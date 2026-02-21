@@ -1,0 +1,191 @@
+# Python
+*.pt
+*.pth
+*.safetensors
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+venv_gpu/
+.env
+
+# Build artifacts (PyInstaller)
+build/
+build_pyinstaller/
+dist/
+*.spec
+
+
+# Generated data
+logs/
+checkpoints/
+replays/
+stress_reports/
+diagnostic_logs/
+verify_log*.txt
+ai_debug_results.txt
+ai_gpu_test.log
+ai_train.log
+debug_results.log
+parser_debug.log
+engine_debug.log
+failure.log
+info.log
+skipped.log
+test_debug.log
+test_stdout.log
+ game_log.txt
+engine_trace.txt
+semantic_log.txt
+strict_debug_log.txt
+train_log_gpu.txt
+game_replay.txt
+report.xml
+report_batch.xml
+reports/
+debug_test_*.log
+card_013_full.json
+# Debug files
+debug_*.txt
+crash_*.txt
+*_output.txt
+loop_debug*.txt
+debug.txt
+error.txt
+error_hearts.txt
+output.txt
+output2.txt
+output_hearts.txt
+output_parser.txt
+test_cross_output.txt
+test_log*.txt
+test_output.txt
+temp_debug.out
+*.out
+*.bak
+
+# Profile outputs
+profile_*.txt
+profile_*.json
+
+# Benchmark and test results
+
+tournament_*.txt
+final_*.txt
+test_results.txt
+test_results.json
+verification_results.txt
+
+# Generated JSON (keep cards.json and rule_map.json)
+analysis_*.json
+verified_parsing_status.json
+scan_results.json
+inverse_parse_report.txt
+faq_test_report
+gpu_status.md
+complex_cards.txt
+git_status_output.txt
+pull_request_feedback.txt
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.tmp
+*.log
+*_old.html
+
+# Local/Agent Context
+.gemini/
+qwen-code/
+
+# Compiled and Cache
+.pytest_cache/
+.hypothesis/
+.python-version
+.venv/
+.venv_bak/
+python_env/
+node_modules/
+diagnose_*.py
+
+# Generated Discovery Reports (transitory)
+full_ability_coverage.json
+analysis_*.json
+scan_results.json
+verified_parsing_status.json
+
+# Checkpoints
+historiccheckpoints/
+
+# Images
+frontend/img/cards/**/*.png
+launcher/static_content/img/cards/
+launcher/static_content/
+
+# Web Distribution
+web_dist/
+
+# Debug and Trace
+trace_logic.py
+fix_logic.py
+fix_logic_final.py
+fix_eof.py
+fix_eof_2.py
+force_eof.py
+id_debug.log
+poppin_debug.log
+compiler_debug*.log
+*_output.txt
+cargo_error*.txt
+check_paths_output.txt
+exe_out.log
+path.txt
+test_output.txt
+validate_report.txt
+debug_1203.py
+tools/inspect_poppin.py
+tools/verify/verify_action_metadata_fix.py
+tools/verify/verify_parity.py
+
+# Rust
+target/
+engine_rust_src/target/
+engine_rust_src/*.txt
+engine_rust_src/*.log
+engine_rust_src/all_results*.txt
+engine_rust_src/cargo_*.txt
+engine_rust_src/build_*.txt
+engine_rust_src/err*.txt
+engine_rust_src/run_output*.txt
+engine_rust_src/**/*.rlib
+engine_rust_src/**/*.pdb
+
+# AI Data Generation Results
+ai/data/*.npz
+ai/data/*.json
+archive/
+*.log
+!README.*
+data/temp/
+
+# Large/Temporary Directories
+gh_emulation/
+prerefactor/
+prerefactor_2/
+numba_cache_backup/
+web_dist/
+dist/
+build/
+*.zip
+*.7z
+*.rar
+*.tar.gz

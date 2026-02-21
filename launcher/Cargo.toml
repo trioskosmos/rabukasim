@@ -1,0 +1,21 @@
+[package]
+name = "loveca_launcher"
+version = "0.1.0"
+edition = "2021"
+default-run = "loveca_launcher"
+
+[lib]
+name = "loveca_launcher"
+path = "src/lib.rs"
+
+[dependencies]
+tiny_http = "0.12"
+webbrowser = "0.8"
+rust-embed = "6.6"
+mime_guess = "2.0"
+mime = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rand = "0.8"
+uuid = { version = "1.4", features = ["v4", "fast-rng", "macro-diagnostics"] }
+engine_rust = { path = "../engine_rust_src", default-features = false, features = ["parallel"] }

@@ -1,0 +1,139 @@
+use crate::core::logic::*;
+use crate::core::gpu_conversions::GpuConverter;
+
+const TEST_CARDS: &str = r#"{
+    "member_db": {
+        "0": {
+            "card_id": 0,
+            "card_no": "TEST-001",
+            "name": "Test Member",
+            "cost": 2,
+            "hearts": [1, 0, 0, 0, 0, 0, 0],
+            "blade_hearts": [0, 0, 0, 0, 0, 0, 0],
+            "blades": 1,
+            "groups": [],
+            "units": [],
+            "abilities": [],
+            "rare": "R",
+            "volume_icons": 0,
+            "draw_icons": 0
+        }
+    },
+    "live_db": {
+        "11000": {
+            "card_id": 11000,
+            "card_no": "LIVE-001",
+            "name": "Test Live",
+            "score": 1,
+            "required_hearts": [1, 0, 0, 0, 0, 0, 0],
+            "abilities": [],
+            "groups": [],
+            "units": [],
+            "volume_icons": 0,
+            "blade_hearts": [0, 0, 0, 0, 0, 0, 0]
+        }
+    }
+}"#;
+
+#[test]
+fn test_database_load() {
+    let db = CardDatabase::from_json(TEST_CARDS).unwrap();
+    assert_eq!(db.members.len(), 1);
+    assert_eq!(db.lives.len(), 1);
+    assert_eq!(db.members[&0].name, "Test Member");
+}
+
+#[test]
+fn test_game_initialization() {
+    let _db = CardDatabase::from_json(TEST_CARDS).unwrap();
+    let mut state = GameState { core: CoreGameState { players: [
+            PlayerState {
+                player_id: 0,
+                ..PlayerState::default()
+            },
+            PlayerState {
+                player_id: 1,
+                ..PlayerState::default()
+            },
+        ],
+        ..CoreGameState::default() }, ..GameState::default() };
+
+    state.initialize_game(
+        vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11000], // P0 Main (10 members + 1 live)
+        vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11000], // P1 Main
+        vec![0, 0, 0, 0, 0],  // P0 Energy
+        vec![0, 0, 0, 0, 0],  // P1 Energy
+        Vec::new(), Vec::new(),
+    );
+
+    assert_eq!(state.core.players[0].hand.len(), 6);
+    assert_eq!(state.core.players[0].energy_zone.len(), 3);
+    assert_eq!(state.core.players[0].live_zone, [-1; 3]);
+    assert_eq!(state.core.players[1].live_zone, [-1; 3]);
+    // Lives are shuffled into the main deck (may be drawn into hand)
+    assert!(state.core.players[0].deck.contains(&11000) || state.core.players[0].hand.contains(&11000));
+}
+
+#[test]
+fn test_play_member() {
+    let db = CardDatabase::from_json(TEST_CARDS).unwrap();
+    let mut state = GameState { core: CoreGameState { players: [
+            PlayerState {
+                player_id: 0,
+                hand: vec![0].into(),
+                energy_zone: vec![0, 0].into(),
+                tapped_energy_mask: 0,
+                ..PlayerState::default()
+            },
+            PlayerState {
+                player_id: 1,
+                ..PlayerState::default()
+            },
+        ],
+        phase: Phase::Main,
+        ..CoreGameState::default() }, ..GameState::default() };
+
+    // Play card 0 (cost 2) to slot 0
+    state.play_member(&db, 0, 0).unwrap();
+
+    assert_eq!(state.core.players[0].stage[0], 0);
+    assert_eq!(state.core.players[0].hand.len(), 0);
+    assert_eq!(state.core.players[0].tapped_energy_mask.count_ones(), 2);
+}
+
+// NOTE: test_performance_phase removed - do_performance_phase method no longer exists
+
+
+#[test]
+fn test_gpu_integration() {
+    use crate::core::gpu_manager::GpuManager;
+
+    // 1. Initialize DB and Manager
+    let db = CardDatabase::from_json(TEST_CARDS).unwrap();
+    let (stats, bytecode) = db.convert_to_gpu();
+
+    let manager = match GpuManager::new(&stats, &bytecode, wgpu::Backends::all()) {
+        Some(m) => m,
+        None => {
+            println!("Skipping GPU test: No compatible GPU found.");
+            return;
+        }
+    };
+
+    // 2. Setup State - Must be in a gameplay phase (not Setup/Rps/TurnChoice)
+    let mut state = GameState::default();
+    state.turn = 10;
+    state.phase = Phase::Main; // GPU shader only handles gameplay phases
+    let mut gpu_state = state.to_gpu(&db);
+    gpu_state.is_debug = 1; // Break after first step to test single transition
+
+    // 3. Run Simulation (inc turn)
+    let mut results = vec![gpu_state.clone(); 1];
+    manager.run_simulations_into(&[gpu_state], &mut results);
+
+    // 4. Verify - With is_debug=1, only one step runs.
+    // A single Main phase pass transitions to next player, not a new turn.
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].turn, 10); // Turn doesn't increment on single Main pass
+    println!("GPU Integration Test Passed: Single step verified");
+}

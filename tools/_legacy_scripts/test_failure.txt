@@ -1,0 +1,1104 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\trios\.gemini\antigravity\vscode\loveca-copy
+configfile: pyproject.toml
+plugins: hypothesis-6.150.2, bdd-8.1.0, xdist-3.8.0
+created: 12/12 workers
+12 workers [1 item]
+
+F                                                                        [100%]
+================================== FAILURES ===================================
+______________ test_ability_executes_without_crash[test_case380] ______________
+[gw0] win32 -- Python 3.12.12 C:\Users\trios\.gemini\antigravity\vscode\loveca-copy\.venv\Scripts\python.exe
+
+game_state = <engine.game.game_state.GameState object at 0x000001F8AD5FF770>
+test_case = {'ability_idx': 0, 'card_id': 317, 'card_name': '中須かすみ', 'card_type': 'member', ...}
+
+    @pytest.mark.parametrize("test_case", generate_ability_test_cases())
+    def test_ability_executes_without_crash(game_state, test_case):
+        """
+        Smoke test: Ensure every ability can be triggered and resolved without crashing.
+        Does NOT verify logical correctness of the effect, just that it doesn't crash the engine.
+        """
+        # 1. Setup based on trigger type
+        trigger_name = test_case["trigger"]
+        cid = test_case["card_id"]
+        p = game_state.players[0]
+
+        # Skip unknown triggers for now
+        if trigger_name == "NONE" or trigger_name == 0:
+            pytest.skip("Skipping ability with no trigger")
+
+        try:
+            if isinstance(trigger_name, int):
+                trigger_enum = TriggerType(trigger_name)
+                trigger_name = trigger_enum.name
+            else:
+                trigger_enum = getattr(TriggerType, trigger_name)
+        except (AttributeError, ValueError):
+            # Might be integer in compiled JSON if not re-serialized with names
+            # Generator currently returns raw values if using names?
+            # Let's handle if it returns int mapped strings
+            pytest.skip(f"Skipping unknown trigger: {trigger_name}")
+            # Might be integer in compiled JSON if not re-serialized with names
+            # Generator currently returns raw values if using names?
+            # Let's handle if it returns int mapped strings
+            pytest.skip(f"Skipping unknown trigger: {trigger_name}")
+
+        # Initialize state for specific triggers
+        if trigger_name == "ON_PLAY":
+            # Setup: Hand -> Stage
+            # Give card + dummies for discard costs
+            p.hand = [cid] + [999] * 5
+            # Sync hand_added_turn to avoid validator desync if card stays in hand
+            # We need to sync for ALL cards
+            p.hand_added_turn = [0] * 6
+            # Give infinite energy for costs
+            p.energy_zone = [2000] * 10
+            p.tapped_energy[:] = False
+
+            game_state.phase = Phase.MAIN
+            # Execute: Play card
+            # Action 1 = Play card at index 0 to stage slot 0 (0*3 + 0 + 1 => 1)
+            game_state = game_state.step(1)
+
+        elif trigger_name == "ON_LIVE_START" or trigger_name == "LIVE_START":
+            # Setup: Card on Stage -> Live Start
+            p.stage[0] = cid
+            p.live_zone = [1000]  # Dummy live
+            p.live_zone_revealed = [True]
+            game_state.phase = Phase.PERFORMANCE_P1
+            game_state.first_player = 0
+            game_state.current_player = 0
+            # Execute: Step(0) to trigger performance abilities
+>           game_state = game_state.step(0)
+                         ^^^^^^^^^^^^^^^^^^
+
+engine\tests\cards\batches\test_all_abilities.py:71:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engine.game.game_state.GameState object at 0x000001F8AD5FF770>
+action_id = 0, check_legality = True, in_place = False
+
+    def step(self, action_id: int, check_legality: bool = True, in_place: bool = False) -> "GameState":
+        """
+
+        Executes one step in the game (Rule 9).
+
+        Args:
+            action_id: The action to execute.
+            check_legality: Whether to verify action legality. Disable for speed if caller guarantees validity.
+            in_place: If True, modifies the state in-place instead of copying. Faster for RL.
+
+        """
+        self.action_count_this_turn += 1
+        if self.action_count_this_turn > 1000:
+            self.game_over = True
+            self.winner = 2  # Draw due to runaway logic
+            self.log_rule("Safety", "Turn exceeded 1000 actions. Force terminating as Draw.")
+            return self
+
+        if self.game_over:
+            print(f"WARNING: Step called after Game Over (Winner: {self.winner}). Ignoring action {action_id}.")
+
+            return self
+
+        # Strict validation for debugging
+        if check_legality:
+            legal_actions = self.get_legal_actions()
+
+            if not legal_actions[action_id]:
+                # Soft fallback for illegal moves to prevent crashes
+                legal_indices = np.where(legal_actions)[0]
+
+                # print(
+                #     f"ILLEGAL MOVE CAUGHT: Action {action_id} in phase {self.phase}. "
+                #     f"PendingChoices: {len(self.pending_choices)}. "
+                #     f"Fallback to first legal action: {legal_indices[0] if len(legal_indices) > 0 else 'None'}"
+                # )
+
+                if len(legal_indices) > 0:
+                    if 0 in legal_indices:
+                        action_id = 0
+                    else:
+                        action_id = int(legal_indices[0])
+                else:
+                    self.game_over = True
+                    self.winner = -2  # Special code for illegal move failure
+                    return self
+
+        if in_place:
+            new_state = self
+        else:
+            new_state = self.copy()
+
+        new_state.log_rule("Rule 9.5", f"Processing action {action_id} in {new_state.phase} phase.")
+
+        # Check rule conditions before acting (Rule 9.5.1 / 10.1.2)
+        # MUST be done on new_state
+        new_state._process_rule_checks()
+
+        # Rule 9.5.4.1: Check timing occurs before play timing
+        new_state._process_rule_checks()
+
+        # Priority: If waiting for a choice (like targeting), handles that action
+
+        if new_state.pending_choices:
+            new_state._handle_choice(action_id)
+
+        # Otherwise, if resolving a complex effect stack
+
+        elif new_state.pending_effects:
+            new_state._resolve_pending_effect(0)  # 0 is dummy action for auto-res
+
+        # Normal action execution
+
+        else:
+            new_state._execute_action(action_id)
+
+        # After any action, automatically process non-choice effects
+
+        while new_state.pending_effects and not new_state.pending_choices:
+            new_state._resolve_pending_effect(0)  # 0 is dummy action for auto-res
+
+        # Rule 9.5.1: Final check timing after action resolution
+
+>       new_state._process_rule_checks()
+
+engine\game\game_state.py:1301:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engine.game.game_state.GameState object at 0x000001F8AD5FF9B0>
+
+    def _process_rule_checks(self) -> None:
+        """Rule 10: Rule Processing & Check Timing (Rule 9.5.3)."""
+        looping = True
+        while looping:
+            looping = False
+            rules_applied = True
+            while rules_applied:
+                rules_applied = False
+                for p in self.players:
+                    p.meta_rules.clear()
+                    for cid in p.stage:
+                        if cid >= 0 and cid in self.member_db:
+                            for ab in self.member_db[cid].abilities:
+                                if ab.trigger == TriggerType.CONSTANT:
+                                    for eff in ab.effects:
+                                        if eff.effect_type == EffectType.META_RULE:
+                                            p.meta_rules.add(str(eff.params.get("type", "")))
+                    for zone in [p.live_zone, p.success_lives]:
+                        for cid in zone:
+                            if cid in self.live_db:
+                                for ab in self.live_db[cid].abilities:
+                                    if ab.trigger == TriggerType.CONSTANT:
+                                        for eff in ab.effects:
+                                            if eff.effect_type == EffectType.META_RULE:
+                                                p.meta_rules.add(str(eff.params.get("type", "")))
+                    if not p.main_deck and p.discard:
+                        p.main_deck = p.discard[:]
+                        p.discard = []
+                        random.shuffle(p.main_deck)
+                        rules_applied = True
+                    for i in range(3):
+                        if p.stage[i] < 0 and p.stage_energy[i]:
+                            p.energy_deck.extend(p.stage_energy[i])
+                            p.stage_energy[i] = []
+                            rules_applied = True
+                    if self.yell_cards and int(self.phase) not in (Phase.PERFORMANCE_P1, Phase.PERFORMANCE_P2):
+                        for cid in self.yell_cards:
+                            self.players[self.current_player].discard.append(cid)
+                        self.yell_cards = []
+                        rules_applied = True
+                    old_game_over = self.game_over
+                    self.check_win_condition()
+                    if self.game_over and not old_game_over:
+                        rules_applied = True
+                if rules_applied:
+                    looping = True
+            if self.triggered_abilities and not self.pending_choices:
+                # DEBUG
+                # print(f"DEBUG: Processing triggers. Count={len(self.triggered_abilities)}")
+                p_triggers = [[] for _ in range(2)]
+                for i, (pid, _ab, _ctx) in enumerate(self.triggered_abilities):
+                    p_triggers[pid].append(i)
+                ap = self.current_player
+                if p_triggers[ap]:
+                    idx = p_triggers[ap][0]
+                    pid, ab, ctx = self.triggered_abilities.pop(idx)
+                    # print(f"DEBUG: Popped trigger for player {pid} index {idx}")
+>                   self._play_automatic_ability(pid, ab, ctx)
+
+engine\game\mixins\effect_mixin.py:94:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engine.game.game_state.GameState object at 0x000001F8AD5FF9B0>
+player_id = 0
+ability = Ability(raw_text='{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_04.png|heart04}}の...e)], costs=[], modal_options=[], is_once_per_turn=False, bytecode=[221, 0, 0, 0, 18, 1, 0, 0, 39, 1, 0, 0, 1, 0, 0, 0])
+context = {'area': 0, 'source_card_id': np.int32(317)}
+
+    def _play_automatic_ability(self, player_id: int, ability: Ability, context: Dict[str, Any]) -> None:
+        """Resolve an automatic ability (Rule 9.5)."""
+        p = self.players[player_id]
+        cid = context.get("card_id", -1)
+        self.current_resolving_ability = ability
+        area = context.get("area", -1)
+        if area >= 0 and p.stage[area] >= 0:
+            cid = p.stage[area]
+            if cid in self.member_db:
+                self.current_resolving_member = self.member_db[cid].name
+                self.current_resolving_member_id = cid
+
+        # Ensure context has source_card_id for _handle_cost prompts
+        if cid != -1:
+            context["source_card_id"] = cid
+
+        if ability.conditions and not all(self._check_condition(p, cond, context) for cond in ability.conditions):
+            return
+        if ability.costs:
+            areal = context.get("area", -1)
+            # Should match _pay_costs signature: (player, costs, source_area)
+            if not self._pay_costs(p, ability.costs, source_area=areal):
+                # Defer execution for auto-abilities
+                abi_key = f"auto-{cid}"
+                self.pending_activation = {"ability": ability, "context": context, "abi_key": abi_key}
+                return
+
+        # Prepare metadata for progress tracking
+        if JIT_AVAILABLE and hasattr(self, "fast_mode") and self.fast_mode:
+            bytecode = ability.compile()
+            # Push the compiled bytecode as a single "effect" to pending_effects
+            # _resolve_pending_effect will then pass it to _resolve_effect_opcode
+            self.pending_effects.insert(0, bytecode)
+        else:
+            total = len(ability.effects)
+            for i, phase_effect in enumerate(reversed(ability.effects)):
+                step = total - i
+                # COPY effect to prevent mutation of shared objects
+                eff_copy = copy.copy(phase_effect)
+                self.pending_effects.insert(0, ResolvingEffect(eff_copy, cid, step, total))
+        while self.pending_effects and not self.pending_choices:
+>           self._resolve_pending_effect(0, context=context)
+
+engine\game\mixins\effect_mixin.py:3620:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engine.game.game_state.GameState object at 0x000001F8AD5FF9B0>
+action = 0, context = {'area': 0, 'source_card_id': np.int32(317)}
+
+    def _resolve_pending_effect(self, action: int, context: Optional[Dict[str, Any]] = None) -> None:
+        """Resolve top effect from stack"""
+        if not hasattr(self, "pending_effects") or not self.pending_effects:
+            return
+
+        resolving_effect = self.pending_effects.pop(0)
+
+        # Handle bytecode (list of ints) from fast_mode
+        if isinstance(resolving_effect, list):
+            # Execute all opcodes in the bytecode segment
+            # Each instruction is 4 ints: [Opcode, Value, Attr, TargetSlot]
+            for i in range(0, len(resolving_effect), 4):
+                op = resolving_effect[i]
+                if op == int(Opcode.RETURN):
+                    break
+                self._resolve_effect_opcode(Opcode(op), resolving_effect[i : i + 4])
+            return
+
+        # Handle unwrapping if it's a ResolvingEffect wrapper (Rule 1.3: Wrapper handling)
+        if hasattr(resolving_effect, "effect"):
+            effect = resolving_effect.effect
+            source_id = resolving_effect.source_card_id
+            step_progress = f"{resolving_effect.step_index}/{resolving_effect.total_steps}"
+        else:
+            # Legacy/Testing support for raw Effect objects
+            effect = resolving_effect
+            source_id = -1
+            step_progress = "?"
+
+        p = self.active_player
+        ctx = context or {}
+
+        # Inject source metadata into context for downstream choices
+        source_name = self.current_resolving_member or "Unknown"
+        source_img = ""
+        if source_id != -1:
+            if source_id in self.member_db:
+                source_name = self.member_db[source_id].name
+                source_img = self.member_db[source_id].img_path
+            elif source_id in self.live_db:
+                source_name = self.live_db[source_id].name
+                source_img = self.live_db[source_id].img_path
+
+        choice_metadata = {
+            "source_card_id": source_id,
+            "source_img": source_img,
+            "step_progress": step_progress,
+            "source_member": source_name,
+            "source_ability": self.current_resolving_ability.raw_text if self.current_resolving_ability else "",
+        }
+
+        if hasattr(self, "log_rule"):
+            # Enhanced Logging
+            source_name = "Unknown Source"
+            if source_id != -1:
+                if source_id in self.member_db:
+                    source_name = self.member_db[source_id].name
+                elif source_id in self.live_db:
+                    source_name = self.live_db[source_id].name
+            elif self.current_resolving_member:
+                source_name = self.current_resolving_member
+
+            ability_text = ""
+            if self.current_resolving_ability:
+                ability_text = f" [{self.current_resolving_ability.raw_text[:20]}...]"
+
+            msg = f"{source_name}: Resolving {effect.effect_type.name}{ability_text} (Val: {effect.value})"
+            self.log_rule("Rule 9.7", msg)
+
+        # --- REPLACEMENT EFFECTS (Rule 9.8) ---
+        indices_to_remove = []
+        replaced = False
+        for i, ce in enumerate(p.continuous_effects):
+            ce_eff = ce["effect"]
+            if ce_eff.effect_type == EffectType.REPLACE_EFFECT:
+                targets_type = ce_eff.params.get("replaces")
+                if targets_type == effect.effect_type.name:
+                    if self.verbose:
+                        print(f"Effect {effect.effect_type.name} replaced by {ce_eff.raw_text}")
+
+                    if "modifier" in ce_eff.params:
+                        mod = ce_eff.params["modifier"]
+                        if mod == "double":
+                            effect.value *= 2
+                        elif mod == "add":
+                            effect.value += ce_eff.params.get("value", 0)
+                        elif mod == "prevent":
+                            replaced = True
+
+                    elif "new_effect_type" in ce_eff.params:
+                        new_eff_type = EffectType[ce_eff.params["new_effect_type"]]
+                        new_val = ce_eff.params.get("new_value", 0)
+                        new_eff = Effect(new_eff_type, new_val, TargetType.SELF, ce_eff.params.get("new_params", {}))
+                        self.pending_effects.insert(0, new_eff)
+                        replaced = True
+
+                    if ce.get("expiry") == "ONE_SHOT":
+                        indices_to_remove.append(i)
+
+                    if replaced:
+                        break
+
+        for i in sorted(indices_to_remove, reverse=True):
+            p.continuous_effects.pop(i)
+
+        if replaced:
+            return
+
+        if p.negate_next_effect:
+            p.negate_next_effect = False
+            if self.verbose:
+                print(f"Effect: Effect {effect.effect_type} negated by current effect mitigation.")
+            return
+
+        if effect.effect_type == EffectType.COLOR_SELECT:
+            self.pending_choices.append(
+                (
+                    "COLOR_SELECT",
+                    {
+                        **choice_metadata,
+                        "choices": effect.params.get("choices", ["pink", "red", "yellow", "green", "blue", "purple"]),
+                        "count": effect.value,
+                        "effect_description": "色を選んでください",
+                    },
+                )
+            )
+            return
+
+        elif effect.effect_type == EffectType.ACTIVATE_MEMBER:
+            if effect.params.get("target") == "energy":
+                # Filter for tapped energy
+                tapped_indices = [i for i, tapped in enumerate(p.tapped_energy) if tapped and i < len(p.energy_zone)]
+                tapped_cards = [p.energy_zone[i] for i in tapped_indices]
+
+                if not tapped_cards:
+                    return
+
+                # If we need to choose X, and we have enough or fewer, we might just untap them?
+                # But usually "Choose 1" implies choice. Though if count >= available, auto-pick?
+                # Game usually forces manual choice for "Choose".
+                # However, for energy, they are often identical unless different cards.
+                # Let's use SELECT_FROM_LIST
+
+                self.pending_choices.append(
+                    (
+                        "SELECT_FROM_LIST",
+                        {
+                            **choice_metadata,
+                            "cards": tapped_cards,
+                            "count": effect.value,
+                            "reason": "activate_energy",
+                            "effect_description": f"活動させるエールを{effect.value}枚選んでください",
+                        },
+                    )
+                )
+                return
+
+            if effect.params.get("all") or effect.params.get("target") == "all":
+                p.tapped_members[:] = False
+                return
+
+            if effect.target == TargetType.MEMBER_SELF:
+                area = ctx.get("area", -1)
+                if area >= 0:
+                    p.tapped_members[area] = False
+            else:
+                self.pending_choices.append(
+                    (
+                        "TARGET_MEMBER",
+                        {
+                            **choice_metadata,
+                            "effect": "activate",
+                            "effect_description": "活動させるメンバーを選んでください",
+                            "is_optional": False,
+                        },
+                    )
+                )
+            return
+
+        if effect.target == TargetType.CARD_HAND and effect.effect_type != EffectType.SWAP_CARDS:
+            if len(p.hand) > 0:
+                effect_desc = (
+                    "手札から捨てるカードを選んでください"
+                    if effect.effect_type == EffectType.SWAP_CARDS
+                    else "手札からカードを選んでください"
+                )
+                self.pending_choices.append(
+                    (
+                        "TARGET_HAND",
+                        {
+                            **choice_metadata,
+                            "effect": "discard" if effect.effect_type == EffectType.SWAP_CARDS else "select",
+                            "effect_description": effect_desc,
+                            "is_optional": False,
+                            **effect.params,
+                        },
+                    )
+                )
+            return
+        elif effect.target == TargetType.MEMBER_SELECT:
+            if any(cid >= 0 for cid in p.stage):
+                self.pending_choices.append(
+                    (
+                        "TARGET_MEMBER",
+                        {
+                            **choice_metadata,
+                            "effect": "buff",
+                            "target_effect": effect,
+                            "effect_description": f"{effect.effect_type.name}の対象メンバーを選んでください",
+                            "is_optional": False,
+                        },
+                    )
+                )
+            return
+
+        if effect.effect_type == EffectType.SELECT_MODE:
+            options = effect.modal_options or effect.params.get("options", [])
+            self.pending_choices.append(
+                (
+                    "SELECT_MODE",
+                    {
+                        **choice_metadata,
+                        "options": options,
+                        "effect_description": "以下から1つ選んでください",
+                        "is_optional": False,
+                    },
+                )
+            )
+            return
+        elif effect.effect_type == EffectType.COLOR_SELECT:
+            self.pending_choices.append(
+                (
+                    "COLOR_SELECT",
+                    {
+                        **choice_metadata,
+                        "effect_description": "ハートの色を選んでください",
+                        "is_optional": False,
+                    },
+                )
+            )
+            return
+
+        if effect.effect_type == EffectType.REVEAL_CARDS:
+            count = effect.value
+            if effect.params.get("per_member_all"):
+                count = int(np.sum(p.stage >= 0)) + int(np.sum(self.inactive_player.stage >= 0))
+
+            source = effect.params.get("from", "deck")
+            if source == "deck":
+                self.looked_cards = []
+                for _ in range(count):
+                    if p.main_deck:
+                        self.looked_cards.append(p.main_deck.pop(0))
+            return
+
+        if effect.effect_type == EffectType.CHEER_REVEAL:
+            if p.main_deck:
+                card = p.main_deck.pop(0)
+                self.looked_cards = [card]
+            return
+
+        if effect.target == TargetType.MEMBER_NAMED:
+            name = effect.params.get("target_name", "")
+            found_slot = -1
+            for i, cid in enumerate(p.stage):
+                if cid >= 0 and cid in self.member_db:
+                    if name in self.member_db[cid].name:
+                        found_slot = i
+                        break
+            if found_slot >= 0:
+                ctx = ctx.copy() if ctx else {}
+                ctx["area"] = found_slot
+                target_for_logic = TargetType.MEMBER_SELF
+            else:
+                return
+        else:
+            target_for_logic = effect.target
+
+        if effect.effect_type == EffectType.DRAW:
+            should_draw = True
+            draw_count = effect.value
+
+            if effect.params.get("condition") == "has_live_in_looked":
+                # Nozomi Logic: Check if looked_cards contains a live card
+                has_live = any(cid in self.live_db for cid in self.looked_cards)
+                should_draw = has_live
+
+            if effect.params.get("multiplier") == "energy":
+                req = effect.params.get("req_per_unit", 1)
+                count = len(p.energy_zone)
+                draw_count = count // req if req > 0 else 0
+
+            if should_draw and draw_count > 0:
+                self._draw_cards(p, draw_count)
+
+        elif effect.effect_type == EffectType.TAP_OPPONENT:
+            opp = self.inactive_player
+            if any(cid >= 0 for cid in opp.stage):
+                if effect.params.get("target") == "all":
+                    cost_max = effect.params.get("cost_max", 999)
+                    for i, cid in enumerate(opp.stage):
+                        if cid >= 0:
+                            card = self.member_db[cid]
+                            if card.cost <= cost_max:
+                                opp.tapped_members[i] = True
+                    return
+
+                # Detect "Opponent chooses" logic (e.g., Nico)
+                is_opponent_choice = (
+                    self.current_resolving_ability and "相手は" in self.current_resolving_ability.raw_text
+                )
+
+                if is_opponent_choice:
+                    # Opponent chooses their own member to tap
+                    self.pending_choices.append(
+                        (
+                            "TARGET_MEMBER",
+                            {
+                                **choice_metadata,
+                                "player_id": self.inactive_player.player_id,
+                                "effect": "tap_self_chosen",
+                                "effect_description": "ウェイトにする自分のメンバーを選んでください",
+                                "is_optional": False,
+                            },
+                        )
+                    )
+                else:
+                    self.pending_choices.append(
+                        (
+                            "TARGET_OPPONENT_MEMBER",
+                            {
+                                **choice_metadata,
+                                "effect": "tap",
+                                "effect_description": "相手のメンバーを選んでタップしてください",
+                                "is_optional": False,
+                            },
+                        )
+                    )
+
+        elif effect.effect_type == EffectType.MOVE_TO_DECK:
+            pos = effect.params.get("position", "top")
+            target_deck = p.energy_deck if effect.params.get("to_energy_deck") else p.main_deck
+            if p.discard:
+                card = p.discard.pop()
+                if pos == "top":
+                    target_deck.insert(0, card)
+                else:
+                    target_deck.append(card)
+
+        elif effect.effect_type == EffectType.MOVE_MEMBER:
+            self.pending_choices.append(
+                (
+                    "TARGET_MEMBER_SLOT",
+                    {
+                        **choice_metadata,
+                        "reason": "position_change",
+                        "count": 1,
+                        "effect_description": "移動するメンバーを選んでください",
+                    },
+                )
+            )
+            self.pending_choices.append(
+                (
+                    "TARGET_MEMBER_SLOT",
+                    {
+                        **choice_metadata,
+                        "reason": "position_change",
+                        "count": 1,
+                        "effect_description": "移動先を選んでください",
+                    },
+                )
+            )
+
+        elif effect.effect_type == EffectType.SWAP_ZONE:
+            live_cards = p.success_lives
+            if not live_cards or not p.hand:
+                return
+            self.pending_choices.append(
+                (
+                    "SELECT_SWAP_SOURCE",
+                    {
+                        **choice_metadata,
+                        "cards": live_cards.copy(),
+                        "source": "success_live",
+                        "effect_description": "交換に出すライブを選んでください",
+                    },
+                )
+            )
+
+        elif effect.effect_type == EffectType.DRAW:
+            self._draw_cards(p, effect.value)
+
+        elif effect.effect_type == EffectType.ADD_BLADES:
+            val = effect.value
+            if effect.params.get("multiplier"):
+                if effect.params.get("per_live"):
+                    val *= len(p.success_lives)
+                elif effect.params.get("per_energy"):
+                    val *= len(p.energy_zone)
+                elif effect.params.get("per_member"):
+                    val *= int(np.sum(p.stage >= 0))
+            p.continuous_effects.append(
+                {
+                    "effect": Effect(EffectType.ADD_BLADES, val, effect.target, effect.params),
+                    "target_slot": ctx.get("area", -1) if target_for_logic == TargetType.MEMBER_SELF else -1,
+                    "expiry": effect.params.get("until", "turn_end").upper(),
+                }
+            )
+        elif effect.effect_type == EffectType.RESTRICTION:
+            r_type = effect.params.get("type", "unknown")
+            p.restrictions.add(r_type)
+            p.continuous_effects.append(
+                {
+                    "effect": Effect(EffectType.RESTRICTION, 0, TargetType.SELF, {"type": r_type}),
+                    "expiry": effect.params.get("until", "turn_end").upper(),
+                }
+            )
+
+        elif effect.effect_type == EffectType.MODIFY_SCORE_RULE:
+            p.continuous_effects.append({"effect": effect, "expiry": effect.params.get("until", "turn_end").upper()})
+
+        elif effect.effect_type == EffectType.LOOK_DECK:
+            # Rule 10.2: Refresh if needed before looking
+            if not p.main_deck:
+                self._resolve_deck_refresh(p)
+
+            count = min(effect.value, len(p.main_deck))
+            # print(f"DEBUG: Executing LOOK_DECK count={count} deck={len(p.main_deck)} value={effect.value}")
+            self.looked_cards = []
+            for _ in range(count):
+                if p.main_deck:
+                    self.looked_cards.append(p.main_deck.pop(0))
+
+        elif effect.effect_type == EffectType.LOOK_AND_CHOOSE:
+            if self.looked_cards:
+                # If count is 0, just discard everything (Mill logic)
+                count = effect.params.get("count", effect.value)
+                if count <= 0:
+                    self.active_player.discard.extend(self.looked_cards)
+                    self.looked_cards = []
+                if count <= 0:
+                    self.active_player.discard.extend(self.looked_cards)
+                    self.looked_cards = []
+                else:
+                    valid_cards = self.looked_cards.copy()
+                    # Filter if ability has conditions acting as choice filters
+                    if self.current_resolving_ability and self.current_resolving_ability.conditions:
+                        filtered = []
+                        for cid in valid_cards:
+                            # Context for filtering
+                            filter_ctx = {**choice_metadata, "target_card_id": int(cid), "check_candidate": True}
+                            # Only check conditions that are relevant to filtering?
+                            # For now, check all. If activation conditions (like Turn 1) are present,
+                            # they usually don't depend on "target_card_id" and should remain True if already met.
+                            if all(
+                                self._check_condition(p, c, filter_ctx)
+                                for c in self.current_resolving_ability.conditions
+                            ):
+                                filtered.append(cid)
+                        valid_cards = filtered
+
+                    self.pending_choices.append(
+                        (
+                            "SELECT_FROM_LIST",
+                            {
+                                **choice_metadata,
+                                "cards": valid_cards,
+                                "reason": "look_and_choose",
+                                "effect_description": "手札に加えるカードを選んでください",
+                                **effect.params,
+                            },
+                        )
+                    )
+
+        elif effect.effect_type == EffectType.RECOVER_LIVE:
+            live_cards_in_discard = [cid for cid in p.discard if cid in self.live_db]
+            # print(f"DEBUG: RECOVER_LIVE - Discard Live Cards: {live_cards_in_discard}")
+            group_filter = effect.params.get("group")
+            if group_filter:
+                # Convert string to Group enum
+                target_group = Group.from_japanese_name(group_filter)
+                # print(f"DEBUG: RECOVER_LIVE - Group Filter: {group_filter} -> {target_group} ({type(target_group)})")
+
+                # Check each card
+                for cid in live_cards_in_discard:
+                    lc_groups = self.live_db[cid].groups
+                    if lc_groups:
+                        # print(
+                        #     f"DEBUG: Card {cid} Groups: {lc_groups} (Type: {type(lc_groups[0])} val {lc_groups[0].value})"
+                        # )
+                        pass
+                    else:
+                        # print(f"DEBUG: Card {cid} Groups: {lc_groups}")
+                        pass
+                    is_match = target_group in lc_groups
+                    # print(f"DEBUG: Match? {is_match}")
+
+                live_cards_in_discard = [
+                    cid for cid in live_cards_in_discard if target_group in self.live_db[cid].groups
+                ]
+                # print(f"DEBUG: RECOVER_LIVE - Filtered: {live_cards_in_discard}")
+
+            if live_cards_in_discard:
+                self.pending_choices.append(
+                    (
+                        "SELECT_FROM_DISCARD",
+                        {
+                            **choice_metadata,
+                            "cards": live_cards_in_discard,
+                            "count": effect.value,
+                            "filter": "live",
+                            "destination": "hand",
+                            "effect_description": "回収するライブを選んでください",
+                        },
+                    )
+                )
+
+        elif effect.effect_type == EffectType.RECOVER_MEMBER:
+            member_cards_in_discard = [cid for cid in p.discard if cid in self.member_db]
+            group_filter = effect.params.get("group")
+            if group_filter:
+                target_group = Group.from_japanese_name(group_filter)
+                member_cards_in_discard = [
+                    cid for cid in member_cards_in_discard if target_group in self.member_db[cid].groups
+                ]
+
+            cost_max = effect.params.get("cost_max")
+            if cost_max is not None:
+                member_cards_in_discard = [
+                    cid for cid in member_cards_in_discard if self.member_db[cid].cost <= cost_max
+                ]
+
+            if member_cards_in_discard:
+                self.pending_choices.append(
+                    (
+                        "SELECT_FROM_DISCARD",
+                        {
+                            **choice_metadata,
+                            "cards": member_cards_in_discard,
+                            "count": effect.value,
+                            "filter": "member",
+                            "destination": effect.params.get("to", "hand"),
+                            "effect_description": "回収するメンバーを選んでください",
+                        },
+                    )
+                )
+
+        elif effect.effect_type == EffectType.SWAP_CARDS:
+            if effect.params.get("target") == "discard":
+                params = {**choice_metadata, "count": effect.value, "is_optional": effect.is_optional, **effect.params}
+                if "draw_on_discard" not in params:
+                    params["draw_on_discard"] = True
+                self.pending_choices.append(
+                    (
+                        "DISCARD_SELECT",
+                        params,
+                    )
+                )
+
+        elif effect.effect_type == EffectType.ADD_HEARTS:
+            val = effect.value
+            if effect.params.get("multiplier"):
+                if effect.params.get("per_live"):
+                    val *= len(p.success_lives)
+                elif effect.params.get("per_energy"):
+                    val *= len(p.energy_zone)
+                elif effect.params.get("per_member"):
+                    val *= int(np.sum(p.stage >= 0))
+            p.continuous_effects.append(
+                {
+                    "effect": Effect(EffectType.ADD_HEARTS, val, effect.target, effect.params),
+                    "target_slot": ctx.get("area", -1) if target_for_logic == TargetType.MEMBER_SELF else -1,
+                    "expiry": effect.params.get("until", "turn_end").upper(),
+                }
+            )
+
+        elif effect.effect_type == EffectType.BUFF_POWER:
+            val = effect.value
+            if effect.params.get("multiplier"):
+                if effect.params.get("per_live"):
+                    val *= len(p.success_lives)
+                elif effect.params.get("per_energy"):
+                    val *= len(p.energy_zone)
+                elif effect.params.get("per_member"):
+                    val *= int(np.sum(p.stage >= 0))
+
+            p.continuous_effects.append(
+                {
+                    "effect": Effect(EffectType.ADD_BLADES, val, target_for_logic, effect.params),
+                    "target_slot": ctx.get("area", -1) if target_for_logic == TargetType.MEMBER_SELF else -1,
+                    "expiry": effect.params.get("until", "turn_end").upper(),
+                }
+            )
+
+        elif effect.effect_type == EffectType.BOOST_SCORE:
+            final_val = effect.value
+            if effect.params.get("per_live_in_looked"):
+                final_val = sum(1 for cid in self.looked_cards if cid in self.live_db)
+
+            for ce in p.continuous_effects:
+                if (
+                    ce["effect"].effect_type == EffectType.REPLACE_EFFECT
+                    and ce["effect"].params.get("replaces") == "score_boost"
+                ):
+                    final_val = ce["effect"].value
+                    break
+            p.live_score_bonus += int(final_val)
+
+        elif effect.effect_type == EffectType.REPLACE_EFFECT:
+            p.continuous_effects.append({"effect": effect, "expiry": effect.params.get("until", "live_end").upper()})
+
+        elif effect.effect_type == EffectType.SET_SCORE:
+            p.live_score_bonus = effect.value
+            ctx["set_score_override"] = effect.value
+
+        elif effect.effect_type == EffectType.BATON_TOUCH_MOD:
+            p.baton_touch_limit = effect.value
+
+        elif effect.effect_type == EffectType.REDUCE_COST:
+            p.continuous_effects.append({"effect": effect, "expiry": effect.params.get("until", "turn_end").upper()})
+
+        elif effect.effect_type == EffectType.REDUCE_HEART_REQ:
+            p.continuous_effects.append({"effect": effect, "expiry": effect.params.get("until", "live_end").upper()})
+
+        elif effect.effect_type == EffectType.NEGATE_EFFECT:
+            self.inactive_player.negate_next_effect = True
+
+        elif effect.effect_type == EffectType.IMMUNITY:
+            p.restrictions.add("immunity")
+
+        elif effect.effect_type == EffectType.ADD_TO_HAND:
+            if effect.params.get("from") == "discard" and p.discard:
+                p.hand.append(p.discard.pop())
+                p.hand_added_turn.append(self.turn_number)
+
+        elif effect.effect_type == EffectType.TRIGGER_REMOTE:
+            zone = effect.params.get("from", "discard")
+            if zone == "discard":
+                members_in_discard = [cid for cid in p.discard if cid in self.member_db]
+                if members_in_discard:
+                    self.pending_choices.append(
+                        (
+                            "SELECT_FROM_DISCARD",
+                            {
+                                **choice_metadata,
+                                "cards": members_in_discard,
+                                "count": 1,
+                                "filter": "member_with_ability",
+                                "destination": "trigger_ability",
+                                "effect_description": "効果を発動するメンバーを選んでください",
+                            },
+                        )
+                    )
+
+        elif effect.effect_type == EffectType.PLAY_MEMBER_FROM_HAND:
+            if len(p.hand) > 0:
+                self.pending_choices.append(
+                    (
+                        "TARGET_HAND",
+                        {
+                            **choice_metadata,
+                            "effect": "place_member",
+                            "effect_description": f"手札からメンバーを{effect.value}枚配置してください",
+                            "count": effect.value,
+                            **effect.params,
+                        },
+                    )
+                )
+
+        elif effect.effect_type == EffectType.ENERGY_CHARGE:
+            source = effect.params.get("from", "deck")
+            count = effect.value
+            if source == "deck":
+                for _ in range(count):
+                    if not p.main_deck:
+                        self._resolve_deck_refresh(p)
+                    if p.main_deck:
+                        p.energy_zone.append(p.main_deck.pop(0))
+                        p.tapped_energy[len(p.energy_zone) - 1] = False
+            elif source == "hand":
+                self.pending_choices.append(
+                    (
+                        "TARGET_HAND",
+                        {
+                            **choice_metadata,
+                            "effect": "energy_charge",
+                            "count": count,
+                            "effect_description": "エールにする手札を選んでください",
+                            **effect.params,
+                        },
+                    )
+                )
+
+        elif effect.effect_type == EffectType.FLAVOR_ACTION:
+            self.pending_choices.append(
+                ("CHOOSE_FORMATION", {**choice_metadata, "effect_description": "フォーメーションを選んでください"})
+            )
+
+        elif effect.effect_type == EffectType.ORDER_DECK:
+            if not p.main_deck:
+                self._resolve_deck_refresh(p)
+            position = effect.params.get("position", "top")
+            shuffle = effect.params.get("shuffle", False)
+            count = min(effect.value, len(p.main_deck))
+            top_cards = []
+            for _ in range(count):
+                if p.main_deck:
+                    top_cards.append(p.main_deck.pop(0))
+            if not top_cards:
+                return
+            if shuffle:
+                random.shuffle(top_cards)
+                if position == "bottom":
+                    p.main_deck.extend(top_cards)
+                else:
+                    for c in reversed(top_cards):
+                        p.main_deck.insert(0, c)
+            else:
+                self.pending_choices.append(
+                    (
+                        "SELECT_ORDER",
+                        {
+                            **choice_metadata,
+                            "cards": top_cards,
+                            "ordered": [],
+                            "position": position,
+                            "effect_description": "カードの順番を選んでください",
+                        },
+                    )
+                )
+
+        elif effect.effect_type == EffectType.PLACE_UNDER:
+            target_area = ctx.get("area", -1)
+            if effect.params.get("from", "hand") == "hand" and target_area >= 0:
+                self.pending_choices.append(
+                    (
+                        "TARGET_HAND",
+                        {
+                            **choice_metadata,
+                            "effect": "place_under",
+                            "target_area": target_area,
+                            "count": effect.value,
+                            **effect.params,
+                        },
+                    )
+                )
+
+        elif effect.effect_type == EffectType.SEARCH_DECK:
+            group = effect.params.get("group")
+            cost_max = effect.params.get("cost_max")
+            targets = []
+            for cid in p.main_deck:
+                if cid in self.member_db:
+                    m = self.member_db[cid]
+                    if group and Group.from_japanese_name(group) not in m.groups:
+                        continue
+                    if cost_max is not None and m.cost > cost_max:
+                        continue
+                    targets.append(cid)
+                elif cid in self.live_db:
+                    l = self.live_db[cid]
+                    if group and Group.from_japanese_name(group) not in l.groups:
+                        continue
+                    targets.append(cid)
+            if targets:
+                self.pending_choices.append(
+                    (
+                        "SELECT_FROM_LIST",
+                        {
+                            **choice_metadata,
+                            "cards": targets,
+                            "reason": "search_deck",
+                            "shuffle": True,
+                            "effect_description": "デッキから加えるカードを選んでください",
+                        },
+                    )
+                )
+            else:
+                random.shuffle(p.main_deck)
+
+        elif effect.effect_type == EffectType.FORMATION_CHANGE:
+            members = [(i, cid) for i, cid in enumerate(p.stage) if cid >= 0]
+            if members:
+                self.pending_choices.append(
+                    (
+                        "SELECT_FORMATION_SLOT",
+                        {
+                            **choice_metadata,
+                            "slot_index": 0,
+                            "available_members": members,
+                            "new_stage": [-1, -1, -1],
+                            "effect_description": "移動するメンバーを選んでください",
+                        },
+                    )
+                )
+
+        elif effect.effect_type == EffectType.TRANSFORM_COLOR:
+            # Rule 11.12: Transformation effects.
+            # Usually lasts until LIVE_END.
+>           self.players[self.active_player].continuous_effects.append(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                {
+                    "effect": effect,
+                    "source_card_id": source_id,
+                    "expiry": "LIVE_END",
+                }
+            )
+E           TypeError: list indices must be integers or slices, not PlayerState
+
+engine\game\mixins\effect_mixin.py:4426: TypeError
+---------------------------- Captured stdout call -----------------------------
+DEBUG: Checking live_zone [1000] with live_db keys [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023, 1024, 1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052, 1053, 1054, 1055, 1056, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065, 1066, 1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078, 1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090, 1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128, 1129, 1130]
+DEBUG: Kept 1000
+=========================== short test summary info ===========================
+FAILED engine/tests/cards/batches/test_all_abilities.py::test_ability_executes_without_crash[test_case380]
+============================== 1 failed in 6.02s ==============================

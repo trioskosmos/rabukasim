@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deck Viewer (Interactive)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            background: linear-gradient(90deg, #ff6b9d, #c44dff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .controls {
+            max-width: 800px;
+            margin: 0 auto 30px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #444;
+            color: #ddd;
+            padding: 10px;
+            border-radius: 8px;
+            resize: vertical;
+            margin-bottom: 15px;
+            font-family: monospace;
+        }
+
+        button {
+            background: linear-gradient(90deg, #ff6b9d, #c44dff);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: transform 0.1s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .stats {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #aaa;
+        }
+
+        .deck-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .card-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(196, 77, 255, 0.3);
+        }
+
+        .card-item img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            aspect-ratio: 219/306;
+            object-fit: contain;
+            background: #000;
+        }
+
+        .card-name {
+            font-size: 0.85rem;
+            color: #fff;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-type {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+
+        .card-type.member {
+            background: #4CAF50;
+        }
+
+        .card-type.live {
+            background: #2196F3;
+        }
+
+        .card-type.energy {
+            background: #FF9800;
+        }
+
+        .card-count {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ff6b9d;
+        }
+
+        .card-id {
+            font-size: 0.65rem;
+            color: #666;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Interactive Deck Viewer</h1>
+
+    <div class="controls">
+        <h3 style="margin-bottom:10px;">Paste Deck HTML Here:</h3>
+        <textarea id="deckInput" placeholder="Paste the content of decktest.txt or similar HTML here..."></textarea>
+        <button onclick="parseAndRender()">Visualize Deck</button>
+    </div>
+
+    <div class="stats" id="stats">Ready to load...</div>
+    <div class="deck-grid" id="deck-grid"></div>
+
+    <script>
+        // FULL CARD DATABASE (Embedded for portability)
+        // Only including essential fields to keep size manageable if needed,
+        // but typically better to fetch locally if this file is in the project.
+        // For this "interactive" version, we'll try to fetch local cards.json.
+
+        let cardsDb = {};
+
+        async function init() {
+            try {
+                const response = await fetch('data/cards.json');
+                cardsDb = await response.json();
+                console.log("Card DB Loaded:", Object.keys(cardsDb).length, "cards");
+            } catch (e) {
+                console.error("Failed to load local data/cards.json. Ensure file is in project root.", e);
+                document.getElementById('stats').innerHTML =
+                    `<span style='color:red'>Error: Could not load data/cards.json. Open this file via local server or ensure paths are correct.</span>`;
+            }
+        }
+
+        init();
+
+        function parseAndRender() {
+            const input = document.getElementById('deckInput').value;
+            if (!input.trim()) return;
+
+            // Regex: title="ID : Name" ... class="num">N</span>
+            // Generic pattern: title="([^"]+) :
+            const regex = /title="([^"]+?) :[^"]*"[^>]*>.*?class="num">(\d+)<\/span>/gs;
+
+            const deckData = {};
+            let match;
+            let totalFound = 0;
+
+            while ((match = regex.exec(input)) !== null) {
+                const cardId = match[1].trim();
+                const qty = parseInt(match[2], 10);
+                deckData[cardId] = (deckData[cardId] || 0) + qty;
+                totalFound++;
+            }
+
+            if (totalFound === 0) {
+                // Fallback: try just titles w/o N
+                alert("No card data found! Ensure you paste the full HTML including 'title=...' and 'class=\"num\"'.");
+                return;
+            }
+
+            renderDeck(deckData);
+        }
+
+        function renderDeck(deckData) {
+            const grid = document.getElementById('deck-grid');
+            grid.innerHTML = '';
+
+            let totalCards = 0;
+            let memberCount = 0;
+            let liveCount = 0;
+            let energyCount = 0;
+
+            // Sort by Type then ID
+            const sortedIds = Object.keys(deckData).sort((a, b) => {
+                // simple sort for now
+                return a.localeCompare(b);
+            });
+
+            for (const cardId of sortedIds) {
+                const count = deckData[cardId];
+                totalCards += count;
+
+                const card = cardsDb[cardId] || { name: "Unknown Card", type: "Unknown", _img: null, img: null };
+
+                const item = document.createElement('div');
+                item.className = 'card-item';
+
+                const type = card.type || 'Unknown';
+                const typeClass = type.includes('メンバー') ? 'member' :
+                    type.includes('ライブ') ? 'live' :
+                        type.includes('エネルギー') ? 'energy' : '';
+
+                if (typeClass === 'member') memberCount += count;
+                else if (typeClass === 'live') liveCount += count;
+                else if (typeClass === 'energy') energyCount += count;
+
+                // Image Logic: Prefer _img (local), then img (remote), then placeholder
+                const imgSrc = card._img || card.img || '';
+
+                item.innerHTML = `
+                    <img src="${imgSrc}" alt="${card.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/150x210?text=No+Image'">
+                    <div class="card-name">${card.name}</div>
+                    <span class="card-type ${typeClass}">${type}</span>
+                    <div class="card-count">×${count}</div>
+                    <div class="card-id">${cardId}</div>
+                `;
+                grid.appendChild(item);
+            }
+
+            document.getElementById('stats').textContent =
+                `Total: ${totalCards} cards | Members: ${memberCount} | Live: ${liveCount} | Energy: ${energyCount} | Unique: ${Object.keys(deckData).length}`;
+        }
+    </script>
+</body>
+
+</html>

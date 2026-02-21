@@ -1,0 +1,13 @@
+{
+    "weight_live_score": 100.0,
+    "weight_success_bonus": 100.0,
+    "weight_member_cost": 100.0,
+    "weight_heart": 50.0,
+    "weight_slot_bonus": 100.0,
+    "weight_slot_penalty": 1000.0,
+    "weight_blade": 0.5,
+    "weight_draw_potential": 0.1,
+    "weight_vol_bonus": 0.05,
+    "weight_discard_bonus": 0.1,
+    "scaling_factor": 0.0001
+}

@@ -1,0 +1,39 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\trios\.gemini\antigravity\vscode\loveca-copy
+configfile: pyproject.toml
+plugins: hypothesis-6.150.2, bdd-8.1.0, xdist-3.8.0
+created: 12/12 workers
+12 workers [1 item]
+
+F                                                                        [100%]
+================================== FAILURES ===================================
+_________________________ test_strict_PL_N_bp3_013_N __________________________
+[gw0] win32 -- Python 3.12.12 C:\Users\trios\.gemini\antigravity\vscode\loveca-copy\.venv\Scripts\python.exe
+
+game = <engine.game.game_state.GameState object at 0x0000021B45724050>
+
+    def test_strict_PL_N_bp3_013_N(game):
+        cno = "PL!N-bp3-013-N"
+        cid = _find_id(game, cno)
+        if cid is None:
+            pytest.skip(f"{cno} not found in DB")
+
+        card = game.member_db[cid]
+        assert len(card.abilities) == 1, 'Ability count mismatch'
+
+        # Ability 0
+        ab0 = card.abilities[0]
+        assert ab0.trigger == 1, f'Trigger mismatch: {ab0.trigger} != 1'
+        assert len(ab0.conditions) == 0, 'Condition count mismatch'
+        assert len(ab0.effects) == 3, 'Effect count mismatch'
+        assert ab0.effects[0].effect_type == 0, 'Effect 0 type mismatch'
+>       assert ab0.effects[0].value == 1, 'Effect 0 value mismatch'
+E       AssertionError: Effect 0 value mismatch
+E       assert 2 == 1
+E        +  where 2 = Effect(effect_type=<EffectType.DRAW: 0>, value=2, target=<TargetType.PLAYER: 1>, params={'from': 'deck'}, is_optional=True, modal_options=[]).value
+
+engine\tests\cards\batches\test_auto_generated_strict_v2.py:6827: AssertionError
+=========================== short test summary info ===========================
+FAILED engine/tests/cards/batches/test_auto_generated_strict_v2.py::test_strict_PL_N_bp3_013_N
+============================== 1 failed in 6.03s ==============================
