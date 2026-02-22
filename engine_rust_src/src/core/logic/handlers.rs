@@ -397,9 +397,20 @@ impl PhaseHandlers for GameState {
 
         let mut ctx = AbilityContext { source_card_id: cid, player_id: p_idx as u8, area_idx: slot_idx as i16, ability_index: ab_idx as i16, choice_index: choice_idx as i16, ..Default::default() };
         if target_slot >= 0 { ctx.target_slot = target_slot as i16; }
+        let source_type = if slot_idx < 3 { 0 } else { 1 }; // 0=Stage, 1=Other
 
         // ENFORCEMENT PHASE: Check conditions and costs
         if !self.debug.debug_ignore_conditions {
+            if self.core.players[p_idx].prevent_activate > 0 {
+                return Err("Cannot activate abilities due to restriction".to_string());
+            }
+
+            if ab.is_once_per_turn {
+                if !self.check_once_per_turn(p_idx, source_type, cid as u32, ab_idx) {
+                    return Err("Ability already used this turn".to_string());
+                }
+            }
+
             for cond in &ab.conditions {
                 if !self.check_condition_opcode(db, cond.condition_type as i32, cond.value, cond.attr, cond.target_slot as i32, &ctx, 1) {
                     return Err("Conditions not met".to_string());
@@ -412,6 +423,10 @@ impl PhaseHandlers for GameState {
             }
             for cost in &ab.costs {
                 self.pay_cost(db, p_idx, cost, &ctx);
+            }
+
+            if ab.is_once_per_turn {
+                self.consume_once_per_turn(p_idx, source_type, cid as u32, ab_idx);
             }
         }
 

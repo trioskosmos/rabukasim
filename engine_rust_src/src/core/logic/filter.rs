@@ -5,6 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 use crate::core::generated_constants::*;
+use super::CardDatabase;
 
 /// Represents a comparison operation for cost/attribute filtering
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -53,7 +54,151 @@ pub struct CardFilter {
     pub setsuna_filter: bool,
 }
 
+
 impl CardFilter {
+    /// Check if a card matches this filter.
+    /// Note: is_tapped_override should be provided if the Tapped filter (bit 12) is relevant,
+    /// as it depends on the dynamic GameState.
+    pub fn matches(&self, db: &CardDatabase, cid: i32, is_tapped_override: bool) -> bool {
+        if cid == -1 { return false; }
+
+        // Character Filter
+        if !self.character_ids.iter().all(|&id| id.is_none()) {
+            let name = if let Some(m) = db.get_member(cid) { &m.name }
+                       else if let Some(l) = db.get_live(cid) { &l.name }
+                       else { "" };
+            
+            let mut match_found = false;
+            let normalized_name = name.replace(" ", "");
+            for &id_opt in &self.character_ids {
+                if let Some(id) = id_opt {
+                    let target_name = crate::core::logic::card_db::get_character_name(id).replace(" ", "");
+                    if normalized_name.contains(&target_name) {
+                        match_found = true;
+                        break;
+                    }
+                }
+            }
+            if !match_found { return false; }
+        }
+
+        // Setsuna Filter
+        if self.setsuna_filter {
+            let name = if let Some(m) = db.get_member(cid) { &m.name }
+                       else if let Some(l) = db.get_live(cid) { &l.name }
+                       else { "" };
+            let setsuna_name = crate::core::logic::card_db::get_character_name(27);
+            if !name.replace(" ", "").contains(&setsuna_name.replace(" ", "")) {
+                return false;
+            }
+        }
+
+        // Color Filter
+        if self.color_mask != 0 {
+            if let Some(m) = db.get_member(cid) {
+                let mut has_match = false;
+                for i in 0..7 {
+                    if (self.color_mask & (1 << i)) != 0 && m.hearts[i] > 0 {
+                        has_match = true;
+                        break;
+                    }
+                }
+                if !has_match { return false; }
+            } else if let Some(l) = db.get_live(cid) {
+                let mut has_match = false;
+                for i in 0..7 {
+                    if (self.color_mask & (1 << i)) != 0 && l.required_hearts[i] > 0 {
+                        has_match = true;
+                        break;
+                    }
+                }
+                if !has_match { return false; }
+            } else {
+                return false;
+            }
+        }
+
+        // Type Filter
+        if let Some(ct) = self.card_type {
+            if ct == 1 && db.get_member(cid).is_none() { return false; }
+            if ct == 2 && db.get_live(cid).is_none() { return false; }
+        }
+
+        // Group Filter
+        if let Some(group_id) = self.group_id {
+            if let Some(m) = db.get_member(cid) {
+                if !m.groups.contains(&(group_id as u8)) { return false; }
+            } else if let Some(l) = db.get_live(cid) {
+                if !l.groups.contains(&(group_id as u8)) { return false; }
+            } else {
+                return false;
+            }
+        }
+
+        // Unit Filter
+        if let Some(unit_id) = self.unit_id {
+            if let Some(m) = db.get_member(cid) {
+                if !m.units.contains(&(unit_id as u8)) { return false; }
+            } else if let Some(l) = db.get_live(cid) {
+                if !l.units.contains(&(unit_id as u8)) { return false; }
+            } else {
+                return false;
+            }
+        }
+
+        // Tapped Filter
+        if self.is_tapped == Some(true) && !is_tapped_override {
+            return false;
+        }
+
+        // Blade Heart Filters
+        if let Some(has_bh) = self.has_blade_heart {
+            if let Some(m) = db.get_member(cid) {
+                let actual_has = m.blade_hearts.iter().any(|&h| h > 0);
+                if actual_has != has_bh { return false; }
+            } else if let Some(l) = db.get_live(cid) {
+                let actual_has = l.blade_hearts.iter().any(|&h| h > 0);
+                if actual_has != has_bh { return false; }
+            } else {
+                return false;
+            }
+        }
+
+        // Special Filter IDs
+        if self.special_id != 0 {
+            let card_name = if let Some(m) = db.get_member(cid) { &m.name }
+                           else if let Some(l) = db.get_live(cid) { &l.name }
+                           else { "" };
+            match self.special_id {
+                1 => { // NAME_IN=['澁谷かのん', 'ウィーン·マルガレーテ', '鬼塚冬毬']
+                    if !["澁谷かのん", "ウィーン·マルガレーテ", "鬼塚冬毬"].contains(&card_name) { return false; }
+                },
+                2 => { // NOT_NAME=MY舞☆TONIGHT
+                    if card_name == "MY舞☆TONIGHT" { return false; }
+                },
+                _ => {}
+            }
+        }
+
+        // Cost/Hearts Filter
+        if let Some((threshold, is_le)) = self.cost_filter {
+            let card_value = if let Some(m) = db.get_member(cid) {
+                m.cost as i32
+            } else if let Some(l) = db.get_live(cid) {
+                l.required_hearts.iter().map(|&h| h as i32).sum::<i32>()
+            } else {
+                return false;
+            };
+            if is_le {
+                if card_value > threshold { return false; }
+            } else {
+                if card_value < threshold { return false; }
+            }
+        }
+
+        true
+    }
+
     /// Parse a 64-bit filter attribute into a structured CardFilter
     pub fn from_attr(filter_attr: u64) -> Self {
         let mut filter = CardFilter::default();

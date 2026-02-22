@@ -23,12 +23,7 @@ use smallvec::SmallVec;
 
 // use crate::core::*; // UNUSED
 use crate::core::enums::*;
-use crate::core::generated_constants::{
-    FILTER_CHARACTER_ENABLE, FILTER_SETSUNA, FILTER_COLOR_SHIFT, FILTER_TYPE_SHIFT,
-    FILTER_GROUP_ENABLE, FILTER_GROUP_SHIFT, FILTER_UNIT_ENABLE, FILTER_UNIT_SHIFT,
-    FILTER_TAPPED, FILTER_HAS_BLADE_HEART, FILTER_NOT_BLADE_HEART, FILTER_SPECIAL_SHIFT,
-    FILTER_COST_ENABLE, FILTER_COST_SHIFT, FILTER_COST_LE,
-};
+use super::filter::CardFilter;
 use super::models::*;
 use super::card_db::*;
 use super::player::*;
@@ -397,171 +392,23 @@ impl GameState {
 
 
     pub fn card_matches_filter(&self, db: &CardDatabase, cid: i32, filter_attr: u64) -> bool {
-        if cid == -1 { return false; } // Handle tombstone placeholders
+        if cid == -1 { return false; }
+        let filter = CardFilter::from_attr(filter_attr);
         
-        // Bit 42: Character Filter Enable (Multi-mode)
-        if (filter_attr & FILTER_CHARACTER_ENABLE) != 0 {
-             let id1 = ((filter_attr >> 31) & 0x7F) as u8;
-             let id2 = ((filter_attr >> 17) & 0x7F) as u8;
-             let id3 = ((filter_attr >> 24) & 0x7F) as u8;
-             
-             let name = if let Some(m) = db.get_member(cid) { &m.name }
-                        else if let Some(l) = db.get_live(cid) { &l.name }
-                        else { "" };
-             
-             let mut match_found = false;
-             if id1 > 0 && name.contains(crate::core::logic::card_db::get_character_name(id1)) { match_found = true; }
-             if !match_found && id2 > 0 && name.contains(crate::core::logic::card_db::get_character_name(id2)) { match_found = true; }
-             if !match_found && id3 > 0 && name.contains(crate::core::logic::card_db::get_character_name(id3)) { match_found = true; }
-             
-             if !match_found {
-                 if self.debug.debug_mode { println!("[DEBUG] REJECT cid={}: Character filter mismatch. Name '{}' not found in IDs ({}, {}, {})", cid, name, id1, id2, id3); }
-                 return false;
-             }
-        }
-
-        // Bit 7: Specialized 'Setsuna' filter (ID: 27)
-        if (filter_attr & FILTER_SETSUNA) != 0 {
-             let name = if let Some(m) = db.get_member(cid) { &m.name }
-                        else if let Some(l) = db.get_live(cid) { &l.name }
-                        else { "" };
-             let setsuna_name = crate::core::logic::card_db::get_character_name(27);
-             if !name.replace(" ", "").contains(&setsuna_name.replace(" ", "")) {
-                 if self.debug.debug_mode { println!("[DEBUG] REJECT cid={}: Name '{}' does not match Setsuna ID 27", cid, name); }
-                 return false; 
-             }
-        }
-        
-        // Bits 32-38: Color Filter (SMILE, PURE, COOL, RED, YELLOW, BLUE, PURPLE)
-        let color_mask = (filter_attr >> FILTER_COLOR_SHIFT) & 0x7F;
-        if color_mask != 0 {
-            if let Some(m) = db.get_member(cid) {
-                let mut has_match = false;
-                for i in 0..7 {
-                    if (color_mask & (1 << i)) != 0 && m.hearts[i] > 0 {
-                        has_match = true;
-                        break;
-                    }
-                }
-                if !has_match { return false; }
-            } else if let Some(l) = db.get_live(cid) {
-                let mut has_match = false;
-                for i in 0..7 {
-                    if (color_mask & (1 << i)) != 0 && l.required_hearts[i] > 0 {
-                        has_match = true;
-                        break;
-                    }
-                }
-                if !has_match { return false; }
-            } else {
-                return false;
-            }
-        }
-
-        // Bit 2-3: Type Filter (0=None, 1=Member, 2=Live)
-        let type_filter = (filter_attr >> FILTER_TYPE_SHIFT) & 0x03;
-        if type_filter == 1 && db.get_member(cid).is_none() { return false; }
-        if type_filter == 2 && db.get_live(cid).is_none() { return false; }
-
-        // Bit 4: Group Filter Enable
-        if (filter_attr & FILTER_GROUP_ENABLE) != 0 {
-            let group_id = (filter_attr >> FILTER_GROUP_SHIFT) & 0x7F;
-            if let Some(m) = db.get_member(cid) {
-                if !m.groups.contains(&(group_id as u8)) { return false; }
-            } else if let Some(l) = db.get_live(cid) {
-                let res = l.groups.contains(&(group_id as u8));
-                if !res { return false; }
-            } else {
-                return false;
-            }
-        }
-
-        // Bit 16: Unit Filter Enable
-        if (filter_attr & FILTER_UNIT_ENABLE) != 0 {
-            let unit_id = (filter_attr >> FILTER_UNIT_SHIFT) & 0x7F;
-            if let Some(m) = db.get_member(cid) {
-                if !m.units.contains(&(unit_id as u8)) { return false; }
-            } else if let Some(l) = db.get_live(cid) {
-                if !l.units.contains(&(unit_id as u8)) { return false; }
-            } else {
-                return false;
-            }
-        }
-        // Bit 12: Tapped Filter
-        if (filter_attr & FILTER_TAPPED) != 0 {
-             // Tapped check requires knowledge of which player's card it is and which slot.
-             // This is tricky for Hand/Discard. For Stage, we should ideally pass more context.
-             // For now, let's assume it's used for Stage counting where we CAN check the state.
-             let mut is_tapped = false;
+        let mut is_tapped = false;
+        if filter.is_tapped == Some(true) {
              for p in 0..2 {
                  for s in 0..3 {
                      if self.core.players[p].stage[s] == cid && self.core.players[p].is_tapped(s) {
                          is_tapped = true;
+                         break;
                      }
                  }
+                 if is_tapped { break; }
              }
-             if !is_tapped { return false; }
         }
-
-        // Bit 13: Has Blade Heart
-        if (filter_attr & FILTER_HAS_BLADE_HEART) != 0 {
-            if let Some(m) = db.get_member(cid) {
-                if m.blade_hearts.iter().all(|&h| h == 0) { return false; }
-            } else if let Some(l) = db.get_live(cid) {
-                if l.blade_hearts.iter().all(|&h| h == 0) { return false; }
-            } else { return false; }
-        }
-
-        // Bit 14: Not Has Blade Heart
-        if (filter_attr & FILTER_NOT_BLADE_HEART) != 0 {
-            if let Some(m) = db.get_member(cid) {
-                if m.blade_hearts.iter().any(|&h| h > 0) { return false; }
-            } else if let Some(l) = db.get_live(cid) {
-                if l.blade_hearts.iter().any(|&h| h > 0) { return false; }
-            }
-        }
-
-        // Bit 15: UNIQUE_NAMES is handled by the caller (counting loop)
-
-        // Bits 48-50: Special Filter IDs (Moved from 8-10 to avoid Group ID collision)
-        let special_id = (filter_attr >> FILTER_SPECIAL_SHIFT) & 0x07;
-        if special_id != 0 {
-            let card_name = if let Some(m) = db.get_member(cid) { &m.name }
-                           else if let Some(l) = db.get_live(cid) { &l.name }
-                           else { "" };
-            match special_id {
-                1 => { // NAME_IN=['澁谷かのん', 'ウィーン·マルガレーテ', '鬼塚冬毬']
-                    if !["澁谷かのん", "ウィーン·マルガレーテ", "鬼塚冬毬"].contains(&card_name) { return false; }
-                },
-                2 => { // NOT_NAME=MY舞☆TONIGHT
-                    if card_name == "MY舞☆TONIGHT" { return false; }
-                },
-                _ => {}
-            }
-        }
-
-        // Bit 24: Cost/Hearts Filter Enable
-        if (filter_attr & FILTER_COST_ENABLE) != 0 {
-            let threshold = ((filter_attr >> FILTER_COST_SHIFT) & 0x1F) as i32;
-            let is_le = (filter_attr & FILTER_COST_LE) != 0;
-            let card_value = if let Some(m) = db.get_member(cid) {
-                m.cost as i32
-            } else if let Some(l) = db.get_live(cid) {
-                // Sum all hearts (0-6)
-                l.required_hearts.iter().map(|&h| h as i32).sum::<i32>()
-            } else {
-                return false;
-            };
-            if is_le {
-                if card_value > threshold { return false; }
-            } else {
-                if card_value < threshold {
-                    println!("REJECT: cid={} val={} thresh={}", cid, card_value, threshold);
-                    return false;
-                }
-            }
-        }
-        true
+        
+        filter.matches(db, cid, is_tapped)
     }
 
     pub fn check_hearts_suitability(&self, have: &[u8; 7], need: &[u8; 7]) -> bool {
@@ -585,22 +432,6 @@ impl GameState {
         None
     }
 
-    /// Get Japanese trigger label for logging
-    pub fn get_trigger_label(trigger: TriggerType) -> &'static str {
-        match trigger {
-            TriggerType::OnPlay => "【登場】",
-            TriggerType::OnLiveStart => "【開始】",
-            TriggerType::OnLiveSuccess => "【成功】",
-            TriggerType::TurnStart => "【ターン開始】",
-            TriggerType::TurnEnd => "【ターン終了】",
-            TriggerType::Constant => "【常時】",
-            TriggerType::Activated => "【起動】",
-            TriggerType::OnLeaves => "【退場】",
-            TriggerType::OnReveal => "【公開】",
-            TriggerType::OnPositionChange => "【移動】",
-            TriggerType::None => "",
-        }
-    }
 
     // --- Performance Phase Wrappers ---
     pub fn do_yell(&mut self, db: &CardDatabase, count: u32) -> Vec<i32> {

@@ -108,6 +108,8 @@ Thumbs.db
 qwen-code/
 
 # Compiled and Cache
+.mypy_cache/
+.ruff_cache/
 .pytest_cache/
 .hypothesis/
 .python-version
@@ -116,6 +118,7 @@ qwen-code/
 python_env/
 node_modules/
 diagnose_*.py
+
 
 # Generated Discovery Reports (transitory)
 full_ability_coverage.json
