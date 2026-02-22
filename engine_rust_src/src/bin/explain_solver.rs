@@ -179,7 +179,7 @@ fn main() {
     for (cid, chance) in evaluations {
         let card = db.get_member(cid).unwrap();
         // Predict specifically for the Center slot (slot 1) for this demonstration
-        let adj = PerformanceProbabilitySolver::predict_adjustments(&state, &db, card, 1);
+        let _adj = PerformanceProbabilitySolver::predict_adjustments(&state, &db, card, 1);
     println!(">>> Resulting Win Probability: {:.2}%", chance.success_probability * 100.0);
         println!("  - Expected Score: {:.2}", chance.expected_score);
         println!("-------------------------------------------------------");

@@ -95,9 +95,9 @@ fn run_benchmark() {
         let num_batches = 10;
         println!("\n=== Testing Sequential Batching ({} batches of {}) ===", num_batches, batch_size);
         let mut total_latency_ms = 0.0;
-        let mut overall_start = Instant::now();
+        let overall_start = Instant::now();
 
-        for i in 0..num_batches {
+        for _i in 0..num_batches {
             let mut batch = Vec::with_capacity(batch_size);
             for _ in 0..batch_size {
                 batch.push(state_gpu.clone());

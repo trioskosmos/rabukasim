@@ -5,6 +5,11 @@ use rand::rngs::SmallRng;
 use rand::SeedableRng;
 use crate::core::heuristics::Heuristic;
 use crate::core::logic::{GameState, CardDatabase};
+// use crate::core::logic::{Phase, ActionReceiver};
+#[cfg(feature = "nn")]
+use crate::core::logic::ai_encoding::GameStateEncoding;
+#[cfg(feature = "nn")]
+use crate::core::enums::*;
 use crate::core::gpu_manager::GpuManager;
 use crate::core::gpu_state::GpuGameState;
 use std::f32;

@@ -31,7 +31,7 @@ fn run_benchmark() {
     let batch_size = 100_000;
     println!("\nBatch Size: {}", batch_size);
 
-    let mut batch = vec![state_gpu.clone(); batch_size];
+    let batch = vec![state_gpu.clone(); batch_size];
     
     // Test 1: Full State Readback
     {

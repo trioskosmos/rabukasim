@@ -8,7 +8,7 @@ use engine_rust::core::logic::*;
 use engine_rust::core::gpu_manager::GpuManager;
 use engine_rust::core::gpu_state::GpuGameState;
 use engine_rust::core::gpu_conversions::GpuConverter;
-use engine_rust::test_helpers::{create_test_state, load_real_db, Action};
+use engine_rust::test_helpers::{create_test_state, load_real_db};
 use std::collections::HashMap;
 
 const ACTION_BASE_CHOICE: u32 = 8000;

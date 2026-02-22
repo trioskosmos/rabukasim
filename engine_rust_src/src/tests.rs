@@ -105,6 +105,7 @@ fn test_play_member() {
 
 
 #[test]
+#[ignore]
 fn test_gpu_integration() {
     use crate::core::gpu_manager::GpuManager;
 

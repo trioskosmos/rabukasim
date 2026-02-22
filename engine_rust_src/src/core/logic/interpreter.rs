@@ -197,17 +197,7 @@ pub fn check_condition(state: &GameState, db: &CardDatabase, _p_idx: usize, cond
 
 
 pub fn get_choice_text(db: &CardDatabase, ctx: &AbilityContext) -> String {
-    if let Some(card) = db.get_member(ctx.source_card_id) {
-        if !card.original_text.is_empty() { card.original_text.clone() }
-        else if !card.ability_text.is_empty() { card.ability_text.clone() }
-        else { card.name.clone() }
-    } else if let Some(live) = db.get_live(ctx.source_card_id) {
-        if !live.original_text.is_empty() { live.original_text.clone() }
-        else if !live.ability_text.is_empty() { live.ability_text.clone() }
-        else { live.name.clone() }
-    } else {
-        String::new()
-    }
+    crate::core::logic::ActionFactory::get_choice_text(db, ctx)
 }
 
 pub fn suspend_interaction(state: &mut GameState, db: &CardDatabase, ctx: &AbilityContext, instr_ip: usize, effect_opcode: i32, target_slot: i32, choice_type: &str, choice_text: &str, filter_attr: u64, v_remaining: i16) -> bool {

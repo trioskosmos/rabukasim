@@ -278,3 +278,26 @@ pub enum Phase {
     Terminal = 9,
     Response = 10,
 }
+
+impl Phase {
+    pub fn is_interactive(&self) -> bool {
+        match self {
+            Phase::Main | Phase::LiveSet | Phase::MulliganP1 | Phase::MulliganP2 | Phase::Response | Phase::LiveResult | Phase::TurnChoice | Phase::Rps => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_gameplay(&self) -> bool {
+        match self {
+            Phase::Active | Phase::Energy | Phase::Draw | Phase::Main | Phase::LiveSet | Phase::PerformanceP1 | Phase::PerformanceP2 | Phase::LiveResult | Phase::Response => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_mulligan(&self) -> bool {
+        match self {
+            Phase::MulliganP1 | Phase::MulliganP2 => true,
+            _ => false,
+        }
+    }
+}

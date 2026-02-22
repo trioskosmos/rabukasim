@@ -27,6 +27,7 @@ fn test_energy_initialization() {
 #[test]
 fn test_phase_auto_advance_from_mulligan() {
     let mut state = GameState::default();
+    state.debug.debug_mode = true;
     let db = load_real_db();
     
     // Setup for reproducible test (seed 1)

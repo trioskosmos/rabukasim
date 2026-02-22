@@ -4,7 +4,7 @@ use engine_rust::core::enums::{Phase};
 #[test]
 fn test_card_557_logic_repro() {
     let mut state = GameState::default();
-    state.debug_mode = true;
+    state.debug.debug_mode = true;
     let json_content = std::fs::read_to_string("../data/cards_compiled.json").expect("Failed to read cards_compiled.json");
     let db = CardDatabase::from_json(&json_content).unwrap();
     
@@ -54,7 +54,7 @@ fn test_card_557_logic_repro() {
 #[test]
 fn test_card_557_logic_fail_if_not_only_liella() {
     let mut state = GameState::default();
-    state.debug_mode = true;
+    state.debug.debug_mode = true;
     let json_content = std::fs::read_to_string("../data/cards_compiled.json").expect("Failed to read cards_compiled.json");
     let db = CardDatabase::from_json(&json_content).unwrap();
     
