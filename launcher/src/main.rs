@@ -24,7 +24,8 @@ fn main() {
     let debug_mode = args.contains(&"--debug".to_string()) || args.contains(&"-d".to_string());
 
     if debug_mode {
-        println!("[DEBUG] LovecaSim Debug Mode: ENABLED");
+        println!("[DEBUG] RabukaSim Debug Mode: ENABLED");
+
         println!("[DEBUG] Card ability logic will be logged to terminal.");
     }
 
@@ -119,7 +120,8 @@ fn main() {
     let server = server.expect("Failed to start server. Is the port blocked?");
 
     println!("--------------------------------------------------");
-    println!("Loveca Launcher (Multiplayer Host) is Running!");
+    println!("Rabuka Launcher (Multiplayer Host) is Running!");
+
     println!("Local:   http://127.0.0.1:{}", port);
 
     if let Ok(my_ip) = get_local_ip() {

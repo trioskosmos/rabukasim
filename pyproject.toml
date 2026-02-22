@@ -7,9 +7,10 @@ manifest-path = "engine_rust_src/Cargo.toml"
 module-name = "engine_rust"
 
 [project]
-name = "lovecasim"
+name = "rabukasim"
 version = "0.1.0"
-description = "Add your description here"
+description = "Love Live! School Idol Collection Simulator"
+
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

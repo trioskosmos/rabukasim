@@ -1,11 +1,14 @@
 [package]
-name = "loveca_launcher"
+name = "rabuka_launcher"
+
 version = "0.1.0"
 edition = "2021"
-default-run = "loveca_launcher"
+default-run = "rabuka_launcher"
+
 
 [lib]
-name = "loveca_launcher"
+name = "rabuka_launcher"
+
 path = "src/lib.rs"
 
 [dependencies]

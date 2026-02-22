@@ -1,4 +1,5 @@
-# Lovecasim Project Documentation
+# RabukaSim Project Documentation
+
 
 > [!IMPORTANT]
 > **Source of Truth Rules**:
@@ -60,7 +61,8 @@ These are **read-only** outputs. Never edit files inside these.
 ---
 
 ## 2. Project Overview
-Lovecasim is a web-based implementation of the "Love Live! School Idol Collection" Trading Card Game (TCG). The project is designed with a client-server architecture where a Python/Flask backend (powered by a hybrid Python/Rust game engine) serves a Vanilla JS/HTML frontend.
+RabukaSim is a web-based implementation of the "Love Live! School Idol Collection" Trading Card Game (TCG). The project is designed with a client-server architecture where a Python/Flask backend (powered by a hybrid Python/Rust game engine) serves a Vanilla JS/HTML frontend.
+
 
 ## 3. Architecture
 

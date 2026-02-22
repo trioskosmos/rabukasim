@@ -100,7 +100,8 @@ window.onerror = function (msg, url, line, col, error) {
 
 // --- Global Initialization ---
 export async function initialize() {
-    console.log("[Init] Starting Lovecasim UI Initialization...");
+    console.log("[Init] Starting Rabukasim UI Initialization...");
+
 
     try {
         // 0. Start Adaptive Polling (PROMOTED to first step)
@@ -293,4 +294,5 @@ window.State = State;
 window.Network = Network;
 window.Tooltips = Tooltips;
 
-console.log("Lovecasim modular main.js loaded and globals wired.");
+console.log("Rabukasim modular main.js loaded and globals wired.");
+

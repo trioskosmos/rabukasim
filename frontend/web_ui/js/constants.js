@@ -48,7 +48,8 @@ export const fixImg = (path) => {
         url = 'img/' + url;
     }
 
-    const isGithub = window.location.hostname.includes('github') || window.location.hostname.includes('lovecasim');
+    const isGithub = window.location.hostname.includes('github') || window.location.hostname.includes('rabukasim');
+
 
     if (isGithub && url.toLowerCase().endsWith('.png')) {
         url = url.replace(/\.png$/i, '.webp');
