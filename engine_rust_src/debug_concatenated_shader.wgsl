@@ -1053,6 +1053,242 @@ fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32,
             }
             return false;
         }
+        case 205: { // C_COUNT_DISCARD
+            var d_len = 0u;
+            if (p_idx == 0u) { d_len = states[g_gid].player0.discard_pile_len; }
+            else { d_len = states[g_gid].player1.discard_pile_len; }
+            return d_len >= u32(v);
+        }
+        case 206: { // C_IS_CENTER
+            // target_slot == 1 means center position
+            return target_slot == 1u;
+        }
+        case 212: { // C_MODAL_ANSWER
+            // Check if ctx_choice matches v
+            // In GPU, we use choice from resolve_bytecode context
+            return false; // Simplified: requires ctx_choice which is passed differently
+        }
+        case 214: { // C_HAS_LIVE_CARD
+            // Check if player has any live cards in live zone
+            // live_zone is array<u32, 2>, each holding 2 cards (4 cards max)
+            // Check if any slot has a card (non-zero)
+            if (p_idx == 0u) { 
+                return states[g_gid].player0.live_zone[0] != 0u || states[g_gid].player0.live_zone[1] != 0u;
+            }
+            else { 
+                return states[g_gid].player1.live_zone[0] != 0u || states[g_gid].player1.live_zone[1] != 0u;
+            }
+        }
+        case 217: { // C_HAND_HAS_NO_LIVE
+            // Check if hand contains no live cards
+            var h_len = 0u;
+            if (p_idx == 0u) { h_len = states[g_gid].player0.hand_len; }
+            else { h_len = states[g_gid].player1.hand_len; }
+            for (var i = 0u; i < h_len; i = i + 1u) {
+                let h_cid = get_hand_card(p_idx, i);
+                if (h_cid > 0u && h_cid < arrayLength(&card_stats)) {
+                    if (card_stats[h_cid].card_type == 2u) { return false; } // Found a live
+                }
+            }
+            return true;
+        }
+        case 219: { // C_OPPONENT_HAND_DIFF
+            var my_h_len = 0u; var opp_h_len = 0u;
+            if (p_idx == 0u) {
+                my_h_len = states[g_gid].player0.hand_len;
+                opp_h_len = states[g_gid].player1.hand_len;
+            } else {
+                my_h_len = states[g_gid].player1.hand_len;
+                opp_h_len = states[g_gid].player0.hand_len;
+            }
+            return i32(opp_h_len) - i32(my_h_len) >= v;
+        }
+        case 221: { // C_HAS_CHOICE
+            // Check if there's a pending interaction/choice
+            // In GPU rollout, we typically don't have interaction stack
+            return false;
+        }
+        case 222: { // C_OPPONENT_CHOICE
+            // Check if the current choice is from opponent
+            return false;
+        }
+        case 225: { // C_OPPONENT_ENERGY_DIFF
+            var my_e = 0u; var opp_e = 0u;
+            if (p_idx == 0u) {
+                my_e = states[g_gid].player0.energy_count;
+                opp_e = states[g_gid].player1.energy_count;
+            } else {
+                my_e = states[g_gid].player1.energy_count;
+                opp_e = states[g_gid].player0.energy_count;
+            }
+            return i32(opp_e) - i32(my_e) >= v;
+        }
+        case 226: { // C_HAS_KEYWORD
+            // Check for keywords like PLAYED_THIS_TURN, YELL_COUNT, HAS_LIVE_SET
+            let keyword_flags = u32(a);
+            if ((keyword_flags & 0x01u) != 0u) { // PLAYED_THIS_TURN
+                // played_group_mask not in GpuPlayerState, use used_abilities_mask as proxy
+                // This is a simplification - may not be 100% accurate
+                var used_mask = 0u;
+                if (p_idx == 0u) { used_mask = states[g_gid].player0.used_abilities_mask; }
+                else { used_mask = states[g_gid].player1.used_abilities_mask; }
+                if (used_mask == 0u) { return false; }
+            }
+            if ((keyword_flags & 0x02u) != 0u) { // YELL_COUNT
+                // yell_count is not stored directly, use yell_count_reduction as proxy
+                var yell_cnt = 0u;
+                if (p_idx == 0u) { yell_cnt = states[g_gid].player0.yell_count_reduction; }
+                else { yell_cnt = states[g_gid].player1.yell_count_reduction; }
+                if (i32(yell_cnt) < v) { return false; }
+            }
+            if ((keyword_flags & 0x04u) != 0u) { // HAS_LIVE_SET
+                if (p_idx == 0u) { 
+                    if (states[g_gid].player0.live_zone[0] == 0u && states[g_gid].player0.live_zone[1] == 0u) { return false; }
+                } else {
+                    if (states[g_gid].player1.live_zone[0] == 0u && states[g_gid].player1.live_zone[1] == 0u) { return false; }
+                }
+            }
+            return true;
+        }
+        case 227: { // C_DECK_REFRESHED
+            // Check if deck was refreshed this game
+            // deck_refreshed is not stored in GpuPlayerState, use heuristic
+            // If deck_len is 0 and we're checking for refresh, return false
+            return false; // Simplified: not tracked in GPU state
+        }
+        case 228: { // C_HAS_MOVED
+            // Check if a card has moved this turn
+            // moved_flags is the field name in GpuPlayerState
+            if (target_slot < 3u) {
+                if (p_idx == 0u) { return (states[g_gid].player0.moved_flags & (1u << target_slot)) != 0u; }
+                else { return (states[g_gid].player1.moved_flags & (1u << target_slot)) != 0u; }
+            }
+            return false;
+        }
+        case 230: { // C_COUNT_LIVE_ZONE
+            // Count live cards in live_zone (array<u32, 2>, each holding 2 cards)
+            var count = 0u;
+            if (p_idx == 0u) {
+                let lz0 = states[g_gid].player0.live_zone[0];
+                let lz1 = states[g_gid].player0.live_zone[1];
+                if ((lz0 & 0xFFFFu) != 0u) { count += 1u; }
+                if ((lz0 >> 16u) != 0u) { count += 1u; }
+                if ((lz1 & 0xFFFFu) != 0u) { count += 1u; }
+                if ((lz1 >> 16u) != 0u) { count += 1u; }
+            } else {
+                let lz0 = states[g_gid].player1.live_zone[0];
+                let lz1 = states[g_gid].player1.live_zone[1];
+                if ((lz0 & 0xFFFFu) != 0u) { count += 1u; }
+                if ((lz0 >> 16u) != 0u) { count += 1u; }
+                if ((lz1 & 0xFFFFu) != 0u) { count += 1u; }
+                if ((lz1 >> 16u) != 0u) { count += 1u; }
+            }
+            return count >= u32(v);
+        }
+        case 234: { // C_AREA_CHECK
+            // Check if card is in specific area
+            // a encodes the area type
+            return false; // Simplified
+        }
+        case 235: { // C_COST_LEAD
+            // Compare costs between players
+            return false; // Simplified
+        }
+        case 236: { // C_SCORE_LEAD
+            var my_score = 0u; var opp_score = 0u;
+            if (p_idx == 0u) {
+                my_score = states[g_gid].player0.score;
+                opp_score = states[g_gid].player1.score;
+            } else {
+                my_score = states[g_gid].player1.score;
+                opp_score = states[g_gid].player0.score;
+            }
+            return i32(my_score) - i32(opp_score) >= v;
+        }
+        case 237: { // C_HEART_LEAD
+            var my_hearts = 0u; var opp_hearts = 0u;
+            for (var j = 0u; j < 7u; j = j + 1u) {
+                my_hearts += get_board_heart(p_idx, j);
+                opp_hearts += get_board_heart(1u - p_idx, j);
+            }
+            return i32(my_hearts) - i32(opp_hearts) >= v;
+        }
+        case 238: { // C_HAS_EXCESS_HEART
+            // Check if player has more hearts than needed
+            return false; // Simplified
+        }
+        case 239: { // C_NOT_HAS_EXCESS_HEART
+            // Check if player does NOT have excess hearts
+            return true; // Simplified
+        }
+        case 240: { // C_TOTAL_BLADES
+            var total = 0u;
+            if (p_idx == 0u) { total = states[g_gid].player0.board_blades; }
+            else { total = states[g_gid].player1.board_blades; }
+            return total >= u32(v);
+        }
+        case 241: { // C_COST_COMPARE
+            return false; // Simplified
+        }
+        case 242: { // C_BLADE_COMPARE
+            var my_blades = 0u; var opp_blades = 0u;
+            if (p_idx == 0u) {
+                my_blades = states[g_gid].player0.board_blades;
+                opp_blades = states[g_gid].player1.board_blades;
+            } else {
+                my_blades = states[g_gid].player1.board_blades;
+                opp_blades = states[g_gid].player0.board_blades;
+            }
+            let comp_op = (target_slot >> 4u) & 0x0Fu;
+            if (comp_op == 0u) { return my_blades >= opp_blades; }
+            if (comp_op == 1u) { return my_blades <= opp_blades; }
+            if (comp_op == 2u) { return my_blades > opp_blades; }
+            if (comp_op == 3u) { return my_blades < opp_blades; }
+            return my_blades >= opp_blades;
+        }
+        case 243: { // C_HEART_COMPARE
+            var my_hearts = 0u; var opp_hearts = 0u;
+            for (var j = 0u; j < 7u; j = j + 1u) {
+                my_hearts += get_board_heart(p_idx, j);
+                opp_hearts += get_board_heart(1u - p_idx, j);
+            }
+            let comp_op = (target_slot >> 4u) & 0x0Fu;
+            if (comp_op == 0u) { return my_hearts >= opp_hearts; }
+            if (comp_op == 1u) { return my_hearts <= opp_hearts; }
+            if (comp_op == 2u) { return my_hearts > opp_hearts; }
+            if (comp_op == 3u) { return my_hearts < opp_hearts; }
+            return my_hearts >= opp_hearts;
+        }
+        case 244: { // C_OPPONENT_HAS_WAIT
+            // Check if opponent has cards in wait state
+            return false; // Simplified
+        }
+        case 245: { // C_IS_TAPPED
+            if (target_slot < 3u) {
+                if (p_idx == 0u) { return (states[g_gid].player0.flags & (1u << (3u + target_slot))) != 0u; }
+                else { return (states[g_gid].player1.flags & (1u << (3u + target_slot))) != 0u; }
+            }
+            return false;
+        }
+        case 246: { // C_IS_ACTIVE
+            if (target_slot < 3u) {
+                if (p_idx == 0u) { return (states[g_gid].player0.flags & (1u << (3u + target_slot))) == 0u; }
+                else { return (states[g_gid].player1.flags & (1u << (3u + target_slot))) == 0u; }
+            }
+            return false;
+        }
+        case 247: { // C_LIVE_PERFORMED
+            // Check if live was performed this turn
+            return false; // Simplified
+        }
+        case 248: { // C_IS_PLAYER
+            // Check if current player matches
+            return true; // Simplified: always true for current player
+        }
+        case 249: { // C_IS_OPPONENT
+            // Check if target is opponent
+            return false; // Simplified
+        }
         default: { return false; }
     }
 }

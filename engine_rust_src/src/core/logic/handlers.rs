@@ -1,4 +1,4 @@
-use crate::core::logic::{GameState, CardDatabase, Phase, AbilityContext, ActionFactory, action_factory::DecodedAction};
+use crate::core::logic::{GameState, CardDatabase, Phase, AbilityContext, ActionFactory, action_factory::DecodedAction, interpreter::costs};
 use crate::core::enums::*;
 // use crate::core::generated_constants::*;
 // use crate::core::hearts::*;
@@ -425,13 +425,8 @@ impl PhaseHandlers for GameState {
                     return Err("Conditions not met".to_string());
                 }
             }
-            for cost in &ab.costs {
-                if !self.check_cost(db, p_idx, cost, &ctx) {
-                    return Err(format!("Cannot afford cost: {:?}", cost.cost_type));
-                }
-            }
-            for cost in &ab.costs {
-                self.pay_cost(db, p_idx, cost, &ctx);
+            if !costs::pay_costs_transactional(self, db, &ab.costs, &ctx) {
+                return Err("Cannot afford costs".to_string());
             }
 
             if ab.is_once_per_turn {

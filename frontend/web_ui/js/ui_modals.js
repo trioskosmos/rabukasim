@@ -186,7 +186,7 @@ export const Modals = {
             p1Col.style.pointerEvents = 'auto';
             // Update AI/Player label
             const p1Title = p1Col.querySelector('h4');
-            if (p1Title) p1Title.textContent = (mode === 'pve') ? '🤖 Player 2 (AI)' : '👤 Player 2 (Opponent)';
+            if (p1Title) p1Title.textContent = (mode === 'pve') ? '[AI] Player 2 (AI)' : '[P2] Player 2 (Opponent)';
         }
         Modals.fetchAndPopulateDecks();
     },
@@ -352,7 +352,7 @@ export const Modals = {
         }
 
         if (startBtn) {
-            startBtn.textContent = '✅ Submit Deck & Join';
+            startBtn.textContent = 'Submit Deck & Join';
             startBtn.onclick = Modals.submitPvPDeck;
         }
 

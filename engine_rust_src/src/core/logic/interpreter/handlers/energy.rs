@@ -1,7 +1,7 @@
 use crate::core::logic::{GameState, CardDatabase, AbilityContext};
 use crate::core::enums::*;
 use super::HandlerResult;
-use super::super::suspension::suspend_interaction_with_db as suspend_interaction;
+use super::super::suspension::suspend_interaction;
 
 pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i32, s: i32, instr_ip: usize) -> HandlerResult {
     let p_idx = ctx.player_id as usize;
@@ -17,6 +17,7 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
                     state.core.players[target_p].set_energy_tapped(new_idx, is_wait);
                 }
             }
+            HandlerResult::Continue
         },
         O_PAY_ENERGY => {
             let available = (0..state.core.players[p_idx].energy_zone.len())
@@ -25,7 +26,7 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
 
             if (a & 0x82) != 0 && ctx.choice_index == -1 {
                 if available < v {
-                    return HandlerResult::Continue; // Failed cond (logic handled in mod.rs via cond)
+                    return HandlerResult::SetCond(false); // Can't afford optional -> SetCond(false)
                 } else {
                     if suspend_interaction(state, db, ctx, instr_ip, O_PAY_ENERGY, 0, "OPTIONAL", "", a as u64, -1) {
                         return HandlerResult::Suspend;
@@ -35,15 +36,15 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
             
             let mut next_ctx = ctx.clone();
             if (a & 0x82) != 0 && ctx.choice_index != -1 && ctx.v_remaining == -1 {
-                 if ctx.choice_index == 1 { return HandlerResult::Continue; } // Declined
+                 if ctx.choice_index == 1 { return HandlerResult::SetCond(false); } // Declined -> SetCond(false)
                  next_ctx.choice_index = -1;
                  next_ctx.v_remaining = v as i16;
             }
             
             if next_ctx.choice_index == 99 {
-                return HandlerResult::Continue;
+                return HandlerResult::SetCond(false);
             } else if available < v {
-                return HandlerResult::Continue;
+                return HandlerResult::SetCond(false);
             } else {
                  if next_ctx.choice_index != -1 {
                     let idx = next_ctx.choice_index as usize;
@@ -70,6 +71,7 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
                     }
                 }
             }
+            HandlerResult::SetCond(true)
         },
         O_ACTIVATE_ENERGY => {
              let mut count = 0;
@@ -80,8 +82,8 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
                      count += 1;
                  }
              }
+             HandlerResult::Continue
         },
-        _ => return HandlerResult::Continue,
+        _ => HandlerResult::Continue,
     }
-    HandlerResult::Continue
 }

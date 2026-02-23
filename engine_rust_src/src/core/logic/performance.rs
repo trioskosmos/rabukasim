@@ -446,6 +446,10 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 state.live_success_processed_mask[p_idx] |= 1 << i;
             }
         }
+        // Update excess hearts for Rule Q142
+        state.core.players[p_idx].excess_hearts = remaining_hearts.iter().map(|&x| x as u32).sum();
+    } else {
+        state.core.players[p_idx].excess_hearts = 0;
     }
 
     // --- Store Performance Results for UI ---
@@ -616,30 +620,25 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
     let mut has_success = [false; 2];
 
     // 1. Judgment Phase: Calculate scores based on SUCCESSFUL lives (still in zone)
+    // IMPORTANT: We trust the snapshot from check_performance_requirements, not re-check hearts
     for p in 0..2 {
         let mut live_score = 0;
         let mut player_has_success = false;
-        let mut all_satisfied = true;
         let mut has_live = false;
         let mut p_score = 0;
-        let hearts = state.get_total_hearts(p, db, 0);
+
+        // Check snapshot from check_performance_requirements first
+        let snapshot_success = state.ui.performance_results.get(&(p as u8))
+            .and_then(|res| res.get("success"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
 
         for i in 0..3 {
             let cid = state.core.players[p].live_zone[i];
             if cid >= 0 {
                 has_live = true;
                 if let Some(card) = db.get_live(cid) {
-                    let mut req_board = card.hearts_board;
-                    let red_req = state.core.players[p].heart_req_reductions;
-                    let add_req = state.core.players[p].heart_req_additions;
-                    for h in 0..7 {
-                        let red = red_req.get_color_count(h) as i32;
-                        let add = add_req.get_color_count(h) as i32;
-                        let val = (req_board.get_color_count(h) as i32 - red + add).max(0) as u8;
-                        req_board.set_color_count(h, val);
-                    }
-                    let board_satisfied = hearts.satisfies(req_board);
-                    
+                    // Use snapshot score if available (from check_performance_requirements)
                     let snapshot_score = state.ui.performance_results.get(&(p as u8))
                         .and_then(|res| res.get("lives"))
                         .and_then(|l| l.as_array())
@@ -647,20 +646,28 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                         .and_then(|l_res| l_res.get("score"))
                         .and_then(|s| s.as_u64());
 
-                    if board_satisfied || snapshot_score.is_some() {
+                    // Check if this specific live passed in the snapshot
+                    let snapshot_passed = state.ui.performance_results.get(&(p as u8))
+                        .and_then(|res| res.get("lives"))
+                        .and_then(|l| l.as_array())
+                        .and_then(|lives| lives.get(i))
+                        .and_then(|l_res| l_res.get("passed"))
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false);
+
+                    if snapshot_passed || snapshot_score.is_some() {
                          p_score += snapshot_score.unwrap_or(card.score as u64) as u32;
-                    } else {
-                         all_satisfied = false;
                     }
                 }
             }
         }
 
-        if has_live && all_satisfied {
+        // Trust the snapshot success flag instead of re-checking hearts
+        if has_live && snapshot_success {
             live_score = p_score;
             player_has_success = true;
         } else if has_live {
-            // Rule 8.3.16: Clear zone if any failed
+            // Rule 8.3.16: Clear zone if snapshot indicates failure
             if !state.ui.silent { state.log(format!("Rule 8.3.16: P{} performance FAILED (unsatisfied requirements). Clearing live zone.", p)); }
             for i in 0..3 {
                 if state.core.players[p].live_zone[i] >= 0 {
@@ -723,7 +730,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
              }
         }
 
-        scores[p] = live_score + constant_bonus.max(0) as u32;
+        scores[p] = live_score + constant_bonus.max(0) as u32 + state.core.players[p].live_score_bonus.max(0) as u32;
     }
 
     // 8.4.6 Compare
@@ -869,12 +876,17 @@ pub fn finalize_live_result(state: &mut GameState) {
             state.core.players[p].sync_stage_energy_count(i);
         }
         
-        // Update Judgement Score for current turn (Resets every turn)
-        if let Some(res) = state.ui.last_performance_results.get(&(p as u8)) {
-            state.core.players[p].score = res.get("total_score").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
+        // Update Judgement Score - accumulate from performance results
+        // Check both performance_results and last_performance_results for compatibility
+        let score_to_add = if let Some(res) = state.ui.performance_results.get(&(p as u8)) {
+            res.get("total_score").and_then(|v| v.as_u64()).unwrap_or(0) as u32
+        } else if let Some(res) = state.ui.last_performance_results.get(&(p as u8)) {
+            res.get("total_score").and_then(|v| v.as_u64()).unwrap_or(0) as u32
         } else {
-            state.core.players[p].score = 0;
-        }
+            0
+        };
+        // Accumulate score (persistent across turns)
+        state.core.players[p].score += score_to_add;
 
         state.core.players[p].current_turn_volume = 0;
     }

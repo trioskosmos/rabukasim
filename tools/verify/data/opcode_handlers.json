@@ -1,0 +1,674 @@
+{
+    "opcodes": {
+        "0": {
+            "name": "O_NOP",
+            "handler": null,
+            "description": "No operation (unused)"
+        },
+        "1": {
+            "name": "O_RETURN",
+            "handler": "meta_control",
+            "description": "Return from execution"
+        },
+        "2": {
+            "name": "O_JUMP",
+            "handler": "meta_control",
+            "description": "Jump to address"
+        },
+        "3": {
+            "name": "O_JUMP_IF_FALSE",
+            "handler": "meta_control",
+            "description": "Conditional jump"
+        },
+        "10": {
+            "name": "O_DRAW",
+            "handler": "draw_hand",
+            "description": "Draw cards"
+        },
+        "11": {
+            "name": "O_ADD_BLADES",
+            "handler": "score_hearts",
+            "description": "Add blades"
+        },
+        "12": {
+            "name": "O_ADD_HEARTS",
+            "handler": "score_hearts",
+            "description": "Add hearts"
+        },
+        "13": {
+            "name": "O_REDUCE_COST",
+            "handler": "score_hearts",
+            "description": "Reduce cost"
+        },
+        "14": {
+            "name": "O_LOOK_DECK",
+            "handler": "deck_zones",
+            "description": "Look at deck cards"
+        },
+        "15": {
+            "name": "O_RECOVER_LIVE",
+            "handler": "deck_zones",
+            "description": "Recover live card"
+        },
+        "16": {
+            "name": "O_BOOST_SCORE",
+            "handler": "score_hearts",
+            "description": "Boost score"
+        },
+        "17": {
+            "name": "O_RECOVER_MEMBER",
+            "handler": "deck_zones",
+            "description": "Recover member card"
+        },
+        "18": {
+            "name": "O_BUFF_POWER",
+            "handler": "score_hearts",
+            "description": "Buff power (blades)"
+        },
+        "19": {
+            "name": "O_IMMUNITY",
+            "handler": "meta_control",
+            "description": "Grant immunity"
+        },
+        "20": {
+            "name": "O_MOVE_MEMBER",
+            "handler": "member_state",
+            "description": "Move member position"
+        },
+        "21": {
+            "name": "O_SWAP_CARDS",
+            "handler": "deck_zones",
+            "description": "Swap cards between zones"
+        },
+        "22": {
+            "name": "O_SEARCH_DECK",
+            "handler": "deck_zones",
+            "description": "Search deck (unused)"
+        },
+        "23": {
+            "name": "O_ENERGY_CHARGE",
+            "handler": "energy",
+            "description": "Charge energy"
+        },
+        "24": {
+            "name": "O_SET_BLADES",
+            "handler": "score_hearts",
+            "description": "Set blades to value"
+        },
+        "25": {
+            "name": "O_SET_HEARTS",
+            "handler": "score_hearts",
+            "description": "Set hearts to value"
+        },
+        "26": {
+            "name": "O_FORMATION_CHANGE",
+            "handler": "member_state",
+            "description": "Formation change (unused)"
+        },
+        "27": {
+            "name": "O_NEGATE_EFFECT",
+            "handler": "meta_control",
+            "description": "Negate effect"
+        },
+        "28": {
+            "name": "O_ORDER_DECK",
+            "handler": "deck_zones",
+            "description": "Order deck cards"
+        },
+        "29": {
+            "name": "O_META_RULE",
+            "handler": "meta_control",
+            "description": "Meta rule effect"
+        },
+        "30": {
+            "name": "O_SELECT_MODE",
+            "handler": "meta_control",
+            "description": "Select mode/option"
+        },
+        "31": {
+            "name": "O_MOVE_TO_DECK",
+            "handler": "deck_zones",
+            "description": "Move card to deck"
+        },
+        "32": {
+            "name": "O_TAP_OPPONENT",
+            "handler": "member_state",
+            "description": "Tap opponent member"
+        },
+        "33": {
+            "name": "O_PLACE_UNDER",
+            "handler": "member_state",
+            "description": "Place card under member"
+        },
+        "34": {
+            "name": "O_FLAVOR",
+            "handler": null,
+            "description": "Flavor text (unused)"
+        },
+        "35": {
+            "name": "O_RESTRICTION",
+            "handler": "meta_control",
+            "description": "Apply restriction"
+        },
+        "36": {
+            "name": "O_BATON_TOUCH_MOD",
+            "handler": "meta_control",
+            "description": "Baton touch modifier"
+        },
+        "37": {
+            "name": "O_SET_SCORE",
+            "handler": "score_hearts",
+            "description": "Set score to value"
+        },
+        "38": {
+            "name": "O_SWAP_ZONE",
+            "handler": "deck_zones",
+            "description": "Swap zone (unused)"
+        },
+        "39": {
+            "name": "O_TRANSFORM_COLOR",
+            "handler": "score_hearts",
+            "description": "Transform heart color"
+        },
+        "40": {
+            "name": "O_REVEAL_CARDS",
+            "handler": "deck_zones",
+            "description": "Reveal cards"
+        },
+        "41": {
+            "name": "O_LOOK_AND_CHOOSE",
+            "handler": "deck_zones",
+            "description": "Look and choose cards"
+        },
+        "42": {
+            "name": "O_CHEER_REVEAL",
+            "handler": "deck_zones",
+            "description": "Cheer reveal"
+        },
+        "43": {
+            "name": "O_ACTIVATE_MEMBER",
+            "handler": "member_state",
+            "description": "Activate member (untap)"
+        },
+        "44": {
+            "name": "O_ADD_TO_HAND",
+            "handler": "deck_zones",
+            "description": "Add card to hand"
+        },
+        "45": {
+            "name": "O_COLOR_SELECT",
+            "handler": "meta_control",
+            "description": "Select color"
+        },
+        "46": {
+            "name": "O_REPLACE_EFFECT",
+            "handler": null,
+            "description": "Replace effect (unused)"
+        },
+        "47": {
+            "name": "O_TRIGGER_REMOTE",
+            "handler": "meta_control",
+            "description": "Trigger remote ability"
+        },
+        "48": {
+            "name": "O_REDUCE_HEART_REQ",
+            "handler": "score_hearts",
+            "description": "Reduce heart requirement"
+        },
+        "49": {
+            "name": "O_MODIFY_SCORE_RULE",
+            "handler": "meta_control",
+            "description": "Modify score rule"
+        },
+        "50": {
+            "name": "O_ADD_STAGE_ENERGY",
+            "handler": "member_state",
+            "description": "Add stage energy"
+        },
+        "51": {
+            "name": "O_SET_TAPPED",
+            "handler": "member_state",
+            "description": "Set tapped state"
+        },
+        "52": {
+            "name": "O_ADD_CONTINUOUS",
+            "handler": null,
+            "description": "Add continuous effect (unused)"
+        },
+        "53": {
+            "name": "O_TAP_MEMBER",
+            "handler": "member_state",
+            "description": "Tap member"
+        },
+        "57": {
+            "name": "O_PLAY_MEMBER_FROM_HAND",
+            "handler": "member_state",
+            "description": "Play member from hand"
+        },
+        "58": {
+            "name": "O_MOVE_TO_DISCARD",
+            "handler": "deck_zones",
+            "description": "Move card to discard"
+        },
+        "60": {
+            "name": "O_GRANT_ABILITY",
+            "handler": "member_state",
+            "description": "Grant ability to member"
+        },
+        "61": {
+            "name": "O_INCREASE_HEART_COST",
+            "handler": "score_hearts",
+            "description": "Increase heart cost"
+        },
+        "62": {
+            "name": "O_REDUCE_YELL_COUNT",
+            "handler": "meta_control",
+            "description": "Reduce yell count"
+        },
+        "63": {
+            "name": "O_PLAY_MEMBER_FROM_DISCARD",
+            "handler": "member_state",
+            "description": "Play member from discard"
+        },
+        "64": {
+            "name": "O_PAY_ENERGY",
+            "handler": "energy",
+            "description": "Pay energy"
+        },
+        "65": {
+            "name": "O_SELECT_MEMBER",
+            "handler": "member_state",
+            "description": "Select member"
+        },
+        "66": {
+            "name": "O_DRAW_UNTIL",
+            "handler": "draw_hand",
+            "description": "Draw until count"
+        },
+        "67": {
+            "name": "O_SELECT_PLAYER",
+            "handler": "meta_control",
+            "description": "Select player"
+        },
+        "68": {
+            "name": "O_SELECT_LIVE",
+            "handler": "deck_zones",
+            "description": "Select live card"
+        },
+        "69": {
+            "name": "O_REVEAL_UNTIL",
+            "handler": "deck_zones",
+            "description": "Reveal until condition"
+        },
+        "70": {
+            "name": "O_INCREASE_COST",
+            "handler": "member_state",
+            "description": "Increase cost"
+        },
+        "71": {
+            "name": "O_PREVENT_PLAY_TO_SLOT",
+            "handler": "meta_control",
+            "description": "Prevent play to slot"
+        },
+        "72": {
+            "name": "O_SWAP_AREA",
+            "handler": "member_state",
+            "description": "Swap area"
+        },
+        "73": {
+            "name": "O_TRANSFORM_HEART",
+            "handler": "score_hearts",
+            "description": "Transform heart type"
+        },
+        "74": {
+            "name": "O_SELECT_CARDS",
+            "handler": "deck_zones",
+            "description": "Select cards"
+        },
+        "75": {
+            "name": "O_OPPONENT_CHOOSE",
+            "handler": "meta_control",
+            "description": "Opponent chooses"
+        },
+        "76": {
+            "name": "O_PLAY_LIVE_FROM_DISCARD",
+            "handler": "deck_zones",
+            "description": "Play live from discard"
+        },
+        "77": {
+            "name": "O_REDUCE_LIVE_SET_LIMIT",
+            "handler": "meta_control",
+            "description": "Reduce live set limit"
+        },
+        "80": {
+            "name": "O_PREVENT_SET_TO_SUCCESS_PILE",
+            "handler": null,
+            "description": "Prevent set to success pile (unused)"
+        },
+        "81": {
+            "name": "O_ACTIVATE_ENERGY",
+            "handler": "energy",
+            "description": "Activate energy (untap)"
+        },
+        "82": {
+            "name": "O_PREVENT_ACTIVATE",
+            "handler": "meta_control",
+            "description": "Prevent activate"
+        },
+        "83": {
+            "name": "O_SET_HEART_COST",
+            "handler": null,
+            "description": "Set heart cost (unused)"
+        },
+        "90": {
+            "name": "O_PREVENT_BATON_TOUCH",
+            "handler": "meta_control",
+            "description": "Prevent baton touch"
+        }
+    },
+    "triggers": {
+        "0": {
+            "name": "NONE",
+            "description": "No trigger"
+        },
+        "1": {
+            "name": "ON_PLAY",
+            "description": "When card is played"
+        },
+        "2": {
+            "name": "ON_LIVE_START",
+            "description": "At live start phase"
+        },
+        "3": {
+            "name": "ON_LIVE_SUCCESS",
+            "description": "When live succeeds"
+        },
+        "4": {
+            "name": "TURN_START",
+            "description": "At turn start"
+        },
+        "5": {
+            "name": "TURN_END",
+            "description": "At turn end"
+        },
+        "6": {
+            "name": "CONSTANT",
+            "description": "Constant/continuous effect"
+        },
+        "7": {
+            "name": "ACTIVATED",
+            "description": "Activated ability"
+        },
+        "8": {
+            "name": "ON_LEAVES",
+            "description": "When card leaves stage"
+        },
+        "9": {
+            "name": "ON_REVEAL",
+            "description": "When card is revealed"
+        },
+        "10": {
+            "name": "ON_POSITION_CHANGE",
+            "description": "When position changes"
+        }
+    },
+    "effect_types": {
+        "10": {
+            "name": "DRAW",
+            "opcode": "O_DRAW"
+        },
+        "11": {
+            "name": "ADD_BLADES",
+            "opcode": "O_ADD_BLADES"
+        },
+        "12": {
+            "name": "ADD_HEARTS",
+            "opcode": "O_ADD_HEARTS"
+        },
+        "13": {
+            "name": "REDUCE_COST",
+            "opcode": "O_REDUCE_COST"
+        },
+        "14": {
+            "name": "LOOK_DECK",
+            "opcode": "O_LOOK_DECK"
+        },
+        "15": {
+            "name": "RECOVER_LIVE",
+            "opcode": "O_RECOVER_LIVE"
+        },
+        "16": {
+            "name": "BOOST_SCORE",
+            "opcode": "O_BOOST_SCORE"
+        },
+        "17": {
+            "name": "RECOVER_MEMBER",
+            "opcode": "O_RECOVER_MEMBER"
+        },
+        "18": {
+            "name": "BUFF_POWER",
+            "opcode": "O_BUFF_POWER"
+        },
+        "19": {
+            "name": "IMMUNITY",
+            "opcode": "O_IMMUNITY"
+        },
+        "20": {
+            "name": "MOVE_MEMBER",
+            "opcode": "O_MOVE_MEMBER"
+        },
+        "21": {
+            "name": "SWAP_CARDS",
+            "opcode": "O_SWAP_CARDS"
+        },
+        "22": {
+            "name": "SEARCH_DECK",
+            "opcode": "O_SEARCH_DECK"
+        },
+        "23": {
+            "name": "ENERGY_CHARGE",
+            "opcode": "O_ENERGY_CHARGE"
+        },
+        "24": {
+            "name": "SET_BLADES",
+            "opcode": "O_SET_BLADES"
+        },
+        "25": {
+            "name": "SET_HEARTS",
+            "opcode": "O_SET_HEARTS"
+        },
+        "27": {
+            "name": "NEGATE_EFFECT",
+            "opcode": "O_NEGATE_EFFECT"
+        },
+        "28": {
+            "name": "ORDER_DECK",
+            "opcode": "O_ORDER_DECK"
+        },
+        "29": {
+            "name": "META_RULE",
+            "opcode": "O_META_RULE"
+        },
+        "30": {
+            "name": "SELECT_MODE",
+            "opcode": "O_SELECT_MODE"
+        },
+        "31": {
+            "name": "MOVE_TO_DECK",
+            "opcode": "O_MOVE_TO_DECK"
+        },
+        "32": {
+            "name": "TAP_OPPONENT",
+            "opcode": "O_TAP_OPPONENT"
+        },
+        "33": {
+            "name": "PLACE_UNDER",
+            "opcode": "O_PLACE_UNDER"
+        },
+        "35": {
+            "name": "RESTRICTION",
+            "opcode": "O_RESTRICTION"
+        },
+        "39": {
+            "name": "TRANSFORM_COLOR",
+            "opcode": "O_TRANSFORM_COLOR"
+        },
+        "40": {
+            "name": "REVEAL_CARDS",
+            "opcode": "O_REVEAL_CARDS"
+        },
+        "41": {
+            "name": "LOOK_AND_CHOOSE",
+            "opcode": "O_LOOK_AND_CHOOSE"
+        },
+        "42": {
+            "name": "CHEER_REVEAL",
+            "opcode": "O_CHEER_REVEAL"
+        },
+        "43": {
+            "name": "ACTIVATE_MEMBER",
+            "opcode": "O_ACTIVATE_MEMBER"
+        },
+        "44": {
+            "name": "ADD_TO_HAND",
+            "opcode": "O_ADD_TO_HAND"
+        },
+        "45": {
+            "name": "COLOR_SELECT",
+            "opcode": "O_COLOR_SELECT"
+        },
+        "47": {
+            "name": "TRIGGER_REMOTE",
+            "opcode": "O_TRIGGER_REMOTE"
+        },
+        "48": {
+            "name": "REDUCE_HEART_REQ",
+            "opcode": "O_REDUCE_HEART_REQ"
+        },
+        "49": {
+            "name": "MODIFY_SCORE_RULE",
+            "opcode": "O_MODIFY_SCORE_RULE"
+        },
+        "50": {
+            "name": "ADD_STAGE_ENERGY",
+            "opcode": "O_ADD_STAGE_ENERGY"
+        },
+        "51": {
+            "name": "SET_TAPPED",
+            "opcode": "O_SET_TAPPED"
+        },
+        "53": {
+            "name": "TAP_MEMBER",
+            "opcode": "O_TAP_MEMBER"
+        },
+        "57": {
+            "name": "PLAY_MEMBER_FROM_HAND",
+            "opcode": "O_PLAY_MEMBER_FROM_HAND"
+        },
+        "58": {
+            "name": "MOVE_TO_DISCARD",
+            "opcode": "O_MOVE_TO_DISCARD"
+        },
+        "60": {
+            "name": "GRANT_ABILITY",
+            "opcode": "O_GRANT_ABILITY"
+        },
+        "61": {
+            "name": "INCREASE_HEART_COST",
+            "opcode": "O_INCREASE_HEART_COST"
+        },
+        "63": {
+            "name": "PLAY_MEMBER_FROM_DISCARD",
+            "opcode": "O_PLAY_MEMBER_FROM_DISCARD"
+        },
+        "64": {
+            "name": "PAY_ENERGY",
+            "opcode": "O_PAY_ENERGY"
+        },
+        "65": {
+            "name": "SELECT_MEMBER",
+            "opcode": "O_SELECT_MEMBER"
+        },
+        "66": {
+            "name": "DRAW_UNTIL",
+            "opcode": "O_DRAW_UNTIL"
+        },
+        "67": {
+            "name": "SELECT_PLAYER",
+            "opcode": "O_SELECT_PLAYER"
+        },
+        "68": {
+            "name": "SELECT_LIVE",
+            "opcode": "O_SELECT_LIVE"
+        },
+        "70": {
+            "name": "INCREASE_COST",
+            "opcode": "O_INCREASE_COST"
+        },
+        "73": {
+            "name": "TRANSFORM_HEART",
+            "opcode": "O_TRANSFORM_HEART"
+        },
+        "74": {
+            "name": "SELECT_CARDS",
+            "opcode": "O_SELECT_CARDS"
+        },
+        "75": {
+            "name": "OPPONENT_CHOOSE",
+            "opcode": "O_OPPONENT_CHOOSE"
+        },
+        "76": {
+            "name": "PLAY_LIVE_FROM_DISCARD",
+            "opcode": "O_PLAY_LIVE_FROM_DISCARD"
+        },
+        "77": {
+            "name": "REDUCE_LIVE_SET_LIMIT",
+            "opcode": "O_REDUCE_LIVE_SET_LIMIT"
+        },
+        "81": {
+            "name": "ACTIVATE_ENERGY",
+            "opcode": "O_ACTIVATE_ENERGY"
+        },
+        "82": {
+            "name": "PREVENT_ACTIVATE",
+            "opcode": "O_PREVENT_ACTIVATE"
+        },
+        "90": {
+            "name": "PREVENT_BATON_TOUCH",
+            "opcode": "O_PREVENT_BATON_TOUCH"
+        }
+    },
+    "targets": {
+        "0": "SELF",
+        "1": "ALL_SELF",
+        "2": "OPPONENT",
+        "3": "ALL_OPPONENT",
+        "4": "PLAYER",
+        "5": "BOTH",
+        "6": "CARD_HAND",
+        "7": "CARD_DISCARD",
+        "8": "CARD_DECK"
+    },
+    "cost_types": {
+        "1": {
+            "name": "TAP_MEMBER",
+            "description": "Tap member as cost"
+        },
+        "2": {
+            "name": "DISCARD_HAND",
+            "description": "Discard from hand"
+        },
+        "3": {
+            "name": "MOVE_TO_DECK",
+            "description": "Move to deck"
+        },
+        "4": {
+            "name": "PAY_ENERGY",
+            "description": "Pay energy"
+        },
+        "5": {
+            "name": "MOVE_TO_DISCARD",
+            "description": "Move to discard"
+        }
+    }
+}

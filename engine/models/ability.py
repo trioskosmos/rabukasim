@@ -144,6 +144,21 @@ class ConditionType(IntEnum):
     TYPE_CHECK = 232
     IS_IN_DISCARD = 233  # [UNUSED]
     AREA_CHECK = 234
+    COST_LEAD = 235
+    SCORE_LEAD = 236
+    HEART_LEAD = 237
+    HAS_EXCESS_HEART = 238
+    NOT_HAS_EXCESS_HEART = 239
+    TOTAL_BLADES = 240
+    COST_COMPARE = 241
+    BLADE_COMPARE = 242
+    HEART_COMPARE = 243
+    OPPONENT_HAS_WAIT = 244
+    IS_TAPPED = 245
+    IS_ACTIVE = 246
+    LIVE_PERFORMED = 247
+    IS_PLAYER = 248
+    IS_OPPONENT = 249
 
 
 # --- DESCRIPTIONS ---
@@ -525,7 +540,8 @@ class Ability:
                 elif isinstance(instr, Effect):
                     self._compile_effect_wrapper(instr, bytecode)
                 elif isinstance(instr, Cost):
-                    self._compile_single_cost(instr, bytecode)
+                    if instr.is_optional:
+                        self._compile_single_cost(instr, bytecode)
 
             # Terminator
             bytecode.extend([int(Opcode.RETURN), 0, 0, 0])
@@ -575,9 +591,10 @@ class Ability:
                 i += 1
 
         # 3. Add Costs to bytecode if present (Fallback for non-instruction abilities)
-        if not self.instructions:
-            for cost in self.costs:
-                self._compile_single_cost(cost, bytecode)
+        # DISABLE: Modern engine handles costs via pay_costs_transactional in the trigger/activation shell.
+        # if not self.instructions:
+        #     for cost in self.costs:
+        #         self._compile_single_cost(cost, bytecode)
 
         # Terminator
         bytecode.extend([int(Opcode.RETURN), 0, 0, 0])
@@ -907,8 +924,12 @@ class Ability:
 
             # Check for interactive target selection requirement
             # Use Bit 5 (0x20) in attr to flag "Requires Selection"
-            if eff.effect_type == EffectType.TAP_OPPONENT:
-                attr |= 1 << 5
+            if eff.effect_type in (EffectType.TAP_OPPONENT, EffectType.TAP_MEMBER):
+                attr = self._pack_filter_attr(eff)
+                if eff.effect_type == EffectType.TAP_MEMBER:
+                    attr |= 0x01  # Bit 0: Selection mode
+                    if eff.is_optional:
+                        attr |= 0x02  # Bit 1: Optional mode
 
             # Special handling for PLACE_UNDER params
             if eff.effect_type == EffectType.PLACE_UNDER:
@@ -1112,6 +1133,26 @@ class Ability:
                     attr |= (int(c_max) & 0x1F) << 25
                     attr |= 1 << 30  # Mode 1 (LE)
 
+            # --- Multiplier Support (Dynamic Value) ---
+            # If the effect has a per_card multiplier, we use Bit 6 (0x40) as the "Dynamic" flag.
+            # val is repurposed as the "Count Source" (e.g. COUNT_STAGE).
+            if eff.params.get("per_card") or eff.params.get("per_member") or eff.params.get("has_multiplier"):
+                # Source of count: Default to STAGE (203)
+                count_src = eff.params.get("per_card", "").upper()
+                if count_src == "HAND":
+                    count_op = int(ConditionType.COUNT_HAND)
+                elif count_src == "DISCARD":
+                    count_op = int(ConditionType.COUNT_DISCARD)
+                elif count_src == "ENERGY":
+                    count_op = int(ConditionType.COUNT_ENERGY)
+                else:
+                    count_op = int(ConditionType.COUNT_STAGE)
+
+                attr |= 0x02  # DYNAMIC flag
+                slot = count_op # Repurpose slot for count opcode
+                # Pack filter parameters for the count into 'a'.
+                attr |= self._pack_filter_attr(eff)
+
                 # Color Filter: Bit 31 (Enable), Bits 8-10 (Color ID 0-6)
                 # Using bits 8-10 because they are part of Group ID (5-11), which is risky if both present.
                 # Actually, bits 24-31 are the safest if we treat as u32 in Rust.
@@ -1149,19 +1190,6 @@ class Ability:
                 # Let's just stick to Cost for now as it's the primary bug.
                 # I'll add Color if I find a clear use case or if I can find safe bits.
 
-            # Special handling for TAP filters
-            if eff.effect_type in (EffectType.TAP_OPPONENT, EffectType.TAP_MEMBER):
-                # Use Value for cost_max filter (99 = dynamic/none)
-                # Use Attr bits 0-6 for blades_max filter (99 = none)
-                try:
-                    val = int(eff.params.get("cost_max", 99))
-                except (ValueError, TypeError):
-                    val = 99
-                try:
-                    blades_max = int(eff.params.get("blades_max", 99))
-                except (ValueError, TypeError):
-                    blades_max = 99
-                attr = (attr & 0x80) | (blades_max & 0x7F)
 
             # Special handling for MOVE_TO_DISCARD params
             if eff.effect_type == EffectType.MOVE_TO_DISCARD:
@@ -1298,6 +1326,7 @@ class Ability:
         Bit 31:     Color Filter Enable (Careful with sign bit)
         """
         # Parse 'filter' string if present (e.g. "GROUP_ID=0, TYPE_LIVE, COST_GE=11")
+        detected_type = None
         if "filter" in eff.params:
             filter_str = str(eff.params["filter"])
             parts = [p.strip() for p in filter_str.split(",")]
@@ -1313,13 +1342,16 @@ class Ability:
                         eff.params["type"] = v
                     elif k == "COST_GE":
                         eff.params["cost_min"] = v
+                        detected_type = "member"
                     elif k == "COST_LE" or k == "TOTAL_COST_LE":
                         eff.params["cost_max"] = v
-
+                        detected_type = "member"
                     elif k == "HEARTS_GE" or k == "SUM_HEART_TOTAL_GE":
                         eff.params["cost_min"] = v
+                        detected_type = "live"
                     elif k == "HEARTS_LE" or k == "SUM_HEART_TOTAL_LE":
                         eff.params["cost_max"] = v
+                        detected_type = "live"
                     elif k == "COLOR":
                         eff.params["color_filter"] = v
                     elif k == "NAME":
@@ -1330,13 +1362,16 @@ class Ability:
                         eff.params["type"] = "live"
                     elif up == "TYPE_MEMBER":
                         eff.params["type"] = "member"
+                    elif up == "COST_LE_4":
+                        eff.params["cost_max"] = 4
+                        detected_type = "member"
                     elif up in ["PINK", "RED", "YELLOW", "GREEN", "BLUE", "PURPLE"]:
                         eff.params["color_filter"] = up
 
         attr = 0
 
         # Type Filter (Bits 2-3)
-        ctype = str(eff.params.get("type", "")).lower()
+        ctype = str(eff.params.get("type", detected_type or "")).lower()
         if ctype == "live" or "LIVE" in str(eff.params.get("card_type", "")).upper():
             attr |= 0x02 << 2
         elif ctype == "member" or "MEMBER" in str(eff.params.get("card_type", "")).upper():

@@ -288,8 +288,8 @@
           "bytecode": [
             13,
             1,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -387,14 +387,10 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            6,
             11,
             1,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -577,10 +573,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            31,
-            6,
-            1,
-            7,
             81,
             6,
             0,
@@ -641,10 +633,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            6,
-            0,
-            0,
             11,
             3,
             0,
@@ -810,7 +798,7 @@
             1798,
             32,
             99,
-            99,
+            0,
             2,
             1,
             0,
@@ -886,7 +874,7 @@
             1798,
             32,
             99,
-            99,
+            0,
             2,
             1,
             0,
@@ -1175,10 +1163,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            2,
-            0,
-            6,
             15,
             1,
             0,
@@ -1287,10 +1271,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            2,
-            0,
-            6,
             15,
             1,
             0,
@@ -1371,7 +1351,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_MEMBER(99) {FILTER=\"COST_LE_2\", TARGET=\"OPPONENT\"}",
+          "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_2\"}",
           "trigger": 1,
           "effects": [
             {
@@ -1412,13 +1392,12 @@
                 ],
                 [
                   {
-                    "effect_type": 53,
+                    "effect_type": 32,
                     "value": 99,
                     "value_cond": 0,
                     "target": 1,
                     "params": {
-                      "filter": "COST_LE_2",
-                      "target": "opponent"
+                      "filter": "COST_LE_2"
                     },
                     "is_optional": false,
                     "modal_options": []
@@ -1456,9 +1435,9 @@
             3,
             0,
             0,
-            53,
+            32,
             99,
-            99,
+            0,
             1,
             2,
             1,
@@ -1472,7 +1451,7 @@
           "requires_selection": false,
           "choice_flags": 2,
           "choice_count": 2,
-          "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_MEMBER(99) {FILTER=\"COST_LE_2\", TARGET=\"OPPONENT\"}",
+          "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_2\"}",
           "instructions": [
             {
               "effect_type": 30,
@@ -1512,13 +1491,12 @@
                 ],
                 [
                   {
-                    "effect_type": 53,
+                    "effect_type": 32,
                     "value": 99,
                     "value_cond": 0,
                     "target": 1,
                     "params": {
-                      "filter": "COST_LE_2",
-                      "target": "opponent"
+                      "filter": "COST_LE_2"
                     },
                     "is_optional": false,
                     "modal_options": []
@@ -1531,7 +1509,7 @@
       ],
       "img_path": "cards_webp/PL!-PR-005-PR.webp",
       "rare": "PR",
-      "ability_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_MEMBER(99) {FILTER=\"COST_LE_2\", TARGET=\"OPPONENT\"}",
+      "ability_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_2\"}",
       "original_text": "{{toujyou.png|登場}}以下から1つを選ぶ。\n・カードを1枚引き、手札を1枚控え室に置く。\n・相手のステージにいるすべてのコスト2以下のメンバーをウェイトにする。",
       "original_text_en": "[On Play] Choose one of the following:\\n- Draw 1 card, then put 1 card from your hand into the waiting room.\\n- Put all members with cost 2 or less on your opponent's stage into a wait state.",
       "volume_icons": 0,
@@ -1574,7 +1552,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_MEMBER(99) {FILTER=\"COST_LE_2\", TARGET=\"OPPONENT\"}",
+          "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_2\"}",
           "trigger": 1,
           "effects": [
             {
@@ -1615,13 +1593,12 @@
                 ],
                 [
                   {
-                    "effect_type": 53,
+                    "effect_type": 32,
                     "value": 99,
                     "value_cond": 0,
                     "target": 1,
                     "params": {
-                      "filter": "COST_LE_2",
-                      "target": "opponent"
+                      "filter": "COST_LE_2"
                     },
                     "is_optional": false,
                     "modal_options": []
@@ -1659,9 +1636,9 @@
             3,
             0,
             0,
-            53,
+            32,
             99,
-            99,
+            0,
             1,
             2,
             1,
@@ -1675,7 +1652,7 @@
           "requires_selection": false,
           "choice_flags": 2,
           "choice_count": 2,
-          "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_MEMBER(99) {FILTER=\"COST_LE_2\", TARGET=\"OPPONENT\"}",
+          "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_2\"}",
           "instructions": [
             {
               "effect_type": 30,
@@ -1715,13 +1692,12 @@
                 ],
                 [
                   {
-                    "effect_type": 53,
+                    "effect_type": 32,
                     "value": 99,
                     "value_cond": 0,
                     "target": 1,
                     "params": {
-                      "filter": "COST_LE_2",
-                      "target": "opponent"
+                      "filter": "COST_LE_2"
                     },
                     "is_optional": false,
                     "modal_options": []
@@ -1734,7 +1710,7 @@
       ],
       "img_path": "cards_webp/PL!-PR-006-PR.webp",
       "rare": "PR",
-      "ability_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_MEMBER(99) {FILTER=\"COST_LE_2\", TARGET=\"OPPONENT\"}",
+      "ability_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_2\"}",
       "original_text": "{{toujyou.png|登場}}以下から1つを選ぶ。\n・カードを1枚引き、手札を1枚控え室に置く。\n・相手のステージにいるすべてのコスト2以下のメンバーをウェイトにする。",
       "original_text_en": "[On Play] Choose one of the following:\\n- Draw 1 card, then put 1 card from your hand into the waiting room.\\n- Put all members with cost 2 or less on your opponent's stage into a wait state.",
       "volume_icons": 0,
@@ -1819,7 +1795,8 @@
                     "value_cond": 0,
                     "target": 1,
                     "params": {
-                      "filter": "COST_LE_4"
+                      "filter": "COST_LE_4",
+                      "cost_max": 4
                     },
                     "is_optional": false,
                     "modal_options": []
@@ -1842,8 +1819,8 @@
             0,
             0,
             32,
-            99,
-            99,
+            1,
+            1224736768,
             1,
             2,
             1,
@@ -1878,7 +1855,8 @@
                     "value_cond": 0,
                     "target": 1,
                     "params": {
-                      "filter": "COST_LE_4"
+                      "filter": "COST_LE_4",
+                      "cost_max": 4
                     },
                     "is_optional": false,
                     "modal_options": []
@@ -1934,7 +1912,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_MEMBER(99) {FILTER=\"COST_LE_2\", TARGET=\"OPPONENT\"}",
+          "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_2\"}",
           "trigger": 1,
           "effects": [
             {
@@ -1975,13 +1953,12 @@
                 ],
                 [
                   {
-                    "effect_type": 53,
+                    "effect_type": 32,
                     "value": 99,
                     "value_cond": 0,
                     "target": 1,
                     "params": {
-                      "filter": "COST_LE_2",
-                      "target": "opponent"
+                      "filter": "COST_LE_2"
                     },
                     "is_optional": false,
                     "modal_options": []
@@ -2019,9 +1996,9 @@
             3,
             0,
             0,
-            53,
+            32,
             99,
-            99,
+            0,
             1,
             2,
             1,
@@ -2035,7 +2012,7 @@
           "requires_selection": false,
           "choice_flags": 2,
           "choice_count": 2,
-          "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_MEMBER(99) {FILTER=\"COST_LE_2\", TARGET=\"OPPONENT\"}",
+          "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_2\"}",
           "instructions": [
             {
               "effect_type": 30,
@@ -2075,13 +2052,12 @@
                 ],
                 [
                   {
-                    "effect_type": 53,
+                    "effect_type": 32,
                     "value": 99,
                     "value_cond": 0,
                     "target": 1,
                     "params": {
-                      "filter": "COST_LE_2",
-                      "target": "opponent"
+                      "filter": "COST_LE_2"
                     },
                     "is_optional": false,
                     "modal_options": []
@@ -2094,7 +2070,7 @@
       ],
       "img_path": "cards_webp/PL!-PR-008-PR.webp",
       "rare": "PR",
-      "ability_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_MEMBER(99) {FILTER=\"COST_LE_2\", TARGET=\"OPPONENT\"}",
+      "ability_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MODE(1)\n  OPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\n  OPTION: WAIT | EFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_2\"}",
       "original_text": "{{toujyou.png|登場}}以下から1つを選ぶ。\n・カードを1枚引き、手札を1枚控え室に置く。\n・相手のステージにいるすべてのコスト2以下のメンバーをウェイトにする。",
       "original_text_en": "[On Play] Choose one of the following:\\n- Draw 1 card, then put 1 card from your hand into the waiting room.\\n- Put all members with cost 2 or less on your opponent's stage into a wait state.",
       "volume_icons": 0,
@@ -2179,7 +2155,8 @@
                     "value_cond": 0,
                     "target": 1,
                     "params": {
-                      "filter": "COST_LE_4"
+                      "filter": "COST_LE_4",
+                      "cost_max": 4
                     },
                     "is_optional": false,
                     "modal_options": []
@@ -2202,8 +2179,8 @@
             0,
             0,
             32,
-            99,
-            99,
+            1,
+            1224736768,
             1,
             2,
             1,
@@ -2238,7 +2215,8 @@
                     "value_cond": 0,
                     "target": 1,
                     "params": {
-                      "filter": "COST_LE_4"
+                      "filter": "COST_LE_4",
+                      "cost_max": 4
                     },
                     "is_optional": false,
                     "modal_options": []
@@ -2331,10 +2309,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            53,
-            0,
-            0,
-            4,
             10,
             1,
             0,
@@ -2435,7 +2409,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 10,
-      "ability_flags": 2081,
+      "ability_flags": 33,
       "synergy_flags": 0,
       "cost_flags": 2,
       "faq": []
@@ -2509,10 +2483,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            53,
-            0,
-            0,
-            4,
             10,
             1,
             0,
@@ -2613,7 +2583,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 10,
-      "ability_flags": 2081,
+      "ability_flags": 33,
       "synergy_flags": 0,
       "cost_flags": 2,
       "faq": []
@@ -2650,17 +2620,17 @@
       ],
       "abilities": [
         {
-          "raw_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: TAP_MEMBER(2) {FILTER=\"COST_LE_4\", TARGET=\"OPPONENT\"}\n\n",
+          "raw_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: TAP_OPPONENT(2) {FILTER=\"COST_LE=4\"}\n\n",
           "trigger": 1,
           "effects": [
             {
-              "effect_type": 53,
+              "effect_type": 32,
               "value": 2,
               "value_cond": 0,
               "target": 1,
               "params": {
-                "filter": "COST_LE_4",
-                "target": "opponent"
+                "filter": "COST_LE=4",
+                "cost_max": "4"
               },
               "is_optional": false,
               "modal_options": []
@@ -2682,9 +2652,9 @@
             1,
             2,
             6,
-            53,
-            99,
-            99,
+            32,
+            2,
+            1224736768,
             1,
             1,
             0,
@@ -2694,7 +2664,7 @@
           "requires_selection": false,
           "choice_flags": 0,
           "choice_count": 0,
-          "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: TAP_MEMBER(2) {FILTER=\"COST_LE_4\", TARGET=\"OPPONENT\"}\n\n",
+          "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: TAP_OPPONENT(2) {FILTER=\"COST_LE=4\"}\n\n",
           "instructions": [
             {
               "type": 3,
@@ -2703,13 +2673,13 @@
               "is_optional": true
             },
             {
-              "effect_type": 53,
+              "effect_type": 32,
               "value": 2,
               "value_cond": 0,
               "target": 1,
               "params": {
-                "filter": "COST_LE_4",
-                "target": "opponent"
+                "filter": "COST_LE=4",
+                "cost_max": "4"
               },
               "is_optional": false,
               "modal_options": []
@@ -2739,8 +2709,8 @@
           "bytecode": [
             11,
             1,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -2767,7 +2737,7 @@
       ],
       "img_path": "cards_webp/PL!-bp3-P-002-P.webp",
       "rare": "P",
-      "ability_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: TAP_MEMBER(2) {FILTER=\"COST_LE_4\", TARGET=\"OPPONENT\"}\n\nTRIGGER: CONSTANT\nEFFECT: ADD_BLADES(1) -> PLAYER {PER_CARD=\"OPPONENT_WAIT\"}",
+      "ability_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: TAP_OPPONENT(2) {FILTER=\"COST_LE=4\"}\n\nTRIGGER: CONSTANT\nEFFECT: ADD_BLADES(1) -> PLAYER {PER_CARD=\"OPPONENT_WAIT\"}",
       "original_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）\n{{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{icon_blade.png|ブレード}}を得る。",
       "original_text_en": "[On Play] You may put 1 card from your hand into the waiting room: Put up to 2 members with cost 4 or less on your opponent's stage into a wait state. (Blades of a member in a wait state do not increase the number of cards revealed by a yell.)\\n[Always] You gain (Blade) for each member in a wait state on your opponent's stage.",
       "volume_icons": 0,
@@ -2826,17 +2796,17 @@
       ],
       "abilities": [
         {
-          "raw_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: TAP_MEMBER(2) {FILTER=\"COST_LE_4\", TARGET=\"OPPONENT\"}\n\n",
+          "raw_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: TAP_OPPONENT(2) {FILTER=\"COST_LE=4\"}\n\n",
           "trigger": 1,
           "effects": [
             {
-              "effect_type": 53,
+              "effect_type": 32,
               "value": 2,
               "value_cond": 0,
               "target": 1,
               "params": {
-                "filter": "COST_LE_4",
-                "target": "opponent"
+                "filter": "COST_LE=4",
+                "cost_max": "4"
               },
               "is_optional": false,
               "modal_options": []
@@ -2858,9 +2828,9 @@
             1,
             2,
             6,
-            53,
-            99,
-            99,
+            32,
+            2,
+            1224736768,
             1,
             1,
             0,
@@ -2870,7 +2840,7 @@
           "requires_selection": false,
           "choice_flags": 0,
           "choice_count": 0,
-          "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: TAP_MEMBER(2) {FILTER=\"COST_LE_4\", TARGET=\"OPPONENT\"}\n\n",
+          "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: TAP_OPPONENT(2) {FILTER=\"COST_LE=4\"}\n\n",
           "instructions": [
             {
               "type": 3,
@@ -2879,13 +2849,13 @@
               "is_optional": true
             },
             {
-              "effect_type": 53,
+              "effect_type": 32,
               "value": 2,
               "value_cond": 0,
               "target": 1,
               "params": {
-                "filter": "COST_LE_4",
-                "target": "opponent"
+                "filter": "COST_LE=4",
+                "cost_max": "4"
               },
               "is_optional": false,
               "modal_options": []
@@ -2915,8 +2885,8 @@
           "bytecode": [
             11,
             1,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -2943,7 +2913,7 @@
       ],
       "img_path": "cards_webp/PL!-bp3-P-002-P.webp",
       "rare": "P",
-      "ability_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: TAP_MEMBER(2) {FILTER=\"COST_LE_4\", TARGET=\"OPPONENT\"}\n\nTRIGGER: CONSTANT\nEFFECT: ADD_BLADES(1) -> PLAYER {PER_CARD=\"OPPONENT_WAIT\"}",
+      "ability_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: TAP_OPPONENT(2) {FILTER=\"COST_LE=4\"}\n\nTRIGGER: CONSTANT\nEFFECT: ADD_BLADES(1) -> PLAYER {PER_CARD=\"OPPONENT_WAIT\"}",
       "original_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）\n{{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{icon_blade.png|ブレード}}を得る。",
       "original_text_en": "[On Play] You may put 1 card from your hand into the waiting room: Put up to 2 members with cost 4 or less on your opponent's stage into a wait state. (Blades of a member in a wait state do not increase the number of cards revealed by a yell.)\\n[Always] You gain (Blade) for each member in a wait state on your opponent's stage.",
       "volume_icons": 0,
@@ -4309,8 +4279,8 @@
             6,
             18,
             2,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -4419,8 +4389,8 @@
             6,
             18,
             2,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -4885,10 +4855,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -5092,10 +5058,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -5299,10 +5261,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -5617,10 +5575,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            53,
-            0,
-            0,
-            4,
             30,
             3,
             0,
@@ -5743,7 +5697,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 11,
-      "ability_flags": 2057,
+      "ability_flags": 9,
       "synergy_flags": 0,
       "cost_flags": 2,
       "faq": []
@@ -5918,10 +5872,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            53,
-            0,
-            0,
-            4,
             30,
             3,
             0,
@@ -6044,7 +5994,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 11,
-      "ability_flags": 2057,
+      "ability_flags": 9,
       "synergy_flags": 0,
       "cost_flags": 2,
       "faq": []
@@ -6219,10 +6169,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            53,
-            0,
-            0,
-            4,
             30,
             3,
             0,
@@ -6345,7 +6291,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 11,
-      "ability_flags": 2057,
+      "ability_flags": 9,
       "synergy_flags": 0,
       "cost_flags": 2,
       "faq": []
@@ -6520,10 +6466,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            53,
-            0,
-            0,
-            4,
             30,
             3,
             0,
@@ -6646,7 +6588,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 11,
-      "ability_flags": 2057,
+      "ability_flags": 9,
       "synergy_flags": 0,
       "cost_flags": 2,
       "faq": []
@@ -6939,48 +6881,48 @@
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             11,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             9,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             7,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             5,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             3,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             1,
             0,
@@ -7288,48 +7230,48 @@
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             11,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             9,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             7,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             5,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             3,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             1,
             0,
@@ -7637,48 +7579,48 @@
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             11,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             9,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             7,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             5,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             3,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             1,
             0,
@@ -7929,24 +7871,24 @@
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             5,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             3,
             0,
             0,
             12,
             1,
-            0,
-            1,
+            2,
+            203,
             2,
             1,
             0,
@@ -8791,10 +8733,6 @@
             6,
             0,
             0,
-            58,
-            2,
-            0,
-            6,
             15,
             1,
             16,
@@ -8961,10 +8899,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            2,
-            0,
-            6,
             15,
             1,
             0,
@@ -9119,10 +9053,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            2,
-            0,
-            6,
             15,
             1,
             0,
@@ -9277,10 +9207,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            2,
-            0,
-            6,
             15,
             1,
             0,
@@ -9387,10 +9313,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -9497,10 +9419,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -11395,8 +11313,8 @@
           "is_once_per_turn": false,
           "bytecode": [
             32,
-            99,
-            99,
+            1,
+            0,
             2,
             1,
             0,
@@ -11496,8 +11414,8 @@
           "is_once_per_turn": false,
           "bytecode": [
             32,
-            99,
-            99,
+            1,
+            0,
             2,
             1,
             0,
@@ -11603,10 +11521,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             11,
             2,
             0,
@@ -11646,7 +11560,7 @@
       "original_text_en": "[Live Start] You may pay (E): This member gets +2 Blades until the end of the live phase.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 16,
+      "semantic_flags": 0,
       "ability_flags": 9,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -12558,14 +12472,6 @@
             0,
             0,
             0,
-            53,
-            0,
-            0,
-            4,
-            58,
-            1,
-            0,
-            6,
             30,
             2,
             0,
@@ -12687,7 +12593,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 18,
-      "ability_flags": 2049,
+      "ability_flags": 1,
       "synergy_flags": 8,
       "cost_flags": 3,
       "faq": [
@@ -12846,14 +12752,6 @@
             0,
             0,
             0,
-            53,
-            0,
-            0,
-            4,
-            58,
-            1,
-            0,
-            6,
             30,
             2,
             0,
@@ -12975,7 +12873,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 18,
-      "ability_flags": 2049,
+      "ability_flags": 1,
       "synergy_flags": 8,
       "cost_flags": 3,
       "faq": [
@@ -13121,8 +13019,8 @@
             0,
             0,
             32,
-            99,
-            99,
+            1,
+            0,
             1,
             2,
             1,
@@ -13199,8 +13097,8 @@
           "bytecode": [
             12,
             1,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,
@@ -13349,8 +13247,8 @@
             0,
             0,
             32,
-            99,
-            99,
+            1,
+            0,
             1,
             2,
             1,
@@ -13427,8 +13325,8 @@
           "bytecode": [
             12,
             1,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,
@@ -13565,8 +13463,8 @@
           "bytecode": [
             81,
             1,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -13702,8 +13600,8 @@
           "bytecode": [
             81,
             1,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -14659,10 +14557,6 @@
             1,
             0,
             0,
-            58,
-            0,
-            0,
-            6,
             15,
             1,
             16,
@@ -14806,10 +14700,6 @@
             1,
             0,
             0,
-            58,
-            0,
-            0,
-            6,
             15,
             1,
             16,
@@ -14938,8 +14828,8 @@
             4,
             10,
             1,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -15064,8 +14954,8 @@
             4,
             10,
             1,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -15196,8 +15086,8 @@
           "is_once_per_turn": false,
           "bytecode": [
             32,
-            99,
-            99,
+            1,
+            0,
             2,
             82,
             99,
@@ -15349,8 +15239,8 @@
           "is_once_per_turn": false,
           "bytecode": [
             32,
-            99,
-            99,
+            1,
+            0,
             2,
             82,
             99,
@@ -15692,7 +15582,8 @@
               "value_cond": 0,
               "target": 2,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -15719,8 +15610,8 @@
             0,
             0,
             32,
-            99,
-            99,
+            1,
+            1224736768,
             2,
             1,
             0,
@@ -15748,7 +15639,8 @@
               "value_cond": 0,
               "target": 2,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -15810,7 +15702,8 @@
               "value_cond": 0,
               "target": 2,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -15837,8 +15730,8 @@
             0,
             0,
             32,
-            99,
-            99,
+            1,
+            1224736768,
             2,
             1,
             0,
@@ -15866,7 +15759,8 @@
               "value_cond": 0,
               "target": 2,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -16150,10 +16044,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             40,
             1,
             0,
@@ -16319,10 +16209,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             40,
             1,
             0,
@@ -16711,8 +16597,8 @@
             2,
             4,
             32,
-            99,
-            99,
+            1,
+            0,
             2,
             1,
             0,
@@ -16795,8 +16681,8 @@
             2,
             4,
             32,
-            99,
-            99,
+            1,
+            0,
             2,
             1,
             0,
@@ -17005,8 +16891,8 @@
             2,
             4,
             32,
-            99,
-            99,
+            1,
+            0,
             2,
             1,
             0,
@@ -17089,8 +16975,8 @@
             2,
             4,
             32,
-            99,
-            99,
+            1,
+            0,
             2,
             1,
             0,
@@ -17529,8 +17415,8 @@
           "is_once_per_turn": false,
           "bytecode": [
             53,
-            99,
-            99,
+            1,
+            3,
             1,
             10,
             1,
@@ -17687,8 +17573,8 @@
           "is_once_per_turn": false,
           "bytecode": [
             53,
-            99,
-            99,
+            1,
+            3,
             1,
             10,
             1,
@@ -18186,10 +18072,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             0,
@@ -18584,10 +18466,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -18806,10 +18684,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             0,
@@ -19274,10 +19148,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             0,
@@ -19793,10 +19663,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -20370,10 +20236,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             58,
             10,
             32768,
@@ -20415,7 +20277,7 @@
       "original_text_en": "[Activate] [Turn 1] (E)(E): Put the top 10 cards of your deck into the waiting room.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
+      "semantic_flags": 10,
       "ability_flags": 1,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -22033,10 +21895,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             0,
@@ -23723,14 +23581,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
-            58,
-            0,
-            0,
-            4,
             63,
             1,
             0,
@@ -23865,14 +23715,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
-            58,
-            0,
-            0,
-            4,
             63,
             1,
             0,
@@ -24052,7 +23894,8 @@
               "params": {
                 "filter": "GROUP_ID=4, COST_LE_4",
                 "source": "discard",
-                "group": "4"
+                "group": "4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -24070,13 +23913,9 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             17,
             1,
-            144,
+            1224736912,
             6,
             1,
             0,
@@ -24102,7 +23941,8 @@
               "params": {
                 "filter": "GROUP_ID=4, COST_LE_4",
                 "source": "discard",
-                "group": "4"
+                "group": "4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -24117,7 +23957,7 @@
       "original_text_en": "[Continuous] If you have 'Hasunosora' members in all areas of your stage and they have different names, this member gets \"[Continuous] Live Score +1\".\n[Activate] [Turn 1] (E): Add 1 'Hasunosora' Member card with Cost 4 or less from your waiting room to your hand.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
+      "semantic_flags": 10,
       "ability_flags": 133,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -24272,10 +24112,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             17,
             1,
             0,
@@ -24317,7 +24153,7 @@
       "original_text_en": "[Continuous] If you have 'Hasunosora' members in all areas of your stage and they have different names, this member gets \"[Continuous] Live Score +1\".\n[Activate] [Turn 1] (E): Add 1 'Hasunosora' Member card with Cost 4 or less from your waiting room to your hand.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 18,
+      "semantic_flags": 2,
       "ability_flags": 141,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -24472,10 +24308,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             17,
             1,
             0,
@@ -24517,7 +24349,7 @@
       "original_text_en": "[Continuous] If you have 'Hasunosora' members in all areas of your stage and they have different names, this member gets \"[Continuous] Live Score +1\".\n[Activate] [Turn 1] (E): Add 1 'Hasunosora' Member card with Cost 4 or less from your waiting room to your hand.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 18,
+      "semantic_flags": 2,
       "ability_flags": 141,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -24672,10 +24504,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             17,
             1,
             0,
@@ -24717,7 +24545,7 @@
       "original_text_en": "[Continuous] If you have 'Hasunosora' members in all areas of your stage and they have different names, this member gets \"[Continuous] Live Score +1\".\n[Activate] [Turn 1] (E): Add 1 'Hasunosora' Member card with Cost 4 or less from your waiting room to your hand.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 18,
+      "semantic_flags": 2,
       "ability_flags": 141,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -24808,10 +24636,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            3,
-            0,
-            0,
             15,
             1,
             144,
@@ -24881,8 +24705,8 @@
             0,
             11,
             1,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,
@@ -25031,10 +24855,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            3,
-            0,
-            0,
             15,
             1,
             144,
@@ -25104,8 +24924,8 @@
             0,
             11,
             1,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,
@@ -25254,10 +25074,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            3,
-            0,
-            0,
             15,
             1,
             144,
@@ -25327,8 +25143,8 @@
             0,
             11,
             1,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,
@@ -25477,10 +25293,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            3,
-            0,
-            0,
             15,
             1,
             144,
@@ -25550,8 +25362,8 @@
             0,
             11,
             1,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,
@@ -25704,8 +25516,8 @@
             6,
             10,
             1,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -25814,8 +25626,8 @@
             6,
             10,
             1,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -26020,10 +25832,6 @@
             1,
             0,
             0,
-            58,
-            1,
-            0,
-            6,
             45,
             1,
             0,
@@ -26265,10 +26073,6 @@
             1,
             0,
             0,
-            58,
-            1,
-            0,
-            6,
             45,
             1,
             0,
@@ -26510,10 +26314,6 @@
             1,
             0,
             0,
-            58,
-            1,
-            0,
-            6,
             45,
             1,
             0,
@@ -26755,10 +26555,6 @@
             1,
             0,
             0,
-            58,
-            1,
-            0,
-            6,
             45,
             1,
             0,
@@ -26896,10 +26692,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             10,
             1,
             0,
@@ -26939,7 +26731,7 @@
       "original_text_en": "[Activate] [Once per Turn] (E)(E): Draw 1 card.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
+      "semantic_flags": 10,
       "ability_flags": 1,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -27002,10 +26794,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             10,
             1,
             0,
@@ -27045,7 +26833,7 @@
       "original_text_en": "[Activate] [Once per Turn] (E)(E): Draw 1 card.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
+      "semantic_flags": 10,
       "ability_flags": 1,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -28298,10 +28086,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             15,
             1,
             144,
@@ -28345,7 +28129,7 @@
       "original_text_en": "[Activate] [Once per Turn] (E)(E): Add 1 'Hasunosora' Live card with score 3 or less from your waiting room to your hand.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
+      "semantic_flags": 10,
       "ability_flags": 5,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -28410,10 +28194,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             15,
             1,
             0,
@@ -28455,7 +28235,7 @@
       "original_text_en": "[Activate] [Once per Turn] (E)(E): Add 1 'Hasunosora' Live card with score 3 or less from your waiting room to your hand.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 18,
+      "semantic_flags": 2,
       "ability_flags": 5,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -29362,10 +29142,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -29472,10 +29248,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -29679,10 +29451,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             203,
             0,
             0,
@@ -29734,7 +29502,7 @@
       "original_text_en": "[On Play] You may put 1 card from your hand into the waiting room: If you have another member on your stage, add 1 'Mira-Cra Park!' card from your waiting room to your hand.\n[Live Start] You may pay (E): If you have members in all areas of your stage, this member gets +2 Blades until the end of the live phase.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 17,
+      "semantic_flags": 1,
       "ability_flags": 13,
       "synergy_flags": 0,
       "cost_flags": 1,
@@ -29896,10 +29664,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             203,
             0,
             0,
@@ -29951,7 +29715,7 @@
       "original_text_en": "[On Play] You may put 1 card from your hand into the waiting room: If you have another member on your stage, add 1 'Mira-Cra Park!' card from your waiting room to your hand.\n[Live Start] You may pay (E): If you have members in all areas of your stage, this member gets +2 Blades until the end of the live phase.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 17,
+      "semantic_flags": 1,
       "ability_flags": 13,
       "synergy_flags": 0,
       "cost_flags": 1,
@@ -30113,10 +29877,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             203,
             0,
             0,
@@ -30168,7 +29928,7 @@
       "original_text_en": "[On Play] You may put 1 card from your hand into the waiting room: If you have another member on your stage, add 1 'Mira-Cra Park!' card from your waiting room to your hand.\n[Live Start] You may pay (E): If you have members in all areas of your stage, this member gets +2 Blades until the end of the live phase.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 17,
+      "semantic_flags": 1,
       "ability_flags": 13,
       "synergy_flags": 0,
       "cost_flags": 1,
@@ -30330,10 +30090,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             203,
             0,
             0,
@@ -30385,7 +30141,7 @@
       "original_text_en": "[On Play] You may put 1 card from your hand into the waiting room: If you have another member on your stage, add 1 'Mira-Cra Park!' card from your waiting room to your hand.\n[Live Start] You may pay (E): If you have members in all areas of your stage, this member gets +2 Blades until the end of the live phase.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 17,
+      "semantic_flags": 1,
       "ability_flags": 13,
       "synergy_flags": 0,
       "cost_flags": 1,
@@ -30489,8 +30245,8 @@
           "bytecode": [
             11,
             1,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -30626,8 +30382,8 @@
           "bytecode": [
             11,
             1,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -33644,10 +33400,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             76,
             1,
             0,
@@ -34550,10 +34302,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -35113,10 +34861,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -35508,10 +35252,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -36813,10 +36553,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             45,
             1,
             0,
@@ -36869,7 +36605,7 @@
       "original_text_en": "[On Play] You may put 1 card from your hand into the waiting room: Add 1 'Nijigasaki' Live card from your waiting room to your hand.\\n[Live Start] You may pay (E): Choose 1 heart color. Until the end of the live phase, you gain 1 of that color heart.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 17,
+      "semantic_flags": 1,
       "ability_flags": 13,
       "synergy_flags": 0,
       "cost_flags": 1,
@@ -37962,10 +37698,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             226,
             1,
             0,
@@ -38037,10 +37769,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             10,
             1,
             0,
@@ -38178,10 +37906,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             226,
             1,
             0,
@@ -38253,10 +37977,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             10,
             1,
             0,
@@ -38394,10 +38114,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             226,
             1,
             0,
@@ -38469,10 +38185,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             10,
             1,
             0,
@@ -38610,10 +38322,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             226,
             1,
             0,
@@ -38685,10 +38393,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             10,
             1,
             0,
@@ -39041,10 +38745,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             17,
             1,
             0,
@@ -39159,10 +38859,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             17,
             1,
             0,
@@ -40156,10 +39852,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            3,
-            0,
-            0,
             15,
             1,
             0,
@@ -40201,7 +39893,7 @@
       "original_text_en": "[Always] If you have 3 or more cards currently in a live and at least one of them is a 'Nijigasaki' Live card, you gain (ALL)(ALL)(Blade)(Blade).\\n[Activate] [Once per Turn] (E)(E)(E): Add 1 Live card from your waiting room to your hand.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 18,
+      "semantic_flags": 2,
       "ability_flags": 13,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -40397,10 +40089,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            3,
-            0,
-            0,
             15,
             1,
             0,
@@ -40442,7 +40130,7 @@
       "original_text_en": "[Continuous] If you have 3 or more live cards in progress, including at least 1 'Nijigasaki' Live card, this member gets [Heart][Heart][Blade][Blade].\n[Activate] [Turn 1] (E)(E)(E): Add 1 Live card from your waiting room to your hand.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 18,
+      "semantic_flags": 2,
       "ability_flags": 13,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -40638,10 +40326,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            3,
-            0,
-            0,
             15,
             1,
             0,
@@ -40683,7 +40367,7 @@
       "original_text_en": "[Continuous] If you have 3 or more live cards in progress, including at least 1 'Nijigasaki' Live card, this member gets [Heart][Heart][Blade][Blade].\n[Activate] [Turn 1] (E)(E)(E): Add 1 Live card from your waiting room to your hand.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 18,
+      "semantic_flags": 2,
       "ability_flags": 13,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -40879,10 +40563,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            3,
-            0,
-            0,
             15,
             1,
             0,
@@ -40924,7 +40604,7 @@
       "original_text_en": "[Always] If you have 3 or more cards currently in a live and at least one of them is a 'Nijigasaki' Live card, you gain (ALL)(ALL)(Blade)(Blade).\\n[Activate] [Once per Turn] (E)(E)(E): Add 1 Live card from your waiting room to your hand.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 18,
+      "semantic_flags": 2,
       "ability_flags": 13,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -42787,10 +42467,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             45,
             1,
             0,
@@ -42941,10 +42617,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             45,
             1,
             0,
@@ -43307,14 +42979,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            53,
-            0,
-            0,
-            4,
-            58,
-            1,
-            0,
-            6,
             15,
             1,
             80,
@@ -43365,7 +43029,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 10,
-      "ability_flags": 2053,
+      "ability_flags": 5,
       "synergy_flags": 0,
       "cost_flags": 3,
       "faq": []
@@ -43437,14 +43101,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            53,
-            0,
-            0,
-            4,
-            58,
-            1,
-            0,
-            6,
             15,
             1,
             80,
@@ -43495,7 +43151,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 10,
-      "ability_flags": 2053,
+      "ability_flags": 5,
       "synergy_flags": 0,
       "cost_flags": 3,
       "faq": []
@@ -44547,8 +44203,8 @@
           "is_once_per_turn": false,
           "bytecode": [
             53,
-            99,
-            99,
+            1,
+            1,
             1,
             1,
             0,
@@ -44636,8 +44292,8 @@
           "is_once_per_turn": false,
           "bytecode": [
             53,
-            99,
-            99,
+            1,
+            1,
             1,
             1,
             0,
@@ -44763,14 +44419,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
-            58,
-            0,
-            0,
-            4,
             65,
             1,
             1526751360,
@@ -45014,14 +44662,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
-            58,
-            0,
-            0,
-            4,
             65,
             1,
             24576,
@@ -45236,10 +44876,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            53,
-            1,
-            0,
-            4,
             10,
             1,
             0,
@@ -45315,10 +44951,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            2,
-            0,
-            6,
             43,
             1,
             0,
@@ -45378,7 +45010,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 10,
-      "ability_flags": 2089,
+      "ability_flags": 41,
       "synergy_flags": 0,
       "cost_flags": 3,
       "faq": [
@@ -45467,10 +45099,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            53,
-            1,
-            0,
-            4,
             10,
             1,
             0,
@@ -45546,10 +45174,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            2,
-            0,
-            6,
             43,
             1,
             0,
@@ -45609,7 +45233,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 10,
-      "ability_flags": 2089,
+      "ability_flags": 41,
       "synergy_flags": 0,
       "cost_flags": 3,
       "faq": [
@@ -45698,10 +45322,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            53,
-            1,
-            0,
-            4,
             10,
             1,
             0,
@@ -45777,10 +45397,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            2,
-            0,
-            6,
             43,
             1,
             0,
@@ -45840,7 +45456,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 10,
-      "ability_flags": 2089,
+      "ability_flags": 41,
       "synergy_flags": 0,
       "cost_flags": 3,
       "faq": [
@@ -45929,10 +45545,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            53,
-            1,
-            0,
-            4,
             10,
             1,
             0,
@@ -46008,10 +45620,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            2,
-            0,
-            6,
             43,
             1,
             0,
@@ -46071,7 +45679,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 10,
-      "ability_flags": 2089,
+      "ability_flags": 41,
       "synergy_flags": 0,
       "cost_flags": 3,
       "faq": [
@@ -46203,10 +45811,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            31,
-            2,
-            0,
-            7,
             30,
             3,
             0,
@@ -46461,10 +46065,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            31,
-            2,
-            0,
-            7,
             30,
             3,
             0,
@@ -46719,10 +46319,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            31,
-            2,
-            0,
-            7,
             30,
             3,
             0,
@@ -46977,10 +46573,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            31,
-            2,
-            0,
-            7,
             30,
             3,
             0,
@@ -48857,17 +48449,17 @@
           ]
         },
         {
-          "raw_text": "TRIGGER: ON_REVEAL\nEFFECT: TAP_MEMBER(99) {TARGET=\"OPPONENT\", FILTER=\"COST_LE_4\"}",
+          "raw_text": "TRIGGER: ON_REVEAL\nEFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_4\"}",
           "trigger": 9,
           "effects": [
             {
-              "effect_type": 53,
+              "effect_type": 32,
               "value": 99,
               "value_cond": 0,
               "target": 1,
               "params": {
-                "target": "opponent",
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -48878,9 +48470,9 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            53,
+            32,
             99,
-            99,
+            1224736768,
             1,
             1,
             0,
@@ -48890,16 +48482,16 @@
           "requires_selection": false,
           "choice_flags": 0,
           "choice_count": 0,
-          "pseudocode": "TRIGGER: ON_REVEAL\nEFFECT: TAP_MEMBER(99) {TARGET=\"OPPONENT\", FILTER=\"COST_LE_4\"}",
+          "pseudocode": "TRIGGER: ON_REVEAL\nEFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_4\"}",
           "instructions": [
             {
-              "effect_type": 53,
+              "effect_type": 32,
               "value": 99,
               "value_cond": 0,
               "target": 1,
               "params": {
-                "target": "opponent",
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -48909,7 +48501,7 @@
       ],
       "img_path": "cards_webp/PL!N-bp3-N-017-N.webp",
       "rare": "N",
-      "ability_text": "TRIGGER: ON_PLAY\nTRIGGER: ON_LIVE_START\nEFFECT: CHEER_REVEAL(1) (Optional) -> SELF\nTRIGGER: ON_REVEAL\nEFFECT: TAP_MEMBER(99) {TARGET=\"OPPONENT\", FILTER=\"COST_LE_4\"}",
+      "ability_text": "TRIGGER: ON_PLAY\nTRIGGER: ON_LIVE_START\nEFFECT: CHEER_REVEAL(1) (Optional) -> SELF\nTRIGGER: ON_REVEAL\nEFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_4\"}",
       "original_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
       "original_text_en": "[On Play] / [Live Start] You may set this member to Waiting state: Set 1 member with Cost 4 or less on your opponent's stage to Waiting state. (Blades held by Waiting state members do not increase the number of cards revealed by Yell.)",
       "volume_icons": 0,
@@ -49289,17 +48881,17 @@
           ]
         },
         {
-          "raw_text": "TRIGGER: ON_REVEAL\nEFFECT: TAP_MEMBER(99) {TARGET=\"OPPONENT\", FILTER=\"COST_LE_4\"}",
+          "raw_text": "TRIGGER: ON_REVEAL\nEFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_4\"}",
           "trigger": 9,
           "effects": [
             {
-              "effect_type": 53,
+              "effect_type": 32,
               "value": 99,
               "value_cond": 0,
               "target": 1,
               "params": {
-                "target": "opponent",
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -49310,9 +48902,9 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            53,
+            32,
             99,
-            99,
+            1224736768,
             1,
             1,
             0,
@@ -49322,16 +48914,16 @@
           "requires_selection": false,
           "choice_flags": 0,
           "choice_count": 0,
-          "pseudocode": "TRIGGER: ON_REVEAL\nEFFECT: TAP_MEMBER(99) {TARGET=\"OPPONENT\", FILTER=\"COST_LE_4\"}",
+          "pseudocode": "TRIGGER: ON_REVEAL\nEFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_4\"}",
           "instructions": [
             {
-              "effect_type": 53,
+              "effect_type": 32,
               "value": 99,
               "value_cond": 0,
               "target": 1,
               "params": {
-                "target": "opponent",
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -49341,7 +48933,7 @@
       ],
       "img_path": "cards_webp/PL!N-bp3-N-023-N.webp",
       "rare": "N",
-      "ability_text": "TRIGGER: ON_PLAY\nTRIGGER: ON_LIVE_START\nEFFECT: CHEER_REVEAL(1) (Optional) -> SELF\nTRIGGER: ON_REVEAL\nEFFECT: TAP_MEMBER(99) {TARGET=\"OPPONENT\", FILTER=\"COST_LE_4\"}",
+      "ability_text": "TRIGGER: ON_PLAY\nTRIGGER: ON_LIVE_START\nEFFECT: CHEER_REVEAL(1) (Optional) -> SELF\nTRIGGER: ON_REVEAL\nEFFECT: TAP_OPPONENT(99) {FILTER=\"COST_LE_4\"}",
       "original_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
       "original_text_en": "[On Play] / [Live Start] You may set this member to Waiting state: Set 1 member with Cost 4 or less on your opponent's stage to Waiting state. (Blades held by Waiting state members do not increase the number of cards revealed by Yell.)",
       "volume_icons": 0,
@@ -50243,8 +49835,8 @@
             0,
             1,
             32,
-            99,
-            99,
+            1,
+            0,
             1,
             14,
             1,
@@ -50394,8 +49986,8 @@
             0,
             1,
             32,
-            99,
-            99,
+            1,
+            0,
             1,
             14,
             1,
@@ -50545,8 +50137,8 @@
             0,
             1,
             32,
-            99,
-            99,
+            1,
+            0,
             1,
             14,
             1,
@@ -50696,8 +50288,8 @@
             0,
             1,
             32,
-            99,
-            99,
+            1,
+            0,
             1,
             14,
             1,
@@ -50808,7 +50400,8 @@
               "value_cond": 0,
               "target": 1,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -50831,8 +50424,8 @@
             2,
             6,
             32,
-            99,
-            99,
+            2,
+            1224736768,
             1,
             1,
             0,
@@ -50856,7 +50449,8 @@
               "value_cond": 0,
               "target": 1,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -50918,7 +50512,8 @@
               "value_cond": 0,
               "target": 1,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -50941,8 +50536,8 @@
             2,
             6,
             32,
-            99,
-            99,
+            2,
+            1224736768,
             1,
             1,
             0,
@@ -50966,7 +50561,8 @@
               "value_cond": 0,
               "target": 1,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -51029,7 +50625,8 @@
               "target": 1,
               "params": {
                 "filter": "GROUP_ID=3, COST_LE_4",
-                "group": "3"
+                "group": "3",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -51065,11 +50662,11 @@
             0,
             57,
             1,
-            112,
+            1224736880,
             4,
             53,
-            99,
-            99,
+            1,
+            1,
             1,
             1,
             0,
@@ -51094,7 +50691,8 @@
               "target": 1,
               "params": {
                 "filter": "GROUP_ID=3, COST_LE_4",
-                "group": "3"
+                "group": "3",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -51169,7 +50767,8 @@
               "target": 1,
               "params": {
                 "filter": "GROUP_ID=3, COST_LE_4",
-                "group": "3"
+                "group": "3",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -51205,11 +50804,11 @@
             0,
             57,
             1,
-            112,
+            1224736880,
             4,
             53,
-            99,
-            99,
+            1,
+            1,
             1,
             1,
             0,
@@ -51234,7 +50833,8 @@
               "target": 1,
               "params": {
                 "filter": "GROUP_ID=3, COST_LE_4",
-                "group": "3"
+                "group": "3",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -52410,10 +52010,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             30,
             2,
             0,
@@ -52600,10 +52196,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             30,
             2,
             0,
@@ -55295,10 +54887,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             80,
@@ -55597,10 +55185,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             80,
@@ -56752,10 +56336,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             10,
             1,
             0,
@@ -56938,10 +56518,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             10,
             1,
             0,
@@ -57888,12 +57464,9 @@
           ],
           "conditions": [
             {
-              "type": 203,
+              "type": 244,
               "params": {
-                "raw_cond": "OPPONENT_HAS_WAIT",
-                "target": "opponent",
-                "filter": "tapped",
-                "min": 1
+                "raw_cond": "OPPONENT_HAS_WAIT"
               },
               "is_negated": false
             }
@@ -57913,12 +57486,8 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            31,
-            1,
+            244,
             0,
-            7,
-            203,
-            1,
             0,
             0,
             10,
@@ -57946,12 +57515,9 @@
               "is_optional": false
             },
             {
-              "type": 203,
+              "type": 244,
               "params": {
-                "raw_cond": "OPPONENT_HAS_WAIT",
-                "target": "opponent",
-                "filter": "tapped",
-                "min": 1
+                "raw_cond": "OPPONENT_HAS_WAIT"
               },
               "is_negated": false
             },
@@ -58027,12 +57593,9 @@
           ],
           "conditions": [
             {
-              "type": 203,
+              "type": 244,
               "params": {
-                "raw_cond": "OPPONENT_HAS_WAIT",
-                "target": "opponent",
-                "filter": "tapped",
-                "min": 1
+                "raw_cond": "OPPONENT_HAS_WAIT"
               },
               "is_negated": false
             }
@@ -58052,12 +57615,8 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            31,
-            1,
+            244,
             0,
-            7,
-            203,
-            1,
             0,
             0,
             10,
@@ -58085,12 +57644,9 @@
               "is_optional": false
             },
             {
-              "type": 203,
+              "type": 244,
               "params": {
-                "raw_cond": "OPPONENT_HAS_WAIT",
-                "target": "opponent",
-                "filter": "tapped",
-                "min": 1
+                "raw_cond": "OPPONENT_HAS_WAIT"
               },
               "is_negated": false
             },
@@ -59571,8 +59127,8 @@
           "bytecode": [
             11,
             1,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,
@@ -59729,8 +59285,8 @@
           "bytecode": [
             11,
             1,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,
@@ -60252,7 +59808,8 @@
               "params": {
                 "filter": "NAME=上原步梦, COST_LE_4",
                 "zone": "HAND",
-                "name": "上原步梦"
+                "name": "上原步梦",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -60285,7 +59842,7 @@
             0,
             65,
             1,
-            24576,
+            1224761344,
             1,
             57,
             1,
@@ -60315,7 +59872,8 @@
               "params": {
                 "filter": "NAME=上原步梦, COST_LE_4",
                 "zone": "HAND",
-                "name": "上原步梦"
+                "name": "上原步梦",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -60443,7 +60001,8 @@
               "params": {
                 "filter": "NAME=上原步梦, COST_LE_4",
                 "zone": "HAND",
-                "name": "上原步梦"
+                "name": "上原步梦",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -60476,7 +60035,7 @@
             0,
             65,
             1,
-            24576,
+            1224761344,
             1,
             57,
             1,
@@ -60506,7 +60065,8 @@
               "params": {
                 "filter": "NAME=上原步梦, COST_LE_4",
                 "zone": "HAND",
-                "name": "上原步梦"
+                "name": "上原步梦",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -60910,7 +60470,8 @@
               "params": {
                 "filter": "NAME=樱坂雫, COST_LE_4",
                 "zone": "HAND",
-                "name": "樱坂雫"
+                "name": "樱坂雫",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -60943,7 +60504,7 @@
             0,
             65,
             1,
-            24576,
+            1224761344,
             1,
             57,
             1,
@@ -60973,7 +60534,8 @@
               "params": {
                 "filter": "NAME=樱坂雫, COST_LE_4",
                 "zone": "HAND",
-                "name": "樱坂雫"
+                "name": "樱坂雫",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -61086,7 +60648,8 @@
               "params": {
                 "filter": "NAME=樱坂雫, COST_LE_4",
                 "zone": "HAND",
-                "name": "樱坂雫"
+                "name": "樱坂雫",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -61119,7 +60682,7 @@
             0,
             65,
             1,
-            24576,
+            1224761344,
             1,
             57,
             1,
@@ -61149,7 +60712,8 @@
               "params": {
                 "filter": "NAME=樱坂雫, COST_LE_4",
                 "zone": "HAND",
-                "name": "樱坂雫"
+                "name": "樱坂雫",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -61456,7 +61020,8 @@
               "params": {
                 "filter": "NAME=宫下爱, COST_LE_4",
                 "zone": "HAND",
-                "name": "宫下爱"
+                "name": "宫下爱",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -61489,7 +61054,7 @@
             0,
             65,
             1,
-            24576,
+            1224761344,
             1,
             57,
             1,
@@ -61519,7 +61084,8 @@
               "params": {
                 "filter": "NAME=宫下爱, COST_LE_4",
                 "zone": "HAND",
-                "name": "宫下爱"
+                "name": "宫下爱",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -61647,7 +61213,8 @@
               "params": {
                 "filter": "NAME=宫下爱, COST_LE_4",
                 "zone": "HAND",
-                "name": "宫下爱"
+                "name": "宫下爱",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -61680,7 +61247,7 @@
             0,
             65,
             1,
-            24576,
+            1224761344,
             1,
             57,
             1,
@@ -61710,7 +61277,8 @@
               "params": {
                 "filter": "NAME=宫下爱, COST_LE_4",
                 "zone": "HAND",
-                "name": "宫下爱"
+                "name": "宫下爱",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -63054,7 +62622,8 @@
               "params": {
                 "filter": "NAME=ミア·テイラー, COST_LE_4",
                 "zone": "HAND",
-                "name": "ミア·テイラー"
+                "name": "ミア·テイラー",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -63087,7 +62656,7 @@
             0,
             65,
             1,
-            24576,
+            1224761344,
             1,
             57,
             1,
@@ -63117,7 +62686,8 @@
               "params": {
                 "filter": "NAME=ミア·テイラー, COST_LE_4",
                 "zone": "HAND",
-                "name": "ミア·テイラー"
+                "name": "ミア·テイラー",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -63245,7 +62815,8 @@
               "params": {
                 "filter": "NAME=ミア·テイラー, COST_LE_4",
                 "zone": "HAND",
-                "name": "ミア·テイラー"
+                "name": "ミア·テイラー",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -63278,7 +62849,7 @@
             0,
             65,
             1,
-            24576,
+            1224761344,
             1,
             57,
             1,
@@ -63308,7 +62879,8 @@
               "params": {
                 "filter": "NAME=ミア·テイラー, COST_LE_4",
                 "zone": "HAND",
-                "name": "ミア·テイラー"
+                "name": "ミア·テイラー",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -64977,10 +64549,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            2,
-            0,
-            6,
             17,
             1,
             0,
@@ -65087,10 +64655,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             0,
@@ -65309,10 +64873,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            2,
-            0,
-            6,
             15,
             1,
             0,
@@ -65514,14 +65074,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
-            58,
-            1,
-            0,
-            6,
             15,
             1,
             0,
@@ -65569,7 +65121,7 @@
       "original_text_en": "[Activate] [Turn 1] (E)(E), Put 1 card from your hand into the waiting room: Add 1 'Nijigasaki' Live card from your waiting room to your hand.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 18,
+      "semantic_flags": 2,
       "ability_flags": 5,
       "synergy_flags": 0,
       "cost_flags": 1,
@@ -65816,10 +65368,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -68073,10 +67621,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             0,
@@ -68295,10 +67839,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -68580,10 +68120,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             0,
@@ -71229,14 +70765,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            40,
-            1,
-            0,
-            6,
-            31,
-            0,
-            1,
-            0,
             14,
             2,
             0,
@@ -71399,14 +70927,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            40,
-            1,
-            0,
-            6,
-            31,
-            0,
-            1,
-            0,
             14,
             2,
             0,
@@ -71569,14 +71089,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            40,
-            1,
-            0,
-            6,
-            31,
-            0,
-            1,
-            0,
             14,
             2,
             0,
@@ -71739,14 +71251,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            40,
-            1,
-            0,
-            6,
-            31,
-            0,
-            1,
-            0,
             14,
             2,
             0,
@@ -73383,10 +72887,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -73668,10 +73168,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -74290,10 +73786,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             0,
@@ -74621,10 +74113,6 @@
             0,
             0,
             0,
-            53,
-            1,
-            0,
-            4,
             60,
             1,
             0,
@@ -74699,7 +74187,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 18,
-      "ability_flags": 2049,
+      "ability_flags": 1,
       "synergy_flags": 8,
       "cost_flags": 2,
       "faq": [
@@ -74958,10 +74446,6 @@
             0,
             0,
             0,
-            53,
-            1,
-            0,
-            4,
             60,
             1,
             0,
@@ -75036,7 +74520,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 18,
-      "ability_flags": 2049,
+      "ability_flags": 1,
       "synergy_flags": 8,
       "cost_flags": 2,
       "faq": [
@@ -75295,10 +74779,6 @@
             0,
             0,
             0,
-            53,
-            1,
-            0,
-            4,
             60,
             1,
             0,
@@ -75373,7 +74853,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 18,
-      "ability_flags": 2049,
+      "ability_flags": 1,
       "synergy_flags": 8,
       "cost_flags": 2,
       "faq": [
@@ -75632,10 +75112,6 @@
             0,
             0,
             0,
-            53,
-            1,
-            0,
-            4,
             60,
             1,
             0,
@@ -75710,7 +75186,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 18,
-      "ability_flags": 2049,
+      "ability_flags": 1,
       "synergy_flags": 8,
       "cost_flags": 2,
       "faq": [
@@ -76236,10 +75712,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             10,
             3,
             0,
@@ -76303,14 +75775,10 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            6,
             11,
             2,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -76488,8 +75956,8 @@
             6,
             11,
             2,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -76667,8 +76135,8 @@
             6,
             11,
             2,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -76846,8 +76314,8 @@
             6,
             11,
             2,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -77476,14 +76944,6 @@
             0,
             0,
             0,
-            53,
-            0,
-            0,
-            4,
-            58,
-            1,
-            0,
-            6,
             65,
             1,
             32816,
@@ -77577,7 +77037,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 18,
-      "ability_flags": 2049,
+      "ability_flags": 1,
       "synergy_flags": 8,
       "cost_flags": 3,
       "faq": [
@@ -77717,14 +77177,6 @@
             0,
             0,
             0,
-            53,
-            0,
-            0,
-            4,
-            58,
-            1,
-            0,
-            6,
             65,
             1,
             32816,
@@ -77818,7 +77270,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 18,
-      "ability_flags": 2049,
+      "ability_flags": 1,
       "synergy_flags": 8,
       "cost_flags": 3,
       "faq": [
@@ -77958,14 +77410,6 @@
             0,
             0,
             0,
-            53,
-            0,
-            0,
-            4,
-            58,
-            1,
-            0,
-            6,
             65,
             1,
             32816,
@@ -78059,7 +77503,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 18,
-      "ability_flags": 2049,
+      "ability_flags": 1,
       "synergy_flags": 8,
       "cost_flags": 3,
       "faq": [
@@ -78199,14 +77643,6 @@
             0,
             0,
             0,
-            53,
-            0,
-            0,
-            4,
-            58,
-            1,
-            0,
-            6,
             65,
             1,
             32816,
@@ -78300,7 +77736,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 18,
-      "ability_flags": 2049,
+      "ability_flags": 1,
       "synergy_flags": 8,
       "cost_flags": 3,
       "faq": [
@@ -78409,10 +77845,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             67,
             1,
             0,
@@ -78569,10 +78001,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             67,
             1,
             0,
@@ -78728,10 +78156,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -78997,10 +78421,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -79638,7 +79058,8 @@
               "value_cond": 0,
               "target": 2,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -79661,8 +79082,8 @@
             2,
             4,
             32,
-            99,
-            99,
+            1,
+            1224736768,
             2,
             1,
             0,
@@ -79686,7 +79107,8 @@
               "value_cond": 0,
               "target": 2,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -79703,7 +79125,8 @@
               "value_cond": 0,
               "target": 2,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -79726,8 +79149,8 @@
             2,
             4,
             32,
-            99,
-            99,
+            1,
+            1224736768,
             2,
             1,
             0,
@@ -79751,7 +79174,8 @@
               "value_cond": 0,
               "target": 2,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -79958,8 +79382,8 @@
           "bytecode": [
             13,
             -1,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,
@@ -80070,7 +79494,8 @@
               "value_cond": 0,
               "target": 1,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -80093,8 +79518,8 @@
             2,
             4,
             32,
-            99,
-            99,
+            1,
+            1224736768,
             1,
             1,
             0,
@@ -80118,7 +79543,8 @@
               "value_cond": 0,
               "target": 1,
               "params": {
-                "filter": "COST_LE_4"
+                "filter": "COST_LE_4",
+                "cost_max": 4
               },
               "is_optional": false,
               "modal_options": []
@@ -81602,10 +81028,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -81887,10 +81309,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -86664,10 +86082,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            40,
-            0,
-            0,
-            6,
             60,
             1,
             0,
@@ -86984,10 +86398,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            40,
-            0,
-            0,
-            6,
             60,
             1,
             0,
@@ -87304,10 +86714,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            40,
-            0,
-            0,
-            6,
             60,
             1,
             0,
@@ -87624,10 +87030,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            40,
-            0,
-            0,
-            6,
             60,
             1,
             0,
@@ -88164,10 +87566,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             41,
             5,
             32881,
@@ -88278,10 +87676,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             41,
             5,
             32881,
@@ -89332,10 +88726,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             10,
             1,
             0,
@@ -89391,7 +88781,7 @@
       "original_text_en": "[Activate] [Once per Turn] (E): Draw 1 card, then put 1 card from your hand into the waiting room.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
+      "semantic_flags": 10,
       "ability_flags": 1,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -89466,10 +88856,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             10,
             1,
             0,
@@ -89525,7 +88911,7 @@
       "original_text_en": "[Activate] [Once per Turn] (E): Draw 1 card, then put 1 card from your hand into the waiting room.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
+      "semantic_flags": 10,
       "ability_flags": 1,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -89598,10 +88984,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             58,
             1,
             2,
@@ -89655,7 +89037,7 @@
       "original_text_en": "[Activate] [Once per Turn] (E)(E), Put 1 card from your hand into the waiting room: Look at the top 5 cards of your deck. You may reveal 1 'Liella!' card among them and add it to your hand. Put the rest into the waiting room.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
+      "semantic_flags": 10,
       "ability_flags": 1,
       "synergy_flags": 0,
       "cost_flags": 1,
@@ -89728,14 +89110,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
-            58,
-            1,
-            0,
-            6,
             41,
             5,
             32881,
@@ -89785,7 +89159,7 @@
       "original_text_en": "[Activate] [Once per Turn] (E)(E), Put 1 card from your hand into the waiting room: Look at the top 5 cards of your deck. You may reveal 1 'Liella!' card among them and add it to your hand. Put the rest into the waiting room.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
+      "semantic_flags": 10,
       "ability_flags": 1,
       "synergy_flags": 0,
       "cost_flags": 1,
@@ -89850,10 +89224,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -90135,10 +89505,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -93365,10 +92731,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             47,
             1,
             0,
@@ -93576,10 +92938,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             47,
             1,
             0,
@@ -93787,10 +93145,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             47,
             1,
             0,
@@ -93998,10 +93352,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            1,
-            0,
-            6,
             47,
             1,
             0,
@@ -94364,10 +93714,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             72,
             1,
             0,
@@ -94470,10 +93816,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
             72,
             1,
             0,
@@ -102763,14 +102105,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
-            53,
-            1,
-            0,
-            4,
             23,
             1,
             1,
@@ -102819,8 +102153,8 @@
       "original_text_en": "[Activate] [Turn 1] (E), set this member to Waiting state: Place 1 Energy card from your Energy Deck into your Energy Area in Waiting state.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
-      "ability_flags": 2065,
+      "semantic_flags": 10,
+      "ability_flags": 17,
       "synergy_flags": 0,
       "cost_flags": 2,
       "faq": []
@@ -102891,14 +102225,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            1,
-            0,
-            0,
-            53,
-            1,
-            0,
-            4,
             23,
             1,
             1,
@@ -102947,8 +102273,8 @@
       "original_text_en": "[Activate] [Turn 1] (E), set this member to Waiting state: Place 1 Energy card from your Energy Deck into your Energy Area in Waiting state.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
-      "ability_flags": 2065,
+      "semantic_flags": 10,
+      "ability_flags": 17,
       "synergy_flags": 0,
       "cost_flags": 2,
       "faq": []
@@ -103026,8 +102352,8 @@
           "is_once_per_turn": false,
           "bytecode": [
             32,
-            99,
-            99,
+            1,
+            0,
             1,
             1,
             0,
@@ -103139,8 +102465,8 @@
           "is_once_per_turn": false,
           "bytecode": [
             32,
-            99,
-            99,
+            1,
+            0,
             1,
             1,
             0,
@@ -103252,8 +102578,8 @@
           "is_once_per_turn": false,
           "bytecode": [
             32,
-            99,
-            99,
+            1,
+            0,
             1,
             1,
             0,
@@ -103365,8 +102691,8 @@
           "is_once_per_turn": false,
           "bytecode": [
             32,
-            99,
-            99,
+            1,
+            0,
             1,
             1,
             0,
@@ -103707,10 +103033,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             0,
@@ -104040,10 +103362,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             0,
@@ -104152,10 +103470,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             0,
@@ -106025,10 +105339,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            3,
-            0,
-            0,
             10,
             1,
             0,
@@ -106374,10 +105684,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            64,
-            3,
-            0,
-            0,
             10,
             1,
             0,
@@ -109010,10 +108316,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -109428,10 +108730,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             17,
             1,
             0,
@@ -110279,10 +109577,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            3,
-            0,
-            0,
             15,
             1,
             0,
@@ -110324,7 +109618,7 @@
       "original_text_en": "[Activate] [Turn 1] (E)(E)(E): Add 1 Live card from your waiting room to your hand.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
+      "semantic_flags": 10,
       "ability_flags": 5,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -110389,10 +109683,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            58,
-            0,
-            0,
-            4,
             15,
             1,
             0,
@@ -111074,10 +110364,6 @@
           "modal_options": [],
           "is_once_per_turn": true,
           "bytecode": [
-            64,
-            2,
-            0,
-            0,
             23,
             1,
             1,
@@ -111120,7 +110406,7 @@
       "original_text_en": "[Activate] [Turn 1] (E)(E): Place 1 Energy card from your Energy Deck into your Energy Area in Waiting state.",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 26,
+      "semantic_flags": 10,
       "ability_flags": 17,
       "synergy_flags": 0,
       "cost_flags": 0,
@@ -112395,8 +111681,8 @@
             1793,
             16,
             1,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,
@@ -112489,7 +111775,7 @@
           ],
           "conditions": [
             {
-              "type": 224,
+              "type": 240,
               "params": {
                 "min": 10,
                 "area": "STAGE",
@@ -112502,7 +111788,7 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            224,
+            240,
             10,
             0,
             0,
@@ -112521,7 +111807,7 @@
           "pseudocode": "TRIGGER: ON_LIVE_START\nCONDITION: TOTAL_BLADES {MIN=10, AREA=\"STAGE\"}\nEFFECT: REDUCE_HEART_REQ(2) -> SELF",
           "instructions": [
             {
-              "type": 224,
+              "type": 240,
               "params": {
                 "min": 10,
                 "area": "STAGE",
@@ -113003,11 +112289,9 @@
           ],
           "conditions": [
             {
-              "type": 223,
+              "type": 238,
               "params": {
-                "raw_cond": "HAS_EXCESS_HEART",
-                "context": "excess",
-                "min": 1
+                "raw_cond": "HAS_EXCESS_HEART"
               },
               "is_negated": true
             }
@@ -113016,10 +112300,10 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            1223,
-            1,
+            1238,
             0,
-            2,
+            0,
+            0,
             16,
             1,
             0,
@@ -113035,11 +112319,9 @@
           "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: NOT HAS_EXCESS_HEART\nEFFECT: BOOST_SCORE(1) -> PLAYER",
           "instructions": [
             {
-              "type": 223,
+              "type": 238,
               "params": {
-                "raw_cond": "HAS_EXCESS_HEART",
-                "context": "excess",
-                "min": 1
+                "raw_cond": "HAS_EXCESS_HEART"
               },
               "is_negated": true
             },
@@ -113366,11 +112648,10 @@
           ],
           "conditions": [
             {
-              "type": 223,
+              "type": 237,
               "params": {
                 "min": 1,
-                "raw_cond": "HEART_LEAD",
-                "comparison": "GE"
+                "raw_cond": "HEART_LEAD"
               },
               "is_negated": false
             }
@@ -113379,7 +112660,7 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            223,
+            237,
             1,
             0,
             0,
@@ -113398,11 +112679,10 @@
           "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: HEART_LEAD {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER",
           "instructions": [
             {
-              "type": 223,
+              "type": 237,
               "params": {
                 "min": 1,
-                "raw_cond": "HEART_LEAD",
-                "comparison": "GE"
+                "raw_cond": "HEART_LEAD"
               },
               "is_negated": false
             },
@@ -114227,12 +113507,10 @@
           ],
           "conditions": [
             {
-              "type": 223,
+              "type": 238,
               "params": {
                 "filter": "COLOR_PINK",
-                "raw_cond": "HAS_EXCESS_HEART",
-                "context": "excess",
-                "min": 1
+                "raw_cond": "HAS_EXCESS_HEART"
               },
               "is_negated": false
             }
@@ -114241,10 +113519,10 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            223,
-            1,
+            238,
             0,
-            2,
+            0,
+            0,
             10,
             1,
             0,
@@ -114260,12 +113538,10 @@
           "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: HAS_EXCESS_HEART {FILTER=\"COLOR_PINK\"}\nEFFECT: DRAW(1) -> PLAYER",
           "instructions": [
             {
-              "type": 223,
+              "type": 238,
               "params": {
                 "filter": "COLOR_PINK",
-                "raw_cond": "HAS_EXCESS_HEART",
-                "context": "excess",
-                "min": 1
+                "raw_cond": "HAS_EXCESS_HEART"
               },
               "is_negated": false
             },
@@ -114795,12 +114071,9 @@
           ],
           "conditions": [
             {
-              "type": 203,
+              "type": 244,
               "params": {
-                "raw_cond": "OPPONENT_HAS_WAIT",
-                "target": "opponent",
-                "filter": "tapped",
-                "min": 1
+                "raw_cond": "OPPONENT_HAS_WAIT"
               },
               "is_negated": false
             }
@@ -114809,8 +114082,8 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            203,
-            1,
+            244,
+            0,
             0,
             0,
             48,
@@ -114828,12 +114101,9 @@
           "pseudocode": "TRIGGER: ON_LIVE_START\nCONDITION: OPPONENT_HAS_WAIT\nEFFECT: REDUCE_HEART_REQ(2) -> SELF\n\n",
           "instructions": [
             {
-              "type": 203,
+              "type": 244,
               "params": {
-                "raw_cond": "OPPONENT_HAS_WAIT",
-                "target": "opponent",
-                "filter": "tapped",
-                "min": 1
+                "raw_cond": "OPPONENT_HAS_WAIT"
               },
               "is_negated": false
             },
@@ -117714,8 +116984,8 @@
           "bytecode": [
             16,
             2,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,
@@ -118903,7 +118173,8 @@
               "target": 0,
               "params": {
                 "per_card": "UNIQUE_HEART_COLORS",
-                "filter": "GROUP_ID=2"
+                "filter": "GROUP_ID=2",
+                "group": "2"
               },
               "is_optional": false,
               "modal_options": []
@@ -118916,8 +118187,8 @@
           "bytecode": [
             16,
             1,
-            0,
-            0,
+            82,
+            203,
             1,
             0,
             0,
@@ -118935,7 +118206,8 @@
               "target": 0,
               "params": {
                 "per_card": "UNIQUE_HEART_COLORS",
-                "filter": "GROUP_ID=2"
+                "filter": "GROUP_ID=2",
+                "group": "2"
               },
               "is_optional": false,
               "modal_options": []
@@ -119298,8 +118570,8 @@
           "bytecode": [
             12,
             3,
-            0,
-            1,
+            2,
+            203,
             1,
             0,
             0,
@@ -120326,8 +119598,8 @@
           "bytecode": [
             16,
             1,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,
@@ -121042,7 +120314,8 @@
               "target": 0,
               "params": {
                 "per_card": "SUCCESS_LIVE",
-                "filter": "NAME=EMOTION"
+                "filter": "NAME=EMOTION",
+                "name": "EMOTION"
               },
               "is_optional": false,
               "modal_options": []
@@ -121067,8 +120340,8 @@
           "bytecode": [
             16,
             2,
-            0,
-            0,
+            2,
+            203,
             61,
             3,
             0,
@@ -121090,7 +120363,8 @@
               "target": 0,
               "params": {
                 "per_card": "SUCCESS_LIVE",
-                "filter": "NAME=EMOTION"
+                "filter": "NAME=EMOTION",
+                "name": "EMOTION"
               },
               "is_optional": false,
               "modal_options": []
@@ -122717,7 +121991,7 @@
           ],
           "conditions": [
             {
-              "type": 224,
+              "type": 240,
               "params": {
                 "min": 10,
                 "area": "STAGE",
@@ -122730,7 +122004,7 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            224,
+            240,
             10,
             0,
             0,
@@ -122749,7 +122023,7 @@
           "pseudocode": "TRIGGER: ON_LIVE_START\nCONDITION: TOTAL_BLADES {MIN=10, AREA=\"STAGE\"}\nEFFECT: BOOST_SCORE(1) -> SELF",
           "instructions": [
             {
-              "type": 224,
+              "type": 240,
               "params": {
                 "min": 10,
                 "area": "STAGE",
@@ -124734,10 +124008,6 @@
           "modal_options": [],
           "is_once_per_turn": false,
           "bytecode": [
-            31,
-            1,
-            0,
-            7,
             65,
             1,
             32768,
@@ -124907,7 +124177,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "TRIGGER: ON_LIVE_START\nCONDITION: HAS_MEMBER {FILTER=\"GROUP_ID=1, COST_GE=9\", AREA=\"CENTER\"}\nEFFECT: SELECT_MODE(1)\n  OPTION: ブレード | EFFECT: SELECT_MEMBER(1) -> TARGET; ADD_BLADES(2) -> TARGET\n  OPTION: WAIT | EFFECT: TAP_MEMBER(1) {TARGET=\"OPPONENT\", FILTER=\"COST_LE_4\"}",
+          "raw_text": "TRIGGER: ON_LIVE_START\nCONDITION: HAS_MEMBER {FILTER=\"GROUP_ID=1, COST_GE=9\", AREA=\"CENTER\"}\nEFFECT: SELECT_MODE(1)\n  OPTION: ブレード | EFFECT: SELECT_MEMBER(1) -> TARGET; ADD_BLADES(2) -> TARGET\n  OPTION: WAIT | EFFECT: TAP_OPPONENT(1) {FILTER=\"COST_LE_4\"}",
           "trigger": 2,
           "effects": [
             {
@@ -124945,13 +124215,13 @@
                 ],
                 [
                   {
-                    "effect_type": 53,
+                    "effect_type": 32,
                     "value": 1,
                     "value_cond": 0,
                     "target": 1,
                     "params": {
-                      "target": "opponent",
-                      "filter": "COST_LE_4"
+                      "filter": "COST_LE_4",
+                      "cost_max": 4
                     },
                     "is_optional": false,
                     "modal_options": []
@@ -125003,9 +124273,9 @@
             3,
             0,
             0,
-            53,
-            99,
-            99,
+            32,
+            1,
+            1224736768,
             1,
             2,
             1,
@@ -125019,7 +124289,7 @@
           "requires_selection": false,
           "choice_flags": 2,
           "choice_count": 2,
-          "pseudocode": "TRIGGER: ON_LIVE_START\nCONDITION: HAS_MEMBER {FILTER=\"GROUP_ID=1, COST_GE=9\", AREA=\"CENTER\"}\nEFFECT: SELECT_MODE(1)\n  OPTION: ブレード | EFFECT: SELECT_MEMBER(1) -> TARGET; ADD_BLADES(2) -> TARGET\n  OPTION: WAIT | EFFECT: TAP_MEMBER(1) {TARGET=\"OPPONENT\", FILTER=\"COST_LE_4\"}",
+          "pseudocode": "TRIGGER: ON_LIVE_START\nCONDITION: HAS_MEMBER {FILTER=\"GROUP_ID=1, COST_GE=9\", AREA=\"CENTER\"}\nEFFECT: SELECT_MODE(1)\n  OPTION: ブレード | EFFECT: SELECT_MEMBER(1) -> TARGET; ADD_BLADES(2) -> TARGET\n  OPTION: WAIT | EFFECT: TAP_OPPONENT(1) {FILTER=\"COST_LE_4\"}",
           "instructions": [
             {
               "type": 201,
@@ -125065,13 +124335,13 @@
                 ],
                 [
                   {
-                    "effect_type": 53,
+                    "effect_type": 32,
                     "value": 1,
                     "value_cond": 0,
                     "target": 1,
                     "params": {
-                      "target": "opponent",
-                      "filter": "COST_LE_4"
+                      "filter": "COST_LE_4",
+                      "cost_max": 4
                     },
                     "is_optional": false,
                     "modal_options": []
@@ -125088,7 +124358,7 @@
       "units": [],
       "img_path": "cards_webp/PL!S-bp3-L-024-L.webp",
       "rare": "L",
-      "ability_text": "TRIGGER: ON_LIVE_START\nCONDITION: HAS_MEMBER {FILTER=\"GROUP_ID=1, COST_GE=9\", AREA=\"CENTER\"}\nEFFECT: SELECT_MODE(1)\n  OPTION: ブレード | EFFECT: SELECT_MEMBER(1) -> TARGET; ADD_BLADES(2) -> TARGET\n  OPTION: WAIT | EFFECT: TAP_MEMBER(1) {TARGET=\"OPPONENT\", FILTER=\"COST_LE_4\"}",
+      "ability_text": "TRIGGER: ON_LIVE_START\nCONDITION: HAS_MEMBER {FILTER=\"GROUP_ID=1, COST_GE=9\", AREA=\"CENTER\"}\nEFFECT: SELECT_MODE(1)\n  OPTION: ブレード | EFFECT: SELECT_MEMBER(1) -> TARGET; ADD_BLADES(2) -> TARGET\n  OPTION: WAIT | EFFECT: TAP_OPPONENT(1) {FILTER=\"COST_LE_4\"}",
       "original_text": "{{live_start.png|ライブ開始時}}自分のステージのセンターエリアにコスト9以上の『Aqours』のメンバーがいる場合、以下から1つを選ぶ。\n・ライブ終了時まで、自分のステージにいるメンバー1人は、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。",
       "original_text_en": "[Live Start] If you have an 'Aqours' member with Cost 9 or more in your Center Area, choose 1 of the following:\n- 1 member on your stage gets +2 Blades until the end of the live phase.\n- Set 1 member with Cost 4 or less on your opponent's stage to Waiting state.",
       "volume_icons": 0,
@@ -127828,8 +127098,8 @@
           "bytecode": [
             48,
             1,
-            0,
-            0,
+            2,
+            203,
             1,
             0,
             0,

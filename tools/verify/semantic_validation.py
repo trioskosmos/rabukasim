@@ -8,8 +8,9 @@ import json
 import re
 import sys
 
-sys.path.insert(0, "game")
-from ability import AbilityParser, ConditionType, EffectType, TriggerType
+sys.path.insert(0, ".")
+from engine.models.ability import ConditionType, EffectType, TriggerType, TargetType
+from compiler.parser_v2 import parse_ability_text
 
 
 def load_cards():
@@ -27,7 +28,7 @@ def validate_card(card):
     issues = []
 
     try:
-        abilities = AbilityParser.parse_ability_text(text)
+        abilities = parse_ability_text(text)
     except Exception as e:
         return [f"PARSE_ERROR: {str(e)[:50]}"]
 
@@ -92,7 +93,7 @@ def validate_card(card):
             if hasattr(e, "params") and e.params
         )
         # Check target type too
-        from ability import TargetType
+        # TargetType already imported at top
 
         has_opponent_target = any(e.target in [TargetType.OPPONENT, TargetType.OPPONENT_HAND] for e in all_effects)
         if not has_opponent_effect and not has_opponent_target:

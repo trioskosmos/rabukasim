@@ -6,6 +6,7 @@ use crate::core::logic::{GameState, CardDatabase, AbilityContext, Condition, Con
 use crate::core::enums::*;
 use super::filter::map_filter_string_to_attr;
 use super::suspension::resolve_target_slot;
+use super::constants::*;
 
 pub fn check_condition(
     state: &GameState, 
@@ -38,13 +39,30 @@ pub fn check_condition(
         
         if let Some(area_str) = params.get("area").and_then(|v| v.as_str()) {
             if area_str == "ANY_STAGE" || area_str == "ALL_AREAS" {
-                mapped_attr |= 1u64 << 40; // Bit 40 for ANY_STAGE/ALL_AREAS
+                mapped_attr |= FILTER_ANY_STAGE;
             }
         }
         
         if let Some(p_val) = params.get("player").and_then(|v| v.as_i64()) {
             if p_val == 2 { // Opponent
-                mapped_attr |= 1u64 << 41; // Bit 41 for explicitly checking opponent
+                mapped_attr |= FILTER_OPPONENT;
+            }
+        }
+
+        if let Some(kw) = params.get("keyword").and_then(|v| v.as_str()) {
+            match kw {
+                "PLAYED_THIS_TURN" | "COUNT_PLAYED_THIS_TURN" => mapped_attr |= KEYWORD_PLAYED_THIS_TURN,
+                "YELL_COUNT" | "COUNT_YELL_REVEALED" => mapped_attr |= KEYWORD_YELL_COUNT,
+                "HAS_LIVE_SET" => mapped_attr |= KEYWORD_HAS_LIVE_SET,
+                "UNIQUE_NAMES" | "COUNT_UNIQUE_NAMES" => mapped_attr |= FILTER_UNIQUE_NAMES,
+                "REVEALED_CONTAINS" => {
+                    mapped_attr |= FILTER_REVEALED_CONTEXT;
+                    if let Some(val_str) = params.get("value").and_then(|v| v.as_str()) {
+                        if val_str == "live" { val = 1; }
+                        else if val_str == "member" { val = 2; }
+                    }
+                }
+                _ => {}
             }
         }
 
@@ -70,6 +88,105 @@ pub fn check_condition(
         return true;
     }
     result
+}
+
+pub fn resolve_count(
+    state: &GameState, 
+    db: &CardDatabase, 
+    op: i32,
+    attr: u64,
+    ctx: &AbilityContext, 
+    depth: u32
+) -> i32 {
+    let p_idx = ctx.player_id as usize;
+    let player = &state.core.players[p_idx];
+    let opponent = &state.core.players[1 - p_idx];
+
+    match op {
+        C_COUNT_STAGE => {
+            let filter_attr = attr & 0x00000000FFFFFFFF; 
+            let include_opponent = (attr & (1u64 << 40)) != 0 || (attr & (1u64 << 41)) != 0;
+            let only_opponent = (attr & (1u64 << 41)) != 0 && (attr & (1u64 << 40)) == 0;
+
+            let mut ids = Vec::new();
+            if !only_opponent { ids.extend(player.stage.iter().filter(|&&id| id >= 0)); }
+            if include_opponent { ids.extend(opponent.stage.iter().filter(|&&id| id >= 0)); }
+
+            if (attr & 0x8000) != 0 { // UNIQUE_NAMES
+                let mut names = std::collections::HashSet::new();
+                for &&id in &ids {
+                    if state.card_matches_filter(db, id, filter_attr) {
+                        if let Some(m) = db.get_member(id) { names.insert(&m.name); }
+                        else if let Some(l) = db.get_live(id) { names.insert(&l.name); }
+                    }
+                }
+                names.len() as i32
+            } else {
+                ids.into_iter().filter(|&&id| state.card_matches_filter(db, id, filter_attr)).count() as i32
+            }
+        },
+        C_COUNT_HAND => {
+            let filter_attr = attr & 0x00000000FFFFFFFF;
+            if (attr & 0x8000) != 0 {
+                let mut names = std::collections::HashSet::new();
+                for &id in player.hand.iter().filter(|&&id| id >= 0) {
+                    if state.card_matches_filter(db, id, filter_attr) {
+                        if let Some(m) = db.get_member(id) { names.insert(&m.name); }
+                    }
+                }
+                names.len() as i32
+            } else {
+                player.hand.iter().filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr)).count() as i32
+            }
+        },
+        C_COUNT_DISCARD => {
+            let filter_attr = attr & 0x00000000FFFFFFFF;
+            if (attr & 0x8000) != 0 {
+                let mut names = std::collections::HashSet::new();
+                for &id in player.discard.iter().filter(|&&id| id >= 0) {
+                    if state.card_matches_filter(db, id, filter_attr) {
+                        if let Some(m) = db.get_member(id) { names.insert(&m.name); }
+                    }
+                }
+                names.len() as i32
+            } else {
+                player.discard.iter().filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr)).count() as i32
+            }
+        },
+        C_COUNT_ENERGY => player.energy_zone.len() as i32,
+        C_COUNT_SUCCESS_LIVE => {
+            let filter_attr = attr & 0x00000000FFFFFFFF;
+            if (attr & 0x8000) != 0 {
+                let mut names = std::collections::HashSet::new();
+                for &id in player.success_lives.iter().filter(|&&id| id >= 0) {
+                    if state.card_matches_filter(db, id, filter_attr) {
+                        if let Some(l) = db.get_live(id) { names.insert(&l.name); }
+                    }
+                }
+                names.len() as i32
+            } else {
+                player.success_lives.iter().filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr)).count() as i32
+            }
+        },
+        C_COUNT_BLADES => {
+             // Total appeal on stage
+             let mut sum = 0;
+             for i in 0..3 {
+                 sum += state.get_effective_blades(p_idx, i, db, depth) as i32;
+             }
+             sum
+        },
+        C_COUNT_HEARTS => {
+            let hearts = state.get_total_hearts(p_idx, db, depth).to_array();
+            let color_idx = (attr >> 8) & 0x0F;
+            if color_idx == 0 || color_idx > 7 {
+                hearts.iter().map(|&x| x as i32).sum()
+            } else {
+                hearts[(color_idx - 1) as usize] as i32
+            }
+        },
+        _ => 0
+    }
 }
 
 pub fn check_condition_opcode(
@@ -139,61 +256,11 @@ pub fn check_condition_opcode(
                 } else { false }
             }
         },
-        C_COUNT_STAGE => {
-            let filter_attr = attr & 0x00000000FFFFFFFF; 
-            let include_opponent = (attr & (1u64 << 40)) != 0 || (attr & (1u64 << 41)) != 0;
-            let only_opponent = (attr & (1u64 << 41)) != 0 && (attr & (1u64 << 40)) == 0;
-
-            let mut ids = Vec::new();
-            if !only_opponent { ids.extend(player.stage.iter().filter(|&&id| id >= 0)); }
-            if include_opponent { ids.extend(opponent.stage.iter().filter(|&&id| id >= 0)); }
-
-            let count = if (attr & 0x8000) != 0 { // UNIQUE_NAMES
-                let mut names = std::collections::HashSet::new();
-                for &&id in &ids {
-                    if state.card_matches_filter(db, id, filter_attr) {
-                        if let Some(m) = db.get_member(id) { names.insert(&m.name); }
-                        else if let Some(l) = db.get_live(id) { names.insert(&l.name); }
-                    }
-                }
-                names.len() as i32
-            } else {
-                ids.into_iter().filter(|&&id| state.card_matches_filter(db, id, filter_attr)).count() as i32
-            };
-            count >= val
-        },
+        C_COUNT_STAGE => resolve_count(state, db, op, attr, ctx, depth) >= val,
         C_IS_CENTER => ctx.area_idx == 1,
-        C_COUNT_HAND => {
-            let filter_attr = attr & 0x00000000FFFFFFFF;
-            let count = if (attr & 0x8000) != 0 {
-                let mut names = std::collections::HashSet::new();
-                for &id in player.hand.iter().filter(|&&id| id >= 0) {
-                    if state.card_matches_filter(db, id, filter_attr) {
-                        if let Some(m) = db.get_member(id) { names.insert(&m.name); }
-                    }
-                }
-                names.len() as i32
-            } else {
-                player.hand.iter().filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr)).count() as i32
-            };
-            count >= val
-        },
-        C_COUNT_DISCARD => {
-            let filter_attr = attr & 0x00000000FFFFFFFF;
-            let count = if (attr & 0x8000) != 0 {
-                let mut names = std::collections::HashSet::new();
-                for &id in player.discard.iter().filter(|&&id| id >= 0) {
-                    if state.card_matches_filter(db, id, filter_attr) {
-                        if let Some(m) = db.get_member(id) { names.insert(&m.name); }
-                    }
-                }
-                names.len() as i32
-            } else {
-                player.discard.iter().filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr)).count() as i32
-            };
-            count >= val
-        },
-        C_COUNT_ENERGY => player.energy_zone.len() as i32 >= val,
+        C_COUNT_HAND => resolve_count(state, db, op, attr, ctx, depth) >= val,
+        C_COUNT_DISCARD => resolve_count(state, db, op, attr, ctx, depth) >= val,
+        C_COUNT_ENERGY => resolve_count(state, db, op, attr, ctx, depth) >= val,
         C_HAS_LIVE_CARD => player.live_zone.iter().any(|&cid| cid >= 0),
         COST_ENERGY => {
             let cost_delta = state.calculate_cost_delta(db, ctx.source_card_id, p_idx);
@@ -224,22 +291,7 @@ pub fn check_condition_opcode(
                   db.get_member(cid).map_or(false, |m| m.rarity == val as u8)
              } else { false }
         },
-        C_COUNT_SUCCESS_LIVE => {
-            let filter_attr = attr & 0x00000000FFFFFFFF;
-            let count = if (attr & 0x8000) != 0 {
-                let mut names = std::collections::HashSet::new();
-                for &id in player.success_lives.iter().filter(|&&id| id >= 0) {
-                    if state.card_matches_filter(db, id, filter_attr) {
-                        if let Some(m) = db.get_member(id) { names.insert(&m.name); }
-                        else if let Some(l) = db.get_live(id) { names.insert(&l.name); }
-                    }
-                }
-                names.len() as i32
-            } else {
-                player.success_lives.iter().filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr)).count() as i32
-            };
-            count >= val
-        },
+        C_COUNT_SUCCESS_LIVE => resolve_count(state, db, op, attr, ctx, depth) >= val,
         C_OPPONENT_HAS => {
              let filter_attr = attr & 0x00000000FFFFFFFF;
              opponent.stage.iter().filter(|&&id| id >= 0).any(|&cid| cid == val || (filter_attr != 0 && state.card_matches_filter(db, cid, filter_attr)))
@@ -325,7 +377,28 @@ pub fn check_condition_opcode(
             let opp_energy = opponent.energy_zone.len() as i32;
             (opp_energy - my_energy) >= val
         },
-        C_HAS_KEYWORD => false,
+        C_HAS_KEYWORD => {
+            let mut res = false;
+            if (attr & KEYWORD_PLAYED_THIS_TURN) != 0 {
+                // Heuristic: check if played_group_mask is set or used_abilities is not empty
+                res = player.played_group_mask != 0 || !player.used_abilities.is_empty();
+            }
+            if (attr & KEYWORD_YELL_COUNT) != 0 {
+                res = player.yell_cards.len() as i32 >= val;
+            }
+            if (attr & KEYWORD_HAS_LIVE_SET) != 0 {
+                res = player.live_zone.iter().any(|&c| c >= 0);
+            }
+            if (attr & FILTER_REVEALED_CONTEXT) != 0 {
+                // val=1 is live, val=2 is member
+                if val == 1 {
+                    res = player.looked_cards.iter().any(|&cid| db.get_live(cid).is_some());
+                } else if val == 2 {
+                    res = player.looked_cards.iter().any(|&cid| db.get_member(cid).is_some());
+                }
+            }
+            res
+        },
         C_DECK_REFRESHED => player.get_flag(crate::core::logic::player::PlayerState::FLAG_DECK_REFRESHED),
         C_HAS_MOVED => ctx.area_idx >= 0 && player.is_moved(ctx.area_idx as usize),
         C_HAND_INCREASED => player.hand_increased_this_turn > 0,
@@ -427,6 +500,17 @@ pub fn check_condition_opcode(
             // 相手の場にWAIT（タップ状態）のメンバーがいるか
             (0..3).any(|i| opponent.stage[i] >= 0 && opponent.is_tapped(i))
         },
+        C_IS_TAPPED => {
+            let slot = if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 { ctx.area_idx as usize } else { 0 };
+            player.is_tapped(slot)
+        },
+        C_IS_ACTIVE => {
+            let slot = if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 { ctx.area_idx as usize } else { 0 };
+            !player.is_tapped(slot)
+        },
+        C_LIVE_PERFORMED => state.obtained_success_live[p_idx],
+        C_IS_PLAYER => p_idx == state.current_player as usize,
+        C_IS_OPPONENT => p_idx != state.current_player as usize,
         _ => {
             false
         }

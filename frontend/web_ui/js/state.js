@@ -31,6 +31,10 @@ const stateInternal = {
     lastPerformanceData: null,
     lastAssetsHash: null,
 
+    // Card ID Index for O(1) lookups (performance optimization)
+    cardIndex: null,
+    lastIndexedStateId: null,
+
     // Config
     currentLang: 'jp',
     showFriendlyAbilities: localStorage.getItem('lovelive_friendly_abilities') !== 'false',
@@ -54,24 +58,87 @@ const stateInternal = {
     update: (newData) => {
         if (!newData) {
             State.data = null;
+            State.cardIndex = null;
             return;
         }
         State.data = { ...State.data, ...newData };
+        // Rebuild card index when state updates
+        State.rebuildCardIndex();
+    },
+
+    /**
+     * Rebuilds the card ID index for O(1) lookups.
+     * Called automatically on state update.
+     */
+    rebuildCardIndex: () => {
+        const state = State.data;
+        if (!state || !state.players) {
+            State.cardIndex = null;
+            return;
+        }
+
+        const index = {};
+
+        state.players.forEach((p, playerIdx) => {
+            if (!p) return;
+
+            // Helper to add cards to index
+            const addCard = (card, zone) => {
+                if (card && card.id !== undefined && card.id >= 0) {
+                    // Store first occurrence (or update with more complete data)
+                    if (!index[card.id] || (card.name && !index[card.id].name)) {
+                        index[card.id] = card;
+                    }
+                }
+            };
+
+            // Index all zones
+            if (p.hand) p.hand.forEach(c => addCard(c, 'hand'));
+            if (p.stage) p.stage.forEach(c => addCard(c, 'stage'));
+            if (p.live_zone) p.live_zone.forEach(c => addCard(c, 'live_zone'));
+            if (p.energy) p.energy.forEach(e => { if (e && e.card) addCard(e.card, 'energy'); });
+            if (p.discard) p.discard.forEach(c => addCard(c, 'discard'));
+            if (p.waiting_room) p.waiting_room.forEach(c => addCard(c, 'waiting_room'));
+            if (p.success_lives) p.success_lives.forEach(c => addCard(c, 'success_lives'));
+            if (p.success_pile) p.success_pile.forEach(c => addCard(c, 'success_pile'));
+        });
+
+        // Also index looked_cards
+        if (state.looked_cards) {
+            state.looked_cards.forEach(c => {
+                if (c && c.id !== undefined && c.id >= 0) {
+                    index[c.id] = c;
+                }
+            });
+        }
+
+        State.cardIndex = index;
     },
 
     resolveCardData: (cid) => {
         if (cid === null || cid === undefined || cid < 0) return null;
-        const state = State.data;
-        if (state && state.looked_cards) {
-            const found = state.looked_cards.find(c => c.id === cid);
-            if (found) return found;
+
+        // O(1) lookup using card index
+        if (State.cardIndex && State.cardIndex[cid]) {
+            return State.cardIndex[cid];
         }
+
+        // Fallback: return placeholder
         return { id: cid, name: `Card ${cid}`, img: 'icon_blade.png', text: "", original_text: "" };
     },
 
     resolveCardDataByName: (name) => {
         const state = State.data;
         if (!state) return null;
+
+        // Use card index if available
+        if (State.cardIndex) {
+            for (const card of Object.values(State.cardIndex)) {
+                if (card && card.name === name) return card;
+            }
+        }
+
+        // Fallback to linear search
         for (const p of state.players) {
             if (!p) continue;
             const allZones = [(p.hand || []), (p.stage || []), (p.live_zone || []), (p.energy || []), (p.discard || []), (p.success_lives || p.success_zone || [])];

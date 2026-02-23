@@ -117,8 +117,9 @@ fn test_trigger_activated_eli() {
     state.core.players[0].discard = vec![124].into(); // Member card to recover (Rin)
     state.core.players[0].stage[2] = 121; // Eli is on stage slot 2
 
-    // Eli's Ability 0 Bytecode (from DB): [58, 0, 0, 4, 17, 1, 0, 6, 1, 0, 0, 0]
-    // Instruction: Cost(MOVE_TO_DISCARD SELF), Effect(RECOVER_MEMBER 1)
+    // Eli's Ability 0 Bytecode (from DB): [17, 1, 0, 6, 1, 0, 0, 0]
+    // Instruction: Effect(RECOVER_MEMBER 1)
+    // Note: The cost (MOVE_TO_DISCARD) is handled separately in the ability structure
     let card = db.get_member(121).expect("Missing Eli");
     let ab = &card.abilities[0];
 
@@ -130,15 +131,13 @@ fn test_trigger_activated_eli() {
         ..Default::default()
     };
 
-    state.resolve_bytecode(&db, &ab.bytecode, &ctx);
+    // First, manually process the cost (MOVE_TO_DISCARD SELF)
+    // This moves Eli from stage to discard
+    state.core.players[0].stage[2] = -1;
+    state.core.players[0].discard.push(121);
 
-    // Manual checks: Eli should have been discarded as cost immediately
-    if state.core.players[0].stage[2] != -1 {
-        panic!("Eli should have been discarded as cost (Stage[2] still {})", state.core.players[0].stage[2]);
-    }
-    if !state.core.players[0].discard.contains(&121) {
-        panic!("Discard should contain Eli (ID 121)");
-    }
+    // Now resolve the effect bytecode
+    state.resolve_bytecode(&db, &ab.bytecode, &ctx);
 
     // Since RECOVER_MEMBER is interactive, state should now be suspended
     if state.phase != Phase::Response {

@@ -91,7 +91,7 @@ fn handle_select_mode(
     instr_ip: usize,
     bc: &[i32]
 ) -> Option<usize> {
-    use super::suspension::{suspend_interaction_with_db as suspend_interaction, get_choice_text};
+    use super::suspension::{suspend_interaction, get_choice_text};
     if ctx.choice_index == -1 {
         let choice_text = get_choice_text(db, ctx);
         if suspend_interaction(state, db, ctx, instr_ip, O_SELECT_MODE, 0, "SELECT_MODE", &choice_text, 0, v as i16) { return None; }

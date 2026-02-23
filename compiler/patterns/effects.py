@@ -49,6 +49,22 @@ EFFECT_PATTERNS = [
         },
     ),
     Pattern(
+        name="tap_opponent_pseudocode",
+        phase=PatternPhase.EFFECT,
+        regex=r"TAP_OPPONENT\((\d+)\)",
+        priority=5,
+        consumes=True,
+        output_type="EffectType.TAP_OPPONENT",
+    ),
+    Pattern(
+        name="tap_member_pseudocode",
+        phase=PatternPhase.EFFECT,
+        regex=r"TAP_MEMBER\((\d+)\)",
+        priority=5,
+        consumes=True,
+        output_type="EffectType.TAP_MEMBER",
+    ),
+    Pattern(
         name="draw_one",
         phase=PatternPhase.EFFECT,
         regex=r"引く",
@@ -377,8 +393,9 @@ EFFECT_PATTERNS = [
     Pattern(
         name="tap_opponent",
         phase=PatternPhase.EFFECT,
-        regex=r"相手.*?(\d+)?人?.*?(?:ウェイト|休み)",
-        priority=25,
+        regex=r"相手.*?(\d+)?(?:人|枚)?(?:まで)?.*?(?:ウェイト|休み)",
+        priority=15,
+        consumes=True,
         output_type="EffectType.TAP_OPPONENT",
     ),
     Pattern(

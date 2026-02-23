@@ -185,7 +185,13 @@ impl CardFilter {
             let card_value = if let Some(m) = db.get_member(cid) {
                 m.cost as i32
             } else if let Some(l) = db.get_live(cid) {
-                l.required_hearts.iter().map(|&h| h as i32).sum::<i32>()
+                // Live cards only match cost filters if the card_type filter is explicitly set to Live (2).
+                // This prevents generic "Cost >= X" filters (meant for members) from matching high-heart live cards.
+                if self.card_type == Some(2) {
+                    l.required_hearts.iter().map(|&h| h as i32).sum::<i32>()
+                } else {
+                    return false;
+                }
             } else {
                 return false;
             };

@@ -687,12 +687,28 @@ impl GameState {
                 self.log_turn_event("TRIGGER", cid, ab_idx as i16, p_idx as u8, &format!("[{}] Triggered for {}{}", trigger_str, card_name, p_code));
             }
 
+            let costs = if is_live {
+                &db.get_live(cid).unwrap().abilities[ab_idx as usize].costs
+            } else {
+                &db.get_member(cid).unwrap().abilities[ab_idx as usize].costs
+            };
+
             // Check conditions before resolving bytecode
             let mut all_met = true;
             for cond in conditions {
                 if !self.check_condition_opcode(db, cond.condition_type as i32, cond.value, cond.attr, cond.target_slot as i32, &ab_ctx, 1) {
                     all_met = false;
                     break;
+                }
+            }
+
+            if all_met {
+                // Check costs as well before enqueueing
+                for cost in costs {
+                    if !super::interpreter::costs::check_cost(self, db, p_idx, cost, &ab_ctx) {
+                        all_met = false;
+                        break;
+                    }
                 }
             }
 

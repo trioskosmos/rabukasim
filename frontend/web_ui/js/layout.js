@@ -103,10 +103,10 @@ export function toggleSidebar() {
     document.body.classList.toggle('sidebar-open');
 
     if (isActive) {
-        btn.textContent = '✕';
+        btn.textContent = 'X';
         btn.style.background = '#444';
     } else {
-        btn.textContent = '☰';
+        btn.textContent = '=';
         btn.style.background = 'var(--accent-pink)';
     }
 }

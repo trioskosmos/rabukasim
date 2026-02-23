@@ -64,6 +64,7 @@ mod opcode_coverage_gap_2;
 // mod archetype_runner;
 mod repro_task;
 #[cfg(test)]
+mod repro_bp3_002_p;
 mod repro_card_fixes;
 #[cfg(test)]
 mod semantic_assertions;
@@ -89,6 +90,8 @@ mod repro_bp4_002_p;
 mod opcode_rigor_tests;
 #[cfg(test)]
 mod parity_tests;
+#[cfg(test)]
+mod untested_opcode_tests;
 
 // pub mod repro_pl_bp3_004; // Deleted
 

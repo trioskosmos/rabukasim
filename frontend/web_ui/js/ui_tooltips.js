@@ -11,9 +11,98 @@ let tooltipHideTimeout = null;
 let currentTooltipTarget = null;
 let currentTooltipSidebarTarget = null;
 
+// Pre-compiled regex patterns for performance
+const REGEX_HTML_TAG = /<[^>]+>/g;
+const REGEX_CURLY_TAG = /{{(.*?)\|(.*?)}}/g;
+const REGEX_COLORS = /(ピンク|レッド|赤|イエロー|黄|グリーン|緑|ブルー|青|パープル|紫|オール|Pink|Red|Yellow|Green|Blue|Purple|All)/g;
+const REGEX_MECHANICS = /(ハート|ピース|エナジー|ボルテージ|勧誘|Hearts|Blades|Energy|Voltage|Scout|Yell|RUSH|LIVE|LIVE!|Appeal|HEART|DREAM)/g;
+const REGEX_SUCCESS = /(SUCCESS|成功)/g;
+const REGEX_FAILURE = /(FAILURE|失敗)/g;
+const REGEX_CARD_NUM = /(PL![\w-]+)/g;
+const REGEX_NEWLINE = /\\n/g;
+
+// Pre-built zone regex
+const ZONE_LIST = ['控え室', 'メンバー置場', 'ライブ置場', 'エナジー置場', '待機室', '手札', 'デッキ', '山札', 'Discard', 'Stage', 'Live Zone', 'Hand', 'Deck', 'Performance'];
+const REGEX_ZONES = new RegExp(`(${ZONE_LIST.join('|')})`, 'g');
+
+// Pre-built icon map with pre-compiled regexes
+const ICON_MAP = {
+    '登場時': { path: 'texticon/toujyou.png', regex: /【登場時】/g },
+    '自動': { path: 'texticon/jidou.png', regex: /【自動】/g },
+    '永続': { path: 'texticon/jyouji.png', regex: /【永続】/g },
+    '起動': { path: 'texticon/kidou.png', regex: /【起動】/g },
+    'ターン1': { path: 'texticon/turn1.png', regex: /【ターン1】/g },
+    'ライブスタート': { path: 'texticon/live_start.png', regex: /【ライブスタート】/g },
+    'LIVE START': { path: 'texticon/live_start.png', regex: /【LIVE START】/g },
+    'ピンク': { path: 'color_pink.png', regex: /【ピンク】/g },
+    'Pink': { path: 'color_pink.png', regex: /【Pink】/g },
+    'レッド': { path: 'color_red.png', regex: /【レッド】/g },
+    '赤': { path: 'color_red.png', regex: /【赤】/g },
+    'Red': { path: 'color_red.png', regex: /【Red】/g },
+    'イエロー': { path: 'color_yellow.png', regex: /【イエロー】/g },
+    '黄': { path: 'color_yellow.png', regex: /【黄】/g },
+    'Yellow': { path: 'color_yellow.png', regex: /【Yellow】/g },
+    'グリーン': { path: 'color_green.png', regex: /【グリーン】/g },
+    '緑': { path: 'color_green.png', regex: /【緑】/g },
+    'Green': { path: 'color_green.png', regex: /【Green】/g },
+    'ブルー': { path: 'color_blue.png', regex: /【ブルー】/g },
+    '青': { path: 'color_blue.png', regex: /【青】/g },
+    'Blue': { path: 'color_blue.png', regex: /【Blue】/g },
+    'パープル': { path: 'color_purple.png', regex: /【パープル】/g },
+    '紫': { path: 'color_purple.png', regex: /【紫】/g },
+    'Purple': { path: 'color_purple.png', regex: /【Purple】/g },
+    'オール': { path: 'color_all.png', regex: /【オール】/g },
+    'All': { path: 'color_all.png', regex: /【All】/g },
+    'ライブ開始時': { path: 'icon_live_start.png', regex: /【ライブ開始時】/g },
+    '成功時': { path: 'icon_live_success.png', regex: /【成功時】/g },
+    'ライブ成功時': { path: 'icon_live_success.png', regex: /【ライブ成功時】/g },
+    'LIVE SUCCESS': { path: 'icon_live_success.png', regex: /【LIVE SUCCESS】/g },
+    'エネ': { path: 'icon_energy.png', regex: /【エネ】/g },
+    'Energy': { path: 'icon_energy.png', regex: /【Energy】/g },
+    'エネルギー': { path: 'icon_energy.png', regex: /【エネルギー】/g },
+    'ハート': { path: 'heart_01.png', regex: /【ハート】/g },
+    'Hearts': { path: 'heart_01.png', regex: /【Hearts】/g },
+    'ピース': { path: 'heart_01.png', regex: /【ピース】/g },
+    'ピンクハート': { path: 'heart_00.png', regex: /【ピンクハート】/g },
+    'Pink Hearts': { path: 'heart_00.png', regex: /【Pink Hearts】/g },
+    'レッドハート': { path: 'heart_01.png', regex: /【レッドハート】/g },
+    'Red Hearts': { path: 'heart_01.png', regex: /【Red Hearts】/g },
+    'イエローハート': { path: 'heart_02.png', regex: /【イエローハート】/g },
+    'Yellow Hearts': { path: 'heart_02.png', regex: /【Yellow Hearts】/g },
+    'グリーンハート': { path: 'heart_03.png', regex: /【グリーンハート】/g },
+    'Green Hearts': { path: 'heart_03.png', regex: /【Green Hearts】/g },
+    'ブルーハート': { path: 'heart_04.png', regex: /【ブルーハート】/g },
+    'Blue Hearts': { path: 'heart_04.png', regex: /【Blue Hearts】/g },
+    'パープルハート': { path: 'heart_05.png', regex: /【パープルハート】/g },
+    'Purple Hearts': { path: 'heart_05.png', regex: /【Purple Hearts】/g },
+    '全色ハート': { path: 'heart_06.png', regex: /【全色ハート】/g },
+    'All Color Hearts': { path: 'heart_06.png', regex: /【All Color Hearts】/g },
+    'ブレード': { path: 'icon_blade.png', regex: /【ブレード】/g },
+    'Blade': { path: 'icon_blade.png', regex: /【Blade】/g },
+    'Blades': { path: 'icon_blade.png', regex: /【Blades】/g },
+    '開始時': { path: 'icon_live_start.png', regex: /【開始時】/g },
+};
+
+// Pre-built icon replacement strings
+const ICON_REPLACEMENTS = {};
+for (const [key, data] of Object.entries(ICON_MAP)) {
+    let style = 'height: 1.1em; vertical-align: middle;';
+    if (data.path.includes('live_start') || data.path.includes('live_success')) {
+        style += ' min-width: 3.5em;';
+    } else if (data.path.includes('all')) {
+        style += ' min-width: 2em;';
+    }
+    let src = data.path.includes('/') ? `img/${data.path}` : `img/texticon/${data.path}`;
+    if (typeof ICON_DATA_URIs !== 'undefined' && ICON_DATA_URIs[key]) {
+        src = ICON_DATA_URIs[key];
+    }
+    ICON_REPLACEMENTS[key] = { regex: data.regex, replacement: `<img src="${src}" alt="${key}" style="${style}">` };
+}
+
 export const Tooltips = {
     /**
      * Replaces bracketed icons [Auto] and {{icon|alt}} with actual <img> tags.
+     * Optimized with pre-compiled regex patterns.
      */
     enrichAbilityText: (text) => {
         if (!text) return "";
@@ -22,14 +111,14 @@ export const Tooltips = {
         const placeholders = [];
 
         // 1. First, mask all existing HTML tags to prevent text-based highlighting from matching inside them
-        text = text.replace(/<[^>]+>/g, (match) => {
+        text = text.replace(REGEX_HTML_TAG, (match) => {
             const id = `__TAG_${placeholders.length}__`;
             placeholders.push(match);
             return id;
         });
 
         // 2. Hide curly-brace tags {{...}} to prevent highlighting matching into alt text
-        text = text.replace(/{{(.*?)\|(.*?)}}/g, (match) => {
+        text = text.replace(REGEX_CURLY_TAG, (match) => {
             const id = `__PH_${placeholders.length}__`;
             placeholders.push(match);
             return id;
@@ -38,7 +127,7 @@ export const Tooltips = {
         // 3. Apply text-based highlighting only on the unmasked text
 
         // Colors (SIC Attributes)
-        text = text.replace(/(ピンク|レッド|赤|イエロー|黄|グリーン|緑|ブルー|青|パープル|紫|オール|Pink|Red|Yellow|Green|Blue|Purple|All)/g, match => {
+        text = text.replace(REGEX_COLORS, match => {
             const m = match.toLowerCase();
             let cls = 'hl-keyword';
             if (m.includes('pink') || m.includes('red') || m === 'ピンク' || m === 'レッド' || m === '赤') cls = 'hl-heart';
@@ -48,20 +137,17 @@ export const Tooltips = {
         });
 
         // Zones (Discard, Stage, Live Zone)
-        const zoneList = ['控え室', 'メンバー置場', 'ライブ置場', 'エナジー置場', '待機室', '手札', 'デッキ', '山札', 'Discard', 'Stage', 'Live Zone', 'Hand', 'Deck', 'Performance'];
-        const zoneRegex = new RegExp(`(${zoneList.join('|')})`, 'g');
-        text = text.replace(zoneRegex, '<span class="hl-zone">$1</span>');
+        text = text.replace(REGEX_ZONES, '<span class="hl-zone">$1</span>');
 
         // Mechanics (Hearts, Blades, Energy, Yell)
-        const mechRegex = /(ハート|ピース|エナジー|ボルテージ|勧誘|Hearts|Blades|Energy|Voltage|Scout|Yell|RUSH|LIVE|LIVE!|Appeal|HEART|DREAM)/g;
-        text = text.replace(mechRegex, '<span class="hl-keyword">$1</span>');
+        text = text.replace(REGEX_MECHANICS, '<span class="hl-keyword">$1</span>');
 
         // Success/Failure
-        text = text.replace(/(SUCCESS|成功)/g, '<span class="hl-success">$1</span>');
-        text = text.replace(/(FAILURE|失敗)/g, '<span class="hl-failure">$1</span>');
+        text = text.replace(REGEX_SUCCESS, '<span class="hl-success">$1</span>');
+        text = text.replace(REGEX_FAILURE, '<span class="hl-failure">$1</span>');
 
         // Card Numbers (e.g., PL!HS-PR-010-PR)
-        text = text.replace(/(PL![\w-]+)/g, '<span class="hl-card">$1</span>');
+        text = text.replace(REGEX_CARD_NUM, '<span class="hl-card">$1</span>');
 
         // 4. Restore ALL placeholders in reverse order to handle nesting if any occurred (though unlikely here)
         for (let i = placeholders.length - 1; i >= 0; i--) {
@@ -69,56 +155,15 @@ export const Tooltips = {
             text = text.replace(`__PH_${i}__`, placeholders[i]);
         }
 
-        // 5. Now insert icons and other tags
-        const iconMap = {
-            '登場時': 'texticon/toujyou.png',
-            '自動': 'texticon/jidou.png',
-            '永続': 'texticon/jyouji.png',
-            '起動': 'texticon/kidou.png',
-            'ターン1': 'texticon/turn1.png',
-            'ライブスタート': 'texticon/live_start.png',
-            'LIVE START': 'texticon/live_start.png',
-            'ピンク': 'color_pink.png', 'Pink': 'color_pink.png',
-            'レッド': 'color_red.png', '赤': 'color_red.png', 'Red': 'color_red.png',
-            'イエロー': 'color_yellow.png', '黄': 'color_yellow.png', 'Yellow': 'color_yellow.png',
-            'グリーン': 'color_green.png', '緑': 'color_green.png', 'Green': 'color_green.png',
-            'ブルー': 'color_blue.png', '青': 'color_blue.png', 'Blue': 'color_blue.png',
-            'パープル': 'color_purple.png', '紫': 'color_purple.png', 'Purple': 'color_purple.png',
-            'オール': 'color_all.png', 'All': 'color_all.png',
-            'ライブ開始時': 'icon_live_start.png', 'LIVE START': 'icon_live_start.png',
-            '成功時': 'icon_live_success.png',
-            'ライブ成功時': 'icon_live_success.png', 'LIVE SUCCESS': 'icon_live_success.png',
-            'エネ': 'icon_energy.png', 'Energy': 'icon_energy.png', 'エネルギー': 'icon_energy.png',
-            'ハート': 'heart_01.png', 'Hearts': 'heart_01.png', 'ピース': 'heart_01.png',
-            'ピンクハート': 'heart_00.png', 'Pink Hearts': 'heart_00.png',
-            'レッドハート': 'heart_01.png', 'Red Hearts': 'heart_01.png',
-            'イエローハート': 'heart_02.png', 'Yellow Hearts': 'heart_02.png',
-            'グリーンハート': 'heart_03.png', 'Green Hearts': 'heart_03.png',
-            'ブルーハート': 'heart_04.png', 'Blue Hearts': 'heart_04.png',
-            'パープルハート': 'heart_05.png', 'Purple Hearts': 'heart_05.png',
-            '全色ハート': 'heart_06.png', 'All Color Hearts': 'heart_06.png',
-            'ブレード': 'icon_blade.png', 'Blade': 'icon_blade.png', 'Blades': 'icon_blade.png',
-            '開始時': 'icon_live_start.png',
-        };
-
-        for (const [key, path] of Object.entries(iconMap)) {
-            const regex = new RegExp(`【${key}】`, 'g');
-            let style = 'height: 1.1em; vertical-align: middle;';
-            if (path.includes('live_start') || path.includes('live_success')) {
-                style += ' min-width: 3.5em;';
-            } else if (path.includes('all')) {
-                style += ' min-width: 2em;';
-            }
-
-            let src = path.includes('/') ? `img/${path}` : `img/texticon/${path}`;
-            if (typeof ICON_DATA_URIs !== 'undefined' && ICON_DATA_URIs[key]) {
-                src = ICON_DATA_URIs[key];
-            }
-            text = text.replace(regex, `<img src="${src}" alt="${key}" style="${style}">`);
+        // 5. Now insert icons using pre-built replacements
+        for (const data of Object.values(ICON_REPLACEMENTS)) {
+            // Reset regex lastIndex for global regex reuse
+            data.regex.lastIndex = 0;
+            text = text.replace(data.regex, data.replacement);
         }
 
         // --- Complex Replacement for {{icon|alt}} syntax ---
-        text = text.replace(/{{(.*?)\|(.*?)}}/g, (match, img, alt) => {
+        text = text.replace(REGEX_CURLY_TAG, (match, img, alt) => {
             let src = "img/" + img;
             if (img.endsWith('.png') && !img.includes('/')) {
                 src = "img/texticon/" + img;
@@ -134,7 +179,7 @@ export const Tooltips = {
             // Use quotes for event handlers, and ensure structural correctness
             return `<span class="icon-wrapper"><img src="${src}" alt="${alt}" style="${style}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"><span style="display:none;">${alt}</span></span>`;
         });
-        text = text.replace(/\\n/g, '<br>');
+        text = text.replace(REGEX_NEWLINE, '<br>');
 
         return text;
     },
@@ -155,66 +200,35 @@ export const Tooltips = {
      */
     getEffectiveRawText: (card) => {
         if (!card) return "";
-        const rawText = card.text || "";
+        // Prioritize 'text' (pseudocode), then 'ability_text' (full text), then empty string
+        const rawText = card.text || card.ability_text || "";
         const originalText = card.original_text;
 
         let effectiveText = "";
-        if (State.currentLang === 'en') {
+        const currentLang = State.currentLang;
+        const showFriendlyAbilities = State.showFriendlyAbilities;
+
+        if (currentLang === 'en') {
             const originalTextEn = card.original_text_en || '';
-            if (State.showFriendlyAbilities) {
+            if (showFriendlyAbilities) {
                 effectiveText = window.translateAbility ? window.translateAbility(rawText, 'en') : rawText;
             } else {
-                if (originalTextEn) {
-                    effectiveText = originalTextEn;
-                } else {
-                    effectiveText = window.translateAbility ? window.translateAbility(rawText, 'en') : rawText;
-                }
+                effectiveText = originalTextEn || (window.translateAbility ? window.translateAbility(rawText, 'en') : rawText);
             }
-        } else if (State.showFriendlyAbilities) {
+        } else if (showFriendlyAbilities) {
             effectiveText = window.translateAbility ? window.translateAbility(rawText, 'jp') : rawText;
         } else {
-            if (originalText) {
-                effectiveText = originalText;
-            } else {
-                effectiveText = window.translateAbility ? window.translateAbility(rawText, 'jp') : rawText;
-            }
+            effectiveText = originalText || (window.translateAbility ? window.translateAbility(rawText, 'jp') : rawText);
         }
         return effectiveText;
     },
 
     /**
      * Helper to find a card object in the current game state by its unique ID.
+     * Delegates to State.resolveCardData for consistency and deduplication.
      */
     findCardById: (cardId) => {
-        const state = State.data;
-        if (!state || !state.players) return null;
-        for (const p of state.players) {
-            if (p.hand) {
-                const c = p.hand.find(x => x.id === cardId);
-                if (c) return c;
-            }
-            if (p.stage) {
-                const c = p.stage.find(x => x && x.id === cardId);
-                if (c) return c;
-            }
-            if (p.live_zone) {
-                const c = p.live_zone.find(x => x && x.id === cardId);
-                if (c) return c;
-            }
-            if (p.energy) {
-                const eEntry = p.energy.find(x => x && x.card && x.card.id === cardId);
-                if (eEntry) return eEntry.card;
-            }
-            if (p.discard) {
-                const c = p.discard.find(x => x && (typeof x === 'object' ? x.id === cardId : x === cardId));
-                if (c) return typeof c === 'object' ? c : { id: c, name: "Card" };
-            }
-            if (p.waiting_room) {
-                const c = p.waiting_room.find(x => x && x.id === cardId);
-                if (c) return c;
-            }
-        }
-        return null;
+        return State.resolveCardData(cardId);
     },
 
     showTooltip: (target, e, forceTarget = null, useSidebar = false, explicitText = null) => {
@@ -233,24 +247,26 @@ export const Tooltips = {
         const state = State.data;
         const perspectivePlayer = State.perspectivePlayer;
         let cardObj = null;
+        let actionObj = null;
 
         // Resolve via Action OR Card ID
         const actionId = effectiveTarget.dataset.actionId;
         const cardId = effectiveTarget.dataset.cardId;
 
         if (actionId !== undefined && state && state.legal_actions) {
-            const actionObj = state.legal_actions.find(a => a.id === parseInt(actionId));
+            actionObj = state.legal_actions.find(a => a.id === parseInt(actionId));
             if (actionObj) {
                 Tooltips.highlightAction(actionObj);
-                // Priority 1: source_card_id
-                if (actionObj.source_card_id !== undefined && actionObj.source_card_id !== -1) {
-                    cardObj = Tooltips.findCardById(actionObj.source_card_id);
-                }
-                // Priority 2: Index-based lookup for your own cards
                 const p = state.players[perspectivePlayer];
-                if (!cardObj && p) {
+                // Priority 1: Index-based lookup for your own cards (most specific)
+                if (p) {
                     if (actionObj.hand_idx !== undefined && p.hand) cardObj = p.hand[actionObj.hand_idx];
                     else if (actionObj.area_idx !== undefined && p.stage) cardObj = p.stage[actionObj.area_idx];
+                    else if (actionObj.slot_idx !== undefined && p.stage) cardObj = p.stage[actionObj.slot_idx];
+                }
+                // Priority 2: source_card_id (fallback when no position info)
+                if (!cardObj && actionObj.source_card_id !== undefined && actionObj.source_card_id !== -1) {
+                    cardObj = Tooltips.findCardById(actionObj.source_card_id);
                 }
             }
         }
@@ -259,33 +275,74 @@ export const Tooltips = {
             cardObj = Tooltips.findCardById(parseInt(cardId));
         }
 
-        // 3. UI UPDATE (SIDEBAR ONLY)
+        // 3. UI UPDATE (SIDEBAR/PANEL)
         if (descContent && descPanel) {
             const descTitle = document.getElementById('card-desc-title');
             let finalText = explicitText;
             let titleText = (State.currentLang === 'jp' ? 'カード能力' : 'Card Ability');
 
-            // If we have a resolved card, prioritize its full ability
-            if (cardObj && !cardObj.hidden) {
-                finalText = Tooltips.getEffectiveRawText(cardObj);
-                titleText = cardObj.name || titleText;
-            }
-            // Fallback to action info if it's an action button
-            else if (actionId !== undefined && state && state.legal_actions) {
-                const actionObj = state.legal_actions.find(a => a.id === parseInt(actionId));
-                if (actionObj) {
-                    titleText = actionObj.name || titleText;
-                    if (!finalText) finalText = actionObj.raw_text || actionObj.text;
+            // Priority 1: Use data-text if available (most reliable source for ability text)
+            const dataText = effectiveTarget.dataset.text;
+            if (dataText && !finalText) {
+                // Try to translate raw pseudocode if that's what's in data-text
+                if (window.translateAbility && (dataText.includes('O_') || dataText.includes('EFFECT:'))) {
+                    finalText = window.translateAbility(dataText, State.currentLang);
+                } else {
+                    finalText = dataText;
                 }
             }
 
-            // Fallback to data-text if no card was found (e.g. choice buttons)
-            if (!finalText) {
-                finalText = effectiveTarget.dataset.text;
+            // Priority 2: If we have a resolved card, use its full ability (only if no data-text)
+            if (!finalText && cardObj && !cardObj.hidden) {
+                finalText = Tooltips.getEffectiveRawText(cardObj);
+            }
+            // Always set title from card name if available
+            if (cardObj && cardObj.name) {
+                titleText = cardObj.name;
             }
 
-            if (finalText) {
+            // Special handling for MULLIGAN: we want the card's ability even if it's an action
+            if (actionObj && actionObj.type === 'MULLIGAN' && !finalText) {
+                const hIdx = actionObj.hand_idx;
+                const p = state.players[perspectivePlayer];
+                const cardInHand = (p && p.hand) ? p.hand[hIdx] : null;
+                if (cardInHand) {
+                    finalText = Tooltips.getEffectiveRawText(cardInHand);
+                    titleText = cardInHand.name || titleText;
+                }
+            }
+
+            // Fallback to action info if it's an action button
+            else if (actionObj) {
+                titleText = actionObj.name || titleText;
+
+                // Resolve generic names like "Action 303"
+                if (titleText.match(/^Action\s+30\d$/)) {
+                    const liveIdx = parseInt(titleText.replace("Action 30", ""), 10);
+                    const liveCard = state?.live_zone && state.live_zone[liveIdx];
+                    if (liveCard && liveCard.name) {
+                        titleText = liveCard.name;
+                    }
+                }
+
+                if (!finalText) {
+                    finalText = Tooltips.getEffectiveActionText(actionObj);
+                }
+            }
+
+            if ((finalText && finalText !== "") || (cardObj || actionObj)) {
                 if (descTitle) descTitle.innerHTML = titleText;
+
+                // If we have a card/action but NO specific text, provide a useful fallback
+                if (!finalText || finalText === "") {
+                    if (cardObj) {
+                        const type = cardObj.type || (cardObj.card_no?.includes('-L') ? 'Live' : 'Member');
+                        finalText = `<span style="opacity:0.5; font-style:italic;">[${type} Card]</span>`;
+                    } else if (actionObj) {
+                        finalText = `<span style="opacity:0.5; font-style:italic;">[Action: ${actionObj.type || 'Generic'}]</span>`;
+                    }
+                }
+
                 descContent.innerHTML = Tooltips.enrichAbilityText(finalText);
                 descContent.dataset.rawText = finalText;
                 descPanel.style.display = 'flex';
@@ -296,9 +353,8 @@ export const Tooltips = {
                     tooltipHideTimeout = null;
                 }
             } else {
-                // USER REQUEST: The panel should persist. 
-                // We DON'T hide the panel just because this specific element has no text,
-                // unless it's a deliberate mouseout of the board entirely (handled in hideTooltip).
+                // If we have absolutely nothing, we still PERSIST the last view 
+                // as per user request to avoid flickering.
             }
         }
 
@@ -527,15 +583,18 @@ export const Tooltips = {
             }
         }
 
-        // Always check for a source card ID even if specific highlighted
-        let srcCardId = a.source_card_id;
-        // If action has no source but we're in a pending choice, the choice might have the source
-        if ((srcCardId === undefined || srcCardId === -1) && state.pending_choice) {
-            srcCardId = state.pending_choice.source_card_id || (state.pending_choice.params ? state.pending_choice.params.source_card_id : -1);
-        }
+        // Only highlight by source_card_id if not already specifically highlighted by position
+        // This prevents highlighting ALL cards with the same ID when we already found the specific one
+        if (!specificHighlighted) {
+            let srcCardId = a.source_card_id;
+            // If action has no source but we're in a pending choice, the choice might have the source
+            if ((srcCardId === undefined || srcCardId === -1) && state.pending_choice) {
+                srcCardId = state.pending_choice.source_card_id || (state.pending_choice.params ? state.pending_choice.params.source_card_id : -1);
+            }
 
-        if (srcCardId !== undefined && srcCardId !== -1) {
-            Tooltips.highlightCardById(srcCardId, 'highlight-source');
+            if (srcCardId !== undefined && srcCardId !== -1) {
+                Tooltips.highlightCardById(srcCardId, 'highlight-source');
+            }
         }
     },
 
@@ -568,7 +627,7 @@ export const Tooltips = {
         }
     },
 
-    highlightCardById: (srcId, className = 'highlight-source') => {
+    highlightCardById: (srcId, className = 'highlight-source', firstOnly = true) => {
         const state = State.data;
         if (!state) return;
 
@@ -578,38 +637,60 @@ export const Tooltips = {
             { id: 1 - perspectivePlayer, prefix: 'opp' }
         ];
 
-        playersMap.forEach(pMap => {
+        for (const pMap of playersMap) {
             const p = state.players[pMap.id];
-            if (!p) return;
+            if (!p) continue;
 
+            // Check stage
             if (p.stage) {
-                p.stage.forEach((card, idx) => {
+                for (let idx = 0; idx < p.stage.length; idx++) {
+                    const card = p.stage[idx];
                     const cid = card ? card.id : -1;
-                    if (cid === srcId) Tooltips.addHighlight(`${pMap.prefix}-stage-slot-${idx}`, 'highlight-source');
-                });
+                    if (cid === srcId) {
+                        Tooltips.addHighlight(`${pMap.prefix}-stage-slot-${idx}`, className);
+                        if (firstOnly) return;
+                    }
+                }
             }
+            // Check hand
             if (p.hand) {
-                p.hand.forEach((card, idx) => {
+                for (let idx = 0; idx < p.hand.length; idx++) {
+                    const card = p.hand[idx];
                     const cid = card ? card.id : -1;
-                    if (cid === srcId) Tooltips.addHighlight(`${pMap.prefix}-hand-card-${idx}`, 'highlight-source');
-                });
+                    if (cid === srcId) {
+                        Tooltips.addHighlight(`${pMap.prefix}-hand-card-${idx}`, className);
+                        if (firstOnly) return;
+                    }
+                }
             }
+            // Check live_zone
             if (p.live_zone) {
-                p.live_zone.forEach((cardObj, idx) => {
+                for (let idx = 0; idx < p.live_zone.length; idx++) {
+                    const cardObj = p.live_zone[idx];
                     const cid = cardObj ? cardObj.id : -1;
-                    if (cid === srcId) Tooltips.addHighlight(`${pMap.prefix}-live-slot-${idx}`, 'highlight-source');
-                });
+                    if (cid === srcId) {
+                        Tooltips.addHighlight(`${pMap.prefix}-live-slot-${idx}`, className);
+                        if (firstOnly) return;
+                    }
+                }
             }
+            // Check discard
             if (p.discard && p.discard.some(c => (typeof c === 'object' ? c.id === srcId : c === srcId))) {
-                Tooltips.addHighlight(`${pMap.prefix}-discard`, 'highlight-source');
+                Tooltips.addHighlight(`${pMap.prefix}-discard`, className);
+                if (firstOnly) return;
             }
+            // Check energy
             if (p.energy) {
-                p.energy.forEach((e, idx) => {
+                for (let idx = 0; idx < p.energy.length; idx++) {
+                    const e = p.energy[idx];
                     const cid = (e && e.card) ? e.card.id : -1;
-                    if (cid === srcId) Tooltips.addHighlight(`${pMap.prefix}-energy-slot-${idx}`, className);
-                });
+                    if (cid === srcId) {
+                        Tooltips.addHighlight(`${pMap.prefix}-energy-slot-${idx}`, className);
+                        if (firstOnly) return;
+                    }
+                }
             }
-        });
+        }
     },
 
     highlightValidZones: (source, index) => {
@@ -688,25 +769,28 @@ export const Tooltips = {
     getEffectiveActionText: (action) => {
         if (!action) return "";
         const rawText = action.raw_text || action.text || "";
-        let effectiveText = rawText;
 
         const currentLang = State.currentLang;
         const showFriendlyAbilities = State.showFriendlyAbilities;
 
-        // If we want friendly/English, use the translator on the raw pseudocode
+        // Special handling: if it's an action with a source card, use the standardized card text resolution logic
+        // for consistency, unless it's a generic action without a specific source card text.
+        if (action.source_card_id !== undefined && action.source_card_id !== -1) {
+            const srcCard = State.resolveCardData(action.source_card_id);
+            if (srcCard && (srcCard.text || srcCard.ability_text)) {
+                return Tooltips.enrichAbilityText(Tooltips.getEffectiveRawText(srcCard));
+            }
+        }
+
+        let effectiveText = rawText;
         if ((currentLang === 'en' || showFriendlyAbilities) && window.translateAbility) {
             effectiveText = window.translateAbility(rawText, currentLang);
-        }
-        // Otherwise in Japanese mode without friendly abilities, try to get original Japanese text
-        else if (currentLang === 'jp') {
+        } else if (currentLang === 'jp') {
             const srcCard = State.resolveCardData(action.source_card_id);
             if (srcCard && srcCard.original_text) {
                 effectiveText = srcCard.original_text;
-            } else {
-                // Fallback: Force translation if no original text found (to avoid raw variable names)
-                if (window.translateAbility) {
-                    effectiveText = window.translateAbility(rawText, 'jp');
-                }
+            } else if (window.translateAbility) {
+                effectiveText = window.translateAbility(rawText, 'jp');
             }
         }
 
@@ -739,7 +823,7 @@ export const Tooltips = {
 // Global Event Listeners for Tooltips
 if (typeof document !== 'undefined') {
     document.body.addEventListener('mouseover', (e) => {
-        const selector = '.card, .member-slot, .energy-pip, .modifier-line, .action-btn, .action-group, .btn, .modal-content, .active-ability-tag, .perf-guide-entry';
+        const selector = '.card, .member-slot, .member-area, .board-slot-container, .energy-pip, .modifier-line, .action-btn, .action-group, .btn, .modal-content, .active-ability-tag, .perf-guide-entry';
         const target = e.target.closest(selector);
 
         console.log("Tooltip mouseover event:", e.target, "Target matched:", target);

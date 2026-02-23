@@ -10,11 +10,71 @@ import { InteractionAdapter } from './interaction_adapter.js';
 import { Logs } from './ui_logs.js';
 import { PerformanceRenderer } from './ui_performance.js';
 
+// Cached DOM element references for performance
+const DOM_CACHE = {
+    turn: null,
+    phase: null,
+    score: null,
+    headerEnergy: null,
+    totalHearts: null,
+    totalBlades: null,
+    myHand: null,
+    oppHand: null,
+    myStage: null,
+    oppStage: null,
+    myLive: null,
+    oppLive: null,
+    myEnergy: null,
+    oppEnergy: null,
+    myDiscard: null,
+    oppDiscard: null,
+    mySuccess: null,
+    oppSuccess: null,
+    actions: null,
+    ruleLog: null,
+    activeAbilitiesList: null,
+    activeAbilitiesPanel: null,
+};
+
+// Initialize DOM cache on first use
+let domCacheInitialized = false;
+function initDomCache() {
+    if (domCacheInitialized) return;
+    domCacheInitialized = true;
+    for (const [key, id] of Object.entries({
+        turn: 'turn',
+        phase: 'phase',
+        score: 'score',
+        headerEnergy: 'header-energy',
+        totalHearts: 'total-hearts-summary',
+        totalBlades: 'total-blades-summary',
+        myHand: 'my-hand',
+        oppHand: 'opp-hand',
+        myStage: 'my-stage',
+        oppStage: 'opp-stage',
+        myLive: 'my-live',
+        oppLive: 'opp-live',
+        myEnergy: 'my-energy',
+        oppEnergy: 'opp-energy',
+        myDiscard: 'my-discard-visual',
+        oppDiscard: 'opp-discard-visual',
+        mySuccess: 'my-success',
+        oppSuccess: 'opp-success',
+        actions: 'actions',
+        ruleLog: 'rule-log',
+        activeAbilitiesList: 'active-abilities-list',
+        activeAbilitiesPanel: 'active-abilities-panel',
+    })) {
+        DOM_CACHE[key] = document.getElementById(id);
+    }
+}
+
 export const Rendering = {
     render: () => {
         if (State.renderRequested) return;
         State.renderRequested = true;
         requestAnimationFrame(() => {
+            initDomCache();
             Rendering.renderInternal();
             State.renderRequested = false;
         });
@@ -24,37 +84,30 @@ export const Rendering = {
         // RPS, Setup, etc. phase names
         let phaseKey = Rendering.getPhaseKey(state.phase);
 
-        const turnEl = document.getElementById('turn');
-        if (turnEl) turnEl.textContent = state.turn_number || state.turn || 1;
+        if (DOM_CACHE.turn) DOM_CACHE.turn.textContent = state.turn_number || state.turn || 1;
+        if (DOM_CACHE.phase) DOM_CACHE.phase.textContent = t[phaseKey] || state.phase;
 
-        const phaseEl = document.getElementById('phase');
-        if (phaseEl) phaseEl.textContent = t[phaseKey] || state.phase;
-
-        const scoreEl = document.getElementById('score');
-        if (scoreEl) {
+        if (DOM_CACHE.score) {
             const p0Score = state.players[0].success_lives ? state.players[0].success_lives.length : 0;
             const p1Score = state.players[1].success_lives ? state.players[1].success_lives.length : 0;
-            scoreEl.textContent = `${p0Score} - ${p1Score}`;
+            DOM_CACHE.score.textContent = `${p0Score} - ${p1Score}`;
         }
 
         // Energy and Hearts
-        const energyEl = document.getElementById('header-energy');
-        if (energyEl && p0) {
-            energyEl.textContent = `${p0.energy_untapped || 0}/${p0.energy_count || 0}`;
+        if (DOM_CACHE.headerEnergy && p0) {
+            DOM_CACHE.headerEnergy.textContent = `${p0.energy_untapped || 0}/${p0.energy_count || 0}`;
         }
 
         // Hearts summary
-        const totalHearts = document.getElementById('total-hearts-summary');
-        if (totalHearts && p0) {
+        if (DOM_CACHE.totalHearts && p0) {
             const hearts = p0.total_hearts || [0, 0, 0, 0, 0, 0, 0];
-            totalHearts.innerHTML = Rendering.renderHeartsCompact(hearts);
+            DOM_CACHE.totalHearts.innerHTML = Rendering.renderHeartsCompact(hearts);
         }
 
         // Blades summary
-        const totalBladesSummary = document.getElementById('total-blades-summary');
-        if (totalBladesSummary && p0) {
+        if (DOM_CACHE.totalBlades && p0) {
             const bladesCount = p0.total_blades !== undefined ? p0.total_blades : 0;
-            totalBladesSummary.innerHTML = `<span class="stat-item" title="Total Blades">
+            DOM_CACHE.totalBlades.innerHTML = `<span class="stat-item" title="Total Blades">
                 <img src="img/texticon/icon_blade.png" class="heart-mini-icon">
                 <span class="stat-value">${bladesCount}</span>
              </span>`;
@@ -312,8 +365,12 @@ export const Rendering = {
                 slotDiv.innerHTML = imgPath ? `<img src="${fixImg(imgPath)}">${modifiersHtml}` : modifiersHtml;
 
                 const rawText = Tooltips.getEffectiveRawText(slot);
-                if (rawText) slotDiv.setAttribute('data-text', rawText);
+                if (rawText) {
+                    slotDiv.setAttribute('data-text', rawText);
+                    area.setAttribute('data-text', rawText);
+                }
                 slotDiv.setAttribute('data-card-id', slot.id);
+                area.setAttribute('data-card-id', slot.id);
             }
 
             area.appendChild(slotDiv);
@@ -457,6 +514,14 @@ export const Rendering = {
                 div.innerHTML = `<img src="${fixImg(card.img || '')}">`;
                 div.style.transform = `translate(${i * 2}px, ${i * 2}px)`;
                 div.style.zIndex = 10 - i;
+
+                // Add tooltip metadata to mini-cards
+                if (card.id !== undefined) {
+                    div.setAttribute('data-card-id', card.id);
+                    const rawText = Tooltips.getEffectiveRawText(card);
+                    if (rawText) div.setAttribute('data-text', rawText);
+                }
+
                 el.appendChild(div);
             }
         }
@@ -531,8 +596,12 @@ export const Rendering = {
                 div.className = 'card'; // Original class name
                 let imgPath = card.img || card.img_path || '';
                 div.innerHTML = `<img src="${fixImg(imgPath)}">`;
+
+                // Add tooltip metadata
                 const rawText = Tooltips.getEffectiveRawText(card);
                 if (rawText) div.setAttribute('data-text', rawText);
+                if (card.id !== undefined) div.setAttribute('data-card-id', card.id);
+
                 container.appendChild(div);
             });
         }
@@ -555,12 +624,19 @@ export const Rendering = {
 
         // Helper for consistent action labels
         const getActionLabel = (a, isMini = false) => {
+            if (a.id === 0 && state.pending_choice) {
+                if (state.phase === Phase.MulliganP1 || state.phase === Phase.MulliganP2) {
+                    return currentLang === 'jp' ? '完了' : 'Done';
+                }
+                return currentLang === 'jp' ? 'パス / いいえ' : 'Pass / No';
+            }
             const energyIcon = `<img src="img/texticon/icon_energy.png" style="height:14px; vertical-align:middle; margin:0 2px;">`;
             const heartIcon = `<img src="img/texticon/icon_heart.png" style="height:14px; vertical-align:middle; margin:0 2px;">`;
 
             let cost = a.metadata?.cost ?? a.cost ?? a.base_cost ?? null;
             const isBaton = (a.name && (a.name.includes('Baton') || a.name.includes('バトン')));
             let name = a.metadata?.name ?? a.name ?? "";
+
 
             // User Request: If name is "Action 30X", try to resolve the card name
             // But ONLY if it's not an ability-related action (which might share ID indices)
@@ -642,6 +718,12 @@ export const Rendering = {
             const btn = document.createElement('button');
             btn.className = `action-btn ${isMini ? 'mini' : ''} ${extraClass}`.trim();
             if (a.id !== undefined) btn.setAttribute('data-action-id', a.id);
+
+            // Standardized Tooltip Data: Always try to attach source_card_id for tooltips
+            if (a.source_card_id !== undefined) {
+                btn.setAttribute('data-card-id', a.source_card_id);
+            }
+
             if (a.raw_text || a.text) btn.dataset.text = a.raw_text || a.text;
             btn.innerHTML = getActionLabel(a, isMini);
             btn.onclick = () => { if (window.doAction && a.id !== undefined) window.doAction(a.id); };
@@ -742,6 +824,7 @@ export const Rendering = {
                 choice.options.forEach((opt, idx) => {
                     const a = {
                         id: choice.actions[idx],
+                        source_card_id: choice.source_card_id, // Pass source card to options for tooltips
                         name: opt.name || opt.text || `Option ${idx + 1}`,
                         text: opt.text
                     };
@@ -781,6 +864,18 @@ export const Rendering = {
         state.legal_actions.forEach(a => {
             const category = a.metadata?.category || a.type;
             const hIdx = a.metadata?.hand_idx ?? a.hand_idx;
+            const sIdx = a.metadata?.slot_idx ?? a.slot_idx;
+
+            // Resolve source_card_id for tooltips if missing
+            if (a.source_card_id === undefined) {
+                if (hIdx !== undefined) {
+                    const card = state.players[perspectivePlayer]?.hand[hIdx];
+                    if (card) a.source_card_id = card.id;
+                } else if (category === 'ABILITY' && sIdx !== undefined) {
+                    const card = state.players[perspectivePlayer]?.stage[sIdx];
+                    if (card) a.source_card_id = card.id;
+                }
+            }
 
             if (a.id === 0 || a.type === 'SYSTEM' || a.id < 10 || a.name?.includes('End') || a.name?.includes('終了')) {
                 systemActions.push(a);
@@ -973,9 +1068,15 @@ export const Rendering = {
             const isClickable = (aid !== undefined && aid !== 0);
             const clickHandler = isClickable ? `if(window.doAction) window.doAction(${aid})` : '';
             const cursorStyle = isClickable ? 'cursor: pointer;' : '';
+            const rawText = Tooltips.getEffectiveRawText(c);
 
             return `
-                <div class="looked-card-item" ${isClickable ? `onclick="${clickHandler}"` : ''} style="${cursorStyle}" title="${tooltip.replace(/"/g, '&quot;')}">
+                <div class="looked-card-item card" 
+                    ${isClickable ? `onclick="${clickHandler}"` : ''} 
+                    style="${cursorStyle}" 
+                    data-card-id="${c.id}" 
+                    data-text="${rawText.replace(/"/g, '&quot;')}"
+                    ${aid !== undefined ? `data-action-id="${aid}"` : ''}>
                     <img src="${fixImg(c.img)}" class="looked-card-img">
                     <div class="looked-card-name">${c.name}</div>
                 </div>

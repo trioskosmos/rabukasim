@@ -56,6 +56,8 @@ pub struct Cost {
     #[serde(default)]
     pub value: i32,
     #[serde(default)]
+    pub is_optional: bool,
+    #[serde(default)]
     pub params: serde_json::Value,
 }
 
@@ -63,6 +65,7 @@ impl std::hash::Hash for Cost {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.cost_type.hash(state);
         self.value.hash(state);
+        self.is_optional.hash(state);
         // params is skipped
     }
 }

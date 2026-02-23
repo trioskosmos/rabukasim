@@ -4,7 +4,7 @@
  */
 import { State } from './state.js';
 import { translations } from './translations_data.js';
-import { fixImg } from './constants.js';
+import { fixImg, Phase } from './constants.js';
 import { Tooltips } from './ui_tooltips.js';
 
 export const PerformanceRenderer = {
@@ -43,7 +43,7 @@ export const PerformanceRenderer = {
                     </div>
                     ${!l.passed ? `<div class="perf-guide-reason">${l.reason || ''}</div>` : ''}
                 </div>
-                <div class="perf-guide-status" style="color:${color}">${l.passed ? '✓' : 'x'}</div>
+                <div class="perf-guide-status" style="color:${color}">${l.passed ? '[OK]' : '[X]'}</div>
             </div>`;
 
             html += entryHtml;
@@ -70,7 +70,22 @@ export const PerformanceRenderer = {
         }
 
         content.innerHTML = '';
-        PerformanceRenderer.renderTurnHistory(); // Render history in background tab
+        PerformanceRenderer.renderTurnHistory((phase) => {
+            const perspectivePlayer = State.perspectivePlayer;
+            if (phase === Phase.RPS) return 'rps';
+            if (phase === Phase.SETUP) return 'setup';
+            if (phase === Phase.MULLIGAN_P1) return (perspectivePlayer === 0) ? 'mulligan_you' : 'mulligan_opp';
+            if (phase === Phase.MULLIGAN_P2) return (perspectivePlayer === 1) ? 'mulligan_you' : 'mulligan_opp';
+            if (phase === Phase.ACTIVE) return 'active';
+            if (phase === Phase.ENERGY) return 'energy';
+            if (phase === Phase.DRAW) return 'draw';
+            if (phase === Phase.MAIN) return 'main';
+            if (phase === Phase.LIVE_SET) return 'live_set';
+            if (phase === Phase.PERFORMANCE_P1) return (perspectivePlayer === 0) ? 'perf_p1' : 'perf_p2';
+            if (phase === Phase.PERFORMANCE_P2) return (perspectivePlayer === 1) ? 'perf_p1' : 'perf_p2';
+            if (phase === Phase.LIVE_RESULT) return 'live_result';
+            return 'wait';
+        }); // Render history in background tab
         PerformanceRenderer.showPerfTab('result'); // Ensure we start on result tab
 
         let html = '';
@@ -132,7 +147,7 @@ export const PerformanceRenderer = {
                                         </div>
                                          <div style="display:flex; align-items:center; gap:10px;">
                                             ${Math.max(0, filledSum - reqSum) > 0 ? `<span style="font-size:0.75rem; color:var(--accent-gold);">${t ? (t['extra_hearts'] || '+{count} Extra').replace('{count}', Math.max(0, filledSum - reqSum)) : `+${Math.max(0, filledSum - reqSum)} Extra`}</span>` : ''}
-                                            <span style="color:${l.passed ? '#4f4' : '#f44'}; font-weight:bold; font-size:0.8rem;">${l.passed ? '✓ PASS' : '✗ FAIL'}</span>
+                                            <span style="color:${l.passed ? '#4f4' : '#f44'}; font-weight:bold; font-size:0.8rem;">${l.passed ? '[PASS]' : '[FAIL]'}</span>
                                         </div>
                                     </div>
                                     <div class="perf-heart-progress">
@@ -284,11 +299,28 @@ export const PerformanceRenderer = {
             historyTab.style.display = 'block';
             if (resultBtn) resultBtn.classList.remove('active');
             if (historyBtn) historyBtn.classList.add('active');
-            PerformanceRenderer.renderTurnHistory();
+            PerformanceRenderer.renderTurnHistory((phase) => {
+                const perspectivePlayer = State.perspectivePlayer;
+                if (phase === Phase.RPS) return 'rps';
+                if (phase === Phase.SETUP) return 'setup';
+                if (phase === Phase.MULLIGAN_P1) return (perspectivePlayer === 0) ? 'mulligan_you' : 'mulligan_opp';
+                if (phase === Phase.MULLIGAN_P2) return (perspectivePlayer === 1) ? 'mulligan_you' : 'mulligan_opp';
+                if (phase === Phase.ACTIVE) return 'active';
+                if (phase === Phase.ENERGY) return 'energy';
+                if (phase === Phase.DRAW) return 'draw';
+                if (phase === Phase.MAIN) return 'main';
+                if (phase === Phase.LIVE_SET) return 'live_set';
+                if (phase === Phase.PERFORMANCE_P1) return (perspectivePlayer === 0) ? 'perf_p1' : 'perf_p2';
+                if (phase === Phase.PERFORMANCE_P2) return (perspectivePlayer === 1) ? 'perf_p1' : 'perf_p2';
+                if (phase === Phase.LIVE_RESULT) return 'live_result';
+                return 'wait';
+            });
         }
     },
 
     renderTurnHistory: (getPhaseKey) => {
+        // Provide default function if getPhaseKey is not provided or not a function
+        const phaseKeyFn = typeof getPhaseKey === 'function' ? getPhaseKey : (phase) => String(phase);
         const container = document.getElementById('performance-history-content');
         if (!container) return;
 
@@ -305,7 +337,7 @@ export const PerformanceRenderer = {
 
         let html = '';
         history.forEach((event) => {
-            const phaseKey = getPhaseKey(event.phase);
+            const phaseKey = phaseKeyFn(event.phase);
             const playerLabel = event.player_id === State.perspectivePlayer ? (t['you'] || 'You') : (t['opp'] || 'Opponent');
             const typeClass = event.event_type ? event.event_type.toLowerCase() : 'generic';
 

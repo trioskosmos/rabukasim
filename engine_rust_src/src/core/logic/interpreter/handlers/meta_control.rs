@@ -1,7 +1,7 @@
 use crate::core::logic::{GameState, CardDatabase, AbilityContext, TriggerType};
 use crate::core::enums::*;
 use super::HandlerResult;
-use super::super::suspension::{suspend_interaction_with_db as suspend_interaction, resolve_target_slot, get_choice_text};
+use super::super::suspension::{suspend_interaction, resolve_target_slot, get_choice_text};
 
 pub fn handle_meta_control(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i32, s: i32, instr_ip: usize) -> HandlerResult {
     let p_idx = ctx.player_id as usize;

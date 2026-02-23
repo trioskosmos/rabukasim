@@ -2,6 +2,8 @@
 //!
 //! This module contains the logic for parsing filter strings into attribute bitmasks.
 
+use super::constants::*;
+
 pub fn map_filter_string_to_attr(filter: &str) -> u64 {
     let mut attr: u64 = 0;
     for part in filter.split(',') {
@@ -16,8 +18,8 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             };
             if let Some(s) = val_str {
                 if let Ok(threshold) = s.parse::<i32>() {
-                    attr |= 0x01000000 | ((threshold as u64) << 25);
-                    if part.contains("_LE") { attr |= 0x40000000u64; }
+                    attr |= FILTER_COST_FLAG | ((threshold as u64) << FILTER_VALUE_SHIFT);
+                    if part.contains("_LE") { attr |= FILTER_IS_LE; }
                 }
             }
         } else if part.starts_with("GROUP_ID=") || part.starts_with("GROUP_ID_") {
@@ -28,78 +30,75 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
              };
               if let Some(s) = gid_str {
                  if let Ok(gid) = s.parse::<i32>() {
-                    attr |= 0x10 | ((gid as u64) << 5);
+                    attr |= FILTER_GROUP_FLAG | ((gid as u64) << FILTER_GROUP_SHIFT);
                  }
               }
         } else if part.starts_with("UNIT_") {
             let unit_name = part.replace("UNIT_", "").replace("_ONLY", "");
-            let unit_id = match unit_name.as_str() {
+            let unit_id: i32 = match unit_name.as_str() {
                 "BIBI" => 0, "LILY_WHITE" | "LILYWHITE" => 2, "QU4RTZ" => 12, "AZUNA" => 11, "DIVERDIVA" => 13, "A_ZU_NA" => 11,
                 _ => -1,
             };
-            if unit_id >= 0 { attr |= 0x10000 | ((unit_id as u64) << 17); }
+            if unit_id >= 0 { attr |= FILTER_UNIT_FLAG | ((unit_id as u64) << FILTER_UNIT_SHIFT); }
         } else if part == "TAPPED" {
-            attr |= 0x1000; // Bit 12
+            attr |= FILTER_TAPPED;
         } else if part == "HAS_BLADE_HEART" {
-            attr |= 0x2000; // Bit 13
+            attr |= FILTER_HAS_BLADE_HEART;
         } else if part == "NOT_HAS_BLADE_HEART" {
-            attr |= 0x4000; // Bit 14
+            attr |= FILTER_NOT_HAS_BLADE_HEART;
         } else if part == "TYPE_MEMBER" {
-            attr |= 0x04; // Bit 2 (1<<2 = 4)
+            attr |= FILTER_TYPE_MEMBER;
         } else if part == "TYPE_LIVE" {
-            attr |= 0x08; // Bit 3 (2<<2 = 8)
+            attr |= FILTER_TYPE_LIVE;
         } else if part == "AQOURS" {
-            attr |= 0x10 | (1 << 5);
+            attr |= FILTER_GROUP_FLAG | (1 << FILTER_GROUP_SHIFT);
         } else if part == "M'S" || part == "μ'S" || part == "U'S" {
-            attr |= 0x10 | (0 << 5);
+            attr |= FILTER_GROUP_FLAG | (0 << FILTER_GROUP_SHIFT);
         } else if part.contains("NAME_IN") && part.contains("澁谷かのん") {
-            attr |= 1u64 << 48; // Special ID 1 (Moved to avoid collision with Group ID)
+            attr |= 1u64 << FILTER_SPECIAL_ID_SHIFT;
         } else if part.contains("NOT_NAME=MY舞") {
-            attr |= 2u64 << 48; // Special ID 2 (Moved to avoid collision with Group ID)
+            attr |= 2u64 << FILTER_SPECIAL_ID_SHIFT;
         } else if part == "UNIQUE_NAMES=TRUE" || part == "UNIQUE_NAMES" || part == "SAME_UNIQUE_NAMES" {
-            attr |= 0x8000; // Bit 15
+            attr |= FILTER_UNIQUE_NAMES;
         } else if part == "SMILE" || part == "PINK" || part == "COLOR_0" {
-            attr |= 1u64 << 32;
+            attr |= 1u64 << (FILTER_COLOR_SHIFT + 0);
         } else if part == "PURE" || part == "GREEN" || part == "COLOR_1" {
-            attr |= 1u64 << 33;
+            attr |= 1u64 << (FILTER_COLOR_SHIFT + 1);
         } else if part == "COOL" || part == "BLUE" || part == "COLOR_2" {
-            attr |= 1u64 << 34;
+            attr |= 1u64 << (FILTER_COLOR_SHIFT + 2);
         } else if part == "ALL_STARS_RED" || part == "RED" || part == "COLOR_3" {
-            attr |= 1u64 << 35;
+            attr |= 1u64 << (FILTER_COLOR_SHIFT + 3);
         } else if part == "ALL_STARS_YELLOW" || part == "YELLOW" || part == "COLOR_4" {
-            attr |= 1u64 << 36;
+            attr |= 1u64 << (FILTER_COLOR_SHIFT + 4);
         } else if part == "ALL_STARS_BLUE" || part == "LTBLUE" || part == "COLOR_5" {
-            attr |= 1u64 << 37;
+            attr |= 1u64 << (FILTER_COLOR_SHIFT + 5);
         } else if part == "ALL_STARS_PURPLE" || part == "PURPLE" || part == "COLOR_6" {
-            attr |= 1u64 << 38;
+            attr |= 1u64 << (FILTER_COLOR_SHIFT + 6);
         } else if part.starts_with("BLADE_LE") {
-            // BLADE_LE_3 などのブレード制限フィルタ
             let val_str = part.replace("BLADE_LE", "").replace("_", "");
             if let Ok(threshold) = val_str.parse::<i32>() {
-                attr |= 0x02000000 | ((threshold as u64) << 25); // Use bit 25 for threshold
-                attr |= 0x40000000u64; // LE flag
+                attr |= FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << FILTER_VALUE_SHIFT);
+                attr |= FILTER_IS_LE;
             }
         } else if part.starts_with("BLADE_GE") {
-            // BLADE_GE_5 などのブレード下限制限フィルタ
             let val_str = part.replace("BLADE_GE", "").replace("_", "");
             if let Ok(threshold) = val_str.parse::<i32>() {
-                attr |= 0x02000000 | ((threshold as u64) << 25);
+                attr |= FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << FILTER_VALUE_SHIFT);
             }
         } else if part == "COST_LE_REVEALED" {
-            // 公開されたカードのコスト制限
-            attr |= 0x01000000 | (1u64 << 25);
-            attr |= 0x40000000u64; // LE flag
-            attr |= 1u64 << 43; // Bit 43: REVEALED context
+            attr |= FILTER_COST_FLAG | (1u64 << FILTER_VALUE_SHIFT);
+            attr |= FILTER_IS_LE;
+            attr |= FILTER_REVEALED_CONTEXT;
         } else if part == "HEART_PINK" {
-            attr |= 1u64 << 32; // Same as PINK
+            attr |= 1u64 << (FILTER_COLOR_SHIFT + 0);
         } else if part == "HEART_BLUE" {
-            attr |= 1u64 << 34; // Same as BLUE/COOL
+            attr |= 1u64 << (FILTER_COLOR_SHIFT + 2);
         } else if part == "HASUNOSORA" {
-            attr |= 0x10 | (4 << 5); // Group ID 4 for Hasunosora
+            attr |= FILTER_GROUP_FLAG | (4 << FILTER_GROUP_SHIFT);
         } else if part == "LIELLA" {
-            attr |= 0x10 | (3 << 5); // Group ID 3 for Liella
+            attr |= FILTER_GROUP_FLAG | (3 << FILTER_GROUP_SHIFT);
         } else if part == "NIJIGASAKI" || part == "NIJIGAKU" {
-            attr |= 0x10 | (2 << 5); // Group ID 2 for Nijigasaki
+            attr |= FILTER_GROUP_FLAG | (2 << FILTER_GROUP_SHIFT);
         }
     }
     attr

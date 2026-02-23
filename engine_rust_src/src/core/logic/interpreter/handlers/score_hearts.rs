@@ -2,6 +2,8 @@ use crate::core::logic::{GameState, CardDatabase, AbilityContext};
 use crate::core::enums::*;
 use super::HandlerResult;
 use super::super::suspension::resolve_target_slot;
+use super::super::conditions::resolve_count;
+use super::super::constants::DYNAMIC_VALUE;
 use super::super::logging;
 
 pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i32, s: i32) -> HandlerResult {
@@ -11,15 +13,20 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
 
     match op {
         O_BOOST_SCORE => {
-            state.core.players[p_idx].live_score_bonus += v;
+            let mut final_v = v;
+            if (a as u64 & DYNAMIC_VALUE) != 0 {
+                // slot (s) contains the count opcode
+                let count = resolve_count(state, _db, s, a as u64 & !DYNAMIC_VALUE, ctx, 0);
+                final_v = v * count;
+            }
+            state.core.players[p_idx].live_score_bonus += final_v;
             if !state.ui.silent {
-                if let Some(msg) = logging::get_opcode_log(O_BOOST_SCORE, v, a, s, 0) {
+                if let Some(msg) = logging::get_opcode_log(O_BOOST_SCORE, final_v, a, s, 0) {
                     state.log(msg);
                 }
             }
         },
         O_REDUCE_COST => state.core.players[p_idx].cost_reduction += v as i16,
-        O_REDUCE_YELL_COUNT => state.core.players[p_idx].yell_count_reduction = v as i16,
         O_SET_SCORE => state.core.players[p_idx].score = v as u32,
         O_ADD_BLADES | O_BUFF_POWER => {
             if target_slot == 1 {
@@ -83,6 +90,13 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
              if (s as usize) < 7 {
                  state.core.players[p_idx].heart_req_additions.add_to_color(s as usize, v);
              }
+        },
+        O_SET_HEART_COST => {
+            // Set heart cost for a specific color
+            // v = amount to set, s = color index
+            if (s as usize) < 7 {
+                state.core.players[p_idx].heart_req_additions.set_color_count(s as usize, v as u8);
+            }
         },
         _ => return HandlerResult::Continue,
     }

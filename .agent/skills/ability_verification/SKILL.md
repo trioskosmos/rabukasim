@@ -1,41 +1,31 @@
----
-name: ability_verification
-description: Unified skill for auditing, analyzing, debugging, and reproducing card abilities.
----
-
 # Ability Verification Skill
 
-This skill unifies all workflows for ensuring card abilities are correctly implemented, translated, and presented in the UI.
+This skill provides a unified, high-fidelity framework for ensuring card abilities are correctly implemented, translated, and verified with **100% fidelity** against Japanese source text and game rules.
 
-## Core Capabilities
+## 🎯 The 100% Goal
+Our objective is a **100% pass rate** in the Semantic Audit. This ensures that every card in the game behaves exactly as described in its text, enabling a professional-grade TCG engine.
 
-### 1. Visual Auditing (`generate_report.py`)
-Generates an interactive HTML report comparing raw card text, manual pseudocode, and compiled bytecode.
-- **Usage**: `uv run python .agent/skills/ability_verification/scripts/generate_report.py`
-- **Output**: `reports/ability_audit_visual.html` and `reports/ability_index.json`.
+## 🛠️ Core Capabilities
 
-### 2. Card Analysis (`card_analyzer.py` / `card_finder.py`)
-Centralized analysis of a card's lifecycle across JSON source files.
-- **Usage**: `uv run python tools/card_finder.py <card_no_or_text>`
-- **Purpose**: Unified view of Raw JP, Manual Pseudo, and Compiled Bytecode with integrated decoding.
-
-### 2.1 Bytecode Decoding (`bytecode_decoder.py`)
-Decodes raw bytecode arrays into human-readable logic.
-- **Usage**: `uv run python tools/verify/bytecode_decoder.py "[41, 3, ...]" `
-- **Purpose**: Fast understanding of complex attribute filters and opcode sequences.
-
-### 3. Debugging & Reproduction
-Systematic workflow for fixing card abilities using reproduction scripts.
+### 1. Semantic Audit Pipeline
+The primary mechanism for verifying engine logic against textual meaning.
 - **Workflow**: 
-  1. Research with Analyzer.
-  2. Create Reproduction (`uv run python tools/create_reproduction.py [CID]`).
-  3. Verify conditions (Positive/Negative/Optional).
-- **Fast Repro Build**: `cargo build --release; del ..\engine\engine_rust.pyd; copy target\release\engine_rust.dll ..\engine\engine_rust.pyd`
+    1. **Baseline**: `cargo test generate_v3_truth` (Synchronized capture).
+    2. **Audit**: `cargo test test_semantic_mass_verification -- --nocapture`.
+- **Reporting**: [COMPREHENSIVE_SEMANTIC_AUDIT.md](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/reports/COMPREHENSIVE_SEMANTIC_AUDIT.md).
+- **Milestone**: **78.3% Pass Rate** (638/815). Goal is 100%.
 
-### 4. UI Button Auditing
-Ensures button labels are consistent and match premium aesthetics.
-- **Usage**: `cargo run --bin audit_buttons` (from `launcher/`)
-- **Standard**: Full-width brackets `【】` for JP action types.
+### 2. Triage & Pattern Analysis
+Systematic categorization of failures to resolve systemic engine bugs.
+- **Tool**: `uv run python tools/verify/error_pattern_analyzer.py`.
+- **Output**: [ERROR_PATTERN_ANALYSIS.md](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/reports/ERROR_PATTERN_ANALYSIS.md).
+- **Strategy**: Resolve failures by pattern (e.g., `HAND_DELTA_DRAW`) rather than card-by-card.
+
+### 3. Deep Analysis & Diagnostics
+Tools for inspecting individual card logic and bytecode.
+- **Card Finder**: `uv run python tools/card_finder.py <card_no>` (Unified view).
+- **Bytecode Decoder**: `uv run python tools/verify/bytecode_decoder.py <bytecode_array>` (Logic breakdown).
+- **Diagnostics**: `cargo test debug_card_logic -- [CID]` to view step-by-step engine execution.
 
 ## Engine Reference Tables
 
@@ -158,12 +148,11 @@ Run a batch execution of **every** unique ability signature to catch engine pani
 
 ### Phase 3: Semantic Assertion Verification (High Fidelity)
 Advanced meaning-driven verification using sequential delta assertions.
-1. **Generate Semantic Truth**: `uv run python tools/verify/generate_semantic_truth.py`.
-2. **Run Mass Audit**: `cd engine_rust_src && cargo test --lib test_semantic_mass_verification -- --nocapture`
-    - Module: `engine_rust_src/src/semantic_assertions.rs`.
-    - Logic: Compares real game state deltas (Hand, Energy, Score) against segments interpreted directly from JP text via `SemanticOracleV2`.
-3. **Report**: `reports/COMPREHENSIVE_SEMANTIC_AUDIT.md` — Per-card pass/fail with error details.
-    - **Baseline (2026-02-23)**: 235 Pass / 297 Fail out of 532 cards (44% pass).
+1. **Dual-Player Tracking**: Captures `ZoneSnapshot` for both Player (P0) and Opponent (P1).
+2. **Metric Expansion**: Tracks `YELL_DELTA`, `ACTION_PREVENTION`, and `STAGE_ENERGY`.
+3. **Synchronized Baseline**: Captures baseline snapshots *before* triggers to correctly audit "Initial Effects."
+4. **Report**: `reports/COMPREHENSIVE_SEMANTIC_AUDIT.md`.
+5. **Latest Milestone**: 638/815 abilities (78.3%).
 
 > [!TIP]
 > Use `--lib` flag to avoid scanning all binary targets (avoids the noisy "running 0 tests" spam from `src/bin/*.rs`).

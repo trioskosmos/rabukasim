@@ -1,6 +1,6 @@
 use crate::core::logic::*;
 use crate::core::logic::player::PlayerState;
-use crate::core::logic::card_db::*;
+use crate::core::logic::card_db::CardDatabase;
 
 #[derive(Debug, Clone)]
 pub struct ZoneSnapshot {

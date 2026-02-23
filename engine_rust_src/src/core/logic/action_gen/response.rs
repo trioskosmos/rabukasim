@@ -104,6 +104,9 @@ impl ActionGenerator for ResponseGenerator {
                         receiver.add_action((crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize);
                     }
                 }
+                if (pi.filter_attr & 0x02) != 0 || receiver.is_empty() {
+                    receiver.add_action(0);
+                }
                 return;
             }
             O_RECOVER_MEMBER | O_RECOVER_LIVE => {
@@ -152,7 +155,9 @@ impl ActionGenerator for ResponseGenerator {
                 for i in 0..player.hand.len() {
                     receiver.add_action((crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize);
                 }
-                if receiver.is_empty() { receiver.add_action(0); }
+                if (pi.filter_attr & 0x02) != 0 || receiver.is_empty() {
+                    receiver.add_action(0);
+                }
                 return;
             }
             _ => {

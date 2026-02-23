@@ -610,10 +610,10 @@ class AbilityParserV2:
                 effect.params["all"] = True
 
         # Apply multiplier flags
-        for key in ["per_member", "per_live", "per_energy", "has_multiplier"]:
+        for key in ["per_member", "per_live", "per_energy", "has_multiplier", "per_card"]:
             if modifiers.get(key):
                 for effect in ability.effects:
-                    effect.params[key] = True
+                    effect.params[key] = modifiers[key] if modifiers[key] is not True else True
 
         # Apply filters
         if modifiers.get("cost_max"):
@@ -1438,14 +1438,10 @@ class AbilityParserV2:
                     ctype = ConditionType.GROUP_FILTER
 
                 if name == "TOTAL_BLADES":
-                    ctype = ConditionType.COUNT_BLADES
+                    ctype = ConditionType.TOTAL_BLADES
 
                 if name == "HEART_LEAD":
-                    ctype = ConditionType.COUNT_HEARTS
-                    if "comparison" not in params:
-                        params["comparison"] = "GE"
-                    if "min" not in params and "value" not in params:
-                        params["min"] = 1
+                    ctype = ConditionType.HEART_LEAD
 
                 if name == "SCORE_TOTAL":
                     ctype = ConditionType.SCORE_COMPARE
@@ -1458,20 +1454,13 @@ class AbilityParserV2:
                     params["filter"] = "ACTIVATED"
 
                 if name == "OPPONENT_HAS_WAIT":
-                    ctype = ConditionType.COUNT_STAGE
-                    params["target"] = "opponent"
-                    params["filter"] = "tapped"
-                    if "min" not in params:
-                        params["min"] = 1
+                    ctype = ConditionType.OPPONENT_HAS_WAIT
 
                 if name == "CHECK_IS_IN_DISCARD":
                     ctype = ConditionType.IS_IN_DISCARD
 
                 if name == "HAS_EXCESS_HEART":
-                    ctype = ConditionType.COUNT_HEARTS
-                    params["context"] = "excess"
-                    if "min" not in params:
-                        params["min"] = 1
+                    ctype = ConditionType.HAS_EXCESS_HEART
 
                 if name == "COUNT_MEMBER":
                     ctype = ConditionType.COUNT_STAGE

@@ -135,6 +135,7 @@ mod tests {
             cost_type: AbilityCostType::DiscardHand,
             value: 1,
             params: serde_json::json!({"filter": "GROUP_ID=3"}),
+            is_optional: false,
         };
         
         assert!(!check_cost(&state, &db, 0, &cost, &ctx));
@@ -185,6 +186,7 @@ mod tests {
             cost_type: AbilityCostType::DiscardSuccessLive,
             value: 1,
             params: serde_json::json!({"filter": "GROUP_ID=3"}),
+            is_optional: false,
         };
         
         assert!(check_cost(&state, &db, 0, &cost, &ctx));

@@ -37,7 +37,11 @@ pub struct SemanticAssertionEngine {
 impl SemanticAssertionEngine {
     pub fn load() -> Self {
         println!("DEBUG CWD: {:?}", std::env::current_dir());
-        let truth: HashMap<String, SemanticCardTruth> = if let Ok(truth_str) = std::fs::read_to_string("../reports/semantic_truth.json") {
+        let truth: HashMap<String, SemanticCardTruth> = if let Ok(truth_str) = std::fs::read_to_string("../reports/semantic_truth_v3.json") {
+            serde_json::from_str(&truth_str).expect("Failed to parse semantic_truth_v3.json")
+        } else if let Ok(truth_str) = std::fs::read_to_string("../reports/semantic_truth_v2.json") {
+            serde_json::from_str(&truth_str).expect("Failed to parse semantic_truth_v2.json")
+        } else if let Ok(truth_str) = std::fs::read_to_string("../reports/semantic_truth.json") {
             serde_json::from_str(&truth_str).expect("Failed to parse semantic_truth.json")
         } else {
             println!("WARNING: semantic_truth.json not found. Starting with empty truth set.");
@@ -113,8 +117,8 @@ impl SemanticAssertionEngine {
                     }
                 }
 
-                // Capture snapshot AFTER placing the card but BEFORE triggering/activating
-                let prev_snapshot = ZoneSnapshot::capture(&state.core.players[0]);
+                let p0_init = ZoneSnapshot::capture(&state.core.players[0]);
+                let p1_init = ZoneSnapshot::capture(&state.core.players[1]);
 
                 // --- Execution Phase ---
                 if trigger_type == TriggerType::Activated {
@@ -144,8 +148,6 @@ impl SemanticAssertionEngine {
                     state.process_trigger_queue(&self.db);
                 }
                 
-                let p0_init = ZoneSnapshot::capture(&state.core.players[0]);
-                let p1_init = ZoneSnapshot::capture(&state.core.players[1]);
                 self.run_sequence(&mut state, &ability.sequence, p0_init, p1_init, trigger_type)?;
             },
             _ => {
@@ -268,10 +270,10 @@ impl SemanticAssertionEngine {
         let base = match pi.choice_type.as_str() {
             "MODE" | "CHOICE" | "MODAL" | "SELECT_MODE" | "OPTIONAL" | "YES_NO" => 8000,
             "COLOR" | "SELECT_COLOR" => 580,
-            "SLOT" | "SELECT_SLOT" | "TARGET_MEMBER" | "SELECT_STAGE" | "SELECT_LIVE_SLOT" | "MEMBER" => 600,
+            "SLOT" | "SELECT_SLOT" | "TARGET_MEMBER" | "SELECT_STAGE" | "SELECT_LIVE_SLOT" | "MEMBER" | "TAP_O" => 600,
             "RPS" => 10001,
             "HAND" | "SELECT_HAND" | "SELECT_HAND_DISCARD" | "REVEAL_HAND" | "SELECT_SWAP_TARGET" => 3000,
-            "DISCARD" | "SELECT_DISCARD" | "RECOV_M" | "SELECT_DISCARD_PLAY" | "SEARCH" | "SEARCH_MEMBER" => 8000,
+            "DISCARD" | "SELECT_DISCARD" | "RECOV_M" | "RECOV_L" | "SELECT_DISCARD_PLAY" | "SEARCH" | "SEARCH_MEMBER" => 8000,
             "PAY_ENERGY" => 2000,
             _ => {
                 if pi.choice_type.contains("SEARCH") || pi.choice_type.contains("RECOV") { 8000 }
@@ -297,12 +299,13 @@ impl SemanticAssertionEngine {
                    }
                }
             },
-            "SELECT_DISCARD" | "SELECT_STAGE" | "SLOT" | "MEMBER" | "TARGET_MEMBER" => {
+            "SELECT_DISCARD" | "SELECT_STAGE" | "SLOT" | "MEMBER" | "TARGET_MEMBER" | "TAP_O" => {
+                let target_p = if pi.choice_type == "TAP_O" { 1 - p_idx } else { p_idx };
                 // Prefer selecting a member that isn't tapped if possible
                 for i in 0..3 {
-                    if state.core.players[p_idx].stage[i] >= 0 {
+                    if state.core.players[target_p].stage[i] >= 0 {
                         selected_idx = i as i32;
-                        if !state.core.players[p_idx].is_tapped(i) {
+                        if !state.core.players[target_p].is_tapped(i) {
                             break;
                         }
                     }
@@ -481,6 +484,7 @@ impl SemanticAssertionEngine {
 
     pub fn record_card(&self, card_id_str: &str, ab_idx: usize) -> Result<Option<SemanticAbility>, String> {
         let mut state = create_test_state();
+        let mut segments = Vec::new();
         state.ui.silent = true;
         
         let real_id = self.find_real_id(card_id_str)?;
@@ -513,7 +517,6 @@ impl SemanticAssertionEngine {
             let is_live = self.db.get_live(real_id).is_some();
             state.trigger_queue.push_back((real_id, ab_idx as u16, actx, is_live, trigger_type));
             state.process_trigger_queue(&self.db);
-            state.step(&self.db, EngineAction::Pass.id()).ok();
         } else if trigger_type == TriggerType::Constant {
             let mut deltas = Vec::new();
             if state.core.players[0].live_score_bonus > 0 {
@@ -608,7 +611,7 @@ impl SemanticAssertionEngine {
 
         // Discard (Net change)
         let d_discard = current.discard_len as i32 - baseline.discard_len as i32;
-        if d_discard > 0 { 
+        if d_discard != 0 { 
             deltas.push(SemanticDelta { tag: "DISCARD_DELTA".to_string(), value: serde_json::json!(d_discard) }); 
         }
 
@@ -722,8 +725,8 @@ impl SemanticAssertionEngine {
                     match clean_tag {
                         "HAND_DELTA" => expected_hand_delta += val_i64 as i32,
                         "ENERGY_COST" => expected_energy_cost += val_i64 as i32,
-                        "SCORE_DELTA" | "LIVE_SCORE_DELTA" => expected_score_delta += delta.value.as_u64().unwrap_or(0) as u32,
-                        "HEART_DELTA" => expected_heart_delta += delta.value.as_u64().unwrap_or(0),
+                        "SCORE_DELTA" | "LIVE_SCORE_DELTA" => expected_score_delta += delta.value.as_i64().unwrap_or(0) as i32,
+                        "HEART_DELTA" => expected_heart_delta += delta.value.as_i64().unwrap_or(0) as u64,
                         "BLADE_DELTA" => expected_blade_delta += val_i64 as i32,
                         "STAGE_DELTA" => expected_stage_delta += val_i64 as i32,
                         "ENERGY_DELTA" => expected_energy_delta += val_i64 as i32,
@@ -802,8 +805,9 @@ impl SemanticAssertionEngine {
         }
 
         // SCORE (P0)
-        let actual_score = current_p0.score.saturating_sub(baseline_p0.score);
-        if expected_score_delta != 99 && actual_score < (expected_score_delta as u32) {
+        let actual_score = (current_p0.score as i32 - baseline_p0.score as i32) 
+                         + (current_p0.live_score_bonus as i32 - baseline_p0.live_score_bonus as i32);
+        if expected_score_delta != 99 && actual_score < (expected_score_delta as i32) {
              return Err(format!("Mismatch SCORE_DELTA for '{}': Exp {}, Got {}", combined_text, expected_score_delta, actual_score));
         }
 
@@ -980,8 +984,9 @@ mod tests {
             ability_results.join("\n")
         }).collect();
 
-        let pass = results.iter().filter(|r| r.contains("✅ PASS")).count();
-        let total_abilities = results.iter().map(|r| r.split('\n').count()).sum::<usize>();
+        let pass = results.iter().map(|r| r.matches("✅ PASS").count()).sum::<usize>();
+        let results_filtered: Vec<&String> = results.iter().filter(|r| !r.is_empty()).collect();
+        let total_abilities = results_filtered.iter().map(|r| r.split('\n').count()).sum::<usize>();
         let fail = total_abilities - pass;
 
         println!("Audit Results: {}/{} Abilities Passed", pass, total_abilities);
@@ -998,14 +1003,14 @@ mod tests {
     }
 
     #[test]
-    fn generate_v2_truth() {
+    fn generate_v3_truth() {
         let engine = SemanticAssertionEngine::load();
         let mut new_truth = HashMap::new();
         
         let mut card_nos: Vec<String> = engine.truth.keys().cloned().collect();
         card_nos.sort();
 
-        println!("🔮 Generating V2 Truth Baseline for {} cards...", card_nos.len());
+        println!("🔮 Generating V3 Truth Baseline (Synchronized) for {} cards...", card_nos.len());
 
         for cid in &card_nos {
             let mut recorded_card = SemanticCardTruth {
@@ -1029,8 +1034,8 @@ mod tests {
         }
 
         let output = serde_json::to_string_pretty(&new_truth).unwrap();
-        std::fs::write("../reports/semantic_truth_v2.json", output).expect("Failed to write v2 truth");
-        println!("✅ V2 Truth Baseline written to reports/semantic_truth_v2.json");
+        std::fs::write("../reports/semantic_truth_v3.json", output).expect("Failed to write v3 truth");
+        println!("✅ V3 Truth Baseline written to reports/semantic_truth_v3.json");
     }
 
     #[test]

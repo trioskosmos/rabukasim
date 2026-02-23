@@ -323,10 +323,7 @@
     },
     "unused": [
         "NOP",
-        "SEARCH_DECK",
-        "FORMATION_CHANGE",
         "FLAVOR",
-        "SWAP_ZONE",
         "REPLACE_EFFECT",
         "ADD_CONTINUOUS",
         "PREVENT_SET_TO_SUCCESS_PILE",
@@ -335,11 +332,9 @@
         "HAS_COLOR",
         "LIFE_LEAD",
         "OPPONENT_HAS",
-        "SELF_IS_GROUP",
         "RARITY_CHECK",
         "HAND_HAS_NO_LIVE",
         "HAS_CHOICE",
-        "OPPONENT_CHOICE",
         "HAS_MOVED",
         "HAND_INCREASED",
         "IS_IN_DISCARD"

@@ -113,6 +113,26 @@ SUPPORTED_OPCODES = {
     232,
     233,
     234,
+    235,  # CostLead
+    236,  # ScoreLead
+    237,  # HeartLead
+    238,  # HasExcessHeart
+    239,  # NotHasExcessHeart
+    240,  # TotalBlades
+    241,  # CostCompare
+    242,  # BladeCompare
+    243,  # HeartCompare
+    244,  # OpponentHasWait
+    245,  # IsTapped
+    246,  # IsActive
+    247,  # LivePerformed
+    248,  # IsPlayer
+    249,  # IsOpponent
+    # Negated conditions (1000 + base opcode)
+    1237,  # Not HeartLead
+    1238,  # Not HasExcessHeart
+    1240,  # Not TotalBlades
+    1244,  # Not OpponentHasWait
 }
 
 # Values from EffectType in logic.rs/opcodes.py that map to the standard set.
@@ -158,11 +178,13 @@ def analyze_coverage():
     fully_covered_friendly = 0
     partially_covered = 0
     unsupported_opcodes = {}
+    unsupported_cards = {}  # Track which cards use unsupported opcodes
 
     print(f"Total Cards in DB (Member + Live): {total_cards}")
 
     for card in cards:
         current_abilities = card.get("abilities", [])
+        card_no = card.get("card_no", "unknown")
 
         # In compiled data, abilities should be a list of objects with 'bytecode' and 'raw_text'
         if current_abilities:
@@ -179,6 +201,10 @@ def analyze_coverage():
                         if base_op not in SUPPORTED_OPCODES:
                             all_ops_supported = False
                             unsupported_opcodes[op] = unsupported_opcodes.get(op, 0) + 1
+                            if op not in unsupported_cards:
+                                unsupported_cards[op] = []
+                            if card_no not in unsupported_cards[op]:
+                                unsupported_cards[op].append(card_no)
                         i += 4
 
             if all_ops_supported:
@@ -196,7 +222,8 @@ def analyze_coverage():
     print("\nMost Common Unsupported Opcodes:")
     sorted_unsupported = sorted(unsupported_opcodes.items(), key=lambda x: x[1], reverse=True)
     for op, count in sorted_unsupported[:10]:
-        print(f"Opcode {op}: {count} cards")
+        cards_list = unsupported_cards.get(op, [])
+        print(f"Opcode {op}: {count} cards -> {cards_list}")
 
 
 if __name__ == "__main__":

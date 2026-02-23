@@ -19,12 +19,12 @@ export function log(msg, type = 'normal') {
 
 function addToFeed(msg, type) {
     const icons = {
-        'action': '🎫',
-        'score': '✨',
-        'effect': '🪄',
-        'turn': '📅'
+        'action': '[A]',
+        'score': '[S]',
+        'effect': '[E]',
+        'turn': '[T]'
     };
-    const icon = icons[type] || '📝';
+    const icon = icons[type] || '[*]';
 
     feedItems.unshift({ msg, icon, timestamp: Date.now() });
     if (feedItems.length > 20) feedItems.shift();

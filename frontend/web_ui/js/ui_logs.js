@@ -64,34 +64,71 @@ export const Logs = {
                 // Create Header
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'log-entry ability group-header';
-                headerDiv.innerHTML = Tooltips.enrichAbilityText(Logs.formatLogEntry(headerEntry, group.turnPrefix, currentLang, showFriendlyAbilities));
+
+                const headerContent = Logs.formatLogEntry(headerEntry, group.turnPrefix, currentLang, showFriendlyAbilities);
+                const enrichedHeader = Tooltips.enrichAbilityText(headerContent);
+
+                headerDiv.innerHTML = `
+                    <div class="log-entry-icon"></div>
+                    <div class="log-entry-content">${enrichedHeader}</div>
+                    <div class="log-group-toggle">▼</div>
+                `;
+
                 blockDiv.appendChild(headerDiv);
 
                 // Create container for details (nesting)
                 if (detailEntries.length > 0) {
                     const detailsContainer = document.createElement('div');
                     detailsContainer.className = 'log-group-details';
+
                     detailEntries.forEach(detail => {
                         const detailDiv = document.createElement('div');
                         detailDiv.className = 'log-entry effect detail';
-                        detailDiv.innerHTML = Tooltips.enrichAbilityText(Logs.formatLogEntry(detail, "", currentLang, showFriendlyAbilities));
+
+                        const detailContent = Logs.formatLogEntry(detail, "", currentLang, showFriendlyAbilities);
+                        const enrichedDetail = Tooltips.enrichAbilityText(detailContent);
+
+                        detailDiv.innerHTML = `
+                            <div class="log-entry-icon"></div>
+                            <div class="log-entry-content">${enrichedDetail}</div>
+                        `;
                         detailsContainer.appendChild(detailDiv);
                     });
                     blockDiv.appendChild(detailsContainer);
+
+                    // Add collapse/expand event
+                    headerDiv.onclick = () => {
+                        const isCollapsed = detailsContainer.classList.toggle('collapsed');
+                        blockDiv.classList.toggle('open', !isCollapsed);
+                    };
                 }
                 fragment.appendChild(blockDiv);
             } else {
                 // Standalone entry
                 const div = document.createElement('div');
                 div.className = 'log-entry';
-                div.innerHTML = Tooltips.enrichAbilityText(Logs.formatLogEntry(group.body, group.turnPrefix, currentLang, showFriendlyAbilities));
+
+                const bodyContent = Logs.formatLogEntry(group.body, group.turnPrefix, currentLang, showFriendlyAbilities);
+                const enrichedBody = Tooltips.enrichAbilityText(bodyContent);
 
                 const entryUpper = group.entry.toUpperCase();
-                if ((entryUpper.includes("---") && entryUpper.includes("PHASE")) || entryUpper.includes("[ACTIVE PHASE]")) div.classList.add('phase');
-                else if (entryUpper.includes('PLAYS') || entryUpper.includes('MULLIGAN') || entryUpper.includes('SELECTED')) div.classList.add('action');
-                else if (entryUpper.includes('EFFECT:') || entryUpper.includes('RULE')) div.classList.add('effect');
-                else if (entryUpper.includes('SCORE') || entryUpper.includes('SUCCESS LIVE')) div.classList.add('score');
-                else if (group.entry.includes('===')) div.classList.add('turn');
+
+                if ((entryUpper.includes("---") && entryUpper.includes("PHASE")) || entryUpper.includes("[ACTIVE PHASE]")) {
+                    div.classList.add('phase');
+                } else if (entryUpper.includes('PLAYS') || entryUpper.includes('MULLIGAN') || entryUpper.includes('SELECTED')) {
+                    div.classList.add('action');
+                } else if (entryUpper.includes('EFFECT:') || entryUpper.includes('RULE')) {
+                    div.classList.add('effect');
+                } else if (entryUpper.includes('SCORE') || entryUpper.includes('SUCCESS LIVE')) {
+                    div.classList.add('score');
+                } else if (group.entry.includes('===')) {
+                    div.classList.add('turn');
+                }
+
+                div.innerHTML = `
+                    <div class="log-entry-icon"></div>
+                    <div class="log-entry-content">${enrichedBody}</div>
+                `;
 
                 fragment.appendChild(div);
             }
@@ -103,6 +140,16 @@ export const Logs = {
 
     formatLogEntry: (body, turnPrefix, currentLang, showFriendlyAbilities) => {
         let displayText = body;
+        let playerTag = "";
+
+        // Identify player context from body
+        if (body.startsWith("P1 ") || body.startsWith("[P1]")) {
+            playerTag = `<span class="log-p-badge p1">P1</span>`;
+            displayText = displayText.replace(/^\[?P1\]?\s?/, '');
+        } else if (body.startsWith("P2 ") || body.startsWith("[P2]")) {
+            playerTag = `<span class="log-p-badge p2">P2</span>`;
+            displayText = displayText.replace(/^\[?P2\]?\s?/, '');
+        }
 
         const abilityMatch = body.match(/\[TRIGGER:(\d+)\](.*?): (.*)/);
         const rustAbilityMatch = body.match(/(\[Rule .*?\]|\[Activated\]|\[Turn Start\]|\[Turn End\]|\[Triggered\])(.*?): (.*)/);
@@ -145,7 +192,7 @@ export const Logs = {
                 displayCardName = window.NAME_MAP[cardName];
             }
 
-            displayText = `${triggerLabel} ${displayCardName}: ${translatedEffect}`;
+            displayText = `${triggerLabel} <strong>${displayCardName}</strong>: ${translatedEffect}`;
         }
 
         const mulliganMatch = body.match(/(Mulligan): (.*)/i);
@@ -156,29 +203,33 @@ export const Logs = {
             if (currentLang === 'en' && window.NAME_MAP && window.NAME_MAP[cardName]) {
                 displayCardName = window.NAME_MAP[cardName];
             }
-            displayText = `${displayPhase}: ${displayCardName}`;
+            displayText = `${displayPhase}: <strong>${displayCardName}</strong>`;
         }
 
         // Clean up internal tokens like HEART_BLUE
-        displayText = displayText.replace(/HEART_RED/g, '❤️')
-            .replace(/HEART_YELLOW/g, '💛')
-            .replace(/HEART_GREEN/g, '💚')
-            .replace(/HEART_BLUE/g, '💙')
-            .replace(/HEART_PURPLE/g, '💜')
-            .replace(/HEART_PINK/g, '💖')
-            .replace(/HEART_WILD/g, '🤍');
+        displayText = displayText.replace(/HEART_RED/g, '[Red]')
+            .replace(/HEART_YELLOW/g, '[Yellow]')
+            .replace(/HEART_GREEN/g, '[Green]')
+            .replace(/HEART_BLUE/g, '[Blue]')
+            .replace(/HEART_PURPLE/g, '[Purple]')
+            .replace(/HEART_PINK/g, '[Pink]')
+            .replace(/HEART_WILD/g, '[Wild]');
 
-        return (turnPrefix ? turnPrefix + " " : "") + displayText;
+        return (turnPrefix ? `<span class="log-turn-prefix">${turnPrefix}</span> ` : "") + playerTag + displayText;
     },
 
     renderActiveAbilities: (containerId, abilities) => {
         const el = document.getElementById(containerId);
         if (!el || !abilities) return;
-        el.innerHTML = abilities.map(a => `
-            <div class="active-ability-tag" data-text="${a.text || a.description || ''}">
-                ${Tooltips.enrichAbilityText(a.name || 'Ability')}
-            </div>
-        `).join('');
+        el.innerHTML = abilities.map(a => {
+            const cardIdAttr = a.source_card_id !== undefined ? `data-card-id="${a.source_card_id}"` : '';
+            const dataTextAttr = a.text || a.description ? `data-text="${a.text || a.description}"` : '';
+            return `
+                <div class="active-ability-tag" ${cardIdAttr} ${dataTextAttr}>
+                    ${Tooltips.enrichAbilityText(a.name || 'Ability')}
+                </div>
+            `;
+        }).join('');
     },
 
     renderActiveEffects: (state, p0, p1, t) => {

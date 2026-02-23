@@ -12,9 +12,10 @@ import os
 import sys
 from collections import defaultdict
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.getcwd())
 
-from game.ability import AbilityParser
+from engine.models.ability import Ability
+from compiler.parser_v2 import parse_ability_text
 
 
 def generate_semantic_report():
@@ -29,7 +30,7 @@ def generate_semantic_report():
         if not ability_text:
             continue
 
-        abilities = AbilityParser.parse_ability_text(ability_text)
+        abilities = parse_ability_text(ability_text)
         if not abilities:
             continue
 

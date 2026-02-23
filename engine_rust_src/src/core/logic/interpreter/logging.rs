@@ -37,8 +37,17 @@ pub fn get_opcode_log(op: i32, v: i32, a: i32, _s: i32, result_count: i32) -> Op
         O_RECOVER_LIVE => Some(format!("Recovered {} live card(s) from Discard", v)),
         O_ENERGY_CHARGE => Some(format!("Charge {} Energy", v)),
         O_TAP_MEMBER => Some("Tapped member".to_string()),
-        O_ACTIVATE_MEMBER => Some("Activated member ability".to_string()),
+        O_TAP_OPPONENT => Some("Tapped opponent member".to_string()),
+        O_ACTIVATE_MEMBER => Some("Activated member/energy".to_string()),
         O_BOOST_SCORE => Some(format!("Score +{}", v)),
+        O_MOVE_MEMBER | O_FORMATION_CHANGE => Some("Moved member/Changed formation".to_string()),
+        O_PLACE_UNDER => Some("Placed card under member (Energy)".to_string()),
+        O_ADD_STAGE_ENERGY => Some(format!("Added {} energy to stage slot", v)),
+        O_GRANT_ABILITY => Some("Granted ability to member(s)".to_string()),
+        O_PLAY_MEMBER_FROM_HAND => Some("Played member from hand via effect".to_string()),
+        O_SET_TAPPED => Some(format!("Set member tapped state to {}", v != 0)),
+        O_ORDER_DECK => Some(format!("Reordered top {} cards of deck", v)),
+        O_REVEAL_UNTIL => Some("Revealed cards until condition met".to_string()),
         _ => None,
     }
 }

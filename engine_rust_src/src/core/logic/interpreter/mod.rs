@@ -5,6 +5,7 @@
 pub mod filter;
 pub mod conditions;
 pub mod costs;
+pub mod constants;
 pub mod suspension;
 pub mod handlers;
 pub mod logging;
@@ -13,7 +14,7 @@ use crate::core::logic::{GameState, CardDatabase, AbilityContext};
 pub use handlers::{HandlerRegistry, HandlerResult};
 pub use conditions::{check_condition_opcode, check_condition};
 pub use costs::{check_cost, pay_cost};
-pub use suspension::{suspend_interaction_with_db as suspend_interaction, resolve_target_slot, get_choice_text};
+pub use suspension::{suspend_interaction, resolve_target_slot, get_choice_text};
 
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
@@ -61,8 +62,8 @@ impl BytecodeExecutor {
         }
     }
 
-    fn pop_frame(&mut self) {
-        self.stack.pop();
+    fn pop_frame(&mut self) -> Option<ExecutionFrame> {
+        self.stack.pop()
     }
 }
 
@@ -134,7 +135,9 @@ pub fn resolve_bytecode(
             if let Ok(mut tracker) = GLOBAL_OPCODE_TRACKER.lock() {
                 tracker.insert(op);
             }
-            executor.pop_frame();
+            if executor.pop_frame().is_none() {
+                break;
+            }
             continue;
         }
 
@@ -179,7 +182,7 @@ pub fn resolve_bytecode(
             if !executor.cond {
                 frame.ip = (ip as i32 + 4 + (v * 4)) as usize;
             }
-            // Reset cond after JUMP_IF_FALSE
+            // Reset cond ONLY after JUMP_IF_FALSE (end of current condition block)
             executor.cond = true;
             frame.ctx.choice_index = -1;
             continue;
@@ -198,7 +201,9 @@ pub fn resolve_bytecode(
             HandlerResult::SetCond(c) => executor.cond = c,
             HandlerResult::Suspend => return, 
             HandlerResult::Return => {
-                executor.pop_frame();
+                if executor.pop_frame().is_none() {
+                    return;
+                }
             },
             HandlerResult::Branch(new_ip) => {
                 frame.ip = new_ip;
@@ -235,12 +240,17 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
         // Generate a new ID for the activation
         state.generate_execution_id();
         
-        let bytecode = if is_live {
-            &db.get_live(cid).unwrap().abilities[ab_idx as usize].bytecode
+        let (bytecode, costs) = if is_live {
+            let ab = &db.get_live(cid).unwrap().abilities[ab_idx as usize];
+            (&ab.bytecode, &ab.costs)
         } else {
-            &db.get_member(cid).unwrap().abilities[ab_idx as usize].bytecode
+            let ab = &db.get_member(cid).unwrap().abilities[ab_idx as usize];
+            (&ab.bytecode, &ab.costs)
         };
-        resolve_bytecode(state, db, bytecode, &ctx);
+        
+        if costs::pay_costs_transactional(state, db, costs, &ctx) {
+            resolve_bytecode(state, db, bytecode, &ctx);
+        }
         
         state.clear_execution_id();
     }

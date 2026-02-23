@@ -1,4 +1,6 @@
+#[cfg(test)]
 use crate::core::logic::*;
+#[cfg(test)]
 use crate::test_helpers::*;
 
 #[cfg(test)]

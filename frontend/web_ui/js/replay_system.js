@@ -188,7 +188,7 @@ export const Replay = {
 
     startPlay: () => {
         const btn = document.getElementById('play-btn');
-        if (btn) btn.textContent = '⏸ Pause';
+        if (btn) btn.textContent = '|| Pause';
         State.playInterval = setInterval(Replay.replayNext, 500);
     },
 
@@ -197,7 +197,7 @@ export const Replay = {
             clearInterval(State.playInterval);
             State.playInterval = null;
             const btn = document.getElementById('play-btn');
-            if (btn) btn.textContent = '▶ Play';
+            if (btn) btn.textContent = '> Play';
         }
     }
 };

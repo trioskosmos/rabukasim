@@ -787,13 +787,20 @@ export const Network = {
         // Pending choice (important for bug reports)
         if (raw.pending_choice) report.pending_choice = raw.pending_choice;
 
-        // Legal actions (current ones only, slim)
+        // Legal actions (current ones only - just IDs and essential info to reduce size)
         if (Array.isArray(raw.legal_actions) && raw.legal_actions.length > 0) {
             report.legal_actions = raw.legal_actions.map(a => {
-                const s = { ...a };
-                delete s.description; // keep desc only
-                delete s.img;
-                return s;
+                // Only keep essential action info
+                return {
+                    id: a.id,
+                    name: a.name,
+                    type: a.type,
+                    hand_idx: a.hand_idx,
+                    area_idx: a.area_idx,
+                    slot_idx: a.slot_idx,
+                    cost: a.cost,
+                    cost_label: a.cost_label
+                };
             });
         }
 
