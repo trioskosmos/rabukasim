@@ -31,7 +31,10 @@ pub use models::{Ability, AbilityContext, PendingInteraction, Effect, Condition,
 pub use crate::core::enums::*;
 
 // Heuristic utility re-exports
-pub use interpreter::resolve_bytecode;
+pub use interpreter::{resolve_bytecode, process_trigger_queue, check_once_per_turn, consume_once_per_turn};
+pub use interpreter::conditions::{check_condition, check_condition_opcode};
+pub use interpreter::costs::{check_cost, pay_cost};
+pub use interpreter::suspension::suspend_interaction_with_db as suspend_interaction;
 pub use performance::PerformanceResults;
 
 // Heuristic flags (matching generated_constants.rs types)

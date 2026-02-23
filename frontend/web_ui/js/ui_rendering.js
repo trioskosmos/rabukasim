@@ -6,6 +6,9 @@ import { State } from './state.js';
 import { Phase, fixImg } from './constants.js';
 import { translations } from './translations_data.js';
 import { Tooltips } from './ui_tooltips.js';
+import { InteractionAdapter } from './interaction_adapter.js';
+import { Logs } from './ui_logs.js';
+import { PerformanceRenderer } from './ui_performance.js';
 
 export const Rendering = {
     render: () => {
@@ -58,90 +61,7 @@ export const Rendering = {
         }
     },
 
-    get_valid_targets: (state) => {
-        const valid = {
-            myHand: {},
-            oppHand: {},
-            myStage: {},
-            oppStage: {},
-            myLive: {},
-            oppLive: {},
-            myEnergy: {},
-            oppEnergy: {},
-            discard: {},
-            hasSelection: false
-        };
-
-        if (!state.legal_actions) return valid;
-
-        state.legal_actions.forEach(a => {
-            const m = a.metadata || {};
-            const hIdx = a.hand_idx ?? m.hand_idx;
-            const sIdx = a.slot_idx ?? m.slot_idx;
-            const srcIdx = a.source_idx ?? m.source_idx;
-            const eIdx = m.energy_idx;
-            const tPlayer = m.target_player !== undefined ? m.target_player : State.perspectivePlayer;
-            const isMe = (tPlayer === State.perspectivePlayer);
-
-            if (hIdx !== undefined) {
-                if (isMe) valid.myHand[hIdx] = a.id;
-                else valid.oppHand[hIdx] = a.id;
-            }
-
-            if (sIdx !== undefined) {
-                // Determine if it's a stage target or live target
-                if (a.type !== 'PLAY' && a.type !== 'LIVE_SET' && m.category !== 'LIVE') {
-                    if (isMe) valid.myStage[sIdx] = a.id;
-                    else valid.oppStage[sIdx] = a.id;
-                }
-            }
-            if (srcIdx !== undefined) {
-                if (isMe) valid.myStage[srcIdx] = a.id;
-                else valid.oppStage[srcIdx] = a.id;
-            }
-
-            if (a.type === 'LIVE_PERFORM' || m.category === 'LIVE') {
-                const liveIdx = sIdx !== undefined ? sIdx : (a.id >= 600 && a.id < 610 ? a.id - 600 : (a.id >= 900 && a.id <= 902 ? a.id - 900 : undefined));
-                if (liveIdx !== undefined) {
-                    if (isMe) valid.myLive[liveIdx] = a.id;
-                    else valid.oppLive[liveIdx] = a.id;
-                }
-            }
-
-            if (a.type === 'SELECT_DISCARD' || m.from_discard || m.category === 'DISCARD') {
-                valid.discard['all'] = a.id;
-            }
-
-            if (eIdx !== undefined) {
-                if (isMe) valid.myEnergy[eIdx] = a.id;
-                else valid.oppEnergy[eIdx] = a.id;
-            }
-        });
-
-        const hasCardActions = (Object.keys(valid.myHand).length + Object.keys(valid.myStage).length + Object.keys(valid.myLive).length +
-            Object.keys(valid.oppHand).length + Object.keys(valid.oppStage).length + Object.keys(valid.oppLive).length) > 0;
-        valid.hasSelection = hasCardActions;
-
-        if (state.pending_choice && state.pending_choice.options) {
-            valid.hasSelection = true;
-            valid.myHand = {}; valid.oppHand = {};
-            valid.myStage = {}; valid.oppStage = {};
-            valid.myLive = {}; valid.oppLive = {};
-            valid.myEnergy = {}; valid.oppEnergy = {};
-
-            state.pending_choice.options.forEach((opt, idx) => {
-                const actionId = state.pending_choice.actions[idx];
-                const tPlayer = opt.target_player !== undefined ? opt.target_player : State.perspectivePlayer;
-                const isMe = (tPlayer === State.perspectivePlayer);
-
-                if (opt.hand_idx !== undefined) { if (isMe) valid.myHand[opt.hand_idx] = actionId; else valid.oppHand[opt.hand_idx] = actionId; }
-                if (opt.slot_idx !== undefined) { if (isMe) valid.myStage[opt.slot_idx] = actionId; else valid.oppStage[opt.slot_idx] = actionId; }
-                if (opt.energy_idx !== undefined) { if (isMe) valid.myEnergy[opt.energy_idx] = actionId; else valid.oppEnergy[opt.energy_idx] = actionId; }
-            });
-        }
-
-        return valid;
-    },
+    get_valid_targets: InteractionAdapter.get_valid_targets,
 
     renderInternal: () => {
         const state = State.data;
@@ -378,7 +298,8 @@ export const Rendering = {
             if (isValid) highlightClass += ' valid-target';
 
             const slotDiv = document.createElement('div');
-            slotDiv.className = 'member-slot' + (slot && slot !== -1 ? ' filled' : '') + highlightClass;
+            const isTapped = slot && typeof slot === 'object' && slot.tapped;
+            slotDiv.className = 'member-slot' + (slot && slot !== -1 ? ' filled' : '') + (isTapped ? ' tapped' : '') + highlightClass;
             slotDiv.id = `${containerId}-slot-${i}`;
 
             if (slot && typeof slot === 'object' && slot.id !== undefined && slot.id !== -1) {
@@ -554,242 +475,11 @@ export const Rendering = {
         }
     },
 
-    renderActiveEffects: (state, p0, p1, t) => {
-        const container = document.getElementById('active-effects-list');
-        if (!container) return;
+    renderActiveEffects: (state, p0, p1, t) => Logs.renderActiveEffects(state, p0, p1, t),
 
-        let html = '';
+    renderRuleLog: (containerId = 'rule-log') => Logs.renderRuleLog(containerId),
 
-        const renderPlayerEffects = (p, pIdx) => {
-            if (!p) return '';
-            let effects = [];
-            const isMe = pIdx === State.perspectivePlayer;
-            const badgeClass = isMe ? 'badge-p1' : 'badge-p2';
-            const badgeLabel = isMe ? (t['you'] || 'You') : (t['opponent'] || 'Opponent');
-
-            // Cost Reduction
-            if (p.cost_reduction && p.cost_reduction !== 0) {
-                effects.push({
-                    title: t['cost_reduction'] || 'Cost Reduction',
-                    desc: `${t['cost'] || 'Cost'} ${p.cost_reduction > 0 ? '-' : '+'}${Math.abs(p.cost_reduction)}`,
-                    duration: t['until_end_of_turn'] || 'Until End of Turn',
-                    type: 'buff'
-                });
-            }
-
-            // Blade Buffs
-            if (p.blade_buffs) {
-                p.blade_buffs.forEach((val, idx) => {
-                    if (val !== 0) {
-                        effects.push({
-                            title: `${t['slot'] || 'Slot'} ${idx + 1}: ${t['blade_buff'] || 'Blade Buff'}`,
-                            desc: `Appeal ${val > 0 ? '+' : ''}${val}`,
-                            duration: t['until_end_of_turn'] || 'Until End of Turn',
-                            type: val > 0 ? 'buff-blade' : 'debuff'
-                        });
-                    }
-                });
-            }
-
-            // Heart Buffs
-            if (p.heart_buffs) {
-                p.heart_buffs.forEach((hb, idx) => {
-                    const colors = ['Smile', 'Pure', 'Cool', 'Green', 'Blue', 'Purple', 'Wildcard'];
-                    let heartDesc = [];
-                    if (hb && Array.isArray(hb)) {
-                        hb.forEach((count, cIdx) => {
-                            if (count > 0) {
-                                heartDesc.push(`${colors[cIdx] || cIdx} +${count}`);
-                            }
-                        });
-                    }
-                    if (heartDesc.length > 0) {
-                        effects.push({
-                            title: `${t['slot'] || 'Slot'} ${idx + 1}: ${t['heart_buff'] || 'Heart Buff'}`,
-                            desc: heartDesc.join(', '),
-                            duration: t['until_end_of_turn'] || 'Until End of Turn',
-                            type: 'buff-heart'
-                        });
-                    }
-                });
-            }
-
-            // Game Restrictions
-            if (p.prevent_baton_touch > 0) {
-                effects.push({
-                    title: t['restriction'] || 'Restriction',
-                    desc: t['cannot_baton_touch'] || 'Cannot Baton Touch',
-                    duration: t['until_end_of_turn'] || 'Until End of Turn',
-                    type: 'restriction'
-                });
-            }
-            if (p.prevent_activate > 0) {
-                effects.push({
-                    title: t['restriction'] || 'Restriction',
-                    desc: t['cannot_activate_member'] || 'Cannot Activate Member Abilities',
-                    duration: t['until_end_of_turn'] || 'Until End of Turn',
-                    type: 'restriction'
-                });
-            }
-
-            // Yell Cards removed from Active Effects UI per user feedback.
-            // They are tracked via the Rule Log / Turn History now.
-
-            if (effects.length === 0) return '';
-
-            let pStats = `<div class="effect-player-badge ${badgeClass}">${badgeLabel}</div>`;
-            return pStats + effects.map(e => `
-                <div class="effect-item ${e.type || ''}">
-                    <div class="effect-title-row">
-                        <span class="effect-title">${e.title}</span>
-                        <span class="effect-duration">${e.duration}</span>
-                    </div>
-                    <div class="effect-desc">${e.desc}</div>
-                </div>
-            `).join('');
-        };
-
-        html += renderPlayerEffects(p0, State.perspectivePlayer);
-        html += renderPlayerEffects(p1, 1 - State.perspectivePlayer);
-
-        if (!html) {
-            container.innerHTML = `<div style="font-size: 0.75rem; color: var(--text-dim); text-align: center; padding: 10px;">${t['no_active_effects'] || 'No active effects'}</div>`;
-        } else {
-            container.innerHTML = html;
-        }
-    },
-
-    renderRuleLog: (containerId = 'rule-log') => {
-        const ruleLogEl = document.getElementById(containerId);
-        if (!ruleLogEl) return;
-
-        const state = State.data;
-        const currentLang = State.currentLang;
-        const showFriendlyAbilities = State.showFriendlyAbilities;
-        const selectedTurn = State.selectedTurn || -1;
-        const showingFullLog = State.showingFullLog;
-
-        let logData = state.rule_log || [];
-
-        // Apply filtering
-        if (selectedTurn !== -1) {
-            const turnStr = `[Turn ${selectedTurn}]`;
-            logData = logData.filter(entry => entry.includes(turnStr));
-        }
-
-        ruleLogEl.innerHTML = '';
-
-        // Log Consolidation: Deduplicate consecutive redundant logs
-        let filteredLogData = [];
-        for (let i = 0; i < logData.length; i++) {
-            const entry = logData[i];
-            const nextEntry = logData[i + 1];
-
-            const normEntry = entry.replace(/^\[Turn \d+\]\s*/, '');
-            const normNext = nextEntry ? nextEntry.replace(/^\[Turn \d+\]\s*/, '') : null;
-
-            if (normEntry.includes("sets live card") && normNext && (normNext.includes("sets live card") || normNext.includes("Live Set End"))) {
-                continue;
-            }
-            if (normEntry === normNext) continue;
-
-            filteredLogData.push(entry);
-        }
-
-        const fragment = document.createDocumentFragment();
-        filteredLogData.forEach(entry => {
-            const div = document.createElement('div');
-            div.className = 'log-entry';
-
-            let displayText = entry;
-            let isAbility = false;
-
-            const abilityMatch = entry.match(/(?:\[Turn \d+\] )?\[TRIGGER:(\d+)\](.*?): (.*)/);
-            const rustAbilityMatch = entry.match(/(?:\[Turn \d+\] )?(\[Rule .*?\]|\[Activated\]|\[Turn Start\]|\[Turn End\]|\[Triggered\])(.*?): (.*)/);
-
-            if (abilityMatch || rustAbilityMatch) {
-                isAbility = true;
-                const match = abilityMatch || rustAbilityMatch;
-                let triggerLabel = "";
-                let cardName = "";
-                let pseudocode = "";
-
-                if (abilityMatch) {
-                    const triggerId = parseInt(match[1]);
-                    cardName = match[2].trim();
-                    pseudocode = match[3].trim();
-                    triggerLabel = `[${triggerId}]`;
-                    if (translations[currentLang] && translations[currentLang].triggers && translations[currentLang].triggers[triggerId]) {
-                        triggerLabel = translations[currentLang].triggers[triggerId];
-                    }
-                } else {
-                    triggerLabel = match[1].trim();
-                    cardName = match[2].trim();
-                    pseudocode = match[3].trim();
-                }
-
-                let translatedEffect = pseudocode;
-                const shouldTranslate = (currentLang === 'en' || showFriendlyAbilities);
-
-                if (shouldTranslate && window.translateAbility) {
-                    translatedEffect = window.translateAbility("EFFECT: " + pseudocode, currentLang);
-                    translatedEffect = translatedEffect.replace(/^.*?: /, '').replace(/^→ /, '');
-                } else if (currentLang === 'jp' && !showFriendlyAbilities) {
-                    const srcCard = State.resolveCardDataByName(cardName);
-                    if (srcCard && srcCard.original_text) {
-                        translatedEffect = srcCard.original_text;
-                    }
-                }
-
-                let displayCardName = cardName;
-                if (currentLang === 'en' && window.NAME_MAP && window.NAME_MAP[cardName]) {
-                    displayCardName = window.NAME_MAP[cardName];
-                }
-
-                const turnMatch = entry.match(/^\[Turn \d+\]/);
-                const turnPrefix = turnMatch ? turnMatch[0] + " " : "";
-                displayText = `${turnPrefix}${triggerLabel} ${displayCardName}: ${translatedEffect}`;
-            }
-
-            const mulliganMatch = entry.match(/(?:\[Turn \d+\] )?(Mulligan): (.*)/i);
-            if (mulliganMatch) {
-                const rawPhase = mulliganMatch[1];
-                const cardName = mulliganMatch[2].trim();
-                let displayPhase = currentLang === 'jp' ? "マリガン" : "Mulligan";
-                let displayCardName = cardName;
-                if (currentLang === 'en' && window.NAME_MAP && window.NAME_MAP[cardName]) {
-                    displayCardName = window.NAME_MAP[cardName];
-                }
-                const turnMatch = entry.match(/^\[Turn \d+\]/);
-                const turnPrefix = turnMatch ? turnMatch[0] + " " : "";
-                displayText = `${turnPrefix}${displayPhase}: ${displayCardName}`;
-            }
-
-            const entryUpper = entry.toUpperCase();
-            if (entryUpper.includes("---") && entryUpper.includes("PHASE") || entryUpper.includes("[ACTIVE PHASE]")) div.classList.add('phase');
-            else if (isAbility) div.classList.add('ability');
-            else if (entryUpper.includes('PLAYS') || entryUpper.includes('MULLIGAN') || entryUpper.includes('SELECTED')) div.classList.add('action');
-            else if (entryUpper.includes('EFFECT:') || entryUpper.includes('RULE')) div.classList.add('effect');
-            else if (entryUpper.includes('SCORE') || entryUpper.includes('SUCCESS LIVE')) div.classList.add('score');
-            else if (entry.includes('===')) div.classList.add('turn');
-
-            div.innerHTML = Tooltips.enrichAbilityText(displayText);
-            fragment.appendChild(div);
-        });
-
-        ruleLogEl.appendChild(fragment);
-        if (!showingFullLog) ruleLogEl.scrollTop = ruleLogEl.scrollHeight;
-    },
-
-    renderActiveAbilities: (containerId, abilities) => {
-        const el = document.getElementById(containerId);
-        if (!el || !abilities) return;
-        el.innerHTML = abilities.map(a => `
-            <div class="active-ability-tag" data-text="${a.text || a.description || ''}">
-                ${Tooltips.enrichAbilityText(a.name || 'Ability')}
-            </div>
-        `).join('');
-    },
+    renderActiveAbilities: (containerId, abilities) => Logs.renderActiveAbilities(containerId, abilities),
 
     renderSelectionModal: () => {
         // Disabled as per user request - all selections are now in the sidebar
@@ -873,7 +563,8 @@ export const Rendering = {
             let name = a.metadata?.name ?? a.name ?? "";
 
             // User Request: If name is "Action 30X", try to resolve the card name
-            if (name.match(/^Action\s+30\d$/)) {
+            // But ONLY if it's not an ability-related action (which might share ID indices)
+            if (name.match(/^Action\s+30\d$/) && a.metadata?.category !== 'ABILITY') {
                 const liveIdx = parseInt(name.replace("Action 30", ""), 10);
                 const state = State.data;
                 const liveCard = state?.live_zone && state.live_zone[liveIdx];
@@ -917,6 +608,35 @@ export const Rendering = {
             }
         };
 
+        const getHighlightTargets = (a) => {
+            const state = State.data;
+            if (!state) return [];
+            const m = a.metadata || {};
+            const hIdx = a.hand_idx ?? m.hand_idx;
+            const sIdx = a.slot_idx ?? m.slot_idx;
+            const srcIdx = a.source_idx ?? m.source_idx;
+            const targetSlotIdx = m.target_slot_idx ?? m.secondary_slot_idx;
+            const tPlayer = m.target_player !== undefined ? m.target_player : perspectivePlayer;
+            const isMe = (tPlayer === perspectivePlayer);
+            const playerKey = isMe ? 'p0' : 'p1';
+
+            const targets = [];
+            if (hIdx !== undefined) targets.push(`${playerKey}-hand-card-${hIdx}`);
+            if (sIdx !== undefined) {
+                if (a.type !== 'PLAY' && a.type !== 'LIVE_SET' && m.category !== 'LIVE') {
+                    targets.push(`${playerKey}-stage-slot-${sIdx}`);
+                }
+            }
+            if (srcIdx !== undefined) targets.push(`${playerKey}-stage-slot-${srcIdx}`);
+            if (targetSlotIdx !== undefined) targets.push(`${playerKey}-stage-slot-${targetSlotIdx}`);
+            if (a.type === 'LIVE_PERFORM' || m.category === 'LIVE') {
+                const liveIdx = sIdx !== undefined ? sIdx : (a.id >= 600 && a.id < 610 ? a.id - 600 : (a.id >= 900 && a.id <= 902 ? a.id - 900 : undefined));
+                if (liveIdx !== undefined) targets.push(`${playerKey}-live-zone-slot-${liveIdx}`);
+            }
+            return targets;
+        };
+
+
         // Unified Button Creator to reduce repeated code
         const createActionButton = (a, isMini = false, extraClass = '') => {
             const btn = document.createElement('button');
@@ -925,6 +645,23 @@ export const Rendering = {
             if (a.raw_text || a.text) btn.dataset.text = a.raw_text || a.text;
             btn.innerHTML = getActionLabel(a, isMini);
             btn.onclick = () => { if (window.doAction && a.id !== undefined) window.doAction(a.id); };
+
+            // Hover Highlighting
+            btn.onmouseenter = () => {
+                const targets = getHighlightTargets(a);
+                targets.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.add('action-highlight');
+                });
+            };
+            btn.onmouseleave = () => {
+                const targets = getHighlightTargets(a);
+                targets.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.remove('action-highlight');
+                });
+            };
+
             return btn;
         };
 
@@ -1187,49 +924,7 @@ export const Rendering = {
         }
     },
 
-    renderPerformanceGuide: () => {
-        const state = State.data;
-        const perspectivePlayer = State.perspectivePlayer;
-        const p0 = state.players[perspectivePlayer] || state.players[0];
-        const guide = p0.performance_guide;
-        const panel = document.getElementById('perf-guide-panel');
-        const contentEl = document.getElementById('perf-guide-content');
-        if (!panel || !contentEl) return;
-
-        if (!guide || !guide.lives || guide.lives.length === 0) {
-            panel.style.display = 'none';
-            return;
-        }
-        panel.style.display = 'block';
-
-        let html = `<div class="perf-guide-header">
-            <span>Blades: <b>${guide.total_blades}</b></span>
-            <span>Hearts: ${Rendering.renderHeartsCompact(guide.total_hearts)}</span>
-        </div>`;
-
-        guide.lives.forEach(l => {
-            if (!l || typeof l !== 'object') return;
-            const color = l.passed ? '#4f4' : '#f44';
-            const imgPath = l.img || '';
-            const imgHtml = imgPath ? `<img src="${fixImg(imgPath)}" class="perf-guide-img" style="border-color:${color}">` : '';
-
-            let entryHtml = `<div class="perf-guide-entry" style="opacity: ${l.passed ? 1 : 0.7}" ${l.text ? `data-text="${l.text.replace(/"/g, '&quot;')}"` : ''}>
-                ${imgHtml}
-                <div class="perf-guide-info">
-                    <div class="perf-guide-name">${l.name || 'Live'} <span class="perf-guide-score">(${l.score || 0}pts)</span></div>
-                    <div class="perf-guide-pips">
-                        ${Rendering.renderHeartProgress(l.filled, l.required)}
-                    </div>
-                    ${!l.passed ? `<div class="perf-guide-reason">${l.reason || ''}</div>` : ''}
-                </div>
-                <div class="perf-guide-status" style="color:${color}">${l.passed ? '✓' : 'x'}</div>
-            </div>`;
-
-            html += entryHtml;
-        });
-
-        contentEl.innerHTML = html;
-    },
+    renderPerformanceGuide: () => PerformanceRenderer.renderPerformanceGuide(Rendering.renderHeartProgress),
 
     renderLookedCards: () => {
         const state = State.data;
@@ -1289,202 +984,7 @@ export const Rendering = {
         content.innerHTML = html;
     },
 
-    renderPerformanceResult: (results = null) => {
-        const modal = document.getElementById('performance-modal');
-        const content = document.getElementById('performance-result-content');
-        if (!modal || !content) return;
-
-        let displayResults = results ||
-            (State.data.performance_results && Object.keys(State.data.performance_results).length > 0 ? State.data.performance_results : State.data.last_performance_results);
-
-        const currentLang = State.currentLang;
-        const t = translations ? translations[currentLang] : null;
-
-        if (!displayResults || Object.keys(displayResults).length === 0) {
-            const label = t ? (t['no_perf_data'] || 'No performance data available for this turn.') : 'No performance data available for this turn.';
-            content.innerHTML = `<div style="text-align:center; padding: 20px; opacity:0.6;">${label}</div>`;
-            return;
-        }
-
-        content.innerHTML = '';
-        Rendering.renderTurnHistory(); // Render history in background tab
-        Rendering.showPerfTab('result'); // Ensure we start on result tab
-
-        let html = '';
-        // Added turn history navigation
-        if (State.performanceHistoryTurns && State.performanceHistoryTurns.length > 1) {
-            html += `<div class="perf-turn-nav">`;
-            const turns = [...State.performanceHistoryTurns].sort((a, b) => a - b);
-            turns.forEach((turn) => {
-                const turnNum = parseInt(turn);
-                const isLatest = turnNum === turns[turns.length - 1];
-                let turnLabel = isLatest ? `Current (T${turnNum})` : `Turn ${turnNum}`;
-                if (t) {
-                    turnLabel = isLatest ? (t['current_turn'] || 'Current (T{turn})').replace('{turn}', turnNum) : (t['turn_label'] || 'Turn {turn}').replace('{turn}', turnNum);
-                }
-
-                const isSelected = (State.selectedPerfTurn === turnNum) || (State.selectedPerfTurn === -1 && isLatest);
-                const activeClass = isSelected ? 'active' : '';
-
-                html += `<button class="perf-nav-btn ${activeClass}" onclick="window.showPerformanceForTurn(${turnNum})">
-                            ${turnLabel}
-                         </button>`;
-            });
-            html += `</div>`;
-        }
-
-        html += '<div class="perf-result-container">';
-        [0, 1].forEach(pid => {
-            const res = displayResults[pid];
-            if (!res) return;
-
-            const playerName = pid === State.perspectivePlayer ? (t ? (t['you'] || 'You') : 'You') : (t ? (t['opp'] || 'Opponent') : 'Opponent');
-            const statusLabel = res.success ? (t ? (t['success'] || 'SUCCESS') : 'SUCCESS') : (t ? (t['failure'] || 'FAILURE') : 'FAILURE');
-            const statusClass = res.success ? 'success' : 'failure';
-
-            html += `
-    <div class="perf-player-box ${statusClass}">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <h3 style="margin:0;">${playerName}: ${statusLabel}</h3>
-                        <div style="text-align:right;">
-                            <span style="font-size:0.75rem; opacity:0.6; text-transform:uppercase;">${t ? (t['judge_score'] || 'Judge Score') : 'Judge Score'}</span>
-                            <div style="font-size:1.25rem; font-weight:bold; color:var(--accent-gold);">${res.total_score || 0}</div>
-                        </div>
-                    </div>
-                    <div class="perf-breakdown">
-                        <div class="perf-section">
-                            <h4>${t ? (t['target_lives'] || 'Target Lives') : 'Target Lives'}</h4>
-                            ${res.lives && res.lives.length > 0 ? res.lives.map(l => {
-                if (!l) return ''; // Added null check
-                const filledSum = (l.filled || [0, 0, 0, 0, 0, 0, 0]).reduce((a, b) => a + b, 0);
-                const reqSum = (l.required || [0, 0, 0, 0, 0, 0, 0]).reduce((a, b) => a + b, 0);
-                const spareSum = (l.spare || [0, 0, 0, 0, 0, 0, 0]).reduce((a, b) => a + b, 0);
-                const extraHearts = Math.max(0, filledSum - reqSum);
-
-                return `
-                                <div class="perf-line" style="flex-direction: column; align-items: flex-start; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 8px;">
-                                    <div style="display:flex; justify-content: space-between; width: 100%; align-items:center;">
-                                        <div style="display:flex; align-items:center; gap:5px;">
-                                            ${l.img ? `<img src="${fixImg(l.img)}" style="width:24px; border-radius:3px;">` : ''}
-                                            <div style="display:flex; flex-direction:column;">
-                                                <span style="font-weight:bold; font-size:0.9rem;">${l.name || 'Live'}</span>
-                                                <span style="font-size:0.7rem; color:var(--accent-gold); opacity:0.9;">${t ? (t['score'] || 'Score') : 'Score'}: <b>${l.score || 0}</b></span>
-                                            </div>
-                                        </div>
-                                         <div style="display:flex; align-items:center; gap:10px;">
-                                            ${extraHearts > 0 ? `<span style="font-size:0.75rem; color:var(--accent-gold);">${t ? (t['extra_hearts'] || '+{count} Extra').replace('{count}', extraHearts) : `+${extraHearts} Extra`}</span>` : ''}
-                                            <span style="color:${l.passed ? '#4f4' : '#f44'}; font-weight:bold; font-size:0.8rem;">${l.passed ? '✓ PASS' : '✗ FAIL'}</span>
-                                        </div>
-                                    </div>
-                                    <div class="perf-heart-progress">
-                                        ${Rendering.renderHeartProgress(l.filled, l.required)}
-                                    </div>
-                                    <div style="display:flex; flex-wrap:wrap; gap:15px; margin-top:5px; font-size:0.75rem;">
-                                        <div style="display:flex; align-items:center; gap:8px;">
-                                            ${Rendering.renderHeartsCompact(l.filled)}
-                                        </div>
-                                    </div>
-                                </div>
-                                `;
-            }).join('') : 'None'}
-                        </div>
-                        
-                        <div class="perf-section">
-                            <h4>${t ? (t['blades_breakdown'] || 'Blades Breakdown (Total: {total})').replace('{total}', res.yell_count || 0) : `Blades Breakdown (Total: ${res.yell_count || 0})`}</h4>
-                            ${res.breakdown && res.breakdown.blades ? res.breakdown.blades.map(b => `
-                                <div class="perf-line">
-                                    <span>${Tooltips.enrichAbilityText(b.source)}</span>
-                                    <span class="value">+${b.value}</span>
-                                </div>
-                            `).join('') : ''}
-                            ${res.volume_icons ? `
-                                <div class="perf-line" style="border-top:1px dashed rgba(255,255,255,0.1); padding-top:2px;">
-                                    <span>${t ? (t['volume'] || 'Volume Icons') : 'Volume Icons'}</span>
-                                    <span class="value">+${res.volume_icons}</span>
-                                </div>
-                            ` : ''}
-                        </div>
-
-
-
-                        ${res.member_contributions && res.member_contributions.length > 0 ? `
-                        <div class="perf-section">
-                            <h4>${t ? (t['member_contrib'] || 'Member Contributions') : 'Member Contributions'}</h4>
-                            ${res.member_contributions.map(m => {
-                if (!m) return '';
-                return `
-                                <div class="perf-member-contribution">
-                                    ${m.img ? `<img src="${fixImg(m.img)}" class="perf-member-img">` : ''}
-                                    <div class="perf-member-info">
-                                        <div class="perf-member-name">${Tooltips.enrichAbilityText(m.source || "Member")}</div>
-                                        <div class="perf-member-stats">
-                                            <div class="contrib-row">${Rendering.renderHeartsCompact(m.hearts)}</div>
-                                            <div class="contrib-row">${Rendering.renderBladesCompact(m.blades)}</div>
-                                             ${m.volume_icons ? `<span>${t ? (t['volume'] || 'Vol') : 'Vol'}: <b>${m.volume_icons}</b></span>` : ''}
-                                            ${m.draw_icons ? `<span>${t ? (t['cards_draw'] || 'Drw') : 'Drw'}: <b>${m.draw_icons}</b></span>` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-            }).join('')}
-                        </div>
-                        ` : ''}
-
-
-                        ${(res.breakdown && ((res.breakdown.requirements && res.breakdown.requirements.length > 0) || (res.breakdown.transforms && res.breakdown.transforms.length > 0))) ? `
-                        <div class="perf-section">
-                            <h4>${t ? (t['adjustments'] || 'Adjustments') : 'Adjustments'}</h4>
-                            ${res.breakdown.requirements ? res.breakdown.requirements.map(req => {
-                const colors = ['Pink', 'Red', 'Yellow', 'Green', 'Blue', 'Purple', 'Any'];
-                return `
-                                <div class="perf-line" style="color: #4f4; font-size: 0.8rem; gap: 4px;">
-                                    <span style="opacity:0.7;">${Tooltips.enrichAbilityText(req.source)}:</span>
-                                    <span>-${req.value} ${colors[req.color] || 'Any'} Req</span>
-                                </div>
-                                `;
-            }).join('') : ''}
-                            ${res.breakdown.transforms ? res.breakdown.transforms.map(tr => `
-                                <div class="perf-line" style="color: #aaf; font-size: 0.8rem; gap: 4px;">
-                                    <span style="opacity:0.7;">${tr.source}:</span>
-                                    <span>${tr.desc}</span>
-                                </div>
-                            `).join('') : ''}
-                        </div>
-                        ` : ''}
-
-                        ${res.yell_cards && res.yell_cards.length > 0 ? `
-                        <div class="perf-section">
-                            <h4>${t ? (t['yelled_cards'] || 'Yelled Cards') : 'Yelled Cards'} (${res.yell_cards.length} Total)</h4>
-                            <div class="perf-yell-grid">
-                                ${res.yell_cards.map(c => {
-                if (!c) return '';
-                const rawText = Tooltips.getEffectiveRawText(c);
-                return `
-                                    <div class="perf-yell-card" title="${c ? (c.name || 'Card') : 'Card'}" ${rawText ? `data-text="${rawText.replace(/"/g, '&quot;')}"` : ''}>
-                                        ${c && c.img ? `<img src="${fixImg(c.img)}">` : ''}
-                                        <div class="perf-card-icons">
-                                            ${(c && c.blade_hearts && c.blade_hearts.some(v => v > 0)) ? c.blade_hearts.map((v, hIdx) => {
-                    if (v <= 0) return '';
-                    const icon = hIdx === 6 ? 'img/texticon/icon_all.png' : `img/texticon/heart_0${hIdx + 1}.png`;
-                    return `<img src="${icon}" class="perf-mini-icon">`;
-                }).join('') : ''}
-                                             ${(c && c.volume_icons > 0) ? `<img src="img/texticon/icon_score.png" class="perf-mini-icon" title="${t ? (t['volume'] || 'Volume') : 'Volume'}">` : ''}
-                                            ${(c && c.draw_icons > 0) ? `<img src="img/texticon/icon_draw.png" class="perf-mini-icon" title="${t ? (t['cards_draw'] || 'Draw') : 'Draw'}">` : ''}
-                                        </div>
-                                    </div>
-                                `;
-            }).join('')}
-                            </div>
-                        </div>
-                        ` : ''}
-
-                    </div>
-                </div>
-    `;
-        });
-        html += '</div>';
-        content.innerHTML = html;
-    },
+    renderPerformanceResult: (results = null) => PerformanceRenderer.renderPerformanceResult(results, Rendering.renderHeartProgress),
 
     renderHeartProgress: (filled, required) => {
         if (!required || !Array.isArray(required)) return '';
@@ -1502,38 +1002,10 @@ export const Rendering = {
         return html;
     },
 
-    renderHeartsCompact: (hearts) => {
-        if (!hearts) return '';
-        let html = '<div class="hearts-compact">';
-        hearts.forEach((count, idx) => {
-            if (count > 0) {
-                const isAny = idx === 6;
-                const colorClass = isAny ? 'color-any' : `color-${idx}`;
-                const icon = isAny ? 'img/texticon/icon_all.png' : `img/texticon/heart_0${idx + 1}.png`; // fallback
-                html += `<div class="heart-tag ${colorClass}"><img src="${icon}" class="heart-mini-icon"><span>${count}</span></div>`;
-            }
-        });
-        html += '</div>';
-        return (html === '<div class="hearts-compact"></div>') ? '-' : html;
-    },
-
-    renderBladeHeartsCompact: (hearts) => {
-        return Rendering.renderHeartsCompact(hearts);
-    },
-
-    renderBladesCompact: (blades) => {
-        if (!blades || blades <= 0) return '';
-        let html = '<div class="blades-compact">';
-        for (let i = 0; i < blades; i++) {
-            html += `<img src="img/texticon/icon_blade.png" class="heart-mini-icon">`;
-        }
-        html += '</div>';
-        return html;
-    },
-
-    renderTotalHeartsBreakdown: (hearts) => {
-        return Rendering.renderHeartsCompact(hearts);
-    },
+    renderHeartsCompact: (hearts) => PerformanceRenderer.renderHeartsCompact(hearts),
+    renderBladeHeartsCompact: (hearts) => PerformanceRenderer.renderHeartsCompact(hearts),
+    renderBladesCompact: (blades) => PerformanceRenderer.renderBladesCompact(blades),
+    renderTotalHeartsBreakdown: (hearts) => PerformanceRenderer.renderHeartsCompact(hearts),
 
     renderModifiers: () => { /* Placeholder for future implementation */ },
     renderGameData: () => { /* Placeholder for future implementation */ },
@@ -1569,61 +1041,8 @@ export const Rendering = {
         }
     },
 
-    showPerfTab: (tab) => {
-        const resultTab = document.getElementById('perf-tab-result');
-        const historyTab = document.getElementById('perf-tab-history');
-        const resultBtn = document.getElementById('tab-btn-result');
-        const historyBtn = document.getElementById('tab-btn-history');
+    showPerfTab: (tab) => PerformanceRenderer.showPerfTab(tab),
 
-        if (!resultTab || !historyTab) return;
-
-        if (tab === 'result') {
-            resultTab.style.display = 'block';
-            historyTab.style.display = 'none';
-            resultBtn.classList.add('active');
-            historyBtn.classList.remove('active');
-        } else {
-            resultTab.style.display = 'none';
-            historyTab.style.display = 'block';
-            resultBtn.classList.remove('active');
-            historyBtn.classList.add('active');
-            Rendering.renderTurnHistory();
-        }
-    },
-
-    renderTurnHistory: () => {
-        const container = document.getElementById('performance-history-content');
-        if (!container) return;
-
-        const state = State.data;
-        const history = state.turn_history || state.turn_events || [];
-
-        const currentLang = State.currentLang;
-        const t = translations ? translations[currentLang] : {};
-
-        if (history.length === 0) {
-            const label = t['no_history'] || 'No history available for this turn.';
-            container.innerHTML = `<div style="text-align:center; padding:20px; opacity:0.6;">${label}</div>`;
-            return;
-        }
-
-        let html = '';
-        history.forEach((event) => {
-            const phaseKey = Rendering.getPhaseKey(event.phase);
-            const playerLabel = event.player_id === State.perspectivePlayer ? (t['you'] || 'You') : (t['opp'] || 'Opponent');
-            const typeClass = event.event_type.toLowerCase();
-
-            html += `
-                <div class="turn-event-item ${typeClass}">
-                    <div class="event-header">
-                        <span>Turn ${event.turn} - <span class="event-phase-tag">${t[phaseKey] || event.phase}</span></span>
-                        <span>${playerLabel}</span>
-                    </div>
-                    <div class="event-source">${event.event_type}</div>
-                    <div class="event-description">${event.description}</div>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
-    }
+    renderTurnHistory: () => PerformanceRenderer.renderTurnHistory(Rendering.getPhaseKey)
 };
+

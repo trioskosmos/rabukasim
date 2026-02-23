@@ -289,6 +289,22 @@ impl PyGameState {
         self.inner.ui.rule_log.clone()
     }
 
+    fn generate_execution_id(&mut self) -> u32 {
+        self.inner.generate_execution_id()
+    }
+
+    fn clear_execution_id(&mut self) {
+        self.inner.clear_execution_id();
+    }
+
+    fn get_current_execution_id(&self) -> Option<u32> {
+        self.inner.ui.current_execution_id
+    }
+
+    fn log(&mut self, msg: String) {
+        self.inner.log(msg);
+    }
+
     #[getter]
     fn phase(&self) -> i8 {
         self.inner.phase as i8

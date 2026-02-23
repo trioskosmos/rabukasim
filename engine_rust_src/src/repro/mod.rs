@@ -6,7 +6,8 @@ pub mod fix_kimi_no_kokoro;
 // pub mod size_test;
 // pub mod mini_engine_tests;
 // pub mod movement_parity_tests;
-// pub mod crash_triage;
+#[cfg(test)]
+pub mod crash_triage;
 #[cfg(test)]
 pub mod yell_persistence_repro;
 #[cfg(test)]

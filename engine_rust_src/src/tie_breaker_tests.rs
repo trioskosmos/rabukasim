@@ -1,10 +1,9 @@
 use crate::test_helpers::{create_test_state, load_real_db};
-use crate::core::logic::*;
 use serde_json::json;
 
 #[test]
 fn test_megaphone_scoring_accumulation() {
-    let db = load_real_db();
+    let _db = load_real_db();
     let mut state = create_test_state();
     
     // Setup a winning performance with 1 card (ID 121, Eli, Score 1) and 2 megaphones

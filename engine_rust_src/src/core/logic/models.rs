@@ -116,6 +116,8 @@ pub struct PendingInteraction {
     pub original_current_player: u8,
     #[serde(default)]
     pub actions: Vec<i32>,
+    #[serde(default)]
+    pub execution_id: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

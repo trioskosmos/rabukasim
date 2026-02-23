@@ -179,6 +179,7 @@ class AbilityParserV2:
             conditions=conditions,
             costs=costs,
             instructions=instructions,
+            pseudocode=block,
         )
 
         # === PASS 4: Apply modifiers ===
@@ -911,6 +912,7 @@ class AbilityParserV2:
             effects=effects,
             is_once_per_turn=is_once_per_turn,
             instructions=instructions,
+            pseudocode=text,
         )
 
     def _parse_pseudocode_effects_compact(self, text: str) -> List[Effect]:

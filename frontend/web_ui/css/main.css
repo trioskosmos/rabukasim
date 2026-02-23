@@ -643,6 +643,15 @@ body {
     border-width: 3px !important;
 }
 
+.action-highlight {
+    border-color: var(--accent-gold) !important;
+    box-shadow: 0 0 20px var(--accent-gold), 0 0 10px var(--accent-gold) inset !important;
+    transform: scale(1.03) !important;
+    z-index: 1001 !important;
+    border-style: solid !important;
+}
+
+
 .highlight-source {
     border-color: var(--accent-pink) !important;
     box-shadow: 0 0 25px var(--accent-pink), 0 0 15px var(--accent-pink) inset !important;
@@ -2279,4 +2288,92 @@ body {
 .discard-pile-visual .card:hover {
     transform: scale(1.05) translateY(-5px);
     z-index: 100;
+}
+
+/* Rule Log Styles */
+.rule-log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    height: 100%;
+}
+
+.log-entry {
+    padding: 6px 10px;
+    border-radius: 4px;
+    line-height: 1.4;
+    word-break: break-all;
+    border-left: 2px solid transparent;
+}
+
+.log-entry.phase {
+    border-left-color: var(--accent-blue);
+    background: rgba(74, 158, 255, 0.1);
+    font-weight: bold;
+}
+
+.log-entry.ability {
+    border-left-color: var(--accent-pink);
+    background: rgba(255, 85, 170, 0.05);
+}
+
+.log-entry.action {
+    border-left-color: var(--accent-gold);
+}
+
+.log-entry.effect {
+    border-left-color: var(--text-dim);
+    border-left-style: dashed;
+}
+
+.log-entry.score {
+    border-left-color: var(--accent-green);
+    background: rgba(46, 204, 113, 0.1);
+}
+
+.log-entry.turn {
+    font-weight: bold;
+    color: var(--accent-gold);
+    border-bottom: 1px solid var(--border);
+    margin: 8px 0;
+}
+
+/* Grouping Logic Styles */
+.log-group-block {
+    margin: 4px 0;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.log-entry.group-header {
+    background: rgba(255, 85, 170, 0.1) !important;
+    border-left: 4px solid var(--accent-pink) !important;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.log-group-details {
+    padding-left: 12px;
+    padding-bottom: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.log-entry.detail {
+    font-size: 0.8rem;
+    padding: 2px 8px !important;
+    opacity: 0.85;
+    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.log-entry.detail::before {
+    content: "↳ ";
+    opacity: 0.5;
+    margin-right: 4px;
 }

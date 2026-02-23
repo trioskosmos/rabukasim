@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0"
 echo ==========================================
-echo Loveca Simulator Startup
+echo Rabuka Simulator Startup
 echo ==========================================
 
 echo [1/3] Checking dependencies...
@@ -13,7 +13,7 @@ where uv >nul 2>&1
 if %errorlevel% neq 0 goto NO_UV
 
 echo [2/3] Cleaning up processes...
-taskkill /F /IM loveca_launcher.exe /T 2>nul
+taskkill /F /IM rabuka_launcher.exe /T 2>nul
 :: Simplified PowerShell cleanup
 powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8000,8080,8888,3000,5000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"
 
@@ -53,13 +53,13 @@ uv run python tools/analysis/analyze_translation_coverage.py
 if %errorlevel% neq 0 goto CMD_FAIL
 
 echo.
-echo Starting Loveca Simulator Server (Rust)...
+echo Starting Rabuka Simulator Server (Rust)...
 echo NOTE: Using Rust Launcher as verified Source of Truth.
 if "%DEBUG_ARG%"=="--debug" echo [DEBUG MODE ENABLED]
 echo.
 
 pushd launcher
-cargo run --release --bin loveca_launcher -- %DEBUG_ARG%
+cargo run --release --bin rabuka_launcher -- %DEBUG_ARG%
 set "EXIT_CODE=%errorlevel%"
 popd
 

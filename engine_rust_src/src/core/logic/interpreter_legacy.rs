@@ -1001,11 +1001,7 @@ pub fn get_condition_count(state: &GameState, db: &CardDatabase, cond_id: i32, a
 }
 
 pub fn resolve_bytecode(state: &mut GameState, db: &CardDatabase, bytecode: &[i32], ctx_in: &AbilityContext) {
-    if ctx_in.program_counter == 0 {
-        if crate::core::hardcoded::execute_hardcoded_ability(state, db, ctx_in.source_card_id as i32, ctx_in.ability_index as usize, ctx_in) {
-            return;
-        }
-    } else {
+    if ctx_in.program_counter != 0 {
         // Resumption: phase was already restored by the caller (activate_ability_with_choice)
         // Do NOT force Phase::Main here — the caller handles phase restoration.
     }
@@ -1526,6 +1522,7 @@ pub fn resolve_bytecode(state: &mut GameState, db: &CardDatabase, bytecode: &[i3
                     },
                     O_SWAP_CARDS => {
                         for _ in 0..(v as usize) {
+                            if state.core.players[p_idx].deck.is_empty() { state.resolve_deck_refresh(p_idx); }
                             if let Some(cid) = state.core.players[p_idx].deck.pop() {
                                 match target_slot {
                                     7 => state.core.players[p_idx].discard.push(cid),

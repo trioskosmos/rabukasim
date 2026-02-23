@@ -17,6 +17,137 @@ from engine.models.card import EnergyCard, LiveCard, MemberCard
 from engine.models.enums import CHAR_MAP
 from engine.models.opcodes import Opcode
 
+# --- Compile-time Bytecode Validation ---
+# All valid effect opcodes (0-99 range) from generated_constants
+_VALID_EFFECT_OPS = {
+    0,   # O_NOP
+    1,   # O_RETURN
+    2,   # O_JUMP
+    3,   # O_JUMP_IF_FALSE
+    10,  # O_DRAW
+    11,  # O_ADD_BLADES
+    12,  # O_ADD_HEARTS
+    13,  # O_REDUCE_COST
+    14,  # O_LOOK_DECK
+    15,  # O_RECOVER_LIVE
+    16,  # O_BOOST_SCORE
+    17,  # O_RECOVER_MEMBER
+    18,  # O_BUFF_POWER
+    19,  # O_IMMUNITY
+    20,  # O_MOVE_MEMBER
+    21,  # O_SWAP_CARDS
+    22,  # O_SEARCH_DECK
+    23,  # O_ENERGY_CHARGE
+    24,  # O_SET_BLADES
+    25,  # O_SET_HEARTS
+    26,  # O_FORMATION_CHANGE
+    27,  # O_NEGATE_EFFECT
+    28,  # O_ORDER_DECK
+    29,  # O_META_RULE
+    30,  # O_SELECT_MODE
+    31,  # O_MOVE_TO_DECK
+    32,  # O_TAP_OPPONENT
+    33,  # O_PLACE_UNDER
+    34,  # O_FLAVOR
+    35,  # O_RESTRICTION
+    36,  # O_BATON_TOUCH_MOD
+    37,  # O_SET_SCORE
+    38,  # O_SWAP_ZONE
+    39,  # O_TRANSFORM_COLOR
+    40,  # O_REVEAL_CARDS
+    41,  # O_LOOK_AND_CHOOSE
+    42,  # O_CHEER_REVEAL
+    43,  # O_ACTIVATE_MEMBER
+    44,  # O_ADD_TO_HAND
+    45,  # O_COLOR_SELECT
+    46,  # O_REPLACE_EFFECT
+    47,  # O_TRIGGER_REMOTE
+    48,  # O_REDUCE_HEART_REQ
+    49,  # O_MODIFY_SCORE_RULE
+    50,  # O_ADD_STAGE_ENERGY
+    51,  # O_SET_TAPPED
+    52,  # O_ADD_CONTINUOUS
+    53,  # O_TAP_MEMBER
+    57,  # O_PLAY_MEMBER_FROM_HAND
+    58,  # O_MOVE_TO_DISCARD
+    60,  # O_GRANT_ABILITY
+    61,  # O_INCREASE_HEART_COST
+    62,  # O_REDUCE_YELL_COUNT
+    63,  # O_PLAY_MEMBER_FROM_DISCARD
+    64,  # O_PAY_ENERGY
+    65,  # O_SELECT_MEMBER
+    66,  # O_DRAW_UNTIL
+    67,  # O_SELECT_PLAYER
+    68,  # O_SELECT_LIVE
+    69,  # O_REVEAL_UNTIL
+    70,  # O_INCREASE_COST
+    71,  # O_PREVENT_PLAY_TO_SLOT
+    72,  # O_SWAP_AREA
+    73,  # O_TRANSFORM_HEART
+    74,  # O_SELECT_CARDS
+    75,  # O_OPPONENT_CHOOSE
+    76,  # O_PLAY_LIVE_FROM_DISCARD
+    77,  # O_REDUCE_LIVE_SET_LIMIT
+    80,  # O_PREVENT_SET_TO_SUCCESS_PILE
+    81,  # O_ACTIVATE_ENERGY
+    82,  # O_PREVENT_ACTIVATE
+    83,  # O_SET_HEART_COST
+    90,  # O_PREVENT_BATON_TOUCH
+}
+
+# Condition opcodes: 200-244 range
+_VALID_CONDITION_OPS = set(range(200, 245))
+
+# Combined: all valid base opcodes
+_ALL_VALID_OPS = _VALID_EFFECT_OPS | _VALID_CONDITION_OPS
+
+
+def validate_bytecode(bytecode: list, card_no: str, ab_idx: int) -> list:
+    """Validate a compiled bytecode array for structural integrity.
+    
+    Returns a list of warning/error strings. Empty = valid.
+    """
+    issues = []
+    
+    if not bytecode:
+        return issues
+    
+    # Check 1: Length must be a multiple of 4
+    if len(bytecode) % 4 != 0:
+        issues.append(f"[{card_no}] ab#{ab_idx}: Bytecode length {len(bytecode)} not a multiple of 4")
+        return issues  # Can't safely check further
+    
+    # Check 2: Scan all opcodes
+    for i in range(0, len(bytecode), 4):
+        op = bytecode[i]
+        v = bytecode[i + 1]
+        
+        # Handle negated opcodes (1000+)
+        real_op = op - 1000 if op >= 1000 else op
+        
+        if real_op not in _ALL_VALID_OPS:
+            issues.append(f"[{card_no}] ab#{ab_idx}: Unknown opcode {real_op} at position {i}")
+        
+        # Check 3: JUMP targets in-bounds
+        if real_op == 2 or real_op == 3:  # O_JUMP or O_JUMP_IF_FALSE
+            target = i + 4 + (v * 4)
+            if target < 0 or target > len(bytecode):
+                issues.append(
+                    f"[{card_no}] ab#{ab_idx}: JUMP at {i} targets position {target}, "
+                    f"but bytecode length is {len(bytecode)}"
+                )
+    
+    # Check 4: Should end with O_RETURN (opcode 1)
+    if len(bytecode) >= 4:
+        last_op = bytecode[-4]
+        real_last = last_op - 1000 if last_op >= 1000 else last_op
+        if real_last != 1:  # O_RETURN
+            # Not necessarily an error — some bytecodes end with O_JUMP 
+            # back to the start or fall through. Warn only.
+            issues.append(f"[{card_no}] ab#{ab_idx}: Does not end with O_RETURN (last opcode: {real_last})")
+    
+    return issues
+
 
 def compile_cards(input_path: str, output_path: str):
     print(f"Loading raw cards from {input_path}...")
@@ -35,6 +166,7 @@ def compile_cards(input_path: str, output_path: str):
 
     success_count = 0
     errors = []
+    validation_issues = []  # Bytecode validation
 
     # Pre-create adapters
     member_adapter = TypeAdapter(MemberCard)
@@ -121,6 +253,28 @@ def compile_cards(input_path: str, output_path: str):
         with open("compiler_errors.log", "w", encoding="utf-8") as f_err:
             for err_msg in errors:
                 f_err.write(f"- {err_msg}\n")
+
+    # --- Bytecode Validation Pass ---
+    for db_key in ["member_db", "live_db"]:
+        for cid_str, card_data in compiled_data[db_key].items():
+            card_no = card_data.get("card_no", cid_str)
+            for ab_idx, ab in enumerate(card_data.get("abilities", [])):
+                bc = ab.get("bytecode", [])
+                issues = validate_bytecode(bc, card_no, ab_idx)
+                validation_issues.extend(issues)
+
+    if validation_issues:
+        print(f"\n⚠️  BYTECODE VALIDATION: {len(validation_issues)} issue(s) found:")
+        for issue in validation_issues[:20]:  # Show first 20
+            print(f"  {issue}")
+        if len(validation_issues) > 20:
+            print(f"  ... and {len(validation_issues) - 20} more.")
+        with open("reports/bytecode_validation.txt", "w", encoding="utf-8") as f:
+            for issue in validation_issues:
+                f.write(f"{issue}\n")
+        print(f"  Full report: reports/bytecode_validation.txt")
+    else:
+        print("\n✅ BYTECODE VALIDATION: All bytecodes pass structural checks.")
 
     # Write output
     print(f"Writing compiled data to {output_path}...")

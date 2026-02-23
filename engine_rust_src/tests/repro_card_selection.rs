@@ -1,6 +1,4 @@
 use engine_rust::core::logic::*;
-use engine_rust::core::logic::game::GameState;
-use engine_rust::core::logic::models::*;
 use engine_rust::test_helpers::{create_test_state, load_real_db, TestActionReceiver};
 
 #[test]

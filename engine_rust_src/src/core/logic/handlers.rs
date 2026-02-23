@@ -1,6 +1,6 @@
 use crate::core::logic::{GameState, CardDatabase, Phase, AbilityContext, ActionFactory, action_factory::DecodedAction};
 use crate::core::enums::*;
-use crate::core::generated_constants::*;
+// use crate::core::generated_constants::*;
 // use crate::core::hearts::*;
 use rand::seq::SliceRandom;
 use rand_pcg::Pcg64;
@@ -196,9 +196,11 @@ impl PhaseHandlers for GameState {
         }
         Ok(())
     }
-
     fn handle_response(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
-        let pi = if let Some(p) = self.interaction_stack.last() { p } else { return Ok(()); };
+        let (execution_id, ctx_res) = {
+            let pi = if let Some(p) = self.interaction_stack.last() { p } else { return Ok(()); };
+            (pi.execution_id, pi.ctx.clone())
+        };
         
         let choice_idx = match ActionFactory::parse_action(action) {
             DecodedAction::Pass => 99,
@@ -211,12 +213,15 @@ impl PhaseHandlers for GameState {
             _ => -1,
         };
 
-        let ctx_res = pi.ctx.clone();
+        self.ui.current_execution_id = if execution_id > 0 { Some(execution_id) } else { None };
+
         let slot_idx = ctx_res.area_idx as usize;
         let ab_idx_call = if ctx_res.ability_index < 0 { 0 } else { ctx_res.ability_index as usize };
         let target_slot = ctx_res.target_slot as i32;
 
         self.activate_ability_with_choice(db, slot_idx, ab_idx_call, choice_idx, target_slot)?;
+        
+        self.clear_execution_id();
         Ok(())
     }
 
@@ -361,16 +366,15 @@ impl PhaseHandlers for GameState {
                  (live.name.clone(), ab.bytecode.clone())
             } else { return Err("Card not found".to_string()); };
 
-            self.phase = orig_phase;
-            if self.phase == Phase::Response || self.phase == Phase::Setup { self.phase = Phase::Main; }
+            // Pop interaction first, but keep Phase::Response during execution
             self.interaction_stack.pop();
 
             self.resolve_bytecode(db, &bytecode, &ctx);
             self.process_rule_checks();
 
-            if self.phase == Phase::Response && self.interaction_stack.is_empty() {
-                self.phase = orig_phase;
-                if self.phase == Phase::Response || self.phase == Phase::Setup { self.phase = Phase::Main; }
+            // Restore phase only if no new suspension occurred
+            if self.interaction_stack.is_empty() {
+                self.phase = if orig_phase == Phase::Response || orig_phase == Phase::Setup { Phase::Main } else { orig_phase };
             }
             return Ok(());
         }
@@ -391,8 +395,9 @@ impl PhaseHandlers for GameState {
         }
 
         if !self.ui.silent { 
-            self.log(format!("Rule 7.7.2.1: Player {} activates ability of {} (Slot {}, Choice {})", p_idx, card.name, slot_idx, choice_idx)); 
-            self.log_turn_event("ACTIVATE", cid, ab_idx as i16, p_idx as u8, &format!("Activates {} (Choice {})", card.name, choice_idx));
+            let p_code = if ab.pseudocode.is_empty() { "" } else { &format!(": {}", ab.pseudocode) };
+            self.log(format!("Rule 7.7.2.1: Player {} activates ability of {}{}", p_idx, card.name, p_code)); 
+            self.log_turn_event("ACTIVATE", cid, ab_idx as i16, p_idx as u8, &format!("Activates {}{}", card.name, p_code));
         }
 
         let mut ctx = AbilityContext { source_card_id: cid, player_id: p_idx as u8, area_idx: slot_idx as i16, ability_index: ab_idx as i16, choice_index: choice_idx as i16, ..Default::default() };
@@ -413,6 +418,10 @@ impl PhaseHandlers for GameState {
 
             for cond in &ab.conditions {
                 if !self.check_condition_opcode(db, cond.condition_type as i32, cond.value, cond.attr, cond.target_slot as i32, &ctx, 1) {
+                    if !self.ui.silent {
+                         let cond_desc = super::interpreter::logging::describe_condition(cond.condition_type as i32, cond.value, cond.attr);
+                         self.log(format!("Ability activation failed: {}.", cond_desc));
+                    }
                     return Err("Conditions not met".to_string());
                 }
             }

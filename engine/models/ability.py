@@ -51,11 +51,11 @@ class EffectType(IntEnum):
     IMMUNITY = 19
     MOVE_MEMBER = 20
     SWAP_CARDS = 21
-    SEARCH_DECK = 22
+    SEARCH_DECK = 22  # [UNUSED]
     ENERGY_CHARGE = 23
     SET_BLADES = 24
     SET_HEARTS = 25
-    FORMATION_CHANGE = 26
+    FORMATION_CHANGE = 26  # [UNUSED]
     NEGATE_EFFECT = 27
     ORDER_DECK = 28
     META_RULE = 29
@@ -63,11 +63,11 @@ class EffectType(IntEnum):
     MOVE_TO_DECK = 31
     TAP_OPPONENT = 32
     PLACE_UNDER = 33
-    FLAVOR_ACTION = 34
+    FLAVOR_ACTION = 34  # [UNUSED]
     RESTRICTION = 35
     BATON_TOUCH_MOD = 36
     SET_SCORE = 37
-    SWAP_ZONE = 38
+    SWAP_ZONE = 38  # [UNUSED]
     TRANSFORM_COLOR = 39
     REVEAL_CARDS = 40
     LOOK_AND_CHOOSE = 41
@@ -75,7 +75,7 @@ class EffectType(IntEnum):
     ACTIVATE_MEMBER = 43
     ADD_TO_HAND = 44
     COLOR_SELECT = 45
-    REPLACE_EFFECT = 46
+    REPLACE_EFFECT = 46  # [UNUSED]
     TRIGGER_REMOTE = 47
     REDUCE_HEART_REQ = 48
     MODIFY_SCORE_RULE = 49
@@ -102,47 +102,47 @@ class EffectType(IntEnum):
     REDUCE_LIVE_SET_LIMIT = 77
     PREVENT_ACTIVATE = 82
     ACTIVATE_ENERGY = 81
-    PREVENT_SET_TO_SUCCESS_PILE = 80
-    SET_HEART_COST = 84
+    PREVENT_SET_TO_SUCCESS_PILE = 80  # [UNUSED]
+    SET_HEART_COST = 83  # [UNUSED] (Fixed from 84 for parity)
     PREVENT_BATON_TOUCH = 90
 
 
 class ConditionType(IntEnum):
-    NONE = 0
+    NONE = 0  # [UNUSED]
     TURN_1 = 200
     HAS_MEMBER = 201
-    HAS_COLOR = 202
+    HAS_COLOR = 202  # [UNUSED]
     COUNT_STAGE = 203
     COUNT_HAND = 204
     COUNT_DISCARD = 205
     IS_CENTER = 206
-    LIFE_LEAD = 207
+    LIFE_LEAD = 207  # [UNUSED]
     COUNT_GROUP = 208
     GROUP_FILTER = 209
-    OPPONENT_HAS = 210
-    SELF_IS_GROUP = 211
+    OPPONENT_HAS = 210  # [UNUSED]
+    SELF_IS_GROUP = 211  # [UNUSED]
     MODAL_ANSWER = 212
     COUNT_ENERGY = 213
     HAS_LIVE_CARD = 214
     COST_CHECK = 215
-    RARITY_CHECK = 216
-    HAND_HAS_NO_LIVE = 217
+    RARITY_CHECK = 216  # [UNUSED]
+    HAND_HAS_NO_LIVE = 217  # [UNUSED]
     COUNT_SUCCESS_LIVE = 218
     OPPONENT_HAND_DIFF = 219
     SCORE_COMPARE = 220
-    HAS_CHOICE = 221
-    OPPONENT_CHOICE = 222
+    HAS_CHOICE = 221  # [UNUSED]
+    OPPONENT_CHOICE = 222  # [UNUSED]
     COUNT_HEARTS = 223
     COUNT_BLADES = 224
     OPPONENT_ENERGY_DIFF = 225
     HAS_KEYWORD = 226
     DECK_REFRESHED = 227
-    HAS_MOVED = 228
-    HAND_INCREASED = 229
+    HAS_MOVED = 228  # [UNUSED]
+    HAND_INCREASED = 229  # [UNUSED]
     COUNT_LIVE_ZONE = 230
     BATON = 231
     TYPE_CHECK = 232
-    IS_IN_DISCARD = 233
+    IS_IN_DISCARD = 233  # [UNUSED]
     AREA_CHECK = 234
 
 
@@ -161,11 +161,11 @@ EFFECT_DESCRIPTIONS = {
     EffectType.IMMUNITY: "Gain Immunity",
     EffectType.MOVE_MEMBER: "Move Member to another zone",
     EffectType.SWAP_CARDS: "Discard {value} card(s) then Draw {value}",
-    EffectType.SEARCH_DECK: "Search Deck",
+    EffectType.SEARCH_DECK: "Search Deck",  # [UNUSED]
     EffectType.ENERGY_CHARGE: "Charge {value} Energy",
     EffectType.SET_BLADES: "Set Blade(s) to {value}",
     EffectType.SET_HEARTS: "Set Heart(s) to {value}",
-    EffectType.FORMATION_CHANGE: "Rearrange members on stage",
+    EffectType.FORMATION_CHANGE: "Rearrange members on stage",  # [UNUSED]
     EffectType.NEGATE_EFFECT: "Negate effect",
     EffectType.ORDER_DECK: "Reorder top {value} cards of deck",
     EffectType.META_RULE: "[Rule modifier]",
@@ -183,8 +183,8 @@ EFFECT_DESCRIPTIONS = {
     EffectType.TRIGGER_REMOTE: "Trigger Remote Ability",
     EffectType.CHEER_REVEAL: "Reveal via Cheer",
     EffectType.REDUCE_HEART_REQ: "Modify Heart Requirement",
-    EffectType.SWAP_ZONE: "Swap card zones",
-    EffectType.FLAVOR_ACTION: "Flavor Action",
+    EffectType.SWAP_ZONE: "Swap card zones",  # [UNUSED]
+    EffectType.FLAVOR_ACTION: "Flavor Action",  # [UNUSED]
     EffectType.MOVE_TO_DISCARD: "Move {value} card(s) to Discard",
     EffectType.PLAY_MEMBER_FROM_HAND: "Play member from hand",
     EffectType.TAP_MEMBER: "Tap {value} Member(s)",
@@ -203,11 +203,11 @@ EFFECT_DESCRIPTIONS_JP = {
     EffectType.IMMUNITY: "効果無効",
     EffectType.MOVE_MEMBER: "メンバー移動",
     EffectType.SWAP_CARDS: "手札交換({value}枚捨て{value}枚引く)",
-    EffectType.SEARCH_DECK: "デッキ検索",
+    EffectType.SEARCH_DECK: "デッキ検索",  # [UNUSED]
     EffectType.ENERGY_CHARGE: "エネルギーチャージ+{value}",
     EffectType.SET_BLADES: "ブレードを{value}にセット",
     EffectType.SET_HEARTS: "ハートを{value}にセット",
-    EffectType.FORMATION_CHANGE: "配置変更",
+    EffectType.FORMATION_CHANGE: "配置変更",  # [UNUSED]
     EffectType.NEGATE_EFFECT: "効果打ち消し",
     EffectType.ORDER_DECK: "デッキトップ{value}枚並べ替え",
     EffectType.META_RULE: "[ルール変更]",
@@ -225,8 +225,8 @@ EFFECT_DESCRIPTIONS_JP = {
     EffectType.TRIGGER_REMOTE: "リモート能力誘発",
     EffectType.CHEER_REVEAL: "応援で公開",
     EffectType.REDUCE_HEART_REQ: "ハート条件変更",
-    EffectType.SWAP_ZONE: "カード移動(ゾーン間)",
-    EffectType.FLAVOR_ACTION: "フレーバーアクション",
+    EffectType.SWAP_ZONE: "カード移動(ゾーン間)",  # [UNUSED]
+    EffectType.FLAVOR_ACTION: "フレーバーアクション",  # [UNUSED]
     EffectType.MOVE_TO_DISCARD: "控え室に{value}枚置く",
     EffectType.PLAY_MEMBER_FROM_HAND: "手札からメンバーを登場させる",
     EffectType.TAP_MEMBER: "{value}人をウェイトにする",
@@ -509,6 +509,7 @@ class Ability:
     requires_selection: bool = False
     choice_flags: int = 0
     choice_count: int = 0
+    pseudocode: str = ""
     # Ordered list of operations (Union[Effect, Condition]) for precise execution order
     instructions: List[Any] = field(default_factory=list)
 

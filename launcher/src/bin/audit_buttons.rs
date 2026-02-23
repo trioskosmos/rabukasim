@@ -2,7 +2,7 @@ use serde_json::{json, Value};
 use engine_rust::core::logic::*;
 use engine_rust::core::logic::{GameState, CardDatabase, PendingInteraction};
 // use engine_rust::core::enums::*;
-use loveca_launcher::serialization::get_action_desc_rich;
+use rabuka_launcher::serialization::get_action_desc_rich;
 use std::fs::File;
 use std::io::Write;
 use std::collections::HashMap;

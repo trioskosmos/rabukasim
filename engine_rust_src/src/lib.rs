@@ -26,11 +26,9 @@ mod trigger_tests;
 #[cfg(test)]
 mod size_test;
 #[cfg(test)]
-// mod tie_breaker_tests;
+mod tie_breaker_tests;
 #[cfg(test)]
 mod meta_rule_tests;
-#[cfg(test)]
-// mod archetype_tests;
 #[cfg(test)]
 mod comprehensive_tests;
 #[cfg(test)]
@@ -85,6 +83,12 @@ mod meta_rule_card_tests;
 mod repro_softlock;
 #[cfg(test)]
 mod repro_color_filter;
+#[cfg(test)]
+mod repro_bp4_002_p;
+#[cfg(test)]
+mod opcode_rigor_tests;
+#[cfg(test)]
+mod parity_tests;
 
 // pub mod repro_pl_bp3_004; // Deleted
 

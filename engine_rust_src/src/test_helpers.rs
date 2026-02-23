@@ -17,6 +17,16 @@ pub struct ZoneSnapshot {
     pub active_members_count: usize,
     pub total_heart_buffs: u32,
     pub total_blade_buffs: i32,
+    pub tapped_members: [bool; 3],
+    pub prevent_activate: u8,
+    pub prevent_baton_touch: u8,
+    pub prevent_success_pile_set: u8,
+    pub prevent_play_mask: u8,
+    pub cost_reduction: i16,
+    pub stage_energy_total: u32,
+    pub live_score_bonus: i32,
+    pub looked_cards: Vec<i32>,
+    pub yell_count: usize,
 }
 
 impl ZoneSnapshot {
@@ -24,10 +34,14 @@ impl ZoneSnapshot {
         let mut total_hearts = 0;
         let mut total_blades = 0;
         let mut active_members = 0;
+        let mut stage_energy_total = 0;
         for i in 0..3 {
             total_hearts += p.heart_buffs[i].get_total_count();
             total_blades += p.blade_buffs[i] as i32;
-            if p.stage[i] != -1 { active_members += 1; }
+            if p.stage[i] != -1 { 
+                active_members += 1; 
+                stage_energy_total += p.stage_energy[i].len() as u32;
+            }
         }
 
         Self {
@@ -44,6 +58,16 @@ impl ZoneSnapshot {
             active_members_count: active_members,
             total_heart_buffs: total_hearts,
             total_blade_buffs: total_blades,
+            tapped_members: [p.is_tapped(0), p.is_tapped(1), p.is_tapped(2)],
+            prevent_activate: p.prevent_activate,
+            prevent_baton_touch: p.prevent_baton_touch,
+            prevent_success_pile_set: p.prevent_success_pile_set,
+            prevent_play_mask: p.prevent_play_to_slot_mask,
+            cost_reduction: p.cost_reduction,
+            stage_energy_total,
+            live_score_bonus: p.live_score_bonus,
+            looked_cards: p.looked_cards.iter().cloned().collect(),
+            yell_count: p.yell_cards.len(),
         }
     }
 }
@@ -146,6 +170,15 @@ pub fn create_test_db() -> CardDatabase {
         if lid < db.members_vec.len() { db.members_vec[lid] = Some(m); }
     }
 
+    // Energy Card
+    let mut energy = MemberCard::default();
+    energy.card_id = 2000;
+    energy.name = "Test Energy".to_string();
+    energy.hearts[0] = 1; // 1 Pink heart
+    db.members.insert(2000, energy.clone());
+    let eid = (2000 & LOGIC_ID_MASK) as usize;
+    if eid < db.members_vec.len() { db.members_vec[eid] = Some(energy); }
+
     // Generic Live
     let l55001 = LiveCard {
         card_id: 55001, card_no: "GEN-L-55001".to_string(), name: "Live 55001".to_string(),
@@ -166,6 +199,9 @@ pub fn create_test_db() -> CardDatabase {
     add_card(&mut db, 3159, "ARCH-04", vec![1], vec![(TriggerType::OnLiveStart, vec![64, 0, 130, 0, 58, 1, 24576, 0, 64, 1, 0, 0, 16, 5, 0, 0], vec![])]);
     add_card(&mut db, 304347, "ARCH-06", vec![1], vec![(TriggerType::OnPlay, vec![10, 1, 0, 0, 58, 1, 0, 0, 1, 0, 0, 0], vec![])]);
     add_card(&mut db, 300223, "ARCH-09", vec![1], vec![(TriggerType::OnPlay, vec![10, 2, 0, 0, 58, 2, 0, 0, 1, 0, 0, 0], vec![])]);
+    // CID 3001: Test card for O_OPPONENT_CHOOSE -> O_DRAW
+    // O_OPPONENT_CHOOSE(75) v=1 -> O_DRAW(10) v=1 -> O_RETURN(1)
+    add_card(&mut db, 3001, "OPP_CHOOSE_TEST", vec![1], vec![(TriggerType::OnPlay, vec![75, 1, 0, 0, 10, 1, 0, 0, 1, 0, 0, 0], vec![])]);
 
     // CID 4332: RANK-13 (OnLiveStart: PayEnergy(1) -> ColorSelect -> AddHearts(1))
     // Real Bytecode: [64, 1, 2, 0, 45, 1, 0, 1, 12, 1, 0, 1, 1, 0, 0, 0]

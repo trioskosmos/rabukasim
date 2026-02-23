@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, VecDeque, HashSet};
 use rand::SeedableRng;
 use rand::rngs::SmallRng;
 use smallvec::SmallVec;
@@ -205,6 +205,10 @@ pub struct UIState {
     pub last_performance_results: HashMap<u8, serde_json::Value>,
     #[serde(default)]
     pub performance_history: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub next_execution_id: u32,
+    #[serde(default)]
+    pub current_execution_id: Option<u32>,
 }
 
 impl Default for UIState {
@@ -215,6 +219,8 @@ impl Default for UIState {
             performance_results: HashMap::new(),
             last_performance_results: HashMap::new(),
             performance_history: Vec::new(),
+            next_execution_id: 1,
+            current_execution_id: None,
         }
     }
 }
@@ -224,6 +230,7 @@ pub struct DebugState {
     pub debug_ignore_conditions: bool,
     pub bypassed_conditions: BypassLog,
     pub debug_mode: bool,
+    pub executed_opcodes: HashSet<i32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

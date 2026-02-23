@@ -8,10 +8,10 @@ use std::time::Duration;
 use engine_rust::core::models::{CardDatabase};
 
 // Internal modules are now in lib.rs
-use loveca_launcher::models::{AppState};
-use loveca_launcher::handlers::route_request;
-use loveca_launcher::utils::get_local_ip;
-use loveca_launcher::{Assets};
+use rabuka_launcher::models::{AppState};
+use rabuka_launcher::handlers::route_request;
+use rabuka_launcher::utils::get_local_ip;
+use rabuka_launcher::{Assets};
 
 
 fn main() {

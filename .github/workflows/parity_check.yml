@@ -1,0 +1,139 @@
+name: WGSL-Rust Parity Check
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'engine_rust_src/**'
+      - 'tools/sync_metadata.py'
+      - 'data/metadata.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'engine_rust_src/**'
+      - 'tools/sync_metadata.py'
+      - 'data/metadata.json'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  sync-check:
+    name: Verify Constant Synchronization
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Run sync_metadata.py
+        run: python tools/sync_metadata.py
+      
+      - name: Check for uncommitted changes
+        run: |
+          git diff --exit-code engine_rust_src/src/core/generated_constants.rs
+          git diff --exit-code engine_rust_src/src/core/shader_constants.wgsl
+          git diff --exit-code reports/parity_matrix.json
+        shell: bash
+
+  parity-tests:
+    name: Run Parity Tests
+    runs-on: ubuntu-latest
+    needs: sync-check
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            engine_rust_src/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      
+      - name: Run parity tests
+        working-directory: engine_rust_src
+        run: cargo test parity_tests --no-fail-fast -- --nocapture
+      
+      - name: Run opcode tests
+        working-directory: engine_rust_src
+        run: cargo test opcode_tests --no-fail-fast -- --nocapture
+
+  parity-report:
+    name: Generate Parity Report
+    runs-on: ubuntu-latest
+    needs: [sync-check, parity-tests]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Generate parity matrix
+        run: python tools/sync_metadata.py
+      
+      - name: Read parity matrix
+        id: parity
+        run: |
+          echo "opcode_coverage=$(python -c 'import json; d=json.load(open("reports/parity_matrix.json")); print(d["wgsl_opcodes"]["coverage"])')" >> $GITHUB_OUTPUT
+          echo "condition_coverage=$(python -c 'import json; d=json.load(open("reports/parity_matrix.json")); print(d["wgsl_conditions"]["coverage"])')" >> $GITHUB_OUTPUT
+      
+      - name: Create parity summary
+        run: |
+          echo "## WGSL-Rust Parity Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Category | Coverage | Implemented | Total |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|----------|-------------|-------|" >> $GITHUB_STEP_SUMMARY
+          python -c "
+          import json
+          d = json.load(open('reports/parity_matrix.json'))
+          op = d['wgsl_opcodes']
+          cd = d['wgsl_conditions']
+          print(f\"| Opcodes | {op['coverage']*100:.1f}% | {len(op['implemented'])} | {op['total']} |\")
+          print(f\"| Conditions | {cd['coverage']*100:.1f}% | {len(cd['implemented'])} | {cd['total']} |\")
+          " >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Implemented Opcodes (WGSL)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          python -c "import json; print(', '.join(json.load(open('reports/parity_matrix.json'))['wgsl_opcodes']['implemented']))" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Implemented Conditions (WGSL)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          python -c "import json; print(', '.join(json.load(open('reports/parity_matrix.json'))['wgsl_conditions']['implemented']))" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "_Last updated: $(date -u +'%Y-%m-%d %H:%M:%S UTC')_" >> $GITHUB_STEP_SUMMARY
+
+  # Optional: Run on GPU hardware for full validation
+  gpu-validation:
+    name: GPU Validation (Optional)
+    runs-on: self-hosted
+    needs: parity-tests
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run GPU shader tests
+        working-directory: engine_rust_src
+        run: |
+          # This would run actual GPU tests if available
+          echo "GPU validation would run here"
+          # cargo test --features gpu_tests

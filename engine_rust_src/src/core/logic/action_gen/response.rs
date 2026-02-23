@@ -98,8 +98,9 @@ impl ActionGenerator for ResponseGenerator {
                 return;
             }
             O_MOVE_TO_DISCARD => {
+                let masked_filter = (pi.filter_attr as u32 as u64) & 0xFFFFFFFFFFFF0FFF;
                 for (i, &cid) in player.hand.iter().enumerate() {
-                    if state.card_matches_filter(db, cid, pi.filter_attr) {
+                    if state.card_matches_filter(db, cid, masked_filter) {
                         receiver.add_action((crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize);
                     }
                 }

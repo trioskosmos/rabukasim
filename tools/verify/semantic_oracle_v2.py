@@ -39,7 +39,9 @@ class SemanticOracleV2:
         "ENERGY_ADD": r'エネルギーに(置く|追加する)',
         "DECK_SEARCH": r'デッキ(から|のカードを).*?(探す|加える|見る)',
         "MOVE_TO_STAGE": r'舞台に.*?置く',
-        "LIVE_RECOVER": r'控え室から.*?ライブを.*?戻す'
+        "LIVE_RECOVER": r'控え室から.*?ライブを.*?戻す',
+        "MEMBER_TAP": r'(休ませる|タップする|スリープにする|WAITにする|待機状態にする)',
+        "PREVENT": r'(無効にする|防ぐ|できなくなる)',
     }
 
     def __init__(self, cards_path=None):
@@ -58,6 +60,12 @@ class SemanticOracleV2:
              
         with open(cards_path, "r", encoding="utf-8") as f:
             self.db = json.load(f)
+            
+        self.manual_pseudocode = {}
+        manual_path = "data/manual_pseudocode.json"
+        if os.path.exists(manual_path):
+            with open(manual_path, "r", encoding="utf-8") as f:
+                self.manual_pseudocode = json.load(f)
 
     def extract_segments(self, text):
         """Splits text into sequential logic segments."""
@@ -129,16 +137,81 @@ class SemanticOracleV2:
             expectations.append({"tag": "STAGE_DELTA", "value": 1})
 
         # 11. Live Recovery
+    def map_expectations(self, segment_text):
+        """Maps a text segment to a list of expected deltas."""
+        expectations = []
+        
+        # 1. Energy Cost
+        energy_icons = len(re.findall(self.PATTERNS["ENERGY_COST"], segment_text))
+        if energy_icons > 0:
+            expectations.append({"tag": "ENERGY_COST", "value": energy_icons})
+
+        # 2. Hand Delta (Draw/Recover)
+        if re.search(self.PATTERNS["HAND_DRAW"], segment_text):
+            count = 1
+            num_match = re.search(r'([0-9１２３４５])枚', segment_text)
+            if num_match:
+                v_map = {"１": 1, "２": 2, "３": 3, "４": 4, "５": 5}
+                count_str = num_match.group(1)
+                count = int(v_map.get(count_str, count_str))
+            expectations.append({"tag": "HAND_DELTA", "value": count})
+
+        # 3. Discard
+        if re.search(self.PATTERNS["HAND_DISCARD"], segment_text):
+             count = 1
+             num_match = re.search(r'([0-9１２３４５])枚', segment_text)
+             if num_match:
+                v_map = {"１": 1, "２": 2, "３": 3, "４": 4, "５": 5}
+                count_str = num_match.group(1)
+                count = int(v_map.get(count_str, count_str))
+             expectations.append({"tag": "HAND_DISCARD", "value": count})
+             
+        # 4. Sacrifice
+        if re.search(self.PATTERNS["MEMBER_SACRIFICE"], segment_text):
+             expectations.append({"tag": "MEMBER_SACRIFICE", "value": 1})
+
+        # 5. Energy Activation
+        if re.search(self.PATTERNS["ENERGY_ACTIVATE"], segment_text):
+            expectations.append({"tag": "ENERGY_ACTIVATE", "value": 1})
+
+        # 6. Score Deltas
+        score_match = re.search(self.PATTERNS["SCORE_DELTA"], segment_text)
+        if score_match:
+            v_map = {"１": 1, "２": 2, "３": 3, "４": 4, "５": 5}
+            count_str = score_match.group(1)
+            val = int(v_map.get(count_str, count_str))
+            expectations.append({"tag": "SCORE_DELTA", "value": val})
+
+        # 7. Hearts
+        if re.search(self.PATTERNS["HEART_DELTA"], segment_text):
+            expectations.append({"tag": "HEART_DELTA", "value": 1})
+
+        # 8. Tap Members
+        if re.search(self.PATTERNS["MEMBER_TAP"], segment_text):
+            expectations.append({"tag": "MEMBER_TAP_DELTA", "value": 1})
+
+        # 9. Prevention
+        if re.search(self.PATTERNS["PREVENT"], segment_text):
+            expectations.append({"tag": "ACTION_PREVENTION", "value": 1})
+
+        # 10. Live Recovery
         if re.search(self.PATTERNS["LIVE_RECOVER"], segment_text):
             expectations.append({"tag": "LIVE_RECOVER", "value": 1})
 
-        # 12. Energy Addition
+        # 11. Energy Addition
         if re.search(self.PATTERNS["ENERGY_ADD"], segment_text):
             expectations.append({"tag": "ENERGY_DELTA", "value": 1})
-
+            
         return expectations
 
     def interpret_card(self, card_id):
+        """Interprets a card's text or manual pseudocode into expectations."""
+        # PRIORITIZE MANUAL PSEUDOCODE
+        if card_id in self.manual_pseudocode:
+            pc = self.manual_pseudocode[card_id].get("pseudocode", "")
+            if pc:
+                return self.interpret_pseudocode(card_id, pc)
+
         data = self.db.get(card_id, {})
         raw_text = data.get("ability", "")
         
@@ -184,6 +257,69 @@ class SemanticOracleV2:
                     "sequence": seg_expects
                 })
         
+        return {
+            "id": card_id,
+            "abilities": card_expectations
+        }
+
+    def interpret_pseudocode(self, card_id, pc):
+        """Parses structured manual pseudocode into expectations."""
+        card_expectations = []
+        
+        # Split by blocks (TRIGGER: ...)
+        blocks = re.split(r'\n\s*\n', pc.strip())
+        for block in blocks:
+            trigger_match = re.search(r'TRIGGER:\s*(\w+)', block)
+            if not trigger_match: continue
+            trigger = trigger_match.group(1)
+            
+            sequence = []
+            # Extract effects and costs
+            for line in block.split('\n'):
+                if "EFFECT:" in line or "COST:" in line:
+                    tag_prefix = "COST_" if "COST:" in line else ""
+                    # Simple parsers for common pseudocode verbs
+                    if "DRAW(" in line:
+                        v = re.search(r'DRAW\((\d+)\)', line)
+                        if v: sequence.append({"text": line.strip(), "deltas": [{"tag": tag_prefix + "HAND_DELTA", "value": int(v.group(1))}]})
+                    elif "DISCARD_HAND(" in line:
+                        v = re.search(r'DISCARD_HAND\((\d+)\)', line)
+                        if v: sequence.append({"text": line.strip(), "deltas": [{"tag": tag_prefix + "HAND_DISCARD", "value": int(v.group(1))}]})
+                    elif "BOOST_SCORE(" in line:
+                        v = re.search(r'BOOST_SCORE\((\d+)\)', line)
+                        if v: sequence.append({"text": line.strip(), "deltas": [{"tag": tag_prefix + "SCORE_DELTA", "value": int(v.group(1))}]})
+                    elif "RECOVER_LIVE(" in line:
+                        sequence.append({"text": line.strip(), "deltas": [{"tag": "LIVE_RECOVER", "value": 1}]})
+                    elif "RECOVER_MEMBER(1)" in line:
+                        sequence.append({"text": line.strip(), "deltas": [{"tag": "HAND_DELTA", "value": 1}, {"tag": "DISCARD_DELTA", "value": -1}]})
+                    elif "ADD_HEARTS(" in line:
+                        v = re.search(r'ADD_HEARTS\((\d+)\)', line)
+                        if v: sequence.append({"text": line.strip(), "deltas": [{"tag": "HEART_DELTA", "value": int(v.group(1))}]})
+                    elif "ADD_BLADES(" in line:
+                        v = re.search(r'ADD_BLADES\((\d+)\)', line)
+                        if v: sequence.append({"text": line.strip(), "deltas": [{"tag": "BLADE_DELTA", "value": int(v.group(1))}]})
+                    elif "ENERGY_CHARGE(" in line or "ACTIVATE_ENERGY(" in line:
+                        v = re.search(r'(?:ENERGY_CHARGE|ACTIVATE_ENERGY)\((\d+)\)', line)
+                        if v: sequence.append({"text": line.strip(), "deltas": [{"tag": "ENERGY_DELTA", "value": int(v.group(1))}]})
+                    elif "PAY_ENERGY(" in line:
+                        v = re.search(r'PAY_ENERGY\((\d+)\)', line)
+                        if v: sequence.append({"text": line.strip(), "deltas": [{"tag": "ENERGY_COST", "value": int(v.group(1))}]})
+                    elif "MOVE_TO_DISCARD" in line:
+                        sequence.append({"text": line.strip(), "deltas": [{"tag": "STAGE_DELTA", "value": -1}, {"tag": "DISCARD_DELTA", "value": 1}]})
+                    elif "TAP_MEMBER" in line:
+                        # Handle optional or count-based tap
+                        sequence.append({"text": line.strip(), "deltas": [{"tag": "MEMBER_TAP_DELTA", "value": 1}]})
+                    elif "PREVENT_" in line or "PREVENT(" in line:
+                        sequence.append({"text": line.strip(), "deltas": [{"tag": "ACTION_PREVENTION", "value": 1}]})
+                    elif "LOOK_AND_CHOOSE" in line or "SEARCH_DECK" in line:
+                        sequence.append({"text": line.strip(), "deltas": [{"tag": "DECK_SEARCH", "value": 1}]})
+
+            if sequence:
+                card_expectations.append({
+                    "trigger": trigger,
+                    "sequence": sequence
+                })
+                
         return {
             "id": card_id,
             "abilities": card_expectations

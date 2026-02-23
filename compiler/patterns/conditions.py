@@ -206,7 +206,7 @@ CONDITION_PATTERNS = [
         phase=PatternPhase.CONDITION,
         keywords=["移動している場合"],
         priority=30,
-        output_type="ConditionType.HAS_MOVED",
+        output_type="ConditionType.HAS_MOVED",  # [UNUSED]
     ),
     Pattern(
         name="has_live_card",
@@ -220,7 +220,7 @@ CONDITION_PATTERNS = [
         phase=PatternPhase.CONDITION,
         regex=r"(?:1つを選ぶ|どちらか.*?選ぶ|選んでもよい|のうち.*?選ぶ)",
         priority=40,
-        output_type="ConditionType.HAS_CHOICE",
+        output_type="ConditionType.HAS_CHOICE",  # [UNUSED]
     ),
     Pattern(
         name="group_filter",
@@ -264,6 +264,6 @@ CONDITION_PATTERNS = [
         phase=PatternPhase.CONDITION,
         regex=r"この(カード|メンバー)が控え室にある場合のみ起動できる",
         priority=10,
-        output_type="ConditionType.IS_IN_DISCARD",
+        output_type="ConditionType.IS_IN_DISCARD",  # [UNUSED]
     ),
 ]

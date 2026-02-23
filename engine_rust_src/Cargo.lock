@@ -291,6 +291,7 @@ dependencies = [
  "lru",
  "ndarray 0.16.1",
  "numpy",
+ "once_cell",
  "ort",
  "pollster",
  "pyo3",

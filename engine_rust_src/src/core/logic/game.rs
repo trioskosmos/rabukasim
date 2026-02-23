@@ -16,7 +16,7 @@
 //! the `interpreter` to resolve complex card effects while maintaining state consistency.
 
 use rand::SeedableRng;
-use rand::rngs::SmallRng;
+// use rand::rngs::SmallRng;
 use rand::seq::SliceRandom;
 use rand_pcg::Pcg64;
 use smallvec::SmallVec;
@@ -62,13 +62,36 @@ impl GameState {
         }
     }
 
+    pub fn generate_execution_id(&mut self) -> u32 {
+        let id = self.ui.next_execution_id;
+        self.ui.next_execution_id = self.ui.next_execution_id.wrapping_add(1);
+        self.ui.current_execution_id = Some(id);
+        id
+    }
+
+    pub fn clear_execution_id(&mut self) {
+        self.ui.current_execution_id = None;
+    }
+
     pub fn log(&mut self, msg: String) {
         if self.ui.silent { return; }
-        let full_msg = if msg.starts_with("[Turn") {
-            msg
+        
+        let (turn_prefix, body) = if msg.starts_with("[Turn") {
+            if let Some(idx) = msg.find("] ") {
+                (msg[..=idx].to_string(), msg[idx+2..].to_string())
+            } else {
+                (format!("[Turn {}]", self.turn), msg)
+            }
         } else {
-            format!("[Turn {}] {}", self.turn, msg)
+            (format!("[Turn {}]", self.turn), msg)
         };
+        
+        let full_msg = if let Some(id) = self.ui.current_execution_id {
+            format!("{} [ID: {}] {}", turn_prefix, id, body)
+        } else {
+            format!("{} {}", turn_prefix, body)
+        };
+        
         self.ui.rule_log.push(full_msg);
     }
 
@@ -649,18 +672,20 @@ impl GameState {
             ab_ctx.source_card_id = cid;
             ab_ctx.ability_index = ab_idx as i16;
             
-            if !self.ui.silent {
-                let card_name = if is_live { db.get_live(cid).unwrap().name.clone() } else { db.get_member(cid).unwrap().name.clone() };
-                self.log_turn_event("TRIGGER", cid, ab_idx as i16, p_idx as u8, &format!("Triggering {}", card_name));
-            }
-            
-            let (bytecode, conditions) = if is_live {
+            let (_bytecode, conditions, pseudocode) = if is_live {
                 let ab = &db.get_live(cid).unwrap().abilities[ab_idx as usize];
-                (&ab.bytecode, &ab.conditions)
+                (&ab.bytecode, &ab.conditions, &ab.pseudocode)
             } else {
                 let ab = &db.get_member(cid).unwrap().abilities[ab_idx as usize];
-                (&ab.bytecode, &ab.conditions)
+                (&ab.bytecode, &ab.conditions, &ab.pseudocode)
             };
+
+            if !self.ui.silent {
+                let card_name = if is_live { db.get_live(cid).unwrap().name.clone() } else { db.get_member(cid).unwrap().name.clone() };
+                let trigger_str = super::interpreter::logging::trigger_as_str(trigger);
+                let p_code = if pseudocode.is_empty() { "" } else { &format!(": {}", pseudocode) };
+                self.log_turn_event("TRIGGER", cid, ab_idx as i16, p_idx as u8, &format!("[{}] Triggered for {}{}", trigger_str, card_name, p_code));
+            }
 
             // Check conditions before resolving bytecode
             let mut all_met = true;
@@ -675,7 +700,17 @@ impl GameState {
                 // PHASE 3: Queue instead of immediate resolve to decouple mutations
                 self.enqueue_trigger(cid, ab_idx as u16, ab_ctx, is_live, trigger);
             } else {
-                if !self.ui.silent { self.log(format!("Triggered ability of {} (Index {}) skipped due to unmet conditions.", cid, ab_idx)); }
+                if !self.ui.silent { 
+                    // Log which condition failed
+                    for cond in conditions {
+                        if !self.check_condition_opcode(db, cond.condition_type as i32, cond.value, cond.attr, cond.target_slot as i32, &ab_ctx, 1) {
+                            let cond_desc = super::interpreter::logging::describe_condition(cond.condition_type as i32, cond.value, cond.attr);
+                            let card_name = if is_live { db.get_live(cid).unwrap().name.clone() } else { db.get_member(cid).unwrap().name.clone() };
+                            self.log(format!("{}'s ability did not activate because target condition was not met: {}.", card_name, cond_desc));
+                            break;
+                        }
+                    }
+                }
             }
         }
 

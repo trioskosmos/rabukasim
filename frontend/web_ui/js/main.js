@@ -9,6 +9,7 @@ import { DragDrop } from './ui_drag_drop.js';
 import { Modals } from './ui_modals.js';
 import { Replay } from './replay_system.js';
 import { toggleSidebar, switchBoard } from './layout.js';
+import { loadTranslations } from './i18n/index.js';
 
 // Global UI object for layout/switching
 window.UI = {
@@ -104,7 +105,12 @@ export async function initialize() {
 
 
     try {
-        // 0. Start Adaptive Polling (PROMOTED to first step)
+        // 0. Load translations
+        console.log("[Init] Loading translations...");
+        const defaultLang = localStorage.getItem('lovelive_lang') || 'jp';
+        await loadTranslations(defaultLang);
+
+        // 0.5 Start Adaptive Polling (PROMOTED to first step)
         console.log("[Init] Starting polling (immediate)...");
         updatePolling();
 

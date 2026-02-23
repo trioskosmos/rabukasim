@@ -141,37 +141,74 @@ When debugging softlocks or "double-suspension" bugs:
 
 ## Scale Strategy (High-Speed Verification)
 
-To verify all 368+ archetypes efficiently, use this three-phase approach instead of writing manual tests for each card.
+To verify all 755+ cards efficiently, use this three-phase approach.
 
-### Phase 1: Crash Triage
-Run a lightweight scan of **every** ability in `cards_compiled.json` to catch engine panics and errors immediately.
-1.  Load `cards_compiled.json` in a Rust test.
-2.  Iterate through all members.
-3.  Create a minimal valid `GameState` (with dummy deck/hand).
-4.  Execute `resolve_bytecode` in silent mode.
-5.  Report findings: `PASS`, `SUSPEND` (needs user input), or `CRASH` (panic/error).
+### Phase 1: Compile-Time Structural Validation
+The compiler (`main.py`) runs a structural check on every bytecode array generated.
+- **Checks**: Unknown opcodes, JUMP bounds, multiple of 4 length, trailing `O_RETURN`.
+- **Location**: `validate_bytecode()` in `compiler/main.py`.
 
-### Phase 2: Oracle Verification
-Use the Python engine as the "Source of Truth" to generate expected states.
-1.  **Upgrade Generator**: Update `generate_archetype_scenarios.py` to use real card IDs.
-2.  **Generate State**: Run the Python engine for each archetype to capture the "Correct" final state (Hand size, Discard size, Energy, etc.).
-3.  **Export Scenarios**: Save these inputs and expected outputs to `scenarios.json`.
+### Phase 2: Crash Triage (Fault Isolation)
+Run a batch execution of **every** unique ability signature to catch engine panics.
+1.  **Command**: `cd engine_rust_src && cargo test crash_triage -- --nocapture`
+2.  **Mechanism**: Uses `std::panic::catch_unwind` to execute all 287+ unique signatures in a single run without aborting on failure.
+3.  **Outputs**: 
+    - `reports/state_delta_verification.md`: Full audit logs.
+    - `reports/crashed_abilities.txt`: Targeted list of crashing cards.
 
-### Phase 3: Batch Verification
-Run the generated scenarios against the Rust engine in batches.
-1.  Load `scenarios.json`.
-2.  Run checking logic in `archetype_runner.rs`.
-3.  Failures indicate divergence between Python (Truth) and Rust (Implementation).
-
-### Phase 4: Semantic Assertion Verification (High Fidelity)
+### Phase 3: Semantic Assertion Verification (High Fidelity)
 Advanced meaning-driven verification using sequential delta assertions.
 1. **Generate Semantic Truth**: `uv run python tools/verify/generate_semantic_truth.py`.
-    - Iterates through all cards using `SemanticOracleV2`.
-    - Interprets JP text into structured effect segments (deltas).
-2. **Execute Assertions (Rust)**: `cargo test test_semantic_verification_batch --lib`.
+2. **Run Mass Audit**: `cd engine_rust_src && cargo test --lib test_semantic_mass_verification -- --nocapture`
     - Module: `engine_rust_src/src/semantic_assertions.rs`.
-    - Logic: Compares real game state deltas (Hand, Energy, Score) against interpreted segments.
-    - Captures subtle logic gaps in complex multi-step abilities.
+    - Logic: Compares real game state deltas (Hand, Energy, Score) against segments interpreted directly from JP text via `SemanticOracleV2`.
+3. **Report**: `reports/COMPREHENSIVE_SEMANTIC_AUDIT.md` — Per-card pass/fail with error details.
+    - **Baseline (2026-02-23)**: 235 Pass / 297 Fail out of 532 cards (44% pass).
+
+> [!TIP]
+> Use `--lib` flag to avoid scanning all binary targets (avoids the noisy "running 0 tests" spam from `src/bin/*.rs`).
+
+### Phase 4: Semantic Audit Triage (Generalized Failure Categories)
+
+The 297 failures from the mass audit generalize into **6 systemic root causes**. Fixing these categories in order of impact will raise the pass rate most efficiently.
+
+#### Category 1: Condition Not Met — 102 cards (34%)
+- **Symptom**: `Mismatch HAND_DELTA: Exp 1, Got 0` for abilities with conditions.
+- **Root Cause**: The synthetic board state (`setup_oracle_environment`) does not satisfy the ability's condition. E.g., "if you have 2+ success lives" or "if opponent has a tapped member" — the oracle environment doesn't set up the opponent's state or specific card names.
+- **Fix**: Enrich `setup_oracle_environment` to populate both players with realistic state (opponent cards, specific group names, baton touch flags, etc.), OR make the oracle skip conditional abilities it can't satisfy.
+
+#### Category 2: Score Delta Zero — 87 cards (29%)
+- **Symptom**: `Mismatch SCORE_DELTA: Exp X, Got 0` for live card scoring abilities.
+- **Root Cause**: Two sub-problems:
+  1. **Constant abilities**: `TriggerType::Constant` effects (e.g., "Score +1 while X") are handled via a shortcut that only checks `live_score_bonus`, but many score bonuses are gated by complex conditions (blade counts, group filters) that the synthetic state doesn't satisfy.
+  2. **Live-context abilities**: Score bonuses during `ON_LIVE_SUCCESS` require the game to be in `Phase::Live` with cards in `live_zone`, which the oracle doesn't set up.
+- **Fix**: For Constant abilities, pre-populate the state to satisfy common filters. For live-context, transition the game into `Phase::Live` before executing the ability.
+
+#### Category 3: Optional Not Resolved — 43 cards (14%)
+- **Symptom**: `Mismatch HAND_DELTA: Exp -1, Got 0` for "手札を1枚控え室に置いてもよい" (you may discard 1).
+- **Root Cause**: Optional discard abilities suspend the engine (waiting for user choice). The `resolve_interaction` helper auto-resolves with action `8000`, but the `SELECT_HAND_DISCARD` interaction isn't being picked up — the ability may not fire at all due to a failed precondition (e.g., it's an Activated ability requiring a tap cost that wasn't paid).
+- **Fix**: Ensure `resolve_interaction` handles `SELECT_HAND_DISCARD` correctly, and that activated ability costs (tap, energy) are pre-paid in the oracle environment.
+
+#### Category 4: Discard+Draw Hand Mismatch — 25 cards (8%)
+- **Symptom**: `Mismatch HAND (Discard Expected): Exp -1, Got 1` or `Got 2`.
+- **Root Cause**: Cards with "Draw X, Discard Y" patterns. The oracle expects a net delta of `X-Y`, but the engine draws cards and then suspends for the discard selection. The `resolve_interaction` auto-picks action `8000`, which may not correctly resolve the discard, leaving the hand size at `+X` instead of `X-Y`.
+- **Fix**: Improve `resolve_interaction` to properly resolve `SELECT_HAND_DISCARD` interactions by selecting valid hand indices instead of a generic action.
+
+#### Category 5: Heart/Blade Delta Zero — 14 cards (4%)
+- **Symptom**: `Mismatch HEART_DELTA: Exp 1, Got 0`.
+- **Root Cause**: Heart/blade buffs are often gated by live-phase conditions or specific heart-color filters. The oracle environment doesn't place the game in live context or populate heart metadata on stage members.
+- **Fix**: Same as Category 2 — enrich the oracle environment with live-phase context and heart data.
+
+#### Category 6: Energy Cost Zero — 10 cards (3%)
+- **Symptom**: `Mismatch ENERGY_COST: Exp 2, Got 0`.
+- **Root Cause**: Activated abilities with energy costs require the player to explicitly pay. The oracle auto-resolves interactions but doesn't simulate the "pay energy" step, so the ability never fires.
+- **Fix**: In `record_card`, when trigger is `Activated`, ensure the test pre-pays or auto-resolves the energy cost interaction.
+
+#### Oracle Parse Bugs — 6 cards (2%)
+- **Symptom**: Wildly wrong expectations like `Exp 7` or `Exp 47`.
+- **Root Cause**: The Python `SemanticOracleV2` regex misparses JP text. E.g., "エネルギーが7枚以上ある場合、カードを1枚引く" extracts `7` instead of `1` because it grabs the condition value, not the draw count.
+- **Fix**: Improve `SemanticOracleV2.map_expectations()` regex to distinguish condition thresholds from effect quantities.
+
 ## 9. Crate-Wide Reliability Audit (Systematic Fix)
 
 When multiple tests fail across different modules, avoid "running in circles" with ad-hoc patches. Follow this systematic process:
