@@ -18,7 +18,7 @@ pub fn do_yell(state: &mut GameState, db: &CardDatabase, count: u32) -> Vec<i32>
         if let Some(card_id) = state.core.players[p_idx].deck.pop() {
             revealed.push(card_id);
             // Dispatch OnReveal trigger
-            state.trigger_event(db, TriggerType::OnReveal, p_idx, card_id, -1, 0);
+            state.trigger_event(db, TriggerType::OnReveal, p_idx, card_id, -1, 0, -1);
         }
     }
     revealed
@@ -145,7 +145,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 let cid = state.core.players[p_idx].live_zone[i];
                 state.core.players[p_idx].set_revealed(i, true);
                 if cid >= 0 {
-                    state.trigger_event(db, TriggerType::OnReveal, p_idx, cid, i as i16, 0);
+                    state.trigger_event(db, TriggerType::OnReveal, p_idx, cid, i as i16, 0, -1);
                     if state.phase == Phase::Response { return; }
                 }
             }
@@ -167,7 +167,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     // Rule 11.4 [ライブ開始時] (Live Start)
     if !state.live_start_triggers_done {
         state.live_start_triggers_done = true;
-        state.trigger_event(db, TriggerType::OnLiveStart, p_idx, -1, -1, 0);
+        state.trigger_event(db, TriggerType::OnLiveStart, p_idx, -1, -1, 0, -1);
         if state.phase == Phase::Response { return; }
     }
 
@@ -607,7 +607,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 if (state.live_result_processed_mask[p] & 0x80) == 0 {
                     state.live_result_processed_mask[p] |= 0x80;
                     
-                    state.trigger_event(db, TriggerType::OnLiveSuccess, p, -1, -1, 0);
+                    state.trigger_event(db, TriggerType::OnLiveSuccess, p, -1, -1, 0, -1);
                     if state.phase == Phase::Response { return; }
                 }
             }

@@ -54,3 +54,21 @@ When you need to understand how a card works in the engine:
 - **Packed ID**: `(logic_id & 0x0FFF) | (variant_idx << 12)`
 - **Logic ID**: The "base" identity of the card, shared across variants.
 - **Variant**: `0` for base, `1` for R+, `2` for P+, etc.
+
+## Diagnostic Shortcuts
+
+These are quick commands or patterns to use for common diagnostic tasks.
+
+1.  **"What is the ID?" (Lookup ID)**
+    -   **Alias**: `id_lookup <CARD_NO>`
+    -   **Command**: `uv run python tools/card_finder.py "<CARD_NO>" | Select-String "ID"`
+
+2.  **"Show me the bytecode" (Raw Bytecode)**
+    -   **Alias**: `show_bc <CARD_NO>`
+    -   **Command**: `uv run python tools/card_finder.py "<CARD_NO>" | Select-String "Bytecode"`
+
+3.  **"Check the decoding" (Decoded Logic)**
+    -   **Alias**: `check_decoding <CARD_NO>`
+    -   **Command / Workflow**: 
+        1. `uv run python tools/card_finder.py "<CARD_NO>" --output reports/diag.md`
+        2. View `reports/diag.md` and check the **Decoded Bytecode** section.

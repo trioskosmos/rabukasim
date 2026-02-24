@@ -427,12 +427,12 @@ fn end_main_phase() {
     let p_idx = local_state.current_player;
     let first_p = local_state.first_player;
     if (p_idx == first_p) {
+        // CPU: Main → Active (opponent's turn starts)
         let other_p = 1u - first_p;
         local_state.current_player = other_p;
-        draw_energy(other_p);
-        draw_card(other_p);
-        local_state.phase = 4; // Main
+        local_state.phase = 1; // Active (will auto-advance to Energy → Draw → Main)
     } else {
+        // Both players finished their turns → LiveSet
         local_state.phase = 5; // LiveSet
         local_state.current_player = first_p;
     }

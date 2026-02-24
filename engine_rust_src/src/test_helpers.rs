@@ -27,10 +27,11 @@ pub struct ZoneSnapshot {
     pub live_score_bonus: i32,
     pub looked_cards: Vec<i32>,
     pub yell_count: usize,
+    pub opponent_tapped_members: [bool; 3],
 }
 
 impl ZoneSnapshot {
-    pub fn capture(p: &PlayerState) -> Self {
+    pub fn capture(p: &PlayerState, state: &GameState) -> Self {
         let mut total_hearts = 0;
         let mut total_blades = 0;
         let mut active_members = 0;
@@ -44,9 +45,13 @@ impl ZoneSnapshot {
             }
         }
 
+        // Count actual cards (not -1 placeholders) for hand and deck
+        let actual_hand_len = p.hand.iter().filter(|&&c| c >= 0).count();
+        let actual_deck_len = p.deck.iter().filter(|&&c| c >= 0).count();
+
         Self {
-            hand_len: p.hand.len(),
-            deck_len: p.deck.len(),
+            hand_len: actual_hand_len,
+            deck_len: actual_deck_len,
             discard_len: p.discard.len(),
             energy_len: p.energy_zone.len(),
             tapped_energy_count: p.tapped_energy_mask.count_ones() as usize,
@@ -68,6 +73,11 @@ impl ZoneSnapshot {
             live_score_bonus: p.live_score_bonus,
             looked_cards: p.looked_cards.iter().cloned().collect(),
             yell_count: p.yell_cards.len(),
+            opponent_tapped_members: [
+                state.core.players[1].is_tapped(0),
+                state.core.players[1].is_tapped(1),
+                state.core.players[1].is_tapped(2),
+            ],
         }
     }
 }

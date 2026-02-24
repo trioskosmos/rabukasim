@@ -777,10 +777,12 @@ pub fn get_action_desc_rich(
             let pending = gs.interaction_stack.last();
             let opcode = pending.map(|p| p.effect_opcode).unwrap_or(0);
             
+            let target_player = if opcode == O_TAP_OPPONENT { 1 - viewer_idx } else { viewer_idx };
+            
             let cid = if opcode == O_SELECT_LIVE {
-                p.live_zone.get(slot_idx).cloned().unwrap_or(-1)
+                gs.players[target_player].live_zone.get(slot_idx).cloned().unwrap_or(-1)
             } else {
-                p.stage.get(slot_idx).cloned().unwrap_or(-1)
+                gs.players[target_player].stage.get(slot_idx).cloned().unwrap_or(-1)
             };
             
             let card_name = if cid >= 0 { resolve_card_name(cid, db) } else { "".to_string() };
@@ -792,7 +794,6 @@ pub fn get_action_desc_rich(
                 if card_name.is_empty() { format!("Select {} Slot", areas.get(slot_idx).unwrap_or(&"")) }
                 else { format!("{} ({})", card_name, areas.get(slot_idx).unwrap_or(&"")) }
             };
-            let target_player = if opcode == O_TAP_OPPONENT { 1 - viewer_idx } else { viewer_idx };
             metadata.insert("slot_idx".into(), json!(slot_idx));
             metadata.insert("target_player".into(), json!(target_player));
             (label, "".into(), "SELECT".into(), Some(slot_idx))
@@ -1338,8 +1339,14 @@ pub fn serialize_state_rich(
             use crate::models::Action;
 
             for &id in &legal_actions {
-                let (name, text, _type_str, _area, _meta) = get_action_desc_rich(id, gs, db, viewer_idx, lang);
-                options.push(json!({ "name": name, "text": text }));
+                let (name, text, _type_str, _area, meta) = get_action_desc_rich(id, gs, db, viewer_idx, lang);
+                let mut opt_obj = json!({ "name": name, "text": text });
+                if let Some(opt_map) = opt_obj.as_object_mut() {
+                    for (k, v) in meta {
+                        opt_map.insert(k, v);
+                    }
+                }
+                options.push(opt_obj);
                 actions.push(id);
                 
                 // Populate action map

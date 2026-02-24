@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-use crate::core::logic::{GameState, Phase};
+use crate::core::logic::*;
 use crate::test_helpers::load_real_db;
 
 #[test]

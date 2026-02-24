@@ -29,7 +29,7 @@ pub enum ComparisonOp {
 /// - Bits 17-23: Unit ID
 /// - Bits 32-38: Color mask
 /// - Bit 42: Character filter enable
-/// - Bits 48-50: Special filter ID
+/// - Bits 57-59: Special filter ID
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CardFilter {
     /// Card type filter: None, Some(Member), Some(Live)
@@ -225,15 +225,17 @@ impl CardFilter {
             filter.unit_id = Some(((filter_attr >> FILTER_UNIT_SHIFT) & 0x7F) as u8);
         }
         
-        // Color mask (bits 32-38)
-        filter.color_mask = ((filter_attr >> FILTER_COLOR_SHIFT) & 0x7F) as u8;
+        // Color mask (bits 24-30, enabled by bit 31)
+        if (filter_attr & FILTER_COLOR_ENABLE as u64) != 0 {
+            filter.color_mask = ((filter_attr >> FILTER_COLOR_SHIFT) & 0x7F) as u8;
+        }
         
         // Character filter (bit 42)
-        if (filter_attr & FILTER_CHARACTER_ENABLE) != 0 {
+        if (filter_attr & FILTER_CHARACTER_ENABLE as u64) != 0 {
             filter.character_ids = [
-                Some(((filter_attr >> 31) & 0x7F) as u8),
-                Some(((filter_attr >> 17) & 0x7F) as u8),
-                Some(((filter_attr >> 24) & 0x7F) as u8),
+                Some(((filter_attr >> 32) & 0x7F) as u8),
+                Some(((filter_attr >> 43) & 0x7F) as u8),
+                Some(((filter_attr >> 50) & 0x7F) as u8),
             ];
         }
         
@@ -257,7 +259,7 @@ impl CardFilter {
             filter.cost_filter = Some((threshold, is_le));
         }
         
-        // Special filter (bits 48-50)
+        // Special filter (bits 57-59)
         filter.special_id = ((filter_attr >> FILTER_SPECIAL_SHIFT) & 0x07) as u8;
         
         // Setsuna filter (bit 7)
@@ -284,16 +286,19 @@ impl CardFilter {
             attr |= FILTER_UNIT_ENABLE | ((uid as u64) << FILTER_UNIT_SHIFT);
         }
         
-        attr |= (self.color_mask as u64) << FILTER_COLOR_SHIFT;
+        if self.color_mask != 0 {
+            attr |= FILTER_COLOR_ENABLE as u64;
+            attr |= (self.color_mask as u64) << FILTER_COLOR_SHIFT;
+        }
         
         for (i, cid) in self.character_ids.iter().enumerate() {
             if let Some(id) = cid {
-                attr |= FILTER_CHARACTER_ENABLE;
-                // Character IDs are stored at different bit positions
+                attr |= FILTER_CHARACTER_ENABLE as u64;
+                // Character IDs moved to higher bits to avoid collision with 32-bit fields
                 match i {
-                    0 => attr |= (*id as u64) << 31,
-                    1 => attr |= (*id as u64) << 17,
-                    2 => attr |= (*id as u64) << 24,
+                    0 => attr |= (*id as u64) << 32,
+                    1 => attr |= (*id as u64) << 43,
+                    2 => attr |= (*id as u64) << 50,
                     _ => {}
                 }
             }

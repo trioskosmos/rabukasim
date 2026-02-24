@@ -1,0 +1,31 @@
+﻿--- Loading Sources ---
+--- Searching for 'PL!S-bp2-004-R' (from 'PL!S-bp2-004-R') ---
+
+[ CARD: PL!S-bp2-004-R ]
+Engine Packed ID: 4514
+Logic ID: 418, Variant: 1
+
+--- CONTENT (Source: cards.json) ---
+Name: 鮟呈ｾ､繝繧､繝､
+Card No: PL!S-bp2-004-R
+Ability (JP): {{jidou.png|閾ｪ蜍扶}・ｻ繧ｿ繝ｼ繝ｳ1蝗橸ｼｽ繧ｨ繝ｼ繝ｫ縺ｫ繧医ｊ蜈ｬ髢九＆繧後◆閾ｪ蛻・・繧ｫ繝ｼ繝峨・荳ｭ縺ｫ繝ｩ繧､繝悶き繝ｼ繝峨′縺ｪ縺・→縺阪√◎繧後ｉ縺ｮ繧ｫ繝ｼ繝峨ｒ縺吶∋縺ｦ謗ｧ縺亥ｮ､縺ｫ鄂ｮ縺・※繧ゅｈ縺・ゅ％繧後↓繧医ｊ1譫壻ｻ･荳翫・繧ｫ繝ｼ繝峨′謗ｧ縺亥ｮ､縺ｫ鄂ｮ縺九ｌ縺溷ｴ蜷医√◎縺ｮ繧ｨ繝ｼ繝ｫ縺ｧ蠕励◆繝悶Ξ繝ｼ繝峨ワ繝ｼ繝医ｒ螟ｱ縺・√ｂ縺・ｸ蠎ｦ繧ｨ繝ｼ繝ｫ繧定｡後≧縲・
+Ability (JP): {{jidou.png|閾ｪ蜍扶}・ｻ繧ｿ繝ｼ繝ｳ1蝗橸ｼｽ繧ｨ繝ｼ繝ｫ縺ｫ繧医ｊ蜈ｬ髢九＆繧後◆閾ｪ蛻・・繧ｫ繝ｼ繝峨・荳ｭ縺ｫ繝ｩ繧､繝悶き繝ｼ繝峨′縺ｪ縺・→縺阪√◎繧後ｉ縺ｮ繧ｫ繝ｼ繝峨ｒ縺吶∋縺ｦ謗ｧ縺亥ｮ､縺ｫ鄂ｮ縺・※繧ゅｈ縺・ゅ％繧後↓繧医ｊ1譫壻ｻ･荳翫・繧ｫ繝ｼ繝峨′謗ｧ縺亥ｮ､縺ｫ鄂ｮ縺九ｌ縺溷ｴ蜷医√◎縺ｮ繧ｨ繝ｼ繝ｫ縺ｧ蠕励◆繝悶Ξ繝ｼ繝峨ワ繝ｼ繝医ｒ螟ｱ縺・√ｂ縺・ｸ蠎ｦ繧ｨ繝ｼ繝ｫ繧定｡後≧縲・
+Pseudocode (Raw): None
+Pseudocode (Manual): TRIGGER: ON_REVEAL (Once per turn)
+CONDITION: NOT REVEALED_CONTAINS {TYPE_LIVE}
+EFFECT: MULLIGAN
+
+--- LOGIC (Source: cards_compiled.json) ---
+Name (Compiled): 鮟呈ｾ､繝繧､繝､
+Ability 0:
+  Trigger: 9
+  Bytecode: [1226, 0, 0, 0, 29, 1, 0, 1, 1, 0, 0, 0]
+  Decoded:
+  00: NOT CHECK_HAS_KEYWORD | v(Val):0, a(Attr):0, s(Comp):GE (>=), s(Slot):Left Slot
+  04: META_RULE            | v=1, a=0, s=1
+  08: RETURN               | v=0, a=0, s=0
+
+--- BYTECODE LEGEND ---
+Zones: 0:Deck, 1:Deck Top, 2:Deck Bottom, 3:Energy Zone, 4:Stage, 6:Hand, 7:Discard, 8:Deck (Generic), 13:Success Live Pile, 15:Yell Cards
+Slots: 0:Left Slot, 1:Center Slot, 2:Right Slot, 4:Context Area, 6:Hand (Generic), 7:Discard (Generic), 10:Choice Target
+Comparisons: 0:GE (>=), 1:LE (<=), 2:GT (>), 3:LT (<), 4:EQ (==)

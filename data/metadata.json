@@ -29,8 +29,8 @@
         "PLAYER_SELECT": 13
     },
     "opcodes": {
-        "NOP": 0,
         "RETURN": 1,
+        "NOP": 0,
         "JUMP": 2,
         "JUMP_IF_FALSE": 3,
         "DRAW": 10,
@@ -68,17 +68,13 @@
         "ACTIVATE_MEMBER": 43,
         "ADD_TO_HAND": 44,
         "COLOR_SELECT": 45,
-        "REPLACE_EFFECT": 46,
         "TRIGGER_REMOTE": 47,
         "REDUCE_HEART_REQ": 48,
         "MODIFY_SCORE_RULE": 49,
         "ADD_STAGE_ENERGY": 50,
         "SET_TAPPED": 51,
-        "ADD_CONTINUOUS": 52,
         "TAP_MEMBER": 53,
-        "FLAVOR": 34,
         "PLAY_MEMBER_FROM_HAND": 57,
-        "SET_HEART_COST": 83,
         "MOVE_TO_DISCARD": 58,
         "GRANT_ABILITY": 60,
         "INCREASE_HEART_COST": 61,
@@ -98,9 +94,10 @@
         "OPPONENT_CHOOSE": 75,
         "PLAY_LIVE_FROM_DISCARD": 76,
         "REDUCE_LIVE_SET_LIMIT": 77,
-        "PREVENT_ACTIVATE": 82,
-        "ACTIVATE_ENERGY": 81,
         "PREVENT_SET_TO_SUCCESS_PILE": 80,
+        "ACTIVATE_ENERGY": 81,
+        "PREVENT_ACTIVATE": 82,
+        "SET_HEART_COST": 83,
         "PREVENT_BATON_TOUCH": 90
     },
     "action_bases": {
@@ -189,7 +186,6 @@
         "IS_OPPONENT": 249
     },
     "costs": {
-        "NONE": 0,
         "ENERGY": 1,
         "TAP_SELF": 2,
         "DISCARD_HAND": 3,
@@ -314,29 +310,13 @@
         "FILTER_NOT_BLADE_HEART": 16384,
         "FILTER_UNIT_ENABLE": 65536,
         "FILTER_UNIT_SHIFT": 17,
+        "FILTER_CHARACTER_ENABLE": 4398046511104,
+        "FILTER_SPECIAL_SHIFT": 57,
+        "FILTER_COLOR_ENABLE": 2147483648,
+        "FILTER_COLOR_SHIFT": 24,
         "FILTER_COST_ENABLE": 16777216,
         "FILTER_COST_SHIFT": 25,
-        "FILTER_COST_LE": 1073741824,
-        "FILTER_COLOR_SHIFT": 32,
-        "FILTER_CHARACTER_ENABLE": 4398046511104,
-        "FILTER_SPECIAL_SHIFT": 48
+        "FILTER_COST_LE": 1073741824
     },
-    "unused": [
-        "NOP",
-        "FLAVOR",
-        "REPLACE_EFFECT",
-        "ADD_CONTINUOUS",
-        "PREVENT_SET_TO_SUCCESS_PILE",
-        "SET_HEART_COST",
-        "NONE",
-        "HAS_COLOR",
-        "LIFE_LEAD",
-        "OPPONENT_HAS",
-        "RARITY_CHECK",
-        "HAND_HAS_NO_LIVE",
-        "HAS_CHOICE",
-        "HAS_MOVED",
-        "HAND_INCREASED",
-        "IS_IN_DISCARD"
-    ]
+    "unused": []
 }

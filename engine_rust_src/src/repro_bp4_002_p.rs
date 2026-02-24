@@ -1,5 +1,5 @@
 use crate::core::logic::*;
-// Redundant import removed
+use crate::core::generated_constants::ACTION_BASE_CHOICE;
 use crate::test_helpers::{load_real_db, create_test_state, TestUtils};
 
 #[test]
@@ -56,9 +56,9 @@ fn test_repro_bp4_002_p_wait_flow() {
         interaction.choice_type
     );
     
-    // 4. Choose "Yes" (WAIT) -> choice_index 0
+    // 4. Choose "Yes" (WAIT) -> ACTION_BASE_CHOICE + 0
     println!("--- ACTION: Choosing YES (WAIT) ---");
-    let res = state.step(&db, 8000);
+    let res = state.step(&db, ACTION_BASE_CHOICE + 0);  // Use ACTION_BASE_CHOICE + 0 for Yes in OPTIONAL
     if let Err(e) = res {
         panic!("Step 3 (Choice Yes) failed: {}", e);
     }
@@ -72,9 +72,23 @@ fn test_repro_bp4_002_p_wait_flow() {
     println!("DEBUG: Current Interaction: {}", state.interaction_stack.last().unwrap().choice_type);
     assert_eq!(state.interaction_stack.last().unwrap().choice_type, "LOOK_AND_CHOOSE");
     
-    // Choose the first available card (if any) or just skip if we want to finish
-    // Action 10 is Choice Target 0
-    let _ = state.step(&db, 10); 
+    // LOOK_AND_CHOOSE requires selecting from looked_cards or skipping
+    // ACTION_BASE_CHOICE + 0 = select first option, or we may need to skip if no valid choices
+    // Keep stepping until we complete the interaction
+    while state.phase == Phase::Response && !state.interaction_stack.is_empty() {
+        let pi = state.interaction_stack.last().unwrap();
+        println!("DEBUG: Resolving interaction: {}", pi.choice_type);
+        
+        // For LOOK_AND_CHOOSE, try to select the first available option
+        // or skip if that doesn't work
+        match state.step(&db, ACTION_BASE_CHOICE + 0) {
+            Ok(_) => {},
+            Err(_) => {
+                // Try skip action if selection fails (Pass = 999)
+                let _ = state.step(&db, 999);
+            }
+        }
+    }
     
     println!("--- AFTER LOOK_AND_CHOOSE ---");
     state.dump();

@@ -18,7 +18,7 @@ async fn run_tests() {
     println!("=== GPU Parity Tests: Triggers (Ported from comprehensive_tests.rs) ===\n");
     
     // Prepare Database and GPU Manager
-    let mut my_db = create_test_db();
+    let my_db = create_test_db();
     let (stats, bytecode_raw) = my_db.convert_to_gpu();
     let manager = GpuManager::new(&stats, &bytecode_raw, wgpu::Backends::all()).expect("Failed to init GPU");
     

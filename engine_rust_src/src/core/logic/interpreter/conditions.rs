@@ -303,7 +303,21 @@ pub fn check_condition_opcode(
         },
         C_COUNT_GROUP => {
             let filter_attr = attr & 0x00000000FFFFFFFF;
-            player.stage.iter().filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr)).count() as i32 >= val
+            let is_unique = (attr & 0x8000) != 0;
+            let clean_filter = filter_attr & !0x8000; // Strip unique flag from filter
+            if is_unique {
+                let mut names = std::collections::HashSet::new();
+                for &id in player.stage.iter().filter(|&&id| id >= 0) {
+                    if state.card_matches_filter(db, id, clean_filter) {
+                        if let Some(card) = db.get_member(id) {
+                            names.insert(card.name.clone());
+                        }
+                    }
+                }
+                names.len() as i32 >= val
+            } else {
+                player.stage.iter().filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr)).count() as i32 >= val
+            }
         },
         C_GROUP_FILTER => {
             let lower_attr = attr & 0x00000000FFFFFFFF;

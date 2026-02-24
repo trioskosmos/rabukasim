@@ -303,12 +303,30 @@ mod tests {
         
         // Success Case (Q34)
         state.core.players[0].live_zone[0] = 11000;
+        // Set performance_results snapshot to indicate success
+        state.ui.performance_results.insert(0, serde_json::json!({
+            "success": true,
+            "lives": [
+                {"passed": true, "score": 1, "slot_idx": 0},
+                {"passed": false, "score": 0, "slot_idx": 1},
+                {"passed": false, "score": 0, "slot_idx": 2}
+            ]
+        }));
         state.do_live_result(&db);
         assert!(state.core.players[0].success_lives.contains(&11000));
         assert_eq!(state.core.players[0].live_zone[0], -1);
 
         // Failure Case (Q35)
         state.core.players[0].live_zone[0] = 11001;
+        // Clear and set failure snapshot
+        state.ui.performance_results.insert(0, serde_json::json!({
+            "success": false,
+            "lives": [
+                {"passed": false, "score": 0, "slot_idx": 0},
+                {"passed": false, "score": 0, "slot_idx": 1},
+                {"passed": false, "score": 0, "slot_idx": 2}
+            ]
+        }));
         state.do_live_result(&db);
         assert!(state.core.players[0].discard.contains(&11001));
         assert_eq!(state.core.players[0].live_zone[0], -1);
@@ -329,6 +347,16 @@ mod tests {
         
         // Add a -1 score modifier (e.g. from an ability)
         // state.core.players[0].score_bonus = -1;
+        
+        // Set performance_results snapshot to indicate success
+        state.ui.performance_results.insert(0, serde_json::json!({
+            "success": true,
+            "lives": [
+                {"passed": true, "score": 1, "slot_idx": 0},
+                {"passed": false, "score": 0, "slot_idx": 1},
+                {"passed": false, "score": 0, "slot_idx": 2}
+            ]
+        }));
         
         state.do_live_result(&db);
         

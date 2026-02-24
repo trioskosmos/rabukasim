@@ -122,10 +122,10 @@ fn real_main() {
         gpu_input.rng_state_lo = rng.x;
         gpu_input.rng_state_hi = rng.y;
         gpu_input.forced_action = action;
-        gpu_input.is_debug = 1;
+        gpu_input.is_debug = 1;  // Mark as debug for single-step semantics
 
         let mut gpu_output = vec![GpuGameState::default(); 1];
-        gpu_manager.run_simulations_into(&[gpu_input], &mut gpu_output);
+        gpu_manager.run_single_step(&[gpu_input], &mut gpu_output);
         let result = &gpu_output[0];
 
         // 2. Step CPU

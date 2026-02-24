@@ -1,0 +1,31 @@
+﻿--- Loading Sources ---
+--- Searching for 'PL!SP-bp2-011-R' (from 'PL!SP-bp2-011-R') ---
+
+[ CARD: PL!SP-bp2-011-R ]
+Engine Packed ID: 4633
+Logic ID: 537, Variant: 1
+
+--- CONTENT (Source: cards.json) ---
+Name: 鬯ｼ蝪壼・豈ｬ
+Card No: PL!SP-bp2-011-R
+Ability (JP): {{toujyou.png|逋ｻ蝣ｴ}}閾ｪ蛻・・謗ｧ縺亥ｮ､縺ｫ縺ゅｋ縲√き繝ｼ繝牙錐縺ｮ逡ｰ縺ｪ繧九Λ繧､繝悶き繝ｼ繝峨ｒ2譫夐∈縺ｶ縲ゅ◎縺・＠縺溷ｴ蜷医∫嶌謇九・縺昴ｌ繧峨・繧ｫ繝ｼ繝峨・縺・■1譫壹ｒ驕ｸ縺ｶ縲ゅ％繧後↓繧医ｊ逶ｸ謇九↓驕ｸ縺ｰ繧後◆繧ｫ繝ｼ繝峨ｒ閾ｪ蛻・・謇区惆縺ｫ蜉縺医ｋ縲・
+Ability (JP): {{toujyou.png|逋ｻ蝣ｴ}}閾ｪ蛻・・謗ｧ縺亥ｮ､縺ｫ縺ゅｋ縲√き繝ｼ繝牙錐縺ｮ逡ｰ縺ｪ繧九Λ繧､繝悶き繝ｼ繝峨ｒ2譫夐∈縺ｶ縲ゅ◎縺・＠縺溷ｴ蜷医∫嶌謇九・縺昴ｌ繧峨・繧ｫ繝ｼ繝峨・縺・■1譫壹ｒ驕ｸ縺ｶ縲ゅ％繧後↓繧医ｊ逶ｸ謇九↓驕ｸ縺ｰ繧後◆繧ｫ繝ｼ繝峨ｒ閾ｪ蛻・・謇区惆縺ｫ蜉縺医ｋ縲・
+Pseudocode (Raw): None
+Pseudocode (Manual): TRIGGER: ON_PLAY
+EFFECT: SELECT_CARDS(2) {FROM="DISCARD", TYPE_LIVE, UNIQUE_NAMES} -> OPTIONS; OPPONENT_CHOOSE(OPTIONS) -> TARGET; ADD_TO_HAND(TARGET)
+
+--- LOGIC (Source: cards_compiled.json) ---
+Name (Compiled): 鬯ｼ蝪壼・豈ｬ
+Ability 0:
+  Trigger: 1
+  Bytecode: [74, 2, 32768, 1, 75, 1, 0, 1, 44, 1, 0, 1, 1, 0, 0, 0]
+  Decoded:
+  00: SELECT_CARDS         | v=2, a=32768, s=1
+  04: OPPONENT_CHOOSE      | v=1, a=0, s=1
+  08: ADD_TO_HAND          | v=1, a=0, s=1
+  12: RETURN               | v=0, a=0, s=0
+
+--- BYTECODE LEGEND ---
+Zones: 0:Deck, 1:Deck Top, 2:Deck Bottom, 3:Energy Zone, 4:Stage, 6:Hand, 7:Discard, 8:Deck (Generic), 13:Success Live Pile, 15:Yell Cards
+Slots: 0:Left Slot, 1:Center Slot, 2:Right Slot, 4:Context Area, 6:Hand (Generic), 7:Discard (Generic), 10:Choice Target
+Comparisons: 0:GE (>=), 1:LE (<=), 2:GT (>), 3:LT (<), 4:EQ (==)

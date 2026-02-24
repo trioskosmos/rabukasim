@@ -1,4 +1,4 @@
-use crate::core::logic::{GameState, Phase, MemberCard, Ability, AbilityContext, LOGIC_ID_MASK};
+use crate::core::logic::*;
 use crate::core::generated_constants::{O_SELECT_MODE, O_JUMP, O_PAY_ENERGY, O_MOVE_TO_DISCARD, O_RETURN, CHOICE_FLAG_MODE, ACTION_BASE_MODE};
 use crate::core::enums::TriggerType;
 use crate::test_helpers::load_real_db;

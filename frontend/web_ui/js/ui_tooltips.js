@@ -27,13 +27,24 @@ const REGEX_ZONES = new RegExp(`(${ZONE_LIST.join('|')})`, 'g');
 
 // Pre-built icon map with pre-compiled regexes
 const ICON_MAP = {
-    '登場時': { path: 'texticon/toujyou.png', regex: /【登場時】/g },
-    '自動': { path: 'texticon/jidou.png', regex: /【自動】/g },
-    '永続': { path: 'texticon/jyouji.png', regex: /【永続】/g },
-    '起動': { path: 'texticon/kidou.png', regex: /【起動】/g },
-    'ターン1': { path: 'texticon/turn1.png', regex: /【ターン1】/g },
-    'ライブスタート': { path: 'texticon/live_start.png', regex: /【ライブスタート】/g },
-    'LIVE START': { path: 'texticon/live_start.png', regex: /【LIVE START】/g },
+    '登場時': { path: 'toujyou.png', regex: /【登場時】/g },
+    '[Play]': { path: 'toujyou.png', regex: /\[Play\]/g },
+    'Play': { path: 'toujyou.png', regex: /【Play】/g },
+    '自動': { path: 'jidou.png', regex: /【自動】/g },
+    '[Auto]': { path: 'jidou.png', regex: /\[Auto\]/g },
+    'Auto': { path: 'jidou.png', regex: /【Auto】/g },
+    '永続': { path: 'jyouji.png', regex: /【永続】/g },
+    '[Always]': { path: 'jyouji.png', regex: /\[Always\]/g },
+    'Always': { path: 'jyouji.png', regex: /【Always】/g },
+    '起動': { path: 'kidou.png', regex: /【起動】/g },
+    '[Act]': { path: 'kidou.png', regex: /\[Act\]/g },
+    'Act': { path: 'kidou.png', regex: /【Act】/g },
+    'ターン1': { path: 'turn1.png', regex: /【ターン1】/g },
+    'Turn 1': { path: 'turn1.png', regex: /【Turn 1】/g },
+    '[Turn 1]': { path: 'turn1.png', regex: /\[Turn 1\]/g },
+    'ライブスタート': { path: 'live_start.png', regex: /【ライブスタート】/g },
+    'LIVE START': { path: 'live_start.png', regex: /【LIVE START】/g },
+    '[Start]': { path: 'live_start.png', regex: /\[Start\]/g },
     'ピンク': { path: 'color_pink.png', regex: /【ピンク】/g },
     'Pink': { path: 'color_pink.png', regex: /【Pink】/g },
     'レッド': { path: 'color_red.png', regex: /【レッド】/g },
@@ -51,12 +62,13 @@ const ICON_MAP = {
     'パープル': { path: 'color_purple.png', regex: /【パープル】/g },
     '紫': { path: 'color_purple.png', regex: /【紫】/g },
     'Purple': { path: 'color_purple.png', regex: /【Purple】/g },
-    'オール': { path: 'color_all.png', regex: /【オール】/g },
-    'All': { path: 'color_all.png', regex: /【All】/g },
-    'ライブ開始時': { path: 'icon_live_start.png', regex: /【ライブ開始時】/g },
-    '成功時': { path: 'icon_live_success.png', regex: /【成功時】/g },
-    'ライブ成功時': { path: 'icon_live_success.png', regex: /【ライブ成功時】/g },
-    'LIVE SUCCESS': { path: 'icon_live_success.png', regex: /【LIVE SUCCESS】/g },
+    'オール': { path: 'icon_all.png', regex: /【オール】/g },
+    'All': { path: 'icon_all.png', regex: /【All】/g },
+    'ライブ開始時': { path: 'live_start.png', regex: /【ライブ開始時】/g },
+    '成功時': { path: 'live_success.png', regex: /【成功時】/g },
+    'ライブ成功時': { path: 'live_success.png', regex: /【ライブ成功時】/g },
+    'LIVE SUCCESS': { path: 'live_success.png', regex: /【LIVE SUCCESS】/g },
+    '[Success]': { path: 'live_success.png', regex: /\[Success\]/g },
     'エネ': { path: 'icon_energy.png', regex: /【エネ】/g },
     'Energy': { path: 'icon_energy.png', regex: /【Energy】/g },
     'エネルギー': { path: 'icon_energy.png', regex: /【エネルギー】/g },
@@ -80,8 +92,9 @@ const ICON_MAP = {
     'ブレード': { path: 'icon_blade.png', regex: /【ブレード】/g },
     'Blade': { path: 'icon_blade.png', regex: /【Blade】/g },
     'Blades': { path: 'icon_blade.png', regex: /【Blades】/g },
-    '開始時': { path: 'icon_live_start.png', regex: /【開始時】/g },
+    '開始時': { path: 'live_start.png', regex: /【開始時】/g },
 };
+
 
 // Pre-built icon replacement strings
 const ICON_REPLACEMENTS = {};
@@ -92,12 +105,22 @@ for (const [key, data] of Object.entries(ICON_MAP)) {
     } else if (data.path.includes('all')) {
         style += ' min-width: 2em;';
     }
+
+    // Construct local path fallback
     let src = data.path.includes('/') ? `img/${data.path}` : `img/texticon/${data.path}`;
-    if (typeof ICON_DATA_URIs !== 'undefined' && ICON_DATA_URIs[key]) {
-        src = ICON_DATA_URIs[key];
+
+    // Check registry for data URI by filename (iconKey)
+    const iconKey = data.path.replace('.png', '');
+    if (typeof ICON_DATA_URIs !== 'undefined' && ICON_DATA_URIs[iconKey]) {
+        src = ICON_DATA_URIs[iconKey];
     }
-    ICON_REPLACEMENTS[key] = { regex: data.regex, replacement: `<img src="${src}" alt="${key}" style="${style}">` };
+
+    ICON_REPLACEMENTS[key] = {
+        regex: data.regex,
+        replacement: `<span class="icon-wrapper"><img src="${src}" alt="${key}" style="${style}" onerror="this.style.visibility='hidden'"></span>`
+    };
 }
+
 
 export const Tooltips = {
     /**
@@ -170,13 +193,13 @@ export const Tooltips = {
             }
             let style = "height: 1.1em; vertical-align: middle;";
             if (img.includes('live_start') || img.includes('live_success')) {
-                style += ' min-width: 3.5em;';
+                style += ' min-width: 3.2em;'; // Slightly tighter
             }
             const iconKey = img.replace('.png', '');
             if (typeof ICON_DATA_URIs !== 'undefined' && ICON_DATA_URIs[iconKey]) {
                 src = ICON_DATA_URIs[iconKey];
             }
-            // Use quotes for event handlers, and ensure structural correctness
+            // Use icon-wrapper for better spacing control
             return `<span class="icon-wrapper"><img src="${src}" alt="${alt}" style="${style}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"><span style="display:none;">${alt}</span></span>`;
         });
         text = text.replace(REGEX_NEWLINE, '<br>');
@@ -336,8 +359,9 @@ export const Tooltips = {
                 // If we have a card/action but NO specific text, provide a useful fallback
                 if (!finalText || finalText === "") {
                     if (cardObj) {
-                        const type = cardObj.type || (cardObj.card_no?.includes('-L') ? 'Live' : 'Member');
-                        finalText = `<span style="opacity:0.5; font-style:italic;">[${type} Card]</span>`;
+                        const type = (cardObj.card_no && cardObj.card_no.includes('-L')) ? 'Live' : 'Member';
+                        // Last ditch effort: if it's a Live card, try to get ability_text directly from card object
+                        finalText = cardObj.ability_text || cardObj.text || `<span style="opacity:0.5; font-style:italic;">[${type} Card]</span>`;
                     } else if (actionObj) {
                         finalText = `<span style="opacity:0.5; font-style:italic;">[Action: ${actionObj.type || 'Generic'}]</span>`;
                     }

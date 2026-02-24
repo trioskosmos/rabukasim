@@ -1769,6 +1769,9 @@ class AbilityParserV2:
 
                 print(f"DEBUG: Final Effect - type={etype}, val={val_int}")
 
+                if etype == EffectType.LOOK_AND_CHOOSE and "choose_count" not in params:
+                    params["choose_count"] = 1
+
                 effects.append(Effect(etype, val_int, val_cond, target, params, is_optional=is_opt))
                 last_target = target
         return effects

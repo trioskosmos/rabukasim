@@ -203,6 +203,42 @@ export const Rendering = {
         return 'wait';
     },
 
+    highlightTargetsForAction: (a) => {
+        const targets = Rendering.getHighlightTargets(a);
+        targets.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('action-highlight');
+        });
+    },
+
+    getHighlightTargets: (a) => {
+        const state = State.data;
+        if (!state) return [];
+        const perspectivePlayer = State.perspectivePlayer;
+        const hIdx = a.hand_idx;
+        const sIdx = a.slot_idx;
+        const srcIdx = a.source_idx;
+        const targetSlotIdx = a.target_slot_idx ?? a.secondary_slot_idx;
+        const tPlayer = a.target_player !== undefined ? a.target_player : perspectivePlayer;
+        const isMe = (tPlayer === perspectivePlayer);
+        const playerKey = isMe ? 'p0' : 'p1';
+
+        const targets = [];
+        if (hIdx !== undefined) targets.push(`${playerKey}-hand-card-${hIdx}`);
+        if (sIdx !== undefined) {
+            if (a.type !== 'PLAY' && a.type !== 'LIVE_SET' && a.category !== 'LIVE') {
+                targets.push(`${playerKey}-stage-slot-${sIdx}`);
+            }
+        }
+        if (srcIdx !== undefined) targets.push(`${playerKey}-stage-slot-${srcIdx}`);
+        if (targetSlotIdx !== undefined) targets.push(`${playerKey}-stage-slot-${targetSlotIdx}`);
+        if (a.type === 'LIVE_PERFORM' || a.category === 'LIVE') {
+            const liveIdx = sIdx !== undefined ? sIdx : (a.id >= 600 && a.id < 610 ? a.id - 600 : (a.id >= 900 && a.id <= 902 ? a.id - 900 : undefined));
+            if (liveIdx !== undefined) targets.push(`${playerKey}-live-zone-slot-${liveIdx}`);
+        }
+        return targets;
+    },
+
     renderBoard: (state, p0, p1, validTargets = { stage: {}, discard: {}, hasSelection: false }) => {
         Rendering.renderStage('my-stage', p0.stage, true, validTargets.myStage, validTargets.hasSelection);
         Rendering.renderStage('opp-stage', p1.stage, true, validTargets.oppStage, validTargets.hasSelection);
@@ -301,6 +337,8 @@ export const Rendering = {
             div.setAttribute('data-card-id', card.id);
 
             if (!isHidden) {
+                const rawText = Tooltips.getEffectiveRawText(card);
+                if (rawText) div.setAttribute('data-text', rawText);
                 let imgPath = card.img || card.img_path || '';
                 const imgHtml = imgPath ? `<img src="${fixImg(imgPath)}" draggable="false" onerror="this.style.display='none'">` : '';
 
@@ -320,6 +358,21 @@ export const Rendering = {
                             window.playCard(idx);
                         }
                     };
+
+                    // Action Context: Sync hover with action buttons
+                    if (isValid) {
+                        div.setAttribute('data-action-id', actionId);
+                        const state = State.data;
+                        const actionObj = state?.legal_actions?.find(a => a.id === actionId);
+                        if (actionObj) {
+                            div.onmouseenter = () => {
+                                Rendering.highlightTargetsForAction(actionObj);
+                            };
+                            div.onmouseleave = () => {
+                                Tooltips.clearHighlights();
+                            };
+                        }
+                    }
                 } else {
                     div.onclick = null;
                 }
@@ -388,6 +441,18 @@ export const Rendering = {
                     // Also clickable on slotDiv just in case
                     slotDiv.onclick = area.onclick;
                     area.style.cursor = 'pointer';
+
+                    // Action Context for Stage Slots
+                    if (isValid) {
+                        area.setAttribute('data-action-id', actionId);
+                        slotDiv.setAttribute('data-action-id', actionId);
+                        const state = State.data;
+                        const actionObj = state?.legal_actions?.find(a => a.id === actionId);
+                        if (actionObj) {
+                            area.onmouseenter = () => Rendering.highlightTargetsForAction(actionObj);
+                            area.onmouseleave = () => Tooltips.clearHighlights();
+                        }
+                    }
                 } else {
                     area.onclick = null;
                 }
@@ -427,6 +492,13 @@ export const Rendering = {
             if (clickable && isValid) {
                 div.style.cursor = 'pointer';
                 div.onclick = () => { if (window.doAction) window.doAction(actionId); };
+                div.setAttribute('data-action-id', actionId);
+
+                const actionObj = state?.legal_actions?.find(a => a.id === actionId);
+                if (actionObj) {
+                    div.onmouseenter = () => Rendering.highlightTargetsForAction(actionObj);
+                    div.onmouseleave = () => Tooltips.clearHighlights();
+                }
             }
 
             el.appendChild(div);
@@ -654,6 +726,36 @@ export const Rendering = {
             // Clean name: remove verbose bracketed prefixes
             name = name.replace(/[【\[].*?[】\]]/g, "").trim();
 
+            // Handle special actions without descriptive names
+            if (!name || name.startsWith('Action ')) {
+                // Color selection (IDs 580-585)
+                if (a.id >= 580 && a.id < 590) {
+                    const colorIdx = a.id - 580;
+                    const colorKeys = ['PINK', 'RED', 'YELLOW', 'GREEN', 'BLUE', 'PURPLE'];
+                    if (colorIdx < colorKeys.length) {
+                        const colorKey = colorKeys[colorIdx];
+                        const t = currentLang === 'en' ? window.currentTranslationsEN : window.currentTranslationsJP;
+                        name = t?.params?.COLOR?.[colorKey] || colorKey;
+                    }
+                }
+                // Mode selection (IDs 500-505)
+                else if (a.id >= 500 && a.id < 510) {
+                    const modeIdx = a.id - 500;
+                    const pc = state.pending_choice;
+                    if (pc && pc.options_text && pc.options_text[modeIdx]) {
+                        name = pc.options_text[modeIdx];
+                    } else {
+                        name = (currentLang === 'jp' ? "モード " : "Mode ") + modeIdx;
+                    }
+                }
+                // Stage Slot selection (IDs 600-602)
+                else if (a.id >= 600 && a.id <= 602) {
+                    const slotIdx = a.id - 600;
+                    const t = currentLang === 'en' ? window.currentTranslationsEN : window.currentTranslationsJP;
+                    name = t?.params?.AREA?.[slotIdx] || (currentLang === 'jp' ? `スロット ${slotIdx}` : `Slot ${slotIdx}`);
+                }
+            }
+
             if (isMini) {
                 // For PLAY actions, show just the cost number
                 if (a.type === 'PLAY') return `<span>${cost !== null ? cost : 0}</span>${isBaton ? ' [B]' : ''}`;
@@ -684,33 +786,6 @@ export const Rendering = {
             }
         };
 
-        const getHighlightTargets = (a) => {
-            const state = State.data;
-            if (!state) return [];
-            const m = a.metadata || {};
-            const hIdx = a.hand_idx ?? m.hand_idx;
-            const sIdx = a.slot_idx ?? m.slot_idx;
-            const srcIdx = a.source_idx ?? m.source_idx;
-            const targetSlotIdx = m.target_slot_idx ?? m.secondary_slot_idx;
-            const tPlayer = m.target_player !== undefined ? m.target_player : perspectivePlayer;
-            const isMe = (tPlayer === perspectivePlayer);
-            const playerKey = isMe ? 'p0' : 'p1';
-
-            const targets = [];
-            if (hIdx !== undefined) targets.push(`${playerKey}-hand-card-${hIdx}`);
-            if (sIdx !== undefined) {
-                if (a.type !== 'PLAY' && a.type !== 'LIVE_SET' && m.category !== 'LIVE') {
-                    targets.push(`${playerKey}-stage-slot-${sIdx}`);
-                }
-            }
-            if (srcIdx !== undefined) targets.push(`${playerKey}-stage-slot-${srcIdx}`);
-            if (targetSlotIdx !== undefined) targets.push(`${playerKey}-stage-slot-${targetSlotIdx}`);
-            if (a.type === 'LIVE_PERFORM' || m.category === 'LIVE') {
-                const liveIdx = sIdx !== undefined ? sIdx : (a.id >= 600 && a.id < 610 ? a.id - 600 : (a.id >= 900 && a.id <= 902 ? a.id - 900 : undefined));
-                if (liveIdx !== undefined) targets.push(`${playerKey}-live-zone-slot-${liveIdx}`);
-            }
-            return targets;
-        };
 
 
         // Unified Button Creator to reduce repeated code
@@ -730,18 +805,10 @@ export const Rendering = {
 
             // Hover Highlighting
             btn.onmouseenter = () => {
-                const targets = getHighlightTargets(a);
-                targets.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.classList.add('action-highlight');
-                });
+                Rendering.highlightTargetsForAction(a);
             };
             btn.onmouseleave = () => {
-                const targets = getHighlightTargets(a);
-                targets.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.classList.remove('action-highlight');
-                });
+                Tooltips.clearHighlights();
             };
 
             return btn;
@@ -795,10 +862,10 @@ export const Rendering = {
             const choiceDiv = document.createElement('div');
             choiceDiv.className = 'pending-choice-indicator';
 
-            const opcode = choice.opcode || (state.legal_actions && state.legal_actions[0] && state.legal_actions[0].metadata && state.legal_actions[0].metadata.opcode);
+            const opcode = choice.opcode || (state.legal_actions && state.legal_actions[0] && state.legal_actions[0].opcode);
             let headerColor = 'var(--accent-gold)';
             if (opcode === 58) headerColor = '#ff4d4d';
-            else if (opcode === 15 || opcode === 17 || opcode === 63) headerColor = '#4da6ff';
+            else if (opcode === 15 || opcode === 17 || opcode === 63 || opcode === 30) headerColor = '#4da6ff';
             else if (opcode === 45) headerColor = '#ffcc00';
             else if (opcode === 41 || opcode === 74) headerColor = '#9966ff';
 
@@ -862,9 +929,9 @@ export const Rendering = {
         const otherActions = [];
 
         state.legal_actions.forEach(a => {
-            const category = a.metadata?.category || a.type;
-            const hIdx = a.metadata?.hand_idx ?? a.hand_idx;
-            const sIdx = a.metadata?.slot_idx ?? a.slot_idx;
+            const category = a.category || a.type;
+            const hIdx = a.hand_idx;
+            const sIdx = a.slot_idx;
 
             // Resolve source_card_id for tooltips if missing
             if (a.source_card_id === undefined) {
@@ -943,15 +1010,15 @@ export const Rendering = {
                 const header = document.createElement('div');
                 header.className = 'action-group-header';
                 const energyIcon = `<img src="img/texticon/icon_energy.png" style="height:14px; vertical-align:middle; margin-left: 5px;">`;
-                const displayCost = firstA.metadata?.cost ?? firstA.cost ?? firstA.base_cost ?? 0;
-                let cleanName = (firstA.metadata?.name ?? firstA.name ?? "").replace(/[【\[].*?[】\]]/g, "").replace(/\(.*?\)/g, "").trim();
+                const displayCost = firstA.cost ?? firstA.base_cost ?? 0;
+                let cleanName = (firstA.name ?? "").replace(/[【\[].*?[】\]]/g, "").replace(/\(.*?\)/g, "").trim();
                 header.innerHTML = `<span>${cleanName}</span> <span class="header-base-cost">${energyIcon}${displayCost}</span>`;
                 groupDiv.appendChild(header);
 
                 const btnsDiv = document.createElement('div');
                 btnsDiv.className = 'action-group-buttons grid-3';
                 for (let slotIdx = 0; slotIdx < 3; slotIdx++) {
-                    const a = actions.find(act => (act.slot_idx === slotIdx || act.metadata?.slot_idx === slotIdx) && act.metadata?.secondary_slot_idx === undefined);
+                    const a = actions.find(act => (act.slot_idx === slotIdx) && act.secondary_slot_idx === undefined);
                     if (a) {
                         btnsDiv.appendChild(createActionButton(a, true));
                     } else {
@@ -963,13 +1030,13 @@ export const Rendering = {
                 }
                 groupDiv.appendChild(btnsDiv);
 
-                const doubleActions = actions.filter(act => act.metadata?.secondary_slot_idx !== undefined);
+                const doubleActions = actions.filter(act => act.secondary_slot_idx !== undefined);
                 if (doubleActions.length > 0) {
                     // Group double actions by unique pair (sorted indices)
                     const pairs = {};
                     doubleActions.forEach(a => {
-                        const s1 = a.metadata.slot_idx;
-                        const s2 = a.metadata.secondary_slot_idx;
+                        const s1 = a.slot_idx;
+                        const s2 = a.secondary_slot_idx;
                         const key = [s1, s2].sort().join('-');
                         if (!pairs[key]) pairs[key] = [];
                         pairs[key].push(a);
@@ -981,11 +1048,11 @@ export const Rendering = {
 
                         // Show buttons in their actual target columns
                         const pairSlots = new Set();
-                        pairActions.forEach(a => pairSlots.add(a.metadata.slot_idx));
-                        pairActions.forEach(a => pairSlots.add(a.metadata.secondary_slot_idx));
+                        pairActions.forEach(a => pairSlots.add(a.slot_idx));
+                        pairActions.forEach(a => pairSlots.add(a.secondary_slot_idx));
 
                         for (let i = 0; i < 3; i++) {
-                            const a = pairActions.find(act => act.metadata.slot_idx === i);
+                            const a = pairActions.find(act => act.slot_idx === i);
                             if (a) {
                                 const btn = createActionButton(a, true, 'double-baton-btn');
                                 btn.style.width = '100%';

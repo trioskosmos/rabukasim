@@ -17,7 +17,10 @@ impl GameState {
             rng_state_lo: 0,
             rng_state_hi: 0,
             first_player: self.first_player as u32,
-            _pad_game: [0; 5],
+            trigger_queue: [crate::core::gpu_state::GpuTriggerRequest::default(); 8],
+            queue_head: 0,
+            queue_tail: 0,
+            _pad_game: [0; 3],
         }
     }
 }
@@ -84,9 +87,19 @@ impl PlayerState {
             prevent_baton_touch: self.prevent_baton_touch as u32,
             prevent_success_pile_set: self.prevent_success_pile_set as u32,
             prevent_play_to_slot_mask: self.prevent_play_to_slot_mask as u32,
-            _pad_player: 0,
+            cost_reduction: self.cost_reduction as i32,
             success_lives: [0; 4],
+            granted_abilities: [0; 16],
         };
+
+        // Pack Granted Abilities (8 slots, 2 words each)
+        for i in 0..self.granted_abilities.len().min(8) {
+            let (target_cid, source_cid, ab_idx) = self.granted_abilities[i];
+            let word0_idx = i * 2;
+            let word1_idx = i * 2 + 1;
+            ps.granted_abilities[word0_idx] = (target_cid as u16 as u32) | ((source_cid as u16 as u32) << 16);
+            ps.granted_abilities[word1_idx] = ab_idx as u32;
+        }
 
         // Pack success lives
         for i in 0..self.success_lives.len().min(8) {

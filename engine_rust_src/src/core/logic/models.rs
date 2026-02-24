@@ -83,6 +83,8 @@ pub struct AbilityContext {
     pub v_remaining: i16,
     #[serde(default)]
     pub trigger_type: TriggerType,
+    #[serde(default)]
+    pub original_phase: Option<Phase>,
 }
 
 impl Default for AbilityContext {
@@ -98,6 +100,7 @@ impl Default for AbilityContext {
             ability_index: -1,
             v_remaining: -1,
             trigger_type: TriggerType::None,
+            original_phase: None,
         }
     }
 }

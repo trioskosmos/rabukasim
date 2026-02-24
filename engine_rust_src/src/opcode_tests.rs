@@ -185,6 +185,8 @@ fn test_opcode_look_and_choose_filter_cost_ge() {
 }
 
 /// Verifies the card matching logic used by various opcodes for Live cards based on heart requirements.
+/// NOTE: Live cards only match cost filters when card_type is explicitly set to Live (2).
+/// This prevents generic "Cost >= X" filters (meant for members) from matching high-heart live cards.
 #[test]
 fn test_card_matches_filter_live_hearts() {
     let mut db = create_test_db();
@@ -200,22 +202,27 @@ fn test_card_matches_filter_live_hearts() {
     let logic_id = (cid_live & LOGIC_ID_MASK) as usize;
     db.lives_vec[logic_id] = Some(db.lives[&cid_live].clone());
 
-    // Filter: COST_GE = 8
+    // Filter: COST_GE = 8, Type = Live (2)
     // Bit 24: Enable (0x01000000)
     // Bits 25-30: Value 8 (8 << 25 = 0x10000000)
+    // Bits 2-3: Type = Live (2 << 2 = 0x08)
     // Bit 30: is_le = 0
-    let filter_attr = 0x01000000 | (8 << 25);
+    let filter_attr = 0x01000000 | (8 << 25) | (2 << 2);
 
-    assert!(state.card_matches_filter(&db, cid_live, filter_attr), "Live with 8 hearts should match GE 8");
+    assert!(state.card_matches_filter(&db, cid_live, filter_attr), "Live with 8 hearts should match GE 8 with Live type filter");
 
-    // Filter: COST_GE = 9
-    let filter_attr_fail = 0x01000000 | (9 << 25);
+    // Filter: COST_GE = 9, Type = Live (2)
+    let filter_attr_fail = 0x01000000 | (9 << 25) | (2 << 2);
     assert!(!state.card_matches_filter(&db, cid_live, filter_attr_fail), "Live with 8 hearts should NOT match GE 9");
 
-    // Filter: COST_LE = 8
+    // Filter: COST_LE = 8, Type = Live (2)
     // Bit 30: is_le = 1 (0x40000000)
-    let filter_attr_le = 0x01000000 | (8 << 25) | 0x40000000;
-    assert!(state.card_matches_filter(&db, cid_live, filter_attr_le), "Live with 8 hearts should match LE 8");
+    let filter_attr_le = 0x01000000 | (8 << 25) | 0x40000000 | (2 << 2);
+    assert!(state.card_matches_filter(&db, cid_live, filter_attr_le), "Live with 8 hearts should match LE 8 with Live type filter");
+    
+    // Verify that generic cost filter (without type=Live) does NOT match Live cards
+    let filter_generic = 0x01000000 | (8 << 25);  // No type filter
+    assert!(!state.card_matches_filter(&db, cid_live, filter_generic), "Live should NOT match generic cost filter without Live type constraint");
 }
 
 /// Verifies that O_LOOK_AND_CHOOSE correctly uses Deck source even if Destination matches Hand (Arg 3 = 6).

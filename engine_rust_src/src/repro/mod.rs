@@ -14,3 +14,5 @@ pub mod yell_persistence_repro;
 pub mod repro_card_pb1_001_r;
 #[cfg(test)]
 pub mod repro_card_560_double_baton;
+#[cfg(test)]
+pub mod special_mechanics_tests;

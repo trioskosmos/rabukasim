@@ -200,12 +200,12 @@ fn end_main_phase() {
     let p_idx = local_state.current_player;
     let first_p = local_state.first_player;
     if (p_idx == first_p) {
+        // CPU: Main → Active (opponent's turn starts)
         let other_p = 1u - first_p;
         local_state.current_player = other_p;
-        draw_energy(other_p);
-        draw_card(other_p);
-        local_state.phase = 4; // Main
+        local_state.phase = 1; // Active (will auto-advance to Energy → Draw → Main)
     } else {
+        // Both players finished their turns → LiveSet
         local_state.phase = 5; // LiveSet
         local_state.current_player = first_p;
     }
@@ -539,10 +539,12 @@ fn step_state(action: u32) -> u32 {
         return 1u;
     }
     if (phase == 8) {
+        // LiveResult: Process performance results and advance turn
+        // This mirrors CPU's do_live_result which auto-advances to Active
         local_state.turn += 1u;
         local_state.first_player = 1u - local_state.first_player;
         local_state.current_player = local_state.first_player;
-        local_state.phase = 1;
+        local_state.phase = 1; // Active (will auto-advance to Energy → Draw → Main)
         local_state.players[0].live_zone[0] = 0u;
         local_state.players[0].live_zone[1] = 0u;
         local_state.players[1].live_zone[0] = 0u;

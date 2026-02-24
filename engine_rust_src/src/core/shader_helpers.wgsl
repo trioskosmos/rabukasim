@@ -173,6 +173,28 @@ fn set_deck_card(p_idx: u32, d_idx: u32, card_id: u32) {
     }
 }
 
+fn add_to_deck_top(p_idx: u32, card_id: u32) {
+    // Add card to top of deck (position 0, drawn first)
+    if (card_id == 0u) { return; }
+    var d_len = 0u;
+    if (p_idx == 0u) { d_len = states[g_gid].player0.deck_len; }
+    else { d_len = states[g_gid].player1.deck_len; }
+    if (d_len >= 64u) { return; }
+    
+    // Shift all cards down by one position
+    for (var i = d_len; i > 0u; i = i - 1u) {
+        let prev_card = get_deck_card(p_idx, i - 1u);
+        set_deck_card(p_idx, i, prev_card);
+    }
+    // Place new card at position 0 (top)
+    set_deck_card(p_idx, 0u, card_id);
+    if (p_idx == 0u) {
+        states[g_gid].player0.deck_len += 1u;
+    } else {
+        states[g_gid].player1.deck_len += 1u;
+    }
+}
+
 fn is_moved(p_idx: u32, slot: u32) -> bool {
     var m_flags = 0u;
     if (p_idx == 0u) { m_flags = states[g_gid].player0.moved_flags; }
@@ -360,12 +382,12 @@ fn end_main_phase() {
     let p_idx = states[g_gid].current_player;
     let first_p = states[g_gid].first_player;
     if (p_idx == first_p) {
+        // CPU: Main → Active (opponent's turn starts)
         let other_p = 1u - first_p;
         states[g_gid].current_player = other_p;
-        draw_energy(other_p);
-        draw_card(other_p);
-        states[g_gid].phase = PHASE_MAIN;
+        states[g_gid].phase = PHASE_ACTIVE; // Will auto-advance to Energy → Draw → Main
     } else {
+        // Both players finished their turns → LiveSet
         states[g_gid].phase = PHASE_LIVESET;
         states[g_gid].current_player = first_p;
     }
@@ -404,6 +426,65 @@ fn recalculate_board_stats(p_idx: u32) {
             total_hearts[5] += (stats.hearts_hi >> 8u) & 0xFFu;
             total_hearts[6] += (stats.hearts_hi >> 16u) & 0xFFu;
             total_blades += stats.blades;
+        }
+    }
+    
+    // Process Granted Abilities (Constant Effects)
+    for (var i = 0u; i < 8u; i = i + 1u) {
+        let word0_idx = i * 2u;
+        let word1_idx = i * 2u + 1u;
+        var entry0 = 0u; var entry1 = 0u;
+        if (p_idx == 0u) {
+            entry0 = states[g_gid].player0.granted_abilities[word0_idx];
+            entry1 = states[g_gid].player0.granted_abilities[word1_idx];
+        } else {
+            entry0 = states[g_gid].player1.granted_abilities[word0_idx];
+            entry1 = states[g_gid].player1.granted_abilities[word1_idx];
+        }
+        if (entry0 == 0u) { continue; }
+        
+        let t_cid = entry0 & 0xFFFFu;
+        let s_cid = entry0 >> 16u;
+        let ab_idx = entry1;
+        
+        // Find if target is still on board
+        var target_on_board = false;
+        var t_slot = 99u;
+        for (var sl = 0u; sl < 3u; sl = sl + 1u) {
+            if (get_stage_card(p_idx, sl) == t_cid) { target_on_board = true; t_slot = sl; break; }
+        }
+        if (!target_on_board) { continue; }
+
+        if (s_cid < arrayLength(&card_stats)) {
+            let s_stats = card_stats[s_cid];
+            var pool_ip = s_stats.bytecode_start;
+            let pool_end = s_stats.bytecode_start + s_stats.bytecode_len;
+            if (pool_ip < arrayLength(&bytecode)) {
+                let num_ab = u32(bytecode[pool_ip]);
+                pool_ip += 1u;
+                for (var j = 0u; j < num_ab; j += 1u) {
+                    if (pool_ip + 3u >= pool_end) { break; }
+                    let trigger = bytecode[pool_ip];
+                    let ab_len = u32(bytecode[pool_ip + 3u]);
+                    pool_ip += 4u;
+                    if (j == ab_idx) {
+                        // Very basic constant effect execution
+                        var ip = pool_ip; let end = pool_ip + ab_len;
+                        while (ip + 3u < end) {
+                            let op = bytecode[ip]; let v = bytecode[ip+1]; let a = bytecode[ip+2]; let s = bytecode[ip+3];
+                            ip += 4u;
+                            if (op == 11 || op == 18) { // O_ADD_BLADES / O_BUFF_POWER
+                                total_blades += u32(v);
+                            } else if (op == 12) { // O_ADD_HEARTS
+                                let color = min(u32(a), 7u);
+                                total_hearts[color] += u32(v);
+                            }
+                        }
+                        break;
+                    }
+                    pool_ip += ab_len;
+                }
+            }
         }
     }
     // Add buffs

@@ -76,22 +76,29 @@ impl ActionGenerator for MainPhaseGenerator {
                              let aid = crate::core::logic::ACTION_BASE_HAND + (hand_idx as i32 * 10) + slot_idx as i32;
                             receiver.add_action(aid as usize);
                         }
+                    }
 
-                        // Double Baton Touch (Card 560 etc.)
-                        let multi_limit = crate::core::logic::rules::has_multi_baton(card);
-                        if multi_limit >= 2 && hand_idx < 10 {
-                            for other_slot in 0..3 {
-                                if other_slot == slot_idx { continue; }
-                                if player.stage[other_slot] < 0 { continue; }
-                                if player.is_moved(other_slot) { continue; }
+                    // Double Baton Touch (Card 560 etc.)
+                    // Move OUTSIDE single-slot affordability check
+                    let multi_limit = crate::core::logic::rules::has_multi_baton(card);
+                    if multi_limit >= 2 && hand_idx < 10 && player.stage[slot_idx] >= 0 {
+                        // Check baton touch prevention for this primary slot
+                        if player.prevent_baton_touch > 0 { continue; }
+                        if GameState::has_restriction(state, p_idx, slot_idx, O_PREVENT_BATON_TOUCH, db) { continue; }
 
-                                let combined_cost = (base_cost - slot_costs[slot_idx] - slot_costs[other_slot]).max(0);
-                                if combined_cost <= available_energy {
-                                    let is_next = other_slot == (slot_idx + 1) % 3;
-                                    let combo_idx = slot_idx * 2 + (if is_next { 1 } else { 0 });
-                                    let aid = crate::core::logic::ACTION_BASE_HAND + (hand_idx as i32 * 10) + 3 + combo_idx as i32;
-                                    receiver.add_action(aid as usize);
-                                }
+                        for other_slot in 0..3 {
+                            if other_slot == slot_idx { continue; }
+                            if player.stage[other_slot] < 0 { continue; }
+                            if player.is_moved(other_slot) { continue; }
+                            // Also check baton touch prevention for second slot?
+                            if GameState::has_restriction(state, p_idx, other_slot, O_PREVENT_BATON_TOUCH, db) { continue; }
+
+                            let combined_cost = (base_cost - slot_costs[slot_idx] - slot_costs[other_slot]).max(0);
+                            if combined_cost <= available_energy {
+                                let is_next = other_slot == (slot_idx + 1) % 3;
+                                let combo_idx = slot_idx * 2 + (if is_next { 1 } else { 0 });
+                                let aid = crate::core::logic::ACTION_BASE_HAND + (hand_idx as i32 * 10) + 3 + combo_idx as i32;
+                                receiver.add_action(aid as usize);
                             }
                         }
                     }

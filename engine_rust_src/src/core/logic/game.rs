@@ -625,12 +625,13 @@ impl GameState {
     }
 
     /// Unified trigger entry point to reduce boilerplate
-    pub fn trigger_event(&mut self, db: &CardDatabase, trigger: TriggerType, p_idx: usize, source_cid: i32, slot: i16, start_ab_idx: usize) {
+    pub fn trigger_event(&mut self, db: &CardDatabase, trigger: TriggerType, p_idx: usize, source_cid: i32, slot: i16, start_ab_idx: usize, choice: i16) {
         let ctx = AbilityContext {
             player_id: p_idx as u8,
             source_card_id: source_cid,
             area_idx: slot,
             trigger_type: trigger,
+            choice_index: choice,
             ..Default::default()
         };
         self.trigger_abilities_from(db, trigger, &ctx, start_ab_idx);
@@ -668,15 +669,15 @@ impl GameState {
             self.collect_triggers_for_card(db, source_cid, trigger, ctx, start_ab_idx, true, &mut queue);
         }
 
-        for (cid, ab_idx, mut ab_ctx, is_live) in queue {
+        for (cid, def_cid, ab_idx, mut ab_ctx, is_live) in queue {
             ab_ctx.source_card_id = cid;
             ab_ctx.ability_index = ab_idx as i16;
             
             let (_bytecode, conditions, pseudocode) = if is_live {
-                let ab = &db.get_live(cid).unwrap().abilities[ab_idx as usize];
+                let ab = &db.get_live(def_cid).unwrap().abilities[ab_idx as usize];
                 (&ab.bytecode, &ab.conditions, &ab.pseudocode)
             } else {
-                let ab = &db.get_member(cid).unwrap().abilities[ab_idx as usize];
+                let ab = &db.get_member(def_cid).unwrap().abilities[ab_idx as usize];
                 (&ab.bytecode, &ab.conditions, &ab.pseudocode)
             };
 
@@ -688,9 +689,9 @@ impl GameState {
             }
 
             let costs = if is_live {
-                &db.get_live(cid).unwrap().abilities[ab_idx as usize].costs
+                &db.get_live(def_cid).unwrap().abilities[ab_idx as usize].costs
             } else {
-                &db.get_member(cid).unwrap().abilities[ab_idx as usize].costs
+                &db.get_member(def_cid).unwrap().abilities[ab_idx as usize].costs
             };
 
             // Check conditions before resolving bytecode
@@ -748,7 +749,7 @@ impl GameState {
         ctx: &AbilityContext,
         start_ab_idx: usize,
         is_live: bool,
-        queue: &mut Vec<(i32, u16, AbilityContext, bool)>,
+        queue: &mut Vec<(i32, i32, u16, AbilityContext, bool)>,
     ) {
         if cid < 0 { return; }
         
@@ -758,8 +759,8 @@ impl GameState {
             db.get_member(cid).map(|m| &m.abilities)
         };
 
+        let p_idx = ctx.player_id as usize;
         if let Some(abs) = abilities {
-            let p_idx = ctx.player_id as usize;
             for (ab_idx, ab) in abs.iter().enumerate() {
                 if ab.trigger == trigger {
                     // Filter OnPlay/OnLeaves to only the specific card being moved
@@ -779,7 +780,28 @@ impl GameState {
                             if !self.ui.silent { self.log(format!("Trigger {:?} for card {} is negated.", trigger, cid)); }
                             continue;
                         }
-                        queue.push((cid, ab_idx as u16, ctx.clone(), is_live));
+                        queue.push((cid, cid, ab_idx as u16, ctx.clone(), is_live));
+                    }
+                }
+            }
+        }
+
+        // --- PHASE 3: Granted (Triggered) Abilities Audit Fix ---
+        if !is_live {
+            // We use a separate loop to avoid borrowing issues if we were mutating, 
+            // but here we just need to read granted_abilities.
+            for i in 0..self.core.players[p_idx].granted_abilities.len() {
+                let (target_cid, source_cid, ab_idx) = self.core.players[p_idx].granted_abilities[i];
+                if target_cid == cid {
+                    if let Some(src_m) = db.get_member(source_cid) {
+                        if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                            if ab.trigger == trigger {
+                                if (trigger == TriggerType::OnPlay || trigger == TriggerType::OnLeaves) && cid != ctx.source_card_id {
+                                    continue;
+                                }
+                                queue.push((cid, source_cid, ab_idx as u16, ctx.clone(), false));
+                            }
+                        }
                     }
                 }
             }

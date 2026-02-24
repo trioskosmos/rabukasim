@@ -76,6 +76,8 @@ mod filter_audit_tests;
 mod rule_alignment_tests;
 #[cfg(test)]
 mod qa_verification_tests;
+#[cfg(test)]
+mod count_group_tests;
 
 #[cfg(test)]
 mod meta_rule_card_tests;

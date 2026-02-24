@@ -173,7 +173,7 @@ fn run_scenarios() {
         }
 
         state.phase = Phase::Main;
-        let before = ZoneSnapshot::capture(&state.core.players[0]);
+        let before = ZoneSnapshot::capture(&state.core.players[0], &state);
 
         // 2. Perform Action
         let mut error_msg = None;
@@ -311,7 +311,7 @@ fn run_scenarios() {
         } else { Vec::new() };
         let bypass_str = bypassed_list.join("; ");
 
-        let after = ZoneSnapshot::capture(&state.core.players[0]);
+        let after = ZoneSnapshot::capture(&state.core.players[0], &state);
         let h_delta = after.hand_len as i32 - before.hand_len as i32;
         let d_delta = after.discard_len as i32 - before.discard_len as i32;
         let dk_delta = after.deck_len as i32 - before.deck_len as i32;

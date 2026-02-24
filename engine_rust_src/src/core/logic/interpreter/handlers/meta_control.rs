@@ -61,14 +61,17 @@ pub fn handle_meta_control(state: &mut GameState, db: &CardDatabase, ctx: &mut A
              // On resumption, ctx.player_id is already flipped (stored as flip_ctx)
              // Subsequent opcodes will use the flipped player_id (opponent's perspective)
         },
-        O_PREVENT_ACTIVATE | O_PREVENT_BATON_TOUCH | O_PREVENT_SET_TO_SUCCESS_PILE => {
+        O_PREVENT_ACTIVATE => {
             let target_p_idx = if s == 1 { 1 - p_idx } else { p_idx };
-            match op {
-                O_PREVENT_ACTIVATE => state.core.players[target_p_idx].prevent_activate = 1,
-                O_PREVENT_BATON_TOUCH => state.core.players[target_p_idx].prevent_baton_touch = 1,
-                O_PREVENT_SET_TO_SUCCESS_PILE => state.core.players[target_p_idx].prevent_success_pile_set = 1,
-                _ => {}
-            }
+            state.core.players[target_p_idx].prevent_activate = 1;
+        },
+        O_PREVENT_BATON_TOUCH => {
+            let target_p_idx = if s == 1 { 1 - p_idx } else { p_idx };
+            state.core.players[target_p_idx].prevent_baton_touch = 1;
+        },
+        O_PREVENT_SET_TO_SUCCESS_PILE => {
+            let target_p_idx = if s == 1 { 1 - p_idx } else { p_idx };
+            state.core.players[target_p_idx].prevent_success_pile_set = 1;
         },
         O_PREVENT_PLAY_TO_SLOT => {
             let target_p_idx = if a == 1 { 1 - p_idx } else { p_idx };

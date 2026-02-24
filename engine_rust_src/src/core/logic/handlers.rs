@@ -264,7 +264,7 @@ impl PhaseHandlers for GameState {
 
     fn end_main_phase(&mut self, db: &CardDatabase) {
         if !self.ui.silent { self.log(format!("Rule 7.7.3: Player {} ends Main Phase.", self.current_player)); }
-        self.trigger_event(db, TriggerType::TurnEnd, self.current_player as usize, -1, -1, 0);
+        self.trigger_event(db, TriggerType::TurnEnd, self.current_player as usize, -1, -1, 0, -1);
 
         if self.current_player == self.first_player {
             self.current_player = 1 - self.first_player;
@@ -336,7 +336,7 @@ impl PhaseHandlers for GameState {
             self.log_turn_event("PLAY", card_id, -1, p_idx as u8, &format!("Plays {} to Slot {}", card.name, slot_idx + 1));
         }
 
-        self.execute_play_member_state(db, p_idx, hand_idx, card_id, slot_idx, secondary_slot_idx, start_ab_idx);
+        self.execute_play_member_state(db, p_idx, hand_idx, card_id, slot_idx, secondary_slot_idx, start_ab_idx, choice_idx);
         Ok(())
     }
 
@@ -350,6 +350,7 @@ impl PhaseHandlers for GameState {
             let (cid, ctx, orig_phase) = if let Some(pi) = self.interaction_stack.last() {
                 let mut c = pi.ctx.clone();
                 c.choice_index = choice_idx as i16;
+                c.original_phase = Some(pi.original_phase);
                 if target_slot >= 0 { c.target_slot = target_slot as i16; }
                 (pi.card_id, c, pi.original_phase)
             } else { return Err("No pending interaction".to_string()); };
@@ -446,6 +447,7 @@ impl GameState {
         let (card_id, ctx, orig_phase) = if let Some(pi) = self.interaction_stack.last() {
             let mut c = pi.ctx.clone();
             c.choice_index = choice_idx as i16;
+            c.original_phase = Some(pi.original_phase);
             (pi.card_id, c, pi.original_phase)
         } else { return Err("No pending interaction found in Response phase".to_string()); };
 
@@ -456,7 +458,7 @@ impl GameState {
         if self.phase == Phase::Response || self.phase == Phase::Setup { self.phase = Phase::Main; }
         self.interaction_stack.pop();
 
-        self.trigger_event(db, TriggerType::OnPlay, ctx.player_id as usize, card_id as i32, ctx.area_idx, start_ab_idx);
+        self.trigger_event(db, TriggerType::OnPlay, ctx.player_id as usize, card_id as i32, ctx.area_idx, start_ab_idx, ctx.choice_index);
         self.process_rule_checks();
         Ok(())
     }
@@ -481,7 +483,7 @@ impl GameState {
         Ok(())
     }
 
-    fn execute_play_member_state(&mut self, db: &CardDatabase, p_idx: usize, hand_idx: usize, card_id: i32, slot_idx: usize, secondary_slot_idx: i16, start_ab_idx: usize) {
+    fn execute_play_member_state(&mut self, db: &CardDatabase, p_idx: usize, hand_idx: usize, card_id: i32, slot_idx: usize, secondary_slot_idx: i16, start_ab_idx: usize, choice: i32) {
         let old_card_id = self.core.players[p_idx].stage[slot_idx];
         if old_card_id >= 0 { self.core.players[p_idx].baton_touch_count += 1; }
         if secondary_slot_idx >= 0 {
@@ -497,7 +499,7 @@ impl GameState {
         if hand_idx < self.core.players[p_idx].hand_added_turn.len() { self.core.players[p_idx].hand_added_turn.remove(hand_idx); }
 
         if old_card_id >= 0 {
-            self.trigger_event(db, TriggerType::OnLeaves, p_idx, old_card_id, slot_idx as i16, 0);
+            self.trigger_event(db, TriggerType::OnLeaves, p_idx, old_card_id, slot_idx as i16, 0, -1);
             self.core.players[p_idx].discard.push(old_card_id);
         }
 
@@ -509,7 +511,7 @@ impl GameState {
         let card = db.get_member(card_id).unwrap();
         for &gid in &card.groups { self.core.players[p_idx].played_group_mask |= 1 << gid; }
 
-        self.trigger_event(db, TriggerType::OnPlay, p_idx, card_id, slot_idx as i16, start_ab_idx);
+        self.trigger_event(db, TriggerType::OnPlay, p_idx, card_id, slot_idx as i16, start_ab_idx, choice as i16);
         self.process_rule_checks();
     }
 }

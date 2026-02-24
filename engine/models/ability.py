@@ -675,6 +675,10 @@ class Ability:
                         attr = int(cond.params["group"])
                     except:
                         pass
+            
+            if cond.type == ConditionType.COUNT_GROUP:
+                if cond.params.get("UNIQUE_NAMES") or cond.params.get("unique_names"):
+                    attr |= 0x8000 # FILTER_UNIQUE_NAMES flag
 
             # Pack comparison into higher bits of slot (bits 4-7)
             # Slot is usually 0-3, so shift 4 is safe.
@@ -911,6 +915,8 @@ class Ability:
                 self._compile_single_effect(eff, bytecode)
 
     def _compile_single_effect(self, eff: Effect, bytecode: List[int]):
+        # Normalize params to lowercase keys for consistent lookups
+        eff.params = {str(k).lower(): v for k, v in eff.params.items()}
         print(f"DEBUG: Compiling Single Effect: {eff.effect_type.name} (Val={eff.value})")
         if hasattr(Opcode, eff.effect_type.name):
             op = getattr(Opcode, eff.effect_type.name)
@@ -948,7 +954,11 @@ class Ability:
                 attr = self._pack_filter_attr(eff)
 
             # Special handling for PLAY_MEMBER_FROM_HAND params
-            if eff.effect_type == EffectType.PLAY_MEMBER_FROM_HAND:
+            if eff.effect_type in (EffectType.PLAY_MEMBER_FROM_HAND, EffectType.PLAY_MEMBER_FROM_DISCARD):
+                attr = self._pack_filter_attr(eff)
+
+            # Special handling for PLAY_LIVE_FROM_DISCARD
+            if eff.effect_type == EffectType.PLAY_LIVE_FROM_DISCARD:
                 attr = self._pack_filter_attr(eff)
 
             # Special handling for LOOK_AND_CHOOSE
@@ -1362,9 +1372,22 @@ class Ability:
                         eff.params["type"] = "live"
                     elif up == "TYPE_MEMBER":
                         eff.params["type"] = "member"
-                    elif up == "COST_LE_4":
-                        eff.params["cost_max"] = 4
-                        detected_type = "member"
+                    elif "COST_LE_" in up:
+                        m = re.search(r"COST_LE_(\d+)", up)
+                        if m:
+                            eff.params["cost_max"] = int(m.group(1))
+                            detected_type = "member"
+                    elif "COST_GE_" in up:
+                        m = re.search(r"COST_GE_(\d+)", up)
+                        if m:
+                            eff.params["cost_min"] = int(m.group(1))
+                            detected_type = "member"
+                    elif up == "TAPPED":
+                        eff.params["is_tapped"] = True
+                    elif up == "HAS_BLADE_HEART":
+                        eff.params["has_blade_heart"] = True
+                    elif up == "NOT_BLADE_HEART":
+                        eff.params["has_blade_heart"] = False
                     elif up in ["PINK", "RED", "YELLOW", "GREEN", "BLUE", "PURPLE"]:
                         eff.params["color_filter"] = up
 
@@ -1396,12 +1419,20 @@ class Ability:
             except:
                 pass
 
+
+        # Special Filter (Bits 57-59)
+        try:
+            special_id = int(eff.params.get("special_id", 0))
+            if special_id > 0:
+                attr |= (special_id & 0x07) << 57
+        except:
+            pass
+
         # Unit Filter (Bit 16 + Bits 17-23)
         unit_val = eff.params.get("unit")
         if unit_val is not None:
             try:
                 from engine.models.enums import Unit
-
                 if str(unit_val).isdigit():
                     u_id = int(str(unit_val))
                 else:
@@ -1421,52 +1452,73 @@ class Ability:
                 val = int(c_min)
                 attr |= 1 << 24
                 attr |= (val & 0x1F) << 25
-                # Mode 0 = GE
             except:
                 pass
-        # If cost_max is present (LE)
         elif c_max is not None:
             try:
                 val = int(c_max)
                 attr |= 1 << 24
                 attr |= (val & 0x1F) << 25
-                attr |= 1 << 30  # Mode 1 = LE
+                attr |= 1 << 30
             except:
                 pass
 
-        # Color Filter Enable (Bit 31) - Used as a flag for the engine
-        if eff.params.get("color_filter"):
-            attr |= 1 << 31
+        # Color Filter (Bits 24-30, Enabled by Bit 31)
+        colors = eff.params.get("colors") or ([eff.params.get("color")] if "color" in eff.params else [])
+        if colors and any(c is not None for c in colors):
+            color_mask = 0
+            for c in colors:
+                if c is None: continue
+                try:
+                    from engine.models.enums import HeartColor
+                    if isinstance(c, str):
+                        c_val = int(HeartColor[c.upper()])
+                    else:
+                        c_val = int(c)
+                    color_mask |= 1 << c_val
+                except:
+                    pass
+            if color_mask > 0:
+                attr |= (color_mask & 0x7F) << 24
+                attr |= 1 << 31  # Enable bit
 
-        # --- Name Filter (Custom Packed Logic) ---
-        # We'll use the remaining bits if possible, or override bits if necessary.
-        # Actually, let's use a specialized field for Name if we want 100% accuracy.
-        # But per current engine design, we pack everything into 'attr' (a).
-        # Let's use bits 8-15 for Name ID if Group Filter is NOT enabled,
-        # OR use higher bits if we treat attr as u32.
-        name_val = eff.params.get("name")
-        if name_filter := name_val:
-            from engine.models.enums import CHAR_MAP
+        # Character Filter (Bit 42 + IDs at 32, 43, 50)
+        names = eff.params.get("name")
+        if names:
+            n_list = str(names).split("/")
+            if n_list:
+                attr |= 1 << 42  # FILTER_CHARACTER_ENABLE
+                for i, n in enumerate(n_list[:3]):
+                    # Try lookup via shared CHAR_MAP if possible
+                    c_id = 0
+                    try:
+                        from engine.models.enums import CHAR_MAP
+                        n_norm = n.strip().replace(" ", "").replace("　", "")
+                        for k, cid in CHAR_MAP.items():
+                            if k.replace(" ", "").replace("　", "") == n_norm:
+                                c_id = cid
+                                break
+                    except:
+                        pass
+                    if c_id > 0:
+                        if i == 0:
+                            attr |= (c_id & 0x7F) << 32
+                        elif i == 1:
+                            attr |= (c_id & 0x7F) << 43
+                        elif i == 2:
+                            attr |= (c_id & 0x7F) << 50
 
-            # Normalize: remove spaces for lookup
-            name_norm = name_filter.replace(" ", "").replace("　", "")
-            char_id = 0
-            for k, cid in CHAR_MAP.items():
-                if k.replace(" ", "").replace("　", "") == name_norm:
-                    char_id = cid
-                    break
+        # Special Filter (Bits 57-59)
+        special_id = int(eff.params.get("special_id", 0))
+        if special_id > 0:
+            attr |= (special_id & 0x07) << 57
 
-            if char_id > 0:
-                # Pack Name ID into bits 0-7 of a high word (if we treat attr as u32)
-                # For now let's use bits 12-15 (Source Zone) if it's 0,
-                # OR just use a dedicated flag bit + ID.
-                # Let's use Bit 11 (Top of Group ID bits) as Name Enable and some other bits for ID.
-                # Actually, bits 24-31 are mostly free except for Cost (24-30) and Color (31).
-                # Let's re-allocate bits 24-31 for Name if we use a different prefix?
-                # No, let's just use bits 8-11 as a Name ID (4 bits = 16 characters) if Group is OFF.
-                # Setsuna is common, we can give her a fixed bit.
-                if name_filter == "優木せつ菜":
-                    attr |= 1 << 7  # Borrow bit 7 from Group ID (currently 5-11)
+        if eff.params.get("is_tapped"):
+            attr |= 1 << 12
+        if eff.params.get("has_blade_heart") is True:
+            attr |= 1 << 13
+        elif eff.params.get("has_blade_heart") is False:
+            attr |= 1 << 14
 
         return attr
 

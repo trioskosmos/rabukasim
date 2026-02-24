@@ -68,15 +68,6 @@
   "PL!S-pb1-015-N": {
     "pseudocode": "LOOK_AND_CHOOSE_REVEAL(3, choose_count=1) {TARGET=HAND, REMAINDER=\"DISCARD\"}"
   },
-  "PL!-bp3-014-N": {
-    "pseudocode": "LOOK_AND_CHOOSE_REVEAL(3, choose_count=1) {TARGET=HAND, REMAINDER=\"DISCARD\"}"
-  },
-  "PL!-bp3-017-N": {
-    "pseudocode": "LOOK_AND_CHOOSE_REVEAL(3, choose_count=1) {TARGET=HAND, REMAINDER=\"DISCARD\"}"
-  },
-  "PL!-bp3-018-N": {
-    "pseudocode": "LOOK_AND_CHOOSE_REVEAL(3, choose_count=1) {TARGET=HAND, REMAINDER=\"DISCARD\"}"
-  },
   "PL!N-bp3-022-N": {
     "pseudocode": "LOOK_AND_CHOOSE_REVEAL(3, choose_count=1) {TARGET=HAND, REMAINDER=\"DISCARD\"}"
   },

@@ -8,34 +8,8 @@ fn load_real_db() -> CardDatabase {
     CardDatabase::from_json(&json_str).expect("Failed to parse CardDatabase")
 }
 
-#[derive(Debug, Clone)]
-struct ZoneSnapshot {
-    hand_len: usize,
-    deck_len: usize,
-    discard_len: usize,
-    energy_len: usize,
-    tapped_energy_count: usize,
-    stage: [i32; 3],
-    live_zone: [i32; 3],
-    looked_cards_len: usize,
-    // success_lives_len: usize,
-}
+use crate::test_helpers::ZoneSnapshot;
 
-impl ZoneSnapshot {
-    fn capture(p: &PlayerState) -> Self {
-        Self {
-            hand_len: p.hand.len(),
-            deck_len: p.deck.len(),
-            discard_len: p.discard.len(),
-            energy_len: p.energy_zone.len(),
-            tapped_energy_count: p.tapped_energy_mask.count_ones() as usize,
-            stage: p.stage,
-            live_zone: p.live_zone,
-            looked_cards_len: p.looked_cards.len(),
-            // success_lives_len: p.success_lives.len(),
-        }
-    }
-}
 
 #[derive(Debug)]
 struct StateDelta {
@@ -215,14 +189,14 @@ fn test_state_delta_verification() {
                 ..Default::default()
             };
 
-            let before = ZoneSnapshot::capture(&state.core.players[0]);
+            let before = ZoneSnapshot::capture(&state.core.players[0], &state);
 
             // Execute
             let bytecode_slice: &[i32] = &bc_clone;
             state.resolve_bytecode(&db, bytecode_slice, &ctx);
 
             let suspended = state.phase == Phase::Response || !state.interaction_stack.is_empty();
-            let after = ZoneSnapshot::capture(&state.core.players[0]);
+            let after = ZoneSnapshot::capture(&state.core.players[0], &state);
             let delta = StateDelta::compute(&before, &after, suspended);
             
             (delta, suspended)

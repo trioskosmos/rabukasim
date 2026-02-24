@@ -5,6 +5,36 @@ use crate::test_helpers::{Action as EngineAction, create_test_state, ZoneSnapsho
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Test environment variants for conditional ability testing
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum TestEnvironment {
+    /// Standard oracle environment with full resources
+    Standard,
+    /// Minimal environment - no energy, no hand, no opponent
+    Minimal,
+    /// No energy - tests energy-dependent abilities
+    NoEnergy,
+    /// No hand - tests hand-dependent abilities (discard costs, etc.)
+    NoHand,
+    /// Full hand (11 cards) - tests hand limit effects
+    FullHand,
+    /// Opponent has empty stage - tests opponent-dependent conditions
+    OpponentEmpty,
+}
+
+impl std::fmt::Display for TestEnvironment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TestEnvironment::Standard => write!(f, "Standard"),
+            TestEnvironment::Minimal => write!(f, "Minimal"),
+            TestEnvironment::NoEnergy => write!(f, "NoEnergy"),
+            TestEnvironment::NoHand => write!(f, "NoHand"),
+            TestEnvironment::FullHand => write!(f, "FullHand"),
+            TestEnvironment::OpponentEmpty => write!(f, "OppEmpty"),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SemanticDelta {
     pub tag: String,
@@ -20,6 +50,8 @@ pub struct SemanticSegment {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SemanticAbility {
     pub trigger: String,
+    #[serde(default)]
+    pub condition: Option<String>,
     pub sequence: Vec<SemanticSegment>,
 }
 
@@ -97,6 +129,11 @@ impl SemanticAssertionEngine {
         let truth = self.truth.get(card_id_str).ok_or(format!("Card {} not found in truth set", card_id_str))?;
         let ability = truth.abilities.get(ab_idx).ok_or(format!("Ability index {} not found for {}", ab_idx, card_id_str))?;
         
+        // Skip abilities with empty sequences - they represent passive or unimplemented effects
+        if ability.sequence.is_empty() {
+            return Ok(()); // Empty sequence means no observable deltas to verify
+        }
+        
         let mut state = create_test_state();
         state.ui.silent = false; // Enable logging for debugging
         state.debug.debug_mode = true; // Enable interpreter debug mode
@@ -117,8 +154,8 @@ impl SemanticAssertionEngine {
                     }
                 }
 
-                let p0_init = ZoneSnapshot::capture(&state.core.players[0]);
-                let p1_init = ZoneSnapshot::capture(&state.core.players[1]);
+                let p0_init = ZoneSnapshot::capture(&state.core.players[0], &state);
+                let p1_init = ZoneSnapshot::capture(&state.core.players[1], &state);
 
                 // --- Execution Phase ---
                 if trigger_type == TriggerType::Activated {
@@ -135,14 +172,14 @@ impl SemanticAssertionEngine {
                         TriggerType::OnLeaves => {
                             // Move from stage to discard to trigger
                             state.core.players[0].stage[0] = -1;
-                            state.trigger_event(&self.db, trigger_type, 0, real_id, 0, 0);
+                            state.trigger_event(&self.db, trigger_type, 0, real_id, 0, 0, -1);
                         },
                         TriggerType::TurnEnd => {
                             state.phase = Phase::Terminal;
-                            state.trigger_event(&self.db, trigger_type, 0, real_id, 0, 0);
+                            state.trigger_event(&self.db, trigger_type, 0, real_id, 0, 0, -1);
                         },
                         _ => {
-                            state.trigger_event(&self.db, trigger_type, 0, real_id, 0, 0);
+                            state.trigger_event(&self.db, trigger_type, 0, real_id, 0, 0, -1);
                         }
                     }
                     state.process_trigger_queue(&self.db);
@@ -161,6 +198,11 @@ impl SemanticAssertionEngine {
         let truth = self.truth.get(card_id_str).ok_or(format!("Card {} not found in truth set", card_id_str))?;
         let ability = truth.abilities.get(ab_idx).ok_or(format!("Ability index {} not found for {}", ab_idx, card_id_str))?;
         
+        // Skip abilities with empty sequences - they represent passive or unimplemented effects
+        if ability.sequence.is_empty() {
+            return Ok(()); // Empty sequence means no observable deltas to verify
+        }
+        
         let mut state = create_test_state();
         state.ui.silent = true;
         
@@ -174,7 +216,7 @@ impl SemanticAssertionEngine {
         state.core.players[0].discard.clear();
         state.core.players[1].stage[0] = -1; // Empty opponent stage
         
-        let prev_snapshot = ZoneSnapshot::capture(&state.core.players[0]);
+        let prev_snapshot = ZoneSnapshot::capture(&state.core.players[0], &state);
 
         // Execute
         if trigger_type == TriggerType::Activated {
@@ -195,19 +237,86 @@ impl SemanticAssertionEngine {
             state.step(&self.db, EngineAction::Pass.id()).ok();
         }
 
-        let current_snapshot = ZoneSnapshot::capture(&state.core.players[0]);
+        let current_snapshot = ZoneSnapshot::capture(&state.core.players[0], &state);
         let deltas = self.diff_snapshots(&prev_snapshot, &current_snapshot);
 
         if !deltas.is_empty() {
              // If the ability fired when it shouldn't have...
              // Some abilities have NO conditions, so they will always fire.
              // We only report this as a "failure" if the JP text suggests a condition.
-             // For now, we'll just log it.
              let combined_deltas = deltas.iter().map(|d| format!("{}:{}", d.tag, d.value)).collect::<Vec<_>>().join(", ");
-             println!("INFO: [Negative Test] Ability {}/{} fired in minimal state: {}", card_id_str, ab_idx, combined_deltas);
+             Err(format!("Ability fired in minimal state: {}", combined_deltas))
+        } else {
+             Ok(())
         }
+    }
 
-        Ok(())
+    /// Verify card ability in a specific environment
+    pub fn verify_card_with_env(&self, card_id_str: &str, ab_idx: usize, env: TestEnvironment) -> Result<(), String> {
+        let truth = self.truth.get(card_id_str).ok_or(format!("Card {} not found in truth set", card_id_str))?;
+        let ability = truth.abilities.get(ab_idx).ok_or(format!("Ability index {} not found for {}", ab_idx, card_id_str))?;
+        
+        // Skip abilities with empty sequences - they represent passive or unimplemented effects
+        if ability.sequence.is_empty() {
+            return Ok(()); // Empty sequence means no observable deltas to verify
+        }
+        
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.debug.debug_mode = true;
+        
+        let real_id = self.find_real_id(card_id_str)?;
+        let trigger_type = self.map_trigger_type(&ability.trigger);
+        
+        // Setup environment
+        Self::setup_environment(&mut state, &self.db, real_id, env);
+        
+        let p0_init = ZoneSnapshot::capture(&state.core.players[0], &state);
+        let p1_init = ZoneSnapshot::capture(&state.core.players[1], &state);
+
+        // Execute
+        if trigger_type == TriggerType::Activated {
+            state.activate_ability(&self.db, 0, ab_idx).ok();
+            state.process_trigger_queue(&self.db);
+            let mut cost_safety = 0;
+            while !state.interaction_stack.is_empty() && cost_safety < 10 {
+                self.resolve_interaction(&mut state).ok();
+                cost_safety += 1;
+            }
+        } else if trigger_type != TriggerType::None && trigger_type != TriggerType::Constant {
+            let ctx = AbilityContext { 
+                source_card_id: real_id, 
+                player_id: 0, 
+                area_idx: 0, 
+                trigger_type,
+                ability_index: ab_idx as i16,
+                ..Default::default() 
+            };
+            let is_live = self.db.get_live(real_id).is_some();
+            state.trigger_queue.push_back((real_id, ab_idx as u16, ctx, is_live, trigger_type));
+            state.process_trigger_queue(&self.db);
+        }
+        
+        self.run_sequence(&mut state, &ability.sequence, p0_init, p1_init, trigger_type)
+    }
+
+    /// Test card in all environments and return results
+    pub fn verify_card_all_envs(&self, card_id_str: &str, ab_idx: usize) -> Vec<(TestEnvironment, Result<(), String>)> {
+        let envs = [
+            TestEnvironment::Standard,
+            TestEnvironment::Minimal,
+            TestEnvironment::NoEnergy,
+            TestEnvironment::NoHand,
+            TestEnvironment::FullHand,
+            TestEnvironment::OpponentEmpty,
+        ];
+        
+        envs.iter().map(|&env| {
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                self.verify_card_with_env(card_id_str, ab_idx, env)
+            }));
+            (env, result.unwrap_or(Err("PANIC".to_string())))
+        }).collect()
     }
 
     fn run_sequence(&self, state: &mut GameState, sequence: &[SemanticSegment], initial_p0: ZoneSnapshot, initial_p1: ZoneSnapshot, _trigger_type: TriggerType) -> Result<(), String> {
@@ -222,10 +331,37 @@ impl SemanticAssertionEngine {
 
             if is_suspended {
                  self.resolve_interaction(state).expect("Failed to resolve interaction during audit");
+                 // Capture new state AFTER resolving interaction
+                 let curr_p0 = ZoneSnapshot::capture(&state.core.players[0], &state);
+                 let curr_p1 = ZoneSnapshot::capture(&state.core.players[1], &state);
+                 
+                 // Try to match after resolution
+                 let mut matched_segments = 0;
+                 let mut error_if_fail = String::new();
+                 'lookahead_resolve: for offset in 0..(sequence.len() - seq_idx) {
+                     let segments_to_check = &sequence[seq_idx ..= seq_idx + offset];
+                     match self.assert_cumulative_deltas(segments_to_check, &checkpoint_p0, &curr_p0, &checkpoint_p1, &curr_p1) {
+                         Ok(_) => {
+                             seq_idx += offset + 1;
+                             matched_segments = offset + 1;
+                             checkpoint_p0 = curr_p0;
+                             checkpoint_p1 = curr_p1;
+                             break 'lookahead_resolve;
+                         },
+                         Err(e) => {
+                             if offset == 0 { error_if_fail = e; }
+                         }
+                     }
+                 }
+                 if matched_segments == 0 && state.phase == Phase::Main && state.interaction_stack.is_empty() {
+                     return Err(format!("Stuck at segment {} (after resolve): {}", seq_idx, error_if_fail));
+                 }
+                 safety += 1;
+                 continue;
             }
 
-            let curr_p0 = ZoneSnapshot::capture(&state.core.players[0]);
-            let curr_p1 = ZoneSnapshot::capture(&state.core.players[1]);
+            let curr_p0 = ZoneSnapshot::capture(&state.core.players[0], &state);
+            let curr_p1 = ZoneSnapshot::capture(&state.core.players[1], &state);
             
             let mut matched_segments = 0;
             let mut error_if_fail = String::new();
@@ -318,6 +454,10 @@ impl SemanticAssertionEngine {
                         let matches = match pi.choice_type.as_str() {
                             "RECOV_L" => self.db.get_live(cid).is_some(),
                             "RECOV_M" => self.db.get_member(cid).is_some(),
+                            "LOOK_AND_CHOOSE" if pi.filter_attr != 0 => {
+                                let filter = crate::core::logic::filter::CardFilter::from_attr(pi.filter_attr);
+                                filter.matches(&self.db, cid, false)
+                            },
                             _ => true,
                         };
                         if matches {
@@ -397,10 +537,18 @@ impl SemanticAssertionEngine {
         state.core.players[0].success_lives.extend(live_fill.iter().cloned());
         state.core.players[0].live_zone[0] = real_lives.first().copied().unwrap_or(5003);
 
-        // Stage (card under test at center, same-group neighbors)
-        state.core.players[0].stage[0] = real_id;
-        state.core.players[0].stage[1] = same_group_members.first().copied().unwrap_or(5000);
-        state.core.players[0].stage[2] = same_group_members.get(1).copied().unwrap_or(5000);
+        // Stage/Live placement using correct zones
+        if db.get_member(real_id).is_some() {
+            state.core.players[0].stage[0] = real_id;
+            state.core.players[0].stage[1] = same_group_members.first().copied().unwrap_or(5000);
+            state.core.players[0].stage[2] = same_group_members.get(1).copied().unwrap_or(5000);
+        } else if db.get_live(real_id).is_some() {
+            state.core.players[0].live_zone[0] = real_id;
+            // Also need members on stage for many Live card effects
+            state.core.players[0].stage[0] = same_group_members.first().copied().unwrap_or(5000);
+            state.core.players[0].stage[1] = same_group_members.get(1).copied().unwrap_or(5000);
+            state.core.players[0].stage[2] = same_group_members.get(2).copied().unwrap_or(5000);
+        }
 
         state.core.players[0].score = 99;
 
@@ -482,6 +630,58 @@ impl SemanticAssertionEngine {
         state.turn = 5;
     }
 
+    /// Setup environment based on TestEnvironment variant
+    pub fn setup_environment(state: &mut GameState, db: &CardDatabase, real_id: i32, env: TestEnvironment) {
+        match env {
+            TestEnvironment::Standard => {
+                Self::setup_oracle_environment(state, db, real_id);
+            },
+            TestEnvironment::Minimal => {
+                // Just the card on stage, nothing else
+                state.core.players[0].stage[0] = real_id;
+                state.core.players[0].energy_zone.clear();
+                state.core.players[0].hand.clear();
+                state.core.players[0].deck.clear();
+                state.core.players[0].discard.clear();
+                state.core.players[0].success_lives.clear();
+                state.core.players[1].stage[0] = -1;
+                state.core.players[1].stage[1] = -1;
+                state.core.players[1].stage[2] = -1;
+            },
+            TestEnvironment::NoEnergy => {
+                // Standard setup but no energy
+                Self::setup_oracle_environment(state, db, real_id);
+                state.core.players[0].energy_zone.clear();
+            },
+            TestEnvironment::NoHand => {
+                // Standard setup but no hand
+                Self::setup_oracle_environment(state, db, real_id);
+                state.core.players[0].hand.clear();
+            },
+            TestEnvironment::FullHand => {
+                // Standard setup with full hand (11 cards)
+                Self::setup_oracle_environment(state, db, real_id);
+                state.core.players[0].hand.clear();
+                // Fill hand to max (11 cards)
+                let fill_cards: Vec<i32> = db.members.keys().take(11).cloned().collect();
+                for id in fill_cards {
+                    if state.core.players[0].hand.len() < 11 {
+                        state.core.players[0].hand.push(id);
+                    }
+                }
+            },
+            TestEnvironment::OpponentEmpty => {
+                // Standard setup but opponent has empty stage
+                Self::setup_oracle_environment(state, db, real_id);
+                state.core.players[1].stage[0] = -1;
+                state.core.players[1].stage[1] = -1;
+                state.core.players[1].stage[2] = -1;
+            },
+        }
+        state.phase = Phase::Main;
+        state.turn = 5;
+    }
+
     pub fn record_card(&self, card_id_str: &str, ab_idx: usize) -> Result<Option<SemanticAbility>, String> {
         let mut state = create_test_state();
         let mut segments = Vec::new();
@@ -499,8 +699,8 @@ impl SemanticAssertionEngine {
         };
         
         let _ability = abilities.get(ab_idx).ok_or("Ability not found")?;
-        let mut last_p0 = ZoneSnapshot::capture(&state.core.players[0]);
-        let mut last_p1 = ZoneSnapshot::capture(&state.core.players[1]);
+        let mut last_p0 = ZoneSnapshot::capture(&state.core.players[0], &state);
+        let mut last_p1 = ZoneSnapshot::capture(&state.core.players[1], &state);
 
         if trigger_type == TriggerType::Activated {
             state.activate_ability(&self.db, 0, ab_idx).ok();
@@ -524,13 +724,14 @@ impl SemanticAssertionEngine {
             }
             return Ok(Some(SemanticAbility {
                 trigger: format!("{:?}", trigger_type).to_uppercase(),
+                condition: None,
                 sequence: vec![SemanticSegment { text: "Constant Effect".to_string(), deltas }]
             }));
         }
 
         // Record initial effects
-        let curr_p0 = ZoneSnapshot::capture(&state.core.players[0]);
-        let curr_p1 = ZoneSnapshot::capture(&state.core.players[1]);
+        let curr_p0 = ZoneSnapshot::capture(&state.core.players[0], &state);
+        let curr_p1 = ZoneSnapshot::capture(&state.core.players[1], &state);
         let d_p0 = self.diff_snapshots(&last_p0, &curr_p0);
         let d_p1 = self.diff_snapshots(&last_p1, &curr_p1);
         
@@ -556,8 +757,8 @@ impl SemanticAssertionEngine {
                 state.step(&self.db, EngineAction::Pass.id()).ok();
             }
             
-            let curr_p0 = ZoneSnapshot::capture(&state.core.players[0]);
-            let curr_p1 = ZoneSnapshot::capture(&state.core.players[1]);
+            let curr_p0 = ZoneSnapshot::capture(&state.core.players[0], &state);
+            let curr_p1 = ZoneSnapshot::capture(&state.core.players[1], &state);
             let d_p0 = self.diff_snapshots(&last_p0, &curr_p0);
             let d_p1 = self.diff_snapshots(&last_p1, &curr_p1);
             
@@ -578,6 +779,7 @@ impl SemanticAssertionEngine {
 
         Ok(Some(SemanticAbility {
             trigger: format!("{:?}", trigger_type).to_uppercase(),
+            condition: None,
             sequence: segments
         }))
     }
@@ -645,6 +847,17 @@ impl SemanticAssertionEngine {
             deltas.push(SemanticDelta { tag: "MEMBER_TAP_DELTA".to_string(), value: serde_json::json!(tap_delta) });
         }
 
+        // Opponent Tap Members (Transition from Active to Wait)
+        let mut opp_tap_delta = 0;
+        for i in 0..3 {
+            if !baseline.opponent_tapped_members[i] && current.opponent_tapped_members[i] {
+                opp_tap_delta += 1;
+            }
+        }
+        if opp_tap_delta > 0 {
+            deltas.push(SemanticDelta { tag: "OPPONENT_MEMBER_TAP_DELTA".to_string(), value: serde_json::json!(opp_tap_delta) });
+        }
+
         // Energy Tap (Net change in tapped energy)
         let d_energy_tap = current.tapped_energy_count as i32 - baseline.tapped_energy_count as i32;
         if d_energy_tap > 0 {
@@ -706,7 +919,11 @@ impl SemanticAssertionEngine {
                 let val_i64 = delta.value.as_i64().unwrap_or(0);
                 
                 if tag.starts_with("OPPONENT_") {
-                    let clean_tag = &tag["OPPONENT_".len()..];
+                    let mut clean_tag = &tag["OPPONENT_".len()..];
+                    // Handle redundant prefixes that sometimes occur in truth data
+                    if clean_tag.starts_with("OPPONENT_") {
+                        clean_tag = &clean_tag["OPPONENT_".len()..];
+                    }
                     match clean_tag {
                         "HAND_DELTA" => opp_hand_delta += val_i64 as i32,
                         "HAND_DISCARD" => {
@@ -890,12 +1107,17 @@ impl SemanticAssertionEngine {
         }
 
         // TAP (P1)
-        if opp_member_tap_delta != 0 {
-            let actual_opp_tap = {
-                let mut t = 0;
-                for i in 0..3 { if !baseline_p1.tapped_members[i] && current_p1.tapped_members[i] { t += 1; } }
-                t
-            };
+        let actual_opp_tap = {
+            let mut t = 0;
+            for i in 0..3 { if !baseline_p1.tapped_members[i] && current_p1.tapped_members[i] { t += 1; } }
+            t
+        };
+        if opp_member_tap_delta == 99 {
+            let baseline_untapped = baseline_p1.tapped_members.iter().filter(|&&t| !t).count();
+            if actual_opp_tap == 0 && baseline_untapped > 0 {
+                 return Err(format!("Mismatch OPP_TAP_ALL for '{}': Expected all targets ({} available) but got 0 additional taps", combined_text, baseline_untapped));
+            }
+        } else if opp_member_tap_delta != 0 {
             if actual_opp_tap < opp_member_tap_delta {
                 return Err(format!("Mismatch OPPONENT_MEMBER_TAP_DELTA for '{}': Exp {}, Got {}", combined_text, opp_member_tap_delta, actual_opp_tap));
             }
@@ -935,6 +1157,7 @@ impl SemanticAssertionEngine {
         match trigger_str {
             "ON_PLAY" | "ONPLAY" => TriggerType::OnPlay,
             "ON_LIVE_START" | "ONLIVESTART" => TriggerType::OnLiveStart,
+            "ON_LIVE_SUCCESS" | "ONLIVESUCCESS" => TriggerType::OnLiveSuccess,
             "ACTIVATED" => TriggerType::Activated,
             "CONSTANT" => TriggerType::Constant,
             _ => TriggerType::None,
@@ -955,6 +1178,9 @@ mod tests {
 
         println!("🚀 Starting Parallel Semantic Audit of {} cards...", card_nos.len());
         
+        // Collect detailed failure information for analysis
+        let mut failure_categories: HashMap<String, Vec<String>> = HashMap::new();
+        
         let results: Vec<String> = card_nos.par_iter().map(|cid| {
             let truth = &engine.truth[cid];
             let mut ability_results = Vec::new();
@@ -968,10 +1194,16 @@ mod tests {
 
                 match result {
                     Ok(Ok(_)) => {
-                        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        // Run negative test and capture result
+                        let neg_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                             engine_ref.verify_card_negative(cid_ref, idx)
                         }));
-                        ability_results.push(format!("| {} | Ab{} | ✅ PASS | |", cid, idx));
+                        let neg_status = match neg_result {
+                            Ok(Ok(())) => "✅ NEG_PASS",
+                            Ok(Err(_e)) => "⚠️ NEG_FAIL",
+                            Err(_) => "💥 NEG_PANIC",
+                        };
+                        ability_results.push(format!("| {} | Ab{} | ✅ PASS | {} |", cid, idx, neg_status));
                     },
                     Ok(Err(e)) => {
                         ability_results.push(format!("| {} | Ab{} | ❌ FAIL | {} |", cid, idx, e));
@@ -985,21 +1217,231 @@ mod tests {
         }).collect();
 
         let pass = results.iter().map(|r| r.matches("✅ PASS").count()).sum::<usize>();
+        let neg_pass = results.iter().map(|r| r.matches("✅ NEG_PASS").count()).sum::<usize>();
+        let neg_fail = results.iter().map(|r| r.matches("⚠️ NEG_FAIL").count()).sum::<usize>();
+        let panic_count = results.iter().map(|r| r.matches("💥 PANIC").count()).sum::<usize>();
         let results_filtered: Vec<&String> = results.iter().filter(|r| !r.is_empty()).collect();
         let total_abilities = results_filtered.iter().map(|r| r.split('\n').count()).sum::<usize>();
         let fail = total_abilities - pass;
 
-        println!("Audit Results: {}/{} Abilities Passed", pass, total_abilities);
+        // Categorize failures for analysis
+        for line in &results {
+            if line.contains("❌ FAIL") {
+                // Extract failure reason
+                if line.contains("HAND_DELTA") {
+                    failure_categories.entry("HAND_DELTA".to_string()).or_default().push(line.clone());
+                } else if line.contains("SCORE_DELTA") {
+                    failure_categories.entry("SCORE_DELTA".to_string()).or_default().push(line.clone());
+                } else if line.contains("ENERGY") {
+                    failure_categories.entry("ENERGY".to_string()).or_default().push(line.clone());
+                } else if line.contains("DISCARD") {
+                    failure_categories.entry("DISCARD".to_string()).or_default().push(line.clone());
+                } else if line.contains("Stuck at segment") {
+                    failure_categories.entry("SEGMENT_STUCK".to_string()).or_default().push(line.clone());
+                } else {
+                    failure_categories.entry("OTHER".to_string()).or_default().push(line.clone());
+                }
+            }
+        }
+
+        let pass_rate = if total_abilities > 0 { (pass as f64 / total_abilities as f64) * 100.0 } else { 0.0 };
+        
+        println!("Audit Results: {}/{} Abilities Passed ({:.1}%)", pass, total_abilities, pass_rate);
+        println!("Negative Tests: {} PASS, {} FAIL (abilities that fire without conditions)", neg_pass, neg_fail);
+        println!("Panic Count: {}", panic_count);
+        
+        // Print failure category summary
+        if !failure_categories.is_empty() {
+            println!("\n📊 Failure Categories:");
+            for (category, failures) in &failure_categories {
+                println!("  - {}: {} failures", category, failures.len());
+            }
+        }
         
         // Write report
         let mut report = String::from("# Comprehensive Semantic Audit Report\n\n");
         report.push_str(&format!("- Date: 2026-02-23 (Automated Audit)\n"));
         report.push_str(&format!("- Total Abilities: {}\n", total_abilities));
-        report.push_str(&format!("- Pass: {}\n- Fail: {}\n\n", pass, fail));
-        report.push_str("| Card No | Ability | Status | Details |\n| :--- | :--- | :--- | :--- |\n");
+        report.push_str(&format!("- Pass: {}\n- Fail: {}\n- Pass Rate: {:.1}%\n", pass, fail, pass_rate));
+        report.push_str(&format!("- Negative Tests: {} PASS, {} FAIL\n", neg_pass, neg_fail));
+        report.push_str(&format!("- Panics: {}\n\n", panic_count));
+        
+        // Add failure category breakdown
+        if !failure_categories.is_empty() {
+            report.push_str("## Failure Categories\n\n");
+            for (category, failures) in &failure_categories {
+                report.push_str(&format!("### {} ({} failures)\n\n", category, failures.len()));
+                for f in failures.iter().take(5) {
+                    report.push_str(&format!("{}\n", f));
+                }
+                if failures.len() > 5 {
+                    report.push_str(&format!("... and {} more\n", failures.len() - 5));
+                }
+                report.push_str("\n");
+            }
+        }
+        
+        report.push_str("## Results\n\n| Card No | Ability | Status | Details |\n| :--- | :--- | :--- | :--- |\n");
         report.push_str(&results.join("\n"));
         
         std::fs::write("../reports/COMPREHENSIVE_SEMANTIC_AUDIT.md", report).ok();
+        
+        // ASSERTION: Require minimum 85% pass rate
+        assert!(pass_rate >= 97.0, "Semantic test pass rate {:.1}% is below minimum threshold of 97%", pass_rate);
+        
+        // ASSERTION: No panics allowed
+        assert_eq!(panic_count, 0, "{} tests caused panics - this indicates critical bugs", panic_count);
+    }
+
+    #[test]
+    fn test_multi_environment_verification() {
+        let engine = SemanticAssertionEngine::load();
+        
+        // Test ALL cards in multiple environments (parallelized)
+        let mut card_nos: Vec<String> = engine.truth.keys().cloned().collect();
+        card_nos.sort();
+        
+        println!("🧪 Testing {} cards in multiple environments (parallelized)...", card_nos.len());
+        
+        let results: Vec<String> = card_nos.par_iter().map(|card_id| {
+            let truth = engine.truth.get(card_id).unwrap();
+            let mut ability_results = Vec::new();
+            
+            for ab_idx in 0..truth.abilities.len() {
+                let env_results = engine.verify_card_all_envs(card_id, ab_idx);
+                let status_str: String = env_results.iter().map(|(_env, result)| {
+                    let status = match result {
+                        Ok(()) => "✅",
+                        Err(_) => "❌",
+                    };
+                    format!("{}", status)
+                }).collect::<Vec<_>>().join(" | ");
+                
+                ability_results.push(format!("| {} | Ab{} | {} |", card_id, ab_idx, status_str));
+            }
+            ability_results.join("\n")
+        }).collect();
+        
+        // Count passes per environment
+        let env_names = ["Standard", "Minimal", "NoEnergy", "NoHand", "FullHand", "OppEmpty"];
+        let mut env_passes = [0usize; 6];
+        let mut env_fails = [0usize; 6];
+        let total = results.iter().map(|r| r.matches("|")).count();
+        
+        for line in &results {
+            let parts: Vec<&str> = line.split('|').collect();
+            if parts.len() > 3 {
+                for (i, status) in parts[3..].iter().enumerate() {
+                    if i < 6 {
+                        if status.contains("✅") {
+                            env_passes[i] += 1;
+                        } else if status.contains("❌") {
+                            env_fails[i] += 1;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Calculate pass rates
+        let mut env_pass_rates = [0.0f64; 6];
+        for i in 0..6 {
+            let env_total = env_passes[i] + env_fails[i];
+            if env_total > 0 {
+                env_pass_rates[i] = (env_passes[i] as f64 / env_total as f64) * 100.0;
+            }
+        }
+        
+        println!("\n📊 Environment Pass Rates:");
+        for (i, name) in env_names.iter().enumerate() {
+            let env_total = env_passes[i] + env_fails[i];
+            println!("  - {}: {}/{} ({:.1}%)", name, env_passes[i], env_total, env_pass_rates[i]);
+        }
+        
+        let mut report = String::from("# Multi-Environment Test Report\n\n");
+        report.push_str("- Date: 2026-02-23 (Automated Audit)\n");
+        report.push_str(&format!("- Total Abilities: {}\n\n", total));
+        report.push_str("## Environment Pass Rates\n\n");
+        report.push_str("| Environment | Pass | Fail | Rate |\n");
+        report.push_str("| :--- | :--- | :--- | :--- |\n");
+        for (i, name) in env_names.iter().enumerate() {
+            let _env_total = env_passes[i] + env_fails[i];
+            report.push_str(&format!("| {} | {} | {} | {:.1}% |\n", name, env_passes[i], env_fails[i], env_pass_rates[i]));
+        }
+        report.push_str("\n## Results\n\n");
+        report.push_str("| Card | Ability | Std | Min | NoE | NoH | Full | Opp |\n");
+        report.push_str("| :--- | :------ | :-- | :-- | :-- | :-- | :--- | :-- |\n");
+        report.push_str(&results.join("\n"));
+        
+        std::fs::write("../reports/MULTI_ENV_TEST.md", report).ok();
+        println!("✅ Multi-environment test complete. Report written to reports/MULTI_ENV_TEST.md");
+        
+        // ASSERTION: Standard environment should have at least 85% pass rate
+        assert!(env_pass_rates[0] >= 85.0, "Standard environment pass rate {:.1}% is below minimum threshold of 85%", env_pass_rates[0]);
+    }
+
+    #[test]
+    fn debug_hand_delta_failure() {
+        // Debug test for HAND_DELTA failures
+        // Pattern: Mismatch HAND_DELTA for 'COST: DISCARD_HAND(1)': Exp -1, Got 0
+        let engine = SemanticAssertionEngine::load();
+        
+        // Test a specific failing card
+        let test_cards = vec![
+            "PL!-bp3-002-P",  // COST: DISCARD_HAND(1)
+            "PL!-bp3-010-N",  // COST: DISCARD_HAND(1)
+            "PL!N-PR-004-PR", // COST: DISCARD_HAND(1)
+        ];
+        
+        for card_id in test_cards {
+            if let Some(truth) = engine.truth.get(card_id) {
+                println!("\n🔍 Debugging {} with {} abilities", card_id, truth.abilities.len());
+                for (idx, ability) in truth.abilities.iter().enumerate() {
+                    println!("  Ability {}: {:?}", idx, ability);
+                }
+                
+                // Try to verify
+                for idx in 0..truth.abilities.len() {
+                    match engine.verify_card(card_id, idx) {
+                        Ok(_) => println!("  ✅ Ab{} passed", idx),
+                        Err(e) => {
+                            println!("  ❌ Ab{} failed: {}", idx, e);
+                            
+                            // Debug: Check if hand is set up correctly
+                            let real_id = engine.find_real_id(card_id).unwrap_or(-1);
+                            let mut state = create_test_state();
+                            SemanticAssertionEngine::setup_oracle_environment(&mut state, &engine.db, real_id);
+                            
+                            // Capture initial snapshot
+                            let initial_snapshot = ZoneSnapshot::capture(&state.core.players[0], &state);
+                            println!("     Initial ZoneSnapshot hand_len: {}", initial_snapshot.hand_len);
+                            println!("     Raw hand array len: {}", state.core.players[0].hand.len());
+                            println!("     Hand cards (first 5): {:?}", state.core.players[0].hand.iter().take(5).collect::<Vec<_>>());
+                            
+                            // Trigger the ability
+                            state.trigger_event(&engine.db, TriggerType::OnPlay, 0, real_id, 0, 0, -1);
+                            state.process_trigger_queue(&engine.db);
+                            
+                            // Resolve any interactions
+                            let mut safety = 0;
+                            while !state.interaction_stack.is_empty() && safety < 10 {
+                                engine.resolve_interaction(&mut state).ok();
+                                safety += 1;
+                            }
+                            
+                            // Capture final snapshot
+                            let final_snapshot = ZoneSnapshot::capture(&state.core.players[0], &state);
+                            println!("     Final ZoneSnapshot hand_len: {}", final_snapshot.hand_len);
+                            println!("     Final raw hand array len: {}", state.core.players[0].hand.len());
+                            println!("     Final hand cards (first 5): {:?}", state.core.players[0].hand.iter().take(5).collect::<Vec<_>>());
+                            println!("     Hand delta: {}", final_snapshot.hand_len as i32 - initial_snapshot.hand_len as i32);
+                        }
+                    }
+                }
+            } else {
+                println!("Card {} not found in truth", card_id);
+            }
+        }
     }
 
     #[test]
@@ -1011,6 +1453,10 @@ mod tests {
         card_nos.sort();
 
         println!("🔮 Generating V3 Truth Baseline (Synchronized) for {} cards...", card_nos.len());
+        
+        let mut recorded_count = 0;
+        let mut skipped_count = 0;
+        let mut error_count = 0;
 
         for cid in &card_nos {
             let mut recorded_card = SemanticCardTruth {
@@ -1020,14 +1466,24 @@ mod tests {
 
             let abilities_count = engine.truth[cid].abilities.len();
             for idx in 0..abilities_count {
-                if let Ok(Some(mut recorded_ability)) = engine.record_card(cid, idx) {
-                    // Restore original Japanese text for readability
-                    if let Some(segment) = recorded_ability.sequence.get_mut(0) {
-                        if let Some(old_segment) = engine.truth[cid].abilities[idx].sequence.get(0) {
-                            segment.text = old_segment.text.clone();
+                match engine.record_card(cid, idx) {
+                    Ok(Some(mut recorded_ability)) => {
+                        // Restore original Japanese text for readability
+                        if let Some(segment) = recorded_ability.sequence.get_mut(0) {
+                            if let Some(old_segment) = engine.truth[cid].abilities[idx].sequence.get(0) {
+                                segment.text = old_segment.text.clone();
+                            }
                         }
+                        recorded_card.abilities.push(recorded_ability);
+                        recorded_count += 1;
                     }
-                    recorded_card.abilities.push(recorded_ability);
+                    Ok(None) => {
+                        skipped_count += 1;
+                    }
+                    Err(e) => {
+                        println!("⚠️ Error recording {} ability {}: {}", cid, idx, e);
+                        error_count += 1;
+                    }
                 }
             }
             new_truth.insert(cid.clone(), recorded_card);
@@ -1035,7 +1491,18 @@ mod tests {
 
         let output = serde_json::to_string_pretty(&new_truth).unwrap();
         std::fs::write("../reports/semantic_truth_v3.json", output).expect("Failed to write v3 truth");
+        
         println!("✅ V3 Truth Baseline written to reports/semantic_truth_v3.json");
+        println!("   - Recorded: {} abilities", recorded_count);
+        println!("   - Skipped: {} abilities", skipped_count);
+        println!("   - Errors: {} abilities", error_count);
+        
+        // ASSERTION: At least 90% of abilities should be recorded successfully
+        let total = recorded_count + skipped_count + error_count;
+        if total > 0 {
+            let record_rate = (recorded_count as f64 / total as f64) * 100.0;
+            assert!(record_rate >= 90.0, "Truth generation rate {:.1}% is below minimum threshold of 90%", record_rate);
+        }
     }
 
     #[test]
@@ -1091,4 +1558,57 @@ mod tests {
 
 
 
+    #[test]
+    fn test_targeted_scoring_audit() {
+        let engine = SemanticAssertionEngine::load();
+        let targets = vec!["PL!N-bp3-031-L", "PL!-bp3-025-L"];
+        
+        for cid in targets {
+            println!("🎯 Targeted Audit for: {}", cid);
+            let truth = &engine.truth[cid];
+            for idx in 0..truth.abilities.len() {
+                // For 31-L, we need to tap the members to see the multiplier work
+                let mut state = crate::test_helpers::create_test_state();
+                state.ui.silent = false;
+                state.debug.debug_mode = true;
+                let real_id = engine.find_real_id(cid).unwrap();
+                println!("[DEBUG] Cid: {}, Real ID: {}", cid, real_id);
+                SemanticAssertionEngine::setup_oracle_environment(&mut state, &engine.db, real_id);
+                
+                // For Live cards, ensure phase and zone are correct
+                if engine.db.get_live(real_id).is_some() {
+                    state.phase = Phase::LiveResult;
+                    state.core.players[0].live_zone[0] = real_id;
+                    println!("[DEBUG] Set Phase::LiveResult for Live card {}", cid);
+                }
+                
+                if cid == "PL!N-bp3-031-L" {
+                    // Tap 2 members on stage to check multiplier (1*2 = 2)
+                    state.core.players[0].set_tapped(0, true);
+                    state.core.players[0].set_tapped(1, true);
+                    println!("[DEBUG] Tapped members for 31-L test.");
+                }
+
+                let p0_init = ZoneSnapshot::capture(&state.core.players[0], &state);
+                let p1_init = ZoneSnapshot::capture(&state.core.players[1], &state);
+                
+                let trigger_type = engine.map_trigger_type(&truth.abilities[idx].trigger);
+                
+                // Trigger the event
+                state.trigger_event(&engine.db, trigger_type, 0, real_id, 0, 0, -1);
+                state.process_trigger_queue(&engine.db);
+                
+                let result = engine.run_sequence(&mut state, &truth.abilities[idx].sequence, p0_init, p1_init, trigger_type);
+                match result {
+                    Ok(_) => println!("✅ {} Ab{}: PASS", cid, idx),
+                    Err(e) => {
+                        println!("❌ {} Ab{}: FAIL: {}", cid, idx, e);
+                        // Dump final state bonus
+                        println!("     Final live_score_bonus: {}", state.core.players[0].live_score_bonus);
+                        panic!("Targeted audit failed for {}", cid);
+                    }
+                }
+            }
+        }
+    }
 }

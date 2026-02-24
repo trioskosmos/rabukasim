@@ -1,3 +1,12 @@
+struct GpuTriggerRequest {
+    card_id: u32,
+    slot_idx: u32,
+    trigger_filter: i32,
+    ab_filter: i32,
+    choice: i32,
+    _pad: array<u32, 3>,
+}
+
 struct GpuPlayerState {
     heart_buffs: array<u32, 8>,           // 32
     heart_req_reductions: array<u32, 2>,  // 8
@@ -32,9 +41,10 @@ struct GpuPlayerState {
     prevent_baton_touch: u32,             // 4
     prevent_success_pile_set: u32,        // 4
     prevent_play_to_slot_mask: u32,       // 4
-    _pad_player: u32,                     // 4
+    cost_reduction: i32,                  // 4
     success_lives: array<u32, 4>,         // 16
-} // Total: 608 bytes
+    granted_abilities: array<u32, 16>,    // 64
+} // Total: 672 bytes
 
 struct GpuGameState {
     player0: GpuPlayerState,
@@ -50,8 +60,11 @@ struct GpuGameState {
     rng_state_lo: u32,
     rng_state_hi: u32,
     first_player: u32,
-    _pad_game: array<u32, 5>,
-} // Total: 1152 bytes
+    trigger_queue: array<GpuTriggerRequest, 8>,
+    queue_head: u32,
+    queue_tail: u32,
+    _pad_game: array<u32, 3>,
+} // Total: 1664 bytes
 
 struct GpuCardStats {
     ability_flags_lo: u32,
@@ -226,3 +239,6 @@ const ACTION_BASE_STAGE: u32 = 4000u;
 const ACTION_BASE_STAGE_CHOICE: u32 = 4300u;
 const ACTION_BASE_DISCARD_ACTIVATE: u32 = 6000u;
 const ACTION_BASE_CHOICE: u32 = 8000u;
+// ACTION_BASE_TRIGGER: Format = 9000 + slot_idx * 1000 + trigger_type * 100 + ab_idx * 10 + choice
+// This allows testing any trigger type with proper trigger_filter
+const ACTION_BASE_TRIGGER: u32 = 9000u;

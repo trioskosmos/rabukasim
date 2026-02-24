@@ -501,6 +501,13 @@ body {
     background: linear-gradient(135deg, #444, #111);
 }
 
+.card.highlight-hover {
+    box-shadow: 0 0 15px var(--accent-gold);
+    border-color: var(--accent-gold);
+    z-index: 50;
+    transform: scale(1.05);
+}
+
 .card.hidden::after {
     content: 'Card';
     position: absolute;
@@ -918,29 +925,46 @@ body {
     background: rgba(255, 85, 170, 0.05);
     /* Subtle pink tint */
     border: 1px solid rgba(255, 85, 170, 0.2);
-    padding: 12px;
+    padding: 10px;
     border-radius: 8px;
-    margin-bottom: 10px;
     display: none;
-    /* Controlled by JS */
     flex-direction: column;
+    gap: 8px;
+    max-height: 400px;
+    overflow: hidden;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
 }
 
-.card-desc-panel h3 {
+.card-desc-title {
+    font-size: 1.1rem;
+    font-weight: 800;
     color: var(--accent-pink);
-    margin-bottom: 5px;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    border-bottom: 2px solid rgba(255, 85, 170, 0.3);
+    padding-bottom: 6px;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .card-desc-content {
-    font-size: 0.85rem;
-    line-height: 1.4;
-    color: #eee;
-    white-space: pre-wrap;
-    word-break: break-all;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #e2e8f0;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.card-desc-content br {
+    content: "";
+    display: block;
+    margin-top: 4px;
+}
+
+.icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 2px;
 }
 
 .active-abilities-panel {
@@ -2325,6 +2349,8 @@ body {
     text-align: center;
     font-size: 0.9rem;
     width: 100%;
+    display: block;
+    justify-content: center;
 }
 
 /* Player Badges in Log */

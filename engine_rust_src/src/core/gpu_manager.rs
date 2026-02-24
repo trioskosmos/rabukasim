@@ -3,7 +3,7 @@ use wgpu::util::DeviceExt;
 use pollster::block_on;
 use crate::core::gpu_state::{GpuGameState, GpuCardStats};
 
-pub const MAX_BATCH_SIZE: usize = 100_000; // 128MB pre-allocation limit for wide compatibility
+pub const MAX_BATCH_SIZE: usize = 75_000; // Fits within 128MB limit with 1664-byte GpuGameState
 
 pub struct GpuManager {
     pub device: wgpu::Device,
@@ -265,6 +265,65 @@ impl GpuManager {
 
         self.queue.submit(Some(encoder.finish()));
 
+        let buffer_slice = self.readback_buffer.slice(..state_buffer_size);
+        let (sender, receiver) = std::sync::mpsc::channel();
+        buffer_slice.map_async(wgpu::MapMode::Read, move |v| sender.send(v).unwrap());
+
+        self.device.poll(wgpu::Maintain::Wait);
+
+        if let Ok(Ok(())) = receiver.recv() {
+            let data = buffer_slice.get_mapped_range();
+            let result_slice: &[GpuGameState] = bytemuck::cast_slice(&data);
+            output_states[..count].copy_from_slice(result_slice);
+            drop(data);
+            self.readback_buffer.unmap();
+        } else {
+            panic!("Failed to map GPU buffer");
+        }
+    }
+
+    /// Run a single GPU step for parity testing.
+    /// Unlike run_simulations_into (which runs 200 steps for MCTS),
+    /// this executes exactly one shader dispatch for precise state comparison.
+    pub fn run_single_step(&self, input_states: &[GpuGameState], output_states: &mut [GpuGameState]) {
+        if input_states.is_empty() { return; }
+
+        let _guard = self.lock.lock().unwrap();
+
+        let count = input_states.len();
+        if count > MAX_BATCH_SIZE {
+            panic!("Batch size {} exceeds pre-allocated limit {}", count, MAX_BATCH_SIZE);
+        }
+        if output_states.len() < count {
+            panic!("Output slice too small for result count {}", count);
+        }
+
+        let state_buffer_size = (count * std::mem::size_of::<GpuGameState>()) as u64;
+
+        // Upload data to GPU
+        self.queue.write_buffer(&self.state_buffer, 0, bytemuck::cast_slice(input_states));
+
+        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Single Step Compute Encoder"),
+        });
+
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Single Step Compute Pass"),
+                timestamp_writes: None,
+            });
+            compute_pass.set_pipeline(&self.compute_pipeline);
+            compute_pass.set_bind_group(0, &self.bind_group, &[]);
+            // SINGLE DISPATCH: Exactly one step for parity testing
+            compute_pass.dispatch_workgroups(((count + 63) / 64) as u32, 1, 1);
+        }
+
+        // Copy result to readback buffer
+        encoder.copy_buffer_to_buffer(&self.state_buffer, 0, &self.readback_buffer, 0, state_buffer_size);
+
+        self.queue.submit(Some(encoder.finish()));
+
+        // Read back results
         let buffer_slice = self.readback_buffer.slice(..state_buffer_size);
         let (sender, receiver) = std::sync::mpsc::channel();
         buffer_slice.map_async(wgpu::MapMode::Read, move |v| sender.send(v).unwrap());

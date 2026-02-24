@@ -21,13 +21,24 @@ pub fn suspend_interaction(
     filter_attr: u64, 
     v_remaining: i16
 ) -> bool {
+    let original_phase = if let Some(p) = ctx.original_phase {
+        p
+    } else if state.phase == Phase::Response {
+        // Fallback for cases where context didn't carry it (e.g. root activation via trigger)
+        state.interaction_stack.last()
+            .map(|pi| pi.original_phase)
+            .unwrap_or(state.phase)
+    } else {
+        state.phase
+    };
+    
     let mut p_ctx = ctx.clone();
     p_ctx.program_counter = instr_ip as u16;
     p_ctx.choice_index = -1; 
     p_ctx.v_remaining = v_remaining;
+    p_ctx.original_phase = Some(original_phase);
     
     let original_cp = state.current_player;
-    let original_phase = state.phase;
     let execution_id = state.ui.current_execution_id.unwrap_or(0);
 
     state.interaction_stack.push(PendingInteraction {

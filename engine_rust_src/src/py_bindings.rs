@@ -572,6 +572,7 @@ impl PyGameState {
             ability_index: -1,
             v_remaining: -1,
             trigger_type: Default::default(),
+            original_phase: None,
         };
         self.inner.resolve_bytecode(db, &bytecode, &ctx);
     }
@@ -746,6 +747,7 @@ impl PyGameState {
         let ctx = crate::core::logic::AbilityContext {
             player_id,
             area_idx: area_idx as i16,
+            original_phase: None,
             ..crate::core::logic::AbilityContext::default()
         };
         self.inner.resolve_bytecode(&self.db.inner, &bytecode, &ctx);
@@ -755,6 +757,7 @@ impl PyGameState {
         let trigger_type = unsafe { std::mem::transmute::<i8, crate::core::enums::TriggerType>(trigger as i8) };
         let ctx = crate::core::logic::AbilityContext {
             player_id,
+            original_phase: None,
             ..crate::core::logic::AbilityContext::default()
         };
         self.inner.trigger_abilities(&self.db.inner, trigger_type, &ctx);

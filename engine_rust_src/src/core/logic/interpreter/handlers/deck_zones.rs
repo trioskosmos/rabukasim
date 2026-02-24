@@ -282,8 +282,9 @@ fn handle_move_to_discard(state: &mut GameState, db: &CardDatabase, ctx: &mut Ab
     }
     
     if next_ctx.choice_index != -1 {
-        // Choice 99 or 0 during selection counts as "Decline" for optional costs
-        if is_optional && (next_ctx.choice_index == CHOICE_DONE || next_ctx.choice_index == 0) {
+        // Choice 99 counts as "Decline" for optional costs
+        // Note: choice_index == 0 means "select first card", NOT decline
+        if is_optional && next_ctx.choice_index == CHOICE_DONE {
             return Some(false);
         }
         
@@ -292,7 +293,11 @@ fn handle_move_to_discard(state: &mut GameState, db: &CardDatabase, ctx: &mut Ab
         match source_zone {
             6 => if idx < state.core.players[p_idx].hand.len() {
                 removed_cid = state.core.players[p_idx].hand[idx];
-                if removed_cid != -1 { state.core.players[p_idx].hand[idx] = -1; }
+                if removed_cid != -1 { 
+                    state.core.players[p_idx].hand[idx] = -1;
+                    // Immediately remove -1 placeholders from hand
+                    state.core.players[p_idx].hand.retain(|c| *c != -1);
+                }
             },
             4 => {
                 let slot = if idx < 3 { idx } else if next_ctx.area_idx >= 0 { next_ctx.area_idx as usize } else { 0 };

@@ -165,7 +165,7 @@ pub fn resolve_bytecode(
         // Condition opcodes (200-255)
         if real_op >= 200 && real_op <= 255 {
             let passed = conditions::check_condition_opcode(
-                state, db, real_op, v, a as u64, target_slot, &frame.ctx, 0
+                state, db, real_op, v, a as u32 as u64, target_slot, &frame.ctx, 0
             );
             executor.cond = executor.cond && if is_negated { !passed } else { passed };
             frame.ctx.choice_index = -1;

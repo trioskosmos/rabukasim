@@ -8,7 +8,7 @@ pub use crate::core::generated_constants::*;
 #[repr(u8)]
 pub enum TriggerType {
     #[default]
-    None = 0, /// [UNUSED]
+    None = 0,
     OnPlay = 1,
     OnLiveStart = 2,
     OnLiveSuccess = 3,
@@ -61,11 +61,11 @@ pub enum EffectType {
     Immunity = 19,
     MoveMember = 20,
     SwapCards = 21,
-    SearchDeck = 22, /// [UNUSED]
+    SearchDeck = 22,
     EnergyCharge = 23,
     SetBlades = 24,
     SetHearts = 25,
-    FormationChange = 26, /// [UNUSED]
+    FormationChange = 26,
     NegateEffect = 27,
     OrderDeck = 28,
     MetaRule = 29,
@@ -76,7 +76,7 @@ pub enum EffectType {
     Restriction = 35,
     BatonTouchMod = 36,
     SetScore = 37,
-    SwapZone = 38, /// [UNUSED]
+    SwapZone = 38,
     TransformColor = 39,
     RevealCards = 40,
     LookAndChoose = 41,
@@ -84,17 +84,13 @@ pub enum EffectType {
     ActivateMember = 43,
     AddToHand = 44,
     ColorSelect = 45,
-    ReplaceEffect = 46, /// [UNUSED]
     TriggerRemote = 47,
     ReduceHeartReq = 48,
     ModifyScoreRule = 49,
     AddStageEnergy = 50,
     SetTapped = 51,
-    AddContinuous = 52, /// [UNUSED]
     TapMember = 53,
-    Flavor = 34, /// [UNUSED]
     PlayMemberFromHand = 57,
-    SetHeartCost = 83, /// [UNUSED]
     MoveToDiscard = 58,
     GrantAbility = 60,
     IncreaseHeartCost = 61,
@@ -114,9 +110,10 @@ pub enum EffectType {
     OpponentChoose = 75,
     PlayLiveFromDiscard = 76,
     ReduceLiveSetLimit = 77,
-    PreventActivate = 82,
+    PreventSetToSuccessPile = 80,
     ActivateEnergy = 81,
-    PreventSetToSuccessPile = 80, /// [UNUSED]
+    PreventActivate = 82,
+    SetHeartCost = 83,
     PreventBatonTouch = 90,
 }
 
@@ -127,38 +124,38 @@ pub enum ConditionType {
     None = 0,
     Turn1 = 200,
     HasMember = 201,
-    HasColor = 202, /// [UNUSED]
+    HasColor = 202,
     CountStage = 203,
     CountHand = 204,
     CountDiscard = 205,
     IsCenter = 206,
-    LifeLead = 207, /// [UNUSED]
+    LifeLead = 207,
     CountGroup = 208,
     GroupFilter = 209,
-    OpponentHas = 210, /// [UNUSED]
-    SelfIsGroup = 211, /// [UNUSED]
+    OpponentHas = 210,
+    SelfIsGroup = 211,
     ModalAnswer = 212,
     CountEnergy = 213,
     HasLiveCard = 214,
     CostCheck = 215,
-    RarityCheck = 216, /// [UNUSED]
-    HandHasNoLive = 217, /// [UNUSED]
+    RarityCheck = 216,
+    HandHasNoLive = 217,
     CountSuccessLive = 218,
     OpponentHandDiff = 219,
     ScoreCompare = 220,
-    HasChoice = 221, /// [UNUSED]
-    OpponentChoice = 222, /// [UNUSED]
+    HasChoice = 221,
+    OpponentChoice = 222,
     CountHearts = 223,
     CountBlades = 224,
     OpponentEnergyDiff = 225,
     HasKeyword = 226,
     DeckRefreshed = 227,
-    HasMoved = 228, /// [UNUSED]
-    HandIncreased = 229, /// [UNUSED]
+    HasMoved = 228,
+    HandIncreased = 229,
     CountLiveZone = 230,
     Baton = 231,
     TypeCheck = 232,
-    IsInDiscard = 233, /// [UNUSED]
+    IsInDiscard = 233,
     AreaCheck = 234,
     CostLead = 235,
     ScoreLead = 236,

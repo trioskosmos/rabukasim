@@ -118,6 +118,17 @@ fn test_poppin_up_success_repro() {
     println!("DEBUG: Req: {:?}", req.to_array());
     println!("DEBUG: Satisfies? {}", hearts.satisfies(req));
 
+    // Set performance_results snapshot to indicate success
+    // This is required because do_live_result trusts the snapshot from check_performance_requirements
+    state.ui.performance_results.insert(0, serde_json::json!({
+        "success": true,
+        "lives": [
+            {"passed": true, "score": 1, "slot_idx": 0},
+            {"passed": false, "score": 0, "slot_idx": 1},
+            {"passed": false, "score": 0, "slot_idx": 2}
+        ]
+    }));
+
     state.do_live_result(&db);
 
     // Expect card to move to success_lives

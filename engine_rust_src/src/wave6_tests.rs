@@ -68,20 +68,16 @@ mod tests {
         state.turn = 1;
         state.current_player = 0;
         
-        // Bypass Performance Phase checks (assuming we passed them in the real flow)
-        // But do_live_result *re-checks* validity. This is what we are testing.
-        
-        // We need `performance_results` to simulate "success" flag from Performance Phase?
-        // Actually do_live_result calculates scores based on what's in the zone.
-        // BUT it filters candidates for success pile based on *re-checking* requirements.
-        
-        // Let's pretend player has 0 hearts.
-        // Req: 2. Reduction: 2. Eff Req: 0.
-        // 0 satisfies 0. Should pass.
-        
-        // Mock performance calculation if needed by logic
-        // "1. Judgment Phase: Calculate scores based on SUCCESSFUL lives (still in zone)"
-        // It checks hearts there too.
+        // Set performance_results snapshot to indicate success
+        // This is required because do_live_result trusts the snapshot from check_performance_requirements
+        state.ui.performance_results.insert(p_idx as u8, serde_json::json!({
+            "success": true,
+            "lives": [
+                {"passed": true, "score": 1, "slot_idx": 0},
+                {"passed": false, "score": 0, "slot_idx": 1},
+                {"passed": false, "score": 0, "slot_idx": 2}
+            ]
+        }));
         
         crate::core::logic::performance::do_live_result(&mut state, &db);
 
