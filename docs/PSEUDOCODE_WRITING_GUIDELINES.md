@@ -97,15 +97,19 @@ Use `{FILTER="..."}` for card selection filters:
 
 ## Heart Types
 
-| Index | Color | Japanese |
-|-------|-------|----------|
-| 0 | PINK | ピンク |
-| 1 | RED | レッド |
-| 2 | YELLOW | イエロー |
-| 3 | GREEN | グリーン |
-| 4 | BLUE | ブルー |
-| 5 | PURPLE | パープル |
-| 6 | STAR/ALL | スター |
+Based on `heart_0x.png` files in [`launcher/static_content/img/texticon/`](launcher/static_content/img/texticon/):
+
+| Icon File | Pseudocode | Notes |
+|-----------|------------|-------|
+| heart_00.png | HEART_00 | Pink heart |
+| heart_01.png | HEART_01 | Red heart |
+| heart_02.png | HEART_02 | Yellow heart |
+| heart_03.png | HEART_03 | Green heart |
+| heart_04.png | HEART_04 | Blue heart |
+| heart_05.png | HEART_05 | Purple heart |
+| heart_06.png | HEART_06 | Star/All heart |
+
+**Important**: In Japanese ability texts, hearts are referenced as `{{heart_0x.png|heart0x}}`. Use the exact `HEART_0x` format in pseudocode to avoid color name ambiguity.
 
 ## Common Patterns
 

@@ -721,9 +721,16 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                             if (ctx_choice == -1i) {
                                 let hand_len = local_state.players[p_idx].hand_len;
                                 if (hand_len > 0u) {
-                                    local_state.phase = 11; // Phase::Response
-                                    // In shader we can't easily 'return' from nested loop
-                                    // but setting phase=11 will cause outer loop check to break
+                                    // In debug mode, auto-resolve by discarding the last card
+                                    if (local_state.is_debug > 0u) {
+                                        for (var di = 0u; di < count; di = di + 1u) {
+                                            if (local_state.players[p_idx].hand_len > 0u) {
+                                                remove_from_hand(p_idx, local_state.players[p_idx].hand_len - 1u);
+                                            }
+                                        }
+                                    } else {
+                                        local_state.phase = 11; // Phase::Response
+                                    }
                                 }
                             } else {
                                 // Choice made, discard it

@@ -28,6 +28,20 @@ fn match_filter(cid: u32, attr: u32) -> bool {
     if (cid == 0u || cid >= arrayLength(&card_stats)) { return false; }
     let s = card_stats[cid];
 
+    // Cost Filter (bits 24-30)
+    // Bit 24: Enable (0x01000000)
+    // Bits 25-30: Value (cost << 25)
+    // Bit 30: is_le flag (0x40000000) - if set, check cost <= value, else cost >= value
+    if ((attr & 0x01000000u) != 0u) {
+        let cost_value = (attr >> 25u) & 0x3Fu;
+        let is_le = (attr & 0x40000000u) != 0u;
+        if (is_le) {
+            if (s.cost > cost_value) { return false; }
+        } else {
+            if (s.cost < cost_value) { return false; }
+        }
+    }
+
     // Group Filter (attr >> 5 & 0x7F)
     if ((attr & 0x10u) != 0u) {
         let gid = (attr >> 5u) & 0x7Fu;
@@ -1196,6 +1210,19 @@ fn select_random_legal_action(p_idx: u32) -> u32 {
             }
         }
     }
+    
+    // PHASE_RESPONSE: Handle interaction choices (LOOK_AND_CHOOSE, SELECT_DISCARD, etc.)
+    // Action 0 = Skip/Pass, Action 1+ = Select option
+    if (phase == PHASE_RESPONSE) {
+        // For interactions, we can either skip (action 0) or select an option (action 1+)
+        // Default to selecting the first available option (action 1) for deterministic testing
+        // This matches the CPU behavior in semantic tests
+        legal_count = legal_count + 1u;
+        if ((rng_jump() % legal_count) == 0u) { chosen_action = 1u; }  // Select first option
+        legal_count = legal_count + 1u;
+        if ((rng_jump() % legal_count) == 0u) { chosen_action = 0u; }  // Skip option
+    }
+    
     return chosen_action;
 }
 

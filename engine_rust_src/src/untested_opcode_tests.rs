@@ -5,7 +5,6 @@
 //! - Condition Opcodes: C_HAS_COLOR (202), C_HAS_MOVED (228)
 
 use crate::core::logic::*;
-use crate::core::generated_constants::*;
 use crate::test_helpers::{create_test_db, create_test_state, add_card};
 
 // =============================================================================

@@ -13,7 +13,20 @@ The primary mechanism for verifying engine logic against textual meaning.
     1. **Baseline**: `cargo test generate_v3_truth` (Synchronized capture).
     2. **Audit**: `cargo test test_semantic_mass_verification -- --nocapture`.
 - **Reporting**: [COMPREHENSIVE_SEMANTIC_AUDIT.md](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/reports/COMPREHENSIVE_SEMANTIC_AUDIT.md).
+- **Tool**: `uv run python tools/verify/error_pattern_analyzer.py`.
 - **Milestone**: **78.3% Pass Rate** (638/815). Goal is 100%.
+
+### 2. Parser Roundtrip Verification
+Ensures bytecode integrity by checking if it can be decompiled.
+- **Goal**: 100% of compiled abilities must be valid.
+- **Command**: `uv run python .agent/skills/parser_roundtrip_verification/scripts/verify_roundtrip.py`
+- **Report**: [parser_verification_report.json](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/reports/parser_verification_report.json)
+
+### 3. Crash Triage & Logic Audit
+Batch execution to catch engine panics and desyncs.
+- **Command**: `cd engine_rust_src && cargo test crash_triage -- --nocapture`
+- **Logic Audit**: `cargo test logic_audit -- --nocapture` (Deep desync check).
+- **Diagnostics**: `cargo test debug_card_logic -- [CID]`
 
 ### 2. Triage & Pattern Analysis
 Systematic categorization of failures to resolve systemic engine bugs.
@@ -26,6 +39,29 @@ Tools for inspecting individual card logic and bytecode.
 - **Card Finder**: `uv run python tools/card_finder.py <card_no>` (Unified view).
 - **Bytecode Decoder**: `uv run python tools/verify/bytecode_decoder.py <bytecode_array>` (Logic breakdown).
 - **Diagnostics**: `cargo test debug_card_logic -- [CID]` to view step-by-step engine execution.
+
+## 4. Semantic Testing Methodology
+Triangulate logic across three independent sources:
+- **Intent (JP Text)**: What the card *should* do (decoded by the Oracle).
+- **Instruction (Bytecode)**: What the engine *tries* to do (compiled logic).
+- **Inertia (State Delta)**: What the engine *actually* did to the state zones.
+
+### Segmentation Principle
+Abilities are broken into **Segments** based on Japanese conjunctive logic (e.g., "その後", "さらに"). Verify each delta (After - Before) against the segment's expected deltas.
+
+## 5. Semantic Testing Pipeline
+Validates card abilities by comparing expected behavior (from pseudocode) against actual engine execution.
+
+### Architecture
+`manual_pseudocode.json` → `pseudocode_oracle.py` → `semantic_truth_v3.json` → `semantic_assertions.rs`
+
+### Pseudocode Effect Mappings
+| Pseudocode | Delta Tag |
+|------------|-----------|
+| `DRAW(n)` | `HAND_DELTA` |
+| `DISCARD_HAND(n)` | `HAND_DISCARD` |
+| `ADD_BLADES(n)` | `BLADE_DELTA` |
+| `BOOST_SCORE(n)` | `SCORE_DELTA` |
 
 ## Engine Reference Tables
 

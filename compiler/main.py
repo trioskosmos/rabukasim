@@ -503,20 +503,14 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
         raw_ability = str(data.get("pseudocode", data.get("ability", "")))
 
     abilities = _v2_parser.parse(raw_ability)
-    if "PL!S-bp2-005-P" in card_no:
-        print(f"DEBUG: Processing {repr(card_no)}")
-        print(f"DEBUG: In overrides? {card_no in _manual_overrides}")
-        if card_no not in _manual_overrides:
-            # Find close matches
-            for k in _manual_overrides.keys():
-                if "PL!S-bp2-005-P" in k:
-                    print(f"DEBUG: Potential match in overrides: {repr(k)}")
-
-        print(f"DEBUG: Parsing PL!S-bp2-005-P raw_ability:\n{raw_ability}")
-        for ab in abilities:
+    if "PL!-bp3-008-P" in card_no or card_id == 30:
+        print(f"DEBUG: Processing Card ID 30: {card_no}")
+        for idx, ab in enumerate(abilities):
+            print(f"  Ability #{idx}: OncePerTurn={ab.is_once_per_turn}, Trigger={ab.trigger.name}")
+            print(f"  Instructions: {[(type(i).__name__, getattr(i, 'type', getattr(i, 'effect_type', 'N/A'))) for i in ab.instructions]}")
             for eff in ab.effects:
-                if eff.effect_type == 41:  # LOOK_AND_CHOOSE
-                    print(f"DEBUG: Found LOOK_AND_CHOOSE in parser output. Params: {eff.params}")
+                if eff.effect_type == EffectType.RECOVER_LIVE:
+                    print(f"    RECOVER_LIVE params: {eff.params}")
 
     # --- GRANT_ABILITY FLATTENING ---
     extra_abilities = []

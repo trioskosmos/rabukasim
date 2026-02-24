@@ -11,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/unified_log_styles.css">
 </head>
 
 <body>
@@ -133,7 +134,7 @@
         <div class="sidebar sidebar-left" id="sidebar-left">
             <div class="sidebar-section panel-container">
                 <div id="card-desc-panel" class="card-desc-panel">
-                    <h3 id="card-desc-title">カード能力</h3>
+                    <h3 id="card-desc-title" class="card-desc-title">カード能力</h3>
                     <div id="card-desc-content" class="card-desc-content"></div>
                 </div>
                 <div id="active-abilities-panel" class="active-abilities-panel">
@@ -578,7 +579,7 @@
 
     <!-- Game Setup Modal -->
     <div id="setup-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content setup-modal-content">
+        <div class="modal-content setup-modal-content highlight-hover">
             <div class="modal-header">
                 <span class="modal-title" id="setup-title">Game Setup</span>
                 <button class="close-btn" onclick="closeSetupModal()">×</button>
@@ -594,7 +595,7 @@
                         <h4 style="color: var(--accent-blue);">Player 1 (You)</h4>
                         <div class="setting-item">
                             <label>Select Deck:</label>
-                            <select id="p0-deck-select" class="form-select"
+                            <select id="p0-deck-select" class="form-select highlight-hover"
                                 onchange="onDeckSelectChange(0, this.value)">
                                 <option value="random">🎲 Random Deck</option>
                                 <option value="paste">📋 Paste Deck List...</option>
@@ -612,7 +613,7 @@
                         <h4 style="color: var(--accent-pink);">Player 2</h4>
                         <div class="setting-item">
                             <label>Select Deck:</label>
-                            <select id="p1-deck-select" class="form-select"
+                            <select id="p1-deck-select" class="form-select highlight-hover"
                                 onchange="onDeckSelectChange(1, this.value)">
                                 <option value="paste">📋 Paste Deck List...</option>
                                 <option value="random">🎲 Random Deck</option>
@@ -661,11 +662,12 @@
                         <label>Select Your Deck:</label>
                         <select id="join-deck-select" class="form-select" onchange="onDeckSelectChange('join')">
                             <option value="random">🎲 Random Deck</option>
+                            <option value="paste">📋 Paste Deck List...</option>
                         </select>
                     </div>
 
-                    <div id="join-paste-area" class="setup-paste-container" style="display:none;">
-                        <textarea id="join-deck-paste" class="report-textarea"
+                    <div id="pjoin-paste-area" class="setup-paste-container" style="display:none;">
+                        <textarea id="pjoin-deck-paste" class="report-textarea"
                             placeholder="Paste deck list here..."></textarea>
                     </div>
 

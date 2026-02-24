@@ -15,7 +15,8 @@ pub fn handle_draw(state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityC
             } else {
                 state.draw_cards(target_p, count);
             }
-            state.log_turn_event("EFFECT", ctx.source_card_id, ctx.ability_index, p_idx as u8, &format!("Draw {} card(s)", count));
+            // Unified logging: EFFECT events now go to both turn_history and rule_log
+            state.log_event("EFFECT", &format!("Draw {} card(s)", count), ctx.source_card_id, ctx.ability_index, p_idx as u8, None, true);
         },
         O_DRAW_UNTIL => {
             let target_hand_size = v as usize;

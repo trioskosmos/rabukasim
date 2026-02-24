@@ -222,13 +222,18 @@ impl GpuSemanticBridge {
         // If the DISCARD_DELTA value matches a HAND_DISCARD value, it's likely a duplicate
         // In that case, we should not double-count
         if !hand_discard_values.is_empty() {
-            if let Some(discard_delta) = aggregated.get(&DeltaTag::DiscardDelta) {
+            if let Some(discard_delta) = aggregated.get_mut(&DeltaTag::DiscardDelta) {
                 // Check if the discard delta includes the hand discard value
                 // If so, subtract the duplicate
                 let total_hand_discard: i32 = hand_discard_values.iter().sum();
-                // If DISCARD_DELTA is >= total_hand_discard, it might include the hand discard already
-                // We need to be careful here - only adjust if there's clear duplication
-                // For now, we'll trust the aggregation and not make assumptions
+                // If DISCARD_DELTA equals total_hand_discard, it's likely a duplicate
+                // Subtract the duplicate to avoid double-counting
+                if *discard_delta == total_hand_discard && total_hand_discard > 0 {
+                    // The DISCARD_DELTA is exactly the same as HAND_DISCARD total
+                    // This means the semantic truth has both tags for the same effect
+                    // We already added HAND_DISCARD to DISCARD_DELTA, so remove the duplicate
+                    *discard_delta -= total_hand_discard;
+                }
             }
         }
         

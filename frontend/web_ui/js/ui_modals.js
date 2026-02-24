@@ -46,12 +46,14 @@ export const Modals = {
         const select = document.getElementById(elementId);
         if (!select) return;
 
-        // Preserve "Manual" and "Random" options if they exist
+        // Preserve "Manual", "Paste" and "Random" options if they exist
         const manual = select.querySelector('option[value="manual"]');
+        const paste = select.querySelector('option[value="paste"]');
         const random = select.querySelector('option[value="random"]');
 
         select.innerHTML = '';
         if (manual) select.appendChild(manual);
+        if (paste) select.appendChild(paste);
 
         (decks || []).forEach(d => {
             const opt = document.createElement('option');
@@ -66,6 +68,8 @@ export const Modals = {
         // Default to the first preset instead of "Random" (if presets exist)
         if (decks && decks.length > 0) {
             select.value = decks[0].id;
+        } else if (paste) {
+            select.value = 'paste';
         } else if (manual) {
             select.value = 'manual';
         }

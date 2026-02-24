@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import Any, Dict, List
@@ -605,48 +606,59 @@ class Ability:
         if hasattr(Opcode, op_name):
             op = getattr(Opcode, op_name)
             # Fixed width: [Opcode, Value, Attr, TargetSlot]
-            # Check multiple potential keys for the value (min, count, value, diff)
-            v_raw = cond.params.get(
-                "value", cond.params.get("min", cond.params.get("count", cond.params.get("diff", 0)))
+            # Check multiple potential keys for the value (min, count, value, diff) - case insensitive
+            params_upper = {k.upper(): v for k, v in cond.params.items() if isinstance(k, str)}
+            
+            v_raw = (
+                cond.params.get("value") or cond.params.get("min") or cond.params.get("count") or cond.params.get("diff") or
+                params_upper.get("VALUE") or params_upper.get("MIN") or params_upper.get("COUNT") or params_upper.get("DIFF") or 0
             )
             try:
                 val = int(v_raw) if v_raw is not None else 0
             except (ValueError, TypeError):
                 val = 0
 
+            # Handle ALL_AREAS and ALL flags for stage counts
+            if cond.params.get("ALL_AREAS") or cond.params.get("all_areas") or params_upper.get("ALL_AREAS"):
+                val = 3
+            if (cond.params.get("all") or cond.params.get("ALL") or params_upper.get("ALL")) and cond.type != ConditionType.GROUP_FILTER:
+                # For non-group filters, bit 2 might still be used for "Check ALL"
+                val |= 0x04
+
             # Resolve attr (color, group, or unit) to integer
-            attr_raw = cond.params.get(
-                "attr", cond.params.get("color", cond.params.get("group", cond.params.get("unit", 0)))
+            attr_raw = (
+                cond.params.get("attr") or cond.params.get("color") or cond.params.get("group") or cond.params.get("unit") or
+                params_upper.get("ATTR") or params_upper.get("COLOR") or params_upper.get("GROUP") or params_upper.get("UNIT") or 0
             )
             if isinstance(attr_raw, str):
                 # Resolve using enums
-                if "group" in cond.params:
+                if "group" in cond.params or "GROUP" in params_upper:
                     from engine.models.enums import Group
 
                     attr = int(Group.from_japanese_name(attr_raw))
-                elif "unit" in cond.params:
+                elif "unit" in cond.params or "UNIT" in params_upper:
                     from engine.models.enums import Unit
 
                     attr = int(Unit.from_japanese_name(attr_raw))
                 elif cond.type == ConditionType.SCORE_COMPARE:
                     # Map score/cost/heart types to int
-                    stype = cond.params.get("type", "score")
+                    stype = cond.params.get("type") or params_upper.get("TYPE") or "score"
                     type_map = {"score": 0, "cost": 1, "heart": 2, "heart_count": 2, "cheer_count": 3}
-                    attr = type_map.get(stype, 0)
+                    attr = type_map.get(str(stype).lower(), 0)
                 else:
                     attr = 0
             else:
                 attr = int(attr_raw) if attr_raw is not None else 0
 
             # Comparison mapping (GE=0, LE=1, GT=2, LT=3, EQ=4)
-            comp_str = cond.params.get("comparison", "GE")
+            comp_str = str(cond.params.get("comparison") or params_upper.get("COMPARISON") or "GE").upper()
             comp_map = {"GE": 0, "LE": 1, "GT": 2, "LT": 3, "EQ": 4}
             comp_val = comp_map.get(comp_str, 0)
 
             # Zone mapping: STAGE=0, LIVE_ZONE=1, LIVE_RESULT/EXCESS=2
             slot = 0
-            zone = cond.params.get("zone", "")
-            context = cond.params.get("context", "")
+            zone = str(cond.params.get("zone") or params_upper.get("ZONE") or "").upper()
+            context = str(cond.params.get("context") or params_upper.get("CONTEXT") or "").lower()
 
             if zone == "LIVE_ZONE":
                 slot = 1
@@ -655,7 +667,7 @@ class Ability:
             elif context == "excess":
                 slot = 2
             else:
-                slot = cond.params.get("TargetSlot", 0)
+                slot = int(cond.params.get("TargetSlot") or params_upper.get("TARGETSLOT") or 0)
 
             # Special flags for certain conditions
             if cond.type == ConditionType.GROUP_FILTER:
@@ -677,8 +689,24 @@ class Ability:
                         pass
             
             if cond.type == ConditionType.COUNT_GROUP:
-                if cond.params.get("UNIQUE_NAMES") or cond.params.get("unique_names"):
+                if cond.params.get("UNIQUE_NAMES") or cond.params.get("unique_names") or params_upper.get("UNIQUE_NAMES"):
                     attr |= 0x8000 # FILTER_UNIQUE_NAMES flag
+                
+                # If attr is still 0, try to extract from FILTER parameter
+                if attr & 0x7FFF == 0:
+                    f_str = str(cond.params.get("filter") or params_upper.get("FILTER") or "").upper()
+                    if "UNIT_" in f_str:
+                        from engine.models.enums import Unit
+                        for u in Unit:
+                            if u.name in f_str:
+                                attr |= (int(u) | 0x10000) # Set unit enable bit
+                                break
+                    elif "GROUP_" in f_str:
+                        from engine.models.enums import Group
+                        for g in Group:
+                            if g.name in f_str:
+                                attr |= (int(g) | 0x10) # Set group enable bit
+                                break
 
             # Pack comparison into higher bits of slot (bits 4-7)
             # Slot is usually 0-3, so shift 4 is safe.
@@ -717,7 +745,7 @@ class Ability:
                 filter_type = 0
                 if "filter" in cond.params:
                     f_str = cond.params["filter"]
-                    if f_str == "COST_LT_SELF":
+                if f_str.upper() == "COST_LT_SELF":
                         filter_type = 1  # 1 = Cost Check Less Than Self
 
                 bytecode.extend([int(Opcode.CHECK_BATON), unit_id, filter_type, 0])
@@ -725,7 +753,7 @@ class Ability:
         elif cond.type == ConditionType.TYPE_CHECK:
             if hasattr(Opcode, "CHECK_TYPE_CHECK"):
                 # card_type: "live" = 1, "member" = 0
-                ctype = 1 if cond.params.get("card_type") == "live" else 0
+                ctype = 1 if str(cond.params.get("card_type", "")).lower() == "live" else 0
                 bytecode.extend([int(Opcode.CHECK_TYPE_CHECK), ctype, 0, 0])
         else:
             if cond.type != ConditionType.NONE:
@@ -778,9 +806,11 @@ class Ability:
                 slot = int(TargetType.SELF)
 
             # --- Resolve Attr (Params/Destination) ---
+            params_upper = {k.upper(): v for k, v in cost.params.items() if isinstance(k, str)}
+            
             if op == Opcode.MOVE_TO_DECK:
                 # 0=Discard, 1=Top, 2=Bottom
-                to = cost.params.get("to", "top").lower()
+                to = str(cost.params.get("to") or params_upper.get("TO") or "top").lower()
                 if to == "bottom":
                     attr = 2
                 elif to == "top":
@@ -794,17 +824,18 @@ class Ability:
             # For O_SELECT_MEMBER / O_PLAY_MEMBER_FROM_HAND, encode filters into 'attr' (a)
             if op in [Opcode.SELECT_MEMBER, Opcode.PLAY_MEMBER_FROM_HAND, Opcode.PLAY_MEMBER_FROM_DISCARD]:
                 # Cost LE filter
-                if "cost_le" in cost.params:
-                    cle = int(cost.params["cost_le"])
+                cle_raw = cost.params.get("cost_le") or params_upper.get("COST_LE")
+                if cle_raw is not None:
+                    cle = int(cle_raw)
                     attr |= 1 << 4  # Comparison = LE (1)
                     attr |= cle << 8
 
                 # Name filter (Setsuna = 1 if using CHAR_MAP indices, or specialized bits)
-                name_filter = cost.params.get("name")
+                name_filter = cost.params.get("name") or params_upper.get("NAME")
                 if name_filter:
                     from engine.models.enums import CHAR_MAP
 
-                    char_id = CHAR_MAP.get(name_filter, 0)
+                    char_id = CHAR_MAP.get(str(name_filter), 0)
                     if char_id > 0:
                         attr |= char_id << 16
 
@@ -813,8 +844,9 @@ class Ability:
 
             # Use value from cost params if available (max/count)
             value = cost.value
-            if not value and "count" in cost.params:
-                value = int(cost.params["count"])
+            count_raw = cost.params.get("count") or params_upper.get("COUNT")
+            if not value and count_raw is not None:
+                value = int(count_raw)
 
             bytecode.extend([int(op), int(value), attr, slot])
         else:
@@ -917,7 +949,8 @@ class Ability:
     def _compile_single_effect(self, eff: Effect, bytecode: List[int]):
         # Normalize params to lowercase keys for consistent lookups
         eff.params = {str(k).lower(): v for k, v in eff.params.items()}
-        print(f"DEBUG: Compiling Single Effect: {eff.effect_type.name} (Val={eff.value})")
+        print(f"DEBUG: Compiling Single Effect: {eff.effect_type.name} (Val={eff.value}) Target={eff.target.name}")
+        
         if hasattr(Opcode, eff.effect_type.name):
             op = getattr(Opcode, eff.effect_type.name)
 
@@ -927,6 +960,21 @@ class Ability:
                 val = 1
             attr = eff.params.get("color", 0) if isinstance(eff.params.get("color"), int) else 0
             slot = eff.target.value if hasattr(eff.target, "value") else int(eff.target)
+
+            # ZONE RELOCATION: Use bits 16-23 of 's' for Source Zone
+            if eff.effect_type in (
+                EffectType.RECOVER_MEMBER,
+                EffectType.RECOVER_LIVE,
+                EffectType.PLAY_MEMBER_FROM_DISCARD,
+                EffectType.PLAY_LIVE_FROM_DISCARD,
+            ):
+                source = str(eff.params.get("source", "discard")).lower()
+                source_val = 7 if source == "discard" else 0
+                if source == "yell": source_val = 15
+                if source == "deck" or source == "deck_top": source_val = 8
+                
+                slot = (slot & 0xFF) | ((source_val & 0xFF) << 16)
+                print(f"DEBUG: Zone Packing for {eff.effect_type.name}: source={source}, source_val={source_val}, final_slot={slot}")
 
             # Check for interactive target selection requirement
             # Use Bit 5 (0x20) in attr to flag "Requires Selection"
@@ -1017,16 +1065,17 @@ class Ability:
                         attr &= ~(0x7F << 24)  # Clear Cost bits
                         attr |= (char_ids[2] & 0x7F) << 24
 
-                # Source packing (New standard: Bits 12-15)
+                # ZONE RELOCATION: Use bits 16-23 of 's' for Source Zone
                 src = str(eff.params.get("source", "DECK")).upper()
                 src_val = 8  # Default DECK
                 if src == "HAND":
                     src_val = 6
                 elif src == "DISCARD":
                     src_val = 7
-                elif src in ["YELL", "REVEALED"]:
+                elif src in ["YELL", "REVEALED", "CHEER"]:
                     src_val = 15
-                attr |= (src_val & 0x0F) << 12
+                
+                slot = (slot & 0xFF) | ((src_val & 0xFF) << 16)
 
                 if eff.params.get("destination") == "discard":
                     attr |= 0x01  # Bit 0: Destination Discard
@@ -1065,19 +1114,20 @@ class Ability:
                 """
                 attr = self._pack_filter_attr(eff)
 
-                # Source Zone: Bits 12-15
+                # ZONE RELOCATION: Use bits 16-23 of 's' for Source Zone
                 src_zone = str(eff.params.get("source") or eff.params.get("zone") or "DECK").upper()
                 src_val = 8  # Default DECK
                 if src_zone == "HAND":
                     src_val = 6
                 elif src_zone == "DISCARD":
                     src_val = 7
-                elif src_zone in ["YELL", "REVEALED"]:
+                elif src_zone in ["YELL", "REVEALED", "CHEER"]:
                     src_val = 15
-                attr |= (src_val & 0x0F) << 12
+                
+                slot = (slot & 0xFF) | ((src_val & 0xFF) << 16)
 
                 if eff.is_optional or eff.params.get("is_optional"):
-                    attr |= 0x02  # Bit 1: Optional (May)
+                    attr |= 0x01  # Bit 0: Optional (May)
 
             # Special handling for SET_HEART_COST
             if eff.effect_type == EffectType.SET_HEART_COST:
@@ -1155,10 +1205,13 @@ class Ability:
                     count_op = int(ConditionType.COUNT_DISCARD)
                 elif count_src == "ENERGY":
                     count_op = int(ConditionType.COUNT_ENERGY)
+                elif count_src == "COLOR":
+                    # Custom opcode used for unique color counting
+                    count_op = 250 # C_COUNT_UNIQUE_COLORS
                 else:
                     count_op = int(ConditionType.COUNT_STAGE)
 
-                attr |= 0x02  # DYNAMIC flag
+                attr |= 0x02  # Bit 1: DYNAMIC flag
                 slot = count_op # Repurpose slot for count opcode
                 # Pack filter parameters for the count into 'a'.
                 attr |= self._pack_filter_attr(eff)
@@ -1201,18 +1254,18 @@ class Ability:
                 # I'll add Color if I find a clear use case or if I can find safe bits.
 
 
-            # Special handling for MOVE_TO_DISCARD params
-            if eff.effect_type == EffectType.MOVE_TO_DISCARD:
-                # Use bits 12-15 for Source Zone to avoid collision with Optional/Dynamic flags
-                source = eff.params.get("from") or eff.params.get("source")
-                if source == "deck_top" or source == "DECK":
-                    attr |= 8 << 12  # Source: Deck Top (8) or Deck (0, but we'll use 8 for consistency if top)
-                elif source == "hand" or source == "HAND":
-                    attr |= 6 << 12  # Source: Hand (6)
-                elif source == "energy" or source == "ENERGY":
-                    attr |= 3 << 12  # Source: Energy (3 - Wait, check interpreter for energy id)
-                elif source == "self" or source == "SELF":
-                    attr |= 4 << 12  # Source: Stage (4)
+                source = str(eff.params.get("from") or eff.params.get("source") or "").lower()
+                source_val = 0
+                if source == "deck_top" or source == "deck":
+                    source_val = 8
+                elif source == "hand":
+                    source_val = 6
+                elif source == "energy":
+                    source_val = 3
+                elif source == "self":
+                    source_val = 4
+                
+                slot = (slot & 0xFF) | ((source_val & 0xFF) << 16)
 
             if eff.value_cond != ConditionType.NONE:
                 val = int(eff.value_cond)
@@ -1251,34 +1304,48 @@ class Ability:
             # Special encoding for REVEAL_UNTIL
             if eff.effect_type == EffectType.REVEAL_UNTIL:
                 if eff.value_cond == ConditionType.TYPE_CHECK:
-                    if eff.params.get("card_type") == "live":
-                        attr |= 0x01
+                    if str(eff.params.get("card_type", "")).lower() == "live":
+                        slot |= (1 << 25) # Bit 25 of S: IS_LIVE for reveal-until
                 elif eff.value_cond == ConditionType.COST_CHECK:
                     cost = int(eff.params.get("min", 0))
-                    attr |= (cost & 0x1F) << 1
+                    # Bits 1-5 for cost (6 bits)
+                    attr |= (cost & 0x3F) << 1
 
-            # Default to Choice (slot 4) for PLAY opcodes if target is generic (SELF/PLAYER)
-            if eff.effect_type in (
-                EffectType.PLAY_MEMBER_FROM_HAND,
-                EffectType.PLAY_MEMBER_FROM_DISCARD,
-                EffectType.PLAY_LIVE_FROM_DISCARD,
-                EffectType.RECOVER_MEMBER,
-                EffectType.RECOVER_LIVE,
-            ):
                 if eff.effect_type in (
+                    EffectType.PLAY_MEMBER_FROM_HAND,
                     EffectType.PLAY_MEMBER_FROM_DISCARD,
                     EffectType.PLAY_LIVE_FROM_DISCARD,
                     EffectType.RECOVER_MEMBER,
                     EffectType.RECOVER_LIVE,
+                    EffectType.MOVE_TO_DISCARD,
+                    EffectType.SELECT_CARDS,
+                    EffectType.SELECT_MEMBER,
+                    EffectType.SELECT_LIVE,
                 ):
                     attr = self._pack_filter_attr(eff)
+                    
+                    # ZONE RELOCATION: Use bits 16-23 of 's' for Source Zone
+                    source_raw = (eff.params.get("source") or eff.params.get("SOURCE") or 
+                                 eff.params.get("zone") or eff.params.get("from") or eff.params.get("FROM"))
+                    
+                    source = str(source_raw or "discard").lower()
+                    source_val = 7 if source == "discard" else 0
+                    if source == "yell": source_val = 15
+                    if source == "deck" or source == "deck_top": source_val = 8
+                    
+                    slot = (slot & 0xFF) | ((source_val & 0xFF) << 16)
 
-                if eff.target in (TargetType.SELF, TargetType.PLAYER):
-                    slot = 4
+                # Default to Choice (slot 4) if target is generic, BUT NOT for MOVE_TO_DISCARD from deck
+                is_deck_discard = eff.effect_type == EffectType.MOVE_TO_DISCARD and source_val == 8
+                if eff.target in (TargetType.SELF, TargetType.PLAYER) and not is_deck_discard:
+                    slot = (slot & ~0xFF) | 4
+                
+                # TARGET_OPPONENT flag (Bit 24 of Slot/S word)
+                if eff.target == TargetType.OPPONENT:
+                    slot |= (1 << 24)
 
             # Special encoding for LOOK_AND_CHOOSE: val = look_count | (pick_count << 8) | (color_mask << 23)
             if eff.effect_type == EffectType.LOOK_AND_CHOOSE:
-                print(f"DEBUG: Compiling LOOK_AND_CHOOSE. Params: {eff.params}")
                 look_count = int(val)
                 pick_count = int(eff.params.get("choose_count", 0))
 
@@ -1299,11 +1366,9 @@ class Ability:
                     for p in color_str.split("/"):
                         color_mask |= color_map.get(p.strip(), 0)
 
-                # Pack look/pick (bits 0-15) and color_mask (bits 23-29)
-                val = (look_count & 0xFF) | ((pick_count & 0xFF) << 8) | ((color_mask & 0x7F) << 23)
-                print(
-                    f"DEBUG: Packed LOOK_AND_CHOOSE V={val} (Look={look_count}, Pick={pick_count}, ColorMask={color_mask:02X})"
-                )
+                # Pack look/pick (bits 0-15), color_mask (bits 23-29), and reveal (bit 30)
+                reveal_bit = 1 if eff.params.get("reveal") else 0
+                val = (look_count & 0xFF) | ((pick_count & 0xFF) << 8) | ((color_mask & 0x7F) << 23) | (reveal_bit << 30)
 
             def to_signed_32(x):
                 x = int(x) & 0xFFFFFFFF
@@ -1327,13 +1392,16 @@ class Ability:
         Bits 2-3:   Type (0=Any, 1=Member, 2=Live)
         Bit 4:      Group Filter Enable
         Bits 5-11:  Group ID
-        Bit 12-15:  Source Zone (Usually 6=Hand, 7=Discard, 8=Deck)
+        Bit 12:     Tapped Filter Enable (FILTER_TAPPED)
+        Bit 13:     Has Blade Heart (FILTER_HAS_BLADE_HEART)
+        Bit 14:     Not Has Blade Heart (FILTER_NOT_HAS_BLADE_HEART)
+        Bit 15:     Unique Names (FILTER_UNIQUE_NAMES)
         Bit 16:     Unit Filter Enable
         Bits 17-23: Unit ID
         Bit 24:     Cost Filter Enable
         Bits 25-29: Cost Threshold (0-31)
         Bit 30:     Cost Mode (0=GE, 1=LE)
-        Bit 31:     Color Filter Enable (Careful with sign bit)
+        Bit 31:     Color Filter Enable
         """
         # Parse 'filter' string if present (e.g. "GROUP_ID=0, TYPE_LIVE, COST_GE=11")
         detected_type = None
@@ -1388,6 +1456,10 @@ class Ability:
                         eff.params["has_blade_heart"] = True
                     elif up == "NOT_BLADE_HEART":
                         eff.params["has_blade_heart"] = False
+                    elif up.startswith("UNIT_"):
+                        eff.params["unit"] = up[5:]
+                    elif up.startswith("GROUP_"):
+                        eff.params["group"] = up[6:]
                     elif up in ["PINK", "RED", "YELLOW", "GREEN", "BLUE", "PURPLE"]:
                         eff.params["color_filter"] = up
 

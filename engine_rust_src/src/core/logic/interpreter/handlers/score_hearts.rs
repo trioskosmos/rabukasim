@@ -34,7 +34,8 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
             } else if resolved_slot < 3 {
                 state.core.players[p_idx].blade_buffs[resolved_slot as usize] += v as i16;
             }
-            state.log_turn_event("EFFECT", ctx.source_card_id, ctx.ability_index, p_idx as u8, &format!("+{} Appeal", v));
+            // Unified logging: EFFECT events now go to both turn_history and rule_log
+            state.log_event("EFFECT", &format!("+{} Appeal", v), ctx.source_card_id, ctx.ability_index, p_idx as u8, None, true);
         },
         O_SET_BLADES => {
             if target_slot == 4 && ctx.area_idx >= 0 {
@@ -60,7 +61,8 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
                     state.log(msg);
                 }
             }
-            state.log_turn_event("EFFECT", ctx.source_card_id, ctx.ability_index, p_idx as u8, &format!("+{} Heart(s)", v));
+            // Unified logging: EFFECT events now go to both turn_history and rule_log
+            state.log_event("EFFECT", &format!("+{} Heart(s)", v), ctx.source_card_id, ctx.ability_index, p_idx as u8, None, true);
         },
         O_SET_HEARTS => {
             if (a as usize) < 7 {

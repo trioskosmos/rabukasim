@@ -221,7 +221,7 @@ export const Rendering = {
         const targetSlotIdx = a.target_slot_idx ?? a.secondary_slot_idx;
         const tPlayer = a.target_player !== undefined ? a.target_player : perspectivePlayer;
         const isMe = (tPlayer === perspectivePlayer);
-        const playerKey = isMe ? 'p0' : 'p1';
+        const playerKey = isMe ? 'my' : 'opp'; // Changed from p0/p1 to match DOM IDs
 
         const targets = [];
         if (hIdx !== undefined) targets.push(`${playerKey}-hand-card-${hIdx}`);

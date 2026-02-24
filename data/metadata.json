@@ -165,6 +165,7 @@
         "HAS_MOVED": 228,
         "HAND_INCREASED": 229,
         "COUNT_LIVE_ZONE": 230,
+        "COUNT_UNIQUE_COLORS": 250,
         "BATON": 231,
         "TYPE_CHECK": 232,
         "IS_IN_DISCARD": 233,

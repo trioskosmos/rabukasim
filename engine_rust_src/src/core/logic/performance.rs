@@ -244,7 +244,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         }
         if !yelled_names.is_empty() {
             let msg = format!("Yelled {} card(s): {}", yelled_names.len(), yelled_names.join(", "));
-            state.log_turn_event("YELL", -1, -1, p_idx as u8, &msg);
+            // Unified logging: YELL events now go to both turn_history and rule_log
+            state.log_event("YELL", &msg, -1, -1, p_idx as u8, Some("Rule 8.3.11"), true);
         }
         state.performance_yell_done[p_idx] = true;
         if state.phase == Phase::Response { return; }
@@ -554,6 +555,18 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
        }
     }
 
+    // Calculate total_score as sum of live card scores for passed lives + volume icons
+    let live_score: u32 = lives_list.iter()
+        .filter_map(|l| {
+            if l.get("passed").and_then(|v| v.as_bool()).unwrap_or(false) {
+                l.get("score").and_then(|v| v.as_u64()).map(|s| s as u32)
+            } else {
+                None
+            }
+        })
+        .sum();
+    let total_score = live_score + volume_icons as u32;
+
     let member_contributions: Vec<_> = member_summary.values().collect();
     state.ui.performance_results.insert(p_idx as u8, json!({
         "success": all_met,
@@ -568,7 +581,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
             "hearts": heart_breakdown,
             "requirements": requirement_logs,
             "transforms": transform_logs
-        }
+        },
+        "total_score": total_score
     }));
     // state.yell_cards.clear(); // REMOVED: Now cleared in untap_all() for persistence
     advance_from_performance(state);

@@ -472,7 +472,10 @@
     "IS_MAIN_PHASE": "メインフェイズ",
     "ON_STAGE_ENTRY": "登場時",
     "ON_MEMBER_DISCARD": "メンバー退場時",
-    "ON_OPPONENT_TAP": "相手ウェイト時"
+    "ON_OPPONENT_TAP": "相手ウェイト時",
+    "RECOVER_FROM_CHEER": "応援から{value}枚回収",
+    "BOOST_SCORE_PER_COLOR": "色ごとにスコア+{value}",
+    "PLACE_ENERGY_WAIT": "エネチャージ+{value}(ウェイト)"
   },
   "params": {
     "UNTIL": {
@@ -493,6 +496,8 @@
     "COUNT": "{v}回",
     "KEYWORD": "{v}",
     "ZONE": "{v}",
+    "GROUP_ID": "グループ{v}",
+    "HEART_TYPE": "{v}ハート",
     "FILTER": {
       "energy": "エネ",
       "member": "メンバー"

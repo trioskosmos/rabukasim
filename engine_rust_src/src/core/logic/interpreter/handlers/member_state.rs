@@ -33,10 +33,15 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
                         return HandlerResult::Suspend;
                     }
                 }
-                if resolved_slot < 3 { state.core.players[p_idx].set_tapped(resolved_slot as usize, true); }
+                
+                // Only auto-tap if it was NOT an optional handler that just suspended or was bypassed
+                if (a & 0x03) == 0 && resolved_slot < 3 {
+                    state.core.players[p_idx].set_tapped(resolved_slot as usize, true);
+                }
             } else {
                 if (a & 0x02) != 0 {
-                    if ctx.choice_index == 1 { return HandlerResult::SetCond(false); }
+                    // 1 and 99 are both mapped to "No" for optional costs
+                    if ctx.choice_index == 1 || ctx.choice_index == 99 { return HandlerResult::SetCond(false); }
                     if resolved_slot < 3 { state.core.players[p_idx].set_tapped(resolved_slot as usize, true); }
                     return HandlerResult::SetCond(true);
                 } else {

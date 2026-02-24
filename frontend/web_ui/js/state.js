@@ -37,7 +37,7 @@ const stateInternal = {
 
     // Config
     currentLang: 'jp',
-    showFriendlyAbilities: localStorage.getItem('lovelive_friendly_abilities') !== 'false',
+    showFriendlyAbilities: localStorage.getItem('lovelive_friendly_abilities') === 'true',
 
     // UI State & Cache
     selectedTurn: -1, // Log selection (-1 means all)

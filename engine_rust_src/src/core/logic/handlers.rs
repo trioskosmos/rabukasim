@@ -331,10 +331,16 @@ impl PhaseHandlers for GameState {
             for i in untap_energy_indices { self.core.players[p_idx].set_energy_tapped(i, true); }
         }
 
-        if !self.ui.silent { 
-            self.log(format!("Rule 7.7.2.2: Player {} plays {} to Slot {}", p_idx, card.name, slot_idx)); 
-            self.log_turn_event("PLAY", card_id, -1, p_idx as u8, &format!("Plays {} to Slot {}", card.name, slot_idx + 1));
-        }
+        // Unified logging: records to both turn_history and rule_log
+        self.log_event(
+            "PLAY",
+            &format!("Player {} plays {} to Slot {}", p_idx, card.name, slot_idx + 1),
+            card_id,
+            -1,
+            p_idx as u8,
+            Some("Rule 7.7.2.2"),
+            true,
+        );
 
         self.execute_play_member_state(db, p_idx, hand_idx, card_id, slot_idx, secondary_slot_idx, start_ab_idx, choice_idx);
         Ok(())
@@ -395,11 +401,17 @@ impl PhaseHandlers for GameState {
              return Err("Not an activated ability".to_string());
         }
 
-        if !self.ui.silent { 
-            let p_code = if ab.pseudocode.is_empty() { "" } else { &format!(": {}", ab.pseudocode) };
-            self.log(format!("Rule 7.7.2.1: Player {} activates ability of {}{}", p_idx, card.name, p_code)); 
-            self.log_turn_event("ACTIVATE", cid, ab_idx as i16, p_idx as u8, &format!("Activates {}{}", card.name, p_code));
-        }
+        // Unified logging: records to both turn_history and rule_log
+        let p_code = if ab.pseudocode.is_empty() { "" } else { &format!(": {}", ab.pseudocode) };
+        self.log_event(
+            "ACTIVATE",
+            &format!("Player {} activates ability of {}{}", p_idx, card.name, p_code),
+            cid,
+            ab_idx as i16,
+            p_idx as u8,
+            Some("Rule 7.7.2.1"),
+            true,
+        );
 
         let mut ctx = AbilityContext { source_card_id: cid, player_id: p_idx as u8, area_idx: slot_idx as i16, ability_index: ab_idx as i16, choice_index: choice_idx as i16, ..Default::default() };
         if target_slot >= 0 { ctx.target_slot = target_slot as i16; }

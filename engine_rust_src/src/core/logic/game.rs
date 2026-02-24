@@ -96,10 +96,8 @@ impl GameState {
     }
 
     pub fn log_rule(&mut self, rule: &str, msg: &str) {
-        if self.ui.silent { return; }
-        let p_idx = self.current_player;
-        self.log(format!("[{}] {}", rule, msg));
-        self.log_turn_event("RULE", -1, -1, p_idx, msg);
+        // Use unified log_event for RULE events
+        self.log_event("RULE", msg, -1, -1, self.current_player, Some(rule), true);
     }
 
     pub fn log_turn_event(&mut self, event_type: &str, source_cid: i32, ability_idx: i16, player_id: u8, description: &str) {
@@ -115,6 +113,54 @@ impl GameState {
             ability_idx,
             description: description.to_string(),
         });
+    }
+
+    /// Unified event logging function that records to both turn_history and optionally rule_log.
+    /// This replaces the pattern of calling both log() and log_turn_event() separately.
+    /// 
+    /// # Arguments
+    /// * `event_type` - Type of event (e.g., "PLAY", "ACTIVATE", "TRIGGER", "RULE", "EFFECT")
+    /// * `description` - Human-readable description of the event
+    /// * `source_cid` - Source card ID (or -1 if not applicable)
+    /// * `ability_idx` - Ability index (or -1 if not applicable)
+    /// * `player_id` - Player who triggered the event
+    /// * `rule_ref` - Optional rule reference (e.g., "Rule 7.7.2.1")
+    /// * `log_to_rule_log` - If true, also add to rule_log for text-based viewing
+    pub fn log_event(
+        &mut self,
+        event_type: &str,
+        description: &str,
+        source_cid: i32,
+        ability_idx: i16,
+        player_id: u8,
+        rule_ref: Option<&str>,
+        log_to_rule_log: bool,
+    ) {
+        // Extract values first to avoid borrow conflicts
+        let turn = self.turn as u32;
+        let phase = self.phase;
+        let silent = self.ui.silent;
+        
+        // 1. Always add to turn_history (structured data)
+        if self.turn_history.len() < 2000 {
+            self.turn_history.push(TurnEvent {
+                turn,
+                phase,
+                player_id,
+                event_type: event_type.to_string(),
+                source_cid,
+                ability_idx,
+                description: description.to_string(),
+            });
+        }
+
+        // 2. Optionally add to rule_log (text format)
+        if log_to_rule_log && !silent {
+            let turn_prefix = format!("[Turn {}]", turn);
+            let rule_prefix = rule_ref.map(|r| format!("[{}] ", r)).unwrap_or_default();
+            let full_msg = format!("{}{}{}", turn_prefix, rule_prefix, description);
+            self.ui.rule_log.push(full_msg);
+        }
     }
 
     pub fn handle_member_leaves_stage(&mut self, p_idx: usize, slot: usize, db: &CardDatabase, ctx: &AbilityContext) -> Option<i32> {
@@ -681,12 +727,19 @@ impl GameState {
                 (&ab.bytecode, &ab.conditions, &ab.pseudocode)
             };
 
-            if !self.ui.silent {
-                let card_name = if is_live { db.get_live(cid).unwrap().name.clone() } else { db.get_member(cid).unwrap().name.clone() };
-                let trigger_str = super::interpreter::logging::trigger_as_str(trigger);
-                let p_code = if pseudocode.is_empty() { "" } else { &format!(": {}", pseudocode) };
-                self.log_turn_event("TRIGGER", cid, ab_idx as i16, p_idx as u8, &format!("[{}] Triggered for {}{}", trigger_str, card_name, p_code));
-            }
+            // Unified logging: TRIGGER events now go to both turn_history and rule_log
+            let card_name = if is_live { db.get_live(cid).unwrap().name.clone() } else { db.get_member(cid).unwrap().name.clone() };
+            let trigger_str = super::interpreter::logging::trigger_as_str(trigger);
+            let p_code = if pseudocode.is_empty() { "" } else { &format!(": {}", pseudocode) };
+            self.log_event(
+                "TRIGGER",
+                &format!("[{}] Triggered for {}{}", trigger_str, card_name, p_code),
+                cid,
+                ab_idx as i16,
+                p_idx as u8,
+                None,
+                true,  // Also log to rule_log for visibility
+            );
 
             let costs = if is_live {
                 &db.get_live(def_cid).unwrap().abilities[ab_idx as usize].costs
@@ -706,6 +759,7 @@ impl GameState {
             if all_met {
                 // Check costs as well before enqueueing
                 for cost in costs {
+                    if cost.is_optional { continue; } // Skip optional costs for trigger check
                     if !super::interpreter::costs::check_cost(self, db, p_idx, cost, &ab_ctx) {
                         all_met = false;
                         break;

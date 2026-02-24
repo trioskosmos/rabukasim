@@ -23,12 +23,15 @@ When writing or debugging tests:
 - Check if the IDs used in the test (e.g., `deck`, `stage`, `discard`) are registered in the `CardDatabase` returned by `create_test_db`.
 - If using dummy IDs, ensure they are registered in a local `CardDatabase` for that test.
 
-### 2. ID Mapping Audit
-To verify a specific card's packed ID:
-- Use `tools/card_finder.py <CARD_NO>` to get the official ID.
-- Manually calculate: `PackedID = LogicID + (Variant * 4096)`.
+### 2. ID Mapping Audit (Legacy Transition)
+To verify a specific card's packed ID or map from legacy IDs (found in old scenarios):
+- **Source of Truth**: [id_migration_report.txt](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/reports/id_migration_report.txt)
+- **Bridging Logic**: Use the `Card No` (e.g., `PL!N-pb1-001-P＋`) to bridge between legacy `real_card_id` and current `Logic ID`.
+- **Logic ID Path**: Extract `Card No` from scenario name -> Match in `new_id_map.json` -> Get `Logic ID`.
+- ** packed ID calculation**: `PackedID = LogicID + (Variant * 4096)`.
 
 ## Common Pitfalls
+- **Legacy ID Desync**: Relying on `real_card_id` from old `scenarios.json` without bridging via `Card No`.
 - **Missing Registration**: Cards in `deck` or `hand` that are not in the `CardDatabase` will cause "Card not found" errors during trigger checks.
 - **Index Out of Bounds**: `logic_id` >= 4096 will crash if accessed via `members_vec` or `lives_vec`.
 - **Mismatched IDs**: Using raw IDs from `cards.json` without verifying if the compiler mapped them differently.

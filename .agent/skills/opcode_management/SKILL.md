@@ -134,3 +134,20 @@ Card IDs are assigned to unique `(Name, Ability Text)` pairs and are relatively 
 - **Alpha-Sorting**: The compiler always alpha-sorts card numbers before ID assignment. To maintain ID stability, ensure "Card No" strings never change.
 - **Pseudocode**: Use card numbers (e.g., `LL-bp01-001`) in pseudocode parameters rather than logic IDs whenever possible to remain agnostic of ID shifts.
 
+## 8. Opcode Rigor Audit
+Unified workflow for assessing the rigor of opcode tests. Dry run tests are good for coverage, but specialized tests ensure correctness.
+
+### Test Rigor Levels
+- **Level 1 (Property Check)**: Verifies a value changed.
+- **Level 2 (Parity Check)**: Compares outputs between two implementations (Semantic Audit).
+- **Level 3 (Functional Behavior)**: Verifies gameplay flow, phase transitions, and interaction stack.
+
+### Recipe: Level 3 "Interaction Cycle" Test
+1. **Verify Suspension**: Assert `state.phase == Phase::Response` and `state.interaction_stack.len() > 0`.
+2. **Action Generation**: Ensure correct action IDs are available.
+3. **Resume**: Call `state.step(db, action_id)` and verify final state.
+
+### One-Shot Ready Principles
+- **Unified Dispatch**: Update both modular and legacy handlers.
+- **ID Validation**: Use Logic IDs in `3000-3500` range for dummy tests.
+- **Visibility**: Use debug prints for Phase and InteractionStack transitions.

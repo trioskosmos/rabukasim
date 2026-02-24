@@ -182,8 +182,22 @@ pub fn resolve_count(
             if color_idx == 0 || color_idx > 7 {
                 hearts.iter().map(|&x| x as i32).sum()
             } else {
-                hearts[(color_idx - 1) as usize] as i32
+                hearts.get(color_idx as usize - 1).copied().unwrap_or(0) as i32
             }
+        },
+        250 => { // C_COUNT_UNIQUE_COLORS
+            let mut count = 0;
+            let mut seen = 0u8;
+            for i in 0..3 {
+                let h = state.get_effective_hearts(p_idx, i, db, depth + 1);
+                for c in 0..7 {
+                    if h.get_color_count(c) > 0 && (seen & (1 << c)) == 0 {
+                        seen |= 1 << c;
+                        count += 1;
+                    }
+                }
+            }
+            count as i32
         },
         _ => 0
     }
@@ -302,13 +316,21 @@ pub fn check_condition_opcode(
             (my_lives - opp_lives) >= val
         },
         C_COUNT_GROUP => {
-            let filter_attr = attr & 0x00000000FFFFFFFF;
-            let is_unique = (attr & 0x8000) != 0;
-            let clean_filter = filter_attr & !0x8000; // Strip unique flag from filter
+            let raw_attr = attr & 0x00000000FFFFFFFF;
+            let is_unique = (raw_attr & 0x8000) != 0;
+            // Strip unique flag before processing
+            let group_attr = raw_attr & !0x8000;
+            // Convert raw group ID to proper filter format if needed
+            // If FILTER_GROUP_ENABLE (bit 4) is not set and value looks like a group ID, encode it
+            let filter_attr = if (group_attr & 0x10) == 0 && group_attr != 0 && group_attr < 300 {
+                0x10 | (group_attr << 5)  // Set group enable bit and shift group ID
+            } else {
+                group_attr
+            };
             if is_unique {
                 let mut names = std::collections::HashSet::new();
                 for &id in player.stage.iter().filter(|&&id| id >= 0) {
-                    if state.card_matches_filter(db, id, clean_filter) {
+                    if state.card_matches_filter(db, id, filter_attr) {
                         if let Some(card) = db.get_member(id) {
                             names.insert(card.name.clone());
                         }

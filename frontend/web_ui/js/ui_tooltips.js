@@ -223,8 +223,10 @@ export const Tooltips = {
      */
     getEffectiveRawText: (card) => {
         if (!card) return "";
-        // Prioritize 'text' (pseudocode), then 'ability_text' (full text), then empty string
-        const rawText = card.text || card.ability_text || "";
+        // Prioritize 'text' (pseudocode), then 'ability_text' (full text), then check abilities array
+        const rawText = card.text || card.ability_text ||
+            (card.abilities && card.abilities.length > 0 ? card.abilities.map(a => a.pseudocode || a.raw_text).join('\n') : "") ||
+            "";
         const originalText = card.original_text;
 
         let effectiveText = "";
@@ -286,6 +288,12 @@ export const Tooltips = {
                     if (actionObj.hand_idx !== undefined && p.hand) cardObj = p.hand[actionObj.hand_idx];
                     else if (actionObj.area_idx !== undefined && p.stage) cardObj = p.stage[actionObj.area_idx];
                     else if (actionObj.slot_idx !== undefined && p.stage) cardObj = p.stage[actionObj.slot_idx];
+                    // Also check live_zone and energy for action-based lookups
+                    else if (actionObj.live_idx !== undefined && p.live_zone) cardObj = p.live_zone[actionObj.live_idx];
+                    else if (actionObj.energy_idx !== undefined && p.energy) {
+                        const energySlot = p.energy[actionObj.energy_idx];
+                        if (energySlot && energySlot.card) cardObj = energySlot.card;
+                    }
                 }
                 // Priority 2: source_card_id (fallback when no position info)
                 if (!cardObj && actionObj.source_card_id !== undefined && actionObj.source_card_id !== -1) {
@@ -304,11 +312,31 @@ export const Tooltips = {
             let finalText = explicitText;
             let titleText = (State.currentLang === 'jp' ? 'カード能力' : 'Card Ability');
 
+            // For actions, try to resolve the source card first to get ability text
+            if (actionObj && !cardObj) {
+                const p = state.players[perspectivePlayer];
+                if (p) {
+                    // Try various index lookups to find the card
+                    if (actionObj.hand_idx !== undefined && p.hand) cardObj = p.hand[actionObj.hand_idx];
+                    else if (actionObj.area_idx !== undefined && p.stage) cardObj = p.stage[actionObj.area_idx];
+                    else if (actionObj.slot_idx !== undefined && p.stage) cardObj = p.stage[actionObj.slot_idx];
+                    else if (actionObj.live_idx !== undefined && p.live_zone) cardObj = p.live_zone[actionObj.live_idx];
+                    else if (actionObj.energy_idx !== undefined && p.energy) {
+                        const energySlot = p.energy[actionObj.energy_idx];
+                        if (energySlot && energySlot.card) cardObj = energySlot.card;
+                    }
+                }
+                // Also try source_card_id
+                if (!cardObj && actionObj.source_card_id !== undefined && actionObj.source_card_id !== -1) {
+                    cardObj = Tooltips.findCardById(actionObj.source_card_id);
+                }
+            }
+
             // Priority 1: Use data-text if available (most reliable source for ability text)
             const dataText = effectiveTarget.dataset.text;
             if (dataText && !finalText) {
                 // Try to translate raw pseudocode if that's what's in data-text
-                if (window.translateAbility && (dataText.includes('O_') || dataText.includes('EFFECT:'))) {
+                if (window.translateAbility && (dataText.includes('O_') || dataText.includes('EFFECT:') || dataText.includes('TRIGGER:'))) {
                     finalText = window.translateAbility(dataText, State.currentLang);
                 } else {
                     finalText = dataText;
@@ -324,19 +352,13 @@ export const Tooltips = {
                 titleText = cardObj.name;
             }
 
-            // Special handling for MULLIGAN: we want the card's ability even if it's an action
-            if (actionObj && actionObj.type === 'MULLIGAN' && !finalText) {
-                const hIdx = actionObj.hand_idx;
-                const p = state.players[perspectivePlayer];
-                const cardInHand = (p && p.hand) ? p.hand[hIdx] : null;
-                if (cardInHand) {
-                    finalText = Tooltips.getEffectiveRawText(cardInHand);
-                    titleText = cardInHand.name || titleText;
-                }
+            // For actions, still try to get card ability text if we have a card
+            if (actionObj && cardObj && !finalText) {
+                finalText = Tooltips.getEffectiveRawText(cardObj);
             }
 
-            // Fallback to action info if it's an action button
-            else if (actionObj) {
+            // Set title from action name if no card name
+            if (actionObj && !cardObj) {
                 titleText = actionObj.name || titleText;
 
                 // Resolve generic names like "Action 303"
@@ -347,38 +369,40 @@ export const Tooltips = {
                         titleText = liveCard.name;
                     }
                 }
+            }
 
-                if (!finalText) {
-                    finalText = Tooltips.getEffectiveActionText(actionObj);
+            // Only use action text as absolute fallback when no card ability is available
+            if (!finalText && actionObj && !cardObj) {
+                finalText = Tooltips.getEffectiveActionText(actionObj);
+            }
+
+            // Always show panel if we have any target (even without text)
+            if (descTitle) descTitle.innerHTML = titleText;
+
+            // If we have a card/action but NO specific text, provide a useful fallback
+            if (!finalText || finalText === "") {
+                if (cardObj) {
+                    const type = (cardObj.card_no && cardObj.card_no.includes('-L')) ? 'Live' :
+                        (cardObj.type === 'energy' || (cardObj.card_no && cardObj.card_no.includes('-E'))) ? 'Energy' : 'Member';
+                    // Last ditch effort: try multiple text sources
+                    finalText = cardObj.ability_text || cardObj.text || cardObj.original_text ||
+                        `<span style="opacity:0.5; font-style:italic;">[${type} Card]</span>`;
+                } else if (actionObj) {
+                    finalText = `<span style="opacity:0.5; font-style:italic;">[Action: ${actionObj.type || 'Generic'}]</span>`;
+                } else {
+                    // No card or action - still show panel with generic message
+                    finalText = `<span style="opacity:0.5; font-style:italic;">[No ability text available]</span>`;
                 }
             }
 
-            if ((finalText && finalText !== "") || (cardObj || actionObj)) {
-                if (descTitle) descTitle.innerHTML = titleText;
+            descContent.innerHTML = Tooltips.enrichAbilityText(finalText);
+            descContent.dataset.rawText = finalText;
+            descPanel.style.display = 'flex';
 
-                // If we have a card/action but NO specific text, provide a useful fallback
-                if (!finalText || finalText === "") {
-                    if (cardObj) {
-                        const type = (cardObj.card_no && cardObj.card_no.includes('-L')) ? 'Live' : 'Member';
-                        // Last ditch effort: if it's a Live card, try to get ability_text directly from card object
-                        finalText = cardObj.ability_text || cardObj.text || `<span style="opacity:0.5; font-style:italic;">[${type} Card]</span>`;
-                    } else if (actionObj) {
-                        finalText = `<span style="opacity:0.5; font-style:italic;">[Action: ${actionObj.type || 'Generic'}]</span>`;
-                    }
-                }
-
-                descContent.innerHTML = Tooltips.enrichAbilityText(finalText);
-                descContent.dataset.rawText = finalText;
-                descPanel.style.display = 'flex';
-
-                // Success: we clear any "stale" hiding logic
-                if (tooltipHideTimeout) {
-                    clearTimeout(tooltipHideTimeout);
-                    tooltipHideTimeout = null;
-                }
-            } else {
-                // If we have absolutely nothing, we still PERSIST the last view 
-                // as per user request to avoid flickering.
+            // Success: we clear any "stale" hiding logic
+            if (tooltipHideTimeout) {
+                clearTimeout(tooltipHideTimeout);
+                tooltipHideTimeout = null;
             }
         }
 
@@ -847,7 +871,7 @@ export const Tooltips = {
 // Global Event Listeners for Tooltips
 if (typeof document !== 'undefined') {
     document.body.addEventListener('mouseover', (e) => {
-        const selector = '.card, .member-slot, .member-area, .board-slot-container, .energy-pip, .modifier-line, .action-btn, .action-group, .btn, .modal-content, .active-ability-tag, .perf-guide-entry';
+        const selector = '.card, .member-slot, .member-area, .board-slot-container, .energy-pip, .modifier-line, .action-btn, .action-group, .btn, .active-ability-tag, .perf-guide-entry';
         const target = e.target.closest(selector);
 
         console.log("Tooltip mouseover event:", e.target, "Target matched:", target);
@@ -864,7 +888,7 @@ if (typeof document !== 'undefined') {
     });
 
     document.body.addEventListener('mouseout', (e) => {
-        const selector = '.card, .member-slot, .energy-pip, .modifier-line, .action-btn, .action-group, .btn, .modal-content, .active-ability-tag, .perf-guide-entry';
+        const selector = '.card, .member-slot, .energy-pip, .modifier-line, .action-btn, .action-group, .btn, .active-ability-tag, .perf-guide-entry';
         const target = e.target.closest(selector);
         if (target) {
             const nextTarget = e.relatedTarget ? e.relatedTarget.closest(selector) : null;

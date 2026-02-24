@@ -286,6 +286,13 @@ impl GpuManager {
     /// Unlike run_simulations_into (which runs 200 steps for MCTS),
     /// this executes exactly one shader dispatch for precise state comparison.
     pub fn run_single_step(&self, input_states: &[GpuGameState], output_states: &mut [GpuGameState]) {
+        self.run_multi_step(input_states, output_states, 1);
+    }
+
+    /// Run multiple GPU steps for parity testing.
+    /// This is needed for cards that require interaction resolution (LOOK_AND_CHOOSE, etc.)
+    /// Each step executes one shader dispatch, which may advance the game state.
+    pub fn run_multi_step(&self, input_states: &[GpuGameState], output_states: &mut [GpuGameState], steps: usize) {
         if input_states.is_empty() { return; }
 
         let _guard = self.lock.lock().unwrap();
@@ -304,18 +311,20 @@ impl GpuManager {
         self.queue.write_buffer(&self.state_buffer, 0, bytemuck::cast_slice(input_states));
 
         let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Single Step Compute Encoder"),
+            label: Some("Multi Step Compute Encoder"),
         });
 
         {
             let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: Some("Single Step Compute Pass"),
+                label: Some("Multi Step Compute Pass"),
                 timestamp_writes: None,
             });
             compute_pass.set_pipeline(&self.compute_pipeline);
             compute_pass.set_bind_group(0, &self.bind_group, &[]);
-            // SINGLE DISPATCH: Exactly one step for parity testing
-            compute_pass.dispatch_workgroups(((count + 63) / 64) as u32, 1, 1);
+            // MULTI DISPATCH: Execute multiple steps for interaction resolution
+            for _ in 0..steps {
+                compute_pass.dispatch_workgroups(((count + 63) / 64) as u32, 1, 1);
+            }
         }
 
         // Copy result to readback buffer

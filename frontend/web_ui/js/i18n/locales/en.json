@@ -503,7 +503,10 @@
     "IS_MAIN_PHASE": "Main Phase",
     "ON_STAGE_ENTRY": "On Entry",
     "ON_MEMBER_DISCARD": "On Member Discard",
-    "ON_OPPONENT_TAP": "On Opponent Wait"
+    "ON_OPPONENT_TAP": "On Opponent Wait",
+    "RECOVER_FROM_CHEER": "Recover {value} from Cheer",
+    "BOOST_SCORE_PER_COLOR": "Score +{value} per color",
+    "PLACE_ENERGY_WAIT": "Charge {value} Energy (Wait)"
   },
   "params": {
     "UNTIL": {
@@ -524,6 +527,8 @@
     "COUNT": "x{v}",
     "KEYWORD": "{v}",
     "ZONE": "{v}",
+    "GROUP_ID": "Group {v}",
+    "HEART_TYPE": "{v} Heart",
     "FILTER": {
       "energy": "Energy",
       "member": "Member"

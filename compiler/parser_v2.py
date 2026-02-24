@@ -6,11 +6,13 @@ modular architecture based on:
 1. Declarative patterns organized by phase
 2. Multi-pass parsing: Trigger → Conditions → Effects → Modifiers
 3. Proper optionality handling (fixes the is_optional bug)
+4. Structural Lexing: Balanced-brace scanning instead of greedy regex
 """
 
 import copy
 import json
 import re
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Match, Optional, Tuple
 
 from engine.models.ability import (
@@ -29,6 +31,272 @@ from .patterns.base import PatternPhase
 from .patterns.registry import PatternRegistry, get_registry
 
 
+# =============================================================================
+# Structural Lexing: Balanced-Brace Scanner
+# =============================================================================
+
+@dataclass
+class StructuredEffect:
+    """Represents a structurally parsed effect before type resolution."""
+    name: str = ""
+    value: str = ""
+    params: Dict[str, Any] = field(default_factory=dict)
+    target: str = ""
+    raw: str = ""
+    
+    def __repr__(self):
+        return f"StructuredEffect(name={self.name!r}, value={self.value!r}, params={self.params}, target={self.target!r})"
+
+
+class StructuralLexer:
+    """
+    Balanced-brace scanner for pseudocode parsing.
+    
+    Instead of using greedy regex, this lexer treats pseudocode as a structured
+    format with specific delimiters:
+    - Value/Args are always inside (...)
+    - Attributes/Filters are always inside {...}
+    - Target is always preceded by ->
+    
+    This prevents the "Name" group from accidentally swallowing the { of the
+    parameter block, which was causing keys like "recover_live(1) {filter".
+    """
+    
+    # Opening and closing delimiters
+    PAREN_OPEN = '('
+    PAREN_CLOSE = ')'
+    BRACE_OPEN = '{'
+    BRACE_CLOSE = '}'
+    
+    @staticmethod
+    def extract_balanced(text: str, start_pos: int, open_char: str, close_char: str) -> Tuple[str, int]:
+        """
+        Extract content between balanced delimiters starting at start_pos.
+        
+        Args:
+            text: The full text string
+            start_pos: Position of the opening delimiter
+            open_char: The opening delimiter character
+            close_char: The closing delimiter character
+            
+        Returns:
+            Tuple of (extracted content without delimiters, position after closing delimiter)
+        """
+        if start_pos >= len(text) or text[start_pos] != open_char:
+            return "", start_pos
+        
+        depth = 1
+        pos = start_pos + 1
+        content_start = pos
+        
+        while pos < len(text) and depth > 0:
+            char = text[pos]
+            if char == open_char:
+                depth += 1
+            elif char == close_char:
+                depth -= 1
+            elif char == '"':
+                # Skip over quoted strings to avoid counting delimiters inside them
+                pos += 1
+                while pos < len(text) and text[pos] != '"':
+                    if text[pos] == '\\' and pos + 1 < len(text):
+                        pos += 1  # Skip escaped character
+                    pos += 1
+            elif char == "'":
+                # Handle single quotes too
+                pos += 1
+                while pos < len(text) and text[pos] != "'":
+                    if text[pos] == '\\' and pos + 1 < len(text):
+                        pos += 1
+                    pos += 1
+            pos += 1
+        
+        if depth == 0:
+            return text[content_start:pos - 1], pos
+        else:
+            # Unbalanced - return what we have
+            return text[content_start:], pos
+    
+    @classmethod
+    def parse_effect(cls, text: str) -> StructuredEffect:
+        """
+        Parse a single effect string structurally.
+        
+        Example: RECOVER_LIVE(1) {FILTER="GROUP=0"} -> CARD_HAND
+        
+        Steps:
+        1. Find and extract (...) value block
+        2. Find and extract {...} params block
+        3. Find -> target
+        4. What remains is the NAME
+        """
+        result = StructuredEffect(raw=text)
+        text = text.strip()
+        
+        # Step 1: Extract value block (...)
+        paren_pos = cls._find_delimiter(text, cls.PAREN_OPEN)
+        if paren_pos != -1:
+            # Everything before ( is potentially the name
+            result.name = text[:paren_pos].strip()
+            value_content, end_pos = cls.extract_balanced(text, paren_pos, cls.PAREN_OPEN, cls.PAREN_CLOSE)
+            result.value = value_content.strip()
+            remaining = text[end_pos:].strip()
+        else:
+            # No value block - need to find other delimiters
+            remaining = text
+            result.name = ""
+        
+        # Step 2: Extract params block {...}
+        brace_pos = cls._find_delimiter(remaining, cls.BRACE_OPEN)
+        if brace_pos != -1:
+            # If name wasn't set from parens, take everything before {
+            if not result.name:
+                result.name = remaining[:brace_pos].strip()
+            params_content, end_pos = cls.extract_balanced(remaining, brace_pos, cls.BRACE_OPEN, cls.BRACE_CLOSE)
+            result.params = cls._parse_params_content(params_content)
+            remaining = remaining[end_pos:].strip()
+        elif not result.name:
+            # Still no name - check for target arrow
+            arrow_pos = remaining.find('->')
+            if arrow_pos != -1:
+                result.name = remaining[:arrow_pos].strip()
+                remaining = remaining[arrow_pos:].strip()
+            else:
+                result.name = remaining.strip()
+                remaining = ""
+        
+        # Step 3: Extract target (-> TARGET)
+        arrow_pos = remaining.find('->')
+        if arrow_pos != -1:
+            target_part = remaining[arrow_pos + 2:].strip()
+            # Target might have trailing content, just take first word
+            target_parts = target_part.split()
+            if target_parts:
+                result.target = target_parts[0].strip(',')
+            # Check if there's anything before the arrow that should be part of name
+            if arrow_pos > 0 and not result.name:
+                result.name = remaining[:arrow_pos].strip()
+        
+        # Clean up name - remove any trailing punctuation
+        result.name = result.name.strip(' ,;')
+        
+        return result
+    
+    @classmethod
+    def _find_delimiter(cls, text: str, delimiter: str) -> int:
+        """Find the first occurrence of delimiter not inside quotes."""
+        in_double_quote = False
+        in_single_quote = False
+        
+        for i, char in enumerate(text):
+            if char == '"' and not in_single_quote:
+                in_double_quote = not in_double_quote
+            elif char == "'" and not in_double_quote:
+                in_single_quote = not in_single_quote
+            elif char == delimiter and not in_double_quote and not in_single_quote:
+                return i
+        
+        return -1
+    
+    @classmethod
+    def _parse_params_content(cls, content: str) -> Dict[str, Any]:
+        """
+        Parse parameter content like: FILTER="GROUP=0", COUNT=2
+        Respects quotes and nested structures.
+        """
+        params = {}
+        if not content.strip():
+            return params
+        
+        # Split by comma but respect quotes and nested braces
+        parts = []
+        current = ""
+        depth = 0
+        in_double_quote = False
+        in_single_quote = False
+        
+        for char in content:
+            if char == '"' and not in_single_quote:
+                in_double_quote = not in_double_quote
+            elif char == "'" and not in_double_quote:
+                in_single_quote = not in_single_quote
+            elif char == '{' and not in_double_quote and not in_single_quote:
+                depth += 1
+            elif char == '}' and not in_double_quote and not in_single_quote:
+                depth -= 1
+            elif char == ',' and not in_double_quote and not in_single_quote and depth == 0:
+                parts.append(current.strip())
+                current = ""
+                continue
+            current += char
+        
+        if current.strip():
+            parts.append(current.strip())
+        
+        # Parse each KEY=VAL part
+        for part in parts:
+            if '=' in part:
+                eq_pos = part.index('=')
+                key = part[:eq_pos].strip().upper()
+                val = part[eq_pos + 1:].strip()
+                
+                # Strip quotes
+                if (val.startswith('"') and val.endswith('"')) or \
+                   (val.startswith("'") and val.endswith("'")):
+                    val = val[1:-1]
+                
+                # Type conversion
+                if val.isdigit():
+                    val = int(val)
+                elif val.upper() == 'TRUE':
+                    val = True
+                elif val.upper() == 'FALSE':
+                    val = False
+                
+                params[key] = val
+        
+        return params
+    
+    @classmethod
+    def split_effects(cls, text: str) -> List[str]:
+        """
+        Split multiple effects by semicolon, respecting nested structures.
+        
+        Example: "DRAW(1); MOVE_TO_DECK(2) {zone=discard}"
+        -> ["DRAW(1)", "MOVE_TO_DECK(2) {zone=discard}"]
+        """
+        parts = []
+        current = ""
+        depth = 0
+        in_double_quote = False
+        in_single_quote = False
+        
+        for char in text:
+            if char == '"':
+                in_double_quote = not in_double_quote
+            elif char == "'":
+                in_single_quote = not in_single_quote
+            elif char == '{' and not in_double_quote and not in_single_quote:
+                depth += 1
+            elif char == '}' and not in_double_quote and not in_single_quote:
+                depth -= 1
+            elif char == '(' and not in_double_quote and not in_single_quote:
+                depth += 1
+            elif char == ')' and not in_double_quote and not in_single_quote:
+                depth -= 1
+            elif char == ';' and not in_double_quote and not in_single_quote and depth == 0:
+                if current.strip():
+                    parts.append(current.strip())
+                current = ""
+                continue
+            current += char
+        
+        if current.strip():
+            parts.append(current.strip())
+        
+        return parts
+
+
 class AbilityParserV2:
     """Multi-pass ability parser using pattern registry."""
 
@@ -39,7 +307,7 @@ class AbilityParserV2:
         """Parse ability text into structured Ability objects."""
         # Detect pseudocode format
         triggers = ["TRIGGER:", "CONDITION:", "EFFECT:", "COST:"]
-        if any(text.strip().startswith(kw) for kw in triggers):
+        if any(text.strip().upper().startswith(kw) for kw in triggers):
             return self._parse_pseudocode_block(text)
 
         # Preprocessing
@@ -734,16 +1002,16 @@ class AbilityParserV2:
             if text[i] == '"':
                 in_quote = not in_quote
 
-            # Check for TRIGGER: start
-            # Ensure we are at start or newline-ish boundary to avoid false positives,
-            # but main requirement is not in quote.
-            if not in_quote and text[i:].startswith("TRIGGER:"):
+            # Check for TRIGGER: start (case-insensitive)
+            if not in_quote and text[i:].upper().startswith("TRIGGER:"):
                 if current_block.strip():
                     blocks.append(current_block)
                     current_block = ""
-                # Append TRIGGER: and Move forward
+                # Find the actual case and move forward
+                trigger_kw_match = re.match(r"TRIGGER:", text[i:], re.I)
+                kw_len = len(trigger_kw_match.group(0))
                 current_block += "TRIGGER:"
-                i += 8
+                i += kw_len
                 continue
 
             current_block += text[i]
@@ -779,15 +1047,28 @@ class AbilityParserV2:
         # If we see "Options:", the next lines until the next keyword belong to it
         i = 0
         last_target = TargetType.PLAYER
+        
+        # Pre-pass: Remove parenthesized reminder text at the very start of the ability
+        # unless it starts with a keyword.
+        if lines and lines[0].startswith("(") and lines[0].endswith(")"):
+            # If it's just reminder text like (エールで出たスコア...), skip it if no keywords inside
+            inner = lines[0][1:-1].lower()
+            keywords = ["trigger:", "effect:", "cost:", "condition:"]
+            if not any(kw in inner for kw in keywords):
+                lines = lines[1:]
+
         while i < len(lines):
             line = lines[i]
+            upper_line = line.upper()
 
-            if line.startswith("TRIGGER:"):
-                t_name = line.replace("TRIGGER:", "").strip()
-                if "(Once per turn)" in t_name:
-                    is_once_per_turn = True
+            # Check for Once per turn/Game flags globally for any instruction line
+            low_line = line.lower()
+            if "once per turn" in low_line or "once per game" in low_line or "(once per turn)" in low_line:
+                is_once_per_turn = True
 
-                # Strip all content in parentheses
+            if upper_line.startswith("TRIGGER:"):
+                t_name = line[len("TRIGGER:"):].strip().upper()
+                # Strip all content in parentheses (e.g.Once per turn)
                 t_name = re.sub(r"\(.*?\)", "", t_name).strip()
 
                 # Aliases for triggers
@@ -795,7 +1076,8 @@ class AbilityParserV2:
                     "ON_YELL": "ON_REVEAL",
                     "ON_YELL_SUCCESS": "ON_REVEAL",
                     "ON_ACTIVATE": "ACTIVATED",
-                    "JIDOU": "ON_REVEAL",  # JIDOU often means automatic trigger on reveal
+                    "JIDOU": "ON_LEAVES",
+                    "ON_REVEAL": "ON_REVEAL",
                     "ON_MEMBER_DISCARD": "ON_LEAVES",
                     "ON_DISCARDED": "ON_LEAVES",
                     "ON_REMOVE": "ON_LEAVES",
@@ -807,55 +1089,48 @@ class AbilityParserV2:
                     "ON_TURN_START": "TURN_START",
                     "ON_TURN_END": "TURN_END",
                     "ON_TAP": "ACTIVATED",
-                    # REMOVED: "ON_OPPONENT_TAP": "ON_LEAVES" - incorrect approximation
-                    # ON_OPPONENT_TAP should be handled as a separate trigger type
                     "ON_REVEAL_SELF": "ON_REVEAL",
                     "ON_LIVE_SUCCESS_SELF": "ON_LIVE_SUCCESS",
                     "ACTIVATED_FROM_DISCARD": "ACTIVATED",
                     "ON_ENERGY_CHARGE": "ACTIVATED",
-                    "ON_DRAW": "ACTIVATED",  # Approx
-                    # New aliases for common patterns
-                    "ON_POSITION_CHANGE": "ON_LEAVES",  # Movement triggers
+                    "ON_DRAW": "ACTIVATED",
+                    "ON_POSITION_CHANGE": "ON_LEAVES",
                     "ON_MOVE": "ON_LEAVES",
                 }
                 t_name = alias_map.get(t_name, t_name)
-
                 try:
                     trigger = TriggerType[t_name]
                 except (KeyError, ValueError):
                     trigger = getattr(TriggerType, t_name, TriggerType.NONE)
 
-            elif "(Once per turn)" in line:
-                is_once_per_turn = True
-
-            elif line.startswith("COST:"):
-                cost_str = line.replace("COST:", "").strip()
+            elif upper_line.startswith("COST:"):
+                cost_str = line[len("COST:"):].strip()
                 new_costs = self._parse_pseudocode_costs(cost_str)
                 costs.extend(new_costs)
                 instructions.extend(new_costs)
 
-            elif line.startswith("CONDITION:"):
-                cond_str = line.replace("CONDITION:", "").strip()
+            elif upper_line.startswith("CONDITION:"):
+                cond_str = line[len("CONDITION:"):].strip()
                 new_conditions = self._parse_pseudocode_conditions(cond_str)
                 conditions.extend(new_conditions)
                 instructions.extend(new_conditions)
 
-            elif line.startswith("EFFECT:"):
-                eff_str = line.replace("EFFECT:", "").strip()
+            elif upper_line.startswith("EFFECT:"):
+                eff_str = line[len("EFFECT:"):].strip()
                 new_effects = self._parse_pseudocode_effects(eff_str, last_target=last_target)
                 if new_effects:
                     last_target = new_effects[-1].target
                 effects.extend(new_effects)
                 instructions.extend(new_effects)
 
-            elif line.startswith("Options:"):
+            elif upper_line.startswith("OPTIONS:"):
                 # The most recently added effect should be SELECT_MODE
                 if effects and effects[-1].effect_type == EffectType.SELECT_MODE:
                     # Parse subsequent lines until next major keyword
                     modal_options = []
                     i += 1
                     while i < len(lines) and not any(
-                        lines[i].startswith(kw) for kw in ["TRIGGER:", "COST:", "CONDITION:", "EFFECT:"]
+                        lines[i].upper().startswith(kw) for kw in ["TRIGGER:", "COST:", "CONDITION:", "EFFECT:"]
                     ):
                         # Format: N: EFFECT1, EFFECT2
                         option_match = re.match(r"\d+:\s*(.*)", lines[i])
@@ -867,7 +1142,7 @@ class AbilityParserV2:
                     effects[-1].modal_options = modal_options
                     continue  # Already incremented i
 
-            elif line.startswith("OPTION:"):
+            elif upper_line.startswith("OPTION:"):
                 # Format: OPTION: Description | EFFECT: Effect1; Effect2 | COST: Cost1
                 if effects and effects[-1].effect_type == EffectType.SELECT_MODE:
                     # Parse the option line
@@ -941,16 +1216,18 @@ class AbilityParserV2:
             m = re.match(r"(\w+)\((.*?)\)\s*->\s*(\w+)(.*)", p)
             if m:
                 name, val, target_name, rest = m.groups()
-                etype = getattr(EffectType, name, EffectType.DRAW)
-                target = getattr(TargetType, target_name, TargetType.PLAYER)
+                name_up = name.upper()
+                etype = getattr(EffectType, name_up, EffectType.DRAW)
+                target = getattr(TargetType, target_name.upper() if target_name else "PLAYER", TargetType.PLAYER)
                 params = self._parse_pseudocode_params(rest)
 
                 val_int = 0
                 val_cond = ConditionType.NONE
 
                 # Check if val is a condition type
-                if hasattr(ConditionType, val):
-                    val_cond = getattr(ConditionType, val)
+                val_up = str(val).upper()
+                if hasattr(ConditionType, val_up):
+                    val_cond = getattr(ConditionType, val_up)
                 else:
                     try:
                         val_int = int(val)
@@ -967,85 +1244,67 @@ class AbilityParserV2:
         if not param_str or "{" not in param_str:
             return {}
 
-        # Extract content between { and }
-        match = re.search(r"\{(.*)\}", param_str)
-        if not match:
-            return {}
-
-        content = match.group(1)
         params = {}
+        if not param_str or param_str == "{}":
+            return params
 
-        # Simple parser for KEY=VAL or KEY=["a", "b"] or FLAG
+        # Remove outer braces
+        content = param_str.strip()
+        if content.startswith("{") and content.endswith("}"):
+            content = content[1:-1]
+
+        # Split by comma but respect quotes
         parts = []
         current = ""
-        depth = 0
         in_quotes = False
         for char in content:
-            if char == '"' and (not current or (current and current[-1] != "\\")):
+            if char == '"':
                 in_quotes = not in_quotes
-            if not in_quotes:
-                if char in "[{":
-                    depth += 1
-                elif char in "}]":
-                    depth -= 1
-                elif char == "," and depth == 0:
-                    parts.append(current.strip())
-                    current = ""
-                    continue
+            if char == "," and not in_quotes:
+                parts.append(current.strip())
+                current = ""
+                continue
             current += char
         if current:
             parts.append(current.strip())
 
-        for part in parts:
-            if "=" in part:
-                k, v = part.split("=", 1)
-                k = k.strip().lower()
-                v = v.strip()
-                # Try to parse as JSON for lists/objects
-                try:
-                    val = json.loads(v)
-                    # Normalize common ENUM string values
-                    if k in ["until", "from", "to", "target", "type"]:
-                        if isinstance(val, str):
-                            params[k] = val.lower()
-                        elif isinstance(val, list):
-                            params[k] = [x.lower() if isinstance(x, str) else x for x in val]
-                        else:
-                            params[k] = val
-                    elif k == "cost_max" or k == "cost_min":
-                        params[k] = val
-                    elif k == "cost<= ":  # Support legacy/alternative
-                        params["cost_max"] = val
-                    elif k == "cost>= ":
-                        params["cost_min"] = val
-                    else:
-                        params[k] = val
-                except:
-                    # Fallback
-                    if v.startswith('"') and v.endswith('"'):
-                        v = v[1:-1]
+        for p in parts:
+            if "=" in p:
+                k, v = p.split("=", 1)
+                k = k.strip().upper()
+                v = v.strip().strip('"').strip("'")
 
-                    if v.isdigit():
-                        params[k] = int(v)
-                    elif k in ["until", "from", "to", "target", "type"]:
-                        params[k] = v.lower()
-                    else:
-                        params[k] = v
-            elif part.startswith("{") and part.endswith("}"):
-                # Merge embedded JSON
-                try:
-                    embedded = json.loads(part)
-                    if isinstance(embedded, dict):
-                        params.update(embedded)
-                except:
-                    pass
-            elif part.startswith("(") and part.endswith(")"):
-                # Handle (VAL) shorthand
-                params["val"] = part[1:-1]
-            else:
-                # Flag
-                params[part.lower()] = True
+                # Handle numeric values
+                if v.isdigit():
+                    v = int(v)
+                elif v.upper() == "TRUE":
+                    v = True
+                elif v.upper() == "FALSE":
+                    v = False
+                
+                # HEART_TYPE / HEART_0x mapping
+                if k == "HEART_TYPE" or k == "HEART":
+                    if isinstance(v, str) and v.startswith("HEART_0"):
+                        # Map HEART_00..05 to 0..5
+                        try:
+                            v = int(v[7:])
+                        except:
+                            pass
+                
+                # Special color mapping for FILTER strings
+                if k == "FILTER" and isinstance(v, str):
+                    h_map = {
+                        "HEART_00": "COLOR_PINK",
+                        "HEART_01": "COLOR_RED",
+                        "HEART_02": "COLOR_YELLOW",
+                        "HEART_03": "COLOR_GREEN",
+                        "HEART_04": "COLOR_BLUE",
+                        "HEART_05": "COLOR_PURPLE",
+                    }
+                    for old, new in h_map.items():
+                        v = v.replace(old, new)
 
+                params[k] = v
         return params
 
     def _parse_pseudocode_costs(self, text: str) -> List[Cost]:
@@ -1158,6 +1417,10 @@ class AbilityParserV2:
 
                 # Default ctype
                 ctype = getattr(ConditionType, name.upper(), ConditionType.NONE)
+
+                # Special mapping for Once per turn
+                if name == "ONCE" or name == "TURN_1":
+                    ctype = ConditionType.TURN_1
 
                 # Special handling for ALL_MEMBERS alias
                 if name == "ALL_MEMBERS":
@@ -1531,128 +1794,173 @@ class AbilityParserV2:
                 grant_match = re.search(r"GRANT_ABILITY\((.*?),\s*\"(.*?)\"\)", p)
                 if grant_match:
                     target_str, ability_str = grant_match.groups()
-                    params = {"target_str": target_str, "granted_ability_text": ability_str}
+                    params = {"target_str": target_str, "ability_text": ability_str}
                     target = TargetType.PLAYER
                     if "MEMBER" in target_str:
                         target = TargetType.MEMBER_SELECT
                     effects.append(Effect(EffectType.GRANT_ABILITY, 0, ConditionType.NONE, target, params))
                     continue
 
-            # Format: NAME(VAL) -> TARGET {PARAMS} (Optional)
-            m = re.match(r"(\w+)(?:\((.*?)\))?(?:\s*\{.*?\}\s*)?(?:\s*->\s*([\w, ]+))?(.*)", p)
+            p = p.strip()
+            # More robust regex that handles underscores and varies spacing
+            m = re.match(r"^([\w_]+)(?:\((.*?)\))?\s*(?:(\{.*?\})\s*)?(?:->\s*([\w, _]+))?(.*)$", p)
             if m:
-                name, val, target_name, rest = m.groups()
+                name, val, param_block, target_name, rest = m.groups()
 
-                # Extract params from the whole string 'p' since {} might be anywhere
-                params = self._parse_pseudocode_params(p)
+                # Extract params only from the isolated {...} block if found
+                params = self._parse_pseudocode_params(param_block) if param_block else {}
+
+                # Target Resolution
+                target = last_target
+                if target_name:
+                    target_name = target_name.strip().upper()
+                    if target_name == "SELF" or target_name == "MEMBER_SELF":
+                        target = TargetType.MEMBER_SELF
+                    elif target_name == "PLAYER":
+                        target = TargetType.PLAYER
+                    elif target_name == "OPPONENT":
+                        target = TargetType.OPPONENT
+                    elif target_name == "ALL_PLAYERS":
+                        target = TargetType.ALL_PLAYERS
+                    elif target_name == "CARD_HAND":
+                        target = TargetType.CARD_HAND
+                    elif "MEMBER_" in target_name:
+                        target = TargetType.MEMBER_SELECT # Fallback for complex targets
+                    else:
+                        try:
+                            target = TargetType[target_name]
+                        except:
+                            pass
+                
+                # Legacy SELF mapping (If -> SELF exists in text)
+                if "-> SELF" in p or "-> self" in p:
+                    target = TargetType.MEMBER_SELF
 
                 # Aliases from parser_pseudocode
-                if name == "TAP_PLAYER":
-                    name = "TAP_MEMBER"
-                if name == "CHARGE_SELF":
-                    name = "ENERGY_CHARGE"
-                    target_name = "MEMBER_SELF"
-                if name == "CHARGE_ENERGY":
-                    name = "ENERGY_CHARGE"
-                if name == "MOVE_DISCARD":
-                    name = "MOVE_TO_DISCARD"
-                if name == "REMOVE_SELF":
-                    name = "MOVE_TO_DISCARD"
-                    target_name = "MEMBER_SELF"
-                if name == "SWAP_SELF":
-                    name = "SWAP_ZONE"
-                    target_name = "MEMBER_SELF"
-                if name == "MOVE_HAND" or name == "MOVE_TO_HAND":
-                    name = "ADD_TO_HAND"
-                if name == "ADD_HAND":
-                    name = "ADD_TO_HAND"
-                if name == "TRIGGER_YELL_AGAIN":
-                    name = "META_RULE"
+                name_up = name.upper()
+                if name_up == "TAP_PLAYER":
+                    name_up = "TAP_MEMBER"
+                if name_up == "CHARGE_SELF":
+                    name_up = "ENERGY_CHARGE"
+                    target = TargetType.MEMBER_SELF
+                
+                if name_up == "PLACE_ENERGY_WAIT":
+                    name_up = "PLACE_UNDER"
+                    params["type"] = "energy"
+                    params["wait"] = True
+                if name_up == "RECOVER_FROM_CHEER":
+                    name_up = "RECOVER_MEMBER"
+                    params["source"] = "yell"
+                if name_up == "BOOST_SCORE_PER_COLOR":
+                    name_up = "BOOST_SCORE"
+                    params["multiplier"] = "color"
+                
+                if name_up == "LOOK_AND_CHOOSE_ORDER":
+                    name_up = "ORDER_DECK"
+                if name_up == "LOOK_AND_CHOOSE_REVEAL":
+                    name_up = "LOOK_AND_CHOOSE"
+                    params["reveal"] = True
+
+                etype = getattr(EffectType, name_up, None)
+                if name_up == "CHARGE_ENERGY":
+                    name_up = "ENERGY_CHARGE"
+                if name_up == "MOVE_DISCARD":
+                    name_up = "MOVE_TO_DISCARD"
+                if name_up == "REMOVE_SELF":
+                    name_up = "MOVE_TO_DISCARD"
+                    target = TargetType.MEMBER_SELF
+                if name_up == "SWAP_SELF":
+                    name_up = "SWAP_ZONE"
+                    target = TargetType.MEMBER_SELF
+                if name_up == "MOVE_HAND" or name_up == "MOVE_TO_HAND":
+                    name_up = "ADD_TO_HAND"
+                if name_up == "ADD_HAND":
+                    name_up = "ADD_TO_HAND"
+                if name_up == "TRIGGER_YELL_AGAIN":
+                    name_up = "META_RULE"
                     params["meta_type"] = "TRIGGER_YELL_AGAIN"
-                if name == "DISCARD_HAND":
-                    name = "MOVE_TO_DISCARD"
+                if name_up == "DISCARD_HAND":
+                    name_up = "MOVE_TO_DISCARD"
                     params["source"] = "HAND"
                     params["destination"] = "discard"
-                if name == "RECOVER_LIVE":
+                if name_up == "RECOVER_LIVE":
                     # Usually means from discard
                     params["source"] = "discard"
-                if name == "RECOVER_MEMBER":
+                if name_up == "RECOVER_MEMBER":
                     # Usually means from discard
                     params["source"] = "discard"
-                if name == "SELECT_LIMIT":
-                    name = "REDUCE_LIVE_SET_LIMIT"
-                if name == "POWER_UP":
-                    name = "BUFF_POWER"
-                if name == "REDUCE_SET_LIMIT":
-                    name = "REDUCE_LIVE_SET_LIMIT"
-                if name == "REDUCE_LIMIT":
-                    name = "REDUCE_LIVE_SET_LIMIT"
-                if name == "REDUCE_HEART":
-                    name = "REDUCE_HEART_REQ"
-                if name == "ADD_TAG":
-                    name = "META_RULE"
+                if name_up == "SELECT_LIMIT":
+                    name_up = "REDUCE_LIVE_SET_LIMIT"
+                if name_up == "POWER_UP":
+                    name_up = "BUFF_POWER"
+                if name_up == "REDUCE_SET_LIMIT":
+                    name_up = "REDUCE_LIVE_SET_LIMIT"
+                if name_up == "REDUCE_LIMIT":
+                    name_up = "REDUCE_LIVE_SET_LIMIT"
+                if name_up == "REDUCE_HEART":
+                    name_up = "REDUCE_HEART_REQ"
+                if name_up == "ADD_TAG":
+                    name_up = "META_RULE"
                     params["tag"] = val
-                if name == "PREVENT_LIVE":
-                    name = "RESTRICTION"
+                if name_up == "PREVENT_LIVE":
+                    name_up = "RESTRICTION"
                     params["type"] = "no_live"
-                if name == "MOVE_DECK":
-                    name = "MOVE_TO_DECK"
+                if name_up == "MOVE_DECK":
+                    name_up = "MOVE_TO_DECK"
                 if name == "OPPONENT_CHOICE":
                     etype = EffectType.OPPONENT_CHOOSE
                     # OPPONENT_CHOICE implies complex options which parse_pseudocode_block/effects handles?
                     # Actually SELECT_MODE handles options. OPPONENT_CHOICE likely structured similarly.
-                if name == "RESET_YELL_HEARTS":
-                    name = "META_RULE"
+                if name_up == "RESET_YELL_HEARTS":
+                    name_up = "META_RULE"
                     params["meta_type"] = "RESET_YELL_HEARTS"
-                if name == "TRIGGER_YELL_AGAIN":
-                    name = "META_RULE"
+                if name_up == "TRIGGER_YELL_AGAIN":
+                    name_up = "META_RULE"
                     params["meta_type"] = "TRIGGER_YELL_AGAIN"
-                if name == "ADD_HAND":
-                    name = "ADD_TO_HAND"
-                if name == "ACTION_YELL_MULLIGAN":
-                    name = "META_RULE"
+                if name_up == "ADD_HAND":
+                    name_up = "ADD_TO_HAND"
+                if name_up == "ACTION_YELL_MULLIGAN":
+                    name_up = "META_RULE"
                     params["meta_type"] = "ACTION_YELL_MULLIGAN"
-                if name == "OPPONENT_CHOICE":
-                    name = "OPPONENT_CHOOSE"
-                if name == "SET_BASE_BLADES":
-                    name = "SET_BLADES"
-                if name == "GRANT_HEARTS" or name == "GRANT_HEART":
-                    name = "ADD_HEARTS"
-                if name == "SELECT_REVEALED":
-                    name = "LOOK_AND_CHOOSE"
+                if name_up == "OPPONENT_CHOICE":
+                    name_up = "OPPONENT_CHOOSE"
+                if name_up == "SET_BASE_BLADES":
+                    name_up = "SET_BLADES"
+                if name_up == "GRANT_HEARTS" or name_up == "GRANT_HEART":
+                    name_up = "ADD_HEARTS"
+                if name_up == "SELECT_REVEALED":
+                    name_up = "LOOK_AND_CHOOSE"
                     params["source"] = "revealed"
-                if name == "LOOK_AND_CHOOSE_REVEALED":
-                    name = "LOOK_AND_CHOOSE"
+                if name_up == "LOOK_AND_CHOOSE_REVEALED":
+                    name_up = "LOOK_AND_CHOOSE"
                     params["source"] = "revealed"
-                if name == "TAP_SELF":
-                    name = "TAP_MEMBER"
-                    target_name = "SELF"
-                if name == "CHANGE_BASE_HEART":
-                    name = "TRANSFORM_HEART"
-                if name == "SELECT_LIVE_CARD":
-                    name = "SELECT_LIVE"
-                if name == "MOVE_TO_HAND":
-                    name = "ADD_TO_HAND"
-                if name == "POSITION_CHANGE":
-                    name = "MOVE_MEMBER"
-                if name == "INCREASE_HEART":
-                    name = "INCREASE_HEART_COST"
-                if name == "CHANGE_YELL_BLADE_COLOR":
-                    name = "TRANSFORM_COLOR"
-                if name == "MOVE_SUCCESS":
-                    name = "META_RULE"
-                    params["meta_type"] = "MOVE_SUCCESS"  # Use meta_type to silence linter
-                if name == "PREVENT_SET_TO_SUCCESS_PILE":
-                    etype = EffectType.PREVENT_SET_TO_SUCCESS_PILE
-                if name.startswith("PLAY_MEMBER"):
-                    # Heuristic: if params has 'discard', use PLAY_MEMBER_FROM_DISCARD
-                    # Also check 'text' (the full line before splitting) to catch cases where ZONE="DISCARD" is on a preceding effect
+                if name_up == "TAP_SELF":
+                    name_up = "TAP_MEMBER"
+                    target = TargetType.MEMBER_SELF
+                if name_up == "CHANGE_BASE_HEART":
+                    name_up = "TRANSFORM_HEART"
+                if name_up == "SELECT_LIVE_CARD":
+                    name_up = "SELECT_LIVE"
+                if name_up == "MOVE_TO_HAND":
+                    name_up = "ADD_TO_HAND"
+                if name_up == "POSITION_CHANGE":
+                    name_up = "MOVE_MEMBER"
+                if name_up == "INCREASE_HEART":
+                    name_up = "INCREASE_HEART_COST"
+                if name_up == "CHANGE_YELL_BLADE_COLOR":
+                    name_up = "TRANSFORM_COLOR"
+                if name_up == "MOVE_SUCCESS":
+                    name_up = "META_RULE"
+                    params["meta_type"] = "MOVE_SUCCESS"
+                if name_up == "PREVENT_SET_TO_SUCCESS_PILE":
+                    name_up = "PREVENT_SET_TO_SUCCESS_PILE"
+                if name_up.startswith("PLAY_MEMBER"):
                     if params.get("zone") == "DISCARD" or "DISCARD" in p.upper() or "DISCARD" in text.upper():
-                        name = "PLAY_MEMBER_FROM_DISCARD"
+                        name_up = "PLAY_MEMBER_FROM_DISCARD"
                     else:
-                        name = "PLAY_MEMBER_FROM_HAND"
+                        name_up = "PLAY_MEMBER_FROM_HAND"
 
-                etype = getattr(EffectType, name.upper(), None)
+                etype = getattr(EffectType, name_up, None)
                 if name.upper() == "LOOK_AND_CHOOSE_ORDER":
                     etype = EffectType.ORDER_DECK
                 if name.upper() == "LOOK_AND_CHOOSE_REVEAL":
@@ -1766,8 +2074,6 @@ class AbilityParserV2:
                 if etype == EffectType.ENERGY_CHARGE:
                     if params.get("mode") == "WAIT":
                         params["wait"] = True
-
-                print(f"DEBUG: Final Effect - type={etype}, val={val_int}")
 
                 if etype == EffectType.LOOK_AND_CHOOSE and "choose_count" not in params:
                     params["choose_count"] = 1

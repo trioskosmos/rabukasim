@@ -313,6 +313,20 @@ fn match_filter(cid: u32, attr: u32) -> bool {
     if (cid == 0u || cid >= arrayLength(&card_stats)) { return false; }
     let s = card_stats[cid];
 
+    // Cost Filter (bits 24-30)
+    // Bit 24: Enable (0x01000000)
+    // Bits 25-30: Value (cost << 25)
+    // Bit 30: is_le flag (0x40000000) - if set, check cost <= value, else cost >= value
+    if ((attr & 0x01000000u) != 0u) {
+        let cost_value = (attr >> 25u) & 0x3Fu;
+        let is_le = (attr & 0x40000000u) != 0u;
+        if (is_le) {
+            if (s.cost > cost_value) { return false; }
+        } else {
+            if (s.cost < cost_value) { return false; }
+        }
+    }
+
     // Group Filter (attr >> 5 & 0x7F)
     if ((attr & 0x10u) != 0u) {
         let gid = (attr >> 5u) & 0x7Fu;
@@ -552,9 +566,18 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                     case 31: {
                         let t = u32(a) & 0xFDu;
                         let count = u32(v);
-                        if (t == 6u && ctx_choice != -1i) {
-                             let h_idx = u32(ctx_choice);
-                             remove_from_hand(p_idx, h_idx);
+                        if (t == 6u) { // Hand
+                            if (ctx_choice != -1i) {
+                                let h_idx = u32(ctx_choice);
+                                remove_from_hand(p_idx, h_idx);
+                            } else if (local_state.is_debug > 0u) {
+                                // In debug mode, auto-resolve by discarding the last card
+                                for (var di = 0u; di < count; di = di + 1u) {
+                                    if (local_state.players[p_idx].hand_len > 0u) {
+                                        remove_from_hand(p_idx, local_state.players[p_idx].hand_len - 1u);
+                                    }
+                                }
+                            }
                         }
                     }
                     case 32: {

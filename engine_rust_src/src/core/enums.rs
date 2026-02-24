@@ -172,6 +172,7 @@ pub enum ConditionType {
     LivePerformed = 247,
     IsPlayer = 248,
     IsOpponent = 249,
+    CountUniqueColors = 250,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]

@@ -46,6 +46,28 @@ export const translations = {
         'perf_result': '結果概要',
         'turn_history': 'ターン履歴',
         'no_history': 'このターンの履歴はありません。',
+        // Event Types
+        'event_play': 'プレイ',
+        'event_activate': '発動',
+        'event_trigger': 'トリガー',
+        'event_effect': '効果',
+        'event_rule': 'ルール',
+        'event_yell': 'エール',
+        'event_performance': 'パフォーマンス',
+        // New event types (Phase 2)
+        'event_phase': 'フェーズ',
+        'event_draw': 'ドロー',
+        'event_score': 'スコア',
+        'event_heart': 'ハート',
+        'event_baton': 'バトン',
+        'event_live': 'ライブ',
+        // Filter Controls
+        'filter_all_turns': '全ターン',
+        'filter_by_type': 'タイプで絞り込み',
+        'filter_by_player': 'プレイヤーで絞り込み',
+        'search_placeholder': 'ログを検索...',
+        'show_all': 'すべて表示',
+        'hide_all': 'すべて非表示',
     },
     'en': {
         'turn': 'Turn', 'phase': 'Phase', 'score': 'Score',
@@ -94,5 +116,27 @@ export const translations = {
         'perf_result': 'Result Overview',
         'turn_history': 'Turn History',
         'no_history': 'No history available for this turn.',
+        // Event Types
+        'event_play': 'Play',
+        'event_activate': 'Activate',
+        'event_trigger': 'Trigger',
+        'event_effect': 'Effect',
+        'event_rule': 'Rule',
+        'event_yell': 'Yell',
+        'event_performance': 'Performance',
+        // New event types (Phase 2)
+        'event_phase': 'Phase',
+        'event_draw': 'Draw',
+        'event_score': 'Score',
+        'event_heart': 'Heart',
+        'event_baton': 'Baton',
+        'event_live': 'Live',
+        // Filter Controls
+        'filter_all_turns': 'All Turns',
+        'filter_by_type': 'Filter by Type',
+        'filter_by_player': 'Filter by Player',
+        'search_placeholder': 'Search log...',
+        'show_all': 'Show All',
+        'hide_all': 'Hide All',
     }
 };

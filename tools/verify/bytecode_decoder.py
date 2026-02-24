@@ -243,9 +243,15 @@ def decode_chunk(chunk):
     elif base_op == Opcode.BUFF_POWER:
         params = f"v(Value):{v}, a(Attr):{a}, s(Slot):{SLOTS.get(s, s)}"
     elif base_op == Opcode.RECOVER_MEMBER or base_op == Opcode.RECOVER_LIVE:
-        params = f"v(Count):{v}, a(Source):{ZONES.get(a, a)}, s(Dest):{ZONES.get(s, s)}"
+        src_val = (s >> 16) & 0xFF
+        src_zone_id = src_val if src_val != 0 else 7 # Default recovery to discard
+        params = f"v(Count):{v}, a(Filter):[{decode_filter(a)}], s(Source):{ZONES.get(src_zone_id, src_zone_id)}, s(Dest):{SLOTS.get(s & 0xFF, s & 0xFF)}"
     elif base_op == Opcode.DRAW or base_op == Opcode.MOVE_TO_DISCARD or base_op == Opcode.ADD_HEARTS or base_op == Opcode.ADD_BLADES:
-        params = f"v(Count):{v}, a(Attr/Source):{a}, s(Slot/Target):{SLOTS.get(s, s)}"
+        src_val = (s >> 16) & 0xFF
+        if base_op == Opcode.MOVE_TO_DISCARD and src_val != 0:
+             params = f"v(Count):{v}, a(Filter):[{decode_filter(a)}], s(Source):{ZONES.get(src_val, src_val)}, s(Target):{SLOTS.get(s & 0xFF, s & 0xFF)}"
+        else:
+             params = f"v(Count):{v}, a(Attr/Source):{a}, s(Slot/Target):{SLOTS.get(s & 0xFF, s & 0xFF)}"
     elif base_op == Opcode.PAY_ENERGY:
         params = f"v(Cost):{v}, a(Optional):{a}, s(Type):{s}"
     elif base_op == Opcode.SELECT_MEMBER:
