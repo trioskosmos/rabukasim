@@ -32,6 +32,205 @@ from .patterns.registry import PatternRegistry, get_registry
 
 
 # =============================================================================
+# Constants: Alias Mappings
+# =============================================================================
+
+# Trigger type aliases (pseudocode -> canonical name)
+TRIGGER_ALIASES = {
+    "ON_YELL": "ON_REVEAL",
+    "ON_YELL_SUCCESS": "ON_REVEAL",
+    "ON_ACTIVATE": "ACTIVATED",
+    "JIDOU": "ON_LEAVES",
+    "ON_REVEAL": "ON_REVEAL",
+    "ON_MEMBER_DISCARD": "ON_LEAVES",
+    "ON_DISCARDED": "ON_LEAVES",
+    "ON_REMOVE": "ON_LEAVES",
+    "ON_SET": "ON_PLAY",
+    "ON_STAGE_ENTRY": "ON_PLAY",
+    "ON_PLAY_OTHER": "ON_PLAY",
+    "ON_REVEAL_OTHER": "ON_REVEAL",
+    "ON_LIVE_SUCCESS_OTHER": "ON_LIVE_SUCCESS",
+    "ON_TURN_START": "TURN_START",
+    "ON_TURN_END": "TURN_END",
+    "ON_TAP": "ACTIVATED",
+    "ON_REVEAL_SELF": "ON_REVEAL",
+    "ON_LIVE_SUCCESS_SELF": "ON_LIVE_SUCCESS",
+    "ACTIVATED_FROM_DISCARD": "ACTIVATED",
+    "ON_ENERGY_CHARGE": "ACTIVATED",
+    "ON_DRAW": "ACTIVATED",
+    "ON_POSITION_CHANGE": "ON_LEAVES",
+    "ON_MOVE": "ON_LEAVES",
+}
+
+# Effect type aliases (pseudocode -> canonical name)
+# Simple name-only aliases (no param modifications)
+EFFECT_ALIASES = {
+    "TAP_PLAYER": "TAP_MEMBER",
+    "CHARGE_ENERGY": "ENERGY_CHARGE",
+    "MOVE_DISCARD": "MOVE_TO_DISCARD",
+    "MOVE_HAND": "ADD_TO_HAND",
+    "MOVE_TO_HAND": "ADD_TO_HAND",
+    "ADD_HAND": "ADD_TO_HAND",
+    "SELECT_LIMIT": "REDUCE_LIVE_SET_LIMIT",
+    "POWER_UP": "BUFF_POWER",
+    "REDUCE_SET_LIMIT": "REDUCE_LIVE_SET_LIMIT",
+    "REDUCE_LIMIT": "REDUCE_LIVE_SET_LIMIT",
+    "REDUCE_HEART": "REDUCE_HEART_REQ",
+    "MOVE_DECK": "MOVE_TO_DECK",
+    "SET_BASE_BLADES": "SET_BLADES",
+    "GRANT_HEARTS": "ADD_HEARTS",
+    "GRANT_HEART": "ADD_HEARTS",
+    "CHANGE_BASE_HEART": "TRANSFORM_HEART",
+    "SELECT_LIVE_CARD": "SELECT_LIVE",
+    "POSITION_CHANGE": "MOVE_MEMBER",
+    "INCREASE_HEART": "INCREASE_HEART_COST",
+    "CHANGE_YELL_BLADE_COLOR": "TRANSFORM_COLOR",
+    "OPPONENT_CHOICE": "OPPONENT_CHOOSE",
+    "LOOK_AND_CHOOSE_ORDER": "ORDER_DECK",
+    "LOOK_AND_CHOOSE_REVEAL": "LOOK_AND_CHOOSE",
+}
+
+# Effect aliases that require additional param modifications
+# Format: alias -> (canonical_name, params_dict)
+EFFECT_ALIASES_WITH_PARAMS = {
+    "CHARGE_SELF": ("ENERGY_CHARGE", {"target": "MEMBER_SELF"}),
+    "PLACE_ENERGY_WAIT": ("PLACE_UNDER", {"type": "energy", "wait": True}),
+    "RECOVER_FROM_CHEER": ("RECOVER_MEMBER", {"source": "yell"}),
+    "BOOST_SCORE_PER_COLOR": ("BOOST_SCORE", {"multiplier": "color"}),
+    "LOOK_AND_CHOOSE_REVEAL": ("LOOK_AND_CHOOSE", {"reveal": True}),
+    "REMOVE_SELF": ("MOVE_TO_DISCARD", {"target": "MEMBER_SELF"}),
+    "SWAP_SELF": ("SWAP_ZONE", {"target": "MEMBER_SELF"}),
+    "TRIGGER_YELL_AGAIN": ("META_RULE", {"meta_type": "TRIGGER_YELL_AGAIN"}),
+    "DISCARD_HAND": ("MOVE_TO_DISCARD", {"source": "HAND", "destination": "discard"}),
+    "RECOVER_LIVE": ("RECOVER_LIVE", {"source": "discard"}),
+    "RECOVER_MEMBER": ("RECOVER_MEMBER", {"source": "discard"}),
+    "ADD_TAG": ("META_RULE", {}),
+    "PREVENT_LIVE": ("RESTRICTION", {"type": "no_live"}),
+    "RESET_YELL_HEARTS": ("META_RULE", {"meta_type": "RESET_YELL_HEARTS"}),
+    "ACTION_YELL_MULLIGAN": ("META_RULE", {"meta_type": "ACTION_YELL_MULLIGAN"}),
+    "SELECT_REVEALED": ("LOOK_AND_CHOOSE", {"source": "revealed"}),
+    "LOOK_AND_CHOOSE_REVEALED": ("LOOK_AND_CHOOSE", {"source": "revealed"}),
+    "TAP_SELF": ("TAP_MEMBER", {"target": "MEMBER_SELF"}),
+    "MOVE_SUCCESS": ("META_RULE", {"meta_type": "MOVE_SUCCESS"}),
+}
+
+# Maximum value for "ALL" selector
+MAX_SELECT_ALL = 99
+
+# =============================================================================
+# Precompiled Regex Patterns
+# =============================================================================
+
+# Condition parsing patterns
+_RE_CONDITION_NAME = re.compile(r"(\w+)(?:\s*\{(.*)\})?")
+_RE_CONDITION_PARENS = re.compile(r"\((.*?)\)")
+_RE_CONDITION_EQUALS = re.compile(r"=\s*[\"']?(.*?)[\"']?$")
+
+# Effect parsing patterns
+_RE_EFFECT_FULL = re.compile(r"^([\w_]+)(?:\((.*?)\))?\s*(?:(\{.*?\})\s*)?(?:->\s*([\w, _]+))?(.*)$")
+_RE_EFFECT_COMPACT = re.compile(r"(\w+)\((.*?)\)\s*->\s*(\w+)(.*)")
+_RE_GRANT_ABILITY = re.compile(r"GRANT_ABILITY\((.*?),\s*\"(.*?)\"\)")
+
+# Cost parsing patterns
+_RE_COST_FORMAT = re.compile(r"(\w+)(?:\((.*?)\))?(.*)")
+
+# Trigger parsing patterns
+_RE_TRIGGER_KEYWORD = re.compile(r"TRIGGER:", re.I)
+_RE_TRIGGER_PARENS = re.compile(r"\(.*?\)")
+
+# Value parsing patterns
+_RE_COST_GE = re.compile(r"COST_GE=(\d+)")
+_RE_COST_COMPARISON = re.compile(r"COST_(GE|LE|GT|LT|EQ)=(\d+)")
+
+# Condition type aliases (pseudocode -> canonical name)
+# Format: alias -> (canonical_name, extra_params)
+CONDITION_ALIASES = {
+    # Simple name-only aliases
+    "ONCE": ("TURN_1", {}),
+    "TURN_1": ("TURN_1", {}),
+    "ALL_MEMBERS": ("GROUP_FILTER", {"all": True}),
+    "COUNT_LIVE": ("COUNT_LIVE_ZONE", {}),
+    "HAS_SUCCESS_LIVE": ("COUNT_SUCCESS_LIVE", {}),
+    "SUM_ENERGY": ("COUNT_ENERGY", {}),
+    "BATON_FROM_NAME": ("BATON", {}),
+    "MOVED_THIS_TURN": ("HAS_MOVED", {}),
+    "DECK_REFRESHED_THIS_TURN": ("DECK_REFRESHED", {}),
+    "HAND_SIZE_DIFF": ("OPPONENT_HAND_DIFF", {}),
+    "BATON_TOUCH": ("BATON", {}),
+    "BATON_COUNT": ("BATON", {}),
+    "BATON": ("BATON", {}),
+    "HAND_SIZE": ("COUNT_HAND", {}),
+    "BLADES": ("COUNT_BLADES", {}),
+    "TOTAL_BLADES": ("TOTAL_BLADES", {}),
+    "HEART_LEAD": ("HEART_LEAD", {}),
+    "OPPONENT_HAS_WAIT": ("OPPONENT_HAS_WAIT", {}),
+    "CHECK_IS_IN_DISCARD": ("IS_IN_DISCARD", {}),
+    "HAS_EXCESS_HEART": ("HAS_EXCESS_HEART", {}),
+    "COUNT_MEMBER": ("COUNT_STAGE", {}),
+    "TOTAL_HEARTS": ("COUNT_HEARTS", {}),
+    "ALL_MEMBER": ("GROUP_FILTER", {}),
+    "MEMBER_AT_SLOT": ("GROUP_FILTER", {}),
+    "HAS_LIVE_HEART_COLORS": ("HAS_COLOR", {}),
+    "COUNT_REVEALED": ("COUNT_HAND", {}),
+    "COUNT_DISCARDED_THIS_TURN": ("COUNT_DISCARD", {}),
+    "CHECK_GROUP_FILTER": ("GROUP_FILTER", {}),
+    "FILTER": ("GROUP_FILTER", {}),
+    "NAME_MATCH": ("GROUP_FILTER", {"filter": "NAME_MATCH"}),
+    "SUCCESS": ("MODAL_ANSWER", {}),
+    "MATCH_PREVIOUS": ("MODAL_ANSWER", {}),
+    
+    # Aliases with params
+    "COST_LEAD": ("SCORE_COMPARE", {"type": "cost", "target": "opponent", "comparison": "GT"}),
+    "SCORE_LEAD": ("SCORE_COMPARE", {"type": "score", "comparison": "GT", "target": "opponent"}),
+    "TYPE_MEMBER": ("TYPE_CHECK", {"card_type": "member"}),
+    "TYPE_LIVE": ("TYPE_CHECK", {"card_type": "live"}),
+    "ENERGY_LAGGING": ("OPPONENT_ENERGY_DIFF", {"comparison": "GE", "diff": 1}),
+    "ENERGY_LEAD": ("OPPONENT_ENERGY_DIFF", {"comparison": "LE", "diff": 0}),
+    "SUM_SCORE": ("SCORE_COMPARE", {"type": "score", "comparison": "GE"}),
+    "SUM_COST": ("SCORE_COMPARE", {"type": "cost", "comparison": "GE"}),
+    "COST_LE_9": ("COST_CHECK", {"comparison": "LE", "value": 9}),
+    "SCORE_EQUAL_OPPONENT": ("SCORE_COMPARE", {"comparison": "EQ", "target": "opponent"}),
+    "SCORE_TOTAL": ("SCORE_COMPARE", {"type": "score", "comparison": "GE"}),
+    "COUNT_ACTIVATED": ("COUNT_STAGE", {"filter": "ACTIVATED"}),
+    "HAS_REMAINING_HEART": ("COUNT_HEARTS", {"min": 1}),
+    "COUNT_CHARGED_ENERGY": ("COUNT_ENERGY", {}),
+    "SUM_SUCCESS_LIVE": ("COUNT_SUCCESS_LIVE", {}),
+    "SUM_HEARTS": ("COUNT_HEARTS", {}),
+    "EXTRA_HEARTS": ("COUNT_HEARTS", {"min": 1}),
+    "HAS_ACTIVE_ENERGY": ("COUNT_ENERGY", {"filter": "active", "min": 1}),
+    "ALL_ENERGY_ACTIVE": ("COUNT_ENERGY", {"filter": "active", "comparison": "ALL"}),
+    "ENERGY": ("COUNT_ENERGY", {}),
+    "HAS_TYPE_LIVE": ("TYPE_CHECK", {"card_type": "live"}),
+    "NOT_MOVED_THIS_TURN": ("HAS_MOVED", {}),  # negated handled separately
+}
+
+# Conditions that map to HAS_KEYWORD with a keyword param
+KEYWORD_CONDITIONS = {
+    "COUNT_PLAYED_THIS_TURN": "PLAYED_THIS_TURN",
+    "REVEALED_CONTAINS": "REVEALED_CONTAINS",
+    "ZONE": "ZONE_CHECK",
+    "AREA": "AREA_CHECK",
+    "EFFECT_NEGATED_THIS_TURN": "EFFECT_NEGATED",
+    "HIGHEST_COST_ON_STAGE": "HIGHEST_COST",
+    "COUNT_UNIQUE_NAMES": "UNIQUE_NAMES",
+    "OPPONENT_EXTRA_HEARTS": "OPPONENT_EXTRA_HEARTS",
+    "HAS_LIVE_SET": "HAS_LIVE_SET",
+    "SUCCESS_LIVES_CONTAINS": "SUCCESS_LIVES_CONTAINS",
+    "YELL_COUNT": "YELL_COUNT",
+    "COUNT_YELL_REVEALED": "YELL_COUNT",
+}
+
+# Conditions that should be ignored (map to NONE)
+IGNORED_CONDITIONS = {
+    "TARGET",
+    "IS_MAIN_PHASE",
+    "MAIN_PHASE",
+    "ON_YELL",
+    "ON_YELL_SUCCESS",
+}
+
+
+# =============================================================================
 # Structural Lexing: Balanced-Brace Scanner
 # =============================================================================
 
@@ -265,13 +464,36 @@ class StructuralLexer:
         Example: "DRAW(1); MOVE_TO_DECK(2) {zone=discard}"
         -> ["DRAW(1)", "MOVE_TO_DECK(2) {zone=discard}"]
         """
+        return cls.split_respecting_nesting(text, delimiter=';')
+    
+    @staticmethod
+    def split_respecting_nesting(
+        text: str, 
+        delimiter: str = ';', 
+        extra_delimiters: Optional[List[str]] = None
+    ) -> List[str]:
+        """
+        Split text by delimiter(s), respecting nested braces, parentheses, and quotes.
+        
+        Args:
+            text: The text to split
+            delimiter: Primary delimiter (default: semicolon)
+            extra_delimiters: Additional delimiters to split on (e.g., [',', ' OR '])
+        
+        Returns:
+            List of split parts with whitespace stripped
+        """
         parts = []
         current = ""
         depth = 0
         in_double_quote = False
         in_single_quote = False
+        all_delimiters = [delimiter] + (extra_delimiters or [])
+        i = 0
         
-        for char in text:
+        while i < len(text):
+            char = text[i]
+            
             if char == '"':
                 in_double_quote = not in_double_quote
             elif char == "'":
@@ -284,12 +506,23 @@ class StructuralLexer:
                 depth += 1
             elif char == ')' and not in_double_quote and not in_single_quote:
                 depth -= 1
-            elif char == ';' and not in_double_quote and not in_single_quote and depth == 0:
-                if current.strip():
-                    parts.append(current.strip())
-                current = ""
-                continue
+            
+            # Check for delimiters only at depth 0 and not in quotes
+            if depth == 0 and not in_double_quote and not in_single_quote:
+                matched = False
+                for delim in all_delimiters:
+                    if text[i:i+len(delim)] == delim:
+                        if current.strip():
+                            parts.append(current.strip())
+                        current = ""
+                        i += len(delim)
+                        matched = True
+                        break
+                if matched:
+                    continue
+            
             current += char
+            i += 1
         
         if current.strip():
             parts.append(current.strip())
@@ -598,7 +831,7 @@ class AbilityParserV2:
 
         return False
 
-    def _extend_ability(self, ability: Ability, sentence: str):
+    def _extend_ability(self, ability: Ability, sentence: str) -> None:
         """Extend an existing ability with content from a continuation sentence."""
         # Extract additional effects
         effects = self._extract_effects(sentence)
@@ -678,11 +911,6 @@ class AbilityParserV2:
         if not type_str:
             return None
         name = type_str.replace("ConditionType.", "")
-        print(f"DEBUG_LOUD: Resolving '{type_str}' -> '{name}'")
-
-        # Debug members
-        # if name == "COUNT_STAGE":
-        #    print(f"DEBUG_MEMBERS: {[m.name for m in ConditionType]}")
 
         try:
             # Map common aliases
@@ -690,11 +918,8 @@ class AbilityParserV2:
                 # For now map to GROUP_FILTER, but we will use the 'val' or 'attr' to flag 'ALL' in Pass 2/4
                 return ConditionType.GROUP_FILTER
 
-            val = ConditionType[name]
-            print(f"DEBUG_LOUD: SUCCESS {name} -> {val}")
-            return val
+            return ConditionType[name]
         except KeyError:
-            print(f"DEBUG_LOUD: FAILED {name}")
             return None
 
     # =========================================================================
@@ -705,14 +930,6 @@ class AbilityParserV2:
         """Extract all effects from sentence."""
         effects = []
         results = self.registry.match_all(sentence, PatternPhase.EFFECT)
-
-        # Debug: Show what's being parsed
-        # if "DRAW(" in sentence:
-        print(f"DEBUG_EFFECTS: Parsing sentence: '{sentence[:50]}'")
-        results = self.registry.match_all(sentence, PatternPhase.EFFECT)
-        print(f"DEBUG_EFFECTS: Got {len(results)} pattern matches")
-        for pattern, match, data in results:
-            print(f"DEBUG_EFFECTS: Pattern={pattern.name}, Data={data}")
 
         for pattern, match, data in results:
             eff_type = self._resolve_effect_type(data.get("type", ""))
@@ -1071,33 +1288,8 @@ class AbilityParserV2:
                 # Strip all content in parentheses (e.g.Once per turn)
                 t_name = re.sub(r"\(.*?\)", "", t_name).strip()
 
-                # Aliases for triggers
-                alias_map = {
-                    "ON_YELL": "ON_REVEAL",
-                    "ON_YELL_SUCCESS": "ON_REVEAL",
-                    "ON_ACTIVATE": "ACTIVATED",
-                    "JIDOU": "ON_LEAVES",
-                    "ON_REVEAL": "ON_REVEAL",
-                    "ON_MEMBER_DISCARD": "ON_LEAVES",
-                    "ON_DISCARDED": "ON_LEAVES",
-                    "ON_REMOVE": "ON_LEAVES",
-                    "ON_SET": "ON_PLAY",
-                    "ON_STAGE_ENTRY": "ON_PLAY",
-                    "ON_PLAY_OTHER": "ON_PLAY",
-                    "ON_REVEAL_OTHER": "ON_REVEAL",
-                    "ON_LIVE_SUCCESS_OTHER": "ON_LIVE_SUCCESS",
-                    "ON_TURN_START": "TURN_START",
-                    "ON_TURN_END": "TURN_END",
-                    "ON_TAP": "ACTIVATED",
-                    "ON_REVEAL_SELF": "ON_REVEAL",
-                    "ON_LIVE_SUCCESS_SELF": "ON_LIVE_SUCCESS",
-                    "ACTIVATED_FROM_DISCARD": "ACTIVATED",
-                    "ON_ENERGY_CHARGE": "ACTIVATED",
-                    "ON_DRAW": "ACTIVATED",
-                    "ON_POSITION_CHANGE": "ON_LEAVES",
-                    "ON_MOVE": "ON_LEAVES",
-                }
-                t_name = alias_map.get(t_name, t_name)
+                # Use module-level constant for trigger aliases
+                t_name = TRIGGER_ALIASES.get(t_name, t_name)
                 try:
                     trigger = TriggerType[t_name]
                 except (KeyError, ValueError):
@@ -1112,7 +1304,9 @@ class AbilityParserV2:
             elif upper_line.startswith("CONDITION:"):
                 cond_str = line[len("CONDITION:"):].strip()
                 new_conditions = self._parse_pseudocode_conditions(cond_str)
-                conditions.extend(new_conditions)
+                # Only add to pre-activation pre-check conditions if NO effects or costs have been encountered yet
+                if not effects and not costs:
+                    conditions.extend(new_conditions)
                 instructions.extend(new_conditions)
 
             elif upper_line.startswith("EFFECT:"):
@@ -1309,35 +1503,8 @@ class AbilityParserV2:
 
     def _parse_pseudocode_costs(self, text: str) -> List[Cost]:
         costs = []
-        # Split by ' OR ' first, but for now we might just take the first one or treat as optional?
-        # Actually, let's treat 'OR' as splitting into separate options if needed,
-        # but the Cost model is AND-only.
-        # We'll split by comma AND ' OR ' for now and mark them all.
-        parts = []
-        current = ""
-        depth = 0
-        i = 0
-        while i < len(text):
-            char = text[i]
-            if char == "{":
-                depth += 1
-            elif char == "}":
-                depth -= 1
-            elif depth == 0:
-                if text[i : i + 4] == " OR ":
-                    parts.append(current.strip())
-                    current = ""
-                    i += 4
-                    continue
-                elif char == "," or char == ";":
-                    parts.append(current.strip())
-                    current = ""
-                    i += 1
-                    continue
-            current += char
-            i += 1
-        if current:
-            parts.append(current.strip())
+        # Use the shared split method with multiple delimiters
+        parts = StructuralLexer.split_respecting_nesting(text, delimiter=',', extra_delimiters=[' OR ', ';'])
 
         for p in parts:
             if not p:
@@ -1369,31 +1536,8 @@ class AbilityParserV2:
 
     def _parse_pseudocode_conditions(self, text: str) -> List[Condition]:
         conditions = []
-        parts = []
-        current = ""
-        depth = 0
-        i = 0
-        while i < len(text):
-            char = text[i]
-            if char == "{":
-                depth += 1
-            elif char == "}":
-                depth -= 1
-            elif depth == 0:
-                if text[i : i + 4] == " OR ":
-                    parts.append(current.strip())
-                    current = ""
-                    i += 4
-                    continue
-                elif char == "," or char == ";":
-                    parts.append(current.strip())
-                    current = ""
-                    i += 1
-                    continue
-            current += char
-            i += 1
-        if current:
-            parts.append(current.strip())
+        # Use the shared split method with multiple delimiters
+        parts = StructuralLexer.split_respecting_nesting(text, delimiter=',', extra_delimiters=[' OR ', ';'])
 
         for p in parts:
             if not p:
@@ -1415,19 +1559,6 @@ class AbilityParserV2:
                 # Initialize params from the {KEY=VAL} part
                 params = self._parse_pseudocode_params(f"{{{params_str}}}") if params_str else {}
 
-                # Default ctype
-                ctype = getattr(ConditionType, name.upper(), ConditionType.NONE)
-
-                # Special mapping for Once per turn
-                if name == "ONCE" or name == "TURN_1":
-                    ctype = ConditionType.TURN_1
-
-                # Special handling for ALL_MEMBERS alias
-                if name == "ALL_MEMBERS":
-                    ctype = ConditionType.GROUP_FILTER
-                    # Bit 2 of val (value 4) flags 'ALL' instead of 'CONTEXT'
-                    params["all"] = True
-
                 # Check for (VAL) or =VAL outside of {PARAMS}
                 remaining_part = name_part[len(m.group(0)) :].strip()
                 if remaining_part:
@@ -1441,108 +1572,52 @@ class AbilityParserV2:
                             params["val"] = e_m.group(1)
 
                 params["raw_cond"] = name
-                if name == "COST_LEAD":
-                    ctype = ConditionType.SCORE_COMPARE
-                    params["type"] = "cost"
-                    params["target"] = "opponent"
-                    params["comparison"] = "GT"
-                    if params.get("area") == "CENTER":
-                        params["zone"] = "CENTER_STAGE"
-                        del params["area"]
-
-                # Fix for SCORE_LEAD -> SCORE_COMPARE
-                if name == "SCORE_LEAD":
-                    ctype = ConditionType.SCORE_COMPARE
-                    params["type"] = "score"
-                    # Default comparison GT (Lead)
-                    if "comparison" not in params:
-                        params["comparison"] = "GT"
-                    # If target is opponent, it implies checking relative to opponent
-                    if "target" not in params:
-                        params["target"] = "opponent"
-
-                # TYPE_MEMBER/TYPE_LIVE -> TYPE_CHECK
-                if name == "TYPE_MEMBER":
-                    ctype = ConditionType.TYPE_CHECK
-                    params["card_type"] = "member"
-                if name == "TYPE_LIVE":
-                    ctype = ConditionType.TYPE_CHECK
-                    params["card_type"] = "live"
-
-                # Fix for COUNT_LIVE -> COUNT_LIVE_ZONE
-                if name == "COUNT_LIVE":
-                    ctype = ConditionType.COUNT_LIVE_ZONE
-
-                # ENERGY_LAGGING / ENERGY_LEAD -> OPPONENT_ENERGY_DIFF
-                if name == "ENERGY_LAGGING":
-                    ctype = ConditionType.OPPONENT_ENERGY_DIFF
-                    params["comparison"] = "GE"
-                    if "diff" not in params:
-                        params["diff"] = 1
-                if name == "ENERGY_LEAD":
-                    ctype = ConditionType.OPPONENT_ENERGY_DIFF
-                    params["comparison"] = "LE"
-                    if "diff" not in params:
-                        params["diff"] = 0
-
-                # Aliases
-                if name == "SUM_SCORE":
-                    ctype = ConditionType.SCORE_COMPARE
-                    params["type"] = "score"
-                    if "comparison" not in params:
-                        params["comparison"] = "GE"
-                    if "min" in params and "value" not in params:
-                        # Map min to value for SCORE_COMPARE absolute check?
-                        # Assuming SCORE_COMPARE supports absolute value if target is set?
-                        # Actually logic.rs might compare vs opponent score if no value is set?
-                        # If value IS set, it might compare vs value?
-                        # I'll rely on value mapping logic.
-                        pass
-
-                if name == "COUNT_PLAYED_THIS_TURN":
-                    # Pending engine support, use HAS_KEYWORD to silence linter
-                    ctype = ConditionType.HAS_KEYWORD
-                    params["keyword"] = "PLAYED_THIS_TURN"
-
-                if name == "SUM_COST":
-                    ctype = ConditionType.SCORE_COMPARE
-                    params["type"] = "cost"
-                    if "comparison" not in params:
-                        params["comparison"] = "GE"
-                    # Default target to ME if not specified?
-                    # If params has TARGET="OPPONENT", it will be parsed.
-
-                if name == "REVEALED_CONTAINS":
-                    # No generic HAS_CARD_IN_ZONE condition yet
-                    ctype = ConditionType.HAS_KEYWORD
-                    params["keyword"] = "REVEALED_CONTAINS"
-                    if "TYPE_LIVE" in params:
-                        params["value"] = "live"
-                    if "TYPE_MEMBER" in params:
-                        params["value"] = "member"
-
-                if name == "ZONE":
-                    # Heuristic for ZONE condition (e.g. ZONE="YELL_REVEALED")
-                    ctype = ConditionType.HAS_KEYWORD
-                    params["keyword"] = "ZONE_CHECK"
-                    params["value"] = params.get("val", "Unknown")  # Default param processing might put it in val?
-                    # The parser puts the value in params based on default logic?
-                    # Actually _parse_pseudocode_conditions logic puts keys in params.
-                    # params is passed in? No, params is dict.
-                    # We rely on default param parsing for the "YELL_REVEALED" value which should be in params?
-                    # Actually parsing of condition params happens AFTER this block usually?
-                    # No, this block converts Name to Params.
-                    # If ZONE="YELL_REVEALED", input `name` is "ZONE".
-                    # params is empty.
-                    pass
-
-                if name == "IS_MAIN_PHASE" or name == "MAIN_PHASE":
-                    # Implicit in activated abilities usually, map to NONE to ignore
+                
+                # Determine negation for NOT_MOVED_THIS_TURN
+                is_negated = negated
+                
+                # === Apply condition aliases using module-level constants ===
+                
+                # Check if this is an ignored condition
+                if name in IGNORED_CONDITIONS:
                     ctype = ConditionType.NONE
-
+                    conditions.append(Condition(ctype, params, is_negated=is_negated))
+                    continue
+                
+                # Check for HAS_KEYWORD fallback conditions
+                if name in KEYWORD_CONDITIONS:
+                    ctype = ConditionType.HAS_KEYWORD
+                    params["keyword"] = KEYWORD_CONDITIONS[name]
+                    conditions.append(Condition(ctype, params, is_negated=is_negated))
+                    continue
+                
+                # Check for prefix-based HAS_KEYWORD conditions (MATCH_*, DID_ACTIVATE_*)
+                if name.startswith("MATCH_") or name.startswith("DID_ACTIVATE_"):
+                    ctype = ConditionType.HAS_KEYWORD
+                    params["keyword"] = name
+                    conditions.append(Condition(ctype, params, is_negated=is_negated))
+                    continue
+                
+                # Check for condition aliases
+                if name in CONDITION_ALIASES:
+                    canonical_name, extra_params = CONDITION_ALIASES[name]
+                    try:
+                        ctype = ConditionType[canonical_name]
+                    except KeyError:
+                        ctype = ConditionType.NONE
+                    # Merge extra params (don't overwrite existing)
+                    for pk, pv in extra_params.items():
+                        if pk not in params:
+                            params[pk] = pv
+                    # Handle NOT_MOVED_THIS_TURN negation
+                    if name == "NOT_MOVED_THIS_TURN":
+                        is_negated = True
+                    conditions.append(Condition(ctype, params, is_negated=is_negated))
+                    continue
+                
+                # Special handling for COUNT_SUCCESS_LIVES with PLAYER param
                 if name == "COUNT_SUCCESS_LIVES" or name == "COUNT_SUCCESS_LIVE":
                     ctype = ConditionType.COUNT_SUCCESS_LIVE
-                    # Handle PLAYER=0/1 param mapping
                     if "PLAYER" in params:
                         pval = params["PLAYER"]
                         if str(pval) == "1":
@@ -1554,109 +1629,10 @@ class AbilityParserV2:
                         params["value"] = params["COUNT"]
                         params["comparison"] = "EQ"
                         del params["COUNT"]
-
-                if name == "HAS_SUCCESS_LIVE":
-                    ctype = ConditionType.COUNT_SUCCESS_LIVE
-
-                if name == "SUM_ENERGY":
-                    ctype = ConditionType.COUNT_ENERGY
-
-                if name == "BATON_FROM_NAME":
-                    ctype = ConditionType.BATON
-
-                if name == "MOVED_THIS_TURN":
-                    ctype = ConditionType.HAS_MOVED
-
-                if name == "DECK_REFRESHED_THIS_TURN":
-                    ctype = ConditionType.DECK_REFRESHED
-
-                if name == "HAND_SIZE_DIFF":
-                    ctype = ConditionType.OPPONENT_HAND_DIFF
-
-                if name == "COST_LE_9":
-                    ctype = ConditionType.COST_CHECK
-                    params["comparison"] = "LE"
-                    params["value"] = 9
-
-                if name == "TARGET":
-                    # Data error where params separated by comma
-                    ctype = ConditionType.NONE
-
-                if name.startswith("MATCH_"):
-                    ctype = ConditionType.HAS_KEYWORD
-                    params["keyword"] = name
-
-                if name.startswith("DID_ACTIVATE_"):
-                    ctype = ConditionType.HAS_KEYWORD
-                    params["keyword"] = name
-
-                if name == "SUCCESS_LIVES_CONTAINS":
-                    ctype = ConditionType.HAS_KEYWORD
-                    params["keyword"] = "SUCCESS_LIVES_CONTAINS"
-
-                if name == "YELL_COUNT" or name == "COUNT_YELL_REVEALED":
-                    # Pending engine support for Yell Count
-                    ctype = ConditionType.HAS_KEYWORD
-                    ctype = ConditionType.HAS_KEYWORD
-                    params["keyword"] = "YELL_COUNT"
-
-                if name == "HAS_REMAINING_HEART":
-                    ctype = ConditionType.COUNT_HEARTS
-                    params["min"] = 1
-
-                if name == "COUNT_CHARGED_ENERGY":
-                    ctype = ConditionType.COUNT_ENERGY
-
-                if name == "SUM_SUCCESS_LIVE":
-                    ctype = ConditionType.COUNT_SUCCESS_LIVE  # Approx
-
-                if name == "SUM_HEARTS":
-                    ctype = ConditionType.COUNT_HEARTS
-
-                if name == "SCORE_EQUAL_OPPONENT":
-                    ctype = ConditionType.SCORE_COMPARE
-                    params["comparison"] = "EQ"
-                    params["target"] = "opponent"
-
-                if name == "AREA":
-                    ctype = ConditionType.HAS_KEYWORD  # Likely filtering by area
-                    params["keyword"] = "AREA_CHECK"
-
-                if name == "EFFECT_NEGATED_THIS_TURN":
-                    ctype = ConditionType.HAS_KEYWORD
-                    params["keyword"] = "EFFECT_NEGATED"
-
-                if name == "HIGHEST_COST_ON_STAGE":
-                    ctype = ConditionType.HAS_KEYWORD
-                    params["keyword"] = "HIGHEST_COST"
-
-                if name == "BATON_TOUCH":
-                    ctype = ConditionType.BATON
-
-                if name == "HAND_SIZE":
-                    ctype = ConditionType.COUNT_HAND
-
-                if name == "COUNT_UNIQUE_NAMES":
-                    ctype = ConditionType.HAS_KEYWORD
-                    params["keyword"] = "UNIQUE_NAMES"
-
-                if name == "HAS_TYPE_LIVE":
-                    ctype = ConditionType.TYPE_CHECK
-                    params["card_type"] = "live"
-
-                if name == "OPPONENT_EXTRA_HEARTS":
-                    ctype = ConditionType.HAS_KEYWORD
-                    params["keyword"] = "OPPONENT_EXTRA_HEARTS"
-
-                if name == "EXTRA_HEARTS":
-                    ctype = ConditionType.COUNT_HEARTS
-                    # Typically means checking if we have extra hearts
-                    if "min" not in params:
-                        params["min"] = 1
-
-                if name == "BLADES":
-                    ctype = ConditionType.COUNT_BLADES
-
+                    conditions.append(Condition(ctype, params, is_negated=is_negated))
+                    continue
+                
+                # Special handling for AREA_IN
                 if name == "AREA_IN" or name == "AREA":
                     val = params.get("val", "").upper().strip('"')
                     if val == "CENTER" or params.get("zone") == "CENTER" or params.get("area") == "CENTER":
@@ -1664,126 +1640,34 @@ class AbilityParserV2:
                     else:
                         ctype = ConditionType.AREA_CHECK
                         params["keyword"] = "AREA_CHECK"
-                        # Map area names to indices (0=Left, 1=Center, 2=Right)
                         area_map = {"LEFT_SIDE": 0, "LEFT": 0, "RIGHT_SIDE": 2, "RIGHT": 2}
                         if val in area_map:
                             params["value"] = area_map[val]
-
-                if name == "BATON_COUNT" or name == "BATON" or name == "BATON_TOUCH":
-                    ctype = ConditionType.BATON
-
-                if name == "HAS_ACTIVE_ENERGY":
-                    ctype = ConditionType.COUNT_ENERGY
-                    params["filter"] = "active"
-                    if "min" not in params:
-                        params["min"] = 1
-
-                if name == "HAS_LIVE_SET":
-                    ctype = ConditionType.HAS_KEYWORD
-                    params["keyword"] = "HAS_LIVE_SET"
-
-                if name == "ALL_ENERGY_ACTIVE":
-                    ctype = ConditionType.COUNT_ENERGY
-                    params["filter"] = "active"
-                    params["comparison"] = "ALL"  # Custom logic in engine likely
-
-                if name == "ENERGY":
-                    ctype = ConditionType.COUNT_ENERGY
-
-                # Aliases
-                if name == "ON_YELL" or name == "ON_YELL_SUCCESS":
-                    ctype = ConditionType.NONE  # Triggers handled separately, but avoid ERROR
-
-                if name == "CHECK_GROUP_FILTER":
-                    ctype = ConditionType.GROUP_FILTER
-
-                if name == "FILTER":
-                    ctype = ConditionType.GROUP_FILTER
-
-                if name == "TOTAL_BLADES":
-                    ctype = ConditionType.TOTAL_BLADES
-
-                if name == "HEART_LEAD":
-                    ctype = ConditionType.HEART_LEAD
-
-                if name == "SCORE_TOTAL":
-                    ctype = ConditionType.SCORE_COMPARE
-                    params["type"] = "score"
-                    if "comparison" not in params:
-                        params["comparison"] = "GE"
-
-                if name == "COUNT_ACTIVATED":
-                    ctype = ConditionType.COUNT_STAGE
-                    params["filter"] = "ACTIVATED"
-
-                if name == "OPPONENT_HAS_WAIT":
-                    ctype = ConditionType.OPPONENT_HAS_WAIT
-
-                if name == "CHECK_IS_IN_DISCARD":
-                    ctype = ConditionType.IS_IN_DISCARD
-
-                if name == "HAS_EXCESS_HEART":
-                    ctype = ConditionType.HAS_EXCESS_HEART
-
-                if name == "COUNT_MEMBER":
-                    ctype = ConditionType.COUNT_STAGE
-
-                if name == "TOTAL_HEARTS":
-                    ctype = ConditionType.COUNT_HEARTS
-
-                if name == "ALL_MEMBER":
-                    ctype = ConditionType.GROUP_FILTER
-
-                if name == "MEMBER_AT_SLOT":
-                    ctype = ConditionType.GROUP_FILTER
-
-                if name == "SUCCESS":
-                    ctype = ConditionType.MODAL_ANSWER
-
-                if name == "HAS_LIVE_HEART_COLORS":
-                    ctype = ConditionType.HAS_COLOR
-
-                if name == "COUNT_REVEALED":
-                    ctype = ConditionType.COUNT_HAND  # Approximate or META_RULE
-
-                if name == "COUNT_DISCARDED_THIS_TURN":
-                    ctype = ConditionType.COUNT_DISCARD
-
-                if name == "IS_MAIN_PHASE":
-                    ctype = ConditionType.NONE
-
-                if name == "MATCH_PREVIOUS":
-                    ctype = ConditionType.MODAL_ANSWER  # Heuristic
-
-                if name == "NOT_MOVED_THIS_TURN":
-                    ctype = ConditionType.HAS_MOVED
-                    negated = True
-
-                if name == "NAME_MATCH":
-                    ctype = ConditionType.GROUP_FILTER
-                    params["filter"] = "NAME_MATCH"
-
-                conditions.append(Condition(ctype, params, is_negated=negated))
+                    conditions.append(Condition(ctype, params, is_negated=is_negated))
+                    continue
+                
+                # Special handling for COST_LEAD with area param
+                if name == "COST_LEAD" and params.get("area") == "CENTER":
+                    params["zone"] = "CENTER_STAGE"
+                    del params["area"]
+                
+                # Special handling for REVEALED_CONTAINS with type params
+                if name == "REVEALED_CONTAINS":
+                    if "TYPE_LIVE" in params:
+                        params["value"] = "live"
+                    if "TYPE_MEMBER" in params:
+                        params["value"] = "member"
+                
+                # Default: try to resolve from ConditionType enum
+                ctype = getattr(ConditionType, name, ConditionType.NONE)
+                
+                conditions.append(Condition(ctype, params, is_negated=is_negated))
         return conditions
 
     def _parse_pseudocode_effects(self, text: str, last_target: TargetType = TargetType.PLAYER) -> List[Effect]:
         effects = []
-        # Split by semicolon but not inside {}
-        parts = []
-        current = ""
-        depth = 0
-        for char in text:
-            if char == "{":
-                depth += 1
-            elif char == "}":
-                depth -= 1
-            elif char == ";" and depth == 0:
-                parts.append(current.strip())
-                current = ""
-                continue
-            current += char
-        if current:
-            parts.append(current.strip())
+        # Use the shared split method
+        parts = StructuralLexer.split_respecting_nesting(text, delimiter=';')
 
         for p in parts:
             if not p:
@@ -1836,124 +1720,30 @@ class AbilityParserV2:
                 if "-> SELF" in p or "-> self" in p:
                     target = TargetType.MEMBER_SELF
 
-                # Aliases from parser_pseudocode
+                # Apply effect aliases using module-level constants
                 name_up = name.upper()
-                if name_up == "TAP_PLAYER":
-                    name_up = "TAP_MEMBER"
-                if name_up == "CHARGE_SELF":
-                    name_up = "ENERGY_CHARGE"
-                    target = TargetType.MEMBER_SELF
                 
-                if name_up == "PLACE_ENERGY_WAIT":
-                    name_up = "PLACE_UNDER"
-                    params["type"] = "energy"
-                    params["wait"] = True
-                if name_up == "RECOVER_FROM_CHEER":
-                    name_up = "RECOVER_MEMBER"
-                    params["source"] = "yell"
-                if name_up == "BOOST_SCORE_PER_COLOR":
-                    name_up = "BOOST_SCORE"
-                    params["multiplier"] = "color"
+                # First check simple aliases (name-only transformations)
+                if name_up in EFFECT_ALIASES:
+                    name_up = EFFECT_ALIASES[name_up]
                 
-                if name_up == "LOOK_AND_CHOOSE_ORDER":
-                    name_up = "ORDER_DECK"
-                if name_up == "LOOK_AND_CHOOSE_REVEAL":
-                    name_up = "LOOK_AND_CHOOSE"
-                    params["reveal"] = True
-
-                etype = getattr(EffectType, name_up, None)
-                if name_up == "CHARGE_ENERGY":
-                    name_up = "ENERGY_CHARGE"
-                if name_up == "MOVE_DISCARD":
-                    name_up = "MOVE_TO_DISCARD"
-                if name_up == "REMOVE_SELF":
-                    name_up = "MOVE_TO_DISCARD"
-                    target = TargetType.MEMBER_SELF
-                if name_up == "SWAP_SELF":
-                    name_up = "SWAP_ZONE"
-                    target = TargetType.MEMBER_SELF
-                if name_up == "MOVE_HAND" or name_up == "MOVE_TO_HAND":
-                    name_up = "ADD_TO_HAND"
-                if name_up == "ADD_HAND":
-                    name_up = "ADD_TO_HAND"
-                if name_up == "TRIGGER_YELL_AGAIN":
-                    name_up = "META_RULE"
-                    params["meta_type"] = "TRIGGER_YELL_AGAIN"
-                if name_up == "DISCARD_HAND":
-                    name_up = "MOVE_TO_DISCARD"
-                    params["source"] = "HAND"
-                    params["destination"] = "discard"
-                if name_up == "RECOVER_LIVE":
-                    # Usually means from discard
-                    params["source"] = "discard"
-                if name_up == "RECOVER_MEMBER":
-                    # Usually means from discard
-                    params["source"] = "discard"
-                if name_up == "SELECT_LIMIT":
-                    name_up = "REDUCE_LIVE_SET_LIMIT"
-                if name_up == "POWER_UP":
-                    name_up = "BUFF_POWER"
-                if name_up == "REDUCE_SET_LIMIT":
-                    name_up = "REDUCE_LIVE_SET_LIMIT"
-                if name_up == "REDUCE_LIMIT":
-                    name_up = "REDUCE_LIVE_SET_LIMIT"
-                if name_up == "REDUCE_HEART":
-                    name_up = "REDUCE_HEART_REQ"
+                # Then check aliases with params
+                if name_up in EFFECT_ALIASES_WITH_PARAMS:
+                    canonical_name, extra_params = EFFECT_ALIASES_WITH_PARAMS[name_up]
+                    name_up = canonical_name
+                    # Merge extra params (don't overwrite existing)
+                    for pk, pv in extra_params.items():
+                        if pk not in params:
+                            params[pk] = pv
+                    # Handle target modifications
+                    if extra_params.get("target") == "MEMBER_SELF":
+                        target = TargetType.MEMBER_SELF
+                
+                # Special cases that need dynamic handling
                 if name_up == "ADD_TAG":
                     name_up = "META_RULE"
                     params["tag"] = val
-                if name_up == "PREVENT_LIVE":
-                    name_up = "RESTRICTION"
-                    params["type"] = "no_live"
-                if name_up == "MOVE_DECK":
-                    name_up = "MOVE_TO_DECK"
-                if name == "OPPONENT_CHOICE":
-                    etype = EffectType.OPPONENT_CHOOSE
-                    # OPPONENT_CHOICE implies complex options which parse_pseudocode_block/effects handles?
-                    # Actually SELECT_MODE handles options. OPPONENT_CHOICE likely structured similarly.
-                if name_up == "RESET_YELL_HEARTS":
-                    name_up = "META_RULE"
-                    params["meta_type"] = "RESET_YELL_HEARTS"
-                if name_up == "TRIGGER_YELL_AGAIN":
-                    name_up = "META_RULE"
-                    params["meta_type"] = "TRIGGER_YELL_AGAIN"
-                if name_up == "ADD_HAND":
-                    name_up = "ADD_TO_HAND"
-                if name_up == "ACTION_YELL_MULLIGAN":
-                    name_up = "META_RULE"
-                    params["meta_type"] = "ACTION_YELL_MULLIGAN"
-                if name_up == "OPPONENT_CHOICE":
-                    name_up = "OPPONENT_CHOOSE"
-                if name_up == "SET_BASE_BLADES":
-                    name_up = "SET_BLADES"
-                if name_up == "GRANT_HEARTS" or name_up == "GRANT_HEART":
-                    name_up = "ADD_HEARTS"
-                if name_up == "SELECT_REVEALED":
-                    name_up = "LOOK_AND_CHOOSE"
-                    params["source"] = "revealed"
-                if name_up == "LOOK_AND_CHOOSE_REVEALED":
-                    name_up = "LOOK_AND_CHOOSE"
-                    params["source"] = "revealed"
-                if name_up == "TAP_SELF":
-                    name_up = "TAP_MEMBER"
-                    target = TargetType.MEMBER_SELF
-                if name_up == "CHANGE_BASE_HEART":
-                    name_up = "TRANSFORM_HEART"
-                if name_up == "SELECT_LIVE_CARD":
-                    name_up = "SELECT_LIVE"
-                if name_up == "MOVE_TO_HAND":
-                    name_up = "ADD_TO_HAND"
-                if name_up == "POSITION_CHANGE":
-                    name_up = "MOVE_MEMBER"
-                if name_up == "INCREASE_HEART":
-                    name_up = "INCREASE_HEART_COST"
-                if name_up == "CHANGE_YELL_BLADE_COLOR":
-                    name_up = "TRANSFORM_COLOR"
-                if name_up == "MOVE_SUCCESS":
-                    name_up = "META_RULE"
-                    params["meta_type"] = "MOVE_SUCCESS"
-                if name_up == "PREVENT_SET_TO_SUCCESS_PILE":
-                    name_up = "PREVENT_SET_TO_SUCCESS_PILE"
+                    
                 if name_up.startswith("PLAY_MEMBER"):
                     if params.get("zone") == "DISCARD" or "DISCARD" in p.upper() or "DISCARD" in text.upper():
                         name_up = "PLAY_MEMBER_FROM_DISCARD"
@@ -1961,15 +1751,6 @@ class AbilityParserV2:
                         name_up = "PLAY_MEMBER_FROM_HAND"
 
                 etype = getattr(EffectType, name_up, None)
-                if name.upper() == "LOOK_AND_CHOOSE_ORDER":
-                    etype = EffectType.ORDER_DECK
-                if name.upper() == "LOOK_AND_CHOOSE_REVEAL":
-                    etype = EffectType.LOOK_AND_CHOOSE
-
-                if name.upper() == "DISCARD_HAND":
-                    etype = EffectType.MOVE_TO_DISCARD
-                    params["source"] = "HAND"
-                    params["destination"] = "discard"
 
                 if target_name:
                     target_name_up = target_name.upper()
@@ -2064,13 +1845,10 @@ class AbilityParserV2:
 
                     try:
                         val_int = int(val) if val else 1
-                        print(f"DEBUG: Effect parsing - name={name}, val={val}, val_int={val_int}")
-                        if name.upper() == "DISCARD_HAND" and val_int == 1:
-                            pass
                     except ValueError:
                         val_int = 1  # Fallback for non-numeric val (e.g. "ALL")
                         if val == "ALL":
-                            val_int = 99
+                            val_int = MAX_SELECT_ALL
                 if etype == EffectType.ENERGY_CHARGE:
                     if params.get("mode") == "WAIT":
                         params["wait"] = True

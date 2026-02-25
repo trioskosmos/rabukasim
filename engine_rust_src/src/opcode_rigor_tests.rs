@@ -13,7 +13,7 @@ fn test_opcode_swap_cards_deck_refresh() {
     state.core.players[0].hand = vec![].into();
 
     // Opcode 21: O_SWAP_CARDS, v=2 (move 2 cards), target_slot=6 (Hand)
-    let bc = vec![O_SWAP_CARDS, 2, 0, 6, O_RETURN, 0, 0, 0];
+    let bc = vec![O_SWAP_CARDS, 2, 0, 0, 6, O_RETURN, 0, 0, 0, 0];
     
     state.resolve_bytecode(&db, &bc, &ctx);
 
@@ -34,7 +34,7 @@ fn test_opcode_increase_cost_ripple() {
     let base_cost = state.get_member_cost(0, 3000, -1, -1, &db, 0);
     
     // Opcode 70: O_INCREASE_COST, v=2
-    let bc = vec![O_INCREASE_COST, 2, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_INCREASE_COST, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
 
     let new_cost = state.get_member_cost(0, 3000, -1, -1, &db, 0);
@@ -49,7 +49,7 @@ fn test_opcode_select_live_rigor() {
     let ctx = AbilityContext { player_id: 0, area_idx: 0, ..Default::default() };
     
     // Opcode 68: O_SELECT_LIVE, v=1 (Count 1)
-    let bc = vec![O_SELECT_LIVE, 1, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_SELECT_LIVE, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
 
     assert_eq!(state.phase, Phase::Response, "O_SELECT_LIVE should enter Phase::Response");
@@ -103,7 +103,7 @@ fn test_opcode_reduce_yell_count_functional() {
     let ctx = AbilityContext { player_id: 0, area_idx: 0, ..Default::default() };
     
     // Opcode 62: O_REDUCE_YELL_COUNT, v=1
-    let bc = vec![O_REDUCE_YELL_COUNT, 1, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_REDUCE_YELL_COUNT, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
 
     // Call do_yell for 2 cards
@@ -120,7 +120,7 @@ fn test_opcode_prevent_activate_rigor() {
     let ctx = AbilityContext { player_id: 0, area_idx: 0, ..Default::default() };
     
     // Opcode 82: O_PREVENT_ACTIVATE
-    let bc = vec![O_PREVENT_ACTIVATE, 0, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_PREVENT_ACTIVATE, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
 
     // Verify prevent_activate flag is set
@@ -143,7 +143,7 @@ fn test_opcode_add_stage_energy_functional() {
     state.core.players[0].stage_energy[0] = vec![].into();
     
     // Add 2 stage energy. Opcode 50.
-    let bc = vec![O_ADD_STAGE_ENERGY, 2, 0, 4, O_RETURN, 0, 0, 0];
+    let bc = vec![O_ADD_STAGE_ENERGY, 2, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
 
     // Verify stage_energy was added

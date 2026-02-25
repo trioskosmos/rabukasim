@@ -363,7 +363,7 @@ impl PhaseHandlers for GameState {
 
             let (_card_name, bytecode) = if cid == -1 {
                  let pi = self.interaction_stack.last().unwrap();
-                 let virtual_bc = vec![pi.effect_opcode, pi.ctx.v_remaining as i32, 0, 0, O_RETURN, 0, 0, 0];
+                 let virtual_bc = vec![pi.effect_opcode, pi.ctx.v_remaining as i32, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
                  ("System".to_string(), virtual_bc)
             } else if let Some(mem) = db.get_member(cid) {
                  let ab = mem.abilities.get(ab_idx).ok_or("Ability not found")?;

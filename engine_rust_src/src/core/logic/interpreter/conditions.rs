@@ -547,6 +547,33 @@ pub fn check_condition_opcode(
         C_LIVE_PERFORMED => state.obtained_success_live[p_idx],
         C_IS_PLAYER => p_idx == state.current_player as usize,
         C_IS_OPPONENT => p_idx != state.current_player as usize,
+        // New BP05 conditions (301-304)
+        C_COUNT_ENERGY_EXACT => {
+            // Check if energy count equals val exactly
+            player.energy_zone.len() as i32 == val
+        },
+        C_COUNT_BLADE_HEART_TYPES => {
+            // Count unique blade/heart types on stage
+            let mut type_count = 0;
+            for i in 0..3 {
+                if player.stage[i] >= 0 {
+                    let blades = state.get_effective_blades(p_idx, i, db, depth + 1);
+                    if blades > 0 { type_count += 1; }
+                }
+            }
+            type_count >= val
+        },
+        C_OPPONENT_HAS_EXCESS_HEART => {
+            // Check if opponent has excess hearts
+            opponent.excess_hearts > 0
+        },
+        C_SCORE_TOTAL_CHECK => {
+            // Check total score (base + bonus)
+            let total = (player.score as i32) + player.live_score_bonus;
+            let threshold = val;
+            let is_le = (attr & 0x40000000) != 0;
+            if is_le { total <= threshold } else { total >= threshold }
+        },
         _ => {
             false
         }
@@ -568,7 +595,7 @@ pub fn get_condition_count(
     state: &GameState,
     db: &CardDatabase,
     cond_id: i32,
-    attr: i32,
+    attr: u64,
     ctx: &AbilityContext
 ) -> i32 {
     let p_idx = ctx.player_id as usize;

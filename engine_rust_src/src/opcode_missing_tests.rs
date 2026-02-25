@@ -14,7 +14,7 @@ fn test_opcode_select_member() {
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
     
     // O_SELECT_MEMBER 1 (Count 1)
-    let bc = vec![O_SELECT_MEMBER, 1, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_SELECT_MEMBER, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     
     // Updated behavior: Should enter Response phase and set pending choice
@@ -33,7 +33,7 @@ fn test_opcode_select_live() {
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
     
     // O_SELECT_LIVE 1
-    let bc = vec![O_SELECT_LIVE, 1, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_SELECT_LIVE, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     
     // Updated behavior
@@ -49,7 +49,7 @@ fn test_opcode_opponent_choose() {
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
     
     // O_OPPONENT_CHOOSE
-    let bc = vec![O_OPPONENT_CHOOSE, 1, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_OPPONENT_CHOOSE, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     
     // Updated behavior
@@ -91,7 +91,7 @@ fn test_opcode_prevent_activate() {
     
     // 2. Apply Restriction
     // O_PREVENT_ACTIVATE, val=0, attr=0, target=0 (Self)
-    let bc = vec![O_PREVENT_ACTIVATE, 0, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_PREVENT_ACTIVATE, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     
     assert_eq!(state.core.players[0].prevent_activate, 1, "Flag should be set");
@@ -134,7 +134,7 @@ fn test_opcode_prevent_baton_touch() {
     // 1. Apply Restriction (Global prevent baton touch on player)
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
     // O_PREVENT_BATON_TOUCH
-    let bc = vec![O_PREVENT_BATON_TOUCH, 0, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_PREVENT_BATON_TOUCH, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     
     assert_eq!(state.core.players[0].prevent_baton_touch, 1, "Flag should be set");
@@ -170,7 +170,7 @@ fn test_opcode_prevent_play_to_slot() {
     // O_PREVENT_PLAY_TO_SLOT, val=0, attr=0, target_slot=1 (s parameter)
     // interpreter.rs: if target_slot >= 0 && target_slot < 3 ...
     // bc[3] is s/target_slot.
-    let bc = vec![O_PREVENT_PLAY_TO_SLOT, 0, 0, 1, O_RETURN, 0, 0, 0];
+    let bc = vec![O_PREVENT_PLAY_TO_SLOT, 0, 0, 0, 1, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     
     assert_ne!(state.core.players[0].prevent_play_to_slot_mask & (1 << 1), 0, "Mask should be set for slot 1");
@@ -202,9 +202,9 @@ fn test_opcode_heart_modifiers() {
     l.abilities.push(Ability {
         trigger: TriggerType::Constant,
         bytecode: vec![
-            O_INCREASE_HEART_COST, 1, 1, 0, 
-            O_TRANSFORM_HEART, 2, 5, 0,
-            O_RETURN, 0, 0, 0
+            O_INCREASE_HEART_COST, 1, 1, 0, 0, 
+            O_TRANSFORM_HEART, 2, 5, 0, 0,
+            O_RETURN, 0, 0, 0, 0
         ],
         ..Default::default()
     });

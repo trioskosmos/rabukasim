@@ -3,7 +3,7 @@ use crate::core::enums::*;
 use super::HandlerResult;
 use super::super::suspension::suspend_interaction;
 
-pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i32, s: i32, instr_ip: usize) -> HandlerResult {
+pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i64, s: i32, instr_ip: usize) -> HandlerResult {
     let p_idx = ctx.player_id as usize;
 
     match op {
@@ -83,6 +83,57 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
                  }
              }
              HandlerResult::Continue
+        },
+        O_PAY_ENERGY_DYNAMIC => {
+            // Pay energy equal to card score + v
+            // Used by cards that have dynamic energy costs based on card properties
+            let base_score = state.core.players[p_idx].score as i32;
+            let total_cost = (base_score + v) as usize;
+            
+            if state.debug.debug_mode {
+                println!("[DEBUG] O_PAY_ENERGY_DYNAMIC: base_score={}, v={}, total_cost={}", base_score, v, total_cost);
+            }
+            
+            let available = (0..state.core.players[p_idx].energy_zone.len())
+                .filter(|&i| !state.core.players[p_idx].is_energy_tapped(i))
+                .count();
+            
+            if available < total_cost {
+                return HandlerResult::SetCond(false);
+            }
+            
+            // Auto-pay the energy
+            let mut paid = 0;
+            for i in 0..state.core.players[p_idx].energy_zone.len() {
+                if paid >= total_cost { break; }
+                if !state.core.players[p_idx].is_energy_tapped(i) {
+                    state.core.players[p_idx].set_energy_tapped(i, true);
+                    paid += 1;
+                }
+            }
+            HandlerResult::SetCond(true)
+        },
+        O_PLACE_ENERGY_UNDER_MEMBER => {
+            // Place energy card under a member
+            // Used by cards that attach energy to members for special effects
+            let slot = if ctx.area_idx >= 0 { ctx.area_idx as usize } else { 0 };
+            
+            if slot < 3 && !state.core.players[p_idx].energy_zone.is_empty() {
+                // Find an untapped energy to move
+                for i in 0..state.core.players[p_idx].energy_zone.len() {
+                    if !state.core.players[p_idx].is_energy_tapped(i) {
+                        let energy_cid = state.core.players[p_idx].energy_zone.remove(i);
+                        // Store the energy under the member using stage_energy field
+                        state.core.players[p_idx].stage_energy[slot].push(energy_cid);
+                        
+                        if state.debug.debug_mode {
+                            println!("[DEBUG] O_PLACE_ENERGY_UNDER_MEMBER: placed energy {} under member at slot {}", energy_cid, slot);
+                        }
+                        break;
+                    }
+                }
+            }
+            HandlerResult::Continue
         },
         _ => HandlerResult::Continue,
     }

@@ -601,10 +601,10 @@ fn calculate_card_potential(cid: i32, db: &CardDatabase, max_energy: u32) -> f32
 fn has_opcode(bytecode: &[i32], target_op: i32) -> bool {
     let mut i = 0;
     while i < bytecode.len() {
-        if i + 3 >= bytecode.len() { break; }
+        if i + 4 >= bytecode.len() { break; }
         let op = bytecode[i];
         if op == target_op { return true; }
-        i += 4;
+        i += 5;
     }
     false
 }

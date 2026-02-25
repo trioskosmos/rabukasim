@@ -4,6 +4,8 @@ pub mod py_bindings;
 pub mod wasm_bindings;
 pub mod test_helpers;
 pub mod repro;
+#[cfg(test)]
+mod repro_discard_bug;
 
 #[cfg(test)]
 mod tests;
@@ -96,6 +98,12 @@ mod opcode_rigor_tests;
 mod parity_tests;
 #[cfg(test)]
 mod untested_opcode_tests;
+
+#[cfg(test)]
+mod new_opcode_tests;
+
+#[cfg(test)]
+mod unique_ability_tests;
 
 // pub mod repro_pl_bp3_004; // Deleted
 

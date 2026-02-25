@@ -710,4 +710,82 @@ EFFECT_PATTERNS = [
         output_type="EffectType.PREVENT_BATON_TOUCH",
         output_value=1,
     ),
+    # ==========================================================================
+    # New effects for BP05 and new card abilities
+    # ==========================================================================
+    Pattern(
+        name="look_deck_dynamic_score",
+        phase=PatternPhase.EFFECT,
+        regex=r"デッキの上から.*?ライブの合計スコアに(\d+)を足した数に等しい枚数見る",
+        priority=15,
+        output_type="EffectType.LOOK_DECK_DYNAMIC",
+        extractor=lambda text, m: {
+            "type": "EffectType.LOOK_DECK_DYNAMIC",
+            "value": 0,  # Dynamic value
+            "params": {"value_source": "live_score", "modifier": int(m.group(1))},
+        },
+    ),
+    Pattern(
+        name="reduce_score",
+        phase=PatternPhase.EFFECT,
+        regex=r"ライブの合計スコアを[－−](\d+)する",
+        priority=20,
+        output_type="EffectType.REDUCE_SCORE",
+        extractor=lambda text, m: {
+            "type": "EffectType.REDUCE_SCORE",
+            "value": int(m.group(1)),
+        },
+    ),
+    Pattern(
+        name="repeat_ability",
+        phase=PatternPhase.EFFECT,
+        regex=r"この手順をさらに(\d+)回まで繰り返してもよい",
+        priority=15,
+        output_type="EffectType.REPEAT_ABILITY",
+        extractor=lambda text, m: {
+            "type": "EffectType.REPEAT_ABILITY",
+            "value": int(m.group(1)),
+            "params": {"optional": True},
+        },
+    ),
+    Pattern(
+        name="lose_excess_hearts",
+        phase=PatternPhase.EFFECT,
+        regex=r"余剰ハートを(\d+)つ以上持っている場合、それらをすべて失い",
+        priority=15,
+        output_type="EffectType.LOSE_EXCESS_HEARTS",
+        extractor=lambda text, m: {
+            "type": "EffectType.LOSE_EXCESS_HEARTS",
+            "value": int(m.group(1)),
+            "params": {"lose_all": True},
+        },
+    ),
+    Pattern(
+        name="skip_activate_phase",
+        phase=PatternPhase.EFFECT,
+        regex=r"このメンバーは自分のアクティブフェイズにアクティブにしない",
+        priority=20,
+        output_type="EffectType.SKIP_ACTIVATE_PHASE",
+        output_value=1,
+    ),
+    Pattern(
+        name="pay_energy_dynamic_score",
+        phase=PatternPhase.EFFECT,
+        regex=r"そのカードのスコアに等しい数の{{icon_energy.*?}}を支払ってもよい",
+        priority=15,
+        output_type="EffectType.PAY_ENERGY_DYNAMIC",
+        output_params={"value_source": "selected_card_score"},
+    ),
+    Pattern(
+        name="place_energy_under_member",
+        phase=PatternPhase.EFFECT,
+        regex=r"エネルギー置き場にあるエネルギー(\d+)枚をこのメンバーの下に置く",
+        priority=15,
+        output_type="EffectType.PLACE_ENERGY_UNDER_MEMBER",
+        extractor=lambda text, m: {
+            "type": "EffectType.PLACE_ENERGY_UNDER_MEMBER",
+            "value": int(m.group(1)),
+            "params": {"target": "self"},
+        },
+    ),
 ]

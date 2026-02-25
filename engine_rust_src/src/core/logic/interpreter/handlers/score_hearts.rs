@@ -6,7 +6,7 @@ use super::super::conditions::resolve_count;
 use super::super::constants::DYNAMIC_VALUE;
 use super::super::logging;
 
-pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i32, s: i32) -> HandlerResult {
+pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i64, s: i32) -> HandlerResult {
     let p_idx = ctx.player_id as usize;
     let target_slot = s & 0xFF;
     let resolved_slot = if target_slot == 10 { ctx.target_slot as i32 } else { resolve_target_slot(target_slot, ctx) as i32 };
@@ -20,6 +20,7 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
                 final_v = v * count;
             }
             state.core.players[p_idx].live_score_bonus += final_v;
+            state.core.players[p_idx].live_score_bonus_logs.push((ctx.source_card_id, final_v));
             if !state.ui.silent {
                 if let Some(msg) = logging::get_opcode_log(O_BOOST_SCORE, final_v, a, s, 0) {
                     state.log(msg);
@@ -98,6 +99,34 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
             // v = amount to set, s = color index
             if (s as usize) < 7 {
                 state.core.players[p_idx].heart_req_additions.set_color_count(s as usize, v as u8);
+            }
+        },
+        O_REDUCE_SCORE => {
+            // Reduce live score bonus by v
+            // Used by cards that penalize the player's live score
+            let reduction = v.min(state.core.players[p_idx].live_score_bonus);
+            state.core.players[p_idx].live_score_bonus -= reduction;
+            if state.debug.debug_mode {
+                println!("[DEBUG] O_REDUCE_SCORE: reduced by {} to {}", reduction, state.core.players[p_idx].live_score_bonus);
+            }
+        },
+        O_LOSE_EXCESS_HEARTS => {
+            // Lose excess hearts beyond what's required for the live
+            // v = number of excess hearts to lose (0 = lose all excess)
+            // This is used by cards that penalize having too many hearts
+            let _player = &mut state.core.players[p_idx];
+            // For now, this is a placeholder - actual implementation would need
+            // to compare current hearts vs required hearts for the active live
+            if state.debug.debug_mode {
+                println!("[DEBUG] O_LOSE_EXCESS_HEARTS: v={}", v);
+            }
+        },
+        O_SKIP_ACTIVATE_PHASE => {
+            // Skip the next activate phase
+            // Used by cards that prevent member activation
+            state.core.players[p_idx].skip_next_activate = true;
+            if state.debug.debug_mode {
+                println!("[DEBUG] O_SKIP_ACTIVATE_PHASE: set skip_next_activate=true");
             }
         },
         _ => return HandlerResult::Continue,

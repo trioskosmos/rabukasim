@@ -3,7 +3,7 @@ use crate::core::enums::*;
 use super::HandlerResult;
 use super::super::suspension::{suspend_interaction, resolve_target_slot, get_choice_text};
 
-pub fn handle_meta_control(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i32, s: i32, instr_ip: usize) -> HandlerResult {
+pub fn handle_meta_control(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i64, s: i32, instr_ip: usize) -> HandlerResult {
     let p_idx = ctx.player_id as usize;
     let target_slot = s & 0xFF;
     let _resolved_slot = if target_slot == 10 { ctx.target_slot as i32 } else { resolve_target_slot(target_slot, ctx) as i32 };
@@ -125,6 +125,22 @@ pub fn handle_meta_control(state: &mut GameState, db: &CardDatabase, ctx: &mut A
                  p.set_moved(0, temp_moved[2]); p.set_moved(1, temp_moved[0]); p.set_moved(2, temp_moved[1]);
              }
          },
+        O_REPEAT_ABILITY => {
+            // v = max repeat count (0 = infinite, N = repeat N more times)
+            // Returns Branch(0) to restart ability from beginning, or Continue if limit reached
+            let max_repeats = v;
+            if max_repeats == 0 || ctx.repeat_count < max_repeats as i16 {
+                ctx.repeat_count = ctx.repeat_count.saturating_add(1);
+                if state.debug.debug_mode {
+                    println!("[DEBUG] O_REPEAT_ABILITY: repeating ability (count={}/{})", ctx.repeat_count, max_repeats);
+                }
+                return HandlerResult::Branch(0);  // Jump back to start of ability
+            } else {
+                if state.debug.debug_mode {
+                    println!("[DEBUG] O_REPEAT_ABILITY: limit reached (count={}/{})", ctx.repeat_count, max_repeats);
+                }
+            }
+        },
         _ => return HandlerResult::Continue,
     }
     HandlerResult::Continue

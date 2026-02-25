@@ -65,16 +65,16 @@ fn verify_ability_bytecode(card_no: &str, ab_idx: usize, ab: &Ability, opcodes: 
         card_no, ab_idx
     );
 
-    // Rule 2: Bytecode length should generally be a multiple of 4 (as most opcodes use 4-byte slots)
+    // Rule 2: Bytecode length should generally be a multiple of 5 (5-word extended format)
     // Note: Some jump targets or complex opcodes might vary, but O_RETURN is always at the end.
-    // In our compiler, almost all are 4-byte aligned.
+    // In our compiler, almost all are 5-word aligned.
     assert!(
-        ab.bytecode.len() % 4 == 0, 
-        "Ability {} [{}] bytecode length {} is not multiple of 4", 
+        ab.bytecode.len() % 5 == 0, 
+        "Ability {} [{}] bytecode length {} is not multiple of 5", 
         card_no, ab_idx, ab.bytecode.len()
     );
 
-    for chunk in ab.bytecode.chunks(13) {
+    for chunk in ab.bytecode.chunks(5) {
         if !chunk.is_empty() {
             opcodes.insert(chunk[0]);
         }

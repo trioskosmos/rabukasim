@@ -18,7 +18,7 @@ fn test_triggers_group_a_action() {
     state.core.players[0].deck = vec![5901, 5902, 5903, 5904, 5905].into(); // Updated deck cards
 
     // [TriggerType::OnPlay]
-    let ab_play = Ability { trigger: TriggerType::OnPlay, bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0], ..Default::default() };
+    let ab_play = Ability { trigger: TriggerType::OnPlay, bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], ..Default::default() };
     let mut m_play = db.members.get(&3000).unwrap().clone();
     m_play.card_id = 5910; m_play.abilities = vec![ab_play];
     db.members.insert(5910, m_play.clone()); db.members_vec[5910 & LOGIC_ID_MASK as usize] = Some(m_play);
@@ -27,16 +27,16 @@ fn test_triggers_group_a_action() {
     assert_eq!(state.core.players[0].hand.len(), 1, "OnPlay should trigger draw");
 
     // [TriggerType::OnLeaves]
-    let ab_leaves = Ability { trigger: TriggerType::OnLeaves, bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0], ..Default::default() };
+    let ab_leaves = Ability { trigger: TriggerType::OnLeaves, bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], ..Default::default() };
     let mut m_leaves = db.members.get(&3000).unwrap().clone();
     m_leaves.card_id = 5911; m_leaves.abilities = vec![ab_leaves];
     db.members.insert(5911, m_leaves.clone()); db.members_vec[5911 & LOGIC_ID_MASK as usize] = Some(m_leaves);
     state.core.players[0].stage[0] = 5911;
-    state.resolve_bytecode(&db, &vec![O_MOVE_TO_DISCARD, 1, 0, 4, O_RETURN, 0, 0, 0], &AbilityContext { player_id: 0, area_idx: 0, source_card_id: 5911, ..Default::default() });
+    state.resolve_bytecode(&db, &vec![O_MOVE_TO_DISCARD, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0], &AbilityContext { player_id: 0, area_idx: 0, source_card_id: 5911, ..Default::default() });
     assert_eq!(state.core.players[0].hand.len(), 2, "OnLeaves should trigger draw");
 
     // [TriggerType::OnReveal]
-    let ab_reveal = Ability { trigger: TriggerType::OnReveal, bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0], ..Default::default() };
+    let ab_reveal = Ability { trigger: TriggerType::OnReveal, bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], ..Default::default() };
     let mut l_reveal = db.lives.get(&55001).unwrap().clone();
     l_reveal.card_id = 15002; l_reveal.abilities = vec![ab_reveal];
     db.lives.insert(15002, l_reveal.clone()); 
@@ -60,7 +60,7 @@ fn test_triggers_group_b_phase() {
     state.core.players[0].deck = vec![5901, 5902, 5903].into();
 
     // [TriggerType::TurnStart]
-    let ab_start = Ability { trigger: TriggerType::TurnStart, bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0], ..Default::default() };
+    let ab_start = Ability { trigger: TriggerType::TurnStart, bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], ..Default::default() };
     let mut m_start = db.members.get(&3000).unwrap().clone();
     m_start.card_id = 5920; m_start.abilities = vec![ab_start];
     db.members.insert(5920, m_start.clone()); db.members_vec[5920 & LOGIC_ID_MASK as usize] = Some(m_start);
@@ -81,7 +81,7 @@ fn test_triggers_exhaustive() {
     let mut state = create_test_state();
 
     // [TriggerType::TurnEnd]
-    let ab_end = Ability { trigger: TriggerType::TurnEnd, bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0], ..Default::default() };
+    let ab_end = Ability { trigger: TriggerType::TurnEnd, bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], ..Default::default() };
     let mut m_end = db.members.get(&3000).unwrap().clone();
     m_end.card_id = 5914; m_end.abilities = vec![ab_end];
     db.members.insert(5914, m_end.clone()); db.members_vec[5914 & LOGIC_ID_MASK as usize] = Some(m_end);
@@ -90,13 +90,13 @@ fn test_triggers_exhaustive() {
     assert_eq!(state.core.players[0].hand.len(), 1, "TurnEnd should trigger draw");
 
     // [TriggerType::OnPositionChange]
-    let ab_pos = Ability { trigger: TriggerType::OnPositionChange, bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0], ..Default::default() };
+    let ab_pos = Ability { trigger: TriggerType::OnPositionChange, bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], ..Default::default() };
     let mut m_pos = db.members.get(&3000).unwrap().clone();
     m_pos.card_id = 5915; m_pos.abilities = vec![ab_pos];
     db.members.insert(5915, m_pos.clone()); db.members_vec[5915 & LOGIC_ID_MASK as usize] = Some(m_pos);
     state.core.players[0].stage[0] = 5915; state.core.players[0].deck.extend(vec![5960, 5961, 5962]); // Updated deck cards
     // Simulate position change (MoveMember) - ctx.area_idx=0 is source, target_slot=1 is destination
-    state.resolve_bytecode(&db, &vec![O_MOVE_MEMBER, 0, 0, 0, O_RETURN, 0, 0, 0], &AbilityContext { player_id: 0, area_idx: 0, target_slot: 1, ..Default::default() });
+    state.resolve_bytecode(&db, &vec![O_MOVE_MEMBER, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0], &AbilityContext { player_id: 0, area_idx: 0, target_slot: 1, ..Default::default() });
     assert_eq!(state.core.players[0].hand.len(), 2, "OnPositionChange should trigger draw");
 }
 
@@ -106,7 +106,7 @@ fn test_triggers_group_c_persistent() {
     let mut state = create_test_state();
 
     // [TriggerType::Activated]
-    let ab_act = Ability { trigger: TriggerType::Activated, bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0], ..Default::default() };
+    let ab_act = Ability { trigger: TriggerType::Activated, bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], ..Default::default() };
     let mut m_act = db.members.get(&3000).unwrap().clone();
     m_act.card_id = 5912; m_act.abilities = vec![ab_act];
     db.members.insert(5912, m_act.clone()); db.members_vec[5912 & LOGIC_ID_MASK as usize] = Some(m_act);
@@ -115,7 +115,7 @@ fn test_triggers_group_c_persistent() {
     assert_eq!(state.core.players[0].hand.len(), 1, "Activated ability should trigger");
 
     // [TriggerType::Constant]
-    let ab_const = Ability { trigger: TriggerType::Constant, bytecode: vec![O_ADD_BLADES, 5, 0, 0, O_RETURN, 0, 0, 0], ..Default::default() };
+    let ab_const = Ability { trigger: TriggerType::Constant, bytecode: vec![O_ADD_BLADES, 5, 0, 0, 0, O_RETURN, 0, 0, 0, 0], ..Default::default() };
     let mut m_const = db.members.get(&3000).unwrap().clone();
     m_const.card_id = 5913; m_const.abilities = vec![ab_const];
     db.members.insert(5913, m_const.clone()); db.members_vec[5913 & LOGIC_ID_MASK as usize] = Some(m_const);
@@ -215,7 +215,7 @@ fn test_effects_group_ab_stats_zone() {
     let mut db = create_test_db();
     let mut state = create_test_state();
     // [EffectType::AddHearts] (Pink=0, Count=2) to Self (Target 4)
-    let bc = vec![O_ADD_HEARTS, 2, 0, 4, O_RETURN, 0, 0, 0];
+    let bc = vec![O_ADD_HEARTS, 2, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     let mut m_src_1 = MemberCard { card_id: 60001, ..Default::default() };
     m_src_1.abilities.push(Ability { bytecode: bc.clone(), ..Default::default() }); 
     db.members.insert(60001, m_src_1.clone()); db.members_vec[60001 & LOGIC_ID_MASK as usize] = Some(m_src_1);
@@ -231,7 +231,7 @@ fn test_effects_group_ab_stats_zone() {
     state.core.players[0].discard = vec![5901].into(); // Updated discard card
     
     // Update the card in DB to have the O_RECOVER_MEMBER bytecode, because resumption reads from DB
-    let bc_recov = vec![O_RECOVER_MEMBER, 1, 0, 0, O_RETURN, 0, 0, 0];
+    let bc_recov = vec![O_RECOVER_MEMBER, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     let mut m_src_recov = db.members.get(&60001).unwrap().clone();
     m_src_recov.abilities[0].bytecode = bc_recov.clone();
     db.members.insert(60001, m_src_recov.clone()); db.members_vec[60001 & LOGIC_ID_MASK as usize] = Some(m_src_recov);
@@ -245,7 +245,7 @@ fn test_effects_group_ab_stats_zone() {
     // O_RECOVER_MEMBER recovered 5901. Hand has 5901.
     // MoveToDeck moves 5901 to Deck.
     // Discard should be empty (since 5901 was removed).
-    state.resolve_bytecode(&db, &vec![O_MOVE_TO_DECK, 1, 2, 0, O_RETURN, 0, 0, 0], &ctx); // From Hand
+    state.resolve_bytecode(&db, &vec![O_MOVE_TO_DECK, 1, 2, 0, 0, O_RETURN, 0, 0, 0, 0], &ctx); // From Hand
     assert_eq!(state.core.players[0].discard.len(), 0, "Discard should be empty after Recover and MoveToDeck");
     // println!("DEBUG: Discard: {:?}", state.core.players[0].discard);
     // assert!(state.core.players[0].discard.contains(&10)); // Removed invalid assertion
@@ -259,7 +259,7 @@ fn test_effects_group_ce_info_modal() {
 
     // [EffectType::LookAndChoose]
     state.core.players[0].deck = vec![5901, 5902, 5903].into(); // Updated deck cards
-    state.resolve_bytecode(&db, &vec![O_LOOK_AND_CHOOSE, 2, 0, 0, O_RETURN, 0, 0, 0], &ctx);
+    state.resolve_bytecode(&db, &vec![O_LOOK_AND_CHOOSE, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0], &ctx);
     assert_eq!(state.phase, Phase::Response);
 
     // [EffectType::SelectMode]
@@ -274,17 +274,17 @@ fn test_effects_exhaustive() {
 
     // [EffectType::ReduceYellCount]
     state.core.players[0].yell_count_reduction = 0;
-    state.resolve_bytecode(&db, &vec![O_REDUCE_YELL_COUNT, 2, 0, 0, O_RETURN, 0, 0, 0], &ctx);
+    state.resolve_bytecode(&db, &vec![O_REDUCE_YELL_COUNT, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0], &ctx);
     // Note: O_REDUCE_YELL_COUNT logic might affect game_state.players[0].cost_reduction or similar.
     
     // [EffectType::SwapArea]
     state.core.players[0].stage[0] = 5901; state.core.players[0].stage[1] = 5902; // Updated stage cards
-    state.resolve_bytecode(&db, &vec![O_SWAP_AREA, 0, 1, 0, O_RETURN, 0, 0, 0], &ctx);
+    state.resolve_bytecode(&db, &vec![O_SWAP_AREA, 0, 1, 0, 0, O_RETURN, 0, 0, 0, 0], &ctx);
     assert_eq!(state.core.players[0].stage[0], 5902); assert_eq!(state.core.players[0].stage[1], 5901);
 
     // [EffectType::TransformHeart] (Change color of heart in slot 0)
     // O_TRANSFORM_HEART from_color, to_color, count
-    state.resolve_bytecode(&db, &vec![O_TRANSFORM_COLOR, 0, 1, 1, O_RETURN, 0, 0, 0], &ctx);
+    state.resolve_bytecode(&db, &vec![O_TRANSFORM_COLOR, 0, 1, 0, 1, O_RETURN, 0, 0, 0, 0], &ctx);
 }
 
 #[test]
@@ -295,11 +295,11 @@ fn test_effects_group_f_system() {
     // [EffectType::EnergyCharge]
     state.core.players[0].energy_deck = vec![3101].into(); // Updated energy deck card
     let initial_energy = state.core.players[0].energy_zone.len();
-    state.resolve_bytecode(&db, &vec![O_ENERGY_CHARGE, 1, 0, 0, O_RETURN, 0, 0, 0], &AbilityContext { player_id: 0, ..Default::default() });
+    state.resolve_bytecode(&db, &vec![O_ENERGY_CHARGE, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], &AbilityContext { player_id: 0, ..Default::default() });
     assert_eq!(state.core.players[0].energy_zone.len(), initial_energy + 1);
 
     // [EffectType::Immunity]
-    state.resolve_bytecode(&db, &vec![O_IMMUNITY, 1, 0, 0, O_RETURN, 0, 0, 0], &AbilityContext { player_id: 0, ..Default::default() });
+    state.resolve_bytecode(&db, &vec![O_IMMUNITY, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], &AbilityContext { player_id: 0, ..Default::default() });
     assert!(state.core.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
 }
 
@@ -339,16 +339,16 @@ fn test_targets_all_groups() {
     state.core.players[1].deck = vec![5911, 5912, 5913, 5914, 5915, 5916, 5917, 5918, 5919, 5920].into(); // Updated deck cards
 
     // [TargetType::Player] (Target 1)
-    state.resolve_bytecode(&db, &vec![O_DRAW, 1, 0, 1, O_RETURN, 0, 0, 0], &AbilityContext { player_id: 0, ..Default::default() });
+    state.resolve_bytecode(&db, &vec![O_DRAW, 1, 0, 0, 1, O_RETURN, 0, 0, 0, 0], &AbilityContext { player_id: 0, ..Default::default() });
     assert_eq!(state.core.players[0].hand.len(), 1);
 
     // [TargetType::Opponent] (Target 2)
-    state.resolve_bytecode(&db, &vec![O_DRAW, 1, 0, 2, O_RETURN, 0, 0, 0], &AbilityContext { player_id: 0, ..Default::default() });
+    state.resolve_bytecode(&db, &vec![O_DRAW, 1, 0, 0, 2, O_RETURN, 0, 0, 0, 0], &AbilityContext { player_id: 0, ..Default::default() });
     assert_eq!(state.core.players[1].hand.len(), 1);
 
     // [TargetType::AllPlayers] (Target 3)
     // Draw 1 each
-    state.resolve_bytecode(&db, &vec![O_DRAW, 1, 0, 3, O_RETURN, 0, 0, 0], &AbilityContext { player_id: 0, ..Default::default() });
+    state.resolve_bytecode(&db, &vec![O_DRAW, 1, 0, 0, 3, O_RETURN, 0, 0, 0, 0], &AbilityContext { player_id: 0, ..Default::default() });
     assert_eq!(state.core.players[0].hand.len(), 2); // P0 drew 1 for self, then 1 for all players
     assert_eq!(state.core.players[1].hand.len(), 2); // P1 drew 1 for opponent, then 1 for all players
 }
@@ -367,7 +367,7 @@ fn test_mechanics_optional_once_per_turn() {
     let ab_once = Ability {
         trigger: TriggerType::OnPlay,
         is_once_per_turn: true,
-        bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0],
+        bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
         ..Default::default()
     };
     let mut m_once = db.members.get(&3000).unwrap().clone();
@@ -389,7 +389,7 @@ fn test_mechanics_optional_once_per_turn() {
     // 2. [Optional] (~てもよい)
     let ab_opt = Ability {
         trigger: TriggerType::OnPlay,
-        bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0],
+        bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
         ..Default::default()
     };
     let mut m_opt = db.members.get(&3000).unwrap().clone();
@@ -420,7 +420,7 @@ fn test_pattern_on_play() {
     // "When this card is played, draw 1 card."
     let ab1 = Ability {
         trigger: TriggerType::OnPlay,
-        bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0],
+        bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
         ..Default::default()
     };
     let mut m1 = db.members.get(&3000).unwrap().clone();
@@ -437,7 +437,7 @@ fn test_pattern_on_play() {
     let ab2 = Ability {
         trigger: TriggerType::OnPlay,
         conditions: vec![cond2],
-        bytecode: vec![O_RECOVER_MEMBER, 1, 0, 0, O_RETURN, 0, 0, 0],
+        bytecode: vec![O_RECOVER_MEMBER, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
         ..Default::default()
     };
     let mut m2 = db.members.get(&3000).unwrap().clone();
@@ -464,7 +464,7 @@ fn test_pattern_on_play() {
     let ab3 = Ability {
         trigger: TriggerType::OnPlay,
         costs: vec![cost3],
-        bytecode: vec![O_LOOK_AND_CHOOSE, 3, 0, 0, O_RETURN, 0, 0, 0],
+        bytecode: vec![O_LOOK_AND_CHOOSE, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
         ..Default::default()
     };
     let mut m3 = db.members.get(&3000).unwrap().clone();
@@ -529,7 +529,7 @@ fn test_pattern_performance() {
     let ab2 = Ability {
         trigger: TriggerType::OnReveal,
         is_once_per_turn: true,
-        bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0],
+        bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
         ..Default::default()
     };
     let mut l2 = db.lives.get(&55001).unwrap().clone();
@@ -544,7 +544,7 @@ fn test_pattern_performance() {
     
     // Simulate Reveal
     state.phase = Phase::PerformanceP1; // Must be in Performance phase to reveal
-    state.resolve_bytecode(&db, &vec![O_REVEAL_CARDS, 1, 0, 0, O_RETURN, 0, 0, 0], &AbilityContext { player_id: 0, ..Default::default() });
+    state.resolve_bytecode(&db, &vec![O_REVEAL_CARDS, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], &AbilityContext { player_id: 0, ..Default::default() });
     assert_eq!(state.core.players[0].hand.len(), 1, "OnReveal Temporal pattern failed");
 
     // 3. Result Reward (OnLiveSuccess + ScoreLead)
@@ -553,7 +553,7 @@ fn test_pattern_performance() {
     let ab3 = Ability {
         trigger: TriggerType::OnLiveSuccess,
         conditions: vec![cond3],
-        bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0], // Using Draw as proxy for "Reward"
+        bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], // Using Draw as proxy for "Reward"
         ..Default::default()
     };
     let mut m3 = db.members.get(&3000).unwrap().clone();
@@ -590,9 +590,8 @@ fn test_opcode_reveal_until_cost_ge() {
 
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
 
-    // O_REVEAL_UNTIL C_COST_CHECK (215) attr: (19 << 1) | 0x40 = 38 | 64 = 102? No, wait.
-    // If we want min_cost 10, it's (10 << 1) | 0x40 = 20 | 64 = 84.
-    let bc = vec![O_REVEAL_UNTIL, C_COST_CHECK, 84, 6, O_RETURN, 0, 0, 0];
+    // O_REVEAL_UNTIL C_COST_CHECK val=10 (raw threshold)
+    let bc = vec![O_REVEAL_UNTIL, C_COST_CHECK, 10, 0, 6, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
 
     // Should pop 60010 (cost 5 < 10), then 60015 (cost 15 >= 10).
@@ -613,7 +612,7 @@ fn test_pattern_exhaustive_sampling() {
     let ab1 = Ability {
         trigger: TriggerType::OnPlay,
         costs: vec![cost1],
-        bytecode: vec![O_IMMUNITY, 1, 0, 1, O_RETURN, 0, 0, 0], // Grant to Player (Target 1)
+        bytecode: vec![O_IMMUNITY, 1, 0, 0, 1, O_RETURN, 0, 0, 0, 0], // Grant to Player (Target 1)
         ..Default::default()
     };
     let mut m1 = db.members.get(&3000).unwrap().clone();
@@ -631,7 +630,7 @@ fn test_pattern_exhaustive_sampling() {
 
     // 2. Niche Opcode: SwapArea & TransformColor
     // "Swap two members on stage, then change color of slot 0 to GREEN."
-    let bc2 = vec![O_SWAP_AREA, 0, 1, 0, O_TRANSFORM_COLOR, 3, 0, 0, O_RETURN, 0, 0, 0];
+    let bc2 = vec![O_SWAP_AREA, 0, 1, 0, 0, O_TRANSFORM_COLOR, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc2, &AbilityContext { player_id: 0, ..Default::default() });
     // Verification would check stage positions and color overrides
 }
@@ -654,7 +653,7 @@ fn test_reproduce_example_draw_discard() {
     // 1. Setup the specific card logic (using Safe ID 5500)
     // Logic: TRIGGER: ON_PLAY -> EFFECT: DRAW(1); DISCARD_HAND(1)
     // Bytecode: [10, 1, 0, 1, 58, 1, 1, 6, 1, 0, 0, 0] (O_DRAW:1, O_MOVE_TO_DISCARD:1, O_RETURN)
-    let bytecode = vec![O_DRAW, 1, 0, 1, 58, 1, 1, 6, 1, 0, 0, 0];
+    let bytecode = vec![O_DRAW, 1, 0, 0, 1, 58, 1, 1, 0, 6, 1, 0, 0, 0, 0];
     let abilities = vec![Ability {
         trigger: TriggerType::OnPlay,
         bytecode,

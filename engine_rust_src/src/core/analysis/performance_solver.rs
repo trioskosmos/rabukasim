@@ -284,11 +284,13 @@ impl PerformanceProbabilitySolver {
             let mut i = 0;
             use crate::core::generated_constants::*;
 
-            while i + 3 < bc.len() {
+            while i + 4 < bc.len() {
                 let op = bc[i];
                 let v = bc[i + 1];
-                let a = bc[i + 2];
-                // let s = bc[i + 3];
+                let a_low = bc[i + 2];
+                let a_high = bc[i + 3];
+                let a = ((a_high as i64) << 32) | (a_low as i64);
+                // let s = bc[i + 4];
 
                 if op == O_ADD_HEARTS {
                     let mut color = a as usize;
@@ -312,7 +314,7 @@ impl PerformanceProbabilitySolver {
                     // Treat heart requirement reduction as adding special hearts for calculation purposes
                     adj.extra_hearts[6] = adj.extra_hearts[6].saturating_add(v as u8);
                 }
-                i += 4;
+                i += 5;
             }
         }
         adj

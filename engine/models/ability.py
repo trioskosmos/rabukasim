@@ -106,6 +106,14 @@ class EffectType(IntEnum):
     PREVENT_SET_TO_SUCCESS_PILE = 80  # [UNUSED]
     SET_HEART_COST = 83  # [UNUSED] (Fixed from 84 for parity)
     PREVENT_BATON_TOUCH = 90
+    # New opcodes for BP05
+    LOOK_DECK_DYNAMIC = 91
+    REDUCE_SCORE = 92
+    REPEAT_ABILITY = 93
+    LOSE_EXCESS_HEARTS = 94
+    SKIP_ACTIVATE_PHASE = 95
+    PAY_ENERGY_DYNAMIC = 96
+    PLACE_ENERGY_UNDER_MEMBER = 97
 
 
 class ConditionType(IntEnum):
@@ -160,6 +168,11 @@ class ConditionType(IntEnum):
     LIVE_PERFORMED = 247
     IS_PLAYER = 248
     IS_OPPONENT = 249
+    # New conditions for BP05 (300-399 range)
+    COUNT_ENERGY_EXACT = 301
+    COUNT_BLADE_HEART_TYPES = 302
+    OPPONENT_HAS_EXCESS_HEART = 303
+    SCORE_TOTAL_CHECK = 304
 
 
 # --- DESCRIPTIONS ---
@@ -545,7 +558,7 @@ class Ability:
                         self._compile_single_cost(instr, bytecode)
 
             # Terminator
-            bytecode.extend([int(Opcode.RETURN), 0, 0, 0])
+            bytecode.extend([int(Opcode.RETURN), 0, 0, 0, 0])
             return bytecode
 
         # 1. Compile Conditions (Legacy/Split Mode)
@@ -568,7 +581,7 @@ class Ability:
                     j += 1
 
                 # Emit block for SELF
-                bytecode.extend([int(Opcode.SET_TARGET_SELF), 0, 0, 0])
+                bytecode.extend([int(Opcode.SET_TARGET_SELF), 0, 0, 0, 0])
                 for e in block:
                     # Create a copy with target=PLAYER (Self)
                     e_self = Effect(e.effect_type, e.value, e.value_cond, TargetType.PLAYER, e.params)
@@ -576,7 +589,7 @@ class Ability:
                     self._compile_effect_wrapper(e_self, bytecode)
 
                 # Emit block for OPPONENT
-                bytecode.extend([int(Opcode.SET_TARGET_OPPONENT), 0, 0, 0])
+                bytecode.extend([int(Opcode.SET_TARGET_OPPONENT), 0, 0, 0, 0])
                 for e in block:
                     # Create a copy with target=OPPONENT
                     e_opp = Effect(e.effect_type, e.value, e.value_cond, TargetType.OPPONENT, e.params)
@@ -584,7 +597,7 @@ class Ability:
                     self._compile_effect_wrapper(e_opp, bytecode)
 
                 # Reset context
-                bytecode.extend([int(Opcode.SET_TARGET_SELF), 0, 0, 0])
+                bytecode.extend([int(Opcode.SET_TARGET_SELF), 0, 0, 0, 0])
 
                 i = j
             else:
@@ -598,7 +611,7 @@ class Ability:
         #         self._compile_single_cost(cost, bytecode)
 
         # Terminator
-        bytecode.extend([int(Opcode.RETURN), 0, 0, 0])
+        bytecode.extend([int(Opcode.RETURN), 0, 0, 0, 0])
         return bytecode
 
     def _compile_single_condition(self, cond: Condition, bytecode: List[int]):
@@ -671,20 +684,20 @@ class Ability:
 
             # Special flags for certain conditions
             if cond.type == ConditionType.GROUP_FILTER:
-                if cond.params.get("all") or cond.params.get("ALL"):
+                if cond.params.get("all") or cond.params.get("ALL") or params_upper.get("ALL"):
                     val |= 0x04  # Bit 2: ALL_MEMBERS
 
                 # Extract group ID if buried in filter string
-                f_str = str(cond.params.get("filter", ""))
+                f_str = str(cond.params.get("filter") or params_upper.get("FILTER") or "")
                 if "GROUP_ID=" in f_str.upper():
                     import re
 
                     m_g = re.search(r"GROUP_ID=(\d+)", f_str, re.I)
                     if m_g:
                         attr = int(m_g.group(1))
-                elif "group" in cond.params:
+                elif "group" in cond.params or "GROUP" in params_upper:
                     try:
-                        attr = int(cond.params["group"])
+                        attr = int(cond.params.get("group") or params_upper.get("GROUP"))
                     except:
                         pass
             
@@ -720,7 +733,8 @@ class Ability:
                 [
                     op_val,
                     val,
-                    attr,
+                    attr & 0xFFFFFFFF,
+                    (attr >> 32) & 0xFFFFFFFF,
                     packed_slot,
                 ]
             )
@@ -748,13 +762,13 @@ class Ability:
                 if f_str.upper() == "COST_LT_SELF":
                         filter_type = 1  # 1 = Cost Check Less Than Self
 
-                bytecode.extend([int(Opcode.CHECK_BATON), unit_id, filter_type, 0])
+                bytecode.extend([int(Opcode.CHECK_BATON), unit_id, filter_type, 0, 0])
 
         elif cond.type == ConditionType.TYPE_CHECK:
             if hasattr(Opcode, "CHECK_TYPE_CHECK"):
                 # card_type: "live" = 1, "member" = 0
                 ctype = 1 if str(cond.params.get("card_type", "")).lower() == "live" else 0
-                bytecode.extend([int(Opcode.CHECK_TYPE_CHECK), ctype, 0, 0])
+                bytecode.extend([int(Opcode.CHECK_TYPE_CHECK), ctype, 0, 0, 0])
         else:
             if cond.type != ConditionType.NONE:
                 print(f"CRITICAL WARNING: No opcode mapping for condition type: {cond.type.name}")
@@ -776,6 +790,7 @@ class Ability:
             AbilityCostType.DISCARD_LIVE: Opcode.MOVE_TO_DISCARD,
             AbilityCostType.DISCARD_ENERGY: Opcode.MOVE_TO_DISCARD,
             AbilityCostType.DISCARD_SUCCESS_LIVE: Opcode.MOVE_TO_DISCARD,
+            AbilityCostType.DISCARD_STAGE_ENERGY: Opcode.MOVE_TO_DISCARD,
             AbilityCostType.REVEAL_HAND: Opcode.REVEAL_CARDS,
             AbilityCostType.REVEAL_HAND_ALL: Opcode.REVEAL_CARDS,
         }
@@ -840,7 +855,7 @@ class Ability:
                         attr |= char_id << 16
 
             if cost.is_optional:
-                attr |= 0x02  # Bit 1 = Optional
+                attr |= 0x01  # Bit 0 = Optional
 
             # Use value from cost params if available (max/count)
             value = cost.value
@@ -848,7 +863,7 @@ class Ability:
             if not value and count_raw is not None:
                 value = int(count_raw)
 
-            bytecode.extend([int(op), int(value), attr, slot])
+            bytecode.extend([int(op), int(value), attr & 0xFFFFFFFF, (attr >> 32) & 0xFFFFFFFF, slot])
         else:
             if cost.type != AbilityCostType.NONE:
                 # This ensures we don't silently drop costs like we did with TAP_MEMBER
@@ -867,8 +882,8 @@ class Ability:
             elif rem == "deck_bottom":
                 attr = 2
 
-            bytecode.extend([int(Opcode.LOOK_DECK), eff.value, 0, 0])
-            bytecode.extend([int(Opcode.ORDER_DECK), eff.value, attr, 0])
+            bytecode.extend([int(Opcode.LOOK_DECK), eff.value, 0, 0, 0])
+            bytecode.extend([int(Opcode.ORDER_DECK), eff.value, attr & 0xFFFFFFFF, (attr >> 32) & 0xFFFFFFFF, 0])
             return
 
         # Check for modal options on Effect OR Ability (fallback)
@@ -879,12 +894,12 @@ class Ability:
             num_options = len(modal_opts)
             # Emit header: [SELECT_MODE, NumOptions, 0, 0]
             if hasattr(Opcode, "SELECT_MODE"):
-                bytecode.extend([int(Opcode.SELECT_MODE), num_options, 0, 0])
+                bytecode.extend([int(Opcode.SELECT_MODE), num_options, 0, 0, 0])
 
             # Placeholders for Jump Table
             jump_table_start_idx = len(bytecode)
             for _ in range(num_options):
-                bytecode.extend([int(Opcode.JUMP), 0, 0, 0])
+                bytecode.extend([int(Opcode.JUMP), 0, 0, 0, 0])
 
             # Compile each option and track start/end
             option_start_offsets = []
@@ -892,7 +907,7 @@ class Ability:
 
             for opt_instructions in modal_opts:
                 # Record start offset (relative to current instruction pointer)
-                current_idx = len(bytecode) // 4
+                current_idx = len(bytecode) // 5
                 option_start_offsets.append(current_idx)
 
                 # Compile option instructions
@@ -906,21 +921,21 @@ class Ability:
 
                 # Add Jump to End (placeholder)
                 end_jumps_locations.append(len(bytecode))
-                bytecode.extend([int(Opcode.JUMP), 0, 0, 0])
+                bytecode.extend([int(Opcode.JUMP), 0, 0, 0, 0])
 
             # Determine End Index
-            end_idx = len(bytecode) // 4
+            end_idx = len(bytecode) // 5
 
             # Patch Jump Table (Start Jumps)
             for i in range(num_options):
-                jump_instr_idx = (jump_table_start_idx // 4) + i
+                jump_instr_idx = (jump_table_start_idx // 5) + i
                 target_idx = option_start_offsets[i]
                 offset = target_idx - jump_instr_idx
-                bytecode[jump_instr_idx * 4 + 1] = offset
+                bytecode[jump_instr_idx * 5 + 1] = offset
 
             # Patch End Jumps
             for loc in end_jumps_locations:
-                jump_instr_idx = loc // 4
+                jump_instr_idx = loc // 5
                 offset = end_idx - jump_instr_idx
                 bytecode[loc + 1] = offset
 
@@ -928,21 +943,21 @@ class Ability:
             if eff.target == TargetType.ALL_PLAYERS:
                 # ALL_PLAYERS: Emit sequences for both SELF and OPPONENT
                 # 1. SET_TARGET_SELF
-                bytecode.extend([int(Opcode.SET_TARGET_SELF), 0, 0, 0])
+                bytecode.extend([int(Opcode.SET_TARGET_SELF), 0, 0, 0, 0])
                 # 2. Compile for SELF
                 eff_self = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.PLAYER, eff.params)
                 eff_self.is_optional = eff.is_optional
                 self._compile_single_effect(eff_self, bytecode)
 
                 # 3. SET_TARGET_OPPONENT
-                bytecode.extend([int(Opcode.SET_TARGET_OPPONENT), 0, 0, 0])
+                bytecode.extend([int(Opcode.SET_TARGET_OPPONENT), 0, 0, 0, 0])
                 # 4. Compile for OPPONENT
                 eff_opp = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.OPPONENT, eff.params)
                 eff_opp.is_optional = eff.is_optional
                 self._compile_single_effect(eff_opp, bytecode)
 
                 # 5. Restore context to SELF (optional safety)
-                bytecode.extend([int(Opcode.SET_TARGET_SELF), 0, 0, 0])
+                bytecode.extend([int(Opcode.SET_TARGET_SELF), 0, 0, 0, 0])
             else:
                 self._compile_single_effect(eff, bytecode)
 
@@ -981,9 +996,9 @@ class Ability:
             if eff.effect_type in (EffectType.TAP_OPPONENT, EffectType.TAP_MEMBER):
                 attr = self._pack_filter_attr(eff)
                 if eff.effect_type == EffectType.TAP_MEMBER:
-                    attr |= 0x01  # Bit 0: Selection mode
+                    attr |= 0x02  # Bit 1: Selection mode
                     if eff.is_optional:
-                        attr |= 0x02  # Bit 1: Optional mode
+                        attr |= 0x01  # Bit 0: Optional mode
 
             # Special handling for PLACE_UNDER params
             if eff.effect_type == EffectType.PLACE_UNDER:
@@ -1301,48 +1316,52 @@ class Ability:
                     elif src == "blade":
                         val = 2
 
-            # Special encoding for REVEAL_UNTIL
-            if eff.effect_type == EffectType.REVEAL_UNTIL:
-                if eff.value_cond == ConditionType.TYPE_CHECK:
-                    if str(eff.params.get("card_type", "")).lower() == "live":
-                        slot |= (1 << 25) # Bit 25 of S: IS_LIVE for reveal-until
-                elif eff.value_cond == ConditionType.COST_CHECK:
-                    cost = int(eff.params.get("min", 0))
-                    # Bits 1-5 for cost (6 bits)
-                    attr |= (cost & 0x3F) << 1
-
-                if eff.effect_type in (
-                    EffectType.PLAY_MEMBER_FROM_HAND,
-                    EffectType.PLAY_MEMBER_FROM_DISCARD,
-                    EffectType.PLAY_LIVE_FROM_DISCARD,
-                    EffectType.RECOVER_MEMBER,
-                    EffectType.RECOVER_LIVE,
-                    EffectType.MOVE_TO_DISCARD,
-                    EffectType.SELECT_CARDS,
-                    EffectType.SELECT_MEMBER,
-                    EffectType.SELECT_LIVE,
-                ):
-                    attr = self._pack_filter_attr(eff)
-                    
-                    # ZONE RELOCATION: Use bits 16-23 of 's' for Source Zone
-                    source_raw = (eff.params.get("source") or eff.params.get("SOURCE") or 
-                                 eff.params.get("zone") or eff.params.get("from") or eff.params.get("FROM"))
-                    
-                    source = str(source_raw or "discard").lower()
-                    source_val = 7 if source == "discard" else 0
-                    if source == "yell": source_val = 15
-                    if source == "deck" or source == "deck_top": source_val = 8
-                    
-                    slot = (slot & 0xFF) | ((source_val & 0xFF) << 16)
-
-                # Default to Choice (slot 4) if target is generic, BUT NOT for MOVE_TO_DISCARD from deck
-                is_deck_discard = eff.effect_type == EffectType.MOVE_TO_DISCARD and source_val == 8
-                if eff.target in (TargetType.SELF, TargetType.PLAYER) and not is_deck_discard:
-                    slot = (slot & ~0xFF) | 4
+            # Filter attribute packing for various effect types (OUTSIDE META_RULE block)
+            # Note: SELECT_MEMBER, PLAY_MEMBER_FROM_HAND/DISCARD, PLAY_LIVE_FROM_DISCARD are already
+            # handled above at lines 1003-1012.
+            # Note: SELECT_CARDS, SELECT_LIVE are handled above at lines 1103-1130.
+            # Note: LOOK_AND_CHOOSE is handled above at lines 1014-1101.
+            if eff.effect_type in (
+                EffectType.RECOVER_MEMBER,
+                EffectType.RECOVER_LIVE,
+                EffectType.MOVE_TO_DISCARD,
+                EffectType.REVEAL_UNTIL,
+            ):
+                attr = self._pack_filter_attr(eff)
                 
-                # TARGET_OPPONENT flag (Bit 24 of Slot/S word)
-                if eff.target == TargetType.OPPONENT:
-                    slot |= (1 << 24)
+                # Special handling for REVEAL_UNTIL legacy condition params
+                if eff.effect_type == EffectType.REVEAL_UNTIL:
+                    if eff.value_cond == ConditionType.TYPE_CHECK:
+                        if str(eff.params.get("card_type", "")).lower() == "live":
+                            attr |= 0x01
+                    elif eff.value_cond == ConditionType.COST_CHECK:
+                        # Pass cost in A if using C_COST_CHECK
+                        attr = int(eff.params.get("min", 0))
+                
+                # Ensure is_optional uses Bit 0 (0x01)
+                if eff.is_optional or eff.params.get("is_optional"):
+                    attr |= 0x01
+                
+                # ZONE RELOCATION: Use bits 16-23 of 's' for Source Zone
+                source_raw = (eff.params.get("source") or eff.params.get("SOURCE") or 
+                             eff.params.get("zone") or eff.params.get("from") or eff.params.get("FROM"))
+                
+                source = str(source_raw or "discard").lower()
+                source_val = 7 if source == "discard" else 0
+                if source == "yell": source_val = 15
+                if source == "deck" or source == "deck_top": source_val = 8
+                
+                slot = (slot & 0xFF) | ((source_val & 0xFF) << 16)
+
+            # Default to Choice (slot 4) if target is generic, BUT NOT for MOVE_TO_DISCARD from deck
+            source_val = locals().get('source_val', 7)  # Default to discard
+            is_deck_discard = eff.effect_type == EffectType.MOVE_TO_DISCARD and source_val == 8
+            if eff.target in (TargetType.SELF, TargetType.PLAYER) and not is_deck_discard:
+                slot = (slot & ~0xFF) | 4
+            
+            # TARGET_OPPONENT flag (Bit 24 of Slot/S word)
+            if eff.target == TargetType.OPPONENT:
+                slot |= (1 << 24)
 
             # Special encoding for LOOK_AND_CHOOSE: val = look_count | (pick_count << 8) | (color_mask << 23)
             if eff.effect_type == EffectType.LOOK_AND_CHOOSE:
@@ -1380,14 +1399,15 @@ class Ability:
                 [
                     int(op),
                     to_signed_32(val),
-                    to_signed_32(attr_val),
+                    to_signed_32(attr_val & 0xFFFFFFFF),          # a_low
+                    to_signed_32((attr_val >> 32) & 0xFFFFFFFF),  # a_high
                     to_signed_32(slot),
                 ]
             )
 
     def _pack_filter_attr(self, eff: Effect) -> int:
         """
-        Pack filter parameters into a 32-bit integer compatible with Rust's card_matches_filter.
+        Pack filter parameters into a 64-bit integer compatible with Rust's card_matches_filter.
 
         Bits 2-3:   Type (0=Any, 1=Member, 2=Live)
         Bit 4:      Group Filter Enable
@@ -1401,7 +1421,8 @@ class Ability:
         Bit 24:     Cost Filter Enable
         Bits 25-29: Cost Threshold (0-31)
         Bit 30:     Cost Mode (0=GE, 1=LE)
-        Bit 31:     Color Filter Enable
+        Bit 60:     Color Filter Enable
+        Bits 61-63: Color Mask (3bit = 8 colors)
         """
         # Parse 'filter' string if present (e.g. "GROUP_ID=0, TYPE_LIVE, COST_GE=11")
         detected_type = None
@@ -1535,7 +1556,7 @@ class Ability:
             except:
                 pass
 
-        # Color Filter (Bits 24-30, Enabled by Bit 31)
+        # Color Filter (Bits 61-63, Enabled by Bit 60)
         colors = eff.params.get("colors") or ([eff.params.get("color")] if "color" in eff.params else [])
         if colors and any(c is not None for c in colors):
             color_mask = 0
@@ -1551,8 +1572,8 @@ class Ability:
                 except:
                     pass
             if color_mask > 0:
-                attr |= (color_mask & 0x7F) << 24
-                attr |= 1 << 31  # Enable bit
+                attr |= (color_mask & 0x07) << 61  # 3bit mask at bits 61-63
+                attr |= 1 << 60  # Enable bit at bit 60
 
         # Character Filter (Bit 42 + IDs at 32, 43, 50)
         names = eff.params.get("name")

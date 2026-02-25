@@ -115,10 +115,17 @@ pub enum EffectType {
     PreventActivate = 82,
     SetHeartCost = 83,
     PreventBatonTouch = 90,
+    LookDeckDynamic = 91,
+    ReduceScore = 92,
+    RepeatAbility = 93,
+    LoseExcessHearts = 94,
+    SkipActivatePhase = 95,
+    PayEnergyDynamic = 96,
+    PlaceEnergyUnderMember = 97,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]
-#[repr(u8)]
+#[repr(u16)]
 pub enum ConditionType {
     #[default]
     None = 0,
@@ -153,6 +160,7 @@ pub enum ConditionType {
     HasMoved = 228,
     HandIncreased = 229,
     CountLiveZone = 230,
+    CountUniqueColors = 250,
     Baton = 231,
     TypeCheck = 232,
     IsInDiscard = 233,
@@ -172,7 +180,10 @@ pub enum ConditionType {
     LivePerformed = 247,
     IsPlayer = 248,
     IsOpponent = 249,
-    CountUniqueColors = 250,
+    CountEnergyExact = 301,
+    CountBladeHeartTypes = 302,
+    OpponentHasExcessHeart = 303,
+    ScoreTotalCheck = 304,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]

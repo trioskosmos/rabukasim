@@ -342,13 +342,13 @@ fn match_filter(cid: u32, attr: u32) -> bool {
     return true;
 }
 
-fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32) -> bool {
+fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a_lo: u32, a_hi: u32, target_slot: u32) -> bool {
     switch (op) {
         case 200: { return local_state.turn == 1u; }
         case 201: { 
             var count = 0u;
             for (var s = 0u; s < 3u; s = s + 1u) {
-                if (get_stage_card(p_idx, s) == u32(a)) { count = count + 1u; }
+                if (get_stage_card(p_idx, s) == a_lo) { count = count + 1u; }
             }
             return count >= u32(v);
         }
@@ -366,7 +366,7 @@ fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32)
             return h_len >= u32(v);
         }
         case 202: { 
-            let color_idx = a;
+            let color_idx = a_lo;
             if (color_idx > 0u && color_idx < 7u) {
                 for (var s = 0u; s < 3u; s = s + 1u) {
                     let s_cid = get_stage_card(p_idx, s);
@@ -397,7 +397,7 @@ fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32)
         }
         case 208: { 
             var count = 0u;
-            let group_id = a;
+            let group_id = a_lo;
             for (var s = 0u; s < 3u; s = s + 1u) {
                 let s_cid = get_stage_card(p_idx, s);
                 if (s_cid > 0u && s_cid < arrayLength(&card_stats)) {
@@ -415,10 +415,10 @@ fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32)
             if (target_slot < 3u) { cid = get_stage_card(p_idx, target_slot); }
             if (cid > 0u && cid < arrayLength(&card_stats)) {
                 let groups = card_stats[cid].groups;
-                if (((groups >> 0u) & 0xFFu) == a) { return true; }
-                if (((groups >> 8u) & 0xFFu) == a) { return true; }
-                if (((groups >> 16u) & 0xFFu) == a) { return true; }
-                if (((groups >> 24u) & 0xFFu) == a) { return true; }
+                if (((groups >> 0u) & 0xFFu) == a_lo) { return true; }
+                if (((groups >> 8u) & 0xFFu) == a_lo) { return true; }
+                if (((groups >> 16u) & 0xFFu) == a_lo) { return true; }
+                if (((groups >> 24u) & 0xFFu) == a_lo) { return true; }
             }
             return false;
         }
@@ -514,20 +514,20 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
         var cond = true;
         var ctx_choice = choice;
         while (ip < end) {
-            if (ip + 4u > end) { break; }
-            let op = bytecode[ip]; let v = bytecode[ip + 1]; let a = bytecode[ip + 2]; let s_op = bytecode[ip + 3];
-            ip = ip + 4;
+            if (ip + 5u > end) { break; }
+            let op = bytecode[ip]; let v = bytecode[ip + 1]; let a_lo = u32(bytecode[ip + 2]); let a_hi = u32(bytecode[ip + 3]); let s_op = bytecode[ip + 4];
+            ip = ip + 5;
             if (op <= 0) { continue; }
             if (op == 1) { break; }
             var real_op = op; var is_negated = false;
             if (real_op >= 1000) { real_op = real_op - 1000; is_negated = true; }
             if (real_op >= 200 && real_op <= 299) {
-                let passed = check_condition_opcode(p_idx, real_op, v, u32(a), slot_idx);
+                let passed = check_condition_opcode(p_idx, real_op, v, a_lo, a_hi, slot_idx);
                 cond = passed; if (is_negated) { cond = !cond; }
                 continue;
             }
-            if (real_op == 2) { ip = u32(i32(ip) + v * 4); continue; }
-            if (real_op == 3) { if (!cond) { ip = u32(i32(ip) + v * 4); } continue; }
+            if (real_op == 2) { ip = u32(i32(ip) + v * 5); continue; }
+            if (real_op == 3) { if (!cond) { ip = u32(i32(ip) + v * 5); } continue; }
             if (real_op >= 10 && real_op < 100) {
                 switch (real_op) {
                     case 10: { for (var d = 0; d < v; d = d + 1) { draw_card(p_idx); } }
@@ -536,7 +536,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                         else { local_state.players[1].board_blades += u32(v); }
                     }
                     case 12: {
-                        var color = u32(a);
+                        var color = a_lo;
                         if (color == 0u) { color = u32(ctx_choice); }
                         if (color < 8u) { add_board_heart(p_idx, color, u32(v)); }
                     }
@@ -564,7 +564,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                     }
                     case 30: { }
                     case 31: {
-                        let t = u32(a) & 0xFDu;
+                        let t = a_lo & 0xFDu;
                         let count = u32(v);
                         if (t == 6u) { // Hand
                             if (ctx_choice != -1i) {

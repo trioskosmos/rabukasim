@@ -875,10 +875,31 @@ export const Rendering = {
             choiceDiv.style.borderRadius = '10px';
             choiceDiv.style.borderLeft = `4px solid ${headerColor}`;
 
-            const title = choice.title || choice.description || (currentLang === 'jp' ? '選択してください' : 'Please Select');
-            let content = `<div style="font-weight:bold; color:${headerColor}; margin-bottom: 10px; font-size: 1.1rem;">${title}</div>`;
-            if (choice.text && choice.text !== title) {
-                content += `<div style="font-size: 0.9rem; margin-bottom: 10px; opacity: 0.8; line-height: 1.4;">${choice.text}</div>`;
+            // Header: Card name + ID (like card-desc-panel)
+            // Try to resolve card name from source_card_id if source_member is missing or generic
+            const cardId = choice.source_card_id !== undefined ? choice.source_card_id : -1;
+            let cardName = choice.source_member;
+
+            // Fallback: Resolve from card index if source_member is missing/generic
+            if (!cardName || cardName === 'Unknown Source' || cardName === 'Unknown Card' || cardName.startsWith('Card ')) {
+                const resolvedCard = State.resolveCardData(cardId);
+                if (resolvedCard && resolvedCard.name) {
+                    cardName = resolvedCard.name;
+                } else {
+                    cardName = currentLang === 'jp' ? '不明なカード' : 'Unknown Card';
+                }
+            }
+
+            let headerText = cardName;
+            if (cardId >= 0) {
+                headerText += ` <span style="opacity:0.6; font-size:0.8em;">(ID: ${cardId})</span>`;
+            }
+            let content = `<div style="font-weight:bold; color:${headerColor}; margin-bottom: 10px; font-size: 1.1rem;">${headerText}</div>`;
+
+            // Ability text: Show only source_ability with image mapping (like card-desc-panel)
+            if (choice.source_ability) {
+                const enrichedAbility = Tooltips.enrichAbilityText(choice.source_ability);
+                content += `<div style="font-size: 0.9rem; margin-bottom: 10px; opacity: 0.9; line-height: 1.5;">${enrichedAbility}</div>`;
             }
             choiceDiv.innerHTML = content;
 

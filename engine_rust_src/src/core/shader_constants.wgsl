@@ -72,6 +72,13 @@ const O_ACTIVATE_ENERGY: i32 = 81; // IMPLEMENTED
 const O_PREVENT_ACTIVATE: i32 = 82; // IMPLEMENTED
 const O_SET_HEART_COST: i32 = 83; // IMPLEMENTED
 const O_PREVENT_BATON_TOUCH: i32 = 90; // IMPLEMENTED
+const O_LOOK_DECK_DYNAMIC: i32 = 91; // IMPLEMENTED
+const O_REDUCE_SCORE: i32 = 92; // IMPLEMENTED
+const O_REPEAT_ABILITY: i32 = 93; // IMPLEMENTED
+const O_LOSE_EXCESS_HEARTS: i32 = 94; // IMPLEMENTED
+const O_SKIP_ACTIVATE_PHASE: i32 = 95; // IMPLEMENTED
+const O_PAY_ENERGY_DYNAMIC: i32 = 96; // IMPLEMENTED
+const O_PLACE_ENERGY_UNDER_MEMBER: i32 = 97; // IMPLEMENTED
 
 // --- CONDITION TYPES ---
 const C_TURN_1: i32 = 200; // IMPLEMENTED
@@ -105,6 +112,7 @@ const C_DECK_REFRESHED: i32 = 227; // IMPLEMENTED
 const C_HAS_MOVED: i32 = 228; // IMPLEMENTED
 const C_HAND_INCREASED: i32 = 229; // IMPLEMENTED
 const C_COUNT_LIVE_ZONE: i32 = 230; // IMPLEMENTED
+const C_COUNT_UNIQUE_COLORS: i32 = 250; // TODO: Not implemented in WGSL
 const C_BATON: i32 = 231; // IMPLEMENTED
 const C_TYPE_CHECK: i32 = 232; // IMPLEMENTED
 const C_IS_IN_DISCARD: i32 = 233; // IMPLEMENTED
@@ -124,6 +132,10 @@ const C_IS_ACTIVE: i32 = 246; // IMPLEMENTED
 const C_LIVE_PERFORMED: i32 = 247; // IMPLEMENTED
 const C_IS_PLAYER: i32 = 248; // IMPLEMENTED
 const C_IS_OPPONENT: i32 = 249; // IMPLEMENTED
+const C_COUNT_ENERGY_EXACT: i32 = 301; // TODO: Not implemented in WGSL
+const C_COUNT_BLADE_HEART_TYPES: i32 = 302; // TODO: Not implemented in WGSL
+const C_OPPONENT_HAS_EXCESS_HEART: i32 = 303; // TODO: Not implemented in WGSL
+const C_SCORE_TOTAL_CHECK: i32 = 304; // TODO: Not implemented in WGSL
 
 // --- PHASES ---
 const PHASE_SETUP: i32 = -4;
@@ -135,7 +147,7 @@ const PHASE_ACTIVE: i32 = 1;
 const PHASE_ENERGY: i32 = 2;
 const PHASE_DRAW: i32 = 3;
 const PHASE_MAIN: i32 = 4;
-const PHASE_LIVE_SET: i32 = 5;
+const PHASE_LIVESET: i32 = 5;  // Also known as LIVE_SET
 const PHASE_PERFORMANCE_P1: i32 = 6;
 const PHASE_PERFORMANCE_P2: i32 = 7;
 const PHASE_LIVE_RESULT: i32 = 8;
@@ -164,6 +176,6 @@ const SYN_CENTER: u32 = 8u;
 const SYN_LIFE_LEAD: u32 = 16u;
 
 // --- PARITY STATUS ---
-// WGSL Opcodes: 73/70 implemented
-// WGSL Conditions: 50/50 implemented
+// WGSL Opcodes: 73/77 implemented
+// WGSL Conditions: 50/55 implemented
 // See plans/wgsl_rust_parity_strategy.md for details

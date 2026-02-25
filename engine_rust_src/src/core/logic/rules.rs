@@ -12,11 +12,11 @@ pub fn has_multi_baton(m: &MemberCard) -> u8 {
         if ab.trigger == TriggerType::Constant {
             let bc = &ab.bytecode;
             let mut i = 0;
-            while i + 3 < bc.len() {
+            while i + 4 < bc.len() {
                 if bc[i] == O_BATON_TOUCH_MOD {
                     limit = limit.max(bc[i+1] as u8);
                 }
-                i += 4;
+                i += 5;
             }
         }
     }
@@ -48,10 +48,10 @@ pub fn get_effective_blades(state: &GameState, player_idx: usize, slot_idx: usiz
                     if ab.conditions.iter().all(|c| state.check_condition(db, player_idx, c, &ctx, depth + 1)) {
                         let bc = &ab.bytecode;
                         let mut i = 0;
-                        while i + 3 < bc.len() {
+                        while i + 4 < bc.len() {
                             let op = bc[i];
                             let v = bc[i+1];
-                            let s = bc[i+3];
+                            let s = bc[i+4];
                             
                             // Does this O_ADD_BLADES/O_BUFF_POWER target our slot?
                             // Target 1=All, 4=This Slot (if area_idx matching target_slot), 
@@ -64,7 +64,7 @@ pub fn get_effective_blades(state: &GameState, player_idx: usize, slot_idx: usiz
                             if (op == O_ADD_BLADES || op == O_BUFF_POWER) && targets_us {
                                 val += v as i32;
                             }
-                            i += 4;
+                            i += 5;
                         }
                     }
                 }
@@ -82,11 +82,11 @@ pub fn get_effective_blades(state: &GameState, player_idx: usize, slot_idx: usiz
                          if ab.conditions.iter().all(|c| state.check_condition(db, player_idx, c, &ctx, depth + 1)) {
                              let bc = &ab.bytecode;
                              let mut i = 0;
-                             while i + 3 < bc.len() {
+                             while i + 4 < bc.len() {
                                  let op = bc[i];
                                  let v = bc[i+1];
                                  if op == O_ADD_BLADES { val += v as i32; }
-                                 i += 4;
+                                 i += 5;
                              }
                          }
                     }
@@ -129,11 +129,13 @@ pub fn get_effective_hearts(state: &GameState, player_idx: usize, slot_idx: usiz
                     if ab.conditions.iter().all(|c| state.check_condition(db, player_idx, c, &ctx, depth + 1)) {
                         let bc = &ab.bytecode;
                         let mut i = 0;
-                        while i + 3 < bc.len() {
+                        while i + 4 < bc.len() {
                             let op = bc[i];
                             let v = bc[i+1];
-                            let a_color = bc[i+2];
-                            let s_target = bc[i+3];
+                            let a_low = bc[i+2];
+                            let a_high = bc[i+3];
+                            let a = ((a_high as i64) << 32) | (a_low as i64);
+                            let s_target = bc[i+4];
                             
                             let mut targets_us = false;
                             if s_target == 1 { targets_us = true; }
@@ -141,11 +143,11 @@ pub fn get_effective_hearts(state: &GameState, player_idx: usize, slot_idx: usiz
                             else if s_target == 10 && slot_idx as i16 == ctx.target_slot { targets_us = true; }
 
                             if op == O_ADD_HEARTS && targets_us {
-                                 let mut color = a_color as usize;
+                                 let mut color = a as usize;
                                  if color == 0 { color = ctx.selected_color as usize; }
                                  if color < 7 { board.add_to_color(color, v as i32); }
                             }
-                            i += 4;
+                            i += 5;
                         }
                     }
                 }
@@ -163,16 +165,18 @@ pub fn get_effective_hearts(state: &GameState, player_idx: usize, slot_idx: usiz
                          if ab.conditions.iter().all(|c| state.check_condition(db, player_idx, c, &ctx, depth + 1)) {
                              let bc = &ab.bytecode;
                              let mut i = 0;
-                             while i + 3 < bc.len() {
+                             while i + 4 < bc.len() {
                                  let op = bc[i];
                                  let v = bc[i+1];
-                                 let a = bc[i+2];
+                                 let a_low = bc[i+2];
+                                 let a_high = bc[i+3];
+                                 let a = ((a_high as i64) << 32) | (a_low as i64);
                                  if op == O_ADD_HEARTS {
                                      let mut color = a as usize;
                                      if color == 0 { color = ctx.selected_color as usize; }
                                      if color < 7 { board.add_to_color(color, v as i32); }
                                  }
-                                 i += 4;
+                                 i += 5;
                              }
                          }
                     }
@@ -243,13 +247,13 @@ pub fn get_member_cost(state: &GameState, p_idx: usize, card_id: i32, slot_idx: 
             if ab.conditions.iter().all(|c| state.check_condition(db, p_idx, c, &ctx, depth + 1)) {
                 let bc = &ab.bytecode;
                 let mut i = 0;
-                while i + 3 < bc.len() {
+                while i + 4 < bc.len() {
                     let op = bc[i];
                     let v = bc[i+1];
                     if op == O_REDUCE_COST {
                          cost -= v as i32;
                     }
-                    i += 4;
+                    i += 5;
                 }
             }
         }
@@ -273,11 +277,11 @@ pub fn get_member_cost(state: &GameState, p_idx: usize, card_id: i32, slot_idx: 
                          if ab.conditions.iter().all(|c| state.check_condition(db, p_idx, c, &ctx, depth + 1)) {
                              let bc = &ab.bytecode;
                              let mut i = 0;
-                             while i + 3 < bc.len() {
+                             while i + 4 < bc.len() {
                                  let op = bc[i];
                                  let v = bc[i+1];
                                  if op == O_REDUCE_COST { cost -= v as i32; }
-                                 i += 4;
+                                 i += 5;
                              }
                          }
                     }
@@ -306,9 +310,9 @@ pub fn has_restriction(state: &GameState, p_idx: usize, slot_idx: usize, opcode:
             if ab.conditions.iter().all(|c| state.check_condition(db, p_idx, c, &ctx, 0)) {
                 let bc = &ab.bytecode;
                 let mut i = 0;
-                while i + 3 < bc.len() {
+                while i + 4 < bc.len() {
                     if bc[i] == opcode { return true; }
-                    i += 4;
+                    i += 5;
                 }
             }
         }
@@ -324,9 +328,9 @@ pub fn has_restriction(state: &GameState, p_idx: usize, slot_idx: usize, opcode:
                          if ab.conditions.iter().all(|c| state.check_condition(db, p_idx, c, &ctx, 0)) {
                              let bc = &ab.bytecode;
                              let mut i = 0;
-                             while i + 3 < bc.len() {
+                             while i + 4 < bc.len() {
                                  if bc[i] == opcode { return true; }
-                                 i += 4;
+                                 i += 5;
                              }
                          }
                     }

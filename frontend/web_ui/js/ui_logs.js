@@ -149,7 +149,11 @@ export const Logs = {
         effects.forEach(e => {
             const entry = document.createElement('div');
             entry.className = `log-entry active-effect ${e.type || ''}`;
-            entry.innerHTML = `<span class="player-badge p${State.perspectivePlayer}">${e.player}</span> ${e.desc}`;
+            const cardIdAttr = e.source_card_id !== undefined ? `data-card-id="${e.source_card_id}"` : '';
+            const dataTextAttr = e.desc ? `data-text="${e.desc.replace(/"/g, '&quot;')}"` : '';
+            entry.innerHTML = `<div class="active-effect-hover-container" ${cardIdAttr} ${dataTextAttr} style="display: contents;">
+                <span class="player-badge p${State.perspectivePlayer}">${e.player}</span> ${e.desc}
+            </div>`;
             section.appendChild(entry);
         });
 
@@ -207,12 +211,18 @@ export const Logs = {
         entry.setAttribute('aria-live', 'polite');
         entry.setAttribute('aria-label', `Turn ${event.turn}, ${phaseLabel}, ${playerLabel}: ${event.event_type} - ${event.description || ''}`);
 
+        const cardIdAttr = event.card_id !== undefined ? `data-card-id="${event.card_id}"` : '';
+        const cardNameAttr = event.card_name ? `data-card-name="${event.card_name}"` : '';
+        const dataTextAttr = event.description ? `data-text="${event.description.replace(/"/g, '&quot;')}"` : '';
+
         entry.innerHTML = `
-            <span class="turn-badge" aria-label="Turn ${event.turn}">T${event.turn}</span>
-            <span class="phase-badge" aria-label="Phase: ${phaseLabel}">${phaseLabel}</span>
-            <span class="player-badge p${event.player_id}" aria-label="Player: ${playerLabel}">${playerLabel}</span>
-            <span class="event-type" aria-label="Event type: ${event.event_type || 'Event'}">${eventIcon} ${event.event_type || 'Event'}</span>
-            <span class="event-desc">${event.description || ''}</span>
+            <div class="turn-event-hover-container" ${cardIdAttr} ${cardNameAttr} ${dataTextAttr} style="display: contents;">
+                <span class="turn-badge" aria-label="Turn ${event.turn}">T${event.turn}</span>
+                <span class="phase-badge" aria-label="Phase: ${phaseLabel}">${phaseLabel}</span>
+                <span class="player-badge p${event.player_id}" aria-label="Player: ${playerLabel}">${playerLabel}</span>
+                <span class="event-type" aria-label="Event type: ${event.event_type || 'Event'}">${eventIcon} ${event.event_type || 'Event'}</span>
+                <span class="event-desc">${event.description || ''}</span>
+            </div>
         `;
 
         return entry;
@@ -449,8 +459,8 @@ export const Logs = {
                 translatedEffect = translatedEffect.replace(/^.*?: /, '').replace(/^→ /, '');
             } else if (currentLang === 'jp' && !showFriendlyAbilities) {
                 const srcCard = State.resolveCardDataByName(cardName);
-                if (srcCard && srcCard.original_text) {
-                    translatedEffect = srcCard.original_text;
+                if (srcCard && (srcCard.original_text || srcCard.ability)) {
+                    translatedEffect = srcCard.original_text || srcCard.ability;
                 }
             }
 
@@ -581,7 +591,7 @@ export const Logs = {
 
             let pStats = `<div class="effect-player-badge ${badgeClass}">${badgeLabel}</div>`;
             return pStats + effects.map(e => `
-                <div class="effect-item ${e.type || ''}">
+                <div class="effect-item ${e.type || ''}" ${e.desc ? `data-text="${e.desc.replace(/"/g, '&quot;')}"` : ''} ${e.source_card_id !== undefined ? `data-card-id="${e.source_card_id}"` : ''}>
                     <div class="effect-title-row">
                         <span class="effect-title">${e.title}</span>
                         <span class="effect-duration">${e.duration}</span>

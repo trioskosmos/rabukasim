@@ -85,6 +85,8 @@ pub struct AbilityContext {
     pub trigger_type: TriggerType,
     #[serde(default)]
     pub original_phase: Option<Phase>,
+    #[serde(default)]
+    pub repeat_count: i16,  // For O_REPEAT_ABILITY: tracks how many times ability has repeated
 }
 
 impl Default for AbilityContext {
@@ -101,6 +103,7 @@ impl Default for AbilityContext {
             v_remaining: -1,
             trigger_type: TriggerType::None,
             original_phase: None,
+            repeat_count: 0,
         }
     }
 }

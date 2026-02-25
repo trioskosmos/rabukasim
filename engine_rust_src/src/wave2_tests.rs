@@ -34,7 +34,7 @@ fn test_opcode_reduce_yell_count() {
     
     // O_REDUCE_YELL_COUNT 1
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
-    let bc = vec![O_REDUCE_YELL_COUNT, 1, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_REDUCE_YELL_COUNT, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     
     assert_eq!(state.core.players[0].yell_count_reduction, 1);
@@ -71,7 +71,7 @@ fn test_opcode_swap_area() {
     // O_SWAP_AREA (Rotate Right: 0->1, 1->2, 2->0)
     // 10->Pos1, 20->Pos2, 30->Pos0
     // Result: [30, 10, 20]
-    let bc = vec![O_SWAP_AREA, 0, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_SWAP_AREA, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     
     assert_eq!(state.core.players[0].stage, [30, 10, 20]);
@@ -92,7 +92,7 @@ fn test_opcode_negate() {
     state.core.players[0].stage[0] = target_cid; // Target member
     
     // O_NEGATE_EFFECT (27), val=2 (OnLiveStart)
-    let bc = vec![O_NEGATE_EFFECT, 2, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_NEGATE_EFFECT, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     
     // Check negated_triggers
@@ -105,7 +105,7 @@ fn test_opcode_negate() {
          abilities: vec![
              Ability { 
                  trigger: TriggerType::OnLiveStart, 
-                 bytecode: vec![O_DRAW, 1, 0, 0], // Draw 1
+                 bytecode: vec![O_DRAW, 1, 0, 0, 0], // Draw 1
                  ..Default::default() 
              }
          ],
@@ -144,7 +144,7 @@ fn test_granted_ability_propagation_cost() {
         abilities: vec![
             Ability {
                 trigger: TriggerType::Constant,
-                bytecode: vec![O_REDUCE_COST, 1, 0, 0, O_RETURN, 0, 0, 0],
+                bytecode: vec![O_REDUCE_COST, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
                 ..Default::default()
             }
         ],
@@ -186,7 +186,7 @@ fn test_granted_ability_propagation_hearts() {
         abilities: vec![
             Ability {
                 trigger: TriggerType::Constant,
-                bytecode: vec![O_ADD_HEARTS, 1, 0, 0, O_RETURN, 0, 0, 0], // O_ADD_HEARTS [count, color, 0]
+                bytecode: vec![O_ADD_HEARTS, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], // O_ADD_HEARTS [count, color, 0]
                 ..Default::default()
             }
         ],
@@ -215,7 +215,7 @@ fn test_granted_ability_propagation_score() {
         abilities: vec![
             Ability {
                 trigger: TriggerType::Constant,
-                bytecode: vec![O_BOOST_SCORE, 500, 0, 0, O_RETURN, 0, 0, 0], 
+                bytecode: vec![O_BOOST_SCORE, 500, 0, 0, 0, O_RETURN, 0, 0, 0, 0], 
                 ..Default::default()
             }
         ],

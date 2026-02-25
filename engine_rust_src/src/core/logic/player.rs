@@ -40,6 +40,7 @@ pub struct PlayerState {
     pub current_turn_volume: u32,
     pub used_abilities: SmallVec<[u32; 16]>,
     pub live_score_bonus: i32,
+    pub live_score_bonus_logs: SmallVec<[(i32, i32); 4]>, // (source_cid, amount)
     pub blade_buffs: [i16; 3],
     pub heart_buffs: [HeartBoard; 3],
     pub cost_reduction: i16,
@@ -69,6 +70,8 @@ pub struct PlayerState {
     pub yell_cards: SmallVec<[i32; 8]>,
     #[serde(default)]
     pub excess_hearts: u32,
+    #[serde(default)]
+    pub skip_next_activate: bool,
 }
 
 impl Default for PlayerState {
@@ -92,6 +95,7 @@ impl Default for PlayerState {
             current_turn_volume: 0,
             used_abilities: SmallVec::new(),
             live_score_bonus: 0,
+            live_score_bonus_logs: SmallVec::new(),
             blade_buffs: [0; 3],
             heart_buffs: [HeartBoard::default(); 3],
             cost_reduction: 0,
@@ -119,6 +123,7 @@ impl Default for PlayerState {
             played_group_mask: 0,
             yell_cards: SmallVec::new(),
             excess_hearts: 0,
+            skip_next_activate: false,
         }
     }
 }
@@ -192,6 +197,7 @@ impl PlayerState {
         self.heart_buffs = [HeartBoard::default(); 3];
         self.cost_reduction = 0;
         self.live_score_bonus = 0;
+        self.live_score_bonus_logs.clear();
         self.used_abilities.clear();
         self.color_transforms.clear();
         self.heart_req_reductions = HeartBoard::default();
@@ -229,6 +235,7 @@ impl PlayerState {
         self.current_turn_volume = other.current_turn_volume;
         self.used_abilities.clear(); self.used_abilities.extend_from_slice(&other.used_abilities);
         self.live_score_bonus = other.live_score_bonus;
+        self.live_score_bonus_logs.clear(); self.live_score_bonus_logs.extend_from_slice(&other.live_score_bonus_logs);
         self.blade_buffs = other.blade_buffs;
         self.heart_buffs = other.heart_buffs;
         self.cost_reduction = other.cost_reduction;

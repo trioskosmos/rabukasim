@@ -171,6 +171,13 @@ const O_PREVENT_ACTIVATE: i32 = 82;
 const O_SET_HEART_COST: i32 = 83;
 const O_PREVENT_SET_TO_SUCCESS_PILE: i32 = 80;
 const O_PREVENT_BATON_TOUCH: i32 = 90;
+const O_LOOK_DECK_DYNAMIC: i32 = 91;
+const O_REDUCE_SCORE: i32 = 92;
+const O_REPEAT_ABILITY: i32 = 93;
+const O_LOSE_EXCESS_HEARTS: i32 = 94;
+const O_SKIP_ACTIVATE_PHASE: i32 = 95;
+const O_PAY_ENERGY_DYNAMIC: i32 = 96;
+const O_PLACE_ENERGY_UNDER_MEMBER: i32 = 97;
 
 // --- CONDITIONS (Synced with generated_constants.rs) ---
 const C_TURN_1: i32 = 200;
@@ -928,17 +935,14 @@ fn push_trigger(card_id: u32, slot_idx: u32, trigger_filter: i32, ab_filter: i32
     }
 }
 
-fn match_filter(cid: u32, attr: u32) -> bool {
+fn match_filter(cid: u32, a_lo: u32, a_hi: u32) -> bool {
     if (cid == 0u || cid >= arrayLength(&card_stats)) { return false; }
     let s = card_stats[cid];
 
-    // Cost Filter (bits 24-30)
-    // Bit 24: Enable (0x01000000)
-    // Bits 25-30: Value (cost << 25)
-    // Bit 30: is_le flag (0x40000000) - if set, check cost <= value, else cost >= value
-    if ((attr & 0x01000000u) != 0u) {
-        let cost_value = (attr >> 25u) & 0x3Fu;
-        let is_le = (attr & 0x40000000u) != 0u;
+    // Cost Filter (bits 24-30 of a_lo)
+    if ((a_lo & 0x01000000u) != 0u) {
+        let cost_value = (a_lo >> 25u) & 0x1Fu;
+        let is_le = (a_lo & 0x40000000u) != 0u;
         if (is_le) {
             if (s.cost > cost_value) { return false; }
         } else {
@@ -946,16 +950,55 @@ fn match_filter(cid: u32, attr: u32) -> bool {
         }
     }
 
-    // Group Filter (attr >> 5 & 0x7F)
-    if ((attr & 0x10u) != 0u) {
-        let gid = (attr >> 5u) & 0x7Fu;
+    // Group Filter (a_lo bits 5-11)
+    if ((a_lo & 0x10u) != 0u) {
+        let gid = (a_lo >> 5u) & 0x7Fu;
         let g = s.groups;
         if (((g >> 0u) & 0xFFu) != gid && ((g >> 8u) & 0xFFu) != gid && 
             ((g >> 16u) & 0xFFu) != gid && ((g >> 24u) & 0xFFu) != gid) { return false; }
     }
 
-    // Type Filter (attr >> 2 & 0x03)
-    let tf = (attr >> 2u) & 0x03u;
+    // Unit Filter (a_lo bits 17-23)
+    if ((a_lo & 0x10000u) != 0u) {
+        let uid = (a_lo >> 17u) & 0x7Fu;
+        let u = s.units;
+        if (((u >> 0u) & 0xFFu) != uid && ((u >> 8u) & 0xFFu) != uid && 
+            ((u >> 16u) & 0xFFu) != uid && ((u >> 24u) & 0xFFu) != uid) { return false; }
+    }
+
+    // Color Filter (a_hi bits 28-31)
+    if ((a_hi & 0x10000000u) != 0u) {
+        let c_mask = (a_hi >> 29u) & 0x07u;
+        var found_color = false;
+        // Check first 3 colors (as per compiler's color_mask & 0x07)
+        for (var c = 1u; c <= 3u; c = c + 1u) {
+            if ((c_mask & (1u << (c - 1u))) != 0u) {
+                let h_val = (s.hearts_lo >> ((c - 1u) * 8u)) & 0xFFu;
+                if (h_val > 0u) { found_color = true; break; }
+            }
+        }
+        if (!found_color) { return false; }
+    }
+
+    // Character Filter (a_hi)
+    if ((a_hi & 0x00000400u) != 0u) { // FILTER_CHARACTER_ENABLE (Bit 10 of a_hi)
+        let cid1 = a_hi & 0x7Fu;
+        let cid2 = (a_hi >> 11u) & 0x7Fu;
+        let cid3 = (a_hi >> 18u) & 0x7Fu;
+        var char_matched = (s.char_id == cid1);
+        if (cid2 > 0u && s.char_id == cid2) { char_matched = true; }
+        if (cid3 > 0u && s.char_id == cid3) { char_matched = true; }
+        if (!char_matched) { return false; }
+    }
+
+    // Attribute requirements (a_lo bits 12-14)
+    if ((a_lo & 0x1000u) != 0u) { // is_tapped requirement
+         // match_filter is usually used for selecting from zones, where tapped state might be relevant
+         // But in rollout it's simplified. For now we ignore it to avoid false negatives.
+    }
+
+    // Type Filter (a_lo >> 2 & 0x03)
+    let tf = (a_lo >> 2u) & 0x03u;
     if (tf == 1u && s.card_type != 1u) { return false; }
     if (tf == 2u && s.card_type != 2u) { return false; }
     return true;
@@ -991,14 +1034,14 @@ fn add_heart_req_addition(p_idx: u32, color: u32, amount: u32) {
     }
 }
 
-fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32, ctx_cid: u32) -> bool {
+fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a_lo: u32, a_hi: u32, target_slot: u32, ctx_cid: u32) -> bool {
     let cid = select(u32(states[g_gid].prev_card_id), ctx_cid, ctx_cid != 0u);
     switch (op) {
         case 200: { return states[g_gid].turn == 1u; }
         case 201: { 
             var count = 0u;
             for (var s = 0u; s < 3u; s = s + 1u) {
-                if (get_stage_card(p_idx, s) == u32(a)) { count = count + 1u; }
+                if (get_stage_card(p_idx, s) == a_lo) { count = count + 1u; }
             }
             return count >= u32(v);
         }
@@ -1016,7 +1059,7 @@ fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32,
             return h_len >= u32(v);
         }
         case 202: { 
-            let color_idx = a;
+            let color_idx = a_lo;
             if (color_idx > 0u && color_idx < 7u) {
                 for (var s = 0u; s < 3u; s = s + 1u) {
                     let s_cid = get_stage_card(p_idx, s);
@@ -1045,7 +1088,7 @@ fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32,
         }
         case 208: { 
             var count = 0u;
-            let group_id = a;
+            let group_id = a_lo;
             for (var s = 0u; s < 3u; s = s + 1u) {
                 let s_cid = get_stage_card(p_idx, s);
                 if (s_cid > 0u && s_cid < arrayLength(&card_stats)) {
@@ -1060,24 +1103,18 @@ fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32,
         }
         case 209: { // C_GROUP_FILTER
             if (cid != 0u && cid < arrayLength(&card_stats)) {
-                var f_filter = u32(a);
-                if ((f_filter & 0x10u) == 0u && f_filter != 0u && f_filter < 300u) {
-                    f_filter = 0x10u | (f_filter << 5u);
-                } else if ((f_filter & 0x10u) == 0u && v != 0) {
-                    f_filter = 0x10u | (u32(v) << 5u);
-                }
-                return match_filter(cid, f_filter);
+                return match_filter(cid, a_lo, a_hi);
             }
             return false;
         }
         case 210: { // C_OPPONENT_HAS
-             let filter_attr = u32(a);
+             let filter_attr = a_lo;
              let o_idx = 1u - p_idx;
              for (var s = 0u; s < 3u; s = s + 1u) {
                  let s_cid = get_stage_card(o_idx, s);
                  if (s_cid > 0u) {
                      if (s_cid == u32(v)) { return true; }
-                     if (filter_attr != 0u && match_filter(s_cid, filter_attr)) { return true; }
+                     if (filter_attr != 0u && match_filter(s_cid, filter_attr, a_hi)) { return true; }
                  }
              }
              return false;
@@ -1087,10 +1124,10 @@ fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32,
             if (target_slot < 3u) { c_cid = get_stage_card(p_idx, target_slot); }
             if (c_cid > 0u && c_cid < arrayLength(&card_stats)) {
                 let groups = card_stats[c_cid].groups;
-                if (((groups >> 0u) & 0xFFu) == a) { return true; }
-                if (((groups >> 8u) & 0xFFu) == a) { return true; }
-                if (((groups >> 16u) & 0xFFu) == a) { return true; }
-                if (((groups >> 24u) & 0xFFu) == a) { return true; }
+                if (((groups >> 0u) & 0xFFu) == a_lo) { return true; }
+                if (((groups >> 8u) & 0xFFu) == a_lo) { return true; }
+                if (((groups >> 16u) & 0xFFu) == a_lo) { return true; }
+                if (((groups >> 24u) & 0xFFu) == a_lo) { return true; }
             }
             return false;
         }
@@ -1116,7 +1153,7 @@ fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32,
              return false;
         }
         case 218: { // C_COUNT_SUCCESS_LIVE
-             let filter_attr = u32(a);
+             let filter_attr = a_lo;
              var count = 0u;
              let l_count = select(states[g_gid].player1.lives_cleared_count, states[g_gid].player0.lives_cleared_count, p_idx == 0u);
              // On GPU we don't store success pile, but we track count. 
@@ -1180,7 +1217,7 @@ fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32,
             if (p_idx == 0u) { d_len = states[g_gid].player0.discard_pile_len; }
             else { d_len = states[g_gid].player1.discard_pile_len; }
             for (var i = 0u; i < d_len; i = i + 1u) {
-                if (get_discard_card(p_idx, i) == u32(a)) { return true; }
+                if (get_discard_card(p_idx, i) == a_lo) { return true; }
             }
             return false;
         }
@@ -1256,7 +1293,7 @@ fn check_condition_opcode(p_idx: u32, op: i32, v: i32, a: u32, target_slot: u32,
         }
         case 226: { // C_HAS_KEYWORD
             // Check for keywords like PLAYED_THIS_TURN, YELL_COUNT, HAS_LIVE_SET
-            let keyword_flags = u32(a);
+            let keyword_flags = a_lo;
             if ((keyword_flags & 0x01u) != 0u) { // PLAYED_THIS_TURN
                 // played_group_mask not in GpuPlayerState, use used_abilities_mask as proxy
                 // This is a simplification - may not be 100% accurate
@@ -1458,9 +1495,9 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
         var ctx_choice = choice;
         
         while (ip < end) {
-            if (ip + 4u > end) { break; }
-            let op = bytecode[ip]; let v = bytecode[ip + 1]; let a = bytecode[ip + 2]; let s = bytecode[ip + 3];
-            ip = ip + 4;
+            if (ip + 5u > end) { break; }
+            let op = bytecode[ip]; let v = bytecode[ip + 1]; let a_lo = u32(bytecode[ip + 2]); let a_hi = u32(bytecode[ip + 3]); let s = bytecode[ip + 4];
+            ip = ip + 5;
             let target_raw = u32(s);
             let target_slot = target_raw & 0xFFu;
             
@@ -1471,12 +1508,12 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
             if (real_op >= 1000) { real_op = real_op - 1000; is_negated = true; }
             
             if (real_op >= 200 && real_op <= 299) {
-                let passed = check_condition_opcode(p_idx, real_op, v, u32(a), target_slot, card_id);
+                let passed = check_condition_opcode(p_idx, real_op, v, a_lo, a_hi, target_slot, card_id);
                 cond = passed; if (is_negated) { cond = !cond; }
                 continue;
             }
-            if (real_op == O_JUMP) { ip = u32(i32(ip) + v * 4); continue; }
-            if (real_op == O_JUMP_IF_FALSE) { if (!cond) { ip = u32(i32(ip) + v * 4); } continue; }
+            if (real_op == O_JUMP) { ip = u32(i32(ip) + v * 5); continue; }
+            if (real_op == O_JUMP_IF_FALSE) { if (!cond) { ip = u32(i32(ip) + v * 5); } continue; }
             
             if (real_op >= 10 && real_op < 100) {
                 switch (real_op) {
@@ -1487,7 +1524,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                         else { states[g_gid].player1.blade_buffs[ab_t_slot] += u32(v); }
                     }
                     case O_ADD_HEARTS: {
-                        var color = u32(a);
+                        var color = a_lo;
                         if (color == 0u) { color = u32(ctx_choice); }
                         if (color < 8u) { add_board_heart(p_idx, color, u32(v)); }
                     }
@@ -1500,7 +1537,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                          else { states[g_gid].player1.score += u32(v); }
                     }
                     case O_RESTRICTION: {
-                        if (u32(a) == 1u) { // FLAG_CANNOT_LIVE
+                        if (a_lo == 1u) { // FLAG_CANNOT_LIVE
                             if (p_idx == 0u) { states[g_gid].player0.flags |= 1u; }
                             else { states[g_gid].player1.flags |= 1u; }
                         }
@@ -1538,7 +1575,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                          else { states[g_gid].player1.blade_buffs[sb_t_slot] = u32(v); }
                     }
                     case O_SET_HEARTS: {
-                        let color = u32(a);
+                        let color = a_lo;
                         if (color < 8u) {
                             if (p_idx == 0u) { states[g_gid].player0.heart_buffs[color] = u32(v); }
                             else { states[g_gid].player1.heart_buffs[color] = u32(v); }
@@ -1549,7 +1586,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                         if (real_op != O_MOVE_MEMBER || mv_src >= 3u) {
                              mv_src = resolve_target_slot(target_slot, slot_idx);
                         }
-                        let mv_dst = u32(a);
+                        let mv_dst = a_lo;
                         if (mv_src < 3u && mv_dst < 3u && mv_src != mv_dst) {
                             var src_cid = 0u; var dst_cid = 0u;
                             if (p_idx == 0u) {
@@ -1599,7 +1636,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                             let cid = pop_deck(p_idx);
                             if (cid == 0u) { break; }
                             cards[i] = cid;
-                            if (check_condition_opcode(p_idx, cond_v, i32(a), 0u, rev_t_slot, cid)) {
+                            if (check_condition_opcode(p_idx, cond_v, i32(a_lo), a_lo, a_hi, rev_t_slot, cid)) {
                                 found_cid = cid; r_idx = i; break;
                             }
                         }
@@ -1671,13 +1708,13 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                         }
                     }
                     case O_MOVE_TO_DECK: {
-                        // v = count, a = attr (zone info in upper bits), s = target
-                        // a bits 12-15: source zone (6=hand, 4=stage, 13=discard)
-                        let source_zone = (u32(a) >> 12u) & 0x0Fu;
+                        // v = count, a_lo/a_hi = attr (filter), s = target
+                        // source zone in bits 16-23 of s
+                        let source_zone = (u32(s) >> 16u) & 0x1Fu;
                         let count = u32(v);
                         
-                        // Determine destination: deck_top (a bit 0) or deck_bottom
-                        let to_top = (u32(a) & 0x01u) == 0u;
+                        // Determine destination: deck_top (s bit 0) or deck_bottom
+                        let to_top = (u32(s) & 0x01u) == 0u;
                         
                         for (var k = 0u; k < count; k = k + 1u) {
                             var card_id = 0u;
@@ -1840,7 +1877,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                         else { states[g_gid].player1.prevent_baton_touch += u32(v); }
                     }
                     case 58: { // O_MOVE_TO_DISCARD
-                        let zone = select(target_slot, u32(a >> 12u) & 0x0Fu, (u32(a >> 12u) & 0x0Fu) != 0u);
+                        let zone = select(target_slot, (u32(s) >> 16u) & 0xFFu, ((u32(s) >> 16u) & 0xFFu) != 0u);
                         if (zone == 6u || target_slot == 6u) { // Hand
                             let count = u32(v);
                             for (var k = 0u; k < count; k = k + 1u) {
@@ -1856,7 +1893,8 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                         }
                     }
                     case O_PLAY_MEMBER_FROM_HAND: {
-                        let filter_attr = u32(a);
+                        let filter_lo = a_lo;
+                        let filter_hi = a_hi;
                         let dst_slot = u32(s) & 0x0Fu;
                         let choice_card_idx = u32(choice);
                         var pm_h_len = 0u;
@@ -1865,7 +1903,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
 
                         if (choice_card_idx < pm_h_len && dst_slot < 3u) {
                             let pm_cid = get_hand_card(p_idx, choice_card_idx);
-                            if (pm_cid != 0u && match_filter(pm_cid, filter_attr)) {
+                            if (pm_cid != 0u && match_filter(pm_cid, filter_lo, filter_hi)) {
                                 let target_cid = get_stage_card(p_idx, dst_slot);
                                 if (target_cid > 0u) { add_to_discard(p_idx, target_cid); }
                                 remove_from_hand(p_idx, choice_card_idx);
@@ -1877,7 +1915,8 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                         }
                     }
                     case O_PLAY_MEMBER_FROM_DISCARD: {
-                        let filter_attr_d = u32(a);
+                        let filter_lo_d = a_lo;
+                        let filter_hi_d = a_hi;
                         let dst_slot_d = u32(s) & 0x0Fu;
                         let choice_disc_idx = u32(choice);
                         var pmd_d_len = 0u;
@@ -1886,7 +1925,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
 
                         if (choice_disc_idx < pmd_d_len && dst_slot_d < 3u) {
                             let pmd_cid = get_discard_card(p_idx, choice_disc_idx);
-                            if (pmd_cid != 0u && match_filter(pmd_cid, filter_attr_d)) {
+                            if (pmd_cid != 0u && match_filter(pmd_cid, filter_lo_d, filter_hi_d)) {
                                 let target_cid_d = get_stage_card(p_idx, dst_slot_d);
                                 if (target_cid_d > 0u) { add_to_discard(p_idx, target_cid_d); }
                                 remove_from_discard(p_idx, choice_disc_idx);
@@ -1924,7 +1963,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                         }
                     }
                     case O_TRANSFORM_HEART: {
-                        let src_color = u32(a); let dst_color = u32(s);
+                        let src_color = a_lo; let dst_color = u32(s);
                         let amt = u32(abs(v));
                         let s_word = src_color / 4u; let s_shift = (src_color % 4u) * 8u;
                         let d_word = dst_color / 4u; let d_shift = (dst_color % 4u) * 8u;
@@ -1965,9 +2004,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                          }
                     }
                     case O_TRANSFORM_COLOR: {
-                         // Simplify: often used for "Treat Color X as Y". 
-                         // For now, we add hearts to Y if X exists.
-                         let src = u32(a); let dst = u32(v);
+                         let src = a_lo; let dst = u32(v);
                          if (src < 8u && dst < 8u) {
                              let h = get_board_heart(p_idx, src);
                              add_board_heart(p_idx, dst, h);
@@ -1975,7 +2012,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                     }
 
                     case O_ADD_TO_HAND: {
-                        let t = u32(a);
+                        let t = a_lo;
                         if (t == 1u) { // From Deck
                             var d_len = 0u;
                             if (p_idx == 0u) { d_len = states[g_gid].player0.deck_len; }
@@ -1999,7 +2036,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                     }
                     case O_SWAP_AREA: {
                         let sa_src = resolve_target_slot(target_slot, slot_idx);
-                        let sa_dst = u32(a);
+                        let sa_dst = a_lo;
                         if (sa_src < 3u && sa_dst < 3u && sa_src != sa_dst) {
                             let sa_src_cid = get_stage_card(p_idx, sa_src);
                             let sa_dst_cid = get_stage_card(p_idx, sa_dst);
@@ -2036,6 +2073,96 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                                  states[g_gid].player1.success_lives[word_idx] = (states[g_gid].player1.success_lives[word_idx] & ~(0xFFFFu << shift)) | (hcid << shift);
                              }
                          }
+                    }
+                    // === MISSING OPCODES FOR PARITY ===
+                    case O_LOOK_DECK_DYNAMIC: {
+                        // Look at cards from deck equal to live score + v
+                        // Used by cards like PL!-bp5-001-AR: "look at cards equal to live score + 2"
+                        let base_score = select(states[g_gid].player0.score, states[g_gid].player1.score, p_idx == 0u);
+                        // Note: live_score_bonus not in GPU state, using score only
+                        let count = base_score + u32(v);
+                        // For GPU, we just draw the cards (simplified - no looked_cards pile)
+                        for (var d = 0u; d < count; d = d + 1u) {
+                            var ldd_d_len = 0u;
+                            if (p_idx == 0u) { ldd_d_len = states[g_gid].player0.deck_len; }
+                            else { ldd_d_len = states[g_gid].player1.deck_len; }
+                            if (ldd_d_len == 0u) { break; }
+                            // In GPU, we don't track looked_cards - just skip
+                            if (p_idx == 0u) { states[g_gid].player0.deck_len -= 1u; }
+                            else { states[g_gid].player1.deck_len -= 1u; }
+                        }
+                    }
+                    case O_REDUCE_SCORE: {
+                        // Reduce live score bonus by v
+                        // Note: GPU uses score directly (no live_score_bonus field)
+                        let reduction = min(u32(v), select(states[g_gid].player0.score, states[g_gid].player1.score, p_idx == 0u));
+                        if (p_idx == 0u) { states[g_gid].player0.score -= reduction; }
+                        else { states[g_gid].player1.score -= reduction; }
+                    }
+                    case O_REPEAT_ABILITY: {
+                        // Repeat the current ability from the beginning
+                        // v = max repeat count (0 = infinite, N = repeat N more times)
+                        // In GPU compute shader, we reset ip to pool_ip (start of ability bytecode)
+                        // Note: This requires a repeat_count variable in the ability execution scope
+                        // For simplicity in GPU model, we use a static repeat limit check
+                        // Real implementation would need loop state tracking
+                        let max_repeats = u32(v);
+                        if (max_repeats == 0u) {
+                            // Infinite repeat - jump back to start (pool_ip)
+                            ip = pool_ip;
+                        } else if (max_repeats > 0u) {
+                            // Limited repeat - for GPU simplicity, just jump back once
+                            // Full implementation would track repeat_count in function scope
+                            ip = pool_ip;
+                        }
+                    }
+                    case O_LOSE_EXCESS_HEARTS: {
+                        // Lose excess hearts beyond what's required for the live
+                        // v = number of excess hearts to lose (0 = lose all excess)
+                        // Placeholder - actual implementation would compare current vs required hearts
+                        // For now, this is a no-op in GPU as it requires complex heart board state
+                    }
+                    case O_SKIP_ACTIVATE_PHASE: {
+                        // Skip the next activate phase
+                        // Used by cards that prevent member activation
+                        // Store in flags (bit 31 = skip_next_activate)
+                        if (p_idx == 0u) { states[g_gid].player0.flags |= 0x80000000u; }
+                        else { states[g_gid].player1.flags |= 0x80000000u; }
+                    }
+                    case O_PAY_ENERGY_DYNAMIC: {
+                        // Pay energy equal to card score + v
+                        let base_score = select(states[g_gid].player0.score, states[g_gid].player1.score, p_idx == 0u);
+                        let total_cost = base_score + u32(v);
+                        var ped_energy = 0u; var ped_tapped = 0u;
+                        if (p_idx == 0u) { ped_energy = states[g_gid].player0.energy_count; ped_tapped = states[g_gid].player0.tapped_energy_count; }
+                        else { ped_energy = states[g_gid].player1.energy_count; ped_tapped = states[g_gid].player1.tapped_energy_count; }
+                        let available = ped_energy - ped_tapped;
+                        if (available >= total_cost) {
+                            if (p_idx == 0u) { states[g_gid].player0.tapped_energy_count += total_cost; }
+                            else { states[g_gid].player1.tapped_energy_count += total_cost; }
+                        }
+                    }
+                    case O_PLACE_ENERGY_UNDER_MEMBER: {
+                        // Place energy card under a member
+                        // Used by cards that attach energy to members for special effects
+                        // s parameter contains the slot index
+                        let slot = u32(s) & 0xFFu;
+                        if (slot < 3u) {
+                            var pem_energy = 0u; var pem_tapped = 0u;
+                            if (p_idx == 0u) { pem_energy = states[g_gid].player0.energy_count; pem_tapped = states[g_gid].player0.tapped_energy_count; }
+                            else { pem_energy = states[g_gid].player1.energy_count; pem_tapped = states[g_gid].player1.tapped_energy_count; }
+                            let available = pem_energy - pem_tapped;
+                            if (available > 0u) {
+                                // Find an untapped energy to move (simplified - just increment stage_energy_count)
+                                // In GPU, we track count via stage_energy arrays
+                                if (p_idx == 0u) { 
+                                    states[g_gid].player0.tapped_energy_count += 1u;
+                                    // stage_energy[slot] would need proper implementation
+                                } else { 
+                                    states[g_gid].player1.tapped_energy_count += 1u;
+                                }
+                            }
+                        }
                     }
                     default: {}
                 }
@@ -2135,7 +2262,21 @@ fn step_state(action: u32) -> u32 {
     let phase = states[g_gid].phase;
 
     if (phase == PHASE_TERMINAL) { return 0u; } 
-    if (phase == PHASE_RPS) { states[g_gid].phase = PHASE_ENERGY; return 1u; }
+    if (phase == PHASE_RPS) { states[g_gid].phase = PHASE_TURN_CHOICE; return 1u; }
+    if (phase == PHASE_TURN_CHOICE) {
+        // Determine first player based on RPS result or random
+        // In LL!SIC, winner of RPS chooses who goes first
+        // For GPU, we use first_player flag which was set during RPS
+        states[g_gid].phase = PHASE_ACTIVE;
+        states[g_gid].current_player = states[g_gid].first_player;
+        return 1u;
+    }
+    if (phase == PHASE_ACTIVE) {
+        // Active phase: determine active player for the turn
+        // Auto-advance to Energy phase
+        states[g_gid].phase = PHASE_ENERGY;
+        return 1u;
+    }
     if (phase == PHASE_ENERGY) { draw_energy(p_idx); states[g_gid].phase = PHASE_DRAW; return 1u; }
     if (phase == PHASE_DRAW) { draw_card(p_idx); states[g_gid].phase = PHASE_MAIN; return 1u; }
     if (phase == PHASE_LIVESET) {

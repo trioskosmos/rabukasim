@@ -118,7 +118,7 @@ pub fn check_live_success(state: &GameState, p_idx: usize, live: &LiveCard, tota
                         req_board.set_color_count(to_idx, old_to.saturating_add(count));
                     }
                 }
-                i += 4;
+                i += 5;
             }
         }
     }
@@ -614,7 +614,8 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
     // 0. Trigger ON_LIVE_SUCCESS for successful performances (Rule 8.3.15 sequence completion)
     // We iterate through players and slots, using a mask to track which cards have already triggered
     // This allows us to resume correctly if an ability (like Kimi no Kokoro) pauses for input.
-    for p in 0..2 {
+    for i in 0..2 {
+        let p = (state.first_player as usize + i) % 2;
         if let Some(res) = state.ui.performance_results.get(&(p as u8)) {
             if res.get("success").and_then(|v| v.as_bool()).unwrap_or(false) {
                 // Use bit 7 for "broad trigger done"
@@ -702,7 +703,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         }
 
         // Pool O_BOOST_SCORE from constant abilities
-        let mut constant_bonus = 0i32;
+        let mut constant_bonuses = std::collections::HashMap::new();
         for slot in 0..3 {
             let cid = state.core.players[p].stage[slot];
             if cid >= 0 {
@@ -713,9 +714,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                             if ab.conditions.iter().all(|c| state.check_condition(db, p, c, &ctx, 1)) {
                                  let bc = &ab.bytecode;
                                  let mut i = 0;
-                                 while i + 3 < bc.len() {
-                                     if bc[i] == O_BOOST_SCORE { constant_bonus += bc[i+1]; }
-                                     i += 4;
+                                 while i + 4 < bc.len() {
+                                     if bc[i] == O_BOOST_SCORE {
+                                         *constant_bonuses.entry(cid).or_insert(0) += bc[i+1];
+                                     }
+                                     i += 5;
                                  }
                             }
                         }
@@ -733,9 +736,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                              if ab.conditions.iter().all(|c| state.check_condition(db, p, c, &ctx, 1)) {
                                  let bc = &ab.bytecode;
                                  let mut i = 0;
-                                 while i + 3 < bc.len() {
-                                     if bc[i] == O_BOOST_SCORE { constant_bonus += bc[i+1]; }
-                                     i += 4;
+                                 while i + 4 < bc.len() {
+                                     if bc[i] == O_BOOST_SCORE {
+                                         *constant_bonuses.entry(s_cid).or_insert(0) += bc[i+1];
+                                     }
+                                     i += 5;
                                  }
                              }
                          }
@@ -744,7 +749,64 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
              }
         }
 
-        scores[p] = live_score + constant_bonus.max(0) as u32 + state.core.players[p].live_score_bonus.max(0) as u32;
+        let mut total_constant_bonus = 0;
+        let mut score_breakdown = Vec::new();
+        
+        // 1. Base Score (Lives)
+        score_breakdown.push(json!({
+            "source": "Base (Lives)",
+            "value": live_score.saturating_sub(state.core.players[p].current_turn_volume),
+            "type": "base"
+        }));
+
+        // 2. Volume Bonus
+        if state.core.players[p].current_turn_volume > 0 {
+            score_breakdown.push(json!({
+                "source": "Volume Bonus",
+                "value": state.core.players[p].current_turn_volume,
+                "type": "volume"
+            }));
+        }
+
+        // 3. Constant Bonuses
+        for (cid, bonus) in constant_bonuses {
+            total_constant_bonus += bonus;
+            let name = db.get_member(cid).map(|m| m.name.clone()).unwrap_or_else(|| format!("Card {}", cid));
+            score_breakdown.push(json!({
+                "source": name,
+                "source_id": cid,
+                "value": bonus,
+                "type": "constant_ability"
+            }));
+        }
+
+        // 4. Triggered/Activated Bonuses (live_score_bonus_logs)
+        for &(cid, bonus) in &state.core.players[p].live_score_bonus_logs {
+            let name = if cid >= 0 {
+                db.get_member(cid).map(|m| m.name.clone())
+                    .or_else(|| db.get_live(cid).map(|l| l.name.clone()))
+                    .unwrap_or_else(|| format!("Card {}", cid))
+            } else {
+                "Ability Effect".to_string()
+            };
+            score_breakdown.push(json!({
+                "source": name,
+                "source_id": cid,
+                "value": bonus,
+                "type": "triggered_ability"
+            }));
+        }
+
+        scores[p] = live_score + total_constant_bonus.max(0) as u32 + state.core.players[p].live_score_bonus.max(0) as u32;
+
+        if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
+            if let serde_json::Value::Object(ref mut map) = res {
+                if let Some(serde_json::Value::Object(ref mut b_map)) = map.get_mut("breakdown") {
+                    b_map.insert("scores".to_string(), json!(score_breakdown));
+                }
+            }
+        }
+
     }
 
     // 8.4.6 Compare
@@ -786,7 +848,8 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
 
     // 2. Handling Winners (Rule 8.4.7)
     let mut choices_pending = false;
-    for p in 0..2 {
+    for i in 0..2 {
+        let p = (state.first_player as usize + i) % 2;
         let wins = if p == 0 { p0_wins } else { p1_wins };
         if wins {
             let cards_in_zone: Vec<usize> = state.core.players[p].live_zone.iter().enumerate()
@@ -794,29 +857,34 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 .map(|(i, _)| i)
                 .collect();
             
-            let hearts_per_player: Vec<HeartBoard> = (0..2).map(|pi| state.get_total_hearts(pi, db, 0)).collect();
+            // Use performance_results snapshot instead of re-checking hearts
+            // Rule 8.3.15-16: Cards that passed are still in live_zone, failed cards were already discarded
+            let perf_res = state.ui.performance_results.get(&(p as u8));
             let valid_candidates: Vec<usize> = cards_in_zone.iter().cloned()
                 .filter(|&i| {
                     let cid = state.core.players[p].live_zone[i];
                     if let Some(card) = db.get_live(cid) {
+                        // Check for prevention effects
                         if state.core.players[p].prevent_success_pile_set != 0 {
                             return false;
                         }
                         if card.abilities.iter().any(|a| a.effects.iter().any(|e| e.effect_type == EffectType::PreventSetToSuccessPile)) {
                             return false;
                         }
-                        // Check if player's total hearts satisfy live card's requirements
-                        let mut req_board = card.hearts_board;
-                        let red_req = state.core.players[p].heart_req_reductions;
-                        let add_req = state.core.players[p].heart_req_additions;
-                        for h in 0..7 {
-                            let red = red_req.get_color_count(h) as i32;
-                            let add = add_req.get_color_count(h) as i32;
-                            let val = (req_board.get_color_count(h) as i32 - red + add).max(0) as u8;
-                            req_board.set_color_count(h, val);
+                        
+                        // Use the "passed" flag from performance_results snapshot
+                        // This is the authoritative record from the performance phase (Rule 8.3.15)
+                        if let Some(res) = perf_res {
+                            if let Some(lives) = res.get("lives").and_then(|l| l.as_array()) {
+                                if let Some(live_res) = lives.get(i) {
+                                    return live_res.get("passed").and_then(|v| v.as_bool()).unwrap_or(false);
+                                }
+                            }
                         }
                         
-                        hearts_per_player[p].satisfies(req_board)
+                        // Fallback: if card is still in live_zone after performance phase, 
+                        // it passed the requirements (Rule 8.3.16 already discarded failed cards)
+                        true
                     } else { false }
                 })
                 .collect();
@@ -857,7 +925,8 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
 
     // 3. Finalization (Cleanup and Turn Advance)
     // Rule 8.4.10: Trigger [Turn End] abilities for BOTH players
-    for p in 0..2 {
+    for i in 0..2 {
+        let p = (state.first_player as usize + i) % 2;
         let ctx = AbilityContext {
             player_id: p as u8,
             source_card_id: -1,
@@ -874,7 +943,8 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
 
 pub fn finalize_live_result(state: &mut GameState) {
     // 8.4.8 Cleanup all live zones
-    for p in 0..2 {
+    for i in 0..2 {
+        let p = (state.first_player as usize + i) % 2;
         for i in 0..3 {
             if state.core.players[p].live_zone[i] >= 0 {
                 state.core.players[p].discard.push(state.core.players[p].live_zone[i]);

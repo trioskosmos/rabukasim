@@ -63,7 +63,18 @@ export const COMMON_NAMES = {
     "藤島 慈": "Megumi Fujishima",
     "徒町 小鈴": "Kosuzu Kachimachi",
     "百生 吟子": "Ginko Momose",
-    "安養寺 姫芽": "Hime Anyoji"
+    "安養寺 姫芽": "Hime Anyoji",
+
+    // Additional characters from new cards
+    "聖澤 悠奈": "Yuna Sezegawa",
+    "桂城 泉": "Izumi Katsuragi",
+    "柊 摩央": "Mao Hiiragi",
+    "統堂 英玲奈": "Erena Todo",
+    "綺羅 ツバサ": "Tsubasa Kira",
+    "鹿角 理亞": "Ria Kazuno",
+    "鹿角 聖良": "Seira Kazuno",
+    "高咲 侑": "Yu Takasaki",
+    "優木 あんじゅ": "Anju Yuki"
 };
 
 /**

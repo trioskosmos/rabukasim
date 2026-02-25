@@ -19,7 +19,7 @@ fn test_opcode_draw() {
     };
 
     // O_DRAW 2
-    let bytecode = vec![O_DRAW, 2, 0, 0, O_RETURN, 0, 0, 0];
+    let bytecode = vec![O_DRAW, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bytecode, &ctx);
 
     assert_eq!(state.core.players[0].hand.len(), 2);
@@ -40,7 +40,7 @@ fn test_opcode_blades() {
     };
 
     // O_ADD_BLADES 3 to SELF (Slot 4)
-    let bytecode = vec![O_ADD_BLADES, 3, 0, 4, O_RETURN, 0, 0, 0];
+    let bytecode = vec![O_ADD_BLADES, 3, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bytecode, &ctx);
 
     assert_eq!(state.core.players[0].blade_buffs[0], 3);
@@ -60,7 +60,7 @@ fn test_opcode_hearts() {
     };
 
     // O_ADD_HEARTS 1 to Red (Attr 1), Slot 4 (SELF)
-    let bytecode = vec![O_ADD_HEARTS, 1, 1, 4, O_RETURN, 0, 0, 0];
+    let bytecode = vec![O_ADD_HEARTS, 1, 1, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bytecode, &ctx);
 
     assert_eq!(state.core.players[0].heart_buffs[0].get_color_count(1), 1);
@@ -74,7 +74,7 @@ fn test_opcode_reduce_cost() {
     let ctx = AbilityContext { player_id: 0, ..AbilityContext::default() };
 
     // O_REDUCE_COST 2
-    let bytecode = vec![O_REDUCE_COST, 2, 0, 0, O_RETURN, 0, 0, 0];
+    let bytecode = vec![O_REDUCE_COST, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bytecode, &ctx);
 
     assert_eq!(state.core.players[0].cost_reduction, 2);
@@ -93,10 +93,10 @@ fn test_condition_count_hand() {
 
     // Condition: C_COUNT_HAND GE 3 -> O_DRAW 1
     let bytecode = vec![
-        C_COUNT_HAND, 3, 0, 0,
-        O_JUMP_IF_FALSE, 1, 0, 0,
-        O_DRAW, 1, 0, 0,
-        O_RETURN, 0, 0, 0
+        C_COUNT_HAND, 3, 0, 0, 0,
+        O_JUMP_IF_FALSE, 1, 0, 0, 0,
+        O_DRAW, 1, 0, 0, 0,
+        O_RETURN, 0, 0, 0, 0
     ];
 
     // Case 1: Met
@@ -131,7 +131,7 @@ fn test_opcode_play_member_from_hand() {
     };
 
     // O_PLAY_MEMBER_FROM_HAND
-    let bytecode = vec![O_PLAY_MEMBER_FROM_HAND, 0, 0, 0, O_RETURN, 0, 0, 0];
+    let bytecode = vec![O_PLAY_MEMBER_FROM_HAND, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
 
     state.resolve_bytecode(&db, &bytecode, &ctx);
 

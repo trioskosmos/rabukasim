@@ -107,12 +107,14 @@ pub fn resolve_bytecode(
 
         let op = frame.bytecode[ip];
         
-        // Instruction decoding (standard 4-word format)
+        // Instruction decoding (5-word extended format)
         let v = if ip + 1 < frame.bytecode.len() { frame.bytecode[ip+1] } else { 0 };
-        let a = if ip + 2 < frame.bytecode.len() { frame.bytecode[ip+2] } else { 0 };
-        let s = if ip + 3 < frame.bytecode.len() { frame.bytecode[ip+3] } else { 0 };
+        let a_low = if ip + 2 < frame.bytecode.len() { frame.bytecode[ip+2] } else { 0 } as u32;
+        let a_high = if ip + 3 < frame.bytecode.len() { frame.bytecode[ip+3] } else { 0 } as u32;
+        let s = if ip + 4 < frame.bytecode.len() { frame.bytecode[ip+4] } else { 0 };
+        let a = ((a_high as i64) << 32) | (a_low as i64);
 
-        frame.ip += 4; // Advance IP
+        frame.ip += 5; // Advance IP
         frame.ctx.program_counter = ip as u16;
 
         // Resumption logic: inject choice index if we're at the suspension point
@@ -162,10 +164,10 @@ pub fn resolve_bytecode(
         let mut target_slot = s & 0xFF;
         if target_slot == 10 { target_slot = frame.ctx.target_slot as i32; }
 
-        // Condition opcodes (200-255)
-        if real_op >= 200 && real_op <= 255 {
+        // Condition opcodes (200-255 and 301-399 for extended conditions)
+        if (real_op >= 200 && real_op <= 255) || (real_op >= 301 && real_op <= 399) {
             let passed = conditions::check_condition_opcode(
-                state, db, real_op, v, a as u32 as u64, target_slot, &frame.ctx, 0
+                state, db, real_op, v, a as u64, target_slot, &frame.ctx, 0
             );
             executor.cond = executor.cond && if is_negated { !passed } else { passed };
             frame.ctx.choice_index = -1;
@@ -174,13 +176,13 @@ pub fn resolve_bytecode(
 
         // Control flow
         if real_op == crate::core::enums::O_JUMP as i32 {
-            frame.ip = (ip as i32 + 4 + (v * 4)) as usize;
+            frame.ip = (ip as i32 + 5 + (v * 5)) as usize;
             frame.ctx.choice_index = -1;
             continue;
         }
         if real_op == crate::core::enums::O_JUMP_IF_FALSE as i32 {
             if !executor.cond {
-                frame.ip = (ip as i32 + 4 + (v * 4)) as usize;
+                frame.ip = (ip as i32 + 5 + (v * 5)) as usize;
             }
             // Reset cond ONLY after JUMP_IF_FALSE (end of current condition block)
             executor.cond = true;
@@ -232,7 +234,7 @@ pub fn resolve_bytecode(
 /// Helper to check if an opcode is a condition
 pub fn is_condition_opcode(op: i32) -> bool {
     let real_op = if op >= 1000 { op - 1000 } else { op };
-    real_op >= 200 && real_op <= 255
+    (real_op >= 200 && real_op <= 255) || (real_op >= 301 && real_op <= 399)
 }
 
 pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {

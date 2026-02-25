@@ -6,12 +6,14 @@ on:
     paths:
       - 'engine_rust_src/**'
       - 'tools/sync_metadata.py'
+      - 'tools/verify_wgsl_rust_sync.py'
       - 'data/metadata.json'
   pull_request:
     branches: [main]
     paths:
       - 'engine_rust_src/**'
       - 'tools/sync_metadata.py'
+      - 'tools/verify_wgsl_rust_sync.py'
       - 'data/metadata.json'
 
 env:
@@ -19,6 +21,43 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
+  struct-sync-check:
+    name: Verify WGSL-Rust Struct Synchronization
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Run struct sync verification
+        run: python tools/verify_wgsl_rust_sync.py --report reports/wgsl_rust_sync_report.json
+      
+      - name: Upload sync report
+        uses: actions/upload-artifact@v4
+        with:
+          name: wgsl-rust-sync-report
+          path: reports/wgsl_rust_sync_report.json
+      
+      - name: Create struct sync summary
+        run: |
+          echo "## WGSL-Rust Struct Sync Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          python -c "
+          import json
+          d = json.load(open('reports/wgsl_rust_sync_report.json'))
+          s = d['summary']
+          print(f\"Total structs: {s['total_structs']}\")
+          print(f\"Synced: {s['synced']}\")
+          print(f\"Discrepancies: {s['discrepancies']}\")
+          if s['errors']:
+              print('Errors:')
+              for e in s['errors']:
+                  print(f'  - {e}')
+          " >> $GITHUB_STEP_SUMMARY
+
   sync-check:
     name: Verify Constant Synchronization
     runs-on: ubuntu-latest

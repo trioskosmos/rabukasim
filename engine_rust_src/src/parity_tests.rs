@@ -98,7 +98,7 @@ mod parity_tests {
             player_id: 0, 
             ..Default::default() 
         };
-        let bytecode = vec![O_DRAW, 2, 0, 0, O_RETURN, 0, 0, 0];
+        let bytecode = vec![O_DRAW, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify
@@ -127,7 +127,7 @@ mod parity_tests {
             area_idx: 0,  // Target slot 0
             ..Default::default() 
         };
-        let bytecode = vec![O_ADD_HEARTS, 2, 1, 4, O_RETURN, 0, 0, 0]; // s=4 means current slot, color 1 = pink
+        let bytecode = vec![O_ADD_HEARTS, 2, 1, 0, 4, O_RETURN, 0, 0, 0, 0]; // s=4 means current slot, color 1 = pink
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify: hearts should be added to slot 0
@@ -147,7 +147,7 @@ mod parity_tests {
             player_id: 0, 
             ..Default::default() 
         };
-        let bytecode = vec![O_BOOST_SCORE, 5, 0, 0, O_RETURN, 0, 0, 0];
+        let bytecode = vec![O_BOOST_SCORE, 5, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify: O_BOOST_SCORE adds to live_score_bonus, not score directly
@@ -169,7 +169,7 @@ mod parity_tests {
             player_id: 0, 
             ..Default::default() 
         };
-        let bytecode = vec![O_ENERGY_CHARGE, 2, 0, 0, O_RETURN, 0, 0, 0];
+        let bytecode = vec![O_ENERGY_CHARGE, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify
@@ -348,7 +348,7 @@ mod parity_tests {
         };
         
         // Simulate OnPlay: Draw 1 card
-        let bytecode = vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0];
+        let bytecode = vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify: Hand should have drawn a card
@@ -370,10 +370,10 @@ mod parity_tests {
             ..Default::default() 
         };
         let bytecode = vec![
-            C_TURN_1, 0, 0, 0,      // Condition: turn 1
-            O_JUMP_IF_FALSE, 1, 0, 0, // Skip next block if false
-            O_DRAW, 2, 0, 0,        // Draw 2 cards
-            O_RETURN, 0, 0, 0
+            C_TURN_1, 0, 0, 0, 0,      // Condition: turn 1
+            O_JUMP_IF_FALSE, 1, 0, 0, 0, // Skip next block if false
+            O_DRAW, 2, 0, 0, 0,        // Draw 2 cards
+            O_RETURN, 0, 0, 0, 0
         ];
         
         let hand_len_before = state.core.players[0].hand.len();
@@ -400,7 +400,7 @@ mod parity_tests {
             player_id: 0, 
             ..Default::default() 
         };
-        let bytecode = vec![O_RECOVER_MEMBER, 1, 0, 0, O_RETURN, 0, 0, 0];
+        let bytecode = vec![O_RECOVER_MEMBER, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify: Hand should have gained a card
@@ -419,7 +419,7 @@ mod parity_tests {
             player_id: 0, 
             ..Default::default() 
         };
-        let bytecode = vec![O_SET_SCORE, 50, 0, 0, O_RETURN, 0, 0, 0];
+        let bytecode = vec![O_SET_SCORE, 50, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify
@@ -441,7 +441,7 @@ mod parity_tests {
             player_id: 0, 
             ..Default::default() 
         };
-        let bytecode = vec![O_DRAW_UNTIL, 5, 0, 0, O_RETURN, 0, 0, 0];
+        let bytecode = vec![O_DRAW_UNTIL, 5, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify: Should have 5 cards in hand
@@ -464,7 +464,7 @@ mod parity_tests {
             player_id: 0, 
             ..Default::default() 
         };
-        let bytecode = vec![O_PAY_ENERGY, 3, 0, 0, O_RETURN, 0, 0, 0];
+        let bytecode = vec![O_PAY_ENERGY, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify
@@ -536,10 +536,10 @@ mod parity_tests {
             ..Default::default() 
         };
         let bytecode = vec![
-            1000 + C_TURN_1, 0, 0, 0,  // Negated condition (opcode + 1000)
-            O_JUMP_IF_FALSE, 1, 0, 0,   // Skip next block if false
-            O_DRAW, 1, 0, 0,            // Draw 1 card
-            O_RETURN, 0, 0, 0
+            1000 + C_TURN_1, 0, 0, 0, 0,  // Negated condition (opcode + 1000)
+            O_JUMP_IF_FALSE, 1, 0, 0, 0,   // Skip next block if false
+            O_DRAW, 1, 0, 0, 0,            // Draw 1 card
+            O_RETURN, 0, 0, 0, 0
         ];
         
         let hand_len_before = state.core.players[0].hand.len();
@@ -566,7 +566,7 @@ mod parity_tests {
             player_id: 0, 
             ..Default::default() 
         };
-        let bytecode = vec![O_ADD_TO_HAND, 1, 1, 0, O_RETURN, 0, 0, 0]; // a=1 = from deck
+        let bytecode = vec![O_ADD_TO_HAND, 1, 1, 0, 0, O_RETURN, 0, 0, 0, 0]; // a=1 = from deck
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify: Hand should have gained a card
@@ -584,7 +584,7 @@ mod parity_tests {
             player_id: 0, 
             ..Default::default() 
         };
-        let bytecode = vec![O_REDUCE_HEART_REQ, 2, 1, 0, O_RETURN, 0, 0, 0];
+        let bytecode = vec![O_REDUCE_HEART_REQ, 2, 1, 0, 0, O_RETURN, 0, 0, 0, 0];
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify: Heart requirement reduction should be tracked
@@ -607,7 +607,7 @@ mod parity_tests {
             source_card_id: 100,
             ..Default::default() 
         };
-        let bytecode = vec![O_TRANSFORM_COLOR, 2, 0, 1, O_RETURN, 0, 0, 0]; // v=dst, a=src
+        let bytecode = vec![O_TRANSFORM_COLOR, 2, 0, 0, 1, O_RETURN, 0, 0, 0, 0]; // v=dst, a=src
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify: Transform rule should be added
@@ -631,7 +631,7 @@ mod parity_tests {
         };
         
         // Execute: Play member from discard to slot 0 (choice=0)
-        let bytecode = vec![O_PLAY_MEMBER_FROM_DISCARD, 1, 0, 0, O_RETURN, 0, 0, 0];
+        let bytecode = vec![O_PLAY_MEMBER_FROM_DISCARD, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Note: This requires choice context to work properly
@@ -649,7 +649,7 @@ mod parity_tests {
             player_id: 0, 
             ..Default::default() 
         };
-        let bytecode = vec![O_REDUCE_LIVE_SET_LIMIT, 1, 0, 0, O_RETURN, 0, 0, 0];
+        let bytecode = vec![O_REDUCE_LIVE_SET_LIMIT, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
         state.resolve_bytecode(&db, &bytecode, &ctx);
         
         // Verify: The effect should be tracked (implementation-specific)
@@ -716,12 +716,12 @@ mod parity_tests {
             ..Default::default() 
         };
         let bytecode = vec![
-            C_TURN_1, 0, 0, 0,           // Condition: turn 1
-            O_JUMP_IF_FALSE, 2, 0, 0,    // Skip 2 opcodes if false
-            O_DRAW, 2, 0, 0,             // Draw 2
-            O_BOOST_SCORE, 3, 0, 0,      // Add 3 to live_score_bonus
-            O_ADD_HEARTS, 1, 1, 4,       // Add 1 pink heart (s=4 for current slot)
-            O_RETURN, 0, 0, 0
+            C_TURN_1, 0, 0, 0, 0,           // Condition: turn 1
+            O_JUMP_IF_FALSE, 2, 0, 0, 0,    // Skip 2 opcodes if false
+            O_DRAW, 2, 0, 0, 0,             // Draw 2
+            O_BOOST_SCORE, 3, 0, 0, 0,      // Add 3 to live_score_bonus
+            O_ADD_HEARTS, 1, 1, 0, 4,       // Add 1 pink heart (s=4 for current slot)
+            O_RETURN, 0, 0, 0, 0
         ];
         
         let hand_len_before = state.core.players[0].hand.len();

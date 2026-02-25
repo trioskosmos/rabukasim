@@ -20,7 +20,7 @@ fn test_opcode_color_select_real_card_122() {
     
     // Find the ability that contains O_COLOR_SELECT (opcode 45)
     let ab_idx = card.abilities.iter().position(|a| {
-        a.bytecode.iter().step_by(4).any(|&op| op == 45)
+        a.bytecode.iter().step_by(5).any(|&op| op == 45)
     }).expect("Card 122 should have an ability with O_COLOR_SELECT");
     
     let ab = &card.abilities[ab_idx];
@@ -70,7 +70,7 @@ fn test_opcode_jump_real_card_19() {
     
     // Find the ability that contains O_JUMP (opcode 2)
     let ab_idx = card.abilities.iter().position(|a| {
-        a.bytecode.iter().step_by(4).any(|&op| op == 2)
+        a.bytecode.iter().step_by(5).any(|&op| op == 2)
     }).expect("Card 19 should have an ability with O_JUMP");
     
     let ab = &card.abilities[ab_idx];
@@ -107,8 +107,8 @@ fn test_opcode_tap_opponent_dynamic() {
     
     for (&cid, m) in db.members.iter() {
         for (ai, a) in m.abilities.iter().enumerate() {
-            let has_tap = a.bytecode.iter().step_by(4).any(|&op| op == 32);
-            let has_modal = a.bytecode.iter().step_by(4).any(|&op| op == 30 || op == 64);
+            let has_tap = a.bytecode.iter().step_by(5).any(|&op| op == 32);
+            let has_modal = a.bytecode.iter().step_by(5).any(|&op| op == 30 || op == 64);
             if has_tap && !has_modal {
                 found_card_id = Some(cid);
                 found_ab_idx = Some(ai);
@@ -184,7 +184,7 @@ fn test_opcode_buff_power_dynamic() {
     
     for (&cid, m) in db.members.iter() {
         for (ai, a) in m.abilities.iter().enumerate() {
-            if a.bytecode.iter().step_by(4).any(|&op| op == 18) {
+            if a.bytecode.iter().step_by(5).any(|&op| op == 18) {
                 found_card_id = Some(cid);
                 found_ab_idx = Some(ai);
                 break;

@@ -17,7 +17,7 @@ fn test_opcode_draw_until() {
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
 
     // O_DRAW_UNTIL 5 (Draw up to 5)
-    let bc = vec![O_DRAW_UNTIL, 5, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_DRAW_UNTIL, 5, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
 
     assert_eq!(state.core.players[0].hand.len(), 5);
@@ -41,7 +41,8 @@ fn test_opcode_reveal_until_type_live() {
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
 
     // O_REVEAL_UNTIL C_TYPE_CHECK attr: 1 (Live), target: 6 (Hand)
-    let bc = vec![O_REVEAL_UNTIL, C_TYPE_CHECK, 1, 6, O_RETURN, 0, 0, 0];
+    // s word needs bit 25 (0x02000000) for TYPE_CHECK to match Live cards.
+    let bc = vec![O_REVEAL_UNTIL, C_TYPE_CHECK, 1, 0, 6 | 0x02000000, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
 
     // Should have popped 10, 15, then 10050.
@@ -81,8 +82,8 @@ fn test_opcode_reveal_until_cost_ge() {
 
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
 
-    // O_REVEAL_UNTIL C_COST_CHECK attr: ...
-    let bc = vec![O_REVEAL_UNTIL, C_COST_CHECK, 21, 6, O_RETURN, 0, 0, 0];
+    // O_REVEAL_UNTIL C_COST_CHECK val=10 (raw threshold)
+    let bc = vec![O_REVEAL_UNTIL, C_COST_CHECK, 10, 0, 6, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
 
     // Should pop 60010 (cost 5 < 10), then 60015 (cost 15 >= 10).
@@ -102,12 +103,12 @@ fn test_opcode_immunity() {
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
 
     // O_IMMUNITY 1
-    let bc = vec![O_IMMUNITY, 1, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_IMMUNITY, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     assert!(state.core.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
 
     // O_IMMUNITY 0
-    let bc = vec![O_IMMUNITY, 0, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_IMMUNITY, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     assert!(!state.core.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
 }
@@ -123,7 +124,7 @@ fn test_opcode_pay_energy() {
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
 
     // O_PAY_ENERGY 2
-    let bc = vec![O_PAY_ENERGY, 2, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_PAY_ENERGY, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
 
     assert_eq!(state.core.players[0].tapped_energy_mask.count_ones(), 2);
@@ -139,7 +140,7 @@ fn test_opcode_look_deck() {
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
 
     // O_LOOK_DECK 3
-    let bc = vec![O_LOOK_DECK, 3, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_LOOK_DECK, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
 
     assert_eq!(state.core.players[0].looked_cards.len(), 3);
@@ -164,7 +165,7 @@ fn test_opcode_look_and_choose_filter_cost_ge() {
 
     // O_LOOK_AND_CHOOSE 2 (Look 2)
     // attr: Bit 24 (Enable) | (10 << 25) (Min Cost 10) = 0x01000000 | 0x14000000 = 0x15000000
-    let bc = vec![O_LOOK_AND_CHOOSE, 2, 0x15000000, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_LOOK_AND_CHOOSE, 2, 0x15000000, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
 
     // Should be in Response phase, with looked_cards: [10, 15]
@@ -241,7 +242,7 @@ fn test_look_and_choose_source_zone_fix() {
     // [41, 2, 0, 6]
     // Expected behavior: Source Zone defaults to Deck (8) despite Dest=6.
     let ctx = AbilityContext { player_id: 0, source_card_id: 99, ..Default::default() };
-    let bc = vec![O_LOOK_AND_CHOOSE, 2, 0, 6, O_RETURN, 0, 0, 0];
+    let bc = vec![O_LOOK_AND_CHOOSE, 2, 0, 0, 6, O_RETURN, 0, 0, 0, 0];
 
     state.resolve_bytecode(&db, &bc, &ctx);
 

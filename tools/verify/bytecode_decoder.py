@@ -214,7 +214,8 @@ def get_legend_str():
     return "\n".join(lines)
 
 def decode_chunk(chunk):
-    op, v, a, s = chunk
+    op, v, a_low, a_high, s = chunk
+    a = ((a_high & 0xFFFFFFFF) << 32) | (a_low & 0xFFFFFFFF)
     is_negated = False
     base_op = op
     if op >= 1000 and op < 1300:
@@ -276,12 +277,12 @@ def decode_bytecode(bytecode):
     if not bytecode:
         return "None"
     
-    chunks = [bytecode[i:i+4] for i in range(0, len(bytecode), 4)]
+    chunks = [bytecode[i:i+5] for i in range(0, len(bytecode), 5)]
     lines = []
     for i, chunk in enumerate(chunks):
-        if len(chunk) < 4:
-            chunk = chunk + [0] * (4 - len(chunk))
-        lines.append(f"  {i*4:02d}: {decode_chunk(chunk)}")
+        if len(chunk) < 5:
+            chunk = chunk + [0] * (5 - len(chunk))
+        lines.append(f"  {i*5:02d}: {decode_chunk(chunk)}")
     
     # Add Legend to the end
     lines.append(get_legend_str())

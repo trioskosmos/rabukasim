@@ -30,70 +30,67 @@ async fn run_suite() {
     let mut unit_db = create_test_db();
     
     // S-UNIT-1: O_REVEAL_UNTIL (CPU Mirror: test_opcode_reveal_until_type_live)
-    let s1_bc = vec![69, 232, 1, 6, O_RETURN, 0, 0, 0];
+    let s1_bc = vec![69, 232, 1, 0, 6, O_RETURN, 0, 0, 0, 0];
     add_card(&mut unit_db, 2001, "REVEAL_LIVE", vec![], vec![(TriggerType::OnPlay, s1_bc, vec![])]);
     
     // S-UNIT-2: O_IMMUNITY (CPU Mirror: test_opcode_immunity)
-    let s2_bc = vec![O_IMMUNITY, 1, 0, 0, O_RETURN, 0, 0, 0];
+    let s2_bc = vec![O_IMMUNITY, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     add_card(&mut unit_db, 2002, "SET_IMMUNITY", vec![], vec![(TriggerType::OnPlay, s2_bc, vec![])]);
 
     // S-UNIT-3: O_SET_BLADES (CPU Mirror: test_opcode_set_blades)
-    let s3_bc = vec![O_SET_BLADES, 5, 0, 4, O_RETURN, 0, 0, 0]; // 4 = SELF (Slot 0 for us)
+    let s3_bc = vec![O_SET_BLADES, 5, 0, 0, 4, O_RETURN, 0, 0, 0, 0]; // 4 = SELF (Slot 0 for us)
     add_card(&mut unit_db, 2003, "SET_BLADES_5", vec![], vec![(TriggerType::OnPlay, s3_bc, vec![])]);
 
-    // S-UNIT-4: O_LOOK_AND_CHOOSE
-    // v: look=3, pick=1 -> 1 << 8 | 3 = 259
-    // a: source=Deck(8) -> 8 << 12 = 32768
     // s: target=Hand(6), rem=Discard(7) -> 6 | (7 << 8) = 1798
-    let s4_bc = vec![O_LOOK_AND_CHOOSE, 259, 32768, 1798, O_RETURN, 0, 0, 0];
+    let s4_bc = vec![O_LOOK_AND_CHOOSE, 259, 32768, 0, 1798, O_RETURN, 0, 0, 0, 0];
     add_card(&mut unit_db, 2004, "LOOK_AND_CHOOSE", vec![], vec![(TriggerType::OnPlay, s4_bc, vec![])]);
 
     // S-UNIT-5: O_MOVE_MEMBER
     // Move from slot 0 to slot 1
-    let s5_bc = vec![O_MOVE_MEMBER, 0, 1, 0, O_RETURN, 0, 0, 0];
+    let s5_bc = vec![O_MOVE_MEMBER, 0, 1, 0, 0, O_RETURN, 0, 0, 0, 0];
     add_card(&mut unit_db, 2005, "MOVE_MEMBER", vec![], vec![(TriggerType::OnPlay, s5_bc, vec![])]);
 
     // S-UNIT-6: O_TAP_OPPONENT
     // v: count=1, a: 0, s: 0
-    let s6_bc = vec![O_TAP_OPPONENT, 1, 0, 0, O_RETURN, 0, 0, 0];
+    let s6_bc = vec![O_TAP_OPPONENT, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     add_card(&mut unit_db, 2006, "TAP_OPPONENT", vec![], vec![(TriggerType::OnPlay, s6_bc, vec![])]);
     
     // S-UNIT-7: O_SET_HEART_COST (CPU Mirror: test_opcode_set_heart_cost)
     // v = amount to set, s = color index
-    let s7_bc = vec![O_SET_HEART_COST, 3, 0, 2, O_RETURN, 0, 0, 0]; // Set color 2 cost to 3
+    let s7_bc = vec![O_SET_HEART_COST, 3, 0, 0, 2, O_RETURN, 0, 0, 0, 0]; // Set color 2 cost to 3
     add_card(&mut unit_db, 2007, "SET_HEART_COST", vec![], vec![(TriggerType::OnPlay, s7_bc, vec![])]);
     
     // S-UNIT-8: O_INCREASE_HEART_COST
-    let s8_bc = vec![O_INCREASE_HEART_COST, 2, 0, 1, O_RETURN, 0, 0, 0]; // Increase color 1 cost by 2
+    let s8_bc = vec![O_INCREASE_HEART_COST, 2, 0, 0, 1, O_RETURN, 0, 0, 0, 0]; // Increase color 1 cost by 2
     add_card(&mut unit_db, 2008, "INC_HEART_COST", vec![], vec![(TriggerType::OnPlay, s8_bc, vec![])]);
     
     // S-UNIT-9: O_REDUCE_HEART_REQ
-    let s9_bc = vec![O_REDUCE_HEART_REQ, 2, 0, 3, O_RETURN, 0, 0, 0]; // Reduce color 3 requirement by 2
+    let s9_bc = vec![O_REDUCE_HEART_REQ, 2, 0, 0, 3, O_RETURN, 0, 0, 0, 0]; // Reduce color 3 requirement by 2
     add_card(&mut unit_db, 2009, "REDUCE_HEART_REQ", vec![], vec![(TriggerType::OnPlay, s9_bc, vec![])]);
     
     // S-UNIT-10: O_DRAW (simple draw)
-    let s10_bc = vec![O_DRAW, 2, 0, 0, O_RETURN, 0, 0, 0]; // Draw 2 cards
+    let s10_bc = vec![O_DRAW, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0]; // Draw 2 cards
     add_card(&mut unit_db, 2010, "DRAW_2", vec![], vec![(TriggerType::OnPlay, s10_bc, vec![])]);
     
     // S-UNIT-11: O_BOOST_SCORE (add to score)
-    let s11_bc = vec![O_BOOST_SCORE, 5, 0, 0, O_RETURN, 0, 0, 0]; // Add 5 to score
+    let s11_bc = vec![O_BOOST_SCORE, 5, 0, 0, 0, O_RETURN, 0, 0, 0, 0]; // Add 5 to score
     add_card(&mut unit_db, 2011, "BOOST_SCORE", vec![], vec![(TriggerType::OnPlay, s11_bc, vec![])]);
     
     // S-UNIT-12: O_REDUCE_COST
-    let s12_bc = vec![O_REDUCE_COST, 3, 0, 0, O_RETURN, 0, 0, 0]; // Reduce cost by 3
+    let s12_bc = vec![O_REDUCE_COST, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0]; // Reduce cost by 3
     add_card(&mut unit_db, 2012, "REDUCE_COST", vec![], vec![(TriggerType::OnPlay, s12_bc, vec![])]);
     
     // S-UNIT-13: O_ADD_BLADES (add blade buff)
-    let s13_bc = vec![O_ADD_BLADES, 2, 0, 0, O_RETURN, 0, 0, 0]; // Add 2 blades
+    let s13_bc = vec![O_ADD_BLADES, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0]; // Add 2 blades
     add_card(&mut unit_db, 2013, "ADD_BLADES", vec![], vec![(TriggerType::OnPlay, s13_bc, vec![])]);
     
     // S-UNIT-14: O_ADD_HEARTS (add heart buff to slot 0)
     // a = slot index (0-2), v = amount, s = color
-    let s14_bc = vec![O_ADD_HEARTS, 3, 0, 0, O_RETURN, 0, 0, 0]; // Add 3 hearts to color 0
+    let s14_bc = vec![O_ADD_HEARTS, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0]; // Add 3 hearts to color 0
     add_card(&mut unit_db, 2014, "ADD_HEARTS", vec![], vec![(TriggerType::OnPlay, s14_bc, vec![])]);
     
     // S-UNIT-15: O_SET_SCORE
-    let s15_bc = vec![O_SET_SCORE, 100, 0, 0, O_RETURN, 0, 0, 0]; // Set score to 100
+    let s15_bc = vec![O_SET_SCORE, 100, 0, 0, 0, O_RETURN, 0, 0, 0, 0]; // Set score to 100
     add_card(&mut unit_db, 2015, "SET_SCORE", vec![], vec![(TriggerType::OnPlay, s15_bc, vec![])]);
     
     // Convert to GPU AFTER all cards are added

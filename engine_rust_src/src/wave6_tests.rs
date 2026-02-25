@@ -176,7 +176,7 @@ mod tests {
         ab.trigger = TriggerType::Constant;
         // Important: Bytecode must contain O_PREVENT_BATON_TOUCH (4131)
         // Format: [Opcode, Value, Target, Unused]
-        ab.bytecode = vec![O_PREVENT_BATON_TOUCH, 1, 0, 0]; 
+        ab.bytecode = vec![O_PREVENT_BATON_TOUCH, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0]; 
         restricted_member.abilities.push(ab);
 
         db.members.insert(1, restricted_member.clone());

@@ -41,7 +41,7 @@ impl HandlerRegistry {
         ctx: &mut AbilityContext,
         op: i32,
         v: i32,
-        a: i32,
+        a: i64,
         s: i32,
         instr_ip: usize,
         bytecode: &[i32]
@@ -86,7 +86,7 @@ fn handle_select_mode(
     db: &CardDatabase,
     ctx: &mut AbilityContext,
     v: i32,
-    _a: i32,
+    _a: i64,
     _s: i32,
     instr_ip: usize,
     bc: &[i32]
@@ -95,19 +95,16 @@ fn handle_select_mode(
     if ctx.choice_index == -1 {
         let choice_text = get_choice_text(db, ctx);
         if suspend_interaction(state, db, ctx, instr_ip, O_SELECT_MODE, 0, "SELECT_MODE", &choice_text, 0, v as i16) { return None; }
-        return Some(instr_ip + 4);
+        return Some(instr_ip + 5);
     }
 
     let choice = ctx.choice_index as usize;
     if choice >= v as usize { 
-        return Some(instr_ip + 4 + ((v as usize).saturating_sub(2) + 3) / 4 * 4);
+        return Some(instr_ip + 5 + ((v as usize).saturating_sub(1)) * 5);
     }
 
-    let target = if choice < 2 {
-        bc[instr_ip + 2 + choice]
-    } else {
-        bc[instr_ip + 4 + (choice - 2)]
-    };
+    let jump_instr_offset = instr_ip + 5 + (choice * 5);
+    let target = jump_instr_offset as i32 + 5 + (bc[jump_instr_offset + 1] * 5);
 
     Some(target as usize)
 }

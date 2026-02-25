@@ -14,14 +14,14 @@ fn test_opcode_draw_discard() {
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
 
     // O_DRAW 2
-    let bc = vec![O_DRAW, 2, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_DRAW, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     assert_eq!(state.core.players[0].hand.len(), 2);
     assert_eq!(state.core.players[0].deck.len(), 3);
     assert!(state.core.players[0].hand.contains(&121) || state.core.players[0].hand.contains(&124));
 
     // O_MOVE_TO_DISCARD 1 (attr 2 = Hand)
-    let bc = vec![O_MOVE_TO_DISCARD, 1, 2, 6, O_RETURN, 0, 0, 0];
+    let bc = vec![O_MOVE_TO_DISCARD, 1, 2, 0, 6, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     assert_eq!(state.core.players[0].hand.len(), 1);
     assert_eq!(state.core.players[0].discard.len(), 1);
@@ -37,17 +37,17 @@ fn test_opcode_stats_boost() {
     let ctx = AbilityContext { player_id: 0, area_idx: 0, ..Default::default() };
 
     // O_ADD_BLADES 2 to SELF (Slot 4)
-    let bc = vec![O_ADD_BLADES, 2, 0, 4, O_RETURN, 0, 0, 0];
+    let bc = vec![O_ADD_BLADES, 2, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     assert_eq!(state.core.players[0].blade_buffs[0], 2);
 
     // O_ADD_HEARTS 3 (Pink=0) to SELF (Slot 4)
-    let bc = vec![O_ADD_HEARTS, 3, 0, 4, O_RETURN, 0, 0, 0];
+    let bc = vec![O_ADD_HEARTS, 3, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     assert_eq!(state.core.players[0].heart_buffs[0].get_color_count(0), 3);
 
     // O_BOOST_SCORE 5 to SELF
-    let bc = vec![O_BOOST_SCORE, 5, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![O_BOOST_SCORE, 5, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     assert_eq!(state.core.players[0].live_score_bonus, 5);
 }
@@ -63,12 +63,12 @@ fn test_opcode_tap_untap() {
     let ctx = AbilityContext { player_id: 0, area_idx: 1, ..Default::default() };
 
     // O_SET_TAPPED 1 SELF
-    let bc = vec![O_SET_TAPPED, 1, 0, 4, O_RETURN, 0, 0, 0];
+    let bc = vec![O_SET_TAPPED, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     assert!(state.core.players[0].is_tapped(1));
 
     // O_SET_TAPPED 0 SELF
-    let bc = vec![O_SET_TAPPED, 0, 0, 4, O_RETURN, 0, 0, 0];
+    let bc = vec![O_SET_TAPPED, 0, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode(&db, &bc, &ctx);
     assert!(!state.core.players[0].is_tapped(1));
 }
@@ -82,12 +82,11 @@ fn test_conditions_basic() {
 
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
 
-    // C_COUNT_HAND GE 3 -> Draw 1
     let bc = vec![
-        C_COUNT_HAND, 3, 0, 0,
-        O_JUMP_IF_FALSE, 1, 0, 0,
-        O_DRAW, 1, 0, 0,
-        O_RETURN, 0, 0, 0
+        C_COUNT_HAND, 3, 0, 0, 0,
+        O_JUMP_IF_FALSE, 1, 0, 0, 0,
+        O_DRAW, 1, 0, 0, 0,
+        O_RETURN, 0, 0, 0, 0
     ];
 
     state.core.players[0].deck = vec![124].into();
@@ -99,10 +98,10 @@ fn test_conditions_basic() {
     state.core.players[0].hand = vec![121, 124, 121].into();
     state.core.players[0].deck = vec![124].into();
     let bc = vec![
-        C_COUNT_HAND, 5, 0, 0,
-        O_JUMP_IF_FALSE, 1, 0, 0,
-        O_DRAW, 1, 0, 0,
-        O_RETURN, 0, 0, 0
+        C_COUNT_HAND, 5, 0, 0, 0,
+        O_JUMP_IF_FALSE, 1, 0, 0, 0,
+        O_DRAW, 1, 0, 0, 0,
+        O_RETURN, 0, 0, 0, 0
     ];
     state.resolve_bytecode(&db, &bc, &ctx);
     assert_eq!(state.core.players[0].hand.len(), 3);
@@ -118,7 +117,7 @@ fn test_look_and_choose_remainder() {
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
 
     // O_LOOK_DECK 4 -> O_LOOK_AND_CHOOSE 1 to Hand (Source 6)
-    let bc = vec![O_LOOK_DECK, 4, 0, 0, O_LOOK_AND_CHOOSE, 1, 0, 6, O_RETURN, 0, 0, 0];
+    let bc = vec![O_LOOK_DECK, 4, 0, 0, 0, O_LOOK_AND_CHOOSE, 1, 0, 0, 6, O_RETURN, 0, 0, 0, 0];
 
     // Execution 1: Reveal cards
     state.resolve_bytecode(&db, &bc, &ctx);

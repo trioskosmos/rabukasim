@@ -61,7 +61,7 @@ const stateInternal = {
             State.cardIndex = null;
             return;
         }
-        State.data = { ...State.data, ...newData };
+        State.data = newData;  // Replace entirely instead of merging
         // Rebuild card index when state updates
         State.rebuildCardIndex();
     },
@@ -79,14 +79,22 @@ const stateInternal = {
 
         const index = {};
 
+        // 1. Index master data first (baseline)
+        if (state.master_cards) state.master_cards.forEach(c => addCard(c, 'master'));
+        if (state.all_cards) state.all_cards.forEach(c => addCard(c, 'all_cards'));
+
         state.players.forEach((p, playerIdx) => {
             if (!p) return;
 
             // Helper to add cards to index
             const addCard = (card, zone) => {
                 if (card && card.id !== undefined && card.id >= 0) {
-                    // Store first occurrence (or update with more complete data)
-                    if (!index[card.id] || (card.name && !index[card.id].name)) {
+                    // Store first occurrence OR update if this one has more data (name, text)
+                    const existing = index[card.id];
+                    const cardText = card.original_text || card.ability;
+                    const existingText = existing ? (existing.original_text || existing.ability) : null;
+
+                    if (!existing || (!existingText && cardText) || (!existing.name && card.name)) {
                         index[card.id] = card;
                     }
                 }
@@ -105,14 +113,11 @@ const stateInternal = {
 
         // Also index looked_cards
         if (state.looked_cards) {
-            state.looked_cards.forEach(c => {
-                if (c && c.id !== undefined && c.id >= 0) {
-                    index[c.id] = c;
-                }
-            });
+            state.looked_cards.forEach(c => addCard(c, 'looked_cards'));
         }
 
         State.cardIndex = index;
+        console.log(`[State] Card index rebuilt. Size: ${Object.keys(index).length}`);
     },
 
     resolveCardData: (cid) => {

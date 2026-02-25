@@ -70,7 +70,7 @@ fn test_play_member_from_hand_opcode_preserves_energy() {
 
     // Opcode: O_PLAY_MEMBER_FROM_HAND (57)
     // Args: none (uses ctx)
-    let bytecode = vec![O_PLAY_MEMBER_FROM_HAND, 0, 0, 0, O_RETURN, 0, 0, 0];
+    let bytecode = vec![O_PLAY_MEMBER_FROM_HAND, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
 
     let ctx = AbilityContext {
         player_id: 0,

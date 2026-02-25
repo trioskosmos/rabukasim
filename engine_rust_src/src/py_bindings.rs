@@ -573,6 +573,7 @@ impl PyGameState {
             v_remaining: -1,
             trigger_type: Default::default(),
             original_phase: None,
+            repeat_count: 0,
         };
         self.inner.resolve_bytecode(db, &bytecode, &ctx);
     }

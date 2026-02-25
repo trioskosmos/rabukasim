@@ -195,8 +195,10 @@ impl ResponseGenerator {
                 } else { pi.ability_index as usize };
 
                 if let Some(ab) = abs.get(ab_idx_real) {
-                    if let Some(chunk) = ab.bytecode.chunks(4).find(|ch| ch[0] == O_LOOK_AND_CHOOSE) {
-                        final_filter_attr = (chunk[2] as u32) as u64;
+                    if let Some(chunk) = ab.bytecode.chunks(5).find(|ch| ch[0] == O_LOOK_AND_CHOOSE) {
+                        let a_low = chunk[2] as u32;
+                        let a_high = chunk[3] as u32;
+                        final_filter_attr = ((a_high as u64) << 32) | (a_low as u64);
                     }
                 }
             }
@@ -297,8 +299,8 @@ impl ResponseGenerator {
                     let bc = &ab.bytecode;
                     
                     let mut ip = 0;
-                    if let Some(pos) = bc.chunks(4).position(|chunk| chunk[0] == O_SELECT_MODE) {
-                        ip = pos * 4;
+                    if let Some(pos) = bc.chunks(5).position(|chunk| chunk[0] == O_SELECT_MODE) {
+                        ip = pos * 5;
                     }
                     
                     let target_ip = if i < 2 {

@@ -93,10 +93,18 @@ _VALID_EFFECT_OPS = {
     82,  # O_PREVENT_ACTIVATE
     83,  # O_SET_HEART_COST
     90,  # O_PREVENT_BATON_TOUCH
+    # New opcodes for BP05
+    91,  # O_LOOK_DECK_DYNAMIC
+    92,  # O_REDUCE_SCORE
+    93,  # O_REPEAT_ABILITY
+    94,  # O_LOSE_EXCESS_HEARTS
+    95,  # O_SKIP_ACTIVATE_PHASE
+    96,  # O_PAY_ENERGY_DYNAMIC
+    97,  # O_PLACE_ENERGY_UNDER_MEMBER
 }
 
-# Condition opcodes: 200-244 range
-_VALID_CONDITION_OPS = set(range(200, 245))
+# Condition opcodes: 200-250 range (original) + 300-399 range (new conditions)
+_VALID_CONDITION_OPS = set(range(200, 250)) | set(range(300, 400))
 
 # Combined: all valid base opcodes
 _ALL_VALID_OPS = _VALID_EFFECT_OPS | _VALID_CONDITION_OPS
@@ -112,13 +120,13 @@ def validate_bytecode(bytecode: list, card_no: str, ab_idx: int) -> list:
     if not bytecode:
         return issues
     
-    # Check 1: Length must be a multiple of 4
-    if len(bytecode) % 4 != 0:
-        issues.append(f"[{card_no}] ab#{ab_idx}: Bytecode length {len(bytecode)} not a multiple of 4")
+    # Check 1: Length must be a multiple of 5
+    if len(bytecode) % 5 != 0:
+        issues.append(f"[{card_no}] ab#{ab_idx}: Bytecode length {len(bytecode)} not a multiple of 5")
         return issues  # Can't safely check further
     
     # Check 2: Scan all opcodes
-    for i in range(0, len(bytecode), 4):
+    for i in range(0, len(bytecode), 5):
         op = bytecode[i]
         v = bytecode[i + 1]
         
@@ -130,7 +138,7 @@ def validate_bytecode(bytecode: list, card_no: str, ab_idx: int) -> list:
         
         # Check 3: JUMP targets in-bounds
         if real_op == 2 or real_op == 3:  # O_JUMP or O_JUMP_IF_FALSE
-            target = i + 4 + (v * 4)
+            target = i + 5 + (v * 5)
             if target < 0 or target > len(bytecode):
                 issues.append(
                     f"[{card_no}] ab#{ab_idx}: JUMP at {i} targets position {target}, "
@@ -138,8 +146,8 @@ def validate_bytecode(bytecode: list, card_no: str, ab_idx: int) -> list:
                 )
     
     # Check 4: Should end with O_RETURN (opcode 1)
-    if len(bytecode) >= 4:
-        last_op = bytecode[-4]
+    if len(bytecode) >= 5:
+        last_op = bytecode[-5]
         real_last = last_op - 1000 if last_op >= 1000 else last_op
         if real_last != 1:  # O_RETURN
             # Not necessarily an error — some bytecodes end with O_JUMP 
@@ -156,6 +164,15 @@ def compile_cards(input_path: str, output_path: str):
 
     compiled_data = {"member_db": {}, "live_db": {}, "energy_db": {}, "meta": {"version": "1.0", "source": input_path}}
 
+    # Load existing card_id mapping if available (for ID stability)
+    existing_id_mapping = {}
+    mapping_path = "data/card_id_mapping.json"
+    if os.path.exists(mapping_path):
+        print(f"Loading existing ID mapping from {mapping_path}...")
+        with open(mapping_path, "r", encoding="utf-8") as f:
+            existing_id_mapping = json.load(f)
+        print(f"Loaded {len(existing_id_mapping)} existing ID mappings")
+
     sorted_keys = sorted(raw_data.keys())
     # Logic for bit-packed IDs
     # Bits 0-11: Logical ID (0-4095)
@@ -163,6 +180,18 @@ def compile_cards(input_path: str, output_path: str):
     logical_id_map = {}  # (name, ability_text) -> logic_id
     logic_id_to_variant_count = {}  # logic_id -> next_variant_index
     next_logic_id = 0
+
+    # Initialize from existing mapping
+    if existing_id_mapping:
+        for card_no, card_id in existing_id_mapping.items():
+            logic_id = card_id & 0xFFF  # Lower 12 bits
+            variant_idx = (card_id >> 12) & 0xF  # Upper 4 bits
+            if logic_id >= next_logic_id:
+                next_logic_id = logic_id + 1
+            if logic_id not in logic_id_to_variant_count:
+                logic_id_to_variant_count[logic_id] = 0
+            if variant_idx >= logic_id_to_variant_count[logic_id]:
+                logic_id_to_variant_count[logic_id] = variant_idx + 1
 
     success_count = 0
     errors = []
@@ -202,33 +231,38 @@ def compile_cards(input_path: str, output_path: str):
             v_key = v["card_no"]
             v_data = v["data"]
 
-            # Determine Logical Identity
-            # We use Name + Original Text (Ability) as the unique logical key
-            v_name = str(v_data.get("name", "Unknown"))
-            v_ability = str(v_data.get("ability", ""))
-            logic_key = (v_name, v_ability)
+            # Check if this card already has an ID in the existing mapping
+            if v_key in existing_id_mapping:
+                packed_id = existing_id_mapping[v_key]
+                print(f"DEBUG: Using existing ID for card_no={v_key}, packed_id={packed_id}")
+            else:
+                # Determine Logical Identity for new cards
+                # We use Name + Original Text (Ability) as the unique logical key
+                v_name = str(v_data.get("name", "Unknown"))
+                v_ability = str(v_data.get("ability", ""))
+                logic_key = (v_name, v_ability)
 
-            if logic_key not in logical_id_map:
-                logical_id_map[logic_key] = next_logic_id
-                logic_id_to_variant_count[next_logic_id] = 0
-                next_logic_id += 1
+                if logic_key not in logical_id_map:
+                    logical_id_map[logic_key] = next_logic_id
+                    logic_id_to_variant_count[next_logic_id] = 0
+                    next_logic_id += 1
 
-            logic_id = logical_id_map[logic_key]
-            variant_idx = logic_id_to_variant_count[logic_id]
-            logic_id_to_variant_count[logic_id] += 1
+                logic_id = logical_id_map[logic_key]
+                variant_idx = logic_id_to_variant_count[logic_id]
+                logic_id_to_variant_count[logic_id] += 1
 
-            # Pack ID: (variant << 12) | logic
-            # Bits 0-11: Logical ID (0-4095)
-            # Bits 12-15: Variant Index (0-15)
+                # Pack ID: (variant << 12) | logic
+                # Bits 0-11: Logical ID (0-4095)
+                # Bits 12-15: Variant Index (0-15)
 
-            if logic_id >= 4096:
-                print(f"WARNING: Logic ID {logic_id} exceeds 12-bit limit (4096). Card: {v_key}")
-            if variant_idx >= 16:
-                print(f"WARNING: Variant Index {variant_idx} exceeds 4-bit limit (16). Card: {v_key}")
+                if logic_id >= 4096:
+                    print(f"WARNING: Logic ID {logic_id} exceeds 12-bit limit (4096). Card: {v_key}")
+                if variant_idx >= 16:
+                    print(f"WARNING: Variant Index {variant_idx} exceeds 4-bit limit (16). Card: {v_key}")
+                    variant_idx = 15  # Cap at maximum to prevent overflow
 
-            packed_id = (variant_idx << 12) | logic_id
-
-            print(f"DEBUG: Processing card_no={v_key}, packed_id={packed_id}")
+                packed_id = (variant_idx << 12) | logic_id
+                print(f"DEBUG: Assigned new ID for card_no={v_key}, packed_id={packed_id}")
             try:
                 if ctype == "メンバー":
                     m_card = parse_member(packed_id, v_key, v_data)
@@ -264,7 +298,7 @@ def compile_cards(input_path: str, output_path: str):
                 validation_issues.extend(issues)
 
     if validation_issues:
-        print(f"\n⚠️  BYTECODE VALIDATION: {len(validation_issues)} issue(s) found:")
+        print(f"\n[!] BYTECODE VALIDATION: {len(validation_issues)} issue(s) found:")
         for issue in validation_issues[:20]:  # Show first 20
             print(f"  {issue}")
         if len(validation_issues) > 20:
@@ -274,7 +308,7 @@ def compile_cards(input_path: str, output_path: str):
                 f.write(f"{issue}\n")
         print(f"  Full report: reports/bytecode_validation.txt")
     else:
-        print("\n✅ BYTECODE VALIDATION: All bytecodes pass structural checks.")
+        print("\n[OK] BYTECODE VALIDATION: All bytecodes pass structural checks.")
 
     # Write output
     print(f"Writing compiled data to {output_path}...")

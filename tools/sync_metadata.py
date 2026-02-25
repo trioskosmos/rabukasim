@@ -110,8 +110,11 @@ def sync():
         f.write("}\n\n")
 
         # ConditionType
+        # Check if any condition values exceed u8 range
+        max_condition_val = max(metadata["conditions"].values()) if metadata["conditions"] else 0
+        condition_repr = "u16" if max_condition_val > 255 else "u8"
         f.write("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]\n")
-        f.write("#[repr(u8)]\n")
+        f.write(f"#[repr({condition_repr})]\n")
         f.write("pub enum ConditionType {\n")
         f.write("    #[default]\n")
         f.write("    None = 0,\n")

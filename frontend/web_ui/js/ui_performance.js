@@ -34,7 +34,7 @@ export const PerformanceRenderer = {
             const imgPath = l.img || '';
             const imgHtml = imgPath ? `<img src="${fixImg(imgPath)}" class="perf-guide-img" style="border-color:${color}">` : '';
 
-            let entryHtml = `<div class="perf-guide-entry" style="opacity: ${l.passed ? 1 : 0.7}" ${l.text ? `data-text="${l.text.replace(/"/g, '&quot;')}"` : ''}>
+            let entryHtml = `<div class="perf-guide-entry" style="opacity: ${l.passed ? 1 : 0.7}" ${l.text ? `data-text="${l.text.replace(/"/g, '&quot;')}"` : ''} ${l.id !== undefined ? `data-card-id="${l.id}"` : ''}>
                 ${imgHtml}
                 <div class="perf-guide-info">
                     <div class="perf-guide-name">${l.name || 'Live'} <span class="perf-guide-score">(${l.score || 0}pts)</span></div>
@@ -128,6 +128,16 @@ export const PerformanceRenderer = {
                             <div style="font-size:1.25rem; font-weight:bold; color:var(--accent-gold);">${res.total_score || 0}</div>
                         </div>
                     </div>
+                    ${(res.breakdown && res.breakdown.scores && res.breakdown.scores.length > 0) ? `
+                    <div class="perf-score-breakdown" style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 0.85rem;">
+                        ${res.breakdown.scores.map(s => `
+                            <div class="perf-line" style="margin: 2px 0;">
+                                <span style="opacity: 0.8;">${Tooltips.enrichAbilityText(s.source)}:</span>
+                                <span class="value" style="color: var(--accent-gold);">+${s.value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
                     <div class="perf-breakdown">
                         <div class="perf-section">
                             <h4>${t ? (t['target_lives'] || 'Target Lives') : 'Target Lives'}</h4>
@@ -231,7 +241,7 @@ export const PerformanceRenderer = {
                 if (!c) return '';
                 const rawText = Tooltips.getEffectiveRawText(c);
                 return `
-                                    <div class="perf-yell-card" title="${c ? (c.name || 'Card') : 'Card'}" ${rawText ? `data-text="${rawText.replace(/"/g, '&quot;')}"` : ''}>
+                                    <div class="perf-yell-card" title="${c ? (c.name || 'Card') : 'Card'}" ${rawText ? `data-text="${rawText.replace(/"/g, '&quot;')}"` : ''} ${c && c.id !== undefined ? `data-card-id="${c.id}"` : ''}>
                                         ${c && c.img ? `<img src="${fixImg(c.img)}">` : ''}
                                         <div class="perf-card-icons">
                                             ${(c && c.blade_hearts && c.blade_hearts.some(v => v > 0)) ? c.blade_hearts.map((v, hIdx) => {

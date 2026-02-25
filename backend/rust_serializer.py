@@ -219,6 +219,7 @@ class RustGameStateSerializer:
                 "blade_hearts": list(m.blade_hearts),
                 "text": at,
                 "original_text": m.original_text,
+                "ability": m.original_text,
             }
         elif bid_str in self.live_db:
             l = self.live_db[bid_str]
@@ -238,6 +239,7 @@ class RustGameStateSerializer:
                 "required_hearts": list(l.required_hearts),
                 "text": at,
                 "original_text": l.original_text,
+                "ability": l.original_text,
             }
         elif bid_str in self.energy_db:
             e = self.energy_db[bid_str]
@@ -248,6 +250,7 @@ class RustGameStateSerializer:
                 "img": e.img_path,
                 "text": e.ability_text,
                 "original_text": e.original_text,
+                "ability": e.original_text,
             }
 
         if res:

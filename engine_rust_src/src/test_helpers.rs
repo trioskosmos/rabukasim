@@ -28,6 +28,7 @@ pub struct ZoneSnapshot {
     pub looked_cards: Vec<i32>,
     pub yell_count: usize,
     pub opponent_tapped_members: [bool; 3],
+    pub opponent_tapped_count: usize,
 }
 
 impl ZoneSnapshot {
@@ -78,6 +79,11 @@ impl ZoneSnapshot {
                 state.core.players[1].is_tapped(1),
                 state.core.players[1].is_tapped(2),
             ],
+            opponent_tapped_count: [
+                state.core.players[1].is_tapped(0),
+                state.core.players[1].is_tapped(1),
+                state.core.players[1].is_tapped(2),
+            ].iter().filter(|&&t| t).count(),
         }
     }
 }
@@ -199,25 +205,25 @@ pub fn create_test_db() -> CardDatabase {
     if llid < db.lives_vec.len() { db.lives_vec[llid] = Some(l55001); }
 
     // Archetype Cards
-    add_card(&mut db, 3121, "ARCH-02", vec![1], vec![(TriggerType::Activated, vec![58, 1, 0, 4, 17, 1, 0, 0, 1, 0, 0, 0], vec![])]);
-    add_card(&mut db, 3124, "ARCH-01", vec![1], vec![(TriggerType::Activated, vec![58, 1, 0, 4, 15, 1, 0, 0, 1, 0, 0, 0], vec![])]);
+    add_card(&mut db, 3121, "ARCH-02", vec![1], vec![(TriggerType::Activated, vec![58, 1, 0, 0, 4, 17, 1, 0, 0, 0, 1, 0, 0, 0, 0], vec![])]);
+    add_card(&mut db, 3124, "ARCH-01", vec![1], vec![(TriggerType::Activated, vec![58, 1, 0, 0, 4, 15, 1, 0, 0, 0, 1, 0, 0, 0, 0], vec![])]);
     // CID 130: PL!-sd1-011-SD (OnPlay: MoveToDiscard(1) -> LookAndChoose(3,1))
     // Bytecode: [58, 1, 2, 6, 41, 3, 1, 6, 1, 0, 0, 0]
-    add_card(&mut db, 130, "PL!-sd1-011", vec![1], vec![(TriggerType::OnPlay, vec![58, 1, 2, 6, 41, 3, 1, 6, 1, 0, 0, 0], vec![])]);
+    add_card(&mut db, 130, "PL!-sd1-011", vec![1], vec![(TriggerType::OnPlay, vec![58, 1, 2, 0, 6, 41, 3, 1, 0, 6, 1, 0, 0, 0, 0], vec![])]);
     // Old incorrect mock
-    add_card(&mut db, 3130, "ARCH-03", vec![1], vec![(TriggerType::OnPlay, vec![64, 0, 130, 0, 41, 1, 24577, 0, 14, 3, 0, 0, 41, 1, 0, 0], vec![])]);
-    add_card(&mut db, 3159, "ARCH-04", vec![1], vec![(TriggerType::OnLiveStart, vec![64, 0, 130, 0, 58, 1, 24576, 0, 64, 1, 0, 0, 16, 5, 0, 0], vec![])]);
-    add_card(&mut db, 304347, "ARCH-06", vec![1], vec![(TriggerType::OnPlay, vec![10, 1, 0, 0, 58, 1, 0, 0, 1, 0, 0, 0], vec![])]);
-    add_card(&mut db, 300223, "ARCH-09", vec![1], vec![(TriggerType::OnPlay, vec![10, 2, 0, 0, 58, 2, 0, 0, 1, 0, 0, 0], vec![])]);
+    add_card(&mut db, 3130, "ARCH-03", vec![1], vec![(TriggerType::OnPlay, vec![64, 0, 130, 0, 0, 41, 1, 24577, 0, 0, 14, 3, 0, 0, 0, 41, 1, 0, 0, 0, 1, 0, 0, 0, 0], vec![])]);
+    add_card(&mut db, 3159, "ARCH-04", vec![1], vec![(TriggerType::OnLiveStart, vec![64, 0, 130, 0, 0, 58, 1, 24576, 0, 0, 64, 1, 0, 0, 0, 16, 5, 0, 0, 0, 1, 0, 0, 0, 0], vec![])]);
+    add_card(&mut db, 304347, "ARCH-06", vec![1], vec![(TriggerType::OnPlay, vec![10, 1, 0, 0, 0, 58, 1, 0, 0, 0, 1, 0, 0, 0, 0], vec![])]);
+    add_card(&mut db, 300223, "ARCH-09", vec![1], vec![(TriggerType::OnPlay, vec![10, 2, 0, 0, 0, 58, 2, 0, 0, 0, 1, 0, 0, 0, 0], vec![])]);
     // CID 3001: Test card for O_OPPONENT_CHOOSE -> O_DRAW
     // O_OPPONENT_CHOOSE(75) v=1 -> O_DRAW(10) v=1 -> O_RETURN(1)
-    add_card(&mut db, 3001, "OPP_CHOOSE_TEST", vec![1], vec![(TriggerType::OnPlay, vec![75, 1, 0, 0, 10, 1, 0, 0, 1, 0, 0, 0], vec![])]);
+    add_card(&mut db, 3001, "OPP_CHOOSE_TEST", vec![1], vec![(TriggerType::OnPlay, vec![75, 1, 0, 0, 0, 10, 1, 0, 0, 0, 1, 0, 0, 0, 0], vec![])]);
 
     // CID 4332: RANK-13 (OnLiveStart: PayEnergy(1) -> ColorSelect -> AddHearts(1))
     // Real Bytecode: [64, 1, 2, 0, 45, 1, 0, 1, 12, 1, 0, 1, 1, 0, 0, 0]
-    add_card(&mut db, 4332, "RANK-13", vec![2], vec![(TriggerType::OnLiveStart, vec![64, 1, 2, 0, 45, 1, 0, 1, 12, 1, 0, 1, 1, 0, 0, 0], vec![])]);
-    add_card(&mut db, 4335, "RANK-14", vec![2], vec![(TriggerType::Activated, vec![58, 1, 1, 6, 3, 2, 0, 0, 81, 2, 0, 0, 1, 0, 0, 0], vec![])]); // Archetype 13: OnPlay -> Select Mode (2 options) -> [Op 8] or [Op 16] (Dummy) -> Tap Opponent / Draw
-    add_card(&mut db, 3017, "ARCH-13", vec![1], vec![(TriggerType::OnPlay, vec![30, 2, 8, 16, 1, 0, 0, 0, 32, 1, 0, 0, 1, 0, 0, 0, 10, 1, 0, 0, 1, 0, 0, 0], vec![])]);
+    add_card(&mut db, 4332, "RANK-13", vec![2], vec![(TriggerType::OnLiveStart, vec![64, 1, 2, 0, 0, 45, 1, 0, 0, 1, 12, 1, 0, 0, 1, 1, 0, 0, 0, 0], vec![])]);
+    add_card(&mut db, 4335, "RANK-14", vec![2], vec![(TriggerType::Activated, vec![58, 1, 1, 0, 6, 3, 2, 0, 0, 0, 81, 2, 0, 0, 0, 1, 0, 0, 0, 0], vec![])]); // Archetype 13: OnPlay -> Select Mode (2 options) -> [Op 8] or [Op 16] (Dummy) -> Tap Opponent / Draw
+    add_card(&mut db, 3017, "ARCH-13", vec![1], vec![(TriggerType::OnPlay, vec![30, 2, 8, 0, 16, 1, 0, 0, 0, 0, 32, 1, 0, 0, 0, 1, 0, 0, 0, 0, 10, 1, 0, 0, 0, 1, 0, 0, 0, 0], vec![])]);
 
     db
 }

@@ -138,7 +138,7 @@ mod tests {
             card_id: 4270,
             effect_opcode: 58,
             choice_type: "SELECT_HAND_DISCARD".to_string(),
-            filter_attr: 0x6002, 
+            filter_attr: 0x6001, 
             v_remaining: 1,
             ..Default::default()
         });

@@ -16,7 +16,7 @@ fn create_test_db() -> CardDatabase {
         abilities: vec![
             Ability {
                 trigger: TriggerType::Activated, // or whatever triggers manually
-                bytecode: vec![O_RECOVER_MEMBER, 1, 0, 0, O_RETURN, 0, 0, 0],
+                bytecode: vec![O_RECOVER_MEMBER, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
                 ..Default::default()
             }
         ],
@@ -135,7 +135,7 @@ fn test_nested_suspension_real_flow() {
         abilities: vec![
             Ability {
                 trigger: TriggerType::Activated,
-                bytecode: vec![O_TAP_MEMBER, 0, 2, 0, O_RECOVER_MEMBER, 1, 0, 0, O_RETURN, 0, 0, 0],
+                bytecode: vec![O_TAP_MEMBER, 0, 2, 0, 0, O_RECOVER_MEMBER, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
                 ..Default::default()
             }
         ],

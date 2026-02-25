@@ -197,7 +197,7 @@ impl CardDatabase {
                                     O_RETURN, O_LOOK_AND_CHOOSE, O_TAP_MEMBER, O_ACTIVATE_MEMBER, O_SET_TAPPED, O_TRANSFORM_COLOR
                                 ];
 
-                                for chunk in ab.bytecode.chunks(4) {
+                                for chunk in ab.bytecode.chunks(5) {
                                     if chunk.is_empty() { continue; }
                                     let op = chunk[0];
 
@@ -424,21 +424,21 @@ impl CardDatabase {
     pub fn has_opcode_static(bytecode: &[i32], target_op: i32) -> bool {
         let mut i = 0;
         while i < bytecode.len() {
-            if i + 3 >= bytecode.len() { break; }
+            if i + 4 >= bytecode.len() { break; }
             let op = bytecode[i];
             if op == target_op { return true; }
-            i += 4;
+            i += 5;
         }
         false
     }
 
-    // Optimized opcode check that just checks 0th element of chunks(4)
+    // Optimized opcode check that just checks 0th element of chunks(5)
     pub fn has_opcode_static_fast(bytecode: &[i32], target_op: i32) -> bool {
         let len = bytecode.len();
         let mut i = 0;
         while i < len {
              if bytecode[i] == target_op { return true; }
-             i += 4;
+             i += 5;
         }
         false
     }
@@ -453,7 +453,7 @@ impl CardDatabase {
 }
 
 pub fn bytecode_has_choice(bytecode: &[i32]) -> bool {
-    bytecode.chunks(4).any(|chunk| {
+    bytecode.chunks(5).any(|chunk| {
         if chunk.is_empty() { return false; }
         let op = chunk[0];
         op == O_SELECT_MODE || op == O_LOOK_AND_CHOOSE || op == O_COLOR_SELECT ||
@@ -463,7 +463,7 @@ pub fn bytecode_has_choice(bytecode: &[i32]) -> bool {
 }
 
 pub fn bytecode_needs_early_pause(bytecode: &[i32]) -> bool {
-    bytecode.chunks(4).any(|chunk| {
+    bytecode.chunks(5).any(|chunk| {
         if chunk.is_empty() { return false; }
         let op = chunk[0];
         op == O_SELECT_MODE || op == O_COLOR_SELECT || op == O_LOOK_AND_CHOOSE
@@ -471,7 +471,7 @@ pub fn bytecode_needs_early_pause(bytecode: &[i32]) -> bool {
 }
 
 pub fn bytecode_needs_early_pause_opcode(bytecode: &[i32]) -> i32 {
-    bytecode.chunks(4).find(|chunk| {
+    bytecode.chunks(5).find(|chunk| {
         if chunk.is_empty() { return false; }
         let op = chunk[0];
         op == O_SELECT_MODE || op == O_COLOR_SELECT || op == O_LOOK_AND_CHOOSE

@@ -266,4 +266,55 @@ CONDITION_PATTERNS = [
         priority=10,
         output_type="ConditionType.IS_IN_DISCARD",  # [UNUSED]
     ),
+    # ==========================================================================
+    # New conditions for BP05 and new card abilities
+    # ==========================================================================
+    Pattern(
+        name="count_energy_exact",
+        phase=PatternPhase.CONDITION,
+        regex=r"エネルギーがちょうど(\d+)枚(ある|かぎり)",
+        priority=25,
+        output_type="ConditionType.COUNT_ENERGY_EXACT",
+        extractor=lambda text, m: {
+            "type": "ConditionType.COUNT_ENERGY_EXACT",
+            "value": int(m.group(1)),
+            "params": {"exact_count": int(m.group(1))},
+        },
+    ),
+    Pattern(
+        name="count_blade_heart_types",
+        phase=PatternPhase.CONDITION,
+        regex=r"ブレードハートの中に.*?(\d+)種類以上ある場合",
+        priority=20,
+        output_type="ConditionType.COUNT_BLADE_HEART_TYPES",
+        extractor=lambda text, m: {
+            "type": "ConditionType.COUNT_BLADE_HEART_TYPES",
+            "value": int(m.group(1)),
+            "params": {"min_types": int(m.group(1))},
+        },
+    ),
+    Pattern(
+        name="opponent_has_excess_heart",
+        phase=PatternPhase.CONDITION,
+        regex=r"相手の余剰ハートが(\d+)つ以上ある(かぎり|場合)",
+        priority=20,
+        output_type="ConditionType.OPPONENT_HAS_EXCESS_HEART",
+        extractor=lambda text, m: {
+            "type": "ConditionType.OPPONENT_HAS_EXCESS_HEART",
+            "value": int(m.group(1)),
+            "params": {"min_count": int(m.group(1))},
+        },
+    ),
+    Pattern(
+        name="score_total_check",
+        phase=PatternPhase.CONDITION,
+        regex=r"成功ライブカード置き場にあるカードのスコアの合計が(\d+)以上(の場合|であるかぎり)",
+        priority=20,
+        output_type="ConditionType.SCORE_TOTAL_CHECK",
+        extractor=lambda text, m: {
+            "type": "ConditionType.SCORE_TOTAL_CHECK",
+            "value": int(m.group(1)),
+            "params": {"min_score": int(m.group(1))},
+        },
+    ),
 ]

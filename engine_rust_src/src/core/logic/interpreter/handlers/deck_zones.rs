@@ -1,6 +1,7 @@
 use crate::core::logic::{GameState, CardDatabase, AbilityContext, TriggerType, player::PlayerState, interpreter::constants::*};
 use crate::core::enums::*;
 use super::HandlerResult;
+use super::super::conditions::check_condition_opcode;
 use super::super::suspension::{suspend_interaction, resolve_target_slot, get_choice_text};
 use super::super::logging;
 // use super::super::conditions::get_condition_count;
@@ -8,7 +9,7 @@ use rand_pcg::Pcg64;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 
-pub fn handle_deck_zones(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i32, s: i32, instr_ip: usize) -> HandlerResult {
+pub fn handle_deck_zones(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i64, s: i32, instr_ip: usize) -> HandlerResult {
     let p_idx = ctx.player_id as usize;
     let target_slot = s & 0xFF;
     let resolved_slot = if target_slot == 10 { ctx.target_slot as i32 } else { resolve_target_slot(target_slot, ctx) as i32 };
@@ -123,16 +124,7 @@ pub fn handle_deck_zones(state: &mut GameState, db: &CardDatabase, ctx: &mut Abi
                     revealed_count += 1;
                     let mut new_ctx = ctx.clone(); new_ctx.source_card_id = cid;
                     state.trigger_abilities(db, TriggerType::OnReveal, &new_ctx);
-                    let mut matches = false;
-                    match v {
-                        C_TYPE_CHECK => { // TYPE_CHECK
-                            if db.get_live(cid as i32).is_some() { if (s & (FLAG_REVEAL_UNTIL_IS_LIVE as i32)) != 0 { matches = true; } } 
-                        },
-                        C_COST_CHECK => { // COST_GE / COST_CHECK
-                            if let Some(member) = db.get_member(cid) { if member.cost >= ((a & 0x3F) >> 1) as u32 { matches = true; } }
-                        },
-                        _ => {}
-                    }
+                    let matches = check_condition_opcode(state, db, v, a as i32, a as u64, resolved_slot as i32, &new_ctx, 0);
                     if matches {
                         if resolved_slot == 6 {
                             state.core.players[p_idx].hand.push(cid);
@@ -189,6 +181,28 @@ pub fn handle_deck_zones(state: &mut GameState, db: &CardDatabase, ctx: &mut Abi
                 }
             }
         },
+        O_LOOK_DECK_DYNAMIC => {
+            // Look at cards from deck equal to live score + v
+            // Used by cards like PL!-bp5-001-AR: "look at cards equal to live score + 2"
+            let base_score = state.core.players[p_idx].score as i32;
+            let bonus_score = state.core.players[p_idx].live_score_bonus;
+            let total_score = base_score + bonus_score;
+            let count = (total_score + v) as usize;
+            
+            if state.debug.debug_mode {
+                println!("[DEBUG] O_LOOK_DECK_DYNAMIC: base={}, bonus={}, v={}, count={}", base_score, bonus_score, v, count);
+            }
+            
+            if count > 0 {
+                if state.core.players[p_idx].deck.len() < count { state.resolve_deck_refresh(p_idx); }
+                let deck_len = state.core.players[p_idx].deck.len();
+                for _ in 0..count.min(deck_len) {
+                    if let Some(cid) = state.core.players[p_idx].deck.pop() {
+                        state.core.players[p_idx].looked_cards.push(cid);
+                    }
+                }
+            }
+        },
         O_MOVE_TO_DISCARD => {
             return match handle_move_to_discard(state, db, ctx, v, a, s, instr_ip) {
                 Some(success) => HandlerResult::SetCond(success),
@@ -231,7 +245,7 @@ pub fn handle_deck_zones(state: &mut GameState, db: &CardDatabase, ctx: &mut Abi
 }
 
 // Logic for these helper functions is migrated from interpreter_legacy.rs
-fn handle_move_to_discard(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, v: i32, a: i32, s: i32, instr_ip: usize) -> Option<bool> {
+fn handle_move_to_discard(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, v: i32, a: i64, s: i32, instr_ip: usize) -> Option<bool> {
     let p_idx = ctx.player_id as usize;
     // Zone bits are now in the 's' word: Bits 16-23 Source, Bits 8-15 Destination.
     let mut source_zone = (s >> 16) & 0xFF;
@@ -252,10 +266,10 @@ fn handle_move_to_discard(state: &mut GameState, db: &CardDatabase, ctx: &mut Ab
     }
     
     // Mask out source zone bits (12-15) for filter matching
-    let filter_attr = (a as u32 as u64) & 0xFFFFFFFFFFFF0FFF;
+    let filter_attr = (a as u64) & 0xFFFFFFFFFFFF0FFF;
 
     // OPTIONAL Handling: Check if we have enough cards to pay if it's an optional cost
-    let is_optional = (a & (FILTER_IS_OPTIONAL as i32)) != 0;
+    let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
     
     if is_optional && ctx.choice_index == -1 && !state.ui.silent {
         // Check if we have enough cards to pay
@@ -280,11 +294,8 @@ fn handle_move_to_discard(state: &mut GameState, db: &CardDatabase, ctx: &mut Ab
         if slot < 3 && state.core.players[p_idx].stage[slot] == ctx.source_card_id { next_ctx.choice_index = slot as i16; }
     }
 
-    if next_ctx.choice_index == -1 && count > 0 && source_zone != 0 && (source_zone != 8 || ctx.target_slot != 0) && !state.ui.silent {
-         // Auto-pilot deck top removal if no specific target slot is given (standard case for 'from deck top')
-         if source_zone == 8 && ctx.target_slot == 0 {
-             // Continue to loop below
-         } else if suspend_interaction(state, db, &next_ctx, instr_ip, O_MOVE_TO_DISCARD, s, choice_type, "", filter_attr, count as i16) { 
+    if next_ctx.choice_index == -1 && count > 0 && source_zone != 0 && source_zone != 8 && !state.ui.silent {
+         if suspend_interaction(state, db, &next_ctx, instr_ip, O_MOVE_TO_DISCARD, s, choice_type, "", filter_attr, count as i16) { 
              return None; 
          }
     }
@@ -363,7 +374,7 @@ fn handle_move_to_discard(state: &mut GameState, db: &CardDatabase, ctx: &mut Ab
 
 }
 
-fn handle_play_live_from_discard(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, v: i32, a: i32, _s: i32, instr_ip: usize) -> Option<bool> {
+fn handle_play_live_from_discard(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, v: i32, a: i64, _s: i32, instr_ip: usize) -> Option<bool> {
     let p_idx = ctx.player_id as usize;
     let remaining = if ctx.v_remaining == -1 { v as i16 * 2 } else { ctx.v_remaining };
     if remaining <= 0 { return Some(true); }
@@ -420,7 +431,7 @@ fn handle_play_live_from_discard(state: &mut GameState, db: &CardDatabase, ctx: 
     Some(true)
 }
 
-fn handle_select_cards(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, v: i32, a: i32, s: i32, instr_ip: usize) -> Option<bool> {
+fn handle_select_cards(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, v: i32, a: i64, s: i32, instr_ip: usize) -> Option<bool> {
     let p_idx = ctx.player_id as usize;
     if ctx.choice_index == -1 {
         let source_zone = (s >> 16) & 0xFF;
@@ -456,7 +467,7 @@ fn handle_select_cards(state: &mut GameState, db: &CardDatabase, ctx: &mut Abili
     }
     
     let choice = ctx.choice_index;
-    if choice == CHOICE_DONE && (a & 0x02) != 0 {
+    if choice == CHOICE_DONE && (a as u64 & FILTER_IS_OPTIONAL) != 0 {
         return Some(false);
     }
 
@@ -490,7 +501,7 @@ fn handle_select_cards(state: &mut GameState, db: &CardDatabase, ctx: &mut Abili
     Some(true)
 }
 
-fn handle_look_and_choose(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, v: i32, a: i32, s: i32, instr_ip: usize) -> Option<bool> {
+fn handle_look_and_choose(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, v: i32, a: i64, s: i32, instr_ip: usize) -> Option<bool> {
     let p_idx = ctx.player_id as usize;
     let target_slot = s & 0xFF;
     let rem_dest = (s >> 8) & 0xFF;
@@ -521,7 +532,7 @@ fn handle_look_and_choose(state: &mut GameState, db: &CardDatabase, ctx: &mut Ab
          let choice_text = get_choice_text(db, ctx);
          let pick_count = ((v >> 8) & 0xFF) as i16;
          let v_rem = if pick_count > 0 { pick_count } else { 1 };
-         let mut filter_attr = (a as u32) as u64;
+         let mut filter_attr = a as u64;
          if ((v >> 16) & 0x7F) > 0 { filter_attr |= 1u64 << 42; filter_attr |= (((v >> 16) & 0x7F) as u64) << 31; }
          if ((v >> 23) & 0x7F) > 0 { filter_attr |= 1u64 << 31; filter_attr |= (((v >> 23) & 0x7F) as u64) << 32; }
          if suspend_interaction(state, db, ctx, instr_ip, O_LOOK_AND_CHOOSE, s, choice_type, &choice_text, filter_attr, v_rem) { return None; }
@@ -584,7 +595,7 @@ fn handle_look_and_choose(state: &mut GameState, db: &CardDatabase, ctx: &mut Ab
     Some(true)
 }
 
-fn handle_recovery(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, v: i32, _a: i32, s: i32, instr_ip: usize, real_op: i32) -> Option<bool> {
+fn handle_recovery(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, v: i32, _a: i64, s: i32, instr_ip: usize, real_op: i32) -> Option<bool> {
     let p_idx = ctx.player_id as usize;
     if state.debug.debug_mode {
         println!("[DEBUG] handle_recovery: p_idx={}, choice_index={}, v={}, real_op={}", p_idx, ctx.choice_index, v, real_op);
@@ -641,7 +652,7 @@ fn handle_recovery(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityCo
     Some(true)
 }
 
-fn handle_swap_zone(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, _v: i32, _a: i32, _s: i32, instr_ip: usize) -> Option<bool> {
+fn handle_swap_zone(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, _v: i32, _a: i64, _s: i32, instr_ip: usize) -> Option<bool> {
     let p_idx = ctx.player_id as usize;
     if ctx.choice_index == -1 && ctx.v_remaining == -1 {
         let cards = state.core.players[p_idx].success_lives.clone();

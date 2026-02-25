@@ -225,9 +225,9 @@ impl CardFilter {
             filter.unit_id = Some(((filter_attr >> FILTER_UNIT_SHIFT) & 0x7F) as u8);
         }
         
-        // Color mask (bits 24-30, enabled by bit 31)
-        if (filter_attr & FILTER_COLOR_ENABLE as u64) != 0 {
-            filter.color_mask = ((filter_attr >> FILTER_COLOR_SHIFT) & 0x7F) as u8;
+        // Color mask (bits 61-63, enabled by bit 60)
+        if (filter_attr & FILTER_COLOR_ENABLE) != 0 {
+            filter.color_mask = ((filter_attr >> FILTER_COLOR_SHIFT) & 0x07) as u8;
         }
         
         // Character filter (bit 42)
@@ -287,7 +287,7 @@ impl CardFilter {
         }
         
         if self.color_mask != 0 {
-            attr |= FILTER_COLOR_ENABLE as u64;
+            attr |= FILTER_COLOR_ENABLE;
             attr |= (self.color_mask as u64) << FILTER_COLOR_SHIFT;
         }
         

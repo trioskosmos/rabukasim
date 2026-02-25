@@ -3,7 +3,7 @@ use crate::core::enums::*;
 use super::HandlerResult;
 use super::super::suspension::{suspend_interaction, resolve_target_slot, get_choice_text};
 
-pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i32, s: i32, instr_ip: usize) -> HandlerResult {
+pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i64, s: i32, instr_ip: usize) -> HandlerResult {
     let p_idx = ctx.player_id as usize;
     let target_slot = s & 0xFF;
     let resolved_slot = if target_slot == 10 { ctx.target_slot as i32 } else { resolve_target_slot(target_slot, ctx) as i32 };
@@ -21,13 +21,13 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
         },
         O_TAP_MEMBER => {
             if ctx.choice_index == -1 {
-                if (a & 0x02) != 0 {
+                if (a & 0x01) != 0 {
                     let choice_text = get_choice_text(db, ctx);
                     if suspend_interaction(state, db, ctx, instr_ip, O_TAP_MEMBER, 0, "OPTIONAL", &choice_text, a as u64, -1) {
                         return HandlerResult::Suspend;
                     }
                 }
-                if (a & 0x01) != 0 {
+                if (a & 0x02) != 0 {
                     let choice_text = get_choice_text(db, ctx);
                     if suspend_interaction(state, db, ctx, instr_ip, O_TAP_MEMBER, 0, "TAP_M_SELECT", &choice_text, a as u64, v as i16) {
                         return HandlerResult::Suspend;
@@ -39,7 +39,7 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
                     state.core.players[p_idx].set_tapped(resolved_slot as usize, true);
                 }
             } else {
-                if (a & 0x02) != 0 {
+                if (a & 0x01) != 0 {
                     // 1 and 99 are both mapped to "No" for optional costs
                     if ctx.choice_index == 1 || ctx.choice_index == 99 { return HandlerResult::SetCond(false); }
                     if resolved_slot < 3 { state.core.players[p_idx].set_tapped(resolved_slot as usize, true); }

@@ -171,6 +171,13 @@ const O_PREVENT_ACTIVATE: i32 = 82;
 const O_SET_HEART_COST: i32 = 83;
 const O_PREVENT_SET_TO_SUCCESS_PILE: i32 = 80;
 const O_PREVENT_BATON_TOUCH: i32 = 90;
+const O_LOOK_DECK_DYNAMIC: i32 = 91;
+const O_REDUCE_SCORE: i32 = 92;
+const O_REPEAT_ABILITY: i32 = 93;
+const O_LOSE_EXCESS_HEARTS: i32 = 94;
+const O_SKIP_ACTIVATE_PHASE: i32 = 95;
+const O_PAY_ENERGY_DYNAMIC: i32 = 96;
+const O_PLACE_ENERGY_UNDER_MEMBER: i32 = 97;
 
 // --- CONDITIONS (Synced with generated_constants.rs) ---
 const C_TURN_1: i32 = 200;

@@ -98,7 +98,14 @@
         "ACTIVATE_ENERGY": 81,
         "PREVENT_ACTIVATE": 82,
         "SET_HEART_COST": 83,
-        "PREVENT_BATON_TOUCH": 90
+        "PREVENT_BATON_TOUCH": 90,
+        "LOOK_DECK_DYNAMIC": 91,
+        "REDUCE_SCORE": 92,
+        "REPEAT_ABILITY": 93,
+        "LOSE_EXCESS_HEARTS": 94,
+        "SKIP_ACTIVATE_PHASE": 95,
+        "PAY_ENERGY_DYNAMIC": 96,
+        "PLACE_ENERGY_UNDER_MEMBER": 97
     },
     "action_bases": {
         "PASS": 0,
@@ -184,7 +191,11 @@
         "IS_ACTIVE": 246,
         "LIVE_PERFORMED": 247,
         "IS_PLAYER": 248,
-        "IS_OPPONENT": 249
+        "IS_OPPONENT": 249,
+        "COUNT_ENERGY_EXACT": 301,
+        "COUNT_BLADE_HEART_TYPES": 302,
+        "OPPONENT_HAS_EXCESS_HEART": 303,
+        "SCORE_TOTAL_CHECK": 304
     },
     "costs": {
         "ENERGY": 1,
@@ -313,8 +324,8 @@
         "FILTER_UNIT_SHIFT": 17,
         "FILTER_CHARACTER_ENABLE": 4398046511104,
         "FILTER_SPECIAL_SHIFT": 57,
-        "FILTER_COLOR_ENABLE": 2147483648,
-        "FILTER_COLOR_SHIFT": 24,
+        "FILTER_COLOR_ENABLE": 1152921504606846976,
+        "FILTER_COLOR_SHIFT": 61,
         "FILTER_COST_ENABLE": 16777216,
         "FILTER_COST_SHIFT": 25,
         "FILTER_COST_LE": 1073741824

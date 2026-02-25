@@ -1,7 +1,6 @@
 // pub mod karin_repro;
 // pub mod on_leaves_repro;
-#[cfg(test)]
-pub mod fix_kimi_no_kokoro;
+// pub mod fix_kimi_no_kokoro;  // Removed: duplicate of wave6_tests::test_kimi_no_kokoro_prevention
 // pub mod cost_dependency_repro;
 // pub mod size_test;
 // pub mod mini_engine_tests;

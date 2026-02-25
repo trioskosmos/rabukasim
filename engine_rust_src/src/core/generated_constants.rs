@@ -72,6 +72,13 @@ pub const O_ACTIVATE_ENERGY: i32 = 81;
 pub const O_PREVENT_ACTIVATE: i32 = 82;
 pub const O_SET_HEART_COST: i32 = 83;
 pub const O_PREVENT_BATON_TOUCH: i32 = 90;
+pub const O_LOOK_DECK_DYNAMIC: i32 = 91;
+pub const O_REDUCE_SCORE: i32 = 92;
+pub const O_REPEAT_ABILITY: i32 = 93;
+pub const O_LOSE_EXCESS_HEARTS: i32 = 94;
+pub const O_SKIP_ACTIVATE_PHASE: i32 = 95;
+pub const O_PAY_ENERGY_DYNAMIC: i32 = 96;
+pub const O_PLACE_ENERGY_UNDER_MEMBER: i32 = 97;
 
 // Action ID Bases
 pub const ACTION_BASE_PASS: i32 = 0;
@@ -121,6 +128,7 @@ pub const C_DECK_REFRESHED: i32 = 227;
 pub const C_HAS_MOVED: i32 = 228;
 pub const C_HAND_INCREASED: i32 = 229;
 pub const C_COUNT_LIVE_ZONE: i32 = 230;
+pub const C_COUNT_UNIQUE_COLORS: i32 = 250;
 pub const C_BATON: i32 = 231;
 pub const C_TYPE_CHECK: i32 = 232;
 pub const C_IS_IN_DISCARD: i32 = 233;
@@ -140,6 +148,10 @@ pub const C_IS_ACTIVE: i32 = 246;
 pub const C_LIVE_PERFORMED: i32 = 247;
 pub const C_IS_PLAYER: i32 = 248;
 pub const C_IS_OPPONENT: i32 = 249;
+pub const C_COUNT_ENERGY_EXACT: i32 = 301;
+pub const C_COUNT_BLADE_HEART_TYPES: i32 = 302;
+pub const C_OPPONENT_HAS_EXCESS_HEART: i32 = 303;
+pub const C_SCORE_TOTAL_CHECK: i32 = 304;
 
 // Cost Types
 pub const COST_ENERGY: i32 = 1;
@@ -268,8 +280,8 @@ pub const FILTER_UNIT_ENABLE: u64 = 65536u64;
 pub const FILTER_UNIT_SHIFT: u64 = 17u64;
 pub const FILTER_CHARACTER_ENABLE: u64 = 4398046511104u64;
 pub const FILTER_SPECIAL_SHIFT: u64 = 57u64;
-pub const FILTER_COLOR_ENABLE: u64 = 2147483648u64;
-pub const FILTER_COLOR_SHIFT: u64 = 24u64;
+pub const FILTER_COLOR_ENABLE: u64 = 1152921504606846976u64;
+pub const FILTER_COLOR_SHIFT: u64 = 61u64;
 pub const FILTER_COST_ENABLE: u64 = 16777216u64;
 pub const FILTER_COST_SHIFT: u64 = 25u64;
 pub const FILTER_COST_LE: u64 = 1073741824u64;

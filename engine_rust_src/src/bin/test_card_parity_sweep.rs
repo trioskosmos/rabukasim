@@ -60,10 +60,10 @@ fn real_main() {
                 if ab.trigger == TriggerType::OnPlay {
                     let bc = &ab.bytecode;
                     let mut pc = 0;
-                    while pc + 3 < bc.len() {
+                    while pc + 4 < bc.len() {
                         let op = bc[pc];
                         *opcode_hits.entry(op).or_insert(0) += 1;
-                        pc += 4; // Each instruction is 4 words
+                        pc += 5; // Each instruction is 5 words
                     }
                 }
             }
