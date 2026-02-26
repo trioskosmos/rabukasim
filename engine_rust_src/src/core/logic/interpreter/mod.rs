@@ -223,6 +223,7 @@ pub fn resolve_bytecode(
         // Obtaining frame again after dispatch might be necessary if we popped, but the loop head handles it.
         if let Some(f) = executor.stack.last_mut() {
             f.ctx.choice_index = -1; // Reset choice index after each instruction
+            f.ctx.v_remaining = -1;  // Reset v_remaining to prevent state leakage
         }
     }
 

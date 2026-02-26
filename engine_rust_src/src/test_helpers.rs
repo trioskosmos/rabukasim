@@ -2,6 +2,11 @@ use crate::core::logic::*;
 use crate::core::logic::player::PlayerState;
 use crate::core::logic::card_db::CardDatabase;
 
+#[cfg(feature = "gpu")]
+use crate::core::gpu_state::{GpuGameState, GpuCardStats, GpuTriggerRequest};
+#[cfg(feature = "gpu")]
+use crate::core::gpu_conversions::GpuConverter;
+
 #[derive(Debug, Clone)]
 pub struct ZoneSnapshot {
     pub hand_len: usize,
@@ -251,6 +256,119 @@ pub fn add_card(db: &mut CardDatabase, cid: i32, no: &str, groups: Vec<u8>, abil
     db.members.insert(cid, m.clone());
     let lid = (cid & LOGIC_ID_MASK) as usize;
     if lid < db.members_vec.len() { db.members_vec[lid] = Some(m); }
+}
+
+// --- GPU PARITY HARNESS ---
+#[cfg(feature = "gpu")]
+pub struct GpuParityHarness {
+    pub manager: crate::core::gpu_manager::GpuManager,
+}
+
+#[cfg(feature = "gpu")]
+impl GpuParityHarness {
+    pub fn new(db: &CardDatabase) -> Self {
+        let (stats, bytecode) = db.convert_to_gpu();
+        let manager = crate::core::gpu_manager::GpuManager::new(&stats, &bytecode, wgpu::Backends::all())
+            .expect("Failed to initialize GPU manager for harness");
+        Self { manager }
+    }
+
+    pub fn assert_bytecode_parity(
+        &self,
+        db: &CardDatabase,
+        state: &GameState,
+        bytecode: &[i32],
+        ctx: &AbilityContext,
+        name: &str,
+    ) {
+        // 1. Run CPU
+        let mut cpu_final = state.clone();
+        crate::core::logic::interpreter::resolve_bytecode(&mut cpu_final, db, bytecode, &mut ctx.clone());
+
+        // 2. Run GPU
+        let mut gpu_input = state.to_gpu(db);
+        // We use a special forced_action or manual trigger push?
+        // For bytecode parity, we can't use forced_action (which is for Main phase actions).
+        // Instead, we manually push a trigger to the queue and run one step.
+        gpu_input.trigger_queue[0] = GpuTriggerRequest {
+            card_id: ctx.source_card_id as u32,
+            slot_idx: ctx.area_idx as u32,
+            trigger_filter: ctx.trigger_type as i32,
+            ab_filter: -1, // Use provided bytecode directly
+            choice: ctx.choice_index as i32,
+            _pad: [0; 3],
+        };
+        gpu_input.queue_tail = 1;
+        gpu_input.phase = 6; // PHASE_MAIN (to allow process_trigger_queue)
+        gpu_input.forced_action = -1;
+        gpu_input.is_debug = 1;
+
+        let mut results = vec![crate::core::gpu_state::GpuGameState::default(); 1];
+        self.manager.run_single_step(&[gpu_input], &mut results);
+        let gpu_final = &results[0];
+
+        // 3. Compare
+        self.compare_and_panic(&cpu_final, gpu_final, name);
+    }
+
+    pub fn assert_step_parity(&self, db: &CardDatabase, state: &GameState, action_id: i32, name: &str) {
+        // 1. Run CPU
+        let mut cpu_final = state.clone();
+        cpu_final.step(db, action_id).expect("CPU step failed in harness");
+        
+        // Match GPU's eager resumption for interactions
+        let mut loop_limit = 0;
+        while !cpu_final.interaction_stack.is_empty() && loop_limit < 10 {
+            cpu_final.step(db, (ACTION_BASE_CHOICE + 0) as i32).expect("CPU auto-choice failed");
+            loop_limit += 1;
+        }
+
+        // 2. Run GPU
+        let mut gpu_input = state.to_gpu(db);
+        gpu_input.forced_action = action_id;
+        gpu_input.is_debug = 1;
+
+        let mut results = vec![crate::core::gpu_state::GpuGameState::default(); 1];
+        self.manager.run_single_step(&[gpu_input], &mut results);
+        let gpu_final = &results[0];
+
+        // 3. Compare
+        self.compare_and_panic(&cpu_final, gpu_final, name);
+    }
+
+    fn compare_and_panic(&self, cpu: &GameState, gpu: &crate::core::gpu_state::GpuGameState, name: &str) {
+        let mut errors = Vec::new();
+        let p0 = &cpu.core.players[0];
+        let gp0 = &gpu.player0;
+
+        if p0.hand.len() as u32 != gp0.hand_len {
+            errors.push(format!("Hand len: CPU {}, GPU {}", p0.hand.len(), gp0.hand_len));
+        }
+        if p0.deck.len() as u32 != gp0.deck_len {
+            errors.push(format!("Deck len: CPU {}, GPU {}", p0.deck.len(), gp0.deck_len));
+        }
+        if p0.score != gp0.score {
+            errors.push(format!("Score: CPU {}, GPU {}", p0.score, gp0.score));
+        }
+        if p0.live_score_bonus != gp0.live_score_bonus {
+            errors.push(format!("Live Score Bonus: CPU {}, GPU {}", p0.live_score_bonus, gp0.live_score_bonus));
+        }
+        if p0.tapped_energy_mask.count_ones() as u32 != gp0.tapped_energy_count {
+            errors.push(format!("Tapped Energy: CPU {}, GPU {}", p0.tapped_energy_mask.count_ones(), gp0.tapped_energy_count));
+        }
+        for i in 0..3 {
+            if p0.blade_buffs[i] as i32 != gp0.blade_buffs[i] as i32 {
+                errors.push(format!("Blade Buff [{}]: CPU {}, GPU {}", i, p0.blade_buffs[i], gp0.blade_buffs[i]));
+            }
+        }
+        if p0.flags != gp0.flags {
+            errors.push(format!("Flags: CPU {:08x}, GPU {:08x}", p0.flags, gp0.flags));
+        }
+
+        if !errors.is_empty() {
+            panic!("\n--- GPU PARITY FAILURE: {} ---\n{}\n", name, errors.join("\n"));
+        }
+    }
 }
 
 #[derive(Default)]

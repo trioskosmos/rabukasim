@@ -1,0 +1,229 @@
+import { State } from '../state.js';
+import { Network } from '../network.js';
+import { Modals } from '../ui_modals.js';
+
+export const GameSetupModal = {
+    openSetupModal: (mode) => {
+        Modals.setupMode = mode;
+        const modal = document.getElementById('setup-modal');
+        if (modal) modal.style.display = 'flex';
+
+        const roomModal = document.getElementById('room-modal');
+        if (roomModal) roomModal.style.display = 'none';
+
+        Modals.fetchAndPopulateDecks().then(() => {
+            Modals.populateDeckSelect('p0-deck-select', Modals.deckPresets);
+            Modals.populateDeckSelect('p1-deck-select', Modals.deckPresets);
+        });
+
+        const p0Col = document.getElementById('setup-p0-col');
+        const p1Col = document.getElementById('setup-p1-col');
+        const title = document.getElementById('setup-title');
+        if (title) title.textContent = (mode === 'pvp') ? 'PvP Setup' : 'PvE Setup';
+
+        if (p0Col) p0Col.style.display = 'block';
+        if (p1Col) {
+            p1Col.style.display = 'block';
+            p1Col.style.opacity = '1';
+            p1Col.style.pointerEvents = 'auto';
+            const p1Title = p1Col.querySelector('h4');
+            if (p1Title) p1Title.textContent = (mode === 'pve') ? '[AI] Player 2 (AI)' : '[P2] Player 2 (Opponent)';
+        }
+    },
+
+    closeSetupModal: () => {
+        const modal = document.getElementById('setup-modal');
+        if (modal) modal.style.display = 'none';
+
+        if (!State.roomCode && !State.offlineMode && !State.replayMode) {
+            const roomModal = document.getElementById('room-modal');
+            if (roomModal) roomModal.style.display = 'flex';
+        }
+    },
+
+    getDeckConfig: (pid) => {
+        const selectId = `p${pid}-deck-select`;
+        const select = document.getElementById(selectId);
+        if (!select) return null;
+
+        const mode = select.value;
+        if (mode === 'manual' || mode === 'paste') {
+            let input = document.getElementById(`p${pid}-manual-deck`);
+            if (!input) input = document.getElementById(`p${pid}-deck-paste`);
+            return { type: 'manual', content: input ? input.value : '' };
+        } else if (mode === 'random') {
+            return { type: 'random' };
+        } else {
+            const presets = Modals.deckPresets || [];
+            const preset = presets.find(d => d.id === mode);
+            return { type: 'preset', id: mode, preset: preset };
+        }
+    },
+
+    resolveDeck: async (config) => {
+        if (!config) return null;
+        if (config.type === 'preset') {
+            if (!config.preset) {
+                config.preset = Modals.deckPresets.find(d => d.id === config.id);
+            }
+            if (!config.preset) {
+                console.error("Preset not found:", config.id);
+                return null;
+            }
+            return { main: config.preset.main, energy: config.preset.energy };
+        } else if (config.type === 'random') {
+            const res = await fetch('api/get_random_deck');
+            const data = await res.json();
+            return {
+                main: data.content || [],
+                energy: data.energy || []
+            };
+        } else if (config.type === 'manual') {
+            const content = config.content || "";
+            let matches = content.match(/(PL![A-Za-z0-9\-]+)/g);
+            if (!matches || matches.length === 0) {
+                const lines = content.split(/\r?\n|,\s*/);
+                matches = [];
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed || trimmed.startsWith('#')) continue;
+                    let code = trimmed.replace(/^(\d+)[xX]\s*/, '').replace(/\s*[xX](\d+)$/, '').trim();
+                    if (code.length > 0) matches.push(code);
+                }
+            }
+            return { main: matches || [], energy: [] };
+        }
+        return null;
+    },
+
+    submitGameSetup: async () => {
+        const p0Config = GameSetupModal.getDeckConfig(0);
+        const p1Config = GameSetupModal.getDeckConfig(1);
+
+        try {
+            const p0Deck = await GameSetupModal.resolveDeck(p0Config);
+            const p1Deck = await GameSetupModal.resolveDeck(p1Config);
+
+            if (!p0Deck || !p1Deck) {
+                alert("Failed to resolve decks. Please check console.");
+                return;
+            }
+
+            const res = await fetch('api/rooms/create', {
+                method: 'POST',
+                headers: Network.getHeaders(),
+                body: JSON.stringify({
+                    mode: Modals.setupMode,
+                    p0_deck: p0Deck.main,
+                    p1_deck: p1Deck.main,
+                    p0_energy: p0Deck.energy,
+                    p1_energy: p1Deck.energy,
+                    public: true
+                })
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({ error: "Server error" }));
+                throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+            }
+
+            const data = await res.json();
+            if (data.success) {
+                State.roomCode = data.room_id;
+                State.offlineMode = false;
+                if (data.session) {
+                    Network.saveSession(data.room_id, { token: data.session, playerId: data.player_idx });
+                }
+                localStorage.setItem('lovelive_room_code', State.roomCode);
+
+                const roomModal = document.getElementById('room-modal');
+                if (roomModal) roomModal.style.display = 'none';
+
+                GameSetupModal.closeSetupModal();
+
+                if (window.onRoomUpdate) window.onRoomUpdate();
+                if (window.fetchState) window.fetchState();
+            } else {
+                alert("Failed to create game: " + data.error);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Network error: " + e.message);
+        }
+    },
+
+    openDeckSelectionForPvP: (pid) => {
+        Modals.pvpJoinPid = pid;
+        const modal = document.getElementById('setup-modal');
+        if (modal) modal.style.display = 'flex';
+
+        const p0Col = document.getElementById('setup-p0-col');
+        const p1Col = document.getElementById('setup-p1-col');
+        const startBtn = document.getElementById('setup-start-btn');
+        const title = document.getElementById('setup-title');
+
+        if (title) title.textContent = 'Select Your Deck';
+
+        if (pid === 0) {
+            if (p0Col) p0Col.style.display = 'block';
+            if (p1Col) p1Col.style.display = 'none';
+        } else {
+            if (p0Col) p0Col.style.display = 'none';
+            if (p1Col) {
+                p1Col.style.display = 'block';
+                p1Col.style.opacity = '1';
+                p1Col.style.pointerEvents = 'auto';
+            }
+        }
+
+        if (startBtn) {
+            startBtn.textContent = 'Submit Deck & Join';
+            startBtn.onclick = GameSetupModal.submitPvPDeck;
+        }
+
+        Modals.fetchAndPopulateDecks();
+    },
+
+    submitPvPDeck: async () => {
+        const config = GameSetupModal.getDeckConfig(Modals.pvpJoinPid);
+        const resolved = await GameSetupModal.resolveDeck(config);
+
+        if (!resolved) return;
+
+        try {
+            const res = await fetch('api/set_deck', {
+                method: 'POST',
+                headers: Network.getHeaders(),
+                body: JSON.stringify({
+                    player: Modals.pvpJoinPid,
+                    deck: resolved.main,
+                    energy_deck: resolved.energy
+                })
+            });
+            const data = await res.json();
+            if (data.success || data.status === 'ok') {
+                GameSetupModal.closeSetupModal();
+                if (window.fetchState) window.fetchState();
+                alert("Deck Submitted! Waiting for game to start.");
+            } else {
+                alert("Error setting deck: " + (data.error || "Unknown"));
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error submitting deck.");
+        }
+    },
+
+    onDeckSelectChange: (pid, value) => {
+        let finalValue = value;
+        if (finalValue === undefined) {
+            const select = document.getElementById(`p${pid}-deck-select`);
+            if (select) finalValue = select.value;
+        }
+        console.log(`Player ${pid} selected deck: ${finalValue}`);
+        const pasteArea = document.getElementById(`p${pid}-paste-area`);
+        if (pasteArea) {
+            pasteArea.style.display = (finalValue === 'paste' || finalValue === 'manual') ? 'block' : 'none';
+        }
+    }
+};

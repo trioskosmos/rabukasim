@@ -1142,7 +1142,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                             set_moved(p_idx, sa_dst);
                         }
                     }
-                    case O_SWAP_ZONE: {
+                     case O_SWAP_ZONE: {
                          let success_idx = u32(ctx_choice);
                          let hand_idx = 0u; 
                          var sz_h_len = 0u; var sz_s_len = 0u;
@@ -1162,6 +1162,27 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                                  states[g_gid].player1.success_lives[word_idx] = (states[g_gid].player1.success_lives[word_idx] & ~(0xFFFFu << shift)) | (hcid << shift);
                              }
                          }
+                    }
+
+                    case O_META_RULE: {
+                        // v = flag state (1=on, 0=off, etc.)
+                        // a_lo = rule type
+                        if (a_lo == 8u) { // SCORE_RULE
+                            if (v == 1i) { // 1 = ALL_ENERGY_ACTIVE
+                                var e_count = 0u; var t_count = 0u;
+                                if (p_idx == 0u) {
+                                    e_count = states[g_gid].player0.energy_count;
+                                    t_count = states[g_gid].player0.tapped_energy_count;
+                                } else {
+                                    e_count = states[g_gid].player1.energy_count;
+                                    t_count = states[g_gid].player1.tapped_energy_count;
+                                }
+                                cond = (t_count == 0u && e_count > 0u);
+                            } else {
+                                // Default/unhandled score rule types
+                                cond = false;
+                            }
+                        }
                     }
                     // === MISSING OPCODES FOR PARITY ===
                     case O_LOOK_DECK_DYNAMIC: {

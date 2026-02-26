@@ -70,3 +70,12 @@ The current GPU implementation (RTX 3050 Ti) achieves ~835k sims/sec. Significan
 ### 7.5 Persistent Tree States
 **Problem**: Game state is uploaded from scratch for every leaf evaluation.
 **Improvement**: Keep state resident on GPU throughout the MCTS search process, only updating "forced actions" and reading back scores.
+
+## 8. GPU Testing Viability & Parity Improvements
+**Problem**: We investigated whether we could port Rust `#[test]` functions directly to WGSL to test GPU logic.
+**Finding**: **Not viable**. WGSL lacks a test framework, assertions, and stdout. Interpreting pass/fail requires writing full GPU-to-CPU host code, which is exactly what our current CPU↔GPU parity testing pattern already does.
+**Action Plan (Ordered Priorities)**:
+1. **Shader Compile Smoke Test**: Add a simple `#[test]` in Rust to verify `GpuManager::new()` succeeds (catching basic WGSL syntax breaks).
+2. **Convert Parity Binaries to Tests**: Migrate scenarios in `test_gpu_parity_suite.rs` into proper `#[test]` functions for CI integration and per-scenario failure reporting.
+3. **Opcode Coverage Linting**: Write a structural validation test that ensures every compiled opcode in `cards_compiled.json` has a corresponding `case` block in `shader_rules.wgsl`.
+4. **Statistical Parity Testing**: Run N=10,000 blind random rollouts on both CPU and GPU and assert that their average heuristic terminal scores stay within `ε`.

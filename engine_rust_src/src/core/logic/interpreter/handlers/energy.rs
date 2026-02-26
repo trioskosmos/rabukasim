@@ -3,7 +3,7 @@ use crate::core::enums::*;
 use super::HandlerResult;
 use super::super::suspension::suspend_interaction;
 
-pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i64, s: i32, instr_ip: usize) -> HandlerResult {
+pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i64, s: i32, instr_ip: usize) -> Option<HandlerResult> {
     let p_idx = ctx.player_id as usize;
 
     match op {
@@ -17,7 +17,7 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
                     state.core.players[target_p].set_energy_tapped(new_idx, is_wait);
                 }
             }
-            HandlerResult::Continue
+            Some(HandlerResult::Continue)
         },
         O_PAY_ENERGY => {
             let available = (0..state.core.players[p_idx].energy_zone.len())
@@ -26,25 +26,25 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
 
             if (a & 0x82) != 0 && ctx.choice_index == -1 {
                 if available < v {
-                    return HandlerResult::SetCond(false); // Can't afford optional -> SetCond(false)
+                    return Some(HandlerResult::SetCond(false)); // Can't afford optional -> SetCond(false)
                 } else {
                     if suspend_interaction(state, db, ctx, instr_ip, O_PAY_ENERGY, 0, "OPTIONAL", "", a as u64, -1) {
-                        return HandlerResult::Suspend;
+                        return Some(HandlerResult::Suspend);
                     }
                 }
             }
             
             let mut next_ctx = ctx.clone();
             if (a & 0x82) != 0 && ctx.choice_index != -1 && ctx.v_remaining == -1 {
-                 if ctx.choice_index == 1 { return HandlerResult::SetCond(false); } // Declined -> SetCond(false)
+                 if ctx.choice_index == 1 { return Some(HandlerResult::SetCond(false)); } // Declined -> SetCond(false)
                  next_ctx.choice_index = -1;
                  next_ctx.v_remaining = v as i16;
             }
             
             if next_ctx.choice_index == 99 {
-                return HandlerResult::SetCond(false);
+                return Some(HandlerResult::SetCond(false));
             } else if available < v {
-                return HandlerResult::SetCond(false);
+                return Some(HandlerResult::SetCond(false));
             } else {
                  if next_ctx.choice_index != -1 {
                     let idx = next_ctx.choice_index as usize;
@@ -54,7 +54,7 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
                         if next_ctx.v_remaining > 0 {
                             next_ctx.choice_index = -1;
                             if suspend_interaction(state, db, &next_ctx, instr_ip, O_PAY_ENERGY, 0, "PAY_ENERGY", "", 0, next_ctx.v_remaining) {
-                                return HandlerResult::Suspend;
+                                return Some(HandlerResult::Suspend);
                             }
                         }
                     }
@@ -71,18 +71,19 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
                     }
                 }
             }
-            HandlerResult::SetCond(true)
+            Some(HandlerResult::SetCond(true))
         },
         O_ACTIVATE_ENERGY => {
-             let mut count = 0;
-             for i in 0..state.core.players[p_idx].energy_zone.len() {
-                 if count >= v { break; }
-                 if state.core.players[p_idx].is_energy_tapped(i) {
-                     state.core.players[p_idx].set_energy_tapped(i, false);
-                     count += 1;
-                 }
-             }
-             HandlerResult::Continue
+            // Readies up to `v` tapped energy.
+            let mut count = 0;
+            for i in 0..state.core.players[p_idx].energy_zone.len() {
+                if count >= v { break; }
+                if state.core.players[p_idx].is_energy_tapped(i) {
+                    state.core.players[p_idx].set_energy_tapped(i, false);
+                    count += 1;
+                }
+            }
+            Some(HandlerResult::Continue)
         },
         O_PAY_ENERGY_DYNAMIC => {
             // Pay energy equal to card score + v
@@ -99,7 +100,7 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
                 .count();
             
             if available < total_cost {
-                return HandlerResult::SetCond(false);
+                return Some(HandlerResult::SetCond(false));
             }
             
             // Auto-pay the energy
@@ -111,7 +112,7 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
                     paid += 1;
                 }
             }
-            HandlerResult::SetCond(true)
+            Some(HandlerResult::SetCond(true))
         },
         O_PLACE_ENERGY_UNDER_MEMBER => {
             // Place energy card under a member
@@ -133,8 +134,8 @@ pub fn handle_energy(state: &mut GameState, db: &CardDatabase, ctx: &mut Ability
                     }
                 }
             }
-            HandlerResult::Continue
+            Some(HandlerResult::Continue)
         },
-        _ => HandlerResult::Continue,
+        _ => None,
     }
 }

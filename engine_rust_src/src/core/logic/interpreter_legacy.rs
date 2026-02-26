@@ -511,7 +511,23 @@ pub fn check_condition_opcode(state: &GameState, db: &CardDatabase, op: i32, val
         C_DECK_REFRESHED => player.get_flag(crate::core::logic::player::PlayerState::FLAG_DECK_REFRESHED),
         C_HAS_MOVED => ctx.area_idx >= 0 && player.is_moved(ctx.area_idx as usize),
         C_HAND_INCREASED => player.hand_increased_this_turn > 0,
-        C_BATON => state.prev_card_id != -1 || player.baton_touch_count > 0,
+        C_BATON => {
+            // val = expected baton touch count (0 means any > 0)
+            // attr = filter for baton source cards (GROUP_ID filter encoded in lower 32 bits)
+            let count_ok = if val > 0 {
+                player.baton_touch_count == val as u8
+            } else {
+                player.baton_touch_count > 0 || state.prev_card_id != -1
+            };
+            
+            // If filter is specified in attr, check if prev_card matches
+            let filter_attr = attr & 0x00000000FFFFFFFF;
+            if count_ok && filter_attr != 0 && state.prev_card_id >= 0 {
+                state.card_matches_filter(db, state.prev_card_id, filter_attr)
+            } else {
+                count_ok
+            }
+        },
         C_COUNT_LIVE_ZONE => {
              let filter_attr = attr & 0x00000000FFFFFFFF;
              let count = if (attr & 0x8000) != 0 {

@@ -62,6 +62,29 @@ impl ActionGenerator for ResponseGenerator {
                 }
                 return;
             }
+            "SELECT_STAGE" => {
+                for i in 0..3 {
+                    if (player.prevent_play_to_slot_mask & (1 << i)) == 0 {
+                        receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
+                    }
+                }
+                return;
+            }
+            "SELECT_STAGE_EMPTY" => {
+                for i in 0..3 {
+                    if player.stage[i] == -1 && (player.prevent_play_to_slot_mask & (1 << i)) == 0 {
+                        receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
+                    }
+                }
+                return;
+            }
+            "SELECT_LIVE_SLOT" => {
+                for i in 0..3 {
+                    // Usually there's no prevent_play for live slots, but we verify it's open
+                    receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
+                }
+                return;
+            }
             "SELECT_SWAP_TARGET" => {
                 for i in 0..player.hand.len() {
                     receiver.add_action((crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize);
@@ -127,6 +150,10 @@ impl ActionGenerator for ResponseGenerator {
                     }
                 }
                 receiver.add_action(0);
+                return;
+            }
+            O_PLAY_MEMBER_FROM_DISCARD | O_PLAY_LIVE_FROM_DISCARD => {
+                self.generate_look_and_choose_actions(db, p_idx, state, receiver, pi, abilities);
                 return;
             }
             O_SELECT_MEMBER => {

@@ -7,6 +7,32 @@ struct GpuTriggerRequest {
     _pad: array<u32, 3>,
 }
 
+// Interaction types for Response phase
+const INTERACTION_LOOK_AND_CHOOSE: u32 = 1u;
+const INTERACTION_COLOR_SELECT: u32 = 2u;
+const INTERACTION_SELECT_DISCARD: u32 = 3u;
+const INTERACTION_SELECT_HAND: u32 = 4u;
+const INTERACTION_SELECT_STAGE: u32 = 5u;
+const INTERACTION_OPPONENT_CHOOSE: u32 = 6u;
+
+// Interaction stack entry for suspending bytecode execution
+struct GpuInteraction {
+    card_id: u32,           // Card that triggered the interaction
+    slot_idx: u32,          // Slot index of the card
+    trigger_filter: i32,    // Trigger type being processed
+    ab_filter: i32,         // Ability index being processed
+    original_phase: i32,    // Phase to return to after interaction
+    choice_type: u32,       // Type of interaction (LOOK_AND_CHOOSE, etc.)
+    param_v: i32,           // Original v parameter
+    param_a_lo: u32,        // Original a_lo parameter
+    param_a_hi: u32,        // Original a_hi parameter
+    param_s: i32,           // Original s parameter
+    bytecode_start: u32,    // Start of bytecode for resume
+    bytecode_len: u32,      // Length of bytecode
+    ip_offset: u32,         // Instruction pointer offset for resume
+    _pad: array<u32, 2>,
+}
+
 struct GpuPlayerState {
     heart_buffs: array<u32, 8>,           // 32
     heart_req_reductions: array<u32, 2>,  // 8
@@ -43,8 +69,12 @@ struct GpuPlayerState {
     prevent_play_to_slot_mask: u32,       // 4
     cost_reduction: i32,                  // 4
     success_lives: array<u32, 4>,         // 16
+    live_score_bonus: i32,                // 4
+    hand_increased_this_turn: u32,        // 4
+    played_group_mask: u32,               // 4
+    excess_hearts: u32,                   // 4
     granted_abilities: array<u32, 16>,    // 64
-} // Total: 672 bytes
+} // Total: 688 bytes
 
 struct GpuGameState {
     player0: GpuPlayerState,
@@ -63,8 +93,11 @@ struct GpuGameState {
     trigger_queue: array<GpuTriggerRequest, 8>,
     queue_head: u32,
     queue_tail: u32,
-    _pad_game: array<u32, 3>,
-} // Total: 1664 bytes
+    // Interaction stack for Response phase
+    interaction_stack: array<GpuInteraction, 4>,
+    interaction_depth: u32,
+    _pad_game: array<u32, 2>,
+} // Total: updated with interaction stack
 
 struct GpuCardStats {
     ability_flags_lo: u32,
@@ -2053,7 +2086,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                             set_moved(p_idx, sa_dst);
                         }
                     }
-                    case O_SWAP_ZONE: {
+                     case O_SWAP_ZONE: {
                          let success_idx = u32(ctx_choice);
                          let hand_idx = 0u; 
                          var sz_h_len = 0u; var sz_s_len = 0u;
@@ -2073,6 +2106,38 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                                  states[g_gid].player1.success_lives[word_idx] = (states[g_gid].player1.success_lives[word_idx] & ~(0xFFFFu << shift)) | (hcid << shift);
                              }
                          }
+                    }
+                    case O_ACTIVATE_ENERGY: {
+                        let amount = u32(v);
+                        if (p_idx == 0u) {
+                            let tapped = states[g_gid].player0.tapped_energy_count;
+                            let untap_amount = min(amount, tapped);
+                            states[g_gid].player0.tapped_energy_count -= untap_amount;
+                        } else {
+                            let tapped = states[g_gid].player1.tapped_energy_count;
+                            let untap_amount = min(amount, tapped);
+                            states[g_gid].player1.tapped_energy_count -= untap_amount;
+                        }
+                    }
+                    case O_META_RULE: {
+                        // v = flag state (1=on, 0=off, etc.)
+                        // a_lo = rule type
+                        if (a_lo == 8u) { // SCORE_RULE
+                            if (v == 1i) { // 1 = ALL_ENERGY_ACTIVE
+                                var e_count = 0u; var t_count = 0u;
+                                if (p_idx == 0u) {
+                                    e_count = states[g_gid].player0.energy_count;
+                                    t_count = states[g_gid].player0.tapped_energy_count;
+                                } else {
+                                    e_count = states[g_gid].player1.energy_count;
+                                    t_count = states[g_gid].player1.tapped_energy_count;
+                                }
+                                cond = (t_count == 0u && e_count > 0u);
+                            } else {
+                                // Default/unhandled score rule types
+                                cond = false;
+                            }
+                        }
                     }
                     // === MISSING OPCODES FOR PARITY ===
                     case O_LOOK_DECK_DYNAMIC: {
@@ -2527,22 +2592,24 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     
     // AUTO-PHASE ADVANCE: Continue stepping through non-interactive phases
-    // This mirrors CPU's step() which auto-advances Active→Energy→Draw→Main
-    var current_phase = states[g_gid].phase;
-    var safety = 0u;
-    while (current_phase != PHASE_TERMINAL && 
-           current_phase != PHASE_MAIN && 
-           current_phase != PHASE_LIVESET && 
-           current_phase != PHASE_RESPONSE && 
-           current_phase != PHASE_MULLIGAN_P1 && 
-           current_phase != PHASE_MULLIGAN_P2 &&
-           current_phase != PHASE_LIVE_RESULT &&
-           current_phase != PHASE_ENERGY &&
-           safety < 10u) {
-        let auto_res = step_state(0u);
-        if (auto_res == 0u) { break; }
-        current_phase = states[g_gid].phase;
-        safety += 1u;
+    // DISABLED when is_debug == 1 for CPU/GPU sync testing
+    if (states[g_gid].is_debug == 0u) {
+        var current_phase = states[g_gid].phase;
+        var safety = 0u;
+        while (current_phase != PHASE_TERMINAL && 
+               current_phase != PHASE_MAIN && 
+               current_phase != PHASE_LIVESET && 
+               current_phase != PHASE_RESPONSE && 
+               current_phase != PHASE_MULLIGAN_P1 && 
+               current_phase != PHASE_MULLIGAN_P2 &&
+               current_phase != PHASE_LIVE_RESULT &&
+               current_phase != PHASE_ENERGY &&
+               safety < 10u) {
+            let auto_res = step_state(0u);
+            if (auto_res == 0u) { break; }
+            current_phase = states[g_gid].phase;
+            safety += 1u;
+        }
     }
     
     // Final evaluation if we just hit terminal

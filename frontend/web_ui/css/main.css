@@ -1954,7 +1954,7 @@ body {
 }
 
 /* Simplified Indicators */
-.deck-discard-group.simplified {
+.deck-discard-group.simplified { margin-bottom: 20px; 
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -1964,18 +1964,24 @@ body {
 
 .deck-pill {
     font-size: 0.65rem;
-    padding: 4px 8px;
+    padding: 6px 8px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border);
     border-radius: 4px;
     width: 100%;
     text-align: center;
     color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-.deck-pill.energy {
-    border-color: rgba(245, 158, 11, 0.3);
+.deck-pill:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateX(2px);
+    color: var(--text);
 }
+
+.deck-pill.energy { background: rgba(245, 158, 11, 0.15) !important; border-color: rgba(245, 158, 11, 0.6) !important; color: var(--accent-gold) !important; }
 
 .btn-discard {
     width: 100%;
@@ -1993,24 +1999,35 @@ body {
 .successful-live-area-container {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 0;
     align-items: center;
-    padding: 5px;
+    padding: 2px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    width: 100%;
+    background: rgba(0,0,0,0.1);
+    border-radius: 4px;
 }
 
 .successful-live-area-container .card {
     width: var(--card-h-mini) !important;
     height: var(--card-w-mini) !important;
-    margin-top: -60px;
-    /* Heavy overlap for landscape cards */
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.5);
+    margin-top: -65px; /* Overlap cards for vertical list */
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.6);
+    flex-shrink: 0;
+    transition: transform 0.2s, margin 0.2s;
+}
+
+.successful-live-area-container .card:hover {
+    transform: scale(1.05) translateX(5px);
+    z-index: 10;
 }
 
 .successful-live-area-container .card:first-child {
-    margin-top: 0;
+    margin-top: 5px;
 }
 
-/* Live cards are naturally landscape, so 0deg rotation in Success */
 .successful-live-area-container .card.type-live {
     transform: rotate(0deg) !important;
 }
@@ -2446,4 +2463,120 @@ body {
 
 .log-group-block.open .log-group-toggle {
     transform: rotate(180deg);
+}
+
+/* Zone Viewer Styles */
+.zone-viewer-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 10px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.zone-viewer-section {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 15px;
+}
+
+.zone-viewer-section h3 { margin: 0 0 10px 0; font-size: 0.95rem; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+
+.selection-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+
+/* Deck Button Overrides */
+.btn-deck { background: rgba(74, 158, 255, 0.25) !important; border-color: rgba(74, 158, 255, 0.6) !important; color: #ffffff !important; font-weight: bold !important; }
+
+.btn-deck:hover { background: rgba(74, 158, 255, 0.45) !important; color: #ffffff !important; transform: translateX(2px); box-shadow: 0 0 12px rgba(74, 158, 255, 0.4); }
+
+.deck-pill.energy { background: rgba(245, 158, 11, 0.15) !important; border-color: rgba(245, 158, 11, 0.6) !important; color: var(--accent-gold) !important; } 
+
+
+
+
+/* --- Final UI Refinement Overrides --- */
+
+/* Contrast: White on Red for Discard */
+.btn-discard {
+    background: rgba(231, 76, 60, 0.45) !important; /* Stronger red */
+    border-color: rgba(231, 76, 60, 0.8) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+.btn-discard:hover {
+    background: rgba(231, 76, 60, 0.6) !important;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.4);
+}
+
+/* Deck Pill Readability */
+.deck-pill {
+    color: #ffffff !important;
+    font-weight: bold !important;
+}
+
+/* Zone Spacing */
+.utility-column-right .deck-discard-group.simplified {
+    margin-bottom: 25px !important;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Success Zone: Vertical Landscape Stack */
+.successful-live-area-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    align-items: center !important;
+    overflow-y: auto !important;
+    min-height: 0 !important;
+    background: rgba(0,0,0,0.2) !important;
+    padding: 10px 5px !important;
+}
+
+.successful-live-area-container .card {
+    /* Visual landscape dimensions for the stack */
+    width: var(--card-h-mini) !important;
+    height: var(--card-w-mini) !important;
+    margin-top: -45px !important; /* Overlap vertically */
+    flex-shrink: 0;
+    transition: transform 0.2s, margin 0.2s !important;
+    box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.8);
+    background: #000;
+}
+
+.successful-live-area-container .card:first-child {
+    margin-top: 5px !important;
+}
+
+.successful-live-area-container .card:hover {
+    transform: scale(1.05) translateY(-8px) !important;
+    z-index: 100 !important;
+}
+
+/* Orientation Correction: Live cards are already landscape */
+.successful-live-area-container .card.type-live img {
+    width: 100% !important;
+    height: 100% !important;
+    transform: none !important;
+}
+
+/* Orientation Correction: Member cards are rotated to landscape */
+.successful-live-area-container .card.rotated-90 {
+    transform: none !important; /* Reset div rotation, we handle layout via width/height */
+}
+.successful-live-area-container .card.rotated-90 img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--card-h-mini) !important; /* Swap dimensions forrotated image */
+    height: var(--card-w-mini) !important;
+    transform: translate(-50%, -50%) rotate(90deg) !important;
+    object-fit: cover;
 }

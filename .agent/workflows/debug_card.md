@@ -1,0 +1,46 @@
+---
+description: Comprehensive workflow for end-to-end debugging of card logic issues, from identification to verification.
+---
+
+# Debug Card Workflow
+
+Use this workflow when a card effect is not triggering, behaving incorrectly, or causing crashes. This process ensures you identify the disconnect between the source data, the compiled logic, and the engine execution.
+
+## Phase 1: Identification & Analysis
+
+1. **Generate Card report**: Use `card_finder.py` to get the full logic stack.
+   ```powershell
+   uv run python tools/card_finder.py "<ID_OR_NO>" --output "reports/debug_<ID>.md"
+   ```
+
+2. **Verify against Metadata**: Compare the opcodes in the report with [generated_metadata.py](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/engine/models/generated_metadata.py).
+   - Check if the opcode name (e.g., `RECOVER_LIVE`) matches the intended manual pseudocode.
+   - If the report shows `META_RULE` (29) for a specific trigger/effect, it likely means the compiler failed to match a pattern.
+
+## Phase 2: Compiler Verification
+
+1. **Check Parser Aliases**: Look at [parser_v2.py](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/compiler/parser_v2.py) constants:
+   - `TRIGGER_ALIASES`
+   - `EFFECT_ALIASES`
+   - `EFFECT_ALIASES_WITH_PARAMS`
+   - `CONDITION_ALIASES`
+   
+2. **Verify Patterns**: If the alias exists but the bytecode is still wrong, check the regex patterns in `compiler/patterns/`.
+
+3. **Recompile**: After making changes, always recompile:
+   ```powershell
+   uv run python -m compiler.main --cards "<CARD_NO>"
+   ```
+
+## Phase 3: Engine Verification (Rust)
+
+1. **Create Repro Test**: If the logic compiles correctly but fails at runtime, create a Rust repro test in `engine_rust_src/src/repro/`.
+   - Use existing repro files as templates.
+   - Run the test: `cd engine_rust_src; cargo test --bin test_repro_<NAME>`
+
+2. **Check Logs**: If using the web UI, check the `launcher` console or use `PerformanceMonitor` to see execution steps.
+
+## Phase 4: Verification
+
+1. **Regenerate Report**: Run Phase 1 Step 1 again to confirm the bytecode now matches the intended logic.
+2. **Standard Tests**: Run `uv run pytest` and `cd engine_rust_src; cargo test` to ensure no regressions.

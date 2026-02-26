@@ -88,6 +88,10 @@ EFFECT_ALIASES = {
     "OPPONENT_CHOICE": "OPPONENT_CHOOSE",
     "LOOK_AND_CHOOSE_ORDER": "ORDER_DECK",
     "LOOK_AND_CHOOSE_REVEAL": "LOOK_AND_CHOOSE",
+    "SET_HEART_REQ": "SET_HEART_COST",
+    "CYCLE_AREAS": "SWAP_AREA",
+    "SELECT_OPTION": "SELECT_MODE",
+    "CHOICE_MODE": "SELECT_MODE",
 }
 
 # Effect aliases that require additional param modifications
@@ -104,14 +108,10 @@ EFFECT_ALIASES_WITH_PARAMS = {
     "DISCARD_HAND": ("MOVE_TO_DISCARD", {"source": "HAND", "destination": "discard"}),
     "RECOVER_LIVE": ("RECOVER_LIVE", {"source": "discard"}),
     "RECOVER_MEMBER": ("RECOVER_MEMBER", {"source": "discard"}),
-    "ADD_TAG": ("META_RULE", {}),
-    "PREVENT_LIVE": ("RESTRICTION", {"type": "no_live"}),
-    "RESET_YELL_HEARTS": ("META_RULE", {"meta_type": "RESET_YELL_HEARTS"}),
-    "ACTION_YELL_MULLIGAN": ("META_RULE", {"meta_type": "ACTION_YELL_MULLIGAN"}),
-    "SELECT_REVEALED": ("LOOK_AND_CHOOSE", {"source": "revealed"}),
-    "LOOK_AND_CHOOSE_REVEALED": ("LOOK_AND_CHOOSE", {"source": "revealed"}),
-    "TAP_SELF": ("TAP_MEMBER", {"target": "MEMBER_SELF"}),
-    "MOVE_SUCCESS": ("META_RULE", {"meta_type": "MOVE_SUCCESS"}),
+    "SELECT_RECOVER_LIVE": ("RECOVER_LIVE", {"source": "discard"}),
+    "SELECT_RECOVER_MEMBER": ("RECOVER_MEMBER", {"source": "discard"}),
+    "DISCARD_UNTIL": ("MOVE_TO_DISCARD", {"operation": "UNTIL_SIZE"}),
+    "YELL_MULLIGAN": ("META_RULE", {"meta_type": "ACTION_YELL_MULLIGAN"}),
 }
 
 # Maximum value for "ALL" selector
@@ -164,7 +164,11 @@ CONDITION_ALIASES = {
     "TOTAL_BLADES": ("TOTAL_BLADES", {}),
     "HEART_LEAD": ("HEART_LEAD", {}),
     "OPPONENT_HAS_WAIT": ("OPPONENT_HAS_WAIT", {}),
-    "CHECK_IS_IN_DISCARD": ("IS_IN_DISCARD", {}),
+    "IS_IN_DISCARD": ("IS_IN_DISCARD", {}),
+    "COUNT_ENERGY_EXACT": ("COUNT_ENERGY_EXACT", {}),
+    "COUNT_BLADE_HEART_TYPES": ("COUNT_BLADE_HEART_TYPES", {}),
+    "OPPONENT_HAS_EXCESS_HEART": ("OPPONENT_HAS_EXCESS_HEART", {}),
+    "SCORE_TOTAL": ("SCORE_TOTAL_CHECK", {}),
     "HAS_EXCESS_HEART": ("HAS_EXCESS_HEART", {}),
     "COUNT_MEMBER": ("COUNT_STAGE", {}),
     "TOTAL_HEARTS": ("COUNT_HEARTS", {}),
@@ -202,6 +206,9 @@ CONDITION_ALIASES = {
     "ENERGY": ("COUNT_ENERGY", {}),
     "HAS_TYPE_LIVE": ("TYPE_CHECK", {"card_type": "live"}),
     "NOT_MOVED_THIS_TURN": ("HAS_MOVED", {}),  # negated handled separately
+    # COUNT_CARDS for unique member checks across zones
+    "COUNT_CARDS": ("GROUP_FILTER", {}),
+    "COUNT_UNIQUE_MEMBERS": ("GROUP_FILTER", {"unique": True}),
 }
 
 # Conditions that map to HAS_KEYWORD with a keyword param
@@ -1209,43 +1216,83 @@ class AbilityParserV2:
 
     def _parse_pseudocode_block(self, text: str) -> List[Ability]:
         """Parse one or more abilities from pseudocode format."""
-        # Split by "TRIGGER:" but respect quotes to support GRANT_ABILITY
-        blocks = []
-        current_block = ""
-        in_quote = False
-
-        i = 0
-        while i < len(text):
-            if text[i] == '"':
-                in_quote = not in_quote
-
-            # Check for TRIGGER: start (case-insensitive)
-            if not in_quote and text[i:].upper().startswith("TRIGGER:"):
-                if current_block.strip():
-                    blocks.append(current_block)
-                    current_block = ""
-                # Find the actual case and move forward
-                trigger_kw_match = re.match(r"TRIGGER:", text[i:], re.I)
-                kw_len = len(trigger_kw_match.group(0))
-                current_block += "TRIGGER:"
-                i += kw_len
+        # Split by keywords but respect quotes
+        # We want to identify blocks that belong together.
+        # A block starts with one or more TRIGGER: lines followed by a body.
+        
+        lines = [line.strip() for line in text.split("\n") if line.strip()]
+        
+        # Filter out reminder-only lines at the top level
+        # (e.g. (エールで出たスコア...))
+        filtered_lines = []
+        for line in lines:
+            cleaned = line.strip()
+            if cleaned.startswith("(") and cleaned.endswith(")") and not any(kw in cleaned.upper() for kw in ["TRIGGER:", "EFFECT:", "COST:", "CONDITION:"]):
                 continue
+            filtered_lines.append(line)
+        lines = filtered_lines
 
-            current_block += text[i]
-            i += 1
+        if not lines:
+            return []
 
-        if current_block.strip():
-            blocks.append(current_block)
+        # Group lines into logical abilities
+        # Each ability has a set of triggers and a set of instructions.
+        current_triggers = []
+        current_body = []
+        ability_specs = []
+
+        for line in lines:
+            # Check if it's a trigger line (can be multiple on one line if separated by semicolon)
+            if line.upper().startswith("TRIGGER:"):
+                # If we have a body from a previous trigger group, finalize it
+                if current_body:
+                    ability_specs.append((current_triggers, current_body))
+                    current_triggers = []
+                    current_body = []
+                
+                # Split and add all triggers from this line
+                # Use regex to find all TRIGGER: instances
+                matches = re.finditer(r"TRIGGER:\s*([^;]+)(?:;|$)", line, re.I)
+                for m in matches:
+                    t_text = m.group(1).strip()
+                    if t_text:
+                        current_triggers.append(t_text)
+            else:
+                current_body.append(line)
+
+        # Finalize last block
+        if current_triggers or current_body:
+            ability_specs.append((current_triggers, current_body))
 
         abilities = []
-        for block in blocks:
-            if not block.strip():
-                continue
-            ability = self._parse_single_pseudocode(block)
-            # Default trigger to ACTIVATED if missing but has content
-            if ability.trigger == TriggerType.NONE and (ability.costs or ability.effects):
-                ability.trigger = TriggerType.ACTIVATED
-            abilities.append(ability)
+        for triggers, body in ability_specs:
+            if not triggers:
+                # Default to ACTIVATED if body exists but no trigger
+                # BUT ONLY IF THERE IS SUBSTANCE (not just keywords or reminders)
+                has_substance = False
+                for line in body:
+                    cleaned = line.upper()
+                    if any(kw in cleaned for kw in ["EFFECT:", "COST:", "CONDITION:"]):
+                        has_substance = True
+                        break
+                    # Also check for non-parenthesized text
+                    if line.strip() and not (line.strip().startswith("(") and line.strip().endswith(")")):
+                        has_substance = True
+                        break
+                
+                if not has_substance:
+                    continue
+                    
+                triggers = ["ACTIVATED"]
+            
+            # For each trigger, create a separate ability but sharing the same body content
+            body_text = "\n".join(body)
+            for t_val in triggers:
+                full_text = f"TRIGGER: {t_val}\n{body_text}"
+                ability = self._parse_single_pseudocode(full_text)
+                if ability:
+                    abilities.append(ability)
+        
         return abilities
 
     def _parse_single_pseudocode(self, text: str) -> Ability:
@@ -1406,31 +1453,73 @@ class AbilityParserV2:
 
         effects = []
         for p in parts:
-            # Format: NAME(VAL)->TARGET {PARAMS}
-            m = re.match(r"(\w+)\((.*?)\)\s*->\s*(\w+)(.*)", p)
+            # Format: NAME(VAL)->TARGET {PARAMS} or NAME(VAL)->EFFECT(VAL2)
+            # Try to match name and val first
+            m = re.match(r"(\w+)\((.*?)\)(.*)", p)
             if m:
-                name, val, target_name, rest = m.groups()
+                name, val_part, rest = m.groups()
                 name_up = name.upper()
                 etype = getattr(EffectType, name_up, EffectType.DRAW)
-                target = getattr(TargetType, target_name.upper() if target_name else "PLAYER", TargetType.PLAYER)
+                
+                # Check for target or chained effect in rest
+                target = last_target
+                chained_effect_str = ""
+                
+                arrow_match = re.search(r"->\s*([\w!]+)(\(.*\))?(.*)", rest)
+                if arrow_match:
+                    target_or_eff_name = arrow_match.group(1).upper()
+                    inner_val = arrow_match.group(2)
+                    extra_rest = arrow_match.group(3)
+                    
+                    if hasattr(EffectType, target_or_eff_name):
+                        # Chained effect!
+                        chained_effect_str = f"{target_or_eff_name}{inner_val if inner_val else '()'} {extra_rest}"
+                        target = last_target # Keep last target for the first effect
+                    else:
+                        target = getattr(TargetType, target_or_eff_name, TargetType.PLAYER)
+                        rest = extra_rest # Parameters belong to the first effect
+                
                 params = self._parse_pseudocode_params(rest)
 
                 val_int = 0
                 val_cond = ConditionType.NONE
 
-                # Check if val is a condition type
-                val_up = str(val).upper()
-                if hasattr(ConditionType, val_up):
+                # Check if val_part is a condition type or contains multiple params
+                val_up = str(val_part).upper()
+                if "," in val_up:
+                    # Positional params in parentheses: META_RULE(SCORE_RULE, ALL_ENERGY_ACTIVE)
+                    v_parts = [vp.strip() for vp in val_part.split(",")]
+                    for vp in v_parts:
+                        vp_up = vp.upper()
+                        if vp_up == "SCORE_RULE":
+                            params["type"] = "SCORE_RULE"
+                        elif vp_up == "ALL_ENERGY_ACTIVE":
+                            params["rule"] = "ALL_ENERGY_ACTIVE"
+                            val_int = 1 # v=1 for SCORE_RULE: ALL_ENERGY_ACTIVE
+                        else:
+                            if "=" in vp:
+                                k, v = vp.split("=", 1)
+                                params[k.strip().lower()] = v.strip().strip('"\'')
+                            else:
+                                try:
+                                    if val_int == 0: val_int = int(vp)
+                                except:
+                                    pass
+                elif hasattr(ConditionType, val_up):
                     val_cond = getattr(ConditionType, val_up)
                 else:
                     try:
-                        val_int = int(val)
+                        val_int = int(val_part)
                     except ValueError:
                         val_int = 1
-                        # Preserve raw val for special effects like SET_HEART_COST
-                        params["raw_val"] = val
+                        params["raw_val"] = val_part
 
                 effects.append(Effect(etype, val_int, val_cond, target, params))
+                
+                if chained_effect_str:
+                    # Recursively parse the chained effect
+                    effects.extend(self._parse_pseudocode_effects(chained_effect_str, last_target=target))
+                    
         return effects
 
     def _parse_pseudocode_params(self, param_str: str) -> Dict[str, Any]:
@@ -1463,6 +1552,15 @@ class AbilityParserV2:
             parts.append(current.strip())
 
         for p in parts:
+            # Handle special formats like COUNT_EQ_2 (without = sign)
+            # Pattern: KEY_EQ_N or KEY_LE_N or KEY_GE_N etc.
+            special_match = re.match(r"(COUNT_EQ|COUNT_LE|COUNT_GE|COUNT_LT|COUNT_GT)_(\d+)$", p.strip(), re.I)
+            if special_match:
+                key_part = special_match.group(1).upper()
+                num_val = int(special_match.group(2))
+                params[key_part] = num_val
+                continue
+            
             if "=" in p:
                 k, v = p.split("=", 1)
                 k = k.strip().upper()
@@ -1499,6 +1597,11 @@ class AbilityParserV2:
                         v = v.replace(old, new)
 
                 params[k] = v
+            else:
+                # Single word like "UNIQUE_NAMES" or "ALL_AREAS"
+                k = p.strip().upper()
+                if k:
+                    params[k] = True
         return params
 
     def _parse_pseudocode_costs(self, text: str) -> List[Cost]:
@@ -1524,13 +1627,28 @@ class AbilityParserV2:
                 cost_name = name.upper()
                 if cost_name == "REMOVE_SELF":
                     cost_name = "SACRIFICE_SELF"
-                ctype = getattr(AbilityCostType, cost_name, AbilityCostType.NONE)
+                
+                # Special mapping for ENERGY_CHARGE as a cost (optional/conditional)
+                if cost_name == "ENERGY_CHARGE":
+                    # In engine, this is usually an effect, but if used as cost
+                    # we map it to NONE and rely on params/value for custom logic
+                    # OR we can map it to a specific effect if bytecode supports it.
+                    # For now, let's treat it as a meta-cost.
+                    ctype = AbilityCostType.NONE
+                else:
+                    ctype = getattr(AbilityCostType, cost_name, AbilityCostType.NONE)
+                
                 try:
                     val = int(val_str) if val_str else 0
                 except ValueError:
                     val = 0
                 is_opt = "(Optional)" in rest or " OR " in text  # OR implies selectivity
                 params = self._parse_pseudocode_params(rest)
+                
+                # If it was ENERGY_CHARGE, ensure we have enough info
+                if cost_name == "ENERGY_CHARGE":
+                    params["cost_type_name"] = "ENERGY_CHARGE"
+                
                 costs.append(Cost(ctype, val, is_optional=is_opt, params=params))
         return costs
 
@@ -1550,23 +1668,47 @@ class AbilityParserV2:
                 negated = True
                 name_part = name_part[1:]
 
-            # Match "NAME {PARAMS}" or "NAME"
-            m = re.match(r"(\w+)(?:\s*\{(.*)\})?", name_part)
+            # Match "NAME(VAL) {PARAMS}" or "NAME {PARAMS}" or "NAME"
+            m = re.match(r"(\w+)(?:\((.*?)\))?\s*(?:\{(.*)\})?", name_part)
             if m:
                 name = m.group(1).upper()
-                params_str = m.group(2)
+                val_in_parens = m.group(2)
+                params_str = m.group(3)
 
                 # Initialize params from the {KEY=VAL} part
                 params = self._parse_pseudocode_params(f"{{{params_str}}}") if params_str else {}
 
-                # Check for (VAL) or =VAL outside of {PARAMS}
+                if val_in_parens:
+                    # Handle positional arguments in parentheses like COUNT_MEMBER(UNIT_CATCHU, STAGE)
+                    v_parts = [vp.strip() for vp in val_in_parens.split(",")]
+                    for vp in v_parts:
+                        vp_up = vp.upper()
+                        if vp_up.startswith("UNIT_"):
+                            params["unit"] = vp[5:]
+                        elif vp_up.startswith("GROUP_"):
+                            params["group"] = vp[6:]
+                        elif vp_up in ["STAGE", "HAND", "DISCARD", "ENERGY", "SUCCESS_LIVE", "LIVE_ZONE", "SUCCESS_PILE"]:
+                            params["zone"] = vp_up
+                        elif "=" in vp:
+                            sk, sv = [s.strip().strip('"').strip("'") for s in vp.split("=", 1)]
+                            params[sk.lower()] = sv
+                        elif ":" in vp:
+                            sk, sv = [s.strip().strip('"').strip("'") for s in vp.split(":", 1)]
+                            params[sk.lower()] = sv
+                        else:
+                            params["val"] = vp
+
+                # Check for comparison operators outside of {PARAMS}
                 remaining_part = name_part[len(m.group(0)) :].strip()
                 if remaining_part:
-                    p_m = re.search(r"\((.*?)\)", remaining_part)
-                    if p_m:
-                        params["val"] = p_m.group(1)
+                    # Check for >=, <=, >, <, =
+                    comp_match = re.match(r"(>=|<=|>|<|=)\s*[\"']?(.*?)[\"']?$", remaining_part)
+                    if comp_match:
+                        op_map = {">=": "GE", "<=": "LE", ">": "GT", "<": "LT", "=": "EQ"}
+                        params["comparison"] = op_map.get(comp_match.group(1), "GE")
+                        params["val"] = comp_match.group(2)
                     else:
-                        # Check for =VAL
+                        # Fallback for old =VAL logic
                         e_m = re.search(r"=\s*[\"']?(.*?)[\"']?$", remaining_part)
                         if e_m:
                             params["val"] = e_m.group(1)
@@ -1597,6 +1739,29 @@ class AbilityParserV2:
                     params["keyword"] = name
                     conditions.append(Condition(ctype, params, is_negated=is_negated))
                     continue
+
+                # Special handling for COUNT_SUCCESS_LIVES or COUNT_CARDS(ZONE="SUCCESS_PILE" / "SUCCESS_LIVE")
+                if name in ["COUNT_SUCCESS_LIVES", "COUNT_SUCCESS_LIVE", "COUNT_CARDS"]:
+                    z_val = (params.get("zone") or "").upper()
+                    print(f"DEBUG: Processing {name}, zone={z_val}, params={params}")
+                    if name == "COUNT_CARDS" and z_val not in ["SUCCESS_PILE", "SUCCESS_LIVE"]:
+                        # Not a success pile check, fall through to default (GROUP_FILTER) or handle elsewhere
+                        pass
+                    else:
+                        ctype = ConditionType.COUNT_SUCCESS_LIVE
+                        if "PLAYER" in params or "target" not in params:
+                            pval = params.get("PLAYER", "0")
+                            if str(pval) == "1":
+                                params["target"] = "opponent"
+                            else:
+                                params["target"] = "self"
+                            if "PLAYER" in params: del params["PLAYER"]
+                        if "COUNT" in params:
+                            params["value"] = params["COUNT"]
+                            params["comparison"] = "EQ"
+                            del params["COUNT"]
+                        conditions.append(Condition(ctype, params, is_negated=is_negated))
+                        continue
                 
                 # Check for condition aliases
                 if name in CONDITION_ALIASES:
@@ -1612,23 +1777,6 @@ class AbilityParserV2:
                     # Handle NOT_MOVED_THIS_TURN negation
                     if name == "NOT_MOVED_THIS_TURN":
                         is_negated = True
-                    conditions.append(Condition(ctype, params, is_negated=is_negated))
-                    continue
-                
-                # Special handling for COUNT_SUCCESS_LIVES with PLAYER param
-                if name == "COUNT_SUCCESS_LIVES" or name == "COUNT_SUCCESS_LIVE":
-                    ctype = ConditionType.COUNT_SUCCESS_LIVE
-                    if "PLAYER" in params:
-                        pval = params["PLAYER"]
-                        if str(pval) == "1":
-                            params["target"] = "opponent"
-                        else:
-                            params["target"] = "self"
-                        del params["PLAYER"]
-                    if "COUNT" in params:
-                        params["value"] = params["COUNT"]
-                        params["comparison"] = "EQ"
-                        del params["COUNT"]
                     conditions.append(Condition(ctype, params, is_negated=is_negated))
                     continue
                 
@@ -1686,19 +1834,26 @@ class AbilityParserV2:
                     continue
 
             p = p.strip()
-            # More robust regex that handles underscores and varies spacing
-            m = re.match(r"^([\w_]+)(?:\((.*?)\))?\s*(?:(\{.*?\})\s*)?(?:->\s*([\w, _]+))?(.*)$", p)
+            # More robust regex that handles underscores, varies spacing, and mid-string (Optional)
+            # Format: NAME(VAL) (Optional)? {PARAMS}? -> TARGET? REST
+            m = re.match(r"^([\w_]+)(?:\((.*?)\))?\s*(?:\(Optional\)\s*)?(?:(\{.*?\})\s*)?(?:->\s*([\w, _]+))?(.*)$", p)
             if m:
                 name, val, param_block, target_name, rest = m.groups()
+                
+                # If we matched (Optional) via the explicit group, we should ensure is_optional is set later.
+                # The current logic checks for "(Optional)" in rest or p, which is sufficient.
 
                 # Extract params only from the isolated {...} block if found
                 params = self._parse_pseudocode_params(param_block) if param_block else {}
 
                 # Target Resolution
                 target = last_target
+                is_chained = False
                 if target_name:
                     target_name = target_name.strip().upper()
-                    if target_name == "SELF" or target_name == "MEMBER_SELF":
+                    if hasattr(EffectType, target_name):
+                        is_chained = True
+                    elif target_name == "SELF" or target_name == "MEMBER_SELF":
                         target = TargetType.MEMBER_SELF
                     elif target_name == "PLAYER":
                         target = TargetType.PLAYER
@@ -1752,7 +1907,7 @@ class AbilityParserV2:
 
                 etype = getattr(EffectType, name_up, None)
 
-                if target_name:
+                if target_name and not is_chained:
                     target_name_up = target_name.upper()
                     if "CARD_HAND" in target_name_up:
                         target = TargetType.CARD_HAND
@@ -1760,19 +1915,19 @@ class AbilityParserV2:
                         target = TargetType.CARD_DISCARD
                     else:
                         t_part = target_name.split(",")[0].strip()
-                        target = getattr(TargetType, t_part.upper(), TargetType.PLAYER)
+                        target = getattr(TargetType, t_part.upper(), last_target)
 
                     if "DISCARD_REMAINDER" in target_name_up:
                         params["destination"] = "discard"
 
-                    # Variable targeting support: if target is "TARGET" or "TARGET_MEMBER", use last_target
-                    if target_name_up in ["TARGET", "TARGET_MEMBER"]:
+                    # Variable targeting support: if target is "TARGET" or "TARGET_MEMBER" or "SLOT", use last_target
+                    if target_name_up in ["TARGET", "TARGET_MEMBER", "SLOT"]:
                         target = last_target
                     elif target_name_up == "ACTIVATE_AND_SELF":
                         # Special case for "activate and self" -> targets player but implied multi-target
                         # For now default to player or member self
                         target = TargetType.PLAYER
-                else:
+                elif not is_chained:
                     target = TargetType.PLAYER
 
                 if name.upper() == "LOOK_AND_CHOOSE_REVEAL" and "DISCARD_REMAINDER" in p.upper():
@@ -1789,8 +1944,27 @@ class AbilityParserV2:
                 val_int = 0
                 val_cond = ConditionType.NONE
 
+                # Check for comma-separated positional params in val (e.g. META_RULE(SCORE_RULE, ALL_ENERGY_ACTIVE))
+                if val and "," in val:
+                    v_parts = [vp.strip() for vp in val.split(",")]
+                    for vp in v_parts:
+                        vp_up = vp.upper()
+                        if vp_up == "SCORE_RULE":
+                            params["type"] = "SCORE_RULE"
+                        elif vp_up == "ALL_ENERGY_ACTIVE":
+                            params["rule"] = "ALL_ENERGY_ACTIVE"
+                            val_int = 1 # v=1 for SCORE_RULE: ALL_ENERGY_ACTIVE
+                        else:
+                            if "=" in vp:
+                                k, v = vp.split("=", 1)
+                                params[k.strip().lower()] = v.strip().strip('"\'')
+                            else:
+                                try:
+                                    if val_int == 0: val_int = int(vp)
+                                except:
+                                    pass
                 # Check if val is a condition type (e.g. COUNT_STAGE)
-                if val and hasattr(ConditionType, val):
+                elif val and hasattr(ConditionType, val):
                     val_cond = getattr(ConditionType, val)
                 elif etype == EffectType.REVEAL_UNTIL and val:
                     # Special parsing for REVEAL_UNTIL(CONDITION)
@@ -1849,6 +2023,12 @@ class AbilityParserV2:
                         val_int = 1  # Fallback for non-numeric val (e.g. "ALL")
                         if val == "ALL":
                             val_int = MAX_SELECT_ALL
+                        elif val == "OPPONENT":
+                            target = TargetType.OPPONENT
+                            target_name = "OPPONENT"
+                        elif val == "PLAYER":
+                            target = TargetType.PLAYER
+                            target_name = "PLAYER"
                 if etype == EffectType.ENERGY_CHARGE:
                     if params.get("mode") == "WAIT":
                         params["wait"] = True
@@ -1856,8 +2036,25 @@ class AbilityParserV2:
                 if etype == EffectType.LOOK_AND_CHOOSE and "choose_count" not in params:
                     params["choose_count"] = 1
 
+                # Special handling for SET_HEART_COST - parse array format [2,2,3,3,6,6]
+                if etype == EffectType.SET_HEART_COST and val:
+                    # Check if val is an array format like [2,2,3,3,6,6]
+                    if val.startswith("[") and val.endswith("]"):
+                        # Parse the array and convert to raw_val format
+                        params["raw_val"] = val
+                        val_int = 0
+                    else:
+                        # Try to parse as heart cost string like "2xYELLOW,2xGREEN,2xPURPLE"
+                        # Strip quotes from the value
+                        clean_val = val.strip('"').strip("'")
+                        params["raw_val"] = clean_val
+
                 effects.append(Effect(etype, val_int, val_cond, target, params, is_optional=is_opt))
                 last_target = target
+
+                if is_chained:
+                    chained_str = f"{target_name}{rest}"
+                    effects.extend(self._parse_pseudocode_effects(chained_str, last_target=target))
         return effects
 
 

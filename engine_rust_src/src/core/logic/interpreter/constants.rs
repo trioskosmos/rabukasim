@@ -1,6 +1,8 @@
 //! # Interpreter Constants
 //!
 //! Defined bitmasks and flags used by the interpreter's filtering and condition logic.
+//! Constants that are also in `generated_constants.rs` (via metadata.json) are NOT
+//! duplicated here to avoid ambiguous glob imports.
 
 /// Mask for the lower 32 bits of the attribute, often used for basic filters.
 pub const FILTER_MASK_LOWER: u64 = 0x00000000FFFFFFFF;
@@ -28,22 +30,16 @@ pub const DYNAMIC_VALUE: u64 = 0x02;
 
 /// Flag indicating a specific Group ID filter is active.
 pub const FILTER_GROUP_FLAG: u64 = 0x10;
-/// Bit shift for the Group ID value.
-pub const FILTER_GROUP_SHIFT: u64 = 5;
+// NOTE: FILTER_GROUP_SHIFT is in generated_constants.rs
 
-/// Flag indicating the card must be Tapped.
-pub const FILTER_TAPPED: u64 = 0x1000; // Bit 12
-/// Flag indicating the card must have a Blade Heart.
-pub const FILTER_HAS_BLADE_HEART: u64 = 0x2000; // Bit 13
 /// Flag indicating the card must NOT have a Blade Heart.
 pub const FILTER_NOT_HAS_BLADE_HEART: u64 = 0x4000; // Bit 14
 /// Flag indicating unique names should be counted instead of total instances.
-pub const FILTER_UNIQUE_NAMES: u64 = 0x8000; // Bit 15 - COLLIDES with Source Zone if using 'a' word!
+pub const FILTER_UNIQUE_NAMES: u64 = 0x8000; // Bit 15
 
 /// Flag indicating a specific Unit ID filter is active.
 pub const FILTER_UNIT_FLAG: u64 = 0x10000;
-/// Bit shift for the Unit ID value.
-pub const FILTER_UNIT_SHIFT: u64 = 17;
+// NOTE: FILTER_UNIT_SHIFT is in generated_constants.rs
 
 /// Flag indicating a Cost-based filter is active.
 pub const FILTER_COST_FLAG: u64 = 0x01000000;
@@ -53,10 +49,9 @@ pub const FILTER_BLADE_FILTER_FLAG: u64 = 0x02000000;
 /// Bit shift for thresholds (Cost, Blade count, etc.).
 pub const FILTER_VALUE_SHIFT: u64 = 25;
 
-/// Bit shift for color masks.
-pub const FILTER_COLOR_SHIFT: u64 = 32;
-/// Mask for the 7-bit color flags.
-pub const FILTER_COLOR_MASK: u64 = 0x7F << FILTER_COLOR_SHIFT;
+// NOTE: FILTER_COLOR_SHIFT is in generated_constants.rs
+/// Mask for the 7-bit color flags (uses FILTER_COLOR_SHIFT from generated_constants).
+pub const FILTER_COLOR_MASK: u64 = 0x7F << 32; // 32 = FILTER_COLOR_SHIFT
 
 /// Less-than-or-Equal (LE) threshold flag.
 pub const FILTER_IS_LE: u64 = 0x40000000;
@@ -78,6 +73,8 @@ pub const KEYWORD_HAS_LIVE_SET: u64 = 1u64 << 46;
 /// Bit shift for special ID tags (names, unique IDs, etc.).
 pub const FILTER_SPECIAL_ID_SHIFT: u64 = 48;
 
+// NOTE: FILTER_SPECIAL_SHIFT is in generated_constants.rs
+
 /// Mask for all filter type flags (Member, Live, Group, Unit, Cost, Blade).
 pub const FILTER_TYPE_MASK: u64 = FILTER_TYPE_MEMBER | FILTER_TYPE_LIVE | FILTER_GROUP_FLAG | FILTER_UNIT_FLAG | FILTER_COST_FLAG | FILTER_BLADE_FILTER_FLAG;
 
@@ -90,3 +87,5 @@ pub const CHOICE_ALL: i16 = 999;
 pub const FLAG_TARGET_OPPONENT: u64 = 0x01000000;
 /// Flag for REVEAL_UNTIL live card check (S word bit 25).
 pub const FLAG_REVEAL_UNTIL_IS_LIVE: u64 = 0x02000000;
+/// Flag for forcing PLAY actions to only target empty slots (S word bit 26).
+pub const FLAG_EMPTY_SLOT_ONLY: u64 = 0x04000000;

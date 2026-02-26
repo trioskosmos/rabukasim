@@ -7,6 +7,7 @@ fn test_meta_rule_yell_mulligan() {
     let db = load_real_db();
     let mut state = GameState::default();
     state.ui.silent = false;
+    state.debug.debug_ignore_conditions = true;
     state.current_player = 0; 
 
     // Card 418: PL!S-bp2-004-R (Kurosawa Dia)

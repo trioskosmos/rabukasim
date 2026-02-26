@@ -19,14 +19,14 @@ fn test_repro_pb1_001_r_softlock_fix() {
     ability.choice_flags = CHOICE_FLAG_MODE;
     // Compiled BC for pb1-001-R's Select Mode
     ability.bytecode = vec![
-        O_SELECT_MODE as i32, 2, 12, 20, // 0, 1, 2, 3 (Jumps to 12 and 20)
-        O_JUMP as i32, 2, 0, 0,         // 4, 5, 6, 7
-        O_JUMP as i32, 3, 0, 0,         // 8, 9, 10, 11
-        O_PAY_ENERGY as i32, 2, 0, 0,   // 12, 13, 14, 15
-        O_JUMP as i32, 3, 0, 0,         // 16, 17, 18, 19
-        O_MOVE_TO_DISCARD as i32, 2, 0, 6, // 20, 21, 22, 23
-        O_JUMP as i32, 1, 0, 0,         // 24, 25, 26, 27
-        O_RETURN as i32, 0, 0, 0        // 28, 29, 30, 31
+        O_SELECT_MODE as i32, 2, 15, 25, 0, // 0, 1, 2, 3, 4 (Jumps to 15 and 25)
+        O_JUMP as i32, 2, 0, 0, 0,          // 5, 6, 7, 8, 9
+        O_JUMP as i32, 3, 0, 0, 0,          // 10, 11, 12, 13, 14
+        O_PAY_ENERGY as i32, 2, 0, 0, 0,    // 15, 16, 17, 18, 19
+        O_JUMP as i32, 3, 0, 0, 0,          // 20, 21, 22, 23, 24
+        O_MOVE_TO_DISCARD as i32, 2, 0, 6, 0, // 25, 26, 27, 28, 29
+        O_JUMP as i32, 1, 0, 0, 0,          // 30, 31, 32, 33, 34
+        O_RETURN as i32, 0, 0, 0, 0         // 35, 36, 37, 38, 39
     ];
     mock_member.abilities.push(ability);
     

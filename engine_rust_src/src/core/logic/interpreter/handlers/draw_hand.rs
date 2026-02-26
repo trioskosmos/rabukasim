@@ -2,7 +2,7 @@ use crate::core::logic::{GameState, CardDatabase, AbilityContext};
 use crate::core::enums::*;
 use super::HandlerResult;
 
-pub fn handle_draw(state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, _a: i64, s: i32) -> HandlerResult {
+pub fn handle_draw(state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, _a: i64, s: i32) -> Option<HandlerResult> {
     let p_idx = ctx.player_id as usize;
     let count = v as u32;
     let target_p = if s == 2 { 1 - p_idx } else if s == 3 { 0 } else { p_idx };
@@ -40,7 +40,7 @@ pub fn handle_draw(state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityC
                 state.draw_cards(p_idx, v as u32);
             }
         },
-        _ => return HandlerResult::Continue,
+        _ => return None,
     }
-    HandlerResult::Continue
+    Some(HandlerResult::Continue)
 }

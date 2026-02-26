@@ -41,6 +41,7 @@ pub fn get_effective_blades(state: &GameState, player_idx: usize, slot_idx: usiz
                     let ctx = AbilityContext { 
                         source_card_id: other_cid, 
                         player_id: player_idx as u8, 
+                        activator_id: player_idx as u8,
                         area_idx: other_slot as i16, 
                         target_slot: slot_idx as i16, // The slot being evaluated
                         ..Default::default() 
@@ -78,7 +79,7 @@ pub fn get_effective_blades(state: &GameState, player_idx: usize, slot_idx: usiz
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                     if ab.trigger == TriggerType::Constant {
-                         let ctx = AbilityContext { source_card_id: cid, player_id: player_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
+                         let ctx = AbilityContext { source_card_id: cid, player_id: player_idx as u8, activator_id: player_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
                          if ab.conditions.iter().all(|c| state.check_condition(db, player_idx, c, &ctx, depth + 1)) {
                              let bc = &ab.bytecode;
                              let mut i = 0;
@@ -122,6 +123,7 @@ pub fn get_effective_hearts(state: &GameState, player_idx: usize, slot_idx: usiz
                     let ctx = AbilityContext { 
                         source_card_id: other_cid, 
                         player_id: player_idx as u8, 
+                        activator_id: player_idx as u8,
                         area_idx: other_slot as i16, 
                         target_slot: slot_idx as i16,
                         ..Default::default() 
@@ -161,7 +163,7 @@ pub fn get_effective_hearts(state: &GameState, player_idx: usize, slot_idx: usiz
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                     if ab.trigger == TriggerType::Constant {
-                         let ctx = AbilityContext { source_card_id: cid, player_id: player_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
+                         let ctx = AbilityContext { source_card_id: cid, player_id: player_idx as u8, activator_id: player_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
                          if ab.conditions.iter().all(|c| state.check_condition(db, player_idx, c, &ctx, depth + 1)) {
                              let bc = &ab.bytecode;
                              let mut i = 0;
@@ -243,7 +245,7 @@ pub fn get_member_cost(state: &GameState, p_idx: usize, card_id: i32, slot_idx: 
     // 3. Self constant abilities
     for ab in &m.abilities {
         if ab.trigger == TriggerType::Constant {
-            let ctx = AbilityContext { source_card_id: card_id, player_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
+            let ctx = AbilityContext { source_card_id: card_id, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
             if ab.conditions.iter().all(|c| state.check_condition(db, p_idx, c, &ctx, depth + 1)) {
                 let bc = &ab.bytecode;
                 let mut i = 0;
@@ -261,7 +263,7 @@ pub fn get_member_cost(state: &GameState, p_idx: usize, card_id: i32, slot_idx: 
 
     // 4. Temporary cost modifiers
     for (cond, amount) in &state.core.players[p_idx].cost_modifiers {
-         let ctx = AbilityContext { source_card_id: card_id, player_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
+         let ctx = AbilityContext { source_card_id: card_id, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
          if state.check_condition(db, p_idx, cond, &ctx, depth + 1) {
              cost += *amount;
          }
@@ -273,7 +275,7 @@ pub fn get_member_cost(state: &GameState, p_idx: usize, card_id: i32, slot_idx: 
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                     if ab.trigger == TriggerType::Constant {
-                         let ctx = AbilityContext { source_card_id: card_id, player_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
+                         let ctx = AbilityContext { source_card_id: card_id, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
                          if ab.conditions.iter().all(|c| state.check_condition(db, p_idx, c, &ctx, depth + 1)) {
                              let bc = &ab.bytecode;
                              let mut i = 0;
@@ -304,6 +306,7 @@ pub fn has_restriction(state: &GameState, p_idx: usize, slot_idx: usize, opcode:
             let ctx = AbilityContext { 
                 source_card_id: cid, 
                 player_id: p_idx as u8, 
+                activator_id: p_idx as u8,
                 area_idx: slot_idx as i16, 
                 ..Default::default() 
             };
@@ -324,7 +327,7 @@ pub fn has_restriction(state: &GameState, p_idx: usize, slot_idx: usize, opcode:
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                     if ab.trigger == TriggerType::Constant {
-                         let ctx = AbilityContext { source_card_id: cid, player_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
+                         let ctx = AbilityContext { source_card_id: cid, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
                          if ab.conditions.iter().all(|c| state.check_condition(db, p_idx, c, &ctx, 0)) {
                              let bc = &ab.bytecode;
                              let mut i = 0;

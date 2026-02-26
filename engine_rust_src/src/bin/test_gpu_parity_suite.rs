@@ -169,15 +169,10 @@ async fn run_suite() {
     if !run_parity_check(&unit_manager, &unit_db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U10 Draw 2") { mismatch_count += 1; }
 
     // Run S-UNIT-11 (O_BOOST_SCORE - card 2011)
-    // SKIPPED: CPU uses live_score_bonus field, GPU uses score directly
-    // TODO: Add live_score_bonus field to GpuPlayerState for parity
-    /*
     let mut state = create_test_state();
     state.core.players[0].hand = vec![2011].into();
     state.core.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
     if !run_parity_check(&unit_manager, &unit_db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U11 Boost Score") { mismatch_count += 1; }
-    */
-    println!("  [SKIP] U11 Boost Score (live_score_bonus field missing in GPU)");
 
     // Run S-UNIT-12 (O_REDUCE_COST - card 2012)
     let mut state = create_test_state();

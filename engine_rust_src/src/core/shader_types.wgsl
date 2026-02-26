@@ -7,6 +7,32 @@ struct GpuTriggerRequest {
     _pad: array<u32, 3>,
 }
 
+// Interaction types for Response phase
+const INTERACTION_LOOK_AND_CHOOSE: u32 = 1u;
+const INTERACTION_COLOR_SELECT: u32 = 2u;
+const INTERACTION_SELECT_DISCARD: u32 = 3u;
+const INTERACTION_SELECT_HAND: u32 = 4u;
+const INTERACTION_SELECT_STAGE: u32 = 5u;
+const INTERACTION_OPPONENT_CHOOSE: u32 = 6u;
+
+// Interaction stack entry for suspending bytecode execution
+struct GpuInteraction {
+    card_id: u32,           // Card that triggered the interaction
+    slot_idx: u32,          // Slot index of the card
+    trigger_filter: i32,    // Trigger type being processed
+    ab_filter: i32,         // Ability index being processed
+    original_phase: i32,    // Phase to return to after interaction
+    choice_type: u32,       // Type of interaction (LOOK_AND_CHOOSE, etc.)
+    param_v: i32,           // Original v parameter
+    param_a_lo: u32,        // Original a_lo parameter
+    param_a_hi: u32,        // Original a_hi parameter
+    param_s: i32,           // Original s parameter
+    bytecode_start: u32,    // Start of bytecode for resume
+    bytecode_len: u32,      // Length of bytecode
+    ip_offset: u32,         // Instruction pointer offset for resume
+    _pad: array<u32, 2>,
+}
+
 struct GpuPlayerState {
     heart_buffs: array<u32, 8>,           // 32
     heart_req_reductions: array<u32, 2>,  // 8
@@ -43,8 +69,12 @@ struct GpuPlayerState {
     prevent_play_to_slot_mask: u32,       // 4
     cost_reduction: i32,                  // 4
     success_lives: array<u32, 4>,         // 16
+    live_score_bonus: i32,                // 4
+    hand_increased_this_turn: u32,        // 4
+    played_group_mask: u32,               // 4
+    excess_hearts: u32,                   // 4
     granted_abilities: array<u32, 16>,    // 64
-} // Total: 672 bytes
+} // Total: 688 bytes
 
 struct GpuGameState {
     player0: GpuPlayerState,
@@ -63,8 +93,11 @@ struct GpuGameState {
     trigger_queue: array<GpuTriggerRequest, 8>,
     queue_head: u32,
     queue_tail: u32,
-    _pad_game: array<u32, 3>,
-} // Total: 1664 bytes
+    // Interaction stack for Response phase
+    interaction_stack: array<GpuInteraction, 4>,
+    interaction_depth: u32,
+    _pad_game: array<u32, 2>,
+} // Total: updated with interaction stack
 
 struct GpuCardStats {
     ability_flags_lo: u32,

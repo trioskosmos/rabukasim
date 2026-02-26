@@ -79,6 +79,24 @@ const stateInternal = {
 
         const index = {};
 
+        // Helper to add cards to index
+        const addCard = (card, zone) => {
+            if (!card) return;
+            // Support both 'id' (client/runtime) and 'card_id' (server/master data)
+            const cid = card.id !== undefined ? card.id : card.card_id;
+
+            if (cid !== undefined && cid >= 0) {
+                // Store first occurrence OR update if this one has more data (name, text)
+                const existing = index[cid];
+                const cardText = card.original_text || card.ability_text || card.ability || card.text;
+                const existingText = existing ? (existing.original_text || existing.ability_text || existing.ability || existing.text) : null;
+
+                if (!existing || (!existingText && cardText) || (!existing.name && card.name)) {
+                    index[cid] = { ...card, id: cid }; // Ensure id key exists for consistency
+                }
+            }
+        };
+
         // 1. Index master data first (baseline)
         if (state.master_cards) state.master_cards.forEach(c => addCard(c, 'master'));
         if (state.all_cards) state.all_cards.forEach(c => addCard(c, 'all_cards'));
@@ -86,28 +104,20 @@ const stateInternal = {
         state.players.forEach((p, playerIdx) => {
             if (!p) return;
 
-            // Helper to add cards to index
-            const addCard = (card, zone) => {
-                if (card && card.id !== undefined && card.id >= 0) {
-                    // Store first occurrence OR update if this one has more data (name, text)
-                    const existing = index[card.id];
-                    const cardText = card.original_text || card.ability;
-                    const existingText = existing ? (existing.original_text || existing.ability) : null;
-
-                    if (!existing || (!existingText && cardText) || (!existing.name && card.name)) {
-                        index[card.id] = card;
-                    }
-                }
-            };
-
             // Index all zones
             if (p.hand) p.hand.forEach(c => addCard(c, 'hand'));
             if (p.stage) p.stage.forEach(c => addCard(c, 'stage'));
             if (p.live_zone) p.live_zone.forEach(c => addCard(c, 'live_zone'));
-            if (p.energy) p.energy.forEach(e => { if (e && e.card) addCard(e.card, 'energy'); });
+            // Rust Launcher provides energy cards directly as objects in p.energy
+            if (p.energy) p.energy.forEach(e => {
+                const card = (e && typeof e === 'object' && e.id !== undefined) ? e : (e && e.card);
+                if (card) addCard(card, 'energy');
+            });
             if (p.discard) p.discard.forEach(c => addCard(c, 'discard'));
             if (p.waiting_room) p.waiting_room.forEach(c => addCard(c, 'waiting_room'));
+            // Rust Launcher uses success_lives or success_zone
             if (p.success_lives) p.success_lives.forEach(c => addCard(c, 'success_lives'));
+            if (p.success_zone) p.success_zone.forEach(c => addCard(c, 'success_zone'));
             if (p.success_pile) p.success_pile.forEach(c => addCard(c, 'success_pile'));
         });
 
@@ -155,7 +165,7 @@ const stateInternal = {
             }
         }
         if (state.looked_cards) {
-            const found = state.looked_cards.find(c => c.name === name);
+            const found = state.looked_cards.find(c => c && c.name === name);
             if (found) return found;
         }
         return null;

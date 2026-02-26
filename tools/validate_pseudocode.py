@@ -38,6 +38,7 @@ VALID_TRIGGERS = {
     "ON_OPPONENT_TAP",
     "ON_YELL",
     "ON_YELL_SUCCESS",
+    "ON_YELL_REVEAL",
     "ON_OPPONENT_YELL",
     "ON_DISCARD",
     "ON_STAGE_ENTRY",
@@ -46,6 +47,13 @@ VALID_TRIGGERS = {
     "ACTIVATED_FROM_DISCARD",
     "ON_MOVE_TO_DISCARD",
     "ON_ENERGY_CHARGE",
+    "ON_MEMBER_PLAYED",
+    "ON_MEMBER_TAP",
+    "ON_SELF_TAPPED",
+    "ON_RECOVERED_FROM_DISCARD",
+    "ON_SET_TO_LIVE_PLAY",
+    "ON_PLACE_ENERGY_BY_EFFECT",
+    "ON_ABILITY_RESOLVE",
 }
 
 VALID_EFFECTS = {
@@ -162,18 +170,27 @@ def validate_pseudocode(card_no: str, pseudocode: str) -> list:
             check_previous_ability()
 
             trigger_text = line[8:].strip()
-            # Remove modifiers
-            trigger_text = re.sub(r"\s*\([^)]*\)\s*", "", trigger_text).strip()
-            # Split by possible combined triggers if any (though usually one per line)
+            # Remove modifiers in parentheses
+            trigger_text = re.sub(r"\s*\([^)]*\)\s*", " ", trigger_text).strip()
+            # Remove parameters in curly braces
+            trigger_text = re.sub(r"\{[^{}]*\}", " ", trigger_text).strip()
 
-            if trigger_text.upper() not in VALID_TRIGGERS:
-                issues.append(
-                    PseudocodeIssue(
-                        card_no, "INVALID_TRIGGER", f"Unknown trigger type: '{trigger_text}'", line, "ERROR"
+            # Split by possible combined triggers (comma or semicolon)
+            split_triggers = [t.strip() for t in re.split(r",|;", trigger_text) if t.strip()]
+
+            # Clean up redundant "TRIGGER:" prefix in split parts if any
+            split_triggers = [re.sub(r"^TRIGGER:\s*", "", t, flags=re.IGNORECASE).strip() for t in split_triggers]
+
+            for t in split_triggers:
+                if t.upper() not in VALID_TRIGGERS:
+                    issues.append(
+                        PseudocodeIssue(
+                            card_no, "INVALID_TRIGGER", f"Unknown trigger type: '{t}'", line, "ERROR"
+                        )
                     )
-                )
-
-            current_trigger = trigger_text.upper()
+            
+            if split_triggers:
+                current_trigger = split_triggers[0].upper()
             has_cost = False
             has_effect = False
 

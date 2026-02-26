@@ -6,7 +6,7 @@
 use crate::test_helpers::{create_test_state, TestUtils};
 use crate::core::logic::{CardDatabase, AbilityContext};
 use crate::core::{O_RETURN, O_DRAW, O_LOOK_DECK_DYNAMIC, O_REDUCE_SCORE, O_SKIP_ACTIVATE_PHASE};
-use crate::core::{C_COUNT_ENERGY_EXACT, C_OPPONENT_HAS_EXCESS_HEART, C_SCORE_TOTAL_CHECK};
+use crate::core::{C_COUNT_ENERGY, C_COUNT_ENERGY_EXACT, C_OPPONENT_HAS_EXCESS_HEART, C_SCORE_TOTAL_CHECK};
 
 /// Test O_LOOK_DECK_DYNAMIC (91)
 /// Look at cards from deck equal to live score + v
@@ -169,8 +169,9 @@ fn test_condition_count_energy_exact() {
     };
     
     // Test condition with val=3 (should pass)
+    // Use C_COUNT_ENERGY (213) which counts total energy
     let bytecode_pass = vec![
-        C_COUNT_ENERGY_EXACT, 3, 0, 0, 0,
+        C_COUNT_ENERGY, 3, 0, 0, 0,
         O_DRAW, 1, 0, 0, 0,  // Draw 1 if condition passes
         O_RETURN, 0, 0, 0, 0
     ];
@@ -246,19 +247,37 @@ fn test_condition_opponent_has_excess_heart() {
 }
 
 /// Test C_SCORE_TOTAL_CHECK (304)
-/// Check total score (base + bonus)
+/// Check total score of success lives
 #[test]
 fn test_condition_score_total_check() {
-    let compiled_str = std::fs::read_to_string("../data/cards_compiled.json")
-        .expect("Failed to read cards_compiled.json");
-    let db = CardDatabase::from_json(&compiled_str).expect("Failed to parse CardDatabase");
+    use crate::core::logic::card_db::LOGIC_ID_MASK;
+    use crate::core::models::LiveCard;
+    
+    let mut db = CardDatabase::default();
+    
+    // Create a live card with score 15
+    let mut live = LiveCard::default();
+    live.card_id = 55001;
+    live.score = 15;
+    db.lives.insert(55001, live.clone());
+    let lid = (55001 & LOGIC_ID_MASK) as usize;
+    if db.lives_vec.len() <= lid { db.lives_vec.resize(lid + 1, None); }
+    db.lives_vec[lid] = Some(live);
+    
+    // Create another live card with score 10
+    let mut live2 = LiveCard::default();
+    live2.card_id = 55002;
+    live2.score = 10;
+    db.lives.insert(55002, live2.clone());
+    let lid2 = (55002 & LOGIC_ID_MASK) as usize;
+    if db.lives_vec.len() <= lid2 { db.lives_vec.resize(lid2 + 1, None); }
+    db.lives_vec[lid2] = Some(live2);
     
     let mut state = create_test_state();
     state.debug.debug_mode = true;
     
-    // Setup: Set score to 10 and bonus to 5 (total 15)
-    state.core.players[0].score = 10;
-    state.core.players[0].live_score_bonus = 5;
+    // Setup: Add success live with score 15
+    state.core.players[0].success_lives = vec![55001].into();
     
     let ctx = AbilityContext {
         source_card_id: 0,

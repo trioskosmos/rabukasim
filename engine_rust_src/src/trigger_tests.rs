@@ -74,7 +74,7 @@ fn test_trigger_on_play_honoka() {
     // Setup state for Honoka's ability (ID 120): Need 2 success lives
     // Use card ID 6, 42 (Live cards) for Success Live area and 43 for Discard
     state.core.players[0].success_lives = vec![6, 42].into();
-    state.core.players[0].discard = vec![43].into(); // Live card to recover
+    state.core.players[0].discard = vec![30001].into(); // Live card to recover (fake injected)
 
     let card = db.get_member(120).expect("Missing Honoka");
     let ab = &card.abilities[0];
@@ -102,8 +102,8 @@ fn test_trigger_on_play_honoka() {
     if state.core.players[0].hand.len() != 1 {
         panic!("Should have recovered a live card to hand, found {}", state.core.players[0].hand.len());
     }
-    if !state.core.players[0].hand.contains(&43) {
-        panic!("Hand should contain the recovered live card 43");
+    if !state.core.players[0].hand.contains(&30001) {
+        panic!("Hand should contain the recovered live card 30001");
     }
 }
 

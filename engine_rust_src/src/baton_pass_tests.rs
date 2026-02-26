@@ -69,7 +69,7 @@ fn test_baton_pass_restriction() {
     // Fast forward back to Player 0's Main Phase
     state.current_player = 0;
     state.phase = Phase::Main;
-    state.core.players[0].untap_all(); // This should reset moved_members_this_turn
+    state.core.players[0].untap_all(false); // This should reset moved_members_this_turn
 
     assert!(!state.core.players[0].is_moved(0));
 

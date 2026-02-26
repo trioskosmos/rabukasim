@@ -54,28 +54,16 @@ impl HandlerRegistry {
             }
         }
 
-        let res = meta_control::handle_meta_control(state, db, ctx, op, v, a, s, instr_ip);
-        if !matches!(res, HandlerResult::Continue) { return res; }
+        if let Some(res) = meta_control::handle_meta_control(state, db, ctx, op, v, a, s, instr_ip) { return res; }
+        if let Some(res) = draw_hand::handle_draw(state, db, ctx, op, v, a, s) { return res; }
+        if let Some(res) = member_state::handle_member_state(state, db, ctx, op, v, a, s, instr_ip) { return res; }
+        if let Some(res) = energy::handle_energy(state, db, ctx, op, v, a, s, instr_ip) { return res; }
+        if let Some(res) = deck_zones::handle_deck_zones(state, db, ctx, op, v, a, s, instr_ip) { return res; }
+        if let Some(res) = score_hearts::handle_score_hearts(state, db, ctx, op, v, a, s) { return res; }
 
-        // 2. Draw / Hand
-        let res = draw_hand::handle_draw(state, db, ctx, op, v, a, s);
-        if !matches!(res, HandlerResult::Continue) { return res; }
-
-        // 3. Member State
-        let res = member_state::handle_member_state(state, db, ctx, op, v, a, s, instr_ip);
-        if !matches!(res, HandlerResult::Continue) { return res; }
-
-        // 4. Energy
-        let res = energy::handle_energy(state, db, ctx, op, v, a, s, instr_ip);
-        if !matches!(res, HandlerResult::Continue) { return res; }
-
-        // 5. Deck / Zones
-        let res = deck_zones::handle_deck_zones(state, db, ctx, op, v, a, s, instr_ip);
-        if !matches!(res, HandlerResult::Continue) { return res; }
-
-        // 6. Score / Hearts
-        let res = score_hearts::handle_score_hearts(state, db, ctx, op, v, a, s);
-        if !matches!(res, HandlerResult::Continue) { return res; }
+        if state.debug.debug_mode {
+            println!("[WARN] Unhandled opcode: {} (v={}, a={}, s={}) at IP {}", op, v, a, s, instr_ip);
+        }
 
         HandlerResult::Continue
     }
@@ -93,8 +81,34 @@ fn handle_select_mode(
 ) -> Option<usize> {
     use super::suspension::{suspend_interaction, get_choice_text};
     if ctx.choice_index == -1 {
+        let is_opponent = (_s & (1 << 24)) != 0 || (_s & 0xFF) == 2;
+        let choice_type = if is_opponent { "OPPONENT_CHOOSE" } else { "SELECT_MODE" };
         let choice_text = get_choice_text(db, ctx);
-        if suspend_interaction(state, db, ctx, instr_ip, O_SELECT_MODE, 0, "SELECT_MODE", &choice_text, 0, v as i16) { return None; }
+        
+        let mut flip_ctx = ctx.clone();
+        if is_opponent {
+            flip_ctx.player_id = 1 - (ctx.player_id as u8);
+        }
+        
+        let old_cp = state.current_player;
+        if is_opponent { state.current_player = 1 - ctx.player_id; }
+        
+        let suspended = suspend_interaction(
+            state, 
+            db, 
+            if is_opponent { &flip_ctx } else { ctx }, 
+            instr_ip, 
+            crate::core::enums::O_SELECT_MODE, 
+            0, 
+            choice_type, 
+            &choice_text, 
+            0, 
+            v as i16
+        );
+        
+        if is_opponent { state.current_player = old_cp; }
+        
+        if suspended { return None; }
         return Some(instr_ip + 5);
     }
 

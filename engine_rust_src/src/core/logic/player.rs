@@ -188,10 +188,16 @@ impl PlayerState {
         }
     }
 
-    pub fn untap_all(&mut self) {
-        // Clear tapped and moved flags (bits 3-8)
-        self.flags &= !0b111111000; 
-        self.tapped_energy_mask = 0;
+    pub fn untap_all(&mut self, skip_physical_untap: bool) {
+        if !skip_physical_untap {
+            // Clear tapped and moved flags (bits 3-8)
+            self.flags &= !0b111111000; 
+            self.tapped_energy_mask = 0;
+        } else {
+            // Even if skipping untap, we must clear "moved" flags for next turn
+            self.flags &= !0b111000000; 
+        }
+        
         self.baton_touch_count = 0;
         self.blade_buffs = [0; 3];
         self.heart_buffs = [HeartBoard::default(); 3];
@@ -266,6 +272,7 @@ impl PlayerState {
         self.played_group_mask = other.played_group_mask;
         self.yell_cards.clear(); self.yell_cards.extend_from_slice(&other.yell_cards);
         self.excess_hearts = other.excess_hearts;
+        self.skip_next_activate = other.skip_next_activate;
     }
     pub fn is_energy_tapped(&self, idx: usize) -> bool {
         if idx >= 64 { return false; }

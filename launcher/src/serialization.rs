@@ -3,6 +3,323 @@ use engine_rust::core::logic::{GameState, PlayerState, CardDatabase, card_db};
 use engine_rust::core::logic::*;
 use std::collections::HashMap;
 
+/// Describes an opcode's effect for UI display in mode selection choices
+fn describe_opcode_effect(op: i32, val: i32, bytecode: &[i32], lang: &str) -> String {
+    use engine_rust::core::generated_constants::*;
+    use engine_rust::core::enums::TargetType;
+    
+    match op {
+        O_PAY_ENERGY => {
+            if lang == "jp" { format!("{{{{icon_energy.png|E}}}}{}支払う", val) }
+            else { format!("Pay {}{{{{icon_energy.png|E}}}}", val) }
+        },
+        O_MOVE_TO_DISCARD => {
+            let slot = bytecode.get(3).copied().unwrap_or(0);
+            if slot == TargetType::CardHand as i32 {
+                if lang == "jp" { format!("手札を{}枚捨てる", val) } else { format!("Discard {} Hand", val) }
+            } else {
+                if lang == "jp" { format!("{}枚捨てる", val) } else { format!("Discard {}", val) }
+            }
+        },
+        O_DRAW => {
+            if lang == "jp" { format!("{{{{icon_draw.png|D}}}}{}枚引く", val) }
+            else { format!("Draw {}{{{{icon_draw.png|D}}}}", val) }
+        },
+        O_ADD_BLADES => {
+            if lang == "jp" { format!("{{{{icon_blade.png|B}}}}{}を得る", val) }
+            else { format!("Gain {}{{{{icon_blade.png|B}}}}", val) }
+        },
+        O_ADD_HEARTS => {
+            // val may encode heart type in upper bits
+            let heart_type = (val >> 8) & 0xFF;
+            let count = val & 0xFF;
+            let heart_name = match heart_type {
+                0 => if lang == "jp" { "ピンク" } else { "Pink" },
+                1 => if lang == "jp" { "ピンク" } else { "Pink" },
+                2 => if lang == "jp" { "イエロー" } else { "Yellow" },
+                3 => if lang == "jp" { "クール" } else { "Cool" },
+                4 => if lang == "jp" { "緑" } else { "Green" },
+                5 => if lang == "jp" { "パープル" } else { "Purple" },
+                _ => if lang == "jp" { "ハート" } else { "Heart" },
+            };
+            if lang == "jp" { format!("{}の{{{{icon_heart.png|H}}}}{}を得る", heart_name, count) }
+            else { format!("Gain {} {}{{{{icon_heart.png|H}}}}", count, heart_name) }
+        },
+        O_TAP_OPPONENT | O_TAP_MEMBER => {
+            if lang == "jp" { "相手をウェイトにする".to_string() }
+            else { "Tap opponent member".to_string() }
+        },
+        O_RECOVER_LIVE => {
+            if lang == "jp" { "ライブを回収".to_string() }
+            else { "Recover Live".to_string() }
+        },
+        O_RECOVER_MEMBER => {
+            if lang == "jp" { "メンバーを回収".to_string() }
+            else { "Recover Member".to_string() }
+        },
+        O_BUFF_POWER => {
+            if lang == "jp" { format!("パワー+{}", val) }
+            else { format!("Power +{}", val) }
+        },
+        O_BOOST_SCORE => {
+            if lang == "jp" { format!("スコア+{}", val) }
+            else { format!("Score +{}", val) }
+        },
+        O_ACTIVATE_MEMBER => {
+            if lang == "jp" { "アクティブにする".to_string() }
+            else { "Untap/Activate".to_string() }
+        },
+        O_LOOK_DECK => {
+            if lang == "jp" { format!("デッキの上{}枚を見る", val) }
+            else { format!("Look at top {} cards", val) }
+        },
+        O_SEARCH_DECK => {
+            if lang == "jp" { "デッキ検索".to_string() }
+            else { "Search Deck".to_string() }
+        },
+        O_ENERGY_CHARGE => {
+            if lang == "jp" { "エネルギーチャージ".to_string() }
+            else { "Energy Charge".to_string() }
+        },
+        O_REDUCE_COST => {
+            if lang == "jp" { format!("コスト-{}", val) }
+            else { format!("Cost -{}", val) }
+        },
+        O_IMMUNITY => {
+            if lang == "jp" { "効果無効".to_string() }
+            else { "Immunity".to_string() }
+        },
+        O_NEGATE_EFFECT => {
+            if lang == "jp" { "効果打ち消し".to_string() }
+            else { "Negate Effect".to_string() }
+        },
+        O_GRANT_ABILITY => {
+            if lang == "jp" { "能力付与".to_string() }
+            else { "Grant Ability".to_string() }
+        },
+        O_SWAP_CARDS => {
+            if lang == "jp" { "手札交換".to_string() }
+            else { "Swap Cards".to_string() }
+        },
+        O_MOVE_MEMBER => {
+            if lang == "jp" { "メンバー移動".to_string() }
+            else { "Move Member".to_string() }
+        },
+        O_FORMATION_CHANGE => {
+            if lang == "jp" { "配置変更".to_string() }
+            else { "Formation Change".to_string() }
+        },
+        O_ORDER_DECK => {
+            if lang == "jp" { "デッキ並べ替え".to_string() }
+            else { "Order Deck".to_string() }
+        },
+        O_MOVE_TO_DECK => {
+            if lang == "jp" { "デッキに戻す".to_string() }
+            else { "Return to Deck".to_string() }
+        },
+        O_ADD_TO_HAND => {
+            if lang == "jp" { "手札に加える".to_string() }
+            else { "Add to Hand".to_string() }
+        },
+        O_REVEAL_CARDS => {
+            if lang == "jp" { "公開".to_string() }
+            else { "Reveal".to_string() }
+        },
+        O_COLOR_SELECT => {
+            if lang == "jp" { "色選択".to_string() }
+            else { "Select Color".to_string() }
+        },
+        O_SELECT_MEMBER => {
+            if lang == "jp" { "メンバー選択".to_string() }
+            else { "Select Member".to_string() }
+        },
+        O_SELECT_LIVE => {
+            if lang == "jp" { "ライブ選択".to_string() }
+            else { "Select Live".to_string() }
+        },
+        O_SELECT_PLAYER => {
+            if lang == "jp" { "プレイヤー選択".to_string() }
+            else { "Select Player".to_string() }
+        },
+        O_SELECT_CARDS => {
+            if lang == "jp" { "カード選択".to_string() }
+            else { "Select Cards".to_string() }
+        },
+        O_LOOK_AND_CHOOSE => {
+            if lang == "jp" { "見て選ぶ".to_string() }
+            else { "Look & Choose".to_string() }
+        },
+        O_PLAY_MEMBER_FROM_HAND => {
+            if lang == "jp" { "メンバーを登場".to_string() }
+            else { "Play Member".to_string() }
+        },
+        O_PLAY_MEMBER_FROM_DISCARD => {
+            if lang == "jp" { "控えから登場".to_string() }
+            else { "Play from Discard".to_string() }
+        },
+        O_PLAY_LIVE_FROM_DISCARD => {
+            if lang == "jp" { "控えからライブ".to_string() }
+            else { "Play Live from Discard".to_string() }
+        },
+        O_SET_HEART_COST => {
+            if lang == "jp" { "ハート固定".to_string() }
+            else { "Set Heart Cost".to_string() }
+        },
+        O_REDUCE_HEART_REQ => {
+            if lang == "jp" { "ハート条件変更".to_string() }
+            else { "Reduce Heart Req".to_string() }
+        },
+        O_INCREASE_HEART_COST => {
+            if lang == "jp" { "ハート増加".to_string() }
+            else { "Increase Heart Cost".to_string() }
+        },
+        O_REDUCE_YELL_COUNT => {
+            if lang == "jp" { "エール数軽減".to_string() }
+            else { "Reduce Yell Count".to_string() }
+        },
+        O_REDUCE_LIVE_SET_LIMIT => {
+            if lang == "jp" { "ライブ制限変更".to_string() }
+            else { "Reduce Live Limit".to_string() }
+        },
+        O_SET_BLADES => {
+            if lang == "jp" { "ブレード固定".to_string() }
+            else { "Set Blades".to_string() }
+        },
+        O_SET_HEARTS => {
+            if lang == "jp" { "ハート固定".to_string() }
+            else { "Set Hearts".to_string() }
+        },
+        O_SET_SCORE => {
+            if lang == "jp" { "スコア固定".to_string() }
+            else { "Set Score".to_string() }
+        },
+        O_SWAP_ZONE => {
+            if lang == "jp" { "カード移動".to_string() }
+            else { "Swap Zone".to_string() }
+        },
+        O_SWAP_AREA => {
+            if lang == "jp" { "エリア移動".to_string() }
+            else { "Swap Area".to_string() }
+        },
+        O_TRANSFORM_COLOR => {
+            if lang == "jp" { "色変換".to_string() }
+            else { "Transform Color".to_string() }
+        },
+        O_TRANSFORM_HEART => {
+            if lang == "jp" { "ハート変換".to_string() }
+            else { "Transform Heart".to_string() }
+        },
+        O_PLACE_UNDER => {
+            if lang == "jp" { "メンバーの下に置く".to_string() }
+            else { "Place Under".to_string() }
+        },
+        O_TRIGGER_REMOTE => {
+            if lang == "jp" { "リモート能力".to_string() }
+            else { "Trigger Remote".to_string() }
+        },
+        O_REPLACE_EFFECT => {
+            if lang == "jp" { "代わりに".to_string() }
+            else { "Replace Effect".to_string() }
+        },
+        O_META_RULE => {
+            if lang == "jp" { "ルール変更".to_string() }
+            else { "Meta Rule".to_string() }
+        },
+        O_RESTRICTION => {
+            if lang == "jp" { "プレイ制限".to_string() }
+            else { "Restriction".to_string() }
+        },
+        O_PREVENT_PLAY_TO_SLOT => {
+            if lang == "jp" { "プレイ制限".to_string() }
+            else { "Prevent Play".to_string() }
+        },
+        O_PREVENT_ACTIVATE => {
+            if lang == "jp" { "起動制限".to_string() }
+            else { "Prevent Activate".to_string() }
+        },
+        O_PREVENT_BATON_TOUCH => {
+            if lang == "jp" { "バトン制限".to_string() }
+            else { "Prevent Baton".to_string() }
+        },
+        O_PREVENT_SET_TO_SUCCESS_PILE => {
+            if lang == "jp" { "成功制限".to_string() }
+            else { "Prevent Success".to_string() }
+        },
+        O_BATON_TOUCH_MOD => {
+            if lang == "jp" { "バトンタッチ変更".to_string() }
+            else { "Baton Touch Mod".to_string() }
+        },
+        O_MODIFY_SCORE_RULE => {
+            if lang == "jp" { "スコア計算変更".to_string() }
+            else { "Modify Score Rule".to_string() }
+        },
+        O_INCREASE_COST => {
+            if lang == "jp" { format!("コスト+{}", val) }
+            else { format!("Cost +{}", val) }
+        },
+        O_DRAW_UNTIL => {
+            if lang == "jp" { format!("{}枚になるまで引く", val) }
+            else { format!("Draw until {} cards", val) }
+        },
+        O_REVEAL_UNTIL => {
+            if lang == "jp" { "条件まで公開".to_string() }
+            else { "Reveal Until".to_string() }
+        },
+        O_OPPONENT_CHOOSE => {
+            if lang == "jp" { "相手が選ぶ".to_string() }
+            else { "Opponent Chooses".to_string() }
+        },
+        O_FLAVOR => {
+            if lang == "jp" { "フレーバー".to_string() }
+            else { "Flavor".to_string() }
+        },
+        O_ACTIVATE_ENERGY => {
+            if lang == "jp" { "エネルギー回復".to_string() }
+            else { "Untap Energy".to_string() }
+        },
+        O_ADD_STAGE_ENERGY => {
+            if lang == "jp" { "ステージエネルギー追加".to_string() }
+            else { "Add Stage Energy".to_string() }
+        },
+        O_SET_TAPPED => {
+            if lang == "jp" { "ウェイト状態にする".to_string() }
+            else { "Set Tapped".to_string() }
+        },
+        O_REDUCE_SCORE => {
+            if lang == "jp" { format!("スコア-{}", val) }
+            else { format!("Score -{}", val) }
+        },
+        O_REPEAT_ABILITY => {
+            if lang == "jp" { "能力再使用".to_string() }
+            else { "Repeat Ability".to_string() }
+        },
+        O_LOSE_EXCESS_HEARTS => {
+            if lang == "jp" { "余分なハートを失う".to_string() }
+            else { "Lose Excess Hearts".to_string() }
+        },
+        O_SKIP_ACTIVATE_PHASE => {
+            if lang == "jp" { "アクティベートフェイズスキップ".to_string() }
+            else { "Skip Activate Phase".to_string() }
+        },
+        O_PAY_ENERGY_DYNAMIC => {
+            if lang == "jp" { "エネルギー支払い".to_string() }
+            else { "Pay Energy Dynamic".to_string() }
+        },
+        O_PLACE_ENERGY_UNDER_MEMBER => {
+            if lang == "jp" { "エネルギーをメンバーの下に".to_string() }
+            else { "Place Energy Under".to_string() }
+        },
+        O_LOOK_DECK_DYNAMIC => {
+            if lang == "jp" { "デッキを見る".to_string() }
+            else { "Look Deck Dynamic".to_string() }
+        },
+        _ => {
+            // Fallback: just show opcode number
+            if lang == "jp" { format!("効果{}", op) } else { format!("Effect {}", op) }
+        }
+    }
+}
+
 pub fn get_group_name(id: u8, lang: &str) -> &'static str {
     if lang == "jp" {
         match id {
@@ -443,6 +760,7 @@ pub fn get_action_desc_rich(
             metadata.insert("cost_label".into(), json!(cost_label));
             metadata.insert("cost".into(), json!(actual_cost));
             metadata.insert("name".into(), json!(card_name_full));
+            metadata.insert("source_card_id".into(), json!(cid));
             (label, card.map(|m| m.original_text.clone()).unwrap_or_default(), "PLAY".into(), Some(slot_idx))
         },
         Action::PlayMemberDouble { hand_idx, slot_idx, other_slot } => {
@@ -498,6 +816,7 @@ pub fn get_action_desc_rich(
             metadata.insert("cost".into(), json!(actual_cost));
             metadata.insert("name".into(), json!(card_name_full));
             metadata.insert("target_player".into(), json!(viewer_idx));
+            metadata.insert("source_card_id".into(), json!(cid));
             metadata.insert("hand_idx".into(), json!(hand_idx));
             metadata.insert("slot_idx".into(), json!(slot_idx));
             metadata.insert("areas_desc".into(), json!(areas_desc));
@@ -524,6 +843,7 @@ pub fn get_action_desc_rich(
             metadata.insert("slot_idx".into(), json!(slot_idx));
             metadata.insert("ab_idx".into(), json!(ab_idx));
             metadata.insert("card_id".into(), json!(cid));
+            metadata.insert("source_card_id".into(), json!(cid));
             (label, resolve_card_desc(cid, db), "ABILITY".into(), Some(slot_idx))
         },
         Action::SelectChoice { choice_idx } => {
@@ -567,29 +887,7 @@ pub fn get_action_desc_rich(
                                         if target_ptr + 1 < ab.bytecode.len() {
                                             let op = ab.bytecode[target_ptr] as i32;
                                             let val = ab.bytecode[target_ptr + 1];
-                                            match op {
-                                                O_PAY_ENERGY => {
-                                                    // Use pattern that frontend enrichAbilityText recognizes: {{icon.png|alt}}
-                                                    name = if lang == "jp" { 
-                                                        format!("{{{{icon_energy.png|E}}}}{}支払う", val) 
-                                                    } else { 
-                                                        format!("Pay {}{{{{icon_energy.png|E}}}}", val) 
-                                                    };
-                                                },
-                                                O_MOVE_TO_DISCARD => {
-                                                    // Check target slot
-                                                    let slot = ab.bytecode[target_ptr + 3];
-                                                    if slot == engine_rust::core::enums::TargetType::CardHand as i32 {
-                                                        name = if lang == "jp" { format!("手札を{}枚捨てる", val) } else { format!("Discard {} Hand", val) };
-                                                    } else {
-                                                        name = if lang == "jp" { format!("{}枚捨てる", val) } else { format!("Discard {}", val) };
-                                                    }
-                                                },
-                                                O_DRAW => {
-                                                    name = if lang == "jp" { format!("{{{{icon_draw.png|D}}}}{}枚引く", val) } else { format!("Draw {}{{{{icon_draw.png|D}}}}", val) };
-                                                },
-                                                _ => {}
-                                            }
+                                            name = describe_opcode_effect(op, val, &ab.bytecode[target_ptr..], lang)
                                         }
                                     }
                                }
@@ -856,6 +1154,7 @@ pub fn get_action_desc_rich(
             metadata.insert("ab_idx".into(), json!(ab_idx));
             metadata.insert("choice_idx".into(), json!(choice_idx));
             metadata.insert("card_id".into(), json!(cid));
+            metadata.insert("source_card_id".into(), json!(cid));
             metadata.insert("category".into(), json!("ABILITY"));
             metadata.insert("opcode".into(), json!(opcode));
             metadata.insert("target_player".into(), json!(viewer_idx));
@@ -928,6 +1227,7 @@ pub fn get_action_desc_rich(
              metadata.insert("cost_label".into(), json!(cost_label));
              metadata.insert("cost".into(), json!(actual_cost));
              metadata.insert("name".into(), json!(card_name_full));
+             metadata.insert("source_card_id".into(), json!(cid));
              (label, card.map(|m| m.original_text.clone()).unwrap_or_default(), "PLAY".into(), Some(slot_idx))
         },
         Action::ActivateFromDiscard { discard_idx, ab_idx } => {
@@ -946,6 +1246,7 @@ pub fn get_action_desc_rich(
             metadata.insert("discard_idx".into(), json!(discard_idx));
             metadata.insert("ab_idx".into(), json!(ab_idx));
             metadata.insert("card_id".into(), json!(cid));
+            metadata.insert("source_card_id".into(), json!(cid));
             (label, resolve_card_desc(cid, db), "ABILITY".into(), None)
         },
         Action::PlaceLive { hand_idx } => {
@@ -981,6 +1282,7 @@ pub fn get_action_desc_rich(
 
             metadata.insert("hand_idx".into(), json!(hand_idx));
             metadata.insert("name".into(), json!(name));
+            metadata.insert("source_card_id".into(), json!(cid));
             (label, desc, "LIVE_SET".into(), None)
         },
         Action::Rps { choice, .. } => {
@@ -1396,6 +1698,9 @@ pub fn serialize_state_rich(
                 }
             };
 
+            let mut source_member = String::new();
+            let mut source_ability = String::new();
+
             let mut choose_count = 1;
             // Enrich title with ability name if available
             if pending.card_id >= 0 {
@@ -1404,12 +1709,17 @@ pub fn serialize_state_rich(
                 let abilities = if let Some(m) = member { Some(&m.abilities) } else { live.map(|l| &l.abilities) };
                 
                 if let Some(abs) = abilities {
-                    if let Some(ab) = abs.get(pending.ability_index.max(0) as usize) {
+                    let ab_idx = pending.ability_index.max(0) as usize;
+                    if let Some(ab) = abs.get(ab_idx) {
                         choose_count = ab.choice_count.max(1);
                         let ab_summary = get_ability_summary(&serde_json::to_value(ab).unwrap(), lang);
                         let source_info = if let Some(m) = member { format!("{} ({})", m.name, m.card_no) }
                                          else if let Some(l) = live { format!("{} ({})", l.name, l.card_no) }
                                          else { "".to_string() };
+                        
+                        source_member = source_info.clone();
+                        source_ability = ab_summary.clone();
+
                         if !source_info.is_empty() {
                             title = format!("{}: {}", source_info, ab_summary);
                         } else {
@@ -1424,12 +1734,21 @@ pub fn serialize_state_rich(
                 title = if lang == "jp" { format!("{} ({})", title, filter_desc) } else { format!("{} ({})", title, filter_desc) };
             }
 
+            // Extract options_text for frontend compatibility
+            let options_text: Vec<String> = options.iter()
+                .filter_map(|opt| opt.get("name").and_then(|n| n.as_str()).map(|s| s.to_string()))
+                .collect();
+
             Some(json!({
                 "type": pending.choice_type,
                 "title": title,
                 "text": pending.choice_text,
                 "card_id": pending.card_id,
+                "source_card_id": pending.card_id,
+                "source_member": source_member,
+                "source_ability": source_ability,
                 "options": options,
+                "options_text": options_text,
                 "actions": actions,
                 "action_map": action_map,
                 "choose_count": choose_count,

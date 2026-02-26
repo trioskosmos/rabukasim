@@ -1,90 +1,55 @@
 import os
-import re
 import sys
+import json
 
 # Add project root to path
 sys.path.insert(0, os.getcwd())
 
-from engine.game.card_loader import CardDataLoader
+from engine.game.deck_utils import UnifiedDeckParser
 
 
 def extract_deck():
-    # Load IDs
-    try:
-        loader = CardDataLoader("engine/data/cards.json")
-        m_db, l_db, e_db = loader.load()
-    except Exception as e:
-        print(f"Failed to load cards: {e}")
+    # Load card DB
+    db_path = "data/cards.json"
+    card_db = {}
+    if os.path.exists(db_path):
+        with open(db_path, "r", encoding="utf-8") as f:
+            card_db = json.load(f)
+    else:
+        print(f"Error: {db_path} not found.")
         return
 
-    card_map = {}
-    for c in m_db.values():
-        card_map[c.card_no] = c.card_id
-    for c in l_db.values():
-        card_map[c.card_no] = c.card_id
+    # Load extraction content
+    content_path = "tests/decktest.txt"
+    if not os.path.exists(content_path):
+        print(f"Error: {content_path} not found.")
+        # Try finding it in project root
+        content_path = os.path.join(os.getcwd(), "tests/decktest.txt")
 
-    # Also add map for "+" vs "＋"
-    keys = list(card_map.keys())
-    for k in keys:
-        if "+" in k:
-            card_map[k.replace("+", "＋")] = card_map[k]
-
-    # Parse decktest.txt
     try:
-        with open("tests/decktest.txt", "r", encoding="utf-8") as f:
+        with open(content_path, "r", encoding="utf-8") as f:
             content = f.read()
     except Exception as e:
-        print(f"Failed to read decktest.txt: {e}")
+        print(f"Failed to read {content_path}: {e}")
         return
 
-    # Regex to find title='ID : Name' ... <span class='num'>COUNT</span>
-    # We look for the pattern: title="PL!..." ... class="num">N</span>
+    # Parse decks
+    parser = UnifiedDeckParser(card_db)
+    results = parser.extract_from_content(content)
 
-    # Let's use a simpler approach: multiple regexes
-    # 1. Find all card-view divs
+    if not results:
+        print("No cards found.")
+        return
 
-    deck_list = []
-    print("Found cards:")
-
-    # Find all occurrences of potential card entries
-    # Pattern: title="(PL![^ ]+)" ... class="num">(\d+)
-
-    # Note: re.DOTALL is important if newlines exist
-    matches = re.findall(r'title="(PL![^\s"]+)\s*:.*?.class="num">(\d+)</span>', content, re.DOTALL)
-
-    for no, count in matches:
-        no = no.strip()
-
-        cid = card_map.get(no)
-        if not cid:
-            # Try replacing fullwidth plus
-            if "＋" in no:
-                cid = card_map.get(no.replace("＋", "+"))
-
-        if cid:
-            count = int(count)
-            # Ignore count 12 if it's the energy deck (usually 12 cards)
-            # Actually, decktest.txt separates them.
-            # The HTML shows "エネルギーデッキ" then PL!SP-bp1-030-SECE x12
-            # We want main deck only? The Main Deck has 60 cards usually.
-            # Wait, the deck list in HTML has Main Deck and Energy Deck.
-            # card ID 200 is standard energy.
-
-            # Let's filter: if it's the 12-card energy member, skip/handle separately?
-            # Standard game logic sets energy deck to ID 200.
-            # If this is a member card being used as energy, we might need to handle it.
-            # But usually benchmark uses 200.
-
-            # Let's perform a check for main deck size vs energy deck
-
-            # For now, just print what we found
-            print(f"{no}: {cid} x{count}")
-            deck_list.extend([cid] * count)
-        else:
-            print(f"WARNING: Could not find card {no}")
-
-    print(f"\nTotal Cards: {len(deck_list)}")
-    print(f"Deck List: {deck_list}")
+    for deck in results:
+        print(f"\nDeck: {deck['name']}")
+        print(f"Total Main: {len(deck['main'])}")
+        print(f"Total Energy: {len(deck['energy'])}")
+        
+        # Print first few for verification
+        for cid in sorted(set(deck['main']))[:5]:
+            count = deck['main'].count(cid)
+            print(f"  {cid} x{count}")
 
 
 if __name__ == "__main__":

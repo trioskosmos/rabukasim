@@ -163,7 +163,22 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         }
     }
 
-    // Rule 11.4 [ライブ開始時] (Live Start)
+    // Q68: If player has FLAG_CANNOT_LIVE, discard all live cards and skip live entirely
+    // (No OnLiveStart triggers, no Yell)
+    if state.core.players[p_idx].get_flag(PlayerState::FLAG_CANNOT_LIVE) {
+        if !state.ui.silent { state.log("Q68: Player cannot perform live. Discarding all cards from Live Zone.".to_string()); }
+        for i in 0..3 {
+            let cid = state.core.players[p_idx].live_zone[i];
+            if cid >= 0 {
+                state.core.players[p_idx].discard.push(cid);
+                state.core.players[p_idx].live_zone[i] = -1;
+            }
+        }
+        state.live_start_triggers_done = true; // Mark as done to prevent future triggers
+        advance_from_performance(state);
+        return;
+    }
+
     // Rule 11.4 [ライブ開始時] (Live Start)
     if !state.live_start_triggers_done {
         state.live_start_triggers_done = true;
@@ -710,7 +725,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 if let Some(m) = db.get_member(cid) {
                     for ab in &m.abilities {
                         if ab.trigger == TriggerType::Constant {
-                            let ctx = AbilityContext { source_card_id: cid, player_id: p as u8, area_idx: slot as i16, ..Default::default() };
+                            let ctx = AbilityContext { source_card_id: cid, player_id: p as u8, activator_id: p as u8, area_idx: slot as i16, ..Default::default() };
                             if ab.conditions.iter().all(|c| state.check_condition(db, p, c, &ctx, 1)) {
                                  let bc = &ab.bytecode;
                                  let mut i = 0;
@@ -732,7 +747,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                  if let Some(src_m) = db.get_member(s_cid) {
                      if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                          if ab.trigger == TriggerType::Constant {
-                             let ctx = AbilityContext { source_card_id: t_cid, player_id: p as u8, area_idx: slot as i16, ..Default::default() };
+                             let ctx = AbilityContext { source_card_id: t_cid, player_id: p as u8, activator_id: p as u8, area_idx: slot as i16, ..Default::default() };
                              if ab.conditions.iter().all(|c| state.check_condition(db, p, c, &ctx, 1)) {
                                  let bc = &ab.bytecode;
                                  let mut i = 0;
@@ -929,6 +944,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         let p = (state.first_player as usize + i) % 2;
         let ctx = AbilityContext {
             player_id: p as u8,
+            activator_id: p as u8,
             source_card_id: -1,
             area_idx: -1,
             ..Default::default()

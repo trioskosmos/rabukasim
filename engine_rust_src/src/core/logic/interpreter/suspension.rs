@@ -64,7 +64,7 @@ pub fn suspend_interaction(
     
     // Don't skip suspension for OPTIONAL, LOOK_AND_CHOOSE, COLOR_SELECT, TAP_M_SELECT, etc.
     // These are legitimate choice types that should always suspend even with limited actions.
-    let always_suspend_types = ["OPTIONAL", "LOOK_AND_CHOOSE", "COLOR_SELECT", "TAP_M_SELECT", "TAP_O", "SELECT_MEMBER", "SELECT_LIVE", "SELECT_PLAYER", "RECOV_L", "RECOV_M"];
+    let always_suspend_types = ["OPTIONAL", "LOOK_AND_CHOOSE", "COLOR_SELECT", "TAP_M_SELECT", "TAP_O", "SELECT_MEMBER", "SELECT_LIVE", "SELECT_PLAYER", "RECOV_L", "RECOV_M", "SELECT_DISCARD_PLAY", "SELECT_STAGE", "SELECT_STAGE_EMPTY", "SELECT_LIVE_SLOT", "SELECT_HAND_PLAY"];
     let should_check_skip = !always_suspend_types.contains(&choice_type);
     
     if should_check_skip && actions.len() <= 1 && (actions.is_empty() || actions.contains(&0)) && choice_type != "OPPONENT_CHOOSE" {

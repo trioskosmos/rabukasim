@@ -1,5 +1,5 @@
 use crate::core::logic::{GameState, PlayerState, CardDatabase};
-use crate::core::gpu_state::{GpuGameState, GpuPlayerState, GpuCardStats, MAX_HAND, MAX_DECK, MAX_DISCARD};
+use crate::core::gpu_state::{GpuGameState, GpuPlayerState, GpuCardStats, GpuInteraction, MAX_HAND, MAX_DECK, MAX_DISCARD};
 
 impl GameState {
     pub fn to_gpu(&self, db: &CardDatabase) -> GpuGameState {
@@ -20,7 +20,9 @@ impl GameState {
             trigger_queue: [crate::core::gpu_state::GpuTriggerRequest::default(); 8],
             queue_head: 0,
             queue_tail: 0,
-            _pad_game: [0; 3],
+            interaction_stack: [GpuInteraction::default(); 4],
+            interaction_depth: 0,
+            _pad_game: [0; 2],
         }
     }
 }
@@ -89,6 +91,10 @@ impl PlayerState {
             prevent_play_to_slot_mask: self.prevent_play_to_slot_mask as u32,
             cost_reduction: self.cost_reduction as i32,
             success_lives: [0; 4],
+            live_score_bonus: self.live_score_bonus,
+            hand_increased_this_turn: self.hand_increased_this_turn,
+            played_group_mask: self.played_group_mask,
+            excess_hearts: self.excess_hearts,
             granted_abilities: [0; 16],
         };
 

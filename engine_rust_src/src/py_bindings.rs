@@ -563,6 +563,7 @@ impl PyGameState {
         let db = &self.db.inner;
         let ctx = crate::core::logic::AbilityContext {
             player_id,
+            activator_id: player_id,
             area_idx: area_idx as i16,
             source_card_id,
             target_slot: target_slot as i16,
@@ -747,6 +748,7 @@ impl PyGameState {
     fn resolve_bytecode(&mut self, bytecode: Vec<i32>, player_id: u8, area_idx: i32) {
         let ctx = crate::core::logic::AbilityContext {
             player_id,
+            activator_id: player_id,
             area_idx: area_idx as i16,
             original_phase: None,
             ..crate::core::logic::AbilityContext::default()
@@ -758,6 +760,7 @@ impl PyGameState {
         let trigger_type = unsafe { std::mem::transmute::<i8, crate::core::enums::TriggerType>(trigger as i8) };
         let ctx = crate::core::logic::AbilityContext {
             player_id,
+            activator_id: player_id,
             original_phase: None,
             ..crate::core::logic::AbilityContext::default()
         };

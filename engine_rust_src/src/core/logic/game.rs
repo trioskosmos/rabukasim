@@ -477,7 +477,11 @@ impl GameState {
              }
         }
         
-        filter.matches(db, cid, is_tapped)
+        let res = filter.matches(db, cid, is_tapped);
+        if !res && filter_attr != 0 {
+            println!("[DEBUG] card_matches_filter: Card {} FAILED filter {}. Details: {:?}", cid, filter_attr, filter);
+        }
+        res
     }
 
     pub fn check_hearts_suitability(&self, have: &[u8; 7], need: &[u8; 7]) -> bool {
@@ -674,6 +678,7 @@ impl GameState {
     pub fn trigger_event(&mut self, db: &CardDatabase, trigger: TriggerType, p_idx: usize, source_cid: i32, slot: i16, start_ab_idx: usize, choice: i16) {
         let ctx = AbilityContext {
             player_id: p_idx as u8,
+            activator_id: p_idx as u8,
             source_card_id: source_cid,
             area_idx: slot,
             trigger_type: trigger,
@@ -911,6 +916,7 @@ impl GameState {
         let ctx = AbilityContext {
             source_card_id: card_id,
             player_id: p_idx as u8,
+            activator_id: p_idx as u8,
             ..Default::default()
         };
         for (cond, val) in &self.core.players[p_idx].cost_modifiers {

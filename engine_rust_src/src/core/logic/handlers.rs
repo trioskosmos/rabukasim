@@ -230,9 +230,17 @@ impl PhaseHandlers for GameState {
         if self.phase != Phase::Active { return; }
         let p_idx = self.current_player as usize;
         self.setup_turn_log();
-        if !self.ui.silent { self.log(format!("Rule 7.4.1: [Active Phase] Untapping all cards for Player {}.", p_idx)); }
-        self.core.players[p_idx].untap_all();
-        let ctx = AbilityContext { source_card_id: -1, player_id: p_idx as u8, area_idx: -1, ..Default::default() };
+        
+        let skip = self.core.players[p_idx].skip_next_activate;
+        if skip {
+            if !self.ui.silent { self.log(format!("Rule 7.4.1: [Active Phase] SKIPPED (untapping skipped) for Player {}.", p_idx)); }
+            self.core.players[p_idx].skip_next_activate = false;
+        } else {
+            if !self.ui.silent { self.log(format!("Rule 7.4.1: [Active Phase] Untapping all cards for Player {}.", p_idx)); }
+        }
+        
+        self.core.players[p_idx].untap_all(skip);
+        let ctx = AbilityContext { source_card_id: -1, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: -1, ..Default::default() };
         self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
         if self.phase == Phase::Active {
             self.phase = Phase::Energy;
@@ -253,7 +261,7 @@ impl PhaseHandlers for GameState {
 
     fn do_draw_phase(&mut self, db: &CardDatabase) {
         let p_idx = self.current_player as usize;
-        let ctx = AbilityContext { source_card_id: -1, player_id: p_idx as u8, area_idx: -1, ..Default::default() };
+        let ctx = AbilityContext { source_card_id: -1, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: -1, ..Default::default() };
         self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
 
         if self.phase != Phase::Draw { return; }
@@ -413,7 +421,15 @@ impl PhaseHandlers for GameState {
             true,
         );
 
-        let mut ctx = AbilityContext { source_card_id: cid, player_id: p_idx as u8, area_idx: slot_idx as i16, ability_index: ab_idx as i16, choice_index: choice_idx as i16, ..Default::default() };
+        let mut ctx = AbilityContext { 
+            source_card_id: cid, 
+            player_id: p_idx as u8, 
+            activator_id: p_idx as u8,
+            area_idx: slot_idx as i16, 
+            ability_index: ab_idx as i16, 
+            choice_index: choice_idx as i16, 
+            ..Default::default() 
+        };
         if target_slot >= 0 { ctx.target_slot = target_slot as i16; }
         let source_type = if slot_idx < 3 { 0 } else { 1 }; // 0=Stage, 1=Other
 
@@ -478,7 +494,9 @@ impl GameState {
     fn check_play_legality(&self, db: &CardDatabase, p_idx: usize, _card_id: i32, slot_idx: usize, secondary_slot_idx: i16) -> Result<(), String> {
         if self.debug.debug_ignore_conditions { return Ok(()); }
         let player = &self.core.players[p_idx];
-        if (player.prevent_play_to_slot_mask & (1 << slot_idx)) != 0 { return Err("Cannot play to this slot due to restriction".to_string()); }
+        if (player.prevent_play_to_slot_mask & (1 << slot_idx)) != 0 { 
+            return Err("Cannot play to this slot due to restriction".to_string()); 
+        }
         if player.is_moved(slot_idx) { return Err("Already played/moved to this slot this turn".to_string()); }
 
         let old_card_id = player.stage[slot_idx];
@@ -501,7 +519,7 @@ impl GameState {
         if secondary_slot_idx >= 0 {
             self.core.players[p_idx].baton_touch_count += 1;
             let s_idx = secondary_slot_idx as usize;
-            if let Some(old) = self.handle_member_leaves_stage(p_idx, s_idx, db, &AbilityContext { player_id: p_idx as u8, area_idx: s_idx as i16, ..Default::default() }) {
+            if let Some(old) = self.handle_member_leaves_stage(p_idx, s_idx, db, &AbilityContext { player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: s_idx as i16, ..Default::default() }) {
                 self.core.players[p_idx].discard.push(old);
             }
             self.core.players[p_idx].set_moved(s_idx, true);

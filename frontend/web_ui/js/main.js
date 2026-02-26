@@ -19,6 +19,7 @@ window.UI = {
     showLastPerformance: Modals.showLastPerformance,
     closePerformanceModal: Modals.closePerformanceModal,
     showDiscardModal: Rendering.showDiscardModal,
+    showZoneViewer: Rendering.showZoneViewer,
     showPerfTab: Rendering.showPerfTab
 };
 

@@ -1,4 +1,5 @@
 use crate::core::logic::{GameState, CardDatabase, AbilityContext};
+use crate::core::hearts::HeartBoard;
 use crate::core::enums::*;
 use super::HandlerResult;
 use super::super::suspension::resolve_target_slot;
@@ -6,7 +7,7 @@ use super::super::conditions::resolve_count;
 use super::super::constants::DYNAMIC_VALUE;
 use super::super::logging;
 
-pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i64, s: i32) -> HandlerResult {
+pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i64, s: i32) -> Option<HandlerResult> {
     let p_idx = ctx.player_id as usize;
     let target_slot = s & 0xFF;
     let resolved_slot = if target_slot == 10 { ctx.target_slot as i32 } else { resolve_target_slot(target_slot, ctx) as i32 };
@@ -95,10 +96,25 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
              }
         },
         O_SET_HEART_COST => {
-            // Set heart cost for a specific color
-            // v = amount to set, s = color index
-            if (s as usize) < 7 {
-                state.core.players[p_idx].heart_req_additions.set_color_count(s as usize, v as u8);
+            // Set heart cost for a specific color or full map override
+            if (a & 0x01) != 0 {
+                // Packed map: v contains counts (4 bits per color)
+                // When using packed map, we assume it's an OVERRIDE, so we clear base by setting reductions to 255.
+                let player = &mut state.core.players[p_idx];
+                player.heart_req_additions = HeartBoard::default();
+                player.heart_req_reductions = HeartBoard(0x00FFFFFFFFFFFFFF); // Clear base (0..6)
+                
+                for color_idx in 0..7 {
+                    let count = ((v >> (color_idx * 4)) & 0xF) as u8;
+                    if count > 0 {
+                        player.heart_req_additions.set_color_count(color_idx, count);
+                    }
+                }
+            } else {
+                // Legacy single-color behavior: v = amount to set, s = color index
+                if (s as usize) < 7 {
+                    state.core.players[p_idx].heart_req_additions.set_color_count(s as usize, v as u8);
+                }
             }
         },
         O_REDUCE_SCORE => {
@@ -113,12 +129,12 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
         O_LOSE_EXCESS_HEARTS => {
             // Lose excess hearts beyond what's required for the live
             // v = number of excess hearts to lose (0 = lose all excess)
-            // This is used by cards that penalize having too many hearts
-            let _player = &mut state.core.players[p_idx];
-            // For now, this is a placeholder - actual implementation would need
-            // to compare current hearts vs required hearts for the active live
+            let player = &mut state.core.players[p_idx];
+            let reduction = if v == 0 { player.excess_hearts } else { v as u32 };
+            player.excess_hearts = player.excess_hearts.saturating_sub(reduction);
+            
             if state.debug.debug_mode {
-                println!("[DEBUG] O_LOSE_EXCESS_HEARTS: v={}", v);
+                println!("[DEBUG] O_LOSE_EXCESS_HEARTS: reduced by {} to {}", reduction, player.excess_hearts);
             }
         },
         O_SKIP_ACTIVATE_PHASE => {
@@ -129,7 +145,7 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
                 println!("[DEBUG] O_SKIP_ACTIVATE_PHASE: set skip_next_activate=true");
             }
         },
-        _ => return HandlerResult::Continue,
+        _ => return None,
     }
-    HandlerResult::Continue
+    Some(HandlerResult::Continue)
 }

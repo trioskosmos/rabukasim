@@ -34,6 +34,7 @@ pollster = "0.3"
 extension-module = ["dep:pyo3", "dep:numpy", "pyo3/extension-module"]
 parallel = ["dep:rayon"]
 nn = ["dep:ort"]
+gpu = []
 default = ["extension-module", "parallel"]
 
 [profile.dev]

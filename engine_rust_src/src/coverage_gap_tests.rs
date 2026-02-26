@@ -64,7 +64,7 @@ fn test_conditions_member_properties() {
     let m10 = MemberCard {
         card_id: 19,
         hearts: [10, 0, 0, 0, 0, 0, 0], // Pink heart at index 0
-        hearts_board: HeartBoard(1),
+        hearts_board: HeartBoard::from_array(&[10, 0, 0, 0, 0, 0, 0]),
         blades: 1,
         groups: vec![10],
         ..Default::default()
@@ -118,12 +118,14 @@ fn test_conditions_member_properties() {
 
     // C_COUNT_HEARTS: Has at least 1 heart (Pink Heart on 3001)
     // Manually add heart to state to satisfy condition for generic card 3001
+    // slot=3 means "greater-or-equal" (>=), slot=0 means "equal" (==)
     state.core.players[0].heart_buffs[0].add_heart(0);
-    assert!(check_cond(&mut state, &db, C_COUNT_HEARTS, 1, 0, 0));
+    assert!(check_cond(&mut state, &db, C_COUNT_HEARTS, 1, 0, 3)); // slot=3 for >= comparison
     
     // C_COUNT_BLADES: Has at least 1 blade
+    // slot=3 means "greater-or-equal" (>=)
     state.core.players[0].blade_buffs[0] = 1;
-    assert!(check_cond(&mut state, &db, C_COUNT_BLADES, 1, 0, 0));
+    assert!(check_cond(&mut state, &db, C_COUNT_BLADES, 1, 0, 3));
 
     // C_SELF_IS_GROUP: Source card has group 1
     ctx.source_card_id = 19;

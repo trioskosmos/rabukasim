@@ -5,6 +5,15 @@ pub const MAX_HAND: usize = 64;
 pub const MAX_DECK: usize = 64;
 pub const MAX_DISCARD: usize = 64;
 pub const MAX_TRIGGER_QUEUE: usize = 8;
+pub const MAX_INTERACTION_STACK: usize = 4;
+
+// Interaction types for Response phase
+pub const INTERACTION_LOOK_AND_CHOOSE: u32 = 1;
+pub const INTERACTION_COLOR_SELECT: u32 = 2;
+pub const INTERACTION_SELECT_DISCARD: u32 = 3;
+pub const INTERACTION_SELECT_HAND: u32 = 4;
+pub const INTERACTION_SELECT_STAGE: u32 = 5;
+pub const INTERACTION_OPPONENT_CHOOSE: u32 = 6;
 
 /// GPU-compatible player state with fixed-size arrays.
 /// All fields are u32 for maximum Pod compatibility and alignment safety.
@@ -17,6 +26,26 @@ pub struct GpuTriggerRequest {
     pub ab_filter: i32,
     pub choice: i32,
     pub _pad: [u32; 3], // Align to 32 bytes
+}
+
+/// Interaction stack entry for suspending bytecode execution during Response phase
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Pod, Zeroable, Default)]
+pub struct GpuInteraction {
+    pub card_id: u32,           // Card that triggered the interaction
+    pub slot_idx: u32,          // Slot index of the card
+    pub trigger_filter: i32,    // Trigger type being processed
+    pub ab_filter: i32,         // Ability index being processed
+    pub original_phase: i32,    // Phase to return to after interaction
+    pub choice_type: u32,       // Type of interaction (LOOK_AND_CHOOSE, etc.)
+    pub param_v: i32,           // Original v parameter
+    pub param_a_lo: u32,        // Original a_lo parameter
+    pub param_a_hi: u32,        // Original a_hi parameter
+    pub param_s: i32,           // Original s parameter
+    pub bytecode_start: u32,    // Start of bytecode for resume
+    pub bytecode_len: u32,      // Length of bytecode
+    pub ip_offset: u32,         // Instruction pointer offset for resume
+    pub _pad: [u32; 2],         // Padding for alignment
 }
 
 #[repr(C)]
@@ -57,14 +86,18 @@ pub struct GpuPlayerState {
     pub prevent_play_to_slot_mask: u32,  // 4 bytes
     pub cost_reduction: i32,             // 4 bytes
     pub success_lives: [u32; 4],         // 16 bytes
-    pub granted_abilities: [u32; 16],    // 64 bytes -> Total 672 bytes
+    pub live_score_bonus: i32,           // 4 bytes
+    pub hand_increased_this_turn: u32,   // 4 bytes
+    pub played_group_mask: u32,          // 4 bytes
+    pub excess_hearts: u32,              // 4 bytes
+    pub granted_abilities: [u32; 16],    // 64 bytes -> Total 688 bytes
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Pod, Zeroable)]
 pub struct GpuGameState {
-    pub player0: GpuPlayerState,          // 608 bytes
-    pub player1: GpuPlayerState,          // 608 bytes
+    pub player0: GpuPlayerState,          // 688 bytes
+    pub player1: GpuPlayerState,          // 688 bytes
     pub current_player: u32,             // 4 bytes
     pub phase: i32,                      // 4 bytes
     pub turn: u32,                       // 4 bytes
@@ -79,7 +112,10 @@ pub struct GpuGameState {
     pub trigger_queue: [GpuTriggerRequest; 8], // 256 bytes
     pub queue_head: u32,                 // 4 bytes
     pub queue_tail: u32,                 // 4 bytes
-    pub _pad_game: [u32; 3],             // 12 bytes -> Total 1664 bytes (multiple of 64)
+    // Interaction stack for Response phase
+    pub interaction_stack: [GpuInteraction; 4], // 4 * 56 = 224 bytes
+    pub interaction_depth: u32,          // 4 bytes
+    pub _pad_game: [u32; 2],             // 8 bytes
 }
 
 impl Default for GpuGameState {
@@ -101,12 +137,14 @@ impl Default for GpuGameState {
             trigger_queue: [GpuTriggerRequest::default(); 8],
             queue_head: 0,
             queue_tail: 0,
-            _pad_game: [0; 3],
+            interaction_stack: [GpuInteraction::default(); 4],
+            interaction_depth: 0,
+            _pad_game: [0; 2],
         }
     }
 }
 
-pub const GPU_GAME_STATE_SIZE: usize = 1664;
+pub const GPU_GAME_STATE_SIZE: usize = 1936; // Updated for new fields in GpuPlayerState (688 * 2 + 560)
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Pod, Zeroable, Default)]
@@ -139,8 +177,8 @@ mod tests {
 
     #[test]
     fn test_layout_consistency() {
-        // GpuPlayerState (672 bytes)
-        assert_eq!(size_of::<GpuPlayerState>(), 672);
+        // GpuPlayerState (688 bytes)
+        assert_eq!(size_of::<GpuPlayerState>(), 688);
         assert_eq!(align_of::<GpuPlayerState>(), 4);
         assert_eq!(offset_of!(GpuPlayerState, heart_buffs), 0);
         assert_eq!(offset_of!(GpuPlayerState, flags), 444);
@@ -148,22 +186,24 @@ mod tests {
         assert_eq!(offset_of!(GpuPlayerState, avg_hearts), 512);
         assert_eq!(offset_of!(GpuPlayerState, success_lives), 592);
 
-        // GpuGameState (1664 bytes)
-        assert_eq!(size_of::<GpuGameState>(), 1664);
+        // GpuGameState (1936 bytes) - updated for interaction_stack
+        assert_eq!(size_of::<GpuGameState>(), 1936);
         assert_eq!(align_of::<GpuGameState>(), 4);
         assert_eq!(offset_of!(GpuGameState, player0), 0);
-        assert_eq!(offset_of!(GpuGameState, player1), 672);
-        assert_eq!(offset_of!(GpuGameState, current_player), 1344);
-        assert_eq!(offset_of!(GpuGameState, phase), 1348);
-        assert_eq!(offset_of!(GpuGameState, winner), 1360);
-        assert_eq!(offset_of!(GpuGameState, rng_state_lo), 1376);
-        // trigger_queue offset: 1344 + 2*672 = 1344, then after game fields:
-        // current_player(4) + phase(4) + turn(4) + active_count(4) + winner(4) + prev_card_id(4) + forced_action(4) + is_debug(4) + rng_state_lo(4) + rng_state_hi(4) + first_player(4) = 44 bytes
-        // 1344 + 44 = 1388
-        assert_eq!(offset_of!(GpuGameState, trigger_queue), 1388);
-        // trigger_queue is 8 * 32 = 256 bytes, so 1388 + 256 = 1644
-        assert_eq!(offset_of!(GpuGameState, queue_head), 1644);
-        assert_eq!(offset_of!(GpuGameState, queue_tail), 1648);
+        assert_eq!(offset_of!(GpuGameState, player1), 688);
+        assert_eq!(offset_of!(GpuGameState, current_player), 1376);
+        assert_eq!(offset_of!(GpuGameState, phase), 1380);
+        assert_eq!(offset_of!(GpuGameState, winner), 1392);
+        assert_eq!(offset_of!(GpuGameState, rng_state_lo), 1408);
+        // trigger_queue offset: 1376 + 44 bytes = 1420
+        assert_eq!(offset_of!(GpuGameState, trigger_queue), 1420);
+        // trigger_queue is 8 * 32 = 256 bytes, so 1420 + 256 = 1676
+        assert_eq!(offset_of!(GpuGameState, queue_head), 1676);
+        assert_eq!(offset_of!(GpuGameState, queue_tail), 1680);
+        // interaction_stack is at 1684
+        assert_eq!(offset_of!(GpuGameState, interaction_stack), 1684);
+        // interaction_stack is 4 * 60 = 240 bytes, so 1684 + 240 = 1924
+        assert_eq!(offset_of!(GpuGameState, interaction_depth), 1924);
 
         // GpuCardStats (80 bytes)
         assert_eq!(size_of::<GpuCardStats>(), 80);

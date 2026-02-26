@@ -72,10 +72,12 @@ fn test_meta_rule_pl_sp_bp1_024_l_heart_buffs() {
     // Need to resolve all interactions
     // First SELECT_MEMBER: Select Kanon (slot 0) to give heart01 + blade
     // Second SELECT_MEMBER: Select Keke (slot 1) to give heart01 + blade
+    let mut selection_count = 0;
     while state.phase == Phase::Response && !state.interaction_stack.is_empty() {
         println!("[TEST] Resolving interaction: {:?}", state.interaction_stack.last().unwrap().choice_type);
-        // Select slot 0 first, then slot 1
-        let slot = if state.players[0].blade_buffs[0] == 0 { 6000 } else { 6001 };
+        // Alternate between slot 0 and slot 1 for each selection
+        let slot = if selection_count == 0 { 6000 } else { 6001 };
+        selection_count += 1;
         state.step(&db, slot).expect("Step failed");
     }
     

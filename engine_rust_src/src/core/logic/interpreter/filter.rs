@@ -2,13 +2,25 @@
 //!
 //! This module contains the logic for parsing filter strings into attribute bitmasks.
 
+use crate::core::enums::*;
 use super::constants::*;
 
 pub fn map_filter_string_to_attr(filter: &str) -> u64 {
     let mut attr: u64 = 0;
     for part in filter.split(',') {
-        let part = part.trim().to_uppercase();
+        let part_trimmed = part.trim();
+        let part = part_trimmed.to_uppercase();
         if part.is_empty() { continue; }
+
+        // Check for NAME_IN with Japanese characters before uppercase conversion
+        if part_trimmed.contains("NAME_IN") && part_trimmed.contains("澁谷かのん") {
+            attr |= 1u64 << FILTER_SPECIAL_SHIFT;
+            continue;
+        }
+        if part_trimmed.contains("NOT_NAME=MY舞") {
+            attr |= 2u64 << FILTER_SPECIAL_SHIFT;
+            continue;
+        }
 
         if part.starts_with("COST") {
             let val_str = if part.contains('=') {
@@ -36,7 +48,23 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
         } else if part.starts_with("UNIT_") {
             let unit_name = part.replace("UNIT_", "").replace("_ONLY", "");
             let unit_id: i32 = match unit_name.as_str() {
-                "BIBI" => 0, "LILY_WHITE" | "LILYWHITE" => 2, "QU4RTZ" => 12, "AZUNA" => 11, "DIVERDIVA" => 13, "A_ZU_NA" => 11,
+                "PRINTEMPS" => 0, 
+                "LILY_WHITE" | "LILYWHITE" => 1,
+                "BIBI" => 2,
+                "CYARON" | "CYARON!" => 3,
+                "AZALEA" => 4,
+                "GUILTY_KISS" | "GUILTYKISS" => 5,
+                "DIVER_DIVA" | "DIVERDIVA" => 6,
+                "A_ZU_NA" | "AZUNA" => 7,
+                "QU4RTZ" => 8,
+                "R3BIRTH" => 9,
+                "CATCHU" | "CATCHU!" => 10,
+                "KALEIDOSCORE" => 11,
+                "5YNCRI5E" | "SYNCRISE" => 12,
+                "CERISE_BOUQUET" | "CERISE" => 13,
+                "DOLLCHESTRA" => 14,
+                "MIRA_CRA_PARK" | "MIRACRA" | "MIRACRA_PARK" => 15,
+                "EDEL_NOTE" | "EDELNOTE" => 16,
                 _ => -1,
             };
             if unit_id >= 0 { attr |= FILTER_UNIT_FLAG | ((unit_id as u64) << FILTER_UNIT_SHIFT); }
@@ -52,12 +80,8 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             attr |= FILTER_TYPE_LIVE;
         } else if part == "AQOURS" {
             attr |= FILTER_GROUP_FLAG | (1 << FILTER_GROUP_SHIFT);
-        } else if part == "M'S" || part == "μ'S" || part == "U'S" {
+        } else if part == "M'S" || part == "μ'S" || part == "U'S" || part == "MUSE" {
             attr |= FILTER_GROUP_FLAG | (0 << FILTER_GROUP_SHIFT);
-        } else if part.contains("NAME_IN") && part.contains("澁谷かのん") {
-            attr |= 1u64 << FILTER_SPECIAL_ID_SHIFT;
-        } else if part.contains("NOT_NAME=MY舞") {
-            attr |= 2u64 << FILTER_SPECIAL_ID_SHIFT;
         } else if part == "UNIQUE_NAMES=TRUE" || part == "UNIQUE_NAMES" || part == "SAME_UNIQUE_NAMES" {
             attr |= FILTER_UNIQUE_NAMES;
         } else if part == "SMILE" || part == "PINK" || part == "COLOR_0" {

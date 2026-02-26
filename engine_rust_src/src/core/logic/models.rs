@@ -73,6 +73,7 @@ impl std::hash::Hash for Cost {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct AbilityContext {
     pub player_id: u8,
+    pub activator_id: u8,  // The player who originally triggered/activated the ability
     pub area_idx: i16,
     pub source_card_id: i32,
     pub target_slot: i16,
@@ -93,6 +94,7 @@ impl Default for AbilityContext {
     fn default() -> Self {
         Self {
             player_id: 0,
+            activator_id: 0,
             area_idx: -1,
             source_card_id: -1,
             target_slot: -1,

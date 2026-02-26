@@ -306,6 +306,21 @@ mod parity_tests {
         // Setup: Member on stage with blades
         state.core.players[0].stage[0] = 100;  // Need a member on stage
         state.core.players[0].blade_buffs[0] = 3;
+        state.core.players[0].set_tapped(0, false);  // Ensure slot is not tapped
+        
+        // Debug output
+        eprintln!("DEBUG: stage[0] = {}", state.core.players[0].stage[0]);
+        eprintln!("DEBUG: blade_buffs[0] = {}", state.core.players[0].blade_buffs[0]);
+        eprintln!("DEBUG: is_tapped(0) = {}", state.core.players[0].is_tapped(0));
+        eprintln!("DEBUG: flags = {:b}", state.core.players[0].flags);
+        
+        // Debug: call get_effective_blades directly
+        let blades_0 = state.get_effective_blades(0, 0, &db, 0);
+        eprintln!("DEBUG: get_effective_blades(0, 0) = {}", blades_0);
+        for i in 0..3 {
+            let b = state.get_effective_blades(0, i, &db, 0);
+            eprintln!("DEBUG: slot {} blades = {}", i, b);
+        }
         
         let ctx = AbilityContext { 
             player_id: 0, 
@@ -315,8 +330,9 @@ mod parity_tests {
         // Test: Count >= 2 should be true
         // Note: C_COUNT_BLADES uses get_effective_blades which requires stage members
         let result = crate::core::logic::interpreter::check_condition_opcode(
-            &state, &db, C_COUNT_BLADES, 2, 0, 0, &ctx, 0
+            &state, &db, C_COUNT_BLADES, 2, 0, 3, &ctx, 0
         );
+        eprintln!("DEBUG: C_COUNT_BLADES result = {}", result);
         assert!(result, "C_COUNT_BLADES >= 2 should be true");
     }
 

@@ -144,8 +144,18 @@ pub fn get_random_valid_deck(db: &CardDatabase) -> ParsedDecks {
     let mut rng = rand::thread_rng();
 
     // 1. Members: 48 cards (12 distinct types x 4 copies)
-    let mut m_ids: Vec<i32> = db.members.keys().cloned().collect();
-    if m_ids.is_empty() { m_ids.push(1); } // Safety fallback
+    // Requirement: Must have at least one ability
+    let mut m_ids: Vec<i32> = db.members.iter()
+        .filter(|(_, m)| !m.abilities.is_empty())
+        .map(|(id, _)| *id)
+        .collect();
+    
+    // Fallback if no cards with abilities found (unlikely with full DB)
+    if m_ids.is_empty() {
+        m_ids = db.members.keys().cloned().collect();
+    }
+    if m_ids.is_empty() { m_ids.push(1); } // Absolute safety fallback
+    
     m_ids.shuffle(&mut rng);
 
     let needed_types = 12;
@@ -158,8 +168,17 @@ pub fn get_random_valid_deck(db: &CardDatabase) -> ParsedDecks {
     members.shuffle(&mut rng); // Shuffle the final list
 
     // 2. Lives: 12 cards (3 distinct types x 4 copies)
-    let mut l_ids: Vec<i32> = db.lives.keys().cloned().collect();
+    // Requirement: Must have at least one ability
+    let mut l_ids: Vec<i32> = db.lives.iter()
+        .filter(|(_, l)| !l.abilities.is_empty())
+        .map(|(id, _)| *id)
+        .collect();
+    
+    if l_ids.is_empty() {
+        l_ids = db.lives.keys().cloned().collect();
+    }
     if l_ids.is_empty() { l_ids.push(10001); }
+    
     l_ids.shuffle(&mut rng);
 
     let needed_lives = 3;
@@ -178,4 +197,69 @@ pub fn get_random_valid_deck(db: &CardDatabase) -> ParsedDecks {
     let energy = vec![def_e; 12];
 
     ParsedDecks { members, lives, energy }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use engine_rust::core::logic::CardDatabase;
+    use engine_rust::core::logic::card_db::{MemberCard, LiveCard};
+    use engine_rust::core::logic::models::Ability;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_random_deck_generation_has_abilities() {
+        let mut db = CardDatabase::default();
+        
+        // Add 2 members with abilities
+        db.members.insert(1, MemberCard {
+            card_id: 1,
+            abilities: vec![Ability::default()],
+            ..MemberCard::default()
+        });
+        db.members.insert(2, MemberCard {
+            card_id: 2,
+            abilities: vec![Ability::default()],
+            ..MemberCard::default()
+        });
+        
+        // Add 10 members without abilities (pool is small so they will be ignored if filter works)
+        for i in 3..13 {
+            db.members.insert(i, MemberCard {
+                card_id: i,
+                abilities: vec![],
+                ..MemberCard::default()
+            });
+        }
+
+        // Add 1 live with ability
+        db.lives.insert(10001, LiveCard {
+            card_id: 10001,
+            abilities: vec![Ability::default()],
+            ..LiveCard::default()
+        });
+        
+        // Add 5 lives without abilities
+        for i in 10002..10007 {
+            db.lives.insert(i, LiveCard {
+                card_id: i,
+                abilities: vec![],
+                ..LiveCard::default()
+            });
+        }
+
+        let deck = get_random_valid_deck(&db);
+        
+        // Check memberships
+        for mid in deck.members {
+            let m = db.members.get(&mid).unwrap();
+            assert!(!m.abilities.is_empty(), "Member card {} should have abilities", mid);
+        }
+        
+        // Check lives
+        for lid in deck.lives {
+            let l = db.lives.get(&lid).unwrap();
+            assert!(!l.abilities.is_empty(), "Live card {} should have abilities", lid);
+        }
+    }
 }

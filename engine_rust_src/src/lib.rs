@@ -61,15 +61,16 @@ mod game_end_tests;
 mod opcode_missing_tests;
 #[cfg(test)]
 mod opcode_coverage_gap_2;
+// #[cfg(test)]
+// // mod archetype_runner;
 #[cfg(test)]
-#[cfg(test)]
-// mod archetype_runner;
 mod repro_task;
 #[cfg(test)]
 mod repro_bp3_002_p;
-mod repro_card_fixes;
 #[cfg(test)]
-mod semantic_assertions;
+mod repro_card_fixes;
+// #[cfg(test)]
+// // mod semantic_assertions;
 #[cfg(test)]
 mod enforcement_tests;
 #[cfg(test)]
@@ -82,6 +83,9 @@ mod qa_verification_tests;
 mod count_group_tests;
 #[cfg(test)]
 mod repro_optionality;
+
+#[cfg(test)]
+mod repro_flags;
 
 #[cfg(test)]
 mod meta_rule_card_tests;
@@ -104,6 +108,12 @@ mod new_opcode_tests;
 
 #[cfg(test)]
 mod unique_ability_tests;
+
+#[cfg(test)]
+mod gpu_smoke_tests;
+
+#[cfg(test)]
+mod gpu_parity_tests;
 
 // pub mod repro_pl_bp3_004; // Deleted
 

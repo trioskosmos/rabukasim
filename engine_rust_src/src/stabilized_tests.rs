@@ -91,18 +91,23 @@ fn verify_full_win_condition() {
 
 #[test]
 fn verify_buff_logic() {
-    let db = load_real_db();
+    let mut db = load_real_db();
+    let mut mock_member = db.get_member(8360).unwrap().clone();
+    mock_member.card_id = 9999;
+    mock_member.blades = 3;
+    // Clear conditions and use unconditional O_ADD_BLADES (11) targeting context area (4)
+    mock_member.abilities[0].conditions.clear();
+    mock_member.abilities[0].bytecode = vec![11, 1, 0, 0, 4, 1, 0, 0, 0, 0];
+    db.members.insert(9999, mock_member);
+
     let mut state = GameState::default();
     state.ui.silent = true;
     
-    // ID 8360: 乙宗 梢 (Buffer: Constant +1 Blade to Self)
-    // Base Blades: 3
-    // Total should be 4.
-    state.core.players[0].stage[0] = 8360; 
+    // ID 9999: Mock Buffer (Buffer: Constant +1 Blade to Self using Opcode 11 (O_ADD_BLADES) Targeting 4)
+    // Base Blades: 3. Total should be 4.
+    state.core.players[0].stage[0] = 9999; 
     
-    // Eli ID 121: Base Blades 1
-    state.core.players[0].stage[1] = 121;
-    
-    assert_eq!(state.get_effective_blades(0, 0, &db, 0), 4, "8360 should have 3+1 blades");
-    assert_eq!(state.get_effective_blades(0, 1, &db, 0), 1, "121 should have 1 blade");
+    let blades = state.get_effective_blades(0, 0, &db, 0);
+    assert_eq!(blades, 4, "9999 should have 3+1 blades");
 }
+

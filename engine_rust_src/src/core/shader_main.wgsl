@@ -31,22 +31,24 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     
     // AUTO-PHASE ADVANCE: Continue stepping through non-interactive phases
-    // This mirrors CPU's step() which auto-advances Active→Energy→Draw→Main
-    var current_phase = states[g_gid].phase;
-    var safety = 0u;
-    while (current_phase != PHASE_TERMINAL && 
-           current_phase != PHASE_MAIN && 
-           current_phase != PHASE_LIVESET && 
-           current_phase != PHASE_RESPONSE && 
-           current_phase != PHASE_MULLIGAN_P1 && 
-           current_phase != PHASE_MULLIGAN_P2 &&
-           current_phase != PHASE_LIVE_RESULT &&
-           current_phase != PHASE_ENERGY &&
-           safety < 10u) {
-        let auto_res = step_state(0u);
-        if (auto_res == 0u) { break; }
-        current_phase = states[g_gid].phase;
-        safety += 1u;
+    // DISABLED when is_debug == 1 for CPU/GPU sync testing
+    if (states[g_gid].is_debug == 0u) {
+        var current_phase = states[g_gid].phase;
+        var safety = 0u;
+        while (current_phase != PHASE_TERMINAL && 
+               current_phase != PHASE_MAIN && 
+               current_phase != PHASE_LIVESET && 
+               current_phase != PHASE_RESPONSE && 
+               current_phase != PHASE_MULLIGAN_P1 && 
+               current_phase != PHASE_MULLIGAN_P2 &&
+               current_phase != PHASE_LIVE_RESULT &&
+               current_phase != PHASE_ENERGY &&
+               safety < 10u) {
+            let auto_res = step_state(0u);
+            if (auto_res == 0u) { break; }
+            current_phase = states[g_gid].phase;
+            safety += 1u;
+        }
     }
     
     // Final evaluation if we just hit terminal

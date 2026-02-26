@@ -8,6 +8,7 @@ mod tests {
     use crate::core::logic::card_db::MemberCard;
 
     fn create_test_db() -> CardDatabase {
+        use crate::core::logic::card_db::LOGIC_ID_MASK;
         let mut db = CardDatabase::default();
         // ID 100: Liella Member, Cost 1
         let mut m1 = MemberCard::default();
@@ -15,14 +16,20 @@ mod tests {
         m1.name = "澁谷かのん".to_string();
         m1.cost = 1;
         m1.groups = vec![3]; // Liella
-        db.members.insert(100, m1);
+        db.members.insert(100, m1.clone());
+        let lid = (100 & LOGIC_ID_MASK) as usize;
+        if db.members_vec.len() <= lid { db.members_vec.resize(lid + 1, None); }
+        db.members_vec[lid] = Some(m1);
 
         // ID 101: Other Member, Cost 5
         let mut m2 = MemberCard::default();
         m2.card_id = 101;
         m2.name = "Other".to_string();
         m2.cost = 5;
-        db.members.insert(101, m2);
+        db.members.insert(101, m2.clone());
+        let lid2 = (101 & LOGIC_ID_MASK) as usize;
+        if db.members_vec.len() <= lid2 { db.members_vec.resize(lid2 + 1, None); }
+        db.members_vec[lid2] = Some(m2);
         
         db
     }

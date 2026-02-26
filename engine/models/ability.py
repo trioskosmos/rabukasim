@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 
 from engine.models.enums import CHAR_MAP
 from engine.models.opcodes import Opcode
+from .generated_metadata import EXTRA_CONSTANTS
 
 
 class TriggerType(IntEnum):
@@ -615,6 +616,44 @@ class Ability:
         return bytecode
 
     def _compile_single_condition(self, cond: Condition, bytecode: List[int]):
+        # Special handling for BATON condition - must be first since it uses different param keys
+        if cond.type == ConditionType.BATON:
+            # Special handling for BATON condition
+            # Bytecode format: [CHECK_BATON, val, attr, attr_hi, slot]
+            # val: expected baton touch count (0 = any > 0, 2 = exactly 2)
+            # attr: GROUP_ID filter (lower 32 bits)
+            if hasattr(Opcode, "CHECK_BATON"):
+                params_upper = {k.upper(): v for k, v in cond.params.items() if isinstance(k, str)}
+                
+                # Value: expected baton touch count
+                val = 0
+                count_eq = cond.params.get("count_eq") or params_upper.get("COUNT_EQ")
+                if count_eq:
+                    try:
+                        val = int(count_eq)
+                    except (ValueError, TypeError):
+                        val = 0
+                
+                # Attr: GROUP_ID filter for baton source cards
+                attr = 0
+                f_str = str(cond.params.get("filter") or params_upper.get("FILTER") or "")
+                if "GROUP_ID=" in f_str.upper():
+                    import re
+                    m_g = re.search(r"GROUP_ID=(\d+)", f_str, re.I)
+                    if m_g:
+                        attr = int(m_g.group(1))
+                
+                # Also check for direct group parameter
+                group_id = cond.params.get("group") or params_upper.get("GROUP")
+                if group_id:
+                    try:
+                        attr = int(group_id)
+                    except (ValueError, TypeError):
+                        pass
+
+                bytecode.extend([int(Opcode.CHECK_BATON), val, attr, 0, 0])
+            return
+        
         op_name = f"CHECK_{cond.type.name}"
         if hasattr(Opcode, op_name):
             op = getattr(Opcode, op_name)
@@ -623,8 +662,12 @@ class Ability:
             params_upper = {k.upper(): v for k, v in cond.params.items() if isinstance(k, str)}
             
             v_raw = (
-                cond.params.get("value") or cond.params.get("min") or cond.params.get("count") or cond.params.get("diff") or
-                params_upper.get("VALUE") or params_upper.get("MIN") or params_upper.get("COUNT") or params_upper.get("DIFF") or 0
+                cond.params.get("min") or cond.params.get("count") or cond.params.get("value") or cond.params.get("diff") or
+                cond.params.get("GE") or cond.params.get("LE") or cond.params.get("GT") or cond.params.get("LT") or cond.params.get("EQ") or
+                cond.params.get("COUNT_GE") or cond.params.get("COUNT_LE") or cond.params.get("COUNT_GT") or cond.params.get("COUNT_LT") or cond.params.get("COUNT_EQ") or
+                cond.params.get("val") or
+                params_upper.get("MIN") or params_upper.get("COUNT") or params_upper.get("VALUE") or params_upper.get("DIFF") or 
+                params_upper.get("GE") or params_upper.get("LE") or params_upper.get("GT") or params_upper.get("LT") or params_upper.get("EQ") or 0
             )
             try:
                 val = int(v_raw) if v_raw is not None else 0
@@ -647,12 +690,12 @@ class Ability:
                 # Resolve using enums
                 if "group" in cond.params or "GROUP" in params_upper:
                     from engine.models.enums import Group
-
-                    attr = int(Group.from_japanese_name(attr_raw))
+                    g_id = int(Group.from_japanese_name(attr_raw))
+                    attr = (g_id & 0x7F) << 5 | 0x10
                 elif "unit" in cond.params or "UNIT" in params_upper:
                     from engine.models.enums import Unit
-
-                    attr = int(Unit.from_japanese_name(attr_raw))
+                    u_id = int(Unit.from_japanese_name(attr_raw))
+                    attr = (u_id & 0x7F) << 17 | 0x10000
                 elif cond.type == ConditionType.SCORE_COMPARE:
                     # Map score/cost/heart types to int
                     stype = cond.params.get("type") or params_upper.get("TYPE") or "score"
@@ -665,7 +708,7 @@ class Ability:
 
             # Comparison mapping (GE=0, LE=1, GT=2, LT=3, EQ=4)
             comp_str = str(cond.params.get("comparison") or params_upper.get("COMPARISON") or "GE").upper()
-            comp_map = {"GE": 0, "LE": 1, "GT": 2, "LT": 3, "EQ": 4}
+            comp_map = {"EQ": 0, "GT": 1, "LT": 2, "GE": 3, "LE": 4}
             comp_val = comp_map.get(comp_str, 0)
 
             # Zone mapping: STAGE=0, LIVE_ZONE=1, LIVE_RESULT/EXCESS=2
@@ -701,24 +744,64 @@ class Ability:
                     except:
                         pass
             
-            if cond.type == ConditionType.COUNT_GROUP:
+            if cond.type in [
+                ConditionType.COUNT_GROUP,
+                ConditionType.COUNT_STAGE,
+                ConditionType.COUNT_HAND,
+                ConditionType.COUNT_DISCARD,
+            ]:
                 if cond.params.get("UNIQUE_NAMES") or cond.params.get("unique_names") or params_upper.get("UNIQUE_NAMES"):
                     attr |= 0x8000 # FILTER_UNIQUE_NAMES flag
                 
-                # If attr is still 0, try to extract from FILTER parameter
+                # Zone Bitmask Filter (Bits 45-47)
+                zone_val = cond.params.get("zone") or params_upper.get("ZONE")
+                if zone_val:
+                    z_str = str(zone_val).upper()
+                    z_mask = 0
+                    if "STAGE" in z_str: z_mask |= 0x01
+                    if "DISCARD" in z_str: z_mask |= 0x02
+                    if "HAND" in z_str: z_mask |= 0x04
+                    if z_mask > 0:
+                        attr |= (z_mask & 0x7) << 45
+
+                # Extract unit/group from direct parameters if 'filter' search failed
+                if attr & 0x7FFF == 0:
+                    unit_val = cond.params.get("unit") or params_upper.get("UNIT")
+                    if unit_val:
+                        from engine.models.enums import Unit
+                        u_str = str(unit_val).upper()
+                        if not u_str.startswith("UNIT_"):
+                            u_str = "UNIT_" + u_str
+                        for u in Unit:
+                            if u.name == u_str:
+                                attr |= (int(u) << 17) | 0x10000
+                                break
+                    
+                    group_val = cond.params.get("group") or params_upper.get("GROUP")
+                    if group_val and not (attr & 0x10):
+                        from engine.models.enums import Group
+                        g_str = str(group_val).upper()
+                        if not g_str.startswith("GROUP_"):
+                            g_str = "GROUP_" + g_str
+                        for g in Group:
+                            if g.name == g_str:
+                                attr |= (int(g) << 5) | 0x10
+                                break
+
+                # Fallback: if attr is still 0, try to extract from FILTER parameter string
                 if attr & 0x7FFF == 0:
                     f_str = str(cond.params.get("filter") or params_upper.get("FILTER") or "").upper()
                     if "UNIT_" in f_str:
                         from engine.models.enums import Unit
                         for u in Unit:
                             if u.name in f_str:
-                                attr |= (int(u) | 0x10000) # Set unit enable bit
+                                attr |= (int(u) << 17) | 0x10000 # Set unit enable bit
                                 break
                     elif "GROUP_" in f_str:
                         from engine.models.enums import Group
                         for g in Group:
                             if g.name in f_str:
-                                attr |= (int(g) | 0x10) # Set group enable bit
+                                attr |= (int(g) << 5) | 0x10 # Set group enable bit
                                 break
 
             # Pack comparison into higher bits of slot (bits 4-7)
@@ -741,28 +824,39 @@ class Ability:
 
         elif cond.type == ConditionType.BATON:
             # Special handling for BATON condition
+            # Bytecode format: [CHECK_BATON, val, attr, attr_hi, slot]
+            # val: expected baton touch count (0 = any > 0, 2 = exactly 2)
+            # attr: GROUP_ID filter (lower 32 bits)
             if hasattr(Opcode, "CHECK_BATON"):
-                unit_id = 0
-                if "unit" in cond.params:
-                    from engine.models.enums import Unit
-
+                params_upper = {k.upper(): v for k, v in cond.params.items() if isinstance(k, str)}
+                
+                # Value: expected baton touch count
+                val = 0
+                count_eq = cond.params.get("count_eq") or params_upper.get("COUNT_EQ")
+                if count_eq:
                     try:
-                        # Handle string unit names
-                        u_val = cond.params["unit"]
-                        if isinstance(u_val, str):
-                            unit_id = int(Unit.from_japanese_name(u_val))
-                        else:
-                            unit_id = int(u_val)
-                    except:
-                        unit_id = 0
+                        val = int(count_eq)
+                    except (ValueError, TypeError):
+                        val = 0
+                
+                # Attr: GROUP_ID filter for baton source cards
+                attr = 0
+                f_str = str(cond.params.get("filter") or params_upper.get("FILTER") or "")
+                if "GROUP_ID=" in f_str.upper():
+                    import re
+                    m_g = re.search(r"GROUP_ID=(\d+)", f_str, re.I)
+                    if m_g:
+                        attr = int(m_g.group(1))
+                
+                # Also check for direct group parameter
+                group_id = cond.params.get("group") or params_upper.get("GROUP")
+                if group_id:
+                    try:
+                        attr = int(group_id)
+                    except (ValueError, TypeError):
+                        pass
 
-                filter_type = 0
-                if "filter" in cond.params:
-                    f_str = cond.params["filter"]
-                if f_str.upper() == "COST_LT_SELF":
-                        filter_type = 1  # 1 = Cost Check Less Than Self
-
-                bytecode.extend([int(Opcode.CHECK_BATON), unit_id, filter_type, 0, 0])
+                bytecode.extend([int(Opcode.CHECK_BATON), val, attr, 0, 0])
 
         elif cond.type == ConditionType.TYPE_CHECK:
             if hasattr(Opcode, "CHECK_TYPE_CHECK"):
@@ -892,9 +986,12 @@ class Ability:
         if eff.effect_type == EffectType.SELECT_MODE and modal_opts:
             # Handle SELECT_MODE with jump table
             num_options = len(modal_opts)
-            # Emit header: [SELECT_MODE, NumOptions, 0, 0]
+            slot = 0
+            if eff.target == TargetType.OPPONENT:
+                slot |= (1 << 24)
+            # Emit header: [SELECT_MODE, NumOptions, 0, 0, slot]
             if hasattr(Opcode, "SELECT_MODE"):
-                bytecode.extend([int(Opcode.SELECT_MODE), num_options, 0, 0, 0])
+                bytecode.extend([int(Opcode.SELECT_MODE), num_options, 0, 0, slot])
 
             # Placeholders for Jump Table
             jump_table_start_idx = len(bytecode)
@@ -1019,6 +1116,9 @@ class Ability:
             # Special handling for PLAY_MEMBER_FROM_HAND params
             if eff.effect_type in (EffectType.PLAY_MEMBER_FROM_HAND, EffectType.PLAY_MEMBER_FROM_DISCARD):
                 attr = self._pack_filter_attr(eff)
+                dest = str(eff.params.get("destination", "")).upper()
+                if dest == "STAGE_EMPTY":
+                    slot |= (1 << 26)  # FLAG_EMPTY_SLOT_ONLY
 
             # Special handling for PLAY_LIVE_FROM_DISCARD
             if eff.effect_type == EffectType.PLAY_LIVE_FROM_DISCARD:
@@ -1120,93 +1220,98 @@ class Ability:
                 Bits 0-3:   Type (0=Any, 1=Member, 2=Live)
                 Bit 4:      Group Filter Enable
                 Bits 5-11:  Group ID
-                Bit 12-15:  Source Zone (Usually 6=Hand, 7=Discard, 8=Deck)
+                Bit 12-15:  Source Zone (Legacy)
                 Bit 16:     Unit Filter Enable
                 Bits 17-23: Unit ID
                 Bit 24:     Cost Filter Enable
                 Bits 25-29: Cost Threshold (0-31)
                 Bit 30:     Cost Mode (0=GE, 1=LE)
+                Added:
+                Bits 45-47: Zone Bitmask (45=Stage, 46=Discard, 47=Hand)
                 """
                 attr = self._pack_filter_attr(eff)
 
-                # ZONE RELOCATION: Use bits 16-23 of 's' for Source Zone
-                src_zone = str(eff.params.get("source") or eff.params.get("zone") or "DECK").upper()
-                src_val = 8  # Default DECK
-                if src_zone == "HAND":
-                    src_val = 6
-                elif src_zone == "DISCARD":
-                    src_val = 7
-                elif src_zone in ["YELL", "REVEALED", "CHEER"]:
-                    src_val = 15
-                
-                slot = (slot & 0xFF) | ((src_val & 0xFF) << 16)
+                # ZONE RELOCATION: Use bits 16-23 of 's' for Source Zone (Legacy)
+                src_zone_str = str(eff.params.get("source") or eff.params.get("zone") or "DECK").upper()
+                if "," not in src_zone_str:
+                    src_val = 8  # Default DECK
+                    if src_zone_str == "HAND":
+                        src_val = 6
+                    elif src_zone_str == "DISCARD":
+                        src_val = 7
+                    elif src_zone_str in ["YELL", "REVEALED", "CHEER"]:
+                        src_val = 15
+                    
+                    slot = (slot & 0xFF) | ((src_val & 0xFF) << 16)
 
                 if eff.is_optional or eff.params.get("is_optional"):
                     attr |= 0x01  # Bit 0: Optional (May)
 
             # Special handling for SET_HEART_COST
+            # Special handling for SET_HEART_COST
             if eff.effect_type == EffectType.SET_HEART_COST:
-                # Value Packing: "P/R/Y/G/B/P" counts -> 24 bits
-                raw_val = eff.params.get("raw_val", "0/0/0/0/0/0")
-                if isinstance(raw_val, str) and "/" in raw_val:
+                # Value Packing: "P/R/Y/G/B/P" counts -> 24 bits (6 nibbles)
+                val = 0
+                colors = ["pink", "red", "yellow", "green", "blue", "purple"]
+                for i, c in enumerate(colors):
+                    c_val = eff.params.get(c, 0)
+                    val |= (int(c_val) & 0xF) << (i * 4)
+                
+                attr = 0x01  # Flag: Packed value
+                # Check for raw_val fallback
+                raw_val = eff.params.get("raw_val")
+                if not val and isinstance(raw_val, str) and "/" in raw_val:
                     parts = raw_val.split("/")
-                    val = 0
                     for i, p in enumerate(parts):
-                        if i >= 6:
-                            break
-                        try:
-                            v = int(p)
-                            val |= (v & 0xF) << (i * 4)
-                        except:
-                            pass
+                        if i >= 6: break
+                        try: val |= (int(p) & 0xF) << (i * 4)
+                        except: pass
 
-                # Attr Packing: "ADD=PINK/RED/ANY" -> List of added hearts
+                # Attr Packing: Added requirements -> 32 bits (8 nibbles)
                 # Map: Pink=1, Red=2, Yellow=3, Green=4, Blue=5, Purple=6, Any=7, None=0
-                add_str = eff.params.get("add", "")
-                if add_str:
-                    color_map = {
-                        "PINK": 1,
-                        "RED": 2,
-                        "YELLOW": 3,
-                        "GREEN": 4,
-                        "BLUE": 5,
-                        "PURPLE": 6,
-                        "ANY": 7,
-                        "STAR": 7,
-                        "ALL": 7,
-                    }
-                    parts = add_str.split("/")
-                    attr = 0
+                # attr already has flags if any
+                color_map = {
+                    "PINK": 1, "RED": 2, "YELLOW": 3, "GREEN": 4, "BLUE": 5, "PURPLE": 6, 
+                    "ANY": 7, "STAR": 7, "ALL": 7, "ANY_HEART": 7
+                }
+                
+                add_val = eff.params.get("add")
+                if isinstance(add_val, str):
+                    parts = add_val.replace(",", "/").split("/")
                     for i, p in enumerate(parts):
-                        if i >= 8:
-                            break  # Max 8 added hearts fit in 32 bits
-                        c_code = color_map.get(p.upper(), 0)
+                        if i >= 8: break
+                        c_code = color_map.get(p.strip().upper(), 0)
                         attr |= (c_code & 0xF) << (i * 4)
+                elif isinstance(add_val, list):
+                    for i, p in enumerate(add_val):
+                        if i >= 8: break
+                        c_code = color_map.get(str(p).strip().upper(), 0)
+                        attr |= (c_code & 0xF) << (i * 4)
+                
+                # Special: if "any" is a standalone number
+                any_count = eff.params.get("any", 0)
+                if any_count > 0:
+                    # Find first empty nibble in attr
+                    for i in range(8):
+                        if (attr >> (i * 4)) & 0xF == 0:
+                            for _ in range(int(any_count)):
+                                if i >= 8: break
+                                attr |= 7 << (i * 4)
+                                i += 1
+                            break
+
                 unit_val = eff.params.get("unit")
                 if unit_val is not None:
                     try:
-                        if str(unit_val).isdigit():
-                            u_id = int(str(unit_val))
-                        else:
-                            from engine.models.enums import Unit
-
-                            u_id = int(Unit.from_japanese_name(str(unit_val)))
-                        attr |= 0x10000  # Bit 16: Has Unit Filter
-                        attr |= u_id << 17  # Bits 17-23: Unit ID
-                    except:
-                        pass
-
-                # Cost Filter: Bit 24 (Enable), Bits 25-29 (Value), Bit 30 (Mode: 0=GE, 1=LE)
-                c_min = eff.params.get("cost_min")
-                c_max = eff.params.get("cost_max")
-                if c_min is not None:
-                    attr |= 1 << 24
-                    attr |= (int(c_min) & 0x1F) << 25
-                    # Mode 0 (GE) is default
-                elif c_max is not None:
-                    attr |= 1 << 24
-                    attr |= (int(c_max) & 0x1F) << 25
-                    attr |= 1 << 30  # Mode 1 (LE)
+                        from engine.models.enums import Unit
+                        if str(unit_val).isdigit(): u_id = int(str(unit_val))
+                        else: u_id = int(Unit.from_japanese_name(str(unit_val)))
+                        attr |= 0x10000 << 32 # Shifted due to 64-bit attr in resolve loop? 
+                        # Actually base attr is 32-bit in bytecode part 1, then high 32 bits.
+                        # Wait, bytecode.extend([op, val, attr_low, attr_high, slot])
+                        # So we can just set bits > 32 and it will be handled.
+                        attr |= (u_id & 0x7F) << (17 + 32)
+                    except: pass
 
             # --- Multiplier Support (Dynamic Value) ---
             # If the effect has a per_card multiplier, we use Bit 6 (0x40) as the "Dynamic" flag.
@@ -1329,6 +1434,10 @@ class Ability:
             ):
                 attr = self._pack_filter_attr(eff)
                 
+                # Special handling for MOVE_TO_DISCARD UNTIL_SIZE operation
+                if eff.effect_type == EffectType.MOVE_TO_DISCARD and eff.params.get("operation") == "UNTIL_SIZE":
+                    val = (int(val) & 0x7FFFFFFF) | (1 << 31)
+                
                 # Special handling for REVEAL_UNTIL legacy condition params
                 if eff.effect_type == EffectType.REVEAL_UNTIL:
                     if eff.value_cond == ConditionType.TYPE_CHECK:
@@ -1350,13 +1459,14 @@ class Ability:
                 source_val = 7 if source == "discard" else 0
                 if source == "yell": source_val = 15
                 if source == "deck" or source == "deck_top": source_val = 8
+                if source == "hand": source_val = 6
                 
                 slot = (slot & 0xFF) | ((source_val & 0xFF) << 16)
 
-            # Default to Choice (slot 4) if target is generic, BUT NOT for MOVE_TO_DISCARD from deck
+            # Default to Choice (slot 4) if target is generic, BUT NOT for MOVE_TO_DISCARD from deck or hand
             source_val = locals().get('source_val', 7)  # Default to discard
-            is_deck_discard = eff.effect_type == EffectType.MOVE_TO_DISCARD and source_val == 8
-            if eff.target in (TargetType.SELF, TargetType.PLAYER) and not is_deck_discard:
+            is_non_stage_discard = eff.effect_type == EffectType.MOVE_TO_DISCARD and source_val in (6, 8)
+            if eff.target in (TargetType.SELF, TargetType.PLAYER) and not is_non_stage_discard:
                 slot = (slot & ~0xFF) | 4
             
             # TARGET_OPPONENT flag (Bit 24 of Slot/S word)
@@ -1388,6 +1498,13 @@ class Ability:
                 # Pack look/pick (bits 0-15), color_mask (bits 23-29), and reveal (bit 30)
                 reveal_bit = 1 if eff.params.get("reveal") else 0
                 val = (look_count & 0xFF) | ((pick_count & 0xFF) << 8) | ((color_mask & 0x7F) << 23) | (reveal_bit << 30)
+
+            # Special encoding for PREVENT_PLAY_TO_SLOT: a=1 if target is opponent
+            if eff.effect_type == EffectType.PREVENT_PLAY_TO_SLOT:
+                if eff.target == TargetType.OPPONENT:
+                    attr = 1
+                else:
+                    attr = 0
 
             def to_signed_32(x):
                 x = int(x) & 0xFFFFFFFF
@@ -1612,6 +1729,14 @@ class Ability:
             attr |= 1 << 13
         elif eff.params.get("has_blade_heart") is False:
             attr |= 1 << 14
+
+        # Zone Bitmask Filter (Synced from metadata.json)
+        zone_val = eff.params.get("zone") or eff.params.get("source")
+        if zone_val:
+            z_str = str(zone_val).upper()
+            if "STAGE" in z_str: attr |= EXTRA_CONSTANTS.get("FILTER_ZONE_STAGE", 1 << 31)
+            if "DISCARD" in z_str: attr |= EXTRA_CONSTANTS.get("FILTER_ZONE_DISCARD", 1 << 39)
+            if "HAND" in z_str: attr |= EXTRA_CONSTANTS.get("FILTER_ZONE_HAND", 1 << 47)
 
         return attr
 

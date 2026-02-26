@@ -7,6 +7,27 @@ description: Unified workflow for finding card information via URL, ID, or Card 
 
 This skill provides a "no-hassle" way to retrieve full information on any card (Member, Live, or Energy) using various inputs.
 
+## RECOMMENDED WORKFLOW: Report Generation
+
+To avoid terminal encoding issues (especially with Japanese characters on Windows/PowerShell) and to get the most detailed analysis, **always use the report generation workflow**.
+
+1.  **Generate the Report**: Use the `-o` or `--output` flag.
+    ```bash
+    uv run python tools/card_finder.py "<INPUT>" --output reports/card_analysis.md
+    ```
+2.  **View File**: Use `view_file` on the generated Markdown file. This ensures proper **UTF-8 decoding** and avoids the common `utf-16le` or `cp1252` crashes in the terminal.
+3.  **Review Logic**: The report contains:
+    -   **Metadata**: Names, JP text, and standard pseudocode.
+    -   **Manual Pseudocode**: Any overrides from `manual_pseudocode.json`.
+    -   **Compiled Bytecode**: The raw numbers stored in `cards_compiled.json`.
+    -   **Decoded Bytecode**: A human-readable breakdown of what the engine actually executes.
+
+## Encoding Safety Warning
+
+> [!IMPORTANT]
+> **Windows Terminal (PowerShell/CMD)** often uses `utf-16le` or `cp1252` which will corrupt Japanese names or fail to display them entirely.
+> **ALWAYS** redirect output to a file or use the `--output` flag to ensure the data is written in **UTF-8**, then read that file using development tools.
+
 ## Core Tool: `tools/card_finder.py`
 
 The `card_finder.py` utility is the primary entry point for card lookup.

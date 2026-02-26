@@ -185,4 +185,47 @@ mod tests {
         assert!(receiver.actions.contains(&3000), "Hand index 0 should be selectable");
         assert!(receiver.actions.contains(&3001), "Hand index 1 should be selectable");
     }
+
+    #[test]
+    fn test_card_bp2_024_discard_hand_fix() {
+        let db = load_real_db();
+        let mut state = create_test_state();
+        let p_idx = 0;
+        
+        // Card 431 (PL!S-bp2-024-L)
+        state.core.players[p_idx].live_zone[0] = 431;
+        state.core.players[p_idx].hand = vec![100, 101].into();
+        state.core.players[p_idx].deck = vec![200, 201, 202].into();
+        state.phase = Phase::Main;
+        
+        // Test context should be the second ability (index 1) which has DRAW and DISCARD
+        let ctx = AbilityContext { 
+            player_id: p_idx as u8, 
+            source_card_id: 431, 
+            area_idx: 0, 
+            ability_index: 1, 
+            ..Default::default() 
+        };
+        
+        // Trigger ON_LIVE_SUCCESS
+        // Trigger ON_LIVE_SUCCESS
+        state.trigger_abilities(&db, TriggerType::OnLiveSuccess, &ctx);
+        state.process_trigger_queue(&db);
+        
+        // 1. Should have drawn 2 cards
+        assert_eq!(state.core.players[p_idx].hand.len(), 4, "Should have drawn 2 cards");
+        
+        // 2. Should be suspended for MOVE_TO_DISCARD
+        assert_eq!(state.phase, Phase::Response);
+        assert_eq!(state.interaction_stack.last().unwrap().effect_opcode, 58);
+        assert_eq!(state.interaction_stack.last().unwrap().choice_type, "SELECT_HAND_DISCARD");
+        
+        // 3. Perform a hand selection (index 0)
+        state.step(&db, ACTION_BASE_HAND_SELECT + 0).expect("Step failed");
+        
+        // 4. Verification
+        assert_eq!(state.core.players[p_idx].hand.len(), 3);
+        assert!(state.core.players[p_idx].discard.len() > 0);
+        assert_eq!(state.phase, Phase::Main);
+    }
 }
