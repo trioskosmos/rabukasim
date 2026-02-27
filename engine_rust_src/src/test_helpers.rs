@@ -170,10 +170,17 @@ pub fn p_state(state: &GameState, p_idx: usize) -> &PlayerState {
     &state.core.players[p_idx]
 }
 
-const DB_JSON: &str = include_str!("../../data/cards_compiled.json");
-
+#[cfg(not(target_arch = "wasm32"))]
 pub fn load_real_db() -> CardDatabase {
-    CardDatabase::from_json(DB_JSON).expect("Failed to load production CardDatabase in test_helpers")
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let path = std::path::Path::new(manifest_dir).join("../data/cards_compiled.json");
+    let json_content = std::fs::read_to_string(path).expect("Failed to read cards_compiled.json");
+    CardDatabase::from_json(&json_content).expect("Failed to load production CardDatabase in test_helpers")
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn load_real_db() -> CardDatabase {
+    panic!("load_real_db not supported on WASM targets as it requires file I/O");
 }
 
 pub fn create_test_db() -> CardDatabase {

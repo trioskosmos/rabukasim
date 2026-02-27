@@ -4,11 +4,12 @@ use crate::core::logic::*;
 // use crate::core::enums::*;
 use std::collections::HashSet;
 
-const DB_JSON: &str = include_str!("../../data/cards_compiled.json");
+// Removed local DB_JSON embedding
+// const DB_JSON: &str = include_str!("../../data/cards_compiled.json");
 
 #[test]
 fn test_database_integrity() {
-    let card_db = CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
+    let card_db = crate::test_helpers::load_real_db();
     
     let mut member_ids = HashSet::new();
     let mut card_nos = HashSet::new();
@@ -31,7 +32,7 @@ fn test_database_integrity() {
 
 #[test]
 fn test_bytecode_sanity_all_cards() {
-    let card_db = CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
+    let card_db = crate::test_helpers::load_real_db();
     let mut total_abilities = 0;
     let mut opcodes_seen = HashSet::new();
 
@@ -83,7 +84,7 @@ fn verify_ability_bytecode(card_no: &str, ab_idx: usize, ab: &Ability, opcodes: 
 
 #[test]
 fn test_dry_run_all_cards() {
-    let card_db = CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
+    let card_db = crate::test_helpers::load_real_db();
     let mut state = GameState::default();
     // Basic setup for dry run
     state.core.players[0].player_id = 0;
