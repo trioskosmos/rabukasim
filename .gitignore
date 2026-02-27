@@ -192,3 +192,21 @@ build/
 *.7z
 *.rar
 *.tar.gz
+
+# AlphaZero & Data Generation
+trajectories.json
+trajectories.npz
+alphazero_game_log.txt
+pure_zero_log.txt
+heuristic_comparison_log.txt
+mcts_audit_log.txt
+mcts_audit_terminal_log.txt
+overnight_training_log.csv
+pure_zero_trajectories.npz
+alphanet_final_session.pt
+STOP_TRAINING
+alphazero/logs/
+ai/logs/
+ai/data/*.npz
+ai/data/*.json
+trajectories/
