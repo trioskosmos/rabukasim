@@ -20,7 +20,8 @@ mod tests {
         state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
         state.process_trigger_queue(&db);
         
-        // The game should now be in Phase::Response with OPTIONAL interaction on stack
+        // The game should now be in Phase::Response with SELECT_HAND_DISCARD interaction on stack
+        // (Engine merges Optional + Selection for efficiency)
         assert_eq!(state.phase, Phase::Response, "Should be in Response phase for optional choice");
         
         // Check legal actions
@@ -29,8 +30,11 @@ mod tests {
         
         println!("Legal actions: {:?}", receiver.actions);
         
-        // Action 0 (Skip/No) and Action 1 (Yes) MUST be present.
+        // Action 0 (Skip/No) MUST be present.
         assert!(receiver.actions.contains(&0), "Action 0 (No/Skip) missing!");
-        assert!(receiver.actions.contains(&1), "Action 1 (Yes) missing! This is the soft-lock.");
+
+        // At least one Selection action (3000+) should be present (Yes + Select)
+        let has_selection = receiver.actions.iter().any(|&a| a >= 3000 && a < 4000);
+        assert!(has_selection, "Selection actions (3000+) missing! This implies we can't choose 'Yes'.");
     }
 }

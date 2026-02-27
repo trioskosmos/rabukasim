@@ -93,6 +93,8 @@ mod meta_rule_card_tests;
 #[cfg(test)]
 mod repro_softlock;
 #[cfg(test)]
+mod repro_softlock_tests;
+#[cfg(test)]
 mod repro_color_filter;
 #[cfg(test)]
 mod repro_bp4_002_p;
@@ -114,6 +116,9 @@ mod gpu_smoke_tests;
 
 #[cfg(test)]
 mod gpu_parity_tests;
+
+#[cfg(test)]
+mod repro_softlock_discard;
 
 // pub mod repro_pl_bp3_004; // Deleted
 
