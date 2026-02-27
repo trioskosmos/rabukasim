@@ -7,6 +7,17 @@ use crate::test_helpers::{create_test_state, create_test_db, add_card, Action};
 
 // --- Test Helper Functions derived from parity suite ---
 
+fn create_manager_or_skip(db: &CardDatabase) -> Option<GpuManager> {
+    let (stats, bytecode) = db.convert_to_gpu();
+    match GpuManager::new(&stats, &bytecode, wgpu::Backends::all()) {
+        Some(m) => Some(m),
+        None => {
+            println!("Skipping test: No GPU adapter found");
+            None
+        }
+    }
+}
+
 fn run_parity_check(manager: &GpuManager, db: &CardDatabase, state: &GameState, action: i32, name: &str) -> bool {
     let mut cpu_state = state.clone();
     cpu_state.step(db, action).expect("CPU step failed");
@@ -90,8 +101,7 @@ fn parity_o_reveal_until() {
     let bc = vec![69, 232, 1, 0, 6, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2001, "REVEAL_LIVE", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].deck = vec![3001, 3002, 55001, 3003, 3004].into(); 
@@ -105,8 +115,7 @@ fn parity_o_immunity() {
     let bc = vec![O_IMMUNITY, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2002, "SET_IMMUNITY", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].hand = vec![2002].into();
@@ -119,8 +128,7 @@ fn parity_o_set_blades() {
     let bc = vec![O_SET_BLADES, 5, 0, 0, 4, O_RETURN, 0, 0, 0, 0]; // 4 = SELF (Slot 0 for us)
     add_card(&mut db, 2003, "SET_BLADES_5", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].stage[0] = 3001;
@@ -134,8 +142,7 @@ fn parity_o_look_and_choose() {
     let bc = vec![O_LOOK_AND_CHOOSE, 259, 32768, 0, 1798, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2004, "LOOK_AND_CHOOSE", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].deck = vec![3001, 3002, 3003, 3004].into(); 
@@ -149,8 +156,7 @@ fn parity_o_move_member() {
     let bc = vec![O_MOVE_MEMBER, 0, 1, 0, 0, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2005, "MOVE_MEMBER", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].stage[0] = 3001;
@@ -164,8 +170,7 @@ fn parity_o_set_heart_cost() {
     let bc = vec![O_SET_HEART_COST, 3, 0, 0, 2, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2007, "SET_HEART_COST", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].hand = vec![2007].into();
@@ -179,8 +184,7 @@ fn parity_o_increase_heart_cost() {
     let bc = vec![O_INCREASE_HEART_COST, 2, 0, 0, 1, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2008, "INC_HEART_COST", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].hand = vec![2008].into();
@@ -194,8 +198,7 @@ fn parity_o_reduce_heart_req() {
     let bc = vec![O_REDUCE_HEART_REQ, 2, 0, 0, 3, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2009, "REDUCE_HEART_REQ", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].hand = vec![2009].into();
@@ -209,8 +212,7 @@ fn parity_o_draw() {
     let bc = vec![O_DRAW, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2010, "DRAW_2", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].hand = vec![2010].into();
@@ -225,8 +227,7 @@ fn parity_o_boost_score() {
     let bc = vec![O_BOOST_SCORE, 5, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2011, "BOOST_SCORE", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].hand = vec![2011].into();
@@ -240,8 +241,7 @@ fn parity_o_reduce_cost() {
     let bc = vec![O_REDUCE_COST, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2012, "REDUCE_COST", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].hand = vec![2012].into();
@@ -255,8 +255,7 @@ fn parity_o_add_blades() {
     let bc = vec![O_ADD_BLADES, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2013, "ADD_BLADES", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].hand = vec![2013].into();
@@ -270,8 +269,7 @@ fn parity_o_add_hearts() {
     let bc = vec![O_ADD_HEARTS, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2014, "ADD_HEARTS", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].hand = vec![2014].into();
@@ -285,8 +283,7 @@ fn parity_o_set_score() {
     let bc = vec![O_SET_SCORE, 100, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     add_card(&mut db, 2015, "SET_SCORE", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
     
-    let (stats, bytecode) = db.convert_to_gpu();
-    let manager = GpuManager::new(&stats, &bytecode, wgpu::Backends::all()).unwrap();
+    let manager = match create_manager_or_skip(&db) { Some(m) => m, None => return };
 
     let mut state = create_test_state();
     state.core.players[0].hand = vec![2015].into();
