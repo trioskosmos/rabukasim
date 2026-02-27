@@ -203,8 +203,6 @@ class PhaseMixin:
         )
         total_blades = max(0, total_blades + extra_reveals)
 
-        print(f"DEBUG: Total Blades (cheer reveal count): {total_blades}")
-
         # Collect blade breakdown for result
         blade_breakdown = []
         for i in range(3):
@@ -440,7 +438,9 @@ class PhaseMixin:
             p.discard.extend(p.live_zone)
             p.live_zone = []
 
-        p.live_score_bonus += yell_score_bonus
+        # Store Yell Score Bonus temporarily, reset live_score_bonus accumulation logic
+        # live_score_bonus was previously accumulating yell_score_bonus in place
+        p.live_score_bonus = yell_score_bonus
         p.yell_score_count = yell_score_bonus
 
         self.performance_results[player_idx] = {
@@ -517,7 +517,12 @@ class PhaseMixin:
         p1_base = sum(self.live_db[c].score for c in p1.passed_lives if c in self.live_db)
 
         # Apply score modifiers (Rule 11)
+        # Fix: Reset live_score_bonus to yell_score_count before applying modifiers to prevent infinite accumulation
+        # if _do_live_result is re-entered multiple times.
         for pid, p in enumerate([p0, p1]):
+            # Reset to base yell bonus from performance phase
+            p.live_score_bonus = getattr(p, "yell_score_count", 0)
+
             player_score_mods = []
             for ce in p.continuous_effects:
                 if ce["effect"].effect_type == EffectType.MODIFY_SCORE_RULE:
