@@ -217,6 +217,8 @@ export const ConditionTypes = {
     COUNT_BLADE_HEART_TYPES: 302,
     OPPONENT_HAS_EXCESS_HEART: 303,
     SCORE_TOTAL_CHECK: 304,
+    IS_LEFT_SIDE: 305,
+    IS_RIGHT_SIDE: 306,
 };
 
 export const CostTypes = {

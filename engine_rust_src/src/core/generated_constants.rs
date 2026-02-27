@@ -152,6 +152,8 @@ pub const C_COUNT_ENERGY_EXACT: i32 = 301;
 pub const C_COUNT_BLADE_HEART_TYPES: i32 = 302;
 pub const C_OPPONENT_HAS_EXCESS_HEART: i32 = 303;
 pub const C_SCORE_TOTAL_CHECK: i32 = 304;
+pub const C_IS_LEFT_SIDE: i32 = 305;
+pub const C_IS_RIGHT_SIDE: i32 = 306;
 
 // Cost Types
 pub const COST_ENERGY: i32 = 1;

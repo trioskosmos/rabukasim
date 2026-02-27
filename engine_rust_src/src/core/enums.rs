@@ -184,6 +184,8 @@ pub enum ConditionType {
     CountBladeHeartTypes = 302,
     OpponentHasExcessHeart = 303,
     ScoreTotalCheck = 304,
+    IsLeftSide = 305,
+    IsRightSide = 306,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]

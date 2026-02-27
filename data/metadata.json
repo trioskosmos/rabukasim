@@ -195,7 +195,9 @@
         "COUNT_ENERGY_EXACT": 301,
         "COUNT_BLADE_HEART_TYPES": 302,
         "OPPONENT_HAS_EXCESS_HEART": 303,
-        "SCORE_TOTAL_CHECK": 304
+        "SCORE_TOTAL_CHECK": 304,
+        "IS_LEFT_SIDE": 305,
+        "IS_RIGHT_SIDE": 306
     },
     "costs": {
         "ENERGY": 1,

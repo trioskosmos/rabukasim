@@ -279,6 +279,8 @@ pub fn check_condition_opcode(
         },
         C_COUNT_STAGE => compare_i32(resolve_count(state, db, op, attr, ctx, depth), val, slot),
         C_IS_CENTER => ctx.area_idx == 1,
+        C_IS_LEFT_SIDE => ctx.area_idx == 0,
+        C_IS_RIGHT_SIDE => ctx.area_idx == 2,
         C_COUNT_HAND => compare_i32(resolve_count(state, db, op, attr, ctx, depth), val, slot),
         C_COUNT_DISCARD => compare_i32(resolve_count(state, db, op, attr, ctx, depth), val, slot),
         C_COUNT_ENERGY => compare_i32(resolve_count(state, db, op, attr, ctx, depth), val, slot),

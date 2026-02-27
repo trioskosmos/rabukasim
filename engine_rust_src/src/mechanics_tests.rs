@@ -141,3 +141,31 @@ fn test_opcode_play_member_from_hand() {
     assert_eq!(state.core.players[0].hand.len(), 1);
     assert_eq!(state.core.players[0].hand[0], 121);
 }
+
+#[test]
+fn test_position_conditions() {
+    let mut state = GameState::default();
+    let db = load_real_db();
+
+    // Test C_IS_CENTER (206)
+    let ctx_left = AbilityContext { player_id: 0, area_idx: 0, ..Default::default() };
+    let ctx_center = AbilityContext { player_id: 0, area_idx: 1, ..Default::default() };
+    let ctx_right = AbilityContext { player_id: 0, area_idx: 2, ..Default::default() };
+
+    let is_center = |ctx| state.check_condition_opcode(&db, C_IS_CENTER, 0, 0, 0, ctx, 0);
+    assert!(!is_center(&ctx_left), "Left should not be center");
+    assert!(is_center(&ctx_center), "Center should be center");
+    assert!(!is_center(&ctx_right), "Right should not be center");
+
+    // Test C_IS_LEFT_SIDE (305)
+    let is_left = |ctx| state.check_condition_opcode(&db, C_IS_LEFT_SIDE, 0, 0, 0, ctx, 0);
+    assert!(is_left(&ctx_left), "Left should be left");
+    assert!(!is_left(&ctx_center), "Center should not be left");
+    assert!(!is_left(&ctx_right), "Right should not be left");
+
+    // Test C_IS_RIGHT_SIDE (306)
+    let is_right = |ctx| state.check_condition_opcode(&db, C_IS_RIGHT_SIDE, 0, 0, 0, ctx, 0);
+    assert!(!is_right(&ctx_left), "Left should not be right");
+    assert!(!is_right(&ctx_center), "Center should not be right");
+    assert!(is_right(&ctx_right), "Right should be right");
+}
