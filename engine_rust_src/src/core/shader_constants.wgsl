@@ -136,6 +136,8 @@ const C_COUNT_ENERGY_EXACT: i32 = 301; // TODO: Not implemented in WGSL
 const C_COUNT_BLADE_HEART_TYPES: i32 = 302; // TODO: Not implemented in WGSL
 const C_OPPONENT_HAS_EXCESS_HEART: i32 = 303; // TODO: Not implemented in WGSL
 const C_SCORE_TOTAL_CHECK: i32 = 304; // TODO: Not implemented in WGSL
+const C_IS_LEFT_SIDE: i32 = 305; // TODO: Not implemented in WGSL
+const C_IS_RIGHT_SIDE: i32 = 306; // TODO: Not implemented in WGSL
 
 // --- PHASES ---
 const PHASE_SETUP: i32 = -4;
@@ -177,5 +179,5 @@ const SYN_LIFE_LEAD: u32 = 16u;
 
 // --- PARITY STATUS ---
 // WGSL Opcodes: 73/77 implemented
-// WGSL Conditions: 50/55 implemented
+// WGSL Conditions: 50/57 implemented
 // See plans/wgsl_rust_parity_strategy.md for details

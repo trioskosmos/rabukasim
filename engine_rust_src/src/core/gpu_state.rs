@@ -45,7 +45,7 @@ pub struct GpuInteraction {
     pub bytecode_start: u32,    // Start of bytecode for resume
     pub bytecode_len: u32,      // Length of bytecode
     pub ip_offset: u32,         // Instruction pointer offset for resume
-    pub _pad: [u32; 2],         // Padding for alignment
+    pub _pad: [u32; 3],         // Padding for alignment
 }
 
 #[repr(C)]
@@ -113,7 +113,7 @@ pub struct GpuGameState {
     pub queue_head: u32,                 // 4 bytes
     pub queue_tail: u32,                 // 4 bytes
     // Interaction stack for Response phase
-    pub interaction_stack: [GpuInteraction; 4], // 4 * 56 = 224 bytes
+    pub interaction_stack: [GpuInteraction; 4], // 4 * 64 = 256 bytes
     pub interaction_depth: u32,          // 4 bytes
     pub _pad_game: [u32; 2],             // 8 bytes
 }
@@ -144,7 +144,7 @@ impl Default for GpuGameState {
     }
 }
 
-pub const GPU_GAME_STATE_SIZE: usize = 1936; // Updated for new fields in GpuPlayerState (688 * 2 + 560)
+pub const GPU_GAME_STATE_SIZE: usize = 1952; // Updated for new fields in GpuPlayerState (688 * 2 + 576)
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Pod, Zeroable, Default)]
@@ -186,8 +186,8 @@ mod tests {
         assert_eq!(offset_of!(GpuPlayerState, avg_hearts), 512);
         assert_eq!(offset_of!(GpuPlayerState, success_lives), 592);
 
-        // GpuGameState (1936 bytes) - updated for interaction_stack
-        assert_eq!(size_of::<GpuGameState>(), 1936);
+        // GpuGameState (1952 bytes) - updated for interaction_stack
+        assert_eq!(size_of::<GpuGameState>(), 1952);
         assert_eq!(align_of::<GpuGameState>(), 4);
         assert_eq!(offset_of!(GpuGameState, player0), 0);
         assert_eq!(offset_of!(GpuGameState, player1), 688);
@@ -202,8 +202,8 @@ mod tests {
         assert_eq!(offset_of!(GpuGameState, queue_tail), 1680);
         // interaction_stack is at 1684
         assert_eq!(offset_of!(GpuGameState, interaction_stack), 1684);
-        // interaction_stack is 4 * 60 = 240 bytes, so 1684 + 240 = 1924
-        assert_eq!(offset_of!(GpuGameState, interaction_depth), 1924);
+        // interaction_stack is 4 * 64 = 256 bytes, so 1684 + 256 = 1940
+        assert_eq!(offset_of!(GpuGameState, interaction_depth), 1940);
 
         // GpuCardStats (80 bytes)
         assert_eq!(size_of::<GpuCardStats>(), 80);
