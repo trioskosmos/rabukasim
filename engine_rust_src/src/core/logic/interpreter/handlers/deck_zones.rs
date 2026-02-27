@@ -375,17 +375,83 @@ fn handle_move_to_discard(state: &mut GameState, db: &CardDatabase, ctx: &mut Ab
             }
         }
     } else {
-        for _ in 0..count {
+        // Fallback for auto-discard (skipped suspension or non-interactive)
+        // Must respect filter if present
+        let mut limit = count;
+
+        while limit > 0 {
+            let mut found = false;
             match source_zone {
-                6 => if let Some(cid) = state.core.players[p_idx].hand.pop() { state.core.players[p_idx].discard.push(cid); },
-                4 => {
-                    let slot = if next_ctx.area_idx >= 0 { next_ctx.area_idx as usize } else { 0 };
-                    if let Some(cid) = state.handle_member_leaves_stage(p_idx, slot, db, &next_ctx) { state.core.players[p_idx].discard.push(cid as i32); }
+                6 => { // Hand
+                    // Find last card matching filter (simulate pop order roughly, or just find any)
+                    // Using reverse iterator to simulate popping from end
+                    let mut pos_to_remove = None;
+                    for (i, &cid) in state.core.players[p_idx].hand.iter().enumerate().rev() {
+                        if cid != -1 && state.card_matches_filter(db, cid, filter_attr) {
+                            pos_to_remove = Some(i);
+                            break;
+                        }
+                    }
+                    if let Some(pos) = pos_to_remove {
+                        let cid = state.core.players[p_idx].hand.remove(pos);
+                        state.core.players[p_idx].discard.push(cid);
+                        found = true;
+                    }
                 },
-                13 => if let Some(cid) = state.core.players[p_idx].success_lives.pop() { state.core.players[p_idx].discard.push(cid); },
-                8 | 0 => if let Some(cid) = state.core.players[p_idx].deck.pop() { state.core.players[p_idx].discard.push(cid); },
-                3 => if let Some(cid) = state.core.players[p_idx].energy_zone.pop() { state.core.players[p_idx].discard.push(cid); },
+                4 => { // Stage
+                    for i in 0..3 {
+                        let cid = state.core.players[p_idx].stage[i];
+                        if cid >= 0 && state.card_matches_filter(db, cid, filter_attr) {
+                            if let Some(removed) = state.handle_member_leaves_stage(p_idx, i, db, &next_ctx) {
+                                state.core.players[p_idx].discard.push(removed);
+                                found = true;
+                                break; // One at a time per outer loop tick
+                            }
+                        }
+                    }
+                },
+                13 => { // Success Lives
+                    let mut pos_to_remove = None;
+                    for (i, &cid) in state.core.players[p_idx].success_lives.iter().enumerate().rev() {
+                        if state.card_matches_filter(db, cid, filter_attr) {
+                            pos_to_remove = Some(i);
+                            break;
+                        }
+                    }
+                    if let Some(pos) = pos_to_remove {
+                        let cid = state.core.players[p_idx].success_lives.remove(pos);
+                        state.core.players[p_idx].discard.push(cid);
+                        found = true;
+                    }
+                },
+                3 => { // Energy
+                    let mut pos_to_remove = None;
+                    for (i, &cid) in state.core.players[p_idx].energy_zone.iter().enumerate().rev() {
+                        if state.card_matches_filter(db, cid, filter_attr) {
+                            pos_to_remove = Some(i);
+                            break;
+                        }
+                    }
+                    if let Some(pos) = pos_to_remove {
+                        let cid = state.core.players[p_idx].energy_zone.remove(pos);
+                        state.core.players[p_idx].discard.push(cid);
+                        found = true;
+                    }
+                },
+                8 | 0 => { // Deck
+                    // Blind pop for deck (filter logic for deck is complex and usually not used for blind move)
+                    if let Some(cid) = state.core.players[p_idx].deck.pop() {
+                        state.core.players[p_idx].discard.push(cid);
+                        found = true;
+                    }
+                },
                 _ => {}
+            }
+
+            if found {
+                limit -= 1;
+            } else {
+                break; // No more matching cards found
             }
         }
     }
