@@ -30,7 +30,7 @@ struct GpuInteraction {
     bytecode_start: u32,    // Start of bytecode for resume
     bytecode_len: u32,      // Length of bytecode
     ip_offset: u32,         // Instruction pointer offset for resume
-    _pad: array<u32, 2>,
+    _pad: array<u32, 3>,    // Padding for alignment (64 bytes total)
 }
 
 struct GpuPlayerState {
