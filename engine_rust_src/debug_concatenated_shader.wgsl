@@ -2107,18 +2107,7 @@ fn resolve_bytecode(p_idx: u32, card_id: u32, slot_idx: u32, trigger_filter: i32
                              }
                          }
                     }
-                    case O_ACTIVATE_ENERGY: {
-                        let amount = u32(v);
-                        if (p_idx == 0u) {
-                            let tapped = states[g_gid].player0.tapped_energy_count;
-                            let untap_amount = min(amount, tapped);
-                            states[g_gid].player0.tapped_energy_count -= untap_amount;
-                        } else {
-                            let tapped = states[g_gid].player1.tapped_energy_count;
-                            let untap_amount = min(amount, tapped);
-                            states[g_gid].player1.tapped_energy_count -= untap_amount;
-                        }
-                    }
+
                     case O_META_RULE: {
                         // v = flag state (1=on, 0=off, etc.)
                         // a_lo = rule type

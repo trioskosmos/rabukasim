@@ -3,7 +3,7 @@ use wgpu::util::DeviceExt;
 use pollster::block_on;
 use crate::core::gpu_state::{GpuGameState, GpuCardStats};
 
-pub const MAX_BATCH_SIZE: usize = 65_000; // Fits within 128MB limit with 1936-byte GpuGameState
+pub const MAX_BATCH_SIZE: usize = 50_000; // Reduced to fit within 128MB limit with 1952-byte GpuGameState
 
 pub struct GpuManager {
     pub device: wgpu::Device,
