@@ -18,7 +18,7 @@ pub struct PerformanceChance {
 #[derive(Debug, Default, Clone, serde::Serialize)]
 pub struct AbilityAdjustments {
     pub extra_hearts: [u8; 7],
-    pub extra_volume: u16,
+    pub extra_notes: u16,
     pub virtual_draws: u8,
     pub boost_score: u8, // For O_BOOST_SCORE
 }
@@ -61,19 +61,19 @@ impl PerformanceProbabilitySolver {
 
         // 2. Calculate Hearts & Volume Already on Stage
         let mut stage_hearts = [0u8; 7];
-        let mut stage_volume = 0u32; 
-        
+        let mut stage_notes = 0u32;
+
         for i in 0..3 {
             let eff_h = state.get_effective_hearts(player_id, i, db, 0);
             let arr = eff_h.to_array();
             for j in 0..7 {
                 stage_hearts[j] = stage_hearts[j].saturating_add(arr[j]);
             }
-            
+
             let cid = player.stage[i];
             if cid >= 0 {
                 if let Some(m) = db.get_member(cid) {
-                    stage_volume += m.volume_icons;
+                    stage_notes += m.note_icons;
                 }
             }
         }
@@ -82,10 +82,10 @@ impl PerformanceProbabilitySolver {
         for i in 0..7 {
             stage_hearts[i] = stage_hearts[i].saturating_add(adj.extra_hearts[i]);
         }
-        stage_volume += adj.extra_volume as u32;
-        
+        stage_notes += adj.extra_notes as u32;
+
         // 3. Current Live Score Potential
-        let mut expected_score = live_card.score as f32 + player.live_score_bonus as f32 + stage_volume as f32 + adj.boost_score as f32;
+        let mut expected_score = live_card.score as f32 + player.live_score_bonus as f32 + stage_notes as f32 + adj.boost_score as f32;
 
         // 4. Analyze Deck Population
         let k_yells = {
@@ -105,12 +105,12 @@ impl PerformanceProbabilitySolver {
             if k_yells > 0 {
                 let n_deck = player.deck.len() as f32;
                 if n_deck > 0.0 {
-                    let mut deck_sum_volume = 0u32;
+                    let mut deck_sum_notes = 0u32;
                     for &cid in player.deck.iter() {
-                        if let Some(m) = db.get_member(cid) { deck_sum_volume += m.volume_icons; }
-                        else if let Some(l) = db.get_live(cid) { deck_sum_volume += l.volume_icons; }
+                        if let Some(m) = db.get_member(cid) { deck_sum_notes += m.note_icons; }
+                        else if let Some(l) = db.get_live(cid) { deck_sum_notes += l.note_icons; }
                     }
-                    expected_score += (k_yells as f32) * (deck_sum_volume as f32 / n_deck);
+                    expected_score += (k_yells as f32) * (deck_sum_notes as f32 / n_deck);
                 }
             }
             return PerformanceChance::guaranteed(k_yells, expected_score);
@@ -129,17 +129,17 @@ impl PerformanceProbabilitySolver {
         // Cap the number of yells by the total number of cards available (Deck + Discard)
         let k_draw = (k_yells as f32).min(n_pool);
         let mut expected_hearts = [0.0f32; 7];
-        
+
         let mut pool_sum_hearts = [0u32; 7];
-        let mut pool_sum_volume = 0u32;
+        let mut pool_sum_notes = 0u32;
 
         for &cid in pool.iter() {
             if let Some(m) = db.get_member(cid) {
                 for i in 0..7 { pool_sum_hearts[i] += m.blade_hearts[i] as u32; }
-                pool_sum_volume += m.volume_icons;
+                pool_sum_notes += m.note_icons;
             } else if let Some(l) = db.get_live(cid) {
                 for i in 0..7 { pool_sum_hearts[i] += l.blade_hearts[i] as u32; }
-                pool_sum_volume += l.volume_icons;
+                pool_sum_notes += l.note_icons;
             }
         }
 
@@ -147,7 +147,7 @@ impl PerformanceProbabilitySolver {
             for i in 0..7 {
                 expected_hearts[i] = k_draw * (pool_sum_hearts[i] as f32 / n_pool);
             }
-            expected_score += k_draw * (pool_sum_volume as f32 / n_pool);
+            expected_score += k_draw * (pool_sum_notes as f32 / n_pool);
         }
 
         // 5. Calculate Deficits
@@ -169,7 +169,7 @@ impl PerformanceProbabilitySolver {
         let mut total_heart_deficit = 0.0f32;
         for i in 0..6 { total_heart_deficit += heart_deficit[i] as f32; }
         total_heart_deficit = (total_heart_deficit - expected_hearts[6]).max(0.0);
-        
+
         if k_draw * (max_h_in_pool as f32) < total_heart_deficit {
             return PerformanceChance::failing(k_yells, expected_score);
         }
@@ -181,7 +181,7 @@ impl PerformanceProbabilitySolver {
 
         let special_buffer = expected_hearts[6];
         let mut total_coverage = 0.0f32;
-        
+
         for i in 0..6 {
             let d = heart_deficit[i] as f32;
             if d > 0.0 {
@@ -190,10 +190,10 @@ impl PerformanceProbabilitySolver {
                 total_coverage += exp.min(d);
             }
         }
-        
+
         // Total potential hearts compared to needed
         let total_potential = total_coverage + special_buffer;
-        
+
         let mut win_prob: f32;
         if total_potential < color_needed_total {
             // Even with all specials, we are short on average
@@ -246,8 +246,8 @@ impl PerformanceProbabilitySolver {
     ) -> AbilityAdjustments {
         let mut adj = AbilityAdjustments::default();
         // Base volume from icons
-        adj.extra_volume = card.volume_icons as u16;
-        
+        adj.extra_notes = card.note_icons as u16;
+
         // Permanent Hearts from icons
         for i in 0..7 {
             let count = card.hearts[i];
@@ -255,7 +255,7 @@ impl PerformanceProbabilitySolver {
                 adj.extra_hearts[i] = adj.extra_hearts[i].saturating_add(count);
             }
         }
-        
+
         for ab in &card.abilities {
             if ab.trigger != crate::core::enums::TriggerType::OnPlay {
                 continue;
@@ -297,7 +297,7 @@ impl PerformanceProbabilitySolver {
                     if color == 0 {
                         // Fallback or color selection prediction? For now, assume special if not specified.
                         // A more sophisticated solver might try all colors or use context.
-                        color = 6; 
+                        color = 6;
                     }
                     if color < 7 {
                         adj.extra_hearts[color] = adj.extra_hearts[color].saturating_add(v as u8);
@@ -328,18 +328,18 @@ impl PerformanceProbabilitySolver {
         live_card: &crate::core::logic::card_db::LiveCard,
     ) -> Vec<(i32, PerformanceChance)> {
         let mut results = Vec::new();
-        
+
         for &cid in hand_cards {
             if cid < 0 { continue; }
             let card = match db.get_member(cid) {
                 Some(m) => m,
                 None => continue,
             };
-            
+
             // Can we afford it?
             let player_id = state.current_player as usize;
             let available_energy = state.core.players[player_id].energy_zone.len() as u32 - state.core.players[player_id].tapped_energy_count();
-            
+
             let mut best_chance = PerformanceChance {
                 success_probability: 0.0,
                 expected_hearts: [0.0; 7],
@@ -355,18 +355,18 @@ impl PerformanceProbabilitySolver {
                 if available_energy < cost as u32 {
                     continue;
                 }
-                
+
                 let adj = Self::predict_adjustments(state, db, card, slot);
                 let chance = Self::calculate_performance_chance(state, db, live_card, &adj);
-                
-                if chance.success_probability > best_chance.success_probability || 
+
+                if chance.success_probability > best_chance.success_probability ||
                    (chance.success_probability == best_chance.success_probability && chance.expected_score > best_chance.expected_score) {
                     best_chance = chance;
                 }
             }
             results.push((cid, best_chance));
         }
-        
+
         // Sort by success probability descending
         results.sort_by(|a, b| b.1.success_probability.partial_cmp(&a.1.success_probability).unwrap_or(std::cmp::Ordering::Equal));
         results
@@ -375,8 +375,8 @@ impl PerformanceProbabilitySolver {
 
 impl PerformanceChance {
     pub fn zero() -> Self {
-        Self { 
-            success_probability: 0.0, 
+        Self {
+            success_probability: 0.0,
             expected_hearts: [0.0; 7],
             expected_score: 0.0,
             expected_extra_score: 0.0,
@@ -384,8 +384,8 @@ impl PerformanceChance {
         }
     }
     pub fn guaranteed(k: u32, score: f32) -> Self {
-        Self { 
-            success_probability: 1.0, 
+        Self {
+            success_probability: 1.0,
             expected_hearts: [0.0; 7],
             expected_score: score,
             expected_extra_score: 0.0,
@@ -393,9 +393,9 @@ impl PerformanceChance {
         }
     }
     pub fn failing(k: u32, score: f32) -> Self {
-        Self { 
-            success_probability: 0.0, 
-            expected_hearts: [0.0; 7], 
+        Self {
+            success_probability: 0.0,
+            expected_hearts: [0.0; 7],
             expected_score: score,
             expected_extra_score: 0.0,
             k_yells: k,

@@ -1,5 +1,6 @@
 import json
-with open('data/cards.json', 'r', encoding='utf-8') as f:
+
+with open("data/cards.json", "r", encoding="utf-8") as f:
     data = json.load(f)
 
 count = 0

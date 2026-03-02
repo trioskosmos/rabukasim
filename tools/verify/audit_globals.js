@@ -49,4 +49,3 @@ for (const call of htmlCalls) {
 if (missing.length === 0) {
     console.log("All HTML calls are satisfied!");
 }
-

@@ -67,12 +67,12 @@ pub fn get_filter_description(filter_attr: u64, lang: &str) -> String {
          let id1 = ((filter_attr >> 31) & 0x7F) as u8;
          let id2 = ((filter_attr >> 17) & 0x7F) as u8;
          let id3 = ((filter_attr >> 24) & 0x7F) as u8;
-         
+
          let mut names = Vec::new();
          if id1 > 0 { names.push(card_db::get_character_name(id1)); }
          if id2 > 0 { names.push(card_db::get_character_name(id2)); }
          if id3 > 0 { names.push(card_db::get_character_name(id3)); }
-         
+
          if !names.is_empty() {
              let name_str = names.join("・"); // Use dot for Japanese names? Or slash? Slash is fine.
              if lang == "jp" {
@@ -132,8 +132,24 @@ pub fn get_filter_description(filter_attr: u64, lang: &str) -> String {
     parts.join("/")
 }
 
-pub fn resolve_card_name(cid: i32, db: &CardDatabase) -> String {
-    if cid == -1 { return "Card".to_string(); }
+pub fn decode_bytecode_to_strings(bytecode: &[i32]) -> Vec<String> {
+    let mut decoded = Vec::new();
+    for (i, chunk) in bytecode.chunks(5).enumerate() {
+        if chunk.len() < 5 { break; }
+        let ip = i * 5;
+        let (op, v) = (chunk[0], chunk[1]);
+        let a_low = chunk[2] as u32;
+        let a_high = chunk[3] as u32;
+        let s = chunk[4];
+        let a = ((a_high as i64) << 32) | (a_low as i64);
+        let desc = interpreter::logging::describe_bytecode(op, v, a, s);
+        decoded.push(format!("ip={:<3} {}", ip, desc));
+    }
+    decoded
+}
+
+pub fn resolve_card_name(cid: i32, db: &CardDatabase, lang: &str) -> String {
+    if cid == -1 { return if lang == "jp" { "カード" } else { "Card" }.to_string(); }
     if let Some(m) = db.get_member(cid) {
         format!("{} ({})", m.name, m.card_no)
     } else if let Some(l) = db.get_live(cid) {
@@ -144,6 +160,7 @@ pub fn resolve_card_name(cid: i32, db: &CardDatabase) -> String {
         format!("Unknown Card #{}", cid)
     }
 }
+
 
 pub fn resolve_card_desc(cid: i32, db: &CardDatabase) -> String {
     if cid == -1 { return "".to_string(); }
@@ -189,9 +206,9 @@ pub fn get_ability_summary(ab: &Value, lang: &str) -> String {
     if let Some(c_list) = costs {
         for c in c_list {
             let c_type = c.get("type").and_then(|v| v.as_i64()).unwrap_or(-1) as i32;
-            if c_type == COST_SACRIFICE_SELF { 
+            if c_type == COST_SACRIFICE_SELF {
                 cost_str = if lang == "jp" { "自身を退場させて: ".into() } else { "Sacrifice self: ".into() };
-            } else if c_type == COST_ENERGY { 
+            } else if c_type == COST_ENERGY {
                 let val = c.get("value").and_then(|v| v.as_i64()).unwrap_or(0);
                 cost_str = if lang == "jp" { format!("{}コスト: ", val) } else { format!("{} Cost: ", val) };
             }
@@ -232,7 +249,6 @@ pub fn get_ability_summary(ab: &Value, lang: &str) -> String {
             O_MOVE_TO_DECK => if l == "jp" { "デッキに戻す".into() } else { "To Deck".into() },
             O_TAP_OPPONENT => if l == "jp" { "相手をウェイトにする".into() } else { "Tap Opp".into() },
             O_PLACE_UNDER => if l == "jp" { "メンバーの下に置く".into() } else { "Place Under".into() },
-            O_FLAVOR => if l == "jp" { "フレーバー".into() } else { "Flavor".into() },
             O_RESTRICTION => if l == "jp" { "プレイ制限".into() } else { "Restriction".into() },
             O_BATON_TOUCH_MOD => if l == "jp" { "バトンタッチ変更".into() } else { "Baton Mod".into() },
             O_SET_SCORE => if l == "jp" { "スコア固定".into() } else { "Set Score".into() },
@@ -244,7 +260,7 @@ pub fn get_ability_summary(ab: &Value, lang: &str) -> String {
             O_ACTIVATE_MEMBER => if l == "jp" { "アクティブにする".into() } else { "Untap".into() },
             O_ADD_TO_HAND => if l == "jp" { "手札に加える".into() } else { "To Hand".into() },
             O_COLOR_SELECT => if l == "jp" { "色選択".into() } else { "Color Select".into() },
-            O_REPLACE_EFFECT => if l == "jp" { "代わりに".into() } else { "Replace".into() },
+            // O_REPLACE_EFFECT removed as it is not a valid opcode
             O_TRIGGER_REMOTE => if l == "jp" { "リモート能力".into() } else { "Trigger".into() },
             O_REDUCE_HEART_REQ => if l == "jp" { "ハート条件変更".into() } else { "Reduce Heart".into() },
             O_MODIFY_SCORE_RULE => if l == "jp" { "スコア計算変更".into() } else { "Score Mod".into() },
@@ -427,7 +443,7 @@ pub fn get_action_desc_rich(
                     format!("{} ({}){} ({} {})", raw_name, card_no, suffix, cost_str, actual_cost)
                 }
             };
-            
+
             let cost_label = if lang == "jp" {
                 if prev_cid >= 0 { format!("({}: {} {}, {}:{})", baton_str, old_name, leaves_str, pay_str, actual_cost) }
                 else { format!("({} {})", cost_str, actual_cost) }
@@ -436,13 +452,14 @@ pub fn get_action_desc_rich(
                 else { format!("({} {})", cost_str, actual_cost) }
             };
 
-            let card_name_full = resolve_card_name(cid, db);
+            let card_name_full = resolve_card_name(cid, db, lang);
             metadata.insert("hand_idx".into(), json!(hand_idx));
             metadata.insert("slot_idx".into(), json!(slot_idx));
             metadata.insert("full_label".into(), json!(label.clone()));
             metadata.insert("cost_label".into(), json!(cost_label));
             metadata.insert("cost".into(), json!(actual_cost));
             metadata.insert("name".into(), json!(card_name_full));
+            metadata.insert("card_id".into(), json!(cid));
             (label, card.map(|m| m.original_text.clone()).unwrap_or_default(), "PLAY".into(), Some(slot_idx))
         },
         Action::PlayMemberDouble { hand_idx, slot_idx, other_slot } => {
@@ -465,7 +482,7 @@ pub fn get_action_desc_rich(
             let new_cost = card.map(|m| m.cost as i32).unwrap_or(0);
             let prev1 = p.stage.get(slot_idx).cloned().unwrap_or(-1);
             let prev2 = p.stage.get(other_slot).cloned().unwrap_or(-1);
-            
+
             let mut old_names = Vec::new();
             let mut reduction = 0;
             if let Some(m1) = if prev1 >= 0 { db.get_member(prev1) } else { None } {
@@ -486,10 +503,10 @@ pub fn get_action_desc_rich(
             let areas_desc = format!("({}) -> {}", pair_desc, target_area);
 
             let label = format!("{} ({}){} ({}: {} {}, {}:{}, {}: {})", raw_name, card_no, suffix, baton_str, old_names_str, leaves_str, pay_str, actual_cost, if lang == "jp" { "移動先" } else { "To" }, target_area);
-            
+
             let cost_label = format!("({}: {} {}, {}:{})", baton_str, old_names_str, leaves_str, pay_str, actual_cost);
 
-            let card_name_full = resolve_card_name(cid, db);
+            let card_name_full = resolve_card_name(cid, db, lang);
             metadata.insert("hand_idx".into(), json!(hand_idx));
             metadata.insert("slot_idx".into(), json!(slot_idx));
             metadata.insert("secondary_slot_idx".into(), json!(other_slot));
@@ -501,6 +518,7 @@ pub fn get_action_desc_rich(
             metadata.insert("hand_idx".into(), json!(hand_idx));
             metadata.insert("slot_idx".into(), json!(slot_idx));
             metadata.insert("areas_desc".into(), json!(areas_desc));
+            metadata.insert("card_id".into(), json!(cid));
             (label, card.map(|m| m.original_text.clone()).unwrap_or_default(), "PLAY".into(), Some(slot_idx))
         },
         Action::ActivateAbility { slot_idx, ab_idx } => {
@@ -510,10 +528,10 @@ pub fn get_action_desc_rich(
             let summary = card.and_then(|c| c.abilities.get(ab_idx as usize))
                 .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
                 .unwrap_or_else(|| if lang == "jp" { "アビリティ".into() } else { "Ability".into() });
-            
+
             let areas = if lang == "jp" { ["左", "中", "右"] } else { ["Left", "Mid", "Right"] };
             let area_name = areas.get(slot_idx).unwrap_or(&"");
-            
+
             let label = if lang == "jp" {
                 format!("{}: {} ({})", name, summary, area_name)
             } else {
@@ -521,16 +539,35 @@ pub fn get_action_desc_rich(
             };
             metadata.insert("category".into(), json!("ABILITY"));
             metadata.insert("target_player".into(), json!(viewer_idx));
-            metadata.insert("slot_idx".into(), json!(slot_idx));
-            metadata.insert("ab_idx".into(), json!(ab_idx));
             metadata.insert("card_id".into(), json!(cid));
             (label, resolve_card_desc(cid, db), "ABILITY".into(), Some(slot_idx))
         },
+        Action::ActivateFromHand { hand_idx, ab_idx } => {
+            let cid = p.hand.get(hand_idx).cloned().unwrap_or(-1);
+            let card = if cid >= 0 { db.get_member(cid) } else { None };
+            let name = card.map(|m| format!("{} ({})", m.name, m.card_no)).unwrap_or_else(|| "Member".into());
+            let summary = card.and_then(|c| c.abilities.get(ab_idx as usize))
+                .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
+                .unwrap_or_else(|| if lang == "jp" { "アビリティ".into() } else { "Ability".into() });
+
+            let label = if lang == "jp" {
+                format!("{}: {} (手札)", name, summary)
+            } else {
+                format!("Use {}: {} (Hand)", name, summary)
+            };
+            metadata.insert("category".into(), json!("HAND_ABILITY"));
+            metadata.insert("hand_idx".into(), json!(hand_idx));
+            metadata.insert("ab_idx".into(), json!(ab_idx));
+            metadata.insert("card_id".into(), json!(cid));
+            metadata.insert("target_player".into(), json!(viewer_idx)); // Added for consistency
+            (label, resolve_card_desc(cid, db), "ABILITY".into(), None)
+        },
+
         Action::SelectChoice { choice_idx } => {
              let mut name = String::new();
              let text = String::new();
              let type_str = "CHOICE".to_string();
-             
+
              let pending = gs.interaction_stack.last();
              let opcode = pending.map(|p| p.effect_opcode).unwrap_or(0);
              let card_id = pending.map(|p| p.card_id).unwrap_or(-1);
@@ -554,31 +591,33 @@ pub fn get_action_desc_rich(
                                        }
                                    }
                                }
-                           } else {
-                               // Fallback: Peek into bytecode if no modal_options strings
-                               if choice_idx < ab.bytecode.len() / 4 {
-                                    // SELECT_MODE at index 0, followed by JUMP targets for each choice
-                                    // Choice 0 jump target is at ab.bytecode[1*4 + 1] (value of JUMP 0)
-                                    // Actually, let's look for the JUMP at index (choice_idx + 1) * 4
-                                    let jump_base = (choice_idx + 1) * 4;
-                                    if jump_base + 1 < ab.bytecode.len() {
-                                        let target_idx = ab.bytecode[jump_base + 1] as usize;
-                                        let target_ptr = target_idx * 4;
-                                        if target_ptr + 1 < ab.bytecode.len() {
-                                            let op = ab.bytecode[target_ptr] as i32;
-                                            let val = ab.bytecode[target_ptr + 1];
+                        } else {
+                            // Fallback: Peek into bytecode if no modal_options strings
+                            // Each instruction is 5 words in the Rust engine.
+                            let instr_ip = pending.map(|p| p.ctx.program_counter).unwrap_or(0) as usize;
+                            if instr_ip + 5 + (choice_idx * 5) + 1 < ab.bytecode.len() {
+                                // For SELECT_MODE, Choice i is followed by an O_JUMP instruction at instr_ip + 5 + i*5
+                                let jump_instr_ip = instr_ip + 5 + (choice_idx * 5);
+                                if jump_instr_ip + 1 < ab.bytecode.len() {
+                                    let jump_op = ab.bytecode[jump_instr_ip];
+                                    if jump_op == engine_rust::core::generated_constants::O_JUMP {
+                                        let jump_val = ab.bytecode[jump_instr_ip + 1] as usize;
+                                        // The target is jump_instr_ip + 1 (chunk) + jump_val chunks
+                                        let target_instr_ip = jump_instr_ip + 5 + (jump_val * 5);
+
+                                        if target_instr_ip + 1 < ab.bytecode.len() {
+                                            let op = ab.bytecode[target_instr_ip] as i32;
+                                            let val = ab.bytecode[target_instr_ip + 1];
                                             match op {
                                                 O_PAY_ENERGY => {
-                                                    // Use pattern that frontend enrichAbilityText recognizes: {{icon.png|alt}}
-                                                    name = if lang == "jp" { 
-                                                        format!("{{{{icon_energy.png|E}}}}{}支払う", val) 
-                                                    } else { 
-                                                        format!("Pay {}{{{{icon_energy.png|E}}}}", val) 
+                                                    name = if lang == "jp" {
+                                                        format!("{{{{icon_energy.png|E}}}}{}支払う", val)
+                                                    } else {
+                                                        format!("Pay {}{{{{icon_energy.png|E}}}}", val)
                                                     };
                                                 },
                                                 O_MOVE_TO_DISCARD => {
-                                                    // Check target slot
-                                                    let slot = ab.bytecode[target_ptr + 3];
+                                                    let slot = ab.bytecode[target_instr_ip + 4]; // Slot is index 4 in 5-word format
                                                     if slot == engine_rust::core::enums::TargetType::CardHand as i32 {
                                                         name = if lang == "jp" { format!("手札を{}枚捨てる", val) } else { format!("Discard {} Hand", val) };
                                                     } else {
@@ -592,28 +631,46 @@ pub fn get_action_desc_rich(
                                             }
                                         }
                                     }
-                               }
-                           }
+                                }
+                            }
+                        }
                        }
                    }
-             } else if opcode == O_TAP_OPPONENT {
+             } else if opcode == O_TAP_OPPONENT || opcode == O_OPPONENT_CHOOSE {
                   let opp_idx = 1 - p_idx;
                   let cid = gs.players[opp_idx].stage.get(choice_idx).cloned().unwrap_or(-1);
                   if cid >= 0 {
-                      name = if lang == "jp" { format!("タップ: {}", resolve_card_name(cid, db)) } else { format!("Tap: {}", resolve_card_name(cid, db)) };
+                      name = if lang == "jp" { format!("タップ: {}", resolve_card_name(cid, db, lang)) } else { format!("Tap: {}", resolve_card_name(cid, db, lang)) };
                   } else {
-                      let areas = if lang == "jp" { ["左", "中", "右"] } else { ["Left", "Mid", "Right"] };
-                      name = if lang == "jp" { format!("相手の{}枠", areas.get(choice_idx).unwrap_or(&"")) } else { format!("Opponent's {} Slot", areas.get(choice_idx).unwrap_or(&"")) };
+                      let areas = if lang == "jp" { ["相手の左枠", "相手の中枠", "相手の右枠"] } else { ["Opponent's Left Slot", "Opponent's Mid Slot", "Opponent's Right Slot"] };
+                      name = areas.get(choice_idx).unwrap_or(&"Slot").to_string();
                   }
-             } else if opcode == O_SELECT_MEMBER {
+             } else if opcode == O_PLAY_MEMBER_FROM_HAND || opcode == O_PLAY_MEMBER_FROM_DISCARD || opcode == O_PLAY_LIVE_FROM_DISCARD {
+                  let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
+                  if choice_type == "SELECT_STAGE" || choice_type == "SELECT_STAGE_EMPTY" {
+                      let areas = if lang == "jp" { ["左枠", "中央枠", "右枠"] } else { ["Left Slot", "Mid Slot", "Right Slot"] };
+                      name = areas.get(choice_idx).unwrap_or(&"Slot").to_string();
+                  } else if choice_type == "SELECT_LIVE_SLOT" {
+                      let areas = if lang == "jp" { ["ライブ枠 1", "ライブ枠 2", "ライブ枠 3"] } else { ["Live Slot 1", "Live Slot 2", "Live Slot 3"] };
+                      name = areas.get(choice_idx).unwrap_or(&"Slot").to_string();
+                  } else if choice_type == "SELECT_HAND_PLAY" || choice_type == "SELECT_DISCARD_PLAY" {
+                      // These steps pick a CARD id from hand or discard
+                      let cid = if choice_type == "SELECT_HAND_PLAY" {
+                          gs.players[p_idx].hand.get(choice_idx).cloned().unwrap_or(-1)
+                      } else {
+                          gs.players[p_idx].looked_cards.get(choice_idx).cloned().unwrap_or(-1)
+                      };
+                      if cid >= 0 { name = resolve_card_name(cid, db, lang); }
+                  }
+             } else if opcode == O_SELECT_MEMBER || opcode == O_TAP_MEMBER || opcode == O_SET_TAPPED || opcode == O_ACTIVATE_MEMBER || opcode == O_SWAP_AREA {
                   let cid = gs.players[p_idx].stage.get(choice_idx).cloned().unwrap_or(-1);
                   if cid >= 0 {
-                      name = resolve_card_name(cid, db);
+                      name = resolve_card_name(cid, db, lang);
                   }
              } else if opcode == O_SELECT_LIVE {
                   let cid = gs.players[p_idx].live_zone.get(choice_idx).cloned().unwrap_or(-1);
                   if cid >= 0 {
-                      name = resolve_card_name(cid, db);
+                      name = resolve_card_name(cid, db, lang);
                   }
              } else if opcode == O_SELECT_PLAYER {
                   name = if choice_idx == 0 {
@@ -621,9 +678,9 @@ pub fn get_action_desc_rich(
                   } else {
                       if lang == "jp" { "相手".into() } else { "Opponent".into() }
                   };
-              } else if opcode == O_RECOVER_LIVE || opcode == O_RECOVER_MEMBER || opcode == O_ORDER_DECK {
+              } else if opcode == O_RECOVER_LIVE || opcode == O_RECOVER_MEMBER || opcode == O_ORDER_DECK || opcode == O_PLAY_MEMBER_FROM_DISCARD || opcode == O_PLAY_LIVE_FROM_DISCARD {
                  if let Some(cid) = gs.players[p_idx].looked_cards.get(choice_idx) {
-                     name = resolve_card_name(*cid, db);
+                     name = resolve_card_name(*cid, db, lang);
                  }
                  if let Some(pi) = pending {
                      let filter_desc = get_filter_description(pi.filter_attr, lang);
@@ -633,7 +690,7 @@ pub fn get_action_desc_rich(
                  }
               } else if opcode == O_SELECT_CARDS || opcode == O_LOOK_AND_CHOOSE {
                   if let Some(cid) = gs.players[p_idx].looked_cards.get(choice_idx) {
-                      name = resolve_card_name(*cid, db);
+                      name = resolve_card_name(*cid, db, lang);
                   }
                   if let Some(pi) = pending {
                       let filter_desc = get_filter_description(pi.filter_attr, lang);
@@ -643,7 +700,7 @@ pub fn get_action_desc_rich(
                   }
                } else if opcode == O_MOVE_TO_DISCARD || opcode == O_PLAY_MEMBER_FROM_HAND {
                   if let Some(cid) = gs.players[p_idx].hand.get(choice_idx) {
-                      name = resolve_card_name(*cid, db);
+                      name = resolve_card_name(*cid, db, lang);
                   }
                   if let Some(pi) = pending {
                       let filter_desc = get_filter_description(pi.filter_attr, lang);
@@ -655,22 +712,22 @@ pub fn get_action_desc_rich(
                    let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
                    if choice_type == "SELECT_SWAP_SOURCE" {
                        if let Some(cid) = gs.players[p_idx].success_lives.get(choice_idx) {
-                           name = resolve_card_name(*cid, db);
+                           name = resolve_card_name(*cid, db, lang);
                        }
                    } else if choice_type == "SELECT_SWAP_TARGET" {
                        if let Some(cid) = gs.players[p_idx].hand.get(choice_idx) {
-                           name = resolve_card_name(*cid, db);
+                           name = resolve_card_name(*cid, db, lang);
                        }
                    }
               } else if opcode == O_LOOK_DECK || opcode == O_REVEAL_CARDS || opcode == O_CHEER_REVEAL {
                    let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
                    if choice_type == "REVEAL_HAND" {
                        if let Some(cid) = gs.players[p_idx].hand.get(choice_idx) {
-                           name = resolve_card_name(*cid, db);
+                           name = resolve_card_name(*cid, db, lang);
                        }
                    } else {
                        if let Some(cid) = gs.players[p_idx].looked_cards.get(choice_idx) {
-                           name = resolve_card_name(*cid, db);
+                           name = resolve_card_name(*cid, db, lang);
                        }
                    }
               } else if opcode == O_PAY_ENERGY {
@@ -679,7 +736,7 @@ pub fn get_action_desc_rich(
                       name = if lang == "jp" { "はい".into() } else { "Yes / Pay".into() };
                   } else {
                       if let Some(cid) = gs.players[p_idx].energy_zone.get(choice_idx) {
-                          name = resolve_card_name(*cid, db);
+                          name = resolve_card_name(*cid, db, lang);
                       }
                   }
               }
@@ -695,7 +752,7 @@ pub fn get_action_desc_rich(
               metadata.insert("choice_idx".into(), json!(choice_idx));
               metadata.insert("opcode".into(), json!(opcode));
               metadata.insert("category".into(), json!("CHOICE"));
-              
+
               // For opcodes that target stage slots, re-add slot_idx so frontend can highlight
               if opcode == O_TAP_OPPONENT {
                   metadata.insert("slot_idx".into(), json!(choice_idx));
@@ -725,21 +782,23 @@ pub fn get_action_desc_rich(
              (name, text, type_str, if opcode == O_SELECT_MEMBER || opcode == O_TAP_OPPONENT || opcode == O_SET_TAPPED { Some(choice_idx) } else { None })
         },
         Action::SelectEnergy { energy_idx } => {
-            let name = if lang == "jp" { format!("エネルギー #{}", energy_idx + 1) } else { format!("Energy #{}", energy_idx + 1) };
+            let cid = p.energy_zone.get(energy_idx).cloned().unwrap_or(-1);
+            let name = resolve_card_name(cid, db, lang);
             let text = if lang == "jp" { "コストとして支払います。".to_string() } else { "Pay as cost.".to_string() };
             let type_str = "ENERGY".to_string();
             metadata.insert("energy_idx".into(), json!(energy_idx));
             metadata.insert("category".into(), json!("ENERGY"));
+            metadata.insert("card_id".into(), json!(cid));
             (name, text, type_str, None)
         },
         Action::SelectHand { hand_idx } => {
             let cid = p.hand.get(hand_idx).cloned().unwrap_or(-1);
-            let card_name = if db.members.contains_key(&cid) {
-                db.get_member(cid).map(|m| format!("{} ({})", m.name, m.card_no)).unwrap_or_else(|| format!("Member #{}", cid))
-            } else if db.lives.contains_key(&cid) {
-                db.get_live(cid).map(|l| l.name.clone()).unwrap_or_else(|| format!("Live #{}", cid))
+            let card_name = if let Some(m) = db.get_member(cid) {
+                format!("{} ({})", m.name, m.card_no)
+            } else if let Some(l) = db.get_live(cid) {
+                l.name.clone()
             } else { "Card".to_string() };
-            
+
             let mut desc = if lang == "jp" { "このカードを選択します。".to_string() } else { "Select this card.".to_string() };
             let mut label_prefix = if lang == "jp" { "【選択】".to_string() } else { "Select: ".to_string() };
 
@@ -754,7 +813,7 @@ pub fn get_action_desc_rich(
                     label_prefix = if lang == "jp" { "【控え室】".to_string() } else { "Discard: ".to_string() };
                     desc = if lang == "jp" { "このカードを控え室に置きます。".to_string() } else { "Put this card into the discard pile.".to_string() };
                 }
-                
+
                 if let Some(pi) = pending {
                     let filter_desc = get_filter_description(pi.filter_attr, lang);
                     if !filter_desc.is_empty() {
@@ -776,21 +835,21 @@ pub fn get_action_desc_rich(
         Action::SelectResponseSlot { slot_idx } => {
             let pending = gs.interaction_stack.last();
             let opcode = pending.map(|p| p.effect_opcode).unwrap_or(0);
-            
+
             let target_player = if opcode == O_TAP_OPPONENT { 1 - viewer_idx } else { viewer_idx };
-            
+
             let cid = if opcode == O_SELECT_LIVE {
                 gs.players[target_player].live_zone.get(slot_idx).cloned().unwrap_or(-1)
             } else {
                 gs.players[target_player].stage.get(slot_idx).cloned().unwrap_or(-1)
             };
-            
-            let card_name = if cid >= 0 { resolve_card_name(cid, db) } else { "".to_string() };
+
+            let card_name = if cid >= 0 { resolve_card_name(cid, db, lang) } else { "".to_string() };
             let areas = if lang == "jp" { ["左", "中", "右"] } else { ["Left", "Mid", "Right"] };
-            let label = if lang == "jp" { 
+            let label = if lang == "jp" {
                 if card_name.is_empty() { format!("{}枠を選択", areas.get(slot_idx).unwrap_or(&"")) }
                 else { format!("{} ({})", card_name, areas.get(slot_idx).unwrap_or(&"")) }
-            } else { 
+            } else {
                 if card_name.is_empty() { format!("Select {} Slot", areas.get(slot_idx).unwrap_or(&"")) }
                 else { format!("{} ({})", card_name, areas.get(slot_idx).unwrap_or(&"")) }
             };
@@ -811,35 +870,35 @@ pub fn get_action_desc_rich(
             let summary = card.and_then(|c| c.abilities.get(ab_idx as usize))
                 .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
                 .unwrap_or_else(|| if lang == "jp" { "アビリティ".into() } else { "Ability".into() });
-            
+
             let pending = gs.interaction_stack.last();
             let opcode = pending.map(|p| p.effect_opcode).unwrap_or(0);
 
             if gs.phase == Phase::Response {
                 if opcode == O_LOOK_AND_CHOOSE || opcode == O_SELECT_CARDS || opcode == O_RECOVER_LIVE || opcode == O_ORDER_DECK {
                     if let Some(cid) = gs.players[viewer_idx].looked_cards.get(choice_idx) {
-                        name = resolve_card_name(*cid, db);
+                        name = resolve_card_name(*cid, db, lang);
                     }
                 } else if opcode == O_MOVE_TO_DISCARD {
                     if let Some(&cid) = gs.players[viewer_idx].hand.get(choice_idx) {
-                        name = resolve_card_name(cid, db);
+                        name = resolve_card_name(cid, db, lang);
                     }
                 } else if opcode == O_SELECT_MEMBER || opcode == O_TAP_MEMBER || opcode == O_SET_TAPPED || opcode == O_ACTIVATE_MEMBER || opcode == O_SWAP_AREA {
                      let sel_cid = gs.players[viewer_idx].stage.get(choice_idx).cloned().unwrap_or(-1);
-                     if sel_cid >= 0 { name = resolve_card_name(sel_cid, db); }
+                     if sel_cid >= 0 { name = resolve_card_name(sel_cid, db, lang); }
                 } else if opcode == O_SELECT_LIVE {
                      let sel_cid = gs.players[viewer_idx].live_zone.get(choice_idx).cloned().unwrap_or(-1);
-                     if sel_cid >= 0 { name = resolve_card_name(sel_cid, db); }
+                     if sel_cid >= 0 { name = resolve_card_name(sel_cid, db, lang); }
                 } else if opcode == O_TAP_OPPONENT {
                      let opp_idx = 1 - viewer_idx;
                      let sel_cid = gs.players[opp_idx].stage.get(choice_idx).cloned().unwrap_or(-1);
-                     if sel_cid >= 0 { name = format!("タップ: {}", resolve_card_name(sel_cid, db)); }
+                     if sel_cid >= 0 { name = format!("タップ: {}", resolve_card_name(sel_cid, db, lang)); }
                 } else if opcode == O_SWAP_ZONE {
                      let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
                      if choice_type == "SELECT_SWAP_SOURCE" {
-                         if let Some(cid) = gs.players[viewer_idx].success_lives.get(choice_idx) { name = resolve_card_name(*cid, db); }
+                         if let Some(cid) = gs.players[viewer_idx].success_lives.get(choice_idx) { name = resolve_card_name(*cid, db, lang); }
                      } else if choice_type == "SELECT_SWAP_TARGET" {
-                         if let Some(cid) = gs.players[viewer_idx].hand.get(choice_idx) { name = resolve_card_name(*cid, db); }
+                         if let Some(cid) = gs.players[viewer_idx].hand.get(choice_idx) { name = resolve_card_name(*cid, db, lang); }
                      }
                 }
             }
@@ -862,15 +921,15 @@ pub fn get_action_desc_rich(
             (label, resolve_card_desc(cid, db), "ABILITY".into(), Some(slot_idx))
         },
         Action::PlayMemberWithChoice { hand_idx, slot_idx, choice_idx } => {
-             let cid = p.hand.get(hand_idx).cloned().unwrap_or(-1);
-             let card = if cid != -1 { db.get_member(cid) } else { None };
+            let cid = p.hand.get(hand_idx).cloned().unwrap_or(-1);
+            let card = if cid != -1 { db.get_member(cid) } else { None };
              let lang_data = if lang == "jp" {
                 ("左", "中", "右", "登場", "に置く", "バトンタッチ", "退場", "支払", "コスト")
              } else {
                 ("Left", "Mid", "Right", "On Play", "to", "Baton Touch", "leaves", "Pay", "Cost")
              };
              let (_l_name, _c_name, _r_name, suffix_str, _to_str, baton_str, leaves_str, pay_str, cost_str) = lang_data;
-             
+
              let raw_name = card.map(|m| m.name.clone()).unwrap_or_else(|| "Member".into());
              let card_no = card.map(|m| m.card_no.clone()).unwrap_or_else(|| "??".into());
              let suffix = if let Some(m) = card {
@@ -902,7 +961,7 @@ pub fn get_action_desc_rich(
                      format!("{} ({}){} ({} {})*", raw_name, card_no, suffix, cost_str, actual_cost)
                  }
              };
-             
+
              let cost_label = if lang == "jp" {
                  if prev_cid >= 0 { format!("({}: {} {}, {}:{})", baton_str, old_name, leaves_str, pay_str, actual_cost) }
                  else { format!("({} {})", cost_str, actual_cost) }
@@ -912,10 +971,10 @@ pub fn get_action_desc_rich(
              };
 
              let card_name_full = card.map(|m| format!("{} ({})", m.name, m.card_no)).unwrap_or_else(|| {
-                 if db.members.contains_key(&cid) {
-                    db.get_member(cid).map(|m| format!("{} ({})", m.name, m.card_no)).unwrap_or_else(|| format!("Member #{}", cid))
-                 } else if db.lives.contains_key(&cid) {
-                    db.get_live(cid).map(|l| l.name.clone()).unwrap_or_else(|| format!("Live #{}", cid))
+                 if let Some(m) = db.get_member(cid) {
+                    format!("{} ({})", m.name, m.card_no)
+                 } else if let Some(l) = db.get_live(cid) {
+                    l.name.clone()
                  } else {
                     format!("Card #{}", cid)
                  }
@@ -928,6 +987,7 @@ pub fn get_action_desc_rich(
              metadata.insert("cost_label".into(), json!(cost_label));
              metadata.insert("cost".into(), json!(actual_cost));
              metadata.insert("name".into(), json!(card_name_full));
+             metadata.insert("card_id".into(), json!(cid));
              (label, card.map(|m| m.original_text.clone()).unwrap_or_default(), "PLAY".into(), Some(slot_idx))
         },
         Action::ActivateFromDiscard { discard_idx, ab_idx } => {
@@ -950,7 +1010,7 @@ pub fn get_action_desc_rich(
         },
         Action::PlaceLive { hand_idx } => {
             let cid = p.hand.get(hand_idx).cloned().unwrap_or(-1);
-            let name = resolve_card_name(cid, db);
+            let name = resolve_card_name(cid, db, lang);
             let live_card = db.get_live(cid);
 
             let label = if lang == "jp" {
@@ -1024,50 +1084,74 @@ pub fn get_action_desc_rich(
 
 pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool) -> Value {
     if cid == -1 { return json!(null); }
-    let (name, ability, rare, img) = if db.members.contains_key(&cid) {
-        if let Some(m) = db.members.get(&(cid)) {
-             (m.name.clone(), m.original_text.clone(), "M".to_string(), m.img_path.clone())
-        } else { ("Unknown".to_string(), "".to_string(), "C".to_string(), "".to_string()) }
-    } else if db.lives.contains_key(&cid) {
-        if let Some(l) = db.lives.get(&(cid)) {
-             (l.name.clone(), l.original_text.clone(), "LIVE".to_string(), l.img_path.clone())
-        } else { ("Unknown Live".to_string(), "".to_string(), "LIVE".to_string(), "".to_string()) }
+    // Use get_member/get_live which mask with TEMPLATE_MASK internally,
+    // since the CID contains packed instance bits in the upper bits.
+    let member = db.get_member(cid);
+    let live = db.get_live(cid);
+
+    let (name, ability, rare, img) = if let Some(m) = member {
+        (m.name.clone(), m.original_text.clone(), "M".to_string(), m.img_path.clone())
+    } else if let Some(l) = live {
+        (l.name.clone(), l.original_text.clone(), "LIVE".to_string(), l.img_path.clone())
     } else {
-        let e_name = db.energy_db.get(&cid).map(|e| e.name.as_str()).unwrap_or("Energy");
+        let template_id = cid;
+        let e_name = db.energy_db.get(&template_id).map(|e| e.name.as_str()).unwrap_or("Energy");
         (e_name.to_string(), "".to_string(), "E".to_string(), "img/texticon/icon_energy.png".to_string())
     };
 
     if viewable {
+        let is_member = member.is_some();
+        let is_live = live.is_some();
         let mut obj = json!({
             "id": cid,
             "name": name,
             "ability": ability,
             "rarity": rare,
-            "type": if db.members.contains_key(&cid) { "member" } else if db.lives.contains_key(&cid) { "live" } else { "energy" },
+            "type": if is_member { "member" } else if is_live { "live" } else { "energy" },
             "img": img
         });
         if let Some(obj_map) = obj.as_object_mut() {
-            if db.members.contains_key(&cid) {
-                if let Some(m) = db.members.get(&(cid)) {
-                    obj_map.insert("cost".to_string(), json!(m.cost));
-                    obj_map.insert("hearts".to_string(), json!(m.hearts));
-                    obj_map.insert("blade_hearts".to_string(), json!(m.blade_hearts));
-                    obj_map.insert("volume_icons".to_string(), json!(m.volume_icons));
-                    obj_map.insert("abilities".to_string(), json!(m.abilities));
-                    if !m.abilities.is_empty() {
-                        obj_map.insert("pseudocode".to_string(), json!(m.abilities[0].pseudocode));
+            if let Some(m) = member {
+                obj_map.insert("cost".to_string(), json!(m.cost));
+                obj_map.insert("hearts".to_string(), json!(m.hearts));
+                obj_map.insert("blade_hearts".to_string(), json!(m.blade_hearts));
+                obj_map.insert("volume_icons".to_string(), json!(m.note_icons));
+                obj_map.insert("semantic_flags".to_string(), json!(m.semantic_flags));
+                obj_map.insert("ability_flags".to_string(), json!(m.ability_flags));
+                obj_map.insert("synergy_flags".to_string(), json!(m.synergy_flags));
+                obj_map.insert("cost_flags".to_string(), json!(m.cost_flags));
+                    
+                let abilities: Vec<Value> = m.abilities.iter().map(|ab| {
+                    let mut ab_val = serde_json::to_value(ab).unwrap();
+                    if let Some(ab_obj) = ab_val.as_object_mut() {
+                        ab_obj.insert("decoded_bytecode".to_string(), json!(decode_bytecode_to_strings(&ab.bytecode)));
                     }
+                    ab_val
+                }).collect();
+                obj_map.insert("abilities".to_string(), json!(abilities));
+                    
+                if !m.abilities.is_empty() {
+                    obj_map.insert("pseudocode".to_string(), json!(m.abilities[0].pseudocode));
                 }
-            } else if db.lives.contains_key(&cid) {
-                if let Some(l) = db.lives.get(&(cid)) {
-                    obj_map.insert("score".to_string(), json!(l.score));
-                    obj_map.insert("required_hearts".to_string(), json!(l.required_hearts));
-                    obj_map.insert("volume_icons".to_string(), json!(l.volume_icons));
-                    obj_map.insert("blade_hearts".to_string(), json!(l.blade_hearts));
-                    obj_map.insert("abilities".to_string(), json!(l.abilities));
-                    if !l.abilities.is_empty() {
-                        obj_map.insert("pseudocode".to_string(), json!(l.abilities[0].pseudocode));
+            } else if let Some(l) = live {
+                obj_map.insert("score".to_string(), json!(l.score));
+                obj_map.insert("required_hearts".to_string(), json!(l.required_hearts));
+                obj_map.insert("volume_icons".to_string(), json!(l.note_icons));
+                obj_map.insert("blade_hearts".to_string(), json!(l.blade_hearts));
+                obj_map.insert("semantic_flags".to_string(), json!(l.semantic_flags));
+                obj_map.insert("synergy_flags".to_string(), json!(l.synergy_flags));
+                    
+                let abilities: Vec<Value> = l.abilities.iter().map(|ab| {
+                    let mut ab_val = serde_json::to_value(ab).unwrap();
+                    if let Some(ab_obj) = ab_val.as_object_mut() {
+                        ab_obj.insert("decoded_bytecode".to_string(), json!(decode_bytecode_to_strings(&ab.bytecode)));
                     }
+                    ab_val
+                }).collect();
+                obj_map.insert("abilities".to_string(), json!(abilities));
+
+                if !l.abilities.is_empty() {
+                    obj_map.insert("pseudocode".to_string(), json!(l.abilities[0].pseudocode));
                 }
             }
         }
@@ -1088,11 +1172,12 @@ pub fn serialize_player_rich(
     let is_viewer = p_idx == viewer_idx;
 
     let viewer_is_acting = gs.current_player == viewer_idx as u8;
-    
+
     let hand: Vec<Value> = p.hand.iter().enumerate().map(|(i, &cid)| {
         let mut v = serialize_card(cid as i32, db, p_idx == viewer_idx);
         if viewer_is_acting {
              if let Some(obj) = v.as_object_mut() {
+                 // Positional indices for mulligan, live set, and hand selections
                  let mulligan_id = ACTION_BASE_MULLIGAN + i as i32;
                  if mulligan_id < legal_mask.len() as i32 && legal_mask[mulligan_id as usize] {
                      obj.insert("is_mulligan_legal".to_string(), json!(true));
@@ -1102,19 +1187,18 @@ pub fn serialize_player_rich(
                      obj.insert("is_live_set_legal".to_string(), json!(true));
                  }
                  let select_id = ACTION_BASE_HAND_SELECT + i as i32;
-                 let select_id_alt = ACTION_BASE_HAND + i as i32; // Some opcodes use 1000+ for selection too
+                 let select_id_alt = ACTION_BASE_HAND + i as i32;
                  if (select_id < legal_mask.len() as i32 && legal_mask[select_id as usize]) ||
                     (select_id_alt < legal_mask.len() as i32 && legal_mask[select_id_alt as usize]) {
                      obj.insert("is_select_legal".to_string(), json!(true));
                  }
-                 
-                 // Highlight playable cards in Main phase
+
+                 // Highlight playable cards in Main phase (Play actions use pos * 10 + slot)
                  if gs.phase == engine_rust::core::logic::Phase::Main && p_idx == viewer_idx {
                      let any_slot_legal = (0..3).any(|slot| {
                          let aid = ACTION_BASE_HAND + (i as i32 * 10) + slot;
                          aid < legal_mask.len() as i32 && legal_mask[aid as usize]
                      });
-                     // Also check for PlayMemberWithChoice (1200 - 1999)
                      let any_choice_legal = (0..3).any(|slot| {
                          (0..10).any(|choice| {
                             let aid = ACTION_BASE_HAND_CHOICE + i as i32 * 100 + slot as i32 * 10 + choice;
@@ -1137,7 +1221,7 @@ pub fn serialize_player_rich(
             obj.insert("tapped".to_string(), json!(p.is_tapped(i)));
             obj.insert("moved".to_string(), json!(p.is_moved(i)));
             obj.insert("revealed".to_string(), json!(p.is_revealed(i)));
-            
+
             // Interaction logic
             if viewer_is_acting {
                 let any_ability_legal = (0..10).any(|ab_idx| {
@@ -1170,7 +1254,7 @@ pub fn serialize_player_rich(
         let mut v = serialize_card(cid, db, p.is_revealed(i) || is_viewer);
         if let Some(obj) = v.as_object_mut() {
             obj.insert("revealed".to_string(), json!(p.is_revealed(i)));
-            
+
             if viewer_is_acting {
                 let action_id = ACTION_BASE_STAGE_SLOTS + i as i32; // Match engine 600+ for Live selection
                 if action_id < legal_mask.len() as i32 && legal_mask[action_id as usize] {
@@ -1221,7 +1305,7 @@ pub fn serialize_player_rich(
         serialize_card(cid as i32, db, true)
     }).collect();
 
-    json!({
+    let mut obj = json!({
         "score": p.score,
         "energy_untapped": p.energy_zone.len() as u32 - p.tapped_energy_count(),
         "energy_count": p.energy_zone.len() as u32,
@@ -1235,24 +1319,57 @@ pub fn serialize_player_rich(
         "discard_count": p.discard.len(),
         "deck_count": p.deck.len(),
         "energy_deck_count": p.energy_deck.len(),
-        "success_lives": success_pile, // Frontend uses success_lives
-        "success_zone": success_pile,  // Added alias for compatibility
+        "success_lives": success_pile,
         "hand_count": p.hand.len(),
         "is_active": gs.current_player == p_idx as u8,
         "live_zone_revealed": [p.is_revealed(0), p.is_revealed(1), p.is_revealed(2)],
-        "looked_cards": p.looked_cards.iter().map(|&cid| serialize_card(cid as i32, db, is_viewer)).collect::<Vec<Value>>(),
         "mulligan_selection": p.mulligan_selection,
         "cost_reduction": p.cost_reduction,
         "blade_buffs": p.blade_buffs,
-        "heart_buffs": p.heart_buffs.iter().map(|hb| hb.to_array()).collect::<Vec<[u8; 7]>>(),
-        "prevent_activate": p.prevent_activate,
-        "prevent_baton_touch": p.prevent_baton_touch,
-        "prevent_success_pile_set": p.prevent_success_pile_set,
         "played_group_mask": p.played_group_mask,
-        "yell_cards": p.yell_cards.iter().map(|&cid| serialize_card(cid, db, true)).collect::<Vec<Value>>(),
-        "heart_req_reductions": p.heart_req_reductions.to_array(),
-        "heart_req_additions": p.heart_req_additions.to_array(),
-    })
+    });
+
+    // Add remaining fields incrementally to avoid json! recursion limit
+    let m = obj.as_object_mut().unwrap();
+    m.insert("looked_cards".into(), json!(p.looked_cards.iter().map(|&cid| serialize_card(cid as i32, db, is_viewer)).collect::<Vec<Value>>()));
+    m.insert("heart_buffs".into(), json!(p.heart_buffs.iter().map(|hb| hb.to_array()).collect::<Vec<[u8; 7]>>()));
+    m.insert("prevent_activate".into(), json!(p.prevent_activate));
+    m.insert("prevent_baton_touch".into(), json!(p.prevent_baton_touch));
+    m.insert("prevent_success_pile_set".into(), json!(p.prevent_success_pile_set));
+    m.insert("activated_energy_group_mask".into(), json!(p.activated_energy_group_mask));
+    m.insert("activated_member_group_mask".into(), json!(p.activated_member_group_mask));
+    m.insert("discarded_this_turn".into(), json!(p.discarded_this_turn));
+    m.insert("yell_cards".into(), json!(p.yell_cards.iter().map(|&cid| serialize_card(cid, db, true)).collect::<Vec<Value>>()));
+    m.insert("heart_req_reductions".into(), json!(p.heart_req_reductions.to_array()));
+    m.insert("heart_req_additions".into(), json!(p.heart_req_additions.to_array()));
+    // Deep diagnostics
+    m.insert("baton_touch_count".into(), json!(p.baton_touch_count));
+    m.insert("baton_touch_limit".into(), json!(p.baton_touch_limit));
+    m.insert("live_score_bonus".into(), json!(p.live_score_bonus));
+    m.insert("live_score_bonus_logs".into(), json!(p.live_score_bonus_logs.iter().map(|(cid, amt)| json!({"source": cid, "amount": amt})).collect::<Vec<Value>>()));
+    m.insert("slot_cost_modifiers".into(), json!(p.slot_cost_modifiers));
+    m.insert("blade_buff_logs".into(), json!(p.blade_buff_logs.iter().map(|(src, amt, slot)| json!({"source": src, "amount": amt, "slot": slot})).collect::<Vec<Value>>()));
+    m.insert("heart_buff_logs".into(), json!(p.heart_buff_logs.iter().map(|(src, amt, col, slot)| json!({"source": src, "amount": amt, "color": col, "slot": slot})).collect::<Vec<Value>>()));
+    m.insert("yell_count_reduction".into(), json!(p.yell_count_reduction));
+    m.insert("flags".into(), json!(p.flags));
+    m.insert("play_count_this_turn".into(), json!(p.play_count_this_turn));
+    m.insert("stage_energy_count".into(), json!(p.stage_energy_count));
+    m.insert("stage_energy".into(), json!(p.stage_energy.iter().map(|sv| sv.iter().map(|&cid| cid).collect::<Vec<i32>>()).collect::<Vec<Vec<i32>>>()));
+    m.insert("restrictions".into(), json!(p.restrictions.iter().collect::<Vec<&u8>>()));
+    m.insert("negated_triggers_count".into(), json!(p.negated_triggers.len()));
+    m.insert("granted_abilities_count".into(), json!(p.granted_abilities.len()));
+    m.insert("prevent_play_to_slot_mask".into(), json!(p.prevent_play_to_slot_mask));
+    m.insert("hand_increased_this_turn".into(), json!(p.hand_increased_this_turn));
+    m.insert("cheer_mod_count".into(), json!(p.cheer_mod_count));
+    m.insert("current_turn_notes".into(), json!(p.current_turn_notes));
+    m.insert("color_transforms_count".into(), json!(p.color_transforms.len()));
+    m.insert("excess_hearts".into(), json!(p.excess_hearts));
+    m.insert("skip_next_activate".into(), json!(p.skip_next_activate));
+    m.insert("used_abilities_count".into(), json!(p.used_abilities.len()));
+    m.insert("exile_count".into(), json!(p.exile.len()));
+    m.insert("live_deck_count".into(), json!(p.live_deck.len()));
+
+    obj
 }
 
 pub fn serialize_state_rich(
@@ -1266,10 +1383,15 @@ pub fn serialize_state_rich(
     lang: &str,
     needs_deck: bool,
 ) -> Value {
+    // Phase 1: Engine standard serialization (Everything)
+    let mut root = serde_json::to_value(gs).unwrap();
+    let map = root.as_object_mut().expect("GameState should serialize to a JSON object");
+
+    // Phase 2: Compute UI helper data
     let legal_actions = gs.get_legal_action_ids(db);
-    let mut legal_mask = vec![false; 12000];
+    let mut legal_mask = vec![false; 22000];
     for &aid in &legal_actions {
-        if aid >= 0 && aid < 12000 {
+        if aid >= 0 && aid < 22000 {
             legal_mask[aid as usize] = true;
         }
     }
@@ -1299,167 +1421,217 @@ pub fn serialize_state_rich(
             json!({ "name": name, "text": text })
         }).collect();
 
-    let last_action_text = gs.ui.rule_log.last().cloned().unwrap_or_default();
+    let last_action_text = gs.ui.rule_log.as_ref().and_then(|v| v.last()).cloned().unwrap_or_default();
 
-    let winner = gs.get_winner();
+    // Phase 3: Enrich/Overwrite with UI fields (Legacy support)
+    map.insert("players".to_string(), json!([p0, p1]));
+    map.insert("active_player".to_string(), json!(gs.current_player));
+    map.insert("game_over".to_string(), json!(gs.phase as i8 == 9));
+    map.insert("winner".to_string(), json!(gs.get_winner()));
+    map.insert("last_action".to_string(), json!(last_action_text));
+    map.insert("rule_log".to_string(), json!(gs.ui.rule_log.clone().unwrap_or_default()));
+    map.insert("mode".to_string(), json!(mode));
+    map.insert("spectators".to_string(), json!(spectator_count));
+    map.insert("is_ai_thinking".to_string(), json!(is_ai_thinking));
+    map.insert("ai_status".to_string(), json!(ai_status));
+    map.insert("my_player_id".to_string(), json!(viewer_idx));
+    map.insert("needs_deck".to_string(), json!(needs_deck));
+    map.insert("performance_results".to_string(), json!(gs.ui.performance_results));
+    map.insert("last_performance_results".to_string(), json!(gs.ui.last_performance_results));
+    map.insert("performance_history".to_string(), json!(gs.ui.performance_history));
+    map.insert("turn_events".to_string(), json!(gs.turn_history));
+    map.insert("triggered_abilities".to_string(), json!(triggered_abilities));
+    map.insert("opponent_triggered_abilities".to_string(), json!(opponent_triggered_abilities));
+    map.insert("queue_depth".to_string(), json!(gs.trigger_queue.len()));
+    map.insert("bytecode_log".to_string(), json!(gs.ui.bytecode_log.clone()));
 
-    json!({
-        "phase": gs.phase,
-        "turn": gs.turn,
-        "active_player": gs.current_player,
-        "players": [p0, p1],
-        "game_over": gs.phase as i8 == 9, // Phase::Terminal
-        "winner": winner,
-        "last_action": last_action_text,
-        "rule_log": gs.ui.rule_log.iter().cloned().collect::<Vec<String>>(),
-        "turn_history": gs.turn_history,
-        "mode": mode,
-        "spectators": spectator_count,
-        "is_ai_thinking": is_ai_thinking,
-        "ai_status": ai_status,
-        "my_player_id": viewer_idx,
-        "needs_deck": needs_deck,
-        "performance_results": gs.ui.performance_results,
-        "last_performance_results": gs.ui.last_performance_results,
-        "performance_history": gs.ui.performance_history,
-        "turn_events": gs.turn_history, // Keep both for safety/migration
-        "triggered_abilities": triggered_abilities,
-        "opponent_triggered_abilities": opponent_triggered_abilities,
-        "queue_depth": gs.trigger_queue.len(),
-        "rps_choices": if gs.phase as i8 == 1 && (gs.rps_choices[0] == -1 || gs.rps_choices[1] == -1) {
-            // Mask choices if one or both players haven't acted yet
-            json!([-1, -1])
-        } else {
-            json!(gs.rps_choices)
-        },
-        "pending_choice": if let Some(pending) = gs.interaction_stack.last() {
-            let mut options = Vec::new();
-            let mut actions = Vec::new();
-            let mut action_map = serde_json::Map::new();
-            use crate::models::Action;
+    // RPS Masking
+    if gs.phase as i8 == 1 && (gs.rps_choices[0] == -1 || gs.rps_choices[1] == -1) {
+        map.insert("rps_choices".to_string(), json!([-1, -1]));
+    } else {
+        map.insert("rps_choices".to_string(), json!(gs.rps_choices));
+    }
 
-            for &id in &legal_actions {
-                let (name, text, _type_str, _area, meta) = get_action_desc_rich(id, gs, db, viewer_idx, lang);
-                let mut opt_obj = json!({ "name": name, "text": text });
-                if let Some(opt_map) = opt_obj.as_object_mut() {
-                    for (k, v) in meta {
-                        opt_map.insert(k, v);
-                    }
-                }
-                options.push(opt_obj);
-                actions.push(id);
-                
-                // Populate action map
-                let action = Action::from_id(id, gs.phase);
-                match action {
-                    Action::SelectChoice { choice_idx } => { action_map.insert(choice_idx.to_string(), json!(id)); },
-                    Action::SelectHand { hand_idx } => { action_map.insert(hand_idx.to_string(), json!(id)); },
-                    Action::SelectResponseSlot { slot_idx } => { action_map.insert(slot_idx.to_string(), json!(id)); },
-                    Action::SelectResponseColor { color_idx } => { action_map.insert(color_idx.to_string(), json!(id)); },
-                    _ => {}
+    // Pending Choice Enrichment
+    let pending_choice_val = if let Some(pending) = gs.interaction_stack.last() {
+        let mut options = Vec::new();
+        let mut actions = Vec::new();
+        let mut action_map = serde_json::Map::new();
+        use crate::models::Action;
+
+        for &id in &legal_actions {
+            let (name, text, _type_str, _area, meta) = get_action_desc_rich(id, gs, db, viewer_idx, lang);
+            let mut opt_obj = json!({ "name": name, "text": text });
+            if let Some(opt_map) = opt_obj.as_object_mut() {
+                for (k, v) in meta {
+                    opt_map.insert(k, v);
                 }
             }
+            options.push(opt_obj);
+            actions.push(id);
 
-            let mut title = if !pending.choice_text.is_empty() {
-                pending.choice_text.clone()
-            } else if lang == "jp" {
-                match pending.choice_type.as_str() {
-                    "SELECT_MODE" => "モードを選択してください".to_string(),
-                    "LOOK_AND_CHOOSE" => "カードを選択してください".to_string(),
-                    "SELECT_CARDS" => "カードを選択してください".to_string(),
-                    "COLOR_SELECT" => "色を選択してください".to_string(),
-                    "TAP_O" => "相手の枠を選択してください".to_string(),
-                    "RECOV_L" => "回収するライブを選択してください".to_string(),
-                    "RECOV_M" => "回収するメンバーを選択してください".to_string(),
-                    "SELECT_HAND_DISCARD" => "捨てるカードを選択してください".to_string(),
-                    "SELECT_HAND_PLAY" => "プレイするカードを選択してください".to_string(),
-                    "SELECT_LIVE_SLOT" => "ライブスロットを選択してください".to_string(),
-                    "SELECT_STAGE" => "ステージを選択してください".to_string(),
-                    "PAY_ENERGY" => "エネルギーを選択してください".to_string(),
-                    _ => "選択してください".to_string()
-                }
-            } else {
-                match pending.choice_type.as_str() {
-                    "SELECT_MODE" => "Mode Select".to_string(),
-                    "LOOK_AND_CHOOSE" => "Select Card".to_string(),
-                    "SELECT_CARDS" => "Select Card".to_string(),
-                    "COLOR_SELECT" => "Select Color".to_string(),
-                    "TAP_O" => "Select Opponent Slot".to_string(),
-                    "RECOV_L" => "Select Live to Recover".to_string(),
-                    "RECOV_M" => "Select Member to Recover".to_string(),
-                    "SELECT_HAND_DISCARD" => "Select Card to Discard".to_string(),
-                    "SELECT_HAND_PLAY" => "Select Card to Play".to_string(),
-                    "SELECT_LIVE_SLOT" => "Select Live Slot".to_string(),
-                    "SELECT_STAGE" => "Select Stage Slot".to_string(),
-                    "PAY_ENERGY" => "Select Energy".to_string(),
-                    _ => "Please Select".to_string()
-                }
-            };
-
-            let mut choose_count = 1;
-            // Enrich title with ability name if available
-            if pending.card_id >= 0 {
-                let member = db.get_member(pending.card_id);
-                let live = db.get_live(pending.card_id);
-                let abilities = if let Some(m) = member { Some(&m.abilities) } else { live.map(|l| &l.abilities) };
-                
-                if let Some(abs) = abilities {
-                    if let Some(ab) = abs.get(pending.ability_index.max(0) as usize) {
-                        choose_count = ab.choice_count.max(1);
-                        let ab_summary = get_ability_summary(&serde_json::to_value(ab).unwrap(), lang);
-                        let source_info = if let Some(m) = member { format!("{} ({})", m.name, m.card_no) }
-                                         else if let Some(l) = live { format!("{} ({})", l.name, l.card_no) }
-                                         else { "".to_string() };
-                        if !source_info.is_empty() {
-                            title = format!("{}: {}", source_info, ab_summary);
-                        } else {
-                            title = ab_summary;
-                        }
-                    }
-                }
+            // Populate action map
+            let action = Action::from_id(id, gs.phase);
+            match action {
+                Action::SelectChoice { choice_idx } => { action_map.insert(choice_idx.to_string(), json!(id)); },
+                Action::SelectHand { hand_idx } => { action_map.insert(hand_idx.to_string(), json!(id)); },
+                Action::SelectResponseSlot { slot_idx } => { action_map.insert(slot_idx.to_string(), json!(id)); },
+                Action::SelectResponseColor { color_idx } => { action_map.insert(color_idx.to_string(), json!(id)); },
+                _ => {}
             }
-            
-            let filter_desc = get_filter_description(pending.filter_attr, lang);
-            if !filter_desc.is_empty() {
-                title = if lang == "jp" { format!("{} ({})", title, filter_desc) } else { format!("{} ({})", title, filter_desc) };
-            }
-
-            Some(json!({
-                "type": pending.choice_type,
-                "title": title,
-                "text": pending.choice_text,
-                "card_id": pending.card_id,
-                "options": options,
-                "actions": actions,
-                "action_map": action_map,
-                "choose_count": choose_count,
-                "v_remaining": pending.v_remaining
-            }))
-        } else {
-            None
-        },
-        "legal_actions": if viewer_idx == gs.current_player as usize {
-            legal_actions.into_iter().map(|id| {
-                let (name, text, type_str, area_idx_opt, metadata) = get_action_desc_rich(id, gs, db, viewer_idx, lang);
-                let mut obj = json!({
-                    "id": id,
-                    "name": name,
-                    "text": text,
-                    "type": type_str
-                });
-                let obj_map = obj.as_object_mut().unwrap();
-                if let Some(idx) = area_idx_opt {
-                    obj_map.insert("area_idx".to_string(), json!(idx));
-                }
-                for (k, v) in metadata {
-                    obj_map.insert(k, v);
-                }
-                obj
-            }).collect::<Vec<Value>>()
-        } else {
-            vec![]
         }
-    })
+
+        let mut title = if !pending.choice_text.is_empty() {
+            pending.choice_text.clone()
+        } else if lang == "jp" {
+            match pending.choice_type.as_str() {
+                "SELECT_MODE" => "モードを選択してください".to_string(),
+                "LOOK_AND_CHOOSE" => "カードを選択してください".to_string(),
+                "SELECT_CARDS" => "カードを選択してください".to_string(),
+                "COLOR_SELECT" => "色を選択してください".to_string(),
+                "TAP_O" => "相手の枠を選択してください".to_string(),
+                "RECOV_L" => "回収するライブを選択してください".to_string(),
+                "RECOV_M" => "回収するメンバーを選択してください".to_string(),
+                "SELECT_HAND_DISCARD" => "捨てるカードを選択してください".to_string(),
+                "SELECT_HAND_PLAY" => "プレイするカードを選択してください".to_string(),
+                "SELECT_LIVE_SLOT" => "ライブスロットを選択してください".to_string(),
+                "SELECT_STAGE" => "ステージを選択してください".to_string(),
+                "SELECT_DISCARD_PLAY" => "控え室からメンバーを選択してください".to_string(),
+                "PAY_ENERGY" => "エネルギーを選択してください".to_string(),
+                "OPTIONAL" => "効果を発動しますか？".to_string(),
+                "TAP_M_SELECT" => "タップするメンバーを選択してください".to_string(),
+                "REVEAL_HAND" => "手札を公開してください".to_string(),
+                "OPPONENT_CHOOSE" => "相手が選択中です...".to_string(),
+                "ORDER_DECK" => "カードをデッキの上に戻す順番を選んでください".to_string(),
+                "SELECT_SWAP_SOURCE" => "入れ替えるライブを選んでください".to_string(),
+                "SELECT_SWAP_TARGET" => "手札から入れ替えるメンバーを選んでください".to_string(),
+                "SELECT_PLAYER" => "プレイヤーを選択してください".to_string(),
+                "SELECT_DISCARD" => "捨てるカードを選択してください".to_string(),
+                "SELECT_STAGE_EMPTY" => "空いている枠を選択してください".to_string(),
+                _ => "選択してください".to_string()
+            }
+        } else {
+            match pending.choice_type.as_str() {
+                "SELECT_MODE" => "Mode Select".to_string(),
+                "LOOK_AND_CHOOSE" => "Select Card".to_string(),
+                "SELECT_CARDS" => "Select Card".to_string(),
+                "COLOR_SELECT" => "Select Color".to_string(),
+                "TAP_O" => "Select Opponent Slot".to_string(),
+                "RECOV_L" => "Select Live to Recover".to_string(),
+                "RECOV_M" => "Select Member to Recover".to_string(),
+                "SELECT_HAND_DISCARD" => "Select Card to Discard".to_string(),
+                "SELECT_HAND_PLAY" => "Select Card to Play".to_string(),
+                "SELECT_LIVE_SLOT" => "Select Live Slot".to_string(),
+                "SELECT_STAGE" => "Select Stage Slot".to_string(),
+                "SELECT_DISCARD_PLAY" => "Select Member from Discard".to_string(),
+                "PAY_ENERGY" => "Select Energy".to_string(),
+                "OPTIONAL" => "Activate Effect?".to_string(),
+                "TAP_M_SELECT" => "Select Member to Tap".to_string(),
+                "REVEAL_HAND" => "Reveal Hand".to_string(),
+                "OPPONENT_CHOOSE" => "Opponent is choosing...".to_string(),
+                "ORDER_DECK" => "Order cards on Deck Top".to_string(),
+                "SELECT_SWAP_SOURCE" => "Select card to swap out".to_string(),
+                "SELECT_SWAP_TARGET" => "Select card to swap in".to_string(),
+                "SELECT_PLAYER" => "Select Player".to_string(),
+                "SELECT_DISCARD" => "Select card to discard".to_string(),
+                "SELECT_STAGE_EMPTY" => "Select empty stage slot".to_string(),
+                _ => "Please Select".to_string()
+            }
+        };
+
+        let mut choose_count = 1;
+        let mut source_ability = "".to_string();
+        let mut trigger_label = "".to_string();
+
+        if pending.card_id >= 0 {
+            let member = db.get_member(pending.card_id);
+            let live = db.get_live(pending.card_id);
+            let abilities = if let Some(m) = member { Some(&m.abilities) } else { live.map(|l| &l.abilities) };
+
+            if let Some(abs) = abilities {
+                if let Some(ab) = abs.get(pending.ability_index.max(0) as usize) {
+                    choose_count = ab.choice_count.max(1);
+                    if !ab.raw_text.is_empty() {
+                        source_ability = ab.raw_text.clone();
+                    } else if !ab.pseudocode.is_empty() {
+                        source_ability = ab.pseudocode.clone();
+                    }
+
+                    trigger_label = match ab.trigger {
+                        TriggerType::OnPlay => "登場",
+                        TriggerType::OnLiveStart => "開始時",
+                        TriggerType::OnLiveSuccess => "成功時",
+                        TriggerType::TurnStart => "ターン開始",
+                        TriggerType::TurnEnd => "ターン終了",
+                        TriggerType::Constant => "常時",
+                        TriggerType::Activated => "起動",
+                        TriggerType::OnLeaves => "自動",
+                        TriggerType::OnReveal => "公開時",
+                        _ => ""
+                    }.to_string();
+
+                    let ab_summary = get_ability_summary(&serde_json::to_value(ab).unwrap(), lang);
+                    let source_info = if let Some(m) = member { format!("{} ({})", m.name, m.card_no) }
+                                     else if let Some(l) = live { format!("{} ({})", l.name, l.card_no) }
+                                     else { "".to_string() };
+                    if !source_info.is_empty() {
+                        title = format!("{}: {}", source_info, ab_summary);
+                    } else {
+                        title = ab_summary;
+                    }
+                }
+            }
+        }
+
+        let filter_desc = get_filter_description(pending.filter_attr, lang);
+        if !filter_desc.is_empty() {
+            title = format!("{} ({})", title, filter_desc);
+        }
+
+        json!({
+            "type": pending.choice_type,
+            "title": title,
+            "text": pending.choice_text,
+            "card_id": pending.card_id,
+            "source_ability": source_ability,
+            "options": options,
+            "actions": actions,
+            "action_map": action_map,
+            "choose_count": choose_count,
+            "v_remaining": pending.v_remaining,
+            "ability_index": pending.ability_index,
+            "trigger_label": trigger_label
+        })
+    } else {
+        Value::Null
+    };
+    map.insert("pending_choice".to_string(), pending_choice_val);
+
+    // Legal Actions Enrichment
+    let rich_legal_actions = if viewer_idx == gs.current_player as usize {
+        legal_actions.into_iter().map(|id| {
+            let (name, text, type_str, area_idx_opt, metadata) = get_action_desc_rich(id, gs, db, viewer_idx, lang);
+            let mut obj = json!({
+                "id": id,
+                "name": name,
+                "text": text,
+                "type": type_str
+            });
+            let obj_map = obj.as_object_mut().unwrap();
+            if let Some(idx) = area_idx_opt {
+                obj_map.insert("area_idx".to_string(), json!(idx));
+            }
+            for (k, v) in metadata {
+                obj_map.insert(k, v);
+            }
+            obj
+        }).collect::<Vec<Value>>()
+    } else {
+        vec![]
+    };
+    map.insert("legal_actions".to_string(), json!(rich_legal_actions));
+
+    root
 }
 
 #[cfg(test)]
@@ -1472,7 +1644,7 @@ mod tests {
     fn test_dump_action_buttons() {
         use std::io::Write;
         use engine_rust::core::logic::{
-            O_SELECT_MODE, O_LOOK_AND_CHOOSE, O_COLOR_SELECT, O_TAP_OPPONENT, O_ORDER_DECK, 
+            O_SELECT_MODE, O_LOOK_AND_CHOOSE, O_COLOR_SELECT, O_TAP_OPPONENT, O_ORDER_DECK,
             O_PLAY_MEMBER_FROM_HAND, O_SELECT_CARDS, O_RECOVER_LIVE, O_RECOVER_MEMBER, O_MOVE_TO_DISCARD,
             O_SWAP_AREA
         };
@@ -1484,13 +1656,13 @@ mod tests {
 
         let out_path = "action_buttons_exhaustive.txt";
         let mut f = fs::File::create(out_path).expect("Failed to create output file");
-        
-        let mut gs = GameState::default(); 
-        
+
+        let mut gs = GameState::default();
+
         macro_rules! dump {
             ($label:expr) => {
                 writeln!(f, "\n=== Scenario: {} ===", $label).unwrap();
-                
+
                 // Show Phase and Pending Logic Info
                 writeln!(f, "Phase: {:?}", gs.phase).unwrap();
                 if gs.phase == Phase::Response {
@@ -1505,7 +1677,7 @@ mod tests {
                 for &id in &legal_actions {
                     let (name_jp, text_jp, type_jp, _, _) = get_action_desc_rich(id, &gs, &db, 0, "jp");
                     let (name_en, text_en, type_en, _, _) = get_action_desc_rich(id, &gs, &db, 0, "en");
-                    
+
                     writeln!(f, "ID {:>3} | [JP] {:<15} | {} ({})", id, name_jp, text_jp, type_jp).unwrap();
                     writeln!(f, "       | [EN] {:<15} | {} ({})", name_en, text_en, type_en).unwrap();
                     writeln!(f, "-------").unwrap();
@@ -1545,7 +1717,7 @@ mod tests {
         dump!("Main Phase - Variety in Hand (Member/Live/Energy)");
 
         // 6. Main Phase - Activated Ability
-        gs.players[0].stage = [2, -1, -1]; 
+        gs.players[0].stage = [2, -1, -1];
         gs.players[0].discard = vec![1, 1, 1, 1, 1, 1].into(); // Discard req for Card 2
         dump!("Main Phase - Activated Ability (Umi #2)");
 
@@ -1556,7 +1728,7 @@ mod tests {
 
         // --- RESPONSE PHASE SCENARIOS ---
         gs.phase = Phase::Response;
-        
+
         let mut base_pending = PendingInteraction {
              card_id: 2, // Source is Umi
              ability_index: 0,
@@ -1575,11 +1747,11 @@ mod tests {
 
         // 10. Look and Choose - Mixed List
         gs.interaction_stack.clear();
-        gs.interaction_stack.push({ 
-            let mut p = base_pending.clone(); 
-            p.effect_opcode = O_LOOK_AND_CHOOSE; 
+        gs.interaction_stack.push({
+            let mut p = base_pending.clone();
+            p.effect_opcode = O_LOOK_AND_CHOOSE;
             p.filter_attr = 0x00000004; // Member filter (Bit 2-3 = 1)
-            p 
+            p
         });
         gs.players[0].looked_cards = vec![1, 10001, 2].into(); // Mix
         dump!("Choice: Look and Choose (Filtering Members from Mix)");

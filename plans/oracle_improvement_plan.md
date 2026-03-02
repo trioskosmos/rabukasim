@@ -101,7 +101,7 @@ EFFECT: SELECT_MODE(1)
 ```python
 class PseudocodeOracle:
     """擬似コードから期待値を生成"""
-    
+
     EFFECT_PATTERNS = {
         "DRAW": r"DRAW\((\d+)\)",
         "DISCARD_HAND": r"DISCARD_HAND\((\d+)\)",
@@ -112,42 +112,42 @@ class PseudocodeOracle:
         "RECOVER_LIVE": r"RECOVER_LIVE\((\d+)\)",
         "ACTIVATE_ENERGY": r"ACTIVATE_ENERGY\((\d+)\)",
     }
-    
+
     def parse_pseudocode(self, pseudocode: str) -> List[SemanticAbility]:
         abilities = []
-        
+
         # TRIGGERで分割
         trigger_blocks = re.split(r'TRIGGER:\s*', pseudocode)
-        
+
         for block in trigger_blocks:
             if not block.strip():
                 continue
-                
+
             # トリガータイプ抽出
             trigger_match = re.match(r'(\w+)', block)
             trigger_type = trigger_match.group(1) if trigger_match else "NONE"
-            
+
             # 効果抽出
             effects = self.extract_effects(block)
-            
+
             abilities.append({
                 "trigger": trigger_type,
                 "sequence": effects
             })
-        
+
         return abilities
-    
+
     def extract_effects(self, block: str) -> List[dict]:
         effects = []
-        
+
         for effect_name, pattern in self.EFFECT_PATTERNS.items():
             matches = re.finditer(pattern, block)
             for match in matches:
                 value = int(match.group(1))
                 effects.append(self.map_effect_to_delta(effect_name, value))
-        
+
         return effects
-    
+
     def map_effect_to_delta(self, effect_name: str, value: int) -> dict:
         mapping = {
             "DRAW": {"tag": "HAND_DELTA", "value": value},
@@ -185,7 +185,7 @@ CONDITION_PATTERNS = {
 def map_expectations(self, segment_text):
     # まず条件を検出
     conditions = self.extract_conditions(segment_text)
-    
+
     # 条件がある場合、期待値に条件フラグを追加
     if conditions:
         return {
@@ -193,7 +193,7 @@ def map_expectations(self, segment_text):
             "effects": self.extract_effects(segment_text),
             "conditional": True
         }
-    
+
     return self.extract_effects(segment_text)
 ```
 
@@ -236,7 +236,7 @@ def map_expectations_llm(self, segment_text):
     prompt = f"""
     以下のカードテキストから期待される効果を抽出してください。
     出力形式: JSON
-    
+
     テキスト: {segment_text}
     """
     response = openai.chat.completions.create(
@@ -309,7 +309,7 @@ def extract_effect_value(text, effect_type):
         "DRAW": r'(引く|加える).*?([0-9]+)枚',
         "DISCARD": r'控え室に置く.*?([0-9]+)枚',
     }
-    
+
     match = re.search(effect_patterns.get(effect_type, ''), text)
     if match:
         return int(match.group(1))
@@ -326,7 +326,7 @@ def extract_segments(self, text):
     # 接続詞
     text = re.sub(r'その後', '|THEN|', text)
     text = re.sub(r'さらに', '|AND|', text)
-    
+
     segments = text.split('|')
     return [s.strip() for s in segments if s.strip() and s not in ['COST', 'THEN', 'AND']]
 ```

@@ -10,7 +10,7 @@ pub fn resolve_deck(main_codes: &[String], energy_codes: &[String], db: &CardDat
     for code in main_codes {
         let trimmed_code = code.trim().to_uppercase();
         if trimmed_code.is_empty() { continue; }
-        
+
         if let Some(id) = db.members.iter().find(|(_, m)| m.card_no.trim().to_uppercase() == trimmed_code).map(|(id, _)| *id) {
             members.push(id);
         } else if let Some(id) = db.lives.iter().find(|(_, l)| l.card_no.trim().to_uppercase() == trimmed_code).map(|(id, _)| *id) {
@@ -26,7 +26,7 @@ pub fn resolve_deck(main_codes: &[String], energy_codes: &[String], db: &CardDat
             energy.push(id);
         }
     }
-    
+
     // Ensure exactly 12 energy cards
     if energy.len() < 12 {
         let fallback_id = if !energy.is_empty() {
@@ -36,7 +36,7 @@ pub fn resolve_deck(main_codes: &[String], energy_codes: &[String], db: &CardDat
         } else {
             40000
         };
-        
+
         println!("[Deck] Energy deck too small ({} cards). Filling with ID: {} to reach 12.", energy.len(), fallback_id);
         while energy.len() < 12 {
             energy.push(fallback_id);
@@ -95,7 +95,7 @@ pub fn load_named_deck(name: &str) -> Option<(Vec<String>, Vec<String>)> {
         for line in content.lines() {
             let line = line.trim();
             if line.is_empty() || line.starts_with('#') { continue; }
-            
+
             let current_code;
             let mut current_count = 1;
 
@@ -105,7 +105,7 @@ pub fn load_named_deck(name: &str) -> Option<(Vec<String>, Vec<String>)> {
             if let Some(idx) = line_lower.find(" x ") {
                 let part1 = line[..idx].trim();
                 let part2 = line[idx+3..].trim();
-                
+
                 if let Ok(count) = part1.parse::<usize>() {
                     // N x CardCode
                     current_count = count;
@@ -149,13 +149,13 @@ pub fn get_random_valid_deck(db: &CardDatabase) -> ParsedDecks {
         .filter(|(_, m)| !m.abilities.is_empty())
         .map(|(id, _)| *id)
         .collect();
-    
+
     // Fallback if no cards with abilities found (unlikely with full DB)
     if m_ids.is_empty() {
         m_ids = db.members.keys().cloned().collect();
     }
     if m_ids.is_empty() { m_ids.push(1); } // Absolute safety fallback
-    
+
     m_ids.shuffle(&mut rng);
 
     let needed_types = 12;
@@ -173,12 +173,12 @@ pub fn get_random_valid_deck(db: &CardDatabase) -> ParsedDecks {
         .filter(|(_, l)| !l.abilities.is_empty())
         .map(|(id, _)| *id)
         .collect();
-    
+
     if l_ids.is_empty() {
         l_ids = db.lives.keys().cloned().collect();
     }
     if l_ids.is_empty() { l_ids.push(10001); }
-    
+
     l_ids.shuffle(&mut rng);
 
     let needed_lives = 3;
@@ -210,7 +210,7 @@ mod tests {
     #[test]
     fn test_random_deck_generation_has_abilities() {
         let mut db = CardDatabase::default();
-        
+
         // Add 2 members with abilities
         db.members.insert(1, MemberCard {
             card_id: 1,
@@ -222,7 +222,7 @@ mod tests {
             abilities: vec![Ability::default()],
             ..MemberCard::default()
         });
-        
+
         // Add 10 members without abilities (pool is small so they will be ignored if filter works)
         for i in 3..13 {
             db.members.insert(i, MemberCard {
@@ -238,7 +238,7 @@ mod tests {
             abilities: vec![Ability::default()],
             ..LiveCard::default()
         });
-        
+
         // Add 5 lives without abilities
         for i in 10002..10007 {
             db.lives.insert(i, LiveCard {
@@ -249,13 +249,13 @@ mod tests {
         }
 
         let deck = get_random_valid_deck(&db);
-        
+
         // Check memberships
         for mid in deck.members {
             let m = db.members.get(&mid).unwrap();
             assert!(!m.abilities.is_empty(), "Member card {} should have abilities", mid);
         }
-        
+
         // Check lives
         for lid in deck.lives {
             let l = db.lives.get(&lid).unwrap();

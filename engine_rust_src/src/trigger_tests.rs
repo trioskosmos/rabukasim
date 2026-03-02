@@ -17,7 +17,7 @@ fn test_enrichment_look_and_choose() {
 
     // O_LOOK_AND_CHOOSE 1
     let bc = vec![O_LOOK_AND_CHOOSE, 1, 0, 0, O_RETURN, 0, 0, 0];
-    state.resolve_bytecode(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(state.phase, Phase::Response);
     let interaction = state.interaction_stack.last().expect("Missing interaction");
@@ -37,22 +37,23 @@ fn test_look_and_choose_filter() {
 
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
 
-    // Filter Attr: 385875969 (Enabled=1, Threshold=11, Mode=0/GE, DiscardBit=1)
-    // GE 11 should match Honoka (11) and Kotori (13), but not Eli (2).
-    let bc = vec![O_LOOK_AND_CHOOSE, 3, 385875969, 0, O_RETURN, 0, 0, 0];
-    state.resolve_bytecode(&db, &bc, &ctx);
+    // Filter Attr: Cost GE 11 → Bit 24 (Enable) | (11 << 25) (Threshold=11) | Bit 31 (Cost Type) | Bit 0 (Target=Self)
+    // Python _pack_filter_attr always sets bit 31 for cost filters. Old value 385875969 was missing bit 31.
+    let cost_ge_11_attr = 0x01u64 | (1u64 << 24) | (11u64 << 25) | (1u64 << 31);
+    let bc = vec![O_LOOK_AND_CHOOSE, 3, cost_ge_11_attr as i32, 0, O_RETURN, 0, 0, 0];
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(state.phase, Phase::Response);
     let legal = state.get_legal_actions(&db);
 
-    // Look&Choose base action range is [8000, 8000+looked.len)
-    // Card 122 (index 0) -> Cost 13 (>=11) -> Legal (8000)
-    // Card 120 (index 1) -> Cost 11 (>=11) -> Legal (8001)
-    // Card 121 (index 2) -> Cost 2  (<11)  -> Illegal (8002)
+    // Look&Choose base action range is [ACTION_BASE_CHOICE, ACTION_BASE_CHOICE+looked.len)
+    // Card 122 (index 0) -> Cost 13 (>=11) -> Legal (ACTION_BASE_CHOICE)
+    // Card 120 (index 1) -> Cost 11 (>=11) -> Legal (ACTION_BASE_CHOICE + 1)
+    // Card 121 (index 2) -> Cost 2  (<11)  -> Illegal (ACTION_BASE_CHOICE + 2)
 
-    assert!(legal[8000], "Card 122 (Cost 13) should be legal");
-    assert!(legal[8001], "Card 120 (Cost 11) should be legal");
-    assert!(!legal[8002], "Card 121 (Cost 2) should be illegal");
+    assert!(legal[ACTION_BASE_CHOICE as usize + 0], "Card 122 (Cost 13) should be legal");
+    assert!(legal[ACTION_BASE_CHOICE as usize + 1], "Card 120 (Cost 11) should be legal");
+    assert!(!legal[ACTION_BASE_CHOICE as usize + 2], "Card 121 (Cost 2) should be illegal");
 }
 
 /// Verifies that Honoka's OnPlay trigger (ID 120) works correctly with production bytecode.
@@ -86,14 +87,14 @@ fn test_trigger_on_play_honoka() {
         ..Default::default()
     };
 
-    state.resolve_bytecode(&db, &ab.bytecode, &ctx);
+    state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
 
     // Resume with choice
     if !state.interaction_stack.is_empty() {
         let mut next_ctx = ctx.clone();
         next_ctx.program_counter = state.interaction_stack.last().unwrap().ctx.program_counter;
         next_ctx.choice_index = 0;
-        state.resolve_bytecode(&db, &ab.bytecode, &next_ctx);
+        state.resolve_bytecode_cref(&db, &ab.bytecode, &next_ctx);
     } else {
         println!("DEBUG: Interaction stack empty after first call!");
     }
@@ -137,7 +138,7 @@ fn test_trigger_activated_eli() {
     state.core.players[0].discard.push(121);
 
     // Now resolve the effect bytecode
-    state.resolve_bytecode(&db, &ab.bytecode, &ctx);
+    state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
 
     // Since RECOVER_MEMBER is interactive, state should now be suspended
     if state.phase != Phase::Response {
@@ -148,7 +149,7 @@ fn test_trigger_activated_eli() {
     let mut pending = state.interaction_stack.pop().expect("No pending interaction");
     pending.ctx.choice_index = 0; // Choose first option (ID 124)
     let card = db.get_member(121).expect("Missing Eli for resume");
-    state.resolve_bytecode(&db, &card.abilities[0].bytecode, &pending.ctx);
+    state.resolve_bytecode_cref(&db, &card.abilities[0].bytecode, &pending.ctx);
 
     // Now verify the hand
     if !state.core.players[0].hand.contains(&124) {

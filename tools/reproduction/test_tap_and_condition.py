@@ -32,7 +32,7 @@ def run_test():
     gs.set_stage_card(0, 0, 1)  # Slot 0: Dummy Member
     gs.set_live_cards(0, [30204])  # Slot 0: Liella Live
 
-    print(f"Initial State:")
+    print("Initial State:")
     print(f"  Hand: {gs.get_player(0).hand}")
     print(f"  Stage Slot 0 (Target): {gs.get_player(0).stage[0]}")
     p0 = gs.get_player(0)

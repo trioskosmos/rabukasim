@@ -1,8 +1,8 @@
 import sys
-import re
 from enum import IntEnum
 
 # --- Mappings (Extracted from engine_rust_src and engine/models) ---
+
 
 class Opcode(IntEnum):
     NOP = 0
@@ -70,22 +70,12 @@ class Opcode(IntEnum):
     OPPONENT_CHOOSE = 75
     PLAY_LIVE_FROM_DISCARD = 76
     REDUCE_LIVE_SET_LIMIT = 77
+    SET_TARGET_SELF = 78
+    SET_TARGET_OPPONENT = 79
     PREVENT_ACTIVATE = 82
     ACTIVATE_ENERGY = 81
     PREVENT_SET_TO_SUCCESS_PILE = 80
     PREVENT_BATON_TOUCH = 90
-    SET_TARGET_SELF = 100
-    SET_TARGET_PLAYER = 101
-    SET_TARGET_OPPONENT = 102
-    SET_TARGET_ALL_PLAYERS = 103
-    SET_TARGET_MEMBER_SELF = 104
-    SET_TARGET_MEMBER_OTHER = 105
-    SET_TARGET_CARD_HAND = 106
-    SET_TARGET_CARD_DISCARD = 107
-    SET_TARGET_CARD_DECK_TOP = 108
-    SET_TARGET_OPPONENT_HAND = 109
-    SET_TARGET_MEMBER_SELECT = 110
-    SET_TARGET_MEMBER_NAMED = 111
 
     # Condition Checks (Pre-defined for decoding)
     CHECK_TURN_1 = 200
@@ -123,6 +113,21 @@ class Opcode(IntEnum):
     CHECK_TYPE_CHECK = 232
     CHECK_IS_IN_DISCARD = 233
     CHECK_AREA_CHECK = 234
+    # BP05+ Opcodes
+    CHECK_COUNT_ENERGY_EXACT = 301
+    CHECK_COUNT_BLADE_HEART_TYPES = 302
+    CHECK_OPPONENT_HAS_EXCESS_HEART = 303
+    CHECK_SCORE_TOTAL_CHECK = 304
+    CHECK_MAIN_PHASE = 305
+    CHECK_SELECT_MEMBER = 306
+    CHECK_SUCCESS_PILE_COUNT = 307
+    CHECK_IS_SELF_MOVE = 308
+    CHECK_DISCARDED_CARDS = 309
+    CHECK_YELL_REVEALED_UNIQUE_COLORS = 310
+    CHECK_SYNC_COST = 311
+    CHECK_SUM_VALUE = 312
+    CHECK_IS_WAIT = 313
+
 
 class TriggerType(IntEnum):
     NONE = 0
@@ -137,41 +142,48 @@ class TriggerType(IntEnum):
     ON_REVEAL = 9
     ON_POSITION_CHANGE = 10
 
+
 def decode_filter(f):
-    if f == 0: return "None"
+    if f == 0:
+        return "None"
     parts = []
-    
+
     # Optional flags
-    if f & 0x02: parts.append("Optional(0x02)")
-    
+    if f & 0x02:
+        parts.append("Optional(0x02)")
+
     # ALL flag
-    if f & 0x80000000: parts.append("ALL")
-    
+    if f & 0x80000000:
+        parts.append("ALL")
+
     # Type Filter
     type_f = (f >> 2) & 0x03
-    if type_f == 1: parts.append("Type:Member")
-    elif type_f == 2: parts.append("Type:Live")
-    
+    if type_f == 1:
+        parts.append("Type:Member")
+    elif type_f == 2:
+        parts.append("Type:Live")
+
     # Group Filter
     if f & 0x10:
         group_id = (f >> 5) & 0x7F
         parts.append(f"Group:{group_id}")
-        
+
     # Unit Filter
     if f & 0x10000:
         unit_id = (f >> 17) & 0x7F
         parts.append(f"Unit:{unit_id}")
-        
+
     # Cost Filter
     if f & 0x01000000:
         threshold = (f >> 25) & 0x1F
         is_le = (f & 0x40000000) != 0
         op = "<=" if is_le else ">="
         parts.append(f"Cost/Hearts {op} {threshold}")
-        
+
     if not parts:
         return f"Unknown({f})"
     return " | ".join(parts)
+
 
 # --- Legends (For human-readable decoding) ---
 
@@ -206,12 +218,14 @@ COMPARISONS = {
     4: "LE (<=)",
 }
 
+
 def get_legend_str():
     lines = ["\n--- BYTECODE LEGEND ---"]
     lines.append("Zones: " + ", ".join([f"{k}:{v}" for k, v in ZONES.items()]))
     lines.append("Slots: " + ", ".join([f"{k}:{v}" for k, v in SLOTS.items()]))
     lines.append("Comparisons: " + ", ".join([f"{k}:{v}" for k, v in COMPARISONS.items()]))
     return "\n".join(lines)
+
 
 def decode_chunk(chunk):
     op, v, a_low, a_high, s = chunk
@@ -221,18 +235,18 @@ def decode_chunk(chunk):
     if op >= 1000 and op < 1300:
         is_negated = True
         base_op = op - 1000
-    
+
     try:
         op_name = Opcode(base_op).name
     except ValueError:
         op_name = f"OP_{base_op}"
-        
+
     if is_negated:
         op_name = f"NOT {op_name}"
-        
+
     # Standard fallback
     params = f"v={v}, a={a}, s={s}"
-    
+
     if base_op == Opcode.LOOK_AND_CHOOSE:
         # v = look_count | pick_count<<8, a = filter/source, s = target/remainder
         src_val = (a >> 12) & 0x0F
@@ -240,69 +254,96 @@ def decode_chunk(chunk):
         src_zone = ZONES.get(src_zone_id, f"Zone_{src_zone_id}")
         target_id = s & 0xFF
         target = SLOTS.get(target_id, f"Slot_{target_id}")
-        params = f"v(Reveal):{v&0xFF}, v(Pick):{(v>>8)&0xFF}, a(Filter):[{decode_filter(a)}], a(Source):{src_zone}, s(Target):{target}"
+        params = f"v(Reveal):{v & 0xFF}, v(Pick):{(v >> 8) & 0xFF}, a(Filter):[{decode_filter(a)}], a(Source):{src_zone}, s(Target):{target}"
     elif base_op == Opcode.BUFF_POWER:
         params = f"v(Value):{v}, a(Attr):{a}, s(Slot):{SLOTS.get(s, s)}"
     elif base_op == Opcode.RECOVER_MEMBER or base_op == Opcode.RECOVER_LIVE:
         src_val = (s >> 16) & 0xFF
-        src_zone_id = src_val if src_val != 0 else 7 # Default recovery to discard
+        src_zone_id = src_val if src_val != 0 else 7  # Default recovery to discard
         params = f"v(Count):{v}, a(Filter):[{decode_filter(a)}], s(Source):{ZONES.get(src_zone_id, src_zone_id)}, s(Dest):{SLOTS.get(s & 0xFF, s & 0xFF)}"
-    elif base_op == Opcode.DRAW or base_op == Opcode.MOVE_TO_DISCARD or base_op == Opcode.ADD_HEARTS or base_op == Opcode.ADD_BLADES:
+    elif (
+        base_op == Opcode.DRAW
+        or base_op == Opcode.MOVE_TO_DISCARD
+        or base_op == Opcode.ADD_HEARTS
+        or base_op == Opcode.ADD_BLADES
+    ):
         src_val = (s >> 16) & 0xFF
         if base_op == Opcode.MOVE_TO_DISCARD and src_val != 0:
-             params = f"v(Count):{v}, a(Filter):[{decode_filter(a)}], s(Source):{ZONES.get(src_val, src_val)}, s(Target):{SLOTS.get(s & 0xFF, s & 0xFF)}"
+            params = f"v(Count):{v}, a(Filter):[{decode_filter(a)}], s(Source):{ZONES.get(src_val, src_val)}, s(Target):{SLOTS.get(s & 0xFF, s & 0xFF)}"
         else:
-             params = f"v(Count):{v}, a(Attr/Source):{a}, s(Slot/Target):{SLOTS.get(s & 0xFF, s & 0xFF)}"
+            area_val = (s >> 28) & 0x07
+            area_name = {1: "LEFT", 2: "CENTER", 3: "RIGHT"}.get(area_val, "None")
+            params = f"v(Count):{v}, a(Attr/Source):{a}, s(Area):{area_name}, s(Slot/Target):{SLOTS.get(s & 0xFF, s & 0xFF)} (Raw:{s})"
     elif base_op == Opcode.PAY_ENERGY:
         params = f"v(Cost):{v}, a(Optional):{a}, s(Type):{s}"
     elif base_op == Opcode.SELECT_MEMBER:
-        params = f"v(Unused):{v}, a(Filter):[{decode_filter(a)}], s(Target_Slot):{SLOTS.get(s, s)}"
+        area_val = (s >> 28) & 0x07
+        area_name = {1: "LEFT", 2: "CENTER", 3: "RIGHT"}.get(area_val, "None")
+        params = f"v(Unused):{v}, a(Filter):[{decode_filter(a)}], s(Area):{area_name}, s(Target_Slot):{SLOTS.get(s & 0xFF, s & 0xFF)} (Raw:{s})"
     elif base_op == Opcode.GRANT_ABILITY:
         params = f"v(Unused):{v}, a(Source_CID):{a}, s(Target_Slot):{SLOTS.get(s, s)}"
     elif base_op == Opcode.MOVE_MEMBER:
         params = f"v(From):{SLOTS.get(v, v)}, a(To):{SLOTS.get(a, a)}, s(Unused):{s}"
     elif base_op >= 100 and base_op < 200:
-        params = f"v={v}, a={a}, s={s}" # Target setters
+        params = f"v={v}, a={a}, s={s}"  # Target setters
     elif base_op >= 200 and base_op < 300:
-        # Comparison logic for conditions
+        # Comparison logic for conditions (Legacy 4-width like, but in 5-width array)
         comp_val = (s >> 4) & 0x0F
         slot = s & 0x0F
         comp_map = COMPARISONS
         comp = comp_map.get(comp_val, f"C_{comp_val}")
         params = f"v(Val):{v}, a(Attr):{a}, s(Comp):{comp}, s(Slot):{SLOTS.get(slot, slot)}"
+    elif base_op >= 300 and base_op < 400:
+        # New 5-width condition packing (BP05+)
+        # [op, val, attr_low, attr_high, packed_slot]
+        val_val = v
+        attr = a # This is already (a_high << 32) | a_low
+        packed_slot = s
         
+        comp_val = (packed_slot >> 4) & 0x0F
+        comp = COMPARISONS.get(comp_val, f"C_{comp_val}")
+        
+        area_val = (packed_slot >> 28) & 0x07
+        area_map = {1: "LEFT", 2: "CENTER", 3: "RIGHT"}
+        area_name = area_map.get(area_val, f"None({area_val})")
+        
+        params = f"v(Val):{val_val}, a(Filter):[{decode_filter(attr)}], s(Comp):{comp}, s(Area):{area_name}, s(Raw_Slot):{packed_slot}"
+
     return f"{op_name:<20} | {params}"
+
 
 def decode_bytecode(bytecode):
     if not bytecode:
         return "None"
-    
-    chunks = [bytecode[i:i+5] for i in range(0, len(bytecode), 5)]
+
+    chunks = [bytecode[i : i + 5] for i in range(0, len(bytecode), 5)]
     lines = []
     for i, chunk in enumerate(chunks):
         if len(chunk) < 5:
             chunk = chunk + [0] * (5 - len(chunk))
-        lines.append(f"  {i*5:02d}: {decode_chunk(chunk)}")
-    
+        lines.append(f"  {i * 5:02d}: {decode_chunk(chunk)}")
+
     # Add Legend to the end
     lines.append(get_legend_str())
     return "\n".join(lines)
 
+
 if __name__ == "__main__":
     # Standardized UTF-8 Handling
-    if sys.stdout.encoding.lower() != 'utf-8':
+    if sys.stdout.encoding.lower() != "utf-8":
         import io
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
     if len(sys.argv) < 2:
-        print("Usage: python bytecode_decoder.py \"[41, 3, 385876097, 0, 1, 0, 0, 0]\"")
+        print('Usage: python bytecode_decoder.py "[41, 3, 385876097, 0, 1, 0, 0, 0]"')
         sys.exit(1)
-        
+
     raw = sys.argv[1]
     # Clean up input if it's bracketed
-    raw = raw.strip('[] ')
+    raw = raw.strip("[] ")
     try:
-        data = [int(x.strip()) for x in raw.split(',')]
+        data = [int(x.strip()) for x in raw.split(",")]
         print(decode_bytecode(data))
     except Exception as e:
         print(f"Error decoding: {e}")

@@ -29,7 +29,7 @@ When writing or expanding the Oracle, use these standardized tags to map text to
 | `ZONE_RECOVERY`| From Discard to Hand | `after.hand > before.hand` AND `after.discard < before.discard` |
 
 ## 4. Handling Suspensions (The Auto-Bot Rule)
-Automated archetypes must be non-blocking. 
+Automated archetypes must be non-blocking.
 - If `state.phase == Phase::Response`, the test runner MUST provide an `Action` to clear the stack.
 - **Default Resolution**: Always pick `choice_idx: 0` or `hand_idx: 0` unless specifically testing a choice-dependent branch.
 

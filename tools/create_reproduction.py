@@ -1,5 +1,4 @@
 import argparse
-import json
 import os
 import sys
 
@@ -101,11 +100,11 @@ def run_repro():
     rust_db = engine_rust.PyCardDatabase(compiled_json_str)
     gs = engine_rust.PyGameState(rust_db)
     serializer = RustGameStateSerializer(m_db, l_db, e_db)
-    
+
     # Common Padding IDs
     plinth_cid = {plinth_cid}
     energy_cid = {energy_cid}
-    
+
     # 3. Standard Init
     # NOTE: Deck initialization uses integers.
     p0_deck = [plinth_cid] * 50
@@ -114,7 +113,7 @@ def run_repro():
     p1_energy = [energy_cid] * 10
     p0_lives = [l for l in l_db.keys()][:3]
     p1_lives = [l for l in l_db.keys()][:3]
-    
+
     print(f"Initializing game with Plinth CID: {{plinth_cid}}")
     try:
         gs.initialize_game(p0_deck, p1_deck, p0_energy, p1_energy, p0_lives, p1_lives)
@@ -131,11 +130,11 @@ def run_repro():
 
     # Setup God Mode
     helper.set_energy(0, 20, tapped=False)
-    
+
     if card_type == "MEMBER":
         helper.set_hand(0, [target_card_no])
         # Add some cards to discard for testing recovery abilities
-        helper.set_discard(0, ["{plinth_no}"] * 5) 
+        helper.set_discard(0, ["{plinth_no}"] * 5)
         gs.phase = 4  # Main
         play_action = 1 # Play to slot 0
     else:
@@ -146,10 +145,10 @@ def run_repro():
     # --- CUSTOM SETUP END ---
 
     print(f"Phase: {{gs.phase}}")
-    
+
     # 5. Show Actions & Execute
     legal = helper.show_actions()
-    
+
     # Auto-play if target found
     if any(a['id'] == play_action for a in legal):
         helper.step(play_action)
@@ -163,7 +162,7 @@ def run_repro():
     print(f"  Hand Size: {{len(p0.hand)}}")
     print(f"  Discard Size: {{len(p0.discard)}}")
     print(f"  Score: {{p0.score}}")
-    
+
     helper.show_actions()
 
     # TODO: Add your assertions!

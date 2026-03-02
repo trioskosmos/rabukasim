@@ -5,7 +5,7 @@ use crate::test_helpers::{Action, load_real_db};
 fn test_energy_initialization() {
     let mut state = GameState::default();
     let _db = load_real_db();
-    
+
     // Rule 6.1.1.1: Main Deck contains 60 cards
     // 121 = Eli (Member), 137 = START:DASH!! (Live)
     // 0 = Energy Card
@@ -29,7 +29,7 @@ fn test_phase_auto_advance_from_mulligan() {
     let mut state = GameState::default();
     state.debug.debug_mode = true;
     let db = load_real_db();
-    
+
     // Setup for reproducible test (seed 1)
     state.initialize_game_with_seed(
         vec![121i32; 60], vec![121i32; 60],
@@ -39,7 +39,7 @@ fn test_phase_auto_advance_from_mulligan() {
     );
 
     // Sequence: Rps -> TurnChoice -> MulliganP1 -> MulliganP2 -> Active -> Energy -> Draw -> Main
-    
+
     // 1. Rps
     state.step(&db, Action::Rps { player_idx: 0, choice: 0 }.id() as i32).unwrap(); // P0 choice: Rock
     state.step(&db, Action::Rps { player_idx: 1, choice: 2 }.id() as i32).unwrap(); // P1 choice: Scissors
@@ -58,7 +58,7 @@ fn test_phase_auto_advance_from_mulligan() {
     // 4. Mulligan P2
     // After this, it should go to Active -> Energy -> Draw -> Main automatically!
     state.step(&db, Action::Pass.id() as i32).unwrap();
-    
+
     assert_eq!(state.phase, Phase::Main, "Should have auto-advanced to Main phase");
     // P0 is first player, so P0's turn 1 starts.
     assert_eq!(state.current_player, 0, "P0 should be active player");
@@ -70,7 +70,7 @@ fn test_phase_auto_advance_from_mulligan() {
 fn test_yell_source_deck_parity() {
     let mut state = GameState::default();
     let db = load_real_db();
-    
+
     // 121 = Eli (1 Blade)
     // 137 = START:DASH!!
     state.core.players[0].hand = smallvec::smallvec![121, 121, 121]; // 3 cards in hand

@@ -47,7 +47,7 @@ def run_test():
     # Set group flag for N-bp1 members in slot 1 (for condition check: GROUP_ID=2)
     gs.set_stage_card(0, 1, 468)  # Kasumi (N-bp1)
 
-    print(f"Initial State:")
+    print("Initial State:")
     p0 = gs.get_player(0)
     tapped_count = sum(1 for t in p0.tapped_energy if t)
     print(f"  Tapped Energy: {tapped_count}")

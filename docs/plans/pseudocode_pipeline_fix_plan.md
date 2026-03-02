@@ -123,10 +123,10 @@ C_HEART_LEAD => {
     let self_hearts = state.get_total_hearts(p_idx, db, 0);
     let opp_hearts = state.get_total_hearts(1 - p_idx, db, 0);
     let reversed = (attr & 0x01) != 0;
-    if reversed { 
-        opp_hearts.total() > self_hearts.total() 
-    } else { 
-        self_hearts.total() > opp_hearts.total() 
+    if reversed {
+        opp_hearts.total() > self_hearts.total()
+    } else {
+        self_hearts.total() > opp_hearts.total()
     }
 },
 C_HAS_EXCESS_HEART => {
@@ -222,28 +222,28 @@ from compiler.parser_v2 import AbilityParserV2
 from engine.models.ability import TriggerType, EffectType, ConditionType
 
 class TestPseudocodePipeline:
-    
+
     def test_filter_blade_le(self):
         """BLADE_LE_* フィルタが正しくパースされる"""
         parser = AbilityParserV2()
         abilities = parser.parse("TRIGGER: ON_PLAY\nEFFECT: TAP_OPPONENT(1) {FILTER=\"BLADE_LE_3\"}")
         assert len(abilities) == 1
         # フィルタがバイトコードに正しく反映されることを確認
-        
+
     def test_dynamic_value_count_stage(self):
         """COUNT_STAGE 動的値が正しく処理される"""
         parser = AbilityParserV2()
         abilities = parser.parse("TRIGGER: ON_PLAY\nEFFECT: DRAW(COUNT_STAGE)")
         assert len(abilities) == 1
         # 動的値フラグが設定されることを確認
-        
+
     def test_per_card_multiplier(self):
         """PER_CARD 乗算が正しく処理される"""
         parser = AbilityParserV2()
         abilities = parser.parse("TRIGGER: ON_LIVE_START\nEFFECT: ADD_BLADES(1) {PER_CARD=\"SUCCESS_LIVE\"}")
         assert len(abilities) == 1
         # PER_CARD パラメータが設定されることを確認
-        
+
     def test_condition_score_lead(self):
         """SCORE_LEAD 条件が正しくパースされる"""
         parser = AbilityParserV2()

@@ -1,4 +1,5 @@
 use crate::core::logic::{GameState, CardDatabase, ActionReceiver, Phase};
+use crate::core::generated_constants::{ACTION_BASE_RPS, ACTION_BASE_RPS_P2};
 
 pub mod active_draw;
 pub mod live_set;
@@ -18,10 +19,10 @@ impl ActionGeneratorFactory {
 
         if state.phase == Phase::Rps {
             if state.rps_choices[p_idx] == -1 {
-                let offset = if p_idx == 0 { 10000 } else { 11000 };
-                receiver.add_action(offset + 0); // Rock
-                receiver.add_action(offset + 1); // Paper
-                receiver.add_action(offset + 2); // Scissors
+                let offset = if p_idx == 0 { ACTION_BASE_RPS } else { ACTION_BASE_RPS_P2 };
+                receiver.add_action(offset as usize + 0); // Rock
+                receiver.add_action(offset as usize + 1); // Paper
+                receiver.add_action(offset as usize + 2); // Scissors
             }
             return;
         }

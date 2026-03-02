@@ -26,7 +26,7 @@ graph TD
         GLA[generate_legal_actions<br/>250行]
         CMF[card_matches_filter<br/>マジックナンバー]
     end
-    
+
     subgraph Target[目標]
         CGS[CoreGameState]
         UIS[UIState]
@@ -34,7 +34,7 @@ graph TD
         GLA2[generate_legal_actions<br/>50行]
         CF[CardFilter構造体]
     end
-    
+
     GS --> CGS
     GS --> UIS
     GS --> DBS
@@ -113,7 +113,7 @@ pub fn get_character_name(id: u8) -> &'static str {
 }
 ```
 
-**影響範囲**: 
+**影響範囲**:
 - `game.rs`: 17行削除
 - `card_db.rs`: 定数配列追加
 
@@ -190,15 +190,15 @@ graph TD
         UI[UIState<br/>UI関連状態]
         Debug[DebugState<br/>デバッグ状態]
     end
-    
+
     Core --> players
     Core --> current_player
     Core --> phase
     Core --> turn
-    
+
     UI --> rule_log
     UI --> performance_results
-    
+
     Debug --> debug_mode
     Debug --> bypassed_conditions
 ```
@@ -245,7 +245,7 @@ pub struct DebugState {
 }
 ```
 
-**影響範囲**: 
+**影響範囲**:
 - `game.rs`: 構造体定義
 - `models.rs`: 新規構造体
 - 全アクセサコードの更新 (例: `state.phase` → `state.core.phase`)
@@ -298,7 +298,7 @@ sequenceDiagram
     participant EB as EventBus
     participant H1 as Handler 1
     participant H2 as Handler 2
-    
+
     GS->>EB: emit(OnPlay, ctx)
     EB->>H1: handle(event)
     EB->>H2: handle(event)

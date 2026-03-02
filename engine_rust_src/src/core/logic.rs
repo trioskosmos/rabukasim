@@ -15,7 +15,7 @@ pub mod action_factory;
 pub mod state;
 
 // Constants
-pub const ACTION_SPACE: usize = 8192;
+pub const ACTION_SPACE: usize = 16384;
 
 // Re-export core structures
 pub use state::{GameState, CoreGameState, UIState, DebugState, ActionReceiver};

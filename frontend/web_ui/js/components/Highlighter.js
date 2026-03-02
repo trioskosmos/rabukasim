@@ -189,7 +189,7 @@ export const Highlighter = {
         if (!specificHighlighted) {
             let srcCardId = a.source_card_id;
             if ((srcCardId === undefined || srcCardId === -1) && state.pending_choice) {
-                srcCardId = state.pending_choice.source_card_id || (state.pending_choice.params ? state.pending_choice.params.source_card_id : -1);
+                srcCardId = state.pending_choice.source_card_id || state.pending_choice.card_id || (state.pending_choice.params ? state.pending_choice.params.source_card_id : -1);
             }
 
             if (srcCardId !== undefined && srcCardId !== -1) {
@@ -202,7 +202,7 @@ export const Highlighter = {
         const state = State.data;
         if (!state || !state.pending_choice) return;
         const choice = state.pending_choice;
-        const srcId = choice.source_card_id || (choice.params ? choice.params.source_card_id : -1);
+        const srcId = choice.source_card_id || choice.card_id || (choice.params ? choice.params.source_card_id : -1);
 
         if (srcId === undefined || srcId === -1) return;
 

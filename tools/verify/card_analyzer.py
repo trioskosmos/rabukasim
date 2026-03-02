@@ -1,6 +1,6 @@
 import json
-import sys
 import os
+import sys
 
 
 def analyze_card(input_id):
@@ -78,7 +78,7 @@ def analyze_card(input_id):
             pseudo_data = json.load(f)
             if results["card_no"] in pseudo_data:
                 results["manual_pseudocode"] = pseudo_data[results["card_no"]]
-    except Exception as e:
+    except Exception:
         pass  # Optional
 
     return results
@@ -93,19 +93,19 @@ def format_output(results):
     pseudo = results["manual_pseudocode"] or {}
     compiled = results["compiled_data"] or {}
 
-    print(f"================================================")
+    print("================================================")
     print(f" CARD ANALYSIS: {results['card_no']} (ID: {results['sequential_id']})")
-    print(f"================================================")
+    print("================================================")
     print(f"Name:   {src.get('name', 'N/A')}")
     print(f"Type:   {src.get('type', 'N/A')}")
     print(f"Rare:   {src.get('rare', 'N/A')}")
     print(f"Cost:   {src.get('cost', compiled.get('cost', 'N/A'))}")
     print(f"Unit:   {src.get('unit', 'N/A')}")
 
-    print(f"\n--- RAW ABILITY TEXT ---")
+    print("\n--- RAW ABILITY TEXT ---")
     print(src.get("ability", "No raw ability text found."))
 
-    print(f"\n--- MANUAL PSEUDOCODE ---")
+    print("\n--- MANUAL PSEUDOCODE ---")
     print(pseudo.get("pseudocode", "No manual pseudocode found."))
 
     if compiled:
@@ -145,7 +145,7 @@ def format_output(results):
         else:
             print("  No compiled abilities found.")
 
-    print(f"\n================================================")
+    print("\n================================================")
 
 
 if __name__ == "__main__":

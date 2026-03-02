@@ -116,7 +116,7 @@ pub stat_modifiers: SmallVec<[StatModifier; 8]>,
 O_BOOST_SCORE => {
     // 既存のコード...
     state.core.players[p_idx].live_score_bonus += final_v;
-    
+
     // 新しいログ記録
     state.core.players[p_idx].stat_modifiers.push(StatModifier {
         source_card_id: ctx.source_card_id,
@@ -130,7 +130,7 @@ O_BOOST_SCORE => {
 O_ADD_BLADES | O_BUFF_POWER => {
     // 既存のコード...
     state.core.players[p_idx].blade_buffs[slot] += v as i16;
-    
+
     // 新しいログ記録
     state.core.players[p_idx].stat_modifiers.push(StatModifier {
         source_card_id: ctx.source_card_id,
@@ -220,15 +220,15 @@ graph TD
     B -->|ADD_HEARTS| C
     B -->|SET_BLADES| C
     B -->|SET_HEARTS| C
-    
+
     C --> D[Apply Effect to Player]
     D --> E[Create StatModifier]
     E --> F[Push to stat_modifiers]
-    
+
     F --> G[Performance Phase]
     G --> H[Group by source_card_id]
     H --> I[Include in breakdown JSON]
-    
+
     I --> J[Frontend Performance Modal]
     J --> K[Display Stat Contributions]
 ```

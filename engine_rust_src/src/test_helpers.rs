@@ -2,10 +2,7 @@ use crate::core::logic::*;
 use crate::core::logic::player::PlayerState;
 use crate::core::logic::card_db::CardDatabase;
 
-#[cfg(feature = "gpu")]
-use crate::core::gpu_state::{GpuGameState, GpuCardStats, GpuTriggerRequest};
-#[cfg(feature = "gpu")]
-use crate::core::gpu_conversions::GpuConverter;
+
 
 #[derive(Debug, Clone)]
 pub struct ZoneSnapshot {
@@ -45,8 +42,8 @@ impl ZoneSnapshot {
         for i in 0..3 {
             total_hearts += p.heart_buffs[i].get_total_count();
             total_blades += p.blade_buffs[i] as i32;
-            if p.stage[i] != -1 { 
-                active_members += 1; 
+            if p.stage[i] != -1 {
+                active_members += 1;
                 stage_energy_total += p.stage_energy[i].len() as u32;
             }
         }
@@ -115,11 +112,14 @@ impl Action {
             Action::LiveSet { live_idx } => (ACTION_BASE_LIVESET as usize) + live_idx,
             Action::Mulligan { .. } => ACTION_BASE_MULLIGAN as usize,
             Action::ColorSelect { color_idx } => (ACTION_BASE_COLOR as usize) + color_idx,
-            Action::PlayMember { hand_idx, slot_idx } => (ACTION_BASE_HAND as usize) + (hand_idx * 3) + slot_idx,
+            Action::PlayMember { hand_idx, slot_idx } => (ACTION_BASE_HAND as usize) + (hand_idx * 10) + slot_idx,
             Action::SelectHand { hand_idx } => (ACTION_BASE_HAND_SELECT as usize) + hand_idx,
             Action::SelectChoice { choice_idx } => (ACTION_BASE_CHOICE as usize) + choice_idx,
-            Action::ActivateAbility { slot_idx, ab_idx } => (ACTION_BASE_STAGE as usize) + (slot_idx * 100) + ab_idx,
-            Action::Rps { player_idx, choice } => 10000 + (player_idx * 1000) + choice,
+            Action::ActivateAbility { slot_idx, ab_idx } => (ACTION_BASE_STAGE as usize) + (slot_idx * 100) + (ab_idx * 10),
+            Action::Rps { player_idx, choice } => {
+                if *player_idx == 0 { (ACTION_BASE_RPS as usize) + choice }
+                else { (ACTION_BASE_RPS_P2 as usize) + choice }
+            },
             Action::ChooseTurnOrder { first } => if *first { 5000 } else { 5001 },
         };
         res as i32
@@ -134,6 +134,7 @@ pub trait TestUtils {
     fn set_stage(&mut self, p_idx: usize, slot: usize, card_id: i32);
     fn set_live(&mut self, p_idx: usize, slot: usize, card_id: i32);
     fn dump(&self);
+    fn dump_verbose(&self);
 }
 
 impl TestUtils for GameState {
@@ -164,21 +165,68 @@ impl TestUtils for GameState {
             }
         }
     }
+    fn dump_verbose(&self) {
+        println!("=== VERBOSE STATE DUMP ===");
+        println!("Phase: {:?}", self.phase);
+        println!("Current Player: {}", self.current_player);
+        println!("Interaction Stack: {:?}", self.interaction_stack);
+        for (i, p) in self.core.players.iter().enumerate() {
+            println!("Player {}:", i);
+            println!("  Score: {}", p.score);
+            println!("  Hand: {:?}", p.hand);
+            println!("  Deck: (len={})", p.deck.len());
+            println!("  Discard: {:?}", p.discard);
+            println!("  Energy: {:?} (Tapped Mask: {:b})", p.energy_zone, p.tapped_energy_mask);
+            println!("  Stage: {:?}", p.stage);
+            println!("  Hearts: {:?}", p.heart_buffs);
+            println!("  Blades: {:?}", p.blade_buffs);
+        }
+        println!("===========================");
+    }
+}
+
+pub fn generate_card_report(card_id: i32) {
+    println!("[TEST_DEBUG] Requesting report for Card ID: {}", card_id);
+    let output = std::process::Command::new("uv")
+        .args(&["run", "python", "tools/card_finder.py", &card_id.to_string(), "--output", &format!("reports/card_{}.md", card_id)])
+        .current_dir("..")
+        .output();
+    
+    match output {
+        Ok(out) => {
+            if !out.status.success() {
+                println!("[TEST_DEBUG] Report generation failed for Card {}: {}", card_id, String::from_utf8_lossy(&out.stderr));
+            } else {
+                println!("[TEST_DEBUG] Report generated: reports/card_{}.md", card_id);
+            }
+        },
+        Err(e) => println!("[TEST_DEBUG] Failed to execute card_finder for Card {}: {}", card_id, e),
+    }
 }
 
 pub fn p_state(state: &GameState, p_idx: usize) -> &PlayerState {
     &state.core.players[p_idx]
 }
 
-const DB_JSON: &str = include_str!("../../data/cards_compiled.json");
+// const DB_JSON: &str = include_str!("../../data/cards_compiled.json");
 
 pub fn load_real_db() -> CardDatabase {
-    CardDatabase::from_json(DB_JSON).expect("Failed to load production CardDatabase in test_helpers")
+    let mut path = std::env::var("CARDS_JSON_PATH").unwrap_or_else(|_| "../../data/cards_compiled.json".to_string());
+    if !std::path::Path::new(&path).exists() {
+        path = "../data/cards_compiled.json".to_string();
+    }
+    if !std::path::Path::new(&path).exists() {
+        path = "data/cards_compiled.json".to_string();
+    }
+    let abs_path = std::fs::canonicalize(&path).unwrap_or_else(|_| std::path::PathBuf::from(&path));
+    println!("[DB_LOAD] Loading CardDatabase from: {:?}", abs_path);
+    let json = std::fs::read_to_string(&path).expect(&format!("Failed to read CardDatabase from {}", path));
+    CardDatabase::from_json(&json).expect("Failed to parse production CardDatabase in test_helpers")
 }
 
 pub fn create_test_db() -> CardDatabase {
     let mut db = CardDatabase::default();
-    
+
     // Generic cards
     for i in 3000..3501 {
         let mut hearts = [0u8; 7]; hearts[0] = 1;
@@ -237,6 +285,8 @@ pub fn create_test_state() -> GameState {
     let mut state = GameState::default();
     state.core.players[0].player_id = 0; state.core.players[1].player_id = 1;
     state.phase = Phase::Main;
+    state.debug.debug_mode = true; // NEW: Enable debug mode for tests
+    state.ui.silent = false;       // NEW: Disable silent mode for tests
     for i in 0..2 {
         state.core.players[i].deck = vec![51001, 51002, 51003, 51004, 51005].into();
         state.core.players[i].energy_zone = vec![3101, 3102, 3103].into();
@@ -258,118 +308,7 @@ pub fn add_card(db: &mut CardDatabase, cid: i32, no: &str, groups: Vec<u8>, abil
     if lid < db.members_vec.len() { db.members_vec[lid] = Some(m); }
 }
 
-// --- GPU PARITY HARNESS ---
-#[cfg(feature = "gpu")]
-pub struct GpuParityHarness {
-    pub manager: crate::core::gpu_manager::GpuManager,
-}
 
-#[cfg(feature = "gpu")]
-impl GpuParityHarness {
-    pub fn new(db: &CardDatabase) -> Self {
-        let (stats, bytecode) = db.convert_to_gpu();
-        let manager = crate::core::gpu_manager::GpuManager::new(&stats, &bytecode, wgpu::Backends::all())
-            .expect("Failed to initialize GPU manager for harness");
-        Self { manager }
-    }
-
-    pub fn assert_bytecode_parity(
-        &self,
-        db: &CardDatabase,
-        state: &GameState,
-        bytecode: &[i32],
-        ctx: &AbilityContext,
-        name: &str,
-    ) {
-        // 1. Run CPU
-        let mut cpu_final = state.clone();
-        crate::core::logic::interpreter::resolve_bytecode(&mut cpu_final, db, bytecode, &mut ctx.clone());
-
-        // 2. Run GPU
-        let mut gpu_input = state.to_gpu(db);
-        // We use a special forced_action or manual trigger push?
-        // For bytecode parity, we can't use forced_action (which is for Main phase actions).
-        // Instead, we manually push a trigger to the queue and run one step.
-        gpu_input.trigger_queue[0] = GpuTriggerRequest {
-            card_id: ctx.source_card_id as u32,
-            slot_idx: ctx.area_idx as u32,
-            trigger_filter: ctx.trigger_type as i32,
-            ab_filter: -1, // Use provided bytecode directly
-            choice: ctx.choice_index as i32,
-            _pad: [0; 3],
-        };
-        gpu_input.queue_tail = 1;
-        gpu_input.phase = 6; // PHASE_MAIN (to allow process_trigger_queue)
-        gpu_input.forced_action = -1;
-        gpu_input.is_debug = 1;
-
-        let mut results = vec![crate::core::gpu_state::GpuGameState::default(); 1];
-        self.manager.run_single_step(&[gpu_input], &mut results);
-        let gpu_final = &results[0];
-
-        // 3. Compare
-        self.compare_and_panic(&cpu_final, gpu_final, name);
-    }
-
-    pub fn assert_step_parity(&self, db: &CardDatabase, state: &GameState, action_id: i32, name: &str) {
-        // 1. Run CPU
-        let mut cpu_final = state.clone();
-        cpu_final.step(db, action_id).expect("CPU step failed in harness");
-        
-        // Match GPU's eager resumption for interactions
-        let mut loop_limit = 0;
-        while !cpu_final.interaction_stack.is_empty() && loop_limit < 10 {
-            cpu_final.step(db, (ACTION_BASE_CHOICE + 0) as i32).expect("CPU auto-choice failed");
-            loop_limit += 1;
-        }
-
-        // 2. Run GPU
-        let mut gpu_input = state.to_gpu(db);
-        gpu_input.forced_action = action_id;
-        gpu_input.is_debug = 1;
-
-        let mut results = vec![crate::core::gpu_state::GpuGameState::default(); 1];
-        self.manager.run_single_step(&[gpu_input], &mut results);
-        let gpu_final = &results[0];
-
-        // 3. Compare
-        self.compare_and_panic(&cpu_final, gpu_final, name);
-    }
-
-    fn compare_and_panic(&self, cpu: &GameState, gpu: &crate::core::gpu_state::GpuGameState, name: &str) {
-        let mut errors = Vec::new();
-        let p0 = &cpu.core.players[0];
-        let gp0 = &gpu.player0;
-
-        if p0.hand.len() as u32 != gp0.hand_len {
-            errors.push(format!("Hand len: CPU {}, GPU {}", p0.hand.len(), gp0.hand_len));
-        }
-        if p0.deck.len() as u32 != gp0.deck_len {
-            errors.push(format!("Deck len: CPU {}, GPU {}", p0.deck.len(), gp0.deck_len));
-        }
-        if p0.score != gp0.score {
-            errors.push(format!("Score: CPU {}, GPU {}", p0.score, gp0.score));
-        }
-        if p0.live_score_bonus != gp0.live_score_bonus {
-            errors.push(format!("Live Score Bonus: CPU {}, GPU {}", p0.live_score_bonus, gp0.live_score_bonus));
-        }
-        if p0.tapped_energy_mask.count_ones() as u32 != gp0.tapped_energy_count {
-            errors.push(format!("Tapped Energy: CPU {}, GPU {}", p0.tapped_energy_mask.count_ones(), gp0.tapped_energy_count));
-        }
-        for i in 0..3 {
-            if p0.blade_buffs[i] as i32 != gp0.blade_buffs[i] as i32 {
-                errors.push(format!("Blade Buff [{}]: CPU {}, GPU {}", i, p0.blade_buffs[i], gp0.blade_buffs[i]));
-            }
-        }
-        if p0.flags != gp0.flags {
-            errors.push(format!("Flags: CPU {:08x}, GPU {:08x}", p0.flags, gp0.flags));
-        }
-
-        if !errors.is_empty() {
-            panic!("\n--- GPU PARITY FAILURE: {} ---\n{}\n", name, errors.join("\n"));
-        }
-    }
-}
 
 #[derive(Default)]
 pub struct TestActionReceiver {

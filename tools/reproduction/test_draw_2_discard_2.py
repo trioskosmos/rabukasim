@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 # Add the project root to sys.path to allow imports from tools.reproduction
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -25,9 +25,8 @@ utils = importlib.util.module_from_spec(spec)
 sys.modules["utils"] = utils
 spec.loader.exec_module(utils)
 
-from utils import create_game_state, create_test_card_database, debug_print
-from engine_rust import PyGameState, PyPlayerState
 import engine_rust
+from utils import create_game_state, create_test_card_database, debug_print
 
 print(f"DEBUG: engine_rust location: {engine_rust.__file__}")
 

@@ -6,13 +6,13 @@
 //! ## Key Roles:
 //! - **State Management**: Holds 100% of the data needed to represent a point in time in a game.
 //! - **Turn Orchestration**: Manages `Phase` transitions (Main, Live, End) and turn switching.
-//! - **Rule Enforcement**: Implements high-level game rules (e.g., Playing a member, 
+//! - **Rule Enforcement**: Implements high-level game rules (e.g., Playing a member,
 //!   starting a Live performance, checking for Live success).
-//! - **Rule 10.5.3 (Cleanup)**: Implements the "State Check" logic 
+//! - **Rule 10.5.3 (Cleanup)**: Implements the "State Check" logic
 //!   (`process_rule_checks`) which handles automatic energy cleanup and score updates.
 //!
 //! ## State-Action Integrity:
-//! The `GameState` is designed to be highly serializable. It works in tandem with 
+//! The `GameState` is designed to be highly serializable. It works in tandem with
 //! the `interpreter` to resolve complex card effects while maintaining state consistency.
 
 use rand::SeedableRng;
@@ -75,7 +75,7 @@ impl GameState {
 
     pub fn log(&mut self, msg: String) {
         if self.ui.silent { return; }
-        
+
         let (turn_prefix, body) = if msg.starts_with("[Turn") {
             if let Some(idx) = msg.find("] ") {
                 (msg[..=idx].to_string(), msg[idx+2..].to_string())
@@ -85,14 +85,17 @@ impl GameState {
         } else {
             (format!("[Turn {}]", self.turn), msg)
         };
-        
+
         let full_msg = if let Some(id) = self.ui.current_execution_id {
             format!("{} [ID: {}] {}", turn_prefix, id, body)
         } else {
             format!("{} {}", turn_prefix, body)
         };
-        
-        self.ui.rule_log.push(full_msg);
+
+        if self.ui.rule_log.is_none() {
+            self.ui.rule_log = Some(Vec::with_capacity(32));
+        }
+        self.ui.rule_log.as_mut().unwrap().push(full_msg);
     }
 
     pub fn log_rule(&mut self, rule: &str, msg: &str) {
@@ -101,10 +104,15 @@ impl GameState {
     }
 
     pub fn log_turn_event(&mut self, event_type: &str, source_cid: i32, ability_idx: i16, player_id: u8, description: &str) {
-        if self.turn_history.len() > 2000 { return; } // Safety cap
+        if self.ui.silent { return; }
         let t = self.turn as u32;
         let ph = self.phase;
-        self.turn_history.push(TurnEvent {
+        if self.core.turn_history.is_none() {
+            self.core.turn_history = Some(Vec::with_capacity(64));
+        }
+        let history = self.core.turn_history.as_mut().unwrap();
+        if history.len() > 2000 { return; } // Safety cap
+        history.push(TurnEvent {
             turn: t,
             phase: ph,
             player_id,
@@ -117,7 +125,7 @@ impl GameState {
 
     /// Unified event logging function that records to both turn_history and optionally rule_log.
     /// This replaces the pattern of calling both log() and log_turn_event() separately.
-    /// 
+    ///
     /// # Arguments
     /// * `event_type` - Type of event (e.g., "PLAY", "ACTIVATE", "TRIGGER", "RULE", "EFFECT")
     /// * `description` - Human-readable description of the event
@@ -140,18 +148,24 @@ impl GameState {
         let turn = self.turn as u32;
         let phase = self.phase;
         let silent = self.ui.silent;
-        
+
         // 1. Always add to turn_history (structured data)
-        if self.turn_history.len() < 2000 {
-            self.turn_history.push(TurnEvent {
-                turn,
-                phase,
-                player_id,
-                event_type: event_type.to_string(),
-                source_cid,
-                ability_idx,
-                description: description.to_string(),
-            });
+        if !silent {
+            if self.core.turn_history.is_none() {
+                self.core.turn_history = Some(Vec::with_capacity(64));
+            }
+            let history = self.core.turn_history.as_mut().unwrap();
+            if history.len() < 2000 {
+                history.push(TurnEvent {
+                    turn,
+                    phase,
+                    player_id,
+                    event_type: event_type.to_string(),
+                    source_cid,
+                    ability_idx,
+                    description: description.to_string(),
+                });
+            }
         }
 
         // 2. Optionally add to rule_log (text format)
@@ -159,7 +173,10 @@ impl GameState {
             let turn_prefix = format!("[Turn {}]", turn);
             let rule_prefix = rule_ref.map(|r| format!("[{}] ", r)).unwrap_or_default();
             let full_msg = format!("{}{}{}", turn_prefix, rule_prefix, description);
-            self.ui.rule_log.push(full_msg);
+            if self.ui.rule_log.is_none() {
+                self.ui.rule_log = Some(Vec::with_capacity(32));
+            }
+            self.ui.rule_log.as_mut().unwrap().push(full_msg);
         }
     }
 
@@ -171,7 +188,7 @@ impl GameState {
         let mut leave_ctx = ctx.clone();
         leave_ctx.source_card_id = cid;
         leave_ctx.area_idx = slot as i16;
-        
+
         // Trigger OnLeaves
         self.trigger_abilities(db, TriggerType::OnLeaves, &leave_ctx);
 
@@ -179,11 +196,11 @@ impl GameState {
         self.core.players[p_idx].stage[slot] = -1;
         self.core.players[p_idx].blade_buffs[slot] = 0;
         self.core.players[p_idx].heart_buffs[slot] = HeartBoard::default();
-        
+
         // Clear flags (Tapped: bit 3-5, Moved: bit 6-8)
-        self.core.players[p_idx].flags &= !(1 << (3 + slot)); 
-        self.core.players[p_idx].flags &= !(1 << (6 + slot)); 
-        
+        self.core.players[p_idx].flags &= !(1 << (3 + slot));
+        self.core.players[p_idx].flags &= !(1 << (6 + slot));
+
         Some(cid as i32)
     }
 
@@ -194,39 +211,91 @@ impl GameState {
     }
 
     pub fn initialize_game(&mut self, p0_deck: Vec<i32>, p1_deck: Vec<i32>, p0_energy: Vec<i32>, p1_energy: Vec<i32>, p0_lives: Vec<i32>, p1_lives: Vec<i32>) {
-        eprintln!("RUST: initialize_game START");
         self.initialize_game_with_seed(p0_deck, p1_deck, p0_energy, p1_energy, p0_lives, p1_lives, None);
-        eprintln!("RUST: initialize_game END");
     }
 
     pub fn copy_from(&mut self, other: &GameState) {
-        self.core.players[0].copy_from(&other.players[0]);
-        self.core.players[1].copy_from(&other.players[1]);
-        self.current_player = other.current_player;
-        self.first_player = other.first_player;
-        self.phase = other.phase;
-        self.prev_card_id = other.prev_card_id;
-        self.turn = other.turn;
+        self.core.players[0].copy_from(&other.core.players[0]);
+        self.core.players[1].copy_from(&other.core.players[1]);
+        self.core.current_player = other.core.current_player;
+        self.core.first_player = other.core.first_player;
+        self.core.phase = other.core.phase;
+        self.core.prev_phase = other.core.prev_phase;
+        self.core.prev_card_id = other.core.prev_card_id;
+        self.core.turn = other.core.turn;
+        self.core.trigger_depth = other.core.trigger_depth;
+        self.core.live_set_pending_draws = other.core.live_set_pending_draws;
+
+        // Interaction stack and trigger queue are expensive but necessary
+        if other.core.interaction_stack.is_empty() {
+            self.core.interaction_stack.clear();
+        } else {
+            self.core.interaction_stack.clear();
+            self.core.interaction_stack.extend_from_slice(&other.core.interaction_stack);
+        }
+
+        if other.core.trigger_queue.is_empty() {
+            self.core.trigger_queue.clear();
+        } else {
+            self.core.trigger_queue.clear();
+            self.core.trigger_queue.extend(other.core.trigger_queue.iter().cloned());
+        }
+
+        self.core.live_result_selection_pending = other.core.live_result_selection_pending;
+        self.core.live_result_triggers_done = other.core.live_result_triggers_done;
+        self.core.live_start_triggers_done = other.core.live_start_triggers_done;
+        self.core.live_result_processed_mask = other.core.live_result_processed_mask;
+        self.core.live_start_processed_mask = other.core.live_start_processed_mask;
+        self.core.live_success_processed_mask = other.core.live_success_processed_mask;
+        self.core.performance_reveals_done = other.core.performance_reveals_done;
+        self.core.performance_yell_done = other.core.performance_yell_done;
+        self.core.rps_choices = other.core.rps_choices;
+        self.core.obtained_success_live = other.core.obtained_success_live;
+
+        // UI state - only clone if not silent or if specifically needed
         self.ui.silent = other.ui.silent;
-        // self.ui.rule_log.clear(); // We purposely do not copy rule log to avoid overhead
-        self.trigger_depth = other.trigger_depth;
-        self.live_set_pending_draws = other.live_set_pending_draws;
-        self.live_result_processed_mask = other.live_result_processed_mask;
-        self.interaction_stack = other.interaction_stack.clone();
-        self.debug.debug_ignore_conditions = other.debug.debug_ignore_conditions;
-        self.debug.bypassed_conditions = other.debug.bypassed_conditions.clone();
+        if !self.ui.silent {
+            self.ui.rule_log = other.ui.rule_log.clone();
+            self.core.turn_history = other.core.turn_history.clone();
+        } else {
+            self.ui.rule_log = None;
+            self.core.turn_history = None;
+        }
+
+        // Debug state - only clone if debug mode is active
         self.debug.debug_mode = other.debug.debug_mode;
+        self.debug.debug_ignore_conditions = other.debug.debug_ignore_conditions;
+        if self.debug.debug_mode {
+            self.debug.executed_opcodes = other.debug.executed_opcodes.clone();
+            self.debug.bypassed_conditions = other.debug.bypassed_conditions.clone();
+        } else {
+            self.debug.executed_opcodes = None;
+            self.debug.bypassed_conditions = None;
+        }
     }
 
     pub fn initialize_game_with_seed(&mut self, p0_deck: Vec<i32>, p1_deck: Vec<i32>, p0_energy: Vec<i32>, p1_energy: Vec<i32>, p0_lives: Vec<i32>, p1_lives: Vec<i32>, seed: Option<u64>) {
         // Rule 6.1.1.1: Main Deck contains 48 member cards and 12 live cards (total 60)
-        let mut d0 = p0_deck;
-        d0.extend(p0_lives.clone());
-        let mut d1 = p1_deck;
-        d1.extend(p1_lives.clone());
+        let mut d0 = Vec::with_capacity(60);
+        for &cid in &p0_deck {
+            d0.push(cid);
+        }
+        for &cid in &p0_lives {
+            d0.push(cid);
+        }
+
+        let mut d1 = Vec::with_capacity(60);
+        for &cid in &p1_deck {
+            d1.push(cid);
+        }
+        for &cid in &p1_lives {
+            d1.push(cid);
+        }
+
         self.core.players[0].deck = SmallVec::from_vec(d0);
         self.core.players[1].deck = SmallVec::from_vec(d1);
 
+        // Energy Deck (12 cards per player) - Cosmetic/Raw
         self.core.players[0].energy_deck = SmallVec::from_vec(p0_energy);
         self.core.players[1].energy_deck = SmallVec::from_vec(p1_energy);
 
@@ -245,11 +314,6 @@ impl GameState {
             self.core.players[i].set_flag(PlayerState::OFFSET_MOVED + 2, false);
             self.core.players[i].discard.clear();
             self.core.players[i].success_lives.clear();
-            if i == 0 {
-                self.core.players[0].success_lives.extend(p0_lives.iter().map(|&x| x));
-            } else {
-                self.core.players[1].success_lives.extend(p1_lives.iter().map(|&x| x));
-            }
             self.core.players[i].mulligan_selection = 0;
             self.core.players[i].hand_added_turn.clear();
             self.core.players[i].live_deck.clear(); // Obsolete, but clearing for safety
@@ -290,10 +354,13 @@ impl GameState {
 
         // Setup first player
         self.phase = Phase::Rps;
-        self.current_player = 0; 
+        self.current_player = 0;
         self.rps_choices = [-1; 2];
         self.turn = 1;
-        self.ui.rule_log.clear();
+        self.ui.rule_log = None;
+        self.turn_history = None;
+        self.debug.executed_opcodes = None;
+        self.debug.bypassed_conditions = None;
         self.ui.performance_results.clear();
         self.ui.last_performance_results.clear();
         self.ui.performance_history.clear();
@@ -311,16 +378,16 @@ impl GameState {
         if !self.core.players[player_idx].discard.is_empty() {
             let mut discard = self.core.players[player_idx].discard.drain(..).collect::<Vec<_>>();
             discard.shuffle(&mut self.rng);
-            
+
             let mut new_deck: SmallVec<[i32; 60]> = SmallVec::from_vec(discard);
             new_deck.extend(self.core.players[player_idx].deck.drain(..));
-            
+
             // Safety: cap at 60 cards if something went wrong upstream
             if new_deck.len() > 60 {
                 if !self.ui.silent { self.log(format!("WARNING: Impossible deck size {} after refresh. Truncating to 60.", new_deck.len())); }
                 new_deck.truncate(60);
             }
-            
+
             self.core.players[player_idx].deck = new_deck;
             self.core.players[player_idx].set_flag(PlayerState::FLAG_DECK_REFRESHED, true);
         }
@@ -329,11 +396,12 @@ impl GameState {
     pub fn register_played_member(&mut self, p_idx: usize, card_id: i32, db: &CardDatabase) {
         if let Some(m) = db.get_member(card_id as i32) {
             for &gid in &m.groups {
-                if gid > 0 && gid < 32 {
-                    self.core.players[p_idx].played_group_mask |= 1 << gid;
+                if gid > 0 && gid <= 32 {
+                    self.core.players[p_idx].played_group_mask |= 1 << (gid - 1);
                 }
             }
         }
+        self.core.players[p_idx].play_count_this_turn += 1;
     }
 
     pub fn draw_cards(&mut self, player_idx: usize, count: u32) {
@@ -408,7 +476,7 @@ impl GameState {
     }
 
 
-    pub fn process_rule_checks(&mut self) {
+    pub fn process_rule_checks(&mut self, db: &CardDatabase) {
         for i in 0..2 {
             // 1. Deck Refresh (Rule 4.4.2)
             if self.core.players[i].deck.is_empty() && !self.core.players[i].discard.is_empty() {
@@ -418,20 +486,31 @@ impl GameState {
             // 2. Energy in empty member area -> Energy Deck (Rule 10.5.3)
             for slot_idx in 0..3 {
                 if self.core.players[i].stage[slot_idx] < 0 && self.core.players[i].stage_energy_count[slot_idx] > 0 {
-                    if !self.ui.silent { 
-                        self.log(format!("Rule 10.5.3: Reclaiming energy from empty slot {} for player {}.", slot_idx, i)); 
+                    if !self.ui.silent {
+                        self.log(format!("Rule 10.5.3: Reclaiming energy from empty slot {} for player {}.", slot_idx, i));
                     }
                     let reclaimed: Vec<i32> = self.core.players[i].stage_energy[slot_idx].drain(..).collect();
                     self.core.players[i].energy_deck.extend(reclaimed);
                     self.core.players[i].stage_energy_count[slot_idx] = 0;
 
                     // Energy deck is unordered; shuffle to maintain randomness.
-                    let mut rng = Pcg64::from_os_rng();
+                    // OPT 6: Use deterministic seed instead of expensive from_os_rng()
+                    use rand::SeedableRng;
+                    let mut rng = rand_pcg::Pcg64::seed_from_u64(
+                        self.core.turn as u64 * 31 + i as u64 * 7 + slot_idx as u64
+                    );
                     self.core.players[i].energy_deck.shuffle(&mut rng);
                 }
             }
+
+            // 3. Eagerly synchronize constant modifiers (Opt V2)
+            // OPT 7: Skip during MCTS/silent mode (only needed at expansion/legal action gen)
+            if !self.ui.silent {
+                self.sync_cost_modifiers(i, db);
+            }
         }
         self.check_win_condition();
+        self.process_trigger_queue(db);
     }
 
     pub(crate) fn has_restriction(state: &GameState, p_idx: usize, slot_idx: usize, restriction_op: i32, db: &CardDatabase) -> bool {
@@ -454,6 +533,77 @@ impl GameState {
         super::rules::get_total_hearts(self, p_idx, db, depth)
     }
 
+    /// Pre-calculates and caches constant cost modifiers for stage slots
+    pub fn sync_cost_modifiers(&mut self, p_idx: usize, db: &CardDatabase) {
+        let mut new_mods = [0i16; 3];
+
+        for slot_idx in 0..3 {
+            let cid = self.core.players[p_idx].stage[slot_idx];
+            if cid < 0 { continue; }
+
+            // Wave 1: Global/Area constant reduction abilities
+            for other_slot in 0..3 {
+                let other_cid = self.core.players[p_idx].stage[other_slot];
+                if other_cid < 0 { continue; }
+                if let Some(other_m) = db.get_member(other_cid) {
+                    for ab in &other_m.abilities {
+                        if ab.trigger == TriggerType::Constant {
+                            // Fast check without DB conditions first if possible, but we must check conditions
+                            let ctx = AbilityContext {
+                                source_card_id: other_cid,
+                                player_id: p_idx as u8,
+                                activator_id: p_idx as u8,
+                                area_idx: other_slot as i16,
+                                target_slot: slot_idx as i16,
+                                ..Default::default()
+                            };
+                            if ab.conditions.iter().all(|c| self.check_condition(db, p_idx, c, &ctx, 1)) {
+                                let bc = &ab.bytecode;
+                                let mut i = 0;
+                                while i + 4 < bc.len() {
+                                    if bc[i] == O_REDUCE_COST {
+                                        // Some older O_REDUCE_COST might use target slot flags, but standard is global or conditional
+                                        new_mods[slot_idx] -= bc[i+1] as i16;
+                                    }
+                                    i += 5;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Wave 2: Granted Abilities
+            // We need to collect granted abilities first to avoid borrow checker issues with self
+            let mut granted = Vec::new();
+            for &(target_cid, source_cid, ab_idx) in &self.core.players[p_idx].granted_abilities {
+                if target_cid == cid {
+                    granted.push((source_cid, ab_idx));
+                }
+            }
+
+            for (source_cid, ab_idx) in granted {
+                if let Some(src_m) = db.get_member(source_cid) {
+                    if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                        if ab.trigger == TriggerType::Constant {
+                             let ctx = AbilityContext { source_card_id: cid, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
+                             if ab.conditions.iter().all(|c| self.check_condition(db, p_idx, c, &ctx, 1)) {
+                                 let bc = &ab.bytecode;
+                                 let mut i = 0;
+                                 while i + 4 < bc.len() {
+                                     if bc[i] == O_REDUCE_COST { new_mods[slot_idx] -= bc[i+1] as i16; }
+                                     i += 5;
+                                 }
+                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        self.core.players[p_idx].slot_cost_modifiers = new_mods;
+    }
+
     pub fn get_member_cost(&self, p_idx: usize, card_id: i32, slot_idx: i16, secondary_slot_idx: i16, db: &CardDatabase, depth: u32) -> i32 {
         super::rules::get_member_cost(self, p_idx, card_id, slot_idx, secondary_slot_idx, db, depth)
     }
@@ -462,25 +612,39 @@ impl GameState {
 
     pub fn card_matches_filter(&self, db: &CardDatabase, cid: i32, filter_attr: u64) -> bool {
         if cid == -1 { return false; }
-        let filter = CardFilter::from_attr(filter_attr);
+        if filter_attr == 0 { return true; }
         
+        let template_id = cid;
+        let filter = CardFilter::from_attr(filter_attr as i64);
+        if self.debug.debug_mode { println!("[DEBUG] card_matches_filter: cid={}, attr={}", cid, filter_attr); }
+
         let mut is_tapped = false;
-        if filter.is_tapped == Some(true) {
-             for p in 0..2 {
-                 for s in 0..3 {
-                     if self.core.players[p].stage[s] == cid && self.core.players[p].is_tapped(s) {
-                         is_tapped = true;
-                         break;
-                     }
-                 }
-                 if is_tapped { break; }
-             }
+        let mut hearts_arr = [0u8; 7];
+        let mut has_dynamic_data = false;
+
+        // Only compute expensive effective hearts when color_mask is active.
+        // This prevents infinite recursion: get_effective_hearts → ability eval → card_matches_filter.
+        // For cost/heart-threshold checks, we use static DB data (no recursion risk).
+        // Tapped state is always safe to look up (no recursion).
+        let needs_dynamic_hearts = filter.color_mask != 0;
+
+        for p in 0..2 {
+            for s in 0..3 {
+                if self.core.players[p].stage[s] == cid {
+                    is_tapped = self.core.players[p].is_tapped(s);
+                    if needs_dynamic_hearts {
+                        hearts_arr = self.get_effective_hearts(p, s, db, 0).to_array();
+                    }
+                    has_dynamic_data = true;
+                    break;
+                }
+            }
+            if has_dynamic_data { break; }
         }
-        
-        let res = filter.matches(db, cid, is_tapped);
-        if !res && filter_attr != 0 {
-            println!("[DEBUG] card_matches_filter: Card {} FAILED filter {}. Details: {:?}", cid, filter_attr, filter);
-        }
+
+        let hearts_ref = if needs_dynamic_hearts && has_dynamic_data { Some(&hearts_arr) } else { None };
+        let res = filter.matches(db, template_id, is_tapped, hearts_ref);
+        if self.debug.debug_mode && !res { println!("      | [FILTER] FAILED matches for cid={}", cid); }
         res
     }
 
@@ -510,8 +674,8 @@ impl GameState {
     pub fn do_yell(&mut self, db: &CardDatabase, count: u32) -> Vec<i32> {
         super::performance::do_yell(self, db, count)
     }
-    pub fn check_live_success(&self, p_idx: usize, live: &LiveCard, total_hearts: &[u8; 7]) -> bool {
-        super::performance::check_live_success(self, p_idx, live, total_hearts)
+    pub fn check_live_success(&self, db: &CardDatabase, p_idx: usize, live: &LiveCard, total_hearts: &[u8; 7]) -> bool {
+        super::performance::check_live_success(self, db, p_idx, live, total_hearts)
     }
     pub fn do_performance_phase(&mut self, db: &CardDatabase) {
         super::performance::do_performance_phase(self, db)
@@ -525,6 +689,10 @@ impl GameState {
     pub fn auto_step(&mut self, db: &CardDatabase) {
         let mut loop_count = 0;
         while loop_count < 40 { // Increased depth for trigger processing
+            // Rule 11.2: Check for win conditions before ANY other processing
+            // This ensures Score 3 ends the game immediately even if triggers are pending
+            self.check_win_condition();
+
             if self.phase == Phase::Terminal || self.phase == Phase::Response { break; }
             if !self.interaction_stack.is_empty() { break; }
 
@@ -538,7 +706,7 @@ impl GameState {
 
             let old_phase = self.phase;
             if !self.ui.silent && self.debug.debug_mode { println!("[DEBUG] auto_step: Phase={:?}, Player={}", self.phase, self.current_player); }
-            
+
             match self.phase {
                 Phase::Active => self.do_active_phase(db),
                 Phase::Energy => self.do_energy_phase(),
@@ -560,7 +728,7 @@ impl GameState {
 
             // Loop continues if phase changed OR if we have new triggers to process
             if self.phase == old_phase && self.core.trigger_queue.is_empty() {
-                 break; 
+                 break;
             }
             loop_count += 1;
         }
@@ -624,8 +792,26 @@ impl GameState {
 
 
     // --- INTERPRETER DELEGATION ---
-    pub fn resolve_bytecode(&mut self, db: &CardDatabase, bytecode: &[i32], ctx_in: &AbilityContext) {
+    pub fn resolve_bytecode(&mut self, db: &CardDatabase, bytecode: std::sync::Arc<Vec<i32>>, ctx_in: &AbilityContext) {
         super::interpreter::resolve_bytecode(self, db, bytecode, ctx_in);
+    }
+
+    /// Convenience: Accept Vec (takes ownership)
+    #[inline]
+    pub fn resolve_bytecode_owned(&mut self, db: &CardDatabase, bytecode: Vec<i32>, ctx_in: &AbilityContext) {
+        self.resolve_bytecode(db, std::sync::Arc::new(bytecode), ctx_in);
+    }
+
+    /// Convenience: Accept &Vec<i32> (clones internally)
+    #[inline]
+    pub fn resolve_bytecode_cref(&mut self, db: &CardDatabase, bytecode: &Vec<i32>, ctx_in: &AbilityContext) {
+        self.resolve_bytecode(db, std::sync::Arc::new(bytecode.clone()), ctx_in);
+    }
+
+    /// Convenience: Accept &[i32] slice (copies internally)
+    #[inline]
+    pub fn resolve_bytecode_slice(&mut self, db: &CardDatabase, bytecode: &[i32], ctx_in: &AbilityContext) {
+        self.resolve_bytecode(db, std::sync::Arc::new(bytecode.to_vec()), ctx_in);
     }
 
     pub fn check_condition(&self, db: &CardDatabase, p_idx: usize, cond: &Condition, ctx: &AbilityContext, depth: u32) -> bool {
@@ -698,7 +884,7 @@ impl GameState {
         // Collect all potential triggers
         let mut queue = Vec::new();
         let p_idx = ctx.player_id as usize;
-        
+
         // 1. Stage Members
         for slot_idx in 0..3 {
             let cid = self.core.players[p_idx].stage[slot_idx];
@@ -720,10 +906,17 @@ impl GameState {
             self.collect_triggers_for_card(db, source_cid, trigger, ctx, start_ab_idx, true, &mut queue);
         }
 
+        // 4. Previous Member (Baton Touch Vision)
+        // Ensure a member who just left can see the entry of their successor
+        if self.prev_card_id >= 0 && trigger == TriggerType::OnPlay {
+             self.collect_triggers_for_card(db, self.prev_card_id, trigger, ctx, start_ab_idx, false, &mut queue);
+        }
+
+        if self.debug.debug_mode { println!("[DEBUG] trigger_abilities_from: trigger={:?}, queue_len={}", trigger, queue.len()); }
         for (cid, def_cid, ab_idx, mut ab_ctx, is_live) in queue {
             ab_ctx.source_card_id = cid;
             ab_ctx.ability_index = ab_idx as i16;
-            
+
             let (_bytecode, conditions, pseudocode) = if is_live {
                 let ab = &db.get_live(def_cid).unwrap().abilities[ab_idx as usize];
                 (&ab.bytecode, &ab.conditions, &ab.pseudocode)
@@ -755,7 +948,7 @@ impl GameState {
             // Check conditions before resolving bytecode
             let mut all_met = true;
             for cond in conditions {
-                if !self.check_condition_opcode(db, cond.condition_type as i32, cond.value, cond.attr, cond.target_slot as i32, &ab_ctx, 1) {
+                if !super::interpreter::conditions::check_condition(self, db, p_idx, cond, &ab_ctx, 1) {
                     all_met = false;
                     break;
                 }
@@ -776,10 +969,10 @@ impl GameState {
                 // PHASE 3: Queue instead of immediate resolve to decouple mutations
                 self.enqueue_trigger(cid, ab_idx as u16, ab_ctx, is_live, trigger);
             } else {
-                if !self.ui.silent { 
+                if !self.ui.silent {
                     // Log which condition failed
                     for cond in conditions {
-                        if !self.check_condition_opcode(db, cond.condition_type as i32, cond.value, cond.attr, cond.target_slot as i32, &ab_ctx, 1) {
+                        if !super::interpreter::conditions::check_condition(self, db, p_idx, cond, &ab_ctx, 1) {
                             let cond_desc = super::interpreter::logging::describe_condition(cond.condition_type as i32, cond.value, cond.attr);
                             let card_name = if is_live { db.get_live(cid).unwrap().name.clone() } else { db.get_member(cid).unwrap().name.clone() };
                             self.log(format!("{}'s ability did not activate because target condition was not met: {}.", card_name, cond_desc));
@@ -811,7 +1004,7 @@ impl GameState {
         queue: &mut Vec<(i32, i32, u16, AbilityContext, bool)>,
     ) {
         if cid < 0 { return; }
-        
+
         let abilities = if is_live {
             db.get_live(cid).map(|l| &l.abilities)
         } else {
@@ -823,8 +1016,16 @@ impl GameState {
             for (ab_idx, ab) in abs.iter().enumerate() {
                 if ab.trigger == trigger {
                     // Filter OnPlay/OnLeaves to only the specific card being moved
+                    // UNLESS it is a monitoring ability (has a GroupFilter/Score/etc condition)
                     if (trigger == TriggerType::OnPlay || trigger == TriggerType::OnLeaves) && cid != ctx.source_card_id {
-                        continue;
+                        let has_monitor_cond = ab.conditions.iter().any(|c|
+                            c.condition_type == ConditionType::GroupFilter ||
+                            c.condition_type == ConditionType::ScoreTotalCheck ||
+                            c.condition_type == ConditionType::CountGroup
+                        );
+                        if !has_monitor_cond {
+                            continue;
+                        }
                     }
 
                     if trigger != ctx.trigger_type || ab_idx >= start_ab_idx {
@@ -847,7 +1048,7 @@ impl GameState {
 
         // --- PHASE 3: Granted (Triggered) Abilities Audit Fix ---
         if !is_live {
-            // We use a separate loop to avoid borrowing issues if we were mutating, 
+            // We use a separate loop to avoid borrowing issues if we were mutating,
             // but here we just need to read granted_abilities.
             for i in 0..self.core.players[p_idx].granted_abilities.len() {
                 let (target_cid, source_cid, ab_idx) = self.core.players[p_idx].granted_abilities[i];
@@ -980,5 +1181,8 @@ impl GameState {
     pub fn evaluate<H: Heuristic>(&self, db: &CardDatabase, p0_baseline: u32, p1_baseline: u32, eval_mode: EvalMode, heuristic: &H) -> f32 {
         heuristic.evaluate(self, db, p0_baseline, p1_baseline, eval_mode, None, None)
     }
-}
 
+    pub fn get_verbose_action_label(&self, action_id: i32, db: &CardDatabase) -> String {
+        ActionFactory::get_verbose_action_label(action_id, self, db)
+    }
+}

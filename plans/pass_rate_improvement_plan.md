@@ -34,7 +34,7 @@
 | PL!N-sd1-001-SD | Ab1 | 特殊トリガー |
 | PL!S-bp3-021-L | Ab0 | ライブカード問題 |
 
-**対策**: 
+**対策**:
 - 各カードのバイトコードを調査
 - `resolve_interaction`のロジックを改善
 - 未実装オペコードを特定して対応
@@ -116,7 +116,7 @@ fn ability_requires_resources(&self, sequence: &[SemanticSegment]) -> bool {
     for segment in sequence {
         for delta in &segment.deltas {
             match delta.tag.as_str() {
-                "DISCARD_DELTA" | "ENERGY_DELTA" | "DECK_DELTA" | "LIVE_DELTA" 
+                "DISCARD_DELTA" | "ENERGY_DELTA" | "DECK_DELTA" | "LIVE_DELTA"
                 | "ENERGY_COST" | "ENERGY_COST_DELTA" => return true,
                 "SCORE_DELTA" if delta.value.as_i64().map(|v| v > 0).unwrap_or(false) => return true,
                 "HAND_DELTA" if delta.value.as_i64().map(|v| v < 0).unwrap_or(false) => return true,

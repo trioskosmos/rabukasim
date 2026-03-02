@@ -77,9 +77,9 @@
    let p1_tapped_current = current.opponent_tapped_count;
    let d_opp_tap = p1_tapped_current as i32 - p1_tapped_before as i32;
    if d_opp_tap != 0 {
-       deltas.push(SemanticDelta { 
-           tag: "OPPONENT_MEMBER_TAP_DELTA".to_string(), 
-           value: serde_json::json!(d_opp_tap) 
+       deltas.push(SemanticDelta {
+           tag: "OPPONENT_MEMBER_TAP_DELTA".to_string(),
+           value: serde_json::json!(d_opp_tap)
        });
    }
    ```

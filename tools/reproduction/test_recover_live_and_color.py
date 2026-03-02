@@ -34,7 +34,7 @@ def run_test():
     gs.set_hand_cards(0, [484, 10])  # Shizuku and cost card
     gs.set_discard_cards(0, [30000])  # Live card to recover
 
-    print(f"Initial State:")
+    print("Initial State:")
     p0 = gs.get_player(0)
     print(f"  Hand: {p0.hand}")
     print(f"  Discard: {p0.discard}")

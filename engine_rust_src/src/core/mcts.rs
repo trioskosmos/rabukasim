@@ -10,8 +10,6 @@ use crate::core::logic::{GameState, CardDatabase};
 use crate::core::logic::ai_encoding::GameStateEncoding;
 #[cfg(feature = "nn")]
 use crate::core::enums::*;
-use crate::core::gpu_manager::GpuManager;
-use crate::core::gpu_state::GpuGameState;
 use std::f32;
 use smallvec::SmallVec;
 #[cfg(feature = "parallel")]
@@ -67,6 +65,7 @@ struct Node {
     visit_count: u32,
     value_sum: f32,
     player_just_moved: u8,
+    prior_prob: f32, // AlphaZero Policy P(s,a)
     untried_actions: SmallVec<[i32; 32]>,
     children: SmallVec<[(i32, usize); 16]>, // (Action, NodeIndex in Arena)
     parent: Option<usize>,
@@ -79,8 +78,10 @@ pub struct MCTS {
     unseen_buffer: SmallVec<[i32; 64]>,
     legal_buffer: SmallVec<[i32; 32]>,
     reusable_state: GameState,
-    pub gpu_manager: Option<std::sync::Arc<GpuManager>>,
+    pub evaluator: Option<std::sync::Arc<Box<dyn crate::core::alphazero_evaluator::AlphaZeroEvaluator>>>,
+    pub cpu_batch_size: usize,
     pub leaf_batch_size: usize,
+    pub exploration_weight: f32,
 }
 
 #[cfg_attr(feature = "extension-module", pyclass)]
@@ -97,36 +98,53 @@ pub enum SearchHorizon {
 impl MCTS {
     pub fn new() -> Self {
         Self {
-            nodes: Vec::with_capacity(1000),
+            nodes: Vec::with_capacity(16384),
             rng: SmallRng::from_os_rng(),
             unseen_buffer: SmallVec::with_capacity(64),
             legal_buffer: SmallVec::with_capacity(32),
             reusable_state: GameState::default(),
-            gpu_manager: None,
+            evaluator: None,
+            cpu_batch_size: 16,
             leaf_batch_size: 512,
+            exploration_weight: 1.41,
         }
     }
 
-    pub fn with_gpu(manager: std::sync::Arc<GpuManager>, batch_size: usize) -> Self {
+
+
+    pub fn with_evaluator(eval: std::sync::Arc<Box<dyn crate::core::alphazero_evaluator::AlphaZeroEvaluator>>, batch_size: usize) -> Self {
         let mut mcts = Self::new();
-        mcts.gpu_manager = Some(manager);
-        mcts.leaf_batch_size = batch_size;
+        mcts.evaluator = Some(eval);
+        mcts.cpu_batch_size = batch_size;
         mcts
+    }
+
+    pub fn get_tree_size(&self) -> usize {
+        self.nodes.len()
+    }
+
+    pub fn get_max_depth(&self) -> usize {
+        let mut max_d = 0;
+        for i in 0..self.nodes.len() {
+            let mut d = 0;
+            let mut curr = i;
+            while let Some(p) = self.nodes[curr].parent {
+                d += 1;
+                curr = p;
+            }
+            if d > max_d { max_d = d; }
+        }
+        max_d
     }
 
     pub fn search_parallel(&self, root_state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32, horizon: SearchHorizon, heuristic: &dyn Heuristic, shuffle_self: bool) -> Vec<(i32, f32, u32)> {
         #[cfg(feature = "parallel")]
         let mut _num_threads = rayon::current_num_threads().max(1);
         #[cfg(not(feature = "parallel"))]
-        let mut _num_threads = 1;
-
-        if self.gpu_manager.is_some() {
-            _num_threads = _num_threads.min(4); // Limit GPU contention
-        }
+        let _num_threads = 1;
         let num_threads = _num_threads;
 
         let start_overall = std::time::Instant::now();
-        let gpu_manager = self.gpu_manager.clone();
         let leaf_batch_size = self.leaf_batch_size;
         let sims_per_thread = if num_sims > 0 { (num_sims + num_threads - 1) / num_threads } else { 0 };
 
@@ -142,7 +160,6 @@ impl MCTS {
             pool.install(|| {
                 (0..num_threads).into_par_iter().map(|_| {
                     let mut mcts = MCTS::new();
-                    mcts.gpu_manager = gpu_manager.clone();
                     mcts.leaf_batch_size = leaf_batch_size;
                     mcts.search_custom(root_state, db, sims_per_thread, timeout_sec, horizon, heuristic, shuffle_self, true)
                 }).collect()
@@ -152,7 +169,6 @@ impl MCTS {
         #[cfg(not(feature = "parallel"))]
         let results: Vec<(Vec<(i32, f32, u32)>, MCTSProfiler)> = vec![{
              let mut mcts = MCTS::new();
-             mcts.gpu_manager = gpu_manager.clone();
              mcts.leaf_batch_size = leaf_batch_size;
              mcts.search_custom(root_state, db, num_sims, timeout_sec, horizon, heuristic, shuffle_self, true)
         }];
@@ -197,14 +213,12 @@ impl MCTS {
         let start_overall = std::time::Instant::now();
 
         #[cfg(feature = "parallel")]
-        let mut num_threads = rayon::current_num_threads().max(1);
-        if self.gpu_manager.is_some() {
-            num_threads = num_threads.min(4); // Limit GPU contention
-        }
+        let mut _num_threads = rayon::current_num_threads().max(1);
         #[cfg(not(feature = "parallel"))]
-        let num_threads = 1;
+        let mut _num_threads = 1;
 
-        let gpu_manager = self.gpu_manager.clone();
+        let num_threads = _num_threads;
+
         let leaf_batch_size = self.leaf_batch_size;
         let sims_per_thread = if num_sims > 0 { (num_sims + num_threads - 1) / num_threads } else { 0 };
 
@@ -212,7 +226,6 @@ impl MCTS {
         #[cfg(feature = "parallel")]
         let results: Vec<(Vec<(i32, f32, u32)>, MCTSProfiler)> = (0..num_threads).into_par_iter().map(|_| {
             let mut mcts = MCTS::new();
-            mcts.gpu_manager = gpu_manager.clone();
             mcts.leaf_batch_size = leaf_batch_size;
             mcts.search_mode(root_state, db, sims_per_thread, timeout_sec, horizon, eval_mode, heuristic)
         }).collect();
@@ -220,7 +233,6 @@ impl MCTS {
         #[cfg(not(feature = "parallel"))]
         let results: Vec<(Vec<(i32, f32, u32)>, MCTSProfiler)> = vec![{
              let mut mcts = MCTS::new();
-             mcts.gpu_manager = gpu_manager.clone();
              mcts.leaf_batch_size = leaf_batch_size;
              mcts.search_mode(root_state, db, num_sims, timeout_sec, horizon, eval_mode, heuristic)
         }];
@@ -262,10 +274,17 @@ impl MCTS {
     }
 
     pub fn search(&mut self, root_state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32, horizon: SearchHorizon, heuristic: &dyn Heuristic) -> (Vec<(i32, f32, u32)>, MCTSProfiler) {
-        self.search_custom(root_state, db, num_sims, timeout_sec, horizon, heuristic, false, true)
+        self.search_custom(root_state, db, num_sims, timeout_sec, horizon, heuristic, false, false)
     }
 
     pub fn search_custom(&mut self, root_state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32, horizon: SearchHorizon, heuristic: &dyn Heuristic, shuffle_self: bool, enable_rollout: bool) -> (Vec<(i32, f32, u32)>, MCTSProfiler) {
+        use crate::core::heuristics::calculate_deck_expectations;
+        let p0_stats = calculate_deck_expectations(&root_state.players[0].deck, db);
+
+        let mut p1_unseen = root_state.players[1].hand.clone();
+        p1_unseen.extend(root_state.players[1].deck.iter().cloned());
+        let p1_stats = calculate_deck_expectations(&p1_unseen, db);
+
         self.run_mcts_config(root_state, db, num_sims, timeout_sec, horizon, shuffle_self, enable_rollout, |state, _db| {
             if state.is_terminal() {
                  match state.get_winner() {
@@ -274,7 +293,7 @@ impl MCTS {
                     _ => 0.5,
                 }
             } else {
-                heuristic.evaluate(state, db, root_state.players[0].score, root_state.players[1].score, crate::core::heuristics::EvalMode::Normal, None, None)
+                heuristic.evaluate(state, db, root_state.players[0].score, root_state.players[1].score, crate::core::heuristics::EvalMode::Normal, Some(p0_stats), Some(p1_stats))
             }
         })
     }
@@ -310,22 +329,13 @@ impl MCTS {
     }
 
 
-    fn run_mcts_config<F>(&mut self, root_state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32, horizon: SearchHorizon, shuffle_self: bool, enable_rollout: bool, mut eval_fn: F) -> (Vec<(i32, f32, u32)>, MCTSProfiler)
+    pub fn run_mcts_config<F>(&mut self, root_state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32, horizon: SearchHorizon, shuffle_self: bool, enable_rollout: bool, mut eval_fn: F) -> (Vec<(i32, f32, u32)>, MCTSProfiler)
     where F: FnMut(&GameState, &CardDatabase) -> f32
     {
-        // Internal buffer for GPU batch
-        let mut gpu_batch = Vec::new();
-        if self.gpu_manager.is_some() {
-            gpu_batch = vec![GpuGameState::default(); self.leaf_batch_size];
-        }
-        let mut gpu_results = Vec::new();
-        if self.gpu_manager.is_some() {
-             gpu_results = vec![GpuGameState::default(); self.leaf_batch_size];
-        }
         self.nodes.clear();
         let start_time = std::time::Instant::now();
         let timeout = if timeout_sec > 0.0 { Some(std::time::Duration::from_secs_f32(timeout_sec)) } else { None };
-        let _start_turn = root_state.turn;
+        let root_start_turn = root_state.turn;
         let mut profiler = MCTSProfiler::default();
 
         // Root Node
@@ -339,6 +349,7 @@ impl MCTS {
             visit_count: 0,
             value_sum: 0.0,
             player_just_moved: 1 - root_state.current_player,
+            prior_prob: 1.0,
             untried_actions: legal_indices,
             children: SmallVec::new(),
             parent: None,
@@ -353,145 +364,244 @@ impl MCTS {
             }
             if num_sims == 0 && timeout.is_none() { break; } // Safety
 
-            sims_done += 1;
-
-            // 1. Setup & Determinization
-            let t_setup = std::time::Instant::now();
             let is_trace = num_sims == 1;
-            if is_trace { println!("[MCTS TRACE] Starting Simulation 1..."); }
+            let t_setup = std::time::Instant::now();
 
-            let mut node_idx = 0;
-            self.reusable_state.copy_from(&root_state);
-            let state = &mut self.reusable_state;
-            state.ui.silent = true;
+            // --- BRANCH: AlphaZero Batch or Sequential ---
+            if let Some(ref evaluator) = self.evaluator {
+                let batch_size = self.cpu_batch_size;
+                let mut batch_leaf_indices = Vec::with_capacity(batch_size);
+                let mut batch_leaf_states = Vec::with_capacity(batch_size);
 
-            let me = root_state.current_player as usize;
-            let opp = 1 - me;
-            let opp_hand_len = state.core.players[opp].hand.len();
+                for _ in 0..batch_size {
+                    // 1. Setup (Determinization)
+                    self.reusable_state.copy_from(&root_state);
+                    let state = &mut self.reusable_state;
+                    state.ui.silent = true;
+                    // (Determinization logic duplicated for now within batch loop)
+                    let me = root_state.current_player as usize;
+                    let opp = 1 - me;
+                    let opp_hand_len = state.core.players[opp].hand.len();
+                    self.unseen_buffer.clear();
+                    self.unseen_buffer.extend_from_slice(&state.core.players[opp].hand);
+                    self.unseen_buffer.extend_from_slice(&state.core.players[opp].deck);
+                    self.unseen_buffer.shuffle(&mut self.rng);
+                    state.core.players[opp].hand.copy_from_slice(&self.unseen_buffer[0..opp_hand_len]);
+                    state.core.players[opp].deck.copy_from_slice(&self.unseen_buffer[opp_hand_len..]);
 
-            self.unseen_buffer.clear();
-            self.unseen_buffer.extend_from_slice(&state.core.players[opp].hand);
-            self.unseen_buffer.extend_from_slice(&state.core.players[opp].deck);
-            self.unseen_buffer.shuffle(&mut self.rng);
+                    // 2. Selection
+                    let mut node_idx = 0;
+                    while self.nodes[node_idx].untried_actions.is_empty() && !self.nodes[node_idx].children.is_empty() {
+                        node_idx = Self::select_child_logic(&self.nodes, node_idx, self.exploration_weight);
+                        let action = self.nodes[node_idx].parent_action;
+                        let _ = state.step(db, action);
+                    }
 
-            state.core.players[opp].hand.copy_from_slice(&self.unseen_buffer[0..opp_hand_len]);
-            state.core.players[opp].deck.copy_from_slice(&self.unseen_buffer[opp_hand_len..]);
+                    // 3. Expansion
+                    if !self.nodes[node_idx].untried_actions.is_empty() {
+                        let idx = self.rng.random_range(0..self.nodes[node_idx].untried_actions.len());
+                        let action = self.nodes[node_idx].untried_actions.swap_remove(idx);
+                        let actor = state.current_player;
+                        let _ = state.step(db, action);
+                        state.sync_cost_modifiers(0, db);
+                        state.sync_cost_modifiers(1, db);
 
-            if shuffle_self {
-                let mut my_deck = state.core.players[me].deck.clone();
-                my_deck.shuffle(&mut self.rng);
-                state.core.players[me].deck = my_deck;
-            }
-            profiler.determinization += t_setup.elapsed();
+                        self.legal_buffer.clear();
+                        state.generate_legal_actions(db, state.current_player as usize, &mut self.legal_buffer);
+                        let new_legal_indices = self.legal_buffer.clone();
+                        let prob = 1.0 / (new_legal_indices.len().max(1) as f32);
 
-            // 2. Selection
-            let t_selection = std::time::Instant::now();
-            while self.nodes[node_idx].untried_actions.is_empty() && !self.nodes[node_idx].children.is_empty() {
-                node_idx = Self::select_child(&self.nodes, node_idx);
-                let action = self.nodes[node_idx].parent_action;
-                if is_trace { println!("[MCTS TRACE] Selection: Action {}", action); }
-                let _ = state.step(db, action);
-            }
-            profiler.selection += t_selection.elapsed();
+                        let new_idx = self.nodes.len();
+                        self.nodes.push(Node {
+                            visit_count: 0,
+                            value_sum: 0.0,
+                            player_just_moved: actor,
+                            prior_prob: prob,
+                            untried_actions: new_legal_indices,
+                            children: SmallVec::new(),
+                            parent: Some(node_idx),
+                            parent_action: action,
+                        });
+                        self.nodes[node_idx].children.push((action, new_idx));
+                        node_idx = new_idx;
+                    }
 
-            let start_turn = state.turn;
-
-            // 3. Expansion
-            let t_expansion = std::time::Instant::now();
-            if !self.nodes[node_idx].untried_actions.is_empty() {
-                let idx = self.rng.random_range(0..self.nodes[node_idx].untried_actions.len());
-                let action = self.nodes[node_idx].untried_actions.swap_remove(idx);
-                if is_trace { println!("[MCTS TRACE] Expansion: Action {}", action); }
-
-                let actor = state.current_player;
-                let _ = state.step(db, action);
-
-                let mut new_legal_indices: SmallVec<[i32; 32]> = SmallVec::new();
-                state.generate_legal_actions(db, state.current_player as usize, &mut new_legal_indices);
-
-                let new_node = Node {
-                    visit_count: 0,
-                    value_sum: 0.0,
-                    player_just_moved: actor,
-                    untried_actions: new_legal_indices,
-                    children: SmallVec::new(),
-                    parent: Some(node_idx),
-                    parent_action: action,
-                };
-
-                let new_idx = self.nodes.len();
-                self.nodes.push(new_node);
-                self.nodes[node_idx].children.push((action, new_idx));
-                node_idx = new_idx;
-            }
-            profiler.expansion += t_expansion.elapsed();
-
-            // 4. Simulation
-            let t_simulation = std::time::Instant::now();
-            let reward_p0 = if let Some(ref manager) = self.gpu_manager {
-                // GPU Leaf Parallelism
-                let gpu_state = state.to_gpu(db);
-                for i in 0..self.leaf_batch_size {
-                    gpu_batch[i] = gpu_state.clone();
-                    gpu_batch[i].active_count = self.leaf_batch_size as u32;
-                    gpu_batch[i].rng_state_lo = self.rng.next_u32();
-                    gpu_batch[i].rng_state_hi = self.rng.next_u32();
+                    batch_leaf_indices.push(node_idx);
+                    batch_leaf_states.push(state.clone());
                 }
 
-                manager.run_simulations_into(&gpu_batch, &mut gpu_results);
+                // 4. Collective Inference
+                let outputs = evaluator.evaluate_batch(&batch_leaf_states, db);
 
-                // Average the results
-                // Consistent Score Differential Signal
-                let r0 = gpu_results.iter().map(|r| r.player0.mcts_reward).sum::<f32>() / self.leaf_batch_size as f32;
-                let r1 = gpu_results.iter().map(|r| r.player1.mcts_reward).sum::<f32>() / self.leaf_batch_size as f32;
-                (r0 - r1).clamp(-1.0, 1.0) * 0.5 + 0.5
-            } else {
-                // Standard CPU Rollout
-                let mut depth = 0;
-                if enable_rollout {
-                    while !state.is_terminal() && depth < 200 {
-                        // Horizon Check
-                        if let SearchHorizon::Limited(max_depth) = horizon {
-                            if depth >= max_depth as usize { break; }
+                // 5. Apply results & Backprop
+                for (i, output) in outputs.into_iter().enumerate() {
+                    let leaf_idx = batch_leaf_indices[i];
+
+                    // Update Policy Priors for children (if expanded)
+                    if !self.nodes[leaf_idx].children.is_empty() {
+                        // Assuming ACTION_SPACE is 8192
+                        for j in 0..self.nodes[leaf_idx].children.len() {
+                            let (action, child_idx) = self.nodes[leaf_idx].children[j];
+                            if (action as usize) < output.policy.len() {
+                                self.nodes[child_idx].prior_prob = output.policy[action as usize];
+                            }
                         }
-                        if let SearchHorizon::TurnEnd() = horizon {
-                            if state.turn > start_turn { break; }
+                    }
+
+                    // Hybrid Reward: NN Value + Heuristic Weighting
+                    let reward_p0 = if batch_leaf_states[i].is_terminal() {
+                        match batch_leaf_states[i].get_winner() {
+                            0 => 1.0, 1 => 0.0, _ => 0.5
                         }
+                    } else {
+                        // Meta-Heuristic: Use NN-predicted weights!
+                        use crate::core::heuristics::{OriginalHeuristic, EvalMode};
+                        let h = OriginalHeuristic { config: output.weights };
+                        let h_val = h.evaluate(&batch_leaf_states[i], db, root_state.players[0].score, root_state.players[1].score, EvalMode::Normal, None, None);
+                        // Blend: 50/50 NN Value and Heuristic Assessment
+                        (output.value * 0.5) + (h_val * 0.5)
+                    };
 
-                        state.generate_legal_actions(db, state.current_player as usize, &mut self.legal_buffer);
-                        if self.legal_buffer.is_empty() { break; }
-
-                        let chunk_action = *self.legal_buffer.choose(&mut self.rng).unwrap();
-                        if is_trace { println!("[MCTS TRACE]   Rollout: Step {}, Action {}", depth, chunk_action); }
-                        let _ = state.step(db, chunk_action);
-                        depth += 1;
+                    // Backprop
+                    let mut curr = Some(leaf_idx);
+                    while let Some(idx) = curr {
+                        let node_p_moved = self.nodes[idx].player_just_moved;
+                        let node = &mut self.nodes[idx];
+                        node.visit_count += 1;
+                        if node_p_moved == 0 {
+                            node.value_sum += reward_p0;
+                        } else {
+                            node.value_sum += 1.0 - reward_p0;
+                        }
+                        curr = node.parent;
                     }
                 }
-                eval_fn(&state, db)
-            };
-            profiler.simulation += t_simulation.elapsed();
+                sims_done += batch_size;
+            } else {
+                sims_done += 1;
+                let mut node_idx = 0;
 
-            // 5. Backpropagation
-            let t_backprop = std::time::Instant::now();
-            if is_trace { println!("[MCTS TRACE] Simulation Result (P0): {:.3}", reward_p0); }
+                // 1. Setup & Determinization (Sequential)
+                self.reusable_state.copy_from(&root_state);
+                let state = &mut self.reusable_state;
+                state.ui.silent = true;
 
-            let mut curr = Some(node_idx);
-            let batch_weight = if self.gpu_manager.is_some() { self.leaf_batch_size as f32 } else { 1.0 };
-            let batch_visits = if self.gpu_manager.is_some() { self.leaf_batch_size } else { 1 };
+                let me = root_state.current_player as usize;
+                let opp = 1 - me;
+                let opp_hand_len = state.core.players[opp].hand.len();
 
-            while let Some(idx) = curr {
-                let node_p_moved = self.nodes[idx].player_just_moved;
-                let node = &mut self.nodes[idx];
-                node.visit_count += batch_visits as u32;
+                self.unseen_buffer.clear();
+                self.unseen_buffer.extend_from_slice(&state.core.players[opp].hand);
+                self.unseen_buffer.extend_from_slice(&state.core.players[opp].deck);
+                self.unseen_buffer.shuffle(&mut self.rng);
 
-                if node_p_moved == 0 {
-                    node.value_sum += reward_p0 * batch_weight;
-                } else {
-                    node.value_sum += (1.0 - reward_p0) * batch_weight;
+                state.core.players[opp].hand.copy_from_slice(&self.unseen_buffer[0..opp_hand_len]);
+                state.core.players[opp].deck.copy_from_slice(&self.unseen_buffer[opp_hand_len..]);
+
+                if shuffle_self {
+                    let mut my_deck = state.core.players[me].deck.clone();
+                    my_deck.shuffle(&mut self.rng);
+                    state.core.players[me].deck = my_deck;
                 }
-                curr = node.parent;
+
+                // --- SEQUENTIAL PATH (Original logic) ---
+                profiler.determinization += t_setup.elapsed();
+
+                // 2. Selection
+                let t_selection = std::time::Instant::now();
+                while self.nodes[node_idx].untried_actions.is_empty() && !self.nodes[node_idx].children.is_empty() {
+                    node_idx = Self::select_child_logic(&self.nodes, node_idx, self.exploration_weight);
+                    let action = self.nodes[node_idx].parent_action;
+                    if is_trace { println!("[MCTS TRACE] Selection: Action {}", action); }
+                    let _ = state.step(db, action);
+                }
+                profiler.selection += t_selection.elapsed();
+
+                // 3. Expansion
+                let t_expansion = std::time::Instant::now();
+                if !self.nodes[node_idx].untried_actions.is_empty() {
+                    let idx = self.rng.random_range(0..self.nodes[node_idx].untried_actions.len());
+                    let action = self.nodes[node_idx].untried_actions.swap_remove(idx);
+                    if is_trace { println!("[MCTS TRACE] Expansion: Action {}", action); }
+
+                    let actor = state.current_player;
+                    let _ = state.step(db, action);
+
+                    state.sync_cost_modifiers(0, db);
+                    state.sync_cost_modifiers(1, db);
+
+                    self.legal_buffer.clear();
+                    let mut is_capped = false;
+                    if let SearchHorizon::TurnEnd() = horizon {
+                        if state.turn > root_start_turn { is_capped = true; }
+                    }
+                    if !is_capped {
+                        state.generate_legal_actions(db, state.current_player as usize, &mut self.legal_buffer);
+                    }
+
+                    let new_legal_indices = self.legal_buffer.clone();
+                    let prob = 1.0 / (new_legal_indices.len().max(1) as f32);
+                    let new_node = Node {
+                        visit_count: 0,
+                        value_sum: 0.0,
+                        player_just_moved: actor,
+                        prior_prob: prob,
+                        untried_actions: new_legal_indices,
+                        children: SmallVec::new(),
+                        parent: Some(node_idx),
+                        parent_action: action,
+                    };
+
+                    let new_idx = self.nodes.len();
+                    self.nodes.push(new_node);
+                    self.nodes[node_idx].children.push((action, new_idx));
+                    node_idx = new_idx;
+                }
+                profiler.expansion += t_expansion.elapsed();
+
+                // 4. Simulation
+                let t_simulation = std::time::Instant::now();
+                let reward_p0 = {
+                    // Standard CPU Rollout
+                    let mut depth = 0;
+                    if enable_rollout {
+                        while !state.is_terminal() && depth < 200 {
+                            if let SearchHorizon::Limited(max_depth) = horizon {
+                                if depth >= max_depth as usize { break; }
+                            }
+                            if let SearchHorizon::TurnEnd() = horizon {
+                                if state.turn > root_start_turn { break; }
+                            }
+                            state.generate_legal_actions(db, state.current_player as usize, &mut self.legal_buffer);
+                            if self.legal_buffer.is_empty() { break; }
+                            let chunk_action = *self.legal_buffer.choose(&mut self.rng).unwrap();
+                            let _ = state.step(db, chunk_action);
+                            depth += 1;
+                        }
+                    }
+                    eval_fn(&state, db)
+                };
+                profiler.simulation += t_simulation.elapsed();
+
+                // 5. Backpropagation
+                let _t_backprop = std::time::Instant::now();
+                let mut curr = Some(node_idx);
+                let batch_weight = 1.0;
+                let batch_visits = 1;
+
+                while let Some(idx) = curr {
+                    let node_p_moved = self.nodes[idx].player_just_moved;
+                    let node = &mut self.nodes[idx];
+                    node.visit_count += batch_visits as u32;
+                    if node_p_moved == 0 {
+                        node.value_sum += reward_p0 * batch_weight;
+                    } else {
+                        node.value_sum += (1.0 - reward_p0) * batch_weight;
+                    }
+                    curr = node.parent;
+                }
+                sims_done += 1;
             }
-            profiler.backpropagation += t_backprop.elapsed();
         }
 
         let mut stats: Vec<(i32, f32, u32)> = self.nodes[0].children.iter()
@@ -505,23 +615,26 @@ impl MCTS {
         (stats, profiler)
     }
 
-    fn select_child(nodes: &[Node], node_idx: usize) -> usize {
+    fn select_child_logic(nodes: &[Node], node_idx: usize, exploration_weight: f32) -> usize {
         let node = &nodes[node_idx];
         let mut best_score = f32::NEG_INFINITY;
         let mut best_child = 0;
 
-        // let log_n = (node.visit_count as f32).ln();
+        let total_visits_sqrt = (node.visit_count as f32).sqrt();
 
         for &(_, child_idx) in &node.children {
             let child = &nodes[child_idx];
-            // UCB1
-            let visits = child.visit_count as f32;
-            let exploit = child.value_sum / visits;
 
-            // Adjust exploration for batching: treat batch as 1 atomic search step
-            let denom = if visits > 127.0 { visits / 128.0 } else { visits.max(1.0) };
-            let adjust_log_n = (node.visit_count as f32 / 128.0).max(1.0).ln();
-            let explore = 1.4 * (adjust_log_n / denom).sqrt();
+            // Average Value (Q). If no visits, evaluate slightly optimistically (0.5)
+            let exploit = if child.visit_count > 0 {
+                child.value_sum / child.visit_count as f32
+            } else {
+                0.5
+            };
+
+            // PUCT Exploration (AlphaZero)
+            let explore = exploration_weight * child.prior_prob * (total_visits_sqrt / (1.0 + child.visit_count as f32));
+
             let score = exploit + explore;
 
             if score > best_score {
@@ -530,6 +643,11 @@ impl MCTS {
             }
         }
         best_child
+    }
+
+    #[allow(dead_code)]
+    fn select_child(&self, node_idx: usize) -> usize {
+        Self::select_child_logic(&self.nodes, node_idx, self.exploration_weight)
     }
 
 

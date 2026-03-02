@@ -99,6 +99,10 @@ impl WasmEngine {
     }
 
     pub fn get_last_log(&self) -> String {
-        self.state.ui.rule_log.last().cloned().unwrap_or_default()
+        if let Some(ref logs) = self.state.ui.rule_log {
+            logs.last().cloned().unwrap_or_default()
+        } else {
+            String::new()
+        }
     }
 }

@@ -1,133 +1,64 @@
-# Rustテスト分析レポート
+# Rust Test Analysis: test_card_557_logic_repro Failure
 
-## 実行日時
-2026-02-25
+## Test Failure Summary
+- **Test**: `test_card_557_logic_repro` in `engine_rust_src/tests/repro_bp4_001.rs`
+- **Expected**: Energy zone length = 8 (charge 1 energy)
+- **Actual**: Energy zone length = 7 (no energy charged)
+- **Card**: PL!SP-bp4-001-P (Card ID 557 - Kanon)
 
-## テスト結果サマリー
+## Root Cause Analysis
 
-| 項目 | 値 |
-|------|-----|
-| 総テスト数 | 252 |
-| 合格 | 248 |
-| 失敗 | 2 |
-| 無視 | 2 |
-| 合格率 | 98.4% |
-
-## 失敗したテスト
-
-### 1. `repro::fix_kimi_no_kokoro::test_kimi_no_kokoro_prevention`
-
-**ファイル**: [`src/repro/fix_kimi_no_kokoro.rs`](engine_rust_src/src/repro/fix_kimi_no_kokoro.rs)
-
-**概要**: 「君の心」カード(ID: 431)のPrevention効果のテスト
-
-**テスト内容**:
-- ライブ成功時のOnLiveSuccessアビリティ発動
-- DRAW(2); MOVE_TO_DISCARD(1) のコスト支払い
-- Prevention効果による成功ライブラリーへの移動阻止
-
-**推定失敗原因**:
-- `state.step(&db, 8000)`の選択肢処理が正しく動作していない可能性
-- `interaction_stack`の`choice_type`または`card_id`の不一致
-- ライブゾーンからのカード除去処理の不具合
-
-### 2. `semantic_assertions::tests::test_semantic_mass_verification`
-
-**ファイル**: [`src/semantic_assertions.rs`](engine_rust_src/src/semantic_assertions.rs)
-
-**概要**: 全カードのセマンティック検証テスト
-
-**結果**:
-- 880/921 Abilities Passed (95.5%)
-- 閾値: 96%
-- **不合格**: 閾値を下回る
-
-**失敗カテゴリ**:
-
-| カテゴリ | 失敗数 | 説明 |
-|----------|--------|------|
-| HAND_DELTA | 2 | 手札増減の期待値と実際の不一致 |
-| SEGMENT_STUCK | 39 | バイトコード実行が停止 |
-
-## SEGMENT_STUCK問題の詳細
-
-[`semantic_assertions.rs`](engine_rust_src/src/semantic_assertions.rs:13)に定義された既知の問題カード:
-
-```rust
-pub const KNOWN_PROBLEMATIC_CARDS: &[(&str, usize)] = &[
-    ("PL!-bp4-009-P", 0),
-    ("PL!-bp4-009-R", 0),
-    ("PL!-bp4-011-N", 1),
-    ("PL!-pb1-009-P＋", 0),
-    ("PL!-pb1-009-R", 0),
-    ("PL!N-bp1-003-P", 1),
-    ("PL!N-bp1-003-P＋", 1),
-    ("PL!N-bp1-003-R＋", 1),
-    ("PL!N-bp1-003-SEC", 1),
-    ("PL!N-bp3-017-N", 2),
-    ("PL!N-bp3-023-N", 2),
-    ("PL!N-sd1-001-SD", 1),
-    ("PL!SP-bp4-011-P", 1),
-    ("PL!SP-bp4-011-P＋", 1),
-    ("PL!SP-bp4-011-R＋", 1),
-    ("PL!SP-bp4-011-SEC", 1),
-    ("PL!SP-pb1-006-P＋", 1),
-    ("PL!SP-pb1-006-R", 1),
-];
+### Card 557 Pseudocode
+```
+TRIGGER: ON_PLAY
+CONDITION: ALL_MEMBERS {FILTER="GROUP_ID=3"}, ENERGY_COUNT {MIN=7}
+EFFECT: PLACE_ENERGY_WAIT(1) -> PLAYER
 ```
 
-**SEGMENT_STUCKの原因**:
-1. バイトコード実行ループが無限ループに陥る
-2. 条件分岐で進行不能になる
-3. 必要なリソースが不足して実行が停止
-
-## 警告
-
-### 1. 未使用変数
-**ファイル**: [`src/core/logic/interpreter/handlers/score_hearts.rs:116`](engine_rust_src/src/core/logic/interpreter/handlers/score_hearts.rs:116)
+### Current Bytecode
 ```
-warning: unused variable: `player`
+[209, 4, 3, 0, 48, 33, 1, 0, 0, 4, 1, 0, 0, 0, 0]
+
+Decoded:
+  00: CHECK_GROUP_FILTER   | v(Val):4, a(Attr):3, s(Comp):GE (>=), s(Slot):Left Slot
+  05: PLACE_UNDER          | v=1, a=0, s=4
+  10: RETURN               | v=0, a=0, s=0
 ```
 
-**修正**: 変数名を`_player`に変更
+### Issues Identified
 
-### 2. 未使用定数
-**ファイル**: [`src/semantic_assertions.rs:9`](engine_rust_src/src/semantic_assertions.rs:9)
+1. **Missing ENERGY_COUNT Condition**: The bytecode only contains C_GROUP_FILTER but is missing the `ENERGY_COUNT {MIN=7}` condition from the pseudocode.
+
+2. **Wrong Opcode for Energy Charging**: The pseudocode says `PLACE_ENERGY_WAIT(1) -> PLAYER` which means "charge 1 energy from deck to player's energy zone with wait state". This should use `O_ENERGY_CHARGE` (opcode 23), not `O_PLACE_UNDER` (opcode 33).
+
+3. **Compiler Bug**: In `compiler/parser_v2.py` line 101:
+   ```python
+   "PLACE_ENERGY_WAIT": ("PLACE_UNDER", {"type": "energy", "wait": True}),
+   ```
+   This incorrectly maps PLACE_ENERGY_WAIT to PLACE_UNDER instead of ENERGY_CHARGE.
+
+4. **Handler Mismatch**: The O_PLACE_UNDER handler in `engine_rust_src/src/core/logic/interpreter/handlers/member_state.rs` only handles:
+   - `a == 0`: Move from hand to stage_energy
+   - `a == 1`: Move from energy_zone to stage_energy
+
+   It does NOT handle charging from energy_deck to energy_zone.
+
+## Fix Required
+
+### Option 1: Fix the Compiler (Recommended)
+Change `compiler/parser_v2.py` to map PLACE_ENERGY_WAIT to ENERGY_CHARGE:
+```python
+"PLACE_ENERGY_WAIT": ("ENERGY_CHARGE", {"wait": True}),
 ```
-warning: constant `BYTECODE_WORDS_PER_INSTRUCTION` is never used
-```
 
-**修正**: 使用するか、削除する
+And update the main.py to properly compile ENERGY_CHARGE with wait state flag.
 
-## 修正計画
+### Option 2: Fix the Handler
+Add logic to O_PLACE_UNDER handler to detect "type: energy" parameter and use O_ENERGY_CHARGE behavior.
 
-### 優先度1: テスト合格率の向上
+### Option 3: Fix the Test
+If PLACE_ENERGY_WAIT is intentionally different from ENERGY_CHARGE, update the test to match the actual expected behavior.
 
-1. **HAND_DELTA失敗(2件)の修正**
-   - 失敗しているカードIDを特定
-   - 手札増減ロジックの検証
-   - 期待値の調整またはロジック修正
-
-2. **SEGMENT_STUCK失敗の削減**
-   - 既知の問題カードのバイトコードを調査
-   - 無限ループ防止のタイムアウト実装
-   - 条件分岐の修正
-
-### 優先度2: 個別テストの修正
-
-1. **test_kimi_no_kokoro_prevention**
-   - デバッグログを追加して失敗箇所を特定
-   - `interaction_stack`の状態を確認
-   - 選択肢処理のロジック検証
-
-### 優先度3: 警告の解消
-
-1. `score_hearts.rs`の未使用変数を`_player`に変更
-2. `BYTECODE_WORDS_PER_INSTRUCTION`の使用または削除
-
-## 次のステップ
-
-1. 個別テストを詳細実行してエラーメッセージを確認
-2. HAND_DELTA失敗のカードを特定
-3. SEGMENT_STUCK問題のバイトコード解析
-4. 修正実装
+## Notes
+- The test `test_card_557_logic_fail_if_not_only_liella` passes because it expects no energy charging (energy_zone stays at 7), which matches the current buggy behavior.
+- After fixing the bytecode, the test will need to include proper ENERGY_COUNT condition check.

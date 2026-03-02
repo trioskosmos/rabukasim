@@ -29,7 +29,7 @@ Decoded:
 1. **Condition 1:** `C_GROUP_FILTER` (209) with `val=4`, `attr=3`
    - `val=4` has bit 2 set (0x04), meaning "Check ALL members on stage"
    - `attr=3` is the GROUP_ID for Liella!
-   
+
 2. **Condition 2:** `C_COUNT_ENERGY` (213) with `val=7`
    - Checks if energy count >= 7
 
@@ -42,8 +42,8 @@ The `C_GROUP_FILTER` condition is evaluated in [`conditions.rs:357-371`](engine_
 ```rust
 C_GROUP_FILTER => {
     let lower_attr = attr & 0x00000000FFFFFFFF;
-    let filter = if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 { 
-        0x10 | (lower_attr << 5) 
+    let filter = if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
+        0x10 | (lower_attr << 5)
     } else if (lower_attr & 0x10) == 0 && val != 0 {
         0x10 | (((val & 0x7F) as u64) << 5)
     } else { lower_attr };
@@ -68,7 +68,7 @@ fn execute_play_member_state(&mut self, db: &CardDatabase, p_idx: usize, hand_id
     // ... secondary slot handling ...
 
     self.core.players[p_idx].hand.remove(hand_idx);
-    
+
     if old_card_id >= 0 {
         self.trigger_event(db, TriggerType::OnLeaves, p_idx, old_card_id, slot_idx as i16, 0, -1);
         self.core.players[p_idx].discard.push(old_card_id);  // OLD CARD REMOVED HERE
@@ -77,7 +77,7 @@ fn execute_play_member_state(&mut self, db: &CardDatabase, p_idx: usize, hand_id
     self.prev_card_id = old_card_id;
     self.core.players[p_idx].stage[slot_idx] = card_id;  // NEW CARD PLACED HERE
     // ...
-    
+
     self.trigger_event(db, TriggerType::OnPlay, p_idx, card_id, slot_idx as i16, start_ab_idx, choice as i16);
 }
 ```
@@ -168,8 +168,8 @@ Add temporary logging to [`conditions.rs`](engine_rust_src/src/core/logic/interp
 ```rust
 C_GROUP_FILTER => {
     let lower_attr = attr & 0x00000000FFFFFFFF;
-    let filter = if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 { 
-        0x10 | (lower_attr << 5) 
+    let filter = if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
+        0x10 | (lower_attr << 5)
     } else if (lower_attr & 0x10) == 0 && val != 0 {
         0x10 | (((val & 0x7F) as u64) << 5)
     } else { lower_attr };

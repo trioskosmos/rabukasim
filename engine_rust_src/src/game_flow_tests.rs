@@ -5,7 +5,7 @@ use crate::core::logic::*;
 fn test_mulligan_logic_discard_and_draw() {
     let _db = load_real_db();
     let mut state = create_test_state();
-    
+
     // Initialize deck and hand with real IDs
     // Eli (121), Rin (124), Kotori (122), Honoka (120)
     state.core.players[0].hand = vec![121, 124, 121, 124, 121, 124].into();
@@ -27,7 +27,7 @@ fn test_mulligan_logic_discard_and_draw() {
 fn test_mulligan_empty_keep() {
     let _db = load_real_db();
     let mut state = create_test_state();
-    
+
     state.core.players[0].hand = vec![121, 121, 121, 121, 121, 121].into();
     state.core.players[0].deck = vec![120].into();
     state.phase = Phase::MulliganP1;

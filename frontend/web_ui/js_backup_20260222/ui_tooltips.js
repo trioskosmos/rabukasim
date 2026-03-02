@@ -296,7 +296,7 @@ export const Tooltips = {
                     tooltipHideTimeout = null;
                 }
             } else {
-                // USER REQUEST: The panel should persist. 
+                // USER REQUEST: The panel should persist.
                 // We DON'T hide the panel just because this specific element has no text,
                 // unless it's a deliberate mouseout of the board entirely (handled in hideTooltip).
             }
@@ -325,7 +325,7 @@ export const Tooltips = {
 
             // CRITICAL: We NO LONGER hide the card-desc-panel on mouseout.
             // It persists until a new card is hovered or the page is refreshed.
-            // This fixes the "only sometimes comes up" issue by preventing it from disappearing 
+            // This fixes the "only sometimes comes up" issue by preventing it from disappearing
             // when the mouse moves between cards or into "dead space" between elements.
             Tooltips.clearHighlights();
         };
@@ -505,7 +505,7 @@ export const Tooltips = {
             } else if (aid >= 500 && aid <= 509) { // SELECT_MODE
                 // Intentionally do nothing. Mode choices are abstract and don't target hand cards.
             } else if (aid >= 8000 && aid <= 8999) { // LOOK_AND_CHOOSE or generic choice
-                // For LOOK_AND_CHOOSE, the UI element often has data-action-id matching this, 
+                // For LOOK_AND_CHOOSE, the UI element often has data-action-id matching this,
                 // but the card itself might be in the looked-cards panel.
                 // It is abstract in terms of board state highlighting.
             } else {

@@ -1,8 +1,7 @@
 import os
 import re
-import json
 from collections import Counter
-from typing import List, Dict, Tuple, Optional
+from typing import Dict, List, Optional
 
 
 class UnifiedDeckParser:
@@ -17,38 +16,54 @@ class UnifiedDeckParser:
 
     def __init__(self, card_db: Optional[Dict] = None):
         self.card_db = card_db or {}
-        # Pre-normalize DB keys if they are Card Nos
+        # Index by Card No (e.g. "PL!S-bp2-022-L") for resolution
         self.normalized_db = {}
-        for k, v in self.card_db.items():
-            self.normalized_db[self.normalize_code(k)] = v
+        for db_name, sub_db in self.card_db.items():
+            if isinstance(sub_db, dict):
+                # Infer type from database name
+                inferred_type = (
+                    "Member"
+                    if "member" in db_name
+                    else "Live"
+                    if "live" in db_name
+                    else "Energy"
+                    if "energy" in db_name
+                    else "Unknown"
+                )
+                for v in sub_db.values():
+                    if isinstance(v, dict) and "card_no" in v:
+                        # Copy to avoid mutating original shared DB if possible, but here we likely want it
+                        v_with_type = v.copy()
+                        v_with_type["type"] = inferred_type
+                        self.normalized_db[self.normalize_code(v["card_no"])] = v_with_type
 
     @staticmethod
     def normalize_code(code: str) -> str:
         """Normalizes card codes for consistent matching."""
         if not code:
             return ""
-        # Convert full-width '+', '-', ' ' to half-width equivalent if needed, 
-        # or just handle the most common character: full-width PLUS '＋'
+        # Convert common full-width characters to half-width for alignment
         code = code.replace("＋", "+").replace("ー", "-").strip()
         return code
 
     def resolve_card(self, code_or_id: str) -> Dict:
         """Finds card data by Card No or Internal ID."""
         norm_code = self.normalize_code(code_or_id)
-        
+
         # 1. Try direct match in normalized DB
         if norm_code in self.normalized_db:
             return self.normalized_db[norm_code]
-            
+
         # 2. Try as internal ID (integer string)
         try:
             int_id = int(code_or_id)
-            for card_data in self.card_db.values():
+            # Search in normalized DB by card_id
+            for card_data in self.normalized_db.values():
                 if card_data.get("card_id") == int_id:
                     return card_data
         except ValueError:
             pass
-            
+
         return {}
 
     def extract_from_content(self, content: str) -> List[Dict]:
@@ -63,23 +78,23 @@ class UnifiedDeckParser:
         }
         """
         # Split content by deck markers if multiple exist (Deck Log markers)
-        deck_sections = re.split(r'デッキ名「([^」]+)」のデッキ', content)
-        
+        deck_sections = re.split(r"デッキ名「([^」]+)」のデッキ", content)
+
         decks = []
         if len(deck_sections) > 1:
             # First part is usually meta or empty
             for i in range(1, len(deck_sections), 2):
                 name = deck_sections[i]
-                body = deck_sections[i+1]
+                body = deck_sections[i + 1]
                 deck_info = self._parse_single_deck(body)
-                deck_info['name'] = name
+                deck_info["name"] = name
                 decks.append(deck_info)
         else:
             # Single deck or unknown format
             deck_info = self._parse_single_deck(content)
-            deck_info['name'] = "Default Deck"
+            deck_info["name"] = "Default Deck"
             decks.append(deck_info)
-            
+
         return decks
 
     def _parse_single_deck(self, content: str) -> Dict:
@@ -87,7 +102,7 @@ class UnifiedDeckParser:
         main_deck = []
         energy_deck = []
         errors = []
-        
+
         # 1. Try HTML Structure findall
         # title="PL!xxx-yyy-zzz : NAME" ... <span class="num">N</span>
         pattern_html = r'title="([^"]+?) :[^"]*"[^>]*>.*?class="num">(\d+)</span>'
@@ -107,7 +122,9 @@ class UnifiedDeckParser:
                     matches = matches_2
                 else:
                     # Fallback 3: Simple list of IDs
-                    id_pattern = r"([PL!|LL\-E][A-Za-z0-9!+\-＋]+-[A-Za-z0-9!+\-＋]+-[A-Za-z0-9!+\-＋]+[A-Za-z0-9!+\-＋]*)"
+                    id_pattern = (
+                        r"([PL!|LL\-E][A-Za-z0-9!+\-＋]+-[A-Za-z0-9!+\-＋]+-[A-Za-z0-9!+\-＋]+[A-Za-z0-9!+\-＋]*)"
+                    )
                     matches_3 = re.findall(id_pattern, content)
                     if matches_3:
                         counts = Counter(matches_3)
@@ -125,26 +142,31 @@ class UnifiedDeckParser:
             cdata = self.resolve_card(card_id)
             ctype = cdata.get("type", "")
 
-            # Determine storage location and type counts
-            if "メンバー" in ctype or "Member" in ctype:
-                type_counts["Member"] += qty
-                for _ in range(qty): main_deck.append(card_id)
-            elif "ライブ" in ctype or "Live" in ctype:
-                type_counts["Live"] += qty
-                for _ in range(qty): main_deck.append(card_id)
-            elif "エネルギー" in ctype or "Energy" in ctype or card_id.startswith("LL-E"):
-                type_counts["Energy"] += qty
-                for _ in range(qty): energy_deck.append(card_id)
-            else:
-                type_counts["Unknown"] += qty
-                for _ in range(qty): main_deck.append(card_id)
+            # Energy detection: Either explicit in DB, starts with LL-E, or ends with -PE/-PE＋
+            is_energy = (
+                "Energy" in ctype or card_id.startswith("LL-E") or card_id.endswith("-PE") or card_id.endswith("-PE+")
+            )
 
-        return {
-            "main": main_deck,
-            "energy": energy_deck,
-            "type_counts": type_counts,
-            "errors": errors
-        }
+            # Determine storage location and type counts
+            if is_energy:
+                type_counts["Energy"] += qty
+                for _ in range(qty):
+                    energy_deck.append(card_id)
+            elif "Member" in ctype:
+                type_counts["Member"] += qty
+                for _ in range(qty):
+                    main_deck.append(card_id)
+            elif "Live" in ctype:
+                type_counts["Live"] += qty
+                for _ in range(qty):
+                    main_deck.append(card_id)
+            else:
+                # Fallback for unknown cards
+                type_counts["Unknown"] += qty
+                for _ in range(qty):
+                    main_deck.append(card_id)
+
+        return {"main": main_deck, "energy": energy_deck, "type_counts": type_counts, "errors": errors}
 
 
 def extract_deck_data(content: str, card_db: dict):
@@ -153,10 +175,10 @@ def extract_deck_data(content: str, card_db: dict):
     results = parser.extract_from_content(content)
     if not results:
         return [], [], {}, ["No deck found"]
-    
+
     # Return first deck for compatibility
     d = results[0]
-    return d['main'], d['energy'], d['type_counts'], d['errors']
+    return d["main"], d["energy"], d["type_counts"], d["errors"]
 
 
 def load_deck_from_file(file_path: str, card_db: dict):

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Quick audit of ability system health metrics."""
+
 import json
 
 # Cards compiled
@@ -67,34 +68,38 @@ print(f"Cards with abilities:          {cards_with_ab}")
 print(f"Total abilities:               {total_ab}")
 print(f"Abilities with valid bytecode: {has_bc}")
 print(f"Empty/stub bytecodes:          {empty_bc}")
-print(f"Bytecode coverage:             {has_bc}/{total_ab} ({100*has_bc/total_ab:.1f}%)")
+print(f"Bytecode coverage:             {has_bc}/{total_ab} ({100 * has_bc / total_ab:.1f}%)")
 print()
-print(f"--- Opcode Usage ---")
+print("--- Opcode Usage ---")
 print(f"Defined effect opcodes:        {len(defined_opcodes)}")
 print(f"Used in compiled cards:        {len(real_used_opcodes)}")
-print(f"Opcode utilization:            {len(real_used_opcodes)}/{len(defined_opcodes)} ({100*len(real_used_opcodes)/len(defined_opcodes):.0f}%)")
+print(
+    f"Opcode utilization:            {len(real_used_opcodes)}/{len(defined_opcodes)} ({100 * len(real_used_opcodes) / len(defined_opcodes):.0f}%)"
+)
 if unused_opcodes:
     print(f"\nUnused opcodes ({len(unused_opcodes)}):")
     for op in sorted(unused_opcodes):
         print(f"  {op:3d} = {opcode_names.get(op, '???')}")
 
 print()
-print(f"--- Condition Usage ---")
+print("--- Condition Usage ---")
 print(f"Defined conditions:            {len(defined_conditions)}")
 print(f"Used in compiled cards:        {len(used_conditions)}")
-print(f"Condition utilization:         {len(used_conditions)}/{len(defined_conditions)} ({100*len(used_conditions)/len(defined_conditions):.0f}%)")
+print(
+    f"Condition utilization:         {len(used_conditions)}/{len(defined_conditions)} ({100 * len(used_conditions) / len(defined_conditions):.0f}%)"
+)
 if unused_conditions:
     print(f"\nUnused conditions ({len(unused_conditions)}):")
     for c in sorted(unused_conditions):
         print(f"  {c:3d} = {cond_names.get(c, '???')}")
 
 print()
-print(f"--- Trigger Usage ---")
+print("--- Trigger Usage ---")
 for t in sorted(used_triggers):
     print(f"  {t} = {trigger_names.get(t, '???')}")
 
 print()
-print(f"--- Metadata Totals ---")
+print("--- Metadata Totals ---")
 print(f"Effect opcodes (defined):      {len(meta['opcodes'])}")
 print(f"Conditions (defined):          {len(meta['conditions'])}")
 print(f"Triggers (defined):            {len(meta['triggers'])}")

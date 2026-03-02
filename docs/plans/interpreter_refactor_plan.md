@@ -95,13 +95,13 @@ pub struct ConditionResult {
 
 /// 条件オペコードを処理
 pub fn check_condition_opcode(
-    state: &GameState, 
-    db: &CardDatabase, 
-    op: i32, 
-    val: i32, 
-    attr: u64, 
-    slot: i32, 
-    ctx: &AbilityContext, 
+    state: &GameState,
+    db: &CardDatabase,
+    op: i32,
+    val: i32,
+    attr: u64,
+    slot: i32,
+    ctx: &AbilityContext,
     depth: u32
 ) -> bool { ... }
 
@@ -215,24 +215,24 @@ impl OpcodeHandler for DrawHandler {
     ) -> HandlerResult {
         let p_idx = ctx.player_id as usize;
         let count = v as u32;
-        
-        if s == 2 { 
-            state.draw_cards(1 - p_idx, count); 
-        } else if s == 3 { 
-            state.draw_cards(0, count); 
-            state.draw_cards(1, count); 
-        } else { 
-            state.draw_cards(p_idx, count); 
+
+        if s == 2 {
+            state.draw_cards(1 - p_idx, count);
+        } else if s == 3 {
+            state.draw_cards(0, count);
+            state.draw_cards(1, count);
+        } else {
+            state.draw_cards(p_idx, count);
         }
-        
+
         state.log_turn_event(
-            "EFFECT", 
-            ctx.source_card_id, 
-            ctx.ability_index, 
-            p_idx as u8, 
+            "EFFECT",
+            ctx.source_card_id,
+            ctx.ability_index,
+            p_idx as u8,
             &format!("Draw {} card(s)", count)
         );
-        
+
         HandlerResult::Continue
     }
 }
@@ -269,9 +269,9 @@ mod filter;
 use handlers::{HandlerRegistry, HandlerResult};
 
 pub fn resolve_bytecode(
-    state: &mut GameState, 
-    db: &CardDatabase, 
-    bytecode: &[i32], 
+    state: &mut GameState,
+    db: &CardDatabase,
+    bytecode: &[i32],
     ctx_in: &AbilityContext
 ) {
     // ハードコード処理のチェック
@@ -283,26 +283,26 @@ pub fn resolve_bytecode(
 
     // スタック初期化
     let mut executor = BytecodeExecutor::new(bytecode, ctx_in);
-    
+
     // ハンドラレジストリ初期化
     let registry = HandlerRegistry::new();
-    
+
     // メインループ
     while let Some(frame) = executor.current_frame() {
         let op = frame.read_opcode();
-        
+
         // 条件オペコードの処理
         if is_condition_opcode(op) {
             executor.cond = conditions::check_condition_opcode(...);
             continue;
         }
-        
+
         // ジャンプ命令の処理
         if is_jump_opcode(op) {
             executor.handle_jump(op);
             continue;
         }
-        
+
         // 通常オペコードの処理
         match registry.dispatch(state, db, &mut executor.ctx, op, v, a, s, instr_ip) {
             HandlerResult::Continue => {},
@@ -310,7 +310,7 @@ pub fn resolve_bytecode(
             HandlerResult::Suspend => return,
             HandlerResult::Return => break,
         }
-        
+
         // choice_indexのリセット
         executor.ctx.choice_index = -1;
     }
@@ -336,13 +336,13 @@ struct ExecutionFrame<'a> {
 
 impl<'a> BytecodeExecutor<'a> {
     fn new(bytecode: &'a [i32], ctx: &AbilityContext) -> Self { ... }
-    
+
     fn current_frame(&mut self) -> Option<&mut ExecutionFrame<'a>> { ... }
-    
+
     fn handle_jump(&mut self, op: i32, v: i32) { ... }
-    
+
     fn push_frame(&mut self, bytecode: &'a [i32], ctx: AbilityContext) -> bool { ... }
-    
+
     fn pop_frame(&mut self) { ... }
 }
 ```
@@ -416,13 +416,13 @@ pub use super::interpreter::costs::check_cost;
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_check_condition_opcode_has_member() { ... }
-    
+
     #[test]
     fn test_check_cost_energy() { ... }
-    
+
     #[test]
     fn test_draw_handler() { ... }
 }

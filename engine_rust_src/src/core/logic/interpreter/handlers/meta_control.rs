@@ -1,4 +1,5 @@
 use crate::core::logic::{GameState, CardDatabase, AbilityContext, TriggerType};
+use super::super::constants::{FILTER_MASK_LOWER, FLAG_TARGET_OPPONENT};
 use crate::core::enums::*;
 use super::HandlerResult;
 use super::super::suspension::{suspend_interaction, resolve_target_slot, get_choice_text};
@@ -20,17 +21,26 @@ pub fn handle_meta_control(state: &mut GameState, db: &CardDatabase, ctx: &mut A
             };
             if target_slot >= 0 && (target_slot as usize) < 3 {
                 let cid = state.core.players[p_idx].stage[target_slot as usize];
-                if cid >= 0 { state.core.players[p_idx].negated_triggers.push((cid, trigger_type, a.max(1) as i32)); }
+                if cid >= 0 { state.core.players[p_idx].negated_triggers.push((cid, trigger_type, (a as u64 & FILTER_MASK_LOWER).max(1) as i32)); }
             }
         },
         O_REDUCE_YELL_COUNT => { state.core.players[p_idx].yell_count_reduction = v as i16; },
         O_RESTRICTION => {
-            state.core.players[p_idx].restrictions.push(a as u8);
-            if a == 1 { state.core.players[p_idx].set_flag(crate::core::logic::player::PlayerState::FLAG_CANNOT_LIVE, true); }
+            state.core.players[p_idx].restrictions.push((a as u64 & FILTER_MASK_LOWER) as u8);
+            if (a as u64 & FILTER_MASK_LOWER) == 1 { state.core.players[p_idx].set_flag(crate::core::logic::player::PlayerState::FLAG_CANNOT_LIVE, true); }
         },
         O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER => {
-            if ctx.choice_index == -1 {
-                let choice_type = if op == O_SELECT_MEMBER { "SELECT_MEMBER" } 
+            // Systemic Fix: If area bits (25-27) are present in the slot parameter, auto-resolve
+            let area_val = (s >> 25) & 0x07;
+            if area_val >= 1 && area_val <= 3 {
+                let auto_slot = (area_val - 1) as i16;
+                ctx.choice_index = auto_slot;
+                ctx.area_idx = auto_slot;
+                if state.debug.debug_mode {
+                    println!("[DEBUG] O_SELECT_MEMBER: Auto-selecting slot {} based on area bits", auto_slot);
+                }
+            } else if ctx.choice_index == -1 {
+                let choice_type = if op == O_SELECT_MEMBER { "SELECT_MEMBER" }
                                   else if op == O_SELECT_LIVE { "SELECT_LIVE" }
                                   else if op == O_SELECT_PLAYER { "SELECT_PLAYER" }
                                   else { "UNKNOWN" };
@@ -42,12 +52,20 @@ pub fn handle_meta_control(state: &mut GameState, db: &CardDatabase, ctx: &mut A
                     return Some(HandlerResult::Suspend);
                 }
             } else {
-                // DEBUG: Log selection resolution
-                if state.debug.debug_mode {
-                    println!("[DEBUG O_SELECT_MEMBER] Resolved: choice_index={}, setting area_idx={}", ctx.choice_index, ctx.choice_index);
+                let choice = ctx.choice_index as i32;
+                let source_zone = (s >> 16) & 0xFF;
+
+                if source_zone == 6 {
+                    // Hand selection: choice IS the index
+                    ctx.target_slot = choice as i16;
+                } else if source_zone == 7 {
+                    // Discard selection: choice IS the index
+                    ctx.target_slot = choice as i16;
+                } else {
+                    // Default to Stage Slot or Live Zone: choice IS the index
+                    ctx.target_slot = choice as i16;
+                    ctx.area_idx = choice as i16;
                 }
-                ctx.target_slot = ctx.choice_index;
-                if ctx.choice_index < 3 { ctx.area_idx = ctx.choice_index; }
             }
         },
         O_OPPONENT_CHOOSE => {
@@ -76,7 +94,7 @@ pub fn handle_meta_control(state: &mut GameState, db: &CardDatabase, ctx: &mut A
             state.core.players[target_p_idx].prevent_success_pile_set = 1;
         },
         O_PREVENT_PLAY_TO_SLOT => {
-            let target_p_idx = if a == 1 { 1 - base_p } else { base_p };
+            let target_p_idx = if (s as u32 & FLAG_TARGET_OPPONENT as u32) != 0 { 1 - base_p } else { base_p };
             if resolved_slot >= 0 && resolved_slot < 3 { state.core.players[target_p_idx].prevent_play_to_slot_mask |= 1 << resolved_slot; }
         },
         O_TRIGGER_REMOTE => {
@@ -84,22 +102,22 @@ pub fn handle_meta_control(state: &mut GameState, db: &CardDatabase, ctx: &mut A
              if target_cid >= 0 {
                  if let Some(m) = db.get_member(target_cid as i32) {
                      if (v as usize) < m.abilities.len() {
-                        return Some(HandlerResult::BranchToBytecode(m.abilities[v as usize].bytecode.clone()));
+                        return Some(HandlerResult::BranchToBytecode(std::sync::Arc::new(m.abilities[v as usize].bytecode.clone())));
                      }
                  }
              }
         },
         O_REDUCE_LIVE_SET_LIMIT => { state.core.players[p_idx].prevent_success_pile_set = state.core.players[p_idx].prevent_success_pile_set.saturating_add(v as u8); },
         O_META_RULE => {
-            if a == 0 || a == 10 { 
-                state.core.players[target_p_idx].cheer_mod_count = state.core.players[target_p_idx].cheer_mod_count.saturating_add(v as u16); 
+            if a == 0 || a == 10 {
+                state.core.players[target_p_idx].cheer_mod_count = state.core.players[target_p_idx].cheer_mod_count.saturating_add(v as u16);
             } else if a == 8 {
                 // SCORE_RULE: dynamic conditional rules for scoring
                 // v = 1 means "ALL_ENERGY_ACTIVE"
                 if v == 1 {
                     let all_active = state.core.players[p_idx].tapped_energy_count() == 0;
                     if state.debug.debug_mode {
-                        println!("[DEBUG] SCORE_RULE: ALL_ENERGY_ACTIVE evaluated to {}", all_active);
+                        // println!("[DEBUG] SCORE_RULE: ALL_ENERGY_ACTIVE evaluated to {}", all_active);
                     }
                     return Some(HandlerResult::SetCond(all_active));
                 }
@@ -153,14 +171,20 @@ pub fn handle_meta_control(state: &mut GameState, db: &CardDatabase, ctx: &mut A
             if max_repeats == 0 || ctx.repeat_count < max_repeats as i16 {
                 ctx.repeat_count = ctx.repeat_count.saturating_add(1);
                 if state.debug.debug_mode {
-                    println!("[DEBUG] O_REPEAT_ABILITY: repeating ability (count={}/{})", ctx.repeat_count, max_repeats);
+                    // println!("[DEBUG] O_REPEAT_ABILITY: repeating ability (count={}/{})", ctx.repeat_count, max_repeats);
                 }
                 return Some(HandlerResult::Branch(0));  // Jump back to start of ability
             } else {
                 if state.debug.debug_mode {
-                    println!("[DEBUG] O_REPEAT_ABILITY: limit reached (count={}/{})", ctx.repeat_count, max_repeats);
+                    // println!("[DEBUG] O_REPEAT_ABILITY: limit reached (count={}/{})", ctx.repeat_count, max_repeats);
                 }
             }
+        },
+        O_SET_TARGET_SELF => {
+            ctx.player_id = ctx.activator_id;
+        },
+        O_SET_TARGET_OPPONENT => {
+            ctx.player_id = 1 - ctx.activator_id;
         },
         _ => return None,
     }

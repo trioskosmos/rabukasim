@@ -9,7 +9,7 @@ Our objective is a **100% pass rate** in the Semantic Audit. This ensures that e
 
 ### 1. Semantic Audit Pipeline
 The primary mechanism for verifying engine logic against textual meaning.
-- **Workflow**: 
+- **Workflow**:
     1. **Baseline**: `cargo test generate_v3_truth` (Synchronized capture).
     2. **Audit**: `cargo test test_semantic_mass_verification -- --nocapture`.
 - **Reporting**: [COMPREHENSIVE_SEMANTIC_AUDIT.md](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/reports/COMPREHENSIVE_SEMANTIC_AUDIT.md).
@@ -142,7 +142,7 @@ The compiler (`main.py`) runs a structural check on every bytecode array generat
 Run a batch execution of **every** unique ability signature to catch engine panics.
 1.  **Command**: `cd engine_rust_src && cargo test crash_triage -- --nocapture`
 2.  **Mechanism**: Uses `std::panic::catch_unwind` to execute all 287+ unique signatures in a single run without aborting on failure.
-3.  **Outputs**: 
+3.  **Outputs**:
     - `reports/state_delta_verification.md`: Full audit logs.
     - `reports/crashed_abilities.txt`: Targeted list of crashing cards.
 

@@ -1,5 +1,4 @@
 import json
-import os
 
 path = "data/manual_pseudocode.json"
 with open(path, "r", encoding="utf-8") as f:

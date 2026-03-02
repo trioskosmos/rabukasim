@@ -1,6 +1,6 @@
-import engine_rust
 import json
-import os
+
+import engine_rust
 
 
 def test_idempotency_performance_phase():

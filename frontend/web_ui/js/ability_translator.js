@@ -1,13 +1,10 @@
-/**
- * ability_translator.js - Legacy Facade for i18n module
- */
-
-import { translateAbility as modularTranslate, NAME_MAP, loadTranslations } from './i18n/index.js';
+import { translateAbility as modularTranslate, NAME_MAP, loadTranslations, t } from './i18n/index.js';
 
 // Re-expose to global window for legacy onclick handlers and direct access
 window.translateAbility = modularTranslate;
 window.NAME_MAP = NAME_MAP;
 window.loadTranslations = loadTranslations;
+window.t = t;
 
 // For backward compatibility with any code directly accessing window.Translations
 // Note: This will only be populated AFTER loadTranslations is called.
@@ -24,5 +21,5 @@ Object.defineProperty(window, 'Translations', {
     configurable: true
 });
 
-export { modularTranslate as translateAbility, NAME_MAP };
+export { modularTranslate as translateAbility, NAME_MAP, t };
 export default modularTranslate;

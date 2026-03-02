@@ -99,6 +99,7 @@ impl HeartBoard {
     }
 }
 
+#[inline]
 pub fn process_hearts(pool: &mut [u32; 7], need: &[u32; 7]) -> (u32, u32) {
     let mut p8 = [0u8; 7];
     let mut n8 = [0u8; 7];

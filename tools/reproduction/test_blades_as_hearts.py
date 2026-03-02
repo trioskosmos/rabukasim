@@ -1,6 +1,6 @@
-import sys
-import os
 import json
+import os
+import sys
 
 
 def run_test():

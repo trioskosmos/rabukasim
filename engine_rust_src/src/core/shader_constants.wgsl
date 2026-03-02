@@ -67,6 +67,8 @@ const O_SELECT_CARDS: i32 = 74; // IMPLEMENTED
 const O_OPPONENT_CHOOSE: i32 = 75; // IMPLEMENTED
 const O_PLAY_LIVE_FROM_DISCARD: i32 = 76; // IMPLEMENTED
 const O_REDUCE_LIVE_SET_LIMIT: i32 = 77; // IMPLEMENTED
+const O_SET_TARGET_SELF: i32 = 78; // TODO: Not implemented in WGSL
+const O_SET_TARGET_OPPONENT: i32 = 79; // TODO: Not implemented in WGSL
 const O_PREVENT_SET_TO_SUCCESS_PILE: i32 = 80; // IMPLEMENTED
 const O_ACTIVATE_ENERGY: i32 = 81; // IMPLEMENTED
 const O_PREVENT_ACTIVATE: i32 = 82; // IMPLEMENTED
@@ -136,6 +138,15 @@ const C_COUNT_ENERGY_EXACT: i32 = 301; // TODO: Not implemented in WGSL
 const C_COUNT_BLADE_HEART_TYPES: i32 = 302; // TODO: Not implemented in WGSL
 const C_OPPONENT_HAS_EXCESS_HEART: i32 = 303; // TODO: Not implemented in WGSL
 const C_SCORE_TOTAL_CHECK: i32 = 304; // TODO: Not implemented in WGSL
+const C_MAIN_PHASE: i32 = 305; // TODO: Not implemented in WGSL
+const C_SELECT_MEMBER: i32 = 306; // TODO: Not implemented in WGSL
+const C_SUCCESS_PILE_COUNT: i32 = 307; // TODO: Not implemented in WGSL
+const C_IS_SELF_MOVE: i32 = 308; // TODO: Not implemented in WGSL
+const C_DISCARDED_CARDS: i32 = 309; // TODO: Not implemented in WGSL
+const C_YELL_REVEALED_UNIQUE_COLORS: i32 = 310; // TODO: Not implemented in WGSL
+const C_SYNC_COST: i32 = 311; // TODO: Not implemented in WGSL
+const C_SUM_VALUE: i32 = 312; // TODO: Not implemented in WGSL
+const C_IS_WAIT: i32 = 313; // TODO: Not implemented in WGSL
 
 // --- PHASES ---
 const PHASE_SETUP: i32 = -4;
@@ -176,6 +187,6 @@ const SYN_CENTER: u32 = 8u;
 const SYN_LIFE_LEAD: u32 = 16u;
 
 // --- PARITY STATUS ---
-// WGSL Opcodes: 73/77 implemented
-// WGSL Conditions: 50/55 implemented
+// WGSL Opcodes: 73/79 implemented
+// WGSL Conditions: 50/64 implemented
 // See plans/wgsl_rust_parity_strategy.md for details

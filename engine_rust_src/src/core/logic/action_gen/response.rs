@@ -6,6 +6,18 @@ pub struct ResponseGenerator;
 
 impl ActionGenerator for ResponseGenerator {
     fn generate<R: ActionReceiver + ?Sized>(&self, db: &CardDatabase, p_idx: usize, state: &GameState, receiver: &mut R) {
+        self.generate_internal(db, p_idx, state, receiver);
+
+        // FINAL FALLBACK: If no actions were generated for a mandatory interaction,
+        // we MUST allow Pass (0) to avoid a complete softlock.
+        if receiver.is_empty() {
+            receiver.add_action(0);
+        }
+    }
+}
+
+impl ResponseGenerator {
+    fn generate_internal<R: ActionReceiver + ?Sized>(&self, db: &CardDatabase, p_idx: usize, state: &GameState, receiver: &mut R) {
         let pi = if let Some(p) = state.core.interaction_stack.last() { p } else { return; };
         let ctx = &pi.ctx;
         let opcode = pi.effect_opcode;
@@ -17,16 +29,24 @@ impl ActionGenerator for ResponseGenerator {
         }
 
         let player = &state.core.players[p_idx];
-        
-        // 1. Determine action 0 (fallback)
-        let mut allow_action_0 = true;
-        if choice_type == "REVEAL_HAND" || choice_type == "SELECT_SWAP_SOURCE" || choice_type == "SELECT_SWAP_TARGET" || choice_type == "PAY_ENERGY" {
+
+        // 1. Determine action 0 (fallback/skip)
+        // Only allow action 0 if the interaction is marked OPTIONAL in bytecode
+        // or if the choice type is inherently skip-able.
+        let mut allow_action_0 = (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0;
+
+        if choice_type == "OPTIONAL" || choice_type == "SELECT_MODE" {
+            allow_action_0 = true;
+        }
+
+        if !allow_action_0 && (choice_type == "REVEAL_HAND" || choice_type == "SELECT_SWAP_SOURCE" || choice_type == "SELECT_SWAP_TARGET" || choice_type == "PAY_ENERGY" || choice_type == "OPPONENT_CHOOSE") {
             allow_action_0 = false;
         }
+
         if allow_action_0 {
             receiver.add_action(0);
         }
-        
+
         let member = db.get_member(source_card_id as i32);
         let live = db.get_live(source_card_id as i32);
         let abilities = if let Some(m) = member { Some(&m.abilities) } else { live.map(|l| &l.abilities) };
@@ -45,13 +65,13 @@ impl ActionGenerator for ResponseGenerator {
                 return;
             }
             "REVEAL_HAND" => {
-                for i in 0..player.hand.len() {
+                for (i, &_cid) in player.hand.iter().enumerate() {
                     receiver.add_action((crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize);
                 }
                 return;
             }
             "SELECT_DISCARD" => {
-                for i in 0..player.discard.len() {
+                for (i, &_cid) in player.discard.iter().enumerate() {
                     receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
                 }
                 return;
@@ -86,7 +106,7 @@ impl ActionGenerator for ResponseGenerator {
                 return;
             }
             "SELECT_SWAP_TARGET" => {
-                for i in 0..player.hand.len() {
+                for (i, &_cid) in player.hand.iter().enumerate() {
                     receiver.add_action((crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize);
                 }
                 return;
@@ -95,17 +115,27 @@ impl ActionGenerator for ResponseGenerator {
         }
 
         match opcode {
-            O_TAP_MEMBER | O_TAP_OPPONENT => {
-                for c in 0..3 {
-                    receiver.add_action((crate::core::logic::ACTION_BASE_STAGE_SLOTS + c as i32) as usize);
+            O_TAP_MEMBER => {
+                for (i, &cid) in player.stage.iter().enumerate() {
+                    if cid != -1 {
+                        receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
+                    }
+                }
+                return;
+            }
+            O_TAP_OPPONENT => {
+                let opp_idx = 1 - p_idx;
+                for (i, &cid) in state.core.players[opp_idx].stage.iter().enumerate() {
+                    if cid != -1 {
+                        receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
+                    }
                 }
                 return;
             }
             O_ORDER_DECK => {
-                let count = player.looked_cards.len();
-                for c in 0..count {
-                    if player.looked_cards[c] != -1 {
-                        receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + c as i32) as usize);
+                for (i, &cid) in player.looked_cards.iter().enumerate() {
+                    if cid != -1 {
+                        receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
                     }
                 }
                 return;
@@ -127,7 +157,7 @@ impl ActionGenerator for ResponseGenerator {
                         receiver.add_action((crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize);
                     }
                 }
-                if (pi.filter_attr & 0x02) != 0 || receiver.is_empty() {
+                if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0 {
                     receiver.add_action(0);
                 }
                 return;
@@ -161,9 +191,9 @@ impl ActionGenerator for ResponseGenerator {
                 return;
             }
             O_SELECT_LIVE => {
-                for i in 0..player.live_zone.len().min(10) {
-                    if player.live_zone[i] >= 0 {
-                        receiver.add_action((crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                for (i, &cid) in player.live_zone.iter().enumerate() {
+                    if cid >= 0 {
+                        receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
                     }
                 }
                 receiver.add_action(0);
@@ -178,11 +208,15 @@ impl ActionGenerator for ResponseGenerator {
                 self.generate_select_mode_actions(db, p_idx, state, receiver, pi, abilities);
                 return;
             }
+            O_OPPONENT_CHOOSE => {
+                self.generate_select_mode_actions(db, p_idx, state, receiver, pi, abilities);
+                return;
+            }
             O_SELECT_CARDS => {
-                for i in 0..player.hand.len() {
+                for (i, &_cid) in player.hand.iter().enumerate() {
                     receiver.add_action((crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize);
                 }
-                if (pi.filter_attr & 0x02) != 0 || receiver.is_empty() {
+                if (pi.filter_attr & 0x02) != 0 {
                     receiver.add_action(0);
                 }
                 return;
@@ -203,10 +237,6 @@ impl ActionGenerator for ResponseGenerator {
                     return;
                 }
             }
-        }
-
-        if receiver.is_empty() {
-            receiver.add_action(0);
         }
     }
 }
@@ -275,36 +305,33 @@ impl ResponseGenerator {
     fn generate_select_member_actions<R: ActionReceiver + ?Sized>(&self, db: &CardDatabase, p_idx: usize, state: &GameState, receiver: &mut R, pi: &PendingInteraction, filter_attr: u64) {
         let player = &state.core.players[p_idx];
         let packed_zone = (filter_attr >> 12) & 0x0F;
-        let target_slot = if packed_zone > 0 { packed_zone as usize } else { 
+        let target_slot = if packed_zone > 0 { packed_zone as usize } else {
             if pi.effect_opcode == O_SELECT_MEMBER || (pi.choice_type == "SELECT_MEMBER" && pi.effect_opcode == 0) {
                 pi.target_slot as usize
             } else {
-                crate::core::logic::interpreter::resolve_target_slot(pi.effect_opcode, &pi.ctx) 
+                crate::core::logic::interpreter::resolve_target_slot(pi.effect_opcode, &pi.ctx)
             }
         };
 
         match target_slot {
             6 => { // Hand
-                for i in 0..player.hand.len() {
-                    let cid = player.hand[i];
+                for (i, &cid) in player.hand.iter().enumerate() {
                     if state.card_matches_filter(db, cid, filter_attr) {
                         receiver.add_action((crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize);
                     }
                 }
             },
             7 => { // Discard
-                for i in 0..player.discard.len() {
-                    let cid = player.discard[i];
+                for (i, &cid) in player.discard.iter().enumerate() {
                     if state.card_matches_filter(db, cid, filter_attr) {
                         receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
                     }
                 }
             },
             _ => { // Stage (0-2) or Default
-                for i in 0..3 {
-                    let cid = player.stage[i];
+                for (i, &cid) in player.stage.iter().enumerate() {
                     if cid >= 0 && state.card_matches_filter(db, cid, filter_attr) {
-                        receiver.add_action((crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                        receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
                     }
                 }
             }
@@ -324,39 +351,52 @@ impl ResponseGenerator {
                 if ab_idx_real < abs.len() {
                     let ab = &abs[ab_idx_real];
                     let bc = &ab.bytecode;
-                    
+
                     let mut ip = 0;
                     if let Some(pos) = bc.chunks(5).position(|chunk| chunk[0] == O_SELECT_MODE) {
                         ip = pos * 5;
-                    }
-                    
-                    let target_ip = if i < 2 {
-                        let offset = ip + 2 + i as usize;
-                        if offset < bc.len() { bc[offset] as usize } else { 0 }
                     } else {
-                        let offset = ip + 4 + (i as usize - 2);
-                        if offset < bc.len() { bc[offset] as usize } else { 0 }
-                    };
-                    
-                    if target_ip > 0 && target_ip < bc.len() {
-                        let target_op = bc[target_ip];
-                        if target_op == O_PAY_ENERGY || target_op == O_MOVE_TO_DISCARD || target_op == O_MOVE_TO_DECK {
-                            let v = if target_ip + 1 < bc.len() { bc[target_ip + 1] } else { 0 };
-                            let s = if target_ip + 3 < bc.len() { bc[target_ip + 3] } else { 0 };
-                            
-                            if target_op == O_PAY_ENERGY {
-                                let available = (0..state.core.players[p_idx].energy_zone.len()).filter(|&idx| !state.core.players[p_idx].is_energy_tapped(idx)).count() as i32;
-                                if available < v { option_valid = false; }
-                            } else if target_op == O_MOVE_TO_DISCARD {
-                                if s == 6 || s == 0 { // TargetType.CARD_HAND or Generic
-                                    if (state.core.players[p_idx].hand.len() as i32) < v { option_valid = false; }
+                        // Fallback: If not found in chunks, check if it's the first instruction
+                        if bc.get(0) == Some(&(O_SELECT_MODE as i32)) { ip = 0; }
+                    }
+
+                    // In 5-word format:
+                    // SELECT_MODE v a s
+                    // JUMP target1
+                    // JUMP target2
+                    // ...
+
+                    let jump_instr_ip = ip + 5 + (i as usize * 5);
+                    if jump_instr_ip + 1 < bc.len() {
+                        let jump_op = bc[jump_instr_ip];
+                        if jump_op == O_JUMP {
+                            let jump_val = bc[jump_instr_ip + 1];
+                            // The JUMP target points to the skip-to-end instruction AFTER the option's effect block.
+                            // The actual first effect instruction is 5 bytes BEFORE that target.
+                            let jump_target = jump_instr_ip + 5 + (jump_val as usize * 5);
+                            let effect_ip = if jump_target >= 5 { jump_target - 5 } else { 0 };
+
+                            if effect_ip + 4 < bc.len() {
+                                let target_op = bc[effect_ip];
+                                let v = bc[effect_ip + 1];
+                                let s = bc[effect_ip + 4];
+
+                                if target_op == O_PAY_ENERGY {
+                                    let available = (0..state.core.players[p_idx].energy_zone.len()).filter(|&idx| !state.core.players[p_idx].is_energy_tapped(idx)).count() as i32;
+                                    if available < v { option_valid = false; }
+                                } else if target_op == O_MOVE_TO_DISCARD {
+                                    // Source zone can be packed: lower byte = slot/target, upper bytes = source zone
+                                    // s=6 means Hand directly, s=0x60001 means source=Hand(6) packed
+                                    let source_zone = if s > 255 { (s >> 16) & 0xFF } else { s };
+                                    let hand_len = state.core.players[p_idx].hand.len() as i32;
+                                    if (source_zone == 6 || source_zone == 0) && hand_len < v { option_valid = false; }
                                 }
                             }
                         }
                     }
                 }
             }
-            
+
             if option_valid {
                 receiver.add_action((crate::core::logic::ACTION_BASE_MODE + i as i32) as usize);
             }

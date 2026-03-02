@@ -200,22 +200,48 @@ export const TextEnricher = {
 
     isGenericInstruction: (text) => {
         if (!text) return true;
+        const trimmed = text.trim();
+
+        // If it's long and looks like an ability (icons/brackets), it's probably NOT generic
+        if (trimmed.length > 40 || trimmed.includes('{{') || (trimmed.includes('【') && trimmed.length > 15)) {
+            return false;
+        }
+
         const genericPatterns = [
-            /戻して引き直します/,
-            /引き直します/,
-            /何もしない/,
-            /次へ進みます/,
-            /終了します/,
+            /^Mulligan/i,
+            /^Set Live/i,
+            /^Draw/i,
+            /^Discard/i,
+            /^Select/i,
+            /^Play/i,
+            /^Activate/i,
+            /^登場/i,
+            /^起動/i,
+            /^セット/i,
+            /^バトンタッチ/i,
+            /^Choose/i,
+            /^Yes\/No/i,
+            /^このライブを/,
+            /^このメンバーを(ウェイトにする|控え室に置く|戻す|セットする|登場させる)$/, // Anchored common instructions
+            /^をスロット\d+に(セット|登場)します$/,
+            /^を(メンバー|ライブ|エナジー)置場にセットします$/,
+            /戻して引き直します$/,
+            /引き直します$/,
+            /^何もしない$/,
+            /^次へ進みます$/,
+            /終了します$/,
             /を確定して/,
-            /キャンセルします/,
+            /キャンセルします$/,
             /^Confirm$/i,
             /^Pass$/i,
             /^Skip$/i,
             /^Decline$/i,
             /^No$/i,
-            /^Yes$/i
+            /^Yes$/i,
+            /^[\d\s,]+を(選ぶ|選択|一括選択)$/,
+            /^[\d\s,]+枚になるまで引く$/
         ];
-        return genericPatterns.some(p => p.test(text));
+        return genericPatterns.some(p => p.test(trimmed));
     },
 
     isRichAbility: (text) => {
@@ -223,16 +249,64 @@ export const TextEnricher = {
         return text.includes('{{') || text.includes('【') || text.includes('[') || text.length > 25;
     },
 
+    splitAbilities: (text) => {
+        if (!text) return [];
+        // Support splitting by literal/escaped newlines AND trigger icons if they are not at the start
+        // Use a lookahead to split before a trigger icon {{...|...}} except at the very beginning
+        return text.split(/\r?\n|\\n|(?<!^)(?=\{\{.*?\.png\|.*?\}\})/).map(s => s.trim()).filter(s => s.length > 0);
+    },
+
+    extractRelevantAbility: (card, triggerLabel, abilityIndex) => {
+        if (!card) return "";
+        const raw = TextEnricher.getEffectiveRawText(card);
+        const blocks = TextEnricher.splitAbilities(raw);
+
+        if (blocks.length === 0) return "";
+
+        // 1. Exact match by ability index if provided and valid
+        if (abilityIndex !== undefined && abilityIndex >= 0 && abilityIndex < blocks.length) {
+            return blocks[abilityIndex];
+        }
+
+        // 2. Heuristic: Match trigger label (e.g., "登場", "起動") against block content
+        if (triggerLabel) {
+            const cleanLabel = triggerLabel.replace(/[【】\[\]]/g, "");
+            // First try strict match (e.g. block starts with the label)
+            let match = blocks.find(b => b.includes(`|${cleanLabel}}`) || b.includes(`【${cleanLabel}】`));
+            if (!match) {
+                // Fallback to loose inclusion
+                match = blocks.find(b => b.includes(cleanLabel));
+            }
+            if (match) return match;
+        }
+
+        if (blocks.length === 1) return blocks[0];
+
+        // 3. Last resort: if we have multiple blocks but no clear match, 
+        // return empty string to avoid showing unrelated ability text if it's a generic choice
+        return "";
+    },
+
     getEffectiveActionText: (action) => {
         if (!action) return "";
-        const rawText = action.raw_text || action.text || "";
 
+        // If the backend provided source_ability (which we patched to be the full block), use it!
+        if (action.source_ability && action.source_ability.length > 5) {
+            return TextEnricher.enrichAbilityText(action.source_ability);
+        }
+
+        const rawText = action.raw_text || action.text || "";
         const currentLang = State.currentLang;
         const showFriendlyAbilities = State.showFriendlyAbilities;
 
         if (action.source_card_id !== undefined && action.source_card_id !== -1) {
             const srcCard = State.resolveCardData(action.source_card_id);
             if (srcCard && (srcCard.text || srcCard.ability_text || srcCard.original_text || srcCard.ability)) {
+                // If we are in JP mode or friendly is OFF, try to extract specific block
+                if (currentLang === 'jp' || !showFriendlyAbilities) {
+                    const block = TextEnricher.extractRelevantAbility(srcCard, action.name, action.id);
+                    if (block) return TextEnricher.enrichAbilityText(block);
+                }
                 return TextEnricher.enrichAbilityText(TextEnricher.getEffectiveRawText(srcCard));
             }
         }
@@ -243,7 +317,7 @@ export const TextEnricher = {
         } else if (currentLang === 'jp') {
             const srcCard = State.resolveCardData(action.source_card_id);
             if (srcCard && (srcCard.original_text || srcCard.ability)) {
-                effectiveText = srcCard.original_text || srcCard.ability;
+                effectiveText = TextEnricher.extractRelevantAbility(srcCard, action.name, action.id) || srcCard.original_text || srcCard.ability;
             } else if (window.translateAbility) {
                 effectiveText = window.translateAbility(rawText, 'jp');
             }

@@ -10,12 +10,12 @@ use smallvec::SmallVec;
 impl GameState {
     pub fn step_opponent(&mut self, db: &CardDatabase) {
          // Simple Random Opponent Logic
-         let legal = self.get_legal_actions(db);
-         let legal_indices: Vec<i32> = legal.iter().enumerate().filter(|(_, l)| **l).map(|(i, _)| i as i32).collect();
+         let mut actions = SmallVec::<[i32; 64]>::new();
+         self.generate_legal_actions(db, self.current_player as usize, &mut actions);
 
-         let action = if !legal_indices.is_empty() {
+         let action = if !actions.is_empty() {
              let mut rng = Pcg64::from_os_rng();
-             *legal_indices.choose(&mut rng).unwrap()
+             *actions.choose(&mut rng).unwrap()
          } else { 0 };
 
          let _ = self.step(db, action);
@@ -24,7 +24,7 @@ impl GameState {
     pub fn step_opponent_mcts(&mut self, db: &CardDatabase, sims: usize, heuristic: &dyn Heuristic) {
         let mcts = MCTS::new();
         let stats = mcts.search_parallel_mode(self, db, sims, 0.0, SearchHorizon::GameEnd(), EvalMode::Blind, heuristic);
-        
+
         let action = if !stats.is_empty() {
             stats[0].0
         } else {
@@ -83,7 +83,7 @@ impl GameState {
         for &action in legal_indices.iter() {
             let mut state = self.clone();
             state.ui.silent = true; // Always silent for evaluations
-            
+
             // Randomize opponent hand/deck for evaluation robustness
             let opp_hand_len = state.core.players[opp].hand.len();
             let mut unseen: Vec<i32> = state.core.players[opp].hand.iter().cloned().collect();
@@ -116,7 +116,7 @@ impl GameState {
         let mut loop_count = 0;
         while self.phase != Phase::Terminal && loop_count < 2000 {
             loop_count += 1;
-            
+
             // Determine who needs to make a decision
             let acting_player = match self.phase {
                 Phase::Response => {
@@ -166,9 +166,9 @@ impl GameState {
     }
 
     pub fn get_legal_action_ids_for_player(&self, db: &CardDatabase, p_idx: usize) -> Vec<i32> {
-        let mut actions = Vec::with_capacity(32);
+        let mut actions = SmallVec::<[i32; 64]>::new();
         self.generate_legal_actions(db, p_idx, &mut actions);
-        actions
+        actions.to_vec()
     }
 
     pub fn get_legal_actions(&self, db: &CardDatabase) -> Vec<bool> {

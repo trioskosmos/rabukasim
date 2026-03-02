@@ -54,10 +54,10 @@ fn test_card_275_sequential_interaction_resumption() {
     state.activate_ability(&db, 0, 0).expect("Activation failed");
     assert_eq!(state.phase, Phase::Response);
     assert_eq!(state.interaction_stack.len(), 1);
-    
+
     // 2. 再開 - プレイヤーが手札を選択
     state.activate_ability_with_choice(&db, 1000, 0, 0, -1).expect("Resumption failed");
-    
+
     // 3. 検証 - ここで失敗
     assert_eq!(state.phase, Phase::Main, "Should HAVE returned to Main phase");
     assert!(state.interaction_stack.is_empty(), "Interaction stack should be cleared");
@@ -79,7 +79,7 @@ sequenceDiagram
     Handler->>State: suspend_interaction
     State-->>State: phase = Response
     State-->>State: interaction_stack.push
-    
+
     User->>Handler: resume with choice
     Handler->>State: phase = orig_phase
     Handler->>State: interaction_stack.pop
@@ -87,7 +87,7 @@ sequenceDiagram
     Note over Interpreter: OnPlay trigger fires
     Interpreter->>State: 可能な追加サスペンション
     Note over State: phase が Response に変更される可能性
-    
+
     alt 追加サスペンション発生
         State-->>State: phase = Response
         State-->>State: interaction_stack.push
@@ -105,20 +105,20 @@ fn activate_ability_with_choice(&mut self, db: &CardDatabase, ...) -> Result<(),
     if self.phase == Phase::Response {
         // 1. コンテキスト取得
         let (cid, ctx, orig_phase) = self.interaction_stack.last()...;
-        
+
         // 2. Phase復元 (早すぎる!)
         self.phase = orig_phase;
-        if self.phase == Phase::Response || self.phase == Phase::Setup { 
-            self.phase = Phase::Main; 
+        if self.phase == Phase::Response || self.phase == Phase::Setup {
+            self.phase = Phase::Main;
         }
-        
+
         // 3. スタックから削除
         self.interaction_stack.pop();
-        
+
         // 4. Bytecode実行 - ここで新しいサスペンションが発生する可能性
         self.resolve_bytecode(db, &bytecode, &ctx);
         self.process_rule_checks();
-        
+
         // 5. 二重チェック (機能しない場合がある)
         if self.phase == Phase::Response && self.interaction_stack.is_empty() {
             self.phase = orig_phase;
@@ -192,7 +192,7 @@ fn activate_ability_with_choice(&mut self, db: &CardDatabase, slot_idx: usize, a
             };
         }
         // else: 新たなサスペンションがあるのでPhase::Responseのままにする
-        
+
         return Ok(());
     }
     // ...
@@ -263,18 +263,18 @@ flowchart TD
 ```mermaid
 stateDiagram-v2
     [*] --> Main: ゲーム開始
-    
+
     Main --> Response: サスペンション発生
     Response --> Main: 通常の再開
-    
+
     Main --> Response: ネストしたサスペンション
     Response --> Response: 追加サスペンション発生
-    
+
     note right of Response
         interaction_stackが空でない限り
         Responseのまま
     end note
-    
+
     note right of Main
         interaction_stackが空なら
         Mainに戻る
@@ -431,7 +431,7 @@ flowchart TD
         G[response.rs: アクション生成] --> H[フォールバックなし]
         I[suspension.rs: 2つの関数] --> J[チェック不整合]
     end
-    
+
     B --> K[タスク1で修正]
     D --> L[タスク5で対応]
     F --> L

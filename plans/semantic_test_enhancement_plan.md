@@ -72,7 +72,7 @@ fn test_opcode_coverage() {
         ("COST", vec![64]), // O_PAY_ENERGY
         ("SELECTION", vec![30, 45, 65, 74, 75]), // Modal, Color, Member, Cards, Opponent
     ];
-    
+
     for (category, opcodes) in opcode_categories {
         // Verify at least one card uses each opcode
     }
@@ -109,13 +109,13 @@ Solution:
 pub fn verify_card_negative(&self, card_id_str: &str, ab_idx: usize) -> Result<(), String> {
     // 1. Check if ability has conditions
     let has_conditions = self.ability_has_conditions(card_id_str, ab_idx);
-    
+
     // 2. If no conditions, ability SHOULD fire even in minimal state
     if !has_conditions {
         // This is expected behavior, not a failure
         return Ok(());
     }
-    
+
     // 3. If has conditions, ability should NOT fire in minimal state
     // ... existing logic
 }

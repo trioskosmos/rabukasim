@@ -1,3 +1,4 @@
+#![cfg(feature = "gpu")]
 use crate::core::gpu_state::GpuGameState;
 
 #[test]

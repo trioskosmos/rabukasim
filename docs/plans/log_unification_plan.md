@@ -8,23 +8,23 @@
 flowchart TB
     subgraph Backend [Rust Backend]
         E1[ゲームイベント発生]
-        
+
         E1 --> L1[self.log - 48箇所]
         E1 --> L2[self.log_turn_event - 11箇所]
-        
+
         L1 --> RL[rule_log: Vec String]
         L2 --> TH[turn_history: Vec TurnEvent]
-        
+
         RL --> |テキストのみ| JSON[JSON出力]
         TH --> |構造化データ| JSON
     end
-    
+
     subgraph Frontend [JavaScript Frontend]
         JSON --> UI1[ログパネル]
         JSON --> UI2[ターン履歴タブ]
         JSON --> UI3[結果概要タブ]
     end
-    
+
     style L1 fill:#f99
     style L2 fill:#9f9
     style RL fill:#f66
@@ -228,7 +228,7 @@ impl GameState {
                 description: description.to_string(),
             });
         }
-        
+
         // 2. rule_logにも追加（必要な場合）
         if log_to_rule_log && !self.ui.silent {
             let turn_prefix = format!("[Turn {}]", self.turn);
@@ -251,7 +251,7 @@ pub struct EventSource {
 **Before (重複コード):**
 ```rust
 // handlers.rs:334-336
-if !self.ui.silent { 
+if !self.ui.silent {
     self.log(format!("Rule 7.7.2.2: Player {} plays {} to Slot {}", p_idx, card.name, slot_idx));
     self.log_turn_event("PLAY", card_id, -1, p_idx as u8, &format!("Plays {} to Slot {}", card.name, slot_idx + 1));
 }
@@ -300,13 +300,13 @@ flowchart TB
         AE[適用中の効果]
         RL[統合ルールログ]
     end
-    
+
     subgraph UnifiedLog[統合ルールログの内容]
         D1[rule_log - テキストログ]
         D2[turn_history - 構造化イベント]
         D3[active_effects - 継続効果]
     end
-    
+
     RL --> UnifiedLog
 ```
 
@@ -317,14 +317,14 @@ flowchart TB
 ```javascript
 renderRuleLog: (containerId = 'rule-log') => {
     const state = State.data;
-    
+
     // 1. 適用中の効果を先頭に表示
     const activeEffects = state.active_effects || [];
     // 2. turn_historyから構造化イベントを取得
     const turnHistory = state.turn_history || [];
     // 3. rule_logからテキストログを取得
     const ruleLog = state.rule_log || [];
-    
+
     // 統合表示: 適用中の効果 → ターン履歴 → ルールログ
     // または: ターン別にグループ化して表示
 }

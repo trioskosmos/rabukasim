@@ -153,10 +153,10 @@ fn test_cost_and_color_no_collision() {
     let mut filter = CardFilter::default();
     filter.cost_filter = Some((5, false)); // Cost GE 5
     filter.color_mask = 0x03; // SMILE + PURE
-    
+
     let attr = filter.to_attr();
     let parsed = CardFilter::from_attr(attr);
-    
+
     assert_eq!(filter.cost_filter, parsed.cost_filter);
     assert_eq!(filter.color_mask, parsed.color_mask);
 }

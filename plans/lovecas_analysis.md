@@ -110,7 +110,7 @@ graph TB
         LC3 --> LC4
         LC3 --> LC5
     end
-    
+
     subgraph 現在のプロジェクト
         CP1[Rust Engine WASM]
         CP2[Vue.js Web UI]

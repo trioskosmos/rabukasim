@@ -9,7 +9,7 @@ use crate::core::logic::*;
 
 fn create_test_db() -> CardDatabase {
     let mut db = CardDatabase::default();
-    
+
     // Member 500 with O_RECOVER_MEMBER ability
     let m = MemberCard {
         card_id: 500,
@@ -40,10 +40,10 @@ fn test_ability_pause_for_selection() {
     state.core.players[0].stage[0] = 500;
     state.core.players[0].discard = vec![99].into(); // ID 99 is in our test DB
     println!("DEBUG: Discard before recovery: {:?}", state.core.players[0].discard);
-    
+
     // Activate ability 0 on slot 0
     state.activate_ability(&db, 0, 0).unwrap();
-    
+
     // Should be in Response phase, waiting for choice
     assert_eq!(state.phase, Phase::Response);
     assert_eq!(state.interaction_stack.last().map(|p| p.effect_opcode).unwrap_or(0), O_RECOVER_MEMBER);
@@ -59,14 +59,14 @@ fn test_ability_resumption_after_choice() {
 
     state.core.players[0].stage[0] = 500;
     state.core.players[0].discard = vec![99].into();
-    
+
     // 1. Pause
     state.activate_ability(&db, 0, 0).unwrap();
     assert_eq!(state.phase, Phase::Response);
-    
+
     // 2. Resume with choice (Select Card 99 at index 0)
     state.activate_ability_with_choice(&db, 0, 0, 0, 0).unwrap();
-    
+
     // 3. Verify results
     assert_eq!(state.phase, Phase::Main);
     assert!(state.core.players[0].hand.contains(&99));
@@ -84,43 +84,43 @@ fn test_nested_trigger_flow_simple() {
     // after the trigger chain finishes.
     let initial_depth = state.trigger_depth;
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
-    
+
     state.trigger_abilities(&db, TriggerType::TurnStart, &ctx);
-    
+
     // Verify that depth returned to its starting value
-    assert_eq!(state.trigger_depth, initial_depth); 
+    assert_eq!(state.trigger_depth, initial_depth);
 }
 
 #[test]
 fn test_nested_suspension_preserves_original_phase() {
     let db = CardDatabase::default();
     let mut state = create_test_state();
-    
+
     // 1. Initial State: Performance results are being processed
     state.phase = Phase::LiveResult;
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
-    
+
     // 2. First suspension (e.g., an optional cost prompt)
     // We'll use O_MOVE_TO_DISCARD to simulate an optional discard cost
     crate::core::logic::interpreter::suspension::suspend_interaction(
         &mut state, &db, &ctx, 10, O_MOVE_TO_DISCARD, 0, "OPTIONAL", "", 0, -1
     );
-    
+
     assert_eq!(state.phase, Phase::Response);
     assert_eq!(state.interaction_stack.len(), 1);
     assert_eq!(state.interaction_stack[0].original_phase, Phase::LiveResult);
-    
+
     // 3. Second suspension (nested, e.g., the effect after cost is paid)
     // While still in Phase::Response, another suspension occurs.
     crate::core::logic::interpreter::suspension::suspend_interaction(
         &mut state, &db, &ctx, 20, O_LOOK_AND_CHOOSE, 0, "LOOK_AND_CHOOSE", "", 0, 1
     );
-    
+
     assert_eq!(state.phase, Phase::Response);
     assert_eq!(state.interaction_stack.len(), 2);
-    
+
     // CRITICAL CHECK: The second suspension must have captured LiveResult, NOT Response.
-    assert_eq!(state.interaction_stack[1].original_phase, Phase::LiveResult, 
+    assert_eq!(state.interaction_stack[1].original_phase, Phase::LiveResult,
         "Nested suspension failed to propagate the true original phase (LiveResult)!");
 }
 
@@ -149,22 +149,22 @@ fn test_nested_suspension_real_flow() {
     state.core.players[0].stage[0] = 501;
     state.core.players[0].discard = vec![99].into();
     state.phase = Phase::LiveResult;
-    
+
     // 1. Initial activation -> First suspension (Optional Tap)
     state.activate_ability(&db, 0, 0).unwrap();
     assert_eq!(state.phase, Phase::Response);
     assert_eq!(state.interaction_stack.len(), 1);
     assert_eq!(state.interaction_stack[0].original_phase, Phase::LiveResult);
-    
+
     // 2. Resume first suspension -> This triggers the second suspension (Recover Selection)
     // Choice 0 = "Yes" for the optional tap
     state.activate_ability_with_choice(&db, 0, 0, 0, 0).unwrap();
-    
+
     // Should still be in Response phase, waiting for recover choice
     assert_eq!(state.phase, Phase::Response);
     assert_eq!(state.interaction_stack.len(), 1, "Should have 1 pending interaction (the nested one)");
-    
+
     // THE CRITICAL CHECK:
-    assert_eq!(state.interaction_stack[0].original_phase, Phase::LiveResult, 
+    assert_eq!(state.interaction_stack[0].original_phase, Phase::LiveResult,
         "Nested suspension lost the original LiveResult phase!");
 }

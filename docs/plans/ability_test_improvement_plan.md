@@ -108,17 +108,17 @@ fn parse_ability_text_ja(text: &str) -> Vec<ExpectedEffect> {
 fn test_all_cards_ability_parity() {
     let db = load_real_db();
     let cards_json = load_cards_json();  // 日本語テキスト付き
-    
+
     for (card_no, card_data) in cards_json {
         let ability_text = card_data["ability"].as_str();
         let card_id = db.card_no_to_id[card_no];
-        
+
         // アビリティテキストから期待値を生成
         let expected = parse_ability_expectations(ability_text);
-        
+
         // 実際のbytecodeを実行
         let result = execute_card_abilities(&db, card_id);
-        
+
         // 比較
         assert_ability_parity(&expected, &result, card_no);
     }
@@ -166,23 +166,23 @@ fn test_all_cards_ability_parity() {
 fn test_pl_sd1_001_honoka() {
     let db = load_real_db();
     let mut state = create_test_state();
-    
+
     // カードID取得
     let card_id = db.card_no_to_id["PL!-sd1-001-SD"];
-    
+
     // アビリティ1: 登場時効果
     // 条件: 成功ライブ2枚以上
     state.players[0].success_lives = vec![10001, 10002];
     state.players[0].discard = vec![15001];  // ライブカード
-    
+
     // 実行
     let ctx = AbilityContext { player_id: 0, source_card_id: card_id, ..Default::default() };
     state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
-    
+
     // 検証: 控え室から手札にライブカードが移動
     assert_eq!(state.players[0].hand.len(), 1);
     assert!(state.players[0].hand.contains(&15001));
-    
+
     // アビリティ2: 常時効果
     // 成功ライブ2枚につきブレード+2
     let blades = state.calculate_blades(&db, 0);
@@ -203,17 +203,17 @@ fn test_pl_sd1_001_honoka() {
 fn test_filter_ayumu_kanon_kaho() {
     let db = load_real_db();
     let mut state = create_test_state();
-    
+
     // 控え室に各キャラのカードを用意
     let ayumu_id = find_card_by_char_name(&db, "歩夢");
     let kanon_id = find_card_by_char_name(&db, "かのん");
     let other_id = find_card_by_char_name(&db, "その他");
-    
+
     state.players[0].discard = vec![ayumu_id, kanon_id, other_id];
-    
+
     // フィルター付き回復を実行
     // ...テスト実行...
-    
+
     // 検証: 歩夢とかのんのみ選択可能
     let legal_actions = state.get_legal_action_ids(&db);
     assert!(legal_actions.contains(&ayumu_id));

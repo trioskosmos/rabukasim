@@ -81,7 +81,7 @@ state.execute_action(ClientAction::PlayMemberFromHand {
 while state.is_suspended() {
     let actions = state.get_legal_actions();
     // Choose the appropriate action to resolve the suspension
-    state.execute_action(actions[0].clone()); 
+    state.execute_action(actions[0].clone());
 }
 ```
 

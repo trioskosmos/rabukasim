@@ -93,6 +93,9 @@ export const Network = {
     // Room Management
     createRoom: async (mode = 'pve') => {
         try {
+            // Reset game state before creating new room
+            State.resetForNewGame();
+
             const res = await fetch('api/rooms/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -138,6 +141,9 @@ export const Network = {
             alert('Please enter a 4-letter room code.');
             return;
         }
+        // Reset game state before joining new room
+        State.resetForNewGame();
+
         State.roomCode = code;
         State.offlineMode = false;
         localStorage.setItem('lovelive_room_code', State.roomCode);
@@ -305,22 +311,8 @@ export const Network = {
                 State.lastPerformanceData = perfRes;
             }
 
-            // Sync history from backend if available
-            if (State.data.performance_history && Array.isArray(State.data.performance_history)) {
-                State.data.performance_history.forEach(item => {
-                    const t = item.turn;
-                    const p = item.player_id;
-                    if (t !== undefined && p !== undefined) {
-                        if (!State.performanceHistory[t]) State.performanceHistory[t] = {};
-                        State.performanceHistory[t][p] = item;
-                        if (!State.performanceHistoryTurns.includes(t)) {
-                            State.performanceHistoryTurns.push(t);
-                        }
-                    }
-                });
-                State.performanceHistoryTurns.sort((a, b) => b - a);
-            } else if (perfRes && Object.keys(perfRes).length > 0) {
-                // Fallback: local tracking if backend history is empty (e.g. legacy or during transition)
+            // Fallback: local tracking if backend history is empty (legacy)
+            if (perfRes && Object.keys(perfRes).length > 0 && (!State.data.performance_history || State.data.performance_history.length === 0)) {
                 if (!State.performanceHistory[turnNum]) {
                     State.performanceHistory[turnNum] = perfRes;
                     if (!State.performanceHistoryTurns.includes(turnNum)) {
@@ -415,6 +407,9 @@ export const Network = {
 
     resetGame: async () => {
         log('Resetting game...');
+
+        // Reset game-specific state
+        State.resetForNewGame();
 
         if (State.offlineMode) {
             const res = await State.wasmAdapter.resetGame();
@@ -572,7 +567,23 @@ export const Network = {
         }
     },
 
-    leaveRoom: () => {
+    leaveRoom: async () => {
+        // Notify backend that we're leaving
+        try {
+            await fetch('api/rooms/leave', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Session-Token': State.sessionToken || ''
+                }
+            });
+        } catch (e) {
+            console.warn('Failed to notify server of leaving room:', e);
+        }
+
+        // Reset game state
+        State.resetForNewGame();
+
         State.roomCode = null;
         State.sessionToken = null;
         updateStateData(null);
@@ -663,8 +674,10 @@ export const Network = {
             out.energy_deck_count = p.energy_deck_count;
             out.live_zone_count = p.live_zone_count;
             out.total_blades = p.total_blades;
-            if (p.total_hearts) out.total_hearts = p.total_hearts;
             if (p.restrictions && p.restrictions.length > 0) out.restrictions = p.restrictions;
+            if (p.flags !== undefined) out.flags = p.flags;
+            if (p.activated_energy_group_mask !== undefined) out.activated_energy_group_mask = p.activated_energy_group_mask;
+            if (p.activated_member_group_mask !== undefined) out.activated_member_group_mask = p.activated_member_group_mask;
 
             // Preserve effect-related fields for Active Effects UI
             if (p.cost_reduction !== undefined) out.cost_reduction = p.cost_reduction;
@@ -814,6 +827,11 @@ export const Network = {
             report.rule_log = raw.rule_log;
         }
 
+        // Bytecode log (newly added)
+        if (Array.isArray(raw.bytecode_log)) {
+            report.bytecode_log = raw.bytecode_log;
+        }
+
         // Performance history — use top-level only (avoid state.performance_history duplication)
         const perfHist = raw.performance_history || [];
         if (perfHist.length > 0) {
@@ -837,18 +855,103 @@ export const Network = {
 
     submitReport: async (explanation) => {
         const reportData = Network._buildSlimReport(explanation);
-
         try {
-            const res = await fetch('api/report_bug', {
+            const res = await fetch('/api/report', {
                 method: 'POST',
-                headers: Network.getHeaders(),
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(reportData)
             });
-            const data = await res.json();
-            return data.success;
+            return res.ok;
         } catch (e) {
             console.error("Report submission failed", e);
             return false;
         }
-    }
+    },
+
+    applyState: async (jsonStr) => {
+        const roomCode = localStorage.getItem("lovelive_room_code");
+        if (!roomCode) return false;
+
+        try {
+            const res = await fetch('/api/debug/apply_state', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Room-Id': roomCode
+                },
+                body: jsonStr
+            });
+            return res.ok;
+        } catch (e) {
+            console.error("Apply state failed", e);
+            return false;
+        }
+    },
+
+    boardOverride: async (jsonStr) => {
+        const roomCode = localStorage.getItem("lovelive_room_code");
+        if (!roomCode) return false;
+        try {
+            const res = await fetch('/api/debug/board_override', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Room-Id': roomCode
+                },
+                body: jsonStr
+            });
+            return res.ok;
+        } catch (e) { return false; }
+    },
+
+    toggleDebugMode: async () => {
+        const roomCode = localStorage.getItem("lovelive_room_code");
+        if (!roomCode) return false;
+
+        try {
+            const res = await fetch('/api/debug/toggle', {
+                method: 'POST',
+                headers: { 'X-Room-ID': roomCode }
+            });
+            const data = await res.json();
+            return data.success ? data.debug_mode : null;
+        } catch (e) {
+            console.error("Toggle debug failed", e);
+            return null;
+        }
+    },
+
+    rewind: async () => {
+        const roomCode = localStorage.getItem("lovelive_room_code");
+        if (!roomCode) return false;
+
+        try {
+            const res = await fetch('/api/debug/rewind', {
+                method: 'POST',
+                headers: { 'X-Room-ID': roomCode }
+            });
+            const data = await res.json();
+            return data.success;
+        } catch (e) {
+            console.error("Rewind failed", e);
+            return false;
+        }
+    },
+
+    redo: async () => {
+        const roomCode = localStorage.getItem("lovelive_room_code");
+        if (!roomCode) return false;
+
+        try {
+            const res = await fetch('/api/debug/redo', {
+                method: 'POST',
+                headers: { 'X-Room-ID': roomCode }
+            });
+            const data = await res.json();
+            return data.success;
+        } catch (e) {
+            console.error("Redo failed", e);
+            return false;
+        }
+    },
 };

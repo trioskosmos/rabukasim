@@ -45,7 +45,7 @@ Add heart_req_additions comparison:
 ```rust
 fn run_parity_check(...) -> bool {
     // ... existing checks ...
-    
+
     // Check Heart Requirements
     for i in 0..2 {
         if cpu_state.players[0].heart_req_additions[i] != gpu_final.player0.heart_req_additions[i] {
@@ -98,7 +98,7 @@ fn test_all_parity_scenarios() {
         },
         // ... more scenarios
     ];
-    
+
     for scenario in scenarios {
         run_parity_scenario(&scenario);
     }

@@ -1,5 +1,4 @@
 import unittest
-from engine.game.game_state import GameState
 
 
 class TestRank23GrantScore(unittest.TestCase):

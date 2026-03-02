@@ -565,5 +565,168 @@
     "condition_prefix": "Cond: ",
     "cost_prefix": "",
     "effect_prefix": "→ "
-  }
+  },
+  "ui": {
+    "turn": "Turn",
+    "phase": "Phase",
+    "score": "Score",
+    "update": "Update",
+    "reset": "RESET",
+    "deck_creator": "Deck Creator",
+    "set_deck": "Set Deck",
+    "report": "Report Issue",
+    "live_watch": "Live Monitor",
+    "open_file": "Open File",
+    "paste": "Paste",
+    "load_server": "Load Server",
+    "replay_mode": "Replay Mode",
+    "live_guide": "Live Guide",
+    "looked_cards": "Looked Cards",
+    "rule_log": "Rule Log",
+    "logs": "Logs",
+    "last_perf": "Last Performance",
+    "god_mode": "God Mode",
+    "force": "Force Exec",
+    "exec": "Run Code",
+    "wait": "Wait",
+    "mulligan_you": "Your Mulligan",
+    "mulligan_opp": "Opponent's Mulligan",
+    "active": "Active",
+    "energy": "Energy",
+    "draw": "Draw",
+    "main": "Main",
+    "live_set": "Live Set",
+    "perf_p1": "Performance (P1)",
+    "perf_p2": "Performance (P2)",
+    "live_result": "Live Result",
+    "setup": "Setup",
+    "rps": "Rock-Paper-Scissors",
+    "friendly_abilities": "Friendly Abilities",
+    "act_ability": "Activate Ability",
+    "perform_live": "Perform Live",
+    "success": "SUCCESS",
+    "failure": "FAILURE",
+    "pick_more": "Pick {count} more cards",
+    "pick_last": "Pick the last card",
+    "target_lives": "Target Lives",
+    "blades_breakdown": "Blades Breakdown (Total: {total})",
+    "adjustments": "Adjustments",
+    "yelled_cards": "Yelled Cards",
+    "member_contrib": "Member Contributions",
+    "notes": "Notes",
+    "cards_draw": "Draw",
+    "extra_hearts": "+{count} Extra",
+    "no_perf_data": "No performance data available for this turn.",
+    "current_turn": "Current (T{turn})",
+    "turn_label": "Turn {turn}",
+    "active_effects": "Active Effects",
+    "no_active_effects": "No active effects",
+    "cost_reduction": "Cost Reduction",
+    "blade_buff": "Blade Buff",
+    "heart_buff": "Heart Buff",
+    "until_end_of_turn": "Until end of turn",
+    "cannot_baton_touch": "Cannot Baton Touch",
+    "cannot_activate_member": "Cannot Activate Abilities",
+    "restriction": "Restriction",
+    "slot": "Slot",
+    "you": "You",
+    "opponent": "Opponent",
+    "perf_result": "Result Overview",
+    "turn_history": "Turn History",
+    "no_history": "No history available for this turn.",
+    "event_play": "Play",
+    "event_activate": "Activate",
+    "event_trigger": "Trigger",
+    "event_effect": "Effect",
+    "event_rule": "Rule",
+    "event_yell": "Yell",
+    "event_performance": "Performance",
+    "event_phase": "Phase",
+    "event_draw": "Draw",
+    "event_score": "Score",
+    "event_heart": "Heart",
+    "event_baton": "Baton",
+    "event_live": "Live",
+    "filter_all_turns": "All Turns",
+    "filter_by_type": "Filter by Type",
+    "filter_by_player": "Filter by Player",
+    "search_placeholder": "Search log...",
+    "show_all": "Show All",
+    "hide_all": "Hide All",
+    "done": "Done",
+    "pass_no": "Pass / No",
+    "slot_n": "Slot {n}",
+    "choose_sign": "Choose Your Sign",
+    "unknown_card": "Unknown Card",
+    "ai_thinking": "AI is thinking...",
+    "system": "System",
+    "mulligan": "Mulligan",
+    "actions": "Actions"
+  },
+  "heuristics": [
+    {
+      "jp": "自分のデッキの上からカードを(\\d+)枚見る",
+      "en": "Look at top $1 card(s) of Deck"
+    },
+    {
+      "jp": "その中から(.+?)を(\\d+)枚公開して手札に加えてもよい",
+      "en": "You may add $2 $1 from them to hand"
+    },
+    {
+      "jp": "残りを控え室に置く",
+      "en": "Discard the rest"
+    },
+    {
+      "jp": "ドローする",
+      "en": "Draw a card"
+    },
+    {
+      "jp": "カードを(\\d+)枚引く",
+      "en": "Draw $1 card(s)"
+    },
+    {
+      "jp": "自分の手札を(\\d+)枚控え室に置く",
+      "en": "Discard $1 card(s) from hand"
+    },
+    {
+      "jp": "手札を(\\d+)枚控え室に置いてもよい",
+      "en": "You may discard $1 card from hand"
+    },
+    {
+      "jp": "このメンバーをステージから控え室に置く",
+      "en": "Retire this Member"
+    },
+    {
+      "jp": "自分の控え室から(.+?)を(\\d+)枚手札に加える",
+      "en": "Return $2 $1 from Discard to Hand"
+    },
+    {
+      "jp": "ライブ",
+      "en": "Live"
+    },
+    {
+      "jp": "メンバー",
+      "en": "Member"
+    },
+    {
+      "jp": "カード",
+      "en": "Card"
+    },
+    {
+      "jp": "コスト",
+      "en": "Cost"
+    },
+    {
+      "jp": "以下",
+      "en": " or less"
+    },
+    {
+      "jp": "以上",
+      "en": " or more"
+    },
+    {
+      "jp": "の",
+      "en": " "
+    }
+  ]
 }

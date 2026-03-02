@@ -201,11 +201,11 @@ mod card_tests {
         fn test_on_play_success_lives_2_plus() {
             let (db, mut state) = setup();
             let card_id = get_card_id(&db);
-            
+
             // Setup: 成功ライブ2枚、控え室にライブカード
             state.players[0].success_lives = vec![10001, 10002];
             state.players[0].discard = vec![15001];  // ライブカード
-            
+
             // Execute: 登場時トリガー
             let ctx = AbilityContext {
                 player_id: 0,
@@ -213,7 +213,7 @@ mod card_tests {
                 ..Default::default()
             };
             state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
-            
+
             // Assert: 控え室から手札にライブカードが移動
             assert!(state.players[0].hand.contains(&15001),
                 "ライブカードが手札に追加されるべき");
@@ -225,18 +225,18 @@ mod card_tests {
         fn test_on_play_success_lives_1() {
             let (db, mut state) = setup();
             let card_id = get_card_id(&db);
-            
+
             // Setup: 成功ライブ1枚のみ
             state.players[0].success_lives = vec![10001];
             state.players[0].discard = vec![15001];
-            
+
             let ctx = AbilityContext {
                 player_id: 0,
                 source_card_id: card_id,
                 ..Default::default()
             };
             state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
-            
+
             // Assert: 条件不足で効果発動なし
             assert!(!state.players[0].hand.contains(&15001),
                 "成功ライブが1枚の場合、効果は発動しない");
@@ -245,13 +245,13 @@ mod card_tests {
         #[test]
         fn test_constant_blade_bonus() {
             let (db, mut state) = setup();
-            
+
             // Setup: 成功ライブ3枚
             state.players[0].success_lives = vec![10001, 10002, 10003];
-            
+
             // Execute: 常時効果の計算
             let blades = state.calculate_blades(&db, 0);
-            
+
             // Assert: 成功ライブ3枚につきブレード+3
             assert!(blades >= 3,
                 "成功ライブ3枚につきブレード+3されるべき");

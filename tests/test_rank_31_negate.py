@@ -1,8 +1,7 @@
-import sys
-import os
 import unittest
+
 from engine.game.game_state import GameState
-from engine.models.card import MemberCard, Ability, TriggerType, EffectType, Condition, ConditionType
+from engine.models.card import Ability, MemberCard, TriggerType
 from engine.models.opcodes import Opcode
 
 

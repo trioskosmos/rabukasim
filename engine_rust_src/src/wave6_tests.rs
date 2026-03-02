@@ -6,8 +6,8 @@ mod tests {
 
     fn setup_test_state() -> (GameState, CardDatabase) {
         let mut state = GameState::default();
-        let mut db = CardDatabase::default(); 
-        
+        let mut db = CardDatabase::default();
+
         // Register dummy IDs used in deck/energy
         let mut m1 = MemberCard::default();
         m1.card_id = 1;
@@ -25,7 +25,7 @@ mod tests {
         let deck1 = vec![1; 60];
         let energy0 = vec![20001; 60];
         let energy1 = vec![20001; 60];
-        
+
         state.initialize_game(deck0, deck1, energy0, energy1, vec![], vec![]);
         state.ui.silent = true;
         (state, db)
@@ -45,7 +45,7 @@ mod tests {
         live_card.score = 1;
         live_card.required_hearts = [2, 0, 0, 0, 0, 0, 0]; // 2 Pink
         db.lives.insert(60001, live_card.clone());
-        db.lives_vec.resize(65536, None); 
+        db.lives_vec.resize(65536, None);
         db.lives_vec[(60001 & LOGIC_ID_MASK) as usize] = Some(live_card);
 
         // 2. Put it in Live Zone
@@ -56,7 +56,7 @@ mod tests {
         // 3. Give player 1 Pink Heart (Insufficient naturally)
         // We'll trust get_total_hearts logic, but we can just override reductions.
         // Let's say we have 0 hearts provided by members/yell.
-        
+
         // 4. Apply Reduction of 2 Pink Hearts
         // "Heart 1" is Pink (Index 0).
         // Reduction encoding: 4 bits per color.
@@ -67,7 +67,7 @@ mod tests {
         state.phase = Phase::LiveResult;
         state.turn = 1;
         state.current_player = 0;
-        
+
         // Set performance_results snapshot to indicate success
         // This is required because do_live_result trusts the snapshot from check_performance_requirements
         state.ui.performance_results.insert(p_idx as u8, serde_json::json!({
@@ -78,17 +78,17 @@ mod tests {
                 {"passed": false, "score": 0, "slot_idx": 2}
             ]
         }));
-        
+
         crate::core::logic::performance::do_live_result(&mut state, &db);
 
         // 6. Assertions
         // If bug exists: Card is in discard (not success lives), or still in live zone (if choices pending? No, if 1 candidate auto-move).
         // If reduced, valid_candidates = 1 (our card). Auto-move to success.
-        
-        assert!(state.core.players[p_idx].success_lives.contains(&60001), 
-            "Live card 60001 should be in Success Lives. Found in Zone: {:?}, Discard: {:?}", 
+
+        assert!(state.core.players[p_idx].success_lives.contains(&60001),
+            "Live card 60001 should be in Success Lives. Found in Zone: {:?}, Discard: {:?}",
             state.core.players[p_idx].live_zone, state.core.players[p_idx].discard);
-            
+
         assert_eq!(state.core.players[p_idx].live_zone[0], -1, "Live zone should be empty");
     }
     #[test]
@@ -103,7 +103,7 @@ mod tests {
         live_card.name = "Kimi Mock".to_string();
         live_card.score = 1;
         live_card.required_hearts = [9, 0, 0, 0, 0, 0, 0]; // Free
-        
+
         // Add PreventSetToSuccessPile effect (Constant, Opcode 80)
         // EffectType::PreventSetToSuccessPile = 80
         let mut ab = Ability::default();
@@ -119,7 +119,7 @@ mod tests {
         // logic.rs:792: `card.abilities.iter().any(|a| a.effects.iter().any(|e| e.effect_type == EffectType::PreventSetToSuccessPile))`
         // It checks `effects` list, NOT bytecode. So we don't need bytecode here.
         live_card.abilities.push(ab);
-        
+
         // Add OnLiveSuccess trigger for the Draw 2 part (Optional but good for completeness)
         let mut ab2 = Ability::default();
         ab2.trigger = TriggerType::OnLiveSuccess;
@@ -146,60 +146,47 @@ mod tests {
 
         state.phase = Phase::LiveResult;
         state.current_player = 0;
-        
+
         // 4. Run Live Result
         crate::core::logic::performance::do_live_result(&mut state, &db);
 
         // 5. Verify Prevention
         // Should NOT be in success_lives
         assert!(!state.core.players[p_idx].success_lives.contains(&(k_id)), "Should not be in success lives");
-        
+
         // Should be in DISCARD
         assert!(state.core.players[p_idx].discard.contains(&(k_id)), "Should be moved to discard");
-        
+
         // Live zone should be empty
         assert_eq!(state.core.players[p_idx].live_zone[0], -1, "Live zone should be cleared");
     }
 
     #[test]
     fn test_baton_touch_restriction() {
-        let (mut state, mut db) = setup_test_state();
+        use crate::test_helpers::load_real_db;
+
+        let (mut state, _) = setup_test_state();
+        let db = load_real_db();
         let p_idx = 0;
 
-        // 1. Create Restricted Member (LL-bp2-001-R＋ / ID 1)
-        let mut restricted_member = MemberCard::default();
-        restricted_member.card_id = 1;
-        restricted_member.name = "Restricted Member".to_string();
-        restricted_member.cost = 20;
-        
-        let mut ab = Ability::default();
-        ab.trigger = TriggerType::Constant;
-        // Important: Bytecode must contain O_PREVENT_BATON_TOUCH (4131)
-        // Format: [Opcode, Value, Target, Unused]
-        ab.bytecode = vec![O_PREVENT_BATON_TOUCH, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0]; 
-        restricted_member.abilities.push(ab);
+        // Card ID 10: LL-bp2-001-R＋ — has a real CONSTANT ability with O_PREVENT_BATON_TOUCH
+        // No mocked bytecode needed: the real compiled data provides the restriction.
+        state.core.players[p_idx].stage[0] = 10;
 
-        db.members.insert(1, restricted_member.clone());
-        db.members_vec[(1 as usize) & LOGIC_ID_MASK as usize] = Some(restricted_member);
-
-        // 2. Place Restricted Member on Slot 0
-        state.core.players[p_idx].stage[0] = 1;
-
-        // 3. Give player another member in hand
-        let other_member_id = 10;
-        let mut other_member = MemberCard::default();
-        other_member.card_id = other_member_id;
-        other_member.cost = 0; // Free for testing
-        db.members.insert(other_member_id, other_member.clone());
-        db.members_vec[(other_member_id as usize) & LOGIC_ID_MASK as usize] = Some(other_member);
+        // Give player another member in hand (use a real card from the DB)
+        let other_member_id = 9; // LL-bp1-001-R＋ (cost 20)
         state.core.players[p_idx].hand.clear();
         state.core.players[p_idx].hand_added_turn.clear();
         state.core.players[p_idx].hand.push(other_member_id);
+        // Card 9 costs 20 energy — give player enough untapped energy
+        state.core.players[p_idx].energy_zone = (0..25).map(|i| (20001 + i) as i32).collect();
+        // Populate deck to prevent auto-refresh
+        for i in 200..210 { state.core.players[p_idx].deck.push(i); }
 
         state.phase = Phase::Main;
         state.current_player = 0;
 
-        // 4. Verify Legal Actions
+        // Verify Legal Actions
         struct Receiver { actions: Vec<usize> }
         impl crate::core::logic::game::ActionReceiver for Receiver {
             fn add_action(&mut self, action_id: usize) { self.actions.push(action_id); }
@@ -209,25 +196,25 @@ mod tests {
 
         let mut recv = Receiver { actions: vec![] };
         state.generate_legal_actions(&db, p_idx, &mut recv);
-        
+
         // PlayMember actions are ACTION_BASE_HAND + hand_idx * 3 + slot_idx
-        // hand_idx = 0, slot_idx = 0 -> action 1000
-        // Since slot 0 is restricted, action 1000 should NOT be present
+        // hand_idx = 0, slot_idx = 0 -> action base+0
+        // Since slot 0 is restricted by PREVENT_BATON_TOUCH, baton to slot 0 should NOT be present
         let aid0 = (ACTION_BASE_HAND + 0) as usize;
         let aid1 = (ACTION_BASE_HAND + 1) as usize;
         let aid2 = (ACTION_BASE_HAND + 2) as usize;
 
         assert!(!recv.actions.contains(&aid0), "Action {} (Baton Touch on restricted slot) should not be legal. Actions: {:?}", aid0, recv.actions);
-        // But playing to empty slots (10 and 2) should be fine
+        // But playing to empty slots (1 and 2) should be fine
         assert!(recv.actions.contains(&aid1), "Action {} (Play to empty slot 1) should be legal", aid1);
         assert!(recv.actions.contains(&aid2), "Action {} (Play to empty slot 2) should be legal", aid2);
 
-        // 5. Verify attempt to play fails
+        // Verify attempt to play fails
         let res = state.play_member(&db, 0, 0);
         assert!(res.is_err(), "Playing member on restricted slot should return an error");
         let err_msg = res.err().unwrap();
         println!("DEBUG: Actual error message: {}", err_msg);
-        assert!(err_msg.to_lowercase().contains("baton touch") && err_msg.to_lowercase().contains("not allowed"), 
+        assert!(err_msg.to_lowercase().contains("baton touch") && err_msg.to_lowercase().contains("not allowed"),
             "Error message should mention Baton Touch restriction. Actual: '{}'", err_msg);
     }
 }

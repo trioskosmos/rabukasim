@@ -10,12 +10,11 @@ sys.path.append(os.getcwd())
 
 import engine_rust
 
-INSTANCE_SHIFT = 20
 BASE_ID_MASK = 0xFFFFF
 
 
 def create_uid(base_id: int, index: int) -> int:
-    return (index << INSTANCE_SHIFT) | (base_id & BASE_ID_MASK)
+    return base_id
 
 
 def load_db():

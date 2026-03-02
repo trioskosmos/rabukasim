@@ -20,10 +20,10 @@ from engine.models.opcodes import Opcode
 # --- Compile-time Bytecode Validation ---
 # All valid effect opcodes (0-99 range) from generated_constants
 _VALID_EFFECT_OPS = {
-    0,   # O_NOP
-    1,   # O_RETURN
-    2,   # O_JUMP
-    3,   # O_JUMP_IF_FALSE
+    0,  # O_NOP
+    1,  # O_RETURN
+    2,  # O_JUMP
+    3,  # O_JUMP_IF_FALSE
     10,  # O_DRAW
     11,  # O_ADD_BLADES
     12,  # O_ADD_HEARTS
@@ -88,6 +88,8 @@ _VALID_EFFECT_OPS = {
     75,  # O_OPPONENT_CHOOSE
     76,  # O_PLAY_LIVE_FROM_DISCARD
     77,  # O_REDUCE_LIVE_SET_LIMIT
+    78,  # O_SET_TARGET_SELF
+    79,  # O_SET_TARGET_OPPONENT
     80,  # O_PREVENT_SET_TO_SUCCESS_PILE
     81,  # O_ACTIVATE_ENERGY
     82,  # O_PREVENT_ACTIVATE
@@ -112,30 +114,30 @@ _ALL_VALID_OPS = _VALID_EFFECT_OPS | _VALID_CONDITION_OPS
 
 def validate_bytecode(bytecode: list, card_no: str, ab_idx: int) -> list:
     """Validate a compiled bytecode array for structural integrity.
-    
+
     Returns a list of warning/error strings. Empty = valid.
     """
     issues = []
-    
+
     if not bytecode:
         return issues
-    
+
     # Check 1: Length must be a multiple of 5
     if len(bytecode) % 5 != 0:
         issues.append(f"[{card_no}] ab#{ab_idx}: Bytecode length {len(bytecode)} not a multiple of 5")
         return issues  # Can't safely check further
-    
+
     # Check 2: Scan all opcodes
     for i in range(0, len(bytecode), 5):
         op = bytecode[i]
         v = bytecode[i + 1]
-        
+
         # Handle negated opcodes (1000+)
         real_op = op - 1000 if op >= 1000 else op
-        
+
         if real_op not in _ALL_VALID_OPS:
             issues.append(f"[{card_no}] ab#{ab_idx}: Unknown opcode {real_op} at position {i}")
-        
+
         # Check 3: JUMP targets in-bounds
         if real_op == 2 or real_op == 3:  # O_JUMP or O_JUMP_IF_FALSE
             target = i + 5 + (v * 5)
@@ -144,16 +146,16 @@ def validate_bytecode(bytecode: list, card_no: str, ab_idx: int) -> list:
                     f"[{card_no}] ab#{ab_idx}: JUMP at {i} targets position {target}, "
                     f"but bytecode length is {len(bytecode)}"
                 )
-    
+
     # Check 4: Should end with O_RETURN (opcode 1)
     if len(bytecode) >= 5:
         last_op = bytecode[-5]
         real_last = last_op - 1000 if last_op >= 1000 else last_op
         if real_last != 1:  # O_RETURN
-            # Not necessarily an error — some bytecodes end with O_JUMP 
+            # Not necessarily an error — some bytecodes end with O_JUMP
             # back to the start or fall through. Warn only.
             issues.append(f"[{card_no}] ab#{ab_idx}: Does not end with O_RETURN (last opcode: {real_last})")
-    
+
     return issues
 
 
@@ -306,13 +308,13 @@ def compile_cards(input_path: str, output_path: str):
         with open("reports/bytecode_validation.txt", "w", encoding="utf-8") as f:
             for issue in validation_issues:
                 f.write(f"{issue}\n")
-        print(f"  Full report: reports/bytecode_validation.txt")
+        print("  Full report: reports/bytecode_validation.txt")
     else:
         print("\n[OK] BYTECODE VALIDATION: All bytecodes pass structural checks.")
 
     # Write output
     print(f"Writing compiled data to {output_path}...")
-    with open(output_path, "w", encoding="utf-8") as f:
+    with open(output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(compiled_data, f, ensure_ascii=False, indent=2)
     print("Done.")
 
@@ -371,13 +373,13 @@ COST_FLAG_DISCARD = 0x01
 # Initialize parser globally
 _v2_parser = AbilityParserV2()
 
-# Load manual overrides
-MANUAL_OVERRIDES_PATH = "data/manual_pseudocode.json"
-_manual_overrides = {}
-if os.path.exists(MANUAL_OVERRIDES_PATH):
-    print(f"Loading manual overrides from {MANUAL_OVERRIDES_PATH}")
-    with open(MANUAL_OVERRIDES_PATH, "r", encoding="utf-8") as f:
-        _manual_overrides = json.load(f)
+# Load consolidated ability mappings
+CONSOLIDATED_ABILITIES_PATH = "data/consolidated_abilities.json"
+_consolidated_abilities = {}
+if os.path.exists(CONSOLIDATED_ABILITIES_PATH):
+    print(f"Loading consolidated ability mappings from {CONSOLIDATED_ABILITIES_PATH}")
+    with open(CONSOLIDATED_ABILITIES_PATH, "r", encoding="utf-8") as f:
+        _consolidated_abilities = json.load(f)
 
 # Load manual translations
 MANUAL_TRANSLATIONS_EN_PATH = "data/manual_translations_en.json"
@@ -450,6 +452,8 @@ def compute_flags(card):
         int(Opcode.MOVE_TO_DECK),
         int(Opcode.MOVE_TO_DISCARD),
         int(Opcode.PLAY_MEMBER_FROM_HAND),
+        int(Opcode.SET_TARGET_SELF),
+        int(Opcode.SET_TARGET_OPPONENT),
     }
 
     for ab in card.abilities:
@@ -465,7 +469,7 @@ def compute_flags(card):
 
         # Bytecode loop for Ability & Choice Flags
         unflagged_logic = False
-        for i in range(0, len(ab.bytecode), 4):
+        for i in range(0, len(ab.bytecode), 5):
             op = ab.bytecode[i]
             if op in flagged_ops:
                 ability_flags |= flagged_ops[op]
@@ -526,25 +530,19 @@ def compute_flags(card):
 
 def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
     spec = data.get("special_heart", {})
-    # Use manual override if present
-    override_data = _manual_overrides.get(card_no, {})
     translation_en = _manual_translations_en.get(card_no)
 
-    # Use manual pseudo/text if available, else raw data
-    if "pseudocode" in override_data:
-        raw_ability = str(override_data["pseudocode"])
+    # Use consolidated ability mapping
+    raw_jp = str(data.get("ability", ""))
+    if raw_jp in _consolidated_abilities:
+        entry = _consolidated_abilities[raw_jp]
+        if isinstance(entry, dict):
+            raw_ability = entry.get("pseudocode", raw_jp)
+        else:
+            raw_ability = entry # Fallback to old flat format
     else:
-        raw_ability = str(data.get("pseudocode", data.get("ability", "")))
-
+        raw_ability = str(data.get("pseudocode", raw_jp))
     abilities = _v2_parser.parse(raw_ability)
-    if "PL!-bp3-008-P" in card_no or card_id == 30:
-        print(f"DEBUG: Processing Card ID 30: {card_no}")
-        for idx, ab in enumerate(abilities):
-            print(f"  Ability #{idx}: OncePerTurn={ab.is_once_per_turn}, Trigger={ab.trigger.name}")
-            print(f"  Instructions: {[(type(i).__name__, getattr(i, 'type', getattr(i, 'effect_type', 'N/A'))) for i in ab.instructions]}")
-            for eff in ab.effects:
-                if eff.effect_type == EffectType.RECOVER_LIVE:
-                    print(f"    RECOVER_LIVE params: {eff.params}")
 
     # --- GRANT_ABILITY FLATTENING ---
     extra_abilities = []
@@ -562,12 +560,6 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
                         extra_abilities.extend(granted_abs)
     abilities.extend(extra_abilities)
     # --------------------------------
-
-    for ab in abilities:
-        try:
-            ab.bytecode = ab.compile()
-        except Exception as e:
-            print(f"Warning: Failed to compile bytecode for {card_no} ability: {e}")
 
     card = MemberCard(
         card_id=card_id,
@@ -580,7 +572,7 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
         groups=data.get("series", ""),
         units=data.get("unit", ""),
         abilities=abilities,
-        rare=str(override_data.get("rare", data.get("rare", "N"))),
+        rare=str(data.get("rare", "N")),
         img_path=_resolve_img_path(data),
         ability_text=raw_ability,
         original_text=str(data.get("ability", "")),
@@ -590,17 +582,35 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
         char_id=int(CHAR_MAP.get(str(data.get("name", "")), 0)),
         faq=data.get("faq", []),
     )
+
+    # Compile bytecode on the FINAL objects to ensure Pydantic doesn't strip them
+    for idx, ab in enumerate(card.abilities):
+        ab.card_no = card_no
+        try:
+            ab.bytecode = ab.compile()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"Warning: Failed to compile bytecode for {card_no} ability: {e}")
+
     compute_flags(card)
     return card
 
 
 def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
     spec = data.get("special_heart", {})
-    # Use manual override if present
-    override_data = _manual_overrides.get(card_no, {})
     translation_en = _manual_translations_en.get(card_no)
-    # Prioritize 'pseudocode' over 'ability'
-    raw_ability = str(override_data.get("pseudocode", data.get("pseudocode", data.get("ability", ""))))
+
+    # Use consolidated ability mapping
+    raw_jp = str(data.get("ability", ""))
+    if raw_jp in _consolidated_abilities:
+        entry = _consolidated_abilities[raw_jp]
+        if isinstance(entry, dict):
+            raw_ability = entry.get("pseudocode", raw_jp)
+        else:
+            raw_ability = entry # Fallback to old flat format
+    else:
+        raw_ability = str(data.get("pseudocode", raw_jp))
     abilities = _v2_parser.parse(raw_ability)
 
     # --- GRANT_ABILITY FLATTENING ---
@@ -619,12 +629,6 @@ def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
                         extra_abilities.extend(granted_abs)
     abilities.extend(extra_abilities)
     # --------------------------------
-    for ab in abilities:
-        try:
-            ab.bytecode = ab.compile()
-        except Exception as e:
-            print(f"Warning: Failed to compile bytecode for {card_no} ability: {e}")
-
     card = LiveCard(
         card_id=card_id,
         card_no=card_no,
@@ -635,6 +639,7 @@ def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
         groups=data.get("series", ""),
         units=data.get("unit", ""),
         img_path=_resolve_img_path(data),
+        rare=str(data.get("rare", "N")),
         ability_text=raw_ability,
         original_text=str(data.get("ability", "")),
         original_text_en=str(translation_en) if translation_en else "",
@@ -642,8 +647,18 @@ def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
         draw_icons=int(spec.get("draw", data.get("draw", 0))),
         blade_hearts=parse_blade_hearts(data.get("blade_heart", {})),
         faq=data.get("faq", []),
-        rare=str(override_data.get("rare", data.get("rare", "N"))),
     )
+
+    # Compile bytecode on the FINAL objects to ensure Pydantic doesn't strip them
+    for idx, ab in enumerate(card.abilities):
+        ab.card_no = card_no
+        try:
+            ab.bytecode = ab.compile()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"Warning: Failed to compile bytecode for {card_no} ability: {e}")
+
     compute_flags(card)
     return card
 

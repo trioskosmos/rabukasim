@@ -63,7 +63,7 @@ filesToVerify.forEach(file => {
     if (file.expectedInObject) {
         for (const [obj, fns] of Object.entries(file.expectedInObject)) {
             fns.forEach(fn => {
-                // Look for fn: or fn( or fn = 
+                // Look for fn: or fn( or fn =
                 const regex = new RegExp(`${fn}\\s*[:(=]`);
                 if (!regex.test(cleanContent)) {
                     console.error(`[FAIL] ${file.name}: Missing function '${fn}' in ${obj}`);

@@ -22,7 +22,7 @@ struct Scenario {
 
 #[derive(Debug, Deserialize)]
 struct Setup {
-    hand: Vec<u16>, 
+    hand: Vec<u16>,
     deck: Vec<u16>,
     live: Vec<u16>,
     discard: Vec<u16>,
@@ -37,7 +37,7 @@ fn default_energy_count() -> usize { 10 }
 #[derive(Debug, Deserialize)]
 struct Action {
     #[serde(rename = "type")]
-    action_type: String, 
+    action_type: String,
     #[serde(default)]
     hand_idx: usize,
     #[serde(default)]
@@ -56,7 +56,7 @@ struct Expect {
     phase: Option<String>,
     hand_count: Option<usize>,
     discard_count: Option<usize>,
-    live_count: Option<Option<usize>>, 
+    live_count: Option<Option<usize>>,
     stage_tapped: Option<Vec<usize>>,
     hand_contains: Option<Vec<u16>>,
     #[serde(default)]
@@ -77,7 +77,7 @@ fn load_real_db() -> CardDatabase {
 
 fn load_id_mapping(scenarios: &[Scenario]) -> HashMap<i32, i32> {
     let mut map = HashMap::new();
-    
+
     // Load new_id_map.json to get Card No -> Logic ID
     let paths = ["../reports/new_id_map.json", "reports/new_id_map.json"];
     let mut new_id_map: HashMap<String, i32> = HashMap::new();
@@ -115,12 +115,12 @@ fn load_id_mapping(scenarios: &[Scenario]) -> HashMap<i32, i32> {
             map.insert(old_id, logic_id);
         }
     }
-    
+
     // Energy cards (usually in 40000 range)
     for i in 40000..40020 {
         map.insert(i, i);
     }
-    
+
     map
 }
 
@@ -132,7 +132,7 @@ fn run_scenarios() {
 
     let db = load_real_db();
     let id_map = load_id_mapping(&scenario_file.scenarios);
-    
+
     let map_id = |id: i32| -> i32 {
         if id < 0 { return -1; }
         // Preserve 40000+ IDs (usually Energy or special types)
@@ -143,7 +143,7 @@ fn run_scenarios() {
 
     let mut passed_count = 0;
     let total = scenario_file.scenarios.len();
-    
+
     let mut report_rows = Vec::new();
 
     for scenario in scenario_file.scenarios {
@@ -156,8 +156,8 @@ fn run_scenarios() {
         state.core.players[0].discard.clear();
         state.core.players[0].energy_zone.clear();
         state.core.players[0].tapped_energy_mask = 0;
-        state.core.players[0].live_zone = [-1; 3]; 
-        
+        state.core.players[0].live_zone = [-1; 3];
+
         for id in scenario.setup.hand { state.core.players[0].hand.push(map_id(id as i32)); }
         for id in scenario.setup.deck { state.core.players[0].deck.push(map_id(id as i32)); }
         for id in scenario.setup.discard { state.core.players[0].discard.push(map_id(id as i32)); }
@@ -179,9 +179,9 @@ fn run_scenarios() {
         let mut error_msg = None;
         match scenario.action.action_type.as_str() {
             "PLAY_MEMBER" => {
-                let aid = EngineAction::PlayMember { 
-                    hand_idx: scenario.action.hand_idx, 
-                    slot_idx: scenario.action.slot_idx 
+                let aid = EngineAction::PlayMember {
+                    hand_idx: scenario.action.hand_idx,
+                    slot_idx: scenario.action.slot_idx
                 }.id();
                 if let Err(e) = state.step(&db, aid) {
                     error_msg = Some(format!("{:?}", e));
@@ -198,7 +198,7 @@ fn run_scenarios() {
                 };
                 // Manually trigger OnLiveStart
                 state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
-                state.process_rule_checks();
+                state.process_rule_checks(&db);
             },
             "MANUAL_ABILITY" => {
                 if let Err(e) = state.activate_ability(&db, scenario.action.slot_idx, scenario.action.ab_idx) {
@@ -220,7 +220,7 @@ fn run_scenarios() {
                     _ => TriggerType::None,
                 };
                 let slot = scenario.action.slot_idx;
-                
+
                 let mut cid = if t_type == TriggerType::OnPlay {
                     state.core.players[0].hand.get(0).copied().unwrap_or(0) as i16
                 } else if t_type == TriggerType::OnReveal {
@@ -259,7 +259,7 @@ fn run_scenarios() {
                         ..Default::default()
                     };
                     state.trigger_abilities(&db, t_type, &ctx);
-                    state.process_rule_checks();
+                    state.process_rule_checks(&db);
                 } else {
                     error_msg = Some("Target card for force trigger not found".to_string());
                 }
@@ -292,10 +292,10 @@ fn run_scenarios() {
                  let has_blade_buffs = p.blade_buffs.iter().any(|&b| b != 0);
                  let has_heart_buffs = p.heart_buffs.iter().any(|h| h.0 != 0);
                  let has_granted = !p.granted_abilities.is_empty();
-                 
+
                  if has_blade_buffs || has_heart_buffs || has_granted {
                      error_msg = Some(format!(
-                         "Buffs not cleared! B:{:?} H:{:?} G:{}", 
+                         "Buffs not cleared! B:{:?} H:{:?} G:{}",
                          p.blade_buffs,                          p.heart_buffs.iter().map(|h| h.0 != 0).collect::<Vec<_>>(),
                          p.granted_abilities.len()
                      ));
@@ -316,22 +316,22 @@ fn run_scenarios() {
         let d_delta = after.discard_len as i32 - before.discard_len as i32;
         let dk_delta = after.deck_len as i32 - before.deck_len as i32;
         let e_delta = after.active_energy as i32 - before.active_energy as i32;
-        
+
         let mut success = true;
         let delta_str = format!("H:{:+} D:{:+} Dk:{:+} E:{:+}", h_delta, d_delta, dk_delta, e_delta);
-        
+
         if scenario.expect.is_pass {
             if error_msg.is_some() { success = false; }
-            // Some cards might not have state delta (e.g. constant buffs), but if they exist, 
+            // Some cards might not have state delta (e.g. constant buffs), but if they exist,
             // they shouldn't error.
         } else {
             // FAIL Case: Normally we expect it to do nothing.
-            // But if we are in Debug Bypass Mode (debug_ignore_conditions), 
+            // But if we are in Debug Bypass Mode (debug_ignore_conditions),
             // the action will succeed, so we don't mark failure here.
             if !state.debug.debug_ignore_conditions {
                 if scenario.action.action_type == "PLAY_MEMBER" {
                     if h_delta < -1 || d_delta > 0 || dk_delta < 0 || e_delta < 0 {
-                        success = false; 
+                        success = false;
                     }
                 } else {
                     if h_delta != 0 || d_delta != 0 || dk_delta != 0 || e_delta != 0 {
@@ -342,12 +342,12 @@ fn run_scenarios() {
         }
 
         if success { passed_count += 1; }
-        
-        report_rows.push(format!("| {} | {} | {} | {} | {} | {} | {} |", 
-            scenario.id, 
-            scenario.original_text_jp.replace("|", "\\|").replace("\n", " "), 
+
+        report_rows.push(format!("| {} | {} | {} | {} | {} | {} | {} |",
+            scenario.id,
+            scenario.original_text_jp.replace("|", "\\|").replace("\n", " "),
             if scenario.expect.is_pass { "PASS" } else { "FAIL" },
-            delta_str, 
+            delta_str,
             if success { "✅" } else { "❌" },
             error_msg.unwrap_or_default(),
             bypass_str
@@ -366,7 +366,7 @@ fn run_scenarios() {
     }
 
     println!("\nSUMMARY: {}/{} archetypes verified.", passed_count, total);
-    
+
     // Ensure pass rate is reasonable (at least 90%)
     assert!(passed_count as f64 / total as f64 > 0.9, "Pass rate too low: {}/{}", passed_count, total);
 }

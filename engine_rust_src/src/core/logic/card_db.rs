@@ -1,18 +1,18 @@
 //! # LovecaSim Card Database
 //!
-//! This module defines the `CardDatabase` which acts as the source of truth for 
+//! This module defines the `CardDatabase` which acts as the source of truth for
 //! card statistics, images, and bytecode instructions.
 //!
 //! ## Key Roles:
 //! - **Centralized Card Data**: Stores `MemberCard` and `LiveCard` structures.
-//! - **Fast Lookups**: Implements a `card_no_to_id` mapping for O(1) lookups by 
+//! - **Fast Lookups**: Implements a `card_no_to_id` mapping for O(1) lookups by
 //!   collector number (e.g., "LL-bp1-001").
-//! - **Data Integrity**: Ensures that card IDs are unique and that all referenced 
+//! - **Data Integrity**: Ensures that card IDs are unique and that all referenced
 //!   metadata exists.
 //!
 //! ## Design Strategy:
-//! The `CardDatabase` is typically loaded once at startup and shared across 
-//! game instances. Test helpers like `create_test_db` provide a minimal subset 
+//! The `CardDatabase` is typically loaded once at startup and shared across
+//! game instances. Test helpers like `create_test_db` provide a minimal subset
 //! for unit testing.
 
 use serde::{Deserialize, Serialize};
@@ -35,7 +35,8 @@ pub struct MemberCard {
     pub groups: Vec<u8>,
     pub units: Vec<u8>,
     pub abilities: Vec<Ability>,
-    pub volume_icons: u32,
+    #[serde(alias = "volume_icons")]
+    pub note_icons: u32,
     pub draw_icons: u32,
     #[serde(default)]
     pub ability_text: String,
@@ -73,7 +74,8 @@ pub struct LiveCard {
     pub abilities: Vec<Ability>,
     pub groups: Vec<u8>,
     pub units: Vec<u8>,
-    pub volume_icons: u32,
+    #[serde(alias = "volume_icons")]
+    pub note_icons: u32,
     pub blade_hearts: [u8; 7],
     #[serde(default)]
     pub rare: String,
@@ -150,14 +152,13 @@ impl CardDatabase {
         let mut db = Self {
             members: HashMap::new(),
             lives: HashMap::new(),
-            members_vec: vec![None; 4096], 
+            members_vec: vec![None; 4096],
             lives_vec: vec![None; 4096],
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
         };
 
         if let Some(members_raw) = raw.get("member_db").and_then(|m| m.as_object()) {
-            println!("[DB] Loading {} member entries...", members_raw.len());
             for (_, val) in members_raw {
                 match serde_json::from_value::<MemberCard>(val.clone()) {
                     Ok(mut card) => {
@@ -223,7 +224,7 @@ impl CardDatabase {
                                         O_LOOK_AND_CHOOSE => {
                                             ab.choice_flags |= CHOICE_FLAG_LOOK;
                                             // choice_count for UI: Unpack from v (Byte 2) or default to 3
-                                            if ab.choice_count == 0 { 
+                                            if ab.choice_count == 0 {
                                                 let v = chunk.get(1).copied().unwrap_or(0);
                                                 let pick = (v >> 8) & 0xFF;
                                                 ab.choice_count = if pick > 0 { pick as u8 } else { 3 };
@@ -283,7 +284,7 @@ impl CardDatabase {
                             card.ability_flags = flags;
                             card.semantic_flags |= s_flags; // Apply accumulated semantic flags
                         }
-                        
+
                         // HeartBoard population (always needed if deserialized as default/0)
                         if card.hearts_board.0 == 0 {
                             card.hearts_board = HeartBoard::from_array(&card.hearts);
@@ -311,7 +312,6 @@ impl CardDatabase {
         }
 
         if let Some(lives_raw) = raw.get("live_db").and_then(|l| l.as_object()) {
-            println!("[DB] Loading {} live entries...", lives_raw.len());
             for (_, val) in lives_raw {
                 match serde_json::from_value::<LiveCard>(val.clone()) {
                     Ok(mut card) => {
@@ -335,7 +335,7 @@ impl CardDatabase {
                             }
                             card.semantic_flags = s_flags;
                         }
-                        
+
                         if card.hearts_board.0 == 0 {
                             card.hearts_board = HeartBoard::from_array(&card.required_hearts);
                         }
@@ -362,7 +362,6 @@ impl CardDatabase {
         }
 
         if let Some(energy_raw) = raw.get("energy_db").and_then(|e| e.as_object()) {
-            println!("[DB] Loading {} energy entries...", energy_raw.len());
             for (_, val) in energy_raw {
                 match serde_json::from_value::<EnergyCard>(val.clone()) {
                     Ok(card) => {
@@ -380,7 +379,8 @@ impl CardDatabase {
 
     // Fast Lookups
     pub fn get_member(&self, id: i32) -> Option<&MemberCard> {
-        if let Some(m) = self.members.get(&id) {
+        let template_id = id;
+        if let Some(m) = self.members.get(&template_id) {
             return Some(m);
         }
         // Collision protection: If this ID is known to be a Live card, it can't be a member variant.
@@ -400,7 +400,8 @@ impl CardDatabase {
     }
 
     pub fn get_live(&self, id: i32) -> Option<&LiveCard> {
-        if let Some(l) = self.lives.get(&id) {
+        let template_id = id;
+        if let Some(l) = self.lives.get(&template_id) {
             return Some(l);
         }
         // Collision protection
@@ -419,6 +420,16 @@ impl CardDatabase {
 
     pub fn id_by_no(&self, card_no: &str) -> Option<i32> {
         self.card_no_to_id.get(card_no).copied()
+    }
+
+    pub fn get_name(&self, id: i32) -> Option<String> {
+        if let Some(m) = self.get_member(id) {
+            return Some(m.name.clone());
+        }
+        if let Some(l) = self.get_live(id) {
+            return Some(l.name.clone());
+        }
+        None
     }
     // Static opcode check
     pub fn has_opcode_static(bytecode: &[i32], target_op: i32) -> bool {

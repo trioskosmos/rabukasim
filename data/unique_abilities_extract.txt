@@ -1590,4 +1590,3 @@ Japanese: {{live_start.png|ライブ開始時}}自分の成功ライブカード
 === ABILITY 368 ===
 Cards: PL!N-pb1-042-L
 Japanese: {{live_start.png|ライブ開始時}}自分のステージに同じ名前の『虹ヶ咲』のメンバーが2人以上いる場合、このカードを成功させるための必要ハートを{{heart_00.png|heart0}}{{heart_00.png|heart0}}{{heart_00.png|heart0}}減らす。
-

@@ -21,11 +21,16 @@ When you need to create a new QA rule verification test or debug repro test, fol
 
 3. **Locate the Target Card Data**
    Use the `unified_card_search` skill (e.g., evaluating the SKILL.md or running `uv run python tools/card_finder.py "<Card No>" -o reports/diag.md`) to find the exact internal engine IDs (`id`) of the cards involved in your test scenario from the DB.
+   **CRITICAL POLICY**: YOU MUST USE REAL COMPILED BYTECODE FROM REAL CARDS. NEVER MOCK ABILITIES OR BYTECODE.
 
 4. **Draft the Test in a Dedicated Rust File**
-   If this test is for general QA rule verification, either add it to `engine_rust_src/tests/qa_verification_tests.rs` or create an isolated file like `engine_rust_src/tests/repro_q103_catchu.rs`.
-   - Setup the DB and State.
+   If this test is for general QA rule verification, either add it to `engine_rust_src/src/qa_verification_tests.rs` or create an isolated file like `engine_rust_src/src/repro/repro_q103_catchu.rs`.
+   - Setup the DB using `let db = load_real_db();` and State using `let mut state = create_test_state();`.
    - Look up definitions dynamically if needed: `db.id_by_no("PL!SP-pb1-023-L").unwrap_or(0)`
+   - **MANDATORY DOCUMENTATION**: In the test comments, you MUST explicitly state the testing context:
+     - **Ability**: The exact Japanese ability text (or english pseudocode) being tested.
+     - **Intended Effect**: What the bytecode/engine is specifically trying to accomplish.
+     - **QA**: The QA reference ID (e.g., Q103) and a brief summary of the official ruling.
    - Execute the test logic.
    - Assert the expected engine behavior explicitly.
 

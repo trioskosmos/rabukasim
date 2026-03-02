@@ -1,5 +1,3 @@
-import os
-
 path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\launcher\src\serialization.rs"
 
 with open(path, "rb") as f:
@@ -71,30 +69,37 @@ idx = raw_data.find(anchor)
 
 if idx != -1:
     middle_segment = raw_data[idx:]
-    
+
     # We need to fix the ability summary within the middle segment.
     # It has mojibake for triggers.
-    
-    jp_trigger_map = 'let t_map = ["", "登場時", "ライブ進行時", "ライブ成功時", "ターン開始時", "ターン終了時", "常時", "起動"];'
+
+    jp_trigger_map = (
+        'let t_map = ["", "登場時", "ライブ進行時", "ライブ成功時", "ターン開始時", "ターン終了時", "常時", "起動"];'
+    )
     jp_trigger_fmt = 'if !t_desc.is_empty() { format!("【{}】", t_desc) } else { "".to_string() }'
 
     # Convert to bytes for replacement if needed, but let's try string replacement on the decoded content.
     # Since it's mojibake, we might need regex or just find the line starts.
-    
+
     try:
         content_str = middle_segment.decode("utf-8", errors="replace")
-        
+
         # Repair the Trigger Map Mojibake
         import re
-        content_str = re.sub(r'let t_map = \["", ".*", ".*", ".*", ".*", ".*", ".*", ".*"\];', jp_trigger_map, content_str)
-        content_str = re.sub(r'if !t_desc\.is_empty\(\) \{ format!\(".*\{\}.*", t_desc\) \}', jp_trigger_fmt, content_str)
-        
+
+        content_str = re.sub(
+            r'let t_map = \["", ".*", ".*", ".*", ".*", ".*", ".*", ".*"\];', jp_trigger_map, content_str
+        )
+        content_str = re.sub(
+            r'if !t_desc\.is_empty\(\) \{ format!\(".*\{\}.*", t_desc\) \}', jp_trigger_fmt, content_str
+        )
+
         # Final full file assembly
         with open(path, "w", encoding="utf-8") as f:
             f.write(header)
             f.write("\n")
             f.write(content_str)
-            
+
         print("Repair complete.")
     except Exception as e:
         print(f"Repair failed: {e}")

@@ -1,7 +1,7 @@
 import { ICON_DATA_URIs } from './assets_registry.js';
 import { State } from './state.js';
 import { Phase, fixImg } from './constants.js';
-import { translations } from './translations_data.js';
+import * as i18n from './i18n/index.js';
 import { Network } from './network.js';
 import { Tooltips } from './ui_tooltips.js';
 import { Rendering } from './ui_rendering.js';
@@ -299,7 +299,8 @@ window.stopReplay = Replay.toggleReplayMode;
 // Utility exports
 window.State = State;
 window.Network = Network;
+window.Modals = Modals;
+window.Rendering = Rendering;
 window.Tooltips = Tooltips;
 
 console.log("Rabukasim modular main.js loaded and globals wired.");
-

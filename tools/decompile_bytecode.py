@@ -5,10 +5,8 @@ import sys
 # Ensure we can import from local modules
 sys.path.append(os.getcwd())
 
-from engine.models.ability import TargetType
+from engine.models.generated_metadata import CONDITIONS, OPCODES, TARGETS
 from engine.models.opcodes import Opcode
-from engine.models.generated_metadata import OPCODES, TARGETS, CONDITIONS
-
 
 # Build reverse lookup dictionaries
 OPCODE_REVERSE = {v: k for k, v in OPCODES.items()}
@@ -102,40 +100,42 @@ def decompile(bytecode):
 
             # Params - extract from attr
             params = []
-            
+
             # Unit Filter (Bit 16 + Bits 17-23)
             if attr & 0x10000:
                 unit_id = (attr >> 17) & 0x7F
                 try:
                     from engine.models.enums import Unit
+
                     unit_name = Unit(unit_id).name
                     params.append(f"UNIT={unit_name}")
                 except:
                     params.append(f"UNIT_ID={unit_id}")
-            
+
             # Group Filter (Bit 4 + Bits 5-11)
             if attr & 0x10:
                 group_id = (attr >> 5) & 0x7F
                 try:
                     from engine.models.enums import Group
+
                     group_name = Group(group_id).to_japanese_name()
                     params.append(f'GROUP="{group_name}"')
                 except:
                     params.append(f"GROUP_ID={group_id}")
-            
+
             # Type Filter (Bits 2-3)
             type_val = (attr >> 2) & 0x03
             if type_val == 1:
                 params.append("TYPE=MEMBER")
             elif type_val == 2:
                 params.append("TYPE=LIVE")
-            
+
             # Cost Filter (Bit 24 + Bits 25-29 + Bit 30)
             if attr & (1 << 24):
                 cost_val = (attr >> 25) & 0x1F
                 cost_mode = "LE" if attr & (1 << 30) else "GE"
                 params.append(f"COST_{cost_mode}={cost_val}")
-            
+
             # Color Filter (Bit 31)
             if attr & (1 << 31):
                 colors = {1: "PINK", 2: "RED", 3: "YELLOW", 4: "GREEN", 5: "BLUE", 6: "PURPLE"}

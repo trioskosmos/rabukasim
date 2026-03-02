@@ -1,5 +1,3 @@
-import os
-
 file_path = r"frontend\web_ui\js\ui_rendering.js"
 with open(file_path, "r", encoding="utf-8") as f:
     content = f.read()
@@ -10,11 +8,11 @@ new_helper = """        // Helper for consistent action labels
             const energyIcon = `<img src="img/texticon/icon_energy.png" style="height:14px; vertical-align:middle; margin:0 2px;">`;
             const cost = a.cost !== undefined ? a.cost : (a.base_cost !== undefined ? a.base_cost : null);
             const isBaton = (a.name && (a.name.includes('Baton') || a.name.includes('バトン')));
-            
+
             // Clean name: remove verbose bracketed prefixes (【...】 or [...]) and card numbers in parentheses (...)
             let name = a.name || "";
             name = name.replace(/[【\\\[].*?[】\\\]]/g, "").replace(/\\(.*?\\)/g, "").trim();
-            
+
             if (isMini) {
                 let label = `${energyIcon}${cost !== null ? cost : 0}`;
                 if (isBaton) label += ' 🔄';

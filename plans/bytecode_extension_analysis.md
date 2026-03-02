@@ -196,7 +196,7 @@ a  (i64): Attribute Filter (64bit完全使用可能)
    ```rust
    // Before
    pub bytecode: Vec<i32>
-   
+
    // After
    pub bytecode: Vec<i32>  // 5要素ごとに1命令
    ```
@@ -205,7 +205,7 @@ a  (i64): Attribute Filter (64bit完全使用可能)
    ```rust
    // Before
    for chunk in bytecode.chunks(4) { ... }
-   
+
    // After
    for chunk in bytecode.chunks(5) {
        let op = chunk[0];

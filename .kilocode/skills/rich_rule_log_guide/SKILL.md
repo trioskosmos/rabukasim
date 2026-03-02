@@ -6,7 +6,7 @@ This skill documents the "Context-Aware Rule Log" system, which allows related g
 
 The system follows a three-tier architecture:
 
-1.  **Engine (Rust)**: Tracks a `current_execution_id`. 
+1.  **Engine (Rust)**: Tracks a `current_execution_id`.
     - When an ability activation starts, the engine generates a new ID: `state.generate_execution_id()`.
     - Every log call while this ID is active is prefixed with `[ID: X]`.
     - When activation ends, ID is cleared: `state.clear_execution_id()`.

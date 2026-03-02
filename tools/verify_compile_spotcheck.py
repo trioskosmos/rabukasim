@@ -1,6 +1,7 @@
 import json
 import os
 
+
 def find_card():
     path = "data/cards_compiled.json"
     if not os.path.exists(path):
@@ -11,7 +12,7 @@ def find_card():
         data = json.load(f)
 
     card_no_to_find = "PL!-PR-001-PR"
-    
+
     for db_name in ["member_db", "live_db"]:
         db = data.get(db_name, {})
         for cid, card_data in db.items():
@@ -21,6 +22,7 @@ def find_card():
                 return
 
     print(f"Card {card_no_to_find} not found in compiled database")
+
 
 if __name__ == "__main__":
     find_card()

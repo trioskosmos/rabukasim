@@ -164,16 +164,16 @@ struct PlayerStateVariables {
     energy_size: usize,      // 0-10
     live_zone_size: usize,   // 0-3
     success_lives_size: usize, // 0-3
-    
+
     // ステージ
     stage: [i32; 3],         // card_id or -1
     stage_tapped: [bool; 3], // tap state
-    
+
     // バフ
     blade_buffs: [i32; 3],
     heart_buffs: [[u8; 7]; 3],
     live_score_bonus: i32,
-    
+
     // フラグ
     has_moved: bool,
     hand_increased: bool,
@@ -365,7 +365,7 @@ struct GlobalStateVariables {
 fn test_cost_discard_hand_with_filter() {
     // コスト: 手札を3枚捨てる（フィルター: 歩夢/かのん/花帆）
     // 効果: スコア+3
-    
+
     // Setup
     let hand = vec![Ayumu, Kanon, Kaho, Other];
     // Expected: 3枚捨ててスコア+3
@@ -375,7 +375,7 @@ fn test_cost_discard_hand_with_filter() {
 fn test_cost_pay_energy_with_insufficient() {
     // コスト: エネルギー3支払い
     // 状態: エネルギー2のみ
-    
+
     // Expected: 効果発動なし
 }
 ```
@@ -387,7 +387,7 @@ fn test_cost_pay_energy_with_insufficient() {
 fn test_on_leaves_trigger_chain() {
     // メンバーがステージを離れる時、OnLeaves効果が発動
     // その効果がさらに別のカードを移動させる
-    
+
     // Setup: stage[0] = CardWithOnLeaves
     // Execute: O_MOVE_TO_DISCARD
     // Expected: OnLeaves効果が発動
@@ -397,7 +397,7 @@ fn test_on_leaves_trigger_chain() {
 fn test_trigger_remote_chain() {
     // O_TRIGGER_REMOTEで別のカードのアビリティを発動
     // そのアビリティがさらにO_TRIGGER_REMOTE
-    
+
     // Expected: 連鎖的にアビリティ発動
 }
 ```
@@ -411,7 +411,7 @@ fn test_empty_zone_operations() {
     // - 空のデッキからドロー
     // - 空の捨て札から回復
     // - 空のステージでタップ
-    
+
     // Expected: エラーなく処理
 }
 
@@ -420,7 +420,7 @@ fn test_full_zone_operations() {
     // 満杯のゾーンに対する操作
     // - 手札10枚でドロー
     // - ライブゾーン3枚で追加
-    
+
     // Expected: ルールに従った処理
 }
 ```
@@ -512,7 +512,7 @@ proptest! {
     ) {
         // ドロー後の手札が最大値を超えないことを確認
     }
-    
+
     #[test]
     fn test_energy_payment_never_negative(
         energy in 0usize..10,
@@ -581,10 +581,10 @@ fn get_card_id(db: &CardDatabase, card_no: &str) -> i32 {
 fn test_real_card_pl_sd1_001_honoka() {
     let db = load_real_db();
     let card_id = get_card_id(&db, "PL!-sd1-001-SD");
-    
+
     let mut state = create_test_state();
     state.ui.silent = true;
-    
+
     // Setup: 成功ライブ2枚、控え室にライブカード
     state.players[0].success_lives = vec![
         get_card_id(&db, "PL!-sd1-020-SD"),  // ライブカード
@@ -592,7 +592,7 @@ fn test_real_card_pl_sd1_001_honoka() {
     ];
     let live_in_discard = get_card_id(&db, "PL!-sd1-022-SD");
     state.players[0].discard = vec![live_in_discard];
-    
+
     // Execute: 登場時トリガー
     let ctx = AbilityContext {
         player_id: 0,
@@ -600,7 +600,7 @@ fn test_real_card_pl_sd1_001_honoka() {
         ..Default::default()
     };
     state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
-    
+
     // Assert: 控え室から手札にライブカードが移動
     assert!(state.players[0].hand.contains(&live_in_discard),
         "ライブカードが手札に追加されるべき");
@@ -612,17 +612,17 @@ fn test_real_card_pl_sd1_001_honoka() {
 fn test_real_card_ll_bp1_001_ayumu_kanon_kaho() {
     let db = load_real_db();
     let card_id = get_card_id(&db, "LL-bp1-001-R＋");
-    
+
     let mut state = create_test_state();
     state.ui.silent = true;
     state.phase = Phase::PerformanceP1;
-    
+
     // Setup: 手札に歩夢、かのん、花帆
     let ayumu = find_card_by_char_name(&db, "歩夢");
     let kanon = find_card_by_char_name(&db, "かのん");
     let kaho = find_card_by_char_name(&db, "花帆");
     state.players[0].hand = vec![ayumu, kanon, kaho, 9999];  // 9999は他のカード
-    
+
     // Execute: ライブ開始時トリガー
     let ctx = AbilityContext {
         player_id: 0,
@@ -630,7 +630,7 @@ fn test_real_card_ll_bp1_001_ayumu_kanon_kaho() {
         ..Default::default()
     };
     state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
-    
+
     // Assert: スコア+3
     assert_eq!(state.players[0].live_score_bonus, 3,
         "スコア+3されるべき");

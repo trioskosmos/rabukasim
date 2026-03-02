@@ -16,7 +16,7 @@ Instead of calculating the exact probability, the engine calculates the **Expect
 1. **Linear Scan**: $O(N)$ pass through the deck to find the ratio of each color.
 2. **Expected Hearts**: $\text{Expected}_c = \frac{\text{Count}_c}{N} \times K \times (1 + \text{Blades})$.
 3. **Deficit Evaluation**: Compare Stage Deficit vs. Expected Yield.
-4. **Soft Gradient**: 
+4. **Soft Gradient**:
    - If $\text{Yield} < \text{Deficit}$: Return a quadratic decay score (AI senses failure).
    - If $\text{Yield} \gg \text{Deficit}$: Return $\sim 99\%$ (AI senses security).
 

@@ -12,12 +12,12 @@ flowchart TD
     B --> C[効果オブジェクト effects]
     C --> D[バイトコード bytecode]
     D --> E[Rustインタプリタ]
-    
+
     F[manual_pseudocode.json] --> G{整合性チェック}
     C --> G
     D --> G
     E --> G
-    
+
     G --> H[検証レポート]
 ```
 

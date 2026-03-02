@@ -26,21 +26,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Run struct sync verification
         run: python tools/verify_wgsl_rust_sync.py --report reports/wgsl_rust_sync_report.json
-      
+
       - name: Upload sync report
         uses: actions/upload-artifact@v4
         with:
           name: wgsl-rust-sync-report
           path: reports/wgsl_rust_sync_report.json
-      
+
       - name: Create struct sync summary
         run: |
           echo "## WGSL-Rust Struct Sync Report" >> $GITHUB_STEP_SUMMARY
@@ -63,15 +63,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Run sync_metadata.py
         run: python tools/sync_metadata.py
-      
+
       - name: Check for uncommitted changes
         run: |
           git diff --exit-code engine_rust_src/src/core/generated_constants.rs
@@ -85,12 +85,12 @@ jobs:
     needs: sync-check
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -101,11 +101,11 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      
+
       - name: Run parity tests
         working-directory: engine_rust_src
         run: cargo test parity_tests --no-fail-fast -- --nocapture
-      
+
       - name: Run opcode tests
         working-directory: engine_rust_src
         run: cargo test opcode_tests --no-fail-fast -- --nocapture
@@ -117,21 +117,21 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Generate parity matrix
         run: python tools/sync_metadata.py
-      
+
       - name: Read parity matrix
         id: parity
         run: |
           echo "opcode_coverage=$(python -c 'import json; d=json.load(open("reports/parity_matrix.json")); print(d["wgsl_opcodes"]["coverage"])')" >> $GITHUB_OUTPUT
           echo "condition_coverage=$(python -c 'import json; d=json.load(open("reports/parity_matrix.json")); print(d["wgsl_conditions"]["coverage"])')" >> $GITHUB_OUTPUT
-      
+
       - name: Create parity summary
         run: |
           echo "## WGSL-Rust Parity Report" >> $GITHUB_STEP_SUMMARY
@@ -169,7 +169,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run GPU shader tests
         working-directory: engine_rust_src
         run: |

@@ -1,8 +1,9 @@
 import argparse
 import json
 import os
-import sys
 import re
+import sys
+
 from verify.bytecode_decoder import decode_bytecode
 
 
@@ -21,14 +22,14 @@ def extract_card_no(query):
     match = re.search(pattern, query)
     if match:
         return match.group(1)
-    
+
     # Try simpler match for filenames in URLs if complex pattern fails
     # e.g. .../PL!S-bp2-005-P.webp
     pattern_simple = r"/([^/]+)\.(?:webp|png|jpg)$"
     match_simple = re.search(pattern_simple, query)
     if match_simple:
         return match_simple.group(1)
-        
+
     return query
 
 
@@ -45,13 +46,13 @@ def find_card_by_id(query_id, cards_compiled):
         # 1. Search by exact key (Packed ID as string)
         if str(qid) in db:
             return db[str(qid)], str(qid)
-        
+
         # 2. Search by Logic ID
         for cid, c in db.items():
             logic_id = int(cid) & 0x0FFF
             if logic_id == qid:
                 return c, cid
-                
+
     return None, None
 
 
@@ -92,15 +93,16 @@ def find_card_by_no(no, cards_raw, cards_compiled):
 
 def main():
     # Ensure stdout/stderr use UTF-8 regardless of locale
-    if sys.stdout.encoding.lower() != 'utf-8':
+    if sys.stdout.encoding.lower() != "utf-8":
         import io
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
     parser = argparse.ArgumentParser(description="Unified card lookup and report generator.")
     parser.add_argument("query", help="Card No, URL, Packed ID, or Logic ID")
     parser.add_argument("-o", "--output", help="Write report to this Markdown file", type=str)
-    
+
     args = parser.parse_args()
     raw_query = args.query.strip()
     query = extract_card_no(raw_query)
@@ -109,10 +111,12 @@ def main():
     CARDS_COMPILED_PATH = "data/cards_compiled.json"
 
     # Efficiently load (standardized)
-    print(f"--- Loading Sources ---")
+    print("--- Loading Sources ---")
     cards_raw = load_json(CARDS_RAW_PATH) or {}
     cards_compiled = load_json(CARDS_COMPILED_PATH) or {}
     manual_pseudo = load_json("data/manual_pseudocode.json") or {}
+    qa_data = load_json("data/qa_data.json") or []
+    consolidated_pseudo = load_json("data/consolidated_abilities.json") or {}
 
     print(f"--- Searching for '{query}' (from '{raw_query}') ---")
 
@@ -144,14 +148,78 @@ def main():
             print("No matches found.")
             return
 
-    # 4. Display or Save
+    # 4. Fetch Cross-References
+    card_no = compiled.get("card_no") if compiled else raw.get("card_no") if raw else query
+
+    # 4a. Find QA Data
+    related_qas = []
+    if card_no:
+        for qa in qa_data:
+            for rc in qa.get("related_cards", []):
+                if rc.get("card_no") == card_no:
+                    related_qas.append(qa)
+                    break
+
+    # 4b. Find Shared Abilities
+    shared_cards = []
+    baseline_ability = raw.get("ability", "").strip() if raw else ""
+    if baseline_ability:
+        for no, c in cards_raw.items():
+            if no != card_no and c.get("ability", "").strip() == baseline_ability:
+                shared_cards.append(no)
+
+    # 4c. Find Rust Tests
+    rust_tests = []
+    if card_no:
+        search_terms = set([card_no, card_no.replace("＋", "+")])
+        for q in related_qas:
+            search_terms.add(q.get("id"))
+        for sc in shared_cards:
+            search_terms.add(sc)
+            search_terms.add(sc.replace("＋", "+"))
+
+        rust_dir = "engine_rust_src/src"
+        if os.path.exists(rust_dir):
+            for root, dirs, files in os.walk(rust_dir):
+                for file in files:
+                    if file.endswith(".rs"):
+                        filepath = os.path.join(root, file)
+                        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+                            lines = f.readlines()
+
+                        for i, line in enumerate(lines):
+                            if any(term in line for term in search_terms):
+                                func_name = "Unknown Test"
+                                for j in range(i, -1, -1):
+                                    if "fn test_" in lines[j] or "fn repro_" in lines[j] or "fn " in lines[j]:
+                                        m = re.search(r"fn\s+([a-zA-Z0-9_]+)\s*\(", lines[j])
+                                        if m:
+                                            func_name = m.group(1)
+                                            break
+                                rust_tests.append(f"{file}::{func_name}")
+        rust_tests = sorted(list(set(rust_tests)))
+
+    # 5. Display or Save
     if args.output:
-        generate_report(args.output, query, raw, compiled, cid, manual_pseudo)
+        generate_report(
+            args.output,
+            query,
+            raw,
+            compiled,
+            cid,
+            manual_pseudo,
+            consolidated_pseudo,
+            related_qas,
+            shared_cards,
+            rust_tests,
+        )
     else:
-        display_card(query, raw, compiled, cid, manual_pseudo)
+        display_card(
+            query, raw, compiled, cid, manual_pseudo, consolidated_pseudo, related_qas, shared_cards, rust_tests
+        )
 
 
-def display_card(query, raw, compiled, cid, manual_pseudo):
+def display_card(query, raw, compiled, cid, manual_pseudo, consolidated_pseudo, related_qas, shared_cards, rust_tests):
     print(f"\n[ CARD: {compiled.get('card_no') if compiled else query} ]")
     if cid is not None:
         packed_id = int(cid)
@@ -167,21 +235,42 @@ def display_card(query, raw, compiled, cid, manual_pseudo):
         print(f"Ability (JP): {raw.get('ability')}")
         print(f"Ability (JP): {raw.get('ability')}")
         print(f"Pseudocode (Raw): {raw.get('pseudocode')}")
-        
+
+        # Consolidate Check
+        ab_norm = raw.get("ability", "").strip()
+        if ab_norm in consolidated_pseudo:
+            print(f"Pseudocode (Consolidated DB): {consolidated_pseudo[ab_norm]}")
+
         # Check Manual Override
-        card_no = raw.get('card_no')
+        card_no = raw.get("card_no")
         if card_no and card_no in manual_pseudo:
-            print(f"Pseudocode (Manual): {manual_pseudo[card_no].get('pseudocode')}")
+            print(f"Pseudocode (Manual Override): {manual_pseudo[card_no].get('pseudocode')}")
     else:
         print("NOT FOUND IN RAW DATA")
+
+    print("\n--- CROSS-REFERENCES ---")
+    if shared_cards:
+        print(
+            f"Shared Ability Cards: {len(shared_cards)} ({', '.join(shared_cards[:5])}{'...' if len(shared_cards) > 5 else ''})"
+        )
+    else:
+        print("Shared Ability Cards: None")
+
+    print(f"QA Rulings: {len(related_qas)}")
+    for qa in related_qas:
+        print(f"  [{qa.get('id')}] {qa.get('question')[:80]}...")
+
+    print(f"Rust Test Coverage: {len(rust_tests)} files")
+    for t in rust_tests:
+        print(f"  - {t}")
 
     print("\n--- LOGIC (Source: cards_compiled.json) ---")
     if compiled:
         print(f"Name (Compiled): {compiled.get('name')}")
         for i, ab in enumerate(compiled.get("abilities", [])):
             print(f"Ability {i}:")
-            trigger_id = ab.get('trigger', 0)
-            bytecode = ab.get('bytecode', [])
+            trigger_id = ab.get("trigger", 0)
+            bytecode = ab.get("bytecode", [])
             print(f"  Trigger: {trigger_id}")
             print(f"  Bytecode: {bytecode}")
             print(f"  Decoded:\n{decode_bytecode(bytecode)}")
@@ -189,52 +278,81 @@ def display_card(query, raw, compiled, cid, manual_pseudo):
         print("NOT FOUND IN COMPILED DATA")
 
 
-def generate_report(output_path, query, raw, compiled, cid, manual_pseudo):
-    card_no = compiled.get('card_no') if compiled else query
+def generate_report(
+    output_path, query, raw, compiled, cid, manual_pseudo, consolidated_pseudo, related_qas, shared_cards, rust_tests
+):
+    card_no = compiled.get("card_no") if compiled else query
     lines = []
     lines.append(f"# Card Report: {card_no}")
-    
+
     if cid is not None:
         packed_id = int(cid)
         logic_id = packed_id & 0x0FFF
         variant = packed_id >> 12
-        lines.append(f"\n## IDs")
+        lines.append("\n## IDs")
         lines.append(f"- **Engine Packed ID**: `{packed_id}`")
         lines.append(f"- **Logic ID**: `{logic_id}`")
         lines.append(f"- **Variant Index**: `{variant}`")
 
-    lines.append(f"\n## Metadata (Source: cards.json)")
+    lines.append("\n## Metadata (Source: cards.json)")
     if raw:
         lines.append(f"- **Name**: {raw.get('name')}")
         lines.append(f"- **Card No**: {raw.get('card_no')}")
         lines.append(f"- **Ability (JP)**:\n```\n{raw.get('ability')}\n```")
         lines.append(f"- **Pseudocode (Raw)**: `{raw.get('pseudocode')}`")
-        
+
+        ab_norm = raw.get("ability", "").strip()
+        if ab_norm in consolidated_pseudo:
+            lines.append(f"\n### Pseudocode (Consolidated DB)\n```\n{consolidated_pseudo[ab_norm]}\n```")
+
         # Check Manual Override
-        card_no = raw.get('card_no')
+        card_no = raw.get("card_no")
         if card_no and card_no in manual_pseudo:
-            mp = manual_pseudo[card_no].get('pseudocode')
+            mp = manual_pseudo[card_no].get("pseudocode")
             lines.append(f"\n### Manual Pseudocode (Override)\n```\n{mp}\n```")
     else:
         lines.append("\n> [!WARNING]\n> Not found in raw database.")
 
-    lines.append(f"\n## Compiled Logic (Source: cards_compiled.json)")
+    lines.append("\n## Cross-References")
+
+    if related_qas:
+        lines.append(f"### QA Rulings ({len(related_qas)})")
+        for qa in related_qas:
+            lines.append(f"**{qa.get('id')}**: {qa.get('question')}")
+            lines.append(f"> {qa.get('answer')}\n")
+    else:
+        lines.append("### QA Rulings: None")
+
+    lines.append(f"### Shared Ability Cards ({len(shared_cards)})")
+    if shared_cards:
+        lines.append(", ".join([f"`{c}`" for c in shared_cards]))
+    else:
+        lines.append("*Unique ability.*")
+
+    lines.append(f"### Rust Engine Tests ({len(rust_tests)})")
+    if rust_tests:
+        for t in rust_tests:
+            lines.append(f"- `{t}`")
+    else:
+        lines.append("\n> [!CAUTION]\n> No known Rust tests cover this card, its ability peers, or its QA items.")
+
+    lines.append("\n## Compiled Logic (Source: cards_compiled.json)")
     if compiled:
         lines.append(f"- **Name (Compiled)**: {compiled.get('name')}")
         for i, ab in enumerate(compiled.get("abilities", [])):
-            trigger_id = ab.get('trigger', 0)
-            bytecode = ab.get('bytecode', [])
+            trigger_id = ab.get("trigger", 0)
+            bytecode = ab.get("bytecode", [])
             lines.append(f"\n### Ability {i}")
             lines.append(f"- **Trigger**: `{trigger_id}`")
             lines.append(f"- **Bytecode**: `{bytecode}`")
-            lines.append(f"\n#### Decoded Bytecode")
+            lines.append("\n#### Decoded Bytecode")
             lines.append(f"```\n{decode_bytecode(bytecode)}\n```")
     else:
         lines.append("\n> [!WARNING]\n> Not found in compiled database.")
 
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
-    
+
     print(f"\n--- Report generated: {output_path} ---")
 
 

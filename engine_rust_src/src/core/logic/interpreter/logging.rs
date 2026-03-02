@@ -52,6 +52,71 @@ pub fn get_opcode_log(op: i32, v: i32, a: i64, _s: i32, result_count: i32) -> Op
     }
 }
 
+pub fn get_opcode_name(op: i32) -> &'static str {
+    match op {
+        O_DRAW => "DRAW",
+        O_ADD_HEARTS => "ADD_HEARTS",
+        O_ADD_BLADES => "ADD_BLADES",
+        O_MOVE_TO_DISCARD => "MOVE_TO_DISCARD",
+        O_LOOK_AND_CHOOSE => "LOOK_AND_CHOOSE",
+        O_RECOVER_MEMBER => "RECOVER_MEMBER",
+        O_RECOVER_LIVE => "RECOVER_LIVE",
+        O_ENERGY_CHARGE => "ENERGY_CHARGE",
+        O_TAP_MEMBER => "TAP_MEMBER",
+        O_TAP_OPPONENT => "TAP_OPPONENT",
+        O_ACTIVATE_MEMBER => "ACTIVATE_MEMBER",
+        O_BOOST_SCORE => "BOOST_SCORE",
+        O_MOVE_MEMBER => "MOVE_MEMBER",
+        O_FORMATION_CHANGE => "FORMATION_CHANGE",
+        O_PLACE_UNDER => "PLACE_UNDER",
+        O_ADD_STAGE_ENERGY => "ADD_STAGE_ENERGY",
+        O_GRANT_ABILITY => "GRANT_ABILITY",
+        O_PLAY_MEMBER_FROM_HAND => "PLAY_MEMBER_FROM_HAND",
+        O_SET_TAPPED => "SET_TAPPED",
+        O_ORDER_DECK => "ORDER_DECK",
+        O_REVEAL_UNTIL => "REVEAL_UNTIL",
+        O_PAY_ENERGY => "PAY_ENERGY",
+        O_SELECT_MEMBER => "SELECT_MEMBER",
+        O_META_RULE => "META_RULE",
+        O_PLAY_MEMBER_FROM_DISCARD => "PLAY_MEMBER_FROM_DISCARD",
+        O_JUMP => "JUMP",
+        O_JUMP_IF_FALSE => "JUMP_IF_FALSE",
+        O_RETURN => "RETURN",
+        O_NOP => "NOP",
+        // Condition opcodes
+        203 => "COUNT_STAGE",
+        204 => "COUNT_HAND",
+        208 => "COUNT_GROUP",
+        209 => "GROUP_FILTER",
+        213 => "COUNT_ENERGY",
+        220 => "SCORE_COMPARE",
+        226 => "HAS_KEYWORD",
+        305 => "MAIN_PHASE",
+        306 => "SELECT_MEMBER",
+        307 => "SUCCESS_PILE_COUNT",
+        308 => "IS_SELF_MOVE",
+        309 => "DISCARDED_CARDS",
+        310 => "YELL_REVEALED_UNIQUE_COLORS",
+        311 => "SYNC_COST",
+        312 => "SUM_VALUE",
+        313 => "IS_WAIT",
+        _ => "UNKNOWN",
+    }
+}
+
+pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
+    let base_name = get_opcode_name(op);
+    let mut details = String::new();
+
+    // Standard human description if available
+    if let Some(desc) = get_opcode_log(op, v, a, s, 0) {
+        details = format!(" ({})", desc);
+    }
+
+    format!("{:<15} | v:{:<4} a:{:<10} s:{:<4}{}",
+        base_name, v, a, s, details)
+}
+
 pub fn trigger_as_str(t: TriggerType) -> &'static str {
     match t {
         TriggerType::None => "NONE",
@@ -82,6 +147,17 @@ pub fn describe_condition(op: i32, val: i32, _attr: u64) -> String {
         C_IS_OPPONENT => "Is Opponent's turn".to_string(),
         C_COUNT_BLADES => format!("Need {} Blade(s)", val),
         C_COUNT_HEARTS => format!("Need {} Heart(s)", val),
-        _ => format!("Condition {} (val={}) not met", op, val),
+        C_GROUP_FILTER => "Group Filter".to_string(),
+        C_SCORE_TOTAL_CHECK => format!("Score Total >= {}", val),
+        305 => "Is Main Phase".to_string(),
+        306 => "Target must match filter".to_string(),
+        307 => format!("Need {} Success Live card(s)", val),
+        308 => "Is Self Move activation".to_string(),
+        309 => format!("Discarded {} card(s) this turn", val),
+        310 => format!("Need {} unique colors in Yell zone", val),
+        311 => format!("Relative Cost comparison (val={})", val),
+        312 => format!("Sum Value check (val={})", val),
+        313 => "Member is Tapped (WAIT)".to_string(),
+        _ => format!("Condition {} (val={})", op, val),
     }
 }

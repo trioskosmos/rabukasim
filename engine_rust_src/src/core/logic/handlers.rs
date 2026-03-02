@@ -1,6 +1,6 @@
 use crate::core::logic::{GameState, CardDatabase, Phase, AbilityContext, ActionFactory, action_factory::DecodedAction, interpreter::costs};
 use crate::core::enums::*;
-// use crate::core::generated_constants::*;
+use crate::core::generated_constants::{ACTION_BASE_RPS, ACTION_BASE_RPS_P2};
 // use crate::core::hearts::*;
 use rand::seq::SliceRandom;
 use rand_pcg::Pcg64;
@@ -29,10 +29,10 @@ pub trait PhaseHandlers {
 
 impl PhaseHandlers for GameState {
     fn handle_rps(&mut self, action: i32) -> Result<(), String> {
-        let (p_idx, choice) = if action >= 11000 {
-            (1, action - 11000)
-        } else if action >= 10000 {
-            (0, action - 10000)
+        let (p_idx, choice) = if action >= ACTION_BASE_RPS_P2 {
+            (1, action - ACTION_BASE_RPS_P2)
+        } else if action >= ACTION_BASE_RPS {
+            (0, action - ACTION_BASE_RPS)
         } else {
              return Ok(());
         };
@@ -93,7 +93,7 @@ impl PhaseHandlers for GameState {
 
     fn handle_mulligan(&mut self, action: i32) -> Result<(), String> {
         let p_idx = self.current_player as usize;
-        if self.debug.debug_mode { println!("[DEBUG] handle_mulligan: action={}, current_player={}, phase={:?}", action, p_idx, self.phase); }
+        if self.debug.debug_mode { println!("[DEBUG] handle_mulligan: current_player={}, phase={:?}", p_idx, self.phase); }
         if action == 0 {
             let mut discards = Vec::new();
             for i in 0..60 {
@@ -103,8 +103,8 @@ impl PhaseHandlers for GameState {
             }
             self.execute_mulligan(p_idx, discards);
         } else if action >= ACTION_BASE_MULLIGAN && action <= ACTION_BASE_MULLIGAN + 59 {
-            let card_idx = (action - ACTION_BASE_MULLIGAN) as u16;
-            if (card_idx as usize) < self.core.players[p_idx].hand.len() {
+            let card_idx = (action - ACTION_BASE_MULLIGAN) as usize;
+            if card_idx < self.core.players[p_idx].hand.len() {
                 self.core.players[p_idx].mulligan_selection ^= 1u64 << card_idx;
             }
         }
@@ -117,17 +117,25 @@ impl PhaseHandlers for GameState {
                 self.end_main_phase(db);
             }
             DecodedAction::PlayMember { hand_idx, slot_idx, other_slot, choice_idx } => {
-                let other = other_slot.map(|s| s as i16).unwrap_or(-1);
-                let choice = choice_idx.unwrap_or(-1);
-                self.play_member_with_choice(db, hand_idx, slot_idx, other, choice, 0)?;
+                if hand_idx < self.core.players[self.current_player as usize].hand.len() {
+                    let other = other_slot.map(|s| s as i16).unwrap_or(-1);
+                    let choice = choice_idx.unwrap_or(-1);
+                    self.play_member_with_choice(db, hand_idx, slot_idx, other, choice, 0)?;
+                }
             }
             DecodedAction::ActivateMember { slot_idx, ab_idx, choice_idx } => {
                 let choice = choice_idx.unwrap_or(-1);
-                // Note: activate_ability_with_choice handles mapping if choice is -1
                 self.activate_ability_with_choice(db, slot_idx, ab_idx, choice, 0)?;
             }
             DecodedAction::ActivateFromDiscard { discard_idx, ab_idx } => {
-                self.activate_ability_with_choice(db, 100 + discard_idx, ab_idx, -1, -1)?;
+                if discard_idx < self.core.players[self.current_player as usize].discard.len() {
+                    self.activate_ability_with_choice(db, 100 + discard_idx, ab_idx, -1, -1)?;
+                }
+            }
+            DecodedAction::ActivateFromHand { hand_idx, ab_idx } => {
+                if hand_idx < self.core.players[self.current_player as usize].hand.len() {
+                    self.activate_ability_with_choice(db, 200 + hand_idx, ab_idx, -1, -1)?;
+                }
             }
             _ => {}
         }
@@ -155,6 +163,9 @@ impl PhaseHandlers for GameState {
             if hand_idx < self.core.players[p_idx].hand.len() {
                 let cid = self.core.players[p_idx].hand[hand_idx];
                 self.core.players[p_idx].hand.remove(hand_idx);
+                if hand_idx < self.core.players[p_idx].hand_added_turn.len() {
+                    self.core.players[p_idx].hand_added_turn.remove(hand_idx);
+                }
                 for i in 0..3 {
                      if self.core.players[p_idx].live_zone[i] == -1 {
                          self.core.players[p_idx].live_zone[i] = cid;
@@ -183,14 +194,22 @@ impl PhaseHandlers for GameState {
 
                 self.core.players[p_idx].live_zone[slot_idx] = -1;
 
-                if is_prevented {
-                    if !self.ui.silent { self.log(format!("Player {} SELECTED Success Live prevented by effect. Moving to discard: Card ID {}", p_idx, cid)); }
+                if is_prevented || self.core.players[p_idx].success_lives.len() >= 3 {
+                    if !self.ui.silent {
+                        let reason = if is_prevented { "prevented by effect" } else { "already at 3-card limit" };
+                        self.log(format!("Player {} SELECTED Success Live {}. Moving to discard: Card ID {}", p_idx, reason, cid));
+                    }
                      self.core.players[p_idx].discard.push(cid);
                 } else {
                     self.core.players[p_idx].success_lives.push(cid);
                     self.obtained_success_live[p_idx] = true;
                     if !self.ui.silent { self.log(format!("Player {} SELECTED Success Live: Card ID {}", p_idx, cid)); }
                 }
+
+                self.check_win_condition();
+                if self.phase == Phase::Terminal { return Ok(()); }
+
+                // Continue do_live_result to check for more winners or finalize
                 self.do_live_result(db);
             }
         }
@@ -201,7 +220,7 @@ impl PhaseHandlers for GameState {
             let pi = if let Some(p) = self.interaction_stack.last() { p } else { return Ok(()); };
             (pi.execution_id, pi.ctx.clone())
         };
-        
+
         let choice_idx = match ActionFactory::parse_action(action) {
             DecodedAction::Pass => 99,
             DecodedAction::SelectMode { mode_idx } => mode_idx,
@@ -220,8 +239,9 @@ impl PhaseHandlers for GameState {
         let target_slot = ctx_res.target_slot as i32;
 
         self.activate_ability_with_choice(db, slot_idx, ab_idx_call, choice_idx, target_slot)?;
-        
+
         self.clear_execution_id();
+        self.check_win_condition(); // Check if ability caused a win
         Ok(())
     }
 
@@ -230,7 +250,7 @@ impl PhaseHandlers for GameState {
         if self.phase != Phase::Active { return; }
         let p_idx = self.current_player as usize;
         self.setup_turn_log();
-        
+
         let skip = self.core.players[p_idx].skip_next_activate;
         if skip {
             if !self.ui.silent { self.log(format!("Rule 7.4.1: [Active Phase] SKIPPED (untapping skipped) for Player {}.", p_idx)); }
@@ -238,7 +258,7 @@ impl PhaseHandlers for GameState {
         } else {
             if !self.ui.silent { self.log(format!("Rule 7.4.1: [Active Phase] Untapping all cards for Player {}.", p_idx)); }
         }
-        
+
         self.core.players[p_idx].untap_all(skip);
         let ctx = AbilityContext { source_card_id: -1, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: -1, ..Default::default() };
         self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
@@ -307,13 +327,13 @@ impl PhaseHandlers for GameState {
         self.core.players[player_idx].deck.shuffle(&mut rng);
         self.resolve_deck_refresh(player_idx);
         let prev_phase = self.phase;
-        if self.phase == Phase::MulliganP1 { 
-            self.current_player = 1 - self.first_player; 
-            self.phase = Phase::MulliganP2; 
+        if self.phase == Phase::MulliganP1 {
+            self.current_player = 1 - self.first_player;
+            self.phase = Phase::MulliganP2;
         }
-        else if self.phase == Phase::MulliganP2 { 
-            self.current_player = self.first_player; 
-            self.phase = Phase::Active; 
+        else if self.phase == Phase::MulliganP2 {
+            self.current_player = self.first_player;
+            self.phase = Phase::Active;
         }
         if self.debug.debug_mode { println!("[DEBUG] execute_mulligan: transition {:?} -> {:?}", prev_phase, self.phase); }
     }
@@ -333,9 +353,12 @@ impl PhaseHandlers for GameState {
         let mut cost = self.get_member_cost(p_idx, card_id, slot_idx as i16, secondary_slot_idx, db, 0);
         cost = cost.max(0);
         let untap_energy_indices = self.core.players[p_idx].get_untapped_energy_indices(cost as usize);
-        
+
         if !self.debug.debug_ignore_conditions {
-            if untap_energy_indices.len() < cost as usize { return Err("Not enough energy".to_string()); }
+            if untap_energy_indices.len() < cost as usize { 
+                if self.debug.debug_mode { println!("[DEBUG] play_member_with_choice: FAILED! cost={}, available={}", cost, untap_energy_indices.len()); }
+                return Err("Not enough energy".to_string()); 
+            }
             for i in untap_energy_indices { self.core.players[p_idx].set_energy_tapped(i, true); }
         }
 
@@ -384,8 +407,8 @@ impl PhaseHandlers for GameState {
             // Pop interaction first, but keep Phase::Response during execution
             self.interaction_stack.pop();
 
-            self.resolve_bytecode(db, &bytecode, &ctx);
-            self.process_rule_checks();
+            self.resolve_bytecode(db, std::sync::Arc::new(bytecode), &ctx);
+            self.process_rule_checks(db);
 
             // Restore phase only if no new suspension occurred
             if self.interaction_stack.is_empty() {
@@ -400,6 +423,9 @@ impl PhaseHandlers for GameState {
         } else if slot_idx >= 100 && slot_idx < 200 {
             let d_idx = slot_idx - 100;
             self.core.players[p_idx].discard.get(d_idx).cloned().unwrap_or(-1)
+        } else if slot_idx >= 200 && slot_idx < 300 {
+            let h_idx = slot_idx - 200;
+            self.core.players[p_idx].hand.get(h_idx).cloned().unwrap_or(-1)
         } else { -1 };
 
         let card = db.get_member(cid).ok_or_else(|| format!("Card not found: {}", cid))?;
@@ -421,14 +447,14 @@ impl PhaseHandlers for GameState {
             true,
         );
 
-        let mut ctx = AbilityContext { 
-            source_card_id: cid, 
-            player_id: p_idx as u8, 
+        let mut ctx = AbilityContext {
+            source_card_id: cid,
+            player_id: p_idx as u8,
             activator_id: p_idx as u8,
-            area_idx: slot_idx as i16, 
-            ability_index: ab_idx as i16, 
-            choice_index: choice_idx as i16, 
-            ..Default::default() 
+            area_idx: slot_idx as i16,
+            ability_index: ab_idx as i16,
+            choice_index: choice_idx as i16,
+            ..Default::default()
         };
         if target_slot >= 0 { ctx.target_slot = target_slot as i16; }
         let source_type = if slot_idx < 3 { 0 } else { 1 }; // 0=Stage, 1=Other
@@ -463,8 +489,8 @@ impl PhaseHandlers for GameState {
             }
         }
 
-        self.resolve_bytecode(db, &ab.bytecode, &ctx);
-        self.process_rule_checks();
+        self.resolve_bytecode(db, std::sync::Arc::new(ab.bytecode.clone()), &ctx);
+        self.process_rule_checks(db);
         Ok(())
     }
 }
@@ -487,15 +513,15 @@ impl GameState {
         self.interaction_stack.pop();
 
         self.trigger_event(db, TriggerType::OnPlay, ctx.player_id as usize, card_id as i32, ctx.area_idx, start_ab_idx, ctx.choice_index);
-        self.process_rule_checks();
+        self.process_rule_checks(db);
         Ok(())
     }
 
     fn check_play_legality(&self, db: &CardDatabase, p_idx: usize, _card_id: i32, slot_idx: usize, secondary_slot_idx: i16) -> Result<(), String> {
         if self.debug.debug_ignore_conditions { return Ok(()); }
         let player = &self.core.players[p_idx];
-        if (player.prevent_play_to_slot_mask & (1 << slot_idx)) != 0 { 
-            return Err("Cannot play to this slot due to restriction".to_string()); 
+        if (player.prevent_play_to_slot_mask & (1 << slot_idx)) != 0 {
+            return Err("Cannot play to this slot due to restriction".to_string());
         }
         if player.is_moved(slot_idx) { return Err("Already played/moved to this slot this turn".to_string()); }
 
@@ -529,8 +555,9 @@ impl GameState {
         if hand_idx < self.core.players[p_idx].hand_added_turn.len() { self.core.players[p_idx].hand_added_turn.remove(hand_idx); }
 
         if old_card_id >= 0 {
-            self.trigger_event(db, TriggerType::OnLeaves, p_idx, old_card_id, slot_idx as i16, 0, -1);
-            self.core.players[p_idx].discard.push(old_card_id);
+            if let Some(old) = self.handle_member_leaves_stage(p_idx, slot_idx, db, &AbilityContext { player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() }) {
+                self.core.players[p_idx].discard.push(old);
+            }
         }
 
         self.prev_card_id = old_card_id;
@@ -538,10 +565,9 @@ impl GameState {
         self.core.players[p_idx].set_tapped(slot_idx, false);
         self.core.players[p_idx].set_moved(slot_idx, true);
 
-        let card = db.get_member(card_id).unwrap();
-        for &gid in &card.groups { self.core.players[p_idx].played_group_mask |= 1 << gid; }
+        self.register_played_member(p_idx, card_id, db);
 
         self.trigger_event(db, TriggerType::OnPlay, p_idx, card_id, slot_idx as i16, start_ab_idx, choice as i16);
-        self.process_rule_checks();
+        self.process_rule_checks(db);
     }
 }

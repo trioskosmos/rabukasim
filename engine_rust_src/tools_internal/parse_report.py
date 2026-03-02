@@ -1,7 +1,9 @@
-import re
 import os
+import re
 
-report_path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\engine_rust_src\reports\semantic_report_v2_utf8.txt"
+report_path = (
+    r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\engine_rust_src\reports\semantic_report_v2_utf8.txt"
+)
 
 if not os.path.exists(report_path):
     print(f"Report not found at {report_path}")

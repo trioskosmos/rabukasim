@@ -1,6 +1,7 @@
 import json
-import re
 import os
+import re
+
 
 def clean_text(text):
     if not text:
@@ -10,13 +11,16 @@ def clean_text(text):
     # Escape pipe characters which are the primary table breakers
     text = text.replace("|", "\\|")
     # Remove any potential markdown-breaking characters like backticks if used incorrectly
-    # text = text.replace("`", "'") 
+    # text = text.replace("`", "'")
     return text.strip()
+
 
 def generate_matrix():
     data_path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\data\qa_data.json"
     tests_path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\engine_rust_src\src\qa_verification_tests.rs"
-    output_path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\.agent\skills\qa_rule_verification\qa_test_matrix.md"
+    output_path = (
+        r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\.agent\skills\qa_rule_verification\qa_test_matrix.md"
+    )
 
     if not os.path.exists(data_path):
         print(f"Data path not found: {data_path}")
@@ -39,7 +43,7 @@ def generate_matrix():
 
     # Find verified tests
     test_matches = re.findall(r"fn (test_q(\d+)[^({ ]*)", tests_content)
-    verified_ids = {} # map q_id (int) to test_name
+    verified_ids = {}  # map q_id (int) to test_name
     for name, q_id_str in test_matches:
         ids = re.findall(r"q(\d+)", name)
         for i in ids:
@@ -51,19 +55,19 @@ def generate_matrix():
         "This matrix tracks the alignment of the LovecaSim engine with all 206+ official Q&A rulings.",
         "",
         "| ID | Status | Question | Answer | Justification / Verification |",
-        "| :--- | :---: | :--- | :--- | :--- |"
+        "| :--- | :---: | :--- | :--- | :--- |",
     ]
 
     for item in qa_data:
         qid_str = item["id"]
         qid_int = get_id_num(item)
-        
+
         # Use a more robust text cleaning for markdown
         q_text = clean_text(item["question"])
         a_text = clean_text(item["answer"])
-        
+
         status_icon = "✅" if qid_int in verified_ids else "ℹ️"
-        
+
         justification = ""
         if qid_int in verified_ids:
             justification = f"Verified in `{verified_ids[qid_int]}`"
@@ -72,14 +76,14 @@ def generate_matrix():
             if qid_int <= 15:
                 justification = "General tournament/setup; outside engine scope."
             elif is_card_specific:
-                card_refs = ", ".join([c['card_no'] for c in item['related_cards']])
+                card_refs = ", ".join([c["card_no"] for c in item["related_cards"]])
                 justification = f"Card-specific ({card_refs}); covered by generic engine triggers."
             elif qid_int < 50:
-                 justification = "Core turn-order/setup logic; shared with Batch 1 tests."
+                justification = "Core turn-order/setup logic; shared with Batch 1 tests."
             elif "リフレッシュ" in item["question"] or "デッキ" in item["question"]:
-                 justification = "Deck/Refresh mechanics; shared with Batch 3 tests."
+                justification = "Deck/Refresh mechanics; shared with Batch 3 tests."
             else:
-                 justification = "Standard rule; behavior verified by structural tests."
+                justification = "Standard rule; behavior verified by structural tests."
 
         # Final row construction - ensuring leading and trailing pipes
         line = f"| **{qid_str}** | {status_icon} | {q_text} | {a_text} | {justification} |"
@@ -88,6 +92,7 @@ def generate_matrix():
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
     print(f"Final Matrix generated at: {output_path}")
+
 
 if __name__ == "__main__":
     generate_matrix()

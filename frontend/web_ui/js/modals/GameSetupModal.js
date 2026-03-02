@@ -1,6 +1,7 @@
 import { State } from '../state.js';
 import { Network } from '../network.js';
 import { Modals } from '../ui_modals.js';
+import { validator } from '../components/DeckValidator.js';
 
 export const GameSetupModal = {
     openSetupModal: (mode) => {
@@ -11,10 +12,22 @@ export const GameSetupModal = {
         const roomModal = document.getElementById('room-modal');
         if (roomModal) roomModal.style.display = 'none';
 
+        validator.init();
+
         Modals.fetchAndPopulateDecks().then(() => {
             Modals.populateDeckSelect('p0-deck-select', Modals.deckPresets);
             Modals.populateDeckSelect('p1-deck-select', Modals.deckPresets);
         });
+
+        // Add real-time validation listeners
+        const p0Input = document.getElementById('p0-deck-paste');
+        if (p0Input) {
+            p0Input.addEventListener('input', () => GameSetupModal.validateInline(0));
+        }
+        const p1Input = document.getElementById('p1-deck-paste');
+        if (p1Input) {
+            p1Input.addEventListener('input', () => GameSetupModal.validateInline(1));
+        }
 
         const p0Col = document.getElementById('setup-p0-col');
         const p1Col = document.getElementById('setup-p1-col');
@@ -29,6 +42,15 @@ export const GameSetupModal = {
             const p1Title = p1Col.querySelector('h4');
             if (p1Title) p1Title.textContent = (mode === 'pve') ? '[AI] Player 2 (AI)' : '[P2] Player 2 (Opponent)';
         }
+    },
+
+    validateInline: (pid) => {
+        const input = document.getElementById(`p${pid}-deck-paste`);
+        const preview = document.getElementById(`p${pid}-deck-preview`);
+        if (!input || !preview) return;
+
+        const results = validator.validateDeckString(input.value);
+        validator.renderPreview(results, preview);
     },
 
     closeSetupModal: () => {

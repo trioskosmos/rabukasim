@@ -9,7 +9,7 @@ use crate::core::logic::card_db::LOGIC_ID_MASK;
 fn test_enforce_cost_failure() {
     let mut db = create_test_db();
     let mut state = create_test_state();
-    
+
     // Create member with cost 2 energy
     let cid = 3991;
     let mut m = MemberCard::default();
@@ -37,7 +37,7 @@ fn test_enforce_cost_failure() {
 fn test_enforce_condition_failure() {
     let mut db = create_test_db();
     let mut state = create_test_state();
-    
+
     // Create member with condition Stage >= 3
     let cid = 3992;
     let mut m = MemberCard::default();
@@ -64,7 +64,7 @@ fn test_enforce_condition_failure() {
 fn test_enforce_once_per_turn_failure() {
     let mut db = create_test_db();
     let mut state = create_test_state();
-    
+
     // Create member with Once Per Turn
     let cid = 3993;
     let mut m = MemberCard::default();
@@ -96,7 +96,7 @@ fn test_enforce_once_per_turn_failure() {
 fn test_enforce_play_member_cost_failure() {
     let mut db = create_test_db();
     let mut state = create_test_state();
-    
+
     // Member with cost 2
     let cid = 3994;
     let mut m = MemberCard::default();

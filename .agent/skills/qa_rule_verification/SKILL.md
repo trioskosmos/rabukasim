@@ -33,7 +33,11 @@ This skill provides a standardized approach to ensuring the LovecaSim engine ali
 4. Update `qa_test_matrix.md` status to `[x]`.
 
 ## 3. Best Practices
-- **Isolation**: Use `create_test_state()` and `create_test_db()` for each test to avoid side effects.
-- **Card IDs**: Use `add_card()` to mock specific card abilities if the exact card isn't in the test DB.
+- **Real Data Only**: **CRITICAL POLICY:** Always use `load_real_db()` and real card IDs. NEVER mock card abilities or bytecode manually via `add_card()` or similar methods.
+- **Isolation**: Use `create_test_state()` to ensure a pristine game state for each test.
+- **Documentation**: Every test MUST include comments detailing:
+  - **Ability**: The relevant card text or pseudocode.
+  - **Intended Effect**: What the engine logic is supposed to do.
+  - **QA**: The QA ID (e.g., Q195) and official ruling summary.
 - **Traceability**: Always link tests to their QID in doc comments or test names.
 - **Negative Tests**: When the official answer is "No", ensure the engine rejects the action or condition.

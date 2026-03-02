@@ -1,14 +1,15 @@
-import sys
-import os
 import json
+import os
+import sys
 
 # Add project root to path
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
 import engine_rust
-from engine.game.data_loader import CardDataLoader
+
 from backend.rust_serializer import RustGameStateSerializer
+from engine.game.data_loader import CardDataLoader
 
 
 def verify():

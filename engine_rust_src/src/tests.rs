@@ -1,6 +1,4 @@
 use crate::core::logic::*;
-use crate::core::gpu_conversions::GpuConverter;
-
 const TEST_CARDS: &str = r#"{
     "member_db": {
         "0": {
@@ -101,40 +99,3 @@ fn test_play_member() {
     assert_eq!(state.core.players[0].tapped_energy_mask.count_ones(), 2);
 }
 
-// NOTE: test_performance_phase removed - do_performance_phase method no longer exists
-
-
-#[test]
-#[ignore]
-fn test_gpu_integration() {
-    use crate::core::gpu_manager::GpuManager;
-
-    // 1. Initialize DB and Manager
-    let db = CardDatabase::from_json(TEST_CARDS).unwrap();
-    let (stats, bytecode) = db.convert_to_gpu();
-
-    let manager = match GpuManager::new(&stats, &bytecode, wgpu::Backends::all()) {
-        Some(m) => m,
-        None => {
-            println!("Skipping GPU test: No compatible GPU found.");
-            return;
-        }
-    };
-
-    // 2. Setup State - Must be in a gameplay phase (not Setup/Rps/TurnChoice)
-    let mut state = GameState::default();
-    state.turn = 10;
-    state.phase = Phase::Main; // GPU shader only handles gameplay phases
-    let mut gpu_state = state.to_gpu(&db);
-    gpu_state.is_debug = 1; // Break after first step to test single transition
-
-    // 3. Run Simulation (inc turn)
-    let mut results = vec![gpu_state.clone(); 1];
-    manager.run_simulations_into(&[gpu_state], &mut results);
-
-    // 4. Verify - With is_debug=1, only one step runs.
-    // A single Main phase pass transitions to next player, not a new turn.
-    assert_eq!(results.len(), 1);
-    assert_eq!(results[0].turn, 10); // Turn doesn't increment on single Main pass
-    println!("GPU Integration Test Passed: Single step verified");
-}

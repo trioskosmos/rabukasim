@@ -1,5 +1,6 @@
-import re
 import os
+import re
+
 
 def parse_rust_enums(content):
     opcodes = {}
@@ -18,16 +19,18 @@ def parse_rust_enums(content):
                 opcodes[match.group(1)] = int(match.group(2))
     return opcodes
 
+
 def parse_python_opcodes(content):
     opcodes = {}
     for line in content.splitlines():
         line = line.strip()
         match = re.match(r"(\w+)\s*=\s*(\d+)", line)
-        if match and match.group(1) != "NOP": # Skip NOP if not in others
-             # Python uses SCREAMING_SNAKE_CASE, Rust uses PascalCase. 
-             # We should normalize to integer ID comparison.
-             opcodes[match.group(1)] = int(match.group(2))
+        if match and match.group(1) != "NOP":  # Skip NOP if not in others
+            # Python uses SCREAMING_SNAKE_CASE, Rust uses PascalCase.
+            # We should normalize to integer ID comparison.
+            opcodes[match.group(1)] = int(match.group(2))
     return opcodes
+
 
 def parse_js_opcodes(content):
     opcodes = {}
@@ -39,16 +42,17 @@ def parse_js_opcodes(content):
             continue
         if in_obj and "};" in line:
             in_obj = False
-            break # JS Defines it in one block
+            break  # JS Defines it in one block
         if in_obj:
             # JS format: NAME: ID, or multiple on one line
-            parts = line.split(',')
+            parts = line.split(",")
             for part in parts:
                 part = part.strip()
                 match = re.search(r"(\w+):\s*(\d+)", part)
                 if match:
                     opcodes[match.group(1)] = int(match.group(2))
     return opcodes
+
 
 BASE_DIR = os.getcwd()
 

@@ -1,10 +1,11 @@
 import json
 import os
 
+
 def verify_images():
     json_path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\data\cards_compiled.json"
     img_root = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\frontend\img"
-    
+
     if not os.path.exists(json_path):
         print(f"Error: {json_path} not found.")
         return
@@ -14,14 +15,14 @@ def verify_images():
 
     member_db = data.get("member_db", {})
     live_db = data.get("live_db", {})
-    
+
     missing_paths = []
     missing_ids = []
-    
+
     def check_card(card_id, card_data):
         card_no = card_data.get("card_no", "Unknown")
         img_path = card_data.get("img_path")
-        
+
         # Check img_path
         if img_path:
             full_img_path = os.path.join(img_root, img_path.replace("/", "\\"))
@@ -38,7 +39,7 @@ def verify_images():
     print("Checking member_db...")
     for card_id, card_data in member_db.items():
         check_card(card_id, card_data)
-    
+
     print("Checking live_db...")
     for card_id, card_data in live_db.items():
         check_card(card_id, card_data)
@@ -60,6 +61,7 @@ def verify_images():
             print(f"  ... and {len(missing_ids) - 20} more.")
     else:
         print("\nAll cardid.webp files are present.")
+
 
 if __name__ == "__main__":
     verify_images()

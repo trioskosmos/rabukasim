@@ -14,19 +14,19 @@ fn test_yell_persistence_and_selection() {
     let db = CardDatabase::from_json(&json_str).unwrap();
 
     let mut state = GameState::default();
-    
+
     // Initialize game with some dummy cards
     state.initialize_game(
         vec![101; 48], // Player 0 deck
         vec![101; 48], // Player 1 deck
         vec![1, 1, 1, 1, 1, 1], // Dummy energy
         vec![1, 1, 1, 1, 1, 1],
-        vec![], 
+        vec![],
         vec![]
     );
     state.debug.debug_mode = true;
 
-    let card_id = 111; 
+    let card_id = 111;
     println!("DEBUG: Using card_id {}", card_id);
     if let Some(live) = db.get_live(card_id) {
         println!("DEBUG: Card found in Live DB: {}", live.name);
@@ -34,10 +34,10 @@ fn test_yell_persistence_and_selection() {
         println!("DEBUG: Card NOT found in Live DB!");
     }
     state.core.players[0].live_zone[0] = card_id;
-    
+
     // Mock some "Yelled" cards in Player 0's state
     state.core.players[0].yell_cards = smallvec![101, 102];
-    
+
     // Also ensure these cards are in the energy zone (since picking from YELL removes from energy)
     state.core.players[0].stage_energy[0].push(101);
     state.core.players[0].stage_energy[1].push(102);
@@ -59,12 +59,12 @@ fn test_yell_persistence_and_selection() {
     state.step(&db, 0).unwrap(); // 0 = Confirm result
 
     assert_eq!(state.phase, Phase::Response, "Should pause for optional cost");
-    
-    // Step 2: Accept optional cost (ACTION_BASE_CHOICE = 8000 = "Yes")
+
+    // Step 2: Accept optional cost (ACTION_BASE_CHOICE = 11000 = "Yes")
     // Give player a card to discard first
-    state.core.players[0].hand.push(500); 
+    state.core.players[0].hand.push(500);
     state.step(&db, ACTION_BASE_CHOICE).unwrap(); // Accept cost
-    
+
     // Step 3: Select card to discard (card 500 is at last index of hand)
     let discard_idx = state.core.players[0].hand.iter().position(|&c| c == 500).unwrap();
     println!("DEBUG: Discarding card 500 at hand index {}", discard_idx);
@@ -74,7 +74,7 @@ fn test_yell_persistence_and_selection() {
     println!("DEBUG: Phase after discard: {:?}", state.phase);
     println!("DEBUG: looked_cards: {:?}", state.core.players[0].looked_cards);
     println!("DEBUG: interaction_stack: {:?}", state.interaction_stack.len());
-    
+
     // The LOOK_AND_CHOOSE may have already completed if there were no valid cards
     // or the flow may differ based on engine implementation
     // Check if we're in Response phase with looked_cards populated
@@ -88,19 +88,18 @@ fn test_yell_persistence_and_selection() {
     }
 
     // Step 5: Pick card 101 (index 0 in looked_cards)
-    state.step(&db, ACTION_BASE_CHOICE + 0).unwrap(); 
+    state.step(&db, ACTION_BASE_CHOICE + 0).unwrap();
 
     // Verification:
     println!("DEBUG: Final hand: {:?}", state.core.players[0].hand);
     println!("DEBUG: Final discard: {:?}", state.core.players[0].discard);
-    
+
     // Note: The engine currently has a bug where the optional cost discard doesn't work correctly
     // The card 500 was added to hand but not properly discarded
     // This test documents the current behavior
-    
+
     // Check that card 111 (the live card) was moved to discard after performance
     assert!(state.core.players[0].discard.contains(&111), "Card 111 should be in discard after performance");
 
     println!("Yell persistence test completed (documenting current engine behavior)");
 }
-

@@ -228,8 +228,8 @@ The test only supports these triggers:
 
 ```rust
 match trigger_type {
-    TriggerType::OnPlay | TriggerType::OnLiveStart | 
-    TriggerType::OnLiveSuccess | TriggerType::Constant | 
+    TriggerType::OnPlay | TriggerType::OnLiveStart |
+    TriggerType::OnLiveSuccess | TriggerType::Constant |
     TriggerType::None | TriggerType::Activated => { ... }
     _ => return Err("Trigger type not yet supported")
 }

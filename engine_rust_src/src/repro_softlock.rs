@@ -1,9 +1,9 @@
 
 #[cfg(test)]
 mod tests {
-    
+
     use crate::core::logic::game::GameState;
-    
+
     use crate::core::models::AbilityContext;
     use crate::core::enums::Phase;
     use crate::core::generated_constants::*;
@@ -43,11 +43,11 @@ mod tests {
             "Expected OPTIONAL or COLOR_SELECT, got: {}",
             pi.choice_type
         );
-        
+
         // Generate legal actions
         let mut actions = Vec::new();
         state.generate_legal_actions(&db, 0, &mut actions);
-        
+
         // The engine went directly to COLOR_SELECT, skipping OPTIONAL
         // This is expected behavior when the optional cost is auto-accepted
         if pi.choice_type == "COLOR_SELECT" {
@@ -55,14 +55,14 @@ mod tests {
             assert!(actions.iter().any(|&a| a >= 580 && a <= 585), "Should have COLOR selection actions. Found: {:?}", actions);
         } else {
             // OPTIONAL case - verify YES action exists
-            assert!(actions.contains(&8000), "Missing Action 8000 (YES) in first suspension! Found: {:?}", actions);
+            assert!(actions.contains(&(ACTION_BASE_CHOICE as usize)), "Missing Action {} (YES) in first suspension! Found: {:?}", ACTION_BASE_CHOICE, actions);
             // Resolve it
-            state.step(&db, 8000).unwrap();
+            state.step(&db, ACTION_BASE_CHOICE as i32).unwrap();
         }
 
         // Test completed successfully - the engine correctly handles the ability flow
         println!("test_repro_softlock_full_flow: PASSED");
-        
+
         // Final Action Check
         actions.clear();
         state.generate_legal_actions(&db, 0, &mut actions);

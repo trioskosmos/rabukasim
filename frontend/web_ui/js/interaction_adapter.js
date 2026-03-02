@@ -80,6 +80,7 @@ export const InteractionAdapter = {
             valid.myStage = {}; valid.oppStage = {};
             valid.myLive = {}; valid.oppLive = {};
             valid.myEnergy = {}; valid.oppEnergy = {};
+            valid.selection = {}; // For "Looked Cards"
 
             state.pending_choice.options.forEach((opt, idx) => {
                 const actionId = state.pending_choice.actions[idx];
@@ -89,6 +90,9 @@ export const InteractionAdapter = {
                 if (opt.hand_idx !== undefined) { if (isMe) valid.myHand[opt.hand_idx] = actionId; else valid.oppHand[opt.hand_idx] = actionId; }
                 if (opt.slot_idx !== undefined) { if (isMe) valid.myStage[opt.slot_idx] = actionId; else valid.oppStage[opt.slot_idx] = actionId; }
                 if (opt.energy_idx !== undefined) { if (isMe) valid.myEnergy[opt.energy_idx] = actionId; else valid.oppEnergy[opt.energy_idx] = actionId; }
+                if (opt.live_idx !== undefined) { if (isMe) valid.myLive[opt.live_idx] = actionId; else valid.oppLive[opt.live_idx] = actionId; }
+                if (opt.selection_idx !== undefined) { valid.selection[opt.selection_idx] = actionId; }
+                if (opt.discard_idx !== undefined) { valid.discard[opt.discard_idx] = actionId; }
             });
         }
 

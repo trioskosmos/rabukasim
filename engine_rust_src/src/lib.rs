@@ -1,3 +1,4 @@
+// Incremental build verification comment
 pub mod core;
 #[cfg(feature = "extension-module")]
 pub mod py_bindings;
@@ -69,8 +70,8 @@ mod repro_task;
 mod repro_bp3_002_p;
 #[cfg(test)]
 mod repro_card_fixes;
-// #[cfg(test)]
-// // mod semantic_assertions;
+#[cfg(test)]
+mod semantic_assertions;
 #[cfg(test)]
 mod enforcement_tests;
 #[cfg(test)]
@@ -98,8 +99,7 @@ mod repro_color_filter;
 mod repro_bp4_002_p;
 #[cfg(test)]
 mod opcode_rigor_tests;
-#[cfg(test)]
-mod parity_tests;
+
 #[cfg(test)]
 mod untested_opcode_tests;
 
@@ -108,12 +108,15 @@ mod new_opcode_tests;
 
 #[cfg(test)]
 mod unique_ability_tests;
-
 #[cfg(test)]
-mod gpu_smoke_tests;
-
+mod alphazero_verification_tests;
 #[cfg(test)]
-mod gpu_parity_tests;
+mod debug_q203;
+
+
+
+// #[cfg(test)]
+// mod gpu_parity_tests;
 
 // pub mod repro_pl_bp3_004; // Deleted
 

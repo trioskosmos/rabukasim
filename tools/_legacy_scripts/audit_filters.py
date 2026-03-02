@@ -1,6 +1,6 @@
 import json
-import re
 import os
+import re
 
 
 def audit_filters():

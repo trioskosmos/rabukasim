@@ -9,7 +9,7 @@ Our objective is a **100% pass rate** in the Semantic Audit. This ensures that e
 
 ### 1. Semantic Audit Pipeline
 The primary mechanism for verifying engine logic against textual meaning.
-- **Workflow**: 
+- **Workflow**:
     1. **Baseline**: `cargo test generate_v3_truth` (Synchronized capture).
     2. **Audit**: `cargo test test_semantic_mass_verification -- --nocapture`.
 - **Reporting**: [COMPREHENSIVE_SEMANTIC_AUDIT.md](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/reports/COMPREHENSIVE_SEMANTIC_AUDIT.md).
@@ -153,6 +153,7 @@ Keep these engine-specific behaviors in mind when debugging or writing new tests
 ### 11.4 Manual Bytecode Maintenance
 - When writing repro tests with manual bytecode, always check `compiler/parser_v2.py` or `engine/models/opcodes.py` to ensure opcode signatures match.
 - **JUMP Pointers**: Always double-check relative jump offsets. One-byte errors can cause the interpreter to land on illegal data or skip intended instructions.
+- **WARNING**: Avoid using manual bytecode for high-level integration tests. It bypasses the compiler and can hide bugs. Use `load_real_db()` whenever possible.
 
 ### 11.5 Suspension & Resumption Flow
 When debugging softlocks or "double-suspension" bugs:
@@ -164,6 +165,12 @@ When debugging softlocks or "double-suspension" bugs:
 **CRITICAL**: The Engine uses an auto-generated optimization file (`engine_rust_src/src/core/hardcoded.rs`) to bypass the bytecode interpreter for "simple" abilities (like flat buffs or draws).
 - **The Bug**: If you fix a broken or "simple" ability in `cards.json` and it becomes complex (e.g., adding `SELECT_MEMBER` or conditionals), the engine will **silently ignore your new bytecode** and continue executing the old, hardcoded simple logic.
 - **The Fix**: ALWAYS run `uv run python tools/codegen_abilities.py` after modifying card abilities to regenerate the hardcoded mappings and ensure complex abilities are correctly handed back to the bytecode interpreter.
+
+### 11.7 Test Integrity Audit (No Mocked Bytecode)
+To ensure tests actually verify the compiler output, we maintain an audit script that identifies tests using mocked bytecode.
+- **Audit Tool**: `uv run python .agent/skills/ability_verification/scripts/analyze_test_mocks.py`
+- **Policy**: High-level tests (especially `repro_card_*.rs`) MUST NOT define their own `ability.bytecode`. They should use `test_helpers::load_real_db()` and fetch the real ability from the database.
+- **Exceptions**: Unit tests for the interpreter (`interpreter_test.rs`) are allowed to use raw opcodes for granular logic isolation.
 
 ## Scale Strategy (High-Speed Verification)
 
@@ -178,7 +185,7 @@ The compiler (`main.py`) runs a structural check on every bytecode array generat
 Run a batch execution of **every** unique ability signature to catch engine panics.
 1.  **Command**: `cd engine_rust_src && cargo test crash_triage -- --nocapture`
 2.  **Mechanism**: Uses `std::panic::catch_unwind` to execute all 287+ unique signatures in a single run without aborting on failure.
-3.  **Outputs**: 
+3.  **Outputs**:
     - `reports/state_delta_verification.md`: Full audit logs.
     - `reports/crashed_abilities.txt`: Targeted list of crashing cards.
 
@@ -299,3 +306,28 @@ When faced with 50+ failures, do not look at individual failures. Look at the **
 2. Apply systemic fix (e.g., standardizing `IT_OPTIONAL`).
 3. Run `cargo test > after.log`.
 4. Compare `grep FAILED` counts. A successful systemic fix should drop failure counts by 10-20% across the entire crate.
+## 12. FAQ & Common Pitfalls
+
+### Q: Why did my interaction (Button) disappear unexpectedly?
+**A:** This is usually due to one of two reasons:
+1. **Unsatisfied Filter**: Many opcodes (like `O_LOOK_AND_CHOOSE` or `O_SELECT_MEMBER`) have an internal filter (e.g., `SUM_HEART_TOTAL_GE=8`). If the mock board state in your test doesn't satisfy this, the engine skips the effect immediately.
+2. **Context Collision**: If you are writing a manual test and provide `ctx.choice_index` or `ctx.target_slot` upfront, some handlers (like `O_PLAY_MEMBER_FROM_HAND`) use these variables to store internal state between suspensions. Pre-seeding them can cause the handler to branch incorrectly or skip a step.
+
+### Q: Why is my discard pile/deck resetting in the middle of a test?
+**A:** **Deck Auto-Refresh**. The engine's `auto_step` logic automatically shuffles the discard pile back into the deck if the deck is empty during certain phase transitions or draw interactions.
+- **The Fix**: Always populate the deck with "dummy" cards in your test setup if you are verifying discard pile state.
+
+### Q: How do I verify a multi-step interaction?
+**A:** Some opcodes (like `O_PLAY_MEMBER_FROM_HAND` or `O_TAP_OPPONENT`) suspend multiple times (e.g., once for the card, once for the slot).
+- In a `GameState::step()` test, you must call `step()` for **each** resumption.
+- In a `resolve_bytecode` test, ensure your context is updated correctly between calls, or use `test_helpers` to simulate a real game flow.
+
+### Q: My card's bytecode changed, but the test still sees the old logic?
+**A:** **Hardcoded Bypass**. Simple abilities (flat buffs, standard draws) are hardcoded in `engine_rust_src/src/core/hardcoded.rs` for performance.
+- **The Fix**: Run `uv run python tools/codegen_abilities.py` whenever you modify card abilities in `cards.json` to ensure the hardcoded mappings are synchronized.
+
+### Q: How should I examine ability text vs. pseudocode vs. bytecode?
+**A:**
+1. **Ability Text (JP)**: The source of truth for intent.
+2. **Pseudocode**: Our internal representation of that intent. Check `data/cards.json` to verify the mapping is accurate.
+3. **Bytecode**: The actual engine instructions. Use `uv run python tools/verify/bytecode_decoder.py [bytecode]` to see a human-readable breakdown. If the decoder shows "Unknown opcode" or incorrect jump offsets, the compiler/parser is likely at fault.

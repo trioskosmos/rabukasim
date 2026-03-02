@@ -35,20 +35,20 @@ pub struct HeuristicConfig {
 impl Default for HeuristicConfig {
     fn default() -> Self {
         Self {
-            weight_live_score: 10000.0,
-            weight_success_bonus: 20000.0,
-            weight_member_cost: 10.0,
-            weight_heart: 500.0,
-            weight_slot_bonus: 100.0,
-            weight_slot_penalty: 50.0,
-            weight_blade: 100.0,        // Extreme focus on Yell hearts
+            weight_live_score: 10.0,
+            weight_success_bonus: 20.0,
+            weight_member_cost: 0.1,
+            weight_heart: 0.5,
+            weight_slot_bonus: 0.1,
+            weight_slot_penalty: 0.05,
+            weight_blade: 0.1,        // Normal focus
             weight_draw_potential: 0.1,
             weight_vol_bonus: 2.0,
             weight_discard_bonus: 0.1,
-            weight_stage_ability: 100.0,
+            weight_stage_ability: 1.0,
             weight_untapped_bonus: 1.05,
-            weight_synergy_group: 0.5,
-            weight_synergy_center: 2.0,
+            weight_synergy_group: 0.05,
+            weight_synergy_center: 0.2,
             weight_mill_bonus: 0.0,
             weight_live_filter: 0.0,     // Never penalize lives; keep them all
             scaling_factor: 0.01,        // Extreme sensitivity
@@ -68,7 +68,7 @@ impl HeuristicConfig {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct DeckStats {
     pub avg_hearts: [f32; 7],
-    pub avg_vol: f32,
+    pub avg_notes: f32,
     pub avg_draw: f32,
     pub count: f32,
 }
@@ -79,6 +79,7 @@ pub enum EvalMode {
     Normal,
     Solitaire,
     Blind,
+    TerminalOnly,
 }
 
 pub trait Heuristic: Send + Sync {
@@ -206,6 +207,7 @@ impl LegacyHeuristic {
         score
     }
 
+    #[inline]
     fn calculate_proximity_u32(&self, pool: &[u32; 7], req: &[u32; 7]) -> f32 {
         let mut pool_clone = *pool;
         let (sat, tot) = crate::core::hearts::process_hearts(&mut pool_clone, req);
@@ -216,6 +218,9 @@ impl LegacyHeuristic {
 
 impl OriginalHeuristic {
     pub fn heuristic_eval(&self, state: &GameState, db: &CardDatabase, p0_baseline: u32, p1_baseline: u32, eval_mode: EvalMode, p0_deck_stats: Option<DeckStats>, p1_deck_stats: Option<DeckStats>) -> f32 {
+        if eval_mode == EvalMode::TerminalOnly {
+            return 0.5;
+        }
         let score0 = evaluate_player(state, db, 0, p0_baseline, p0_deck_stats, Some(&self.config));
 
         if eval_mode == EvalMode::Solitaire {
@@ -225,13 +230,13 @@ impl OriginalHeuristic {
         let score1 = evaluate_player(state, db, 1, p1_baseline, p1_deck_stats, Some(&self.config));
         let mut final_val = (score0 - score1) * self.config.scaling_factor + 0.5;
 
-        let p0_vol = state.core.players[0].current_turn_volume;
-        let p1_vol = state.core.players[1].current_turn_volume;
+        let p0_notes = state.core.players[0].current_turn_notes;
+        let p1_notes = state.core.players[1].current_turn_notes;
 
-        if p0_vol > 0 {
+        if p0_notes > 0 {
             final_val += self.config.weight_vol_bonus * 0.1;
         }
-        if p1_vol > 0 {
+        if p1_notes > 0 {
             final_val -= self.config.weight_vol_bonus * 0.1;
         }
 
@@ -245,8 +250,6 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
 
     let p = &state.core.players[p_idx];
     let mut score = 0.0;
-    let mut msg = String::new();
-    if !state.ui.silent { msg.push_str(&format!("  -- Score Breakdown (P{}): ", p_idx)); }
 
     let mut live_val = 0.0;
     for &cid in &p.success_lives {
@@ -255,11 +258,9 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
         }
     }
     score += live_val;
-    if !state.ui.silent { msg.push_str(&format!("Lives: {:.0}, ", live_val)); }
 
     if p.success_lives.len() > baseline_score as usize {
         score += cfg.weight_success_bonus;
-        if !state.ui.silent { msg.push_str(&format!("Progress: +{:.0}, ", cfg.weight_success_bonus)); }
     }
 
     let mut stage_hearts = [0u32; 7];
@@ -308,19 +309,16 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
         stage_blades += state.get_effective_blades(p_idx, i, db, 0);
     }
     score += stage_val;
-    if !state.ui.silent { msg.push_str(&format!("StagePower: {:.1}, ", stage_val)); }
 
     let total_hearts: u32 = stage_hearts.iter().sum();
     let heart_val = total_hearts as f32 * cfg.weight_heart;
     score += heart_val;
-    if !state.ui.silent { msg.push_str(&format!("Hearts: {:.0}, ", heart_val)); }
 
     let empty_slots = 3 - occupied_slots;
     let slot_bonus = occupied_slots as f32 * cfg.weight_slot_bonus;
     let slot_penalty = empty_slots as f32 * cfg.weight_slot_penalty;
     score += slot_bonus;
     score -= slot_penalty;
-    if !state.ui.silent { msg.push_str(&format!("Slots: {}/3 ({:+.0}), ", occupied_slots, (slot_bonus - slot_penalty))); }
 
     score += stage_blades as f32 * cfg.weight_blade;
 
@@ -340,7 +338,7 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
     expected_yell_count += draw_potential * cfg.weight_draw_potential;
 
     let expected_yell_hearts: Vec<f32> = stats.avg_hearts.iter().map(|&h| h * expected_yell_count).collect();
-    let expected_volume = stats.avg_vol * expected_yell_count;
+    let expected_notes = stats.avg_notes * expected_yell_count;
 
     let mut max_prob = 0.0;
     for &cid in &p.live_zone {
@@ -354,7 +352,6 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
                     );
                 let prob_val = prob * 2000.0;
                 score += prob_val;
-                if !state.ui.silent { msg.push_str(&format!("SuccProb: {:.2}, ", prob_val)); }
                 if prob > max_prob { max_prob = prob; }
 
                 let mut proximity_score = 0.0;
@@ -374,29 +371,24 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
                 }
                 let prox_val = proximity_score * 500.0;
                 score += prox_val;
-                if !state.ui.silent { msg.push_str(&format!("Prox: {:.2}, ", prox_val)); }
             }
         }
     }
 
     if max_prob > 0.5 {
-        let vol_bonus = (expected_volume + p.current_turn_volume as f32) * max_prob * 0.5;
-        score += vol_bonus;
-        if !state.ui.silent { msg.push_str(&format!("Vol: {:.2}, ", vol_bonus)); }
+        let notes_bonus = (expected_notes + p.current_turn_notes as f32) * max_prob * 0.5;
+        score += notes_bonus;
     }
 
     let hand_val = calculate_hand_quality(state, db, p_idx);
     score += hand_val * 1.0;
-    if !state.ui.silent { msg.push_str(&format!("Hand: {:.2}, ", hand_val * 1.0)); }
 
     let ez_val = p.energy_zone.len() as f32 * 0.5;
     score += ez_val;
-    if !state.ui.silent { msg.push_str(&format!("Energy: {:.1}, ", ez_val)); }
 
     let tapped_energy = p.tapped_energy_mask.count_ones() as usize;
     let tapped_val = tapped_energy as f32 * 5.0; // Reduced from 20.0 to not overwhelm scoring
     score += tapped_val;
-    if !state.ui.silent { msg.push_str(&format!("Spent: {:.0}, ", tapped_val)); }
 
     /*
     if !state.ui.silent {
@@ -406,9 +398,7 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
     */
 
     let has_recovery = p.hand.iter().any(|&cid| {
-        if let Some(m) = db.get_member(cid) {
-            m.abilities.iter().any(|a| has_opcode(&a.bytecode, 15) || has_opcode(&a.bytecode, 17))
-        } else { false }
+        db.get_member(cid).map_or(false, |m| (m.ability_flags & FLAG_RECOVER) != 0)
     });
 
     if has_recovery {
@@ -457,24 +447,24 @@ pub fn calculate_deck_expectations(deck: &[i32], db: &CardDatabase) -> DeckStats
     if deck.is_empty() { return DeckStats::default(); }
 
     let mut total_hearts = [0.0; 7];
-    let mut total_vol = 0.0;
+    let mut total_notes = 0.0;
     let mut total_draw = 0.0;
     let count = deck.len() as f32;
 
     for &cid in deck {
          if let Some(m) = db.get_member(cid) {
              for i in 0..7 { total_hearts[i] += m.blade_hearts[i] as f32; }
-             total_vol += m.volume_icons as f32;
+             total_notes += m.note_icons as f32;
              total_draw += m.draw_icons as f32;
          } else if let Some(l) = db.get_live(cid) {
              for i in 0..7 { total_hearts[i] += l.blade_hearts[i] as f32; }
-             total_vol += l.volume_icons as f32;
+             total_notes += l.note_icons as f32;
          }
     }
 
     DeckStats {
         avg_hearts: total_hearts.map(|v| v / count),
-        avg_vol: total_vol / count,
+        avg_notes: total_notes / count,
         avg_draw: total_draw / count,
         count,
     }
@@ -598,16 +588,6 @@ fn calculate_card_potential(cid: i32, db: &CardDatabase, max_energy: u32) -> f32
     }
 }
 
-fn has_opcode(bytecode: &[i32], target_op: i32) -> bool {
-    let mut i = 0;
-    while i < bytecode.len() {
-        if i + 4 >= bytecode.len() { break; }
-        let op = bytecode[i];
-        if op == target_op { return true; }
-        i += 5;
-    }
-    false
-}
 
 pub struct SimpleHeuristic;
 

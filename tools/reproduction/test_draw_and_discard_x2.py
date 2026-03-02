@@ -36,7 +36,7 @@ def run_test():
     gs.set_hand_cards(0, [453, 10, 11])
     gs.set_deck_cards(0, [100, 101])
 
-    print(f"Initial State:")
+    print("Initial State:")
     print(f"  Hand: {gs.get_player(0).hand}")
     print(f"  Deck: {gs.get_player(0).deck}")
 

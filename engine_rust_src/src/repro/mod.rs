@@ -15,3 +15,11 @@ pub mod repro_card_pb1_001_r;
 pub mod repro_card_560_double_baton;
 #[cfg(test)]
 pub mod special_mechanics_tests;
+#[cfg(test)]
+pub mod card_579_verification;
+#[cfg(test)]
+pub mod repro_card_420_multi_pick;
+#[cfg(test)]
+pub mod repro_card_420_cost_sum;
+#[cfg(test)]
+pub mod repro_score_jump;

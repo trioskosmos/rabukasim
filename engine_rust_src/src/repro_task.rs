@@ -10,7 +10,7 @@ mod tests {
         ids: Vec<usize>,
     }
     impl ActionReceiver for TestReceiver {
-        fn add_action(&mut self, action_id: usize) { 
+        fn add_action(&mut self, action_id: usize) {
             self.ids.push(action_id);
         }
         fn reset(&mut self) { self.ids.clear(); self.actions.clear(); }
@@ -42,12 +42,12 @@ mod tests {
         state.phase = Phase::Main;
         state.current_player = 0;
         state.core.players[0].energy_zone.extend(std::iter::repeat(100).take(10));
-        
+
         // CASE 1: Card in Discard → NO activation
         state.core.players[0].discard.push(target_cid);
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let discard_actions = stage_actions_in_range(&receiver, 6000, 6600);
+        let discard_actions = stage_actions_in_range(&receiver, ACTION_BASE_DISCARD_ACTIVATE as usize, ACTION_BASE_ENERGY as usize);
         println!("Discard Actions (IDs): {:?}", discard_actions);
         assert!(discard_actions.is_empty(), "Ability should NOT be activatable from Discard");
 
@@ -57,7 +57,8 @@ mod tests {
         state.core.players[0].set_tapped(0, false);
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let stage_actions = stage_actions_in_range(&receiver, 4010, 4011); // 4000 + 0*100 + 1*10
+        let action_id = (ACTION_BASE_STAGE + 0*100 + 1*10) as usize;
+        let stage_actions = stage_actions_in_range(&receiver, action_id, action_id + 1);
         println!("Stage Actions (IDs): {:?}", stage_actions);
         assert!(!stage_actions.is_empty(), "Ability 1 (second ability) should be activatable from Stage");
     }
@@ -87,14 +88,16 @@ mod tests {
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
 
-        // Slot 0, ab_idx 1 → 4000 + 0*100 + 1*10 = 4010
-        // Slot 2, ab_idx 1 → 4000 + 2*100 + 1*10 = 4210
-        let slot0_actions = stage_actions_in_range(&receiver, 4010, 4011);
-        let slot2_actions = stage_actions_in_range(&receiver, 4210, 4211);
-        
+        // Slot 0, ab_idx 1 → ACTION_BASE_STAGE + 0*100 + 1*10
+        // Slot 2, ab_idx 1 → ACTION_BASE_STAGE + 2*100 + 1*10
+        let slot0_id = (ACTION_BASE_STAGE + 0*100 + 1*10) as usize;
+        let slot2_id = (ACTION_BASE_STAGE + 2*100 + 1*10) as usize;
+        let slot0_actions = stage_actions_in_range(&receiver, slot0_id, slot0_id + 1);
+        let slot2_actions = stage_actions_in_range(&receiver, slot2_id, slot2_id + 1);
+
         println!("Slot 0 actions: {:?}", slot0_actions);
         println!("Slot 2 actions: {:?}", slot2_actions);
-        
+
         assert!(!slot0_actions.is_empty(), "Slot 0 should have activated ability");
         assert!(!slot2_actions.is_empty(), "Slot 2 should have activated ability");
         assert_ne!(slot0_actions[0], slot2_actions[0], "Action IDs must differ between slots");
@@ -119,7 +122,7 @@ mod tests {
         state.core.players[0].set_tapped(0, false);
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let untapped_actions = stage_actions_in_range(&receiver, 4010, 4011);
+        let untapped_actions = stage_actions_in_range(&receiver, (ACTION_BASE_STAGE + 10) as usize, (ACTION_BASE_STAGE + 11) as usize);
         println!("Untapped: {:?}", untapped_actions);
         assert!(!untapped_actions.is_empty(), "Untapped member should be able to activate Energy-cost ability");
 
@@ -127,7 +130,7 @@ mod tests {
         state.core.players[0].set_tapped(0, true);
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let tapped_actions = stage_actions_in_range(&receiver, 4010, 4011);
+        let tapped_actions = stage_actions_in_range(&receiver, (ACTION_BASE_STAGE + 10) as usize, (ACTION_BASE_STAGE + 11) as usize);
         println!("Tapped: {:?}", tapped_actions);
         // This ability uses Energy cost, NOT TapSelf. A tapped member CAN still use it.
         assert!(!tapped_actions.is_empty(), "Tapped member should still activate Energy-cost ability (no TapSelf required)");
@@ -146,11 +149,11 @@ mod tests {
         state.core.players[0].energy_zone.extend(std::iter::repeat(100).take(10));
         state.core.players[0].stage[0] = target_cid;
         state.core.players[0].set_tapped(0, false);
-        
+
         // Baseline: Should generate stage activation
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let baseline_actions = stage_actions_in_range(&receiver, 4000, 4300);
+        let baseline_actions = stage_actions_in_range(&receiver, ACTION_BASE_STAGE as usize, (ACTION_BASE_STAGE + 300) as usize);
         println!("Baseline stage actions: {:?}", baseline_actions);
         assert!(!baseline_actions.is_empty(), "Baseline: should have stage activation");
 
@@ -158,8 +161,8 @@ mod tests {
         state.core.players[0].prevent_activate = 1;
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let blocked_stage = stage_actions_in_range(&receiver, 4000, 4300);
-        let blocked_discard = stage_actions_in_range(&receiver, 6000, 6600);
+        let blocked_stage = stage_actions_in_range(&receiver, ACTION_BASE_STAGE as usize, (ACTION_BASE_STAGE + 300) as usize);
+        let blocked_discard = stage_actions_in_range(&receiver, ACTION_BASE_DISCARD_ACTIVATE as usize, ACTION_BASE_ENERGY as usize);
         println!("Blocked stage: {:?}", blocked_stage);
         println!("Blocked discard: {:?}", blocked_discard);
         assert!(blocked_stage.is_empty(), "prevent_activate should block all stage activations");
@@ -168,16 +171,14 @@ mod tests {
 
     // ===================== Test 2: Once-Per-Turn Slot Movement =====================
     // If a card uses once-per-turn ability in slot 0, then is baton-touched to slot 1,
-    // the once-per-turn tracking should ideally still block re-activation.
-    // Current implementation keys by slot_idx (source_type=1), so this IS a known issue.
+    // the once-per-turn tracking should still block re-activation.
+    // The action generator keys by (source_type=0, card_id, ab_idx), so
+    // moving to a different slot does NOT bypass the once-per-turn restriction.
 
     #[test]
-    fn test_once_per_turn_slot_movement_known_issue() {
+    fn test_once_per_turn_slot_movement() {
         let db = load_db();
-        // We need a card with is_once_per_turn=true on an Activated ability.
-        // Card 4264's ability 1 might not be once_per_turn, let's check by just
-        // observing behavior. If not once_per_turn, we document rather than assert.
-        let target_cid = 4264;
+        let target_cid = 4264; // Has Activated ability at index 1
 
         let mut state = GameState::default();
         state.phase = Phase::Main;
@@ -189,18 +190,19 @@ mod tests {
         // Step 1: Generate actions - ability should be available
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let initial_actions = stage_actions_in_range(&receiver, 4010, 4011);
+    let action_id = (ACTION_BASE_STAGE + 0*100 + 1*10) as usize;
+    let initial_actions = stage_actions_in_range(&receiver, action_id, action_id + 1);
         println!("Initial slot 0 actions: {:?}", initial_actions);
         assert!(!initial_actions.is_empty(), "Should have activation initially");
 
-        // Step 2: Consume once_per_turn for slot 0
-        // source_type=1 (stage), id=slot_idx=0, ab_idx=1
-        state.consume_once_per_turn(0, 1, 0, 1);
+        // Step 2: Consume once_per_turn using the same keying the action generator uses:
+        // source_type=0, id=card_id, ab_idx=1
+        state.consume_once_per_turn(0, 0, target_cid as u32, 1);
 
         // Step 3: Verify blocked at slot 0
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let after_consume = stage_actions_in_range(&receiver, 4010, 4011);
+    let after_consume = stage_actions_in_range(&receiver, action_id, action_id + 1);
         println!("After consume at slot 0: {:?}", after_consume);
         assert!(after_consume.is_empty(), "Should be blocked after once_per_turn consume");
 
@@ -209,22 +211,15 @@ mod tests {
         state.core.players[0].stage[0] = -1; // Empty slot 0
         state.core.players[0].set_tapped(1, false);
 
-        // Step 5: Check if ability is available at slot 1
-        // KNOWN BUG: It WILL be available because once_per_turn is keyed by slot_idx
+        // Step 5: Check if ability is STILL blocked at slot 1
+        // Because tracking is by card_id (not slot_idx), the restriction persists.
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        // Slot 1, ab_idx 1 → 4000 + 1*100 + 1*10 = 4110
-        let slot1_actions = stage_actions_in_range(&receiver, 4110, 4111);
+        // Slot 1, ab_idx 1 → ACTION_BASE_STAGE + 1*100 + 1*10
+        let action_id_slot1 = (ACTION_BASE_STAGE + 1*100 + 1*10) as usize;
+        let slot1_actions = stage_actions_in_range(&receiver, action_id_slot1, action_id_slot1 + 1);
         println!("After baton touch to slot 1: {:?}", slot1_actions);
-
-        // Document the known issue: this WILL pass (showing the bypass exists)
-        // When we fix this, change to assert!(slot1_actions.is_empty(), ...)
-        if !slot1_actions.is_empty() {
-            println!("KNOWN ISSUE: Once-per-turn bypass via slot movement detected!");
-            println!("  Card moved from slot 0 to slot 1, ability re-offered.");
-        }
-        // For now, just assert the bypass IS happening to document it
-        // (This test passes to confirm the known issue exists)
+        assert!(slot1_actions.is_empty(), "Once-per-turn should persist across slot movement (card_id keyed)");
     }
 
     // ===================== Test 1: Stage Choice Ability Generation =====================
@@ -236,16 +231,16 @@ mod tests {
         let db = load_db();
         // Find a card with an Activated ability that has choice_flags > 0
         // We'll scan the database programmatically.
-        
+
         let mut found_choice_card: Option<(i32, usize)> = None; // (card_id, ab_idx)
-        
+
         // Scan all member cards for an Activated ability with choice
         for cid in 0..8000i32 {
             if let Some(card) = db.get_member(cid) {
                 for (ab_idx, ab) in card.abilities.iter().enumerate() {
                     if ab.trigger == TriggerType::Activated && ab.choice_flags > 0 {
                         found_choice_card = Some((cid, ab_idx));
-                        println!("Found choice card: ID={}, ab_idx={}, choice_flags={}, choice_count={}", 
+                        println!("Found choice card: ID={}, ab_idx={}, choice_flags={}, choice_count={}",
                                  cid, ab_idx, ab.choice_flags, ab.choice_count);
                         break;
                     }
@@ -270,10 +265,10 @@ mod tests {
             let choice_actions = stage_actions_in_range(&receiver, 4300, 4600);
             // Check for ACTION_BASE_STAGE non-choice actions
             let non_choice_actions = stage_actions_in_range(&receiver, 4000, 4300);
-            
+
             println!("Choice actions (4300-4599): {:?}", choice_actions);
             println!("Non-choice actions (4000-4299): {:?}", non_choice_actions);
-            
+
             // KNOWN ISSUE: The generation loop does NOT check choice_flags.
             // It always emits ACTION_BASE_STAGE, never ACTION_BASE_STAGE_CHOICE.
             // This test documents the gap.
@@ -298,7 +293,7 @@ mod tests {
         let target_cid = 410;
         // ID 2: PL!-sd1-001-SD (Cost 11) - Note: sd1-003 is cost 13
         let cost_11_cid = 2;
-        
+
         // Find a cost 13 card programmatically
         let mut cost_13_cid = -1;
         for cid in 0..1000 {
@@ -315,19 +310,19 @@ mod tests {
         state.debug.debug_mode = true;
         state.phase = Phase::Main;
         state.current_player = 0;
-        
+
         // Place the passive card
         state.core.players[0].stage[0] = target_cid;
         state.core.players[0].set_tapped(0, false);
 
         // Get the base blades from the card
         let base_blades = db.get_member(target_cid).map(|m| m.blades as u32).unwrap_or(3);
-        
+
         // Verification 1: No other members on stage.
         // The condition C_COUNT_STAGE >= 0 is always true, so bonus is always applied.
         let blades_solitary = state.get_effective_blades(0, 0, &db, 0);
         println!("Blades (solitary): {}", blades_solitary);
-        
+
         // Verification 2: Add a cost 11 member.
         state.core.players[0].stage[1] = cost_11_cid;
         let blades_with_11 = state.get_effective_blades(0, 0, &db, 0);
@@ -341,7 +336,7 @@ mod tests {
         // Current behavior: The condition C_COUNT_STAGE >= 0 is always true,
         // so the +2 blade bonus is always applied regardless of other cards' costs.
         // This test documents that the passive always gives +2 blades.
-        // If the card's condition was properly checking for cost 13+, 
+        // If the card's condition was properly checking for cost 13+,
         // solitary would be base_blades and with_13 would be base_blades + 2.
         assert!(blades_solitary >= base_blades, "Card should have at least base blades");
         assert!(blades_with_11 >= blades_solitary, "Adding cost 11 should not reduce blades");

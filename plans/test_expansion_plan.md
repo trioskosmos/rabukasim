@@ -36,9 +36,9 @@ enum TestEnvironment {
 **実装**:
 ```rust
 pub fn verify_card_with_env(
-    &self, 
-    card_id: &str, 
-    ab_idx: usize, 
+    &self,
+    card_id: &str,
+    ab_idx: usize,
     env: TestEnvironment
 ) -> Result<(), String> {
     let mut state = create_test_state();

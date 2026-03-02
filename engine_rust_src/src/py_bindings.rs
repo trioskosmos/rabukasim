@@ -1,10 +1,10 @@
 use pyo3::prelude::*;
 use rayon::prelude::*;
 use numpy::{PyArray1, PyArray2, PyReadonlyArray1, PyArrayMethods};
-use crate::core::logic::{GameState, PlayerState, Phase};
-// use crate::core::enums::*;
+use crate::core::logic::{GameState, PlayerState, Phase, CardDatabase};
 use crate::core::mcts::SearchHorizon;
 use crate::core::heuristics::{EvalMode, HeuristicConfig, OriginalHeuristic, LegacyHeuristic};
+use crate::core::alphazero_encoding::AlphaZeroEncoding;
 use smallvec::SmallVec;
 // use crate::core::heuristics::{OriginalHeuristic, SimpleHeuristic};
 
@@ -182,6 +182,36 @@ impl PyPlayerState {
         for (i, &v) in val.iter().enumerate() { if i < 3 { self.inner.blade_buffs[i] = v as i16; } }
     }
 
+    #[getter]
+    pub fn activated_energy_group_mask(&self) -> u32 { self.inner.activated_energy_group_mask }
+    #[setter(activated_energy_group_mask)]
+    pub fn set_activated_energy_group_mask(&mut self, val: u32) { self.inner.activated_energy_group_mask = val; }
+
+    #[getter]
+    pub fn activated_member_group_mask(&self) -> u32 {
+        self.inner.activated_member_group_mask
+    }
+    #[setter(activated_member_group_mask)]
+    pub fn set_activated_member_group_mask(&mut self, val: u32) {
+        self.inner.activated_member_group_mask = val;
+    }
+
+    #[getter]
+    pub fn flags(&self) -> u32 { self.inner.flags }
+    #[setter(flags)]
+    pub fn set_flags(&mut self, val: u32) { self.inner.flags = val; }
+}
+
+
+#[pyclass]
+#[derive(Clone)]
+pub struct PyPendingInteraction {
+    #[pyo3(get)]
+    pub choice_type: String,
+    #[pyo3(get)]
+    pub filter_attr: u64,
+    #[pyo3(get)]
+    pub ctx: String, // Stringified AbilityContext
 }
 
 
@@ -218,6 +248,14 @@ impl PyCardDatabase {
         self.inner.members.keys().map(|&k| k as u32).collect()
     }
 
+    fn get_live_ids(&self) -> Vec<u32> {
+        self.inner.lives.keys().map(|&k| k as u32).collect()
+    }
+
+    fn get_energy_ids(&self) -> Vec<u32> {
+        self.inner.energy_db.keys().map(|&k| k as u32).collect()
+    }
+
     fn id_by_no(&self, card_no: &str) -> Option<i32> {
         self.inner.id_by_no(card_no)
     }
@@ -251,7 +289,7 @@ impl PyGameState {
     }
 
     pub fn ping(&self) -> String {
-        "pong_v_force_fix_1212".to_string()
+        "pong_v_force_fix_1215".to_string()
     }
 
     #[getter]
@@ -286,7 +324,25 @@ impl PyGameState {
 
     #[getter]
     fn rule_log(&self) -> Vec<String> {
-        self.inner.ui.rule_log.clone()
+        self.inner.ui.rule_log.clone().unwrap_or_default()
+    }
+
+    #[getter]
+    fn bytecode_log(&self) -> Vec<String> {
+        self.inner.ui.bytecode_log.clone()
+    }
+
+    fn clear_bytecode_log(&mut self) {
+        self.inner.ui.bytecode_log.clear();
+    }
+
+    #[getter]
+    fn turn_history(&self) -> Vec<String> {
+        if let Some(ref history) = self.inner.core.turn_history {
+            history.iter().map(|e| format!("{:?}", e)).collect()
+        } else {
+            Vec::new()
+        }
     }
 
     fn generate_execution_id(&mut self) -> u32 {
@@ -338,6 +394,23 @@ impl PyGameState {
     #[setter(debug_mode)]
     fn set_debug_mode(&mut self, val: bool) {
         self.inner.debug.debug_mode = val;
+    }
+
+    #[getter]
+    fn debug_ignore_conditions(&self) -> bool {
+        self.inner.debug.debug_ignore_conditions
+    }
+
+    #[setter(debug_ignore_conditions)]
+    fn set_debug_ignore_conditions(&mut self, val: bool) {
+        self.inner.debug.debug_ignore_conditions = val;
+    }
+
+    fn apply_state_json(&mut self, json_str: &str) -> PyResult<()> {
+        let new_state: GameState = serde_json::from_str(json_str)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Invalid state JSON: {}", e)))?;
+        self.inner = new_state;
+        Ok(())
     }
 
     #[getter]
@@ -510,12 +583,41 @@ impl PyGameState {
         self.inner.get_legal_action_ids(&self.db.inner)
     }
 
+
+
     fn get_legal_action_ids_for_player(&mut self, p_idx: usize) -> Vec<i32> {
         self.inner.get_legal_action_ids_for_player(&self.db.inner, p_idx)
     }
 
     fn get_observation(&self) -> Vec<f32> {
         self.inner.get_observation(&self.db.inner)
+    }
+}
+
+// Second #[pymethods] block — PyO3 abi3 has a per-block inventory limit
+#[pymethods]
+impl PyGameState {
+    pub fn get_verbose_label(&self, action_id: i32) -> String {
+        crate::core::logic::ActionFactory::get_verbose_action_label(action_id, &self.inner, &self.db.inner)
+    }
+
+    pub fn test_method(&self) -> String {
+        "test_ok_v3".to_string()
+    }
+
+    fn get_interaction(&self) -> Option<PyPendingInteraction> {
+        self.inner.interaction_stack.last().map(|pi| {
+            PyPendingInteraction {
+                choice_type: pi.choice_type.clone(),
+                filter_attr: pi.filter_attr,
+                ctx: format!("{:?}", pi.ctx),
+            }
+        })
+    }
+
+
+    fn to_alphazero_tensor(&self) -> Vec<f32> {
+        self.inner.to_alphazero_tensor(&self.db.inner)
     }
 
     fn is_terminal(&self) -> bool {
@@ -559,6 +661,15 @@ impl PyGameState {
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e))
     }
 
+    fn get_action_label(&self, action_id: i32) -> String {
+        crate::core::logic::ActionFactory::get_action_label(action_id)
+    }
+
+
+    fn auto_step(&mut self, _db: &PyCardDatabase) {
+        self.inner.auto_step(&self.db.inner);
+    }
+
     fn debug_execute_bytecode(&mut self, bytecode: Vec<i32>, player_id: u8, area_idx: i32, source_card_id: i32, target_slot: i32, choice_index: i32, selected_color: i32) {
         let db = &self.db.inner;
         let ctx = crate::core::logic::AbilityContext {
@@ -566,6 +677,7 @@ impl PyGameState {
             activator_id: player_id,
             area_idx: area_idx as i16,
             source_card_id,
+            target_card_id: -1,
             target_slot: target_slot as i16,
             choice_index: choice_index as i16,
             selected_color: selected_color as i16,
@@ -576,7 +688,7 @@ impl PyGameState {
             original_phase: None,
             repeat_count: 0,
         };
-        self.inner.resolve_bytecode(db, &bytecode, &ctx);
+        self.inner.resolve_bytecode(db, std::sync::Arc::new(bytecode), &ctx);
     }
 
     fn integrated_step(&mut self, action: i32, opp_mode: u8, mcts_sims: usize, enable_rollout: bool) -> (f32, bool) {
@@ -745,15 +857,15 @@ impl PyGameState {
         }
     }
 
-    fn resolve_bytecode(&mut self, bytecode: Vec<i32>, player_id: u8, area_idx: i32) {
+    fn resolve_bytecode(&mut self, bytecode: Vec<i32>, player_id: u8, _area_idx: i32) {
         let ctx = crate::core::logic::AbilityContext {
             player_id,
             activator_id: player_id,
-            area_idx: area_idx as i16,
+            target_card_id: -1,
             original_phase: None,
             ..crate::core::logic::AbilityContext::default()
         };
-        self.inner.resolve_bytecode(&self.db.inner, &bytecode, &ctx);
+        self.inner.resolve_bytecode(&self.db.inner, std::sync::Arc::new(bytecode), &ctx);
     }
 
     fn trigger_abilities(&mut self, trigger: i32, player_id: u8) {
@@ -761,8 +873,9 @@ impl PyGameState {
         let ctx = crate::core::logic::AbilityContext {
             player_id,
             activator_id: player_id,
-            original_phase: None,
-            ..crate::core::logic::AbilityContext::default()
+            target_card_id: -1,
+            trigger_type: crate::core::enums::TriggerType::None,
+            ..Default::default()
         };
         self.inner.trigger_abilities(&self.db.inner, trigger_type, &ctx);
     }
@@ -1013,10 +1126,11 @@ impl PyHybridMCTS {
 }
 
 pub fn register_python_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<PyGameState>()?;
     m.add_class::<PyPlayerState>()?;
-    m.add_class::<PyCardDatabase>()?;
+    m.add_class::<PyGameState>()?;
     m.add_class::<PyVectorGameState>()?;
+    m.add_class::<PyCardDatabase>()?;
+    m.add_class::<PyPendingInteraction>()?;
     #[cfg(feature = "nn")]
     m.add_class::<PyHybridMCTS>()?;
     m.add_class::<SearchHorizon>()?;

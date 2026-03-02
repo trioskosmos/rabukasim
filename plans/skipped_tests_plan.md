@@ -19,7 +19,7 @@ PASS: 57, FAIL: 168, SKIP: 701
 ```rust
 // Skip triggers that need special setup not yet implemented
 let trigger_type = map_trigger_type(&ability.trigger);
-if trigger_type != TriggerType::OnPlay 
+if trigger_type != TriggerType::OnPlay
     && trigger_type != TriggerType::Constant {
     println!("  [SKIP] {} (trigger: {})", test_name, ability.trigger);
     skip_count += 1;
@@ -29,7 +29,7 @@ if trigger_type != TriggerType::OnPlay
 
 **影響**: ONLIVESTART, ACTIVATED, ONLIVESUCCESS, ONLEAVES, ONREVEAL などのトリガー
 
-**対応策**: 
+**対応策**:
 - このチェックを削除または緩和
 - 各トリガータイプ用のテスト関数を実装（一部は既に実装済み）
 
@@ -174,7 +174,7 @@ fn run_generic_trigger_test(
 // Before (lines 52-85)
 // Skip triggers that need special setup not yet implemented
 let trigger_type = map_trigger_type(&ability.trigger);
-if trigger_type != TriggerType::OnPlay 
+if trigger_type != TriggerType::OnPlay
     && trigger_type != TriggerType::Constant {
     println!("  [SKIP] {} (trigger: {})", test_name, ability.trigger);
     skip_count += 1;

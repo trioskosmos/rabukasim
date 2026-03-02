@@ -36,7 +36,7 @@ def run_test():
     gs.set_hand_cards(0, [10])
     gs.set_energy_cards(0, [1000, 1001])
 
-    print(f"Initial State:")
+    print("Initial State:")
     p0 = gs.get_player(0)
     print(f"  Discard: {p0.discard}")
     print(f"  Hand: {p0.hand}")

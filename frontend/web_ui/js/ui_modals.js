@@ -9,6 +9,7 @@ import { PerformanceModal } from './modals/PerformanceModal.js';
 import { HelpModal } from './modals/HelpModal.js';
 import { LobbyModal } from './modals/LobbyModal.js';
 import { ReportModal } from './modals/ReportModal.js';
+import { DebugModal } from './modals/DebugModal.js';
 
 export const Modals = {
     deckPresets: [],
@@ -40,6 +41,7 @@ export const Modals = {
     toggleLang: () => SettingsModal.toggleLang(),
     toggleFriendlyAbilities: () => SettingsModal.toggleFriendlyAbilities(),
     updateLanguage: () => SettingsModal.updateLanguage(),
+    toggleDebugMode: () => SettingsModal.toggleDebugMode(),
 
     // --- Performance ---
     showLastPerformance: () => PerformanceModal.showLastPerformance(),
@@ -58,5 +60,26 @@ export const Modals = {
     openReportModal: () => ReportModal.openReportModal(),
     closeReportModal: () => ReportModal.closeReportModal(),
     submitReport: () => ReportModal.submitReport(),
-    downloadReport: () => ReportModal.downloadReport()
+    downloadReport: () => ReportModal.downloadReport(),
+
+    // --- Debug ---
+    openDebugModal: (tab) => {
+        DebugModal.openDebugModal();
+        if (tab) DebugModal.switchTab(tab);
+    },
+    closeDebugModal: () => DebugModal.closeDebugModal(),
+    saveState: () => DebugModal.saveState(),
+    copyState: () => {
+        DebugModal.openDebugModal();
+        DebugModal.switchTab('string');
+    },
+    loadState: () => {
+        DebugModal.openDebugModal();
+        DebugModal.switchTab('string');
+        setTimeout(() => DebugModal.triggerFileLoad(), 50);
+    },
+    applyState: () => DebugModal.applyCustomState(),
+    rewind: () => DebugModal.rewind(),
+    redo: () => DebugModal.redo(),
+    switchDebugTab: (tab) => DebugModal.switchTab(tab)
 };

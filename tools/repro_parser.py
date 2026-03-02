@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+
 sys.path.append(os.getcwd())
 from compiler.parser_v2 import AbilityParserV2
 

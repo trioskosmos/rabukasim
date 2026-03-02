@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Trace each audit issue to real cards that use the affected opcodes."""
+
 import json
-import sys
 
 with open("data/cards_compiled.json", "r", encoding="utf-8") as f:
     data = json.load(f)
@@ -45,9 +45,7 @@ def find_cards(target_op):
                     op = bc[i]
                     real_op = op - 1000 if op >= 1000 else op
                     if real_op == target_op:
-                        results.append(
-                            (card_no, cid, ab_idx, name, bc[i : i + 5])
-                        )
+                        results.append((card_no, cid, ab_idx, name, bc[i : i + 5]))
                         break
     return results
 
@@ -74,7 +72,7 @@ for name, op_id in sorted(TRACE_EFFECTS.items(), key=lambda x: x[1]):
     for card_no, cid, ab_idx, cname, instr in cards[:8]:
         p(f"    {card_no} (ID={cid} Ab{ab_idx}) {instr}")
     if len(cards) > 8:
-        p(f"    ...+{len(cards)-8} more")
+        p(f"    ...+{len(cards) - 8} more")
 
 p()
 p("=== CONDITION OPCODES ===")
@@ -87,7 +85,7 @@ for name, cond_id in sorted(TRACE_CONDS.items(), key=lambda x: x[1]):
     for card_no, cid, ab_idx, cname, instr in cards[:5]:
         p(f"    {card_no} (ID={cid} Ab{ab_idx}) {instr}")
     if len(cards) > 5:
-        p(f"    ...+{len(cards)-5} more")
+        p(f"    ...+{len(cards) - 5} more")
 
 p()
 p("=== ALL OPCODES IN COMPILED BYTECODE ===")

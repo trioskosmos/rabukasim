@@ -32,7 +32,7 @@ CONDITION_ALIASES = {
     "SCORE_LEAD": ("SCORE_COMPARE", {"type": "score", "comparison": "GT"}),
     "TYPE_MEMBER": ("TYPE_CHECK", {"card_type": "member"}),
     "TYPE_LIVE": ("TYPE_CHECK", {"card_type": "live"}),
-    # ... 
+    # ...
 }
 
 # HAS_KEYWORDにフォールバックする条件のリスト

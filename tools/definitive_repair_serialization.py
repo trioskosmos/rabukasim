@@ -1,13 +1,11 @@
-import os
-
 # Define the Japanese strings as Unicode escapes to be 100% safe
 strings = {
-    "group_niji": "\u8679\u30e2\u5d0e", # 虹ヶ咲
-    "group_hasu": "\u84ee\u30ce\u7a7a", # 蓮ノ空
-    "group_other": "\u4ed6", # 他
-    "unit_slsz": "\u30b9\u30ea\u30fc\u30ba\u30d6\u30fc\u30b1", # スリーズブーケ
-    "unit_miraku": "\u307f\u3089\u304f\u3089\u3071\u30fc\u304f", # みらくらぱーく
-    "unit_univ": "\u30e6\u30cb\u30c3\u30c8", # ユニット
+    "group_niji": "\u8679\u30e2\u5d0e",  # 虹ヶ咲
+    "group_hasu": "\u84ee\u30ce\u7a7a",  # 蓮ノ空
+    "group_other": "\u4ed6",  # 他
+    "unit_slsz": "\u30b9\u30ea\u30fc\u30ba\u30d6\u30fc\u30b1",  # スリーズブーケ
+    "unit_miraku": "\u307f\u3089\u304f\u3089\u3071\u30fc\u304f",  # みらくらぱーく
+    "unit_univ": "\u30e6\u30cb\u30c3\u30c8",  # ユニット
     "trigger_onplay": "\u767b\u5834\u6642",
     "trigger_live_start": "\u30e9\u30a4\u30d6\u9032\u884c\u6642",
     "trigger_live_success": "\u30e9\u30a4\u30d6\u6210\u529f\u6642",
@@ -81,7 +79,7 @@ strings = {
     "choice_liveslot": "\u30e9\u30a4\u30d6\u30b9\u30ed\u30c3\u30c8\u3022\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044",
     "choice_stage": "\u30b9\u30c6\u30fc\u30b8\u3022\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044",
     "choice_energy": "\u30a8\u30cd\u30eb\u30ae\u30fc\u3022\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044",
-    "please_select": "\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044"
+    "please_select": "\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044",
 }
 
 path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\launcher\src\serialization.rs"
@@ -92,8 +90,11 @@ with open(path, "rb") as f:
 content = raw.decode("utf-8", errors="replace")
 
 # 1. get_group_name
-content = re.sub(r'2 => ".*",\s*3 => "Liella!",\s*4 => ".*"', 
-                 f'2 => "{strings["group_niji"]}", 3 => "Liella!", 4 => "{strings["group_hasu"]}"', content)
+content = re.sub(
+    r'2 => ".*",\s*3 => "Liella!",\s*4 => ".*"',
+    f'2 => "{strings["group_niji"]}", 3 => "Liella!", 4 => "{strings["group_hasu"]}"',
+    content,
+)
 content = re.sub(r'_ => ".*"', f'_ => "{strings["group_other"]}"', content, count=1)
 
 # 2. get_unit_name
@@ -102,16 +103,25 @@ content = content.replace('15 => "みらくらぱーく"', f'15 => "{strings["un
 content = content.replace('_ => "ユニット"', f'_ => "{strings["unit_univ"]}"')
 
 # 3. get_ability_summary
-content = re.sub(r'let t_map = \["", ".*", ".*", ".*", ".*", ".*", ".*", ".*"\];', 
-                 f'let t_map = ["", "{strings["trigger_onplay"]}", "{strings["trigger_live_start"]}", "{strings["trigger_live_success"]}", "{strings["trigger_turn_start"]}", "{strings["trigger_turn_end"]}", "{strings["trigger_constant"]}", "{strings["trigger_act"]}"];', content)
-content = content.replace('match target {\n            1 => "自分"', f'match target {{\n            1 => "{strings["self"]}"')
+content = re.sub(
+    r'let t_map = \["", ".*", ".*", ".*", ".*", ".*", ".*", ".*"\];',
+    f'let t_map = ["", "{strings["trigger_onplay"]}", "{strings["trigger_live_start"]}", "{strings["trigger_live_success"]}", "{strings["trigger_turn_start"]}", "{strings["trigger_turn_end"]}", "{strings["trigger_constant"]}", "{strings["trigger_act"]}"];',
+    content,
+)
+content = content.replace(
+    'match target {\n            1 => "自分"', f'match target {{\n            1 => "{strings["self"]}"'
+)
 content = content.replace('2 => "相手"', f'2 => "{strings["opponent"]}"')
 content = content.replace('_ => "全体"', f'_ => "{strings["all"]}"')
 
 # 4. get_action_desc_rich (HEAVY FIX)
 # We'll replace the match action block with the clean version using escapes
 import re
-match_pattern = re.compile(r'let \(name, text, type_str, area_idx_opt\) = match action \{.*?\}\n\n\s*\(name, text, type_str, area_idx_opt, metadata\)', re.DOTALL)
+
+match_pattern = re.compile(
+    r"let \(name, text, type_str, area_idx_opt\) = match action \{.*?\}\n\n\s*\(name, text, type_str, area_idx_opt, metadata\)",
+    re.DOTALL,
+)
 
 new_match_block = f"""let (name, text, type_str, area_idx_opt) = match action {{
         Action::Pass => {{
@@ -197,7 +207,7 @@ new_match_block = f"""let (name, text, type_str, area_idx_opt) = match action {{
                     format!("{{}} ({{}}){{}} ({{}} {{}})", raw_name, card_no, suffix, cost_str, actual_cost)
                 }}
             }};
-            
+
             let cost_label = if lang == "jp" {{
                 if prev_cid >= 0 {{ format!("({{}}: {{}}{strings["leaves"]}, {{}}:{{}})", baton_str, old_name, pay_str, actual_cost) }}
                 else {{ format!("({{}} {{}})", cost_str, actual_cost) }}
@@ -224,10 +234,10 @@ new_match_block = f"""let (name, text, type_str, area_idx_opt) = match action {{
             let summary = card.and_then(|c| c.abilities.get(ab_idx as usize))
                 .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
                 .unwrap_or_else(|| if lang == "jp" {{ "{strings["ability"]}".into() }} else {{ "Ability".into() }});
-            
+
             let areas = if lang == "jp" {{ ["{strings["left"]}", "{strings["mid"]}", "{strings["right"]}"] }} else {{ ["Left", "Mid", "Right"] }};
             let area_name = areas.get(slot_idx).unwrap_or(&"");
-            
+
             let label = if lang == "jp" {{
                 format!("{strings["act"]}{{}}: {{}} ({{}})", name, summary, area_name)
             }} else {{
@@ -242,7 +252,7 @@ new_match_block = f"""let (name, text, type_str, area_idx_opt) = match action {{
              let mut name = String::new();
              let text = String::new();
              let type_str = "CHOICE".to_string();
-             
+
              let pending = gs.interaction_stack.last();
              let opcode = pending.map(|p| p.effect_opcode).unwrap_or(0);
              let card_id = pending.map(|p| p.card_id).unwrap_or(-1);
@@ -311,7 +321,7 @@ new_match_block = f"""let (name, text, type_str, area_idx_opt) = match action {{
             }} else if cid < 40000 {{
                 db.get_live(cid as u16).map(|l| l.name.clone()).unwrap_or_else(|| format!("Live #{{}}", cid))
             }} else {{ "Card".to_string() }};
-            
+
             let mut desc = if lang == "jp" {{ "{strings["select_desc"]}".to_string() }} else {{ "Select this card.".to_string() }};
             let mut label_prefix = if lang == "jp" {{ "{strings["select"]}" }} else {{ "Select: " }};
 
@@ -353,7 +363,7 @@ new_match_block = f"""let (name, text, type_str, area_idx_opt) = match action {{
             let summary = card.and_then(|c| c.abilities.get(ab_idx as usize))
                 .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
                 .unwrap_or_else(|| if lang == "jp" {{ "{strings["ability"]}".into() }} else {{ "Ability".into() }});
-            
+
             let pending = gs.interaction_stack.last();
             let opcode = pending.map(|p| p.effect_opcode).unwrap_or(0);
 
@@ -437,7 +447,7 @@ new_match_block = f"""let (name, text, type_str, area_idx_opt) = match action {{
                      format!("{{}} ({{}}){{}} ({{}} {{}})*", raw_name, card_no, suffix, cost_str, actual_cost)
                  }}
              }};
-             
+
              let cost_label = if lang == "jp" {{
                  if prev_cid \u003e= 0 {{ format!("({{}}: {{}}{strings["leaves"]}, {{}}:{{}})", baton_str, old_name, pay_str, actual_cost) }}
                  else {{ format!("({{}} {{}})", cost_str, actual_cost) }}
@@ -571,14 +581,14 @@ choice_mapping = {
     "SELECT_LIVE_SLOT": strings["choice_liveslot"],
     "SELECT_STAGE": strings["choice_stage"],
     "PAY_ENERGY": strings["choice_energy"],
-    "_": strings["please_select"]
+    "_": strings["please_select"],
 }
 
 for key, val in choice_mapping.items():
     if key == "_":
         content = re.sub(r'_ => ".*"\.to_string\(\)', f'_ => "{val}".to_string()', content)
     else:
-        pattern = fr'"{key}" => ".*"\.to_string\(\)'
+        pattern = rf'"{key}" => ".*"\.to_string\(\)'
         replacement = f'"{key}" => "{val}".to_string()'
         content = re.sub(pattern, replacement, content)
 

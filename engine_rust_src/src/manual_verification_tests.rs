@@ -16,7 +16,7 @@ fn load_test_db() -> CardDatabase {
 fn test_strict_condition_logic_no_bypass() {
     let mut state = GameState::default();
     state.phase = Phase::Main;
-    
+
     let db = load_test_db();
 
     // Reset bypass mode to ensure strictness
@@ -29,36 +29,36 @@ fn test_strict_condition_logic_no_bypass() {
 
     // Put card 278 in hand (PL!HS-PR-019-PR)
     state.core.players[p0].hand.push(4135);
-    
+
     // SETUP FAILURE: Put non-heart 04 cards on top of deck
     state.core.players[p0].deck.clear();
-    state.core.players[p0].deck.push(1); 
+    state.core.players[p0].deck.push(1);
     state.core.players[p0].deck.push(11);
     state.core.players[p0].deck.push(12);
-    
+
     // Play card 278 (Action ID for hand 0, slot 0 is 1)
     let res = state.step(&db, (ACTION_BASE_HAND + 0) as i32);
     assert!(res.is_ok(), "Play should succeed with enough energy, res: {:?}", res);
-    
+
     // Check state: 3 cards should be in discard from the deck
     assert_eq!(state.core.players[p0].discard.len(), 3);
-    
+
     // Buff should NOT be applied because cards were not heart 04 members
     assert_eq!(state.core.players[p0].heart_buffs[0].get_color_count(4), 0, "Buff should not be applied if condition fails");
-    
+
     // SETUP SUCCESS
     let mut state = GameState::default();
     state.phase = Phase::Main;
     state.core.players[p0].energy_zone = vec![40000; 10].into();
     state.core.players[p0].tapped_energy_mask = 0;
     state.core.players[p0].hand.push(4135);
-    state.core.players[p0].deck.push(4135); 
     state.core.players[p0].deck.push(4135);
     state.core.players[p0].deck.push(4135);
-    
+    state.core.players[p0].deck.push(4135);
+
     let res = state.step(&db, (ACTION_BASE_HAND + 0) as i32);
     assert!(res.is_ok());
-    
+
     // Buff SHOULD be applied
     assert_eq!(state.core.players[p0].heart_buffs[0].get_color_count(4), 1);
 }
@@ -68,17 +68,17 @@ fn test_effect_dissipation_manual() {
     let mut state = GameState::default();
     state.phase = Phase::Main;
     let p0 = 0;
-    
+
     // Manually add a buff
     state.core.players[p0].blade_buffs[0] = 5;
     assert_eq!(state.core.players[p0].blade_buffs[0], 5);
-    
+
     // Simulate Turn Start (which calls untap_all in Active Phase)
     state.phase = Phase::Active;
     let db = load_test_db();
-    
+
     state.do_active_phase(&db);
-    
+
     // Buff should be cleared
     assert_eq!(state.core.players[p0].blade_buffs[0], 0, "Buff should be cleared during Active Phase");
 }

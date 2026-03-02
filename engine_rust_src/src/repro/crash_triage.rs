@@ -161,7 +161,7 @@ fn test_state_delta_verification() {
         let bc_clone = bytecode.clone();
         let trigger_clone = *trigger;
         let card_id_clone = *card_id;
-        
+
         let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
             // Setup controlled state
             let mut state = GameState::default();
@@ -193,12 +193,12 @@ fn test_state_delta_verification() {
 
             // Execute
             let bytecode_slice: &[i32] = &bc_clone;
-            state.resolve_bytecode(&db, bytecode_slice, &ctx);
+            state.resolve_bytecode_slice(&db, bytecode_slice, &ctx);
 
             let suspended = state.phase == Phase::Response || !state.interaction_stack.is_empty();
             let after = ZoneSnapshot::capture(&state.core.players[0], &state);
             let delta = StateDelta::compute(&before, &after, suspended);
-            
+
             (delta, suspended)
         }));
 
@@ -277,6 +277,6 @@ fn test_state_delta_verification() {
 
     // The test passes as long as more than 90% of abilities don't crash
     let crash_rate = crash_count as f64 / all_entries.len() as f64;
-    assert!(crash_rate < 0.10, "Crash rate {:.1}% exceeds 10% threshold ({} of {} crashed)", 
+    assert!(crash_rate < 0.10, "Crash rate {:.1}% exceeds 10% threshold ({} of {} crashed)",
         crash_rate * 100.0, crash_count, all_entries.len());
 }

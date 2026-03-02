@@ -4,7 +4,7 @@ use crate::core::enums::*;
 use super::HandlerResult;
 use super::super::suspension::resolve_target_slot;
 use super::super::conditions::resolve_count;
-use super::super::constants::DYNAMIC_VALUE;
+use super::super::constants::{DYNAMIC_VALUE, FILTER_MASK_LOWER};
 use super::super::logging;
 
 pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i64, s: i32) -> Option<HandlerResult> {
@@ -17,7 +17,7 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
             let mut final_v = v;
             if (a as u64 & DYNAMIC_VALUE) != 0 {
                 // slot (s) contains the count opcode
-                let count = resolve_count(state, _db, s, a as u64 & !DYNAMIC_VALUE, ctx, 0);
+                let count = resolve_count(state, _db, s, a as u64 & !DYNAMIC_VALUE & FILTER_MASK_LOWER, 0, ctx, 0);
                 final_v = v * count;
             }
             state.core.players[p_idx].live_score_bonus += final_v;
@@ -32,9 +32,13 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
         O_SET_SCORE => state.core.players[p_idx].score = v as u32,
         O_ADD_BLADES | O_BUFF_POWER => {
             if target_slot == 1 {
-                for t in 0..3 { state.core.players[p_idx].blade_buffs[t] += v as i16; }
+                for t in 0..3 { 
+                    state.core.players[p_idx].blade_buffs[t] += v as i16; 
+                    state.core.players[p_idx].blade_buff_logs.push((ctx.source_card_id, v as i16, t as u8));
+                }
             } else if resolved_slot < 3 {
                 state.core.players[p_idx].blade_buffs[resolved_slot as usize] += v as i16;
+                state.core.players[p_idx].blade_buff_logs.push((ctx.source_card_id, v as i16, resolved_slot as u8));
             }
             // Unified logging: EFFECT events now go to both turn_history and rule_log
             state.log_event("EFFECT", &format!("+{} Appeal", v), ctx.source_card_id, ctx.ability_index, p_idx as u8, None, true);
@@ -45,17 +49,21 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
             }
         },
         O_ADD_HEARTS => {
-            let mut color = a as usize;
+            let mut color = (a as u64 & FILTER_MASK_LOWER) as usize;
             if color == 0 { color = ctx.selected_color as usize; }
             if color < 7 {
                 // DEBUG: Log heart buff application
                 if state.debug.debug_mode {
-                    println!("[DEBUG O_ADD_HEARTS] target_slot={}, area_idx={}, color={}, v={}", target_slot, ctx.area_idx, color, v);
+                    // println!("[DEBUG O_ADD_HEARTS] target_slot={}, area_idx={}, color={}, v={}", target_slot, ctx.area_idx, color, v);
                 }
                 if (target_slot == 4 || target_slot == 0) && ctx.area_idx >= 0 {
                     state.core.players[p_idx].heart_buffs[ctx.area_idx as usize].add_to_color(color, v as i32);
+                    state.core.players[p_idx].heart_buff_logs.push((ctx.source_card_id, v, color as u8, ctx.area_idx as u8));
                 } else if target_slot == 1 {
-                    for t in 0..3 { state.core.players[p_idx].heart_buffs[t].add_to_color(color, v as i32); }
+                    for t in 0..3 { 
+                        state.core.players[p_idx].heart_buffs[t].add_to_color(color, v as i32); 
+                        state.core.players[p_idx].heart_buff_logs.push((ctx.source_card_id, v, color as u8, t as u8));
+                    }
                 }
             }
             if !state.ui.silent {
@@ -93,28 +101,27 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
         O_INCREASE_HEART_COST => {
              if (s as usize) < 7 {
                  state.core.players[p_idx].heart_req_additions.add_to_color(s as usize, v);
+                 state.core.players[p_idx].heart_req_addition_logs.push((ctx.source_card_id, s as u8, v as u8));
              }
         },
         O_SET_HEART_COST => {
-            // Set heart cost for a specific color or full map override
-            if (a & 0x01) != 0 {
-                // Packed map: v contains counts (4 bits per color)
-                // When using packed map, we assume it's an OVERRIDE, so we clear base by setting reductions to 255.
-                let player = &mut state.core.players[p_idx];
+            // Set heart cost map override
+            // IF v > 15 OR s == -1: Assume packed map (nibbles)
+            // ELSE: Treat s as color index and v as value
+            let player = &mut state.core.players[p_idx];
+            if v > 15 || s == -1 {
                 player.heart_req_additions = HeartBoard::default();
-                player.heart_req_reductions = HeartBoard(0x00FFFFFFFFFFFFFF); // Clear base (0..6)
-                
-                for color_idx in 0..7 {
-                    let count = ((v >> (color_idx * 4)) & 0xF) as u8;
+                player.heart_req_addition_logs.clear(); // Clear old overrides if setting a full board
+                for i in 0..7 {
+                    let count = ((v >> (i * 4)) & 0xF) as u8;
                     if count > 0 {
-                        player.heart_req_additions.set_color_count(color_idx, count);
+                        player.heart_req_additions.set_color_count(i, count);
+                        player.heart_req_addition_logs.push((ctx.source_card_id, i as u8, count));
                     }
                 }
-            } else {
-                // Legacy single-color behavior: v = amount to set, s = color index
-                if (s as usize) < 7 {
-                    state.core.players[p_idx].heart_req_additions.set_color_count(s as usize, v as u8);
-                }
+            } else if (s as usize) < 7 {
+                player.heart_req_additions.set_color_count(s as usize, v as u8);
+                player.heart_req_addition_logs.push((ctx.source_card_id, s as u8, v as u8));
             }
         },
         O_REDUCE_SCORE => {
@@ -123,7 +130,7 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
             let reduction = v.min(state.core.players[p_idx].live_score_bonus);
             state.core.players[p_idx].live_score_bonus -= reduction;
             if state.debug.debug_mode {
-                println!("[DEBUG] O_REDUCE_SCORE: reduced by {} to {}", reduction, state.core.players[p_idx].live_score_bonus);
+                // println!("[DEBUG] O_REDUCE_SCORE: reduced by {} to {}", reduction, state.core.players[p_idx].live_score_bonus);
             }
         },
         O_LOSE_EXCESS_HEARTS => {
@@ -132,9 +139,9 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
             let player = &mut state.core.players[p_idx];
             let reduction = if v == 0 { player.excess_hearts } else { v as u32 };
             player.excess_hearts = player.excess_hearts.saturating_sub(reduction);
-            
+
             if state.debug.debug_mode {
-                println!("[DEBUG] O_LOSE_EXCESS_HEARTS: reduced by {} to {}", reduction, player.excess_hearts);
+                // println!("[DEBUG] O_LOSE_EXCESS_HEARTS: reduced by {} to {}", reduction, player.excess_hearts);
             }
         },
         O_SKIP_ACTIVATE_PHASE => {
@@ -142,7 +149,7 @@ pub fn handle_score_hearts(state: &mut GameState, _db: &CardDatabase, ctx: &mut 
             // Used by cards that prevent member activation
             state.core.players[p_idx].skip_next_activate = true;
             if state.debug.debug_mode {
-                println!("[DEBUG] O_SKIP_ACTIVATE_PHASE: set skip_next_activate=true");
+                // println!("[DEBUG] O_SKIP_ACTIVATE_PHASE: set skip_next_activate=true");
             }
         },
         _ => return None,

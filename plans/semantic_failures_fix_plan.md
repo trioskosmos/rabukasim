@@ -53,7 +53,7 @@ The `OPPONENT_MEMBER_TAP_DELTA` is expected but **not tracked at all** in `ZoneS
 2. Capture P1's tap state in `ZoneSnapshot::capture`
 3. Add `OPPONENT_MEMBER_TAP_DELTA` delta calculation in `diff_snapshots`
 
-**Fix Location:** 
+**Fix Location:**
 - [`semantic_assertions.rs:760-842`](engine_rust_src/src/semantic_assertions.rs:760) - `diff_snapshots`
 - [`test_helpers.rs`](engine_rust_src/src/test_helpers.rs) - `ZoneSnapshot` struct
 

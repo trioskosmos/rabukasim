@@ -5,7 +5,7 @@ use crate::core::logic::*;
 fn test_phase_flow_mulligan_to_main() {
     let _db = load_real_db();
     let mut state = create_test_state();
-    
+
     // Setup Mulligan Phase
     state.phase = Phase::MulliganP1;
     // ensure deck has cards to draw if mulligan needs them
@@ -16,7 +16,7 @@ fn test_phase_flow_mulligan_to_main() {
 
     // Simulate Player 0 confirming mulligan (Keep all = discard empty list)
     state.execute_mulligan(0, vec![]);
-    
+
     // Should transition to P2 Mulligan
     assert_eq!(state.phase, Phase::MulliganP2);
     assert_eq!(state.current_player, 1);
@@ -38,16 +38,16 @@ fn test_phase_flow_main_to_next_turn() {
     state.current_player = 0;
     state.phase = Phase::Main;
     state.turn = 1;
-    
+
     // P1 Ends Main Phase -> Should go to P2 Active
     state.end_main_phase(&db);
-    
+
     assert_eq!(state.phase, Phase::Active);
     assert_eq!(state.current_player, 1);
 
     // P2 Ends Main Phase -> Should go to LiveSet (Round End)
     state.end_main_phase(&db);
-    
+
     assert_eq!(state.phase, Phase::LiveSet);
     assert_eq!(state.current_player, 0);
 }
@@ -63,14 +63,13 @@ fn test_phase_flow_active_to_main() {
 
     // auto_step should drive: Active -> Energy -> Draw -> Main
     state.auto_step(&db);
-    
+
     // Check if we reached Main
     assert_eq!(state.phase, Phase::Main);
-    
+
     // Check side effects were applied
     // Energy phase: +1 energy (10 base + 1 new = 11)
     assert_eq!(state.core.players[0].energy_zone.len(), 4);
     // Draw phase: +1 card (Hand was 0, now 1)
     assert_eq!(state.core.players[0].hand.len(), 1);
 }
-

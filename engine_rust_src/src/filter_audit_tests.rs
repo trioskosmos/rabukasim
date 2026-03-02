@@ -30,7 +30,7 @@ mod tests {
         let lid2 = (101 & LOGIC_ID_MASK) as usize;
         if db.members_vec.len() <= lid2 { db.members_vec.resize(lid2 + 1, None); }
         db.members_vec[lid2] = Some(m2);
-        
+
         db
     }
 
@@ -39,9 +39,9 @@ mod tests {
         let db = create_test_db();
         let mut state = GameState::default();
         state.core.players[0].hand = vec![100, 101, 101].into(); // 1 Liella, 2 Others
-        
+
         let ctx = AbilityContext::default();
-        
+
         // Condition: Hand count of Liella! >= 1
         let cond = Condition {
             condition_type: ConditionType::CountHand,
@@ -51,9 +51,9 @@ mod tests {
             params: serde_json::json!({"filter": "GROUP_ID=3"}),
             is_negated: false,
         };
-        
+
         assert!(check_condition(&state, &db, 0, &cond, &ctx, 0));
-        
+
         // Condition: Hand count of Liella! >= 2 (should fail)
         let cond2 = Condition {
             condition_type: ConditionType::CountHand,
@@ -71,9 +71,9 @@ mod tests {
         let db = create_test_db();
         let mut state = GameState::default();
         state.core.players[0].stage = [100, 100, -1]; // 2 same cards
-        
+
         let ctx = AbilityContext::default();
-        
+
         // Count stage with UNIQUE_NAMES
         let cond = Condition {
             condition_type: ConditionType::CountStage,
@@ -84,7 +84,7 @@ mod tests {
             is_negated: false,
         };
         assert!(check_condition(&state, &db, 0, &cond, &ctx, 0));
-        
+
         // Should NOT be >= 2 unique names
         let cond2 = Condition {
             condition_type: ConditionType::CountStage,
@@ -103,9 +103,9 @@ mod tests {
         let mut state = GameState::default();
         state.core.players[0].stage = [100, 101, -1];
         state.core.players[0].set_tapped(0, true); // 100 is tapped
-        
+
         let ctx = AbilityContext::default();
-        
+
         // Count tapped
         let cond = Condition {
             condition_type: ConditionType::CountStage,
@@ -116,7 +116,7 @@ mod tests {
             is_negated: false,
         };
         assert!(check_condition(&state, &db, 0, &cond, &ctx, 0));
-        
+
         // Count tapped liella
         let cond2 = Condition {
             condition_type: ConditionType::CountStage,
@@ -134,9 +134,9 @@ mod tests {
         let db = create_test_db();
         let mut state = GameState::default();
         state.core.players[0].hand = vec![101].into(); // Only non-liella
-        
+
         let ctx = AbilityContext::default();
-        
+
         // Cost: Discard 1 Liella
         let cost = Cost {
             cost_type: AbilityCostType::DiscardHand,
@@ -144,13 +144,13 @@ mod tests {
             params: serde_json::json!({"filter": "GROUP_ID=3"}),
             is_optional: false,
         };
-        
+
         assert!(!check_cost(&state, &db, 0, &cost, &ctx));
-        
+
         // Add Liella
         state.core.players[0].hand.push(100);
         assert!(check_cost(&state, &db, 0, &cost, &ctx));
-        
+
         // Pay cost
         let success = pay_cost(&mut state, &db, 0, &cost, &ctx);
         assert!(success);
@@ -165,9 +165,9 @@ mod tests {
         let db = create_test_db();
         let mut state = GameState::default();
         state.core.players[0].hand = vec![100, 101].into(); // Kanon, Other
-        
+
         let ctx = AbilityContext::default();
-        
+
         // Filter for "澁谷かのん" (Kanon)
         let cond = Condition {
             condition_type: ConditionType::CountHand,
@@ -185,9 +185,9 @@ mod tests {
         let db = create_test_db();
         let mut state = GameState::default();
         state.core.players[0].success_lives = vec![100].into(); // Success Live (simulated card ID)
-        
+
         let ctx = AbilityContext::default();
-        
+
         // Cost: Discard 1 Success Live with Liella group
         let cost = Cost {
             cost_type: AbilityCostType::DiscardSuccessLive,
@@ -195,7 +195,7 @@ mod tests {
             params: serde_json::json!({"filter": "GROUP_ID=3"}),
             is_optional: false,
         };
-        
+
         assert!(check_cost(&state, &db, 0, &cost, &ctx));
         assert!(pay_cost(&mut state, &db, 0, &cost, &ctx));
         assert!(state.core.players[0].success_lives.is_empty());

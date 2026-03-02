@@ -19,7 +19,7 @@ fn test_opcode_meta_rule() {
         let initial_restrictions = state.core.players[0].restrictions.clone();
 
         // Execute
-        state.resolve_bytecode(&db, &bytecode, &ctx);
+        state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
         // Verify it did NOTHING (as per current implementation)
         assert_eq!(state.core.players[0].flags, initial_flags);

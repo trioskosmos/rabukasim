@@ -1,6 +1,6 @@
-import os
 import re
 import sys
+
 
 def extract_deck(html_path, output_path):
     with open(html_path, "r", encoding="utf-8") as f:
@@ -19,16 +19,18 @@ def extract_deck(html_path, output_path):
     deck_lines = []
     seen = set()
     for code, qty in matches:
-        if code in seen: continue # Avoid duplicates due to img and span having same title
+        if code in seen:
+            continue  # Avoid duplicates due to img and span having same title
         seen.add(code)
         deck_lines.append(f"{code} x {qty}")
 
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("\n".join(deck_lines))
-    
+
     print(f"Extracted {len(deck_lines)} unique cards to {output_path}")
     for line in deck_lines:
         print(f"  {line}")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:

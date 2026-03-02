@@ -43,12 +43,26 @@ export async function loadTranslations(lang = 'jp') {
 }
 
 /**
- * Main entry point for translating ability text.
+ * Generic translation function for UI labels.
+ * Supports parameter substitution like {count}.
+ * @param {string} key
+ * @param {Object} params
+ * @returns {string}
  */
+export function t(key, params = {}) {
+    const langData = translations[currentLanguage] || translations.jp || {};
+    let text = (langData.ui && langData.ui[key]) ? langData.ui[key] : key;
+
+    for (const [k, v] of Object.entries(params)) {
+        text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+    }
+    return text;
+}
+
 export function translateAbility(rawText, lang = 'jp') {
     if (!rawText) return '';
-    const t = translations[lang] || translations.jp; // Fallback to JP if loaded, or raw if not
-    if (!t || Object.keys(t).length === 0) return rawText;
+    const tData = translations[lang] || translations.jp; // Fallback to JP if loaded, or raw if not
+    if (!tData || Object.keys(tData).length === 0) return rawText;
 
     const lines = rawText.split('\n');
     const translatedLines = [];
@@ -62,15 +76,15 @@ export function translateAbility(rawText, lang = 'jp') {
 
         // --- Heuristic Check for Raw Japanese ---
         if (lang === 'en' && /[亜-熙ぁ-んァ-ヶ]/.test(line) && !line.includes('EFFECT:') && !line.includes('CONDITION:') && !line.includes('COST:')) {
-            translatedLines.push(translateHeuristic(line));
+            translatedLines.push(translateHeuristic(line, tData));
             continue;
         }
 
         if (line.startsWith('TRIGGER:')) {
             const triggerKey = line.replace('TRIGGER:', '').trim();
             const id = TriggerType[triggerKey];
-            if (id !== undefined && t.triggers[id]) {
-                translatedLines.push(t.triggers[id]);
+            if (id !== undefined && tData.triggers[id]) {
+                translatedLines.push(tData.triggers[id]);
             } else {
                 const displayLabel = triggerKey.toLowerCase()
                     .split('_')
@@ -83,9 +97,9 @@ export function translateAbility(rawText, lang = 'jp') {
 
         let prefix = "", body = line, isPseudo = false;
         const upperLine = line.toUpperCase();
-        if (upperLine.startsWith('CONDITION:')) { prefix = t.misc.condition_prefix; body = line.substr(10).trim(); isPseudo = true; }
-        else if (upperLine.startsWith('COST:')) { prefix = t.misc.cost_prefix; body = line.substr(5).trim(); isPseudo = true; }
-        else if (upperLine.startsWith('EFFECT:')) { prefix = t.misc.effect_prefix; body = line.substr(7).trim(); isPseudo = true; }
+        if (upperLine.startsWith('CONDITION:')) { prefix = tData.misc.condition_prefix; body = line.substr(10).trim(); isPseudo = true; }
+        else if (upperLine.startsWith('COST:')) { prefix = tData.misc.cost_prefix; body = line.substr(5).trim(); isPseudo = true; }
+        else if (upperLine.startsWith('EFFECT:')) { prefix = tData.misc.effect_prefix; body = line.substr(7).trim(); isPseudo = true; }
         else if (line.match(/^\d+:/)) { const m = line.match(/^\d+:/); prefix = m[0] + " "; body = line.replace(m[0], '').trim(); isPseudo = true; }
         else if (line.includes('->') || Object.keys(EffectType).some(op => line.includes(op + '('))) {
             isPseudo = true;
@@ -109,23 +123,23 @@ export function translateAbility(rawText, lang = 'jp') {
                 const allParams = (trgtMatch && trgtMatch[2]) ? parseParams(trgtMatch[2]) : {};
                 const actOp = parts[0].split('(')[0];
                 const joiner = (lang === 'en' ? ((actOp.startsWith('RECOVER') || actOp === 'MOVE_TO_DECK') ? " from " : " to ") : " ");
-                const actionPart = translatePart(parts[0], t, lang, allParams, consumedKeys);
-                const targetPart = translatePart(parts[1], t, lang, allParams, consumedKeys);
+                const actionPart = translatePart(parts[0], tData, lang, allParams, consumedKeys);
+                const targetPart = translatePart(parts[1], tData, lang, allParams, consumedKeys);
                 return actionPart + joiner + targetPart;
             }
-            return translatePart(parts[0], t, lang, {}, consumedKeys);
+            return translatePart(parts[0], tData, lang, {}, consumedKeys);
         }).join('; ');
 
         let result = prefix + translatedBody;
-        if (isOnce) result = t.misc.once_per_turn + "\n" + result;
-        if (isOpt) result += t.misc.optional;
+        if (isOnce) result = tData.misc.once_per_turn + "\n" + result;
+        if (isOpt) result += tData.misc.optional;
         translatedLines.push(result);
     }
 
     return translatedLines.join('\n');
 }
 
-function translatePart(part, t, lang, allParams, consumedKeys) {
+function translatePart(part, tData, lang, allParams, consumedKeys) {
     if (!part) return '';
     const opcodeMatch = part.match(/^(\w+)(?:\((.*)\))?(?:\s*\{(.*?)\})?/);
     if (!opcodeMatch) return part;
@@ -137,7 +151,7 @@ function translatePart(part, t, lang, allParams, consumedKeys) {
     // Merge params: local part params override global block params
     const combinedParams = { ...allParams, ...localParams };
 
-    let template = t.opcodes[opcode] || opcode;
+    let template = tData.opcodes[opcode] || opcode;
     let translated = template;
 
     // Numerical value substitution
@@ -154,12 +168,12 @@ function translatePart(part, t, lang, allParams, consumedKeys) {
         const placeholder = `{${k.toLowerCase()}}`;
         let replacement = null;
 
-        if (t.params[k]) {
-            replacement = t.params[k][v] || v;
+        if (tData.params[k]) {
+            replacement = tData.params[k][v] || v;
         } else if (k === 'NAME' || k === 'NAMES') {
             replacement = v.split('/').map(n => NAME_MAP[n] || n).join(lang === 'en' ? ' & ' : '＆');
         } else if (k === 'COLOR') {
-            replacement = t.params.COLOR[v] || v;
+            replacement = tData.params.COLOR[v] || v;
         } else {
             replacement = v;
         }
@@ -188,10 +202,10 @@ function translatePart(part, t, lang, allParams, consumedKeys) {
 
     // Color/Icon handling
     if (colorVal && (opcode === 'HEARTS' || opcode === 'ADD_HEARTS' || opcode === 'SET_HEARTS' || opcode === 'PAY_ENERGY' || opcode === 'ENERGY')) {
-        const cName = t.params.COLOR[colorVal] || colorVal;
+        const cName = tData.params.COLOR[colorVal] || colorVal;
         const iconTag = (opcode.includes('HEART')) ? `【${cName} Hearts】` : `【${cName} Energy】`;
         if (lang === 'jp') {
-            const jpCName = t.params.COLOR[colorVal] || colorVal;
+            const jpCName = tData.params.COLOR[colorVal] || colorVal;
             const jpIconTag = (opcode.includes('HEART')) ? `【${jpCName}ハート】` : `【${jpCName}エネ】`;
             translated = translated.replace(/【ハート】|ハート|【エネ】|エネ/, jpIconTag);
         } else {
@@ -213,27 +227,18 @@ function translatePart(part, t, lang, allParams, consumedKeys) {
     return translated.trim().replace(/\s+/g, ' ');
 }
 
-function translateHeuristic(text) {
+function translateHeuristic(text, tData) {
     if (!text) return "";
-    let t = text;
-    // Common Phrases (Legacy parity)
-    t = t.replace(/自分のデッキの上からカードを(\d+)枚見る/g, "Look at top $1 card(s) of Deck");
-    t = t.replace(/その中から(.+?)を(\d+)枚公開して手札に加えてもよい/g, "You may add $2 $1 from them to hand");
-    t = t.replace(/残りを控え室に置く/g, "Discard the rest");
-    t = t.replace(/ドローする/g, "Draw a card");
-    t = t.replace(/カードを(\d+)枚引く/g, "Draw $1 card(s)");
-    t = t.replace(/自分の手札を(\d+)枚控え室に置く/g, "Discard $1 card(s) from hand");
-    t = t.replace(/手札を(\d+)枚控え室に置いてもよい/g, "You may discard $1 card from hand");
-    t = t.replace(/このメンバーをステージから控え室に置く/g, "Retire this Member");
-    t = t.replace(/自分の控え室から(.+?)を(\d+)枚手札に加える/g, "Return $2 $1 from Discard to Hand");
-    t = t.replace(/ライブ/g, "Live");
-    t = t.replace(/メンバー/g, "Member");
-    t = t.replace(/カード/g, "Card");
-    t = t.replace(/コスト/g, "Cost");
-    t = t.replace(/以下/g, " or less");
-    t = t.replace(/以上/g, " or more");
-    t = t.replace(/の/g, " ");
-    return t;
+    let result = text;
+
+    // Use heuristic patterns from JSON if available
+    if (tData.heuristics && Array.isArray(tData.heuristics)) {
+        for (const h of tData.heuristics) {
+            const regex = new RegExp(h.jp, 'g');
+            result = result.replace(regex, h.en);
+        }
+    }
+    return result;
 }
 
 function parseParams(paramsStr) {

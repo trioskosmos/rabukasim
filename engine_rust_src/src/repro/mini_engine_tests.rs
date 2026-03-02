@@ -39,22 +39,22 @@ fn mini_test_o_pay_energy_resumption() {
     let bc = vec![64, 1, 0, 0, 10, 1, 0, 1, 1, 0, 0, 0];
     let db = create_mini_db_with_bytecode(bc);
     let mut state = create_mini_state();
-    
+
     // Setup energy (2 untapped, need 1 -> should suspend for choice)
     state.core.players[0].tapped_energy_mask = 0;
-    
+
     // Populate deck so DRAW works
     state.core.players[0].deck.extend(vec![1, 2, 3, 4, 5]);
-    
+
     // Activate the ability at slot 0, ability 0
     state.activate_ability_with_choice(&db, 0, 0, -1, 0).unwrap();
-    
+
     assert_eq!(state.phase, Phase::Response, "Should suspend for PAY_ENERGY selection");
     assert_eq!(state.interaction_stack.last().map(|i| i.effect_opcode).unwrap_or(0), 64, "Pending opcode should be O_PAY_ENERGY");
-    
+
     // Resume with SelectResponseSlot action
     state.step(&db, Action::SelectResponseSlot { slot_idx: 0 }.id() as i32).unwrap();
-    
+
     assert!(state.core.players[0].is_energy_tapped(0), "Energy should be tapped");
     assert_eq!(state.core.players[0].hand.len(), 1, "Should have resumed and drawn a card");
     assert_eq!(state.phase, Phase::Main, "Should return to Main phase");
@@ -74,19 +74,19 @@ fn mini_test_o_select_mode_resumption() {
     ];
     let db = create_mini_db_with_bytecode(bc);
     let mut state = create_mini_state();
-    
+
     // Populate deck so DRAW works
     state.core.players[0].deck.extend(vec![1, 2, 3, 4, 5]);
-    
+
     // Activate the ability at slot 0, ability 0
     state.activate_ability_with_choice(&db, 0, 0, -1, 0).unwrap();
-    
+
     assert_eq!(state.phase, Phase::Response, "Should suspend for SELECT_MODE");
     assert_eq!(state.interaction_stack.last().map(|i| i.effect_opcode).unwrap_or(0), 30, "Pending opcode should be O_SELECT_MODE");
-    
+
     // Pick Option 2 (choice_idx=1)
     state.step(&db, Action::SelectChoice { choice_idx: 1 }.id() as i32).unwrap();
-    
+
     assert_eq!(state.core.players[0].hand.len(), 2, "Should have picked Option 2 and drawn 2 cards");
     assert_eq!(state.phase, Phase::Main, "Should return to Main phase");
 }

@@ -5,7 +5,7 @@ use super::constants::*;
 
 pub fn pay_costs_transactional(state: &mut GameState, db: &CardDatabase, costs: &[Cost], ctx: &AbilityContext) -> bool {
     let p_idx = ctx.player_id as usize;
-    
+
     // 1. Pre-check all costs
     for cost in costs {
         if cost.is_optional { continue; } // Skip optional costs in the transactional shell
@@ -13,19 +13,19 @@ pub fn pay_costs_transactional(state: &mut GameState, db: &CardDatabase, costs: 
             return false;
         }
     }
-    
+
     // 2. Pay all costs
-    // Note: Since we pre-checked, these should succeed. 
-    // If a cost has side effects that invalidate subsequent costs, 
+    // Note: Since we pre-checked, these should succeed.
+    // If a cost has side effects that invalidate subsequent costs,
     // we might need a more complex rollback mechanism.
     for cost in costs {
         if cost.is_optional { continue; } // Skip optional costs in the transactional shell
         if !pay_cost(state, db, p_idx, cost, ctx) {
             // This shouldn't happen if check_cost is accurate
-            return false; 
+            return false;
         }
     }
-    
+
     true
 }
 
@@ -34,7 +34,10 @@ pub fn check_cost(state: &GameState, db: &CardDatabase, p_idx: usize, cost: &Cos
     let val = cost.value as usize;
     let mut attr: u64 = 0;
     if let Some(params) = cost.params.as_object() {
-        if let Some(filter_str) = params.get("filter").and_then(|v| v.as_str()) {
+        let get_param = |key: &str| -> Option<&serde_json::Value> {
+            params.get(key).or_else(|| params.get(&key.to_uppercase()))
+        };
+        if let Some(filter_str) = get_param("filter").and_then(|v| v.as_str()) {
             attr = map_filter_string_to_attr(filter_str);
         }
     }
@@ -120,8 +123,10 @@ pub fn check_cost(state: &GameState, db: &CardDatabase, p_idx: usize, cost: &Cos
      };
 
     if !result && state.debug.debug_ignore_conditions {
-        if let Ok(mut bypassed) = state.debug.bypassed_conditions.0.lock() {
-            bypassed.push(format!("BYPASS Cost: Type {:?}, Value {}", cost.cost_type, cost.value));
+        if let Some(ref log) = state.debug.bypassed_conditions {
+            if let Ok(mut bypassed) = log.0.lock() {
+                bypassed.push(format!("BYPASS Cost: Type {:?}, Value {}", cost.cost_type, cost.value));
+            }
         }
         return true;
     }
@@ -131,13 +136,18 @@ pub fn check_cost(state: &GameState, db: &CardDatabase, p_idx: usize, cost: &Cos
 pub fn pay_cost(state: &mut GameState, db: &CardDatabase, p_idx: usize, cost: &Cost, ctx: &AbilityContext) -> bool {
     let mut attr = 0;
     if let Some(params) = cost.params.as_object() {
-        if let Some(filter_str) = params.get("filter").and_then(|v| v.as_str()) {
+        let get_param = |key: &str| -> Option<&serde_json::Value> {
+            params.get(key).or_else(|| params.get(&key.to_uppercase()))
+        };
+        if let Some(filter_str) = get_param("filter").and_then(|v| v.as_str()) {
             attr = map_filter_string_to_attr(filter_str);
         }
     }
 
     if state.debug.debug_mode {
-        println!("[DEBUG] Paying Cost: {:?}, Value: {}, Card: {}", cost.cost_type, cost.value, ctx.source_card_id);
+        // if state.debug.debug_mode {
+        //     println!("[DEBUG] Paying Cost: {:?}, Value: {}, Card: {}", cost.cost_type, cost.value, ctx.source_card_id);
+        // }
     }
     let result = match cost.cost_type {
         AbilityCostType::None => true,
@@ -158,7 +168,7 @@ pub fn pay_cost(state: &mut GameState, db: &CardDatabase, p_idx: usize, cost: &C
         AbilityCostType::TapMember => {
             let player = &mut state.core.players[p_idx];
             let mut needed = cost.value as usize;
-            if needed == 0 { 
+            if needed == 0 {
                 // FALLBACK: Value 0 means "Tap Self"
                 if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
                     player.set_tapped(ctx.area_idx as usize, true);
@@ -166,7 +176,7 @@ pub fn pay_cost(state: &mut GameState, db: &CardDatabase, p_idx: usize, cost: &C
                 }
                 return false;
             }
-            
+
             // Prioritize source slot if it's untapped (Wait Self behavior)
             if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
                 let slot = ctx.area_idx as usize;
@@ -175,7 +185,7 @@ pub fn pay_cost(state: &mut GameState, db: &CardDatabase, p_idx: usize, cost: &C
                     needed -= 1;
                 }
             }
-            
+
             if needed > 0 {
                 for i in 0..3 {
                     if !player.is_tapped(i) && player.stage[i] >= 0 {
@@ -203,7 +213,7 @@ pub fn pay_cost(state: &mut GameState, db: &CardDatabase, p_idx: usize, cost: &C
         AbilityCostType::DiscardHand => {
             let count = cost.value as usize;
             let filter_attr = attr;
-            
+
             if (filter_attr & FILTER_TYPE_MASK) != 0 {
                 let mut to_discard = Vec::new();
                 for &cid in &state.core.players[p_idx].hand {
@@ -212,9 +222,9 @@ pub fn pay_cost(state: &mut GameState, db: &CardDatabase, p_idx: usize, cost: &C
                         if to_discard.len() >= count { break; }
                     }
                 }
-                
+
                 if to_discard.len() < count { return false; }
-                
+
                 for cid in to_discard {
                     if let Some(pos) = state.core.players[p_idx].hand.iter().position(|&x| x == cid) {
                         state.core.players[p_idx].hand.remove(pos);

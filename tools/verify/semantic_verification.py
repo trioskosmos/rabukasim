@@ -14,7 +14,6 @@ from collections import defaultdict
 
 sys.path.append(os.getcwd())
 
-from engine.models.ability import Ability
 from compiler.parser_v2 import parse_ability_text
 
 

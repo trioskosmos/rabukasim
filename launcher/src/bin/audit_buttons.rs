@@ -32,19 +32,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut gs_ab = GameState::default();
         gs_ab.phase = Phase::Main;
         gs_ab.players[0].stage = [cid as i32, -1, -1];
-        
+
         for (ab_idx, _) in member.abilities.iter().enumerate() {
-            let aid = ACTION_BASE_STAGE + (0 * 10) + ab_idx as i32; 
+            let aid = ACTION_BASE_STAGE + (0 * 10) + ab_idx as i32;
             let (l_jp, d_jp, t_str, _, _) = get_action_desc_rich(aid, &gs_ab, &card_db, 0, "jp");
-            
+
             if t_str == "ABILITY" || t_str == "ACTIVATE" {
                 let (l_en, d_en, _, _, _) = get_action_desc_rich(aid, &gs_ab, &card_db, 0, "en");
-                let entry = json!({ 
-                    "context": format!("On Stage (AbIdx {})", ab_idx), 
-                    "id": aid, 
-                    "type": t_str.clone(), 
-                    "jp": { "label": l_jp.clone(), "desc": d_jp.clone() }, 
-                    "en": { "label": l_en.clone(), "desc": d_en.clone() } 
+                let entry = json!({
+                    "context": format!("On Stage (AbIdx {})", ab_idx),
+                    "id": aid,
+                    "type": t_str.clone(),
+                    "jp": { "label": l_jp.clone(), "desc": d_jp.clone() },
+                    "en": { "label": l_en.clone(), "desc": d_en.clone() }
                 });
                 card_entries.push(entry.clone());
                 unique_labels.entry(l_jp.clone()).or_insert(json!({
@@ -63,15 +63,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for (ab_idx, _) in member.abilities.iter().enumerate() {
             let aid = ACTION_BASE_DISCARD_ACTIVATE + (0 * 10) + ab_idx as i32;
             let (l_jp, d_jp, t_str, _, _) = get_action_desc_rich(aid, &gs_ds, &card_db, 0, "jp");
-            
+
             if t_str == "ABILITY" || t_str == "ACTIVATE" {
                 let (l_en, d_en, _, _, _) = get_action_desc_rich(aid, &gs_ds, &card_db, 0, "en");
-                let entry = json!({ 
-                    "context": format!("In Discard (AbIdx {})", ab_idx), 
-                    "id": aid, 
-                    "type": t_str.clone(), 
-                    "jp": { "label": l_jp.clone(), "desc": d_jp.clone() }, 
-                    "en": { "label": l_en.clone(), "desc": d_en.clone() } 
+                let entry = json!({
+                    "context": format!("In Discard (AbIdx {})", ab_idx),
+                    "id": aid,
+                    "type": t_str.clone(),
+                    "jp": { "label": l_jp.clone(), "desc": d_jp.clone() },
+                    "en": { "label": l_en.clone(), "desc": d_en.clone() }
                 });
                 card_entries.push(entry.clone());
                 unique_labels.entry(l_jp.clone()).or_insert(json!({
@@ -106,19 +106,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut gs_ab = GameState::default();
         gs_ab.phase = Phase::Main;
         gs_ab.players[0].stage = [cid as i32, -1, -1];
-        
+
         for (ab_idx, _) in live.abilities.iter().enumerate() {
             let aid = ACTION_BASE_STAGE + (0 * 10) + ab_idx as i32;
             let (l_jp, d_jp, t_str, _, _) = get_action_desc_rich(aid, &gs_ab, &card_db, 0, "jp");
-            
+
             if t_str == "ABILITY" || t_str == "ACTIVATE" {
                 let (l_en, d_en, _, _, _) = get_action_desc_rich(aid, &gs_ab, &card_db, 0, "en");
-                let entry = json!({ 
-                    "context": format!("Live Ability (AbIdx {})", ab_idx), 
-                    "id": aid, 
-                    "type": t_str.clone(), 
-                    "jp": { "label": l_jp.clone(), "desc": d_jp.clone() }, 
-                    "en": { "label": l_en.clone(), "desc": d_en.clone() } 
+                let entry = json!({
+                    "context": format!("Live Ability (AbIdx {})", ab_idx),
+                    "id": aid,
+                    "type": t_str.clone(),
+                    "jp": { "label": l_jp.clone(), "desc": d_jp.clone() },
+                    "en": { "label": l_en.clone(), "desc": d_en.clone() }
                 });
                 card_entries.push(entry.clone());
                 unique_labels.entry(l_jp.clone()).or_insert(json!({
@@ -143,7 +143,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 4. Selection Action Audit (Simulation)
     println!("Auditing selection actions...");
     let mut selection_audit = Vec::new();
-    
+
     // Test Case: O_LOOK_AND_CHOOSE with mocked looked_cards
     let mut gs_sel = GameState::default();
     gs_sel.phase = Phase::Response;
@@ -152,7 +152,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ..Default::default()
     });
     gs_sel.players[0].looked_cards = vec![1179, 10].into(); // Some random IDs (Rank 19 and something else)
-    
+
     let mut entries = Vec::new();
     for choice_idx in 0..2 {
         let aid = ACTION_BASE_CHOICE + choice_idx as i32; // Action::SelectChoice { choice_idx }
@@ -183,7 +183,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ..Default::default()
     });
     gs_rec.players[0].hand = vec![1179, 500].into();
-    
+
     let mut entries = Vec::new();
     for hand_idx in 0..2 {
         let aid = ACTION_BASE_HAND_SELECT + hand_idx as i32; // Action::SelectHand { hand_idx }
@@ -214,7 +214,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ..Default::default()
     });
     gs_sm.players[0].stage = [1179, 10, -1];
-    
+
     let mut entries = Vec::new();
     for slot_idx in 0..2 {
         let aid = ACTION_BASE_CHOICE + slot_idx as i32; // Action::SelectChoice { choice_idx }
@@ -245,7 +245,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ..Default::default()
     });
     gs_to.players[1].stage = [500, -1, -1]; // Opponent has one card on left
-    
+
     let mut entries = Vec::new();
     for slot_idx in 0..1 {
         let aid = ACTION_BASE_CHOICE + slot_idx as i32; // Action::SelectChoice { choice_idx }
@@ -280,7 +280,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut unique_list: Vec<_> = unique_labels.into_values().collect();
     // Sort by label for easier reading
     unique_list.sort_by_key(|v| v.get("jp_label").and_then(|s| s.as_str()).unwrap_or("").to_string());
-    
+
     let unique_out = serde_json::to_string_pretty(&unique_list)?;
     let mut file_u = File::create("action_buttons_unique.json")?;
     file_u.write_all(unique_out.as_bytes())?;

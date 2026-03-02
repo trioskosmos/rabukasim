@@ -34,7 +34,7 @@ fn test_refresh_on_look_at_top_x() {
     // O_LOOK_DECK, Value 3 (Look at top 3)
     // Rule 10.2.2.2: Refresh because deck (1) < needed (3)
     let bytecode = vec![O_LOOK_DECK, 3, 0, 0, O_RETURN, 0, 0, 0];
-    state.resolve_bytecode(&db, &bytecode, &ctx);
+    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
     // After refresh, deck should have 1 (original) + 3 (refreshed) = 4 cards.
     // However, LOOK_DECK pops 3 cards from the deck.
@@ -84,7 +84,7 @@ fn test_refresh_on_look_and_choose() {
     // O_LOOK_AND_CHOOSE, Value 3, Attr 30 (Hand destination), Target 0 (Deck source)
     // Rule 10.2.2.2: Refresh because deck (1) < needed (3)
     let bytecode = vec![O_LOOK_AND_CHOOSE, 259, 0, 6, O_RETURN, 0, 0, 0];
-    state.resolve_bytecode(&db, &bytecode, &ctx);
+    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
     // After refresh, deck should have 1 + 3 = 4 cards.
     // Pop 3: 120, ?, ? -> These go to looked_cards.

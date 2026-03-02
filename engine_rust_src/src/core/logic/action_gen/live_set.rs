@@ -8,7 +8,7 @@ impl ActionGenerator for LiveSetGenerator {
         let player = &state.core.players[p_idx];
         receiver.add_action(0);
         if player.live_zone.iter().any(|&cid| cid == -1) {
-            for i in 0..player.hand.len().min(60) {
+            for (i, &_cid) in player.hand.iter().enumerate() {
                 // Rule 8.2.2: Any card can be placed in the live zone.
                 receiver.add_action((crate::core::logic::ACTION_BASE_LIVESET + i as i32) as usize);
             }

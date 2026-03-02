@@ -1,5 +1,3 @@
-import os
-
 path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\launcher\src\serialization.rs"
 
 # We will read the whole file as a string (handling possible encoding mess)
@@ -37,7 +35,7 @@ new_func = """pub fn get_ability_summary(ab: &Value, lang: &str) -> String {
     let val = eff.get("value").and_then(|v| v.as_i64()).unwrap_or(0);
     let target = eff.get("target").and_then(|v| v.as_i64()).unwrap_or(0);
     let params = eff.get("params").and_then(|v| v.as_object());
-    
+
     let tg_name = if lang == "jp" {
         match target {
             1 => "自分",
@@ -71,7 +69,7 @@ choice_titles_jp = {
     "SELECT_LIVE_SLOT": "ライブスロットを選択してください",
     "SELECT_STAGE": "ステージを選択してください",
     "PAY_ENERGY": "エネルギーを選択してください",
-    "_": "選択してください"
+    "_": "選択してください",
 }
 
 for key, val in choice_titles_jp.items():
@@ -80,7 +78,7 @@ for key, val in choice_titles_jp.items():
         content = re.sub(r'_ => "驕ｸ謚槭＠縺ｦ縺上□縺輔＞"\.to_string\(\)', f'_ => "{val}".to_string()', content)
     else:
         # Match "KEY" => "MOJIBAKE".to_string()
-        pattern = fr'"{key}" => ".*"\.to_string\(\)'
+        pattern = rf'"{key}" => ".*"\.to_string\(\)'
         replacement = f'"{key}" => "{val}".to_string()'
         content = re.sub(pattern, replacement, content)
 

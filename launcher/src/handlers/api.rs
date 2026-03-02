@@ -2,7 +2,7 @@ use tiny_http::{Request, Response, Header};
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use uuid::Uuid;
 use engine_rust::core::logic::GameState;
 use engine_rust::core::logic::Phase;
@@ -10,7 +10,7 @@ use engine_rust::core::mcts::{MCTS, SearchHorizon};
 
 // Removed SearchHorizon, EvalMode imports as they were unused
 // Removed unused Request types from import
-use crate::models::{AppState, Room, CreateRoomReq, JoinRoomReq, ActionReq, UploadDeckReq, SetDeckReq};
+use crate::models::{AppState, Room, CreateRoomReq, JoinRoomReq, ActionReq, UploadDeckReq, SetDeckReq, BoardOverrideReq};
 use crate::serialization::{serialize_state_rich, get_action_desc_rich};
 use crate::utils::{parse_body, generate_room_code, get_header, resolve_deck, get_random_valid_deck, parse_deck_content, load_named_deck};
 use crate::Decks;
@@ -23,8 +23,8 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
     match path {
         "api/status" => {
             let rooms = state.rooms.lock().unwrap();
-            response_json = json!({ 
-                "status": "rust_server", 
+            response_json = json!({
+                "status": "rust_server",
                 "instance_id": state.server_instance_id,
                 "rooms": rooms.len(),
                 "members": state.card_db.members.len(),
@@ -53,7 +53,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                 let is_pve = body.mode.as_deref() == Some("pve");
                 if let (Some(p0_main), Some(p0_energy)) = (&body.p0_deck, &body.p0_energy) {
                     let p0 = resolve_deck(p0_main, p0_energy, &state.card_db);
-                    
+
                     let p1 = if let (Some(p1_main), Some(p1_energy)) = (&body.p1_deck, &body.p1_energy) {
                         resolve_deck(p1_main, p1_energy, &state.card_db)
                     } else {
@@ -93,20 +93,22 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                     pending_decks,
                     is_ai_thinking: false,
                     ai_status: String::new(),
+                    history: VecDeque::new(),
+                    redo_history: VecDeque::new(),
                 };
 
                 let room_arc = Arc::new(Mutex::new(new_room));
                 rooms.insert(room_id.clone(), room_arc);
-                println!("[API] SUCCESS: Created room {} (mode: {}). Decks: P0={}, P1={}", 
-                    room_id, mode_str, 
+                println!("[API] SUCCESS: Created room {} (mode: {}). Decks: P0={}, P1={}",
+                    room_id, mode_str,
                     body.p0_deck.as_ref().map(|d| d.len()).unwrap_or(0),
                     body.p1_deck.as_ref().map(|d| d.len()).unwrap_or(0)
                 );
                 response_json = json!({ "success": true, "room_id": room_id, "session": token, "player_idx": 0 }).to_string();
-            } else { 
-                status = 400; 
+            } else {
+                status = 400;
                 let err_msg = body_res.err().unwrap_or_else(|| "Unknown error".to_string());
-                response_json = json!({"error": "Invalid body"}).to_string(); 
+                response_json = json!({"error": "Invalid body"}).to_string();
                 println!("[API] FAILED to create room: {}", err_msg);
             }
         },
@@ -153,16 +155,16 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                     let room = room_arc.lock().unwrap();
                     let viewer_idx = session.as_ref().and_then(|s| room.players.get(s)).cloned().unwrap_or(2);
                     let needs_deck = if viewer_idx < 2 && room.state.phase == Phase::Setup { room.pending_decks[viewer_idx].is_none() } else { false };
-                    
+
                     if needs_deck {
                         println!("[API] Room {}: Player {} needs deck selection (Phase: {:?})", rid, viewer_idx, room.state.phase);
                     }
 
                     let state_val = serialize_state_rich(
-                        &room.state, 
-                        &state.card_db, 
-                        &room.mode, 
-                        viewer_idx, 
+                        &room.state,
+                        &state.card_db,
+                        &room.mode,
+                        viewer_idx,
                         0,
                         room.is_ai_thinking,
                         room.ai_status.clone(),
@@ -170,8 +172,8 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                         needs_deck
                     );
                     response_json = json!({ "success": true, "state": state_val }).to_string();
-                } else { 
-                    status = 404; 
+                } else {
+                    status = 404;
                     println!("[API] State request failed: Room {} not found in map (Existing: {:?})", rid, rooms.keys().collect::<Vec<_>>());
                 }
             } else { status = 400; }
@@ -194,6 +196,12 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                         };
 
                         if is_my_turn {
+                            // Save state to history before action
+                            let snapshot = room.state.clone();
+                            room.history.push_back(snapshot);
+                            if room.history.len() > 50 { room.history.pop_front(); }
+                            room.redo_history.clear(); // Clear redo on action
+
                             if let Err(e) = room.state.step(&state.card_db, body.action_id) {
                                 response_json = json!({"success": false, "error": e.to_string()}).to_string();
                             } else {
@@ -204,14 +212,14 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                                     use engine_rust::core::heuristics::OriginalHeuristic;
                                     let heuristic = OriginalHeuristic::default();
                                     let mut steps = 0;
-                                    
+
                                     loop {
                                         let ai_needed = match room.state.phase {
                                             Phase::Response => room.state.interaction_stack.last().map_or(false, |p| p.ctx.player_id == 1),
                                             Phase::Rps => room.state.rps_choices[1] == -1,
                                             _ => room.state.current_player == 1,
                                         };
-                                        
+
                                         if ai_needed && room.state.phase != Phase::Terminal && steps < 5 {
                                             room.state.step_opponent_greedy(&state.card_db, &heuristic);
                                             steps += 1;
@@ -228,7 +236,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                                     Phase::Rps => room.state.rps_choices[1] == -1,
                                     _ => room.state.current_player == 1,
                                 };
-                                
+
                                 let will_think_in_background = room.mode == "pve" && room.state.phase != Phase::Terminal && !room.is_ai_thinking && ai_needed_after;
                                 if will_think_in_background {
                                     room.is_ai_thinking = true;
@@ -240,10 +248,10 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                                 let needs_deck = if viewer_idx < 2 && room.state.phase == Phase::Setup { room.pending_decks[viewer_idx].is_none() } else { false };
 
                                 let state_val = serialize_state_rich(
-                                    &room.state, 
-                                    &state.card_db, 
-                                    &room.mode, 
-                                    viewer_idx, 
+                                    &room.state,
+                                    &state.card_db,
+                                    &room.mode,
+                                    viewer_idx,
                                     0,
                                     room.is_ai_thinking,
                                     room.ai_status.clone(),
@@ -256,7 +264,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                                 if will_think_in_background {
                                     let state_clone = state.clone();
                                     let room_arc_clone = room_arc.clone();
-                                    
+
                                     thread::spawn(move || {
                                         use engine_rust::core::logic::Phase;
                                         use engine_rust::core::heuristics::OriginalHeuristic;
@@ -270,7 +278,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                                                     Phase::Rps => room.state.rps_choices[1] == -1,
                                                     _ => room.state.current_player == 1,
                                                 };
-                                                
+
                                                 if ai_needed && room.state.phase != Phase::Terminal && steps < 50 {
                                                     room.state.step_opponent_greedy(&state_clone.card_db, &heuristic);
                                                     steps += 1;
@@ -305,7 +313,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                             if room.pending_decks[0].is_some() && room.pending_decks[1].is_some() {
                             let p0_decks = room.pending_decks[0].clone().unwrap();
                             let p1_decks = room.pending_decks[1].clone().unwrap();
-                            
+
                             let mut p0_main = p0_decks.members;
                             p0_main.extend(p0_decks.lives);
                             let mut p1_main = p1_decks.members;
@@ -331,7 +339,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                 .filter(|n| n.ends_with(".txt"))
                 .map(|n| n.as_ref().trim_end_matches(".txt").to_string())
                 .collect();
-            
+
             let decks_enriched: Vec<Value> = available.into_iter().map(|n| {
                 let (main, energy) = load_named_deck(&n).unwrap_or((vec![], vec![]));
                 json!({
@@ -348,7 +356,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
         "api/get_random_deck" => {
             let deck = crate::utils::get_random_valid_deck(&state.card_db);
             let mut content = Vec::new();
-            
+
             // Map Members
             for &mid in &deck.members {
                 if let Some(m) = state.card_db.members.get(&mid) {
@@ -368,9 +376,9 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                     energy.push(e.card_no.clone());
                 }
             }
-            
+
             response_json = json!({
-                "success": true, 
+                "success": true,
                 "content": content,
                 "energy": energy
             }).to_string();
@@ -381,7 +389,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
         },
         "api/get_test_deck" => {
             let name = query.and_then(|q| q.split('&').find(|p| p.starts_with("deck=")).map(|p| &p[5..])).unwrap_or("default");
-            
+
             if let Some((main, energy)) = load_named_deck(name) {
                 response_json = json!({"success": true, "main_deck": main, "energy_deck": energy}).to_string();
             } else {
@@ -389,7 +397,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                 let fallback_name = Decks::iter()
                     .find(|n| n.ends_with(".txt"))
                     .map(|n| n.as_ref().trim_end_matches(".txt").to_string());
-                
+
                 if let Some(fb_name) = fallback_name {
                     if let Some((main, energy)) = load_named_deck(&fb_name) {
                         response_json = json!({"success": true, "main_deck": main, "energy_deck": energy, "fallback": true, "fallback_name": fb_name}).to_string();
@@ -445,11 +453,161 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                 } else { status = 404; }
             } else { status = 400; }
         },
+        "api/debug/apply_state" => {
+            let room_id = get_header(&request, "X-Room-Id");
+            if let Some(rid) = room_id {
+                let rooms = state.rooms.lock().unwrap();
+                if let Some(room_arc) = rooms.get(&rid) {
+                    let mut room = room_arc.lock().unwrap();
+                    match parse_body::<GameState>(&mut request) {
+                        Ok(new_state) => {
+                            // Save state to history before warp
+                            let snapshot = room.state.clone();
+                            room.history.push_back(snapshot);
+                            if room.history.len() > 50 { room.history.pop_front(); }
+                            room.redo_history.clear(); // Clear redo on warp
+
+                            room.state = new_state;
+                            room.last_update = std::time::SystemTime::now();
+                            response_json = json!({"success": true}).to_string();
+                            println!("[DEBUG] Room {}: State applied via Warp.", rid);
+                        },
+                        Err(e) => {
+                            status = 400;
+                            response_json = json!({"success": false, "error": e}).to_string();
+                            println!("[DEBUG] Room {}: Failed to apply state: {}", rid, e);
+                        }
+                    }
+                } else { status = 404; }
+            } else { status = 400; }
+        },
+        "api/debug/board_override" => {
+            let room_id = get_header(&request, "X-Room-Id");
+            if let Some(rid) = room_id {
+                let rooms = state.rooms.lock().unwrap();
+                if let Some(room_arc) = rooms.get(&rid) {
+                    let mut room = room_arc.lock().unwrap();
+                    match parse_body::<BoardOverrideReq>(&mut request) {
+                        Ok(req) => {
+                            // Save state to history before warp
+                            let snapshot = room.state.clone();
+                            room.history.push_back(snapshot);
+                            if room.history.len() > 50 { room.history.pop_front(); }
+                            room.redo_history.clear();
+
+                            if let Some(ph) = req.phase {
+                                room.state.phase = unsafe { std::mem::transmute(ph) };
+                            }
+                            if let Some(t) = req.turn { room.state.turn = t; }
+
+                            for (i, p_ov) in req.players.iter().enumerate() {
+                                if i >= 2 { break; }
+                                let p = &mut room.state.players[i];
+                                if let Some(ref st) = p_ov.stage {
+                                    for (si, cid_ref) in st.iter().enumerate() {
+                                        let cid = *cid_ref;
+                                        if si < 3 { p.stage[si] = cid; }
+                                    }
+                                }
+                                if let Some(ref lz) = p_ov.live_zone {
+                                    for (li, cid_ref) in lz.iter().enumerate() {
+                                        let cid = *cid_ref;
+                                        if li < 3 { p.live_zone[li] = cid; }
+                                    }
+                                }
+                                if let Some(ref h) = p_ov.hand {
+                                    p.hand.clear();
+                                    for &cid in h { p.hand.push(cid); }
+                                }
+                                if let Some(ref e) = p_ov.energy {
+                                    p.energy_zone.clear();
+                                    for &cid in e { p.energy_zone.push(cid); }
+                                }
+                                if let Some(ref s) = p_ov.success_lives {
+                                    p.success_lives.clear();
+                                    for &cid in s { p.success_lives.push(cid); }
+                                }
+                                if let Some(ref d) = p_ov.discard {
+                                    p.discard.clear();
+                                    for &cid in d { p.discard.push(cid); }
+                                }
+                            }
+                            room.last_update = std::time::SystemTime::now();
+                            response_json = json!({"success": true}).to_string();
+                            println!("[DEBUG] Room {}: Board state overridden via minimal JSON.", rid);
+                        },
+                        Err(e) => {
+                            status = 400;
+                            response_json = json!({"success": false, "error": e}).to_string();
+                            println!("[DEBUG] Room {}: Failed to override board: {}", rid, e);
+                        }
+                    }
+                } else { status = 404; }
+            } else { status = 400; }
+        },
+        "api/debug/toggle" => {
+            let room_id = get_header(&request, "X-Room-Id");
+            if let Some(rid) = room_id {
+                let rooms = state.rooms.lock().unwrap();
+                if let Some(room_arc) = rooms.get(&rid) {
+                    let mut room = room_arc.lock().unwrap();
+                    room.state.debug.debug_mode = !room.state.debug.debug_mode;
+                    response_json = json!({"success": true, "debug_mode": room.state.debug.debug_mode}).to_string();
+                    println!("[DEBUG] Room {}: Debug Mode = {}", rid, room.state.debug.debug_mode);
+                } else { status = 404; }
+            } else { status = 400; }
+        },
+        "api/debug/rewind" => {
+            let room_id = get_header(&request, "X-Room-Id");
+            if let Some(rid) = room_id {
+                let rooms = state.rooms.lock().unwrap();
+                if let Some(room_arc) = rooms.get(&rid) {
+                    let mut room = room_arc.lock().unwrap();
+                    if let Some(old_state) = room.history.pop_back() {
+                        // Push current state to REDO before restoring
+                        let current_snapshot = room.state.clone();
+                        room.redo_history.push_back(current_snapshot);
+                        if room.redo_history.len() > 50 { room.redo_history.pop_front(); }
+
+                        room.state = old_state;
+                        room.last_update = std::time::SystemTime::now();
+                        response_json = json!({"success": true}).to_string();
+                        println!("[DEBUG] Room {}: Rewound to previous state. Remaining history: {}, Redo: {}", rid, room.history.len(), room.redo_history.len());
+                    } else {
+                        status = 400;
+                        response_json = json!({"success": false, "error": "No history available"}).to_string();
+                    }
+                } else { status = 404; }
+            } else { status = 400; }
+        },
+        "api/debug/redo" => {
+            let room_id = get_header(&request, "X-Room-Id");
+            if let Some(rid) = room_id {
+                let rooms = state.rooms.lock().unwrap();
+                if let Some(room_arc) = rooms.get(&rid) {
+                    let mut room = room_arc.lock().unwrap();
+                    if let Some(newer_state) = room.redo_history.pop_back() {
+                        // Push current state to HISTORY before restoring
+                        let snapshot = room.state.clone();
+                        room.history.push_back(snapshot);
+                        if room.history.len() > 50 { room.history.pop_front(); }
+
+                        room.state = newer_state;
+                        room.last_update = std::time::SystemTime::now();
+                        response_json = json!({"success": true}).to_string();
+                        println!("[DEBUG] Room {}: Redone state. History: {}, Redo left: {}", rid, room.history.len(), room.redo_history.len());
+                    } else {
+                        status = 400;
+                        response_json = json!({"success": false, "error": "No redo available"}).to_string();
+                    }
+                } else { status = 404; }
+            } else { status = 400; }
+        },
         "api/exec" => {
              // Stub for debug commands
              response_json = json!({"success": true, "message": "Command received"}).to_string();
         },
-        "api/report_bug" => {
+        "api/report" | "api/report_bug" => {
             if let Ok(body) = parse_body::<Value>(&mut request) {
                 let explanation = body.get("explanation").and_then(|v| v.as_str()).unwrap_or("(none)");
                 println!("[BUG REPORT] received: {}", explanation);
@@ -534,6 +692,33 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                     response_json = json!({"success": true, "suggestions": suggestions}).to_string();
                 } else { status = 404; }
             } else { status = 400; }
+        },
+        "api/get_card_registry" => {
+            let mut registry = HashMap::new();
+
+            for m in state.card_db.members.values() {
+                registry.insert(m.card_no.clone(), json!({
+                    "name": m.name,
+                    "type": "member"
+                }));
+            }
+            for l in state.card_db.lives.values() {
+                registry.insert(l.card_no.clone(), json!({
+                    "name": l.name,
+                    "type": "live"
+                }));
+            }
+            for e in state.card_db.energy_db.values() {
+                registry.insert(e.card_no.clone(), json!({
+                    "name": e.name,
+                    "type": "energy"
+                }));
+            }
+
+            response_json = json!({
+                "success": true,
+                "registry": registry
+            }).to_string();
         },
         _ => { status = 404; response_json = json!({"error": "Unknown API"}).to_string(); }
     }

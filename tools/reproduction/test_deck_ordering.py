@@ -36,7 +36,7 @@ def run_test():
     gs.set_stage_card(0, 0, 1)  # Slot 0: Dummy Member to tap
     gs.set_deck_cards(0, [101, 102, 103])
 
-    print(f"Initial State:")
+    print("Initial State:")
     print(f"  Hand: {gs.get_player(0).hand}")
     print(f"  Deck: {gs.get_player(0).deck}")  # Stack: [101, 102, 103] -> 103 is top
 

@@ -1,5 +1,4 @@
 import json
-import os
 
 path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\data\cards_compiled.json"
 with open(path, "r", encoding="utf-8") as f:
@@ -23,9 +22,9 @@ if card:
         # Structure: [opcode, val, attr, slot]
         for j in range(0, len(bc), 4):
             op = bc[j]
-            val = bc[j+1]
-            attr = bc[j+2]
-            slot = bc[j+3]
+            val = bc[j + 1]
+            attr = bc[j + 2]
+            slot = bc[j + 3]
             if op == 208:
                 print(f"  [{j}] Op: {op}, Val: {val}, Attr: {attr} (0x{attr:04X}), Slot: {slot}")
                 if attr & 0x8000:

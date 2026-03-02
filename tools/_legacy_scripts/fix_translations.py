@@ -1,4 +1,5 @@
-import json, collections
+import collections
+import json
 
 with open("data/manual_translations_en.json", "r", encoding="utf-8") as f:
     data = json.load(f, object_pairs_hook=collections.OrderedDict)

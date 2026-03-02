@@ -43,7 +43,7 @@ git commit -m "chore: pre-refactor snapshot"
 # エクスポート一覧
 grep -n "export " frontend/web_ui/js/*.js > exports_inventory.txt
 
-# インポート一覧  
+# インポート一覧
 grep -n "import " frontend/web_ui/js/*.js > imports_inventory.txt
 ```
 
@@ -149,7 +149,7 @@ import * as Targeting from './targeting.js';
 export const Rendering = {
     render: () => { /* ... */ },
     renderInternal: () => { /* ... */ },
-    
+
     // 各モジュールから再エクスポート
     ...Board,
     ...Cards,
@@ -340,16 +340,16 @@ import { Replay } from './replay_system.js';
 export function setupGlobals() {
     // Network
     window.doAction = Network.doAction;
-    
+
     // Selection
     window.selectCard = selectCard;
     window.selectStageCard = selectStageCard;
     // ... 他の選択関数
-    
+
     // Modals
     window.showDeckModal = Modals.showDeckModal;
     // ... 他のモーダル関数
-    
+
     // ... 残りの関数
 }
 ```

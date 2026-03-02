@@ -10,15 +10,15 @@ pub fn get_choice_text(db: &CardDatabase, ctx: &AbilityContext) -> String {
 }
 
 pub fn suspend_interaction(
-    state: &mut GameState, 
-    db: &CardDatabase, 
-    ctx: &AbilityContext, 
-    instr_ip: usize, 
-    effect_opcode: i32, 
-    target_slot: i32, 
-    choice_type: &str, 
-    choice_text: &str, 
-    filter_attr: u64, 
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    instr_ip: usize,
+    effect_opcode: i32,
+    target_slot: i32,
+    choice_type: &str,
+    choice_text: &str,
+    filter_attr: u64,
     v_remaining: i16
 ) -> bool {
     let original_phase = if let Some(p) = ctx.original_phase {
@@ -31,13 +31,13 @@ pub fn suspend_interaction(
     } else {
         state.phase
     };
-    
+
     let mut p_ctx = ctx.clone();
     p_ctx.program_counter = instr_ip as u16;
-    p_ctx.choice_index = -1; 
+    p_ctx.choice_index = -1;
     p_ctx.v_remaining = v_remaining;
     p_ctx.original_phase = Some(original_phase);
-    
+
     let original_cp = state.current_player;
     let execution_id = state.ui.current_execution_id.unwrap_or(0);
 
@@ -61,12 +61,16 @@ pub fn suspend_interaction(
 
     let mut actions = Vec::with_capacity(8);
     state.generate_legal_actions(db, ctx.player_id as usize, &mut actions);
-    
+
     // Don't skip suspension for OPTIONAL, LOOK_AND_CHOOSE, COLOR_SELECT, TAP_M_SELECT, etc.
     // These are legitimate choice types that should always suspend even with limited actions.
-    let always_suspend_types = ["OPTIONAL", "LOOK_AND_CHOOSE", "COLOR_SELECT", "TAP_M_SELECT", "TAP_O", "SELECT_MEMBER", "SELECT_LIVE", "SELECT_PLAYER", "RECOV_L", "RECOV_M", "SELECT_DISCARD_PLAY", "SELECT_STAGE", "SELECT_STAGE_EMPTY", "SELECT_LIVE_SLOT", "SELECT_HAND_PLAY"];
+    let always_suspend_types = ["OPTIONAL", "LOOK_AND_CHOOSE", "COLOR_SELECT", "TAP_M_SELECT", "TAP_O", "SELECT_MEMBER", "SELECT_LIVE", "SELECT_PLAYER", "RECOV_L", "RECOV_M", "SELECT_DISCARD_PLAY", "SELECT_STAGE", "SELECT_STAGE_EMPTY", "SELECT_LIVE_SLOT", "SELECT_HAND_PLAY", "SELECT_MODE"];
     let should_check_skip = !always_suspend_types.contains(&choice_type);
-    
+
+    if state.debug.debug_mode {
+        println!("[DEBUG] suspend_interaction: choice_type={}, v_remaining={}, actions={}", choice_type, v_remaining, actions.len());
+    }
+
     if should_check_skip && actions.len() <= 1 && (actions.is_empty() || actions.contains(&0)) && choice_type != "OPPONENT_CHOOSE" {
         if state.debug.debug_mode {
             println!("[DEBUG] Softlock prevented: {} has no legal actions. Skipping suspension.", choice_type);

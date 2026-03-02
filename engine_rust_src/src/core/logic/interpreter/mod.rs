@@ -22,23 +22,24 @@ use std::collections::HashSet;
 
 pub static GLOBAL_OPCODE_TRACKER: Lazy<Mutex<HashSet<i32>>> = Lazy::new(|| Mutex::new(HashSet::<i32>::new()));
 
-fn log_opcode_to_file(op: i32) {
-    use std::io::Write;
-    let thread_name = std::thread::current().name().unwrap_or("unknown").to_string();
-    if let Ok(mut file) = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open("reports/telemetry_raw.log") 
-    {
-        let _ = writeln!(file, "[OPCODE] {} | Test: {}", op, thread_name);
-    }
-}
+// fn log_opcode_to_file(_op: i32) {
+//     use std::io::Write;
+//     let thread_name = std::thread::current().name().unwrap_or("unknown").to_string();
+//     if let Ok(mut file) = std::fs::OpenOptions::new()
+//         .create(true)
+//         .append(true)
+//         .open("reports/telemetry_raw.log")
+//     {
+//         let _ = writeln!(file, "[OPCODE] {} | Test: {}", _op, thread_name);
+//     }
+// }
 
 /// The maximum depth of nested bytecode execution (e.g. via O_TRIGGER_REMOTE)
 pub const MAX_DEPTH: usize = 8;
+pub const MAX_BYTECODE_LOG_SIZE: usize = 500;
 
 struct ExecutionFrame {
-    bytecode: Vec<i32>,
+    bytecode: std::sync::Arc<Vec<i32>>,
     ip: usize,
     ctx: AbilityContext,
 }
@@ -50,10 +51,10 @@ struct BytecodeExecutor {
 }
 
 impl BytecodeExecutor {
-    fn new(bytecode: &[i32], ctx: &AbilityContext) -> Self {
+    fn new(bytecode: std::sync::Arc<Vec<i32>>, ctx: &AbilityContext) -> Self {
         Self {
             stack: vec![ExecutionFrame {
-                bytecode: bytecode.to_vec(),
+                bytecode,
                 ip: ctx.program_counter as usize,
                 ctx: ctx.clone(),
             }],
@@ -69,9 +70,9 @@ impl BytecodeExecutor {
 
 /// Main entry point for bytecode execution
 pub fn resolve_bytecode(
-    state: &mut GameState, 
-    db: &CardDatabase, 
-    bytecode: &[i32], 
+    state: &mut GameState,
+    db: &CardDatabase,
+    bytecode: std::sync::Arc<Vec<i32>>,
     ctx_in: &AbilityContext
 ) {
     let _id = if state.ui.current_execution_id.is_none() && ctx_in.program_counter == 0 {
@@ -90,7 +91,7 @@ pub fn resolve_bytecode(
     while !executor.stack.is_empty() {
         if executor.steps >= 1000 {
             if state.debug.debug_mode {
-                println!("[ERROR] Interpreter infinite loop detected (1000 steps)");
+                if !state.ui.silent { println!("[ERROR] Interpreter infinite loop detected (1000 steps)"); }
             }
             break;
         }
@@ -98,7 +99,7 @@ pub fn resolve_bytecode(
 
         // Obtain mutable reference to the current frame
         let frame = executor.stack.last_mut().unwrap();
-        
+
         let ip = frame.ip;
         if ip >= frame.bytecode.len() {
             executor.pop_frame();
@@ -106,12 +107,17 @@ pub fn resolve_bytecode(
         }
 
         let op = frame.bytecode[ip];
-        
+
         // Instruction decoding (5-word extended format)
         let v = if ip + 1 < frame.bytecode.len() { frame.bytecode[ip+1] } else { 0 };
         let a_low = if ip + 2 < frame.bytecode.len() { frame.bytecode[ip+2] } else { 0 } as u32;
         let a_high = if ip + 3 < frame.bytecode.len() { frame.bytecode[ip+3] } else { 0 } as u32;
         let s = if ip + 4 < frame.bytecode.len() { frame.bytecode[ip+4] } else { 0 };
+        
+        if op == 226 {
+            println!("[DECODE-DEBUG] Op: {}, IP: {}, v: {}, a_low: {}, a_high: {}, s: {}", op, ip, v, a_low, a_high, s);
+        }
+
         let a = ((a_high as i64) << 32) | (a_low as i64);
 
         frame.ip += 5; // Advance IP
@@ -123,20 +129,24 @@ pub fn resolve_bytecode(
         }
 
         // Logic for O_NOP and O_RETURN
-        if op == crate::core::enums::O_NOP as i32 { 
-            state.debug.executed_opcodes.insert(op);
-            log_opcode_to_file(op);
-            if let Ok(mut tracker) = GLOBAL_OPCODE_TRACKER.lock() {
-                tracker.insert(op);
+        if op == crate::core::enums::O_NOP as i32 {
+            if let Some(ref mut set) = state.debug.executed_opcodes {
+                set.insert(op);
             }
-            continue; 
+            // log_opcode_to_file(op);
+            // if let Ok(mut tracker) = GLOBAL_OPCODE_TRACKER.lock() {
+            //     tracker.insert(op);
+            // }
+            continue;
         }
         if op == crate::core::enums::O_RETURN as i32 {
-            state.debug.executed_opcodes.insert(op);
-            log_opcode_to_file(op);
-            if let Ok(mut tracker) = GLOBAL_OPCODE_TRACKER.lock() {
-                tracker.insert(op);
+            if let Some(ref mut set) = state.debug.executed_opcodes {
+                set.insert(op);
             }
+            // log_opcode_to_file(op);
+            // if let Ok(mut tracker) = GLOBAL_OPCODE_TRACKER.lock() {
+            //     tracker.insert(op);
+            // }
             if executor.pop_frame().is_none() {
                 break;
             }
@@ -152,24 +162,53 @@ pub fn resolve_bytecode(
         }
 
         if state.debug.debug_mode {
-            println!("[DEBUG] BC_STEP: ip={}, op={} (real={}), v={}, a={}, s={}, cond={}", 
-                ip, op, real_op, v, a, s, executor.cond);
+            let desc = logging::describe_bytecode(real_op, v, a, s);
+            let log_line = format!("BC_STEP: ip={:<3} {}", ip, desc);
+            println!("[DEBUG] {}", log_line);
+            
+            let b_log = &mut state.ui.bytecode_log;
+            if b_log.len() < MAX_BYTECODE_LOG_SIZE {
+                b_log.push(log_line);
+            }
         }
-        state.debug.executed_opcodes.insert(real_op);
-        log_opcode_to_file(real_op);
-        if let Ok(mut tracker) = GLOBAL_OPCODE_TRACKER.lock() {
-            tracker.insert(real_op);
+        if let Some(ref mut set) = state.debug.executed_opcodes {
+            set.insert(real_op);
+        }
+        // log_opcode_to_file(real_op);
+        // if let Ok(mut tracker) = GLOBAL_OPCODE_TRACKER.lock() {
+        //     tracker.insert(real_op);
+        // }
+
+        let mut target_slot = s;
+        if (s & 0xFF) == 10 { 
+            // Resolve Choice Target (10) while preserving upper bits (flags/area)
+            target_slot = (s & !0xFF) | (frame.ctx.target_slot as i32); 
         }
 
-        let mut target_slot = s & 0xFF;
-        if target_slot == 10 { target_slot = frame.ctx.target_slot as i32; }
 
         // Condition opcodes (200-255 and 301-399 for extended conditions)
         if (real_op >= 200 && real_op <= 255) || (real_op >= 301 && real_op <= 399) {
-            let passed = conditions::check_condition_opcode(
-                state, db, real_op, v, a as u64, target_slot, &frame.ctx, 0
-            );
+            if state.debug.debug_mode {
+                println!("[DEBUG] CALLING check_condition_opcode: op={}, a={:x}", real_op, a);
+            }
+            let passed = if !executor.cond {
+                false // Already failed, no need to check
+            } else {
+                conditions::check_condition_opcode(
+                    state, db, real_op, v, a as u64, target_slot, &frame.ctx, 0
+                )
+            };
             executor.cond = executor.cond && if is_negated { !passed } else { passed };
+            if state.debug.debug_mode {
+                let cond_desc = format!("BC_COND: ip={:<3} {} -> passed={}, final={}", 
+                    ip, logging::describe_condition(real_op, v, a as u64), passed, executor.cond);
+                println!("      | [COND] {}", cond_desc);
+                
+                let b_log = &mut state.ui.bytecode_log;
+                if b_log.len() < MAX_BYTECODE_LOG_SIZE {
+                    b_log.push(cond_desc);
+                }
+            }
             frame.ctx.choice_index = -1;
             continue;
         }
@@ -193,15 +232,19 @@ pub fn resolve_bytecode(
         // Skip effect opcodes when condition is false
         // This handles cases where bytecode doesn't have explicit JUMP_IF_FALSE
         if !executor.cond {
+            if state.debug.debug_mode {
+                println!("      | [SKIP] Opcode {} skipped (cond=false)", logging::get_opcode_name(real_op));
+            }
             // Skip this opcode. cond will be reset by JUMP_IF_FALSE or end of scope.
             continue;
         }
 
-        // Dispatch to handlers
+
+        // Dispatch to handlers - Use 64-bit 'a' directly
         match registry.dispatch(state, db, &mut frame.ctx, real_op, v, a, s, ip, &frame.bytecode) {
             HandlerResult::Continue => {},
             HandlerResult::SetCond(c) => executor.cond = c,
-            HandlerResult::Suspend => return, 
+            HandlerResult::Suspend => return,
             HandlerResult::Return => {
                 if executor.pop_frame().is_none() {
                     return;
@@ -242,19 +285,19 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
     while let Some((cid, ab_idx, ctx, is_live, _trigger)) = state.core.trigger_queue.pop_front() {
         // Generate a new ID for the activation
         state.generate_execution_id();
-        
+
         let (bytecode, costs) = if is_live {
             let ab = &db.get_live(cid).unwrap().abilities[ab_idx as usize];
-            (&ab.bytecode, &ab.costs)
+            (ab.bytecode.clone(), &ab.costs)
         } else {
             let ab = &db.get_member(cid).unwrap().abilities[ab_idx as usize];
-            (&ab.bytecode, &ab.costs)
+            (ab.bytecode.clone(), &ab.costs)
         };
-        
+
         if costs::pay_costs_transactional(state, db, costs, &ctx) {
-            resolve_bytecode(state, db, bytecode, &ctx);
+            resolve_bytecode(state, db, std::sync::Arc::new(bytecode), &ctx);
         }
-        
+
         state.clear_execution_id();
     }
 }

@@ -308,7 +308,7 @@ export const Rendering = {
             if (isLive) {
                 // Live Cards (Naturally Landscape)
                 if (containerId.includes('hand')) {
-                    // Stay horizontal in hand, or we could rotate to portrait. 
+                    // Stay horizontal in hand, or we could rotate to portrait.
                     // User requested Hand cards stop overlapping, and "already in correct orientation" for live zone.
                     // For hand, we keep them native (landscape) but sized to fit.
                 }
@@ -1388,7 +1388,7 @@ export const Rendering = {
                                 `;
             }).join('') : 'None'}
                         </div>
-                        
+
                         <div class="perf-section">
                             <h4>${t ? (t['blades_breakdown'] || 'Blades Breakdown (Total: {total})').replace('{total}', res.yell_count || 0) : `Blades Breakdown (Total: ${res.yell_count || 0})`}</h4>
                             ${res.breakdown && res.breakdown.blades ? res.breakdown.blades.map(b => `

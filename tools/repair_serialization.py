@@ -1,5 +1,3 @@
-import os
-
 path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\launcher\src\serialization.rs"
 
 with open(path, "rb") as f:

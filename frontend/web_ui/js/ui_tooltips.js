@@ -10,6 +10,12 @@ let tooltipTimeout = null;
 let tooltipHideTimeout = null;
 let currentTooltipTarget = null;
 
+// Cached DOM nodes — these panels are static and never destroyed,
+// so we grab them once at module load instead of on every hover.
+const descPanel = document.getElementById('card-desc-panel');
+const descContent = document.getElementById('card-desc-content');
+const descTitle = document.getElementById('card-desc-title');
+
 export const Tooltips = {
     findCardById: (cardId) => State.resolveCardData(cardId),
 
@@ -41,10 +47,6 @@ export const Tooltips = {
     showTooltip: (target, e, forceTarget = null, useSidebar = false, explicitText = null) => {
         const effectiveTarget = forceTarget || target;
         const dataSource = effectiveTarget.closest('[data-card-id],[data-action-id],[data-text]') || effectiveTarget;
-
-        const descPanel = document.getElementById('card-desc-panel');
-        const descContent = document.getElementById('card-desc-content');
-        const descTitle = document.getElementById('card-desc-title');
 
         if (currentTooltipTarget && currentTooltipTarget !== dataSource) {
             currentTooltipTarget.classList.remove('highlight-hover');
@@ -97,38 +99,43 @@ export const Tooltips = {
         const dText = dataSource.dataset.text;
         // Always get card text - hidden flag should only hide instance-specific data,
         // not the card's ability which is public knowledge from master data
-        const cardText = cardObj ? TextEnricher.getEffectiveRawText(cardObj) : "";
-        let finalText = "";
+        const cardText = cardObj ? (TextEnricher.getEffectiveRawText(cardObj) || "") : "";
+        let finalAbilityText = cardText;
 
-        // Selection Priority Logic:
-        // 1. If we have master index text and dText is generic or identical, use master text (more likely to be enriched)
-        if (cardText && (!dText || TextEnricher.isGenericInstruction(dText) || dText === cardText)) {
-            finalText = cardText;
-        }
-        // 2. If dText is rich and unique (e.g. action-specific info), use it
-        else if (dText && !TextEnricher.isGenericInstruction(dText)) {
-            finalText = dText;
-        }
+        // 2. Fallback or additional text
+        let actionLabel = dText || "";
 
-        // Action enrichment: If we have an action object, try to get even better text (e.g. translated or card-specific)
+        // Action enrichment: If we have an action object, try to get even better text
+        let actionRichText = "";
         if (actionObj) {
-            const actionRichText = TextEnricher.getEffectiveActionText(actionObj);
-            const rawActionRichText = actionRichText.replace(/<[^>]+>/g, "").trim(); // Stripped version for comparison
+            actionRichText = TextEnricher.getEffectiveActionText(actionObj);
+            const rawActionRichText = actionRichText.replace(/<[^>]+>/g, "").trim();
 
             if (rawActionRichText && !TextEnricher.isGenericInstruction(rawActionRichText)) {
-                // If it's substantially better than current finalText, use it
-                // We store the already enriched text to avoid double enrichment later
-                finalText = actionRichText;
+                // If the action text is non-generic (like a translated sub-ability), prioritize it
+                finalAbilityText = actionRichText;
+            } else if (rawActionRichText && !finalAbilityText.includes(rawActionRichText)) {
+                // If it's a generic mechanical instruction (like "Play X to Slot 0"), 
+                // and it's not already in the text, we might want to keep it as a label.
+                actionLabel = actionRichText;
             }
         }
 
-        // 3. Fallback to any available text
-        if (!finalText) {
-            finalText = cardText || dText || "";
+        let combinedText = finalAbilityText;
+
+        if (!combinedText) {
+            // Only fallback to dText (raw instruction) if we DON'T have a card.
+            // If we have a card but no ability text, we want to stay clean.
+            if (!cardObj) {
+                combinedText = dText || "";
+            } else if (cardText) {
+                combinedText = cardText;
+            }
         }
 
-        if (!finalText) {
-            descPanel.style.display = 'none';
+        // Only hide the panel if we have absolutely nothing to show (no card and no text)
+        if (!combinedText && !cardObj) {
+            descPanel.classList.remove('active');
             return;
         }
 
@@ -138,19 +145,12 @@ export const Tooltips = {
         if (descTitle) {
             descTitle.innerHTML = titleText;
             descTitle.style.display = titleText ? 'block' : 'none';
-            // Match pending-choice-indicator header style
-            descTitle.style.fontSize = '1.1rem';
-            descTitle.style.borderBottom = 'none';
-            descTitle.style.marginBottom = '10px';
         }
 
-        const enrichedText = TextEnricher.enrichAbilityText(finalText);
+        const enrichedText = combinedText ? TextEnricher.enrichAbilityText(combinedText) : "";
         descContent.innerHTML = enrichedText;
-        descContent.dataset.rawText = finalText;
-        descPanel.style.display = 'flex';
-        descPanel.style.borderLeft = '4px solid var(--accent-pink)'; // Match pending-choice-indicator accent
-        descPanel.style.padding = '12px';
-        descPanel.style.background = 'rgba(255,255,255,0.05)';
+        descContent.dataset.rawText = enrichedText;
+        descPanel.classList.add('active');
 
         if (tooltipHideTimeout) {
             clearTimeout(tooltipHideTimeout);
@@ -189,6 +189,7 @@ export const Tooltips = {
 
     // Proxies for backwards compatibility
     enrichAbilityText: (text) => TextEnricher.enrichAbilityText(text),
+    extractRelevantAbility: (card, triggerLabel, abilityIndex) => TextEnricher.extractRelevantAbility(card, triggerLabel, abilityIndex),
     getEffectiveAbilityText: (card) => TextEnricher.getEffectiveAbilityText(card),
     getEffectiveRawText: (card) => TextEnricher.getEffectiveRawText(card),
     isGenericInstruction: (text) => TextEnricher.isGenericInstruction(text),

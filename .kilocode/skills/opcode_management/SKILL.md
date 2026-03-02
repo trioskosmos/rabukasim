@@ -67,7 +67,7 @@ To save space in the 4x32-bit bytecode structure, some opcodes use bit-packing f
 - `LOOK_AND_CHOOSE`: `RevealCount | (PickCount << 8) | (ColorMask << 23)`
 
 ### `a` (Attribute) Packing
-The attribute word `a` is used for card filtering. While the Rust engine uses a `u64`, the bytecode word is typically packed as a `u32`. 
+The attribute word `a` is used for card filtering. While the Rust engine uses a `u64`, the bytecode word is typically packed as a `u32`.
 
 > [!WARNING]
 > **Sign Extension**: Bytecode words are signed `i32`. When bit 31 (sign bit) is set, it will sign-extend to bits 32-63 in the Rust engine. Use bit 31 only as a flag that is checked before or after masking.
@@ -133,4 +133,3 @@ Card IDs are assigned to unique `(Name, Ability Text)` pairs and are relatively 
 ### Stability Rules
 - **Alpha-Sorting**: The compiler always alpha-sorts card numbers before ID assignment. To maintain ID stability, ensure "Card No" strings never change.
 - **Pseudocode**: Use card numbers (e.g., `LL-bp01-001`) in pseudocode parameters rather than logic IDs whenever possible to remain agnostic of ID shifts.
-

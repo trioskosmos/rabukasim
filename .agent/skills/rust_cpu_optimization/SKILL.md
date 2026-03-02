@@ -37,3 +37,13 @@ Optimize for CPU cache behavior.
 ### D. Pruning the State Machine
 1.  **Minimize Cloning**: Avoid `clone()` in simulation stacks. Use Copy-on-Write (`Cow`) or persistent data structures (e.g., the `im` crate) to share memory between nodes in the search tree.
 2.  **Efficient State Management**: Ensure state transitions are lean and do not trigger unnecessary logic recalculations.
+
+### E. Benchmarking & Profiling
+To verify the impact of optimizations, use the unified Rust benchmark tool:
+
+```bash
+cd engine_rust_src
+cargo run --release --bin benchmark_unified
+```
+
+This benchmark runs a 10-second simulation challenge, reporting games per second and steps per second for both single-threaded and multi-threaded execution.

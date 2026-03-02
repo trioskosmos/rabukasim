@@ -48,7 +48,7 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
         } else if part.starts_with("UNIT_") {
             let unit_name = part.replace("UNIT_", "").replace("_ONLY", "");
             let unit_id: i32 = match unit_name.as_str() {
-                "PRINTEMPS" => 0, 
+                "PRINTEMPS" => 0,
                 "LILY_WHITE" | "LILYWHITE" => 1,
                 "BIBI" => 2,
                 "CYARON" | "CYARON!" => 3,

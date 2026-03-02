@@ -54,7 +54,7 @@ mod tests {
         // We manually call trigger_abilities to simulate the event
         println!("DEBUG: Triggering OnLeaves for Card B (20) at Slot 1");
         state.trigger_abilities(&db, TriggerType::OnLeaves, &ctx);
-        
+
         println!("DEBUG: Processing Trigger Queue. Queue len: {}", state.trigger_queue.len());
         state.process_trigger_queue(&db); // Ensure queued abilities execute
 
@@ -63,8 +63,8 @@ mod tests {
         // CHECK: Did Card A trigger?
         // If bug exists: Card A saw the event broadcasting and triggered -> count == 1
         // If correct: Card A checks "Is it me?" -> No -> count == 0
-        
-        assert_eq!(state.core.players[0].cheer_mod_count, 0, 
+
+        assert_eq!(state.core.players[0].cheer_mod_count, 0,
             "Broadcasting Bug still present: Listener (Card A) triggered OnLeaves when Leaver (Card B) left!");
     }
 }

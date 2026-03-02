@@ -8,9 +8,10 @@ if PROJECT_ROOT not in sys.path:
 if os.path.join(PROJECT_ROOT, "engine") not in sys.path:
     sys.path.insert(0, os.path.join(PROJECT_ROOT, "engine"))
 
-from backend.rust_serializer import RustGameStateSerializer
-from game.data_loader import CardDataLoader
 import engine_rust
+from game.data_loader import CardDataLoader
+
+from backend.rust_serializer import RustGameStateSerializer
 
 
 class ReproHelper:

@@ -6,18 +6,18 @@ fn test_card_selection_filtering() {
     let db = load_real_db();
     let mut state = create_test_state();
     state.phase = Phase::Main;
-    
+
     let muse_cid = 234;
     let aqours_cid = 459;
 
     // Put Muse member in slot 0, Aqours member in slot 1
-    state.players[0].stage[0] = muse_cid; 
-    state.players[0].stage[1] = aqours_cid; 
+    state.players[0].stage[0] = muse_cid;
+    state.players[0].stage[1] = aqours_cid;
     state.players[0].stage[2] = -1;
 
     let mut ctx = AbilityContext::default();
     ctx.player_id = 0;
-    
+
     // Add pending interaction for SELECT_MEMBER
     let pending = PendingInteraction {
         card_id: aqours_cid,
@@ -42,7 +42,7 @@ fn test_card_selection_filtering() {
     println!("Legal actions: {:?}", actions);
 
     // ACTION_BASE_STAGE_SLOTS (600) + slot
-    // We expect action 600 (slot 0 - Muse) to NOT be present, 
+    // We expect action 600 (slot 0 - Muse) to NOT be present,
     // and action 601 (slot 1 - Aqours) to be present.
     assert!(!actions.contains(&600), "Should not allow selecting Muse member");
     assert!(actions.contains(&601), "Should allow selecting Aqours member");

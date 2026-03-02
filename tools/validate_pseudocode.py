@@ -184,11 +184,9 @@ def validate_pseudocode(card_no: str, pseudocode: str) -> list:
             for t in split_triggers:
                 if t.upper() not in VALID_TRIGGERS:
                     issues.append(
-                        PseudocodeIssue(
-                            card_no, "INVALID_TRIGGER", f"Unknown trigger type: '{t}'", line, "ERROR"
-                        )
+                        PseudocodeIssue(card_no, "INVALID_TRIGGER", f"Unknown trigger type: '{t}'", line, "ERROR")
                     )
-            
+
             if split_triggers:
                 current_trigger = split_triggers[0].upper()
             has_cost = False

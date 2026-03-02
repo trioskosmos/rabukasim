@@ -6,7 +6,7 @@ description: Definitions, standards, and workflows for writing card ability pseu
 # Pseudocode Guidelines
 
 > [!IMPORTANT]
-> **Source of Truth**: 
+> **Source of Truth**:
 > - `data/manual_pseudocode.json` is the **ONLY** place to add or modify pseudocode.
 > - **NEVER** edit `data/cards.json` directly for pseudocode, as it will be overwritten by the compiler or sync scripts.
 
@@ -30,7 +30,7 @@ description: Definitions, standards, and workflows for writing card ability pseu
   ```
   EFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER="COST_LE_2"} -> TARGET
   ```
-  
+
 - **Look and Choose (Deck)**: Use `LOOK_AND_CHOOSE_REVEAL(X, choose_count=Y)`.
   - `X`: Number of cards to look at.
   - `choose_count=Y`: Number of cards to pick.
@@ -46,7 +46,7 @@ description: Definitions, standards, and workflows for writing card ability pseu
   - `COST_LE_X` / `COST_GE_X`
   - `attribute` (e.g. `Pure`, `Cool`)
   - `IS_CENTER`
-  
+
 ### Known Pitfalls
 - **Compound Effects**: The compiler splits effects by `;`. Ensure parameters (like `ZONE`) are on the specific effect that needs them, or use a specialized opcode that implies the zone (like `PLAY_MEMBER_FROM_DISCARD`).
 - **Opponent Targeting**: Use `TARGET="OPPONENT"` inside the effect parameters.

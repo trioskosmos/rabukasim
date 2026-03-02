@@ -64,13 +64,13 @@ export const BoardRenderer = {
             if (clickable && isValid) {
                 div.style.cursor = 'pointer';
                 div.onclick = () => { if (window.doAction) window.doAction(actionId); };
-                div.setAttribute('data-action-id', actionId);
 
-                const actionObj = state?.legal_actions?.find(a => a.id === actionId);
-                if (actionObj) {
-                    div.onmouseenter = () => Tooltips.highlightTargetsForAction ? Tooltips.highlightTargetsForAction(actionObj) : null;
-                    div.onmouseleave = () => Tooltips.clearHighlights ? Tooltips.clearHighlights() : null;
-                }
+                div.onmouseenter = () => {
+                    if (window.highlightActionBtn) window.highlightActionBtn(actionId, true);
+                };
+                div.onmouseleave = () => {
+                    if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
+                };
             }
 
             el.appendChild(div);

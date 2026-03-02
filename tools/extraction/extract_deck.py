@@ -1,6 +1,6 @@
+import json
 import os
 import sys
-import json
 
 # Add project root to path
 sys.path.insert(0, os.getcwd())
@@ -45,10 +45,10 @@ def extract_deck():
         print(f"\nDeck: {deck['name']}")
         print(f"Total Main: {len(deck['main'])}")
         print(f"Total Energy: {len(deck['energy'])}")
-        
+
         # Print first few for verification
-        for cid in sorted(set(deck['main']))[:5]:
-            count = deck['main'].count(cid)
+        for cid in sorted(set(deck["main"]))[:5]:
+            count = deck["main"].count(cid)
             print(f"  {cid} x{count}")
 
 

@@ -161,7 +161,7 @@ let actual_energy_tap = {
     t
 };
 if actual_energy_tap < expected_energy_delta {
-    return Err(format!("Mismatch ENERGY_TAP for '{}': Exp {}, Got {}", 
+    return Err(format!("Mismatch ENERGY_TAP for '{}': Exp {}, Got {}",
         combined_text, expected_energy_delta, actual_energy_tap));
 }
 ```
@@ -199,8 +199,8 @@ pub live_score_bonus: u32,
 
 // diff_snapshots()に追加
 let d_live_score = current.live_score_bonus as i32 - baseline.live_score_bonus as i32;
-if d_live_score != 0 { 
-    deltas.push(SemanticDelta { tag: "LIVE_SCORE_DELTA".to_string(), value: serde_json::json!(d_live_score) }); 
+if d_live_score != 0 {
+    deltas.push(SemanticDelta { tag: "LIVE_SCORE_DELTA".to_string(), value: serde_json::json!(d_live_score) });
 }
 ```
 
@@ -332,7 +332,7 @@ fn resolve_interaction(&self, state: &mut GameState) -> Result<(), String> {
         let last = state.interaction_stack.last().ok_or("No interaction to resolve")?;
         (last.clone(), last.ctx.player_id)
     };
-    
+
     let p_idx = player_id as usize;
     let mut selected_idx = 0;
     let base: i32;
@@ -369,7 +369,7 @@ fn resolve_interaction(&self, state: &mut GameState) -> Result<(), String> {
             base = 600;
             // タップされていないメンバーを優先
             for i in 0..3 {
-                if state.core.players[p_idx].stage[i] >= 0 
+                if state.core.players[p_idx].stage[i] >= 0
                    && !state.core.players[p_idx].is_tapped(i) {
                     selected_idx = i as i32;
                     break;

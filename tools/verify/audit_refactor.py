@@ -3,9 +3,9 @@ Audit the JS refactor by comparing function definitions in the old monolithic ma
 (from git HEAD) against all current JS module files.
 """
 
+import os
 import re
 import subprocess
-import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 JS_DIR = os.path.join(ROOT, "frontend", "web_ui", "js")
@@ -146,7 +146,7 @@ def main():
 
     # 5. Check for functions that ARE in modules but NOT exported to window
     print(f"\n{'=' * 70}")
-    print(f"FUNCTIONS IN MODULES BUT NOT ON window.*:")
+    print("FUNCTIONS IN MODULES BUT NOT ON window.*:")
     print(f"{'=' * 70}")
     in_modules_not_exported = cur_funcs - window_exports - trivial
     for f in sorted(in_modules_not_exported):

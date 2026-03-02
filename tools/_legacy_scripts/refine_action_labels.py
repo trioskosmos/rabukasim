@@ -1,5 +1,3 @@
-import os
-
 file_path = r"frontend\web_ui\js\ui_rendering.js"
 with open(file_path, "r", encoding="utf-8") as f:
     content = f.read()
@@ -10,7 +8,7 @@ new_logic = """        // Helper for consistent action labels
             const energyIcon = `<img src="img/texticon/icon_energy.png" style="height:14px; vertical-align:middle; margin:0 2px;">`;
             const cost = a.cost !== undefined ? a.cost : (a.base_cost !== undefined ? a.base_cost : null);
             const isBaton = (a.name && (a.name.includes('Baton') || a.name.includes('バトン')));
-            
+
             if (isMini) {
                 let label = `${energyIcon}${cost !== null ? cost : 0}`;
                 if (isBaton) label += ' 🔄';
@@ -19,7 +17,7 @@ new_logic = """        // Helper for consistent action labels
                 // Clean name: remove verbose prefixes like 【左に置く】 if they exist
                 let name = a.name || "";
                 name = name.replace(/【.*?】/g, "").trim();
-                
+
                 let label = `<div class="action-title">${name}</div>`;
                 if (cost !== null) {
                     label += `<div class="action-cost">${energyIcon}${cost}</div>`;

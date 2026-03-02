@@ -9,8 +9,8 @@ import re
 import sys
 
 sys.path.insert(0, ".")
-from engine.models.ability import ConditionType, EffectType, TriggerType, TargetType
 from compiler.parser_v2 import parse_ability_text
+from engine.models.ability import ConditionType, EffectType, TargetType, TriggerType
 
 
 def load_cards():

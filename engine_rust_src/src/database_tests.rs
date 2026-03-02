@@ -9,7 +9,7 @@ const DB_JSON: &str = include_str!("../../data/cards_compiled.json");
 #[test]
 fn test_database_integrity() {
     let card_db = CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
-    
+
     let mut member_ids = HashSet::new();
     let mut card_nos = HashSet::new();
 
@@ -60,8 +60,8 @@ fn verify_ability_bytecode(card_no: &str, ab_idx: usize, ab: &Ability, opcodes: 
 
     // Rule 1: Bytecode block must contain O_RETURN (10)
     assert!(
-        ab.bytecode.contains(&O_RETURN), 
-        "Ability {} [{}] does not contain O_RETURN", 
+        ab.bytecode.contains(&O_RETURN),
+        "Ability {} [{}] does not contain O_RETURN",
         card_no, ab_idx
     );
 
@@ -69,8 +69,8 @@ fn verify_ability_bytecode(card_no: &str, ab_idx: usize, ab: &Ability, opcodes: 
     // Note: Some jump targets or complex opcodes might vary, but O_RETURN is always at the end.
     // In our compiler, almost all are 5-word aligned.
     assert!(
-        ab.bytecode.len() % 5 == 0, 
-        "Ability {} [{}] bytecode length {} is not multiple of 5", 
+        ab.bytecode.len() % 5 == 0,
+        "Ability {} [{}] bytecode length {} is not multiple of 5",
         card_no, ab_idx, ab.bytecode.len()
     );
 
@@ -106,7 +106,7 @@ fn test_dry_run_all_cards() {
             // Dry run execution (this should NOT panic)
             // We use a clone of state to keep it clean
             let mut test_state = state.clone();
-            test_state.resolve_bytecode(&card_db, &ab.bytecode, &ctx);
+            test_state.resolve_bytecode_cref(&card_db, &ab.bytecode, &ctx);
         }
     }
 }

@@ -1,5 +1,6 @@
 import json
 
+
 def verify():
     with open("data/cards_compiled.json", "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -11,6 +12,7 @@ def verify():
         print(f"  Trigger: {a['trigger']}")
         print(f"  Costs: {a['costs']}")
         print(f"  Effects: {a['effects']}")
+
 
 if __name__ == "__main__":
     verify()

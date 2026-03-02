@@ -155,18 +155,18 @@ fn test_gpu_parity_card_4340_reveal_until() {
     let mut state = create_test_state();
     state.core.players[0].deck = vec![9, 10, 73, 11, 12].into();
     state.core.players[0].hand = vec![4340].into();
-    
+
     let expected_deltas = vec![
         SemanticDelta { tag: "deck".to_string(), value: json!(-3) },
         SemanticDelta { tag: "discard".to_string(), value: json!(+2) },
     ];
-    
+
     let mut gpu_state = state.to_gpu(&db);
     gpu_state.forced_action = ACTION_BASE_HAND + 0;
-    
+
     let mut results = vec![GpuGameState::default(); 1];
     manager.run_single_step(&[gpu_state], &mut results);
-    
+
     assert_gpu_deltas(&expected_deltas, &results[0]);
 }
 ```

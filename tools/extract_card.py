@@ -1,4 +1,3 @@
-
 import json
 
 path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\data\cards_compiled.json"

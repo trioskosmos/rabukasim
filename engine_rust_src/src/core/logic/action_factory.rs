@@ -26,11 +26,22 @@ pub enum DecodedAction {
         discard_idx: usize,
         ab_idx: usize,
     },
+    ActivateFromHand {
+        hand_idx: usize,
+        ab_idx: usize,
+    },
     SelectEnergy {
         energy_idx: usize,
     },
     SelectChoice {
         choice_idx: i32,
+    },
+    Rps {
+        p_idx: usize,
+        choice: i8,
+    },
+    TurnChoice {
+        choice: i8,
     },
     Unknown(i32),
 }
@@ -75,7 +86,7 @@ impl ActionFactory {
             };
         }
 
-        if action_id >= ACTION_BASE_HAND && action_id < ACTION_BASE_HAND_CHOICE {
+        if action_id >= ACTION_BASE_HAND && action_id < ACTION_BASE_HAND_ACTIVATE {
             let adj = (action_id - ACTION_BASE_HAND) as usize;
             let hand_idx = adj / 10;
             let offset = adj % 10;
@@ -100,6 +111,14 @@ impl ActionFactory {
             }
         }
 
+        if action_id >= ACTION_BASE_HAND_ACTIVATE && action_id < ACTION_BASE_HAND_CHOICE {
+            let adj = (action_id - ACTION_BASE_HAND_ACTIVATE) as usize;
+            return DecodedAction::ActivateFromHand {
+                hand_idx: adj / 10,
+                ab_idx: adj % 10,
+            };
+        }
+
         if action_id >= ACTION_BASE_HAND_CHOICE && action_id < ACTION_BASE_HAND_SELECT {
             let adj = (action_id - ACTION_BASE_HAND_CHOICE) as usize;
             let hand_idx = adj / 100;
@@ -114,7 +133,7 @@ impl ActionFactory {
             };
         }
 
-        if action_id >= ACTION_BASE_HAND_SELECT && action_id < ACTION_BASE_HAND_SELECT + 1000 {
+        if action_id >= ACTION_BASE_HAND_SELECT && action_id < ACTION_BASE_STAGE {
             return DecodedAction::SelectChoice {
                 choice_idx: action_id - ACTION_BASE_HAND_SELECT,
             };
@@ -138,7 +157,7 @@ impl ActionFactory {
             };
         }
 
-        if action_id >= ACTION_BASE_DISCARD_ACTIVATE && action_id < ACTION_BASE_DISCARD_ACTIVATE + 600 {
+        if action_id >= ACTION_BASE_DISCARD_ACTIVATE && action_id < ACTION_BASE_ENERGY {
             let adj = action_id - ACTION_BASE_DISCARD_ACTIVATE;
             return DecodedAction::ActivateFromDiscard {
                 discard_idx: (adj / 10) as usize,
@@ -146,19 +165,117 @@ impl ActionFactory {
             };
         }
 
-        if action_id >= ACTION_BASE_ENERGY && action_id < ACTION_BASE_ENERGY + 100 {
+        if action_id >= ACTION_BASE_ENERGY && action_id < ACTION_BASE_CHOICE {
             return DecodedAction::SelectEnergy {
                 energy_idx: (action_id - ACTION_BASE_ENERGY) as usize,
             };
         }
 
-        if action_id >= ACTION_BASE_CHOICE && action_id < ACTION_BASE_CHOICE + 2000 {
+        if action_id >= ACTION_BASE_CHOICE && action_id < ACTION_BASE_CHOICE + 5000 {
             return DecodedAction::SelectChoice {
                 choice_idx: action_id - ACTION_BASE_CHOICE,
             };
         }
 
+        if action_id >= 20000 && action_id < 20010 {
+            return DecodedAction::Rps { p_idx: 0, choice: (action_id - 20000) as i8 };
+        }
+        if action_id >= 21000 && action_id < 21010 {
+            return DecodedAction::Rps { p_idx: 1, choice: (action_id - 21000) as i8 };
+        }
+
         DecodedAction::Unknown(action_id)
+    }
+
+    /// Returns a human-readable label for a given action ID, including card details if available.
+    pub fn get_verbose_action_label(action_id: i32, state: &super::game::GameState, db: &CardDatabase) -> String {
+        // Special Contextual Collision Handling for ID 5000/5001 (Turn Choice vs Discard Activate)
+        if state.phase == crate::core::enums::Phase::TurnChoice {
+            if action_id == 5000 { return "Turn Choice: Go First".to_string(); }
+            if action_id == 5001 { return "Turn Choice: Go Second".to_string(); }
+        }
+
+        let decoded = Self::parse_action(action_id);
+        let p_idx = state.current_player as usize;
+        let player = &state.core.players[p_idx];
+
+        match decoded {
+            DecodedAction::MulliganSelect { card_idx } => {
+                if let Some(&cid) = player.hand.get(card_idx as usize) {
+                    if let Some(m) = db.get_member(cid) {
+                        return format!("Mulligan Hand[{}] ([{}] {})", card_idx, m.card_no, m.name);
+                    }
+                }
+                format!("Mulligan Hand[{}]", card_idx)
+            }
+            DecodedAction::SetLive { hand_idx } => {
+                if let Some(&cid) = player.hand.get(hand_idx) {
+                    if let Some(l) = db.get_live(cid) {
+                        return format!("Set Live card ([{}] {}) (Hand[{}])", l.card_no, l.name, hand_idx);
+                    }
+                }
+                format!("Set Live card (Hand[{}])", hand_idx)
+            }
+            DecodedAction::PlayMember { hand_idx, slot_idx, other_slot, choice_idx } => {
+                let mut label = String::new();
+                if let Some(&cid) = player.hand.get(hand_idx) {
+                    if let Some(m) = db.get_member(cid) {
+                        label = format!("Play ([{}] {}) (Hand[{}]) to Slot {}", m.card_no, m.name, hand_idx, slot_idx);
+                    }
+                }
+                if label.is_empty() {
+                    label = format!("Play Hand[{}] to Slot {}", hand_idx, slot_idx);
+                }
+                if let Some(other) = other_slot { label.push_str(&format!(" and Slot {}", other)); }
+                if let Some(c) = choice_idx { label.push_str(&format!(" with Choice {}", c)); }
+                label
+            }
+            DecodedAction::ActivateMember { slot_idx, ab_idx, choice_idx } => {
+                let cid = player.stage[slot_idx];
+                let mut label = String::new();
+                if cid >= 0 {
+                    if let Some(m) = db.get_member(cid) {
+                        label = format!("Activate ([{}] {}) at Slot {}, Ability {}", m.card_no, m.name, slot_idx, ab_idx);
+                    }
+                }
+                if label.is_empty() {
+                    label = format!("Activate Slot {}, Ability {}", slot_idx, ab_idx);
+                }
+                if let Some(c) = choice_idx { label.push_str(&format!(" with Choice {}", c)); }
+                label
+            }
+            DecodedAction::ActivateFromDiscard { discard_idx, ab_idx } => {
+                if let Some(&cid) = player.discard.get(discard_idx) {
+                    if let Some(m) = db.get_member(cid) {
+                        return format!("Activate from Discard Index {}, Ability {} ([{}] {})", discard_idx, ab_idx, m.card_no, m.name);
+                    }
+                }
+                format!("Activate from Discard Index {}, Ability {}", discard_idx, ab_idx)
+            }
+            DecodedAction::ActivateFromHand { hand_idx, ab_idx } => {
+                if let Some(&cid) = player.hand.get(hand_idx) {
+                    if let Some(m) = db.get_member(cid) {
+                        return format!("Activate from Hand Index {}, Ability {} ([{}] {})", hand_idx, ab_idx, m.card_no, m.name);
+                    }
+                }
+                format!("Activate from Hand Index {}, Ability {}", hand_idx, ab_idx)
+            }
+            DecodedAction::Rps { p_idx, choice } => {
+                let move_name = match choice { 0 => "Rock", 1 => "Paper", 2 => "Scissors", _ => "Unknown" };
+                format!("RPS: Player {} chose {}", p_idx, move_name)
+            }
+            DecodedAction::TurnChoice { choice } => {
+                format!("Turn Choice: {}", if choice == 0 { "Go First" } else { "Go Second" })
+            }
+            _ => {
+                // Special Contextual Collision Handling for ID 5000/5001
+                if state.phase == crate::core::enums::Phase::TurnChoice {
+                    if action_id == 5000 { return "Turn Choice: Go First".to_string(); }
+                    if action_id == 5001 { return "Turn Choice: Go Second".to_string(); }
+                }
+                Self::get_action_label(action_id)
+            }
+        }
     }
 
     /// Returns a human-readable label for a given action ID.
@@ -190,8 +307,18 @@ impl ActionFactory {
             DecodedAction::ActivateFromDiscard { discard_idx, ab_idx } => {
                 format!("Activate from Discard Index {}, Ability {}", discard_idx, ab_idx)
             },
+            DecodedAction::ActivateFromHand { hand_idx, ab_idx } => {
+                format!("Activate from Hand Index {}, Ability {}", hand_idx, ab_idx)
+            },
             DecodedAction::SelectEnergy { energy_idx } => format!("Select Energy Index {}", energy_idx),
             DecodedAction::SelectChoice { choice_idx } => format!("Select Choice Index {}", choice_idx),
+            DecodedAction::Rps { p_idx, choice } => {
+                let move_name = match choice { 0 => "Rock", 1 => "Paper", 2 => "Scissors", _ => "Unknown" };
+                format!("RPS: Player {} chose {}", p_idx, move_name)
+            }
+            DecodedAction::TurnChoice { choice } => {
+                format!("Turn Choice: {}", if choice == 0 { "Go First" } else { "Go Second" })
+            }
             DecodedAction::Unknown(id) => format!("Unknown Action {}", id),
         }
     }

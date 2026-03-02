@@ -4,13 +4,12 @@ Improved Deck Parser for Love Live TCG Deck Log HTML pages.
 Refactored to use engine.game.deck_utils.UnifiedDeckParser.
 """
 
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
-from dataclasses import dataclass, field, asdict
-from typing import Optional, List, Dict
-from pathlib import Path
+from dataclasses import asdict, dataclass, field
+from typing import Dict, List, Optional
 
 # Add project root
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -21,6 +20,7 @@ from engine.game.deck_utils import UnifiedDeckParser
 @dataclass
 class CardEntry:
     """Represents a single card entry with code, name, and quantity."""
+
     code: str
     name: str
     quantity: int
@@ -30,6 +30,7 @@ class CardEntry:
 @dataclass
 class DeckInfo:
     """Represents a complete deck with all metadata."""
+
     deck_name: str = ""
     deck_code: str = ""
     build_rule: str = ""
@@ -38,7 +39,7 @@ class DeckInfo:
     stats: dict = field(default_factory=dict)
     main_deck_ids: List[int] = field(default_factory=list)
     energy_deck_ids: List[int] = field(default_factory=list)
-    
+
     def to_dict(self) -> dict:
         return {
             "deck_name": self.deck_name,
@@ -54,11 +55,11 @@ class DeckInfo:
 
 class DeckParser:
     """Parser for Bushiroad DECK LOG HTML pages using UnifiedDeckParser."""
-    
+
     def __init__(self, use_compiled_data: bool = True):
         self.card_db = self._load_card_db()
         self.unified_parser = UnifiedDeckParser(self.card_db)
-        
+
     def _load_card_db(self) -> Dict:
         """Load card database."""
         db_path = os.path.join(os.path.dirname(__file__), "..", "data", "cards.json")
@@ -73,44 +74,42 @@ class DeckParser:
         results = self.unified_parser.extract_from_content(html_content)
         if not results:
             return DeckInfo()
-            
+
         raw_deck = results[0]
         deck = DeckInfo()
-        deck.deck_name = raw_deck.get('name', 'Unknown Deck')
-        
+        deck.deck_name = raw_deck.get("name", "Unknown Deck")
+
         # Extract metadata specifically if present (since UnifiedDeckParser is more generic)
-        deck.deck_code = self._extract_regex(html_content, r'デッキコード[：:]\s*([A-Za-z0-9]+)')
-        deck.build_rule = self._extract_regex(html_content, r'構築ルール[：:]\s*<span>([^<]+)</span>')
-        
+        deck.deck_code = self._extract_regex(html_content, r"デッキコード[：:]\s*([A-Za-z0-9]+)")
+        deck.build_rule = self._extract_regex(html_content, r"構築ルール[：:]\s*<span>([^<]+)</span>")
+
         # Stats
-        deck.stats = raw_deck.get('type_counts', {})
-        
+        deck.stats = raw_deck.get("type_counts", {})
+
         # Map to CardEntry objects for main deck
-        main_counts = Counter(raw_deck['main'])
+        main_counts = Counter(raw_deck["main"])
         for code, qty in main_counts.items():
             card_data = self.unified_parser.resolve_card(code)
-            deck.main_deck.append(CardEntry(
-                code=code,
-                name=card_data.get('name', 'Unknown'),
-                quantity=qty,
-                internal_id=card_data.get('card_id')
-            ))
-            if card_data.get('card_id'):
-                deck.main_deck_ids.extend([card_data['card_id']] * qty)
+            deck.main_deck.append(
+                CardEntry(
+                    code=code, name=card_data.get("name", "Unknown"), quantity=qty, internal_id=card_data.get("card_id")
+                )
+            )
+            if card_data.get("card_id"):
+                deck.main_deck_ids.extend([card_data["card_id"]] * qty)
 
         # Map to CardEntry objects for energy deck
-        energy_counts = Counter(raw_deck['energy'])
+        energy_counts = Counter(raw_deck["energy"])
         for code, qty in energy_counts.items():
             card_data = self.unified_parser.resolve_card(code)
-            deck.energy_deck.append(CardEntry(
-                code=code,
-                name=card_data.get('name', 'Unknown'),
-                quantity=qty,
-                internal_id=card_data.get('card_id')
-            ))
-            if card_data.get('card_id'):
-                deck.energy_deck_ids.extend([card_data['card_id']] * qty)
-                
+            deck.energy_deck.append(
+                CardEntry(
+                    code=code, name=card_data.get("name", "Unknown"), quantity=qty, internal_id=card_data.get("card_id")
+                )
+            )
+            if card_data.get("card_id"):
+                deck.energy_deck_ids.extend([card_data["card_id"]] * qty)
+
         return deck
 
     def _extract_regex(self, content: str, pattern: str) -> str:
@@ -122,11 +121,12 @@ class DeckParser:
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
         return self.parse_html(content)
-    
+
     def parse_url(self, url: str) -> DeckInfo:
         """Parse deck from URL."""
         try:
             import requests
+
             response = requests.get(url, timeout=30)
             response.raise_for_status()
             return self.parse_html(response.text)
@@ -140,7 +140,7 @@ def format_output(deck: DeckInfo, format_type: str = "text") -> str:
     """Format deck information for output."""
     if format_type == "json":
         return json.dumps(deck.to_dict(), ensure_ascii=False, indent=2)
-    
+
     elif format_type == "deck":
         lines = [f"# Deck: {deck.deck_name}", f"# Code: {deck.deck_code}", ""]
         lines.append("# Main Deck")
@@ -150,9 +150,15 @@ def format_output(deck: DeckInfo, format_type: str = "text") -> str:
         for card in deck.energy_deck:
             lines.append(f"{card.code} x{card.quantity}")
         return "\n".join(lines)
-    
+
     else:  # text format
-        lines = ["=" * 60, f"Deck Name: {deck.deck_name}", f"Deck Code: {deck.deck_code}", f"Build Rule: {deck.build_rule}", "=" * 60]
+        lines = [
+            "=" * 60,
+            f"Deck Name: {deck.deck_name}",
+            f"Deck Code: {deck.deck_code}",
+            f"Build Rule: {deck.build_rule}",
+            "=" * 60,
+        ]
         lines.append(f"\n[Statistics]\n  {deck.stats}")
         lines.append("\n[Main Deck]")
         for card in sorted(deck.main_deck, key=lambda x: x.code):
@@ -171,10 +177,10 @@ def main():
     parser.add_argument("--url", help="DECK LOG URL to fetch and parse")
     parser.add_argument("--output", "-o", choices=["text", "json", "deck"], default="text")
     parser.add_argument("--save", "-s", help="Save output to file")
-    
+
     args = parser.parse_args()
     deck_parser = DeckParser()
-    
+
     if args.url:
         deck = deck_parser.parse_url(args.url)
     elif args.file:
@@ -182,10 +188,10 @@ def main():
     else:
         parser.print_help()
         return
-    
+
     output = format_output(deck, args.output)
     print(output)
-    
+
     if args.save:
         with open(args.save, "w", encoding="utf-8") as f:
             if args.save.endswith(".json"):

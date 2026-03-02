@@ -1,6 +1,5 @@
 import os
 import sys
-import json
 
 # Add project root to path for engine_rust
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -32,7 +31,7 @@ def run_test():
     gs.set_stage_card(0, 0, 251)  # Slot 0: Rin
     gs.set_discard_cards(0, [30000])  # Discard: One Live card
 
-    print(f"Initial State:")
+    print("Initial State:")
     print(f"  Stage Slot 0: {gs.get_player(0).stage[0]}")
     print(f"  Discard Pile: {gs.get_player(0).discard}")
     print(f"  Hand: {gs.get_player(0).hand}")

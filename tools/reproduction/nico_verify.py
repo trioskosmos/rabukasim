@@ -1,6 +1,5 @@
 import os
 import sys
-import json
 import traceback
 
 # --- PATH SETUP ---
@@ -11,8 +10,9 @@ if os.path.join(PROJECT_ROOT, "engine") not in sys.path:
     sys.path.insert(0, os.path.join(PROJECT_ROOT, "engine"))
 
 import engine_rust
-from backend.rust_serializer import RustGameStateSerializer
 from game.data_loader import CardDataLoader
+
+from backend.rust_serializer import RustGameStateSerializer
 
 
 class ReproHelper:

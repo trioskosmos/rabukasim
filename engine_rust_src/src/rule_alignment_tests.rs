@@ -4,14 +4,14 @@ use serde_json::json;
 #[test]
 fn test_rule_8_3_16_all_or_nothing_failure() {
     let mut db = CardDatabase::default();
-    
+
     // Card 0: Impossible (needs 100 Red hearts)
     let mut impossible_live = LiveCard::default();
     impossible_live.card_id = 0;
     impossible_live.hearts_board.set_color_count(1, 100);
     db.lives.insert(0, impossible_live.clone());
     db.lives_vec[0 as usize] = Some(impossible_live);
-    
+
     // Card 1: Easy (needs 0 hearts)
     let mut easy_live = LiveCard::default();
     easy_live.card_id = 1;
@@ -20,7 +20,7 @@ fn test_rule_8_3_16_all_or_nothing_failure() {
 
     let mut state = GameState::default();
     state.phase = Phase::LiveResult;
-    
+
     // P0 sets both: 0 (impossible) and 1 (easy)
     state.core.players[0].live_zone[0] = 0;
     state.core.players[0].live_zone[1] = 1;
@@ -42,13 +42,13 @@ fn test_rule_8_4_13_first_player_change() {
     state.first_player = 0;
     state.current_player = 0;
     state.phase = Phase::LiveResult;
-    
+
     // Only P1 gets a success live
     state.obtained_success_live = [false, true];
-    
+
     // Finalize
     state.finalize_live_result();
-    
+
     // Rule 8.4.13: P1 becomes first player
     assert_eq!(state.first_player, 1);
     assert_eq!(state.current_player, 1);
@@ -60,13 +60,13 @@ fn test_rule_8_4_13_first_player_no_change_both_success() {
     state.first_player = 0;
     state.current_player = 0;
     state.phase = Phase::LiveResult;
-    
+
     // Both get success lives
     state.obtained_success_live = [true, true];
-    
+
     // Finalize
     state.finalize_live_result();
-    
+
     // Rule 8.4.13: Turn order unchanged
     assert_eq!(state.first_player, 0);
 }
@@ -103,7 +103,7 @@ fn test_priority_p1_triggers_first() {
     let mut state = GameState::default();
     state.first_player = 1; // P1 IS FIRST PLAYER
     state.phase = Phase::LiveResult;
-    
+
     // P0 has m1 on stage
     state.core.players[0].stage[0] = 101;
     // P1 has m2 on stage
@@ -118,11 +118,11 @@ fn test_priority_p1_triggers_first() {
 
     // Verify order in rule_log
     // Order should be P1 trigger (Score +200) then P0 trigger (Score +100)
-    let logs: Vec<String> = state.ui.rule_log.iter()
+    let logs: Vec<String> = state.ui.rule_log.as_ref().unwrap().iter()
         .filter(|s| s.contains("Score +"))
         .cloned()
         .collect();
-    
+
     assert_eq!(logs.len(), 2);
     assert!(logs[0].contains("Score +200"), "P1 (First Player) should trigger first. Logs: {:?}", logs);
     assert!(logs[1].contains("Score +100"), "P0 should trigger second. Logs: {:?}", logs);
@@ -132,7 +132,7 @@ fn test_priority_p1_triggers_first() {
 fn test_priority_p1_choice_selection() {
     let mut db = CardDatabase::default();
     db.lives_vec.resize(1000, None);
-    
+
     // Setup lives
     let mut l1 = LiveCard::default(); l1.card_id = 1; l1.name = "L1".to_string();
     db.lives.insert(1, l1.clone()); db.lives_vec[1] = Some(l1);
@@ -142,7 +142,7 @@ fn test_priority_p1_choice_selection() {
     let mut state = GameState::default();
     state.first_player = 1; // P1 IS FIRST PLAYER
     state.phase = Phase::LiveResult;
-    
+
     // Both players have 2 candidates (multiple candidates = choice needed)
     state.core.players[0].live_zone[0] = 1;
     state.core.players[0].live_zone[1] = 2;
@@ -160,7 +160,7 @@ fn test_priority_p1_choice_selection() {
     }));
 
     // Skip OnLiveSuccess triggers to reach choice logic
-    state.live_result_processed_mask = [0x80, 0x80]; 
+    state.live_result_processed_mask = [0x80, 0x80];
 
     state.do_live_result(&db);
 

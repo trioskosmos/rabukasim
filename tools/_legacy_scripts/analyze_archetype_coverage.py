@@ -1,6 +1,4 @@
 import json
-import os
-import sys
 from collections import defaultdict
 
 # Fixed opcodes

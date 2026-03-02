@@ -95,7 +95,7 @@ state.players.forEach((p, pi) => {
 
 **Location:** [`ui_logs.js`](frontend/web_ui/js/ui_logs.js) - `renderRuleLog()`
 
-**Problem:** 
+**Problem:**
 - Entire log is re-rendered on every state change
 - Regex parsing performed on every log entry every render
 - No virtualization for long logs
@@ -209,4 +209,3 @@ These changes can be made immediately with minimal risk:
 2. Cache frequently accessed DOM elements
 3. Add early returns when state hasn't changed
 4. Debounce rapid state updates
-

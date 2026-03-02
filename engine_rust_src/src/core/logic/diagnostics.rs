@@ -11,15 +11,15 @@ impl GameState {
         for i in 0..2 {
             println!("--- PLAYER {} ---", i);
             let p = &self.core.players[i];
-            
+
             // Flags
             let tapped = [p.is_tapped(0), p.is_tapped(1), p.is_tapped(2)];
             let moved = [p.is_moved(0), p.is_moved(1), p.is_moved(2)];
             let refreshed = p.get_flag(PlayerState::FLAG_DECK_REFRESHED);
-            
+
             println!("  [FLAGS] Tapped: {:?}, Moved: {:?}, Refreshed: {}", tapped, moved, refreshed);
-            println!("  [SCORE] Score: {}, Bonus: {}, Volume: {}", p.score, p.live_score_bonus, p.current_turn_volume);
-            
+            println!("  [SCORE] Score: {}, Bonus: {}, Volume: {}", p.score, p.live_score_bonus, p.current_turn_notes);
+
             // Zones
             print!("  [HAND]  ");
             if p.hand.is_empty() { print!("(Empty)"); }
@@ -34,7 +34,7 @@ impl GameState {
                     print!("    Slot {}: ID={} No={} ", slot, cid, card_no);
                     if tapped[slot] { print!("[TAPPED] "); }
                     if moved[slot] { print!("[MOVED] "); }
-                    
+
                     let energy = &p.stage_energy[slot];
                     if !energy.is_empty() {
                         print!("(Under: ");
@@ -59,14 +59,14 @@ impl GameState {
             if p.discard.is_empty() { print!("(Empty)"); }
             for &cid in &p.discard { print!("{} ", cid); }
             println!();
-            
+
             println!();
         }
 
         if !self.interaction_stack.is_empty() {
             println!("--- INTERACTION STACK ({}) ---", self.interaction_stack.len());
             for (idx, pending) in self.interaction_stack.iter().enumerate() {
-                println!("  [{}] Op: {}, Type: {}, Card: {}, Choices: {}", 
+                println!("  [{}] Op: {}, Type: {}, Card: {}, Choices: {}",
                     idx, pending.effect_opcode, pending.choice_type, pending.card_id, pending.choice_text);
             }
             println!();

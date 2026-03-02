@@ -1,7 +1,8 @@
-import engine_rust
 import json
-import random
 import os
+import random
+
+import engine_rust
 
 
 def test_basic_game_loop():

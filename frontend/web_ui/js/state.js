@@ -6,7 +6,8 @@
 // We use a mutable object to share state across modules
 const stateInternal = {
     // Core Game Data (from backend)
-    data: null, // The "state" object from JSON
+    data: null, // The "state" object from JSON (may be enriched with objects)
+    rawData: null, // The "original" state object from server (IDs only, for debugging/warping)
 
     // Identity & Session
     roomCode: localStorage.getItem('lovelive_room_code'),
@@ -37,7 +38,11 @@ const stateInternal = {
 
     // Config
     currentLang: 'jp',
-    showFriendlyAbilities: localStorage.getItem('lovelive_friendly_abilities') === 'true',
+    showFriendlyAbilities: localStorage.getItem('lovelive_friendly_abilities') === 'true', // Defaults to false if not set to 'true'
+
+    // Card ID Constants (Must match Rust engine)
+    TEMPLATE_MASK: 0x1FFFFF, // Bits 0-20
+    INSTANCE_SHIFT: 21,      // Bits 21-30 are UID
 
     // UI State & Cache
     selectedTurn: -1, // Log selection (-1 means all)
@@ -54,16 +59,34 @@ const stateInternal = {
     // Error Tracking
     capturedErrors: [],
 
-    // State management helpers
     update: (newData) => {
         if (!newData) {
             State.data = null;
+            State.rawData = null;
             State.cardIndex = null;
             return;
         }
+        // Deep clone for rawData to ensure we have a pure ID-only version
+        State.rawData = JSON.parse(JSON.stringify(newData));
         State.data = newData;  // Replace entirely instead of merging
         // Rebuild card index when state updates
         State.rebuildCardIndex();
+
+        // Sync performance history on every state update
+        if (newData.performance_history && Array.isArray(newData.performance_history)) {
+            newData.performance_history.forEach(item => {
+                const t = item.turn;
+                const p = item.player_id;
+                if (t !== undefined && p !== undefined) {
+                    if (!State.performanceHistory[t]) State.performanceHistory[t] = {};
+                    State.performanceHistory[t][p] = item;
+                    if (!State.performanceHistoryTurns.includes(t)) {
+                        State.performanceHistoryTurns.push(t);
+                    }
+                }
+            });
+            State.performanceHistoryTurns.sort((a, b) => b - a);
+        }
     },
 
     /**
@@ -83,16 +106,26 @@ const stateInternal = {
         const addCard = (card, zone) => {
             if (!card) return;
             // Support both 'id' (client/runtime) and 'card_id' (server/master data)
-            const cid = card.id !== undefined ? card.id : card.card_id;
+            const rawCid = card.id !== undefined ? card.id : card.card_id;
+            if (rawCid === undefined || rawCid < 0) return;
 
-            if (cid !== undefined && cid >= 0) {
+            // Mask the ID to find the template
+            const templateId = rawCid & State.TEMPLATE_MASK;
+
+            if (templateId >= 0) {
                 // Store first occurrence OR update if this one has more data (name, text)
-                const existing = index[cid];
+                // We use the templateId as the key for metadata resolution
+                const existing = index[templateId];
                 const cardText = card.original_text || card.ability_text || card.ability || card.text;
                 const existingText = existing ? (existing.original_text || existing.ability_text || existing.ability || existing.text) : null;
 
                 if (!existing || (!existingText && cardText) || (!existing.name && card.name)) {
-                    index[cid] = { ...card, id: cid }; // Ensure id key exists for consistency
+                    index[templateId] = { ...card, id: templateId };
+                }
+
+                // Also store the packed version if it's different and we are in a dynamic zone
+                if (rawCid !== templateId) {
+                    index[rawCid] = { ...index[templateId], id: rawCid };
                 }
             }
         };
@@ -104,42 +137,55 @@ const stateInternal = {
         state.players.forEach((p, playerIdx) => {
             if (!p) return;
 
-            // Index all zones
-            if (p.hand) p.hand.forEach(c => addCard(c, 'hand'));
-            if (p.stage) p.stage.forEach(c => addCard(c, 'stage'));
-            if (p.live_zone) p.live_zone.forEach(c => addCard(c, 'live_zone'));
-            // Rust Launcher provides energy cards directly as objects in p.energy
-            if (p.energy) p.energy.forEach(e => {
-                const card = (e && typeof e === 'object' && e.id !== undefined) ? e : (e && e.card);
-                if (card) addCard(card, 'energy');
-            });
-            if (p.discard) p.discard.forEach(c => addCard(c, 'discard'));
-            if (p.waiting_room) p.waiting_room.forEach(c => addCard(c, 'waiting_room'));
-            // Rust Launcher uses success_lives or success_zone
-            if (p.success_lives) p.success_lives.forEach(c => addCard(c, 'success_lives'));
-            if (p.success_zone) p.success_zone.forEach(c => addCard(c, 'success_zone'));
-            if (p.success_pile) p.success_pile.forEach(c => addCard(c, 'success_pile'));
-        });
+            // Index all zones (p.hand here usually contains integer IDs in raw data, 
+            // but the launcher might provide rich objects)
+            const indexZone = (zoneData) => {
+                if (!zoneData) return;
+                zoneData.forEach(c => {
+                    if (typeof c === 'number') {
+                        // Create a skeleton for the ID so addCard can enrich it from index[templateId]
+                        addCard({ id: c }, 'zone');
+                    } else {
+                        addCard(c, 'zone');
+                    }
+                });
+            }
 
-        // Also index looked_cards
-        if (state.looked_cards) {
-            state.looked_cards.forEach(c => addCard(c, 'looked_cards'));
-        }
+            indexZone(p.hand);
+            indexZone(p.stage);
+            indexZone(p.live_zone);
+            indexZone(p.looked_cards);
+            if (p.energy) indexZone(p.energy.map(e => (e && e.card) ? e.card : e));
+            indexZone(p.discard);
+            indexZone(p.success_lives || p.success_zone || p.success_pile);
+        });
 
         State.cardIndex = index;
         console.log(`[State] Card index rebuilt. Size: ${Object.keys(index).length}`);
     },
 
+    /**
+     * Resets game-specific state when joining a new room or starting a new game.
+     * This prevents old performance data from leaking into new games.
+     */
+    resetForNewGame: () => {
+        // ... (existing reset logic)
+    },
+
     resolveCardData: (cid) => {
         if (cid === null || cid === undefined || cid < 0) return null;
 
+        // Mask to find template if not directly indexed
+        const templateId = cid & State.TEMPLATE_MASK;
+
         // O(1) lookup using card index
-        if (State.cardIndex && State.cardIndex[cid]) {
-            return State.cardIndex[cid];
+        if (State.cardIndex) {
+            if (State.cardIndex[cid]) return State.cardIndex[cid];
+            if (State.cardIndex[templateId]) return { ...State.cardIndex[templateId], id: cid };
         }
 
         // Fallback: return placeholder
-        return { id: cid, name: `Card ${cid}`, img: 'icon_blade.png', text: "", original_text: "" };
+        return { id: cid, name: `Card ${templateId}`, img: 'icon_blade.png', text: "", original_text: "" };
     },
 
     resolveCardDataByName: (name) => {
@@ -169,6 +215,49 @@ const stateInternal = {
             if (found) return found;
         }
         return null;
+    },
+
+    /**
+     * Traverses the state object and converts "Rich Card" objects back into
+     * simple integer IDs (card_id) that the Rust engine expects for deserialization.
+     * Also maps frontend-specific keys (like active_player) back to engine-specific keys (current_player).
+     */
+    stripRichData: (obj) => {
+        if (obj === null || obj === undefined) return obj;
+
+        if (Array.isArray(obj)) {
+            return obj.map(item => State.stripRichData(item));
+        }
+
+        if (typeof obj === 'object') {
+            // 1. Handle Card Objects: If this has id/card_id and card_no, it's a rich card
+            if ((obj.id !== undefined || obj.card_id !== undefined) && obj.card_no !== undefined) {
+                return obj.id !== undefined ? obj.id : obj.card_id;
+            }
+
+            // 2. Regular object: recurse but purge UI-only fields
+            const stripped = {};
+
+            // Map keys if needed
+            if (obj.active_player !== undefined && obj.current_player === undefined) {
+                obj.current_player = obj.active_player;
+            }
+
+            const blacklistedKeys = [
+                'ai_status', 'is_ai_thinking', 'last_action',
+                'mode', 'my_player_id', 'needs_deck', 'spectators',
+                'triggered_abilities', 'opponent_triggered_abilities',
+                'game_over', 'winner', 'queue_depth'
+            ];
+
+            for (const [key, value] of Object.entries(obj)) {
+                if (blacklistedKeys.includes(key)) continue;
+                stripped[key] = State.stripRichData(value);
+            }
+            return stripped;
+        }
+
+        return obj;
     }
 };
 

@@ -4,7 +4,7 @@
  */
 import { State } from '../state.js';
 import { fixImg, Phase } from '../constants.js';
-import { translations } from '../translations_data.js';
+import * as i18n from '../i18n/index.js';
 import { Tooltips } from '../ui_tooltips.js';
 
 export const PerformanceRenderer = {
@@ -77,10 +77,9 @@ export const PerformanceRenderer = {
             (State.data.performance_results && Object.keys(State.data.performance_results).length > 0 ? State.data.performance_results : State.data.last_performance_results);
 
         const currentLang = State.currentLang;
-        const t = translations ? translations[currentLang] : null;
 
         if (!displayResults || Object.keys(displayResults).length === 0) {
-            const label = t ? (t['no_perf_data'] || 'No performance data available for this turn.') : 'No performance data available for this turn.';
+            const label = i18n.t('no_perf_data');
             content.innerHTML = `<div style="text-align:center; padding: 20px; opacity:0.6;">${label}</div>`;
             return;
         }
@@ -96,10 +95,7 @@ export const PerformanceRenderer = {
             turns.forEach((turn) => {
                 const turnNum = parseInt(turn);
                 const isLatest = turnNum === turns[turns.length - 1];
-                let turnLabel = isLatest ? `Current (T${turnNum})` : `Turn ${turnNum}`;
-                if (t) {
-                    turnLabel = isLatest ? (t['current_turn'] || 'Current (T{turn})').replace('{turn}', turnNum) : (t['turn_label'] || 'Turn {turn}').replace('{turn}', turnNum);
-                }
+                let turnLabel = isLatest ? i18n.t('current_turn', { turn: turnNum }) : i18n.t('turn_label', { turn: turnNum });
 
                 const isSelected = (State.selectedPerfTurn === turnNum) || (State.selectedPerfTurn === -1 && isLatest);
                 const activeClass = isSelected ? 'active' : '';
@@ -116,8 +112,8 @@ export const PerformanceRenderer = {
             const res = displayResults[pid];
             if (!res) return;
 
-            const playerName = pid === State.perspectivePlayer ? (t ? (t['you'] || 'You') : 'You') : (t ? (t['opp'] || 'Opponent') : 'Opponent');
-            const statusLabel = res.success ? (t ? (t['success'] || 'SUCCESS') : 'SUCCESS') : (t ? (t['failure'] || 'FAILURE') : 'FAILURE');
+            const playerName = pid === State.perspectivePlayer ? i18n.t('you') : i18n.t('opponent');
+            const statusLabel = res.success ? i18n.t('success') : i18n.t('failure');
             const statusClass = res.success ? 'success' : 'failure';
 
             html += `
@@ -125,7 +121,7 @@ export const PerformanceRenderer = {
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                         <h3 style="margin:0;">${playerName}: ${statusLabel}</h3>
                         <div style="text-align:right;">
-                            <span style="font-size:0.75rem; opacity:0.6; text-transform:uppercase;">${t ? (t['judge_score'] || 'Judge Score') : 'Judge Score'}</span>
+                            <span style="font-size:0.75rem; opacity:0.6; text-transform:uppercase;">${i18n.t('judge_score') || 'Judge Score'}</span>
                             <div style="font-size:1.25rem; font-weight:bold; color:var(--accent-gold);">${res.total_score || 0}</div>
                         </div>
                     </div>
@@ -141,7 +137,7 @@ export const PerformanceRenderer = {
                     ` : ''}
                     <div class="perf-breakdown">
                         <div class="perf-section">
-                            <h4>${t ? (t['target_lives'] || 'Target Lives') : 'Target Lives'}</h4>
+                            <h4>${i18n.t('target_lives')}</h4>
                             ${res.lives && res.lives.length > 0 ? res.lives.map(l => {
                 if (!l) return '';
                 const filledSum = (l.filled || [0, 0, 0, 0, 0, 0, 0]).reduce((a, b) => a + b, 0);
@@ -153,11 +149,11 @@ export const PerformanceRenderer = {
                                             ${l.img ? `<img src="${fixImg(l.img)}" style="width:24px; border-radius:3px;">` : ''}
                                             <div style="display:flex; flex-direction:column;">
                                                 <span style="font-weight:bold; font-size:0.9rem;">${l.name || 'Live'}</span>
-                                                <span style="font-size:0.7rem; color:var(--accent-gold); opacity:0.9;">${t ? (t['score'] || 'Score') : 'Score'}: <b>${l.score || 0}</b></span>
+                                                <span style="font-size:0.7rem; color:var(--accent-gold); opacity:0.9;">${i18n.t('score')}: <b>${l.score || 0}</b></span>
                                             </div>
                                         </div>
                                          <div style="display:flex; align-items:center; gap:10px;">
-                                            ${Math.max(0, filledSum - reqSum) > 0 ? `<span style="font-size:0.75rem; color:var(--accent-gold);">${t ? (t['extra_hearts'] || '+{count} Extra').replace('{count}', Math.max(0, filledSum - reqSum)) : `+${Math.max(0, filledSum - reqSum)} Extra`}</span>` : ''}
+                                            ${Math.max(0, filledSum - reqSum) > 0 ? `<span style="font-size:0.75rem; color:var(--accent-gold);">${i18n.t('extra_hearts', { count: Math.max(0, filledSum - reqSum) })}</span>` : ''}
                                             <span style="color:${l.passed ? '#4f4' : '#f44'}; font-weight:bold; font-size:0.8rem;">${l.passed ? '[PASS]' : '[FAIL]'}</span>
                                         </div>
                                     </div>
@@ -173,26 +169,26 @@ export const PerformanceRenderer = {
                                 `;
             }).join('') : 'None'}
                         </div>
-                        
+
                         <div class="perf-section">
-                            <h4>${t ? (t['blades_breakdown'] || 'Blades Breakdown (Total: {total})').replace('{total}', res.yell_count || 0) : `Blades Breakdown (Total: ${res.yell_count || 0})`}</h4>
+                            <h4>${i18n.t('blades_breakdown', { total: res.yell_count || 0 })}</h4>
                             ${res.breakdown && res.breakdown.blades ? res.breakdown.blades.map(b => `
                                 <div class="perf-line">
                                     <span>${Tooltips.enrichAbilityText(b.source)}</span>
                                     <span class="value">+${b.value}</span>
                                 </div>
                             `).join('') : ''}
-                            ${res.volume_icons ? `
+                            ${res.note_icons || res.volume_icons ? `
                                 <div class="perf-line" style="border-top:1px dashed rgba(255,255,255,0.1); padding-top:2px;">
-                                    <span>${t ? (t['volume'] || 'Volume Icons') : 'Volume Icons'}</span>
-                                    <span class="value">+${res.volume_icons}</span>
+                                    <span>${i18n.t('notes')}</span>
+                                    <span class="value">+${res.note_icons || res.volume_icons}</span>
                                 </div>
                             ` : ''}
                         </div>
 
                         ${res.member_contributions && res.member_contributions.length > 0 ? `
                         <div class="perf-section">
-                            <h4>${t ? (t['member_contrib'] || 'Member Contributions') : 'Member Contributions'}</h4>
+                            <h4>${i18n.t('member_contrib')}</h4>
                             ${res.member_contributions.map(m => {
                 if (!m) return '';
                 return `
@@ -201,10 +197,34 @@ export const PerformanceRenderer = {
                                     <div class="perf-member-info">
                                         <div class="perf-member-name">${Tooltips.enrichAbilityText(m.source || "Member")}</div>
                                         <div class="perf-member-stats">
-                                            <div class="contrib-row">${PerformanceRenderer.renderHeartsCompact(m.hearts)}</div>
-                                            <div class="contrib-row">${PerformanceRenderer.renderBladesCompact(m.blades)}</div>
-                                             ${m.volume_icons ? `<span>${t ? (t['volume'] || 'Vol') : 'Vol'}: <b>${m.volume_icons}</b></span>` : ''}
-                                            ${m.draw_icons ? `<span>${t ? (t['cards_draw'] || 'Drw') : 'Drw'}: <b>${m.draw_icons}</b></span>` : ''}
+                                            <div class="contrib-row">
+                                                ${PerformanceRenderer.renderHeartsCompact(m.base_hearts)}
+                                                ${m.bonus_hearts && m.bonus_hearts.some(v => v > 0) ? `
+                                                    <div class="bonus-container">
+                                                        <span class="bonus-tag">+${PerformanceRenderer.renderHeartsCompact(m.bonus_hearts)}</span>
+                                                        ${m.ability_heart_bonuses && m.ability_heart_bonuses.length > 0 ? `
+                                                            <div class="bonus-source-list">
+                                                                ${m.ability_heart_bonuses.map(b => `<div class="source-line">${b.source}: +${b.amount} ${['Pink', 'Red', 'Yellow', 'Green', 'Blue', 'Purple', 'Any'][b.color] || ''}</div>`).join('')}
+                                                            </div>
+                                                        ` : ''}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                            <div class="contrib-row">
+                                                ${PerformanceRenderer.renderBladesCompact(m.base_blades)}
+                                                ${m.bonus_blades > 0 ? `
+                                                    <div class="bonus-container">
+                                                        <span class="bonus-tag"> +${m.bonus_blades}</span>
+                                                        ${m.ability_blade_bonuses && m.ability_blade_bonuses.length > 0 ? `
+                                                            <div class="bonus-source-list">
+                                                                ${m.ability_blade_bonuses.map(b => `<div class="source-line">${b.source}: +${b.amount}</div>`).join('')}
+                                                            </div>
+                                                        ` : ''}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                             ${(m.base_notes > 0 || m.bonus_notes > 0) ? `<span>${i18n.t('notes')}: <b>${m.base_notes}${m.bonus_notes > 0 ? ` <span class="bonus-tag">(+${m.bonus_notes})</span>` : ''}</b></span>` : ''}
+                                            ${m.draw_icons ? `<span>${i18n.t('cards_draw')}: <b>${m.draw_icons}</b></span>` : ''}
                                         </div>
                                     </div>
                                 </div>
@@ -213,30 +233,42 @@ export const PerformanceRenderer = {
                         </div>
                         ` : ''}
 
-                        ${(res.breakdown && ((res.breakdown.requirements && res.breakdown.requirements.length > 0) || (res.breakdown.transforms && res.breakdown.transforms.length > 0))) ? `
+                        ${(res.breakdown && ((res.breakdown.requirements && res.breakdown.requirements.length > 0) || (res.breakdown.transforms && res.breakdown.transforms.length > 0) || (res.lives && res.lives.some(l => l.adjustments && l.adjustments.length > 0)))) ? `
                         <div class="perf-section">
-                            <h4>${t ? (t['adjustments'] || 'Adjustments') : 'Adjustments'}</h4>
-                            ${res.breakdown.requirements ? res.breakdown.requirements.map(req => {
-                const colors = ['Pink', 'Red', 'Yellow', 'Green', 'Blue', 'Purple', 'Any'];
-                return `
-                                <div class="perf-line" style="color: #4f4; font-size: 0.8rem; gap: 4px;">
-                                    <span style="opacity:0.7;">${Tooltips.enrichAbilityText(req.source)}:</span>
-                                    <span>-${req.value} ${colors[req.color] || 'Any'} Req</span>
-                                </div>
-                                `;
-            }).join('') : ''}
+                            <h4>${i18n.t('adjustments')}</h4>
                             ${res.breakdown.transforms ? res.breakdown.transforms.map(tr => `
                                 <div class="perf-line" style="color: #aaf; font-size: 0.8rem; gap: 4px;">
                                     <span style="opacity:0.7;">${tr.source}:</span>
                                     <span>${tr.desc}</span>
                                 </div>
                             `).join('') : ''}
+                            ${res.lives && res.lives.some(l => l.adjustments && l.adjustments.length > 0) ? res.lives.map(l => {
+                if (!l.adjustments) return '';
+                return l.adjustments.map(adj => {
+                    const colorNames = ['Pink', 'Red', 'Yellow', 'Green', 'Blue', 'Purple', 'Any'];
+                    const colorName = colorNames[adj.color] || '??';
+                    const icon = adj.color === 6 ? 'img/texticon/icon_all.png' : `img/texticon/heart_0${adj.color + 1}.png`;
+                    const sign = adj.value > 0 ? '-' : '+';
+                    const absValue = Math.abs(adj.value);
+                    const adjTypeClass = adj.type || 'reduction';
+
+                    return `
+                        <div class="perf-line adjustment-line ${adjTypeClass}" style="font-size: 0.8rem; gap: 4px;">
+                            <span style="opacity:0.7;">${l.name} (${adj.source}):</span>
+                            <div style="display:flex; align-items:center; gap:2px;">
+                                <img src="${icon}" class="heart-mini-icon">
+                                <span class="value" style="color: inherit;">${sign}${absValue} Req</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }).join('') : ''}
                         </div>
                         ` : ''}
 
                         ${res.yell_cards && res.yell_cards.length > 0 ? `
                         <div class="perf-section">
-                            <h4>${t ? (t['yelled_cards'] || 'Yelled Cards') : 'Yelled Cards'} (${res.yell_cards.length} Total)</h4>
+                            <h4>${i18n.t('yelled_cards')} (${res.yell_cards.length} Total)</h4>
                             <div class="perf-yell-grid">
                                 ${res.yell_cards.map(c => {
                 if (!c) return '';
@@ -250,8 +282,8 @@ export const PerformanceRenderer = {
                     const icon = hIdx === 6 ? 'img/texticon/icon_all.png' : `img/texticon/heart_0${hIdx + 1}.png`;
                     return `<img src="${icon}" class="perf-mini-icon">`;
                 }).join('') : ''}
-                                                 ${(c && c.volume_icons > 0) ? `<img src="img/texticon/icon_score.png" class="perf-mini-icon" title="${t ? (t['volume'] || 'Volume') : 'Volume'}">` : ''}
-                                                ${(c && c.draw_icons > 0) ? `<img src="img/texticon/icon_draw.png" class="perf-mini-icon" title="${t ? (t['cards_draw'] || 'Draw') : 'Draw'}">` : ''}
+                                                 ${(c && (c.note_icons > 0 || c.volume_icons > 0)) ? `<img src="img/texticon/icon_score.png" class="perf-mini-icon" title="${i18n.t('notes')}">` : ''}
+                                                ${(c && c.draw_icons > 0) ? `<img src="img/texticon/icon_draw.png" class="perf-mini-icon" title="${i18n.t('cards_draw')}">` : ''}
                                             </div>
                                         </div>
                                     `;
@@ -320,11 +352,9 @@ export const PerformanceRenderer = {
 
         const state = State.data;
         const history = state.turn_history || state.turn_events || [];
-        const currentLang = State.currentLang;
-        const t = translations ? translations[currentLang] : {};
 
         if (history.length === 0) {
-            const label = t['no_history'] || 'No history available for this turn.';
+            const label = i18n.t('no_history');
             container.innerHTML = `<div style="text-align:center; padding:20px; opacity:0.6;">${label}</div>`;
             return;
         }
@@ -332,13 +362,13 @@ export const PerformanceRenderer = {
         let html = '';
         history.forEach((event) => {
             const phaseKey = PerformanceRenderer._getPhaseKey(event.phase);
-            const playerLabel = event.player_id === State.perspectivePlayer ? (t['you'] || 'You') : (t['opp'] || 'Opponent');
+            const playerLabel = event.player_id === State.perspectivePlayer ? i18n.t('you') : i18n.t('opponent');
             const typeClass = event.event_type ? event.event_type.toLowerCase() : 'generic';
 
             html += `
                 <div class="turn-event-item ${typeClass}">
                     <div class="event-header">
-                        <span>Turn ${event.turn} - <span class="event-phase-tag">${t[phaseKey] || event.phase}</span></span>
+                        <span>Turn ${event.turn} - <span class="event-phase-tag">${i18n.t(phaseKey)}</span></span>
                         <span>${playerLabel}</span>
                     </div>
                     <div class="event-source">${event.event_type || 'Event'}</div>

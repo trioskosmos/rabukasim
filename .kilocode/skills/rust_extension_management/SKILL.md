@@ -47,6 +47,6 @@ After rebuilding, verify the extension version and exposed constants:
 
 ```python
 import engine_rust
-print(engine_rust.PyCardDatabase.__doc__) 
+print(engine_rust.PyCardDatabase.__doc__)
 # Or check specific enums if exposed (currently they are internal to the Rust logic)
 ```

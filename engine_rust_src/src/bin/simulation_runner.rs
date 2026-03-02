@@ -12,7 +12,7 @@ fn parse_deck(path: &str, db: &CardDatabase) -> Vec<i32> {
         let parts: Vec<&str> = line.split('x').map(|s| s.trim()).collect();
         let no = parts[0];
         let count = if parts.len() > 1 { parts[1].parse::<usize>().unwrap_or(1) } else { 1 };
-        
+
         if let Some(&id) = db.card_no_to_id.get(no) {
             for _ in 0..count { ids.push(id); }
         }
@@ -35,11 +35,11 @@ fn main() {
     let p1_deck = p0_deck.clone();
 
     let mut state = GameState::default();
-    
+
     // Split into main and energy (Simplified: just use members for energy for now)
     let p0_main: Vec<i32> = p0_deck.iter().filter(|&&id| db.get_member(id).is_some() || db.get_live(id).is_some()).cloned().collect();
     let p1_main: Vec<i32> = p1_deck.iter().filter(|&&id| db.get_member(id).is_some() || db.get_live(id).is_some()).cloned().collect();
-    
+
     // Take energy from DB directly for stability
     let energy_ids: Vec<i32> = db.energy_db.keys().take(10).cloned().collect();
 
@@ -61,7 +61,7 @@ fn main() {
     while !state.is_terminal() && move_count < 1000 {
         let current_p = state.current_player as usize;
         println!("\n--- [MOVE {}] Turn {} | Phase {:?} | Player {} ---", move_count, state.turn, state.phase, current_p);
-        
+
         // Log current probability as seen by the heuristic
         let current_eval = heuristic.evaluate(&state, &db, 0, 0, engine_rust::core::heuristics::EvalMode::Normal, None, None);
         println!("[AI View] Evaluation Score: {:.4} (higher favors P0)", current_eval);

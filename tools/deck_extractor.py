@@ -1,6 +1,5 @@
-import os
-import re
 import json
+import os
 import sys
 from collections import Counter
 
@@ -19,9 +18,9 @@ def extract_deck_data(content, card_db):
     results = parser.extract_from_content(content)
     if not results:
         return [], [], {"Member": 0, "Live": 0, "Energy": 0, "Unknown": 0}, ["No deck found"]
-    
+
     d = results[0]
-    return d['main'], d['energy'], d['type_counts'], d['errors']
+    return d["main"], d["energy"], d["type_counts"], d["errors"]
 
 
 def parse_and_validate_deck(file_path):
@@ -46,7 +45,9 @@ def parse_and_validate_deck(file_path):
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(f"=== Deck Verification Report for {os.path.basename(file_path)} ===\n")
         f.write(f"Total Cards: {len(main_deck) + len(energy_deck)}\n")
-        f.write(f"Breakdown: Member: {type_counts.get('Member', 0)} | Live: {type_counts.get('Live', 0)} | Energy: {type_counts.get('Energy', 0)}\n")
+        f.write(
+            f"Breakdown: Member: {type_counts.get('Member', 0)} | Live: {type_counts.get('Live', 0)} | Energy: {type_counts.get('Energy', 0)}\n"
+        )
 
         f.write(f"\nMain Deck: {len(main_deck)} cards\n")
         main_counts = Counter(main_deck)
@@ -74,6 +75,7 @@ def parse_and_validate_deck(file_path):
     # Auto-upload to server if running
     try:
         import urllib.request
+
         server_url = "http://localhost:8000"
         payload = {"player": 0, "deck": main_deck, "energy_deck": energy_deck}
         req = urllib.request.Request(

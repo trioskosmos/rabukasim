@@ -1,4 +1,5 @@
 import { State } from '../state.js';
+import { Network } from '../network.js';
 
 export const SettingsModal = {
     openSettingsModal: () => {
@@ -52,5 +53,13 @@ export const SettingsModal = {
         if (btn) btn.textContent = State.currentLang === 'jp' ? 'English' : '日本語';
 
         if (State.data && window.render) window.render();
+    },
+
+    toggleDebugMode: async () => {
+        const res = await Network.toggleDebugMode();
+        if (res !== null) {
+            alert(`Debug Mode (Bytecode Logging): ${res ? 'ENABLED' : 'DISABLED'}`);
+            // Force status badge update if needed, but next fetchState will update it.
+        }
     }
 };

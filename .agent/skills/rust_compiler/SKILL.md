@@ -38,7 +38,7 @@ cargo check > build_errors.txt 2>&1
 
 ### A. Borrow Checker (Ownership/Borrowing)
 - **Error**: `cannot borrow *self as mutable more than once`
-- **Fix**: 
+- **Fix**:
     - Reorder operations to end the first borrow before the second starts.
     - Clone data if needed/cheap to avoid holding a reference.
     - Use scopes `{ ... }` to limit the lifetime of a borrow.

@@ -31,7 +31,7 @@ def run_test():
     gs.set_hand_cards(0, [257, 10])  # Eli and a card to discard (10)
     gs.set_deck_cards(0, [101, 102, 103, 104])  # Deck entries
 
-    print(f"Initial State:")
+    print("Initial State:")
     print(f"  Hand: {gs.get_player(0).hand}")
     print(f"  Deck: {gs.get_player(0).deck}")
 

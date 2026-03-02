@@ -3,11 +3,11 @@
 This skill defines the technical standards and workflows for maintaining bit-level parity between the **Rust Game Engine** and the **WGSL GPU Shader**.
 
 ## 1. Memory Layout Parity
-The GPU and CPU must have identical struct layouts. 
+The GPU and CPU must have identical struct layouts.
 
 ### Rules:
 - **`#[repr(C)]`**: All Rust structs transferred to GPU must use `#[repr(C)]`.
-- **Power of Two / 16-byte Alignment**: Buffers in WGSL/wgpu prefer 16-byte alignment. 
+- **Power of Two / 16-byte Alignment**: Buffers in WGSL/wgpu prefer 16-byte alignment.
 - **Type Mapping**:
   - Rust `u32` -> WGSL `u32`
   - Rust `i32` -> WGSL `i32`
@@ -37,7 +37,7 @@ To verify parity, we use "Parity Tests" that compare the execution of a single a
 - **Eager Resumption**: The GPU shader executes multiple steps or resolves choices automatically where possible. The CPU test must match this behavior (e.g., by looping `step(CHOICE_0)` until the interaction stack is empty).
 - **Parity Check**: Assert that `hand_len`, `deck_len`, `scores`, and `flags` match exactly.
 
-### Primary Tool: 
+### Primary Tool:
 - `engine_rust_src/src/bin/test_gpu_parity_suite.rs`
 
 ## 4. Porting a CPU Test to GPU

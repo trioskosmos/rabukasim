@@ -8,7 +8,7 @@ import random
 import sys
 import threading
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 import numpy as np
@@ -170,6 +170,10 @@ ai_agent = SmartAgent()  # Use original heuristic AI
 # Room Registry
 ROOMS: dict[str, dict[str, Any]] = {}
 game_lock = threading.Lock()
+
+# Room cleanup configuration
+ROOM_INACTIVE_TIMEOUT_MINUTES = 30  # Remove rooms inactive for 30 minutes
+ROOM_CLEANUP_INTERVAL = 60  # Run cleanup every 60 seconds (loops)
 
 # Rust Card DB (Global Singleton for performance)
 RUST_DB = None
@@ -910,6 +914,34 @@ def join_room():
     return jsonify({"success": False, "error": "Room not found"}), 404
 
 
+@app.route("/api/rooms/leave", methods=["POST"])
+def leave_room():
+    """Allow a player to leave a room."""
+    room_id = get_room_id()
+    session_token = request.headers.get("X-Session-Token")
+
+    if not room_id or room_id not in ROOMS:
+        return jsonify({"success": False, "error": "Room not found"}), 404
+
+    with game_lock:
+        room = ROOMS.get(room_id)
+        if not room:
+            return jsonify({"success": False, "error": "Room not found"}), 404
+
+        sessions = room.get("sessions", {})
+
+        # Remove the session
+        if session_token and session_token in sessions:
+            del sessions[session_token]
+            print(f"DEBUG: Session {session_token} left room {room_id}", file=sys.stderr)
+
+        # Don't immediately delete room - let cleanup handle it
+        # But update last_active so it doesn't get cleaned up immediately
+        room["last_active"] = datetime.now()
+
+        return jsonify({"success": True})
+
+
 @app.route("/")
 def index():
     return send_from_directory(WEB_UI_DIR, "index.html")
@@ -953,6 +985,62 @@ import time
 # Threading setup
 game_lock = threading.RLock()  # Re-entrant lock to prevent self-deadlock
 game_thread = None
+_cleanup_counter = 0  # Counter for cleanup interval
+
+
+def cleanup_inactive_rooms():
+    """
+    Remove rooms that have been inactive for too long or have no active sessions.
+    Called periodically from background_game_loop.
+    """
+    global _cleanup_counter
+    _cleanup_counter += 1
+
+    # Only run cleanup every ROOM_CLEANUP_INTERVAL seconds (based on 0.1s sleep = 600 loops)
+    if _cleanup_counter < ROOM_CLEANUP_INTERVAL:
+        return
+
+    _cleanup_counter = 0
+
+    now = datetime.now()
+    timeout = timedelta(minutes=ROOM_INACTIVE_TIMEOUT_MINUTES)
+
+    rooms_to_remove = []
+
+    for rid, room in ROOMS.items():
+        # Skip SINGLE_PLAYER room - it's special
+        if rid == "SINGLE_PLAYER":
+            continue
+
+        last_active = room.get("last_active")
+        sessions = room.get("sessions", {})
+
+        # Check if room has any active sessions
+        active_sessions = [sid for sid, pid in sessions.items() if pid != -1]
+
+        # Remove if:
+        # 1. No active sessions (all players left)
+        # 2. Inactive for too long
+        should_remove = False
+        reason = ""
+
+        if not active_sessions:
+            should_remove = True
+            reason = "no active sessions"
+        elif last_active and (now - last_active) > timeout:
+            should_remove = True
+            reason = f"inactive for {(now - last_active).total_seconds() / 60:.1f} minutes"
+
+        if should_remove:
+            rooms_to_remove.append((rid, reason))
+
+    # Remove the rooms
+    for rid, reason in rooms_to_remove:
+        print(f"DEBUG: Cleaning up room {rid}: {reason}", file=sys.stderr)
+        del ROOMS[rid]
+
+    if rooms_to_remove:
+        print(f"DEBUG: Cleaned up {len(rooms_to_remove)} inactive rooms", file=sys.stderr)
 
 
 def background_game_loop():
@@ -964,6 +1052,10 @@ def background_game_loop():
     while True:
         try:
             # print("DEBUG: Background Loop acquiring lock...", file=sys.stderr)
+
+            # Run room cleanup periodically
+            cleanup_inactive_rooms()
+
             with game_lock:
                 # Iterate over a copy of keys to avoid modification issues if needed
                 active_room_ids = list(ROOMS.keys())
@@ -973,6 +1065,13 @@ def background_game_loop():
                     room = ROOMS.get(rid)
                     if not room:
                         continue
+
+                    # Skip rooms with no active sessions (except SINGLE_PLAYER)
+                    if rid != "SINGLE_PLAYER":
+                        sessions = room.get("sessions", {})
+                        active_sessions = [sid for sid, pid in sessions.items() if pid != -1]
+                        if not active_sessions:
+                            continue
 
                     gs = room["state"]
                     game_mode = room["mode"]

@@ -1,6 +1,6 @@
 import { State } from '../state.js';
-import { Phase, fixImg } from '../constants.js';
-import { translations } from '../translations_data.js';
+import { Phase, fixImg as fixImgPath } from '../constants.js';
+import * as i18n from '../i18n/index.js';
 import { Tooltips } from '../ui_tooltips.js';
 
 export const CardRenderer = {
@@ -56,7 +56,7 @@ export const CardRenderer = {
 
             if (!isHidden) {
                 let imgPath = card.img || card.img_path || '';
-                const imgHtml = imgPath ? `<img src="${fixImg(imgPath)}" draggable="false" onerror="this.style.display='none'">` : '';
+                const imgHtml = imgPath ? `<img src="${fixImgPath(imgPath)}" draggable="false" onerror="this.style.display='none'">` : '';
                 div.innerHTML = `${imgHtml}${card.cost !== undefined ? `<span class="cost">${card.cost}</span>` : ''}<div class="name">${card.name || ''}</div>`;
             } else {
                 div.classList.add('card-back');
@@ -73,6 +73,14 @@ export const CardRenderer = {
                             window.playCard(idx);
                         }
                     };
+                    if (isValid) {
+                        div.onmouseenter = () => {
+                            if (window.highlightActionBtn) window.highlightActionBtn(actionId, true);
+                        };
+                        div.onmouseleave = () => {
+                            if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
+                        };
+                    }
                 } else {
                     div.onclick = null;
                 }
@@ -108,7 +116,7 @@ export const CardRenderer = {
                     modifiersHtml = `<div class="member-modifiers">${slot.modifiers.map(m => `<div class="modifier-tag ${m.type}">${m.label || (m.type === 'heart' ? '+' : m.value)}</div>`).join('')}</div>`;
                 }
 
-                slotDiv.innerHTML = imgPath ? `<img src="${fixImg(imgPath)}">${modifiersHtml}` : modifiersHtml;
+                slotDiv.innerHTML = imgPath ? `<img src="${fixImgPath(imgPath)}">${modifiersHtml}` : modifiersHtml;
 
                 Tooltips.attachCardData(area, slot, isValid ? actionId : undefined);
                 Tooltips.attachCardData(slotDiv, slot, isValid ? actionId : undefined);
@@ -128,6 +136,14 @@ export const CardRenderer = {
                     };
                     slotDiv.onclick = area.onclick;
                     area.style.cursor = 'pointer';
+                    if (isValid) {
+                        area.onmouseenter = () => {
+                            if (window.highlightActionBtn) window.highlightActionBtn(actionId, true);
+                        };
+                        area.onmouseleave = () => {
+                            if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
+                        };
+                    }
                 } else {
                     area.onclick = null;
                 }
@@ -158,7 +174,7 @@ export const CardRenderer = {
                 const imgPath = card.img || card.img_path || '';
                 slot.innerHTML = `
                     <div class="live-card-inner ${isPerfLegal ? 'perf-legal' : ''}">
-                        ${imgPath ? `<img src="${fixImg(imgPath)}">` : ''}
+                        ${imgPath ? `<img src="${fixImgPath(imgPath)}">` : ''}
                         <div class="cost">${card.score || (card.cost !== undefined ? card.cost : 0)}</div>
                         ${isPerfLegal ? '<div class="perf-badge">LIVE!</div>' : ''}
                     </div>
@@ -170,6 +186,12 @@ export const CardRenderer = {
                 if (isValid) {
                     slot.style.cursor = 'pointer';
                     slot.onclick = () => { if (window.doAction) window.doAction(actionId); };
+                    slot.onmouseenter = () => {
+                        if (window.highlightActionBtn) window.highlightActionBtn(actionId, true);
+                    };
+                    slot.onmouseleave = () => {
+                        if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
+                    };
                 } else if (isPerfLegal) {
                     const fallbackId = state.legal_actions?.find(a => (a.id === 600 + i || a.id === 900 + i || (a.metadata && a.metadata.slot_idx === i && a.metadata.category === 'LIVE')))?.id;
                     if (fallbackId !== undefined) {
@@ -208,7 +230,7 @@ export const CardRenderer = {
                 const card = discard[discard.length - 1 - i];
                 const div = document.createElement('div');
                 div.className = 'card card-mini';
-                div.innerHTML = `<img src="${fixImg(card.img || '')}">`;
+                div.innerHTML = `<img src="${fixImgPath(card.img || '')}">`;
                 div.style.transform = `translate(${i * 2}px, ${i * 2}px)`;
                 div.style.zIndex = 10 - i;
 
@@ -228,6 +250,12 @@ export const CardRenderer = {
                 e.stopPropagation();
                 if (window.doAction) window.doAction(actionId);
             };
+            el.onmouseenter = () => {
+                if (window.highlightActionBtn) window.highlightActionBtn(actionId, true);
+            };
+            el.onmouseleave = () => {
+                if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
+            };
         } else if (!hasGlobalSelection && discard && discard.length > 0) {
             el.style.cursor = 'pointer';
             el.onclick = () => { if (showModalCallback) showModalCallback(playerIdx); };
@@ -236,7 +264,7 @@ export const CardRenderer = {
         }
     },
 
-    renderLookedCards: () => {
+    renderLookedCards: (validActionMap = {}) => {
         const state = State.data;
         const panel = document.getElementById('looked-cards-panel');
         const content = document.getElementById('looked-cards-content');
@@ -259,43 +287,50 @@ export const CardRenderer = {
             const total = state.pending_choice.choose_count;
             const v_rem = state.pending_choice.v_remaining;
             const remaining = (v_rem === -1) ? total : (v_rem + 1);
-            const t = translations ? translations[State.currentLang] : null;
 
             if (remaining > 1) {
-                const label = t ? (t['pick_more'] || `Pick ${remaining} more cards`).replace('{count}', remaining) : `Pick ${remaining} more cards`;
+                const label = i18n.t('pick_more', { count: remaining });
                 html += `<div style="padding: 0 5px 8px 5px; font-size: 0.75rem; color: var(--accent-pink); font-style: italic;">${label}</div>`;
             } else {
-                const label = t ? (t['pick_last'] || 'Pick the last card') : 'Pick the last card';
+                const label = i18n.t('pick_last');
                 html += `<div style="padding: 0 5px 8px 5px; font-size: 0.75rem; color: var(--accent-green); font-style: italic;">${label}</div>`;
             }
         }
 
-        html += cards.map((c, idx) => {
+        content.innerHTML = '';
+        cards.forEach((c, idx) => {
             if (c === null) {
-                return `<div class="looked-card-item placeholder" style="visibility: hidden; pointer-events: none;"></div>`;
+                const placeholder = document.createElement('div');
+                placeholder.className = 'looked-card-item placeholder';
+                placeholder.style.visibility = 'hidden';
+                placeholder.style.pointerEvents = 'none';
+                content.appendChild(placeholder);
+                return;
             }
-            const aid = (state.pending_choice && state.pending_choice.actions && state.pending_choice.actions.length > idx)
-                ? state.pending_choice.actions[idx]
-                : undefined;
 
+            const aid = validActionMap[idx];
             const isClickable = (aid !== undefined && aid !== 0);
-            const clickHandler = isClickable ? `if(window.doAction) window.doAction(${aid})` : '';
-            const cursorStyle = isClickable ? 'cursor: pointer;' : '';
 
-            const tempDiv = document.createElement('div');
-            Tooltips.attachCardData(tempDiv, c, aid);
-            const metadataAttrs = Array.from(tempDiv.attributes).map(a => `${a.name}="${a.value}"`).join(' ');
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'looked-card-item card card-mini' + (isClickable ? ' valid-target' : '');
+            if (isClickable) {
+                itemDiv.style.cursor = 'pointer';
+                itemDiv.onclick = () => { if (window.doAction) window.doAction(aid); };
+                itemDiv.onmouseenter = () => {
+                    if (window.highlightActionBtn) window.highlightActionBtn(aid, true);
+                };
+                itemDiv.onmouseleave = () => {
+                    if (window.highlightActionBtn) window.highlightActionBtn(aid, false);
+                };
+            }
 
-            return `
-                <div class="looked-card-item card" 
-                    ${isClickable ? `onclick="${clickHandler}"` : ''} 
-                    style="${cursorStyle}" 
-                    ${metadataAttrs}>
-                    <img src="${fixImg(c.img)}" class="looked-card-img">
-                    <div class="looked-card-name">${c.name}</div>
-                </div>
+            Tooltips.attachCardData(itemDiv, c, aid);
+
+            itemDiv.innerHTML = `
+                <img src="${fixImgPath(c.img)}" class="looked-card-img">
+                <div class="looked-card-name">${c.name}</div>
             `;
-        }).join('');
-        content.innerHTML = html;
+            content.appendChild(itemDiv);
+        });
     }
 };

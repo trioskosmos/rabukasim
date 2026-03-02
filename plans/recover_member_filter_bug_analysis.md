@@ -12,7 +12,7 @@
 # line 1277
 if eff.effect_type == EffectType.META_RULE:
     # ... META_RULE specific code ...
-    
+
     # line 1305-1317: このコードは META_RULE ブロックの中にあるため、
     # RECOVER_MEMBER などの効果タイプでは実行されない
     if eff.effect_type in (
@@ -87,7 +87,7 @@ if eff.effect_type == EffectType.META_RULE:
 ```python
 if eff.effect_type == EffectType.META_RULE:
     # ... META_RULE specific code ...
-    
+
     if eff.effect_type in (...):  # 誤ったネスト
         attr = self._pack_filter_attr(eff)
 ```

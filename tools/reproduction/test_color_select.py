@@ -39,7 +39,7 @@ def run_test():
 
     gs.set_live_cards(0, [30001])  # Slot 0: Liella Live
 
-    print(f"Initial State:")
+    print("Initial State:")
     p0 = gs.get_player(0)
     print(f"  Stage Slot 0: {p0.stage[0]}")
     print(f"  Success Lives: {p0.success_lives}")

@@ -1,6 +1,5 @@
-import sys
 import os
-import json
+import sys
 
 # Add project root to path
 PROJECT_ROOT = os.getcwd()
@@ -8,7 +7,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 import engine_rust
-from backend.rust_serializer import RustGameStateSerializer
+
 from engine.game.data_loader import CardDataLoader
 
 

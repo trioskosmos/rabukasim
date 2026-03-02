@@ -28,11 +28,11 @@ class VirtualScroll {
         this.bufferSize = bufferSize;
         this.visibleItems = [];
     }
-    
+
     render(items, scrollTop) {
         const startIdx = Math.floor(scrollTop / this.itemHeight) - this.bufferSize;
         const endIdx = startIdx + Math.ceil(this.container.clientHeight / this.itemHeight) + this.bufferSize * 2;
-        
+
         // 表示範囲のアイテムのみレンダリング
         return items.slice(Math.max(0, startIdx), endIdx);
     }
@@ -76,7 +76,7 @@ const filterState = {
 
 // フィルター適用関数
 applyFilters: (events, filters) => {
-    return events.filter(e => 
+    return events.filter(e =>
         filters.eventTypes.includes(e.event_type) &&
         filters.players.includes(e.player_id) &&
         (filters.selectedTurn === -1 || e.turn === filters.selectedTurn) &&
@@ -217,7 +217,7 @@ describe('Logs Module', () => {
         const result = Logs.renderActiveEffectsSection(state, {});
         expect(result).toBeNull();
     });
-    
+
     test('createTurnEventElement creates correct structure', () => {
         const event = {
             turn: 1,
@@ -239,7 +239,7 @@ describe('Log Integration', () => {
     test('log_event writes to both turn_history and rule_log', async () => {
         const gameState = createTestGameState();
         gameState.log_event('TEST', 'Test event', -1, -1, 0, None, true);
-        
+
         expect(gameState.turn_history).toHaveLength(1);
         expect(gameState.ui.rule_log).toHaveLength(1);
     });
@@ -258,17 +258,17 @@ describe('Log Integration', () => {
         font-size: 0.75rem;
         padding: 3px 4px;
     }
-    
+
     .log-entry {
         padding: 3px 4px;
         font-size: 0.75rem;
     }
-    
+
     .player-badge, .turn-badge, .phase-badge {
         font-size: 0.6rem;
         padding: 1px 2px;
     }
-    
+
     /* 折りたたみ可能セクション */
     .log-section.collapsed .log-section-content {
         display: none;

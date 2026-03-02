@@ -1,6 +1,5 @@
-
-import sys
 import os
+import sys
 
 fn = "engine_rust_src/final_final_check.log"
 if not os.path.exists(fn):
@@ -18,5 +17,5 @@ else:
 lines = text.splitlines()
 for i, line in enumerate(lines):
     if "error:" in line or "error[" in line:
-        print("\n".join(lines[max(0, i-2):i+10]))
+        print("\n".join(lines[max(0, i - 2) : i + 10]))
         print("-" * 50)

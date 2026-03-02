@@ -1,6 +1,4 @@
 import json
-import os
-import sys
 
 # Opcodes
 O_SELECT_MODE = 30

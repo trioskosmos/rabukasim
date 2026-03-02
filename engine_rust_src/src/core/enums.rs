@@ -110,6 +110,8 @@ pub enum EffectType {
     OpponentChoose = 75,
     PlayLiveFromDiscard = 76,
     ReduceLiveSetLimit = 77,
+    SetTargetSelf = 78,
+    SetTargetOpponent = 79,
     PreventSetToSuccessPile = 80,
     ActivateEnergy = 81,
     PreventActivate = 82,
@@ -184,6 +186,15 @@ pub enum ConditionType {
     CountBladeHeartTypes = 302,
     OpponentHasExcessHeart = 303,
     ScoreTotalCheck = 304,
+    MainPhase = 305,
+    SelectMember = 306,
+    SuccessPileCount = 307,
+    IsSelfMove = 308,
+    DiscardedCards = 309,
+    YellRevealedUniqueColors = 310,
+    SyncCost = 311,
+    SumValue = 312,
+    IsWait = 313,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]

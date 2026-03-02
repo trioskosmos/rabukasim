@@ -24,21 +24,21 @@ TRIGGER_PATTERNS = [
         name="on_play_icon",
         phase=PatternPhase.TRIGGER,
         regex=r"toujyou",
-        priority=25, # Was 10
+        priority=25,  # Was 10
         output_type="TriggerType.ON_PLAY",
     ),
     Pattern(
         name="on_live_start_icon",
         phase=PatternPhase.TRIGGER,
         regex=r"live_start",
-        priority=25, # Was 10
+        priority=25,  # Was 10
         output_type="TriggerType.ON_LIVE_START",
     ),
     Pattern(
         name="on_live_success_icon",
         phase=PatternPhase.TRIGGER,
         regex=r"live_success",
-        priority=25, # Was 10
+        priority=25,  # Was 10
         # Skip if "この能力は...のみ発動する" (activation restriction, not trigger)
         excludes=["この能力は"],
         output_type="TriggerType.ON_LIVE_SUCCESS",
@@ -47,14 +47,14 @@ TRIGGER_PATTERNS = [
         name="activated_icon",
         phase=PatternPhase.TRIGGER,
         regex=r"kidou",
-        priority=25, # Was 10
+        priority=25,  # Was 10
         output_type="TriggerType.ACTIVATED",
     ),
     Pattern(
         name="constant_icon",
         phase=PatternPhase.TRIGGER,
         regex=r"jyouji",
-        priority=25, # Was 10
+        priority=25,  # Was 10
         output_type="TriggerType.CONSTANT",
     ),
     Pattern(
@@ -72,7 +72,7 @@ TRIGGER_PATTERNS = [
         name="on_reveal_after_jidou",
         phase=PatternPhase.TRIGGER,
         regex=r"jidou.*?エール(により|で)?公開",
-        priority=15, # Higher than Tier 1/2 generic icons
+        priority=15,  # Higher than Tier 1/2 generic icons
         output_type="TriggerType.ON_REVEAL",
     ),
     Pattern(
@@ -93,7 +93,7 @@ TRIGGER_PATTERNS = [
         name="live_end_icon",
         phase=PatternPhase.TRIGGER,
         regex=r"live_end",
-        priority=25, # Was 10
+        priority=25,  # Was 10
         output_type="TriggerType.TURN_END",
     ),
     # ==========================================================================

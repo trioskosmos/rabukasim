@@ -6,7 +6,7 @@ pub fn handle_draw(state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityC
     let p_idx = ctx.player_id as usize;
     let count = v as u32;
     let target_p = if s == 2 { 1 - p_idx } else if s == 3 { 0 } else { p_idx };
-    
+
     match op {
         O_DRAW => {
             if s == 3 {

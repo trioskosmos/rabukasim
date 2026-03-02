@@ -1,6 +1,7 @@
 import json
 import os
 
+
 def lookup():
     cards_path = "data/cards.json"
     if not os.path.exists(cards_path):
@@ -12,7 +13,7 @@ def lookup():
 
     target_id = "PL!SP-bp4-015-N"
     card = data.get(target_id)
-    
+
     print(f"Details for {target_id}:")
     if card:
         print(json.dumps(card, indent=2, ensure_ascii=False))
@@ -25,10 +26,11 @@ def lookup():
         name = cdata.get("name", "")
         # Check name or ability text or anything descriptive
         if "宮下" in name or "愛" in name:
-             ai_matches.append(f"{cid}: {name}")
-    
+            ai_matches.append(f"{cid}: {name}")
+
     for match in ai_matches[:20]:
         print(match)
+
 
 if __name__ == "__main__":
     lookup()

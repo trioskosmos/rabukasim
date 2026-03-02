@@ -1,12 +1,11 @@
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.getcwd())
 import engine_rust
 
 print(f"DEBUG: engine_rust loaded from {engine_rust.__file__}")
 import traceback
-import json
 
 # Add project root to path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))

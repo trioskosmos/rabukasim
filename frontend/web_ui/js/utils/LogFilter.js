@@ -69,7 +69,7 @@ export const LogFilter = {
 
         filterDiv.innerHTML = `
             <div class="filter-row">
-                <input type="text" class="log-search-input" 
+                <input type="text" class="log-search-input"
                     placeholder="${t['search_placeholder'] || 'Search...'}"
                     value="${LogFilter.filterState.searchText}"
                     oninput="Logs.setSearchText(this.value)">

@@ -12,7 +12,7 @@ graph TB
         C --> D[check_condition_opcode]
         D --> E[限定的オペコード]
     end
-    
+
     subgraph Rust Engine
         F[GameState] --> G[step]
         G --> H[resolve_bytecode]

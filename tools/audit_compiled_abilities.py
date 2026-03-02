@@ -7,9 +7,10 @@ Checks:
 4. Cards with extremely large attr values (potential encoding overflow).
 5. Cost duplication patterns.
 """
+
 import json
-import sys
 from collections import Counter, defaultdict
+
 
 def main():
     with open("data/cards_compiled.json", "r", encoding="utf-8") as f:
@@ -30,11 +31,11 @@ def main():
 
     # Issue trackers
     zero_filter_selects = []  # Cards with SELECT_MEMBER/PLAY_FROM_HAND with a=0
-    large_attr_values = []   # Cards with suspiciously large attr
-    duplicate_cost_candidates = [] # Cards starting with PAY_ENERGY that also have metadata costs
-    unknown_opcodes = []     # Opcodes not in metadata
+    large_attr_values = []  # Cards with suspiciously large attr
+    duplicate_cost_candidates = []  # Cards starting with PAY_ENERGY that also have metadata costs
+    unknown_opcodes = []  # Opcodes not in metadata
     empty_bytecodes = []
-    
+
     # Opcode IDs
     O_SELECT_MEMBER = 65
     O_PLAY_MEMBER_FROM_HAND = 57
@@ -54,7 +55,7 @@ def main():
             for ab_idx, ab in enumerate(card.get("abilities", [])):
                 bc = ab.get("bytecode", [])
                 costs = ab.get("costs", [])
-                
+
                 if not bc:
                     if ab.get("trigger", 0) not in [0, 4]:  # Not NONE or CONSTANT
                         empty_bytecodes.append(f"ID={cid} ({card_name}) ab#{ab_idx} trigger={ab.get('trigger')}")
@@ -67,7 +68,7 @@ def main():
                 for i in range(0, len(bc), 4):
                     if i + 3 >= len(bc):
                         break
-                    op, v, a, s = bc[i], bc[i+1], bc[i+2], bc[i+3]
+                    op, v, a, s = bc[i], bc[i + 1], bc[i + 2], bc[i + 3]
 
                     opcode_usage[op] += 1
                     if len(cards_by_opcode[op]) < 3:
@@ -163,6 +164,7 @@ def main():
         print(f"  {item}")
     if len(empty_bytecodes) > 20:
         print(f"  ... and {len(empty_bytecodes) - 20} more")
+
 
 if __name__ == "__main__":
     main()

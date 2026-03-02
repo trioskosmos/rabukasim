@@ -1,6 +1,3 @@
-
-import os
-
 file_path = "engine_rust_src/src/semantic_assertions.rs"
 test_code = r"""
     #[test]
@@ -8,34 +5,34 @@ test_code = r"""
         let engine = SemanticAssertionEngine::load();
         let card_id_str = "PL!-sd1-001-SD";
         let ab_idx = 0;
-        
+
         let mut state = create_test_state();
         state.silent = true;
         let real_id = engine.find_real_id(card_id_str).unwrap();
-        
+
         println!("--- Trace sd1-001 ---");
         SemanticAssertionEngine::setup_oracle_environment(&mut state, &engine.db, real_id);
         let snap0 = ZoneSnapshot::capture(&state.players[0]);
         println!("Baseline Hand: {} ({:?})", snap0.hand_len, state.players[0].hand);
-        
-        let actx = AbilityContext { 
-            source_card_id: real_id, 
-            player_id: 0, 
-            area_idx: 0, 
+
+        let actx = AbilityContext {
+            source_card_id: real_id,
+            player_id: 0,
+            area_idx: 0,
             trigger_type: TriggerType::OnPlay,
             ability_index: ab_idx as i16,
-            ..Default::default() 
+            ..Default::default()
         };
         let is_live = engine.db.get_live(real_id as u16).is_some();
         state.trigger_queue.push_back((real_id as u16, ab_idx as u16, actx, is_live, TriggerType::OnPlay));
-        
+
         println!("Triggering...");
         state.process_trigger_queue(&engine.db);
-        state.step(&engine.db, 0).ok(); 
-        
+        state.step(&engine.db, 0).ok();
+
         let snap1 = ZoneSnapshot::capture(&state.players[0]);
         println!("After OnPlay Hand: {} ({:?})", snap1.hand_len, state.players[0].hand);
-        
+
         let mut safety = 0;
         while (!state.interaction_stack.is_empty()) && safety < 10 {
             engine.resolve_interaction(&mut state).ok();

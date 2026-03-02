@@ -1,5 +1,3 @@
-import os
-
 file_path = r"frontend\web_ui\css\main.css"
 with open(file_path, "r", encoding="utf-8") as f:
     lines = f.readlines()

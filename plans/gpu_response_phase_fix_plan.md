@@ -111,7 +111,7 @@ case O_LOOK_AND_CHOOSE: {
     let look_count = u32(v & 0xFFi);
     if (choice < 0i) {
         // 選択が必要 - Responseフェーズに遷移
-        push_interaction(p_idx, card_id, ab_idx, trigger_filter, 
+        push_interaction(p_idx, card_id, ab_idx, trigger_filter,
                         INTERACTION_LOOK_AND_CHOOSE, v, a_lo, a_hi, s, ip);
         states[g_gid].phase = PHASE_RESPONSE;
         return;  // 処理を中断
@@ -130,17 +130,17 @@ fn process_trigger_queue(p_idx: u32) {
         if (states[g_gid].phase == PHASE_RESPONSE) {
             return;  // キューを消費せずに戻る
         }
-        
+
         let head = states[g_gid].queue_head;
         let req = states[g_gid].trigger_queue[head];
         states[g_gid].queue_head = head + 1u;
-        
+
         let req_card_id = req.card_id;
         if (req_card_id < arrayLength(&card_stats)) {
             let req_stats = card_stats[req_card_id];
-            resolve_bytecode(p_idx, req_card_id, req.slot_idx, 
-                           req.trigger_filter, req.ab_filter, 
-                           req_stats.bytecode_start, req_stats.bytecode_len, 
+            resolve_bytecode(p_idx, req_card_id, req.slot_idx,
+                           req.trigger_filter, req.ab_filter,
+                           req_stats.bytecode_start, req_stats.bytecode_len,
                            req.choice);
         }
     }
@@ -162,7 +162,7 @@ if (phase == PHASE_RESPONSE) {
                  else if (action >= 1000u) { i32(action - 1000u) }  // Hand card
                  else if (action >= 500u) { i32(action - 500u) }    // Mode choice
                  else { i32(action) };
-    
+
     // インタラクションスタックから復元
     if (states[g_gid].interaction_depth > 0u) {
         resume_interaction(p_idx, choice);
@@ -180,15 +180,15 @@ if (phase == PHASE_RESPONSE) {
 fn resume_interaction(p_idx: u32, choice: i32) {
     let depth = states[g_gid].interaction_depth - 1u;
     let interaction = states[g_gid].interaction_stack[depth];
-    
+
     // 選択肢を使って処理を再開
     resolve_bytecode_from(p_idx, interaction.card_id, interaction.ip_offset,
                          interaction.trigger_filter, interaction.ability_index,
                          choice);
-    
+
     // インタラクション完了
     states[g_gid].interaction_depth = depth;
-    
+
     // スタックが空なら元のフェーズに戻る
     if (depth == 0u) {
         states[g_gid].phase = interaction.original_phase;
@@ -205,7 +205,7 @@ fn resume_interaction(p_idx: u32, choice: i32) {
 impl GpuGameState {
     pub fn from_game_state(state: &GameState, db: &CardDatabase) -> Self {
         // ... 既存の変換 ...
-        
+
         // インタラクションスタックの変換
         let mut interaction_stack = [GpuInteraction::default(); 4];
         for (i, pi) in state.interaction_stack.iter().enumerate() {
@@ -216,7 +216,7 @@ impl GpuGameState {
                 // ... 他のフィールド ...
             };
         }
-        
+
         Self {
             interaction_stack,
             interaction_depth: state.interaction_stack.len() as u32,
@@ -238,9 +238,9 @@ if is_interactive_phase(cpu_phase) && is_interactive_phase(gpu_state.phase) {
     // インタラクションスタックの比較も追加
     let cpu_interaction_depth = cpu_state.interaction_stack.len();
     let gpu_interaction_depth = gpu_state.interaction_depth as usize;
-    
+
     if cpu_interaction_depth != gpu_interaction_depth {
-        println!("  Interaction depth: CPU={} GPU={}", 
+        println!("  Interaction depth: CPU={} GPU={}",
                  cpu_interaction_depth, gpu_interaction_depth);
         mismatches += 1;
     }

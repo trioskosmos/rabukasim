@@ -1,5 +1,3 @@
-import os
-
 file_path = r"frontend\web_ui\js\ui_rendering.js"
 with open(file_path, "r", encoding="utf-8") as f:
     content = f.read()
@@ -25,13 +23,13 @@ new_logic = """        Object.keys(playActionsByHand).forEach(hIdx => {
                     const btn = document.createElement('button');
                     btn.className = 'action-btn mini';
                     btn.dataset.text = Tooltips.getEffectiveActionText(a);
-                    
+
                     const energyIcon = `<img src="img/texticon/icon_energy.png" style="height:14px; vertical-align:middle; margin:0 2px;">`;
                     let label = `${energyIcon}${a.cost !== undefined ? a.cost : (a.base_cost || 0)}`;
 
                     const isBaton = (a.name && (a.name.includes('Baton') || a.name.includes('バトン')));
                     if (isBaton) label += ' 🔄';
-                    
+
                     btn.innerHTML = label;
                     btn.onclick = () => { if (window.doAction) window.doAction(a.id); };
                     btnsDiv.appendChild(btn);

@@ -16,7 +16,7 @@ fn test_recov_l_only_shows_lives() {
 
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
     let bc = vec![O_RECOVER_LIVE, 1, 0, 0, O_RETURN, 0, 0, 0];
-    state.resolve_bytecode(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(state.core.players[0].looked_cards.len(), 1);
     assert_eq!(state.core.players[0].looked_cards[0], 55001);
@@ -32,7 +32,7 @@ fn test_recov_l_no_lives_returns_early() {
 
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
     let bc = vec![O_RECOVER_LIVE, 1, 0, 0, O_RETURN, 0, 0, 0];
-    state.resolve_bytecode(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert!(state.core.players[0].looked_cards.is_empty());
     assert_ne!(state.phase, Phase::Response);
@@ -49,7 +49,7 @@ fn test_pay_energy_auto_pays() {
 
     let ctx = AbilityContext { player_id: 0, ..Default::default() };
     let bc = vec![O_PAY_ENERGY, 2, 0, 0, O_RETURN, 0, 0, 0];
-    state.resolve_bytecode(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_ne!(state.phase, Phase::Response);
     assert_eq!(state.core.players[0].tapped_energy_mask.count_ones(), 2);
@@ -75,7 +75,7 @@ fn test_deck_refresh_caps_at_60() {
 #[test]
 fn test_poppin_up_success_repro() {
     let mut db = CardDatabase::default();
-    
+
     // Insert Poppin' Up! with correct requirements
     // Need: [9, 0, 1, 0, 0, 0, 2]
     // Use a small card_id instead of 30047 to avoid HashMap overhead in test
@@ -99,13 +99,13 @@ fn test_poppin_up_success_repro() {
     let mut state = create_test_state();
     state.ui.silent = false;
     state.phase = Phase::LiveResult;
-    
+
     // Set dummy member on stage
     state.core.players[0].stage[0] = 10;
-    
+
     // Set Poppin' Up! in P0's live zone
     state.core.players[0].live_zone[0] = card_id;
-    
+
     // Mock player hearts: Available: [10, 2, 1, 0, 1, 1, 1]
     state.core.players[0].heart_buffs[0] = HeartBoard::from_array(&[10, 2, 1, 0, 1, 1, 1]);
 
@@ -132,7 +132,9 @@ fn test_poppin_up_success_repro() {
     state.do_live_result(&db);
 
     // Expect card to move to success_lives
-    for msg in &state.ui.rule_log { println!("LOG: {}", msg); }
+    if let Some(ref log) = state.ui.rule_log {
+        for msg in log { println!("LOG: {}", msg); }
+    }
     assert!(hearts.satisfies(req), "Hearts should satisfy requirement");
     assert_eq!(state.core.players[0].success_lives.len(), 1, "Poppin' Up! should have succeeded hearts");
     assert_eq!(state.core.players[0].success_lives[0], card_id);

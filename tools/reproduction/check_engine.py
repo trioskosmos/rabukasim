@@ -1,5 +1,4 @@
 import engine_rust
-import os
 
 
 def check():

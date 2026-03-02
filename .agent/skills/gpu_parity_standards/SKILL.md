@@ -3,11 +3,11 @@
 This skill defines the technical standards and workflows for maintaining bit-level parity between the **Rust Game Engine** and the **WGSL GPU Shader**.
 
 ## 1. Memory Layout Parity
-The GPU and CPU must have identical struct layouts. 
+The GPU and CPU must have identical struct layouts.
 
 ### Rules:
 - **`#[repr(C)]`**: All Rust structs transferred to GPU must use `#[repr(C)]`.
-- **Power of Two / 16-byte Alignment**: Buffers in WGSL/wgpu prefer 16-byte alignment. 
+- **Power of Two / 16-byte Alignment**: Buffers in WGSL/wgpu prefer 16-byte alignment.
 - **Type Mapping**:
   - Rust `u32` -> WGSL `u32`
   - Rust `i32` -> WGSL `i32`

@@ -56,7 +56,7 @@ Use this for movement or resource opcodes (e.g., `O_SWAP_CARDS`, `O_PAY_ENERGY`)
 To ensure tests pass on the first attempt ("One-Shot"), follow these heuristics before execution:
 
 ### 1. Unified Dispatch Awareness
-The engine has transitioned to a **Modular Interpreter** (`src/core/logic/interpreter/handlers/`). 
+The engine has transitioned to a **Modular Interpreter** (`src/core/logic/interpreter/handlers/`).
 - **Legacy check**: Always verify if the opcode is also implemented in `interpreter_legacy.rs` and check `execution.rs` to see which dispatch path is active.
 - **Action**: Apply fixes to BOTH legacy and modular handlers during transitions to avoid stealth bypassing.
 

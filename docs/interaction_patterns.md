@@ -66,4 +66,3 @@ The following engine states are **not** currently surfaced through the main Acti
 - **For Passives**: Manually inspect `player.blade_buffs` or `player.heart_buffs` in the engine log.
 - **For Filters**: Cross-reference the `filter_attr` bitmask with `logic.rs:card_matches_filter`.
 - **For Queue**: Check `gs.pending_abilities.len()` in the debugger.
-

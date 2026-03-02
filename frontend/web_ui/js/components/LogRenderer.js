@@ -1,5 +1,5 @@
 import { State } from '../state.js';
-import { translations } from '../translations_data.js';
+import * as i18n from '../i18n/index.js';
 import { Tooltips } from '../ui_tooltips.js';
 import { LogFilter } from '../utils/LogFilter.js';
 import { PerformanceMonitor } from '../utils/PerformanceMonitor.js';
@@ -22,19 +22,18 @@ export const LogRenderer = {
         const showFriendlyAbilities = State.showFriendlyAbilities;
         const selectedTurn = State.selectedTurn || -1;
         const showingFullLog = State.showingFullLog;
-        const t = translations ? translations[currentLang] : {};
 
         ruleLogEl.innerHTML = '';
         const fragment = document.createDocumentFragment();
 
         // === SECTION 1: Active Effects ===
-        const activeEffectsSection = LogRenderer.renderActiveEffectsSection(state, t);
+        const activeEffectsSection = LogRenderer.renderActiveEffectsSection(state);
         if (activeEffectsSection) {
             fragment.appendChild(activeEffectsSection);
         }
 
         // === SECTION 2: Turn History ===
-        const turnHistorySection = LogRenderer.renderTurnHistorySection(state, t, selectedTurn);
+        const turnHistorySection = LogRenderer.renderTurnHistorySection(state, selectedTurn);
         if (turnHistorySection) {
             fragment.appendChild(turnHistorySection);
         }
@@ -51,7 +50,7 @@ export const LogRenderer = {
         PerformanceMonitor.endPerfMeasure();
     },
 
-    renderActiveEffectsSection: (state, t) => {
+    renderActiveEffectsSection: (state) => {
         if (!state || !state.players) return null;
 
         const p0 = state.players[0];
@@ -61,13 +60,13 @@ export const LogRenderer = {
         const collectEffects = (p, pIdx) => {
             if (!p) return [];
             const isMe = pIdx === State.perspectivePlayer;
-            const playerLabel = isMe ? (t['you'] || 'You') : (t['opponent'] || 'Opponent');
+            const playerLabel = isMe ? i18n.t('you') : i18n.t('opponent');
             let result = [];
 
             if (p.cost_reduction && p.cost_reduction !== 0) {
                 result.push({
                     player: playerLabel,
-                    desc: `${t['cost_reduction'] || 'Cost Reduction'}: ${p.cost_reduction > 0 ? '-' : '+'}${Math.abs(p.cost_reduction)}`,
+                    desc: `${i18n.t('cost_reduction')}: ${p.cost_reduction > 0 ? '-' : '+'}${Math.abs(p.cost_reduction)}`,
                     type: 'buff'
                 });
             }
@@ -77,7 +76,7 @@ export const LogRenderer = {
                     if (val !== 0) {
                         result.push({
                             player: playerLabel,
-                            desc: `${t['slot'] || 'Slot'} ${idx + 1}: Appeal ${val > 0 ? '+' : ''}${val}`,
+                            desc: `${i18n.t('slot')} ${idx + 1}: Appeal ${val > 0 ? '+' : ''}${val}`,
                             type: val > 0 ? 'buff-blade' : 'debuff'
                         });
                     }
@@ -92,7 +91,7 @@ export const LogRenderer = {
                         if (heartDesc.length > 0) {
                             result.push({
                                 player: playerLabel,
-                                desc: `${t['slot'] || 'Slot'} ${idx + 1}: ${heartDesc.join(', ')}`,
+                                desc: `${i18n.t('slot')} ${idx + 1}: ${heartDesc.join(', ')}`,
                                 type: 'buff-heart'
                             });
                         }
@@ -103,14 +102,14 @@ export const LogRenderer = {
             if (p.prevent_baton_touch > 0) {
                 result.push({
                     player: playerLabel,
-                    desc: t['cannot_baton_touch'] || 'Cannot Baton Touch',
+                    desc: i18n.t('cannot_baton_touch'),
                     type: 'restriction'
                 });
             }
             if (p.prevent_activate > 0) {
                 result.push({
                     player: playerLabel,
-                    desc: t['cannot_activate_member'] || 'Cannot Activate Member Abilities',
+                    desc: i18n.t('cannot_activate_member'),
                     type: 'restriction'
                 });
             }
@@ -127,7 +126,7 @@ export const LogRenderer = {
 
         const header = document.createElement('div');
         header.className = 'log-section-header';
-        header.textContent = t['active_effects'] || '適用中の効果';
+        header.textContent = i18n.t('active_effects');
         section.appendChild(header);
 
         effects.forEach(e => {
@@ -151,7 +150,7 @@ export const LogRenderer = {
         return section;
     },
 
-    renderTurnHistorySection: (state, t, selectedTurn) => {
+    renderTurnHistorySection: (state, selectedTurn) => {
         const history = state.turn_history || state.turn_events || [];
         if (!history || history.length === 0) return null;
 
@@ -164,11 +163,11 @@ export const LogRenderer = {
 
         const header = document.createElement('div');
         header.className = 'log-section-header';
-        header.textContent = t['turn_history'] || 'ターン履歴';
+        header.textContent = i18n.t('turn_history');
         section.appendChild(header);
 
         filteredHistory.forEach(event => {
-            const entry = LogRenderer.createTurnEventElement(event, t);
+            const entry = LogRenderer.createTurnEventElement(event);
             section.appendChild(entry);
         });
 
@@ -176,17 +175,17 @@ export const LogRenderer = {
         return section;
     },
 
-    createTurnEventElement: (event, t) => {
+    createTurnEventElement: (event) => {
         const entry = document.createElement('div');
         const typeClass = event.event_type ? event.event_type.toLowerCase() : 'generic';
         entry.className = `log-entry turn-event ${typeClass}`;
 
         const playerLabel = event.player_id === State.perspectivePlayer
-            ? (t['you'] || 'You')
-            : (t['opponent'] || 'Opponent');
+            ? i18n.t('you')
+            : i18n.t('opponent');
 
         const phaseKey = LogRenderer.getPhaseKey(event.phase);
-        const phaseLabel = t[phaseKey] || event.phase;
+        const phaseLabel = i18n.t(phaseKey);
         const eventIcon = LogRenderer.getEventIcon(event.event_type);
 
         entry.setAttribute('role', 'logentry');
@@ -266,7 +265,7 @@ export const LogRenderer = {
 
         const header = document.createElement('div');
         header.className = 'log-section-header';
-        header.textContent = currentLang === 'jp' ? 'ルールログ' : 'Rule Log';
+        header.textContent = i18n.t('rule_log');
         section.appendChild(header);
 
         let groupedLogs = [];
@@ -425,7 +424,9 @@ export const LogRenderer = {
             } else if (currentLang === 'jp' && !showFriendlyAbilities) {
                 const srcCard = State.resolveCardDataByName(cardName);
                 if (srcCard && (srcCard.original_text || srcCard.ability)) {
-                    translatedEffect = srcCard.original_text || srcCard.ability;
+                    // Try to match the trigger label from the log to the correct ability block
+                    const block = Tooltips.extractRelevantAbility(srcCard, triggerLabel);
+                    translatedEffect = block || srcCard.original_text || srcCard.ability;
                 }
             }
 
@@ -473,30 +474,64 @@ export const LogRenderer = {
         }).join('');
     },
 
-    renderActiveEffects: (state, p0, p1, t) => {
-        const container = document.getElementById('active-effects-list');
+    renderActiveEffects: (state) => {
+        const container = document.getElementById('active-abilities-list');
         if (!container) return;
+
+        const p0 = state.players[State.perspectivePlayer] || state.players[0];
+        const p1 = state.players[1 - State.perspectivePlayer] || state.players[1];
 
         let html = '';
 
+        // 1. Render Triggered Abilities (Transient)
+        const triggersHtml = LogRenderer.renderActiveAbilities(null, state.triggered_abilities || []);
+        if (triggersHtml) {
+            html += `<div class="effects-group-header">Pending Triggers</div>${triggersHtml}`;
+        }
+
+        // 2. Render Long-term Buffs/Restrictions
         const renderPlayerEffects = (p, pIdx) => {
             if (!p) return '';
             let effects = [];
             const isMe = pIdx === State.perspectivePlayer;
             const badgeClass = isMe ? 'badge-p1' : 'badge-p2';
-            const badgeLabel = isMe ? (t['you'] || 'You') : (t['opponent'] || 'Opponent');
+            const badgeLabel = isMe ? i18n.t('you') : i18n.t('opponent');
 
             if (p.cost_reduction && p.cost_reduction !== 0) {
-                effects.push({ title: t['cost_reduction'] || 'Cost Reduction', desc: `${t['cost'] || 'Cost'} ${p.cost_reduction > 0 ? '-' : '+'}${Math.abs(p.cost_reduction)}`, duration: t['until_end_of_turn'] || 'Until End of Turn', type: 'buff' });
+                effects.push({ title: i18n.t('cost_reduction'), desc: `${i18n.t('cost')} ${p.cost_reduction > 0 ? '-' : '+'}${Math.abs(p.cost_reduction)}`, duration: i18n.t('until_end_of_turn'), type: 'buff' });
             }
-            if (p.blade_buffs) {
+            // Use Logs for blade buffs if available
+            if (p.blade_buff_logs && p.blade_buff_logs.length > 0) {
+                p.blade_buff_logs.forEach(log => {
+                    effects.push({
+                        title: `${i18n.t('slot')} ${log.slot + 1}: ${i18n.t('blade_buff')}`,
+                        desc: `Appeal ${log.amount > 0 ? '+' : ''}${log.amount}`,
+                        duration: i18n.t('until_end_of_turn'),
+                        type: log.amount > 0 ? 'buff-blade' : 'debuff',
+                        source_card_id: log.source
+                    });
+                });
+            } else if (p.blade_buffs) {
                 p.blade_buffs.forEach((val, idx) => {
                     if (val !== 0) {
-                        effects.push({ title: `${t['slot'] || 'Slot'} ${idx + 1}: ${t['blade_buff'] || 'Blade Buff'}`, desc: `Appeal ${val > 0 ? '+' : ''}${val}`, duration: t['until_end_of_turn'] || 'Until End of Turn', type: val > 0 ? 'buff-blade' : 'debuff' });
+                        effects.push({ title: `${i18n.t('slot')} ${idx + 1}: ${i18n.t('blade_buff')}`, desc: `Appeal ${val > 0 ? '+' : ''}${val}`, duration: i18n.t('until_end_of_turn'), type: val > 0 ? 'buff-blade' : 'debuff' });
                     }
                 });
             }
-            if (p.heart_buffs) {
+
+            // Use Logs for heart buffs
+            if (p.heart_buff_logs && p.heart_buff_logs.length > 0) {
+                p.heart_buff_logs.forEach(log => {
+                    const colors = ['Smile', 'Pure', 'Cool', 'Green', 'Blue', 'Purple', 'Wildcard'];
+                    effects.push({
+                        title: `${i18n.t('slot')} ${log.slot + 1}: ${i18n.t('heart_buff')}`,
+                        desc: `${colors[log.color] || log.color} +${log.amount}`,
+                        duration: i18n.t('until_end_of_turn'),
+                        type: 'buff-heart',
+                        source_card_id: log.source
+                    });
+                });
+            } else if (p.heart_buffs) {
                 p.heart_buffs.forEach((hb, idx) => {
                     const colors = ['Smile', 'Pure', 'Cool', 'Green', 'Blue', 'Purple', 'Wildcard'];
                     let heartDesc = [];
@@ -504,36 +539,46 @@ export const LogRenderer = {
                         hb.forEach((count, cIdx) => { if (count > 0) heartDesc.push(`${colors[cIdx] || cIdx} +${count}`); });
                     }
                     if (heartDesc.length > 0) {
-                        effects.push({ title: `${t['slot'] || 'Slot'} ${idx + 1}: ${t['heart_buff'] || 'Heart Buff'}`, desc: heartDesc.join(', '), duration: t['until_end_of_turn'] || 'Until End of Turn', type: 'buff-heart' });
+                        effects.push({ title: `${i18n.t('slot')} ${idx + 1}: ${i18n.t('heart_buff')}`, desc: heartDesc.join(', '), duration: i18n.t('until_end_of_turn'), type: 'buff-heart' });
                     }
                 });
             }
+
             if (p.prevent_baton_touch > 0) {
-                effects.push({ title: t['restriction'] || 'Restriction', desc: t['cannot_baton_touch'] || 'Cannot Baton Touch', duration: t['until_end_of_turn'] || 'Until End of Turn', type: 'restriction' });
+                effects.push({ title: i18n.t('restriction'), desc: i18n.t('cannot_baton_touch'), duration: i18n.t('until_end_of_turn'), type: 'restriction' });
             }
             if (p.prevent_activate > 0) {
-                effects.push({ title: t['restriction'] || 'Restriction', desc: t['cannot_activate_member'] || 'Cannot Activate Member Abilities', duration: t['until_end_of_turn'] || 'Until End of Turn', type: 'restriction' });
+                effects.push({ title: i18n.t('restriction'), desc: i18n.t('cannot_activate_member'), duration: i18n.t('until_end_of_turn'), type: 'restriction' });
             }
 
             if (effects.length === 0) return '';
 
             let pStats = `<div class="effect-player-badge ${badgeClass}">${badgeLabel}</div>`;
-            return pStats + effects.map(e => `
-                <div class="effect-item ${e.type || ''}" ${e.desc ? `data-text="${e.desc.replace(/"/g, '&quot;')}"` : ''} ${e.source_card_id !== undefined ? `data-card-id="${e.source_card_id}"` : ''}>
-                    <div class="effect-title-row">
-                        <span class="effect-title">${e.title}</span>
-                        <span class="effect-duration">${e.duration}</span>
+            return pStats + effects.map(e => {
+                const sourceCard = e.source_card_id ? Tooltips.findCardById(e.source_card_id) : null;
+                const sourcePrefix = sourceCard ? `<span class="effect-source-name">${sourceCard.name}:</span> ` : '';
+                return `
+                    <div class="effect-item ${e.type || ''}" ${e.desc ? `data-text="${e.desc.replace(/"/g, '&quot;')}"` : ''} ${e.source_card_id !== undefined ? `data-card-id="${e.source_card_id}"` : ''}>
+                        <div class="effect-title-row">
+                            <span class="effect-title">${e.title}</span>
+                            <span class="effect-duration">${e.duration}</span>
+                        </div>
+                        <div class="effect-desc">${sourcePrefix}${e.desc}</div>
                     </div>
-                    <div class="effect-desc">${e.desc}</div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         };
 
-        html += renderPlayerEffects(p0, State.perspectivePlayer);
-        html += renderPlayerEffects(p1, 1 - State.perspectivePlayer);
+        const p0Effects = renderPlayerEffects(p0, State.perspectivePlayer);
+        const p1Effects = renderPlayerEffects(p1, 1 - State.perspectivePlayer);
+
+        if (p0Effects || p1Effects) {
+            html += `<div class="effects-group-header" style="margin-top:10px;">Active Effects</div>`;
+            html += p0Effects + p1Effects;
+        }
 
         if (!html) {
-            container.innerHTML = `<div style="font-size: 0.75rem; color: var(--text-dim); text-align: center; padding: 10px;">${t['no_active_effects'] || 'No active effects'}</div>`;
+            container.innerHTML = `<div style="font-size: 0.75rem; color: var(--text-dim); text-align: center; padding: 10px;">${i18n.t('no_active_effects')}</div>`;
         } else {
             container.innerHTML = html;
         }
@@ -546,7 +591,6 @@ export const LogRenderer = {
         const state = State.data;
         const currentLang = State.currentLang;
         const showFriendlyAbilities = State.showFriendlyAbilities;
-        const t = translations ? translations[currentLang] : {};
 
         const currentLogCount = (state.rule_log || []).length;
         const currentHistoryCount = (state.turn_history || []).length;
@@ -569,7 +613,7 @@ export const LogRenderer = {
                 newHistoryEntries.forEach(event => {
                     const filteredEvent = LogFilter.applyFilters([event])[0];
                     if (filteredEvent) {
-                        const entry = LogRenderer.createTurnEventElement(event, t);
+                        const entry = LogRenderer.createTurnEventElement(event);
                         turnHistorySection.appendChild(entry);
                     }
                 });

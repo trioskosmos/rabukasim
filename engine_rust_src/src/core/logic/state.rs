@@ -122,12 +122,17 @@ impl<'de> Deserialize<'de> for BypassLog {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CoreGameState {
     pub players: [PlayerState; 2],
+    #[serde(default)]
     pub current_player: u8,
+    #[serde(default)]
     pub first_player: u8,
+    #[serde(default)]
     pub phase: Phase,
     #[serde(default)]
     pub prev_phase: Phase,
+    #[serde(default)]
     pub prev_card_id: i32,
+    #[serde(default)]
     pub turn: u16,
     #[serde(default)]
     pub trigger_depth: u16,
@@ -151,14 +156,14 @@ pub struct CoreGameState {
     pub performance_reveals_done: [bool; 2],
     #[serde(default)]
     pub performance_yell_done: [bool; 2],
-    #[serde(skip)]
+    #[serde(default)]
     pub trigger_queue: VecDeque<(i32, u16, AbilityContext, bool, TriggerType)>,
     #[serde(skip, default = "SmallRng::from_os_rng")]
     pub rng: SmallRng,
     #[serde(default)]
     pub rps_choices: [i8; 2],
     #[serde(default)]
-    pub turn_history: Vec<TurnEvent>,
+    pub turn_history: Option<Vec<TurnEvent>>,
     #[serde(default)]
     pub obtained_success_live: [bool; 2],
 }
@@ -187,7 +192,7 @@ impl Default for CoreGameState {
             trigger_queue: VecDeque::new(),
             rng: SmallRng::from_os_rng(),
             rps_choices: [-1; 2],
-            turn_history: Vec::new(),
+            turn_history: None,
             obtained_success_live: [false; 2],
         }
     }
@@ -198,7 +203,7 @@ pub struct UIState {
     #[serde(default)]
     pub silent: bool,
     #[serde(default)]
-    pub rule_log: Vec<String>,
+    pub rule_log: Option<Vec<String>>,
     #[serde(default)]
     pub performance_results: HashMap<u8, serde_json::Value>,
     #[serde(default)]
@@ -209,18 +214,21 @@ pub struct UIState {
     pub next_execution_id: u32,
     #[serde(default)]
     pub current_execution_id: Option<u32>,
+    #[serde(default)]
+    pub bytecode_log: Vec<String>,
 }
 
 impl Default for UIState {
     fn default() -> Self {
         Self {
             silent: false,
-            rule_log: Vec::new(),
+            rule_log: None,
             performance_results: HashMap::new(),
             last_performance_results: HashMap::new(),
             performance_history: Vec::new(),
             next_execution_id: 1,
             current_execution_id: None,
+            bytecode_log: Vec::new(),
         }
     }
 }
@@ -228,9 +236,9 @@ impl Default for UIState {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DebugState {
     pub debug_ignore_conditions: bool,
-    pub bypassed_conditions: BypassLog,
+    pub bypassed_conditions: Option<BypassLog>,
     pub debug_mode: bool,
-    pub executed_opcodes: HashSet<i32>,
+    pub executed_opcodes: Option<HashSet<i32>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

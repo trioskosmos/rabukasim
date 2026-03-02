@@ -32,7 +32,7 @@ def run_test():
     gs.set_energy_cards(0, [1000])  # Energy: One card
     gs.set_live_cards(0, [30000])  # Live: One card at index 0
 
-    print(f"Initial State:")
+    print("Initial State:")
     p0 = gs.get_player(0)
     print(f"  Stage Slot 0: {p0.stage[0]}")
     print(f"  Energy Zone: {p0.energy_zone}")

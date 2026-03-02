@@ -32,7 +32,7 @@
 - `LOOK_DECK_DYNAMIC` (値が動的に計算される)
 - パラメータ: `value_source: "live_score"`, `modifier: +2`
 
-**現在の対応状況:** 
+**現在の対応状況:**
 - `LOOK_DECK` (Opcode 14) は固定枚数のみ対応
 - 動的な枚数計算には新しいオペコードまたはパラメータ拡張が必要
 
@@ -75,7 +75,7 @@
 - PL!SP-bp5-009-AR (鬼塚夏美)
 
 **必要なオペコード:**
-- `REPEAT_ABILITY` または `LOOP` 
+- `REPEAT_ABILITY` または `LOOP`
 - パラメータ: `max_repeats: 4`, `condition: "optional_continue"`
 
 **現在の対応状況:**
@@ -116,7 +116,7 @@
 - PL!N-bp5-025-L
 
 **必要なオペコード:**
-- `LOSE_EXCESS_HEARTS` 
+- `LOSE_EXCESS_HEARTS`
 - パラメータ: `min_count: 3`, `lose_all: true`
 
 **現在の対応状況:**
@@ -276,7 +276,7 @@
 ### 現在の使用状況
 
 - **OPCODES**: 最大97 (制限256に対して余裕あり)
-- **CONDITIONS**: 
+- **CONDITIONS**:
   - 元の範囲: 200-249
   - 新しい範囲: 300-399 (将来的な拡張用に予約)
   - 現在使用: 301-304

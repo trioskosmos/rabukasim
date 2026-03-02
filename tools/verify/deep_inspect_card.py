@@ -2,16 +2,26 @@ import json
 import sys
 
 # Force UTF-8
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding="utf-8")
 
 CARD_IDS = [
-    "PL!N-bp1-003-R＋", "PL!N-bp1-003-P＋", "PL!N-bp1-003-SEC",
-    "PL!N-sd1-001-SD", "PL!N-sd1-009-SD",
-    "PL!HS-bp1-003-R＋", "PL!HS-bp1-003-P＋", "PL!HS-bp1-003-SEC",
-    "PL!N-pb1-003-R", "PL!N-pb1-003-P＋",
-    "PL!N-bp1-012-P＋", "PL!N-bp1-012-SEC",
-    "PL!HS-PR-014-PR", "PL!SP-bp1-010-R", "PL!N-pb1-002-R"
+    "PL!N-bp1-003-R＋",
+    "PL!N-bp1-003-P＋",
+    "PL!N-bp1-003-SEC",
+    "PL!N-sd1-001-SD",
+    "PL!N-sd1-009-SD",
+    "PL!HS-bp1-003-R＋",
+    "PL!HS-bp1-003-P＋",
+    "PL!HS-bp1-003-SEC",
+    "PL!N-pb1-003-R",
+    "PL!N-pb1-003-P＋",
+    "PL!N-bp1-012-P＋",
+    "PL!N-bp1-012-SEC",
+    "PL!HS-PR-014-PR",
+    "PL!SP-bp1-010-R",
+    "PL!N-pb1-002-R",
 ]
+
 
 def deep_inspect():
     with open("deep_inspect_dump.txt", "w", encoding="utf-8") as out:
@@ -51,6 +61,7 @@ def deep_inspect():
             out.write("\n\n")
 
     print("Dump written to deep_inspect_dump.txt")
+
 
 if __name__ == "__main__":
     deep_inspect()

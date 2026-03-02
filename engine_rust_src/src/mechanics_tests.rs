@@ -20,7 +20,7 @@ fn test_opcode_draw() {
 
     // O_DRAW 2
     let bytecode = vec![O_DRAW, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode(&db, &bytecode, &ctx);
+    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
     assert_eq!(state.core.players[0].hand.len(), 2);
     assert_eq!(state.core.players[0].deck.len(), 3);
@@ -41,7 +41,7 @@ fn test_opcode_blades() {
 
     // O_ADD_BLADES 3 to SELF (Slot 4)
     let bytecode = vec![O_ADD_BLADES, 3, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode(&db, &bytecode, &ctx);
+    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
     assert_eq!(state.core.players[0].blade_buffs[0], 3);
 }
@@ -61,7 +61,7 @@ fn test_opcode_hearts() {
 
     // O_ADD_HEARTS 1 to Red (Attr 1), Slot 4 (SELF)
     let bytecode = vec![O_ADD_HEARTS, 1, 1, 0, 4, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode(&db, &bytecode, &ctx);
+    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
     assert_eq!(state.core.players[0].heart_buffs[0].get_color_count(1), 1);
 }
@@ -75,7 +75,7 @@ fn test_opcode_reduce_cost() {
 
     // O_REDUCE_COST 2
     let bytecode = vec![O_REDUCE_COST, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode(&db, &bytecode, &ctx);
+    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
     assert_eq!(state.core.players[0].cost_reduction, 2);
 }
@@ -101,13 +101,13 @@ fn test_condition_count_hand() {
 
     // Case 1: Met
     state.core.players[0].deck = vec![121].into();
-    state.resolve_bytecode(&db, &bytecode, &ctx);
+    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
     assert_eq!(state.core.players[0].hand.len(), 4);
 
     // Case 2: Not Met
     state.core.players[0].hand = vec![121].into(); // 1 card
     state.core.players[0].deck = vec![124].into();
-    state.resolve_bytecode(&db, &bytecode, &ctx);
+    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
     assert_eq!(state.core.players[0].hand.len(), 1);
 }
 
@@ -123,7 +123,7 @@ fn test_opcode_play_member_from_hand() {
     state.core.players[0].energy_zone = vec![9000, 9001, 9002, 9003, 9004].into();
 
     // choice_index=1 (Rin/124), target_slot=2
-    let ctx = AbilityContext {
+    let mut ctx = AbilityContext {
         player_id: 0,
         choice_index: 1,
         target_slot: 2,
@@ -133,7 +133,21 @@ fn test_opcode_play_member_from_hand() {
     // O_PLAY_MEMBER_FROM_HAND
     let bytecode = vec![O_PLAY_MEMBER_FROM_HAND, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
 
-    state.resolve_bytecode(&db, &bytecode, &ctx);
+    // Step 1: Select Card from Hand (choice_index=1)
+    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
+    
+    // It should have suspended for the slot. 
+    // The handler updated ctx inside the interaction_stack
+    assert!(state.interaction_stack.len() > 0);
+    let mut resumed_ctx = state.interaction_stack.pop().unwrap().ctx;
+    
+    // The handler updated context should have: target_slot=1 (hand_idx), v_remaining=1, choice_index=-1
+    assert_eq!(resumed_ctx.v_remaining, 1);
+    assert_eq!(resumed_ctx.target_slot, 1);
+
+    // Step 2: Select Slot (choice_index=2)
+    resumed_ctx.choice_index = 2;
+    state.resolve_bytecode_cref(&db, &bytecode, &resumed_ctx);
 
     // Card 124 should be on stage slot 2
     assert_eq!(state.core.players[0].stage[2], 124);

@@ -20,7 +20,7 @@ The engine is remarkably compliant with the official rules. Key areas like Win C
 ### 1. Performance Phase Idempotency (Critical)
 The most significant issue is that `do_performance_phase` is not idempotent.
 - **Problem**: In the Rust engine, the performance phase is a single function. If an ability triggers a pause (e.g., for user choice), the function returns and the game state enters `Phase::Response`. When the game resumes, it re-enters `do_performance_phase` from the beginning.
-- **Impact**: 
+- **Impact**:
     - `OnReveal` and `OnLiveStart` triggers fire multiple times.
     - Statistics (Blades, Hearts) from "Yell" and bonuses accumulate redundantly.
     - This leads to "Stat Inflation" (e.g., a card giving +1 blade might end up giving +3 if there were multiple choices during the phase).
@@ -31,7 +31,7 @@ The most significant issue is that `do_performance_phase` is not idempotent.
 - **Impact**: Players draw additional cards every time the phase restarts, which is not allowed by Rule 8.3.11.
 
 ### 3. Energy Reclamation (Minor)
-- **Rule 10.5.3**: "Energy in empty member area -> Energy Deck". 
+- **Rule 10.5.3**: "Energy in empty member area -> Energy Deck".
 - **Implementation**: Currently shuffles the energy deck after pushback. While safe, the rules only specify "placed in energy deck", and since our energy deck is unordered (4.9.2), pushing and shuffling is correct but heavy on RNG.
 
 ### 4. Action ID Space Constraints

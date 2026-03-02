@@ -4,7 +4,7 @@ description: Quickly generate and read a comprehensive report for any card to an
 
 # Analyze Card Workflow
 
-When you need to analyze a card, understand its logic, or find its bytecode, **DO NOT manually search through `cards.json` or `manual_pseudocode.json` using grep or file views.** Manual searches are slow and prone to UTF-8 encoding failures on Windows. 
+When you need to analyze a card, understand its logic, or find its bytecode, **DO NOT manually search through `cards.json` or `manual_pseudocode.json` using grep or file views.** Manual searches are slow and prone to UTF-8 encoding failures on Windows.
 
 Instead, use this automated workflow to instantly retrieve "every detail of the card and every detail of the details."
 
@@ -26,7 +26,11 @@ Instead, use this automated workflow to instantly retrieve "every detail of the 
 3. **Analyze**: The report contains all necessary information in one place:
    - **IDs**: Packed ID, Logic ID, Variant
    - **Metadata**: Name, JP Ability Text, Raw Pseudocode
-   - **Overrides**: Manual Pseudocode overrides (if any)
+   - **Overrides/Consolidated**: Consolidated pseudocode and any manual overrides
+   - **Cross-References**:
+     - *QA Rulings*: Official rulings associated with this card.
+     - *Shared Ability Cards*: Other cards with this exact ability.
+     - *Rust Engine Tests*: Which tests cover this card, its shared peers, or its QA items.
    - **Engine Logic**: The fully decoded bytecode, clearly mapping opcodes and their parameters.
 
-Always execute these steps sequentially when investigating a card's implementation or debugging anomalous behavior.
+Always execute these steps sequentially when investigating a card's implementation, testing coverage, or debugging anomalous behavior.

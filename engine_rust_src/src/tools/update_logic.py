@@ -1,5 +1,3 @@
-import os
-
 file_path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\engine_rust_src\src\core\logic.rs"
 
 with open(file_path, "r", encoding="utf-8") as f:

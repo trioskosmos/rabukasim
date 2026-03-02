@@ -1,12 +1,28 @@
 import { State } from '../state.js';
 import { Network } from '../network.js';
 import { Modals } from '../ui_modals.js';
+import { validator } from '../components/DeckValidator.js';
 
 export const DeckSetupModal = {
     openDeckModal: () => {
         const modal = document.getElementById('deck-modal');
         if (modal) modal.style.display = 'flex';
+        validator.init();
         Modals.fetchAndPopulateDecks();
+
+        const input = document.getElementById('deck-html-input');
+        if (input) {
+            input.addEventListener('input', () => DeckSetupModal.validateInline());
+        }
+    },
+
+    validateInline: () => {
+        const input = document.getElementById('deck-html-input');
+        const preview = document.getElementById('deck-preview');
+        if (!input || !preview) return;
+
+        const results = validator.validateDeckString(input.value);
+        validator.renderPreview(results, preview);
     },
 
     closeDeckModal: () => {

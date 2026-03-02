@@ -1,4 +1,5 @@
 """Audit all cards with LOOK_AND_CHOOSE (opcode 41) bytecode."""
+
 import json
 
 with open("data/cards_compiled.json", "r", encoding="utf-8") as f:
@@ -39,8 +40,8 @@ for db_name in ["member_db", "live_db"]:
                         dest = "HAND(default)"
 
                     trigger = ab.get("trigger", "?")
-                    
-                    is_bug = (s == 6)  # source=HAND when it should be DECK
+
+                    is_bug = s == 6  # source=HAND when it should be DECK
                     marker = " *** BUG" if is_bug else ""
                     if is_bug:
                         bug_count += 1

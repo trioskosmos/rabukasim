@@ -157,13 +157,13 @@ flowchart TD
     B -->|Condition| C[_compile_single_condition]
     B -->|Effect| D[_compile_effect_wrapper]
     B -->|Cost| E[_compile_single_cost]
-    
+
     C --> F[Opcode + Value + Attr + Slot]
     D --> G{Effect Type?}
     G -->|ORDER_DECK| H[LOOK_DECK + ORDER_DECK]
     G -->|SELECT_MODE| I[Jump Table生成]
     G -->|Other| J[_compile_single_effect]
-    
+
     J --> K[特殊処理]
     K --> L[_pack_filter_attr呼び出し]
     L --> F
@@ -225,7 +225,7 @@ flowchart TD
        cost_filter: Optional[tuple[int, bool]]  # (threshold, is_le)
        color_mask: int
        # ...
-       
+
        def pack(self) -> int:
            """構造化されたフィルタをビット列に変換"""
    ```

@@ -1,7 +1,8 @@
 import { State } from '../state.js';
 import { Phase } from '../constants.js';
-import { translations } from '../translations_data.js';
+import * as i18n from '../i18n/index.js';
 import { Tooltips } from '../ui_tooltips.js';
+import { ActionBases } from '../generated_constants.js';
 
 export const ActionMenu = {
     renderActions: () => {
@@ -10,7 +11,6 @@ export const ActionMenu = {
         if (!state || !actionsDiv || state.game_over) return;
 
         const currentLang = State.currentLang;
-        const t = translations[currentLang];
         const perspectivePlayer = State.perspectivePlayer;
         const mobileActionBar = document.getElementById('mobile-action-bar');
 
@@ -20,9 +20,9 @@ export const ActionMenu = {
         const getActionLabel = (a, isMini = false) => {
             if (a.id === 0 && state.pending_choice) {
                 if (state.phase === Phase.MulliganP1 || state.phase === Phase.MulliganP2) {
-                    return currentLang === 'jp' ? '完了' : 'Done';
+                    return i18n.t('done') || (currentLang === 'jp' ? '完了' : 'Done');
                 }
-                return currentLang === 'jp' ? 'パス / いいえ' : 'Pass / No';
+                return i18n.t('pass_no') || (currentLang === 'jp' ? 'パス / いいえ' : 'Pass / No');
             }
             const energyIcon = `<img src="img/texticon/icon_energy.png" style="height:14px; vertical-align:middle; margin:0 2px;">`;
             const heartIcon = `<img src="img/texticon/icon_heart.png" style="height:14px; vertical-align:middle; margin:0 2px;">`;
@@ -61,8 +61,8 @@ export const ActionMenu = {
                     }
                 } else if (a.id >= 600 && a.id <= 602) {
                     const slotIdx = a.id - 600;
-                    const trans = currentLang === 'en' ? window.currentTranslationsEN : window.currentTranslationsJP;
-                    name = trans?.params?.AREA?.[slotIdx] || (currentLang === 'jp' ? `スロット ${slotIdx}` : `Slot ${slotIdx}`);
+                    const trans = i18n.getCurrentTranslations();
+                    name = trans?.params?.AREA?.[slotIdx] || i18n.t('slot_n', { n: slotIdx });
                 }
             }
 
@@ -104,6 +104,17 @@ export const ActionMenu = {
             btn.innerHTML = getActionLabel(a, isMini);
             btn.onclick = () => { if (window.doAction && a.id !== undefined) window.doAction(a.id); };
 
+            btn.onmouseenter = () => {
+                if (window.highlightActionTarget && a.id !== undefined) {
+                    window.highlightActionTarget(a.id, true);
+                }
+            };
+            btn.onmouseleave = () => {
+                if (window.highlightActionTarget && a.id !== undefined) {
+                    window.highlightActionTarget(a.id, false);
+                }
+            };
+
             return btn;
         };
 
@@ -116,7 +127,7 @@ export const ActionMenu = {
             rpsDiv.style.borderRadius = '12px';
             rpsDiv.style.marginBottom = '20px';
 
-            const title = currentLang === 'en' ? 'Choose Your Sign' : '手を選んでください';
+            const title = i18n.t('choose_sign');
             rpsDiv.innerHTML = `<h3 style="margin-top:0; color:var(--accent-gold);">${title}</h3>`;
 
             const btnContainer = document.createElement('div');
@@ -125,7 +136,7 @@ export const ActionMenu = {
             btnContainer.style.alignItems = 'center';
             btnContainer.style.gap = '10px';
 
-            const baseId = (perspectivePlayer === 1) ? 11000 : 10000;
+            const baseId = (perspectivePlayer === 1) ? ActionBases.RPS_P2 : ActionBases.RPS;
             const signs = [
                 { id: baseId + 0, name: 'Rock', jp: 'グー' },
                 { id: baseId + 1, name: 'Paper', jp: 'パー' },
@@ -159,13 +170,11 @@ export const ActionMenu = {
             else if (opcode === 45) headerColor = '#ffcc00';
             else if (opcode === 41 || opcode === 74) headerColor = '#9966ff';
 
-            choiceDiv.style.marginBottom = '15px';
-            choiceDiv.style.padding = '12px';
-            choiceDiv.style.background = 'rgba(255,255,255,0.05)';
-            choiceDiv.style.borderRadius = '10px';
+            // JS keeps border-left color logic
             choiceDiv.style.borderLeft = `4px solid ${headerColor}`;
 
-            const cardId = choice.source_card_id !== undefined ? choice.source_card_id : -1;
+            // Rust serializer sends 'card_id', not 'source_card_id'
+            const cardId = choice.card_id !== undefined ? choice.card_id : (choice.source_card_id !== undefined ? choice.source_card_id : -1);
             let cardName = choice.source_member;
 
             if (!cardName || cardName === 'Unknown Source' || cardName === 'Unknown Card' || cardName.startsWith('Card ')) {
@@ -173,7 +182,7 @@ export const ActionMenu = {
                 if (resolvedCard && resolvedCard.name) {
                     cardName = resolvedCard.name;
                 } else {
-                    cardName = currentLang === 'jp' ? '不明なカード' : 'Unknown Card';
+                    cardName = i18n.t('unknown_card');
                 }
             }
 
@@ -181,24 +190,45 @@ export const ActionMenu = {
             if (cardId >= 0) {
                 headerText += ` <span style="opacity:0.6; font-size:0.8em;">(ID: ${cardId})</span>`;
             }
-            let content = `<div style="font-weight:bold; color:${headerColor}; margin-bottom: 10px; font-size: 1.1rem;">${headerText}</div>`;
 
-            if (choice.source_ability) {
-                const enrichedAbility = Tooltips.enrichAbilityText(choice.source_ability);
-                content += `<div style="font-size: 0.9rem; margin-bottom: 10px; opacity: 0.9; line-height: 1.5;">${enrichedAbility}</div>`;
+            let content = `<div class="choice-header" style="color:${headerColor};">${headerText}</div>`;
+
+            // Show the triggering ability text
+            let abilityText = "";
+            if (cardId >= 0) {
+                const card = State.resolveCardData(cardId);
+                const naturalText = Tooltips.extractRelevantAbility(card, choice.trigger_label, choice.ability_index);
+                if (naturalText && !Tooltips.isGenericInstruction(naturalText)) {
+                    abilityText = naturalText;
+                }
             }
+
+            // Fallback to server-provided source_ability (pseudocode) if no natural block found
+            if (!abilityText || abilityText.length < 5) {
+                const fallback = choice.source_ability || "";
+                // If it's a generic choice (Pass/No), we really don't want to show the full pseudocode underneath it
+                const isGenericChoice = Tooltips.isGenericInstruction(choice.choice_text);
+                if (fallback && fallback.length > 5 && !Tooltips.isGenericInstruction(fallback) && !isGenericChoice) {
+                    abilityText = fallback;
+                }
+            }
+
+            if (abilityText && abilityText.length > 5 && !Tooltips.isGenericInstruction(abilityText)) {
+                const enriched = Tooltips.enrichAbilityText(abilityText);
+                content += `<div class="source-ability-text">${enriched}</div>`;
+            }
+
             choiceDiv.innerHTML = content;
 
             if (choice.options && choice.options.length > 0) {
                 const optContainer = document.createElement('div');
-                optContainer.className = 'action-list';
-                optContainer.style.maxHeight = '300px';
-                optContainer.style.overflowY = 'auto';
+                optContainer.className = 'action-list choice-options-container';
 
                 choice.options.forEach((opt, idx) => {
+                    const optCardId = opt.card_id !== undefined ? opt.card_id : cardId;
                     const a = {
                         id: choice.actions[idx],
-                        source_card_id: choice.source_card_id,
+                        source_card_id: optCardId,
                         name: opt.name || opt.text || `Option ${idx + 1}`,
                         text: opt.text
                     };
@@ -215,12 +245,12 @@ export const ActionMenu = {
         if (state.is_ai_thinking) {
             const aiDiv = document.createElement('div');
             aiDiv.className = 'ai-thinking-indicator';
-            aiDiv.innerHTML = `<div style="font-weight:bold; color:#0096ff; padding:10px; border-left:4px solid #0096ff; background:rgba(0,150,255,0.1); border-radius:8px;">${state.ai_status || 'AI is thinking...'}</div>`;
+            aiDiv.innerHTML = `<div style="font-weight:bold; color:#0096ff; padding:10px; border-left:4px solid #0096ff; background:rgba(0,150,255,0.1); border-radius:8px;">${state.ai_status || i18n.t('ai_thinking')}</div>`;
             actionsDiv.appendChild(aiDiv);
         }
 
         if (!state.legal_actions || state.legal_actions.length === 0) {
-            actionsDiv.innerHTML = `<div class="no-actions">${t['wait'] || 'Waiting...'}</div>`;
+            actionsDiv.innerHTML = `<div class="no-actions">${i18n.t('wait')}</div>`;
             return;
         }
 
@@ -238,6 +268,11 @@ export const ActionMenu = {
             const category = a.category || a.type;
             const hIdx = a.hand_idx;
             const sIdx = a.slot_idx;
+
+            // Normalize card_id → source_card_id (Rust sends card_id in metadata)
+            if (a.source_card_id === undefined && a.card_id !== undefined) {
+                a.source_card_id = a.card_id;
+            }
 
             if (a.source_card_id === undefined) {
                 if (hIdx !== undefined) {
@@ -273,33 +308,24 @@ export const ActionMenu = {
         };
 
         if (systemActions.length > 0) {
-            addHeader(currentLang === 'jp' ? 'システム' : 'SYSTEM');
+            addHeader(i18n.t('system'));
             systemActions.forEach(a => listDiv.appendChild(createActionButton(a, false, a.id === 0 ? 'confirm system' : 'system')));
         }
 
         if (abilityActions.length > 0) {
-            addHeader(currentLang === 'jp' ? 'アビリティ' : 'ABILITIES', '#9966ff');
+            addHeader(i18n.t('act_ability').toUpperCase(), '#9966ff');
             abilityActions.forEach(a => listDiv.appendChild(createActionButton(a)));
         }
 
         const perspectivePlayerHand = state.players[perspectivePlayer]?.hand || [];
-        if (Object.keys(mulliganActions).length > 0) {
-            addHeader(currentLang === 'jp' ? 'マリガン' : 'MULLIGAN', 'var(--accent-pink)');
-            perspectivePlayerHand.forEach((_, idx) => {
-                const actions = mulliganActions[idx] || [];
-                if (actions.length > 0) {
-                    actions.forEach(a => listDiv.appendChild(createActionButton(a)));
-                } else {
-                    const spacer = document.createElement('button');
-                    spacer.className = 'action-btn';
-                    spacer.style.visibility = 'hidden';
-                    listDiv.appendChild(spacer);
-                }
-            });
+        const allMulliganActions = Object.values(mulliganActions).flat();
+        if (allMulliganActions.length > 0) {
+            addHeader(i18n.t('mulligan').toUpperCase(), 'var(--accent-pink)');
+            allMulliganActions.forEach(a => listDiv.appendChild(createActionButton(a)));
         }
 
         if (Object.keys(playActionsByHand).length > 0) {
-            addHeader(currentLang === 'jp' ? 'メンバー登場' : 'PLAY MEMBER', 'var(--accent-gold)');
+            addHeader(i18n.t('event_play').toUpperCase(), 'var(--accent-gold)');
             Object.keys(playActionsByHand).sort((a, b) => parseInt(a) - parseInt(b)).forEach(hIdx => {
                 const actions = playActionsByHand[hIdx];
                 const firstA = actions[0];
@@ -373,7 +399,7 @@ export const ActionMenu = {
         }
 
         if (otherActions.length > 0) {
-            addHeader(currentLang === 'jp' ? 'アクション' : 'ACTIONS');
+            addHeader(i18n.t('actions').toUpperCase());
             otherActions.forEach(a => listDiv.appendChild(createActionButton(a)));
         }
     },

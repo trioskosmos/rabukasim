@@ -90,6 +90,6 @@ These are quick commands or patterns to use for common diagnostic tasks.
 
 3.  **"Check the decoding" (Decoded Logic)**
     -   **Alias**: `check_decoding <CARD_NO>`
-    -   **Command / Workflow**: 
+    -   **Command / Workflow**:
         1. `uv run python tools/card_finder.py "<CARD_NO>" --output reports/diag.md`
         2. View `reports/diag.md` and check the **Decoded Bytecode** section.

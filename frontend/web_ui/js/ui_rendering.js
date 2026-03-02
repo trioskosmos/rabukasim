@@ -8,7 +8,7 @@ import { BoardRenderer } from './components/BoardRenderer.js';
 import { ActionMenu } from './components/ActionMenu.js';
 
 import { Phase, fixImg } from './constants.js';
-import { translations } from './translations_data.js';
+import * as i18n from './i18n/index.js';
 import { Tooltips } from './ui_tooltips.js';
 import { InteractionAdapter } from './interaction_adapter.js';
 import { Logs } from './ui_logs.js';
@@ -89,7 +89,7 @@ export const Rendering = {
         let phaseKey = Rendering.getPhaseKey(state.phase);
 
         if (DOM_CACHE.turn) DOM_CACHE.turn.textContent = state.turn_number || state.turn || 1;
-        if (DOM_CACHE.phase) DOM_CACHE.phase.textContent = t[phaseKey] || state.phase;
+        if (DOM_CACHE.phase) DOM_CACHE.phase.textContent = i18n.t(phaseKey);
 
         if (DOM_CACHE.score) {
             const p0Score = state.players[0].success_lives ? state.players[0].success_lives.length : 0;
@@ -126,7 +126,7 @@ export const Rendering = {
 
         const perspectivePlayer = State.perspectivePlayer;
         const currentLang = State.currentLang;
-        const t = translations[currentLang];
+        const t = i18n.getCurrentTranslations();
 
         // --- Proactive Pre-loading ---
         const assetsToLoad = [];
@@ -172,14 +172,21 @@ export const Rendering = {
         Rendering.renderCards('opp-hand', p1.hand, false, true, [], validTargets.oppHand, validTargets.hasSelection);
         Rendering.renderLiveZone('my-live', p0.live_zone, p0.live_zone_revealed, validTargets.myLive, validTargets.hasSelection);
         Rendering.renderPerformanceGuide();
-        Rendering.renderLookedCards();
+        Rendering.renderLookedCards(validTargets.selection);
         Rendering.renderSelectionModal();
         Rendering.renderRuleLog();
-        Rendering.renderActiveEffects(state, p0, p1, t);
-        Rendering.renderActiveAbilities('active-abilities-list', state.triggered_abilities || []);
+        Rendering.renderActiveEffects(state);
         // Toggle the panel visibility based on content
         const abPanel = document.getElementById('active-abilities-panel');
-        if (abPanel) abPanel.style.display = (state.triggered_abilities && state.triggered_abilities.length > 0) ? 'block' : 'none';
+        const hasContent = (state.triggered_abilities && state.triggered_abilities.length > 0) ||
+            (p0.blade_buffs && p0.blade_buffs.some(v => v !== 0)) ||
+            (p0.heart_buffs && p0.heart_buffs.some(hb => hb.some(v => v > 0))) ||
+            (p1.blade_buffs && p1.blade_buffs.some(v => v !== 0)) ||
+            (p1.heart_buffs && p1.heart_buffs.some(hb => hb.some(v => v > 0))) ||
+            (p0.cost_reduction !== 0) || (p1.cost_reduction !== 0) ||
+            (p0.prevent_baton_touch > 0) || (p1.prevent_baton_touch > 0);
+
+        if (abPanel) abPanel.style.display = hasContent ? 'block' : 'none';
         if (state.game_over) {
             Rendering.renderGameOver(state);
         } else {
@@ -236,7 +243,7 @@ export const Rendering = {
         CardRenderer.renderDiscardPile(containerId, discard, playerIdx, validActionMap, hasGlobalSelection, Rendering.showDiscardModal);
     },
 
-    renderActiveEffects: (state, p0, p1, t) => Logs.renderActiveEffects(state, p0, p1, t),
+    renderActiveEffects: (state, p0, p1) => Logs.renderActiveEffects(state, p0, p1),
 
     renderRuleLog: (containerId = 'rule-log') => Logs.renderRuleLog(containerId),
 
@@ -315,7 +322,7 @@ export const Rendering = {
             const grid = document.createElement('div');
             grid.className = 'selection-grid';
 
-            // For deck, we want "input order". Since we don't have the original deck, 
+            // For deck, we want "input order". Since we don't have the original deck,
             // we sort by card ID as a stable substitute for now, or use alphabetic.
             let sortedCards = [...cards];
             if (isDeck) {
@@ -394,16 +401,14 @@ export const Rendering = {
 
     renderRuleLog: () => Logs.renderRuleLog('rule-log'),
 
-    renderActiveEffects: (state, p0, p1, t) => {
-        // Bridges to u_logs.js if needed or handled by renderRuleLog
-    },
+    renderActiveEffects: (state) => Logs.renderActiveEffects(state),
 
     renderActiveAbilities: (containerId, abilities) => {
         const el = document.getElementById(containerId);
         if (!el) return;
         el.innerHTML = abilities.map(a => {
             const card = Tooltips.findCardById(a.source_card_id);
-            const name = card ? card.name : (State.currentLang === 'jp' ? 'カード' : 'Card');
+            const name = card ? card.name : i18n.t('card');
             const dataText = a.description || (card ? Tooltips.getEffectiveRawText(card) : '');
 
             return `<div class="active-ability-item" data-card-id="${a.source_card_id}" data-text="${dataText.replace(/"/g, '&quot;')}">
@@ -412,8 +417,8 @@ export const Rendering = {
         }).join('');
     },
 
-    renderLookedCards: () => {
-        CardRenderer.renderLookedCards();
+    renderLookedCards: (selectionTargets = {}) => {
+        CardRenderer.renderLookedCards(selectionTargets);
     },
 
     renderPerformanceResult: (results = null) => PerformanceRenderer.renderPerformanceResult(results),
@@ -428,11 +433,9 @@ export const Rendering = {
     renderGameData: () => { /* Placeholder for future implementation */ },
 
     updateSettingsButtons: () => {
-        const t = (window.translations && State.currentLang) ? window.translations[State.currentLang] : null;
-
         const liveWatchBtn = document.getElementById('live-watch-btn');
         if (liveWatchBtn) {
-            const label = t ? (t['live_watch'] || 'Live Watch') : 'Live Watch';
+            const label = i18n.t('live_watch');
             liveWatchBtn.textContent = `${label}: ${State.isLiveWatchOn ? 'ON' : 'OFF'}`;
         }
 
@@ -448,7 +451,7 @@ export const Rendering = {
 
         const friendlyBtn = document.getElementById('friendly-abilities-btn');
         if (friendlyBtn) {
-            const label = t ? (t['friendly_abilities'] || 'Friendly Abilities') : 'Friendly Abilities';
+            const label = i18n.t('friendly_abilities');
             friendlyBtn.textContent = `${label}: ${State.showFriendlyAbilities ? 'ON' : 'OFF'}`;
         }
 
@@ -463,3 +466,19 @@ export const Rendering = {
     renderTurnHistory: () => PerformanceRenderer.renderTurnHistory(Rendering.getPhaseKey)
 };
 
+// Global Highlighting Logic for Bidirectional Linkage
+window.highlightActionBtn = (actionId, active) => {
+    const btns = document.querySelectorAll(`.action-btn[data-action-id="${actionId}"]`);
+    btns.forEach(btn => {
+        if (active) btn.classList.add('hover-highlight');
+        else btn.classList.remove('hover-highlight');
+    });
+};
+
+window.highlightActionTarget = (actionId, active) => {
+    const targets = document.querySelectorAll(`[data-action-id="${actionId}"]:not(.action-btn)`);
+    targets.forEach(target => {
+        if (active) target.classList.add('hover-highlight');
+        else target.classList.remove('hover-highlight');
+    });
+};

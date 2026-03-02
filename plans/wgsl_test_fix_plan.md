@@ -92,7 +92,7 @@ DeltaTag::HandDiscard => {
 for delta in deltas {
     let tag: DeltaTag = delta.tag.as_str().into();
     let value = delta.value.as_i64().unwrap_or(0) as i32;
-    
+
     if tag == DeltaTag::HandDiscard {
         // HAND_DISCARD = HAND_DELTA(-N) + DISCARD_DELTA(+N)
         *aggregated.entry(DeltaTag::HandDelta).or_insert(0) -= value;
@@ -151,19 +151,19 @@ fn run_onlivestart_test(
     expected_deltas: &[SemanticDelta]
 ) -> Result<bool, String> {
     let real_id = find_card_id(db, card_id_str)?;
-    
+
     let mut state = create_test_state();
     // カードを既に場に配置（プレイ済み状態）
     state.core.players[0].stage[0] = Some(real_id);
     state.core.phase = Phase::Live;
-    
+
     // ONLIVESTARTトリガーを実行
     state.step_live_start(db);
-    
+
     // GPU実行
     let mut gpu_initial = state.to_gpu(db);
     gpu_initial.phase = Phase::Live as i32;
-    
+
     // ... 比較ロジック
 }
 ```
@@ -188,17 +188,17 @@ fn run_activated_test(
     expected_deltas: &[SemanticDelta]
 ) -> Result<bool, String> {
     let real_id = find_card_id(db, card_id_str)?;
-    
+
     let mut state = create_test_state();
     // カードを場に配置
     state.core.players[0].stage[0] = Some(real_id);
     // アクティベート可能な状態に設定
     state.core.players[0].can_activate = true;
-    
+
     // アクティベートアクションを実行
     let action = Action::Activate { member_idx: 0 }.id();
     state.step(db, action)?;
-    
+
     // ... 比較ロジック
 }
 ```

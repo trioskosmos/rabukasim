@@ -90,8 +90,8 @@ impl GameStateEncoding for GameState {
         feats.push(suitability);
         feats.push((3 - self.core.players[0].success_lives.len()) as f32 / 3.0);
         feats.push((3 - self.core.players[1].success_lives.len()) as f32 / 3.0);
-        feats.push(self.core.players[0].current_turn_volume as f32 / 20.0);
-        feats.push(self.core.players[1].current_turn_volume as f32 / 20.0);
+        feats.push(self.core.players[0].current_turn_notes as f32 / 20.0);
+        feats.push(self.core.players[1].current_turn_notes as f32 / 20.0);
 
         while feats.len() < TOTAL_SIZE - 10 { feats.push(0.0); }
         while feats.len() < TOTAL_SIZE { feats.push(0.0); }
@@ -111,7 +111,7 @@ impl GameStateEncoding for GameState {
                 for h in hearts.to_array() { feats.push(h as f32 / 5.0); }
                 for _ in 0..7 { feats.push(0.0); }
                 for &bh in &m.blade_hearts { feats.push(bh as f32 / 5.0); }
-                feats.push(m.volume_icons as f32 / 5.0);
+                feats.push(m.note_icons as f32 / 5.0);
                 feats.push(if (m.semantic_flags & 0x01) != 0 { 1.0 } else { 0.0 });
                 feats.push(if (m.semantic_flags & 0x04) != 0 { 1.0 } else { 0.0 });
                 feats.push(if (m.semantic_flags & 0x02) != 0 { 1.0 } else { 0.0 });
@@ -133,7 +133,7 @@ impl GameStateEncoding for GameState {
                 for _ in 0..7 { feats.push(0.0); }
                 for &h in &l.required_hearts { feats.push(h as f32 / 5.0); }
                 for &bh in &l.blade_hearts { feats.push(bh as f32 / 5.0); }
-                feats.push(l.volume_icons as f32 / 5.0);
+                feats.push(l.note_icons as f32 / 5.0);
                 feats.push(if (l.semantic_flags & 0x01) != 0 { 1.0 } else { 0.0 });
                 feats.push(0.0); feats.push(0.0);
                 while (feats.len() % 48) != 0 { feats.push(0.0); }
@@ -152,7 +152,7 @@ impl GameStateEncoding for GameState {
             for _ in 0..7 { feats.push(0.0); }
             for &bh in &m.blade_hearts { feats.push(bh as f32 / 5.0); }
             for _ in 0..7 { feats.push(0.0); } // Padding for blade hearts if 7 colors
-            feats.push(m.volume_icons as f32 / 5.0);
+            feats.push(m.note_icons as f32 / 5.0);
             feats.push(if (m.semantic_flags & 0x01) != 0 { 1.0 } else { 0.0 });
             feats.push(if (m.semantic_flags & 0x04) != 0 { 1.0 } else { 0.0 });
             feats.push(if (m.semantic_flags & 0x02) != 0 { 1.0 } else { 0.0 });
@@ -164,7 +164,7 @@ impl GameStateEncoding for GameState {
             for _ in 0..7 { feats.push(0.0); }
             for &h in &l.required_hearts { feats.push(h as f32 / 5.0); }
             for &bh in &l.blade_hearts { feats.push(bh as f32 / 5.0); }
-            feats.push(l.volume_icons as f32 / 5.0);
+            feats.push(l.note_icons as f32 / 5.0);
             feats.push(if (l.semantic_flags & 0x01) != 0 { 1.0 } else { 0.0 });
             feats.push(0.0); feats.push(0.0); feats.push(0.0);
             while (feats.len() % 48) != 0 { feats.push(0.0); }

@@ -1,64 +1,128 @@
 use crate::core::logic::*;
-use crate::core::generated_constants::{O_SELECT_MODE, O_JUMP, O_PAY_ENERGY, O_MOVE_TO_DISCARD, O_RETURN, CHOICE_FLAG_MODE, ACTION_BASE_MODE};
-use crate::core::enums::TriggerType;
-use crate::test_helpers::load_real_db;
+use crate::core::generated_constants::ACTION_BASE_MODE;
+use crate::test_helpers::{load_real_db, TestUtils};
 use smallvec::smallvec;
 
 #[test]
 fn test_repro_pb1_001_r_softlock_fix() {
-    let mut state = GameState::default();
-    let mut db = load_real_db();
-    
-    // Inject mock card for PL!SP-pb1-001-R
-    let mut mock_member = MemberCard::default();
-    mock_member.card_id = 4684;
-    
-    // Ability 0: ON_LIVE_START Select Mode -> [0] Pay 2 Energy, [1] Discard 2 Hand -> else [2] Start Live (Implicit)
-    let mut ability = Ability::default();
-    ability.trigger = TriggerType::OnLiveStart;
-    ability.choice_flags = CHOICE_FLAG_MODE;
-    // Compiled BC for pb1-001-R's Select Mode
-    ability.bytecode = vec![
-        O_SELECT_MODE as i32, 2, 15, 25, 0, // 0, 1, 2, 3, 4 (Jumps to 15 and 25)
-        O_JUMP as i32, 2, 0, 0, 0,          // 5, 6, 7, 8, 9
-        O_JUMP as i32, 3, 0, 0, 0,          // 10, 11, 12, 13, 14
-        O_PAY_ENERGY as i32, 2, 0, 0, 0,    // 15, 16, 17, 18, 19
-        O_JUMP as i32, 3, 0, 0, 0,          // 20, 21, 22, 23, 24
-        O_MOVE_TO_DISCARD as i32, 2, 0, 6, 0, // 25, 26, 27, 28, 29
-        O_JUMP as i32, 1, 0, 0, 0,          // 30, 31, 32, 33, 34
-        O_RETURN as i32, 0, 0, 0, 0         // 35, 36, 37, 38, 39
-    ];
-    mock_member.abilities.push(ability);
-    
-    db.members.insert(4684, mock_member.clone());
-    db.members_vec[4684 as usize % LOGIC_ID_MASK as usize] = Some(mock_member);
+    let db = load_real_db();
 
+    // We use the real card 4684 (PL!SP-pb1-001-R) from the compiled database.
+    // Ability 0: ON_LIVE_START Select Mode -> [0] Pay 2 Energy, [1] Discard 2 Hand -> else [2] Start Live (Implicit)
+    let mut state = GameState::default();
     state.core.players[0].player_id = 0;
     state.core.players[1].player_id = 1;
 
     // Test Case: Empty hand, enough energy.
-    // Cost 1 (Pay 2 Energy) is VALID. Cost 2 (Discard 2 Hand) is INVALID.
+    // Option 0 (Pay 2 Energy) is VALID. Option 1 (Discard 2 Hand) is INVALID.
     state.core.players[0].hand.clear();
     state.core.players[0].energy_zone = smallvec![100, 101]; // 2 Energy available
-    
+
+    let card_id = 4684;
+    crate::test_helpers::generate_card_report(card_id);
     let ctx = AbilityContext {
         player_id: 0,
-        source_card_id: 4684,
+        source_card_id: card_id,
         ability_index: 0,
         ..Default::default()
     };
-    
+
     // Start the ability to hit the mode selection interaction suspension
-    state.resolve_bytecode(&db, &db.get_member(4684).unwrap().abilities[0].bytecode, &ctx);
-    
+    println!("--- Starting Ability for Card {} ---", card_id);
+    state.resolve_bytecode_cref(&db, &db.get_member(card_id).unwrap().abilities[0].bytecode, &ctx);
+    state.dump_verbose();
+
     // Engine should be suspended waiting for interaction
     assert_eq!(state.phase, Phase::Response);
-    
+
     // Generate the actions available to the player at this pause
     let mut actions = Vec::new();
     state.generate_legal_actions(&db, 0, &mut actions);
-    
+
     // Based on validation logic, only Mode 0 (Pay Energy) should be available. Mode 1 (Discard Hand) is skipped.
     assert!(actions.contains(&(ACTION_BASE_MODE as i32 + 0)), "Option 0 (Pay Energy) should be valid!");
     assert!(!actions.contains(&(ACTION_BASE_MODE as i32 + 1)), "Option 1 (Discard Hand) MUST BE HIDDEN to prevent softlock!");
+}
+
+#[test]
+fn test_repro_pb1_001_r_all_combinations() {
+    let db = load_real_db();
+
+    // Test Matrix for Card 4684 (ON_LIVE_START)
+    // Mode 0: Pay 2 Energy (v=2)
+    // Mode 1: Discard 2 Hand (v=2)
+
+    let scenarios = vec![
+        (2, 2, true, true),   // Both valid
+        (0, 2, false, true),  // Only hand valid
+        (2, 0, true, false),  // Only energy valid
+        (0, 0, false, false), // Neither valid — engine will handle gracefully
+    ];
+
+    for (en, hn, exp_0, exp_1) in scenarios {
+        let mut state = GameState::default();
+        state.core.players[0].hand = (0..hn).map(|i| 1000 + i as i32).collect();
+        state.core.players[0].energy_zone = (0..en).map(|i| (2000 + i) as i32).collect();
+
+        let ctx = AbilityContext {
+            player_id: 0,
+            source_card_id: 4684,
+            ability_index: 0,
+            ..Default::default()
+        };
+
+        let target_id = 4684;
+        state.resolve_bytecode_cref(&db, &db.get_member(target_id).unwrap().abilities[0].bytecode, &ctx);
+        state.dump_verbose();
+
+        let mut actions = Vec::new();
+        state.generate_legal_actions(&db, 0, &mut actions);
+
+        let has_0 = actions.contains(&(ACTION_BASE_MODE as i32 + 0));
+        let has_1 = actions.contains(&(ACTION_BASE_MODE as i32 + 1));
+
+        assert_eq!(has_0, exp_0, "Scenario (En:{}, Hn:{}): Mode 0 mismatch", en, hn);
+        assert_eq!(has_1, exp_1, "Scenario (En:{}, Hn:{}): Mode 1 mismatch", en, hn);
+    }
+}
+
+#[test]
+fn test_repro_card_103_full_board() {
+    let mut state = GameState::default();
+    let db = load_real_db();
+
+    // Fill the board for Player 0
+    state.core.players[0].stage[0] = 1001;
+    state.core.players[0].stage[1] = 1002;
+    state.core.players[0].stage[2] = 1003;
+
+    // Discard has a valid cost-2 member
+    state.core.players[0].discard.push(103); // Play another nico from discard
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        source_card_id: 103, // Triggered by Nico playing
+        ability_index: 0,
+        ..Default::default()
+    };
+
+    // Execute Opcode 63 (PLAY_MEMBER_FROM_DISCARD) with FLAG_EMPTY_SLOT_ONLY
+    // The engine should NOT suspend for slot selection because there are 0 valid slots.
+    // It should skip the effect for P0.
+
+    state.resolve_bytecode_cref(&db, &db.get_member(103).unwrap().abilities[0].bytecode, &ctx);
+    state.dump_verbose();
+
+    // Verification:
+    // 1. Board should still be the same (no overlaps)
+    assert_eq!(state.core.players[0].stage[0], 1001);
+    assert_eq!(state.core.players[0].stage[1], 1002);
+    assert_eq!(state.core.players[0].stage[2], 1003);
+
+    // 2. The Nico in discard should STILL BE in discard (it wasn't moved/lost)
+    assert!(state.core.players[0].discard.contains(&103));
+
+    // 3. Since P0 skipped, it should have moved to P1's part of the ability or finished.
+    // If P1 board is also full, phase should NOT be Response.
+    assert_ne!(state.phase, Phase::Response);
 }

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
 use serde::Deserialize;
 use std::time::SystemTime;
@@ -16,6 +16,8 @@ pub struct Room {
     pub pending_decks: [Option<ParsedDecks>; 2],
     pub is_ai_thinking: bool,
     pub ai_status: String,
+    pub history: VecDeque<GameState>,
+    pub redo_history: VecDeque<GameState>,
 }
 
 pub struct AppState {
@@ -78,6 +80,23 @@ pub struct SetDeckReq {
     pub energy_deck: Option<Vec<String>>,
 }
 
+#[derive(Deserialize)]
+pub struct PlayerBoardOverride {
+    pub stage: Option<Vec<i32>>,
+    pub live_zone: Option<Vec<i32>>,
+    pub hand: Option<Vec<i32>>,
+    pub energy: Option<Vec<i32>>,
+    pub success_lives: Option<Vec<i32>>,
+    pub discard: Option<Vec<i32>>,
+}
+
+#[derive(Deserialize)]
+pub struct BoardOverrideReq {
+    pub phase: Option<i8>,
+    pub turn: Option<u16>,
+    pub players: Vec<PlayerBoardOverride>,
+}
+
 #[derive(Clone)]
 pub struct ParsedDecks {
     pub members: Vec<i32>,
@@ -99,6 +118,7 @@ pub enum Action {
     PlayMemberWithChoice { hand_idx: usize, slot_idx: usize, choice_idx: usize },
     PlayMemberDouble { hand_idx: usize, slot_idx: usize, other_slot: usize },
     ActivateFromDiscard { discard_idx: usize, ab_idx: usize },
+    ActivateFromHand { hand_idx: usize, ab_idx: usize },
     PlaceLive { hand_idx: usize },
     Rps { choice: i8 },
     ChooseTurnOrder { first: bool },
@@ -142,19 +162,25 @@ impl Action {
                     } else {
                         Action::Unknown(id)
                     }
+                } else if id >= ACTION_BASE_HAND_ACTIVATE && id < ACTION_BASE_HAND_CHOICE {
+                    let adj = id - ACTION_BASE_HAND_ACTIVATE;
+                    Action::ActivateFromHand {
+                        hand_idx: (adj / 10) as usize,
+                        ab_idx: (adj % 10) as usize
+                    }
                 } else if id >= ACTION_BASE_STAGE_CHOICE && id < ACTION_BASE_DISCARD_ACTIVATE {
                     let adj = id - ACTION_BASE_STAGE_CHOICE;
-                    Action::ActivateAbilityWithChoice { 
-                        slot_idx: (adj / 100) as usize, 
-                        ab_idx: ((adj % 100) / 10) as usize, 
-                        choice_idx: (adj % 10) as usize 
+                    Action::ActivateAbilityWithChoice {
+                        slot_idx: (adj / 100) as usize,
+                        ab_idx: ((adj % 100) / 10) as usize,
+                        choice_idx: (adj % 10) as usize
                     }
                 } else if id >= ACTION_BASE_HAND_CHOICE && id < ACTION_BASE_HAND_SELECT {
                     let adj = id - ACTION_BASE_HAND_CHOICE;
-                    Action::PlayMemberWithChoice { 
-                        hand_idx: (adj / 100) as usize, 
-                        slot_idx: ((adj % 100) / 10) as usize, 
-                        choice_idx: (adj % 10) as usize 
+                    Action::PlayMemberWithChoice {
+                        hand_idx: (adj / 100) as usize,
+                        slot_idx: ((adj % 100) / 10) as usize,
+                        choice_idx: (adj % 10) as usize
                     }
                 } else if id >= ACTION_BASE_DISCARD_ACTIVATE && id < ACTION_BASE_DISCARD_ACTIVATE + 600 {
                     let adj = id - ACTION_BASE_DISCARD_ACTIVATE;

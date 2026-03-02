@@ -2,6 +2,7 @@ use crate::core::logic::{GameState, CardDatabase, AbilityContext, TriggerType};
 use crate::core::enums::*;
 use super::HandlerResult;
 use super::super::suspension::{suspend_interaction, resolve_target_slot, get_choice_text};
+use crate::core::logic::interpreter::constants::CHOICE_DONE;
 
 pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut AbilityContext, op: i32, v: i32, a: i64, s: i32, instr_ip: usize) -> Option<HandlerResult> {
     let p_idx = ctx.player_id as usize;
@@ -10,18 +11,36 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
 
     match op {
         O_ACTIVATE_MEMBER => {
+            let mut group_bits = 0u32;
+            if let Some(card) = db.get_member(ctx.source_card_id) {
+                for &g in &card.groups {
+                    if g < 32 {
+                        group_bits |= 1 << g;
+                    }
+                }
+            }
+
             if target_slot == 1 {
-                for i in 0..3 { state.core.players[p_idx].set_tapped(i, false); }
+                for i in 0..3 {
+                    if state.core.players[p_idx].is_tapped(i) {
+                        state.core.players[p_idx].set_tapped(i, false);
+                        state.core.players[p_idx].activated_member_group_mask |= group_bits;
+                    }
+                }
             } else if resolved_slot < 3 {
-                state.core.players[p_idx].set_tapped(resolved_slot as usize, false);
+                if state.core.players[p_idx].is_tapped(resolved_slot as usize) {
+                    state.core.players[p_idx].set_tapped(resolved_slot as usize, false);
+                    state.core.players[p_idx].activated_member_group_mask |= group_bits;
+                }
             }
         },
         O_SET_TAPPED => {
             if resolved_slot < 3 { state.core.players[p_idx].set_tapped(resolved_slot as usize, v != 0); }
         },
         O_TAP_MEMBER => {
+            let is_optional = (a as u64 & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0;
             if ctx.choice_index == -1 {
-                if (a & 0x01) != 0 {
+                if is_optional || (a & 0x01) != 0 {
                     let choice_text = get_choice_text(db, ctx);
                     if suspend_interaction(state, db, ctx, instr_ip, O_TAP_MEMBER, 0, "OPTIONAL", &choice_text, a as u64, -1) {
                         return Some(HandlerResult::Suspend);
@@ -33,44 +52,46 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
                         return Some(HandlerResult::Suspend);
                     }
                 }
-                
+
                 // Only auto-tap if it was NOT an optional handler that just suspended or was bypassed
                 if (a & 0x03) == 0 && resolved_slot < 3 {
                     state.core.players[p_idx].set_tapped(resolved_slot as usize, true);
                 }
             } else {
-                if (a & 0x01) != 0 {
+                if is_optional || (a & 0x01) != 0 {
                     // 1 and 99 are both mapped to "No" for optional costs
-                    if ctx.choice_index == 1 || ctx.choice_index == 99 { return Some(HandlerResult::SetCond(false)); }
+                    if ctx.choice_index == CHOICE_DONE || ctx.choice_index == 1 { return Some(HandlerResult::SetCond(false)); }
                     if resolved_slot < 3 { state.core.players[p_idx].set_tapped(resolved_slot as usize, true); }
                     return Some(HandlerResult::SetCond(true));
                 } else {
                     let slot = ctx.choice_index as usize;
-                    if slot < 3 { state.core.players[p_idx].set_tapped(slot, true); }
+                    if slot < 3 {
+                        state.core.players[p_idx].set_tapped(slot, true);
+                    }
                     return Some(HandlerResult::SetCond(true));
                 }
             }
         },
         O_TAP_OPPONENT => {
             let target_p_idx = 1 - (ctx.activator_id as usize);
-            println!("[DEBUG] O_TAP_OPPONENT handler: v={}, a={}, s={}", v, a, s);
+            // println!("[DEBUG] O_TAP_OPPONENT handler: v={}, a={}, s={}", v, a, s);
             let count = if ctx.v_remaining == -1 { v as i16 } else { ctx.v_remaining };
             if count <= 0 { return Some(HandlerResult::Continue); }
 
             if ctx.choice_index == -1 {
                 let choice_text = get_choice_text(db, ctx);
-                if suspend_interaction(state, db, ctx, instr_ip, O_TAP_OPPONENT, 0, "TAP_O", &choice_text, a as u64, count) {
+                 if suspend_interaction(state, db, ctx, instr_ip, O_TAP_OPPONENT, 0, "TAP_O", &choice_text, a as u64, count) {
                     return Some(HandlerResult::Suspend);
                 }
             } else {
                 let slot_idx = ctx.choice_index as usize;
-                if slot_idx < 3 { 
-                    state.core.players[target_p_idx].set_tapped(slot_idx, true); 
+                if slot_idx < 3 {
+                    state.core.players[target_p_idx].set_tapped(slot_idx, true);
                     ctx.v_remaining = count - 1;
                     ctx.choice_index = -1;
                     if ctx.v_remaining > 0 {
                         let choice_text = get_choice_text(db, ctx);
-                        if suspend_interaction(state, db, ctx, instr_ip, O_TAP_OPPONENT, 0, "TAP_O", &choice_text, a as u64, ctx.v_remaining) {
+                         if suspend_interaction(state, db, ctx, instr_ip, O_TAP_OPPONENT, 0, "TAP_O", &choice_text, a as u64, ctx.v_remaining) {
                             return Some(HandlerResult::Suspend);
                         }
                     }
@@ -78,7 +99,7 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
             }
         },
         O_MOVE_MEMBER | O_FORMATION_CHANGE => {
-            let src_slot = if op == O_FORMATION_CHANGE && target_slot == 4 { ctx.area_idx as usize } 
+            let src_slot = if op == O_FORMATION_CHANGE && target_slot == 4 { ctx.area_idx as usize }
                            else if op == O_MOVE_MEMBER && ctx.area_idx >= 0 { ctx.area_idx as usize }
                            else { resolved_slot as usize };
 
@@ -105,8 +126,8 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
                         state.core.players[p_idx].stage_energy[slot].push(cid);
                     }
                 } else if a == 1 {
-                    if let Some(cid) = state.core.players[p_idx].energy_zone.pop() { 
-                        state.core.players[p_idx].stage_energy[slot].push(cid); 
+                    if let Some(cid) = state.core.players[p_idx].energy_zone.pop() {
+                        state.core.players[p_idx].stage_energy[slot].push(cid);
                     }
                 }
                 state.core.players[p_idx].stage_energy_count[slot] = state.core.players[p_idx].stage_energy[slot].len() as u8;
@@ -134,24 +155,62 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
                 let cid = state.core.players[p_idx].stage[target_slot as usize];
                 if cid >= 0 { targets.push(cid); }
             }
-            
+
             for t_cid in targets {
                 state.core.players[p_idx].granted_abilities.push((t_cid, source_cid, ab_idx));
             }
         },
         O_PLAY_MEMBER_FROM_HAND => {
-            println!("[DEBUG] O_PLAY_MEMBER_FROM_HAND: p_idx={}, activator_id={}, choice_index={}", p_idx, ctx.activator_id, ctx.choice_index);
-            if ctx.choice_index == -1 && !state.core.players[p_idx].hand.is_empty() {
-                if suspend_interaction(state, db, ctx, instr_ip, O_PLAY_MEMBER_FROM_HAND, 0, "SELECT_HAND_PLAY", "", a as u64, -1) {
-                    return Some(HandlerResult::Suspend);
-                }
+            let remaining = if ctx.v_remaining == -1 {
+                if v == 1 { 1 } else { 2 } // v=1 means card pre-selected, just need slot
+            } else { ctx.v_remaining };
+
+            if state.debug.debug_mode {
+                println!("[DEBUG] O_PLAY_MEMBER_FROM_HAND: v={}, remaining={}, target_slot={}, choice_index={}", v, remaining, ctx.target_slot, ctx.choice_index);
             }
-            if ctx.choice_index != -1 && ctx.choice_index != 99 {
-                let hand_idx = ctx.choice_index as usize;
-                if hand_idx < state.core.players[p_idx].hand.len() {
-                    let cid = state.core.players[p_idx].hand.remove(hand_idx);
-                    let slot_idx = resolved_slot as usize;
-                    if slot_idx < 3 {
+
+            if remaining == 2 {
+                // Step 1: Select Card from Hand
+                if ctx.choice_index == -1 {
+                    if suspend_interaction(state, db, ctx, instr_ip, O_PLAY_MEMBER_FROM_HAND, 0, "SELECT_HAND_PLAY", "", a as u64, remaining) {
+                        return Some(HandlerResult::Suspend);
+                    }
+                }
+                let h_idx = ctx.choice_index as usize;
+                
+                if h_idx < state.core.players[p_idx].hand.len() {
+                    ctx.target_slot = h_idx as i16;
+                    ctx.v_remaining = 1;
+                    ctx.choice_index = -1;
+                    if state.debug.debug_mode {
+                        println!("[DEBUG] O_PLAY_MEMBER_FROM_HAND: Step 1 Done. Selected real hand_idx={}", h_idx);
+                    }
+                    // Move to Step 2
+                    return handle_member_state(state, db, ctx, op, v, a, s, instr_ip);
+                }
+            } else if remaining == 1 {
+                // Step 2: Select Slot
+                if ctx.choice_index == -1 {
+                    let mut next_ctx = ctx.clone();
+                    next_ctx.player_id = p_idx as u8;
+                    if suspend_interaction(state, db, &next_ctx, instr_ip, O_PLAY_MEMBER_FROM_HAND, s, "SELECT_STAGE", "", a as u64, remaining) {
+                        return Some(HandlerResult::Suspend);
+                    }
+                }
+
+                let slot_idx = ctx.choice_index as usize;
+                if state.debug.debug_mode {
+                    println!("[DEBUG] O_PLAY_MEMBER_FROM_HAND: Step 2 Selection. slot_idx={}", slot_idx);
+                }
+
+                if slot_idx < 3 {
+                    // Execute Play
+                    let h_idx = ctx.target_slot as usize;
+                    if h_idx < state.core.players[p_idx].hand.len() {
+                        let cid = state.core.players[p_idx].hand.remove(h_idx);
+                        if state.debug.debug_mode {
+                            println!("[DEBUG] O_PLAY_MEMBER_FROM_HAND: Executing Play of cid={} to slot={}", cid, slot_idx);
+                        }
                         if let Some(old) = state.handle_member_leaves_stage(p_idx, slot_idx, db, ctx) {
                             state.core.players[p_idx].discard.push(old);
                         }
@@ -159,13 +218,15 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
                         state.core.players[p_idx].set_tapped(slot_idx, false);
                         state.core.players[p_idx].set_moved(slot_idx, true);
                         state.register_played_member(p_idx, cid, db);
-                        ctx.target_slot = slot_idx as i16;
-                        ctx.area_idx = slot_idx as i16;
-                        let mut new_ctx = AbilityContext { source_card_id: cid, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
-                        new_ctx.v_remaining = ctx.v_remaining; // Carry over if needed?
+
+                        let new_ctx = AbilityContext {
+                            source_card_id: cid, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: slot_idx as i16,
+                            ..Default::default()
+                        };
                         state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
-                    } else {
-                        state.core.players[p_idx].hand.insert(hand_idx, cid);
+                        ctx.choice_index = -1;
+                        ctx.v_remaining = 0;
+                        return Some(HandlerResult::Continue);
                     }
                 }
             }
@@ -174,20 +235,41 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
             let opponent_bit = (s >> 24) & 1;
             let target_p_idx = if opponent_bit != 0 { 1 - (ctx.activator_id as usize) } else { ctx.activator_id as usize };
             let empty_slot_only = ((s as u64) & crate::core::logic::interpreter::constants::FLAG_EMPTY_SLOT_ONLY) != 0;
-            
-            let mut remaining = if ctx.v_remaining == -1 { v as i16 * 2 } else { ctx.v_remaining };
+
+            let filter_attr_base = a as u64;
+            let is_total_cost = (filter_attr_base & crate::core::logic::interpreter::constants::FILTER_TOTAL_COST) != 0;
+
+            let mut remaining = if ctx.v_remaining == -1 {
+                if is_total_cost {
+                    ctx.v_accumulated = ((filter_attr_base >> crate::core::generated_constants::FILTER_COST_SHIFT) & 0x1F) as i16;
+                }
+                v as i16 * 2
+            } else {
+                ctx.v_remaining
+            };
             if remaining <= 0 { return Some(HandlerResult::Continue); }
 
             if remaining % 2 == 0 {
-                if ctx.choice_index == -1 {
-                    state.core.players[target_p_idx].looked_cards.clear();
-                    let filter_attr = a as u64;
+                // Softlock Prevention: If empty_slot_only is set, check if any slot is actually empty
+                if empty_slot_only && state.core.players[target_p_idx].stage.iter().all(|&c| c >= 0) {
+                    return Some(HandlerResult::Continue);
+                }
+
+                // Step 1: Choose Card
+                if state.core.players[target_p_idx].looked_cards.is_empty() {
+                    let mut filter_attr = filter_attr_base;
+                    if is_total_cost {
+                        filter_attr = (filter_attr & !(0x1F << crate::core::generated_constants::FILTER_COST_SHIFT)) | ((ctx.v_accumulated as u64) << crate::core::generated_constants::FILTER_COST_SHIFT);
+                    }
                     for &cid in &state.core.players[target_p_idx].discard {
                         if db.get_member(cid).is_some() && (filter_attr == 0 || state.card_matches_filter(db, cid, filter_attr)) {
                             state.core.players[target_p_idx].looked_cards.push(cid);
                         }
                     }
                     if state.core.players[target_p_idx].looked_cards.is_empty() { return Some(HandlerResult::Continue); }
+
+                    // Reset stale choice_index from previous round and re-suspend
+                    ctx.choice_index = -1;
                     let mut target_ctx = ctx.clone();
                     target_ctx.player_id = target_p_idx as u8;
                     let choice_text = get_choice_text(db, &target_ctx);
@@ -195,13 +277,15 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
                         return Some(HandlerResult::Suspend);
                     }
                 }
-                
-                let choice = ctx.choice_index as usize;
-                if choice < state.core.players[target_p_idx].looked_cards.len() {
-                    let cid = state.core.players[target_p_idx].looked_cards[choice];
+
+                let idx = ctx.choice_index as usize;
+                let cards_len = state.core.players[target_p_idx].looked_cards.len();
+
+                if idx < cards_len {
+                    let cid = state.core.players[target_p_idx].looked_cards[idx];
                     state.core.players[target_p_idx].looked_cards.clear();
                     state.core.players[target_p_idx].looked_cards.push(cid);
-                    
+
                     remaining -= 1;
                     let mut target_ctx = ctx.clone();
                     target_ctx.player_id = target_p_idx as u8;
@@ -213,18 +297,29 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
             } else {
                 if state.core.players[target_p_idx].looked_cards.is_empty() { return Some(HandlerResult::Continue); }
                 let card_id = state.core.players[target_p_idx].looked_cards.remove(0);
-                
+
+                // If the player passed the stage selection (choice 99), we stop here and DON'T remove from discard.
+                if ctx.choice_index == 99 {
+                    return Some(HandlerResult::Continue);
+                }
+
                 if let Some(pos) = state.core.players[target_p_idx].discard.iter().position(|&cid| cid == card_id) {
-                    state.core.players[target_p_idx].discard.remove(pos);
                     let slot_idx = if ctx.choice_index >= 0 && ctx.choice_index < 3 { ctx.choice_index as usize } else { resolved_slot as usize };
-                    
+
                     if slot_idx < 3 {
-                        // Validate slot restriction
-                        if (state.core.players[target_p_idx].prevent_play_to_slot_mask & (1 << slot_idx)) != 0 {
-                            // If the slot is locked, we abort the play and put the card back in discard
-                            state.core.players[target_p_idx].discard.push(card_id);
+                        // Validate slot restriction or overlap
+                        if (state.core.players[target_p_idx].prevent_play_to_slot_mask & (1 << slot_idx)) != 0 || (empty_slot_only && state.core.players[target_p_idx].stage[slot_idx] != -1) {
+                            // If the slot is locked or occupied (when empty only is req), we abort the play and DON'T remove from discard
                             return Some(HandlerResult::Continue);
                         }
+
+                        if is_total_cost {
+                            if let Some(m) = db.get_member(card_id) {
+                                ctx.v_accumulated = (ctx.v_accumulated - m.cost as i16).max(0);
+                            }
+                        }
+
+                        state.core.players[target_p_idx].discard.remove(pos);
 
                         if let Some(old) = state.handle_member_leaves_stage(target_p_idx, slot_idx, db, ctx) {
                             state.core.players[target_p_idx].discard.push(old);
@@ -233,29 +328,45 @@ pub fn handle_member_state(state: &mut GameState, db: &CardDatabase, ctx: &mut A
                         state.core.players[target_p_idx].set_tapped(slot_idx, true); // WAIT state
                         state.core.players[target_p_idx].set_moved(slot_idx, true);
                         state.register_played_member(target_p_idx, card_id, db);
-                        
+
                         // Rule Check: Slot is locked for the rest of the turn (Q169)
                         state.core.players[target_p_idx].prevent_play_to_slot_mask |= 1 << slot_idx;
 
-                        let mut new_ctx = AbilityContext { 
-                            source_card_id: card_id, 
-                            player_id: target_p_idx as u8, 
-                            activator_id: target_p_idx as u8, 
-                            area_idx: slot_idx as i16, 
-                            ..Default::default() 
+                        let mut new_ctx = AbilityContext {
+                            source_card_id: card_id,
+                            player_id: target_p_idx as u8,
+                            activator_id: target_p_idx as u8,
+                            area_idx: slot_idx as i16,
+                            v_accumulated: ctx.v_accumulated,
+                            ..Default::default()
                         };
                         new_ctx.v_remaining = ctx.v_remaining;
                         state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
                     }
                 }
-                
+
                 remaining -= 1;
                 if remaining > 0 {
-                    // Start next pair
+                    // Start next pair: repopulate looked_cards for the next card selection
+                    let mut filter_attr = filter_attr_base;
+                    if is_total_cost {
+                        filter_attr = (filter_attr & !(0x1F << crate::core::generated_constants::FILTER_COST_SHIFT)) | ((ctx.v_accumulated as u64) << crate::core::generated_constants::FILTER_COST_SHIFT);
+                    }
+                    state.core.players[target_p_idx].looked_cards.clear();
+                    for &cid in &state.core.players[target_p_idx].discard {
+                        if db.get_member(cid).is_some() && (filter_attr == 0 || state.card_matches_filter(db, cid, filter_attr)) {
+                            state.core.players[target_p_idx].looked_cards.push(cid);
+                        }
+                    }
+                    if state.core.players[target_p_idx].looked_cards.is_empty() {
+                        // No more eligible cards in discard
+                        return Some(HandlerResult::Continue);
+                    }
                     let mut target_ctx = ctx.clone();
                     target_ctx.player_id = target_p_idx as u8;
                     target_ctx.choice_index = -1;
-                    if suspend_interaction(state, db, &target_ctx, instr_ip, O_PLAY_MEMBER_FROM_DISCARD, s, "SELECT_DISCARD_PLAY", "", a as u64, remaining) {
+                    let choice_text = get_choice_text(db, &target_ctx);
+                    if suspend_interaction(state, db, &target_ctx, instr_ip, O_PLAY_MEMBER_FROM_DISCARD, s, "SELECT_DISCARD_PLAY", &choice_text, a as u64, remaining) {
                         return Some(HandlerResult::Suspend);
                     }
                 }

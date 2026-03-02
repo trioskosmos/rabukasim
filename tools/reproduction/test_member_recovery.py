@@ -32,7 +32,7 @@ def run_test():
     gs.set_stage_card(0, 0, 248)  # Slot 0: Source Card
     gs.set_discard_cards(0, [1])  # Discard: One Member card
 
-    print(f"Initial State:")
+    print("Initial State:")
     print(f"  Stage Slot 0: {gs.get_player(0).stage[0]}")
     print(f"  Discard Pile: {gs.get_player(0).discard}")
     print(f"  Hand: {gs.get_player(0).hand}")
