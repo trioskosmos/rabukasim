@@ -1,19 +1,22 @@
 use engine_rust::core::logic::{GameState, ACTION_SPACE};
 use engine_rust::test_helpers::load_real_db;
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 
 fn main() {
     println!("=== Detailed CPU Profiler (ST) ===");
     let db = load_real_db();
-    
+
     let mut initial_state = GameState::default();
     let p_main = db.members.keys().take(50).cloned().collect::<Vec<i32>>();
     let energy_ids = db.energy_db.keys().take(10).cloned().collect::<Vec<i32>>();
-    
+
     initial_state.initialize_game(
-        p_main.clone(), p_main.clone(), 
-        energy_ids.clone(), energy_ids.clone(), 
-        Vec::new(), Vec::new()
+        p_main.clone(),
+        p_main.clone(),
+        energy_ids.clone(),
+        energy_ids.clone(),
+        Vec::new(),
+        Vec::new(),
     );
     initial_state.ui.silent = true;
     initial_state.phase = engine_rust::core::logic::Phase::Main;
@@ -47,10 +50,14 @@ fn main() {
             let t_action = Instant::now();
             let mut valid_actions = smallvec::SmallVec::<[i32; 64]>::new();
             for (i, &b) in mask.iter().enumerate() {
-                if b { valid_actions.push(i as i32); }
+                if b {
+                    valid_actions.push(i as i32);
+                }
             }
-            if valid_actions.is_empty() { break; }
-            
+            if valid_actions.is_empty() {
+                break;
+            }
+
             rng_state ^= rng_state << 13;
             rng_state ^= rng_state >> 17;
             rng_state ^= rng_state << 5;
@@ -61,7 +68,7 @@ fn main() {
             let t_step = Instant::now();
             let _ = sim.step(&db, action);
             step_time += t_step.elapsed();
-            
+
             steps += 1;
         }
         steps_total += steps;
@@ -75,9 +82,28 @@ fn main() {
     println!("Games/sec:    {:.2}", games as f64 / elapsed);
     println!("Steps/sec:    {:.2}", steps_total as f64 / elapsed);
     println!("\n--- Breakdown ---");
-    println!("Clone Time:   {:.4}s ({:.1}%)", clone_time.as_secs_f64(), (clone_time.as_secs_f64() / elapsed) * 100.0);
-    println!("Gen Time:     {:.4}s ({:.1}%)", gen_time.as_secs_f64(), (gen_time.as_secs_f64() / elapsed) * 100.0);
-    println!("Action Time:  {:.4}s ({:.1}%)", action_time.as_secs_f64(), (action_time.as_secs_f64() / elapsed) * 100.0);
-    println!("Step Time:    {:.4}s ({:.1}%)", step_time.as_secs_f64(), (step_time.as_secs_f64() / elapsed) * 100.0);
-    println!("Other Time:   {:.4}s", elapsed - (clone_time + gen_time + action_time + step_time).as_secs_f64());
+    println!(
+        "Clone Time:   {:.4}s ({:.1}%)",
+        clone_time.as_secs_f64(),
+        (clone_time.as_secs_f64() / elapsed) * 100.0
+    );
+    println!(
+        "Gen Time:     {:.4}s ({:.1}%)",
+        gen_time.as_secs_f64(),
+        (gen_time.as_secs_f64() / elapsed) * 100.0
+    );
+    println!(
+        "Action Time:  {:.4}s ({:.1}%)",
+        action_time.as_secs_f64(),
+        (action_time.as_secs_f64() / elapsed) * 100.0
+    );
+    println!(
+        "Step Time:    {:.4}s ({:.1}%)",
+        step_time.as_secs_f64(),
+        (step_time.as_secs_f64() / elapsed) * 100.0
+    );
+    println!(
+        "Other Time:   {:.4}s",
+        elapsed - (clone_time + gen_time + action_time + step_time).as_secs_f64()
+    );
 }

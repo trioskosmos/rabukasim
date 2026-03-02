@@ -5,19 +5,19 @@
 /// - When Kanon (Liella!) baton passes a non-Liella! member, the stage should only have Liella! members
 /// - The ALL_MEMBERS {FILTER="GROUP_ID=3"} condition should pass
 /// - Energy charge effect should activate
-
-use engine_rust::core::logic::{GameState, CardDatabase, AbilityContext};
+use engine_rust::core::logic::{AbilityContext, CardDatabase, GameState};
 
 /// Test the actual game flow with baton pass
 #[test]
 fn test_card_557_baton_pass_from_non_liella() {
-    let json_content = std::fs::read_to_string("../data/cards_compiled.json").expect("Failed to read cards_compiled.json");
+    let json_content = std::fs::read_to_string("../data/cards_compiled.json")
+        .expect("Failed to read cards_compiled.json");
     let db = CardDatabase::from_json(&json_content).unwrap();
     let mut state = GameState::default();
     state.debug.debug_mode = true;
 
     let p1 = 0;
-    let kanon_id = 557;  // Liella!
+    let kanon_id = 557; // Liella!
     let honoka_id = 143; // Non-Liella!
 
     // Setup: Honoka is on stage in slot 1 (Center)
@@ -44,18 +44,29 @@ fn test_card_557_baton_pass_from_non_liella() {
     state.process_trigger_queue(&db);
 
     assert!(result.is_ok(), "Play should succeed");
-    assert_eq!(state.core.players[p1].stage[1], kanon_id, "Kanon should be on stage slot 1");
-    assert_eq!(state.core.players[p1].discard.len(), 1, "Honoka should be in discard");
+    assert_eq!(
+        state.core.players[p1].stage[1], kanon_id,
+        "Kanon should be on stage slot 1"
+    );
+    assert_eq!(
+        state.core.players[p1].discard.len(),
+        1,
+        "Honoka should be in discard"
+    );
 
     // The key assertion: Energy should have been charged (+1)
-    assert_eq!(state.core.players[p1].energy_zone.len(), 8,
-        "ALL_MEMBERS condition should pass after baton pass removes Honoka, charging 1 energy");
+    assert_eq!(
+        state.core.players[p1].energy_zone.len(),
+        8,
+        "ALL_MEMBERS condition should pass after baton pass removes Honoka, charging 1 energy"
+    );
 }
 
 /// Test direct bytecode execution to isolate the condition check
 #[test]
 fn test_card_557_condition_check_direct() {
-    let json_content = std::fs::read_to_string("../data/cards_compiled.json").expect("Failed to read cards_compiled.json");
+    let json_content = std::fs::read_to_string("../data/cards_compiled.json")
+        .expect("Failed to read cards_compiled.json");
     let db = CardDatabase::from_json(&json_content).unwrap();
     let mut state = GameState::default();
     state.debug.debug_mode = true;
@@ -90,20 +101,24 @@ fn test_card_557_condition_check_direct() {
     state.resolve_bytecode_cref(&db, bytecode, &ctx);
 
     // Should succeed - only Liella! on stage
-    assert_eq!(state.core.players[p1].energy_zone.len(), 8,
-        "Should have charged energy when only Liella! is on stage");
+    assert_eq!(
+        state.core.players[p1].energy_zone.len(),
+        8,
+        "Should have charged energy when only Liella! is on stage"
+    );
 }
 
 /// Test that condition fails when mixed groups are on stage
 #[test]
 fn test_card_557_condition_fails_with_mixed_groups() {
-    let json_content = std::fs::read_to_string("../data/cards_compiled.json").expect("Failed to read cards_compiled.json");
+    let json_content = std::fs::read_to_string("../data/cards_compiled.json")
+        .expect("Failed to read cards_compiled.json");
     let db = CardDatabase::from_json(&json_content).unwrap();
     let mut state = GameState::default();
     state.debug.debug_mode = true;
 
     let p1 = 0;
-    let kanon_id = 557;  // Liella!
+    let kanon_id = 557; // Liella!
     let honoka_id = 143; // Muse (non-Liella!)
 
     // Setup: Both Kanon and Honoka on stage
@@ -132,6 +147,9 @@ fn test_card_557_condition_fails_with_mixed_groups() {
     state.resolve_bytecode_cref(&db, bytecode, &ctx);
 
     // Should fail - mixed groups on stage
-    assert_eq!(state.core.players[p1].energy_zone.len(), 7,
-        "Should NOT have charged energy when mixed groups are on stage");
+    assert_eq!(
+        state.core.players[p1].energy_zone.len(),
+        7,
+        "Should NOT have charged energy when mixed groups are on stage"
+    );
 }

@@ -12,7 +12,11 @@ fn test_hime_optional_discard_resumption() {
     state.phase = Phase::Response;
 
     // Opcode 58 (MOVE_TO_DISCARD), Attr 0x6002 (Hand + Optional), Count 1
-    let ctx = AbilityContext { player_id: p_idx as u8, source_card_id: 4270, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: p_idx as u8,
+        source_card_id: 4270,
+        ..Default::default()
+    };
     state.interaction_stack.push(PendingInteraction {
         ctx: ctx.clone(),
         card_id: 4270,
@@ -26,12 +30,23 @@ fn test_hime_optional_discard_resumption() {
     // 1. Verify Pass action exists (Action 0)
     let mut actions: Vec<i32> = Vec::new();
     state.generate_legal_actions(&db, p_idx, &mut actions);
-    assert!(actions.contains(&0), "Pass action (0) should be available for optional discard!");
+    assert!(
+        actions.contains(&0),
+        "Pass action (0) should be available for optional discard!"
+    );
 
     // 2. Test Pass (Choice 0)
     state.step(&db, 0).expect("Step failed");
-    assert_eq!(state.core.players[p_idx].hand.len(), 3, "Hand should NOT have changed after Pass");
-    assert_eq!(state.phase, Phase::Main, "Should return to Main/Previous phase after passing cost");
+    assert_eq!(
+        state.core.players[p_idx].hand.len(),
+        3,
+        "Hand should NOT have changed after Pass"
+    );
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "Should return to Main/Previous phase after passing cost"
+    );
 }
 
 #[test]
@@ -49,7 +64,11 @@ fn test_rurino_filter_masking_fix() {
     state.phase = Phase::Response;
 
     // Interaction: O_MOVE_TO_DISCARD with 0x6000 (Hand Zone) filter
-    let ctx = AbilityContext { player_id: p_idx as u8, source_card_id: 17, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: p_idx as u8,
+        source_card_id: 17,
+        ..Default::default()
+    };
     state.interaction_stack.push(PendingInteraction {
         ctx: ctx.clone(),
         card_id: 17,
@@ -71,5 +90,9 @@ fn test_rurino_filter_masking_fix() {
     // Action IDs for hand selection are 3000 + hand_index (based on observed behavior)
     // Check if any hand selection actions exist (3000-3999 range)
     let has_hand_selection = actions.iter().any(|&a| a >= 3000 && a < 4000);
-    assert!(has_hand_selection, "At least one hand selection action should be available. Actions: {:?}", actions);
+    assert!(
+        has_hand_selection,
+        "At least one hand selection action should be available. Actions: {:?}",
+        actions
+    );
 }

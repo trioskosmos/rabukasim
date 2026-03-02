@@ -35,7 +35,16 @@ fn test_repro_card_4654_hand_clearing() {
     // 4 = v (look 4)
     // 121 = a (attr/filter)
     // 6 = s (target slot = Hand = 6)
-    let bytecode = vec![O_LOOK_AND_CHOOSE as i32, 4, 121, 6, O_RETURN as i32, 0, 0, 0];
+    let bytecode = vec![
+        O_LOOK_AND_CHOOSE as i32,
+        4,
+        121,
+        6,
+        O_RETURN as i32,
+        0,
+        0,
+        0,
+    ];
 
     println!("DEBUG: Initial hand: {:?}", state.core.players[0].hand);
     assert_eq!(state.core.players[0].hand.len(), 5);
@@ -46,11 +55,28 @@ fn test_repro_card_4654_hand_clearing() {
     // The engine should now have suspended for interaction if logic proceeds correctly to look at deck.
     // BUT! Due to the bug, it likely emptied the hand already into looked_cards.
 
-    println!("DEBUG: Hand after resolution: {:?}", state.core.players[0].hand);
-    println!("DEBUG: Looked cards: {:?}", state.core.players[0].looked_cards);
+    println!(
+        "DEBUG: Hand after resolution: {:?}",
+        state.core.players[0].hand
+    );
+    println!(
+        "DEBUG: Looked cards: {:?}",
+        state.core.players[0].looked_cards
+    );
 
     // BUG CONFIRMATION:
     // If hand is empty and looked_cards contains [3001, 3002, 3003, 3004, 3005], the bug is confirmed.
-    assert_eq!(state.core.players[0].hand.len(), 5, "Hand was EMPTIED! Looked cards took them? {:?}, Hand: {:?}", state.core.players[0].looked_cards, state.core.players[0].hand);
-    assert_eq!(state.core.players[0].looked_cards.len(), 4, "Should have looked at 4 cards from DECK, not: {:?}", state.core.players[0].looked_cards);
+    assert_eq!(
+        state.core.players[0].hand.len(),
+        5,
+        "Hand was EMPTIED! Looked cards took them? {:?}, Hand: {:?}",
+        state.core.players[0].looked_cards,
+        state.core.players[0].hand
+    );
+    assert_eq!(
+        state.core.players[0].looked_cards.len(),
+        4,
+        "Should have looked at 4 cards from DECK, not: {:?}",
+        state.core.players[0].looked_cards
+    );
 }

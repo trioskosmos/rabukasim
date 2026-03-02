@@ -2,7 +2,6 @@
 //!
 //! This module decouples the monolithic interpreter into smaller, maintainable components.
 
-pub mod filter;
 pub mod conditions;
 pub mod costs;
 pub mod constants;

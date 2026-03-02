@@ -1,10 +1,11 @@
-use engine_rust::core::logic::{GameState, resolve_bytecode, CardDatabase, AbilityContext};
-use engine_rust::core::enums::{Phase};
+use engine_rust::core::enums::Phase;
+use engine_rust::core::logic::{resolve_bytecode, AbilityContext, CardDatabase, GameState};
 
 #[test]
 fn test_card_558_wait_repro() {
     let mut state = GameState::default();
-    let json_content = std::fs::read_to_string("../data/cards_compiled.json").expect("Failed to read cards_compiled.json");
+    let json_content = std::fs::read_to_string("../data/cards_compiled.json")
+        .expect("Failed to read cards_compiled.json");
     let db = CardDatabase::from_json(&json_content).unwrap();
 
     let p1 = 0;
@@ -33,7 +34,10 @@ fn test_card_558_wait_repro() {
 
     // Should be suspended for OPTIONAL/TAP cost
     assert_eq!(state.phase, Phase::Response);
-    let interaction = state.interaction_stack.last().expect("Should have an interaction");
+    let interaction = state
+        .interaction_stack
+        .last()
+        .expect("Should have an interaction");
     assert_eq!(interaction.choice_type, "OPTIONAL");
 
     // Resume with YES (0)
@@ -44,12 +48,20 @@ fn test_card_558_wait_repro() {
 
     state.phase = Phase::Main; // Reset for execution
     state.interaction_stack.pop(); // Simulate consumption
-    resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode.clone()), &resume_ctx);
+    resolve_bytecode(
+        &mut state,
+        &db,
+        std::sync::Arc::new(bytecode.clone()),
+        &resume_ctx,
+    );
 
     // It should NOT return early. It should proceed to LOOK_AND_CHOOSE.
     // Since we have Liella cards in deck, it should show LOOK_AND_CHOOSE interaction.
     assert_eq!(state.phase, Phase::Response);
-    let next_interaction = state.interaction_stack.last().expect("Should have LOOK_AND_CHOOSE interaction");
+    let next_interaction = state
+        .interaction_stack
+        .last()
+        .expect("Should have LOOK_AND_CHOOSE interaction");
     assert_eq!(next_interaction.choice_type, "LOOK_AND_CHOOSE");
 
     // Card should be tapped

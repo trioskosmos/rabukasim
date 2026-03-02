@@ -1,10 +1,11 @@
-use engine_rust::core::logic::{GameState, resolve_bytecode, CardDatabase, AbilityContext};
+use engine_rust::core::logic::{resolve_bytecode, AbilityContext, CardDatabase, GameState};
 
 #[test]
 fn test_card_557_logic_repro() {
     let mut state = GameState::default();
     state.debug.debug_mode = true;
-    let json_content = std::fs::read_to_string("../data/cards_compiled.json").expect("Failed to read cards_compiled.json");
+    let json_content = std::fs::read_to_string("../data/cards_compiled.json")
+        .expect("Failed to read cards_compiled.json");
     let db = CardDatabase::from_json(&json_content).unwrap();
 
     let p1 = 0;
@@ -44,8 +45,15 @@ fn test_card_557_logic_repro() {
 
     // 7. Verification
     // Success: Energy zone should have 8 cards, and the last one should be tapped (wait state).
-    assert_eq!(state.players[p1].energy_zone.len(), 8, "Should have charged 1 energy");
-    assert!(state.players[p1].is_energy_tapped(7), "New energy should be in WAIT (tapped) state");
+    assert_eq!(
+        state.players[p1].energy_zone.len(),
+        8,
+        "Should have charged 1 energy"
+    );
+    assert!(
+        state.players[p1].is_energy_tapped(7),
+        "New energy should be in WAIT (tapped) state"
+    );
 
     println!("Test passed: Energy charged and tapped.");
 }
@@ -54,7 +62,8 @@ fn test_card_557_logic_repro() {
 fn test_card_557_logic_fail_if_not_only_liella() {
     let mut state = GameState::default();
     state.debug.debug_mode = true;
-    let json_content = std::fs::read_to_string("../data/cards_compiled.json").expect("Failed to read cards_compiled.json");
+    let json_content = std::fs::read_to_string("../data/cards_compiled.json")
+        .expect("Failed to read cards_compiled.json");
     let db = CardDatabase::from_json(&json_content).unwrap();
 
     let p1 = 0;
@@ -83,5 +92,9 @@ fn test_card_557_logic_fail_if_not_only_liella() {
     resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode.clone()), &ctx);
 
     // Should NOT have charged energy because ALL_MEMBERS condition failed
-    assert_eq!(state.players[p1].energy_zone.len(), 7, "Should NOT have charged energy (mixed groups)");
+    assert_eq!(
+        state.players[p1].energy_zone.len(),
+        7,
+        "Should NOT have charged energy (mixed groups)"
+    );
 }

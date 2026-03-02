@@ -36,10 +36,16 @@ mod tests {
         let filter_any = 0x17000000;
 
         // Member should match
-        assert!(state.card_matches_filter(&db, 100, filter_any), "Member with Cost 11 should match generic COST_GE=11");
+        assert!(
+            state.card_matches_filter(&db, 100, filter_any),
+            "Member with Cost 11 should match generic COST_GE=11"
+        );
 
         // Live should NOT match (even though hearts = 12 >= 11) because it's not type-constrained to Live
-        assert!(!state.card_matches_filter(&db, 200, filter_any), "Live card should NOT match generic COST_GE=11 (Bug Repro)");
+        assert!(
+            !state.card_matches_filter(&db, 200, filter_any),
+            "Live card should NOT match generic COST_GE=11 (Bug Repro)"
+        );
     }
 
     #[test]
@@ -51,8 +57,14 @@ mod tests {
         // attr = 0x17000000 | (0x01 << 2) = 0x17000004
         let filter_member = 0x17000004;
 
-        assert!(state.card_matches_filter(&db, 100, filter_member), "Member should match Member-constrained COST_GE=11");
-        assert!(!state.card_matches_filter(&db, 200, filter_member), "Live should NOT match Member-constrained COST_GE=11");
+        assert!(
+            state.card_matches_filter(&db, 100, filter_member),
+            "Member should match Member-constrained COST_GE=11"
+        );
+        assert!(
+            !state.card_matches_filter(&db, 200, filter_member),
+            "Live should NOT match Member-constrained COST_GE=11"
+        );
     }
 
     #[test]
@@ -64,7 +76,13 @@ mod tests {
         // attr = 0x17000000 | (0x02 << 2) = 0x17000008
         let filter_live = 0x17000008;
 
-        assert!(!state.card_matches_filter(&db, 100, filter_live), "Member should NOT match Live-constrained HEARTS_GE=11");
-        assert!(state.card_matches_filter(&db, 200, filter_live), "Live should match Live-constrained HEARTS_GE=11");
+        assert!(
+            !state.card_matches_filter(&db, 100, filter_live),
+            "Member should NOT match Live-constrained HEARTS_GE=11"
+        );
+        assert!(
+            state.card_matches_filter(&db, 200, filter_live),
+            "Live should match Live-constrained HEARTS_GE=11"
+        );
     }
 }

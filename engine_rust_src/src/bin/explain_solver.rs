@@ -1,6 +1,8 @@
-use engine_rust::core::logic::GameState;
+use engine_rust::core::analysis::performance_solver::{
+    AbilityAdjustments, PerformanceProbabilitySolver,
+};
 use engine_rust::core::logic::CardDatabase;
-use engine_rust::core::analysis::performance_solver::{PerformanceProbabilitySolver, AbilityAdjustments};
+use engine_rust::core::logic::GameState;
 use engine_rust::test_helpers::load_real_db;
 
 fn parse_deck(path: &str, db: &CardDatabase) -> Vec<i32> {
@@ -8,14 +10,22 @@ fn parse_deck(path: &str, db: &CardDatabase) -> Vec<i32> {
     let mut ids = Vec::new();
     for line in content.lines() {
         let line = line.trim();
-        if line.is_empty() || line.starts_with('#') { continue; }
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
         // Format: NO x COUNT or just NO
         let parts: Vec<&str> = line.split('x').map(|s| s.trim()).collect();
         let no = parts[0];
-        let count = if parts.len() > 1 { parts[1].parse::<usize>().unwrap_or(1) } else { 1 };
+        let count = if parts.len() > 1 {
+            parts[1].parse::<usize>().unwrap_or(1)
+        } else {
+            1
+        };
 
         if let Some(&id) = db.card_no_to_id.get(no) {
-            for _ in 0..count { ids.push(id); }
+            for _ in 0..count {
+                ids.push(id);
+            }
         } else {
             println!("[WARN] Card not found in DB: {}", no);
         }
@@ -41,8 +51,16 @@ fn main() {
     let master_deck = parse_deck(deck_path, &db);
 
     // Split into main and energy (if applicable, but muse_cup is mostly main)
-    let member_ids: Vec<i32> = master_deck.iter().filter(|&&id| db.get_member(id).is_some()).cloned().collect();
-    let live_ids: Vec<i32> = master_deck.iter().filter(|&&id| db.get_live(id).is_some()).cloned().collect();
+    let member_ids: Vec<i32> = master_deck
+        .iter()
+        .filter(|&&id| db.get_member(id).is_some())
+        .cloned()
+        .collect();
+    let live_ids: Vec<i32> = master_deck
+        .iter()
+        .filter(|&&id| db.get_live(id).is_some())
+        .cloned()
+        .collect();
 
     // Base Yells: 10
     state.core.players[p_idx].cheer_mod_count = 10;
@@ -63,24 +81,35 @@ fn main() {
 
     for &live_id in &live_ids {
         let live_card = db.get_live(live_id).unwrap();
-        println!(">>> Evaluating Live Card: {} (Base Score: {}, Hearts Required: {:?})", live_card.name, live_card.score, live_card.required_hearts);
+        println!(
+            ">>> Evaluating Live Card: {} (Base Score: {}, Hearts Required: {:?})",
+            live_card.name, live_card.score, live_card.required_hearts
+        );
 
         let mut state = GameState::default();
         let p_idx = 0;
 
         // Stage has 1 member
         state.core.players[p_idx].stage[0] = member_ids[0]; // Eli
-        // Deck
-        state.core.players[p_idx].deck.extend_from_slice(&member_ids);
+                                                            // Deck
+        state.core.players[p_idx]
+            .deck
+            .extend_from_slice(&member_ids);
 
-        let chance = PerformanceProbabilitySolver::calculate_win_chance(&state, &db, p_idx, live_id);
+        let chance =
+            PerformanceProbabilitySolver::calculate_win_chance(&state, &db, p_idx, live_id);
 
-        println!("  - Expected Hearts across {} Yells: {:.2?}", chance.k_yells, chance.expected_hearts);
+        println!(
+            "  - Expected Hearts across {} Yells: {:.2?}",
+            chance.k_yells, chance.expected_hearts
+        );
         println!("  - Expected Score: {:.2}", chance.expected_score);
-        println!("  - Win Probability: {:.2}%", chance.success_probability * 100.0);
+        println!(
+            "  - Win Probability: {:.2}%",
+            chance.success_probability * 100.0
+        );
         println!("-------------------------------------------------------");
     }
-
 
     // SCENARIO 2: HIGH STAGE (3 Strong Members, 20 Yells, 3 Blades)
     println!("\n=======================================================");
@@ -90,16 +119,19 @@ fn main() {
 
     for &live_id in &live_ids {
         let live_card = db.get_live(live_id).unwrap();
-        println!(">>> Evaluating Live Card: {} (Base Score: {}, Hearts Required: {:?})", live_card.name, live_card.score, live_card.required_hearts);
+        println!(
+            ">>> Evaluating Live Card: {} (Base Score: {}, Hearts Required: {:?})",
+            live_card.name, live_card.score, live_card.required_hearts
+        );
 
         let mut state = GameState::default();
         let p_idx = 0;
 
         // Stage has 3 members
         if member_ids.len() >= 3 {
-             state.core.players[p_idx].stage[0] = member_ids[1];
-             state.core.players[p_idx].stage[1] = member_ids[2];
-             state.core.players[p_idx].stage[2] = member_ids[3];
+            state.core.players[p_idx].stage[0] = member_ids[1];
+            state.core.players[p_idx].stage[1] = member_ids[2];
+            state.core.players[p_idx].stage[2] = member_ids[3];
         }
 
         // Let's add blades to these members (simulating +1 blade per member)
@@ -110,13 +142,25 @@ fn main() {
         // 15 Yells
         state.core.players[p_idx].cheer_mod_count = 15;
         // Deck
-        state.core.players[p_idx].deck.extend_from_slice(&member_ids);
+        state.core.players[p_idx]
+            .deck
+            .extend_from_slice(&member_ids);
 
-        let chance = PerformanceProbabilitySolver::calculate_win_chance(&state, &db, p_idx, live_id);
+        let chance =
+            PerformanceProbabilitySolver::calculate_win_chance(&state, &db, p_idx, live_id);
 
-        println!("  - Expected Hearts across {} Yells: {:.2?}", chance.k_yells, chance.expected_hearts);
-        println!("  - Expected Score: {:.2} (Note: Volume Icons give bonus!)", chance.expected_score);
-        println!("  - Win Probability: {:.2}%", chance.success_probability * 100.0);
+        println!(
+            "  - Expected Hearts across {} Yells: {:.2?}",
+            chance.k_yells, chance.expected_hearts
+        );
+        println!(
+            "  - Expected Score: {:.2} (Note: Volume Icons give bonus!)",
+            chance.expected_score
+        );
+        println!(
+            "  - Win Probability: {:.2}%",
+            chance.success_probability * 100.0
+        );
         println!("-------------------------------------------------------");
     }
 
@@ -128,17 +172,24 @@ fn main() {
 
     let live_id = live_ids[0]; // SENTIMENTAL StepS (Score 2)
     let live_card = db.get_live(live_id).unwrap();
-    println!(">>> Target Live: {} (Requires: {:?})", live_card.name, live_card.required_hearts);
+    println!(
+        ">>> Target Live: {} (Requires: {:?})",
+        live_card.name, live_card.required_hearts
+    );
 
     let mut state = GameState::default();
     state.current_player = 0;
     let p_idx = 0;
     // state.core.players[p_idx].energy = 10; // DEPRECATED
     // Instead, add 10 dummy energy cards
-    for _ in 0..10 { state.core.players[p_idx].energy_zone.push(1); }
+    for _ in 0..10 {
+        state.core.players[p_idx].energy_zone.push(1);
+    }
     // Base Yells: 10
     state.core.players[p_idx].cheer_mod_count = 10;
-    state.core.players[p_idx].deck.extend_from_slice(&member_ids);
+    state.core.players[p_idx]
+        .deck
+        .extend_from_slice(&member_ids);
     // Stage: 1 member to provide a base
     state.core.players[p_idx].stage[0] = member_ids[0];
 
@@ -162,7 +213,9 @@ fn main() {
 
     state.core.players[p_idx].hand = hand_ids.clone().into();
     // Add multiple members to success pile/deck to ensure variety and satisfy conditions
-    state.core.players[p_idx].success_lives.extend_from_slice(&member_ids);
+    state.core.players[p_idx]
+        .success_lives
+        .extend_from_slice(&member_ids);
 
     // Ensure deck has enough variety to meet live requirements, but keep it readable (unique-ish)
     // We'll take all unique members from the DB to form a truly diverse deck
@@ -172,7 +225,12 @@ fn main() {
     diverse_deck.truncate(40);
     state.core.players[p_idx].deck = diverse_deck.into();
 
-    let evaluations = PerformanceProbabilitySolver::evaluate_hand_contributions(&state, &db, &state.core.players[p_idx].hand, live_card);
+    let evaluations = PerformanceProbabilitySolver::evaluate_hand_contributions(
+        &state,
+        &db,
+        &state.core.players[p_idx].hand,
+        live_card,
+    );
 
     println!(">>> Evaluations Found: {}", evaluations.len());
 
@@ -180,7 +238,10 @@ fn main() {
         let card = db.get_member(cid).unwrap();
         // Predict specifically for the Center slot (slot 1) for this demonstration
         let _adj = PerformanceProbabilitySolver::predict_adjustments(&state, &db, card, 1);
-    println!(">>> Resulting Win Probability: {:.2}%", chance.success_probability * 100.0);
+        println!(
+            ">>> Resulting Win Probability: {:.2}%",
+            chance.success_probability * 100.0
+        );
         println!("  - Expected Score: {:.2}", chance.expected_score);
         println!("-------------------------------------------------------");
     }
@@ -196,7 +257,12 @@ fn main() {
 
     for &lid in &all_live_ids {
         let l_card = db.get_live(lid).unwrap();
-        let chance = PerformanceProbabilitySolver::calculate_performance_chance(&state, &db, l_card, &AbilityAdjustments::default());
+        let chance = PerformanceProbabilitySolver::calculate_performance_chance(
+            &state,
+            &db,
+            l_card,
+            &AbilityAdjustments::default(),
+        );
 
         // Group by name - keep the maximum probability found for this name
         let entry = live_map.entry(l_card.name.clone()).or_insert(0.0f32);

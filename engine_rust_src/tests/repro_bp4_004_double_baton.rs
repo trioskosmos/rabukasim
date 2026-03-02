@@ -10,14 +10,14 @@
 /// - Card can be played via double baton pass (baton_touch_count = 2)
 /// - When played via double baton pass from Liella! members (GROUP_ID=3),
 ///   the second ability should trigger: draw 2 cards and play member from discard
-
-use engine_rust::core::logic::{GameState, CardDatabase};
+use engine_rust::core::logic::{CardDatabase, GameState};
 
 /// Test double baton pass with Liella! members
 /// This should trigger the second ability: DRAW(2) + PLAY_MEMBER_FROM_DISCARD
 #[test]
 fn test_card_560_double_baton_liella() {
-    let json_content = std::fs::read_to_string("../data/cards_compiled.json").expect("Failed to read cards_compiled.json");
+    let json_content = std::fs::read_to_string("../data/cards_compiled.json")
+        .expect("Failed to read cards_compiled.json");
     let db = CardDatabase::from_json(&json_content).unwrap();
     let mut state = GameState::default();
     state.debug.debug_mode = true;
@@ -25,9 +25,9 @@ fn test_card_560_double_baton_liella() {
     let p1 = 0;
 
     // Card IDs
-    let sumire_id = 560;  // PL!SP-bp4-004-P (Liella! - Group 3)
-    let kanon_id = 557;   // PL!SP-bp4-001-P (Liella! - Group 3)
-    let rin_id = 143;     // Muse member (Group 1) for first baton pass
+    let sumire_id = 560; // PL!SP-bp4-004-P (Liella! - Group 3)
+    let kanon_id = 557; // PL!SP-bp4-001-P (Liella! - Group 3)
+    let rin_id = 143; // Muse member (Group 1) for first baton pass
 
     // Get card info
     let sumire = db.get_member(sumire_id).expect("Sumire not found");
@@ -41,11 +41,14 @@ fn test_card_560_double_baton_liella() {
 
     // Verify sumire has BATON_TOUCH_MOD(2) first ability
     println!("Sumire first ability: {:?}", sumire.abilities[0].pseudocode);
-    println!("Sumire second ability: {:?}", sumire.abilities[1].pseudocode);
+    println!(
+        "Sumire second ability: {:?}",
+        sumire.abilities[1].pseudocode
+    );
 
     // Setup: Stage has Rin in slot 0, Kanon in slot 1 (two Liella! members)
     // This allows double baton pass
-    state.core.players[p1].stage[0] = rin_id;  // Non-Liella! member
+    state.core.players[p1].stage[0] = rin_id; // Non-Liella! member
     state.core.players[p1].stage[1] = kanon_id; // Liella! member
     state.core.players[p1].stage[2] = -1;
 
@@ -68,8 +71,10 @@ fn test_card_560_double_baton_liella() {
     let initial_discard_count = state.core.players[p1].discard.len();
     let initial_energy_count = state.core.players[p1].energy_zone.len();
 
-    println!("Initial hand: {}, discard: {}, energy: {}",
-        initial_hand_count, initial_discard_count, initial_energy_count);
+    println!(
+        "Initial hand: {}, discard: {}, energy: {}",
+        initial_hand_count, initial_discard_count, initial_energy_count
+    );
 
     // Execute baton pass: Play Sumire to slot 0, replacing Rin
     // This is a single baton pass (replacing 1 member)
@@ -92,8 +97,14 @@ fn test_card_560_double_baton_liella() {
     println!("Stage after play: {:?}", state.core.players[p1].stage);
     println!("Hand after play: {:?}", state.core.players[p1].hand);
     println!("Discard after play: {:?}", state.core.players[p1].discard);
-    println!("Energy zone count: {}", state.core.players[p1].energy_zone.len());
-    println!("Baton touch count: {}", state.core.players[p1].baton_touch_count);
+    println!(
+        "Energy zone count: {}",
+        state.core.players[p1].energy_zone.len()
+    );
+    println!(
+        "Baton touch count: {}",
+        state.core.players[p1].baton_touch_count
+    );
 
     // Verify play succeeded
     assert!(result.is_ok(), "Play should succeed");

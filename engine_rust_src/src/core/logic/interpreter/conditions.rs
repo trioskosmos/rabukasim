@@ -5,7 +5,7 @@
 use crate::core::logic::{GameState, CardDatabase, AbilityContext, Condition, ConditionType};
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
-use super::filter::map_filter_string_to_attr;
+use crate::core::logic::filter::map_filter_string_to_attr;
 use super::suspension::resolve_target_slot;
 use super::constants::*;
 

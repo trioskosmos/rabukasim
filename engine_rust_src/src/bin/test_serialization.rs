@@ -1,5 +1,5 @@
-use engine_rust::core::logic::{GameState, PendingInteraction, AbilityContext};
 use engine_rust::core::enums::*;
+use engine_rust::core::logic::{AbilityContext, GameState, PendingInteraction};
 use std::collections::VecDeque;
 
 fn main() {
@@ -15,7 +15,10 @@ fn main() {
         effect_opcode: 41, // LOOK_AND_CHOOSE
         card_id: 123,
         ability_index: 0,
-        ctx: AbilityContext { player_id: 1, ..Default::default() },
+        ctx: AbilityContext {
+            player_id: 1,
+            ..Default::default()
+        },
         choice_type: "LOOK_AND_CHOOSE".to_string(),
         ..Default::default()
     };
@@ -25,9 +28,12 @@ fn main() {
     let trigger = (
         456, // cid
         1,   // ab_idx
-        AbilityContext { player_id: 0, ..Default::default() },
+        AbilityContext {
+            player_id: 0,
+            ..Default::default()
+        },
         false, // is_optional
-        TriggerType::OnPlay
+        TriggerType::OnPlay,
     );
     gs.trigger_queue.push_back(trigger);
 
@@ -36,7 +42,8 @@ fn main() {
     println!("FULL_JSON_START\n{}\nFULL_JSON_END", serialized);
 
     // 2. Deserialize back
-    let deserialized: GameState = serde_json::from_str(&serialized).expect("Failed to deserialize GameState");
+    let deserialized: GameState =
+        serde_json::from_str(&serialized).expect("Failed to deserialize GameState");
 
     // 3. Verify critical fields
     assert_eq!(deserialized.turn, 5);

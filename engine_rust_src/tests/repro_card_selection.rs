@@ -44,6 +44,12 @@ fn test_card_selection_filtering() {
     // ACTION_BASE_STAGE_SLOTS (600) + slot
     // We expect action 600 (slot 0 - Muse) to NOT be present,
     // and action 601 (slot 1 - Aqours) to be present.
-    assert!(!actions.contains(&600), "Should not allow selecting Muse member");
-    assert!(actions.contains(&601), "Should allow selecting Aqours member");
+    assert!(
+        !actions.contains(&600),
+        "Should not allow selecting Muse member"
+    );
+    assert!(
+        actions.contains(&601),
+        "Should allow selecting Aqours member"
+    );
 }

@@ -1,4 +1,4 @@
-use engine_rust::core::logic::{GameState, CardDatabase, AbilityContext, check_condition_opcode};
+use engine_rust::core::logic::{check_condition_opcode, AbilityContext, CardDatabase, GameState};
 
 #[test]
 fn test_repro_count_success_live_comparison() {
@@ -51,5 +51,8 @@ fn test_repro_count_success_live_opponent() {
     // Opcode=218, Val=1, Attr=FILTER_OPPONENT, Slot=0 (GE)
     let passed = check_condition_opcode(&state, &db, 218, 1, filter_opponent, 0, &ctx, 0);
     // Expected: true (checking opponent who has 1). Buggy result: false (checking self who has 0).
-    assert!(passed, "MIN=1, PLAYER=1 should pass when opponent has 1 life");
+    assert!(
+        passed,
+        "MIN=1, PLAYER=1 should pass when opponent has 1 life"
+    );
 }

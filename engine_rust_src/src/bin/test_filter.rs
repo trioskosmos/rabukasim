@@ -1,5 +1,5 @@
-use engine_rust::core::logic::{GameState, CardDatabase};
 use engine_rust::core::logic::filter::CardFilter;
+use engine_rust::core::logic::{CardDatabase, GameState};
 
 fn main() {
     let json_content = std::fs::read_to_string("data/cards_compiled.json").expect("Failed to read");

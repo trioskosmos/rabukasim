@@ -1,6 +1,6 @@
 use crate::core::logic::{GameState, CardDatabase, AbilityContext, Cost, TriggerType};
 use crate::core::enums::*;
-use super::filter::map_filter_string_to_attr;
+use crate::core::logic::filter::map_filter_string_to_attr;
 use super::constants::*;
 
 pub fn pay_costs_transactional(state: &mut GameState, db: &CardDatabase, costs: &[Cost], ctx: &AbilityContext) -> bool {
