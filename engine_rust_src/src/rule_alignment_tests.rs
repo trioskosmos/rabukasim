@@ -110,22 +110,41 @@ fn test_priority_p1_triggers_first() {
     state.core.players[1].stage[0] = 102;
 
     // Both had successful lives (snapshot)
-    state.ui.performance_results.insert(0, json!({"success": true}));
-    state.ui.performance_results.insert(1, json!({"success": true}));
+    state
+        .ui
+        .performance_results
+        .insert(0, json!({"success": true}));
+    state
+        .ui
+        .performance_results
+        .insert(1, json!({"success": true}));
 
     // Run judgement
     state.do_live_result(&db);
 
     // Verify order in rule_log
     // Order should be P1 trigger (Score +200) then P0 trigger (Score +100)
-    let logs: Vec<String> = state.ui.rule_log.as_ref().unwrap().iter()
+    let logs: Vec<String> = state
+        .ui
+        .rule_log
+        .as_ref()
+        .unwrap()
+        .iter()
         .filter(|s| s.contains("Score +"))
         .cloned()
         .collect();
 
     assert_eq!(logs.len(), 2);
-    assert!(logs[0].contains("Score +200"), "P1 (First Player) should trigger first. Logs: {:?}", logs);
-    assert!(logs[1].contains("Score +100"), "P0 should trigger second. Logs: {:?}", logs);
+    assert!(
+        logs[0].contains("Score +200"),
+        "P1 (First Player) should trigger first. Logs: {:?}",
+        logs
+    );
+    assert!(
+        logs[1].contains("Score +100"),
+        "P0 should trigger second. Logs: {:?}",
+        logs
+    );
 }
 
 #[test]
@@ -134,10 +153,16 @@ fn test_priority_p1_choice_selection() {
     db.lives_vec.resize(1000, None);
 
     // Setup lives
-    let mut l1 = LiveCard::default(); l1.card_id = 1; l1.name = "L1".to_string();
-    db.lives.insert(1, l1.clone()); db.lives_vec[1] = Some(l1);
-    let mut l2 = LiveCard::default(); l2.card_id = 2; l2.name = "L2".to_string();
-    db.lives.insert(2, l2.clone()); db.lives_vec[2] = Some(l2);
+    let mut l1 = LiveCard::default();
+    l1.card_id = 1;
+    l1.name = "L1".to_string();
+    db.lives.insert(1, l1.clone());
+    db.lives_vec[1] = Some(l1);
+    let mut l2 = LiveCard::default();
+    l2.card_id = 2;
+    l2.name = "L2".to_string();
+    db.lives.insert(2, l2.clone());
+    db.lives_vec[2] = Some(l2);
 
     let mut state = GameState::default();
     state.first_player = 1; // P1 IS FIRST PLAYER
@@ -150,14 +175,20 @@ fn test_priority_p1_choice_selection() {
     state.core.players[1].live_zone[1] = 2;
 
     // Snapshot: both succeeded
-    state.ui.performance_results.insert(0, json!({
-        "success": true,
-        "lives": [{"passed": true, "score": 10}, {"passed": true, "score": 10}]
-    }));
-    state.ui.performance_results.insert(1, json!({
-        "success": true,
-        "lives": [{"passed": true, "score": 10}, {"passed": true, "score": 10}]
-    }));
+    state.ui.performance_results.insert(
+        0,
+        json!({
+            "success": true,
+            "lives": [{"passed": true, "score": 10}, {"passed": true, "score": 10}]
+        }),
+    );
+    state.ui.performance_results.insert(
+        1,
+        json!({
+            "success": true,
+            "lives": [{"passed": true, "score": 10}, {"passed": true, "score": 10}]
+        }),
+    );
 
     // Skip OnLiveSuccess triggers to reach choice logic
     state.live_result_processed_mask = [0x80, 0x80];
@@ -165,6 +196,9 @@ fn test_priority_p1_choice_selection() {
     state.do_live_result(&db);
 
     // P1 (First Player) should be current_player for choice
-    assert_eq!(state.current_player, 1, "P1 should be selected for choice first when P1 is first_player");
+    assert_eq!(
+        state.current_player, 1,
+        "P1 should be selected for choice first when P1 is first_player"
+    );
     assert!(state.live_result_selection_pending);
 }

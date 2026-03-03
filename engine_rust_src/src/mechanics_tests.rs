@@ -2,7 +2,7 @@
 //! These tests verify higher-level game flow and simple card placements using production data.
 
 use crate::core::logic::*;
-use crate::test_helpers::{load_real_db};
+use crate::test_helpers::load_real_db;
 
 /// Verifies that the O_DRAW opcode correctly moves cards from deck to hand using real card IDs.
 #[test]
@@ -71,7 +71,10 @@ fn test_opcode_hearts() {
 fn test_opcode_reduce_cost() {
     let mut state = GameState::default();
     let db = load_real_db();
-    let ctx = AbilityContext { player_id: 0, ..AbilityContext::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..AbilityContext::default()
+    };
 
     // O_REDUCE_COST 2
     let bytecode = vec![O_REDUCE_COST, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
@@ -89,14 +92,33 @@ fn test_condition_count_hand() {
     // Hand: Eli (121), Rin (124), Energy (0). Total 3 cards.
     state.core.players[0].hand = vec![121, 124, 0].into();
 
-    let ctx = AbilityContext { player_id: 0, ..AbilityContext::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..AbilityContext::default()
+    };
 
     // Condition: C_COUNT_HAND GE 3 -> O_DRAW 1
     let bytecode = vec![
-        C_COUNT_HAND, 3, 0, 0, 0,
-        O_JUMP_IF_FALSE, 1, 0, 0, 0,
-        O_DRAW, 1, 0, 0, 0,
-        O_RETURN, 0, 0, 0, 0
+        C_COUNT_HAND,
+        3,
+        0,
+        0,
+        0,
+        O_JUMP_IF_FALSE,
+        1,
+        0,
+        0,
+        0,
+        O_DRAW,
+        1,
+        0,
+        0,
+        0,
+        O_RETURN,
+        0,
+        0,
+        0,
+        0,
     ];
 
     // Case 1: Met
@@ -135,12 +157,12 @@ fn test_opcode_play_member_from_hand() {
 
     // Step 1: Select Card from Hand (choice_index=1)
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
-    
-    // It should have suspended for the slot. 
+
+    // It should have suspended for the slot.
     // The handler updated ctx inside the interaction_stack
     assert!(state.interaction_stack.len() > 0);
     let mut resumed_ctx = state.interaction_stack.pop().unwrap().ctx;
-    
+
     // The handler updated context should have: target_slot=1 (hand_idx), v_remaining=1, choice_index=-1
     assert_eq!(resumed_ctx.v_remaining, 1);
     assert_eq!(resumed_ctx.target_slot, 1);

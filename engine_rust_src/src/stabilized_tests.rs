@@ -1,6 +1,6 @@
+use crate::core::enums::Phase;
 use crate::core::logic::*;
 use crate::test_helpers::{load_real_db, Action};
-use crate::core::enums::Phase;
 use smallvec::smallvec;
 
 #[test]
@@ -18,7 +18,10 @@ fn verify_on_reveal_trigger() {
     state.phase = Phase::PerformanceP1;
     state.do_performance_phase(&db);
 
-    assert!(state.core.players[0].is_revealed(0), "Live card should be revealed during performance phase");
+    assert!(
+        state.core.players[0].is_revealed(0),
+        "Live card should be revealed during performance phase"
+    );
     // Trigger should have executed (it meets conditions if yelled revealed is empty)
 }
 
@@ -36,15 +39,29 @@ fn verify_manual_recovery_pattern() {
     state.phase = Phase::Main;
 
     // 1. Activate ability (Slot 0, Ability 0)
-    state.step(&db, Action::ActivateAbility { slot_idx: 0, ab_idx: 0 }.id() as i32).unwrap();
+    state
+        .step(
+            &db,
+            Action::ActivateAbility {
+                slot_idx: 0,
+                ab_idx: 0,
+            }
+            .id() as i32,
+        )
+        .unwrap();
 
-    assert_eq!(state.core.players[0].stage[0], -1, "Member should be in discard after sacrifice");
+    assert_eq!(
+        state.core.players[0].stage[0], -1,
+        "Member should be in discard after sacrifice"
+    );
     assert!(state.core.players[0].discard.contains(&406));
 
     // 2. Resolve Recovery
     // Choice interaction: Pick the member to recover (121)
     assert_eq!(state.phase, Phase::Response);
-    state.step(&db, Action::SelectChoice { choice_idx: 0 }.id() as i32).unwrap();
+    state
+        .step(&db, Action::SelectChoice { choice_idx: 0 }.id() as i32)
+        .unwrap();
 
     assert_eq!(state.core.players[0].hand.len(), 1);
     assert!(state.core.players[0].hand.contains(&121));
@@ -66,7 +83,11 @@ fn verify_performance_transition_history() {
     // P1 Perform (Pass)
     state.step(&db, 0).expect("P1 pass failed");
 
-    assert_eq!(state.ui.performance_history.len(), 2, "Should have 2 performance records");
+    assert_eq!(
+        state.ui.performance_history.len(),
+        2,
+        "Should have 2 performance records"
+    );
 }
 
 #[test]
@@ -103,5 +124,8 @@ fn verify_buff_logic() {
 
     // Total should be 2 (base) + 2 (from ability) = 4
     let blades = state.get_effective_blades(0, 0, &db, 0);
-    assert_eq!(blades, 4, "Card 120 should have 2 (base) + 2 (bonus) = 4 blades");
+    assert_eq!(
+        blades, 4,
+        "Card 120 should have 2 (base) + 2 (bonus) = 4 blades"
+    );
 }

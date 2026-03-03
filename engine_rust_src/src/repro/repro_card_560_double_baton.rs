@@ -13,13 +13,25 @@ fn test_repro_card_560_double_baton() {
 
     // Use Liella! members (GROUP_ID=3) for baton sources
     // PL!SP-bp4-001-P (Kanon) and PL!SP-bp4-002-P (Keke) are Liella! members
-    let kanon_id = *db.card_no_to_id.get("PL!SP-bp4-001-P").expect("Kanon not found");
-    let keke_id = *db.card_no_to_id.get("PL!SP-bp4-002-P").expect("Keke not found");
+    let kanon_id = *db
+        .card_no_to_id
+        .get("PL!SP-bp4-001-P")
+        .expect("Kanon not found");
+    let keke_id = *db
+        .card_no_to_id
+        .get("PL!SP-bp4-002-P")
+        .expect("Keke not found");
 
     let kanon = db.get_member(kanon_id).expect("Kanon member not in DB");
     let keke = db.get_member(keke_id).expect("Keke member not in DB");
-    eprintln!("Kanon: id={}, cost={}, groups={:?}", kanon_id, kanon.cost, kanon.groups);
-    eprintln!("Keke: id={}, cost={}, groups={:?}", keke_id, keke.cost, keke.groups);
+    eprintln!(
+        "Kanon: id={}, cost={}, groups={:?}",
+        kanon_id, kanon.cost, kanon.groups
+    );
+    eprintln!(
+        "Keke: id={}, cost={}, groups={:?}",
+        keke_id, keke.cost, keke.groups
+    );
 
     // Setup Stage for Player 0
     // Slot 0: Kanon, Slot 1: Keke, Slot 2: Empty
@@ -40,8 +52,14 @@ fn test_repro_card_560_double_baton() {
     let standard_cost_slot0 = state.get_member_cost(0, card_560_id, 0, -1, &db, 0);
     let standard_cost_slot1 = state.get_member_cost(0, card_560_id, 1, -1, &db, 0);
     let double_cost = state.get_member_cost(0, card_560_id, 0, 1, &db, 0);
-    eprintln!("Standard cost slot 0 (replace Kanon): {}", standard_cost_slot0);
-    eprintln!("Standard cost slot 1 (replace Keke): {}", standard_cost_slot1);
+    eprintln!(
+        "Standard cost slot 0 (replace Kanon): {}",
+        standard_cost_slot0
+    );
+    eprintln!(
+        "Standard cost slot 1 (replace Keke): {}",
+        standard_cost_slot1
+    );
     eprintln!("Double baton cost (replace both): {}", double_cost);
 
     // Verify Action Generation
@@ -52,9 +70,18 @@ fn test_repro_card_560_double_baton() {
     // Standard plays to each slot (offsets 0,1,2)
     // hand_idx=0, so base = ACTION_BASE_HAND (1000)
     // slot 0: 1000, slot 1: 1001, slot 2: 1002
-    assert!(actions.contains(&1000), "Standard play to slot 0 should be legal");
-    assert!(actions.contains(&1001), "Standard play to slot 1 should be legal");
-    assert!(actions.contains(&1002), "Standard play to slot 2 (empty) should be legal");
+    assert!(
+        actions.contains(&1000),
+        "Standard play to slot 0 should be legal"
+    );
+    assert!(
+        actions.contains(&1001),
+        "Standard play to slot 1 should be legal"
+    );
+    assert!(
+        actions.contains(&1002),
+        "Standard play to slot 2 (empty) should be legal"
+    );
 
     // Double Baton actions (offsets 3-8)
     // combo_idx for (slot_idx=0, other_slot=1): 0*2 + 1 = 1 -> offset 3+1 = 4 -> action 1004
@@ -62,22 +89,41 @@ fn test_repro_card_560_double_baton() {
     let double_baton_01 = 1004; // Play to slot 0, also replacing slot 1
     let _double_baton_10 = 1005; // Play to slot 1, also replacing slot 0
 
-    assert!(actions.contains(&double_baton_01),
-        "Double Baton action {} (Slot 0+1) should be legal! Found: {:?}", double_baton_01, actions);
+    assert!(
+        actions.contains(&double_baton_01),
+        "Double Baton action {} (Slot 0+1) should be legal! Found: {:?}",
+        double_baton_01,
+        actions
+    );
 
     // Execute Double Baton: play Sumire to slot 0, also removing Keke from slot 1
-    state.step(&db, double_baton_01).expect("Double Baton step failed");
+    state
+        .step(&db, double_baton_01)
+        .expect("Double Baton step failed");
 
     // Verifications:
-    assert_eq!(state.core.players[0].stage[0], card_560_id, "Card 560 should be on Slot 0");
-    assert_eq!(state.core.players[0].stage[1], -1, "Slot 1 should be empty after Double Baton");
-    assert_eq!(state.core.players[0].baton_touch_count, 2, "baton_touch_count should be 2");
+    assert_eq!(
+        state.core.players[0].stage[0], card_560_id,
+        "Card 560 should be on Slot 0"
+    );
+    assert_eq!(
+        state.core.players[0].stage[1], -1,
+        "Slot 1 should be empty after Double Baton"
+    );
+    assert_eq!(
+        state.core.players[0].baton_touch_count, 2,
+        "baton_touch_count should be 2"
+    );
 
     // Expected cost = 22 - kanon.cost - keke.cost
     let expected_cost = (22 - kanon.cost as i32 - keke.cost as i32).max(0) as usize;
     eprintln!("Expected tapped energy: {}", expected_cost);
     let tapped = state.core.players[0].tapped_energy_mask.count_ones() as usize;
-    assert_eq!(tapped, expected_cost, "Should have tapped {} energy", expected_cost);
+    assert_eq!(
+        tapped, expected_cost,
+        "Should have tapped {} energy",
+        expected_cost
+    );
 
     // === TEST SECOND ABILITY: ON_PLAY condition check ===
     // Card 560's second ability:
@@ -86,7 +132,10 @@ fn test_repro_card_560_double_baton() {
     // EFFECT: DRAW(2); PLAY_MEMBER_FROM_DISCARD(1) {FILTER="GROUP_ID=3, COST_LE_4"}
 
     eprintln!("\n=== Testing Second Ability ===");
-    eprintln!("baton_touch_count: {}", state.core.players[0].baton_touch_count);
+    eprintln!(
+        "baton_touch_count: {}",
+        state.core.players[0].baton_touch_count
+    );
     eprintln!("prev_card_id: {}", state.prev_card_id);
 
     // Check if the card is in CENTER position (slot 0)
@@ -119,7 +168,10 @@ fn test_repro_card_560_double_baton() {
     let card = db.get_member(card_560_id).expect("Card 560 not found");
     eprintln!("\nCard 560 abilities: {:?}", card.abilities.len());
     for (i, ab) in card.abilities.iter().enumerate() {
-        eprintln!("Ability {}: trigger={:?}, bytecode={:?}", i, ab.trigger, ab.bytecode);
+        eprintln!(
+            "Ability {}: trigger={:?}, bytecode={:?}",
+            i, ab.trigger, ab.bytecode
+        );
     }
 
     // The condition bytecode from cards_compiled.json:
@@ -146,15 +198,29 @@ fn test_card_560_second_ability_condition() {
     let card_560_id = 560;
 
     // Use Liella! members (GROUP_ID=3) for baton sources
-    let kanon_id = *db.card_no_to_id.get("PL!SP-bp4-001-P").expect("Kanon not found");
-    let keke_id = *db.card_no_to_id.get("PL!SP-bp4-002-P").expect("Keke not found");
+    let kanon_id = *db
+        .card_no_to_id
+        .get("PL!SP-bp4-001-P")
+        .expect("Kanon not found");
+    let keke_id = *db
+        .card_no_to_id
+        .get("PL!SP-bp4-002-P")
+        .expect("Keke not found");
 
     let kanon = db.get_member(kanon_id).expect("Kanon not in DB");
     let keke = db.get_member(keke_id).expect("Keke not in DB");
 
     // Check if they are Liella! members
-    eprintln!("Kanon groups: {:?} - is Liella!: {}", kanon.groups, kanon.groups.contains(&3));
-    eprintln!("Keke groups: {:?} - is Liella!: {}", keke.groups, keke.groups.contains(&3));
+    eprintln!(
+        "Kanon groups: {:?} - is Liella!: {}",
+        kanon.groups,
+        kanon.groups.contains(&3)
+    );
+    eprintln!(
+        "Keke groups: {:?} - is Liella!: {}",
+        keke.groups,
+        keke.groups.contains(&3)
+    );
 
     // Setup: Stage with Kanon and Keke
     state.core.players[0].stage[0] = kanon_id;
@@ -174,7 +240,10 @@ fn test_card_560_second_ability_condition() {
         if let Some(m) = db.get_member(id) {
             if m.groups.contains(&3) && m.cost <= 4 {
                 liella_low_cost = Some(id);
-                eprintln!("Found Liella! low cost member: {} (cost={})", card_no, m.cost);
+                eprintln!(
+                    "Found Liella! low cost member: {} (cost={})",
+                    card_no, m.cost
+                );
                 break;
             }
         }
@@ -188,7 +257,9 @@ fn test_card_560_second_ability_condition() {
 
     // Execute double baton
     let double_baton_01 = 1004;
-    state.step(&db, double_baton_01).expect("Double Baton step failed");
+    state
+        .step(&db, double_baton_01)
+        .expect("Double Baton step failed");
 
     // Check hand size - should have drawn 2 cards if second ability triggered
     let hand_size = state.core.players[0].hand.len();

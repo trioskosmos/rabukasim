@@ -1,8 +1,8 @@
 #[cfg(test)]
 use crate::core::logic::*;
+use crate::test_helpers::TestUtils;
 #[cfg(test)]
 use crate::test_helpers::*;
-use crate::test_helpers::TestUtils;
 
 #[cfg(test)]
 mod tests {
@@ -20,7 +20,12 @@ mod tests {
         state.core.players[0].deck = vec![563, 563, 563].into();
         state.phase = Phase::Main;
 
-        let ctx = AbilityContext { player_id: 0, source_card_id: 528, area_idx: 0, ..Default::default() };
+        let ctx = AbilityContext {
+            player_id: 0,
+            source_card_id: 528,
+            area_idx: 0,
+            ..Default::default()
+        };
         state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
         state.process_trigger_queue(&db);
 
@@ -32,11 +37,19 @@ mod tests {
         assert_eq!(chosen_card_id, 563);
 
         // Submit choice (Action ID 8000 + index 0)
-        state.step(&db, ACTION_BASE_CHOICE + 0).expect("Step failed");
+        state
+            .step(&db, ACTION_BASE_CHOICE + 0)
+            .expect("Step failed");
 
         // Verify destination: Hand (6)
-        assert!(state.core.players[0].hand.contains(&chosen_card_id), "Card 563 should be in hand!");
-        assert!(!state.core.players[0].discard.contains(&chosen_card_id), "Card 563 should NOT be in discard!");
+        assert!(
+            state.core.players[0].hand.contains(&chosen_card_id),
+            "Card 563 should be in hand!"
+        );
+        assert!(
+            !state.core.players[0].discard.contains(&chosen_card_id),
+            "Card 563 should NOT be in discard!"
+        );
     }
 
     #[test]
@@ -48,7 +61,10 @@ mod tests {
         state.core.players[0].energy_zone = vec![9, 10, 11].into();
         state.core.players[0].tapped_energy_mask = 0;
 
-        let mut ctx = AbilityContext { player_id: 0, ..Default::default() };
+        let mut ctx = AbilityContext {
+            player_id: 0,
+            ..Default::default()
+        };
         ctx.v_remaining = 2;
 
         state.phase = Phase::Response;
@@ -67,19 +83,35 @@ mod tests {
         let mut receiver = TestActionReceiver::default();
         state.generate_legal_actions(&db, 0, &mut receiver);
 
-        assert!(receiver.actions.contains(&(ACTION_BASE_ENERGY + 0)), "Action ID {} (Energy 0) missing!", ACTION_BASE_ENERGY + 0);
-        assert!(receiver.actions.contains(&(ACTION_BASE_ENERGY + 1)), "Action ID {} (Energy 1) missing!", ACTION_BASE_ENERGY + 1);
-        assert!(receiver.actions.contains(&(ACTION_BASE_ENERGY + 2)), "Action ID {} (Energy 2) missing!", ACTION_BASE_ENERGY + 2);
+        assert!(
+            receiver.actions.contains(&(ACTION_BASE_ENERGY + 0)),
+            "Action ID {} (Energy 0) missing!",
+            ACTION_BASE_ENERGY + 0
+        );
+        assert!(
+            receiver.actions.contains(&(ACTION_BASE_ENERGY + 1)),
+            "Action ID {} (Energy 1) missing!",
+            ACTION_BASE_ENERGY + 1
+        );
+        assert!(
+            receiver.actions.contains(&(ACTION_BASE_ENERGY + 2)),
+            "Action ID {} (Energy 2) missing!",
+            ACTION_BASE_ENERGY + 2
+        );
 
         // 2. Pay 1st energy
-        state.step(&db, ACTION_BASE_ENERGY + 0).expect("Step 1 failed");
+        state
+            .step(&db, ACTION_BASE_ENERGY + 0)
+            .expect("Step 1 failed");
 
         assert_eq!(state.phase, Phase::Response);
         assert_eq!(state.interaction_stack.last().unwrap().v_remaining, 1);
         assert!(state.core.players[0].is_energy_tapped(0));
 
         // 3. Pay 2nd energy
-        state.step(&db, ACTION_BASE_ENERGY + 1).expect("Step 2 failed");
+        state
+            .step(&db, ACTION_BASE_ENERGY + 1)
+            .expect("Step 2 failed");
 
         assert!(state.core.players[0].is_energy_tapped(0));
         assert!(state.core.players[0].is_energy_tapped(1));
@@ -107,19 +139,26 @@ mod tests {
         // O_SELECT_MEMBER(65): Select member to play from hand
         // O_PLAY_MEMBER_FROM_HAND(57): Play the selected member
         // O_PLACE_UNDER(33): Place under
-        state.activate_ability(&db, 0, 0).expect("Activation failed");
+        state
+            .activate_ability(&db, 0, 0)
+            .expect("Activation failed");
 
         // The bytecode executes without suspension due to softlock prevention
         // when SELECT_MEMBER has no valid targets (filter doesn't match any members)
         // This is expected behavior - the engine prevents softlocks by skipping impossible selections
 
         // Verify the cost was paid (energy tapped)
-        assert!(state.core.players[0].tapped_energy_mask.count_ones() >= 2, "Energy should be tapped");
+        assert!(
+            state.core.players[0].tapped_energy_mask.count_ones() >= 2,
+            "Energy should be tapped"
+        );
 
         // Note: The card may or may not be sacrificed depending on whether the selection was skipped
         // The key test is that the engine doesn't crash and returns to a valid state
-        assert!(state.phase == Phase::Main || state.phase == Phase::Response,
-            "Should be in a valid phase after ability execution");
+        assert!(
+            state.phase == Phase::Main || state.phase == Phase::Response,
+            "Should be in a valid phase after ability execution"
+        );
     }
 
     #[test]
@@ -133,7 +172,11 @@ mod tests {
         state.phase = Phase::Response;
 
         // Opcode 58 (MOVE_TO_DISCARD), Attr (Hand + Optional), Count 1
-        let ctx = AbilityContext { player_id: p_idx as u8, source_card_id: 4270, ..Default::default() };
+        let ctx = AbilityContext {
+            player_id: p_idx as u8,
+            source_card_id: 4270,
+            ..Default::default()
+        };
         state.interaction_stack.push(PendingInteraction {
             ctx: ctx.clone(),
             card_id: 4270,
@@ -147,12 +190,23 @@ mod tests {
         // 1. Verify Pass action exists
         let mut receiver = TestActionReceiver::default();
         state.generate_legal_actions(&db, p_idx, &mut receiver);
-        assert!(receiver.actions.contains(&0), "Pass action (0) should be available for optional discard!");
+        assert!(
+            receiver.actions.contains(&0),
+            "Pass action (0) should be available for optional discard!"
+        );
 
         // 2. Test Pass (Choice 0)
         state.step(&db, 0).expect("Step failed");
-        assert_eq!(state.core.players[p_idx].hand.len(), 3, "Hand should NOT have changed after Pass");
-        assert_eq!(state.phase, Phase::Main, "Should return to Main/Previous phase after passing cost");
+        assert_eq!(
+            state.core.players[p_idx].hand.len(),
+            3,
+            "Hand should NOT have changed after Pass"
+        );
+        assert_eq!(
+            state.phase,
+            Phase::Main,
+            "Should return to Main/Previous phase after passing cost"
+        );
     }
 
     #[test]
@@ -167,7 +221,11 @@ mod tests {
         state.phase = Phase::Response;
 
         // Interaction: O_MOVE_TO_DISCARD with 0x6000 (Hand Zone) filter
-        let ctx = AbilityContext { player_id: p_idx as u8, source_card_id: 17, ..Default::default() };
+        let ctx = AbilityContext {
+            player_id: p_idx as u8,
+            source_card_id: 17,
+            ..Default::default()
+        };
         state.interaction_stack.push(PendingInteraction {
             ctx: ctx.clone(),
             card_id: 17,
@@ -183,8 +241,14 @@ mod tests {
         state.generate_legal_actions(&db, p_idx, &mut receiver);
 
         // ACTION_BASE_HAND_SELECT = 8200
-        assert!(receiver.actions.contains(&(ACTION_BASE_HAND_SELECT + 0)), "Hand index 0 should be selectable");
-        assert!(receiver.actions.contains(&(ACTION_BASE_HAND_SELECT + 1)), "Hand index 1 should be selectable");
+        assert!(
+            receiver.actions.contains(&(ACTION_BASE_HAND_SELECT + 0)),
+            "Hand index 0 should be selectable"
+        );
+        assert!(
+            receiver.actions.contains(&(ACTION_BASE_HAND_SELECT + 1)),
+            "Hand index 1 should be selectable"
+        );
     }
 
     #[test]
@@ -217,15 +281,24 @@ mod tests {
         state.dump_verbose();
 
         // 1. Should have drawn 2 cards
-        assert_eq!(state.core.players[p_idx].hand.len(), 4, "Should have drawn 2 cards");
+        assert_eq!(
+            state.core.players[p_idx].hand.len(),
+            4,
+            "Should have drawn 2 cards"
+        );
 
         // 2. Should be suspended for MOVE_TO_DISCARD
         assert_eq!(state.phase, Phase::Response);
         assert_eq!(state.interaction_stack.last().unwrap().effect_opcode, 58);
-        assert_eq!(state.interaction_stack.last().unwrap().choice_type, "SELECT_HAND_DISCARD");
+        assert_eq!(
+            state.interaction_stack.last().unwrap().choice_type,
+            "SELECT_HAND_DISCARD"
+        );
 
         // 3. Perform a hand selection (index 0)
-        state.step(&db, ACTION_BASE_HAND_SELECT + 0).expect("Step failed");
+        state
+            .step(&db, ACTION_BASE_HAND_SELECT + 0)
+            .expect("Step failed");
 
         // 4. Verification
         assert_eq!(state.core.players[p_idx].hand.len(), 3);

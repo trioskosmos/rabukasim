@@ -1,6 +1,6 @@
-use crate::core::logic::*;
 use crate::core::generated_constants::ACTION_BASE_CHOICE;
-use crate::test_helpers::{load_real_db, create_test_state, TestUtils};
+use crate::core::logic::*;
+use crate::test_helpers::{create_test_state, load_real_db, TestUtils};
 
 #[test]
 fn test_repro_bp4_002_p_wait_flow() {
@@ -40,12 +40,20 @@ fn test_repro_bp4_002_p_wait_flow() {
     println!("Trigger Queue Depth: {}", state.trigger_queue.len());
     println!("Interaction Stack Depth: {}", state.interaction_stack.len());
 
-    assert_eq!(state.core.players[0].stage[0], card_id, "Card should be on stage slot 0");
+    assert_eq!(
+        state.core.players[0].stage[0], card_id,
+        "Card should be on stage slot 0"
+    );
 
     // 3. The card triggers ON_PLAY ability.
     // The ability has an optional TAP_MEMBER cost followed by LOOK_AND_CHOOSE
     // The engine may process this differently - check what we actually have
-    assert_eq!(state.phase, Phase::Response, "Should have entered Response phase for ability. Got: {:?}", state.phase);
+    assert_eq!(
+        state.phase,
+        Phase::Response,
+        "Should have entered Response phase for ability. Got: {:?}",
+        state.phase
+    );
 
     // Check the interaction type - it could be OPTIONAL or LOOK_AND_CHOOSE depending on engine flow
     let interaction = state.interaction_stack.last().unwrap();
@@ -60,7 +68,7 @@ fn test_repro_bp4_002_p_wait_flow() {
 
     // 4. Choose "Yes" (WAIT) -> ACTION_BASE_CHOICE + 0
     println!("--- ACTION: Choosing YES (WAIT) ---");
-    let res = state.step(&db, ACTION_BASE_CHOICE + 0);  // Use ACTION_BASE_CHOICE + 0 for Yes in OPTIONAL
+    let res = state.step(&db, ACTION_BASE_CHOICE + 0); // Use ACTION_BASE_CHOICE + 0 for Yes in OPTIONAL
     if let Err(e) = res {
         panic!("Step 3 (Choice Yes) failed: {}", e);
     }
@@ -68,11 +76,20 @@ fn test_repro_bp4_002_p_wait_flow() {
     state.dump();
 
     // 5. Verify the card is TAPPED (WAIT state)
-    assert!(state.core.players[0].is_tapped(0), "Card should be tapped after choosing YES to wait");
+    assert!(
+        state.core.players[0].is_tapped(0),
+        "Card should be tapped after choosing YES to wait"
+    );
 
     // 6. Handle LOOK_AND_CHOOSE
-    println!("DEBUG: Current Interaction: {}", state.interaction_stack.last().unwrap().choice_type);
-    assert_eq!(state.interaction_stack.last().unwrap().choice_type, "LOOK_AND_CHOOSE");
+    println!(
+        "DEBUG: Current Interaction: {}",
+        state.interaction_stack.last().unwrap().choice_type
+    );
+    assert_eq!(
+        state.interaction_stack.last().unwrap().choice_type,
+        "LOOK_AND_CHOOSE"
+    );
 
     // LOOK_AND_CHOOSE requires selecting from looked_cards or skipping
     // ACTION_BASE_CHOICE + 0 = select first option, or we may need to skip if no valid choices
@@ -84,7 +101,7 @@ fn test_repro_bp4_002_p_wait_flow() {
         // For LOOK_AND_CHOOSE, try to select the first available option
         // or skip if that doesn't work
         match state.step(&db, ACTION_BASE_CHOICE + 0) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(_) => {
                 // Try skip action if selection fails (Pass = 999)
                 let _ = state.step(&db, 999);
@@ -96,7 +113,11 @@ fn test_repro_bp4_002_p_wait_flow() {
     state.dump();
 
     // 7. Verify the flow completed
-    assert_eq!(state.phase, Phase::Main, "Should be in Main phase after ability completes");
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "Should be in Main phase after ability completes"
+    );
 
     println!("SUCCESS: Ability flow verified for PL!SP-bp4-002-P");
 }

@@ -1,5 +1,5 @@
-use crate::core::logic::*;
 use crate::core::generated_constants::ACTION_BASE_MODE;
+use crate::core::logic::*;
 use crate::test_helpers::{load_real_db, TestUtils};
 use smallvec::smallvec;
 
@@ -29,7 +29,11 @@ fn test_repro_pb1_001_r_softlock_fix() {
 
     // Start the ability to hit the mode selection interaction suspension
     println!("--- Starting Ability for Card {} ---", card_id);
-    state.resolve_bytecode_cref(&db, &db.get_member(card_id).unwrap().abilities[0].bytecode, &ctx);
+    state.resolve_bytecode_cref(
+        &db,
+        &db.get_member(card_id).unwrap().abilities[0].bytecode,
+        &ctx,
+    );
     state.dump_verbose();
 
     // Engine should be suspended waiting for interaction
@@ -40,8 +44,14 @@ fn test_repro_pb1_001_r_softlock_fix() {
     state.generate_legal_actions(&db, 0, &mut actions);
 
     // Based on validation logic, only Mode 0 (Pay Energy) should be available. Mode 1 (Discard Hand) is skipped.
-    assert!(actions.contains(&(ACTION_BASE_MODE as i32 + 0)), "Option 0 (Pay Energy) should be valid!");
-    assert!(!actions.contains(&(ACTION_BASE_MODE as i32 + 1)), "Option 1 (Discard Hand) MUST BE HIDDEN to prevent softlock!");
+    assert!(
+        actions.contains(&(ACTION_BASE_MODE as i32 + 0)),
+        "Option 0 (Pay Energy) should be valid!"
+    );
+    assert!(
+        !actions.contains(&(ACTION_BASE_MODE as i32 + 1)),
+        "Option 1 (Discard Hand) MUST BE HIDDEN to prevent softlock!"
+    );
 }
 
 #[test]
@@ -72,7 +82,11 @@ fn test_repro_pb1_001_r_all_combinations() {
         };
 
         let target_id = 4684;
-        state.resolve_bytecode_cref(&db, &db.get_member(target_id).unwrap().abilities[0].bytecode, &ctx);
+        state.resolve_bytecode_cref(
+            &db,
+            &db.get_member(target_id).unwrap().abilities[0].bytecode,
+            &ctx,
+        );
         state.dump_verbose();
 
         let mut actions = Vec::new();
@@ -81,8 +95,16 @@ fn test_repro_pb1_001_r_all_combinations() {
         let has_0 = actions.contains(&(ACTION_BASE_MODE as i32 + 0));
         let has_1 = actions.contains(&(ACTION_BASE_MODE as i32 + 1));
 
-        assert_eq!(has_0, exp_0, "Scenario (En:{}, Hn:{}): Mode 0 mismatch", en, hn);
-        assert_eq!(has_1, exp_1, "Scenario (En:{}, Hn:{}): Mode 1 mismatch", en, hn);
+        assert_eq!(
+            has_0, exp_0,
+            "Scenario (En:{}, Hn:{}): Mode 0 mismatch",
+            en, hn
+        );
+        assert_eq!(
+            has_1, exp_1,
+            "Scenario (En:{}, Hn:{}): Mode 1 mismatch",
+            en, hn
+        );
     }
 }
 
@@ -110,7 +132,11 @@ fn test_repro_card_103_full_board() {
     // The engine should NOT suspend for slot selection because there are 0 valid slots.
     // It should skip the effect for P0.
 
-    state.resolve_bytecode_cref(&db, &db.get_member(103).unwrap().abilities[0].bytecode, &ctx);
+    state.resolve_bytecode_cref(
+        &db,
+        &db.get_member(103).unwrap().abilities[0].bytecode,
+        &ctx,
+    );
     state.dump_verbose();
 
     // Verification:

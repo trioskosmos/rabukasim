@@ -5,7 +5,7 @@
 //! - Condition Opcodes: C_HAS_COLOR (202), C_HAS_MOVED (228)
 
 use crate::core::logic::*;
-use crate::test_helpers::{create_test_db, create_test_state, add_card};
+use crate::test_helpers::{add_card, create_test_db, create_test_state};
 
 // =============================================================================
 // O_FORMATION_CHANGE (26) Tests
@@ -29,8 +29,8 @@ fn test_opcode_formation_change_basic() {
 
     let ctx = AbilityContext {
         player_id: 0,
-        area_idx: 0,  // Source slot
-        target_slot: 1,  // Destination slot
+        area_idx: 0,    // Source slot
+        target_slot: 1, // Destination slot
         ..Default::default()
     };
 
@@ -40,8 +40,14 @@ fn test_opcode_formation_change_basic() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Verify swap occurred
-    assert_eq!(state.core.players[0].stage[0], 4002, "Member_B should now be in slot 0");
-    assert_eq!(state.core.players[0].stage[1], 4001, "Member_A should now be in slot 1");
+    assert_eq!(
+        state.core.players[0].stage[0], 4002,
+        "Member_B should now be in slot 0"
+    );
+    assert_eq!(
+        state.core.players[0].stage[1], 4001,
+        "Member_A should now be in slot 1"
+    );
 }
 
 /// Verifies that O_FORMATION_CHANGE triggers OnPositionChange for both members.
@@ -53,9 +59,17 @@ fn test_opcode_formation_change_triggers_position_change() {
 
     // Add a member with OnPositionChange trigger
     // Bytecode for OnPositionChange: O_DRAW 1
-    add_card(&mut db, 4010, "Position_Trigger", vec![1], vec![
-        (TriggerType::OnPositionChange, vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0], vec![])
-    ]);
+    add_card(
+        &mut db,
+        4010,
+        "Position_Trigger",
+        vec![1],
+        vec![(
+            TriggerType::OnPositionChange,
+            vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
+            vec![],
+        )],
+    );
     add_card(&mut db, 4011, "Other_Member", vec![1], vec![]);
 
     state.core.players[0].stage = [4010, 4011, -1];
@@ -74,7 +88,10 @@ fn test_opcode_formation_change_triggers_position_change() {
 
     // OnPositionChange triggers for BOTH members that moved (4010 and 4011)
     // So we expect 2 cards drawn (1 for each member's OnPositionChange)
-    assert!(state.core.players[0].hand.len() >= 1, "Should have drawn at least 1 card from OnPositionChange trigger");
+    assert!(
+        state.core.players[0].hand.len() >= 1,
+        "Should have drawn at least 1 card from OnPositionChange trigger"
+    );
 }
 
 // =============================================================================
@@ -91,13 +108,30 @@ fn test_opcode_prevent_set_to_success_pile() {
     // Initially the flag should be 0
     assert_eq!(state.core.players[0].prevent_success_pile_set, 0);
 
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // O_PREVENT_SET_TO_SUCCESS_PILE sets the flag to 1
-    let bc = vec![O_PREVENT_SET_TO_SUCCESS_PILE, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
+    let bc = vec![
+        O_PREVENT_SET_TO_SUCCESS_PILE,
+        1,
+        0,
+        0,
+        0,
+        O_RETURN,
+        0,
+        0,
+        0,
+        0,
+    ];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    assert_eq!(state.core.players[0].prevent_success_pile_set, 1, "prevent_success_pile_set should be set to 1");
+    assert_eq!(
+        state.core.players[0].prevent_success_pile_set, 1,
+        "prevent_success_pile_set should be set to 1"
+    );
 }
 
 /// Verifies that O_REDUCE_LIVE_SET_LIMIT can stack values (uses saturating_add).
@@ -107,7 +141,10 @@ fn test_opcode_reduce_live_set_limit_stacking() {
     let mut state = create_test_state();
     state.ui.silent = true;
 
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // O_REDUCE_LIVE_SET_LIMIT stacks with saturating_add
     let bc = vec![O_REDUCE_LIVE_SET_LIMIT, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
@@ -115,7 +152,10 @@ fn test_opcode_reduce_live_set_limit_stacking() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Should stack (saturating_add)
-    assert_eq!(state.core.players[0].prevent_success_pile_set, 4, "prevent_success_pile_set should stack to 4 via O_REDUCE_LIVE_SET_LIMIT");
+    assert_eq!(
+        state.core.players[0].prevent_success_pile_set, 4,
+        "prevent_success_pile_set should stack to 4 via O_REDUCE_LIVE_SET_LIMIT"
+    );
 }
 
 // =============================================================================
@@ -129,14 +169,21 @@ fn test_opcode_set_heart_cost() {
     let mut state = create_test_state();
     state.ui.silent = true;
 
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // O_SET_HEART_COST: v=3 (amount), s=0 (color index 0 = Pink)
     let bc = vec![O_SET_HEART_COST, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Verify heart_req_additions was modified for color 0
-    assert_eq!(state.core.players[0].heart_req_additions.get_color_count(0), 3, "Pink heart cost should be increased by 3");
+    assert_eq!(
+        state.core.players[0].heart_req_additions.get_color_count(0),
+        3,
+        "Pink heart cost should be increased by 3"
+    );
 }
 
 /// Verifies that O_SET_HEART_COST works for different colors.
@@ -146,7 +193,10 @@ fn test_opcode_set_heart_cost_multiple_colors() {
     let mut state = create_test_state();
     state.ui.silent = true;
 
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // Set cost for color 1 (Green)
     let bc1 = vec![O_SET_HEART_COST, 2, 0, 0, 1, O_RETURN, 0, 0, 0, 0];
@@ -156,8 +206,16 @@ fn test_opcode_set_heart_cost_multiple_colors() {
     let bc2 = vec![O_SET_HEART_COST, 4, 0, 0, 2, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc2, &ctx);
 
-    assert_eq!(state.core.players[0].heart_req_additions.get_color_count(1), 2, "Green heart cost should be 2");
-    assert_eq!(state.core.players[0].heart_req_additions.get_color_count(2), 4, "Blue heart cost should be 4");
+    assert_eq!(
+        state.core.players[0].heart_req_additions.get_color_count(1),
+        2,
+        "Green heart cost should be 2"
+    );
+    assert_eq!(
+        state.core.players[0].heart_req_additions.get_color_count(2),
+        4,
+        "Blue heart cost should be 4"
+    );
 }
 
 // =============================================================================
@@ -187,15 +245,43 @@ fn test_condition_has_color_true() {
     state.core.players[0].hand = vec![].into();
     state.core.players[0].deck = vec![3000].into();
 
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // C_HAS_COLOR with color 0 (Pink): should pass
     // Format: [C_HAS_COLOR, val, attr, slot] where attr encodes color
-    let bc = vec![C_HAS_COLOR, 0, 0, 0, 0, O_JUMP_IF_FALSE, 1, 0, 0, 0, O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
+    let bc = vec![
+        C_HAS_COLOR,
+        0,
+        0,
+        0,
+        0,
+        O_JUMP_IF_FALSE,
+        1,
+        0,
+        0,
+        0,
+        O_DRAW,
+        1,
+        0,
+        0,
+        0,
+        O_RETURN,
+        0,
+        0,
+        0,
+        0,
+    ];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // If condition passed, should have drawn a card
-    assert_eq!(state.core.players[0].hand.len(), 1, "Should have drawn 1 card when color is present");
+    assert_eq!(
+        state.core.players[0].hand.len(),
+        1,
+        "Should have drawn 1 card when color is present"
+    );
 }
 
 /// Verifies that C_HAS_COLOR returns false when no member with the specified color is on stage.
@@ -221,14 +307,42 @@ fn test_condition_has_color_false() {
     state.core.players[0].hand = vec![].into();
     state.core.players[0].deck = vec![3000].into();
 
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // C_HAS_COLOR with color 0 (Pink): should fail, jump over DRAW
-    let bc = vec![C_HAS_COLOR, 0, 0, 0, 0, O_JUMP_IF_FALSE, 1, 0, 0, 0, O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
+    let bc = vec![
+        C_HAS_COLOR,
+        0,
+        0,
+        0,
+        0,
+        O_JUMP_IF_FALSE,
+        1,
+        0,
+        0,
+        0,
+        O_DRAW,
+        1,
+        0,
+        0,
+        0,
+        O_RETURN,
+        0,
+        0,
+        0,
+        0,
+    ];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // If condition failed, should NOT have drawn a card
-    assert_eq!(state.core.players[0].hand.len(), 0, "Should not have drawn a card when color not present");
+    assert_eq!(
+        state.core.players[0].hand.len(),
+        0,
+        "Should not have drawn a card when color not present"
+    );
 }
 
 // =============================================================================
@@ -247,19 +361,44 @@ fn test_condition_has_moved_true() {
 
     let ctx = AbilityContext {
         player_id: 0,
-        area_idx: 0,  // Check slot 0
+        area_idx: 0, // Check slot 0
         ..Default::default()
     };
 
     // C_HAS_MOVED: should pass because slot 0 has moved flag
     // Format: [C_HAS_MOVED, val, attr, slot]
-    let bc = vec![C_HAS_MOVED, 0, 0, 0, 0, O_JUMP_IF_FALSE, 1, 0, 0, 0, O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
+    let bc = vec![
+        C_HAS_MOVED,
+        0,
+        0,
+        0,
+        0,
+        O_JUMP_IF_FALSE,
+        1,
+        0,
+        0,
+        0,
+        O_DRAW,
+        1,
+        0,
+        0,
+        0,
+        O_RETURN,
+        0,
+        0,
+        0,
+        0,
+    ];
     state.core.players[0].hand = vec![].into();
     state.core.players[0].deck = vec![3001].into();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Condition should pass, draw should execute
-    assert_eq!(state.core.players[0].hand.len(), 1, "Should have drawn a card when member has moved");
+    assert_eq!(
+        state.core.players[0].hand.len(),
+        1,
+        "Should have drawn a card when member has moved"
+    );
 }
 
 /// Verifies that C_HAS_MOVED returns false when the member has not moved this turn.
@@ -278,13 +417,38 @@ fn test_condition_has_moved_false() {
         ..Default::default()
     };
 
-    let bc = vec![C_HAS_MOVED, 0, 0, 0, 0, O_JUMP_IF_FALSE, 1, 0, 0, 0, O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
+    let bc = vec![
+        C_HAS_MOVED,
+        0,
+        0,
+        0,
+        0,
+        O_JUMP_IF_FALSE,
+        1,
+        0,
+        0,
+        0,
+        O_DRAW,
+        1,
+        0,
+        0,
+        0,
+        O_RETURN,
+        0,
+        0,
+        0,
+        0,
+    ];
     state.core.players[0].hand = vec![].into();
     state.core.players[0].deck = vec![3001].into();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Condition should fail, draw should NOT execute
-    assert_eq!(state.core.players[0].hand.len(), 0, "Should not have drawn a card when member has not moved");
+    assert_eq!(
+        state.core.players[0].hand.len(),
+        0,
+        "Should not have drawn a card when member has not moved"
+    );
 }
 
 // =============================================================================
@@ -315,9 +479,18 @@ fn test_formation_change_with_group_condition() {
     let bc = vec![O_FORMATION_CHANGE, 1, 2, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    assert_eq!(state.core.players[0].stage[0], -1, "Slot 0 should be empty after swap");
-    assert_eq!(state.core.players[0].stage[2], 6001, "Slot 2 should have GroupA_Member1");
-    assert_eq!(state.core.players[0].stage[1], 6002, "Slot 1 should still have GroupA_Member2");
+    assert_eq!(
+        state.core.players[0].stage[0], -1,
+        "Slot 0 should be empty after swap"
+    );
+    assert_eq!(
+        state.core.players[0].stage[2], 6001,
+        "Slot 2 should have GroupA_Member1"
+    );
+    assert_eq!(
+        state.core.players[0].stage[1], 6002,
+        "Slot 1 should still have GroupA_Member2"
+    );
 }
 
 /// Tests that O_PREVENT_SET_TO_SUCCESS_PILE affects game mechanics.
@@ -330,10 +503,24 @@ fn test_prevent_success_pile_integration() {
     // Set up a live in live_zone
     state.core.players[0].live_zone = [55001, -1, -1];
 
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // Apply prevent_success_pile_set
-    let bc = vec![O_PREVENT_SET_TO_SUCCESS_PILE, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
+    let bc = vec![
+        O_PREVENT_SET_TO_SUCCESS_PILE,
+        1,
+        0,
+        0,
+        0,
+        O_RETURN,
+        0,
+        0,
+        0,
+        0,
+    ];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // The flag should prevent the live from being moved to success_lives

@@ -1,10 +1,16 @@
-use crate::core::logic::{ActionReceiver, CardDatabase, GameState};
 use crate::core::logic::action_gen::ActionGenerator;
+use crate::core::logic::{ActionReceiver, CardDatabase, GameState};
 
 pub struct MulliganGenerator;
 
 impl ActionGenerator for MulliganGenerator {
-    fn generate<R: ActionReceiver + ?Sized>(&self, _db: &CardDatabase, p_idx: usize, state: &GameState, receiver: &mut R) {
+    fn generate<R: ActionReceiver + ?Sized>(
+        &self,
+        _db: &CardDatabase,
+        p_idx: usize,
+        state: &GameState,
+        receiver: &mut R,
+    ) {
         let player = &state.core.players[p_idx];
         // Action 0: Confirm
         receiver.add_action(0);

@@ -14,11 +14,11 @@
 //! `PlayerState` uses `SmallVec` and fixed-size arrays where possible to minimize
 //! heap allocations, which is critical for MCTS performance.
 
+use super::models::*;
+use crate::core::enums::*;
+use crate::core::hearts::HeartBoard;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
-use crate::core::hearts::HeartBoard;
-use crate::core::enums::*;
-use super::models::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PlayerState {
@@ -103,7 +103,6 @@ pub struct PlayerState {
     pub played_group_mask: u32,
     #[serde(default)]
     pub play_count_this_turn: u8,
-
 
     // Bitfields
     #[serde(default)]
@@ -206,20 +205,37 @@ impl PlayerState {
     pub const OFFSET_MOVED: u8 = 6;
     pub const OFFSET_REVEALED: u8 = 9;
 
-    pub fn get_flag(&self, bit: u8) -> bool { (self.flags >> bit) & 1 == 1 }
+    pub fn get_flag(&self, bit: u8) -> bool {
+        (self.flags >> bit) & 1 == 1
+    }
     pub fn set_flag(&mut self, bit: u8, val: bool) {
-        if val { self.flags |= 1 << bit; }
-        else { self.flags &= !(1 << bit); }
+        if val {
+            self.flags |= 1 << bit;
+        } else {
+            self.flags &= !(1 << bit);
+        }
     }
 
-    pub fn is_tapped(&self, slot: usize) -> bool { self.get_flag(Self::OFFSET_TAPPED + slot as u8) }
-    pub fn set_tapped(&mut self, slot: usize, val: bool) { self.set_flag(Self::OFFSET_TAPPED + slot as u8, val); }
+    pub fn is_tapped(&self, slot: usize) -> bool {
+        self.get_flag(Self::OFFSET_TAPPED + slot as u8)
+    }
+    pub fn set_tapped(&mut self, slot: usize, val: bool) {
+        self.set_flag(Self::OFFSET_TAPPED + slot as u8, val);
+    }
 
-    pub fn is_moved(&self, slot: usize) -> bool { self.get_flag(Self::OFFSET_MOVED + slot as u8) }
-    pub fn set_moved(&mut self, slot: usize, val: bool) { self.set_flag(Self::OFFSET_MOVED + slot as u8, val); }
+    pub fn is_moved(&self, slot: usize) -> bool {
+        self.get_flag(Self::OFFSET_MOVED + slot as u8)
+    }
+    pub fn set_moved(&mut self, slot: usize, val: bool) {
+        self.set_flag(Self::OFFSET_MOVED + slot as u8, val);
+    }
 
-    pub fn is_revealed(&self, slot: usize) -> bool { self.get_flag(Self::OFFSET_REVEALED + slot as u8) }
-    pub fn set_revealed(&mut self, slot: usize, val: bool) { self.set_flag(Self::OFFSET_REVEALED + slot as u8, val); }
+    pub fn is_revealed(&self, slot: usize) -> bool {
+        self.get_flag(Self::OFFSET_REVEALED + slot as u8)
+    }
+    pub fn set_revealed(&mut self, slot: usize, val: bool) {
+        self.set_flag(Self::OFFSET_REVEALED + slot as u8, val);
+    }
 
     pub fn swap_tapped(&mut self, i: usize, j: usize) {
         let ti = self.is_tapped(i);
@@ -339,12 +355,15 @@ impl PlayerState {
         copy_smallvec!(self.blade_buff_logs, other.blade_buff_logs);
         copy_smallvec!(self.heart_buff_logs, other.heart_buff_logs);
         for i in 0..3 {
-             copy_smallvec!(self.stage_energy[i], other.stage_energy[i]);
+            copy_smallvec!(self.stage_energy[i], other.stage_energy[i]);
         }
         copy_smallvec!(self.color_transforms, other.color_transforms);
         self.heart_req_reductions = other.heart_req_reductions;
         self.heart_req_additions = other.heart_req_additions;
-        copy_smallvec!(self.heart_req_reduction_logs, other.heart_req_reduction_logs);
+        copy_smallvec!(
+            self.heart_req_reduction_logs,
+            other.heart_req_reduction_logs
+        );
         self.mulligan_selection = other.mulligan_selection;
         copy_smallvec!(self.hand_added_turn, other.hand_added_turn);
         copy_smallvec!(self.restrictions, other.restrictions);
@@ -354,7 +373,8 @@ impl PlayerState {
 
         self.cost_modifiers.clear();
         if !other.cost_modifiers.is_empty() {
-            self.cost_modifiers.extend(other.cost_modifiers.iter().cloned());
+            self.cost_modifiers
+                .extend(other.cost_modifiers.iter().cloned());
         }
 
         self.flags = other.flags;
@@ -375,12 +395,16 @@ impl PlayerState {
         self.discarded_this_turn = other.discarded_this_turn;
     }
     pub fn is_energy_tapped(&self, idx: usize) -> bool {
-        if idx >= 64 { return false; }
+        if idx >= 64 {
+            return false;
+        }
         (self.tapped_energy_mask & (1u64 << idx)) != 0
     }
 
     pub fn set_energy_tapped(&mut self, idx: usize, tapped: bool) {
-        if idx >= 64 { return; }
+        if idx >= 64 {
+            return;
+        }
         if tapped {
             self.tapped_energy_mask |= 1u64 << idx;
         } else {
@@ -389,12 +413,16 @@ impl PlayerState {
     }
 
     pub fn get_untapped_energy_indices(&self, count: usize) -> Vec<usize> {
-        if count == 0 { return Vec::new(); }
+        if count == 0 {
+            return Vec::new();
+        }
         let mut indices = Vec::with_capacity(count);
         for i in 0..self.energy_zone.len() {
             if !self.is_energy_tapped(i) {
                 indices.push(i);
-                if indices.len() == count { break; }
+                if indices.len() == count {
+                    break;
+                }
             }
         }
         indices

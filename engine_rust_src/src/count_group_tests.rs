@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
+    use crate::core::logic::interpreter::conditions::check_condition_opcode;
     use crate::core::logic::*;
     use crate::test_helpers::*;
-    use crate::core::logic::interpreter::conditions::check_condition_opcode;
 
     #[test]
     fn test_count_group_unique_names() {
@@ -22,7 +22,10 @@ mod tests {
         // Put all 3 on stage
         state.core.players[0].stage = [3001, 3002, 3003];
 
-        let ctx = AbilityContext { player_id: 0, ..Default::default() };
+        let ctx = AbilityContext {
+            player_id: 0,
+            ..Default::default()
+        };
 
         // 1. Total Count (Wait 3, Group 10)
         // attr = 10 (group)
@@ -34,7 +37,10 @@ mod tests {
         // attr = 10 | 0x8000
         // val = 3
         let passed_unique_3 = check_condition_opcode(&state, &db, 208, 3, 10 | 0x8000, -1, &ctx, 0);
-        assert!(!passed_unique_3, "Should NOT find 3 UNIQUE names (only 2: Member A and Member C)");
+        assert!(
+            !passed_unique_3,
+            "Should NOT find 3 UNIQUE names (only 2: Member A and Member C)"
+        );
 
         // 3. Unique Count (Wait 2, Group 10, Unique Flag 0x8000)
         // attr = 10 | 0x8000

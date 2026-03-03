@@ -1,7 +1,7 @@
 mod tests {
-    use crate::test_helpers::*;
-    use crate::core::models::*;
     use crate::core::logic::TriggerType;
+    use crate::core::models::*;
+    use crate::test_helpers::*;
 
     #[test]
     fn test_repro_bp3_002_p_tap_targeting() {
@@ -32,7 +32,9 @@ mod tests {
             ability_index: 0,
             ..Default::default()
         };
-        state.trigger_queue.push_back((eli_id, 0, actx, false, TriggerType::OnPlay));
+        state
+            .trigger_queue
+            .push_back((eli_id, 0, actx, false, TriggerType::OnPlay));
         state.process_trigger_queue(&db);
 
         // The engine may skip OPTIONAL and go directly to SELECT_HAND_DISCARD
@@ -49,7 +51,8 @@ mod tests {
         // Accept either OPTIONAL or SELECT_HAND_DISCARD as the first interaction
         assert!(
             pi.choice_type == "OPTIONAL" || pi.choice_type == "SELECT_HAND_DISCARD",
-            "Choice type should be OPTIONAL or SELECT_HAND_DISCARD, got: {}", pi.choice_type
+            "Choice type should be OPTIONAL or SELECT_HAND_DISCARD, got: {}",
+            pi.choice_type
         );
 
         // If OPTIONAL, resolve it first
@@ -60,7 +63,10 @@ mod tests {
                 return;
             }
             let pi = state.interaction_stack.last().unwrap();
-            println!("DEBUG: After OPTIONAL, interaction type: {}", pi.choice_type);
+            println!(
+                "DEBUG: After OPTIONAL, interaction type: {}",
+                pi.choice_type
+            );
         }
 
         // Handle SELECT_HAND_DISCARD if present
@@ -84,8 +90,14 @@ mod tests {
             // Resolve interaction choosing slot 600 (opponent slot 0)
             state.step(&db, 600).unwrap();
 
-            assert!(state.core.players[1].is_tapped(0), "Opponent member should be tapped");
-            assert!(!state.core.players[0].is_tapped(0), "Active player member should NOT be tapped");
+            assert!(
+                state.core.players[1].is_tapped(0),
+                "Opponent member should be tapped"
+            );
+            assert!(
+                !state.core.players[0].is_tapped(0),
+                "Active player member should NOT be tapped"
+            );
         } else {
             println!("Unexpected interaction type: {}", pi.choice_type);
         }

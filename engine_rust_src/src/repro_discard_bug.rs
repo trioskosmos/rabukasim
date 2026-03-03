@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
+    use crate::core::logic::{AbilityContext, TriggerType};
     use crate::test_helpers::{create_test_state, load_real_db, TestUtils};
-    use crate::core::logic::{TriggerType, AbilityContext};
 
     #[test]
     fn test_move_to_discard_deck_top_slot_1_repro() {
@@ -37,7 +37,14 @@ mod tests {
         state.dump_verbose();
 
         // If the bug exists, the state will have a suspension and the discard count won't increase by 5
-        assert!(state.interaction_stack.is_empty(), "Game should NOT be suspended for MOVE_TO_DISCARD from deck top");
-        assert_eq!(state.core.players[p_idx].discard.len(), initial_discard_len + 5, "Should have discarded 5 cards");
+        assert!(
+            state.interaction_stack.is_empty(),
+            "Game should NOT be suspended for MOVE_TO_DISCARD from deck top"
+        );
+        assert_eq!(
+            state.core.players[p_idx].discard.len(),
+            initial_discard_len + 5,
+            "Should have discarded 5 cards"
+        );
     }
 }

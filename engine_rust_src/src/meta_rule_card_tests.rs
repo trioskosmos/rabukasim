@@ -7,7 +7,7 @@
 //! The ALL_BLADE_AS_ANY_HEART meta rule is not yet implemented in the engine.
 
 use crate::core::logic::*;
-use crate::test_helpers::{load_real_db, create_test_state};
+use crate::test_helpers::{create_test_state, load_real_db};
 
 // =============================================================================
 // PL!SP-bp1-024-L: 澁谷かのん&唐可可
@@ -24,7 +24,10 @@ use crate::test_helpers::{load_real_db, create_test_state};
 
 /// Helper to find card ID by card number
 fn find_card_id(db: &CardDatabase, card_no: &str) -> i32 {
-    db.card_no_to_id.get(card_no).copied().expect(&format!("Card {} not found", card_no))
+    db.card_no_to_id
+        .get(card_no)
+        .copied()
+        .expect(&format!("Card {} not found", card_no))
 }
 
 /// Helper to find member card by character name
@@ -74,7 +77,10 @@ fn test_meta_rule_pl_sp_bp1_024_l_heart_buffs() {
     // Second SELECT_MEMBER: Select Keke (slot 1) to give heart01 + blade
     let mut selection_count = 0;
     while state.phase == Phase::Response && !state.interaction_stack.is_empty() {
-        println!("[TEST] Resolving interaction: {:?}", state.interaction_stack.last().unwrap().choice_type);
+        println!(
+            "[TEST] Resolving interaction: {:?}",
+            state.interaction_stack.last().unwrap().choice_type
+        );
         // Alternate between choice 0 and choice 1 for each selection
         let action_id = (ACTION_BASE_CHOICE + selection_count) as i32;
         selection_count += 1;
@@ -162,7 +168,7 @@ fn test_meta_rule_pl_sp_bp1_024_l_no_draw_without_both() {
     // Setup: Only Kanon on stage (no Keke)
     let kanon_id = find_member_by_name(&db, "澁谷かのん").unwrap_or(100);
     state.players[0].stage[0] = kanon_id;
-    state.players[0].stage[1] = -1;  // Empty slot
+    state.players[0].stage[1] = -1; // Empty slot
     state.players[0].live_zone[0] = card_id;
 
     state.players[0].deck = vec![3001, 3002, 3003].into();
@@ -207,7 +213,9 @@ fn test_meta_rule_pl_sp_bp1_026_l_condition_check() {
 
     // Setup: Place 5+ unique Liella! members in stage and discard
     // Group ID for Liella! is 3
-    let liella_members: Vec<i32> = db.members.iter()
+    let liella_members: Vec<i32> = db
+        .members
+        .iter()
         .filter(|(_, m)| m.groups.contains(&3))
         .take(5)
         .map(|(id, _)| *id)
@@ -215,7 +223,10 @@ fn test_meta_rule_pl_sp_bp1_026_l_condition_check() {
 
     if liella_members.len() < 5 {
         // Skip test if not enough Liella! members in DB
-        eprintln!("Skipping test: Need at least 5 Liella! members, found {}", liella_members.len());
+        eprintln!(
+            "Skipping test: Need at least 5 Liella! members, found {}",
+            liella_members.len()
+        );
         return;
     }
 
@@ -252,7 +263,10 @@ fn test_meta_rule_cheer_mod_increment() {
 
     // Execute O_META_RULE with a=0 (cheer_mod), v=1
     let bc = vec![O_META_RULE, 1, 0, 0, O_RETURN, 0, 0, 0];
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Assert: cheer_mod_count should be incremented
@@ -273,13 +287,15 @@ fn test_meta_rule_cheer_mod_multiple() {
 
     // Execute O_META_RULE multiple times
     let bc = vec![O_META_RULE, 3, 0, 0, O_RETURN, 0, 0, 0];
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Assert: cheer_mod_count should be incremented by 3
     assert_eq!(
-        state.players[0].cheer_mod_count,
-        3,
+        state.players[0].cheer_mod_count, 3,
         "cheer_mod_count should be incremented by 3"
     );
 }

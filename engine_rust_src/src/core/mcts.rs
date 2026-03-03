@@ -1,22 +1,22 @@
+use crate::core::heuristics::Heuristic;
+use crate::core::logic::{CardDatabase, GameState};
 #[cfg(feature = "extension-module")]
 use pyo3::prelude::*;
 use rand::prelude::*;
 use rand::rngs::SmallRng;
 use rand::SeedableRng;
-use crate::core::heuristics::Heuristic;
-use crate::core::logic::{GameState, CardDatabase};
 // use crate::core::logic::{Phase, ActionReceiver};
+#[cfg(feature = "nn")]
+use crate::core::enums::*;
 #[cfg(feature = "nn")]
 use crate::core::logic::ai_encoding::GameStateEncoding;
 #[cfg(feature = "nn")]
-use crate::core::enums::*;
-use std::f32;
-use smallvec::SmallVec;
+use ort::session::Session;
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
+use smallvec::SmallVec;
 use std::collections::HashMap;
-#[cfg(feature = "nn")]
-use ort::session::Session;
+use std::f32;
 #[cfg(feature = "nn")]
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -29,7 +29,6 @@ pub struct MCTSProfiler {
     pub simulation: Duration,
     pub backpropagation: Duration,
 }
-
 
 // DeckStats and EvalMode moved to heuristics.rs
 
@@ -44,7 +43,9 @@ impl MCTSProfiler {
 
     pub fn print(&self, total: Duration) {
         let total_secs = total.as_secs_f64();
-        if total_secs == 0.0 { return; }
+        if total_secs == 0.0 {
+            return;
+        }
         println!("[MCTS Profile] Breakdown:");
         let items = [
             ("Determinization", self.determinization),
@@ -56,7 +57,12 @@ impl MCTSProfiler {
 
         for (name, dur) in items {
             let secs = dur.as_secs_f64();
-            println!("  - {:<16}: {:>8.3}s ({:>6.1}%)", name, secs, (secs / total_secs) * 100.0);
+            println!(
+                "  - {:<16}: {:>8.3}s ({:>6.1}%)",
+                name,
+                secs,
+                (secs / total_secs) * 100.0
+            );
         }
     }
 }
@@ -78,7 +84,8 @@ pub struct MCTS {
     unseen_buffer: SmallVec<[i32; 64]>,
     legal_buffer: SmallVec<[i32; 32]>,
     reusable_state: GameState,
-    pub evaluator: Option<std::sync::Arc<Box<dyn crate::core::alphazero_evaluator::AlphaZeroEvaluator>>>,
+    pub evaluator:
+        Option<std::sync::Arc<Box<dyn crate::core::alphazero_evaluator::AlphaZeroEvaluator>>>,
     pub cpu_batch_size: usize,
     pub leaf_batch_size: usize,
     pub exploration_weight: f32,
@@ -91,7 +98,6 @@ pub enum SearchHorizon {
     TurnEnd(),
     Limited(u32),
 }
-
 
 // EvalMode moved to heuristics.rs
 
@@ -110,9 +116,10 @@ impl MCTS {
         }
     }
 
-
-
-    pub fn with_evaluator(eval: std::sync::Arc<Box<dyn crate::core::alphazero_evaluator::AlphaZeroEvaluator>>, batch_size: usize) -> Self {
+    pub fn with_evaluator(
+        eval: std::sync::Arc<Box<dyn crate::core::alphazero_evaluator::AlphaZeroEvaluator>>,
+        batch_size: usize,
+    ) -> Self {
         let mut mcts = Self::new();
         mcts.evaluator = Some(eval);
         mcts.cpu_batch_size = batch_size;
@@ -132,12 +139,23 @@ impl MCTS {
                 d += 1;
                 curr = p;
             }
-            if d > max_d { max_d = d; }
+            if d > max_d {
+                max_d = d;
+            }
         }
         max_d
     }
 
-    pub fn search_parallel(&self, root_state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32, horizon: SearchHorizon, heuristic: &dyn Heuristic, shuffle_self: bool) -> Vec<(i32, f32, u32)> {
+    pub fn search_parallel(
+        &self,
+        root_state: &GameState,
+        db: &CardDatabase,
+        num_sims: usize,
+        timeout_sec: f32,
+        horizon: SearchHorizon,
+        heuristic: &dyn Heuristic,
+        shuffle_self: bool,
+    ) -> Vec<(i32, f32, u32)> {
         #[cfg(feature = "parallel")]
         let mut _num_threads = rayon::current_num_threads().max(1);
         #[cfg(not(feature = "parallel"))]
@@ -146,7 +164,11 @@ impl MCTS {
 
         let start_overall = std::time::Instant::now();
         let leaf_batch_size = self.leaf_batch_size;
-        let sims_per_thread = if num_sims > 0 { (num_sims + num_threads - 1) / num_threads } else { 0 };
+        let sims_per_thread = if num_sims > 0 {
+            (num_sims + num_threads - 1) / num_threads
+        } else {
+            0
+        };
 
         // Collect results
         #[cfg(feature = "parallel")]
@@ -155,22 +177,48 @@ impl MCTS {
                 .stack_size(16 * 1024 * 1024)
                 .num_threads(num_threads)
                 .build()
-                .unwrap_or_else(|_| rayon::ThreadPoolBuilder::default().num_threads(num_threads).build().unwrap());
+                .unwrap_or_else(|_| {
+                    rayon::ThreadPoolBuilder::default()
+                        .num_threads(num_threads)
+                        .build()
+                        .unwrap()
+                });
 
             pool.install(|| {
-                (0..num_threads).into_par_iter().map(|_| {
-                    let mut mcts = MCTS::new();
-                    mcts.leaf_batch_size = leaf_batch_size;
-                    mcts.search_custom(root_state, db, sims_per_thread, timeout_sec, horizon, heuristic, shuffle_self, true)
-                }).collect()
+                (0..num_threads)
+                    .into_par_iter()
+                    .map(|_| {
+                        let mut mcts = MCTS::new();
+                        mcts.leaf_batch_size = leaf_batch_size;
+                        mcts.search_custom(
+                            root_state,
+                            db,
+                            sims_per_thread,
+                            timeout_sec,
+                            horizon,
+                            heuristic,
+                            shuffle_self,
+                            true,
+                        )
+                    })
+                    .collect()
             })
         };
 
         #[cfg(not(feature = "parallel"))]
         let results: Vec<(Vec<(i32, f32, u32)>, MCTSProfiler)> = vec![{
-             let mut mcts = MCTS::new();
-             mcts.leaf_batch_size = leaf_batch_size;
-             mcts.search_custom(root_state, db, num_sims, timeout_sec, horizon, heuristic, shuffle_self, true)
+            let mut mcts = MCTS::new();
+            mcts.leaf_batch_size = leaf_batch_size;
+            mcts.search_custom(
+                root_state,
+                db,
+                num_sims,
+                timeout_sec,
+                horizon,
+                heuristic,
+                shuffle_self,
+                true,
+            )
         }];
 
         // Merge results
@@ -193,23 +241,35 @@ impl MCTS {
         let duration = start_overall.elapsed();
         let _sims_per_sec = total_visits as f64 / duration.as_secs_f64();
         if total_visits > 100 {
-             // println!("[MCTS] Completed {} sims in {:.3}s ({:.0} sims/s)", total_visits, duration.as_secs_f64(), sims_per_sec);
-             // agg_profile.print(duration);
+            // println!("[MCTS] Completed {} sims in {:.3}s ({:.0} sims/s)", total_visits, duration.as_secs_f64(), sims_per_sec);
+            // agg_profile.print(duration);
         }
 
-        let mut stats: Vec<(i32, f32, u32)> = agg_map.into_iter().map(|(action, (sum_val, visits))| {
-            if visits > 0 {
-                (action, sum_val / visits as f32, visits)
-            } else {
-                (action, 0.0, 0)
-            }
-        }).collect();
+        let mut stats: Vec<(i32, f32, u32)> = agg_map
+            .into_iter()
+            .map(|(action, (sum_val, visits))| {
+                if visits > 0 {
+                    (action, sum_val / visits as f32, visits)
+                } else {
+                    (action, 0.0, 0)
+                }
+            })
+            .collect();
 
         stats.sort_by_key(|&(_, _, v)| std::cmp::Reverse(v));
         stats
     }
 
-    pub fn search_parallel_mode(&self, root_state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32, horizon: SearchHorizon, eval_mode: crate::core::heuristics::EvalMode, heuristic: &dyn Heuristic) -> Vec<(i32, f32, u32)> {
+    pub fn search_parallel_mode(
+        &self,
+        root_state: &GameState,
+        db: &CardDatabase,
+        num_sims: usize,
+        timeout_sec: f32,
+        horizon: SearchHorizon,
+        eval_mode: crate::core::heuristics::EvalMode,
+        heuristic: &dyn Heuristic,
+    ) -> Vec<(i32, f32, u32)> {
         let start_overall = std::time::Instant::now();
 
         #[cfg(feature = "parallel")]
@@ -220,21 +280,44 @@ impl MCTS {
         let num_threads = _num_threads;
 
         let leaf_batch_size = self.leaf_batch_size;
-        let sims_per_thread = if num_sims > 0 { (num_sims + num_threads - 1) / num_threads } else { 0 };
+        let sims_per_thread = if num_sims > 0 {
+            (num_sims + num_threads - 1) / num_threads
+        } else {
+            0
+        };
 
         // Collect results
         #[cfg(feature = "parallel")]
-        let results: Vec<(Vec<(i32, f32, u32)>, MCTSProfiler)> = (0..num_threads).into_par_iter().map(|_| {
-            let mut mcts = MCTS::new();
-            mcts.leaf_batch_size = leaf_batch_size;
-            mcts.search_mode(root_state, db, sims_per_thread, timeout_sec, horizon, eval_mode, heuristic)
-        }).collect();
+        let results: Vec<(Vec<(i32, f32, u32)>, MCTSProfiler)> = (0..num_threads)
+            .into_par_iter()
+            .map(|_| {
+                let mut mcts = MCTS::new();
+                mcts.leaf_batch_size = leaf_batch_size;
+                mcts.search_mode(
+                    root_state,
+                    db,
+                    sims_per_thread,
+                    timeout_sec,
+                    horizon,
+                    eval_mode,
+                    heuristic,
+                )
+            })
+            .collect();
 
         #[cfg(not(feature = "parallel"))]
         let results: Vec<(Vec<(i32, f32, u32)>, MCTSProfiler)> = vec![{
-             let mut mcts = MCTS::new();
-             mcts.leaf_batch_size = leaf_batch_size;
-             mcts.search_mode(root_state, db, num_sims, timeout_sec, horizon, eval_mode, heuristic)
+            let mut mcts = MCTS::new();
+            mcts.leaf_batch_size = leaf_batch_size;
+            mcts.search_mode(
+                root_state,
+                db,
+                num_sims,
+                timeout_sec,
+                horizon,
+                eval_mode,
+                heuristic,
+            )
         }];
 
         // Merge results
@@ -257,27 +340,57 @@ impl MCTS {
         let duration = start_overall.elapsed();
         let _sims_per_sec = total_visits as f64 / duration.as_secs_f64();
         if total_visits > 100 {
-             // println!("[MCTS Mode] Completed {} sims in {:.3}s ({:.0} sims/s)", total_visits, duration.as_secs_f64(), sims_per_sec);
-             // agg_profile.print(duration);
+            // println!("[MCTS Mode] Completed {} sims in {:.3}s ({:.0} sims/s)", total_visits, duration.as_secs_f64(), sims_per_sec);
+            // agg_profile.print(duration);
         }
 
-        let mut stats: Vec<(i32, f32, u32)> = agg_map.into_iter().map(|(action, (sum_val, visits))| {
-            if visits > 0 {
-                (action, sum_val / visits as f32, visits)
-            } else {
-                (action, 0.0, 0)
-            }
-        }).collect();
+        let mut stats: Vec<(i32, f32, u32)> = agg_map
+            .into_iter()
+            .map(|(action, (sum_val, visits))| {
+                if visits > 0 {
+                    (action, sum_val / visits as f32, visits)
+                } else {
+                    (action, 0.0, 0)
+                }
+            })
+            .collect();
 
         stats.sort_by_key(|&(_, _, v)| std::cmp::Reverse(v));
         stats
     }
 
-    pub fn search(&mut self, root_state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32, horizon: SearchHorizon, heuristic: &dyn Heuristic) -> (Vec<(i32, f32, u32)>, MCTSProfiler) {
-        self.search_custom(root_state, db, num_sims, timeout_sec, horizon, heuristic, false, false)
+    pub fn search(
+        &mut self,
+        root_state: &GameState,
+        db: &CardDatabase,
+        num_sims: usize,
+        timeout_sec: f32,
+        horizon: SearchHorizon,
+        heuristic: &dyn Heuristic,
+    ) -> (Vec<(i32, f32, u32)>, MCTSProfiler) {
+        self.search_custom(
+            root_state,
+            db,
+            num_sims,
+            timeout_sec,
+            horizon,
+            heuristic,
+            false,
+            false,
+        )
     }
 
-    pub fn search_custom(&mut self, root_state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32, horizon: SearchHorizon, heuristic: &dyn Heuristic, shuffle_self: bool, enable_rollout: bool) -> (Vec<(i32, f32, u32)>, MCTSProfiler) {
+    pub fn search_custom(
+        &mut self,
+        root_state: &GameState,
+        db: &CardDatabase,
+        num_sims: usize,
+        timeout_sec: f32,
+        horizon: SearchHorizon,
+        heuristic: &dyn Heuristic,
+        shuffle_self: bool,
+        enable_rollout: bool,
+    ) -> (Vec<(i32, f32, u32)>, MCTSProfiler) {
         use crate::core::heuristics::calculate_deck_expectations;
         let p0_stats = calculate_deck_expectations(&root_state.players[0].deck, db);
 
@@ -285,20 +398,46 @@ impl MCTS {
         p1_unseen.extend(root_state.players[1].deck.iter().cloned());
         let p1_stats = calculate_deck_expectations(&p1_unseen, db);
 
-        self.run_mcts_config(root_state, db, num_sims, timeout_sec, horizon, shuffle_self, enable_rollout, |state, _db| {
-            if state.is_terminal() {
-                 match state.get_winner() {
-                    0 => 1.0,
-                    1 => 0.0,
-                    _ => 0.5,
+        self.run_mcts_config(
+            root_state,
+            db,
+            num_sims,
+            timeout_sec,
+            horizon,
+            shuffle_self,
+            enable_rollout,
+            |state, _db| {
+                if state.is_terminal() {
+                    match state.get_winner() {
+                        0 => 1.0,
+                        1 => 0.0,
+                        _ => 0.5,
+                    }
+                } else {
+                    heuristic.evaluate(
+                        state,
+                        db,
+                        root_state.players[0].score,
+                        root_state.players[1].score,
+                        crate::core::heuristics::EvalMode::Normal,
+                        Some(p0_stats),
+                        Some(p1_stats),
+                    )
                 }
-            } else {
-                heuristic.evaluate(state, db, root_state.players[0].score, root_state.players[1].score, crate::core::heuristics::EvalMode::Normal, Some(p0_stats), Some(p1_stats))
-            }
-        })
+            },
+        )
     }
 
-    pub fn search_mode(&mut self, root_state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32, horizon: SearchHorizon, eval_mode: crate::core::heuristics::EvalMode, heuristic: &dyn Heuristic) -> (Vec<(i32, f32, u32)>, MCTSProfiler) {
+    pub fn search_mode(
+        &mut self,
+        root_state: &GameState,
+        db: &CardDatabase,
+        num_sims: usize,
+        timeout_sec: f32,
+        horizon: SearchHorizon,
+        eval_mode: crate::core::heuristics::EvalMode,
+        heuristic: &dyn Heuristic,
+    ) -> (Vec<(i32, f32, u32)>, MCTSProfiler) {
         use crate::core::heuristics::{calculate_deck_expectations, EvalMode};
         // Pre-calculate deck expectations for optimization
         let p0_stats = calculate_deck_expectations(&root_state.players[0].deck, db);
@@ -307,43 +446,82 @@ impl MCTS {
         p1_unseen.extend(root_state.players[1].deck.iter().cloned());
         let p1_stats = calculate_deck_expectations(&p1_unseen, db);
 
-        self.run_mcts_config(root_state, db, num_sims, timeout_sec, horizon, eval_mode == EvalMode::Blind, true, |state, _db| {
-            if state.is_terminal() {
-                if eval_mode == EvalMode::Solitaire {
-                     match state.get_winner() {
-                        0 => 1.0,
-                        1 => 0.0,
-                        _ => 0.5,
+        self.run_mcts_config(
+            root_state,
+            db,
+            num_sims,
+            timeout_sec,
+            horizon,
+            eval_mode == EvalMode::Blind,
+            true,
+            |state, _db| {
+                if state.is_terminal() {
+                    if eval_mode == EvalMode::Solitaire {
+                        match state.get_winner() {
+                            0 => 1.0,
+                            1 => 0.0,
+                            _ => 0.5,
+                        }
+                    } else {
+                        match state.get_winner() {
+                            0 => 1.0,
+                            1 => 0.0,
+                            _ => 0.5,
+                        }
                     }
                 } else {
-                     match state.get_winner() {
-                        0 => 1.0,
-                        1 => 0.0,
-                        _ => 0.5,
-                    }
+                    heuristic.evaluate(
+                        state,
+                        db,
+                        root_state.players[0].score,
+                        root_state.players[1].score,
+                        eval_mode,
+                        Some(p0_stats),
+                        Some(p1_stats),
+                    )
                 }
-            } else {
-                heuristic.evaluate(state, db, root_state.players[0].score, root_state.players[1].score, eval_mode, Some(p0_stats), Some(p1_stats))
-            }
-        })
+            },
+        )
     }
 
-
-    pub fn run_mcts_config<F>(&mut self, root_state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32, horizon: SearchHorizon, shuffle_self: bool, enable_rollout: bool, mut eval_fn: F) -> (Vec<(i32, f32, u32)>, MCTSProfiler)
-    where F: FnMut(&GameState, &CardDatabase) -> f32
+    pub fn run_mcts_config<F>(
+        &mut self,
+        root_state: &GameState,
+        db: &CardDatabase,
+        num_sims: usize,
+        timeout_sec: f32,
+        horizon: SearchHorizon,
+        shuffle_self: bool,
+        enable_rollout: bool,
+        mut eval_fn: F,
+    ) -> (Vec<(i32, f32, u32)>, MCTSProfiler)
+    where
+        F: FnMut(&GameState, &CardDatabase) -> f32,
     {
         self.nodes.clear();
         let start_time = std::time::Instant::now();
-        let timeout = if timeout_sec > 0.0 { Some(std::time::Duration::from_secs_f32(timeout_sec)) } else { None };
+        let timeout = if timeout_sec > 0.0 {
+            Some(std::time::Duration::from_secs_f32(timeout_sec))
+        } else {
+            None
+        };
         let root_start_turn = root_state.turn;
         let mut profiler = MCTSProfiler::default();
 
         // Root Node
         let mut legal_indices: SmallVec<[i32; 32]> = SmallVec::with_capacity(32);
-        root_state.generate_legal_actions(db, root_state.current_player as usize, &mut legal_indices);
+        root_state.generate_legal_actions(
+            db,
+            root_state.current_player as usize,
+            &mut legal_indices,
+        );
 
-        if legal_indices.is_empty() { return (vec![(0, 0.5, 0)], profiler); }
-        if legal_indices.len() == 1 { return (vec![(legal_indices[0], 0.5, 1)], profiler); }
+        if legal_indices.is_empty() {
+            return (vec![(0, 0.5, 0)], profiler);
+        }
+        if legal_indices.len() == 1 {
+            return (vec![(legal_indices[0], 0.5, 1)], profiler);
+        }
 
         self.nodes.push(Node {
             visit_count: 0,
@@ -358,11 +536,17 @@ impl MCTS {
 
         let mut sims_done = 0;
         loop {
-            if num_sims > 0 && sims_done >= num_sims { break; }
-            if let Some(to) = timeout {
-                if start_time.elapsed() >= to { break; }
+            if num_sims > 0 && sims_done >= num_sims {
+                break;
             }
-            if num_sims == 0 && timeout.is_none() { break; } // Safety
+            if let Some(to) = timeout {
+                if start_time.elapsed() >= to {
+                    break;
+                }
+            }
+            if num_sims == 0 && timeout.is_none() {
+                break;
+            } // Safety
 
             let is_trace = num_sims == 1;
             let t_setup = std::time::Instant::now();
@@ -383,23 +567,37 @@ impl MCTS {
                     let opp = 1 - me;
                     let opp_hand_len = state.core.players[opp].hand.len();
                     self.unseen_buffer.clear();
-                    self.unseen_buffer.extend_from_slice(&state.core.players[opp].hand);
-                    self.unseen_buffer.extend_from_slice(&state.core.players[opp].deck);
+                    self.unseen_buffer
+                        .extend_from_slice(&state.core.players[opp].hand);
+                    self.unseen_buffer
+                        .extend_from_slice(&state.core.players[opp].deck);
                     self.unseen_buffer.shuffle(&mut self.rng);
-                    state.core.players[opp].hand.copy_from_slice(&self.unseen_buffer[0..opp_hand_len]);
-                    state.core.players[opp].deck.copy_from_slice(&self.unseen_buffer[opp_hand_len..]);
+                    state.core.players[opp]
+                        .hand
+                        .copy_from_slice(&self.unseen_buffer[0..opp_hand_len]);
+                    state.core.players[opp]
+                        .deck
+                        .copy_from_slice(&self.unseen_buffer[opp_hand_len..]);
 
                     // 2. Selection
                     let mut node_idx = 0;
-                    while self.nodes[node_idx].untried_actions.is_empty() && !self.nodes[node_idx].children.is_empty() {
-                        node_idx = Self::select_child_logic(&self.nodes, node_idx, self.exploration_weight);
+                    while self.nodes[node_idx].untried_actions.is_empty()
+                        && !self.nodes[node_idx].children.is_empty()
+                    {
+                        node_idx = Self::select_child_logic(
+                            &self.nodes,
+                            node_idx,
+                            self.exploration_weight,
+                        );
                         let action = self.nodes[node_idx].parent_action;
                         let _ = state.step(db, action);
                     }
 
                     // 3. Expansion
                     if !self.nodes[node_idx].untried_actions.is_empty() {
-                        let idx = self.rng.random_range(0..self.nodes[node_idx].untried_actions.len());
+                        let idx = self
+                            .rng
+                            .random_range(0..self.nodes[node_idx].untried_actions.len());
                         let action = self.nodes[node_idx].untried_actions.swap_remove(idx);
                         let actor = state.current_player;
                         let _ = state.step(db, action);
@@ -407,7 +605,11 @@ impl MCTS {
                         state.sync_cost_modifiers(1, db);
 
                         self.legal_buffer.clear();
-                        state.generate_legal_actions(db, state.current_player as usize, &mut self.legal_buffer);
+                        state.generate_legal_actions(
+                            db,
+                            state.current_player as usize,
+                            &mut self.legal_buffer,
+                        );
                         let new_legal_indices = self.legal_buffer.clone();
                         let prob = 1.0 / (new_legal_indices.len().max(1) as f32);
 
@@ -451,13 +653,25 @@ impl MCTS {
                     // Hybrid Reward: NN Value + Heuristic Weighting
                     let reward_p0 = if batch_leaf_states[i].is_terminal() {
                         match batch_leaf_states[i].get_winner() {
-                            0 => 1.0, 1 => 0.0, _ => 0.5
+                            0 => 1.0,
+                            1 => 0.0,
+                            _ => 0.5,
                         }
                     } else {
                         // Meta-Heuristic: Use NN-predicted weights!
-                        use crate::core::heuristics::{OriginalHeuristic, EvalMode};
-                        let h = OriginalHeuristic { config: output.weights };
-                        let h_val = h.evaluate(&batch_leaf_states[i], db, root_state.players[0].score, root_state.players[1].score, EvalMode::Normal, None, None);
+                        use crate::core::heuristics::{EvalMode, OriginalHeuristic};
+                        let h = OriginalHeuristic {
+                            config: output.weights,
+                        };
+                        let h_val = h.evaluate(
+                            &batch_leaf_states[i],
+                            db,
+                            root_state.players[0].score,
+                            root_state.players[1].score,
+                            EvalMode::Normal,
+                            None,
+                            None,
+                        );
                         // Blend: 50/50 NN Value and Heuristic Assessment
                         (output.value * 0.5) + (h_val * 0.5)
                     };
@@ -491,12 +705,18 @@ impl MCTS {
                 let opp_hand_len = state.core.players[opp].hand.len();
 
                 self.unseen_buffer.clear();
-                self.unseen_buffer.extend_from_slice(&state.core.players[opp].hand);
-                self.unseen_buffer.extend_from_slice(&state.core.players[opp].deck);
+                self.unseen_buffer
+                    .extend_from_slice(&state.core.players[opp].hand);
+                self.unseen_buffer
+                    .extend_from_slice(&state.core.players[opp].deck);
                 self.unseen_buffer.shuffle(&mut self.rng);
 
-                state.core.players[opp].hand.copy_from_slice(&self.unseen_buffer[0..opp_hand_len]);
-                state.core.players[opp].deck.copy_from_slice(&self.unseen_buffer[opp_hand_len..]);
+                state.core.players[opp]
+                    .hand
+                    .copy_from_slice(&self.unseen_buffer[0..opp_hand_len]);
+                state.core.players[opp]
+                    .deck
+                    .copy_from_slice(&self.unseen_buffer[opp_hand_len..]);
 
                 if shuffle_self {
                     let mut my_deck = state.core.players[me].deck.clone();
@@ -509,10 +729,15 @@ impl MCTS {
 
                 // 2. Selection
                 let t_selection = std::time::Instant::now();
-                while self.nodes[node_idx].untried_actions.is_empty() && !self.nodes[node_idx].children.is_empty() {
-                    node_idx = Self::select_child_logic(&self.nodes, node_idx, self.exploration_weight);
+                while self.nodes[node_idx].untried_actions.is_empty()
+                    && !self.nodes[node_idx].children.is_empty()
+                {
+                    node_idx =
+                        Self::select_child_logic(&self.nodes, node_idx, self.exploration_weight);
                     let action = self.nodes[node_idx].parent_action;
-                    if is_trace { println!("[MCTS TRACE] Selection: Action {}", action); }
+                    if is_trace {
+                        println!("[MCTS TRACE] Selection: Action {}", action);
+                    }
                     let _ = state.step(db, action);
                 }
                 profiler.selection += t_selection.elapsed();
@@ -520,9 +745,13 @@ impl MCTS {
                 // 3. Expansion
                 let t_expansion = std::time::Instant::now();
                 if !self.nodes[node_idx].untried_actions.is_empty() {
-                    let idx = self.rng.random_range(0..self.nodes[node_idx].untried_actions.len());
+                    let idx = self
+                        .rng
+                        .random_range(0..self.nodes[node_idx].untried_actions.len());
                     let action = self.nodes[node_idx].untried_actions.swap_remove(idx);
-                    if is_trace { println!("[MCTS TRACE] Expansion: Action {}", action); }
+                    if is_trace {
+                        println!("[MCTS TRACE] Expansion: Action {}", action);
+                    }
 
                     let actor = state.current_player;
                     let _ = state.step(db, action);
@@ -533,10 +762,16 @@ impl MCTS {
                     self.legal_buffer.clear();
                     let mut is_capped = false;
                     if let SearchHorizon::TurnEnd() = horizon {
-                        if state.turn > root_start_turn { is_capped = true; }
+                        if state.turn > root_start_turn {
+                            is_capped = true;
+                        }
                     }
                     if !is_capped {
-                        state.generate_legal_actions(db, state.current_player as usize, &mut self.legal_buffer);
+                        state.generate_legal_actions(
+                            db,
+                            state.current_player as usize,
+                            &mut self.legal_buffer,
+                        );
                     }
 
                     let new_legal_indices = self.legal_buffer.clone();
@@ -567,13 +802,23 @@ impl MCTS {
                     if enable_rollout {
                         while !state.is_terminal() && depth < 200 {
                             if let SearchHorizon::Limited(max_depth) = horizon {
-                                if depth >= max_depth as usize { break; }
+                                if depth >= max_depth as usize {
+                                    break;
+                                }
                             }
                             if let SearchHorizon::TurnEnd() = horizon {
-                                if state.turn > root_start_turn { break; }
+                                if state.turn > root_start_turn {
+                                    break;
+                                }
                             }
-                            state.generate_legal_actions(db, state.current_player as usize, &mut self.legal_buffer);
-                            if self.legal_buffer.is_empty() { break; }
+                            state.generate_legal_actions(
+                                db,
+                                state.current_player as usize,
+                                &mut self.legal_buffer,
+                            );
+                            if self.legal_buffer.is_empty() {
+                                break;
+                            }
                             let chunk_action = *self.legal_buffer.choose(&mut self.rng).unwrap();
                             let _ = state.step(db, chunk_action);
                             depth += 1;
@@ -604,10 +849,16 @@ impl MCTS {
             }
         }
 
-        let mut stats: Vec<(i32, f32, u32)> = self.nodes[0].children.iter()
+        let mut stats: Vec<(i32, f32, u32)> = self.nodes[0]
+            .children
+            .iter()
             .map(|&(act, idx)| {
                 let child = &self.nodes[idx];
-                (act, child.value_sum / child.visit_count as f32, child.visit_count)
+                (
+                    act,
+                    child.value_sum / child.visit_count as f32,
+                    child.visit_count,
+                )
             })
             .collect();
 
@@ -633,7 +884,9 @@ impl MCTS {
             };
 
             // PUCT Exploration (AlphaZero)
-            let explore = exploration_weight * child.prior_prob * (total_visits_sqrt / (1.0 + child.visit_count as f32));
+            let explore = exploration_weight
+                * child.prior_prob
+                * (total_visits_sqrt / (1.0 + child.visit_count as f32));
 
             let score = exploit + explore;
 
@@ -650,8 +903,7 @@ impl MCTS {
         Self::select_child_logic(&self.nodes, node_idx, self.exploration_weight)
     }
 
-
-// Evaluation functions moved to heuristics.rs
+    // Evaluation functions moved to heuristics.rs
 }
 
 #[cfg(feature = "nn")]
@@ -673,7 +925,13 @@ impl HybridMCTS {
         }
     }
 
-    pub fn get_suggestions(&mut self, state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32) -> Vec<(i32, f32, u32)> {
+    pub fn get_suggestions(
+        &mut self,
+        state: &GameState,
+        db: &CardDatabase,
+        num_sims: usize,
+        timeout_sec: f32,
+    ) -> Vec<(i32, f32, u32)> {
         let start = std::time::Instant::now();
         let (stats, profile) = self.search(state, db, num_sims, timeout_sec);
         let duration = start.elapsed();
@@ -683,56 +941,78 @@ impl HybridMCTS {
         stats
     }
 
-    pub fn search(&mut self, root_state: &GameState, db: &CardDatabase, num_sims: usize, timeout_sec: f32) -> (Vec<(i32, f32, u32)>, MCTSProfiler) {
+    pub fn search(
+        &mut self,
+        root_state: &GameState,
+        db: &CardDatabase,
+        num_sims: usize,
+        timeout_sec: f32,
+    ) -> (Vec<(i32, f32, u32)>, MCTSProfiler) {
         let session_arc = self.session.clone();
         let neural_weight = self.neural_weight;
         let mut mcts = MCTS::new();
 
-        mcts.run_mcts_config(root_state, db, num_sims, timeout_sec, SearchHorizon::GameEnd(), false, !self.skip_rollout, |state: &GameState, db: &CardDatabase| {
-            if state.is_terminal() {
-                return match state.get_winner() {
-                    0 => 1.0,
-                    1 => 0.0,
-                    _ => 0.5,
-                };
-            }
+        mcts.run_mcts_config(
+            root_state,
+            db,
+            num_sims,
+            timeout_sec,
+            SearchHorizon::GameEnd(),
+            false,
+            !self.skip_rollout,
+            |state: &GameState, db: &CardDatabase| {
+                if state.is_terminal() {
+                    return match state.get_winner() {
+                        0 => 1.0,
+                        1 => 0.0,
+                        _ => 0.5,
+                    };
+                }
 
-            // Normal Heuristic Baseline
-            use crate::core::heuristics::{OriginalHeuristic, EvalMode};
-            let h = OriginalHeuristic::default();
-            let h_val = h.evaluate(state, db, root_state.players[0].score, root_state.players[1].score, EvalMode::Normal, None, None);
+                // Normal Heuristic Baseline
+                use crate::core::heuristics::{EvalMode, OriginalHeuristic};
+                let h = OriginalHeuristic::default();
+                let h_val = h.evaluate(
+                    state,
+                    db,
+                    root_state.players[0].score,
+                    root_state.players[1].score,
+                    EvalMode::Normal,
+                    None,
+                    None,
+                );
 
-            // NN Evaluation
-            let input_vec = state.encode_state(db);
-            let mut session = session_arc.lock().unwrap();
+                // NN Evaluation
+                let input_vec = state.encode_state(db);
+                let mut session = session_arc.lock().unwrap();
 
-            let input_shape = [1, input_vec.len()];
+                let input_shape = [1, input_vec.len()];
 
-            // Try to create input tensor and run using (shape, vec) which is version-agnostic
-            if let Ok(input_tensor) = ort::value::Value::from_array((input_shape, input_vec)) {
-                if let Ok(outputs) = session.run(ort::inputs![input_tensor]) {
-                    // Try to get value output. AlphaNet has 'output_1' or index 1
-                    let val_opt = outputs.get("output_1")
-                        .or_else(|| outputs.get("value"));
+                // Try to create input tensor and run using (shape, vec) which is version-agnostic
+                if let Ok(input_tensor) = ort::value::Value::from_array((input_shape, input_vec)) {
+                    if let Ok(outputs) = session.run(ort::inputs![input_tensor]) {
+                        // Try to get value output. AlphaNet has 'output_1' or index 1
+                        let val_opt = outputs.get("output_1").or_else(|| outputs.get("value"));
 
-                    if let Some(v_val) = val_opt {
-                        if let Ok((_, v_slice)) = v_val.try_extract_tensor::<f32>() {
-                            let nn_val = v_slice[0];
-                            let nn_norm = (nn_val * 0.5 + 0.5).clamp(0.0, 1.0) as f32;
-                            return h_val * (1.0 - neural_weight) + nn_norm * neural_weight;
-                        }
-                    } else if outputs.len() > 1 {
-                        // Fallback to index if names missing
-                        if let Ok((_, v_slice)) = outputs[1].try_extract_tensor::<f32>() {
-                            let nn_val = v_slice[0];
-                            let nn_norm = (nn_val * 0.5 + 0.5).clamp(0.0, 1.0) as f32;
-                            return h_val * (1.0 - neural_weight) + nn_norm * neural_weight;
+                        if let Some(v_val) = val_opt {
+                            if let Ok((_, v_slice)) = v_val.try_extract_tensor::<f32>() {
+                                let nn_val = v_slice[0];
+                                let nn_norm = (nn_val * 0.5 + 0.5).clamp(0.0, 1.0) as f32;
+                                return h_val * (1.0 - neural_weight) + nn_norm * neural_weight;
+                            }
+                        } else if outputs.len() > 1 {
+                            // Fallback to index if names missing
+                            if let Ok((_, v_slice)) = outputs[1].try_extract_tensor::<f32>() {
+                                let nn_val = v_slice[0];
+                                let nn_norm = (nn_val * 0.5 + 0.5).clamp(0.0, 1.0) as f32;
+                                return h_val * (1.0 - neural_weight) + nn_norm * neural_weight;
+                            }
                         }
                     }
                 }
-            }
 
-            h_val
-        })
+                h_val
+            },
+        )
     }
 }

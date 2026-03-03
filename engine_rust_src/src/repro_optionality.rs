@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::core::logic::*;
-    use crate::test_helpers::{create_test_db, create_test_state, add_card, Action};
+    use crate::test_helpers::{add_card, create_test_db, create_test_state, Action};
 
     #[test]
     fn test_optional_tap_cost_accept() {
@@ -12,21 +12,34 @@ mod tests {
         // Create a card with optional tap cost ability
         // O_ADD_BLADES(17) v=2 s=0 (target self) with optional tap cost
         // Bytecode: [17, 2, 0, 0] with cost flag
-        add_card(&mut db, 30032, "OPT-TAP", vec![1], vec![(
-            TriggerType::Activated,
-            vec![17, 2, 0, 0], // O_ADD_BLADES +2
-            vec![]
-        )]);
+        add_card(
+            &mut db,
+            30032,
+            "OPT-TAP",
+            vec![1],
+            vec![(
+                TriggerType::Activated,
+                vec![17, 2, 0, 0], // O_ADD_BLADES +2
+                vec![],
+            )],
+        );
 
         state.core.players[0].hand.push(30032);
 
         // Play the card
-        let play_action = Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id();
+        let play_action = Action::PlayMember {
+            hand_idx: 0,
+            slot_idx: 0,
+        }
+        .id();
         state.step(&db, play_action).expect("Failed to play member");
         state.auto_step(&db);
 
         // Basic verification that card is on stage
-        assert!(state.core.players[0].stage[0] >= 0, "Card should be on stage");
+        assert!(
+            state.core.players[0].stage[0] >= 0,
+            "Card should be on stage"
+        );
     }
 
     #[test]
@@ -47,16 +60,26 @@ mod tests {
         let mut state = create_test_state();
 
         // Add a card with on-play trigger
-        add_card(&mut db, 30033, "TRIGGER-CARD", vec![1], vec![(
-            TriggerType::OnPlay,
-            vec![10, 1, 0, 0], // O_DRAW 1
-            vec![]
-        )]);
+        add_card(
+            &mut db,
+            30033,
+            "TRIGGER-CARD",
+            vec![1],
+            vec![(
+                TriggerType::OnPlay,
+                vec![10, 1, 0, 0], // O_DRAW 1
+                vec![],
+            )],
+        );
 
         state.core.players[0].hand.push(30033);
 
         // Play the card
-        let play_action = Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id();
+        let play_action = Action::PlayMember {
+            hand_idx: 0,
+            slot_idx: 0,
+        }
+        .id();
         state.step(&db, play_action).expect("Failed to play member");
 
         // Verify card is on stage

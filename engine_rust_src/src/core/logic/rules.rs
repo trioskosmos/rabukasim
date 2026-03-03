@@ -1,11 +1,11 @@
-use super::game::GameState;
 use super::card_db::{CardDatabase, MemberCard};
+use super::game::GameState;
 use crate::core::logic::interpreter::check_condition;
 
-use crate::core::hearts::*;
 use crate::core::enums::*;
-pub use crate::core::logic::models::*;
 pub use crate::core::generated_constants::*;
+use crate::core::hearts::*;
+pub use crate::core::logic::models::*;
 
 pub fn has_multi_baton(m: &MemberCard) -> u8 {
     let mut limit = 1;
@@ -15,7 +15,7 @@ pub fn has_multi_baton(m: &MemberCard) -> u8 {
             let mut i = 0;
             while i + 4 < bc.len() {
                 if bc[i] == O_BATON_TOUCH_MOD {
-                    limit = limit.max(bc[i+1] as u8);
+                    limit = limit.max(bc[i + 1] as u8);
                 }
                 i += 5;
             }
@@ -24,18 +24,34 @@ pub fn has_multi_baton(m: &MemberCard) -> u8 {
     limit
 }
 
-pub fn get_effective_blades(state: &GameState, player_idx: usize, slot_idx: usize, db: &CardDatabase, depth: u32) -> u32 {
-    if depth > 5 { return 0; }
+pub fn get_effective_blades(
+    state: &GameState,
+    player_idx: usize,
+    slot_idx: usize,
+    db: &CardDatabase,
+    depth: u32,
+) -> u32 {
+    if depth > 5 {
+        return 0;
+    }
     let cid = state.core.players[player_idx].stage[slot_idx];
-    if cid < 0 || state.core.players[player_idx].is_tapped(slot_idx) { return 0; }
+    if cid < 0 || state.core.players[player_idx].is_tapped(slot_idx) {
+        return 0;
+    }
     let base_id = cid;
-    let m = if let Some(m) = db.get_member(base_id) { m } else { return 0 };
+    let m = if let Some(m) = db.get_member(base_id) {
+        m
+    } else {
+        return 0;
+    };
     let mut val = m.blades as i32;
 
     // Wave 1: Constant abilities from ALL members on stage (Global/Area buffs)
     for other_slot in 0..3 {
         let other_cid = state.core.players[player_idx].stage[other_slot];
-        if other_cid < 0 { continue; }
+        if other_cid < 0 {
+            continue;
+        }
         if let Some(other_m) = db.get_member(other_cid) {
             for ab in &other_m.abilities {
                 if ab.trigger == TriggerType::Constant {
@@ -47,21 +63,29 @@ pub fn get_effective_blades(state: &GameState, player_idx: usize, slot_idx: usiz
                         target_slot: slot_idx as i16, // The slot being evaluated
                         ..Default::default()
                     };
-                    if ab.conditions.iter().all(|c| check_condition(state, db, player_idx, c, &ctx, depth + 1)) {
+                    if ab
+                        .conditions
+                        .iter()
+                        .all(|c| check_condition(state, db, player_idx, c, &ctx, depth + 1))
+                    {
                         let bc = &ab.bytecode;
                         let mut i = 0;
                         while i + 4 < bc.len() {
                             let op = bc[i];
-                            let v = bc[i+1];
-                            let s = bc[i+4];
+                            let v = bc[i + 1];
+                            let s = bc[i + 4];
 
                             // Does this O_ADD_BLADES/O_BUFF_POWER target our slot?
                             // Target 1=All, 4=This Slot (if area_idx matching target_slot),
                             // 0=This Slot (often used as default)
                             let mut targets_us = false;
-                            if s == 1 { targets_us = true; }
-                            else if (s == 4 || s == 0) && other_slot == slot_idx { targets_us = true; }
-                            else if s == 10 && slot_idx as i16 == ctx.target_slot { targets_us = true; }
+                            if s == 1 {
+                                targets_us = true;
+                            } else if (s == 4 || s == 0) && other_slot == slot_idx {
+                                targets_us = true;
+                            } else if s == 10 && slot_idx as i16 == ctx.target_slot {
+                                targets_us = true;
+                            }
 
                             if (op == O_ADD_BLADES || op == O_BUFF_POWER) && targets_us {
                                 val += v as i32;
@@ -80,17 +104,29 @@ pub fn get_effective_blades(state: &GameState, player_idx: usize, slot_idx: usiz
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                     if ab.trigger == TriggerType::Constant {
-                         let ctx = AbilityContext { source_card_id: cid, player_id: player_idx as u8, activator_id: player_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
-                         if ab.conditions.iter().all(|c| check_condition(state, db, player_idx, c, &ctx, depth + 1)) {
-                             let bc = &ab.bytecode;
-                             let mut i = 0;
-                             while i + 4 < bc.len() {
-                                 let op = bc[i];
-                                 let v = bc[i+1];
-                                 if op == O_ADD_BLADES { val += v as i32; }
-                                 i += 5;
-                             }
-                         }
+                        let ctx = AbilityContext {
+                            source_card_id: cid,
+                            player_id: player_idx as u8,
+                            activator_id: player_idx as u8,
+                            area_idx: slot_idx as i16,
+                            ..Default::default()
+                        };
+                        if ab
+                            .conditions
+                            .iter()
+                            .all(|c| check_condition(state, db, player_idx, c, &ctx, depth + 1))
+                        {
+                            let bc = &ab.bytecode;
+                            let mut i = 0;
+                            while i + 4 < bc.len() {
+                                let op = bc[i];
+                                let v = bc[i + 1];
+                                if op == O_ADD_BLADES {
+                                    val += v as i32;
+                                }
+                                i += 5;
+                            }
+                        }
                     }
                 }
             }
@@ -101,15 +137,25 @@ pub fn get_effective_blades(state: &GameState, player_idx: usize, slot_idx: usiz
     (val + buff as i32).max(0) as u32
 }
 
-pub fn get_effective_hearts(state: &GameState, player_idx: usize, slot_idx: usize, db: &CardDatabase, depth: u32) -> HeartBoard {
-    if depth > 5 { return HeartBoard::default(); }
+pub fn get_effective_hearts(
+    state: &GameState,
+    player_idx: usize,
+    slot_idx: usize,
+    db: &CardDatabase,
+    depth: u32,
+) -> HeartBoard {
+    if depth > 5 {
+        return HeartBoard::default();
+    }
     let cid = state.core.players[player_idx].stage[slot_idx];
     if cid < 0 {
         // Even without a member, heart buffs for the slot might apply
         return state.core.players[player_idx].heart_buffs[slot_idx];
     }
     let base_id = cid;
-    let m = if let Some(m) = db.get_member(base_id) { m } else {
+    let m = if let Some(m) = db.get_member(base_id) {
+        m
+    } else {
         return state.core.players[player_idx].heart_buffs[slot_idx];
     };
     let mut board = m.hearts_board.clone();
@@ -117,7 +163,9 @@ pub fn get_effective_hearts(state: &GameState, player_idx: usize, slot_idx: usiz
     // Wave 1: Constant abilities from ALL members on stage (Global/Area buffs)
     for other_slot in 0..3 {
         let other_cid = state.core.players[player_idx].stage[other_slot];
-        if other_cid < 0 { continue; }
+        if other_cid < 0 {
+            continue;
+        }
         if let Some(other_m) = db.get_member(other_cid) {
             for ab in &other_m.abilities {
                 if ab.trigger == TriggerType::Constant {
@@ -129,26 +177,38 @@ pub fn get_effective_hearts(state: &GameState, player_idx: usize, slot_idx: usiz
                         target_slot: slot_idx as i16,
                         ..Default::default()
                     };
-                    if ab.conditions.iter().all(|c| check_condition(state, db, player_idx, c, &ctx, depth + 1)) {
+                    if ab
+                        .conditions
+                        .iter()
+                        .all(|c| check_condition(state, db, player_idx, c, &ctx, depth + 1))
+                    {
                         let bc = &ab.bytecode;
                         let mut i = 0;
                         while i + 4 < bc.len() {
                             let op = bc[i];
-                            let v = bc[i+1];
-                            let a_low = bc[i+2];
-                            let a_high = bc[i+3];
+                            let v = bc[i + 1];
+                            let a_low = bc[i + 2];
+                            let a_high = bc[i + 3];
                             let a = ((a_high as i64) << 32) | (a_low as i64);
-                            let s_target = bc[i+4];
+                            let s_target = bc[i + 4];
 
                             let mut targets_us = false;
-                            if s_target == 1 { targets_us = true; }
-                            else if (s_target == 4 || s_target == 0) && other_slot == slot_idx { targets_us = true; }
-                            else if s_target == 10 && slot_idx as i16 == ctx.target_slot { targets_us = true; }
+                            if s_target == 1 {
+                                targets_us = true;
+                            } else if (s_target == 4 || s_target == 0) && other_slot == slot_idx {
+                                targets_us = true;
+                            } else if s_target == 10 && slot_idx as i16 == ctx.target_slot {
+                                targets_us = true;
+                            }
 
                             if op == O_ADD_HEARTS && targets_us {
-                                 let mut color = a as usize;
-                                 if color == 0 { color = ctx.selected_color as usize; }
-                                 if color < 7 { board.add_to_color(color, v as i32); }
+                                let mut color = a as usize;
+                                if color == 0 {
+                                    color = ctx.selected_color as usize;
+                                }
+                                if color < 7 {
+                                    board.add_to_color(color, v as i32);
+                                }
                             }
                             i += 5;
                         }
@@ -164,24 +224,38 @@ pub fn get_effective_hearts(state: &GameState, player_idx: usize, slot_idx: usiz
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                     if ab.trigger == TriggerType::Constant {
-                         let ctx = AbilityContext { source_card_id: cid, player_id: player_idx as u8, activator_id: player_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
-                         if ab.conditions.iter().all(|c| check_condition(state, db, player_idx, c, &ctx, depth + 1)) {
-                             let bc = &ab.bytecode;
-                             let mut i = 0;
-                             while i + 4 < bc.len() {
-                                 let op = bc[i];
-                                 let v = bc[i+1];
-                                 let a_low = bc[i+2];
-                                 let a_high = bc[i+3];
-                                 let a = ((a_high as i64) << 32) | (a_low as i64);
-                                 if op == O_ADD_HEARTS {
-                                     let mut color = a as usize;
-                                     if color == 0 { color = ctx.selected_color as usize; }
-                                     if color < 7 { board.add_to_color(color, v as i32); }
-                                 }
-                                 i += 5;
-                             }
-                         }
+                        let ctx = AbilityContext {
+                            source_card_id: cid,
+                            player_id: player_idx as u8,
+                            activator_id: player_idx as u8,
+                            area_idx: slot_idx as i16,
+                            ..Default::default()
+                        };
+                        if ab
+                            .conditions
+                            .iter()
+                            .all(|c| check_condition(state, db, player_idx, c, &ctx, depth + 1))
+                        {
+                            let bc = &ab.bytecode;
+                            let mut i = 0;
+                            while i + 4 < bc.len() {
+                                let op = bc[i];
+                                let v = bc[i + 1];
+                                let a_low = bc[i + 2];
+                                let a_high = bc[i + 3];
+                                let a = ((a_high as i64) << 32) | (a_low as i64);
+                                if op == O_ADD_HEARTS {
+                                    let mut color = a as usize;
+                                    if color == 0 {
+                                        color = ctx.selected_color as usize;
+                                    }
+                                    if color < 7 {
+                                        board.add_to_color(color, v as i32);
+                                    }
+                                }
+                                i += 5;
+                            }
+                        }
                     }
                 }
             }
@@ -207,7 +281,12 @@ pub fn get_total_blades(state: &GameState, p_idx: usize, db: &CardDatabase, dept
     total
 }
 
-pub fn get_total_hearts(state: &GameState, p_idx: usize, db: &CardDatabase, depth: u32) -> HeartBoard {
+pub fn get_total_hearts(
+    state: &GameState,
+    p_idx: usize,
+    db: &CardDatabase,
+    depth: u32,
+) -> HeartBoard {
     let mut total = HeartBoard::default();
     for i in 0..3 {
         total.add(get_effective_hearts(state, p_idx, i, db, depth + 1));
@@ -215,12 +294,31 @@ pub fn get_total_hearts(state: &GameState, p_idx: usize, db: &CardDatabase, dept
     total
 }
 
-pub fn get_member_cost(state: &GameState, p_idx: usize, card_id: i32, slot_idx: i16, secondary_slot_idx: i16, db: &CardDatabase, depth: u32) -> i32 {
-    if depth > 5 { return 0; } // Recursion limit
+pub fn get_member_cost(
+    state: &GameState,
+    p_idx: usize,
+    card_id: i32,
+    slot_idx: i16,
+    secondary_slot_idx: i16,
+    db: &CardDatabase,
+    depth: u32,
+) -> i32 {
+    if depth > 5 {
+        return 0;
+    } // Recursion limit
     let base_id = card_id;
-    let m = if let Some(m) = db.get_member(base_id) { m } else { return 0 };
+    let m = if let Some(m) = db.get_member(base_id) {
+        m
+    } else {
+        return 0;
+    };
     let mut cost = m.cost as i32;
-    if state.debug.debug_mode { println!("[DEBUG] get_member_cost: card_id={}, base_cost={}", card_id, cost); }
+    if state.debug.debug_mode {
+        println!(
+            "[DEBUG] get_member_cost: card_id={}, base_cost={}",
+            card_id, cost
+        );
+    }
 
     // 1. Global reduction
     cost -= state.core.players[p_idx].cost_reduction as i32;
@@ -250,17 +348,27 @@ pub fn get_member_cost(state: &GameState, p_idx: usize, card_id: i32, slot_idx: 
     // 3. Self constant abilities that reduce own cost
     for ab in &m.abilities {
         if ab.trigger == TriggerType::Constant {
-            let ctx = AbilityContext { source_card_id: card_id, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
-            if ab.conditions.iter().all(|c| check_condition(state, db, p_idx, c, &ctx, depth + 1)) {
+            let ctx = AbilityContext {
+                source_card_id: card_id,
+                player_id: p_idx as u8,
+                activator_id: p_idx as u8,
+                area_idx: slot_idx as i16,
+                ..Default::default()
+            };
+            if ab
+                .conditions
+                .iter()
+                .all(|c| check_condition(state, db, p_idx, c, &ctx, depth + 1))
+            {
                 let bc = &ab.bytecode;
                 let mut i = 0;
                 while i + 4 < bc.len() {
                     let op = bc[i];
-                    let v = bc[i+1];
-                    let target_type = bc[i+4];
+                    let v = bc[i + 1];
+                    let target_type = bc[i + 4];
 
                     if op == O_REDUCE_COST && (target_type == 0 || target_type == 4) {
-                         cost -= v as i32;
+                        cost -= v as i32;
                     }
                     i += 5;
                 }
@@ -274,20 +382,30 @@ pub fn get_member_cost(state: &GameState, p_idx: usize, card_id: i32, slot_idx: 
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                     if ab.trigger == TriggerType::Constant {
-                         let ctx = AbilityContext { source_card_id: card_id, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
-                         if ab.conditions.iter().all(|c| check_condition(state, db, p_idx, c, &ctx, depth + 1)) {
-                             let bc = &ab.bytecode;
-                             let mut i = 0;
-                             while i + 4 < bc.len() {
-                                 let op = bc[i];
-                                 let v = bc[i+1];
-                                 let target_type = bc[i+4];
-                                 if op == O_REDUCE_COST && (target_type == 0 || target_type == 4) {
-                                      cost -= v as i32;
-                                 }
-                                 i += 5;
-                             }
-                         }
+                        let ctx = AbilityContext {
+                            source_card_id: card_id,
+                            player_id: p_idx as u8,
+                            activator_id: p_idx as u8,
+                            area_idx: slot_idx as i16,
+                            ..Default::default()
+                        };
+                        if ab
+                            .conditions
+                            .iter()
+                            .all(|c| check_condition(state, db, p_idx, c, &ctx, depth + 1))
+                        {
+                            let bc = &ab.bytecode;
+                            let mut i = 0;
+                            while i + 4 < bc.len() {
+                                let op = bc[i];
+                                let v = bc[i + 1];
+                                let target_type = bc[i + 4];
+                                if op == O_REDUCE_COST && (target_type == 0 || target_type == 4) {
+                                    cost -= v as i32;
+                                }
+                                i += 5;
+                            }
+                        }
                     }
                 }
             }
@@ -296,19 +414,37 @@ pub fn get_member_cost(state: &GameState, p_idx: usize, card_id: i32, slot_idx: 
 
     // 5. Temporary cost modifiers (From Action Phase triggers)
     for (cond, amount) in &state.core.players[p_idx].cost_modifiers {
-         let ctx = AbilityContext { source_card_id: card_id, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
-         if check_condition(state, db, p_idx, cond, &ctx, depth + 1) {
-             cost += *amount;
-         }
+        let ctx = AbilityContext {
+            source_card_id: card_id,
+            player_id: p_idx as u8,
+            activator_id: p_idx as u8,
+            area_idx: slot_idx as i16,
+            ..Default::default()
+        };
+        if check_condition(state, db, p_idx, cond, &ctx, depth + 1) {
+            cost += *amount;
+        }
     }
 
     cost.max(0)
 }
 
-pub fn has_restriction(state: &GameState, p_idx: usize, slot_idx: usize, opcode: i32, db: &CardDatabase) -> bool {
+pub fn has_restriction(
+    state: &GameState,
+    p_idx: usize,
+    slot_idx: usize,
+    opcode: i32,
+    db: &CardDatabase,
+) -> bool {
     let cid = state.core.players[p_idx].stage[slot_idx];
-    if cid < 0 { return false; }
-    let m = if let Some(m) = db.get_member(cid) { m } else { return false };
+    if cid < 0 {
+        return false;
+    }
+    let m = if let Some(m) = db.get_member(cid) {
+        m
+    } else {
+        return false;
+    };
 
     // 1. Self constant abilities
     for ab in &m.abilities {
@@ -320,11 +456,17 @@ pub fn has_restriction(state: &GameState, p_idx: usize, slot_idx: usize, opcode:
                 area_idx: slot_idx as i16,
                 ..Default::default()
             };
-            if ab.conditions.iter().all(|c| check_condition(state, db, p_idx, c, &ctx, 0)) {
+            if ab
+                .conditions
+                .iter()
+                .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
+            {
                 let bc = &ab.bytecode;
                 let mut i = 0;
                 while i + 4 < bc.len() {
-                    if bc[i] == opcode { return true; }
+                    if bc[i] == opcode {
+                        return true;
+                    }
                     i += 5;
                 }
             }
@@ -337,15 +479,27 @@ pub fn has_restriction(state: &GameState, p_idx: usize, slot_idx: usize, opcode:
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                     if ab.trigger == TriggerType::Constant {
-                         let ctx = AbilityContext { source_card_id: cid, player_id: p_idx as u8, activator_id: p_idx as u8, area_idx: slot_idx as i16, ..Default::default() };
-                         if ab.conditions.iter().all(|c| check_condition(state, db, p_idx, c, &ctx, 0)) {
-                             let bc = &ab.bytecode;
-                             let mut i = 0;
-                             while i + 4 < bc.len() {
-                                 if bc[i] == opcode { return true; }
-                                 i += 5;
-                             }
-                         }
+                        let ctx = AbilityContext {
+                            source_card_id: cid,
+                            player_id: p_idx as u8,
+                            activator_id: p_idx as u8,
+                            area_idx: slot_idx as i16,
+                            ..Default::default()
+                        };
+                        if ab
+                            .conditions
+                            .iter()
+                            .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
+                        {
+                            let bc = &ab.bytecode;
+                            let mut i = 0;
+                            while i + 4 < bc.len() {
+                                if bc[i] == opcode {
+                                    return true;
+                                }
+                                i += 5;
+                            }
+                        }
                     }
                 }
             }

@@ -1,6 +1,5 @@
-
-use crate::core::logic::*;
 use crate::core::generated_constants::*;
+use crate::core::logic::*;
 
 #[test]
 fn test_exile_zone_exists() {
@@ -34,11 +33,21 @@ fn test_rule_10_5_3_orphan_energy_cleanup() {
 
     // Assertion
     // 1. Stage energy should be empty
-    assert!(state.core.players[0].stage_energy[0].is_empty(), "Orphan energy should be removed from stage");
-    assert_eq!(state.core.players[0].stage_energy_count[0], 0, "Energy count should be reset");
+    assert!(
+        state.core.players[0].stage_energy[0].is_empty(),
+        "Orphan energy should be removed from stage"
+    );
+    assert_eq!(
+        state.core.players[0].stage_energy_count[0], 0,
+        "Energy count should be reset"
+    );
 
     // 2. Energy deck should contain the energy cards
-    assert_eq!(state.core.players[0].energy_deck.len(), 2, "Energy deck should receive the orphan energy");
+    assert_eq!(
+        state.core.players[0].energy_deck.len(),
+        2,
+        "Energy deck should receive the orphan energy"
+    );
     // Since we shuffle, we check containment
     assert!(state.core.players[0].energy_deck.contains(&10));
     assert!(state.core.players[0].energy_deck.contains(&20));
@@ -74,13 +83,12 @@ fn test_play_member_from_hand_opcode_preserves_energy() {
     let mut ctx = AbilityContext::default();
     ctx.player_id = 0;
     ctx.choice_index = 0; // Hand index 0 (Card 888)
-    ctx.target_slot = 0;  // Target Slot 0
-
+    ctx.target_slot = 0; // Target Slot 0
 
     // We only invoke resolve_bytecode to test the opcode directly.
     // Step 1: Select Card from Hand (choice_index=0)
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
-    
+
     // Handler should have suspended for the slot.
     assert!(state.interaction_stack.len() > 0);
     let mut resumed_ctx = state.interaction_stack.pop().unwrap().ctx;
@@ -100,7 +108,11 @@ fn test_play_member_from_hand_opcode_preserves_energy() {
     assert_eq!(state.core.players[0].stage[0], 888);
 
     // 3. Energy should remain!
-    assert_eq!(state.core.players[0].stage_energy[0].len(), 2, "Energy should be preserved");
+    assert_eq!(
+        state.core.players[0].stage_energy[0].len(),
+        2,
+        "Energy should be preserved"
+    );
     assert_eq!(state.core.players[0].stage_energy[0][0], 10);
     assert_eq!(state.core.players[0].stage_energy[0][1], 20);
     assert_eq!(state.core.players[0].stage_energy_count[0], 2);

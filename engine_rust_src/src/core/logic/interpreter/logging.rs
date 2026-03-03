@@ -1,5 +1,5 @@
-use crate::core::generated_constants::*;
 use crate::core::enums::*;
+use crate::core::generated_constants::*;
 
 pub fn get_opcode_log(op: i32, v: i32, a: i64, _s: i32, result_count: i32) -> Option<String> {
     match op {
@@ -15,7 +15,7 @@ pub fn get_opcode_log(op: i32, v: i32, a: i64, _s: i32, result_count: i32) -> Op
                 _ => "HEART_WILD",
             };
             Some(format!("Added +{} {}", v, color_str))
-        },
+        }
         O_ADD_BLADES => Some(format!("Added +{} BLADE", v)),
         O_MOVE_TO_DISCARD => {
             let count = if result_count > 0 { result_count } else { v };
@@ -27,12 +27,15 @@ pub fn get_opcode_log(op: i32, v: i32, a: i64, _s: i32, result_count: i32) -> Op
                 3 => "Energy Zone",
                 _ => "Zone",
             };
-            Some(format!("Moved {} card(s) from {} to Discard", count, source))
-        },
+            Some(format!(
+                "Moved {} card(s) from {} to Discard",
+                count, source
+            ))
+        }
         O_LOOK_AND_CHOOSE => {
-             let pick_count = (v >> 8) & 0xFF;
-             Some(format!("Looked at cards and chose {}", pick_count))
-        },
+            let pick_count = (v >> 8) & 0xFF;
+            Some(format!("Looked at cards and chose {}", pick_count))
+        }
         O_RECOVER_MEMBER => Some(format!("Recovered {} member(s) from Discard", v)),
         O_RECOVER_LIVE => Some(format!("Recovered {} live card(s) from Discard", v)),
         O_ENERGY_CHARGE => Some(format!("Charge {} Energy", v)),
@@ -113,8 +116,10 @@ pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
         details = format!(" ({})", desc);
     }
 
-    format!("{:<15} | v:{:<4} a:{:<10} s:{:<4}{}",
-        base_name, v, a, s, details)
+    format!(
+        "{:<15} | v:{:<4} a:{:<10} s:{:<4}{}",
+        base_name, v, a, s, details
+    )
 }
 
 pub fn trigger_as_str(t: TriggerType) -> &'static str {

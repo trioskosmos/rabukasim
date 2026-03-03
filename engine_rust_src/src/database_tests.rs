@@ -8,7 +8,8 @@ const DB_JSON: &str = include_str!("../../data/cards_compiled.json");
 
 #[test]
 fn test_database_integrity() {
-    let card_db = CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
+    let card_db =
+        CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
 
     let mut member_ids = HashSet::new();
     let mut card_nos = HashSet::new();
@@ -26,12 +27,17 @@ fn test_database_integrity() {
         card_nos.insert(live.card_no.clone());
     }
 
-    println!("Database Integrity Check Passed: {} members, {} lives", card_db.members.len(), card_db.lives.len());
+    println!(
+        "Database Integrity Check Passed: {} members, {} lives",
+        card_db.members.len(),
+        card_db.lives.len()
+    );
 }
 
 #[test]
 fn test_bytecode_sanity_all_cards() {
-    let card_db = CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
+    let card_db =
+        CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
     let mut total_abilities = 0;
     let mut opcodes_seen = HashSet::new();
 
@@ -50,7 +56,10 @@ fn test_bytecode_sanity_all_cards() {
     }
 
     println!("Bytecode Sanity Passed for {} abilities.", total_abilities);
-    println!("Unique Opcodes Found in Production: {:?}", opcodes_seen.len());
+    println!(
+        "Unique Opcodes Found in Production: {:?}",
+        opcodes_seen.len()
+    );
 }
 
 fn verify_ability_bytecode(card_no: &str, ab_idx: usize, ab: &Ability, opcodes: &mut HashSet<i32>) {
@@ -62,7 +71,8 @@ fn verify_ability_bytecode(card_no: &str, ab_idx: usize, ab: &Ability, opcodes: 
     assert!(
         ab.bytecode.contains(&O_RETURN),
         "Ability {} [{}] does not contain O_RETURN",
-        card_no, ab_idx
+        card_no,
+        ab_idx
     );
 
     // Rule 2: Bytecode length should generally be a multiple of 5 (5-word extended format)
@@ -71,7 +81,9 @@ fn verify_ability_bytecode(card_no: &str, ab_idx: usize, ab: &Ability, opcodes: 
     assert!(
         ab.bytecode.len() % 5 == 0,
         "Ability {} [{}] bytecode length {} is not multiple of 5",
-        card_no, ab_idx, ab.bytecode.len()
+        card_no,
+        ab_idx,
+        ab.bytecode.len()
     );
 
     for chunk in ab.bytecode.chunks(5) {
@@ -83,7 +95,8 @@ fn verify_ability_bytecode(card_no: &str, ab_idx: usize, ab: &Ability, opcodes: 
 
 #[test]
 fn test_dry_run_all_cards() {
-    let card_db = CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
+    let card_db =
+        CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
     let mut state = GameState::default();
     // Basic setup for dry run
     state.core.players[0].player_id = 0;

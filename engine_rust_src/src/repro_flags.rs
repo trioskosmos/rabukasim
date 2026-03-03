@@ -1,7 +1,7 @@
 #![allow(unused_imports)]
-use crate::core::logic::*;
-use crate::core::logic::card_db::LOGIC_ID_MASK;
 use crate::core::enums::TriggerType;
+use crate::core::logic::card_db::LOGIC_ID_MASK;
+use crate::core::logic::*;
 
 // Types like ConditionType, MemberCard, LiveCard, PlayerState are all re-exported in logic.rs
 
@@ -50,20 +50,28 @@ fn test_q68_cannot_live_state() {
 
     // Q68 Verification:
     // 1. Live card should be discarded (not in live_zone)
-    assert!(state.core.players[0].live_zone.iter().all(|&c| c < 0),
-        "Q68: Live cards should be discarded when player cannot perform live");
+    assert!(
+        state.core.players[0].live_zone.iter().all(|&c| c < 0),
+        "Q68: Live cards should be discarded when player cannot perform live"
+    );
 
     // 2. Live card should be in discard pile
-    assert!(state.core.players[0].discard.contains(&10001i32),
-        "Q68: Live card should be in discard pile");
+    assert!(
+        state.core.players[0].discard.contains(&10001i32),
+        "Q68: Live card should be in discard pile"
+    );
 
     // 3. OnLiveStart triggers should NOT have fired (live_start_triggers_done should be true but no triggers processed)
-    assert!(state.live_start_triggers_done,
-        "Q68: live_start_triggers_done should be marked as done");
+    assert!(
+        state.live_start_triggers_done,
+        "Q68: live_start_triggers_done should be marked as done"
+    );
 
     // 4. Yell should NOT have been performed (yell_cards should be empty)
-    assert!(state.core.players[0].yell_cards.is_empty(),
-        "Q68: Yell should not be performed when player cannot live");
+    assert!(
+        state.core.players[0].yell_cards.is_empty(),
+        "Q68: Yell should not be performed when player cannot live"
+    );
 }
 
 /// Q68 Additional test: Verify normal live flow works when FLAG_CANNOT_LIVE is NOT set
@@ -137,7 +145,13 @@ fn test_q29_baton_touch_restriction_same_turn() {
 
     // Add energy cards for payment
     for i in 0..10 {
-        db.energy_db.insert(1000 + i, EnergyCard { card_id: 1000 + i, ..Default::default() });
+        db.energy_db.insert(
+            1000 + i,
+            EnergyCard {
+                card_id: 1000 + i,
+                ..Default::default()
+            },
+        );
     }
 
     let mut state = GameState::default();
@@ -161,7 +175,10 @@ fn test_q29_baton_touch_restriction_same_turn() {
     let result = state.play_member(&db, 0, 0); // hand_idx=0 (member 101), slot=0
 
     // Q29: Baton touch should fail because the member in slot 0 entered this turn
-    assert!(result.is_err(), "Q29: Baton touch should fail for member that entered this turn");
+    assert!(
+        result.is_err(),
+        "Q29: Baton touch should fail for member that entered this turn"
+    );
 }
 
 /// Q70 Test: Cannot place member in area that has member this turn
@@ -189,7 +206,13 @@ fn test_q70_cannot_place_in_occupied_area_same_turn() {
 
     // Add energy cards for payment
     for i in 0..10 {
-        db.energy_db.insert(1000 + i, EnergyCard { card_id: 1000 + i, ..Default::default() });
+        db.energy_db.insert(
+            1000 + i,
+            EnergyCard {
+                card_id: 1000 + i,
+                ..Default::default()
+            },
+        );
     }
 
     let mut state = GameState::default();
@@ -212,7 +235,10 @@ fn test_q70_cannot_place_in_occupied_area_same_turn() {
     let result = state.play_member(&db, 0, 0); // hand_idx=0, slot=0
 
     // Q70: Should fail because the area already has a member that entered this turn
-    assert!(result.is_err(), "Q70: Should not be able to place member in area with member that entered this turn");
+    assert!(
+        result.is_err(),
+        "Q70: Should not be able to place member in area with member that entered this turn"
+    );
 }
 
 /// Q71 Test: CAN place member in area if the member moved away
@@ -240,7 +266,13 @@ fn test_q71_can_place_after_member_moved_away() {
 
     // Add energy cards for payment
     for i in 0..10 {
-        db.energy_db.insert(1000 + i, EnergyCard { card_id: 1000 + i, ..Default::default() });
+        db.energy_db.insert(
+            1000 + i,
+            EnergyCard {
+                card_id: 1000 + i,
+                ..Default::default()
+            },
+        );
     }
 
     let mut state = GameState::default();
@@ -265,7 +297,10 @@ fn test_q71_can_place_after_member_moved_away() {
     let result = state.play_member(&db, 0, 0); // hand_idx=0, slot=0
 
     // Q71: Should succeed because the previous member moved away
-    assert!(result.is_ok(), "Q71: Should be able to place member in area after previous member moved away");
+    assert!(
+        result.is_ok(),
+        "Q71: Should be able to place member in area after previous member moved away"
+    );
 }
 
 /// Q72 Test: Can set live cards even with no members on stage
@@ -289,7 +324,10 @@ fn test_q72_can_set_live_cards_no_members() {
     let result = state.set_live_cards(0, vec![10001]);
 
     // Q72: Should succeed - can set live cards even with no members
-    assert!(result.is_ok(), "Q72: Should be able to set live cards even with no members on stage");
+    assert!(
+        result.is_ok(),
+        "Q72: Should be able to set live cards even with no members on stage"
+    );
 }
 
 /// Q91 Test: OnLiveStart abilities don't trigger if live is not performed
@@ -328,12 +366,16 @@ fn test_q91_onlivestart_no_trigger_without_live() {
 
     // Q91: OnLiveStart triggers should NOT have fired
     // The live_start_triggers_done should be true but no actual triggers processed
-    assert!(state.live_start_triggers_done,
-        "Q91: live_start_triggers_done should be marked done without processing triggers");
+    assert!(
+        state.live_start_triggers_done,
+        "Q91: live_start_triggers_done should be marked done without processing triggers"
+    );
 
     // Live card should be discarded
-    assert!(state.core.players[0].live_zone.iter().all(|&c| c < 0),
-        "Q91: Live card should be discarded when live is not performed");
+    assert!(
+        state.core.players[0].live_zone.iter().all(|&c| c < 0),
+        "Q91: Live card should be discarded when live is not performed"
+    );
 }
 
 /// Q79 Test: Area becomes available after activation ability puts member in waiting room as cost
@@ -361,7 +403,13 @@ fn test_q79_area_available_after_activation_cost() {
 
     // Add energy cards for payment
     for i in 0..10 {
-        db.energy_db.insert(1000 + i, EnergyCard { card_id: 1000 + i, ..Default::default() });
+        db.energy_db.insert(
+            1000 + i,
+            EnergyCard {
+                card_id: 1000 + i,
+                ..Default::default()
+            },
+        );
     }
 
     let mut state = GameState::default();
@@ -448,6 +496,8 @@ fn test_q80_effect_can_place_after_activation_cost() {
     }
 
     // Q80: Effect should have placed the member successfully
-    assert_eq!(state.core.players[0].stage[0], 101,
-        "Q80: Effect should be able to place member in area after activation ability cost");
+    assert_eq!(
+        state.core.players[0].stage[0], 101,
+        "Q80: Effect should be able to place member in area after activation ability cost"
+    );
 }

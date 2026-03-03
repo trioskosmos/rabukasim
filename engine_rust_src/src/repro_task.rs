@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use crate::core::logic::game::{GameState, ActionReceiver};
-    use crate::core::logic::card_db::CardDatabase;
-    use crate::test_helpers::Action;
     use crate::core::enums::*;
+    use crate::core::logic::card_db::CardDatabase;
+    use crate::core::logic::game::{ActionReceiver, GameState};
+    use crate::test_helpers::Action;
 
     struct TestReceiver {
         actions: Vec<Action>,
@@ -13,21 +13,35 @@ mod tests {
         fn add_action(&mut self, action_id: usize) {
             self.ids.push(action_id);
         }
-        fn reset(&mut self) { self.ids.clear(); self.actions.clear(); }
-        fn is_empty(&self) -> bool { self.ids.is_empty() }
+        fn reset(&mut self) {
+            self.ids.clear();
+            self.actions.clear();
+        }
+        fn is_empty(&self) -> bool {
+            self.ids.is_empty()
+        }
     }
 
     fn load_db() -> CardDatabase {
-        let json_str = std::fs::read_to_string("../data/cards_compiled.json").expect("Failed to read cards_compiled.json");
+        let json_str = std::fs::read_to_string("../data/cards_compiled.json")
+            .expect("Failed to read cards_compiled.json");
         CardDatabase::from_json(&json_str).expect("Failed to parse CardDatabase")
     }
 
     fn new_receiver() -> TestReceiver {
-        TestReceiver { actions: Vec::new(), ids: Vec::new() }
+        TestReceiver {
+            actions: Vec::new(),
+            ids: Vec::new(),
+        }
     }
 
     fn stage_actions_in_range(receiver: &TestReceiver, lo: usize, hi: usize) -> Vec<usize> {
-        receiver.ids.iter().filter(|&&id| id >= lo && id < hi).cloned().collect()
+        receiver
+            .ids
+            .iter()
+            .filter(|&&id| id >= lo && id < hi)
+            .cloned()
+            .collect()
     }
 
     // ===================== Original Repro Test =====================
@@ -41,15 +55,24 @@ mod tests {
         let mut state = GameState::default();
         state.phase = Phase::Main;
         state.current_player = 0;
-        state.core.players[0].energy_zone.extend(std::iter::repeat(100).take(10));
+        state.core.players[0]
+            .energy_zone
+            .extend(std::iter::repeat(100).take(10));
 
         // CASE 1: Card in Discard → NO activation
         state.core.players[0].discard.push(target_cid);
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let discard_actions = stage_actions_in_range(&receiver, ACTION_BASE_DISCARD_ACTIVATE as usize, ACTION_BASE_ENERGY as usize);
+        let discard_actions = stage_actions_in_range(
+            &receiver,
+            ACTION_BASE_DISCARD_ACTIVATE as usize,
+            ACTION_BASE_ENERGY as usize,
+        );
         println!("Discard Actions (IDs): {:?}", discard_actions);
-        assert!(discard_actions.is_empty(), "Ability should NOT be activatable from Discard");
+        assert!(
+            discard_actions.is_empty(),
+            "Ability should NOT be activatable from Discard"
+        );
 
         // CASE 2: Card on Stage → activation at ab_idx=1
         state.core.players[0].discard.clear();
@@ -57,10 +80,13 @@ mod tests {
         state.core.players[0].set_tapped(0, false);
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let action_id = (ACTION_BASE_STAGE + 0*100 + 1*10) as usize;
+        let action_id = (ACTION_BASE_STAGE + 0 * 100 + 1 * 10) as usize;
         let stage_actions = stage_actions_in_range(&receiver, action_id, action_id + 1);
         println!("Stage Actions (IDs): {:?}", stage_actions);
-        assert!(!stage_actions.is_empty(), "Ability 1 (second ability) should be activatable from Stage");
+        assert!(
+            !stage_actions.is_empty(),
+            "Ability 1 (second ability) should be activatable from Stage"
+        );
     }
 
     // ===================== Test 3: Multi-Ability Stage Actions =====================
@@ -77,7 +103,9 @@ mod tests {
         let mut state = GameState::default();
         state.phase = Phase::Main;
         state.current_player = 0;
-        state.core.players[0].energy_zone.extend(std::iter::repeat(100).take(10));
+        state.core.players[0]
+            .energy_zone
+            .extend(std::iter::repeat(100).take(10));
 
         // Place same card in slot 0 AND slot 2 to verify encoding differs
         state.core.players[0].stage[0] = target_cid;
@@ -90,17 +118,26 @@ mod tests {
 
         // Slot 0, ab_idx 1 → ACTION_BASE_STAGE + 0*100 + 1*10
         // Slot 2, ab_idx 1 → ACTION_BASE_STAGE + 2*100 + 1*10
-        let slot0_id = (ACTION_BASE_STAGE + 0*100 + 1*10) as usize;
-        let slot2_id = (ACTION_BASE_STAGE + 2*100 + 1*10) as usize;
+        let slot0_id = (ACTION_BASE_STAGE + 0 * 100 + 1 * 10) as usize;
+        let slot2_id = (ACTION_BASE_STAGE + 2 * 100 + 1 * 10) as usize;
         let slot0_actions = stage_actions_in_range(&receiver, slot0_id, slot0_id + 1);
         let slot2_actions = stage_actions_in_range(&receiver, slot2_id, slot2_id + 1);
 
         println!("Slot 0 actions: {:?}", slot0_actions);
         println!("Slot 2 actions: {:?}", slot2_actions);
 
-        assert!(!slot0_actions.is_empty(), "Slot 0 should have activated ability");
-        assert!(!slot2_actions.is_empty(), "Slot 2 should have activated ability");
-        assert_ne!(slot0_actions[0], slot2_actions[0], "Action IDs must differ between slots");
+        assert!(
+            !slot0_actions.is_empty(),
+            "Slot 0 should have activated ability"
+        );
+        assert!(
+            !slot2_actions.is_empty(),
+            "Slot 2 should have activated ability"
+        );
+        assert_ne!(
+            slot0_actions[0], slot2_actions[0],
+            "Action IDs must differ between slots"
+        );
     }
 
     // ===================== Test 4: Tapped Member Activation =====================
@@ -115,25 +152,41 @@ mod tests {
         let mut state = GameState::default();
         state.phase = Phase::Main;
         state.current_player = 0;
-        state.core.players[0].energy_zone.extend(std::iter::repeat(100).take(10));
+        state.core.players[0]
+            .energy_zone
+            .extend(std::iter::repeat(100).take(10));
         state.core.players[0].stage[0] = target_cid;
 
         // Case A: Untapped → should activate
         state.core.players[0].set_tapped(0, false);
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let untapped_actions = stage_actions_in_range(&receiver, (ACTION_BASE_STAGE + 10) as usize, (ACTION_BASE_STAGE + 11) as usize);
+        let untapped_actions = stage_actions_in_range(
+            &receiver,
+            (ACTION_BASE_STAGE + 10) as usize,
+            (ACTION_BASE_STAGE + 11) as usize,
+        );
         println!("Untapped: {:?}", untapped_actions);
-        assert!(!untapped_actions.is_empty(), "Untapped member should be able to activate Energy-cost ability");
+        assert!(
+            !untapped_actions.is_empty(),
+            "Untapped member should be able to activate Energy-cost ability"
+        );
 
         // Case B: Tapped → should STILL activate (ability doesn't require TapSelf)
         state.core.players[0].set_tapped(0, true);
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let tapped_actions = stage_actions_in_range(&receiver, (ACTION_BASE_STAGE + 10) as usize, (ACTION_BASE_STAGE + 11) as usize);
+        let tapped_actions = stage_actions_in_range(
+            &receiver,
+            (ACTION_BASE_STAGE + 10) as usize,
+            (ACTION_BASE_STAGE + 11) as usize,
+        );
         println!("Tapped: {:?}", tapped_actions);
         // This ability uses Energy cost, NOT TapSelf. A tapped member CAN still use it.
-        assert!(!tapped_actions.is_empty(), "Tapped member should still activate Energy-cost ability (no TapSelf required)");
+        assert!(
+            !tapped_actions.is_empty(),
+            "Tapped member should still activate Energy-cost ability (no TapSelf required)"
+        );
     }
 
     // ===================== Test 5: prevent_activate Blocks All Zones =====================
@@ -146,27 +199,50 @@ mod tests {
         let mut state = GameState::default();
         state.phase = Phase::Main;
         state.current_player = 0;
-        state.core.players[0].energy_zone.extend(std::iter::repeat(100).take(10));
+        state.core.players[0]
+            .energy_zone
+            .extend(std::iter::repeat(100).take(10));
         state.core.players[0].stage[0] = target_cid;
         state.core.players[0].set_tapped(0, false);
 
         // Baseline: Should generate stage activation
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let baseline_actions = stage_actions_in_range(&receiver, ACTION_BASE_STAGE as usize, (ACTION_BASE_STAGE + 300) as usize);
+        let baseline_actions = stage_actions_in_range(
+            &receiver,
+            ACTION_BASE_STAGE as usize,
+            (ACTION_BASE_STAGE + 300) as usize,
+        );
         println!("Baseline stage actions: {:?}", baseline_actions);
-        assert!(!baseline_actions.is_empty(), "Baseline: should have stage activation");
+        assert!(
+            !baseline_actions.is_empty(),
+            "Baseline: should have stage activation"
+        );
 
         // Set prevent_activate to block
         state.core.players[0].prevent_activate = 1;
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let blocked_stage = stage_actions_in_range(&receiver, ACTION_BASE_STAGE as usize, (ACTION_BASE_STAGE + 300) as usize);
-        let blocked_discard = stage_actions_in_range(&receiver, ACTION_BASE_DISCARD_ACTIVATE as usize, ACTION_BASE_ENERGY as usize);
+        let blocked_stage = stage_actions_in_range(
+            &receiver,
+            ACTION_BASE_STAGE as usize,
+            (ACTION_BASE_STAGE + 300) as usize,
+        );
+        let blocked_discard = stage_actions_in_range(
+            &receiver,
+            ACTION_BASE_DISCARD_ACTIVATE as usize,
+            ACTION_BASE_ENERGY as usize,
+        );
         println!("Blocked stage: {:?}", blocked_stage);
         println!("Blocked discard: {:?}", blocked_discard);
-        assert!(blocked_stage.is_empty(), "prevent_activate should block all stage activations");
-        assert!(blocked_discard.is_empty(), "prevent_activate should block all discard activations");
+        assert!(
+            blocked_stage.is_empty(),
+            "prevent_activate should block all stage activations"
+        );
+        assert!(
+            blocked_discard.is_empty(),
+            "prevent_activate should block all discard activations"
+        );
     }
 
     // ===================== Test 2: Once-Per-Turn Slot Movement =====================
@@ -183,17 +259,22 @@ mod tests {
         let mut state = GameState::default();
         state.phase = Phase::Main;
         state.current_player = 0;
-        state.core.players[0].energy_zone.extend(std::iter::repeat(100).take(10));
+        state.core.players[0]
+            .energy_zone
+            .extend(std::iter::repeat(100).take(10));
         state.core.players[0].stage[0] = target_cid;
         state.core.players[0].set_tapped(0, false);
 
         // Step 1: Generate actions - ability should be available
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
-    let action_id = (ACTION_BASE_STAGE + 0*100 + 1*10) as usize;
-    let initial_actions = stage_actions_in_range(&receiver, action_id, action_id + 1);
+        let action_id = (ACTION_BASE_STAGE + 0 * 100 + 1 * 10) as usize;
+        let initial_actions = stage_actions_in_range(&receiver, action_id, action_id + 1);
         println!("Initial slot 0 actions: {:?}", initial_actions);
-        assert!(!initial_actions.is_empty(), "Should have activation initially");
+        assert!(
+            !initial_actions.is_empty(),
+            "Should have activation initially"
+        );
 
         // Step 2: Consume once_per_turn using the same keying the action generator uses:
         // source_type=0, id=card_id, ab_idx=1
@@ -202,9 +283,12 @@ mod tests {
         // Step 3: Verify blocked at slot 0
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
-    let after_consume = stage_actions_in_range(&receiver, action_id, action_id + 1);
+        let after_consume = stage_actions_in_range(&receiver, action_id, action_id + 1);
         println!("After consume at slot 0: {:?}", after_consume);
-        assert!(after_consume.is_empty(), "Should be blocked after once_per_turn consume");
+        assert!(
+            after_consume.is_empty(),
+            "Should be blocked after once_per_turn consume"
+        );
 
         // Step 4: "Baton touch" - move card from slot 0 to slot 1
         state.core.players[0].stage[1] = target_cid;
@@ -216,10 +300,13 @@ mod tests {
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
         // Slot 1, ab_idx 1 → ACTION_BASE_STAGE + 1*100 + 1*10
-        let action_id_slot1 = (ACTION_BASE_STAGE + 1*100 + 1*10) as usize;
+        let action_id_slot1 = (ACTION_BASE_STAGE + 1 * 100 + 1 * 10) as usize;
         let slot1_actions = stage_actions_in_range(&receiver, action_id_slot1, action_id_slot1 + 1);
         println!("After baton touch to slot 1: {:?}", slot1_actions);
-        assert!(slot1_actions.is_empty(), "Once-per-turn should persist across slot movement (card_id keyed)");
+        assert!(
+            slot1_actions.is_empty(),
+            "Once-per-turn should persist across slot movement (card_id keyed)"
+        );
     }
 
     // ===================== Test 1: Stage Choice Ability Generation =====================
@@ -240,12 +327,16 @@ mod tests {
                 for (ab_idx, ab) in card.abilities.iter().enumerate() {
                     if ab.trigger == TriggerType::Activated && ab.choice_flags > 0 {
                         found_choice_card = Some((cid, ab_idx));
-                        println!("Found choice card: ID={}, ab_idx={}, choice_flags={}, choice_count={}",
-                                 cid, ab_idx, ab.choice_flags, ab.choice_count);
+                        println!(
+                            "Found choice card: ID={}, ab_idx={}, choice_flags={}, choice_count={}",
+                            cid, ab_idx, ab.choice_flags, ab.choice_count
+                        );
                         break;
                     }
                 }
-                if found_choice_card.is_some() { break; }
+                if found_choice_card.is_some() {
+                    break;
+                }
             }
         }
 
@@ -253,7 +344,9 @@ mod tests {
             let mut state = GameState::default();
             state.phase = Phase::Main;
             state.current_player = 0;
-            state.core.players[0].energy_zone.extend(std::iter::repeat(100).take(10));
+            state.core.players[0]
+                .energy_zone
+                .extend(std::iter::repeat(100).take(10));
             state.core.players[0].stage[0] = cid;
             state.core.players[0].set_tapped(0, false);
             state.debug.debug_ignore_conditions = true; // Bypass conditions to focus on choice generation
@@ -316,7 +409,10 @@ mod tests {
         state.core.players[0].set_tapped(0, false);
 
         // Get the base blades from the card
-        let base_blades = db.get_member(target_cid).map(|m| m.blades as u32).unwrap_or(3);
+        let base_blades = db
+            .get_member(target_cid)
+            .map(|m| m.blades as u32)
+            .unwrap_or(3);
 
         // Verification 1: No other members on stage.
         // The condition C_COUNT_STAGE >= 0 is always true, so bonus is always applied.
@@ -338,8 +434,17 @@ mod tests {
         // This test documents that the passive always gives +2 blades.
         // If the card's condition was properly checking for cost 13+,
         // solitary would be base_blades and with_13 would be base_blades + 2.
-        assert!(blades_solitary >= base_blades, "Card should have at least base blades");
-        assert!(blades_with_11 >= blades_solitary, "Adding cost 11 should not reduce blades");
-        assert!(blades_with_13 >= blades_solitary, "Adding cost 13 should not reduce blades");
+        assert!(
+            blades_solitary >= base_blades,
+            "Card should have at least base blades"
+        );
+        assert!(
+            blades_with_11 >= blades_solitary,
+            "Adding cost 11 should not reduce blades"
+        );
+        assert!(
+            blades_with_13 >= blades_solitary,
+            "Adding cost 13 should not reduce blades"
+        );
     }
 }

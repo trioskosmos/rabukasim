@@ -1,9 +1,7 @@
-use crate::test_helpers::{create_test_db, create_test_state};
-use crate::core::logic::*;
 use crate::core::hearts::HeartBoard;
+use crate::core::logic::*;
+use crate::test_helpers::{create_test_db, create_test_state};
 // use std::collections::HashMap;
-
-
 
 /// O_RECOVER_LIVE must only show Live cards, never members.
 #[test]
@@ -11,10 +9,13 @@ fn test_recov_l_only_shows_lives() {
     let db = create_test_db();
     let mut state = create_test_state();
 
-    state.core.players[0].discard.push(19);    // Member
+    state.core.players[0].discard.push(19); // Member
     state.core.players[0].discard.push(55001); // Live (exists in create_test_db)
 
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
     let bc = vec![O_RECOVER_LIVE, 1, 0, 0, O_RETURN, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
@@ -30,7 +31,10 @@ fn test_recov_l_no_lives_returns_early() {
 
     state.core.players[0].discard.push(19); // Only members
 
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
     let bc = vec![O_RECOVER_LIVE, 1, 0, 0, O_RETURN, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
@@ -47,7 +51,10 @@ fn test_pay_energy_auto_pays() {
 
     state.core.players[0].tapped_energy_mask = 0;
 
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
     let bc = vec![O_PAY_ENERGY, 2, 0, 0, O_RETURN, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
@@ -81,20 +88,26 @@ fn test_poppin_up_success_repro() {
     // Use a small card_id instead of 30047 to avoid HashMap overhead in test
     // and Ensure lives_vec is large enough if we want to use it
     let card_id: i32 = 30047;
-    db.lives.insert(card_id, LiveCard {
+    db.lives.insert(
         card_id,
-        card_no: "PL!N-bp1-026-L".to_string(),
-        name: "Poppin' Up!".to_string(),
-        score: 1,
-        required_hearts: [9, 0, 1, 0, 0, 0, 2],
-        ..Default::default()
-    });
+        LiveCard {
+            card_id,
+            card_no: "PL!N-bp1-026-L".to_string(),
+            name: "Poppin' Up!".to_string(),
+            score: 1,
+            required_hearts: [9, 0, 1, 0, 0, 0, 2],
+            ..Default::default()
+        },
+    );
 
     // Add a dummy member so we can possess hearts on stage
-    db.members.insert(19, MemberCard {
-        card_id: 19,
-        ..Default::default()
-    });
+    db.members.insert(
+        19,
+        MemberCard {
+            card_id: 19,
+            ..Default::default()
+        },
+    );
 
     let mut state = create_test_state();
     state.ui.silent = false;
@@ -120,23 +133,35 @@ fn test_poppin_up_success_repro() {
 
     // Set performance_results snapshot to indicate success
     // This is required because do_live_result trusts the snapshot from check_performance_requirements
-    state.ui.performance_results.insert(0, serde_json::json!({
-        "success": true,
-        "lives": [
-            {"passed": true, "score": 1, "slot_idx": 0},
-            {"passed": false, "score": 0, "slot_idx": 1},
-            {"passed": false, "score": 0, "slot_idx": 2}
-        ]
-    }));
+    state.ui.performance_results.insert(
+        0,
+        serde_json::json!({
+            "success": true,
+            "lives": [
+                {"passed": true, "score": 1, "slot_idx": 0},
+                {"passed": false, "score": 0, "slot_idx": 1},
+                {"passed": false, "score": 0, "slot_idx": 2}
+            ]
+        }),
+    );
 
     state.do_live_result(&db);
 
     // Expect card to move to success_lives
     if let Some(ref log) = state.ui.rule_log {
-        for msg in log { println!("LOG: {}", msg); }
+        for msg in log {
+            println!("LOG: {}", msg);
+        }
     }
     assert!(hearts.satisfies(req), "Hearts should satisfy requirement");
-    assert_eq!(state.core.players[0].success_lives.len(), 1, "Poppin' Up! should have succeeded hearts");
+    assert_eq!(
+        state.core.players[0].success_lives.len(),
+        1,
+        "Poppin' Up! should have succeeded hearts"
+    );
     assert_eq!(state.core.players[0].success_lives[0], card_id);
-    assert_eq!(state.core.players[0].live_zone[0], -1, "Card should be removed from live_zone");
+    assert_eq!(
+        state.core.players[0].live_zone[0], -1,
+        "Card should be removed from live_zone"
+    );
 }

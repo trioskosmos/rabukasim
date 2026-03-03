@@ -81,7 +81,12 @@ pub const FILTER_SPECIAL_ID_SHIFT: u64 = 56;
 pub const FILTER_ZONE_MASK_SHIFT: u64 = 53;
 
 /// Mask for all filter type flags (Member, Live, Group, Unit, Cost, Blade).
-pub const FILTER_TYPE_MASK: u64 = FILTER_TYPE_MEMBER | FILTER_TYPE_LIVE | FILTER_GROUP_FLAG | FILTER_UNIT_FLAG | FILTER_COST_FLAG | FILTER_BLADE_FILTER_FLAG;
+pub const FILTER_TYPE_MASK: u64 = FILTER_TYPE_MEMBER
+    | FILTER_TYPE_LIVE
+    | FILTER_GROUP_FLAG
+    | FILTER_UNIT_FLAG
+    | FILTER_COST_FLAG
+    | FILTER_BLADE_FILTER_FLAG;
 
 /// Special choice index for "Done" or "Cancel".
 pub const CHOICE_DONE: i16 = 99;

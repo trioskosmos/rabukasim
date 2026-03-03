@@ -1,11 +1,10 @@
-use serde::{Serialize, Deserialize};
 use crate::core::logic::{
-    GameState, CardDatabase, Phase, LiveCard,
-    FLAG_DRAW, FLAG_SEARCH, FLAG_RECOVER, FLAG_CHARGE,
-    FLAG_WIN_COND
+    CardDatabase, GameState, LiveCard, Phase, FLAG_CHARGE, FLAG_DRAW, FLAG_RECOVER, FLAG_SEARCH,
+    FLAG_WIN_COND,
 };
 #[cfg(feature = "extension-module")]
 use pyo3::prelude::*;
+use serde::{Deserialize, Serialize};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
@@ -31,7 +30,6 @@ pub struct HeuristicConfig {
     pub scaling_factor: f32,
 }
 
-
 impl Default for HeuristicConfig {
     fn default() -> Self {
         Self {
@@ -41,7 +39,7 @@ impl Default for HeuristicConfig {
             weight_heart: 0.5,
             weight_slot_bonus: 0.1,
             weight_slot_penalty: 0.05,
-            weight_blade: 0.1,        // Normal focus
+            weight_blade: 0.1, // Normal focus
             weight_draw_potential: 0.1,
             weight_vol_bonus: 2.0,
             weight_discard_bonus: 0.1,
@@ -50,8 +48,8 @@ impl Default for HeuristicConfig {
             weight_synergy_group: 0.05,
             weight_synergy_center: 0.2,
             weight_mill_bonus: 0.0,
-            weight_live_filter: 0.0,     // Never penalize lives; keep them all
-            scaling_factor: 0.01,        // Extreme sensitivity
+            weight_live_filter: 0.0, // Never penalize lives; keep them all
+            scaling_factor: 0.01,    // Extreme sensitivity
         }
     }
 }
@@ -84,14 +82,15 @@ pub enum EvalMode {
 
 pub trait Heuristic: Send + Sync {
     fn name(&self) -> &str;
-    fn evaluate(&self,
+    fn evaluate(
+        &self,
         state: &GameState,
         db: &CardDatabase,
         p0_baseline: u32,
         p1_baseline: u32,
         eval_mode: EvalMode,
         p0_deck_stats: Option<DeckStats>,
-        p1_deck_stats: Option<DeckStats>
+        p1_deck_stats: Option<DeckStats>,
     ) -> f32;
 }
 
@@ -100,12 +99,27 @@ pub struct LegacyHeuristic {
 }
 
 impl Default for LegacyHeuristic {
-    fn default() -> Self { Self { config: HeuristicConfig::default() } }
+    fn default() -> Self {
+        Self {
+            config: HeuristicConfig::default(),
+        }
+    }
 }
 
 impl Heuristic for LegacyHeuristic {
-    fn name(&self) -> &str { "LegacyHeuristic" }
-    fn evaluate(&self, state: &GameState, db: &CardDatabase, p0_baseline: u32, p1_baseline: u32, _eval_mode: EvalMode, _p0_deck_stats: Option<DeckStats>, _p1_deck_stats: Option<DeckStats>) -> f32 {
+    fn name(&self) -> &str {
+        "LegacyHeuristic"
+    }
+    fn evaluate(
+        &self,
+        state: &GameState,
+        db: &CardDatabase,
+        p0_baseline: u32,
+        p1_baseline: u32,
+        _eval_mode: EvalMode,
+        _p0_deck_stats: Option<DeckStats>,
+        _p1_deck_stats: Option<DeckStats>,
+    ) -> f32 {
         let score0 = self.evaluate_player(state, db, 0, p0_baseline);
         let score1 = self.evaluate_player(state, db, 1, p1_baseline);
         ((score0 - score1) + 1.0) / 2.0
@@ -117,18 +131,47 @@ pub struct OriginalHeuristic {
 }
 
 impl Default for OriginalHeuristic {
-    fn default() -> Self { Self { config: HeuristicConfig::default() } }
+    fn default() -> Self {
+        Self {
+            config: HeuristicConfig::default(),
+        }
+    }
 }
 
 impl Heuristic for OriginalHeuristic {
-    fn name(&self) -> &str { "OriginalHeuristic" }
-    fn evaluate(&self, state: &GameState, db: &CardDatabase, p0_baseline: u32, p1_baseline: u32, eval_mode: EvalMode, p0_deck_stats: Option<DeckStats>, p1_deck_stats: Option<DeckStats>) -> f32 {
-        self.heuristic_eval(state, db, p0_baseline, p1_baseline, eval_mode, p0_deck_stats, p1_deck_stats)
+    fn name(&self) -> &str {
+        "OriginalHeuristic"
+    }
+    fn evaluate(
+        &self,
+        state: &GameState,
+        db: &CardDatabase,
+        p0_baseline: u32,
+        p1_baseline: u32,
+        eval_mode: EvalMode,
+        p0_deck_stats: Option<DeckStats>,
+        p1_deck_stats: Option<DeckStats>,
+    ) -> f32 {
+        self.heuristic_eval(
+            state,
+            db,
+            p0_baseline,
+            p1_baseline,
+            eval_mode,
+            p0_deck_stats,
+            p1_deck_stats,
+        )
     }
 }
 
 impl LegacyHeuristic {
-    fn evaluate_player(&self, state: &GameState, db: &CardDatabase, p_idx: usize, baseline_score: u32) -> f32 {
+    fn evaluate_player(
+        &self,
+        state: &GameState,
+        db: &CardDatabase,
+        p_idx: usize,
+        baseline_score: u32,
+    ) -> f32 {
         let p = &state.core.players[p_idx];
         let mut score = 0.0;
 
@@ -142,7 +185,9 @@ impl LegacyHeuristic {
 
         // 3. Power on Board (Capabilities) - 0.02 per blade
         let mut my_power = 0;
-        for i in 0..3 { my_power += state.get_effective_blades(p_idx, i, db, 0); }
+        for i in 0..3 {
+            my_power += state.get_effective_blades(p_idx, i, db, 0);
+        }
         score += my_power as f32 * 0.02; // Increased from 0.01
 
         // 4. Energy Zone (Fuel) - 0.05 per energy
@@ -154,7 +199,9 @@ impl LegacyHeuristic {
         for i in 0..3 {
             let h = state.get_effective_hearts(p_idx, i, db, 0);
             let h_arr = h.to_array();
-            for color in 0..7 { stage_hearts[color] += h_arr[color] as u32; }
+            for color in 0..7 {
+                stage_hearts[color] += h_arr[color] as u32;
+            }
         }
 
         // Conservative Yell + Volume Icons estimation
@@ -167,7 +214,9 @@ impl LegacyHeuristic {
             if cid >= 0 {
                 if let Some(l) = db.get_live(cid) {
                     num_lives += 1;
-                    for h in 0..7 { zone_reqs[h] += l.required_hearts[h] as u32; }
+                    for h in 0..7 {
+                        zone_reqs[h] += l.required_hearts[h] as u32;
+                    }
                 }
             }
         }
@@ -189,7 +238,10 @@ impl LegacyHeuristic {
         }
 
         // 6. Hand Value (Long term potential)
-        let is_mulligan = matches!(state.phase, crate::core::logic::Phase::MulliganP1 | crate::core::logic::Phase::MulliganP2);
+        let is_mulligan = matches!(
+            state.phase,
+            crate::core::logic::Phase::MulliganP1 | crate::core::logic::Phase::MulliganP2
+        );
 
         for (i, &cid) in p.hand.iter().enumerate() {
             if is_mulligan && ((p.mulligan_selection >> i) & 1 == 1) {
@@ -197,7 +249,10 @@ impl LegacyHeuristic {
                 score += 0.04;
             } else if let Some(l) = db.get_live(cid) {
                 // Live cards in hand are valuable if we can clear them
-                score += (self.calculate_proximity_u32(&stage_hearts, &l.required_hearts.map(|v| v as u32)) * 0.1).max(0.04);
+                score += (self
+                    .calculate_proximity_u32(&stage_hearts, &l.required_hearts.map(|v| v as u32))
+                    * 0.1)
+                    .max(0.04);
             } else {
                 // Member cards in hand are generally good (increased from 0.03)
                 score += 0.06;
@@ -211,20 +266,31 @@ impl LegacyHeuristic {
     fn calculate_proximity_u32(&self, pool: &[u32; 7], req: &[u32; 7]) -> f32 {
         let mut pool_clone = *pool;
         let (sat, tot) = crate::core::hearts::process_hearts(&mut pool_clone, req);
-        if tot == 0 { return 1.0; }
+        if tot == 0 {
+            return 1.0;
+        }
         (sat as f32 / tot as f32).clamp(0.0, 1.0)
     }
 }
 
 impl OriginalHeuristic {
-    pub fn heuristic_eval(&self, state: &GameState, db: &CardDatabase, p0_baseline: u32, p1_baseline: u32, eval_mode: EvalMode, p0_deck_stats: Option<DeckStats>, p1_deck_stats: Option<DeckStats>) -> f32 {
+    pub fn heuristic_eval(
+        &self,
+        state: &GameState,
+        db: &CardDatabase,
+        p0_baseline: u32,
+        p1_baseline: u32,
+        eval_mode: EvalMode,
+        p0_deck_stats: Option<DeckStats>,
+        p1_deck_stats: Option<DeckStats>,
+    ) -> f32 {
         if eval_mode == EvalMode::TerminalOnly {
             return 0.5;
         }
         let score0 = evaluate_player(state, db, 0, p0_baseline, p0_deck_stats, Some(&self.config));
 
         if eval_mode == EvalMode::Solitaire {
-             return (score0 / 25.0).clamp(0.0, 1.0);
+            return (score0 / 25.0).clamp(0.0, 1.0);
         }
 
         let score1 = evaluate_player(state, db, 1, p1_baseline, p1_deck_stats, Some(&self.config));
@@ -244,7 +310,14 @@ impl OriginalHeuristic {
     }
 }
 
-pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, baseline_score: u32, deck_stats: Option<DeckStats>, config: Option<&HeuristicConfig>) -> f32 {
+pub fn evaluate_player(
+    state: &GameState,
+    db: &CardDatabase,
+    p_idx: usize,
+    baseline_score: u32,
+    deck_stats: Option<DeckStats>,
+    config: Option<&HeuristicConfig>,
+) -> f32 {
     let default_config = HeuristicConfig::default();
     let cfg = config.unwrap_or(&default_config);
 
@@ -280,11 +353,21 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
                 let mut ability_val = 0.0;
 
                 // Value "engine building" or "pressure" abilities
-                if (flags & FLAG_CHARGE) != 0 { ability_val += cfg.weight_stage_ability; }
-                if (flags & FLAG_DRAW) != 0 { ability_val += cfg.weight_stage_ability * 0.8; }
-                if (flags & FLAG_SEARCH) != 0 { ability_val += cfg.weight_stage_ability * 0.8; }
-                if (flags & FLAG_RECOVER) != 0 { ability_val += cfg.weight_stage_ability * 0.5; }
-                if (flags & FLAG_WIN_COND) != 0 { ability_val += cfg.weight_stage_ability * 1.2; }
+                if (flags & FLAG_CHARGE) != 0 {
+                    ability_val += cfg.weight_stage_ability;
+                }
+                if (flags & FLAG_DRAW) != 0 {
+                    ability_val += cfg.weight_stage_ability * 0.8;
+                }
+                if (flags & FLAG_SEARCH) != 0 {
+                    ability_val += cfg.weight_stage_ability * 0.8;
+                }
+                if (flags & FLAG_RECOVER) != 0 {
+                    ability_val += cfg.weight_stage_ability * 0.5;
+                }
+                if (flags & FLAG_WIN_COND) != 0 {
+                    ability_val += cfg.weight_stage_ability * 1.2;
+                }
 
                 // Bonus for being untapped (ready to use)
                 if !state.core.players[p_idx].is_tapped(i) && ability_val > 0.0 {
@@ -305,7 +388,9 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
         }
         let h = state.get_effective_hearts(p_idx, i, db, 0);
         let h_arr = h.to_array();
-        for color in 0..7 { stage_hearts[color] += h_arr[color] as u32; }
+        for color in 0..7 {
+            stage_hearts[color] += h_arr[color] as u32;
+        }
         stage_blades += state.get_effective_blades(p_idx, i, db, 0);
     }
     score += stage_val;
@@ -329,36 +414,48 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
     };
 
     let mut expected_yell_count = stage_blades as f32;
-    let hand_added_blades = p.hand.iter().filter_map(|&cid| db.get_member(cid)).map(|m| m.blades).sum::<u32>();
+    let hand_added_blades = p
+        .hand
+        .iter()
+        .filter_map(|&cid| db.get_member(cid))
+        .map(|m| m.blades)
+        .sum::<u32>();
     if !p.energy_zone.is_empty() {
-         expected_yell_count += (hand_added_blades as f32 / p.hand.len().max(1) as f32).min(2.0);
+        expected_yell_count += (hand_added_blades as f32 / p.hand.len().max(1) as f32).min(2.0);
     }
 
     let draw_potential = stats.avg_draw * expected_yell_count;
     expected_yell_count += draw_potential * cfg.weight_draw_potential;
 
-    let expected_yell_hearts: Vec<f32> = stats.avg_hearts.iter().map(|&h| h * expected_yell_count).collect();
+    let expected_yell_hearts: Vec<f32> = stats
+        .avg_hearts
+        .iter()
+        .map(|&h| h * expected_yell_count)
+        .collect();
     let expected_notes = stats.avg_notes * expected_yell_count;
 
     let mut max_prob = 0.0;
     for &cid in &p.live_zone {
         if cid >= 0 {
             if let Some(l) = db.get_live(cid) {
-                    let prob = calculate_live_success_prob(
-                        l,
-                        &stage_hearts,
-                        &expected_yell_hearts,
-                        p.heart_req_reductions.to_array()
-                    );
+                let prob = calculate_live_success_prob(
+                    l,
+                    &stage_hearts,
+                    &expected_yell_hearts,
+                    p.heart_req_reductions.to_array(),
+                );
                 let prob_val = prob * 2000.0;
                 score += prob_val;
-                if prob > max_prob { max_prob = prob; }
+                if prob > max_prob {
+                    max_prob = prob;
+                }
 
                 let mut proximity_score = 0.0;
                 let mut current_req_board = l.hearts_board;
                 for h in 0..7 {
                     let red = p.heart_req_reductions.get_color_count(h);
-                    let val = (current_req_board.get_color_count(h) as i32 - red as i32).max(0) as u8;
+                    let val =
+                        (current_req_board.get_color_count(h) as i32 - red as i32).max(0) as u8;
                     current_req_board.set_color_count(h, val);
                 }
 
@@ -398,13 +495,18 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
     */
 
     let has_recovery = p.hand.iter().any(|&cid| {
-        db.get_member(cid).map_or(false, |m| (m.ability_flags & FLAG_RECOVER) != 0)
+        db.get_member(cid)
+            .map_or(false, |m| (m.ability_flags & FLAG_RECOVER) != 0)
     });
 
     if has_recovery {
-        let discard_val = p.discard.iter().filter(|&&cid| {
-            db.get_live(cid).is_some() || db.get_member(cid).map_or(false, |m| m.cost >= 3)
-        }).count();
+        let discard_val = p
+            .discard
+            .iter()
+            .filter(|&&cid| {
+                db.get_live(cid).is_some() || db.get_member(cid).map_or(false, |m| m.cost >= 3)
+            })
+            .count();
         score += discard_val as f32 * cfg.weight_discard_bonus * 5.0; // High bonus if we can recover
     }
 
@@ -426,7 +528,9 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
             let mut total_req = 0;
             let mut impossible_colors = 0;
             for i in 0..6 {
-                let req = (l.required_hearts[i] as i32 - p.heart_req_reductions.get_color_count(i) as i32).max(0) as u32;
+                let req = (l.required_hearts[i] as i32
+                    - p.heart_req_reductions.get_color_count(i) as i32)
+                    .max(0) as u32;
                 total_req += req;
                 if req > 0 && stage_hearts[i] == 0 && stage_blades < 3 {
                     // No board setup for this color and low yell volume
@@ -444,7 +548,9 @@ pub fn evaluate_player(state: &GameState, db: &CardDatabase, p_idx: usize, basel
 }
 
 pub fn calculate_deck_expectations(deck: &[i32], db: &CardDatabase) -> DeckStats {
-    if deck.is_empty() { return DeckStats::default(); }
+    if deck.is_empty() {
+        return DeckStats::default();
+    }
 
     let mut total_hearts = [0.0; 7];
     let mut total_notes = 0.0;
@@ -452,14 +558,18 @@ pub fn calculate_deck_expectations(deck: &[i32], db: &CardDatabase) -> DeckStats
     let count = deck.len() as f32;
 
     for &cid in deck {
-         if let Some(m) = db.get_member(cid) {
-             for i in 0..7 { total_hearts[i] += m.blade_hearts[i] as f32; }
-             total_notes += m.note_icons as f32;
-             total_draw += m.draw_icons as f32;
-         } else if let Some(l) = db.get_live(cid) {
-             for i in 0..7 { total_hearts[i] += l.blade_hearts[i] as f32; }
-             total_notes += l.note_icons as f32;
-         }
+        if let Some(m) = db.get_member(cid) {
+            for i in 0..7 {
+                total_hearts[i] += m.blade_hearts[i] as f32;
+            }
+            total_notes += m.note_icons as f32;
+            total_draw += m.draw_icons as f32;
+        } else if let Some(l) = db.get_live(cid) {
+            for i in 0..7 {
+                total_hearts[i] += l.blade_hearts[i] as f32;
+            }
+            total_notes += l.note_icons as f32;
+        }
     }
 
     DeckStats {
@@ -470,7 +580,12 @@ pub fn calculate_deck_expectations(deck: &[i32], db: &CardDatabase) -> DeckStats
     }
 }
 
-pub fn calculate_live_success_prob(live: &LiveCard, stage_hearts: &[u32; 7], expected_yell_hearts: &[f32], reductions: [u8; 7]) -> f32 {
+pub fn calculate_live_success_prob(
+    live: &LiveCard,
+    stage_hearts: &[u32; 7],
+    expected_yell_hearts: &[f32],
+    reductions: [u8; 7],
+) -> f32 {
     let mut needed = live.required_hearts;
     for i in 0..7 {
         needed[i] = (needed[i] as i32 - reductions[i] as i32).max(0) as u8;
@@ -511,14 +626,18 @@ pub fn calculate_live_success_prob(live: &LiveCard, stage_hearts: &[u32; 7], exp
             let used = surplus.min(remaining_any);
             satisfied += used;
             remaining_any -= used;
-            if remaining_any <= 0.0 { break; }
+            if remaining_any <= 0.0 {
+                break;
+            }
         }
     }
 
     let prob = if total_req > 0.0 {
         let mut p = (satisfied / total_req).clamp(0.0, 1.0);
         p = p.powf(0.5);
-        if p >= 1.0 { p = 1.2; }
+        if p >= 1.0 {
+            p = 1.2;
+        }
         p
     } else {
         1.2
@@ -535,7 +654,11 @@ fn calculate_hand_quality(state: &GameState, db: &CardDatabase, p_idx: usize) ->
         Phase::MulliganP1 | Phase::MulliganP2 => true,
         _ => false,
     };
-    let max_energy = if is_mulligan { 3 } else { p.energy_zone.len() as u32 };
+    let max_energy = if is_mulligan {
+        3
+    } else {
+        p.energy_zone.len() as u32
+    };
 
     for (i, &cid) in p.hand.iter().enumerate() {
         let card_val = calculate_card_potential(cid, db, max_energy);
@@ -560,25 +683,51 @@ fn calculate_card_potential(cid: i32, db: &CardDatabase, max_energy: u32) -> f32
         }
 
         use crate::core::logic::{
-            FLAG_DRAW, FLAG_SEARCH, FLAG_RECOVER, FLAG_BUFF, FLAG_CHARGE,
-            FLAG_TEMPO, FLAG_REDUCE, FLAG_BOOST, FLAG_TRANSFORM, FLAG_WIN_COND
+            FLAG_BOOST, FLAG_BUFF, FLAG_CHARGE, FLAG_DRAW, FLAG_RECOVER, FLAG_REDUCE, FLAG_SEARCH,
+            FLAG_TEMPO, FLAG_TRANSFORM, FLAG_WIN_COND,
         };
 
         let f = m.ability_flags;
-        if (f & FLAG_DRAW) != 0 { score += 5.0; }
-        if (f & FLAG_SEARCH) != 0 { score += 5.0; }
-        if (f & FLAG_RECOVER) != 0 { score += 0.5; }
-        if (f & FLAG_BUFF) != 0 { score += 0.4; }
-        if (f & FLAG_CHARGE) != 0 { score += 1.2; }
-        if (f & FLAG_TEMPO) != 0 { score += 0.3; }
-        if (f & FLAG_REDUCE) != 0 { score += 0.6; }
-        if (f & FLAG_BOOST) != 0 { score += 0.6; }
-        if (f & FLAG_TRANSFORM) != 0 { score += 0.4; }
-        if (f & FLAG_WIN_COND) != 0 { score += 1.0; }
+        if (f & FLAG_DRAW) != 0 {
+            score += 5.0;
+        }
+        if (f & FLAG_SEARCH) != 0 {
+            score += 5.0;
+        }
+        if (f & FLAG_RECOVER) != 0 {
+            score += 0.5;
+        }
+        if (f & FLAG_BUFF) != 0 {
+            score += 0.4;
+        }
+        if (f & FLAG_CHARGE) != 0 {
+            score += 1.2;
+        }
+        if (f & FLAG_TEMPO) != 0 {
+            score += 0.3;
+        }
+        if (f & FLAG_REDUCE) != 0 {
+            score += 0.6;
+        }
+        if (f & FLAG_BOOST) != 0 {
+            score += 0.6;
+        }
+        if (f & FLAG_TRANSFORM) != 0 {
+            score += 0.4;
+        }
+        if (f & FLAG_WIN_COND) != 0 {
+            score += 1.0;
+        }
 
-        if (m.synergy_flags & crate::core::logic::SYN_FLAG_GROUP) != 0 { score += 0.3; }
-        if (m.synergy_flags & crate::core::logic::SYN_FLAG_CENTER) != 0 { score += 0.5; }
-        if (m.cost_flags & crate::core::logic::COST_FLAG_TAP as u32) != 0 { score += 0.2; }
+        if (m.synergy_flags & crate::core::logic::SYN_FLAG_GROUP) != 0 {
+            score += 0.3;
+        }
+        if (m.synergy_flags & crate::core::logic::SYN_FLAG_CENTER) != 0 {
+            score += 0.5;
+        }
+        if (m.cost_flags & crate::core::logic::COST_FLAG_TAP as u32) != 0 {
+            score += 0.2;
+        }
 
         score
     } else if let Some(l) = db.get_live(cid) {
@@ -588,20 +737,38 @@ fn calculate_card_potential(cid: i32, db: &CardDatabase, max_energy: u32) -> f32
     }
 }
 
-
 pub struct SimpleHeuristic;
 
 impl Heuristic for SimpleHeuristic {
-    fn name(&self) -> &str { "SimpleHeuristic" }
-    fn evaluate(&self, state: &GameState, _db: &CardDatabase, _p0_baseline: u32, _p1_baseline: u32, _eval_mode: EvalMode, _p0_deck_stats: Option<DeckStats>, _p1_deck_stats: Option<DeckStats>) -> f32 {
+    fn name(&self) -> &str {
+        "SimpleHeuristic"
+    }
+    fn evaluate(
+        &self,
+        state: &GameState,
+        _db: &CardDatabase,
+        _p0_baseline: u32,
+        _p1_baseline: u32,
+        _eval_mode: EvalMode,
+        _p0_deck_stats: Option<DeckStats>,
+        _p1_deck_stats: Option<DeckStats>,
+    ) -> f32 {
         let p0 = &state.core.players[0];
         let p1 = &state.core.players[1];
 
-        let score0 = p0.success_lives.len() as f32 * 10.0 + p0.energy_zone.len() as f32 * 0.5 + p0.hand.len() as f32 * 0.1;
-        let score1 = p1.success_lives.len() as f32 * 10.0 + p1.energy_zone.len() as f32 * 0.5 + p1.hand.len() as f32 * 0.1;
+        let score0 = p0.success_lives.len() as f32 * 10.0
+            + p0.energy_zone.len() as f32 * 0.5
+            + p0.hand.len() as f32 * 0.1;
+        let score1 = p1.success_lives.len() as f32 * 10.0
+            + p1.energy_zone.len() as f32 * 0.5
+            + p1.hand.len() as f32 * 0.1;
 
-        if score0 > score1 { 0.6 }
-        else if score1 > score0 { 0.4 }
-        else { 0.5 }
+        if score0 > score1 {
+            0.6
+        } else if score1 > score0 {
+            0.4
+        } else {
+            0.5
+        }
     }
 }

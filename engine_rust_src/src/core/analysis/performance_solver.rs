@@ -1,6 +1,6 @@
-use crate::core::logic::game::GameState;
-use crate::core::logic::card_db::CardDatabase;
 use crate::core::hearts::HeartBoard;
+use crate::core::logic::card_db::CardDatabase;
+use crate::core::logic::game::GameState;
 
 /// Analysis tool to calculate mathematical probabilities during the performance phase.
 pub struct PerformanceProbabilitySolver;
@@ -85,7 +85,10 @@ impl PerformanceProbabilitySolver {
         stage_notes += adj.extra_notes as u32;
 
         // 3. Current Live Score Potential
-        let mut expected_score = live_card.score as f32 + player.live_score_bonus as f32 + stage_notes as f32 + adj.boost_score as f32;
+        let mut expected_score = live_card.score as f32
+            + player.live_score_bonus as f32
+            + stage_notes as f32
+            + adj.boost_score as f32;
 
         // 4. Analyze Deck Population
         let k_yells = {
@@ -107,8 +110,11 @@ impl PerformanceProbabilitySolver {
                 if n_deck > 0.0 {
                     let mut deck_sum_notes = 0u32;
                     for &cid in player.deck.iter() {
-                        if let Some(m) = db.get_member(cid) { deck_sum_notes += m.note_icons; }
-                        else if let Some(l) = db.get_live(cid) { deck_sum_notes += l.note_icons; }
+                        if let Some(m) = db.get_member(cid) {
+                            deck_sum_notes += m.note_icons;
+                        } else if let Some(l) = db.get_live(cid) {
+                            deck_sum_notes += l.note_icons;
+                        }
                     }
                     expected_score += (k_yells as f32) * (deck_sum_notes as f32 / n_deck);
                 }
@@ -135,10 +141,14 @@ impl PerformanceProbabilitySolver {
 
         for &cid in pool.iter() {
             if let Some(m) = db.get_member(cid) {
-                for i in 0..7 { pool_sum_hearts[i] += m.blade_hearts[i] as u32; }
+                for i in 0..7 {
+                    pool_sum_hearts[i] += m.blade_hearts[i] as u32;
+                }
                 pool_sum_notes += m.note_icons;
             } else if let Some(l) = db.get_live(cid) {
-                for i in 0..7 { pool_sum_hearts[i] += l.blade_hearts[i] as u32; }
+                for i in 0..7 {
+                    pool_sum_hearts[i] += l.blade_hearts[i] as u32;
+                }
                 pool_sum_notes += l.note_icons;
             }
         }
@@ -160,14 +170,20 @@ impl PerformanceProbabilitySolver {
         // 6. Strict Bounds Check
         let mut max_h_in_pool = 1u8;
         for i in 0..7 {
-            let color_max = pool.iter().map(|&cid| {
-                db.get_member(cid).map(|m| m.blade_hearts[i]).unwrap_or(0)
-            }).max().unwrap_or(0);
-            if color_max > max_h_in_pool { max_h_in_pool = color_max; }
+            let color_max = pool
+                .iter()
+                .map(|&cid| db.get_member(cid).map(|m| m.blade_hearts[i]).unwrap_or(0))
+                .max()
+                .unwrap_or(0);
+            if color_max > max_h_in_pool {
+                max_h_in_pool = color_max;
+            }
         }
 
         let mut total_heart_deficit = 0.0f32;
-        for i in 0..6 { total_heart_deficit += heart_deficit[i] as f32; }
+        for i in 0..6 {
+            total_heart_deficit += heart_deficit[i] as f32;
+        }
         total_heart_deficit = (total_heart_deficit - expected_hearts[6]).max(0.0);
 
         if k_draw * (max_h_in_pool as f32) < total_heart_deficit {
@@ -177,7 +193,9 @@ impl PerformanceProbabilitySolver {
         // 7. Improved Success Probability Model
         // We evaluate how well expected hearts (Normal + Special) cover the deficit.
         let mut color_needed_total = 0.0f32;
-        for i in 0..6 { color_needed_total += heart_deficit[i] as f32; }
+        for i in 0..6 {
+            color_needed_total += heart_deficit[i] as f32;
+        }
 
         let special_buffer = expected_hearts[6];
         let mut total_coverage = 0.0f32;
@@ -222,7 +240,11 @@ impl PerformanceProbabilitySolver {
         }
     }
 
-    pub fn analyze_current_permissible_lives(state: &GameState, db: &CardDatabase, player_id: usize) -> Vec<(i32, PerformanceChance)> {
+    pub fn analyze_current_permissible_lives(
+        state: &GameState,
+        db: &CardDatabase,
+        player_id: usize,
+    ) -> Vec<(i32, PerformanceChance)> {
         let player = &state.core.players[player_id];
         let mut results = Vec::new();
         for &cid in player.live_zone.iter() {
@@ -231,7 +253,15 @@ impl PerformanceProbabilitySolver {
                     Some(l) => l,
                     None => continue,
                 };
-                results.push((cid, Self::calculate_performance_chance(state, db, live_card, &AbilityAdjustments::default())));
+                results.push((
+                    cid,
+                    Self::calculate_performance_chance(
+                        state,
+                        db,
+                        live_card,
+                        &AbilityAdjustments::default(),
+                    ),
+                ));
             }
         }
         results
@@ -330,7 +360,9 @@ impl PerformanceProbabilitySolver {
         let mut results = Vec::new();
 
         for &cid in hand_cards {
-            if cid < 0 { continue; }
+            if cid < 0 {
+                continue;
+            }
             let card = match db.get_member(cid) {
                 Some(m) => m,
                 None => continue,
@@ -338,7 +370,8 @@ impl PerformanceProbabilitySolver {
 
             // Can we afford it?
             let player_id = state.current_player as usize;
-            let available_energy = state.core.players[player_id].energy_zone.len() as u32 - state.core.players[player_id].tapped_energy_count();
+            let available_energy = state.core.players[player_id].energy_zone.len() as u32
+                - state.core.players[player_id].tapped_energy_count();
 
             let mut best_chance = PerformanceChance {
                 success_probability: 0.0,
@@ -359,8 +392,10 @@ impl PerformanceProbabilitySolver {
                 let adj = Self::predict_adjustments(state, db, card, slot);
                 let chance = Self::calculate_performance_chance(state, db, live_card, &adj);
 
-                if chance.success_probability > best_chance.success_probability ||
-                   (chance.success_probability == best_chance.success_probability && chance.expected_score > best_chance.expected_score) {
+                if chance.success_probability > best_chance.success_probability
+                    || (chance.success_probability == best_chance.success_probability
+                        && chance.expected_score > best_chance.expected_score)
+                {
                     best_chance = chance;
                 }
             }
@@ -368,7 +403,11 @@ impl PerformanceProbabilitySolver {
         }
 
         // Sort by success probability descending
-        results.sort_by(|a, b| b.1.success_probability.partial_cmp(&a.1.success_probability).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.1.success_probability
+                .partial_cmp(&a.1.success_probability)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         results
     }
 }

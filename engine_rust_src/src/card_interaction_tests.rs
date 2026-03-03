@@ -1,4 +1,4 @@
-use crate::test_helpers::{load_real_db, create_test_state};
+use crate::test_helpers::{create_test_state, load_real_db};
 
 /// Verifies that granted abilities (Wave 2) are correctly applied to a target card using real IDs.
 #[test]
@@ -25,7 +25,9 @@ fn test_granted_abilities_removal() {
     assert_eq!(state.core.players[0].granted_abilities.len(), 1);
 
     // Manually remove
-    state.core.players[0].granted_abilities.retain(|&(target, _, _)| target != 121);
+    state.core.players[0]
+        .granted_abilities
+        .retain(|&(target, _, _)| target != 121);
     assert_eq!(state.core.players[0].granted_abilities.len(), 0);
 }
 

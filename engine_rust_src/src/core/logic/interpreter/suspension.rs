@@ -3,7 +3,7 @@
 //! This module contains the logic for suspending execution for user input
 //! and resolving target slots.
 
-use crate::core::logic::{GameState, CardDatabase, AbilityContext, PendingInteraction, Phase};
+use crate::core::logic::{AbilityContext, CardDatabase, GameState, PendingInteraction, Phase};
 
 pub fn get_choice_text(db: &CardDatabase, ctx: &AbilityContext) -> String {
     crate::core::logic::ActionFactory::get_choice_text(db, ctx)
@@ -19,13 +19,15 @@ pub fn suspend_interaction(
     choice_type: &str,
     choice_text: &str,
     filter_attr: u64,
-    v_remaining: i16
+    v_remaining: i16,
 ) -> bool {
     let original_phase = if let Some(p) = ctx.original_phase {
         p
     } else if state.phase == Phase::Response {
         // Fallback for cases where context didn't carry it (e.g. root activation via trigger)
-        state.interaction_stack.last()
+        state
+            .interaction_stack
+            .last()
             .map(|pi| pi.original_phase)
             .unwrap_or(state.phase)
     } else {
@@ -64,16 +66,45 @@ pub fn suspend_interaction(
 
     // Don't skip suspension for OPTIONAL, LOOK_AND_CHOOSE, COLOR_SELECT, TAP_M_SELECT, etc.
     // These are legitimate choice types that should always suspend even with limited actions.
-    let always_suspend_types = ["OPTIONAL", "LOOK_AND_CHOOSE", "COLOR_SELECT", "TAP_M_SELECT", "TAP_O", "SELECT_MEMBER", "SELECT_LIVE", "SELECT_PLAYER", "RECOV_L", "RECOV_M", "SELECT_DISCARD_PLAY", "SELECT_STAGE", "SELECT_STAGE_EMPTY", "SELECT_LIVE_SLOT", "SELECT_HAND_PLAY", "SELECT_MODE"];
+    let always_suspend_types = [
+        "OPTIONAL",
+        "LOOK_AND_CHOOSE",
+        "COLOR_SELECT",
+        "TAP_M_SELECT",
+        "TAP_O",
+        "SELECT_MEMBER",
+        "SELECT_LIVE",
+        "SELECT_PLAYER",
+        "RECOV_L",
+        "RECOV_M",
+        "SELECT_DISCARD_PLAY",
+        "SELECT_STAGE",
+        "SELECT_STAGE_EMPTY",
+        "SELECT_LIVE_SLOT",
+        "SELECT_HAND_PLAY",
+        "SELECT_MODE",
+    ];
     let should_check_skip = !always_suspend_types.contains(&choice_type);
 
     if state.debug.debug_mode {
-        println!("[DEBUG] suspend_interaction: choice_type={}, v_remaining={}, actions={}", choice_type, v_remaining, actions.len());
+        println!(
+            "[DEBUG] suspend_interaction: choice_type={}, v_remaining={}, actions={}",
+            choice_type,
+            v_remaining,
+            actions.len()
+        );
     }
 
-    if should_check_skip && actions.len() <= 1 && (actions.is_empty() || actions.contains(&0)) && choice_type != "OPPONENT_CHOOSE" {
+    if should_check_skip
+        && actions.len() <= 1
+        && (actions.is_empty() || actions.contains(&0))
+        && choice_type != "OPPONENT_CHOOSE"
+    {
         if state.debug.debug_mode {
-            println!("[DEBUG] Softlock prevented: {} has no legal actions. Skipping suspension.", choice_type);
+            println!(
+                "[DEBUG] Softlock prevented: {} has no legal actions. Skipping suspension.",
+                choice_type
+            );
         }
         state.interaction_stack.pop();
         state.phase = original_phase;
@@ -93,7 +124,11 @@ pub fn resolve_target_slot(target_slot: i32, ctx: &AbilityContext) -> usize {
         ctx.area_idx as usize
     } else if target_slot == -1 || target_slot == 4 {
         // Fallback to 0 if we expect a slot but none is provided, or if slot 4 is passed without context
-        if ctx.area_idx >= 0 { ctx.area_idx as usize } else { 0 }
+        if ctx.area_idx >= 0 {
+            ctx.area_idx as usize
+        } else {
+            0
+        }
     } else {
         target_slot.max(0) as usize
     }

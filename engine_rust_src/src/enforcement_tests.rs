@@ -1,9 +1,9 @@
 //! Tests for core rule enforcement (Referee Logic).
 //! These tests verify that the engine correctly prevents actions when costs or conditions are not met.
 
+use crate::core::logic::card_db::LOGIC_ID_MASK;
 use crate::core::logic::*;
 use crate::test_helpers::{create_test_db, create_test_state};
-use crate::core::logic::card_db::LOGIC_ID_MASK;
 
 #[test]
 fn test_enforce_cost_failure() {
@@ -16,7 +16,11 @@ fn test_enforce_cost_failure() {
     m.card_id = cid;
     m.abilities.push(Ability {
         trigger: TriggerType::Activated,
-        costs: vec![Cost { cost_type: AbilityCostType::Energy, value: 2, ..Default::default() }],
+        costs: vec![Cost {
+            cost_type: AbilityCostType::Energy,
+            value: 2,
+            ..Default::default()
+        }],
         bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0],
         ..Default::default()
     });
@@ -44,7 +48,11 @@ fn test_enforce_condition_failure() {
     m.card_id = cid;
     m.abilities.push(Ability {
         trigger: TriggerType::Activated,
-        conditions: vec![Condition { condition_type: ConditionType::CountStage, value: 3, ..Default::default() }],
+        conditions: vec![Condition {
+            condition_type: ConditionType::CountStage,
+            value: 3,
+            ..Default::default()
+        }],
         bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0],
         ..Default::default()
     });
@@ -56,7 +64,10 @@ fn test_enforce_condition_failure() {
 
     // Attempt to activate (0, 0)
     let res = state.activate_ability(&db, 0, 0);
-    assert!(res.is_err(), "Should fail due to conditions not met (Stage count < 3)");
+    assert!(
+        res.is_err(),
+        "Should fail due to conditions not met (Stage count < 3)"
+    );
     assert!(res.unwrap_err().contains("Conditions not met"));
 }
 
@@ -84,11 +95,18 @@ fn test_enforce_once_per_turn_failure() {
 
     // First activation - Success
     let res1 = state.activate_ability(&db, 0, 0);
-    assert!(res1.is_ok(), "First activation should succeed. Error: {:?}", res1.err());
+    assert!(
+        res1.is_ok(),
+        "First activation should succeed. Error: {:?}",
+        res1.err()
+    );
 
     // Second activation - Failure
     let res2 = state.activate_ability(&db, 0, 0);
-    assert!(res2.is_err(), "Second activation should fail due to Once-Per-Turn");
+    assert!(
+        res2.is_err(),
+        "Second activation should fail due to Once-Per-Turn"
+    );
     assert!(res2.unwrap_err().contains("Ability already used this turn"));
 }
 
@@ -111,6 +129,9 @@ fn test_enforce_play_member_cost_failure() {
 
     // Attempt to play to slot 0
     let res = state.play_member(&db, 0, 0);
-    assert!(res.is_err(), "Should fail to play member due to insufficient energy");
+    assert!(
+        res.is_err(),
+        "Should fail to play member due to insufficient energy"
+    );
     assert!(res.unwrap_err().contains("Not enough energy"));
 }

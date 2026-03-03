@@ -1,8 +1,8 @@
 // use crate::test_helpers::{Action, TestUtils, create_test_db, create_test_state, p_state};
 #[cfg(test)]
 mod tests {
-    use crate::core::logic::*;
     use crate::core::logic::card_db::LOGIC_ID_MASK;
+    use crate::core::logic::*;
 
     fn setup_test_state() -> (GameState, CardDatabase) {
         let mut state = GameState::default();
@@ -61,7 +61,9 @@ mod tests {
         // "Heart 1" is Pink (Index 0).
         // Reduction encoding: 4 bits per color.
         // We want -2 to Pink.
-        state.core.players[p_idx].heart_req_reductions.set_color_count(0, 2);
+        state.core.players[p_idx]
+            .heart_req_reductions
+            .set_color_count(0, 2);
 
         // 5. Run Live Result Phase
         state.phase = Phase::LiveResult;
@@ -70,14 +72,17 @@ mod tests {
 
         // Set performance_results snapshot to indicate success
         // This is required because do_live_result trusts the snapshot from check_performance_requirements
-        state.ui.performance_results.insert(p_idx as u8, serde_json::json!({
-            "success": true,
-            "lives": [
-                {"passed": true, "score": 1, "slot_idx": 0},
-                {"passed": false, "score": 0, "slot_idx": 1},
-                {"passed": false, "score": 0, "slot_idx": 2}
-            ]
-        }));
+        state.ui.performance_results.insert(
+            p_idx as u8,
+            serde_json::json!({
+                "success": true,
+                "lives": [
+                    {"passed": true, "score": 1, "slot_idx": 0},
+                    {"passed": false, "score": 0, "slot_idx": 1},
+                    {"passed": false, "score": 0, "slot_idx": 2}
+                ]
+            }),
+        );
 
         crate::core::logic::performance::do_live_result(&mut state, &db);
 
@@ -85,11 +90,17 @@ mod tests {
         // If bug exists: Card is in discard (not success lives), or still in live zone (if choices pending? No, if 1 candidate auto-move).
         // If reduced, valid_candidates = 1 (our card). Auto-move to success.
 
-        assert!(state.core.players[p_idx].success_lives.contains(&60001),
+        assert!(
+            state.core.players[p_idx].success_lives.contains(&60001),
             "Live card 60001 should be in Success Lives. Found in Zone: {:?}, Discard: {:?}",
-            state.core.players[p_idx].live_zone, state.core.players[p_idx].discard);
+            state.core.players[p_idx].live_zone,
+            state.core.players[p_idx].discard
+        );
 
-        assert_eq!(state.core.players[p_idx].live_zone[0], -1, "Live zone should be empty");
+        assert_eq!(
+            state.core.players[p_idx].live_zone[0], -1,
+            "Live zone should be empty"
+        );
     }
     #[test]
     fn test_kimi_no_kokoro_prevention() {
@@ -128,7 +139,7 @@ mod tests {
 
         db.lives.insert(k_id, live_card.clone());
         if db.lives_vec.len() <= k_id as usize {
-             db.lives_vec.resize(k_id as usize + 1, None);
+            db.lives_vec.resize(k_id as usize + 1, None);
         }
         db.lives_vec[(k_id as usize) & LOGIC_ID_MASK as usize] = Some(live_card);
 
@@ -139,10 +150,13 @@ mod tests {
         // 3. Force Success
         // Requirements are 0, so it should succeed automatically.
         // But we need performance results to say "success" so `do_live_result` proceeds.
-        state.ui.performance_results.insert(p_idx as u8, serde_json::json!({
-            "success": true,
-            "lives": [ { "score": 1 } ]
-        }));
+        state.ui.performance_results.insert(
+            p_idx as u8,
+            serde_json::json!({
+                "success": true,
+                "lives": [ { "score": 1 } ]
+            }),
+        );
 
         state.phase = Phase::LiveResult;
         state.current_player = 0;
@@ -152,13 +166,22 @@ mod tests {
 
         // 5. Verify Prevention
         // Should NOT be in success_lives
-        assert!(!state.core.players[p_idx].success_lives.contains(&(k_id)), "Should not be in success lives");
+        assert!(
+            !state.core.players[p_idx].success_lives.contains(&(k_id)),
+            "Should not be in success lives"
+        );
 
         // Should be in DISCARD
-        assert!(state.core.players[p_idx].discard.contains(&(k_id)), "Should be moved to discard");
+        assert!(
+            state.core.players[p_idx].discard.contains(&(k_id)),
+            "Should be moved to discard"
+        );
 
         // Live zone should be empty
-        assert_eq!(state.core.players[p_idx].live_zone[0], -1, "Live zone should be cleared");
+        assert_eq!(
+            state.core.players[p_idx].live_zone[0], -1,
+            "Live zone should be cleared"
+        );
     }
 
     #[test]
@@ -181,17 +204,27 @@ mod tests {
         // Card 9 costs 20 energy — give player enough untapped energy
         state.core.players[p_idx].energy_zone = (0..25).map(|i| (20001 + i) as i32).collect();
         // Populate deck to prevent auto-refresh
-        for i in 200..210 { state.core.players[p_idx].deck.push(i); }
+        for i in 200..210 {
+            state.core.players[p_idx].deck.push(i);
+        }
 
         state.phase = Phase::Main;
         state.current_player = 0;
 
         // Verify Legal Actions
-        struct Receiver { actions: Vec<usize> }
+        struct Receiver {
+            actions: Vec<usize>,
+        }
         impl crate::core::logic::game::ActionReceiver for Receiver {
-            fn add_action(&mut self, action_id: usize) { self.actions.push(action_id); }
-            fn reset(&mut self) { self.actions.clear(); }
-            fn is_empty(&self) -> bool { self.actions.is_empty() }
+            fn add_action(&mut self, action_id: usize) {
+                self.actions.push(action_id);
+            }
+            fn reset(&mut self) {
+                self.actions.clear();
+            }
+            fn is_empty(&self) -> bool {
+                self.actions.is_empty()
+            }
         }
 
         let mut recv = Receiver { actions: vec![] };
@@ -204,17 +237,37 @@ mod tests {
         let aid1 = (ACTION_BASE_HAND + 1) as usize;
         let aid2 = (ACTION_BASE_HAND + 2) as usize;
 
-        assert!(!recv.actions.contains(&aid0), "Action {} (Baton Touch on restricted slot) should not be legal. Actions: {:?}", aid0, recv.actions);
+        assert!(
+            !recv.actions.contains(&aid0),
+            "Action {} (Baton Touch on restricted slot) should not be legal. Actions: {:?}",
+            aid0,
+            recv.actions
+        );
         // But playing to empty slots (1 and 2) should be fine
-        assert!(recv.actions.contains(&aid1), "Action {} (Play to empty slot 1) should be legal", aid1);
-        assert!(recv.actions.contains(&aid2), "Action {} (Play to empty slot 2) should be legal", aid2);
+        assert!(
+            recv.actions.contains(&aid1),
+            "Action {} (Play to empty slot 1) should be legal",
+            aid1
+        );
+        assert!(
+            recv.actions.contains(&aid2),
+            "Action {} (Play to empty slot 2) should be legal",
+            aid2
+        );
 
         // Verify attempt to play fails
         let res = state.play_member(&db, 0, 0);
-        assert!(res.is_err(), "Playing member on restricted slot should return an error");
+        assert!(
+            res.is_err(),
+            "Playing member on restricted slot should return an error"
+        );
         let err_msg = res.err().unwrap();
         println!("DEBUG: Actual error message: {}", err_msg);
-        assert!(err_msg.to_lowercase().contains("baton touch") && err_msg.to_lowercase().contains("not allowed"),
-            "Error message should mention Baton Touch restriction. Actual: '{}'", err_msg);
+        assert!(
+            err_msg.to_lowercase().contains("baton touch")
+                && err_msg.to_lowercase().contains("not allowed"),
+            "Error message should mention Baton Touch restriction. Actual: '{}'",
+            err_msg
+        );
     }
 }

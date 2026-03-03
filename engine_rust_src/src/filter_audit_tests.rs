@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use crate::core::logic::game::GameState;
-    use crate::core::logic::card_db::CardDatabase;
-    use crate::core::logic::models::*;
     use crate::core::enums::*;
-    use crate::core::logic::interpreter::*;
+    use crate::core::logic::card_db::CardDatabase;
     use crate::core::logic::card_db::MemberCard;
+    use crate::core::logic::game::GameState;
+    use crate::core::logic::interpreter::*;
+    use crate::core::logic::models::*;
 
     fn create_test_db() -> CardDatabase {
         use crate::core::logic::card_db::LOGIC_ID_MASK;
@@ -18,7 +18,9 @@ mod tests {
         m1.groups = vec![3]; // Liella
         db.members.insert(100, m1.clone());
         let lid = (100 & LOGIC_ID_MASK) as usize;
-        if db.members_vec.len() <= lid { db.members_vec.resize(lid + 1, None); }
+        if db.members_vec.len() <= lid {
+            db.members_vec.resize(lid + 1, None);
+        }
         db.members_vec[lid] = Some(m1);
 
         // ID 101: Other Member, Cost 5
@@ -28,7 +30,9 @@ mod tests {
         m2.cost = 5;
         db.members.insert(101, m2.clone());
         let lid2 = (101 & LOGIC_ID_MASK) as usize;
-        if db.members_vec.len() <= lid2 { db.members_vec.resize(lid2 + 1, None); }
+        if db.members_vec.len() <= lid2 {
+            db.members_vec.resize(lid2 + 1, None);
+        }
         db.members_vec[lid2] = Some(m2);
 
         db

@@ -1,5 +1,5 @@
 use crate::core::logic::*;
-use crate::test_helpers::{load_real_db, create_test_state};
+use crate::test_helpers::{create_test_state, load_real_db};
 
 /// Verifies that O_LOOK_AND_CHOOSE correctly enriches the choice text with the card's real original_text.
 #[test]
@@ -22,7 +22,10 @@ fn test_enrichment_look_and_choose() {
     assert_eq!(state.phase, Phase::Response);
     let interaction = state.interaction_stack.last().expect("Missing interaction");
     // Honoka's original_text starts with "{{toujyou.png|登場}}"
-    assert!(interaction.choice_text.contains("登場"), "Look & Choose should be enriched with Honoka's real text");
+    assert!(
+        interaction.choice_text.contains("登場"),
+        "Look & Choose should be enriched with Honoka's real text"
+    );
 }
 
 /// Verifies that O_LOOK_AND_CHOOSE filters correctly based on real card attributes (Cost).
@@ -35,12 +38,24 @@ fn test_look_and_choose_filter() {
     // Indices in looked_cards (stack order): 0=122, 1=120, 2=121
     state.core.players[0].deck = vec![121, 120, 122].into();
 
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // Filter Attr: Cost GE 11 → Bit 24 (Enable) | (11 << 25) (Threshold=11) | Bit 31 (Cost Type) | Bit 0 (Target=Self)
     // Python _pack_filter_attr always sets bit 31 for cost filters. Old value 385875969 was missing bit 31.
     let cost_ge_11_attr = 0x01u64 | (1u64 << 24) | (11u64 << 25) | (1u64 << 31);
-    let bc = vec![O_LOOK_AND_CHOOSE, 3, cost_ge_11_attr as i32, 0, O_RETURN, 0, 0, 0];
+    let bc = vec![
+        O_LOOK_AND_CHOOSE,
+        3,
+        cost_ge_11_attr as i32,
+        0,
+        O_RETURN,
+        0,
+        0,
+        0,
+    ];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(state.phase, Phase::Response);
@@ -51,9 +66,18 @@ fn test_look_and_choose_filter() {
     // Card 120 (index 1) -> Cost 11 (>=11) -> Legal (ACTION_BASE_CHOICE + 1)
     // Card 121 (index 2) -> Cost 2  (<11)  -> Illegal (ACTION_BASE_CHOICE + 2)
 
-    assert!(legal[ACTION_BASE_CHOICE as usize + 0], "Card 122 (Cost 13) should be legal");
-    assert!(legal[ACTION_BASE_CHOICE as usize + 1], "Card 120 (Cost 11) should be legal");
-    assert!(!legal[ACTION_BASE_CHOICE as usize + 2], "Card 121 (Cost 2) should be illegal");
+    assert!(
+        legal[ACTION_BASE_CHOICE as usize + 0],
+        "Card 122 (Cost 13) should be legal"
+    );
+    assert!(
+        legal[ACTION_BASE_CHOICE as usize + 1],
+        "Card 120 (Cost 11) should be legal"
+    );
+    assert!(
+        !legal[ACTION_BASE_CHOICE as usize + 2],
+        "Card 121 (Cost 2) should be illegal"
+    );
 }
 
 /// Verifies that Honoka's OnPlay trigger (ID 120) works correctly with production bytecode.
@@ -62,12 +86,15 @@ fn test_trigger_on_play_honoka() {
     let mut db = load_real_db();
 
     // Inject fake live card 30001 (used for recovery)
-    db.lives.insert(30001, crate::core::logic::card_db::LiveCard {
-        card_id: 30001,
-        card_no: "FAKE-30001".to_string(),
-        name: "Fake Live".to_string(),
-        ..Default::default()
-    });
+    db.lives.insert(
+        30001,
+        crate::core::logic::card_db::LiveCard {
+            card_id: 30001,
+            card_no: "FAKE-30001".to_string(),
+            name: "Fake Live".to_string(),
+            ..Default::default()
+        },
+    );
 
     let mut state = create_test_state();
     state.ui.silent = true;
@@ -101,7 +128,10 @@ fn test_trigger_on_play_honoka() {
 
     // Verify manually
     if state.core.players[0].hand.len() != 1 {
-        panic!("Should have recovered a live card to hand, found {}", state.core.players[0].hand.len());
+        panic!(
+            "Should have recovered a live card to hand, found {}",
+            state.core.players[0].hand.len()
+        );
     }
     if !state.core.players[0].hand.contains(&30001) {
         panic!("Hand should contain the recovered live card 30001");
@@ -142,17 +172,26 @@ fn test_trigger_activated_eli() {
 
     // Since RECOVER_MEMBER is interactive, state should now be suspended
     if state.phase != Phase::Response {
-        panic!("State should be in Phase::Response for recovery choice, found {:?}", state.phase);
+        panic!(
+            "State should be in Phase::Response for recovery choice, found {:?}",
+            state.phase
+        );
     }
 
     // Simulate choosing the first card in the recovery list (the only one, ID 124)
-    let mut pending = state.interaction_stack.pop().expect("No pending interaction");
+    let mut pending = state
+        .interaction_stack
+        .pop()
+        .expect("No pending interaction");
     pending.ctx.choice_index = 0; // Choose first option (ID 124)
     let card = db.get_member(121).expect("Missing Eli for resume");
     state.resolve_bytecode_cref(&db, &card.abilities[0].bytecode, &pending.ctx);
 
     // Now verify the hand
     if !state.core.players[0].hand.contains(&124) {
-        panic!("Hand should contain the recovered member Rin (ID 124). Hand: {:?}", state.core.players[0].hand);
+        panic!(
+            "Hand should contain the recovered member Rin (ID 124). Hand: {:?}",
+            state.core.players[0].hand
+        );
     }
 }

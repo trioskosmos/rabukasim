@@ -30,8 +30,8 @@
 //! Bit 62:     Keyword: Activated Energy
 //! Bit 63:     Keyword: Activated Member
 
-use serde::{Deserialize, Serialize};
 use super::CardDatabase;
+use serde::{Deserialize, Serialize};
 
 // --- Filter Bitfield Constants (Revision 5) ---
 pub const FILTER_TYPE_MEMBER: u64 = 0x01 << 2;
@@ -68,7 +68,7 @@ pub struct CardFilter {
     // Bit 12
     pub is_tapped: bool,
     // Bits 13-14
-    pub has_blade_heart: i8,   // 1=yes, -1=no, 0=don't care
+    pub has_blade_heart: i8, // 1=yes, -1=no, 0=don't care
     // Bit 15
     pub unique_names: bool,
     // Bit 16 + Bits 17-23
@@ -78,7 +78,7 @@ pub struct CardFilter {
     pub value_enabled: bool,
     pub value_threshold: u8,
     pub is_le: bool,
-    pub is_cost_type: bool,    // true=Cost, false=Heart
+    pub is_cost_type: bool, // true=Cost, false=Heart
     // Bits 32-38
     pub color_mask: u8,
     // Bits 39-45, 46-52
@@ -98,26 +98,40 @@ impl CardFilter {
         db: &CardDatabase,
         cid: i32,
         is_tapped_override: bool,
-        effective_hearts: Option<&[u8; 7]>
+        effective_hearts: Option<&[u8; 7]>,
     ) -> bool {
-        if !self.is_enabled { return true; }
-        if cid == -1 { return false; }
+        if !self.is_enabled {
+            return true;
+        }
+        if cid == -1 {
+            return false;
+        }
 
         // 1. Card Type Filter (bits 2-3)
         if self.card_type > 0 {
-            if self.card_type == 1 { // Member
-                if !db.members.contains_key(&cid) { return false; }
-            } else if self.card_type == 2 { // Live
-                if !db.lives.contains_key(&cid) { return false; }
+            if self.card_type == 1 {
+                // Member
+                if !db.members.contains_key(&cid) {
+                    return false;
+                }
+            } else if self.card_type == 2 {
+                // Live
+                if !db.lives.contains_key(&cid) {
+                    return false;
+                }
             }
         }
 
         // 2. Group Filter (bit 4 + bits 5-11)
         if self.group_enabled {
             if let Some(m) = db.get_member(cid) {
-                if !m.groups.contains(&self.group_id) { return false; }
+                if !m.groups.contains(&self.group_id) {
+                    return false;
+                }
             } else if let Some(l) = db.get_live(cid) {
-                if !l.groups.contains(&self.group_id) { return false; }
+                if !l.groups.contains(&self.group_id) {
+                    return false;
+                }
             } else {
                 return false;
             }
@@ -126,7 +140,9 @@ impl CardFilter {
         // 3. Unit Filter (bit 16 + bits 17-23)
         if self.unit_enabled {
             if let Some(m) = db.get_member(cid) {
-                if !m.units.contains(&self.unit_id) { return false; }
+                if !m.units.contains(&self.unit_id) {
+                    return false;
+                }
             } else {
                 return false;
             }
@@ -134,16 +150,27 @@ impl CardFilter {
 
         // 4. Character ID Filter (bits 39-45)
         if self.char_id_1 > 0 {
-            let name = if let Some(m) = db.get_member(cid) { &m.name }
-                       else if let Some(l) = db.get_live(cid) { &l.name }
-                       else { "" };
+            let name = if let Some(m) = db.get_member(cid) {
+                &m.name
+            } else if let Some(l) = db.get_live(cid) {
+                &l.name
+            } else {
+                ""
+            };
 
             let target_name = crate::core::logic::card_db::get_character_name(self.char_id_1);
-            if !name.replace(" ", "").contains(&target_name.replace(" ", "")) {
+            if !name
+                .replace(" ", "")
+                .contains(&target_name.replace(" ", ""))
+            {
                 // Check char_id_2 as alternate match
                 if self.char_id_2 > 0 {
-                    let target_name_2 = crate::core::logic::card_db::get_character_name(self.char_id_2);
-                    if !name.replace(" ", "").contains(&target_name_2.replace(" ", "")) {
+                    let target_name_2 =
+                        crate::core::logic::card_db::get_character_name(self.char_id_2);
+                    if !name
+                        .replace(" ", "")
+                        .contains(&target_name_2.replace(" ", ""))
+                    {
                         return false;
                     }
                 } else {
@@ -154,18 +181,27 @@ impl CardFilter {
 
         // 5. Setsuna Filter (bit 59)
         if self.is_setsuna {
-            let name = if let Some(m) = db.get_member(cid) { &m.name }
-                       else if let Some(l) = db.get_live(cid) { &l.name }
-                       else { "" };
-            if !name.contains("せつ菜") { return false; }
+            let name = if let Some(m) = db.get_member(cid) {
+                &m.name
+            } else if let Some(l) = db.get_live(cid) {
+                &l.name
+            } else {
+                ""
+            };
+            if !name.contains("せつ菜") {
+                return false;
+            }
         }
 
         // 6. Value Threshold Filter — Cost for Members, Hearts for Live (bit 24 + bits 25-29)
         if self.value_enabled && self.value_threshold > 0 {
             let actual_val = if self.is_cost_type {
                 // Cost mode: check member cost
-                if let Some(m) = db.get_member(cid) { m.cost as u8 }
-                else { 0 }
+                if let Some(m) = db.get_member(cid) {
+                    m.cost as u8
+                } else {
+                    0
+                }
             } else {
                 // Heart mode: check total hearts
                 if let Some(h) = effective_hearts {
@@ -180,9 +216,13 @@ impl CardFilter {
             };
 
             if self.is_le {
-                if actual_val > self.value_threshold { return false; }
+                if actual_val > self.value_threshold {
+                    return false;
+                }
             } else {
-                if actual_val < self.value_threshold { return false; }
+                if actual_val < self.value_threshold {
+                    return false;
+                }
             }
         }
 
@@ -206,7 +246,9 @@ impl CardFilter {
                         break;
                     }
                 }
-                if !match_found { return false; }
+                if !match_found {
+                    return false;
+                }
             } else {
                 return false;
             }
@@ -214,7 +256,9 @@ impl CardFilter {
 
         // 8. Tapped Filter (bit 12)
         if self.is_tapped {
-            if !is_tapped_override { return false; }
+            if !is_tapped_override {
+                return false;
+            }
         }
 
         // 9. Blade Heart Filter (bits 13-14)
@@ -224,8 +268,12 @@ impl CardFilter {
             } else {
                 false
             };
-            if self.has_blade_heart > 0 && !has { return false; }
-            if self.has_blade_heart < 0 && has { return false; }
+            if self.has_blade_heart > 0 && !has {
+                return false;
+            }
+            if self.has_blade_heart < 0 && has {
+                return false;
+            }
         }
 
         // 10. Special ID Name Filter (bits 56-58)
@@ -233,12 +281,24 @@ impl CardFilter {
         //   special_id=1: NAME_IN=澁谷かのん (カノン/Kanon)
         //   special_id=2: NOT_NAME=MY舞 (excludes cards with MY舞 in name)
         if self.special_id > 0 {
-            let name = if let Some(m) = db.get_member(cid) { m.name.as_str() }
-                       else if let Some(l) = db.get_live(cid) { l.name.as_str() }
-                       else { "" };
+            let name = if let Some(m) = db.get_member(cid) {
+                m.name.as_str()
+            } else if let Some(l) = db.get_live(cid) {
+                l.name.as_str()
+            } else {
+                ""
+            };
             match self.special_id {
-                1 => { if !name.contains("澁谷かのん") { return false; } },
-                2 => { if name.contains("MY舞") { return false; } },
+                1 => {
+                    if !name.contains("澁谷かのん") {
+                        return false;
+                    }
+                }
+                2 => {
+                    if name.contains("MY舞") {
+                        return false;
+                    }
+                }
                 _ => {}
             }
         }
@@ -320,7 +380,9 @@ impl CardFilter {
     }
 
     pub fn to_attr(&self) -> i64 {
-        if !self.is_enabled { return 0; }
+        if !self.is_enabled {
+            return 0;
+        }
 
         let mut a: u64 = 0;
 
@@ -337,14 +399,22 @@ impl CardFilter {
         }
 
         // Bit 12: Tapped
-        if self.is_tapped { a |= 1 << 12; }
+        if self.is_tapped {
+            a |= 1 << 12;
+        }
 
         // Bits 13-14: Blade Heart
-        if self.has_blade_heart > 0 { a |= 1 << 13; }
-        if self.has_blade_heart < 0 { a |= 1 << 14; }
+        if self.has_blade_heart > 0 {
+            a |= 1 << 13;
+        }
+        if self.has_blade_heart < 0 {
+            a |= 1 << 14;
+        }
 
         // Bit 15: Unique Names
-        if self.unique_names { a |= 1 << 15; }
+        if self.unique_names {
+            a |= 1 << 15;
+        }
 
         // Bit 16 + Bits 17-23: Unit
         if self.unit_enabled {
@@ -356,8 +426,12 @@ impl CardFilter {
         if self.value_enabled {
             a |= 1 << 24;
             a |= ((self.value_threshold & 0x1F) as u64) << 25;
-            if self.is_le { a |= 1 << 30; }
-            if self.is_cost_type { a |= 1u64 << 31; }
+            if self.is_le {
+                a |= 1 << 30;
+            }
+            if self.is_cost_type {
+                a |= 1u64 << 31;
+            }
         }
 
         // Bits 32-38: Color Mask
@@ -376,7 +450,9 @@ impl CardFilter {
         a |= ((self.special_id & 0x07) as u64) << 56;
 
         // Bit 59: Setsuna
-        if self.is_setsuna { a |= 1u64 << 59; }
+        if self.is_setsuna {
+            a |= 1u64 << 59;
+        }
 
         a as i64
     }
@@ -389,7 +465,9 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
     for part in filter.split(',') {
         let part_trimmed = part.trim();
         let part = part_trimmed.to_uppercase();
-        if part.is_empty() { continue; }
+        if part.is_empty() {
+            continue;
+        }
 
         // Check for NAME_IN with Japanese characters before uppercase conversion
         if part_trimmed.contains("NAME_IN") && part_trimmed.contains("澁谷かのん") {
@@ -410,7 +488,9 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             if let Some(s) = val_str {
                 if let Ok(threshold) = s.parse::<i32>() {
                     attr |= FILTER_COST_FLAG | ((threshold as u64) << FILTER_VALUE_SHIFT);
-                    if part.contains("_LE") { attr |= FILTER_IS_LE; }
+                    if part.contains("_LE") {
+                        attr |= FILTER_IS_LE;
+                    }
                     attr |= FILTER_COST_TYPE_FLAG; // Explicitly cost type
                 }
             }
@@ -447,7 +527,9 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
                 "EDEL_NOTE" | "EDELNOTE" => 16,
                 _ => -1,
             };
-            if unit_id >= 0 { attr |= FILTER_UNIT_FLAG | ((unit_id as u64) << FILTER_UNIT_SHIFT); }
+            if unit_id >= 0 {
+                attr |= FILTER_UNIT_FLAG | ((unit_id as u64) << FILTER_UNIT_SHIFT);
+            }
         } else if part == "TAPPED" {
             attr |= FILTER_TAPPED;
         } else if part == "HAS_BLADE_HEART" {
@@ -462,7 +544,10 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             attr |= FILTER_GROUP_FLAG | (1 << FILTER_GROUP_SHIFT);
         } else if part == "M'S" || part == "μ'S" || part == "U'S" || part == "MUSE" {
             attr |= FILTER_GROUP_FLAG | (0 << FILTER_GROUP_SHIFT);
-        } else if part == "UNIQUE_NAMES=TRUE" || part == "UNIQUE_NAMES" || part == "SAME_UNIQUE_NAMES" {
+        } else if part == "UNIQUE_NAMES=TRUE"
+            || part == "UNIQUE_NAMES"
+            || part == "SAME_UNIQUE_NAMES"
+        {
             attr |= FILTER_UNIQUE_NAMES;
         } else if part == "SMILE" || part == "PINK" || part == "COLOR_0" {
             attr |= 1u64 << (FILTER_COLOR_SHIFT + 0);
@@ -519,7 +604,7 @@ mod tests {
         let filter = CardFilter {
             is_enabled: true,
             target_player: 1,
-            card_type: 1,       // Member
+            card_type: 1, // Member
             value_enabled: true,
             value_threshold: 5,
             is_le: true,
@@ -548,8 +633,8 @@ mod tests {
         assert_eq!(filter, parsed);
 
         // Verify bit layout matches Python: bit 4 set + (3 << 5)
-        assert_eq!(attr & 0x10, 0x10);          // Group Enable
-        assert_eq!((attr >> 5) & 0x7F, 3);      // Group ID = 3
+        assert_eq!(attr & 0x10, 0x10); // Group Enable
+        assert_eq!((attr >> 5) & 0x7F, 3); // Group ID = 3
     }
 
     #[test]
@@ -588,17 +673,18 @@ mod tests {
         // Simulate what Python would produce for:
         //   target=Self, type=Member, group=Liella(3), cost_min=5
         // Python: attr = 0x01 | (0x01 << 2) | 0x10 | (3 << 5) | (1 << 24) | (5 << 25) | (1 << 31)
-        let python_attr: i64 = 0x01 | (0x01 << 2) | 0x10 | (3 << 5) | (1 << 24) | (5 << 25) | (1i64 << 31);
+        let python_attr: i64 =
+            0x01 | (0x01 << 2) | 0x10 | (3 << 5) | (1 << 24) | (5 << 25) | (1i64 << 31);
         let filter = CardFilter::from_attr(python_attr);
 
         assert!(filter.is_enabled);
-        assert_eq!(filter.target_player, 1);     // Self
-        assert_eq!(filter.card_type, 1);          // Member
+        assert_eq!(filter.target_player, 1); // Self
+        assert_eq!(filter.card_type, 1); // Member
         assert!(filter.group_enabled);
-        assert_eq!(filter.group_id, 3);           // Liella
+        assert_eq!(filter.group_id, 3); // Liella
         assert!(filter.value_enabled);
         assert_eq!(filter.value_threshold, 5);
-        assert!(!filter.is_le);                    // GE (cost_min)
-        assert!(filter.is_cost_type);              // Cost type
+        assert!(!filter.is_le); // GE (cost_min)
+        assert!(filter.is_cost_type); // Cost type
     }
 }

@@ -1,5 +1,5 @@
-use crate::test_helpers::{create_test_state, load_real_db};
 use crate::core::logic::*;
+use crate::test_helpers::{create_test_state, load_real_db};
 
 #[test]
 fn test_win_by_lives() {
@@ -28,7 +28,11 @@ fn test_draw_simultaneous_lives() {
     state.check_win_condition();
 
     assert_eq!(state.phase, Phase::Terminal);
-    assert_eq!(state.get_winner(), 2, "Rule 1.2.1.2: Simultaneous 3+ lives is a Draw (2)");
+    assert_eq!(
+        state.get_winner(),
+        2,
+        "Rule 1.2.1.2: Simultaneous 3+ lives is a Draw (2)"
+    );
 }
 
 #[test]
@@ -47,7 +51,6 @@ fn test_true_draw_lives_and_score_equal() {
     assert_eq!(state.get_winner(), 2, "Should be a true draw (2)");
 }
 
-
 #[test]
 fn test_deck_out_not_yet_implemented() {
     // Verifying current behavior: Deck out doesn't cause immediate loss yet
@@ -58,5 +61,9 @@ fn test_deck_out_not_yet_implemented() {
 
     state.draw_cards(0, 1);
 
-    assert_ne!(state.phase, Phase::Terminal, "Deck out logic NOT in game.rs yet");
+    assert_ne!(
+        state.phase,
+        Phase::Terminal,
+        "Deck out logic NOT in game.rs yet"
+    );
 }

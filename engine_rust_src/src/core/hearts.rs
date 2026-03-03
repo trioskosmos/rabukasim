@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct HeartBoard(pub u64);
@@ -91,7 +91,9 @@ impl HeartBoard {
                 let used = (pool[i] as i32).min(any_need);
                 satisfied += used;
                 any_need -= used;
-                if any_need <= 0 { break; }
+                if any_need <= 0 {
+                    break;
+                }
             }
         }
 
@@ -141,12 +143,16 @@ pub fn process_hearts(pool: &mut [u32; 7], need: &[u32; 7]) -> (u32, u32) {
             satisfied += used;
             p8[i] -= used as u8;
             any_need -= used;
-            if any_need <= 0 { break; }
+            if any_need <= 0 {
+                break;
+            }
         }
     }
 
     pool[6] = wildcards.max(0) as u32;
-    for i in 0..6 { pool[i] = p8[i] as u32; }
+    for i in 0..6 {
+        pool[i] = p8[i] as u32;
+    }
 
     (satisfied as u32, total_req as u32)
 }

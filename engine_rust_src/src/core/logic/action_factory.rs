@@ -1,16 +1,26 @@
+use crate::core::generated_constants::*;
 use crate::core::logic::card_db::CardDatabase;
 use crate::core::logic::models::AbilityContext;
-use crate::core::generated_constants::*;
 
 /// Structured representation of a decoded Action ID.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DecodedAction {
     Pass,
-    MulliganSelect { card_idx: u16 },
-    SetLive { hand_idx: usize },
-    SelectMode { mode_idx: i32 },
-    SelectColor { color_idx: i32 },
-    SelectStageSlot { slot_idx: usize },
+    MulliganSelect {
+        card_idx: u16,
+    },
+    SetLive {
+        hand_idx: usize,
+    },
+    SelectMode {
+        mode_idx: i32,
+    },
+    SelectColor {
+        color_idx: i32,
+    },
+    SelectStageSlot {
+        slot_idx: usize,
+    },
     PlayMember {
         hand_idx: usize,
         slot_idx: usize,
@@ -101,7 +111,8 @@ impl ActionFactory {
                 let combo_idx = offset - 3;
                 let slot_idx = combo_idx / 2;
                 let is_next = (combo_idx % 2) == 1;
-                let other_slot = crate::core::logic::game::GameState::get_combo_other_slot(slot_idx, is_next);
+                let other_slot =
+                    crate::core::logic::game::GameState::get_combo_other_slot(slot_idx, is_next);
                 return DecodedAction::PlayMember {
                     hand_idx,
                     slot_idx,
@@ -178,21 +189,35 @@ impl ActionFactory {
         }
 
         if action_id >= 20000 && action_id < 20010 {
-            return DecodedAction::Rps { p_idx: 0, choice: (action_id - 20000) as i8 };
+            return DecodedAction::Rps {
+                p_idx: 0,
+                choice: (action_id - 20000) as i8,
+            };
         }
         if action_id >= 21000 && action_id < 21010 {
-            return DecodedAction::Rps { p_idx: 1, choice: (action_id - 21000) as i8 };
+            return DecodedAction::Rps {
+                p_idx: 1,
+                choice: (action_id - 21000) as i8,
+            };
         }
 
         DecodedAction::Unknown(action_id)
     }
 
     /// Returns a human-readable label for a given action ID, including card details if available.
-    pub fn get_verbose_action_label(action_id: i32, state: &super::game::GameState, db: &CardDatabase) -> String {
+    pub fn get_verbose_action_label(
+        action_id: i32,
+        state: &super::game::GameState,
+        db: &CardDatabase,
+    ) -> String {
         // Special Contextual Collision Handling for ID 5000/5001 (Turn Choice vs Discard Activate)
         if state.phase == crate::core::enums::Phase::TurnChoice {
-            if action_id == 5000 { return "Turn Choice: Go First".to_string(); }
-            if action_id == 5001 { return "Turn Choice: Go Second".to_string(); }
+            if action_id == 5000 {
+                return "Turn Choice: Go First".to_string();
+            }
+            if action_id == 5001 {
+                return "Turn Choice: Go Second".to_string();
+            }
         }
 
         let decoded = Self::parse_action(action_id);
@@ -211,67 +236,115 @@ impl ActionFactory {
             DecodedAction::SetLive { hand_idx } => {
                 if let Some(&cid) = player.hand.get(hand_idx) {
                     if let Some(l) = db.get_live(cid) {
-                        return format!("Set Live card ([{}] {}) (Hand[{}])", l.card_no, l.name, hand_idx);
+                        return format!(
+                            "Set Live card ([{}] {}) (Hand[{}])",
+                            l.card_no, l.name, hand_idx
+                        );
                     }
                 }
                 format!("Set Live card (Hand[{}])", hand_idx)
             }
-            DecodedAction::PlayMember { hand_idx, slot_idx, other_slot, choice_idx } => {
+            DecodedAction::PlayMember {
+                hand_idx,
+                slot_idx,
+                other_slot,
+                choice_idx,
+            } => {
                 let mut label = String::new();
                 if let Some(&cid) = player.hand.get(hand_idx) {
                     if let Some(m) = db.get_member(cid) {
-                        label = format!("Play ([{}] {}) (Hand[{}]) to Slot {}", m.card_no, m.name, hand_idx, slot_idx);
+                        label = format!(
+                            "Play ([{}] {}) (Hand[{}]) to Slot {}",
+                            m.card_no, m.name, hand_idx, slot_idx
+                        );
                     }
                 }
                 if label.is_empty() {
                     label = format!("Play Hand[{}] to Slot {}", hand_idx, slot_idx);
                 }
-                if let Some(other) = other_slot { label.push_str(&format!(" and Slot {}", other)); }
-                if let Some(c) = choice_idx { label.push_str(&format!(" with Choice {}", c)); }
+                if let Some(other) = other_slot {
+                    label.push_str(&format!(" and Slot {}", other));
+                }
+                if let Some(c) = choice_idx {
+                    label.push_str(&format!(" with Choice {}", c));
+                }
                 label
             }
-            DecodedAction::ActivateMember { slot_idx, ab_idx, choice_idx } => {
+            DecodedAction::ActivateMember {
+                slot_idx,
+                ab_idx,
+                choice_idx,
+            } => {
                 let cid = player.stage[slot_idx];
                 let mut label = String::new();
                 if cid >= 0 {
                     if let Some(m) = db.get_member(cid) {
-                        label = format!("Activate ([{}] {}) at Slot {}, Ability {}", m.card_no, m.name, slot_idx, ab_idx);
+                        label = format!(
+                            "Activate ([{}] {}) at Slot {}, Ability {}",
+                            m.card_no, m.name, slot_idx, ab_idx
+                        );
                     }
                 }
                 if label.is_empty() {
                     label = format!("Activate Slot {}, Ability {}", slot_idx, ab_idx);
                 }
-                if let Some(c) = choice_idx { label.push_str(&format!(" with Choice {}", c)); }
+                if let Some(c) = choice_idx {
+                    label.push_str(&format!(" with Choice {}", c));
+                }
                 label
             }
-            DecodedAction::ActivateFromDiscard { discard_idx, ab_idx } => {
+            DecodedAction::ActivateFromDiscard {
+                discard_idx,
+                ab_idx,
+            } => {
                 if let Some(&cid) = player.discard.get(discard_idx) {
                     if let Some(m) = db.get_member(cid) {
-                        return format!("Activate from Discard Index {}, Ability {} ([{}] {})", discard_idx, ab_idx, m.card_no, m.name);
+                        return format!(
+                            "Activate from Discard Index {}, Ability {} ([{}] {})",
+                            discard_idx, ab_idx, m.card_no, m.name
+                        );
                     }
                 }
-                format!("Activate from Discard Index {}, Ability {}", discard_idx, ab_idx)
+                format!(
+                    "Activate from Discard Index {}, Ability {}",
+                    discard_idx, ab_idx
+                )
             }
             DecodedAction::ActivateFromHand { hand_idx, ab_idx } => {
                 if let Some(&cid) = player.hand.get(hand_idx) {
                     if let Some(m) = db.get_member(cid) {
-                        return format!("Activate from Hand Index {}, Ability {} ([{}] {})", hand_idx, ab_idx, m.card_no, m.name);
+                        return format!(
+                            "Activate from Hand Index {}, Ability {} ([{}] {})",
+                            hand_idx, ab_idx, m.card_no, m.name
+                        );
                     }
                 }
                 format!("Activate from Hand Index {}, Ability {}", hand_idx, ab_idx)
             }
             DecodedAction::Rps { p_idx, choice } => {
-                let move_name = match choice { 0 => "Rock", 1 => "Paper", 2 => "Scissors", _ => "Unknown" };
+                let move_name = match choice {
+                    0 => "Rock",
+                    1 => "Paper",
+                    2 => "Scissors",
+                    _ => "Unknown",
+                };
                 format!("RPS: Player {} chose {}", p_idx, move_name)
             }
             DecodedAction::TurnChoice { choice } => {
-                format!("Turn Choice: {}", if choice == 0 { "Go First" } else { "Go Second" })
+                format!(
+                    "Turn Choice: {}",
+                    if choice == 0 { "Go First" } else { "Go Second" }
+                )
             }
             _ => {
                 // Special Contextual Collision Handling for ID 5000/5001
                 if state.phase == crate::core::enums::Phase::TurnChoice {
-                    if action_id == 5000 { return "Turn Choice: Go First".to_string(); }
-                    if action_id == 5001 { return "Turn Choice: Go Second".to_string(); }
+                    if action_id == 5000 {
+                        return "Turn Choice: Go First".to_string();
+                    }
+                    if action_id == 5001 {
+                        return "Turn Choice: Go Second".to_string();
+                    }
                 }
                 Self::get_action_label(action_id)
             }
@@ -282,42 +355,86 @@ impl ActionFactory {
     pub fn get_action_label(action_id: i32) -> String {
         match Self::parse_action(action_id) {
             DecodedAction::Pass => "Pass / Done".to_string(),
-            DecodedAction::MulliganSelect { card_idx } => format!("Mulligan Hand Index {}", card_idx),
-            DecodedAction::SetLive { hand_idx } => format!("Set Live Card (Hand Index {})", hand_idx),
+            DecodedAction::MulliganSelect { card_idx } => {
+                format!("Mulligan Hand Index {}", card_idx)
+            }
+            DecodedAction::SetLive { hand_idx } => {
+                format!("Set Live Card (Hand Index {})", hand_idx)
+            }
             DecodedAction::SelectMode { mode_idx } => format!("Select Mode {}", mode_idx),
             DecodedAction::SelectColor { color_idx } => {
                 let color = match color_idx {
-                    0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple",
+                    0 => "Pink",
+                    1 => "Red",
+                    2 => "Yellow",
+                    3 => "Green",
+                    4 => "Blue",
+                    5 => "Purple",
                     _ => "Unknown",
                 };
                 format!("Select Color {}", color)
-            },
-            DecodedAction::SelectStageSlot { slot_idx } => format!("Select Stage Slot {}", slot_idx),
-            DecodedAction::PlayMember { hand_idx, slot_idx, other_slot, choice_idx } => {
+            }
+            DecodedAction::SelectStageSlot { slot_idx } => {
+                format!("Select Stage Slot {}", slot_idx)
+            }
+            DecodedAction::PlayMember {
+                hand_idx,
+                slot_idx,
+                other_slot,
+                choice_idx,
+            } => {
                 let mut s = format!("Play Hand[{}] to Slot {}", hand_idx, slot_idx);
-                if let Some(other) = other_slot { s.push_str(&format!(" and Slot {}", other)); }
-                if let Some(c) = choice_idx { s.push_str(&format!(" with Choice {}", c)); }
+                if let Some(other) = other_slot {
+                    s.push_str(&format!(" and Slot {}", other));
+                }
+                if let Some(c) = choice_idx {
+                    s.push_str(&format!(" with Choice {}", c));
+                }
                 s
-            },
-            DecodedAction::ActivateMember { slot_idx, ab_idx, choice_idx } => {
+            }
+            DecodedAction::ActivateMember {
+                slot_idx,
+                ab_idx,
+                choice_idx,
+            } => {
                 let mut s = format!("Activate Member Slot {}, Ability {}", slot_idx, ab_idx);
-                if let Some(c) = choice_idx { s.push_str(&format!(" with Choice {}", c)); }
+                if let Some(c) = choice_idx {
+                    s.push_str(&format!(" with Choice {}", c));
+                }
                 s
-            },
-            DecodedAction::ActivateFromDiscard { discard_idx, ab_idx } => {
-                format!("Activate from Discard Index {}, Ability {}", discard_idx, ab_idx)
-            },
+            }
+            DecodedAction::ActivateFromDiscard {
+                discard_idx,
+                ab_idx,
+            } => {
+                format!(
+                    "Activate from Discard Index {}, Ability {}",
+                    discard_idx, ab_idx
+                )
+            }
             DecodedAction::ActivateFromHand { hand_idx, ab_idx } => {
                 format!("Activate from Hand Index {}, Ability {}", hand_idx, ab_idx)
-            },
-            DecodedAction::SelectEnergy { energy_idx } => format!("Select Energy Index {}", energy_idx),
-            DecodedAction::SelectChoice { choice_idx } => format!("Select Choice Index {}", choice_idx),
+            }
+            DecodedAction::SelectEnergy { energy_idx } => {
+                format!("Select Energy Index {}", energy_idx)
+            }
+            DecodedAction::SelectChoice { choice_idx } => {
+                format!("Select Choice Index {}", choice_idx)
+            }
             DecodedAction::Rps { p_idx, choice } => {
-                let move_name = match choice { 0 => "Rock", 1 => "Paper", 2 => "Scissors", _ => "Unknown" };
+                let move_name = match choice {
+                    0 => "Rock",
+                    1 => "Paper",
+                    2 => "Scissors",
+                    _ => "Unknown",
+                };
                 format!("RPS: Player {} chose {}", p_idx, move_name)
             }
             DecodedAction::TurnChoice { choice } => {
-                format!("Turn Choice: {}", if choice == 0 { "Go First" } else { "Go Second" })
+                format!(
+                    "Turn Choice: {}",
+                    if choice == 0 { "Go First" } else { "Go Second" }
+                )
             }
             DecodedAction::Unknown(id) => format!("Unknown Action {}", id),
         }
@@ -326,13 +443,21 @@ impl ActionFactory {
     /// Extracted from interpreter.rs: Gets the descriptive text for a card choice.
     pub fn get_choice_text(db: &CardDatabase, ctx: &AbilityContext) -> String {
         if let Some(card) = db.get_member(ctx.source_card_id) {
-            if !card.original_text.is_empty() { card.original_text.clone() }
-            else if !card.ability_text.is_empty() { card.ability_text.clone() }
-            else { card.name.clone() }
+            if !card.original_text.is_empty() {
+                card.original_text.clone()
+            } else if !card.ability_text.is_empty() {
+                card.ability_text.clone()
+            } else {
+                card.name.clone()
+            }
         } else if let Some(live) = db.get_live(ctx.source_card_id) {
-            if !live.original_text.is_empty() { live.original_text.clone() }
-            else if !live.ability_text.is_empty() { live.ability_text.clone() }
-            else { live.name.clone() }
+            if !live.original_text.is_empty() {
+                live.original_text.clone()
+            } else if !live.ability_text.is_empty() {
+                live.ability_text.clone()
+            } else {
+                live.name.clone()
+            }
         } else {
             String::new()
         }

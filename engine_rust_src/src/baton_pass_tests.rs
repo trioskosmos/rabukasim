@@ -1,4 +1,3 @@
-
 use crate::core::logic::*;
 
 const TEST_CARDS: &str = r#"{
@@ -25,31 +24,44 @@ const TEST_CARDS: &str = r#"{
 #[test]
 fn test_baton_pass_restriction() {
     let db = CardDatabase::from_json(TEST_CARDS).unwrap();
-    let mut state = GameState { core: CoreGameState { players: [
-            PlayerState {
-                player_id: 0,
-                hand: vec![0, 0].into(), // Two test members
-                deck: vec![0].into(),    // Non-empty deck to avoid Terminal
-                ..PlayerState::default()
-            },
-            PlayerState {
-                player_id: 1,
-                deck: vec![0].into(),    // Non-empty deck to avoid Terminal
-                ..PlayerState::default()
-            },
-        ],
-        phase: Phase::Main,
-        ..CoreGameState::default() }, ..GameState::default() };
+    let mut state = GameState {
+        core: CoreGameState {
+            players: [
+                PlayerState {
+                    player_id: 0,
+                    hand: vec![0, 0].into(), // Two test members
+                    deck: vec![0].into(),    // Non-empty deck to avoid Terminal
+                    ..PlayerState::default()
+                },
+                PlayerState {
+                    player_id: 1,
+                    deck: vec![0].into(), // Non-empty deck to avoid Terminal
+                    ..PlayerState::default()
+                },
+            ],
+            phase: Phase::Main,
+            ..CoreGameState::default()
+        },
+        ..GameState::default()
+    };
 
     // 1. First play to slot 0 should succeed
-    state.play_member(&db, 0, 0).expect("First play should succeed");
+    state
+        .play_member(&db, 0, 0)
+        .expect("First play should succeed");
     assert_eq!(state.core.players[0].stage[0], 0);
     assert!(state.core.players[0].is_moved(0));
 
     // 2. Second play (Baton Pass) to the SAME slot in the SAME turn should fail (Rule 9.6.2.1.2.1)
     let result = state.play_member(&db, 0, 0);
-    assert!(result.is_err(), "Second play to same slot should fail this turn");
-    assert_eq!(result.unwrap_err(), "Already played/moved to this slot this turn");
+    assert!(
+        result.is_err(),
+        "Second play to same slot should fail this turn"
+    );
+    assert_eq!(
+        result.unwrap_err(),
+        "Already played/moved to this slot this turn"
+    );
 
     // 3. get_legal_actions_into should also mask out slot 0
     let mut mask = vec![false; 2000];
@@ -57,7 +69,10 @@ fn test_baton_pass_restriction() {
 
     // Action ID for hand_idx 0, slot 0
     let aid_0 = (ACTION_BASE_HAND + 0 * 3 + 0) as usize;
-    assert!(!mask[aid_0], "Play to slot 0 should be masked out in legal actions");
+    assert!(
+        !mask[aid_0],
+        "Play to slot 0 should be masked out in legal actions"
+    );
 
     // Action ID for hand_idx 0, slot 1
     let aid_1 = (ACTION_BASE_HAND + 0 * 3 + 1) as usize;
@@ -75,8 +90,13 @@ fn test_baton_pass_restriction() {
 
     // 5. Now Baton Pass to slot 0 should be legal
     state.get_legal_actions_into(&db, 0, &mut mask);
-    assert!(mask[aid_0], "Play to slot 0 should be legal in the next turn");
+    assert!(
+        mask[aid_0],
+        "Play to slot 0 should be legal in the next turn"
+    );
 
-    state.play_member(&db, 0, 0).expect("Baton pass in next turn should succeed");
+    state
+        .play_member(&db, 0, 0)
+        .expect("Baton pass in next turn should succeed");
     assert_eq!(state.core.players[0].baton_touch_count, 1);
 }

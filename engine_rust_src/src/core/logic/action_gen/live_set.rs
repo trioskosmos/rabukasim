@@ -1,10 +1,16 @@
-use crate::core::logic::{ActionReceiver, CardDatabase, GameState};
 use crate::core::logic::action_gen::ActionGenerator;
+use crate::core::logic::{ActionReceiver, CardDatabase, GameState};
 
 pub struct LiveSetGenerator;
 
 impl ActionGenerator for LiveSetGenerator {
-    fn generate<R: ActionReceiver + ?Sized>(&self, _db: &CardDatabase, p_idx: usize, state: &GameState, receiver: &mut R) {
+    fn generate<R: ActionReceiver + ?Sized>(
+        &self,
+        _db: &CardDatabase,
+        p_idx: usize,
+        state: &GameState,
+        receiver: &mut R,
+    ) {
         let player = &state.core.players[p_idx];
         receiver.add_action(0);
         if player.live_zone.iter().any(|&cid| cid == -1) {

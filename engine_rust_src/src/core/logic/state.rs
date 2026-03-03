@@ -1,12 +1,12 @@
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque, HashSet};
-use rand::SeedableRng;
 use rand::rngs::SmallRng;
+use rand::SeedableRng;
+use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
+use std::collections::{HashMap, HashSet, VecDeque};
 
-use crate::core::enums::*;
 use super::models::*;
 use super::player::*;
+use crate::core::enums::*;
 
 pub trait ActionReceiver {
     fn add_action(&mut self, action_id: usize);
@@ -100,20 +100,26 @@ impl Clone for BypassLog {
 }
 
 impl PartialEq for BypassLog {
-    fn eq(&self, _other: &Self) -> bool { true }
+    fn eq(&self, _other: &Self) -> bool {
+        true
+    }
 }
 impl Eq for BypassLog {}
 
 impl Serialize for BypassLog {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where S: serde::Serializer {
+    where
+        S: serde::Serializer,
+    {
         serializer.serialize_unit()
     }
 }
 
 impl<'de> Deserialize<'de> for BypassLog {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where D: serde::Deserializer<'de> {
+    where
+        D: serde::Deserializer<'de>,
+    {
         let _ = serde::de::IgnoredAny::deserialize(deserializer)?;
         Ok(Self::default())
     }

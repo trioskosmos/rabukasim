@@ -1,9 +1,8 @@
+use crate::core::logic::*;
 /// CPU Opcode Coverage Gap Tests (Batch 1)
 /// Uses REAL cards from cards_compiled.json to verify opcode execution.
 /// Card IDs verified via `tools/card_finder.py` and Python bytecode audit.
-
-use crate::test_helpers::{load_real_db, create_test_state};
-use crate::core::logic::*;
+use crate::test_helpers::{create_test_state, load_real_db};
 
 /// Card ID 122: PL!-sd1-003-SD (南 ことり / Kotori)
 /// Ability[1] Trigger=OnLiveStart: bytecode contains O_COLOR_SELECT (45)
@@ -25,9 +24,11 @@ fn test_opcode_color_select_real_card_122() {
     };
 
     // Find the ability that contains O_COLOR_SELECT (opcode 45)
-    let ab_idx = match card.abilities.iter().position(|a| {
-        a.bytecode.iter().step_by(5).any(|&op| op == 45)
-    }) {
+    let ab_idx = match card
+        .abilities
+        .iter()
+        .position(|a| a.bytecode.iter().step_by(5).any(|&op| op == 45))
+    {
         Some(idx) => idx,
         None => {
             // Skip test if opcode not found - data may have changed
@@ -53,12 +54,20 @@ fn test_opcode_color_select_real_card_122() {
     state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
 
     // Should suspend for COLOR_SELECT interaction
-    assert_eq!(state.phase, Phase::Response,
-        "Card 122 ability should suspend for COLOR_SELECT");
-    assert!(!state.interaction_stack.is_empty(),
-        "Interaction stack should have a pending COLOR_SELECT");
-    assert_eq!(state.interaction_stack.last().unwrap().choice_type, "COLOR_SELECT",
-        "Pending interaction should be COLOR_SELECT");
+    assert_eq!(
+        state.phase,
+        Phase::Response,
+        "Card 122 ability should suspend for COLOR_SELECT"
+    );
+    assert!(
+        !state.interaction_stack.is_empty(),
+        "Interaction stack should have a pending COLOR_SELECT"
+    );
+    assert_eq!(
+        state.interaction_stack.last().unwrap().choice_type,
+        "COLOR_SELECT",
+        "Pending interaction should be COLOR_SELECT"
+    );
 
     // Resume with a color choice (e.g., Pink = 0)
     let mut pending = state.interaction_stack.pop().unwrap();
@@ -82,9 +91,11 @@ fn test_opcode_jump_real_card_19() {
     let card = db.get_member(card_id).expect("Card 19 missing from DB");
 
     // Find the ability that contains O_JUMP (opcode 2)
-    let ab_idx = match card.abilities.iter().position(|a| {
-        a.bytecode.iter().step_by(5).any(|&op| op == 2)
-    }) {
+    let ab_idx = match card
+        .abilities
+        .iter()
+        .position(|a| a.bytecode.iter().step_by(5).any(|&op| op == 2))
+    {
         Some(idx) => idx,
         None => {
             // Skip test if card doesn't have O_JUMP - data may have changed
@@ -135,7 +146,9 @@ fn test_opcode_tap_opponent_dynamic() {
                 break;
             }
         }
-        if found_card_id.is_some() { break; }
+        if found_card_id.is_some() {
+            break;
+        }
     }
 
     let card_id = found_card_id.expect("No card found with O_TAP_OPPONENT in compiled DB");
@@ -143,7 +156,10 @@ fn test_opcode_tap_opponent_dynamic() {
     let card = db.get_member(card_id).unwrap();
     let ab = &card.abilities[ab_idx];
 
-    println!("Testing O_TAP_OPPONENT with Card ID={}, NO={}", card_id, card.card_no);
+    println!(
+        "Testing O_TAP_OPPONENT with Card ID={}, NO={}",
+        card_id, card.card_no
+    );
 
     // Place card on stage, opponent has untapped member
     state.core.players[0].stage[0] = card_id;
@@ -182,8 +198,10 @@ fn test_opcode_tap_opponent_dynamic() {
                 pending.ctx.choice_index = 0;
                 state.resolve_bytecode_cref(&db, &ab.bytecode, &pending.ctx);
 
-                assert!(state.core.players[1].is_tapped(0),
-                    "Opponent slot 0 should be tapped after O_TAP_OPPONENT resolution");
+                assert!(
+                    state.core.players[1].is_tapped(0),
+                    "Opponent slot 0 should be tapped after O_TAP_OPPONENT resolution"
+                );
             }
         }
     }
@@ -211,7 +229,9 @@ fn test_opcode_buff_power_dynamic() {
                 break;
             }
         }
-        if found_card_id.is_some() { break; }
+        if found_card_id.is_some() {
+            break;
+        }
     }
 
     let card_id = match found_card_id {
@@ -226,7 +246,10 @@ fn test_opcode_buff_power_dynamic() {
     let card = db.get_member(card_id).unwrap();
     let ab = &card.abilities[ab_idx];
 
-    println!("Testing O_BUFF_POWER with Card ID={}, NO={}", card_id, card.card_no);
+    println!(
+        "Testing O_BUFF_POWER with Card ID={}, NO={}",
+        card_id, card.card_no
+    );
 
     // Place card on stage
     state.core.players[0].stage[0] = card_id;
@@ -246,7 +269,10 @@ fn test_opcode_buff_power_dynamic() {
     if state.phase == Phase::Response {
         println!("Ability suspended for user input - this is expected for abilities with costs/conditions");
     } else {
-        println!("Blade buffs before={}, after={}", before_blades, state.core.players[0].blade_buffs[0]);
+        println!(
+            "Blade buffs before={}, after={}",
+            before_blades, state.core.players[0].blade_buffs[0]
+        );
     }
 
     println!("test_opcode_buff_power_dynamic: PASSED");

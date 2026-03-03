@@ -44,24 +44,30 @@ fn test_database_load() {
 #[test]
 fn test_game_initialization() {
     let _db = CardDatabase::from_json(TEST_CARDS).unwrap();
-    let mut state = GameState { core: CoreGameState { players: [
-            PlayerState {
-                player_id: 0,
-                ..PlayerState::default()
-            },
-            PlayerState {
-                player_id: 1,
-                ..PlayerState::default()
-            },
-        ],
-        ..CoreGameState::default() }, ..GameState::default() };
+    let mut state = GameState {
+        core: CoreGameState {
+            players: [
+                PlayerState {
+                    player_id: 0,
+                    ..PlayerState::default()
+                },
+                PlayerState {
+                    player_id: 1,
+                    ..PlayerState::default()
+                },
+            ],
+            ..CoreGameState::default()
+        },
+        ..GameState::default()
+    };
 
     state.initialize_game(
         vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11000], // P0 Main (10 members + 1 live)
         vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11000], // P1 Main
-        vec![0, 0, 0, 0, 0],  // P0 Energy
-        vec![0, 0, 0, 0, 0],  // P1 Energy
-        Vec::new(), Vec::new(),
+        vec![0, 0, 0, 0, 0],                       // P0 Energy
+        vec![0, 0, 0, 0, 0],                       // P1 Energy
+        Vec::new(),
+        Vec::new(),
     );
 
     assert_eq!(state.core.players[0].hand.len(), 6);
@@ -69,27 +75,34 @@ fn test_game_initialization() {
     assert_eq!(state.core.players[0].live_zone, [-1; 3]);
     assert_eq!(state.core.players[1].live_zone, [-1; 3]);
     // Lives are shuffled into the main deck (may be drawn into hand)
-    assert!(state.core.players[0].deck.contains(&11000) || state.core.players[0].hand.contains(&11000));
+    assert!(
+        state.core.players[0].deck.contains(&11000) || state.core.players[0].hand.contains(&11000)
+    );
 }
 
 #[test]
 fn test_play_member() {
     let db = CardDatabase::from_json(TEST_CARDS).unwrap();
-    let mut state = GameState { core: CoreGameState { players: [
-            PlayerState {
-                player_id: 0,
-                hand: vec![0].into(),
-                energy_zone: vec![0, 0].into(),
-                tapped_energy_mask: 0,
-                ..PlayerState::default()
-            },
-            PlayerState {
-                player_id: 1,
-                ..PlayerState::default()
-            },
-        ],
-        phase: Phase::Main,
-        ..CoreGameState::default() }, ..GameState::default() };
+    let mut state = GameState {
+        core: CoreGameState {
+            players: [
+                PlayerState {
+                    player_id: 0,
+                    hand: vec![0].into(),
+                    energy_zone: vec![0, 0].into(),
+                    tapped_energy_mask: 0,
+                    ..PlayerState::default()
+                },
+                PlayerState {
+                    player_id: 1,
+                    ..PlayerState::default()
+                },
+            ],
+            phase: Phase::Main,
+            ..CoreGameState::default()
+        },
+        ..GameState::default()
+    };
 
     // Play card 0 (cost 2) to slot 0
     state.play_member(&db, 0, 0).unwrap();
@@ -98,4 +111,3 @@ fn test_play_member() {
     assert_eq!(state.core.players[0].hand.len(), 0);
     assert_eq!(state.core.players[0].tapped_energy_mask.count_ones(), 2);
 }
-

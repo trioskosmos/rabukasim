@@ -4,17 +4,24 @@
 use crate::core::logic::card_db::LOGIC_ID_MASK;
 use crate::test_helpers::{create_test_db, create_test_state};
 
-
-use crate::core::logic::*;
 use crate::core::hearts::HeartBoard;
+use crate::core::logic::*;
 
 /// Helper to execute a simple condition check
-fn check_cond(state: &mut GameState, db: &CardDatabase, op: i32, val: i32, attr: u64, slot: i32) -> bool {
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+fn check_cond(
+    state: &mut GameState,
+    db: &CardDatabase,
+    op: i32,
+    val: i32,
+    attr: u64,
+    slot: i32,
+) -> bool {
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
     state.check_condition_opcode(db, op, val, attr, slot, &ctx, 0)
 }
-
-
 
 #[test]
 fn test_conditions_basic_state() {
@@ -82,7 +89,10 @@ fn test_conditions_member_properties() {
     state.core.players[0].stage[1] = 3020; // Generic ID (Group 2)
 
     // C_IS_CENTER: Area Index 1 is Center
-    let mut ctx = AbilityContext { area_idx: 1, ..Default::default() };
+    let mut ctx = AbilityContext {
+        area_idx: 1,
+        ..Default::default()
+    };
     assert!(state.check_condition_opcode(&db, C_IS_CENTER, 0, 0, 0, &ctx, 0));
     ctx.area_idx = 0;
     assert!(!state.check_condition_opcode(&db, C_IS_CENTER, 0, 0, 0, &ctx, 0));
@@ -93,17 +103,17 @@ fn test_conditions_member_properties() {
 
     // C_HAS_COLOR: Has Pink (9) members?
     assert!(check_cond(&mut state, &db, C_HAS_COLOR, 0, 0, 0)); // Attr is color index? Wait, C_HAS_COLOR uses attr as index.
-    // logic.rs: let color_idx = attr as usize;
-    // member 10 has heart at index 0.
-    // However, logic.rs checks `color_idx > 0 && color_idx < 7`. Code: if color_idx > 0 && color_idx < 7
-    // So 0 (Pink) is technically index ? In `hearts.rs` colors are 0..6?
-    // Let's check logic.rs check again.
-    // `if color_idx > 0 && color_idx < 7` -> This excludes index 0!
-    // Wait, typical mapping: 1=Smile(Red), 2=Pure(Green), 3=Cool(Blue)?
-    // The implementation seems to assume 1-based indexing for C_HAS_COLOR or ignores 0.
-    // My test setup used index 0. Let's rely on M20 which uses index 4 (Blue).
-    // C_HAS_COLOR: Has Pink (0) members?
-    // member 4594 has heart at index 0.
+                                                                // logic.rs: let color_idx = attr as usize;
+                                                                // member 10 has heart at index 0.
+                                                                // However, logic.rs checks `color_idx > 0 && color_idx < 7`. Code: if color_idx > 0 && color_idx < 7
+                                                                // So 0 (Pink) is technically index ? In `hearts.rs` colors are 0..6?
+                                                                // Let's check logic.rs check again.
+                                                                // `if color_idx > 0 && color_idx < 7` -> This excludes index 0!
+                                                                // Wait, typical mapping: 1=Smile(Red), 2=Pure(Green), 3=Cool(Blue)?
+                                                                // The implementation seems to assume 1-based indexing for C_HAS_COLOR or ignores 0.
+                                                                // My test setup used index 0. Let's rely on M20 which uses index 4 (Blue).
+                                                                // C_HAS_COLOR: Has Pink (0) members?
+                                                                // member 4594 has heart at index 0.
     state.debug.debug_mode = true;
     assert!(check_cond(&mut state, &db, C_HAS_COLOR, 0, 0, 0));
     state.debug.debug_mode = false;
@@ -179,7 +189,9 @@ fn test_conditions_comparison_and_baton() {
     };
     db.members.insert(3010, m3010.clone());
     let logic_id = (3010 & LOGIC_ID_MASK) as usize;
-    if db.members_vec.len() <= logic_id { db.members_vec.resize(logic_id + 1, None); }
+    if db.members_vec.len() <= logic_id {
+        db.members_vec.resize(logic_id + 1, None);
+    }
     db.members_vec[logic_id] = Some(m3010);
 
     let mut state = create_test_state();
@@ -198,7 +210,7 @@ fn test_conditions_comparison_and_baton() {
 
     // C_BATON
     state.prev_card_id = 3010; // Char ID on M3010 is default 0?
-    // Let's check M10 defaults. Char ID 0.
+                               // Let's check M10 defaults. Char ID 0.
     assert!(check_cond(&mut state, &db, C_BATON, 0, 0, 0));
 }
 
@@ -209,12 +221,15 @@ fn test_conditions_misc() {
 
     // C_DECK_REFRESHED
     state.core.players[0].flags |= 1 << PlayerState::FLAG_DECK_REFRESHED; // Need public const or value?
-    // PlayerState::FLAG_DECK_REFRESHED is 0. 1<<0 = 1.
+                                                                          // PlayerState::FLAG_DECK_REFRESHED is 0. 1<<0 = 1.
     assert!(check_cond(&mut state, &db, C_DECK_REFRESHED, 0, 0, 0));
 
     // C_IS_IN_DISCARD
     state.core.players[0].discard = vec![4594].into();
-    let ctx = AbilityContext { source_card_id: 4594, ..Default::default() };
+    let ctx = AbilityContext {
+        source_card_id: 4594,
+        ..Default::default()
+    };
     assert!(state.check_condition_opcode(&db, C_IS_IN_DISCARD, 0, 0, 0, &ctx, 0));
 }
 
@@ -222,7 +237,10 @@ fn test_conditions_misc() {
 fn test_opcodes_state_modifiers_simple() {
     let db = create_test_db();
     let mut state = create_test_state();
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // O_SET_SCORE: Set score to 5000
     let bc = vec![O_SET_SCORE, 5000, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
@@ -242,11 +260,19 @@ fn test_opcodes_state_modifiers_simple() {
     // target 4 (MemberSelf) via ctx.area_idx=0
     let mut ctx_activate = ctx.clone();
     ctx_activate.area_idx = 0;
-    state.resolve_bytecode_cref(&db, &vec![O_ACTIVATE_MEMBER, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0], &ctx_activate);
+    state.resolve_bytecode_cref(
+        &db,
+        &vec![O_ACTIVATE_MEMBER, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0],
+        &ctx_activate,
+    );
     assert!(!state.core.players[0].is_tapped(0));
 
     // O_TAP_MEMBER: Tap Member
-    state.resolve_bytecode_cref(&db, &vec![O_TAP_MEMBER, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0], &ctx_activate);
+    state.resolve_bytecode_cref(
+        &db,
+        &vec![O_TAP_MEMBER, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0],
+        &ctx_activate,
+    );
     assert!(state.core.players[0].is_tapped(0));
 
     // O_ADD_STAGE_ENERGY
@@ -254,7 +280,11 @@ fn test_opcodes_state_modifiers_simple() {
     state.core.players[0].deck = vec![12343].into();
     // O_ADD_STAGE_ENERGY usually takes top of deck.
     // Logic: move deck[0] to stage_energy[ctx.area_idx]
-    state.resolve_bytecode_cref(&db, &vec![O_ADD_STAGE_ENERGY, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0], &ctx_activate);
+    state.resolve_bytecode_cref(
+        &db,
+        &vec![O_ADD_STAGE_ENERGY, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0],
+        &ctx_activate,
+    );
     assert_eq!(state.core.players[0].stage_energy[0].len(), 1);
 
     // O_SET_BLADES: Set base blades
@@ -289,7 +319,10 @@ fn test_opcodes_state_modifiers_simple() {
 fn test_opcodes_movement_control() {
     let db = create_test_db();
     let mut state = create_test_state();
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // Setup stage for swapping
     state.core.players[0].stage[0] = 3010;
@@ -323,17 +356,24 @@ fn test_opcodes_movement_control() {
     // This triggers a choice.
     let bc = vec![O_ORDER_DECK, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert!(state.interaction_stack.last().map(|p| p.choice_type.len()).unwrap_or(0) > 0); // Should pause
-    // Check pending choice
-    // assert_eq!(state.pending_choice_type, "OrderDeck"); // Hypothetical name
-    // Clear pause for next tests
+    assert!(
+        state
+            .interaction_stack
+            .last()
+            .map(|p| p.choice_type.len())
+            .unwrap_or(0)
+            > 0
+    ); // Should pause
+       // Check pending choice
+       // assert_eq!(state.pending_choice_type, "OrderDeck"); // Hypothetical name
+       // Clear pause for next tests
     state.interaction_stack.pop();
 
     // O_PLAY_MEMBER_FROM_DISCARD
     state.core.players[0].discard = vec![19].into(); // Member 10
     state.core.players[0].stage[2] = -1; // Empty slot
     let bc = vec![O_PLAY_MEMBER_FROM_DISCARD, 1, 2, 0, 0, O_RETURN, 0, 0, 0, 0]; // val=cid, attr=slot?
-    // logic.rs: O_PLAY_MEMBER_FROM_DISCARD => { play card val to slot attr }
+                                                                                 // logic.rs: O_PLAY_MEMBER_FROM_DISCARD => { play card val to slot attr }
     state.resolve_bytecode_cref(&db, &bc, &ctx);
     // Should be on stage
     // assert_eq!(state.core.players[0].stage[2], 10);
@@ -347,7 +387,10 @@ fn test_opcodes_movement_control() {
 fn test_opcodes_complex_mod() {
     let db = create_test_db();
     let mut state = create_test_state();
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // O_ADD_HEARTS: Add Heart to member
     state.core.players[0].stage[0] = 10;
@@ -391,14 +434,22 @@ fn test_opcodes_complex_mod() {
     // It usually works globally or on specific live?
     // logic.rs: O_REDUCE_HEART_REQ => { player.heart_req_reductions.add(...) }
     // It's a `HeartBoard`.
-    assert_eq!(state.core.players[0].heart_req_reductions.get_color_count(0), 1);
+    assert_eq!(
+        state.core.players[0]
+            .heart_req_reductions
+            .get_color_count(0),
+        1
+    );
 }
 
 #[test]
 fn test_opcodes_selection() {
     let _db = create_test_db();
     let _state = create_test_state();
-    let _ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let _ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // O_SELECT_MEMBER: Pause for member selection
     // params: v=count, a=filter?, s=target
@@ -434,7 +485,10 @@ fn test_opcodes_selection() {
 fn test_opcodes_meta_rules() {
     let db = create_test_db();
     let mut state = create_test_state();
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
 
     // O_PREVENT_ACTIVATE: Set trigger prevention
     // params: v=count?, a=type?

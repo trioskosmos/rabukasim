@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::core::enums::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct Condition {
@@ -73,7 +73,7 @@ impl std::hash::Hash for Cost {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct AbilityContext {
     pub player_id: u8,
-    pub activator_id: u8,  // The player who originally triggered/activated the ability
+    pub activator_id: u8, // The player who originally triggered/activated the ability
     pub area_idx: i16,
     pub source_card_id: i32,
     pub target_card_id: i32,
@@ -90,7 +90,7 @@ pub struct AbilityContext {
     #[serde(default)]
     pub original_phase: Option<Phase>,
     #[serde(default)]
-    pub repeat_count: i16,  // For O_REPEAT_ABILITY: tracks how many times ability has repeated
+    pub repeat_count: i16, // For O_REPEAT_ABILITY: tracks how many times ability has repeated
 }
 
 impl Default for AbilityContext {

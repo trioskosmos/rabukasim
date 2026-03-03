@@ -41,15 +41,17 @@ fn test_selective_retrieval_natsumi() {
     state.ui.silent = false;
     state.phase = Phase::Main;
 
-    // Note: ID 537 is "Onitsuka Fuyumari" (Fuyu), but the test is named "Natsumi" 
+    // Note: ID 537 is "Onitsuka Fuyumari" (Fuyu), but the test is named "Natsumi"
     // likely due to the name being "Onitsuka". Fuyu is Natsumi's sister.
     // Logic ID 537 has cost 13.
-    let natsumi_id = 537; 
+    let natsumi_id = 537;
     state.core.players[0].hand.push(natsumi_id);
-    
+
     // Provide 13 energy (Cost of card 537)
-    for i in 0..13 { state.core.players[0].energy_zone.push(3000 + i as i32); }
-    
+    for i in 0..13 {
+        state.core.players[0].energy_zone.push(3000 + i as i32);
+    }
+
     // Card 537 Ability: SELECT_CARDS(2) {FROM="DISCARD", TYPE_LIVE, UNIQUE_NAMES}
     // We need 2 Live cards with different names in discard.
     // ID 6: "愛♡スクリ～ム！" (Live)
@@ -82,7 +84,10 @@ fn test_opponent_choice_penalty_maki() {
     state.process_trigger_queue(&db);
 
     assert_eq!(state.phase, Phase::Response);
-    assert_eq!(state.interaction_stack.last().unwrap().choice_type, "OPPONENT_CHOOSE");
+    assert_eq!(
+        state.interaction_stack.last().unwrap().choice_type,
+        "OPPONENT_CHOOSE"
+    );
 }
 
 #[test]
@@ -123,10 +128,18 @@ fn test_heart_transformation_kanan_via_reduction() {
 
     // Manually execute O_REDUCE_HEART_REQ (48) for Red (1)
     let bc = vec![48, 1, 0, 1, O_RETURN, 0, 0, 0];
-    let ctx = AbilityContext { player_id: 0, ..Default::default() };
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    assert!(state.core.players[0].heart_req_reductions.get_color_count(1) == 1);
+    assert!(
+        state.core.players[0]
+            .heart_req_reductions
+            .get_color_count(1)
+            == 1
+    );
 }
 
 #[test]
@@ -142,11 +155,19 @@ fn test_selective_reveal_kanon() {
     state.core.players[0].hand.push(kanon_id);
 
     let ab = &db.get_member(kanon_id).unwrap().abilities[0];
-    let ctx = AbilityContext { source_card_id: kanon_id, player_id: 0, area_idx: 1, ..Default::default() };
+    let ctx = AbilityContext {
+        source_card_id: kanon_id,
+        player_id: 0,
+        area_idx: 1,
+        ..Default::default()
+    };
     println!("--- Testing Kanon ({}) ---", kanon_id);
     state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
     state.dump_verbose();
 
     assert_eq!(state.phase, Phase::Response);
-    assert_eq!(state.interaction_stack.last().unwrap().choice_type, "SELECT_MODE");
+    assert_eq!(
+        state.interaction_stack.last().unwrap().choice_type,
+        "SELECT_MODE"
+    );
 }

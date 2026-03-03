@@ -1,5 +1,5 @@
-use crate::core::logic::{GameState, Phase};
 use crate::core::generated_constants::*;
+use crate::core::logic::{GameState, Phase};
 use crate::test_helpers::*;
 
 #[test]
@@ -20,14 +20,26 @@ fn test_repro_card_420_cost_sum_limit() {
                 }
             }
         }
-        if cost_4_id != -1 && cost_2_ids.len() >= 2 { break; }
+        if cost_4_id != -1 && cost_2_ids.len() >= 2 {
+            break;
+        }
     }
-    assert!(cost_4_id != -1 && cost_2_ids.len() >= 2, "Need vanilla members with cost 2 and 4 in DB");
+    assert!(
+        cost_4_id != -1 && cost_2_ids.len() >= 2,
+        "Need vanilla members with cost 2 and 4 in DB"
+    );
 
     let p0_deck = vec![cost_4_id; 60];
     let p1_deck = vec![cost_4_id; 60];
     let mut state = GameState::default();
-    state.initialize_game(p0_deck, p1_deck, vec![999; 12], vec![999; 12], vec![12001; 3], vec![12001; 3]);
+    state.initialize_game(
+        p0_deck,
+        p1_deck,
+        vec![999; 12],
+        vec![999; 12],
+        vec![12001; 3],
+        vec![12001; 3],
+    );
     state.debug.debug_mode = true;
 
     let p_idx = 0;
@@ -49,21 +61,33 @@ fn test_repro_card_420_cost_sum_limit() {
 
         // Now it triggers OnPlay.
         // It should suspend for PAY_ENERGY (Optional).
-        assert_eq!(state.interaction_stack.last().unwrap().choice_type, "OPTIONAL");
+        assert_eq!(
+            state.interaction_stack.last().unwrap().choice_type,
+            "OPTIONAL"
+        );
         state.step(&db, ACTION_BASE_CHOICE + 0).unwrap(); // Pay Energy (Yes)
 
         // Now it should suspend for SELECT_DISCARD_PLAY
-        assert_eq!(state.interaction_stack.last().unwrap().choice_type, "SELECT_DISCARD_PLAY");
+        assert_eq!(
+            state.interaction_stack.last().unwrap().choice_type,
+            "SELECT_DISCARD_PLAY"
+        );
         let looked_cards = state.core.players[p_idx].looked_cards.clone();
-        let idx = looked_cards.iter().position(|&cid| cid == cost_4_id).expect("Cost 4 card not in looked_cards");
-        
+        let idx = looked_cards
+            .iter()
+            .position(|&cid| cid == cost_4_id)
+            .expect("Cost 4 card not in looked_cards");
+
         state.step(&db, ACTION_BASE_CHOICE + idx as i32).unwrap(); // Select Card
         state.step(&db, ACTION_BASE_CHOICE + 1).unwrap(); // Select Slot 1 (since Slot 0 has Yoshiko)
 
         // After placing cost 4 card, v_accumulated should be 0.
         // The engine should see no more cards (since cost 2 > 0) and finish.
         assert_eq!(state.core.players[p_idx].stage[1], cost_4_id);
-        assert!(state.interaction_stack.is_empty(), "Should be empty after limit reached");
+        assert!(
+            state.interaction_stack.is_empty(),
+            "Should be empty after limit reached"
+        );
     }
 
     // Scenario 2: Pick Cost 2 -> Should allow another Cost 2 but NOT Cost 4
@@ -79,9 +103,15 @@ fn test_repro_card_420_cost_sum_limit() {
 
         // Pick 1st Cost 2 card
         {
-            assert_eq!(state.interaction_stack.last().unwrap().choice_type, "SELECT_DISCARD_PLAY");
+            assert_eq!(
+                state.interaction_stack.last().unwrap().choice_type,
+                "SELECT_DISCARD_PLAY"
+            );
             let looked_cards = state.core.players[p_idx].looked_cards.clone();
-            let idx = looked_cards.iter().position(|&cid| cid == cost_2_ids[0]).expect("Cost 2 card not in looked_cards");
+            let idx = looked_cards
+                .iter()
+                .position(|&cid| cid == cost_2_ids[0])
+                .expect("Cost 2 card not in looked_cards");
             state.step(&db, ACTION_BASE_CHOICE + idx as i32).unwrap(); // Select Card
             state.step(&db, ACTION_BASE_CHOICE + 1).unwrap(); // Select Slot 1
         }
@@ -89,12 +119,24 @@ fn test_repro_card_420_cost_sum_limit() {
         // Now it should suspend for 2nd SELECT_DISCARD_PLAY
         // But only cost 2 card should be in looked_cards (cost 4 > 2 remaining)
         {
-            assert_eq!(state.interaction_stack.last().unwrap().choice_type, "SELECT_DISCARD_PLAY");
+            assert_eq!(
+                state.interaction_stack.last().unwrap().choice_type,
+                "SELECT_DISCARD_PLAY"
+            );
             let looked_cards = state.core.players[p_idx].looked_cards.clone();
-            assert!(looked_cards.contains(&cost_2_ids[1]), "Should contain 2nd cost 2 card");
-            assert!(!looked_cards.contains(&cost_4_id), "Should NOT contain cost 4 card (4 > 2)");
-            
-            let idx = looked_cards.iter().position(|&cid| cid == cost_2_ids[1]).unwrap();
+            assert!(
+                looked_cards.contains(&cost_2_ids[1]),
+                "Should contain 2nd cost 2 card"
+            );
+            assert!(
+                !looked_cards.contains(&cost_4_id),
+                "Should NOT contain cost 4 card (4 > 2)"
+            );
+
+            let idx = looked_cards
+                .iter()
+                .position(|&cid| cid == cost_2_ids[1])
+                .unwrap();
             state.step(&db, ACTION_BASE_CHOICE + idx as i32).unwrap(); // Select Card
             state.step(&db, ACTION_BASE_CHOICE + 2).unwrap(); // Select Slot 2
         }
