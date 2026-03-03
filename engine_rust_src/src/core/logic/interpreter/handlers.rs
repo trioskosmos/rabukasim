@@ -1,16 +1,15 @@
 // --- Merged Handlers ---
 use crate::core::enums::*;
-use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
-use crate::core::logic::interpreter::constants::CHOICE_DONE;
 use crate::core::logic::interpreter::constants::{
     CHOICE_ALL, CHOICE_DONE, FILTER_IS_OPTIONAL, FILTER_MASK_LOWER, FLAG_REVEAL_UNTIL_IS_LIVE,
-    FLAG_TARGET_OPPONENT,
+    FLAG_TARGET_OPPONENT, DYNAMIC_VALUE,
 };
-use crate::core::logic::{AbilityContext, CardDatabase, GameState};
-use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState, TriggerType};
-use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
+use crate::core::models::interpreter::{resolve_target_slot, get_choice_text, check_condition_opcode};
+use crate::core::models::suspend_interaction;
+use crate::core::logic::interpreter::conditions::resolve_count;
+use crate::core::logic::interpreter::logging;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
@@ -160,7 +159,7 @@ impl HandlerRegistry {
     }
 }
 
-fn handle_select_mode(
+pub fn handle_select_mode(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
@@ -617,7 +616,7 @@ pub fn handle_deck_zones(
 }
 
 // Logic for these helper functions is migrated from interpreter_legacy.rs
-fn handle_move_to_discard(
+pub fn handle_move_to_discard(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
@@ -889,7 +888,7 @@ fn handle_move_to_discard(
     Some(true)
 }
 
-fn handle_play_live_from_discard(
+pub fn handle_play_live_from_discard(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
@@ -1015,7 +1014,7 @@ fn handle_play_live_from_discard(
     Some(true)
 }
 
-fn handle_select_cards(
+pub fn handle_select_cards(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
@@ -1190,7 +1189,7 @@ fn handle_select_cards(
     Some(true)
 }
 
-fn handle_look_and_choose(
+pub fn handle_look_and_choose(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
@@ -1446,7 +1445,7 @@ fn handle_look_and_choose(
     Some(true)
 }
 
-fn handle_recovery(
+pub fn handle_recovery(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
@@ -1610,7 +1609,7 @@ fn handle_recovery(
     Some(true)
 }
 
-fn handle_swap_zone(
+pub fn handle_swap_zone(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,

@@ -59,7 +59,7 @@ mod tests {
             activator_id: 0,
             ..Default::default()
         };
-        crate::core::logic::interpreter::handlers::energy::handle_energy(
+        crate::core::logic::interpreter::handlers::handle_energy(
             &mut state, &db, &mut ctx, 81, 1, 0, 0, 0,
         );
         println!(

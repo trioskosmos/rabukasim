@@ -832,7 +832,7 @@ mod tests {
         };
 
         // Use the handler to simulate activation
-        crate::core::logic::interpreter::handlers::energy::handle_energy(
+        crate::core::logic::interpreter::handlers::handle_energy(
             &mut state, &db, &mut ctx, 81, 1, 0, 0, 0,
         );
         println!(
@@ -862,7 +862,7 @@ mod tests {
         // 4. Perform "Activate Member" by Niji Member
         println!("Step 3: Activating member using Nijigasaki member.");
         state.core.players[0].set_tapped(0, true); // TAP member to allow activation
-        crate::core::logic::interpreter::handlers::member_state::handle_member_state(
+        crate::core::logic::interpreter::handlers::handle_member_state(
             &mut state, &db, &mut ctx, 43, 1, 0, 0, 0,
         );
 
