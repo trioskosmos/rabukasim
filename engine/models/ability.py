@@ -735,7 +735,7 @@ class Ability:
                 val = int(v_raw) if v_raw is not None else 0
             except (ValueError, TypeError):
                 val = 0
-            if (cond.params.get("ALL") or params_upper.get("ALL")) and cond.type != ConditionType.GROUP_FILTER:
+            if cond.params.get("ALL") or params_upper.get("ALL"):
                 val |= 0x04
 
             # Unified Filter Packing
@@ -1711,8 +1711,8 @@ class Ability:
         elif c_max is not None:
             try:
                 attr |= 1 << 24 | (int(c_max) & 0x1F) << 25 | 1 << 30 | 1 << 31 # Mode=1 (LE), Type=1 (Cost)
-                # Note: total_cost_le used to be at 31, but 31 is now the Cost Type flag.
-                # If we need total_cost_le specifically, we can use another bit or a special ID.
+                if params.get("total_cost_le") is not None:
+                    attr |= 1 << 50 # Flag indicating this is a TOTAL cost limit across multiple picks
             except: pass
 
         # 6. Character Filter (IDs at 39-45, 46-52 in Revision 5)
@@ -1744,7 +1744,7 @@ class Ability:
                 try:
                     c_idx = int(color_code)
                     if not colors: colors = [c_idx]
-                    if count and val == 0: val = int(count)
+                    if count: val = int(count)
                 except: pass
         elif "HAS_COLOR_" in filter_str:
             match = re.search(r"HAS_COLOR_([A-Z]+)(?:_X(\d+))?", filter_str)
@@ -1754,14 +1754,13 @@ class Ability:
                 try:
                     c_idx = int(HeartColor[color_name])
                     if not colors: colors = [c_idx]
-                    if count and val == 0: val = int(count)
+                    if count: val = int(count)
                 except: pass
 
         if val > 0:
             attr |= 1 << 24 | (val & 0x1F) << 25 # Threshold=val, Mode=0 (GE), Type=0 (Heart)
             
         if colors or "COLOR=" in filter_str:
-            attr |= (1 << 31) # Standardized Color Flag is actually bit 31 in some versions, but let's use the mask presence.
             # Actually, per filter.rs, color_mask starts at 32.
             color_mask = 0
             for c in (colors if isinstance(colors, list) else [colors]):

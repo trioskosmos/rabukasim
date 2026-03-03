@@ -24,7 +24,7 @@ fn test_card_selection_filtering() {
         ability_index: 0,
         choice_type: "SELECT_MEMBER".to_string(),
         choice_text: "Choose Aqours member".to_string(),
-        filter_attr: 32816, // Group Filter for Aqours
+        filter_attr: 80, // Group Filter for Aqours (bit 4, group = 2)
         v_remaining: 1,
         effect_opcode: 65, // O_SELECT_MEMBER
         ctx: ctx,

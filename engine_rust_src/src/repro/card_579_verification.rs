@@ -16,19 +16,12 @@ fn test_card_579_ability_0_cost_comparison() {
 
     use std::io::Write;
 
-    // Find the Liella card that has the SYNC_COST condition (opcode 311) and BOOST_SCORE (opcode 16)
+    // Find "ノンフィクション!!"
     let (target_id, target_live) = db
         .lives
         .iter()
-        .find(|(_, m)| {
-            m.groups.contains(&3)
-                && m.abilities.iter().any(|a| {
-                    matches!(a.trigger, TriggerType::OnLiveStart)
-                        && a.bytecode.contains(&311)
-                        && a.bytecode.contains(&16)
-                })
-        })
-        .expect("Could not find Liella target card with SYNC_COST for test 0");
+        .find(|(_, m)| m.name == "ノンフィクション!!")
+        .expect("Could not find ノンフィクション!! target card for test 0");
     let target_id = *target_id;
 
     // Find a Liella member for stage setup
@@ -127,16 +120,12 @@ fn test_card_579_ability_1_heart_filter() {
     // Note: The report said "HAS_COLOR_YELLOW_X3" in effects params but "HAS_HEART_02_X3" in pseudocode.
     // Heart 02 is Yellow 2-value heart.
 
-    // Find the card with the specific HAS_HEART_02_X3 bytecode or similar ability
+    // Find "ノンフィクション!!"
     let (target_id, target_live) = db
         .lives
         .iter()
-        .find(|(_, m)| {
-            m.groups.contains(&3)
-                && m.abilities.len() > 1
-                && matches!(m.abilities[1].trigger, TriggerType::OnLiveStart)
-        })
-        .expect("Could not find Liella target card for test 1");
+        .find(|(_, m)| m.name == "ノンフィクション!!")
+        .expect("Could not find ノンフィクション!! target card for test 1");
     let target_id = *target_id;
     crate::test_helpers::generate_card_report(target_id);
 

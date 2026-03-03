@@ -48,9 +48,10 @@ mod tests {
         // EFFECT: LOOK_AND_CHOOSE_REVEAL(7, choose_count=3) {COLOR_FILTER="RED/GREEN/YELLOW", TYPE_MEMBER, TARGET=HAND, SOURCE=DECK, REMAINDER="DISCARD"}
         // Color mask 14 = 0b01110 = bit 1 (RED) + bit 2 (YELLOW) + bit 3 (GREEN)
         // v = 7 | (3 << 8) | (14 << 23) = 117441287
-        // a = 1 << 31 (Color Enable) | 8 << 12 (Source Deck) | 1 << 2 (Type Member) = -2147450876
-        // s = 7 << 8 (Remainder Discard) | 6? No, target is hand (6). 6 | (7 << 8) = 1798
-        let bytecode = vec![41, 117441287, -2147450876, 1798, 1, 0, 0, 0];
+        // a_low = 1 (Self) | 4 (Type Member) = 5
+        // a_high = 0
+        // s = 6 (Hand target) | (7 << 8) (remainder discard) | (8 << 16) (source deck) = 526086
+        let bytecode = vec![41, 117441287, 5, 0, 526086, 0, 0, 0];
         let ability_cid = 1000;
         add_card(
             &mut db,

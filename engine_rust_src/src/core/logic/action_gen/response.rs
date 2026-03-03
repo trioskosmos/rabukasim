@@ -272,13 +272,9 @@ impl ResponseGenerator {
                 return;
             }
             O_SELECT_CARDS => {
-                for (i, &_cid) in player.hand.iter().enumerate() {
-                    receiver.add_action(
-                        (crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize,
-                    );
-                }
+                self.generate_look_and_choose_actions(db, p_idx, state, receiver, pi, abilities);
                 if (pi.filter_attr & 0x02) != 0 {
-                    receiver.add_action(0);
+                    receiver.add_action(0); // If OPTIONAL flag is set? Wait, actually look_and_choose might handle this, but adding action 0 here is fine.
                 }
                 return;
             }

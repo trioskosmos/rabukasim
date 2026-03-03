@@ -2667,8 +2667,8 @@ pub fn handle_meta_control(
             }
         }
         O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER => {
-            // Systemic Fix: If area bits (25-27) are present in the slot parameter, auto-resolve
-            let area_val = (s >> 25) & 0x07;
+            // Systemic Fix: If area bits (28-30) are present in the slot parameter, auto-resolve
+            let area_val = (s >> 28) & 0x07;
             if area_val >= 1 && area_val <= 3 {
                 let auto_slot = (area_val - 1) as i16;
                 ctx.choice_index = auto_slot;

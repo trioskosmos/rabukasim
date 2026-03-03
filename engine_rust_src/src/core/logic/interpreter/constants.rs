@@ -59,7 +59,7 @@ pub const FILTER_IS_LE: u64 = 0x40000000;
 /// Flag for checking all stage slots (Any Stage).
 pub const FILTER_ANY_STAGE: u64 = 1u64 << 40;
 /// Flag indicating cumulative cost limit for multi-pick abilities (TOTAL_COST_LE).
-pub const FILTER_TOTAL_COST: u64 = 1u64 << 31;
+pub const FILTER_TOTAL_COST: u64 = 1u64 << 50;
 /// Flag for explicitly checking the opponent's zones.
 pub const FILTER_OPPONENT: u64 = 1u64 << 41;
 /// Flag for checking cards in the "Revealed" context.

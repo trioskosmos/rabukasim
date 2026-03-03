@@ -66,7 +66,7 @@ fn test_selective_retrieval_natsumi() {
     // Should be in Response phase for opponent to choose one of the 2 cards
     assert_eq!(state.phase, Phase::Response);
     let interaction = state.interaction_stack.last().unwrap();
-    assert!(interaction.choice_type.contains("CHOOSE"));
+    assert_eq!(interaction.choice_type, "SELECT_DISCARD_PLAY");
     assert_eq!(state.core.players[0].looked_cards.len(), 2);
 }
 

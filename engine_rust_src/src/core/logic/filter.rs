@@ -194,7 +194,7 @@ impl CardFilter {
         }
 
         // 6. Value Threshold Filter — Cost for Members, Hearts for Live (bit 24 + bits 25-29)
-        if self.value_enabled && self.value_threshold > 0 {
+        if self.value_enabled {
             let actual_val = if self.is_cost_type {
                 // Cost mode: check member cost
                 if let Some(m) = db.get_member(cid) {
@@ -203,13 +203,31 @@ impl CardFilter {
                     0
                 }
             } else {
-                // Heart mode: check total hearts
-                if let Some(h) = effective_hearts {
-                    h.iter().sum::<u8>()
+                // Heart mode: check total hearts of matching colors
+                let h_slice = if let Some(h) = effective_hearts {
+                    Some(h)
                 } else if let Some(l) = db.get_live(cid) {
-                    l.required_hearts.iter().sum::<u8>()
+                    Some(&l.required_hearts)
                 } else if let Some(m) = db.get_member(cid) {
-                    m.hearts.iter().sum::<u8>()
+                    Some(&m.hearts)
+                } else {
+                    None
+                };
+
+                if let Some(h) = h_slice {
+                    // If color mask is 0, sum all hearts (TOTAL_HEARTS). 
+                    // Otherwise, sum only the masked colors (e.g., HAS_HEART_02_X3).
+                    if self.color_mask > 0 {
+                        let mut sum = 0;
+                        for i in 0..7 {
+                            if (self.color_mask & (1 << i)) != 0 {
+                                sum += h[i];
+                            }
+                        }
+                        sum
+                    } else {
+                        h.iter().sum::<u8>()
+                    }
                 } else {
                     0
                 }
