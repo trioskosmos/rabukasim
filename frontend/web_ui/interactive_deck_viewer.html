@@ -23,148 +23,230 @@
         h1 {
             text-align: center;
             margin-bottom: 20px;
-            font-size: 2rem;
+            font-size: 1.8rem;
             background: linear-gradient(90deg, #ff6b9d, #c44dff);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         .controls {
-            max-width: 800px;
-            margin: 0 auto 30px;
+            max-width: 900px;
+            margin: 0 auto 20px;
             background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
+            padding: 16px;
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        .controls h3 {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
         textarea {
             width: 100%;
-            height: 100px;
+            height: 80px;
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid #444;
             color: #ddd;
-            padding: 10px;
+            padding: 8px;
             border-radius: 8px;
             resize: vertical;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         button {
             background: linear-gradient(90deg, #ff6b9d, #c44dff);
             border: none;
             color: white;
-            padding: 10px 20px;
+            padding: 8px 18px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 1rem;
+            font-size: 0.9rem;
             transition: transform 0.1s;
         }
 
         button:hover {
-            transform: scale(1.05);
+            transform: scale(1.04);
         }
 
-        .stats {
-            text-align: center;
-            margin-bottom: 30px;
+        .format-hint {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            max-width: 900px;
+            margin: 0 auto 16px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .stat-item {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .stat-label {
             color: #aaa;
         }
 
+        .stat-val {
+            font-weight: bold;
+            color: #ff6b9d;
+        }
+
+        .stat-val.ok {
+            color: #2ecc71;
+        }
+
+        .stat-val.warn {
+            color: #f1c40f;
+        }
+
+        /* Section headers */
+        .section-header {
+            max-width: 900px;
+            margin: 0 auto 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            padding: 6px 10px;
+            background: rgba(255, 107, 157, 0.12);
+            border-left: 3px solid #ff6b9d;
+            border-radius: 4px;
+            color: #ff6b9d;
+        }
+
+        .section-header.energy {
+            background: rgba(255, 152, 0, 0.1);
+            border-left-color: #FF9800;
+            color: #FF9800;
+        }
+
+        /* Card grid — compact */
         .deck-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            max-width: 1400px;
-            margin: 0 auto;
+            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+            gap: 6px;
+            max-width: 900px;
+            margin: 0 auto 16px;
         }
 
         .card-item {
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 10px;
+            border-radius: 8px;
+            padding: 5px;
             text-align: center;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.15s, box-shadow 0.15s;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            position: relative;
         }
 
         .card-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(196, 77, 255, 0.3);
+            transform: translateY(-4px) scale(1.04);
+            box-shadow: 0 8px 24px rgba(196, 77, 255, 0.35);
+            z-index: 2;
         }
 
         .card-item img {
             width: 100%;
-            border-radius: 8px;
-            margin-bottom: 8px;
+            border-radius: 4px;
+            margin-bottom: 4px;
             aspect-ratio: 219/306;
-            object-fit: contain;
-            background: #000;
+            object-fit: cover;
+            background: #111;
+            display: block;
         }
 
-        .card-name {
-            font-size: 0.85rem;
-            color: #fff;
-            margin-bottom: 4px;
+        .card-qty-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.75);
+            color: #ff6b9d;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 1px 5px;
+            border-radius: 10px;
+            line-height: 1.4;
+        }
+
+        .card-code {
+            font-size: 0.55rem;
+            color: #888;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .card-type {
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 10px;
-            display: inline-block;
+        /* Unknown card placeholder */
+        .card-placeholder {
+            aspect-ratio: 219/306;
+            background: #222;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #555;
             margin-bottom: 4px;
         }
 
-        .card-type.member {
-            background: #4CAF50;
+        .error-box {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 12px;
+            background: rgba(231, 76, 60, 0.15);
+            border: 1px solid rgba(231, 76, 60, 0.4);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #e74c3c;
         }
 
-        .card-type.live {
-            background: #2196F3;
-        }
-
-        .card-type.energy {
-            background: #FF9800;
-        }
-
-        .card-count {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #ff6b9d;
-        }
-
-        .card-id {
-            font-size: 0.65rem;
-            color: #666;
-            margin-top: 4px;
+        #results {
+            max-width: 900px;
+            margin: 0 auto;
         }
     </style>
 </head>
 
 <body>
-    <h1>Interactive Deck Viewer</h1>
+    <h1>Deck Viewer (DECK LOG Paste)</h1>
 
     <div class="controls">
-        <h3 style="margin-bottom:10px;">Paste Deck HTML Here:</h3>
-        <textarea id="deckInput" placeholder="Paste the content of decktest.txt or similar HTML here..."></textarea>
-        <button onclick="parseAndRender()">Visualize Deck</button>
+        <h3>Paste DECK LOG HTML here (full page source or deck section):</h3>
+        <textarea id="deckInput" placeholder="Paste the full HTML source of a DECK LOG view page here..."></textarea>
+        <div class="btn-row">
+            <button onclick="parseAndRender()">Visualize Deck</button>
+            <button onclick="clearAll()" style="background: rgba(255,255,255,0.1);">Clear</button>
+            <span class="format-hint">Supports: Bushiroad DECK LOG HTML · Text format (ID x N / N x ID)</span>
+        </div>
     </div>
 
-    <div class="stats" id="stats">Ready to load...</div>
-    <div class="deck-grid" id="deck-grid"></div>
+    <div id="stats-bar" class="stats-bar" style="display:none;"></div>
+    <div id="results"></div>
 
     <script>
-        // FULL CARD DATABASE (Embedded for portability)
-        // Only including essential fields to keep size manageable if needed,
-        // but typically better to fetch locally if this file is in the project.
-        // For this "interactive" version, we'll try to fetch local cards.json.
-
         let cardsDb = {};
 
         async function init() {
@@ -173,90 +255,207 @@
                 cardsDb = await response.json();
                 console.log("Card DB Loaded:", Object.keys(cardsDb).length, "cards");
             } catch (e) {
-                console.error("Failed to load local data/cards.json. Ensure file is in project root.", e);
-                document.getElementById('stats').innerHTML =
-                    `<span style='color:red'>Error: Could not load data/cards.json. Open this file via local server or ensure paths are correct.</span>`;
+                console.warn("Could not load local data/cards.json. Cards will show placeholder images.", e);
             }
         }
-
         init();
 
-        function parseAndRender() {
-            const input = document.getElementById('deckInput').value;
-            if (!input.trim()) return;
+        function clearAll() {
+            document.getElementById('deckInput').value = '';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('stats-bar').style.display = 'none';
+        }
 
-            // Regex: title="ID : Name" ... class="num">N</span>
-            // Generic pattern: title="([^"]+) :
-            const regex = /title="([^"]+?) :[^"]*"[^>]*>.*?class="num">(\d+)<\/span>/gs;
+        // ── Parsers ──────────────────────────────────────────────────────────
 
-            const deckData = {};
-            let match;
-            let totalFound = 0;
+        /**
+         * Returns { main: {id: qty}, energy: {id: qty}, deckName: str } from HTML.
+         * Splits by <h3>メインデッキ</h3> and <h3>エネルギーデッキ</h3> headings.
+         */
+        function parseDeckLogHTML(html) {
+            // Extract deck name from <h2>デッキ名「...」のデッキ</h2>
+            const nameMatch = html.match(/デッキ名「([^」]+)」/);
+            const deckName = nameMatch ? nameMatch[1] : '';
 
-            while ((match = regex.exec(input)) !== null) {
-                const cardId = match[1].trim();
-                const qty = parseInt(match[2], 10);
-                deckData[cardId] = (deckData[cardId] || 0) + qty;
-                totalFound++;
+            // Split into sections by h3 headings
+            // We look for the deckview div content
+            const mainSection = extractAfterH3(html, 'メインデッキ');
+            const energySection = extractAfterH3(html, 'エネルギーデッキ');
+
+            const main = parseCardSection(mainSection);
+            const energy = parseCardSection(energySection);
+
+            // If section splitting failed, fall back to flat parse (no energy separation)
+            if (Object.keys(main).length === 0 && Object.keys(energy).length === 0) {
+                const all = parseCardSection(html);
+                return { main: all, energy: {}, deckName, fallback: true };
             }
 
-            if (totalFound === 0) {
-                // Fallback: try just titles w/o N
-                alert("No card data found! Ensure you paste the full HTML including 'title=...' and 'class=\"num\"'.");
+            return { main, energy, deckName, fallback: false };
+        }
+
+        /**
+         * Returns the HTML content that belongs to the section starting after a given h3 heading
+         * and ending before the next h3 (or end of string).
+         */
+        function extractAfterH3(html, heading) {
+            const re = new RegExp(`<h3[^>]*>\\s*${escapeRegex(heading)}\\s*<\\/h3>([\\s\\S]*?)(?=<h3|$)`, 'i');
+            const m = html.match(re);
+            return m ? m[1] : '';
+        }
+
+        function escapeRegex(s) {
+            return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        /**
+         * Extracts { cardId: qty } from a section of HTML or text.
+         * Pattern: title="CARD_ID : Card Name" ... <span class="num">N</span>
+         */
+        function parseCardSection(content) {
+            if (!content) return {};
+            const result = {};
+
+            // Primary: DECK LOG HTML format
+            const htmlRe = /title="([^"]+?)\s*:\s*[^"]*"[\s\S]*?<span[^>]*class="num"[^>]*>(\d+)<\/span>/g;
+            let m;
+            while ((m = htmlRe.exec(content)) !== null) {
+                const id = m[1].trim();
+                const qty = parseInt(m[2], 10);
+                result[id] = (result[id] || 0) + qty;
+            }
+
+            if (Object.keys(result).length > 0) return result;
+
+            // Fallback: text format  "N x ID"  or  "ID x N"
+            const textRe1 = /(\d+)\s*[xX×]\s*([A-Za-z0-9!+\-＋＝]+(?:[－\-][A-Za-z0-9!+＋＝]+)*)/g;
+            while ((m = textRe1.exec(content)) !== null) {
+                const qty = parseInt(m[1]);
+                const id = m[2].trim();
+                if (id.length > 3) result[id] = (result[id] || 0) + qty;
+            }
+            if (Object.keys(result).length > 0) return result;
+
+            const textRe2 = /([A-Za-z0-9!+\-＋＝]+(?:[－\-][A-Za-z0-9!+＋＝]+)*)\s*[xX×]\s*(\d+)/g;
+            while ((m = textRe2.exec(content)) !== null) {
+                const id = m[1].trim();
+                const qty = parseInt(m[2]);
+                if (id.length > 3) result[id] = (result[id] || 0) + qty;
+            }
+
+            return result;
+        }
+
+        // ── Rendering ─────────────────────────────────────────────────────────
+
+        function parseAndRender() {
+            const input = document.getElementById('deckInput').value.trim();
+            if (!input) return;
+
+            let parsed;
+            if (input.includes('<html') || input.includes('<div') || input.includes('class="num"')) {
+                parsed = parseDeckLogHTML(input);
+            } else {
+                // Plain text mode — treat everything as main deck
+                const cards = parseCardSection(input);
+                parsed = { main: cards, energy: {}, deckName: '', fallback: true };
+            }
+
+            if (Object.keys(parsed.main).length === 0 && Object.keys(parsed.energy).length === 0) {
+                document.getElementById('results').innerHTML =
+                    `<div class="error-box">⚠️ No cards found. Make sure you paste the full HTML source of the DECK LOG page (Ctrl+U → Ctrl+A → Ctrl+C) or a plain text deck list.</div>`;
                 return;
             }
 
-            renderDeck(deckData);
+            renderAll(parsed);
         }
 
-        function renderDeck(deckData) {
-            const grid = document.getElementById('deck-grid');
-            grid.innerHTML = '';
+        function renderAll({ main, energy, deckName, fallback }) {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
 
-            let totalCards = 0;
-            let memberCount = 0;
-            let liveCount = 0;
-            let energyCount = 0;
+            const mainCount = Object.values(main).reduce((s, v) => s + v, 0);
+            const energyCount = Object.values(energy).reduce((s, v) => s + v, 0);
+            const mainUnique = Object.keys(main).length;
+            const energyUnique = Object.keys(energy).length;
 
-            // Sort by Type then ID
-            const sortedIds = Object.keys(deckData).sort((a, b) => {
-                // simple sort for now
-                return a.localeCompare(b);
-            });
+            // Stats bar
+            const statsBar = document.getElementById('stats-bar');
+            statsBar.style.display = 'flex';
+            const mainOk = mainCount === 60;
+            const energyOk = energyCount === 12;
+            statsBar.innerHTML = `
+                ${deckName ? `<div class="stat-item"><span class="stat-label">Deck:</span><span class="stat-val">${deckName}</span></div>` : ''}
+                <div class="stat-item"><span class="stat-label">Main Deck:</span>
+                    <span class="stat-val ${mainOk ? 'ok' : 'warn'}">${mainCount} / 60</span>
+                    <span class="stat-label">(${mainUnique} unique)</span>
+                </div>
+                <div class="stat-item"><span class="stat-label">Energy:</span>
+                    <span class="stat-val ${energyOk ? 'ok' : energyCount === 0 ? '' : 'warn'}">${energyCount} / 12</span>
+                    <span class="stat-label">(${energyUnique} unique)</span>
+                </div>
+                ${fallback ? `<div class="stat-item" style="color:#f1c40f;font-size:0.75rem;">⚠ Section split failed — showing all cards as main deck</div>` : ''}
+            `;
 
-            for (const cardId of sortedIds) {
-                const count = deckData[cardId];
-                totalCards += count;
+            // Main deck section
+            if (Object.keys(main).length > 0) {
+                const hdr = document.createElement('div');
+                hdr.className = 'section-header';
+                hdr.textContent = `メインデッキ — ${mainCount} cards`;
+                results.appendChild(hdr);
 
-                const card = cardsDb[cardId] || { name: "Unknown Card", type: "Unknown", _img: null, img: null };
+                const grid = document.createElement('div');
+                grid.className = 'deck-grid';
+                renderCards(main, grid);
+                results.appendChild(grid);
+            }
+
+            // Energy deck section
+            if (Object.keys(energy).length > 0) {
+                const hdr = document.createElement('div');
+                hdr.className = 'section-header energy';
+                hdr.textContent = `エネルギーデッキ — ${energyCount} cards`;
+                results.appendChild(hdr);
+
+                const grid = document.createElement('div');
+                grid.className = 'deck-grid';
+                renderCards(energy, grid);
+                results.appendChild(grid);
+            }
+        }
+
+        function renderCards(cardMap, grid) {
+            const sorted = Object.entries(cardMap).sort(([a], [b]) => a.localeCompare(b));
+
+            for (const [cardId, count] of sorted) {
+                // Look up in DB — try as-is, then uppercase
+                const card = cardsDb[cardId] || cardsDb[cardId.toUpperCase()] || null;
+                const imgSrc = card ? (card._img || card.img || '') : '';
+                const cardName = card ? (card.name || cardId) : cardId;
 
                 const item = document.createElement('div');
                 item.className = 'card-item';
+                item.title = `${cardId}\n${cardName}${count > 1 ? ` ×${count}` : ''}`;
 
-                const type = card.type || 'Unknown';
-                const typeClass = type.includes('メンバー') ? 'member' :
-                    type.includes('ライブ') ? 'live' :
-                        type.includes('エネルギー') ? 'energy' : '';
+                if (imgSrc) {
+                    item.innerHTML = `
+                        <img src="${imgSrc}" alt="${cardName}" loading="lazy"
+                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                        <div class="card-placeholder" style="display:none;">?</div>
+                        ${count > 1 ? `<div class="card-qty-badge">×${count}</div>` : ''}
+                        <div class="card-code">${cardId}</div>
+                    `;
+                } else {
+                    // No local image — show remote image from title attribute or placeholder
+                    item.innerHTML = `
+                        <div class="card-placeholder">?</div>
+                        ${count > 1 ? `<div class="card-qty-badge">×${count}</div>` : ''}
+                        <div class="card-code">${cardId}</div>
+                    `;
+                }
 
-                if (typeClass === 'member') memberCount += count;
-                else if (typeClass === 'live') liveCount += count;
-                else if (typeClass === 'energy') energyCount += count;
-
-                // Image Logic: Prefer _img (local), then img (remote), then placeholder
-                const imgSrc = card._img || card.img || '';
-
-                item.innerHTML = `
-                    <img src="${imgSrc}" alt="${card.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/150x210?text=No+Image'">
-                    <div class="card-name">${card.name}</div>
-                    <span class="card-type ${typeClass}">${type}</span>
-                    <div class="card-count">×${count}</div>
-                    <div class="card-id">${cardId}</div>
-                `;
                 grid.appendChild(item);
             }
-
-            document.getElementById('stats').textContent =
-                `Total: ${totalCards} cards | Members: ${memberCount} | Live: ${liveCount} | Energy: ${energyCount} | Unique: ${Object.keys(deckData).length}`;
         }
     </script>
 </body>

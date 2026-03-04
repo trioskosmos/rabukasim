@@ -31,7 +31,7 @@ smallvec = { version = "1.13", features = ["serde", "union", "const_generics", "
 extension-module = ["dep:pyo3", "dep:numpy", "pyo3/extension-module"]
 parallel = ["dep:rayon"]
 nn = ["dep:ort"]
-default = ["parallel"]
+default = ["parallel", "extension-module"]
 
 [profile.dev]
 opt-level = 2  # Keep host code fast enough even in debug

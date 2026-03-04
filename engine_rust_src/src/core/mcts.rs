@@ -104,7 +104,7 @@ pub enum SearchHorizon {
 impl MCTS {
     pub fn new() -> Self {
         Self {
-            nodes: Vec::with_capacity(16384),
+            nodes: Vec::with_capacity(256), // 128 sims → ~128 nodes max; was 16384 = 7.2MB per tree
             rng: SmallRng::from_os_rng(),
             unseen_buffer: SmallVec::with_capacity(64),
             legal_buffer: SmallVec::with_capacity(32),
@@ -499,6 +499,12 @@ impl MCTS {
         F: FnMut(&GameState, &CardDatabase) -> f32,
     {
         self.nodes.clear();
+        // Reserve exactly enough for the entire search upfront.
+        // Each simulation adds ≤1 node, so this is a tight upper bound.
+        // Prevents Vec from doubling (8192→16384 = 7.2MB) when system RAM is low.
+        if num_sims > 0 {
+            self.nodes.reserve(num_sims + 1);
+        }
         let start_time = std::time::Instant::now();
         let timeout = if timeout_sec > 0.0 {
             Some(std::time::Duration::from_secs_f32(timeout_sec))

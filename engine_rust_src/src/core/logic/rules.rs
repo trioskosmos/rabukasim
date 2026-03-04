@@ -1,6 +1,7 @@
 use super::card_db::{CardDatabase, MemberCard};
 use super::game::GameState;
 use crate::core::logic::interpreter::check_condition;
+use crate::core::logic::interpreter::conditions::resolve_count;
 
 use crate::core::enums::*;
 pub use crate::core::generated_constants::*;
@@ -74,21 +75,38 @@ pub fn get_effective_blades(
                             let op = bc[i];
                             let v = bc[i + 1];
                             let s = bc[i + 4];
+                            let target_area = s & 0xFF;
 
                             // Does this O_ADD_BLADES/O_BUFF_POWER target our slot?
                             // Target 1=All, 4=This Slot (if area_idx matching target_slot),
                             // 0=This Slot (often used as default)
                             let mut targets_us = false;
-                            if s == 1 {
+                            if target_area == 1 {
                                 targets_us = true;
-                            } else if (s == 4 || s == 0) && other_slot == slot_idx {
+                            } else if (target_area == 4 || target_area == 0) && other_slot == slot_idx {
                                 targets_us = true;
-                            } else if s == 10 && slot_idx as i16 == ctx.target_slot {
+                            } else if target_area == 10 && slot_idx as i16 == ctx.target_slot {
                                 targets_us = true;
                             }
 
                             if (op == O_ADD_BLADES || op == O_BUFF_POWER) && targets_us {
-                                val += v as i32;
+                                let a_low = bc[i + 2];
+                                let a_high = bc[i + 3];
+                                let a = ((a_high as u64) << 32) | (a_low as u64);
+                                
+                                let mut multiplier = 1;
+                                if (s & 0x10000) != 0 {
+                                    // Dynamic multiplier: slot (bc[i+4]) bits 8-15 contains the count opcode
+                                    let count_op = (s >> 8) & 0xFF;
+                                    multiplier = resolve_count(state, db, count_op, a, s, &ctx, depth + 1);
+                                } else if (a & 0x40) != 0 {
+                                    // Legacy dynamic bit
+                                    if a_low == 307 {
+                                         multiplier = state.core.players[player_idx].success_lives.len() as i32;
+                                    }
+                                }
+
+                                val += (v as i32) * multiplier;
                             }
                             i += 5;
                         }
@@ -121,8 +139,22 @@ pub fn get_effective_blades(
                             while i + 4 < bc.len() {
                                 let op = bc[i];
                                 let v = bc[i + 1];
+                                let s = bc[i + 4];
                                 if op == O_ADD_BLADES {
-                                    val += v as i32;
+                                    let a_low = bc[i + 2];
+                                    let a_high = bc[i + 3];
+                                    let a = ((a_high as u64) << 32) | (a_low as u64);
+                                    
+                                    let mut multiplier = 1;
+                                    if (s & 0x10000) != 0 {
+                                        let count_op = (s >> 8) & 0xFF;
+                                        multiplier = resolve_count(state, db, count_op, a, s, &ctx, depth + 1);
+                                    } else if (a & 0x40) != 0 {
+                                        if a_low == 307 {
+                                             multiplier = state.core.players[player_idx].success_lives.len() as i32;
+                                        }
+                                    }
+                                    val += (v as i32) * multiplier;
                                 }
                                 i += 5;
                             }
@@ -190,24 +222,31 @@ pub fn get_effective_hearts(
                             let a_low = bc[i + 2];
                             let a_high = bc[i + 3];
                             let a = ((a_high as i64) << 32) | (a_low as i64);
-                            let s_target = bc[i + 4];
+                            let s = bc[i + 4];
 
+                            let target_area = s & 0xFF;
                             let mut targets_us = false;
-                            if s_target == 1 {
+                            if target_area == 1 {
                                 targets_us = true;
-                            } else if (s_target == 4 || s_target == 0) && other_slot == slot_idx {
+                            } else if (target_area == 4 || target_area == 0) && other_slot == slot_idx {
                                 targets_us = true;
-                            } else if s_target == 10 && slot_idx as i16 == ctx.target_slot {
+                            } else if target_area == 10 && slot_idx as i16 == ctx.target_slot {
                                 targets_us = true;
                             }
 
                             if op == O_ADD_HEARTS && targets_us {
+                                let mut multiplier = 1;
+                                if (a & 0x02) != 0 {
+                                    let count_op = (s >> 8) & 0xFF;
+                                    multiplier = resolve_count(state, db, count_op, a as u64, count_op, &ctx, depth + 1);
+                                }
+
                                 let mut color = a as usize;
                                 if color == 0 {
                                     color = ctx.selected_color as usize;
                                 }
                                 if color < 7 {
-                                    board.add_to_color(color, v as i32);
+                                    board.add_to_color(color, (v as i32) * multiplier);
                                 }
                             }
                             i += 5;
@@ -244,13 +283,20 @@ pub fn get_effective_hearts(
                                 let a_low = bc[i + 2];
                                 let a_high = bc[i + 3];
                                 let a = ((a_high as i64) << 32) | (a_low as i64);
+                                let s = bc[i + 4];
                                 if op == O_ADD_HEARTS {
+                                    let mut multiplier = 1;
+                                    if (s & 0x10000) != 0 {
+                                        let count_op = (s >> 8) & 0xFF;
+                                        multiplier = resolve_count(state, db, count_op, a as u64, s, &ctx, depth + 1);
+                                    }
+
                                     let mut color = a as usize;
                                     if color == 0 {
                                         color = ctx.selected_color as usize;
                                     }
                                     if color < 7 {
-                                        board.add_to_color(color, v as i32);
+                                        board.add_to_color(color, (v as i32) * multiplier);
                                     }
                                 }
                                 i += 5;

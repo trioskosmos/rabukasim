@@ -97,74 +97,111 @@ class UnifiedDeckParser:
 
         return decks
 
+    @staticmethod
+    def _extract_html_section(content: str, heading: str) -> str:
+        """Extracts the HTML content of a named <h3> section from DECK LOG HTML.
+        Returns the content between the matching <h3> and the next <h3> (or end of string).
+        """
+        import re as _re
+        pattern = rf"<h3[^>]*>\s*{_re.escape(heading)}\s*</h3>([\s\S]*?)(?=<h3|$)"
+        m = _re.search(pattern, content, _re.IGNORECASE)
+        return m.group(1) if m else ""
+
+    def _parse_card_matches_from_content(self, content: str):
+        """Extracts list of (card_id, qty_str) from a section of HTML or text."""
+        # Primary: DECK LOG HTML — title="CARD_ID : Name" ... class="num">N</span>
+        pattern_html = r'title="([^"]+?)\s*:\s*[^"]*"[\s\S]*?class="num"[^>]*>(\d+)</span>'
+        matches = re.findall(pattern_html, content, re.DOTALL)
+        if matches:
+            return matches
+
+        # Fallback 1: Text "QTY x ID"
+        text_pattern_1 = r"(\d+)\s*[xX]\s*([A-Za-z0-9!+\-＋]+)"
+        matches_1 = re.findall(text_pattern_1, content)
+        if matches_1:
+            return [(m[1], m[0]) for m in matches_1]
+
+        # Fallback 2: Text "ID x QTY"
+        text_pattern_2 = r"([A-Za-z0-9!+\-＋]+)\s*[xX]\s*(\d+)"
+        matches_2 = re.findall(text_pattern_2, content)
+        if matches_2:
+            return matches_2
+
+        # Fallback 3: Simple list of card IDs (counted by repetition)
+        id_pattern = r"([PL!|LL\-E][A-Za-z0-9!+\-＋]+-[A-Za-z0-9!+\-＋]+-[A-Za-z0-9!+\-＋]+[A-Za-z0-9!+\-＋]*)"
+        matches_3 = re.findall(id_pattern, content)
+        if matches_3:
+            counts = Counter(matches_3)
+            return [(cid, str(cnt)) for cid, cnt in counts.items()]
+
+        return []
+
     def _parse_single_deck(self, content: str) -> Dict:
-        """Parses a single deck section."""
+        """Parses a single deck section, using h3 section headers when present."""
         main_deck = []
         energy_deck = []
         errors = []
-
-        # 1. Try HTML Structure findall
-        # title="PL!xxx-yyy-zzz : NAME" ... <span class="num">N</span>
-        pattern_html = r'title="([^"]+?) :[^"]*"[^>]*>.*?class="num">(\d+)</span>'
-        matches = re.findall(pattern_html, content, re.DOTALL)
-
-        if not matches:
-            # Fallback 1: Text format "QTY x ID"
-            text_pattern_1 = r"(\d+)\s*[xX]\s*([A-Za-z0-9!+\-＋]+)"
-            matches_1 = re.findall(text_pattern_1, content)
-            if matches_1:
-                matches = [(m[1], m[0]) for m in matches_1]
-            else:
-                # Fallback 2: Text format "ID x QTY"
-                text_pattern_2 = r"([A-Za-z0-9!+\-＋]+)\s*[xX]\s*(\d+)"
-                matches_2 = re.findall(text_pattern_2, content)
-                if matches_2:
-                    matches = matches_2
-                else:
-                    # Fallback 3: Simple list of IDs
-                    id_pattern = (
-                        r"([PL!|LL\-E][A-Za-z0-9!+\-＋]+-[A-Za-z0-9!+\-＋]+-[A-Za-z0-9!+\-＋]+[A-Za-z0-9!+\-＋]*)"
-                    )
-                    matches_3 = re.findall(id_pattern, content)
-                    if matches_3:
-                        counts = Counter(matches_3)
-                        matches = [(cid, str(cnt)) for cid, cnt in counts.items()]
-
         type_counts = {"Member": 0, "Live": 0, "Energy": 0, "Unknown": 0}
 
-        for card_id, qty_str in matches:
-            try:
-                qty = int(qty_str)
-            except ValueError:
-                continue
+        # Try section-aware parsing for DECK LOG HTML
+        main_section = self._extract_html_section(content, "メインデッキ")
+        energy_section = self._extract_html_section(content, "エネルギーデッキ")
 
-            card_id = card_id.strip()
-            cdata = self.resolve_card(card_id)
-            ctype = cdata.get("type", "")
+        if main_section or energy_section:
+            # ── Section-aware path ──────────────────────────────────────────
+            for card_id, qty_str in self._parse_card_matches_from_content(main_section):
+                try:
+                    qty = int(qty_str)
+                except ValueError:
+                    continue
+                card_id = card_id.strip()
+                cdata = self.resolve_card(card_id)
+                ctype = cdata.get("type", "Unknown")
+                if "Member" in ctype:
+                    type_counts["Member"] += qty
+                elif "Live" in ctype:
+                    type_counts["Live"] += qty
+                else:
+                    type_counts["Unknown"] += qty
+                main_deck.extend([card_id] * qty)
 
-            # Energy detection: Either explicit in DB, starts with LL-E, or ends with -PE/-PE＋
-            is_energy = (
-                "Energy" in ctype or card_id.startswith("LL-E") or card_id.endswith("-PE") or card_id.endswith("-PE+")
-            )
-
-            # Determine storage location and type counts
-            if is_energy:
+            for card_id, qty_str in self._parse_card_matches_from_content(energy_section):
+                try:
+                    qty = int(qty_str)
+                except ValueError:
+                    continue
+                card_id = card_id.strip()
                 type_counts["Energy"] += qty
-                for _ in range(qty):
-                    energy_deck.append(card_id)
-            elif "Member" in ctype:
-                type_counts["Member"] += qty
-                for _ in range(qty):
-                    main_deck.append(card_id)
-            elif "Live" in ctype:
-                type_counts["Live"] += qty
-                for _ in range(qty):
-                    main_deck.append(card_id)
-            else:
-                # Fallback for unknown cards
-                type_counts["Unknown"] += qty
-                for _ in range(qty):
-                    main_deck.append(card_id)
+                energy_deck.extend([card_id] * qty)
+        else:
+            # ── Flat parse (text / unknown format) ─────────────────────────
+            matches = self._parse_card_matches_from_content(content)
+            for card_id, qty_str in matches:
+                try:
+                    qty = int(qty_str)
+                except ValueError:
+                    continue
+                card_id = card_id.strip()
+                cdata = self.resolve_card(card_id)
+                ctype = cdata.get("type", "")
+                is_energy = (
+                    "Energy" in ctype
+                    or card_id.startswith("LL-E")
+                    or card_id.endswith("-PE")
+                    or card_id.endswith("-PE+")
+                )
+                if is_energy:
+                    type_counts["Energy"] += qty
+                    energy_deck.extend([card_id] * qty)
+                elif "Member" in ctype:
+                    type_counts["Member"] += qty
+                    main_deck.extend([card_id] * qty)
+                elif "Live" in ctype:
+                    type_counts["Live"] += qty
+                    main_deck.extend([card_id] * qty)
+                else:
+                    type_counts["Unknown"] += qty
+                    main_deck.extend([card_id] * qty)
 
         return {"main": main_deck, "energy": energy_deck, "type_counts": type_counts, "errors": errors}
 

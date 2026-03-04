@@ -95,8 +95,8 @@ fn test_alphazero_volatile_flags() {
     let tensor = state.to_alphazero_tensor(&db);
 
     // Verify offsets (assuming me=0)
-    assert_eq!(tensor[12], 1.0, "Baton touch count (me)");
-    assert_eq!(tensor[13], 2.0, "Baton touch limit (me)");
+    assert_eq!(tensor[12], 1.0 / 5.0, "Baton touch count (me)");
+    assert_eq!(tensor[13], 2.0 / 5.0, "Baton touch limit (me)");
     assert_eq!(tensor[16], 3.0 / 5.0, "Hand increased (me)");
     assert_eq!(tensor[18], 1.0, "Performance yell done (me)");
 
@@ -127,20 +127,19 @@ fn test_alphazero_volatile_flags() {
 
     // Test NOT SPENT
     let tensor_not_spent = state.to_alphazero_tensor(&db);
-    // Entity 0 (Stage Slot 0):
-    // Global(25) + Meta(16) + Identity(16) + Stats(10) = 67 offset to Bytecode.
-    // Ability Header: [Trigger, IsOnce, Len, IsSpent] -> IsSpent is at 67 + 3 = 70.
-    assert_eq!(tensor_not_spent[70], 0.0, "Ability should not be spent");
+    // Global(100) + Meta(16) + Identity(16) + Stats(10) = 142 offset to Bytecode.
+    // Ability Header: [Trigger, IsOnce, Len, IsSpent] -> IsSpent is at 142 + 3 = 145.
+    assert_eq!(tensor_not_spent[145], 0.0, "Ability should not be spent");
 
     // 3. Verify Identity Metadata
-    // Meta block is 16 floats. Type starts at 25 + 16 = 41.
-    assert_eq!(tensor_not_spent[41], 1.0, "Type should be Member (1.0)");
-    assert_eq!(tensor_not_spent[42], 103.0, "CharID should be 103");
+    // Meta block is 16 floats. Type starts at 100 + 16 = 116.
+    assert_eq!(tensor_not_spent[116], 1.0, "Type should be Member (1.0)");
+    assert_eq!(tensor_not_spent[117], 103.0 / 50.0, "CharID should be normalized 103/50");
 
     // 4. Test SPENT
     let uid = crate::core::logic::interpreter::get_ability_uid(0, 103, 0);
     state.core.players[0].used_abilities.push(uid);
 
     let tensor_spent = state.to_alphazero_tensor(&db);
-    assert_eq!(tensor_spent[70], 1.0, "Ability should be spent");
+    assert_eq!(tensor_spent[145], 1.0, "Ability should be spent");
 }

@@ -4,6 +4,7 @@ use super::models::*;
 use super::player::PlayerState;
 use crate::core::enums::*;
 use crate::core::hearts::*;
+use crate::core::logic::interpreter::check_condition;
 use serde_json::{json, Value};
 
 pub type PerformanceResults = serde_json::Value;
@@ -52,6 +53,102 @@ pub fn consume_hearts_from_pool(pool: &mut [u8; 7], need: &[u8; 7]) {
     }
 }
 
+fn process_heart_modifiers_bytecode(
+    bc: &[i32],
+    req_board: &mut HeartBoard,
+    adjustments: &mut Vec<serde_json::Value>,
+    source_name: &str,
+    source_id: i32,
+) {
+    let mut i = 0;
+    while i + 4 < bc.len() {
+        let op = bc[i];
+        if op == O_SET_HEART_COST {
+            let val = bc[i + 1];
+            let attr = bc[i + 2];
+
+            adjustments.push(json!({
+                "source": source_name,
+                "source_id": source_id,
+                "type": "override",
+                "desc": "Ability Override"
+            }));
+
+            for j in 0..6 {
+                let count = ((val >> (j * 4)) & 0xF) as u8;
+                if count > 0 {
+                    req_board.set_color_count(j, count);
+                }
+            }
+            // Packed Any Heart requirements in attr
+            for j in 0..8 {
+                let c_code = ((attr >> (j * 4)) & 0xF) as usize;
+                if c_code == 0 {
+                    break;
+                }
+                if c_code == 7 {
+                    let old = req_board.get_color_count(6);
+                    req_board.set_color_count(6, old.saturating_add(1));
+                } else if c_code >= 1 && c_code <= 6 {
+                    let idx = c_code - 1;
+                    let old = req_board.get_color_count(idx);
+                    req_board.set_color_count(idx, old.saturating_add(1));
+                }
+            }
+        } else if op == O_INCREASE_HEART_COST {
+            let val = bc[i + 1];
+            let attr = bc[i + 2] as usize;
+            if attr >= 1 && attr <= 7 {
+                let idx = if attr == 7 { 6 } else { attr - 1 };
+                let old = req_board.get_color_count(idx);
+                req_board.set_color_count(idx, old.saturating_add(val as u8));
+                adjustments.push(json!({
+                    "source": source_name,
+                    "source_id": source_id,
+                    "color": idx,
+                    "value": -(val as i32),
+                    "type": "addition"
+                }));
+            }
+        } else if op == O_TRANSFORM_HEART {
+            let from_attr = bc[i + 1] as usize;
+            let to_attr = bc[i + 2] as usize;
+            let from_idx = if from_attr == 7 {
+                6
+            } else if from_attr >= 1 && from_attr <= 6 {
+                from_attr - 1
+            } else {
+                99
+            };
+            let to_idx = if to_attr == 7 {
+                6
+            } else if to_attr >= 1 && to_attr <= 6 {
+                to_attr - 1
+            } else {
+                99
+            };
+
+            if from_idx < 7 && to_idx < 7 && from_idx != to_idx {
+                let count = req_board.get_color_count(from_idx);
+                if count > 0 {
+                    req_board.set_color_count(from_idx, 0);
+                    let old_to = req_board.get_color_count(to_idx);
+                    req_board.set_color_count(to_idx, old_to.saturating_add(count));
+                    adjustments.push(json!({
+                        "source": source_name,
+                        "source_id": source_id,
+                        "from_color": from_idx,
+                        "to_color": to_idx,
+                        "value": count,
+                        "type": "transform"
+                    }));
+                }
+            }
+        }
+        i += 5;
+    }
+}
+
 pub fn get_live_requirements(
     state: &GameState,
     db: &CardDatabase,
@@ -62,92 +159,41 @@ pub fn get_live_requirements(
     let mut adjustments = Vec::new();
 
     // Constant Ability Scan (O_SET_HEART_COST, O_INCREASE_HEART_COST, O_TRANSFORM_HEART)
+    // 1. Scan the Live card itself
     for ab in &live.abilities {
-        if ab.trigger == TriggerType::Constant {
-            let bc = &ab.bytecode;
-            let mut i = 0;
-            while i + 4 < bc.len() {
-                let op = bc[i];
-                if op == O_SET_HEART_COST {
-                    let val = bc[i + 1];
-                    let attr = bc[i + 2];
+        if ab.trigger == TriggerType::Constant || ab.trigger == TriggerType::OnLiveStart {
+            let ctx = AbilityContext {
+                player_id: p_idx as u8,
+                activator_id: p_idx as u8,
+                ..Default::default()
+            };
+            if ab.conditions.iter().all(|c| state.check_condition(db, p_idx, c, &ctx, 1)) {
+                process_heart_modifiers_bytecode(&ab.bytecode, &mut req_board, &mut adjustments, &live.name, live.card_id);
+            }
+        }
+    }
 
-                    adjustments.push(json!({
-                        "source": live.name,
-                        "source_id": live.card_id,
-                        "type": "override",
-                        "desc": "Ability Override"
-                    }));
-
-                    for j in 0..6 {
-                        let count = ((val >> (j * 4)) & 0xF) as u8;
-                        req_board.set_color_count(j, count);
-                    }
-                    for j in 0..8 {
-                        let c_code = ((attr >> (j * 4)) & 0xF) as usize;
-                        if c_code == 0 {
-                            break;
-                        }
-                        if c_code == 7 {
-                            let old = req_board.get_color_count(6);
-                            req_board.set_color_count(6, old.saturating_add(1));
-                        } else if c_code >= 1 && c_code <= 6 {
-                            let idx = c_code - 1;
-                            let old = req_board.get_color_count(idx);
-                            req_board.set_color_count(idx, old.saturating_add(1));
-                        }
-                    }
-                } else if op == O_INCREASE_HEART_COST {
-                    let val = bc[i + 1];
-                    let attr = bc[i + 2] as usize;
-                    if attr >= 1 && attr <= 7 {
-                        let idx = if attr == 7 { 6 } else { attr - 1 };
-                        let old = req_board.get_color_count(idx);
-                        req_board.set_color_count(idx, old.saturating_add(val as u8));
-                        adjustments.push(json!({
-                            "source": live.name,
-                            "source_id": live.card_id,
-                            "color": idx,
-                            "value": -(val as i32),
-                            "type": "addition"
-                        }));
-                    }
-                } else if op == O_TRANSFORM_HEART {
-                    let from_attr = bc[i + 1] as usize;
-                    let to_attr = bc[i + 2] as usize;
-                    let from_idx = if from_attr == 7 {
-                        6
-                    } else if from_attr >= 1 && from_attr <= 6 {
-                        from_attr - 1
-                    } else {
-                        99
-                    };
-                    let to_idx = if to_attr == 7 {
-                        6
-                    } else if to_attr >= 1 && to_attr <= 6 {
-                        to_attr - 1
-                    } else {
-                        99
-                    };
-
-                    if from_idx < 7 && to_idx < 7 && from_idx != to_idx {
-                        let count = req_board.get_color_count(from_idx);
-                        if count > 0 {
-                            req_board.set_color_count(from_idx, 0);
-                            let old_to = req_board.get_color_count(to_idx);
-                            req_board.set_color_count(to_idx, old_to.saturating_add(count));
-                            adjustments.push(json!({
-                                "source": live.name,
-                                "source_id": live.card_id,
-                                "from_color": from_idx,
-                                "to_color": to_idx,
-                                "value": count,
-                                "type": "transform"
-                            }));
+    // 2. Scan all members on the stage (both players) - Fix for Q115
+    for p in 0..2 {
+        for slot in 0..3 {
+            let cid = state.core.players[p].stage[slot];
+            if cid >= 0 {
+                if let Some(m) = db.get_member(cid) {
+                    for ab in &m.abilities {
+                        if ab.trigger == TriggerType::Constant {
+                            let ctx = AbilityContext {
+                                source_card_id: cid,
+                                player_id: p as u8,
+                                activator_id: p as u8,
+                                area_idx: slot as i16,
+                                ..Default::default()
+                            };
+                            if ab.conditions.iter().all(|c| state.check_condition(db, p_idx, c, &ctx, 1)) {
+                                process_heart_modifiers_bytecode(&ab.bytecode, &mut req_board, &mut adjustments, &m.name, m.card_id);
+                            }
                         }
                     }
                 }
-                i += 5;
             }
         }
     }
@@ -339,8 +385,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     entry["blades"] = json!(eff_b);
                     entry["bonus_blades"] = json!(bonus_b);
 
-                    // Collect Blade Buffs for this slot
-                    let slot_blade_buffs: Vec<Value> = state.core.players[p_idx]
+                    // Collect Blade Buffs for this slot (triggered abilities)
+                    let mut slot_blade_buffs: Vec<Value> = state.core.players[p_idx]
                         .blade_buff_logs
                         .iter()
                         .filter(|&&(_, _, slot)| slot == i as u8)
@@ -350,6 +396,79 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                             json!({ "source": source_name, "amount": amt })
                         })
                         .collect();
+
+                    // Scan constant abilities for blade sources (Wave 1: area buffs)
+                    if !state.ui.silent {
+                        for other_slot in 0..3 {
+                            let other_cid = state.core.players[p_idx].stage[other_slot];
+                            if other_cid < 0 { continue; }
+                            if let Some(other_m) = db.get_member(other_cid) {
+                                for ab in &other_m.abilities {
+                                    if ab.trigger == TriggerType::Constant {
+                                        let ctx = AbilityContext {
+                                            source_card_id: other_cid,
+                                            player_id: p_idx as u8,
+                                            activator_id: p_idx as u8,
+                                            area_idx: other_slot as i16,
+                                            target_slot: i as i16,
+                                            ..Default::default()
+                                        };
+                                        if ab.conditions.iter().all(|c| check_condition(state, db, p_idx, c, &ctx, 1)) {
+                                            let bc = &ab.bytecode;
+                                            let mut bi = 0;
+                                            while bi + 4 < bc.len() {
+                                                let bop = bc[bi];
+                                                let bv = bc[bi + 1];
+                                                let bs = bc[bi + 4];
+                                                let mut targets_us = false;
+                                                if bs == 1 { targets_us = true; }
+                                                else if (bs == 4 || bs == 0) && other_slot == i { targets_us = true; }
+                                                else if bs == 10 && i as i16 == ctx.target_slot { targets_us = true; }
+                                                if (bop == O_ADD_BLADES || bop == O_BUFF_POWER) && targets_us && bv > 0 {
+                                                    slot_blade_buffs.push(json!({
+                                                        "source": other_m.name,
+                                                        "amount": bv
+                                                    }));
+                                                }
+                                                bi += 5;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // Wave 2: Granted abilities for blade sources
+                        for &(target_cid, source_cid, ab_idx) in &state.core.players[p_idx].granted_abilities {
+                            if target_cid == cid {
+                                if let Some(src_m) = db.get_member(source_cid) {
+                                    if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                                        if ab.trigger == TriggerType::Constant {
+                                            let ctx = AbilityContext {
+                                                source_card_id: cid,
+                                                player_id: p_idx as u8,
+                                                activator_id: p_idx as u8,
+                                                area_idx: i as i16,
+                                                ..Default::default()
+                                            };
+                                            if ab.conditions.iter().all(|c| check_condition(state, db, p_idx, c, &ctx, 1)) {
+                                                let bc = &ab.bytecode;
+                                                let mut bi = 0;
+                                                while bi + 4 < bc.len() {
+                                                    if bc[bi] == O_ADD_BLADES && bc[bi + 1] > 0 {
+                                                        slot_blade_buffs.push(json!({
+                                                            "source": format!("Granted: {}", src_m.name),
+                                                            "amount": bc[bi + 1]
+                                                        }));
+                                                    }
+                                                    bi += 5;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     entry["ability_blade_bonuses"] = json!(slot_blade_buffs);
                 }
             }
@@ -461,8 +580,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     entry["note_icons"] = json!(m.note_icons);
                     entry["base_notes"] = json!(m.note_icons);
 
-                    // Collect Heart Buffs for this slot
-                    let slot_heart_buffs: Vec<Value> = state.core.players[p_idx]
+                    // Collect Heart Buffs for this slot (triggered abilities)
+                    let mut slot_heart_buffs: Vec<Value> = state.core.players[p_idx]
                         .heart_buff_logs
                         .iter()
                         .filter(|&&(_, _, _, slot)| slot == i as u8)
@@ -472,6 +591,95 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                             json!({ "source": source_name, "amount": amt, "color": color })
                         })
                         .collect();
+
+                    // Scan constant abilities for heart sources (Wave 1: area buffs)
+                    if !state.ui.silent {
+                        for other_slot in 0..3 {
+                            let other_cid = state.core.players[p_idx].stage[other_slot];
+                            if other_cid < 0 { continue; }
+                            if let Some(other_m) = db.get_member(other_cid) {
+                                for ab in &other_m.abilities {
+                                    if ab.trigger == TriggerType::Constant {
+                                        let ctx = AbilityContext {
+                                            source_card_id: other_cid,
+                                            player_id: p_idx as u8,
+                                            activator_id: p_idx as u8,
+                                            area_idx: other_slot as i16,
+                                            target_slot: i as i16,
+                                            ..Default::default()
+                                        };
+                                        if ab.conditions.iter().all(|c| check_condition(state, db, p_idx, c, &ctx, 1)) {
+                                            let bc = &ab.bytecode;
+                                            let mut bi = 0;
+                                            while bi + 4 < bc.len() {
+                                                let bop = bc[bi];
+                                                let bv = bc[bi + 1];
+                                                let a_low = bc[bi + 2];
+                                                let a_high = bc[bi + 3];
+                                                let ba = ((a_high as i64) << 32) | (a_low as i64);
+                                                let bs = bc[bi + 4];
+                                                let mut targets_us = false;
+                                                if bs == 1 { targets_us = true; }
+                                                else if (bs == 4 || bs == 0) && other_slot == i { targets_us = true; }
+                                                else if bs == 10 && i as i16 == ctx.target_slot { targets_us = true; }
+                                                if bop == O_ADD_HEARTS && targets_us && bv > 0 {
+                                                    let mut color = ba as usize;
+                                                    if color == 0 { color = ctx.selected_color as usize; }
+                                                    if color < 7 {
+                                                        slot_heart_buffs.push(json!({
+                                                            "source": other_m.name,
+                                                            "amount": bv,
+                                                            "color": color
+                                                        }));
+                                                    }
+                                                }
+                                                bi += 5;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // Wave 2: Granted abilities for heart sources
+                        for &(target_cid, source_cid, ab_idx) in &state.core.players[p_idx].granted_abilities {
+                            if target_cid == cid {
+                                if let Some(src_m) = db.get_member(source_cid) {
+                                    if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                                        if ab.trigger == TriggerType::Constant {
+                                            let ctx = AbilityContext {
+                                                source_card_id: cid,
+                                                player_id: p_idx as u8,
+                                                activator_id: p_idx as u8,
+                                                area_idx: i as i16,
+                                                ..Default::default()
+                                            };
+                                            if ab.conditions.iter().all(|c| check_condition(state, db, p_idx, c, &ctx, 1)) {
+                                                let bc = &ab.bytecode;
+                                                let mut bi = 0;
+                                                while bi + 4 < bc.len() {
+                                                    let a_low = bc[bi + 2];
+                                                    let a_high = bc[bi + 3];
+                                                    let ba = ((a_high as i64) << 32) | (a_low as i64);
+                                                    if bc[bi] == O_ADD_HEARTS && bc[bi + 1] > 0 {
+                                                        let mut color = ba as usize;
+                                                        if color == 0 { color = ctx.selected_color as usize; }
+                                                        if color < 7 {
+                                                            slot_heart_buffs.push(json!({
+                                                                "source": format!("Granted: {}", src_m.name),
+                                                                "amount": bc[bi + 1],
+                                                                "color": color
+                                                            }));
+                                                        }
+                                                    }
+                                                    bi += 5;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     entry["ability_heart_bonuses"] = json!(slot_heart_buffs);
                 }
                 note_icons += m.note_icons;

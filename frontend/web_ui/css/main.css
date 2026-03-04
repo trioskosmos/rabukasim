@@ -1923,7 +1923,7 @@ body {
     min-height: 18px;
 }
 
-.bonus-tag {
+.perf-bonus-tag {
     font-size: 0.7rem;
     color: #4f4;
     font-weight: bold;
@@ -2785,7 +2785,7 @@ body {
 }
 
 /* Performance Modal Bonus Tags */
-.bonus-tag {
+.perf-bonus-tag {
     color: #4f4;
     font-weight: bold;
     font-size: 0.8em;
@@ -2796,12 +2796,12 @@ body {
     color: var(--accent-gold);
 }
 /* Bonus Tooltips in Performance Modal */
-.bonus-container {
+.perf-bonus-tooltip-wrapper {
     position: relative;
     display: inline-block;
 }
 
-.bonus-source-list {
+.perf-bonus-source-tooltip {
     position: absolute;
     bottom: 100%;
     left: 50%;
@@ -2819,7 +2819,7 @@ body {
     margin-bottom: 8px;
 }
 
-.bonus-source-list::after {
+.perf-bonus-source-tooltip::after {
     content: "";
     position: absolute;
     top: 100%;
@@ -2830,17 +2830,17 @@ body {
     border-color: var(--accent-pink) transparent transparent transparent;
 }
 
-.bonus-container:hover .bonus-source-list {
+.perf-bonus-tooltip-wrapper:hover .perf-bonus-source-tooltip {
     display: block;
 }
 
-.source-line {
+.perf-bonus-source-line {
     color: #fff;
     line-height: 1.4;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.source-line:last-child {
+.perf-bonus-source-line:last-child {
     border-bottom: none;
 }
 

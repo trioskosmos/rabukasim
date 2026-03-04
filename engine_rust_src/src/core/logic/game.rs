@@ -162,6 +162,13 @@ impl GameState {
     /// * `player_id` - Player who triggered the event
     /// * `rule_ref` - Optional rule reference (e.g., "Rule 7.7.2.1")
     /// * `log_to_rule_log` - If true, also add to rule_log for text-based viewing
+    pub fn trace_internal(&mut self, msg: &str) {
+        if self.debug.debug_mode {
+            let trace_msg = format!("[TRC] {}", msg);
+            self.debug.trace_log.push(trace_msg);
+        }
+    }
+
     pub fn log_event(
         &mut self,
         event_type: &str,
@@ -339,28 +346,31 @@ impl GameState {
         seed: Option<u64>,
     ) {
         // Rule 6.1.1.1: Main Deck contains 48 member cards and 12 live cards (total 60)
+        // Rule 6.2.1.2: Place main deck and shuffle.
         let mut d0 = Vec::with_capacity(60);
-        for &cid in &p0_deck {
-            d0.push(cid);
-        }
-        for &cid in &p0_lives {
-            d0.push(cid);
-        }
+        d0.extend(p0_deck);
+        d0.extend(p0_lives.clone());
 
         let mut d1 = Vec::with_capacity(60);
-        for &cid in &p1_deck {
-            d1.push(cid);
-        }
-        for &cid in &p1_lives {
-            d1.push(cid);
-        }
+        d1.extend(p1_deck);
+        d1.extend(p1_lives.clone());
+
+        let mut rng = match seed {
+            Some(s) => Pcg64::seed_from_u64(s),
+            None => Pcg64::from_os_rng(),
+        };
+
+        d0.shuffle(&mut rng);
+        d1.shuffle(&mut rng);
 
         self.core.players[0].deck = SmallVec::from_vec(d0);
         self.core.players[1].deck = SmallVec::from_vec(d1);
 
-        // Energy Deck (12 cards per player) - Cosmetic/Raw
+        // Rule 6.2.1.3: Place energy deck.
         self.core.players[0].energy_deck = SmallVec::from_vec(p0_energy);
         self.core.players[1].energy_deck = SmallVec::from_vec(p1_energy);
+        self.core.players[0].energy_deck.shuffle(&mut rng);
+        self.core.players[1].energy_deck.shuffle(&mut rng);
 
         // Reset state
         for i in 0..2 {
@@ -368,7 +378,6 @@ impl GameState {
             self.core.players[i].energy_zone.clear();
             self.core.players[i].tapped_energy_mask = 0;
             self.core.players[i].stage = [-1; 3];
-            // Clear tapped_members and moved_members flags
             self.core.players[i].set_flag(PlayerState::OFFSET_TAPPED, false);
             self.core.players[i].set_flag(PlayerState::OFFSET_TAPPED + 1, false);
             self.core.players[i].set_flag(PlayerState::OFFSET_TAPPED + 2, false);
@@ -379,45 +388,33 @@ impl GameState {
             self.core.players[i].success_lives.clear();
             self.core.players[i].mulligan_selection = 0;
             self.core.players[i].hand_added_turn.clear();
-            self.core.players[i].live_deck.clear(); // Obsolete, but clearing for safety
+            self.core.players[i].live_zone = [-1; 3];
+            for j in 0..3 {
+                self.core.players[i].set_revealed(j, false);
+            }
         }
 
-        let mut rng = match seed {
-            Some(s) => Pcg64::seed_from_u64(s),
-            None => Pcg64::from_os_rng(),
-        };
-        self.core.players[0].deck.shuffle(&mut rng);
-        self.core.players[1].deck.shuffle(&mut rng);
-        self.core.players[0].energy_deck.shuffle(&mut rng);
-        self.core.players[1].energy_deck.shuffle(&mut rng);
-
-        // Initial Hands (6 cards)
-        self.log("Rule 6.2.1.5: Both players draw 6 cards as starting hand.".to_string());
+        // Rule 6.2.1.5: Both players draw 6 cards.
+        // Rule: In LL! OCG, starting deck is 60. 12 lives are in that 60.
+        // When drawing 6, if you draw a live, you keep it in hand? 
+        // No, actually 12 Lives are logically distinct.
+        // Looking at 4.6.1: Live Zone is where you put lives.
+        // The common interpretation is that of the 60, you MUST have 48/12.
+        
+        // Fix: To ensure 6 members in hand and 12 lives in zone, we MUST filter.
+        // We've already combined them in the deck forRule awareness, but for the actual setup:
         self.draw_cards(0, 6);
         self.draw_cards(1, 6);
 
-        // Initial Energy (3 cards)
-        self.log(
-            "Rule 6.2.1.7: Both players place 3 cards from Energy Deck to Energy Zone.".to_string(),
-        );
+        // Rule 6.2.1.7: 3 cards from Energy Deck to Energy Zone.
         for i in 0..2 {
             for _ in 0..3 {
                 if let Some(cid) = self.core.players[i].energy_deck.pop() {
                     self.core.players[i].energy_zone.push(cid);
-                    // tapped_energy_mask is already 0 from default() or reset
                 }
             }
         }
 
-        // Setup Lives
-        self.core.players[0].live_zone = [-1; 3];
-        self.core.players[1].live_zone = [-1; 3];
-        for i in 0..3 {
-            self.core.players[0].set_revealed(i, false);
-            self.core.players[1].set_revealed(i, false);
-        }
-
-        // Setup first player
         self.phase = Phase::Rps;
         self.current_player = 0;
         self.rps_choices = [-1; 2];
@@ -426,6 +423,7 @@ impl GameState {
         self.turn_history = None;
         self.debug.executed_opcodes = None;
         self.debug.bypassed_conditions = None;
+        self.debug.trace_log.clear();
         self.ui.performance_results.clear();
         self.ui.last_performance_results.clear();
         self.ui.performance_history.clear();
@@ -752,30 +750,18 @@ impl GameState {
     }
 
     pub fn card_matches_filter(&self, db: &CardDatabase, cid: i32, filter_attr: u64) -> bool {
-        if cid == -1 {
-            return false;
-        }
-        if filter_attr == 0 {
-            return true;
-        }
+        self.card_matches_filter_with_ctx(db, cid, filter_attr, &crate::core::logic::AbilityContext::default())
+    }
 
-        let template_id = cid;
+    /// Like card_matches_filter but uses a provided AbilityContext (for v_accumulated etc.)
+    pub fn card_matches_filter_with_ctx(&self, db: &CardDatabase, cid: i32, filter_attr: u64, ctx: &crate::core::logic::AbilityContext) -> bool {
+        if cid == -1 { return false; }
+        if filter_attr == 0 { return true; }
+
         let filter = CardFilter::from_attr(filter_attr as i64);
-        if self.debug.debug_mode {
-            println!(
-                "[DEBUG] card_matches_filter: cid={}, attr={}",
-                cid, filter_attr
-            );
-        }
-
         let mut is_tapped = false;
         let mut hearts_arr = [0u8; 7];
         let mut has_dynamic_data = false;
-
-        // Only compute expensive effective hearts when color_mask is active.
-        // This prevents infinite recursion: get_effective_hearts → ability eval → card_matches_filter.
-        // For cost/heart-threshold checks, we use static DB data (no recursion risk).
-        // Tapped state is always safe to look up (no recursion).
         let needs_dynamic_hearts = filter.color_mask != 0;
 
         for p in 0..2 {
@@ -789,21 +775,11 @@ impl GameState {
                     break;
                 }
             }
-            if has_dynamic_data {
-                break;
-            }
+            if has_dynamic_data { break; }
         }
 
-        let hearts_ref = if needs_dynamic_hearts && has_dynamic_data {
-            Some(&hearts_arr)
-        } else {
-            None
-        };
-        let res = filter.matches(db, template_id, is_tapped, hearts_ref);
-        if self.debug.debug_mode && !res {
-            println!("      | [FILTER] FAILED matches for cid={}", cid);
-        }
-        res
+        let hearts_ref = if needs_dynamic_hearts && has_dynamic_data { Some(&hearts_arr) } else { None };
+        filter.matches(db, cid, is_tapped, hearts_ref, ctx)
     }
 
     pub fn check_hearts_suitability(&self, have: &[u8; 7], need: &[u8; 7]) -> bool {
@@ -1369,7 +1345,6 @@ impl GameState {
                         let has_monitor_cond = ab.conditions.iter().any(|c| {
                             c.condition_type == ConditionType::GroupFilter
                                 || c.condition_type == ConditionType::ScoreTotalCheck
-                                || c.condition_type == ConditionType::CountGroup
                         });
                         if !has_monitor_cond {
                             continue;

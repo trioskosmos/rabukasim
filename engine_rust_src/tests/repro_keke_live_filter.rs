@@ -37,13 +37,13 @@ mod tests {
 
         // Member should match
         assert!(
-            state.card_matches_filter(&db, 100, filter_any),
+            state.card_matches_filter_with_ctx(&db, 100, filter_any, &engine_rust::core::logic::AbilityContext::default()),
             "Member with Cost 11 should match generic COST_GE=11"
         );
 
         // Live should NOT match (even though hearts = 12 >= 11) because it's not type-constrained to Live
         assert!(
-            !state.card_matches_filter(&db, 200, filter_any),
+            !state.card_matches_filter_with_ctx(&db, 200, filter_any, &engine_rust::core::logic::AbilityContext::default()),
             "Live card should NOT match generic COST_GE=11 (Bug Repro)"
         );
     }
@@ -58,11 +58,11 @@ mod tests {
         let filter_member = 0x17000004;
 
         assert!(
-            state.card_matches_filter(&db, 100, filter_member),
+            state.card_matches_filter_with_ctx(&db, 100, filter_member, &engine_rust::core::logic::AbilityContext::default()),
             "Member should match Member-constrained COST_GE=11"
         );
         assert!(
-            !state.card_matches_filter(&db, 200, filter_member),
+            !state.card_matches_filter_with_ctx(&db, 200, filter_member, &engine_rust::core::logic::AbilityContext::default()),
             "Live should NOT match Member-constrained COST_GE=11"
         );
     }
@@ -77,11 +77,11 @@ mod tests {
         let filter_live = 0x17000008;
 
         assert!(
-            !state.card_matches_filter(&db, 100, filter_live),
+            !state.card_matches_filter_with_ctx(&db, 100, filter_live, &engine_rust::core::logic::AbilityContext::default()),
             "Member should NOT match Live-constrained HEARTS_GE=11"
         );
         assert!(
-            state.card_matches_filter(&db, 200, filter_live),
+            state.card_matches_filter_with_ctx(&db, 200, filter_live, &engine_rust::core::logic::AbilityContext::default()),
             "Live should match Live-constrained HEARTS_GE=11"
         );
     }

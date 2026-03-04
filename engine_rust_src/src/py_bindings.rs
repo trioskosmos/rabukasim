@@ -500,6 +500,11 @@ impl PyGameState {
     }
 
     #[getter]
+    fn trace_log(&self) -> Vec<String> {
+        self.inner.debug.trace_log.clone()
+    }
+
+    #[getter]
     fn bytecode_log(&self) -> Vec<String> {
         self.inner.ui.bytecode_log.clone()
     }
@@ -536,6 +541,20 @@ impl PyGameState {
     #[getter]
     fn phase(&self) -> i8 {
         self.inner.phase as i8
+    }
+
+    #[getter]
+    fn acting_player(&self) -> u8 {
+        match self.inner.phase {
+            Phase::Response => {
+                if let Some(pi) = self.inner.interaction_stack.last() {
+                    pi.ctx.player_id as u8
+                } else {
+                    self.inner.current_player
+                }
+            }
+            _ => self.inner.current_player,
+        }
     }
 
     #[getter]
@@ -584,6 +603,12 @@ impl PyGameState {
         })?;
         self.inner = new_state;
         Ok(())
+    }
+
+    pub fn to_json(&self) -> PyResult<String> {
+        serde_json::to_string(&self.inner).map_err(|e| {
+            pyo3::exceptions::PyValueError::new_err(format!("Serialization error: {}", e))
+        })
     }
 
     #[getter]
@@ -940,6 +965,8 @@ impl PyGameState {
             trigger_type: Default::default(),
             original_phase: None,
             repeat_count: 0,
+            selected_cards: Vec::new(),
+            v_accumulated: 0,
         };
         self.inner
             .resolve_bytecode(db, std::sync::Arc::new(bytecode), &ctx);

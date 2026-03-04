@@ -21,6 +21,29 @@ This skill governs the architectural patterns, mathematical heuristics, and trai
 1. **Analytical Baseline**: Verify engine logic using `test_performance_solver.rs`.
 2. **Heuristic Profiling**: Measure the throughput of the analysis layer to ensure it doesn't bottleneck MCTS.
 3. **Data Collection**: Export game traces where the analytical solver provides "ground truth" labels for success probability.
+4. **Automated Evaluation**: Use `ai_tournament.py` to benchmark agent performance against a baseline (e.g., `OriginalHeuristic`) across a variety of decks to ensure no regressions in strategy.
+
+## Evaluation & Benchmarking
+
+The consolidated tournament runner allows for high-performance auditing of AI agents.
+
+### [ai_tournament.py](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/alphazero/benchmarks/ai_tournament.py)
+This tool runs parallel matches using the Rust engine to evaluate heuristic or network performance.
+
+**Standard Benchmark (Smoke Test)**:
+```bash
+uv run python alphazero/benchmarks/ai_tournament.py --sims 128 --games_per_pair 5
+```
+
+**High-Fidelity Audit**:
+```bash
+uv run python alphazero/benchmarks/ai_tournament.py --sims 4096 --games_per_pair 1 --p0_type original --p1_type original
+```
+
+**Matchup Configuration**:
+- `--p0_type` / `--p1_type`: `original`, `legacy`, `simple`.
+- `--sims`: Number of MCTS simulations per move.
+- `--decks`: Optional list of specific deck files.
 
 ## Performance Benchmarks
 As of recent optimizations (Action Generation pre-caching, Bytecode sharing with `Arc`, and `match`-based dispatch):

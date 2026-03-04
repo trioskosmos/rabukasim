@@ -25,7 +25,7 @@
 //! Bits 53-55: Zone Mask
 //! Bits 56-58: Special ID
 //! Bit 59:     Setsuna flag
-//! Bit 60:     Dynamic Value flag
+//! Bit 60:     Compare Against Accumulated flag (New)
 //! Bit 61:     Optional flag
 //! Bit 62:     Keyword: Activated Energy
 //! Bit 63:     Keyword: Activated Member
@@ -90,6 +90,8 @@ pub struct CardFilter {
     pub special_id: u8,
     // Bit 59
     pub is_setsuna: bool,
+    // Bit 60
+    pub compare_accumulated: bool,
 }
 
 impl CardFilter {
@@ -99,6 +101,7 @@ impl CardFilter {
         cid: i32,
         is_tapped_override: bool,
         effective_hearts: Option<&[u8; 7]>,
+        ctx: &crate::core::logic::AbilityContext,
     ) -> bool {
         if !self.is_enabled {
             return true;
@@ -215,6 +218,7 @@ impl CardFilter {
                 };
 
                 if let Some(h) = h_slice {
+                    // println!("[DEBUG_FILTER] Comparing Hearts: mask={:b}, threshold={}, values={:?}", self.color_mask, self.value_threshold, h);
                     // If color mask is 0, sum all hearts (TOTAL_HEARTS). 
                     // Otherwise, sum only the masked colors (e.g., HAS_HEART_02_X3).
                     if self.color_mask > 0 {
@@ -224,6 +228,7 @@ impl CardFilter {
                                 sum += h[i];
                             }
                         }
+                        // println!("[DEBUG_FILTER] Mask Sum: {} vs threshold {}", sum, self.value_threshold);
                         sum
                     } else {
                         h.iter().sum::<u8>()
@@ -232,13 +237,19 @@ impl CardFilter {
                     0
                 }
             };
+            
+            let threshold = if self.compare_accumulated {
+                ctx.v_accumulated as u8
+            } else {
+                self.value_threshold
+            };
 
             if self.is_le {
-                if actual_val > self.value_threshold {
+                if actual_val > threshold {
                     return false;
                 }
             } else {
-                if actual_val < self.value_threshold {
+                if actual_val < threshold {
                     return false;
                 }
             }
@@ -394,6 +405,9 @@ impl CardFilter {
         // Bit 59: Setsuna
         filter.is_setsuna = (a & (1u64 << 59)) != 0;
 
+        // Bit 60: Compare Accumulated
+        filter.compare_accumulated = (a & (1u64 << 60)) != 0;
+
         filter
     }
 
@@ -472,7 +486,115 @@ impl CardFilter {
             a |= 1u64 << 59;
         }
 
+        // Bit 60: Compare Accumulated
+        if self.compare_accumulated {
+            a |= 1u64 << 60;
+        }
+
         a as i64
+    }
+
+    pub fn new() -> Self {
+        Self {
+            is_enabled: true,
+            ..Self::default()
+        }
+    }
+
+    pub fn with_target(mut self, player: u8) -> Self {
+        self.target_player = player;
+        self
+    }
+
+    pub fn with_member_type(mut self) -> Self {
+        self.card_type = 1;
+        self
+    }
+
+    pub fn with_live_type(mut self) -> Self {
+        self.card_type = 2;
+        self
+    }
+
+    pub fn with_group(mut self, gid: u8) -> Self {
+        self.group_enabled = true;
+        self.group_id = gid;
+        self
+    }
+
+    pub fn with_unit(mut self, uid: u8) -> Self {
+        self.unit_enabled = true;
+        self.unit_id = uid;
+        self
+    }
+
+    pub fn with_cost_ge(mut self, threshold: u8) -> Self {
+        self.value_enabled = true;
+        self.value_threshold = threshold;
+        self.is_le = false;
+        self.is_cost_type = true;
+        self
+    }
+
+    pub fn with_cost_le(mut self, threshold: u8) -> Self {
+        self.value_enabled = true;
+        self.value_threshold = threshold;
+        self.is_le = true;
+        self.is_cost_type = true;
+        self
+    }
+
+    pub fn with_heart_ge(mut self, threshold: u8, color_mask: u8) -> Self {
+        self.value_enabled = true;
+        self.value_threshold = threshold;
+        self.is_le = false;
+        self.is_cost_type = false;
+        self.color_mask = color_mask;
+        self
+    }
+
+    pub fn with_char(mut self, char_id: u8) -> Self {
+        if self.char_id_1 == 0 {
+            self.char_id_1 = char_id;
+        } else {
+            self.char_id_2 = char_id;
+        }
+        self
+    }
+
+    pub fn with_tapped(mut self) -> Self {
+        self.is_tapped = true;
+        self
+    }
+
+    pub fn with_blade_heart(mut self) -> Self {
+        self.has_blade_heart = 1;
+        self
+    }
+
+    pub fn with_no_blade_heart(mut self) -> Self {
+        self.has_blade_heart = -1;
+        self
+    }
+
+    pub fn with_unique_names(mut self) -> Self {
+        self.unique_names = true;
+        self
+    }
+
+    pub fn with_setsuna(mut self) -> Self {
+        self.is_setsuna = true;
+        self
+    }
+
+    pub fn with_special_id(mut self, sid: u8) -> Self {
+        self.special_id = sid;
+        self
+    }
+
+    pub fn with_zone_mask(mut self, mask: u8) -> Self {
+        self.zone_mask = mask;
+        self
     }
 }
 
@@ -679,6 +801,7 @@ mod tests {
             zone_mask: 3,
             special_id: 2,
             is_setsuna: true,
+            compare_accumulated: false,
         };
 
         let attr = filter.to_attr();

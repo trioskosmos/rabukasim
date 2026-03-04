@@ -1,4 +1,5 @@
 use crate::core::logic::{CardDatabase, GameState, PlayerState};
+use crate::core::analysis::pro_vision::ProVisionHints;
 
 pub const AZ_BYTECODE_MAX_LEN: usize = 128;
 // Base(16) + Identity(16) + Stats(10) + Bytecode(128) = 170
@@ -33,10 +34,10 @@ impl AlphaZeroEncoding for GameState {
         tensor.push(self.core.players[me].hand.len() as f32 / 15.0);
         tensor.push(self.core.players[opp].hand.len() as f32 / 15.0);
 
-        tensor.push(self.core.players[me].baton_touch_count as f32);
-        tensor.push(self.core.players[me].baton_touch_limit as f32);
-        tensor.push(self.core.players[opp].baton_touch_count as f32);
-        tensor.push(self.core.players[opp].baton_touch_limit as f32);
+        tensor.push(self.core.players[me].baton_touch_count as f32 / 5.0);
+        tensor.push(self.core.players[me].baton_touch_limit as f32 / 5.0);
+        tensor.push(self.core.players[opp].baton_touch_count as f32 / 5.0);
+        tensor.push(self.core.players[opp].baton_touch_limit as f32 / 5.0);
 
         tensor.push(self.core.players[me].hand_increased_this_turn as f32 / 5.0);
         tensor.push(self.core.players[opp].hand_increased_this_turn as f32 / 5.0);
@@ -57,8 +58,24 @@ impl AlphaZeroEncoding for GameState {
             0.0
         });
 
-        // Padding to exactly 25
-        while tensor.len() < 25 {
+        // 2.5 Pro Vision Analytical Hints (Indices 70-80)
+        let hints = ProVisionHints::calculate(self, db, me);
+        
+        // Indices 70, 71, 72: Win Probabilities for the 3 live slots
+        tensor.push(hints.win_probabilities[0]);
+        tensor.push(hints.win_probabilities[1]);
+        tensor.push(hints.win_probabilities[2]);
+        
+        // Indices 73-79: Deck Heart Distribution (7 colors)
+        for &dist in &hints.deck_distribution {
+            tensor.push(dist);
+        }
+        
+        // Index 80: Energy Projection
+        tensor.push(hints.energy_projection);
+
+        // Padding to exactly 100 (Increased from 25 to provide room for more features)
+        while tensor.len() < 100 {
             tensor.push(0.0);
         }
 
@@ -164,8 +181,8 @@ fn append_entity_vector(
     // 1. Meta Block (16 floats)
     tensor.push(1.0); // Exists
     tensor.push(if is_me { 0.0 } else { 1.0 }); // Owner
-    tensor.push(zone as f32); // Zone (1=Hand, 2=Stage, 3=Energy, etc.)
-    tensor.push(z_idx as f32); // Index in zone
+    tensor.push(zone as f32 / 10.0); // Zone (1=Hand, 2=Stage, 3=Energy, etc.)
+    tensor.push(z_idx as f32 / 25.0); // Index in zone
 
     // Hidden Information Masking
     // We only show card details if:
@@ -191,12 +208,12 @@ fn append_entity_vector(
     // 2. Identity Block (16 floats)
     if let Some(m) = db.get_member(template_id) {
         tensor.push(1.0); // Type: Member
-        tensor.push(m.char_id as f32);
-        tensor.push(m.rarity as f32);
-        tensor.push(m.groups.get(0).copied().unwrap_or(0) as f32);
-        tensor.push(m.groups.get(1).copied().unwrap_or(0) as f32);
-        tensor.push(m.units.get(0).copied().unwrap_or(0) as f32);
-        tensor.push(m.units.get(1).copied().unwrap_or(0) as f32);
+        tensor.push(m.char_id as f32 / 50.0);
+        tensor.push(m.rarity as f32 / 5.0);
+        tensor.push(m.groups.get(0).copied().unwrap_or(0) as f32 / 100.0);
+        tensor.push(m.groups.get(1).copied().unwrap_or(0) as f32 / 100.0);
+        tensor.push(m.units.get(0).copied().unwrap_or(0) as f32 / 100.0);
+        tensor.push(m.units.get(1).copied().unwrap_or(0) as f32 / 100.0);
         let mut attr_mask = 0.0f32;
         for i in 0..7 {
             if m.hearts[i] > 0 {
@@ -215,10 +232,10 @@ fn append_entity_vector(
         }
 
         // 3. Stats Block (10 floats)
-        tensor.push(m.cost as f32);
-        tensor.push(m.blades as f32);
+        tensor.push(m.cost as f32 / 10.0);
+        tensor.push(m.blades as f32 / 5.0);
         for h in 0..7 {
-            tensor.push(m.hearts[h] as f32);
+            tensor.push(m.hearts[h] as f32 / 10.0);
         }
         let tapped = if zone == 2 {
             player.is_tapped(z_idx)
@@ -231,10 +248,10 @@ fn append_entity_vector(
         for _ in 0..2 {
             tensor.push(0.0);
         }
-        tensor.push(l.groups.get(0).copied().unwrap_or(0) as f32);
-        tensor.push(l.groups.get(1).copied().unwrap_or(0) as f32);
-        tensor.push(l.units.get(0).copied().unwrap_or(0) as f32);
-        tensor.push(l.units.get(1).copied().unwrap_or(0) as f32);
+        tensor.push(l.groups.get(0).copied().unwrap_or(0) as f32 / 100.0);
+        tensor.push(l.groups.get(1).copied().unwrap_or(0) as f32 / 100.0);
+        tensor.push(l.units.get(0).copied().unwrap_or(0) as f32 / 100.0);
+        tensor.push(l.units.get(1).copied().unwrap_or(0) as f32 / 100.0);
         let mut attr_mask = 0.0f32;
         for i in 0..7 {
             if l.required_hearts[i] > 0 {
@@ -252,10 +269,10 @@ fn append_entity_vector(
         }
 
         // 3. Stats Block (10 floats)
-        tensor.push(l.score as f32);
-        tensor.push(l.note_icons as f32);
+        tensor.push(l.score as f32 / 10.0);
+        tensor.push(l.note_icons as f32 / 5.0);
         for h in 0..7 {
-            tensor.push(l.required_hearts[h] as f32);
+            tensor.push(l.required_hearts[h] as f32 / 10.0);
         }
         tensor.push(0.0);
     } else {
@@ -278,9 +295,9 @@ fn append_entity_vector(
             if instructions_added + 5 >= AZ_BYTECODE_MAX_LEN {
                 break;
             }
-            tensor.push(ab.trigger as i32 as f32);
+            tensor.push(ab.trigger as i32 as f32 / 20.0);
             tensor.push(if ab.is_once_per_turn { 1.0 } else { 0.0 });
-            tensor.push(ab.bytecode.len() as f32);
+            tensor.push(ab.bytecode.len() as f32 / 128.0);
             let is_spent = if ab.is_once_per_turn {
                 let s_type = if db.get_member(template_id).is_some() {
                     0
@@ -304,7 +321,7 @@ fn append_entity_vector(
             instructions_added += 4;
             for &code in &ab.bytecode {
                 if instructions_added < AZ_BYTECODE_MAX_LEN - 1 {
-                    tensor.push(code as f32);
+                    tensor.push(code as f32 / 255.0);
                     instructions_added += 1;
                 }
             }

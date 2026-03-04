@@ -5,7 +5,7 @@ use crate::test_helpers::*;
 #[test]
 fn test_repro_card_420_cost_sum_limit() {
     let db = load_real_db();
-    let card_420_id = 420; // 津島善子
+    let card_420_id = 420; // 津島善子, Card No: PL!S-bp2-006-P
 
     let mut cost_4_id = -1;
     let mut cost_2_ids = Vec::new();

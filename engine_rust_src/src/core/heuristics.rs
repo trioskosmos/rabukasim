@@ -49,7 +49,7 @@ impl Default for HeuristicConfig {
             weight_synergy_center: 0.2,
             weight_mill_bonus: 0.0,
             weight_live_filter: 0.0, // Never penalize lives; keep them all
-            scaling_factor: 0.01,    // Extreme sensitivity
+            scaling_factor: 0.5,     // Significantly increased sensitivity
         }
     }
 }
@@ -299,11 +299,16 @@ impl OriginalHeuristic {
         let p0_notes = state.core.players[0].current_turn_notes;
         let p1_notes = state.core.players[1].current_turn_notes;
 
-        if p0_notes > 0 {
-            final_val += self.config.weight_vol_bonus * 0.1;
-        }
-        if p1_notes > 0 {
-            final_val -= self.config.weight_vol_bonus * 0.1;
+        if state.phase == Phase::Rps {
+            // Pseudo-random tie-breaker for RPS based on turn number and deck lengths
+            // This ensures that even if scores are tied, different moves are slightly preferred
+            // to break deterministic Rock-vs-Rock loops in greedy agents.
+            let p0_seed = (state.core.players[0].deck.len() as u32).wrapping_shl(8) ^ state.turn as u32;
+            let p1_seed = (state.core.players[1].deck.len() as u32).wrapping_shl(16) ^ state.turn as u32;
+            
+            // Add a tiny deterministic noise (+/- 0.0001)
+            let noise = ((p0_seed.wrapping_sub(p1_seed) % 100) as f32) / 1000000.0;
+            final_val += noise;
         }
 
         final_val.clamp(0.0, 1.0)

@@ -1,0 +1,283 @@
+﻿Initial Phase: -3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Phase -3, Acting: 0, Legal moves: 3
+Phase -3, Acting: 1, Legal moves: 3
+Reached Mulligan/Active, Phase: -3
+Turn 1, Phase -3, Acting P0
+  Moves Available: 3
+  MCTS Choice: 20001 (Eval: 0.5015)
+  Random Choice: 20002
+Turn 1, Phase -3, Acting P1
+  Moves Available: 3
+  MCTS Choice: 21000 (Eval: 0.4875)
+  Random Choice: 21001
+Turn 1, Phase -2, Acting P0
+  Moves Available: 2
+  MCTS Choice: 5000 (Eval: 0.4978)
+  Random Choice: 5000
+Turn 1, Phase -1, Acting P0
+  Moves Available: 7
+  MCTS Choice: 300 (Eval: 0.5087)
+  Random Choice: 0
+Turn 1, Phase -1, Acting P0
+  Moves Available: 6
+  MCTS Choice: 301 (Eval: 0.4942)
+  Random Choice: 301
+Turn 1, Phase -1, Acting P0
+  Moves Available: 5
+  MCTS Choice: 303 (Eval: 0.4969)
+  Random Choice: 302
+Turn 1, Phase -1, Acting P0
+  Moves Available: 4
+  MCTS Choice: 302 (Eval: 0.4950)
+  Random Choice: 302
+Turn 1, Phase -1, Acting P0
+  Moves Available: 3
+  MCTS Choice: 305 (Eval: 0.4955)
+  Random Choice: 0
+Turn 1, Phase -1, Acting P0
+  Moves Available: 2
+  MCTS Choice: 304 (Eval: 0.4896)
+  Random Choice: 0
+Turn 1, Phase -1, Acting P0
+  Moves Available: 1
+  MCTS Choice: 0 (Eval: 0.5000)
+  Random Choice: 0
+Turn 1, Phase 0, Acting P1
+  Moves Available: 7
+  MCTS Choice: 300 (Eval: 0.5004)
+  Random Choice: 302
+Turn 1, Phase 0, Acting P1
+  Moves Available: 6
+  MCTS Choice: 305 (Eval: 0.5004)
+  Random Choice: 0
+Turn 1, Phase 0, Acting P1
+  Moves Available: 5
+  MCTS Choice: 0 (Eval: 0.5150)
+  Random Choice: 0
+Turn 1, Phase 4, Acting P0
+  Moves Available: 1
+  MCTS Choice: 0 (Eval: 0.5000)
+  Random Choice: 0
+Turn 1, Phase 4, Acting P1
+  Moves Available: 1
+  MCTS Choice: 0 (Eval: 0.5000)
+  Random Choice: 0
+Turn 1, Phase 5, Acting P0
+  Moves Available: 8
+  MCTS Choice: 404 (Eval: 0.4954)
+  Random Choice: 402
+Turn 1, Phase 5, Acting P0
+  Moves Available: 7
+  MCTS Choice: 403 (Eval: 0.5063)
+  Random Choice: 404
+Turn 1, Phase 5, Acting P0
+  Moves Available: 6
+  MCTS Choice: 401 (Eval: 0.5008)
+  Random Choice: 402
+Turn 1, Phase 5, Acting P0
+  Moves Available: 1
+  MCTS Choice: 0 (Eval: 0.5000)
+  Random Choice: 0
+Turn 1, Phase 5, Acting P1
+  Moves Available: 8
+  MCTS Choice: 0 (Eval: 0.5041)
+  Random Choice: 405
+Match Results. Winner: -1

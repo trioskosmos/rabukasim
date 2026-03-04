@@ -5,10 +5,11 @@ use engine_rust::test_helpers::{create_test_state, load_real_db, TestActionRecei
 fn test_card_selection_filtering() {
     let db = load_real_db();
     let mut state = create_test_state();
+    state.debug.debug_mode = true;
     state.phase = Phase::Main;
 
-    let muse_cid = 234;
-    let aqours_cid = 459;
+    let muse_cid = 100;
+    let aqours_cid = 8587;
 
     // Put Muse member in slot 0, Aqours member in slot 1
     state.players[0].stage[0] = muse_cid;
@@ -24,7 +25,7 @@ fn test_card_selection_filtering() {
         ability_index: 0,
         choice_type: "SELECT_MEMBER".to_string(),
         choice_text: "Choose Aqours member".to_string(),
-        filter_attr: 80, // Group Filter for Aqours (bit 4, group = 2)
+        filter_attr: 48, // Group Filter for Aqours (enabled bit 0x10 + Group ID 1 << 5 = 0x20 = 48)
         v_remaining: 1,
         effect_opcode: 65, // O_SELECT_MEMBER
         ctx: ctx,
@@ -46,10 +47,10 @@ fn test_card_selection_filtering() {
     // and action 601 (slot 1 - Aqours) to be present.
     assert!(
         !actions.contains(&600),
-        "Should not allow selecting Muse member"
+        "Should not allow selecting Muse member (Slot 0)"
     );
     assert!(
         actions.contains(&601),
-        "Should allow selecting Aqours member"
+        "Should allow selecting Aqours member (Slot 1)"
     );
 }

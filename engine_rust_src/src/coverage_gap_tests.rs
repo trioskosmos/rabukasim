@@ -202,16 +202,19 @@ fn test_conditions_comparison_and_baton() {
     // C_SCORE_COMPARE: Compare Score (attr=0)
     // Op: 0=GE, 1=LE, 2=GT. Default GT.
     // Slot >> 4 for op.
-    // 2 (GT) << 4 = 32
-    assert!(check_cond(&mut state, &db, C_SCORE_COMPARE, 0, 0, 32)); // 10 > 5
+    // 1 (GT) << 4 = 16
+    assert!(check_cond(&mut state, &db, C_SCORE_COMPARE, 0, 0, 16)); // 10 > 5
 
-    // 1 (LE) << 4 = 16
-    assert!(!check_cond(&mut state, &db, C_SCORE_COMPARE, 0, 0, 16)); // 10 <= 5 False
+    // 2 (LT) << 4 = 32
+    assert!(!check_cond(&mut state, &db, C_SCORE_COMPARE, 0, 0, 32)); // 10 < 5 False
 
     // C_BATON
-    state.prev_card_id = 3010; // Char ID on M3010 is default 0?
-                               // Let's check M10 defaults. Char ID 0.
-    assert!(check_cond(&mut state, &db, C_BATON, 0, 0, 0));
+    state.prev_card_id = 3010; // Char ID on M3010 is 0
+    let ctx = AbilityContext {
+        source_card_id: 3010, // Also char 0
+        ..Default::default()
+    };
+    assert!(state.check_condition_opcode(&db, C_BATON, 0, 0, 0, &ctx, 0));
 }
 
 #[test]

@@ -187,324 +187,139 @@ class VectorGameState:
 
     def _load_bytecode(self):
         import json
+        import re
 
         try:
-            with open("data/cards_numba.json", "r") as f:
-                raw_map = json.load(f)
-
-            # Convert to numpy array
-            # Format: key "cardid_abidx" -> List[int]
-            # storage:
-            # 1. giant array of bytecodes (N, MaxLen, 4)
-            # 2. lookup index (CardID, AbIdx) -> Index in giant array
+            # Unified Source: cards_compiled.json
+            with open("data/cards_compiled.json", "r", encoding="utf-8") as f:
+                db = json.load(f)
 
             self.max_cards = 2000
             self.max_abilities = 8
-            self.max_len = 128  # Max 128 instructions per ability for future expansion
+            self.max_len = 128
 
-            # Count unique compiled entries
-            unique_entries = len(raw_map)
-            # (Index 0 is empty/nop)
-            self.bytecode_map = np.zeros((unique_entries + 1, self.max_len, 4), dtype=np.int32)
+            # 1. Count unique abilities for bytecode_map
+            # We'll build a temp list of bytecodes to populate the map
+            bytecode_list = []
+            
             self.bytecode_index = np.full((self.max_cards, self.max_abilities), 0, dtype=np.int32)
-
-            idx_counter = 1
-            for key, bc_list in raw_map.items():
-                cid, aid = map(int, key.split("_"))
-                if cid < self.max_cards and aid < self.max_abilities:
-                    # reshape list to (M, 4)
-                    bc_arr = np.array(bc_list, dtype=np.int32).reshape(-1, 4)
-                    length = min(bc_arr.shape[0], self.max_len)
-                    self.bytecode_map[idx_counter, :length] = bc_arr[:length]
-                    self.bytecode_index[cid, aid] = idx_counter
-                    idx_counter += 1
-
-            print(f" [VectorEnv] Loaded {unique_entries} compiled abilities.")
-
-            # --- IMAX PRO VISION (Stride 80) ---
-            # Fixed Geography: No maps, no shifting. Dedicated space per ability.
-            # 0-19: Stats (Cost, Hearts, Traits, Live Reqs)
-            # 20-35: Ability 1 (Trig, Cond, Opts, 3 Effs)
-            # 36-47: Ability 2 (Trig, Cond, 3 Effs)
-            # 48-59: Ability 3 (Trig, Cond, 3 Effs)
-            # 60-71: Ability 4 (Trig, Cond, 3 Effs)
-            # 79: Location Signal (Runtime Only)
             self.card_stats = np.zeros((self.max_cards, 80), dtype=np.int32)
 
-            try:
-                import json
-                import re
+            name_to_id = {}
+            all_cards = {**db.get("member_db", {}), **db.get("live_db", {})}
 
-                with open("data/cards_compiled.json", "r", encoding="utf-8") as f:
-                    db = json.load(f)
+            # First pass: Character Name mapping
+            for cid_str, card in db.get("member_db", {}).items():
+                name = card.get("name", "")
+                if name:
+                    name_to_id[name] = int(cid_str)
 
-                # We need to map Card ID (int) -> Stats
-                # cards_compiled.json is keyed by string integer "0", "1"...
+            # Second pass: Process Stats and Bytecode
+            processed_count = 0
+            for cid_str, card in all_cards.items():
+                cid = int(cid_str)
+                if cid >= self.max_cards:
+                    continue
 
-                count = 0
+                # --- STATS ---
+                is_member = cid_str in db.get("member_db", {})
+                self.card_stats[cid, 10] = 1 if is_member else 2 # Type
+                self.card_stats[cid, 0] = card.get("cost", 0)
+                self.card_stats[cid, 1] = card.get("blades", 0)
+                
+                h_arr = card.get("hearts", card.get("required_hearts", []))
+                self.card_stats[cid, 2] = sum(h_arr)
+                for r_idx in range(min(len(h_arr), 7)):
+                    self.card_stats[cid, 12 + r_idx] = h_arr[r_idx]
 
-                # Build character name to ID mapping for Baton Pass
-                name_to_id = {}
+                bh = card.get("blade_hearts", [])
+                for b_idx in range(min(len(bh), 7)):
+                    self.card_stats[cid, 40 + b_idx] = bh[b_idx]
 
-                # First pass: collect all character names and their IDs
-                if "member_db" in db:
-                    for cid_str, card in db["member_db"].items():
-                        cid = int(cid_str)
-                        if cid < self.max_cards:
-                            # Store character name to ID mapping
-                            name = card.get("name", "")
-                            if name:
-                                name_to_id[name] = cid
+                self.card_stats[cid, 4] = card.get("volume_icons", 0)
+                self.card_stats[cid, 5] = card.get("draw_icons", 0)
+                self.card_stats[cid, 38] = card.get("score", 0)
 
-                # Load Members
-                if "member_db" in db:
-                    for cid_str, card in db["member_db"].items():
-                        cid = int(cid_str)
-                        if cid < self.max_cards:
-                            # 0. Card Type (1=Member)
-                            self.card_stats[cid, 10] = 1
-                            # 1. Cost
-                            self.card_stats[cid, 0] = card.get("cost", 0)
-                            # 2. Blades
-                            self.card_stats[cid, 1] = card.get("blades", 0)
-                            # 3. Hearts (Sum of array elements > 0?)
-                            # Actually just count non-zero hearts in array? Or sum of values?
-                            # Usually 'hearts' is [points, points...]. Let's sum points.
-                            h_arr = card.get("hearts", [])
-                            self.card_stats[cid, 2] = sum(h_arr)
+                # Character ID link
+                name = card.get("name", "")
+                if name in name_to_id:
+                    self.card_stats[cid, 19] = name_to_id[name]
 
-                            # 4. Store detailed hearts for Members too (indices 12-18)
-                            # [Pn, Rd, Yl, Gr, Bl, Pu, All]
-                            for r_idx in range(min(len(h_arr), 7)):
-                                self.card_stats[cid, 12 + r_idx] = h_arr[r_idx]
+                # Traits mask
+                mask = 0
+                for g in card.get("groups", []):
+                    mask |= 1 << (int(g) % 20)
+                for u in card.get("units", []):
+                    mask |= 1 << ((int(u) % 20) + 5)
+                self.card_stats[cid, 11] = mask
 
-                            # Store Character ID in index 19 for Baton Pass condition
-                            name = card.get("name", "")
-                            if name in name_to_id:
-                                self.card_stats[cid, 19] = name_to_id[name]
+                # --- BYTECODE ---
+                ab_list = card.get("abilities", [])
+                for ab_idx, ab in enumerate(ab_list):
+                    if ab_idx >= self.max_abilities: break
+                    
+                    # Pack fixed geography stats
+                    base_idx = 20 + (ab_idx * 12) if ab_idx > 0 else 20
+                    # Note: Ability 1 (idx 0) has extra logic for Options in some builds, 
+                    # but here we follow the standard logic.
+                    self.card_stats[cid, base_idx] = ab.get("trigger", 0)
+                    
+                    bc = ab.get("bytecode", [])
+                    if bc:
+                        # Register in bytecode_map
+                        bc_idx = len(bytecode_list) + 1 # 1-based
+                        bytecode_list.append(np.array(bc, dtype=np.int32))
+                        self.bytecode_index[cid, ab_idx] = bc_idx
 
-                            # Infer Primary Color (for visualization/traits)
-                            col = 0
-                            for cidx, val in enumerate(h_arr):
-                                if val > 0:
-                                    col = cidx + 1  # 1-based color
-                                    break
-                            self.card_stats[cid, 3] = col
+                processed_count += 1
 
-                            # 5. Volume/Draw Icons
-                            self.card_stats[cid, 4] = card.get("volume_icons", 0)
-                            self.card_stats[cid, 5] = card.get("draw_icons", 0)
+            # Populate bytecode_map
+            self.bytecode_map = np.zeros((len(bytecode_list) + 32, self.max_len, 4), dtype=np.int32)
+            for i, bc_arr in enumerate(bytecode_list):
+                bc_reshaped = bc_arr.reshape(-1, 4)
+                length = min(bc_reshaped.shape[0], self.max_len)
+                self.bytecode_map[i + 1, :length] = bc_reshaped[:length]
 
-                            # 6. Blade Hearts (flipped as yell)
-                            bh = card.get("blade_hearts", [])
-                            for b_idx in range(min(len(bh), 7)):
-                                self.card_stats[cid, 40 + b_idx] = bh[b_idx]
+            print(f" [VectorEnv] Loaded {processed_count} cards and {len(bytecode_list)} abilities from cards_compiled.json.")
 
-                            # Live Card Stats
-                            if "required_hearts" in card:
-                                # Pack Required Hearts into 12-18 (Pink..Purple, All)
-                                reqs = card.get("required_hearts", [])
-                                for r_idx in range(min(len(reqs), 7)):
-                                    self.card_stats[cid, 12 + r_idx] = reqs[r_idx]
+            # --- BATON PASS PATCHING ---
+            baton_pattern = re.compile(r"「(.+?)」からバトンタッチして")
+            patched_count = 0
+            idx_counter = len(bytecode_list) + 1
+            
+            for cid_str, card in all_cards.items():
+                cid = int(cid_str)
+                if cid >= self.max_cards: continue
+                
+                for ab_idx, ab in enumerate(card.get("abilities", [])):
+                    raw_text = ab.get("raw_text", "")
+                    match = baton_pattern.search(raw_text)
+                    if match:
+                        target_name = match.group(1)
+                        target_cid = name_to_id.get(target_name, -1)
+                        if target_cid != -1:
+                            original_bc = ab.get("bytecode", [])
+                            if original_bc:
+                                # Prepend C_BATON (231) + TargetID
+                                new_bc = [231, target_cid, 0, 0] + original_bc
+                                if idx_counter < self.bytecode_map.shape[0]:
+                                    bc_reshaped = np.array(new_bc, dtype=np.int32).reshape(-1, 4)
+                                    length = min(bc_reshaped.shape[0], self.max_len)
+                                    self.bytecode_map[idx_counter, :length] = bc_reshaped[:length]
+                                    self.bytecode_index[cid, ab_idx] = idx_counter
+                                    idx_counter += 1
+                                    patched_count += 1
 
-                            # --- FIXED GEOGRAPHY ABILITY PACKING ---
-                            ab_list = card.get("abilities", [])
+            if patched_count > 0:
+                print(f" [VectorEnv] Applied {patched_count} runtime Baton Pass patches.")
 
-                            # Helper to pack an ability into a fixed block
-                            def pack_ability_block(ab, base_idx, has_opts=False):
-                                if not ab:
-                                    return
-
-                                # Trigger (Base + 0)
-                                self.card_stats[cid, base_idx] = ab.get("trigger", 0)
-
-                                # Condition (Base + 1, 2)
-                                conds = ab.get("conditions", [])
-                                if conds:
-                                    self.card_stats[cid, base_idx + 1] = conds[0].get("type", 0)
-                                    self.card_stats[cid, base_idx + 2] = conds[0].get("params", {}).get("value", 0)
-
-                                # Effects
-                                effs = ab.get("effects", [])
-                                eff_start = base_idx + 3
-                                if has_opts:  # Ability 1 has extra space for Options
-                                    eff_start = base_idx + 9  # Skip 6 slots for options
-
-                                    # Pack Options (from first effect)
-                                    if effs:
-                                        m_opts = effs[0].get("modal_options", [])
-                                        if len(m_opts) > 0 and len(m_opts[0]) > 0:
-                                            o = m_opts[0][0]  # Opt 1
-                                            self.card_stats[cid, base_idx + 3] = o.get("effect_type", 0)
-                                            self.card_stats[cid, base_idx + 4] = o.get("value", 0)
-                                            self.card_stats[cid, base_idx + 5] = o.get("target", 0)
-                                        if len(m_opts) > 1 and len(m_opts[1]) > 0:
-                                            o = m_opts[1][0]  # Opt 2
-                                            self.card_stats[cid, base_idx + 6] = o.get("effect_type", 0)
-                                            self.card_stats[cid, base_idx + 7] = o.get("value", 0)
-                                            self.card_stats[cid, base_idx + 8] = o.get("target", 0)
-
-                                # Pack up to 3 Effects
-                                for e_i in range(min(len(effs), 3)):
-                                    e = effs[e_i]
-                                    off = eff_start + (e_i * 3)
-                                    self.card_stats[cid, off] = e.get("effect_type", 0)
-                                    self.card_stats[cid, off + 1] = e.get("value", 0)
-                                    self.card_stats[cid, off + 2] = e.get("target", 0)
-
-                            # Block 1: Ability 1 (Indices 20-35) [Has Options]
-                            if len(ab_list) > 0:
-                                pack_ability_block(ab_list[0], 20, has_opts=True)
-
-                            # Block 2: Ability 2 (Indices 36-47)
-                            if len(ab_list) > 1:
-                                pack_ability_block(ab_list[1], 36)
-
-                            # Block 3: Ability 3 (Indices 48-59)
-                            if len(ab_list) > 2:
-                                pack_ability_block(ab_list[2], 48)
-
-                            # Block 4: Ability 4 (Indices 60-71)
-                            if len(ab_list) > 3:
-                                pack_ability_block(ab_list[3], 60)
-
-                            # 7. Type
-                            self.card_stats[cid, 10] = 1
-
-                            # 8. Traits Bitmask (Groups & Units) -> Stores in Index 11
-                            # Bits 0-4: Groups (Max 5)
-                            # Bits 5-20: Units (Max 16)
-                            mask = 0
-                            groups = card.get("groups", [])
-                            for g in groups:
-                                try:
-                                    mask |= 1 << (int(g) % 20)
-                                except:
-                                    pass
-
-                            units = card.get("units", [])
-                            for u in units:
-                                try:
-                                    mask |= 1 << ((int(u) % 20) + 5)
-                                except:
-                                    pass
-
-                            self.card_stats[cid, 11] = mask
-
-                            count += 1
-
-                # Load Lives
-                if "live_db" in db:
-                    for cid_str, card in db["live_db"].items():
-                        cid = int(cid_str)
-                        if cid < self.max_cards:
-                            # Type: Live=2
-                            self.card_stats[cid, 10] = 2
-
-                            # Required Hearts
-                            reqs = card.get("required_hearts", [])
-                            for r_idx in range(min(len(reqs), 7)):
-                                self.card_stats[cid, 12 + r_idx] = reqs[r_idx]
-
-                            # Score
-                            self.card_stats[cid, 38] = card.get("score", 0)
-
-                            # Store Character ID in index 19 for Baton Pass condition
-                            name = card.get("name", "")
-                            if name in name_to_id:
-                                self.card_stats[cid, 19] = name_to_id[name]
-
-                            count += 1
-
-                print(f" [VectorEnv] Loaded detailed stats/abilities for {count} cards.")
-
-                # --- RUNTIME PATCHING FOR BATON PASS CARDS ---
-                # Scan all cards for "バトンタッチして" condition and inject C_BATON opcode
-                print(" [VectorEnv] Starting runtime patching for Baton Pass cards...")
-
-                # Load the original bytecode map to scan for cards that need patching
-                with open("data/cards_numba.json", "r") as f:
-                    raw_map = json.load(f)
-
-                # Regex pattern to detect Baton Pass condition
-                baton_pattern = re.compile(r"「(.+?)」からバトンタッチして")
-
-                patched_count = 0
-                idx_counter = 1  # Start from 1 since 0 is reserved for empty
-
-                # First pass: count how many patched bytecodes we'll need
-                baton_cards = []
-                for cid_str, card in {**db.get("member_db", {}), **db.get("live_db", {})}.items():
-                    cid = int(cid_str)
-
-                    if cid >= self.max_cards:
-                        continue
-
-                    # Check if this card has abilities with Baton Pass condition
-                    ab_list = card.get("abilities", [])
-
-                    for ab_idx, ability in enumerate(ab_list):
-                        raw_text = ability.get("raw_text", "")
-
-                        # Check if the raw text contains the Baton Pass pattern
-                        match = baton_pattern.search(raw_text)
-                        if match:
-                            target_name = match.group(1)
-
-                            # Get the target character ID
-                            target_cid = name_to_id.get(target_name, -1)
-
-                            if target_cid != -1:
-                                original_key = f"{cid}_{ab_idx}"
-                                if original_key in raw_map:
-                                    baton_cards.append((cid, ab_idx, target_cid, raw_map[original_key], target_name))
-
-                # Second pass: expand bytecode_map if needed and apply patches
-                for cid, ab_idx, target_cid, original_bytecode, target_name in baton_cards:
-                    # Get the card object again to access the name
-                    card = {}
-                    if str(cid) in db.get("member_db", {}):
-                        card = db["member_db"][str(cid)]
-                    elif str(cid) in db.get("live_db", {}):
-                        card = db["live_db"][str(cid)]
-
-                    # This card has a Baton Pass condition that needs to be patched
-                    print(
-                        f" [VectorEnv] Patching Baton Pass for card {cid} ('{card.get('name', '')}') targeting '{target_name}' (ID: {target_cid})"
-                    )
-
-                    # Create new bytecode sequence with C_BATON condition prepended
-                    # Format: [C_BATON, Target_Char_ID, 0, 0] + original_bytecode
-                    # Prepend CHECK_BATON (231) opcode
-                    new_bytecode = [231, target_cid, 0, 0] + original_bytecode  # original_bytecode is already a list
-
-                    # Find a free slot in the bytecode map for the patched version
-                    if idx_counter < self.bytecode_map.shape[0]:
-                        # Reshape the new bytecode to fit the map dimensions
-                        bc_arr = np.array(new_bytecode, dtype=np.int32).reshape(-1, 4)
-                        length = min(bc_arr.shape[0], self.max_len)
-                        self.bytecode_map[idx_counter, :length] = bc_arr[:length]
-
-                        # Update the bytecode index to point to the new patched version
-                        self.bytecode_index[cid, ab_idx] = idx_counter
-
-                        patched_count += 1
-                        print(
-                            f" [VectorEnv] Successfully patched ability {ab_idx} for card {cid}, new bytecode index: {idx_counter}"
-                        )
-                        idx_counter += 1
-                    else:
-                        print(f" [VectorEnv] Error: No more space in bytecode map for card {cid}")
-
-                print(f" [VectorEnv] Runtime patching completed. {patched_count} cards patched.")
-
-            except Exception as e:
-                print(f" [VectorEnv] Warning: Failed to load compiled stats: {e}")
-
-        except FileNotFoundError:
-            print(" [VectorEnv] Warning: data/cards_numba.json not found. Using empty map.")
+        except Exception as e:
+            print(f" [VectorEnv] ERROR loading bytecode/stats: {e}")
+            import traceback
+            traceback.print_exc()
             self.bytecode_map = np.zeros((1, 64, 4), dtype=np.int32)
-            self.bytecode_index = np.zeros((1, 1), dtype=np.int32)
+            self.bytecode_index = np.zeros((self.max_cards, self.max_abilities), dtype=np.int32)
+            self.card_stats = np.zeros((self.max_cards, 80), dtype=np.int32)
 
     def _load_verified_deck_pool(self):
         import json

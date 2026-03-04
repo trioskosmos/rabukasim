@@ -1,3 +1,4 @@
+use crate::core::alphazero_encoding::AlphaZeroEncoding;
 use crate::core::logic::{CardDatabase, GameState};
 // removed unused AlphaZeroEncoding
 use crate::core::heuristics::{Heuristic, HeuristicConfig};

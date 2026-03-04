@@ -103,6 +103,9 @@ _VALID_EFFECT_OPS = {
     95,  # O_SKIP_ACTIVATE_PHASE
     96,  # O_PAY_ENERGY_DYNAMIC
     97,  # O_PLACE_ENERGY_UNDER_MEMBER
+    125,  # O_LOOK_REORDER_DISCARD
+    126,  # O_DIV_VALUE
+    106,  # O_CALC_SUM_COST
 }
 
 # Condition opcodes: 200-250 range (original) + 300-399 range (new conditions)
@@ -280,15 +283,13 @@ def compile_cards(input_path: str, output_path: str):
             except Exception as e:
                 import traceback
 
-                traceback.print_exc()
-                errors.append(f"Error parsing card {v_key}: {e}")
+                tb_str = traceback.format_exc()
+                errors.append(f"[CARD PARSE] {v_key}: {e}\n{tb_str}")
 
-    print(f"Compilation complete. Processed {success_count} cards.")
-    if errors:
-        print(f"Encountered {len(errors)} errors. See compiler_errors.log for details.")
-        with open("compiler_errors.log", "w", encoding="utf-8") as f_err:
-            for err_msg in errors:
-                f_err.write(f"- {err_msg}\n")
+    # Collect bytecode compile errors from parse_member/parse_live
+    global _bytecode_compile_errors
+    bc_errors = list(_bytecode_compile_errors)
+    _bytecode_compile_errors.clear()
 
     # --- Bytecode Validation Pass ---
     for db_key in ["member_db", "live_db"]:
@@ -299,23 +300,86 @@ def compile_cards(input_path: str, output_path: str):
                 issues = validate_bytecode(bc, card_no, ab_idx)
                 validation_issues.extend(issues)
 
-    if validation_issues:
-        print(f"\n[!] BYTECODE VALIDATION: {len(validation_issues)} issue(s) found:")
-        for issue in validation_issues[:20]:  # Show first 20
-            print(f"  {issue}")
-        if len(validation_issues) > 20:
-            print(f"  ... and {len(validation_issues) - 20} more.")
-        with open("reports/bytecode_validation.txt", "w", encoding="utf-8") as f:
-            for issue in validation_issues:
-                f.write(f"{issue}\n")
-        print("  Full report: reports/bytecode_validation.txt")
-    else:
-        print("\n[OK] BYTECODE VALIDATION: All bytecodes pass structural checks.")
+    # Output Automatic Documentation
+    from compiler.doc_generator import generate_opcode_docs
+    generate_opcode_docs(compiled_data, "reports/opcode_reference.md")
 
-    # Write output
+    # Write output (always write, even with errors)
     print(f"Writing compiled data to {output_path}...")
     with open(output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(compiled_data, f, ensure_ascii=False, indent=2)
+
+    # ============================================================
+    #  COMPILATION SUMMARY
+    # ============================================================
+    total_errors = len(errors) + len(bc_errors) + len(validation_issues)
+    sep_thick = "=" * 60
+    sep_thin = "-" * 60
+    print(f"\n{sep_thick}")
+    print("  COMPILATION SUMMARY")
+    print(sep_thick)
+    print(f"  Cards compiled: {success_count}")
+    print(f"  Total issues:   {total_errors}")
+
+    def _print_grouped_errors(title: str, error_list: list[str]):
+        """Group errors by root cause and print a compact summary."""
+        if not error_list:
+            return
+        # Extract first line (the summary) as key, collect card identifiers
+        from collections import defaultdict
+        groups: dict[str, list[str]] = defaultdict(list)
+        for entry in error_list:
+            first_line = entry.split("\n")[0].strip()
+            # Extract card identifier from "[TYPE] CARD_NO ab#N: error_msg"
+            # or "[CARD PARSE] CARD_NO: error_msg"
+            parts = first_line.split(": ", 1)
+            card_tag = parts[0] if len(parts) > 1 else first_line
+            error_msg = parts[1] if len(parts) > 1 else "Unknown"
+            groups[error_msg].append(card_tag)
+
+        print(f"\n{sep_thin}")
+        print(f"  {title} ({len(error_list)} total, {len(groups)} unique)")
+        print(sep_thin)
+        for error_msg, cards in groups.items():
+            print(f"  [{len(cards)}x] {error_msg}")
+            # Show card list compactly (strip [TYPE] prefix for readability)
+            card_names = [c.split("] ", 1)[-1] if "] " in c else c for c in cards]
+            line = "       Cards: " + ", ".join(card_names)
+            if len(line) > 200:
+                line = line[:197] + "..."
+            print(line)
+
+    _print_grouped_errors("CARD PARSE ERRORS", errors)
+    _print_grouped_errors("BYTECODE COMPILE ERRORS", bc_errors)
+
+    if validation_issues:
+        print(f"\n{sep_thin}")
+        print(f"  BYTECODE VALIDATION ISSUES ({len(validation_issues)})")
+        print(sep_thin)
+        for issue in validation_issues:
+            print(f"  {issue}")
+
+    if total_errors == 0:
+        print("\n  All cards compiled and validated successfully!")
+    print(sep_thick)
+
+    # Write detailed log for reference (with full tracebacks)
+    if errors or bc_errors or validation_issues:
+        with open("compiler_errors.log", "w", encoding="utf-8") as f_err:
+            if errors:
+                f_err.write("=== CARD PARSE ERRORS ===\n")
+                for err_msg in errors:
+                    f_err.write(f"{err_msg}\n\n")
+            if bc_errors:
+                f_err.write("=== BYTECODE COMPILE ERRORS ===\n")
+                for err_msg in bc_errors:
+                    f_err.write(f"{err_msg}\n\n")
+            if validation_issues:
+                f_err.write("=== BYTECODE VALIDATION ISSUES ===\n")
+                for issue in validation_issues:
+                    f_err.write(f"{issue}\n")
+        print(f"  Full log: compiler_errors.log")
+
     print("Done.")
 
 
@@ -372,6 +436,9 @@ COST_FLAG_DISCARD = 0x01
 
 # Initialize parser globally
 _v2_parser = AbilityParserV2()
+
+# Module-level error collector for bytecode compilation errors in parse_member/parse_live
+_bytecode_compile_errors: list[str] = []
 
 # Load consolidated ability mappings
 CONSOLIDATED_ABILITIES_PATH = "data/consolidated_abilities.json"
@@ -590,8 +657,8 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
             ab.bytecode = ab.compile()
         except Exception as e:
             import traceback
-            traceback.print_exc()
-            print(f"Warning: Failed to compile bytecode for {card_no} ability: {e}")
+            tb_str = traceback.format_exc()
+            _bytecode_compile_errors.append(f"[MEMBER] {card_no} ab#{idx}: {e}\n{tb_str}")
 
     compute_flags(card)
     return card
@@ -656,8 +723,8 @@ def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
             ab.bytecode = ab.compile()
         except Exception as e:
             import traceback
-            traceback.print_exc()
-            print(f"Warning: Failed to compile bytecode for {card_no} ability: {e}")
+            tb_str = traceback.format_exc()
+            _bytecode_compile_errors.append(f"[LIVE] {card_no} ab#{idx}: {e}\n{tb_str}")
 
     compute_flags(card)
     return card

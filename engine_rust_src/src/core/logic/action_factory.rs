@@ -221,6 +221,22 @@ impl ActionFactory {
         }
 
         let decoded = Self::parse_action(action_id);
+        if let DecodedAction::SelectMode { mode_idx } = decoded {
+            if let Some(pi) = state.interaction_stack.last() {
+                if let Some(card) = db.get_member(pi.card_id) {
+                    if let Some(ab) = card.abilities.get(pi.ability_index as usize) {
+                        if let Some(options) = ab.modal_options.as_object() {
+                            if let Some(name) = options.get(&mode_idx.to_string()) {
+                                if let Some(s) = name.as_str() {
+                                    return format!("Mode: {}", s);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         let p_idx = state.current_player as usize;
         let player = &state.core.players[p_idx];
 
@@ -330,6 +346,15 @@ impl ActionFactory {
                 };
                 format!("RPS: Player {} chose {}", p_idx, move_name)
             }
+            DecodedAction::SelectStageSlot { slot_idx } => {
+                let cid = player.stage[slot_idx];
+                if cid >= 0 {
+                    if let Some(m) = db.get_member(cid) {
+                        return format!("Select Member ([{}] {}) at Slot {}", m.card_no, m.name, slot_idx + 1);
+                    }
+                }
+                format!("Select Stage Slot {}", slot_idx + 1)
+            }
             DecodedAction::TurnChoice { choice } => {
                 format!(
                     "Turn Choice: {}",
@@ -375,7 +400,7 @@ impl ActionFactory {
                 format!("Select Color {}", color)
             }
             DecodedAction::SelectStageSlot { slot_idx } => {
-                format!("Select Stage Slot {}", slot_idx)
+                format!("Select Stage Slot {}", slot_idx + 1)
             }
             DecodedAction::PlayMember {
                 hand_idx,

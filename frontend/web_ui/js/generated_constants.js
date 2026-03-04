@@ -80,6 +80,9 @@ export const Opcodes = {
     SKIP_ACTIVATE_PHASE: 95,
     PAY_ENERGY_DYNAMIC: 96,
     PLACE_ENERGY_UNDER_MEMBER: 97,
+    CALC_SUM_COST: 106,
+    LOOK_REORDER_DISCARD: 125,
+    DIV_VALUE: 126,
 };
 
 export const TriggerType = {

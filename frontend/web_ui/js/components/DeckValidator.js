@@ -20,72 +20,149 @@ export class DeckValidator {
         }
     }
 
+    normalizeCode(code) {
+        if (!code) return "";
+        return code.replace(/＋/g, "+").replace(/－/g, "-").replace(/ー/g, "-").trim().toUpperCase();
+    }
+
     validateDeckString(content) {
         if (!this.registry) return { success: false, error: "Registry not loaded" };
 
-        const lines = content.split(/\r?\n|,\s*/);
+        let main = {};
+        let energy = {};
+        let isHtml = content.includes('<h3') || content.includes('card-item') || content.includes('title=');
+
+        if (isHtml) {
+            // HTML Section Parsing
+            const mainHtml = this._extractHtmlSection(content, "メインデッキ");
+            const energyHtml = this._extractHtmlSection(content, "エネルギーデッキ");
+
+            if (mainHtml || energyHtml) {
+                main = this._parseCardSection(mainHtml);
+                energy = this._parseCardSection(energyHtml);
+
+                // If section parsing found nothing in main, fall back to flat parse
+                if (Object.keys(main).length === 0) {
+                    main = this._parseCardSection(content);
+                }
+            } else {
+                // Flat HTML fallback
+                main = this._parseCardSection(content);
+            }
+        } else {
+            // Plain text parsing
+            main = this._parseCardSection(content);
+        }
+
         const results = {
             total: 0,
             members: 0,
             lives: 0,
             energy: 0,
             invalid: [],
-            parsed: []
+            parsed: [], // For Main Deck
+            parsedEnergy: []
         };
 
+        const processMap = (map, targetArray, isEnergySection) => {
+            for (let [code, count] of Object.entries(map)) {
+                const normCode = this.normalizeCode(code);
+                const card = this.registry[normCode] || this.registry[code.toUpperCase()];
+
+                if (card) {
+                    results.total += count;
+                    if (isEnergySection || card.type === 'energy' || normCode.startsWith('LL-E') || normCode.endsWith('-PE') || normCode.endsWith('-PE+')) {
+                        results.energy += count;
+                    } else {
+                        if (card.type === 'member') results.members += count;
+                        else if (card.type === 'live') results.lives += count;
+                    }
+
+                    targetArray.push({
+                        code: normCode,
+                        count: count,
+                        name: card.name,
+                        type: card.type,
+                        valid: true,
+                        img: card.img || card._img
+                    });
+                } else {
+                    // Skip very short strings or common garbage
+                    if (code.length < 4 || /SEARCH|CODE|FAV|COPY/i.test(code)) continue;
+
+                    results.invalid.push(code);
+                    targetArray.push({
+                        code: code,
+                        count: count,
+                        valid: false
+                    });
+                }
+            }
+        };
+
+        processMap(main, results.parsed, false);
+        processMap(energy, results.parsedEnergy, true);
+
+        return results;
+    }
+
+    _extractHtmlSection(html, heading) {
+        // More robust heading match: allow some inner spacing/tags if necessary
+        const re = new RegExp(`<h3[^>]*>[\\s\\S]*?${heading}[\\s\\S]*?<\\/h3>([\\s\\S]*?)(?=<h3|$)`, 'i');
+        const m = html.match(re);
+        return m ? m[1] : '';
+    }
+
+    _parseCardSection(content) {
+        if (!content) return {};
+        const result = {};
+
+        // 1. HTML Pattern
+        const htmlRe = /title="([^"]+?)\s*:\s*[^"]*"[\s\S]*?<span[^>]*class="num"[^>]*>(\d+)<\/span>/g;
+        let m;
+        let foundAny = false;
+        while ((m = htmlRe.exec(content)) !== null) {
+            const id = m[1].trim();
+            const qty = parseInt(m[2], 10);
+            result[id] = (result[id] || 0) + qty;
+            foundAny = true;
+        }
+        if (foundAny) return result;
+
+        // 2. Text Pattern "ID x N" or "N x ID"
+        const lines = content.split(/\r?\n|,\s*/);
         for (let line of lines) {
             line = line.trim();
             if (!line || line.startsWith('#')) continue;
 
-            let count = 1;
-            let code = line;
-
             const suffixMatch = line.match(/^(.+?)\s*[xX]\s*(\d+)$/);
             if (suffixMatch) {
-                code = suffixMatch[1].trim();
-                count = parseInt(suffixMatch[2]);
-            } else {
-                const prefixMatch = line.match(/^(\d+)\s*[xX]\s*(.+)$/);
-                if (prefixMatch) {
-                    count = parseInt(prefixMatch[1]);
-                    code = prefixMatch[2].trim();
-                }
+                const id = suffixMatch[1].trim();
+                const qty = parseInt(suffixMatch[2]);
+                result[id] = (result[id] || 0) + qty;
+                continue;
             }
 
-            const codeUpper = code.toUpperCase();
-            const card = this.registry[codeUpper];
-
-            if (card) {
-                results.total += count;
-                if (card.type === 'member') results.members += count;
-                else if (card.type === 'live') results.lives += count;
-                else if (card.type === 'energy') results.energy += count;
-
-                results.parsed.push({
-                    code: codeUpper,
-                    count: count,
-                    name: card.name,
-                    type: card.type,
-                    valid: true
-                });
-            } else {
-                results.invalid.push(code);
-                results.parsed.push({
-                    code: code,
-                    count: count,
-                    valid: false
-                });
+            const prefixMatch = line.match(/^(\d+)\s*[xX]\s*(.+)$/);
+            if (prefixMatch) {
+                const qty = parseInt(prefixMatch[1]);
+                const id = prefixMatch[2].trim();
+                result[id] = (result[id] || 0) + qty;
+                continue;
             }
+
+            // Fallback: Just the ID
+            result[line] = (result[line] || 0) + 1;
         }
 
-        return results;
+        return result;
     }
 
     renderPreview(results, targetEl) {
         if (!targetEl) return;
 
-        if (results.parsed.length === 0) {
-            targetEl.innerHTML = '';
+        if (results.parsed.length === 0 && results.parsedEnergy.length === 0) {
+            targetEl.innerHTML = '<div class="format-hint">Paste DECK LOG HTML or "CardID x Count" list</div>';
             return;
         }
 
@@ -93,7 +170,7 @@ export class DeckValidator {
             <div class="deck-validation-summary">
                 <span class="stat ${results.members === 48 ? 'valid' : 'warning'}">Members: ${results.members}/48</span>
                 <span class="stat ${results.lives === 12 ? 'valid' : 'warning'}">Lives: ${results.lives}/12</span>
-                <span class="stat ${results.energy >= 12 ? 'valid' : 'warning'}">Energy: ${results.energy}</span>
+                <span class="stat ${results.energy === 12 ? 'valid' : (results.energy > 0 ? 'warning' : '')}">Energy: ${results.energy}/12</span>
             </div>
         `;
 
@@ -101,25 +178,34 @@ export class DeckValidator {
             html += `
                 <div class="deck-validation-errors">
                     <strong>Invalid Codes:</strong>
-                    <ul>
-                        ${results.invalid.map(code => `<li class="error-text">${code}</li>`).join('')}
-                    </ul>
+                    <div class="error-list">${results.invalid.join(', ')}</div>
                 </div>
             `;
         }
 
-        html += `
-            <div class="deck-preview-grid">
-                ${results.parsed.map(p => `
-                    <div class="preview-item ${p.valid ? 'valid' : 'invalid'}" title="${p.name || 'Unknown'}">
-                        <span class="count">${p.count}x</span>
-                        <span class="code">${p.code}</span>
-                    </div>
-                `).join('')}
-            </div>
-        `;
+        html += `<div class="preview-section-title">Main Deck (${results.members + results.lives} cards)</div>`;
+        html += `<div class="deck-preview-grid">`;
+        html += results.parsed.map(p => this._renderItem(p)).join('');
+        html += `</div>`;
+
+        if (results.parsedEnergy.length > 0) {
+            html += `<div class="preview-section-title">Energy Deck (${results.energy} cards)</div>`;
+            html += `<div class="deck-preview-grid">`;
+            html += results.parsedEnergy.map(p => this._renderItem(p)).join('');
+            html += `</div>`;
+        }
 
         targetEl.innerHTML = html;
+    }
+
+    _renderItem(p) {
+        return `
+            <div class="preview-item ${p.valid ? 'valid' : 'invalid'}" title="${p.name || 'Unknown'}">
+                ${p.img ? `<img src="${p.img}" class="preview-card-img" onerror="this.style.display='none'">` : ''}
+                <div class="preview-badge">${p.count}x</div>
+                <div class="preview-code">${p.code}</div>
+            </div>
+        `;
     }
 }
 

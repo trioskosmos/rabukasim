@@ -245,6 +245,8 @@ pub struct DebugState {
     pub bypassed_conditions: Option<BypassLog>,
     pub debug_mode: bool,
     pub executed_opcodes: Option<HashSet<i32>>,
+    #[serde(default)]
+    pub trace_log: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

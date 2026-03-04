@@ -25,6 +25,8 @@ pub struct AppState {
     pub card_db: CardDatabase,
     pub server_instance_id: u64,
     pub debug_mode: bool,
+    #[cfg(feature = "nn")]
+    pub model_session: Option<Arc<Mutex<ort::session::Session>>>,
 }
 
 // API Request Structures

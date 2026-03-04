@@ -645,7 +645,7 @@
 
             <div class="setup-footer-actions">
                 <button class="btn btn-primary" onclick="submitGameSetup()">Start Game</button>
-                <a href="deck_builder.html" target="_blank" class="btn btn-accent">Deck Builder</a>
+                <a href="deck_converter.html" target="_blank" class="btn btn-accent">Deck Converter</a>
             </div>
         </div>
     </div>
@@ -842,11 +842,13 @@
                         <button class="btn btn-secondary btn-xs" onclick="DebugModal.renderMinimalJSON()">Minimal Board
                             (IDs only)</button>
                         <button class="btn btn-secondary btn-xs" onclick="renderFullJSON()">Full State</button>
+                        <button class="btn btn-ai btn-xs" onclick="DebugModal.runModelAnalysis()">Analyze with Model</button>
                     </div>
                     <div id="debug-json-content" style="flex: 1; display: flex; flex-direction: column;">
                         <textarea id="debug-json-textarea" spellcheck="false"
                             style="flex: 1; width: 100%; height: 100%; background: #1a2332; color: #fff; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: monospace; font-size: 13px; resize: none;"></textarea>
                     </div>
+                    <div id="debug-analysis-results" style="margin-top: 10px; max-height: 200px; overflow-y: auto; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid #444; display: none;"></div>
                 </div>
 
                 <div id="debug-string-content" class="debug-tab-content"

@@ -9,6 +9,7 @@ pub mod handlers;
 pub mod logging;
 pub mod suspension;
 
+use crate::core::enums::Phase;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 pub use conditions::{check_condition, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
@@ -132,12 +133,14 @@ pub fn resolve_bytecode(
             0
         };
 
+        /*
         if op == 226 {
             println!(
                 "[DECODE-DEBUG] Op: {}, IP: {}, v: {}, a_low: {}, a_high: {}, s: {}",
                 op, ip, v, a_low, a_high, s
             );
         }
+        */
 
         let a = ((a_high as i64) << 32) | (a_low as i64);
 
@@ -189,8 +192,9 @@ pub fn resolve_bytecode(
 
             let b_log = &mut state.ui.bytecode_log;
             if b_log.len() < MAX_BYTECODE_LOG_SIZE {
-                b_log.push(log_line);
+                b_log.push(log_line.clone());
             }
+            state.trace_internal(&log_line);
         }
         if let Some(ref mut set) = state.debug.executed_opcodes {
             set.insert(real_op);
@@ -241,8 +245,9 @@ pub fn resolve_bytecode(
 
                 let b_log = &mut state.ui.bytecode_log;
                 if b_log.len() < MAX_BYTECODE_LOG_SIZE {
-                    b_log.push(cond_desc);
+                    b_log.push(cond_desc.clone());
                 }
+                state.trace_internal(&cond_desc);
             }
             frame.ctx.choice_index = -1;
             continue;
@@ -346,6 +351,11 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
         }
 
         state.clear_execution_id();
+
+        // If the interpreter suspended, we must stop processing the queue
+        if state.phase == Phase::Response {
+            break;
+        }
     }
 }
 

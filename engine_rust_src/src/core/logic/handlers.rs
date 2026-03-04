@@ -90,11 +90,27 @@ impl PhaseHandlers for GameState {
             }
 
             if p0 == p1 {
+                // Track draw count in turn - using turn field as a temporary overflow for RPS draws
+                // if turn is 0 (RPS phase).
+                let draw_count = (self.turn & 0x7) + 1;
+                self.turn = (self.turn & !0x7) | (draw_count & 0x7);
+
                 if !self.ui.silent {
-                    self.log("Rule 11.1.1: Draw! Restarting RPS.".to_string());
+                    self.log(format!("Rule 11.1.1: Draw #{}! Restarting RPS.", draw_count));
                 }
-                self.rps_choices = [-1, -1];
-                self.current_player = 0;
+
+                if draw_count >= 5 {
+                    if !self.ui.silent {
+                        self.log("Maximum RPS draws reached. P0 wins by default to progress.".to_string());
+                    }
+                    self.current_player = 0;
+                    self.first_player = 0;
+                    self.phase = Phase::Setup;
+                    self.turn = 0; // Reset turn for game start
+                } else {
+                    self.rps_choices = [-1, -1];
+                    self.current_player = 0;
+                }
             } else {
                 let p0_wins = (p0 == 0 && p1 == 2) || (p0 == 1 && p1 == 0) || (p0 == 2 && p1 == 1);
                 let winner = if p0_wins { 0 } else { 1 };

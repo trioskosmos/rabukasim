@@ -59,10 +59,15 @@ EFFECT_PATTERNS = [
     Pattern(
         name="tap_member_pseudocode",
         phase=PatternPhase.EFFECT,
-        regex=r"TAP_MEMBER\((\d+)\)",
+        regex=r"TAP_MEMBER\((.*?)\)",
         priority=5,
         consumes=True,
         output_type="EffectType.TAP_MEMBER",
+        extractor=lambda text, m: {
+            "type": "EffectType.TAP_MEMBER",
+            "value": int(m.group(1)) if m.group(1).isdigit() else 1,
+            "params": {"target": "targets"} if m.group(1) == "TARGETS" else {},
+        },
     ),
     Pattern(
         name="draw_one",

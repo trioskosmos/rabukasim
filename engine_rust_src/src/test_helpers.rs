@@ -152,6 +152,7 @@ pub trait TestUtils {
     fn set_live(&mut self, p_idx: usize, slot: usize, card_id: i32);
     fn dump(&self);
     fn dump_verbose(&self);
+    fn dump_trace(&self);
 }
 
 impl TestUtils for GameState {
@@ -213,6 +214,18 @@ impl TestUtils for GameState {
             println!("  Blades: {:?}", p.blade_buffs);
         }
         println!("===========================");
+    }
+    
+    fn dump_trace(&self) {
+        println!("=== TRACE LOG ===");
+        if self.debug.trace_log.is_empty() {
+            println!("(Trace log is empty)");
+        } else {
+            for t in &self.debug.trace_log {
+                println!("{}", t);
+            }
+        }
+        println!("=================");
     }
 }
 

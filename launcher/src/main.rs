@@ -69,11 +69,39 @@ fn main() {
     println!("==========================================");
 
     // 2. Initialize App State
+    #[cfg(feature = "nn")]
+    let model_session = {
+        let model_path = "../alphazero/training/firstrun.onnx";
+        if std::path::Path::new(model_path).exists() {
+            println!("Loading AI model from {}...", model_path);
+            match ort::session::Session::builder()
+                .unwrap()
+                .with_intra_threads(1)
+                .unwrap()
+                .commit_from_file(model_path)
+            {
+                Ok(s) => {
+                    println!("[AI] Model loaded successfully.");
+                    Some(Arc::new(Mutex::new(s)))
+                },
+                Err(e) => {
+                    println!("[WARN] Failed to load ONNX model: {}", e);
+                    None
+                }
+            }
+        } else {
+            println!("[WARN] Model {} not found. AI analysis will be disabled.", model_path);
+            None
+        }
+    };
+
     let app_state = Arc::new(AppState {
         rooms: Mutex::new(HashMap::new()),
         card_db,
         server_instance_id: start_time,
         debug_mode,
+        #[cfg(feature = "nn")]
+        model_session,
     });
 
     // 3. Start Background Cleanup Thread

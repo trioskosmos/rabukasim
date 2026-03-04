@@ -152,33 +152,54 @@ def decode_filter(f):
     if f & 0x02:
         parts.append("Optional(0x02)")
 
-    # ALL flag
-    if f & 0x80000000:
-        parts.append("ALL")
-
-    # Type Filter
+    # Type Filter (Bits 2-3)
     type_f = (f >> 2) & 0x03
     if type_f == 1:
         parts.append("Type:Member")
     elif type_f == 2:
         parts.append("Type:Live")
 
-    # Group Filter
+    # Group Filter (Bit 4 = enabled, Bits 5-11 = ID)
     if f & 0x10:
         group_id = (f >> 5) & 0x7F
         parts.append(f"Group:{group_id}")
+        
+    # Is Tapped (Bit 12)
+    if f & 0x1000:
+        parts.append("Is:Tapped")
+        
+    # Has Blade/Heart (Bit 13)
+    if f & 0x2000:
+        parts.append("Has:Blade/Heart")
+        
+    # Not Has Blade/Heart (Bit 14)
+    if f & 0x4000:
+        parts.append("NotHas:Blade/Heart")
+        
+    # Unique Names (Bit 15)
+    if f & 0x8000:
+        parts.append("Unique_Names")
 
-    # Unit Filter
+    # Unit Filter (Bit 16 = enabled, Bits 17-23 = ID)
     if f & 0x10000:
         unit_id = (f >> 17) & 0x7F
         parts.append(f"Unit:{unit_id}")
 
-    # Cost Filter
+    # Cost Filter (Bit 24 = enabled, Bits 25-29 = Val, Bit 30 = LE, Bit 31 = ALL)
     if f & 0x01000000:
         threshold = (f >> 25) & 0x1F
         is_le = (f & 0x40000000) != 0
         op = "<=" if is_le else ">="
         parts.append(f"Cost/Hearts {op} {threshold}")
+        
+    # ALL flag
+    if f & 0x80000000:
+        parts.append("ALL")
+        
+    # Color Shift (Bit 46)
+    if f & (0x7F << 46):
+        color_val = (f >> 46) & 0x7F
+        parts.append(f"ColorMask:{color_val:07b}")
 
     if not parts:
         return f"Unknown({f})"

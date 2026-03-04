@@ -7,11 +7,13 @@ import sys
 import time
 from pathlib import Path
 
-# Add project root to sys.path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add project root and relevant subdirectories to sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "alphazero" / "training"))
 
 from alphazero.alphanet import AlphaNet
-from alphazero.overnight_pure_zero import load_tournament_decks
+from overnight_pure_zero import load_tournament_decks
 import engine_rust
 
 def get_player_move(player_type, state, db, model, device, sims=128):
@@ -27,10 +29,11 @@ def get_player_move(player_type, state, db, model, device, sims=128):
         obs_numpy = np.array(state.to_alphazero_tensor()).astype(np.float32)
         obs = torch.from_numpy(obs_numpy).unsqueeze(0).to(device)
         
-        # Create mask
-        mask = torch.zeros((1, 16384), dtype=torch.bool).to(device)
-        for aid in legal_ids:
-            mask[0, aid] = True
+        # Create mask efficiently on CPU first
+        mask_np = np.zeros((1, 22000), dtype=np.bool_)
+        if legal_ids:
+            mask_np[0, legal_ids] = True
+        mask = torch.from_numpy(mask_np).to(device)
             
         with torch.no_grad():
             # v8 has action branching, but for argmax we care about the final index
@@ -38,7 +41,7 @@ def get_player_move(player_type, state, db, model, device, sims=128):
             policy = torch.softmax(policy_logits, dim=1).cpu().numpy()[0]
         
         # Mask illegal again just in case
-        policy[~mask[0].cpu().numpy()] = -1.0
+        policy[~mask_np[0]] = -1.0
                 
         return int(np.argmax(policy))
 
@@ -56,17 +59,26 @@ def get_player_move(player_type, state, db, model, device, sims=128):
 
     return random.choice(legal_ids)
 
-def play_match(p0_type, p1_type, decks, db_engine, model, device, sims=128):
+def play_match(p0_type, p1_type, decks, db_engine, model, device, sims=128, debug=False):
     d0 = random.choice(decks)
     d1 = random.choice(decks)
     state = engine_rust.PyGameState(db_engine)
     state.initialize_game(d0["members"]+d0["lives"], d1["members"]+d1["lives"], d0["energy"], d1["energy"], [], [])
-    state.silent = True
+    state.silent = not debug
 
-    while not state.is_terminal() and state.turn < 120:
+    while not state.is_terminal() and state.turn < 20:
         p_type = p0_type if state.current_player == 0 else p1_type
         move = get_player_move(p_type, state, db_engine, model, device, sims=sims)
         if move is None: break
+        
+        if debug:
+            p_str = f"P{state.current_player} ({p_type})"
+            label = state.get_action_label(move)
+            legal_ids = state.get_legal_action_ids()
+            labels = [f"{m} ({state.get_action_label(m)})" for m in legal_ids]
+            print(f"[Turn {state.turn}] {p_str} Legal ({len(legal_ids)}): {labels[:20]}..." if len(labels) > 20 else labels)
+            print(f"[Turn {state.turn}] {p_str} picked: {move} ({label})")
+            
         state.step(move)
         state.auto_step(db_engine)
     
@@ -78,11 +90,12 @@ def run_benchmark():
     
     # Load Model
     model = AlphaNet().to(device)
-    checkpoint = "alphazero/alphanettest.pt"
+    root_dir = Path(__file__).resolve().parent.parent.parent
+    checkpoint = str(root_dir / "alphazero" / "training" / "firstrun.pt")
     if not os.path.exists(checkpoint):
         print(f"ERROR: Checkpoint {checkpoint} not found!")
         # Try fallback
-        checkpoint = "alphazero/alphanet_latest.pt"
+        checkpoint = "alphazero/training/alphanet_latest.pt"
         if not os.path.exists(checkpoint):
             print("No checkpoints found. Exiting.")
             return
@@ -99,7 +112,8 @@ def run_benchmark():
 
     # Load Data
     print("Loading cards_compiled.json...")
-    with open("data/cards_compiled.json", "r", encoding="utf-8") as f:
+    data_path = str(root_dir / "data" / "cards_compiled.json")
+    with open(data_path, "r", encoding="utf-8") as f:
         full_db = json.load(f)
     
     print("Initializing engine database...")
@@ -130,7 +144,7 @@ def run_benchmark():
         
         start_time = time.time()
         for i in range(num_games):
-            winner, turns = play_match(p0_type, p1_type, decks, db_engine, model, device, sims=128)
+            winner, turns = play_match(p0_type, p1_type, decks, db_engine, model, device, sims=128, debug=False)
             if winner == 0: p0_wins += 1
             elif winner == 1: p1_wins += 1
             else: draws += 1
@@ -143,10 +157,18 @@ def run_benchmark():
         wr = (p0_wins / num_games) * 100
         avg_turns = sum(turns_hist) / len(turns_hist)
         
-        print(f"Result: P0 {p0_wins} | P1 {p1_wins} | Draws {draws}")
-        print(f"P0 Win Rate: {wr:.1f}%")
-        print(f"Avg Turns: {avg_turns:.1f}")
-        print(f"Time: {elapsed:.1f}s ({num_games/elapsed:.2f} games/sec)")
+        report = f"Result: P0 {p0_wins} | P1 {p1_wins} | Draws {draws}\n"
+        report += f"P0 Win Rate: {wr:.1f}%\n"
+        report += f"Avg Turns: {avg_turns:.1f}\n"
+        report += f"Time: {elapsed:.1f}s ({num_games/elapsed:.2f} games/sec)\n"
+        print(report)
+
+        # Write ONLY this summary to the report file
+        out_dir = root_dir / "reports"
+        out_dir.mkdir(exist_ok=True)
+        with open(out_dir / "v8_benchmark_summary.txt", "a", encoding="utf-8") as f:
+            f.write(f"\n--- {label} ---\n")
+            f.write(report)
 
 if __name__ == "__main__":
     run_benchmark()

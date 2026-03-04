@@ -66,6 +66,21 @@ test_output.txt
 temp_debug.out
 *.out
 *.bak
+untracked_files.txt
+compiler_errors.log
+compiler_log.txt
+frontend_debug_state.json
+test_group_cd_frontend.json
+test_group_cd_raw.json
+test_score_compare_frontend.json
+test_score_compare_raw.json
+verify_buff_logic_frontend.json
+verify_buff_logic_raw.json
+proof_output.txt
+test_output.txt
+temp_debug.out
+*.out
+*.bak
 
 # Profile outputs
 profile_*.txt
@@ -207,6 +222,11 @@ alphanet_final_session.pt
 STOP_TRAINING
 alphazero/logs/
 ai/logs/
-ai/data/*.npz
 ai/data/*.json
 trajectories/
+test_buffer_data/
+*.npy
+alphazero/**/*.npy
+alphazero/**/*.pt
+alphazero/**/*.pth
+alphazero/models/

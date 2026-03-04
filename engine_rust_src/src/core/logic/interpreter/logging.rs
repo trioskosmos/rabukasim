@@ -1,5 +1,5 @@
 use crate::core::enums::*;
-use crate::core::generated_constants::*;
+// use crate::core::generated_constants::*;
 
 pub fn get_opcode_log(op: i32, v: i32, a: i64, _s: i32, result_count: i32) -> Option<String> {
     match op {

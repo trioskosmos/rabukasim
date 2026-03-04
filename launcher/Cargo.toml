@@ -22,3 +22,8 @@ serde_json = "1.0"
 rand = "0.8"
 uuid = { version = "1.4", features = ["v4", "fast-rng", "macro-diagnostics"] }
 engine_rust = { path = "../engine_rust_src", default-features = false, features = ["parallel"] }
+ort = { version = "2.0.0-rc.9", features = ["ndarray"], optional = true }
+
+[features]
+default = []
+nn = ["engine_rust/nn", "ort"]

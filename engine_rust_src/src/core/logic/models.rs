@@ -70,7 +70,7 @@ impl std::hash::Hash for Cost {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct AbilityContext {
     pub player_id: u8,
     pub activator_id: u8, // The player who originally triggered/activated the ability
@@ -91,6 +91,8 @@ pub struct AbilityContext {
     pub original_phase: Option<Phase>,
     #[serde(default)]
     pub repeat_count: i16, // For O_REPEAT_ABILITY: tracks how many times ability has repeated
+    #[serde(default)]
+    pub selected_cards: Vec<i32>, // IDs of cards picked in the current/last selection action
 }
 
 impl Default for AbilityContext {
@@ -111,6 +113,7 @@ impl Default for AbilityContext {
             trigger_type: TriggerType::None,
             original_phase: None,
             repeat_count: 0,
+            selected_cards: Vec::new(),
         }
     }
 }
@@ -161,6 +164,8 @@ pub struct Ability {
     pub choice_flags: u8,
     #[serde(default)]
     pub choice_count: u8,
+    #[serde(default)]
+    pub filters: Vec<crate::core::logic::filter::CardFilter>,
 }
 
 impl std::hash::Hash for Ability {

@@ -24,9 +24,10 @@ fn test_repro_card_4654_hand_clearing() {
     // Deck: 4 cards. Use the mock live card we just created!
     state.set_deck(0, &[51001, 51001, 51001, 51001]);
 
+    let card_4654_id = 4654; // Card No: PL!N-pb1-028-L
     let ctx = AbilityContext {
         player_id: 0,
-        source_card_id: 4654,
+        source_card_id: card_4654_id,
         ..AbilityContext::default()
     };
 

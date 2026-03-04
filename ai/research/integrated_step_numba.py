@@ -463,9 +463,35 @@ def encode_observation_imax_single(
     observations[i, 15] = batch_global_ctx[i, 10]
     observations[i, 16] = 1.0
 
-    # Mulligan Selection Flags (120-125) -> Map to some unused space (e.g. 50-55)
     for k in range(6):
         observations[i, 50 + k] = batch_global_ctx[i, 120 + k]
+
+    # --- 1.2 PRO VISION HINTS (60-80) ---
+    # 7.1 Energy Projection (Index 80)
+    ed_count = batch_global_ctx[i, 11]
+    cur_ec = batch_global_ctx[i, 5]
+    if ed_count > 0:
+        observations[i, 80] = (cur_ec + 1) / 12.0
+    else:
+        observations[i, 80] = cur_ec / 12.0
+
+    # 7.2 Deck Heart Distribution (63-69)
+    for d_idx in range(60):
+        cid = batch_deck[i, d_idx]
+        if cid > 0 and cid < card_stats.shape[0]:
+            bid = get_base_id(cid)
+            if bid < card_stats.shape[0]:
+                for h_idx in range(7):
+                    if card_stats[bid, 12 + h_idx] > 0:
+                        observations[i, 63 + h_idx] += 1.0
+    
+    deck_size = batch_global_ctx[i, 6]
+    if deck_size > 0:
+        for h_idx in range(7):
+            observations[i, 63 + h_idx] /= deck_size
+
+    # 7.3 Win Probability placeholder (60-62)
+    observations[i, 60] = 0.5 # Default neutral
 
     # --- 2. MY UNIVERSE ---
     u_idx = 0
@@ -793,6 +819,39 @@ def encode_observation_standard_single(
     elif 0 <= ph <= 6:
         observations[i, 20 + ph] = 1.0
 
+    # --- 7. PRO VISION HINTS (60-80) ---
+    # Index 63-69: Deck Heart Distribution (Simplified: Count in Deck or use Heuristic)
+    # For now, we'll use a placeholder or dummy logic in Numba to avoid per-card scans 
+    # if it's too slow, but deck is small (60), so we can scan.
+    
+    # 7.1 Energy Projection (Index 80)
+    # If Energy Deck (idx 11) > 0, project current + 1
+    ed_count = batch_global_ctx[i, 11]
+    cur_ec = batch_global_ctx[i, 5]
+    if ed_count > 0:
+        observations[i, 80] = (cur_ec + 1) / 12.0
+    else:
+        observations[i, 80] = cur_ec / 12.0
+
+    # 7.2 Deck Heart Distribution (63-69)
+    # Scanning deck for hearts (assuming card_stats indices 12-18)
+    for d_idx in range(60):
+        cid = batch_deck[i, d_idx]
+        if cid > 0 and cid < card_stats.shape[0]:
+            for h_idx in range(7):
+                if card_stats[cid, 12 + h_idx] > 0:
+                    observations[i, 63 + h_idx] += 1.0
+    
+    # Normalize distribution
+    deck_size = batch_global_ctx[i, 6]
+    if deck_size > 0:
+        for h_idx in range(7):
+            observations[i, 63 + h_idx] /= deck_size
+
+    # 7.3 Win Probability placeholder (60-62)
+    # In a full impl, this would call a simplified version of the Rust solver
+    observations[i, 60] = 0.5 # Default neutral
+
     # Mulligan Selection Flags (120-125) -> Map to 50-55
     for k in range(6):
         observations[i, 50 + k] = batch_global_ctx[i, 120 + k]
@@ -1084,10 +1143,12 @@ def start_turn_numba(i, batch_global_ctx, batch_hand, batch_deck, batch_trash, b
     # 1. Active Phase (Untap)
     batch_tapped[i].fill(0)
 
-    # 2. Energy Phase (+1 Energy)
+    # 2. Energy Phase (+1 Energy if deck has cards)
+    cur_ed = batch_global_ctx[i, 11]
     cur_en = batch_global_ctx[i, 5]
-    if cur_en < 12:
+    if cur_ed > 0 and cur_en < 12:
         batch_global_ctx[i, 5] = cur_en + 1
+        batch_global_ctx[i, 11] = cur_ed - 1
 
     # 3. Draw Phase (Draw 1)
     check_deck_refresh(batch_deck[i], batch_trash[i], batch_global_ctx[i], 6, 2)
@@ -1535,6 +1596,10 @@ def reset_single(
     opp_global_ctx[i, 5] = 3  # Initial Energy
     opp_global_ctx[i, 8] = -1  # PH = MULLIGAN_P1
     opp_global_ctx[i, 54] = 1  # Turn
+    
+    # Initialize Energy Decks (Index 11)
+    batch_global_ctx[i, 11] = 12 # 15 total - 3 starting
+    opp_global_ctx[i, 11] = 12
 
     # --- START ORDER ---
     # Index 10 in global_ctx will flag if Agent is Second (1) or First (0)
@@ -2655,6 +2720,84 @@ def encode_observations_standard(
             batch_live,
             batch_opp_history,
             turn_number,
+            observations,
+        )
+    return observations
+
+
+@njit(cache=True)
+def encode_observations_imax(
+    num_envs,
+    batch_hand,
+    batch_stage,
+    batch_energy_count,
+    batch_tapped,
+    batch_scores,
+    opp_scores,
+    opp_stage,
+    opp_tapped,
+    card_stats,
+    batch_global_ctx,
+    batch_live,
+    batch_opp_history,
+    turn_number,
+    observations,
+):
+    for i in range(num_envs):
+        encode_observation_imax_single(
+            i,
+            batch_hand,
+            batch_stage,
+            batch_energy_count,
+            batch_tapped,
+            batch_scores,
+            opp_scores,
+            opp_stage,
+            opp_tapped,
+            card_stats,
+            batch_global_ctx,
+            batch_live,
+            batch_opp_history,
+            turn_number,
+            observations,
+        )
+    return observations
+
+
+@njit(cache=True)
+def encode_observations_compressed(
+    num_envs,
+    batch_hand,
+    batch_stage,
+    batch_energy_count,
+    batch_tapped,
+    batch_scores,
+    opp_scores,
+    opp_stage,
+    opp_tapped,
+    card_stats,
+    batch_global_ctx,
+    batch_live,
+    batch_opp_history,
+    turn_number,
+    observations,
+):
+    for i in range(num_envs):
+        encode_observation_compressed_single(
+            i,
+            batch_hand,
+            batch_stage,
+            batch_energy_count,
+            batch_tapped,
+            batch_scores,
+            opp_scores,
+            opp_stage,
+            opp_tapped,
+            card_stats,
+            batch_global_ctx,
+            batch_live,
+            batch_opp_history,
+            int(turn_number),
             observations,
         )
     return observations

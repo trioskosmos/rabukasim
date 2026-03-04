@@ -83,6 +83,7 @@ EFFECT_ALIASES = {
     "POSITION_CHANGE": "MOVE_MEMBER",
     "INCREASE_HEART": "INCREASE_HEART_COST",
     "CHANGE_YELL_BLADE_COLOR": "TRANSFORM_COLOR",
+    "TRANSFORM_YELL_BLADES": "TRANSFORM_COLOR",
     "OPPONENT_CHOICE": "OPPONENT_CHOOSE",
     "LOOK_AND_CHOOSE_ORDER": "ORDER_DECK",
     "LOOK_AND_CHOOSE_REVEAL": "LOOK_AND_CHOOSE",
@@ -90,6 +91,9 @@ EFFECT_ALIASES = {
     "CYCLE_AREAS": "SWAP_AREA",
     "SELECT_OPTION": "SELECT_MODE",
     "CHOICE_MODE": "SELECT_MODE",
+    "HALVE_VALUE": "DIV_VALUE",
+    "REORDER_DISCARD": "LOOK_REORDER_DISCARD",
+    "HEART_SELECT": "COLOR_SELECT",
 }
 
 # Effect aliases that require additional param modifications
@@ -171,6 +175,7 @@ CONDITION_ALIASES = {
     "HAS_EXCESS_HEART": ("HAS_EXCESS_HEART", {}),
     "COUNT_MEMBER": ("COUNT_STAGE", {}),
     "TOTAL_HEARTS": ("COUNT_HEARTS", {}),
+    "HEARTS_COUNT": ("COUNT_HEARTS", {}),
     "ALL_MEMBER": ("GROUP_FILTER", {}),
     "MEMBER_AT_SLOT": ("GROUP_FILTER", {}),
     "HAS_LIVE_HEART_COLORS": ("HAS_COLOR", {}),
@@ -178,6 +183,7 @@ CONDITION_ALIASES = {
     "COUNT_DISCARDED_THIS_TURN": ("COUNT_DISCARD", {}),
     "CHECK_GROUP_FILTER": ("GROUP_FILTER", {}),
     "FILTER": ("GROUP_FILTER", {}),
+    "SELECT_YELL": ("GROUP_FILTER", {"zone": "yell"}),
     "NAME_MATCH": ("GROUP_FILTER", {"filter": "NAME_MATCH"}),
     "SUCCESS": ("MODAL_ANSWER", {}),
     "MATCH_PREVIOUS": ("MODAL_ANSWER", {}),
@@ -215,6 +221,7 @@ CONDITION_ALIASES = {
     "YELL_REVEALED_UNIQUE_COLORS": ("YELL_REVEALED_UNIQUE_COLORS", {}),
     "SYNC_COST": ("SYNC_COST", {}),
     "SUM_VALUE": ("SUM_VALUE", {}),
+    "VALUE_EQ": ("SUM_VALUE", {}),
     "IS_WAIT": ("IS_WAIT", {}),
 }
 
@@ -1370,8 +1377,10 @@ class AbilityParserV2:
                 eff_str = line[len("EFFECT:") :].strip()
                 new_effects = self._parse_pseudocode_effects(eff_str, last_target=last_target)
                 if new_effects:
-                    last_target = new_effects[-1].target
-                effects.extend(new_effects)
+                    last_target = new_effects[-1].target if isinstance(new_effects[-1], Effect) else last_target
+                
+                # Filter out Conditions from the 'effects' list to avoid AttributeErrors in compiler
+                effects.extend([e for e in new_effects if isinstance(e, Effect)])
                 instructions.extend(new_effects)
 
             elif upper_line.startswith("OPTIONS:"):
@@ -1420,6 +1429,7 @@ class AbilityParserV2:
                         eff_str = eff_part.replace("EFFECT:", "").strip()
                         # Use standard effect parser as these can be complex
                         sub_effects = self._parse_pseudocode_effects(eff_str)
+                        # Filter for modal_options which expects List[Effect] usually, or Union
                         sub_instructions.extend(sub_effects)
 
                     # Initialize modal_options if needed
@@ -1547,14 +1557,20 @@ class AbilityParserV2:
         if content.startswith("{") and content.endswith("}"):
             content = content[1:-1]
 
-        # Split by comma but respect quotes
+        # Split by comma but respect quotes and brackets
         parts = []
         current = ""
         in_quotes = False
+        depth = 0
         for char in content:
             if char == '"':
                 in_quotes = not in_quotes
-            if char == "," and not in_quotes:
+            elif char == '[':
+                depth += 1
+            elif char == ']':
+                depth -= 1
+            
+            if char == "," and not in_quotes and depth == 0:
                 parts.append(current.strip())
                 current = ""
                 continue
@@ -1577,8 +1593,13 @@ class AbilityParserV2:
                 k = k.strip().upper()
                 v = v.strip().strip('"').strip("'")
 
+                # Handle list values like [1, 2, 3]
+                if v.startswith("[") and v.endswith("]"):
+                    items = [i.strip().strip('"').strip("'") for i in v[1:-1].split(",") if i.strip()]
+                    # Convert to ints if numeric
+                    v = [int(i) if i.isdigit() else i for i in items]
                 # Handle numeric values
-                if v.isdigit():
+                elif v.isdigit():
                     v = int(v)
                 elif v.upper() == "TRUE":
                     v = True
@@ -1623,17 +1644,20 @@ class AbilityParserV2:
         for p in parts:
             if not p:
                 continue
-            # Format: NAME(VAL) {PARAMS} (Optional)
-            m = re.match(r"(\w+)(?:\((.*?)\))?(.*)", p)
+            # Format: NAME(VAL) {PARAMS} -> DEST (Optional)
+            m = re.match(r"^([\w_]+)(?:\((.*?)\))?\s*(?:(\{.*?\})\s*)?(?:->\s*([\w, _]+))?(.*)$", p.strip())
             if m:
-                name, val_str, rest = m.groups()
+                name, val_str, brace_params, destination, rest = m.groups()
+                rest = rest or ""
 
                 # Manual Mapping for specific cost names
                 if name == "MOVE_TO_DECK":
-                    if 'from="discard"' in rest.lower() or "from='discard'" in rest.lower():
+                    if 'from="discard"' in (brace_params or "").lower() or "from='discard'" in (brace_params or "").lower():
                         name = "RETURN_DISCARD_TO_DECK"
                     else:
                         name = "RETURN_MEMBER_TO_DECK"
+                elif name == "SELECT_RECOVER_MEMBER":
+                    name = "SELECT_CARDS"
 
                 cost_name = name.upper()
                 try:
@@ -1649,20 +1673,18 @@ class AbilityParserV2:
 
                 # Special mapping for ENERGY_CHARGE as a cost (optional/conditional)
                 if cost_name == "ENERGY_CHARGE":
-                    # In engine, this is usually an effect, but if used as cost
-                    # we map it to NONE and rely on params/value for custom logic
-                    # OR we can map it to a specific effect if bytecode supports it.
-                    # For now, let's treat it as a meta-cost.
                     ctype = AbilityCostType.NONE
                 else:
                     ctype = getattr(AbilityCostType, cost_name, AbilityCostType.NONE)
 
-                is_opt = "(Optional)" in rest or " OR " in text  # OR implies selectivity
-                params = self._parse_pseudocode_params(rest)
+                is_opt = "(Optional)" in rest or "(Optional)" in (brace_params or "") or " OR " in text
+                params = self._parse_pseudocode_params(brace_params or "")
+                if destination:
+                    params["destination"] = destination.strip().lower()
 
-                # If it was ENERGY_CHARGE, ensure we have enough info
-                if cost_name == "ENERGY_CHARGE":
-                    params["cost_type_name"] = "ENERGY_CHARGE"
+                # If it was ENERGY_CHARGE or CALC_SUM_COST or SELECT_CARDS or SELECT_MEMBER, ensure we have enough info
+                if cost_name in ["ENERGY_CHARGE", "CALC_SUM_COST", "SELECT_CARDS", "SELECT_MEMBER"]:
+                    params["cost_type_name"] = cost_name
 
                 costs.append(Cost(ctype, val, is_optional=is_opt, params=params))
         return costs
@@ -1768,6 +1790,10 @@ class AbilityParserV2:
                     name = "SYNC_COST"
                     params["area"] = "CENTER"
                     params["comparison"] = "LT"
+                    params["val"] = "0"
+                elif name == "HEARTS_COUNT" and "OPPONENT" in str(params.get("val", "")).upper():
+                    name = "HEART_LEAD"
+                    params["target"] = "opponent"
                     params["val"] = "0"
 
                 # Check if this is an ignored condition
@@ -1886,6 +1912,14 @@ class AbilityParserV2:
                     effects.append(Effect(EffectType.GRANT_ABILITY, 0, ConditionType.NONE, target, params))
                     continue
 
+            # Special handling for CONDITION: inner instruction
+            if p.upper().startswith("CONDITION:"):
+                # Recursive call to condition parser
+                cond_str = p[10:].strip()
+                # These will be filtered out by the caller (parse method)
+                effects.extend(self._parse_pseudocode_conditions(cond_str))
+                continue
+
             p = p.strip()
             # More robust regex that handles underscores, varies spacing, and mid-string (Optional)
             # Format: NAME(VAL) (Optional)? {PARAMS}? -> TARGET? REST
@@ -1922,7 +1956,9 @@ class AbilityParserV2:
                         try:
                             target = TargetType[target_name]
                         except:
-                            pass
+                            # If not a valid target type, it might be a destination (e.g. DECK_BOTTOM)
+                            params["destination"] = target_name.lower()
+                            target = last_target
 
                 # Legacy SELF mapping (If -> SELF exists in text)
                 if "-> SELF" in p or "-> self" in p:
@@ -2084,8 +2120,34 @@ class AbilityParserV2:
                             target = TargetType.PLAYER
                             target_name = "PLAYER"
                 if etype == EffectType.ENERGY_CHARGE:
-                    if params.get("mode") == "WAIT":
+                    if params.get("wait") or params.get("mode") == "WAIT":
                         params["wait"] = True
+
+                # Special parsing for TRANSFORM_COLOR(ALL) -> X
+                if etype == EffectType.TRANSFORM_COLOR:
+                    # If val was "ALL", int(val) would have yielded 1 or 99.
+                    # We want 'a' (source) to be 0 (all) and 'v' (destination) to be the target number.
+                    if val == "ALL":
+                        # Determine destination from target_name (e.g. -> 5)
+                        try:
+                            # The pseudocode usually uses 1-indexed colors (1=Pink, 5=Blue).
+                            # The engine uses 0-indexed (0=Pink, 4=Blue).
+                            val_int = int(target_name) - 1
+                        except (ValueError, TypeError):
+                            val_int = 0 # Default to pink if unknown
+                        # Source (a) is encoded in attr in ability.py, so we just set it here
+                        params["source_color"] = 0 
+                        target = TargetType.PLAYER # Reset target so it doesn't try to target member '5'
+                    elif val and val.isdigit():
+                        # Standard TRANSFORM_COLOR(src) -> dst
+                        try:
+                            source_color = int(val)
+                            dest_color = int(target_name) - 1 if target_name and target_name.isdigit() else 0
+                            val_int = max(0, dest_color)
+                            params["source_color"] = source_color
+                            target = TargetType.PLAYER
+                        except:
+                            pass
 
                 if etype == EffectType.LOOK_AND_CHOOSE and "choose_count" not in params:
                     params["choose_count"] = 1

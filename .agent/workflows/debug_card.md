@@ -8,7 +8,12 @@ Use this workflow when a card effect is not triggering, behaving incorrectly, or
 
 ## Phase 1: Identification & Analysis
 
-1. **Generate Card report**: Use `card_finder.py` to get the full logic stack.
+1. **Instant Triage**: Use `test_pseudocode.py` to check the current logic, JP text, and test coverage in one shot.
+   ```powershell
+   uv run python tools/test_pseudocode.py --card "<ID_OR_NO>"
+   ```
+
+2. **Full Analysis**: If you need cross-references like QA rulings or shared cards, use `card_finder.py`.
    ```powershell
    uv run python tools/card_finder.py "<ID_OR_NO>" --output "reports/debug_<ID>.md"
    ```

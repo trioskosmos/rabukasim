@@ -1,8 +1,9 @@
 use crate::core::logic::*;
+use crate::core::logic::filter::CardFilter;
 use crate::test_helpers::{create_test_state, load_real_db, TestUtils};
 
 #[test]
-fn test_card_579_ability_0_cost_comparison() {
+fn test_card_579_ability_0_cost_comparison() { // Card No: PL!N-bp1-006-P
     let db = load_real_db();
     let mut state = create_test_state();
     state.ui.silent = true;
@@ -94,7 +95,7 @@ fn test_card_579_ability_0_cost_comparison() {
 
     // Reset score and swap situations
     state.core.players[0].live_score_bonus = 0;
-    state.set_stage(1, 1, target_id); // P1 Center: High Cost
+    state.set_stage(1, 1, liella_member_id); // P1 Center: High Cost
     state.set_stage(0, 1, low_cost_id); // P0 Center: Lower Cost
 
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
@@ -160,6 +161,24 @@ fn test_card_579_ability_1_heart_filter() {
     // Test Case 2: Left side has 3 Yellow hearts (Color 2)
     println!("--- Test Case 2: Sufficient Hearts ---");
     state.core.players[0].heart_buffs[0].add_to_color(2, 3);
+
+    // Verify filter matches manually using the builder (Proof of Phase 3 readability)
+    let mut filter = CardFilter::new();
+    filter.target_player = 1;        // Me
+    filter.group_enabled = true;
+    filter.group_id = 3;             // Liella!
+    filter.value_enabled = true;
+    filter.value_threshold = 3;       // 3+ Hearts
+    filter.color_mask = 1 << 2;      // Yellow (Color 2)
+    filter.is_enabled = true;
+        
+    let member_id = liella_member_id;
+    let hearts = state.core.players[0].heart_buffs[0].to_array();
+    assert!(
+        filter.matches(&db, member_id, false, Some(&hearts), &crate::core::logic::AbilityContext::default()), 
+        "Builder filter should match the stage member with hearts"
+    );
+
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
     state.dump_verbose();
     assert_eq!(

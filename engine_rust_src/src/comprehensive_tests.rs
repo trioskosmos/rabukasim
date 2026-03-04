@@ -276,7 +276,7 @@ fn test_conditions_group_ab_state() {
             condition_type: ConditionType::IsCenter,
             ..Default::default()
         },
-        &AbilityContext { area_idx: 1, ..ctx },
+        &AbilityContext { area_idx: 1, ..ctx.clone() },
         0
     ));
     // C_GROUP_FILTER: Source/Context card group check.
@@ -322,7 +322,7 @@ fn test_conditions_group_ab_state() {
         },
         &AbilityContext {
             source_card_id: 55001,
-            ..ctx
+            ..ctx.clone()
         },
         0
     ));
@@ -383,7 +383,7 @@ fn test_conditions_exhaustive() {
             condition_type: ConditionType::HasMoved,
             ..Default::default()
         },
-        &AbilityContext { area_idx: 0, ..ctx },
+        &AbilityContext { area_idx: 0, ..ctx.clone() },
         0
     ));
 

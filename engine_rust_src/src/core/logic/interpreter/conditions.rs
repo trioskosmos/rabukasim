@@ -206,30 +206,30 @@ pub fn resolve_count(
 
         if !only_opponent {
             if check_stage {
-                ids.extend(player.stage.iter().filter(|&&id| id >= 0));
+                ids.extend(player.stage.iter().copied().filter(|&id| id >= 0));
             }
             if check_discard {
-                ids.extend(player.discard.iter().filter(|&&id| id >= 0));
+                ids.extend(player.discard.iter().copied().filter(|&id| id >= 0));
             }
             if check_hand {
-                ids.extend(player.hand.iter().filter(|&&id| id >= 0));
+                ids.extend(player.hand.iter().copied().filter(|&id| id >= 0));
             }
             if check_success {
-                ids.extend(player.success_lives.iter().filter(|&&id| id >= 0));
+                ids.extend(player.success_lives.iter().copied().filter(|&id| id >= 0));
             }
         }
         if include_opponent {
             if check_stage {
-                ids.extend(opponent.stage.iter().filter(|&&id| id >= 0));
+                ids.extend(opponent.stage.iter().copied().filter(|&id| id >= 0));
             }
             if check_discard {
-                ids.extend(opponent.discard.iter().filter(|&&id| id >= 0));
+                ids.extend(opponent.discard.iter().copied().filter(|&id| id >= 0));
             }
             if check_hand {
-                ids.extend(opponent.hand.iter().filter(|&&id| id >= 0));
+                ids.extend(opponent.hand.iter().copied().filter(|&id| id >= 0));
             }
             if check_success {
-                ids.extend(opponent.success_lives.iter().filter(|&&id| id >= 0));
+                ids.extend(opponent.success_lives.iter().copied().filter(|&id| id >= 0));
             }
         }
 
@@ -251,23 +251,29 @@ pub fn resolve_count(
 
         // Preserve high bits (special_id, etc.) from original attr
         let high_bits = attr & 0xFFFF_FF00_0000_0000;
-        let filter_attr = high_bits | encoded_group;
+        let mut filter_attr = high_bits | encoded_group;
+
+        // CRITICAL FIX: If we are counting SUCCESS_PILE, we must ensure it doesn't fail due to 
+        // the effect's targeting filter (which often requires Member type).
+        if check_success {
+            filter_attr &= !0x0C; // Clear Member (0x04) and Live (0x08) bits
+        }
 
         if (attr & FILTER_UNIQUE_NAMES) != 0 {
             let mut names = std::collections::HashSet::new();
-            for &&id in &ids {
+            for id in ids {
                 if state.card_matches_filter(db, id, filter_attr) {
                     if let Some(m) = db.get_member(id) {
-                        names.insert(&m.name);
+                        names.insert(m.name.clone());
                     } else if let Some(l) = db.get_live(id) {
-                        names.insert(&l.name);
+                        names.insert(l.name.clone());
                     }
                 }
             }
             names.len() as i32
         } else {
             ids.into_iter()
-                .filter(|&&id| state.card_matches_filter(db, id, filter_attr))
+                .filter(|&id| state.card_matches_filter(db, id, filter_attr))
                 .count() as i32
         }
     } else {
@@ -516,7 +522,9 @@ pub fn check_condition_opcode(
         C_LIFE_LEAD => {
             let my_lives = player.success_lives.len() as i32;
             let opp_lives = opponent.success_lives.len() as i32;
-            (my_lives - opp_lives) >= val
+            let reversed = (attr & 0x01) != 0;
+            let diff = if reversed { (opp_lives - my_lives) } else { (my_lives - opp_lives) };
+            if val == 0 { diff > 0 } else { diff >= val }
         }
         C_COUNT_GROUP => compare_i32(
             resolve_count(state, db, op, attr, slot, ctx, depth),
@@ -595,18 +603,14 @@ pub fn check_condition_opcode(
         }
         C_SCORE_COMPARE => {
             let my_score = player.score as i32;
-            let target_score = if (attr & 0x20) != 0 {
+            let target_score = if (attr & 0x20) != 0 || (val > 0 && opponent.score == 0) {
                 val
+            } else if val > 0 {
+                opponent.score as i32 + val
             } else {
                 opponent.score as i32
             };
-            let op_type = (slot >> 4) & 0x0F;
-            match op_type {
-                0 => my_score >= target_score,
-                1 => my_score <= target_score,
-                2 => my_score > target_score,
-                _ => my_score >= target_score,
-            }
+            compare_i32(my_score, target_score, slot)
         }
         C_HAS_CHOICE => !state.interaction_stack.is_empty(),
         C_OPPONENT_CHOICE => state
@@ -771,21 +775,15 @@ pub fn check_condition_opcode(
                 .map(|&id| db.get_member(id).map_or(0, |m| m.cost as i32))
                 .sum();
             let reversed = (attr & 0x01) != 0;
-            if reversed {
-                opp_cost > self_cost
-            } else {
-                self_cost > opp_cost
-            }
+            let diff = if reversed { opp_cost - self_cost } else { self_cost - opp_cost };
+            if val == 0 { diff > 0 } else { diff >= val }
         }
         C_SCORE_LEAD => {
             let self_score = player.score as i32;
             let opp_score = opponent.score as i32;
             let reversed = (attr & 0x01) != 0;
-            if reversed {
-                opp_score > self_score
-            } else {
-                self_score > opp_score
-            }
+            let diff = if reversed { opp_score - self_score } else { self_score - opp_score };
+            if val == 0 { diff > 0 } else { diff >= val }
         }
         C_HEART_LEAD => {
             let self_hearts = state.get_total_hearts(p_idx, db, depth + 1);
@@ -797,11 +795,8 @@ pub fn check_condition_opcode(
                 .sum::<i32>();
             let opp_total = opp_hearts.to_array().iter().map(|&x| x as i32).sum::<i32>();
             let reversed = (attr & 0x01) != 0;
-            if reversed {
-                opp_total > self_total
-            } else {
-                self_total > opp_total
-            }
+            let diff = if reversed { (opp_total - self_total) } else { (self_total - opp_total) };
+            if val == 0 { diff > 0 } else { diff >= val }
         }
         C_HAS_EXCESS_HEART => {
             // ライブ成功後の余剰ハートチェック
@@ -1056,11 +1051,16 @@ pub fn check_condition_opcode(
         }
         312 => {
             // SUM_VALUE
-            // Calculate hand size difference: (Opponent Hand) - (My Hand)
-            let my_hand = player.hand.len() as i32;
-            let opp_hand = opponent.hand.len() as i32;
-            let diff = opp_hand - my_hand;
-            compare_i32(diff, val, slot)
+            // If v_accumulated is set (e.g. by CALC_SUM_COST), compare against it.
+            // Otherwise fallback to hand size difference (legacy behavior).
+            let val_to_compare = if ctx.v_accumulated != 0 {
+                ctx.v_accumulated as i32
+            } else {
+                let my_hand = player.hand.len() as i32;
+                let opp_hand = opponent.hand.len() as i32;
+                opp_hand - my_hand
+            };
+            compare_i32(val_to_compare, val, slot)
         }
         313 => {
             // IS_WAIT

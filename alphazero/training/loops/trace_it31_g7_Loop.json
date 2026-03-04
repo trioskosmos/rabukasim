@@ -1,0 +1,1159 @@
+{
+  "turns": 10,
+  "p0_lives": 2,
+  "p1_lives": 1,
+  "winner": -1,
+  "reason": "Loop",
+  "trace": [
+    {
+      "p": 1,
+      "id": 20002,
+      "label": "RPS: Player 0 chose Scissors"
+    },
+    {
+      "p": 0,
+      "id": 21002,
+      "label": "RPS: Player 1 chose Scissors"
+    },
+    {
+      "p": 1,
+      "id": 20001,
+      "label": "RPS: Player 0 chose Paper"
+    },
+    {
+      "p": 1,
+      "id": 21002,
+      "label": "RPS: Player 1 chose Scissors"
+    },
+    {
+      "p": 0,
+      "id": 5001,
+      "label": "Turn Choice: Go Second"
+    },
+    {
+      "p": 0,
+      "id": 302,
+      "label": "Mulligan Hand[2] ([PL!-bp3-008-P] \u5c0f\u6cc9\u82b1\u967d)"
+    },
+    {
+      "p": 0,
+      "id": 300,
+      "label": "Mulligan Hand[0] ([PL!-pb1-025-N] \u6771\u689d \u5e0c)"
+    },
+    {
+      "p": 0,
+      "id": 301,
+      "label": "Mulligan Hand[1] ([PL!-pb1-001-R] \u9ad8\u5742\u7a42\u4e43\u679c)"
+    },
+    {
+      "p": 0,
+      "id": 305,
+      "label": "Mulligan Hand[5] ([PL!-sd1-007-SD] \u6771\u689d \u5e0c)"
+    },
+    {
+      "p": 0,
+      "id": 303,
+      "label": "Mulligan Hand[3] ([PL!-pb1-001-R] \u9ad8\u5742\u7a42\u4e43\u679c)"
+    },
+    {
+      "p": 0,
+      "id": 304,
+      "label": "Mulligan Hand[4]"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 305,
+      "label": "Mulligan Hand[5] ([PL!SP-bp4-002-R] \u5510 \u53ef\u53ef)"
+    },
+    {
+      "p": 1,
+      "id": 303,
+      "label": "Mulligan Hand[3]"
+    },
+    {
+      "p": 1,
+      "id": 304,
+      "label": "Mulligan Hand[4] ([PL!SP-bp1-005-P] \u8449\u6708 \u604b)"
+    },
+    {
+      "p": 1,
+      "id": 301,
+      "label": "Mulligan Hand[1] ([PL!N-sd1-008-SD] \u30a8\u30de\u30fb\u30f4\u30a7\u30eb\u30c7)"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 1051,
+      "label": "Play ([PL!-sd1-002-SD] \u7d62\u702c \u7d75\u91cc) (Hand[5]) to Slot 1"
+    },
+    {
+      "p": 0,
+      "id": 1012,
+      "label": "Play ([PL!-pb1-011-R] \u7d62\u702c\u7d75\u91cc) (Hand[1]) to Slot 2"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 8400,
+      "label": "Activate ([PL!-sd1-002-SD] \u7d62\u702c \u7d75\u91cc) at Slot 1, Ability 0"
+    },
+    {
+      "p": 0,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 401,
+      "label": "Set Live card ([PL!-pb1-032-L] SENTIMENTAL StepS) (Hand[1])"
+    },
+    {
+      "p": 0,
+      "id": 403,
+      "label": "Set Live card (Hand[3])"
+    },
+    {
+      "p": 0,
+      "id": 403,
+      "label": "Set Live card (Hand[3])"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 1022,
+      "label": "Play ([PL!-pb1-019-N] \u9ad8\u5742\u7a42\u4e43\u679c) (Hand[2]) to Slot 2"
+    },
+    {
+      "p": 0,
+      "id": 1001,
+      "label": "Play ([PL!-pb1-019-N] \u9ad8\u5742\u7a42\u4e43\u679c) (Hand[0]) to Slot 1"
+    },
+    {
+      "p": 0,
+      "id": 8400,
+      "label": "Activate ([PL!-pb1-019-N] \u9ad8\u5742\u7a42\u4e43\u679c) at Slot 1, Ability 0"
+    },
+    {
+      "p": 0,
+      "id": 11003,
+      "label": "Select Choice Index 3"
+    },
+    {
+      "p": 0,
+      "id": 1050,
+      "label": "Play ([PL!-pb1-011-R] \u7d62\u702c\u7d75\u91cc) (Hand[5]) to Slot 0"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 1071,
+      "label": "Play ([PL!SP-bp2-002-P] \u5510 \u53ef\u53ef) (Hand[7]) to Slot 1"
+    },
+    {
+      "p": 1,
+      "id": 11002,
+      "label": "Select Choice Index 2"
+    },
+    {
+      "p": 1,
+      "id": 1032,
+      "label": "Play ([PL!SP-pb1-021-N] \u30a6\u30a3\u30fc\u30f3\u30fb\u30de\u30eb\u30ac\u30ec\u30fc\u30c6) (Hand[3]) to Slot 2"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 404,
+      "label": "Set Live card (Hand[4])"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 400,
+      "label": "Set Live card ([PL!SP-bp4-029-L] \u8ffd\u3044\u304b\u3051\u308b\u5922\u306e\u5148\u3067) (Hand[0])"
+    },
+    {
+      "p": 1,
+      "id": 402,
+      "label": "Set Live card (Hand[2])"
+    },
+    {
+      "p": 1,
+      "id": 400,
+      "label": "Set Live card ([PL!SP-bp2-024-L] \u30d3\u30bf\u30df\u30f3SUMMER\uff01) (Hand[0])"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 1031,
+      "label": "Play ([PL!-sd1-002-SD] \u7d62\u702c \u7d75\u91cc) (Hand[3]) to Slot 1"
+    },
+    {
+      "p": 0,
+      "id": 8500,
+      "label": "Activate ([PL!-pb1-019-N] \u9ad8\u5742\u7a42\u4e43\u679c) at Slot 2, Ability 0"
+    },
+    {
+      "p": 0,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 0,
+      "id": 8400,
+      "label": "Activate ([PL!-sd1-002-SD] \u7d62\u702c \u7d75\u91cc) at Slot 1, Ability 0"
+    },
+    {
+      "p": 0,
+      "id": 11004,
+      "label": "Select Choice Index 4"
+    },
+    {
+      "p": 0,
+      "id": 1060,
+      "label": "Play ([PL!-pb1-019-N] \u9ad8\u5742\u7a42\u4e43\u679c) (Hand[6]) to Slot 0"
+    },
+    {
+      "p": 0,
+      "id": 1022,
+      "label": "Play ([PL!-bp3-018-N] \u77e2\u6fa4\u306b\u3053) (Hand[2]) to Slot 2"
+    },
+    {
+      "p": 0,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 0,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 0,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 1042,
+      "label": "Play ([PL!SP-pb1-018-N] \u7c73\u5973\u30e1\u30a4) (Hand[4]) to Slot 2"
+    },
+    {
+      "p": 1,
+      "id": 1061,
+      "label": "Play ([PL!SP-bp1-005-P] \u8449\u6708 \u604b) (Hand[6]) to Slot 1"
+    },
+    {
+      "p": 1,
+      "id": 8202,
+      "label": "Select Choice Index 2"
+    },
+    {
+      "p": 1,
+      "id": 11004,
+      "label": "Select Choice Index 4"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 402,
+      "label": "Set Live card (Hand[2])"
+    },
+    {
+      "p": 0,
+      "id": 400,
+      "label": "Set Live card (Hand[0])"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 404,
+      "label": "Set Live card (Hand[4])"
+    },
+    {
+      "p": 1,
+      "id": 404,
+      "label": "Set Live card (Hand[4])"
+    },
+    {
+      "p": 1,
+      "id": 401,
+      "label": "Set Live card (Hand[1])"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 1031,
+      "label": "Play ([PL!-pb1-025-N] \u6771\u689d \u5e0c) (Hand[3]) to Slot 1"
+    },
+    {
+      "p": 0,
+      "id": 8400,
+      "label": "Activate ([PL!-pb1-025-N] \u6771\u689d \u5e0c) at Slot 1, Ability 0"
+    },
+    {
+      "p": 0,
+      "id": 11002,
+      "label": "Select Choice Index 2"
+    },
+    {
+      "p": 0,
+      "id": 1020,
+      "label": "Play ([PL!-bp3-011-N] \u7d62\u702c\u7d75\u91cc) (Hand[2]) to Slot 0"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 1001,
+      "label": "Play ([PL!-pb1-018-R] \u77e2\u6fa4\u306b\u3053) (Hand[0]) to Slot 1"
+    },
+    {
+      "p": 1,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 0,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 0,
+      "id": 11003,
+      "label": "Select Choice Index 3"
+    },
+    {
+      "p": 0,
+      "id": 11001,
+      "label": "Select Choice Index 1"
+    },
+    {
+      "p": 0,
+      "id": 8400,
+      "label": "Activate ([PL!-sd1-002-SD] \u7d62\u702c \u7d75\u91cc) at Slot 1, Ability 0"
+    },
+    {
+      "p": 0,
+      "id": 11001,
+      "label": "Select Choice Index 1"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 1010,
+      "label": "Play ([PL!SP-bp1-011-R] \u9b3c\u585a\u51ac\u6bec) (Hand[1]) to Slot 0"
+    },
+    {
+      "p": 1,
+      "id": 1021,
+      "label": "Play ([PL!SP-bp2-009-P] \u9b3c\u585a\u590f\u7f8e) (Hand[2]) to Slot 1"
+    },
+    {
+      "p": 1,
+      "id": 8300,
+      "label": "Activate ([PL!SP-bp1-011-R] \u9b3c\u585a\u51ac\u6bec) at Slot 0, Ability 0"
+    },
+    {
+      "p": 1,
+      "id": 11002,
+      "label": "Select Choice Index 2"
+    },
+    {
+      "p": 1,
+      "id": 8500,
+      "label": "Activate ([PL!SP-pb1-018-N] \u7c73\u5973\u30e1\u30a4) at Slot 2, Ability 0"
+    },
+    {
+      "p": 1,
+      "id": 11001,
+      "label": "Select Choice Index 1"
+    },
+    {
+      "p": 1,
+      "id": 1042,
+      "label": "Play ([PL!SP-pb1-014-N] \u5d50 \u5343\u7802\u90fd) (Hand[4]) to Slot 2"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 400,
+      "label": "Set Live card (Hand[0])"
+    },
+    {
+      "p": 0,
+      "id": 401,
+      "label": "Set Live card (Hand[1])"
+    },
+    {
+      "p": 0,
+      "id": 403,
+      "label": "Set Live card (Hand[3])"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 400,
+      "label": "Set Live card (Hand[0])"
+    },
+    {
+      "p": 1,
+      "id": 400,
+      "label": "Set Live card (Hand[0])"
+    },
+    {
+      "p": 1,
+      "id": 403,
+      "label": "Set Live card ([PL!SP-bp2-024-L] \u30d3\u30bf\u30df\u30f3SUMMER\uff01) (Hand[3])"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 583,
+      "label": "Select Mode 83"
+    },
+    {
+      "p": 0,
+      "id": 1041,
+      "label": "Play ([PL!-pb1-024-N] \u897f\u6728\u91ce\u771f\u59eb) (Hand[4]) to Slot 1"
+    },
+    {
+      "p": 0,
+      "id": 1052,
+      "label": "Play ([PL!-pb1-024-N] \u897f\u6728\u91ce\u771f\u59eb) (Hand[5]) to Slot 2"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 402,
+      "label": "Set Live card ([PL!SP-bp2-024-L] \u30d3\u30bf\u30df\u30f3SUMMER\uff01) (Hand[2])"
+    },
+    {
+      "p": 1,
+      "id": 405,
+      "label": "Set Live card (Hand[5])"
+    },
+    {
+      "p": 1,
+      "id": 404,
+      "label": "Set Live card (Hand[4])"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 582,
+      "label": "Select Mode 82"
+    },
+    {
+      "p": 0,
+      "id": 8400,
+      "label": "Activate ([PL!-pb1-024-N] \u897f\u6728\u91ce\u771f\u59eb) at Slot 1, Ability 0"
+    },
+    {
+      "p": 0,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 0,
+      "id": 1052,
+      "label": "Play ([PL!-bp3-011-N] \u7d62\u702c\u7d75\u91cc) (Hand[5]) to Slot 2"
+    },
+    {
+      "p": 0,
+      "id": 1010,
+      "label": "Play ([PL!-bp3-011-N] \u7d62\u702c\u7d75\u91cc) (Hand[1]) to Slot 0"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 1022,
+      "label": "Play ([PL!SP-bp4-002-R] \u5510 \u53ef\u53ef) (Hand[2]) to Slot 2"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 1051,
+      "label": "Play ([PL!SP-pb1-018-N] \u7c73\u5973\u30e1\u30a4) (Hand[5]) to Slot 1"
+    },
+    {
+      "p": 1,
+      "id": 8400,
+      "label": "Activate ([PL!SP-pb1-018-N] \u7c73\u5973\u30e1\u30a4) at Slot 1, Ability 0"
+    },
+    {
+      "p": 1,
+      "id": 11005,
+      "label": "Select Choice Index 5"
+    },
+    {
+      "p": 1,
+      "id": 1040,
+      "label": "Play ([PL!SP-bp4-019-N] \u82e5\u83dc\u56db\u5b63) (Hand[4]) to Slot 0"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 402,
+      "label": "Set Live card ([PL!-pb1-032-L] SENTIMENTAL StepS) (Hand[2])"
+    },
+    {
+      "p": 0,
+      "id": 400,
+      "label": "Set Live card (Hand[0])"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 402,
+      "label": "Set Live card (Hand[2])"
+    },
+    {
+      "p": 1,
+      "id": 400,
+      "label": "Set Live card (Hand[0])"
+    },
+    {
+      "p": 1,
+      "id": 403,
+      "label": "Set Live card ([PL!SP-bp1-026-L] \u672a\u6765\u4e88\u5831\u30cf\u30ec\u30eb\u30e4\uff01) (Hand[3])"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 581,
+      "label": "Select Mode 81"
+    },
+    {
+      "p": 0,
+      "id": 585,
+      "label": "Select Mode 85"
+    },
+    {
+      "p": 0,
+      "id": 1041,
+      "label": "Play ([PL!-pb1-024-N] \u897f\u6728\u91ce\u771f\u59eb) (Hand[4]) to Slot 1"
+    },
+    {
+      "p": 0,
+      "id": 8400,
+      "label": "Activate ([PL!-pb1-024-N] \u897f\u6728\u91ce\u771f\u59eb) at Slot 1, Ability 0"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 1030,
+      "label": "Play ([PL!SP-bp2-002-P] \u5510 \u53ef\u53ef) (Hand[3]) to Slot 0"
+    },
+    {
+      "p": 1,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 1,
+      "id": 1042,
+      "label": "Play ([PL!SP-pb1-001-R] \u6f81\u8c37\u304b\u306e\u3093) (Hand[4]) to Slot 2"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 400,
+      "label": "Set Live card (Hand[0])"
+    },
+    {
+      "p": 0,
+      "id": 400,
+      "label": "Set Live card ([PL!-pb1-031-L] \u8f1d\u591c\u306e\u57ce\u3067\u8e0a\u308a\u305f\u3044) (Hand[0])"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 8201,
+      "label": "Select Choice Index 1"
+    },
+    {
+      "p": 0,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 0,
+      "id": 600,
+      "label": "Select Stage Slot 0"
+    },
+    {
+      "p": 0,
+      "id": 1012,
+      "label": "Play ([PL!-sd1-007-SD] \u6771\u689d \u5e0c) (Hand[1]) to Slot 2"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 1062,
+      "label": "Play ([PL!SP-pb1-018-N] \u7c73\u5973\u30e1\u30a4) (Hand[6]) to Slot 2"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 405,
+      "label": "Set Live card (Hand[5])"
+    },
+    {
+      "p": 1,
+      "id": 403,
+      "label": "Set Live card (Hand[3])"
+    },
+    {
+      "p": 1,
+      "id": 403,
+      "label": "Set Live card ([PL!SP-pb1-026-L] Jump Into the New World) (Hand[3])"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 581,
+      "label": "Select Mode 81"
+    },
+    {
+      "p": 0,
+      "id": 1031,
+      "label": "Play ([PL!-bp3-012-N] \u5357\u3053\u3068\u308a) (Hand[3]) to Slot 1"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 1052,
+      "label": "Play ([PL!SP-bp1-005-P] \u8449\u6708 \u604b) (Hand[5]) to Slot 2"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 1051,
+      "label": "Play ([PL!N-sd1-008-SD] \u30a8\u30de\u30fb\u30f4\u30a7\u30eb\u30c7) (Hand[5]) to Slot 1"
+    },
+    {
+      "p": 1,
+      "id": 1030,
+      "label": "Play ([PL!SP-bp4-002-R] \u5510 \u53ef\u53ef) (Hand[3]) to Slot 0"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 401,
+      "label": "Set Live card (Hand[1])"
+    },
+    {
+      "p": 0,
+      "id": 402,
+      "label": "Set Live card (Hand[2])"
+    },
+    {
+      "p": 0,
+      "id": 401,
+      "label": "Set Live card (Hand[1])"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 400,
+      "label": "Set Live card ([PL!SP-bp2-024-L] \u30d3\u30bf\u30df\u30f3SUMMER\uff01) (Hand[0])"
+    },
+    {
+      "p": 1,
+      "id": 400,
+      "label": "Set Live card (Hand[0])"
+    },
+    {
+      "p": 1,
+      "id": 400,
+      "label": "Set Live card ([PL!SP-bp1-026-L] \u672a\u6765\u4e88\u5831\u30cf\u30ec\u30eb\u30e4\uff01) (Hand[0])"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 580,
+      "label": "Select Mode 80"
+    },
+    {
+      "p": 0,
+      "id": 584,
+      "label": "Select Mode 84"
+    },
+    {
+      "p": 0,
+      "id": 1030,
+      "label": "Play ([PL!-bp3-012-N] \u5357\u3053\u3068\u308a) (Hand[3]) to Slot 0"
+    },
+    {
+      "p": 0,
+      "id": 1022,
+      "label": "Play ([PL!-pb1-001-R] \u9ad8\u5742\u7a42\u4e43\u679c) (Hand[2]) to Slot 2"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 1010,
+      "label": "Play ([PL!SP-bp4-006-P] \u685c\u5c0f\u8def\u304d\u306a\u5b50) (Hand[1]) to Slot 0"
+    },
+    {
+      "p": 1,
+      "id": 1022,
+      "label": "Play ([PL!SP-pb1-021-N] \u30a6\u30a3\u30fc\u30f3\u30fb\u30de\u30eb\u30ac\u30ec\u30fc\u30c6) (Hand[2]) to Slot 2"
+    },
+    {
+      "p": 1,
+      "id": 8500,
+      "label": "Activate ([PL!SP-pb1-021-N] \u30a6\u30a3\u30fc\u30f3\u30fb\u30de\u30eb\u30ac\u30ec\u30fc\u30c6) at Slot 2, Ability 0"
+    },
+    {
+      "p": 1,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 1020,
+      "label": "Play ([PL!-pb1-001-R] \u9ad8\u5742\u7a42\u4e43\u679c) (Hand[2]) to Slot 0"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 1005,
+      "label": "Play ([PL!SP-bp4-004-P\uff0b] \u5e73\u5b89\u540d\u3059\u307f\u308c) (Hand[0]) to Slot 1 and Slot 0"
+    },
+    {
+      "p": 1,
+      "id": 1012,
+      "label": "Play ([PL!SP-pb1-018-N] \u7c73\u5973\u30e1\u30a4) (Hand[1]) to Slot 2"
+    },
+    {
+      "p": 1,
+      "id": 8500,
+      "label": "Activate ([PL!SP-pb1-018-N] \u7c73\u5973\u30e1\u30a4) at Slot 2, Ability 0"
+    },
+    {
+      "p": 1,
+      "id": 11001,
+      "label": "Select Choice Index 1"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 401,
+      "label": "Set Live card (Hand[1])"
+    },
+    {
+      "p": 0,
+      "id": 400,
+      "label": "Set Live card ([PL!-pb1-032-L] SENTIMENTAL StepS) (Hand[0])"
+    },
+    {
+      "p": 1,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 1,
+      "id": 400,
+      "label": "Set Live card (Hand[0])"
+    },
+    {
+      "p": 1,
+      "id": 400,
+      "label": "Set Live card (Hand[0])"
+    },
+    {
+      "p": 1,
+      "id": 400,
+      "label": "Set Live card (Hand[0])"
+    },
+    {
+      "p": 0,
+      "id": 0,
+      "label": "Pass / Done"
+    },
+    {
+      "p": 0,
+      "id": 584,
+      "label": "Select Mode 84"
+    },
+    {
+      "p": 0,
+      "id": 1000,
+      "label": "Play ([PL!-bp3-018-N] \u77e2\u6fa4\u306b\u3053) (Hand[0]) to Slot 0"
+    },
+    {
+      "p": 0,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 0,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    },
+    {
+      "p": 0,
+      "id": 11000,
+      "label": "Select Choice Index 0"
+    }
+  ],
+  "d0_name": "muse_cup",
+  "d1_name": "fade deck",
+  "d0_cards": [
+    30,
+    30,
+    30,
+    30,
+    33,
+    33,
+    33,
+    33,
+    34,
+    34,
+    34,
+    34,
+    36,
+    36,
+    36,
+    36,
+    41,
+    41,
+    41,
+    41,
+    4182,
+    4182,
+    4182,
+    4182,
+    4192,
+    4192,
+    104,
+    104,
+    104,
+    104,
+    106,
+    106,
+    106,
+    106,
+    107,
+    107,
+    121,
+    121,
+    121,
+    121,
+    124,
+    124,
+    126,
+    126,
+    126,
+    126,
+    128,
+    128,
+    49,
+    49,
+    49,
+    111,
+    111,
+    111,
+    111,
+    112,
+    112,
+    112,
+    112,
+    140,
+    4149,
+    141,
+    16423,
+    4352,
+    37116,
+    16774,
+    20870,
+    20990,
+    25084,
+    610,
+    611,
+    16940
+  ],
+  "d1_cards": [
+    4199,
+    4199,
+    4199,
+    376,
+    376,
+    500,
+    500,
+    500,
+    500,
+    4602,
+    4602,
+    528,
+    528,
+    528,
+    528,
+    535,
+    535,
+    535,
+    557,
+    557,
+    557,
+    4654,
+    4654,
+    4654,
+    4654,
+    8752,
+    8752,
+    562,
+    562,
+    562,
+    562,
+    574,
+    574,
+    574,
+    574,
+    4684,
+    4684,
+    4684,
+    4684,
+    16870,
+    16870,
+    602,
+    602,
+    602,
+    602,
+    604,
+    604,
+    604,
+    519,
+    519,
+    519,
+    547,
+    547,
+    547,
+    547,
+    579,
+    579,
+    579,
+    584,
+    608,
+    38,
+    39,
+    40,
+    41,
+    42,
+    38,
+    39,
+    40,
+    41,
+    42,
+    38,
+    39
+  ]
+}

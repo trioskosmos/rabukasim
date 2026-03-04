@@ -5,7 +5,7 @@ use crate::test_helpers::load_real_db;
 use smallvec::smallvec;
 
 #[test]
-fn test_repro_card_103_no_empty_slots() {
+fn test_repro_card_103_placement() { // Card No: LL-bp2-001-R
     let mut state = GameState::default();
     let db = load_real_db();
     

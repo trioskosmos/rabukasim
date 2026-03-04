@@ -200,11 +200,11 @@ export const PerformanceRenderer = {
                                             <div class="contrib-row">
                                                 ${PerformanceRenderer.renderHeartsCompact(m.base_hearts)}
                                                 ${m.bonus_hearts && m.bonus_hearts.some(v => v > 0) ? `
-                                                    <div class="bonus-container">
-                                                        <span class="bonus-tag">+${PerformanceRenderer.renderHeartsCompact(m.bonus_hearts)}</span>
+                                                    <div class="perf-bonus-tooltip-wrapper">
+                                                        <span class="perf-bonus-tag">+${PerformanceRenderer.renderHeartsCompact(m.bonus_hearts)}</span>
                                                         ${m.ability_heart_bonuses && m.ability_heart_bonuses.length > 0 ? `
-                                                            <div class="bonus-source-list">
-                                                                ${m.ability_heart_bonuses.map(b => `<div class="source-line">${b.source}: +${b.amount} ${['Pink', 'Red', 'Yellow', 'Green', 'Blue', 'Purple', 'Any'][b.color] || ''}</div>`).join('')}
+                                                            <div class="perf-bonus-source-tooltip">
+                                                                ${m.ability_heart_bonuses.map(b => `<div class="perf-bonus-source-line">${b.source}: +${b.amount} ${['Pink', 'Red', 'Yellow', 'Green', 'Blue', 'Purple', 'Any'][b.color] || ''}</div>`).join('')}
                                                             </div>
                                                         ` : ''}
                                                     </div>
@@ -213,17 +213,17 @@ export const PerformanceRenderer = {
                                             <div class="contrib-row">
                                                 ${PerformanceRenderer.renderBladesCompact(m.base_blades)}
                                                 ${m.bonus_blades > 0 ? `
-                                                    <div class="bonus-container">
-                                                        <span class="bonus-tag"> +${m.bonus_blades}</span>
+                                                    <div class="perf-bonus-tooltip-wrapper">
+                                                        <span class="perf-bonus-tag"> +${m.bonus_blades}</span>
                                                         ${m.ability_blade_bonuses && m.ability_blade_bonuses.length > 0 ? `
-                                                            <div class="bonus-source-list">
-                                                                ${m.ability_blade_bonuses.map(b => `<div class="source-line">${b.source}: +${b.amount}</div>`).join('')}
+                                                            <div class="perf-bonus-source-tooltip">
+                                                                ${m.ability_blade_bonuses.map(b => `<div class="perf-bonus-source-line">${b.source}: +${b.amount}</div>`).join('')}
                                                             </div>
                                                         ` : ''}
                                                     </div>
                                                 ` : ''}
                                             </div>
-                                             ${(m.base_notes > 0 || m.bonus_notes > 0) ? `<span>${i18n.t('notes')}: <b>${m.base_notes}${m.bonus_notes > 0 ? ` <span class="bonus-tag">(+${m.bonus_notes})</span>` : ''}</b></span>` : ''}
+                                             ${(m.base_notes > 0 || m.bonus_notes > 0) ? `<span>${i18n.t('notes')}: <b>${m.base_notes}${m.bonus_notes > 0 ? ` <span class="perf-bonus-tag">(+${m.bonus_notes})</span>` : ''}</b></span>` : ''}
                                             ${m.draw_icons ? `<span>${i18n.t('cards_draw')}: <b>${m.draw_icons}</b></span>` : ''}
                                         </div>
                                     </div>

@@ -98,31 +98,21 @@ export const DeckSetupModal = {
             return;
         }
 
-        const lines = content.split(/\r?\n|,\s*/);
+        const results = validator.validateDeckString(content);
+        if (results.parsed.length === 0 && results.parsedEnergy.length === 0) {
+            alert("No cards found in the provided content.");
+            return;
+        }
+
         let mainDeck = [];
         let energyDeck = [];
 
-        for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || trimmed.startsWith('#')) continue;
-
-            let count = 1;
-            let code = trimmed;
-
-            const suffixMatch = trimmed.match(/^(.+?)\s*[xX]\s*(\d+)$/);
-            if (suffixMatch) {
-                code = suffixMatch[1].trim();
-                count = parseInt(suffixMatch[2]);
-            } else {
-                const prefixMatch = trimmed.match(/^(\d+)\s*[xX]\s*(.+)$/);
-                if (prefixMatch) {
-                    count = parseInt(prefixMatch[1]);
-                    code = prefixMatch[2].trim();
-                }
-            }
-
-            for (let i = 0; i < count; i++) mainDeck.push(code);
-        }
+        results.parsed.forEach(p => {
+            for (let i = 0; i < p.count; i++) mainDeck.push(p.code);
+        });
+        results.parsedEnergy.forEach(p => {
+            for (let i = 0; i < p.count; i++) energyDeck.push(p.code);
+        });
 
         const playerIds = (playerVal === 'both') ? [0, 1] : [parseInt(playerVal)];
 

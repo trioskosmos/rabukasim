@@ -35,7 +35,7 @@ def parse_args():
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from alphazero.alphanet import AlphaNet
+from alphazero.alphanet import AlphaNet, NUM_ACTIONS
 # from alphazero.training.overnight_pure_zero import load_tournament_decks 
 # Copied here to avoid import nightmare after reorganization
 def load_tournament_decks(full_db):
@@ -89,13 +89,17 @@ def get_player_move(player_type, state, db, model, device, sims=128):
     elif player_type == "Model_Greedy":
         obs_numpy = np.array(state.to_alphazero_tensor()).astype(np.float32)
         obs = torch.from_numpy(obs_numpy).unsqueeze(0).to(device)
-        mask = torch.zeros((1, 16384), dtype=torch.bool).to(device)
-        for aid in legal_ids: mask[0, aid] = True
+        mask = torch.zeros((1, model.num_actions), dtype=torch.bool).to(device)
+        for aid in legal_ids:
+            if aid < model.num_actions:
+                mask[0, aid] = True
         with torch.no_grad():
             policy_logits, _ = model(obs, mask=mask)
             policy = torch.softmax(policy_logits, dim=1).cpu().numpy()[0]
-        policy[~mask[0].cpu().numpy()] = -1.0
-        move = int(np.argmax(policy))
+        # Create a full-size policy array and fill it with very low values
+        full_policy = np.full((NUM_ACTIONS,), -1.0, dtype=np.float32)
+        full_policy[:model.num_actions] = policy
+        move = int(np.argmax(full_policy))
         # print(f"    DEBUG: Model_Greedy chose {move}", flush=True)
         return move
 
@@ -135,8 +139,9 @@ def get_state_str(state):
         return f"Error dumping state: {e}"
 
 def play_match(p0_type, p1_type, decks, db_engine, model, device, sims=128):
-    d0 = random.choice(decks)
-    d1 = random.choice(decks)
+    deck = random.choice(decks)
+    d0 = deck
+    d1 = deck
     state = engine_rust.PyGameState(db_engine)
     state.initialize_game(d0["members"]+d0["lives"], d1["members"]+d1["lives"], d0["energy"], d1["energy"], [], [])
     state.silent = True
@@ -296,7 +301,7 @@ def run_benchmark(args):
         ("MCTS 128: Heuristic vs Model", "Heuristic_MCTS", "Model_MCTS"),
     ]
 
-    games_per_scenario = 5
+    games_per_scenario = 10
     print(f"\nStarting Tournament ({games_per_scenario} games per scenario)...")
     
     table_rows = []

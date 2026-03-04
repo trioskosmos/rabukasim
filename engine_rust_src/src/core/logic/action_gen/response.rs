@@ -40,7 +40,12 @@ impl ResponseGenerator {
         let choice_type = &pi.choice_type;
         let source_card_id = pi.ctx.source_card_id;
 
-        if ctx.player_id as usize != p_idx {
+        let mut expected_p_idx = ctx.player_id as usize;
+        if choice_type == "TAP_O" || choice_type == "OPPONENT_CHOOSE" {
+            expected_p_idx = 1 - expected_p_idx;
+        }
+
+        if expected_p_idx != p_idx {
             return;
         }
 
@@ -160,18 +165,18 @@ impl ResponseGenerator {
                 for (i, &cid) in player.stage.iter().enumerate() {
                     if cid != -1 {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                            (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                         );
                     }
                 }
                 return;
             }
             O_TAP_OPPONENT => {
-                let opp_idx = 1 - p_idx;
-                for (i, &cid) in state.core.players[opp_idx].stage.iter().enumerate() {
+                // If it's TAP_O, p_idx IS the opponent making the choice for themselves.
+                for (i, &cid) in state.core.players[p_idx].stage.iter().enumerate() {
                     if cid != -1 {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                            (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                         );
                     }
                 }
@@ -196,6 +201,9 @@ impl ResponseGenerator {
             }
             O_LOOK_AND_CHOOSE => {
                 self.generate_look_and_choose_actions(db, p_idx, state, receiver, pi, abilities);
+                if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0 {
+                    receiver.add_action(0);
+                }
                 return;
             }
             O_MOVE_TO_DISCARD => {
@@ -226,7 +234,9 @@ impl ResponseGenerator {
                         );
                     }
                 }
-                receiver.add_action(0);
+                if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0 {
+                    receiver.add_action(0);
+                }
                 return;
             }
             O_PLAY_MEMBER_FROM_HAND => {
@@ -236,11 +246,16 @@ impl ResponseGenerator {
                             .add_action((crate::core::logic::ACTION_BASE_HAND + i as i32) as usize);
                     }
                 }
-                receiver.add_action(0);
+                if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0 {
+                    receiver.add_action(0);
+                }
                 return;
             }
             O_PLAY_MEMBER_FROM_DISCARD | O_PLAY_LIVE_FROM_DISCARD => {
                 self.generate_look_and_choose_actions(db, p_idx, state, receiver, pi, abilities);
+                if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0 {
+                    receiver.add_action(0);
+                }
                 return;
             }
             O_SELECT_MEMBER => {
@@ -255,7 +270,9 @@ impl ResponseGenerator {
                         );
                     }
                 }
-                receiver.add_action(0);
+                if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0 {
+                    receiver.add_action(0);
+                }
                 return;
             }
             O_SELECT_PLAYER => {
@@ -273,9 +290,23 @@ impl ResponseGenerator {
             }
             O_SELECT_CARDS => {
                 self.generate_look_and_choose_actions(db, p_idx, state, receiver, pi, abilities);
-                if (pi.filter_attr & 0x02) != 0 {
-                    receiver.add_action(0); // If OPTIONAL flag is set? Wait, actually look_and_choose might handle this, but adding action 0 here is fine.
+                if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0 {
+                    receiver.add_action(0);
                 }
+                return;
+            }
+            O_LOOK_REORDER_DISCARD => {
+                // This uses SELECT_CARDS_ORDER choice type
+                // Similar to O_ORDER_DECK, we present the looked cards for selection/ordering
+                for (i, &cid) in player.looked_cards.iter().enumerate() {
+                    if cid != -1 {
+                        receiver.add_action(
+                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                        );
+                    }
+                }
+                // Also add a "Done" action (99) to finalize the order if optional or once selections are complete
+                receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + 99) as usize);
                 return;
             }
             _ => {
@@ -417,6 +448,9 @@ impl ResponseGenerator {
         pi: &PendingInteraction,
         filter_attr: u64,
     ) {
+        if state.debug.debug_mode {
+            println!("[DEBUG] generate_select_member_actions: p_idx={}, filter_attr={:X}", p_idx, filter_attr);
+        }
         let player = &state.core.players[p_idx];
         let packed_zone = (filter_attr >> 12) & 0x0F;
         let target_slot = if packed_zone > 0 {
@@ -457,7 +491,7 @@ impl ResponseGenerator {
                 for (i, &cid) in player.stage.iter().enumerate() {
                     if cid >= 0 && state.card_matches_filter(db, cid, filter_attr) {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                            (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                         );
                     }
                 }

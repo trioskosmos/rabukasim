@@ -81,6 +81,9 @@ const O_LOSE_EXCESS_HEARTS: i32 = 94; // TODO: Not implemented in WGSL
 const O_SKIP_ACTIVATE_PHASE: i32 = 95; // TODO: Not implemented in WGSL
 const O_PAY_ENERGY_DYNAMIC: i32 = 96; // TODO: Not implemented in WGSL
 const O_PLACE_ENERGY_UNDER_MEMBER: i32 = 97; // TODO: Not implemented in WGSL
+const O_CALC_SUM_COST: i32 = 106; // TODO: Not implemented in WGSL
+const O_LOOK_REORDER_DISCARD: i32 = 125; // TODO: Not implemented in WGSL
+const O_DIV_VALUE: i32 = 126; // TODO: Not implemented in WGSL
 
 // --- CONDITION TYPES ---
 const C_TURN_1: i32 = 200; // IMPLEMENTED
@@ -187,6 +190,6 @@ const SYN_CENTER: u32 = 8u;
 const SYN_LIFE_LEAD: u32 = 16u;
 
 // --- PARITY STATUS ---
-// WGSL Opcodes: 73/79 implemented
+// WGSL Opcodes: 73/82 implemented
 // WGSL Conditions: 50/64 implemented
 // See plans/wgsl_rust_parity_strategy.md for details

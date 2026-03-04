@@ -811,7 +811,7 @@ impl SemanticAssertionEngine {
                                     let filter = crate::core::logic::filter::CardFilter::from_attr(
                                         pi.filter_attr,
                                     );
-                                    filter.matches(&self.db, cid, false)
+                                    filter.matches(&self.db, cid, false, None, &crate::core::logic::AbilityContext::default())
                                 }
                                 _ => true,
                             };

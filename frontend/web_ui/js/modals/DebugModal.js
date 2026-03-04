@@ -546,6 +546,50 @@ export const DebugModal = {
         document.body.appendChild(a);
         a.click();
         a.remove();
+    },
+
+    async runModelAnalysis() {
+        const tx = document.getElementById('debug-json-textarea');
+        const resultsDiv = document.getElementById('debug-analysis-results');
+        if (!tx || !resultsDiv) return;
+
+        try {
+            const state = JSON.parse(tx.value);
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div style="color: #aaa;">Analyzing with Neural Network...</div>';
+
+            const res = await fetch('/api/v1/analyze_model', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(state)
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                let html = `
+                    <div style="display: flex; gap: 10px; margin-bottom: 8px; font-weight: bold; border-bottom: 2px solid #444; padding-bottom: 4px;">
+                        <span style="color: #2ecc71;">Win: ${(data.value.win_prob * 100).toFixed(1)}%</span>
+                        <span style="color: #4a9eff;">Mom: ${data.value.momentum.toFixed(2)}</span>
+                        <span style="color: #f1c40f;">Eff: ${(data.value.efficiency * 100).toFixed(1)}%</span>
+                    </div>
+                    <div style="font-family: monospace; display: flex; flex-direction: column; gap: 4px;">`;
+
+                data.actions.forEach(a => {
+                    const probColor = a.logit > 0 ? '#2ecc71' : (a.logit > -2 ? '#f1c40f' : '#aaa');
+                    html += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 3px;">
+                            <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 10px;">${a.desc}</span>
+                            <span style="color: ${probColor}; font-weight: bold; min-width: 45px; text-align: right;">${a.logit.toFixed(2)}</span>
+                        </div>`;
+                });
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+            } else {
+                resultsDiv.innerHTML = `<div style="color: #e74c3c;">Error: ${data.error || 'Unknown error'}</div>`;
+            }
+        } catch (e) {
+            resultsDiv.innerHTML = `<div style="color: #e74c3c;">Failed to analyze: ${e.message}</div>`;
+        }
     }
 };
 

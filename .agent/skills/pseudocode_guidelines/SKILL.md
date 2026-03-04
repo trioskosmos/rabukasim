@@ -12,10 +12,11 @@ description: Definitions, standards, and workflows for writing card ability pseu
 
 ## Core Workflow
 
-1. **Locate Card**: Find the card ID using `tools/card_finder.py`.
-2. **Edit Pseudocode**: Add or update the entry in `data/consolidated_abilities.json`.
-3. **Compile**: Run `uv run python -m compiler.main` to apply changes to `cards_compiled.json`.
-4. **Verify**: Use `tools/card_finder.py <ID>` to check the compiled bytecode.
+1. **Instant Lookup & Triage**: Use `tools/test_pseudocode.py --card <ID>` to see current name, JP text, and compiled logic.
+2. **Rapid Iteration**: Test new pseudocode ideas instantly with `uv run python tools/test_pseudocode.py "..."`.
+3. **Reference Keywords**: If unsure of syntax, run `uv run python tools/test_pseudocode.py --reference` to see all valid triggers/effects and their parameters.
+4. **Finalize**: Add the verified pseudocode to `data/consolidated_abilities.json`.
+5. **Full Compile**: Run `uv run python -m compiler.main` to sync the master data.
 
 ## Syntax Standards
 

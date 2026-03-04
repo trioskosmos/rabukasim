@@ -81,6 +81,9 @@ pub const O_LOSE_EXCESS_HEARTS: i32 = 94;
 pub const O_SKIP_ACTIVATE_PHASE: i32 = 95;
 pub const O_PAY_ENERGY_DYNAMIC: i32 = 96;
 pub const O_PLACE_ENERGY_UNDER_MEMBER: i32 = 97;
+pub const O_CALC_SUM_COST: i32 = 106;
+pub const O_LOOK_REORDER_DISCARD: i32 = 125;
+pub const O_DIV_VALUE: i32 = 126;
 
 // Action ID Bases
 pub const ACTION_BASE_PASS: i32 = 0;

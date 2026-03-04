@@ -3,26 +3,35 @@ use crate::models::ParsedDecks;
 use tiny_http::Request;
 use engine_rust::core::logic::CardDatabase;
 
+pub fn normalize_code(code: &str) -> String {
+    code.trim()
+        .replace('＋', "+")
+        .replace('－', "-")
+        .replace('ー', "-")
+        .to_uppercase()
+}
+
 pub fn resolve_deck(main_codes: &[String], energy_codes: &[String], db: &CardDatabase) -> ParsedDecks {
     let mut members = Vec::new();
     let mut lives = Vec::new();
 
     for code in main_codes {
-        let trimmed_code = code.trim().to_uppercase();
-        if trimmed_code.is_empty() { continue; }
+        let norm_code = normalize_code(code);
+        if norm_code.is_empty() { continue; }
 
-        if let Some(id) = db.members.iter().find(|(_, m)| m.card_no.trim().to_uppercase() == trimmed_code).map(|(id, _)| *id) {
+        if let Some(id) = db.members.iter().find(|(_, m)| normalize_code(&m.card_no) == norm_code).map(|(id, _)| *id) {
             members.push(id);
-        } else if let Some(id) = db.lives.iter().find(|(_, l)| l.card_no.trim().to_uppercase() == trimmed_code).map(|(id, _)| *id) {
+        } else if let Some(id) = db.lives.iter().find(|(_, l)| normalize_code(&l.card_no) == norm_code).map(|(id, _)| *id) {
             lives.push(id);
         } else {
-            println!("[Deck] WARNING: Failed to resolve card code: '{}'", trimmed_code);
+            println!("[Deck] WARNING: Failed to resolve card code: '{}'", norm_code);
         }
     }
 
     let mut energy = Vec::new();
     for code in energy_codes {
-        if let Some(id) = db.energy_db.iter().find(|(_, v)| v.card_no == *code).map(|(id, _)| *id) {
+        let norm_code = normalize_code(code);
+        if let Some(id) = db.energy_db.iter().find(|(_, v)| normalize_code(&v.card_no) == norm_code).map(|(id, _)| *id) {
             energy.push(id);
         }
     }

@@ -1213,7 +1213,7 @@
     ]
   },
   "{{live_start.png|ライブ開始時}}このゲームの1ターン目のライブフェイズの場合、このカードのスコアを＋１し、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は、{{icon_blade.png|ブレード}}を得る。": {
-    "pseudocode": "TRIGGER: ON_LIVE_START (Once per turn)\n\nEFFECT: BOOST_SCORE(1) -> SELF; ADD_BLADES(1) -> PLAYER {FILTER=\"GROUP_ID=2\", TARGET=\"MEMBER\"}",
+    "pseudocode": "TRIGGER: ON_LIVE_START\nCONDITION: IS_TURN(1)\nEFFECT: BOOST_SCORE(1) -> SELF; ADD_BLADES(1) -> PLAYER {FILTER=\"GROUP_ID=2\", TARGET=\"MEMBER\"}",
     "cards": [
       "PL!N-bp4-029-L"
     ]
@@ -2497,7 +2497,7 @@
     ]
   },
   "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『Aqours』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCOST: TAP_SELF; DISCARD_HAND(1) (Optional)\nEFFECT: LOOK_DECK(5) {FILTER=\"GROUP_ID=1, COST_GE_9, TYPE_MEMBER\"}; MOVE_TO_HAND(1); DISCARD_REMAINDER",
+    "pseudocode": "TRIGGER: ON_PLAY\nCOST: TAP_SELF; DISCARD_HAND(1) (Optional)\nEFFECT: LOOK_AND_CHOOSE(5) {FILTER=\"GROUP_ID=1, COST_GE_9, TYPE_MEMBER\"} -> CARD_HAND; MOVE_TO_DISCARD(REMAINDER) -> CARD_DISCARD",
     "cards": [
       "PL!S-bp5-006-AR",
       "PL!S-bp5-006-P",
@@ -2505,7 +2505,7 @@
     ]
   },
   "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『Liella!』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCOST: TAP_SELF; DISCARD_HAND(1) (Optional)\nEFFECT: LOOK_DECK(5) {FILTER=\"GROUP_ID=3, COST_GE_9, TYPE_MEMBER\"}; MOVE_TO_HAND(1); DISCARD_REMAINDER",
+    "pseudocode": "TRIGGER: ON_PLAY\nCOST: TAP_SELF; DISCARD_HAND(1) (Optional)\nEFFECT: LOOK_AND_CHOOSE(5) {FILTER=\"GROUP_ID=3, COST_GE_9, TYPE_MEMBER\"} -> CARD_HAND; MOVE_TO_DISCARD(REMAINDER) -> CARD_DISCARD",
     "cards": [
       "PL!SP-bp5-008-AR",
       "PL!SP-bp5-008-P",
@@ -2513,7 +2513,7 @@
     ]
   },
   "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCOST: TAP_SELF; DISCARD_HAND(1) (Optional)\nEFFECT: LOOK_DECK(5) {FILTER=\"GROUP_ID=0, COST_GE_9\"}; MOVE_TO_HAND(1); DISCARD_REMAINDER",
+    "pseudocode": "TRIGGER: ON_PLAY\nCOST: TAP_SELF; DISCARD_HAND(1) (Optional)\nEFFECT: LOOK_AND_CHOOSE(5) {FILTER=\"GROUP_ID=0, COST_GE_9, TYPE_MEMBER\"} -> CARD_HAND; MOVE_TO_DISCARD(REMAINDER) -> CARD_DISCARD",
     "cards": [
       "PL!-bp5-002-AR",
       "PL!-bp5-002-P",
@@ -2521,7 +2521,7 @@
     ]
   },
   "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『蓮ノ空』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCOST: TAP_SELF; DISCARD_HAND(1) (Optional)\nEFFECT: LOOK_DECK(5) {FILTER=\"GROUP_ID=4, COST_GE_9, TYPE_MEMBER\"}; MOVE_TO_HAND(1); DISCARD_REMAINDER",
+    "pseudocode": "TRIGGER: ON_PLAY\nCOST: TAP_SELF; DISCARD_HAND(1) (Optional)\nEFFECT: LOOK_AND_CHOOSE(5) {FILTER=\"GROUP_ID=4, COST_GE_9, TYPE_MEMBER\"} -> CARD_HAND; MOVE_TO_DISCARD(REMAINDER) -> CARD_DISCARD",
     "cards": [
       "PL!HS-bp5-008-AR",
       "PL!HS-bp5-008-P",
@@ -2529,7 +2529,7 @@
     ]
   },
   "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『虹ヶ咲』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCOST: TAP_SELF; DISCARD_HAND(1) (Optional)\nEFFECT: LOOK_DECK(5) {FILTER=\"GROUP_ID=2, COST_GE_9, TYPE_MEMBER\"}; MOVE_TO_HAND(1); DISCARD_REMAINDER",
+    "pseudocode": "TRIGGER: ON_PLAY\nCOST: TAP_SELF; DISCARD_HAND(1) (Optional)\nEFFECT: LOOK_AND_CHOOSE(5) {FILTER=\"GROUP_ID=2, COST_GE_9, TYPE_MEMBER\"} -> CARD_HAND; MOVE_TO_DISCARD(REMAINDER) -> CARD_DISCARD",
     "cards": [
       "PL!N-bp5-009-AR",
       "PL!N-bp5-009-P",
