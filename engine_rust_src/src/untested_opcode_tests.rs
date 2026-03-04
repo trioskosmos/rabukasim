@@ -23,9 +23,9 @@ fn test_opcode_formation_change_basic() {
     add_card(&mut db, 4002, "Member_B", vec![1], vec![]);
 
     // Place members on stage: slot 0 = Member_A, slot 1 = Member_B
-    state.core.players[0].stage = [4001, 4002, -1];
-    state.core.players[0].set_tapped(0, false);
-    state.core.players[0].set_tapped(1, false);
+    state.players[0].stage = [4001, 4002, -1];
+    state.players[0].set_tapped(0, false);
+    state.players[0].set_tapped(1, false);
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -41,11 +41,11 @@ fn test_opcode_formation_change_basic() {
 
     // Verify swap occurred
     assert_eq!(
-        state.core.players[0].stage[0], 4002,
+        state.players[0].stage[0], 4002,
         "Member_B should now be in slot 0"
     );
     assert_eq!(
-        state.core.players[0].stage[1], 4001,
+        state.players[0].stage[1], 4001,
         "Member_A should now be in slot 1"
     );
 }
@@ -72,9 +72,9 @@ fn test_opcode_formation_change_triggers_position_change() {
     );
     add_card(&mut db, 4011, "Other_Member", vec![1], vec![]);
 
-    state.core.players[0].stage = [4010, 4011, -1];
-    state.core.players[0].hand = vec![].into();
-    state.core.players[0].deck = vec![3000, 3001, 3002].into();
+    state.players[0].stage = [4010, 4011, -1];
+    state.players[0].hand = vec![].into();
+    state.players[0].deck = vec![3000, 3001, 3002].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -89,7 +89,7 @@ fn test_opcode_formation_change_triggers_position_change() {
     // OnPositionChange triggers for BOTH members that moved (4010 and 4011)
     // So we expect 2 cards drawn (1 for each member's OnPositionChange)
     assert!(
-        state.core.players[0].hand.len() >= 1,
+        state.players[0].hand.len() >= 1,
         "Should have drawn at least 1 card from OnPositionChange trigger"
     );
 }
@@ -106,7 +106,7 @@ fn test_opcode_prevent_set_to_success_pile() {
     state.ui.silent = true;
 
     // Initially the flag should be 0
-    assert_eq!(state.core.players[0].prevent_success_pile_set, 0);
+    assert_eq!(state.players[0].prevent_success_pile_set, 0);
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -129,7 +129,7 @@ fn test_opcode_prevent_set_to_success_pile() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(
-        state.core.players[0].prevent_success_pile_set, 1,
+        state.players[0].prevent_success_pile_set, 1,
         "prevent_success_pile_set should be set to 1"
     );
 }
@@ -153,7 +153,7 @@ fn test_opcode_reduce_live_set_limit_stacking() {
 
     // Should stack (saturating_add)
     assert_eq!(
-        state.core.players[0].prevent_success_pile_set, 4,
+        state.players[0].prevent_success_pile_set, 4,
         "prevent_success_pile_set should stack to 4 via O_REDUCE_LIVE_SET_LIMIT"
     );
 }
@@ -180,7 +180,7 @@ fn test_opcode_set_heart_cost() {
 
     // Verify heart_req_additions was modified for color 0
     assert_eq!(
-        state.core.players[0].heart_req_additions.get_color_count(0),
+        state.players[0].heart_req_additions.get_color_count(0),
         3,
         "Pink heart cost should be increased by 3"
     );
@@ -207,12 +207,12 @@ fn test_opcode_set_heart_cost_multiple_colors() {
     state.resolve_bytecode_cref(&db, &bc2, &ctx);
 
     assert_eq!(
-        state.core.players[0].heart_req_additions.get_color_count(1),
+        state.players[0].heart_req_additions.get_color_count(1),
         2,
         "Green heart cost should be 2"
     );
     assert_eq!(
-        state.core.players[0].heart_req_additions.get_color_count(2),
+        state.players[0].heart_req_additions.get_color_count(2),
         4,
         "Blue heart cost should be 4"
     );
@@ -241,9 +241,9 @@ fn test_condition_has_color_true() {
     db.members.insert(3500, m.clone());
     db.members_vec[3500] = Some(m);
 
-    state.core.players[0].stage = [3500, -1, -1];
-    state.core.players[0].hand = vec![].into();
-    state.core.players[0].deck = vec![3000].into();
+    state.players[0].stage = [3500, -1, -1];
+    state.players[0].hand = vec![].into();
+    state.players[0].deck = vec![3000].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -278,7 +278,7 @@ fn test_condition_has_color_true() {
 
     // If condition passed, should have drawn a card
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         1,
         "Should have drawn 1 card when color is present"
     );
@@ -303,9 +303,9 @@ fn test_condition_has_color_false() {
     db.members.insert(3501, m.clone());
     db.members_vec[3501] = Some(m);
 
-    state.core.players[0].stage = [3501, -1, -1];
-    state.core.players[0].hand = vec![].into();
-    state.core.players[0].deck = vec![3000].into();
+    state.players[0].stage = [3501, -1, -1];
+    state.players[0].hand = vec![].into();
+    state.players[0].deck = vec![3000].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -339,7 +339,7 @@ fn test_condition_has_color_false() {
 
     // If condition failed, should NOT have drawn a card
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         0,
         "Should not have drawn a card when color not present"
     );
@@ -356,8 +356,8 @@ fn test_condition_has_moved_true() {
     let mut state = create_test_state();
     state.ui.silent = true;
 
-    state.core.players[0].stage = [3000, -1, -1];
-    state.core.players[0].set_moved(0, true); // Mark slot 0 as moved
+    state.players[0].stage = [3000, -1, -1];
+    state.players[0].set_moved(0, true); // Mark slot 0 as moved
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -389,13 +389,13 @@ fn test_condition_has_moved_true() {
         0,
         0,
     ];
-    state.core.players[0].hand = vec![].into();
-    state.core.players[0].deck = vec![3001].into();
+    state.players[0].hand = vec![].into();
+    state.players[0].deck = vec![3001].into();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Condition should pass, draw should execute
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         1,
         "Should have drawn a card when member has moved"
     );
@@ -408,7 +408,7 @@ fn test_condition_has_moved_false() {
     let mut state = create_test_state();
     state.ui.silent = true;
 
-    state.core.players[0].stage = [3000, -1, -1];
+    state.players[0].stage = [3000, -1, -1];
     // Don't set moved flag - it should be false by default
 
     let ctx = AbilityContext {
@@ -439,13 +439,13 @@ fn test_condition_has_moved_false() {
         0,
         0,
     ];
-    state.core.players[0].hand = vec![].into();
-    state.core.players[0].deck = vec![3001].into();
+    state.players[0].hand = vec![].into();
+    state.players[0].deck = vec![3001].into();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Condition should fail, draw should NOT execute
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         0,
         "Should not have drawn a card when member has not moved"
     );
@@ -466,7 +466,7 @@ fn test_formation_change_with_group_condition() {
     add_card(&mut db, 6001, "GroupA_Member1", vec![3], vec![]); // Group 3
     add_card(&mut db, 6002, "GroupA_Member2", vec![3], vec![]); // Group 3
 
-    state.core.players[0].stage = [6001, 6002, -1];
+    state.players[0].stage = [6001, 6002, -1];
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -480,15 +480,15 @@ fn test_formation_change_with_group_condition() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(
-        state.core.players[0].stage[0], -1,
+        state.players[0].stage[0], -1,
         "Slot 0 should be empty after swap"
     );
     assert_eq!(
-        state.core.players[0].stage[2], 6001,
+        state.players[0].stage[2], 6001,
         "Slot 2 should have GroupA_Member1"
     );
     assert_eq!(
-        state.core.players[0].stage[1], 6002,
+        state.players[0].stage[1], 6002,
         "Slot 1 should still have GroupA_Member2"
     );
 }
@@ -501,7 +501,7 @@ fn test_prevent_success_pile_integration() {
     state.ui.silent = true;
 
     // Set up a live in live_zone
-    state.core.players[0].live_zone = [55001, -1, -1];
+    state.players[0].live_zone = [55001, -1, -1];
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -525,5 +525,5 @@ fn test_prevent_success_pile_integration() {
 
     // The flag should prevent the live from being moved to success_lives
     // This would be tested in the actual live success flow
-    assert_eq!(state.core.players[0].prevent_success_pile_set, 1);
+    assert_eq!(state.players[0].prevent_success_pile_set, 1);
 }

@@ -340,7 +340,14 @@ pub const KEYWORD_ACTIVATED_MEMBER_BY_GROUP: u64 = 9223372036854775808u64;
 pub const AREA_LEFT: i32 = 1;
 pub const AREA_CENTER: i32 = 2;
 pub const AREA_RIGHT: i32 = 3;
-pub const ZONE_STAY: i32 = 4;
+// Zone Types
+pub const ZONE_DEFAULT: i32 = 0;
+pub const ZONE_DECK_TOP: i32 = 1;
+pub const ZONE_DECK_BOTTOM: i32 = 2;
+pub const ZONE_ENERGY: i32 = 3;
+pub const ZONE_STAGE: i32 = 4;
 pub const ZONE_HAND: i32 = 6;
 pub const ZONE_DISCARD: i32 = 7;
-pub const ZONE_ENERGY: i32 = 3;
+pub const ZONE_LIVE_SET: i32 = 13;
+pub const ZONE_SUCCESS_PILE: i32 = 14;
+pub const ZONE_YELL: i32 = 15;

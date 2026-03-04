@@ -30,7 +30,7 @@ impl ResponseGenerator {
         state: &GameState,
         receiver: &mut R,
     ) {
-        let pi = if let Some(p) = state.core.interaction_stack.last() {
+        let pi = if let Some(p) = state.interaction_stack.last() {
             p
         } else {
             return;
@@ -49,13 +49,13 @@ impl ResponseGenerator {
             return;
         }
 
-        let player = &state.core.players[p_idx];
+        let player = &state.players[p_idx];
 
         // 1. Determine action 0 (fallback/skip)
         // Only allow action 0 if the interaction is marked OPTIONAL in bytecode
         // or if the choice type is inherently skip-able.
         let mut allow_action_0 =
-            (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0;
+            (pi.filter_attr & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
 
         if choice_type == ChoiceType::Optional || choice_type == ChoiceType::SelectMode {
             allow_action_0 = true;
@@ -173,7 +173,7 @@ impl ResponseGenerator {
             }
             O_TAP_OPPONENT => {
                 // If it's TAP_O, p_idx IS the opponent making the choice for themselves.
-                for (i, &cid) in state.core.players[p_idx].stage.iter().enumerate() {
+                for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
                     if cid != -1 {
                         receiver.add_action(
                             (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
@@ -352,7 +352,7 @@ impl ResponseGenerator {
         pi: &PendingInteraction,
         abilities: Option<&Vec<Ability>>,
     ) {
-        let player = &state.core.players[p_idx];
+        let player = &state.players[p_idx];
         let mut final_filter_attr = pi.filter_attr;
         if final_filter_attr == 0 {
             if let Some(abs) = abilities {
@@ -451,7 +451,7 @@ impl ResponseGenerator {
         if state.debug.debug_mode {
             println!("[DEBUG] generate_select_member_actions: p_idx={}, filter_attr={:X}", p_idx, filter_attr);
         }
-        let player = &state.core.players[p_idx];
+        let player = &state.players[p_idx];
         let packed_zone = (filter_attr >> 12) & 0x0F;
         let target_slot = if packed_zone > 0 {
             packed_zone as usize
@@ -561,9 +561,9 @@ impl ResponseGenerator {
                                 let s = bc[effect_ip + 4];
 
                                 if target_op == O_PAY_ENERGY {
-                                    let available = (0..state.core.players[p_idx].energy_zone.len())
+                                    let available = (0..state.players[p_idx].energy_zone.len())
                                         .filter(|&idx| {
-                                            !state.core.players[p_idx].is_energy_tapped(idx)
+                                            !state.players[p_idx].is_energy_tapped(idx)
                                         })
                                         .count()
                                         as i32;
@@ -574,7 +574,7 @@ impl ResponseGenerator {
                                     // Source zone can be packed: lower byte = slot/target, upper bytes = source zone
                                     // s=6 means Hand directly, s=0x60001 means source=Hand(6) packed
                                     let source_zone = if s > 255 { (s >> 16) & 0xFF } else { s };
-                                    let hand_len = state.core.players[p_idx].hand.len() as i32;
+                                    let hand_len = state.players[p_idx].hand.len() as i32;
                                     if (source_zone == 6 || source_zone == 0) && hand_len < v {
                                         option_valid = false;
                                     }

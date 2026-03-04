@@ -212,12 +212,12 @@ impl SemanticAssertionEngine {
                     };
                     // Put the card being tested in the live zone
                     if self.db.get_live(real_id).is_some() {
-                        state.core.players[0].live_zone[0] = real_id;
+                        state.players[0].live_zone[0] = real_id;
                     }
                 }
 
-                let p0_init = ZoneSnapshot::capture(&state.core.players[0], &state);
-                let p1_init = ZoneSnapshot::capture(&state.core.players[1], &state);
+                let p0_init = ZoneSnapshot::capture(&state.players[0], &state);
+                let p1_init = ZoneSnapshot::capture(&state.players[1], &state);
 
                 // --- Execution Phase ---
                 if trigger_type == TriggerType::Activated {
@@ -234,7 +234,7 @@ impl SemanticAssertionEngine {
                     match trigger_type {
                         TriggerType::OnLeaves => {
                             // Move from stage to discard to trigger
-                            state.core.players[0].stage[0] = -1;
+                            state.players[0].stage[0] = -1;
                             state.trigger_event(&self.db, trigger_type, 0, real_id, 0, 0, -1);
                         }
                         TriggerType::TurnEnd => {
@@ -301,13 +301,13 @@ impl SemanticAssertionEngine {
         let trigger_type = self.map_trigger_type(&ability.trigger);
 
         // Minimal setup: just the card on stage, but no energy, no lives, no discard, no opponent
-        state.core.players[0].stage[0] = real_id;
-        state.core.players[0].energy_zone.clear();
-        state.core.players[0].success_lives.clear();
-        state.core.players[0].discard.clear();
-        state.core.players[1].stage[0] = -1; // Empty opponent stage
+        state.players[0].stage[0] = real_id;
+        state.players[0].energy_zone.clear();
+        state.players[0].success_lives.clear();
+        state.players[0].discard.clear();
+        state.players[1].stage[0] = -1; // Empty opponent stage
 
-        let prev_snapshot = ZoneSnapshot::capture(&state.core.players[0], &state);
+        let prev_snapshot = ZoneSnapshot::capture(&state.players[0], &state);
 
         // Execute
         if trigger_type == TriggerType::Activated {
@@ -330,7 +330,7 @@ impl SemanticAssertionEngine {
             state.step(&self.db, EngineAction::Pass.id()).ok();
         }
 
-        let current_snapshot = ZoneSnapshot::capture(&state.core.players[0], &state);
+        let current_snapshot = ZoneSnapshot::capture(&state.players[0], &state);
         let deltas = self.diff_snapshots(&prev_snapshot, &current_snapshot);
 
         if !deltas.is_empty() {
@@ -530,8 +530,8 @@ impl SemanticAssertionEngine {
         // Setup environment
         Self::setup_environment(&mut state, &self.db, real_id, env);
 
-        let p0_init = ZoneSnapshot::capture(&state.core.players[0], &state);
-        let p1_init = ZoneSnapshot::capture(&state.core.players[1], &state);
+        let p0_init = ZoneSnapshot::capture(&state.players[0], &state);
+        let p1_init = ZoneSnapshot::capture(&state.players[1], &state);
 
         // Execute
         if trigger_type == TriggerType::Activated {
@@ -622,8 +622,8 @@ impl SemanticAssertionEngine {
                 self.resolve_interaction(state)
                     .expect("Failed to resolve interaction during audit");
                 // Capture new state AFTER resolving interaction
-                let curr_p0 = ZoneSnapshot::capture(&state.core.players[0], &state);
-                let curr_p1 = ZoneSnapshot::capture(&state.core.players[1], &state);
+                let curr_p0 = ZoneSnapshot::capture(&state.players[0], &state);
+                let curr_p1 = ZoneSnapshot::capture(&state.players[1], &state);
 
                 // Try to match after resolution
                 let mut matched_segments = 0;
@@ -664,8 +664,8 @@ impl SemanticAssertionEngine {
                 continue;
             }
 
-            let curr_p0 = ZoneSnapshot::capture(&state.core.players[0], &state);
-            let curr_p1 = ZoneSnapshot::capture(&state.core.players[1], &state);
+            let curr_p0 = ZoneSnapshot::capture(&state.players[0], &state);
+            let curr_p1 = ZoneSnapshot::capture(&state.players[1], &state);
 
             let mut matched_segments = 0;
             let mut error_if_fail = String::new();
@@ -755,13 +755,13 @@ impl SemanticAssertionEngine {
         let mut selected_idx = 0;
         match pi.choice_type {
             ChoiceType::SelectHandDiscard => {
-                if !state.core.players[p_idx].hand.is_empty() {
+                if !state.players[p_idx].hand.is_empty() {
                     // Prefer choosing a card that matches the filter
                     if pi.filter_attr != 0 {
                         let filter =
                             crate::core::logic::filter::CardFilter::from_attr(pi.filter_attr);
-                        for (i, &cid) in state.core.players[p_idx].hand.iter().enumerate() {
-                            if filter.matches(&self.db, cid, false) {
+                        for (i, &cid) in state.players[p_idx].hand.iter().enumerate() {
+                            if state.card_matches_filter(&self.db, cid, pi.filter_attr) {
                                 selected_idx = i as i32;
                                 break;
                             }
@@ -777,9 +777,9 @@ impl SemanticAssertionEngine {
                 };
                 // Prefer selecting a member that isn't tapped if possible
                 for i in 0..3 {
-                    if state.core.players[target_p].stage[i] >= 0 {
+                    if state.players[target_p].stage[i] >= 0 {
                         selected_idx = i as i32;
-                        if !state.core.players[target_p].is_tapped(i) {
+                        if !state.players[target_p].is_tapped(i) {
                             break;
                         }
                     }
@@ -789,13 +789,13 @@ impl SemanticAssertionEngine {
             | ChoiceType::SelectCards => {
                 // Select from looked_cards
                 // First, check if looked_cards has any valid cards
-                let has_valid_cards = state.core.players[p_idx]
+                let has_valid_cards = state.players[p_idx]
                     .looked_cards
                     .iter()
                     .any(|&c| c != -1);
 
                 if has_valid_cards {
-                    for (i, &cid) in state.core.players[p_idx].looked_cards.iter().enumerate() {
+                    for (i, &cid) in state.players[p_idx].looked_cards.iter().enumerate() {
                         if cid != -1 {
                             let matches = match pi.choice_type {
                                 ChoiceType::RecovL => self.db.get_live(cid).is_some(),
@@ -804,7 +804,7 @@ impl SemanticAssertionEngine {
                                     let filter = crate::core::logic::filter::CardFilter::from_attr(
                                         pi.filter_attr,
                                     );
-                                    filter.matches(&self.db, cid, false, None, &crate::core::logic::AbilityContext::default())
+                                    filter.matches(state, &self.db, cid, false, None, &crate::core::logic::AbilityContext::default())
                                 }
                                 _ => true,
                             };
@@ -820,7 +820,7 @@ impl SemanticAssertionEngine {
                     match pi.choice_type {
                         ChoiceType::RecovL => {
                             // Find a live card in discard
-                            for (i, &cid) in state.core.players[p_idx].discard.iter().enumerate() {
+                            for (i, &cid) in state.players[p_idx].discard.iter().enumerate() {
                                 if self.db.get_live(cid).is_some() {
                                     selected_idx = i as i32;
                                     break;
@@ -829,7 +829,7 @@ impl SemanticAssertionEngine {
                         }
                         ChoiceType::RecovM => {
                             // Find a member card in discard
-                            for (i, &cid) in state.core.players[p_idx].discard.iter().enumerate() {
+                            for (i, &cid) in state.players[p_idx].discard.iter().enumerate() {
                                 if self.db.get_member(cid).is_some() {
                                     selected_idx = i as i32;
                                     break;
@@ -838,7 +838,7 @@ impl SemanticAssertionEngine {
                         }
                         _ => {
                             // For LOOK_AND_CHOOSE, if looked_cards is empty, try deck
-                            if !state.core.players[p_idx].deck.is_empty() {
+                            if !state.players[p_idx].deck.is_empty() {
                                 selected_idx = 0;
                             }
                         }
@@ -847,9 +847,9 @@ impl SemanticAssertionEngine {
             }
             "ENERGY" | "SELECT_ENERGY" => {
                 // Select from energy zone (prefer untapped)
-                for (i, &_cid) in state.core.players[p_idx].energy_zone.iter().enumerate() {
+                for (i, &_cid) in state.players[p_idx].energy_zone.iter().enumerate() {
                     let mask = 1u64 << i;
-                    if (state.core.players[p_idx].tapped_energy_mask & mask) == 0 {
+                    if (state.players[p_idx].tapped_energy_mask & mask) == 0 {
                         selected_idx = i as i32;
                         break;
                     }
@@ -857,7 +857,7 @@ impl SemanticAssertionEngine {
             }
             ChoiceType::SelectLive => {
                 // Select from live zone
-                for (i, &cid) in state.core.players[p_idx].live_zone.iter().enumerate() {
+                for (i, &cid) in state.players[p_idx].live_zone.iter().enumerate() {
                     if cid >= 0 {
                         selected_idx = i as i32;
                         break;
@@ -922,57 +922,57 @@ impl SemanticAssertionEngine {
 
         // --- PLAYER 0 (card under test) ---
         // Energy (20 real cards, all active)
-        state.core.players[0]
+        state.players[0]
             .energy_zone
             .extend(energy_fill.iter().cloned());
 
         // Hand (mix of same-group members and generic members)
         for &id in same_group_members.iter().take(5) {
-            state.core.players[0].hand.push(id);
+            state.players[0].hand.push(id);
         }
         for &id in other_members.iter().skip(5).take(6) {
-            state.core.players[0].hand.push(id);
+            state.players[0].hand.push(id);
         }
 
         // Deck (real members + real lives)
         for &id in other_members.iter().take(10) {
-            state.core.players[0].deck.push(id);
+            state.players[0].deck.push(id);
         }
         for &id in real_lives.iter() {
-            state.core.players[0].deck.push(id);
+            state.players[0].deck.push(id);
         }
 
         // Discard (real members + real lives for recovery effects)
         for &id in same_group_members.iter().take(5) {
-            state.core.players[0].discard.push(id);
+            state.players[0].discard.push(id);
         }
         for &id in other_members.iter().skip(10).take(5) {
-            state.core.players[0].discard.push(id);
+            state.players[0].discard.push(id);
         }
         for &id in real_lives.iter().skip(1) {
-            state.core.players[0].discard.push(id);
+            state.players[0].discard.push(id);
         }
 
         // Success lives (real live IDs)
-        state.core.players[0]
+        state.players[0]
             .success_lives
             .extend(live_fill.iter().cloned());
-        state.core.players[0].live_zone[0] = real_lives.first().copied().unwrap_or(5003);
+        state.players[0].live_zone[0] = real_lives.first().copied().unwrap_or(5003);
 
         // Stage/Live placement using correct zones
         if db.get_member(real_id).is_some() {
-            state.core.players[0].stage[0] = real_id;
-            state.core.players[0].stage[1] = same_group_members.first().copied().unwrap_or(5000);
-            state.core.players[0].stage[2] = same_group_members.get(1).copied().unwrap_or(5000);
+            state.players[0].stage[0] = real_id;
+            state.players[0].stage[1] = same_group_members.first().copied().unwrap_or(5000);
+            state.players[0].stage[2] = same_group_members.get(1).copied().unwrap_or(5000);
         } else if db.get_live(real_id).is_some() {
-            state.core.players[0].live_zone[0] = real_id;
+            state.players[0].live_zone[0] = real_id;
             // Also need members on stage for many Live card effects
-            state.core.players[0].stage[0] = same_group_members.first().copied().unwrap_or(5000);
-            state.core.players[0].stage[1] = same_group_members.get(1).copied().unwrap_or(5000);
-            state.core.players[0].stage[2] = same_group_members.get(2).copied().unwrap_or(5000);
+            state.players[0].stage[0] = same_group_members.first().copied().unwrap_or(5000);
+            state.players[0].stage[1] = same_group_members.get(1).copied().unwrap_or(5000);
+            state.players[0].stage[2] = same_group_members.get(2).copied().unwrap_or(5000);
         }
 
-        state.core.players[0].score = 99;
+        state.players[0].score = 99;
 
         // --- PLAYER 1 (opponent — realistic state) ---
         let opp_members: Vec<i32> = db
@@ -984,27 +984,27 @@ impl SemanticAssertionEngine {
             .collect();
 
         // Opponent energy (10 real cards)
-        state.core.players[1]
+        state.players[1]
             .energy_zone
             .extend(energy_ids.iter().take(10).cloned());
 
         // Opponent hand (5 cards)
-        state.core.players[1]
+        state.players[1]
             .hand
             .extend(opp_members.iter().take(5).cloned());
 
         // Opponent stage (3 cards)
-        state.core.players[1].stage[0] = opp_members.get(5).copied().unwrap_or(5002);
-        state.core.players[1].stage[1] = opp_members.get(6).copied().unwrap_or(5002);
-        state.core.players[1].stage[2] = opp_members.get(7).copied().unwrap_or(5002);
+        state.players[1].stage[0] = opp_members.get(5).copied().unwrap_or(5002);
+        state.players[1].stage[1] = opp_members.get(6).copied().unwrap_or(5002);
+        state.players[1].stage[2] = opp_members.get(7).copied().unwrap_or(5002);
 
         // Opponent deck (10 cards)
-        state.core.players[1]
+        state.players[1]
             .deck
             .extend(opp_members.iter().skip(10).take(10).cloned());
 
         // Opponent discard (5 cards)
-        state.core.players[1]
+        state.players[1]
             .discard
             .extend(opp_members.iter().skip(20).take(5).cloned());
 
@@ -1022,23 +1022,23 @@ impl SemanticAssertionEngine {
                 break;
             }
         }
-        state.core.players[0]
+        state.players[0]
             .discard
             .extend(different_chars.iter().take(5).cloned());
-        state.core.players[0]
+        state.players[0]
             .deck
             .extend(different_chars.iter().skip(5).cloned());
 
         // Energy Activation support: Put some members in active energy zone
-        if state.core.players[0].energy_zone.len() >= 2 {
-            state.core.players[0].energy_zone[0] = different_chars.get(0).copied().unwrap_or(5001);
-            state.core.players[0].energy_zone[1] = different_chars.get(1).copied().unwrap_or(5002);
-            state.core.players[0].tapped_energy_mask = 0; // Ensure they are active
+        if state.players[0].energy_zone.len() >= 2 {
+            state.players[0].energy_zone[0] = different_chars.get(0).copied().unwrap_or(5001);
+            state.players[0].energy_zone[1] = different_chars.get(1).copied().unwrap_or(5002);
+            state.players[0].tapped_energy_mask = 0; // Ensure they are active
         }
 
         // Live Success support: Ensure we have enough success lives for conditions
-        if state.core.players[0].success_lives.len() < 3 {
-            state.core.players[0]
+        if state.players[0].success_lives.len() < 3 {
+            state.players[0]
                 .success_lives
                 .extend(live_fill.iter().take(3).cloned());
         }
@@ -1047,8 +1047,8 @@ impl SemanticAssertionEngine {
         // Ensure discard ALWAYS has at least 3 live cards for RECOVER_LIVE effects
         let live_ids: Vec<i32> = db.lives.keys().copied().take(5).collect();
         for &lid in &live_ids {
-            if !state.core.players[0].discard.contains(&lid) {
-                state.core.players[0].discard.push(lid);
+            if !state.players[0].discard.contains(&lid) {
+                state.players[0].discard.push(lid);
             }
         }
 
@@ -1060,13 +1060,13 @@ impl SemanticAssertionEngine {
             .map(|(&id, _)| id)
             .take(5)
             .collect();
-        state.core.players[0]
+        state.players[0]
             .deck
             .extend(high_cost_members.iter().cloned());
 
         // Reset stage tap state for clean ACTIVATE_MEMBER tests
         for i in 0..3 {
-            state.core.players[0].set_tapped(i, false);
+            state.players[0].set_tapped(i, false);
         }
 
         // --- Global state ---
@@ -1087,57 +1087,57 @@ impl SemanticAssertionEngine {
             }
             TestEnvironment::Minimal => {
                 // Just the card on stage, nothing else
-                state.core.players[0].stage[0] = real_id;
-                state.core.players[0].energy_zone.clear();
-                state.core.players[0].hand.clear();
-                state.core.players[0].deck.clear();
-                state.core.players[0].discard.clear();
-                state.core.players[0].success_lives.clear();
-                state.core.players[1].stage[0] = -1;
-                state.core.players[1].stage[1] = -1;
-                state.core.players[1].stage[2] = -1;
+                state.players[0].stage[0] = real_id;
+                state.players[0].energy_zone.clear();
+                state.players[0].hand.clear();
+                state.players[0].deck.clear();
+                state.players[0].discard.clear();
+                state.players[0].success_lives.clear();
+                state.players[1].stage[0] = -1;
+                state.players[1].stage[1] = -1;
+                state.players[1].stage[2] = -1;
             }
             TestEnvironment::NoEnergy => {
                 // Standard setup but no energy
                 Self::setup_oracle_environment(state, db, real_id);
-                state.core.players[0].energy_zone.clear();
+                state.players[0].energy_zone.clear();
             }
             TestEnvironment::NoHand => {
                 // Standard setup but no hand
                 Self::setup_oracle_environment(state, db, real_id);
-                state.core.players[0].hand.clear();
+                state.players[0].hand.clear();
             }
             TestEnvironment::FullHand => {
                 // Standard setup with full hand (11 cards)
                 Self::setup_oracle_environment(state, db, real_id);
-                state.core.players[0].hand.clear();
+                state.players[0].hand.clear();
                 // Fill hand to max (11 cards)
                 let fill_cards: Vec<i32> = db.members.keys().take(11).cloned().collect();
                 for id in fill_cards {
-                    if state.core.players[0].hand.len() < 11 {
-                        state.core.players[0].hand.push(id);
+                    if state.players[0].hand.len() < 11 {
+                        state.players[0].hand.push(id);
                     }
                 }
             }
             TestEnvironment::OpponentEmpty => {
                 // Standard setup but opponent has empty stage
                 Self::setup_oracle_environment(state, db, real_id);
-                state.core.players[1].stage[0] = -1;
-                state.core.players[1].stage[1] = -1;
-                state.core.players[1].stage[2] = -1;
+                state.players[1].stage[0] = -1;
+                state.players[1].stage[1] = -1;
+                state.players[1].stage[2] = -1;
             }
             TestEnvironment::TappedMembers => {
                 // Standard setup with some tapped members
                 Self::setup_oracle_environment(state, db, real_id);
                 // Tap first two members
-                state.core.players[0].set_tapped(0, true);
-                state.core.players[0].set_tapped(1, true);
+                state.players[0].set_tapped(0, true);
+                state.players[0].set_tapped(1, true);
             }
             TestEnvironment::LowScore => {
                 // Standard setup but with low score
                 Self::setup_oracle_environment(state, db, real_id);
-                state.core.players[0].score = 0;
-                state.core.players[1].score = 50; // Opponent has higher score
+                state.players[0].score = 0;
+                state.players[1].score = 50; // Opponent has higher score
             }
         }
         state.phase = Phase::Main;
@@ -1177,8 +1177,8 @@ impl SemanticAssertionEngine {
         };
 
         let _ability = abilities.get(ab_idx).ok_or("Ability not found")?;
-        let mut last_p0 = ZoneSnapshot::capture(&state.core.players[0], &state);
-        let mut last_p1 = ZoneSnapshot::capture(&state.core.players[1], &state);
+        let mut last_p0 = ZoneSnapshot::capture(&state.players[0], &state);
+        let mut last_p1 = ZoneSnapshot::capture(&state.players[1], &state);
 
         if trigger_type == TriggerType::Activated {
             state.activate_ability(&self.db, 0, ab_idx).ok();
@@ -1199,10 +1199,10 @@ impl SemanticAssertionEngine {
             state.process_trigger_queue(&self.db);
         } else if trigger_type == TriggerType::Constant {
             let mut deltas = Vec::new();
-            if state.core.players[0].live_score_bonus > 0 {
+            if state.players[0].live_score_bonus > 0 {
                 deltas.push(SemanticDelta {
                     tag: "SCORE_DELTA".to_string(),
-                    value: serde_json::json!(state.core.players[0].live_score_bonus),
+                    value: serde_json::json!(state.players[0].live_score_bonus),
                 });
             }
             return Ok(Some(SemanticAbility {
@@ -1216,8 +1216,8 @@ impl SemanticAssertionEngine {
         }
 
         // Record initial effects
-        let curr_p0 = ZoneSnapshot::capture(&state.core.players[0], &state);
-        let curr_p1 = ZoneSnapshot::capture(&state.core.players[1], &state);
+        let curr_p0 = ZoneSnapshot::capture(&state.players[0], &state);
+        let curr_p1 = ZoneSnapshot::capture(&state.players[1], &state);
         let d_p0 = self.diff_snapshots(&last_p0, &curr_p0);
         let d_p1 = self.diff_snapshots(&last_p1, &curr_p1);
 
@@ -1248,8 +1248,8 @@ impl SemanticAssertionEngine {
                 state.step(&self.db, EngineAction::Pass.id()).ok();
             }
 
-            let curr_p0 = ZoneSnapshot::capture(&state.core.players[0], &state);
-            let curr_p1 = ZoneSnapshot::capture(&state.core.players[1], &state);
+            let curr_p0 = ZoneSnapshot::capture(&state.players[0], &state);
+            let curr_p1 = ZoneSnapshot::capture(&state.players[1], &state);
             let d_p0 = self.diff_snapshots(&last_p0, &curr_p0);
             let d_p1 = self.diff_snapshots(&last_p1, &curr_p1);
 
@@ -2257,18 +2257,18 @@ mod tests {
 
                             // Capture initial snapshot
                             let initial_snapshot =
-                                ZoneSnapshot::capture(&state.core.players[0], &state);
+                                ZoneSnapshot::capture(&state.players[0], &state);
                             println!(
                                 "     Initial ZoneSnapshot hand_len: {}",
                                 initial_snapshot.hand_len
                             );
                             println!(
                                 "     Raw hand array len: {}",
-                                state.core.players[0].hand.len()
+                                state.players[0].hand.len()
                             );
                             println!(
                                 "     Hand cards (first 5): {:?}",
-                                state.core.players[0]
+                                state.players[0]
                                     .hand
                                     .iter()
                                     .take(5)
@@ -2296,18 +2296,18 @@ mod tests {
 
                             // Capture final snapshot
                             let final_snapshot =
-                                ZoneSnapshot::capture(&state.core.players[0], &state);
+                                ZoneSnapshot::capture(&state.players[0], &state);
                             println!(
                                 "     Final ZoneSnapshot hand_len: {}",
                                 final_snapshot.hand_len
                             );
                             println!(
                                 "     Final raw hand array len: {}",
-                                state.core.players[0].hand.len()
+                                state.players[0].hand.len()
                             );
                             println!(
                                 "     Final hand cards (first 5): {:?}",
-                                state.core.players[0]
+                                state.players[0]
                                     .hand
                                     .iter()
                                     .take(5)
@@ -2419,23 +2419,23 @@ mod tests {
 
         println!(
             "[DEBUG] success_lives: {:?}",
-            state.core.players[0].success_lives
+            state.players[0].success_lives
         );
-        println!("[DEBUG] discard: {:?}", state.core.players[0].discard);
+        println!("[DEBUG] discard: {:?}", state.players[0].discard);
 
         // Check if condition would pass
-        let count = state.core.players[0].success_lives.len();
+        let count = state.players[0].success_lives.len();
         println!("[DEBUG] success_lives count: {}", count);
 
         // Check if discard contains live cards
-        for &cid in &state.core.players[0].discard {
+        for &cid in &state.players[0].discard {
             if engine.db.get_live(cid).is_some() {
                 println!("[DEBUG] Found live card in discard: {}", cid);
             }
         }
 
         // Check if success_lives contains live cards
-        for &cid in &state.core.players[0].success_lives {
+        for &cid in &state.players[0].success_lives {
             if engine.db.get_live(cid).is_some() {
                 println!("[DEBUG] Found live card in success_lives: {}", cid);
             } else {
@@ -2480,19 +2480,19 @@ mod tests {
                 // For Live cards, ensure phase and zone are correct
                 if engine.db.get_live(real_id).is_some() {
                     state.phase = Phase::LiveResult;
-                    state.core.players[0].live_zone[0] = real_id;
+                    state.players[0].live_zone[0] = real_id;
                     println!("[DEBUG] Set Phase::LiveResult for Live card {}", cid);
                 }
 
                 if cid == "PL!N-bp3-031-L" {
                     // Tap 2 members on stage to check multiplier (1*2 = 2)
-                    state.core.players[0].set_tapped(0, true);
-                    state.core.players[0].set_tapped(1, true);
+                    state.players[0].set_tapped(0, true);
+                    state.players[0].set_tapped(1, true);
                     println!("[DEBUG] Tapped members for 31-L test.");
                 }
 
-                let p0_init = ZoneSnapshot::capture(&state.core.players[0], &state);
-                let p1_init = ZoneSnapshot::capture(&state.core.players[1], &state);
+                let p0_init = ZoneSnapshot::capture(&state.players[0], &state);
+                let p1_init = ZoneSnapshot::capture(&state.players[1], &state);
 
                 let trigger_type = engine.map_trigger_type(&truth.abilities[idx].trigger);
 
@@ -2514,7 +2514,7 @@ mod tests {
                         // Dump final state bonus
                         println!(
                             "     Final live_score_bonus: {}",
-                            state.core.players[0].live_score_bonus
+                            state.players[0].live_score_bonus
                         );
                         panic!("Targeted audit failed for {}", cid);
                     }
@@ -2535,7 +2535,7 @@ mod tests {
 
         // Ensure Phase is correct for ON_LIVE_START
         state.phase = Phase::LiveResult;
-        state.core.players[0].live_zone[0] = real_id;
+        state.players[0].live_zone[0] = real_id;
 
         // --- Setup for Ability 0: Center Cost Comparison ---
         // Player Center (Slot 1): Ensure it's a Liella! member (Group 3) with high cost
@@ -2546,7 +2546,7 @@ mod tests {
             .find(|(_, m)| m.groups.contains(&3) && m.cost >= 7)
             .map(|(&id, _)| id)
             .unwrap_or(33013); // Default to a known high-cost Liella if possible
-        state.core.players[0].stage[1] = liella_high_cost;
+        state.players[0].stage[1] = liella_high_cost;
 
         // Opponent Center (Slot 1): Ensure lower cost
         let low_cost_mbr = engine
@@ -2556,7 +2556,7 @@ mod tests {
             .find(|(_, m)| m.cost <= 3)
             .map(|(&id, _)| id)
             .unwrap_or(1001);
-        state.core.players[1].stage[1] = low_cost_mbr;
+        state.players[1].stage[1] = low_cost_mbr;
 
         // --- Setup for Ability 1: Left Area + Hearts ---
         // Player Left (Slot 0): Liella! member with 3+ hearts
@@ -2567,14 +2567,14 @@ mod tests {
             .find(|(&id, m)| id != liella_high_cost && m.groups.contains(&3))
             .map(|(&id, _)| id)
             .unwrap_or(33014);
-        state.core.players[0].stage[0] = liella_mbr;
+        state.players[0].stage[0] = liella_mbr;
         // Add 3 heart02 buffs to slot 0
         for _ in 0..3 {
-            state.core.players[0].add_heart_buff(0, 2, 0); // heart_id=2 (Heart02)
+            state.players[0].add_heart_buff(0, 2, 0); // heart_id=2 (Heart02)
         }
 
-        let initial_score = state.core.players[0].score;
-        let initial_blades = state.core.players[0].get_blade_count(0);
+        let initial_score = state.players[0].score;
+        let initial_blades = state.players[0].get_blade_count(0);
 
         println!("[TEST] Triggering ON_LIVE_START for Card 579...");
         println!(
@@ -2584,7 +2584,7 @@ mod tests {
         );
         println!(
             "[TEST] P0 Left Slot Hearts: {}",
-            state.core.players[0].get_heart_count(0, 2)
+            state.players[0].get_heart_count(0, 2)
         );
 
         // Trigger the event
@@ -2605,8 +2605,8 @@ mod tests {
             safety += 1;
         }
 
-        let final_score = state.core.players[0].score;
-        let final_blades = state.core.players[0].get_blade_count(0);
+        let final_score = state.players[0].score;
+        let final_blades = state.players[0].get_blade_count(0);
 
         println!(
             "[TEST] Results -> Score: {} (Delta: {}), Blades: {} (Delta: {})",

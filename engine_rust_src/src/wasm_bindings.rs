@@ -101,29 +101,29 @@ impl WasmEngine {
         self.state.current_player as u32
     }
     pub fn get_score(&self, p_idx: usize) -> u32 {
-        self.state.core.players[p_idx].score
+        self.state.players[p_idx].score
     }
     pub fn get_lives(&self, p_idx: usize) -> usize {
-        self.state.core.players[p_idx].success_lives.len()
+        self.state.players[p_idx].success_lives.len()
     }
 
     pub fn get_hand(&self, p_idx: usize) -> Vec<i32> {
-        self.state.core.players[p_idx].hand.to_vec()
+        self.state.players[p_idx].hand.to_vec()
     }
     pub fn get_stage(&self, p_idx: usize) -> Vec<i32> {
-        self.state.core.players[p_idx]
+        self.state.players[p_idx]
             .stage
             .iter()
             .map(|&x| x as i32)
             .collect()
     }
     pub fn get_energy(&self, p_idx: usize) -> Vec<i32> {
-        self.state.core.players[p_idx].energy_zone.to_vec()
+        self.state.players[p_idx].energy_zone.to_vec()
     }
     pub fn get_tapped_energy(&self, p_idx: usize) -> Vec<u8> {
-        (0..self.state.core.players[p_idx].energy_zone.len())
+        (0..self.state.players[p_idx].energy_zone.len())
             .map(|i| {
-                if self.state.core.players[p_idx].is_energy_tapped(i) {
+                if self.state.players[p_idx].is_energy_tapped(i) {
                     1
                 } else {
                     0

@@ -49,8 +49,8 @@ fn test_baton_pass_restriction() {
     state
         .play_member(&db, 0, 0)
         .expect("First play should succeed");
-    assert_eq!(state.core.players[0].stage[0], 0);
-    assert!(state.core.players[0].is_moved(0));
+    assert_eq!(state.players[0].stage[0], 0);
+    assert!(state.players[0].is_moved(0));
 
     // 2. Second play (Baton Pass) to the SAME slot in the SAME turn should fail (Rule 9.6.2.1.2.1)
     let result = state.play_member(&db, 0, 0);
@@ -84,9 +84,9 @@ fn test_baton_pass_restriction() {
     // Fast forward back to Player 0's Main Phase
     state.current_player = 0;
     state.phase = Phase::Main;
-    state.core.players[0].untap_all(false); // This should reset moved_members_this_turn
+    state.players[0].untap_all(false); // This should reset moved_members_this_turn
 
-    assert!(!state.core.players[0].is_moved(0));
+    assert!(!state.players[0].is_moved(0));
 
     // 5. Now Baton Pass to slot 0 should be legal
     state.get_legal_actions_into(&db, 0, &mut mask);
@@ -98,5 +98,5 @@ fn test_baton_pass_restriction() {
     state
         .play_member(&db, 0, 0)
         .expect("Baton pass in next turn should succeed");
-    assert_eq!(state.core.players[0].baton_touch_count, 1);
+    assert_eq!(state.players[0].baton_touch_count, 1);
 }

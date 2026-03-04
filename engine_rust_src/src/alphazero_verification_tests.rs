@@ -19,7 +19,7 @@ fn test_alphazero_baseline_smoke() {
     // Setup a basic valid state
     if !db.members.is_empty() {
         let first_id = *db.members.keys().next().unwrap();
-        state.core.players[0].hand.push(first_id);
+        state.players[0].hand.push(first_id);
     }
 
     // 1. Verify Tensor Encoding
@@ -87,10 +87,10 @@ fn test_alphazero_volatile_flags() {
     let mut state = GameState::default();
 
     // 1. Manually set volatile flags
-    state.core.players[0].baton_touch_count = 1;
-    state.core.players[0].baton_touch_limit = 2;
-    state.core.players[0].hand_increased_this_turn = 3;
-    state.core.performance_yell_done[0] = true;
+    state.players[0].baton_touch_count = 1;
+    state.players[0].baton_touch_limit = 2;
+    state.players[0].hand_increased_this_turn = 3;
+    state.performance_yell_done[0] = true;
 
     let tensor = state.to_alphazero_tensor(&db);
 
@@ -123,7 +123,7 @@ fn test_alphazero_volatile_flags() {
         });
     db.members.insert(103, member.clone());
 
-    state.core.players[0].stage[0] = 103;
+    state.players[0].stage[0] = 103;
 
     // Test NOT SPENT
     let tensor_not_spent = state.to_alphazero_tensor(&db);
@@ -138,7 +138,7 @@ fn test_alphazero_volatile_flags() {
 
     // 4. Test SPENT
     let uid = crate::core::logic::interpreter::get_ability_uid(0, 103, 0);
-    state.core.players[0].used_abilities.push(uid);
+    state.players[0].used_abilities.push(uid);
 
     let tensor_spent = state.to_alphazero_tensor(&db);
     assert_eq!(tensor_spent[145], 1.0, "Ability should be spent");

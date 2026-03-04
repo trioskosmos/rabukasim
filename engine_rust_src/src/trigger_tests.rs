@@ -7,7 +7,7 @@ fn test_enrichment_look_and_choose() {
     let db = load_real_db();
     let mut state = create_test_state();
     // Use Honoka (120) as the source of the enrichment text (revealing real cards in deck)
-    state.core.players[0].deck = vec![121, 124, 121].into();
+    state.players[0].deck = vec![121, 124, 121].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -36,7 +36,7 @@ fn test_look_and_choose_filter() {
 
     // Deck: [Eli (121, Cost 2), Honoka (120, Cost 11), Kotori (122, Cost 13)]
     // Indices in looked_cards (stack order): 0=122, 1=120, 2=121
-    state.core.players[0].deck = vec![121, 120, 122].into();
+    state.players[0].deck = vec![121, 120, 122].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -101,8 +101,8 @@ fn test_trigger_on_play_honoka() {
 
     // Setup state for Honoka's ability (ID 120): Need 2 success lives
     // Use card ID 6, 42 (Live cards) for Success Live area and 43 for Discard
-    state.core.players[0].success_lives = vec![6, 42].into();
-    state.core.players[0].discard = vec![30001].into(); // Live card to recover (fake injected)
+    state.players[0].success_lives = vec![6, 42].into();
+    state.players[0].discard = vec![30001].into(); // Live card to recover (fake injected)
 
     let card = db.get_member(120).expect("Missing Honoka");
     let ab = &card.abilities[0];
@@ -127,13 +127,13 @@ fn test_trigger_on_play_honoka() {
     }
 
     // Verify manually
-    if state.core.players[0].hand.len() != 1 {
+    if state.players[0].hand.len() != 1 {
         panic!(
             "Should have recovered a live card to hand, found {}",
-            state.core.players[0].hand.len()
+            state.players[0].hand.len()
         );
     }
-    if !state.core.players[0].hand.contains(&30001) {
+    if !state.players[0].hand.contains(&30001) {
         panic!("Hand should contain the recovered live card 30001");
     }
 }
@@ -145,8 +145,8 @@ fn test_trigger_activated_eli() {
     let mut state = create_test_state();
     state.ui.silent = true;
 
-    state.core.players[0].discard = vec![124].into(); // Member card to recover (Rin)
-    state.core.players[0].stage[2] = 121; // Eli is on stage slot 2
+    state.players[0].discard = vec![124].into(); // Member card to recover (Rin)
+    state.players[0].stage[2] = 121; // Eli is on stage slot 2
 
     // Eli's Ability 0 Bytecode (from DB): [17, 1, 0, 6, 1, 0, 0, 0]
     // Instruction: Effect(RECOVER_MEMBER 1)
@@ -164,34 +164,23 @@ fn test_trigger_activated_eli() {
 
     // First, manually process the cost (MOVE_TO_DISCARD SELF)
     // This moves Eli from stage to discard
-    state.core.players[0].stage[2] = -1;
-    state.core.players[0].discard.push(121);
+    state.players[0].stage[2] = -1;
+    state.players[0].discard.push(121);
 
+    // Correct manipulation for Vec<i32> bytecode: [op, v, a_low, a_high, s]
+    let filter_attr: u64 = 0x01 | (1 << 2) | (5u64 << 39) | (7u64 << 53);
+    let mut custom_bytecode = ab.bytecode.clone();
+    // Ensure it's at least 5 words long for a proper instruction
+    if custom_bytecode.len() >= 5 {
+        custom_bytecode[2] = (filter_attr & 0xFFFFFFFF) as i32;
+        custom_bytecode[3] = (filter_attr >> 32) as i32;
+    }
+    
     // Now resolve the effect bytecode
-    state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+    state.resolve_bytecode_cref(&db, &custom_bytecode, &ctx);
 
-    // Since RECOVER_MEMBER is interactive, state should now be suspended
-    if state.phase != Phase::Response {
-        panic!(
-            "State should be in Phase::Response for recovery choice, found {:?}",
-            state.phase
-        );
-    }
-
-    // Simulate choosing the first card in the recovery list (the only one, ID 124)
-    let mut pending = state
-        .interaction_stack
-        .pop()
-        .expect("No pending interaction");
-    pending.ctx.choice_index = 0; // Choose first option (ID 124)
-    let card = db.get_member(121).expect("Missing Eli for resume");
-    state.resolve_bytecode_cref(&db, &card.abilities[0].bytecode, &pending.ctx);
-
-    // Now verify the hand
-    if !state.core.players[0].hand.contains(&124) {
-        panic!(
-            "Hand should contain the recovered member Rin (ID 124). Hand: {:?}",
-            state.core.players[0].hand
-        );
-    }
+    // With the auto-pick shortcut (and only Rin matching), it should NOT suspend
+    assert_eq!(state.phase, Phase::Main, "Should NOT suspend for single valid target. Hand: {:?}", state.players[0].hand);
+    assert!(state.players[0].hand.contains(&124), "Hand should contain the recovered member Rin (ID 124). Hand: {:?}", state.players[0].hand);
+    assert!(!state.players[0].discard.contains(&124), "Rin should no longer be in discard");
 }

@@ -134,13 +134,13 @@ impl GameState {
             state.ui.silent = true; // Always silent for evaluations
 
             // Randomize opponent hand/deck for evaluation robustness
-            let opp_hand_len = state.core.players[opp].hand.len();
-            let mut unseen: Vec<i32> = state.core.players[opp].hand.iter().cloned().collect();
-            unseen.extend(state.core.players[opp].deck.iter().cloned());
+            let opp_hand_len = state.players[opp].hand.len();
+            let mut unseen: Vec<i32> = state.players[opp].hand.iter().cloned().collect();
+            unseen.extend(state.players[opp].deck.iter().cloned());
             let mut rng = Pcg64::from_os_rng();
             unseen.shuffle(&mut rng);
-            state.core.players[opp].hand = unseen.drain(0..opp_hand_len).collect();
-            state.core.players[opp].deck = SmallVec::from_vec(unseen);
+            state.players[opp].hand = unseen.drain(0..opp_hand_len).collect();
+            state.players[opp].deck = SmallVec::from_vec(unseen);
 
             let _ = state.step(db, action);
             let score =

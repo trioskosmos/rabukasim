@@ -11,8 +11,8 @@ use crate::test_helpers::{add_card, create_test_db, create_test_state};
 fn test_opcode_draw_until() {
     let db = create_test_db();
     let mut state = create_test_state();
-    state.core.players[0].deck = vec![1, 2, 3, 4, 5].into();
-    state.core.players[0].hand = vec![101, 102].into(); // Hand size 2
+    state.players[0].deck = vec![1, 2, 3, 4, 5].into();
+    state.players[0].hand = vec![101, 102].into(); // Hand size 2
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -23,8 +23,8 @@ fn test_opcode_draw_until() {
     let bc = vec![O_DRAW_UNTIL, 5, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    assert_eq!(state.core.players[0].hand.len(), 5);
-    assert_eq!(state.core.players[0].deck.len(), 2);
+    assert_eq!(state.players[0].hand.len(), 5);
+    assert_eq!(state.players[0].deck.len(), 2);
 }
 
 /// Verifies that O_REVEAL_UNTIL with TYPE_CHECK correctly filters for Live cards.
@@ -46,7 +46,7 @@ fn test_opcode_reveal_until_type_live() {
     );
     db.lives_vec[50] = Some(db.lives[&10050].clone());
 
-    state.core.players[0].deck = vec![1, 10050, 15, 10].into();
+    state.players[0].deck = vec![1, 10050, 15, 10].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -72,11 +72,11 @@ fn test_opcode_reveal_until_type_live() {
     // Should have popped 10, 15, then 10050.
     // 10050 matches Live. It goes to hand.
     // 10 and 15 go to discard.
-    assert!(state.core.players[0].hand.contains(&10050));
-    assert_eq!(state.core.players[0].discard.len(), 2); // 10 and 15
-    assert!(state.core.players[0].discard.contains(&10));
-    assert!(state.core.players[0].discard.contains(&15));
-    assert_eq!(state.core.players[0].deck.len(), 1); // 1 remains
+    assert!(state.players[0].hand.contains(&10050));
+    assert_eq!(state.players[0].discard.len(), 2); // 10 and 15
+    assert!(state.players[0].discard.contains(&10));
+    assert!(state.players[0].discard.contains(&15));
+    assert_eq!(state.players[0].deck.len(), 1); // 1 remains
 }
 
 /// Verifies that O_REVEAL_UNTIL with COST_GE correctly filters for members with a minimum cost.
@@ -104,7 +104,7 @@ fn test_opcode_reveal_until_cost_ge() {
     db.members_vec[60010] = Some(m10);
     db.members_vec[60015] = Some(m15);
 
-    state.core.players[0].deck = vec![60015, 60010].into();
+    state.players[0].deck = vec![60015, 60010].into();
     let ctx = AbilityContext {
         player_id: 0,
         ..Default::default()
@@ -126,8 +126,8 @@ fn test_opcode_reveal_until_cost_ge() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Should pop 60010 (5 < 10), then 60015 (15 >= 10).
-    assert!(state.core.players[0].hand.contains(&60015));
-    assert!(state.core.players[0].discard.contains(&60010));
+    assert!(state.players[0].hand.contains(&60015));
+    assert!(state.players[0].discard.contains(&60010));
 }
 
 /// Verifies that O_IMMUNITY correctly toggles the FLAG_IMMUNITY on the player.
@@ -135,7 +135,7 @@ fn test_opcode_reveal_until_cost_ge() {
 fn test_opcode_immunity() {
     let db = create_test_db();
     let mut state = create_test_state();
-    assert!(!state.core.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
+    assert!(!state.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -145,12 +145,12 @@ fn test_opcode_immunity() {
     // O_IMMUNITY 1
     let bc = vec![O_IMMUNITY, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert!(state.core.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
+    assert!(state.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
 
     // O_IMMUNITY 0
     let bc = vec![O_IMMUNITY, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert!(!state.core.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
+    assert!(!state.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
 }
 
 /// Verifies that O_PAY_ENERGY correctly taps the specified number of energy cards.
@@ -159,7 +159,7 @@ fn test_opcode_pay_energy() {
     let db = create_test_db();
     let mut state = create_test_state();
     state.ui.silent = true;
-    state.core.players[0].tapped_energy_mask = 0;
+    state.players[0].tapped_energy_mask = 0;
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -170,7 +170,7 @@ fn test_opcode_pay_energy() {
     let bc = vec![O_PAY_ENERGY, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    assert_eq!(state.core.players[0].tapped_energy_mask.count_ones(), 2);
+    assert_eq!(state.players[0].tapped_energy_mask.count_ones(), 2);
 }
 
 /// Verifies that O_LOOK_DECK moves cards from deck to the looked_cards buffer.
@@ -178,7 +178,7 @@ fn test_opcode_pay_energy() {
 fn test_opcode_look_deck() {
     let db = create_test_db();
     let mut state = create_test_state();
-    state.core.players[0].deck = vec![1, 2, 3, 4, 5].into();
+    state.players[0].deck = vec![1, 2, 3, 4, 5].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -189,9 +189,9 @@ fn test_opcode_look_deck() {
     let bc = vec![O_LOOK_DECK, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    assert_eq!(state.core.players[0].looked_cards.len(), 3);
-    assert_eq!(state.core.players[0].deck.len(), 2);
-    assert_eq!(state.core.players[0].looked_cards.as_slice(), &[5, 4, 3]);
+    assert_eq!(state.players[0].looked_cards.len(), 3);
+    assert_eq!(state.players[0].deck.len(), 2);
+    assert_eq!(state.players[0].looked_cards.as_slice(), &[5, 4, 3]);
 }
 
 /// Verifies that O_LOOK_AND_CHOOSE correctly filters looked cards and transitions to Response phase.
@@ -215,7 +215,7 @@ fn test_opcode_look_and_choose_filter_cost_ge() {
     db.members.insert(15, m15.clone());
     db.members_vec[15] = Some(m15);
 
-    state.core.players[0].deck = vec![15, 10].into();
+    state.players[0].deck = vec![15, 10].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -243,9 +243,9 @@ fn test_opcode_look_and_choose_filter_cost_ge() {
 
     // Should be in Response phase, with looked_cards: [10, 15]
     assert_eq!(state.phase, Phase::Response);
-    assert_eq!(state.core.players[0].looked_cards.len(), 2);
-    assert_eq!(state.core.players[0].looked_cards[0], 10);
-    assert_eq!(state.core.players[0].looked_cards[1], 15);
+    assert_eq!(state.players[0].looked_cards.len(), 2);
+    assert_eq!(state.players[0].looked_cards[0], 10);
+    assert_eq!(state.players[0].looked_cards[1], 15);
 
     // Check legal actions. base for slot -1 (default), ab -1 (default)
     // base = 550 + (-1 * 100) + (0 * 10) = 450
@@ -330,8 +330,8 @@ fn test_look_and_choose_source_zone_fix() {
     let mut state = create_test_state();
 
     // Setup: Player has 5 cards in hand, 10 in deck
-    state.core.players[0].hand = vec![1, 2, 3, 4, 5].into();
-    state.core.players[0].deck = (10..20).collect();
+    state.players[0].hand = vec![1, 2, 3, 4, 5].into();
+    state.players[0].deck = (10..20).collect();
 
     // Execute O_LOOK_AND_CHOOSE: Look 2, Filter 0, Destination Hand (6)
     // Bytecode: [Opcode, Value, Attr, Slot]
@@ -361,15 +361,15 @@ fn test_look_and_choose_source_zone_fix() {
     // If bug existed: source=6 -> reveal_count=hand.len()=5 -> looked_cards.len()=5 (from hand)
     // Fixed: source=8 -> reveal_count=v=2 -> looked_cards.len()=2 (from deck)
     assert_eq!(
-        state.core.players[0].looked_cards.len(),
+        state.players[0].looked_cards.len(),
         2,
         "Should look at 2 cards from deck, not all cards from hand"
     );
 
     // Verify cards are from deck (10..20) not hand (1..5)
     // Deck pops from end, so should be 19, 18
-    let c1 = state.core.players[0].looked_cards[0];
-    let c2 = state.core.players[0].looked_cards[1];
+    let c1 = state.players[0].looked_cards[0];
+    let c2 = state.players[0].looked_cards[1];
     assert!(c1 >= 10, "Looked card 1 should be from deck (ID >= 10)");
     assert!(c2 >= 10, "Looked card 2 should be from deck (ID >= 10)");
 

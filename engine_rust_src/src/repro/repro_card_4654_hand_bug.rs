@@ -15,8 +15,8 @@ fn test_repro_card_4654_hand_clearing() {
     db.lives.insert(51001, mock_live.clone());
     db.lives_vec[51001 as usize % LOGIC_ID_MASK as usize] = Some(mock_live);
 
-    state.core.players[0].player_id = 0;
-    state.core.players[1].player_id = 1;
+    state.players[0].player_id = 0;
+    state.players[1].player_id = 1;
     state.phase = Phase::Main;
 
     // Hand: 5 cards
@@ -47,8 +47,8 @@ fn test_repro_card_4654_hand_clearing() {
         0,
     ];
 
-    println!("DEBUG: Initial hand: {:?}", state.core.players[0].hand);
-    assert_eq!(state.core.players[0].hand.len(), 5);
+    println!("DEBUG: Initial hand: {:?}", state.players[0].hand);
+    assert_eq!(state.players[0].hand.len(), 5);
 
     // Execute bytecode
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
@@ -58,26 +58,26 @@ fn test_repro_card_4654_hand_clearing() {
 
     println!(
         "DEBUG: Hand after resolution: {:?}",
-        state.core.players[0].hand
+        state.players[0].hand
     );
     println!(
         "DEBUG: Looked cards: {:?}",
-        state.core.players[0].looked_cards
+        state.players[0].looked_cards
     );
 
     // BUG CONFIRMATION:
     // If hand is empty and looked_cards contains [3001, 3002, 3003, 3004, 3005], the bug is confirmed.
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         5,
         "Hand was EMPTIED! Looked cards took them? {:?}, Hand: {:?}",
-        state.core.players[0].looked_cards,
-        state.core.players[0].hand
+        state.players[0].looked_cards,
+        state.players[0].hand
     );
     assert_eq!(
-        state.core.players[0].looked_cards.len(),
+        state.players[0].looked_cards.len(),
         4,
         "Should have looked at 4 cards from DECK, not: {:?}",
-        state.core.players[0].looked_cards
+        state.players[0].looked_cards
     );
 }

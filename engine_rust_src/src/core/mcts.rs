@@ -570,17 +570,17 @@ impl MCTS {
                     // (Determinization logic duplicated for now within batch loop)
                     let me = root_state.current_player as usize;
                     let opp = 1 - me;
-                    let opp_hand_len = state.core.players[opp].hand.len();
+                    let opp_hand_len = state.players[opp].hand.len();
                     self.unseen_buffer.clear();
                     self.unseen_buffer
-                        .extend_from_slice(&state.core.players[opp].hand);
+                        .extend_from_slice(&state.players[opp].hand);
                     self.unseen_buffer
-                        .extend_from_slice(&state.core.players[opp].deck);
+                        .extend_from_slice(&state.players[opp].deck);
                     self.unseen_buffer.shuffle(&mut self.rng);
-                    state.core.players[opp]
+                    state.players[opp]
                         .hand
                         .copy_from_slice(&self.unseen_buffer[0..opp_hand_len]);
-                    state.core.players[opp]
+                    state.players[opp]
                         .deck
                         .copy_from_slice(&self.unseen_buffer[opp_hand_len..]);
 
@@ -707,26 +707,26 @@ impl MCTS {
 
                 let me = root_state.current_player as usize;
                 let opp = 1 - me;
-                let opp_hand_len = state.core.players[opp].hand.len();
+                let opp_hand_len = state.players[opp].hand.len();
 
                 self.unseen_buffer.clear();
                 self.unseen_buffer
-                    .extend_from_slice(&state.core.players[opp].hand);
+                    .extend_from_slice(&state.players[opp].hand);
                 self.unseen_buffer
-                    .extend_from_slice(&state.core.players[opp].deck);
+                    .extend_from_slice(&state.players[opp].deck);
                 self.unseen_buffer.shuffle(&mut self.rng);
 
-                state.core.players[opp]
+                state.players[opp]
                     .hand
                     .copy_from_slice(&self.unseen_buffer[0..opp_hand_len]);
-                state.core.players[opp]
+                state.players[opp]
                     .deck
                     .copy_from_slice(&self.unseen_buffer[opp_hand_len..]);
 
                 if shuffle_self {
-                    let mut my_deck = state.core.players[me].deck.clone();
+                    let mut my_deck = state.players[me].deck.clone();
                     my_deck.shuffle(&mut self.rng);
-                    state.core.players[me].deck = my_deck;
+                    state.players[me].deck = my_deck;
                 }
 
                 // --- SEQUENTIAL PATH (Original logic) ---

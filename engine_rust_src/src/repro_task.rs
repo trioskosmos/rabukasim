@@ -55,12 +55,12 @@ mod tests {
         let mut state = GameState::default();
         state.phase = Phase::Main;
         state.current_player = 0;
-        state.core.players[0]
+        state.players[0]
             .energy_zone
             .extend(std::iter::repeat(100).take(10));
 
         // CASE 1: Card in Discard → NO activation
-        state.core.players[0].discard.push(target_cid);
+        state.players[0].discard.push(target_cid);
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
         let discard_actions = stage_actions_in_range(
@@ -75,9 +75,9 @@ mod tests {
         );
 
         // CASE 2: Card on Stage → activation at ab_idx=1
-        state.core.players[0].discard.clear();
-        state.core.players[0].stage[0] = target_cid;
-        state.core.players[0].set_tapped(0, false);
+        state.players[0].discard.clear();
+        state.players[0].stage[0] = target_cid;
+        state.players[0].set_tapped(0, false);
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
         let action_id = (ACTION_BASE_STAGE + 0 * 100 + 1 * 10) as usize;
@@ -103,15 +103,15 @@ mod tests {
         let mut state = GameState::default();
         state.phase = Phase::Main;
         state.current_player = 0;
-        state.core.players[0]
+        state.players[0]
             .energy_zone
             .extend(std::iter::repeat(100).take(10));
 
         // Place same card in slot 0 AND slot 2 to verify encoding differs
-        state.core.players[0].stage[0] = target_cid;
-        state.core.players[0].stage[2] = target_cid;
-        state.core.players[0].set_tapped(0, false);
-        state.core.players[0].set_tapped(2, false);
+        state.players[0].stage[0] = target_cid;
+        state.players[0].stage[2] = target_cid;
+        state.players[0].set_tapped(0, false);
+        state.players[0].set_tapped(2, false);
 
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
@@ -152,13 +152,13 @@ mod tests {
         let mut state = GameState::default();
         state.phase = Phase::Main;
         state.current_player = 0;
-        state.core.players[0]
+        state.players[0]
             .energy_zone
             .extend(std::iter::repeat(100).take(10));
-        state.core.players[0].stage[0] = target_cid;
+        state.players[0].stage[0] = target_cid;
 
         // Case A: Untapped → should activate
-        state.core.players[0].set_tapped(0, false);
+        state.players[0].set_tapped(0, false);
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
         let untapped_actions = stage_actions_in_range(
@@ -173,7 +173,7 @@ mod tests {
         );
 
         // Case B: Tapped → should STILL activate (ability doesn't require TapSelf)
-        state.core.players[0].set_tapped(0, true);
+        state.players[0].set_tapped(0, true);
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
         let tapped_actions = stage_actions_in_range(
@@ -199,11 +199,11 @@ mod tests {
         let mut state = GameState::default();
         state.phase = Phase::Main;
         state.current_player = 0;
-        state.core.players[0]
+        state.players[0]
             .energy_zone
             .extend(std::iter::repeat(100).take(10));
-        state.core.players[0].stage[0] = target_cid;
-        state.core.players[0].set_tapped(0, false);
+        state.players[0].stage[0] = target_cid;
+        state.players[0].set_tapped(0, false);
 
         // Baseline: Should generate stage activation
         let mut receiver = new_receiver();
@@ -220,7 +220,7 @@ mod tests {
         );
 
         // Set prevent_activate to block
-        state.core.players[0].prevent_activate = 1;
+        state.players[0].prevent_activate = 1;
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
         let blocked_stage = stage_actions_in_range(
@@ -259,11 +259,11 @@ mod tests {
         let mut state = GameState::default();
         state.phase = Phase::Main;
         state.current_player = 0;
-        state.core.players[0]
+        state.players[0]
             .energy_zone
             .extend(std::iter::repeat(100).take(10));
-        state.core.players[0].stage[0] = target_cid;
-        state.core.players[0].set_tapped(0, false);
+        state.players[0].stage[0] = target_cid;
+        state.players[0].set_tapped(0, false);
 
         // Step 1: Generate actions - ability should be available
         let mut receiver = new_receiver();
@@ -291,9 +291,9 @@ mod tests {
         );
 
         // Step 4: "Baton touch" - move card from slot 0 to slot 1
-        state.core.players[0].stage[1] = target_cid;
-        state.core.players[0].stage[0] = -1; // Empty slot 0
-        state.core.players[0].set_tapped(1, false);
+        state.players[0].stage[1] = target_cid;
+        state.players[0].stage[0] = -1; // Empty slot 0
+        state.players[0].set_tapped(1, false);
 
         // Step 5: Check if ability is STILL blocked at slot 1
         // Because tracking is by card_id (not slot_idx), the restriction persists.
@@ -344,11 +344,11 @@ mod tests {
             let mut state = GameState::default();
             state.phase = Phase::Main;
             state.current_player = 0;
-            state.core.players[0]
+            state.players[0]
                 .energy_zone
                 .extend(std::iter::repeat(100).take(10));
-            state.core.players[0].stage[0] = cid;
-            state.core.players[0].set_tapped(0, false);
+            state.players[0].stage[0] = cid;
+            state.players[0].set_tapped(0, false);
             state.debug.debug_ignore_conditions = true; // Bypass conditions to focus on choice generation
 
             let mut receiver = new_receiver();
@@ -405,8 +405,8 @@ mod tests {
         state.current_player = 0;
 
         // Place the passive card
-        state.core.players[0].stage[0] = target_cid;
-        state.core.players[0].set_tapped(0, false);
+        state.players[0].stage[0] = target_cid;
+        state.players[0].set_tapped(0, false);
 
         // Get the base blades from the card
         let base_blades = db
@@ -420,12 +420,12 @@ mod tests {
         println!("Blades (solitary): {}", blades_solitary);
 
         // Verification 2: Add a cost 11 member.
-        state.core.players[0].stage[1] = cost_11_cid;
+        state.players[0].stage[1] = cost_11_cid;
         let blades_with_11 = state.get_effective_blades(0, 0, &db, 0);
         println!("Blades (with cost 11): {}", blades_with_11);
 
         // Verification 3: Add a cost 13 member.
-        state.core.players[1].stage[0] = cost_13_cid; // On opponent stage
+        state.players[1].stage[0] = cost_13_cid; // On opponent stage
         let blades_with_13 = state.get_effective_blades(0, 0, &db, 0);
         println!("Blades (with cost 13): {}", blades_with_13);
 

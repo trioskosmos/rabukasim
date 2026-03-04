@@ -31,6 +31,7 @@ smallvec = { version = "1.13", features = ["serde", "union", "const_generics", "
 extension-module = ["dep:pyo3", "dep:numpy", "pyo3/extension-module"]
 parallel = ["dep:rayon"]
 nn = ["dep:ort"]
+gpu = []
 default = ["parallel", "extension-module"]
 
 [profile.dev]

@@ -15,7 +15,7 @@ fn test_triggers_group_a_action() {
     let mut db = create_test_db();
     let mut state = create_test_state();
     state.ui.silent = false; // Enable logging to debug OnPlay
-    state.core.players[0].deck = vec![5901, 5902, 5903, 5904, 5905].into(); // Updated deck cards
+    state.players[0].deck = vec![5901, 5902, 5903, 5904, 5905].into(); // Updated deck cards
 
     // [TriggerType::OnPlay]
     let ab_play = Ability {
@@ -28,7 +28,7 @@ fn test_triggers_group_a_action() {
     m_play.abilities = vec![ab_play];
     db.members.insert(5910, m_play.clone());
     db.members_vec[5910 & LOGIC_ID_MASK as usize] = Some(m_play);
-    state.core.players[0].hand = vec![5910].into();
+    state.players[0].hand = vec![5910].into();
     state
         .step(
             &db,
@@ -40,7 +40,7 @@ fn test_triggers_group_a_action() {
         )
         .unwrap();
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         1,
         "OnPlay should trigger draw"
     );
@@ -56,7 +56,7 @@ fn test_triggers_group_a_action() {
     m_leaves.abilities = vec![ab_leaves];
     db.members.insert(5911, m_leaves.clone());
     db.members_vec[5911 & LOGIC_ID_MASK as usize] = Some(m_leaves);
-    state.core.players[0].stage[0] = 5911;
+    state.players[0].stage[0] = 5911;
     state.resolve_bytecode_cref(
         &db,
         &vec![O_MOVE_TO_DISCARD, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0],
@@ -68,7 +68,7 @@ fn test_triggers_group_a_action() {
         },
     );
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         2,
         "OnLeaves should trigger draw"
     );
@@ -87,12 +87,12 @@ fn test_triggers_group_a_action() {
     if logic_id < db.lives_vec.len() {
         db.lives_vec[logic_id & LOGIC_ID_MASK as usize] = Some(l_reveal);
     }
-    state.core.players[0].live_zone[0] = 15002;
-    state.core.players[0].set_revealed(0, false);
-    state.core.players[0].yell_count_reduction = 100; // Prevent Yell consumption for test stability
+    state.players[0].live_zone[0] = 15002;
+    state.players[0].set_revealed(0, false);
+    state.players[0].yell_count_reduction = 100; // Prevent Yell consumption for test stability
     state.do_performance_phase(&db);
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         3,
         "OnReveal should trigger draw"
     );
@@ -105,7 +105,7 @@ fn test_triggers_group_a_action() {
 fn test_triggers_group_b_phase() {
     let mut db = create_test_db();
     let mut state = create_test_state();
-    state.core.players[0].deck = vec![5901, 5902, 5903].into();
+    state.players[0].deck = vec![5901, 5902, 5903].into();
 
     // [TriggerType::TurnStart]
     let ab_start = Ability {
@@ -118,11 +118,11 @@ fn test_triggers_group_b_phase() {
     m_start.abilities = vec![ab_start];
     db.members.insert(5920, m_start.clone());
     db.members_vec[5920 & LOGIC_ID_MASK as usize] = Some(m_start);
-    state.core.players[0].stage[0] = 5920;
+    state.players[0].stage[0] = 5920;
     state.current_player = 0;
     state.do_draw_phase(&db);
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         1,
         "TurnStart should trigger draw"
     );
@@ -150,11 +150,11 @@ fn test_triggers_exhaustive() {
     m_end.abilities = vec![ab_end];
     db.members.insert(5914, m_end.clone());
     db.members_vec[5914 & LOGIC_ID_MASK as usize] = Some(m_end);
-    state.core.players[0].stage[0] = 5914;
-    state.core.players[0].deck.extend(vec![5950]); // Updated deck card
+    state.players[0].stage[0] = 5914;
+    state.players[0].deck.extend(vec![5950]); // Updated deck card
     state.end_main_phase(&db);
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         1,
         "TurnEnd should trigger draw"
     );
@@ -170,8 +170,8 @@ fn test_triggers_exhaustive() {
     m_pos.abilities = vec![ab_pos];
     db.members.insert(5915, m_pos.clone());
     db.members_vec[5915 & LOGIC_ID_MASK as usize] = Some(m_pos);
-    state.core.players[0].stage[0] = 5915;
-    state.core.players[0].deck.extend(vec![5960, 5961, 5962]); // Updated deck cards
+    state.players[0].stage[0] = 5915;
+    state.players[0].deck.extend(vec![5960, 5961, 5962]); // Updated deck cards
                                                                // Simulate position change (MoveMember) - ctx.area_idx=0 is source, target_slot=1 is destination
     state.resolve_bytecode_cref(
         &db,
@@ -184,7 +184,7 @@ fn test_triggers_exhaustive() {
         },
     );
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         2,
         "OnPositionChange should trigger draw"
     );
@@ -206,8 +206,8 @@ fn test_triggers_group_c_persistent() {
     m_act.abilities = vec![ab_act];
     db.members.insert(5912, m_act.clone());
     db.members_vec[5912 & LOGIC_ID_MASK as usize] = Some(m_act);
-    state.core.players[0].stage[0] = 5912;
-    state.core.players[0].deck = vec![5900].into(); // Updated deck card
+    state.players[0].stage[0] = 5912;
+    state.players[0].deck = vec![5900].into(); // Updated deck card
     state
         .step(
             &db,
@@ -219,7 +219,7 @@ fn test_triggers_group_c_persistent() {
         )
         .unwrap();
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         1,
         "Activated ability should trigger"
     );
@@ -235,7 +235,7 @@ fn test_triggers_group_c_persistent() {
     m_const.abilities = vec![ab_const];
     db.members.insert(5913, m_const.clone());
     db.members_vec[5913 & LOGIC_ID_MASK as usize] = Some(m_const);
-    state.core.players[0].stage[0] = 5913;
+    state.players[0].stage[0] = 5913;
     // O_ADD_BLADES in Constant ability usually targets Self (Target 4 in bytecode generator)
 }
 
@@ -254,7 +254,7 @@ fn test_conditions_group_ab_state() {
     };
 
     // [ConditionType::CountHand]
-    state.core.players[0].hand = vec![5901, 5902, 5903].into(); // Updated hand cards
+    state.players[0].hand = vec![5901, 5902, 5903].into(); // Updated hand cards
     assert!(state.check_condition(
         &db,
         0,
@@ -268,7 +268,7 @@ fn test_conditions_group_ab_state() {
     ));
 
     // [ConditionType::IsCenter]
-    state.core.players[0].stage[1] = 5901; // Updated stage card
+    state.players[0].stage[1] = 5901; // Updated stage card
     assert!(state.check_condition(
         &db,
         0,
@@ -287,8 +287,8 @@ fn test_conditions_group_ab_state() {
 
     // C_COUNT_HEARTS: Has at least 1 heart (Pink Heart on 3001)
     // Need to add a heart to 3001 for this to pass
-    state.core.players[0].stage[0] = 3001; // Ensure member exists
-    state.core.players[0].heart_buffs[0].add_heart(0); // Add a pink heart to slot 0 (where 3001 would be if played)
+    state.players[0].stage[0] = 3001; // Ensure member exists
+    state.players[0].heart_buffs[0].add_heart(0); // Add a pink heart to slot 0 (where 3001 would be if played)
     assert!(state.check_condition_opcode(&db, C_COUNT_HEARTS, 1, 0, 0, &ctx_grp, 0));
 
     // C_COUNT_BLADES: Has at least 1 blade (3001 has 0 blades default?)
@@ -338,7 +338,7 @@ fn test_conditions_exhaustive() {
     };
 
     // [ConditionType::DeckRefreshed]
-    state.core.players[0].set_flag(PlayerState::FLAG_DECK_REFRESHED, true);
+    state.players[0].set_flag(PlayerState::FLAG_DECK_REFRESHED, true);
     assert!(state.check_condition(
         &db,
         0,
@@ -351,7 +351,7 @@ fn test_conditions_exhaustive() {
     ));
 
     // [ConditionType::HandHasNoLive]
-    state.core.players[0].hand = vec![5901].into(); // Member with ID 5901
+    state.players[0].hand = vec![5901].into(); // Member with ID 5901
     assert!(state.check_condition(
         &db,
         0,
@@ -362,7 +362,7 @@ fn test_conditions_exhaustive() {
         &ctx,
         0
     ));
-    state.core.players[0].hand = vec![55001].into(); // Live with ID 55001
+    state.players[0].hand = vec![55001].into(); // Live with ID 55001
     assert!(!state.check_condition(
         &db,
         0,
@@ -375,7 +375,7 @@ fn test_conditions_exhaustive() {
     ));
 
     // [ConditionType::HasMoved]
-    state.core.players[0].set_flag(PlayerState::OFFSET_MOVED, true);
+    state.players[0].set_flag(PlayerState::OFFSET_MOVED, true);
     assert!(state.check_condition(
         &db,
         0,
@@ -388,7 +388,7 @@ fn test_conditions_exhaustive() {
     ));
 
     // [ConditionType::Baton]
-    state.core.players[0].baton_touch_count = 1;
+    state.players[0].baton_touch_count = 1;
     assert!(state.check_condition(
         &db,
         0,
@@ -411,8 +411,8 @@ fn test_conditions_group_cd_context_input() {
     };
 
     // [ConditionType::LifeLead]
-    state.core.players[0].success_lives = vec![10].into();
-    state.core.players[1].success_lives = vec![].into();
+    state.players[0].success_lives = vec![10].into();
+    state.players[1].success_lives = vec![].into();
     assert!(state.check_condition(
         &db,
         0,
@@ -425,7 +425,7 @@ fn test_conditions_group_cd_context_input() {
     ));
 
     // [ConditionType::ScoreCompare] (Hearts GE value)
-    state.core.players[0].score = 5;
+    state.players[0].score = 5;
     assert!(state.check_condition(
         &db,
         0,
@@ -468,7 +468,7 @@ fn test_effects_group_ab_stats_zone() {
     };
 
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert_eq!(state.core.players[0].heart_buffs[0].get_color_count(0), 2);
+    assert_eq!(state.players[0].heart_buffs[0].get_color_count(0), 2);
 
     // [EffectType::RecoverMember]
     let m_rec = db.members.get(&3000).unwrap().clone();
@@ -476,7 +476,7 @@ fn test_effects_group_ab_stats_zone() {
     m_rec_901.card_id = 5901;
     db.members.insert(5901, m_rec_901.clone());
     db.members_vec[5901 & LOGIC_ID_MASK as usize] = Some(m_rec_901);
-    state.core.players[0].discard = vec![5901].into(); // Updated discard card
+    state.players[0].discard = vec![5901].into(); // Updated discard card
 
     // Update the card in DB to have the O_RECOVER_MEMBER bytecode, because resumption reads from DB
     let bc_recov = vec![O_RECOVER_MEMBER, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
@@ -490,7 +490,7 @@ fn test_effects_group_ab_stats_zone() {
     state
         .step(&db, Action::SelectChoice { choice_idx: 0 }.id() as i32)
         .unwrap();
-    assert_eq!(state.core.players[0].hand.len(), 1);
+    assert_eq!(state.players[0].hand.len(), 1);
 
     // [EffectType::MoveToDeck] (From Hand to Deck)
     // O_RECOVER_MEMBER recovered 5901. Hand has 5901.
@@ -502,12 +502,12 @@ fn test_effects_group_ab_stats_zone() {
         &ctx,
     ); // From Hand
     assert_eq!(
-        state.core.players[0].discard.len(),
+        state.players[0].discard.len(),
         0,
         "Discard should be empty after Recover and MoveToDeck"
     );
-    // println!("DEBUG: Discard: {:?}", state.core.players[0].discard);
-    // assert!(state.core.players[0].discard.contains(&10)); // Removed invalid assertion
+    // println!("DEBUG: Discard: {:?}", state.players[0].discard);
+    // assert!(state.players[0].discard.contains(&10)); // Removed invalid assertion
 }
 
 #[test]
@@ -520,7 +520,7 @@ fn test_effects_group_ce_info_modal() {
     };
 
     // [EffectType::LookAndChoose]
-    state.core.players[0].deck = vec![5901, 5902, 5903].into(); // Updated deck cards
+    state.players[0].deck = vec![5901, 5902, 5903].into(); // Updated deck cards
     state.resolve_bytecode_cref(
         &db,
         &vec![O_LOOK_AND_CHOOSE, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
@@ -543,7 +543,7 @@ fn test_effects_exhaustive() {
     };
 
     // [EffectType::ReduceYellCount]
-    state.core.players[0].yell_count_reduction = 0;
+    state.players[0].yell_count_reduction = 0;
     state.resolve_bytecode_cref(
         &db,
         &vec![O_REDUCE_YELL_COUNT, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
@@ -552,15 +552,15 @@ fn test_effects_exhaustive() {
     // Note: O_REDUCE_YELL_COUNT logic might affect game_state.players[0].cost_reduction or similar.
 
     // [EffectType::SwapArea]
-    state.core.players[0].stage[0] = 5901;
-    state.core.players[0].stage[1] = 5902; // Updated stage cards
+    state.players[0].stage[0] = 5901;
+    state.players[0].stage[1] = 5902; // Updated stage cards
     state.resolve_bytecode_cref(
         &db,
         &vec![O_SWAP_AREA, 0, 1, 0, 0, O_RETURN, 0, 0, 0, 0],
         &ctx,
     );
-    assert_eq!(state.core.players[0].stage[0], 5902);
-    assert_eq!(state.core.players[0].stage[1], 5901);
+    assert_eq!(state.players[0].stage[0], 5902);
+    assert_eq!(state.players[0].stage[1], 5901);
 
     // [EffectType::TransformHeart] (Change color of heart in slot 0)
     // O_TRANSFORM_HEART from_color, to_color, count
@@ -577,8 +577,8 @@ fn test_effects_group_f_system() {
     let mut state = create_test_state();
 
     // [EffectType::EnergyCharge]
-    state.core.players[0].energy_deck = vec![3101].into(); // Updated energy deck card
-    let initial_energy = state.core.players[0].energy_zone.len();
+    state.players[0].energy_deck = vec![3101].into(); // Updated energy deck card
+    let initial_energy = state.players[0].energy_zone.len();
     state.resolve_bytecode_cref(
         &db,
         &vec![O_ENERGY_CHARGE, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
@@ -587,7 +587,7 @@ fn test_effects_group_f_system() {
             ..Default::default()
         },
     );
-    assert_eq!(state.core.players[0].energy_zone.len(), initial_energy + 1);
+    assert_eq!(state.players[0].energy_zone.len(), initial_energy + 1);
 
     // [EffectType::Immunity]
     state.resolve_bytecode_cref(
@@ -598,7 +598,7 @@ fn test_effects_group_f_system() {
             ..Default::default()
         },
     );
-    assert!(state.core.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
+    assert!(state.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
 }
 
 // =========================================================================
@@ -609,8 +609,8 @@ fn test_effects_group_f_system() {
 fn test_costs_all_groups() {
     let db = create_test_db();
     let mut state = create_test_state();
-    state.core.players[0].stage[0] = 5901;
-    state.core.players[0].hand = vec![5901].into(); // Updated cards
+    state.players[0].stage[0] = 5901;
+    state.players[0].hand = vec![5901].into(); // Updated cards
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -648,9 +648,9 @@ fn test_costs_all_groups() {
 fn test_targets_all_groups() {
     let db = create_test_db();
     let mut state = create_test_state();
-    state.core.players[0].deck =
+    state.players[0].deck =
         vec![5901, 5902, 5903, 5904, 5905, 5906, 5907, 5908, 5909, 5910].into(); // Updated deck cards
-    state.core.players[1].deck =
+    state.players[1].deck =
         vec![5911, 5912, 5913, 5914, 5915, 5916, 5917, 5918, 5919, 5920].into(); // Updated deck cards
 
     // [TargetType::Player] (Target 1)
@@ -662,7 +662,7 @@ fn test_targets_all_groups() {
             ..Default::default()
         },
     );
-    assert_eq!(state.core.players[0].hand.len(), 1);
+    assert_eq!(state.players[0].hand.len(), 1);
 
     // [TargetType::Opponent] (Target 2)
     state.resolve_bytecode_cref(
@@ -673,7 +673,7 @@ fn test_targets_all_groups() {
             ..Default::default()
         },
     );
-    assert_eq!(state.core.players[1].hand.len(), 1);
+    assert_eq!(state.players[1].hand.len(), 1);
 
     // [TargetType::AllPlayers] (Target 3)
     // Draw 1 each
@@ -685,8 +685,8 @@ fn test_targets_all_groups() {
             ..Default::default()
         },
     );
-    assert_eq!(state.core.players[0].hand.len(), 2); // P0 drew 1 for self, then 1 for all players
-    assert_eq!(state.core.players[1].hand.len(), 2); // P1 drew 1 for opponent, then 1 for all players
+    assert_eq!(state.players[0].hand.len(), 2); // P0 drew 1 for self, then 1 for all players
+    assert_eq!(state.players[1].hand.len(), 2); // P1 drew 1 for opponent, then 1 for all players
 }
 
 // =========================================================================
@@ -697,7 +697,7 @@ fn test_targets_all_groups() {
 fn test_mechanics_optional_once_per_turn() {
     let mut db = create_test_db();
     let mut state = create_test_state();
-    state.core.players[0].deck = vec![5901, 5902, 5903].into(); // Updated deck cards
+    state.players[0].deck = vec![5901, 5902, 5903].into(); // Updated deck cards
 
     // 1. [Once Per Turn]
     let ab_once = Ability {
@@ -712,8 +712,8 @@ fn test_mechanics_optional_once_per_turn() {
     db.members.insert(5999, m_once.clone());
     db.members_vec[5999 & LOGIC_ID_MASK as usize] = Some(m_once);
 
-    state.core.players[0].hand = vec![5999, 5999].into();
-    state.core.players[0].deck = vec![5901, 5902, 5903, 5904].into(); // Setup deck
+    state.players[0].hand = vec![5999, 5999].into();
+    state.players[0].deck = vec![5901, 5902, 5903, 5904].into(); // Setup deck
 
     // First play
     state
@@ -727,7 +727,7 @@ fn test_mechanics_optional_once_per_turn() {
         )
         .unwrap();
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         2,
         "First play should trigger draw (Hand: [5999] -> [5999, 5901])"
     ); // Updated expected card
@@ -758,7 +758,7 @@ fn test_mechanics_optional_once_per_turn() {
     db.members.insert(5900, m_opt.clone());
     db.members_vec[5900 & LOGIC_ID_MASK as usize] = Some(m_opt);
 
-    state.core.players[0].hand = vec![5900].into();
+    state.players[0].hand = vec![5900].into();
     state.ui.silent = false; // We want to test the pause
     state
         .step(
@@ -775,7 +775,7 @@ fn test_mechanics_optional_once_per_turn() {
     // assert_eq!(state.phase, Phase::Response, "Optional ability should pause");
     // Instead verify the effect happened (Draw)
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         1,
         "Optional draw should have resolved"
     );
@@ -789,7 +789,7 @@ fn test_mechanics_optional_once_per_turn() {
 fn test_pattern_on_play() {
     let mut db = create_test_db();
     let mut state = create_test_state();
-    state.core.players[0].deck = vec![5901, 5902, 5903, 5904, 5905, 5906].into(); // Updated deck cards
+    state.players[0].deck = vec![5901, 5902, 5903, 5904, 5905, 5906].into(); // Updated deck cards
 
     // 1. Mandatory OnPlay + Draw (Simple Common Pattern)
     // "When this card is played, draw 1 card."
@@ -803,7 +803,7 @@ fn test_pattern_on_play() {
     m1.abilities = vec![ab1];
     db.members.insert(5916, m1.clone());
     db.members_vec[5916 & LOGIC_ID_MASK as usize] = Some(m1);
-    state.core.players[0].hand = vec![5916].into();
+    state.players[0].hand = vec![5916].into();
     state.ui.silent = false; // Enable logging
     state
         .step(
@@ -816,10 +816,10 @@ fn test_pattern_on_play() {
         )
         .unwrap();
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         1,
         "Mandatory Draw pattern failed (Hand: {:?})",
-        state.core.players[0].hand
+        state.players[0].hand
     );
 
     // 2. Conditional OnPlay (Turn1) + Recover (Rush Down Pattern)
@@ -846,9 +846,9 @@ fn test_pattern_on_play() {
     db.members.insert(5990, m_recov.clone());
     db.members_vec[5990 & LOGIC_ID_MASK as usize] = Some(m_recov);
     // Clear stage to preventing 5916 from triggering again
-    state.core.players[0].stage = [-1; 3];
-    state.core.players[0].hand = vec![5917].into();
-    state.core.players[0].discard = vec![5990].into(); // Use valid card ID that exists in db
+    state.players[0].stage = [-1; 3];
+    state.players[0].hand = vec![5917].into();
+    state.players[0].discard = vec![5990].into(); // Use valid card ID that exists in db
     state.turn = 1; // It is Turn 1
     state
         .step(
@@ -867,11 +867,11 @@ fn test_pattern_on_play() {
             .unwrap();
     }
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         1,
         "Conditional Recover pattern failed (should have recovered ID 5990)"
     );
-    assert_eq!(state.core.players[0].hand[0], 5990);
+    assert_eq!(state.players[0].hand[0], 5990);
 
     // 3. Optional Cost (Discard) + LookAndChoose (Search Pattern)
     // "When this card is played, you may discard 1 card. If you do, look at top 3 cards and choose 1."
@@ -891,8 +891,8 @@ fn test_pattern_on_play() {
     m3.abilities = vec![ab3];
     db.members.insert(5918, m3.clone());
     db.members_vec[5918 & LOGIC_ID_MASK as usize] = Some(m3);
-    state.core.players[0].hand = vec![5918, 5901].into(); // Card to play and card to discard
-    state.core.players[0].deck = vec![5902, 5903, 5904].into(); // Deck with cards to look at
+    state.players[0].hand = vec![5918, 5901].into(); // Card to play and card to discard
+    state.players[0].deck = vec![5902, 5903, 5904].into(); // Deck with cards to look at
     state
         .step(
             &db,
@@ -919,9 +919,9 @@ fn test_pattern_on_play() {
     }
     // Verify card was added to hand from deck
     assert!(
-        state.core.players[0].hand.len() >= 1,
+        state.players[0].hand.len() >= 1,
         "Optional Search should have added card, hand: {:?}",
-        state.core.players[0].hand
+        state.players[0].hand
     );
 }
 
@@ -946,20 +946,20 @@ fn test_pattern_performance() {
     let mut m1 = db.members.get(&3000).unwrap().clone();
     m1.card_id = 5961; m1.abilities = vec![ab1]; // Changed to 5961
     db.members.insert(5961, m1.clone()); db.members_vec[5961 & LOGIC_ID_MASK as usize] = Some(m1);
-    state.core.players[0].stage[0] = 5961;
-    state.core.players[0].energy_zone = vec![5901].into(); // Updated energy card
+    state.players[0].stage[0] = 5961;
+    state.players[0].energy_zone = vec![5901].into(); // Updated energy card
 
     // Triggering OnLiveStart (Simulated via Performance phase beginning)
     state.current_player = 0; state.phase = Phase::Main;
     state.ui.silent = false; // Testing OnLiveStart pause
     // Add a live card to live_zone so OnLiveStart fires
-    state.core.players[0].live_zone[0] = 15001;
+    state.players[0].live_zone[0] = 15001;
     state.do_performance_phase(&db);
     state.do_performance_phase(&db);
     // OnLiveStart triggers currently auto-resolve (skipping costs/pause)
     // assert_eq!(state.phase, Phase::Response, "OnLiveStart Buff pattern should pause");
     // Verify buff applied directly
-    assert_eq!(state.core.players[0].blade_buffs[0], 1, "Buff should have applied");
+    assert_eq!(state.players[0].blade_buffs[0], 1, "Buff should have applied");
     */
 
     // 2. Temporal State (OnReveal + OncePerTurn)
@@ -978,9 +978,9 @@ fn test_pattern_performance() {
     if logic_id < db.lives_vec.len() {
         db.lives_vec[logic_id & LOGIC_ID_MASK as usize] = Some(l2);
     }
-    state.core.players[0].deck = vec![5901, 5902].into(); // Updated deck cards (Need 2: 1 to Reveal, 1 to Draw)
-    state.core.players[0].live_zone[0] = 15003;
-    state.core.players[0].set_revealed(0, false);
+    state.players[0].deck = vec![5901, 5902].into(); // Updated deck cards (Need 2: 1 to Reveal, 1 to Draw)
+    state.players[0].live_zone[0] = 15003;
+    state.players[0].set_revealed(0, false);
 
     // Simulate Reveal
     state.phase = Phase::PerformanceP1; // Must be in Performance phase to reveal
@@ -993,7 +993,7 @@ fn test_pattern_performance() {
         },
     );
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         1,
         "OnReveal Temporal pattern failed"
     );
@@ -1015,10 +1015,10 @@ fn test_pattern_performance() {
     m3.abilities = vec![ab3]; // Changed to 5963
     db.members.insert(5963, m3.clone());
     db.members_vec[5963 & LOGIC_ID_MASK as usize] = Some(m3);
-    state.core.players[0].stage[0] = 5963;
-    state.core.players[0].deck = vec![5902].into(); // Updated deck card
-    state.core.players[0].success_lives = vec![15001].into();
-    state.core.players[1].success_lives = vec![].into();
+    state.players[0].stage[0] = 5963;
+    state.players[0].deck = vec![5902].into(); // Updated deck card
+    state.players[0].success_lives = vec![15001].into();
+    state.players[1].success_lives = vec![].into();
 
     // Manually inject successful performance result to satisfy do_live_result check
     state.ui.performance_results.insert(
@@ -1032,7 +1032,7 @@ fn test_pattern_performance() {
     // Simulate Success
     state.do_live_result(&db); // This should trigger OnLiveSuccess
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         2,
         "OnLiveSuccess Reward pattern failed"
     );
@@ -1062,7 +1062,7 @@ fn test_opcode_reveal_until_cost_ge() {
     db.members_vec[60010 & LOGIC_ID_MASK as usize] = Some(m10);
     db.members_vec[60015 & LOGIC_ID_MASK as usize] = Some(m15);
 
-    state.core.players[0].deck = vec![60015, 60010].into();
+    state.players[0].deck = vec![60015, 60010].into();
     let ctx = AbilityContext {
         player_id: 0,
         ..Default::default()
@@ -1084,8 +1084,8 @@ fn test_opcode_reveal_until_cost_ge() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Should pop 60010 (5 < 10), then 60015 (15 >= 10).
-    assert!(state.core.players[0].hand.contains(&60015));
-    assert!(state.core.players[0].discard.contains(&60010));
+    assert!(state.players[0].hand.contains(&60015));
+    assert!(state.players[0].discard.contains(&60010));
 }
 
 #[test]
@@ -1112,8 +1112,8 @@ fn test_pattern_exhaustive_sampling() {
     db.members.insert(5801, m1.clone());
     db.members_vec[5801 & LOGIC_ID_MASK as usize] = Some(m1);
 
-    state.core.players[0].hand = vec![5801].into();
-    state.core.players[0].success_lives = vec![15001].into();
+    state.players[0].hand = vec![5801].into();
+    state.players[0].success_lives = vec![15001].into();
     state.ui.silent = false; // Testing sampling selection
     state
         .step(
@@ -1194,8 +1194,8 @@ fn test_reproduce_example_draw_discard() {
     db.members_vec[5500 & LOGIC_ID_MASK as usize] = Some(real_card);
 
     // 2. Setup State: Hand needs cards to discard
-    state.core.players[0].hand = vec![5500, 5001].into(); // Card to play + Card to discard
-    state.core.players[0].deck = vec![5901, 5902].into(); // Card to draw
+    state.players[0].hand = vec![5500, 5001].into(); // Card to play + Card to discard
+    state.players[0].deck = vec![5901, 5902].into(); // Card to draw
 
     // 3. Execute Action
     // Play the card from hand (index 0) to stage (slot 0)
@@ -1211,7 +1211,7 @@ fn test_reproduce_example_draw_discard() {
         .unwrap();
     println!(
         "DEBUG TEST: Phase after PlayMember: {:?}. Hand: {:?}",
-        state.phase, state.core.players[0].hand
+        state.phase, state.players[0].hand
     );
 
     // 4. Verify Logic
@@ -1242,16 +1242,16 @@ fn test_reproduce_example_draw_discard() {
         state.phase
     );
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         1,
         "Should have 1 card left (10 drawn, 1 discarded). Hand: {:?}",
-        state.core.players[0].hand
+        state.players[0].hand
     );
     assert_eq!(
-        state.core.players[0].discard.len(),
+        state.players[0].discard.len(),
         1,
         "Should have 1 card in discard pile. Discard: {:?}",
-        state.core.players[0].discard
+        state.players[0].discard
     );
 }
 

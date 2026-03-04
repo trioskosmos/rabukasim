@@ -7,6 +7,7 @@ pub mod constants;
 pub mod costs;
 pub mod handlers;
 pub mod logging;
+pub mod instruction;
 pub mod suspension;
 
 use crate::core::enums::Phase;
@@ -109,40 +110,11 @@ pub fn resolve_bytecode(
             continue;
         }
 
-        let op = frame.bytecode[ip];
-
-        // Instruction decoding (5-word extended format)
-        let v = if ip + 1 < frame.bytecode.len() {
-            frame.bytecode[ip + 1]
-        } else {
-            0
-        };
-        let a_low = if ip + 2 < frame.bytecode.len() {
-            frame.bytecode[ip + 2]
-        } else {
-            0
-        } as u32;
-        let a_high = if ip + 3 < frame.bytecode.len() {
-            frame.bytecode[ip + 3]
-        } else {
-            0
-        } as u32;
-        let s = if ip + 4 < frame.bytecode.len() {
-            frame.bytecode[ip + 4]
-        } else {
-            0
-        };
-
-        /*
-        if op == 226 {
-            println!(
-                "[DECODE-DEBUG] Op: {}, IP: {}, v: {}, a_low: {}, a_high: {}, s: {}",
-                op, ip, v, a_low, a_high, s
-            );
-        }
-        */
-
-        let a = ((a_high as i64) << 32) | (a_low as i64);
+        let instr = instruction::BytecodeInstruction::decode(&frame.bytecode, ip);
+        let op = instr.op;
+        let v = instr.v;
+        let a = instr.a;
+        let s = instr.raw_s;
 
         frame.ip += 5; // Advance IP
         frame.ctx.program_counter = ip as u16;
@@ -287,10 +259,7 @@ pub fn resolve_bytecode(
             state,
             db,
             &mut frame.ctx,
-            real_op,
-            v,
-            a,
-            s,
+            &instr,
             ip,
             &frame.bytecode,
         ) {
@@ -334,7 +303,7 @@ pub fn is_condition_opcode(op: i32) -> bool {
 }
 
 pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
-    while let Some((cid, ab_idx, ctx, is_live, _trigger)) = state.core.trigger_queue.pop_front() {
+    while let Some((cid, ab_idx, ctx, is_live, _trigger)) = state.trigger_queue.pop_front() {
         // Generate a new ID for the activation
         state.generate_execution_id();
 
@@ -371,7 +340,7 @@ pub fn check_once_per_turn(
     ab_idx: usize,
 ) -> bool {
     let uid = get_ability_uid(source_type, id, ab_idx as u32);
-    !state.core.players[p_idx].used_abilities.contains(&uid)
+    !state.players[p_idx].used_abilities.contains(&uid)
 }
 
 pub fn consume_once_per_turn(
@@ -382,5 +351,5 @@ pub fn consume_once_per_turn(
     ab_idx: usize,
 ) {
     let uid = get_ability_uid(source_type, id, ab_idx as u32);
-    state.core.players[p_idx].used_abilities.push(uid);
+    state.players[p_idx].used_abilities.push(uid);
 }

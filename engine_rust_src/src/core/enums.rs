@@ -432,3 +432,20 @@ impl Phase {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]
+#[repr(u8)]
+pub enum Zone {
+    #[default]
+    Default = 0,
+    DeckTop = 1,
+    DeckBottom = 2,
+    Energy = 3,
+    Stage = 4,
+    Hand = 6,
+    Discard = 7,
+    Deck = 8,
+    LiveSet = 13,
+    SuccessPile = 14,
+    Yell = 15,
+}

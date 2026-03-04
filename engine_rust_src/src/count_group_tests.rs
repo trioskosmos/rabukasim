@@ -20,7 +20,7 @@ mod tests {
         add_card(&mut db, 3003, "Member C", groups.clone(), vec![]);
 
         // Put all 3 on stage
-        state.core.players[0].stage = [3001, 3002, 3003];
+        state.players[0].stage = [3001, 3002, 3003];
 
         let ctx = AbilityContext {
             player_id: 0,

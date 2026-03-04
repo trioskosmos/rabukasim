@@ -35,8 +35,8 @@ pub fn get_effective_blades(
     if depth > 5 {
         return 0;
     }
-    let cid = state.core.players[player_idx].stage[slot_idx];
-    if cid < 0 || state.core.players[player_idx].is_tapped(slot_idx) {
+    let cid = state.players[player_idx].stage[slot_idx];
+    if cid < 0 || state.players[player_idx].is_tapped(slot_idx) {
         return 0;
     }
     let base_id = cid;
@@ -49,7 +49,7 @@ pub fn get_effective_blades(
 
     // Wave 1: Constant abilities from ALL members on stage (Global/Area buffs)
     for other_slot in 0..3 {
-        let other_cid = state.core.players[player_idx].stage[other_slot];
+        let other_cid = state.players[player_idx].stage[other_slot];
         if other_cid < 0 {
             continue;
         }
@@ -102,7 +102,7 @@ pub fn get_effective_blades(
                                 } else if (a & 0x40) != 0 {
                                     // Legacy dynamic bit
                                     if a_low == 307 {
-                                         multiplier = state.core.players[player_idx].success_lives.len() as i32;
+                                         multiplier = state.players[player_idx].success_lives.len() as i32;
                                     }
                                 }
 
@@ -117,7 +117,7 @@ pub fn get_effective_blades(
     }
 
     // --- Wave 2: Granted Abilities ---
-    for &(target_cid, source_cid, ab_idx) in &state.core.players[player_idx].granted_abilities {
+    for &(target_cid, source_cid, ab_idx) in &state.players[player_idx].granted_abilities {
         if target_cid == cid {
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
@@ -151,7 +151,7 @@ pub fn get_effective_blades(
                                         multiplier = resolve_count(state, db, count_op, a, s, &ctx, depth + 1);
                                     } else if (a & 0x40) != 0 {
                                         if a_low == 307 {
-                                             multiplier = state.core.players[player_idx].success_lives.len() as i32;
+                                             multiplier = state.players[player_idx].success_lives.len() as i32;
                                         }
                                     }
                                     val += (v as i32) * multiplier;
@@ -165,7 +165,7 @@ pub fn get_effective_blades(
         }
     }
 
-    let buff = state.core.players[player_idx].blade_buffs[slot_idx];
+    let buff = state.players[player_idx].blade_buffs[slot_idx];
     (val + buff as i32).max(0) as u32
 }
 
@@ -179,22 +179,22 @@ pub fn get_effective_hearts(
     if depth > 5 {
         return HeartBoard::default();
     }
-    let cid = state.core.players[player_idx].stage[slot_idx];
+    let cid = state.players[player_idx].stage[slot_idx];
     if cid < 0 {
         // Even without a member, heart buffs for the slot might apply
-        return state.core.players[player_idx].heart_buffs[slot_idx];
+        return state.players[player_idx].heart_buffs[slot_idx];
     }
     let base_id = cid;
     let m = if let Some(m) = db.get_member(base_id) {
         m
     } else {
-        return state.core.players[player_idx].heart_buffs[slot_idx];
+        return state.players[player_idx].heart_buffs[slot_idx];
     };
     let mut board = m.hearts_board.clone();
 
     // Wave 1: Constant abilities from ALL members on stage (Global/Area buffs)
     for other_slot in 0..3 {
-        let other_cid = state.core.players[player_idx].stage[other_slot];
+        let other_cid = state.players[player_idx].stage[other_slot];
         if other_cid < 0 {
             continue;
         }
@@ -258,7 +258,7 @@ pub fn get_effective_hearts(
     }
 
     // --- Wave 2: Granted Abilities ---
-    for &(target_cid, source_cid, ab_idx) in &state.core.players[player_idx].granted_abilities {
+    for &(target_cid, source_cid, ab_idx) in &state.players[player_idx].granted_abilities {
         if target_cid == cid {
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
@@ -309,13 +309,13 @@ pub fn get_effective_hearts(
     }
 
     // Add hearts from yelled cards (Rule 8.3.1)
-    for &yid in &state.core.players[player_idx].stage_energy[slot_idx] {
+    for &yid in &state.players[player_idx].stage_energy[slot_idx] {
         if let Some(ym) = db.get_member(yid) {
             board.add(ym.blade_hearts_board);
         }
     }
 
-    board.add(state.core.players[player_idx].heart_buffs[slot_idx]);
+    board.add(state.players[player_idx].heart_buffs[slot_idx]);
     board
 }
 
@@ -367,14 +367,14 @@ pub fn get_member_cost(
     }
 
     // 1. Global reduction
-    cost -= state.core.players[p_idx].cost_reduction as i32;
+    cost -= state.players[p_idx].cost_reduction as i32;
 
     // 2. Baton Touch & Cached Position Modifiers (Rule 12 & Auras)
     if slot_idx >= 0 && slot_idx < 3 {
         // Apply cached slot modifiers (from other members & granted abilities)
-        cost += state.core.players[p_idx].slot_cost_modifiers[slot_idx as usize] as i32;
+        cost += state.players[p_idx].slot_cost_modifiers[slot_idx as usize] as i32;
 
-        let old_cid = state.core.players[p_idx].stage[slot_idx as usize];
+        let old_cid = state.players[p_idx].stage[slot_idx as usize];
         if old_cid >= 0 {
             if let Some(old_m) = db.get_member(old_cid) {
                 cost -= old_m.cost as i32;
@@ -383,7 +383,7 @@ pub fn get_member_cost(
     }
 
     if secondary_slot_idx >= 0 && secondary_slot_idx < 3 {
-        let old_cid = state.core.players[p_idx].stage[secondary_slot_idx as usize];
+        let old_cid = state.players[p_idx].stage[secondary_slot_idx as usize];
         if old_cid >= 0 {
             if let Some(old_m) = db.get_member(old_cid) {
                 cost -= old_m.cost as i32;
@@ -423,7 +423,7 @@ pub fn get_member_cost(
     }
 
     // 4. Granted constant abilities that reduce own cost
-    for &(target_cid, source_cid, ab_idx) in &state.core.players[p_idx].granted_abilities {
+    for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
         if target_cid == card_id {
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
@@ -459,7 +459,7 @@ pub fn get_member_cost(
     }
 
     // 5. Temporary cost modifiers (From Action Phase triggers)
-    for (cond, amount) in &state.core.players[p_idx].cost_modifiers {
+    for (cond, amount) in &state.players[p_idx].cost_modifiers {
         let ctx = AbilityContext {
             source_card_id: card_id,
             player_id: p_idx as u8,
@@ -482,7 +482,7 @@ pub fn has_restriction(
     opcode: i32,
     db: &CardDatabase,
 ) -> bool {
-    let cid = state.core.players[p_idx].stage[slot_idx];
+    let cid = state.players[p_idx].stage[slot_idx];
     if cid < 0 {
         return false;
     }
@@ -520,7 +520,7 @@ pub fn has_restriction(
     }
 
     // 2. Granted abilities
-    for &(target_cid, source_cid, ab_idx) in &state.core.players[p_idx].granted_abilities {
+    for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
         if target_cid == cid {
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {

@@ -10,18 +10,18 @@ mod tests {
 
         // Setup Eli (PL!-bp3-002-P) on P0 stage
         let eli_id = db.id_by_no("PL!-bp3-002-P").unwrap();
-        state.core.players[0].stage[0] = eli_id;
+        state.players[0].stage[0] = eli_id;
 
         // Add a different card to hand to pay discard cost (not the Eli card itself)
         let dummy_card = 100; // Use a different card ID
-        state.core.players[0].hand.push(dummy_card);
+        state.players[0].hand.push(dummy_card);
 
         // Setup targets on P1 stage
         let target_id = 130; // PL!-sd1-001-SD (Cost 1)
-        state.core.players[1].stage[0] = target_id;
-        state.core.players[1].stage[1] = target_id;
-        state.core.players[1].set_tapped(0, false);
-        state.core.players[1].set_tapped(1, false);
+        state.players[1].stage[0] = target_id;
+        state.players[1].stage[1] = target_id;
+        state.players[1].set_tapped(0, false);
+        state.players[1].set_tapped(1, false);
 
         // Trigger ON_PLAY ability
         let actx = AbilityContext {
@@ -91,11 +91,11 @@ mod tests {
             state.step(&db, 600).unwrap();
 
             assert!(
-                state.core.players[1].is_tapped(0),
+                state.players[1].is_tapped(0),
                 "Opponent member should be tapped"
             );
             assert!(
-                !state.core.players[0].is_tapped(0),
+                !state.players[0].is_tapped(0),
                 "Active player member should NOT be tapped"
             );
         } else {

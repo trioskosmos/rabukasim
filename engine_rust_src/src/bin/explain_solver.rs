@@ -63,14 +63,14 @@ fn main() {
         .collect();
 
     // Base Yells: 10
-    state.core.players[p_idx].cheer_mod_count = 10;
+    state.players[p_idx].cheer_mod_count = 10;
 
     // Initial Deck for Scenario 1/2
-    state.core.players[p_idx].deck = member_ids.clone().into();
+    state.players[p_idx].deck = member_ids.clone().into();
 
     // Stage: 1 member to provide a base
     if !member_ids.is_empty() {
-        state.core.players[p_idx].stage[0] = member_ids[0];
+        state.players[p_idx].stage[0] = member_ids[0];
     }
 
     // SCENARIO 1: LOW STAGE (1 Weak Member, 5 Yells)
@@ -90,9 +90,9 @@ fn main() {
         let p_idx = 0;
 
         // Stage has 1 member
-        state.core.players[p_idx].stage[0] = member_ids[0]; // Eli
+        state.players[p_idx].stage[0] = member_ids[0]; // Eli
                                                             // Deck
-        state.core.players[p_idx]
+        state.players[p_idx]
             .deck
             .extend_from_slice(&member_ids);
 
@@ -129,20 +129,20 @@ fn main() {
 
         // Stage has 3 members
         if member_ids.len() >= 3 {
-            state.core.players[p_idx].stage[0] = member_ids[1];
-            state.core.players[p_idx].stage[1] = member_ids[2];
-            state.core.players[p_idx].stage[2] = member_ids[3];
+            state.players[p_idx].stage[0] = member_ids[1];
+            state.players[p_idx].stage[1] = member_ids[2];
+            state.players[p_idx].stage[2] = member_ids[3];
         }
 
         // Let's add blades to these members (simulating +1 blade per member)
-        state.core.players[p_idx].blade_buffs[0] += 1;
-        state.core.players[p_idx].blade_buffs[1] += 1;
-        state.core.players[p_idx].blade_buffs[2] += 1;
+        state.players[p_idx].blade_buffs[0] += 1;
+        state.players[p_idx].blade_buffs[1] += 1;
+        state.players[p_idx].blade_buffs[2] += 1;
 
         // 15 Yells
-        state.core.players[p_idx].cheer_mod_count = 15;
+        state.players[p_idx].cheer_mod_count = 15;
         // Deck
-        state.core.players[p_idx]
+        state.players[p_idx]
             .deck
             .extend_from_slice(&member_ids);
 
@@ -180,18 +180,18 @@ fn main() {
     let mut state = GameState::default();
     state.current_player = 0;
     let p_idx = 0;
-    // state.core.players[p_idx].energy = 10; // DEPRECATED
+    // state.players[p_idx].energy = 10; // DEPRECATED
     // Instead, add 10 dummy energy cards
     for _ in 0..10 {
-        state.core.players[p_idx].energy_zone.push(1);
+        state.players[p_idx].energy_zone.push(1);
     }
     // Base Yells: 10
-    state.core.players[p_idx].cheer_mod_count = 10;
-    state.core.players[p_idx]
+    state.players[p_idx].cheer_mod_count = 10;
+    state.players[p_idx]
         .deck
         .extend_from_slice(&member_ids);
     // Stage: 1 member to provide a base
-    state.core.players[p_idx].stage[0] = member_ids[0];
+    state.players[p_idx].stage[0] = member_ids[0];
 
     // Hand setup for Scenario 3:
     // 1. PL!-sd1-002-SD (Eri - Activated, no immediate play boost)
@@ -211,9 +211,9 @@ fn main() {
         }
     }
 
-    state.core.players[p_idx].hand = hand_ids.clone().into();
+    state.players[p_idx].hand = hand_ids.clone().into();
     // Add multiple members to success pile/deck to ensure variety and satisfy conditions
-    state.core.players[p_idx]
+    state.players[p_idx]
         .success_lives
         .extend_from_slice(&member_ids);
 
@@ -223,12 +223,12 @@ fn main() {
     // Shuffle or sort? Let's just use the first 40 unique cards for stability
     diverse_deck.sort();
     diverse_deck.truncate(40);
-    state.core.players[p_idx].deck = diverse_deck.into();
+    state.players[p_idx].deck = diverse_deck.into();
 
     let evaluations = PerformanceProbabilitySolver::evaluate_hand_contributions(
         &state,
         &db,
-        &state.core.players[p_idx].hand,
+        &state.players[p_idx].hand,
         live_card,
     );
 

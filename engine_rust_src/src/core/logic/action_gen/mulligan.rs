@@ -11,7 +11,7 @@ impl ActionGenerator for MulliganGenerator {
         state: &GameState,
         receiver: &mut R,
     ) {
-        let player = &state.core.players[p_idx];
+        let player = &state.players[p_idx];
         // Action 0: Confirm
         receiver.add_action(0);
         // Actions 300+i: Toggle card at hand position i

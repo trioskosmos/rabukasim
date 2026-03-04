@@ -78,14 +78,14 @@ impl ZoneSnapshot {
             looked_cards: p.looked_cards.iter().cloned().collect(),
             yell_count: p.yell_cards.len(),
             opponent_tapped_members: [
-                state.core.players[1].is_tapped(0),
-                state.core.players[1].is_tapped(1),
-                state.core.players[1].is_tapped(2),
+                state.players[1].is_tapped(0),
+                state.players[1].is_tapped(1),
+                state.players[1].is_tapped(2),
             ],
             opponent_tapped_count: [
-                state.core.players[1].is_tapped(0),
-                state.core.players[1].is_tapped(1),
-                state.core.players[1].is_tapped(2),
+                state.players[1].is_tapped(0),
+                state.players[1].is_tapped(1),
+                state.players[1].is_tapped(2),
             ]
             .iter()
             .filter(|&&t| t)
@@ -263,7 +263,7 @@ pub fn generate_card_report(card_id: i32) {
 }
 
 pub fn p_state(state: &GameState, p_idx: usize) -> &PlayerState {
-    &state.core.players[p_idx]
+    &state.players[p_idx]
 }
 
 // const DB_JSON: &str = include_str!("../../data/cards_compiled.json");
@@ -478,14 +478,14 @@ pub fn create_test_db() -> CardDatabase {
 
 pub fn create_test_state() -> GameState {
     let mut state = GameState::default();
-    state.core.players[0].player_id = 0;
-    state.core.players[1].player_id = 1;
+    state.players[0].player_id = 0;
+    state.players[1].player_id = 1;
     state.phase = Phase::Main;
     state.debug.debug_mode = true; // NEW: Enable debug mode for tests
     state.ui.silent = false; // NEW: Disable silent mode for tests
     for i in 0..2 {
-        state.core.players[i].deck = vec![51001, 51002, 51003, 51004, 51005].into();
-        state.core.players[i].energy_zone = vec![3101, 3102, 3103].into();
+        state.players[i].deck = vec![51001, 51002, 51003, 51004, 51005].into();
+        state.players[i].energy_zone = vec![3101, 3102, 3103].into();
     }
     state
 }

@@ -11,8 +11,8 @@ impl ActionGenerator for ActiveDrawGenerator {
         state: &GameState,
         receiver: &mut R,
     ) {
-        let player = &state.core.players[p_idx];
-        if state.phase == Phase::LiveResult && state.core.live_result_selection_pending {
+        let player = &state.players[p_idx];
+        if state.phase == Phase::LiveResult && state.live_result_selection_pending {
             // Hide Action 0 if mandatory choice is active
         } else {
             receiver.add_action(0);

@@ -27,8 +27,8 @@ fn test_enforce_cost_failure() {
     db.members.insert(cid, m.clone());
     db.members_vec[(cid as usize) & LOGIC_ID_MASK as usize] = Some(m);
 
-    state.core.players[0].stage[0] = cid;
-    state.core.players[0].energy_zone.clear(); // 0 Energy
+    state.players[0].stage[0] = cid;
+    state.players[0].energy_zone.clear(); // 0 Energy
     state.debug.debug_ignore_conditions = false; // ENSURE ENFORCEMENT IS ON
 
     // Attempt to activate (0, 0)
@@ -59,7 +59,7 @@ fn test_enforce_condition_failure() {
     db.members.insert(cid, m.clone());
     db.members_vec[(cid as usize) & LOGIC_ID_MASK as usize] = Some(m);
 
-    state.core.players[0].stage = [cid, -1, -1]; // Only 1 member
+    state.players[0].stage = [cid, -1, -1]; // Only 1 member
     state.debug.debug_ignore_conditions = false;
 
     // Attempt to activate (0, 0)
@@ -89,8 +89,8 @@ fn test_enforce_once_per_turn_failure() {
     db.members.insert(cid, m.clone());
     db.members_vec[(cid as usize) & LOGIC_ID_MASK as usize] = Some(m);
 
-    state.core.players[0].stage[0] = cid;
-    state.core.players[0].deck = vec![1, 2, 3].into();
+    state.players[0].stage[0] = cid;
+    state.players[0].deck = vec![1, 2, 3].into();
     state.debug.debug_ignore_conditions = false;
 
     // First activation - Success
@@ -123,8 +123,8 @@ fn test_enforce_play_member_cost_failure() {
     db.members.insert(cid, m.clone());
     db.members_vec[(cid as usize) & LOGIC_ID_MASK as usize] = Some(m);
 
-    state.core.players[0].hand = vec![cid].into();
-    state.core.players[0].energy_zone.clear(); // 0 Energy
+    state.players[0].hand = vec![cid].into();
+    state.players[0].energy_zone.clear(); // 0 Energy
     state.debug.debug_ignore_conditions = false;
 
     // Attempt to play to slot 0

@@ -1,4 +1,4 @@
-use crate::core::logic::handlers::PhaseHandlers;
+use crate::core::logic::MainPhaseController;
 use crate::core::logic::*;
 use crate::test_helpers::{create_test_db, create_test_state};
 
@@ -10,14 +10,14 @@ fn test_score_jump_repro() {
     state.phase = Phase::LiveResult;
 
     // Player 0 has 1 success life already
-    state.core.players[0].success_lives.push(55001);
-    state.core.players[0].score = 1;
+    state.players[0].success_lives.push(55001);
+    state.players[0].score = 1;
 
     // Player 0 has two live cards in zone
     let live_id_1 = 55001;
     let live_id_2 = 55001;
-    state.core.players[0].live_zone[0] = live_id_1;
-    state.core.players[0].live_zone[1] = live_id_2;
+    state.players[0].live_zone[0] = live_id_1;
+    state.players[0].live_zone[1] = live_id_2;
 
     // Mock performance results showing both passed
     state.ui.performance_results.insert(
@@ -41,7 +41,7 @@ fn test_score_jump_repro() {
         "Should be pending selection"
     );
     assert_eq!(
-        state.core.players[0].success_lives.len(),
+        state.players[0].success_lives.len(),
         1,
         "Should still have 1 life before selection"
     );
@@ -59,7 +59,7 @@ fn test_score_jump_repro() {
     // After selection, we expect exactly 2 lives (1 original + 1 selected)
     // If the bug exists, this will be 3.
     assert_eq!(
-        state.core.players[0].success_lives.len(),
+        state.players[0].success_lives.len(),
         2,
         "Should have exactly 2 lives after selecting one of two"
     );

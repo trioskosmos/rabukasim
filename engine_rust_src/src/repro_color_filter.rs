@@ -62,8 +62,8 @@ mod tests {
         );
 
         let mut state = create_test_state();
-        state.core.players[0].deck = deck_cids.into();
-        state.core.players[0].hand = vec![ability_cid].into();
+        state.players[0].deck = deck_cids.into();
+        state.players[0].hand = vec![ability_cid].into();
 
         // 1. Play the card
         let mut receiver = TestActionReceiver::default();
@@ -104,7 +104,7 @@ mod tests {
         // Basic verification: should have some choice actions available
         // The exact filtering depends on implementation details of color mask processing
         assert!(
-            !choice_actions.is_empty() || state.core.players[0].looked_cards.is_empty(),
+            !choice_actions.is_empty() || state.players[0].looked_cards.is_empty(),
             "Should have choice actions or empty looked_cards"
         );
 

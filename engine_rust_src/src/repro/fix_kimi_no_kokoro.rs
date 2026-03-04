@@ -27,11 +27,11 @@ fn test_kimi_no_kokoro_prevention() {
     state.debug.debug_mode = true;
 
     // Force set live card
-    state.core.players[0].live_zone[0] = kimi_no_kokoro_id;
+    state.players[0].live_zone[0] = kimi_no_kokoro_id;
 
     // Give player some dummy cards in hand for the discard cost
-    state.core.players[0].hand.push(1);
-    state.core.players[0].hand.push(2);
+    state.players[0].hand.push(1);
+    state.players[0].hand.push(2);
 
     // Mock performance results to force success
     // We can manually insert a success result into performance_results
@@ -39,9 +39,9 @@ fn test_kimi_no_kokoro_prevention() {
     // Let's rely on do_live_result. We need to satisfy hearts.
     // Just give the player infinite hearts of all colors.
     for i in 0..7 {
-        state.core.players[0].heart_buffs[0].set_color_count(i, 1);
-        state.core.players[0].heart_buffs[1].set_color_count(i, 1);
-        state.core.players[0].heart_buffs[2].set_color_count(i, 1);
+        state.players[0].heart_buffs[0].set_color_count(i, 1);
+        state.players[0].heart_buffs[1].set_color_count(i, 1);
+        state.players[0].heart_buffs[2].set_color_count(i, 1);
     }
 
     // We need to run do_performance_phase to generate the result entry?
@@ -79,24 +79,24 @@ fn test_kimi_no_kokoro_prevention() {
     state.step(&db, crate::core::logic::ACTION_BASE_CHOICE as i32).unwrap();
 
     println!("DEBUG: Phase after resumption: {:?}", state.phase);
-    println!("DEBUG: Live slot 0: {}", state.core.players[0].live_zone[0]);
-    println!("DEBUG: Hand size: {}", state.core.players[0].hand.len());
+    println!("DEBUG: Live slot 0: {}", state.players[0].live_zone[0]);
+    println!("DEBUG: Hand size: {}", state.players[0].hand.len());
 
     // Initial hand was 8 (6 from start + 2 manually added)
     // Ability draws 2 -> 10
     // Ability discards 1 -> 9
     // Turn Start draw (auto-stepped) -> 10
-    assert_eq!(state.core.players[0].hand.len(), 10, "Hand size should be 10 (8+2-1+1)");
+    assert_eq!(state.players[0].hand.len(), 10, "Hand size should be 10 (8+2-1+1)");
 
     // Rule 1 Verification:
     // The card at slot 0 should be gone (-1)
-    assert_eq!(state.core.players[0].live_zone[0], -1, "Live card should be removed from zone");
+    assert_eq!(state.players[0].live_zone[0], -1, "Live card should be removed from zone");
 
     // It should be in DISCARD (due to Prevention)
     // discard should contain KIMI_NO_KOKORO_ID
-    assert!(state.core.players[0].discard.contains(&(kimi_no_kokoro_id as i32)), "Live card should be in discard");
+    assert!(state.players[0].discard.contains(&(kimi_no_kokoro_id as i32)), "Live card should be in discard");
 
     // It should NOT be in success_lives
-    assert!(!state.core.players[0].success_lives.contains(&(kimi_no_kokoro_id as i32)), "Live card should NOT be in success pile");
+    assert!(!state.players[0].success_lives.contains(&(kimi_no_kokoro_id as i32)), "Live card should NOT be in success pile");
 
 }

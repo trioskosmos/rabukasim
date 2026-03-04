@@ -35,12 +35,12 @@ mod tests {
 
         // Setup Stage
         // Slot 0: Listener (A)
-        state.core.players[0].stage[0] = 10;
+        state.players[0].stage[0] = 10;
         // Slot 1: Leaver (B)
-        state.core.players[0].stage[1] = 20;
+        state.players[0].stage[1] = 20;
 
         // Verify initial state
-        assert_eq!(state.core.players[0].cheer_mod_count, 0, "Initial count should be 0");
+        assert_eq!(state.players[0].cheer_mod_count, 0, "Initial count should be 0");
 
         // Action: Trigger OnLeaves for Card B (Leaver)
         let ctx = AbilityContext {
@@ -58,13 +58,13 @@ mod tests {
         println!("DEBUG: Processing Trigger Queue. Queue len: {}", state.trigger_queue.len());
         state.process_trigger_queue(&db); // Ensure queued abilities execute
 
-        println!("DEBUG: Finished Processing. Cheer Mod Count: {}", state.core.players[0].cheer_mod_count);
+        println!("DEBUG: Finished Processing. Cheer Mod Count: {}", state.players[0].cheer_mod_count);
 
         // CHECK: Did Card A trigger?
         // If bug exists: Card A saw the event broadcasting and triggered -> count == 1
         // If correct: Card A checks "Is it me?" -> No -> count == 0
 
-        assert_eq!(state.core.players[0].cheer_mod_count, 0,
+        assert_eq!(state.players[0].cheer_mod_count, 0,
             "Broadcasting Bug still present: Listener (Card A) triggered OnLeaves when Leaver (Card B) left!");
     }
 }

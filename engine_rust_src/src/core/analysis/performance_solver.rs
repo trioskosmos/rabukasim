@@ -45,7 +45,7 @@ impl PerformanceProbabilitySolver {
         adj: &AbilityAdjustments,
     ) -> PerformanceChance {
         let player_id = state.current_player as usize; // Assuming current_player is the one performing
-        let player = &state.core.players[player_id];
+        let player = &state.players[player_id];
 
         // 1. Calculate Required Hearts
         let mut req_board = live_card.hearts_board;
@@ -245,7 +245,7 @@ impl PerformanceProbabilitySolver {
         db: &CardDatabase,
         player_id: usize,
     ) -> Vec<(i32, PerformanceChance)> {
-        let player = &state.core.players[player_id];
+        let player = &state.players[player_id];
         let mut results = Vec::new();
         for &cid in player.live_zone.iter() {
             if cid >= 0 {
@@ -370,8 +370,8 @@ impl PerformanceProbabilitySolver {
 
             // Can we afford it?
             let player_id = state.current_player as usize;
-            let available_energy = state.core.players[player_id].energy_zone.len() as u32
-                - state.core.players[player_id].tapped_energy_count();
+            let available_energy = state.players[player_id].energy_zone.len() as u32
+                - state.players[player_id].tapped_energy_count();
 
             let mut best_chance = PerformanceChance {
                 success_probability: 0.0,

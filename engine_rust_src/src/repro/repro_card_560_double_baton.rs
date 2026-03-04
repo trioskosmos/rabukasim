@@ -35,15 +35,15 @@ fn test_repro_card_560_double_baton() {
 
     // Setup Stage for Player 0
     // Slot 0: Kanon, Slot 1: Keke, Slot 2: Empty
-    state.core.players[0].stage[0] = kanon_id;
-    state.core.players[0].stage[1] = keke_id;
-    state.core.players[0].stage[2] = -1;
+    state.players[0].stage[0] = kanon_id;
+    state.players[0].stage[1] = keke_id;
+    state.players[0].stage[2] = -1;
 
     // Player 0 Hand: Card 560
-    state.core.players[0].hand = vec![card_560_id].into();
+    state.players[0].hand = vec![card_560_id].into();
 
     // Player 0 Energy: 22 cards (max cost)
-    state.core.players[0].energy_zone = vec![9000; 22].into();
+    state.players[0].energy_zone = vec![9000; 22].into();
 
     state.current_player = 0;
     state.phase = Phase::Main;
@@ -103,22 +103,22 @@ fn test_repro_card_560_double_baton() {
 
     // Verifications:
     assert_eq!(
-        state.core.players[0].stage[0], card_560_id,
+        state.players[0].stage[0], card_560_id,
         "Card 560 should be on Slot 0"
     );
     assert_eq!(
-        state.core.players[0].stage[1], -1,
+        state.players[0].stage[1], -1,
         "Slot 1 should be empty after Double Baton"
     );
     assert_eq!(
-        state.core.players[0].baton_touch_count, 2,
+        state.players[0].baton_touch_count, 2,
         "baton_touch_count should be 2"
     );
 
     // Expected cost = 22 - kanon.cost - keke.cost
     let expected_cost = (22 - kanon.cost as i32 - keke.cost as i32).max(0) as usize;
     eprintln!("Expected tapped energy: {}", expected_cost);
-    let tapped = state.core.players[0].tapped_energy_mask.count_ones() as usize;
+    let tapped = state.players[0].tapped_energy_mask.count_ones() as usize;
     assert_eq!(
         tapped, expected_cost,
         "Should have tapped {} energy",
@@ -134,16 +134,16 @@ fn test_repro_card_560_double_baton() {
     eprintln!("\n=== Testing Second Ability ===");
     eprintln!(
         "baton_touch_count: {}",
-        state.core.players[0].baton_touch_count
+        state.players[0].baton_touch_count
     );
     eprintln!("prev_card_id: {}", state.prev_card_id);
 
     // Check if the card is in CENTER position (slot 0)
-    let is_center = state.core.players[0].stage[0] == card_560_id;
+    let is_center = state.players[0].stage[0] == card_560_id;
     eprintln!("Is in CENTER (slot 0): {}", is_center);
 
     // Check baton_touch_count == 2
-    let baton_count_correct = state.core.players[0].baton_touch_count == 2;
+    let baton_count_correct = state.players[0].baton_touch_count == 2;
     eprintln!("baton_touch_count == 2: {}", baton_count_correct);
 
     // Check if Kanon and Keke are Liella! members (GROUP_ID=3)
@@ -223,15 +223,15 @@ fn test_card_560_second_ability_condition() {
     );
 
     // Setup: Stage with Kanon and Keke
-    state.core.players[0].stage[0] = kanon_id;
-    state.core.players[0].stage[1] = keke_id;
-    state.core.players[0].stage[2] = -1;
+    state.players[0].stage[0] = kanon_id;
+    state.players[0].stage[1] = keke_id;
+    state.players[0].stage[2] = -1;
 
     // Hand with Card 560
-    state.core.players[0].hand = vec![card_560_id].into();
+    state.players[0].hand = vec![card_560_id].into();
 
     // Energy
-    state.core.players[0].energy_zone = vec![9000; 22].into();
+    state.players[0].energy_zone = vec![9000; 22].into();
 
     // Discard pile with a Liella! member cost <= 4 for the PLAY_MEMBER_FROM_DISCARD effect
     // Find a Liella! member with cost <= 4
@@ -249,7 +249,7 @@ fn test_card_560_second_ability_condition() {
         }
     }
     if let Some(id) = liella_low_cost {
-        state.core.players[0].discard.push(id as i32);
+        state.players[0].discard.push(id as i32);
     }
 
     state.current_player = 0;
@@ -262,7 +262,7 @@ fn test_card_560_second_ability_condition() {
         .expect("Double Baton step failed");
 
     // Check hand size - should have drawn 2 cards if second ability triggered
-    let hand_size = state.core.players[0].hand.len();
+    let hand_size = state.players[0].hand.len();
     eprintln!("Hand size after play: {}", hand_size);
 
     // The second ability should have drawn 2 cards
@@ -270,5 +270,5 @@ fn test_card_560_second_ability_condition() {
     // and doesn't check FILTER
 
     // For now, just verify the basic double baton worked
-    assert_eq!(state.core.players[0].baton_touch_count, 2);
+    assert_eq!(state.players[0].baton_touch_count, 2);
 }

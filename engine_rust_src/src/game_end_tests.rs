@@ -7,8 +7,8 @@ fn test_win_by_lives() {
     let mut state = create_test_state();
 
     // Player 0 has 3 success lives (START:DASH!! ID 137)
-    state.core.players[0].success_lives = vec![137, 137, 137].into();
-    state.core.players[1].success_lives = vec![].into();
+    state.players[0].success_lives = vec![137, 137, 137].into();
+    state.players[1].success_lives = vec![].into();
 
     state.check_win_condition();
 
@@ -22,8 +22,8 @@ fn test_draw_simultaneous_lives() {
     let mut state = create_test_state();
 
     // Simultaneous reach 3 lives
-    state.core.players[0].success_lives = vec![137, 137, 137].into();
-    state.core.players[1].success_lives = vec![137, 137, 137].into();
+    state.players[0].success_lives = vec![137, 137, 137].into();
+    state.players[1].success_lives = vec![137, 137, 137].into();
 
     state.check_win_condition();
 
@@ -40,11 +40,11 @@ fn test_true_draw_lives_and_score_equal() {
     let _db = load_real_db();
     let mut state = create_test_state();
 
-    state.core.players[0].success_lives = vec![137, 137, 137].into();
-    state.core.players[1].success_lives = vec![137, 137, 137].into();
+    state.players[0].success_lives = vec![137, 137, 137].into();
+    state.players[1].success_lives = vec![137, 137, 137].into();
 
-    state.core.players[0].score = 25;
-    state.core.players[1].score = 25;
+    state.players[0].score = 25;
+    state.players[1].score = 25;
 
     state.check_win_condition();
 
@@ -56,8 +56,8 @@ fn test_deck_out_not_yet_implemented() {
     // Verifying current behavior: Deck out doesn't cause immediate loss yet
     let _db = load_real_db();
     let mut state = create_test_state();
-    state.core.players[0].deck = vec![].into();
-    state.core.players[0].discard = vec![].into();
+    state.players[0].deck = vec![].into();
+    state.players[0].discard = vec![].into();
 
     state.draw_cards(0, 1);
 

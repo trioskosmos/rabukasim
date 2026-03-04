@@ -24,7 +24,7 @@ mod tests {
             )],
         );
 
-        state.core.players[0].hand.push(30032);
+        state.players[0].hand.push(30032);
 
         // Play the card
         let play_action = Action::PlayMember {
@@ -37,7 +37,7 @@ mod tests {
 
         // Basic verification that card is on stage
         assert!(
-            state.core.players[0].stage[0] >= 0,
+            state.players[0].stage[0] >= 0,
             "Card should be on stage"
         );
     }
@@ -72,7 +72,7 @@ mod tests {
             )],
         );
 
-        state.core.players[0].hand.push(30033);
+        state.players[0].hand.push(30033);
 
         // Play the card
         let play_action = Action::PlayMember {
@@ -83,6 +83,6 @@ mod tests {
         state.step(&db, play_action).expect("Failed to play member");
 
         // Verify card is on stage
-        assert_eq!(state.core.players[0].stage[0], 30033);
+        assert_eq!(state.players[0].stage[0], 30033);
     }
 }

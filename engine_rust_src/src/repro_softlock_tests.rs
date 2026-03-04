@@ -11,8 +11,8 @@ mod tests {
 
         // Card 122 (Kotori) has an optional LiveStart ability:
         // "Put 1 hand to discard? Yes/No"
-        state.core.players[0].stage[0] = 122;
-        state.core.players[0].hand = vec![121].into(); // Needs 1 card to pay
+        state.players[0].stage[0] = 122;
+        state.players[0].hand = vec![121].into(); // Needs 1 card to pay
         state.phase = Phase::PerformanceP1;
 
         // Trigger the ability

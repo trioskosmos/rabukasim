@@ -125,7 +125,7 @@ fn main() {
     println!("Winner: {}", state.get_winner());
     println!(
         "Final Scores: P0={} P1={}",
-        state.core.players[0].score, state.core.players[1].score
+        state.players[0].score, state.players[1].score
     );
     println!("Total Moves: {}", move_count);
 }

@@ -58,11 +58,18 @@ pub fn suspend_interaction(
         execution_id,
         ..Default::default()
     });
+    let chooser_p_idx = if choice_type == crate::core::enums::ChoiceType::TapO
+        || choice_type == crate::core::enums::ChoiceType::OpponentChoose
+    {
+        1 - ctx.player_id
+    } else {
+        ctx.player_id
+    };
     state.phase = Phase::Response;
-    state.current_player = ctx.player_id;
+    state.current_player = chooser_p_idx;
 
     let mut actions = Vec::with_capacity(8);
-    state.generate_legal_actions(db, ctx.player_id as usize, &mut actions);
+    state.generate_legal_actions(db, chooser_p_idx as usize, &mut actions);
 
     // Don't skip suspension for OPTIONAL, LOOK_AND_CHOOSE, COLOR_SELECT, TAP_M_SELECT, etc.
     // These are legitimate choice types that should always suspend even with limited actions.

@@ -43,14 +43,14 @@ mod tests {
         let mut state = create_test_state();
 
         // Setup hand
-        state.core.players[0].hand.push(999); // One card to discard
-        state.core.players[0].deck.extend(vec![1, 2, 3, 4, 5]); // Deck to look at
+        state.players[0].hand.push(999); // One card to discard
+        state.players[0].deck.extend(vec![1, 2, 3, 4, 5]); // Deck to look at
 
         // Initial state check
-        assert_eq!(state.core.players[0].hand.len(), 1);
+        assert_eq!(state.players[0].hand.len(), 1);
 
         // Place card on stage
-        state.core.players[0].stage[0] = 257;
+        state.players[0].stage[0] = 257;
 
         // Activate the ability (slot 0, ability 0, no choice yet)
         state.activate_ability_with_choice(&db, 0, 0, -1, 0).unwrap();
@@ -69,7 +69,7 @@ mod tests {
         // After skip, O_MOVE_TO_DISCARD sets cond=false, O_JUMP_F jumps to O_RETURN.
 
         // Check State
-        assert_eq!(state.core.players[0].hand.len(), 1, "Hand card should NOT be discarded on skip");
+        assert_eq!(state.players[0].hand.len(), 1, "Hand card should NOT be discarded on skip");
 
         // Effect should be skipped
         assert_ne!(state.phase, Phase::Response, "Should NOT be in Response for Look and Choose after skipping cost");

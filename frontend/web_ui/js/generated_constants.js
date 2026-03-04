@@ -413,3 +413,16 @@ export const ExtraConstants = {
     ZONE_DISCARD: 7,
     ZONE_ENERGY: 3,
 };
+
+export const Zones = {
+    DEFAULT: 0,
+    DECK_TOP: 1,
+    DECK_BOTTOM: 2,
+    ENERGY: 3,
+    STAGE: 4,
+    HAND: 6,
+    DISCARD: 7,
+    LIVE_SET: 13,
+    SUCCESS_PILE: 14,
+    YELL: 15,
+};

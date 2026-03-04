@@ -22,18 +22,18 @@ fn test_rule_8_3_16_all_or_nothing_failure() {
     state.phase = Phase::LiveResult;
 
     // P0 sets both: 0 (impossible) and 1 (easy)
-    state.core.players[0].live_zone[0] = 0;
-    state.core.players[0].live_zone[1] = 1;
+    state.players[0].live_zone[0] = 0;
+    state.players[0].live_zone[1] = 1;
 
     // Run judgement
     state.do_live_result(&db);
 
     // Rule 8.3.16: Since one failed, both should be discarded
-    assert_eq!(state.core.players[0].live_zone[0], -1);
-    assert_eq!(state.core.players[0].live_zone[1], -1);
-    assert_eq!(state.core.players[0].success_lives.len(), 0);
-    assert!(state.core.players[0].discard.contains(&0));
-    assert!(state.core.players[0].discard.contains(&1));
+    assert_eq!(state.players[0].live_zone[0], -1);
+    assert_eq!(state.players[0].live_zone[1], -1);
+    assert_eq!(state.players[0].success_lives.len(), 0);
+    assert!(state.players[0].discard.contains(&0));
+    assert!(state.players[0].discard.contains(&1));
 }
 
 #[test]
@@ -105,9 +105,9 @@ fn test_priority_p1_triggers_first() {
     state.phase = Phase::LiveResult;
 
     // P0 has m1 on stage
-    state.core.players[0].stage[0] = 101;
+    state.players[0].stage[0] = 101;
     // P1 has m2 on stage
-    state.core.players[1].stage[0] = 102;
+    state.players[1].stage[0] = 102;
 
     // Both had successful lives (snapshot)
     state
@@ -169,10 +169,10 @@ fn test_priority_p1_choice_selection() {
     state.phase = Phase::LiveResult;
 
     // Both players have 2 candidates (multiple candidates = choice needed)
-    state.core.players[0].live_zone[0] = 1;
-    state.core.players[0].live_zone[1] = 2;
-    state.core.players[1].live_zone[0] = 1;
-    state.core.players[1].live_zone[1] = 2;
+    state.players[0].live_zone[0] = 1;
+    state.players[0].live_zone[1] = 2;
+    state.players[1].live_zone[0] = 1;
+    state.players[1].live_zone[1] = 2;
 
     // Snapshot: both succeeded
     state.ui.performance_results.insert(

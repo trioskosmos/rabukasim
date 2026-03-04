@@ -97,6 +97,7 @@ pub struct CardFilter {
 impl CardFilter {
     pub fn matches(
         &self,
+        state: &crate::core::logic::GameState,
         db: &CardDatabase,
         cid: i32,
         is_tapped_override: bool,
@@ -108,6 +109,9 @@ impl CardFilter {
         }
         if cid == -1 {
             return false;
+        }
+        if ctx.player_id == 0 && (cid == 124 || cid == 121) {
+             println!("[DEBUG_FILTER] Checking CID: {}, Filter: {:?}", cid, self);
         }
 
         // 1. Card Type Filter (bits 2-3)
@@ -329,6 +333,14 @@ impl CardFilter {
                     }
                 }
                 _ => {}
+            }
+        }
+
+        // 11. Zone Mask Filter (bits 53-55)
+        // 4=STAGE, 6=HAND, 7=DISCARD
+        if self.zone_mask > 0 {
+            if !state.is_card_in_zone(ctx.player_id, self.target_player, cid, self.zone_mask) {
+                return false;
             }
         }
 
@@ -804,9 +816,12 @@ mod tests {
             compare_accumulated: false,
         };
 
+        let _state = crate::core::logic::GameState::default();
+        let _ctx = crate::core::logic::AbilityContext::default();
         let attr = filter.to_attr();
         let parsed = CardFilter::from_attr(attr);
         assert_eq!(filter, parsed);
+        // Note: Actual matching would require a real DB, but we test roundtrip here.
     }
 
     #[test]

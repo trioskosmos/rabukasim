@@ -21,17 +21,17 @@ fn test_energy_initialization() {
 
     // Rule 6.2.1.7: Starts with 3 energy in zone, 9 left in deck (total 12)
     assert_eq!(
-        state.core.players[0].energy_zone.len(),
+        state.players[0].energy_zone.len(),
         3,
         "P0 should start with 3 energy"
     );
     assert_eq!(
-        state.core.players[1].energy_zone.len(),
+        state.players[1].energy_zone.len(),
         3,
         "P1 should start with 3 energy"
     );
     assert_eq!(
-        state.core.players[0].energy_deck.len(),
+        state.players[0].energy_deck.len(),
         9,
         "P0 should have 9 energy left in deck"
     );
@@ -103,12 +103,12 @@ fn test_phase_auto_advance_from_mulligan() {
     // P0 is first player, so P0's turn 1 starts.
     assert_eq!(state.current_player, 0, "P0 should be active player");
     assert_eq!(
-        state.core.players[0].energy_zone.len(),
+        state.players[0].energy_zone.len(),
         4,
         "Should have charged 1 energy (3+1=4)"
     );
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         7,
         "Should have drawn 1 card (6+1=7)"
     );
@@ -121,12 +121,12 @@ fn test_yell_source_deck_parity() {
 
     // 121 = Eli (1 Blade)
     // 137 = START:DASH!!
-    state.core.players[0].hand = smallvec::smallvec![121, 121, 121]; // 3 cards in hand
-    state.core.players[0].deck = smallvec::smallvec![121, 121, 121, 121, 121]; // 5 cards in deck
-    state.core.players[0].stage[0] = 121; // Blade 1
-    state.core.players[0].stage[1] = 121; // Blade 2
-    state.core.players[0].stage[2] = 121; // Blade 3
-    state.core.players[0].live_zone[0] = 137;
+    state.players[0].hand = smallvec::smallvec![121, 121, 121]; // 3 cards in hand
+    state.players[0].deck = smallvec::smallvec![121, 121, 121, 121, 121]; // 5 cards in deck
+    state.players[0].stage[0] = 121; // Blade 1
+    state.players[0].stage[1] = 121; // Blade 2
+    state.players[0].stage[2] = 121; // Blade 3
+    state.players[0].live_zone[0] = 137;
     state.current_player = 0;
     state.phase = Phase::PerformanceP1;
 
@@ -135,12 +135,12 @@ fn test_yell_source_deck_parity() {
     state.do_performance_phase(&db);
 
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         3,
         "Hand should NOT be consumed by Yell"
     );
     assert_eq!(
-        state.core.players[0].deck.len(),
+        state.players[0].deck.len(),
         2,
         "Deck should have lost 3 cards (blades=3) to Yell"
     );

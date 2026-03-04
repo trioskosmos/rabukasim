@@ -84,17 +84,17 @@ fn test_card_579_ability_0_cost_comparison() { // Card No: PL!N-bp1-006-P
     writeln!(
         log_file,
         "Resulting Bonus (Case 1): {}",
-        state.core.players[0].live_score_bonus
+        state.players[0].live_score_bonus
     )
     .unwrap();
 
     assert_eq!(
-        state.core.players[0].live_score_bonus, 1,
+        state.players[0].live_score_bonus, 1,
         "Should boost score when P0 Cost > P1 Cost"
     );
 
     // Reset score and swap situations
-    state.core.players[0].live_score_bonus = 0;
+    state.players[0].live_score_bonus = 0;
     state.set_stage(1, 1, liella_member_id); // P1 Center: High Cost
     state.set_stage(0, 1, low_cost_id); // P0 Center: Lower Cost
 
@@ -102,11 +102,11 @@ fn test_card_579_ability_0_cost_comparison() { // Card No: PL!N-bp1-006-P
     writeln!(
         log_file,
         "Resulting Bonus (Case 2): {}",
-        state.core.players[0].live_score_bonus
+        state.players[0].live_score_bonus
     )
     .unwrap();
     assert_eq!(
-        state.core.players[0].live_score_bonus, 0,
+        state.players[0].live_score_bonus, 0,
         "Should NOT boost score when P0 Cost < P1 Cost"
     );
 }
@@ -154,13 +154,13 @@ fn test_card_579_ability_1_heart_filter() {
     // Test Case 1: Left side has 0 hearts -> Should NOT add blades
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
     assert_eq!(
-        state.core.players[0].blade_buffs[0], 0,
+        state.players[0].blade_buffs[0], 0,
         "Should NOT add blades if heart count is insufficient"
     );
 
     // Test Case 2: Left side has 3 Yellow hearts (Color 2)
     println!("--- Test Case 2: Sufficient Hearts ---");
-    state.core.players[0].heart_buffs[0].add_to_color(2, 3);
+    state.players[0].heart_buffs[0].add_to_color(2, 3);
 
     // Verify filter matches manually using the builder (Proof of Phase 3 readability)
     let mut filter = CardFilter::new();
@@ -173,16 +173,16 @@ fn test_card_579_ability_1_heart_filter() {
     filter.is_enabled = true;
         
     let member_id = liella_member_id;
-    let hearts = state.core.players[0].heart_buffs[0].to_array();
+    let hearts = state.players[0].heart_buffs[0].to_array();
     assert!(
-        filter.matches(&db, member_id, false, Some(&hearts), &crate::core::logic::AbilityContext::default()), 
+        filter.matches(&state, &db, member_id, false, Some(&hearts), &crate::core::logic::AbilityContext::default()), 
         "Builder filter should match the stage member with hearts"
     );
 
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
     state.dump_verbose();
     assert_eq!(
-        state.core.players[0].blade_buffs[0], 2,
+        state.players[0].blade_buffs[0], 2,
         "Should add 2 blades if heart count is >= 3"
     );
 }

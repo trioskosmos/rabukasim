@@ -70,13 +70,13 @@ fn test_game_initialization() {
         Vec::new(),
     );
 
-    assert_eq!(state.core.players[0].hand.len(), 6);
-    assert_eq!(state.core.players[0].energy_zone.len(), 3);
-    assert_eq!(state.core.players[0].live_zone, [-1; 3]);
-    assert_eq!(state.core.players[1].live_zone, [-1; 3]);
+    assert_eq!(state.players[0].hand.len(), 6);
+    assert_eq!(state.players[0].energy_zone.len(), 3);
+    assert_eq!(state.players[0].live_zone, [-1; 3]);
+    assert_eq!(state.players[1].live_zone, [-1; 3]);
     // Lives are shuffled into the main deck (may be drawn into hand)
     assert!(
-        state.core.players[0].deck.contains(&11000) || state.core.players[0].hand.contains(&11000)
+        state.players[0].deck.contains(&11000) || state.players[0].hand.contains(&11000)
     );
 }
 
@@ -107,7 +107,7 @@ fn test_play_member() {
     // Play card 0 (cost 2) to slot 0
     state.play_member(&db, 0, 0).unwrap();
 
-    assert_eq!(state.core.players[0].stage[0], 0);
-    assert_eq!(state.core.players[0].hand.len(), 0);
-    assert_eq!(state.core.players[0].tapped_energy_mask.count_ones(), 2);
+    assert_eq!(state.players[0].stage[0], 0);
+    assert_eq!(state.players[0].hand.len(), 0);
+    assert_eq!(state.players[0].tapped_energy_mask.count_ones(), 2);
 }

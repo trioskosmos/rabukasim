@@ -238,7 +238,7 @@ impl ActionFactory {
         }
 
         let p_idx = state.current_player as usize;
-        let player = &state.core.players[p_idx];
+        let player = &state.players[p_idx];
 
         match decoded {
             DecodedAction::MulliganSelect { card_idx } => {

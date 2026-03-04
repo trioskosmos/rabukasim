@@ -1,0 +1,43 @@
+﻿cargo :    Compiling engine_rust v0.1.2 (C:\Users
+\trios\.gemini\antigravity\vscode\loveca-copy\eng
+ine_rust_src)
+発生場所 行:1 文字:1
++ cargo test trigger_tests::test_trigger_activate
+d_eli 2>&1 | Out-File  ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (    
+   Compiling en...ngine_rust_src):String) [], R  
+  emoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    Finished `test` profile [optimized + debuginf
+o] target(s) in 12.50s
+     Running unittests src\lib.rs (C:\Users\trios
+\.gemini\antigravity\vscode\loveca-copy\engine_ru
+st_src\target\debug\deps\engine_rust-e4899d9bfae2
+c4d0.exe)
+
+running 1 test
+test trigger_tests::test_trigger_activated_eli ... FAILED
+
+failures:
+
+---- trigger_tests::test_trigger_activated_eli stdout ----
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:63053143562256389 s:4    (Moved 1 card(s) from Deck to Discard)
+[DEBUG] suspend_interaction: choice_type=SelectDiscard, v_remaining=1, actions=2
+
+thread 'trigger_tests::test_trigger_activated_eli' (7940) panicked at src\trigger_tests.rs:183:5:
+assertion `left == right` failed: Should NOT suspend for single valid target. Hand: []
+  left: Response
+ right: Main
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    trigger_tests::test_trigger_activated_eli
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 245 filtered out; finished in 0.11s
+
+error: test failed, to rerun pass `--lib`

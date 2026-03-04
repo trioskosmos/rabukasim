@@ -89,9 +89,9 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: 5 cards in deck
-        state.core.players[0].deck = vec![100, 101, 102, 103, 104].into();
-        let initial_deck_len = state.core.players[0].deck.len();
-        let initial_hand_len = state.core.players[0].hand.len();
+        state.players[0].deck = vec![100, 101, 102, 103, 104].into();
+        let initial_deck_len = state.players[0].deck.len();
+        let initial_hand_len = state.players[0].hand.len();
 
         // Execute: Draw 2 cards
         let ctx = AbilityContext {
@@ -102,8 +102,8 @@ mod parity_tests {
         state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
         // Verify
-        assert_eq!(state.core.players[0].deck.len(), initial_deck_len - 2);
-        assert_eq!(state.core.players[0].hand.len(), initial_hand_len + 2);
+        assert_eq!(state.players[0].deck.len(), initial_deck_len - 2);
+        assert_eq!(state.players[0].hand.len(), initial_hand_len + 2);
 
         // WGSL expected behavior: Same result
         // (In actual WGSL test, we would verify GPU state matches)
@@ -116,9 +116,9 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: Member on stage with hearts
-        state.core.players[0].stage[0] = 100;
+        state.players[0].stage[0] = 100;
 
-        let initial_hearts = state.core.players[0].heart_buffs[0].get_color_count(1);
+        let initial_hearts = state.players[0].heart_buffs[0].get_color_count(1);
 
         // Execute: Add 2 pink hearts (color 1)
         // Note: O_ADD_HEARTS requires area_idx to be set for target_slot=4 (current slot)
@@ -131,7 +131,7 @@ mod parity_tests {
         state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
         // Verify: hearts should be added to slot 0
-        assert_eq!(state.core.players[0].heart_buffs[0].get_color_count(1) as u32, initial_hearts as u32 + 2);
+        assert_eq!(state.players[0].heart_buffs[0].get_color_count(1) as u32, initial_hearts as u32 + 2);
     }
 
     /// Test O_BOOST_SCORE parity: Both engines should add score bonus correctly
@@ -140,7 +140,7 @@ mod parity_tests {
         let db = create_parity_db();
         let mut state = create_parity_state();
 
-        let initial_bonus = state.core.players[0].live_score_bonus;
+        let initial_bonus = state.players[0].live_score_bonus;
 
         // Execute: Add 5 to score bonus (O_BOOST_SCORE adds to live_score_bonus)
         let ctx = AbilityContext {
@@ -151,7 +151,7 @@ mod parity_tests {
         state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
         // Verify: O_BOOST_SCORE adds to live_score_bonus, not score directly
-        assert_eq!(state.core.players[0].live_score_bonus, initial_bonus + 5);
+        assert_eq!(state.players[0].live_score_bonus, initial_bonus + 5);
     }
 
     /// Test O_ENERGY_CHARGE parity: Both engines should charge energy correctly
@@ -161,8 +161,8 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: Energy deck with cards
-        for _ in 0..5 { state.core.players[0].energy_deck.push(20000); }
-        let initial_energy = state.core.players[0].energy_zone.len();
+        for _ in 0..5 { state.players[0].energy_deck.push(20000); }
+        let initial_energy = state.players[0].energy_zone.len();
 
         // Execute: Charge 2 energy
         let ctx = AbilityContext {
@@ -173,8 +173,8 @@ mod parity_tests {
         state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
         // Verify
-        assert_eq!(state.core.players[0].energy_zone.len(), initial_energy + 2);
-        assert_eq!(state.core.players[0].energy_deck.len(), 3);
+        assert_eq!(state.players[0].energy_zone.len(), initial_energy + 2);
+        assert_eq!(state.players[0].energy_deck.len(), 3);
     }
 
     // ============================================================
@@ -205,8 +205,8 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: 2 members on stage
-        state.core.players[0].stage[0] = 100;
-        state.core.players[0].stage[1] = 101;
+        state.players[0].stage[0] = 100;
+        state.players[0].stage[1] = 101;
 
         let ctx = AbilityContext {
             player_id: 0,
@@ -233,7 +233,7 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: 3 cards in hand
-        state.core.players[0].hand = vec![100, 101, 102].into();
+        state.players[0].hand = vec![100, 101, 102].into();
 
         let ctx = AbilityContext {
             player_id: 0,
@@ -255,7 +255,7 @@ mod parity_tests {
 
         // Note: create_parity_state() may initialize energy_zone with some cards
         // Let's check the actual count and test accordingly
-        let actual_count = state.core.players[0].energy_zone.len();
+        let actual_count = state.players[0].energy_zone.len();
 
         let ctx = AbilityContext {
             player_id: 0,
@@ -282,8 +282,8 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: Player 0 has higher score
-        state.core.players[0].score = 10;
-        state.core.players[1].score = 5;
+        state.players[0].score = 10;
+        state.players[1].score = 5;
 
         let ctx = AbilityContext {
             player_id: 0,
@@ -304,15 +304,15 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: Member on stage with blades
-        state.core.players[0].stage[0] = 100;  // Need a member on stage
-        state.core.players[0].blade_buffs[0] = 3;
-        state.core.players[0].set_tapped(0, false);  // Ensure slot is not tapped
+        state.players[0].stage[0] = 100;  // Need a member on stage
+        state.players[0].blade_buffs[0] = 3;
+        state.players[0].set_tapped(0, false);  // Ensure slot is not tapped
 
         // Debug output
-        eprintln!("DEBUG: stage[0] = {}", state.core.players[0].stage[0]);
-        eprintln!("DEBUG: blade_buffs[0] = {}", state.core.players[0].blade_buffs[0]);
-        eprintln!("DEBUG: is_tapped(0) = {}", state.core.players[0].is_tapped(0));
-        eprintln!("DEBUG: flags = {:b}", state.core.players[0].flags);
+        eprintln!("DEBUG: stage[0] = {}", state.players[0].stage[0]);
+        eprintln!("DEBUG: blade_buffs[0] = {}", state.players[0].blade_buffs[0]);
+        eprintln!("DEBUG: is_tapped(0) = {}", state.players[0].is_tapped(0));
+        eprintln!("DEBUG: flags = {:b}", state.players[0].flags);
 
         // Debug: call get_effective_blades directly
         let blades_0 = state.get_effective_blades(0, 0, &db, 0);
@@ -347,12 +347,12 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: Player has energy and a card in hand
-        for _ in 0..3 { state.core.players[0].energy_zone.push(20000); }
-        state.core.players[0].tapped_energy_mask = 0;
-        state.core.players[0].hand = smallvec::smallvec![100];
+        for _ in 0..3 { state.players[0].energy_zone.push(20000); }
+        state.players[0].tapped_energy_mask = 0;
+        state.players[0].hand = smallvec::smallvec![100];
 
         // Card 100 has cost 1 (from our test setup)
-        let hand_len_before = state.core.players[0].hand.len();
+        let hand_len_before = state.players[0].hand.len();
 
         // Execute: Play the card (simplified - just test the bytecode effect)
         let ctx = AbilityContext {
@@ -370,7 +370,7 @@ mod parity_tests {
         // Verify: Hand should have drawn a card
         // Note: In actual play, the played card would be removed first
         // This is a simplified test
-        assert!(state.core.players[0].hand.len() >= hand_len_before);
+        assert!(state.players[0].hand.len() >= hand_len_before);
     }
 
     /// Test conditional execution parity
@@ -392,11 +392,11 @@ mod parity_tests {
             O_RETURN, 0, 0, 0, 0
         ];
 
-        let hand_len_before = state.core.players[0].hand.len();
+        let hand_len_before = state.players[0].hand.len();
         state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
         // Verify: Should have drawn 2 cards (turn 1 is true)
-        assert_eq!(state.core.players[0].hand.len(), hand_len_before + 2);
+        assert_eq!(state.players[0].hand.len(), hand_len_before + 2);
     }
 
     /// Test O_RECOVER_MEMBER parity: Both engines should recover members from discard
@@ -406,10 +406,10 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: Member in discard
-        state.core.players[0].discard = vec![100, 101].into();
+        state.players[0].discard = vec![100, 101].into();
 
-        let hand_len_before = state.core.players[0].hand.len();
-        let _discard_len_before = state.core.players[0].discard.len();
+        let hand_len_before = state.players[0].hand.len();
+        let _discard_len_before = state.players[0].discard.len();
 
         // Execute: Recover member (choice 0 = first member)
         let ctx = AbilityContext {
@@ -421,7 +421,7 @@ mod parity_tests {
 
         // Verify: Hand should have gained a card
         // Note: In WGSL, this would use ctx_choice to select which member
-        assert!(state.core.players[0].hand.len() >= hand_len_before);
+        assert!(state.players[0].hand.len() >= hand_len_before);
     }
 
     /// Test O_SET_SCORE parity: Both engines should set score correctly
@@ -439,7 +439,7 @@ mod parity_tests {
         state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
         // Verify
-        assert_eq!(state.core.players[0].score, 50);
+        assert_eq!(state.players[0].score, 50);
     }
 
     /// Test O_DRAW_UNTIL parity: Both engines should draw until hand size
@@ -449,8 +449,8 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: 2 cards in hand, 5 in deck
-        state.core.players[0].hand = vec![100, 101].into();
-        state.core.players[0].deck = vec![102, 103, 104, 105, 106].into();
+        state.players[0].hand = vec![100, 101].into();
+        state.players[0].deck = vec![102, 103, 104, 105, 106].into();
 
         // Execute: Draw until 5 cards in hand
         let ctx = AbilityContext {
@@ -461,7 +461,7 @@ mod parity_tests {
         state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
         // Verify: Should have 5 cards in hand
-        assert_eq!(state.core.players[0].hand.len(), 5);
+        assert_eq!(state.players[0].hand.len(), 5);
     }
 
     /// Test O_PAY_ENERGY parity: Both engines should tap energy correctly
@@ -472,8 +472,8 @@ mod parity_tests {
 
         // Setup: 5 energy available
         // Setup: 5 energy available
-        for _ in 0..5 { state.core.players[0].energy_zone.push(20000); }
-        state.core.players[0].tapped_energy_mask = 0;
+        for _ in 0..5 { state.players[0].energy_zone.push(20000); }
+        state.players[0].tapped_energy_mask = 0;
 
         // Execute: Pay 3 energy
         let ctx = AbilityContext {
@@ -484,7 +484,7 @@ mod parity_tests {
         state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
         // Verify
-        assert_eq!(state.core.players[0].tapped_energy_count(), 3);
+        assert_eq!(state.players[0].tapped_energy_count(), 3);
     }
 
     /// Test C_BATON parity: Both engines should check baton touch
@@ -494,7 +494,7 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: baton_touch_count > 0
-        state.core.players[0].baton_touch_count = 2;
+        state.players[0].baton_touch_count = 2;
 
         let ctx = AbilityContext {
             player_id: 0,
@@ -509,7 +509,7 @@ mod parity_tests {
         assert!(result, "C_BATON should be true when baton_touch_count > 0");
 
         // Test with no baton touches and no prev_card
-        state.core.players[0].baton_touch_count = 0;
+        state.players[0].baton_touch_count = 0;
         state.prev_card_id = -1;
         let result = crate::core::logic::interpreter::check_condition_opcode(
             &state, &db, C_BATON, 0, 0, 0, &ctx, 0
@@ -525,7 +525,7 @@ mod parity_tests {
 
         // Setup: 5 total hearts on board
         // Setup: 5 total hearts on board
-        state.core.players[0].heart_buffs[0] = HeartBoard::from_array(&[2, 1, 2, 0, 0, 0, 0]);
+        state.players[0].heart_buffs[0] = HeartBoard::from_array(&[2, 1, 2, 0, 0, 0, 0]);
 
         let ctx = AbilityContext {
             player_id: 0,
@@ -558,11 +558,11 @@ mod parity_tests {
             O_RETURN, 0, 0, 0, 0
         ];
 
-        let hand_len_before = state.core.players[0].hand.len();
+        let hand_len_before = state.players[0].hand.len();
         state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
         // Verify: Should have drawn 1 card (NOT turn 1 is true)
-        assert_eq!(state.core.players[0].hand.len(), hand_len_before + 1);
+        assert_eq!(state.players[0].hand.len(), hand_len_before + 1);
     }
 
     /// Test O_ADD_TO_HAND parity: Both engines should add cards to hand
@@ -572,10 +572,10 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: Cards in deck
-        state.core.players[0].deck = vec![100, 101, 102].into();
-        let _deck_len = state.core.players[0].deck.len();
+        state.players[0].deck = vec![100, 101, 102].into();
+        let _deck_len = state.players[0].deck.len();
 
-        let hand_len_before = state.core.players[0].hand.len();
+        let hand_len_before = state.players[0].hand.len();
 
         // Execute: Add card from deck to hand (t=1 = From Deck)
         let ctx = AbilityContext {
@@ -586,7 +586,7 @@ mod parity_tests {
         state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
         // Verify: Hand should have gained a card
-        assert!(state.core.players[0].hand.len() > hand_len_before);
+        assert!(state.players[0].hand.len() > hand_len_before);
     }
 
     /// Test O_REDUCE_HEART_REQ parity: Both engines should reduce heart requirements
@@ -614,7 +614,7 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: Some pink hearts on board
-        state.core.players[0].heart_buffs[0].set_color_count(0, 3); // Pink (color 0)
+        state.players[0].heart_buffs[0].set_color_count(0, 3); // Pink (color 0)
 
         // Execute: Transform color - this adds a transform rule, not immediate conversion
         // O_TRANSFORM_COLOR stores the transform in color_transforms
@@ -628,7 +628,7 @@ mod parity_tests {
 
         // Verify: Transform rule should be added
         // Note: O_TRANSFORM_COLOR adds to color_transforms, not directly to heart_buffs
-        assert!(!state.core.players[0].color_transforms.is_empty(), "Transform should be recorded");
+        assert!(!state.players[0].color_transforms.is_empty(), "Transform should be recorded");
     }
 
     /// Test O_PLAY_MEMBER_FROM_DISCARD parity: Both engines should play from discard
@@ -638,8 +638,8 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: Member in discard, empty stage slot
-        state.core.players[0].discard = vec![100].into();
-        state.core.players[0].stage[0] = -1; // Empty slot
+        state.players[0].discard = vec![100].into();
+        state.players[0].stage[0] = -1; // Empty slot
 
         let ctx = AbilityContext {
             player_id: 0,
@@ -678,7 +678,7 @@ mod parity_tests {
         let mut state = create_parity_state();
 
         // Setup: 3 cards in discard
-        state.core.players[0].discard = vec![100, 101, 102].into();
+        state.players[0].discard = vec![100, 101, 102].into();
 
         let ctx = AbilityContext {
             player_id: 0,
@@ -719,8 +719,8 @@ mod parity_tests {
         state.turn = 1;
 
         // Setup
-        state.core.players[0].deck = vec![100, 101, 102, 103].into();
-        for _ in 0..5 { state.core.players[0].energy_zone.push(20000); }
+        state.players[0].deck = vec![100, 101, 102, 103].into();
+        for _ in 0..5 { state.players[0].energy_zone.push(20000); }
 
         // Execute: Complex sequence
         // 1. If turn 1, draw 2
@@ -740,14 +740,14 @@ mod parity_tests {
             O_RETURN, 0, 0, 0, 0
         ];
 
-        let hand_len_before = state.core.players[0].hand.len();
-        let score_bonus_before = state.core.players[0].live_score_bonus;
+        let hand_len_before = state.players[0].hand.len();
+        let score_bonus_before = state.players[0].live_score_bonus;
 
         state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
         // Verify all effects
-        assert_eq!(state.core.players[0].hand.len(), hand_len_before + 2);
-        assert_eq!(state.core.players[0].live_score_bonus, score_bonus_before + 3);
+        assert_eq!(state.players[0].hand.len(), hand_len_before + 2);
+        assert_eq!(state.players[0].live_score_bonus, score_bonus_before + 3);
         // Note: hearts require proper targeting, may not be added without proper context
     }
 }
@@ -777,43 +777,43 @@ impl WgslStateSnapshot {
             phase: state.phase as i32,
             current_player: state.current_player as u32,
             scores: [
-                state.core.players[0].score,
-                state.core.players[1].score,
+                state.players[0].score,
+                state.players[1].score,
             ],
             hand_lens: [
-                state.core.players[0].hand.len() as u32,
-                state.core.players[1].hand.len() as u32,
+                state.players[0].hand.len() as u32,
+                state.players[1].hand.len() as u32,
             ],
             deck_lens: [
-                state.core.players[0].deck.len() as u32,
-                state.core.players[1].deck.len() as u32,
+                state.players[0].deck.len() as u32,
+                state.players[1].deck.len() as u32,
             ],
             energy_counts: [
-                state.core.players[0].energy_zone.len() as u32,
-                state.core.players[1].energy_zone.len() as u32,
+                state.players[0].energy_zone.len() as u32,
+                state.players[1].energy_zone.len() as u32,
             ],
             board_blades: [
-                state.core.players[0].blade_buffs[0] as u32,
-                state.core.players[1].blade_buffs[0] as u32,
+                state.players[0].blade_buffs[0] as u32,
+                state.players[1].blade_buffs[0] as u32,
             ],
             board_hearts: [
                 [
-                    state.core.players[0].heart_buffs[0].get_color_count(0) as u32,
-                    state.core.players[0].heart_buffs[0].get_color_count(1) as u32,
-                    state.core.players[0].heart_buffs[0].get_color_count(2) as u32,
-                    state.core.players[0].heart_buffs[0].get_color_count(3) as u32,
-                    state.core.players[0].heart_buffs[0].get_color_count(4) as u32,
-                    state.core.players[0].heart_buffs[0].get_color_count(5) as u32,
-                    state.core.players[0].heart_buffs[0].get_color_count(6) as u32,
+                    state.players[0].heart_buffs[0].get_color_count(0) as u32,
+                    state.players[0].heart_buffs[0].get_color_count(1) as u32,
+                    state.players[0].heart_buffs[0].get_color_count(2) as u32,
+                    state.players[0].heart_buffs[0].get_color_count(3) as u32,
+                    state.players[0].heart_buffs[0].get_color_count(4) as u32,
+                    state.players[0].heart_buffs[0].get_color_count(5) as u32,
+                    state.players[0].heart_buffs[0].get_color_count(6) as u32,
                 ],
                 [
-                    state.core.players[1].heart_buffs[0].get_color_count(0) as u32,
-                    state.core.players[1].heart_buffs[0].get_color_count(1) as u32,
-                    state.core.players[1].heart_buffs[0].get_color_count(2) as u32,
-                    state.core.players[1].heart_buffs[0].get_color_count(3) as u32,
-                    state.core.players[1].heart_buffs[0].get_color_count(4) as u32,
-                    state.core.players[1].heart_buffs[0].get_color_count(5) as u32,
-                    state.core.players[1].heart_buffs[0].get_color_count(6) as u32,
+                    state.players[1].heart_buffs[0].get_color_count(0) as u32,
+                    state.players[1].heart_buffs[0].get_color_count(1) as u32,
+                    state.players[1].heart_buffs[0].get_color_count(2) as u32,
+                    state.players[1].heart_buffs[0].get_color_count(3) as u32,
+                    state.players[1].heart_buffs[0].get_color_count(4) as u32,
+                    state.players[1].heart_buffs[0].get_color_count(5) as u32,
+                    state.players[1].heart_buffs[0].get_color_count(6) as u32,
                 ],
             ],
         }

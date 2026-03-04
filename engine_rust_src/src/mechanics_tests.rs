@@ -11,7 +11,7 @@ fn test_opcode_draw() {
     let db = load_real_db();
 
     // Eli (121), Rin (124). Total 5 in deck.
-    state.core.players[0].deck = vec![121, 124, 121, 124, 121].into();
+    state.players[0].deck = vec![121, 124, 121, 124, 121].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -22,8 +22,8 @@ fn test_opcode_draw() {
     let bytecode = vec![O_DRAW, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
-    assert_eq!(state.core.players[0].hand.len(), 2);
-    assert_eq!(state.core.players[0].deck.len(), 3);
+    assert_eq!(state.players[0].hand.len(), 2);
+    assert_eq!(state.players[0].deck.len(), 3);
 }
 
 /// Verifies that O_ADD_BLADES correctly applies blade buffs to a real member on stage.
@@ -31,7 +31,7 @@ fn test_opcode_draw() {
 fn test_opcode_blades() {
     let mut state = GameState::default();
     let db = load_real_db();
-    state.core.players[0].stage[0] = 121; // Eli
+    state.players[0].stage[0] = 121; // Eli
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -43,7 +43,7 @@ fn test_opcode_blades() {
     let bytecode = vec![O_ADD_BLADES, 3, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
-    assert_eq!(state.core.players[0].blade_buffs[0], 3);
+    assert_eq!(state.players[0].blade_buffs[0], 3);
 }
 
 /// Verifies that O_ADD_HEARTS correctly applies colored heart buffs to a real member on stage.
@@ -51,7 +51,7 @@ fn test_opcode_blades() {
 fn test_opcode_hearts() {
     let mut state = GameState::default();
     let db = load_real_db();
-    state.core.players[0].stage[0] = 124; // Rin
+    state.players[0].stage[0] = 124; // Rin
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -63,7 +63,7 @@ fn test_opcode_hearts() {
     let bytecode = vec![O_ADD_HEARTS, 1, 1, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
-    assert_eq!(state.core.players[0].heart_buffs[0].get_color_count(1), 1);
+    assert_eq!(state.players[0].heart_buffs[0].get_color_count(1), 1);
 }
 
 /// Verifies that O_REDUCE_COST correctly modifies the player's cost_reduction stat.
@@ -80,7 +80,7 @@ fn test_opcode_reduce_cost() {
     let bytecode = vec![O_REDUCE_COST, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
 
-    assert_eq!(state.core.players[0].cost_reduction, 2);
+    assert_eq!(state.players[0].cost_reduction, 2);
 }
 
 /// Verifies that conditional jumps based on hand size (C_COUNT_HAND) work correctly with real IDs.
@@ -90,7 +90,7 @@ fn test_condition_count_hand() {
     let db = load_real_db();
 
     // Hand: Eli (121), Rin (124), Energy (0). Total 3 cards.
-    state.core.players[0].hand = vec![121, 124, 0].into();
+    state.players[0].hand = vec![121, 124, 0].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -122,15 +122,15 @@ fn test_condition_count_hand() {
     ];
 
     // Case 1: Met
-    state.core.players[0].deck = vec![121].into();
+    state.players[0].deck = vec![121].into();
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
-    assert_eq!(state.core.players[0].hand.len(), 4);
+    assert_eq!(state.players[0].hand.len(), 4);
 
     // Case 2: Not Met
-    state.core.players[0].hand = vec![121].into(); // 1 card
-    state.core.players[0].deck = vec![124].into();
+    state.players[0].hand = vec![121].into(); // 1 card
+    state.players[0].deck = vec![124].into();
     state.resolve_bytecode_cref(&db, &bytecode, &ctx);
-    assert_eq!(state.core.players[0].hand.len(), 1);
+    assert_eq!(state.players[0].hand.len(), 1);
 }
 
 /// Verifies that O_PLAY_MEMBER_FROM_HAND correctly moves a real card from hand to a target stage slot.
@@ -140,12 +140,12 @@ fn test_opcode_play_member_from_hand() {
     let db = load_real_db();
 
     // Hand: [Eli (121), Rin (124)]
-    state.core.players[0].hand = vec![121, 124].into();
+    state.players[0].hand = vec![121, 124].into();
     // Add infinite energy or enough for cost
-    state.core.players[0].energy_zone = vec![9000, 9001, 9002, 9003, 9004].into();
+    state.players[0].energy_zone = vec![9000, 9001, 9002, 9003, 9004].into();
 
     // choice_index=1 (Rin/124), target_slot=2
-    let mut ctx = AbilityContext {
+    let ctx = AbilityContext {
         player_id: 0,
         choice_index: 1,
         target_slot: 2,
@@ -172,8 +172,8 @@ fn test_opcode_play_member_from_hand() {
     state.resolve_bytecode_cref(&db, &bytecode, &resumed_ctx);
 
     // Card 124 should be on stage slot 2
-    assert_eq!(state.core.players[0].stage[2], 124);
+    assert_eq!(state.players[0].stage[2], 124);
     // Hand should have 1 card (Card 121)
-    assert_eq!(state.core.players[0].hand.len(), 1);
-    assert_eq!(state.core.players[0].hand[0], 121);
+    assert_eq!(state.players[0].hand.len(), 1);
+    assert_eq!(state.players[0].hand[0], 121);
 }

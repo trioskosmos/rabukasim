@@ -12,7 +12,7 @@ impl ActionGenerator for MainPhaseGenerator {
         state: &GameState,
         receiver: &mut R,
     ) {
-        let player = &state.core.players[p_idx];
+        let player = &state.players[p_idx];
         receiver.add_action(0);
 
         // Optimization 3: Loop Hoisting

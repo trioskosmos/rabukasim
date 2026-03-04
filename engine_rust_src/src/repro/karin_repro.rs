@@ -45,20 +45,20 @@ mod tests {
         db.lives.insert(1500, live);
 
         // Setup Player 0
-        state.core.players[0].stage[0] = 599;
-        state.core.players[0].hand.push(100); // Card to discard for cost
-        state.core.players[0].hand.push(101); // Card to discard for effect (O_MOVE_TO_DISCARD)
-        state.core.players[0].discard.push(1500); // Live card to recover
+        state.players[0].stage[0] = 599;
+        state.players[0].hand.push(100); // Card to discard for cost
+        state.players[0].hand.push(101); // Card to discard for effect (O_MOVE_TO_DISCARD)
+        state.players[0].discard.push(1500); // Live card to recover
 
         // Populate deck to prevent auto-refresh
         for i in 200..210 {
-            state.core.players[0].deck.push(i);
+            state.players[0].deck.push(i);
         }
 
         // Verify initial state
-        assert_eq!(state.core.players[0].hand.len(), 2);
-        assert_eq!(state.core.players[0].discard.len(), 1);
-        assert!(!state.core.players[0].is_tapped(0));
+        assert_eq!(state.players[0].hand.len(), 2);
+        assert_eq!(state.players[0].discard.len(), 1);
+        assert!(!state.players[0].is_tapped(0));
 
         // Act 1: Activate Ability (Slot 0, Ab 0)
         state.step(&db, Action::ActivateAbility { slot_idx: 0, ab_idx: 0 }.id()).expect("Activation failed");
@@ -66,10 +66,10 @@ mod tests {
         // After activation:
         // 1. Cost paid: Tapped, Card 101 discarded. Hand: [100], Discard: [1500, 101]
         // 2. Bytecode O_MOVE_TO_DISCARD run -> Suspends.
-        assert!(state.core.players[0].is_tapped(0));
+        assert!(state.players[0].is_tapped(0));
         assert_eq!(state.phase, Phase::Response);
         assert_eq!(state.interaction_stack.last().unwrap().effect_opcode, 58);
-        assert_eq!(state.core.players[0].hand.len(), 1);
+        assert_eq!(state.players[0].hand.len(), 1);
 
         // Act 2: Discard card 100 (Choice index 0)
         state.step(&db, Action::SelectHand { hand_idx: 0 }.id()).expect("Discard step failed");
@@ -89,22 +89,22 @@ mod tests {
         // Wait, handle_recovery suspends with choice_type ChoiceType::RecovL but then immediately pauses for pick?
         // No, RECOV_L moves card to Hand in handle_recovery?
         // Let's check handle_recovery...
-        // It says: state.core.players[p_idx].hand.push(cid);
+        // It says: state.players[p_idx].hand.push(cid);
         // Correct!
 
         // Wait! My previous trace was wrong. RECOV_L in interpreter adds it to hand immediately.
         // So no suspension needed for picking from looked_cards for RECOV_L?
         // Wait, look at handle_recovery:
         /*
-        1802:         let cid = state.core.players[p_idx].looked_cards.remove(choice);
-        1803:         state.core.players[p_idx].hand.push(cid);
+        1802:         let cid = state.players[p_idx].looked_cards.remove(choice);
+        1803:         state.players[p_idx].hand.push(cid);
         */
         // Yes, it's immediate.
 
         // So after Act 3, it should be back to Main.
         assert_eq!(state.phase, Phase::Main, "Should be back in Main phase");
-        assert_eq!(state.core.players[0].hand.len(), 1);
-        assert_eq!(state.core.players[0].hand[0], 1500);
-        assert_eq!(state.core.players[0].discard.len(), 2);
+        assert_eq!(state.players[0].hand.len(), 1);
+        assert_eq!(state.players[0].hand[0], 1500);
+        assert_eq!(state.players[0].discard.len(), 2);
     }
 }

@@ -22,8 +22,8 @@ fn test_opcode_look_deck_dynamic() {
     state.debug.debug_mode = true;
 
     // Setup: Set player score to 5
-    state.core.players[0].score = 5;
-    state.core.players[0].live_score_bonus = 0;
+    state.players[0].score = 5;
+    state.players[0].live_score_bonus = 0;
 
     // Ensure deck has enough cards
     state.set_deck(0, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
@@ -42,7 +42,7 @@ fn test_opcode_look_deck_dynamic() {
 
     // Verify: looked_cards should have 7 cards
     assert_eq!(
-        state.core.players[0].looked_cards.len(),
+        state.players[0].looked_cards.len(),
         7,
         "Should have looked at 7 cards (score 5 + v 2)"
     );
@@ -60,7 +60,7 @@ fn test_opcode_reduce_score() {
     state.debug.debug_mode = true;
 
     // Setup: Set live_score_bonus to 10
-    state.core.players[0].live_score_bonus = 10;
+    state.players[0].live_score_bonus = 10;
 
     let ctx = AbilityContext {
         source_card_id: 0,
@@ -75,7 +75,7 @@ fn test_opcode_reduce_score() {
 
     // Verify: live_score_bonus should be 7
     assert_eq!(
-        state.core.players[0].live_score_bonus, 7,
+        state.players[0].live_score_bonus, 7,
         "live_score_bonus should be reduced by 3"
     );
 }
@@ -91,7 +91,7 @@ fn test_opcode_reduce_score_not_negative() {
     state.debug.debug_mode = true;
 
     // Setup: Set live_score_bonus to 2
-    state.core.players[0].live_score_bonus = 2;
+    state.players[0].live_score_bonus = 2;
 
     let ctx = AbilityContext {
         source_card_id: 0,
@@ -106,7 +106,7 @@ fn test_opcode_reduce_score_not_negative() {
 
     // Verify: live_score_bonus should be 0 (not negative)
     assert_eq!(
-        state.core.players[0].live_score_bonus, 0,
+        state.players[0].live_score_bonus, 0,
         "live_score_bonus should not go negative"
     );
 }
@@ -124,7 +124,7 @@ fn test_opcode_skip_activate_phase() {
 
     // Verify initial state
     assert!(
-        !state.core.players[0].skip_next_activate,
+        !state.players[0].skip_next_activate,
         "skip_next_activate should be false initially"
     );
 
@@ -141,7 +141,7 @@ fn test_opcode_skip_activate_phase() {
 
     // Verify: skip_next_activate should be true
     assert!(
-        state.core.players[0].skip_next_activate,
+        state.players[0].skip_next_activate,
         "skip_next_activate should be true after opcode"
     );
 }
@@ -158,9 +158,9 @@ fn test_condition_count_energy_exact() {
     state.debug.debug_mode = true;
 
     // Setup: Set energy zone to have exactly 3 cards
-    state.core.players[0].energy_zone.clear();
+    state.players[0].energy_zone.clear();
     for i in 0..3 {
-        state.core.players[0].energy_zone.push(5000 + i);
+        state.players[0].energy_zone.push(5000 + i);
     }
 
     let ctx = AbilityContext {
@@ -189,16 +189,16 @@ fn test_condition_count_energy_exact() {
         0,
     ];
 
-    let hand_before = state.core.players[0].hand.len();
+    let hand_before = state.players[0].hand.len();
     state.resolve_bytecode_cref(&db, &bytecode_pass, &ctx);
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         hand_before + 1,
         "Should draw 1 card when energy count is exactly 3"
     );
 
     // Reset
-    state.core.players[0].hand.clear();
+    state.players[0].hand.clear();
 
     // Test condition with val=4 (should fail)
     let bytecode_fail = vec![
@@ -219,10 +219,10 @@ fn test_condition_count_energy_exact() {
         0,
     ];
 
-    let hand_before = state.core.players[0].hand.len();
+    let hand_before = state.players[0].hand.len();
     state.resolve_bytecode_cref(&db, &bytecode_fail, &ctx);
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         hand_before,
         "Should not draw card when energy count is not 4"
     );
@@ -240,7 +240,7 @@ fn test_condition_opponent_has_excess_heart() {
     state.debug.debug_mode = true;
 
     // Setup: Set opponent excess_hearts to 2
-    state.core.players[1].excess_hearts = 2;
+    state.players[1].excess_hearts = 2;
 
     let ctx = AbilityContext {
         source_card_id: 0,
@@ -267,17 +267,17 @@ fn test_condition_opponent_has_excess_heart() {
         0,
     ];
 
-    let hand_before = state.core.players[0].hand.len();
+    let hand_before = state.players[0].hand.len();
     state.resolve_bytecode_cref(&db, &bytecode_pass, &ctx);
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         hand_before + 1,
         "Should draw 1 card when opponent has excess hearts"
     );
 
     // Reset
-    state.core.players[0].hand.clear();
-    state.core.players[1].excess_hearts = 0;
+    state.players[0].hand.clear();
+    state.players[1].excess_hearts = 0;
 
     // Test condition (should fail)
     let bytecode_fail = vec![
@@ -298,10 +298,10 @@ fn test_condition_opponent_has_excess_heart() {
         0,
     ];
 
-    let hand_before = state.core.players[0].hand.len();
+    let hand_before = state.players[0].hand.len();
     state.resolve_bytecode_cref(&db, &bytecode_fail, &ctx);
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         hand_before,
         "Should not draw card when opponent has no excess hearts"
     );
@@ -342,7 +342,7 @@ fn test_condition_score_total_check() {
     state.debug.debug_mode = true;
 
     // Setup: Add success live with score 15
-    state.core.players[0].success_lives = vec![55001].into();
+    state.players[0].success_lives = vec![55001].into();
 
     let ctx = AbilityContext {
         source_card_id: 0,
@@ -369,16 +369,16 @@ fn test_condition_score_total_check() {
         0,
     ];
 
-    let hand_before = state.core.players[0].hand.len();
+    let hand_before = state.players[0].hand.len();
     state.resolve_bytecode_cref(&db, &bytecode_pass, &ctx);
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         hand_before + 1,
         "Should draw 1 card when total score >= 15"
     );
 
     // Reset
-    state.core.players[0].hand.clear();
+    state.players[0].hand.clear();
 
     // Test condition with val=20 (should fail)
     let bytecode_fail = vec![
@@ -399,10 +399,10 @@ fn test_condition_score_total_check() {
         0,
     ];
 
-    let hand_before = state.core.players[0].hand.len();
+    let hand_before = state.players[0].hand.len();
     state.resolve_bytecode_cref(&db, &bytecode_fail, &ctx);
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         hand_before,
         "Should not draw card when total score < 20"
     );

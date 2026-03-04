@@ -13,7 +13,7 @@ pub struct ProVisionHints {
 
 impl ProVisionHints {
     pub fn calculate(state: &GameState, db: &CardDatabase, player_idx: usize) -> Self {
-        let player = &state.core.players[player_idx];
+        let player = &state.players[player_idx];
         
         Self {
             win_probabilities: calculate_win_probabilities(state, db, player_idx),
@@ -59,7 +59,7 @@ fn calculate_deck_distribution(player: &PlayerState, db: &CardDatabase) -> [f32;
 /// Project next turn energy.
 /// Normalizes to max energy 12.
 fn project_energy(state: &GameState, player_idx: usize) -> f32 {
-    let player = &state.core.players[player_idx];
+    let player = &state.players[player_idx];
     let energy_deck_count = player.energy_deck.len();
     let current_energy = player.energy_zone.len();
     

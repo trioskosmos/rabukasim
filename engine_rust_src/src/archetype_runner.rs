@@ -151,29 +151,29 @@ fn run_scenarios() {
         let mut state = GameState::default();
         state.ui.silent = true;
         state.debug.debug_ignore_conditions = true;
-        state.core.players[0].hand.clear();
-        state.core.players[0].deck.clear();
-        state.core.players[0].discard.clear();
-        state.core.players[0].energy_zone.clear();
-        state.core.players[0].tapped_energy_mask = 0;
-        state.core.players[0].live_zone = [-1; 3];
+        state.players[0].hand.clear();
+        state.players[0].deck.clear();
+        state.players[0].discard.clear();
+        state.players[0].energy_zone.clear();
+        state.players[0].tapped_energy_mask = 0;
+        state.players[0].live_zone = [-1; 3];
 
-        for id in scenario.setup.hand { state.core.players[0].hand.push(map_id(id as i32)); }
-        for id in scenario.setup.deck { state.core.players[0].deck.push(map_id(id as i32)); }
-        for id in scenario.setup.discard { state.core.players[0].discard.push(map_id(id as i32)); }
+        for id in scenario.setup.hand { state.players[0].hand.push(map_id(id as i32)); }
+        for id in scenario.setup.deck { state.players[0].deck.push(map_id(id as i32)); }
+        for id in scenario.setup.discard { state.players[0].discard.push(map_id(id as i32)); }
         for (i, id) in scenario.setup.live.iter().enumerate() {
-            if i < 3 { state.core.players[0].live_zone[i] = map_id(*id as i32); }
+            if i < 3 { state.players[0].live_zone[i] = map_id(*id as i32); }
         }
         for (i, &cid) in scenario.setup.stage.iter().enumerate() {
-            if i < 3 { state.core.players[0].stage[i] = map_id(cid); }
+            if i < 3 { state.players[0].stage[i] = map_id(cid); }
         }
         for _ in 0..scenario.setup.energy_count {
-            state.core.players[0].energy_zone.push(40000);
+            state.players[0].energy_zone.push(40000);
             // energy starts untapped
         }
 
         state.phase = Phase::Main;
-        let before = ZoneSnapshot::capture(&state.core.players[0], &state);
+        let before = ZoneSnapshot::capture(&state.players[0], &state);
 
         // 2. Perform Action
         let mut error_msg = None;
@@ -189,7 +189,7 @@ fn run_scenarios() {
             },
             "START_LIVE" => {
                 // START_LIVE is now just a specific case of FORCE_TRIGGER in many cases, but keep for compat
-                let cid = state.core.players[0].stage[scenario.action.slot_idx];
+                let cid = state.players[0].stage[scenario.action.slot_idx];
                 let ctx = AbilityContext {
                     source_card_id: cid,
                     player_id: 0,
@@ -222,11 +222,11 @@ fn run_scenarios() {
                 let slot = scenario.action.slot_idx;
 
                 let mut cid = if t_type == TriggerType::OnPlay {
-                    state.core.players[0].hand.get(0).copied().unwrap_or(0) as i16
+                    state.players[0].hand.get(0).copied().unwrap_or(0) as i16
                 } else if t_type == TriggerType::OnReveal {
-                     state.core.players[0].deck.get(0).copied().unwrap_or(0) as i16
+                     state.players[0].deck.get(0).copied().unwrap_or(0) as i16
                 } else {
-                    state.core.players[0].stage[slot] as i16
+                    state.players[0].stage[slot] as i16
                 };
 
                 // FIX: If target zone is empty, place the primary card there for the trigger
@@ -235,15 +235,15 @@ fn run_scenarios() {
                     if mapped_id > 0 {
                         match t_type {
                             TriggerType::OnPlay => {
-                                state.core.players[0].hand.push(mapped_id);
+                                state.players[0].hand.push(mapped_id);
                                 cid = mapped_id as i16;
                             },
                             TriggerType::OnReveal => {
-                                state.core.players[0].deck.insert(0, mapped_id);
+                                state.players[0].deck.insert(0, mapped_id);
                                 cid = mapped_id as i16;
                             },
                             _ => {
-                                state.core.players[0].stage[slot] = mapped_id;
+                                state.players[0].stage[slot] = mapped_id;
                                 cid = mapped_id as i16;
                             }
                         }
@@ -288,7 +288,7 @@ fn run_scenarios() {
              if let Err(e) = state.step(&db, 0) {
                  error_msg = Some(format!("TurnEnd Error: {:?}", e));
              } else {
-                 let p = &state.core.players[p_idx];
+                 let p = &state.players[p_idx];
                  let has_blade_buffs = p.blade_buffs.iter().any(|&b| b != 0);
                  let has_heart_buffs = p.heart_buffs.iter().any(|h| h.0 != 0);
                  let has_granted = !p.granted_abilities.is_empty();
@@ -311,7 +311,7 @@ fn run_scenarios() {
         } else { Vec::new() };
         let bypass_str = bypassed_list.join("; ");
 
-        let after = ZoneSnapshot::capture(&state.core.players[0], &state);
+        let after = ZoneSnapshot::capture(&state.players[0], &state);
         let h_delta = after.hand_len as i32 - before.hand_len as i32;
         let d_delta = after.discard_len as i32 - before.discard_len as i32;
         let dk_delta = after.deck_len as i32 - before.deck_len as i32;

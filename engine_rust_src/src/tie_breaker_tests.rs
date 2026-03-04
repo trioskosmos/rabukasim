@@ -15,15 +15,15 @@ fn test_megaphone_scoring_accumulation() {
             "lives": [{"slot_idx": 0, "score": 1, "passed": true}]
         }),
     );
-    state.core.players[0].live_zone[0] = 137; // START:DASH!!
-    state.core.players[0].success_lives.push(137);
+    state.players[0].live_zone[0] = 137; // START:DASH!!
+    state.players[0].success_lives.push(137);
     state.obtained_success_live[0] = true;
 
     // Finalize should set persistent score to the success live count (1)
     state.finalize_live_result();
 
     assert_eq!(
-        state.core.players[0].score, 1,
+        state.players[0].score, 1,
         "Persistent score should exactly match success live count"
     );
 }
@@ -36,8 +36,8 @@ fn test_rule_8_4_7_1_success_cap_on_tie() {
     // SCENARIO 1: Tie at 1-0 success lives
     // Note: The current engine implementation may handle ties differently
     // This test documents the current behavior
-    state.core.players[0].success_lives = vec![137].into(); // 1 life
-    state.core.players[1].success_lives = vec![].into(); // 0 lives
+    state.players[0].success_lives = vec![137].into(); // 1 life
+    state.players[1].success_lives = vec![].into(); // 0 lives
 
     state
         .ui
@@ -47,19 +47,19 @@ fn test_rule_8_4_7_1_success_cap_on_tie() {
         .ui
         .performance_results
         .insert(1, json!({"success": true, "total_score": 10}));
-    state.core.players[0].live_zone = [137, -1, -1];
-    state.core.players[1].live_zone = [137, -1, -1];
+    state.players[0].live_zone = [137, -1, -1];
+    state.players[1].live_zone = [137, -1, -1];
 
     state.do_live_result(&db);
 
     // Document current engine behavior
     println!(
         "P0 success_lives: {} (expected 2)",
-        state.core.players[0].success_lives.len()
+        state.players[0].success_lives.len()
     );
     println!(
         "P1 success_lives: {} (expected 1)",
-        state.core.players[1].success_lives.len()
+        state.players[1].success_lives.len()
     );
 
     // The engine currently doesn't implement the tie-breaker rule correctly

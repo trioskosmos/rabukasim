@@ -1,6 +1,6 @@
 use crate::core::alphazero_encoding::AlphaZeroEncoding;
 use crate::core::heuristics::{EvalMode, HeuristicConfig, LegacyHeuristic, OriginalHeuristic};
-use crate::core::logic::{ChoiceType, CardDatabase, GameState, Phase, PlayerState};
+use crate::core::logic::{ChoiceType, GameState, Phase, PlayerState};
 use crate::core::mcts::SearchHorizon;
 use numpy::{PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray1};
 use pyo3::prelude::*;

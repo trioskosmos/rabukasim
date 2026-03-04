@@ -11,7 +11,7 @@ impl ActionGenerator for LiveSetGenerator {
         state: &GameState,
         receiver: &mut R,
     ) {
-        let player = &state.core.players[p_idx];
+        let player = &state.players[p_idx];
         receiver.add_action(0);
         if player.live_zone.iter().any(|&cid| cid == -1) {
             for (i, &_cid) in player.hand.iter().enumerate() {

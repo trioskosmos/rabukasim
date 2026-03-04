@@ -12,11 +12,11 @@ fn test_repro_bp4_002_p_wait_flow() {
     let card_id = 558;
 
     // 1. Setup State: P0 has the card in hand
-    state.core.players[0].hand = vec![card_id].into();
-    state.core.players[0].deck = vec![101, 102, 103, 104].into();
+    state.players[0].hand = vec![card_id].into();
+    state.players[0].deck = vec![101, 102, 103, 104].into();
 
     // Give enough energy just in case
-    state.core.players[0].energy_zone = vec![40001, 40002, 40003, 40004, 40005].into();
+    state.players[0].energy_zone = vec![40001, 40002, 40003, 40004, 40005].into();
 
     // 2. Play the card to slot 0
     state.phase = Phase::Main;
@@ -24,7 +24,7 @@ fn test_repro_bp4_002_p_wait_flow() {
 
     println!("--- INIT STATE ---");
     // Satisfy SUM_HEART_TOTAL_GE=8 condition for card 558
-    state.core.players[0].heart_buffs[0].add_to_color(2, 8); // 8 Yellow hearts on slot 0
+    state.players[0].heart_buffs[0].add_to_color(2, 8); // 8 Yellow hearts on slot 0
     state.dump();
 
     // Action ID for PLAY card 0 to slot 0 is 1000
@@ -41,7 +41,7 @@ fn test_repro_bp4_002_p_wait_flow() {
     println!("Interaction Stack Depth: {}", state.interaction_stack.len());
 
     assert_eq!(
-        state.core.players[0].stage[0], card_id,
+        state.players[0].stage[0], card_id,
         "Card should be on stage slot 0"
     );
 
@@ -77,7 +77,7 @@ fn test_repro_bp4_002_p_wait_flow() {
 
     // 5. Verify the card is TAPPED (WAIT state)
     assert!(
-        state.core.players[0].is_tapped(0),
+        state.players[0].is_tapped(0),
         "Card should be tapped after choosing YES to wait"
     );
 

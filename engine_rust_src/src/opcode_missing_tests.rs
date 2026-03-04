@@ -9,7 +9,7 @@ fn test_opcode_select_member() {
     let mut state = create_test_state();
 
     // Member in slot 0
-    state.core.players[0].stage[0] = 10;
+    state.players[0].stage[0] = 10;
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -43,7 +43,7 @@ fn test_opcode_select_live() {
     let mut state = create_test_state();
 
     // Live in slot 0
-    state.core.players[0].live_zone[0] = 1001;
+    state.players[0].live_zone[0] = 1001;
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -101,15 +101,12 @@ fn test_opcode_opponent_choose() {
         "Pending choice type mismatch"
     );
 
-    // Verify player context might be flipped?
-    // In implementation: `p_ctx.player_id = 1 - p_idx as u8;`
-    // Let's check pending_ctx
-    if let Some(interaction) = state.interaction_stack.last() {
-        assert_eq!(
-            interaction.ctx.player_id, 1,
-            "Pending context should be for opponent (player 1)"
-        );
-    }
+    // After my fix, ctx.player_id correctly remains the activator (0),
+    // but the engine correctly suspends with the opponent (1) as the current_player.
+    assert_eq!(
+        state.current_player, 1,
+        "Engine should flip current_player to opponent (player 1) during suspension"
+    );
 }
 
 #[test]
@@ -132,7 +129,7 @@ fn test_opcode_prevent_activate() {
     db.members.insert(12343, m.clone());
 
     // Place member on stage
-    state.core.players[0].stage[0] = 12343;
+    state.players[0].stage[0] = 12343;
 
     // 1. Initial check: Activation possible (mock check, logic.rs handles this)
     // We can't fully mock activate_ability without a complex DB setup,
@@ -150,7 +147,7 @@ fn test_opcode_prevent_activate() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(
-        state.core.players[0].prevent_activate, 1,
+        state.players[0].prevent_activate, 1,
         "Flag should be set"
     );
 
@@ -185,13 +182,13 @@ fn test_opcode_prevent_baton_touch() {
     db.members.insert(19, m.clone());
 
     // Setup: Slot 0 has a card (ID 10)
-    state.core.players[0].stage[0] = 10;
-    state.core.players[0].baton_touch_limit = 1;
-    state.core.players[0].hand.push(19); // Card to play
-    state.core.players[0].hand_added_turn.push(0);
+    state.players[0].stage[0] = 10;
+    state.players[0].baton_touch_limit = 1;
+    state.players[0].hand.push(19); // Card to play
+    state.players[0].hand_added_turn.push(0);
 
     // Give energy
-    state.core.players[0].tapped_energy_mask = 0; // 2 energy
+    state.players[0].tapped_energy_mask = 0; // 2 energy
 
     // 1. Apply Restriction (Global prevent baton touch on player)
     let ctx = AbilityContext {
@@ -203,7 +200,7 @@ fn test_opcode_prevent_baton_touch() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(
-        state.core.players[0].prevent_baton_touch, 1,
+        state.players[0].prevent_baton_touch, 1,
         "Flag should be set"
     );
 
@@ -232,10 +229,10 @@ fn test_opcode_prevent_play_to_slot() {
     m.abilities = vec![];
     db.members.insert(10, m.clone());
 
-    state.core.players[0].hand.push(10); // idx 0
-    state.core.players[0].hand.push(10); // idx 1 (if needed)
-    state.core.players[0].hand_added_turn.push(0);
-    state.core.players[0].hand_added_turn.push(0);
+    state.players[0].hand.push(10); // idx 0
+    state.players[0].hand.push(10); // idx 1 (if needed)
+    state.players[0].hand_added_turn.push(0);
+    state.players[0].hand_added_turn.push(0);
 
     // 1. Apply Restriction to Slot 1 (Target=1)
     let ctx = AbilityContext {
@@ -249,7 +246,7 @@ fn test_opcode_prevent_play_to_slot() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_ne!(
-        state.core.players[0].prevent_play_to_slot_mask & (1 << 1),
+        state.players[0].prevent_play_to_slot_mask & (1 << 1),
         0,
         "Mask should be set for slot 1"
     );
@@ -307,9 +304,9 @@ fn test_opcode_heart_modifiers() {
     db.lives.insert(10001, l.clone());
 
     // Set up state
-    state.core.players[0].live_zone[0] = 10001;
-    state.core.players[0].live_zone[1] = -1;
-    state.core.players[0].live_zone[2] = -1;
+    state.players[0].live_zone[0] = 10001;
+    state.players[0].live_zone[1] = -1;
+    state.players[0].live_zone[2] = -1;
 
     // Verify Logic via check_live_success directly?
     // Or simulate total_hearts and see if it passes.

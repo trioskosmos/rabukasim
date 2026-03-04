@@ -24,12 +24,12 @@ fn create_mini_db_with_bytecode(bc: Vec<i32>) -> CardDatabase {
 
 fn create_mini_state() -> GameState {
     let mut state = GameState::default();
-    state.core.players[0].player_id = 0;
-    state.core.players[1].player_id = 1;
+    state.players[0].player_id = 0;
+    state.players[1].player_id = 1;
     state.phase = Phase::Main;
     state.ui.silent = false;
     // Place the card on stage so activate_ability_with_choice can find it
-    state.core.players[0].stage[0] = 101;
+    state.players[0].stage[0] = 101;
     state
 }
 
@@ -41,10 +41,10 @@ fn mini_test_o_pay_energy_resumption() {
     let mut state = create_mini_state();
 
     // Setup energy (2 untapped, need 1 -> should suspend for choice)
-    state.core.players[0].tapped_energy_mask = 0;
+    state.players[0].tapped_energy_mask = 0;
 
     // Populate deck so DRAW works
-    state.core.players[0].deck.extend(vec![1, 2, 3, 4, 5]);
+    state.players[0].deck.extend(vec![1, 2, 3, 4, 5]);
 
     // Activate the ability at slot 0, ability 0
     state.activate_ability_with_choice(&db, 0, 0, -1, 0).unwrap();
@@ -55,8 +55,8 @@ fn mini_test_o_pay_energy_resumption() {
     // Resume with SelectResponseSlot action
     state.step(&db, Action::SelectResponseSlot { slot_idx: 0 }.id() as i32).unwrap();
 
-    assert!(state.core.players[0].is_energy_tapped(0), "Energy should be tapped");
-    assert_eq!(state.core.players[0].hand.len(), 1, "Should have resumed and drawn a card");
+    assert!(state.players[0].is_energy_tapped(0), "Energy should be tapped");
+    assert_eq!(state.players[0].hand.len(), 1, "Should have resumed and drawn a card");
     assert_eq!(state.phase, Phase::Main, "Should return to Main phase");
 }
 
@@ -76,7 +76,7 @@ fn mini_test_o_select_mode_resumption() {
     let mut state = create_mini_state();
 
     // Populate deck so DRAW works
-    state.core.players[0].deck.extend(vec![1, 2, 3, 4, 5]);
+    state.players[0].deck.extend(vec![1, 2, 3, 4, 5]);
 
     // Activate the ability at slot 0, ability 0
     state.activate_ability_with_choice(&db, 0, 0, -1, 0).unwrap();
@@ -87,6 +87,6 @@ fn mini_test_o_select_mode_resumption() {
     // Pick Option 2 (choice_idx=1)
     state.step(&db, Action::SelectChoice { choice_idx: 1 }.id() as i32).unwrap();
 
-    assert_eq!(state.core.players[0].hand.len(), 2, "Should have picked Option 2 and drawn 2 cards");
+    assert_eq!(state.players[0].hand.len(), 2, "Should have picked Option 2 and drawn 2 cards");
     assert_eq!(state.phase, Phase::Main, "Should return to Main phase");
 }

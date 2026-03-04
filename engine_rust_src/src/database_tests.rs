@@ -99,8 +99,8 @@ fn test_dry_run_all_cards() {
         CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
     let mut state = GameState::default();
     // Basic setup for dry run
-    state.core.players[0].player_id = 0;
-    state.core.players[1].player_id = 1;
+    state.players[0].player_id = 0;
+    state.players[1].player_id = 1;
 
     for member in card_db.members.values() {
         for (idx, ab) in member.abilities.iter().enumerate() {

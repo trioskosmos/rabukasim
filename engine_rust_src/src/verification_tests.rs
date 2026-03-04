@@ -9,8 +9,8 @@ fn test_recov_l_only_shows_lives() {
     let db = create_test_db();
     let mut state = create_test_state();
 
-    state.core.players[0].discard.push(19); // Member
-    state.core.players[0].discard.push(55001); // Live (exists in create_test_db)
+    state.players[0].discard.push(19); // Member
+    state.players[0].discard.push(55001); // Live (exists in create_test_db)
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -19,8 +19,8 @@ fn test_recov_l_only_shows_lives() {
     let bc = vec![O_RECOVER_LIVE, 1, 0, 0, O_RETURN, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    assert_eq!(state.core.players[0].looked_cards.len(), 1);
-    assert_eq!(state.core.players[0].looked_cards[0], 55001);
+    assert_eq!(state.players[0].looked_cards.len(), 1);
+    assert_eq!(state.players[0].looked_cards[0], 55001);
 }
 
 /// O_RECOVER_LIVE returns early when no live cards are in discard.
@@ -29,7 +29,7 @@ fn test_recov_l_no_lives_returns_early() {
     let db = create_test_db();
     let mut state = create_test_state();
 
-    state.core.players[0].discard.push(19); // Only members
+    state.players[0].discard.push(19); // Only members
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -38,7 +38,7 @@ fn test_recov_l_no_lives_returns_early() {
     let bc = vec![O_RECOVER_LIVE, 1, 0, 0, O_RETURN, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    assert!(state.core.players[0].looked_cards.is_empty());
+    assert!(state.players[0].looked_cards.is_empty());
     assert_ne!(state.phase, Phase::Response);
 }
 
@@ -49,7 +49,7 @@ fn test_pay_energy_auto_pays() {
     let mut state = create_test_state();
     state.ui.silent = true;
 
-    state.core.players[0].tapped_energy_mask = 0;
+    state.players[0].tapped_energy_mask = 0;
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -59,7 +59,7 @@ fn test_pay_energy_auto_pays() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_ne!(state.phase, Phase::Response);
-    assert_eq!(state.core.players[0].tapped_energy_mask.count_ones(), 2);
+    assert_eq!(state.players[0].tapped_energy_mask.count_ones(), 2);
 }
 
 /// Deck refresh safety cap prevents >60 cards.
@@ -70,13 +70,13 @@ fn test_deck_refresh_caps_at_60() {
 
     // Stuff 65 cards into discard (simulating a bug elsewhere)
     for i in 0..65i32 {
-        state.core.players[0].discard.push(i);
+        state.players[0].discard.push(i);
     }
 
     state.resolve_deck_refresh(0);
 
-    assert!(state.core.players[0].deck.len() <= 60);
-    assert!(state.core.players[0].discard.is_empty());
+    assert!(state.players[0].deck.len() <= 60);
+    assert!(state.players[0].discard.is_empty());
 }
 
 #[test]
@@ -114,16 +114,16 @@ fn test_poppin_up_success_repro() {
     state.phase = Phase::LiveResult;
 
     // Set dummy member on stage
-    state.core.players[0].stage[0] = 10;
+    state.players[0].stage[0] = 10;
 
     // Set Poppin' Up! in P0's live zone
-    state.core.players[0].live_zone[0] = card_id;
+    state.players[0].live_zone[0] = card_id;
 
     // Mock player hearts: Available: [10, 2, 1, 0, 1, 1, 1]
-    state.core.players[0].heart_buffs[0] = HeartBoard::from_array(&[10, 2, 1, 0, 1, 1, 1]);
+    state.players[0].heart_buffs[0] = HeartBoard::from_array(&[10, 2, 1, 0, 1, 1, 1]);
 
     // Give P1 a card too, but with 0 score or no success to avoid tie for now
-    state.core.players[1].live_zone[0] = -1;
+    state.players[1].live_zone[0] = -1;
 
     let hearts = state.get_total_hearts(0, &db, 0);
     let req = HeartBoard::from_array(&[9, 0, 1, 0, 0, 0, 2]);
@@ -155,13 +155,13 @@ fn test_poppin_up_success_repro() {
     }
     assert!(hearts.satisfies(req), "Hearts should satisfy requirement");
     assert_eq!(
-        state.core.players[0].success_lives.len(),
+        state.players[0].success_lives.len(),
         1,
         "Poppin' Up! should have succeeded hearts"
     );
-    assert_eq!(state.core.players[0].success_lives[0], card_id);
+    assert_eq!(state.players[0].success_lives[0], card_id);
     assert_eq!(
-        state.core.players[0].live_zone[0], -1,
+        state.players[0].live_zone[0], -1,
         "Card should be removed from live_zone"
     );
 }

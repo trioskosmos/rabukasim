@@ -31,7 +31,10 @@ use crate::core::enums::*;
 use crate::core::hearts::*;
 use crate::core::heuristics::{EvalMode, Heuristic, OriginalHeuristic};
 use crate::core::logic::ai_encoding::GameStateEncoding;
-use crate::core::logic::handlers::PhaseHandlers;
+use crate::core::logic::handlers::{
+    MainPhaseController, MulliganController, ResponseController, TurnController,
+    TurnPhaseController,
+};
 use crate::core::logic::ActionFactory;
 use crate::core::mcts::{SearchHorizon, MCTS};
 
@@ -766,8 +769,8 @@ impl GameState {
 
         for p in 0..2 {
             for s in 0..3 {
-                if self.core.players[p].stage[s] == cid {
-                    is_tapped = self.core.players[p].is_tapped(s);
+                if self.players[p].stage[s] == cid {
+                    is_tapped = self.players[p].is_tapped(s);
                     if needs_dynamic_hearts {
                         hearts_arr = self.get_effective_hearts(p, s, db, 0).to_array();
                     }
@@ -779,7 +782,7 @@ impl GameState {
         }
 
         let hearts_ref = if needs_dynamic_hearts && has_dynamic_data { Some(&hearts_arr) } else { None };
-        filter.matches(db, cid, is_tapped, hearts_ref, ctx)
+        filter.matches(self, db, cid, is_tapped, hearts_ref, ctx)
     }
 
     pub fn check_hearts_suitability(&self, have: &[u8; 7], need: &[u8; 7]) -> bool {
@@ -895,7 +898,7 @@ impl GameState {
     }
 
     pub fn end_main_phase(&mut self, db: &CardDatabase) {
-        <Self as PhaseHandlers>::end_main_phase(self, db);
+        MainPhaseController::end_main_phase(self, db);
     }
 
     pub fn do_live_result(&mut self, db: &CardDatabase) {
@@ -912,7 +915,7 @@ impl GameState {
         slot_idx: usize,
         ab_idx: usize,
     ) -> Result<(), String> {
-        <Self as PhaseHandlers>::activate_ability(self, db, slot_idx, ab_idx)
+        ResponseController::activate_ability(self, db, slot_idx, ab_idx)
     }
 
     pub fn activate_ability_with_choice(
@@ -923,7 +926,7 @@ impl GameState {
         choice_idx: i32,
         target_slot: i32,
     ) -> Result<(), String> {
-        <Self as PhaseHandlers>::activate_ability_with_choice(
+        ResponseController::activate_ability_with_choice(
             self,
             db,
             slot_idx,
@@ -934,11 +937,11 @@ impl GameState {
     }
 
     pub fn execute_mulligan(&mut self, player_idx: usize, discard_indices: Vec<usize>) {
-        <Self as PhaseHandlers>::execute_mulligan(self, player_idx, discard_indices);
+        MulliganController::execute_mulligan(self, player_idx, discard_indices);
     }
 
     pub fn do_active_phase(&mut self, db: &CardDatabase) {
-        <Self as PhaseHandlers>::do_active_phase(self, db);
+        TurnPhaseController::do_active_phase(self, db);
     }
 
     pub fn set_live_cards(&mut self, player_idx: usize, card_ids: Vec<u32>) -> Result<(), String> {

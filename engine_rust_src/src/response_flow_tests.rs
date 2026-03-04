@@ -41,11 +41,11 @@ fn test_ability_pause_for_selection() {
     let db = create_test_db();
     let mut state = create_test_state();
 
-    state.core.players[0].stage[0] = 500;
-    state.core.players[0].discard = vec![99].into(); // ID 99 is in our test DB
+    state.players[0].stage[0] = 500;
+    state.players[0].discard = vec![99].into(); // ID 99 is in our test DB
     println!(
         "DEBUG: Discard before recovery: {:?}",
-        state.core.players[0].discard
+        state.players[0].discard
     );
 
     // Activate ability 0 on slot 0
@@ -62,7 +62,7 @@ fn test_ability_pause_for_selection() {
         O_RECOVER_MEMBER
     );
     assert!(!state.interaction_stack.is_empty());
-    assert_eq!(state.core.players[0].looked_cards.len(), 1);
+    assert_eq!(state.players[0].looked_cards.len(), 1);
 }
 
 /// Verifies that providing a choice correctly resumes the ability and transitions back to Main phase.
@@ -71,8 +71,8 @@ fn test_ability_resumption_after_choice() {
     let db = create_test_db();
     let mut state = create_test_state();
 
-    state.core.players[0].stage[0] = 500;
-    state.core.players[0].discard = vec![99].into();
+    state.players[0].stage[0] = 500;
+    state.players[0].discard = vec![99].into();
 
     // 1. Pause
     state.activate_ability(&db, 0, 0).unwrap();
@@ -83,8 +83,8 @@ fn test_ability_resumption_after_choice() {
 
     // 3. Verify results
     assert_eq!(state.phase, Phase::Main);
-    assert!(state.core.players[0].hand.contains(&99));
-    assert!(state.core.players[0].discard.is_empty());
+    assert!(state.players[0].hand.contains(&99));
+    assert!(state.players[0].discard.is_empty());
     assert!(state.interaction_stack.is_empty());
 }
 
@@ -204,8 +204,8 @@ fn test_nested_suspension_real_flow() {
     db.members_vec[logic_id] = Some(db.members[&501].clone());
 
     let mut state = create_test_state();
-    state.core.players[0].stage[0] = 501;
-    state.core.players[0].discard = vec![99].into();
+    state.players[0].stage[0] = 501;
+    state.players[0].discard = vec![99].into();
     state.phase = Phase::LiveResult;
 
     // 1. Initial activation -> First suspension (Optional Tap)

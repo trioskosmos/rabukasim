@@ -45,14 +45,14 @@ fn test_repro_card_420_cost_sum_limit() {
     let p_idx = 0;
 
     // Ensure enough energy
-    state.core.players[p_idx].energy_zone = smallvec::smallvec![999; 20];
-    state.core.players[p_idx].tapped_energy_mask = 0;
+    state.players[p_idx].energy_zone = smallvec::smallvec![999; 20];
+    state.players[p_idx].tapped_energy_mask = 0;
 
     // Scenario 1: Pick Cost 4 -> Should NOT allow 2nd card
     {
         let mut state = state.clone();
-        state.core.players[p_idx].discard = vec![cost_4_id, cost_2_ids[0]].into();
-        state.core.players[p_idx].hand = vec![card_420_id].into();
+        state.players[p_idx].discard = vec![cost_4_id, cost_2_ids[0]].into();
+        state.players[p_idx].hand = vec![card_420_id].into();
         state.current_player = p_idx as u8;
         state.phase = Phase::Main;
 
@@ -72,7 +72,7 @@ fn test_repro_card_420_cost_sum_limit() {
             state.interaction_stack.last().unwrap().choice_type,
             ChoiceType::SelectDiscardPlay
         );
-        let looked_cards = state.core.players[p_idx].looked_cards.clone();
+        let looked_cards = state.players[p_idx].looked_cards.clone();
         let idx = looked_cards
             .iter()
             .position(|&cid| cid == cost_4_id)
@@ -83,7 +83,7 @@ fn test_repro_card_420_cost_sum_limit() {
 
         // After placing cost 4 card, v_accumulated should be 0.
         // The engine should see no more cards (since cost 2 > 0) and finish.
-        assert_eq!(state.core.players[p_idx].stage[1], cost_4_id);
+        assert_eq!(state.players[p_idx].stage[1], cost_4_id);
         assert!(
             state.interaction_stack.is_empty(),
             "Should be empty after limit reached"
@@ -93,8 +93,8 @@ fn test_repro_card_420_cost_sum_limit() {
     // Scenario 2: Pick Cost 2 -> Should allow another Cost 2 but NOT Cost 4
     {
         let mut state = state.clone();
-        state.core.players[p_idx].discard = vec![cost_4_id, cost_2_ids[0], cost_2_ids[1]].into();
-        state.core.players[p_idx].hand = vec![card_420_id].into();
+        state.players[p_idx].discard = vec![cost_4_id, cost_2_ids[0], cost_2_ids[1]].into();
+        state.players[p_idx].hand = vec![card_420_id].into();
         state.current_player = p_idx as u8;
         state.phase = Phase::Main;
 
@@ -107,7 +107,7 @@ fn test_repro_card_420_cost_sum_limit() {
                 state.interaction_stack.last().unwrap().choice_type,
                 ChoiceType::SelectDiscardPlay
             );
-            let looked_cards = state.core.players[p_idx].looked_cards.clone();
+            let looked_cards = state.players[p_idx].looked_cards.clone();
             let idx = looked_cards
                 .iter()
                 .position(|&cid| cid == cost_2_ids[0])
@@ -123,7 +123,7 @@ fn test_repro_card_420_cost_sum_limit() {
                 state.interaction_stack.last().unwrap().choice_type,
                 ChoiceType::SelectDiscardPlay
             );
-            let looked_cards = state.core.players[p_idx].looked_cards.clone();
+            let looked_cards = state.players[p_idx].looked_cards.clone();
             assert!(
                 looked_cards.contains(&cost_2_ids[1]),
                 "Should contain 2nd cost 2 card"
@@ -141,8 +141,8 @@ fn test_repro_card_420_cost_sum_limit() {
             state.step(&db, ACTION_BASE_CHOICE + 2).unwrap(); // Select Slot 2
         }
 
-        assert_eq!(state.core.players[p_idx].stage[1], cost_2_ids[0]);
-        assert_eq!(state.core.players[p_idx].stage[2], cost_2_ids[1]);
+        assert_eq!(state.players[p_idx].stage[1], cost_2_ids[0]);
+        assert_eq!(state.players[p_idx].stage[2], cost_2_ids[1]);
         assert!(state.interaction_stack.is_empty(), "Should be finished");
     }
 }

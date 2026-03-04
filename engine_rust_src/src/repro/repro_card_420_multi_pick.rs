@@ -55,11 +55,11 @@ fn test_repro_card_420_multi_pick_from_discard() {
     // Setup: empty stage, members in discard, plenty of energy
     // IMPORTANT: Populate deck to prevent deck refresh (process_rule_checks triggers
     // refresh when deck is empty + discard non-empty, which would move discard to deck)
-    state.core.players[p_idx].stage = [-1, -1, -1];
-    state.core.players[p_idx].discard = discard_members.clone().into();
-    state.core.players[p_idx].deck = vec![9999; 5].into(); // Dummy cards to prevent deck refresh
-    state.core.players[p_idx].energy_zone = vec![9000; 6].into(); // 6 energy (enough for PAY_ENERGY 4)
-    state.core.players[p_idx].energy_deck = vec![9000; 5].into(); // Prevent energy deck empty issues
+    state.players[p_idx].stage = [-1, -1, -1];
+    state.players[p_idx].discard = discard_members.clone().into();
+    state.players[p_idx].deck = vec![9999; 5].into(); // Dummy cards to prevent deck refresh
+    state.players[p_idx].energy_zone = vec![9000; 6].into(); // 6 energy (enough for PAY_ENERGY 4)
+    state.players[p_idx].energy_deck = vec![9000; 5].into(); // Prevent energy deck empty issues
 
     // Manually push the PLAY_MEMBER_FROM_DISCARD interaction to skip the PAY_ENERGY step
     // This simulates the point where the user has already paid energy and the engine
@@ -74,15 +74,13 @@ fn test_repro_card_420_multi_pick_from_discard() {
     eprintln!("filter_attr={:#018x}, s_word={}", filter_attr, s_word);
 
     // Populate looked_cards with eligible members from discard
-    state.core.players[p_idx].looked_cards.clear();
-    for &cid in &state.core.players[p_idx].discard {
-        if db.get_member(cid).is_some()
-            && (filter_attr == 0 || state.card_matches_filter(&db, cid, filter_attr))
-        {
-            state.core.players[p_idx].looked_cards.push(cid);
-        }
-    }
-    let initial_looked = state.core.players[p_idx].looked_cards.len();
+    state.players[p_idx].looked_cards.clear();
+    let matched_ids: Vec<i32> = state.players[p_idx].discard.iter()
+        .filter(|&&cid| db.get_member(cid).is_some() && (filter_attr == 0 || state.card_matches_filter(&db, cid, filter_attr)))
+        .cloned()
+        .collect();
+    state.players[p_idx].looked_cards.extend(matched_ids);
+    let initial_looked = state.players[p_idx].looked_cards.len();
     eprintln!("Initial looked_cards: {} members", initial_looked);
     assert!(
         initial_looked >= 2,
@@ -150,10 +148,10 @@ fn test_repro_card_420_multi_pick_from_discard() {
     // First card should be placed on slot 0
     eprintln!(
         "  Stage after 1st placement: {:?}",
-        state.core.players[p_idx].stage
+        state.players[p_idx].stage
     );
     assert!(
-        state.core.players[p_idx].stage[0] >= 0,
+        state.players[p_idx].stage[0] >= 0,
         "Slot 0 should have a member after first placement"
     );
 
@@ -187,7 +185,7 @@ fn test_repro_card_420_multi_pick_from_discard() {
     );
 
     // CRITICAL: Verify looked_cards have been repopulated for the 2nd round
-    let looked = &state.core.players[p_idx].looked_cards;
+    let looked = &state.players[p_idx].looked_cards;
     eprintln!("  looked_cards after 1st placement: {} cards", looked.len());
     assert!(
         !looked.is_empty(),
@@ -212,14 +210,14 @@ fn test_repro_card_420_multi_pick_from_discard() {
     // Both cards should now be placed on stage
     eprintln!(
         "  Stage after 2nd placement: {:?}",
-        state.core.players[p_idx].stage
+        state.players[p_idx].stage
     );
     assert!(
-        state.core.players[p_idx].stage[0] >= 0,
+        state.players[p_idx].stage[0] >= 0,
         "Slot 0 should have a member"
     );
     assert!(
-        state.core.players[p_idx].stage[1] >= 0,
+        state.players[p_idx].stage[1] >= 0,
         "Slot 1 should have a member"
     );
 

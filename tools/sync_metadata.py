@@ -64,6 +64,10 @@ def sync():
             suffix = "u64" if const_type == "u64" else "u32" if const_type == "u32" else ""
             f.write(f"pub const {key}: {const_type} = {val}{suffix};\n")
 
+        f.write("\n// Zone Types\n")
+        for key, val in metadata.get("zones", {}).items():
+            f.write(f"pub const ZONE_{key}: i32 = {val};\n")
+
     # --- Generate Rust Enums (FULL OVERWRITE of enums.rs) ---
     rust_enum_path = "engine_rust_src/src/core/enums.rs"
     with open(rust_enum_path, "w", encoding="utf-8") as f:
@@ -200,7 +204,19 @@ def sync():
         f.write("            _ => false,\n")
         f.write("        }\n")
         f.write("    }\n")
-        f.write("}\n")
+        f.write("}\n\n")
+
+        # Zone (New for Bytecode Standardization)
+        if "zones" in metadata:
+            f.write("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]\n")
+            f.write("#[repr(u8)]\n")
+            f.write("pub enum Zone {\n")
+            f.write("    #[default]\n")
+            f.write("    Default = 0,\n")
+            for key, val in metadata["zones"].items():
+                if key == "DEFAULT": continue
+                f.write(f"    {to_pascal_case(key)} = {val},\n")
+            f.write("}\n")
 
     # --- Generate JS Constants ---
     js_path = "frontend/web_ui/js/generated_constants.js"
@@ -252,6 +268,11 @@ def sync():
         f.write("export const ExtraConstants = {\n")
         for key, val in metadata.get("extra_constants", {}).items():
             f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
+        f.write("export const Zones = {\n")
+        for key, val in metadata.get("zones", {}).items():
+            f.write(f"    {key}: {val},\n")
         f.write("};\n")
 
     # --- Generate Python Metadata ---
@@ -268,6 +289,7 @@ def sync():
             ("COSTS", "costs"),
             ("CHOICES", "choices"),
             ("PHASES", "phases"),
+            ("ZONES", "zones"),
             ("EXTRA_CONSTANTS", "extra_constants"),
         ]
 

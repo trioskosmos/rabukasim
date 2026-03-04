@@ -172,7 +172,7 @@ impl LegacyHeuristic {
         p_idx: usize,
         baseline_score: u32,
     ) -> f32 {
-        let p = &state.core.players[p_idx];
+        let p = &state.players[p_idx];
         let mut score = 0.0;
 
         // 1. Success Lives (Goal) - 0.5 per live
@@ -296,15 +296,15 @@ impl OriginalHeuristic {
         let score1 = evaluate_player(state, db, 1, p1_baseline, p1_deck_stats, Some(&self.config));
         let mut final_val = (score0 - score1) * self.config.scaling_factor + 0.5;
 
-        let _p0_notes = state.core.players[0].current_turn_notes;
-        let _p1_notes = state.core.players[1].current_turn_notes;
+        let _p0_notes = state.players[0].current_turn_notes;
+        let _p1_notes = state.players[1].current_turn_notes;
 
         if state.phase == Phase::Rps {
             // Pseudo-random tie-breaker for RPS based on turn number and deck lengths
             // This ensures that even if scores are tied, different moves are slightly preferred
             // to break deterministic Rock-vs-Rock loops in greedy agents.
-            let p0_seed = (state.core.players[0].deck.len() as u32).wrapping_shl(8) ^ state.turn as u32;
-            let p1_seed = (state.core.players[1].deck.len() as u32).wrapping_shl(16) ^ state.turn as u32;
+            let p0_seed = (state.players[0].deck.len() as u32).wrapping_shl(8) ^ state.turn as u32;
+            let p1_seed = (state.players[1].deck.len() as u32).wrapping_shl(16) ^ state.turn as u32;
             
             // Add a tiny deterministic noise (+/- 0.0001)
             let noise = ((p0_seed.wrapping_sub(p1_seed) % 100) as f32) / 1000000.0;
@@ -326,7 +326,7 @@ pub fn evaluate_player(
     let default_config = HeuristicConfig::default();
     let cfg = config.unwrap_or(&default_config);
 
-    let p = &state.core.players[p_idx];
+    let p = &state.players[p_idx];
     let mut score = 0.0;
 
     let mut live_val = 0.0;
@@ -347,7 +347,7 @@ pub fn evaluate_player(
     let mut occupied_slots = 0;
 
     for i in 0..3 {
-        let cid = state.core.players[p_idx].stage[i];
+        let cid = state.players[p_idx].stage[i];
         if cid != -1 {
             occupied_slots += 1;
             if let Some(m) = db.get_member(cid) {
@@ -375,7 +375,7 @@ pub fn evaluate_player(
                 }
 
                 // Bonus for being untapped (ready to use)
-                if !state.core.players[p_idx].is_tapped(i) && ability_val > 0.0 {
+                if !state.players[p_idx].is_tapped(i) && ability_val > 0.0 {
                     ability_val *= cfg.weight_untapped_bonus;
                 }
 
@@ -652,7 +652,7 @@ pub fn calculate_live_success_prob(
 }
 
 fn calculate_hand_quality(state: &GameState, db: &CardDatabase, p_idx: usize) -> f32 {
-    let p = &state.core.players[p_idx];
+    let p = &state.players[p_idx];
     let mut val = 0.0;
 
     let is_mulligan = match state.phase {
@@ -758,8 +758,8 @@ impl Heuristic for SimpleHeuristic {
         _p0_deck_stats: Option<DeckStats>,
         _p1_deck_stats: Option<DeckStats>,
     ) -> f32 {
-        let p0 = &state.core.players[0];
-        let p1 = &state.core.players[1];
+        let p0 = &state.players[0];
+        let p1 = &state.players[1];
 
         let score0 = p0.success_lives.len() as f32 * 10.0
             + p0.energy_zone.len() as f32 * 0.5

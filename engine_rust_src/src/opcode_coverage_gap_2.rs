@@ -40,7 +40,7 @@ fn test_opcode_color_select_real_card_122() {
     let ab = &card.abilities[ab_idx];
 
     // Place Kotori on stage
-    state.core.players[0].stage[0] = card_id;
+    state.players[0].stage[0] = card_id;
 
     // Execute the ability bytecode directly
     let ctx = AbilityContext {
@@ -107,7 +107,7 @@ fn test_opcode_jump_real_card_19() {
     let ab = &card.abilities[ab_idx];
 
     // Place card on stage
-    state.core.players[0].stage[0] = card_id;
+    state.players[0].stage[0] = card_id;
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -162,9 +162,9 @@ fn test_opcode_tap_opponent_dynamic() {
     );
 
     // Place card on stage, opponent has untapped member
-    state.core.players[0].stage[0] = card_id;
-    state.core.players[1].stage[0] = 3001; // Generic opponent member
-    state.core.players[1].set_tapped(0, false);
+    state.players[0].stage[0] = card_id;
+    state.players[1].stage[0] = 3001; // Generic opponent member
+    state.players[1].set_tapped(0, false);
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -199,7 +199,7 @@ fn test_opcode_tap_opponent_dynamic() {
                 state.resolve_bytecode_cref(&db, &ab.bytecode, &pending.ctx);
 
                 assert!(
-                    state.core.players[1].is_tapped(0),
+                    state.players[1].is_tapped(0),
                     "Opponent slot 0 should be tapped after O_TAP_OPPONENT resolution"
                 );
             }
@@ -252,8 +252,8 @@ fn test_opcode_buff_power_dynamic() {
     );
 
     // Place card on stage
-    state.core.players[0].stage[0] = card_id;
-    let before_blades = state.core.players[0].blade_buffs[0];
+    state.players[0].stage[0] = card_id;
+    let before_blades = state.players[0].blade_buffs[0];
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -271,7 +271,7 @@ fn test_opcode_buff_power_dynamic() {
     } else {
         println!(
             "Blade buffs before={}, after={}",
-            before_blades, state.core.players[0].blade_buffs[0]
+            before_blades, state.players[0].blade_buffs[0]
         );
     }
 

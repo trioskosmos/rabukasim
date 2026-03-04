@@ -10,13 +10,13 @@ fn test_repro_pb1_001_r_softlock_fix() {
     // We use the real card 4684 (PL!SP-pb1-001-R) from the compiled database.
     // Ability 0: ON_LIVE_START Select Mode -> [0] Pay 2 Energy, [1] Discard 2 Hand -> else [2] Start Live (Implicit)
     let mut state = GameState::default();
-    state.core.players[0].player_id = 0;
-    state.core.players[1].player_id = 1;
+    state.players[0].player_id = 0;
+    state.players[1].player_id = 1;
 
     // Test Case: Empty hand, enough energy.
     // Option 0 (Pay 2 Energy) is VALID. Option 1 (Discard 2 Hand) is INVALID.
-    state.core.players[0].hand.clear();
-    state.core.players[0].energy_zone = smallvec![100, 101]; // 2 Energy available
+    state.players[0].hand.clear();
+    state.players[0].energy_zone = smallvec![100, 101]; // 2 Energy available
 
     let card_id = 4684;
     crate::test_helpers::generate_card_report(card_id);
@@ -71,8 +71,8 @@ fn test_repro_pb1_001_r_all_combinations() {
 
     for (en, hn, exp_0, exp_1) in scenarios {
         let mut state = GameState::default();
-        state.core.players[0].hand = (0..hn).map(|i| 1000 + i as i32).collect();
-        state.core.players[0].energy_zone = (0..en).map(|i| (2000 + i) as i32).collect();
+        state.players[0].hand = (0..hn).map(|i| 1000 + i as i32).collect();
+        state.players[0].energy_zone = (0..en).map(|i| (2000 + i) as i32).collect();
 
         let ctx = AbilityContext {
             player_id: 0,
@@ -114,12 +114,12 @@ fn test_repro_card_103_full_board() {
     let db = load_real_db();
 
     // Fill the board for Player 0
-    state.core.players[0].stage[0] = 1001;
-    state.core.players[0].stage[1] = 1002;
-    state.core.players[0].stage[2] = 1003;
+    state.players[0].stage[0] = 1001;
+    state.players[0].stage[1] = 1002;
+    state.players[0].stage[2] = 1003;
 
     // Discard has a valid cost-2 member
-    state.core.players[0].discard.push(103); // Play another nico from discard
+    state.players[0].discard.push(103); // Play another nico from discard
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -141,12 +141,12 @@ fn test_repro_card_103_full_board() {
 
     // Verification:
     // 1. Board should still be the same (no overlaps)
-    assert_eq!(state.core.players[0].stage[0], 1001);
-    assert_eq!(state.core.players[0].stage[1], 1002);
-    assert_eq!(state.core.players[0].stage[2], 1003);
+    assert_eq!(state.players[0].stage[0], 1001);
+    assert_eq!(state.players[0].stage[1], 1002);
+    assert_eq!(state.players[0].stage[2], 1003);
 
     // 2. The Nico in discard should STILL BE in discard (it wasn't moved/lost)
-    assert!(state.core.players[0].discard.contains(&103));
+    assert!(state.players[0].discard.contains(&103));
 
     // 3. Since P0 skipped, it should have moved to P1's part of the ability or finished.
     // If P1 board is also full, phase should NOT be Response.

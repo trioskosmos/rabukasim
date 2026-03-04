@@ -344,6 +344,19 @@ PHASES = {
     "RESPONSE": 10,
 }
 
+ZONES = {
+    "DEFAULT": 0,
+    "DECK_TOP": 1,
+    "DECK_BOTTOM": 2,
+    "ENERGY": 3,
+    "STAGE": 4,
+    "HAND": 6,
+    "DISCARD": 7,
+    "LIVE_SET": 13,
+    "SUCCESS_PILE": 14,
+    "YELL": 15,
+}
+
 EXTRA_CONSTANTS = {
     "FLAG_DRAW": 1,
     "FLAG_SEARCH": 2,

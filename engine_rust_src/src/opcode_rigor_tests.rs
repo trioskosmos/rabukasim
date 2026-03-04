@@ -11,25 +11,25 @@ fn test_opcode_swap_cards_deck_refresh() {
     };
 
     // Setup: Deck with 1 card, Discard with 3 cards.
-    state.core.players[0].deck = vec![101].into();
-    state.core.players[0].discard = vec![201, 202, 203].into();
-    state.core.players[0].hand = vec![].into();
+    state.players[0].deck = vec![101].into();
+    state.players[0].discard = vec![201, 202, 203].into();
+    state.players[0].hand = vec![].into();
 
     // Opcode 21: O_SWAP_CARDS, v=2 (move 2 cards), target_slot=6 (Hand)
     let bc = vec![O_SWAP_CARDS, 2, 0, 0, 6, O_RETURN, 0, 0, 0, 0];
 
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    println!("DECK: {:?}", state.core.players[0].deck);
-    println!("HAND: {:?}", state.core.players[0].hand);
+    println!("DECK: {:?}", state.players[0].deck);
+    println!("HAND: {:?}", state.players[0].hand);
 
     assert_eq!(
-        state.core.players[0].hand.len(),
+        state.players[0].hand.len(),
         2,
         "Hand size should be 2 after moving 2 cards from deck (including refresh)"
     );
     assert_eq!(
-        state.core.players[0].deck.len(),
+        state.players[0].deck.len(),
         2,
         "Deck size should be 2 after moving 2 cards from deck+discard (total 4)"
     );
@@ -66,7 +66,7 @@ fn test_opcode_increase_cost_ripple() {
 fn test_opcode_select_live_rigor() {
     let db = create_test_db();
     let mut state = create_test_state();
-    state.core.players[0].live_zone[0] = 55001;
+    state.players[0].live_zone[0] = 55001;
     let ctx = AbilityContext {
         player_id: 0,
         area_idx: 0,
@@ -139,14 +139,14 @@ fn test_opcode_opponent_choose_rigor() {
 
     println!(
         "DEBUG: P0 hand len = {}, P1 hand len = {}",
-        state.core.players[0].hand.len(),
-        state.core.players[1].hand.len()
+        state.players[0].hand.len(),
+        state.players[1].hand.len()
     );
     assert_eq!(state.phase, Phase::Main);
     // Note: O_OPPONENT_CHOOSE flips ctx.player_id during resumption.
     // Subsequent opcodes (O_DRAW) use the flipped context.
     assert_eq!(
-        state.core.players[1].hand.len(),
+        state.players[1].hand.len(),
         1,
         "Player 1 should have drawn the card due to context flip"
     );
@@ -157,7 +157,7 @@ fn test_opcode_reduce_yell_count_functional() {
     let db = create_test_db();
     let mut state = create_test_state();
     state.current_player = 0;
-    state.core.players[0].deck = vec![3000, 3001, 3002].into();
+    state.players[0].deck = vec![3000, 3001, 3002].into();
     let ctx = AbilityContext {
         player_id: 0,
         area_idx: 0,
@@ -182,7 +182,7 @@ fn test_opcode_prevent_activate_rigor() {
     let db = create_test_db();
     let mut state = create_test_state();
     state.current_player = 0;
-    state.core.players[0].stage[0] = 3000;
+    state.players[0].stage[0] = 3000;
     let ctx = AbilityContext {
         player_id: 0,
         area_idx: 0,
@@ -195,12 +195,12 @@ fn test_opcode_prevent_activate_rigor() {
 
     // Verify prevent_activate flag is set
     assert_eq!(
-        state.core.players[0].prevent_activate, 1,
+        state.players[0].prevent_activate, 1,
         "prevent_activate flag should be set"
     );
 
     // Cid 3121 has index 0 activated ability
-    state.core.players[0].stage[0] = 3121;
+    state.players[0].stage[0] = 3121;
     let res = state.activate_ability(&db, 0, 0);
     assert!(res.is_err(), "Activation should be blocked by restriction");
     assert!(res.unwrap_err().contains("restriction"));
@@ -216,18 +216,18 @@ fn test_opcode_add_stage_energy_functional() {
         ..Default::default()
     };
 
-    state.core.players[0].stage[0] = 3000; // Member in slot 0 (exists in test DB)
-    state.core.players[0].stage_energy[0] = vec![].into();
+    state.players[0].stage[0] = 3000; // Member in slot 0 (exists in test DB)
+    state.players[0].stage_energy[0] = vec![].into();
 
     // Add 2 stage energy. Opcode 50.
     let bc = vec![O_ADD_STAGE_ENERGY, 2, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Verify stage_energy was added
-    assert_eq!(state.core.players[0].stage_energy[0].len(), 2);
-    assert_eq!(state.core.players[0].stage_energy_count[0], 2);
+    assert_eq!(state.players[0].stage_energy[0].len(), 2);
+    assert_eq!(state.players[0].stage_energy_count[0], 2);
 
     // Verify the energy cards are CID 2000 (test energy card)
-    assert_eq!(state.core.players[0].stage_energy[0][0], 2000);
-    assert_eq!(state.core.players[0].stage_energy[0][1], 2000);
+    assert_eq!(state.players[0].stage_energy[0][0], 2000);
+    assert_eq!(state.players[0].stage_energy[0][1], 2000);
 }

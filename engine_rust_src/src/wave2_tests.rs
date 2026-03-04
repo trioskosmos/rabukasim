@@ -47,11 +47,11 @@ fn test_opcode_reduce_yell_count() {
     let bc = vec![O_REDUCE_YELL_COUNT, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    assert_eq!(state.core.players[0].yell_count_reduction, 1);
+    assert_eq!(state.players[0].yell_count_reduction, 1);
 
     // Test do_yell reduction
     // Setup deck
-    state.core.players[0].deck = vec![3010, 3002, 3003, 3004, 3005].into();
+    state.players[0].deck = vec![3010, 3002, 3003, 3004, 3005].into();
 
     // Try to yell 3 cards. Should yell 3 - 1 = 2.
     let revealed = state.do_yell(&db, 3);
@@ -71,11 +71,11 @@ fn test_opcode_swap_area() {
     let mut state = create_test_state();
 
     // Setup Stage: [19, 20, 30]
-    state.core.players[0].stage = [10, 20, 30];
+    state.players[0].stage = [10, 20, 30];
     // Setup Tapped: [false, true, false]
-    state.core.players[0].set_tapped(0, false);
-    state.core.players[0].set_tapped(1, true);
-    state.core.players[0].set_tapped(2, false);
+    state.players[0].set_tapped(0, false);
+    state.players[0].set_tapped(1, true);
+    state.players[0].set_tapped(2, false);
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -87,11 +87,11 @@ fn test_opcode_swap_area() {
     let bc = vec![O_SWAP_AREA, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    assert_eq!(state.core.players[0].stage, [30, 10, 20]);
+    assert_eq!(state.players[0].stage, [30, 10, 20]);
     // Tapped follows: 30(false)->Pos0, 10(false)->Pos1, 20(true)->Pos2
-    assert_eq!(state.core.players[0].is_tapped(0), false);
-    assert_eq!(state.core.players[0].is_tapped(1), false);
-    assert_eq!(state.core.players[0].is_tapped(2), true);
+    assert_eq!(state.players[0].is_tapped(0), false);
+    assert_eq!(state.players[0].is_tapped(1), false);
+    assert_eq!(state.players[0].is_tapped(2), true);
 }
 
 #[test]
@@ -107,16 +107,16 @@ fn test_opcode_negate() {
         source_card_id: target_cid,
         ..Default::default()
     };
-    state.core.players[0].stage[0] = target_cid; // Target member
+    state.players[0].stage[0] = target_cid; // Target member
 
     // O_NEGATE_EFFECT (27), val=2 (OnLiveStart)
     let bc = vec![O_NEGATE_EFFECT, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Check negated_triggers
-    assert_eq!(state.core.players[0].negated_triggers.len(), 1);
+    assert_eq!(state.players[0].negated_triggers.len(), 1);
     assert_eq!(
-        state.core.players[0].negated_triggers[0],
+        state.players[0].negated_triggers[0],
         (target_cid, TriggerType::OnLiveStart, 1)
     );
 
@@ -135,8 +135,8 @@ fn test_opcode_negate() {
     );
 
     // Ensure deck has cards
-    state.core.players[0].deck = vec![3010].into();
-    state.core.players[0].hand = vec![].into();
+    state.players[0].deck = vec![3010].into();
+    state.players[0].hand = vec![].into();
 
     // Trigger OnLiveStart
     let trigger_ctx = AbilityContext {
@@ -146,19 +146,19 @@ fn test_opcode_negate() {
     };
     println!(
         "DEBUG: Triggering OnLiveStart. Negated: {:?}",
-        state.core.players[0].negated_triggers
+        state.players[0].negated_triggers
     );
     state.trigger_abilities(&db, TriggerType::OnLiveStart, &trigger_ctx);
 
     // Should NOT have drawn card (hand size 0)
-    assert_eq!(state.core.players[0].hand.len(), 0);
+    assert_eq!(state.players[0].hand.len(), 0);
 
     // Clear negation manually to verify it DOES work without negation
-    state.core.players[0].negated_triggers.clear();
+    state.players[0].negated_triggers.clear();
     state.trigger_abilities(&db, TriggerType::OnLiveStart, &trigger_ctx);
 
     // Should HAVE drawn card (hand size 1)
-    assert_eq!(state.core.players[0].hand.len(), 1);
+    assert_eq!(state.players[0].hand.len(), 1);
 }
 
 #[test]
@@ -192,8 +192,8 @@ fn test_granted_ability_propagation_cost() {
     );
 
     // 3. Grant Ability to Card 110
-    state.core.players[0].stage[0] = -1; // Slot must be empty to check "play cost" without baton touch
-    state.core.players[0]
+    state.players[0].stage[0] = -1; // Slot must be empty to check "play cost" without baton touch
+    state.players[0]
         .granted_abilities
         .push((110, source_id, 0));
 
@@ -232,8 +232,8 @@ fn test_granted_ability_propagation_hearts() {
         },
     );
 
-    state.core.players[0].stage[0] = 3003;
-    state.core.players[0]
+    state.players[0].stage[0] = 3003;
+    state.players[0]
         .granted_abilities
         .push((3003, source_id, 0));
 
@@ -265,7 +265,7 @@ fn test_granted_ability_propagation_score() {
     );
 
     // Target Card 110 on stage
-    state.core.players[0].stage[0] = 110;
+    state.players[0].stage[0] = 110;
     add_test_member(
         &mut db,
         MemberCard {
@@ -274,7 +274,7 @@ fn test_granted_ability_propagation_score() {
         },
     );
 
-    state.core.players[0]
+    state.players[0]
         .granted_abilities
         .push((110, source_id, 0));
 
@@ -292,9 +292,9 @@ fn test_granted_ability_propagation_score() {
             "volume_icons": 0
         }),
     );
-    state.core.players[0].live_zone[0] = 10050; // Mock live card id
-    state.core.players[0].live_zone[1] = -1;
-    state.core.players[0].live_zone[2] = -1;
+    state.players[0].live_zone[0] = 10050; // Mock live card id
+    state.players[0].live_zone[1] = -1;
+    state.players[0].live_zone[2] = -1;
 
     // Register 10050 in DB so do_live_result doesn't skip it
     add_test_live(

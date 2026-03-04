@@ -1,6 +1,6 @@
 use engine_rust::core::enums::*;
-use engine_rust::core::generated_constants::*;
-use engine_rust::core::logic::{handlers::PhaseHandlers, CardDatabase, GameState};
+// Removed unused generated_constants import
+use engine_rust::core::logic::{CardDatabase, GameState, ResponseController};
 
 #[test]
 fn test_pb1_018_exhaustive() {

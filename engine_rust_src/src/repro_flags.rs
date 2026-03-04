@@ -36,11 +36,11 @@ fn test_q68_cannot_live_state() {
     db.members_vec[(100 as usize) & LOGIC_ID_MASK as usize] = Some(member);
 
     let mut state = GameState::default();
-    state.core.players[0].stage[0] = 100i32;
-    state.core.players[0].live_zone[0] = 10001i32;
+    state.players[0].stage[0] = 100i32;
+    state.players[0].live_zone[0] = 10001i32;
 
     // Set FLAG_CANNOT_LIVE
-    state.core.players[0].set_flag(PlayerState::FLAG_CANNOT_LIVE, true);
+    state.players[0].set_flag(PlayerState::FLAG_CANNOT_LIVE, true);
 
     state.phase = Phase::PerformanceP1;
     state.current_player = 0;
@@ -51,13 +51,13 @@ fn test_q68_cannot_live_state() {
     // Q68 Verification:
     // 1. Live card should be discarded (not in live_zone)
     assert!(
-        state.core.players[0].live_zone.iter().all(|&c| c < 0),
+        state.players[0].live_zone.iter().all(|&c| c < 0),
         "Q68: Live cards should be discarded when player cannot perform live"
     );
 
     // 2. Live card should be in discard pile
     assert!(
-        state.core.players[0].discard.contains(&10001i32),
+        state.players[0].discard.contains(&10001i32),
         "Q68: Live card should be in discard pile"
     );
 
@@ -69,7 +69,7 @@ fn test_q68_cannot_live_state() {
 
     // 4. Yell should NOT have been performed (yell_cards should be empty)
     assert!(
-        state.core.players[0].yell_cards.is_empty(),
+        state.players[0].yell_cards.is_empty(),
         "Q68: Yell should not be performed when player cannot live"
     );
 }
@@ -99,10 +99,10 @@ fn test_q68_normal_live_without_restriction() {
     db.members_vec[(100 as usize) & LOGIC_ID_MASK as usize] = Some(member);
 
     let mut state = GameState::default();
-    state.core.players[0].stage[0] = 100i32;
-    state.core.players[0].live_zone[0] = 10001i32;
+    state.players[0].stage[0] = 100i32;
+    state.players[0].live_zone[0] = 10001i32;
     // Add some cards to deck for yell
-    state.core.players[0].deck.push(100);
+    state.players[0].deck.push(100);
 
     // Do NOT set FLAG_CANNOT_LIVE
 
@@ -155,18 +155,18 @@ fn test_q29_baton_touch_restriction_same_turn() {
     }
 
     let mut state = GameState::default();
-    state.core.players[0].stage[0] = 100i32; // Member in slot 0
-    state.core.players[0].hand.push(101); // Member in hand for baton touch
+    state.players[0].stage[0] = 100i32; // Member in slot 0
+    state.players[0].hand.push(101); // Member in hand for baton touch
 
     // Add energy to energy_zone
     for _ in 0..10 {
-        state.core.players[0].energy_zone.push(1000);
+        state.players[0].energy_zone.push(1000);
     }
 
     // Mark slot 0 as "moved" (entered this turn)
-    state.core.players[0].set_moved(0, true);
+    state.players[0].set_moved(0, true);
 
-    state.core.phase = Phase::Main;
+    state.phase = Phase::Main;
     state.current_player = 0;
     state.ui.silent = true;
 
@@ -216,18 +216,18 @@ fn test_q70_cannot_place_in_occupied_area_same_turn() {
     }
 
     let mut state = GameState::default();
-    state.core.players[0].stage[0] = 100i32; // Member in slot 0
-    state.core.players[0].hand.push(101); // Member in hand
+    state.players[0].stage[0] = 100i32; // Member in slot 0
+    state.players[0].hand.push(101); // Member in hand
 
     // Add energy to energy_zone
     for _ in 0..10 {
-        state.core.players[0].energy_zone.push(1000);
+        state.players[0].energy_zone.push(1000);
     }
 
     // Mark slot 0 as "moved" (member entered this turn)
-    state.core.players[0].set_moved(0, true);
+    state.players[0].set_moved(0, true);
 
-    state.core.phase = Phase::Main;
+    state.phase = Phase::Main;
     state.current_player = 0;
     state.ui.silent = true;
 
@@ -276,20 +276,20 @@ fn test_q71_can_place_after_member_moved_away() {
     }
 
     let mut state = GameState::default();
-    state.core.players[0].hand.push(101); // Member in hand
+    state.players[0].hand.push(101); // Member in hand
 
     // Add energy to energy_zone
     for _ in 0..10 {
-        state.core.players[0].energy_zone.push(1000);
+        state.players[0].energy_zone.push(1000);
     }
 
     // Slot 0 is empty but was previously occupied this turn
     // The is_moved flag should be cleared when member moves away
     // For this test, we simulate the scenario where member moved away
-    state.core.players[0].stage[0] = -1; // Empty slot
-    state.core.players[0].set_moved(0, false); // Not marked as moved anymore
+    state.players[0].stage[0] = -1; // Empty slot
+    state.players[0].set_moved(0, false); // Not marked as moved anymore
 
-    state.core.phase = Phase::Main;
+    state.phase = Phase::Main;
     state.current_player = 0;
     state.ui.silent = true;
 
@@ -310,12 +310,12 @@ fn test_q72_can_set_live_cards_no_members() {
     let mut state = GameState::default();
 
     // No members on stage
-    state.core.players[0].stage = [-1i32, -1i32, -1i32];
+    state.players[0].stage = [-1i32, -1i32, -1i32];
 
     // Have a live card in hand
-    state.core.players[0].hand.push(10001);
+    state.players[0].hand.push(10001);
 
-    state.core.phase = Phase::LiveSet;
+    state.phase = Phase::LiveSet;
     state.current_player = 0;
     state.ui.silent = true;
 
@@ -349,13 +349,13 @@ fn test_q91_onlivestart_no_trigger_without_live() {
     let mut state = GameState::default();
 
     // No members on stage - cannot perform live
-    state.core.players[0].stage = [-1i32, -1i32, -1i32];
+    state.players[0].stage = [-1i32, -1i32, -1i32];
 
     // Set FLAG_CANNOT_LIVE to simulate "cannot perform live" state
-    state.core.players[0].set_flag(PlayerState::FLAG_CANNOT_LIVE, true);
+    state.players[0].set_flag(PlayerState::FLAG_CANNOT_LIVE, true);
 
     // Have a live card in live zone
-    state.core.players[0].live_zone[0] = 10001i32;
+    state.players[0].live_zone[0] = 10001i32;
 
     state.phase = Phase::PerformanceP1;
     state.current_player = 0;
@@ -373,7 +373,7 @@ fn test_q91_onlivestart_no_trigger_without_live() {
 
     // Live card should be discarded
     assert!(
-        state.core.players[0].live_zone.iter().all(|&c| c < 0),
+        state.players[0].live_zone.iter().all(|&c| c < 0),
         "Q91: Live card should be discarded when live is not performed"
     );
 }
@@ -415,26 +415,26 @@ fn test_q79_area_available_after_activation_cost() {
     let mut state = GameState::default();
 
     // Member in slot 0 that entered this turn
-    state.core.players[0].stage[0] = 100i32;
-    state.core.players[0].set_moved(0, true); // Mark as entered this turn
+    state.players[0].stage[0] = 100i32;
+    state.players[0].set_moved(0, true); // Mark as entered this turn
 
     // Another member in hand
-    state.core.players[0].hand.push(101);
+    state.players[0].hand.push(101);
 
     // Add energy to energy_zone
     for _ in 0..10 {
-        state.core.players[0].energy_zone.push(1000);
+        state.players[0].energy_zone.push(1000);
     }
 
-    state.core.phase = Phase::Main;
+    state.phase = Phase::Main;
     state.current_player = 0;
     state.ui.silent = true;
 
     // Simulate activation ability that puts member to waiting room as cost
     // After this, the area should be available even though member entered this turn
-    state.core.players[0].stage[0] = -1; // Member moved to waiting room
-    state.core.players[0].discard.push(100);
-    state.core.players[0].set_moved(0, false); // Area is now available
+    state.players[0].stage[0] = -1; // Member moved to waiting room
+    state.players[0].discard.push(100);
+    state.players[0].set_moved(0, false); // Area is now available
 
     // Should be able to play member to slot 0
     let result = state.play_member(&db, 0, 0); // hand_idx=0, slot=0
@@ -470,34 +470,34 @@ fn test_q80_effect_can_place_after_activation_cost() {
     let mut state = GameState::default();
 
     // Member in slot 0 that entered this turn
-    state.core.players[0].stage[0] = 100i32;
-    state.core.players[0].set_moved(0, true);
+    state.players[0].stage[0] = 100i32;
+    state.players[0].set_moved(0, true);
 
     // Member in waiting room that will be placed by effect
-    state.core.players[0].discard.push(101);
+    state.players[0].discard.push(101);
 
-    state.core.phase = Phase::Main;
+    state.phase = Phase::Main;
     state.current_player = 0;
     state.ui.silent = true;
 
     // Simulate activation ability: cost puts member to waiting room
-    state.core.players[0].stage[0] = -1;
-    state.core.players[0].discard.insert(0, 100); // Member 100 now in discard
-    state.core.players[0].set_moved(0, false); // Area is now available
+    state.players[0].stage[0] = -1;
+    state.players[0].discard.insert(0, 100); // Member 100 now in discard
+    state.players[0].set_moved(0, false); // Area is now available
 
     // Effect places member from waiting room to the now-empty area
     // This simulates an effect like "place a member from waiting room to the area"
-    let card = state.core.players[0].discard.pop();
+    let card = state.players[0].discard.pop();
     if let Some(cid) = card {
         if cid == 101 {
-            state.core.players[0].stage[0] = 101;
-            state.core.players[0].set_moved(0, true);
+            state.players[0].stage[0] = 101;
+            state.players[0].set_moved(0, true);
         }
     }
 
     // Q80: Effect should have placed the member successfully
     assert_eq!(
-        state.core.players[0].stage[0], 101,
+        state.players[0].stage[0], 101,
         "Q80: Effect should be able to place member in area after activation ability cost"
     );
 }

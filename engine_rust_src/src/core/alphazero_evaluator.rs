@@ -3,7 +3,7 @@ use crate::core::alphazero_encoding::AlphaZeroEncoding;
 // removed unused AlphaZeroEncoding
 use crate::core::heuristics::{Heuristic, HeuristicConfig};
 #[cfg(feature = "extension-module")]
-use std::sync::Arc;
+// Removed unused Arc
 
 /// Combined output from the Transformer for a single state.
 #[derive(Debug, Clone)]

@@ -42,7 +42,7 @@ mod tests {
     fn test_hand_filter_liella() {
         let db = create_test_db();
         let mut state = GameState::default();
-        state.core.players[0].hand = vec![100, 101, 101].into(); // 1 Liella, 2 Others
+        state.players[0].hand = vec![100, 101, 101].into(); // 1 Liella, 2 Others
 
         let ctx = AbilityContext::default();
 
@@ -74,7 +74,7 @@ mod tests {
     fn test_unique_names_filter() {
         let db = create_test_db();
         let mut state = GameState::default();
-        state.core.players[0].stage = [100, 100, -1]; // 2 same cards
+        state.players[0].stage = [100, 100, -1]; // 2 same cards
 
         let ctx = AbilityContext::default();
 
@@ -105,8 +105,8 @@ mod tests {
     fn test_tapped_filter() {
         let db = create_test_db();
         let mut state = GameState::default();
-        state.core.players[0].stage = [100, 101, -1];
-        state.core.players[0].set_tapped(0, true); // 100 is tapped
+        state.players[0].stage = [100, 101, -1];
+        state.players[0].set_tapped(0, true); // 100 is tapped
 
         let ctx = AbilityContext::default();
 
@@ -137,7 +137,7 @@ mod tests {
     fn test_filtered_cost_discard() {
         let db = create_test_db();
         let mut state = GameState::default();
-        state.core.players[0].hand = vec![101].into(); // Only non-liella
+        state.players[0].hand = vec![101].into(); // Only non-liella
 
         let ctx = AbilityContext::default();
 
@@ -152,23 +152,23 @@ mod tests {
         assert!(!check_cost(&state, &db, 0, &cost, &ctx));
 
         // Add Liella
-        state.core.players[0].hand.push(100);
+        state.players[0].hand.push(100);
         assert!(check_cost(&state, &db, 0, &cost, &ctx));
 
         // Pay cost
         let success = pay_cost(&mut state, &db, 0, &cost, &ctx);
         assert!(success);
         let expected_hand: smallvec::SmallVec<[i32; 16]> = vec![101].into();
-        assert_eq!(state.core.players[0].hand, expected_hand);
-        assert_eq!(state.core.players[0].discard.len(), 1);
-        assert_eq!(state.core.players[0].discard[0], 100);
+        assert_eq!(state.players[0].hand, expected_hand);
+        assert_eq!(state.players[0].discard.len(), 1);
+        assert_eq!(state.players[0].discard[0], 100);
     }
 
     #[test]
     fn test_name_in_filter() {
         let db = create_test_db();
         let mut state = GameState::default();
-        state.core.players[0].hand = vec![100, 101].into(); // Kanon, Other
+        state.players[0].hand = vec![100, 101].into(); // Kanon, Other
 
         let ctx = AbilityContext::default();
 
@@ -188,7 +188,7 @@ mod tests {
     fn test_discard_success_live_filter() {
         let db = create_test_db();
         let mut state = GameState::default();
-        state.core.players[0].success_lives = vec![100].into(); // Success Live (simulated card ID)
+        state.players[0].success_lives = vec![100].into(); // Success Live (simulated card ID)
 
         let ctx = AbilityContext::default();
 
@@ -202,7 +202,7 @@ mod tests {
 
         assert!(check_cost(&state, &db, 0, &cost, &ctx));
         assert!(pay_cost(&mut state, &db, 0, &cost, &ctx));
-        assert!(state.core.players[0].success_lives.is_empty());
-        assert_eq!(state.core.players[0].discard[0], 100);
+        assert!(state.players[0].success_lives.is_empty());
+        assert_eq!(state.players[0].discard[0], 100);
     }
 }

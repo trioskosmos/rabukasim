@@ -49,9 +49,9 @@ mod tests {
         db.lives_vec[(60001 & LOGIC_ID_MASK) as usize] = Some(live_card);
 
         // 2. Put it in Live Zone
-        state.core.players[p_idx].live_zone[0] = 60001;
+        state.players[p_idx].live_zone[0] = 60001;
         // Mark as "revealed" so performance phase checks it
-        state.core.players[p_idx].set_revealed(0, true);
+        state.players[p_idx].set_revealed(0, true);
 
         // 3. Give player 1 Pink Heart (Insufficient naturally)
         // We'll trust get_total_hearts logic, but we can just override reductions.
@@ -61,7 +61,7 @@ mod tests {
         // "Heart 1" is Pink (Index 0).
         // Reduction encoding: 4 bits per color.
         // We want -2 to Pink.
-        state.core.players[p_idx]
+        state.players[p_idx]
             .heart_req_reductions
             .set_color_count(0, 2);
 
@@ -91,14 +91,14 @@ mod tests {
         // If reduced, valid_candidates = 1 (our card). Auto-move to success.
 
         assert!(
-            state.core.players[p_idx].success_lives.contains(&60001),
+            state.players[p_idx].success_lives.contains(&60001),
             "Live card 60001 should be in Success Lives. Found in Zone: {:?}, Discard: {:?}",
-            state.core.players[p_idx].live_zone,
-            state.core.players[p_idx].discard
+            state.players[p_idx].live_zone,
+            state.players[p_idx].discard
         );
 
         assert_eq!(
-            state.core.players[p_idx].live_zone[0], -1,
+            state.players[p_idx].live_zone[0], -1,
             "Live zone should be empty"
         );
     }
@@ -144,8 +144,8 @@ mod tests {
         db.lives_vec[(k_id as usize) & LOGIC_ID_MASK as usize] = Some(live_card);
 
         // 2. Put in Live Zone
-        state.core.players[p_idx].live_zone[0] = k_id;
-        state.core.players[p_idx].set_revealed(0, true);
+        state.players[p_idx].live_zone[0] = k_id;
+        state.players[p_idx].set_revealed(0, true);
 
         // 3. Force Success
         // Requirements are 0, so it should succeed automatically.
@@ -167,19 +167,19 @@ mod tests {
         // 5. Verify Prevention
         // Should NOT be in success_lives
         assert!(
-            !state.core.players[p_idx].success_lives.contains(&(k_id)),
+            !state.players[p_idx].success_lives.contains(&(k_id)),
             "Should not be in success lives"
         );
 
         // Should be in DISCARD
         assert!(
-            state.core.players[p_idx].discard.contains(&(k_id)),
+            state.players[p_idx].discard.contains(&(k_id)),
             "Should be moved to discard"
         );
 
         // Live zone should be empty
         assert_eq!(
-            state.core.players[p_idx].live_zone[0], -1,
+            state.players[p_idx].live_zone[0], -1,
             "Live zone should be cleared"
         );
     }
@@ -194,18 +194,18 @@ mod tests {
 
         // Card ID 10: LL-bp2-001-R＋ — has a real CONSTANT ability with O_PREVENT_BATON_TOUCH
         // No mocked bytecode needed: the real compiled data provides the restriction.
-        state.core.players[p_idx].stage[0] = 10;
+        state.players[p_idx].stage[0] = 10;
 
         // Give player another member in hand (use a real card from the DB)
         let other_member_id = 9; // LL-bp1-001-R＋ (cost 20)
-        state.core.players[p_idx].hand.clear();
-        state.core.players[p_idx].hand_added_turn.clear();
-        state.core.players[p_idx].hand.push(other_member_id);
+        state.players[p_idx].hand.clear();
+        state.players[p_idx].hand_added_turn.clear();
+        state.players[p_idx].hand.push(other_member_id);
         // Card 9 costs 20 energy — give player enough untapped energy
-        state.core.players[p_idx].energy_zone = (0..25).map(|i| (20001 + i) as i32).collect();
+        state.players[p_idx].energy_zone = (0..25).map(|i| (20001 + i) as i32).collect();
         // Populate deck to prevent auto-refresh
         for i in 200..210 {
-            state.core.players[p_idx].deck.push(i);
+            state.players[p_idx].deck.push(i);
         }
 
         state.phase = Phase::Main;

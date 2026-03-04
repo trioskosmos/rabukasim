@@ -17,11 +17,11 @@ mod tests {
 
         // Ensure deck has enough cards
         state.set_deck(p_idx, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-        let initial_discard_len = state.core.players[p_idx].discard.len();
+        let initial_discard_len = state.players[p_idx].discard.len();
 
         // Play card to Slot 1 (not 0)
         let slot = 1;
-        state.core.players[p_idx].stage[slot] = card_id;
+        state.players[p_idx].stage[slot] = card_id;
 
         let ctx = AbilityContext {
             source_card_id: card_id,
@@ -42,7 +42,7 @@ mod tests {
             "Game should NOT be suspended for MOVE_TO_DISCARD from deck top"
         );
         assert_eq!(
-            state.core.players[p_idx].discard.len(),
+            state.players[p_idx].discard.len(),
             initial_discard_len + 5,
             "Should have discarded 5 cards"
         );

@@ -10,21 +10,25 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use smallvec::SmallVec;
 
-pub trait PhaseHandlers {
+pub trait TurnController {
     fn handle_rps(&mut self, action: i32) -> Result<(), String>;
     fn handle_turn_choice(&mut self, action: i32) -> Result<(), String>;
+}
+
+pub trait MulliganController {
     fn handle_mulligan(&mut self, action: i32) -> Result<(), String>;
+    fn execute_mulligan(&mut self, player_idx: usize, discard_indices: Vec<usize>);
+}
+
+pub trait MainPhaseController {
     fn handle_main(&mut self, db: &CardDatabase, action: i32) -> Result<(), String>;
     fn handle_liveset(&mut self, action: i32) -> Result<(), String>;
     fn handle_liveresult(&mut self, db: &CardDatabase, action: i32) -> Result<(), String>;
-    fn handle_response(&mut self, db: &CardDatabase, action: i32) -> Result<(), String>;
-
-    // Execution helpers
-    fn do_active_phase(&mut self, db: &CardDatabase);
-    fn do_energy_phase(&mut self);
-    fn do_draw_phase(&mut self, db: &CardDatabase);
     fn end_main_phase(&mut self, db: &CardDatabase);
-    fn execute_mulligan(&mut self, player_idx: usize, discard_indices: Vec<usize>);
+}
+
+pub trait ResponseController {
+    fn handle_response(&mut self, db: &CardDatabase, action: i32) -> Result<(), String>;
     fn play_member_with_choice(
         &mut self,
         db: &CardDatabase,
@@ -50,7 +54,13 @@ pub trait PhaseHandlers {
     ) -> Result<(), String>;
 }
 
-impl PhaseHandlers for GameState {
+pub trait TurnPhaseController {
+    fn do_active_phase(&mut self, db: &CardDatabase);
+    fn do_energy_phase(&mut self);
+    fn do_draw_phase(&mut self, db: &CardDatabase);
+}
+
+impl TurnController for GameState {
     fn handle_rps(&mut self, action: i32) -> Result<(), String> {
         let (p_idx, choice) = if action >= ACTION_BASE_RPS_P2 {
             (1, action - ACTION_BASE_RPS_P2)
@@ -143,7 +153,9 @@ impl PhaseHandlers for GameState {
         }
         Ok(())
     }
+}
 
+impl MulliganController for GameState {
     fn handle_mulligan(&mut self, action: i32) -> Result<(), String> {
         let p_idx = self.current_player as usize;
         if self.debug.debug_mode {
@@ -169,6 +181,64 @@ impl PhaseHandlers for GameState {
         Ok(())
     }
 
+    fn execute_mulligan(&mut self, player_idx: usize, discard_indices: Vec<usize>) {
+        if self.debug.debug_mode {
+            println!(
+                "[DEBUG] execute_mulligan: player={}, discards_len={}, current_phase={:?}",
+                player_idx,
+                discard_indices.len(),
+                self.phase
+            );
+        }
+        self.log(format!(
+            "Rule 6.2.1.6: Player {} finished mulligan ({} cards)",
+            player_idx,
+            discard_indices.len()
+        ));
+        let mut count = 0;
+        let mut discards = Vec::new();
+        let mut new_hand = SmallVec::new();
+        for (i, &cid) in self.core.players[player_idx].hand.iter().enumerate() {
+            if discard_indices.contains(&i) {
+                discards.push(cid);
+                count += 1;
+            } else {
+                new_hand.push(cid);
+            }
+        }
+        self.core.players[player_idx].hand = new_hand;
+        let t = self.turn as i32;
+        for _ in 0..count {
+            if self.core.players[player_idx].deck.is_empty() {
+                self.resolve_deck_refresh(player_idx);
+            }
+            if let Some(card_id) = self.core.players[player_idx].deck.pop() {
+                self.core.players[player_idx].hand.push(card_id);
+                self.core.players[player_idx].hand_added_turn.push(t);
+            }
+        }
+        self.core.players[player_idx].deck.extend(discards);
+        let mut rng = Pcg64::from_os_rng();
+        self.core.players[player_idx].deck.shuffle(&mut rng);
+        self.resolve_deck_refresh(player_idx);
+        let prev_phase = self.phase;
+        if self.phase == Phase::MulliganP1 {
+            self.current_player = 1 - self.first_player;
+            self.phase = Phase::MulliganP2;
+        } else if self.phase == Phase::MulliganP2 {
+            self.current_player = self.first_player;
+            self.phase = Phase::Active;
+        }
+        if self.debug.debug_mode {
+            println!(
+                "[DEBUG] execute_mulligan: transition {:?} -> {:?}",
+                prev_phase, self.phase
+            );
+        }
+    }
+}
+
+impl MainPhaseController for GameState {
     fn handle_main(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
         match ActionFactory::parse_action(action) {
             DecodedAction::Pass => {
@@ -319,6 +389,34 @@ impl PhaseHandlers for GameState {
         }
         Ok(())
     }
+
+    fn end_main_phase(&mut self, db: &CardDatabase) {
+        if !self.ui.silent {
+            self.log(format!(
+                "Rule 7.7.3: Player {} ends Main Phase.",
+                self.current_player
+            ));
+        }
+        self.trigger_event(
+            db,
+            TriggerType::TurnEnd,
+            self.current_player as usize,
+            -1,
+            -1,
+            0,
+            -1,
+        );
+
+        if self.current_player == self.first_player {
+            self.current_player = 1 - self.first_player;
+            self.phase = Phase::Active;
+        } else {
+            self.phase = Phase::LiveSet;
+            self.current_player = self.first_player;
+        }
+    }
+}
+impl ResponseController for GameState {
     fn handle_response(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
         let (execution_id, ctx_res) = {
             let pi = if let Some(p) = self.interaction_stack.last() {
@@ -359,168 +457,6 @@ impl PhaseHandlers for GameState {
         self.clear_execution_id();
         self.check_win_condition(); // Check if ability caused a win
         Ok(())
-    }
-
-    // Execution helpers
-    fn do_active_phase(&mut self, db: &CardDatabase) {
-        if self.phase != Phase::Active {
-            return;
-        }
-        let p_idx = self.current_player as usize;
-        self.setup_turn_log();
-
-        let skip = self.core.players[p_idx].skip_next_activate;
-        if skip {
-            if !self.ui.silent {
-                self.log(format!(
-                    "Rule 7.4.1: [Active Phase] SKIPPED (untapping skipped) for Player {}.",
-                    p_idx
-                ));
-            }
-            self.core.players[p_idx].skip_next_activate = false;
-        } else {
-            if !self.ui.silent {
-                self.log(format!(
-                    "Rule 7.4.1: [Active Phase] Untapping all cards for Player {}.",
-                    p_idx
-                ));
-            }
-        }
-
-        self.core.players[p_idx].untap_all(skip);
-        let ctx = AbilityContext {
-            source_card_id: -1,
-            player_id: p_idx as u8,
-            activator_id: p_idx as u8,
-            area_idx: -1,
-            ..Default::default()
-        };
-        self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
-        if self.phase == Phase::Active {
-            self.phase = Phase::Energy;
-        }
-    }
-
-    fn do_energy_phase(&mut self) {
-        if self.phase != Phase::Energy {
-            return;
-        }
-        let p_idx = self.current_player as usize;
-        if let Some(card_id) = self.core.players[p_idx].energy_deck.pop() {
-            if !self.ui.silent {
-                self.log(format!(
-                    "Rule 7.5.2: Player {} placed Energy from Energy Deck",
-                    p_idx
-                ));
-            }
-            let idx = self.core.players[p_idx].energy_zone.len();
-            self.core.players[p_idx].energy_zone.push(card_id);
-            self.core.players[p_idx].set_energy_tapped(idx, false);
-        }
-        self.phase = Phase::Draw;
-    }
-
-    fn do_draw_phase(&mut self, db: &CardDatabase) {
-        let p_idx = self.current_player as usize;
-        let ctx = AbilityContext {
-            source_card_id: -1,
-            player_id: p_idx as u8,
-            activator_id: p_idx as u8,
-            area_idx: -1,
-            ..Default::default()
-        };
-        self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
-
-        if self.phase != Phase::Draw {
-            return;
-        }
-        if !self.ui.silent {
-            self.log(format!("Rule 7.6.2: Player {} draws a card.", p_idx));
-        }
-        self.draw_cards(p_idx, 1);
-        self.phase = Phase::Main;
-    }
-
-    fn end_main_phase(&mut self, db: &CardDatabase) {
-        if !self.ui.silent {
-            self.log(format!(
-                "Rule 7.7.3: Player {} ends Main Phase.",
-                self.current_player
-            ));
-        }
-        self.trigger_event(
-            db,
-            TriggerType::TurnEnd,
-            self.current_player as usize,
-            -1,
-            -1,
-            0,
-            -1,
-        );
-
-        if self.current_player == self.first_player {
-            self.current_player = 1 - self.first_player;
-            self.phase = Phase::Active;
-        } else {
-            self.phase = Phase::LiveSet;
-            self.current_player = self.first_player;
-        }
-    }
-
-    fn execute_mulligan(&mut self, player_idx: usize, discard_indices: Vec<usize>) {
-        if self.debug.debug_mode {
-            println!(
-                "[DEBUG] execute_mulligan: player={}, discards_len={}, current_phase={:?}",
-                player_idx,
-                discard_indices.len(),
-                self.phase
-            );
-        }
-        self.log(format!(
-            "Rule 6.2.1.6: Player {} finished mulligan ({} cards)",
-            player_idx,
-            discard_indices.len()
-        ));
-        let mut count = 0;
-        let mut discards = Vec::new();
-        let mut new_hand = SmallVec::new();
-        for (i, &cid) in self.core.players[player_idx].hand.iter().enumerate() {
-            if discard_indices.contains(&i) {
-                discards.push(cid);
-                count += 1;
-            } else {
-                new_hand.push(cid);
-            }
-        }
-        self.core.players[player_idx].hand = new_hand;
-        let t = self.turn as i32;
-        for _ in 0..count {
-            if self.core.players[player_idx].deck.is_empty() {
-                self.resolve_deck_refresh(player_idx);
-            }
-            if let Some(card_id) = self.core.players[player_idx].deck.pop() {
-                self.core.players[player_idx].hand.push(card_id);
-                self.core.players[player_idx].hand_added_turn.push(t);
-            }
-        }
-        self.core.players[player_idx].deck.extend(discards);
-        let mut rng = Pcg64::from_os_rng();
-        self.core.players[player_idx].deck.shuffle(&mut rng);
-        self.resolve_deck_refresh(player_idx);
-        let prev_phase = self.phase;
-        if self.phase == Phase::MulliganP1 {
-            self.current_player = 1 - self.first_player;
-            self.phase = Phase::MulliganP2;
-        } else if self.phase == Phase::MulliganP2 {
-            self.current_player = self.first_player;
-            self.phase = Phase::Active;
-        }
-        if self.debug.debug_mode {
-            println!(
-                "[DEBUG] execute_mulligan: transition {:?} -> {:?}",
-                prev_phase, self.phase
-            );
-        }
     }
 
     fn play_member_with_choice(
@@ -617,14 +553,14 @@ impl PhaseHandlers for GameState {
     ) -> Result<(), String> {
         let p_idx = self.current_player as usize;
         if self.phase == Phase::Response {
-            let (cid, ctx, orig_phase) = if let Some(pi) = self.interaction_stack.last() {
+            let (cid, ctx, orig_phase, orig_cp) = if let Some(pi) = self.interaction_stack.last() {
                 let mut c = pi.ctx.clone();
                 c.choice_index = choice_idx as i16;
                 c.original_phase = Some(pi.original_phase);
                 if target_slot >= 0 {
                     c.target_slot = target_slot as i16;
                 }
-                (pi.card_id, c, pi.original_phase)
+                (pi.card_id, c, pi.original_phase, pi.original_current_player)
             } else {
                 return Err("No pending interaction".to_string());
             };
@@ -667,6 +603,7 @@ impl PhaseHandlers for GameState {
                 } else {
                     orig_phase
                 };
+                self.current_player = orig_cp;
             }
             return Ok(());
         }
@@ -789,6 +726,87 @@ impl PhaseHandlers for GameState {
         self.resolve_bytecode(db, std::sync::Arc::new(ab.bytecode.clone()), &ctx);
         self.process_rule_checks(db);
         Ok(())
+    }
+}
+
+impl TurnPhaseController for GameState {
+    fn do_active_phase(&mut self, db: &CardDatabase) {
+        if self.phase != Phase::Active {
+            return;
+        }
+        let p_idx = self.current_player as usize;
+        self.setup_turn_log();
+
+        let skip = self.core.players[p_idx].skip_next_activate;
+        if skip {
+            if !self.ui.silent {
+                self.log(format!(
+                    "Rule 7.4.1: [Active Phase] SKIPPED (untapping skipped) for Player {}.",
+                    p_idx
+                ));
+            }
+            self.core.players[p_idx].skip_next_activate = false;
+        } else {
+            if !self.ui.silent {
+                self.log(format!(
+                    "Rule 7.4.1: [Active Phase] Untapping all cards for Player {}.",
+                    p_idx
+                ));
+            }
+        }
+
+        self.core.players[p_idx].untap_all(skip);
+        let ctx = AbilityContext {
+            source_card_id: -1,
+            player_id: p_idx as u8,
+            activator_id: p_idx as u8,
+            area_idx: -1,
+            ..Default::default()
+        };
+        self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
+        if self.phase == Phase::Active {
+            self.phase = Phase::Energy;
+        }
+    }
+
+    fn do_energy_phase(&mut self) {
+        if self.phase != Phase::Energy {
+            return;
+        }
+        let p_idx = self.current_player as usize;
+        if let Some(card_id) = self.core.players[p_idx].energy_deck.pop() {
+            if !self.ui.silent {
+                self.log(format!(
+                    "Rule 7.5.2: Player {} placed Energy from Energy Deck",
+                    p_idx
+                ));
+            }
+            let idx = self.core.players[p_idx].energy_zone.len();
+            self.core.players[p_idx].energy_zone.push(card_id);
+            self.core.players[p_idx].set_energy_tapped(idx, false);
+        }
+        self.phase = Phase::Draw;
+    }
+
+    fn do_draw_phase(&mut self, db: &CardDatabase) {
+        let p_idx = self.current_player as usize;
+        let ctx = AbilityContext {
+            source_card_id: -1,
+            player_id: p_idx as u8,
+            activator_id: p_idx as u8,
+            area_idx: -1,
+            ..Default::default()
+        };
+        self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
+
+        if self.phase != Phase::Draw {
+            return;
+        }
+        if !self.ui.silent {
+            self.log(format!("Rule 7.6.2: Player {} draws a card.", p_idx));
+        }
+        self.draw_cards(p_idx, 1);
+        self.phase = Phase::Main;
     }
 }
 

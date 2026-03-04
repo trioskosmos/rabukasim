@@ -24,9 +24,9 @@ mod tests {
         // 1. Setup state: In PerformanceP1, with card 4332 about to trigger OnLiveStart
         state.phase = Phase::PerformanceP1;
         state.current_player = 0;
-        state.core.players[0].stage[1] = 4332; // 桜坂しずく (Member)
-        state.core.players[0].energy_zone = smallvec::smallvec![1179, 1179]; // 2 energy
-        state.core.players[0].tapped_energy_mask = 0; // Untapped
+        state.players[0].stage[1] = 4332; // 桜坂しずく (Member)
+        state.players[0].energy_zone = smallvec::smallvec![1179, 1179]; // 2 energy
+        state.players[0].tapped_energy_mask = 0; // Untapped
 
         // 2. Trigger OnLiveStart
         let ctx = AbilityContext {

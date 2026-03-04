@@ -259,6 +259,37 @@ pub struct GameState {
     pub debug: DebugState,
 }
 
+impl GameState {
+    pub fn is_card_in_zone(&self, ctx_player_id: u8, target_player: u8, cid: i32, mask: u8) -> bool {
+        // target_player: 1=Self, 2=Opponent
+        let p_idx = if target_player == 1 {
+            ctx_player_id as usize
+        } else if target_player == 2 {
+            1 - (ctx_player_id as usize)
+        } else {
+            ctx_player_id as usize // Default to self
+        };
+        
+        // 4=STAGE, 6=HAND, 7=DISCARD
+        if (mask & 4) != 0 {
+            if self.players[p_idx].stage.iter().any(|&c| c == cid) {
+                return true;
+            }
+        }
+        if (mask & 6) != 0 {
+            if self.players[p_idx].hand.iter().any(|&c| c == cid) {
+                return true;
+            }
+        }
+        if (mask & 7) != 0 {
+            if self.players[p_idx].discard.iter().any(|&c| c == cid) {
+                return true;
+            }
+        }
+        false
+    }
+}
+
 impl std::ops::Deref for GameState {
     type Target = CoreGameState;
     fn deref(&self) -> &Self::Target {
@@ -271,3 +302,6 @@ impl std::ops::DerefMut for GameState {
         &mut self.core
     }
 }
+
+
+

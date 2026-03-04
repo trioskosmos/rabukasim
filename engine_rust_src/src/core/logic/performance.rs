@@ -12,13 +12,13 @@ pub type PerformanceResults = serde_json::Value;
 pub fn do_yell(state: &mut GameState, db: &CardDatabase, count: u32) -> Vec<i32> {
     let p_idx = state.current_player as usize;
     let mut revealed = Vec::new();
-    let reduction = state.core.players[p_idx].yell_count_reduction.max(0) as u32;
+    let reduction = state.players[p_idx].yell_count_reduction.max(0) as u32;
     let actual_count = count.saturating_sub(reduction);
     for _ in 0..actual_count {
-        if state.core.players[p_idx].deck.is_empty() {
+        if state.players[p_idx].deck.is_empty() {
             state.resolve_deck_refresh(p_idx);
         }
-        if let Some(card_id) = state.core.players[p_idx].deck.pop() {
+        if let Some(card_id) = state.players[p_idx].deck.pop() {
             revealed.push(card_id);
             // Dispatch OnReveal trigger
             state.trigger_event(db, TriggerType::OnReveal, p_idx, card_id, -1, 0, -1);
@@ -176,7 +176,7 @@ pub fn get_live_requirements(
     // 2. Scan all members on the stage (both players) - Fix for Q115
     for p in 0..2 {
         for slot in 0..3 {
-            let cid = state.core.players[p].stage[slot];
+            let cid = state.players[p].stage[slot];
             if cid >= 0 {
                 if let Some(m) = db.get_member(cid) {
                     for ab in &m.abilities {
@@ -199,7 +199,7 @@ pub fn get_live_requirements(
     }
 
     // Player State Reductions
-    for &(src_id, col, val) in &state.core.players[p_idx].heart_req_reduction_logs {
+    for &(src_id, col, val) in &state.players[p_idx].heart_req_reduction_logs {
         let name = db.get_name(src_id).unwrap_or_else(|| "Effect".to_string());
         adjustments.push(json!({
             "source": name,
@@ -211,7 +211,7 @@ pub fn get_live_requirements(
     }
 
     // Player State Additions
-    for &(src_id, col, val) in &state.core.players[p_idx].heart_req_addition_logs {
+    for &(src_id, col, val) in &state.players[p_idx].heart_req_addition_logs {
         let name = db.get_name(src_id).unwrap_or_else(|| "Effect".to_string());
         adjustments.push(json!({
             "source": name,
@@ -224,10 +224,10 @@ pub fn get_live_requirements(
 
     // Final board calculation mirroring PlayerState totals
     for i in 0..7 {
-        let red = state.core.players[p_idx]
+        let red = state.players[p_idx]
             .heart_req_reductions
             .get_color_count(i) as i32;
-        let add = state.core.players[p_idx]
+        let add = state.players[p_idx]
             .heart_req_additions
             .get_color_count(i) as i32;
         let val = (req_board.get_color_count(i) as i32 - red + add).max(0) as u8;
@@ -245,7 +245,7 @@ pub fn check_live_success(
     total_hearts: &[u8; 7],
 ) -> bool {
     // Rule: If player has FLAG_CANNOT_LIVE, performance always fails regardless of hearts.
-    if state.core.players[p_idx].get_flag(PlayerState::FLAG_CANNOT_LIVE) {
+    if state.players[p_idx].get_flag(PlayerState::FLAG_CANNOT_LIVE) {
         return false;
     }
 
@@ -260,9 +260,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     // 8.3.4 Flip all cards in Live Zone
     if !state.performance_reveals_done[p_idx] {
         for i in 0..3 {
-            if !state.core.players[p_idx].is_revealed(i) {
-                let cid = state.core.players[p_idx].live_zone[i];
-                state.core.players[p_idx].set_revealed(i, true);
+            if !state.players[p_idx].is_revealed(i) {
+                let cid = state.players[p_idx].live_zone[i];
+                state.players[p_idx].set_revealed(i, true);
                 if cid >= 0 {
                     state.trigger_event(db, TriggerType::OnReveal, p_idx, cid, i as i16, 0, -1);
                     if state.phase == Phase::Response {
@@ -276,7 +276,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
 
     // Discard non-live cards (Rule 8.3.4) BEFORE triggering OnLiveStart (Rule 11.4/8.3.8)
     for i in 0..3 {
-        let cid = state.core.players[p_idx].live_zone[i];
+        let cid = state.players[p_idx].live_zone[i];
         if cid >= 0 && db.get_live(cid).is_none() {
             if !state.ui.silent {
                 state.log(format!(
@@ -284,24 +284,24 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     cid
                 ));
             }
-            state.core.players[p_idx].discard.push(cid);
-            state.core.players[p_idx].live_zone[i] = -1;
+            state.players[p_idx].discard.push(cid);
+            state.players[p_idx].live_zone[i] = -1;
         }
     }
 
     // Q68: If player has FLAG_CANNOT_LIVE, discard all live cards and skip live entirely
     // (No OnLiveStart triggers, no Yell)
-    if state.core.players[p_idx].get_flag(PlayerState::FLAG_CANNOT_LIVE) {
+    if state.players[p_idx].get_flag(PlayerState::FLAG_CANNOT_LIVE) {
         if !state.ui.silent {
             state.log(
                 "Q68: Player cannot perform live. Discarding all cards from Live Zone.".to_string(),
             );
         }
         for i in 0..3 {
-            let cid = state.core.players[p_idx].live_zone[i];
+            let cid = state.players[p_idx].live_zone[i];
             if cid >= 0 {
-                state.core.players[p_idx].discard.push(cid);
-                state.core.players[p_idx].live_zone[i] = -1;
+                state.players[p_idx].discard.push(cid);
+                state.players[p_idx].live_zone[i] = -1;
             }
         }
         state.live_start_triggers_done = true; // Mark as done to prevent future triggers
@@ -318,7 +318,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         }
     }
 
-    if state.core.players[p_idx].live_zone.iter().all(|&c| c < 0) {
+    if state.players[p_idx].live_zone.iter().all(|&c| c < 0) {
         advance_from_performance(state);
         return;
     }
@@ -332,7 +332,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     // Temporary map for member_contributions summary
     let mut member_summary = std::collections::HashMap::new();
     for i in 0..3 {
-        let cid = state.core.players[p_idx].stage[i];
+        let cid = state.players[p_idx].stage[i];
         if cid >= 0 {
             if let Some(m) = db.get_member(cid) {
                 let key = format!("{}_{}", i, cid);
@@ -363,11 +363,11 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
 
     let mut total_blades = 0;
     // Apply Cheer Mod (Meta Rule)
-    total_blades += state.core.players[p_idx].cheer_mod_count as u32;
+    total_blades += state.players[p_idx].cheer_mod_count as u32;
 
     for i in 0..3 {
         let eff_b = state.get_effective_blades(p_idx, i, db, 0);
-        let cid = state.core.players[p_idx].stage[i];
+        let cid = state.players[p_idx].stage[i];
         if cid >= 0 {
             if let Some(m) = db.get_member(cid) {
                 if eff_b > 0 {
@@ -386,7 +386,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     entry["bonus_blades"] = json!(bonus_b);
 
                     // Collect Blade Buffs for this slot (triggered abilities)
-                    let mut slot_blade_buffs: Vec<Value> = state.core.players[p_idx]
+                    let mut slot_blade_buffs: Vec<Value> = state.players[p_idx]
                         .blade_buff_logs
                         .iter()
                         .filter(|&&(_, _, slot)| slot == i as u8)
@@ -400,7 +400,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     // Scan constant abilities for blade sources (Wave 1: area buffs)
                     if !state.ui.silent {
                         for other_slot in 0..3 {
-                            let other_cid = state.core.players[p_idx].stage[other_slot];
+                            let other_cid = state.players[p_idx].stage[other_slot];
                             if other_cid < 0 { continue; }
                             if let Some(other_m) = db.get_member(other_cid) {
                                 for ab in &other_m.abilities {
@@ -438,7 +438,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                             }
                         }
                         // Wave 2: Granted abilities for blade sources
-                        for &(target_cid, source_cid, ab_idx) in &state.core.players[p_idx].granted_abilities {
+                        for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
                             if target_cid == cid {
                                 if let Some(src_m) = db.get_member(source_cid) {
                                     if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
@@ -489,11 +489,11 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         let mut yelled_names = Vec::new();
         for (idx, cid) in yelled_cards.into_iter().enumerate() {
             let cid_i32 = cid as i32;
-            state.core.players[p_idx].yell_cards.push(cid_i32);
+            state.players[p_idx].yell_cards.push(cid_i32);
             // Rule 8.3.11: Place as energy. We distribute them across slots 0-2.
             let slot = idx % 3;
-            state.core.players[p_idx].stage_energy[slot].push(cid_i32);
-            state.core.players[p_idx].sync_stage_energy_count(slot);
+            state.players[p_idx].stage_energy[slot].push(cid_i32);
+            state.players[p_idx].sync_stage_energy_count(slot);
 
             if let Some(m) = db.get_member(cid_i32) {
                 yelled_names.push(format!("{} ({})", m.name, m.card_no));
@@ -532,7 +532,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
             .to_array()
             .map(|h| h as u32);
 
-        let cid = state.core.players[p_idx].stage[i];
+        let cid = state.players[p_idx].stage[i];
         let mut true_bonus_h = [0i32; 7];
         if cid >= 0 {
             if let Some(m) = db.get_member(cid) {
@@ -543,7 +543,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         }
 
         // Apply color transforms to member hearts
-        for &(src_cid, src_col, dst_col) in &state.core.players[p_idx].color_transforms {
+        for &(src_cid, src_col, dst_col) in &state.players[p_idx].color_transforms {
             if src_col == 0 && (dst_col as usize) < 7 {
                 let sum: u32 = eff_h.iter().sum();
                 eff_h = [0u32; 7];
@@ -561,7 +561,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
             }
         }
 
-        let cid = state.core.players[p_idx].stage[i];
+        let cid = state.players[p_idx].stage[i];
         if cid >= 0 {
             if let Some(m) = db.get_member(cid) {
                 if eff_h.iter().any(|&v| v > 0) {
@@ -581,7 +581,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     entry["base_notes"] = json!(m.note_icons);
 
                     // Collect Heart Buffs for this slot (triggered abilities)
-                    let mut slot_heart_buffs: Vec<Value> = state.core.players[p_idx]
+                    let mut slot_heart_buffs: Vec<Value> = state.players[p_idx]
                         .heart_buff_logs
                         .iter()
                         .filter(|&&(_, _, _, slot)| slot == i as u8)
@@ -595,7 +595,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     // Scan constant abilities for heart sources (Wave 1: area buffs)
                     if !state.ui.silent {
                         for other_slot in 0..3 {
-                            let other_cid = state.core.players[p_idx].stage[other_slot];
+                            let other_cid = state.players[p_idx].stage[other_slot];
                             if other_cid < 0 { continue; }
                             if let Some(other_m) = db.get_member(other_cid) {
                                 for ab in &other_m.abilities {
@@ -641,7 +641,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                             }
                         }
                         // Wave 2: Granted abilities for heart sources
-                        for &(target_cid, source_cid, ab_idx) in &state.core.players[p_idx].granted_abilities {
+                        for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
                             if target_cid == cid {
                                 if let Some(src_m) = db.get_member(source_cid) {
                                     if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
@@ -690,7 +690,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         }
     }
 
-    for &cid in state.core.players[p_idx].yell_cards.iter() {
+    for &cid in state.players[p_idx].yell_cards.iter() {
         let (name, bh, ni) = if let Some(m) = db.get_member(cid) {
             (m.name.clone(), m.blade_hearts, m.note_icons)
         } else if let Some(l) = db.get_live(cid) {
@@ -725,7 +725,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
             adj_bh[i] = bh[i] as u32;
         }
 
-        for &(src_cid, src_col, dst_col) in &state.core.players[p_idx].color_transforms {
+        for &(src_cid, src_col, dst_col) in &state.players[p_idx].color_transforms {
             if src_col == 0 && (dst_col as usize) < 7 {
                 let mut sum = 0;
                 for i in 0..7 {
@@ -756,7 +756,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         }
         note_icons += ni;
     }
-    state.core.players[p_idx].current_turn_notes = note_icons;
+    state.players[p_idx].current_turn_notes = note_icons;
 
     if !state.ui.silent {
         state.log(format!("  Total Hearts: {:?}", total_hearts));
@@ -771,7 +771,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     // In this implementation, we consume hearts per live card (8.3.15.1.2)
     let mut remaining_hearts = total_hearts;
     for i in 0..3 {
-        if let Some(cid) = state.core.players[p_idx]
+        if let Some(cid) = state.players[p_idx]
             .live_zone
             .get(i)
             .copied()
@@ -807,17 +807,16 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
 
     // Rule 8.3.16 covers this: if any fail, all are discarded.
     // We capture IDs here so we can still report them to UI even if discarded.
-    let live_ids_before_discard: Vec<i32> = state.core.players[p_idx].live_zone.to_vec();
+    let live_ids_before_discard: Vec<i32> = state.players[p_idx].live_zone.to_vec();
 
     // Rule 8.3.16: If ANY live card's requirements were not met, discard all live cards.
     if any_failed {
         state.log("  Rule 8.3.16: Performance FAILED. All live cards discarded.".to_string());
         for i in 0..3 {
-            if state.core.players[p_idx].live_zone[i] >= 0 {
-                state.core.players[p_idx]
-                    .discard
-                    .push(state.core.players[p_idx].live_zone[i]);
-                state.core.players[p_idx].live_zone[i] = -1;
+            if state.players[p_idx].live_zone[i] >= 0 {
+                let cid = state.players[p_idx].live_zone[i];
+                state.players[p_idx].discard.push(cid);
+                state.players[p_idx].live_zone[i] = -1;
                 passed_flags[i] = false; // Ensure UI reflects failure
             }
         }
@@ -843,21 +842,21 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
             }
         }
         // Update excess hearts for Rule Q142
-        state.core.players[p_idx].excess_hearts = remaining_hearts.iter().map(|&x| x as u32).sum();
+        state.players[p_idx].excess_hearts = remaining_hearts.iter().map(|&x| x as u32).sum();
     } else {
-        state.core.players[p_idx].excess_hearts = 0;
+        state.players[p_idx].excess_hearts = 0;
     }
 
     // --- Store Performance Results for UI ---
     // Rule 8.4.10: Participants change to Rest state
     for i in 0..3 {
-        if state.core.players[p_idx].stage[i] >= 0 {
-            state.core.players[p_idx].set_tapped(i, true);
+        if state.players[p_idx].stage[i] >= 0 {
+            state.players[p_idx].set_tapped(i, true);
         }
     }
 
     let mut yell_cards_meta = Vec::new();
-    for &cid in state.core.players[p_idx].yell_cards.iter() {
+    for &cid in state.players[p_idx].yell_cards.iter() {
         if let Some(m) = db.get_member(cid) {
             yell_cards_meta.push(json!({
                 "id": cid,
@@ -976,9 +975,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 "hearts": heart_breakdown,
                 "requirements": requirement_logs,
                 "transforms": transform_logs,
-                "score_bonus_logs": state.core.players[p_idx].live_score_bonus_logs,
+                "score_bonus_logs": state.players[p_idx].live_score_bonus_logs,
             },
-            "total_score_bonus": state.core.players[p_idx].live_score_bonus,
+            "total_score_bonus": state.players[p_idx].live_score_bonus,
             "total_score": total_score
         }),
     );
@@ -1067,7 +1066,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             .unwrap_or(false);
 
         for i in 0..3 {
-            let cid = state.core.players[p].live_zone[i];
+            let cid = state.players[p].live_zone[i];
             if cid >= 0 {
                 has_live = true;
                 if let Some(card) = db.get_live(cid) {
@@ -1111,11 +1110,10 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 state.log(format!("Rule 8.3.16: P{} performance FAILED (unsatisfied requirements). Clearing live zone.", p));
             }
             for i in 0..3 {
-                if state.core.players[p].live_zone[i] >= 0 {
-                    state.core.players[p]
-                        .discard
-                        .push(state.core.players[p].live_zone[i]);
-                    state.core.players[p].live_zone[i] = -1;
+                if state.players[p].live_zone[i] >= 0 {
+                    let cid = state.players[p].live_zone[i];
+                    state.players[p].discard.push(cid);
+                    state.players[p].live_zone[i] = -1;
                 }
             }
         }
@@ -1136,7 +1134,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         // Pool O_BOOST_SCORE from constant abilities
         let mut constant_bonuses = std::collections::HashMap::new();
         for slot in 0..3 {
-            let cid = state.core.players[p].stage[slot];
+            let cid = state.players[p].stage[slot];
             if cid >= 0 {
                 if let Some(m) = db.get_member(cid) {
                     for ab in &m.abilities {
@@ -1168,8 +1166,8 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             }
         }
         // Pool O_BOOST_SCORE from granted constant abilities
-        for &(t_cid, s_cid, ab_idx) in &state.core.players[p].granted_abilities {
-            if let Some(slot) = state.core.players[p]
+        for &(t_cid, s_cid, ab_idx) in &state.players[p].granted_abilities {
+            if let Some(slot) = state.players[p]
                 .stage
                 .iter()
                 .position(|&cid| cid == t_cid)
@@ -1210,15 +1208,15 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         // 1. Base Score (Lives)
         score_breakdown.push(json!({
             "source": "Base (Lives)",
-            "value": live_score.saturating_sub(state.core.players[p].current_turn_notes),
+            "value": live_score.saturating_sub(state.players[p].current_turn_notes),
             "type": "base"
         }));
 
         // 2. Note Bonus
-        if state.core.players[p].current_turn_notes > 0 {
+        if state.players[p].current_turn_notes > 0 {
             score_breakdown.push(json!({
                 "source": "Note Bonus",
-                "value": state.core.players[p].current_turn_notes,
+                "value": state.players[p].current_turn_notes,
                 "type": "note"
             }));
         }
@@ -1239,7 +1237,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         }
 
         // 4. Triggered/Activated Bonuses (live_score_bonus_logs)
-        for &(cid, bonus) in &state.core.players[p].live_score_bonus_logs {
+        for &(cid, bonus) in &state.players[p].live_score_bonus_logs {
             let name = if cid >= 0 {
                 db.get_member(cid)
                     .map(|m| m.name.clone())
@@ -1258,7 +1256,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
 
         scores[p] = live_score
             + total_constant_bonus.max(0) as u32
-            + state.core.players[p].live_score_bonus.max(0) as u32;
+            + state.players[p].live_score_bonus.max(0) as u32;
 
         if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
             if let serde_json::Value::Object(ref mut map) = res {
@@ -1323,7 +1321,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         let p = (state.first_player as usize + i) % 2;
         let wins = if p == 0 { p0_wins } else { p1_wins };
         if wins && !state.obtained_success_live[p] {
-            let cards_in_zone: Vec<usize> = state.core.players[p]
+            let cards_in_zone: Vec<usize> = state.players[p]
                 .live_zone
                 .iter()
                 .enumerate()
@@ -1338,10 +1336,10 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 .iter()
                 .cloned()
                 .filter(|&i| {
-                    let cid = state.core.players[p].live_zone[i];
+                    let cid = state.players[p].live_zone[i];
                     if let Some(card) = db.get_live(cid) {
                         // Check for prevention effects
-                        if state.core.players[p].prevent_success_pile_set != 0 {
+                        if state.players[p].prevent_success_pile_set != 0 {
                             return false;
                         }
                         if card.abilities.iter().any(|a| {
@@ -1377,7 +1375,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             // Rule 8.4.7.1:
             // If scores are tied (Both Win), a player who ALREADY has 2+ success lives
             // does NOT move a card to success. (Catch-up mechanic).
-            let is_at_limit = state.core.players[p].success_lives.len() >= 2;
+            let is_at_limit = state.players[p].success_lives.len() >= 2;
             let is_tie_capped = is_comparative_tie && is_at_limit;
 
             if is_tie_capped {
@@ -1387,7 +1385,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                         p
                     ));
                 }
-            } else if state.core.players[p].success_lives.len() >= 3 {
+            } else if state.players[p].success_lives.len() >= 3 {
                 // Strict limit check to prevent scoring > 3
                 if !state.ui.silent {
                     state.log(format!(
@@ -1398,11 +1396,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             } else if valid_candidates.len() == 1 {
                 // Auto-move if exactly one card meets requirements
                 let target_idx = valid_candidates[0];
-                let cid = state.core.players[p].live_zone[target_idx];
+                let cid = state.players[p].live_zone[target_idx];
 
-                state.core.players[p].success_lives.push(cid as i32);
+                state.players[p].success_lives.push(cid as i32);
                 state.check_win_condition(); // NEW: Immediate win check
-                state.core.players[p].live_zone[target_idx] = -1;
+                state.players[p].live_zone[target_idx] = -1;
                 state.obtained_success_live[p] = true;
                 if !state.ui.silent {
                     state.log(format!(
@@ -1467,26 +1465,25 @@ pub fn finalize_live_result(state: &mut GameState) {
     for i in 0..2 {
         let p = (state.first_player as usize + i) % 2;
         for i in 0..3 {
-            if state.core.players[p].live_zone[i] >= 0 {
-                state.core.players[p]
-                    .discard
-                    .push(state.core.players[p].live_zone[i]);
-                state.core.players[p].live_zone[i] = -1;
+            if state.players[p].live_zone[i] >= 0 {
+                let cid = state.players[p].live_zone[i];
+                state.players[p].discard.push(cid);
+                state.players[p].live_zone[i] = -1;
             }
         }
 
         // Rule 8.4.8: Cleanup all cards from stage energy and move to discard
         for i in 0..3 {
-            while let Some(cid) = state.core.players[p].stage_energy[i].pop() {
-                state.core.players[p].discard.push(cid);
+            while let Some(cid) = state.players[p].stage_energy[i].pop() {
+                state.players[p].discard.push(cid);
             }
-            state.core.players[p].sync_stage_energy_count(i);
+            state.players[p].sync_stage_energy_count(i);
         }
 
         // Player Score (persistent win condition) is the count of success lives
-        state.core.players[p].score = state.core.players[p].success_lives.len() as u32;
+        state.players[p].score = state.players[p].success_lives.len() as u32;
 
-        state.core.players[p].current_turn_notes = 0;
+        state.players[p].current_turn_notes = 0;
     }
     state.live_result_selection_pending = false;
     state.live_result_triggers_done = false;

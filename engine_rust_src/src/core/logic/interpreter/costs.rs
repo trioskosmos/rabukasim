@@ -45,7 +45,7 @@ pub fn check_cost(
     cost: &Cost,
     ctx: &AbilityContext,
 ) -> bool {
-    let player = &state.core.players[p_idx];
+    let player = &state.players[p_idx];
     let val = cost.value as usize;
     let mut attr: u64 = 0;
     if let Some(params) = cost.params.as_object() {
@@ -205,28 +205,28 @@ pub fn pay_cost(
     let result = match cost.cost_type {
         AbilityCostType::None => true,
         AbilityCostType::Energy => {
-            let untap_indices: Vec<usize> = (0..state.core.players[p_idx].energy_zone.len())
-                .filter(|&i| !state.core.players[p_idx].is_energy_tapped(i))
+            let untap_indices: Vec<usize> = (0..state.players[p_idx].energy_zone.len())
+                .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
                 .take(cost.value as usize)
                 .collect();
             if untap_indices.len() < cost.value as usize {
                 return false;
             }
             for idx in untap_indices {
-                state.core.players[p_idx].set_energy_tapped(idx, true);
+                state.players[p_idx].set_energy_tapped(idx, true);
             }
             true
         }
         AbilityCostType::TapSelf => {
             if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                state.core.players[p_idx].set_tapped(ctx.area_idx as usize, true);
+                state.players[p_idx].set_tapped(ctx.area_idx as usize, true);
                 true
             } else {
                 false
             }
         }
         AbilityCostType::TapMember => {
-            let player = &mut state.core.players[p_idx];
+            let player = &mut state.players[p_idx];
             let mut needed = cost.value as usize;
             if needed == 0 {
                 // FALLBACK: Value 0 means "Tap Self"
@@ -260,7 +260,7 @@ pub fn pay_cost(
             needed == 0
         }
         AbilityCostType::TapEnergy => {
-            let player = &mut state.core.players[p_idx];
+            let player = &mut state.players[p_idx];
             let mut needed = cost.value as usize;
             if needed == 0 {
                 return true;
@@ -282,7 +282,7 @@ pub fn pay_cost(
 
             if (filter_attr & FILTER_TYPE_MASK) != 0 {
                 let mut to_discard = Vec::new();
-                for &cid in &state.core.players[p_idx].hand {
+                for &cid in &state.players[p_idx].hand {
                     if state.card_matches_filter(db, cid, filter_attr) {
                         to_discard.push(cid);
                         if to_discard.len() >= count {
@@ -296,18 +296,18 @@ pub fn pay_cost(
                 }
 
                 for cid in to_discard {
-                    if let Some(pos) = state.core.players[p_idx]
+                    if let Some(pos) = state.players[p_idx]
                         .hand
                         .iter()
                         .position(|&x| x == cid)
                     {
-                        state.core.players[p_idx].hand.remove(pos);
-                        state.core.players[p_idx].discard.push(cid);
+                        state.players[p_idx].hand.remove(pos);
+                        state.players[p_idx].discard.push(cid);
                     }
                 }
                 true
             } else {
-                let player = &mut state.core.players[p_idx];
+                let player = &mut state.players[p_idx];
                 if player.hand.len() < count {
                     return false;
                 }
@@ -322,14 +322,14 @@ pub fn pay_cost(
         AbilityCostType::SacrificeSelf => {
             if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
                 let slot = ctx.area_idx as usize;
-                let cid = state.core.players[p_idx].stage[slot];
+                let cid = state.players[p_idx].stage[slot];
                 if cid >= 0 {
                     let mut leave_ctx = ctx.clone();
                     leave_ctx.source_card_id = cid;
                     leave_ctx.area_idx = ctx.area_idx;
                     state.trigger_abilities(db, TriggerType::OnLeaves, &leave_ctx);
 
-                    let player = &mut state.core.players[p_idx];
+                    let player = &mut state.players[p_idx];
                     player.stage[slot] = -1;
                     player.discard.push(cid as i32);
                     let under_cards = std::mem::take(&mut player.stage_energy[slot]);
@@ -346,7 +346,7 @@ pub fn pay_cost(
         AbilityCostType::RevealHand => true,
         AbilityCostType::SacrificeUnder => {
             if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                let player = &mut state.core.players[p_idx];
+                let player = &mut state.players[p_idx];
                 let count = cost.value as usize;
                 let slot = ctx.area_idx as usize;
                 if player.stage_energy[slot].len() < count {
@@ -364,7 +364,7 @@ pub fn pay_cost(
             }
         }
         AbilityCostType::DiscardEnergy => {
-            let player = &mut state.core.players[p_idx];
+            let player = &mut state.players[p_idx];
             let count = cost.value as usize;
             if player.energy_zone.len() < count {
                 return false;
@@ -379,14 +379,14 @@ pub fn pay_cost(
         AbilityCostType::ReturnMemberToDeck => {
             if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
                 let slot = ctx.area_idx as usize;
-                let cid = state.core.players[p_idx].stage[slot];
+                let cid = state.players[p_idx].stage[slot];
                 if cid >= 0 {
                     let mut leave_ctx = ctx.clone();
                     leave_ctx.source_card_id = cid;
                     leave_ctx.area_idx = slot as i16;
                     state.trigger_abilities(db, TriggerType::OnLeaves, &leave_ctx);
 
-                    let player = &mut state.core.players[p_idx];
+                    let player = &mut state.players[p_idx];
                     player.stage[slot] = -1;
                     player.deck.insert(0, cid as i32);
                     true
@@ -398,7 +398,7 @@ pub fn pay_cost(
             }
         }
         AbilityCostType::ReturnDiscardToDeck => {
-            let player = &mut state.core.players[p_idx];
+            let player = &mut state.players[p_idx];
             let count = cost.value as usize;
             if player.discard.len() < count {
                 return false;
@@ -419,7 +419,7 @@ pub fn pay_cost(
             let is_discard = cost.cost_type == AbilityCostType::DiscardMember;
             let mut slots_to_move = Vec::new();
             for i in 0..3 {
-                let cid = state.core.players[p_idx].stage[i];
+                let cid = state.players[p_idx].stage[i];
                 if cid >= 0
                     && ((filter_attr & FILTER_TYPE_MASK) == 0
                         || state.card_matches_filter(db, cid, filter_attr))
@@ -436,9 +436,9 @@ pub fn pay_cost(
             for slot in slots_to_move {
                 if let Some(old) = state.handle_member_leaves_stage(p_idx, slot, db, ctx) {
                     if is_discard {
-                        state.core.players[p_idx].discard.push(old);
+                        state.players[p_idx].discard.push(old);
                     } else {
-                        state.core.players[p_idx].hand.push(old);
+                        state.players[p_idx].hand.push(old);
                     }
                 }
             }
@@ -448,7 +448,7 @@ pub fn pay_cost(
             let count = cost.value as usize;
             let filter_attr = attr;
             let mut indices = Vec::new();
-            for (idx, &cid) in state.core.players[p_idx].success_lives.iter().enumerate() {
+            for (idx, &cid) in state.players[p_idx].success_lives.iter().enumerate() {
                 if (filter_attr & FILTER_TYPE_MASK) == 0
                     || state.card_matches_filter(db, cid, filter_attr)
                 {
@@ -462,8 +462,8 @@ pub fn pay_cost(
                 return false;
             }
             for &idx in indices.iter().rev() {
-                let cid = state.core.players[p_idx].success_lives.remove(idx);
-                state.core.players[p_idx].discard.push(cid);
+                let cid = state.players[p_idx].success_lives.remove(idx);
+                state.players[p_idx].discard.push(cid);
             }
             true
         }

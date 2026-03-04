@@ -44,12 +44,12 @@ mod tests {
         }
 
         // 2. Setup state
-        state.core.players[0].live_zone[0] = live_id;
-        state.core.players[0].stage[0] = niji_member_id;
+        state.players[0].live_zone[0] = live_id;
+        state.players[0].stage[0] = niji_member_id;
         for _ in 0..5 {
-            state.core.players[0].energy_zone.push(3001);
+            state.players[0].energy_zone.push(3001);
         }
-        state.core.players[0].set_energy_tapped(0, true);
+        state.players[0].set_energy_tapped(0, true);
 
         // 3. Call handle_energy
         println!("\n=== HANDLE_ENERGY ===");
@@ -59,19 +59,20 @@ mod tests {
             activator_id: 0,
             ..Default::default()
         };
+        let instr = crate::core::logic::interpreter::instruction::BytecodeInstruction::new(81, 1, 0, 0);
         crate::core::logic::interpreter::handlers::handle_energy(
-            &mut state, &db, &mut ctx, 81, 1, 0, 0, 0,
+            &mut state, &db, &mut ctx, &instr, 0,
         );
         println!(
             "activated_energy_group_mask = {} (binary: {:b})",
-            state.core.players[0].activated_energy_group_mask,
-            state.core.players[0].activated_energy_group_mask
+            state.players[0].activated_energy_group_mask,
+            state.players[0].activated_energy_group_mask
         );
         println!("Expected: bit 2 set = 4 (binary: 100)");
         assert!(
-            (state.core.players[0].activated_energy_group_mask & (1 << 2)) != 0,
+            (state.players[0].activated_energy_group_mask & (1 << 2)) != 0,
             "FAIL: Energy mask does NOT have bit 2 set! Actual: {}",
-            state.core.players[0].activated_energy_group_mask
+            state.players[0].activated_energy_group_mask
         );
 
         // 4. Trigger OnLiveStart
@@ -82,10 +83,10 @@ mod tests {
         println!("\n=== RESULT ===");
         println!(
             "live_score_bonus = {} (expected: 1)",
-            state.core.players[0].live_score_bonus
+            state.players[0].live_score_bonus
         );
         assert_eq!(
-            state.core.players[0].live_score_bonus, 1,
+            state.players[0].live_score_bonus, 1,
             "live_score_bonus should be 1"
         );
     }

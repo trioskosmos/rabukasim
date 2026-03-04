@@ -165,8 +165,8 @@ pub fn resolve_count(
     depth: u32,
 ) -> i32 {
     let p_idx = ctx.player_id as usize;
-    let player = &state.core.players[p_idx];
-    let opponent = &state.core.players[1 - p_idx];
+    let player = &state.players[p_idx];
+    let opponent = &state.players[1 - p_idx];
 
     // Basic count opcodes (Stage, Hand, Discard, Success Live)
     if op == C_COUNT_STAGE
@@ -356,8 +356,8 @@ pub fn check_condition_opcode(
         return true;
     }
     let p_idx = ctx.player_id as usize;
-    let player = &state.core.players[p_idx];
-    let opponent = &state.core.players[1 - p_idx];
+    let player = &state.players[p_idx];
+    let opponent = &state.players[1 - p_idx];
 
     let get_cid = || {
         if ctx.source_card_id >= 0 {
@@ -956,7 +956,7 @@ pub fn check_condition_opcode(
                         continue;
                     } // Don't check opponent unless flagged
                     check_ids.extend(
-                        state.core.players[player_idx]
+                        state.players[player_idx]
                             .stage
                             .iter()
                             .filter(|&&id| id >= 0),
@@ -1101,8 +1101,8 @@ pub fn get_condition_count(
     ctx: &AbilityContext,
 ) -> i32 {
     let p_idx = ctx.player_id as usize;
-    let player = &state.core.players[p_idx];
-    let opponent = &state.core.players[1 - p_idx];
+    let player = &state.players[p_idx];
+    let opponent = &state.players[1 - p_idx];
 
     let filter_attr = (attr as u64) & 0x00000000FFFFFFFF;
 

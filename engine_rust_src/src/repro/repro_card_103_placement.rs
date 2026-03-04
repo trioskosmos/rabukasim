@@ -10,13 +10,13 @@ fn test_repro_card_103_placement() { // Card No: LL-bp2-001-R
     let db = load_real_db();
     
     let p_idx = 0;
-    state.core.players[p_idx].player_id = 0;
+    state.players[p_idx].player_id = 0;
     
     // Fill all stage slots
-    state.core.players[p_idx].stage = [1, 2, 3]; 
+    state.players[p_idx].stage = [1, 2, 3]; 
     
     // Add a cost 2 member to discard
-    state.core.players[p_idx].discard = vec![100]; // Assume 100 is a valid member
+    state.players[p_idx].discard = vec![100]; // Assume 100 is a valid member
     
     // Card 103 Bytecode for Ability 0 (simplified)
     // Opcode 63 (PLAY_MEMBER_FROM_DISCARD), v=1, a=Filter(Cost<=2), s=FLAG_EMPTY_SLOT_ONLY | Stage

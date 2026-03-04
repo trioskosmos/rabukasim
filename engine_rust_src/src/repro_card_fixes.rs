@@ -14,10 +14,10 @@ mod tests {
         let mut state = create_test_state();
 
         // Card 528 (PL!SP-bp2-002-P)
-        state.core.players[0].stage[0] = 528;
+        state.players[0].stage[0] = 528;
         // Deck needs cards with cost 11 or more for O_LOOK_AND_CHOOSE to find targets
         // ID 563 (PL!SP-bp4-007-P) has cost 11.
-        state.core.players[0].deck = vec![563, 563, 563].into();
+        state.players[0].deck = vec![563, 563, 563].into();
         state.phase = Phase::Main;
 
         let ctx = AbilityContext {
@@ -33,7 +33,7 @@ mod tests {
         assert_eq!(state.phase, Phase::Response);
         assert_eq!(state.interaction_stack.last().unwrap().effect_opcode, 41);
 
-        let chosen_card_id = state.core.players[0].looked_cards[0];
+        let chosen_card_id = state.players[0].looked_cards[0];
         assert_eq!(chosen_card_id, 563);
 
         // Submit choice (Action ID 8000 + index 0)
@@ -43,11 +43,11 @@ mod tests {
 
         // Verify destination: Hand (6)
         assert!(
-            state.core.players[0].hand.contains(&chosen_card_id),
+            state.players[0].hand.contains(&chosen_card_id),
             "Card 563 should be in hand!"
         );
         assert!(
-            !state.core.players[0].discard.contains(&chosen_card_id),
+            !state.players[0].discard.contains(&chosen_card_id),
             "Card 563 should NOT be in discard!"
         );
     }
@@ -58,8 +58,8 @@ mod tests {
         let mut state = create_test_state();
 
         // Generic member IDs for energy
-        state.core.players[0].energy_zone = vec![9, 10, 11].into();
-        state.core.players[0].tapped_energy_mask = 0;
+        state.players[0].energy_zone = vec![9, 10, 11].into();
+        state.players[0].tapped_energy_mask = 0;
 
         let mut ctx = AbilityContext {
             player_id: 0,
@@ -106,15 +106,15 @@ mod tests {
 
         assert_eq!(state.phase, Phase::Response);
         assert_eq!(state.interaction_stack.last().unwrap().v_remaining, 1);
-        assert!(state.core.players[0].is_energy_tapped(0));
+        assert!(state.players[0].is_energy_tapped(0));
 
         // 3. Pay 2nd energy
         state
             .step(&db, ACTION_BASE_ENERGY + 1)
             .expect("Step 2 failed");
 
-        assert!(state.core.players[0].is_energy_tapped(0));
-        assert!(state.core.players[0].is_energy_tapped(1));
+        assert!(state.players[0].is_energy_tapped(0));
+        assert!(state.players[0].is_energy_tapped(1));
     }
 
     #[test]
@@ -122,8 +122,8 @@ mod tests {
         let mut state = GameState::default();
         let card_id = 275; // Setsuna
 
-        state.core.players[0].stage[0] = card_id;
-        state.core.players[0].stage[1] = 100; // Another member on stage
+        state.players[0].stage[0] = card_id;
+        state.players[0].stage[1] = 100; // Another member on stage
         state.phase = Phase::Main;
         state.debug.debug_mode = true;
 
@@ -131,7 +131,7 @@ mod tests {
         let db = load_real_db();
 
         // Give player energy
-        state.core.players[0].energy_zone = vec![999, 999, 999, 999, 999].into();
+        state.players[0].energy_zone = vec![999, 999, 999, 999, 999].into();
 
         // 1. Initial execution - Card 275's bytecode:
         // O_PAY_ENERGY(64): Pay 2 energy
@@ -149,7 +149,7 @@ mod tests {
 
         // Verify the cost was paid (energy tapped)
         assert!(
-            state.core.players[0].tapped_energy_mask.count_ones() >= 2,
+            state.players[0].tapped_energy_mask.count_ones() >= 2,
             "Energy should be tapped"
         );
 
@@ -168,7 +168,7 @@ mod tests {
         let p_idx = 0;
 
         // Setup Hime ability simulation
-        state.core.players[p_idx].hand = vec![100, 101, 102].into();
+        state.players[p_idx].hand = vec![100, 101, 102].into();
         state.phase = Phase::Response;
 
         // Opcode 58 (MOVE_TO_DISCARD), Attr (Hand + Optional), Count 1
@@ -198,7 +198,7 @@ mod tests {
         // 2. Test Pass (Choice 0)
         state.step(&db, 0).expect("Step failed");
         assert_eq!(
-            state.core.players[p_idx].hand.len(),
+            state.players[p_idx].hand.len(),
             3,
             "Hand should NOT have changed after Pass"
         );
@@ -217,7 +217,7 @@ mod tests {
 
         // Rurino (Logic ID 17, ID 17)
         // Hand contains some cards
-        state.core.players[p_idx].hand = vec![1179, 1180].into(); // R+, R
+        state.players[p_idx].hand = vec![1179, 1180].into(); // R+, R
         state.phase = Phase::Response;
 
         // Interaction: O_MOVE_TO_DISCARD with 0x6000 (Hand Zone) filter
@@ -258,9 +258,9 @@ mod tests {
         let p_idx = 0;
 
         // Card 431 (PL!S-bp2-024-L)
-        state.core.players[p_idx].live_zone[0] = 431;
-        state.core.players[p_idx].hand = vec![100, 101].into();
-        state.core.players[p_idx].deck = vec![200, 201, 202].into();
+        state.players[p_idx].live_zone[0] = 431;
+        state.players[p_idx].hand = vec![100, 101].into();
+        state.players[p_idx].deck = vec![200, 201, 202].into();
         state.phase = Phase::Main;
 
         // Test context should be the second ability (index 1) which has DRAW and DISCARD
@@ -282,7 +282,7 @@ mod tests {
 
         // 1. Should have drawn 2 cards
         assert_eq!(
-            state.core.players[p_idx].hand.len(),
+            state.players[p_idx].hand.len(),
             4,
             "Should have drawn 2 cards"
         );
@@ -301,8 +301,8 @@ mod tests {
             .expect("Step failed");
 
         // 4. Verification
-        assert_eq!(state.core.players[p_idx].hand.len(), 3);
-        assert!(state.core.players[p_idx].discard.len() > 0);
+        assert_eq!(state.players[p_idx].hand.len(), 3);
+        assert!(state.players[p_idx].discard.len() > 0);
         assert_eq!(state.phase, Phase::Main);
     }
 }

@@ -9,7 +9,7 @@ fn test_opcode_draw_discard() {
     state.ui.silent = true;
 
     // Use real card IDs: 121 (Eli), 124 (Rin)
-    state.core.players[0].deck = vec![121, 124, 121, 124, 121].into();
+    state.players[0].deck = vec![121, 124, 121, 124, 121].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -19,9 +19,9 @@ fn test_opcode_draw_discard() {
     // O_DRAW 2
     let bc = vec![O_DRAW, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert_eq!(state.core.players[0].hand.len(), 2);
-    assert_eq!(state.core.players[0].deck.len(), 3);
-    assert!(state.core.players[0].hand.contains(&121) || state.core.players[0].hand.contains(&124));
+    assert_eq!(state.players[0].hand.len(), 2);
+    assert_eq!(state.players[0].deck.len(), 3);
+    assert!(state.players[0].hand.contains(&121) || state.players[0].hand.contains(&124));
 
     // O_MOVE_TO_DISCARD 1 (attr 2 = Hand)
     // Pre-seed choice_index so it doesn't suspend, since inline bytecode can't be resumed
@@ -33,8 +33,8 @@ fn test_opcode_draw_discard() {
     let bc = vec![O_MOVE_TO_DISCARD, 1, 2, 0, 6, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &discard_ctx);
 
-    assert_eq!(state.core.players[0].hand.len(), 1);
-    assert_eq!(state.core.players[0].discard.len(), 1);
+    assert_eq!(state.players[0].hand.len(), 1);
+    assert_eq!(state.players[0].discard.len(), 1);
 }
 
 /// Verifies that O_ADD_BLADES, O_ADD_HEARTS, and O_BOOST_SCORE correctly apply stat buffs.
@@ -42,7 +42,7 @@ fn test_opcode_draw_discard() {
 fn test_opcode_stats_boost() {
     let db = load_real_db();
     let mut state = create_test_state();
-    state.core.players[0].stage[0] = 121; // Real card ID
+    state.players[0].stage[0] = 121; // Real card ID
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -53,17 +53,17 @@ fn test_opcode_stats_boost() {
     // O_ADD_BLADES 2 to SELF (Slot 4)
     let bc = vec![O_ADD_BLADES, 2, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert_eq!(state.core.players[0].blade_buffs[0], 2);
+    assert_eq!(state.players[0].blade_buffs[0], 2);
 
     // O_ADD_HEARTS 3 (Pink=0) to SELF (Slot 4)
     let bc = vec![O_ADD_HEARTS, 3, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert_eq!(state.core.players[0].heart_buffs[0].get_color_count(0), 3);
+    assert_eq!(state.players[0].heart_buffs[0].get_color_count(0), 3);
 
     // O_BOOST_SCORE 5 to SELF
     let bc = vec![O_BOOST_SCORE, 5, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert_eq!(state.core.players[0].live_score_bonus, 5);
+    assert_eq!(state.players[0].live_score_bonus, 5);
 }
 
 /// Verifies that O_SET_TAPPED can both tap and untap members.
@@ -71,8 +71,8 @@ fn test_opcode_stats_boost() {
 fn test_opcode_tap_untap() {
     let db = load_real_db();
     let mut state = create_test_state();
-    state.core.players[0].stage[1] = 124; // Real card ID
-    state.core.players[0].set_tapped(1, false);
+    state.players[0].stage[1] = 124; // Real card ID
+    state.players[0].set_tapped(1, false);
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -83,12 +83,12 @@ fn test_opcode_tap_untap() {
     // O_SET_TAPPED 1 SELF
     let bc = vec![O_SET_TAPPED, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert!(state.core.players[0].is_tapped(1));
+    assert!(state.players[0].is_tapped(1));
 
     // O_SET_TAPPED 0 SELF
     let bc = vec![O_SET_TAPPED, 0, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert!(!state.core.players[0].is_tapped(1));
+    assert!(!state.players[0].is_tapped(1));
 }
 
 /// Verifies that conditional jumps (O_JUMP_F) work correctly based on card count in hand (C_COUNT_HAND).
@@ -96,7 +96,7 @@ fn test_opcode_tap_untap() {
 fn test_conditions_basic() {
     let db = load_real_db();
     let mut state = create_test_state();
-    state.core.players[0].hand = vec![121, 124, 121].into();
+    state.players[0].hand = vec![121, 124, 121].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -126,14 +126,14 @@ fn test_conditions_basic() {
         0,
     ];
 
-    state.core.players[0].deck = vec![124].into();
+    state.players[0].deck = vec![124].into();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert_eq!(state.core.players[0].hand.len(), 4);
+    assert_eq!(state.players[0].hand.len(), 4);
 
     // C_COUNT_HAND GE 5 (False) -> Draw 1
     let mut state = create_test_state();
-    state.core.players[0].hand = vec![121, 124, 121].into();
-    state.core.players[0].deck = vec![124].into();
+    state.players[0].hand = vec![121, 124, 121].into();
+    state.players[0].deck = vec![124].into();
     let bc = vec![
         C_COUNT_HAND,
         5,
@@ -157,7 +157,7 @@ fn test_conditions_basic() {
         0,
     ];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert_eq!(state.core.players[0].hand.len(), 3);
+    assert_eq!(state.players[0].hand.len(), 3);
 }
 
 /// Verifies that O_LOOK_AND_CHOOSE correctly defaults to deck and moves remainder to discard using real data.
@@ -165,7 +165,7 @@ fn test_conditions_basic() {
 fn test_look_and_choose_remainder() {
     let db = load_real_db();
     let mut state = create_test_state();
-    state.core.players[0].deck = vec![121, 124, 121, 124, 121].into();
+    state.players[0].deck = vec![121, 124, 121, 124, 121].into();
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -194,8 +194,8 @@ fn test_look_and_choose_remainder() {
     // Execution 1: Reveal cards
     state.resolve_bytecode_cref(&db, &bc, &ctx);
     assert_eq!(state.phase, Phase::Response);
-    assert_eq!(state.core.players[0].looked_cards.len(), 4);
-    assert_eq!(state.core.players[0].deck.len(), 1);
+    assert_eq!(state.players[0].looked_cards.len(), 4);
+    assert_eq!(state.players[0].deck.len(), 1);
 
     // Simulated selection of index 1
     let mut state2 = state.clone();

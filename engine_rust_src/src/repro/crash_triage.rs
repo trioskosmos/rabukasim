@@ -231,16 +231,16 @@ fn test_state_delta_verification() {
             state.phase = Phase::Main;
 
             // Place the card on stage so activated abilities work
-            state.core.players[0].stage[0] = card_id_clone;
+            state.players[0].stage[0] = card_id_clone;
             // Give controlled resources
-            state.core.players[0].hand = (100..106).collect(); // 6 cards in hand
-            state.core.players[0].deck = (200..215).collect(); // 15 cards in deck
-            state.core.players[0].discard = (300..305).collect(); // 5 in discard
-            state.core.players[0].energy_zone = vec![40000i32; 8].into(); // 8 energy cards
-            state.core.players[0].tapped_energy_mask = 0b00001111; // 4 energy tapped
+            state.players[0].hand = (100..106).collect(); // 6 cards in hand
+            state.players[0].deck = (200..215).collect(); // 15 cards in deck
+            state.players[0].discard = (300..305).collect(); // 5 in discard
+            state.players[0].energy_zone = vec![40000i32; 8].into(); // 8 energy cards
+            state.players[0].tapped_energy_mask = 0b00001111; // 4 energy tapped
                                                                    // Put a live card in live zone and one in discard for recovery tests
-            state.core.players[0].live_zone[0] = 15001;
-            state.core.players[0].discard.push(15002); // Live in discard for O_RECOVER_LIVE
+            state.players[0].live_zone[0] = 15001;
+            state.players[0].discard.push(15002); // Live in discard for O_RECOVER_LIVE
 
             let ctx = AbilityContext {
                 player_id: 0,
@@ -251,14 +251,14 @@ fn test_state_delta_verification() {
                 ..Default::default()
             };
 
-            let before = ZoneSnapshot::capture(&state.core.players[0], &state);
+            let before = ZoneSnapshot::capture(&state.players[0], &state);
 
             // Execute
             let bytecode_slice: &[i32] = &bc_clone;
             state.resolve_bytecode_slice(&db, bytecode_slice, &ctx);
 
             let suspended = state.phase == Phase::Response || !state.interaction_stack.is_empty();
-            let after = ZoneSnapshot::capture(&state.core.players[0], &state);
+            let after = ZoneSnapshot::capture(&state.players[0], &state);
             let delta = StateDelta::compute(&before, &after, suspended);
 
             (delta, suspended)

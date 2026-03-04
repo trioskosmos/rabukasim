@@ -101,8 +101,8 @@ fn parity_o_reveal_until() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].deck = vec![3001, 3002, 55001, 3003, 3004].into();
-    state.core.players[0].hand = vec![2001].into();
+    state.players[0].deck = vec![3001, 3002, 55001, 3003, 3004].into();
+    state.players[0].hand = vec![2001].into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U1 Reveal Live"));
 }
 
@@ -122,7 +122,7 @@ fn parity_o_immunity() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].hand = vec![2002].into();
+    state.players[0].hand = vec![2002].into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U2 Immunity"));
 }
 
@@ -142,8 +142,8 @@ fn parity_o_set_blades() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].stage[0] = 3001;
-    state.core.players[0].hand = vec![2003].into();
+    state.players[0].stage[0] = 3001;
+    state.players[0].hand = vec![2003].into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U3 Set Blades"));
 }
 
@@ -163,8 +163,8 @@ fn parity_o_look_and_choose() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].deck = vec![3001, 3002, 3003, 3004].into();
-    state.core.players[0].hand = vec![2004].into();
+    state.players[0].deck = vec![3001, 3002, 3003, 3004].into();
+    state.players[0].hand = vec![2004].into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U4 Look & Choose"));
 }
 
@@ -184,8 +184,8 @@ fn parity_o_move_member() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].stage[0] = 3001;
-    state.core.players[0].hand = vec![2005].into(); // Play to slot 2, effect moves 0 to 1
+    state.players[0].stage[0] = 3001;
+    state.players[0].hand = vec![2005].into(); // Play to slot 2, effect moves 0 to 1
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 2 }.id(), "U5 Move Member"));
 }
 
@@ -205,8 +205,8 @@ fn parity_o_set_heart_cost() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].hand = vec![2007].into();
-    state.core.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
+    state.players[0].hand = vec![2007].into();
+    state.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U7 Set Heart Cost"));
 }
 
@@ -226,8 +226,8 @@ fn parity_o_increase_heart_cost() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].hand = vec![2008].into();
-    state.core.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
+    state.players[0].hand = vec![2008].into();
+    state.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U8 Increase Heart Cost"));
 }
 
@@ -247,8 +247,8 @@ fn parity_o_reduce_heart_req() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].hand = vec![2009].into();
-    state.core.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
+    state.players[0].hand = vec![2009].into();
+    state.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U9 Reduce Heart Req"));
 }
 
@@ -268,9 +268,9 @@ fn parity_o_draw() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].hand = vec![2010].into();
-    state.core.players[0].deck = vec![3001, 3002, 3003, 3004].into();
-    state.core.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
+    state.players[0].hand = vec![2010].into();
+    state.players[0].deck = vec![3001, 3002, 3003, 3004].into();
+    state.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U10 Draw 2"));
 }
 
@@ -290,8 +290,8 @@ fn parity_o_boost_score() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].hand = vec![2011].into();
-    state.core.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
+    state.players[0].hand = vec![2011].into();
+    state.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U11 Boost Score"));
 }
 
@@ -311,8 +311,8 @@ fn parity_o_reduce_cost() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].hand = vec![2012].into();
-    state.core.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
+    state.players[0].hand = vec![2012].into();
+    state.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U12 Reduce Cost"));
 }
 
@@ -332,8 +332,8 @@ fn parity_o_add_blades() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].hand = vec![2013].into();
-    state.core.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
+    state.players[0].hand = vec![2013].into();
+    state.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U13 Add Blades"));
 }
 
@@ -353,8 +353,8 @@ fn parity_o_add_hearts() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].hand = vec![2014].into();
-    state.core.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
+    state.players[0].hand = vec![2014].into();
+    state.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U14 Add Hearts"));
 }
 
@@ -374,7 +374,7 @@ fn parity_o_set_score() {
     };
 
     let mut state = create_test_state();
-    state.core.players[0].hand = vec![2015].into();
-    state.core.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
+    state.players[0].hand = vec![2015].into();
+    state.players[0].energy_zone = (10..30).collect::<Vec<i32>>().into();
     assert!(run_parity_check(&manager, &db, &state, Action::PlayMember { hand_idx: 0, slot_idx: 0 }.id(), "U15 Set Score"));
 }
