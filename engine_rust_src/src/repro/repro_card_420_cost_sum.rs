@@ -1,5 +1,5 @@
 use crate::core::generated_constants::*;
-use crate::core::logic::{GameState, Phase};
+use crate::core::logic::{ChoiceType, GameState, Phase};
 use crate::test_helpers::*;
 
 #[test]
@@ -63,14 +63,14 @@ fn test_repro_card_420_cost_sum_limit() {
         // It should suspend for PAY_ENERGY (Optional).
         assert_eq!(
             state.interaction_stack.last().unwrap().choice_type,
-            "OPTIONAL"
+            ChoiceType::Optional
         );
         state.step(&db, ACTION_BASE_CHOICE + 0).unwrap(); // Pay Energy (Yes)
 
         // Now it should suspend for SELECT_DISCARD_PLAY
         assert_eq!(
             state.interaction_stack.last().unwrap().choice_type,
-            "SELECT_DISCARD_PLAY"
+            ChoiceType::SelectDiscardPlay
         );
         let looked_cards = state.core.players[p_idx].looked_cards.clone();
         let idx = looked_cards
@@ -105,7 +105,7 @@ fn test_repro_card_420_cost_sum_limit() {
         {
             assert_eq!(
                 state.interaction_stack.last().unwrap().choice_type,
-                "SELECT_DISCARD_PLAY"
+                ChoiceType::SelectDiscardPlay
             );
             let looked_cards = state.core.players[p_idx].looked_cards.clone();
             let idx = looked_cards
@@ -121,7 +121,7 @@ fn test_repro_card_420_cost_sum_limit() {
         {
             assert_eq!(
                 state.interaction_stack.last().unwrap().choice_type,
-                "SELECT_DISCARD_PLAY"
+                ChoiceType::SelectDiscardPlay
             );
             let looked_cards = state.core.players[p_idx].looked_cards.clone();
             assert!(

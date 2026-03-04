@@ -46,7 +46,7 @@ mod tests {
         let pi = state.interaction_stack.last().unwrap();
         // Could be OPTIONAL (for PAY_ENERGY) or COLOR_SELECT (if optional was auto-accepted/skipped)
         assert!(
-            pi.choice_type == "OPTIONAL" || pi.choice_type == "COLOR_SELECT",
+            pi.choice_type == crate::core::enums::ChoiceType::Optional || pi.choice_type == crate::core::enums::ChoiceType::ColorSelect,
             "Expected OPTIONAL or COLOR_SELECT, got: {}",
             pi.choice_type
         );
@@ -57,7 +57,7 @@ mod tests {
 
         // The engine went directly to COLOR_SELECT, skipping OPTIONAL
         // This is expected behavior when the optional cost is auto-accepted
-        if pi.choice_type == "COLOR_SELECT" {
+        if pi.choice_type == crate::core::enums::ChoiceType::ColorSelect {
             // Verify color selection actions exist (580-585 for 6 colors)
             assert!(
                 actions.iter().any(|&a| a >= 580 && a <= 585),

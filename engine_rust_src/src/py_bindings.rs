@@ -1,6 +1,6 @@
 use crate::core::alphazero_encoding::AlphaZeroEncoding;
 use crate::core::heuristics::{EvalMode, HeuristicConfig, LegacyHeuristic, OriginalHeuristic};
-use crate::core::logic::{CardDatabase, GameState, Phase, PlayerState};
+use crate::core::logic::{ChoiceType, CardDatabase, GameState, Phase, PlayerState};
 use crate::core::mcts::SearchHorizon;
 use numpy::{PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray1};
 use pyo3::prelude::*;
@@ -648,7 +648,7 @@ impl PyGameState {
         self.inner
             .interaction_stack
             .last()
-            .map(|p| p.choice_type.clone())
+            .map(|p| p.choice_type.as_str().to_string())
             .unwrap_or_default()
     }
 
@@ -744,7 +744,7 @@ impl PyGameState {
                 "cards": looked
             });
             let type_str = if op == O_ORDER_DECK {
-                "ORDER_DECK"
+                ChoiceType::OrderDeck.as_str()
             } else {
                 "SELECT_FROM_LIST"
             };
@@ -756,18 +756,18 @@ impl PyGameState {
         } else if op == O_ACTIVATE_MEMBER {
             result.push(("TAP_MEMBER".to_string(), "{}".to_string()));
         } else if op == O_COLOR_SELECT {
-            result.push(("COLOR_SELECT".to_string(), "{}".to_string()));
+            result.push((ChoiceType::ColorSelect.as_str().to_string(), "{}".to_string()));
         } else if op == O_MOVE_TO_DISCARD {
-            result.push(("SELECT_HAND_DISCARD".to_string(), "{}".to_string()));
+            result.push((ChoiceType::SelectHandDiscard.as_str().to_string(), "{}".to_string()));
         } else if op == O_PLAY_MEMBER_FROM_HAND {
-            result.push(("SELECT_HAND_PLAY".to_string(), "{}".to_string()));
+            result.push((ChoiceType::SelectHandPlay.to_string(), "{}".to_string()));
         } else if op == O_SELECT_CARDS {
             result.push(("SELECT_FROM_LIST".to_string(), "{}".to_string()));
         } else if op == O_OPPONENT_CHOOSE {
-            result.push(("OPPONENT_CHOOSE".to_string(), "{}".to_string()));
+            result.push((ChoiceType::OpponentChoose.to_string(), "{}".to_string()));
         } else if op == O_SELECT_MODE {
             // We might need to store the options in the state if we want better labels
-            result.push(("SELECT_MODE".to_string(), "{}".to_string()));
+            result.push((ChoiceType::SelectMode.to_string(), "{}".to_string()));
         }
 
         result
@@ -872,7 +872,7 @@ impl PyGameState {
             .interaction_stack
             .last()
             .map(|pi| PyPendingInteraction {
-                choice_type: pi.choice_type.clone(),
+                choice_type: pi.choice_type.as_str().to_string(),
                 filter_attr: pi.filter_attr,
                 ctx: format!("{:?}", pi.ctx),
             })

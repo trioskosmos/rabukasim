@@ -1,3 +1,4 @@
+use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use serde::{Deserialize, Serialize};
 
@@ -125,7 +126,8 @@ pub struct PendingInteraction {
     pub ability_index: i16,
     pub effect_opcode: i32,
     pub target_slot: i32,
-    pub choice_type: String,
+    #[serde(default)]
+    pub choice_type: ChoiceType,
     pub filter_attr: u64,
     pub choice_text: String,
     pub v_remaining: i16,

@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-use crate::core::logic::{CardDatabase, GameState, Phase};
+use crate::core::logic::{ChoiceType, CardDatabase, GameState, Phase};
 
 // use serde_json::json;
 #[test]
@@ -72,7 +72,7 @@ fn test_kimi_no_kokoro_prevention() {
     // This requires a choice. So state should be in Response.
 
     assert_eq!(state.phase, Phase::Response, "Should pause for Discard choice");
-    assert_eq!(state.interaction_stack.last().map(|i| i.choice_type.as_str()).unwrap_or(""), "SELECT_HAND_DISCARD");
+    assert_eq!(state.interaction_stack.last().map(|i| i.choice_type).unwrap_or(ChoiceType::None), ChoiceType::SelectHandDiscard);
     assert_eq!(state.interaction_stack.last().map(|i| i.card_id).unwrap_or(0), kimi_no_kokoro_id);
 
     // Resume properly through the game engine

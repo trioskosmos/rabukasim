@@ -296,8 +296,8 @@ impl OriginalHeuristic {
         let score1 = evaluate_player(state, db, 1, p1_baseline, p1_deck_stats, Some(&self.config));
         let mut final_val = (score0 - score1) * self.config.scaling_factor + 0.5;
 
-        let p0_notes = state.core.players[0].current_turn_notes;
-        let p1_notes = state.core.players[1].current_turn_notes;
+        let _p0_notes = state.core.players[0].current_turn_notes;
+        let _p1_notes = state.core.players[1].current_turn_notes;
 
         if state.phase == Phase::Rps {
             // Pseudo-random tie-breaker for RPS based on turn number and deck lengths

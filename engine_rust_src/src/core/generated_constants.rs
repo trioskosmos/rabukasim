@@ -261,6 +261,36 @@ pub const COST_RETURN_STAGE_ENERGY_TO_SUCCESS: i32 = 98;
 pub const COST_RETURN_DISCARD_TO_HAND: i32 = 99;
 pub const COST_RETURN_DISCARD_TO_REMOVED: i32 = 100;
 
+// Choice Types
+pub const CHOICE_NONE: i32 = 0;
+pub const CHOICE_OPTIONAL: i32 = 1;
+pub const CHOICE_PAY_ENERGY: i32 = 2;
+pub const CHOICE_REVEAL_HAND: i32 = 3;
+pub const CHOICE_SELECT_DISCARD: i32 = 4;
+pub const CHOICE_SELECT_SWAP_SOURCE: i32 = 5;
+pub const CHOICE_SELECT_STAGE: i32 = 6;
+pub const CHOICE_SELECT_STAGE_EMPTY: i32 = 7;
+pub const CHOICE_SELECT_LIVE_SLOT: i32 = 8;
+pub const CHOICE_SELECT_SWAP_TARGET: i32 = 9;
+pub const CHOICE_SELECT_MEMBER: i32 = 10;
+pub const CHOICE_SELECT_DISCARD_PLAY: i32 = 11;
+pub const CHOICE_SELECT_HAND_DISCARD: i32 = 12;
+pub const CHOICE_COLOR_SELECT: i32 = 13;
+pub const CHOICE_SELECT_MODE: i32 = 14;
+pub const CHOICE_OPPONENT_CHOOSE: i32 = 15;
+pub const CHOICE_SELECT_CARDS_ORDER: i32 = 16;
+pub const CHOICE_TAP_O: i32 = 17;
+pub const CHOICE_LOOK_AND_CHOOSE: i32 = 18;
+pub const CHOICE_SELECT_CARDS: i32 = 19;
+pub const CHOICE_SELECT_PLAYER: i32 = 20;
+pub const CHOICE_SELECT_LIVE: i32 = 21;
+pub const CHOICE_ORDER_DECK: i32 = 22;
+pub const CHOICE_SELECT_HAND_PLAY: i32 = 23;
+pub const CHOICE_TAP_M_SELECT: i32 = 24;
+pub const CHOICE_MOVE_MEMBER_DEST: i32 = 25;
+pub const CHOICE_RECOV_L: i32 = 26;
+pub const CHOICE_RECOV_M: i32 = 27;
+
 // Extra Constants
 pub const FLAG_DRAW: u64 = 1u64;
 pub const FLAG_SEARCH: u64 = 2u64;

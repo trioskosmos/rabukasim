@@ -83,7 +83,7 @@ mod tests {
             .interaction_stack
             .last()
             .expect("Interaction expected");
-        assert_eq!(interaction.choice_type, "LOOK_AND_CHOOSE");
+        assert_eq!(interaction.choice_type, ChoiceType::LookAndChoose);
 
         // Verify Legal Actions (Filtered cards)
         let mut choice_receiver = TestActionReceiver::default();

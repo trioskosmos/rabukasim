@@ -1,6 +1,6 @@
 use crate::core::enums::*;
 use crate::core::logic::action_gen::ActionGenerator;
-use crate::core::logic::{Ability, ActionReceiver, CardDatabase, GameState, PendingInteraction};
+use crate::core::logic::{ChoiceType, Ability, ActionReceiver, CardDatabase, GameState, PendingInteraction};
 
 pub struct ResponseGenerator;
 
@@ -37,11 +37,11 @@ impl ResponseGenerator {
         };
         let ctx = &pi.ctx;
         let opcode = pi.effect_opcode;
-        let choice_type = &pi.choice_type;
+        let choice_type = pi.choice_type;
         let source_card_id = pi.ctx.source_card_id;
 
         let mut expected_p_idx = ctx.player_id as usize;
-        if choice_type == "TAP_O" || choice_type == "OPPONENT_CHOOSE" {
+        if choice_type == ChoiceType::TapO || choice_type == ChoiceType::OpponentChoose {
             expected_p_idx = 1 - expected_p_idx;
         }
 
@@ -57,16 +57,16 @@ impl ResponseGenerator {
         let mut allow_action_0 =
             (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0;
 
-        if choice_type == "OPTIONAL" || choice_type == "SELECT_MODE" {
+        if choice_type == ChoiceType::Optional || choice_type == ChoiceType::SelectMode {
             allow_action_0 = true;
         }
 
         if !allow_action_0
-            && (choice_type == "REVEAL_HAND"
-                || choice_type == "SELECT_SWAP_SOURCE"
-                || choice_type == "SELECT_SWAP_TARGET"
-                || choice_type == "PAY_ENERGY"
-                || choice_type == "OPPONENT_CHOOSE")
+            && (choice_type == ChoiceType::RevealHand
+                || choice_type == ChoiceType::SelectSwapSource
+                || choice_type == ChoiceType::SelectSwapTarget
+                || choice_type == ChoiceType::PayEnergy
+                || choice_type == ChoiceType::OpponentChoose)
         {
             allow_action_0 = false;
         }
@@ -83,12 +83,12 @@ impl ResponseGenerator {
             live.map(|l| &l.abilities)
         };
 
-        match choice_type.as_str() {
-            "OPTIONAL" => {
+        match choice_type {
+            ChoiceType::Optional => {
                 receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + 0) as usize);
                 return;
             }
-            "PAY_ENERGY" => {
+            ChoiceType::PayEnergy => {
                 for i in 0..player.energy_zone.len().min(16) {
                     if !player.is_energy_tapped(i) {
                         receiver.add_action(
@@ -98,7 +98,7 @@ impl ResponseGenerator {
                 }
                 return;
             }
-            "REVEAL_HAND" => {
+            ChoiceType::RevealHand => {
                 for (i, &_cid) in player.hand.iter().enumerate() {
                     receiver.add_action(
                         (crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize,
@@ -106,14 +106,14 @@ impl ResponseGenerator {
                 }
                 return;
             }
-            "SELECT_DISCARD" => {
+            ChoiceType::SelectDiscard => {
                 for (i, &_cid) in player.discard.iter().enumerate() {
                     receiver
                         .add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
                 }
                 return;
             }
-            "SELECT_SWAP_SOURCE" => {
+            ChoiceType::SelectSwapSource => {
                 for i in 0..player.success_lives.len() {
                     receiver.add_action(
                         (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
@@ -121,7 +121,7 @@ impl ResponseGenerator {
                 }
                 return;
             }
-            "SELECT_STAGE" => {
+            ChoiceType::SelectStage => {
                 for i in 0..3 {
                     if (player.prevent_play_to_slot_mask & (1 << i)) == 0 {
                         receiver.add_action(
@@ -131,7 +131,7 @@ impl ResponseGenerator {
                 }
                 return;
             }
-            "SELECT_STAGE_EMPTY" => {
+            ChoiceType::SelectStageEmpty => {
                 for i in 0..3 {
                     if player.stage[i] == -1 && (player.prevent_play_to_slot_mask & (1 << i)) == 0 {
                         receiver.add_action(
@@ -141,7 +141,7 @@ impl ResponseGenerator {
                 }
                 return;
             }
-            "SELECT_LIVE_SLOT" => {
+            ChoiceType::SelectLiveSlot => {
                 for i in 0..3 {
                     // Usually there's no prevent_play for live slots, but we verify it's open
                     receiver
@@ -149,7 +149,7 @@ impl ResponseGenerator {
                 }
                 return;
             }
-            "SELECT_SWAP_TARGET" => {
+            ChoiceType::SelectSwapTarget => {
                 for (i, &_cid) in player.hand.iter().enumerate() {
                     receiver.add_action(
                         (crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize,
@@ -310,7 +310,7 @@ impl ResponseGenerator {
                 return;
             }
             _ => {
-                if choice_type == "SELECT_MEMBER" {
+                if choice_type == ChoiceType::SelectMember {
                     self.generate_select_member_actions(
                         db,
                         p_idx,
@@ -321,7 +321,7 @@ impl ResponseGenerator {
                     );
                     return;
                 }
-                if choice_type == "SELECT_STAGE" {
+                if choice_type == ChoiceType::SelectStage {
                     for i in 0..3 {
                         receiver.add_action(
                             (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
@@ -329,7 +329,7 @@ impl ResponseGenerator {
                     }
                     return;
                 }
-                if choice_type == "SELECT_LIVE_SLOT" {
+                if choice_type == ChoiceType::SelectLiveSlot {
                     for i in 0..player.live_zone.len().min(10) {
                         receiver.add_action(
                             (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
@@ -382,8 +382,8 @@ impl ResponseGenerator {
             }
         }
 
-        match pi.choice_type.as_str() {
-            "SELECT_HAND_DISCARD" => {
+        match pi.choice_type {
+            ChoiceType::SelectHandDiscard => {
                 for (i, &cid) in player.hand.iter().enumerate() {
                     if state.card_matches_filter(db, cid, final_filter_attr) {
                         receiver.add_action(
@@ -392,7 +392,7 @@ impl ResponseGenerator {
                     }
                 }
             }
-            "SELECT_DISCARD_PLAY" => {
+            ChoiceType::SelectDiscardPlay => {
                 for (i, &cid) in player.looked_cards.iter().enumerate() {
                     if state.card_matches_filter(db, cid, final_filter_attr) {
                         receiver.add_action(
@@ -401,14 +401,14 @@ impl ResponseGenerator {
                     }
                 }
             }
-            "SELECT_STAGE" => {
+            ChoiceType::SelectStage => {
                 for i in 0..3 {
                     receiver.add_action(
                         (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                     );
                 }
             }
-            "SELECT_LIVE_SLOT" => {
+            ChoiceType::SelectLiveSlot => {
                 for i in 0..player.live_zone.len().min(10) {
                     if player.live_zone[i] >= 0 {
                         receiver.add_action(
@@ -417,7 +417,7 @@ impl ResponseGenerator {
                     }
                 }
             }
-            "PAY_ENERGY" => {
+            ChoiceType::PayEnergy => {
                 for i in 0..player.energy_zone.len().min(10) {
                     if !player.is_energy_tapped(i) {
                         receiver.add_action(
@@ -457,7 +457,7 @@ impl ResponseGenerator {
             packed_zone as usize
         } else {
             if pi.effect_opcode == O_SELECT_MEMBER
-                || (pi.choice_type == "SELECT_MEMBER" && pi.effect_opcode == 0)
+                || (pi.choice_type == ChoiceType::SelectMember && pi.effect_opcode == 0)
             {
                 pi.target_slot as usize
             } else {

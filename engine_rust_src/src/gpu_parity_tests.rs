@@ -151,7 +151,7 @@ fn parity_o_set_blades() {
 fn parity_o_look_and_choose() {
     let mut db = create_test_db();
     let bc = vec![O_LOOK_AND_CHOOSE, 259, 32768, 0, 1798, O_RETURN, 0, 0, 0, 0];
-    add_card(&mut db, 2004, "LOOK_AND_CHOOSE", vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
+    add_card(&mut db, 2004, ChoiceType::LookAndChoose, vec![], vec![(TriggerType::OnPlay, bc, vec![])]);
 
     let (stats, bytecode) = db.convert_to_gpu();
     let manager = match GpuManager::new(&stats, &bytecode, wgpu::Backends::all()) {

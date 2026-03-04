@@ -1,6 +1,6 @@
 #![cfg(feature = "gpu")]
 use crate::core::logic::card_db::LOGIC_ID_MASK;
-use crate::core::logic::{CardDatabase, GameState, Phase};
+use crate::core::logic::{ChoiceType, CardDatabase, GameState, Phase};
 use crate::core::models::{AbilityContext, TriggerType};
 use crate::test_helpers::{create_test_state, Action as EngineAction, ZoneSnapshot};
 use serde::{Deserialize, Serialize};
@@ -718,39 +718,32 @@ impl SemanticAssertionEngine {
 
         let p_idx = player_id as usize;
 
-        // Correct Action ID Base Selection based on ResponseGenerator
-        let base = match pi.choice_type.as_str() {
-            "MODE" | "CHOICE" | "MODAL" | "SELECT_MODE" | "OPTIONAL" | "YES_NO" => {
+        let base = match pi.choice_type {
+            ChoiceType::SelectMode | ChoiceType::Optional => {
                 crate::core::logic::ACTION_BASE_CHOICE
             }
-            "COLOR" | "SELECT_COLOR" => crate::core::logic::ACTION_BASE_COLOR,
-            "SLOT" | "SELECT_SLOT" | "TARGET_MEMBER" | "SELECT_STAGE" | "SELECT_LIVE_SLOT"
-            | "MEMBER" | "TAP_O" => crate::core::logic::ACTION_BASE_CHOICE,
-            "RPS" => crate::core::logic::ACTION_BASE_RPS_P1 as i32,
-            "HAND"
-            | "SELECT_HAND"
-            | "SELECT_HAND_DISCARD"
-            | "REVEAL_HAND"
-            | "SELECT_SWAP_TARGET" => crate::core::logic::ACTION_BASE_HAND_SELECT,
-            "DISCARD"
-            | "SELECT_DISCARD"
-            | "RECOV_M"
-            | "RECOV_L"
-            | "SELECT_DISCARD_PLAY"
-            | "SEARCH"
-            | "SEARCH_MEMBER"
-            | "SELECT_CARDS" => crate::core::logic::ACTION_BASE_CHOICE,
-            "PAY_ENERGY" => crate::core::logic::ACTION_BASE_ENERGY,
-            "ENERGY" | "SELECT_ENERGY" => crate::core::logic::ACTION_BASE_ENERGY,
-            "LIVE" | "SELECT_LIVE" => crate::core::logic::ACTION_BASE_LIVE,
+            ChoiceType::ColorSelect => crate::core::logic::ACTION_BASE_COLOR,
+            ChoiceType::SelectStage | ChoiceType::SelectLiveSlot
+            | ChoiceType::TapO => crate::core::logic::ACTION_BASE_CHOICE,
+            ChoiceType::SelectHandDiscard
+            | ChoiceType::RevealHand
+            | ChoiceType::SelectSwapTarget => crate::core::logic::ACTION_BASE_HAND_SELECT,
+            ChoiceType::SelectDiscard
+            | ChoiceType::RecovM
+            | ChoiceType::RecovL
+            | ChoiceType::SelectDiscardPlay
+            | ChoiceType::SelectCards => crate::core::logic::ACTION_BASE_CHOICE,
+            ChoiceType::PayEnergy => crate::core::logic::ACTION_BASE_ENERGY,
+            ChoiceType::SelectLive => crate::core::logic::ACTION_BASE_LIVE,
             _ => {
-                if pi.choice_type.contains("SEARCH") || pi.choice_type.contains("RECOV") {
+                let s = pi.choice_type.as_str();
+                if s.contains("SEARCH") || s.contains("RECOV") {
                     crate::core::logic::ACTION_BASE_CHOICE
-                } else if pi.choice_type.contains("HAND") {
+                } else if s.contains("HAND") {
                     crate::core::logic::ACTION_BASE_HAND_SELECT
-                } else if pi.choice_type.contains("ENERGY") {
+                } else if s.contains("ENERGY") {
                     crate::core::logic::ACTION_BASE_ENERGY
-                } else if pi.choice_type.contains("LIVE") {
+                } else if s.contains("LIVE") {
                     crate::core::logic::ACTION_BASE_LIVE
                 } else {
                     crate::core::logic::ACTION_BASE_CHOICE
@@ -760,8 +753,8 @@ impl SemanticAssertionEngine {
 
         // Automatic Index Selection
         let mut selected_idx = 0;
-        match pi.choice_type.as_str() {
-            "SELECT_HAND_DISCARD" | "HAND" | "SELECT_HAND" => {
+        match pi.choice_type {
+            ChoiceType::SelectHandDiscard => {
                 if !state.core.players[p_idx].hand.is_empty() {
                     // Prefer choosing a card that matches the filter
                     if pi.filter_attr != 0 {
@@ -776,8 +769,8 @@ impl SemanticAssertionEngine {
                     }
                 }
             }
-            "SELECT_DISCARD" | "SELECT_STAGE" | "SLOT" | "MEMBER" | "TARGET_MEMBER" | "TAP_O" => {
-                let target_p = if pi.choice_type == "TAP_O" {
+            ChoiceType::SelectDiscard | ChoiceType::SelectStage | ChoiceType::TapO => {
+                let target_p = if pi.choice_type == crate::core::enums::ChoiceType::TapO {
                     1 - p_idx
                 } else {
                     p_idx
@@ -792,8 +785,8 @@ impl SemanticAssertionEngine {
                     }
                 }
             }
-            "LOOK_AND_CHOOSE" | "RECOV_L" | "RECOV_M" | "SEARCH" | "SEARCH_MEMBER"
-            | "SELECT_CARDS" => {
+            ChoiceType::LookAndChoose | ChoiceType::RecovL | ChoiceType::RecovM
+            | ChoiceType::SelectCards => {
                 // Select from looked_cards
                 // First, check if looked_cards has any valid cards
                 let has_valid_cards = state.core.players[p_idx]
@@ -804,10 +797,10 @@ impl SemanticAssertionEngine {
                 if has_valid_cards {
                     for (i, &cid) in state.core.players[p_idx].looked_cards.iter().enumerate() {
                         if cid != -1 {
-                            let matches = match pi.choice_type.as_str() {
-                                "RECOV_L" => self.db.get_live(cid).is_some(),
-                                "RECOV_M" => self.db.get_member(cid).is_some(),
-                                "LOOK_AND_CHOOSE" if pi.filter_attr != 0 => {
+                            let matches = match pi.choice_type {
+                                ChoiceType::RecovL => self.db.get_live(cid).is_some(),
+                                ChoiceType::RecovM => self.db.get_member(cid).is_some(),
+                                ChoiceType::LookAndChoose if pi.filter_attr != 0 => {
                                     let filter = crate::core::logic::filter::CardFilter::from_attr(
                                         pi.filter_attr,
                                     );
@@ -824,8 +817,8 @@ impl SemanticAssertionEngine {
                 } else {
                     // If looked_cards is empty, try to select from deck (for LOOK_AND_CHOOSE from deck)
                     // or from discard (for RECOV_M/RECOV_L)
-                    match pi.choice_type.as_str() {
-                        "RECOV_L" => {
+                    match pi.choice_type {
+                        ChoiceType::RecovL => {
                             // Find a live card in discard
                             for (i, &cid) in state.core.players[p_idx].discard.iter().enumerate() {
                                 if self.db.get_live(cid).is_some() {
@@ -834,7 +827,7 @@ impl SemanticAssertionEngine {
                                 }
                             }
                         }
-                        "RECOV_M" => {
+                        ChoiceType::RecovM => {
                             // Find a member card in discard
                             for (i, &cid) in state.core.players[p_idx].discard.iter().enumerate() {
                                 if self.db.get_member(cid).is_some() {
@@ -862,7 +855,7 @@ impl SemanticAssertionEngine {
                     }
                 }
             }
-            "LIVE" | "SELECT_LIVE" => {
+            ChoiceType::SelectLive => {
                 // Select from live zone
                 for (i, &cid) in state.core.players[p_idx].live_zone.iter().enumerate() {
                     if cid >= 0 {
@@ -871,7 +864,7 @@ impl SemanticAssertionEngine {
                     }
                 }
             }
-            "OPTIONAL" | "YES_NO" => {
+            ChoiceType::Optional => {
                 // Default to "Yes" for optional abilities
                 selected_idx = 0;
             }

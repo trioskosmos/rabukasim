@@ -1,5 +1,5 @@
-use crate::core::alphazero_encoding::AlphaZeroEncoding;
 use crate::core::logic::{CardDatabase, GameState};
+use crate::core::alphazero_encoding::AlphaZeroEncoding;
 // removed unused AlphaZeroEncoding
 use crate::core::heuristics::{Heuristic, HeuristicConfig};
 #[cfg(feature = "extension-module")]

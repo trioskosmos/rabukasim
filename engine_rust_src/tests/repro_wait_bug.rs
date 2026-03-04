@@ -1,5 +1,5 @@
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::{resolve_bytecode, AbilityContext, CardDatabase, GameState};
+use engine_rust::core::logic::{resolve_bytecode, AbilityContext, CardDatabase, GameState, ChoiceType};
 
 #[test]
 fn test_card_558_wait_repro() {
@@ -38,7 +38,7 @@ fn test_card_558_wait_repro() {
         .interaction_stack
         .last()
         .expect("Should have an interaction");
-    assert_eq!(interaction.choice_type, "OPTIONAL");
+    assert_eq!(interaction.choice_type, ChoiceType::Optional);
 
     // Resume with YES (0)
     println!("Step 2: Resume with YES");
@@ -62,7 +62,7 @@ fn test_card_558_wait_repro() {
         .interaction_stack
         .last()
         .expect("Should have LOOK_AND_CHOOSE interaction");
-    assert_eq!(next_interaction.choice_type, "LOOK_AND_CHOOSE");
+    assert_eq!(next_interaction.choice_type, ChoiceType::LookAndChoose);
 
     // Card should be tapped
     assert!(state.players[p1].is_tapped(1));

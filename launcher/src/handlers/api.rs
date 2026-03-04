@@ -683,7 +683,8 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                             let input_tensor = ort::value::Value::from_array((input_shape, input_vec)).unwrap();
                             let mask_tensor = ort::value::Value::from_array((mask_shape, nn_mask)).unwrap();
 
-                            if let Ok(outputs) = session.run(ort::inputs![input_tensor, mask_tensor]) {
+                            let run_result = session.run(ort::inputs![input_tensor, mask_tensor]);
+                            if let Ok(outputs) = run_result {
                                 let policy_val = outputs.get("policy").expect("Missing policy output");
                                 let value_val = outputs.get("value").expect("Missing value output");
 

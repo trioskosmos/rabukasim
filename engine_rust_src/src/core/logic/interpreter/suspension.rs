@@ -16,7 +16,7 @@ pub fn suspend_interaction(
     instr_ip: usize,
     effect_opcode: i32,
     target_slot: i32,
-    choice_type: &str,
+    choice_type: crate::core::enums::ChoiceType,
     choice_text: &str,
     filter_attr: u64,
     v_remaining: i16,
@@ -49,7 +49,7 @@ pub fn suspend_interaction(
         ability_index: ctx.ability_index,
         effect_opcode,
         target_slot,
-        choice_type: choice_type.to_string(),
+        choice_type,
         filter_attr,
         choice_text: choice_text.to_string(),
         v_remaining,
@@ -66,29 +66,26 @@ pub fn suspend_interaction(
 
     // Don't skip suspension for OPTIONAL, LOOK_AND_CHOOSE, COLOR_SELECT, TAP_M_SELECT, etc.
     // These are legitimate choice types that should always suspend even with limited actions.
+    use crate::core::enums::ChoiceType;
     let always_suspend_types = [
-        "OPTIONAL",
-        "LOOK_AND_CHOOSE",
-        "COLOR_SELECT",
-        "TAP_M_SELECT",
-        "TAP_O",
-        "SELECT_MEMBER",
-        "SELECT_LIVE",
-        "SELECT_PLAYER",
-        "RECOV_L",
-        "RECOV_M",
-        "SELECT_DISCARD_PLAY",
-        "SELECT_STAGE",
-        "SELECT_STAGE_EMPTY",
-        "SELECT_LIVE_SLOT",
-        "SELECT_HAND_PLAY",
-        "SELECT_MODE",
+        ChoiceType::Optional,
+        ChoiceType::LookAndChoose,
+        ChoiceType::ColorSelect,
+        ChoiceType::TapO, // Assuming TAP_M_SELECT doesn't exist in choice_types we added
+        ChoiceType::SelectMember,
+        ChoiceType::SelectLive,
+        ChoiceType::SelectPlayer,
+        ChoiceType::SelectDiscardPlay,
+        ChoiceType::SelectStage,
+        ChoiceType::SelectStageEmpty,
+        ChoiceType::SelectLiveSlot,
+        ChoiceType::SelectMode,
     ];
     let should_check_skip = !always_suspend_types.contains(&choice_type);
 
     if state.debug.debug_mode {
         println!(
-            "[DEBUG] suspend_interaction: choice_type={}, v_remaining={}, actions={}",
+            "[DEBUG] suspend_interaction: choice_type={:?}, v_remaining={}, actions={}",
             choice_type,
             v_remaining,
             actions.len()
@@ -98,11 +95,11 @@ pub fn suspend_interaction(
     if should_check_skip
         && actions.len() <= 1
         && (actions.is_empty() || actions.contains(&0))
-        && choice_type != "OPPONENT_CHOOSE"
+        && choice_type != crate::core::enums::ChoiceType::OpponentChoose
     {
         if state.debug.debug_mode {
             println!(
-                "[DEBUG] Softlock prevented: {} has no legal actions. Skipping suspension.",
+                "[DEBUG] Softlock prevented: {:?} has no legal actions. Skipping suspension.",
                 choice_type
             );
         }

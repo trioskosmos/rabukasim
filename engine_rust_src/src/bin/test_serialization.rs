@@ -1,3 +1,4 @@
+use engine_rust::core::enums::ChoiceType;
 use engine_rust::core::enums::*;
 use engine_rust::core::logic::{AbilityContext, GameState, PendingInteraction};
 use std::collections::VecDeque;
@@ -19,7 +20,7 @@ fn main() {
             player_id: 1,
             ..Default::default()
         },
-        choice_type: "LOOK_AND_CHOOSE".to_string(),
+        choice_type: ChoiceType::LookAndChoose,
         ..Default::default()
     };
     gs.interaction_stack.push(pending);

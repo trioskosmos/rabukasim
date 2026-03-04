@@ -86,9 +86,9 @@ fn test_opcode_select_live_rigor() {
         state
             .interaction_stack
             .last()
-            .map(|i| i.choice_type.as_str())
-            .unwrap_or(""),
-        "SELECT_LIVE"
+            .map(|i| i.choice_type)
+            .unwrap_or(ChoiceType::None),
+        ChoiceType::SelectLive
     );
 
     // Submit choice for Live 55001 (idx 0)

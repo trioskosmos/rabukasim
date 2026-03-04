@@ -59,7 +59,7 @@ if "%DEBUG_ARG%"=="--debug" echo [DEBUG MODE ENABLED]
 echo.
 
 pushd launcher
-cargo run --release --bin rabuka_launcher -- %DEBUG_ARG%
+cargo run --release --features nn --bin rabuka_launcher -- %DEBUG_ARG%
 set "EXIT_CODE=%errorlevel%"
 popd
 

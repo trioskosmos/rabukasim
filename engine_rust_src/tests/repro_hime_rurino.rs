@@ -21,7 +21,7 @@ fn test_hime_optional_discard_resumption() {
         ctx: ctx.clone(),
         card_id: 4270,
         effect_opcode: 58,
-        choice_type: "SELECT_HAND_DISCARD".to_string(),
+        choice_type: ChoiceType::SelectHandDiscard,
         filter_attr: 0x6002,
         v_remaining: 1,
         ..Default::default()
@@ -73,7 +73,7 @@ fn test_rurino_filter_masking_fix() {
         ctx: ctx.clone(),
         card_id: 17,
         effect_opcode: 58,
-        choice_type: "SELECT_HAND_DISCARD".to_string(),
+        choice_type: ChoiceType::SelectHandDiscard,
         filter_attr: 0x6000,
         v_remaining: 1,
         ..Default::default()

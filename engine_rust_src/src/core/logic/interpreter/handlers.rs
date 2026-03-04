@@ -1,11 +1,10 @@
 ﻿// --- Merged Handlers ---
 use crate::core::enums::*;
-use crate::core::hearts::HeartBoard;
 use crate::core::logic::interpreter::constants::{
     CHOICE_ALL, CHOICE_DONE, FILTER_IS_OPTIONAL, FILTER_MASK_LOWER, FLAG_REVEAL_UNTIL_IS_LIVE,
     FLAG_TARGET_OPPONENT, DYNAMIC_VALUE,
 };
-use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState, TriggerType};
+use crate::core::logic::{ChoiceType, AbilityContext, CardDatabase, GameState, PlayerState, TriggerType};
 use crate::core::models::interpreter::{resolve_target_slot, get_choice_text, check_condition_opcode};
 use crate::core::models::suspend_interaction;
 use crate::core::logic::interpreter::conditions::resolve_count;
@@ -175,9 +174,9 @@ pub fn handle_select_mode(
     if ctx.choice_index == -1 {
         let is_opponent = (_s & (1 << 24)) != 0 || (_s & 0xFF) == 2;
         let choice_type = if is_opponent {
-            "OPPONENT_CHOOSE"
+            crate::core::enums::ChoiceType::OpponentChoose
         } else {
-            "SELECT_MODE"
+            crate::core::enums::ChoiceType::SelectMode
         };
         let choice_text = get_choice_text(db, ctx);
 
@@ -315,7 +314,7 @@ pub fn handle_deck_zones(
                         instr_ip,
                         O_ORDER_DECK,
                         0,
-                        "ORDER_DECK",
+                        crate::core::enums::ChoiceType::OrderDeck,
                         &choice_text,
                         0,
                         -1,
@@ -343,7 +342,7 @@ pub fn handle_deck_zones(
                             instr_ip,
                             O_ORDER_DECK,
                             0,
-                            "ORDER_DECK",
+                            crate::core::enums::ChoiceType::OrderDeck,
                             "",
                             0,
                             -1,
@@ -383,7 +382,7 @@ pub fn handle_deck_zones(
                         instr_ip,
                         O_LOOK_REORDER_DISCARD,
                         0,
-                        "SELECT_CARDS_ORDER",
+                        crate::core::enums::ChoiceType::SelectCardsOrder,
                         &choice_text,
                         0,
                         -1,
@@ -414,7 +413,7 @@ pub fn handle_deck_zones(
                             instr_ip,
                             O_LOOK_REORDER_DISCARD,
                             0,
-                            "SELECT_CARDS_ORDER",
+                            crate::core::enums::ChoiceType::SelectCardsOrder,
                             "",
                             0,
                             -1,
@@ -532,7 +531,7 @@ pub fn handle_deck_zones(
                         instr_ip,
                         op,
                         0,
-                        "REVEAL_HAND",
+                        crate::core::enums::ChoiceType::RevealHand,
                         "",
                         (a as u32) as u64,
                         v as i16,
@@ -574,7 +573,7 @@ pub fn handle_deck_zones(
                             instr_ip,
                             op,
                             0,
-                            "REVEAL_HAND",
+                            crate::core::enums::ChoiceType::RevealHand,
                             "",
                             (a as u32) as u64,
                             next_v,
@@ -769,9 +768,9 @@ pub fn handle_move_to_discard(
     // Resumption logic for Yes/No is removed as we go straight to selection.
 
     let choice_type = if source_zone == 6 {
-        "SELECT_HAND_DISCARD"
+        crate::core::enums::ChoiceType::SelectHandDiscard
     } else {
-        "SELECT_DISCARD"
+        crate::core::enums::ChoiceType::SelectDiscard
     };
 
     if source_zone == 4 && next_ctx.choice_index == -1 && count == 1 {
@@ -1007,7 +1006,7 @@ pub fn handle_play_live_from_discard(
                 instr_ip,
                 O_PLAY_LIVE_FROM_DISCARD,
                 s,
-                "SELECT_DISCARD_PLAY",
+                crate::core::enums::ChoiceType::SelectDiscardPlay,
                 &choice_text,
                 a as u64,
                 remaining,
@@ -1042,7 +1041,7 @@ pub fn handle_play_live_from_discard(
                     instr_ip,
                     O_PLAY_LIVE_FROM_DISCARD,
                     s,
-                    "SELECT_LIVE_SLOT",
+                    crate::core::enums::ChoiceType::SelectLiveSlot,
                     "",
                     a as u64,
                     remaining,
@@ -1133,9 +1132,9 @@ pub fn handle_select_cards(
             println!("[DEBUG] handle_select_cards: p_idx={}, effective_zone={}, filter_attr={:X}", p_idx, effective_zone, filter_attr);
         }
         let choice_type = match effective_zone {
-            6 => "SELECT_HAND_DISCARD",
-            7 => "SELECT_DISCARD_PLAY",
-            _ => "LOOK_AND_CHOOSE",
+            6 => crate::core::enums::ChoiceType::SelectHandDiscard,
+            7 => crate::core::enums::ChoiceType::SelectDiscardPlay,
+            _ => crate::core::enums::ChoiceType::LookAndChoose,
         };
         let choice_text = get_choice_text(db, ctx);
         if suspend_interaction(
@@ -1250,7 +1249,7 @@ pub fn handle_select_cards(
                 instr_ip,
                 O_SELECT_CARDS,
                 s,
-                "LOOK_AND_CHOOSE",
+                crate::core::enums::ChoiceType::LookAndChoose,
                 "",
                 a as u64,
                 rem,
@@ -1329,9 +1328,9 @@ pub fn handle_look_and_choose(
 
     if ctx.choice_index == -1 {
         let choice_type = if source_zone == 6 {
-            "SELECT_HAND_DISCARD"
+            crate::core::enums::ChoiceType::SelectHandDiscard
         } else {
-            "LOOK_AND_CHOOSE"
+            crate::core::enums::ChoiceType::LookAndChoose
         };
         let choice_text = get_choice_text(db, ctx);
         let pick_count = ((v >> 8) & 0xFF) as i16;
@@ -1469,9 +1468,9 @@ pub fn handle_look_and_choose(
                 if rem > 0 && revealed.iter().any(|&c| c != -1) {
                     state.core.players[p_idx].looked_cards = revealed.clone();
                     let choice_type = if source_zone == 6 {
-                        "SELECT_HAND_DISCARD"
+                        crate::core::enums::ChoiceType::SelectHandDiscard
                     } else {
-                        "LOOK_AND_CHOOSE"
+                        crate::core::enums::ChoiceType::LookAndChoose
                     };
                     if suspend_interaction(
                         state,
@@ -1590,9 +1589,9 @@ pub fn handle_recovery(
 
     if ctx.choice_index == -1 {
         let choice_type = if real_op == O_RECOVER_LIVE {
-            "RECOV_L"
+            crate::core::enums::ChoiceType::RecovL
         } else {
-            "RECOV_M"
+            crate::core::enums::ChoiceType::RecovM
         };
         let choice_text = get_choice_text(db, ctx);
         if suspend_interaction(
@@ -1676,9 +1675,9 @@ pub fn handle_recovery(
                     .any(|&c| c != -1)
             {
                 let choice_type = if real_op == O_RECOVER_LIVE {
-                    "RECOV_L"
+                    crate::core::enums::ChoiceType::RecovL
                 } else {
-                    "RECOV_M"
+                    crate::core::enums::ChoiceType::RecovM
                 };
                 let choice_text = get_choice_text(db, ctx);
                 if suspend_interaction(
@@ -1727,7 +1726,7 @@ pub fn handle_swap_zone(
             instr_ip,
             O_SWAP_ZONE,
             0,
-            "SELECT_SWAP_SOURCE",
+            crate::core::enums::ChoiceType::SelectSwapSource,
             &choice_text,
             0,
             1,
@@ -1751,7 +1750,7 @@ pub fn handle_swap_zone(
                 instr_ip,
                 O_SWAP_ZONE,
                 0,
-                "SELECT_HAND_PLAY",
+                crate::core::enums::ChoiceType::SelectHandPlay,
                 "",
                 0,
                 1,
@@ -1905,7 +1904,7 @@ pub fn handle_energy(
                         instr_ip,
                         O_PAY_ENERGY,
                         0,
-                        "OPTIONAL",
+                        crate::core::enums::ChoiceType::Optional,
                         "",
                         a as u64,
                         -1,
@@ -1949,7 +1948,7 @@ pub fn handle_energy(
                                 instr_ip,
                                 O_PAY_ENERGY,
                                 0,
-                                "PAY_ENERGY",
+                                crate::core::enums::ChoiceType::PayEnergy,
                                 "",
                                 0,
                                 next_ctx.v_remaining,
@@ -2141,8 +2140,8 @@ pub fn handle_member_state(
             }
         }
         O_TAP_MEMBER => {
-            let mut resolved_slot = resolve_target_slot(s, ctx);
-            let target_p_idx = if s & 0x1000000 != 0 { 1 - ctx.player_id } else { ctx.player_id };
+            let resolved_slot = resolve_target_slot(s, ctx);
+            let _target_p_idx = if s & 0x1000000 != 0 { 1 - ctx.player_id } else { ctx.player_id };
 
             // Robustness Fix for Q183: If selection is needed (v=0) but missing from bytecode
             if v == 0 && resolved_slot == 4 && a & 0x02 == 0 {
@@ -2157,7 +2156,7 @@ pub fn handle_member_state(
                         instr_ip,
                         O_TAP_MEMBER,
                         0,
-                        "TAP_M_SELECT",
+                        crate::core::enums::ChoiceType::TapMSelect,
                         &choice_text,
                         mod_a as u64,
                         v as i16,
@@ -2179,7 +2178,7 @@ pub fn handle_member_state(
                         instr_ip,
                         O_TAP_MEMBER,
                         0,
-                        "OPTIONAL",
+                        crate::core::enums::ChoiceType::Optional,
                         &choice_text,
                         a as u64,
                         -1,
@@ -2196,7 +2195,7 @@ pub fn handle_member_state(
                         instr_ip,
                         O_TAP_MEMBER,
                         0,
-                        "TAP_M_SELECT",
+                        crate::core::enums::ChoiceType::TapMSelect,
                         &choice_text,
                         a as u64,
                         v as i16,
@@ -2260,7 +2259,7 @@ pub fn handle_member_state(
                     instr_ip,
                     O_TAP_OPPONENT,
                     0,
-                    "TAP_O",
+                    crate::core::enums::ChoiceType::TapO,
                     &choice_text,
                     a as u64,
                     count,
@@ -2293,7 +2292,7 @@ pub fn handle_member_state(
                             instr_ip,
                             O_TAP_OPPONENT,
                             0,
-                            "TAP_O",
+                            crate::core::enums::ChoiceType::TapO,
                             &choice_text,
                             a as u64,
                             ctx.v_remaining,
@@ -2326,7 +2325,7 @@ pub fn handle_member_state(
                     instr_ip,
                     O_MOVE_MEMBER,
                     s,
-                    "MOVE_MEMBER_DEST",
+                    crate::core::enums::ChoiceType::MoveMemberDest,
                     &choice_text,
                     0,
                     -1,
@@ -2445,7 +2444,7 @@ pub fn handle_member_state(
                         instr_ip,
                         O_PLAY_MEMBER_FROM_HAND,
                         0,
-                        "SELECT_HAND_PLAY",
+                        crate::core::enums::ChoiceType::SelectHandPlay,
                         "",
                         a as u64,
                         remaining,
@@ -2477,7 +2476,7 @@ pub fn handle_member_state(
                         instr_ip,
                         O_PLAY_MEMBER_FROM_HAND,
                         s,
-                        "SELECT_STAGE",
+                        crate::core::enums::ChoiceType::SelectStage,
                         "",
                         a as u64,
                         remaining,
@@ -2600,7 +2599,7 @@ pub fn handle_member_state(
                         instr_ip,
                         O_PLAY_MEMBER_FROM_DISCARD,
                         s,
-                        "SELECT_DISCARD_PLAY",
+                        crate::core::enums::ChoiceType::SelectDiscardPlay,
                         &choice_text,
                         a as u64,
                         remaining,
@@ -2621,9 +2620,9 @@ pub fn handle_member_state(
                     let mut target_ctx = ctx.clone();
                     target_ctx.player_id = target_p_idx as u8;
                     let choice_type = if empty_slot_only {
-                        "SELECT_STAGE_EMPTY"
+                        crate::core::enums::ChoiceType::SelectStageEmpty
                     } else {
-                        "SELECT_STAGE"
+                        crate::core::enums::ChoiceType::SelectStage
                     };
                     if suspend_interaction(
                         state,
@@ -2741,7 +2740,7 @@ pub fn handle_member_state(
                         instr_ip,
                         O_PLAY_MEMBER_FROM_DISCARD,
                         s,
-                        "SELECT_DISCARD_PLAY",
+                        crate::core::enums::ChoiceType::SelectDiscardPlay,
                         &choice_text,
                         a as u64,
                         remaining,
@@ -2865,13 +2864,13 @@ pub fn handle_meta_control(
                 }
             } else if ctx.choice_index == -1 {
                 let choice_type = if op == O_SELECT_MEMBER {
-                    "SELECT_MEMBER"
+                    crate::core::enums::ChoiceType::SelectMember
                 } else if op == O_SELECT_LIVE {
-                    "SELECT_LIVE"
+                    crate::core::enums::ChoiceType::SelectLive
                 } else if op == O_SELECT_PLAYER {
-                    "SELECT_PLAYER"
+                    crate::core::enums::ChoiceType::SelectPlayer
                 } else {
-                    "UNKNOWN"
+                    crate::core::enums::ChoiceType::None
                 };
                 let mut flip_ctx = ctx.clone();
                 if s == 2 {
@@ -2925,7 +2924,7 @@ pub fn handle_meta_control(
                     instr_ip,
                     O_OPPONENT_CHOOSE,
                     0,
-                    "OPPONENT_CHOOSE",
+                    crate::core::enums::ChoiceType::OpponentChoose,
                     &choice_text,
                     0,
                     -1,
@@ -3017,7 +3016,7 @@ pub fn handle_meta_control(
                     instr_ip,
                     O_COLOR_SELECT,
                     0,
-                    "COLOR_SELECT",
+                    crate::core::enums::ChoiceType::ColorSelect,
                     &choice_text,
                     0,
                     -1,

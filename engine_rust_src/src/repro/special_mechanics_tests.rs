@@ -66,7 +66,7 @@ fn test_selective_retrieval_natsumi() {
     // Should be in Response phase for opponent to choose one of the 2 cards
     assert_eq!(state.phase, Phase::Response);
     let interaction = state.interaction_stack.last().unwrap();
-    assert_eq!(interaction.choice_type, "SELECT_DISCARD_PLAY");
+    assert_eq!(interaction.choice_type, ChoiceType::SelectDiscardPlay);
     assert_eq!(state.core.players[0].looked_cards.len(), 2);
 }
 
@@ -86,7 +86,7 @@ fn test_opponent_choice_penalty_maki() {
     assert_eq!(state.phase, Phase::Response);
     assert_eq!(
         state.interaction_stack.last().unwrap().choice_type,
-        "OPPONENT_CHOOSE"
+        ChoiceType::OpponentChoose
     );
 }
 
@@ -168,6 +168,6 @@ fn test_selective_reveal_kanon() {
     assert_eq!(state.phase, Phase::Response);
     assert_eq!(
         state.interaction_stack.last().unwrap().choice_type,
-        "SELECT_MODE"
+        ChoiceType::SelectMode
     );
 }

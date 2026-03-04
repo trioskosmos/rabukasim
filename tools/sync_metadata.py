@@ -46,6 +46,10 @@ def sync():
         for key, val in metadata["costs"].items():
             f.write(f"pub const COST_{key}: i32 = {val};\n")
 
+        f.write("\n// Choice Types\n")
+        for key, val in metadata.get("choices", {}).items():
+            f.write(f"pub const CHOICE_{key}: i32 = {val};\n")
+
         f.write("\n// Extra Constants\n")
         for key, val in metadata.get("extra_constants", {}).items():
             const_type = "i32"
@@ -137,6 +141,43 @@ def sync():
             f.write(f"    {to_pascal_case(key)} = {val},\n")
         f.write("}\n\n")
 
+        # ChoiceType
+        if "choices" in metadata:
+            f.write("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]\n")
+            f.write("#[repr(u8)]\n")
+            f.write("pub enum ChoiceType {\n")
+            f.write("    #[default]\n")
+            f.write("    None = 0,\n")
+            for key, val in metadata["choices"].items():
+                if key == "NONE":
+                    continue
+                f.write(f"    {to_pascal_case(key)} = {val},\n")
+            f.write("}\n\n")
+
+            f.write("impl ChoiceType {\n")
+            f.write("    pub fn from_str(s: &str) -> Self {\n")
+            f.write("        match s {\n")
+            for key, val in metadata["choices"].items():
+                if key == "NONE": continue
+                f.write(f'            "{key}" => ChoiceType::{to_pascal_case(key)},\n')
+            f.write("            _ => ChoiceType::None,\n")
+            f.write("        }\n")
+            f.write("    }\n")
+            f.write("    pub fn as_str(&self) -> &'static str {\n")
+            f.write("        match self {\n")
+            for key, val in metadata["choices"].items():
+                if key == "NONE": continue
+                f.write(f'            ChoiceType::{to_pascal_case(key)} => "{key}",\n')
+            f.write('            ChoiceType::None => "NONE",\n')
+            f.write("        }\n")
+            f.write("    }\n")
+            f.write("}\n\n")
+            f.write("impl std::fmt::Display for ChoiceType {\n")
+            f.write("    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n")
+            f.write('        write!(f, "{}", self.as_str())\n')
+            f.write("    }\n")
+            f.write("}\n\n")
+
         # Phase
         f.write("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]\n")
         f.write("#[repr(i8)]\n")
@@ -203,6 +244,11 @@ def sync():
             f.write(f"    {key}: {val},\n")
         f.write("};\n\n")
 
+        f.write("export const ChoiceTypes = {\n")
+        for key, val in metadata.get("choices", {}).items():
+            f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
         f.write("export const ExtraConstants = {\n")
         for key, val in metadata.get("extra_constants", {}).items():
             f.write(f"    {key}: {val},\n")
@@ -220,6 +266,7 @@ def sync():
             ("ACTION_BASES", "action_bases"),
             ("CONDITIONS", "conditions"),
             ("COSTS", "costs"),
+            ("CHOICES", "choices"),
             ("PHASES", "phases"),
             ("EXTRA_CONSTANTS", "extra_constants"),
         ]

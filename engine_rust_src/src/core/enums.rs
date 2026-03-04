@@ -297,6 +297,113 @@ pub enum AbilityCostType {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]
+#[repr(u8)]
+pub enum ChoiceType {
+    #[default]
+    None = 0,
+    Optional = 1,
+    PayEnergy = 2,
+    RevealHand = 3,
+    SelectDiscard = 4,
+    SelectSwapSource = 5,
+    SelectStage = 6,
+    SelectStageEmpty = 7,
+    SelectLiveSlot = 8,
+    SelectSwapTarget = 9,
+    SelectMember = 10,
+    SelectDiscardPlay = 11,
+    SelectHandDiscard = 12,
+    ColorSelect = 13,
+    SelectMode = 14,
+    OpponentChoose = 15,
+    SelectCardsOrder = 16,
+    TapO = 17,
+    LookAndChoose = 18,
+    SelectCards = 19,
+    SelectPlayer = 20,
+    SelectLive = 21,
+    OrderDeck = 22,
+    SelectHandPlay = 23,
+    TapMSelect = 24,
+    MoveMemberDest = 25,
+    RecovL = 26,
+    RecovM = 27,
+}
+
+impl ChoiceType {
+    pub fn from_str(s: &str) -> Self {
+        match s {
+            "OPTIONAL" => ChoiceType::Optional,
+            "PAY_ENERGY" => ChoiceType::PayEnergy,
+            "REVEAL_HAND" => ChoiceType::RevealHand,
+            "SELECT_DISCARD" => ChoiceType::SelectDiscard,
+            "SELECT_SWAP_SOURCE" => ChoiceType::SelectSwapSource,
+            "SELECT_STAGE" => ChoiceType::SelectStage,
+            "SELECT_STAGE_EMPTY" => ChoiceType::SelectStageEmpty,
+            "SELECT_LIVE_SLOT" => ChoiceType::SelectLiveSlot,
+            "SELECT_SWAP_TARGET" => ChoiceType::SelectSwapTarget,
+            "SELECT_MEMBER" => ChoiceType::SelectMember,
+            "SELECT_DISCARD_PLAY" => ChoiceType::SelectDiscardPlay,
+            "SELECT_HAND_DISCARD" => ChoiceType::SelectHandDiscard,
+            "COLOR_SELECT" => ChoiceType::ColorSelect,
+            "SELECT_MODE" => ChoiceType::SelectMode,
+            "OPPONENT_CHOOSE" => ChoiceType::OpponentChoose,
+            "SELECT_CARDS_ORDER" => ChoiceType::SelectCardsOrder,
+            "TAP_O" => ChoiceType::TapO,
+            "LOOK_AND_CHOOSE" => ChoiceType::LookAndChoose,
+            "SELECT_CARDS" => ChoiceType::SelectCards,
+            "SELECT_PLAYER" => ChoiceType::SelectPlayer,
+            "SELECT_LIVE" => ChoiceType::SelectLive,
+            "ORDER_DECK" => ChoiceType::OrderDeck,
+            "SELECT_HAND_PLAY" => ChoiceType::SelectHandPlay,
+            "TAP_M_SELECT" => ChoiceType::TapMSelect,
+            "MOVE_MEMBER_DEST" => ChoiceType::MoveMemberDest,
+            "RECOV_L" => ChoiceType::RecovL,
+            "RECOV_M" => ChoiceType::RecovM,
+            _ => ChoiceType::None,
+        }
+    }
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ChoiceType::Optional => "OPTIONAL",
+            ChoiceType::PayEnergy => "PAY_ENERGY",
+            ChoiceType::RevealHand => "REVEAL_HAND",
+            ChoiceType::SelectDiscard => "SELECT_DISCARD",
+            ChoiceType::SelectSwapSource => "SELECT_SWAP_SOURCE",
+            ChoiceType::SelectStage => "SELECT_STAGE",
+            ChoiceType::SelectStageEmpty => "SELECT_STAGE_EMPTY",
+            ChoiceType::SelectLiveSlot => "SELECT_LIVE_SLOT",
+            ChoiceType::SelectSwapTarget => "SELECT_SWAP_TARGET",
+            ChoiceType::SelectMember => "SELECT_MEMBER",
+            ChoiceType::SelectDiscardPlay => "SELECT_DISCARD_PLAY",
+            ChoiceType::SelectHandDiscard => "SELECT_HAND_DISCARD",
+            ChoiceType::ColorSelect => "COLOR_SELECT",
+            ChoiceType::SelectMode => "SELECT_MODE",
+            ChoiceType::OpponentChoose => "OPPONENT_CHOOSE",
+            ChoiceType::SelectCardsOrder => "SELECT_CARDS_ORDER",
+            ChoiceType::TapO => "TAP_O",
+            ChoiceType::LookAndChoose => "LOOK_AND_CHOOSE",
+            ChoiceType::SelectCards => "SELECT_CARDS",
+            ChoiceType::SelectPlayer => "SELECT_PLAYER",
+            ChoiceType::SelectLive => "SELECT_LIVE",
+            ChoiceType::OrderDeck => "ORDER_DECK",
+            ChoiceType::SelectHandPlay => "SELECT_HAND_PLAY",
+            ChoiceType::TapMSelect => "TAP_M_SELECT",
+            ChoiceType::MoveMemberDest => "MOVE_MEMBER_DEST",
+            ChoiceType::RecovL => "RECOV_L",
+            ChoiceType::RecovM => "RECOV_M",
+            ChoiceType::None => "NONE",
+        }
+    }
+}
+
+impl std::fmt::Display for ChoiceType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]
 #[repr(i8)]
 pub enum Phase {
     #[default]

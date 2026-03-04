@@ -107,7 +107,7 @@ impl GameState {
             );
             for (idx, pending) in self.interaction_stack.iter().enumerate() {
                 println!(
-                    "  [{}] Op: {}, Type: {}, Card: {}, Choices: {}",
+                    "  [{}] Op: {}, Type: {:?}, Card: {}, Choices: {}",
                     idx,
                     pending.effect_opcode,
                     pending.choice_type,

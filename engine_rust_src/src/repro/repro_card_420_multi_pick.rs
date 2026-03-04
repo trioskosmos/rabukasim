@@ -108,7 +108,7 @@ fn test_repro_card_420_multi_pick_from_discard() {
         ability_index: 0,
         effect_opcode: O_PLAY_MEMBER_FROM_DISCARD,
         target_slot: 0,
-        choice_type: "SELECT_DISCARD_PLAY".to_string(),
+        choice_type: crate::core::enums::ChoiceType::SelectDiscardPlay,
         filter_attr,
         choice_text: String::new(),
         v_remaining,
@@ -138,7 +138,7 @@ fn test_repro_card_420_multi_pick_from_discard() {
         pi.choice_type, pi.v_remaining
     );
     assert!(
-        pi.choice_type == "SELECT_STAGE" || pi.choice_type == "SELECT_STAGE_EMPTY",
+        pi.choice_type == crate::core::enums::ChoiceType::SelectStage || pi.choice_type == crate::core::enums::ChoiceType::SelectStageEmpty,
         "Should be asking for stage selection, got: {}",
         pi.choice_type
     );
@@ -182,7 +182,7 @@ fn test_repro_card_420_multi_pick_from_discard() {
         pi2.choice_type, pi2.v_remaining
     );
     assert_eq!(
-        pi2.choice_type, "SELECT_DISCARD_PLAY",
+        pi2.choice_type, ChoiceType::SelectDiscardPlay,
         "Should be asking for 2nd discard play"
     );
 

@@ -50,13 +50,13 @@ mod tests {
 
         // Accept either OPTIONAL or SELECT_HAND_DISCARD as the first interaction
         assert!(
-            pi.choice_type == "OPTIONAL" || pi.choice_type == "SELECT_HAND_DISCARD",
+            pi.choice_type == crate::core::enums::ChoiceType::Optional || pi.choice_type == crate::core::enums::ChoiceType::SelectHandDiscard,
             "Choice type should be OPTIONAL or SELECT_HAND_DISCARD, got: {}",
             pi.choice_type
         );
 
         // If OPTIONAL, resolve it first
-        if pi.choice_type == "OPTIONAL" {
+        if pi.choice_type == crate::core::enums::ChoiceType::Optional {
             state.step(&db, 0).unwrap(); // Yes
             if state.interaction_stack.is_empty() {
                 println!("No further interaction after OPTIONAL");
@@ -71,7 +71,7 @@ mod tests {
 
         // Handle SELECT_HAND_DISCARD if present
         let pi = state.interaction_stack.last().unwrap();
-        if pi.choice_type == "SELECT_HAND_DISCARD" {
+        if pi.choice_type == crate::core::enums::ChoiceType::SelectHandDiscard {
             // Resolve cost choosing card index 0
             state.step(&db, 0).unwrap(); // Select first card in hand
         }
@@ -86,7 +86,7 @@ mod tests {
         println!("DEBUG: After cost, interaction type: {}", pi.choice_type);
 
         // The interaction might be TAP_O or something else depending on the ability
-        if pi.choice_type == "TAP_O" {
+        if pi.choice_type == crate::core::enums::ChoiceType::TapO {
             // Resolve interaction choosing slot 600 (opponent slot 0)
             state.step(&db, 600).unwrap();
 

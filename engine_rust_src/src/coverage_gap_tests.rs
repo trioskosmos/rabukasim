@@ -363,7 +363,7 @@ fn test_opcodes_movement_control() {
         state
             .interaction_stack
             .last()
-            .map(|p| p.choice_type.len())
+            .map(|p| p.choice_type.as_str().len())
             .unwrap_or(0)
             > 0
     ); // Should pause
@@ -460,7 +460,7 @@ fn test_opcodes_selection() {
     // state.resolve_bytecode_cref(&db, &bc, &ctx);
     // assert!(state.pending_choice_type.len() > 0);
     // Unimplemented in logic.rs match block.
-    // Could check type == "SELECT_MEMBER" etc if implemented.
+    // Could check type == crate::core::enums::ChoiceType::SelectMember etc if implemented.
     // state.pending_choice_type = "".to_string(); state.pending_card_id = -1;
 
     // O_SELECT_LIVE: Pause for live selection

@@ -30,9 +30,9 @@ fn test_opcode_select_member() {
         state
             .interaction_stack
             .last()
-            .map(|i| i.choice_type.as_str())
-            .unwrap_or(""),
-        "SELECT_MEMBER",
+            .map(|i| i.choice_type)
+            .unwrap_or(ChoiceType::None),
+        ChoiceType::SelectMember,
         "Pending choice type mismatch"
     );
 }
@@ -64,9 +64,9 @@ fn test_opcode_select_live() {
         state
             .interaction_stack
             .last()
-            .map(|i| i.choice_type.as_str())
-            .unwrap_or(""),
-        "SELECT_LIVE",
+            .map(|i| i.choice_type)
+            .unwrap_or(ChoiceType::None),
+        ChoiceType::SelectLive,
         "Pending choice type mismatch"
     );
 }
@@ -95,9 +95,9 @@ fn test_opcode_opponent_choose() {
         state
             .interaction_stack
             .last()
-            .map(|i| i.choice_type.as_str())
-            .unwrap_or(""),
-        "OPPONENT_CHOOSE",
+            .map(|i| i.choice_type)
+            .unwrap_or(ChoiceType::None),
+        ChoiceType::OpponentChoose,
         "Pending choice type mismatch"
     );
 

@@ -65,7 +65,7 @@ fn test_opcode_color_select_real_card_122() {
     );
     assert_eq!(
         state.interaction_stack.last().unwrap().choice_type,
-        "COLOR_SELECT",
+        ChoiceType::ColorSelect,
         "Pending interaction should be COLOR_SELECT"
     );
 
@@ -179,10 +179,10 @@ fn test_opcode_tap_opponent_dynamic() {
     // TAP_OPPONENT is interactive - should suspend
     // The interaction might be OPTIONAL first (for cost), then TAP_O
     if state.phase == Phase::Response && !state.interaction_stack.is_empty() {
-        let choice_type = &state.interaction_stack.last().unwrap().choice_type;
+        let choice_type = state.interaction_stack.last().unwrap().choice_type;
 
         // Handle OPTIONAL interaction first if present
-        if choice_type == "OPTIONAL" {
+        if choice_type == crate::core::enums::ChoiceType::Optional {
             // Resolve OPTIONAL with Yes (0)
             let mut pending = state.interaction_stack.pop().unwrap();
             pending.ctx.choice_index = 0;
@@ -191,8 +191,8 @@ fn test_opcode_tap_opponent_dynamic() {
 
         // Now check for TAP_O interaction
         if !state.interaction_stack.is_empty() {
-            let choice_type = &state.interaction_stack.last().unwrap().choice_type;
-            if choice_type == "TAP_O" {
+            let choice_type = state.interaction_stack.last().unwrap().choice_type;
+            if choice_type == crate::core::enums::ChoiceType::TapO {
                 // Resume with choice: tap slot 0
                 let mut pending = state.interaction_stack.pop().unwrap();
                 pending.ctx.choice_index = 0;

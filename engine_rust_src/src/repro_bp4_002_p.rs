@@ -61,7 +61,7 @@ fn test_repro_bp4_002_p_wait_flow() {
 
     // The interaction should be either OPTIONAL (for tap) or LOOK_AND_CHOOSE (if optional was auto-skipped)
     assert!(
-        interaction.choice_type == "OPTIONAL" || interaction.choice_type == "LOOK_AND_CHOOSE",
+        interaction.choice_type == crate::core::enums::ChoiceType::Optional || interaction.choice_type == crate::core::enums::ChoiceType::LookAndChoose,
         "Interaction should be OPTIONAL or LOOK_AND_CHOOSE, got: {}",
         interaction.choice_type
     );
@@ -88,7 +88,7 @@ fn test_repro_bp4_002_p_wait_flow() {
     );
     assert_eq!(
         state.interaction_stack.last().unwrap().choice_type,
-        "LOOK_AND_CHOOSE"
+        ChoiceType::LookAndChoose
     );
 
     // LOOK_AND_CHOOSE requires selecting from looked_cards or skipping

@@ -1,3 +1,4 @@
+use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 // use crate::core::generated_constants::*;
 
@@ -61,7 +62,7 @@ pub fn get_opcode_name(op: i32) -> &'static str {
         O_ADD_HEARTS => "ADD_HEARTS",
         O_ADD_BLADES => "ADD_BLADES",
         O_MOVE_TO_DISCARD => "MOVE_TO_DISCARD",
-        O_LOOK_AND_CHOOSE => "LOOK_AND_CHOOSE",
+        O_LOOK_AND_CHOOSE => ChoiceType::LookAndChoose.as_str(),
         O_RECOVER_MEMBER => "RECOVER_MEMBER",
         O_RECOVER_LIVE => "RECOVER_LIVE",
         O_ENERGY_CHARGE => "ENERGY_CHARGE",
@@ -76,10 +77,10 @@ pub fn get_opcode_name(op: i32) -> &'static str {
         O_GRANT_ABILITY => "GRANT_ABILITY",
         O_PLAY_MEMBER_FROM_HAND => "PLAY_MEMBER_FROM_HAND",
         O_SET_TAPPED => "SET_TAPPED",
-        O_ORDER_DECK => "ORDER_DECK",
+        O_ORDER_DECK => ChoiceType::OrderDeck.as_str(),
         O_REVEAL_UNTIL => "REVEAL_UNTIL",
-        O_PAY_ENERGY => "PAY_ENERGY",
-        O_SELECT_MEMBER => "SELECT_MEMBER",
+        O_PAY_ENERGY => ChoiceType::PayEnergy.as_str(),
+        O_SELECT_MEMBER => ChoiceType::SelectMember.as_str(),
         O_META_RULE => "META_RULE",
         O_PLAY_MEMBER_FROM_DISCARD => "PLAY_MEMBER_FROM_DISCARD",
         O_JUMP => "JUMP",
@@ -95,7 +96,7 @@ pub fn get_opcode_name(op: i32) -> &'static str {
         220 => "SCORE_COMPARE",
         226 => "HAS_KEYWORD",
         305 => "MAIN_PHASE",
-        306 => "SELECT_MEMBER",
+        306 => ChoiceType::SelectMember.as_str(),
         307 => "SUCCESS_PILE_COUNT",
         308 => "IS_SELF_MOVE",
         309 => "DISCARDED_CARDS",
@@ -103,7 +104,7 @@ pub fn get_opcode_name(op: i32) -> &'static str {
         311 => "SYNC_COST",
         312 => "SUM_VALUE",
         313 => "IS_WAIT",
-        _ => "UNKNOWN",
+        _ => ChoiceType::None.as_str(),
     }
 }
 
@@ -124,7 +125,7 @@ pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
 
 pub fn trigger_as_str(t: TriggerType) -> &'static str {
     match t {
-        TriggerType::None => "NONE",
+        TriggerType::None => "None",
         TriggerType::OnPlay => "OnPlay",
         TriggerType::OnLiveStart => "OnLiveStart",
         TriggerType::OnLiveSuccess => "OnLiveSuccess",

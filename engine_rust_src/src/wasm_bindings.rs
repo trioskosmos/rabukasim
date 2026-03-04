@@ -136,7 +136,7 @@ impl WasmEngine {
         self.state
             .interaction_stack
             .last()
-            .map(|p| p.choice_type.clone())
+            .map(|p| p.choice_type.as_str().to_string())
             .unwrap_or_default()
     }
 

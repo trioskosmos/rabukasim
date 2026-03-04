@@ -73,7 +73,7 @@ mod tests {
             card_id: -1, // TEST: FIXED - activate_ability_with_choice now handles -1
             ability_index: -1,
             effect_opcode: 64, // O_PAY_ENERGY
-            choice_type: "PAY_ENERGY".to_string(),
+            choice_type: crate::core::enums::ChoiceType::PayEnergy,
             v_remaining: 2,
             actions: Vec::new(),
             ..Default::default()
@@ -181,7 +181,7 @@ mod tests {
             ctx: ctx.clone(),
             card_id: 4270,
             effect_opcode: 58,
-            choice_type: "SELECT_HAND_DISCARD".to_string(),
+            choice_type: crate::core::enums::ChoiceType::SelectHandDiscard,
             filter_attr: 0x6000 | crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL,
             v_remaining: 1,
             ..Default::default()
@@ -230,7 +230,7 @@ mod tests {
             ctx: ctx.clone(),
             card_id: 17,
             effect_opcode: 58,
-            choice_type: "SELECT_HAND_DISCARD".to_string(),
+            choice_type: crate::core::enums::ChoiceType::SelectHandDiscard,
             filter_attr: 0x6000,
             v_remaining: 1,
             ..Default::default()
@@ -292,7 +292,7 @@ mod tests {
         assert_eq!(state.interaction_stack.last().unwrap().effect_opcode, 58);
         assert_eq!(
             state.interaction_stack.last().unwrap().choice_type,
-            "SELECT_HAND_DISCARD"
+            ChoiceType::SelectHandDiscard
         );
 
         // 3. Perform a hand selection (index 0)

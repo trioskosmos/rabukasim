@@ -7,7 +7,6 @@ use rand::rngs::SmallRng;
 use rand::SeedableRng;
 // use crate::core::logic::{Phase, ActionReceiver};
 #[cfg(feature = "nn")]
-use crate::core::enums::*;
 #[cfg(feature = "nn")]
 use crate::core::logic::ai_encoding::GameStateEncoding;
 #[cfg(feature = "nn")]

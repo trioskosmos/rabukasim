@@ -23,7 +23,7 @@ fn test_card_selection_filtering() {
     let pending = PendingInteraction {
         card_id: aqours_cid,
         ability_index: 0,
-        choice_type: "SELECT_MEMBER".to_string(),
+        choice_type: ChoiceType::SelectMember,
         choice_text: "Choose Aqours member".to_string(),
         filter_attr: 48, // Group Filter for Aqours (enabled bit 0x10 + Group ID 1 << 5 = 0x20 = 48)
         v_remaining: 1,

@@ -523,7 +523,7 @@ pub fn check_condition_opcode(
             let my_lives = player.success_lives.len() as i32;
             let opp_lives = opponent.success_lives.len() as i32;
             let reversed = (attr & 0x01) != 0;
-            let diff = if reversed { (opp_lives - my_lives) } else { (my_lives - opp_lives) };
+            let diff = if reversed { opp_lives - my_lives } else { my_lives - opp_lives };
             if val == 0 { diff > 0 } else { diff >= val }
         }
         C_COUNT_GROUP => compare_i32(
@@ -795,7 +795,7 @@ pub fn check_condition_opcode(
                 .sum::<i32>();
             let opp_total = opp_hearts.to_array().iter().map(|&x| x as i32).sum::<i32>();
             let reversed = (attr & 0x01) != 0;
-            let diff = if reversed { (opp_total - self_total) } else { (self_total - opp_total) };
+            let diff = if reversed { opp_total - self_total } else { self_total - opp_total };
             if val == 0 { diff > 0 } else { diff >= val }
         }
         C_HAS_EXCESS_HEART => {

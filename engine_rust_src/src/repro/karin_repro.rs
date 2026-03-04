@@ -86,7 +86,7 @@ mod tests {
         // After recovery:
         // 1. ID 1500 moved from discard to looked_cards.
         // 2. Suspends for selection from looked_cards?
-        // Wait, handle_recovery suspends with choice_type "RECOV_L" but then immediately pauses for pick?
+        // Wait, handle_recovery suspends with choice_type ChoiceType::RecovL but then immediately pauses for pick?
         // No, RECOV_L moves card to Hand in handle_recovery?
         // Let's check handle_recovery...
         // It says: state.core.players[p_idx].hand.push(cid);
