@@ -38,7 +38,7 @@ pub enum TargetType {
     MemberSelect = 10,
     MemberNamed = 11,
     OpponentMember = 12,
-    PlayerSelect = 13,
+    PlayerSelect = 20,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]
@@ -446,6 +446,6 @@ pub enum Zone {
     Hand = 6,
     Discard = 7,
     LiveSet = 13,
-    SuccessPile = 14,
-    Yell = 15,
+    SuccessPile = 16,
+    Yell = 17,
 }

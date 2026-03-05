@@ -1,5 +1,6 @@
 use crate::core::enums::Zone;
 use crate::core::generated_layout::*;
+use crate::core::generated_constants::*;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct DecodedSlot {
@@ -36,19 +37,18 @@ impl DecodedSlot {
     }
 
     fn decode_zone(val: u8) -> Zone {
-        match val {
-            1 => Zone::DeckTop,
-            2 => Zone::DeckBottom,
-            3 => Zone::Energy,
-            4 => Zone::Stage,
-            6 => Zone::Hand,
-            7 => Zone::Discard,
-            8 => Zone::Deck,
-            13 => Zone::LiveSet,
-            14 => Zone::SuccessPile,
-            15 => Zone::Yell,
-            _ => Zone::Default,
-        }
+        let v = val as i32;
+        if v == ZONE_DECK_TOP { Zone::DeckTop }
+        else if v == ZONE_DECK_BOTTOM { Zone::DeckBottom }
+        else if v == ZONE_ENERGY { Zone::Energy }
+        else if v == ZONE_STAGE { Zone::Stage }
+        else if v == ZONE_HAND { Zone::Hand }
+        else if v == ZONE_DISCARD { Zone::Discard }
+        else if v == ZONE_DECK { Zone::Deck }
+        else if v == ZONE_LIVE_SET { Zone::LiveSet }
+        else if v == ZONE_SUCCESS_PILE { Zone::SuccessPile }
+        else if v == ZONE_YELL { Zone::Yell }
+        else { Zone::Default }
     }
 }
 

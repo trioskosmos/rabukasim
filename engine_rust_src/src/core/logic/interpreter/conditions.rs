@@ -2,9 +2,10 @@
 //!
 //! This module contains the logic for evaluating conditions and opcodes.
 
-use super::constants::*;
 use super::suspension::resolve_target_slot;
 use crate::core::enums::*;
+use crate::core::generated_layout::*;
+use crate::core::generated_constants::*;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::filter::map_filter_string_to_attr;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};
@@ -18,11 +19,11 @@ fn compare_i32(actual: i32, target: i32, slot: i32) -> bool {
         // println!("[DEBUG] compare_i32: actual={}, target={}, mode={}, slot={}", actual, target, mode, slot);
     }
     match mode {
-        1 => actual > target,
-        2 => actual < target,
-        3 => actual >= target,
-        4 => actual <= target,
-        _ => actual == target, // default: equal (mode 0)
+        COMP_GT => actual > target,
+        COMP_LT => actual < target,
+        COMP_GE => actual >= target,
+        COMP_LE => actual <= target,
+        _ => actual == target, // default: equal (COMP_EQ: 0)
     }
 }
 
@@ -72,7 +73,7 @@ pub fn check_condition(
         }
 
         if let Some(p_val) = get_param("player").and_then(|v| v.as_i64()) {
-            if p_val == 2 {
+            if p_val == TARGET_PLAYER_OPPONENT as i64 {
                 // Opponent
                 mapped_attr |= FILTER_OPPONENT;
             }
@@ -100,9 +101,9 @@ pub fn check_condition(
                     mapped_attr |= FILTER_REVEALED_CONTEXT;
                     if let Some(val_str) = params.get("value").and_then(|v| v.as_str()) {
                         if val_str == "live" {
-                            val = 1;
+                            val = CARD_TYPE_LIVE;
                         } else if val_str == "member" {
-                            val = 2;
+                            val = CARD_TYPE_MEMBER;
                         }
                     }
                 }
@@ -186,17 +187,17 @@ pub fn resolve_count(
 
         // Mask bindings: 4=Stage, 7=Discard, 6=Hand (matching Zone enum)
         let check_stage = if has_zone_mask {
-            zone_mask == 4
+            zone_mask == ZONE_STAGE as u64
         } else {
             op == C_COUNT_STAGE || op == C_COUNT_GROUP
         };
         let check_discard = if has_zone_mask {
-            zone_mask == 7
+            zone_mask == ZONE_DISCARD as u64
         } else {
             op == C_COUNT_DISCARD
         };
         let check_hand = if has_zone_mask {
-            zone_mask == 6
+            zone_mask == ZONE_HAND as u64
         } else {
             op == C_COUNT_HAND
         };
@@ -237,7 +238,7 @@ pub fn resolve_count(
         // Note: Don't apply this encoding if only UNIQUE_NAMES flag is set (0x8000)
         let group_id_bits = (attr & 0x00000000FFFFFFFF) & !FILTER_UNIQUE_NAMES;
         let should_auto_encode_group = (op == C_COUNT_GROUP || op == C_COUNT_STAGE)
-            && (attr & FILTER_GROUP_FLAG) == 0
+            && (attr & FILTER_GROUP_ENABLE) == 0
             && group_id_bits > 0
             && group_id_bits < 300;
 
@@ -253,12 +254,12 @@ pub fn resolve_count(
         // CRITICAL FIX: Python compiler sometimes leaks the condition `val` (e.g. "needs >= 2 CatChu members")
         // into the filter's `value_threshold` as a heart requirement because they share the same params dict!
         // If value_threshold is set but there's no color_mask and it's NOT a cost type, clear the value_threshold bit!
-        let has_value_enabled = (filter_attr & FILTER_COST_FLAG) != 0; // Bit 24
-        let is_cost_type = (filter_attr & crate::core::logic::filter::FILTER_COST_TYPE_FLAG) != 0;  // Bit 31
+        let has_value_enabled = (filter_attr & FILTER_COST_ENABLE) != 0; // Bit 24
+        let is_cost_type = (filter_attr & FILTER_COST_TYPE_FLAG) != 0;  // Bit 31
         let has_color_mask = ((filter_attr >> FILTER_COLOR_SHIFT) & 0x7F) != 0; // Bits 32-38
         if has_value_enabled && !is_cost_type && !has_color_mask {
             // Nullify the value_enabled bit (bit 24) since it's an errant cross-contamination from the count target
-            filter_attr &= !FILTER_COST_FLAG;
+            filter_attr &= !FILTER_COST_ENABLE;
         }
 
         // CRITICAL FIX: Clear metadata flags that collide with biological fields (e.g. char_id_1 at bit 39-45)
@@ -380,7 +381,7 @@ pub fn check_condition_opcode(
     };
 
     let cid = get_cid();
-    let area_val = (slot >> 28) & 0x7; // Extract area from packed slot (bits 28-30)
+    let area_val = ((slot as u32 >> S_STANDARD_AREA_IDX_SHIFT) & S_STANDARD_AREA_IDX_MASK) as u8; 
     let real_slot = slot & 0xFF;
 
     if state.debug.debug_mode {
@@ -645,7 +646,7 @@ pub fn check_condition_opcode(
         C_HAS_KEYWORD => {
             let mut res = false;
             if (attr & KEYWORD_PLAYED_THIS_TURN) != 0 || attr == 0 {
-                if (attr & FILTER_GROUP_FLAG) != 0 {
+                if (attr & FILTER_GROUP_ENABLE) != 0 {
                     let group_id = (attr >> FILTER_GROUP_SHIFT) & 0x7F;
                     res = (player.played_group_mask & (1 << group_id)) != 0;
                 } else {
@@ -673,7 +674,7 @@ pub fn check_condition_opcode(
                 }
             }
             if (attr & KEYWORD_ACTIVATED_ENERGY_BY_GROUP) != 0 {
-                if (attr & FILTER_GROUP_FLAG) != 0 {
+                if (attr & crate::core::logic::constants::FILTER_GROUP_ENABLE) != 0 {
                     let group_id = (attr >> FILTER_GROUP_SHIFT) & 0x7F;
                     let bit = 1 << group_id;
                     let matches = (player.activated_energy_group_mask & bit) != 0;
@@ -686,7 +687,7 @@ pub fn check_condition_opcode(
                 }
             }
             if (attr & KEYWORD_ACTIVATED_MEMBER_BY_GROUP) != 0 {
-                if (attr & FILTER_GROUP_FLAG) != 0 {
+                if (attr & crate::core::logic::constants::FILTER_GROUP_ENABLE) != 0 {
                     let group_id = (attr >> FILTER_GROUP_SHIFT) & 0x7F;
                     let bit = 1 << group_id;
                     let matches = (player.activated_member_group_mask & bit) != 0;

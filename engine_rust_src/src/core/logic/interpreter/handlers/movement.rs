@@ -91,11 +91,11 @@ pub fn handle_move_to_discard(
     let mut source_zone = instr.s.source_zone;
     if source_zone == Zone::Default {
         let ts = instr.s.target_slot;
-        if ts == 4 {
+        if ts == SLOT_CONTEXT as u8 {
             source_zone = Zone::Stage;
-        } else if ts == 6 {
+        } else if ts == SLOT_HAND as u8 {
             source_zone = Zone::Hand;
-        } else if ts == 13 {
+        } else if (SLOT_LIVE_0 as u8..=SLOT_LIVE_2 as u8).contains(&ts) {
             source_zone = Zone::LiveSet;
         } else {
             source_zone = Zone::Deck;
@@ -117,7 +117,7 @@ pub fn handle_move_to_discard(
                 .filter(|&&c| c >= 0)
                 .count() as i32,
             Zone::LiveSet | Zone::SuccessPile => state.players[target_player_idx].success_lives.len() as i32,
-            Zone::Deck | Zone::Default => state.players[target_player_idx].deck.len() as i32,
+            Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => state.players[target_player_idx].deck.len() as i32,
             Zone::Energy => state.players[target_player_idx].energy_zone.len() as i32,
             _ => 0,
         };
@@ -131,7 +131,7 @@ pub fn handle_move_to_discard(
         return Some(false);
     }
 
-    let filter_attr = (a as u64) & 0xFFFFFFFFFFFF0FFF;
+    let filter_attr = (a as u64) & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
     let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
 
     if state.debug.debug_mode {
@@ -148,7 +148,7 @@ pub fn handle_move_to_discard(
                 .count() as i32,
             Zone::LiveSet | Zone::SuccessPile => state.players[target_player_idx].success_lives.len() as i32,
             Zone::Energy => state.players[target_player_idx].energy_zone.len() as i32,
-            Zone::Deck | Zone::Default => state.players[target_player_idx].deck.len() as i32,
+            Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => state.players[target_player_idx].deck.len() as i32,
             _ => 99,
         };
         if available_count < v {
@@ -174,13 +174,22 @@ pub fn handle_move_to_discard(
         }
     }
 
-    if next_ctx.choice_index == -1 && count > 0 && source_zone != Zone::Default && source_zone != Zone::Deck {
+    if next_ctx.choice_index == -1 && count > 0 && source_zone != Zone::Default && source_zone != Zone::Deck && source_zone != Zone::DeckTop && source_zone != Zone::DeckBottom {
         // Auto-pick shortcut for single mandatory target
         if state.players[p_idx].looked_cards.len() == 1 && !is_optional && count == 1 {
             next_ctx.choice_index = 0;
         }
 
         if next_ctx.choice_index == -1 {
+            let mut filter_attr_with_mask = a as u64;
+            if source_zone == Zone::Stage {
+                filter_attr_with_mask |= (ZONE_STAGE as u64) << 53;
+            } else if source_zone == Zone::Hand {
+                filter_attr_with_mask |= (ZONE_HAND as u64) << 53;
+            } else if source_zone == Zone::Discard {
+                filter_attr_with_mask |= (ZONE_DISCARD as u64) << 53;
+            }
+
             if suspend_interaction(
                 state,
                 db,
@@ -190,8 +199,8 @@ pub fn handle_move_to_discard(
                 s,
                 choice_type,
                 "",
-                filter_attr,
-                count as i16,
+                filter_attr_with_mask,
+                v as i16,
             ) {
                 return None;
             }
@@ -261,7 +270,7 @@ pub fn handle_move_to_discard(
                     removed_cid = state.players[target_player_idx].success_lives.pop().unwrap() as i32;
                 }
             }
-            Zone::Deck | Zone::Default => {
+            Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
                 if !state.players[target_player_idx].deck.is_empty() {
                     removed_cid = state.players[target_player_idx].deck.pop().unwrap() as i32;
                 }
@@ -322,7 +331,7 @@ pub fn handle_move_to_discard(
                         state.players[target_player_idx].discard.push(cid);
                     }
                 }
-                Zone::Deck | Zone::Default => {
+                Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
                     if let Some(cid) = state.players[target_player_idx].deck.pop() {
                         state.players[target_player_idx].discard.push(cid);
                     }

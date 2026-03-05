@@ -8,7 +8,10 @@ from pydantic import ConfigDict
 from engine.models.enums import CHAR_MAP
 from engine.models.opcodes import Opcode
 
-from .generated_metadata import EXTRA_CONSTANTS
+from .generated_metadata import (
+    EXTRA_CONSTANTS, COMPARISONS, ZONES, HEART_COLOR_MAP, 
+    META_RULE_TYPES, COUNT_SOURCES
+)
 from .generated_packer import (
     pack_a_standard, pack_a_heart_cost, pack_a_look_choose,
     pack_v_heart_counts, pack_v_look_choose, pack_s_standard
@@ -801,14 +804,13 @@ class Ability:
 
             # Comparison and Slot Mapping
             comp_str = str(cond.params.get("comparison") or params_upper.get("COMPARISON") or "GE").upper()
-            comp_map = {"EQ": 0, "GT": 1, "LT": 2, "GE": 3, "LE": 4}
-            comp_val = comp_map.get(comp_str, 0)
+            comp_val = COMPARISONS.get(comp_str, 0)
 
             slot = 0
             zone = str(cond.params.get("zone") or params_upper.get("ZONE") or "").upper()
-            if zone == "LIVE_ZONE": slot = 1
-            elif zone == "STAGE": slot = 0
-            elif zone == "YELL" or zone == "YELL_REVEALED": slot = 15
+            if zone == "LIVE_ZONE": slot = 13 # LIVE_SET
+            elif zone == "STAGE": slot = int(TargetType.MEMBER_SELF)
+            elif zone == "YELL" or zone == "YELL_REVEALED": slot = ZONES.get("YELL", 17)
             elif str(cond.params.get("context", "")).lower() == "excess": slot = 2
             else:
                 slot_raw = cond.params.get("TargetSlot") or params_upper.get("TARGETSLOT") or 0
@@ -817,11 +819,11 @@ class Ability:
             area_val = cond.params.get("area") or params_upper.get("AREA")
             if area_val:
                 a_str = str(area_val).upper()
-                if "LEFT" in a_str: slot |= (1 << 28)
-                elif "CENTER" in a_str: slot |= (2 << 28)
-                elif "RIGHT" in a_str: slot |= (3 << 28)
+                if "LEFT" in a_str: slot |= (1 << 29)
+                elif "CENTER" in a_str: slot |= (2 << 29)
+                elif "RIGHT" in a_str: slot |= (3 << 29)
 
-            packed_slot = (slot & 0x0F) | ((comp_val & 0x0F) << 4) | (slot & 0x7FFFFF00)
+            packed_slot = (slot & 0x0F) | ((comp_val & 0x0F) << 4) | (slot & 0xFFFFFF00)
 
             bytecode.extend([
                 to_signed_32(int(op) + (1000 if cond.is_negated else 0)),
@@ -879,7 +881,18 @@ class Ability:
 
         if op is not None:
             attr = 0
-            slot = 0
+            slot_params = {
+                "target_slot": 0,
+                "remainder_zone": 0,
+                "source_zone": 0,
+                "dest_zone": 0,
+                "is_opponent": False,
+                "is_reveal_until_live": False,
+                "is_empty_slot": False,
+                "is_wait": False,
+                "is_dynamic": False,
+                "area_idx": 0
+            }
 
             # --- Resolve Slot (Source) ---
             if cost.type in [
@@ -888,18 +901,17 @@ class Ability:
                 AbilityCostType.REVEAL_HAND,
                 AbilityCostType.REVEAL_HAND_ALL,
             ]:
-                slot = int(TargetType.CARD_HAND)
+                slot_params["target_slot"] = int(TargetType.CARD_HAND)
             elif cost.type in [AbilityCostType.TAP_SELF, AbilityCostType.TAP_MEMBER, AbilityCostType.SACRIFICE_SELF]:
-                slot = int(TargetType.MEMBER_SELF)
+                slot_params["target_slot"] = int(TargetType.MEMBER_SELF)
             elif cost.type == AbilityCostType.DISCARD_ENERGY:
-                slot = int(TargetType.SELF)  # Energy usually tied to player/self zone
+                slot_params["target_slot"] = int(TargetType.SELF)
             elif cost.type in [AbilityCostType.RETURN_DISCARD_TO_DECK]:
-                slot = int(TargetType.CARD_DISCARD)
+                slot_params["target_slot"] = int(TargetType.CARD_DISCARD)
             elif cost.type in [AbilityCostType.RETURN_SUCCESS_LIVE_TO_DECK, AbilityCostType.DISCARD_SUCCESS_LIVE]:
-                # Special Target for success pile? (Not explicitly in TargetType but engine handles)
-                slot = 2  # Success area
+                slot_params["source_zone"] = ZONES.get("SUCCESS_PILE", 14)
             else:
-                slot = int(TargetType.SELF)
+                slot_params["target_slot"] = int(TargetType.SELF)
 
             # --- Resolve Attr (Params/Destination) ---
             params_upper = {k.upper(): v for k, v in cost.params.items() if isinstance(k, str)}
@@ -908,9 +920,9 @@ class Ability:
                 # 0=Discard, 1=Top, 2=Bottom
                 to = str(cost.params.get("to") or params_upper.get("TO") or "top").lower()
                 if to == "bottom":
-                    attr = 2
+                    slot_params["remainder_zone"] = int(EXTRA_CONSTANTS.get("DECK_POSITION_BOTTOM", 2))
                 elif to == "top":
-                    attr = 1
+                    slot_params["remainder_zone"] = int(EXTRA_CONSTANTS.get("DECK_POSITION_TOP", 1))
 
             # NEW: Packed Filter Logic for Selection/Manipulation Opcodes
             # Bits 4-7: Comparison (0:GE, 1:LE, 2:GT, 3:LT, 4:EQ)
@@ -921,7 +933,7 @@ class Ability:
             if op in [Opcode.SELECT_MEMBER, Opcode.PLAY_MEMBER_FROM_HAND, Opcode.PLAY_MEMBER_FROM_DISCARD, Opcode.MOVE_TO_DISCARD]:
                 # Value capture flag (Bit 25 of slot)
                 if cost.params.get("destination") == "target_val" or params_upper.get("DESTINATION") == "TARGET_VAL":
-                    slot |= (1 << 25)
+                    slot_params["is_reveal_until_live"] = True # Reuse bit 25 for capture
 
                 # Cost LE filter
                 cle_raw = cost.params.get("cost_le") or params_upper.get("COST_LE")
@@ -949,9 +961,11 @@ class Ability:
                 value = int(count_raw)
             
             # Fix: Default MOVE_TO_DISCARD for members to 1
-            if op == Opcode.MOVE_TO_DISCARD and value == 0 and slot in (int(TargetType.MEMBER_SELF), int(TargetType.MEMBER_OTHER), int(TargetType.MEMBER_SELECT)):
+            cur_slot_val = slot_params["target_slot"]
+            if op == Opcode.MOVE_TO_DISCARD and value == 0 and cur_slot_val in (int(TargetType.MEMBER_SELF), int(TargetType.MEMBER_OTHER), int(TargetType.MEMBER_SELECT)):
                 value = 1
 
+            slot = pack_s_standard(**slot_params)
             bytecode.extend([int(op), to_signed_32(int(value)), to_signed_32(attr & 0xFFFFFFFF), to_signed_32((attr >> 32) & 0xFFFFFFFF), to_signed_32(slot)])
         else:
             if cost.type != AbilityCostType.NONE:
@@ -1122,10 +1136,10 @@ class Ability:
                 EffectType.RECOVER_MEMBER, EffectType.RECOVER_LIVE,
                 EffectType.PLAY_MEMBER_FROM_DISCARD, EffectType.PLAY_LIVE_FROM_DISCARD,
             ):
-                source = str(eff.params.get("source", "discard")).lower()
-                src_val = 7 if source == "discard" else 0
-                if source == "yell": src_val = 15
-                elif source in ("deck", "deck_top"): src_val = 8
+                source = str(eff.params.get("source") or eff.params.get("zone") or "discard").lower()
+                src_val = ZONES.get("DISCARD", 7) if source == "discard" else 0
+                if source == "yell": src_val = ZONES.get("YELL", 15)
+                elif source in ("deck", "deck_top"): src_val = ZONES.get("DECK_TOP", 1)
                 slot_params["source_zone"] = src_val
 
             # TAP/Interactive selection
@@ -1139,8 +1153,8 @@ class Ability:
             if eff.effect_type == EffectType.PLACE_UNDER:
                 source = str(eff.params.get("from") or eff.params.get("source") or "").lower()
                 u_src_val = 0
-                if source == "energy": u_src_val = 1
-                elif source == "discard": u_src_val = 2
+                if source == "energy": u_src_val = ZONES.get("ENERGY", 3)
+                elif source == "discard": u_src_val = ZONES.get("DISCARD", 7)
                 slot_params["source_zone"] = u_src_val
 
             # ENERGY_CHARGE params
@@ -1187,35 +1201,41 @@ class Ability:
                 attr = attr | pack_a_look_choose(**look_a)
 
                 src = str(eff.params.get("source") or eff.params.get("zone") or "DECK").upper()
-                src_val = 8
-                if src == "HAND": src_val = 6
-                elif src == "DISCARD": src_val = 7
-                elif src in ("YELL", "REVEALED", "CHEER"): src_val = 15
-                elif src == "ENERGY": src_val = 3
+                src_val = ZONES.get("DECK_TOP", 1)
+                if src == "HAND": src_val = ZONES.get("HAND", 6)
+                elif src == "DISCARD": src_val = ZONES.get("DISCARD", 7)
+                elif src in ("YELL", "REVEALED", "CHEER"): src_val = ZONES.get("YELL", 15)
+                elif src == "ENERGY": src_val = ZONES.get("ENERGY", 3)
                 slot_params["source_zone"] = src_val
 
                 rem_dest_str = str(eff.params.get("remainder") or eff.params.get("destination") or "").upper()
                 rem_val = 0
-                if rem_dest_str == "DISCARD": rem_val = 7
-                elif rem_dest_str == "DECK": rem_val = 8
-                elif rem_dest_str == "HAND": rem_val = 6
-                elif rem_dest_str == "DECK_TOP": rem_val = 1
-                elif rem_dest_str == "DECK_BOTTOM": rem_val = 2
+                if rem_dest_str == "DISCARD": rem_val = ZONES.get("DISCARD", 7)
+                elif rem_dest_str == "DECK": rem_val = ZONES.get("DECK_TOP", 1)
+                elif rem_dest_str == "HAND": rem_val = ZONES.get("HAND", 6)
+                elif rem_dest_str == "DECK_TOP": rem_val = EXTRA_CONSTANTS.get("DECK_POSITION_TOP", 1)
+                elif rem_dest_str == "DECK_BOTTOM": rem_val = EXTRA_CONSTANTS.get("DECK_POSITION_BOTTOM", 2)
                 slot_params["remainder_zone"] = rem_val
 
             if eff.effect_type in (EffectType.SELECT_CARDS, EffectType.SELECT_MEMBER, EffectType.SELECT_LIVE, EffectType.MOVE_TO_DISCARD, EffectType.MOVE_MEMBER):
                 attr = self._pack_filter_attr(eff)
                 src_zone_str = str(eff.params.get("source") or eff.params.get("zone") or "DECK").upper()
                 if "," not in src_zone_str:
-                    src_val = 8
-                    if src_zone_str == "HAND": src_val = 6
-                    elif src_zone_str == "DISCARD": src_val = 7
-                    elif src_zone_str in ("YELL", "REVEALED", "CHEER"): src_val = 15
+                    src_val = ZONES.get("DECK_TOP", 1)
+                    if src_zone_str == "HAND": src_val = ZONES.get("HAND", 6)
+                    elif src_zone_str == "DISCARD": src_val = ZONES.get("DISCARD", 7)
+                    elif src_zone_str in ("YELL", "REVEALED", "CHEER"): src_val = ZONES.get("YELL", 15)
                     slot_params["source_zone"] = src_val
 
                 rem_val = eff.params.get("remainder_zone", 0)
                 if isinstance(rem_val, str):
-                    rem_map = {"DISCARD": 7, "DECK": 8, "HAND": 6, "DECK_TOP": 1, "DECK_BOTTOM": 2}
+                    rem_map = {
+                        "DISCARD": ZONES.get("DISCARD", 7),
+                        "DECK": ZONES.get("DECK_TOP", 1),
+                        "HAND": ZONES.get("HAND", 6),
+                        "DECK_TOP": EXTRA_CONSTANTS.get("DECK_POSITION_TOP", 1),
+                        "DECK_BOTTOM": EXTRA_CONSTANTS.get("DECK_POSITION_BOTTOM", 2)
+                    }
                     rem_val = rem_map.get(rem_val.upper(), 0)
                 slot_params["remainder_zone"] = rem_val
 
@@ -1224,7 +1244,7 @@ class Ability:
                 v_params = {c: int(eff.params.get(c, 0)) for c in colors}
                 val = pack_v_heart_counts(**v_params)
 
-                color_map = {"PINK": 1, "RED": 2, "YELLOW": 3, "GREEN": 4, "BLUE": 5, "PURPLE": 6, "ANY": 7, "STAR": 7, "ALL": 7, "ANY_HEART": 7}
+                color_map = HEART_COLOR_MAP
                 req_list = []
                 add_val = eff.params.get("add")
                 if isinstance(add_val, (str, list)):
@@ -1233,7 +1253,7 @@ class Ability:
                 
                 any_count = int(eff.params.get("any", 0))
                 for _ in range(any_count):
-                    if len(req_list) < 8: req_list.append(7)
+                    if len(req_list) < 8: req_list.append(HEART_COLOR_MAP.get("ANY", 7))
                 
                 a_params = {f"req_{i+1}": req_list[i] if i < len(req_list) else 0 for i in range(8)}
                 unit_val = eff.params.get("unit")
@@ -1256,13 +1276,7 @@ class Ability:
 
             if eff.effect_type == EffectType.META_RULE:
                 m_type = str(eff.params.get("type", "") or eff.params.get("meta_type", "") or "CHEER_MOD").upper()
-                mapping = {
-                    "CHEER_MOD": 0, "HEART_RULE": 1, "ALL_BLADE_AS_ANY_HEART": 1, "LIVE": 2,
-                    "SHUFFLE": 3, "OPPONENT_TRIGGER_ALLOWED": 4, "LOSE_BLADE_HEART": 5,
-                    "RE_CHEER": 6, "GROUP_ALIAS": 7, "SCORE_RULE": 8, "PREVENT_SET_TO_SUCCESS_PILE": 9,
-                    "ACTION_YELL_MULLIGAN": 10, "TRIGGER_YELL_AGAIN": 11, "MOVE_SUCCESS": 12, "RESET_YELL_HEARTS": 13,
-                }
-                attr = mapping.get(m_type, 0)
+                attr = META_RULE_TYPES.get(m_type, 0)
                 if attr == 1:
                     src = str(eff.params.get("source", "")).lower()
                     if src == "all_blade" or m_type == "ALL_BLADE_AS_ANY_HEART": val = 1
@@ -1279,20 +1293,13 @@ class Ability:
                 if count_src == "COUNT" and hasattr(self, "_last_counted_zone") and self._last_counted_zone:
                     count_src = self._last_counted_zone
                 
-                count_op_map = {
-                    "HAND": int(ConditionType.COUNT_HAND),
-                    "DISCARD": int(ConditionType.COUNT_DISCARD),
-                    "ENERGY": int(ConditionType.COUNT_ENERGY),
-                    "COLOR": 250, # C_COUNT_UNIQUE_COLORS
-                    "SUCCESS_LIVE": 218, "LIVE_AREA": 218, "SUCCESS_PILE": 218, "SUCCESS_PILE_COUNT": 218
-                }
-                count_op = count_op_map.get(count_src, int(ConditionType.COUNT_STAGE))
+                count_op = COUNT_SOURCES.get(count_src, int(ConditionType.COUNT_STAGE))
                 slot_params["remainder_zone"] = count_op
                 slot_params["is_dynamic"] = True
                 attr |= self._pack_filter_attr(eff)
 
             # Default to Choice (slot 4) if target is generic
-            is_non_stage_discard = eff.effect_type == EffectType.MOVE_TO_DISCARD and slot_params["source_zone"] in (6, 8)
+            is_non_stage_discard = eff.effect_type == EffectType.MOVE_TO_DISCARD and slot_params["source_zone"] in (ZONES.get("HAND", 6), ZONES.get("DECK", 5))
             if eff.target in (TargetType.SELF, TargetType.PLAYER) and not is_non_stage_discard and not slot_params.get("is_dynamic", False):
                 slot_params["target_slot"] = 4
 
@@ -1361,15 +1368,15 @@ class Ability:
                 )
 
     def _pack_filter_slot(self, area_str: str) -> int:
-        """Helper to pack area strings into slot bits (28-30)."""
+        """Helper to pack area strings into slot bits (29-31)."""
         slot = 0
         a_str = area_str.upper()
         if "LEFT" in a_str:
-            slot |= (1 << 28)
+            slot |= (1 << 29)
         elif "CENTER" in a_str:
-            slot |= (2 << 28)
+            slot |= (2 << 29)
         elif "RIGHT" in a_str:
-            slot |= (3 << 28)
+            slot |= (3 << 29)
         return slot
 
 
@@ -1592,9 +1599,9 @@ class Ability:
         if zone_val:
             z_str = str(zone_val).upper()
             z_mask = 0
-            if "STAGE" in z_str: z_mask = 4
-            elif "HAND" in z_str: z_mask = 6
-            elif "DISCARD" in z_str: z_mask = 7
+            if "STAGE" in z_str: z_mask = int(EXTRA_CONSTANTS.get("ZONE_MASK_STAGE", 4))
+            elif "HAND" in z_str: z_mask = int(EXTRA_CONSTANTS.get("ZONE_MASK_HAND", 6))
+            elif "DISCARD" in z_str: z_mask = int(EXTRA_CONSTANTS.get("ZONE_MASK_DISCARD", 7))
             if z_mask > 0:
                 filter_obj["zone_mask"] = z_mask & 0x07
 

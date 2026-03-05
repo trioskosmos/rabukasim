@@ -327,6 +327,20 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     // Initialize breakdown logs Early to capture sources before they are moved by triggers
     let mut heart_breakdown = Vec::new();
     let mut blade_breakdown = Vec::new();
+
+    // NEW: Structures for heart allocation tracking
+    #[derive(Clone)]
+    struct SourceInfo {
+        id: i32,
+        slot: i16,
+        name: String,
+        hearts: [u8; 7],
+        base_hearts: [u8; 7], // Track original card hearts for separation
+        is_yell: bool,
+    }
+    let mut heart_sources: Vec<SourceInfo> = Vec::new();
+    let mut allocations = Vec::new();
+
     let requirement_logs: Vec<serde_json::Value> = Vec::new();
     let mut transform_logs = Vec::new();
     // Temporary map for member_contributions summary
@@ -534,8 +548,10 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
 
         let cid = state.players[p_idx].stage[i];
         let mut true_bonus_h = [0i32; 7];
+        let mut member_name = "Member".to_string();
         if cid >= 0 {
             if let Some(m) = db.get_member(cid) {
+                member_name = m.name.clone();
                 for k in 0..7 {
                     true_bonus_h[k] = eff_h[k] as i32 - m.hearts[k] as i32;
                 }
@@ -565,6 +581,17 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         if cid >= 0 {
             if let Some(m) = db.get_member(cid) {
                 if eff_h.iter().any(|&v| v > 0) {
+                    let mut h8 = [0u8; 7];
+                    for k in 0..7 { h8[k] = eff_h[k] as u8; }
+                    heart_sources.push(SourceInfo {
+                        id: cid,
+                        slot: i as i16,
+                        name: m.name.clone(),
+                        hearts: h8,
+                        base_hearts: m.hearts,
+                        is_yell: false,
+                    });
+
                     heart_breakdown.push(json!({
                         "source": m.name,
                         "source_id": cid,
@@ -702,6 +729,15 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         // Log yell card contributions
         let bh_sum: u32 = bh.iter().map(|&h| h as u32).sum();
         if bh_sum > 0 {
+            heart_sources.push(SourceInfo {
+                id: cid,
+                slot: -1,
+                name: format!("Yell: {}", name),
+                hearts: bh,
+                base_hearts: bh, // For yells, everything is "base" (printed on yell card)
+                is_yell: true,
+            });
+
             heart_breakdown.push(json!({
                 "source": format!("Yell: {}", name),
                 "source_id": cid,
@@ -785,6 +821,140 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
 
                 let (req_board, _) = get_live_requirements(state, db, p_idx, live);
                 if check_live_success(state, db, p_idx, live, &remaining_hearts) {
+                    let mut req_arr = req_board.to_array();
+                    
+                    // NEW: Allocate hearts from sources and record them
+                    // 1. Specific colors 0-5
+                    for color_idx in 0..6 {
+                        let mut needed = req_arr[color_idx];
+                        if needed == 0 { continue; }
+
+                        // Try matching color first
+                        for src in heart_sources.iter_mut() {
+                            let available = src.hearts[color_idx];
+                            let take = available.min(needed);
+                            if take > 0 {
+                                // Determine if this heart is 'base' or 'bonus'
+                                // We consume from base_hearts first if available
+                                let base_available = src.base_hearts[color_idx];
+                                let from_base = base_available.min(take);
+                                src.base_hearts[color_idx] -= from_base;
+                                
+                                src.hearts[color_idx] -= take;
+                                needed -= take;
+                                allocations.push(json!({
+                                    "source_id": src.id,
+                                    "source_slot": src.slot,
+                                    "source_name": src.name,
+                                    "source_type": if src.is_yell { "yell" } else { "member" },
+                                    "is_bonus": from_base < take, // If we couldn't satisfy 'take' from 'base', it's a bonus
+                                    "target_id": cid,
+                                    "target_idx": i,
+                                    "target_name": live.name,
+                                    "color": color_idx,
+                                    "amount": take
+                                }));
+                            }
+                            if needed == 0 { break; }
+                        }
+
+                        // Then try wildcards (index 6)
+                        if needed > 0 {
+                            for src in heart_sources.iter_mut() {
+                                let available = src.hearts[6];
+                                let take = available.min(needed);
+                                if take > 0 {
+                                    // Wildcards from members are almost always from abilities/equips
+                                    // because printed wildcards on member cards are rare or non-existent in core mechanics
+                                    // but we check base_hearts anyway for consistency
+                                    let base_available = src.base_hearts[6];
+                                    let from_base = base_available.min(take);
+                                    src.base_hearts[6] -= from_base;
+
+                                    src.hearts[6] -= take;
+                                    needed -= take;
+                                    allocations.push(json!({
+                                        "source_id": src.id,
+                                        "source_slot": src.slot,
+                                        "source_name": src.name,
+                                        "source_type": if src.is_yell { "yell" } else { "member" },
+                                        "is_bonus": from_base < take,
+                                        "target_id": cid,
+                                        "target_idx": i,
+                                        "target_name": live.name,
+                                        "color": color_idx,
+                                        "amount": take,
+                                        "wildcard": true
+                                    }));
+                                }
+                                if needed == 0 { break; }
+                            }
+                        }
+                    }
+
+                    // 2. Any hearts (index 6)
+                    let mut any_needed = req_arr[6];
+                    if any_needed > 0 {
+                        // Use wildcards first
+                        for src in heart_sources.iter_mut() {
+                            let available = src.hearts[6];
+                            let take = available.min(any_needed);
+                            if take > 0 {
+                                let base_available = src.base_hearts[6];
+                                let from_base = base_available.min(take);
+                                src.base_hearts[6] -= from_base;
+
+                                src.hearts[6] -= take;
+                                any_needed -= take;
+                                allocations.push(json!({
+                                    "source_id": src.id,
+                                    "source_slot": src.slot,
+                                    "source_name": src.name,
+                                    "source_type": if src.is_yell { "yell" } else { "member" },
+                                    "is_bonus": from_base < take,
+                                    "target_id": cid,
+                                    "target_idx": i,
+                                    "target_name": live.name,
+                                    "color": 6,
+                                    "amount": take
+                                }));
+                            }
+                            if any_needed == 0 { break; }
+                        }
+
+                        // Then use remaining colors
+                        if any_needed > 0 {
+                            for color_idx in 0..6 {
+                                for src in heart_sources.iter_mut() {
+                                    let available = src.hearts[color_idx];
+                                    let take = available.min(any_needed);
+                                    if take > 0 {
+                                        let base_available = src.base_hearts[color_idx];
+                                        let from_base = base_available.min(take);
+                                        src.base_hearts[color_idx] -= from_base;
+
+                                        src.hearts[color_idx] -= take;
+                                        any_needed -= take;
+                                        allocations.push(json!({
+                                            "source_id": src.id,
+                                            "source_slot": src.slot,
+                                            "source_name": src.name,
+                                            "source_type": if src.is_yell { "yell" } else { "member" },
+                                            "is_bonus": from_base < take,
+                                            "target_id": cid,
+                                            "target_idx": i,
+                                            "target_name": live.name,
+                                            "color": 6,
+                                            "amount": take
+                                        }));
+                                    }
+                                    if any_needed == 0 { break; }
+                                }
+                                if any_needed == 0 { break; }
+                            }
+                        }
+                    }
+
                     let mut remaining_hearts_u32 = remaining_hearts.map(|x| x as u32);
                     let (_, _) = crate::core::hearts::process_hearts(
                         &mut remaining_hearts_u32,
@@ -794,7 +964,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     passed_flags[i] = true;
                     sequential_passed[i] = true;
                     state.log(format!("    -> SUCCESS for {}", live.name));
-                } else {
+                }
+                else {
                     state.log(format!(
                         "    -> FAILED for {} (Hearts or Restrictions)",
                         live.name
@@ -973,6 +1144,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
             "breakdown": {
                 "blades": blade_breakdown,
                 "hearts": heart_breakdown,
+                "allocations": allocations,
                 "requirements": requirement_logs,
                 "transforms": transform_logs,
                 "score_bonus_logs": state.players[p_idx].live_score_bonus_logs,

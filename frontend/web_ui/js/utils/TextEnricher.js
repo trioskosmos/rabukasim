@@ -251,10 +251,16 @@ export const TextEnricher = {
 
     splitAbilities: (text) => {
         if (!text) return [];
-        // Support splitting by literal/escaped newlines AND trigger icons if they are not at the start
-        // Use a lookahead to split before a trigger icon {{...|...}} except at the very beginning
-        return text.split(/\r?\n|\\n|(?<!^)(?=\{\{.*?\.png\|.*?\}\})/).map(s => s.trim()).filter(s => s.length > 0);
+        // Support splitting by:
+        // 1. Literal or escaped newlines (\n)
+        // 2. Trigger icons: toujyou, jidou, jyouji, kidou, live_start, live_success, etc.
+        // We use a negative lookahead to ensure we don't split on heart/blade icons or other descriptors.
+        const triggerPattern = '(?:toujyou|jidou|jyouji|kidou|live_start|live_success|live_kaishi|turn1|開始時|成功時|登場|自動|永続|起動|Turn 1)';
+        const regex = new RegExp(`\\r?\\n|\\\\n|(?<!^)(?=\{\{(?:${triggerPattern})\\.png\\|.*?\}\})`);
+
+        return text.split(regex).map(s => s.trim()).filter(s => s.length > 0);
     },
+
 
     extractRelevantAbility: (card, triggerLabel, abilityIndex) => {
         if (!card) return "";

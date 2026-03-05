@@ -142,8 +142,24 @@ export const PerformanceRenderer = {
                 if (!l) return '';
                 const filledSum = (l.filled || [0, 0, 0, 0, 0, 0, 0]).reduce((a, b) => a + b, 0);
                 const reqSum = (l.required || [0, 0, 0, 0, 0, 0, 0]).reduce((a, b) => a + b, 0);
+
+                // Get allocations for this specific live card
+                const liveAllocations = (res.breakdown && res.breakdown.allocations)
+                    ? res.breakdown.allocations.filter(a => a.target_idx === i)
+                    : [];
+
+                // Group by source to show compact list
+                const sourceGroups = {};
+                liveAllocations.forEach(a => {
+                    const key = `${a.source_id}_${a.source_slot}`;
+                    if (!sourceGroups[key]) {
+                        sourceGroups[key] = { name: a.source_name, amount: 0, slot: a.source_slot, id: a.source_id };
+                    }
+                    sourceGroups[key].amount += a.amount;
+                });
+
                 return `
-                                <div class="perf-line" style="flex-direction: column; align-items: flex-start; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 8px;">
+                                <div class="perf-line perf-live-card-row" style="flex-direction: column; align-items: flex-start; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 8px;" data-live-idx="${i}">
                                     <div style="display:flex; justify-content: space-between; width: 100%; align-items:center;">
                                         <div style="display:flex; align-items:center; gap:5px;">
                                             ${l.img ? `<img src="${fixImg(l.img)}" style="width:24px; border-radius:3px;">` : ''}
@@ -165,6 +181,24 @@ export const PerformanceRenderer = {
                                             ${PerformanceRenderer.renderHeartsCompact(l.filled)}
                                         </div>
                                     </div>
+                                    ${Object.keys(sourceGroups).length > 0 ? `
+                                    <div class="perf-live-sources" style="font-size: 0.7rem; opacity: 0.8; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 6px;">
+                                        <span style="opacity: 0.6;">Sources:</span>
+                                        ${Object.values(sourceGroups).map(sg => {
+                    const allocationsForSource = liveAllocations.filter(a => a.source_id == sg.id && a.source_slot == sg.slot);
+                    const isBonus = allocationsForSource.some(a => a.is_bonus);
+                    const isYell = allocationsForSource.some(a => a.source_type === 'yell');
+                    let label = '';
+                    if (isYell) label = '(Yell)';
+                    else if (isBonus) label = '(Ability)';
+
+                    return `
+                                            <span class="perf-source-tag ${isYell ? 'yell' : ''} ${isBonus ? 'bonus' : ''}" data-source-id="${sg.id}" data-source-slot="${sg.slot}">
+                                                ${Tooltips.enrichAbilityText(sg.name)} ${label} (+${sg.amount})
+                                            </span>
+                                        `}).join('')}
+                                    </div>
+                                    ` : ''}
                                 </div>
                                 `;
             }).join('') : 'None'}
@@ -192,7 +226,7 @@ export const PerformanceRenderer = {
                             ${res.member_contributions.map(m => {
                 if (!m) return '';
                 return `
-                                <div class="perf-member-contribution">
+                                <div class="perf-member-contribution" data-member-id="${m.source_id}" data-member-slot="${m.slot}">
                                     ${m.img ? `<img src="${fixImg(m.img)}" class="perf-member-img">` : ''}
                                     <div class="perf-member-info">
                                         <div class="perf-member-name">${Tooltips.enrichAbilityText(m.source || "Member")}</div>
@@ -225,6 +259,40 @@ export const PerformanceRenderer = {
                                             </div>
                                              ${(m.base_notes > 0 || m.bonus_notes > 0) ? `<span>${i18n.t('notes')}: <b>${m.base_notes}${m.bonus_notes > 0 ? ` <span class="perf-bonus-tag">(+${m.bonus_notes})</span>` : ''}</b></span>` : ''}
                                             ${m.draw_icons ? `<span>${i18n.t('cards_draw')}: <b>${m.draw_icons}</b></span>` : ''}
+                                            
+                                            ${(res.breakdown && res.breakdown.allocations) ? (() => {
+                        const memberAllocations = res.breakdown.allocations.filter(a => a.source_id === m.source_id && a.source_slot === m.slot);
+                        if (memberAllocations.length === 0) return '';
+
+                        const targetGroups = {};
+                        memberAllocations.forEach(a => {
+                            if (!targetGroups[a.target_idx]) {
+                                targetGroups[a.target_idx] = { name: a.target_name, amount: 0 };
+                            }
+                            targetGroups[a.target_idx].amount += a.amount;
+                        });
+
+                        return `
+                                                <div class="perf-member-targets" style="margin-top: 4px; font-size: 0.7rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 4px;">
+                                                    <span style="opacity: 0.6;">Contributed to:</span>
+                                                    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:2px;">
+                                                        ${Object.entries(targetGroups).map(([idx, tg]) => {
+                            const allocsForTarget = memberAllocations.filter(a => a.target_idx == idx);
+                            const isBonus = allocsForTarget.some(a => a.is_bonus);
+                            const isYell = allocsForTarget.some(a => a.source_type === 'yell');
+                            let label = '';
+                            if (isYell) label = '(Yell)';
+                            else if (isBonus) label = '(Ability)';
+
+                            return `
+                                                            <span class="perf-target-tag ${isYell ? 'yell' : ''} ${isBonus ? 'bonus' : ''}" data-target-idx="${idx}">
+                                                                ${Tooltips.enrichAbilityText(tg.name)} ${label} (+${tg.amount})
+                                                            </span>
+                                                        `}).join('')}
+                                                    </div>
+                                                </div>
+                                                `;
+                    })() : ''}
                                         </div>
                                     </div>
                                 </div>
@@ -309,6 +377,75 @@ export const PerformanceRenderer = {
         });
         html += '</div>';
         content.innerHTML = html;
+        PerformanceRenderer.attachAllocationFlashListeners(content);
+    },
+
+    attachAllocationFlashListeners: (container) => {
+        const sourceTags = container.querySelectorAll('.perf-source-tag');
+        const targetTags = container.querySelectorAll('.perf-target-tag');
+        const memberRows = container.querySelectorAll('.perf-member-contribution');
+        const liveRows = container.querySelectorAll('.perf-live-card-row');
+
+        const clearHighlights = () => {
+            container.querySelectorAll('.perf-highlight-source, .perf-highlight-target').forEach(el => {
+                el.classList.remove('perf-highlight-source', 'perf-highlight-target');
+            });
+        };
+
+        const currentData = State.selectedPerfTurn !== -1 ? State.performanceHistory[State.selectedPerfTurn] : State.lastPerformanceData;
+        const allocations = currentData?.breakdown?.allocations || [];
+
+        sourceTags.forEach(tag => {
+            tag.addEventListener('mouseenter', () => {
+                const sid = tag.getAttribute('data-source-id');
+                const sslot = tag.getAttribute('data-source-slot');
+                const sourceMember = container.querySelector(`.perf-member-contribution[data-member-id="${sid}"][data-member-slot="${sslot}"]`);
+                if (sourceMember) sourceMember.classList.add('perf-highlight-source');
+                allocations.filter(a => a.source_id == sid && a.source_slot == sslot).forEach(a => {
+                    const targetRow = container.querySelector(`.perf-live-card-row[data-live-idx="${a.target_idx}"]`);
+                    if (targetRow) targetRow.classList.add('perf-highlight-target');
+                });
+            });
+            tag.addEventListener('mouseleave', clearHighlights);
+        });
+
+        targetTags.forEach(tag => {
+            tag.addEventListener('mouseenter', () => {
+                const tidx = tag.getAttribute('data-target-idx');
+                const targetRow = container.querySelector(`.perf-live-card-row[data-live-idx="${tidx}"]`);
+                if (targetRow) targetRow.classList.add('perf-highlight-target');
+                allocations.filter(a => a.target_idx == tidx).forEach(a => {
+                    const sourceMember = container.querySelector(`.perf-member-contribution[data-member-id="${a.source_id}"][data-member-slot="${a.source_slot}"]`);
+                    if (sourceMember) sourceMember.classList.add('perf-highlight-source');
+                });
+            });
+            tag.addEventListener('mouseleave', clearHighlights);
+        });
+
+        memberRows.forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                const sid = row.getAttribute('data-member-id');
+                const sslot = row.getAttribute('data-member-slot');
+                row.classList.add('perf-highlight-source');
+                allocations.filter(a => a.source_id == sid && a.source_slot == sslot).forEach(a => {
+                    const targetRow = container.querySelector(`.perf-live-card-row[data-live-idx="${a.target_idx}"]`);
+                    if (targetRow) targetRow.classList.add('perf-highlight-target');
+                });
+            });
+            row.addEventListener('mouseleave', clearHighlights);
+        });
+
+        liveRows.forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                const tidx = row.getAttribute('data-live-idx');
+                row.classList.add('perf-highlight-target');
+                allocations.filter(a => a.target_idx == tidx).forEach(a => {
+                    const sourceMember = container.querySelector(`.perf-member-contribution[data-member-id="${a.source_id}"][data-member-slot="${a.source_slot}"]`);
+                    if (sourceMember) sourceMember.classList.add('perf-highlight-source');
+                });
+            });
+            row.addEventListener('mouseleave', clearHighlights);
+        });
     },
 
     renderHeartsCompact: (hearts) => {

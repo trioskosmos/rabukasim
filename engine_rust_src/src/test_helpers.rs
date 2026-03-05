@@ -1,6 +1,9 @@
 use crate::core::logic::card_db::CardDatabase;
 use crate::core::logic::player::PlayerState;
 use crate::core::logic::*;
+use crate::core::enums::Zone;
+use crate::core::generated_layout::*;
+use crate::core::logic::constants::FILTER_IS_OPTIONAL;
 
 #[derive(Debug, Clone, Default)]
 pub struct AbilityBuilder {
@@ -27,6 +30,146 @@ impl AbilityBuilder {
 
     pub fn return_op(self) -> Self {
         self.push(crate::core::logic::O_RETURN, 0, 0, 0)
+    }
+
+    pub fn build(self) -> Vec<i32> {
+        self.bytecode
+    }
+}
+
+pub struct BytecodeBuilder {
+    pub bytecode: Vec<i32>,
+}
+
+impl BytecodeBuilder {
+    pub fn new(op: i32) -> Self {
+        let mut bc = Vec::with_capacity(5);
+        bc.extend_from_slice(&[op, 0, 0, 0, 0]);
+        Self { bytecode: bc }
+    }
+
+    pub fn op(mut self, op: i32) -> Self {
+        self.bytecode.extend_from_slice(&[op, 0, 0, 0, 0]);
+        self
+    }
+
+    fn last_idx(&self) -> usize {
+        self.bytecode.len() - 5
+    }
+
+    pub fn v(mut self, v: i32) -> Self {
+        let idx = self.last_idx();
+        self.bytecode[idx + 1] = v;
+        self
+    }
+
+    pub fn attr(mut self, a: i64) -> Self {
+        let idx = self.last_idx();
+        self.bytecode[idx + 2] = a as i32;
+        self.bytecode[idx + 3] = (a >> 32) as i32;
+        self
+    }
+
+    pub fn a(self, a: i64) -> Self {
+        self.attr(a)
+    }
+
+    pub fn optional(mut self, val: bool) -> Self {
+        let idx = self.last_idx();
+        let mut a = ((self.bytecode[idx+3] as i64) << 32) | (self.bytecode[idx+2] as u32 as i64);
+        if val {
+            a |= FILTER_IS_OPTIONAL as i64;
+        } else {
+            a &= !(FILTER_IS_OPTIONAL as i64);
+        }
+        self.bytecode[idx+2] = a as i32;
+        self.bytecode[idx+3] = (a >> 32) as i32;
+        self
+    }
+
+    pub fn slot(mut self, s: i32) -> Self {
+        let idx = self.last_idx();
+        self.bytecode[idx + 4] = s;
+        self
+    }
+
+    pub fn dest(mut self, zone: Zone) -> Self {
+        let zone_val = self.encode_zone(zone);
+        let idx = self.last_idx();
+        let mut s = self.bytecode[idx + 4] as u32;
+        s &= !((S_STANDARD_DEST_ZONE_MASK as u32) << S_STANDARD_DEST_ZONE_SHIFT);
+        s |= (zone_val as u32 & S_STANDARD_DEST_ZONE_MASK as u32) << S_STANDARD_DEST_ZONE_SHIFT;
+        self.bytecode[idx + 4] = s as i32;
+        self
+    }
+    
+    pub fn target(mut self, slot: u8) -> Self {
+        let idx = self.last_idx();
+        let mut s = self.bytecode[idx + 4] as u32;
+        // Optimization: Use 0x0F mask to avoid overlapping with legacy comparison_mode (bits 4-7)
+        s &= !0x0F;
+        s |= slot as u32 & 0x0F;
+        self.bytecode[idx + 4] = s as i32;
+        self
+    }
+
+    pub fn reveal_until_live(mut self, is_live: bool) -> Self {
+        let idx = self.last_idx();
+        let mut s = self.bytecode[idx + 4] as u32;
+        if is_live {
+            s |= 1u32 << S_STANDARD_IS_REVEAL_UNTIL_LIVE_SHIFT;
+        } else {
+            s &= !(1u32 << S_STANDARD_IS_REVEAL_UNTIL_LIVE_SHIFT);
+        }
+        self.bytecode[idx + 4] = s as i32;
+        self
+    }
+
+    pub fn comparison_mode(mut self, mode: u8) -> Self {
+        let idx = self.last_idx();
+        let mut s = self.bytecode[idx + 4] as u32;
+        // Legacy/Condition mode: bits 4-7
+        s &= !(0x0F << 4);
+        s |= (mode as u32 & 0x0F) << 4;
+        self.bytecode[idx + 4] = s as i32;
+        self
+    }
+
+    pub fn is_opponent(mut self, val: bool) -> Self {
+        let idx = self.last_idx();
+        let mut s = self.bytecode[idx + 4] as u32;
+        if val {
+            s |= 1u32 << S_STANDARD_IS_OPPONENT_SHIFT;
+        } else {
+            s &= !(1u32 << S_STANDARD_IS_OPPONENT_SHIFT);
+        }
+        self.bytecode[idx + 4] = s as i32;
+        self
+    }
+
+    pub fn area_idx(mut self, idx_val: u8) -> Self {
+        let idx = self.last_idx();
+        let mut s = self.bytecode[idx + 4] as u32;
+        s &= !((S_STANDARD_AREA_IDX_MASK as u32) << S_STANDARD_AREA_IDX_SHIFT);
+        s |= (idx_val as u32 & S_STANDARD_AREA_IDX_MASK as u32) << S_STANDARD_AREA_IDX_SHIFT;
+        self.bytecode[idx + 4] = s as i32;
+        self
+    }
+
+    fn encode_zone(&self, zone: Zone) -> u8 {
+        match zone {
+            Zone::DeckTop => 1,
+            Zone::DeckBottom => 2,
+            Zone::Energy => 3,
+            Zone::Stage => 4,
+            Zone::Hand => 6,
+            Zone::Discard => 7,
+            Zone::Deck => 8,
+            Zone::LiveSet => 13,
+            Zone::SuccessPile => 14,
+            Zone::Yell => 15,
+            _ => 0,
+        }
     }
 
     pub fn build(self) -> Vec<i32> {

@@ -33,26 +33,11 @@
 use super::CardDatabase;
 use serde::{Deserialize, Serialize};
 use crate::core::generated_layout::*;
-use crate::core::logic::constants::*;
+pub use crate::core::generated_constants::*;
 // use crate::core::enums::Zone;
 
-// --- Filter Bitfield Constants (Revision 5) ---
-pub const FILTER_TYPE_MEMBER: u64 = 0x01 << 2;
-pub const FILTER_TYPE_LIVE: u64 = 0x02 << 2;
-pub const FILTER_GROUP_FLAG: u64 = 0x10;
-pub const FILTER_GROUP_SHIFT: u64 = 5;
-pub const FILTER_TAPPED: u64 = 1 << 12;
-pub const FILTER_HAS_BLADE_HEART: u64 = 1 << 13;
-pub const FILTER_NOT_HAS_BLADE_HEART: u64 = 1 << 14;
-pub const FILTER_UNIQUE_NAMES: u64 = 1 << 15;
-pub const FILTER_UNIT_FLAG: u64 = 0x10000;
-pub const FILTER_UNIT_SHIFT: u64 = 17;
-pub const FILTER_COST_FLAG: u64 = 1 << 24;
-pub const FILTER_VALUE_SHIFT: u64 = 25;
-pub const FILTER_IS_LE: u64 = 1 << 30;
-pub const FILTER_COST_TYPE_FLAG: u64 = 1u64 << 31;
-pub const FILTER_COLOR_SHIFT: u64 = 32;
-pub const FILTER_SPECIAL_SHIFT: u64 = 56;
+// --- Filter Bitfield Constants (Now loaded from generated_constants.rs via constants.rs) ---
+pub const FILTER_STATE_FLAGS_MASK: u64 = FILTER_TAPPED | FILTER_HAS_BLADE_HEART | FILTER_NOT_HAS_BLADE_HEART | FILTER_UNIQUE_NAMES;
 
 /// A structured representation of the 64-bit filter attribute
 /// Synchronized with ability.py _pack_filter_attr layout.
@@ -606,9 +591,9 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             };
             if let Some(s) = val_str {
                 if let Ok(threshold) = s.parse::<i32>() {
-                    attr |= FILTER_COST_FLAG | ((threshold as u64) << FILTER_VALUE_SHIFT);
+                    attr |= crate::core::logic::constants::FILTER_COST_ENABLE | ((threshold as u64) << crate::core::logic::constants::FILTER_COST_SHIFT);
                     if part.contains("_LE") {
-                        attr |= FILTER_IS_LE;
+                        attr |= crate::core::logic::constants::FILTER_COST_LE;
                     }
                     attr |= FILTER_COST_TYPE_FLAG; // Explicitly cost type
                 }
@@ -621,7 +606,7 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             };
             if let Some(s) = gid_str {
                 if let Ok(gid) = s.parse::<i32>() {
-                    attr |= FILTER_GROUP_FLAG | ((gid as u64) << FILTER_GROUP_SHIFT);
+                    attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE | ((gid as u64) << FILTER_GROUP_SHIFT);
                 }
             }
         } else if part.starts_with("UNIT_") {
@@ -647,7 +632,7 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
                 _ => -1,
             };
             if unit_id >= 0 {
-                attr |= FILTER_UNIT_FLAG | ((unit_id as u64) << FILTER_UNIT_SHIFT);
+                attr |= crate::core::logic::constants::FILTER_UNIT_ENABLE | ((unit_id as u64) << FILTER_UNIT_SHIFT);
             }
         } else if part == "TAPPED" {
             attr |= FILTER_TAPPED;
@@ -660,9 +645,9 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
         } else if part == "TYPE_LIVE" {
             attr |= FILTER_TYPE_LIVE;
         } else if part == "AQOURS" {
-            attr |= FILTER_GROUP_FLAG | (1 << FILTER_GROUP_SHIFT);
+            attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE | (1 << FILTER_GROUP_SHIFT);
         } else if part == "M'S" || part == "μ'S" || part == "U'S" || part == "MUSE" {
-            attr |= FILTER_GROUP_FLAG | (0 << FILTER_GROUP_SHIFT);
+            attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE | (0 << FILTER_GROUP_SHIFT);
         } else if part == "UNIQUE_NAMES=TRUE"
             || part == "UNIQUE_NAMES"
             || part == "SAME_UNIQUE_NAMES"
@@ -685,29 +670,29 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
         } else if part.starts_with("BLADE_LE") {
             let val_str = part.replace("BLADE_LE", "").replace("_", "");
             if let Ok(threshold) = val_str.parse::<i32>() {
-                attr |= FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << FILTER_VALUE_SHIFT);
-                attr |= FILTER_IS_LE;
+                attr |= crate::core::logic::constants::FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << crate::core::logic::constants::FILTER_COST_SHIFT);
+                attr |= crate::core::logic::constants::FILTER_COST_LE;
             }
         } else if part.starts_with("BLADE_GE") {
             let val_str = part.replace("BLADE_GE", "").replace("_", "");
             if let Ok(threshold) = val_str.parse::<i32>() {
-                attr |= FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << FILTER_VALUE_SHIFT);
+                attr |= crate::core::logic::constants::FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << crate::core::logic::constants::FILTER_COST_SHIFT);
             }
         } else if part == "COST_LE_REVEALED" {
-            attr |= FILTER_COST_FLAG | (1u64 << FILTER_VALUE_SHIFT);
-            attr |= FILTER_IS_LE;
-            attr |= FILTER_REVEALED_CONTEXT;
-            attr |= FILTER_COST_TYPE_FLAG;
+            attr |= crate::core::logic::constants::FILTER_COST_ENABLE | (1u64 << crate::core::logic::constants::FILTER_COST_SHIFT);
+            attr |= crate::core::logic::constants::FILTER_COST_LE;
+            attr |= crate::core::logic::constants::FILTER_REVEALED_CONTEXT;
+            attr |= crate::core::logic::constants::FILTER_COST_TYPE_FLAG;
         } else if part == "HEART_PINK" {
             attr |= 1u64 << (FILTER_COLOR_SHIFT + 0);
         } else if part == "HEART_BLUE" {
             attr |= 1u64 << (FILTER_COLOR_SHIFT + 2);
         } else if part == "HASUNOSORA" {
-            attr |= FILTER_GROUP_FLAG | (4 << FILTER_GROUP_SHIFT);
+            attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE | (4 << FILTER_GROUP_SHIFT);
         } else if part == "LIELLA" {
-            attr |= FILTER_GROUP_FLAG | (3 << FILTER_GROUP_SHIFT);
+            attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE | (3 << FILTER_GROUP_SHIFT);
         } else if part == "NIJIGASAKI" || part == "NIJIGAKU" {
-            attr |= FILTER_GROUP_FLAG | (2 << FILTER_GROUP_SHIFT);
+            attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE | (2 << FILTER_GROUP_SHIFT);
         }
     }
     attr

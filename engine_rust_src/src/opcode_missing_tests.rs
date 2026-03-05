@@ -253,8 +253,13 @@ fn test_opcode_prevent_play_to_slot() {
 
     // 2. Try to play to Slot 1
     state.current_player = 0;
-    let res = state.play_member(&db, 0, 1); // hand_idx 0 to slot 1
-    assert!(res.is_err(), "Play to slot 1 should fail");
+    
+    // According to Q181, if the slot is EMPTY, play is ALLOWED even if restricted.
+    // To test the "failure" (blocking), we must have a member there already.
+    state.players[0].stage[1] = 10; 
+    
+    let res = state.play_member(&db, 0, 1); // hand_idx 0 to slot 1 (occupied + restricted)
+    assert!(res.is_err(), "Play to slot 1 should fail when occupied and restricted");
     if let Err(e) = res {
         assert!(
             e.contains("restriction"),

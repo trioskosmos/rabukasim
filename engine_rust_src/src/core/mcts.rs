@@ -656,8 +656,9 @@ impl MCTS {
                     }
 
                     // Hybrid Reward: NN Value + Heuristic Weighting
-                    let reward_p0 = if batch_leaf_states[i].is_terminal() {
-                        match batch_leaf_states[i].get_winner() {
+                    let leaf_state: &GameState = &batch_leaf_states[i];
+                    let reward_p0 = if leaf_state.is_terminal() {
+                        match leaf_state.get_winner() {
                             0 => 1.0,
                             1 => 0.0,
                             _ => 0.5,

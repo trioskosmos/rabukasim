@@ -872,7 +872,7 @@ impl GameState {
             return Ok(());
         }
         let player = &self.core.players[p_idx];
-        if (player.prevent_play_to_slot_mask & (1 << slot_idx)) != 0 {
+        if (player.prevent_play_to_slot_mask & (1 << slot_idx)) != 0 && player.stage[slot_idx] >= 0 {
             return Err("Cannot play to this slot due to restriction".to_string());
         }
         if player.is_moved(slot_idx) {

@@ -4,7 +4,7 @@
 use crate::core::logic::card_db::LOGIC_ID_MASK;
 use crate::core::logic::*;
 // use crate::core::enums::*;
-use crate::test_helpers::{add_card, create_test_db, create_test_state};
+use crate::test_helpers::{add_card, create_test_db, create_test_state, BytecodeBuilder};
 
 /// Verifies that O_DRAW_UNTIL draws the correct number of cards to reach a target hand size.
 #[test]
@@ -20,7 +20,7 @@ fn test_opcode_draw_until() {
     };
 
     // O_DRAW_UNTIL 5 (Draw up to 5)
-    let bc = vec![O_DRAW_UNTIL, 5, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
+    let bc = BytecodeBuilder::new(O_DRAW_UNTIL).v(5).op(O_RETURN).build();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(state.players[0].hand.len(), 5);
@@ -54,19 +54,13 @@ fn test_opcode_reveal_until_type_live() {
     };
 
     // O_REVEAL_UNTIL C_TYPE_CHECK attr: 1 (Live), target: 6 (Hand)
-    // s word needs bit 25 (0x02000000) for TYPE_CHECK to match Live cards.
-    let bc = vec![
-        O_REVEAL_UNTIL,
-        C_TYPE_CHECK,
-        1,
-        0,
-        6 | 0x02000000,
-        O_RETURN,
-        0,
-        0,
-        0,
-        0,
-    ];
+    let bc = BytecodeBuilder::new(O_REVEAL_UNTIL)
+        .v(C_TYPE_CHECK)
+        .a(1) // Val=1 (Live)
+        .target(6)
+        .reveal_until_live(true)
+        .op(O_RETURN)
+        .build();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Should have popped 10, 15, then 10050.
@@ -111,18 +105,13 @@ fn test_opcode_reveal_until_cost_ge() {
     };
 
     // O_REVEAL_UNTIL C_COST_CHECK val=10 (raw threshold) s=54 (Hand=6 | Mode=3/GE)
-    let bc = vec![
-        O_REVEAL_UNTIL,
-        C_COST_CHECK,
-        10,
-        0,
-        54,
-        O_RETURN,
-        0,
-        0,
-        0,
-        0,
-    ];
+    let bc = BytecodeBuilder::new(O_REVEAL_UNTIL)
+        .v(C_COST_CHECK)
+        .a(10)
+        .target(6)
+        .comparison_mode(3)
+        .op(O_RETURN)
+        .build();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Should pop 60010 (5 < 10), then 60015 (15 >= 10).
@@ -143,12 +132,12 @@ fn test_opcode_immunity() {
     };
 
     // O_IMMUNITY 1
-    let bc = vec![O_IMMUNITY, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
+    let bc = BytecodeBuilder::new(O_IMMUNITY).v(1).op(O_RETURN).build();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
     assert!(state.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
 
     // O_IMMUNITY 0
-    let bc = vec![O_IMMUNITY, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
+    let bc = BytecodeBuilder::new(O_IMMUNITY).v(0).op(O_RETURN).build();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
     assert!(!state.players[0].get_flag(PlayerState::FLAG_IMMUNITY));
 }
@@ -167,7 +156,7 @@ fn test_opcode_pay_energy() {
     };
 
     // O_PAY_ENERGY 2
-    let bc = vec![O_PAY_ENERGY, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
+    let bc = BytecodeBuilder::new(O_PAY_ENERGY).v(2).op(O_RETURN).build();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(state.players[0].tapped_energy_mask.count_ones(), 2);
@@ -186,7 +175,7 @@ fn test_opcode_look_deck() {
     };
 
     // O_LOOK_DECK 3
-    let bc = vec![O_LOOK_DECK, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
+    let bc = BytecodeBuilder::new(O_LOOK_DECK).v(3).op(O_RETURN).build();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(state.players[0].looked_cards.len(), 3);
@@ -342,18 +331,12 @@ fn test_look_and_choose_source_zone_fix() {
         source_card_id: 99,
         ..Default::default()
     };
-    let bc = vec![
-        O_LOOK_AND_CHOOSE,
-        2,
-        0,
-        (1u64 << 31) as i32,
-        6,
-        O_RETURN,
-        0,
-        0,
-        0,
-        0,
-    ];
+    let bc = BytecodeBuilder::new(O_LOOK_AND_CHOOSE)
+        .v(2)
+        .optional(true)
+        .target(6)
+        .op(O_RETURN)
+        .build();
 
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 

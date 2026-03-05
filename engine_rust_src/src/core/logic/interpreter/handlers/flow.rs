@@ -19,16 +19,6 @@ pub fn handle_meta_control(
     let base_p = ctx.activator_id as usize;
     let p_idx = ctx.player_id as usize;
     let target_slot = instr.s.target_slot as i32;
-    let target_p_idx = if instr.s.is_opponent || target_slot == 2 {
-        1 - base_p
-    } else {
-        base_p
-    };
-    let resolved_slot = if target_slot == 10 {
-        ctx.target_slot as i32
-    } else {
-        resolve_target_slot(target_slot, ctx) as i32
-    };
 
     match op {
         O_CALC_SUM_COST => {
@@ -165,26 +155,33 @@ pub fn handle_meta_control(
                 // On resumption, the player_id is already flipped
             }
         }
-        O_PREVENT_ACTIVATE => {
-            let target_p_idx = if s == 1 { 1 - base_p } else { base_p };
-            state.players[target_p_idx].prevent_activate = 1;
-        }
-        O_PREVENT_BATON_TOUCH => {
-            let target_p_idx = if s == 1 { 1 - base_p } else { base_p };
-            state.players[target_p_idx].prevent_baton_touch = 1;
-        }
-        O_PREVENT_SET_TO_SUCCESS_PILE => {
-            let target_p_idx = if s == 1 { 1 - base_p } else { base_p };
-            state.players[target_p_idx].prevent_success_pile_set = 1;
-        }
-        O_PREVENT_PLAY_TO_SLOT => {
-            let target_p = if instr.s.is_opponent {
+        O_PREVENT_ACTIVATE | O_PREVENT_BATON_TOUCH | O_PREVENT_SET_TO_SUCCESS_PILE
+        | O_PREVENT_PLAY_TO_SLOT => {
+            // These opcodes typically use bit 24 of s for opponent targeting in legacy,
+            // or TargetType in some other variants.
+            // We use standardized target_p_idx for these specifically.
+            let filter_target = (a as u64) & 0x03;
+            let target_p_idx = if filter_target == 2 || instr.s.is_opponent || target_slot == 2 {
                 1 - base_p
             } else {
                 base_p
             };
-            if resolved_slot >= 0 && resolved_slot < 3 {
-                state.players[target_p].prevent_play_to_slot_mask |= 1 << resolved_slot;
+
+            if op == O_PREVENT_ACTIVATE {
+                state.players[target_p_idx].prevent_activate = 1;
+            } else if op == O_PREVENT_BATON_TOUCH {
+                state.players[target_p_idx].prevent_baton_touch = 1;
+            } else if op == O_PREVENT_SET_TO_SUCCESS_PILE {
+                state.players[target_p_idx].prevent_success_pile_set = 1;
+            } else if op == O_PREVENT_PLAY_TO_SLOT {
+                let resolved_slot = if target_slot == 10 {
+                    ctx.target_slot as i32
+                } else {
+                    resolve_target_slot(target_slot, ctx) as i32
+                };
+                if resolved_slot >= 0 && resolved_slot < 3 {
+                    state.players[target_p_idx].prevent_play_to_slot_mask |= 1 << (resolved_slot as u8);
+                }
             }
         }
         O_TRIGGER_REMOTE => {
@@ -214,6 +211,11 @@ pub fn handle_meta_control(
                 .saturating_add(v as i16);
         }
         O_META_RULE => {
+            let target_p_idx = if instr.s.is_opponent || target_slot == 2 {
+                1 - base_p
+            } else {
+                base_p
+            };
             if a == 0 || a == 10 {
                 state.players[target_p_idx].cheer_mod_count = state.players[target_p_idx]
                     .cheer_mod_count
@@ -252,6 +254,11 @@ pub fn handle_meta_control(
             }
         }
         O_SWAP_AREA => {
+            let target_p_idx = if instr.s.is_opponent || target_slot == 2 {
+                1 - base_p
+            } else {
+                base_p
+            };
             let p = &mut state.players[target_p_idx];
             let temp_stage = p.stage;
             let temp_energy = p.stage_energy_count;

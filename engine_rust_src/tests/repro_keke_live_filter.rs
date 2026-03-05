@@ -32,8 +32,8 @@ mod tests {
 
         // Filter: COST_GE=11, Type=Any (0)
         // Threshold 11 (0x0B), GE=0
-        // attr = (1 << 24) | (11 << 25) = 0x17000000
-        let filter_any = 0x17000000;
+        // attr = (1 << 24) | (11 << 25) | (1 << 31) = 0x97000000
+        let filter_any = 0x97000000;
 
         // Member should match
         assert!(
@@ -54,8 +54,8 @@ mod tests {
         let state = create_test_state();
 
         // Filter: COST_GE=11, Type=Member (1)
-        // attr = 0x17000000 | (0x01 << 2) = 0x17000004
-        let filter_member = 0x17000004;
+        // attr = 0x97000000 | (0x01 << 2) = 0x97000004
+        let filter_member = 0x97000004;
 
         assert!(
             state.card_matches_filter_with_ctx(&db, 100, filter_member, &engine_rust::core::logic::AbilityContext::default()),
@@ -73,7 +73,7 @@ mod tests {
         let state = create_test_state();
 
         // Filter: HEARTS_GE=11, Type=Live (2)
-        // attr = 0x17000000 | (0x02 << 2) = 0x17000008
+        // attr = 0x17000000 | (0x02 << 2) = 0x17000008 (Bit 31=0 for Heart mode)
         let filter_live = 0x17000008;
 
         assert!(

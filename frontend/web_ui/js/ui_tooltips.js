@@ -189,7 +189,9 @@ export const Tooltips = {
 
     // Proxies for backwards compatibility
     enrichAbilityText: (text) => TextEnricher.enrichAbilityText(text),
+    splitAbilities: (text) => TextEnricher.splitAbilities(text),
     extractRelevantAbility: (card, triggerLabel, abilityIndex) => TextEnricher.extractRelevantAbility(card, triggerLabel, abilityIndex),
+
     getEffectiveAbilityText: (card) => TextEnricher.getEffectiveAbilityText(card),
     getEffectiveRawText: (card) => TextEnricher.getEffectiveRawText(card),
     isGenericInstruction: (text) => TextEnricher.isGenericInstruction(text),

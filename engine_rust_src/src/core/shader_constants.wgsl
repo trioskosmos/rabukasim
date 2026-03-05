@@ -181,6 +181,11 @@ const F_TRANSFORM: u32 = 256u;
 const F_WIN_COND: u32 = 512u;
 const F_MOVE: u32 = 1024u;
 const F_TAP: u32 = 2048u;
+const F_TARGET_OPPONENT: u32 = 16777216u;
+const F_CAPTURE_VALUE: u32 = 33554432u;
+const F_EMPTY_SLOT_ONLY: u32 = 67108864u;
+const F_IS_WAIT: u32 = 134217728u;
+const F_REVEAL_UNTIL_IS_LIVE: u32 = 33554432u;
 
 // --- SYNERGY FLAGS ---
 const SYN_GROUP: u32 = 1u;

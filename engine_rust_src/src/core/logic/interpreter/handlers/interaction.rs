@@ -1,5 +1,5 @@
 use crate::core::enums::*;
-use crate::core::logic::constants::{FILTER_IS_OPTIONAL, CHOICE_DONE, CHOICE_ALL};
+use crate::core::logic::constants::{CHOICE_DONE, CHOICE_ALL, FILTER_IS_OPTIONAL};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
 use crate::core::models::interpreter::get_choice_text;
 use crate::core::models::suspend_interaction;
@@ -595,7 +595,7 @@ pub fn handle_recovery(
     }
 
     if ctx.choice_index == -1 {
-        let is_optional = (a as u64 & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0;
+        let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
         let is_single_choice_auto_pick = !is_optional && state.players[p_idx].looked_cards.len() == 1;
 
         if is_single_choice_auto_pick {

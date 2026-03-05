@@ -214,9 +214,13 @@ export const ActionMenu = {
             }
 
             if (abilityText && abilityText.length > 5 && !Tooltips.isGenericInstruction(abilityText)) {
-                const enriched = Tooltips.enrichAbilityText(abilityText);
-                content += `<div class="source-ability-text">${enriched}</div>`;
+                const blocks = Tooltips.splitAbilities ? Tooltips.splitAbilities(abilityText) : [abilityText];
+                blocks.forEach(block => {
+                    const enriched = Tooltips.enrichAbilityText(block);
+                    content += `<div class="source-ability-text">${enriched}</div>`;
+                });
             }
+
 
             choiceDiv.innerHTML = content;
 

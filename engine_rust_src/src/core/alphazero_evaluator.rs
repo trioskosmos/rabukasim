@@ -1,9 +1,7 @@
-use crate::core::logic::{CardDatabase, GameState};
-use crate::core::alphazero_encoding::AlphaZeroEncoding;
-// removed unused AlphaZeroEncoding
+// Basic imports
+use crate::core::logic::state::GameState;
+use crate::core::logic::card_db::CardDatabase;
 use crate::core::heuristics::{Heuristic, HeuristicConfig};
-#[cfg(feature = "extension-module")]
-// Removed unused Arc
 
 /// Combined output from the Transformer for a single state.
 #[derive(Debug, Clone)]
@@ -55,6 +53,7 @@ impl AlphaZeroEvaluator for HeuristicBaselineEvaluator {
 
 #[cfg(feature = "extension-module")]
 use pyo3::prelude::*;
+use crate::core::alphazero_encoding::AlphaZeroEncoding;
 
 #[cfg(feature = "extension-module")]
 pub struct PyAlphaZeroEvaluator {
@@ -73,7 +72,7 @@ impl AlphaZeroEvaluator for PyAlphaZeroEvaluator {
     fn evaluate_batch(&self, states: &[GameState], db: &CardDatabase) -> Vec<AlphaZeroOutput> {
         Python::with_gil(|py| {
             // 1. Encode all states to tensors
-            let tensors: Vec<Vec<f32>> = states.iter().map(|s| s.to_alphazero_tensor(db)).collect();
+            let tensors: Vec<Vec<f32>> = states.iter().map(|s: &GameState| s.to_alphazero_tensor(db)).collect();
 
             // 2. Wrap in NumPy arrays (or just list of lists) and call Python
             let py_tensors = pyo3::IntoPyObjectExt::into_py_any(tensors, py).unwrap();

@@ -1,5 +1,5 @@
 use crate::core::enums::*;
-use crate::core::logic::constants::{FILTER_MASK_LOWER, DYNAMIC_VALUE, CHOICE_DONE, FLAG_IS_WAIT, FLAG_EMPTY_SLOT_ONLY, FILTER_TOTAL_COST};
+use crate::core::logic::constants::{CHOICE_DONE, CHOICE_ALL};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
 use crate::core::models::interpreter::{resolve_target_slot, get_choice_text};
 use crate::core::models::suspend_interaction;
@@ -40,7 +40,7 @@ pub fn handle_energy(
                 .count() as i32;
 
             let is_optional =
-                (a as u64 & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0;
+                (a as u64 & FILTER_IS_OPTIONAL) != 0;
             if is_optional && ctx.choice_index == -1 {
                 if available < v {
                     if state.debug.debug_mode {
@@ -312,7 +312,7 @@ pub fn handle_member_state(
             }
 
             let is_optional =
-                (a as u64 & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0;
+                (a as u64 & FILTER_IS_OPTIONAL) != 0;
             if ctx.choice_index == -1 {
                 if is_optional || (a & 0x01) != 0 {
                     let choice_text = get_choice_text(db, ctx);
@@ -634,15 +634,30 @@ pub fn handle_member_state(
             }
         }
         O_PLAY_MEMBER_FROM_DISCARD => {
-            let opponent_bit = (s >> 24) & 1;
-            let target_p_idx = if opponent_bit != 0 {
-                1 - (ctx.activator_id as usize)
+            // Distinguish legacy vs modern:
+            // Nico (Legacy): a=1 or 2, s=filter_attr
+            // Modern: a=filter_attr, s=flags
+            let (filter_attr_base, target_p_idx) = if a >= 1 && a <= 2 && (s as u32) > 1000 {
+                (
+                    0, // Legacy player-targeted variant often lacks explicit filter in bytecode, s contains flags.
+                    if a == 2 {
+                        1 - (ctx.activator_id as usize)
+                    } else {
+                        ctx.activator_id as usize
+                    },
+                )
             } else {
-                ctx.activator_id as usize
+                let filter_target = (a as u64) & 0x03;
+                let is_opp = filter_target == 2 || instr.s.is_opponent;
+                let t_idx = if is_opp {
+                    1 - (ctx.activator_id as usize)
+                } else {
+                    ctx.activator_id as usize
+                };
+                (a as u64, t_idx)
             };
-            let empty_slot_only = ((s as u64) & FLAG_EMPTY_SLOT_ONLY) != 0;
 
-            let filter_attr_base = a as u64;
+            let empty_slot_only = ((s as u64) & FLAG_EMPTY_SLOT_ONLY) != 0;
 
             // Total Cost detection:
             // Support modern bit 60 (compare_accumulated)
@@ -650,7 +665,7 @@ pub fn handle_member_state(
             // Support bit 31 (FILTER_COST_TYPE_FLAG) + bit 30 (FILTER_COST_LE) for legacy compiled cards
             let is_total_cost = (filter_attr_base & (1u64 << 60)) != 0
                 || (filter_attr_base & (1u64 << 50)) != 0
-                || ((filter_attr_base & crate::core::logic::filter::FILTER_COST_TYPE_FLAG) != 0
+                || ((filter_attr_base & FILTER_COST_TYPE_FLAG) != 0
                     && (filter_attr_base & 1073741824) != 0);
 
             let mut remaining = if ctx.v_remaining == -1 {

@@ -317,11 +317,14 @@ pub const SYN_FLAG_BATON: u32 = 4u32;
 pub const SYN_FLAG_CENTER: u32 = 8u32;
 pub const SYN_FLAG_LIFE_LEAD: u32 = 16u32;
 pub const FILTER_TYPE_SHIFT: u64 = 2u64;
+pub const FILTER_TYPE_MEMBER: u64 = 4u64;
+pub const FILTER_TYPE_LIVE: u64 = 8u64;
 pub const FILTER_GROUP_ENABLE: u64 = 16u64;
 pub const FILTER_GROUP_SHIFT: u64 = 5u64;
 pub const FILTER_TAPPED: u64 = 4096u64;
 pub const FILTER_HAS_BLADE_HEART: u64 = 8192u64;
-pub const FILTER_NOT_BLADE_HEART: u64 = 16384u64;
+pub const FILTER_NOT_HAS_BLADE_HEART: u64 = 16384u64;
+pub const FILTER_UNIQUE_NAMES: u64 = 32768u64;
 pub const FILTER_UNIT_ENABLE: u64 = 65536u64;
 pub const FILTER_UNIT_SHIFT: u64 = 17u64;
 pub const FILTER_CHARACTER_ENABLE: u64 = 0u64;
@@ -337,14 +340,196 @@ pub const FILTER_ZONE_HAND: u64 = 36028797018963968u64;
 pub const FILTER_SETSUNA: u64 = 576460752303423488u64;
 pub const KEYWORD_ACTIVATED_ENERGY_BY_GROUP: u64 = 4611686018427387904u64;
 pub const KEYWORD_ACTIVATED_MEMBER_BY_GROUP: u64 = 9223372036854775808u64;
+pub const FILTER_MASK_LOWER: u64 = 4294967295u64;
+pub const FILTER_BLADE_FILTER_FLAG: u64 = 33554432u64;
+pub const FILTER_ANY_STAGE: u64 = 1099511627776u64;
+pub const FILTER_OPPONENT: u64 = 2199023255552u64;
+pub const FILTER_REVEALED_CONTEXT: u64 = 8796093022208u64;
+pub const KEYWORD_PLAYED_THIS_TURN: u64 = 17592186044416u64;
+pub const KEYWORD_YELL_COUNT: u64 = 35184372088832u64;
+pub const KEYWORD_HAS_LIVE_SET: u64 = 70368744177664u64;
+pub const FILTER_TOTAL_COST: u64 = 1125899906842624u64;
+pub const FILTER_COST_TYPE_FLAG: u64 = 2147483648u64;
+pub const AREA_LEFT: i32 = 1;
+pub const AREA_CENTER: i32 = 2;
+pub const AREA_RIGHT: i32 = 3;
+pub const FILTER_IS_OPTIONAL: u64 = 2305843009213693952u64;
+pub const DYNAMIC_VALUE: u64 = 1152921504606846976u64;
+pub const FLAG_TARGET_OPPONENT: u64 = 16777216u64;
+pub const FLAG_CAPTURE_VALUE: u64 = 33554432u64;
+pub const FLAG_EMPTY_SLOT_ONLY: u64 = 67108864u64;
+pub const FLAG_IS_WAIT: u64 = 134217728u64;
+pub const FLAG_REVEAL_UNTIL_IS_LIVE: u64 = 33554432u64;
+pub const DECK_POSITION_TOP: i32 = 1;
+pub const DECK_POSITION_BOTTOM: i32 = 2;
+pub const ZONE_MASK_STAGE: i32 = 4;
+pub const ZONE_MASK_HAND: i32 = 6;
+pub const ZONE_MASK_DISCARD: i32 = 7;
+pub const ZONE_LOOKED_CARDS: i32 = 90;
+pub const FILTER_ZONE_MASK_SHIFT: u64 = 53u64;
+
 // Zone Types
 pub const ZONE_DEFAULT: i32 = 0;
 pub const ZONE_DECK_TOP: i32 = 1;
 pub const ZONE_DECK_BOTTOM: i32 = 2;
 pub const ZONE_ENERGY: i32 = 3;
 pub const ZONE_STAGE: i32 = 4;
+pub const ZONE_DECK: i32 = 5;
 pub const ZONE_HAND: i32 = 6;
 pub const ZONE_DISCARD: i32 = 7;
 pub const ZONE_LIVE_SET: i32 = 13;
-pub const ZONE_SUCCESS_PILE: i32 = 14;
-pub const ZONE_YELL: i32 = 15;
+pub const ZONE_SUCCESS_PILE: i32 = 16;
+pub const ZONE_YELL: i32 = 17;
+
+// Comparisons
+pub const COMP_EQ: i32 = 0;
+pub const COMP_GT: i32 = 1;
+pub const COMP_LT: i32 = 2;
+pub const COMP_GE: i32 = 3;
+pub const COMP_LE: i32 = 4;
+
+// Heart Color Map
+pub const HEART_COLOR_PINK: i32 = 1;
+pub const HEART_COLOR_RED: i32 = 2;
+pub const HEART_COLOR_YELLOW: i32 = 3;
+pub const HEART_COLOR_GREEN: i32 = 4;
+pub const HEART_COLOR_BLUE: i32 = 5;
+pub const HEART_COLOR_PURPLE: i32 = 6;
+pub const HEART_COLOR_ANY: i32 = 7;
+
+// Meta Rule Types
+pub const META_RULE_CHEER_MOD: i32 = 0;
+pub const META_RULE_HEART_RULE: i32 = 1;
+pub const META_RULE_ALL_BLADE_AS_ANY_HEART: i32 = 1;
+pub const META_RULE_LIVE: i32 = 2;
+pub const META_RULE_SHUFFLE: i32 = 3;
+pub const META_RULE_OPPONENT_TRIGGER_ALLOWED: i32 = 4;
+pub const META_RULE_LOSE_BLADE_HEART: i32 = 5;
+pub const META_RULE_RE_CHEER: i32 = 6;
+pub const META_RULE_GROUP_ALIAS: i32 = 7;
+pub const META_RULE_SCORE_RULE: i32 = 8;
+pub const META_RULE_PREVENT_SET_TO_SUCCESS_PILE: i32 = 9;
+pub const META_RULE_ACTION_YELL_MULLIGAN: i32 = 10;
+pub const META_RULE_TRIGGER_YELL_AGAIN: i32 = 11;
+pub const META_RULE_MOVE_SUCCESS: i32 = 12;
+pub const META_RULE_RESET_YELL_HEARTS: i32 = 13;
+
+// Multiplier Count Sources
+pub const COUNT_SOURCE_HAND: i32 = 204;
+pub const COUNT_SOURCE_DISCARD: i32 = 205;
+pub const COUNT_SOURCE_ENERGY: i32 = 213;
+pub const COUNT_SOURCE_COLOR: i32 = 250;
+pub const COUNT_SOURCE_SUCCESS_LIVE: i32 = 218;
+pub const COUNT_SOURCE_LIVE_AREA: i32 = 218;
+pub const COUNT_SOURCE_SUCCESS_PILE: i32 = 218;
+pub const COUNT_SOURCE_SUCCESS_PILE_COUNT: i32 = 218;
+pub const COUNT_SOURCE_STAGE: i32 = 203;
+
+// Card Types
+pub const CARD_TYPE_MEMBER: i32 = 1;
+pub const CARD_TYPE_LIVE: i32 = 2;
+pub const CARD_TYPE_ENERGY: i32 = 3;
+
+// Slot Indices
+pub const SLOT_STAGE_0: i32 = 0;
+pub const SLOT_STAGE_1: i32 = 1;
+pub const SLOT_STAGE_2: i32 = 2;
+pub const SLOT_CONTEXT: i32 = 4;
+pub const SLOT_HAND: i32 = 6;
+pub const SLOT_DISCARD: i32 = 7;
+pub const SLOT_CHOICE_TARGET: i32 = 10;
+pub const SLOT_LIVE_0: i32 = 13;
+pub const SLOT_LIVE_1: i32 = 14;
+pub const SLOT_LIVE_2: i32 = 15;
+pub const SLOT_LIVE_SET: i32 = 13;
+pub const SLOT_PLAYER_SELECT: i32 = 20;
+
+// Choice Indices
+pub const CHOICE_IDX_DONE: i32 = 99;
+pub const CHOICE_IDX_CANCEL: i32 = 99;
+pub const CHOICE_IDX_ALL: i32 = 999;
+
+// Target Players
+pub const TARGET_PLAYER_SELF: i32 = 1;
+pub const TARGET_PLAYER_OPPONENT: i32 = 2;
+pub const TARGET_PLAYER_BOTH: i32 = 3;
+
+// Character IDs
+pub const CHAR_HONOKA: i32 = 1;
+pub const CHAR_ELI: i32 = 2;
+pub const CHAR_KOTORI: i32 = 3;
+pub const CHAR_UMI: i32 = 4;
+pub const CHAR_RIN: i32 = 5;
+pub const CHAR_MAKI: i32 = 6;
+pub const CHAR_NOZOMI: i32 = 7;
+pub const CHAR_HANAYO: i32 = 8;
+pub const CHAR_NICO: i32 = 9;
+pub const CHAR_CHIKA: i32 = 11;
+pub const CHAR_RIKO: i32 = 12;
+pub const CHAR_KANAN: i32 = 13;
+pub const CHAR_DIA: i32 = 14;
+pub const CHAR_YOU: i32 = 15;
+pub const CHAR_YOSHIKO: i32 = 16;
+pub const CHAR_HANAMARU: i32 = 17;
+pub const CHAR_MARI: i32 = 18;
+pub const CHAR_RUBY: i32 = 19;
+pub const CHAR_AYUMU: i32 = 21;
+pub const CHAR_KASUMI: i32 = 22;
+pub const CHAR_SHIZUKU: i32 = 23;
+pub const CHAR_KARIN: i32 = 24;
+pub const CHAR_AI: i32 = 25;
+pub const CHAR_KANATA: i32 = 26;
+pub const CHAR_SETSUNA: i32 = 27;
+pub const CHAR_EMMA: i32 = 28;
+pub const CHAR_RINA: i32 = 29;
+pub const CHAR_SHIORIKO: i32 = 30;
+pub const CHAR_MIA: i32 = 31;
+pub const CHAR_LANZHU: i32 = 32;
+pub const CHAR_YU: i32 = 33;
+pub const CHAR_KANON: i32 = 41;
+pub const CHAR_KEKE: i32 = 42;
+pub const CHAR_CHISATO: i32 = 43;
+pub const CHAR_SUMIRE: i32 = 44;
+pub const CHAR_REN: i32 = 45;
+pub const CHAR_KINAKO: i32 = 46;
+pub const CHAR_MEI: i32 = 47;
+pub const CHAR_SHIKI: i32 = 48;
+pub const CHAR_NATSUMI: i32 = 49;
+pub const CHAR_MARGARETE: i32 = 50;
+pub const CHAR_TOMARI: i32 = 51;
+pub const CHAR_KAHO: i32 = 61;
+pub const CHAR_SAYAKA: i32 = 62;
+pub const CHAR_KOZUE: i32 = 63;
+pub const CHAR_TSUZURI: i32 = 64;
+pub const CHAR_RURINO: i32 = 65;
+pub const CHAR_MEGU: i32 = 66;
+pub const CHAR_GINKO: i32 = 67;
+pub const CHAR_KOSUZU: i32 = 68;
+pub const CHAR_HIME: i32 = 69;
+
+// Group IDs
+pub const GROUP_MUSE: i32 = 0;
+pub const GROUP_AQOURS: i32 = 1;
+pub const GROUP_NIJIGASAKI: i32 = 2;
+pub const GROUP_LIELLA: i32 = 3;
+pub const GROUP_HASUNOSORA: i32 = 4;
+pub const GROUP_OTHER: i32 = 99;
+
+// Unit IDs
+pub const UNIT_PRINTEMPS: i32 = 0;
+pub const UNIT_LILY_WHITE: i32 = 1;
+pub const UNIT_BIBI: i32 = 2;
+pub const UNIT_CYARON: i32 = 3;
+pub const UNIT_AZALEA: i32 = 4;
+pub const UNIT_GUILTY_KISS: i32 = 5;
+pub const UNIT_DIVER_DIVA: i32 = 6;
+pub const UNIT_A_ZU_NA: i32 = 7;
+pub const UNIT_QU4RTZ: i32 = 8;
+pub const UNIT_R3BIRTH: i32 = 9;
+pub const UNIT_CATCHU: i32 = 10;
+pub const UNIT_KALEIDOSCORE: i32 = 11;
+pub const UNIT_SYNCRISE: i32 = 12;
+pub const UNIT_CERISE_BOUQUET: i32 = 13;
+pub const UNIT_DOLLCHESTRA: i32 = 14;
+pub const UNIT_MIRA_CRA_PARK: i32 = 15;
+pub const UNIT_EDEL_NOTE: i32 = 16;

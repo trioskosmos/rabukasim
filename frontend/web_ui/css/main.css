@@ -1427,13 +1427,52 @@ body {
     background: rgba(255, 255, 255, 0.05);
 }
 
-.tab-btn.active {
-    color: var(--accent-gold);
-    border-bottom-color: var(--accent-gold);
+/* Performance Flow Visualization */
+.perf-source-tag,
+.perf-target-tag {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1px 6px;
+    border-radius: 4px;
+    cursor: help;
+    transition: all 0.2s;
+    white-space: nowrap;
 }
 
-.perf-tab-content {
-    animation: fadeIn 0.3s ease-out;
+.perf-source-tag:hover,
+.perf-target-tag:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--accent-gold);
+}
+
+.perf-source-tag.bonus,
+.perf-target-tag.bonus {
+    color: var(--accent-pink);
+    border-color: rgba(255, 100, 180, 0.3);
+}
+
+.perf-source-tag.yell,
+.perf-target-tag.yell {
+    color: var(--accent-gold);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.perf-highlight-source {
+    background: rgba(255, 100, 180, 0.15) !important;
+    border: 1px solid var(--accent-pink) !important;
+    box-shadow: 0 0 10px rgba(255, 100, 180, 0.3);
+}
+
+.perf-highlight-target {
+    background: rgba(245, 158, 11, 0.15) !important;
+    border: 1px solid var(--accent-gold) !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+}
+
+.perf-member-contribution,
+.perf-live-card-row {
+    transition: all 0.2s;
+    border: 1px solid transparent;
 }
 
 /* Turn History List */
@@ -2773,10 +2812,19 @@ body {
 }
 
 .source-ability-text {
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-    opacity: 0.9;
-    line-height: 1.5;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    opacity: 0.95;
+    line-height: 1.6;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border-left: 3px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+}
+
+.source-ability-text:last-child {
+    margin-bottom: 0;
 }
 
 .choice-options-container {
@@ -2785,6 +2833,7 @@ body {
 }
 
 /* Performance Modal Bonus Tags */
+
 .perf-bonus-tag {
     color: #4f4;
     font-weight: bold;
@@ -2795,6 +2844,7 @@ body {
 .performance-result-content b {
     color: var(--accent-gold);
 }
+
 /* Bonus Tooltips in Performance Modal */
 .perf-bonus-tooltip-wrapper {
     position: relative;

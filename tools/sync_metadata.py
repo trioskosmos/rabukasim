@@ -54,7 +54,7 @@ def sync():
         f.write("\n// Extra Constants\n")
         for key, val in metadata.get("extra_constants", {}).items():
             const_type = "i32"
-            if key.startswith("FLAG_") or key.startswith("FILTER_") or key.startswith("KEYWORD_"):
+            if key.startswith("FLAG_") or key.startswith("FILTER_") or key.startswith("KEYWORD_") or key == "DYNAMIC_VALUE":
                 const_type = "u64"
             elif key.startswith("CHOICE_FLAG_"):
                 const_type = "u8"
@@ -68,6 +68,50 @@ def sync():
         f.write("\n// Zone Types\n")
         for key, val in metadata.get("zones", {}).items():
             f.write(f"pub const ZONE_{key}: i32 = {val};\n")
+
+        f.write("\n// Comparisons\n")
+        for key, val in metadata.get("comparisons", {}).items():
+            f.write(f"pub const COMP_{key}: i32 = {val};\n")
+
+        f.write("\n// Heart Color Map\n")
+        for key, val in metadata.get("heart_color_map", {}).items():
+            f.write(f"pub const HEART_COLOR_{key}: i32 = {val};\n")
+
+        f.write("\n// Meta Rule Types\n")
+        for key, val in metadata.get("meta_rule_types", {}).items():
+            f.write(f"pub const META_RULE_{key}: i32 = {val};\n")
+
+        f.write("\n// Multiplier Count Sources\n")
+        for key, val in metadata.get("multiplier_count_sources", {}).items():
+            f.write(f"pub const COUNT_SOURCE_{key}: i32 = {val};\n")
+
+        f.write("\n// Card Types\n")
+        for key, val in metadata.get("card_types", {}).items():
+            f.write(f"pub const CARD_TYPE_{key}: i32 = {val};\n")
+
+        f.write("\n// Slot Indices\n")
+        for key, val in metadata.get("slot_indices", {}).items():
+            f.write(f"pub const SLOT_{key}: i32 = {val};\n")
+
+        f.write("\n// Choice Indices\n")
+        for key, val in metadata.get("choice_indices", {}).items():
+            f.write(f"pub const CHOICE_IDX_{key}: i32 = {val};\n")
+
+        f.write("\n// Target Players\n")
+        for key, val in metadata.get("target_players", {}).items():
+            f.write(f"pub const TARGET_PLAYER_{key}: i32 = {val};\n")
+
+        f.write("\n// Character IDs\n")
+        for key, val in metadata.get("character_ids", {}).items():
+            f.write(f"pub const CHAR_{key}: i32 = {val};\n")
+
+        f.write("\n// Group IDs\n")
+        for key, val in metadata.get("group_ids", {}).items():
+            f.write(f"pub const GROUP_{key}: i32 = {val};\n")
+
+        f.write("\n// Unit IDs\n")
+        for key, val in metadata.get("unit_ids", {}).items():
+            f.write(f"pub const UNIT_{key}: i32 = {val};\n")
 
     # --- Generate Rust Enums (FULL OVERWRITE of enums.rs) ---
     rust_enum_path = "engine_rust_src/src/core/enums.rs"
@@ -274,6 +318,61 @@ def sync():
         f.write("export const Zones = {\n")
         for key, val in metadata.get("zones", {}).items():
             f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
+        f.write("export const Comparisons = {\n")
+        for key, val in metadata.get("comparisons", {}).items():
+            f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
+        f.write("export const HeartColorMap = {\n")
+        for key, val in metadata.get("heart_color_map", {}).items():
+            f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
+        f.write("export const MetaRuleTypes = {\n")
+        for key, val in metadata.get("meta_rule_types", {}).items():
+            f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
+        f.write("export const CountSources = {\n")
+        for key, val in metadata.get("multiplier_count_sources", {}).items():
+            f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
+        f.write("export const CardTypes = {\n")
+        for key, val in metadata.get("card_types", {}).items():
+            f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
+        f.write("export const SlotIndices = {\n")
+        for key, val in metadata.get("slot_indices", {}).items():
+            f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
+        f.write("export const ChoiceIndices = {\n")
+        for key, val in metadata.get("choice_indices", {}).items():
+            f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
+        f.write("export const TargetPlayers = {\n")
+        for key, val in metadata.get("target_players", {}).items():
+            f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
+        f.write("export const CharacterIds = {\n")
+        for key, val in metadata.get("character_ids", {}).items():
+            f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
+        f.write("export const GroupIds = {\n")
+        for key, val in metadata.get("group_ids", {}).items():
+            f.write(f"    {key}: {val},\n")
+        f.write("};\n\n")
+
+        f.write("export const UnitIds = {\n")
+        for key, val in metadata.get("unit_ids", {}).items():
+            f.write(f"    {key}: {val},\n")
         f.write("};\n")
 
     # --- Generate Python Metadata ---
@@ -292,6 +391,17 @@ def sync():
             ("PHASES", "phases"),
             ("ZONES", "zones"),
             ("EXTRA_CONSTANTS", "extra_constants"),
+            ("COMPARISONS", "comparisons"),
+            ("HEART_COLOR_MAP", "heart_color_map"),
+            ("META_RULE_TYPES", "meta_rule_types"),
+            ("COUNT_SOURCES", "multiplier_count_sources"),
+            ("CARD_TYPES", "card_types"),
+            ("SLOT_INDICES", "slot_indices"),
+            ("CHOICE_INDICES", "choice_indices"),
+            ("TARGET_PLAYERS", "target_players"),
+            ("CHARACTER_IDS", "character_ids"),
+            ("GROUP_IDS", "group_ids"),
+            ("UNIT_IDS", "unit_ids"),
         ]
 
         for var_name, meta_key in sections:

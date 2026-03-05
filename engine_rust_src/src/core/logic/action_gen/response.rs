@@ -52,7 +52,7 @@ impl ResponseGenerator {
         // Only allow action 0 if the interaction is marked OPTIONAL in bytecode
         // or if the choice type is inherently skip-able.
         let mut allow_action_0 =
-            (pi.filter_attr & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
+            (pi.filter_attr & FILTER_IS_OPTIONAL) != 0;
 
         if choice_type == ChoiceType::Optional || choice_type == ChoiceType::SelectMode {
             allow_action_0 = true;
@@ -82,14 +82,14 @@ impl ResponseGenerator {
 
         match choice_type {
             ChoiceType::Optional => {
-                receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + 0) as usize);
+                receiver.add_action((ACTION_BASE_CHOICE + 0) as usize);
                 return;
             }
             ChoiceType::PayEnergy => {
                 for i in 0..player.energy_zone.len().min(16) {
                     if !player.is_energy_tapped(i) {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_ENERGY + i as i32) as usize,
+                            (ACTION_BASE_ENERGY + i as i32) as usize,
                         );
                     }
                 }
@@ -98,7 +98,7 @@ impl ResponseGenerator {
             ChoiceType::RevealHand => {
                 for (i, &_cid) in player.hand.iter().enumerate() {
                     receiver.add_action(
-                        (crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize,
+                        (ACTION_BASE_HAND_SELECT + i as i32) as usize,
                     );
                 }
                 return;
@@ -106,14 +106,14 @@ impl ResponseGenerator {
             ChoiceType::SelectDiscard => {
                 for (i, &_cid) in player.discard.iter().enumerate() {
                     receiver
-                        .add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
+                        .add_action((ACTION_BASE_CHOICE + i as i32) as usize);
                 }
                 return;
             }
             ChoiceType::SelectSwapSource => {
                 for i in 0..player.success_lives.len() {
                     receiver.add_action(
-                        (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
+                        (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                     );
                 }
                 return;
@@ -122,7 +122,7 @@ impl ResponseGenerator {
                 for i in 0..3 {
                     if (player.prevent_play_to_slot_mask & (1 << i)) == 0 {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                            (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
                     }
                 }
@@ -132,7 +132,7 @@ impl ResponseGenerator {
                 for i in 0..3 {
                     if player.stage[i] == -1 && (player.prevent_play_to_slot_mask & (1 << i)) == 0 {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                            (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
                     }
                 }
@@ -142,14 +142,14 @@ impl ResponseGenerator {
                 for i in 0..3 {
                     // Usually there's no prevent_play for live slots, but we verify it's open
                     receiver
-                        .add_action((crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize);
+                        .add_action((ACTION_BASE_CHOICE + i as i32) as usize);
                 }
                 return;
             }
             ChoiceType::SelectSwapTarget => {
                 for (i, &_cid) in player.hand.iter().enumerate() {
                     receiver.add_action(
-                        (crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize,
+                        (ACTION_BASE_HAND_SELECT + i as i32) as usize,
                     );
                 }
                 return;
@@ -162,7 +162,7 @@ impl ResponseGenerator {
                 for (i, &cid) in player.stage.iter().enumerate() {
                     if cid != -1 {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
+                            (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                         );
                     }
                 }
@@ -173,7 +173,7 @@ impl ResponseGenerator {
                 for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
                     if cid != -1 {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
+                            (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                         );
                     }
                 }
@@ -183,7 +183,7 @@ impl ResponseGenerator {
                 for (i, &cid) in player.looked_cards.iter().enumerate() {
                     if cid != -1 {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                            (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
                     }
                 }
@@ -192,7 +192,7 @@ impl ResponseGenerator {
             O_COLOR_SELECT => {
                 for c in 0..6 {
                     receiver
-                        .add_action((crate::core::logic::ACTION_BASE_COLOR + c as i32) as usize);
+                        .add_action((ACTION_BASE_COLOR + c as i32) as usize);
                 }
                 return;
             }
@@ -204,15 +204,15 @@ impl ResponseGenerator {
                 return;
             }
             O_MOVE_TO_DISCARD => {
-                let masked_filter = (pi.filter_attr as u32 as u64) & 0xFFFFFFFFFFFF0FFF;
+                let masked_filter = pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
                 for (i, &cid) in player.hand.iter().enumerate() {
                     if state.card_matches_filter(db, cid, masked_filter) {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize,
+                            (ACTION_BASE_HAND_SELECT + i as i32) as usize,
                         );
                     }
                 }
-                if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL)
+                if (pi.filter_attr & FILTER_IS_OPTIONAL)
                     != 0
                 {
                     receiver.add_action(0);
@@ -224,10 +224,10 @@ impl ResponseGenerator {
                 for i in 0..count {
                     let cid = player.looked_cards[i];
                     if cid != -1
-                        && state.card_matches_filter(db, cid, (pi.filter_attr as u32) as u64)
+                        && state.card_matches_filter(db, cid, pi.filter_attr)
                     {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                            (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
                     }
                 }
@@ -240,7 +240,7 @@ impl ResponseGenerator {
                 for (i, &cid) in player.hand.iter().enumerate() {
                     if state.card_matches_filter(db, cid, pi.filter_attr) {
                         receiver
-                            .add_action((crate::core::logic::ACTION_BASE_HAND + i as i32) as usize);
+                            .add_action((ACTION_BASE_HAND + i as i32) as usize);
                     }
                 }
                 if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0 {
@@ -263,7 +263,7 @@ impl ResponseGenerator {
                 for (i, &cid) in player.live_zone.iter().enumerate() {
                     if cid >= 0 {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                            (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
                     }
                 }
@@ -298,12 +298,12 @@ impl ResponseGenerator {
                 for (i, &cid) in player.looked_cards.iter().enumerate() {
                     if cid != -1 {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                            (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
                     }
                 }
                 // Also add a "Done" action (99) to finalize the order if optional or once selections are complete
-                receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + 99) as usize);
+                receiver.add_action((crate::core::logic::ACTION_BASE_CHOICE + crate::core::logic::constants::CHOICE_DONE as i32) as usize);
                 return;
             }
             _ => {
@@ -321,7 +321,7 @@ impl ResponseGenerator {
                 if choice_type == ChoiceType::SelectStage {
                     for i in 0..3 {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
+                            (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                         );
                     }
                     return;
@@ -329,7 +329,7 @@ impl ResponseGenerator {
                 if choice_type == ChoiceType::SelectLiveSlot {
                     for i in 0..player.live_zone.len().min(10) {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
+                            (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                         );
                     }
                     return;
@@ -384,7 +384,7 @@ impl ResponseGenerator {
                 for (i, &cid) in player.hand.iter().enumerate() {
                     if state.card_matches_filter_with_ctx(db, cid, final_filter_attr, &pi.ctx) {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize,
+                            (ACTION_BASE_HAND_SELECT + i as i32) as usize,
                         );
                     }
                 }
@@ -393,7 +393,7 @@ impl ResponseGenerator {
                 for (i, &cid) in player.looked_cards.iter().enumerate() {
                     if state.card_matches_filter_with_ctx(db, cid, final_filter_attr, &pi.ctx) {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                            (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
                     }
                 }
@@ -401,7 +401,7 @@ impl ResponseGenerator {
             ChoiceType::SelectStage => {
                 for i in 0..3 {
                     receiver.add_action(
-                        (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
+                        (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                     );
                 }
             }
@@ -409,7 +409,7 @@ impl ResponseGenerator {
                 for i in 0..player.live_zone.len().min(10) {
                     if player.live_zone[i] >= 0 {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
+                            (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                         );
                     }
                 }
@@ -418,17 +418,17 @@ impl ResponseGenerator {
                 for i in 0..player.energy_zone.len().min(10) {
                     if !player.is_energy_tapped(i) {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_ENERGY + i as i32) as usize,
+                            (ACTION_BASE_ENERGY + i as i32) as usize,
                         );
                     }
                 }
             }
             _ => {
                 for (i, &cid) in player.looked_cards.iter().enumerate() {
-                    let filter_only = final_filter_attr & 0xFFFFFFFFFFFF0FFF;
+                    let filter_only = final_filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
                     if state.card_matches_filter(db, cid, filter_only) {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                            (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
                     }
                 }
@@ -468,7 +468,7 @@ impl ResponseGenerator {
                 for (i, &cid) in player.hand.iter().enumerate() {
                     if state.card_matches_filter(db, cid, filter_attr) {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize,
+                            (ACTION_BASE_HAND_SELECT + i as i32) as usize,
                         );
                     }
                 }
@@ -478,7 +478,7 @@ impl ResponseGenerator {
                 for (i, &cid) in player.discard.iter().enumerate() {
                     if state.card_matches_filter(db, cid, filter_attr) {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
+                            (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
                     }
                 }
@@ -488,7 +488,7 @@ impl ResponseGenerator {
                 for (i, &cid) in player.stage.iter().enumerate() {
                     if cid >= 0 && state.card_matches_filter(db, cid, filter_attr) {
                         receiver.add_action(
-                            (crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
+                            (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                         );
                     }
                 }
@@ -569,10 +569,10 @@ impl ResponseGenerator {
                                     }
                                 } else if target_op == O_MOVE_TO_DISCARD {
                                     // Source zone can be packed: lower byte = slot/target, upper bytes = source zone
-                                    // s=6 means Hand directly, s=0x60001 means source=Hand(6) packed
+                                    // s=ZONE_HAND means Hand directly, s=packed means source=Hand(6) packed
                                     let source_zone = if s > 255 { (s >> 16) & 0xFF } else { s };
                                     let hand_len = state.players[p_idx].hand.len() as i32;
-                                    if (source_zone == 6 || source_zone == 0) && hand_len < v {
+                                    if (source_zone == ZONE_HAND || source_zone == ZONE_DEFAULT) && hand_len < v {
                                         option_valid = false;
                                     }
                                 }
@@ -583,7 +583,7 @@ impl ResponseGenerator {
             }
 
             if option_valid {
-                receiver.add_action((crate::core::logic::ACTION_BASE_MODE + i as i32) as usize);
+                receiver.add_action((ACTION_BASE_MODE + i as i32) as usize);
             }
         }
     }

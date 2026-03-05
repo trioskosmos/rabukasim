@@ -87,9 +87,8 @@ fn test_rurino_filter_masking_fix() {
     println!("DEBUG: Available actions: {:?}", actions);
     println!("DEBUG: Hand: {:?}", state.core.players[p_idx].hand);
 
-    // Action IDs for hand selection are 3000 + hand_index (based on observed behavior)
-    // Check if any hand selection actions exist (3000-3999 range)
-    let has_hand_selection = actions.iter().any(|&a| a >= 3000 && a < 4000);
+    // Action IDs for hand selection are ACTION_BASE_HAND_SELECT + hand_index
+    let has_hand_selection = actions.iter().any(|&a| a >= ACTION_BASE_HAND_SELECT && a < ACTION_BASE_HAND_SELECT + 100);
     assert!(
         has_hand_selection,
         "At least one hand selection action should be available. Actions: {:?}",
