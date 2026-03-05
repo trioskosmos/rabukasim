@@ -570,9 +570,9 @@ impl ResponseController for GameState {
                 let virtual_bc = vec![
                     pi.effect_opcode,
                     pi.ctx.v_remaining as i32,
-                    0,
-                    0,
-                    0,
+                    (pi.filter_attr & 0xFFFFFFFF) as i32,
+                    (pi.filter_attr >> 32) as i32,
+                    0, // raw_s
                     O_RETURN,
                     0,
                     0,
@@ -598,6 +598,9 @@ impl ResponseController for GameState {
 
             // Restore phase only if no new suspension occurred
             if self.interaction_stack.is_empty() {
+                if self.debug.debug_mode {
+                    println!("[DEBUG_RES] Restoring phase. orig_phase={:?}, stack_len={}", orig_phase, self.interaction_stack.len());
+                }
                 self.phase = if orig_phase == Phase::Response || orig_phase == Phase::Setup {
                     Phase::Main
                 } else {

@@ -117,9 +117,18 @@ pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
         details = format!(" ({})", desc);
     }
 
+    let a_hex = if a != 0 { format!("0x{:012X}", a) } else { "0".to_string() };
+    
+    // Check if the opcode might have a target slot in `s`
+    let s_desc = if (s & 0xFF) == 10 {
+        format!("{} (Choice)", s)
+    } else {
+        format!("{}", s)
+    };
+
     format!(
-        "{:<15} | v:{:<4} a:{:<10} s:{:<4}{}",
-        base_name, v, a, s, details
+        "{:<15} | v:{:<4} a:{:<15} s:{:<10}{}",
+        base_name, v, a_hex, s_desc, details
     )
 }
 

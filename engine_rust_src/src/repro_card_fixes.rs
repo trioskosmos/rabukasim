@@ -170,6 +170,7 @@ mod tests {
         // Setup Hime ability simulation
         state.players[p_idx].hand = vec![100, 101, 102].into();
         state.phase = Phase::Response;
+        state.debug.debug_mode = true;
 
         // Opcode 58 (MOVE_TO_DISCARD), Attr (Hand + Optional), Count 1
         let ctx = AbilityContext {
@@ -184,6 +185,7 @@ mod tests {
             choice_type: crate::core::enums::ChoiceType::SelectHandDiscard,
             filter_attr: 0x6000 | crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL,
             v_remaining: 1,
+            original_phase: Phase::Main,
             ..Default::default()
         });
 

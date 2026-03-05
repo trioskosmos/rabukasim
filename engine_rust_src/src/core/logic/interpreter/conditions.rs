@@ -184,19 +184,19 @@ pub fn resolve_count(
         let zone_mask = (attr >> FILTER_ZONE_MASK_SHIFT) & 0x07;
         let has_zone_mask = zone_mask != 0;
 
-        // Mask bindings: 1=Stage, 2=Discard, 4=Hand
+        // Mask bindings: 4=Stage, 7=Discard, 6=Hand (matching Zone enum)
         let check_stage = if has_zone_mask {
-            (zone_mask & 0x01) != 0
+            zone_mask == 4
         } else {
             op == C_COUNT_STAGE || op == C_COUNT_GROUP
         };
         let check_discard = if has_zone_mask {
-            (zone_mask & 0x02) != 0
+            zone_mask == 7
         } else {
             op == C_COUNT_DISCARD
         };
         let check_hand = if has_zone_mask {
-            (zone_mask & 0x04) != 0
+            zone_mask == 6
         } else {
             op == C_COUNT_HAND
         };
@@ -235,26 +235,36 @@ pub fn resolve_count(
 
         // Special Group ID auto-encoding for C_COUNT_GROUP / C_COUNT_STAGE if not enabled
         // Note: Don't apply this encoding if only UNIQUE_NAMES flag is set (0x8000)
-        // Also preserve high bits (like special_id at bits 57-59) for name filtering
-        // Skip auto-encoding for C_COUNT_SUCCESS_LIVE since live cards don't have groups
-        let group_id_bits = raw_attr & !FILTER_UNIQUE_NAMES;
+        let group_id_bits = (attr & 0x00000000FFFFFFFF) & !FILTER_UNIQUE_NAMES;
         let should_auto_encode_group = (op == C_COUNT_GROUP || op == C_COUNT_STAGE)
-            && (raw_attr & 0x10) == 0
+            && (attr & FILTER_GROUP_FLAG) == 0
             && group_id_bits > 0
             && group_id_bits < 300;
-        let encoded_group = if should_auto_encode_group {
+
+        let mut filter_attr = attr;
+        if should_auto_encode_group {
             let gid = group_id_bits;
-            0x10 | (gid << 5)
-        } else {
-            group_id_bits
-        };
+            // Clear bits 0-11 and insert new group flag+id (bit 4 + bits 5-11)
+            let group_mask = 0xFFF; 
+            let new_group_bits = 0x10 | (gid << 5);
+            filter_attr = (filter_attr & !group_mask) | new_group_bits;
+        }
 
-        // Preserve high bits (special_id, etc.) from original attr
-        let high_bits = attr & 0xFFFF_FF00_0000_0000;
-        let mut filter_attr = high_bits | encoded_group;
+        // CRITICAL FIX: Python compiler sometimes leaks the condition `val` (e.g. "needs >= 2 CatChu members")
+        // into the filter's `value_threshold` as a heart requirement because they share the same params dict!
+        // If value_threshold is set but there's no color_mask and it's NOT a cost type, clear the value_threshold bit!
+        let has_value_enabled = (filter_attr & FILTER_COST_FLAG) != 0; // Bit 24
+        let is_cost_type = (filter_attr & crate::core::logic::filter::FILTER_COST_TYPE_FLAG) != 0;  // Bit 31
+        let has_color_mask = ((filter_attr >> FILTER_COLOR_SHIFT) & 0x7F) != 0; // Bits 32-38
+        if has_value_enabled && !is_cost_type && !has_color_mask {
+            // Nullify the value_enabled bit (bit 24) since it's an errant cross-contamination from the count target
+            filter_attr &= !FILTER_COST_FLAG;
+        }
 
-        // CRITICAL FIX: If we are counting SUCCESS_PILE, we must ensure it doesn't fail due to 
-        // the effect's targeting filter (which often requires Member type).
+        // CRITICAL FIX: Clear metadata flags that collide with biological fields (e.g. char_id_1 at bit 39-45)
+        let metadata_mask = (1u64 << 40) | (1u64 << 41) | (1u64 << 43) | (1u64 << 50) | (0x7u64 << 53);
+        filter_attr &= !metadata_mask;
+
         if check_success {
             filter_attr &= !0x0C; // Clear Member (0x04) and Live (0x08) bits
         }

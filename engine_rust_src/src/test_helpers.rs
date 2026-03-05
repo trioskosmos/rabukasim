@@ -2,6 +2,38 @@ use crate::core::logic::card_db::CardDatabase;
 use crate::core::logic::player::PlayerState;
 use crate::core::logic::*;
 
+#[derive(Debug, Clone, Default)]
+pub struct AbilityBuilder {
+    pub bytecode: Vec<i32>,
+}
+
+impl AbilityBuilder {
+    pub fn new() -> Self {
+        Self { bytecode: Vec::new() }
+    }
+
+    pub fn push(mut self, op: i32, arg1: i32, arg2: i32, arg3: i32) -> Self {
+        self.bytecode.extend_from_slice(&[op, arg1, arg2, arg3]);
+        self
+    }
+
+    pub fn recover_live(self, amount: i32) -> Self {
+        self.push(crate::core::logic::O_RECOVER_LIVE, amount, 0, 0)
+    }
+
+    pub fn pay_energy(self, amount: i32) -> Self {
+        self.push(crate::core::logic::O_PAY_ENERGY, amount, 0, 0)
+    }
+
+    pub fn return_op(self) -> Self {
+        self.push(crate::core::logic::O_RETURN, 0, 0, 0)
+    }
+
+    pub fn build(self) -> Vec<i32> {
+        self.bytecode
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ZoneSnapshot {
     pub hand_len: usize,

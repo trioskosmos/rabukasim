@@ -6,13 +6,14 @@ fn test_q103_catchu_dynamic_condition() {
         .expect("Failed to read cards_compiled.json");
     let db = CardDatabase::from_json(&json_content).unwrap();
     let mut state = GameState::default();
+    state.debug.debug_mode = true;
 
     let p1 = 0;
 
     // Real CatChu IDs based on PR variants
-    let catchu_live_id = 605; // PL!SP-pb1-023-L
-    let catchu_member_1 = 560; // PL!SP-bp4-004-P
-    let catchu_member_2 = 617; // PL!SP-sd1-001-SD
+    let catchu_live_id = *db.card_no_to_id.get("PL!SP-pb1-023-L").unwrap();
+    let catchu_member_1 = *db.card_no_to_id.get("PL!SP-PR-003-PR").unwrap(); // Kanon
+    let catchu_member_2 = *db.card_no_to_id.get("PL!SP-PR-006-PR").unwrap(); // Sumire
 
     // Core ability of CatChu:
     // 1. COND(Check 2 Catchu)

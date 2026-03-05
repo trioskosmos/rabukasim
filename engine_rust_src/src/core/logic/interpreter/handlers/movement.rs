@@ -134,6 +134,10 @@ pub fn handle_move_to_discard(
     let filter_attr = (a as u64) & 0xFFFFFFFFFFFF0FFF;
     let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
 
+    if state.debug.debug_mode {
+        println!("[DEBUG_MOV] h_m_t_d: cid={}, choice={}, optional={}, attr={:x}", ctx.source_card_id, ctx.choice_index, is_optional, a as u64);
+    }
+
     if is_optional && ctx.choice_index == -1 {
         let available_count = match source_zone {
             Zone::Hand => state.players[target_player_idx].hand.len() as i32,

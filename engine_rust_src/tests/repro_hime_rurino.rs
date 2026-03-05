@@ -22,7 +22,7 @@ fn test_hime_optional_discard_resumption() {
         card_id: 4270,
         effect_opcode: 58,
         choice_type: ChoiceType::SelectHandDiscard,
-        filter_attr: 0x6002,
+        filter_attr: 0x2000000000006000,
         v_remaining: 1,
         ..Default::default()
     });

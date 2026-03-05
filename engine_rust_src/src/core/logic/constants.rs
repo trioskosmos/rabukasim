@@ -33,9 +33,9 @@ pub const FILTER_TYPE_MEMBER: u64 = 0x04;
 /// Flag indicating the card must be a Live card.
 pub const FILTER_TYPE_LIVE: u64 = 0x08;
 /// Flag indicating the effect/cost is optional (may).
-pub const FILTER_IS_OPTIONAL: u64 = 1u64 << 63;
+pub const FILTER_IS_OPTIONAL: u64 = 1u64 << 61;
 /// Flag indicating the value should be multiplied by a count (Dynamic Value).
-pub const DYNAMIC_VALUE: u64 = 1u64 << 62;
+pub const DYNAMIC_VALUE: u64 = 1u64 << 60;
 
 /// Flag indicating a specific Group ID filter is active.
 pub const FILTER_GROUP_FLAG: u64 = 0x10;

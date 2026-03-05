@@ -1,6 +1,6 @@
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::*;
-use crate::test_helpers::{create_test_db, create_test_state};
+use crate::test_helpers::{create_test_db, create_test_state, AbilityBuilder};
 // use std::collections::HashMap;
 
 /// O_RECOVER_LIVE must only show Live cards, never members.
@@ -16,11 +16,13 @@ fn test_recov_l_only_shows_lives() {
         player_id: 0,
         ..Default::default()
     };
-    let bc = vec![O_RECOVER_LIVE, 1, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = AbilityBuilder::new().recover_live(1).return_op().build();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    assert_eq!(state.players[0].looked_cards.len(), 1);
-    assert_eq!(state.players[0].looked_cards[0], 55001);
+    // It used to check looked_cards before auto-pick shortcut was implemented.
+    // Now with exactly 1 candidate, it auto-picks and puts it into hand.
+    assert!(state.players[0].hand.contains(&55001));
+    assert!(!state.players[0].hand.contains(&19));
 }
 
 /// O_RECOVER_LIVE returns early when no live cards are in discard.
@@ -35,7 +37,7 @@ fn test_recov_l_no_lives_returns_early() {
         player_id: 0,
         ..Default::default()
     };
-    let bc = vec![O_RECOVER_LIVE, 1, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = AbilityBuilder::new().recover_live(1).return_op().build();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert!(state.players[0].looked_cards.is_empty());
@@ -55,7 +57,7 @@ fn test_pay_energy_auto_pays() {
         player_id: 0,
         ..Default::default()
     };
-    let bc = vec![O_PAY_ENERGY, 2, 0, 0, O_RETURN, 0, 0, 0];
+    let bc = AbilityBuilder::new().pay_energy(2).return_op().build();
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_ne!(state.phase, Phase::Response);

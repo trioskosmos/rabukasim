@@ -940,7 +940,7 @@ class Ability:
                         attr |= char_id << 16
 
             if cost.is_optional:
-                attr |= (1 << 63)  # Bit 63 = Optional (Project Standard)
+                attr |= (1 << 61)  # Bit 61 = Optional (Revised Project Standard)
 
             # Use value from cost params if available (max/count)
             value = cost.value
@@ -1323,9 +1323,9 @@ class Ability:
                 pass # Target opponent bit 24 handles this generically
 
 
-            # ENSURE OPTIONAL BIT 0 SET FOR ALL OPCODES
+            # ENSURE OPTIONAL BIT 61 SET FOR ALL OPCODES
             if eff.is_optional or eff.params.get("is_optional"):
-                attr |= 0x01
+                attr |= (1 << 61)
 
             attr_val = attr if not eff.params.get("all") else (attr | 0x80)
 
