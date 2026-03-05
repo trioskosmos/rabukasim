@@ -927,8 +927,8 @@ class Ability:
                 cle_raw = cost.params.get("cost_le") or params_upper.get("COST_LE")
                 if cle_raw is not None:
                     cle = int(cle_raw)
-                    attr |= 1 << 4  # Comparison = LE (1)
-                    attr |= cle << 8
+                    attr |= EXTRA_CONSTANTS.get("FILTER_COST_LE", 1 << 30)
+                    attr |= cle << EXTRA_CONSTANTS.get("FILTER_COST_SHIFT", 25)
 
                 # Name filter (Setsuna = 1 if using CHAR_MAP indices, or specialized bits)
                 name_filter = cost.params.get("name") or params_upper.get("NAME")
@@ -940,7 +940,7 @@ class Ability:
                         attr |= char_id << 16
 
             if cost.is_optional:
-                attr |= (1 << 61)  # Bit 61 = Optional (Revised Project Standard)
+                attr |= EXTRA_CONSTANTS.get("FILTER_IS_OPTIONAL", 1 << 61)  # Bit 61 = Optional
 
             # Use value from cost params if available (max/count)
             value = cost.value
@@ -1325,7 +1325,7 @@ class Ability:
 
             # ENSURE OPTIONAL BIT 61 SET FOR ALL OPCODES
             if eff.is_optional or eff.params.get("is_optional"):
-                attr |= (1 << 61)
+                attr |= EXTRA_CONSTANTS.get("FILTER_IS_OPTIONAL", 1 << 61)
 
             attr_val = attr if not eff.params.get("all") else (attr | 0x80)
 

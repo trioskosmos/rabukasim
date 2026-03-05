@@ -25,10 +25,10 @@ mod tests {
         let mut kasumi = MemberCard::default();
         kasumi.card_id = 4331;
         kasumi.name = "Kasumi".to_string();
-        // Ability 0: [O_PAY_ENERGY, 1, 0, -2147483648, 0, O_RETURN, 0, 0, 0, 0] -> bit 63 is OPTIONAL
+        // Ability 0: [O_PAY_ENERGY, 1, 0, FILTER_IS_OPTIONAL >> 32, 0, O_RETURN, 0, 0, 0, 0] -> bit 61 is OPTIONAL
         kasumi.abilities.push(Ability {
             trigger: TriggerType::OnLiveStart,
-            bytecode: vec![O_PAY_ENERGY, 1, 0, -2147483648, 0, O_RETURN, 0, 0, 0, 0],
+            bytecode: vec![O_PAY_ENERGY, 1, 0, (crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL >> 32) as i32, 0, O_RETURN, 0, 0, 0, 0],
             ..Default::default()
         });
         db.members.insert(4331, kasumi.clone());
