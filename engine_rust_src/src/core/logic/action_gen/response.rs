@@ -40,10 +40,7 @@ impl ResponseGenerator {
         let choice_type = pi.choice_type;
         let source_card_id = pi.ctx.source_card_id;
 
-        let mut expected_p_idx = ctx.player_id as usize;
-        if choice_type == ChoiceType::TapO || choice_type == ChoiceType::OpponentChoose {
-            expected_p_idx = 1 - expected_p_idx;
-        }
+        let expected_p_idx = ctx.player_id as usize;
 
         if expected_p_idx != p_idx {
             return;
@@ -385,7 +382,7 @@ impl ResponseGenerator {
         match pi.choice_type {
             ChoiceType::SelectHandDiscard => {
                 for (i, &cid) in player.hand.iter().enumerate() {
-                    if state.card_matches_filter(db, cid, final_filter_attr) {
+                    if state.card_matches_filter_with_ctx(db, cid, final_filter_attr, &pi.ctx) {
                         receiver.add_action(
                             (crate::core::logic::ACTION_BASE_HAND_SELECT + i as i32) as usize,
                         );
@@ -394,7 +391,7 @@ impl ResponseGenerator {
             }
             ChoiceType::SelectDiscardPlay => {
                 for (i, &cid) in player.looked_cards.iter().enumerate() {
-                    if state.card_matches_filter(db, cid, final_filter_attr) {
+                    if state.card_matches_filter_with_ctx(db, cid, final_filter_attr, &pi.ctx) {
                         receiver.add_action(
                             (crate::core::logic::ACTION_BASE_CHOICE + i as i32) as usize,
                         );

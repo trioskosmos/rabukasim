@@ -58,13 +58,7 @@ pub fn suspend_interaction(
         execution_id,
         ..Default::default()
     });
-    let chooser_p_idx = if choice_type == crate::core::enums::ChoiceType::TapO
-        || choice_type == crate::core::enums::ChoiceType::OpponentChoose
-    {
-        1 - ctx.player_id
-    } else {
-        ctx.player_id
-    };
+    let chooser_p_idx = ctx.player_id;
     state.phase = Phase::Response;
     state.current_player = chooser_p_idx;
 

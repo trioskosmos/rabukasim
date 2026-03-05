@@ -96,14 +96,12 @@ pub fn get_effective_blades(
                                 
                                 let mut multiplier = 1;
                                 if (s & 0x10000) != 0 {
-                                    // Dynamic multiplier: slot (bc[i+4]) bits 8-15 contains the count opcode
-                                    let count_op = (s >> 8) & 0xFF;
+                                    // Dynamic multiplier: slot (bc[i+4]) bits 8-23 contains the count opcode
+                                    let count_op = (s >> 8) & 0xFFFF;
                                     multiplier = resolve_count(state, db, count_op, a, s, &ctx, depth + 1);
-                                } else if (a & 0x40) != 0 {
-                                    // Legacy dynamic bit
-                                    if a_low == 307 {
-                                         multiplier = state.players[player_idx].success_lives.len() as i32;
-                                    }
+                                } else if (a & 0x40) != 0 || a == ConditionType::SuccessPileCount as u64 {
+                                    // SuccessPileCount (307)
+                                    multiplier = state.players[player_idx].success_lives.len() as i32;
                                 }
 
                                 val += (v as i32) * multiplier;
@@ -147,12 +145,10 @@ pub fn get_effective_blades(
                                     
                                     let mut multiplier = 1;
                                     if (s & 0x10000) != 0 {
-                                        let count_op = (s >> 8) & 0xFF;
+                                        let count_op = (s >> 8) & 0xFFFF;
                                         multiplier = resolve_count(state, db, count_op, a, s, &ctx, depth + 1);
-                                    } else if (a & 0x40) != 0 {
-                                        if a_low == 307 {
-                                             multiplier = state.players[player_idx].success_lives.len() as i32;
-                                        }
+                                    } else if (a & 0x40) != 0 || a == ConditionType::SuccessPileCount as u64 {
+                                        multiplier = state.players[player_idx].success_lives.len() as i32;
                                     }
                                     val += (v as i32) * multiplier;
                                 }
@@ -236,8 +232,11 @@ pub fn get_effective_hearts(
 
                             if op == O_ADD_HEARTS && targets_us {
                                 let mut multiplier = 1;
-                                if (a & 0x02) != 0 {
-                                    let count_op = (s >> 8) & 0xFF;
+                                if (s & 0x10000) != 0 {
+                                    let count_op = (s >> 8) & 0xFFFF;
+                                    multiplier = resolve_count(state, db, count_op, a as u64, s, &ctx, depth + 1);
+                                } else if (a & 0x02) != 0 {
+                                    let count_op = (s >> 8) & 0xFF; // Legacy 8-bit
                                     multiplier = resolve_count(state, db, count_op, a as u64, count_op, &ctx, depth + 1);
                                 }
 

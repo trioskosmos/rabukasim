@@ -139,6 +139,7 @@ fn test_trigger_on_play_honoka() {
 }
 
 /// Verifies that Eli's Activated trigger (ID 121) works correctly with production bytecode.
+/// RECOVER_MEMBER always prompts the user even with 1 candidate (game rule compliance).
 #[test]
 fn test_trigger_activated_eli() {
     let db = load_real_db();
@@ -148,9 +149,6 @@ fn test_trigger_activated_eli() {
     state.players[0].discard = vec![124].into(); // Member card to recover (Rin)
     state.players[0].stage[2] = 121; // Eli is on stage slot 2
 
-    // Eli's Ability 0 Bytecode (from DB): [17, 1, 0, 6, 1, 0, 0, 0]
-    // Instruction: Effect(RECOVER_MEMBER 1)
-    // Note: The cost (MOVE_TO_DISCARD) is handled separately in the ability structure
     let card = db.get_member(121).expect("Missing Eli");
     let ab = &card.abilities[0];
 
@@ -167,20 +165,41 @@ fn test_trigger_activated_eli() {
     state.players[0].stage[2] = -1;
     state.players[0].discard.push(121);
 
-    // Correct manipulation for Vec<i32> bytecode: [op, v, a_low, a_high, s]
     let filter_attr: u64 = 0x01 | (1 << 2) | (5u64 << 39) | (7u64 << 53);
     let mut custom_bytecode = ab.bytecode.clone();
-    // Ensure it's at least 5 words long for a proper instruction
     if custom_bytecode.len() >= 5 {
         custom_bytecode[2] = (filter_attr & 0xFFFFFFFF) as i32;
         custom_bytecode[3] = (filter_attr >> 32) as i32;
     }
-    
-    // Now resolve the effect bytecode
+
+    // First call: should suspend waiting for user selection (1 target still needs user choice)
     state.resolve_bytecode_cref(&db, &custom_bytecode, &ctx);
 
-    // With the auto-pick shortcut (and only Rin matching), it should NOT suspend
-    assert_eq!(state.phase, Phase::Main, "Should NOT suspend for single valid target. Hand: {:?}", state.players[0].hand);
-    assert!(state.players[0].hand.contains(&124), "Hand should contain the recovered member Rin (ID 124). Hand: {:?}", state.players[0].hand);
-    assert!(!state.players[0].discard.contains(&124), "Rin should no longer be in discard");
+    // Game rule: RECOVER_MEMBER always prompts user even with 1 valid card
+    assert_eq!(state.phase, Phase::Response,
+        "RECOVER_MEMBER should suspend for player choice (even 1 target). Hand: {:?}", state.players[0].hand);
+    // Put Eli back in hand to allow activation
+    state.players[0].hand.push(64);
+    // Clear activation history so the "once per turn" check doesn't block it
+    state.players[0].used_abilities.clear();
+
+    assert_eq!(state.interaction_stack.len(), 1, "Should have 1 pending interaction");
+
+    // Resume with choice 0 (select Rin, the only valid card at index 0) for SelectDiscard
+    state.step(&db, ACTION_BASE_CHOICE + 0).expect("Failed to resume ability");
+    state.process_trigger_queue(&db);
+
+    // After choice for SelectDiscard: RECOVER_MEMBER should suspend
+    assert_eq!(state.interaction_stack.last().unwrap().choice_type, ChoiceType::RecovM);
+    state.step(&db, ACTION_BASE_CHOICE + 0).expect("Failed to resume second part");
+
+    // After choice: Rin should be in hand
+    state.process_trigger_queue(&db);
+
+    assert_eq!(state.phase, Phase::Main,
+        "Should return to Main after selection. Hand: {:?}", state.players[0].hand);
+    assert!(state.players[0].hand.contains(&124),
+        "Hand should contain recovered member Rin (ID 124). Hand: {:?}", state.players[0].hand);
+    assert!(!state.players[0].discard.contains(&124),
+        "Rin should no longer be in discard");
 }

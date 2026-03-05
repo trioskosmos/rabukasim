@@ -19,7 +19,7 @@ pub fn handle_meta_control(
     let base_p = ctx.activator_id as usize;
     let p_idx = ctx.player_id as usize;
     let target_slot = instr.s.target_slot as i32;
-    let target_p_idx = if instr.s.is_opponent() || target_slot == 2 {
+    let target_p_idx = if instr.s.is_opponent || target_slot == 2 {
         1 - base_p
     } else {
         base_p
@@ -90,7 +90,7 @@ pub fn handle_meta_control(
             }
         }
         O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER => {
-            let area_val = (s >> 28) & 0x07;
+            let area_val = (s >> 29) & 0x07;
             if area_val >= 1 && area_val <= 3 {
                 let auto_slot = (area_val - 1) as i16;
                 ctx.choice_index = auto_slot;
@@ -133,9 +133,7 @@ pub fn handle_meta_control(
                 let choice = ctx.choice_index as i32;
                 let source_zone = instr.s.source_zone as u8;
 
-                if source_zone == 6 {
-                    ctx.target_slot = choice as i16;
-                } else if source_zone == 7 {
+                if source_zone == 6 || source_zone == 7 {
                     ctx.target_slot = choice as i16;
                 } else {
                     ctx.target_slot = choice as i16;
@@ -145,6 +143,9 @@ pub fn handle_meta_control(
         }
         O_OPPONENT_CHOOSE => {
             if ctx.choice_index == -1 {
+                // Flip player_id BEFORE suspension so that the interaction is attributed to the opponent
+                ctx.player_id = 1 - ctx.player_id;
+                
                 let choice_text = get_choice_text(db, ctx);
                 if suspend_interaction(
                     state,
@@ -161,8 +162,7 @@ pub fn handle_meta_control(
                     return Some(HandlerResult::Suspend);
                 }
             } else {
-                // Subsequent opcodes must execute with the opponent as the activator
-                ctx.player_id = 1 - ctx.player_id;
+                // On resumption, the player_id is already flipped
             }
         }
         O_PREVENT_ACTIVATE => {
@@ -178,7 +178,7 @@ pub fn handle_meta_control(
             state.players[target_p_idx].prevent_success_pile_set = 1;
         }
         O_PREVENT_PLAY_TO_SLOT => {
-            let target_p = if instr.s.is_opponent() {
+            let target_p = if instr.s.is_opponent {
                 1 - base_p
             } else {
                 base_p

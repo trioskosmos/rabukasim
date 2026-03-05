@@ -1,0 +1,1044 @@
+﻿uv : C:\Users\trios\.gemini\antigravity\
+vscode\loveca-copy\.venv\Lib\site-packag
+es\numba\core\decorators.py:246: Runtime
+Warning: nopython is set for njit and is
+ ignored
+発生場所 行:1 文字:1
++ uv run python ai/training/generate_dis
+tillation_data.py --games 100 - ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecif 
+   ied: (C:\Users\trios\... and is ign  
+  ored:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCom 
+   mandError
+ 
+  warnings.warn('nopython is set for nji
+t and is ignored', RuntimeWarning)
+Generating distillation data using SuperHeuristicAgent...
+ [VectorEnv] Observation Mode: STANDARD (2304-dim)
+ [VectorEnv] Game Config: Turns=100, Steps=1000, Win=100.0, Lose=-100.0
+ [VectorEnv] Loaded 737 cards and 772 abilities from cards_compiled.json.
+ [VectorEnv] Pools: 645 Ability Members, 34 Ability Lives.
+ [VectorEnv] Fallbacks: 0 Vanilla Members, 0 Vanilla Lives.
+
+  0%|          | 0/100 [00:00<?, ?it/s]
+  1%|1         | 1/100 [00:01<02:36,  1.
+59s/it]
+  2%|2         | 2/100 [00:02<02:07,  1.
+30s/it]
+SUCCESS: Loaded 1056 members and 175 lives from C:\Users\trios\.gemini\antigravity\vscode\loveca-copy\data\cards_compiled.json
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+  3%|3         | 3/100 [00:03<01:48,  1.
+12s/it]
+  4%|4         | 4/100 [00:05<02:24,  1.
+50s/it]
+  5%|5         | 5/100 [00:06<02:02,  1.
+29s/it]
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 4
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 4
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 4
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 4
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 4
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 4
+DEBUG: Total Blades (cheer reveal count): 4
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 4
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 4
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 4
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 4
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 4
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 5
+DEBUG: Total Blades (cheer reveal count): 5
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 5
+DEBUG: Total Blades (cheer reveal count): 5
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 5
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 5
+DEBUG: Total Blades (cheer reveal count): 5
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 5
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 5
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 5
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 5
+DEBUG: Total Blades (cheer reveal count): 5
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Total Blades (cheer reveal count): 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+  6%|6         | 6/100 [00:07<01:46,  1.
+13s/it]
+  7%|7         | 7/100 [00:08<01:38,  1.
+06s/it]
+  8%|8         | 8/100 [00:09<01:36,  1.
+05s/it]
+  9%|9         | 9/100 [00:10<01:31,  1.
+01s/it]
+ 10%|#         | 10/100 [00:11<01:27,  1
+.03it/s]
+ 11%|#1        | 11/100 [00:11<01:22,  1
+.08it/s]
+ 12%|#2        | 12/100 [00:12<01:18,  1
+.12it/s]
+ 13%|#3        | 13/100 [00:13<01:20,  1
+.08it/s]
+ 14%|#4        | 14/100 [00:14<01:19,  1
+.08it/s]
+ 14%|#4        | 14/100 [00:14<01:32,  1
+.07s/it]
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 2
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+DEBUG: Pushed choices: 1
+Saved 10000 samples to data/full_distill_v1.npz
+

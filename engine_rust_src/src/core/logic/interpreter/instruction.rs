@@ -1,32 +1,37 @@
 use crate::core::enums::Zone;
-// Removed unused FLAG_TARGET_OPPONENT
+use crate::core::generated_layout::*;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct DecodedSlot {
     pub target_slot: u8,
     pub source_zone: Zone,
     pub dest_zone: Zone,
-    pub flags: u8,
     pub count_op: u8,
     pub is_dynamic: bool,
+    pub is_opponent: bool,
+    pub is_reveal_until_live: bool,
+    pub is_empty_slot_only: bool,
+    pub is_wait: bool,
     pub area_idx: u8,
 }
 
 impl DecodedSlot {
     pub fn decode(raw_s: i32) -> Self {
-        let s = raw_s as u32 as u64;
-        let source_zone_val = ((s >> 16) & 0x0F) as u8;
-        let dest_zone_val = ((s >> 20) & 0x0F) as u8;
-        let flags = ((s >> 24) & 0xFF) as u8;
+        let s = raw_s as u32;
+        let source_zone_val = ((s >> S_STANDARD_SOURCE_ZONE_SHIFT) & S_STANDARD_SOURCE_ZONE_MASK as u32) as u8;
+        let dest_zone_val = ((s >> S_STANDARD_DEST_ZONE_SHIFT) & S_STANDARD_DEST_ZONE_MASK as u32) as u8;
 
         Self {
-            target_slot: (s & 0xFF) as u8,
+            target_slot: ((s >> S_STANDARD_TARGET_SLOT_SHIFT) & S_STANDARD_TARGET_SLOT_MASK as u32) as u8,
             source_zone: Self::decode_zone(source_zone_val),
             dest_zone: Self::decode_zone(dest_zone_val),
-            flags,
-            count_op: ((s >> 8) & 0xFF) as u8,
-            is_dynamic: (s & 0x01000000) != 0, // Bit 24 is often the dynamic/opponent flag
-            area_idx: ((s >> 28) & 0x0F) as u8,
+            count_op: ((s >> S_STANDARD_REMAINDER_ZONE_SHIFT) & S_STANDARD_REMAINDER_ZONE_MASK as u32) as u8,
+            is_dynamic: ((s >> S_STANDARD_IS_DYNAMIC_SHIFT) & S_STANDARD_IS_DYNAMIC_MASK as u32) != 0,
+            is_opponent: ((s >> S_STANDARD_IS_OPPONENT_SHIFT) & S_STANDARD_IS_OPPONENT_MASK as u32) != 0,
+            is_reveal_until_live: ((s >> S_STANDARD_IS_REVEAL_UNTIL_LIVE_SHIFT) & S_STANDARD_IS_REVEAL_UNTIL_LIVE_MASK as u32) != 0,
+            is_empty_slot_only: ((s >> S_STANDARD_IS_EMPTY_SLOT_SHIFT) & S_STANDARD_IS_EMPTY_SLOT_MASK as u32) != 0,
+            is_wait: ((s >> S_STANDARD_IS_WAIT_SHIFT) & S_STANDARD_IS_WAIT_MASK as u32) != 0,
+            area_idx: ((s >> S_STANDARD_AREA_IDX_SHIFT) & S_STANDARD_AREA_IDX_MASK as u32) as u8,
         }
     }
 
@@ -44,22 +49,6 @@ impl DecodedSlot {
             15 => Zone::Yell,
             _ => Zone::Default,
         }
-    }
-
-    pub fn is_opponent(&self) -> bool {
-        (self.flags & 0x01) != 0 // Bit 24 of raw_s
-    }
-
-    pub fn is_reveal_until_live(&self) -> bool {
-        (self.flags & 0x02) != 0 // Bit 25 of raw_s
-    }
-
-    pub fn is_empty_slot_only(&self) -> bool {
-        (self.flags & 0x04) != 0 // Bit 26 of raw_s
-    }
-
-    pub fn is_wait(&self) -> bool {
-        (self.flags & 0x08) != 0 // Bit 27 of raw_s
     }
 }
 

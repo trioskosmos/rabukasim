@@ -91,6 +91,8 @@ pub struct AbilityContext {
     #[serde(default)]
     pub original_phase: Option<Phase>,
     #[serde(default)]
+    pub original_current_player: Option<u8>,
+    #[serde(default)]
     pub repeat_count: i16, // For O_REPEAT_ABILITY: tracks how many times ability has repeated
     #[serde(default)]
     pub selected_cards: Vec<i32>, // IDs of cards picked in the current/last selection action
@@ -113,6 +115,7 @@ impl Default for AbilityContext {
             v_remaining: -1,
             trigger_type: TriggerType::None,
             original_phase: None,
+            original_current_player: None,
             repeat_count: 0,
             selected_cards: Vec::new(),
         }

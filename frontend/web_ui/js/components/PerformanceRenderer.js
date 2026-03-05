@@ -266,6 +266,18 @@ export const PerformanceRenderer = {
                         </div>
                         ` : ''}
 
+                        ${res.triggered_abilities && res.triggered_abilities.length > 0 ? `
+                        <div class="perf-section">
+                            <h4>${i18n.t('activated_abilities', { defaultValue: 'Activated Abilities' })}</h4>
+                            ${res.triggered_abilities.map(ta => `
+                                <div class="perf-line" style="font-size: 0.8rem; gap: 4px;">
+                                    <span style="opacity:0.7;">${Tooltips.enrichAbilityText(ta.name)}:</span>
+                                    <span>${Tooltips.enrichAbilityText(ta.card_name || 'Unknown Card')} (Ability ${ta.id + 1})</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+
                         ${res.yell_cards && res.yell_cards.length > 0 ? `
                         <div class="perf-section">
                             <h4>${i18n.t('yelled_cards')} (${res.yell_cards.length} Total)</h4>

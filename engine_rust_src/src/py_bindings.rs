@@ -964,6 +964,7 @@ impl PyGameState {
             v_remaining: -1,
             trigger_type: Default::default(),
             original_phase: None,
+            original_current_player: None,
             repeat_count: 0,
             selected_cards: Vec::new(),
             v_accumulated: 0,

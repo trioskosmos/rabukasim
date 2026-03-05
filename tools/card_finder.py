@@ -93,7 +93,10 @@ def find_card_by_no(no, cards_raw, cards_compiled):
 
 def main():
     # Ensure stdout/stderr use UTF-8 regardless of locale
-    if sys.stdout.encoding.lower() != "utf-8":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    elif sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
         import io
 
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -258,7 +261,8 @@ def display_card(query, raw, compiled, cid, manual_pseudo, consolidated_pseudo, 
 
     print(f"QA Rulings: {len(related_qas)}")
     for qa in related_qas:
-        print(f"  [{qa.get('id')}] {qa.get('question')[:80]}...")
+        print(f"\n  [{qa.get('id')}] Q: {qa.get('question')}")
+        print(f"  A: {qa.get('answer')}")
 
     print(f"Rust Test Coverage: {len(rust_tests)} files")
     for t in rust_tests:

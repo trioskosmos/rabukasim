@@ -266,9 +266,13 @@ class VectorGameState:
                     
                     bc = ab.get("bytecode", [])
                     if bc:
+                        bc_np = np.array(bc, dtype=np.int32)
+                        if bc_np.size % 4 != 0:
+                            pad_size = 4 - (bc_np.size % 4)
+                            bc_np = np.concatenate((bc_np, np.zeros(pad_size, dtype=np.int32)))
                         # Register in bytecode_map
                         bc_idx = len(bytecode_list) + 1 # 1-based
-                        bytecode_list.append(np.array(bc, dtype=np.int32))
+                        bytecode_list.append(bc_np)
                         self.bytecode_index[cid, ab_idx] = bc_idx
 
                 processed_count += 1
@@ -303,7 +307,12 @@ class VectorGameState:
                                 # Prepend C_BATON (231) + TargetID
                                 new_bc = [231, target_cid, 0, 0] + original_bc
                                 if idx_counter < self.bytecode_map.shape[0]:
-                                    bc_reshaped = np.array(new_bc, dtype=np.int32).reshape(-1, 4)
+                                    bc_np = np.array(new_bc, dtype=np.int32)
+                                    if bc_np.size % 4 != 0:
+                                        pad_size = 4 - (bc_np.size % 4)
+                                        bc_np = np.concatenate((bc_np, np.zeros(pad_size, dtype=np.int32)))
+
+                                    bc_reshaped = bc_np.reshape(-1, 4)
                                     length = min(bc_reshaped.shape[0], self.max_len)
                                     self.bytecode_map[idx_counter, :length] = bc_reshaped[:length]
                                     self.bytecode_index[cid, ab_idx] = idx_counter
@@ -767,6 +776,7 @@ class VectorGameState:
             return isn.encode_observations_standard(
                 self.num_envs,
                 self.batch_hand,
+                self.batch_deck,
                 self.batch_stage,
                 self.batch_energy_count,
                 self.batch_tapped,

@@ -255,6 +255,7 @@ pub fn resolve_bytecode(
         }
 
         // Dispatch to handlers - Use 64-bit 'a' directly
+        let mut do_reset = true;
         match registry.dispatch(
             state,
             db,
@@ -273,6 +274,7 @@ pub fn resolve_bytecode(
             }
             HandlerResult::Branch(new_ip) => {
                 frame.ip = new_ip;
+                do_reset = false; // Branch explicitly loops back, requiring state like v_remaining to persist
             }
             HandlerResult::BranchToBytecode(new_bc) => {
                 let next_ctx = frame.ctx.clone();
@@ -286,13 +288,30 @@ pub fn resolve_bytecode(
 
         // Obtaining frame again after dispatch might be necessary if we popped, but the loop head handles it.
         if let Some(f) = executor.stack.last_mut() {
-            f.ctx.choice_index = -1; // Reset choice index after each instruction
-            f.ctx.v_remaining = -1; // Reset v_remaining to prevent state leakage
+            // CRITICAL: Only reset these if we aren't suspended, 
+            // otherwise we lose the budget (v_remaining) and choice state for resumption.
+            if do_reset {
+                f.ctx.choice_index = -1; // Reset choice index after each instruction
+                f.ctx.v_remaining = -1; // Reset v_remaining to prevent state leakage, UNLESS we are branching
+            }
         }
     }
 
     if _id.is_some() {
         state.clear_execution_id();
+    }
+
+    // Restore phase if we finished a resumed execution and no new suspensions occurred
+    if ctx_in.choice_index != -1 && (state.phase == Phase::Response || state.phase == Phase::Setup) && state.interaction_stack.is_empty() {
+        let orig = ctx_in.original_phase.unwrap_or(Phase::Main);
+        state.phase = if orig == Phase::Response || orig == Phase::Setup {
+            Phase::Main
+        } else {
+            orig
+        };
+        if let Some(p) = ctx_in.original_current_player {
+            state.current_player = p;
+        }
     }
 }
 
@@ -316,6 +335,10 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
         };
 
         if costs::pay_costs_transactional(state, db, costs, &ctx) {
+            if state.phase == Phase::PerformanceP1 || state.phase == Phase::PerformanceP2 || state.phase == Phase::LiveResult {
+                let p_idx = ctx.player_id as usize;
+                state.players[p_idx].perf_triggered_abilities.push((cid, ab_idx as i16, _trigger));
+            }
             resolve_bytecode(state, db, std::sync::Arc::new(bytecode), &ctx);
         }
 

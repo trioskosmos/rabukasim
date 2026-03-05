@@ -261,7 +261,7 @@ class SuperHeuristicAgent(Agent):
         return chosen_action
 
     def _minimax(self, state: GameState, depth: int, alpha: float, beta: float, maximize_player: int) -> float:
-        if depth == 0 or state.game_over:
+        if depth <= 0 or state.game_over:
             return self.evaluate_state(state, maximize_player)
 
         current_player = state.current_player

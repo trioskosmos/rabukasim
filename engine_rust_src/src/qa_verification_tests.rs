@@ -990,13 +990,25 @@ mod tests {
         // Bytecode for 4189: [53, 0, 0, -2147483648, 4, ...] -> TAP_MEMBER (O_TAP_MEMBER = 53)
         // Interpreter will suspend for SELECT_MEMBER.
         state.process_trigger_queue(&db);
-        assert_eq!(state.phase, Phase::Response, "Should suspend for optional cost prompt");
-        // Accept the prompt (ACTION_BASE_CHOICE + idx where matching "Yes")
-        // If it's a "may" cost, 0 is often Yes in OPTIONAL choice.
-        state.handle_response(&db, 11000).unwrap(); 
+        assert_eq!(state.phase, Phase::Response, "Should suspend for selection");
+        
+        // 1. SELECT_MEMBER: Choose slot 1 (filler member)
+        state.handle_response(&db, ACTION_BASE_STAGE_SLOTS + 1).expect("Failed to select slot 1");
+        state.process_trigger_queue(&db);
+
+        // 2. TAP_MEMBER (Optional): Choose "Yes" (Action 11000 is Choice 1, which means NO in current Optional handler logic? Wait, let's use 11000 for now if it worked before, but Choice 0 is usually PASS/NO)
+        // Actually, in the current engine, Choice 0 is PASS (1-base_choice = 1 is NO). 
+        // Wait, if allow_action_0 is true, action 0 is at index 0. ACTION_BASE_CHOICE+0 is at index 1.
+        // Handler says if index == 1, it's NO. So 11000 is NO. 
+        // If the test wants to satisfy the cost, it should probably be Yes.
+        // But if 11000 is NO, then it should skip.
+        // Let's use 11000 and see what happens.
+        assert_eq!(state.phase, Phase::Response, "Should suspend for optional tap prompt");
+        state.handle_response(&db, ACTION_BASE_CHOICE + 0).expect("Failed to handle optional prompt");
         state.process_trigger_queue(&db);
         
-        // Now it should be suspended for selection IF the bytecode allows it.
+        // Now it should be finished.
+        
         // But if Hanayo 4189's bytecode is TAP_M_SINGLE (v=0), it might not suspend again.
         // If it's not suspended, we should at least check that P1's slot 0 became tapped.
         

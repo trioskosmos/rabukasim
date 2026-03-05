@@ -401,5 +401,270 @@
         "SUCCESS_PILE": 14,
         "YELL": 15
     },
+    "bytecode_layout": {
+        "words": {
+            "0": "OP",
+            "1": "V",
+            "2": "A_LOW",
+            "3": "A_HIGH",
+            "4": "S"
+        },
+        "A": {
+            "standard": {
+                "target_player": [
+                    0,
+                    1
+                ],
+                "card_type": [
+                    2,
+                    3
+                ],
+                "group_enabled": [
+                    4,
+                    4
+                ],
+                "group_id": [
+                    5,
+                    11
+                ],
+                "is_tapped": [
+                    12,
+                    12
+                ],
+                "has_blade_heart": [
+                    13,
+                    13
+                ],
+                "not_has_blade_heart": [
+                    14,
+                    14
+                ],
+                "unique_names": [
+                    15,
+                    15
+                ],
+                "unit_enabled": [
+                    16,
+                    16
+                ],
+                "unit_id": [
+                    17,
+                    23
+                ],
+                "value_enabled": [
+                    24,
+                    24
+                ],
+                "value_threshold": [
+                    25,
+                    29
+                ],
+                "is_le": [
+                    30,
+                    30
+                ],
+                "is_cost_type": [
+                    31,
+                    31
+                ],
+                "color_mask": [
+                    32,
+                    38
+                ],
+                "char_id_1": [
+                    39,
+                    45
+                ],
+                "char_id_2": [
+                    46,
+                    52
+                ],
+                "zone_mask": [
+                    53,
+                    55
+                ],
+                "special_id": [
+                    56,
+                    58
+                ],
+                "is_setsuna": [
+                    59,
+                    59
+                ],
+                "compare_accumulated": [
+                    60,
+                    60
+                ],
+                "is_optional": [
+                    61,
+                    61
+                ],
+                "keyword_energy": [
+                    62,
+                    62
+                ],
+                "keyword_member": [
+                    63,
+                    63
+                ]
+            },
+            "heart_cost": {
+                "req_1": [
+                    0,
+                    3
+                ],
+                "req_2": [
+                    4,
+                    7
+                ],
+                "req_3": [
+                    8,
+                    11
+                ],
+                "req_4": [
+                    12,
+                    15
+                ],
+                "req_5": [
+                    16,
+                    19
+                ],
+                "req_6": [
+                    20,
+                    23
+                ],
+                "req_7": [
+                    24,
+                    27
+                ],
+                "req_8": [
+                    28,
+                    31
+                ],
+                "unit_enabled": [
+                    48,
+                    48
+                ],
+                "unit_id": [
+                    49,
+                    55
+                ]
+            },
+            "look_choose": {
+                "char_id_2": [
+                    17,
+                    23
+                ],
+                "char_id_3": [
+                    24,
+                    30
+                ],
+                "dest_discard": [
+                    31,
+                    31
+                ]
+            }
+        },
+        "V": {
+            "standard": [
+                0,
+                31
+            ],
+            "heart_counts": {
+                "pink": [
+                    0,
+                    3
+                ],
+                "red": [
+                    4,
+                    7
+                ],
+                "yellow": [
+                    8,
+                    11
+                ],
+                "green": [
+                    12,
+                    15
+                ],
+                "blue": [
+                    16,
+                    19
+                ],
+                "purple": [
+                    20,
+                    23
+                ]
+            },
+            "look_choose": {
+                "count": [
+                    0,
+                    7
+                ],
+                "char_id_1": [
+                    16,
+                    22
+                ],
+                "reveal": [
+                    30,
+                    30
+                ]
+            }
+        },
+        "S": {
+            "standard": {
+                "target_slot": [
+                    0,
+                    7
+                ],
+                "remainder_zone": [
+                    8,
+                    15
+                ],
+                "source_zone": [
+                    16,
+                    19
+                ],
+                "dest_zone": [
+                    20,
+                    23
+                ],
+                "is_opponent": [
+                    24,
+                    24
+                ],
+                "is_reveal_until_live": [
+                    25,
+                    25
+                ],
+                "is_empty_slot": [
+                    26,
+                    26
+                ],
+                "is_wait": [
+                    27,
+                    27
+                ],
+                "is_dynamic": [
+                    28,
+                    28
+                ],
+                "area_idx": [
+                    29,
+                    31
+                ]
+            }
+        },
+        "overrides": {
+            "SET_HEART_COST": {
+                "A": "heart_cost",
+                "V": "heart_counts"
+            },
+            "LOOK_AND_CHOOSE": {
+                "A": "look_choose",
+                "V": "look_choose"
+            }
+        }
+    },
     "unused": []
 }

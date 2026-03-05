@@ -52,6 +52,7 @@ impl HandlerRegistry {
         let v = instr.v;
         let a = instr.a;
         let s = instr.raw_s;
+        println!("[DEBUG] DISPATCH: op={} v={} a={} s={}", op, v, a, s);
         // Centralized Dispatch Match
         match op {
             O_SELECT_MODE => {
@@ -172,7 +173,7 @@ pub fn handle_select_mode(
     use super::suspension::{get_choice_text, suspend_interaction};
     let v = instr.v;
     if ctx.choice_index == -1 {
-        let is_opponent = instr.s.is_opponent() || instr.s.target_slot == 2;
+        let is_opponent = instr.s.is_opponent || instr.s.target_slot == 2;
         let choice_type = if is_opponent {
             crate::core::enums::ChoiceType::OpponentChoose
         } else {
@@ -183,11 +184,6 @@ pub fn handle_select_mode(
         let mut flip_ctx = ctx.clone();
         if is_opponent {
             flip_ctx.player_id = 1 - (ctx.player_id as u8);
-        }
-
-        let old_cp = state.current_player;
-        if is_opponent {
-            state.current_player = 1 - ctx.player_id;
         }
 
         let suspended = suspend_interaction(
@@ -202,10 +198,6 @@ pub fn handle_select_mode(
             0,
             v as i16,
         );
-
-        if is_opponent {
-            state.current_player = old_cp;
-        }
 
         if suspended {
             return None;

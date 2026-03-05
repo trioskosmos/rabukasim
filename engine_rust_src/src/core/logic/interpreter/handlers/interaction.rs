@@ -3,6 +3,7 @@ use crate::core::logic::constants::{FILTER_IS_OPTIONAL, CHOICE_DONE, CHOICE_ALL}
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
 use crate::core::models::interpreter::get_choice_text;
 use crate::core::models::suspend_interaction;
+use crate::core::generated_layout::*;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
@@ -18,7 +19,7 @@ pub fn handle_play_live_from_discard(
     let v = instr.v;
     let a = instr.a;
     let s = instr.raw_s;
-    let target_p_idx = if instr.s.is_opponent() {
+    let target_p_idx = if instr.s.is_opponent {
         1 - (ctx.activator_id as usize)
     } else {
         ctx.activator_id as usize
@@ -326,9 +327,14 @@ pub fn handle_look_and_choose(
     } else {
         source_zone_bits as i32
     };
-    let look_count = (v & 0xFF) as usize;
-    let pick_count_raw = ((v >> 8) & 0xFF) as usize;
-    let reveal_flag = (v & (1 << 30)) != 0;
+    // --- New Layout Unpacking ---
+    let (look_count, char_id_1, reveal_flag) = {
+        let v_u32 = v as u32;
+        let count = ((v_u32 >> V_LOOK_CHOOSE_COUNT_SHIFT) & V_LOOK_CHOOSE_COUNT_MASK) as usize;
+        let char1 = ((v_u32 >> V_LOOK_CHOOSE_CHAR_ID_1_SHIFT) & V_LOOK_CHOOSE_CHAR_ID_1_MASK) as u8;
+        let reveal = ((v as u32 >> V_LOOK_CHOOSE_REVEAL_SHIFT) & V_LOOK_CHOOSE_REVEAL_MASK) != 0;
+        (count, char1, reveal)
+    };
 
     if state.players[p_idx].looked_cards.is_empty() {
         let reveal_count = if source_zone == 6 {
@@ -379,18 +385,15 @@ pub fn handle_look_and_choose(
             ChoiceType::LookAndChoose
         };
         let choice_text = get_choice_text(db, ctx);
-        let pick_count = ((v >> 8) & 0xFF) as i16;
-        let v_rem = if pick_count > 0 { pick_count } else { 1 };
-        let mut filter_attr = a as u64;
-        if ((v >> 16) & 0x7F) > 0 {
-            filter_attr |= 1u64 << 42;
-            filter_attr |= (((v >> 16) & 0x7F) as u64) << 31;
-        }
-        if ((v >> 23) & 0x7F) > 0 {
-            filter_attr |= 1u64 << 31;
-            filter_attr |= (((v >> 23) & 0x7F) as u64) << 32;
-        }
-        let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
+        
+        let mut filter = crate::core::logic::filter::CardFilter::from_attr(a);
+        filter.char_id_1 = char_id_1;
+        filter.char_id_2 = ((a as u64 >> A_LOOK_CHOOSE_CHAR_ID_2_SHIFT) & A_LOOK_CHOOSE_CHAR_ID_2_MASK) as u8;
+        filter.char_id_3 = ((a as u64 >> A_LOOK_CHOOSE_CHAR_ID_3_SHIFT) & A_LOOK_CHOOSE_CHAR_ID_3_MASK) as u8;
+        
+        let final_attr = filter.to_attr();
+        let pick_count = 1;
+
         if suspend_interaction(
             state,
             db,
@@ -400,11 +403,13 @@ pub fn handle_look_and_choose(
             s,
             choice_type,
             &choice_text,
-            filter_attr,
-            v_rem,
+            final_attr as u64,
+            pick_count,
         ) {
+            let is_optional = ((a as u64 >> A_STANDARD_IS_OPTIONAL_SHIFT) & A_STANDARD_IS_OPTIONAL_MASK) != 0;
             if is_optional && ctx.choice_index == CHOICE_DONE {
                 let cards: Vec<i32> = state.players[p_idx].looked_cards.drain(..).collect();
+                // Return cards to deck
                 state.players[p_idx].deck.extend(cards.into_iter().rev());
                 return Some(false);
             }
@@ -437,7 +442,7 @@ pub fn handle_look_and_choose(
                         state.players[p_idx].deck.push(chosen);
                     }
                     4 => {
-                        let slot = s as usize;
+                        let slot = (s as u32 & S_STANDARD_TARGET_SLOT_MASK) as usize;
                         if slot < 3 {
                             if let Some(cid) =
                                 state.handle_member_leaves_stage(p_idx, slot, db, ctx)
@@ -469,10 +474,6 @@ pub fn handle_look_and_choose(
                     }
                     _ => {
                         state.players[p_idx].hand.push(chosen);
-                        state.players[p_idx].hand_increased_this_turn = state.players
-                            [p_idx]
-                            .hand_increased_this_turn
-                            .saturating_add(1);
                     }
                 }
                 if reveal_flag {
@@ -496,15 +497,12 @@ pub fn handle_look_and_choose(
                         }
                     }
                 }
-                let effective_pick_count = if pick_count_raw > 0 {
-                    pick_count_raw
-                } else {
-                    look_count
-                };
+                
+                // --- Multi-pick loop ---
                 let rem = if ctx.v_remaining > 0 {
                     ctx.v_remaining - 1
                 } else {
-                    (effective_pick_count as i16).saturating_sub(1)
+                    0
                 };
                 if rem > 0 && revealed.iter().any(|&c| c != -1) {
                     state.players[p_idx].looked_cards = revealed.clone();
@@ -533,7 +531,10 @@ pub fn handle_look_and_choose(
     }
     revealed.retain(|c| *c != -1);
     if !revealed.is_empty() {
-        let dest = if rem_dest > 0 {
+        let dest_bits = ((a as u64 >> A_LOOK_CHOOSE_DEST_DISCARD_SHIFT) & A_LOOK_CHOOSE_DEST_DISCARD_MASK) != 0;
+        let dest = if dest_bits {
+            7
+        } else if rem_dest > 0 {
             rem_dest as i32
         } else {
             source_zone_bits as i32
@@ -591,33 +592,35 @@ pub fn handle_recovery(
         if state.players[p_idx].looked_cards.is_empty() {
             return Some(true);
         }
-        
-        // Auto-pick shortcut: if only one card matches and we haven't started picking yet
-        if state.players[p_idx].looked_cards.len() == 1 && ctx.choice_index == -1 && v == 1 {
-            ctx.choice_index = 0;
-        }
     }
 
     if ctx.choice_index == -1 {
-        let choice_type = if real_op == O_RECOVER_LIVE {
-            ChoiceType::RecovL
+        let is_optional = (a as u64 & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0;
+        let is_single_choice_auto_pick = !is_optional && state.players[p_idx].looked_cards.len() == 1;
+
+        if is_single_choice_auto_pick {
+            ctx.choice_index = 0;
         } else {
-            ChoiceType::RecovM
-        };
-        let choice_text = get_choice_text(db, ctx);
-        if suspend_interaction(
-            state,
-            db,
-            ctx,
-            instr_ip,
-            real_op,
-            0,
-            choice_type,
-            &choice_text,
-            0,
-            -1,
-        ) {
-            return None;
+            let choice_type = if real_op == O_RECOVER_LIVE {
+                ChoiceType::RecovL
+            } else {
+                ChoiceType::RecovM
+            };
+            let choice_text = get_choice_text(db, ctx);
+            if suspend_interaction(
+                state,
+                db,
+                ctx,
+                instr_ip,
+                real_op,
+                0,
+                choice_type,
+                &choice_text,
+                0,
+                -1,
+            ) {
+                return None;
+            }
         }
     }
 

@@ -5,6 +5,7 @@ use crate::core::models::interpreter::{resolve_target_slot, get_choice_text};
 use crate::core::models::suspend_interaction;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::logging;
+use crate::core::generated_layout::*;
 use super::HandlerResult;
 
 pub fn handle_energy(
@@ -287,7 +288,7 @@ pub fn handle_member_state(
         }
         O_TAP_MEMBER => {
             let resolved_slot = resolve_target_slot(target_slot, ctx);
-            let _target_p_idx = if instr.s.is_opponent() { 1 - ctx.player_id } else { ctx.player_id };
+            let _target_p_idx = if instr.s.is_opponent { 1 - ctx.player_id } else { ctx.player_id };
 
             if v == 0 && resolved_slot == 4 && a & 0x02 == 0 {
                 if a & 0x01 != 0 || a & 0x80 != 0 {
@@ -386,6 +387,9 @@ pub fn handle_member_state(
                 if state.debug.debug_mode {
                     println!("[DEBUG] O_TAP_OPPONENT: Suspending for opponent.");
                 }
+                // Pre-flip: suspension.rs now uses ctx.player_id directly for current_player
+                let orig_player_id = ctx.player_id;
+                ctx.player_id = target_p_idx as u8;
 
                 let suspended = suspend_interaction(
                     state,
@@ -403,6 +407,8 @@ pub fn handle_member_state(
                 if suspended {
                     return Some(HandlerResult::Suspend);
                 }
+                // Restore if not suspended
+                ctx.player_id = orig_player_id;
             } else {
                 let slot_idx = ctx.choice_index as usize;
                 if slot_idx < 3 {
@@ -411,6 +417,8 @@ pub fn handle_member_state(
                     ctx.choice_index = -1;
                     if ctx.v_remaining > 0 {
                         let choice_text = get_choice_text(db, ctx);
+                        let orig_player_id = ctx.player_id;
+                        ctx.player_id = target_p_idx as u8;
                         let suspended = suspend_interaction(
                             state,
                             db,
@@ -427,6 +435,7 @@ pub fn handle_member_state(
                         if suspended {
                             return Some(HandlerResult::Suspend);
                         }
+                        ctx.player_id = orig_player_id;
                     }
                 }
             }
@@ -634,7 +643,15 @@ pub fn handle_member_state(
             let empty_slot_only = ((s as u64) & FLAG_EMPTY_SLOT_ONLY) != 0;
 
             let filter_attr_base = a as u64;
-            let is_total_cost = (filter_attr_base & FILTER_TOTAL_COST) != 0;
+
+            // Total Cost detection:
+            // Support modern bit 60 (compare_accumulated)
+            // Support legacy bit 50 (FILTER_TOTAL_COST)
+            // Support bit 31 (FILTER_COST_TYPE_FLAG) + bit 30 (FILTER_COST_LE) for legacy compiled cards
+            let is_total_cost = (filter_attr_base & (1u64 << 60)) != 0
+                || (filter_attr_base & (1u64 << 50)) != 0
+                || ((filter_attr_base & crate::core::logic::filter::FILTER_COST_TYPE_FLAG) != 0
+                    && (filter_attr_base & 1073741824) != 0);
 
             let mut remaining = if ctx.v_remaining == -1 {
                 if is_total_cost {
@@ -646,11 +663,13 @@ pub fn handle_member_state(
             } else {
                 ctx.v_remaining
             };
+
             if remaining <= 0 {
                 return Some(HandlerResult::Continue);
             }
 
             if remaining % 2 == 0 {
+                // Card Selection Step (4, 2, ...)
                 if empty_slot_only
                     && state.players[target_p_idx]
                         .stage
@@ -660,13 +679,17 @@ pub fn handle_member_state(
                     return Some(HandlerResult::Continue);
                 }
 
+                // IMPORTANT: Only clear looked_cards if we are STARTING a new pick.
+                // If we have a choice_index, it means we just resumed from SelectDiscardPlay.
+                if is_total_cost && ctx.choice_index == -1 {
+                    state.players[target_p_idx].looked_cards.clear();
+                }
+
                 if state.players[target_p_idx].looked_cards.is_empty() {
                     let mut filter_attr = filter_attr_base;
                     if is_total_cost {
-                        filter_attr = (filter_attr
-                            & !(0x1F << crate::core::generated_constants::FILTER_COST_SHIFT))
-                            | ((ctx.v_accumulated as u64)
-                                << crate::core::generated_constants::FILTER_COST_SHIFT);
+                        // Ensure bit 60 is set so CardFilter::matches uses ctx.v_accumulated
+                        filter_attr |= 1u64 << 60;
                     }
                     let matched_ids: Vec<i32> = state.players[target_p_idx].discard.iter()
                         .filter(|&&cid| db.get_member(cid).is_some() && (filter_attr == 0 || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)))
@@ -677,9 +700,12 @@ pub fn handle_member_state(
                         return Some(HandlerResult::Continue);
                     }
 
-                    ctx.choice_index = -1;
                     let mut target_ctx = ctx.clone();
                     target_ctx.player_id = target_p_idx as u8;
+                    target_ctx.v_remaining = remaining;
+                    target_ctx.v_accumulated = ctx.v_accumulated;
+                    target_ctx.choice_index = -1; // Reset for suspension
+
                     let choice_text = get_choice_text(db, &target_ctx);
                     if suspend_interaction(
                         state,
@@ -690,7 +716,7 @@ pub fn handle_member_state(
                         s,
                         ChoiceType::SelectDiscardPlay,
                         &choice_text,
-                        a as u64,
+                        filter_attr,
                         remaining,
                     ) {
                         return Some(HandlerResult::Suspend);
@@ -708,6 +734,10 @@ pub fn handle_member_state(
                     remaining -= 1;
                     let mut target_ctx = ctx.clone();
                     target_ctx.player_id = target_p_idx as u8;
+                    target_ctx.v_remaining = remaining;
+                    target_ctx.v_accumulated = ctx.v_accumulated;
+                    target_ctx.choice_index = -1; // Reset for suspension
+
                     let choice_type = if empty_slot_only {
                         ChoiceType::SelectStageEmpty
                     } else {
@@ -722,13 +752,14 @@ pub fn handle_member_state(
                         s,
                         choice_type,
                         "",
-                        a as u64,
+                        filter_attr_base,
                         remaining,
                     ) {
                         return Some(HandlerResult::Suspend);
                     }
                 }
             } else {
+                // Card Placement Step (3, 1, ...)
                 if state.players[target_p_idx].looked_cards.is_empty() {
                     return Some(HandlerResult::Continue);
                 }
@@ -737,6 +768,14 @@ pub fn handle_member_state(
                 if ctx.choice_index == 99 {
                     return Some(HandlerResult::Continue);
                 }
+
+                let resolved_slot = if ctx.choice_index >= 600 && ctx.choice_index < 603 {
+                    ctx.choice_index - 600
+                } else if ctx.choice_index >= 10 && ctx.choice_index < 13 {
+                    ctx.choice_index - 10
+                } else {
+                    ctx.choice_index
+                };
 
                 if let Some(pos) = state.players[target_p_idx]
                     .discard
@@ -766,7 +805,6 @@ pub fn handle_member_state(
                         }
 
                         state.players[target_p_idx].discard.remove(pos);
-
                         if let Some(old) =
                             state.handle_member_leaves_stage(target_p_idx, slot_idx, db, ctx)
                         {
@@ -784,49 +822,18 @@ pub fn handle_member_state(
                             activator_id: target_p_idx as u8,
                             area_idx: slot_idx as i16,
                             v_accumulated: ctx.v_accumulated,
+                            v_remaining: ctx.v_remaining,
                             ..Default::default()
                         };
-                        new_ctx.v_remaining = ctx.v_remaining;
                         state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
                     }
                 }
 
                 remaining -= 1;
+                ctx.v_remaining = remaining;
                 if remaining > 0 {
-                    let mut filter_attr = filter_attr_base;
-                    if is_total_cost {
-                        filter_attr = (filter_attr
-                            & !(0x1F << crate::core::generated_constants::FILTER_COST_SHIFT))
-                            | ((ctx.v_accumulated as u64)
-                                << crate::core::generated_constants::FILTER_COST_SHIFT);
-                    }
-                    state.players[target_p_idx].looked_cards.clear();
-                    let matched_ids: Vec<i32> = state.players[target_p_idx].discard.iter()
-                        .filter(|&&cid| db.get_member(cid).is_some() && (filter_attr == 0 || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)))
-                        .cloned()
-                        .collect();
-                    state.players[target_p_idx].looked_cards.extend(matched_ids);
-                    if state.players[target_p_idx].looked_cards.is_empty() {
-                        return Some(HandlerResult::Continue);
-                    }
-                    let mut target_ctx = ctx.clone();
-                    target_ctx.player_id = target_p_idx as u8;
-                    target_ctx.choice_index = -1;
-                    let choice_text = get_choice_text(db, &target_ctx);
-                    if suspend_interaction(
-                        state,
-                        db,
-                        &target_ctx,
-                        instr_ip,
-                        O_PLAY_MEMBER_FROM_DISCARD,
-                        s,
-                        ChoiceType::SelectDiscardPlay,
-                        &choice_text,
-                        a as u64,
-                        remaining,
-                    ) {
-                        return Some(HandlerResult::Suspend);
-                    }
+                    ctx.choice_index = -1; // Reset for the NEXT pick step (crucial for budget re-evaluation)
+                    return Some(HandlerResult::Branch(instr_ip));
                 }
             }
         }
@@ -860,7 +867,7 @@ pub fn handle_score_hearts(
     let s = instr.raw_s;
     let p_idx = ctx.player_id as usize;
 
-    let target_p = if instr.s.is_opponent() { 1 - p_idx } else { p_idx };
+    let target_p = if instr.s.is_opponent { 1 - p_idx } else { p_idx };
     let target_slot = instr.s.target_slot as i32;
     let resolved_slot = if target_slot == 10 {
         ctx.target_slot as i32
@@ -924,8 +931,8 @@ pub fn handle_score_hearts(
             );
         }
         O_SET_BLADES => {
-            if target_slot == 4 && ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                state.players[p_idx].blade_buffs[ctx.area_idx as usize] = v as i16;
+            if resolved_slot < 3 {
+                state.players[p_idx].blade_buffs[resolved_slot as usize] = v as i16;
             }
         }
         O_ADD_HEARTS => {
@@ -934,14 +941,15 @@ pub fn handle_score_hearts(
                 color = ctx.selected_color as usize;
             }
             if color < 7 {
-                if (target_slot == 4 || target_slot == 0) && ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                    state.players[p_idx].heart_buffs[ctx.area_idx as usize]
+                if resolved_slot >= 0 && resolved_slot < 3 {
+                    let slot_idx = resolved_slot as usize;
+                    state.players[p_idx].heart_buffs[slot_idx]
                         .add_to_color(color, v as i32);
                     state.players[p_idx].heart_buff_logs.push((
                         ctx.source_card_id,
                         v,
                         color as u8,
-                        ctx.area_idx as u8,
+                        slot_idx as u8,
                     ));
                 } else if target_slot == 1 {
                     for t in 0..3 {
@@ -972,15 +980,12 @@ pub fn handle_score_hearts(
         }
         O_SET_HEARTS => {
             if (a as usize) < 7 {
-                let targets = if target_slot == 4 && ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                    vec![ctx.area_idx as usize]
+                if resolved_slot >= 0 && resolved_slot < 3 {
+                    state.players[p_idx].heart_buffs[resolved_slot as usize].set_color_count(a as usize, v as u8);
                 } else if target_slot == 1 {
-                    vec![0, 1, 2]
-                } else {
-                    vec![]
-                };
-                for t in targets {
-                    state.players[p_idx].heart_buffs[t].set_color_count(a as usize, v as u8);
+                    for t in 0..3 {
+                        state.players[p_idx].heart_buffs[t].set_color_count(a as usize, v as u8);
+                    }
                 }
             }
         }
@@ -1033,25 +1038,56 @@ pub fn handle_score_hearts(
             }
         }
         O_SET_HEART_COST => {
+            let mut reqs = Vec::new();
+            // Unpack 8 requirements from A (4 bits each)
+            let raw_a = a as u64;
+            let req_fields = [
+                (raw_a >> A_HEART_COST_REQ_1_SHIFT) & A_HEART_COST_REQ_1_MASK,
+                (raw_a >> A_HEART_COST_REQ_2_SHIFT) & A_HEART_COST_REQ_2_MASK,
+                (raw_a >> A_HEART_COST_REQ_3_SHIFT) & A_HEART_COST_REQ_3_MASK,
+                (raw_a >> A_HEART_COST_REQ_4_SHIFT) & A_HEART_COST_REQ_4_MASK,
+                (raw_a >> A_HEART_COST_REQ_5_SHIFT) & A_HEART_COST_REQ_5_MASK,
+                (raw_a >> A_HEART_COST_REQ_6_SHIFT) & A_HEART_COST_REQ_6_MASK,
+                (raw_a >> A_HEART_COST_REQ_7_SHIFT) & A_HEART_COST_REQ_7_MASK,
+                (raw_a >> A_HEART_COST_REQ_8_SHIFT) & A_HEART_COST_REQ_8_MASK,
+            ];
+            for &r in &req_fields {
+                if r > 0 {
+                    reqs.push(r as u8);
+                }
+            }
+            if !reqs.is_empty() {
+                state.score_req_list = reqs;
+                state.score_req_player = target_p as i8;
+            }
+
+            // Also check for heart additions in V (packed color counts) or scalar mode
             let player = &mut state.players[p_idx];
-            if v > 15 || s == -1 {
-                for i in 0..7 {
-                    let count = ((v >> (i * 4)) & 0xF) as u8;
+            if v > 0 && v < 16 && (s as usize) < 7 {
+                // Scalar mode: S is color index, V is amount
+                let color_idx = s as usize;
+                let old = player.heart_req_additions.get_color_count(color_idx);
+                player.heart_req_additions.set_color_count(color_idx, old.saturating_add(v as u8));
+                player.heart_req_addition_logs.push((ctx.source_card_id, color_idx as u8, v as u8));
+            } else {
+                // Packed mode: V contains packed counts for all colors
+                let v_u32 = v as u32;
+                let counts = [
+                    (v_u32 >> V_HEART_COUNTS_PINK_SHIFT) & V_HEART_COUNTS_PINK_MASK,
+                    (v_u32 >> V_HEART_COUNTS_RED_SHIFT) & V_HEART_COUNTS_RED_MASK,
+                    (v_u32 >> V_HEART_COUNTS_YELLOW_SHIFT) & V_HEART_COUNTS_YELLOW_MASK,
+                    (v_u32 >> V_HEART_COUNTS_GREEN_SHIFT) & V_HEART_COUNTS_GREEN_MASK,
+                    (v_u32 >> V_HEART_COUNTS_BLUE_SHIFT) & V_HEART_COUNTS_BLUE_MASK,
+                    (v_u32 >> V_HEART_COUNTS_PURPLE_SHIFT) & V_HEART_COUNTS_PURPLE_MASK,
+                ];
+
+                for (i, &count) in counts.iter().enumerate() {
                     if count > 0 {
                         let old = player.heart_req_additions.get_color_count(i);
-                        player.heart_req_additions.set_color_count(i, old.saturating_add(count));
-                        player
-                            .heart_req_addition_logs
-                            .push((ctx.source_card_id, i as u8, count));
+                        player.heart_req_additions.set_color_count(i, old.saturating_add(count as u8));
+                        player.heart_req_addition_logs.push((ctx.source_card_id, i as u8, count as u8));
                     }
                 }
-            } else if (s as usize) < 7 {
-                player
-                    .heart_req_additions
-                    .set_color_count(s as usize, v as u8);
-                player
-                    .heart_req_addition_logs
-                    .push((ctx.source_card_id, s as u8, v as u8));
             }
         }
         O_REDUCE_SCORE => {

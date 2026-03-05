@@ -650,6 +650,7 @@ def encode_observations(
 def encode_observation_standard_single(
     i,
     batch_hand,
+    batch_deck,
     batch_stage,
     batch_energy_count,
     batch_tapped,
@@ -2281,6 +2282,7 @@ def integrated_step_numba(
                         encode_observation_standard_single(
                             i,
                             batch_hand,
+                            batch_deck,
                             batch_stage,
                             batch_energy_count,
                             batch_tapped,
@@ -2403,10 +2405,11 @@ def integrated_step_numba(
                             int(batch_global_ctx[i, 54]),
                             obs_buffer,
                         )
-                    elif obs_mode_int == 1:  # STANDARD
+                    elif obs_mode_int == 1:
                         encode_observation_standard_single(
                             i,
                             batch_hand,
+                            batch_deck,
                             batch_stage,
                             batch_energy_count,
                             batch_tapped,
@@ -2564,6 +2567,7 @@ def integrated_step_numba(
                 encode_observation_standard_single(
                     i,
                     batch_hand,
+                    batch_deck,
                     batch_stage,
                     batch_energy_count,
                     batch_tapped,
@@ -2690,6 +2694,7 @@ def reset_kernel_numba(
 def encode_observations_standard(
     num_envs,
     batch_hand,
+    batch_deck,
     batch_stage,
     batch_energy_count,
     batch_tapped,
@@ -2708,6 +2713,7 @@ def encode_observations_standard(
         encode_observation_standard_single(
             i,
             batch_hand,
+            batch_deck,
             batch_stage,
             batch_energy_count,
             batch_tapped,

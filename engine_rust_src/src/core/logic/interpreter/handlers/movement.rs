@@ -88,16 +88,20 @@ pub fn handle_move_to_discard(
     let s = instr.raw_s;
     let base_p = ctx.activator_id as usize;
     let p_idx = ctx.player_id as usize;
-    let mut source_zone = instr.s.source_zone as u8;
-    if source_zone == 0 {
+    let mut source_zone = instr.s.source_zone;
+    if source_zone == Zone::Default {
         let ts = instr.s.target_slot;
-        if ts == 4 || ts == 6 || ts == 13 {
-            source_zone = ts;
+        if ts == 4 {
+            source_zone = Zone::Stage;
+        } else if ts == 6 {
+            source_zone = Zone::Hand;
+        } else if ts == 13 {
+            source_zone = Zone::LiveSet;
         } else {
-            source_zone = 8;
+            source_zone = Zone::Deck;
         }
     }
-    let target_player_idx = if instr.s.is_opponent() {
+    let target_player_idx = if instr.s.is_opponent {
         1 - base_p
     } else {
         base_p
@@ -106,15 +110,15 @@ pub fn handle_move_to_discard(
     let count = if (v as u32 & (1 << 31)) != 0 {
         let target_size = v & 0x7FFFFFFF;
         let current_size = match source_zone {
-            6 => state.players[target_player_idx].hand.len() as i32,
-            4 => state.players[target_player_idx]
+            Zone::Hand => state.players[target_player_idx].hand.len() as i32,
+            Zone::Stage => state.players[target_player_idx]
                 .stage
                 .iter()
                 .filter(|&&c| c >= 0)
                 .count() as i32,
-            13 => state.players[target_player_idx].success_lives.len() as i32,
-            8 | 0 => state.players[target_player_idx].deck.len() as i32,
-            3 => state.players[target_player_idx].energy_zone.len() as i32,
+            Zone::LiveSet | Zone::SuccessPile => state.players[target_player_idx].success_lives.len() as i32,
+            Zone::Deck | Zone::Default => state.players[target_player_idx].deck.len() as i32,
+            Zone::Energy => state.players[target_player_idx].energy_zone.len() as i32,
             _ => 0,
         };
         (current_size - target_size).max(0)
@@ -132,14 +136,15 @@ pub fn handle_move_to_discard(
 
     if is_optional && ctx.choice_index == -1 {
         let available_count = match source_zone {
-            6 => state.players[target_player_idx].hand.len() as i32,
-            4 => state.players[target_player_idx]
+            Zone::Hand => state.players[target_player_idx].hand.len() as i32,
+            Zone::Stage => state.players[target_player_idx]
                 .stage
                 .iter()
                 .filter(|&&c| c >= 0)
                 .count() as i32,
-            13 => state.players[target_player_idx].energy_zone.len() as i32,
-            8 | 0 => state.players[target_player_idx].deck.len() as i32,
+            Zone::LiveSet | Zone::SuccessPile => state.players[target_player_idx].success_lives.len() as i32,
+            Zone::Energy => state.players[target_player_idx].energy_zone.len() as i32,
+            Zone::Deck | Zone::Default => state.players[target_player_idx].deck.len() as i32,
             _ => 99,
         };
         if available_count < v {
@@ -148,13 +153,13 @@ pub fn handle_move_to_discard(
     }
 
     let mut next_ctx = ctx.clone();
-    let choice_type = if source_zone == 6 {
+    let choice_type = if source_zone == Zone::Hand {
         ChoiceType::SelectHandDiscard
     } else {
         ChoiceType::SelectDiscard
     };
 
-    if source_zone == 4 && next_ctx.choice_index == -1 && count == 1 {
+    if source_zone == Zone::Stage && next_ctx.choice_index == -1 && count == 1 {
         let slot = if next_ctx.area_idx >= 0 {
             next_ctx.area_idx as usize
         } else {
@@ -165,7 +170,7 @@ pub fn handle_move_to_discard(
         }
     }
 
-    if next_ctx.choice_index == -1 && count > 0 && source_zone != 0 && source_zone != 8 {
+    if next_ctx.choice_index == -1 && count > 0 && source_zone != Zone::Default && source_zone != Zone::Deck {
         // Auto-pick shortcut for single mandatory target
         if state.players[p_idx].looked_cards.len() == 1 && !is_optional && count == 1 {
             next_ctx.choice_index = 0;
@@ -221,21 +226,21 @@ pub fn handle_move_to_discard(
         let idx = next_ctx.choice_index as usize;
         let mut removed_cid = -1;
         match source_zone {
-            6 => {
-                if idx < state.players[p_idx].hand.len() {
-                    removed_cid = state.players[p_idx].hand[idx];
+            Zone::Hand => {
+                if idx < state.players[target_player_idx].hand.len() {
+                    removed_cid = state.players[target_player_idx].hand[idx];
                     if removed_cid != -1 {
                         if (s & (1 << 25)) != 0 {
                             if let Some(m) = db.get_member(removed_cid) {
                                 ctx.v_accumulated = m.cost as i16;
                             }
                         }
-                        state.players[p_idx].hand[idx] = -1;
-                        state.players[p_idx].hand.retain(|c| *c != -1);
+                        state.players[target_player_idx].hand[idx] = -1;
+                        state.players[target_player_idx].hand.retain(|c| *c != -1);
                     }
                 }
             }
-            4 => {
+            Zone::Stage => {
                 let slot = if idx < 3 {
                     idx
                 } else if next_ctx.area_idx >= 0 {
@@ -243,29 +248,29 @@ pub fn handle_move_to_discard(
                 } else {
                     0
                 };
-                if let Some(cid) = state.handle_member_leaves_stage(p_idx, slot, db, &next_ctx) {
+                if let Some(cid) = state.handle_member_leaves_stage(target_player_idx, slot, db, &next_ctx) {
                     removed_cid = cid;
                 }
             }
-            13 => {
-                if !state.players[p_idx].success_lives.is_empty() {
-                    removed_cid = state.players[p_idx].success_lives.pop().unwrap() as i32;
+            Zone::LiveSet | Zone::SuccessPile => {
+                if !state.players[target_player_idx].success_lives.is_empty() {
+                    removed_cid = state.players[target_player_idx].success_lives.pop().unwrap() as i32;
                 }
             }
-            8 | 0 => {
-                if !state.players[p_idx].deck.is_empty() {
-                    removed_cid = state.players[p_idx].deck.pop().unwrap() as i32;
+            Zone::Deck | Zone::Default => {
+                if !state.players[target_player_idx].deck.is_empty() {
+                    removed_cid = state.players[target_player_idx].deck.pop().unwrap() as i32;
                 }
             }
-            3 => {
-                if !state.players[p_idx].energy_zone.is_empty() {
-                    removed_cid = state.players[p_idx].energy_zone.pop().unwrap() as i32;
+            Zone::Energy => {
+                if !state.players[target_player_idx].energy_zone.is_empty() {
+                    removed_cid = state.players[target_player_idx].energy_zone.pop().unwrap() as i32;
                 }
             }
             _ => {}
         }
         if removed_cid >= 0 {
-            state.players[p_idx].discard.push(removed_cid as i32);
+            state.players[target_player_idx].discard.push(removed_cid as i32);
             next_ctx.v_remaining = if next_ctx.v_remaining > 0 {
                 next_ctx.v_remaining - 1
             } else {
@@ -292,35 +297,35 @@ pub fn handle_move_to_discard(
     } else {
         for _ in 0..count {
             match source_zone {
-                6 => {
-                    if let Some(cid) = state.players[p_idx].hand.pop() {
-                        state.players[p_idx].discard.push(cid);
+                Zone::Hand => {
+                    if let Some(cid) = state.players[target_player_idx].hand.pop() {
+                        state.players[target_player_idx].discard.push(cid);
                     }
                 }
-                4 => {
+                Zone::Stage => {
                     let slot = if next_ctx.area_idx >= 0 {
                         next_ctx.area_idx as usize
                     } else {
                         0
                     };
-                    if let Some(cid) = state.handle_member_leaves_stage(p_idx, slot, db, &next_ctx)
+                    if let Some(cid) = state.handle_member_leaves_stage(target_player_idx, slot, db, &next_ctx)
                     {
-                        state.players[p_idx].discard.push(cid as i32);
+                        state.players[target_player_idx].discard.push(cid as i32);
                     }
                 }
-                13 => {
-                    if let Some(cid) = state.players[p_idx].success_lives.pop() {
-                        state.players[p_idx].discard.push(cid);
+                Zone::LiveSet | Zone::SuccessPile => {
+                    if let Some(cid) = state.players[target_player_idx].success_lives.pop() {
+                        state.players[target_player_idx].discard.push(cid);
                     }
                 }
-                8 | 0 => {
-                    if let Some(cid) = state.players[p_idx].deck.pop() {
-                        state.players[p_idx].discard.push(cid);
+                Zone::Deck | Zone::Default => {
+                    if let Some(cid) = state.players[target_player_idx].deck.pop() {
+                        state.players[target_player_idx].discard.push(cid);
                     }
                 }
-                3 => {
-                    if let Some(cid) = state.players[p_idx].energy_zone.pop() {
-                        state.players[p_idx].discard.push(cid);
+                Zone::Energy => {
+                    if let Some(cid) = state.players[target_player_idx].energy_zone.pop() {
+                        state.players[target_player_idx].discard.push(cid);
                     }
                 }
                 _ => {}
@@ -334,7 +339,7 @@ pub fn handle_move_to_discard(
         }
     }
 
-    state.players[p_idx].hand.retain(|c| *c != -1);
+    state.players[target_player_idx].hand.retain(|c| *c != -1);
     Some(true)
 }
 

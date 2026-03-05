@@ -1272,11 +1272,26 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
     let p1_wins = has_success[1] && (!has_success[0] || scores[1] >= scores[0]);
     let is_comparative_tie = p0_wins && p1_wins;
 
-    // Update results with final scores
+    // Update results with final scores and triggered abilities
     for p in 0..2 {
+        let abilities: Vec<_> = state.players[p].perf_triggered_abilities.iter().map(|&(cid, ab_idx, trig)| {
+            let card_name: String = db.get_member(cid)
+                .map(|m| m.name.clone())
+                .or_else(|| db.get_live(cid).map(|l| l.name.clone()))
+                .unwrap_or_else(|| format!("Card#{}", cid));
+            let trigger_label = crate::core::logic::interpreter::logging::trigger_as_str(trig);
+            json!({
+                "source_card_id": cid,
+                "card_name": card_name,
+                "name": format!("【{}】", trigger_label),
+                "id": ab_idx
+            })
+        }).collect();
+
         if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
             if let serde_json::Value::Object(ref mut map) = res {
                 map.insert("total_score".to_string(), json!(scores[p]));
+                map.insert("triggered_abilities".to_string(), json!(abilities));
             }
         }
     }
@@ -1528,4 +1543,7 @@ pub fn finalize_live_result(state: &mut GameState) {
     state.live_result_processed_mask = [0; 2];
     state.live_start_processed_mask = [0; 2];
     state.live_success_processed_mask = [0; 2];
+    for p in 0..2 {
+        state.players[p].perf_triggered_abilities.clear();
+    }
 }

@@ -71,20 +71,15 @@ fn test_meta_rule_pl_sp_bp1_024_l_heart_buffs() {
     };
     state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
 
-    // The card uses multiple O_SELECT_MEMBER interactions
-    // Need to resolve all interactions
-    // First SELECT_MEMBER: Select Kanon (slot 0) to give heart01 + blade
-    // Second SELECT_MEMBER: Select Keke (slot 1) to give heart01 + blade
-    let mut selection_count = 0;
+    // Resolving interaction sequence (Optional, SelectMode, SelectMember, etc.)
     while state.phase == Phase::Response && !state.interaction_stack.is_empty() {
-        println!(
-            "[TEST] Resolving interaction: {:?}",
-            state.interaction_stack.last().unwrap().choice_type
-        );
-        // Alternate between choice 0 and choice 1 for each selection
-        let action_id = (ACTION_BASE_CHOICE + selection_count) as i32;
-        selection_count += 1;
-        state.step(&db, action_id).expect("Step failed");
+        state.step(&db, ACTION_BASE_CHOICE + 0).expect("Step failed to resolve interaction");
+        state.process_trigger_queue(&db);
+    }
+
+    println!("[TEST] Stage after interactions: {:?}", state.players[0].stage);
+    for i in 0..3 {
+        println!("[TEST] Slot {}: heart_buff={:?}, blade_buff={}", i, state.players[0].heart_buffs[i], state.players[0].blade_buffs[i]);
     }
 
     // Assert: Both members should have heart buffs (heart01 based on bytecode)

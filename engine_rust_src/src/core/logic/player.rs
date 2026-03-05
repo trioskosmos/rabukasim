@@ -98,6 +98,9 @@ pub struct PlayerState {
     #[serde(default)]
     pub granted_abilities: Vec<(i32, i32, u16)>, // (target_cid, source_cid, ab_idx)
     #[serde(default)]
+    pub perf_triggered_abilities: Vec<(i32, i16, TriggerType)>, // (source_cid, ab_idx, trigger)
+
+    #[serde(default)]
     pub cost_modifiers: Vec<(Condition, i32)>, // (condition, amount)
     #[serde(default)]
     pub played_group_mask: u32,
@@ -176,7 +179,9 @@ impl Default for PlayerState {
             looked_cards: SmallVec::new(),
             live_deck: SmallVec::new(),
             granted_abilities: Vec::new(),
+            perf_triggered_abilities: Vec::new(),
             cost_modifiers: Vec::new(),
+
             flags: 0,
             cheer_mod_count: 0,
             yell_count_reduction: 0,
@@ -301,7 +306,9 @@ impl PlayerState {
         self.heart_buff_logs.clear();
         self.mulligan_selection = 0;
         self.granted_abilities.clear();
+        self.perf_triggered_abilities.clear();
         self.cost_modifiers.clear();
+
         self.cheer_mod_count = 0;
         self.prevent_activate = 0;
         self.prevent_baton_touch = 0;
@@ -370,6 +377,12 @@ impl PlayerState {
         copy_smallvec!(self.looked_cards, other.looked_cards);
         copy_smallvec!(self.live_deck, other.live_deck);
         copy_smallvec!(self.granted_abilities, other.granted_abilities);
+
+        self.perf_triggered_abilities.clear();
+        if !other.perf_triggered_abilities.is_empty() {
+            self.perf_triggered_abilities.extend(other.perf_triggered_abilities.iter().cloned());
+        }
+
 
         self.cost_modifiers.clear();
         if !other.cost_modifiers.is_empty() {

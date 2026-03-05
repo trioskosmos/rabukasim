@@ -32,6 +32,9 @@
 
 use super::CardDatabase;
 use serde::{Deserialize, Serialize};
+use crate::core::generated_layout::*;
+use crate::core::logic::constants::*;
+// use crate::core::enums::Zone;
 
 // --- Filter Bitfield Constants (Revision 5) ---
 pub const FILTER_TYPE_MEMBER: u64 = 0x01 << 2;
@@ -50,12 +53,11 @@ pub const FILTER_IS_LE: u64 = 1 << 30;
 pub const FILTER_COST_TYPE_FLAG: u64 = 1u64 << 31;
 pub const FILTER_COLOR_SHIFT: u64 = 32;
 pub const FILTER_SPECIAL_SHIFT: u64 = 56;
-pub const FILTER_REVEALED_CONTEXT: u64 = 1u64 << 43;
-pub const FILTER_BLADE_FILTER_FLAG: u64 = 0x02000000;
 
 /// A structured representation of the 64-bit filter attribute
-/// Synchronized with ability.py _pack_filter_attr layout (Revision 5).
+/// Synchronized with ability.py _pack_filter_attr layout.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct CardFilter {
     pub is_enabled: bool,
     // Bits 0-1
@@ -67,31 +69,26 @@ pub struct CardFilter {
     pub group_id: u8,
     // Bit 12
     pub is_tapped: bool,
-    // Bits 13-14
-    pub has_blade_heart: i8, // 1=yes, -1=no, 0=don't care
-    // Bit 15
+    pub has_blade_heart: bool,
+    pub not_has_blade_heart: bool,
     pub unique_names: bool,
-    // Bit 16 + Bits 17-23
     pub unit_enabled: bool,
     pub unit_id: u8,
-    // Bit 24 + Bits 25-29 + Bit 30 + Bit 31
     pub value_enabled: bool,
     pub value_threshold: u8,
     pub is_le: bool,
-    pub is_cost_type: bool, // true=Cost, false=Heart
-    // Bits 32-38
+    pub is_cost_type: bool,
     pub color_mask: u8,
-    // Bits 39-45, 46-52
     pub char_id_1: u8,
     pub char_id_2: u8,
-    // Bits 53-55
+    pub char_id_3: u8,
     pub zone_mask: u8,
-    // Bits 56-58
     pub special_id: u8,
-    // Bit 59
     pub is_setsuna: bool,
-    // Bit 60
     pub compare_accumulated: bool,
+    pub is_optional: bool,
+    pub keyword_energy: bool,
+    pub keyword_member: bool,
 }
 
 impl CardFilter {
@@ -166,6 +163,11 @@ impl CardFilter {
             };
 
             let target_name = crate::core::logic::card_db::get_character_name(self.char_id_1);
+            
+            if cid == 100 || cid == 101 || self.char_id_1 == 41 || self.char_id_1 == 42 {
+                println!("[DEBUG_FILTER] CID={} Name='{}' TargetID={} TargetName='{}'", cid, name, self.char_id_1, target_name);
+            }
+
             if !name
                 .replace(" ", "")
                 .contains(&target_name.replace(" ", ""))
@@ -178,11 +180,32 @@ impl CardFilter {
                         .replace(" ", "")
                         .contains(&target_name_2.replace(" ", ""))
                     {
-                        return false;
+                        // Check char_id_3 as alternate match
+                        if self.char_id_3 > 0 {
+                            let target_name_3 =
+                                crate::core::logic::card_db::get_character_name(self.char_id_3);
+                            if !name
+                                .replace(" ", "")
+                                .contains(&target_name_3.replace(" ", ""))
+                            {
+                                return false;
+                            }
+                        } else {
+                            if cid == 100 || cid == 101 || self.char_id_1 == 41 || self.char_id_1 == 42 {
+                                println!("[DEBUG_FILTER]   -> Result: FALSE (char_id_1 match failed, no char_id_2/3)");
+                            }
+                            return false;
+                        }
                     }
                 } else {
+                    if cid == 100 || cid == 101 || self.char_id_1 == 41 || self.char_id_1 == 42 {
+                        println!("[DEBUG_FILTER]   -> Result: FALSE (char_id_1 match failed)");
+                    }
                     return false;
                 }
+            }
+            if cid == 100 || cid == 101 || self.char_id_1 == 41 || self.char_id_1 == 42 {
+                println!("[DEBUG_FILTER]   -> Result: TRUE");
             }
         }
 
@@ -248,6 +271,10 @@ impl CardFilter {
                 self.value_threshold
             };
 
+            if self.compare_accumulated && state.debug.debug_mode {
+                println!("[DBG_FILTER] CID={} Actual={} vs Budget={} (LE={})", cid, actual_val, threshold, self.is_le);
+            }
+
             if self.is_le {
                 if actual_val > threshold {
                     return false;
@@ -295,16 +322,16 @@ impl CardFilter {
         }
 
         // 9. Blade Heart Filter (bits 13-14)
-        if self.has_blade_heart != 0 {
+        if self.has_blade_heart || self.not_has_blade_heart {
             let has = if let Some(m) = db.get_member(cid) {
                 m.blade_hearts.iter().any(|&h| h > 0)
             } else {
                 false
             };
-            if self.has_blade_heart > 0 && !has {
+            if self.has_blade_heart && !has {
                 return false;
             }
-            if self.has_blade_heart < 0 && has {
+            if self.not_has_blade_heart && has {
                 return false;
             }
         }
@@ -354,73 +381,34 @@ impl CardFilter {
 
         let a = attr as u64;
 
-        // Any non-zero attribute means filtering is active
-        let mut filter = Self {
+        Self {
             is_enabled: true,
-            ..Self::default()
-        };
-
-        // Bits 0-1: Target Player
-        filter.target_player = (a & 0x03) as u8;
-
-        // Bits 2-3: Card Type (1=Member, 2=Live)
-        filter.card_type = ((a >> 2) & 0x03) as u8;
-
-        // Bit 4: Group Enable
-        filter.group_enabled = (a & 0x10) != 0;
-        // Bits 5-11: Group ID
-        filter.group_id = ((a >> 5) & 0x7F) as u8;
-
-        // Bit 12: Tapped
-        filter.is_tapped = (a & (1 << 12)) != 0;
-
-        // Bit 13: Has Blade Heart
-        // Bit 14: NOT Has Blade Heart
-        if (a & (1 << 13)) != 0 {
-            filter.has_blade_heart = 1;
-        } else if (a & (1 << 14)) != 0 {
-            filter.has_blade_heart = -1;
+            target_player: ((a >> A_STANDARD_TARGET_PLAYER_SHIFT) & A_STANDARD_TARGET_PLAYER_MASK) as u8,
+            card_type: ((a >> A_STANDARD_CARD_TYPE_SHIFT) & A_STANDARD_CARD_TYPE_MASK) as u8,
+            group_enabled: ((a >> A_STANDARD_GROUP_ENABLED_SHIFT) & A_STANDARD_GROUP_ENABLED_MASK) != 0,
+            group_id: ((a >> A_STANDARD_GROUP_ID_SHIFT) & A_STANDARD_GROUP_ID_MASK) as u8,
+            is_tapped: ((a >> A_STANDARD_IS_TAPPED_SHIFT) & A_STANDARD_IS_TAPPED_MASK) != 0,
+            has_blade_heart: ((a >> A_STANDARD_HAS_BLADE_HEART_SHIFT) & A_STANDARD_HAS_BLADE_HEART_MASK) != 0,
+            not_has_blade_heart: ((a >> A_STANDARD_NOT_HAS_BLADE_HEART_SHIFT) & A_STANDARD_NOT_HAS_BLADE_HEART_MASK) != 0,
+            unique_names: ((a >> A_STANDARD_UNIQUE_NAMES_SHIFT) & A_STANDARD_UNIQUE_NAMES_MASK) != 0,
+            unit_enabled: ((a >> A_STANDARD_UNIT_ENABLED_SHIFT) & A_STANDARD_UNIT_ENABLED_MASK) != 0,
+            unit_id: ((a >> A_STANDARD_UNIT_ID_SHIFT) & A_STANDARD_UNIT_ID_MASK) as u8,
+            value_enabled: ((a >> A_STANDARD_VALUE_ENABLED_SHIFT) & A_STANDARD_VALUE_ENABLED_MASK) != 0,
+            value_threshold: ((a >> A_STANDARD_VALUE_THRESHOLD_SHIFT) & A_STANDARD_VALUE_THRESHOLD_MASK) as u8,
+            is_le: ((a >> A_STANDARD_IS_LE_SHIFT) & A_STANDARD_IS_LE_MASK) != 0,
+            is_cost_type: ((a >> A_STANDARD_IS_COST_TYPE_SHIFT) & A_STANDARD_IS_COST_TYPE_MASK) != 0,
+            color_mask: ((a >> A_STANDARD_COLOR_MASK_SHIFT) & A_STANDARD_COLOR_MASK_MASK) as u8,
+            char_id_1: ((a >> A_STANDARD_CHAR_ID_1_SHIFT) & A_STANDARD_CHAR_ID_1_MASK) as u8,
+            char_id_2: ((a >> A_STANDARD_CHAR_ID_2_SHIFT) & A_STANDARD_CHAR_ID_2_MASK) as u8,
+            char_id_3: 0,
+            zone_mask: ((a >> A_STANDARD_ZONE_MASK_SHIFT) & A_STANDARD_ZONE_MASK_MASK) as u8,
+            special_id: ((a >> A_STANDARD_SPECIAL_ID_SHIFT) & A_STANDARD_SPECIAL_ID_MASK) as u8,
+            is_setsuna: ((a >> A_STANDARD_IS_SETSUNA_SHIFT) & A_STANDARD_IS_SETSUNA_MASK) != 0,
+            compare_accumulated: ((a >> A_STANDARD_COMPARE_ACCUMULATED_SHIFT) & A_STANDARD_COMPARE_ACCUMULATED_MASK) != 0,
+            is_optional: ((a >> A_STANDARD_IS_OPTIONAL_SHIFT) & A_STANDARD_IS_OPTIONAL_MASK) != 0,
+            keyword_energy: ((a >> A_STANDARD_KEYWORD_ENERGY_SHIFT) & A_STANDARD_KEYWORD_ENERGY_MASK) != 0,
+            keyword_member: ((a >> A_STANDARD_KEYWORD_MEMBER_SHIFT) & A_STANDARD_KEYWORD_MEMBER_MASK) != 0,
         }
-
-        // Bit 15: Unique Names
-        filter.unique_names = (a & (1 << 15)) != 0;
-
-        // Bit 16: Unit Enable
-        filter.unit_enabled = (a & 0x10000) != 0;
-        // Bits 17-23: Unit ID
-        filter.unit_id = ((a >> 17) & 0x7F) as u8;
-
-        // Bit 24: Value Enable / Cost Enable
-        filter.value_enabled = (a & (1 << 24)) != 0;
-        // Bits 25-29: Value Threshold
-        filter.value_threshold = ((a >> 25) & 0x1F) as u8;
-        // Bit 30: Cost Mode (0=GE, 1=LE)
-        filter.is_le = (a & (1 << 30)) != 0;
-        // Bit 31: Cost Type (1=Cost, 0=Heart)
-        filter.is_cost_type = (a & (1u64 << 31)) != 0;
-
-        // Bits 32-38: Color Mask
-        filter.color_mask = ((a >> 32) & 0x7F) as u8;
-
-        // Bits 39-45: Character ID #1
-        filter.char_id_1 = ((a >> 39) & 0x7F) as u8;
-
-        // Bits 46-52: Character ID #2
-        filter.char_id_2 = ((a >> 46) & 0x7F) as u8;
-
-        // Bits 53-55: Zone Mask
-        filter.zone_mask = ((a >> 53) & 0x07) as u8;
-
-        // Bits 56-58: Special ID
-        filter.special_id = ((a >> 56) & 0x07) as u8;
-
-        // Bit 59: Setsuna
-        filter.is_setsuna = (a & (1u64 << 59)) != 0;
-
-        // Bit 60: Compare Accumulated
-        filter.compare_accumulated = (a & (1u64 << 60)) != 0;
-
-        filter
     }
 
     pub fn to_attr(&self) -> i64 {
@@ -429,78 +417,57 @@ impl CardFilter {
         }
 
         let mut a: u64 = 0;
-
-        // Bits 0-1: Target Player
-        a |= (self.target_player & 0x03) as u64;
-
-        // Bits 2-3: Card Type
-        a |= ((self.card_type & 0x03) as u64) << 2;
-
-        // Bit 4 + Bits 5-11: Group
+        a |= (self.target_player as u64 & A_STANDARD_TARGET_PLAYER_MASK) << A_STANDARD_TARGET_PLAYER_SHIFT;
+        a |= (self.card_type as u64 & A_STANDARD_CARD_TYPE_MASK) << A_STANDARD_CARD_TYPE_SHIFT;
         if self.group_enabled {
-            a |= 0x10;
-            a |= ((self.group_id & 0x7F) as u64) << 5;
+            a |= (1 & A_STANDARD_GROUP_ENABLED_MASK) << A_STANDARD_GROUP_ENABLED_SHIFT;
+            a |= (self.group_id as u64 & A_STANDARD_GROUP_ID_MASK) << A_STANDARD_GROUP_ID_SHIFT;
         }
-
-        // Bit 12: Tapped
         if self.is_tapped {
-            a |= 1 << 12;
+            a |= (1 & A_STANDARD_IS_TAPPED_MASK) << A_STANDARD_IS_TAPPED_SHIFT;
         }
-
-        // Bits 13-14: Blade Heart
-        if self.has_blade_heart > 0 {
-            a |= 1 << 13;
+        if self.has_blade_heart {
+            a |= (1 & A_STANDARD_HAS_BLADE_HEART_MASK) << A_STANDARD_HAS_BLADE_HEART_SHIFT;
         }
-        if self.has_blade_heart < 0 {
-            a |= 1 << 14;
+        if self.not_has_blade_heart {
+            a |= (1 & A_STANDARD_NOT_HAS_BLADE_HEART_MASK) << A_STANDARD_NOT_HAS_BLADE_HEART_SHIFT;
         }
-
-        // Bit 15: Unique Names
         if self.unique_names {
-            a |= 1 << 15;
+            a |= (1 & A_STANDARD_UNIQUE_NAMES_MASK) << A_STANDARD_UNIQUE_NAMES_SHIFT;
         }
-
-        // Bit 16 + Bits 17-23: Unit
         if self.unit_enabled {
-            a |= 0x10000;
-            a |= ((self.unit_id & 0x7F) as u64) << 17;
+            a |= (1 & A_STANDARD_UNIT_ENABLED_MASK) << A_STANDARD_UNIT_ENABLED_SHIFT;
+            a |= (self.unit_id as u64 & A_STANDARD_UNIT_ID_MASK) << A_STANDARD_UNIT_ID_SHIFT;
         }
-
-        // Bit 24 + Bits 25-29 + Bit 30 + Bit 31: Value/Cost
         if self.value_enabled {
-            a |= 1 << 24;
-            a |= ((self.value_threshold & 0x1F) as u64) << 25;
+            a |= (1 & A_STANDARD_VALUE_ENABLED_MASK) << A_STANDARD_VALUE_ENABLED_SHIFT;
+            a |= (self.value_threshold as u64 & A_STANDARD_VALUE_THRESHOLD_MASK) << A_STANDARD_VALUE_THRESHOLD_SHIFT;
             if self.is_le {
-                a |= 1 << 30;
+                a |= (1 & A_STANDARD_IS_LE_MASK) << A_STANDARD_IS_LE_SHIFT;
             }
             if self.is_cost_type {
-                a |= 1u64 << 31;
+                a |= (1 & A_STANDARD_IS_COST_TYPE_MASK) << A_STANDARD_IS_COST_TYPE_SHIFT;
             }
         }
-
-        // Bits 32-38: Color Mask
-        a |= ((self.color_mask & 0x7F) as u64) << 32;
-
-        // Bits 39-45: Character ID #1
-        a |= ((self.char_id_1 & 0x7F) as u64) << 39;
-
-        // Bits 46-52: Character ID #2
-        a |= ((self.char_id_2 & 0x7F) as u64) << 46;
-
-        // Bits 53-55: Zone Mask
-        a |= ((self.zone_mask & 0x07) as u64) << 53;
-
-        // Bits 56-58: Special ID
-        a |= ((self.special_id & 0x07) as u64) << 56;
-
-        // Bit 59: Setsuna
+        a |= (self.color_mask as u64 & A_STANDARD_COLOR_MASK_MASK) << A_STANDARD_COLOR_MASK_SHIFT;
+        a |= (self.char_id_1 as u64 & A_STANDARD_CHAR_ID_1_MASK) << A_STANDARD_CHAR_ID_1_SHIFT;
+        a |= (self.char_id_2 as u64 & A_STANDARD_CHAR_ID_2_MASK) << A_STANDARD_CHAR_ID_2_SHIFT;
+        a |= (self.zone_mask as u64 & A_STANDARD_ZONE_MASK_MASK) << A_STANDARD_ZONE_MASK_SHIFT;
+        a |= (self.special_id as u64 & A_STANDARD_SPECIAL_ID_MASK) << A_STANDARD_SPECIAL_ID_SHIFT;
         if self.is_setsuna {
-            a |= 1u64 << 59;
+            a |= (1 & A_STANDARD_IS_SETSUNA_MASK) << A_STANDARD_IS_SETSUNA_SHIFT;
         }
-
-        // Bit 60: Compare Accumulated
         if self.compare_accumulated {
-            a |= 1u64 << 60;
+            a |= (1 & A_STANDARD_COMPARE_ACCUMULATED_MASK) << A_STANDARD_COMPARE_ACCUMULATED_SHIFT;
+        }
+        if self.is_optional {
+            a |= (1 & A_STANDARD_IS_OPTIONAL_MASK) << A_STANDARD_IS_OPTIONAL_SHIFT;
+        }
+        if self.keyword_energy {
+            a |= (1 & A_STANDARD_KEYWORD_ENERGY_MASK) << A_STANDARD_KEYWORD_ENERGY_SHIFT;
+        }
+        if self.keyword_member {
+            a |= (1 & A_STANDARD_KEYWORD_MEMBER_MASK) << A_STANDARD_KEYWORD_MEMBER_SHIFT;
         }
 
         a as i64
@@ -580,12 +547,12 @@ impl CardFilter {
     }
 
     pub fn with_blade_heart(mut self) -> Self {
-        self.has_blade_heart = 1;
+        self.has_blade_heart = true;
         self
     }
 
     pub fn with_no_blade_heart(mut self) -> Self {
-        self.has_blade_heart = -1;
+        self.not_has_blade_heart = true;
         self
     }
 
@@ -799,7 +766,8 @@ mod tests {
             group_enabled: true,
             group_id: 4,
             is_tapped: true,
-            has_blade_heart: -1,
+            has_blade_heart: false,
+            not_has_blade_heart: true,
             unique_names: true,
             unit_enabled: true,
             unit_id: 5,
@@ -813,7 +781,11 @@ mod tests {
             zone_mask: 3,
             special_id: 2,
             is_setsuna: true,
+            char_id_3: 0,
             compare_accumulated: false,
+            is_optional: false,
+            keyword_energy: false,
+            keyword_member: false,
         };
 
         let _state = crate::core::logic::GameState::default();

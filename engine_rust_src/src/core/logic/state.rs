@@ -7,6 +7,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use super::models::*;
 use super::player::*;
 use crate::core::enums::*;
+// use crate::core::logic::constants::*;
+// use crate::core::enums::Zone; // Remainder zone is currently int
 
 pub trait ActionReceiver {
     fn add_action(&mut self, action_id: usize);
@@ -169,6 +171,10 @@ pub struct CoreGameState {
     #[serde(default)]
     pub rps_choices: [i8; 2],
     #[serde(default)]
+    pub score_req_list: Vec<u8>,
+    #[serde(default)]
+    pub score_req_player: i8,
+    #[serde(default)]
     pub turn_history: Option<Vec<TurnEvent>>,
     #[serde(default)]
     pub obtained_success_live: [bool; 2],
@@ -198,6 +204,8 @@ impl Default for CoreGameState {
             trigger_queue: VecDeque::new(),
             rng: SmallRng::from_os_rng(),
             rps_choices: [-1; 2],
+            score_req_list: Vec::new(),
+            score_req_player: 0,
             turn_history: None,
             obtained_success_live: [false; 2],
         }
