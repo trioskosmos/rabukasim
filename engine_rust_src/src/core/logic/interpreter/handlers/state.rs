@@ -1,5 +1,5 @@
 use crate::core::enums::*;
-use crate::core::logic::constants::{CHOICE_DONE, CHOICE_ALL};
+use crate::core::logic::constants::CHOICE_DONE;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
 use crate::core::models::interpreter::{resolve_target_slot, get_choice_text};
 use crate::core::models::suspend_interaction;
@@ -14,7 +14,7 @@ pub fn handle_energy(
     ctx: &mut AbilityContext,
     instr: &super::super::instruction::BytecodeInstruction,
     instr_ip: usize,
-) -> Option<HandlerResult> {
+) -> HandlerResult {
     let op = instr.op;
     let v = instr.v;
     let a = instr.a;
@@ -32,7 +32,7 @@ pub fn handle_energy(
                     state.players[target_p].set_energy_tapped(new_idx, is_wait);
                 }
             }
-            Some(HandlerResult::Continue)
+            HandlerResult::Continue
         }
         O_PAY_ENERGY => {
             let available = (0..state.players[p_idx].energy_zone.len())
@@ -46,7 +46,7 @@ pub fn handle_energy(
                     if state.debug.debug_mode {
                         println!("[DEBUG] O_PAY_ENERGY: cannot afford optional cost.");
                     }
-                    return Some(HandlerResult::SetCond(false));
+                    return HandlerResult::SetCond(false);
                 } else {
                     if state.debug.debug_mode {
                         println!(
@@ -66,28 +66,28 @@ pub fn handle_energy(
                         a as u64,
                         -1,
                     ) {
-                        return Some(HandlerResult::Suspend);
+                        return HandlerResult::Suspend;
                     }
                 }
             }
 
             if ctx.choice_index == 99 {
-                return Some(HandlerResult::SetCond(false));
+                return HandlerResult::SetCond(false);
             }
 
             let mut next_ctx = ctx.clone();
             if is_optional && ctx.choice_index != -1 && ctx.v_remaining == -1 {
                 if ctx.choice_index == 1 {
-                    return Some(HandlerResult::SetCond(false));
+                    return HandlerResult::SetCond(false);
                 }
                 next_ctx.choice_index = -1;
                 next_ctx.v_remaining = v as i16;
             }
 
             if next_ctx.choice_index == 99 {
-                return Some(HandlerResult::SetCond(false));
+                return HandlerResult::SetCond(false);
             } else if available < v {
-                return Some(HandlerResult::SetCond(false));
+                return HandlerResult::SetCond(false);
             } else {
                 if next_ctx.choice_index != -1 {
                     let idx = next_ctx.choice_index as usize;
@@ -110,7 +110,7 @@ pub fn handle_energy(
                                 0,
                                 next_ctx.v_remaining,
                             ) {
-                                return Some(HandlerResult::Suspend);
+                                return HandlerResult::Suspend;
                             }
                         }
                     }
@@ -128,7 +128,7 @@ pub fn handle_energy(
                     }
                 }
             }
-            Some(HandlerResult::SetCond(true))
+            HandlerResult::SetCond(true)
         }
         O_ACTIVATE_ENERGY => {
             let mut count = 0;
@@ -164,7 +164,7 @@ pub fn handle_energy(
                     count += 1;
                 }
             }
-            Some(HandlerResult::Continue)
+            HandlerResult::Continue
         }
         O_PAY_ENERGY_DYNAMIC => {
             let base_score = state.players[p_idx].score as i32;
@@ -182,7 +182,7 @@ pub fn handle_energy(
                 .count();
 
             if available < total_cost {
-                return Some(HandlerResult::SetCond(false));
+                return HandlerResult::SetCond(false);
             }
 
             let mut paid = 0;
@@ -195,7 +195,7 @@ pub fn handle_energy(
                     paid += 1;
                 }
             }
-            Some(HandlerResult::SetCond(true))
+            HandlerResult::SetCond(true)
         }
         O_PLACE_ENERGY_UNDER_MEMBER => {
             let src_zone = instr.s.source_zone as u8;
@@ -231,9 +231,9 @@ pub fn handle_energy(
                     }
                 }
             }
-            Some(HandlerResult::Continue)
+            HandlerResult::Continue
         }
-        _ => None,
+        _ => HandlerResult::Continue,
     }
 }
 
@@ -243,7 +243,7 @@ pub fn handle_member_state(
     ctx: &mut AbilityContext,
     instr: &super::super::instruction::BytecodeInstruction,
     instr_ip: usize,
-) -> Option<HandlerResult> {
+) -> HandlerResult {
     let op = instr.op;
     let v = instr.v;
     let a = instr.a;
@@ -306,7 +306,7 @@ pub fn handle_member_state(
                         mod_a as u64,
                         v as i16,
                     ) {
-                        return Some(HandlerResult::Suspend);
+                        return HandlerResult::Suspend;
                     }
                 }
             }
@@ -328,7 +328,7 @@ pub fn handle_member_state(
                         a as u64,
                         -1,
                     ) {
-                        return Some(HandlerResult::Suspend);
+                        return HandlerResult::Suspend;
                     }
                 }
                 if (a & 0x02) != 0 {
@@ -345,7 +345,7 @@ pub fn handle_member_state(
                         a as u64,
                         v as i16,
                     ) {
-                        return Some(HandlerResult::Suspend);
+                        return HandlerResult::Suspend;
                     }
                 }
 
@@ -356,18 +356,18 @@ pub fn handle_member_state(
                 let is_choice_done = ctx.choice_index == CHOICE_DONE;
                 if is_optional || (a & 0x01) != 0 {
                     if is_choice_done || ctx.choice_index == 1 {
-                        return Some(HandlerResult::SetCond(false));
+                        return HandlerResult::SetCond(false);
                     }
                     if resolved_slot < 3 {
                         state.players[p_idx].set_tapped(resolved_slot as usize, true);
                     }
-                    return Some(HandlerResult::SetCond(true));
+                    return HandlerResult::SetCond(true);
                 } else {
                     let slot = ctx.choice_index as usize;
                     if slot < 3 {
                         state.players[p_idx].set_tapped(slot, true);
                     }
-                    return Some(HandlerResult::SetCond(true));
+                    return HandlerResult::SetCond(true);
                 }
             }
         }
@@ -379,7 +379,7 @@ pub fn handle_member_state(
                 ctx.v_remaining
             };
             if count <= 0 {
-                return Some(HandlerResult::Continue);
+                return HandlerResult::Continue;
             }
 
             if ctx.choice_index == -1 {
@@ -405,7 +405,7 @@ pub fn handle_member_state(
                 );
 
                 if suspended {
-                    return Some(HandlerResult::Suspend);
+                    return HandlerResult::Suspend;
                 }
                 // Restore if not suspended
                 ctx.player_id = orig_player_id;
@@ -433,7 +433,7 @@ pub fn handle_member_state(
                         );
 
                         if suspended {
-                            return Some(HandlerResult::Suspend);
+                            return HandlerResult::Suspend;
                         }
                         ctx.player_id = orig_player_id;
                     }
@@ -463,7 +463,7 @@ pub fn handle_member_state(
                     0,
                     -1,
                 ) {
-                    return Some(HandlerResult::Suspend);
+                    return HandlerResult::Suspend;
                 }
             }
 
@@ -573,7 +573,7 @@ pub fn handle_member_state(
                         a as u64,
                         remaining,
                     ) {
-                        return Some(HandlerResult::Suspend);
+                        return HandlerResult::Suspend;
                     }
                 }
                 let h_idx = ctx.choice_index as usize;
@@ -599,7 +599,7 @@ pub fn handle_member_state(
                         a as u64,
                         remaining,
                     ) {
-                        return Some(HandlerResult::Suspend);
+                        return HandlerResult::Suspend;
                     }
                 }
 
@@ -628,7 +628,7 @@ pub fn handle_member_state(
                         state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
                         ctx.choice_index = -1;
                         ctx.v_remaining = 0;
-                        return Some(HandlerResult::Continue);
+                        return HandlerResult::Continue;
                     }
                 }
             }
@@ -680,7 +680,7 @@ pub fn handle_member_state(
             };
 
             if remaining <= 0 {
-                return Some(HandlerResult::Continue);
+                return HandlerResult::Continue;
             }
 
             if remaining % 2 == 0 {
@@ -691,7 +691,7 @@ pub fn handle_member_state(
                         .iter()
                         .all(|&c| c >= 0)
                 {
-                    return Some(HandlerResult::Continue);
+                    return HandlerResult::Continue;
                 }
 
                 // IMPORTANT: Only clear looked_cards if we are STARTING a new pick.
@@ -712,7 +712,7 @@ pub fn handle_member_state(
                         .collect();
                     state.players[target_p_idx].looked_cards.extend(matched_ids);
                     if state.players[target_p_idx].looked_cards.is_empty() {
-                        return Some(HandlerResult::Continue);
+                        return HandlerResult::Continue;
                     }
 
                     let mut target_ctx = ctx.clone();
@@ -734,7 +734,7 @@ pub fn handle_member_state(
                         filter_attr,
                         remaining,
                     ) {
-                        return Some(HandlerResult::Suspend);
+                        return HandlerResult::Suspend;
                     }
                 }
 
@@ -770,18 +770,18 @@ pub fn handle_member_state(
                         filter_attr_base,
                         remaining,
                     ) {
-                        return Some(HandlerResult::Suspend);
+                        return HandlerResult::Suspend;
                     }
                 }
             } else {
                 // Card Placement Step (3, 1, ...)
                 if state.players[target_p_idx].looked_cards.is_empty() {
-                    return Some(HandlerResult::Continue);
+                    return HandlerResult::Continue;
                 }
                 let card_id = state.players[target_p_idx].looked_cards.remove(0);
 
                 if ctx.choice_index == 99 {
-                    return Some(HandlerResult::Continue);
+                    return HandlerResult::Continue;
                 }
 
                 let resolved_slot = if ctx.choice_index >= 600 && ctx.choice_index < 603 {
@@ -810,7 +810,7 @@ pub fn handle_member_state(
                             || (empty_slot_only
                                 && state.players[target_p_idx].stage[slot_idx] != -1)
                         {
-                            return Some(HandlerResult::Continue);
+                            return HandlerResult::Continue;
                         }
 
                         if is_total_cost {
@@ -831,7 +831,7 @@ pub fn handle_member_state(
                         state.register_played_member(target_p_idx, card_id, db);
                         state.players[target_p_idx].prevent_play_to_slot_mask |= 1 << slot_idx;
 
-                        let mut new_ctx = AbilityContext {
+                        let new_ctx = AbilityContext {
                             source_card_id: card_id,
                             player_id: target_p_idx as u8,
                             activator_id: target_p_idx as u8,
@@ -848,7 +848,7 @@ pub fn handle_member_state(
                 ctx.v_remaining = remaining;
                 if remaining > 0 {
                     ctx.choice_index = -1; // Reset for the NEXT pick step (crucial for budget re-evaluation)
-                    return Some(HandlerResult::Branch(instr_ip));
+                    return HandlerResult::Branch(instr_ip);
                 }
             }
         }
@@ -865,9 +865,9 @@ pub fn handle_member_state(
                 v,
             ));
         }
-        _ => return None,
+        _ => return HandlerResult::Continue,
     }
-    Some(HandlerResult::Continue)
+    HandlerResult::Continue
 }
 
 pub fn handle_score_hearts(
@@ -875,7 +875,7 @@ pub fn handle_score_hearts(
     db: &CardDatabase,
     ctx: &mut AbilityContext,
     instr: &super::super::instruction::BytecodeInstruction,
-) -> Option<HandlerResult> {
+) -> HandlerResult {
     let op = instr.op;
     let v = instr.v;
     let a = instr.a;
@@ -899,7 +899,7 @@ pub fn handle_score_hearts(
                     db,
                     s,
                     a as u64 & !DYNAMIC_VALUE & FILTER_MASK_LOWER,
-                    0,
+                    p_idx as i32,
                     ctx,
                     0,
                 );
@@ -1008,6 +1008,26 @@ pub fn handle_score_hearts(
             state.players[p_idx]
                 .color_transforms
                 .push((ctx.source_card_id, 0, v as u8));
+        }
+        O_TRANSFORM_BLADES => {
+            let target_p = if instr.s.is_opponent { 1 - p_idx } else { p_idx };
+            if state.debug.debug_mode {
+                println!("[DEBUG] O_TRANSFORM_BLADES: target_p={}, target_slot={}, resolved_slot={}, v={}", 
+                    target_p, target_slot, resolved_slot, v);
+            }
+            if target_slot == 1 {
+                for t in 0..3 {
+                    state.players[target_p].blade_overrides[t] = v as i16;
+                }
+            } else if resolved_slot < 3 {
+                state.players[target_p].blade_overrides[resolved_slot as usize] = v as i16;
+            }
+            if state.debug.debug_mode {
+                println!("[DEBUG] O_TRANSFORM_BLADES Result: slot_0_override={}, slot_1_override={}, slot_2_override={}",
+                    state.players[target_p].blade_overrides[0],
+                    state.players[target_p].blade_overrides[1],
+                    state.players[target_p].blade_overrides[2]);
+            }
         }
         O_REDUCE_HEART_REQ => {
             if (s as usize) < 7 {
@@ -1121,7 +1141,7 @@ pub fn handle_score_hearts(
         O_SKIP_ACTIVATE_PHASE => {
             state.players[p_idx].skip_next_activate = true;
         }
-        _ => return None,
+        _ => return HandlerResult::Continue,
     }
-    Some(HandlerResult::Continue)
+    HandlerResult::Continue
 }

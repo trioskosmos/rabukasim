@@ -1,9 +1,11 @@
 use crate::core::enums::*;
-use crate::core::logic::constants::{FILTER_MASK_LOWER, FILTER_IS_OPTIONAL, FLAG_REVEAL_UNTIL_IS_LIVE, CHOICE_DONE, CHOICE_ALL};
+use crate::core::logic::constants::{FILTER_MASK_LOWER, FILTER_IS_OPTIONAL, FLAG_REVEAL_UNTIL_IS_LIVE, CHOICE_DONE, CHOICE_ALL, DYNAMIC_VALUE};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType, PlayerState};
+use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::models::interpreter::{resolve_target_slot, check_condition_opcode, get_choice_text};
 use crate::core::models::suspend_interaction;
-use crate::core::logic::interpreter::logging;
+// use crate::core::logic::filter::CardFilter; // Removed to avoid ambiguity
+use super::super::logging;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
@@ -15,12 +17,24 @@ pub fn handle_draw(
     _db: &CardDatabase,
     ctx: &mut AbilityContext,
     instr: &super::super::instruction::BytecodeInstruction,
-) -> Option<HandlerResult> {
+) -> HandlerResult {
     let op = instr.op;
     let v = instr.v;
     let s = instr.raw_s;
     let p_idx = ctx.player_id as usize;
-    let count = v as u32;
+    let count = if (instr.a as u64 & DYNAMIC_VALUE) != 0 {
+        resolve_count(
+            state,
+            _db,
+            s,
+            instr.a as u64 & !DYNAMIC_VALUE & FILTER_MASK_LOWER,
+            p_idx as i32,
+            ctx,
+            0,
+        ) as u32
+    } else {
+        v as u32
+    };
     let target_p = if s == 2 {
         1 - p_idx
     } else if s == 3 {
@@ -71,9 +85,9 @@ pub fn handle_draw(
                 state.draw_cards(p_idx, v as u32);
             }
         }
-        _ => return None,
+        _ => return HandlerResult::Continue,
     }
-    Some(HandlerResult::Continue)
+    HandlerResult::Continue
 }
 
 pub fn handle_move_to_discard(
@@ -82,12 +96,24 @@ pub fn handle_move_to_discard(
     ctx: &mut AbilityContext,
     instr: &super::super::instruction::BytecodeInstruction,
     instr_ip: usize,
-) -> Option<bool> {
-    let v = instr.v;
+) -> HandlerResult {
     let a = instr.a;
     let s = instr.raw_s;
-    let base_p = ctx.activator_id as usize;
     let p_idx = ctx.player_id as usize;
+    let v = if (a as u64 & DYNAMIC_VALUE) != 0 {
+        resolve_count(
+            state,
+            db,
+            s,
+            a as u64 & !DYNAMIC_VALUE & FILTER_MASK_LOWER,
+            p_idx as i32,
+            ctx,
+            0,
+        ) as i32
+    } else {
+        instr.v
+    };
+    let base_p = ctx.activator_id as usize;
     let mut source_zone = instr.s.source_zone;
     if source_zone == Zone::Default {
         let ts = instr.s.target_slot;
@@ -128,7 +154,7 @@ pub fn handle_move_to_discard(
     if target_player_idx != p_idx
         && state.players[target_player_idx].get_flag(PlayerState::FLAG_IMMUNITY)
     {
-        return Some(false);
+        return HandlerResult::Continue;
     }
 
     let filter_attr = (a as u64) & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
@@ -152,7 +178,7 @@ pub fn handle_move_to_discard(
             _ => 99,
         };
         if available_count < v {
-            return Some(false);
+            return HandlerResult::Continue;
         }
     }
 
@@ -175,9 +201,24 @@ pub fn handle_move_to_discard(
     }
 
     if next_ctx.choice_index == -1 && count > 0 && source_zone != Zone::Default && source_zone != Zone::Deck && source_zone != Zone::DeckTop && source_zone != Zone::DeckBottom {
-        // Auto-pick shortcut for single mandatory target
         if state.players[p_idx].looked_cards.len() == 1 && !is_optional && count == 1 {
             next_ctx.choice_index = 0;
+        }
+
+        // Auto-pick all if mandatory and we have fewer than or equal to count
+        if !is_optional && next_ctx.choice_index == -1 {
+            let available_indices = state.get_card_ids_in_zone(p_idx as u8, source_zone as u8);
+            let mut matching_indices = Vec::new();
+            for &card_idx in &available_indices {
+                if state.card_matches_filter_with_ctx(db, card_idx, filter_attr, &next_ctx) {
+                    matching_indices.push(card_idx);
+                }
+            }
+
+            if !matching_indices.is_empty() && (count as usize) >= matching_indices.len() {
+                // If we need them all, just take the first one and the interpreter will loop
+                next_ctx.choice_index = matching_indices[0] as i16;
+            }
         }
 
         if next_ctx.choice_index == -1 {
@@ -202,7 +243,7 @@ pub fn handle_move_to_discard(
                 filter_attr_with_mask,
                 v as i16,
             ) {
-                return None;
+                return HandlerResult::Suspend;
             }
         }
     }
@@ -210,7 +251,7 @@ pub fn handle_move_to_discard(
     if next_ctx.choice_index != -1 {
         if next_ctx.choice_index == CHOICE_DONE {
             if is_optional {
-                return Some(false);
+                return HandlerResult::Continue;
             } else {
                 if (next_ctx.v_remaining > 0) || (next_ctx.v_remaining == -1 && count > 0) {
                     if suspend_interaction(
@@ -229,9 +270,9 @@ pub fn handle_move_to_discard(
                             count as i16
                         },
                     ) {
-                        return None;
+                        return HandlerResult::Suspend;
                     }
-                    return Some(true);
+                    return HandlerResult::Continue;
                 }
             }
         }
@@ -290,6 +331,24 @@ pub fn handle_move_to_discard(
                 (count as i16) - 1
             };
             if next_ctx.v_remaining > 0 {
+                // BUG FIX: Check if there are ANY cards left in the source zone matching the filter.
+                let still_available = match source_zone {
+                    Zone::Hand => state.players[target_player_idx].hand.iter().any(|&c| {
+                        let cf = crate::core::logic::filter::CardFilter::from_attr(filter_attr as i64);
+                        cf.matches(state, db, c, None, false, None, &next_ctx)
+                    }),
+                    Zone::Stage => state.players[target_player_idx].stage.iter().any(|&c| {
+                        if c < 0 { return false; }
+                        let cf = crate::core::logic::filter::CardFilter::from_attr(filter_attr as i64);
+                        cf.matches(state, db, c, None, false, None, &next_ctx)
+                    }),
+                    _ => true,
+                };
+
+                if !still_available {
+                    return HandlerResult::Continue;
+                }
+
                 next_ctx.choice_index = -1;
                 if suspend_interaction(
                     state,
@@ -303,7 +362,7 @@ pub fn handle_move_to_discard(
                     filter_attr,
                     next_ctx.v_remaining,
                 ) {
-                    return None;
+                    return HandlerResult::Suspend;
                 }
             }
         }
@@ -353,7 +412,7 @@ pub fn handle_move_to_discard(
     }
 
     state.players[target_player_idx].hand.retain(|c| *c != -1);
-    Some(true)
+    HandlerResult::Continue
 }
 
 pub fn handle_deck_zones(
@@ -362,7 +421,7 @@ pub fn handle_deck_zones(
     ctx: &mut AbilityContext,
     instr: &super::super::instruction::BytecodeInstruction,
     instr_ip: usize,
-) -> Option<HandlerResult> {
+) -> HandlerResult {
     let op = instr.op;
     let v = instr.v;
     let a = instr.a;
@@ -450,7 +509,7 @@ pub fn handle_deck_zones(
                         0,
                         -1,
                     ) {
-                        return Some(HandlerResult::Suspend);
+                        return HandlerResult::Suspend;
                     }
                 }
                 let choice = ctx.choice_index as i32;
@@ -478,7 +537,7 @@ pub fn handle_deck_zones(
                             0,
                             -1,
                         ) {
-                            return Some(HandlerResult::Suspend);
+                            return HandlerResult::Suspend;
                         }
                     }
                     let remainder_mode = (a as u64 & FILTER_MASK_LOWER) as u8;
@@ -518,7 +577,7 @@ pub fn handle_deck_zones(
                         0,
                         -1,
                     ) {
-                        return Some(HandlerResult::Suspend);
+                        return HandlerResult::Suspend;
                     }
                 }
 
@@ -528,7 +587,7 @@ pub fn handle_deck_zones(
                     for &cid in looked.iter() {
                         state.players[p_idx].deck.push(cid);
                     }
-                    return Some(HandlerResult::Continue);
+                    return HandlerResult::Continue;
                 }
 
                 if choice >= 0 && (choice as usize) < state.players[p_idx].looked_cards.len() {
@@ -548,10 +607,10 @@ pub fn handle_deck_zones(
                             0,
                             -1,
                         ) {
-                            return Some(HandlerResult::Suspend);
+                            return HandlerResult::Suspend;
                         }
                     } else {
-                        return Some(HandlerResult::Continue);
+                        return HandlerResult::Continue;
                     }
                 }
             }
@@ -662,7 +721,7 @@ pub fn handle_deck_zones(
                         (a as u32) as u64,
                         v as i16,
                     ) {
-                        return Some(HandlerResult::Suspend);
+                        return HandlerResult::Suspend;
                     }
                 }
                 let choice = ctx.choice_index as usize;
@@ -703,7 +762,7 @@ pub fn handle_deck_zones(
                             (a as u32) as u64,
                             next_v,
                         ) {
-                            return Some(HandlerResult::Suspend);
+                            return HandlerResult::Suspend;
                         }
                     }
                 }
@@ -756,42 +815,24 @@ pub fn handle_deck_zones(
             }
         }
         O_MOVE_TO_DISCARD => {
-            return match handle_move_to_discard(state, db, ctx, instr, instr_ip) {
-                Some(success) => Some(HandlerResult::SetCond(success)),
-                None => Some(HandlerResult::Suspend),
-            }
+            return handle_move_to_discard(state, db, ctx, instr, instr_ip);
         }
         O_LOOK_AND_CHOOSE => {
-            return match handle_look_and_choose(state, db, ctx, instr, instr_ip) {
-                Some(success) => Some(HandlerResult::SetCond(success)),
-                None => Some(HandlerResult::Suspend),
-            }
+            return handle_look_and_choose(state, db, ctx, instr, instr_ip);
         }
         O_RECOVER_LIVE | O_RECOVER_MEMBER => {
-            return match handle_recovery(state, db, ctx, instr, instr_ip, op) {
-                Some(success) => Some(HandlerResult::SetCond(success)),
-                None => Some(HandlerResult::Suspend),
-            }
+            return handle_recovery(state, db, ctx, instr, instr_ip, op);
         }
         O_PLAY_LIVE_FROM_DISCARD => {
-            return match handle_play_live_from_discard(state, db, ctx, instr, instr_ip) {
-                Some(success) => Some(HandlerResult::SetCond(success)),
-                None => Some(HandlerResult::Suspend),
-            }
+            return handle_play_live_from_discard(state, db, ctx, instr, instr_ip);
         }
         O_SELECT_CARDS => {
-            return match handle_select_cards(state, db, ctx, instr, instr_ip) {
-                Some(success) => Some(HandlerResult::SetCond(success)),
-                None => Some(HandlerResult::Suspend),
-            }
+            return handle_select_cards(state, db, ctx, instr, instr_ip);
         }
-        O_SWAP_ZONE => match handle_swap_zone(state, db, ctx, instr, instr_ip) {
-            Some(_) => {}
-            None => return Some(HandlerResult::Suspend),
-        },
-        _ => return None,
+        O_SWAP_ZONE => return handle_swap_zone(state, db, ctx, instr, instr_ip),
+        _ => return HandlerResult::Continue,
     }
-    Some(HandlerResult::Continue)
+    HandlerResult::Continue
 }
 
 pub fn handle_swap_zone(
@@ -800,13 +841,13 @@ pub fn handle_swap_zone(
     ctx: &mut AbilityContext,
     instr: &super::super::instruction::BytecodeInstruction,
     instr_ip: usize,
-) -> Option<bool> {
+) -> HandlerResult {
     let _s = instr.raw_s;
     let p_idx = ctx.player_id as usize;
     if ctx.choice_index == -1 && ctx.v_remaining == -1 {
         let cards = state.players[p_idx].success_lives.clone();
         if cards.is_empty() {
-            return Some(true);
+            return HandlerResult::Continue;
         }
         state.players[p_idx].looked_cards.clear();
         state.players[p_idx].looked_cards.extend(cards);
@@ -823,7 +864,7 @@ pub fn handle_swap_zone(
             0,
             1,
         ) {
-            return None;
+            return HandlerResult::Suspend;
         }
     }
     if ctx.v_remaining == 1 {
@@ -847,7 +888,7 @@ pub fn handle_swap_zone(
                 0,
                 1,
             ) {
-                return None;
+                return HandlerResult::Suspend;
             }
         }
     } else if ctx.v_remaining == 0 {
@@ -871,5 +912,5 @@ pub fn handle_swap_zone(
         }
     }
     state.players[p_idx].looked_cards.clear();
-    Some(true)
+    HandlerResult::Continue
 }

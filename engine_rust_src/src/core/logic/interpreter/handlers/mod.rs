@@ -55,12 +55,7 @@ impl HandlerRegistry {
         println!("[DEBUG] DISPATCH: op={} v={} a={} s={}", op, v, a, s);
         // Centralized Dispatch Match
         match op {
-            O_SELECT_MODE => {
-                match handle_select_mode(state, db, ctx, instr, instr_ip, bytecode) {
-                    Some(new_ip) => HandlerResult::Branch(new_ip),
-                    None => HandlerResult::Suspend,
-                }
-            }
+            O_SELECT_MODE => handle_select_mode(state, db, ctx, instr, instr_ip, bytecode),
             // 1. Meta / Control Handlers
             O_NEGATE_EFFECT
             | O_REDUCE_YELL_COUNT
@@ -84,11 +79,10 @@ impl HandlerRegistry {
             | O_SET_TARGET_SELF
             | O_SET_TARGET_OPPONENT
             | O_CALC_SUM_COST
-            | O_DIV_VALUE => flow::handle_meta_control(state, db, ctx, instr, instr_ip)
-                .unwrap_or(HandlerResult::Continue),
+            | O_DIV_VALUE => flow::handle_meta_control(state, db, ctx, instr, instr_ip),
             // 2. Draw / Hand
             O_DRAW | O_DRAW_UNTIL | O_ADD_TO_HAND => {
-                movement::handle_draw(state, db, ctx, instr).unwrap_or(HandlerResult::Continue)
+                movement::handle_draw(state, db, ctx, instr)
             }
             // 3. Member State
             O_ACTIVATE_MEMBER
@@ -102,15 +96,13 @@ impl HandlerRegistry {
             | O_GRANT_ABILITY
             | O_PLAY_MEMBER_FROM_HAND
             | O_PLAY_MEMBER_FROM_DISCARD
-            | O_INCREASE_COST => state::handle_member_state(state, db, ctx, instr, instr_ip)
-                .unwrap_or(HandlerResult::Continue),
+            | O_INCREASE_COST => state::handle_member_state(state, db, ctx, instr, instr_ip),
             // 4. Energy
             O_ENERGY_CHARGE
             | O_PAY_ENERGY
             | O_ACTIVATE_ENERGY
             | O_PAY_ENERGY_DYNAMIC
-            | O_PLACE_ENERGY_UNDER_MEMBER => state::handle_energy(state, db, ctx, instr, instr_ip)
-                .unwrap_or(HandlerResult::Continue),
+            | O_PLACE_ENERGY_UNDER_MEMBER => state::handle_energy(state, db, ctx, instr, instr_ip),
             // 5. Deck / Zones
             O_SEARCH_DECK
             | O_ORDER_DECK
@@ -128,8 +120,7 @@ impl HandlerRegistry {
             | O_PLAY_LIVE_FROM_DISCARD
             | O_SELECT_CARDS
             | O_LOOK_REORDER_DISCARD
-            | O_SWAP_ZONE => movement::handle_deck_zones(state, db, ctx, instr, instr_ip)
-                .unwrap_or(HandlerResult::Continue),
+            | O_SWAP_ZONE => movement::handle_deck_zones(state, db, ctx, instr, instr_ip),
             // 6. Score / Hearts
             O_BOOST_SCORE
             | O_REDUCE_COST
@@ -146,9 +137,8 @@ impl HandlerRegistry {
             | O_SET_HEART_COST
             | O_REDUCE_SCORE
             | O_LOSE_EXCESS_HEARTS
-            | O_SKIP_ACTIVATE_PHASE => {
-                state::handle_score_hearts(state, db, ctx, instr).unwrap_or(HandlerResult::Continue)
-            }
+            | O_TRANSFORM_BLADES
+            | O_SKIP_ACTIVATE_PHASE => state::handle_score_hearts(state, db, ctx, instr),
             _ => {
                 if state.debug.debug_mode {
                     println!(
@@ -169,7 +159,7 @@ pub fn handle_select_mode(
     instr: &super::instruction::BytecodeInstruction,
     instr_ip: usize,
     bc: &[i32],
-) -> Option<usize> {
+) -> HandlerResult {
     use super::suspension::{get_choice_text, suspend_interaction};
     let v = instr.v;
     if ctx.choice_index == -1 {
@@ -200,18 +190,18 @@ pub fn handle_select_mode(
         );
 
         if suspended {
-            return None;
+            return HandlerResult::Suspend;
         }
-        return Some(instr_ip + 5);
+        return HandlerResult::Branch(instr_ip + 5);
     }
 
     let choice = ctx.choice_index as usize;
     if choice >= v as usize {
-        return Some(instr_ip + 5 + ((v as usize).saturating_sub(1)) * 5);
+        return HandlerResult::Branch(instr_ip + 5 + ((v as usize).saturating_sub(1)) * 5);
     }
 
     let jump_instr_offset = instr_ip + 5 + (choice * 5);
     let target = jump_instr_offset as i32 + 5 + (bc[jump_instr_offset + 1] * 5);
 
-    Some(target as usize)
+    HandlerResult::Branch(target as usize)
 }

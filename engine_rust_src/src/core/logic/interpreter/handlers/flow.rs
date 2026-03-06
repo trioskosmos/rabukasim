@@ -1,6 +1,7 @@
 use crate::core::enums::*;
-use crate::core::logic::constants::FILTER_MASK_LOWER;
+use crate::core::logic::constants::{FILTER_MASK_LOWER, DYNAMIC_VALUE};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
+use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::models::interpreter::{resolve_target_slot, get_choice_text};
 use crate::core::models::suspend_interaction;
 use super::HandlerResult;
@@ -11,7 +12,7 @@ pub fn handle_meta_control(
     ctx: &mut AbilityContext,
     instr: &super::super::instruction::BytecodeInstruction,
     instr_ip: usize,
-) -> Option<HandlerResult> {
+) -> HandlerResult {
     let op = instr.op;
     let v = instr.v;
     let a = instr.a;
@@ -117,7 +118,7 @@ pub fn handle_meta_control(
                     a as u64,
                     -1,
                 ) {
-                    return Some(HandlerResult::Suspend);
+                    return HandlerResult::Suspend;
                 }
             } else {
                 let choice = ctx.choice_index as i32;
@@ -149,7 +150,7 @@ pub fn handle_meta_control(
                     0,
                     -1,
                 ) {
-                    return Some(HandlerResult::Suspend);
+                    return HandlerResult::Suspend;
                 }
             } else {
                 // On resumption, the player_id is already flipped
@@ -193,9 +194,9 @@ pub fn handle_meta_control(
             if target_cid >= 0 {
                 if let Some(m) = db.get_member(target_cid as i32) {
                     if (v as usize) < m.abilities.len() {
-                        return Some(HandlerResult::BranchToBytecode(std::sync::Arc::new(
+                        return HandlerResult::BranchToBytecode(std::sync::Arc::new(
                             m.abilities[v as usize].bytecode.clone(),
-                        )));
+                        ));
                     }
                 }
             }
@@ -206,9 +207,21 @@ pub fn handle_meta_control(
                 .saturating_add(v as u8);
         }
         O_REDUCE_YELL_COUNT => {
+            let mut final_v = v;
+            if (a as u64 & DYNAMIC_VALUE) != 0 {
+                final_v = resolve_count(
+                    state,
+                    db,
+                    s,
+                    a as u64 & !DYNAMIC_VALUE & FILTER_MASK_LOWER,
+                    p_idx as i32,
+                    ctx,
+                    0,
+                );
+            }
             state.players[p_idx].yell_count_reduction = state.players[p_idx]
                 .yell_count_reduction
-                .saturating_add(v as i16);
+                .saturating_add(final_v as i16);
         }
         O_META_RULE => {
             let target_p_idx = if instr.s.is_opponent || target_slot == 2 {
@@ -223,7 +236,7 @@ pub fn handle_meta_control(
             } else if a == 8 {
                 if v == 1 {
                     let all_active = state.players[p_idx].tapped_energy_count() == 0;
-                    return Some(HandlerResult::SetCond(all_active));
+                    return HandlerResult::SetCond(all_active);
                 }
             }
         }
@@ -247,7 +260,7 @@ pub fn handle_meta_control(
                     0,
                     -1,
                 ) {
-                    return Some(HandlerResult::Suspend);
+                    return HandlerResult::Suspend;
                 }
             } else {
                 ctx.selected_color = ctx.choice_index;
@@ -311,16 +324,21 @@ pub fn handle_meta_control(
             let max_repeats = v;
             if max_repeats == 0 || ctx.repeat_count < max_repeats as i16 {
                 ctx.repeat_count = ctx.repeat_count.saturating_add(1);
-                return Some(HandlerResult::Branch(0));
+                return HandlerResult::Branch(0);
             }
         }
         O_SET_TARGET_SELF => {
             ctx.player_id = ctx.activator_id;
         }
         O_SET_TARGET_OPPONENT => {
-            ctx.player_id = 1 - ctx.activator_id;
+            ctx.player_id = 1 - ctx.activator_id ;
         }
-        _ => return None,
+        O_FLAVOR_ACTION => {
+             if state.debug.debug_mode {
+                println!("[DEBUG] FLAVOR_ACTION: v={}, a={}, s={}", v, a, s);
+            }
+        }
+        _ => return HandlerResult::Continue,
     }
-    Some(HandlerResult::Continue)
+    HandlerResult::Continue
 }

@@ -243,11 +243,12 @@ impl GameState {
         // Clear slot data (Buffs are attached to member, Energy stays in slot)
         self.core.players[p_idx].stage[slot] = -1;
         self.core.players[p_idx].blade_buffs[slot] = 0;
+        self.core.players[p_idx].blade_overrides[slot] = -1;
         self.core.players[p_idx].heart_buffs[slot] = HeartBoard::default();
 
-        // Clear flags (Tapped: bit 3-5, Moved: bit 6-8)
-        self.core.players[p_idx].flags &= !(1 << (3 + slot));
-        self.core.players[p_idx].flags &= !(1 << (6 + slot));
+        // Clear flags
+        self.core.players[p_idx].set_tapped(slot, false);
+        self.core.players[p_idx].set_moved(slot, false);
 
         Some(cid as i32)
     }
@@ -758,31 +759,50 @@ impl GameState {
 
     /// Like card_matches_filter but uses a provided AbilityContext (for v_accumulated etc.)
     pub fn card_matches_filter_with_ctx(&self, db: &CardDatabase, cid: i32, filter_attr: u64, ctx: &crate::core::logic::AbilityContext) -> bool {
+        self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, ctx, false)
+    }
+
+    pub fn card_matches_filter_with_ctx_logs(&self, db: &CardDatabase, cid: i32, filter_attr: u64, ctx: &crate::core::logic::AbilityContext) -> bool {
+        self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, ctx, true)
+    }
+
+    fn card_matches_filter_with_ctx_internal(&self, db: &CardDatabase, cid: i32, filter_attr: u64, ctx: &crate::core::logic::AbilityContext, debug: bool) -> bool {
         if cid == -1 { return false; }
         if filter_attr == 0 { return true; }
 
         let filter = CardFilter::from_attr(filter_attr as i64);
-        let mut is_tapped = false;
-        let mut hearts_arr = [0u8; 7];
-        let mut has_dynamic_data = false;
         let needs_dynamic_hearts = filter.color_mask != 0;
 
         for p in 0..2 {
             for s in 0..3 {
                 if self.players[p].stage[s] == cid {
-                    is_tapped = self.players[p].is_tapped(s);
-                    if needs_dynamic_hearts {
-                        hearts_arr = self.get_effective_hearts(p, s, db, 0).to_array();
+                    let s_idx = s as i16;
+                    let p_idx = p as u8;
+                    
+                    let tapped = self.players[p].is_tapped(s);
+                    let h_arr = if needs_dynamic_hearts {
+                        self.get_effective_hearts(p, s, db, 0).to_array()
+                    } else {
+                        [0u8; 7]
+                    };
+
+                    let res = if debug {
+                        filter.matches_with_logs(db, self, cid, ctx, Some((p_idx, s_idx)), tapped, Some(&h_arr))
+                    } else {
+                        filter.matches(self, db, cid, Some((p_idx, s_idx)), tapped, Some(&h_arr), ctx)
+                    };
+                    if res {
+                        return true;
                     }
-                    has_dynamic_data = true;
-                    break;
                 }
             }
-            if has_dynamic_data { break; }
         }
 
-        let hearts_ref = if needs_dynamic_hearts && has_dynamic_data { Some(&hearts_arr) } else { None };
-        filter.matches(self, db, cid, is_tapped, hearts_ref, ctx)
+        if debug {
+            filter.matches_with_logs(db, self, cid, ctx, None, false, None)
+        } else {
+            filter.matches(self, db, cid, None, false, None, ctx)
+        }
     }
 
     pub fn check_hearts_suitability(&self, have: &[u8; 7], need: &[u8; 7]) -> bool {
@@ -1135,6 +1155,64 @@ impl GameState {
         self.trigger_abilities_from(db, trigger, &ctx, start_ab_idx);
     }
 
+    pub fn trigger_global_event(
+        &mut self,
+        db: &CardDatabase,
+        trigger: TriggerType,
+        source_cid: i32,
+        slot: i16,
+        start_ab_idx: usize,
+        choice: i16,
+    ) {
+        self.trigger_depth += 1;
+        for p_idx in 0..2 {
+            let ctx = AbilityContext {
+                player_id: p_idx as u8,
+                activator_id: p_idx as u8,
+                source_card_id: source_cid,
+                area_idx: slot,
+                trigger_type: trigger,
+                choice_index: choice,
+                ..Default::default()
+            };
+            self.trigger_abilities_from_internal(db, trigger, &ctx, start_ab_idx);
+        }
+        self.trigger_depth -= 1;
+        if self.trigger_depth == 0 {
+            self.process_trigger_queue(db);
+        }
+    }
+
+    fn trigger_abilities_from_internal(
+        &mut self,
+        db: &CardDatabase,
+        trigger: TriggerType,
+        ctx: &AbilityContext,
+        start_ab_idx: usize,
+    ) {
+        // Collect all potential triggers
+        let mut queue = Vec::new();
+        let p_idx = ctx.player_id as usize;
+
+        // Stage Members
+        for slot_idx in 0..3 {
+            let cid = self.core.players[p_idx].stage[slot_idx];
+            self.collect_triggers_for_card(db, cid, trigger, ctx, start_ab_idx, false, &mut queue, slot_idx as i16);
+        }
+
+        // Performance/Live Cards
+        for slot_idx in 0..3 {
+            let cid = self.core.players[p_idx].live_zone[slot_idx];
+            self.collect_triggers_for_card(db, cid, trigger, ctx, start_ab_idx, true, &mut queue, slot_idx as i16);
+        }
+
+        for (cid, _def_cid, ab_idx, mut ab_ctx, is_live) in queue {
+            ab_ctx.source_card_id = cid;
+            ab_ctx.ability_index = ab_idx as i16;
+            self.enqueue_trigger(cid, ab_idx as u16, ab_ctx, is_live, trigger);
+        }
+    }
+
     pub fn trigger_abilities_from(
         &mut self,
         db: &CardDatabase,
@@ -1144,10 +1222,11 @@ impl GameState {
     ) {
         if self.trigger_depth > 10 {
             if !self.ui.silent {
-                self.log(format!("Trigger depth limit reached for {:?}.", trigger));
+                println!("[DEBUG] Trigger depth limit reached for {:?}.", trigger);
             }
             return;
         }
+        println!("[DEBUG] trigger_abilities_from: {:?} for player {}", trigger, ctx.player_id);
         self.trigger_depth += 1;
 
         // Collect all potential triggers
@@ -1157,13 +1236,13 @@ impl GameState {
         // 1. Stage Members
         for slot_idx in 0..3 {
             let cid = self.core.players[p_idx].stage[slot_idx];
-            self.collect_triggers_for_card(db, cid, trigger, ctx, start_ab_idx, false, &mut queue);
+            self.collect_triggers_for_card(db, cid, trigger, ctx, start_ab_idx, false, &mut queue, slot_idx as i16);
         }
 
         // 2. Performance/Live Cards
         for slot_idx in 0..3 {
             let cid = self.core.players[p_idx].live_zone[slot_idx];
-            self.collect_triggers_for_card(db, cid, trigger, ctx, start_ab_idx, true, &mut queue);
+            self.collect_triggers_for_card(db, cid, trigger, ctx, start_ab_idx, true, &mut queue, slot_idx as i16);
         }
 
         // 3. Source Card (if not on stage/live)
@@ -1185,6 +1264,7 @@ impl GameState {
                 start_ab_idx,
                 false,
                 &mut queue,
+                -1,
             );
             self.collect_triggers_for_card(
                 db,
@@ -1194,6 +1274,7 @@ impl GameState {
                 start_ab_idx,
                 true,
                 &mut queue,
+                -1,
             );
         }
 
@@ -1208,15 +1289,16 @@ impl GameState {
                 start_ab_idx,
                 false,
                 &mut queue,
+                -1,
             );
         }
 
         if self.debug.debug_mode {
-            println!(
-                "[DEBUG] trigger_abilities_from: trigger={:?}, queue_len={}",
-                trigger,
-                queue.len()
-            );
+            // println!(
+            //     "[DEBUG] trigger_abilities_from: trigger={:?}, queue_len={}",
+            //     trigger,
+            //     queue.len()
+            // );
         }
         for (cid, def_cid, ab_idx, mut ab_ctx, is_live) in queue {
             ab_ctx.source_card_id = cid;
@@ -1283,6 +1365,7 @@ impl GameState {
             }
 
             if all_met {
+                // println!("[DEBUG] Conditions met for card {}. Enqueueing trigger {:?}.", cid, trigger);
                 // PHASE 3: Queue instead of immediate resolve to decouple mutations
                 self.enqueue_trigger(cid, ab_idx as u16, ab_ctx, is_live, trigger);
             } else {
@@ -1325,6 +1408,7 @@ impl GameState {
         start_ab_idx: usize,
         is_live: bool,
         queue: &mut Vec<(i32, i32, u16, AbilityContext, bool)>,
+        slot_idx: i16,
     ) {
         if cid < 0 {
             return;
@@ -1340,6 +1424,7 @@ impl GameState {
         if let Some(abs) = abilities {
             for (ab_idx, ab) in abs.iter().enumerate() {
                 if ab.trigger == trigger {
+                    // println!("[DEBUG] Found matching trigger for card {}: {:?}", cid, trigger);
                     // Filter OnPlay/OnLeaves to only the specific card being moved
                     // UNLESS it is a monitoring ability (has a GroupFilter/Score/etc condition)
                     if (trigger == TriggerType::OnPlay || trigger == TriggerType::OnLeaves)
@@ -1377,7 +1462,12 @@ impl GameState {
                             }
                             continue;
                         }
-                        queue.push((cid, cid, ab_idx as u16, ctx.clone(), is_live));
+                        let mut trigger_ctx = ctx.clone();
+                        trigger_ctx.source_card_id = cid;
+                        if slot_idx >= 0 {
+                            trigger_ctx.area_idx = slot_idx;
+                        }
+                        queue.push((cid, cid, ab_idx as u16, trigger_ctx, is_live));
                     }
                 }
             }

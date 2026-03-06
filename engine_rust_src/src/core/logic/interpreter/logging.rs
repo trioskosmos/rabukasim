@@ -104,7 +104,23 @@ pub fn get_opcode_name(op: i32) -> &'static str {
         311 => "SYNC_COST",
         312 => "SUM_VALUE",
         313 => "IS_WAIT",
-        _ => ChoiceType::None.as_str(),
+        O_TRANSFORM_BLADES => "TRANSFORM_BLADES",
+        O_SET_HEART_COST => "SET_HEART_COST",
+        O_REDUCE_HEART_REQ => "REDUCE_HEART_REQ",
+        O_INCREASE_HEART_COST => "INCREASE_HEART_COST",
+        O_TRANSFORM_HEART => "TRANSFORM_HEART",
+        O_TRANSFORM_COLOR => "TRANSFORM_COLOR",
+        O_ADD_TO_HAND => "ADD_TO_HAND",
+        O_SELECT_CARDS => "SELECT_CARDS",
+        O_SELECT_PLAYER => "SELECT_PLAYER",
+        O_SELECT_LIVE => "SELECT_LIVE",
+        O_REVEAL_CARDS => "REVEAL_CARDS",
+        O_BATON_TOUCH_MOD => "BATON_TOUCH_MOD",
+        O_SET_SCORE => "SET_SCORE",
+        O_REDUCE_SCORE => "REDUCE_SCORE",
+        O_LOSE_EXCESS_HEARTS => "LOSE_EXCESS_HEARTS",
+        O_SKIP_ACTIVATE_PHASE => "SKIP_ACTIVATE_PHASE",
+        _ => if op == 127 { "TRANSFORM_BLADES" } else { ChoiceType::None.as_str() },
     }
 }
 
@@ -120,15 +136,26 @@ pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
     let a_hex = if a != 0 { format!("0x{:012X}", a) } else { "0".to_string() };
     
     // Check if the opcode might have a target slot in `s`
-    let s_desc = if (s & 0xFF) == 10 {
-        format!("{} (Choice)", s)
+    let slot = crate::core::logic::interpreter::instruction::DecodedSlot::decode(s);
+    let s_desc = format!("S:{:?}/{} -> D:{:?}/{}", slot.source_zone, slot.target_slot, slot.dest_zone, slot.area_idx);
+
+    // Filter decoding if 'a' is large (likely a filter)
+    let a_desc = if a > 10000 {
+        let f = crate::core::logic::filter::CardFilter::from_attr(a);
+        let mut f_parts = Vec::new();
+        if f.char_id_1 > 0 { f_parts.push(format!("Char:{}", f.char_id_1)); }
+        if f.group_enabled { f_parts.push(format!("Group:{}", f.group_id)); }
+        if f.unit_enabled { f_parts.push(format!("Unit:{}", f.unit_id)); }
+        if f.value_enabled { f_parts.push(format!("V{}{}", if f.is_le { "<=" } else { ">=" }, f.value_threshold)); }
+        if f.color_mask > 0 { f_parts.push(format!("Color:0x{:X}", f.color_mask)); }
+        format!("[{}]", f_parts.join(","))
     } else {
-        format!("{}", s)
+        a_hex
     };
 
     format!(
-        "{:<15} | v:{:<4} a:{:<15} s:{:<10}{}",
-        base_name, v, a_hex, s_desc, details
+        "{:<15} | v:{:<4} a:{:<25} s:{:<15}{}",
+        base_name, v, a_desc, s_desc, details
     )
 }
 

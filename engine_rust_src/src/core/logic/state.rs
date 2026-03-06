@@ -7,6 +7,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use super::models::*;
 use super::player::*;
 use crate::core::enums::*;
+use crate::core::logic::card_db::CardDatabase;
+use crate::core::logic::models::{TurnEvent, AbilityContext};
 // use crate::core::logic::constants::*;
 // use crate::core::enums::Zone; // Remainder zone is currently int
 
@@ -269,32 +271,91 @@ pub struct GameState {
 
 impl GameState {
     pub fn is_card_in_zone(&self, ctx_player_id: u8, target_player: u8, cid: i32, mask: u8) -> bool {
-        // target_player: 1=Self, 2=Opponent
-        let p_idx = if target_player == 1 {
-            ctx_player_id as usize
-        } else if target_player == 2 {
-            1 - (ctx_player_id as usize)
-        } else {
-            ctx_player_id as usize // Default to self
+        // target_player: 1=Self, 2=Opponent, 3=Both, 0=Any
+        let players_to_check: Vec<usize> = match target_player {
+            1 => vec![ctx_player_id as usize],
+            2 => vec![1 - (ctx_player_id as usize)],
+            3 | 0 => vec![0, 1], // Both or Any
+            _ => vec![ctx_player_id as usize],
         };
-        
-        // 4=STAGE, 6=HAND, 7=DISCARD
-        if (mask & 4) != 0 {
-            if self.players[p_idx].stage.iter().any(|&c| c == cid) {
-                return true;
-            }
-        }
-        if (mask & 6) != 0 {
-            if self.players[p_idx].hand.iter().any(|&c| c == cid) {
-                return true;
-            }
-        }
-        if (mask & 7) != 0 {
-            if self.players[p_idx].discard.iter().any(|&c| c == cid) {
-                return true;
+
+        for p_idx in players_to_check {
+            let p = &self.players[p_idx];
+            // mask is a Zone enum value (3-bit packed)
+            // 4=STAGE, 6=HAND, 7=DISCARD, 3=ENERGY
+            match mask {
+                4 => {
+                    if p.stage.iter().any(|&c| c == cid) { return true; }
+                }
+                6 => {
+                    if p.hand.iter().any(|&c| c == cid) { return true; }
+                }
+                7 => {
+                    if p.discard.iter().any(|&c| c == cid) { return true; }
+                }
+                3 => {
+                    if p.energy_zone.iter().any(|&c| c == cid) { return true; }
+                }
+                _ => {
+                    // fallback or other zones
+                }
             }
         }
         false
+    }
+
+    pub fn get_card_ids_in_zone(&self, player_idx: u8, mask: u8) -> Vec<i32> {
+        let p = &self.players[player_idx as usize];
+        match mask {
+            4 | 44 => p.stage.iter().filter(|&&c| c != -1).cloned().collect(), // STAGE
+            6 | 66 => p.hand.iter().cloned().collect(), // HAND
+            7 | 77 => p.discard.iter().cloned().collect(), // DISCARD
+            3 | 33 => p.energy_zone.iter().cloned().collect(), // ENERGY
+            15 => p.yell_cards.iter().cloned().collect(), // YELL
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn render_debug_board(&self, db: &CardDatabase) -> String {
+        let mut out = String::new();
+        out.push_str(&format!("\n=== GAME STATE (Turn {}, Phase {:?}, Player {}) ===\n", self.turn, self.phase, self.current_player));
+        
+        for p_idx in 0..2 {
+            let p = &self.players[p_idx];
+            out.push_str(&format!("--- PLAYER {} ---\n", p_idx));
+            out.push_str(&format!("  HAND:    {:?}\n", p.hand));
+            
+            out.push_str("  STAGE:   [");
+            for (i, &cid) in p.stage.iter().enumerate() {
+                if cid == -1 {
+                    out.push_str(" EMPTY ");
+                } else {
+                    let name = db.get_member(cid).map(|c| c.name.as_str()).unwrap_or("Unknown");
+                    let tapped = if p.is_tapped(i) { "(T)" } else { "" };
+                    out.push_str(&format!(" {}{} ", name, tapped));
+                }
+                if i < p.stage.len() - 1 { out.push_str("|"); }
+            }
+            out.push_str("]\n");
+
+            out.push_str("  LIVE:    [");
+            for (i, &cid) in p.live_zone.iter().enumerate() {
+                if cid == -1 {
+                    out.push_str(" EMPTY ");
+                } else {
+                    let name = db.get_live(cid).map(|c| c.name.as_str()).unwrap_or("Unknown");
+                    out.push_str(&format!(" {} ", name));
+                }
+                if i < p.live_zone.len() - 1 { out.push_str("|"); }
+            }
+            out.push_str("]\n");
+
+            out.push_str(&format!("  ENERGY:  {} total, {} tapped (Mask: {:b})\n", p.energy_zone.len(), p.tapped_energy_mask.count_ones(), p.tapped_energy_mask));
+            out.push_str(&format!("  DISCARD: {} cards\n", p.discard.len()));
+            out.push_str(&format!("  SUCCESS: {} cards\n", p.success_lives.len()));
+        }
+        out.push_str("==========================================\n");
+        out
     }
 }
 

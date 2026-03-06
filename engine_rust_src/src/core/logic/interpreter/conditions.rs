@@ -5,7 +5,8 @@
 use super::suspension::resolve_target_slot;
 use crate::core::enums::*;
 use crate::core::generated_layout::*;
-use crate::core::generated_constants::*;
+use crate::core::logic::constants::*;
+use crate::core::logic::filter::CardFilter;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::filter::map_filter_string_to_attr;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};
@@ -176,32 +177,43 @@ pub fn resolve_count(
         || op == C_COUNT_SUCCESS_LIVE
         || op == C_COUNT_GROUP
         || op == 307
+        || (op >= 400 && op < 500)
     {
-        let raw_attr = attr & 0x00000000FFFFFFFF;
-        let include_opponent = (attr & (1u64 << 40)) != 0 || (attr & (1u64 << 41)) != 0;
-        let only_opponent = (attr & (1u64 << 41)) != 0 && (attr & (1u64 << 40)) == 0;
+        let filter = CardFilter::from_attr(attr as i64);
+        let include_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8 || filter.target_player == TARGET_PLAYER_BOTH as u8;
+        let only_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8;
 
-        // Bitmask logic for zones (relocated to bits 53-55)
-        let zone_mask = (attr >> FILTER_ZONE_MASK_SHIFT) & 0x07;
+        // Bitmask logic for zones (relocated to bits 53-55 in R5)
+        let zone_mask = filter.zone_mask as u64;
         let has_zone_mask = zone_mask != 0;
 
+        // NEW: Detect zone from slot if it's an action opcode (e.g. MOVE_TO_DISCARD)
+        let slot_decoded = crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot);
+        let s_zone = slot_decoded.source_zone;
+
         // Mask bindings: 4=Stage, 7=Discard, 6=Hand (matching Zone enum)
-        let check_stage = if has_zone_mask {
+        let check_stage = if op >= 400 && op < 500 {
+            op == 401 || (has_zone_mask && zone_mask == ZONE_STAGE as u64) || (!has_zone_mask && s_zone == Zone::Stage)
+        } else if has_zone_mask {
             zone_mask == ZONE_STAGE as u64
         } else {
-            op == C_COUNT_STAGE || op == C_COUNT_GROUP
+            op == C_COUNT_STAGE || op == C_COUNT_GROUP || s_zone == Zone::Stage
         };
-        let check_discard = if has_zone_mask {
+        let check_discard = if op >= 400 && op < 500 {
+            op == 403 || (has_zone_mask && zone_mask == ZONE_DISCARD as u64) || (!has_zone_mask && s_zone == Zone::Discard)
+        } else if has_zone_mask {
             zone_mask == ZONE_DISCARD as u64
         } else {
-            op == C_COUNT_DISCARD
+            op == C_COUNT_DISCARD || s_zone == Zone::Discard
         };
-        let check_hand = if has_zone_mask {
+        let check_hand = if op >= 400 && op < 500 {
+            op == 402 || (has_zone_mask && zone_mask == ZONE_HAND as u64) || (!has_zone_mask && s_zone == Zone::Hand)
+        } else if has_zone_mask {
             zone_mask == ZONE_HAND as u64
         } else {
-            op == C_COUNT_HAND
+            op == C_COUNT_HAND || s_zone == Zone::Hand
         };
-        let check_success = op == C_COUNT_SUCCESS_LIVE || op == 307; // 307 = SUCCESS_PILE_COUNT
+        let check_success = op == C_COUNT_SUCCESS_LIVE || op == 307 || op == 405 || s_zone == Zone::SuccessPile;
 
         let mut ids = Vec::new();
 
@@ -234,10 +246,12 @@ pub fn resolve_count(
             }
         }
 
-        // Special Group ID auto-encoding for C_COUNT_GROUP / C_COUNT_STAGE if not enabled
-        // Note: Don't apply this encoding if only UNIQUE_NAMES flag is set (0x8000)
+        // Special Group ID auto-encoding for C_COUNT_GROUP if not enabled (Legacy Support)
+        // CRITICAL: Disable if any high-bits are set (Revision 5) or if it looks like a packed attribute
+        let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0 || (attr & 0xF) != 0; 
         let group_id_bits = (attr & 0x00000000FFFFFFFF) & !FILTER_UNIQUE_NAMES;
-        let should_auto_encode_group = (op == C_COUNT_GROUP || op == C_COUNT_STAGE)
+        let should_auto_encode_group = (op == C_COUNT_GROUP)
+            && !is_packed_r5
             && (attr & FILTER_GROUP_ENABLE) == 0
             && group_id_bits > 0
             && group_id_bits < 300;
@@ -254,17 +268,17 @@ pub fn resolve_count(
         // CRITICAL FIX: Python compiler sometimes leaks the condition `val` (e.g. "needs >= 2 CatChu members")
         // into the filter's `value_threshold` as a heart requirement because they share the same params dict!
         // If value_threshold is set but there's no color_mask and it's NOT a cost type, clear the value_threshold bit!
-        let has_value_enabled = (filter_attr & FILTER_COST_ENABLE) != 0; // Bit 24
-        let is_cost_type = (filter_attr & FILTER_COST_TYPE_FLAG) != 0;  // Bit 31
-        let has_color_mask = ((filter_attr >> FILTER_COLOR_SHIFT) & 0x7F) != 0; // Bits 32-38
+        let has_value_enabled = (filter_attr & FILTER_VALUE_ENABLE_FLAG) != 0; // Bit 24
+        let is_cost_type = (filter_attr & FILTER_VALUE_TYPE_FLAG) != 0;  // Bit 31
+        let has_color_mask = ((filter_attr >> FILTER_COLOR_SHIFT_R5) & 0x7F) != 0; // Bits 32-38
         if has_value_enabled && !is_cost_type && !has_color_mask {
             // Nullify the value_enabled bit (bit 24) since it's an errant cross-contamination from the count target
-            filter_attr &= !FILTER_COST_ENABLE;
+            filter_attr &= !FILTER_VALUE_ENABLE_FLAG;
         }
 
-        // CRITICAL FIX: Clear metadata flags that collide with biological fields (e.g. char_id_1 at bit 39-45)
-        let metadata_mask = (1u64 << 40) | (1u64 << 41) | (1u64 << 43) | (1u64 << 50) | (0x7u64 << 53);
-        filter_attr &= !metadata_mask;
+        // REMOVED: Invalid Revision 4 metadata mask that was corrupting Revision 5 character IDs (Bit 39-52)
+        // let metadata_mask = (1u64 << 40) | (1u64 << 41) | (1u64 << 43) | (1u64 << 50) | (0x7u64 << 53);
+        // filter_attr &= !metadata_mask;
 
         if check_success {
             filter_attr &= !0x0C; // Clear Member (0x04) and Live (0x08) bits
@@ -273,7 +287,7 @@ pub fn resolve_count(
         if (attr & FILTER_UNIQUE_NAMES) != 0 {
             let mut names = std::collections::HashSet::new();
             for id in ids {
-                if state.card_matches_filter(db, id, filter_attr) {
+                if if state.debug.debug_mode { state.card_matches_filter_with_ctx_logs(db, id, filter_attr, ctx) } else { state.card_matches_filter_with_ctx(db, id, filter_attr, ctx) } {
                     if let Some(m) = db.get_member(id) {
                         names.insert(m.name.clone());
                     } else if let Some(l) = db.get_live(id) {
@@ -283,9 +297,43 @@ pub fn resolve_count(
             }
             names.len() as i32
         } else {
-            ids.into_iter()
-                .filter(|&id| state.card_matches_filter(db, id, filter_attr))
-                .count() as i32
+
+
+            // Handle "Other than Self" (NOT_SELF=2, NOT_ACTIVATOR=3) by subtraction
+            // This allows counting other instances of the same card ID.
+            let special_id = (filter_attr >> 56) & 0x7;
+            let mut final_filter = filter_attr;
+            let mut do_subtraction = false;
+            if special_id == 2 || special_id == 3 {
+                do_subtraction = true;
+                final_filter &= !(0x7u64 << 56); // Stripping Special ID bits
+            }
+
+            let raw_count = ids.iter()
+                .filter(|&&id| {
+                    let m = if state.debug.debug_mode { state.card_matches_filter_with_ctx_logs(db, id, final_filter, ctx) } else { state.card_matches_filter_with_ctx(db, id, final_filter, ctx) };
+                    if state.debug.debug_mode && (id == 10 || id == 4433) {
+                        // println!("[DEBUG]   ID {} matches filter? {}", id, m);
+                    }
+                    m
+                })
+                .count() as i32;
+
+            let mut res = raw_count;
+            if ctx.player_id == 0 && ids.contains(&4632) {
+                 println!("[DEBUG_COND] resolve_count: raw={}, filter=0x{:x}, ids={:?}, source_id={}", raw_count, final_filter, ids, ctx.source_card_id);
+            }
+            if do_subtraction {
+                let target_id = if special_id == 3 { ctx.source_card_id } else if special_id == 2 { ctx.activator_id as i32 } else { -2 };
+                if ids.contains(&target_id) && if state.debug.debug_mode { state.card_matches_filter_with_ctx_logs(db, target_id, final_filter, ctx) } else { state.card_matches_filter_with_ctx(db, target_id, final_filter, ctx) } {
+                    res = (res - 1).max(0);
+                }
+            }
+
+            if state.debug.debug_mode {
+                println!("[DEBUG] resolve_count result: {} (raw was {})", res, raw_count);
+            }
+            res
         }
     } else {
         match op {
@@ -400,27 +448,14 @@ pub fn check_condition_opcode(
         }
         C_TURN_1 => state.turn == 1,
         C_HAS_MEMBER => {
-            let filter_attr = attr & 0x00000000FFFFFFFF;
-            let check_self = (attr & (1u64 << 41)) == 0;
-            let check_opp = (attr & (1u64 << 40)) != 0 || (attr & (1u64 << 41)) != 0;
-
-            if check_self
-                && player.stage.iter().filter(|&&id| id >= 0).any(|&id| {
-                    (id == val || id == (attr as i32))
-                        || (filter_attr != 0 && state.card_matches_filter(db, id, filter_attr))
-                })
-            {
-                true
-            } else if check_opp
-                && opponent.stage.iter().filter(|&&id| id >= 0).any(|&id| {
-                    (id == val || id == (attr as i32))
-                        || (filter_attr != 0 && state.card_matches_filter(db, id, filter_attr))
-                })
-            {
-                true
-            } else {
-                false
-            }
+            let filter = CardFilter::from_attr(attr as i64);
+            let p_target = if filter.target_player == 2 { 1 - p_idx } else { p_idx };
+            let target_player = &state.players[p_target as usize];
+            
+            target_player.stage.iter().filter(|&&id| id >= 0).any(|&id| {
+                (id == val || id == (attr as i32))
+                    || (attr != 0 && state.card_matches_filter(db, id, attr))
+            })
         }
         C_HAS_COLOR => {
             let color_mask = (attr >> 32) & 0x7F;
@@ -525,9 +560,13 @@ pub fn check_condition_opcode(
             slot,
         ),
         C_OPPONENT_HAS => {
-            let filter_attr = attr & 0x00000000FFFFFFFF;
-            opponent.stage.iter().filter(|&&id| id >= 0).any(|&cid| {
-                cid == val || (filter_attr != 0 && state.card_matches_filter(db, cid, filter_attr))
+            let filter = CardFilter::from_attr(attr as i64);
+            let _p_target = if filter.target_player == 1 { 1 - p_idx } else { 1 - p_idx }; // Usually opponent
+            // Actually, Revision 5 target_player=2 is OPPT. 
+            // If the opcode is explicitly C_OPPONENT_HAS, we force opponent.
+            let p_opp = 1 - p_idx;
+            state.players[p_opp].stage.iter().filter(|&&id| id >= 0).any(|&cid| {
+                cid == val || (attr != 0 && state.card_matches_filter(db, cid, attr))
             })
         }
         C_LIFE_LEAD => {
@@ -544,9 +583,11 @@ pub fn check_condition_opcode(
         ),
         C_GROUP_FILTER => {
             let lower_attr = attr & 0x00000000FFFFFFFF;
-            let filter = if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
+            // Revision 5: If any high bits are set or type bits [0..4] are non-zero, it's packed.
+            let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0 || (attr & 0xF) != 0;
+            let filter = if !is_packed_r5 && (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
                 0x10 | (lower_attr << 5)
-            } else if (lower_attr & 0x10) == 0 && val != 0 {
+            } else if !is_packed_r5 && (lower_attr & 0x10) == 0 && val != 0 {
                 // val might contain flags in higher bits. Filter group ID is restricted to 7 bits (0-127).
                 0x10 | (((val & 0x7F) as u64) << 5)
             } else {
