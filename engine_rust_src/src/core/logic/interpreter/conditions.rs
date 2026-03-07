@@ -268,12 +268,12 @@ pub fn resolve_count(
         // CRITICAL FIX: Python compiler sometimes leaks the condition `val` (e.g. "needs >= 2 CatChu members")
         // into the filter's `value_threshold` as a heart requirement because they share the same params dict!
         // If value_threshold is set but there's no color_mask and it's NOT a cost type, clear the value_threshold bit!
-        let has_value_enabled = (filter_attr & FILTER_VALUE_ENABLE_FLAG) != 0; // Bit 24
-        let is_cost_type = (filter_attr & FILTER_VALUE_TYPE_FLAG) != 0;  // Bit 31
-        let has_color_mask = ((filter_attr >> FILTER_COLOR_SHIFT_R5) & 0x7F) != 0; // Bits 32-38
+        let has_value_enabled = (filter_attr & (1u64 << 24)) != 0; // Bit 24
+        let is_cost_type = (filter_attr & (1u64 << 31)) != 0;  // Bit 31
+        let has_color_mask = ((filter_attr >> 32) & 0x7F) != 0; // Bits 32-38
         if has_value_enabled && !is_cost_type && !has_color_mask {
             // Nullify the value_enabled bit (bit 24) since it's an errant cross-contamination from the count target
-            filter_attr &= !FILTER_VALUE_ENABLE_FLAG;
+            filter_attr &= !(1u64 << 24);
         }
 
         // REMOVED: Invalid Revision 4 metadata mask that was corrupting Revision 5 character IDs (Bit 39-52)

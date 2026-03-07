@@ -104,7 +104,6 @@ pub fn get_opcode_name(op: i32) -> &'static str {
         311 => "SYNC_COST",
         312 => "SUM_VALUE",
         313 => "IS_WAIT",
-        O_TRANSFORM_BLADES => "TRANSFORM_BLADES",
         O_SET_HEART_COST => "SET_HEART_COST",
         O_REDUCE_HEART_REQ => "REDUCE_HEART_REQ",
         O_INCREASE_HEART_COST => "INCREASE_HEART_COST",

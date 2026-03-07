@@ -73,6 +73,8 @@ mod filter_audit_tests;
 #[cfg(test)]
 mod qa_verification_tests;
 #[cfg(test)]
+mod qa_missing_tests;
+#[cfg(test)]
 mod repro_bp3_002_p;
 #[cfg(test)]
 mod repro_card_fixes;
