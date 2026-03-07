@@ -243,7 +243,7 @@ impl GameState {
         // Clear slot data (Buffs are attached to member, Energy stays in slot)
         self.core.players[p_idx].stage[slot] = -1;
         self.core.players[p_idx].blade_buffs[slot] = 0;
-        self.core.players[p_idx].blade_overrides[slot] = -1;
+        self.core.players[p_idx].blade_buffs[slot] = -1;
         self.core.players[p_idx].heart_buffs[slot] = HeartBoard::default();
 
         // Clear flags

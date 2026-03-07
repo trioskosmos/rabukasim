@@ -1009,24 +1009,24 @@ pub fn handle_score_hearts(
                 .color_transforms
                 .push((ctx.source_card_id, 0, v as u8));
         }
-        O_TRANSFORM_BLADES => {
+        O_TRANSFORM_HEART => {
             let target_p = if instr.s.is_opponent { 1 - p_idx } else { p_idx };
             if state.debug.debug_mode {
-                println!("[DEBUG] O_TRANSFORM_BLADES: target_p={}, target_slot={}, resolved_slot={}, v={}", 
+                println!("[DEBUG] O_TRANSFORM_HEART: target_p={}, target_slot={}, resolved_slot={}, v={}",
                     target_p, target_slot, resolved_slot, v);
             }
             if target_slot == 1 {
                 for t in 0..3 {
-                    state.players[target_p].blade_overrides[t] = v as i16;
+                    state.players[target_p].blade_buffs[t] = v as i16;
                 }
             } else if resolved_slot < 3 {
-                state.players[target_p].blade_overrides[resolved_slot as usize] = v as i16;
+                state.players[target_p].blade_buffs[resolved_slot as usize] = v as i16;
             }
             if state.debug.debug_mode {
-                println!("[DEBUG] O_TRANSFORM_BLADES Result: slot_0_override={}, slot_1_override={}, slot_2_override={}",
-                    state.players[target_p].blade_overrides[0],
-                    state.players[target_p].blade_overrides[1],
-                    state.players[target_p].blade_overrides[2]);
+                println!("[DEBUG] O_TRANSFORM_HEART Result: slot_0_override={}, slot_1_override={}, slot_2_override={}",
+                    state.players[target_p].blade_buffs[0],
+                    state.players[target_p].blade_buffs[1],
+                    state.players[target_p].blade_buffs[2]);
             }
         }
         O_REDUCE_HEART_REQ => {

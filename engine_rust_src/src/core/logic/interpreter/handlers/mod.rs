@@ -137,7 +137,7 @@ impl HandlerRegistry {
             | O_SET_HEART_COST
             | O_REDUCE_SCORE
             | O_LOSE_EXCESS_HEARTS
-            | O_TRANSFORM_BLADES
+            | O_TRANSFORM_HEART
             | O_SKIP_ACTIVATE_PHASE => state::handle_score_hearts(state, db, ctx, instr),
             _ => {
                 if state.debug.debug_mode {

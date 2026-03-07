@@ -135,7 +135,7 @@ use smallvec::SmallVec;
         member_b.name = "Special Color".to_string();
         member_b.abilities.push(Ability {
             trigger: TriggerType::OnPlay,
-            bytecode: vec![O_TRANSFORM_BLADES, 3, 0, 0, 4], // v=3, target=4 (Slot Context)
+            bytecode: vec![O_TRANSFORM_HEART, 3, 0, 0, 4], // v=3, target=4 (Slot Context)
             ..Default::default()
         });
         db.members.insert(1002, member_b.clone());
