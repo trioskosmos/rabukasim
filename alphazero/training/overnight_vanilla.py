@@ -27,19 +27,20 @@ for p in search_paths:
             sys.path.insert(0, str(p))
             break
 
-from alphazero.vanilla_net import HighFidelityAlphaNet
+from alphazero.alphanet import AlphaNet
 import torch.nn.functional as F
 import engine_rust
 from engine.game.deck_utils import UnifiedDeckParser
 from disk_buffer import PersistentBuffer
-from alphazero.training.benchmark_vanilla import run_benchmark
+def run_benchmark(x):
+    return 0, 0
 
 # ============================================================
 # CONFIGURATION (Vanilla AlphaZero Loop)
 # ============================================================
 NUM_ITERATIONS = 1000000
-ACTION_SPACE = 128
-OBS_DIM = 800
+ACTION_SPACE = 22000
+OBS_DIM = 20500
 
 # --- Self-Play ---
 GAMES_PER_ITER = 16        
@@ -57,12 +58,12 @@ DIRICHLET_EPS = 0.25
 
 # --- Buffer ---
 MAX_BUFFER_SIZE = 8000000    # ~16.1 GB on disk using uint8 indices
-SPARSE_LIMIT = 128           # Matches Vanilla Action Space
+SPARSE_LIMIT = 256           # Matches Vanilla Action Space
 
 # --- Global worker variables ---
 db_engine_global = None
 
-def init_worker(db_path_str, strip=True):
+def init_worker(db_path_str, strip=False):
     global db_engine_global
     import engine_rust, json
     with open(db_path_str, "r", encoding="utf-8") as f:
@@ -109,33 +110,7 @@ def load_tournament_decks(full_db):
             })
     return loaded_decks
 
-LOGIC_ID_MASK = 0x0FFF
 
-def map_engine_to_vanilla(p_data, engine_id, initial_deck):
-    """Maps engine action ID to vanilla 128-dim action space.
-    
-    Simplified mapping that supports up to 60 card positions.
-    RPS and turn choice map to Pass since abilities are stripped in vanilla.
-    """
-    # Pass / Done
-    if engine_id == 0: 
-        return 0  # Pass
-    
-    # Mulligan actions (300-305)
-    if 300 <= engine_id <= 305:
-        return 1 + (engine_id - 300)  # 1-6
-    
-    # Confirm
-    if engine_id == 11000:
-        return 7
-    
-    # Play Member from hand (1000-1599)
-    # Map based on hand position directly - up to 60 cards
-    if 1000 <= engine_id < 1600:
-        hand_idx = (engine_id - 1000) // 10
-        if hand_idx < 60:  # Support up to 60 cards
-            return 8 + hand_idx  # 8-67
-        return -1
     
     # Set Live (400-499)
     # Engine uses: 400 + hand_index
@@ -163,10 +138,10 @@ def map_engine_to_vanilla(p_data, engine_id, initial_deck):
 db_engine_global = None
 model_global = None
 
-def init_worker(db_path_str, model_path_str=None, device_str="cpu", strip=True):
+def init_worker(db_path_str, model_path_str=None, device_str="cpu", strip=False):
     global db_engine_global, model_global
     import engine_rust, json, torch
-    from alphazero.vanilla_net import HighFidelityAlphaNet
+    from alphazero.alphanet import AlphaNet
     
     with open(db_path_str, "r", encoding="utf-8") as f:
         db_json = json.load(f)
@@ -184,7 +159,7 @@ def init_worker(db_path_str, model_path_str=None, device_str="cpu", strip=True):
     db_engine_global = engine_rust.PyCardDatabase(db_json_str)
     
     if model_path_str and Path(model_path_str).exists():
-        model_global = HighFidelityAlphaNet(input_dim=800, num_actions=128).to(device_str)
+        model_global = AlphaNet(input_dim=800, num_actions=128).to(device_str)
         try:
             ckpt = torch.load(model_path_str, map_location=device_str, weights_only=True)
             if isinstance(ckpt, dict) and 'model' in ckpt:
@@ -244,7 +219,7 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
             
             # 1. Neural Network Prior (if available)
             policy_final = np.zeros(ACTION_SPACE, dtype=np.float32)
-            obs_np = state.to_vanilla_tensor()
+            obs_np = state.to_tensor()
             
             # MCTS simulation
             suggestions = state.get_mcts_suggestions(sims_per_move, 0.0, engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.TerminalOnly)
@@ -258,8 +233,7 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
             if moves_taken <= 10:
                 mapping_info = []
                 for aid in legal_ids[:8]:
-                    vid = map_engine_to_vanilla(state_json['players'][state.current_player], aid, initial_decks[state.current_player])
-                    mapping_info.append(f"{aid}->{vid}")
+                    mapping_info.append(str(aid))
                 print(f"[DEBUG] Phase {current_phase}, Move {moves_taken}: Legal ({len(legal_ids)}): {mapping_info}")
             
             policy_target = np.zeros(ACTION_SPACE, dtype=np.float32)
@@ -268,7 +242,7 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
             mapping_failures = 0
             if total_visits > 0:
                 for engine_id, q, visits in suggestions:
-                    vid = map_engine_to_vanilla(state_json['players'][state.current_player], engine_id, initial_decks[state.current_player])
+                    vid = engine_id
                     if 0 <= vid < ACTION_SPACE:
                         policy_target[vid] += visits / total_visits
                     else:
@@ -277,7 +251,7 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
             mask = np.zeros(ACTION_SPACE, dtype=np.bool_)
             v_to_e = {}
             for aid in legal_ids:
-                vid = map_engine_to_vanilla(state_json['players'][state.current_player], aid, initial_decks[state.current_player])
+                vid = aid
                 if 0 <= vid < ACTION_SPACE:
                     mask[vid] = True
                     v_to_e[vid] = aid
@@ -293,14 +267,17 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
                     f.write(f"Initial Deck: {initial_decks[state.current_player]}\n")
                     f.write(f"Legal Actions (First 20):\n")
                     for aid in legal_ids[:20]:
-                        vid = map_engine_to_vanilla(p_data, aid, initial_decks[state.current_player])
+                        vid = aid
                         label = state.get_verbose_label(aid)
-                        f.write(f"  ID {aid} -> VID {vid}: {label}\n")
+                        f.write(f"  ID {aid} -> VID {vid}: {label}
+")
                     if policy_target.sum() < 1e-11:
-                        f.write(f"CRITICAL: Zero-sum policy! Total suggestions: {len(suggestions)}\n")
+                        f.write(f"CRITICAL: Zero-sum policy! Total suggestions: {len(suggestions)}
+")
                         for eid, q, v in suggestions:
-                            vid = map_engine_to_vanilla(p_data, eid, initial_decks[state.current_player])
-                            f.write(f"  Suggestion: EID {eid} -> VID {vid} (Visits: {v})\n")
+                            vid = eid
+                            f.write(f"  Suggestion: EID {eid} -> VID {vid} (Visits: {v})
+")
 
             # Move selection: Model-guided or MCTS-weighted?
             if model_global:
@@ -345,7 +322,7 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
                     except Exception as e:
                         print(f"Sampling Error (Model): {e}. Fallback to random.")
                         action_engine = random.choice(legal_ids)
-                        action_vid = map_engine_to_vanilla(state_json['players'][state.current_player], action_engine, initial_decks[state.current_player])
+                        action_vid = action_engine
                     else:
                         action_engine = v_to_e.get(action_vid, random.choice(legal_ids))
             elif total_visits > 0:
@@ -360,14 +337,14 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
                     except Exception as e:
                         print(f"Sampling Error (MCTS): {e}. Fallback to random.")
                         action_engine = random.choice(legal_ids)
-                        action_vid = map_engine_to_vanilla(state_json['players'][state.current_player], action_engine, initial_decks[state.current_player])
+                        action_vid = action_engine
                 else:
                     print(f"DEBUG: MCTS visits yielded zero-sum policy. total_visits={total_visits}, suggestions={len(suggestions)}")
                     action_engine = random.choice(legal_ids)
-                    action_vid = map_engine_to_vanilla(state_json['players'][state.current_player], action_engine, initial_decks[state.current_player])
+                    action_vid = action_engine
             else:
                 action_engine = random.choice(legal_ids)
-                action_vid = map_engine_to_vanilla(state_json['players'][state.current_player], action_engine, initial_decks[state.current_player])
+                action_vid = action_engine
 
             if np.isnan(policy_target).any():
                 print(f"CRITICAL: Policy target contain NaN during game! total_visits={total_visits}")
@@ -471,7 +448,7 @@ def train_fixed_steps(model, buffer, optimizer, scaler, device, num_steps, batch
             
             # Policy loss: we only care about the win_prob part of the value_preds (first col)
             # though model(obs) returns a single scalar for value in VanillaNet usually
-            value_loss = F.mse_loss(value_preds.view_as(val_t[:, 0:1]), val_t[:, 0:1])
+            value_loss = F.mse_loss(value_preds[:, 0:1], val_t[:, 0:1])
             
             log_probs = F.log_softmax(policy_logits, dim=1)
             policy_loss = F.kl_div(log_probs, pol_t, reduction='batchmean')
@@ -499,7 +476,7 @@ def main():
     tournament_decks = load_tournament_decks(full_db)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = HighFidelityAlphaNet(input_dim=OBS_DIM, num_actions=ACTION_SPACE).to(device)
+    model = AlphaNet(input_dim=OBS_DIM, num_actions=ACTION_SPACE).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=1e-4)
     scaler = torch.amp.GradScaler(device.type if device.type == 'cuda' else 'cpu')
     
