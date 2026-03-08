@@ -33,6 +33,7 @@
 use super::CardDatabase;
 use serde::{Deserialize, Serialize};
 pub use crate::core::generated_constants::*;
+pub use crate::core::generated_layout::*;
 use crate::core::logic::constants::*;
 // use crate::core::enums::Zone;
 use crate::core::models::{GameState, AbilityContext};
@@ -407,31 +408,31 @@ impl CardFilter {
         // Bits 32-38: Color Mask
         Self {
             is_enabled: true,
-            target_player: ((a >> FILTER_TARGET_SHIFT) & 0x3) as u8,
-            card_type: ((a >> FILTER_TYPE_SHIFT_R5) & 0x3) as u8,
-            group_enabled: ((a >> FILTER_GROUP_ENABLE_SHIFT) & 0x1) != 0,
-            group_id: ((a >> FILTER_GROUP_ID_SHIFT) & 0x7F) as u8,
-            is_tapped: ((a >> FILTER_STATE_SHIFT) & 0x1) != 0,
-            has_blade_heart: ((a >> (FILTER_STATE_SHIFT + 1)) & 0x1) != 0,
-            not_has_blade_heart: ((a >> (FILTER_STATE_SHIFT + 2)) & 0x1) != 0,
-            unique_names: ((a >> (FILTER_STATE_SHIFT + 3)) & 0x1) != 0,
-            unit_enabled: ((a >> FILTER_UNIT_ENABLE_SHIFT) & 0x1) != 0,
-            unit_id: ((a >> FILTER_UNIT_ID_SHIFT) & 0x7F) as u8,
-            value_enabled: ((a >> FILTER_VALUE_ENABLE_SHIFT) & 0x1) != 0,
-            value_threshold: ((a >> FILTER_VALUE_THRESHOLD_SHIFT) & 0x1F) as u8,
-            is_le: ((a >> FILTER_VALUE_LE_SHIFT) & 0x1) != 0,
-            is_cost_type: ((a >> FILTER_VALUE_TYPE_SHIFT) & 0x1) != 0,
-            color_mask: ((a >> FILTER_COLOR_SHIFT_R5) & 0x7F) as u8,
-            char_id_1: ((a >> FILTER_CHAR_1_SHIFT) & 0x7F) as u8,
-            char_id_2: ((a >> FILTER_CHAR_2_SHIFT) & 0x7F) as u8,
+            target_player: ((a >> A_STANDARD_TARGET_PLAYER_SHIFT) & 0x3) as u8,
+            card_type: ((a >> A_STANDARD_CARD_TYPE_SHIFT) & 0x3) as u8,
+            group_enabled: ((a >> A_STANDARD_GROUP_ENABLED_SHIFT) & 0x1) != 0,
+            group_id: ((a >> A_STANDARD_GROUP_ID_SHIFT) & 0x7F) as u8,
+            is_tapped: ((a >> A_STANDARD_IS_TAPPED_SHIFT) & 0x1) != 0,
+            has_blade_heart: ((a >> (A_STANDARD_IS_TAPPED_SHIFT + 1)) & 0x1) != 0,
+            not_has_blade_heart: ((a >> (A_STANDARD_IS_TAPPED_SHIFT + 2)) & 0x1) != 0,
+            unique_names: ((a >> (A_STANDARD_IS_TAPPED_SHIFT + 3)) & 0x1) != 0,
+            unit_enabled: ((a >> A_STANDARD_UNIT_ENABLED_SHIFT) & 0x1) != 0,
+            unit_id: ((a >> A_STANDARD_UNIT_ID_SHIFT) & 0x7F) as u8,
+            value_enabled: ((a >> A_STANDARD_VALUE_ENABLED_SHIFT) & 0x1) != 0,
+            value_threshold: ((a >> A_STANDARD_VALUE_THRESHOLD_SHIFT) & 0x1F) as u8,
+            is_le: ((a >> A_STANDARD_IS_LE_SHIFT) & 0x1) != 0,
+            is_cost_type: ((a >> A_STANDARD_IS_COST_TYPE_SHIFT) & 0x1) != 0,
+            color_mask: ((a >> A_STANDARD_COLOR_MASK_SHIFT) & 0x7F) as u8,
+            char_id_1: ((a >> A_STANDARD_CHAR_ID_1_SHIFT) & 0x7F) as u8,
+            char_id_2: ((a >> A_STANDARD_CHAR_ID_2_SHIFT) & 0x7F) as u8,
             char_id_3: 0,
-            zone_mask: ((a >> FILTER_ZONE_MASK_SHIFT_R5) & 0x7) as u8,
-            special_id: ((a >> FILTER_SPECIAL_ID_SHIFT) & 0x7) as u8,
-            is_setsuna: ((a >> FILTER_SETSUNA_SHIFT) & 0x1) != 0,
-            compare_accumulated: ((a >> FILTER_DYNAMIC_SHIFT) & 0x1) != 0,
-            is_optional: ((a >> FILTER_OPTIONAL_SHIFT) & 0x1) != 0,
-            keyword_energy: ((a >> FILTER_KW_ENERGY_SHIFT) & 0x1) != 0,
-            keyword_member: ((a >> FILTER_KW_MEMBER_SHIFT) & 0x1) != 0,
+            zone_mask: ((a >> A_STANDARD_ZONE_MASK_SHIFT) & 0x7) as u8,
+            special_id: ((a >> A_STANDARD_SPECIAL_ID_SHIFT) & 0x7) as u8,
+            is_setsuna: ((a >> A_STANDARD_IS_SETSUNA_SHIFT) & 0x1) != 0,
+            compare_accumulated: ((a >> A_STANDARD_COMPARE_ACCUMULATED_SHIFT) & 0x1) != 0,
+            is_optional: ((a >> A_STANDARD_IS_OPTIONAL_SHIFT) & 0x1) != 0,
+            keyword_energy: ((a >> A_STANDARD_KEYWORD_ENERGY_SHIFT) & 0x1) != 0,
+            keyword_member: ((a >> A_STANDARD_KEYWORD_MEMBER_SHIFT) & 0x1) != 0,
         }
     }
 
@@ -441,36 +442,36 @@ impl CardFilter {
         }
 
         let mut a: u64 = 0;
-        a |= (self.target_player as u64 & 0x3) << FILTER_TARGET_SHIFT;
-        a |= (self.card_type as u64 & 0x3) << FILTER_TYPE_SHIFT_R5;
+        a |= (self.target_player as u64 & 0x3) << A_STANDARD_TARGET_PLAYER_SHIFT;
+        a |= (self.card_type as u64 & 0x3) << A_STANDARD_CARD_TYPE_SHIFT;
         if self.group_enabled {
-            a |= 1u64 << FILTER_GROUP_ENABLE_SHIFT;
-            a |= (self.group_id as u64 & 0x7F) << FILTER_GROUP_ID_SHIFT;
+            a |= 1u64 << A_STANDARD_GROUP_ENABLED_SHIFT;
+            a |= (self.group_id as u64 & 0x7F) << A_STANDARD_GROUP_ID_SHIFT;
         }
-        if self.is_tapped { a |= 1u64 << FILTER_STATE_SHIFT; }
-        if self.has_blade_heart { a |= 1u64 << (FILTER_STATE_SHIFT+1); }
-        if self.not_has_blade_heart { a |= 1u64 << (FILTER_STATE_SHIFT+2); }
-        if self.unique_names { a |= 1u64 << (FILTER_STATE_SHIFT+3); }
+        if self.is_tapped { a |= 1u64 << A_STANDARD_IS_TAPPED_SHIFT; }
+        if self.has_blade_heart { a |= 1u64 << (A_STANDARD_IS_TAPPED_SHIFT+1); }
+        if self.not_has_blade_heart { a |= 1u64 << (A_STANDARD_IS_TAPPED_SHIFT+2); }
+        if self.unique_names { a |= 1u64 << (A_STANDARD_IS_TAPPED_SHIFT+3); }
         if self.unit_enabled {
-            a |= 1u64 << FILTER_UNIT_ENABLE_SHIFT;
-            a |= (self.unit_id as u64 & 0x7F) << FILTER_UNIT_ID_SHIFT;
+            a |= 1u64 << A_STANDARD_UNIT_ENABLED_SHIFT;
+            a |= (self.unit_id as u64 & 0x7F) << A_STANDARD_UNIT_ID_SHIFT;
         }
         if self.value_enabled {
-            a |= 1u64 << FILTER_VALUE_ENABLE_SHIFT;
-            a |= (self.value_threshold as u64 & 0x1F) << FILTER_VALUE_THRESHOLD_SHIFT;
-            if self.is_le { a |= 1u64 << FILTER_VALUE_LE_SHIFT; }
-            if self.is_cost_type { a |= 1u64 << FILTER_VALUE_TYPE_SHIFT; }
+            a |= 1u64 << A_STANDARD_VALUE_ENABLED_SHIFT;
+            a |= (self.value_threshold as u64 & 0x1F) << A_STANDARD_VALUE_THRESHOLD_SHIFT;
+            if self.is_le { a |= 1u64 << A_STANDARD_IS_LE_SHIFT; }
+            if self.is_cost_type { a |= 1u64 << A_STANDARD_IS_COST_TYPE_SHIFT; }
         }
-        a |= (self.color_mask as u64 & 0x7F) << FILTER_COLOR_SHIFT_R5;
-        a |= (self.char_id_1 as u64 & 0x7F) << FILTER_CHAR_1_SHIFT;
-        a |= (self.char_id_2 as u64 & 0x7F) << FILTER_CHAR_2_SHIFT;
-        a |= (self.zone_mask as u64 & 0x7) << FILTER_ZONE_MASK_SHIFT_R5;
-        a |= (self.special_id as u64 & 0x7) << FILTER_SPECIAL_ID_SHIFT;
-        if self.is_setsuna { a |= 1u64 << FILTER_SETSUNA_SHIFT; }
-        if self.compare_accumulated { a |= 1u64 << FILTER_DYNAMIC_SHIFT; }
-        if self.is_optional { a |= 1u64 << FILTER_OPTIONAL_SHIFT; }
-        if self.keyword_energy { a |= 1u64 << FILTER_KW_ENERGY_SHIFT; }
-        if self.keyword_member { a |= 1u64 << FILTER_KW_MEMBER_SHIFT; }
+        a |= (self.color_mask as u64 & 0x7F) << A_STANDARD_COLOR_MASK_SHIFT;
+        a |= (self.char_id_1 as u64 & 0x7F) << A_STANDARD_CHAR_ID_1_SHIFT;
+        a |= (self.char_id_2 as u64 & 0x7F) << A_STANDARD_CHAR_ID_2_SHIFT;
+        a |= (self.zone_mask as u64 & 0x7) << A_STANDARD_ZONE_MASK_SHIFT;
+        a |= (self.special_id as u64 & 0x7) << A_STANDARD_SPECIAL_ID_SHIFT;
+        if self.is_setsuna { a |= 1u64 << A_STANDARD_IS_SETSUNA_SHIFT; }
+        if self.compare_accumulated { a |= 1u64 << A_STANDARD_COMPARE_ACCUMULATED_SHIFT; }
+        if self.is_optional { a |= 1u64 << A_STANDARD_IS_OPTIONAL_SHIFT; }
+        if self.keyword_energy { a |= 1u64 << A_STANDARD_KEYWORD_ENERGY_SHIFT; }
+        if self.keyword_member { a |= 1u64 << A_STANDARD_KEYWORD_MEMBER_SHIFT; }
 
         a as i64
     }
@@ -605,11 +606,11 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             };
             if let Some(s) = val_str {
                 if let Ok(threshold) = s.parse::<i32>() {
-                    attr |= crate::core::logic::constants::FILTER_VALUE_ENABLE_FLAG | ((threshold as u64) << crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT);
+                    attr |= (1u64 << A_STANDARD_VALUE_ENABLED_SHIFT) | ((threshold as u64) << A_STANDARD_VALUE_THRESHOLD_SHIFT);
                     if part.contains("_LE") {
-                        attr |= crate::core::logic::constants::FILTER_VALUE_LE_FLAG;
+                        attr |= (1u64 << A_STANDARD_IS_LE_SHIFT);
                     }
-                    attr |= crate::core::logic::constants::FILTER_VALUE_TYPE_FLAG; // Set Cost Type flag
+                    attr |= (1u64 << A_STANDARD_IS_COST_TYPE_SHIFT); // Set Cost Type flag
                 }
             }
         } else if part.starts_with("GROUP_ID=") || part.starts_with("GROUP_ID_") {
@@ -620,7 +621,7 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             };
             if let Some(s) = gid_str {
                 if let Ok(gid) = s.parse::<i32>() {
-                    attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE | ((gid as u64) << crate::core::logic::constants::FILTER_GROUP_ID_SHIFT);
+                    attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE | ((gid as u64) << A_STANDARD_GROUP_ID_SHIFT);
                 }
             }
         } else if part.starts_with("UNIT_") {
@@ -659,54 +660,54 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
         } else if part == "TYPE_LIVE" {
             attr |= FILTER_TYPE_LIVE;
         } else if part == "AQOURS" {
-            attr |= FILTER_GROUP_ENABLE | (1u64 << FILTER_GROUP_ID_SHIFT);
+            attr |= FILTER_GROUP_ENABLE | (1u64 << A_STANDARD_GROUP_ID_SHIFT);
         } else if part == "M'S" || part == "μ'S" || part == "U'S" || part == "MUSE" {
-            attr |= FILTER_GROUP_ENABLE | (0u64 << FILTER_GROUP_ID_SHIFT);
+            attr |= FILTER_GROUP_ENABLE | (0u64 << A_STANDARD_GROUP_ID_SHIFT);
         } else if part == "UNIQUE_NAMES=TRUE"
             || part == "UNIQUE_NAMES"
             || part == "SAME_UNIQUE_NAMES"
         {
             attr |= FILTER_UNIQUE_NAMES;
         } else if part == "SMILE" || part == "PINK" || part == "COLOR_0" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 0);
+            attr |= 1u64 << (A_STANDARD_COLOR_MASK_SHIFT + 0);
         } else if part == "PURE" || part == "GREEN" || part == "COLOR_3" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 3);
+            attr |= 1u64 << (A_STANDARD_COLOR_MASK_SHIFT + 3);
         } else if part == "COOL" || part == "BLUE" || part == "COLOR_4" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 4);
+            attr |= 1u64 << (A_STANDARD_COLOR_MASK_SHIFT + 4);
         } else if part == "RED" || part == "COLOR_1" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 1);
+            attr |= 1u64 << (A_STANDARD_COLOR_MASK_SHIFT + 1);
         } else if part == "YELLOW" || part == "COLOR_2" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 2);
+            attr |= 1u64 << (A_STANDARD_COLOR_MASK_SHIFT + 2);
         } else if part == "PURPLE" || part == "COLOR_5" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 5);
+            attr |= 1u64 << (A_STANDARD_COLOR_MASK_SHIFT + 5);
         } else if part == "ANY" || part == "COLOR_7" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 6); // R5 uses bit 6 for ANY/ALL
+            attr |= 1u64 << (A_STANDARD_COLOR_MASK_SHIFT + 6); // R5 uses bit 6 for ANY/ALL
         } else if part.starts_with("BLADE_LE") {
             let val_str = part.replace("BLADE_LE", "").replace("_", "");
             if let Ok(threshold) = val_str.parse::<i32>() {
-                attr |= FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << FILTER_VALUE_THRESHOLD_SHIFT);
-                attr |= FILTER_VALUE_LE_SHIFT;
+                attr |= FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << A_STANDARD_VALUE_THRESHOLD_SHIFT);
+                attr |= (1u64 << A_STANDARD_IS_LE_SHIFT);
             }
         } else if part.starts_with("BLADE_GE") {
             let val_str = part.replace("BLADE_GE", "").replace("_", "");
             if let Ok(threshold) = val_str.parse::<i32>() {
-                attr |= FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << FILTER_VALUE_THRESHOLD_SHIFT);
+                attr |= FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << A_STANDARD_VALUE_THRESHOLD_SHIFT);
             }
         } else if part == "COST_LE_REVEALED" {
-            attr |= FILTER_COST_ENABLE | (1u64 << FILTER_VALUE_THRESHOLD_SHIFT);
-            attr |= FILTER_VALUE_LE_SHIFT;
+            attr |= FILTER_COST_ENABLE | (1u64 << A_STANDARD_VALUE_THRESHOLD_SHIFT);
+            attr |= (1u64 << A_STANDARD_IS_LE_SHIFT);
             attr |= FILTER_REVEALED_CONTEXT;
             attr |= FILTER_COST_TYPE_FLAG;
         } else if part == "HEART_PINK" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 0);
+            attr |= 1u64 << (A_STANDARD_COLOR_MASK_SHIFT + 0);
         } else if part == "HEART_BLUE" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 4);
+            attr |= 1u64 << (A_STANDARD_COLOR_MASK_SHIFT + 4);
         } else if part == "HASUNOSORA" {
-            attr |= FILTER_GROUP_ENABLE | (4u64 << FILTER_GROUP_ID_SHIFT);
+            attr |= FILTER_GROUP_ENABLE | (4u64 << A_STANDARD_GROUP_ID_SHIFT);
         } else if part == "LIELLA" {
-            attr |= FILTER_GROUP_ENABLE | (3u64 << FILTER_GROUP_ID_SHIFT);
+            attr |= FILTER_GROUP_ENABLE | (3u64 << A_STANDARD_GROUP_ID_SHIFT);
         } else if part == "NIJIGASAKI" || part == "NIJIGAKU" {
-            attr |= FILTER_GROUP_ENABLE | (2u64 << FILTER_GROUP_ID_SHIFT);
+            attr |= FILTER_GROUP_ENABLE | (2u64 << A_STANDARD_GROUP_ID_SHIFT);
         }
     }
     attr

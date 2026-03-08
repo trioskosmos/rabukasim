@@ -818,16 +818,32 @@ pub fn handle_deck_zones(
             return handle_move_to_discard(state, db, ctx, instr, instr_ip);
         }
         O_LOOK_AND_CHOOSE => {
-            return handle_look_and_choose(state, db, ctx, instr, instr_ip);
+            let res = handle_look_and_choose(state, db, ctx, instr, instr_ip);
+            if let Some(true) = res {
+                return HandlerResult::Suspend;
+            }
+            return HandlerResult::Continue;
         }
         O_RECOVER_LIVE | O_RECOVER_MEMBER => {
-            return handle_recovery(state, db, ctx, instr, instr_ip, op);
+            let res = handle_recovery(state, db, ctx, instr, instr_ip, op);
+            if let Some(true) = res {
+                return HandlerResult::Suspend;
+            }
+            return HandlerResult::Continue;
         }
         O_PLAY_LIVE_FROM_DISCARD => {
-            return handle_play_live_from_discard(state, db, ctx, instr, instr_ip);
+            let res = handle_play_live_from_discard(state, db, ctx, instr, instr_ip);
+            if let Some(true) = res {
+                return HandlerResult::Suspend;
+            }
+            return HandlerResult::Continue;
         }
         O_SELECT_CARDS => {
-            return handle_select_cards(state, db, ctx, instr, instr_ip);
+            let res = handle_select_cards(state, db, ctx, instr, instr_ip);
+            if let Some(true) = res {
+                return HandlerResult::Suspend;
+            }
+            return HandlerResult::Continue;
         }
         O_SWAP_ZONE => return handle_swap_zone(state, db, ctx, instr, instr_ip),
         _ => return HandlerResult::Continue,

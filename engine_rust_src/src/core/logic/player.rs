@@ -62,6 +62,8 @@ pub struct PlayerState {
     #[serde(default)]
     pub blade_buffs: [i16; 3],
     #[serde(default)]
+    pub blade_overrides: [i16; 3],
+    #[serde(default)]
     pub heart_buffs: [HeartBoard; 3],
     #[serde(default)]
     pub blade_buff_logs: SmallVec<[(i32, i16, u8); 4]>, // (source_cid, amount, slot_idx)
@@ -161,6 +163,7 @@ impl Default for PlayerState {
             live_score_bonus: 0,
             live_score_bonus_logs: SmallVec::new(),
             blade_buffs: [0; 3],
+            blade_overrides: [-1; 3],
             heart_buffs: [HeartBoard::default(); 3],
             blade_buff_logs: SmallVec::new(),
             heart_buff_logs: SmallVec::new(),
