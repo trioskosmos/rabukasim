@@ -6,10 +6,9 @@
 > - **Frontend**: Edit `frontend/web_ui/` ONLY.
 > - **Server**: Edit `launcher/` (Rust) ONLY. `backend/server.py` is **LEGACY/RETIRED**.
 > - **Engine**: Edit `engine_rust_src/` (Rust) ONLY. `engine/` (Python) is **LEGACY/RETIRED**.
-> - **Data**: Edit `data/cards.json` ONLY.
 - **Tools**: Use `tools/`. Legacy scripts are in `tools/_legacy_scripts/`.
 
-❌ **DO NOT EDIT**: `css/`, `js/`, `engine/data/`, `frontend/css|js` (orphans), `launcher/static_content/` (derived).
+❌ **DO NOT EDIT**: `css/`, `data/cards.json` `js/`, `engine/data/`, `frontend/css|js` (orphans), `launcher/static_content/` (derived).
 ❌ **DO NOT EDIT LEGACY**: `engine/` (except `models/ability.py` for compiler), `backend/server.py`.
 
 ## 0. Critical Agent Protocol
@@ -27,6 +26,7 @@ Before starting any significant task, **ALWAYS** check for relevant skills:
 When running tests, builds, or analysis commands that produce significant output:
 - **NEVER** let the output flood the chat.
 - **ALWAYS** redirect output to a file (e.g., `reports/last_cmd_output.txt`) or ensure the tool writes to a file.
+- **POWERSHELL REDIRECTION**: Use `| Out-File -Encoding utf8 <path>` to ensure the file is easily readable without complex decoding.
 - **THEN** use `read_file` to inspect the results.
 
 ### 🔣 Encoding Safety
@@ -97,7 +97,7 @@ RabukaSim is a web-based implementation of the "Love Live!" OCG. The project is 
 | `engine_rust_src/` | Rust source code `src/` and Cargo configuration. |
 | `docs/` | Documentation, including opcode maps and developer guides. |
 | `reports/` | Generated analysis reports (e.g., translation coverage, benchmarks). |
-| `tests/` | Python test suite (Pytest). |
+| `reports/` | Generated analysis reports (e.g., translation coverage, benchmarks). |
 | `tools/` | Utility scripts (e.g., `analyze_translation_coverage.py`). |
 
 ## 4. Development Workflows
@@ -127,9 +127,6 @@ Output -> `dist/LovecaSim.exe` (128MB) and `dist/Source_Code.zip`.
 
 ### Running Tests
 ```bash
-# Python Tests
-uv run pytest
-
 # Rust Tests
 cd engine_rust_src
 cargo test

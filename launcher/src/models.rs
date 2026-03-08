@@ -135,7 +135,7 @@ impl Action {
         use engine_rust::core::generated_constants::*;
         match phase {
             Phase::Rps => Action::Rps { choice: (id % 10) as i8 },
-            Phase::TurnChoice => Action::ChooseTurnOrder { first: id == 5000 },
+            Phase::TurnChoice => Action::ChooseTurnOrder { first: id == ACTION_BASE_TURN_ORDER_FIRST },
             Phase::MulliganP1 | Phase::MulliganP2 => {
                 if id == ACTION_BASE_PASS { Action::Pass }
                 else if id >= ACTION_BASE_MULLIGAN && id < ACTION_BASE_LIVESET { Action::ToggleMulligan { hand_idx: (id - ACTION_BASE_MULLIGAN) as usize } }
@@ -213,11 +213,13 @@ impl Action {
                 else if id >= ACTION_BASE_HAND && id < ACTION_BASE_HAND_CHOICE { Action::SelectHand { hand_idx: (id - ACTION_BASE_HAND) as usize } }
                 else if id >= ACTION_BASE_ENERGY && id < ACTION_BASE_CHOICE { Action::SelectEnergy { energy_idx: (id - ACTION_BASE_ENERGY) as usize } }
                 else if id >= ACTION_BASE_CHOICE { Action::SelectChoice { choice_idx: (id - ACTION_BASE_CHOICE) as usize } }
+                else if id >= ACTION_BASE_MODE && id < ACTION_BASE_COLOR { Action::SelectChoice { choice_idx: (id - ACTION_BASE_MODE) as usize } }
                 else { Action::Unknown(id) }
             },
             _ => {
                 if id == 0 { Action::Pass }
                 else if id >= ACTION_BASE_CHOICE { Action::SelectChoice { choice_idx: (id - ACTION_BASE_CHOICE) as usize } }
+                else if id >= ACTION_BASE_MODE && id < ACTION_BASE_COLOR { Action::SelectChoice { choice_idx: (id - ACTION_BASE_MODE) as usize } }
                 else { Action::Unknown(id) }
             }
         }

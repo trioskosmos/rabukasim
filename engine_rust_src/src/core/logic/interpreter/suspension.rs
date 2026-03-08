@@ -62,7 +62,7 @@ pub fn suspend_interaction(
     state.phase = Phase::Response;
     state.current_player = chooser_p_idx;
 
-    let mut actions = Vec::with_capacity(8);
+    let mut actions: Vec<i32> = Vec::with_capacity(8);
     state.generate_legal_actions(db, chooser_p_idx as usize, &mut actions);
 
     // Don't skip suspension for OPTIONAL, LOOK_AND_CHOOSE, COLOR_SELECT, TAP_M_SELECT, etc.
@@ -94,8 +94,7 @@ pub fn suspend_interaction(
     }
 
     if should_check_skip
-        && actions.len() <= 1
-        && (actions.is_empty() || actions.contains(&0))
+        && actions.is_empty()
         && choice_type != crate::core::enums::ChoiceType::OpponentChoose
     {
         if state.debug.debug_mode {

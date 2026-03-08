@@ -29,6 +29,7 @@ export const Opcodes = {
     MOVE_TO_DECK: 31,
     TAP_OPPONENT: 32,
     PLACE_UNDER: 33,
+    FLAVOR_ACTION: 34,
     RESTRICTION: 35,
     BATON_TOUCH_MOD: 36,
     SET_SCORE: 37,
@@ -83,6 +84,7 @@ export const Opcodes = {
     CALC_SUM_COST: 106,
     LOOK_REORDER_DISCARD: 125,
     DIV_VALUE: 126,
+    TRANSFORM_BLADES: 127,
 };
 
 export const TriggerType = {
@@ -97,6 +99,8 @@ export const TriggerType = {
     ON_LEAVES: 8,
     ON_REVEAL: 9,
     ON_POSITION_CHANGE: 10,
+    ON_ABILITY_RESOLVE: 11,
+    ON_ABILITY_SUCCESS: 12,
 };
 
 export const TargetType = {
@@ -134,6 +138,7 @@ export const ActionBases = {
     CHOICE: 11000,
     RPS: 20000,
     RPS_P2: 21000,
+    TURN_ORDER_FIRST: 5000,
 };
 
 export const Phases = {
@@ -234,6 +239,8 @@ export const ConditionTypes = {
     SYNC_COST: 311,
     SUM_VALUE: 312,
     IS_WAIT: 313,
+    ON_ABILITY_RESOLVE: 314,
+    TARGET_MEMBER_HAS_NO_HEARTS: 315,
 };
 
 export const CostTypes = {
@@ -460,13 +467,13 @@ export const Comparisons = {
 };
 
 export const HeartColorMap = {
-    PINK: 1,
-    RED: 2,
-    YELLOW: 3,
-    GREEN: 4,
-    BLUE: 5,
-    PURPLE: 6,
-    ANY: 7,
+    PINK: 0,
+    RED: 1,
+    YELLOW: 2,
+    GREEN: 3,
+    BLUE: 4,
+    PURPLE: 5,
+    ANY: 6,
 };
 
 export const MetaRuleTypes = {
@@ -584,6 +591,13 @@ export const CharacterIds = {
     GINKO: 67,
     KOSUZU: 68,
     HIME: 69,
+    TSUBASA: 71,
+    ERENA: 72,
+    ANJU: 73,
+    YUNA: 74,
+    MAO: 75,
+    SEIRA: 76,
+    RIA: 77,
 };
 
 export const GroupIds = {
@@ -592,7 +606,12 @@ export const GroupIds = {
     NIJIGASAKI: 2,
     LIELLA: 3,
     HASUNOSORA: 4,
+    ARISE: 10,
+    SAINT_SNOW: 11,
+    SUNNY_PASSION: 12,
+    MUSICAL: 13,
     OTHER: 99,
+    NONE: 100,
 };
 
 export const UnitIds = {
@@ -613,4 +632,42 @@ export const UnitIds = {
     DOLLCHESTRA: 14,
     MIRA_CRA_PARK: 15,
     EDEL_NOTE: 16,
+    AISCREAM: 17,
+    NONE: 100,
+};
+
+export const GroupNames = {
+    0: { jp: "μ's", en: "μ's" },
+    1: { jp: "Aqours", en: "Aqours" },
+    2: { jp: "虹ヶ咲学園スクールアイドル同好会", en: "Nijigasaki High School Idol Club" },
+    3: { jp: "Liella!", en: "Liella!" },
+    4: { jp: "蓮ノ空女学院スクールアイドルクラブ", en: "Hasunosora Girls' High School Idol Club" },
+    10: { jp: "A-RISE", en: "A-RISE" },
+    11: { jp: "Saint Snow", en: "Saint Snow" },
+    12: { jp: "Sunny Passion", en: "Sunny Passion" },
+    13: { jp: "スクールアイドルミュージカル", en: "School Idol Musical" },
+    99: { jp: "その他", en: "Other" },
+    100: { jp: "-", en: "-" },
+};
+
+export const UnitNames = {
+    0: { jp: "Printemps", en: "Printemps" },
+    1: { jp: "lily white", en: "lily white" },
+    2: { jp: "BiBi", en: "BiBi" },
+    3: { jp: "CYaRon!", en: "CYaRon!" },
+    4: { jp: "AZALEA", en: "AZALEA" },
+    5: { jp: "Guilty Kiss", en: "Guilty Kiss" },
+    6: { jp: "DiverDiva", en: "DiverDiva" },
+    7: { jp: "A・ZU・NA", en: "A・ZU・NA" },
+    8: { jp: "QU4RTZ", en: "QU4RTZ" },
+    9: { jp: "R3BIRTH", en: "R3BIRTH" },
+    10: { jp: "CatChu!", en: "CatChu!" },
+    11: { jp: "KALEIDOSCORE", en: "KALEIDOSCORE" },
+    12: { jp: "5yncri5e!", en: "5yncri5e!" },
+    13: { jp: "スリーズブーケ", en: "Cerise Bouquet" },
+    14: { jp: "DOLLCHESTRA", en: "DOLLCHESTRA" },
+    15: { jp: "みらぱーくらぶ", en: "Mira-Cra Park!" },
+    16: { jp: "エデルノート", en: "Edel Note" },
+    17: { jp: "アアイスクリーム", en: "Aiscream" },
+    100: { jp: "-", en: "-" },
 };

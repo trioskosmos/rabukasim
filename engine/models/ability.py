@@ -1,8 +1,7 @@
 import re
-import re
 from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 import pydantic
 from pydantic import ConfigDict
 from engine.models.enums import CHAR_MAP
@@ -11,6 +10,9 @@ from engine.models.opcodes import Opcode
 from .generated_metadata import (
     EXTRA_CONSTANTS, COMPARISONS, ZONES, HEART_COLOR_MAP, 
     META_RULE_TYPES, COUNT_SOURCES
+)
+from .generated_enums import (
+    TriggerType, TargetType, EffectType, ConditionType, AbilityCostType
 )
 from .generated_packer import (
     pack_a_standard, pack_a_heart_cost, pack_a_look_choose,
@@ -24,184 +26,7 @@ def to_signed_32(x):
     return x - 0x100000000 if x >= 0x80000000 else x
 
 
-class TriggerType(IntEnum):
-    NONE = 0
-    ON_PLAY = 1  # 登場時
-    ON_LIVE_START = 2  # ライブ開始時
-    ON_LIVE_SUCCESS = 3  # ライブ成功時
-    TURN_START = 4
-    TURN_END = 5
-    CONSTANT = 6  # 常時
-    ACTIVATED = 7  # 起動
-    ON_LEAVES = 8  # 自動 - when member leaves stage/is discarded
-    ON_REVEAL = 9  # エールにより公開、公開されたとき
-    ON_POSITION_CHANGE = 10  # エリアを移動するたび
-    ON_ACTIVATE = 7  # Alias for ACTIVATED
-
-
-class TargetType(IntEnum):
-    SELF = 0
-    PLAYER = 1
-    OPPONENT = 2
-    ALL_PLAYERS = 3
-    MEMBER_SELF = 4
-    MEMBER_OTHER = 5
-    CARD_HAND = 6
-    CARD_DISCARD = 7
-    CARD_DECK_TOP = 8
-    OPPONENT_HAND = 9  # 相手の手札
-    MEMBER_SELECT = 10  # Select manual target
-    MEMBER_NAMED = 11  # Specific named member implementation
-    OPPONENT_MEMBER = 12  # Specific opponent member target
-    PLAYER_SELECT = 13  # 自分か相手を選ぶ
-
-
-class EffectType(IntEnum):
-    DRAW = 10
-    ADD_BLADES = 11
-    ADD_HEARTS = 12
-    REDUCE_COST = 13
-    LOOK_DECK = 14
-    RECOVER_LIVE = 15
-    BOOST_SCORE = 16
-    RECOVER_MEMBER = 17
-    BUFF_POWER = 18
-    IMMUNITY = 19
-    MOVE_MEMBER = 20
-    SWAP_CARDS = 21
-    SEARCH_DECK = 22  # [UNUSED]
-    ENERGY_CHARGE = 23
-    SET_BLADES = 24
-    SET_HEARTS = 25
-    FORMATION_CHANGE = 26  # [UNUSED]
-    NEGATE_EFFECT = 27
-    ORDER_DECK = 28
-    META_RULE = 29
-    SELECT_MODE = 30
-    MOVE_TO_DECK = 31
-    TAP_OPPONENT = 32
-    PLACE_UNDER = 33
-    FLAVOR_ACTION = 34  # [UNUSED]
-    RESTRICTION = 35
-    BATON_TOUCH_MOD = 36
-    SET_SCORE = 37
-    SWAP_ZONE = 38  # [UNUSED]
-    TRANSFORM_COLOR = 39
-    REVEAL_CARDS = 40
-    LOOK_AND_CHOOSE = 41
-    CHEER_REVEAL = 42
-    ACTIVATE_MEMBER = 43
-    ADD_TO_HAND = 44
-    COLOR_SELECT = 45
-    REPLACE_EFFECT = 46  # [UNUSED]
-    TRIGGER_REMOTE = 47
-    REDUCE_HEART_REQ = 48
-    MODIFY_SCORE_RULE = 49
-    TAP_MEMBER = 53
-    PLAY_MEMBER_FROM_HAND = 57
-    MOVE_TO_DISCARD = 58
-    GRANT_ABILITY = 60
-    INCREASE_HEART_COST = 61
-    REDUCE_YELL_COUNT = 62
-    PLAY_MEMBER_FROM_DISCARD = 63
-    PAY_ENERGY = 64
-    SELECT_MEMBER = 65
-    DRAW_UNTIL = 66
-    SELECT_PLAYER = 67
-    SELECT_LIVE = 68
-    REVEAL_UNTIL = 69
-    INCREASE_COST = 70
-    PREVENT_PLAY_TO_SLOT = 71
-    SWAP_AREA = 72
-    TRANSFORM_HEART = 73
-    SELECT_CARDS = 74
-    OPPONENT_CHOOSE = 75
-    PLAY_LIVE_FROM_DISCARD = 76
-    REDUCE_LIVE_SET_LIMIT = 77
-    LOOK_REORDER_DISCARD = 125
-    DIV_VALUE = 126
-    PREVENT_ACTIVATE = 82
-    ACTIVATE_ENERGY = 81
-    PREVENT_SET_TO_SUCCESS_PILE = 80  # [UNUSED]
-    SET_HEART_COST = 83  # [UNUSED] (Fixed from 84 for parity)
-    PREVENT_BATON_TOUCH = 90
-    # New opcodes for BP05
-    LOOK_DECK_DYNAMIC = 91
-    REDUCE_SCORE = 92
-    REPEAT_ABILITY = 93
-    LOSE_EXCESS_HEARTS = 94
-    SKIP_ACTIVATE_PHASE = 95
-    PAY_ENERGY_DYNAMIC = 96
-    PLACE_ENERGY_UNDER_MEMBER = 97
-    CALC_SUM_COST = 106
-
-
-class ConditionType(IntEnum):
-    NONE = 0  # [UNUSED]
-    TURN_1 = 200
-    HAS_MEMBER = 201
-    HAS_COLOR = 202  # [UNUSED]
-    COUNT_STAGE = 203
-    COUNT_HAND = 204
-    COUNT_DISCARD = 205
-    IS_CENTER = 206
-    LIFE_LEAD = 207  # [UNUSED]
-    COUNT_GROUP = 208
-    GROUP_FILTER = 209
-    OPPONENT_HAS = 210  # [UNUSED]
-    SELF_IS_GROUP = 211  # [UNUSED]
-    MODAL_ANSWER = 212
-    COUNT_ENERGY = 213
-    HAS_LIVE_CARD = 214
-    COST_CHECK = 215
-    RARITY_CHECK = 216  # [UNUSED]
-    HAND_HAS_NO_LIVE = 217  # [UNUSED]
-    COUNT_SUCCESS_LIVE = 218
-    OPPONENT_HAND_DIFF = 219
-    SCORE_COMPARE = 220
-    HAS_CHOICE = 221  # [UNUSED]
-    OPPONENT_CHOICE = 222  # [UNUSED]
-    COUNT_HEARTS = 223
-    COUNT_BLADES = 224
-    OPPONENT_ENERGY_DIFF = 225
-    HAS_KEYWORD = 226
-    DECK_REFRESHED = 227
-    HAS_MOVED = 228  # [UNUSED]
-    HAND_INCREASED = 229  # [UNUSED]
-    COUNT_LIVE_ZONE = 230
-    BATON = 231
-    TYPE_CHECK = 232
-    IS_IN_DISCARD = 233  # [UNUSED]
-    AREA_CHECK = 234
-    COST_LEAD = 235
-    SCORE_LEAD = 236
-    HEART_LEAD = 237
-    HAS_EXCESS_HEART = 238
-    NOT_HAS_EXCESS_HEART = 239
-    TOTAL_BLADES = 240
-    COST_COMPARE = 241
-    BLADE_COMPARE = 242
-    HEART_COMPARE = 243
-    OPPONENT_HAS_WAIT = 244
-    IS_TAPPED = 245
-    IS_ACTIVE = 246
-    LIVE_PERFORMED = 247
-    IS_PLAYER = 248
-    IS_OPPONENT = 249
-    # New conditions for BP05 (300-399 range)
-    COUNT_ENERGY_EXACT = 301
-    COUNT_BLADE_HEART_TYPES = 302
-    OPPONENT_HAS_EXCESS_HEART = 303
-    SCORE_TOTAL_CHECK = 304
-    MAIN_PHASE = 305
-    SELECT_MEMBER = 306
-    SUCCESS_PILE_COUNT = 307
-    IS_SELF_MOVE = 308
-    DISCARDED_CARDS = 309
-    YELL_REVEALED_UNIQUE_COLORS = 310
-    SYNC_COST = 311
-    SUM_VALUE = 312
-    IS_WAIT = 313
+# Original definitions removed, now using generated_enums.
 
 
 # --- DESCRIPTIONS ---
@@ -242,7 +67,6 @@ EFFECT_DESCRIPTIONS = {
     EffectType.CHEER_REVEAL: "Reveal via Cheer",
     EffectType.REDUCE_HEART_REQ: "Modify Heart Requirement",
     EffectType.SWAP_ZONE: "Swap card zones",  # [UNUSED]
-    EffectType.FLAVOR_ACTION: "Flavor Action",  # [UNUSED]
     EffectType.MOVE_TO_DISCARD: "Move {value} card(s) to Discard",
     EffectType.PLAY_MEMBER_FROM_HAND: "Play member from hand",
     EffectType.TAP_MEMBER: "Tap {value} Member(s)",
@@ -284,7 +108,6 @@ EFFECT_DESCRIPTIONS_JP = {
     EffectType.CHEER_REVEAL: "応援で公開",
     EffectType.REDUCE_HEART_REQ: "ハート条件変更",
     EffectType.SWAP_ZONE: "カード移動(ゾーン間)",  # [UNUSED]
-    EffectType.FLAVOR_ACTION: "フレーバーアクション",  # [UNUSED]
     EffectType.MOVE_TO_DISCARD: "控え室に{value}枚置く",
     EffectType.PLAY_MEMBER_FROM_HAND: "手札からメンバーを登場させる",
     EffectType.TAP_MEMBER: "{value}人をウェイトにする",
@@ -344,204 +167,7 @@ class ResolvingEffect:
     total_steps: int
 
 
-class AbilityCostType(IntEnum):
-    NONE = 0
-    ENERGY = 1
-    TAP_SELF = 2  # ウェイトにする
-    DISCARD_HAND = 3  # 手札を捨てる
-    RETURN_HAND = 4  # 手札に戻す (Self bounce)
-    SACRIFICE_SELF = 5  # このメンバーを控え室に置く
-    REVEAL_HAND_ALL = 6  # 手札をすべて公開する
-    SACRIFICE_UNDER = 7  # 下に置かれているカードを控え室に置く
-    DISCARD_ENERGY = 8  # エネルギーを控え室に置く
-    REVEAL_HAND = 9  # 手札を公開する
-    TAP_PLAYER = 2  # Alias for TAP_SELF (ウェイトにする)
-
-    # Missing aliases/members inferred from usage
-    TAP_MEMBER = 20
-    TAP_ENERGY = 21
-    PAY_ENERGY = 1  # Alias for ENERGY
-    REST_MEMBER = 22
-    RETURN_MEMBER_TO_HAND = 23
-    DISCARD_MEMBER = 24
-    DISCARD_LIVE = 25
-    REMOVE_LIVE = 26
-    REMOVE_MEMBER = 27
-    RETURN_LIVE_TO_HAND = 28
-    RETURN_LIVE_TO_DECK = 29
-    RETURN_MEMBER_TO_DECK = 30
-    PLACE_MEMBER_FROM_HAND = 31
-    PLACE_LIVE_FROM_HAND = 32
-    PLACE_ENERGY_FROM_HAND = 33
-    PLACE_MEMBER_FROM_DISCARD = 34
-    PLACE_LIVE_FROM_DISCARD = 35
-    PLACE_ENERGY_FROM_DISCARD = 36
-    PLACE_MEMBER_FROM_DECK = 37
-    PLACE_LIVE_FROM_DECK = 38
-    PLACE_ENERGY_FROM_DECK = 39
-    # REVEAL_HAND = 40  # Moved to 9
-    SHUFFLE_DECK = 41
-    DRAW_CARD = 42
-    DISCARD_TOP_DECK = 43
-    REMOVE_TOP_DECK = 44
-    RETURN_DISCARD_TO_DECK = 45
-    RETURN_REMOVED_TO_DECK = 46
-    RETURN_REMOVED_TO_HAND = 47
-    RETURN_REMOVED_TO_DISCARD = 48
-    PLACE_ENERGY_FROM_SUCCESS = 49
-    DISCARD_SUCCESS_LIVE = 50
-    REMOVE_SUCCESS_LIVE = 51
-    RETURN_SUCCESS_LIVE_TO_HAND = 52
-    RETURN_SUCCESS_LIVE_TO_DECK = 53
-    RETURN_SUCCESS_LIVE_TO_DISCARD = 54
-    PLACE_MEMBER_FROM_SUCCESS = 55
-    PLACE_LIVE_FROM_SUCCESS = 56
-    PLACE_ENERGY_FROM_REMOVED = 57
-    PLACE_MEMBER_FROM_REMOVED = 58
-    PLACE_LIVE_FROM_REMOVED = 59
-    RETURN_ENERGY_TO_DECK = 60
-    RETURN_ENERGY_TO_HAND = 61
-    REMOVE_ENERGY = 62
-    RETURN_STAGE_ENERGY_TO_HAND = 64
-    DISCARD_STAGE_ENERGY = 65
-    REMOVE_STAGE_ENERGY = 66
-    DISCARD_STAGE = 65  # Alias for DISCARD_STAGE_ENERGY (often used for members/energy)
-    MOVE_TO_DISCARD = 5  # Common alias for sacrifice/discard
-    PLACE_ENERGY_FROM_STAGE_ENERGY = 67
-    PLACE_MEMBER_FROM_STAGE_ENERGY = 68
-    PLACE_LIVE_FROM_STAGE_ENERGY = 69
-    PLACE_ENERGY_FROM_HAND_TO_STAGE_ENERGY = 70
-    PLACE_MEMBER_FROM_HAND_TO_STAGE_ENERGY = 71
-    PLACE_LIVE_FROM_HAND_TO_STAGE_ENERGY = 72
-    PLACE_ENERGY_FROM_DISCARD_TO_STAGE_ENERGY = 73
-    PLACE_MEMBER_FROM_DISCARD_TO_STAGE_ENERGY = 74
-    PLACE_LIVE_FROM_DISCARD_TO_STAGE_ENERGY = 75
-    PLACE_ENERGY_FROM_DECK_TO_STAGE_ENERGY = 76
-    PLACE_MEMBER_FROM_DECK_TO_STAGE_ENERGY = 77
-    PLACE_LIVE_FROM_DECK_TO_STAGE_ENERGY = 78
-    PLACE_ENERGY_FROM_SUCCESS_TO_STAGE_ENERGY = 79
-    PLACE_MEMBER_FROM_SUCCESS_TO_STAGE_ENERGY = 80
-    PLACE_LIVE_FROM_SUCCESS_TO_STAGE_ENERGY = 81
-    PLACE_ENERGY_FROM_REMOVED_TO_STAGE_ENERGY = 82
-    PLACE_MEMBER_FROM_REMOVED_TO_STAGE_ENERGY = 83
-    PLACE_LIVE_FROM_REMOVED_TO_STAGE_ENERGY = 84
-    RETURN_LIVE_TO_DISCARD = 85
-    RETURN_LIVE_TO_REMOVED = 86
-    RETURN_LIVE_TO_SUCCESS = 87
-    RETURN_MEMBER_TO_DISCARD = 88
-    RETURN_MEMBER_TO_REMOVED = 89
-    RETURN_MEMBER_TO_SUCCESS = 90
-    RETURN_ENERGY_TO_DISCARD = 91
-    RETURN_ENERGY_TO_REMOVED = 92
-    RETURN_ENERGY_TO_SUCCESS = 93
-    RETURN_SUCCESS_LIVE_TO_REMOVED = 94
-    RETURN_REMOVED_TO_SUCCESS = 95
-    RETURN_STAGE_ENERGY_TO_DISCARD = 96
-    RETURN_STAGE_ENERGY_TO_REMOVED = 97
-    RETURN_STAGE_ENERGY_TO_SUCCESS = 98
-    RETURN_DISCARD_TO_HAND = 99
-    RETURN_DISCARD_TO_REMOVED = 100
-    RETURN_DISCARD_TO_SUCCESS = 101
-    RETURN_DECK_TO_DISCARD = 102
-    RETURN_DECK_TO_HAND = 103
-    RETURN_DECK_TO_REMOVED = 104
-    RETURN_DECK_TO_SUCCESS = 105
-    RETURN_ENERGY_DECK_TO_DISCARD = 106
-    RETURN_ENERGY_DECK_TO_HAND = 107
-    RETURN_ENERGY_DECK_TO_REMOVED = 108
-    RETURN_ENERGY_DECK_TO_SUCCESS = 109
-
-    # Auto-generated missing members for effect_mixin.py compatibility
-    PLACE_ENERGY_FROM_DECK_TO_DISCARD = 110
-    PLACE_ENERGY_FROM_DECK_TO_HAND = 111
-    PLACE_ENERGY_FROM_DECK_TO_REMOVED = 112
-    PLACE_ENERGY_FROM_DECK_TO_SUCCESS = 113
-    PLACE_ENERGY_FROM_DISCARD_TO_HAND = 114
-    PLACE_ENERGY_FROM_DISCARD_TO_REMOVED = 115
-    PLACE_ENERGY_FROM_DISCARD_TO_SUCCESS = 116
-    PLACE_ENERGY_FROM_ENERGY_DECK = 117
-    PLACE_ENERGY_FROM_ENERGY_DECK_TO_DISCARD = 118
-    PLACE_ENERGY_FROM_ENERGY_DECK_TO_HAND = 119
-    PLACE_ENERGY_FROM_ENERGY_DECK_TO_REMOVED = 120
-    PLACE_ENERGY_FROM_ENERGY_DECK_TO_STAGE_ENERGY = 121
-    PLACE_ENERGY_FROM_ENERGY_DECK_TO_SUCCESS = 122
-    PLACE_ENERGY_FROM_ENERGY_ZONE_TO_DISCARD = 123
-    PLACE_ENERGY_FROM_ENERGY_ZONE_TO_HAND = 124
-    PLACE_ENERGY_FROM_ENERGY_ZONE_TO_REMOVED = 125
-    PLACE_ENERGY_FROM_ENERGY_ZONE_TO_SUCCESS = 126
-    PLACE_ENERGY_FROM_HAND_TO_DISCARD = 127
-    PLACE_ENERGY_FROM_HAND_TO_REMOVED = 128
-    PLACE_ENERGY_FROM_HAND_TO_SUCCESS = 129
-    PLACE_ENERGY_FROM_REMOVED_TO_DISCARD = 130
-    PLACE_ENERGY_FROM_REMOVED_TO_HAND = 131
-    PLACE_ENERGY_FROM_REMOVED_TO_SUCCESS = 132
-    PLACE_ENERGY_FROM_STAGE_ENERGY_TO_DISCARD = 133
-    PLACE_ENERGY_FROM_STAGE_ENERGY_TO_HAND = 134
-    PLACE_ENERGY_FROM_STAGE_ENERGY_TO_REMOVED = 135
-    PLACE_ENERGY_FROM_STAGE_ENERGY_TO_SUCCESS = 136
-    PLACE_ENERGY_FROM_SUCCESS_TO_DISCARD = 137
-    PLACE_ENERGY_FROM_SUCCESS_TO_HAND = 138
-    PLACE_ENERGY_FROM_SUCCESS_TO_REMOVED = 139
-    PLACE_LIVE_FROM_DECK_TO_DISCARD = 140
-    PLACE_LIVE_FROM_DECK_TO_HAND = 141
-    PLACE_LIVE_FROM_DECK_TO_REMOVED = 142
-    PLACE_LIVE_FROM_DECK_TO_SUCCESS = 143
-    PLACE_LIVE_FROM_DISCARD_TO_HAND = 144
-    PLACE_LIVE_FROM_DISCARD_TO_REMOVED = 145
-    PLACE_LIVE_FROM_DISCARD_TO_SUCCESS = 146
-    PLACE_LIVE_FROM_ENERGY_DECK = 147
-    PLACE_LIVE_FROM_ENERGY_DECK_TO_DISCARD = 148
-    PLACE_LIVE_FROM_ENERGY_DECK_TO_HAND = 149
-    PLACE_LIVE_FROM_ENERGY_DECK_TO_REMOVED = 150
-    PLACE_LIVE_FROM_ENERGY_DECK_TO_STAGE_ENERGY = 151
-    PLACE_LIVE_FROM_ENERGY_DECK_TO_SUCCESS = 152
-    PLACE_LIVE_FROM_ENERGY_ZONE_TO_DISCARD = 153
-    PLACE_LIVE_FROM_ENERGY_ZONE_TO_HAND = 154
-    PLACE_LIVE_FROM_ENERGY_ZONE_TO_REMOVED = 155
-    PLACE_LIVE_FROM_ENERGY_ZONE_TO_SUCCESS = 156
-    PLACE_LIVE_FROM_HAND_TO_DISCARD = 157
-    PLACE_LIVE_FROM_HAND_TO_REMOVED = 158
-    PLACE_LIVE_FROM_HAND_TO_SUCCESS = 159
-    PLACE_LIVE_FROM_REMOVED_TO_DISCARD = 160
-    PLACE_LIVE_FROM_REMOVED_TO_HAND = 161
-    PLACE_LIVE_FROM_REMOVED_TO_SUCCESS = 162
-    PLACE_LIVE_FROM_STAGE_ENERGY_TO_DISCARD = 163
-    PLACE_LIVE_FROM_STAGE_ENERGY_TO_HAND = 164
-    PLACE_LIVE_FROM_STAGE_ENERGY_TO_REMOVED = 165
-    PLACE_LIVE_FROM_STAGE_ENERGY_TO_SUCCESS = 166
-    PLACE_LIVE_FROM_SUCCESS_TO_DISCARD = 167
-    PLACE_LIVE_FROM_SUCCESS_TO_HAND = 168
-    PLACE_LIVE_FROM_SUCCESS_TO_REMOVED = 169
-    PLACE_MEMBER_FROM_DECK_TO_DISCARD = 170
-    PLACE_MEMBER_FROM_DECK_TO_HAND = 171
-    PLACE_MEMBER_FROM_DECK_TO_REMOVED = 172
-    PLACE_MEMBER_FROM_DECK_TO_SUCCESS = 173
-    PLACE_MEMBER_FROM_DISCARD_TO_HAND = 174
-    PLACE_MEMBER_FROM_DISCARD_TO_REMOVED = 175
-    PLACE_MEMBER_FROM_DISCARD_TO_SUCCESS = 176
-    PLACE_MEMBER_FROM_ENERGY_DECK = 177
-    PLACE_MEMBER_FROM_ENERGY_DECK_TO_DISCARD = 178
-    PLACE_MEMBER_FROM_ENERGY_DECK_TO_HAND = 179
-    PLACE_MEMBER_FROM_ENERGY_DECK_TO_REMOVED = 180
-    PLACE_MEMBER_FROM_ENERGY_DECK_TO_STAGE_ENERGY = 181
-    PLACE_MEMBER_FROM_ENERGY_DECK_TO_SUCCESS = 182
-    PLACE_MEMBER_FROM_ENERGY_ZONE_TO_DISCARD = 183
-    PLACE_MEMBER_FROM_ENERGY_ZONE_TO_HAND = 184
-    PLACE_MEMBER_FROM_ENERGY_ZONE_TO_REMOVED = 185
-    PLACE_MEMBER_FROM_ENERGY_ZONE_TO_SUCCESS = 186
-    PLACE_MEMBER_FROM_HAND_TO_DISCARD = 187
-    PLACE_MEMBER_FROM_HAND_TO_REMOVED = 188
-    PLACE_MEMBER_FROM_HAND_TO_SUCCESS = 189
-    PLACE_MEMBER_FROM_REMOVED_TO_DISCARD = 190
-    PLACE_MEMBER_FROM_REMOVED_TO_HAND = 191
-    PLACE_MEMBER_FROM_REMOVED_TO_SUCCESS = 192
-    PLACE_MEMBER_FROM_STAGE_ENERGY_TO_DISCARD = 193
-    PLACE_MEMBER_FROM_STAGE_ENERGY_TO_HAND = 194
-    PLACE_MEMBER_FROM_STAGE_ENERGY_TO_REMOVED = 195
-    PLACE_MEMBER_FROM_STAGE_ENERGY_TO_SUCCESS = 196
-    PLACE_MEMBER_FROM_SUCCESS_TO_DISCARD = 197
-    PLACE_MEMBER_FROM_SUCCESS_TO_HAND = 198
-    PLACE_MEMBER_FROM_SUCCESS_TO_REMOVED = 199
+# Original AbilityCostType removed, now using generated_enums.
 
 
 @dataclass
@@ -620,8 +246,8 @@ class Ability:
                     # Calculate jump target based on BYTECODE size, not instruction count
                     # skip_size = sum of lengths of remaining bytecode chunks / 5
                     remaining_bc_sum = sum(len(c) for c in instr_bytecodes[i+1:])
-                    # Add 1 for the implicit RETURN at the end
-                    skip_count = (remaining_bc_sum // 5) + 1
+                    # We jump to the instruction AFTER the remaining ones (the RETURN)
+                    skip_count = remaining_bc_sum // 5
                     bytecode.extend([int(Opcode.JUMP_IF_FALSE), to_signed_32(skip_count), 0, 0, 0])
 
             bytecode.extend([int(Opcode.RETURN), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
@@ -692,7 +318,7 @@ class Ability:
 
                 # Value: expected baton touch count
                 val = 0
-                count_eq = cond.params.get("count_eq") or params_upper.get("COUNT_EQ")
+                count_eq = cond.params.get("count_eq") or params_upper.get("COUNT_EQ") or cond.params.get("val") or cond.params.get("value") or params_upper.get("VAL") or params_upper.get("VALUE")
                 if count_eq:
                     try:
                         val = int(count_eq)
@@ -759,7 +385,7 @@ class Ability:
                 val |= 0x04
 
             # Unified Filter Packing
-            if op == 226: # CHECK_HAS_KEYWORD (Opcode 226)
+            if op == int(Opcode.CHECK_HAS_KEYWORD):
                 attr = 0
                 kw = str(cond.params.get("keyword") or "").upper()
                 if "PLAYED_THIS_TURN" in kw: 
@@ -779,7 +405,7 @@ class Ability:
                      if cond.type == ConditionType.HAS_KEYWORD:
                          cond.params["keyword"] = "PLAYED_THIS_TURN"
                          attr |= (1 << 44)
-            elif op == 65: # CHECK_HEART_COMPARE (Opcode 65)
+            elif op == int(Opcode.CHECK_HEART_COMPARE):
                 # Heart compare uses raw color index in bits 0-6
                 from engine.models.enums import HeartColor
                 color_name = str(cond.params.get("color") or "").upper()
@@ -858,7 +484,6 @@ class Ability:
             AbilityCostType.SACRIFICE_SELF: Opcode.MOVE_TO_DISCARD,
             AbilityCostType.RETURN_MEMBER_TO_DECK: Opcode.MOVE_TO_DECK,
             AbilityCostType.RETURN_LIVE_TO_DECK: Opcode.MOVE_TO_DECK,
-            AbilityCostType.RETURN_SUCCESS_LIVE_TO_DECK: Opcode.MOVE_TO_DECK,
             AbilityCostType.RETURN_DISCARD_TO_DECK: Opcode.MOVE_TO_DECK,
             AbilityCostType.DISCARD_MEMBER: Opcode.MOVE_TO_DISCARD,
             AbilityCostType.DISCARD_LIVE: Opcode.MOVE_TO_DISCARD,
@@ -908,7 +533,7 @@ class Ability:
                 slot_params["target_slot"] = int(TargetType.SELF)
             elif cost.type in [AbilityCostType.RETURN_DISCARD_TO_DECK]:
                 slot_params["target_slot"] = int(TargetType.CARD_DISCARD)
-            elif cost.type in [AbilityCostType.RETURN_SUCCESS_LIVE_TO_DECK, AbilityCostType.DISCARD_SUCCESS_LIVE]:
+            elif cost.type in [AbilityCostType.RETURN_SUCCESS_LIVE_TO_HAND, AbilityCostType.DISCARD_SUCCESS_LIVE]:
                 slot_params["source_zone"] = ZONES.get("SUCCESS_PILE", 14)
             else:
                 slot_params["target_slot"] = int(TargetType.SELF)
@@ -924,35 +549,17 @@ class Ability:
                 elif to == "top":
                     slot_params["remainder_zone"] = int(EXTRA_CONSTANTS.get("DECK_POSITION_TOP", 1))
 
-            # NEW: Packed Filter Logic for Selection/Manipulation Opcodes
-            # Bits 4-7: Comparison (0:GE, 1:LE, 2:GT, 3:LT, 4:EQ)
-            # Bits 8-15: Cost Limit (0-255)
-            # Bits 16+: Packed Name Bits or Filter Flags
 
             # O_SELECT_MEMBER / O_PLAY_MEMBER_FROM_HAND / MOVE_TO_DISCARD, encode filters into 'attr' (a)
+            # O_SELECT_MEMBER / O_PLAY_MEMBER_FROM_HAND / MOVE_TO_DISCARD, encode filters into 'attr' (a)
             if op in [Opcode.SELECT_MEMBER, Opcode.PLAY_MEMBER_FROM_HAND, Opcode.PLAY_MEMBER_FROM_DISCARD, Opcode.MOVE_TO_DISCARD]:
+                attr = self._pack_filter_attr(cost)
                 # Value capture flag (Bit 25 of slot)
                 if cost.params.get("destination") == "target_val" or params_upper.get("DESTINATION") == "TARGET_VAL":
                     slot_params["is_reveal_until_live"] = True # Reuse bit 25 for capture
-
-                # Cost LE filter
-                cle_raw = cost.params.get("cost_le") or params_upper.get("COST_LE")
-                if cle_raw is not None:
-                    cle = int(cle_raw)
-                    attr |= EXTRA_CONSTANTS.get("FILTER_COST_LE", 1 << 30)
-                    attr |= cle << EXTRA_CONSTANTS.get("FILTER_COST_SHIFT", 25)
-
-                # Name filter (Setsuna = 1 if using CHAR_MAP indices, or specialized bits)
-                name_filter = cost.params.get("name") or params_upper.get("NAME")
-                if name_filter:
-                    from engine.models.enums import CHAR_MAP
-
-                    char_id = CHAR_MAP.get(str(name_filter), 0)
-                    if char_id > 0:
-                        attr |= char_id << 16
-
+            
             if cost.is_optional:
-                attr |= EXTRA_CONSTANTS.get("FILTER_IS_OPTIONAL", 1 << 61)  # Bit 61 = Optional
+                attr |= EXTRA_CONSTANTS.get("FILTER_IS_OPTIONAL", 1 << 61)
 
             # Use value from cost params if available (max/count)
             value = cost.value
@@ -1082,27 +689,8 @@ class Ability:
                     val = int(eff.value)
                 except (ValueError, TypeError):
                     val = 1
-                attr = eff.params.get("color", 0) if isinstance(eff.params.get("color"), int) else 0
-
-            # --- Target Resolution from Params ---
-            target_raw = eff.params.get("target") or eff.params.get("to")
-            if target_raw:
-                target_str = str(target_raw).upper()
-                target_map = {
-                    "HAND": TargetType.CARD_HAND,
-                    "CARD_HAND": TargetType.CARD_HAND,
-                    "DISCARD": TargetType.CARD_DISCARD,
-                    "CARD_DISCARD": TargetType.CARD_DISCARD,
-                    "DECK": TargetType.CARD_DECK_TOP,
-                    "CARD_DECK_TOP": TargetType.CARD_DECK_TOP,
-                    "PLAYER": TargetType.PLAYER,
-                    "SELF": TargetType.SELF,
-                    "OPPONENT": TargetType.OPPONENT,
-                    "MEMBER_SELF": TargetType.MEMBER_SELF,
-                    "MEMBER_SELECT": TargetType.MEMBER_SELECT,
-                }
-                if target_str in target_map:
-                    eff.target = target_map[target_str]
+                attr = eff.params.get("color", eff.params.get("heart_type", 0))
+                if not isinstance(attr, int): attr = 0
 
             slot_params = {
                 "target_slot": eff.target.value if hasattr(eff.target, "value") else int(eff.target),
@@ -1113,8 +701,11 @@ class Ability:
                 "is_reveal_until_live": False,
                 "is_empty_slot": False,
                 "is_wait": False,
-                "area_idx": 0
+                "area_idx": 0,
+                "is_dynamic": False
             }
+
+            self._resolve_effect_target(eff, slot_params)
 
             # --- Systemic Area Packing ---
             area_raw = eff.params.get("area", "")
@@ -1130,24 +721,13 @@ class Ability:
                 elif "CENTER" in a_str: slot_params["area_idx"] = 2
                 elif "RIGHT" in a_str: slot_params["area_idx"] = 3
 
-            # --- Zone Relocation ---
-            src_val = 0
-            if eff.effect_type in (
-                EffectType.RECOVER_MEMBER, EffectType.RECOVER_LIVE,
-                EffectType.PLAY_MEMBER_FROM_DISCARD, EffectType.PLAY_LIVE_FROM_DISCARD,
-            ):
-                source = str(eff.params.get("source") or eff.params.get("zone") or "discard").lower()
-                src_val = ZONES.get("DISCARD", 7) if source == "discard" else 0
-                if source == "yell": src_val = ZONES.get("YELL", 15)
-                elif source in ("deck", "deck_top"): src_val = ZONES.get("DECK_TOP", 1)
-                slot_params["source_zone"] = src_val
+            self._resolve_effect_source_zone(eff, slot_params)
 
             # TAP/Interactive selection
             if eff.effect_type in (EffectType.TAP_OPPONENT, EffectType.TAP_MEMBER):
                 attr = self._pack_filter_attr(eff)
                 if eff.effect_type == EffectType.TAP_MEMBER:
                     attr |= 0x02  # Bit 1: Selection mode
-                slot_params["source_zone"] = src_val
 
             # PLACE_UNDER params
             if eff.effect_type == EffectType.PLACE_UNDER:
@@ -1181,45 +761,22 @@ class Ability:
                 attr = self._pack_filter_attr(eff)
 
             if eff.effect_type == EffectType.LOOK_AND_CHOOSE:
-                char_ids = []
-                # Simple extraction of up to 3 character IDs
-                raw_names = str(eff.params.get("group") or eff.params.get("target_name") or "")
-                if raw_names:
-                    parts = raw_names.replace(",", "/").split("/")
-                    for p in parts[:3]:
-                        p = p.strip()
-                        if p in CHAR_MAP: char_ids.append(CHAR_MAP[p])
+                val = self._pack_effect_look_and_choose(eff, val, slot_params)
+                attr |= self._pack_filter_attr(eff)
 
+            if eff.effect_type in (
+                EffectType.SELECT_CARDS,
+                EffectType.SELECT_MEMBER,
+                EffectType.SELECT_LIVE,
+                EffectType.MOVE_TO_DISCARD,
+                EffectType.MOVE_MEMBER,
+                EffectType.RECOVER_LIVE,
+                EffectType.RECOVER_MEMBER,
+            ):
                 attr = self._pack_filter_attr(eff)
-                look_v = {"count": val, "char_id_1": char_ids[0] if char_ids else 0}
-                look_a = {
-                    "char_id_2": char_ids[1] if len(char_ids) > 1 else 0,
-                    "char_id_3": char_ids[2] if len(char_ids) > 2 else 0,
-                    "dest_discard": 1 if eff.params.get("destination") == "discard" else 0
-                }
-                val = pack_v_look_choose(**look_v)
-                attr = attr | pack_a_look_choose(**look_a)
-
-                src = str(eff.params.get("source") or eff.params.get("zone") or "DECK").upper()
-                src_val = ZONES.get("DECK_TOP", 1)
-                if src == "HAND": src_val = ZONES.get("HAND", 6)
-                elif src == "DISCARD": src_val = ZONES.get("DISCARD", 7)
-                elif src in ("YELL", "REVEALED", "CHEER"): src_val = ZONES.get("YELL", 15)
-                elif src == "ENERGY": src_val = ZONES.get("ENERGY", 3)
-                slot_params["source_zone"] = src_val
-
-                rem_dest_str = str(eff.params.get("remainder") or eff.params.get("destination") or "").upper()
-                rem_val = 0
-                if rem_dest_str == "DISCARD": rem_val = ZONES.get("DISCARD", 7)
-                elif rem_dest_str == "DECK": rem_val = ZONES.get("DECK_TOP", 1)
-                elif rem_dest_str == "HAND": rem_val = ZONES.get("HAND", 6)
-                elif rem_dest_str == "DECK_TOP": rem_val = EXTRA_CONSTANTS.get("DECK_POSITION_TOP", 1)
-                elif rem_dest_str == "DECK_BOTTOM": rem_val = EXTRA_CONSTANTS.get("DECK_POSITION_BOTTOM", 2)
-                slot_params["remainder_zone"] = rem_val
-
-            if eff.effect_type in (EffectType.SELECT_CARDS, EffectType.SELECT_MEMBER, EffectType.SELECT_LIVE, EffectType.MOVE_TO_DISCARD, EffectType.MOVE_MEMBER):
-                attr = self._pack_filter_attr(eff)
-                src_zone_str = str(eff.params.get("source") or eff.params.get("zone") or "DECK").upper()
+                src_zone_str = str(
+                    eff.params.get("source") or eff.params.get("zone") or "DECK"
+                ).upper()
                 if "," not in src_zone_str:
                     src_val = ZONES.get("DECK_TOP", 1)
                     if src_zone_str == "HAND": src_val = ZONES.get("HAND", 6)
@@ -1240,32 +797,7 @@ class Ability:
                 slot_params["remainder_zone"] = rem_val
 
             if eff.effect_type == EffectType.SET_HEART_COST:
-                colors = ["pink", "red", "yellow", "green", "blue", "purple"]
-                v_params = {c: int(eff.params.get(c, 0)) for c in colors}
-                val = pack_v_heart_counts(**v_params)
-
-                color_map = HEART_COLOR_MAP
-                req_list = []
-                add_val = eff.params.get("add")
-                if isinstance(add_val, (str, list)):
-                    parts = add_val.replace(",", "/").split("/") if isinstance(add_val, str) else add_val
-                    req_list = [color_map.get(str(p).strip().upper(), 0) for p in parts[:8]]
-                
-                any_count = int(eff.params.get("any", 0))
-                for _ in range(any_count):
-                    if len(req_list) < 8: req_list.append(HEART_COLOR_MAP.get("ANY", 7))
-                
-                a_params = {f"req_{i+1}": req_list[i] if i < len(req_list) else 0 for i in range(8)}
-                unit_val = eff.params.get("unit")
-                if unit_val:
-                    try:
-                        from engine.models.enums import Unit
-
-                        u_id = int(str(unit_val)) if str(unit_val).isdigit() else int(Unit.from_japanese_name(str(unit_val)))
-                        a_params["unit_enabled"] = True
-                        a_params["unit_id"] = u_id & 0x7F
-                    except: pass
-                attr = pack_a_heart_cost(**a_params)
+                val, attr = self._pack_effect_heart_cost(eff, val, attr)
 
             if eff.effect_type == EffectType.REVEAL_UNTIL:
                 attr = self._pack_filter_attr(eff)
@@ -1287,43 +819,23 @@ class Ability:
                 if eff.effect_type == EffectType.MOVE_TO_DISCARD and eff.params.get("operation") == "UNTIL_SIZE":
                     val = (int(val) & 0x7FFFFFFF) | (1 << 31)
 
-            # --- Multiplier Support (Dynamic Value) ---
-            if eff.params.get("per_card") or eff.params.get("per_member") or eff.params.get("has_multiplier"):
-                count_src = str(eff.params.get("per_card", "")).upper()
-                if count_src == "COUNT" and hasattr(self, "_last_counted_zone") and self._last_counted_zone:
-                    count_src = self._last_counted_zone
-                
-                count_op = COUNT_SOURCES.get(count_src, int(ConditionType.COUNT_STAGE))
-                slot_params["remainder_zone"] = count_op
-                slot_params["is_dynamic"] = True
-                attr |= self._pack_filter_attr(eff)
+            attr = self._resolve_effect_dynamic_multiplier(eff, val, slot_params, attr)
 
             # Default to Choice (slot 4) if target is generic
             is_non_stage_discard = eff.effect_type == EffectType.MOVE_TO_DISCARD and slot_params["source_zone"] in (ZONES.get("HAND", 6), ZONES.get("DECK", 5))
             if eff.target in (TargetType.SELF, TargetType.PLAYER) and not is_non_stage_discard and not slot_params.get("is_dynamic", False):
                 slot_params["target_slot"] = 4
+            
+            # SYSTEMIC FIX: If this is REDUCE_COST with dynamic multiplier, base value should be 1
+            if eff.effect_type == EffectType.REDUCE_COST and slot_params.get("is_dynamic"):
+                val = 1
+
+            # SYSTEMIC FIX: Set is_wait if wait flow is detected
+            if eff.params.get("wait") or eff.params.get("wait_flow"):
+                slot_params["is_wait"] = True
 
             slot = pack_s_standard(**slot_params)
 
-            # Special encoding for LOOK_AND_CHOOSE: val = look_count | (pick_count << 8) | (color_mask << 23)
-            if eff.effect_type == EffectType.LOOK_AND_CHOOSE:
-                look_count = int(val)
-                # Note: pick_count is handled by v_remaining/choice loop in engine
-                char_ids = [int(CHAR_MAP.get(c.upper(), 0)) for c in str(eff.params.get("character", "")).split("/") if c.strip()]
-                
-                look_v = {
-                    "count": look_count, 
-                    "char_id_1": char_ids[0] if char_ids else 0,
-                    "reveal": 1 if eff.params.get("reveal") else 0
-                }
-                look_a = {
-                    "char_id_2": char_ids[1] if len(char_ids) > 1 else 0,
-                    "char_id_3": char_ids[2] if len(char_ids) > 2 else 0,
-                    "dest_discard": 1 if eff.params.get("destination") == "discard" else 0
-                }
-                val = pack_v_look_choose(**look_v)
-                attr = (attr & 0x00000000FFFFFFFF) | pack_a_look_choose(**look_a)
-                attr |= self._pack_filter_attr(eff)
 
             # Redundant setting for PREVENT_PLAY_TO_SLOT (relies on slot bit 24)
             if eff.effect_type == EffectType.PREVENT_PLAY_TO_SLOT:
@@ -1366,6 +878,145 @@ class Ability:
                         to_signed_32(slot),
                     ]
                 )
+
+    def _resolve_effect_target(self, eff: Effect, slot_params: Dict[str, Any]):
+        """--- Target Resolution from Params ---"""
+        target_raw = eff.params.get("target") or eff.params.get("to")
+        if target_raw:
+            target_str = str(target_raw).upper()
+            target_map = {
+                "HAND": TargetType.CARD_HAND,
+                "CARD_HAND": TargetType.CARD_HAND,
+                "DISCARD": TargetType.CARD_DISCARD,
+                "CARD_DISCARD": TargetType.CARD_DISCARD,
+                "DECK": TargetType.CARD_DECK_TOP,
+                "CARD_DECK_TOP": TargetType.CARD_DECK_TOP,
+                "PLAYER": TargetType.PLAYER,
+                "SELF": TargetType.SELF,
+                "OPPONENT": TargetType.OPPONENT,
+                "MEMBER_SELF": TargetType.MEMBER_SELF,
+                "MEMBER_SELECT": TargetType.MEMBER_SELECT,
+            }
+            if target_str in target_map:
+                eff.target = target_map[target_str]
+
+    def _resolve_effect_source_zone(self, eff: Effect, slot_params: Dict[str, Any]):
+        """--- Zone Relocation ---"""
+        src_val = 0
+        if eff.effect_type in (
+            EffectType.RECOVER_MEMBER, EffectType.RECOVER_LIVE,
+            EffectType.PLAY_MEMBER_FROM_DISCARD, EffectType.PLAY_LIVE_FROM_DISCARD,
+        ):
+            source = str(eff.params.get("source") or eff.params.get("zone") or "discard").lower()
+            src_val = ZONES.get("DISCARD", 7) if source == "discard" else 0
+            if source == "yell": src_val = ZONES.get("YELL", 15)
+            elif source in ("deck", "deck_top"): src_val = ZONES.get("DECK_TOP", 1)
+            slot_params["source_zone"] = src_val
+        
+        # TAP/Interactive selection also uses source zone
+        if eff.effect_type in (EffectType.TAP_OPPONENT, EffectType.TAP_MEMBER):
+            slot_params["source_zone"] = src_val
+
+    def _pack_effect_look_and_choose(self, eff: Effect, val: int, slot_params: Dict[str, Any]) -> int:
+        """Special encoding for LOOK_AND_CHOOSE: val = look_count | (pick_count << 8) | (color_mask << 23)"""
+        char_ids = []
+        # Simple extraction of up to 3 character IDs
+        raw_names = str(eff.params.get("group") or eff.params.get("target_name") or eff.params.get("character") or "")
+        if raw_names:
+            parts = raw_names.replace(",", "/").split("/")
+            for p in parts[:3]:
+                p = p.strip()
+                if p in CHAR_MAP: char_ids.append(CHAR_MAP[p])
+
+        look_v = {
+            "count": val, 
+            "char_id_1": char_ids[0] if char_ids else 0,
+            "char_id_2": char_ids[1] if len(char_ids) > 1 else 0,
+            "char_id_3": char_ids[2] if len(char_ids) > 2 else 0,
+            "reveal": 1 if eff.params.get("reveal") else 0,
+            "dest_discard": 1 if eff.params.get("destination") == "discard" or eff.params.get("dest_discard") else 0
+        }
+        val = pack_v_look_choose(**look_v)
+
+        src = str(eff.params.get("source") or eff.params.get("zone") or "DECK").upper()
+        src_val = ZONES.get("DECK_TOP", 1)
+        if src == "HAND": src_val = ZONES.get("HAND", 6)
+        elif src == "DISCARD": src_val = ZONES.get("DISCARD", 7)
+        elif src in ("YELL", "REVEALED", "CHEER"): src_val = ZONES.get("YELL", 15)
+        elif src == "ENERGY": src_val = ZONES.get("ENERGY", 3)
+        slot_params["source_zone"] = src_val
+
+        rem_dest_str = str(eff.params.get("remainder") or eff.params.get("destination") or "").upper()
+        rem_val = 0
+        if rem_dest_str == "DISCARD": rem_val = ZONES.get("DISCARD", 7)
+        elif rem_dest_str == "DECK": rem_val = ZONES.get("DECK_TOP", 1)
+        elif rem_dest_str == "HAND": rem_val = ZONES.get("HAND", 6)
+        elif rem_dest_str == "DECK_TOP": rem_val = EXTRA_CONSTANTS.get("DECK_POSITION_TOP", 1)
+        elif rem_dest_str == "DECK_BOTTOM": rem_val = EXTRA_CONSTANTS.get("DECK_POSITION_BOTTOM", 2)
+        slot_params["remainder_zone"] = rem_val
+        
+        # Parity Fix: Set is_wait if 'wait' parameter is present
+        if eff.params.get("wait") or eff.params.get("wait_flow"):
+            slot_params["is_wait"] = True
+        
+        return val
+
+    def _pack_effect_heart_cost(self, eff: Effect, val: int, attr: int) -> Tuple[int, int]:
+        """Specialized packing for SET_HEART_COST."""
+        colors = ["pink", "red", "yellow", "green", "blue", "purple"]
+        v_params = {c: int(eff.params.get(c, 0)) for c in colors}
+        val = pack_v_heart_counts(**v_params)
+
+        color_map = HEART_COLOR_MAP
+        req_list = []
+        add_val = eff.params.get("add")
+        if isinstance(add_val, (str, list)):
+            parts = add_val.replace(",", "/").split("/") if isinstance(add_val, str) else add_val
+            req_list = [color_map.get(str(p).strip().upper(), 0) for p in parts[:8]]
+        
+        any_count = int(eff.params.get("any", 0))
+        for _ in range(any_count):
+            if len(req_list) < 8: req_list.append(HEART_COLOR_MAP.get("ANY", 7))
+        
+        a_params = {f"req_{i+1}": req_list[i] if i < len(req_list) else 0 for i in range(8)}
+        unit_val = eff.params.get("unit")
+        if unit_val:
+            try:
+                from engine.models.enums import Unit
+                u_id = int(str(unit_val)) if str(unit_val).isdigit() else int(Unit.from_japanese_name(str(unit_val)))
+                a_params["unit_enabled"] = True
+                a_params["unit_id"] = u_id & 0x7F
+            except: pass
+        attr = pack_a_heart_cost(**a_params)
+        return val, attr
+
+    def _resolve_effect_dynamic_multiplier(self, eff: Effect, val: int, slot_params: Dict[str, Any], attr: int) -> int:
+        """Resolve dynamic multiplier logic for effects."""
+        if not (eff.params.get("per_card") or eff.params.get("per_member") or eff.params.get("has_multiplier")):
+            return attr
+            
+        count_src = str(eff.params.get("per_card", "")).upper()
+        if count_src == "COUNT" and hasattr(self, "_last_counted_zone") and self._last_counted_zone:
+            count_src = self._last_counted_zone
+        
+        count_op = COUNT_SOURCES.get(count_src, int(ConditionType.COUNT_STAGE))
+        slot_params["remainder_zone"] = count_op
+        slot_params["is_dynamic"] = True
+        
+        # Ensure multiplier threshold is 1 if not specified
+        if not eff.params.get("value_enabled") and not eff.params.get("cost_ge") and not eff.params.get("cost_le"):
+            eff.params["value_enabled"] = True
+            eff.params["value_threshold"] = 1
+        
+        # SYSTEMIC FIX: If this is REDUCE_COST, base value should be 1
+        if eff.effect_type == EffectType.REDUCE_COST:
+            # We can't easily change 'val' here because it's passed by value
+            # But we can update the effect value in place if needed, or caller handles it.
+            pass
+
+        # Ensure the DYNAMIC_VALUE bit (bit 60) is set in the attribute for the engine to recognize scaling
+        dynamic_bit = EXTRA_CONSTANTS.get("DYNAMIC_VALUE", 1 << 60)
+        return self._pack_filter_attr(eff) | dynamic_bit
 
     def _pack_filter_slot(self, area_str: str) -> int:
         """Helper to pack area strings into slot bits (29-31)."""
@@ -1433,23 +1084,23 @@ class Ability:
             "keyword_member": False
         }
         
-        raw_val = params.get("val") or params.get("value") or params_upper.get("VAL") or params_upper.get("VALUE") or 0
-        try:
-            val = int(raw_val)
-        except (ValueError, TypeError):
-            val = 0
+        # Use a separate local variable for filter-specific value thresholding
+        # to avoid 'val' contamination from the parent command (e.g. COUNT_MEMBER(2) shouldn't require 2 hearts)
+        f_val = 0
         colors = params.get("colors") or params.get("choices") or ([params.get("color")] if "color" in params else [])
+        sid = params.get("special_id") or params_upper.get("SPECIAL_ID")
         
         # 1. Target Player (Bits 0-1)
-        if hasattr(source, "target"):
-            if source.target == TargetType.OPPONENT: 
-                filter_obj["target_player"] = 2
-            else: 
-                filter_obj["target_player"] = 1
+        if hasattr(source, "target") and source.target == TargetType.OPPONENT:
+            filter_obj["target_player"] = 2
+        elif params_upper.get("OPPONENT") or params_upper.get("TARGET_OPPONENT"):
+            filter_obj["target_player"] = 2
         elif "OPPONENT" in filter_str:
             filter_obj["target_player"] = 2
-        else:
+        elif hasattr(source, "target") and source.target in (TargetType.PLAYER, TargetType.SELF):
             filter_obj["target_player"] = 1
+        else:
+            filter_obj["target_player"] = 0 # Parity Fix: Default to 0 (Unspecified)
 
         # 2. Card Type (Bits 2-3)
         ctype = str(params.get("type") or params.get("card_type") or "").lower()
@@ -1499,8 +1150,8 @@ class Ability:
             except: pass
 
         # 5. Cost Filter (Bit 24 + Bits 25-29 + Bit 30=Mode + Bit 31=Type=1)
-        c_min = params.get("cost_min") or params.get("cost_ge")
-        c_max = params.get("cost_max") or params.get("cost_le") or params.get("total_cost_le")
+        c_min = params.get("cost_ge") # Only check explicit cost GE/LE params
+        c_max = params.get("cost_le") or params.get("total_cost_le")
         
         if c_min is None and "COST_GE=" in filter_str:
             m = re.search(r"COST_GE=(\d+)", filter_str)
@@ -1530,6 +1181,27 @@ class Ability:
                 filter_obj["is_cost_type"] = True
                 filter_obj["is_le"] = True
             except: pass
+        
+        # 5.1 Heart Sum Support
+        sum_ge = params.get("sum_heart_total_ge") or params_upper.get("SUM_HEART_TOTAL_GE")
+        sum_le = params.get("sum_heart_total_le") or params_upper.get("SUM_HEART_TOTAL_LE")
+        # Also check filter_str for SUM_HEART_TOTAL_GE (e.g. "SUM_HEART_TOTAL_GE=8")
+        if not sum_ge and "SUM_HEART_TOTAL_GE=" in filter_str:
+            m = re.search(r"SUM_HEART_TOTAL_GE=(\d+)", filter_str)
+            if m: sum_ge = m.group(1)
+        if not sum_le and "SUM_HEART_TOTAL_LE=" in filter_str:
+            m = re.search(r"SUM_HEART_TOTAL_LE=(\d+)", filter_str)
+            if m: sum_le = m.group(1)
+        if sum_ge is not None:
+            filter_obj["value_enabled"] = True
+            filter_obj["value_threshold"] = int(sum_ge) & 0x1F
+            filter_obj["is_cost_type"] = False # Must be False for heart sum in engine
+            filter_obj["is_le"] = False
+        elif sum_le is not None:
+            filter_obj["value_enabled"] = True
+            filter_obj["value_threshold"] = int(sum_le) & 0x1F
+            filter_obj["is_cost_type"] = False
+            filter_obj["is_le"] = True
 
         # 6. Character Filter (IDs at 39-45, 46-52 in Revision 5)
         names = params.get("name") or params_upper.get("NAME")
@@ -1539,7 +1211,7 @@ class Ability:
 
         if names:
             n_list = str(names).split("/")
-            for i, n in enumerate(n_list[:2]):
+            for i, n in enumerate(n_list[:3]):
                 try:
                     n_norm = n.strip().replace(" ", "").replace("　", "")
                     c_id = 0
@@ -1560,7 +1232,7 @@ class Ability:
                 try:
                     c_idx = int(color_code)
                     if not colors: colors = [c_idx]
-                    if count: val = int(count)
+                    if count: f_val = int(count)
                 except: pass
         elif "HAS_COLOR_" in filter_str:
             match = re.search(r"HAS_COLOR_([A-Z]+)(?:_X(\d+))?", filter_str)
@@ -1570,12 +1242,12 @@ class Ability:
                 try:
                     c_idx = int(HeartColor[color_name])
                     if not colors: colors = [c_idx]
-                    if count: val = int(count)
+                    if count: f_val = int(count)
                 except: pass
 
-        if val > 0:
+        if f_val > 0:
             filter_obj["value_enabled"] = True
-            filter_obj["value_threshold"] = val & 0x1F
+            filter_obj["value_threshold"] = f_val & 0x1F
             filter_obj["is_cost_type"] = False
             
         if colors or "COLOR=" in filter_str:
@@ -1606,7 +1278,11 @@ class Ability:
                 filter_obj["zone_mask"] = z_mask & 0x07
 
         # Special ID (Bits 56-58)
-        sid = params.get("special_id", 0)
+        if not sid and "NOT_SELF" in filter_str:
+            sid = 3
+        elif not sid and "SAME_NAME_AS_REVEALED" in filter_str:
+            sid = 4
+            
         if sid:
             try:
                 sid_int = int(sid)
@@ -1618,7 +1294,7 @@ class Ability:
             filter_obj["is_setsuna"] = True
 
         # Internal Flags
-        if params.get("is_optional") or "(Optional)" in str(params.get("pseudocode", "")):
+        if getattr(source, "is_optional", False) or params.get("is_optional") or "(Optional)" in str(params.get("pseudocode", "")):
             filter_obj["is_optional"] = True
         
         # Keywords (Bits 62-63)
@@ -1707,8 +1383,10 @@ class Ability:
                 cond_desc += " (Opponent chooses)"
             if cond.type == ConditionType.OPPONENT_HAND_DIFF:
                 cond_desc += " (Opponent hand check)"
-            if cond.params.get("group"):
+            if cond.params.get("group") is not None:
                 cond_desc += f"({cond.params['group']})"
+            if cond.params.get("unit") is not None:
+                cond_desc += f" ({cond.params['unit']})"
             if cond.params.get("zone"):
                 cond_desc += f" (in {cond.params['zone']})"
             if cond.params.get("zone") == "SUCCESS_LIVE":

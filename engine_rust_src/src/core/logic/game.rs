@@ -364,6 +364,9 @@ impl GameState {
             None => Pcg64::from_os_rng(),
         };
 
+        self.core.players[0].initial_deck = SmallVec::from_vec(d0.clone());
+        self.core.players[1].initial_deck = SmallVec::from_vec(d1.clone());
+
         d0.shuffle(&mut rng);
         d1.shuffle(&mut rng);
 
@@ -1150,6 +1153,7 @@ impl GameState {
             area_idx: slot,
             trigger_type: trigger,
             choice_index: choice,
+            auto_pick: true,
             ..Default::default()
         };
         self.trigger_abilities_from(db, trigger, &ctx, start_ab_idx);
@@ -1165,7 +1169,9 @@ impl GameState {
         choice: i16,
     ) {
         self.trigger_depth += 1;
-        for p_idx in 0..2 {
+        let cp = self.current_player as usize;
+        for i in 0..2 {
+            let p_idx = (cp + i) % 2;
             let ctx = AbilityContext {
                 player_id: p_idx as u8,
                 activator_id: p_idx as u8,
@@ -1226,7 +1232,9 @@ impl GameState {
             }
             return;
         }
-        println!("[DEBUG] trigger_abilities_from: {:?} for player {}", trigger, ctx.player_id);
+        if !self.ui.silent {
+            println!("[DEBUG] trigger_abilities_from: {:?} for player {}", trigger, ctx.player_id);
+        }
         self.trigger_depth += 1;
 
         // Collect all potential triggers
@@ -1278,20 +1286,7 @@ impl GameState {
             );
         }
 
-        // 4. Previous Member (Baton Touch Vision)
-        // Ensure a member who just left can see the entry of their successor
-        if self.prev_card_id >= 0 && trigger == TriggerType::OnPlay {
-            self.collect_triggers_for_card(
-                db,
-                self.prev_card_id,
-                trigger,
-                ctx,
-                start_ab_idx,
-                false,
-                &mut queue,
-                -1,
-            );
-        }
+
 
         if self.debug.debug_mode {
             // println!(
@@ -1464,7 +1459,7 @@ impl GameState {
                         }
                         let mut trigger_ctx = ctx.clone();
                         trigger_ctx.source_card_id = cid;
-                        if slot_idx >= 0 {
+                        if slot_idx >= 0 && trigger_ctx.area_idx == -1 {
                             trigger_ctx.area_idx = slot_idx;
                         }
                         queue.push((cid, cid, ab_idx as u16, trigger_ctx, is_live));

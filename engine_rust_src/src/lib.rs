@@ -84,6 +84,8 @@ mod repro_task;
 mod rule_alignment_tests;
 #[cfg(test)]
 mod semantic_assertions;
+#[cfg(test)]
+mod qa;
 
 #[cfg(test)]
 mod repro_flags;

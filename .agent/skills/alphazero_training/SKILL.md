@@ -1,73 +1,56 @@
----
-name: alphazero_training
-description: Principles and implementation for AlphaZero/MCTS training and optimization.
----
-
 # AlphaZero Training Skill
 
-This skill governs the architectural patterns, mathematical heuristics, and training workflows required for implementing AlphaZero-style AI in LovecaSim.
+This skill provides the standard workflow for training AlphaZero models in RabukaSim, specifically focusing on the "Vanilla" (Abilityless) environment.
 
-## Core Principles
+## 🛠️ Pre-Setup (Mandatory)
 
-1. **Performance over Precision**: Use linear heuristics (Expected Value) inside MCTS loops rather than exact combinatorial math (Hypergeometric) to maximize tree search throughput.
-2. **State Representation (Start from Zero)**:
-   - Cards are represented as **Rich Feature Vectors**: costs, attributes, and hearts.
-   - Abilities are represented as **Bytecode Sequences**: Feed the raw bytecode instructions (opcodes/params) into the transformer so the AI learns the "programming" of the cards without human bias.
-   - **Card Counting**: Enable perfect card counting by passing discard/hand/stage histograms, allowing the network to infer the remaining deck composition.
-3. **Hybrid Solvers & Meta-Heuristics**: Use the transformer to dynamically predict weight parameters for standard linear heuristics, combining deep strategic intuition with blazing-fast analytical math.
+Before running any training, ensure the Rust engine and data are in sync. Use the dedicated script in the root:
 
-## Workflow
-
-1. **Analytical Baseline**: Verify engine logic using `test_performance_solver.rs`.
-2. **Heuristic Profiling**: Measure the throughput of the analysis layer to ensure it doesn't bottleneck MCTS.
-3. **Data Collection**: Export game traces where the analytical solver provides "ground truth" labels for success probability.
-4. **Automated Evaluation**: Use `ai_tournament.py` to benchmark agent performance against a baseline (e.g., `OriginalHeuristic`) across a variety of decks to ensure no regressions in strategy.
-
-## Evaluation & Benchmarking
-
-The consolidated tournament runner allows for high-performance auditing of AI agents.
-
-### [ai_tournament.py](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/alphazero/benchmarks/ai_tournament.py)
-This tool runs parallel matches using the Rust engine to evaluate heuristic or network performance.
-
-**Standard Benchmark (Smoke Test)**:
-```bash
-uv run python alphazero/benchmarks/ai_tournament.py --sims 128 --games_per_pair 5
+**PowerShell**:
+```powershell
+.\rebuild_engine.ps1
 ```
 
-**High-Fidelity Audit**:
-```bash
-uv run python alphazero/benchmarks/ai_tournament.py --sims 4096 --games_per_pair 1 --p0_type original --p1_type original
+**CMD / Batch**:
+```cmd
+rebuild_engine.bat
 ```
 
-**Matchup Configuration**:
-- `--p0_type` / `--p1_type`: `original`, `legacy`, `simple`.
-- `--sims`: Number of MCTS simulations per move.
-- `--decks`: Optional list of specific deck files.
+This script builds the engine, links the `.pyd`, compiles the card data, and **starts the training loop** automatically.
 
-## Performance Benchmarks
-As of recent optimizations (Action Generation pre-caching, Bytecode sharing with `Arc`, and `match`-based dispatch):
-- **Single-Threaded**: ~137k steps/sec
-- **Multi-Threaded (12t)**: ~577k - 640k steps/sec
-*The engine maintains >100k steps/sec per thread, exceeding the minimum MCTS requirement.*
+## 🚀 Training Workflow
 
-## Implementation Notes
-- **Bytecode Sharing**: Execution frames use `Arc<Vec<i32>>` for zero-copy bytecode sharing across branching/remote triggers.
-- **Opcode Dispatch**: Uses a central `match` jump table in `handlers/mod.rs` for O(1) instruction routing.
-- **Inlining**: Hot path functions (`calculate_proximity`, `process_hearts`) are marked with `#[inline]` to reduce call overhead.
+### 1. Continuous Training (Overnight Loop)
+For long-term improvement, use the unified script which combines self-play and training into a single iterative cycle.
+- **Command**: `uv run python alphazero/training/overnight_vanilla.py`
+- **Behavior**: 
+    - Spawns parallel workers to generate games.
+    - **Ability Stripping**: Automatically strips abilities from cards to ensure a pure vanilla environment.
+    - **Buffer**: Trains on a persistent disk-backed experience buffer.
+    - **Persistence**: Checkpoints are saved to `vanilla_checkpoints/`.
 
-## Stability & Numerical Safety
+### 2. Manual Data Generation (Self-Play)
+If you want to generate a static dataset for inspection:
+- **Command**: `uv run python alphazero/training/generate_vanilla_pure_zero.py --num_games 100 --mirror --verbose`
 
-1.  **Illegal Action Masking**: Mask illegal actions directly in the network's forward pass before the final `log_softmax`. Use a large negative number (e.g., `-1e10`) for masked values.
-2.  **Loss Function Stability**: Prefer PyTorch's `F.cross_entropy` over manual implementation of cross-entropy to handle logarithmic stability internally.
-3.  **Anomaly Detection**: During development, use `torch.autograd.set_detect_anomaly(True)` to trace `NaN` gradients back to their source.
+### 3. Model Training (Static)
+If you have a large pre-generated dataset:
+- **Command**: `uv run python alphazero/training/vanilla_train.py --data vanilla_trajectories.npz`
 
-## Observability & Logging
+## 🧠 Strategic Insights
 
-1.  **Action Enrichment**: Self-play logs (`alphazero_game_log.txt`) should include card IDs and names for readability.
-2.  **MCTS Transparency**: Always log the legal action list, visit counts, and win-rate scores (Q-values) for each move to audit tree search quality.
-3.  **State Dumps**: At the end of each game, generate a comprehensive state report (Bug Report JSON) using the engine's serialization logic for post-mortem analysis.
+### Yell & Blade Mechanics
+The AI observes yells through two distinct layers:
+1. **Input Expectation**: The input tensor contains `ExpectedHearts = AveHeartsPerYell * StageBlades`.
+2. **Search Stochasticity (MCTS)**: During MCTS exploration, the engine shuffles the deck and actually rolls the yells for each simulation.
 
-## Resources
-- [MCTS Performance Principles](resources/mcts_performance_principles.md)
-- `engine_rust_src/src/core/analysis/performance_solver.rs` (Implementation Reference)
+### Positional Invariance
+In the vanilla environment, stage slots (Left/Center/Right) are mechanically identical. To accelerate training, actions are mapped to **Card Index Only** (Slot-less mapping).
+
+### Optimized Action Space (Index 0)
+The "Select Success Live" action (when multiple cards succeed) is consolidated into **Index 0 (Pass)**. Since the Passing action is disabled by the engine during mandatory selections, there is no ambiguity.
+
+## 🛠️ Verification & Debugging
+- **Logs**: Use `--verbose` in `generate` script to see `[Card: Filled/Req OK/FAIL]` status.
+- **Throughput**: Monitor `Generation throughput` (Standard: ~0.7-1.0 games/sec).
+- **Parity**: Ensure `ACTION_SPACE` (Default: 128) matches across `generate`, `train`, and `model` scripts.

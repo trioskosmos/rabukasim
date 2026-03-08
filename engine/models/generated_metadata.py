@@ -29,6 +29,7 @@ OPCODES = {
     "MOVE_TO_DECK": 31,
     "TAP_OPPONENT": 32,
     "PLACE_UNDER": 33,
+    "FLAVOR_ACTION": 34,
     "RESTRICTION": 35,
     "BATON_TOUCH_MOD": 36,
     "SET_SCORE": 37,
@@ -83,6 +84,7 @@ OPCODES = {
     "CALC_SUM_COST": 106,
     "LOOK_REORDER_DISCARD": 125,
     "DIV_VALUE": 126,
+    "TRANSFORM_BLADES": 127,
 }
 
 TRIGGERS = {
@@ -97,6 +99,8 @@ TRIGGERS = {
     "ON_LEAVES": 8,
     "ON_REVEAL": 9,
     "ON_POSITION_CHANGE": 10,
+    "ON_ABILITY_RESOLVE": 11,
+    "ON_ABILITY_SUCCESS": 12,
 }
 
 TARGETS = {
@@ -134,6 +138,7 @@ ACTION_BASES = {
     "CHOICE": 11000,
     "RPS": 20000,
     "RPS_P2": 21000,
+    "TURN_ORDER_FIRST": 5000,
 }
 
 CONDITIONS = {
@@ -201,6 +206,8 @@ CONDITIONS = {
     "SYNC_COST": 311,
     "SUM_VALUE": 312,
     "IS_WAIT": 313,
+    "ON_ABILITY_RESOLVE": 314,
+    "TARGET_MEMBER_HAS_NO_HEARTS": 315,
 }
 
 COSTS = {
@@ -445,13 +452,13 @@ COMPARISONS = {
 }
 
 HEART_COLOR_MAP = {
-    "PINK": 1,
-    "RED": 2,
-    "YELLOW": 3,
-    "GREEN": 4,
-    "BLUE": 5,
-    "PURPLE": 6,
-    "ANY": 7,
+    "PINK": 0,
+    "RED": 1,
+    "YELLOW": 2,
+    "GREEN": 3,
+    "BLUE": 4,
+    "PURPLE": 5,
+    "ANY": 6,
 }
 
 META_RULE_TYPES = {
@@ -569,6 +576,13 @@ CHARACTER_IDS = {
     "GINKO": 67,
     "KOSUZU": 68,
     "HIME": 69,
+    "TSUBASA": 71,
+    "ERENA": 72,
+    "ANJU": 73,
+    "YUNA": 74,
+    "MAO": 75,
+    "SEIRA": 76,
+    "RIA": 77,
 }
 
 GROUP_IDS = {
@@ -577,7 +591,12 @@ GROUP_IDS = {
     "NIJIGASAKI": 2,
     "LIELLA": 3,
     "HASUNOSORA": 4,
+    "ARISE": 10,
+    "SAINT_SNOW": 11,
+    "SUNNY_PASSION": 12,
+    "MUSICAL": 13,
     "OTHER": 99,
+    "NONE": 100,
 }
 
 UNIT_IDS = {
@@ -598,5 +617,7 @@ UNIT_IDS = {
     "DOLLCHESTRA": 14,
     "MIRA_CRA_PARK": 15,
     "EDEL_NOTE": 16,
+    "AISCREAM": 17,
+    "NONE": 100,
 }
 

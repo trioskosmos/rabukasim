@@ -11,7 +11,8 @@ pub mod instruction;
 pub mod suspension;
 
 use crate::core::enums::Phase;
-use crate::core::logic::{AbilityContext, CardDatabase, GameState};
+use crate::core::models::{GameState, AbilityContext};
+use super::CardDatabase;
 pub use conditions::{check_condition, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
 pub use handlers::{HandlerRegistry, HandlerResult};
@@ -101,6 +102,7 @@ pub fn resolve_bytecode(
         }
         executor.steps += 1;
 
+        let stack_depth = executor.stack.len();
         // Obtain mutable reference to the current frame
         let frame = executor.stack.last_mut().unwrap();
 
@@ -159,7 +161,14 @@ pub fn resolve_bytecode(
 
         if state.debug.debug_mode {
             let desc = logging::describe_bytecode(real_op, v, a, s);
-            let log_line = format!("BC_STEP: ip={:<3} {}", ip, desc);
+            
+            // Get card info for context
+            let card_name = db.get_member(frame.ctx.source_card_id)
+                .map(|c| c.name.as_str())
+                .or_else(|| db.get_live(frame.ctx.source_card_id).map(|l| l.name.as_str()))
+                .unwrap_or("System");
+
+            let log_line = format!("BC_STEP: [depth={}] [card={}] ip={:<3} {}", stack_depth, card_name, ip, desc);
             println!("[DEBUG] {}", log_line);
 
             let b_log = &mut state.ui.bytecode_log;
@@ -297,6 +306,9 @@ pub fn resolve_bytecode(
         }
     }
 
+    // Cleanup revealed cards after ability finishes
+    state.players[ctx_in.player_id as usize].revealed_cards.clear();
+
     if _id.is_some() {
         state.clear_execution_id();
     }
@@ -340,6 +352,30 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                 state.players[p_idx].perf_triggered_abilities.push((cid, ab_idx as i16, _trigger));
             }
             resolve_bytecode(state, db, std::sync::Arc::new(bytecode), &ctx);
+
+            // Fire resolution triggers
+            let res_trigger = match _trigger {
+                crate::core::enums::TriggerType::OnLiveStart => Some(crate::core::enums::TriggerType::OnAbilityResolve),
+                crate::core::enums::TriggerType::OnLiveSuccess => Some(crate::core::enums::TriggerType::OnAbilitySuccess),
+                _ => None,
+            };
+
+            if let Some(t) = res_trigger {
+                let mut res_ctx = ctx.clone();
+                res_ctx.trigger_type = t;
+                res_ctx.target_card_id = cid; // The member/card whose ability resolved
+
+                // CRITICAL FIX: Update area_idx to the physical slot where the card is.
+                // SLOT_CONTEXT (4) relies on area_idx pointing to the member's slot.
+                if !is_live {
+                    let p_idx = ctx.player_id as usize;
+                    if let Some(pos) = state.players[p_idx].stage.iter().position(|&slot_cid| slot_cid == cid) {
+                        res_ctx.area_idx = pos as i16;
+                    }
+                }
+
+                state.trigger_abilities(db, t, &res_ctx);
+            }
         }
 
         state.clear_execution_id();

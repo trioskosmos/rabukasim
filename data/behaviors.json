@@ -1,0 +1,57 @@
+{
+    "B_DRAW_DISCARD": {
+        "description": "Draw X cards and discard Y cards.",
+        "trigger": "ON_PLAY",
+        "effects": [
+            {
+                "type": "DRAW",
+                "value": "$DrawCount",
+                "target": "PLAYER"
+            },
+            {
+                "type": "LOOK_AND_CHOOSE",
+                "value": "$DiscardCount",
+                "params": {
+                    "source": "HAND",
+                    "destination": "discard"
+                }
+            }
+        ]
+    },
+    "B_UNIQUE_UNIT_BOOST": {
+        "description": "Gain a score boost if you have a certain number of unique members from a unit on stage.",
+        "trigger": "CONSTANT",
+        "conditions": [
+            {
+                "type": "GROUP_FILTER",
+                "params": {
+                    "unit_id": "$UnitId",
+                    "min": "$Count",
+                    "unique_names": true,
+                    "area_mask": 4
+                }
+            }
+        ],
+        "effects": [
+            {
+                "type": "BOOST_SCORE",
+                "value": "$Score",
+                "target": "PLAYER"
+            }
+        ]
+    },
+    "B_SELECT_HEART_GAIN": {
+        "description": "Choose one of the specified heart colors and gain it until the end of live.",
+        "trigger": "ON_LIVE_START",
+        "effects": [
+            {
+                "type": "SELECT_MODE",
+                "value": 1,
+                "params": {
+                    "mode_type": "COLOR_SELECT",
+                    "options": "$Colors"
+                }
+            }
+        ]
+    }
+}

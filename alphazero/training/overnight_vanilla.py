@@ -34,6 +34,9 @@ from engine.game.deck_utils import UnifiedDeckParser
 from disk_buffer import PersistentBuffer
 from alphazero.training.benchmark_vanilla import run_benchmark
 
+# Also import the game loop helper from benchmark if needed
+# For now, we'll modify play_one_game to match benchmark's logic
+
 # ============================================================
 # CONFIGURATION (Vanilla AlphaZero Loop)
 # ============================================================
@@ -48,8 +51,8 @@ SRR = 8.0                   # Sample Reuse Ratio
 MIRROR = True               # Reduction of variance
 
 # --- Training ---
-TRAIN_STEPS_PER_ITER = 20  
-BATCH_SIZE = 256            
+TRAIN_STEPS_PER_ITER = 200  
+BATCH_SIZE = 512            
 ACCUM_STEPS = 4             
 LR = 0.001                  
 DIRICHLET_ALPHA = 0.3       
@@ -58,106 +61,6 @@ DIRICHLET_EPS = 0.25
 # --- Buffer ---
 MAX_BUFFER_SIZE = 8000000    # ~16.1 GB on disk using uint8 indices
 SPARSE_LIMIT = 128           # Matches Vanilla Action Space
-
-# --- Global worker variables ---
-db_engine_global = None
-
-def init_worker(db_path_str, strip=True):
-    global db_engine_global
-    import engine_rust, json
-    with open(db_path_str, "r", encoding="utf-8") as f:
-        db_json = json.load(f)
-    
-    if strip:
-        # Strip all abilities to create a pure 'Vanilla' environment
-        for cat in ["member_db", "live_db"]:
-            for cid, data in db_json.get(cat, {}).items():
-                data["abilities"] = []
-                data["ability_flags"] = 0
-                if "synergy_flags" in data:
-                    data["synergy_flags"] &= 1
-                    
-    db_json_str = json.dumps(db_json)
-    db_engine_global = engine_rust.PyCardDatabase(db_json_str)
-
-def load_tournament_decks(full_db):
-    decks_dir = Path(__file__).resolve().parent.parent.parent / "ai" / "decks"
-    parser = UnifiedDeckParser(full_db)
-    loaded_decks = []
-    standard_energy_ids = [38, 39, 40, 41, 42] * 4 
-    for deck_file in decks_dir.glob("*.txt"):
-        with open(deck_file, "r", encoding="utf-8") as f:
-            content = f.read()
-        results = parser.extract_from_content(content)
-        if not results: continue
-        d = results[0]
-        m, l, e = [], [], []
-        for code in d['main']:
-            cdata = parser.resolve_card(code)
-            if not cdata: continue
-            if cdata.get("type") == "Member": m.append(cdata["card_id"])
-            elif cdata.get("type") == "Live": l.append(cdata["card_id"])
-        for code in d['energy']:
-            cdata = parser.resolve_card(code)
-            if cdata: e.append(cdata["card_id"])
-        if len(m) >= 30:
-            loaded_decks.append({
-                "name": deck_file.stem,
-                "members": (m + m*4)[:48],
-                "lives": (l + l*4)[:12],
-                "energy": (e + standard_energy_ids*12)[:12]
-            })
-    return loaded_decks
-
-LOGIC_ID_MASK = 0x0FFF
-
-def map_engine_to_vanilla(p_data, engine_id, initial_deck):
-    """Maps engine action ID to vanilla 128-dim action space.
-    
-    Simplified mapping that supports up to 60 card positions.
-    RPS and turn choice map to Pass since abilities are stripped in vanilla.
-    """
-    # Pass / Done
-    if engine_id == 0: 
-        return 0  # Pass
-    
-    # Mulligan actions (300-305)
-    if 300 <= engine_id <= 305:
-        return 1 + (engine_id - 300)  # 1-6
-    
-    # Confirm
-    if engine_id == 11000:
-        return 7
-    
-    # Play Member from hand (1000-1599)
-    # Map based on hand position directly - up to 60 cards
-    if 1000 <= engine_id < 1600:
-        hand_idx = (engine_id - 1000) // 10
-        if hand_idx < 60:  # Support up to 60 cards
-            return 8 + hand_idx  # 8-67
-        return -1
-    
-    # Set Live (400-499)
-    # Engine uses: 400 + hand_index
-    if 400 <= engine_id < 500:
-        hand_idx = engine_id - 400
-        if hand_idx < 60:
-            return 68 + hand_idx  # 68-127 (60 slots)
-        return -1
-    
-    # Select Success Live (600-602) - no abilities in vanilla, map to Pass
-    if 600 <= engine_id <= 602:
-        return 0
-    
-    # Turn Choice (5000-5001) - no abilities in vanilla, map to Pass
-    if engine_id in [5000, 5001]:
-        return 0
-    
-    # RPS (20000-21002) - no abilities in vanilla, map to Pass
-    if 20000 <= engine_id <= 20002 or 21000 <= engine_id <= 21002:
-        return 0
-    
-    return -1
 
 # --- Global worker variables ---
 db_engine_global = None
@@ -196,6 +99,109 @@ def init_worker(db_path_str, model_path_str=None, device_str="cpu", strip=True):
             print(f"Worker failed to load model: {e}")
         model_global.eval()
 
+def load_tournament_decks(full_db):
+    decks_dir = Path(__file__).resolve().parent.parent.parent / "ai" / "decks"
+    parser = UnifiedDeckParser(full_db)
+    loaded_decks = []
+    standard_energy_ids = [38, 39, 40, 41, 42] * 4 
+    for deck_file in decks_dir.glob("*.txt"):
+        with open(deck_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        results = parser.extract_from_content(content)
+        if not results: continue
+        d = results[0]
+        m, l, e = [], [], []
+        for code in d['main']:
+            cdata = parser.resolve_card(code)
+            if not cdata: continue
+            if cdata.get("type") == "Member": m.append(cdata["card_id"])
+            elif cdata.get("type") == "Live": l.append(cdata["card_id"])
+        for code in d['energy']:
+            cdata = parser.resolve_card(code)
+            if cdata: e.append(cdata["card_id"])
+        if len(m) >= 30:
+            loaded_decks.append({
+                "name": deck_file.stem,
+                "members": (m + m*4)[:48],
+                "lives": (l + l*4)[:12],
+                "energy": (e + standard_energy_ids*12)[:12]
+            })
+    return loaded_decks
+
+LOGIC_ID_MASK = 0x0FFF
+
+def map_engine_to_vanilla(p_data, engine_id, initial_deck, current_phase=None):
+    """Maps engine action ID to vanilla 128-dim action space.
+    
+    current_phase: helps distinguish context for multi-purpose IDs (like EID 0)
+    """
+    # 0 is "Pass" in Active phases (Main), but "Confirm" in setup/cleanup phases
+    if engine_id == 0:
+        # Phases: Mulligan(-1,0), LiveSet(5), LiveResult(8), Response(10)
+        if current_phase in [-1, 0, 5, 8, 10]:
+            return 7 # Confirm / Done
+        return 0 # Pass (Active/Main phase)
+    
+    # Mulligan actions (300-305) -> Map to 1-6
+    if 300 <= engine_id <= 305:
+        return 1 + (engine_id - 300)
+    
+    # Confirm
+    if engine_id == 11000:
+        return 7
+    
+    # Play Member from hand (1000-1599)
+    if 1000 <= engine_id < 1600:
+        hand_idx = (engine_id - 1000) // 10
+        if hand_idx < len(p_data['hand']):
+            card_id = p_data['hand'][hand_idx]
+            if initial_deck and card_id in initial_deck:
+                try:
+                    deck_idx = initial_deck.index(card_id)
+                    if deck_idx < 60:
+                        return 8 + deck_idx
+                except ValueError:
+                    pass
+            if hand_idx < 60:
+                return 8 + hand_idx
+        return -1
+    
+    # Set Live (400-499)
+    if 400 <= engine_id < 500:
+        hand_idx = engine_id - 400
+        if hand_idx < len(p_data['hand']):
+            card_id = p_data['hand'][hand_idx]
+            if initial_deck and card_id in initial_deck:
+                try:
+                    deck_idx = initial_deck.index(card_id)
+                    if deck_idx < 60:
+                        return 68 + deck_idx
+                except ValueError:
+                    pass
+            if hand_idx < 60:
+                return 68 + hand_idx
+        return -1
+    
+    # Success Selection (600-602)
+    if 600 <= engine_id <= 602:
+        return 7 # Map to Confirm for now since it's "Done picking success"
+    
+    # RPS Actions (20000-20002)
+    if 20000 <= engine_id <= 20002:
+        return 125 + (engine_id - 20000) # 125, 126, 127
+        
+    # Turn Choice (5000-5001) - Use Dedicated Slot? 
+    # Let's map to 7 (Confirm) or dedicate 124 for Turn Choice
+    if engine_id in [5000, 5001]:
+        return 124 # Dedicate 124
+    
+    # RPS P2 (21000-21002) - map to same as P1
+    if 21000 <= engine_id <= 21002:
+        return 125 + (engine_id - 21000)
+    
+    return -1
+
+
 def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
     global db_engine_global, model_global
     import engine_rust, json, torch, random, traceback
@@ -227,57 +233,91 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
         game_history = []
         max_moves = 1000
         moves_taken = 0
+        winner = None  # Track winner like benchmark
+        
+        # Stall detection
+        last_state_hash = None
+        stall_count = 0
         
         # Debug: Check initial state
         initial_legal = state.get_legal_action_ids()
         print(f"[DEBUG] Game init - term:{state.is_terminal()} turn:{state.turn} player:{state.current_player} legal:{len(initial_legal)}")
         
         while not state.is_terminal() and state.turn < 25 and moves_taken < max_moves:
+            # Hash-based stall detection
+            current_state_str = f"{state.turn}_{state.current_player}_{state.phase}_{len(state.get_legal_action_ids())}"
+            if current_state_str == last_state_hash:
+                stall_count += 1
+            else:
+                stall_count = 0
+                last_state_hash = current_state_str
+            
+            if stall_count >= 10:
+                print(f"[WARNING] Game stalled at turn {state.turn}, phase {state.phase}. Terminating.")
+                break
             legal_ids = state.get_legal_action_ids()
             if not legal_ids:
                 print(f"[DEBUG] No legal actions! Turn: {state.turn}, is_terminal: {state.is_terminal()}")
                 break
             
-            # Debug: Check if loop is about to exit
-            if moves_taken >= 3:
+            # Debug: Check if loop is about to exit (only occasionally to reduce noise)
+            if moves_taken >= 3 and moves_taken % 10 == 0:
                 print(f"[DEBUG] Loop check: term={state.is_terminal()}, turn={state.turn}, moves={moves_taken}")
             
-            # 1. Neural Network Prior (if available)
-            policy_final = np.zeros(ACTION_SPACE, dtype=np.float32)
-            obs_np = state.to_vanilla_tensor()
-            
-            # MCTS simulation
-            suggestions = state.get_mcts_suggestions(sims_per_move, 0.0, engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.TerminalOnly)
-            
+            # 1. Choose move source
             state_json = json.loads(state.to_json())
-            current_phase = state_json.get('phase', 0)
-            
+            current_phase = state_json.get('phase', -4)
             legal_ids = state.get_legal_action_ids()
+            curr_p_data = state_json['players'][state.current_player]
             
-            # Debug: Show legal actions and their vanilla mapping
-            if moves_taken <= 10:
-                mapping_info = []
-                for aid in legal_ids[:8]:
-                    vid = map_engine_to_vanilla(state_json['players'][state.current_player], aid, initial_decks[state.current_player])
-                    mapping_info.append(f"{aid}->{vid}")
-                print(f"[DEBUG] Phase {current_phase}, Move {moves_taken}: Legal ({len(legal_ids)}): {mapping_info}")
+            # FAST BYPASS FOR SETUP/INTERACTIVE PHASES
+            # This ensures we get to the Main phase where the model actually learns
+            action_engine = None
+            
+            if current_phase == -4: # Initial Setup
+                if 0 in legal_ids: action_engine = 0
+            elif current_phase == -3: # RPS
+                action_engine = random.choice(legal_ids)
+                print(f"[DEBUG] Random RPS: {action_engine}")
+            elif current_phase == -2: # Turn Choice
+                action_engine = random.choice(legal_ids)
+                print(f"[DEBUG] Random Turn Choice: {action_engine}")
+            
+            # Mulligan, LiveSet, etc. will now use normal move selection below
+            
+            # FIXED: Use MCTS for phases -1 (Mulligan), 0 (Energy), 4 (Main), 5 (LiveSet)
+            # Same as benchmark_vanilla.py
+            if action_engine is not None:
+                # Still record history if we want (though setup moves are low entropy)
+                # But for simplicity, we just step
+                state.step(action_engine)
+                state.auto_step(db_engine_global)
+                moves_taken += 1
+                continue
+
+            # FIXED: Use MCTS for multiple phases (not just Phase 4)
+            if sims_per_move > 0 and current_phase in [4, 5, -1, 0]:
+                # MCTS simulation
+                suggestions = state.search_mcts(sims_per_move, 0.0, "original", engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.Normal, None)
+            else:
+                suggestions = []
+            
+            # NORMAL MOVE SELECTION
+            obs_np = state.to_vanilla_tensor()
             
             policy_target = np.zeros(ACTION_SPACE, dtype=np.float32)
             total_visits = sum(s[2] for s in suggestions)
             
-            mapping_failures = 0
             if total_visits > 0:
                 for engine_id, q, visits in suggestions:
-                    vid = map_engine_to_vanilla(state_json['players'][state.current_player], engine_id, initial_decks[state.current_player])
+                    vid = map_engine_to_vanilla(curr_p_data, engine_id, initial_decks[state.current_player], current_phase)
                     if 0 <= vid < ACTION_SPACE:
                         policy_target[vid] += visits / total_visits
-                    else:
-                        mapping_failures += 1
-
+            
             mask = np.zeros(ACTION_SPACE, dtype=np.bool_)
             v_to_e = {}
             for aid in legal_ids:
-                vid = map_engine_to_vanilla(state_json['players'][state.current_player], aid, initial_decks[state.current_player])
+                vid = map_engine_to_vanilla(curr_p_data, aid, initial_decks[state.current_player], current_phase)
                 if 0 <= vid < ACTION_SPACE:
                     mask[vid] = True
                     v_to_e[vid] = aid
@@ -382,17 +422,18 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
             })
             
             state.step(action_engine)
-            
-            # Debug: Show detailed step info
-            state_json = json.loads(state.to_json())
-            print(f"[DEBUG] Step: move={moves_taken}, phase={state_json.get('phase')}, turn={state.turn}, player={state.current_player}, action={action_engine}")
-            
             state.auto_step(db_engine_global)
             
-            # Debug after auto_step
-            state_json_after = json.loads(state.to_json())
-            if moves_taken <= 5:
-                print(f"[DEBUG] AutoStep: move={moves_taken}, phase={state_json_after.get('phase')}, turn={state_json_after.get('turn')}")
+            # Debug: Show detailed step info (less verbose)
+            if moves_taken % 10 == 0:
+                state_json_after = json.loads(state.to_json())
+                print(f"[DEBUG] Step: move={moves_taken}, phase={state_json_after.get('phase')}, turn={state_json_after.get('turn')}, player={state.current_player}, action={action_engine}")
+            
+            # Check for terminal state after each move (like benchmark)
+            if state.is_terminal():
+                winner = state.get_winner()
+                print(f"[DEBUG] Game terminated at move {moves_taken}, turn {state.turn}, winner={winner}")
+                break
             
             moves_taken += 1
         
@@ -582,7 +623,7 @@ def main():
                 if it % 10 == 0:
                     model.eval()
                     print(f"[BENCHMARK] Running benchmark...")
-                    bench_turns, bench_score = run_benchmark(str(checkpoint_path))
+                    bench_turns, bench_score = run_benchmark(str(checkpoint_path), sims=128)
                     model.train()
                     print(f"[BENCHMARK] Turns: {bench_turns:.1f}, Score: {bench_score:.1f}")
 

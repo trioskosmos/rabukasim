@@ -49,8 +49,8 @@ fn test_repro_pb1_001_r_softlock_fix() {
         "Option 0 (Pay Energy) should be valid!"
     );
     assert!(
-        !actions.contains(&(ACTION_BASE_MODE as i32 + 1)),
-        "Option 1 (Discard Hand) MUST BE HIDDEN to prevent softlock!"
+        !actions.contains(&0),
+        "Mandatory Select Mode should NOT contain action 0 (Skip)!"
     );
 }
 
@@ -64,9 +64,9 @@ fn test_repro_pb1_001_r_all_combinations() {
 
     let scenarios = vec![
         (2, 2, true, true),   // Both valid
-        (0, 2, false, true),  // Only hand valid
-        (2, 0, true, false),  // Only energy valid
-        (0, 0, false, false), // Neither valid — engine will handle gracefully
+        (0, 2, false, true),  // Only hand valid (Energy hidden, Discard valid)
+        (2, 0, true, true),   // Both valid (Discard valid for partial)
+        (0, 0, false, true),  // Only discard valid (Energy hidden, Discard valid for partial)
     ];
 
     for (en, hn, exp_0, exp_1) in scenarios {

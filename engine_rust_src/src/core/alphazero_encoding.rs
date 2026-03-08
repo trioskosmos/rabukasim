@@ -3,7 +3,7 @@ use crate::core::analysis::pro_vision::ProVisionHints;
 
 pub const AZ_BYTECODE_MAX_LEN: usize = 128;
 // Base(16) + Identity(16) + Stats(10) + Bytecode(128) = 170
-pub const AZ_ENTITY_VECTOR_SIZE: usize = 16 + 16 + 10 + AZ_BYTECODE_MAX_LEN;
+pub const AZ_ENTITY_VECTOR_SIZE: usize = 170;
 pub const AZ_MAX_ENTITIES_PER_PLAYER: usize = 60;
 
 pub trait AlphaZeroEncoding {

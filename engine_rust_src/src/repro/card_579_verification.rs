@@ -175,7 +175,7 @@ fn test_card_579_ability_1_heart_filter() {
     let member_id = liella_member_id;
     let hearts = state.players[0].heart_buffs[0].to_array();
     assert!(
-        filter.matches(&state, &db, member_id, false, Some(&hearts), &crate::core::logic::AbilityContext::default()), 
+        filter.matches(&state, &db, member_id, None, false, Some(&hearts), &crate::core::logic::AbilityContext::default()), 
         "Builder filter should match the stage member with hearts"
     );
 

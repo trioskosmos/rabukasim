@@ -16,103 +16,11 @@ from engine.models.ability import AbilityCostType, ConditionType, EffectType, Tr
 from engine.models.card import EnergyCard, LiveCard, MemberCard
 from engine.models.enums import CHAR_MAP
 from engine.models.opcodes import Opcode
+from engine.models.generated_metadata import OPCODES, CONDITIONS, COSTS
 
 # --- Compile-time Bytecode Validation ---
-# All valid effect opcodes (0-99 range) from generated_constants
-_VALID_EFFECT_OPS = {
-    0,  # O_NOP
-    1,  # O_RETURN
-    2,  # O_JUMP
-    3,  # O_JUMP_IF_FALSE
-    10,  # O_DRAW
-    11,  # O_ADD_BLADES
-    12,  # O_ADD_HEARTS
-    13,  # O_REDUCE_COST
-    14,  # O_LOOK_DECK
-    15,  # O_RECOVER_LIVE
-    16,  # O_BOOST_SCORE
-    17,  # O_RECOVER_MEMBER
-    18,  # O_BUFF_POWER
-    19,  # O_IMMUNITY
-    20,  # O_MOVE_MEMBER
-    21,  # O_SWAP_CARDS
-    22,  # O_SEARCH_DECK
-    23,  # O_ENERGY_CHARGE
-    24,  # O_SET_BLADES
-    25,  # O_SET_HEARTS
-    26,  # O_FORMATION_CHANGE
-    27,  # O_NEGATE_EFFECT
-    28,  # O_ORDER_DECK
-    29,  # O_META_RULE
-    30,  # O_SELECT_MODE
-    31,  # O_MOVE_TO_DECK
-    32,  # O_TAP_OPPONENT
-    33,  # O_PLACE_UNDER
-    34,  # O_FLAVOR
-    35,  # O_RESTRICTION
-    36,  # O_BATON_TOUCH_MOD
-    37,  # O_SET_SCORE
-    38,  # O_SWAP_ZONE
-    39,  # O_TRANSFORM_COLOR
-    40,  # O_REVEAL_CARDS
-    41,  # O_LOOK_AND_CHOOSE
-    42,  # O_CHEER_REVEAL
-    43,  # O_ACTIVATE_MEMBER
-    44,  # O_ADD_TO_HAND
-    45,  # O_COLOR_SELECT
-    46,  # O_REPLACE_EFFECT
-    47,  # O_TRIGGER_REMOTE
-    48,  # O_REDUCE_HEART_REQ
-    49,  # O_MODIFY_SCORE_RULE
-    50,  # O_ADD_STAGE_ENERGY
-    51,  # O_SET_TAPPED
-    52,  # O_ADD_CONTINUOUS
-    53,  # O_TAP_MEMBER
-    57,  # O_PLAY_MEMBER_FROM_HAND
-    58,  # O_MOVE_TO_DISCARD
-    60,  # O_GRANT_ABILITY
-    61,  # O_INCREASE_HEART_COST
-    62,  # O_REDUCE_YELL_COUNT
-    63,  # O_PLAY_MEMBER_FROM_DISCARD
-    64,  # O_PAY_ENERGY
-    65,  # O_SELECT_MEMBER
-    66,  # O_DRAW_UNTIL
-    67,  # O_SELECT_PLAYER
-    68,  # O_SELECT_LIVE
-    69,  # O_REVEAL_UNTIL
-    70,  # O_INCREASE_COST
-    71,  # O_PREVENT_PLAY_TO_SLOT
-    72,  # O_SWAP_AREA
-    73,  # O_TRANSFORM_HEART
-    74,  # O_SELECT_CARDS
-    75,  # O_OPPONENT_CHOOSE
-    76,  # O_PLAY_LIVE_FROM_DISCARD
-    77,  # O_REDUCE_LIVE_SET_LIMIT
-    78,  # O_SET_TARGET_SELF
-    79,  # O_SET_TARGET_OPPONENT
-    80,  # O_PREVENT_SET_TO_SUCCESS_PILE
-    81,  # O_ACTIVATE_ENERGY
-    82,  # O_PREVENT_ACTIVATE
-    83,  # O_SET_HEART_COST
-    90,  # O_PREVENT_BATON_TOUCH
-    # New opcodes for BP05
-    91,  # O_LOOK_DECK_DYNAMIC
-    92,  # O_REDUCE_SCORE
-    93,  # O_REPEAT_ABILITY
-    94,  # O_LOSE_EXCESS_HEARTS
-    95,  # O_SKIP_ACTIVATE_PHASE
-    96,  # O_PAY_ENERGY_DYNAMIC
-    97,  # O_PLACE_ENERGY_UNDER_MEMBER
-    125,  # O_LOOK_REORDER_DISCARD
-    126,  # O_DIV_VALUE
-    106,  # O_CALC_SUM_COST
-}
-
-# Condition opcodes: 200-250 range (original) + 300-399 range (new conditions)
-_VALID_CONDITION_OPS = set(range(200, 250)) | set(range(300, 400))
-
-# Combined: all valid base opcodes
-_ALL_VALID_OPS = _VALID_EFFECT_OPS | _VALID_CONDITION_OPS
+# Combined: all valid base opcodes derived from source metadata
+_ALL_VALID_OPS = set(OPCODES.values()) | set(CONDITIONS.values()) | set(COSTS.values()) | {0, 1} # Ensure basic ops are included
 
 
 def validate_bytecode(bytecode: list, card_no: str, ab_idx: int) -> list:
@@ -459,6 +367,7 @@ if os.path.exists(MANUAL_TRANSLATIONS_EN_PATH):
 
 def compute_flags(card):
     """Replicates Rust flag calculation logic in the Python compiler."""
+    from engine.models.opcodes import Opcode
 
     ability_flags = 0
     semantic_flags = 0
@@ -598,18 +507,25 @@ def compute_flags(card):
 def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
     spec = data.get("special_heart", {})
     translation_en = _manual_translations_en.get(card_no)
-
-    # Use consolidated ability mapping
+    # Ensure we use pseudocode
     raw_jp = str(data.get("ability", ""))
+    raw_ability = ""
+    found_pseudocode = False
+    
     if raw_jp in _consolidated_abilities:
         entry = _consolidated_abilities[raw_jp]
-        if isinstance(entry, dict):
-            raw_ability = entry.get("pseudocode", raw_jp)
-        else:
-            raw_ability = entry # Fallback to old flat format
+        raw_ability = entry.get("pseudocode") if isinstance(entry, dict) else entry
+        found_pseudocode = True
+    elif "pseudocode" in data:
+        raw_ability = str(data.get("pseudocode", ""))
+        found_pseudocode = True
+
+    # Validation: If ability exists but no pseudocode found
+    if raw_jp and not found_pseudocode:
+        _bytecode_compile_errors.append(f"[MEMBER] {card_no}: Missing pseudocode for ability: {raw_jp[:50]}...")
+        abilities = []
     else:
-        raw_ability = str(data.get("pseudocode", raw_jp))
-    abilities = _v2_parser.parse(raw_ability)
+        abilities = _v2_parser.parse(raw_ability)
 
     # --- GRANT_ABILITY FLATTENING ---
     extra_abilities = []
@@ -668,17 +584,25 @@ def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
     spec = data.get("special_heart", {})
     translation_en = _manual_translations_en.get(card_no)
 
-    # Use consolidated ability mapping
+    # Ensure we use pseudocode
     raw_jp = str(data.get("ability", ""))
+    raw_ability = ""
+    found_pseudocode = False
+    
     if raw_jp in _consolidated_abilities:
         entry = _consolidated_abilities[raw_jp]
-        if isinstance(entry, dict):
-            raw_ability = entry.get("pseudocode", raw_jp)
-        else:
-            raw_ability = entry # Fallback to old flat format
+        raw_ability = entry.get("pseudocode") if isinstance(entry, dict) else entry
+        found_pseudocode = True
+    elif "pseudocode" in data:
+        raw_ability = str(data.get("pseudocode", ""))
+        found_pseudocode = True
+
+    # Validation: If ability exists but no pseudocode found
+    if raw_jp and not found_pseudocode:
+        _bytecode_compile_errors.append(f"[LIVE] {card_no}: Missing pseudocode for ability: {raw_jp[:50]}...")
+        abilities = []
     else:
-        raw_ability = str(data.get("pseudocode", raw_jp))
-    abilities = _v2_parser.parse(raw_ability)
+        abilities = _v2_parser.parse(raw_ability)
 
     # --- GRANT_ABILITY FLATTENING ---
     extra_abilities = []
@@ -787,14 +711,68 @@ def parse_live_reqs(req_dict: dict) -> np.ndarray:
     return parse_hearts(req_dict)
 
 
+import hashlib
+
+def calculate_hash(path):
+    if not os.path.exists(path):
+        return None
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+def load_json(path):
+    """Safely load a JSON file with UTF-8 encoding."""
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+def check_parity(input_path, output_path):
+    print(f"Checking parity between {input_path} and {output_path}...")
+    compiled_data = load_json(output_path)
+    if not compiled_data:
+        print("Error: Compiled data not found.")
+        return False
+    
+    # Check if meta contains the source hash
+    stored_hash = compiled_data.get("meta", {}).get("source_hash")
+    current_hash = calculate_hash(input_path)
+    
+    if stored_hash == current_hash:
+        print("SUCCESS: Parity check passed. Compiled data is up to date.")
+        return True
+    else:
+        print("WARNING: Parity check FAILED. Source file has changed since last compilation.")
+        print(f"Stored:  {stored_hash}")
+        print(f"Current: {current_hash}")
+        return False
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", default="data/cards.json", help="Path to raw cards.json")
     parser.add_argument("--output", default="data/cards_compiled.json", help="Output path")
+    parser.add_argument("--check", action="store_true", help="Only check parity and exit")
     args = parser.parse_args()
 
-    # Resolve paths relative to cwd if needed, or assume running from root
+    if args.check:
+        if check_parity(args.input, args.output):
+            sys.exit(0)
+        else:
+            sys.exit(1)
+
     compile_cards(args.input, args.output)
+    
+    # Update hash in the output file
+    print("Updating source hash in compiled file...")
+    compiled_data = load_json(args.output)
+    if compiled_data:
+        if "meta" not in compiled_data:
+            compiled_data["meta"] = {}
+        compiled_data["meta"]["source_hash"] = calculate_hash(args.input)
+        with open(args.output, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(compiled_data, f, ensure_ascii=False, indent=2)
 
     # Copy to both data/ and engine/data/ for compatibility with all scripts
     import shutil

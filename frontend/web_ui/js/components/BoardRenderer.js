@@ -22,8 +22,14 @@ export const BoardRenderer = {
     renderDeckCounts: (p0, p1) => {
         const updateCount = (id, count) => {
             const el = document.getElementById(id);
-            if (el) el.textContent = count !== undefined ? count : 0;
+            if (el) {
+                el.textContent = count !== undefined ? count : 0;
+            } else {
+                console.warn('[BoardRenderer] Element not found:', id);
+            }
         };
+
+        console.log('[BoardRenderer] renderDeckCounts - p0.hand:', p0?.hand, 'p0.energy:', p0?.energy);
 
         updateCount('my-deck-count', p0.deck_count);
         updateCount('opp-deck-count', p1.deck_count);
@@ -31,6 +37,12 @@ export const BoardRenderer = {
         updateCount('opp-energy-deck-count', p1.energy_deck_count);
         updateCount('my-discard-count', p0.discard ? p0.discard.length : 0);
         updateCount('opp-discard-count', p1.discard ? p1.discard.length : 0);
+
+        // Update hand and energy counts
+        updateCount('my-hand-count', p0.hand ? p0.hand.length : 0);
+        updateCount('my-energy-count', p0.energy ? p0.energy.length : 0);
+        updateCount('opp-hand-count', p1.hand ? p1.hand.length : 0);
+        updateCount('opp-energy-count', p1.energy ? p1.energy.length : 0);
     },
 
     renderEnergy: (containerId, energy, clickable = false, validActionMap = {}, hasGlobalSelection = false, state = null) => {

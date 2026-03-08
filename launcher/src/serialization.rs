@@ -1,53 +1,15 @@
-use serde_json::{json, Value};
 use engine_rust::core::logic::{GameState, PlayerState, CardDatabase, card_db};
 use engine_rust::core::logic::*;
+use engine_rust::core::enums;
 use std::collections::HashMap;
+use serde_json::{json, Value};
 
 pub fn get_group_name(id: u8, lang: &str) -> &'static str {
-    if lang == "jp" {
-        match id {
-            0 => "μ's",
-            1 => "Aqours",
-            2 => "虹ヶ咲",
-            3 => "Liella!",
-            4 => "蓮ノ空",
-            _ => "他"
-        }
-    } else {
-        match id {
-            0 => "μ's",
-            1 => "Aqours",
-            2 => "Nijigasaki",
-            3 => "Liella!",
-            4 => "Hasunosora",
-            _ => "Other"
-        }
-    }
+    enums::get_group_name(id, lang)
 }
 
 pub fn get_unit_name(id: u8, lang: &str) -> &'static str {
-    if lang == "jp" {
-        match id {
-            0 => "Printemps", 1 => "lily white", 2 => "BiBi",
-            3 => "CYaRon!", 4 => "AZALEA", 5 => "Guilty Kiss",
-            6 => "DiverDiva", 7 => "A・ZU・NA", 8 => "QU4RTZ", 9 => "R3BIRTH",
-            10 => "CatChu!", 11 => "Kaleidoscore", 12 => "5yncri5e!",
-            13 => "スリーズブーケ",
-            14 => "DOLLCHESTRA", 15 => "みらくらぱーく",
-            16 => "Edel Note",
-            _ => "ユニット"
-        }
-    } else {
-        match id {
-            0 => "Printemps", 1 => "lily white", 2 => "BiBi",
-            3 => "CYaRon!", 4 => "AZALEA", 5 => "Guilty Kiss",
-            6 => "DiverDiva", 7 => "A・ZU・NA", 8 => "QU4RTZ", 9 => "R3BIRTH",
-            10 => "CatChu!", 11 => "Kaleidoscore", 12 => "5yncri5e!",
-            13 => "Cerise Bouquet", 14 => "DOLLCHESTRA", 15 => "Mira-Cra-Park",
-            16 => "Edel Note",
-            _ => "Unit"
-        }
-    }
+    enums::get_unit_name(id, lang)
 }
 
 pub fn get_filter_description(filter_attr: u64, lang: &str) -> String {
@@ -576,14 +538,23 @@ pub fn get_action_desc_rich(
              if gs.phase == Phase::LiveResult {
                  name = if lang == "jp" { format!("第{}枠を選択", choice_idx + 1) } else { format!("Select Slot {}", choice_idx + 1) };
              } else if opcode == O_SELECT_MODE {
-                  let member = if card_id >= 0 { db.get_member(card_id) } else { None };
-                  let ab = member.and_then(|m| m.abilities.get(ab_idx as usize));
+                   let member = if card_id >= 0 { db.get_member(card_id) } else { None };
+                   let live = if member.is_none() && card_id >= 0 { db.get_live(card_id) } else { None };
+                   
+                   let ab = if let Some(m) = member {
+                       m.abilities.get(ab_idx as usize)
+                   } else if let Some(l) = live {
+                       l.abilities.get(ab_idx as usize)
+                   } else {
+                       None
+                   };
+
                    if let Some(ab) = ab {
                        if let Some(arr) = ab.modal_options.as_array() {
                            if !arr.is_empty() {
                                if let Some(opt) = arr.get(choice_idx) {
                                    if let Some(s) = opt.as_str() {
-                                       let source_name = member.map(|m| m.name.clone()).unwrap_or_default();
+                                       let source_name = if let Some(m) = member { m.name.clone() } else if let Some(l) = live { l.name.clone() } else { String::new() };
                                        if !source_name.is_empty() {
                                            name = if lang == "jp" { format!("{} ({})", s, source_name) } else { format!("{} ({})", s, source_name) };
                                        } else {
@@ -597,40 +568,84 @@ pub fn get_action_desc_rich(
                             let instr_ip = pending.map(|p| p.ctx.program_counter).unwrap_or(0) as usize;
                             if instr_ip + 5 + (choice_idx * 5) + 1 < ab.bytecode.len() {
                                 // For SELECT_MODE, Choice i is followed by an O_JUMP instruction at instr_ip + 5 + i*5
-                                let jump_instr_ip = instr_ip + 5 + (choice_idx * 5);
-                                if jump_instr_ip + 1 < ab.bytecode.len() {
+                                let mut jump_instr_ip = instr_ip + 5 + (choice_idx * 5);
+                                
+                                // Recursive Jump Following (Safety Limit: 5)
+                                for _ in 0..5 {
+                                    if jump_instr_ip + 1 >= ab.bytecode.len() { break; }
                                     let jump_op = ab.bytecode[jump_instr_ip];
                                     if jump_op == engine_rust::core::generated_constants::O_JUMP {
                                         let jump_val = ab.bytecode[jump_instr_ip + 1] as usize;
-                                        // The target is jump_instr_ip + 1 (chunk) + jump_val chunks
+                                        // The target is jump_instr_ip + 5 (chunk) + jump_val chunks
                                         let target_instr_ip = jump_instr_ip + 5 + (jump_val * 5);
-
                                         if target_instr_ip + 1 < ab.bytecode.len() {
                                             let op = ab.bytecode[target_instr_ip] as i32;
                                             let val = ab.bytecode[target_instr_ip + 1];
+                                            
+                                            // Handle various opcodes
                                             match op {
-                                                O_PAY_ENERGY => {
+                                                O_PAY_ENERGY | O_PAY_ENERGY_DYNAMIC => {
                                                     name = if lang == "jp" {
                                                         format!("{{{{icon_energy.png|E}}}}{}支払う", val)
                                                     } else {
                                                         format!("Pay {}{{{{icon_energy.png|E}}}}", val)
                                                     };
+                                                    break;
                                                 },
                                                 O_MOVE_TO_DISCARD => {
-                                                    let slot = ab.bytecode[target_instr_ip + 4]; // Slot is index 4 in 5-word format
+                                                    let slot = ab.bytecode[target_instr_ip + 4];
                                                     if slot == engine_rust::core::enums::TargetType::CardHand as i32 {
                                                         name = if lang == "jp" { format!("手札を{}枚捨てる", val) } else { format!("Discard {} Hand", val) };
                                                     } else {
                                                         name = if lang == "jp" { format!("{}枚捨てる", val) } else { format!("Discard {}", val) };
                                                     }
+                                                    break;
                                                 },
                                                 O_DRAW => {
                                                     name = if lang == "jp" { format!("{{{{icon_draw.png|D}}}}{}枚引く", val) } else { format!("Draw {}{{{{icon_draw.png|D}}}}", val) };
+                                                    break;
                                                 },
-                                                _ => {}
+                                                O_ADD_BLADES => {
+                                                    name = if lang == "jp" { format!("ボルテージ+{}", val) } else { format!("Voltage+{}", val) };
+                                                    break;
+                                                },
+                                                O_ADD_HEARTS => {
+                                                    name = if lang == "jp" { format!("ピース+{}", val) } else { format!("Hearts+{}", val) };
+                                                    break;
+                                                },
+                                                O_TAP_MEMBER => {
+                                                    name = if lang == "jp" { "メンバーをタップ".into() } else { "Tap Member".into() };
+                                                    break;
+                                                },
+                                                O_TAP_OPPONENT => {
+                                                    name = if lang == "jp" { "相手をタップ".into() } else { "Tap Opponent".into() };
+                                                    break;
+                                                },
+                                                O_ACTIVATE_MEMBER => {
+                                                    name = if lang == "jp" { "アピールにする".into() } else { "Untap/Ready".into() };
+                                                    break;
+                                                },
+                                                O_BOOST_SCORE => {
+                                                    name = if lang == "jp" { format!("ブースト+{}", val) } else { format!("Boost+{}", val) };
+                                                    break;
+                                                },
+                                                O_RECOVER_MEMBER | O_RECOVER_LIVE => {
+                                                    name = if lang == "jp" { "回収".into() } else { "Recover".into() };
+                                                    break;
+                                                },
+                                                O_SEARCH_DECK | O_LOOK_DECK => {
+                                                    name = if lang == "jp" { "デッキを見る".into() } else { "Look at Deck".into() };
+                                                    break;
+                                                },
+                                                O_JUMP => {
+                                                    // Follow nested jump
+                                                    jump_instr_ip = target_instr_ip;
+                                                    continue;
+                                                }
+                                                _ => { break; }
                                             }
-                                        }
-                                    }
+                                        } else { break; }
+                                    } else { break; }
                                 }
                             }
                         }
@@ -1120,6 +1135,16 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool) -> Value {
                 obj_map.insert("ability_flags".to_string(), json!(m.ability_flags));
                 obj_map.insert("synergy_flags".to_string(), json!(m.synergy_flags));
                 obj_map.insert("cost_flags".to_string(), json!(m.cost_flags));
+                
+                // Metadata Enrichments
+                obj_map.insert("char_id".to_string(), json!(m.char_id));
+                obj_map.insert("groups".to_string(), json!(m.groups));
+                obj_map.insert("units".to_string(), json!(m.units));
+                
+                let group_names: Vec<&str> = m.groups.iter().map(|&g| get_group_name(g, "en")).collect();
+                let unit_names: Vec<&str> = m.units.iter().map(|&u| get_unit_name(u, "en")).collect();
+                obj_map.insert("group_names".to_string(), json!(group_names));
+                obj_map.insert("unit_names".to_string(), json!(unit_names));
                     
                 let abilities: Vec<Value> = m.abilities.iter().map(|ab| {
                     let mut ab_val = serde_json::to_value(ab).unwrap();
@@ -1140,6 +1165,15 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool) -> Value {
                 obj_map.insert("blade_hearts".to_string(), json!(l.blade_hearts));
                 obj_map.insert("semantic_flags".to_string(), json!(l.semantic_flags));
                 obj_map.insert("synergy_flags".to_string(), json!(l.synergy_flags));
+                
+                // Metadata Enrichments
+                obj_map.insert("groups".to_string(), json!(l.groups));
+                obj_map.insert("units".to_string(), json!(l.units));
+                
+                let group_names: Vec<&str> = l.groups.iter().map(|&g| get_group_name(g, "en")).collect();
+                let unit_names: Vec<&str> = l.units.iter().map(|&u| get_unit_name(u, "en")).collect();
+                obj_map.insert("group_names".to_string(), json!(group_names));
+                obj_map.insert("unit_names".to_string(), json!(unit_names));
                     
                 let abilities: Vec<Value> = l.abilities.iter().map(|ab| {
                     let mut ab_val = serde_json::to_value(ab).unwrap();
@@ -1730,7 +1764,7 @@ mod tests {
         gs.phase = Phase::Response;
 
         let mut base_pending = PendingInteraction {
-             card_id: 2, // Source is Umi
+             card_id: 17, // Rin #17 has SELECT_MODE
              ability_index: 0,
              ctx: AbilityContext { player_id: 0, ..Default::default() },
              ..Default::default()

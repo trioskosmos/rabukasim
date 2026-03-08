@@ -314,8 +314,15 @@ export class WasmAdapter {
         // Stage Ability (Simple & Choice)
         if (id >= ActionBases.STAGE && id < ActionBases.DISCARD_ACTIVATE) {
             // This range covers both STAGE and STAGE_CHOICE in the engine's current logic
-            const adj = id - ActionBases.STAGE;
-            const slotIdx = Math.floor(adj / 100);
+            // Fix: Handle STAGE_CHOICE range separately since the offset is different
+            let adj, slotIdx;
+            if (id >= ActionBases.STAGE_CHOICE) {
+                adj = id - ActionBases.STAGE_CHOICE;
+                slotIdx = Math.floor(adj / 100);
+            } else {
+                adj = id - ActionBases.STAGE;
+                slotIdx = Math.floor(adj / 100);
+            }
             const abIdx = Math.floor((adj % 100) / 10);
             const cardId = p.stage[slotIdx];
             const card = this.getCard(cardId);

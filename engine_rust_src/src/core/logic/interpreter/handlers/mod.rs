@@ -52,7 +52,9 @@ impl HandlerRegistry {
         let v = instr.v;
         let a = instr.a;
         let s = instr.raw_s;
-        println!("[DEBUG] DISPATCH: op={} v={} a={} s={}", op, v, a, s);
+        if !state.ui.silent {
+            println!("[DEBUG] DISPATCH: op={} v={} a={} s={}", op, v, a, s);
+        }
         // Centralized Dispatch Match
         match op {
             O_SELECT_MODE => handle_select_mode(state, db, ctx, instr, instr_ip, bytecode),
@@ -163,36 +165,42 @@ pub fn handle_select_mode(
     use super::suspension::{get_choice_text, suspend_interaction};
     let v = instr.v;
     if ctx.choice_index == -1 {
-        let is_opponent = instr.s.is_opponent || instr.s.target_slot == 2;
-        let choice_type = if is_opponent {
-            crate::core::enums::ChoiceType::OpponentChoose
+        // nit: Auto-pick shortcut for single-option mandatory choices (e.g. Q55 discard)
+        if ctx.auto_pick && v == 1 {
+            ctx.choice_index = 0;
+            // fall through to choice resolution below
         } else {
-            crate::core::enums::ChoiceType::SelectMode
-        };
-        let choice_text = get_choice_text(db, ctx);
+            let is_opponent = instr.s.is_opponent || instr.s.target_slot == 2;
+            let choice_type = if is_opponent {
+                crate::core::enums::ChoiceType::OpponentChoose
+            } else {
+                crate::core::enums::ChoiceType::SelectMode
+            };
+            let choice_text = get_choice_text(db, ctx);
 
-        let mut flip_ctx = ctx.clone();
-        if is_opponent {
-            flip_ctx.player_id = 1 - (ctx.player_id as u8);
+            let mut flip_ctx = ctx.clone();
+            if is_opponent {
+                flip_ctx.player_id = 1 - (ctx.player_id as u8);
+            }
+
+            let suspended = suspend_interaction(
+                state,
+                db,
+                if is_opponent { &flip_ctx } else { ctx },
+                instr_ip,
+                crate::core::enums::O_SELECT_MODE,
+                0,
+                choice_type,
+                &choice_text,
+                0,
+                v as i16,
+            );
+
+            if suspended {
+                return HandlerResult::Suspend;
+            }
+            return HandlerResult::Branch(instr_ip + 5);
         }
-
-        let suspended = suspend_interaction(
-            state,
-            db,
-            if is_opponent { &flip_ctx } else { ctx },
-            instr_ip,
-            crate::core::enums::O_SELECT_MODE,
-            0,
-            choice_type,
-            &choice_text,
-            0,
-            v as i16,
-        );
-
-        if suspended {
-            return HandlerResult::Suspend;
-        }
-        return HandlerResult::Branch(instr_ip + 5);
     }
 
     let choice = ctx.choice_index as usize;

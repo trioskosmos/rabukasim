@@ -32,14 +32,14 @@ extension-module = ["dep:pyo3", "dep:numpy", "pyo3/extension-module"]
 parallel = ["dep:rayon"]
 nn = ["dep:ort"]
 gpu = []
-default = ["parallel", "extension-module"]
+default = ["parallel"]
 
 [profile.dev]
-opt-level = 2  # Keep host code fast enough even in debug
+opt-level = 2
 
 [profile.release]
-lto = false          # LTO is extremely slow, disabling for dev cycle
-codegen-units = 256  # Parallelize codegen for speed
+lto = false
+codegen-units = 256
 panic = 'abort'
 opt-level = 3
 

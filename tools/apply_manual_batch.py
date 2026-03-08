@@ -15,52 +15,47 @@ def normalize(text):
 
 def apply_mappings(mappings):
     raw_path = "unique_abilities_for_mapping.json"
-    override_path = "data/manual_pseudocode.json"
+    consolidated_path = "data/consolidated_abilities.json"
 
     if not os.path.exists(raw_path):
         print(f"Error: {raw_path} not found.")
         return
 
-    with open(raw_path, r"r", encoding="utf-8") as f:
+    with open(raw_path, "r", encoding="utf-8") as f:
         unique_map = json.load(f)
 
-    overrides = {}
-    if os.path.exists(override_path):
-        with open(override_path, r"r", encoding="utf-8") as f:
-            overrides = json.load(f)
+    consolidated = {}
+    if os.path.exists(consolidated_path):
+        with open(consolidated_path, "r", encoding="utf-8") as f:
+            consolidated = json.load(f)
 
     count = 0
-    norm_unique_map = {normalize(k): k for k in unique_map.keys()}
+    norm_consolidated_map = {normalize(k): k for k in consolidated.keys()}
 
     for jp_text, pcode in mappings.items():
         n_jp = normalize(jp_text)
-        found = False
-        # 1. Exact Normal Match
-        if n_jp in norm_unique_map:
-            original_key = norm_unique_map[n_jp]
-            for card_no in unique_map[original_key]:
-                overrides[card_no] = {"pseudocode": pcode}
-                count += 1
-            found = True
+        
+        # In the new consolidated system, we map JP text directly to pseudocode
+        if jp_text in consolidated:
+            consolidated[jp_text]["pseudocode"] = pcode
+            count += 1
+        elif n_jp in norm_consolidated_map:
+            original_key = norm_consolidated_map[n_jp]
+            consolidated[original_key]["pseudocode"] = pcode
+            count += 1
         else:
-            # 2. Substring Normal Match
-            for n_k, original_key in norm_unique_map.items():
-                if n_jp in n_k or n_k in n_jp:
-                    for card_no in unique_map[original_key]:
-                        if card_no not in overrides:
-                            overrides[card_no] = {"pseudocode": pcode}
-                            count += 1
-                    found = True
+            # Fallback for new abilities
+            print(f"DEBUG: No entry found in consolidated_abilities for: [{jp_text}]. Adding new entry.")
+            consolidated[jp_text] = {
+                "pseudocode": pcode,
+                "cards": [] # Unknown which cards this belongs to without more context
+            }
+            count += 1
 
-        if not found:
-            # Debug: Print normalized version of first 3 unique keys to see what we are dealing with
-            print(f"DEBUG: No match found for: [{n_jp}]")
-            print(f"DEBUG: First 3 available keys: {list(norm_unique_map.keys())[:3]}")
+    with open(consolidated_path, "w", encoding="utf-8") as f:
+        json.dump(consolidated, f, ensure_ascii=False, indent=2)
 
-    with open(override_path, "w", encoding="utf-8") as f:
-        json.dump(overrides, f, ensure_ascii=False, indent=2)
-
-    print(f"Updated {count} cards in {override_path}")
+    print(f"Updated {count} entries in {consolidated_path}")
 
 
 if __name__ == "__main__":

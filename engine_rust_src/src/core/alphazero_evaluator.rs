@@ -2,6 +2,7 @@
 use crate::core::logic::state::GameState;
 use crate::core::logic::card_db::CardDatabase;
 use crate::core::heuristics::{Heuristic, HeuristicConfig};
+use crate::core::alphazero_encoding::AlphaZeroEncoding;
 
 /// Combined output from the Transformer for a single state.
 #[derive(Debug, Clone)]
@@ -53,7 +54,6 @@ impl AlphaZeroEvaluator for HeuristicBaselineEvaluator {
 
 #[cfg(feature = "extension-module")]
 use pyo3::prelude::*;
-use crate::core::alphazero_encoding::AlphaZeroEncoding;
 
 #[cfg(feature = "extension-module")]
 pub struct PyAlphaZeroEvaluator {

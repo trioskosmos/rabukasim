@@ -1,8 +1,7 @@
-/* --- Unified Log Styles --- */
 .log-section {
-    margin-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 6px;
+    margin-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: var(--space-xs);
 }
 
 .log-section:last-child {
@@ -13,10 +12,10 @@
     font-weight: bold;
     font-size: 0.85rem;
     color: var(--accent-gold);
-    padding: 4px 6px;
+    padding: var(--space-xs) var(--space-sm);
     background: rgba(245, 158, 11, 0.1);
-    border-radius: 4px;
-    margin-bottom: 4px;
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-xs);
 }
 
 .active-effects-section .log-section-header {
@@ -128,10 +127,10 @@
 
 /* --- Filter Controls --- */
 .log-filter-controls {
-    padding: 6px 8px;
+    padding: var(--space-sm) var(--space-md);
     background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-    margin-bottom: 8px;
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-sm);
 }
 
 .filter-row {

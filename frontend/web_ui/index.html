@@ -20,16 +20,14 @@
     <div id="floating-tooltip" class="floating-tooltip" style="display: none;"></div>
 
     <!-- Permanent Debug Overlay (Phase 4) -->
-    <div id="debug-overlay"
-        style="position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.8); color: #00ff00; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 10px; z-index: 9999; border: 1px solid #00ff00; pointer-events: none;">
+    <div id="debug-overlay" class="debug-overlay">
         <div>ROOM: <span id="debug-room">---</span></div>
         <div>SESS: <span id="debug-session">---</span></div>
         <div>VIEW: <span id="debug-view">---</span></div>
         <div>POLL: <span id="debug-poll">0</span></div>
         <div>DLAY: <span id="debug-delay">---</span></div>
         <div>SYNC: <span id="debug-sync" style="font-weight:bold;">???</span></div>
-        <div id="debug-error-panel"
-            style="color: #ff5555; display: none; margin-top: 4px; border-top: 1px solid #444; padding-top: 4px;">ERR:
+        <div id="debug-error-panel" class="debug-error-panel" style="display: none;">ERR:
             <span id="debug-error-msg"></span>
         </div>
     </div>
@@ -106,8 +104,7 @@
             </div>
         </div>
 
-        <div class="replay-controls" id="replay-controls"
-            style="display:none; flex-wrap:wrap; gap:8px; padding:4px; background:rgba(0,0,0,0.3); border-radius:6px; margin-top:4px; align-items:center; width:100%; justify-content: center;">
+        <div class="replay-controls" id="replay-controls" style="display: none;">
             <button class="btn" onclick="document.getElementById('replay-file-input').click()"
                 style="font-size:0.8rem; padding:2px 8px;">Open</button>
             <input type="file" id="replay-file-input" accept=".json" style="display:none"
@@ -165,19 +162,17 @@
         <!-- CENTER GAME BOARD -->
         <div class="game-board">
             <!-- Board Toggle (Tabbed View) -->
-            <div class="board-toggle"
-                style="display: flex; gap: 4px; padding: 4px; background: rgba(0,0,0,0.3); border-radius: 6px 6px 0 0; margin-bottom: 0;">
-                <button class="btn active" id="btn-show-player" onclick="UI.switchBoard('player')"
-                    style="flex: 1; font-size: 0.8rem; padding: 4px;">My Board (Player 1)</button>
-                <button class="btn" id="btn-show-opponent" onclick="UI.switchBoard('opponent')"
-                    style="flex: 1; font-size: 0.8rem; padding: 4px;">Opponent (Player 2)</button>
+            <div class="board-toggle">
+                <button class="btn btn-toggle active" id="btn-show-player" onclick="UI.switchBoard('player')">My Board
+                    (Player 1)</button>
+                <button class="btn btn-toggle" id="btn-show-opponent" onclick="UI.switchBoard('opponent')">Opponent
+                    (Player 2)</button>
             </div>
 
             <!-- OPPONENT SECTION -->
             <div class="player-section opponent" id="board-opponent" style="display: none;">
                 <div class="player-label">
-                    <span>対戦相手 <span id="opp-agent-name"
-                            style="font-size:0.8rem; opacity:0.6; font-weight:normal;">(Player 2)</span></span>
+                    <span>対戦相手 <span id="opp-agent-name" class="player-subtext">(Player 2)</span></span>
                     <span class="score-badge" id="opp-score">0 ライブ</span>
                 </div>
                 <div class="board-inner">
@@ -231,8 +226,7 @@
             <!-- PLAYER SECTION -->
             <div class="player-section" id="board-player">
                 <div class="player-label">
-                    <span>あなた <span id="my-agent-name"
-                            style="font-size:0.8rem; opacity:0.6; font-weight:normal;">(Player 1)</span></span>
+                    <span>あなた <span id="my-agent-name" class="player-subtext">(Player 1)</span></span>
                     <span class="score-badge" id="my-score">0 ライブ</span>
                 </div>
                 <div class="board-inner">
@@ -343,7 +337,7 @@
     </div>
 
     <!-- Settings Modal -->
-    <div id="settings-modal" class="modal-overlay" style="z-index: 2000; display: none;">
+    <div id="settings-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
                 <span class="modal-title"><span data-i18n="settings">設定</span></span>
@@ -842,13 +836,16 @@
                         <button class="btn btn-secondary btn-xs" onclick="DebugModal.renderMinimalJSON()">Minimal Board
                             (IDs only)</button>
                         <button class="btn btn-secondary btn-xs" onclick="renderFullJSON()">Full State</button>
-                        <button class="btn btn-ai btn-xs" onclick="DebugModal.runModelAnalysis()">Analyze with Model</button>
+                        <button class="btn btn-ai btn-xs" onclick="DebugModal.runModelAnalysis()">Analyze with
+                            Model</button>
                     </div>
                     <div id="debug-json-content" style="flex: 1; display: flex; flex-direction: column;">
                         <textarea id="debug-json-textarea" spellcheck="false"
                             style="flex: 1; width: 100%; height: 100%; background: #1a2332; color: #fff; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: monospace; font-size: 13px; resize: none;"></textarea>
                     </div>
-                    <div id="debug-analysis-results" style="margin-top: 10px; max-height: 200px; overflow-y: auto; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid #444; display: none;"></div>
+                    <div id="debug-analysis-results"
+                        style="margin-top: 10px; max-height: 200px; overflow-y: auto; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid #444; display: none;">
+                    </div>
                 </div>
 
                 <div id="debug-string-content" class="debug-tab-content"

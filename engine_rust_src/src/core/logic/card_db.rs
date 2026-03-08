@@ -654,7 +654,7 @@ pub fn bytecode_needs_early_pause_opcode(bytecode: &[i32]) -> i32 {
         .unwrap_or(-1)
 }
 
-pub const CHARACTER_NAMES: [&str; 70] = [
+pub const CHARACTER_NAMES: [&str; 78] = [
     "", // 0
     "高坂穂乃果",
     "絢瀬絵里",
@@ -725,6 +725,14 @@ pub const CHARACTER_NAMES: [&str; 70] = [
     "百生吟子",
     "徒町小鈴",
     "安養寺姫芽", // 66-69
+    "", // 70
+    "綺羅ツバサ",
+    "統堂英玲奈",
+    "優木あんじゅ",
+    "聖澤悠奈",
+    "柊摩央",
+    "鹿角聖良",
+    "鹿角理亞", // 71-77
 ];
 
 pub fn get_character_name(id: u8) -> &'static str {
@@ -743,6 +751,8 @@ pub fn get_trigger_label(trigger: TriggerType) -> &'static str {
         TriggerType::OnLeaves => "【退場】",
         TriggerType::OnReveal => "【公開】",
         TriggerType::OnPositionChange => "【移動】",
+        TriggerType::OnAbilityResolve => "【解決】",
+        TriggerType::OnAbilitySuccess => "【成功】",
         TriggerType::None => "",
     }
 }

@@ -74,12 +74,9 @@
     ]
   },
   "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分がエールしたとき、エールにより公開された自分のカードが持つブレードハートの中に[桃ブレード]、[赤ブレード]、[黄ブレード]、[緑ブレード]、[青ブレード]、[紫ブレード]、{{icon_b_all.png|ALLブレード}}のうち、3種類以上ある場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。6種類以上ある場合、さらにライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。": {
-    "pseudocode": "TRIGGER: ON_REVEAL (Once per turn)\nCONDITION: YELL_REVEALED_UNIQUE_COLORS {MIN=3}\nEFFECT: ADD_HEARTS(1) {HEART_TYPE=1, DURATION=\"UNTIL_LIVE_END\"}\n\nTRIGGER: ON_REVEAL (Once per turn)\nCONDITION: YELL_REVEALED_UNIQUE_COLORS {MIN=6}\nEFFECT: GRANT_ABILITY(SELF, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\") {DURATION=\"UNTIL_LIVE_END\"}",
-    "cards": [
-      "PL!N-bp5-001-AR",
-      "PL!N-bp5-001-P",
-      "PL!N-bp5-001-R＋",
-      "PL!N-bp5-001-SEC"
+    "pseudocode": "TRIGGER: ON_REVEAL (Once per turn)\nCONDITION: COUNT_BLADE_HEART_TYPES(3) {FROM=REVEAL_ZONE}\nEFFECT: ADD_HEARTS(1) {HEART_TYPE=1, DURATION=\"UNTIL_LIVE_END\"}\nCONDITION: COUNT_BLADE_HEART_TYPES(6) {FROM=REVEAL_ZONE}\nEFFECT: GRANT_ABILITY(SELF) {TRIGGER=\"CONSTANT\", EFFECT=\"BOOST_SCORE(1)\", DURATION=\"UNTIL_LIVE_END\"}",
+    "ids": [
+      "PL!N-bp5-001-AR"
     ]
   },
   "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分がエールしたとき、ライブ終了時まで、エールにより公開された自分のカードの中のライブカード1枚につき、{{heart_02.png|heart02}}を得る。この能力では{{heart_02.png|heart02}}は3つまでしか得られない。": {
@@ -211,7 +208,7 @@
     ]
   },
   "{{jidou.png|自動}}自分のステージにいるメンバーの{{live_start.png|ライブ開始時}}能力が解決するたび、そのメンバーが{{icon_all.png|ハート}}を持たない場合、ライブ終了時まで、そのメンバーは{{icon_all.png|ハート}}を得る。\n{{jidou.png|自動}}自分のステージにいるメンバーの{{live_success.png|ライブ成功時}}能力が解決するたび、カードを1枚引く。": {
-    "pseudocode": "TRIGGER: ON_ABILITY_RESOLVE {TYPE=\"ON_LIVE_START\"}\nCONDITION: TARGET_MEMBER_HAS_NO_HEARTS\nEFFECT: ADD_HEARTS(1) {HEART_TYPE=6}\n\nTRIGGER: ON_ABILITY_RESOLVE {TYPE=\"ON_LIVE_SUCCESS\"}\nEFFECT: DRAW(1)",
+    "pseudocode": "TRIGGER: ON_ABILITY_RESOLVE {TYPE=\"ON_LIVE_START\"}\nCONDITION: TARGET_MEMBER_HAS_NO_HEARTS\nEFFECT: ADD_HEARTS(1) {HEART_TYPE=6} -> TARGET\n\nTRIGGER: ON_ABILITY_RESOLVE {TYPE=\"ON_LIVE_SUCCESS\"}\nEFFECT: DRAW(1)",
     "cards": [
       "PL!N-bp5-030-L"
     ]
@@ -303,8 +300,8 @@
     ]
   },
   "{{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。\n{{live_start.png|ライブ開始時}}手札の『蓮ノ空』のメンバーカードを3枚まで控え室に置いてもよい：ライブ終了時まで、自分のステージのメンバー1人は、これにより控え室に置いたカード1枚につき、{{icon_blade.png|ブレード}}を得る。": {
-    "pseudocode": "TRIGGER: CONSTANT\nEFFECT: TREAT_AS_UNIT(\"スリーズブーケ, DOLLCHESTRA, みらくらぱーく！\") -> SELF\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(ANY, target_count=3) {FILTER=\"GROUP_ID=4, TYPE_MEMBER\"} (Optional)\nEFFECT: SELECT_MEMBER(1) -> TARGET; ADD_BLADES(1) -> TARGET {PER_CARD=\"DISCARDED_THIS\"}",
-    "cards": [
+    "pseudocode": "TRIGGER: CONSTANT\nEFFECT: META_RULE(7) {GROUPS=[13, 14, 15]}\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(3) {FILTER=\"GROUP_ID=4\"} (Optional) -> DISCARDED_COUNT\nEFFECT: SELECT_MEMBER(1) -> TARGET; ADD_BLADES(1) {MULTIPLIER=DISCARDED_COUNT, TARGET=TARGET, DURATION=\"UNTIL_LIVE_END\"}",
+    "ids": [
       "PL!HS-sd1-020-SD"
     ]
   },
@@ -337,7 +334,7 @@
     ]
   },
   "{{jyouji.png|常時}}手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる。\n{{jyouji.png|常時}}このメンバーはバトンタッチで控え室に置けない。\n{{live_start.png|ライブ開始時}}手札の「渡辺曜」と「鬼塚夏美」と「大沢瑠璃乃」を、好きな枚数控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いた枚数1枚につき、{{icon_blade.png|ブレード}}を得る。\n（手札のこのカードもこの効果で控え室に置ける。）": {
-    "pseudocode": "TRIGGER: CONSTANT\nEFFECT: COUNT_HAND(PLAYER) {FILTER=\"NOT_SELF\"} -> COUNT_VAL; REDUCE_COST(COUNT_VAL)\n\nTRIGGER: CONSTANT\nEFFECT: PREVENT_BATON_TOUCH(SELF)\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(VARIABLE) {FILTER=\"NAME_IN=['渡辺曜', '鬼塚夏美', '大沢瑠璃乃']\"} -> DISCARD_COUNT\nEFFECT: CONDITION: VALUE_GT(DISCARD_COUNT, 0); ADD_BLADES(1, PER_CARD=DISCARD_COUNT) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
+    "pseudocode": "TRIGGER: CONSTANT\nEFFECT: REDUCE_COST(1) {PER_CARD=\"HAND\", FILTER=\"NOT_SELF\"} -> SELF\n\nTRIGGER: CONSTANT\nEFFECT: PREVENT_BATON_TOUCH(SELF)\n\nTRIGGER: ON_LIVE_START\nCOST: SELECT_HAND(VARIABLE) {FILTER=\"NAME_IN=['渡辺 曜', '鬼塚 夏美', '大沢 瑠璃乃']\"} (Optional) -> DISCARD_COUNT\nEFFECT: CONDITION: VALUE_GT(DISCARD_COUNT, 0); ADD_BLADES(1, PER_CARD=DISCARD_COUNT) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
     "cards": [
       "LL-bp2-001-R＋"
     ]
@@ -526,7 +523,7 @@
     ]
   },
   "{{jyouji.png|常時}}自分のライブ中のカードが3枚以上あり、その中に『虹ヶ咲』のライブカードを1枚以上含む場合、{{icon_all.png|ハート}}{{icon_all.png|ハート}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室からライブカードを1枚手札に加える。": {
-    "pseudocode": "TRIGGER: CONSTANT\nCONDITION: COUNT_CARDS(ZONE=\"LIVE_SLOTS\", PLAYER) {GE=3}, COUNT_CARDS(ZONE=\"LIVE_SLOTS\", PLAYER, FILTER=\"UNIT_NIJIGASAKI\") {GE=1}\nEFFECT: ADD_HEARTS(2) -> SELF; ADD_BLADES(2) -> SELF\n\nTRIGGER: ACTIVATED (Once per turn)\nCOST: PAY_ENERGY(3)\nEFFECT: SELECT_RECOVER_LIVE(1) -> CARD_HAND",
+    "pseudocode": "TRIGGER: CONSTANT\nCONDITION: COUNT_CARDS(ZONE=\"LIVE_SLOTS\", PLAYER) {GE=3}, COUNT_CARDS_IN_ZONE(PLAYER, ZONE=\"LIVE_SLOTS\", FILTER=\"UNIT_NIJIGASAKI\") {GE=1}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=6} -> SELF; ADD_BLADES(2) -> SELF\n\nTRIGGER: ACTIVATED (Once per turn)\nCOST: PAY_ENERGY(3)\nEFFECT: SELECT_RECOVER_LIVE(1) -> CARD_HAND",
     "cards": [
       "PL!N-bp1-012-P",
       "PL!N-bp1-012-P＋",
@@ -553,7 +550,7 @@
     ]
   },
   "{{jyouji.png|常時}}自分のライブ中のライブカードの必要ハートの中に{{heart_01.png|heart01}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_06.png|heart06}}がそれぞれ1以上含まれるかぎり、{{icon_all.png|ハート}}を得る。": {
-    "pseudocode": "TRIGGER: CONSTANT\nCONDITION: LIVE_HEART_REQUIRED_COLORS {COLORS=[1, 2, 3, 4, 5, 6]}\nEFFECT: ADD_HEARTS(1) {HEART_TYPE=0} -> SELF",
+    "pseudocode": "TRIGGER: CONSTANT\nCONDITION: LIVE_HEART_REQUIRED_COLORS {COLORS=[0, 1, 2, 3, 4, 5]}\nEFFECT: ADD_HEARTS(1) {HEART_TYPE=6} -> SELF",
     "cards": [
       "PL!N-pb1-007-P＋",
       "PL!N-pb1-007-R"
@@ -626,12 +623,9 @@
     ]
   },
   "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：相手のステージにいるコスト10以下のメンバー1人をウェイトにする。この能力を起動するためのコストは自分のステージにいるメンバーの中のグループ名1種類につき、{{icon_energy.png|E}}減る。\n{{jidou.png|自動}}{{turn1.png|ターン1回}}自分がエールしたとき、エールにより公開された自分のカードの中にブレードハートを持たないメンバーカードが3枚以上ある場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。": {
-    "pseudocode": "TRIGGER: ACTIVATED (Once per turn)\nCOST: PAY_ENERGY(4); REDUCE_COST_PER_GROUP(1)\nEFFECT: TAP_OPPONENT(1) {FILTER=\"COST_LE_10\"} -> OPPONENT\n\nTRIGGER: ON_REVEAL (Once per turn)\nCONDITION: YELL_REVEALED {FILTER=\"NOT_BLADE_HEART\", MIN=3}\nEFFECT: ADD_HEARTS(1) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
-    "cards": [
-      "PL!-bp5-004-AR",
-      "PL!-bp5-004-P",
-      "PL!-bp5-004-R＋",
-      "PL!-bp5-004-SEC"
+    "pseudocode": "TRIGGER: ACTIVATED\nCOST: PAY_ENERGY(4) {REDUCTION=COUNT_GROUPS}\nEFFECT: SELECT_MEMBER(1) {FILTER=\"OPPONENT, COST_LE=10\"} -> TARGET; TAP_MEMBER(TARGET)\n\nTRIGGER: ON_REVEAL (Once per turn)\nCONDITION: COUNT_CARDS(3) {FROM=REVEAL_ZONE, FILTER=\"TYPE_MEMBER, NOT_HAS_BLADE_HEART\"}\nEFFECT: ADD_HEARTS(1) {HEART_TYPE=6, DURATION=\"UNTIL_LIVE_END\"}",
+    "ids": [
+      "PL!-bp5-004-AR"
     ]
   },
   "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}、このメンバーをステージから控え室に置く：自分の控え室からコスト15以下の『蓮ノ空』のメンバーカードを1枚、このメンバーがいたエリアに登場させる。": {
@@ -855,12 +849,9 @@
     ]
   },
   "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札にあるメンバーカードを好きな枚数公開する：公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。": {
-    "pseudocode": "TRIGGER: ACTIVATED (Once per turn)\nCOST: SELECT_CARDS(ANY, FROM=\"HAND\") -> TARGETS; SUM_COST(TARGETS) -> TOTAL; CONDITION: IN_VAL(TOTAL, [10,20,30,40,50]); REVEAL_CARDS(TARGETS) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); BOOST_SCORE(1) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
-    "cards": [
-      "PL!SP-bp1-003-P",
-      "PL!SP-bp1-003-P＋",
-      "PL!SP-bp1-003-R＋",
-      "PL!SP-bp1-003-SEC"
+    "pseudocode": "TRIGGER: ACTIVATED (Once per turn)\nCOST: REVEAL_CARDS(ANY) {FROM=HAND, TARGET_TYPE=MEMBER}\nEFFECT: IF(REVEALED_COST_SUM_MATCHES([10,20,30,40,50])) GRANT_ABILITY(SELF) {TRIGGER=\"CONSTANT\", EFFECT=\"BOOST_SCORE(1)\", DURATION=\"UNTIL_LIVE_END\"}",
+    "ids": [
+      "PL!SP-bp1-003-R＋"
     ]
   },
   "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札のメンバーカードを1枚控え室に置く：自分の控え室から、これにより控え室に置いたメンバーカードより、コストの低いメンバーカードを1枚手札に加える。": {
@@ -1127,8 +1118,8 @@
     ]
   },
   "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のステージにコスト9以上の『EdelNote』のメンバーがいる場合、以下から1つを選ぶ。\n・自分の控え室からコスト4以下の『EdelNote』のメンバーカードを1枚、メンバーのいないエリアに登場させる。\n・このカードの必要ハートを{{heart_06.png|heart06}}減らす。": {
-    "pseudocode": "TRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(2) (Optional)\nCONDITION: HAS_MEMBER {FILTER=\"GROUP_ID=4, COST_GE_9\"}\nEFFECT: SELECT_MODE(1) -> PLAYER\n  OPTION: 登場 | EFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER=\"GROUP_ID=4, COST_LE_4\"} -> EMPTY_SLOT\n  OPTION: 必要ハート減少 | EFFECT: REDUCE_HEART_REQ(1) {HEART_TYPE=5} -> SELF",
-    "cards": [
+    "pseudocode": "TRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(2) (Optional)\nCONDITION: HAS_MEMBER(1) {FILTER=\"GROUP_ID=16, COST_GE=9\"}\nEFFECT: SELECT_MODE(1) {OPTIONS=[\"PLAY_FROM_DISCARD\", \"REDUCE_HEART_REQ\"]};\nMODE_1: RECOVER_MEMBER(1) {FILTER=\"GROUP_ID=16, COST_LE=4\", TO=\"STAGE\"};\nMODE_2: REDUCE_HEART_REQ(1) {TARGET=\"SELF\", HEART_TYPE=6}",
+    "ids": [
       "PL!HS-bp5-022-L"
     ]
   },
@@ -1308,8 +1299,8 @@
     ]
   },
   "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる『蓮ノ空』のメンバー1人が元々持つハートをすべて{{heart_01.png|heart01}}にする。\n{{live_start.png|ライブ開始時}}自分のステージに『みらくらぱーく！』のメンバーが3人以上いる場合、このカードのスコアを＋１する。": {
-    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: SELECT_MEMBER(1) {FILTER=\"GROUP_ID=4\"} -> TARGET; TRANSFORM_HEARTS(ALL) -> HEART_TYPE_1 {TARGET=TARGET}\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_STAGE {MIN=3, FILTER=\"Unit='みらくらぱーく！'\"}\nEFFECT: BOOST_SCORE(1) -> SELF",
-    "cards": [
+    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: SELECT_MEMBER(1) {FILTER=\"GROUP_ID=4\"} -> TARGET; TRANSFORM_HEART(TARGET) {TO_HEART=0, DURATION=\"UNTIL_LIVE_END\"}\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_UNIT(15) >= 3\nEFFECT: BOOST_SCORE(1) -> SELF",
+    "ids": [
       "PL!HS-bp5-021-L"
     ]
   },
@@ -1363,12 +1354,9 @@
     ]
   },
   "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_03.png|heart03}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}のうち、1つを選ぶ。ライブ終了時まで、自分のステージにいるこのターンに登場したメンバーのうち、『Aqours』以外のすべてのメンバーは選んだハートを1つ得る。": {
-    "pseudocode": "TRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: HEART_SELECT(1) {CHOICES=[3, 4, 5]} -> CHOICE\nEFFECT: ADD_HEARTS(1) {HEART_TYPE=CHOICE} -> MEMBER {FILTER=\"NOT_GROUP_AQOURS, PLAYED_THIS_TURN\"}",
-    "cards": [
-      "PL!S-bp5-005-AR",
-      "PL!S-bp5-005-P",
-      "PL!S-bp5-005-R＋",
-      "PL!S-bp5-005-SEC"
+    "pseudocode": "TRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(1) (Optional)\nEFFECT: COLOR_SELECT(1) {CHOOSE_AMONG=[3, 4, 5]} -> SELECTED_COLOR\nEFFECT: ADD_HEARTS(1) {TARGET=\"MEMBER_OTHER\", FILTER=\"GROUP_ID!=1, PLAYED_THIS_TURN=TRUE\", HEART_TYPE=SELECTED_COLOR, DURATION=\"UNTIL_LIVE_END\"}",
+    "ids": [
+      "PL!S-bp5-005-R＋"
     ]
   },
   "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。": {
@@ -1467,7 +1455,7 @@
     ]
   },
   "{{live_start.png|ライブ開始時}}相手に何が好き？と聞く。\n回答がチョコミントかストロベリーフレイバーかクッキー＆クリームの場合、自分と相手は手札を1枚控え室に置く。\n回答があなたの場合、自分と相手はカードを1枚引く。\n回答がそれ以外の場合、ライブ終了時まで、自分と相手のステージにいるメンバーは{{icon_blade.png|ブレード}}を得る。": {
-    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: SELECT_OPTION(PLAYER) {OPTIONS=[\"CHOC_STRAW_COOKIE\", \"YOU\", \"OTHER\"]} -> CHOICE;\nCONDITION: VALUE_EQ(CHOICE, \"CHOC_STRAW_COOKIE\"); DISCARD_HAND(1, PLAYER); DISCARD_HAND(1, OPPONENT);\nCONDITION: VALUE_EQ(CHOICE, \"YOU\"); DRAW(1, PLAYER); DRAW(1, OPPONENT);\nCONDITION: VALUE_EQ(CHOICE, \"OTHER\"); ADD_BLADES(1, PLAYER) {DURATION=\"UNTIL_LIVE_END\"}; ADD_BLADES(1, OPPONENT) {DURATION=\"UNTIL_LIVE_END\"}",
+    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: SELECT_MODE() -> OPPONENT\nOPTION: 「大好き！」と答える | EFFECT: DRAW(1) -> PLAYER; DRAW(1) -> OPPONENT\nOPTION: 「まあまあ」と答える | EFFECT: ADD_BLADES(1) -> PLAYER; ADD_BLADES(1) -> OPPONENT",
     "cards": [
       "LL-PR-004-PR"
     ]
@@ -1596,8 +1584,8 @@
     ]
   },
   "{{live_start.png|ライブ開始時}}自分のステージに『蓮ノ空』のメンバーが3人以上いて、かつ自分の控え室にカード名に「DreamBelievers」を含むライブカードがある場合、このカードのスコアを＋１する。": {
-    "pseudocode": "TRIGGER: ON_LIVE_START\nCONDITION: COUNT_STAGE {MIN=3, FILTER=\"GROUP_ID=4\"}, HAS_CARD_IN_DISCARD {FILTER=\"TYPE_LIVE, NAME_CONTAINS='DreamBelievers'\"}\nEFFECT: BOOST_SCORE(1) -> SELF",
-    "cards": [
+    "pseudocode": "TRIGGER: ON_LIVE_START\nCONDITION: COUNT_GROUP(4) >= 3; HAS_CARD_IN_DISCARD(NAME_MATCH=\"DreamBelievers\", TYPE=\"LIVE\")\nEFFECT: BOOST_SCORE(1) -> SELF",
+    "ids": [
       "PL!HS-sd1-018-SD"
     ]
   },
@@ -2072,7 +2060,7 @@
     ]
   },
   "{{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、エールにより公開された自分のカードの中から、『虹ヶ咲』のカードを1枚手札に加える。\n\n(必要ハートを確認する時、エールで出た{{icon_b_all.png|ALLブレード}}は任意の色のハートとして扱う。)": {
-    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: SCORE_LEAD(PLAYER)\nEFFECT: SELECT_CARDS(1) {ZONE=\"YELL_REVEALED\", FILTER=\"UNIT_NIJIGASAKI\"} -> CARD_HAND",
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: SCORE_LEAD(PLAYER)\nEFFECT: SELECT_CARDS(1, reveal=True, pick=1) {ZONE=\"YELL_REVEALED\", FILTER=\"UNIT_NIJIGASAKI\"} -> CARD_HAND",
     "cards": [
       "PL!N-bp1-026-L"
     ]
@@ -2568,7 +2556,7 @@
     ]
   },
   "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを4枚見る。その中から必要ハートの合計が8以上の『Liella!』のライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCOST: TAP_MEMBER (Optional)\nEFFECT: LOOK_AND_CHOOSE(4) {FILTER=\"SUM_HEART_TOTAL_GE=8, GROUP_ID=3, TYPE_LIVE\"} -> CARD_HAND, DISCARD_REMAINDER",
+    "pseudocode": "TRIGGER: ON_PLAY\nCOST: TAP_SELF (Optional)\nEFFECT: LOOK_AND_CHOOSE(4, reveal=True, pick=1, dest_discard=True) {FILTER=\"SUM_HEART_TOTAL_GE=8, GROUP_ID=3, TYPE_LIVE\"} -> CARD_HAND",
     "cards": [
       "PL!SP-bp4-002-P",
       "PL!SP-bp4-002-R"
@@ -3414,7 +3402,7 @@
     ]
   },
   "{{toujyou.png|登場}}自分のデッキの上からカードを5枚見る。その中から『虹ヶ咲』のライブカードを1枚まで公開して手札に加えてもよい。残りを控え室に置く。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のステージにいるほかの『虹ヶ咲』のメンバーは{{icon_blade.png|ブレード}}を得る。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: LOOK_AND_CHOOSE_REVEAL(5) {FILTER=\"UNIT_NIJIGASAKI, TYPE_LIVE\"} -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_MEMBER(ALL) {FILTER=\"UNIT_NIJIGASAKI, NOT_SELF\"} -> TARGETS; ADD_BLADES(1) -> TARGETS {DURATION=\"UNTIL_LIVE_END\"}",
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: LOOK_AND_CHOOSE(5, reveal=True, pick=1, dest_discard=True) {FILTER=\"UNIT_NIJIGASAKI, TYPE_LIVE\"}\n\nTRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_MEMBER(ALL) {FILTER=\"UNIT_NIJIGASAKI, NOT_SELF\"} -> TARGETS; ADD_BLADES(1) -> TARGETS {DURATION=\"UNTIL_LIVE_END\"}",
     "cards": [
       "PL!N-sd1-001-SD"
     ]
@@ -3662,5 +3650,41 @@
     "cards": [
       "PL!SP-pb1-003-P＋"
     ]
+  },
+  "(必要ハートを確認する時、エールで出た{{icon_b_all.png|ALLブレード}}は任意の色のハートとして扱う。)": {
+    "pseudocode": "TRIGGER: CONSTANT\nEFFECT: META_RULE(1) {TYPE=ALL_BLADE_AS_ANY_HEART}",
+    "ids": [
+      "PL!HS-PR-010-PR"
+    ]
+  },
+  "{{toujyou.png|登場}}自分のステージにいるメンバーが持つハートに{{heart_05.png|heart05}}が合計5つ以上ある場合、相手のライブ開始時、相手のライブカード置き場にあるライブカード1枚は、成功させるための必要ハートが{{heart_00.png|heart0}}多くなる。": {
+    "pseudocode": "TRIGGER: ON_PLAY\nCONDITION: COUNT_HEARTS(5) {HEART_TYPE=5}\nEFFECT: GRANT_ABILITY(OPPONENT) {TRIGGER=\"ON_LIVE_START\", EFFECT=\"INCREASE_HEART_COST(1) {ZONE=LIVE_AREA}\"}",
+    "ids": [
+      "PL!S-bp5-011-N"
+    ]
+  },
+  "{{live_success.png|ライブ成功時}}自分か相手の成功ライブカード置き場にカードが2枚以上ある場合、エールにより公開された自分のカードの中から、メンバーカードを2枚まで手札に加える。": {
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: COUNT_SUCCESS_LIVE(2) {PLAYER=\"ANY\"}\nEFFECT: SELECT_CARDS(2) {FROM=REVEAL_ZONE, FILTER=\"TYPE_MEMBER\"} -> TARGETS (Optional); MOVE_TO_HAND(TARGETS)",
+    "ids": [
+      "PL!S-bp5-019-L"
+    ]
+  },
+  "{{live_start.png|ライブ開始時}}自分のステージにグループ名がそれぞれ異なるメンバーが3人以上いる場合、ライブ終了時まで、自分のセンターエリアにいるメンバーは{{icon_all.png|ハート}}を得る。\n{{live_success.png|ライブ成功時}}自分の控え室にある、自分のステージにいるすべてのメンバーと異なるグループ名を持つカード1枚を手札に加える。": {
+    "pseudocode": "TRIGGER: ON_LIVE_START; CONDITION: COUNT_GROUP(FILTER=\"UNIQUE\", MIN=3); EFFECT: GRANT_ABILITY(FILTER=\"AREA=CENTER\", \"TRIGGER: CONSTANT; EFFECT: ADD_HEARTS(1) {HEART_TYPE=6} {ATTR=\\\"ALL\\\"}\", UNTIL=\"LIVE_END\")\nTRIGGER: ON_LIVE_SUCCESS; EFFECT: ADD_TO_HAND(1) {FILTER=\"GROUP=NOT_ON_STAGE\", ZONE=\"DISCARD\"}"
+  },
+  "(エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1を加算する。)": {
+    "pseudocode": ""
+  },
+  "(エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計にプラス1する。)": {
+    "pseudocode": ""
+  },
+  "{{live_start.png|ライブ開始時}}手札のライブカードを1枚控え室に置いてもよい：好きな色の{{icon_any.png|エネ}}を1増やす。": {
+    "pseudocode": "TRIGGER: ON_LIVE_START; COST: DISCARD_HAND(1) {FILTER=\"TYPE=LIVE\", OPTIONAL=TRUE}; EFFECT: ENERGY_CHARGE(1) {ATTR=\"ANY\"}"
+  },
+  "{{toujyou.png|登場}}自分のデッキの上からカードを5枚控え室に置く。": {
+    "pseudocode": "TRIGGER: ON_PLAY; EFFECT: MOVE_TO_DISCARD(5) -> CARD_DECK_TOP"
+  },
+  "{{live_start.png|ライブ開始時}}手札のライブカードを1枚控え室に置いてもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。\n{{live_success.png|ライブ成功時}}自分のデッキの上からカードを5枚控え室に置く。その後、自分の控え室にカード名の異なる『虹ヶ咲』のライブカードが3枚以上ある場合、自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。": {
+    "pseudocode": "TRIGGER: ON_LIVE_START; COST: DISCARD_HAND(1) {FILTER=\"TYPE=LIVE\", OPTIONAL=TRUE}; EFFECT: COLOR_SELECT; ADD_HEARTS(1) {UNTIL=\"LIVE_END\"}\nTRIGGER: ON_LIVE_SUCCESS; EFFECT: MOVE_TO_DISCARD(5) -> CARD_DECK_TOP; CONDITION: COUNT_LIVE_ZONE(FILTER=\"GROUP=虹ヶ咲, UNIQUE\", MIN=3, ZONE=\"DISCARD\"); EFFECT: ADD_TO_HAND(1) {FILTER=\"TYPE=LIVE, GROUP=虹ヶ咲\", ZONE=\"DISCARD\"}"
   }
 }

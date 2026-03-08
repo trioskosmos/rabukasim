@@ -164,19 +164,20 @@ pub fn handle_move_to_discard(
         println!("[DEBUG_MOV] h_m_t_d: cid={}, choice={}, optional={}, attr={:x}", ctx.source_card_id, ctx.choice_index, is_optional, a as u64);
     }
 
+    let available_count = match source_zone {
+        Zone::Hand => state.players[target_player_idx].hand.len() as i32,
+        Zone::Stage => state.players[target_player_idx]
+            .stage
+            .iter()
+            .filter(|&&c| c >= 0)
+            .count() as i32,
+        Zone::LiveSet | Zone::SuccessPile => state.players[target_player_idx].success_lives.len() as i32,
+        Zone::Energy => state.players[target_player_idx].energy_zone.len() as i32,
+        Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => state.players[target_player_idx].deck.len() as i32,
+        _ => 99,
+    };
+
     if is_optional && ctx.choice_index == -1 {
-        let available_count = match source_zone {
-            Zone::Hand => state.players[target_player_idx].hand.len() as i32,
-            Zone::Stage => state.players[target_player_idx]
-                .stage
-                .iter()
-                .filter(|&&c| c >= 0)
-                .count() as i32,
-            Zone::LiveSet | Zone::SuccessPile => state.players[target_player_idx].success_lives.len() as i32,
-            Zone::Energy => state.players[target_player_idx].energy_zone.len() as i32,
-            Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => state.players[target_player_idx].deck.len() as i32,
-            _ => 99,
-        };
         if available_count < v {
             return HandlerResult::Continue;
         }
@@ -207,17 +208,30 @@ pub fn handle_move_to_discard(
 
         // Auto-pick all if mandatory and we have fewer than or equal to count
         if !is_optional && next_ctx.choice_index == -1 {
-            let available_indices = state.get_card_ids_in_zone(p_idx as u8, source_zone as u8);
-            let mut matching_indices = Vec::new();
-            for &card_idx in &available_indices {
-                if state.card_matches_filter_with_ctx(db, card_idx, filter_attr, &next_ctx) {
-                    matching_indices.push(card_idx);
+            if source_zone == Zone::Hand {
+                let hand_len = state.players[p_idx].hand.len();
+                if hand_len > 0 && (count as usize) >= hand_len {
+                    next_ctx.choice_index = 0; // Auto-pick first index (interpreter will loop)
                 }
-            }
+            } else {
+                let available_indices = state.get_card_ids_in_zone(p_idx as u8, source_zone as u8);
+                let mut matching_indices = Vec::new();
+                for &card_idx in &available_indices {
+                    if state.card_matches_filter_with_ctx(db, card_idx, filter_attr, &next_ctx) {
+                        matching_indices.push(card_idx);
+                    }
+                }
 
-            if !matching_indices.is_empty() && (count as usize) >= matching_indices.len() {
-                // If we need them all, just take the first one and the interpreter will loop
-                next_ctx.choice_index = matching_indices[0] as i16;
+                if !matching_indices.is_empty() && (count as usize) >= matching_indices.len() {
+                    // For Stage/Live, find the slot index
+                    if source_zone == Zone::Stage {
+                        if let Some(pos) = state.players[p_idx].stage.iter().position(|&c| c == matching_indices[0]) {
+                            next_ctx.choice_index = pos as i16;
+                        }
+                    } else {
+                        next_ctx.choice_index = 0;
+                    }
+                }
             }
         }
 
@@ -231,7 +245,17 @@ pub fn handle_move_to_discard(
                 filter_attr_with_mask |= (ZONE_DISCARD as u64) << 53;
             }
 
-            if suspend_interaction(
+            // AUTO-PICK FIX: If mandatory and no choices remain (count >= items), auto-pick first item.
+            let items_count = match source_zone {
+                Zone::Hand => state.players[target_player_idx].hand.len(),
+                _ => state.get_card_ids_in_zone(target_player_idx as u8, source_zone as u8).len(),
+            };
+
+            if !is_optional && (count as usize) >= items_count && items_count > 0 {
+                next_ctx.choice_index = 0;
+            } else if ctx.auto_pick && !is_optional && available_count > 0 {
+                next_ctx.choice_index = 0;
+            } else if suspend_interaction(
                 state,
                 db,
                 &next_ctx,
@@ -350,6 +374,25 @@ pub fn handle_move_to_discard(
                 }
 
                 next_ctx.choice_index = -1;
+                
+                // If auto_pick is true and it's mandatory, try to move the next card immediately
+                // Or if it's mandatory and count >= items, we also auto-pick
+                let is_forced_pick = !is_optional && (count as usize) >= (state.players[target_player_idx].hand.len()); // simplified for hand
+                if (ctx.auto_pick || is_forced_pick) && !is_optional {
+                    // Safety check: is there another card?
+                    let still_available = match source_zone {
+                        Zone::Hand => !state.players[target_player_idx].hand.is_empty(),
+                        Zone::Stage => state.players[target_player_idx].stage.iter().any(|&c| c >= 0),
+                        _ => true,
+                    };
+                    
+                    if still_available {
+                        next_ctx.choice_index = 0;
+                        // LOOP: Recursive-style but safe because we already removed one card
+                        return handle_move_to_discard(state, db, &mut next_ctx, instr, instr_ip);
+                    }
+                }
+
                 if suspend_interaction(
                     state,
                     db,

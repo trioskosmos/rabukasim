@@ -39,20 +39,20 @@ fn verify_manual_recovery_pattern() {
     state.phase = Phase::Main;
 
     // 1. Activate ability (Slot 0, Ability 0)
-    state
-        .step(
-            &db,
-            Action::ActivateAbility {
-                slot_idx: 0,
-                ab_idx: 0,
-            }
-            .id() as i32,
-        )
-        .unwrap();
+    let result = state.step(
+        &db,
+        Action::ActivateAbility {
+            slot_idx: 0,
+            ab_idx: 0,
+        }
+        .id() as i32,
+    );
+    result.unwrap();
+
 
     assert_eq!(
         state.players[0].stage[0], -1,
-        "Member should be in discard after sacrifice"
+        "Member should be in discard after sacrifice (Cost processing)"
     );
     // SETUP: Put Card 121 (a member) in discard
     state.players[0].discard = vec![121].into();
@@ -62,16 +62,13 @@ fn verify_manual_recovery_pattern() {
     let ctx = AbilityContext { player_id: 0, source_card_id: 120, ..Default::default() };
     state.resolve_bytecode_cref(&db, &db.get_member(120).unwrap().abilities[0].bytecode, &ctx);
 
-    println!("[TEST] Phase after bytecode: {:?}, stack_len: {}", state.phase, state.interaction_stack.len());
-    if !state.interaction_stack.is_empty() {
-        println!("[TEST] Top interaction: {:?}", state.interaction_stack.last().unwrap().choice_type);
-    }
-    println!("[TEST] Discard: {:?}", state.players[0].discard);
-
-    // RESOLVE: The interaction RecovM (Selection from discard)
-    if state.phase == Phase::Response {
+    // RESOLVE: The interactions (MOVE_TO_DISCARD then RecovM)
+    let mut safety_counter = 0;
+    while state.phase == Phase::Response && safety_counter < 5 {
+        println!("[TEST] Resolving suspension. Interaction: {:?}", state.interaction_stack.last().unwrap().choice_type);
         state.step(&db, ACTION_BASE_CHOICE + 0).expect("Step failed to resolve recovery");
         state.process_trigger_queue(&db);
+        safety_counter += 1;
     }
 
     println!("[TEST] Hand after recovery: {:?}", state.players[0].hand);

@@ -98,8 +98,9 @@ fn process_heart_modifiers_bytecode(
         } else if op == O_INCREASE_HEART_COST {
             let val = bc[i + 1];
             let attr = bc[i + 2] as usize;
-            if attr >= 1 && attr <= 7 {
-                let idx = if attr == 7 { 6 } else { attr - 1 };
+            // attr 1-7 = colors 0-6. attr 0 = Generic/Any (index 6).
+            let idx = if attr == 0 || attr == 7 { 6 } else if attr <= 6 { attr - 1 } else { 99 };
+            if idx < 7 {
                 let old = req_board.get_color_count(idx);
                 req_board.set_color_count(idx, old.saturating_add(val as u8));
                 adjustments.push(json!({
@@ -399,7 +400,6 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     entry["blades"] = json!(eff_b);
                     entry["bonus_blades"] = json!(bonus_b);
 
-                    // Collect Blade Buffs for this slot (triggered abilities)
                     let mut slot_blade_buffs: Vec<Value> = state.players[p_idx]
                         .blade_buff_logs
                         .iter()
@@ -407,7 +407,14 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                         .map(|&(src_cid, amt, _)| {
                             let source_name =
                                 db.get_name(src_cid).unwrap_or_else(|| "Effect".to_string());
-                            json!({ "source": source_name, "amount": amt })
+                            let (ability_text, img) = if let Some(m) = db.get_member(src_cid) {
+                                (m.original_text.clone(), m.img_path.clone())
+                            } else if let Some(l) = db.get_live(src_cid) {
+                                (l.original_text.clone(), l.img_path.clone())
+                            } else {
+                                ("".to_string(), "".to_string())
+                            };
+                            json!({ "source": source_name, "amount": amt, "ability_text": ability_text, "img": img })
                         })
                         .collect();
 
@@ -441,7 +448,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                                 if (bop == O_ADD_BLADES || bop == O_BUFF_POWER) && targets_us && bv > 0 {
                                                     slot_blade_buffs.push(json!({
                                                         "source": other_m.name,
-                                                        "amount": bv
+                                                        "amount": bv,
+                                                        "ability_text": ab.raw_text,
+                                                        "img": other_m.img_path
                                                     }));
                                                 }
                                                 bi += 5;
@@ -471,7 +480,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                                     if bc[bi] == O_ADD_BLADES && bc[bi + 1] > 0 {
                                                         slot_blade_buffs.push(json!({
                                                             "source": format!("Granted: {}", src_m.name),
-                                                            "amount": bc[bi + 1]
+                                                            "amount": bc[bi + 1],
+                                                            "ability_text": ab.raw_text,
+                                                            "img": src_m.img_path
                                                         }));
                                                     }
                                                     bi += 5;
@@ -548,10 +559,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
 
         let cid = state.players[p_idx].stage[i];
         let mut true_bonus_h = [0i32; 7];
-        let mut member_name = "Member".to_string();
         if cid >= 0 {
             if let Some(m) = db.get_member(cid) {
-                member_name = m.name.clone();
                 for k in 0..7 {
                     true_bonus_h[k] = eff_h[k] as i32 - m.hearts[k] as i32;
                 }
@@ -607,7 +616,6 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     entry["note_icons"] = json!(m.note_icons);
                     entry["base_notes"] = json!(m.note_icons);
 
-                    // Collect Heart Buffs for this slot (triggered abilities)
                     let mut slot_heart_buffs: Vec<Value> = state.players[p_idx]
                         .heart_buff_logs
                         .iter()
@@ -615,7 +623,14 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                         .map(|&(src_cid, amt, color, _)| {
                             let source_name =
                                 db.get_name(src_cid).unwrap_or_else(|| "Effect".to_string());
-                            json!({ "source": source_name, "amount": amt, "color": color })
+                            let (ability_text, img) = if let Some(m) = db.get_member(src_cid) {
+                                (m.original_text.clone(), m.img_path.clone())
+                            } else if let Some(l) = db.get_live(src_cid) {
+                                (l.original_text.clone(), l.img_path.clone())
+                            } else {
+                                ("".to_string(), "".to_string())
+                            };
+                            json!({ "source": source_name, "amount": amt, "color": color, "ability_text": ability_text, "img": img })
                         })
                         .collect();
 
@@ -656,7 +671,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                                         slot_heart_buffs.push(json!({
                                                             "source": other_m.name,
                                                             "amount": bv,
-                                                            "color": color
+                                                            "color": color,
+                                                            "ability_text": ab.raw_text,
+                                                            "img": other_m.img_path
                                                         }));
                                                     }
                                                 }
@@ -694,7 +711,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                                             slot_heart_buffs.push(json!({
                                                                 "source": format!("Granted: {}", src_m.name),
                                                                 "amount": bc[bi + 1],
-                                                                "color": color
+                                                                "color": color,
+                                                                "ability_text": ab.raw_text,
+                                                                "img": src_m.img_path
                                                             }));
                                                         }
                                                     }
@@ -821,7 +840,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
 
                 let (req_board, _) = get_live_requirements(state, db, p_idx, live);
                 if check_live_success(state, db, p_idx, live, &remaining_hearts) {
-                    let mut req_arr = req_board.to_array();
+                    let req_arr = req_board.to_array();
                     
                     // NEW: Allocate hearts from sources and record them
                     // 1. Specific colors 0-5
@@ -1129,7 +1148,6 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         })
         .sum();
     let total_score = live_score + note_icons as u32;
-
     let member_contributions: Vec<_> = member_summary.values().collect();
     state.ui.performance_results.insert(
         p_idx as u8,
@@ -1273,12 +1291,16 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         }
 
         // Trust the snapshot success flag instead of re-checking hearts
+        if !state.ui.silent {
+            println!("[DEBUG] P{} has_live={}, snapshot_success={}", p, has_live, snapshot_success);
+        }
         if has_live && snapshot_success {
             live_score = p_score;
             player_has_success = true;
         } else if has_live {
             // Rule 8.3.16: Clear zone if snapshot indicates failure
             if !state.ui.silent {
+                println!("[DEBUG] Rule 8.3.16: P{} performance FAILED. Clearing live zone.", p);
                 state.log(format!("Rule 8.3.16: P{} performance FAILED (unsatisfied requirements). Clearing live zone.", p));
             }
             for i in 0..3 {
@@ -1439,9 +1461,12 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         }
     }
 
-    // 8.4.6 Compare
     let p0_wins = has_success[0] && (!has_success[1] || scores[0] >= scores[1]);
     let p1_wins = has_success[1] && (!has_success[0] || scores[1] >= scores[0]);
+
+    if !state.ui.silent || state.debug.debug_mode {
+        println!("[DEBUG] Rule 8.4.6: p0_wins={}, p1_wins={}, has_success={:?}, scores={:?}", p0_wins, p1_wins, has_success, scores);
+    }
     let is_comparative_tie = p0_wins && p1_wins;
 
     // Update results with final scores and triggered abilities
@@ -1464,6 +1489,8 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             if let serde_json::Value::Object(ref mut map) = res {
                 map.insert("total_score".to_string(), json!(scores[p]));
                 map.insert("triggered_abilities".to_string(), json!(abilities));
+                map.insert("p0_wins".to_string(), json!(p0_wins));
+                map.insert("p1_wins".to_string(), json!(p1_wins));
             }
         }
     }
@@ -1508,6 +1535,10 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         let p = (state.first_player as usize + i) % 2;
         let wins = if p == 0 { p0_wins } else { p1_wins };
         if wins && !state.obtained_success_live[p] {
+            state.obtained_success_live[p] = true;
+            if state.debug.debug_mode {
+                println!("[DEBUG] P{} SET obtained_success_live = true", p);
+            }
             let cards_in_zone: Vec<usize> = state.players[p]
                 .live_zone
                 .iter()
@@ -1588,7 +1619,6 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 state.players[p].success_lives.push(cid as i32);
                 state.check_win_condition(); // NEW: Immediate win check
                 state.players[p].live_zone[target_idx] = -1;
-                state.obtained_success_live[p] = true;
                 if !state.ui.silent {
                     state.log(format!(
                         "Rule 8.4.7: P{} obtained Success Live: Card ID {}",

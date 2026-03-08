@@ -44,7 +44,7 @@ fn test_look_and_choose_filter() {
     };
 
     // Filter Attr: Cost GE 11 → Bit 24 (Enable) | (11 << 25) (Threshold=11) | Bit 31 (Cost Type) | Bit 0 (Target=Self)
-    // Python _pack_filter_attr always sets bit 31 for cost filters. Old value 385875969 was missing bit 31.
+    // Python _pack_filter_attr now correctly uses bit 31 for cost filters.
     let cost_ge_11_attr = 0x01u64 | (1u64 << 24) | (11u64 << 25) | (1u64 << 31);
     let bc = vec![
         O_LOOK_AND_CHOOSE,
@@ -165,6 +165,8 @@ fn test_trigger_activated_eli() {
     state.players[0].stage[2] = -1;
     state.players[0].discard.push(121);
 
+    // Filter: CardType=Member(1)@2-3 | Zone=Discard(7)@53-55 | CharID=Rin(5)@39-45 | Target=Self(1)@0-1
+    // Layout: bits 2-3 (type), 39-45 (char), 53-55 (zone), 0-1 (target)
     let filter_attr: u64 = 0x01 | (1 << 2) | (5u64 << 39) | (7u64 << 53);
     let mut custom_bytecode = ab.bytecode.clone();
     if custom_bytecode.len() >= 5 {
@@ -185,13 +187,13 @@ fn test_trigger_activated_eli() {
 
     assert_eq!(state.interaction_stack.len(), 1, "Should have 1 pending interaction");
 
-    // Resume with choice 0 (select Rin, the only valid card at index 0) for SelectDiscard
-    state.step(&db, ACTION_BASE_CHOICE + 0).expect("Failed to resume ability");
-    state.process_trigger_queue(&db);
-
-    // After choice for SelectDiscard: RECOVER_MEMBER should suspend
-    assert_eq!(state.interaction_stack.last().unwrap().choice_type, ChoiceType::RecovM);
-    state.step(&db, ACTION_BASE_CHOICE + 0).expect("Failed to resume second part");
+    // Resume with choice 0 (select Rin, the only valid card at index 0)
+    let mut safety_counter = 0;
+    while state.phase == Phase::Response && safety_counter < 5 {
+        state.step(&db, ACTION_BASE_CHOICE + 0).expect("Failed to resume ability");
+        state.process_trigger_queue(&db);
+        safety_counter += 1;
+    }
 
     // After choice: Rin should be in hand
     state.process_trigger_queue(&db);

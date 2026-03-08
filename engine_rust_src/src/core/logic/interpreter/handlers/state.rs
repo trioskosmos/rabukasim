@@ -44,7 +44,9 @@ pub fn handle_energy(
             if is_optional && ctx.choice_index == -1 {
                 if available < v {
                     if state.debug.debug_mode {
+                        if !state.ui.silent {
                         println!("[DEBUG] O_PAY_ENERGY: cannot afford optional cost.");
+                    }
                     }
                     return HandlerResult::SetCond(false);
                 } else {
@@ -159,10 +161,16 @@ pub fn handle_energy(
                     break;
                 }
                 if state.players[p_idx].is_energy_tapped(i) {
+                    if state.debug.debug_mode {
+                        println!("[DEBUG-ENERGY] Untapping energy card {} for player {}", i, p_idx);
+                    }
                     state.players[p_idx].set_energy_tapped(i, false);
                     state.players[p_idx].activated_energy_group_mask |= group_bits;
                     count += 1;
                 }
+            }
+            if state.debug.debug_mode {
+                println!("[DEBUG-ENERGY] O_ACTIVATE_ENERGY: Untapped {}/{} cards. Mask now: {:b}", count, v, state.players[p_idx].tapped_energy_mask);
             }
             HandlerResult::Continue
         }
@@ -288,7 +296,7 @@ pub fn handle_member_state(
         }
         O_TAP_MEMBER => {
             let resolved_slot = resolve_target_slot(target_slot, ctx);
-            let _target_p_idx = if instr.s.is_opponent { 1 - ctx.player_id } else { ctx.player_id };
+            let target_p_idx = if instr.s.is_opponent { 1 - (ctx.player_id as usize) } else { ctx.player_id as usize };
 
             if v == 0 && resolved_slot == 4 && a & 0x02 == 0 {
                 if a & 0x01 != 0 || a & 0x80 != 0 {
@@ -350,11 +358,25 @@ pub fn handle_member_state(
                 }
 
                 if (a & 0x03) == 0 && resolved_slot < 3 {
-                    state.players[p_idx].set_tapped(resolved_slot as usize, true);
+                    state.players[target_p_idx].set_tapped(resolved_slot as usize, true);
                 }
             } else {
                 let is_choice_done = ctx.choice_index == CHOICE_DONE;
                 if is_optional || (a & 0x01) != 0 {
+                    // VALIDATION FIX: Only consume choice if it's 0, 1, or 99.
+                    // If it's a card slot (like 601), it was probably meant for a DIFFERENT interaction.
+                    if ctx.choice_index != 0 && ctx.choice_index != 1 && !is_choice_done {
+                         if state.debug.debug_mode {
+                             if !state.ui.silent {
+                             println!("[DEBUG] TAP_MEMBER: Ignoring choice {} for Optional prompt", ctx.choice_index);
+                         }
+                         }
+                         // Re-suspend to get a proper choice
+                         if suspend_interaction(state, db, ctx, instr_ip, O_TAP_MEMBER, 0, ChoiceType::Optional, "", a as u64, -1) {
+                             return HandlerResult::Suspend;
+                         }
+                         return HandlerResult::Continue;
+                    }
                     if is_choice_done || ctx.choice_index == 1 {
                         return HandlerResult::SetCond(false);
                     }
@@ -363,9 +385,9 @@ pub fn handle_member_state(
                     }
                     return HandlerResult::SetCond(true);
                 } else {
-                    let slot = ctx.choice_index as usize;
-                    if slot < 3 {
-                        state.players[p_idx].set_tapped(slot, true);
+                    let _slot = ctx.choice_index as usize;
+                    if resolved_slot < 3 {
+                        state.players[target_p_idx].set_tapped(resolved_slot as usize, true);
                     }
                     return HandlerResult::SetCond(true);
                 }
@@ -384,7 +406,7 @@ pub fn handle_member_state(
 
             if ctx.choice_index == -1 {
                 let choice_text = get_choice_text(db, ctx);
-                if state.debug.debug_mode {
+                if !state.ui.silent && state.debug.debug_mode {
                     println!("[DEBUG] O_TAP_OPPONENT: Suspending for opponent.");
                 }
                 // Pre-flip: suspension.rs now uses ctx.player_id directly for current_player
@@ -952,7 +974,7 @@ pub fn handle_score_hearts(
         }
         O_ADD_HEARTS => {
             let mut color = (a as u64 & FILTER_MASK_LOWER) as usize;
-            if color == 0 {
+            if color == 7 {
                 color = ctx.selected_color as usize;
             }
             if color < 7 {
@@ -1011,7 +1033,7 @@ pub fn handle_score_hearts(
         }
         O_TRANSFORM_BLADES => {
             let target_p = if instr.s.is_opponent { 1 - p_idx } else { p_idx };
-            if state.debug.debug_mode {
+            if !state.ui.silent && state.debug.debug_mode {
                 println!("[DEBUG] O_TRANSFORM_BLADES: target_p={}, target_slot={}, resolved_slot={}, v={}", 
                     target_p, target_slot, resolved_slot, v);
             }
@@ -1022,7 +1044,7 @@ pub fn handle_score_hearts(
             } else if resolved_slot < 3 {
                 state.players[target_p].blade_overrides[resolved_slot as usize] = v as i16;
             }
-            if state.debug.debug_mode {
+            if !state.ui.silent && state.debug.debug_mode {
                 println!("[DEBUG] O_TRANSFORM_BLADES Result: slot_0_override={}, slot_1_override={}, slot_2_override={}",
                     state.players[target_p].blade_overrides[0],
                     state.players[target_p].blade_overrides[1],

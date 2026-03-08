@@ -7,13 +7,14 @@ pub fn get_opcode_log(op: i32, v: i32, a: i64, _s: i32, result_count: i32) -> Op
         O_DRAW => Some(format!("Draw {} card(s)", v)),
         O_ADD_HEARTS => {
             let color_str = match a {
+                0 => "HEART_PINK",
                 1 => "HEART_RED",
                 2 => "HEART_YELLOW",
                 3 => "HEART_GREEN",
                 4 => "HEART_BLUE",
                 5 => "HEART_PURPLE",
-                6 => "HEART_PINK",
-                _ => "HEART_WILD",
+                6 => "HEART_ANY",
+                _ => "HEART_UNKNOWN",
             };
             Some(format!("Added +{} {}", v, color_str))
         }
@@ -104,6 +105,8 @@ pub fn get_opcode_name(op: i32) -> &'static str {
         311 => "SYNC_COST",
         312 => "SUM_VALUE",
         313 => "IS_WAIT",
+        314 => "ON_ABILITY_RESOLVE",
+        315 => "TARGET_MEMBER_HAS_NO_HEARTS",
         O_TRANSFORM_BLADES => "TRANSFORM_BLADES",
         O_SET_HEART_COST => "SET_HEART_COST",
         O_REDUCE_HEART_REQ => "REDUCE_HEART_REQ",
@@ -172,6 +175,8 @@ pub fn trigger_as_str(t: TriggerType) -> &'static str {
         TriggerType::OnLeaves => "OnLeaves",
         TriggerType::OnReveal => "OnReveal",
         TriggerType::OnPositionChange => "OnPositionChange",
+        TriggerType::OnAbilityResolve => "OnAbilityResolve",
+        TriggerType::OnAbilitySuccess => "OnAbilitySuccess",
     }
 }
 
@@ -200,6 +205,8 @@ pub fn describe_condition(op: i32, val: i32, _attr: u64) -> String {
         311 => format!("Relative Cost comparison (val={})", val),
         312 => format!("Sum Value check (val={})", val),
         313 => "Member is Tapped (WAIT)".to_string(),
+        314 => "Ability resolved on member".to_string(),
+        315 => "Member has no hearts".to_string(),
         _ => format!("Condition {} (val={})", op, val),
     }
 }

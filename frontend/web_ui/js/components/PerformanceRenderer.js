@@ -238,7 +238,16 @@ export const PerformanceRenderer = {
                                                         <span class="perf-bonus-tag">+${PerformanceRenderer.renderHeartsCompact(m.bonus_hearts)}</span>
                                                         ${m.ability_heart_bonuses && m.ability_heart_bonuses.length > 0 ? `
                                                             <div class="perf-bonus-source-tooltip">
-                                                                ${m.ability_heart_bonuses.map(b => `<div class="perf-bonus-source-line">${b.source}: +${b.amount} ${['Pink', 'Red', 'Yellow', 'Green', 'Blue', 'Purple', 'Any'][b.color] || ''}</div>`).join('')}
+                                                                ${m.ability_heart_bonuses.map(b => `
+                                                                    <div class="perf-bonus-source-line">
+                                                                        <div class="perf-bonus-source-header">
+                                                                            ${b.img ? `<img src="${fixImg(b.img)}" class="perf-bonus-source-icon">` : ''}
+                                                                            <span class="perf-bonus-source-name">${b.source}</span>
+                                                                            <span class="perf-bonus-source-amount">+${b.amount} ${['Pink', 'Red', 'Yellow', 'Green', 'Blue', 'Purple', 'Any'][b.color] || ''}</span>
+                                                                        </div>
+                                                                        ${b.ability_text ? `<div class="perf-bonus-source-ability">${Tooltips.enrichAbilityText(b.ability_text)}</div>` : ''}
+                                                                    </div>
+                                                                `).join('')}
                                                             </div>
                                                         ` : ''}
                                                     </div>
@@ -251,7 +260,16 @@ export const PerformanceRenderer = {
                                                         <span class="perf-bonus-tag"> +${m.bonus_blades}</span>
                                                         ${m.ability_blade_bonuses && m.ability_blade_bonuses.length > 0 ? `
                                                             <div class="perf-bonus-source-tooltip">
-                                                                ${m.ability_blade_bonuses.map(b => `<div class="perf-bonus-source-line">${b.source}: +${b.amount}</div>`).join('')}
+                                                                ${m.ability_blade_bonuses.map(b => `
+                                                                    <div class="perf-bonus-source-line">
+                                                                        <div class="perf-bonus-source-header">
+                                                                            ${b.img ? `<img src="${fixImg(b.img)}" class="perf-bonus-source-icon">` : ''}
+                                                                            <span class="perf-bonus-source-name">${b.source}</span>
+                                                                            <span class="perf-bonus-source-amount">+${b.amount}</span>
+                                                                        </div>
+                                                                        ${b.ability_text ? `<div class="perf-bonus-source-ability">${Tooltips.enrichAbilityText(b.ability_text)}</div>` : ''}
+                                                                    </div>
+                                                                `).join('')}
                                                             </div>
                                                         ` : ''}
                                                     </div>

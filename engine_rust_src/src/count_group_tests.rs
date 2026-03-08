@@ -27,25 +27,21 @@ mod tests {
             ..Default::default()
         };
 
-        // 1. Total Count (Wait 3, Group 10)
-        // attr = 10 (group)
-        // val = 3
-        let passed_total = check_condition_opcode(&state, &db, 208, 3, 10, -1, &ctx, 0);
+        // 1. Total Count (Wait 3, Group 10 Member, Target Self)
+        // Revision 5 packing: 1 (Self) | (1 << 2, Member) | (1 << 4, Group Enabled) | (10 << 5, Group ID) = 341
+        let passed_total = check_condition_opcode(&state, &db, 208, 3, 341, -1, &ctx, 0);
         assert!(passed_total, "Should find 3 members of Group 10");
 
-        // 2. Unique Count (Wait 3, Group 10, Unique Flag 0x8000)
-        // attr = 10 | 0x8000
-        // val = 3
-        let passed_unique_3 = check_condition_opcode(&state, &db, 208, 3, 10 | 0x8000, -1, &ctx, 0);
+        // 2. Unique Count (Wait 3, Group 10 Member, Unique Flag bit 15)
+        // Revision 5 packing: 341 | (1 << 15) = 33109
+        let passed_unique_3 = check_condition_opcode(&state, &db, 208, 3, 33109, -1, &ctx, 0);
         assert!(
             !passed_unique_3,
             "Should NOT find 3 UNIQUE names (only 2: Member A and Member C)"
         );
 
-        // 3. Unique Count (Wait 2, Group 10, Unique Flag 0x8000)
-        // attr = 10 | 0x8000
-        // val = 2
-        let passed_unique_2 = check_condition_opcode(&state, &db, 208, 2, 10 | 0x8000, -1, &ctx, 0);
+        // 3. Unique Count (Wait 2, Group 10 Member, Unique Flag bit 15)
+        let passed_unique_2 = check_condition_opcode(&state, &db, 208, 2, 33109, -1, &ctx, 0);
         assert!(passed_unique_2, "Should find 2 UNIQUE names");
     }
 }

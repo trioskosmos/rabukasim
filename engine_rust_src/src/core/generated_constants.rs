@@ -30,6 +30,7 @@ pub const O_SELECT_MODE: i32 = 30;
 pub const O_MOVE_TO_DECK: i32 = 31;
 pub const O_TAP_OPPONENT: i32 = 32;
 pub const O_PLACE_UNDER: i32 = 33;
+pub const O_FLAVOR_ACTION: i32 = 34;
 pub const O_RESTRICTION: i32 = 35;
 pub const O_BATON_TOUCH_MOD: i32 = 36;
 pub const O_SET_SCORE: i32 = 37;
@@ -84,6 +85,7 @@ pub const O_PLACE_ENERGY_UNDER_MEMBER: i32 = 97;
 pub const O_CALC_SUM_COST: i32 = 106;
 pub const O_LOOK_REORDER_DISCARD: i32 = 125;
 pub const O_DIV_VALUE: i32 = 126;
+pub const O_TRANSFORM_BLADES: i32 = 127;
 
 // Action ID Bases
 pub const ACTION_BASE_PASS: i32 = 0;
@@ -103,6 +105,7 @@ pub const ACTION_BASE_ENERGY: i32 = 10000;
 pub const ACTION_BASE_CHOICE: i32 = 11000;
 pub const ACTION_BASE_RPS: i32 = 20000;
 pub const ACTION_BASE_RPS_P2: i32 = 21000;
+pub const ACTION_BASE_TURN_ORDER_FIRST: i32 = 5000;
 
 // Condition Types
 pub const C_TURN_1: i32 = 200;
@@ -169,6 +172,8 @@ pub const C_YELL_REVEALED_UNIQUE_COLORS: i32 = 310;
 pub const C_SYNC_COST: i32 = 311;
 pub const C_SUM_VALUE: i32 = 312;
 pub const C_IS_WAIT: i32 = 313;
+pub const C_ON_ABILITY_RESOLVE: i32 = 314;
+pub const C_TARGET_MEMBER_HAS_NO_HEARTS: i32 = 315;
 
 // Cost Types
 pub const COST_ENERGY: i32 = 1;
@@ -389,13 +394,13 @@ pub const COMP_GE: i32 = 3;
 pub const COMP_LE: i32 = 4;
 
 // Heart Color Map
-pub const HEART_COLOR_PINK: i32 = 1;
-pub const HEART_COLOR_RED: i32 = 2;
-pub const HEART_COLOR_YELLOW: i32 = 3;
-pub const HEART_COLOR_GREEN: i32 = 4;
-pub const HEART_COLOR_BLUE: i32 = 5;
-pub const HEART_COLOR_PURPLE: i32 = 6;
-pub const HEART_COLOR_ANY: i32 = 7;
+pub const HEART_COLOR_PINK: i32 = 0;
+pub const HEART_COLOR_RED: i32 = 1;
+pub const HEART_COLOR_YELLOW: i32 = 2;
+pub const HEART_COLOR_GREEN: i32 = 3;
+pub const HEART_COLOR_BLUE: i32 = 4;
+pub const HEART_COLOR_PURPLE: i32 = 5;
+pub const HEART_COLOR_ANY: i32 = 6;
 
 // Meta Rule Types
 pub const META_RULE_CHEER_MOD: i32 = 0;
@@ -506,6 +511,13 @@ pub const CHAR_MEGU: i32 = 66;
 pub const CHAR_GINKO: i32 = 67;
 pub const CHAR_KOSUZU: i32 = 68;
 pub const CHAR_HIME: i32 = 69;
+pub const CHAR_TSUBASA: i32 = 71;
+pub const CHAR_ERENA: i32 = 72;
+pub const CHAR_ANJU: i32 = 73;
+pub const CHAR_YUNA: i32 = 74;
+pub const CHAR_MAO: i32 = 75;
+pub const CHAR_SEIRA: i32 = 76;
+pub const CHAR_RIA: i32 = 77;
 
 // Group IDs
 pub const GROUP_MUSE: i32 = 0;
@@ -513,7 +525,12 @@ pub const GROUP_AQOURS: i32 = 1;
 pub const GROUP_NIJIGASAKI: i32 = 2;
 pub const GROUP_LIELLA: i32 = 3;
 pub const GROUP_HASUNOSORA: i32 = 4;
+pub const GROUP_ARISE: i32 = 10;
+pub const GROUP_SAINT_SNOW: i32 = 11;
+pub const GROUP_SUNNY_PASSION: i32 = 12;
+pub const GROUP_MUSICAL: i32 = 13;
 pub const GROUP_OTHER: i32 = 99;
+pub const GROUP_NONE: i32 = 100;
 
 // Unit IDs
 pub const UNIT_PRINTEMPS: i32 = 0;
@@ -533,3 +550,5 @@ pub const UNIT_CERISE_BOUQUET: i32 = 13;
 pub const UNIT_DOLLCHESTRA: i32 = 14;
 pub const UNIT_MIRA_CRA_PARK: i32 = 15;
 pub const UNIT_EDEL_NOTE: i32 = 16;
+pub const UNIT_AISCREAM: i32 = 17;
+pub const UNIT_NONE: i32 = 100;

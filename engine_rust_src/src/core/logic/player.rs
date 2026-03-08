@@ -28,6 +28,8 @@ pub struct PlayerState {
     #[serde(default)]
     pub deck: SmallVec<[i32; 60]>,
     #[serde(default)]
+    pub initial_deck: SmallVec<[i32; 60]>, // Stable reference for AZ
+    #[serde(default)]
     pub discard: SmallVec<[i32; 32]>,
     #[serde(default)]
     pub exile: SmallVec<[i32; 16]>,
@@ -62,6 +64,8 @@ pub struct PlayerState {
     #[serde(default)]
     pub blade_buffs: [i16; 3],
     #[serde(default)]
+    pub blade_overrides: [i16; 3], // -1 = no override
+    #[serde(default)]
     pub heart_buffs: [HeartBoard; 3],
     #[serde(default)]
     pub blade_buff_logs: SmallVec<[(i32, i16, u8); 4]>, // (source_cid, amount, slot_idx)
@@ -93,6 +97,8 @@ pub struct PlayerState {
     pub restrictions: SmallVec<[u8; 8]>,
     #[serde(default)]
     pub looked_cards: SmallVec<[i32; 16]>, // Shared buffer for revealing cards to UI
+    #[serde(default)]
+    pub revealed_cards: SmallVec<[i32; 16]>, // Persistent buffer for SAME_NAME_AS_REVEALED during an ability
     #[serde(default)]
     pub live_deck: SmallVec<[i32; 12]>, // Live cards available for Live Set phase
     #[serde(default)]
@@ -144,6 +150,7 @@ impl Default for PlayerState {
             player_id: 0,
             hand: SmallVec::new(),
             deck: SmallVec::new(),
+            initial_deck: SmallVec::new(),
             discard: SmallVec::new(),
             exile: SmallVec::new(),
             energy_deck: SmallVec::new(),
@@ -161,6 +168,7 @@ impl Default for PlayerState {
             live_score_bonus: 0,
             live_score_bonus_logs: SmallVec::new(),
             blade_buffs: [0; 3],
+            blade_overrides: [-1; 3],
             heart_buffs: [HeartBoard::default(); 3],
             blade_buff_logs: SmallVec::new(),
             heart_buff_logs: SmallVec::new(),
@@ -177,6 +185,7 @@ impl Default for PlayerState {
             hand_added_turn: SmallVec::new(),
             restrictions: SmallVec::new(),
             looked_cards: SmallVec::new(),
+            revealed_cards: SmallVec::new(),
             live_deck: SmallVec::new(),
             granted_abilities: Vec::new(),
             perf_triggered_abilities: Vec::new(),
@@ -209,6 +218,10 @@ impl PlayerState {
     pub const OFFSET_TAPPED: u8 = 3;
     pub const OFFSET_MOVED: u8 = 6;
     pub const OFFSET_REVEALED: u8 = 9;
+
+    pub const MASK_TAPPED: u32 = 56; // 0b111 << 3
+    pub const MASK_MOVED: u32 = 448; // 0b111 << 6
+    pub const MASK_REVEALED: u32 = 3584; // 0b111 << 9
 
     pub fn get_flag(&self, bit: u8) -> bool {
         (self.flags >> bit) & 1 == 1
@@ -275,22 +288,24 @@ impl PlayerState {
             self.stage_energy_count.swap(i, j);
             self.stage_energy.swap(i, j);
             self.blade_buffs.swap(i, j);
+            self.blade_overrides.swap(i, j);
             self.heart_buffs.swap(i, j);
         }
     }
 
     pub fn untap_all(&mut self, skip_physical_untap: bool) {
         if !skip_physical_untap {
-            // Clear tapped and moved flags (bits 3-8)
-            self.flags &= !0b111111000;
+            // Clear tapped and moved flags
+            self.flags &= !(Self::MASK_TAPPED | Self::MASK_MOVED);
             self.tapped_energy_mask = 0;
         } else {
             // Even if skipping untap, we must clear "moved" flags for next turn
-            self.flags &= !0b111000000;
+            self.flags &= !Self::MASK_MOVED;
         }
 
         self.baton_touch_count = 0;
         self.blade_buffs = [0; 3];
+        self.blade_overrides = [-1; 3];
         self.heart_buffs = [HeartBoard::default(); 3];
         self.cost_reduction = 0;
         self.slot_cost_modifiers = [0; 3];
@@ -338,6 +353,7 @@ impl PlayerState {
         self.player_id = other.player_id;
         copy_smallvec!(self.hand, other.hand);
         copy_smallvec!(self.deck, other.deck);
+        copy_smallvec!(self.initial_deck, other.initial_deck);
         copy_smallvec!(self.discard, other.discard);
         copy_smallvec!(self.exile, other.exile);
         copy_smallvec!(self.energy_deck, other.energy_deck);
@@ -355,6 +371,7 @@ impl PlayerState {
         self.live_score_bonus = other.live_score_bonus;
         copy_smallvec!(self.live_score_bonus_logs, other.live_score_bonus_logs);
         self.blade_buffs = other.blade_buffs;
+        self.blade_overrides = other.blade_overrides;
         self.heart_buffs = other.heart_buffs;
         self.cost_reduction = other.cost_reduction;
         self.hand_increased_this_turn = other.hand_increased_this_turn;
@@ -375,6 +392,7 @@ impl PlayerState {
         copy_smallvec!(self.hand_added_turn, other.hand_added_turn);
         copy_smallvec!(self.restrictions, other.restrictions);
         copy_smallvec!(self.looked_cards, other.looked_cards);
+        copy_smallvec!(self.revealed_cards, other.revealed_cards);
         copy_smallvec!(self.live_deck, other.live_deck);
         copy_smallvec!(self.granted_abilities, other.granted_abilities);
 

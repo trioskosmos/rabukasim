@@ -38,7 +38,7 @@ use crate::core::logic::constants::*;
 use crate::core::models::{GameState, AbilityContext};
 
 // --- Filter Bitfield Constants (Now loaded from generated_constants.rs via constants.rs) ---
-pub const FILTER_STATE_FLAGS_MASK: u64 = FILTER_TAPPED | FILTER_HAS_BLADE_HEART | FILTER_NOT_HAS_BLADE_HEART | FILTER_UNIQUE_NAMES;
+pub const FILTER_STATE_FLAGS_MASK: u64 = 61440; // 0xF000
 
 /// A structured representation of the 64-bit filter attribute
 /// Synchronized with ability.py _pack_filter_attr layout.
@@ -365,6 +365,41 @@ impl CardFilter {
             }
         }
 
+        // 10.5 Unique Names Filter (bit 15) - Used as SAME_NAME_AS_REVEALED
+        if self.special_id == 4 {
+            let p_idx = ctx.player_id as usize;
+            if state.players[p_idx].revealed_cards.is_empty() {
+                return false;
+            }
+            
+            let name = if let Some(m) = db.get_member(cid) {
+                m.name.as_str()
+            } else if let Some(l) = db.get_live(cid) {
+                l.name.as_str()
+            } else {
+                ""
+            };
+
+            let mut matched = false;
+            for &looked_cid in &state.players[p_idx].revealed_cards {
+                let looked_name = if let Some(looked_m) = db.get_member(looked_cid) {
+                    &looked_m.name
+                } else if let Some(looked_l) = db.get_live(looked_cid) {
+                    &looked_l.name
+                } else {
+                    ""
+                };
+
+                if name.contains(looked_name) {
+                    matched = true;
+                    break;
+                }
+            }
+            if !matched {
+                return false;
+            }
+        }
+
         // 11. Zone Mask Filter (bits 53-55)
         if self.zone_mask > 0 {
             if !state.is_card_in_zone(ctx.player_id, self.target_player, cid, self.zone_mask) {
@@ -594,6 +629,10 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
         }
         if part_trimmed.contains("NOT_NAME=MY舞") {
             attr |= 2u64 << FILTER_SPECIAL_SHIFT;
+            continue;
+        }
+        if part == "SAME_NAME_AS_REVEALED" {
+            attr |= 4u64 << FILTER_SPECIAL_SHIFT;
             continue;
         }
 

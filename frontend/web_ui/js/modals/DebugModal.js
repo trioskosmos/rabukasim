@@ -2,6 +2,55 @@ import { State } from '../state.js';
 import { fixImg } from '../constants.js';
 import { Network } from '../network.js';
 
+// Metadata Constants for Debug Display (mirrors data/metadata.json)
+const DEBUG_CONSTANTS = {
+    // Ability Effect Flags
+    FLAG_DRAW: 1,
+    FLAG_SEARCH: 2,
+    FLAG_RECOVER: 4,
+    FLAG_BUFF: 8,
+    FLAG_CHARGE: 16,
+    FLAG_TEMPO: 32,
+    FLAG_REDUCE: 64,
+    FLAG_BOOST: 128,
+    FLAG_TRANSFORM: 256,
+    FLAG_WIN_COND: 512,
+    FLAG_MOVE: 1024,
+    FLAG_TAP: 2048,
+    // Cost Flags
+    COST_FLAG_DISCARD: 1,
+    COST_FLAG_TAP: 2,
+    // Choice Flags
+    CHOICE_FLAG_LOOK: 1,
+    CHOICE_FLAG_DISCARD: 2,
+    CHOICE_FLAG_MODE: 4,
+    CHOICE_FLAG_COLOR: 8,
+    CHOICE_FLAG_ORDER: 16,
+    // Synergy Flags
+    SYN_FLAG_GROUP: 1,
+    SYN_FLAG_COLOR: 2,
+    SYN_FLAG_BATON: 4,
+    SYN_FLAG_CENTER: 8,
+    SYN_FLAG_LIFE_LEAD: 16,
+    // Filter Flags (partial)
+    FILTER_TYPE_MEMBER: 4,
+    FILTER_TYPE_LIVE: 8,
+    FILTER_GROUP_ENABLE: 16,
+    FILTER_TAPPED: 4096,
+    FILTER_HAS_BLADE_HEART: 8192,
+    FILTER_NOT_HAS_BLADE_HEART: 16384,
+    FILTER_UNIQUE_NAMES: 32768,
+    FILTER_UNIT_ENABLE: 65536,
+    // Area Constants
+    AREA_LEFT: 1,
+    AREA_CENTER: 2,
+    AREA_RIGHT: 3,
+    // Zones
+    ZONE_MASK_STAGE: 4,
+    ZONE_MASK_HAND: 6,
+    ZONE_MASK_DISCARD: 7,
+};
+
 export const DebugModal = {
     init: () => { },
 
@@ -88,9 +137,13 @@ export const DebugModal = {
                     style="flex: 1; background: #1a1a1a; color: #00ff00; border: 1px solid #333; border-radius: 4px; padding: 10px; font-family: monospace; font-size: 11px; resize: none; min-height: 200px;"
                     spellcheck="false">${blob}</textarea>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" style="flex: 1; min-width: 150px;" onclick="DebugModal.copyStateString()">Copy to Clipboard</button>
+                    <button class="btn btn-primary" style="flex: 1; min-width: 150px;" onclick="DebugModal.copyStateString()">Copy to Clipboard (Base64)</button>
                     <button class="btn btn-secondary" style="flex: 1; min-width: 150px;" onclick="DebugModal.loadStateString()">Load from Textarea</button>
                     <button class="btn btn-accent" style="flex: 1; min-width: 150px; background: var(--accent-gold); color: #000;" onclick="DebugModal.triggerFileLoad()">Load JSON File</button>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <button class="btn" style="flex: 1; background: #9b59b6; color: #fff; border: none;" onclick="DebugModal.copyStandardizedJson()">Copy Standardized JSON (Master)</button>
+                    <button class="btn" style="flex: 1; background: #2c3e50; color: #fff; border: none;" onclick="DebugModal.saveStandardizedJson()">Save Standardized JSON (Master)</button>
                     <input type="file" id="debug-state-file-input" style="display: none;" accept=".json" onchange="DebugModal.loadStateFile(this)">
                 </div>
             </div>
@@ -229,6 +282,75 @@ export const DebugModal = {
         `;
     },
 
+    // Render constants reference section
+    _renderConstantsRef: () => {
+        const C = DEBUG_CONSTANTS;
+        return `
+            <details style="margin-top:8px;">
+                <summary style="cursor:pointer; font-size:10px; font-weight:bold; text-transform:uppercase; opacity:0.6; letter-spacing:1px;">Constants Reference</summary>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-top:4px; font-size:9px;">
+                    <div style="grid-column: span 4; font-weight:bold; color:#f1c40f; border-bottom:1px solid #444; margin-bottom:4px;">Ability Flags</div>
+                    ${Object.entries({ FLAG_DRAW: 1, FLAG_SEARCH: 2, FLAG_RECOVER: 4, FLAG_BUFF: 8, FLAG_CHARGE: 16, FLAG_TEMPO: 32, FLAG_REDUCE: 64, FLAG_BOOST: 128, FLAG_TRANSFORM: 256, FLAG_WIN_COND: 512, FLAG_MOVE: 1024, FLAG_TAP: 2048 }).map(([k, v]) => `<span>${k}:${v}</span>`).join('')}
+                    <div style="grid-column: span 4; font-weight:bold; color:#e67e22; border-bottom:1px solid #444; margin-bottom:4px; margin-top:4px;">Cost Flags</div>
+                    ${Object.entries({ COST_FLAG_DISCARD: 1, COST_FLAG_TAP: 2 }).map(([k, v]) => `<span>${k}:${v}</span>`).join('')}
+                    <div style="grid-column: span 4; font-weight:bold; color:#3498db; border-bottom:1px solid #444; margin-bottom:4px; margin-top:4px;">Choice Flags</div>
+                    ${Object.entries({ CHOICE_FLAG_LOOK: 1, CHOICE_FLAG_DISCARD: 2, CHOICE_FLAG_MODE: 4, CHOICE_FLAG_COLOR: 8, CHOICE_FLAG_ORDER: 16 }).map(([k, v]) => `<span>${k}:${v}</span>`).join('')}
+                    <div style="grid-column: span 4; font-weight:bold; color:#9b59b6; border-bottom:1px solid #444; margin-bottom:4px; margin-top:4px;">Synergy Flags</div>
+                    ${Object.entries({ SYN_FLAG_GROUP: 1, SYN_FLAG_COLOR: 2, SYN_FLAG_BATON: 4, SYN_FLAG_CENTER: 8, SYN_FLAG_LIFE_LEAD: 16 }).map(([k, v]) => `<span>${k}:${v}</span>`).join('')}
+                    <div style="grid-column: span 4; font-weight:bold; color:#2ecc71; border-bottom:1px solid #444; margin-bottom:4px; margin-top:4px;">Filter Flags</div>
+                    ${Object.entries({ FILTER_TYPE_MEMBER: 4, FILTER_TYPE_LIVE: 8, FILTER_GROUP_ENABLE: 16, FILTER_TAPPED: 4096, FILTER_HAS_BLADE_HEART: 8192, FILTER_NOT_HAS_BLADE_HEART: 16384, FILTER_UNIQUE_NAMES: 32768, FILTER_UNIT_ENABLE: 65536 }).map(([k, v]) => `<span>${k}:${v}</span>`).join('')}
+                    <div style="grid-column: span 4; font-weight:bold; color:#e74c3c; border-bottom:1px solid #444; margin-bottom:4px; margin-top:4px;">Area/Zones</div>
+                    ${Object.entries({ AREA_LEFT: 1, AREA_CENTER: 2, AREA_RIGHT: 3, ZONE_MASK_STAGE: 4, ZONE_MASK_HAND: 6, ZONE_MASK_DISCARD: 7 }).map(([k, v]) => `<span>${k}:${v}</span>`).join('')}
+                </div>
+            </details>
+        `;
+    },
+
+    // Render conditions reference
+    _renderConditionsRef: () => {
+        const conditions = [
+            { n: 'TURN_1', v: 200 }, { n: 'HAS_MEMBER', v: 201 }, { n: 'HAS_COLOR', v: 202 }, { n: 'COUNT_STAGE', v: 203 }, { n: 'COUNT_HAND', v: 204 }, { n: 'COUNT_DISCARD', v: 205 }, { n: 'IS_CENTER', v: 206 }, { n: 'LIFE_LEAD', v: 207 }, { n: 'COUNT_GROUP', v: 208 }, { n: 'GROUP_FILTER', v: 209 }, { n: 'OPPONENT_HAS', v: 210 }, { n: 'SELF_IS_GROUP', v: 211 }, { n: 'MODAL_ANSWER', v: 212 }, { n: 'COUNT_ENERGY', v: 213 }, { n: 'HAS_LIVE_CARD', v: 214 }, { n: 'COST_CHECK', v: 215 }, { n: 'RARITY_CHECK', v: 216 }, { n: 'HAND_HAS_NO_LIVE', v: 217 }, { n: 'COUNT_SUCCESS_LIVE', v: 218 }, { n: 'OPPONENT_HAND_DIFF', v: 219 }, { n: 'SCORE_COMPARE', v: 220 }, { n: 'HAS_CHOICE', v: 221 }, { n: 'OPPONENT_CHOICE', v: 222 }, { n: 'COUNT_HEARTS', v: 223 }, { n: 'COUNT_BLADES', v: 224 }, { n: 'OPPONENT_ENERGY_DIFF', v: 225 }, { n: 'HAS_KEYWORD', v: 226 }, { n: 'DECK_REFRESHED', v: 227 }, { n: 'HAS_MOVED', v: 228 }, { n: 'HAND_INCREASED', v: 229 }, { n: 'COUNT_LIVE_ZONE', v: 230 }, { n: 'BATON', v: 231 }, { n: 'TYPE_CHECK', v: 232 }, { n: 'IS_IN_DISCARD', v: 233 }, { n: 'AREA_CHECK', v: 234 }, { n: 'COST_LEAD', v: 235 }, { n: 'SCORE_LEAD', v: 236 }, { n: 'HEART_LEAD', v: 237 }, { n: 'HAS_EXCESS_HEART', v: 238 }, { n: 'NOT_HAS_EXCESS_HEART', v: 239 }, { n: 'TOTAL_BLADES', v: 240 }, { n: 'COST_COMPARE', v: 241 }, { n: 'BLADE_COMPARE', v: 242 }, { n: 'HEART_COMPARE', v: 243 }, { n: 'OPPONENT_HAS_WAIT', v: 244 }, { n: 'IS_TAPPED', v: 245 }, { n: 'IS_ACTIVE', v: 246 }, { n: 'LIVE_PERFORMED', v: 247 }, { n: 'IS_PLAYER', v: 248 }, { n: 'IS_OPPONENT', v: 249 }, { n: 'COUNT_UNIQUE_COLORS', v: 250 }, { n: 'COUNT_ENERGY_EXACT', v: 301 }, { n: 'COUNT_BLADE_HEART_TYPES', v: 302 }, { n: 'OPPONENT_HAS_EXCESS_HEART', v: 303 }, { n: 'SCORE_TOTAL_CHECK', v: 304 }, { n: 'MAIN_PHASE', v: 305 }, { n: 'SELECT_MEMBER', v: 306 }, { n: 'SUCCESS_PILE_COUNT', v: 307 }, { n: 'IS_SELF_MOVE', v: 308 }, { n: 'DISCARDED_CARDS', v: 309 }, { n: 'YELL_REVEALED_UNIQUE_COLORS', v: 310 }, { n: 'SYNC_COST', v: 311 }, { n: 'SUM_VALUE', v: 312 }, { n: 'IS_WAIT', v: 313 }
+        ];
+        return `
+            <details style="margin-top:8px;">
+                <summary style="cursor:pointer; font-size:10px; font-weight:bold; text-transform:uppercase; opacity:0.6; letter-spacing:1px;">Conditions Reference (${conditions.length})</summary>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 2px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-top:4px; font-size:8px; max-height:200px; overflow-y:auto;">
+                    ${conditions.map(c => `<span style="color:#3498db;">${c.n}:${c.v}</span>`).join('')}
+                </div>
+            </details>
+        `;
+    },
+
+    // Render phases reference
+    _renderPhasesRef: () => {
+        const phases = [
+            { n: 'SETUP', v: -4 }, { n: 'RPS', v: -3 }, { n: 'TURN_CHOICE', v: -2 }, { n: 'MULLIGAN_P1', v: -1 }, { n: 'MULLIGAN_P2', v: 0 }, { n: 'ACTIVE', v: 1 }, { n: 'ENERGY', v: 2 }, { n: 'DRAW', v: 3 }, { n: 'MAIN', v: 4 }, { n: 'LIVE_SET', v: 5 }, { n: 'PERFORMANCE_P1', v: 6 }, { n: 'PERFORMANCE_P2', v: 7 }, { n: 'LIVE_RESULT', v: 8 }, { n: 'TERMINAL', v: 9 }, { n: 'RESPONSE', v: 10 }
+        ];
+        return `
+            <details style="margin-top:8px;">
+                <summary style="cursor:pointer; font-size:10px; font-weight:bold; text-transform:uppercase; opacity:0.6; letter-spacing:1px;">Phases Reference</summary>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 2px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-top:4px; font-size:9px;">
+                    ${phases.map(p => `<span style="color:#f1c40f;">${p.n}:${p.v}</span>`).join('')}
+                </div>
+            </details>
+        `;
+    },
+
+    // Render triggers reference
+    _renderTriggersRef: () => {
+        const triggers = [
+            { n: 'NONE', v: 0 }, { n: 'ON_PLAY', v: 1 }, { n: 'ON_LIVE_START', v: 2 }, { n: 'ON_LIVE_SUCCESS', v: 3 }, { n: 'TURN_START', v: 4 }, { n: 'TURN_END', v: 5 }, { n: 'CONSTANT', v: 6 }, { n: 'ACTIVATED', v: 7 }, { n: 'ON_LEAVES', v: 8 }, { n: 'ON_REVEAL', v: 9 }, { n: 'ON_POSITION_CHANGE', v: 10 }
+        ];
+        return `
+            <details style="margin-top:8px;">
+                <summary style="cursor:pointer; font-size:10px; font-weight:bold; text-transform:uppercase; opacity:0.6; letter-spacing:1px;">Triggers Reference</summary>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 2px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-top:4px; font-size:9px;">
+                    ${triggers.map(t => `<span style="color:#2ecc71;">${t.n}:${t.v}</span>`).join('')}
+                </div>
+            </details>
+        `;
+    },
+
     renderFlags: () => {
         const container = document.getElementById('debug-flags-content');
         if (!container || !State.data) return;
@@ -258,6 +380,15 @@ export const DebugModal = {
                         ${F('LiveResPend', d.live_result_selection_pending ? 'YES' : 'NO')}
                         ${F('NeedsDeck', d.needs_deck ? 'YES' : 'NO')}
                         ${F('Spectators', d.spectators || 0)}
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 11px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                        ${F('PrevPhase', d.prev_phase ?? '-')}
+                        ${F('PrevCard', d.prev_card_id ?? -1)}
+                        ${F('LiveSetDraws', JSON.stringify(d.live_set_pending_draws || [0, 0]))}
+                        ${F('LiveResTrigDone', d.live_result_triggers_done ? 'YES' : 'NO')}
+                        ${F('LiveStartTrigDone', d.live_start_triggers_done ? 'YES' : 'NO')}
+                        ${F('ScoreReqPlayer', d.score_req_player ?? -1)}
+                        ${F('ScoreReqList', JSON.stringify(d.score_req_list || []))}
                     </div>
                 </div>
         `;
@@ -323,12 +454,34 @@ export const DebugModal = {
                             ${F('MullSelection', `0x${(p.mulligan_selection || 0).toString(16).toUpperCase()}`)}
                             ${F('ObtSuccess', p.obtained_success_live ? 'YES' : 'NO')}
                             ${F('LvRevealed', JSON.stringify(p.live_zone_revealed || [false, false, false]))}
+                            <!-- NEW: Additional Missing Fields -->
+                            ${F('TappedEnergyMask', `0x${(p.tapped_energy_mask || 0).toString(16).toUpperCase()}`)}
+                            ${F('CostMods', JSON.stringify(p.cost_modifiers || []))}
+                            ${F('BladeBuffLogs', JSON.stringify(p.blade_buff_logs || []))}
+                            ${F('HeartBuffLogs', JSON.stringify(p.heart_buff_logs || []))}
+                            ${F('HandAddedTurn', JSON.stringify(p.hand_added_turn || []))}
+                            ${F('PerfTrigAbs', JSON.stringify(p.perf_triggered_abilities || []))}
+                            <!-- NEW: Flags Bit Breakdown -->
+                            <div style="grid-column: span 4; display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; padding: 4px; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                                <span style="font-size:9px; color: ${(p.flags || 0) & 1 ? '#e74c3c' : '#2ecc71'}">CANNOT_LIVE:${(p.flags || 0) & 1 ? 'Y' : 'N'}</span>
+                                <span style="font-size:9px; color: ${(p.flags || 0) & 2 ? '#e74c3c' : '#2ecc71'}">DECK_REFRESHED:${(p.flags || 0) & 2 ? 'Y' : 'N'}</span>
+                                <span style="font-size:9px; color: ${(p.flags || 0) & 4 ? '#e74c3c' : '#2ecc71'}">IMMUNITY:${(p.flags || 0) & 4 ? 'Y' : 'N'}</span>
+                                <span style="font-size:9px; color: ${(p.flags || 0) & 8 ? '#e74c3c' : '#2ecc71'}">TAPPED_M0:${(p.flags || 0) & 8 ? 'Y' : 'N'}</span>
+                                <span style="font-size:9px; color: ${(p.flags || 0) & 16 ? '#e74c3c' : '#2ecc71'}">TAPPED_M1:${(p.flags || 0) & 16 ? 'Y' : 'N'}</span>
+                                <span style="font-size:9px; color: ${(p.flags || 0) & 32 ? '#e74c3c' : '#2ecc71'}">TAPPED_M2:${(p.flags || 0) & 32 ? 'Y' : 'N'}</span>
+                                <span style="font-size:9px; color: ${(p.flags || 0) & 64 ? '#e74c3c' : '#2ecc71'}">MOVED_M0:${(p.flags || 0) & 64 ? 'Y' : 'N'}</span>
+                                <span style="font-size:9px; color: ${(p.flags || 0) & 128 ? '#e74c3c' : '#2ecc71'}">MOVED_M1:${(p.flags || 0) & 128 ? 'Y' : 'N'}</span>
+                                <span style="font-size:9px; color: ${(p.flags || 0) & 256 ? '#e74c3c' : '#2ecc71'}">MOVED_M2:${(p.flags || 0) & 256 ? 'Y' : 'N'}</span>
+                                <span style="font-size:9px; color: ${(p.flags || 0) & 512 ? '#e74c3c' : '#2ecc71'}">LIVE_REV0:${(p.flags || 0) & 512 ? 'Y' : 'N'}</span>
+                                <span style="font-size:9px; color: ${(p.flags || 0) & 1024 ? '#e74c3c' : '#2ecc71'}">LIVE_REV1:${(p.flags || 0) & 1024 ? 'Y' : 'N'}</span>
+                                <span style="font-size:9px; color: ${(p.flags || 0) & 2048 ? '#e74c3c' : '#2ecc71'}">LIVE_REV2:${(p.flags || 0) & 2048 ? 'Y' : 'N'}</span>
+                            </div>
                         </div>
                     </details>
 
                     <!-- PER-SLOT DATA -->
-                    <details>
-                        <summary style="cursor:pointer; font-size:11px; font-weight:bold; text-transform:uppercase; opacity:0.7; letter-spacing:1px; margin-bottom:6px;">Per-Slot Buffs</summary>
+                    <details open>
+                        <summary style="cursor:pointer; font-size:11px; font-weight:bold; text-transform:uppercase; opacity:0.7; letter-spacing:1px; margin-bottom:6px;">Per-Slot Buffs & Energy</summary>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-bottom:10px;">
                             ${[0, 1, 2].map(s => `
                                 <div style="padding:4px; border:1px solid #333; border-radius:4px; font-size:10px;">
@@ -337,6 +490,7 @@ export const DebugModal = {
                                     ${F('HeartBuffs', JSON.stringify((p.heart_buffs || [])[s] || []))}
                                     ${F('CostMod', (p.slot_cost_modifiers || [])[s] ?? 0)}
                                     ${F('StgEnergy', (p.stage_energy_count || [])[s] ?? 0)}
+                                    ${F('StgEnergyCards', JSON.stringify((p.stage_energy || [])[s] || []))}
                                 </div>
                             `).join('')}
                         </div>
@@ -375,6 +529,18 @@ export const DebugModal = {
         });
 
         html += '</div>';
+
+        // Add Constants Reference Section at the end
+        html += `
+            <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                <h4 style="margin-top:0; color: var(--accent-gold);">Metadata Constants Reference</h4>
+                ${DebugModal._renderConstantsRef()}
+                ${DebugModal._renderConditionsRef()}
+                ${DebugModal._renderPhasesRef()}
+                ${DebugModal._renderTriggersRef()}
+            </div>
+        `;
+
         container.innerHTML = html;
     },
 
@@ -546,6 +712,34 @@ export const DebugModal = {
         document.body.appendChild(a);
         a.click();
         a.remove();
+    },
+
+    copyStandardizedJson: async () => {
+        const data = await Network.fetchStandardizedState();
+        if (data) {
+            navigator.clipboard.writeText(JSON.stringify(data, null, 2))
+                .then(() => alert("Standardized JSON copied to clipboard!"))
+                .catch(err => alert("Failed to copy: " + err));
+        } else {
+            alert("Failed to fetch standardized state from server.");
+        }
+    },
+
+    saveStandardizedJson: async () => {
+        const data = await Network.fetchStandardizedState();
+        if (data) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lovecasim_master_${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } else {
+            alert("Failed to fetch standardized state from server.");
+        }
     },
 
     async runModelAnalysis() {

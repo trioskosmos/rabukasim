@@ -853,10 +853,35 @@ export const Network = {
         return report;
     },
 
-    submitReport: async (explanation) => {
-        const reportData = Network._buildSlimReport(explanation);
+    fetchStandardizedState: async () => {
+        const roomCode = localStorage.getItem("lovelive_room_code");
+        if (!roomCode) return null;
+
         try {
-            const res = await fetch('/api/report', {
+            const res = await fetch('api/debug/dump_state', {
+                headers: { 'X-Room-Id': roomCode }
+            });
+            if (res.ok) return await res.json();
+            return null;
+        } catch (e) {
+            console.error("Failed to fetch standardized state", e);
+            return null;
+        }
+    },
+
+    submitReport: async (explanation) => {
+        // Try to get standardized state first
+        let reportData = await Network.fetchStandardizedState();
+        if (reportData) {
+            reportData.explanation = explanation;
+            reportData.userAgent = navigator.userAgent;
+        } else {
+            // Fallback to slim report if standardized state fetch fails or is unavailable
+            reportData = Network._buildSlimReport(explanation);
+        }
+
+        try {
+            const res = await fetch('api/report', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(reportData)

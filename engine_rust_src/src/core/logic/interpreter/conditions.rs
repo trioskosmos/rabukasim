@@ -248,7 +248,8 @@ pub fn resolve_count(
 
         // Special Group ID auto-encoding for C_COUNT_GROUP if not enabled (Legacy Support)
         // CRITICAL: Disable if any high-bits are set (Revision 5) or if it looks like a packed attribute
-        let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0 || (attr & 0xF) != 0; 
+        // However, allow IDs (0-127 in bits 5-11) or raw IDs (0-127 in bits 0-6) to pass if Type bits (bits 2-3) are not Member/Live.
+        let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0; 
         let group_id_bits = (attr & 0x00000000FFFFFFFF) & !FILTER_UNIQUE_NAMES;
         let should_auto_encode_group = (op == C_COUNT_GROUP)
             && !is_packed_r5
@@ -271,7 +272,7 @@ pub fn resolve_count(
         let has_value_enabled = (filter_attr & FILTER_VALUE_ENABLE_FLAG) != 0; // Bit 24
         let is_cost_type = (filter_attr & FILTER_VALUE_TYPE_FLAG) != 0;  // Bit 31
         let has_color_mask = ((filter_attr >> FILTER_COLOR_SHIFT_R5) & 0x7F) != 0; // Bits 32-38
-        if has_value_enabled && !is_cost_type && !has_color_mask {
+        if has_value_enabled && !is_cost_type && !has_color_mask && !is_packed_r5 {
             // Nullify the value_enabled bit (bit 24) since it's an errant cross-contamination from the count target
             filter_attr &= !FILTER_VALUE_ENABLE_FLAG;
         }
@@ -359,20 +360,37 @@ pub fn resolve_count(
                         sum
                     }
                 } else if op == C_COUNT_HEARTS {
-                    let color_idx = (attr >> 8) & 0x0F;
+                    // Revision 5: Color mask is bits 32-38
+                    let color_mask = (attr >> FILTER_COLOR_SHIFT_R5) & 0x7F;
+                    
                     if resolved_slot < 3 {
                         let h = state.get_effective_hearts(p_idx, resolved_slot, db, depth);
-                        if color_idx == 0 || color_idx > 7 {
+                        if color_mask == 0 {
                             h.get_total_count() as i32
                         } else {
-                            h.to_array()[color_idx as usize - 1] as i32
+                            // If mask is used, we currently sum all colors in the mask.
+                            // Most cards only check 1 color, but mask allows multiple.
+                            let mut sum = 0;
+                            let h_arr = h.to_array();
+                            for i in 0..6 {
+                                if (color_mask & (1 << i)) != 0 {
+                                    sum += h_arr[i] as i32;
+                                }
+                            }
+                            sum
                         }
                     } else {
                         let hearts = state.get_total_hearts(p_idx, db, depth).to_array();
-                        if color_idx == 0 || color_idx > 7 {
+                        if color_mask == 0 {
                             hearts.iter().map(|&x| x as i32).sum()
                         } else {
-                            hearts.get(color_idx as usize - 1).copied().unwrap_or(0) as i32
+                            let mut sum = 0;
+                            for i in 0..6 {
+                                if (color_mask & (1 << i)) != 0 {
+                                    sum += hearts.get(i).copied().unwrap_or(0) as i32;
+                                }
+                            }
+                            sum
                         }
                     }
                 } else {
@@ -583,8 +601,9 @@ pub fn check_condition_opcode(
         ),
         C_GROUP_FILTER => {
             let lower_attr = attr & 0x00000000FFFFFFFF;
-            // Revision 5: If any high bits are set or type bits [0..4] are non-zero, it's packed.
-            let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0 || (attr & 0xF) != 0;
+            // Revision 5: If any high bits are set, it's packed.
+            // Low bits 0-11 can contain raw IDs (0-127 in bits 5-11 or raw)
+            let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0;
             let filter = if !is_packed_r5 && (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
                 0x10 | (lower_attr << 5)
             } else if !is_packed_r5 && (lower_attr & 0x10) == 0 && val != 0 {
@@ -617,9 +636,10 @@ pub fn check_condition_opcode(
             };
             if cid >= 0 {
                 let lower_attr = attr & 0x00000000FFFFFFFF;
-                let filter = if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
+                let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0;
+                let filter = if !is_packed_r5 && (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
                     0x10 | (lower_attr << 5)
-                } else if (lower_attr & 0x10) == 0 && val != 0 {
+                } else if !is_packed_r5 && (lower_attr & 0x10) == 0 && val != 0 {
                     0x10 | ((val as u64) << 5)
                 } else {
                     lower_attr
@@ -1122,6 +1142,24 @@ pub fn check_condition_opcode(
                 0
             };
             player.is_tapped(slot)
+        }
+        C_ON_ABILITY_RESOLVE => {
+            // ON_ABILITY_RESOLVE
+            true
+        }
+        C_TARGET_MEMBER_HAS_NO_HEARTS => {
+            // TARGET_MEMBER_HAS_NO_HEARTS
+            let target_id = ctx.target_card_id;
+            if target_id >= 0 {
+                if let Some(slot_idx) = player.stage.iter().position(|&id| id == target_id) {
+                    let h = state.get_effective_hearts(p_idx, slot_idx, db, depth + 1);
+                    h.get_color_count(6) == 0
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
         }
         _ => false,
     };

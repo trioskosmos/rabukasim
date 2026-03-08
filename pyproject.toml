@@ -47,18 +47,10 @@ dev = [
     "maturin>=1.11.5",
     "mypy>=1.19.1",
     "pre-commit>=4.5.1",
-    "pytest>=9.0.2",
-    "pytest-bdd>=8.1.0",
-    "pytest-xdist>=3.6.1",
     "ruff>=0.14.11",
 ]
 
-[tool.pytest.ini_options]
-testpaths = ["engine/tests"]
-addopts = "--ignore=tests --ignore=tools"
-filterwarnings = [
-    "ignore:.*'cache' is set for njit and is ignored.*:RuntimeWarning"
-]
+
 
 [tool.ruff]
 # Same as Black.

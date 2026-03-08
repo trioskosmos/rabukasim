@@ -110,7 +110,18 @@ pub fn check_cost(
                 false
             }
         }
-        AbilityCostType::RevealHand => player.hand.len() >= val,
+        AbilityCostType::RevealHand => {
+            if (attr & FILTER_TYPE_MASK) != 0 {
+                player
+                    .hand
+                    .iter()
+                    .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, attr))
+                    .count()
+                    >= val
+            } else {
+                player.hand.len() >= val
+            }
+        }
         AbilityCostType::SacrificeUnder => {
             if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
                 player.stage_energy[ctx.area_idx as usize].len() >= val
@@ -163,6 +174,7 @@ pub fn check_cost(
                 player.success_lives.len() >= val
             }
         }
+        AbilityCostType::DiscardTopDeck => player.deck.len() >= val,
         _ => true,
     };
 
@@ -343,7 +355,27 @@ pub fn pay_cost(
                 false
             }
         }
-        AbilityCostType::RevealHand => true,
+        AbilityCostType::RevealHand => {
+            let val = cost.value as usize;
+            let mut revealed = 0;
+            // Clear previous looked_cards and revealed_cards
+            state.players[p_idx].looked_cards.clear();
+            state.players[p_idx].revealed_cards.clear();
+            
+            // Collect the first N cards that match the filter for auto-reveal
+            let hand = state.players[p_idx].hand.to_vec();
+            for cid in hand {
+                if cid >= 0 && (attr == 0 || state.card_matches_filter(db, cid, attr)) {
+                    state.players[p_idx].looked_cards.push(cid);
+                    state.players[p_idx].revealed_cards.push(cid);
+                    revealed += 1;
+                    if revealed >= val {
+                        break;
+                    }
+                }
+            }
+            revealed >= val
+        }
         AbilityCostType::SacrificeUnder => {
             if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
                 let player = &mut state.players[p_idx];
@@ -464,6 +496,20 @@ pub fn pay_cost(
             for &idx in indices.iter().rev() {
                 let cid = state.players[p_idx].success_lives.remove(idx);
                 state.players[p_idx].discard.push(cid);
+            }
+            true
+        }
+        AbilityCostType::DiscardTopDeck => {
+            let player = &mut state.players[p_idx];
+            let count = cost.value as usize;
+            if player.deck.len() < count {
+                return false;
+            }
+            for _ in 0..count {
+                if !player.deck.is_empty() {
+                    let cid = player.deck.remove(0);
+                    player.discard.push(cid);
+                }
             }
             true
         }

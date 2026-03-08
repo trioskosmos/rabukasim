@@ -14,8 +14,8 @@ from engine.game.deck_utils import UnifiedDeckParser
 from engine.game.data_loader import CardDataLoader
 from backend.rust_serializer import RustGameStateSerializer
 
-# AlphaZero configuration
-ACTION_SPACE = 16384
+# AlphaZero configuration (Vanilla 800x128)
+ACTION_SPACE = 128
 
 def load_tournament_decks(db_json):
     decks_dir = Path(__file__).parent.parent.parent / "ai" / "decks"
@@ -168,7 +168,7 @@ def generate_trajectories(num_games=10, sims_per_move=100, output_file="trajecto
                         policy_target[action_id] = visits / total_visits
             
             # Record transition
-            obs = state.to_alphazero_tensor()
+            obs = state.to_vanilla_tensor()
             game_history.append({
                 "obs": obs,
                 "policy": policy_target.tolist(),

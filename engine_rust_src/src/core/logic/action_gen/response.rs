@@ -54,7 +54,7 @@ impl ResponseGenerator {
         let mut allow_action_0 =
             (pi.filter_attr & FILTER_IS_OPTIONAL) != 0;
 
-        if choice_type == ChoiceType::Optional || choice_type == ChoiceType::SelectMode {
+        if choice_type == ChoiceType::Optional {
             allow_action_0 = true;
         }
 
@@ -224,7 +224,7 @@ impl ResponseGenerator {
                 for i in 0..count {
                     let cid = player.looked_cards[i];
                     if cid != -1
-                        && state.card_matches_filter(db, cid, pi.filter_attr)
+                        && state.card_matches_filter_with_ctx(db, cid, pi.filter_attr, &pi.ctx)
                     {
                         receiver.add_action(
                             (ACTION_BASE_CHOICE + i as i32) as usize,
@@ -568,13 +568,10 @@ impl ResponseGenerator {
                                         option_valid = false;
                                     }
                                 } else if target_op == O_MOVE_TO_DISCARD {
-                                    // Source zone can be packed: lower byte = slot/target, upper bytes = source zone
-                                    // s=ZONE_HAND means Hand directly, s=packed means source=Hand(6) packed
-                                    let source_zone = if s > 255 { (s >> 16) & 0xFF } else { s };
-                                    let hand_len = state.players[p_idx].hand.len() as i32;
-                                    if (source_zone == ZONE_HAND || source_zone == ZONE_DEFAULT) && hand_len < v {
-                                        option_valid = false;
-                                    }
+                                    // According to FAQ Q93, hand discard branches in mandatory SELECT_MODE
+                                    // must be selectable even if the player has fewer than the required cards.
+                                    // We allow this to proceed to handle partial fulfillment.
+                                    option_valid = true;
                                 }
                             }
                         }

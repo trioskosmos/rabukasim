@@ -2,7 +2,7 @@
 """
 Pseudocode Validator Tool
 
-This tool validates pseudocode entries in manual_pseudocode.json and cards.json
+This tool validates pseudocode entries in consolidated_abilities.json and cards.json
 to detect common issues that can cause infinite loops or runtime errors.
 
 Checks performed:
@@ -229,16 +229,18 @@ def validate_pseudocode(card_no: str, pseudocode: str) -> list:
     return issues
 
 
-def validate_manual_pseudocode(filepath: str) -> list:
-    """Validate all entries in manual_pseudocode.json"""
+def validate_consolidated_abilities(filepath: str) -> list:
+    """Validate all entries in consolidated_abilities.json"""
     issues = []
 
     with open(filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    for card_no, entry in data.items():
+    for jp_text, entry in data.items():
         pseudocode = entry.get("pseudocode", "")
-        card_issues = validate_pseudocode(card_no, pseudocode)
+        cards = entry.get("cards", [])
+        card_label = cards[0] if cards else "GROUP_TEXT"
+        card_issues = validate_pseudocode(card_label, pseudocode)
         issues.extend(card_issues)
 
     return issues
@@ -262,15 +264,15 @@ def validate_cards_json(filepath: str) -> list:
 
 def main():
     data_dir = PROJECT_ROOT / "data"
-    manual_path = data_dir / "manual_pseudocode.json"
+    consolidated_path = data_dir / "consolidated_abilities.json"
     cards_path = data_dir / "cards.json"
 
     all_issues = []
 
-    # Validate manual_pseudocode.json
-    if manual_path.exists():
-        manual_issues = validate_manual_pseudocode(str(manual_path))
-        all_issues.extend(manual_issues)
+    # Validate consolidated_abilities.json
+    if consolidated_path.exists():
+        consolidated_issues = validate_consolidated_abilities(str(consolidated_path))
+        all_issues.extend(consolidated_issues)
 
     # Validate cards.json
     if cards_path.exists():

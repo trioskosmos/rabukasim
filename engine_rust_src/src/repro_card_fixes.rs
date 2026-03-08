@@ -206,8 +206,8 @@ mod tests {
         );
         assert_eq!(
             state.phase,
-            Phase::Main,
-            "Should return to Main/Previous phase after passing cost"
+            Phase::Response,
+            "Should suspend on LOOK_AND_CHOOSE after passing optional cost"
         );
     }
 

@@ -93,6 +93,16 @@ impl BytecodeBuilder {
         self
     }
 
+    pub fn source(mut self, zone: Zone) -> Self {
+        let zone_val = self.encode_zone(zone);
+        let idx = self.last_idx();
+        let mut s = self.bytecode[idx + 4] as u32;
+        s &= !((S_STANDARD_SOURCE_ZONE_MASK as u32) << S_STANDARD_SOURCE_ZONE_SHIFT);
+        s |= (zone_val as u32 & S_STANDARD_SOURCE_ZONE_MASK as u32) << S_STANDARD_SOURCE_ZONE_SHIFT;
+        self.bytecode[idx + 4] = s as i32;
+        self
+    }
+
     pub fn dest(mut self, zone: Zone) -> Self {
         let zone_val = self.encode_zone(zone);
         let idx = self.last_idx();

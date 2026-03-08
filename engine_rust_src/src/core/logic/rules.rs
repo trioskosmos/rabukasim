@@ -45,7 +45,11 @@ pub fn get_effective_blades(
     } else {
         return 0;
     };
-    let mut val = m.blades as i32;
+    let mut val = if state.players[player_idx].blade_overrides[slot_idx] != -1 {
+        state.players[player_idx].blade_overrides[slot_idx] as i32
+    } else {
+        m.blades as i32
+    };
 
     // Wave 1: Constant abilities from ALL members on stage (Global/Area buffs)
     for other_slot in 0..3 {
@@ -162,6 +166,10 @@ pub fn get_effective_blades(
     }
 
     let buff = state.players[player_idx].blade_buffs[slot_idx];
+    if state.debug.debug_mode && !state.ui.silent {
+        println!("[DEBUG] get_effective_blades: slot={}, base={}, override={:?}, val_accum={}, buff={}, total={}", 
+            slot_idx, m.blades, state.players[player_idx].blade_overrides[slot_idx], val, buff, (val + buff as i32).max(0));
+    }
     (val + buff as i32).max(0) as u32
 }
 
@@ -358,7 +366,7 @@ pub fn get_member_cost(
         return 0;
     };
     let mut cost = m.cost as i32;
-    if state.debug.debug_mode {
+    if state.debug.debug_mode && !state.ui.silent {
         println!(
             "[DEBUG] get_member_cost: card_id={}, base_cost={}",
             card_id, cost
@@ -400,21 +408,51 @@ pub fn get_member_cost(
                 area_idx: slot_idx as i16,
                 ..Default::default()
             };
-            if ab
-                .conditions
-                .iter()
-                .all(|c| check_condition(state, db, p_idx, c, &ctx, depth + 1))
-            {
+                if state.debug.debug_mode && !state.ui.silent {
+                    println!("[DEBUG] Checking ability: trigger={:?}, conditions_len={}", ab.trigger, ab.conditions.len());
+                }
+                let mut cond_match = true;
+                for c in &ab.conditions {
+                    if !check_condition(state, db, p_idx, c, &ctx, depth + 1) {
+                        if state.debug.debug_mode && !state.ui.silent {
+                           println!("[DEBUG] Condition failed: type={:?}, value={}", c.condition_type, c.value);
+                        }
+                        cond_match = false;
+                        break;
+                    }
+                }
+
+            if cond_match {
                 let bc = &ab.bytecode;
                 let mut i = 0;
+                if state.debug.debug_mode && !state.ui.silent {
+                    println!("[DEBUG] Conditions PASSED. Running bytecode loop, len={}", bc.len());
+                }
                 while i + 4 < bc.len() {
                     let op = bc[i];
                     let v = bc[i + 1];
-                    let target_type = bc[i + 4];
+                    let _target_type = bc[i + 4];
 
-                    if op == O_REDUCE_COST && (target_type == 0 || target_type == 4) {
-                        cost -= v as i32;
-                    }
+                        if op == O_REDUCE_COST && ((bc[i + 4] as u32) & 0xFF == 0 || (bc[i + 4] as u32) & 0xFF == 4) {
+                            let a_low = bc[i + 2] as u32;
+                            let a_high = bc[i + 3] as u32;
+                            let a = ((a_high as u64) << 32) | (a_low as u64);
+                            let s = bc[i + 4] as u32;
+
+                            let mut multiplier = 1;
+                            if (a & DYNAMIC_VALUE) != 0 {
+                                // DYNAMIC_VALUE bit set
+                                let count_op = (s >> 8) & 0xFFFF;
+                                multiplier = resolve_count(state, db, count_op as i32, a & !DYNAMIC_VALUE, s as i32, &ctx, depth + 1);
+                                if state.debug.debug_mode && !state.ui.silent {
+                                    println!("[DEBUG] resolve_count returned: {}, for op: {}, a: {:X}", multiplier, count_op, a);
+                                }
+                            }
+                            cost -= (v as i32) * multiplier;
+                            if state.debug.debug_mode && !state.ui.silent {
+                                println!("[DEBUG] Applied REDUCE_COST: v={}, multiplier={}, new_cost={}", v, multiplier, cost);
+                            }
+                        }
                     i += 5;
                 }
             }
@@ -444,9 +482,19 @@ pub fn get_member_cost(
                             while i + 4 < bc.len() {
                                 let op = bc[i];
                                 let v = bc[i + 1];
-                                let target_type = bc[i + 4];
-                                if op == O_REDUCE_COST && (target_type == 0 || target_type == 4) {
-                                    cost -= v as i32;
+                                if op == O_REDUCE_COST && ((bc[i + 4] as u32) & 0xFF == 0 || (bc[i + 4] as u32) & 0xFF == 4) {
+                                    let a_low = bc[i + 2] as u32;
+                                    let a_high = bc[i + 3] as u32;
+                                    let a = ((a_high as u64) << 32) | (a_low as u64);
+                                    let s = bc[i + 4] as u32;
+
+                                    let mut multiplier = 1;
+                                    if (a & DYNAMIC_VALUE) != 0 {
+                                        // DYNAMIC_VALUE bit set
+                                        let count_op = (s >> 8) & 0xFFFF;
+                                        multiplier = resolve_count(state, db, count_op as i32, a & !DYNAMIC_VALUE, s as i32, &ctx, depth + 1);
+                                    }
+                                    cost -= (v as i32) * multiplier;
                                 }
                                 i += 5;
                             }

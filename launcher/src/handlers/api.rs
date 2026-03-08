@@ -4,7 +4,8 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::collections::{HashMap, VecDeque};
 use uuid::Uuid;
-use engine_rust::core::logic::GameState;
+use engine_rust::core::logic::{GameState, StandardizedState};
+#[cfg(feature = "nn")]
 use engine_rust::core::alphazero_encoding::AlphaZeroEncoding;
 use engine_rust::core::logic::Phase;
 use engine_rust::core::mcts::{MCTS, SearchHorizon};
@@ -607,6 +608,38 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                 } else { status = 404; }
             } else { status = 400; }
         },
+        "api/debug/dump_state" => {
+            let room_id = get_header(&request, "X-Room-Id");
+            if let Some(rid) = room_id {
+                let rooms = state.rooms.lock().unwrap();
+                if let Some(room_arc) = rooms.get(&rid) {
+                    let room = room_arc.lock().unwrap();
+                    let mut room_info = HashMap::new();
+                    room_info.insert("id".to_string(), rid.clone());
+                    room_info.insert("mode".to_string(), room.mode.clone());
+
+                    let history_vec: Vec<GameState> = room.history.iter().cloned().collect();
+
+                    let std_state = StandardizedState::new(
+                        room.state.clone(),
+                        &state.card_db,
+                        room_info,
+                        true,
+                        Some(history_vec),
+                    );
+
+                    match serde_json::to_string(&std_state) {
+                        Ok(json) => {
+                            response_json = json;
+                        },
+                        Err(e) => {
+                            status = 500;
+                            response_json = json!({"error": format!("Serialization failed: {}", e)}).to_string();
+                        }
+                    }
+                } else { status = 404; }
+            } else { status = 400; }
+        },
         "api/exec" => {
              // Stub for debug commands
              response_json = json!({"success": true, "message": "Command received"}).to_string();
@@ -646,6 +679,8 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                 let filename = format!("reports/report_{:04}{:02}{:02}_{:02}{:02}{:02}.json", year, month, day, hours, minutes, seconds);
                 let _ = std::fs::create_dir_all("reports");
                 if let Ok(content) = serde_json::to_string_pretty(&body) {
+                    // Check if this is already a standardized state (has "current_state" and "tensor")
+                    // If not, we could wrap it, but for now we just save as is.
                     if let Err(e) = std::fs::write(&filename, content) {
                         println!("[API] Failed to save report: {}", e);
                     } else {
@@ -659,7 +694,6 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
             #[cfg(feature = "nn")]
             {
                 if let Some(session_arc) = &state.model_session {
-                    use engine_rust::core::logic::GameState;
                     match parse_body::<GameState>(&mut request) {
                         Ok(new_state) => {
                             let input_vec = new_state.to_alphazero_tensor(&state.card_db);

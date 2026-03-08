@@ -26,98 +26,16 @@ from engine.models.ability import (
     TriggerType,
 )
 
-from .patterns.base import PatternPhase
-from .patterns.registry import PatternRegistry, get_registry
 
-# =============================================================================
-# Constants: Alias Mappings
-# =============================================================================
-
-# Trigger type aliases (pseudocode -> canonical name)
-TRIGGER_ALIASES = {
-    "ON_YELL": "ON_REVEAL",
-    "ON_YELL_SUCCESS": "ON_REVEAL",
-    "ON_ACTIVATE": "ACTIVATED",
-    "JIDOU": "ON_LEAVES",
-    "ON_REVEAL": "ON_REVEAL",
-    "ON_MEMBER_DISCARD": "ON_LEAVES",
-    "ON_DISCARDED": "ON_LEAVES",
-    "ON_REMOVE": "ON_LEAVES",
-    "ON_SET": "ON_PLAY",
-    "ON_STAGE_ENTRY": "ON_PLAY",
-    "ON_PLAY_OTHER": "ON_PLAY",
-    "ON_REVEAL_OTHER": "ON_REVEAL",
-    "ON_LIVE_SUCCESS_OTHER": "ON_LIVE_SUCCESS",
-    "ON_TURN_START": "TURN_START",
-    "ON_TURN_END": "TURN_END",
-    "ON_TAP": "ACTIVATED",
-    "ON_REVEAL_SELF": "ON_REVEAL",
-    "ON_LIVE_SUCCESS_SELF": "ON_LIVE_SUCCESS",
-    "ACTIVATED_FROM_DISCARD": "ACTIVATED",
-    "ON_ENERGY_CHARGE": "ACTIVATED",
-    "ON_DRAW": "ACTIVATED",
-    "ON_POSITION_CHANGE": "ON_LEAVES",
-    "ON_MOVE": "ON_LEAVES",
-}
-
-# Effect type aliases (pseudocode -> canonical name)
-# Simple name-only aliases (no param modifications)
-EFFECT_ALIASES = {
-    "TAP_PLAYER": "TAP_MEMBER",
-    "CHARGE_ENERGY": "ENERGY_CHARGE",
-    "MOVE_DISCARD": "MOVE_TO_DISCARD",
-    "MOVE_HAND": "ADD_TO_HAND",
-    "MOVE_TO_HAND": "ADD_TO_HAND",
-    "ADD_HAND": "ADD_TO_HAND",
-    "SELECT_LIMIT": "REDUCE_LIVE_SET_LIMIT",
-    "POWER_UP": "BUFF_POWER",
-    "REDUCE_SET_LIMIT": "REDUCE_LIVE_SET_LIMIT",
-    "REDUCE_LIMIT": "REDUCE_LIVE_SET_LIMIT",
-    "REDUCE_HEART": "REDUCE_HEART_REQ",
-    "MOVE_DECK": "MOVE_TO_DECK",
-    "SET_BASE_BLADES": "SET_BLADES",
-    "GRANT_HEARTS": "ADD_HEARTS",
-    "GRANT_HEART": "ADD_HEARTS",
-    "CHANGE_BASE_HEART": "TRANSFORM_HEART",
-    "SELECT_LIVE_CARD": "SELECT_LIVE",
-    "POSITION_CHANGE": "MOVE_MEMBER",
-    "INCREASE_HEART": "INCREASE_HEART_COST",
-    "CHANGE_YELL_BLADE_COLOR": "TRANSFORM_COLOR",
-    "TRANSFORM_YELL_BLADES": "TRANSFORM_COLOR",
-    "OPPONENT_CHOICE": "OPPONENT_CHOOSE",
-    "LOOK_AND_CHOOSE_ORDER": "ORDER_DECK",
-    "LOOK_AND_CHOOSE_REVEAL": "LOOK_AND_CHOOSE",
-    "SET_HEART_REQ": "SET_HEART_COST",
-    "CYCLE_AREAS": "SWAP_AREA",
-    "SELECT_OPTION": "SELECT_MODE",
-    "CHOICE_MODE": "SELECT_MODE",
-    "HALVE_VALUE": "DIV_VALUE",
-    "REORDER_DISCARD": "LOOK_REORDER_DISCARD",
-    "HEART_SELECT": "COLOR_SELECT",
-}
-
-# Effect aliases that require additional param modifications
-# Format: alias -> (canonical_name, params_dict)
-EFFECT_ALIASES_WITH_PARAMS = {
-    "CHARGE_SELF": ("ENERGY_CHARGE", {"target": "MEMBER_SELF"}),
-    "PLACE_ENERGY_WAIT": ("ENERGY_CHARGE", {"wait": True}),
-    "RECOVER_FROM_CHEER": ("RECOVER_MEMBER", {"source": "yell"}),
-    "BOOST_SCORE_PER_COLOR": ("BOOST_SCORE", {"multiplier": "color"}),
-    "LOOK_AND_CHOOSE_REVEAL": ("LOOK_AND_CHOOSE", {"reveal": True}),
-    "REMOVE_SELF": ("MOVE_TO_DISCARD", {"target": "MEMBER_SELF"}),
-    "SWAP_SELF": ("SWAP_ZONE", {"target": "MEMBER_SELF"}),
-    "TRIGGER_YELL_AGAIN": ("META_RULE", {"meta_type": "TRIGGER_YELL_AGAIN"}),
-    "DISCARD_HAND": ("MOVE_TO_DISCARD", {"source": "HAND", "destination": "discard"}),
-    "RECOVER_LIVE": ("RECOVER_LIVE", {"source": "discard"}),
-    "RECOVER_MEMBER": ("RECOVER_MEMBER", {"source": "discard"}),
-    "SELECT_RECOVER_LIVE": ("RECOVER_LIVE", {"source": "discard"}),
-    "SELECT_RECOVER_MEMBER": ("RECOVER_MEMBER", {"source": "discard"}),
-    "DISCARD_UNTIL": ("MOVE_TO_DISCARD", {"operation": "UNTIL_SIZE"}),
-    "YELL_MULLIGAN": ("META_RULE", {"meta_type": "ACTION_YELL_MULLIGAN"}),
-}
-
-# Maximum value for "ALL" selector
-MAX_SELECT_ALL = 99
+from .aliases import (
+    TRIGGER_ALIASES,
+    EFFECT_ALIASES,
+    EFFECT_ALIASES_WITH_PARAMS,
+    CONDITION_ALIASES,
+    KEYWORD_CONDITIONS,
+    IGNORED_CONDITIONS,
+    MAX_SELECT_ALL,
+)
 
 # =============================================================================
 # Precompiled Regex Patterns
@@ -144,109 +62,6 @@ _RE_TRIGGER_PARENS = re.compile(r"\(.*?\)")
 _RE_COST_GE = re.compile(r"COST_GE=(\d+)")
 _RE_COST_COMPARISON = re.compile(r"COST_(GE|LE|GT|LT|EQ)=(\d+)")
 
-# Condition type aliases (pseudocode -> canonical name)
-# Format: alias -> (canonical_name, extra_params)
-CONDITION_ALIASES = {
-    # Simple name-only aliases
-    "ONCE": ("TURN_1", {}),
-    "TURN_1": ("TURN_1", {}),
-    "ALL_MEMBERS": ("GROUP_FILTER", {"all": True}),
-    "COUNT_LIVE": ("COUNT_LIVE_ZONE", {}),
-    "HAS_SUCCESS_LIVE": ("COUNT_SUCCESS_LIVE", {}),
-    "SUM_ENERGY": ("COUNT_ENERGY", {}),
-    "BATON_FROM_NAME": ("BATON", {}),
-    "MOVED_THIS_TURN": ("HAS_MOVED", {}),
-    "DECK_REFRESHED_THIS_TURN": ("DECK_REFRESHED", {}),
-    "HAND_SIZE_DIFF": ("OPPONENT_HAND_DIFF", {}),
-    "BATON_TOUCH": ("BATON", {}),
-    "BATON_COUNT": ("BATON", {}),
-    "BATON": ("BATON", {}),
-    "HAND_SIZE": ("COUNT_HAND", {}),
-    "BLADES": ("COUNT_BLADES", {}),
-    "TOTAL_BLADES": ("TOTAL_BLADES", {}),
-    "HEART_LEAD": ("HEART_LEAD", {}),
-    "OPPONENT_HAS_WAIT": ("OPPONENT_HAS_WAIT", {}),
-    "IS_IN_DISCARD": ("IS_IN_DISCARD", {}),
-    "COUNT_ENERGY_EXACT": ("COUNT_ENERGY_EXACT", {}),
-    "ENERGY_COUNT": ("COUNT_ENERGY", {}),
-    "COUNT_BLADE_HEART_TYPES": ("COUNT_BLADE_HEART_TYPES", {}),
-    "OPPONENT_HAS_EXCESS_HEART": ("OPPONENT_HAS_EXCESS_HEART", {}),
-    "SCORE_TOTAL": ("SCORE_TOTAL_CHECK", {}),
-    "HAS_EXCESS_HEART": ("HAS_EXCESS_HEART", {}),
-    "COUNT_MEMBER": ("COUNT_STAGE", {}),
-    "TOTAL_HEARTS": ("COUNT_HEARTS", {}),
-    "HEARTS_COUNT": ("COUNT_HEARTS", {}),
-    "ALL_MEMBER": ("GROUP_FILTER", {}),
-    "MEMBER_AT_SLOT": ("GROUP_FILTER", {}),
-    "HAS_LIVE_HEART_COLORS": ("HAS_COLOR", {}),
-    "COUNT_REVEALED": ("COUNT_HAND", {}),
-    "COUNT_DISCARDED_THIS_TURN": ("COUNT_DISCARD", {}),
-    "CHECK_GROUP_FILTER": ("GROUP_FILTER", {}),
-    "FILTER": ("GROUP_FILTER", {}),
-    "SELECT_YELL": ("GROUP_FILTER", {"zone": "yell"}),
-    "NAME_MATCH": ("GROUP_FILTER", {"filter": "NAME_MATCH"}),
-    "SUCCESS": ("MODAL_ANSWER", {}),
-    "MATCH_PREVIOUS": ("MODAL_ANSWER", {}),
-    # Aliases with params
-    "COST_LEAD": ("SCORE_COMPARE", {"type": "cost", "target": "opponent", "comparison": "GT"}),
-    "SCORE_LEAD": ("SCORE_COMPARE", {"type": "score", "comparison": "GT", "target": "opponent"}),
-    "TYPE_MEMBER": ("TYPE_CHECK", {"card_type": "member"}),
-    "TYPE_LIVE": ("TYPE_CHECK", {"card_type": "live"}),
-    "ENERGY_LAGGING": ("OPPONENT_ENERGY_DIFF", {"comparison": "GE", "diff": 1}),
-    "ENERGY_LEAD": ("OPPONENT_ENERGY_DIFF", {"comparison": "LE", "diff": 0}),
-    "SUM_SCORE": ("SCORE_COMPARE", {"type": "score", "comparison": "GE"}),
-    "SUM_COST": ("SCORE_COMPARE", {"type": "cost", "comparison": "GE"}),
-    "COST_LE_9": ("COST_CHECK", {"comparison": "LE", "value": 9}),
-    "SCORE_EQUAL_OPPONENT": ("SCORE_COMPARE", {"comparison": "EQ", "target": "opponent"}),
-    "SCORE_TOTAL": ("SCORE_COMPARE", {"type": "score", "comparison": "GE"}),
-    "COUNT_ACTIVATED": ("COUNT_STAGE", {"filter": "ACTIVATED"}),
-    "HAS_REMAINING_HEART": ("COUNT_HEARTS", {"min": 1}),
-    "COUNT_CHARGED_ENERGY": ("COUNT_ENERGY", {}),
-    "SUM_SUCCESS_LIVE": ("COUNT_SUCCESS_LIVE", {}),
-    "SUM_HEARTS": ("COUNT_HEARTS", {}),
-    "EXTRA_HEARTS": ("COUNT_HEARTS", {"min": 1}),
-    "HAS_ACTIVE_ENERGY": ("COUNT_ENERGY", {"filter": "active", "min": 1}),
-    "ALL_ENERGY_ACTIVE": ("COUNT_ENERGY", {"filter": "active", "comparison": "ALL"}),
-    "ENERGY": ("COUNT_ENERGY", {}),
-    "HAS_TYPE_LIVE": ("TYPE_CHECK", {"card_type": "live"}),
-    "NOT_MOVED_THIS_TURN": ("HAS_MOVED", {}),  # negated handled separately
-    # COUNT_CARDS for unique member checks across zones
-    "COUNT_CARDS": ("GROUP_FILTER", {}),
-    "COUNT_UNIQUE_MEMBERS": ("GROUP_FILTER", {"unique": True}),
-    "MAIN_PHASE": ("MAIN_PHASE", {}),
-    "SELECT_MEMBER": ("SELECT_MEMBER", {}),
-    "SUCCESS_PILE_COUNT": ("SUCCESS_PILE_COUNT", {}),
-    "IS_SELF_MOVE": ("IS_SELF_MOVE", {}),
-    "DISCARDED_CARDS": ("DISCARDED_CARDS", {}),
-    "YELL_REVEALED_UNIQUE_COLORS": ("YELL_REVEALED_UNIQUE_COLORS", {}),
-    "SYNC_COST": ("SYNC_COST", {}),
-    "SUM_VALUE": ("SUM_VALUE", {}),
-    "VALUE_EQ": ("SUM_VALUE", {}),
-    "IS_WAIT": ("IS_WAIT", {}),
-}
-
-# Conditions that map to HAS_KEYWORD with a keyword param
-KEYWORD_CONDITIONS = {
-    "COUNT_PLAYED_THIS_TURN": "PLAYED_THIS_TURN",
-    "REVEALED_CONTAINS": "REVEALED_CONTAINS",
-    "ZONE": "ZONE_CHECK",
-    "AREA": "AREA_CHECK",
-    "EFFECT_NEGATED_THIS_TURN": "EFFECT_NEGATED",
-    "HIGHEST_COST_ON_STAGE": "HIGHEST_COST",
-    "COUNT_UNIQUE_NAMES": "UNIQUE_NAMES",
-    "OPPONENT_EXTRA_HEARTS": "OPPONENT_EXTRA_HEARTS",
-    "HAS_LIVE_SET": "HAS_LIVE_SET",
-    "SUCCESS_LIVES_CONTAINS": "SUCCESS_LIVES_CONTAINS",
-    "YELL_COUNT": "YELL_COUNT",
-    "COUNT_YELL_REVEALED": "YELL_COUNT",
-}
-
-# Conditions that should be ignored (map to NONE)
-IGNORED_CONDITIONS = {
-    "TARGET",
-    "ON_YELL",
-    "ON_YELL_SUCCESS",
-}
 
 
 # =============================================================================
@@ -553,675 +368,27 @@ class StructuralLexer:
 class AbilityParserV2:
     """Multi-pass ability parser using pattern registry."""
 
-    def __init__(self, registry: Optional[PatternRegistry] = None):
-        self.registry = registry or get_registry()
+    def __init__(self):
+        pass
 
     def parse(self, text: str) -> List[Ability]:
         """Parse ability text into structured Ability objects."""
-        # Detect pseudocode format
-        triggers = ["TRIGGER:", "CONDITION:", "EFFECT:", "COST:"]
-        if any(text.strip().upper().startswith(kw) for kw in triggers):
-            return self._parse_pseudocode_block(text)
-
-        # Preprocessing
-        text = self._preprocess(text)
-
-        # Split into sentences
-        sentences = self._split_sentences(text)
-
-        # Group sentences into ability blocks
-        blocks = []
-        current_block = []
-        for i, sentence in enumerate(sentences):
-            if i > 0 and self._is_continuation(sentence, i):
-                current_block.append(sentence)
-            else:
-                if current_block:
-                    blocks.append(" ".join(current_block))
-                current_block = [sentence]
-        if current_block:
-            blocks.append(" ".join(current_block))
-
-        abilities = []
-        for block in blocks:
-            ability = self._parse_block(block)
-            if ability:
-                abilities.append(ability)
-
-        return abilities
-
-    def _parse_block(self, block: str) -> Optional[Ability]:
-        """Parse a single combined ability block."""
-        # Split into cost and effect parts
-        colon_idx = block.find("：")
-        if colon_idx == -1:
-            colon_idx = block.find(":")
-
-        if colon_idx != -1:
-            cost_part = block[:colon_idx].strip()
-            effect_part = block[colon_idx + 1 :].strip()
-        else:
-            cost_part = ""
-            effect_part = block
-
-        # === PASS 1: Extract trigger ===
-        trigger, trigger_match = self._extract_trigger(block)
-
-        # Mask trigger text from effect part to avoid double-matching
-        # (e.g. "when placed in discard" shouldn't trigger "place in discard")
-        effective_effect_part = effect_part
-        if trigger_match:
-            # Standard Japanese card formatting: [Trigger/Condition]とき、[Effect]
-            # Or [Trigger/Condition]：[Effect]
-            # If we see "とき", everything before it is usually trigger/condition
-            toki_idx = effective_effect_part.find("とき")
-            if toki_idx == -1:
-                toki_idx = effective_effect_part.find("場合")
-
-            if toki_idx != -1:
-                # Mask everything up to "とき" or "場合" (plus the word itself)
-                # BUT ONLY if it's in the same sentence (no punctuation in between)
-                preceding = effective_effect_part[:toki_idx]
-                if "。" in preceding:
-                    toki_idx = -1
-
-            if toki_idx != -1:
-                mask_end = toki_idx + 2  # Length of "とき" or "場合"
-                effective_effect_part = " " * mask_end + effective_effect_part[mask_end:]
-            else:
-                # Fallback: just mask the trigger match itself
-                start, end = trigger_match.span()
-                if start >= (len(block) - len(effect_part)):
-                    rel_start = start - (len(block) - len(effect_part))
-                    rel_end = end - (len(block) - len(effect_part))
-                    if rel_start >= 0 and rel_end <= len(effect_part):
-                        effective_effect_part = (
-                            effect_part[:rel_start] + " " * (rel_end - rel_start) + effect_part[rel_end:]
-                        )
-
-        # === PASS 2: Extract conditions ===
-        # Scan the entire block for conditions as they can appear anywhere
-        conditions = self._extract_conditions(block)
-
-        # === PASS 3: Extract effects ===
-        # Only extract effects from the masked part to avoid trigger/cost confusion
-        effects = self._extract_effects(effective_effect_part)
-
-        # === PASS 5: Extract costs ===
-        costs = self._extract_costs(cost_part)
-
-        # Determine Trigger and construct Ability
-        if trigger == TriggerType.NONE and not (effects or conditions or costs):
-            return None
-
-        final_trigger = trigger
-        if final_trigger == TriggerType.NONE:
-            # Only default to CONSTANT if we have some indicators of an ability
-            # (to avoid splitting errors defaulting to Constant)
-            has_ability_indicators = any(
-                kw in block
-                for kw in [
-                    "引",
-                    "スコア",
-                    "プラス",
-                    "＋",
-                    "ブレード",
-                    "ハート",
-                    "控",
-                    "戻",
-                    "エネ",
-                    "デッキ",
-                    "山札",
-                    "見る",
-                    "公開",
-                    "選ぶ",
-                    "扱",
-                    "得る",
-                    "移動",
-                    "LOOK_AND_CHOOSE",
-                    "LOOK_AND_CHOOSE_REVEAL",
-                ]
-            )
-            if has_ability_indicators:
-                final_trigger = TriggerType.CONSTANT
-            else:
-                return None
-
-        # Prepare instructions (Execution Order)
-        instructions = []
-        instructions.extend(conditions)
-        instructions.extend(costs)
-        instructions.extend(effects)
-
-        ability = Ability(
-            raw_text=block,
-            trigger=final_trigger,
-            effects=effects,
-            conditions=conditions,
-            costs=costs,
-            instructions=instructions,
-            pseudocode=block,
-        )
-
-        # === PASS 4: Apply modifiers ===
-        # Scan the entire block for modifiers (OPT, optionality, etc.)
-        modifiers = self._extract_modifiers(block)
-        self._apply_modifiers(ability, modifiers)
-
-        # === PASS 6: Handle "Choose Player" transformation ===
-        # If the ability starts with "自分か相手を選ぶ", transform following effects into SELECT_MODE
-        if "自分か相手を選ぶ" in block and len(ability.effects) > 0:
-            original_effects = []
-            # Find the "choose player" dummy effect (META_RULE) if present and remove it
-            other_effects = []
-            for eff in ability.effects:
-                if eff.effect_type == EffectType.META_RULE and eff.params.get("target") == "PLAYER_SELECT":
-                    continue
-                other_effects.append(eff)
-
-            if other_effects:
-                # Option 1: Yourself
-                self_effects = []
-                for eff in other_effects:
-                    new_eff = copy.deepcopy(eff)
-                    new_eff.target = TargetType.SELF
-                    self_effects.append(new_eff)
-
-                # Option 2: Opponent
-                opp_effects = []
-                for eff in other_effects:
-                    new_eff = copy.deepcopy(eff)
-                    new_eff.target = TargetType.OPPONENT
-                    opp_effects.append(new_eff)
-
-                # Replace effects with a single SELECT_MODE
-                ability.effects = [
-                    Effect(
-                        EffectType.SELECT_MODE,
-                        value=1,
-                        target=TargetType.SELF,
-                        params={"options_text": ["自分", "相手"]},
-                        modal_options=[self_effects, opp_effects],
-                    )
-                ]
-
-        return ability
-
-    # =========================================================================
-    # Preprocessing
-    # =========================================================================
-
-    def _preprocess(self, text: str) -> str:
-        """Normalize text for parsing."""
+        # Preprocess
         text = text.replace("<br>", "\n")
-        return text
 
-    def _split_sentences(self, text: str) -> List[str]:
-        """Split text into individual sentences."""
-        # Split by newlines first
-        blocks = re.split(r"\\n|\n", text)
+        # Detect format
+        triggers = ["TRIGGER:", "CONDITION:", "EFFECT:", "COST:"]
+        
+        # Behavior blocks are handled if present, else fallback to pseudocode
+        if text.strip().upper().startswith("BEHAVIOR:"):
+            # Check if behavior parser exists (it was legacy/retired in some versions)
+            if hasattr(self, "_parse_behavior_block"):
+                return self._parse_behavior_block(text)
+            return self._parse_pseudocode_block(text)
+            
+        return self._parse_pseudocode_block(text)
 
-        sentences = []
-        for block in blocks:
-            block = block.strip()
-            if not block:
-                continue
-            # Split on Japanese period, keeping the period
-            parts = re.split(r"(。)\s*", block)
-            # Reconstruct sentences with periods
-            current = ""
-            for part in parts:
-                if part == "。":
-                    current += part
-                    if current.strip():
-                        sentences.append(current.strip())
-                    current = ""
-                else:
-                    current = part
-            if current.strip():
-                sentences.append(current.strip())
 
-        return sentences
-
-    def _is_continuation(self, sentence: str, index: int) -> bool:
-        """Check if sentence is a continuation of previous ability."""
-        # First sentence can't be a continuation
-        if index == 0:
-            return False
-
-        # Explicit trigger icons should NEVER be continuations
-        if any(
-            icon in sentence
-            for icon in ["{{live_success", "{{live_start", "{{toujyou", "{{kidou", "{{jyouji", "{{jidou"]
-        ):
-            return False
-
-        # Check for continuation markers
-        continuation_markers = [
-            "・",
-            "-",
-            "－",
-            "回答が",
-            "選んだ場合",
-            "条件が",
-            "それ以外",
-            "その",
-            "それら",
-            "残り",
-            "そし",
-            "その後",
-            "そこから",
-            "山札",
-            "デッキ",
-            "もよい",
-            "を自分",
-            "ライブ終了時まで",
-            "この能力",
-            "この効果",
-            "（",
-            "(",
-            "そうした場合",
-            "」",
-            "』",
-            "）」",
-            "）",
-            ")",
-            "ただし",
-            "かつ",
-            "または",
-            "もしくは",
-            "および",
-            "代わりに",
-            "このメンバー",
-            "そのメンバー",
-            "選んだ",
-            "選んだエリア",
-            "自分は",
-            "相手は",
-        ]
-
-        # Check if it starts with any common phrase that usually continues an ability
-        for marker in continuation_markers:
-            if sentence.startswith(marker):
-                return True
-
-        # Special case: "その" or "プレイヤー" often appears slightly after "自分は"
-        if "その" in sentence[:10] or "プレイヤー" in sentence[:10]:
-            return True
-
-        return False
-
-    def _extend_ability(self, ability: Ability, sentence: str) -> None:
-        """Extend an existing ability with content from a continuation sentence."""
-        # Extract additional effects
-        effects = self._extract_effects(sentence)
-        ability.effects.extend(effects)
-
-        # Extract additional conditions
-        conditions = self._extract_conditions(sentence)
-        for cond in conditions:
-            if cond not in ability.conditions:
-                ability.conditions.append(cond)
-
-        # Apply modifiers
-        modifiers = self._extract_modifiers(sentence)
-        self._apply_modifiers(ability, modifiers)
-
-        # Update raw text
-        ability.raw_text += " " + sentence
-
-    # =========================================================================
-    # Pass 1: Trigger Extraction
-    # =========================================================================
-
-    def _extract_trigger(self, sentence: str) -> Tuple[TriggerType, Optional[Match]]:
-        """Extract trigger type and match object from sentence."""
-        result = self.registry.match_first(sentence, PatternPhase.TRIGGER)
-        if result:
-            pattern, match, data = result
-            type_str = data.get("type", "")
-            return self._resolve_trigger_type(type_str), match
-        return TriggerType.NONE, None
-
-    def _resolve_trigger_type(self, type_str: str) -> TriggerType:
-        """Convert type string to TriggerType enum."""
-        mapping = {
-            "TriggerType.ON_PLAY": TriggerType.ON_PLAY,
-            "TriggerType.ON_LIVE_START": TriggerType.ON_LIVE_START,
-            "TriggerType.ON_LIVE_SUCCESS": TriggerType.ON_LIVE_SUCCESS,
-            "TriggerType.ACTIVATED": TriggerType.ACTIVATED,
-            "TriggerType.CONSTANT": TriggerType.CONSTANT,
-            "TriggerType.ON_LEAVES": TriggerType.ON_LEAVES,
-            "TriggerType.ON_REVEAL": TriggerType.ON_REVEAL,
-            "TriggerType.TURN_START": TriggerType.TURN_START,
-            "TriggerType.TURN_END": TriggerType.TURN_END,
-        }
-        return mapping.get(type_str, TriggerType.NONE)
-
-    # =========================================================================
-    # Pass 2: Condition Extraction
-    # =========================================================================
-
-    def _extract_conditions(self, sentence: str) -> List[Condition]:
-        """Extract all conditions from sentence."""
-        conditions = []
-        results = self.registry.match_all(sentence, PatternPhase.CONDITION)
-
-        for pattern, match, data in results:
-            cond_type = self._resolve_condition_type(data.get("type", ""))
-            if cond_type is not None:
-                params = data.get("params", {}).copy()
-
-                # Use extracted value if not already in params
-                if "value" in data and "min" not in params:
-                    params["min"] = data["value"]
-                elif "min" not in params and match.lastindex:
-                    try:
-                        # Fallback for simple numeric patterns with one group
-                        params["min"] = int(match.group(1))
-                    except (ValueError, IndexError):
-                        pass
-
-                conditions.append(Condition(cond_type, params))
-
-        return conditions
-
-    def _resolve_condition_type(self, type_str: str) -> Optional[ConditionType]:
-        """Convert type string to ConditionType enum."""
-        if not type_str:
-            return None
-        name = type_str.replace("ConditionType.", "")
-
-        try:
-            # Map common aliases
-            if name == "ALL_MEMBERS":
-                # For now map to GROUP_FILTER, but we will use the 'val' or 'attr' to flag 'ALL' in Pass 2/4
-                return ConditionType.GROUP_FILTER
-
-            return ConditionType[name]
-        except KeyError:
-            return None
-
-    # =========================================================================
-    # Pass 3: Effect Extraction
-    # =========================================================================
-
-    def _extract_effects(self, sentence: str) -> List[Effect]:
-        """Extract all effects from sentence."""
-        effects = []
-        results = self.registry.match_all(sentence, PatternPhase.EFFECT)
-
-        for pattern, match, data in results:
-            eff_type = self._resolve_effect_type(data.get("type", ""))
-            if eff_type is not None:  # Use 'is not None' because EffectType.DRAW = 0 is falsy
-                value = data.get("value", 1)
-                params = data.get("params", {}).copy()
-
-                # Check for dynamic value condition
-                value_cond = ConditionType.NONE
-                if "value_cond" in data:
-                    vc_str = data["value_cond"]
-                    # If it's a string, try to resolve it
-                    if isinstance(vc_str, str):
-                        resolved_vc = self._resolve_condition_type(vc_str)
-                        if resolved_vc:
-                            value_cond = resolved_vc
-                    elif isinstance(vc_str, int):
-                        value_cond = ConditionType(vc_str)
-
-                # Special case for "一番上" (top of deck) which means 1 card
-                if "一番上" in sentence and value == 1:
-                    pass  # Value 1 is already default
-
-                # Determine target
-                target = self._determine_target(sentence, params)
-
-                effects.append(Effect(eff_type, value, value_cond, target, params))
-
-        return effects
-
-    def _resolve_effect_type(self, type_str: str) -> Optional[EffectType]:
-        """Convert type string to EffectType enum."""
-        if not type_str:
-            return None
-        name = type_str.replace("EffectType.", "")
-        try:
-            return EffectType[name]
-        except KeyError:
-            return None
-
-    def _determine_target(self, sentence: str, params: Dict[str, Any]) -> TargetType:
-        """Determine target type from sentence context."""
-        if "相手" in sentence:
-            return TargetType.OPPONENT
-        if "自分と相手" in sentence:
-            return TargetType.ALL_PLAYERS
-        if "控え室" in sentence:
-            return TargetType.CARD_DISCARD
-        if "手札" in sentence:
-            return TargetType.CARD_HAND
-        return TargetType.PLAYER
-
-    # =========================================================================
-    # Pass 4: Modifier Extraction & Application
-    # =========================================================================
-
-    def _extract_modifiers(self, sentence: str) -> Dict[str, Any]:
-        """Extract all modifiers from sentence."""
-        modifiers = {}
-        results = self.registry.match_all(sentence, PatternPhase.MODIFIER)
-
-        for pattern, match, data in results:
-            params = data.get("params", {})
-
-            # Special handling for target_name accumulation
-            if "target_name" in params:
-                if "target_names" not in modifiers:
-                    modifiers["target_names"] = []
-                modifiers["target_names"].append(params["target_name"])
-                # Remove target_name from params to avoid overwriting invalid data
-                params = {k: v for k, v in params.items() if k != "target_name"}
-
-            # Special handling for group accumulation
-            if "group" in params:
-                if "groups" not in modifiers:
-                    modifiers["groups"] = []
-                modifiers["groups"].append(params["group"])
-                # Note: We do NOT remove "group" from params here because we want the last one
-                # to persist in modifiers["group"] for singular backward compatibility,
-                # which modifiers.update(params) below will handle.
-
-            modifiers.update(params)
-
-            # Extract numeric values if present
-            if match.lastindex:
-                try:
-                    if "cost_max" not in modifiers and "コスト" in pattern.name:
-                        modifiers["cost_max"] = int(match.group(1))
-                    if "multiplier" not in modifiers and "multiplier" in pattern.name:
-                        modifiers["multiplier_value"] = int(match.group(1))
-                except (ValueError, IndexError):
-                    pass
-
-        return modifiers
-
-    def _apply_modifiers(self, ability: Ability, modifiers: Dict[str, Any]):
-        """Apply extracted modifiers to effects and conditions."""
-        target_str = None
-        # Apply optionality
-        is_optional = modifiers.get("is_optional", False) or modifiers.get("cost_is_optional", False)
-        if is_optional:
-            # Apply to all costs if they exist
-            for cost in ability.costs:
-                cost.is_optional = True
-
-            for effect in ability.effects:
-                # Primary effects that are usually optional
-                primary_optional_types = [
-                    EffectType.ADD_TO_HAND,
-                    EffectType.RECOVER_MEMBER,
-                    EffectType.RECOVER_LIVE,
-                    EffectType.PLAY_MEMBER_FROM_HAND,
-                    EffectType.SEARCH_DECK,
-                    EffectType.LOOK_AND_CHOOSE,
-                    EffectType.DRAW,
-                    EffectType.ENERGY_CHARGE,
-                ]
-
-                # Housekeeping effects that are usually NOT optional even if primary is
-                # (unless they contain their own "may" keyword, which _extract_modifiers would catch)
-                housekeeping_types = [
-                    EffectType.SWAP_CARDS,  # Often "discard remainder"
-                    EffectType.MOVE_TO_DECK,
-                    EffectType.ORDER_DECK,
-                ]
-
-                if effect.effect_type in primary_optional_types:
-                    effect.is_optional = True
-                # If it's housekeeping, we check if the SPECIFIC text for this effect has "てもよい"
-                # But since we don't have per-effect text easily here without more refactoring,
-                # we'll stick to the heuristic.
-
-        # Apply usage limits
-        if modifiers.get("is_once_per_turn"):
-            ability.is_once_per_turn = True
-
-        # Apply duration
-        duration = modifiers.get("duration")
-        if duration:
-            for effect in ability.effects:
-                effect.params["until"] = duration
-
-        # Apply target overrides
-        if modifiers.get("target"):
-            target_str = modifiers["target"]
-            target_map = {
-                "OPPONENT": TargetType.OPPONENT,
-                "ALL_PLAYERS": TargetType.ALL_PLAYERS,
-                "OPPONENT_HAND": TargetType.OPPONENT_HAND,
-            }
-            if target_str in target_map:
-                for effect in ability.effects:
-                    effect.target = target_map[target_str]
-
-        # Apply both_players flag
-        if modifiers.get("both_players"):
-            for effect in ability.effects:
-                effect.params["both_players"] = True
-
-        # Apply "all" scope
-        if modifiers.get("all"):
-            for effect in ability.effects:
-                effect.params["all"] = True
-
-        # Apply multiplier flags
-        for key in ["per_member", "per_live", "per_energy", "has_multiplier", "per_card"]:
-            if modifiers.get(key):
-                for effect in ability.effects:
-                    effect.params[key] = modifiers[key] if modifiers[key] is not True else True
-
-        # Apply filters
-        if modifiers.get("cost_max"):
-            for effect in ability.effects:
-                effect.params["cost_max"] = modifiers["cost_max"]
-
-        if modifiers.get("has_ability"):
-            for effect in ability.effects:
-                effect.params["has_ability"] = modifiers["has_ability"]
-
-        # Apply group filter
-        if modifiers.get("group") or modifiers.get("groups"):
-            for effect in ability.effects:
-                # Apply to effects that might need a group filter
-                if effect.effect_type in [
-                    EffectType.ADD_TO_HAND,
-                    EffectType.RECOVER_MEMBER,
-                    EffectType.RECOVER_LIVE,
-                    EffectType.SEARCH_DECK,
-                    EffectType.LOOK_AND_CHOOSE,
-                    EffectType.PLAY_MEMBER_FROM_HAND,
-                    EffectType.ADD_BLADES,
-                    EffectType.ADD_HEARTS,
-                    EffectType.BUFF_POWER,
-                ]:
-                    if "group" not in effect.params and modifiers.get("group"):
-                        effect.params["group"] = modifiers["group"]
-
-                    if "groups" not in effect.params and modifiers.get("groups"):
-                        effect.params["groups"] = modifiers["groups"]
-
-        # Apply name filter
-        if modifiers.get("target_names"):
-            for effect in ability.effects:
-                # Apply to effects that might need a name filter
-                if effect.effect_type in [
-                    EffectType.ADD_TO_HAND,
-                    EffectType.RECOVER_MEMBER,
-                    EffectType.RECOVER_LIVE,
-                    EffectType.SEARCH_DECK,
-                    EffectType.LOOK_AND_CHOOSE,
-                    EffectType.PLAY_MEMBER_FROM_HAND,
-                ]:
-                    if "names" not in effect.params:
-                        effect.params["names"] = modifiers["target_names"]
-
-        # Apply opponent trigger flag to conditions
-        if modifiers.get("opponent_trigger_allowed"):
-            ability.conditions.append(Condition(ConditionType.OPPONENT_HAS, {"opponent_trigger_allowed": True}))
-
-    # =========================================================================
-    # Pass 5: Cost Extraction
-    # =========================================================================
-
-    def _extract_costs(self, cost_part: str) -> List[Cost]:
-        """Extract ability costs from cost text."""
-        costs = []
-        if not cost_part:
-            return costs
-
-        # Extract names if present (e.g. discard specific members)
-        cost_names = re.findall(r"「(?!\{\{)(.*?)」", cost_part)
-
-        # Check for tap self cost
-        if "このメンバーをウェイトにし" in cost_part:
-            costs.append(Cost(AbilityCostType.TAP_SELF))
-
-        # Check for discard cost
-        if "控え室に置" in cost_part and "手札" in cost_part:
-            count = 1
-            if m := re.search(r"(\d+)枚", cost_part):
-                count = int(m.group(1))
-
-            params = {}
-            if cost_names:
-                params["names"] = cost_names
-
-            costs.append(Cost(AbilityCostType.DISCARD_HAND, count, params=params))
-
-        # Check for sacrifice self cost
-        if "このメンバーを" in cost_part and "控え室に置" in cost_part:
-            costs.append(Cost(AbilityCostType.SACRIFICE_SELF))
-
-        # Check for energy cost
-        # Strip potential separators like '、' or '。' that might be between icons
-        clean_cost_part = cost_part.replace("、", "").replace("。", "")
-        energy_icons = len(re.findall(r"\{\{icon_energy.*?\}\}", clean_cost_part))
-        if energy_icons:
-            costs.append(Cost(AbilityCostType.ENERGY, energy_icons))
-
-        # Check for reveal hand cost
-        if "手札" in cost_part and "公開" in cost_part:
-            count = 1
-            if m := re.search(r"(\d+)枚", cost_part):
-                count = int(m.group(1))
-            params = {}
-            if "ライブカード" in cost_part:
-                params["filter"] = "live"
-            elif "メンバー" in cost_part:
-                params["filter"] = "member"
-            costs.append(Cost(AbilityCostType.REVEAL_HAND, count, params))
-
-        return costs
 
     # =========================================================================
     # Pseudocode Parsing (Inverse of tools/simplify_cards.py)
@@ -1229,6 +396,10 @@ class AbilityParserV2:
 
     def _parse_pseudocode_block(self, text: str) -> List[Ability]:
         """Parse one or more abilities from pseudocode format."""
+        # Normalized splitting: ensure each keyword starts a new line
+        for kw in ["TRIGGER:", "CONDITION:", "EFFECT:", "COST:"]:
+            text = text.replace(f"; {kw}", f"\n{kw}").replace(f";{kw}", f"\n{kw}")
+
         # Split by keywords but respect quotes
         # We want to identify blocks that belong together.
         # A block starts with one or more TRIGGER: lines followed by a body.
@@ -1349,8 +520,9 @@ class AbilityParserV2:
 
             if upper_line.startswith("TRIGGER:"):
                 t_name = line[len("TRIGGER:") :].strip().upper()
-                # Strip all content in parentheses (e.g.Once per turn)
-                t_name = re.sub(r"\(.*?\)", "", t_name).strip()
+                # Strip all content in parentheses (...) or braces {...}
+                t_name = re.sub(r"\(.*?\)", "", t_name)
+                t_name = re.sub(r"\{.*?\}", "", t_name).strip()
 
                 # Use module-level constant for trigger aliases
                 t_name = TRIGGER_ALIASES.get(t_name, t_name)
@@ -1362,8 +534,17 @@ class AbilityParserV2:
             elif upper_line.startswith("COST:"):
                 cost_str = line[len("COST:") :].strip()
                 new_costs = self._parse_pseudocode_costs(cost_str)
-                costs.extend(new_costs)
-                instructions.extend(new_costs)
+                for c in new_costs:
+                    # SYSTEMIC FIX: Sort costs between Activation Phase (Shell) and Execution Phase (Bytecode)
+                    # Mandatory initial costs go to 'costs' for transactional shell payment.
+                    # Optional or Mid-Ability costs go to 'instructions' for interpreter handling.
+                    # Complex costs (SELECT_MEMBER, etc.) MUST be in bytecode
+                    is_complex = c.type == AbilityCostType.NONE
+                    
+                    if not c.is_optional and not instructions and not is_complex:
+                        costs.append(c)
+                    else:
+                        instructions.append(c)
 
             elif upper_line.startswith("CONDITION:"):
                 cond_str = line[len("CONDITION:") :].strip()
@@ -1665,11 +846,25 @@ class AbilityParserV2:
                 except ValueError:
                     val = 0
 
-                if cost_name == "REMOVE_SELF":
+                if name == "MOVE_TO_DISCARD":
+                    if 'from="deck_top"' in (brace_params or "").lower():
+                        cost_name = "DISCARD_TOP_DECK"
+                    else:
+                        cost_name = "SACRIFICE_SELF"
+                elif name == "REMOVE_SELF":
                     cost_name = "SACRIFICE_SELF"
+                else:
+                    cost_name = name.upper()
+                
                 if cost_name == "DISCARD_SELF":
                     cost_name = "DISCARD_HAND"
                     val = 1
+                if cost_name == "PAY_ENERGY":
+                    cost_name = "ENERGY"
+                if cost_name == "ENERGY":
+                    cost_name = "ENERGY"
+                if "REVEAL_HAND" in cost_name:
+                    cost_name = "REVEAL_HAND"
 
                 # Special mapping for ENERGY_CHARGE as a cost (optional/conditional)
                 if cost_name == "ENERGY_CHARGE":

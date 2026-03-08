@@ -1,6 +1,6 @@
 use crate::core::alphazero_encoding::AlphaZeroEncoding;
 use crate::core::heuristics::{EvalMode, HeuristicConfig, LegacyHeuristic, OriginalHeuristic};
-use crate::core::logic::{ChoiceType, GameState, Phase, PlayerState};
+use crate::core::logic::{ChoiceType, GameState, Phase, PlayerState, StandardizedState};
 use crate::core::mcts::SearchHorizon;
 use numpy::{PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray1};
 use pyo3::prelude::*;
@@ -100,6 +100,18 @@ impl PyPlayerState {
     }
     fn set_deck(&mut self, val: Vec<u32>) {
         self.inner.deck = val.into_iter().map(|x| x as i32).collect();
+    }
+
+    #[getter]
+    fn initial_deck(&self) -> Vec<u32> {
+        self.inner.initial_deck.iter().map(|&x| x as u32).collect()
+    }
+    #[setter(initial_deck)]
+    fn set_initial_deck_prop(&mut self, val: Vec<u32>) {
+        self.set_initial_deck(val);
+    }
+    fn set_initial_deck(&mut self, val: Vec<u32>) {
+        self.inner.initial_deck = val.into_iter().map(|x| x as i32).collect();
     }
 
     #[getter]
@@ -514,6 +526,16 @@ impl PyGameState {
     }
 
     #[getter]
+    fn silent(&self) -> bool {
+        self.inner.ui.silent
+    }
+
+    #[setter]
+    fn set_silent(&mut self, val: bool) {
+        self.inner.ui.silent = val;
+    }
+
+    #[getter]
     fn turn_history(&self) -> Vec<String> {
         if let Some(ref history) = self.inner.core.turn_history {
             history.iter().map(|e| format!("{:?}", e)).collect()
@@ -568,16 +590,6 @@ impl PyGameState {
     }
 
     #[getter]
-    fn silent(&self) -> bool {
-        self.inner.ui.silent
-    }
-
-    #[setter(silent)]
-    fn set_silent(&mut self, val: bool) {
-        self.inner.ui.silent = val;
-    }
-
-    #[getter]
     fn debug_mode(&self) -> bool {
         self.inner.debug.debug_mode
     }
@@ -607,6 +619,33 @@ impl PyGameState {
 
     pub fn to_json(&self) -> PyResult<String> {
         serde_json::to_string(&self.inner).map_err(|e| {
+            pyo3::exceptions::PyValueError::new_err(format!("Serialization error: {}", e))
+        })
+    }
+
+    #[pyo3(signature = (room_id, mode, include_tensor=true, history=None))]
+    fn to_standardized_json(
+        &self,
+        room_id: String,
+        mode: String,
+        include_tensor: bool,
+        history: Option<Vec<PyRef<PyGameState>>>,
+    ) -> PyResult<String> {
+        let mut room_info = std::collections::HashMap::new();
+        room_info.insert("id".to_string(), room_id);
+        room_info.insert("mode".to_string(), mode);
+
+        let rs_history = history.map(|h| h.into_iter().map(|gh| gh.inner.clone()).collect());
+
+        let std = StandardizedState::new(
+            self.inner.clone(),
+            &self.db.inner,
+            room_info,
+            include_tensor,
+            rs_history,
+        );
+
+        serde_json::to_string(&std).map_err(|e| {
             pyo3::exceptions::PyValueError::new_err(format!("Serialization error: {}", e))
         })
     }
@@ -850,6 +889,15 @@ impl PyGameState {
     fn get_observation(&self) -> Vec<f32> {
         self.inner.get_observation(&self.db.inner)
     }
+
+    pub fn to_alphazero_tensor(&self) -> Vec<f32> {
+        self.inner.to_alphazero_tensor(&self.db.inner)
+    }
+
+    pub fn to_vanilla_tensor(&self) -> Vec<f32> {
+        use crate::core::alphazero_encoding_vanilla::AlphaZeroVanillaEncoding;
+        self.inner.to_vanilla_tensor(&self.db.inner)
+    }
 }
 
 // Second #[pymethods] block — PyO3 abi3 has a per-block inventory limit
@@ -876,10 +924,6 @@ impl PyGameState {
                 filter_attr: pi.filter_attr,
                 ctx: format!("{:?}", pi.ctx),
             })
-    }
-
-    fn to_alphazero_tensor(&self) -> Vec<f32> {
-        self.inner.to_alphazero_tensor(&self.db.inner)
     }
 
     fn is_terminal(&self) -> bool {
@@ -968,6 +1012,7 @@ impl PyGameState {
             repeat_count: 0,
             selected_cards: Vec::new(),
             v_accumulated: 0,
+            auto_pick: false,
         };
         self.inner
             .resolve_bytecode(db, std::sync::Arc::new(bytecode), &ctx);

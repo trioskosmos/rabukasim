@@ -19,6 +19,8 @@ pub enum TriggerType {
     OnLeaves = 8,
     OnReveal = 9,
     OnPositionChange = 10,
+    OnAbilityResolve = 11,
+    OnAbilitySuccess = 12,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]
@@ -73,6 +75,7 @@ pub enum EffectType {
     MoveToDeck = 31,
     TapOpponent = 32,
     PlaceUnder = 33,
+    FlavorAction = 34,
     Restriction = 35,
     BatonTouchMod = 36,
     SetScore = 37,
@@ -127,6 +130,7 @@ pub enum EffectType {
     CalcSumCost = 106,
     LookReorderDiscard = 125,
     DivValue = 126,
+    TransformBlades = 127,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]
@@ -198,6 +202,8 @@ pub enum ConditionType {
     SyncCost = 311,
     SumValue = 312,
     IsWait = 313,
+    OnAbilityResolve = 314,
+    TargetMemberHasNoHearts = 315,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]
@@ -449,3 +455,86 @@ pub enum Zone {
     SuccessPile = 16,
     Yell = 17,
 }
+
+pub fn get_group_name(id: u8, lang: &str) -> &'static str {
+    match lang {
+        "jp" => match id {
+            0 => "μ's",
+            1 => "Aqours",
+            2 => "虹ヶ咲学園スクールアイドル同好会",
+            3 => "Liella!",
+            4 => "蓮ノ空女学院スクールアイドルクラブ",
+            10 => "A-RISE",
+            11 => "Saint Snow",
+            12 => "Sunny Passion",
+            13 => "スクールアイドルミュージカル",
+            99 => "その他",
+            100 => "-",
+            _ => "-",
+        },
+        _ => match id {
+            0 => "μ's",
+            1 => "Aqours",
+            2 => "Nijigasaki High School Idol Club",
+            3 => "Liella!",
+            4 => "Hasunosora Girls' High School Idol Club",
+            10 => "A-RISE",
+            11 => "Saint Snow",
+            12 => "Sunny Passion",
+            13 => "School Idol Musical",
+            99 => "Other",
+            100 => "-",
+            _ => "-",
+        }
+    }
+}
+
+pub fn get_unit_name(id: u8, lang: &str) -> &'static str {
+    match lang {
+        "jp" => match id {
+            0 => "Printemps",
+            1 => "lily white",
+            2 => "BiBi",
+            3 => "CYaRon!",
+            4 => "AZALEA",
+            5 => "Guilty Kiss",
+            6 => "DiverDiva",
+            7 => "A・ZU・NA",
+            8 => "QU4RTZ",
+            9 => "R3BIRTH",
+            10 => "CatChu!",
+            11 => "KALEIDOSCORE",
+            12 => "5yncri5e!",
+            13 => "スリーズブーケ",
+            14 => "DOLLCHESTRA",
+            15 => "みらぱーくらぶ",
+            16 => "エデルノート",
+            17 => "アアイスクリーム",
+            100 => "-",
+            _ => "-",
+        },
+        _ => match id {
+            0 => "Printemps",
+            1 => "lily white",
+            2 => "BiBi",
+            3 => "CYaRon!",
+            4 => "AZALEA",
+            5 => "Guilty Kiss",
+            6 => "DiverDiva",
+            7 => "A・ZU・NA",
+            8 => "QU4RTZ",
+            9 => "R3BIRTH",
+            10 => "CatChu!",
+            11 => "KALEIDOSCORE",
+            12 => "5yncri5e!",
+            13 => "Cerise Bouquet",
+            14 => "DOLLCHESTRA",
+            15 => "Mira-Cra Park!",
+            16 => "Edel Note",
+            17 => "Aiscream",
+            100 => "-",
+            _ => "-",
+        }
+    }
+}
+

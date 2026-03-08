@@ -30,6 +30,7 @@ const O_SELECT_MODE: i32 = 30; // IMPLEMENTED
 const O_MOVE_TO_DECK: i32 = 31; // IMPLEMENTED
 const O_TAP_OPPONENT: i32 = 32; // IMPLEMENTED
 const O_PLACE_UNDER: i32 = 33; // IMPLEMENTED
+const O_FLAVOR_ACTION: i32 = 34; // TODO: Not implemented in WGSL
 const O_RESTRICTION: i32 = 35; // IMPLEMENTED
 const O_BATON_TOUCH_MOD: i32 = 36; // IMPLEMENTED
 const O_SET_SCORE: i32 = 37; // IMPLEMENTED
@@ -84,6 +85,7 @@ const O_PLACE_ENERGY_UNDER_MEMBER: i32 = 97; // TODO: Not implemented in WGSL
 const O_CALC_SUM_COST: i32 = 106; // TODO: Not implemented in WGSL
 const O_LOOK_REORDER_DISCARD: i32 = 125; // TODO: Not implemented in WGSL
 const O_DIV_VALUE: i32 = 126; // TODO: Not implemented in WGSL
+const O_TRANSFORM_BLADES: i32 = 127; // TODO: Not implemented in WGSL
 
 // --- CONDITION TYPES ---
 const C_TURN_1: i32 = 200; // IMPLEMENTED
@@ -150,6 +152,8 @@ const C_YELL_REVEALED_UNIQUE_COLORS: i32 = 310; // TODO: Not implemented in WGSL
 const C_SYNC_COST: i32 = 311; // TODO: Not implemented in WGSL
 const C_SUM_VALUE: i32 = 312; // TODO: Not implemented in WGSL
 const C_IS_WAIT: i32 = 313; // TODO: Not implemented in WGSL
+const C_ON_ABILITY_RESOLVE: i32 = 314; // TODO: Not implemented in WGSL
+const C_TARGET_MEMBER_HAS_NO_HEARTS: i32 = 315; // TODO: Not implemented in WGSL
 
 // --- PHASES ---
 const PHASE_SETUP: i32 = -4;
@@ -195,6 +199,6 @@ const SYN_CENTER: u32 = 8u;
 const SYN_LIFE_LEAD: u32 = 16u;
 
 // --- PARITY STATUS ---
-// WGSL Opcodes: 73/82 implemented
-// WGSL Conditions: 50/64 implemented
+// WGSL Opcodes: 73/84 implemented
+// WGSL Conditions: 50/66 implemented
 // See plans/wgsl_rust_parity_strategy.md for details

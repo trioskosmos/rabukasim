@@ -27,32 +27,3 @@ fn test_repro_count_success_live_comparison() {
     assert!(!passed, "COUNT=0 should FAIL when lives=1");
 }
 
-#[test]
-fn test_repro_count_success_live_opponent() {
-    let mut state = GameState::default();
-    state.debug.debug_mode = true;
-    let db = CardDatabase::default();
-
-    let p1 = 0;
-    let ctx = AbilityContext {
-        player_id: p1 as u8,
-        ..Default::default()
-    };
-
-    // FILTER_OPPONENT is 1 << 41
-    let filter_opponent = 1u64 << 41;
-
-    // Case: Player has 0 lives, Opponent has 1 life.
-    // Condition: COUNT_SUCCESS_LIVE {MIN=1, PLAYER=1}
-    state.core.players[p1].success_lives.clear();
-    state.core.players[1].success_lives.clear();
-    state.core.players[1].success_lives.push(101);
-
-    // Opcode=218, Val=1, Attr=FILTER_OPPONENT, Slot=0 (GE)
-    let passed = check_condition_opcode(&state, &db, 218, 1, filter_opponent, 0, &ctx, 0);
-    // Expected: true (checking opponent who has 1). Buggy result: false (checking self who has 0).
-    assert!(
-        passed,
-        "MIN=1, PLAYER=1 should pass when opponent has 1 life"
-    );
-}

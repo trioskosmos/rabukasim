@@ -730,7 +730,7 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
 
         # 2. Group filter
         group_filter = params.get("group")
-        if group_filter:
+        if group_filter is not None:
             target_group = Group.from_japanese_name(group_filter)
             if target_group not in getattr(card, "groups", []):
                 # Also check units just in case
