@@ -186,6 +186,7 @@ engine_rust_src/err*.txt
 engine_rust_src/run_output*.txt
 engine_rust_src/**/*.rlib
 engine_rust_src/**/*.pdb
+engine_rust_src/data/scenarios.json
 
 # AI Data Generation Results
 ai/data/*.npz
