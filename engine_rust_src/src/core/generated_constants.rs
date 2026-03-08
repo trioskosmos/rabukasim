@@ -84,6 +84,7 @@ pub const O_PLACE_ENERGY_UNDER_MEMBER: i32 = 97;
 pub const O_CALC_SUM_COST: i32 = 106;
 pub const O_LOOK_REORDER_DISCARD: i32 = 125;
 pub const O_DIV_VALUE: i32 = 126;
+pub const O_TRANSFORM_BLADES: i32 = 127;
 
 // Action ID Bases
 pub const ACTION_BASE_PASS: i32 = 0;
