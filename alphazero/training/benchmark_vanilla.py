@@ -113,7 +113,7 @@ def play_training_game_parallel(args):
         policy_target = np.zeros(NUM_ACTIONS, dtype=np.float32)
         
         if sims > 0 and cp in [4, 5, -1, 0]:
-            sugg = state.search_mcts(sims, 0.0, "original", engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.Normal, None)
+            sugg = state.search_mcts(sims, 0.0, "original", engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.Solitaire, None)
             if sugg:
                 total_visits = sum(s[2] for s in sugg)
                 if total_visits > 0:
@@ -123,12 +123,14 @@ def play_training_game_parallel(args):
                             policy_target[vid] += visits / total_visits
         
         # Apply Dirichlet noise
-        if policy_target.sum() > 0:
-            policy_target = apply_dirichlet_noise(policy_target, legal_vanilla_indices, DIRICHLET_ALPHA, DIRICHLET_EPSILON)
+        noisy_policy = policy_target.copy()
+        if noisy_policy.sum() > 0:
+            noisy_policy = apply_dirichlet_noise(noisy_policy, legal_vanilla_indices, DIRICHLET_ALPHA, DIRICHLET_EPSILON)
         
-        # Select action using temperature
-        if len(legal_vanilla_indices) > 0 and policy_target[legal_vanilla_indices].sum() > 0:
-            selected_vid = select_action_with_temperature(policy_target, legal_vanilla_indices, temperature)
+        # Select action using temperature (high early in game, greedy later)
+        current_temp = temperature if moves < 20 else 0.0
+        if len(legal_vanilla_indices) > 0 and noisy_policy[legal_vanilla_indices].sum() > 0:
+            selected_vid = select_action_with_temperature(noisy_policy, legal_vanilla_indices, current_temp)
             action = v_to_e.get(selected_vid, legal[0])
         else:
             action = v_to_e.get(legal_vanilla_indices[0], legal[0]) if legal_vanilla_indices else legal[0]
@@ -373,7 +375,7 @@ def run_benchmark(model_path=None, sims=50):
                 # Use MCTS for decision phases
                 action = -1
                 if sims > 0 and cp in [4, 5, -1, 0]:
-                    sugg = state.search_mcts(sims, 0.0, "original", engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.Normal, None)
+                    sugg = state.search_mcts(sims, 0.0, "original", engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.Solitaire, None)
                     if sugg: action = sugg[0][0]
                 
                 if action == -1:
@@ -582,7 +584,7 @@ if __name__ == "__main__":
                 policy_target = np.zeros(ACTION_SPACE, dtype=np.float32)
                 
                 if sims > 0 and cp in [4, 5, -1, 0]:
-                    sugg = state.search_mcts(sims, 0.0, "original", engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.Normal, None)
+                    sugg = state.search_mcts(sims, 0.0, "original", engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.Solitaire, None)
                     if sugg:
                         # Build policy from MCTS visits
                         total_visits = sum(s[2] for s in sugg)
@@ -600,20 +602,22 @@ if __name__ == "__main__":
                         policy_target = torch.softmax(lgt, dim=1).cpu().numpy()[0]
                 
                 # Apply Dirichlet noise for exploration (especially early in training)
-                if use_dirichlet and policy_target.sum() > 0:
-                    policy_target = apply_dirichlet_noise(
-                        policy_target, 
+                noisy_policy = policy_target.copy()
+                if use_dirichlet and noisy_policy.sum() > 0:
+                    noisy_policy = apply_dirichlet_noise(
+                        noisy_policy,
                         legal_vanilla_indices, 
                         alpha=DIRICHLET_ALPHA, 
                         epsilon=DIRICHLET_EPSILON
                     )
                 
-                # Select action using temperature
-                if len(legal_vanilla_indices) > 0 and policy_target[legal_vanilla_indices].sum() > 0:
+                # Select action using temperature (high early in game, greedy later)
+                current_temp = temperature if moves < 20 else 0.0
+                if len(legal_vanilla_indices) > 0 and noisy_policy[legal_vanilla_indices].sum() > 0:
                     selected_vid = select_action_with_temperature(
-                        policy_target, 
+                        noisy_policy,
                         legal_vanilla_indices, 
-                        temperature=temperature
+                        temperature=current_temp
                     )
                     action = v_to_e.get(selected_vid, legal[0])
                 else:
