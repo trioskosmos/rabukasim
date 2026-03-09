@@ -1,0 +1,19 @@
+rps and turn choice can be random only make sense with abilities
+
+mulligan: essentially high energy cost members and high requirement lives should be replaced in hope for lower ones that can be played turn one
+
+main: should prioritise playing members to the field. while position does not matter due to no abilities, the baton pass, which allows an energy cost to equal the cost of card minus the card currently in the slot depends on what card is in what zone so likely will need to multiply the output here by three unless you have a smarter method
+
+live set: can put up to three cards in live set zone, these actually do not matter order or position. number of cards set is the number of cards drawn. can get rid of unneeded cards, low cost members are less useful in later turns due to no abilities.
+
+performance: if heart requirement vectors are made up by stage member heart vectors plus yell heart vectors and judgement score is higher than opponents (full rules have more nuance) win a live card to live success zone. having three live cards in that zone is a win. have to consider having successful performances before your opponent but also having a higher score at all turns, so prioritizing low scores for fast wins may not work if opponent can get high scores working fast enough. also combinations of live cards can be played and their scores are added together, have to consider what combinations of live cards will give best balance of  score but also success chance
+
+randomness: 
+deck draws: unknown by either player. have to handle having wanted cards pulled and unwanted cards gotten rid of, due to no abilities likely during live set
+yell hearts: each card gives either no hearts, a heart of a certain color, a wildheart which can fill any requirement or a draw which just draws a card during the yell during performance. what cards are pulled are based on unknown deck order. also these go to discard so can not be pulled prior to deck refresh.
+
+considerations: reward functions. seems mcts used to just look for a win, which with random moves is just chance. current seems to be "neural" not sure what that means. has to balance randomness somehow without just jacking up the simulation number.
+unknown opponent: opponent's deck is unknown, lots of hidden information.
+mathematical information to give to the model rather than learn: every zone except the deck is known, so what cards are in own deck is always known, just not the order. so, an expected value of yell hearts, a minimum, a maximum and so on can be calculated and shown to the model. this is shown but unknown how helpful it is.
+
+Priority: create a loop that trains a model that wins. lower number of turns through better board management and higher judgement scores, at least when compared to opponent. not sure if this approach just results in garbage in garbage out since moves are random at start. 

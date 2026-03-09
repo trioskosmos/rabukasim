@@ -32,7 +32,7 @@ import torch.nn.functional as F
 import engine_rust
 from engine.game.deck_utils import UnifiedDeckParser
 from disk_buffer import PersistentBuffer
-from alphazero.training.benchmark_vanilla import run_benchmark
+from alphazero.training.vanilla_training import run_benchmark
 
 # Also import the game loop helper from benchmark if needed
 # For now, we'll modify play_one_game to match benchmark's logic
