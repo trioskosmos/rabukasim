@@ -979,15 +979,25 @@ def run_benchmark(model_path=None, sims=50):
                 if m and l: all_decks.append({"name": df.stem, "m": (m*5)[:48], "l": (l*5)[:12]})
 
     results = []
-    for deck in all_decks:  # Run all available decks
+
+    # Filter valid decks
+    valid_decks = []
+    for d in all_decks:
+        if isinstance(d, dict) and "m" in d and "l" in d:
+            valid_decks.append(d)
+
+    for deck in valid_decks:  # Run all available decks
+        if not isinstance(deck, dict) or "m" not in deck or "l" not in deck:
+            continue
         for seed in FIXED_SEEDS:  # Run all seeds for each deck
-            print(f"\n--- START: Deck {deck['name']}, Seed {seed} ---")
+            deck_name = deck.get('name', 'Unknown')
+            print(f"\n--- START: Deck {deck_name}, Seed {seed} ---")
             state = engine_rust.PyGameState(db)
             state.initialize_game_with_seed(deck["m"], deck["m"], [38]*12, [38]*12, deck["l"], deck["l"], seed)
             
             p0 = state.get_player(0)
             if len(p0.deck) == 0:
-                print(f"!!! CRITICAL: Deck P0 is empty for {deck['name']} seed {seed}!")
+                print(f"!!! CRITICAL: Deck P0 is empty for {deck_name} seed {seed}!")
                 continue
 
             initial_decks = [state.get_player(0).initial_deck, state.get_player(1).initial_deck]
@@ -1020,7 +1030,7 @@ def run_benchmark(model_path=None, sims=50):
 
                 # Use MCTS for decision phases
                 action = -1
-                if sims > 0 and cp in [4, 5, -1, 0]:
+                if sims > 0 and cp in [4, 5, 0]:
                     sugg = state.search_mcts(sims, 0.0, "original", engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.Solitaire, None)
                     if sugg: action = sugg[0][0]
                 
@@ -1069,7 +1079,9 @@ def run_benchmark(model_path=None, sims=50):
             p1s = len(state.get_player(1).success_lives)
             total_score = p0s + p1s
             results.append({"turns": state.turn, "score": total_score, "winner": winner})
-            print(f"[{deck['name']}] S{seed} | Turns: {state.turn} | Score: {p0s}-{p1s} | Winner: {['P0','P1','Draw'][winner] if winner is not None else 'N/A'}")
+            winner_idx = int(winner) if winner is not None else None
+            winner_str = ['P0','P1','Draw'][winner_idx] if winner_idx is not None else 'N/A'
+            print(f"[{deck_name}] S{seed} | Turns: {state.turn} | Score: {p0s}-{p1s} | Winner: {winner_str}")
             
     if results:
         avg_turns = sum(r['turns'] for r in results) / len(results)
@@ -1252,6 +1264,37 @@ if __name__ == "__main__":
                 if cp == -2:
                     action = random.choice(legal)
                     state.step(action); state.auto_step(db); moves += 1; continue
+
+                # Mulligan bypass (Phase -1 typically means mulligan decision, but if it has a specific phase like -1)
+                if cp == -1 and MULLIGAN_ENABLED:
+                    hand = pj['players'][curr_p].get('hand', [])
+                    deck = pj['players'][curr_p].get('deck', [])
+
+                    try:
+                        db_json_ref = db_json
+                    except NameError:
+                        db_path = root_dir / "data" / "cards_compiled.json"
+                        with open(db_path, "r", encoding="utf-8") as f:
+                            db_json_ref = json.load(f)
+                    replace_indices = calculate_mulligan_strategy(db_json_ref, hand, deck, MULLIGAN_REPLACE_COUNT)
+
+                    # Action 7 is confirm, actions 8-67 are cards in hand to replace
+                    action = 7 # Confirm by default
+
+                    # Select first card to replace if any, else confirm
+                    for idx in replace_indices:
+                        aid = 8 + idx
+                        if aid in legal:
+                            action = aid
+                            break
+
+                    if action == 7 and 7 not in legal:
+                        action = legal[0] # Fallback
+
+                    state.step(action)
+                    state.auto_step(db)
+                    moves += 1
+                    continue
                 
                 # Get legal vanilla indices for this position
                 mask = np.zeros(ACTION_SPACE, dtype=np.bool_)
@@ -1268,7 +1311,7 @@ if __name__ == "__main__":
                 action = -1
                 policy_target = np.zeros(ACTION_SPACE, dtype=np.float32)
                 
-                if sims > 0 and cp in [4, 5, -1, 0]:
+                if sims > 0 and cp in [4, 5, 0]:
                     sugg = state.search_mcts(sims, 0.0, "original", engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.Solitaire, None)
                     if sugg:
                         # Build policy from MCTS visits
@@ -1314,7 +1357,7 @@ if __name__ == "__main__":
                     action = v_to_e.get(legal_vanilla_indices[0], legal[0]) if legal_vanilla_indices else legal[0]
                 
                 # Record transition (only for decision phases with MCTS) - use CLEAN policy
-                if sims > 0 and cp in [4, 5, -1, 0]:
+                if sims > 0 and cp in [4, 5, 0]:
                     obs_np = state.to_vanilla_tensor()
                     
                     # Get proper mask
@@ -1417,87 +1460,88 @@ if __name__ == "__main__":
         # Main training loop
         db = engine_rust.PyCardDatabase(db_json_str)  # Already loaded in run_benchmark
         
-        for it in range(start_it, args.iters):
-            print(f"\n=== Starting Iteration {it} ===")
-            gen_start = time.time()
-            
-            # Compute learning rate with warmup and decay
-            current_lr = get_lr(it, LR_WARMUP_ITERS, LR_DECAY_ITERS, LR_START, LR_MAX, LR_MIN)
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = current_lr
-            
-            # Temperature is now move-based (high for first 20 moves, then greedy)
-            # Log the representative temperature (early game exploration)
-            current_temp = get_temperature_by_move(0, temp_start=TEMP_START, temp_end=TEMP_END, explore_moves=TEMP_EXPLORE_MOVES)
-            
-            # Beta is not used (PER disabled for Windows)
-            current_beta = 0.0
-            
-            print(f"[SCHEDULE] LR: {current_lr:.6f} | Temp: {current_temp:.4f}")
-            
-            # Play games with random decks and random seeds
-            new_transitions = []
-            game_stats = []
-            decks_used = []
-            
-            # Use parallel game execution with ProcessPoolExecutor
-            # For Neural MCTS, we need to pass the model to workers
-            if NUM_WORKERS > 1 and USE_NEURAL_MCTS:
-                # Neural MCTS requires model in each process - use sequential for now
-                print("[INFO] Using sequential Neural MCTS (model in main process)")
-                for _ in range(GAMES_PER_ITER):
-                    deck = random.choice(all_decks)
-                    decks_used.append(deck)
-                    seed = random.getrandbits(64)
-                    
-                    # Use Neural MCTS for true self-play
-                    transitions, stats = play_selfplay_game(
-                        model, device, db, deck, seed, args.sims, 
-                        use_neural_mcts=True
-                    )
-                    new_transitions.extend(transitions)
-                    game_stats.append(stats)
-            elif NUM_WORKERS > 1:
-            # Prepare game parameters for engine MCTS
-            game_params = []
-            for _ in range(GAMES_PER_ITER):
-                deck = random.choice(all_decks)
-                decks_used.append(deck)
-                seed = random.getrandbits(64)
-                game_params.append((deck, seed, args.sims, db_json_str, current_temp))
-            
-            # Execute games in parallel
-            with ProcessPoolExecutor(max_workers=NUM_WORKERS) as executor:
-                futures = [executor.submit(play_training_game_parallel, params) for params in game_params]
-                for future in as_completed(futures):
-                    try:
-                        transitions, stats = future.result()
+        try:
+            for it in range(start_it, args.iters):
+                print(f"\n=== Starting Iteration {it} ===")
+                gen_start = time.time()
+
+                # Compute learning rate with warmup and decay
+                current_lr = get_lr(it, LR_WARMUP_ITERS, LR_DECAY_ITERS, LR_START, LR_MAX, LR_MIN)
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] = current_lr
+
+                # Temperature is now move-based (high for first 20 moves, then greedy)
+                # Log the representative temperature (early game exploration)
+                current_temp = get_temperature_by_move(0, temp_start=TEMP_START, temp_end=TEMP_END, explore_moves=TEMP_EXPLORE_MOVES)
+
+                # Beta is not used (PER disabled for Windows)
+                current_beta = 0.0
+
+                print(f"[SCHEDULE] LR: {current_lr:.6f} | Temp: {current_temp:.4f}")
+
+                # Play games with random decks and random seeds
+                new_transitions = []
+                game_stats = []
+                decks_used = []
+
+                # Use parallel game execution with ProcessPoolExecutor
+                # For Neural MCTS, we need to pass the model to workers
+                if NUM_WORKERS > 1 and USE_NEURAL_MCTS:
+                    # Neural MCTS requires model in each process - use sequential for now
+                    print("[INFO] Using sequential Neural MCTS (model in main process)")
+                    for _ in range(GAMES_PER_ITER):
+                        deck = random.choice(all_decks)
+                        decks_used.append(deck)
+                        seed = random.getrandbits(64)
+
+                        # Use Neural MCTS for true self-play
+                        transitions, stats = play_selfplay_game(
+                            model, device, db, deck, seed, args.sims,
+                            use_neural_mcts=True
+                        )
                         new_transitions.extend(transitions)
                         game_stats.append(stats)
-                    except Exception as e:
-                        print(f"[ERROR] Game failed: {e}")
-        else:
-            # Sequential execution
-            for _ in range(GAMES_PER_ITER):
-                deck = random.choice(all_decks)
-                decks_used.append(deck)
-                seed = random.getrandbits(64)
-                
-                if USE_NEURAL_MCTS:
-                    # Use Neural MCTS for true self-play
-                    transitions, stats = play_selfplay_game(
-                        model, device, db, deck, seed, args.sims,
-                        use_neural_mcts=True
-                    )
+                elif NUM_WORKERS > 1:
+                    # Prepare game parameters for engine MCTS
+                    game_params = []
+                    for _ in range(GAMES_PER_ITER):
+                        deck = random.choice(all_decks)
+                        decks_used.append(deck)
+                        seed = random.getrandbits(64)
+                        game_params.append((deck, seed, args.sims, db_json_str, current_temp))
+
+                    # Execute games in parallel
+                    with ProcessPoolExecutor(max_workers=NUM_WORKERS) as executor:
+                        futures = [executor.submit(play_training_game_parallel, params) for params in game_params]
+                        for future in as_completed(futures):
+                            try:
+                                transitions, stats = future.result()
+                                new_transitions.extend(transitions)
+                                game_stats.append(stats)
+                            except Exception as e:
+                                print(f"[ERROR] Game failed: {e}")
                 else:
-                    # Use engine MCTS
-                    transitions, stats = play_training_game(
-                        deck, seed, args.sims, db, model, device, 
-                        use_dirichlet=True
-                    )
-                new_transitions.extend(transitions)
-                game_stats.append(stats)
-                
+                    # Sequential execution
+                    for _ in range(GAMES_PER_ITER):
+                        deck = random.choice(all_decks)
+                        decks_used.append(deck)
+                        seed = random.getrandbits(64)
+
+                        if USE_NEURAL_MCTS:
+                            # Use Neural MCTS for true self-play
+                            transitions, stats = play_selfplay_game(
+                                model, device, db, deck, seed, args.sims,
+                                use_neural_mcts=True
+                            )
+                        else:
+                            # Use engine MCTS
+                            transitions, stats = play_training_game(
+                                deck, seed, args.sims, db, model, device,
+                                use_dirichlet=True
+                            )
+                        new_transitions.extend(transitions)
+                        game_stats.append(stats)
+
                 for deck, stats in zip(decks_used, game_stats):
                     print(f"  [Game] {deck['name']} | Winner: {['P0','P1','Draw'][stats['winner']] if stats['winner'] is not None else 'N/A'} | Turns: {stats['turns']} | Lives: P0={stats['p0_lives']} P1={stats['p1_lives']}")
                 
@@ -1589,7 +1633,7 @@ if __name__ == "__main__":
                             'loss': loss
                         }, str(backup_path))
                         print(f"[BACKUP] Saved to {backup_path}")
-                    
+
         except KeyboardInterrupt:
             print("Stopping...")
         finally:
