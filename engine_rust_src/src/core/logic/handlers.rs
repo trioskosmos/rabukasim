@@ -964,7 +964,7 @@ impl GameState {
             }
         }
 
-        self.prev_card_id = old_card_id;
+        self.core.prev_card_id = old_card_id;
         self.core.players[p_idx].stage[slot_idx] = card_id;
         self.core.players[p_idx].set_tapped(slot_idx, false);
         self.core.players[p_idx].set_moved(slot_idx, true);
