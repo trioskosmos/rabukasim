@@ -4,15 +4,27 @@ import torch.nn.functional as F
 import numpy as np
 
 # ============================================================
-# HIGH-FIDELITY VANILLA ACTION SPACE (128)
+# CARD-CENTRIC + SLOT-AWARE ACTION SPACE (248 dims)
 # ============================================================
+# Hierarchy: Phase actions < Generic cards < Slot-specific cards
+# 
+# Actions indexed by initial_deck position + target slot:
 # 0: Pass
-# 1-6: Mulligan Toggles
-# 7: Confirm
-# 8-67: Play Member Card #N (from 60-card pool)
-# 68-127: Set Live Card #N (from 60-card pool)
+# 1-6: Mulligan Toggles (hand[0-5])
+# 7: Confirm/Done
+# 8-67: Generic card play [0-59]
+#       - During live phase: play to live zone
+#       - During main phase: auto-select best slot (baton pass optimization)
+# 68-127: Play card [0-59] to SLOT 0 during main phase
+# 128-187: Play card [0-59] to SLOT 1 during main phase
+# 188-247: Play card [0-59] to SLOT 2 during main phase
+#
+# Masking:
+#   Main phase: 0, 8-247 (generic + all slot-specific)
+#   Live phase: 0, 8-67 (pass + generic only)
+#   Mulligan: 1-7 (toggles + confirm)
 
-NUM_ACTIONS = 128
+NUM_ACTIONS = 248
 
 ACTION_BASE_PASS = 0
 ACTION_BASE_MULLIGAN = 300
@@ -47,7 +59,7 @@ ACTION_MAP = build_vanilla_action_table()
 class HighFidelityAlphaNet(nn.Module):
     def __init__(self,
                  input_dim=800,
-                 num_actions=128,
+                 num_actions=248,
                  embed_dim=384,
                  num_heads=12,
                  num_layers=6):
@@ -100,15 +112,15 @@ class HighFidelityAlphaNet(nn.Module):
         
         summary = latent[:, 0, :] # Use global token as summary
 
-        policy_logits = self.policy_head(summary) # (B, 128)
+        policy_logits = self.policy_head(summary) # (B, 64)
         value = torch.sigmoid(self.value_head(summary))
         
         return policy_logits, value
 
 if __name__ == "__main__":
-    model = HighFidelityAlphaNet(input_dim=800)
+    model = HighFidelityAlphaNet(input_dim=800, num_actions=64)
     dummy_input = torch.randn(2, 800)
     p, v = model(dummy_input)
     print(f"Policy: {p.shape}, Value: {v.shape}")
     print(f"Total parameters: {sum(p.numel() for p in model.parameters()):,}")
-    print("HighFidelityAlphaNet (800x128) smoke test passed!")
+    print("HighFidelityAlphaNet (800x64) smoke test passed!")

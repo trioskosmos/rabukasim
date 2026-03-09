@@ -1860,4 +1860,110 @@ mod tests {
         // The engine's can_pay_cost logic checks if DECK_TOP has enough cards.
         assert!(!actions.contains(&activation_action), "Q234: Kinako activation should be illegal if deck < 3");
     }
+
+    #[test]
+    fn test_q73_reveal_until_refresh() {
+        //Q73: Mia Taylor (ID 4340)
+        //Ruling: Reveal until refreshes the deck.
+        //Ability: "ON_PLAY: REVEAL_UNTIL: Refresh DECK"
+        
+        let mut db = create_test_db();
+        
+        let mut member = MemberCard::default();
+        member.card_id = 4340; // PL!N-bp1-011-R
+        member.name = "Mia Taylor".to_string();
+        member.abilities.push(Ability {
+            trigger: TriggerType::OnPlay,
+            bytecode: vec![
+                O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6
+            ],
+            ..Default::default()
+        });
+        db.members.insert(4340, member.clone());
+        db.members_vec[4340 as usize % LOGIC_ID_MASK as usize] = Some(member);
+
+        let mut live = LiveCard::default();
+        live.card_id = 200;
+        live.name = "Generic Live".to_string();
+        db.lives.insert(200, live.clone());
+        db.lives_vec[200 as usize % LOGIC_ID_MASK as usize] = Some(live);
+
+        let mut generic = MemberCard::default();
+        generic.card_id = 100;
+        generic.name = "Generic".to_string();
+        db.members.insert(100, generic.clone());
+        db.members_vec[100 as usize % LOGIC_ID_MASK as usize] = Some(generic);
+
+        let mut state = create_test_state();
+        state.debug.debug_mode = true;
+        
+        state.players[0].hand = vec![4340, 100].into();
+        state.players[0].deck = vec![100, 100].into(); 
+        state.players[0].discard = vec![100, 200, 100].into();
+        
+        let ctx = crate::core::logic::models::AbilityContext {
+            player_id: 0,
+            source_card_id: 4340,
+            area_idx: 6,
+            ..Default::default()
+        };
+        
+        let bytecode = vec![
+            O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6
+        ];
+        
+        resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
+        
+        let hand: Vec<i32> = state.players[0].hand.iter().copied().collect();
+        assert!(hand.contains(&200), "Hand should contain the live card 200");
+        
+        assert_eq!(state.players[0].deck.len() + state.players[0].discard.len(), 4);
+        
+        assert!(state.players[0].get_flag(PlayerState::FLAG_DECK_REFRESHED));
+    }
+
+    #[test]
+    fn test_q102_reveal_until_no_targets() {
+        //Q102: Mia Taylor (ID 4340)
+        //Ruling: If no targets, do nothing.
+        //Ability: "ON_PLAY: REVEAL_UNTIL: REVEAL_UNTIL(6) {FROM=DECK_TOP}"
+        
+        let mut db = create_test_db();
+        
+        let mut member = MemberCard::default();
+        member.card_id = 4340;
+        member.name = "Mia Taylor".to_string();
+        db.members.insert(4340, member.clone());
+        db.members_vec[4340 as usize % LOGIC_ID_MASK as usize] = Some(member);
+
+        let mut generic = MemberCard::default();
+        generic.card_id = 100;
+        generic.name = "Generic".to_string();
+        db.members.insert(100, generic.clone());
+        db.members_vec[100 as usize % LOGIC_ID_MASK as usize] = Some(generic);
+
+        let mut state = create_test_state();
+        state.debug.debug_mode = true;
+        
+        state.players[0].hand = vec![4340, 100].into();
+        state.players[0].deck = vec![100, 100].into(); 
+        state.players[0].discard = vec![100, 100].into();
+        
+        let ctx = crate::core::logic::models::AbilityContext {
+            player_id: 0,
+            source_card_id: 4340,
+            area_idx: 6,
+            ..Default::default()
+        };
+        
+        let bytecode = vec![
+            O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6
+        ];
+        
+        resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
+
+        assert_eq!(state.players[0].deck.len(), 4);
+        assert_eq!(state.players[0].discard.len(), 0);
+    }
 }
+

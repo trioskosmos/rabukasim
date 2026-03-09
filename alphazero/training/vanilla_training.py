@@ -267,112 +267,290 @@ def prioritize_field_actions(legal_actions, state, curr_p, db_json=None):
     return [a[0] for a in prioritized]
 
 # ============================================================
+# Card-Centric + Slot-Aware Action Mapping (248-dim action space)
+# ============================================================
+
+def get_card_zone(state, player_idx, card_id):
+    """
+    Returns the zone of a card for the given player.
+    0: Deck (not in any zone)
+    1: Hand
+    2: Field (stage)
+    3: Live Zone
+    4: Energy Zone
+    5: Discard/Other
+    """
+    p = state.get_player(player_idx)
+    pj = json.loads(state.to_json())
+    p_data = pj['players'][player_idx]
+    
+    if card_id in p_data.get('hand', []): return 1
+    if card_id in p_data.get('field', []): return 2
+    if card_id in p_data.get('live_zone', []): return 3
+    if card_id in p_data.get('energy_zone', []): return 4
+    return 0  # Deck or discard
+
+def engine_action_to_action_248(engine_id, state, phase, initial_deck, player_idx):
+    """
+    Converts engine action ID to 248-dim action space index.
+    
+    Action space:
+      0: Pass
+      1-6: Mulligan (hand[0-5])
+      7: Confirm
+      8-67: Generic card play [0-59]
+      68-127: Play to slot 0 [0-59]
+      128-187: Play to slot 1 [0-59]
+      188-247: Play to slot 2 [0-59]
+    """
+    # Phase actions
+    if engine_id == 0:
+        if phase in [-1, 0, 5, 8, 10]: return 7  # Confirm
+        return 0  # Pass
+    if 300 <= engine_id <= 305: return 1 + (engine_id - 300)  # Mulligan
+    if engine_id == 11000: return 7  # Confirm
+    
+    # Card plays
+    p = state.get_player(player_idx)
+    pj = json.loads(state.to_json())
+    p_data = pj['players'][player_idx]
+    hand = p_data.get('hand', [])
+    
+    # Main phase: play member (1000+ range)
+    # Engine encoding: 1000 + hand_idx*10 + slot?
+    if 1000 <= engine_id < 1600:
+        hand_idx = (engine_id - 1000) // 10
+        slot = (engine_id - 1000) % 10  # Slot info encoded in last digit?
+        
+        if hand_idx < len(hand):
+            card_id = hand[hand_idx]
+            if card_id in initial_deck:
+                try:
+                    deck_idx = initial_deck.index(card_id)
+                    # If slot is specified (1-3), use slot-specific action
+                    if 1 <= slot <= 3:
+                        slot_idx = slot - 1  # 0-indexed
+                        return 68 + slot_idx * 60 + deck_idx
+                    else:
+                        # Generic play with auto-slot selection
+                        return 8 + deck_idx
+                except:
+                    pass
+        return None
+    
+    # Live phase: set live (400+ range)
+    if 400 <= engine_id < 500:
+        hand_idx = engine_id - 400
+        if hand_idx < len(hand):
+            card_id = hand[hand_idx]
+            if card_id in initial_deck:
+                try:
+                    deck_idx = initial_deck.index(card_id)
+                    return 8 + deck_idx  # Generic play for live
+                except:
+                    pass
+        return None
+    
+    return None
+
+def action_248_to_engine_action(state, player_idx, action_idx, phase, initial_deck):
+    """
+    Converts 248-dim action index to engine action ID.
+    
+    For slot-specific plays, tries to pick the best slot for baton pass.
+    """
+    # Phase actions
+    if action_idx == 0: return 0  # Pass
+    if 1 <= action_idx <= 6: return 300 + (action_idx - 1)  # Mulligan
+    if action_idx == 7: return 11000  # Confirm
+    
+    # Generic card play (8-67)
+    if 8 <= action_idx < 68:
+        deck_idx = action_idx - 8
+        if deck_idx >= len(initial_deck):
+            print(f"[WARN] deck_idx {deck_idx} >= len(initial_deck) {len(initial_deck)}")
+            return None
+        
+        card_id = initial_deck[deck_idx]
+        pj = json.loads(state.to_json())
+        hand = pj['players'][player_idx].get('hand', [])
+        
+        if card_id not in hand:
+            print(f"[WARN] Trying to play card_id {card_id} (deck idx {deck_idx}) not in hand. Hand has {len(hand)} cards: {hand[:5]}...")
+            return None
+        hand_idx = hand.index(card_id)
+        
+        # Map based on phase
+        if phase in [4, 5]:  # Main phase
+            # For generic, try slot 0 (will be auto-selected/switched)
+            result = 1000 + hand_idx * 10 + 0
+            print(f"[DEBUG] Action {action_idx} -> Card {card_id} (deck {deck_idx}) hand_idx {hand_idx} -> Engine {result}")
+            return result
+        elif phase in [-1, 0]:  # Live phase
+            return 400 + hand_idx
+        return None
+    
+    # Slot-specific card play (68-247)
+    if 68 <= action_idx < 248:
+        # Decode: slot_idx = (action_idx - 68) // 60, deck_idx = (action_idx - 68) % 60
+        offset = action_idx - 68
+        slot_idx = offset // 60
+        deck_idx = offset % 60
+        
+        if slot_idx >= 3:
+            print(f"[WARN] slot_idx {slot_idx} >= 3")
+            return None
+        if deck_idx >= len(initial_deck):
+            print(f"[WARN] deck_idx {deck_idx} >= len(initial_deck) {len(initial_deck)} in slot-specific")
+            return None
+        
+        card_id = initial_deck[deck_idx]
+        pj = json.loads(state.to_json())
+        hand = pj['players'][player_idx].get('hand', [])
+        field = pj['players'][player_idx].get('field', [])
+        
+        if card_id not in hand:
+            print(f"[WARN] card_id {card_id} not in hand (slot-specific)")
+            return None
+        hand_idx = hand.index(card_id)
+        
+        # Return engine action with slot encoding
+        # Assuming slot is encoded as: 1000 + hand_idx*10 + slot (1-indexed)
+        return 1000 + hand_idx * 10 + (slot_idx + 1)
+    
+    return None
+
+def build_action_mask_248(state, player_idx, initial_deck, phase):
+    """
+    Builds 248-dim binary mask of legal actions.
+    
+    Only mark actions that correspond to legal engine actions.
+    """
+    legal_engine = state.get_legal_action_ids()
+    mask = np.zeros(248, dtype=np.bool_)
+    
+    if not initial_deck:
+        print(f"[WARN] initial_deck is empty/None")
+        # At minimum, pass is always legal
+        mask[0] = True
+        return mask
+    
+    # Convert each legal engine action to 248-dim index
+    for eng_id in legal_engine:
+        action_idx = engine_action_to_action_248(eng_id, state, phase, initial_deck, player_idx)
+        if action_idx is not None and 0 <= action_idx < 248:
+            mask[action_idx] = True
+    
+    num_legal = mask.sum()
+    if num_legal > 100:
+        print(f"[DEBUG] Phase {phase}: {num_legal} legal actions (unusual)")
+    
+    return mask
+
+# ============================================================
 # Neural MCTS Implementation for True AlphaZero Learning
 # ============================================================
 
 class NeuralMCTS:
     """
-    Simplified Neural Network-guided action selection for True Self-Play.
+    Card-centric + slot-aware neural action selection (248-dim action space).
     
-    Instead of full tree search (which requires state cloning), this uses:
-    1. Model policy as prior
-    2. Add Dirichlet noise for exploration
-    3. Sample action from policy
-    4. Use model value as bootstrap
-    
-    This creates the feedback loop: model -> actions -> outcomes -> train model
+    Action hierarchy:
+      8-67: Generic card plays (auto-slot selection)
+      68-247: Slot-specific plays (explicit slot for baton pass strategy)
     """
     
-    def __init__(self, model, device, action_space=128):
+    def __init__(self, model, device, initial_deck=None):
         self.model = model
         self.device = device
-        self.action_space = action_space
+        self.initial_deck = initial_deck if initial_deck is not None else []
         self.temperature = 1.0
     
-    def select_action(self, state, legal_actions, initial_deck, current_phase, add_noise=True):
+    def select_action(self, state, player_idx, current_phase):
         """
-        Select action using neural network policy.
-        
-        This is the key to true self-play: the model generates the policy,
-        and the resulting game outcomes train the same model.
+        Select action using neural network policy (card + slot aware).
         
         Returns:
-            policy: numpy array of action probabilities (for training)
-            action: selected engine action ID
+            policy_248: numpy array of 248-dim action probabilities (clean, no noise)
+            action_engine: selected engine action ID
             value: model-estimated value
         """
-        # Get vanilla indices for legal actions
-        pj = json.loads(state.to_json())
-        curr_p = state.current_player
+        dbg_file = open('/tmp/debug.log', 'a') if False else open('c:/tmp/debug.log', 'a')  # Use Windows path
         
-        legal_vanilla = []
-        v_to_e = {}
-        mask = np.zeros(self.action_space, dtype=np.bool_)
+        # Build mask for this state
+        mask_248 = build_action_mask_248(state, player_idx, self.initial_deck, current_phase)
         
-        for aid in legal_actions:
-            vid = map_engine_to_vanilla(pj['players'][curr_p], aid, initial_deck, current_phase)
-            if 0 <= vid < self.action_space:
-                legal_vanilla.append(vid)
-                v_to_e[vid] = aid
-                mask[vid] = True
-        
-        if not legal_vanilla:
-            return np.zeros(self.action_space), legal_actions[0] if legal_actions else 0, 0.5
+        if not mask_248.any():
+            # No legal actions - shouldn't happen
+            dbg_file.write(f"WARN: No legal actions in mask for phase {current_phase}\n")
+            dbg_file.flush()
+            dbg_file.close()
+            return np.ones(248) / 248, 0, 0.5
         
         # Get observation
         obs = state.to_vanilla_tensor()
+        # Ensure obs is numpy array (Rust engine may return list)
+        if isinstance(obs, list):
+            obs = np.array(obs, dtype=np.float32)
+        elif not isinstance(obs, np.ndarray):
+            obs = np.asarray(obs, dtype=np.float32)
         
-        # Query model
+        # Query model (output is 248-dim)
         with torch.no_grad():
             obs_t = torch.from_numpy(obs).float().unsqueeze(0).to(self.device)
-            mask_t = torch.from_numpy(mask).unsqueeze(0).to(self.device)
+            mask_t = torch.from_numpy(mask_248).unsqueeze(0).bool().to(self.device)
             policy_logits, value = self.model(obs_t, mask=mask_t)
             
-            # Get probabilities
-            policy = torch.softmax(policy_logits, dim=1).cpu().numpy()[0]
+            # Get clean probabilities (no noise!)
+            policy_248 = torch.softmax(policy_logits, dim=1).cpu().numpy()[0]
             value = value.item()
         
-        # Apply Dirichlet noise for exploration (if enabled)
-        if add_noise:
-            legal_count = len(legal_vanilla)
-            noise = np.random.dirichlet([0.3] * legal_count)
-            epsilon = 0.25
-            for i, vid in enumerate(legal_vanilla):
-                policy[vid] = (1 - epsilon) * policy[vid] + epsilon * noise[i]
-            
-            # Renormalize
-            policy = policy / policy[legal_vanilla].sum()
+        # Mask to legal actions only
+        policy_248_masked = policy_248 * mask_248.astype(np.float32)
+        if policy_248_masked.sum() == 0:
+            dbg_file.write(f"WARN: All masked policy probs are 0 after masking\n")
+            policy_248_masked = mask_248.astype(np.float32) / mask_248.sum()
+        else:
+            policy_248_masked = policy_248_masked / policy_248_masked.sum()  # Renormalize
         
         # Select action using temperature
         if self.temperature > 0.01:
-            # Sample from distribution
-            policy_temp = policy[legal_vanilla] ** (1.0 / self.temperature)
+            # Temperature sampling
+            policy_temp = policy_248_masked ** (1.0 / self.temperature)
             policy_temp = policy_temp / policy_temp.sum()
-            selected_vid = np.random.choice(legal_vanilla, p=policy_temp)
+            action_idx = np.random.choice(248, p=policy_temp)
         else:
             # Greedy
-            selected_vid = legal_vanilla[np.argmax(policy[legal_vanilla])]
+            action_idx = np.argmax(policy_248_masked)
         
-        # Get engine action
-        action = v_to_e.get(selected_vid, legal_actions[0])
+        dbg_file.write(f"DEBUG: Selected action_idx {action_idx}, phase {current_phase}\n")
         
-        return policy, action, value
+        # Convert to engine action
+        action_engine = action_248_to_engine_action(state, player_idx, action_idx, current_phase, self.initial_deck)
+        if action_engine is None:
+            legal_actions = state.get_legal_action_ids()
+            if legal_actions:
+                action_engine = legal_actions[0]
+                dbg_file.write(f"INFO: Converted action_idx {action_idx} returned None, using legal: {action_engine}\n")
+            else:
+                action_engine = 0
+                dbg_file.write(f"INFO: No legal actions, using 0\n")
+        dbg_file.write(f"DEBUG: Final action_engine = {action_engine}\n")
+        dbg_file.flush()
+        dbg_file.close()
+        
+        return policy_248_masked, action_engine, value
 
 
 # ============================================================
 # Enhanced Training Functions with True Self-Play
 # ============================================================
 
-def play_selfplay_game(model, device, db, deck, seed, sims, use_neural_mcts=True):
+def play_selfplay_game(model, device, db, deck, seed, use_neural_mcts=True, iteration=0, total_iters=2000):
     """
-    Play a single game for training with Neural MCTS.
+    Play a single game for training with Neural MCTS card-centric actions.
     
-    This is TRUE self-play: the model generates training data that
-    will be used to improve itself.
-    
-    Returns:
-        transitions: list of (obs, policy_indices, policy_values, mask, value)
-        stats: game statistics
+    Collects clean (non-noisy) policy targets and game outcomes.
     """
     state = engine_rust.PyGameState(db)
     state.silent = True
@@ -383,13 +561,19 @@ def play_selfplay_game(model, device, db, deck, seed, sims, use_neural_mcts=True
         seed
     )
     
-    initial_decks = [state.get_player(0).initial_deck, state.get_player(1).initial_deck]
+    initial_decks = [list(state.get_player(0).initial_deck), list(state.get_player(1).initial_deck)]
+    print(f"[DEBUG] Initial deck sizes: P0={len(initial_decks[0])}, P1={len(initial_decks[1])}")
+    if initial_decks[0]:
+        print(f"[DEBUG] Initial_deck[0] (first 10): {initial_decks[0][:10]}")
     game_history = []
     moves = 0
     winner = None
     
-    # Initialize Neural MCTS
-    mcts = NeuralMCTS(model, device, db) if use_neural_mcts else None
+    # Initialize Neural MCTS with initial deck for each player
+    mcts_players = [
+        NeuralMCTS(model, device, initial_decks[0]),
+        NeuralMCTS(model, device, initial_decks[1])
+    ]
     
     while not state.is_terminal() and state.turn < 25 and moves < 500:
         legal = state.get_legal_action_ids()
@@ -400,129 +584,68 @@ def play_selfplay_game(model, device, db, deck, seed, sims, use_neural_mcts=True
                 break
         
         pj = json.loads(state.to_json())
-        cp = pj.get('phase', -4)
+        phase = pj.get('phase', -4)
         curr_p = state.current_player
         
-        # Setup/RPS/TurnChoice bypass
-        if cp == -4:
+        # Auto-play non-decision phases
+        if phase == -4:  # Setup
             if 0 in legal:
                 state.step(0)
                 state.auto_step(db)
                 moves += 1
                 continue
-        if cp == -3 or cp == -2:
+        if phase in [-3, -2]:  # RPS, TurnChoice
             action = random.choice(legal)
             state.step(action)
             state.auto_step(db)
             moves += 1
             continue
         
-        # Decision phases - use MCTS
-        if cp in [4, 5, -1, 0]:
-            if use_neural_mcts and mcts is not None:
-                # Use Neural MCTS (True AlphaZero)
-                mcts.temperature = get_temperature_by_move(moves, temp_start=1.0, temp_end=0.0, explore_moves=20)
-                
-                policy, action = mcts.search(
-                    state, 
-                    legal, 
-                    initial_decks[curr_p], 
-                    cp, 
-                    num_simulations=sims
-                )
-                
-                # Store transition
-                obs_np = state.to_vanilla_tensor()
-                mask = np.zeros(NUM_ACTIONS, dtype=np.bool_)
-                for aid in legal:
-                    vid = map_engine_to_vanilla(pj['players'][curr_p], aid, initial_decks[curr_p], cp)
-                    if 0 <= vid < NUM_ACTIONS:
-                        mask[vid] = True
-                
-                # Get value from MCTS root (expected value)
-                root_hash = mcts._get_state_hash(state)
-                if root_hash in mcts.tree:
-                    root_value = mcts.tree[root_hash].get('value', 0.5)
-                else:
-                    root_value = 0.5
-                
-                game_history.append({
-                    'obs': obs_np,
-                    'policy': policy.copy() if policy is not None else np.zeros(NUM_ACTIONS),
-                    'player': curr_p,
-                    'mask': mask,
-                    'mcts_value': root_value
-                })
-            else:
-                # Fallback to engine MCTS
-                sugg = state.search_mcts(
-                    sims, 0.0, "original", 
-                    engine_rust.SearchHorizon.GameEnd(), 
-                    engine_rust.EvalMode.Solitaire, 
-                    None
-                )
-                
-                policy_target = np.zeros(NUM_ACTIONS, dtype=np.float32)
-                if sugg:
-                    total_visits = sum(s[2] for s in sugg)
-                    if total_visits > 0:
-                        for engine_id, q, visits in sugg:
-                            vid = map_engine_to_vanilla(pj['players'][curr_p], engine_id, initial_decks[curr_p], cp)
-                            if 0 <= vid < NUM_ACTIONS:
-                                policy_target[vid] += visits / total_visits
-                
-                # Use model as fallback
-                if policy_target.sum() == 0:
-                    obs = state.to_vanilla_tensor()
-                    mask = np.zeros(NUM_ACTIONS, dtype=np.bool_)
-                    for aid in legal:
-                        vid = map_engine_to_vanilla(pj['players'][curr_p], aid, initial_decks[curr_p], cp)
-                        if 0 <= vid < NUM_ACTIONS:
-                            mask[vid] = True
-                    
-                    obs_t = torch.from_numpy(obs).float().unsqueeze(0).to(device)
-                    mask_t = torch.from_numpy(mask).unsqueeze(0).to(device)
-                    with torch.no_grad():
-                        lgt, val = model(obs_t, mask=mask_t)
-                        policy_target = torch.softmax(lgt, dim=1).cpu().numpy()[0]
-                        root_value = val.item()
-                else:
-                    root_value = 0.5
-                
-                # Store transition
-                obs_np = state.to_vanilla_tensor()
-                mask = np.zeros(NUM_ACTIONS, dtype=np.bool_)
-                for aid in legal:
-                    vid = map_engine_to_vanilla(pj['players'][curr_p], aid, initial_decks[curr_p], cp)
-                    if 0 <= vid < NUM_ACTIONS:
-                        mask[vid] = True
-                
-                game_history.append({
-                    'obs': obs_np,
-                    'policy': policy_target,
-                    'player': curr_p,
-                    'mask': mask,
-                    'mcts_value': root_value
-                })
-                
-                # Select action
-                if policy_target[mask].sum() > 0:
-                    action_idx = np.random.choice(NUM_ACTIONS, p=policy_target)
-                    # Find engine action
-                    for aid in legal:
-                        vid = map_engine_to_vanilla(pj['players'][curr_p], aid, initial_decks[curr_p], cp)
-                        if vid == action_idx:
-                            action = aid
-                            break
-                    else:
-                        action = legal[0]
-                else:
-                    action = legal[0]
+        # Decision phases: use Neural MCTS
+        if phase in [4, 5, -1, 0] and use_neural_mcts:
+            # Set temperature with iteration-based decay
+            mcts_players[curr_p].temperature = get_temperature_by_move(
+                moves,
+                temp_start=1.0,
+                temp_end=0.0,
+                explore_moves=20,
+                iteration=iteration,
+                total_iters=total_iters
+            )
+            
+            # Get clean policy + action from model
+            policy_248, action_engine, value_pred = mcts_players[curr_p].select_action(
+                state, curr_p, phase
+            )
+            
+            # Store transition (clean policy, no noise)
+            obs_800 = state.to_vanilla_tensor()
+            if isinstance(obs_800, list):
+                obs_800 = np.array(obs_800, dtype=np.float32)
+            mask_248 = build_action_mask_248(state, curr_p, initial_decks[curr_p], phase)
+            
+            game_history.append({
+                'obs': obs_800,
+                'policy': policy_248.copy(),  # CLEAN policy (already masked & normalized)
+                'mask': mask_248,
+                'phase': phase,
+                'player': curr_p,
+                'value_pred': value_pred
+            })
+            
+            action = action_engine
         else:
-            action = legal[0]
+            # Fallback: random for non-decision phases or disabled MCTS
+            action = random.choice(legal)
         
-        # Take action
-        state.step(action)
+        try:
+            state.step(action)
+        except Exception as e:
+            print(f"[ERROR] Step failed - Action: {action}, Phase: {phase}, Legal: {legal}")
+            print(f"[ERROR] Exception: {e}")
+            action = legal[0] if legal else 0
+            state.step(action)
+        
         state.auto_step(db)
         moves += 1
         
@@ -530,48 +653,36 @@ def play_selfplay_game(model, device, db, deck, seed, sims, use_neural_mcts=True
             winner = state.get_winner()
             break
     
-    # Compute final value targets with intermediate rewards
+    # Build training transitions with terminal values
     new_transitions = []
     for h in game_history:
-        # Final outcome value
-        final_val = 0.5
+        # Terminal value target
         if winner == h['player']:
-            final_val = 1.0
+            value_target = 1.0
         elif winner == 1 - h['player']:
-            final_val = 0.0
+            value_target = 0.0
+        else:
+            value_target = 0.5
         
-        # Combine MCTS value estimate with final outcome (bootstrapped)
-        # Use lambda return: V = (1-lambda)*MCTS_value + lambda*final
-        lambda_return = 0.3  # Weight final outcome more as game progresses
-        combined_value = (1 - lambda_return) * h['mcts_value'] + lambda_return * final_val
+        # Sparse representation: store non-zero indices
+        nonzero_indices = np.where(h['policy'] > 1e-6)[0]
+        nonzero_values = h['policy'][nonzero_indices]
         
-        # Also add life-based reward
-        p0_lives = len(state.get_player(0).success_lives)
-        p1_lives = len(state.get_player(1).success_lives)
-        
-        # Normalize lives to 0-1
-        life_reward = (p0_lives if h['player'] == 0 else p1_lives) / 12.0
-        
-        # Combine: 70% game outcome, 30% life reward
-        final_value = 0.7 * combined_value + 0.3 * life_reward
-        final_value = np.clip(final_value, 0.0, 1.0)
-        
-        indices = np.where(h['policy'] > 0)[0]
-        values = h['policy'][indices]
-        
-        if len(indices) > 0:
-            new_transitions.append((
-                h['obs'],
-                (indices, values),
-                h['mask'],
-                np.array([final_value], dtype=np.float32)
-            ))
+        # (obs, sparse_policy, mask, value_target)
+        new_transitions.append((
+            h['obs'].astype(np.float32),
+            (nonzero_indices.astype(np.int32), nonzero_values.astype(np.float32)),
+            h['mask'],
+            np.array([value_target], dtype=np.float32)
+        ))
     
     stats = {
         'turns': state.turn,
         'p0_lives': len(state.get_player(0).success_lives),
         'p1_lives': len(state.get_player(1).success_lives),
-        'winner': winner
+        'winner': winner,
+        'moves': moves,
+        'num_transitions': len(new_transitions)
     }
     
     return new_transitions, stats
@@ -594,7 +705,7 @@ SELFPLAY_ITERATIONS = 1000
 
 # Original configuration
 FIXED_SEEDS = [101, 202, 303, 404, 505, 606, 707, 808, 909, 1010]
-NUM_ACTIONS = 128
+NUM_ACTIONS = 248  # Phase(8) + Generic(60) + SlotSpecific(180: 60×3)
 OBS_DIM = 800
 
 # Training configuration with enhancements
@@ -733,6 +844,8 @@ def play_training_game_parallel(args):
         # Record transition (only for decision phases) - use CLEAN policy
         if sims > 0 and cp in [4, 5, -1, 0]:
             obs_np = state.to_vanilla_tensor()
+            if isinstance(obs_np, list):
+                obs_np = np.array(obs_np, dtype=np.float32)
             mask = np.zeros(NUM_ACTIONS, dtype=np.bool_)
             for aid in legal:
                 vid = map_engine_to_vanilla(pj['players'][curr_p], aid, initial_decks[curr_p], cp)
@@ -867,22 +980,34 @@ def get_temperature(it, temp_start, temp_end, decay_iters):
     return temp_start * math.exp(decay_rate * it)
 
 
-def get_temperature_by_move(move_number, temp_start=1.0, temp_end=0.0, explore_moves=20):
+def get_temperature_by_move(move_number, temp_start=1.0, temp_end=0.0, explore_moves=20, iteration=0, total_iters=2000):
     """
-    Compute temperature based on move number within a game.
+    Compute temperature based on move number within a game + iteration-based decay.
     Standard AlphaZero methodology: high temperature for first N moves, then greedy.
+    Also includes iteration-based annealing to reduce exploration as training progresses.
     
     Args:
         move_number: Current move number in the game (0-indexed)
         temp_start: Initial temperature (high for exploration)
         temp_end: Final temperature (0 for greedy)
         explore_moves: Number of moves to explore with high temperature
+        iteration: Current training iteration (for annealing)
+        total_iters: Total number of training iterations for decay
     
     Returns:
         Temperature value
     """
+    # Apply iteration-based decay to temp_start
+    # Gradually reduce exploration temperature as we train more
+    if total_iters > 0:
+        decay_factor = 1.0 - min(1.0, iteration / total_iters)
+        iteration_adjusted_start = temp_start * decay_factor
+    else:
+        iteration_adjusted_start = temp_start
+    
+    # Then apply move-based scheduling
     if move_number < explore_moves:
-        return temp_start
+        return iteration_adjusted_start
     else:
         return temp_end
 
@@ -967,7 +1092,7 @@ def run_benchmark(model_path=None, sims=50):
     
     decks_dir = root_dir / "ai" / "decks"
     all_decks = []
-    for df in list(decks_dir.glob("*.txt"))[:2]:
+    for df in list(decks_dir.glob("*.txt")):
         with open(df, "r", encoding="utf-8") as f:
             ext = parser.extract_from_content(f.read())
             if ext:
@@ -979,15 +1104,25 @@ def run_benchmark(model_path=None, sims=50):
                 if m and l: all_decks.append({"name": df.stem, "m": (m*5)[:48], "l": (l*5)[:12]})
 
     results = []
-    for deck in all_decks:  # Run all available decks
+    
+    # Filter valid decks
+    valid_decks = []
+    for d in all_decks:
+        if isinstance(d, dict) and "m" in d and "l" in d:
+            valid_decks.append(d)
+            
+    for deck in valid_decks:  # Run all available decks
+        if not isinstance(deck, dict) or "m" not in deck or "l" not in deck:
+            continue
         for seed in FIXED_SEEDS:  # Run all seeds for each deck
-            print(f"\n--- START: Deck {deck['name']}, Seed {seed} ---")
+            deck_name = deck.get('name', 'Unknown')
+            print(f"\n--- START: Deck {deck_name}, Seed {seed} ---")
             state = engine_rust.PyGameState(db)
             state.initialize_game_with_seed(deck["m"], deck["m"], [38]*12, [38]*12, deck["l"], deck["l"], seed)
             
             p0 = state.get_player(0)
             if len(p0.deck) == 0:
-                print(f"!!! CRITICAL: Deck P0 is empty for {deck['name']} seed {seed}!")
+                print(f"!!! CRITICAL: Deck P0 is empty for {deck_name} seed {seed}!")
                 continue
 
             initial_decks = [state.get_player(0).initial_deck, state.get_player(1).initial_deck]
@@ -1020,7 +1155,7 @@ def run_benchmark(model_path=None, sims=50):
 
                 # Use MCTS for decision phases
                 action = -1
-                if sims > 0 and cp in [4, 5, -1, 0]:
+                if sims > 0 and cp in [4, 5, 0]:
                     sugg = state.search_mcts(sims, 0.0, "original", engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.Solitaire, None)
                     if sugg: action = sugg[0][0]
                 
@@ -1069,7 +1204,9 @@ def run_benchmark(model_path=None, sims=50):
             p1s = len(state.get_player(1).success_lives)
             total_score = p0s + p1s
             results.append({"turns": state.turn, "score": total_score, "winner": winner})
-            print(f"[{deck['name']}] S{seed} | Turns: {state.turn} | Score: {p0s}-{p1s} | Winner: {['P0','P1','Draw'][winner] if winner is not None else 'N/A'}")
+            winner_idx = int(winner) if winner is not None else None
+            winner_str = ['P0','P1','Draw'][winner_idx] if winner_idx is not None else 'N/A'
+            print(f"[{deck_name}] S{seed} | Turns: {state.turn} | Score: {p0s}-{p1s} | Winner: {winner_str}")
             
     if results:
         avg_turns = sum(r['turns'] for r in results) / len(results)
@@ -1121,7 +1258,7 @@ if __name__ == "__main__":
         db_json_str = json.dumps(db_json)
         
         # Training config (simpler version without PER for Windows compatibility)
-        ACTION_SPACE = 128
+        ACTION_SPACE = 248  # Card-centric action space: 8 (phase) + 60 (generic) + 180 (3 slots × 60)
         OBS_DIM = 800
         GAMES_PER_ITER = 16
         TRAIN_STEPS_PER_ITER = 50
@@ -1252,6 +1389,37 @@ if __name__ == "__main__":
                 if cp == -2:
                     action = random.choice(legal)
                     state.step(action); state.auto_step(db); moves += 1; continue
+                    
+                # Mulligan bypass (Phase -1 typically means mulligan decision, but if it has a specific phase like -1)
+                if cp == -1 and MULLIGAN_ENABLED:
+                    hand = pj['players'][curr_p].get('hand', [])
+                    deck = pj['players'][curr_p].get('deck', [])
+                    
+                    try:
+                        db_json_ref = db_json
+                    except NameError:
+                        db_path = root_dir / "data" / "cards_compiled.json"
+                        with open(db_path, "r", encoding="utf-8") as f: 
+                            db_json_ref = json.load(f)
+                    replace_indices = calculate_mulligan_strategy(db_json_ref, hand, deck, MULLIGAN_REPLACE_COUNT)
+                    
+                    # Action 7 is confirm, actions 8-67 are cards in hand to replace
+                    action = 7 # Confirm by default
+                    
+                    # Select first card to replace if any, else confirm
+                    for idx in replace_indices:
+                        aid = 8 + idx
+                        if aid in legal:
+                            action = aid
+                            break
+                            
+                    if action == 7 and 7 not in legal:
+                        action = legal[0] # Fallback
+                        
+                    state.step(action)
+                    state.auto_step(db)
+                    moves += 1
+                    continue
                 
                 # Get legal vanilla indices for this position
                 mask = np.zeros(ACTION_SPACE, dtype=np.bool_)
@@ -1268,7 +1436,7 @@ if __name__ == "__main__":
                 action = -1
                 policy_target = np.zeros(ACTION_SPACE, dtype=np.float32)
                 
-                if sims > 0 and cp in [4, 5, -1, 0]:
+                if sims > 0 and cp in [4, 5, 0]:
                     sugg = state.search_mcts(sims, 0.0, "original", engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.Solitaire, None)
                     if sugg:
                         # Build policy from MCTS visits
@@ -1314,8 +1482,10 @@ if __name__ == "__main__":
                     action = v_to_e.get(legal_vanilla_indices[0], legal[0]) if legal_vanilla_indices else legal[0]
                 
                 # Record transition (only for decision phases with MCTS) - use CLEAN policy
-                if sims > 0 and cp in [4, 5, -1, 0]:
+                if sims > 0 and cp in [4, 5, 0]:
                     obs_np = state.to_vanilla_tensor()
+                    if isinstance(obs_np, list):
+                        obs_np = np.array(obs_np, dtype=np.float32)
                     
                     # Get proper mask
                     mask = np.zeros(ACTION_SPACE, dtype=np.bool_)
@@ -1417,87 +1587,93 @@ if __name__ == "__main__":
         # Main training loop
         db = engine_rust.PyCardDatabase(db_json_str)  # Already loaded in run_benchmark
         
-        for it in range(start_it, args.iters):
-            print(f"\n=== Starting Iteration {it} ===")
-            gen_start = time.time()
-            
-            # Compute learning rate with warmup and decay
-            current_lr = get_lr(it, LR_WARMUP_ITERS, LR_DECAY_ITERS, LR_START, LR_MAX, LR_MIN)
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = current_lr
-            
-            # Temperature is now move-based (high for first 20 moves, then greedy)
-            # Log the representative temperature (early game exploration)
-            current_temp = get_temperature_by_move(0, temp_start=TEMP_START, temp_end=TEMP_END, explore_moves=TEMP_EXPLORE_MOVES)
-            
-            # Beta is not used (PER disabled for Windows)
-            current_beta = 0.0
-            
-            print(f"[SCHEDULE] LR: {current_lr:.6f} | Temp: {current_temp:.4f}")
-            
-            # Play games with random decks and random seeds
-            new_transitions = []
-            game_stats = []
-            decks_used = []
-            
-            # Use parallel game execution with ProcessPoolExecutor
-            # For Neural MCTS, we need to pass the model to workers
-            if NUM_WORKERS > 1 and USE_NEURAL_MCTS:
-                # Neural MCTS requires model in each process - use sequential for now
-                print("[INFO] Using sequential Neural MCTS (model in main process)")
-                for _ in range(GAMES_PER_ITER):
-                    deck = random.choice(all_decks)
-                    decks_used.append(deck)
-                    seed = random.getrandbits(64)
-                    
-                    # Use Neural MCTS for true self-play
-                    transitions, stats = play_selfplay_game(
-                        model, device, db, deck, seed, args.sims, 
-                        use_neural_mcts=True
-                    )
-                    new_transitions.extend(transitions)
-                    game_stats.append(stats)
-            elif NUM_WORKERS > 1:
-            # Prepare game parameters for engine MCTS
-            game_params = []
-            for _ in range(GAMES_PER_ITER):
-                deck = random.choice(all_decks)
-                decks_used.append(deck)
-                seed = random.getrandbits(64)
-                game_params.append((deck, seed, args.sims, db_json_str, current_temp))
-            
-            # Execute games in parallel
-            with ProcessPoolExecutor(max_workers=NUM_WORKERS) as executor:
-                futures = [executor.submit(play_training_game_parallel, params) for params in game_params]
-                for future in as_completed(futures):
-                    try:
-                        transitions, stats = future.result()
+        try:
+            for it in range(start_it, args.iters):
+                print(f"\n=== Starting Iteration {it} ===")
+                gen_start = time.time()
+                
+                # Compute learning rate with warmup and decay
+                current_lr = get_lr(it, LR_WARMUP_ITERS, LR_DECAY_ITERS, LR_START, LR_MAX, LR_MIN)
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] = current_lr
+                
+                # Temperature is now move-based (high for first 20 moves, then greedy)
+                # PLUS iteration-based decay (reduces exploration as training progresses)
+                # Log the representative temperature (early game exploration with iteration decay)
+                current_temp = get_temperature_by_move(0, temp_start=TEMP_START, temp_end=TEMP_END, explore_moves=TEMP_EXPLORE_MOVES, iteration=it, total_iters=args.iters)
+                
+                # Beta is not used (PER disabled for Windows)
+                current_beta = 0.0
+                
+                print(f"[SCHEDULE] LR: {current_lr:.6f} | Temp: {current_temp:.4f}")
+                
+                # Play games with random decks and random seeds
+                new_transitions = []
+                game_stats = []
+                decks_used = []
+                
+                # Use parallel game execution with ProcessPoolExecutor
+                # For Neural MCTS, we need to pass the model to workers
+                if NUM_WORKERS > 1 and USE_NEURAL_MCTS:
+                    # Neural MCTS requires model in each process - use sequential for now
+                    print("[INFO] Using sequential Neural MCTS (model in main process)")
+                    for _ in range(GAMES_PER_ITER):
+                        deck = random.choice(all_decks)
+                        decks_used.append(deck)
+                        seed = random.getrandbits(64)
+                        
+                        # Use Neural MCTS for true self-play with card-centric 64-dim actions
+                        transitions, stats = play_selfplay_game(
+                            model, device, db, deck, seed,
+                            use_neural_mcts=True,
+                            iteration=it,
+                            total_iters=args.iters
+                        )
                         new_transitions.extend(transitions)
                         game_stats.append(stats)
-                    except Exception as e:
-                        print(f"[ERROR] Game failed: {e}")
-        else:
-            # Sequential execution
-            for _ in range(GAMES_PER_ITER):
-                deck = random.choice(all_decks)
-                decks_used.append(deck)
-                seed = random.getrandbits(64)
-                
-                if USE_NEURAL_MCTS:
-                    # Use Neural MCTS for true self-play
-                    transitions, stats = play_selfplay_game(
-                        model, device, db, deck, seed, args.sims,
-                        use_neural_mcts=True
-                    )
+                elif NUM_WORKERS > 1:
+                    # Prepare game parameters for engine MCTS
+                    game_params = []
+                    for _ in range(GAMES_PER_ITER):
+                        deck = random.choice(all_decks)
+                        decks_used.append(deck)
+                        seed = random.getrandbits(64)
+                        game_params.append((deck, seed, args.sims, db_json_str, current_temp))
+                    
+                    # Execute games in parallel
+                    with ProcessPoolExecutor(max_workers=NUM_WORKERS) as executor:
+                        futures = [executor.submit(play_training_game_parallel, params) for params in game_params]
+                        for future in as_completed(futures):
+                            try:
+                                transitions, stats = future.result()
+                                new_transitions.extend(transitions)
+                                game_stats.append(stats)
+                            except Exception as e:
+                                print(f"[ERROR] Game failed: {e}")
                 else:
-                    # Use engine MCTS
-                    transitions, stats = play_training_game(
-                        deck, seed, args.sims, db, model, device, 
-                        use_dirichlet=True
-                    )
-                new_transitions.extend(transitions)
-                game_stats.append(stats)
-                
+                    # Sequential execution
+                    for _ in range(GAMES_PER_ITER):
+                        deck = random.choice(all_decks)
+                        decks_used.append(deck)
+                        seed = random.getrandbits(64)
+                        
+                        if USE_NEURAL_MCTS:
+                            # Use Neural MCTS for true self-play with card-centric actions
+                            transitions, stats = play_selfplay_game(
+                                model, device, db, deck, seed,
+                                use_neural_mcts=True,
+                                iteration=it,
+                                total_iters=args.iters
+                            )
+                        else:
+                            # Use engine MCTS
+                            transitions, stats = play_training_game(
+                                deck, seed, args.sims, db, model, device, 
+                                use_dirichlet=True
+                            )
+                        new_transitions.extend(transitions)
+                        game_stats.append(stats)
+                        
                 for deck, stats in zip(decks_used, game_stats):
                     print(f"  [Game] {deck['name']} | Winner: {['P0','P1','Draw'][stats['winner']] if stats['winner'] is not None else 'N/A'} | Turns: {stats['turns']} | Lives: P0={stats['p0_lives']} P1={stats['p1_lives']}")
                 
@@ -1589,7 +1765,7 @@ if __name__ == "__main__":
                             'loss': loss
                         }, str(backup_path))
                         print(f"[BACKUP] Saved to {backup_path}")
-                    
+                        
         except KeyboardInterrupt:
             print("Stopping...")
         finally:
