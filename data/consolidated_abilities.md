@@ -8,7 +8,7 @@ This file lists unique card abilities, the cards that share them, and the consol
 
 **Cards:** PL!-sd1-001-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -28,7 +28,7 @@ EFFECT: ADD_BLADES(1, PER_CARD=COUNT) -> SELF
 
 **Cards:** PL!-sd1-002-SD, PL!S-PR-025-PR, PL!S-PR-027-PR, PL!HS-PR-014-PR, PL!N-sd1-006-SD, PL!SP-pb1-021-N, PL!S-bp2-016-N, PL!-pb1-019-N, PL!-pb1-025-N, PL!N-bp4-017-N, PL!N-bp4-020-N, PL!SP-bp4-015-N, PL!SP-bp4-019-N, PL!HS-PR-014-RM, PL!S-PR-025-RM, PL!S-PR-027-RM, PL!HS-sd1-015-SD, PL!S-sd1-008-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -45,7 +45,7 @@ EFFECT: RECOVER_MEMBER(1) {FILTER="GROUP_ID=2"} -> CARD_HAND
 
 **Cards:** PL!-sd1-003-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -64,7 +64,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_OPTION(PLAYER) {OPTIONS=["RED
 
 **Cards:** PL!-sd1-004-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -79,7 +79,7 @@ EFFECT: LOOK_AND_CHOOSE_REVEAL(5, Optional) {FILTER="UNIT_M_S, TYPE=LIVE"} -> CA
 
 **Cards:** PL!-sd1-005-SD, PL!S-PR-026-PR, PL!N-PR-009-PR, PL!N-PR-012-PR, PL!N-PR-014-PR, PL!SP-bp1-011-R, PL!SP-bp1-011-P, PL!N-sd1-011-SD, PL!SP-sd1-006-SD, PL!SP-pb1-018-N, PL!S-bp2-009-R, PL!S-bp2-009-P, PL!HS-bp2-004-R, PL!HS-bp2-004-P, PL!S-pb1-004-R, PL!S-pb1-004-P＋, PL!-pb1-024-N, PL!-bp4-003-R, PL!-bp4-003-P, PL!N-PR-009-RM, PL!-sd1-005-RM, PL!S-sd1-015-SD, PL!N-PR-012-RM, PL!HS-sd1-009-SD, PL!N-PR-014-RM, PL!HS-PR-026-PR, PL!N-PR-019-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -95,7 +95,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) -> CARD_HAND
 
 **Cards:** PL!-sd1-006-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -111,7 +111,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_SUCCESS_PILE(1, PLAYER) -> TA
 
 **Cards:** PL!-sd1-007-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -127,7 +127,7 @@ CONDITION: COUNT_CARDS(DISCARDED) {FILTER="TYPE=LIVE", GE=1}; DRAW(1)
 
 **Cards:** PL!-sd1-008-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -144,7 +144,7 @@ EFFECT: MOVE_TO_DISCARD(10) {FROM="DECK_TOP"}
 
 **Cards:** PL!-sd1-009-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -177,7 +177,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_AND_CHOOSE_REVEAL(3) -> CARD_HA
 
 **Cards:** PL!-sd1-015-SD, PL!HS-bp2-010-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -193,7 +193,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_AND_CHOOSE(5) {FILTER="TYPE_MEM
 
 **Cards:** PL!-sd1-019-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -208,7 +208,7 @@ EFFECT: LOOK_AND_CHOOSE_ORDER(3, ANY) -> DECK_TOP; MOVE_TO_DISCARD(REMAINDER)
 
 **Cards:** PL!-sd1-022-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -224,7 +224,7 @@ EFFECT: HEART_COST_REDUCTION(2, PER_CARD=COUNT) -> SELF
 
 **Cards:** PL!-bp3-012-PR, PL!-bp3-011-N, PL!-bp3-012-N, PL!-bp3-013-N, PL!-bp3-012-RM
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -242,7 +242,7 @@ EFFECT: COUNT_SUCCESS_LIVE(PLAYER) -> COUNT_VAL; CHOICE_MODE -> PLAYER
 
 **Cards:** PL!-PR-001-PR, PL!-PR-002-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -257,7 +257,7 @@ EFFECT: ACTIVATE_MEMBER(1) (Optional) -> SELF
 
 **Cards:** PL!-PR-003-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -273,7 +273,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="REQS_HAS_RED_GE_3"} -> CARD_HAND
 
 **Cards:** PL!-PR-004-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -291,7 +291,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="REQS_HAS_RED_GE_3"} -> CARD_HAND
 
 **Cards:** PL!-PR-005-PR, PL!-PR-006-PR, PL!-PR-008-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -326,7 +326,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_MEMBER(1) {FILTER="OPPONENT, 
 
 **Cards:** PL!S-PR-013-PR, PL!S-PR-019-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -346,7 +346,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS_2, TRUE); ADD_BLADES(2) -> SELF {DURATION="U
 
 **Cards:** PL!S-PR-016-PR, PL!S-PR-020-PR, PL!S-PR-021-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -361,7 +361,7 @@ EFFECT: ADD_BLADES(1) -> SELF {DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!S-PR-028-PR, PL!S-PR-032-PR, PL!S-PR-033-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -393,7 +393,7 @@ EFFECT: ADD_BLADES(2) -> SELF
 
 **Cards:** PL!N-bp1-019-PR, PL!N-bp1-014-N, PL!N-bp1-015-N, PL!N-bp1-019-N, PL!HS-bp1-010-N, PL!HS-bp1-014-N, PL!N-sd1-013-SD, PL!N-sd1-021-SD, PL!N-sd1-022-SD, PL!N-sd1-022-PRproteinbar, PL!N-sd1-013-PRproteinbar, PL!N-bp1-015-PRproteinbar, PL!N-bp1-019-PRproteinbar, PL!N-bp1-014-PRproteinbar, PL!N-sd1-021-PRproteinbar
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -408,7 +408,7 @@ EFFECT: DRAW(1) -> PLAYER; DISCARD_HAND(1) -> PLAYER
 
 **Cards:** PL!N-PR-003-PR, PL!N-PR-008-PR, PL!N-PR-010-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -443,7 +443,7 @@ EFFECT: DRAW(2) -> PLAYER; DISCARD_HAND(2) -> PLAYER
 
 **Cards:** PL!SP-PR-003-PR, PL!SP-PR-007-PR, PL!SP-PR-010-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -459,7 +459,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!SP-PR-004-PR, PL!SP-PR-006-PR, PL!SP-PR-013-PR, PL!SP-bp1-021-N, PL!SP-sd1-014-SD, PL!SP-sd1-016-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -475,7 +475,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); ENERGY_CHARGE(1, MODE="WAIT")
 
 **Cards:** PL!SP-PR-009-PR, PL!SP-PR-011-PR, PL!SP-PR-012-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -492,7 +492,7 @@ CONDITION: COUNT_CARDS(DISCARDED) {FILTER="TYPE=LIVE", GE=1}; DRAW(1)
 
 **Cards:** PL!HS-bp2-011-PR, PL!HS-bp2-011-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -508,7 +508,7 @@ EFFECT: MOVE_TO_DISCARD(5) {FROM="DECK_TOP"}
 
 **Cards:** PL!HS-PR-001-PR, PL!HS-PR-002-PR, PL!HS-PR-005-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -528,7 +528,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS_2, TRUE); ADD_BLADES(1) -> SELF {DURATION="U
 
 **Cards:** PL!HS-PR-010-PR, PL!HS-PR-011-PR, PL!HS-PR-012-PR, PL!N-bp1-025-L, PL!SP-bp1-025-L, PL!HS-bp1-020-L, PL!N-sd1-026-SD, PL!N-sd1-027-SD, PL!SP-sd1-024-SD, PL!SP-sd1-025-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:** *[No pseudocode defined]*
 
@@ -539,7 +539,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS_2, TRUE); ADD_BLADES(1) -> SELF {DURATION="U
 
 **Cards:** PL!HS-PR-016-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -555,7 +555,7 @@ EFFECT: ADD_HEARTS(2) -> SELF {HEART_TYPE=BLUE, DURATION="UNTIL_LIVE_END"}; ADD_
 
 **Cards:** PL!HS-PR-017-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -571,7 +571,7 @@ EFFECT: ADD_HEARTS(2) -> SELF {HEART_TYPE=PINK, DURATION="UNTIL_LIVE_END"}; ADD_
 
 **Cards:** PL!HS-PR-018-PR, PL!HS-PR-022-PR, PL!SP-bp1-006-R, PL!SP-bp1-006-P, PL!SP-bp2-019-N, PL!SP-bp2-022-N, PL!S-pb1-016-N, PL!S-pb1-017-N, PL!S-pb1-018-N, PL!-bp4-010-N, PL!N-bp4-013-N, PL!HS-PR-018-RM
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -607,7 +607,7 @@ EFFECT: ADD_HEARTS(1) -> SELF {HEART_TYPE=BLUE, DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!HS-PR-020-PR, PL!HS-PR-023-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -623,7 +623,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_CARDS(2, FROM="DISCARD") {FIL
 
 **Cards:** PL!HS-PR-021-PR, PL!HS-PR-021-RM
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -643,7 +643,7 @@ EFFECT: ADD_HEARTS(1) -> SELF {HEART_TYPE=RED, DURATION="UNTIL_LIVE_END"}
 
 **Cards:** LL-PR-004-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -663,7 +663,7 @@ CONDITION: VALUE_EQ(CHOICE, "OTHER"); ADD_BLADES(1, PLAYER) {DURATION="UNTIL_LIV
 
 **Cards:** LL-bp1-001-R＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -682,7 +682,7 @@ EFFECT: BOOST_SCORE(3) -> SELF
 
 **Cards:** PL!N-bp1-001-R, PL!N-bp1-001-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -699,7 +699,7 @@ EFFECT: ADD_BLADES(1) -> PLAYER
 
 **Cards:** PL!N-bp1-002-R＋, PL!N-bp1-002-P, PL!N-bp1-002-P＋, PL!N-bp1-002-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -719,7 +719,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); PLAY_MEMBER(SELF)
 
 **Cards:** PL!N-bp1-003-R＋, PL!N-bp1-003-P, PL!N-bp1-003-P＋, PL!N-bp1-003-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -739,7 +739,7 @@ EFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER
 
 **Cards:** PL!N-bp1-004-R, PL!N-bp1-004-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -755,7 +755,7 @@ EFFECT: ACTIVATE_ENERGY(1) -> PLAYER
 
 **Cards:** PL!N-bp1-005-R, PL!N-bp1-005-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -772,7 +772,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); ADD_BLADES(1) -> SELF {DURATION="UNT
 
 **Cards:** PL!N-bp1-006-R＋, PL!N-bp1-006-P, PL!N-bp1-006-P＋, PL!N-bp1-006-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -792,7 +792,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!N-bp1-008-R, PL!N-bp1-008-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -808,7 +808,7 @@ EFFECT: SELECT_RECOVER_MEMBER(1) {FILTER="COST_LT_TARGET_VAL"} -> CARD_HAND
 
 **Cards:** PL!N-bp1-009-R, PL!N-bp1-009-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -824,7 +824,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); MOVE_TO_DISCARD(2) {FROM="DECK_TOP"}
 
 **Cards:** PL!N-bp1-011-R, PL!N-bp1-011-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -841,7 +841,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); REVEAL_UNTIL(FILTER="TYPE=LIVE") -> 
 
 **Cards:** PL!N-bp1-012-R＋, PL!N-bp1-012-P, PL!N-bp1-012-P＋, PL!N-bp1-012-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -863,7 +863,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) -> CARD_HAND
 
 **Cards:** PL!N-bp1-026-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -881,7 +881,7 @@ EFFECT: SELECT_CARDS(1) {ZONE="YELL_REVEALED", FILTER="UNIT_NIJIGASAKI"} -> CARD
 
 **Cards:** PL!N-bp1-027-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -898,7 +898,7 @@ EFFECT: COUNT_HEART_COLORS(PLAYER) {FILTER="UNIT_NIJIGASAKI"} -> COUNT_VAL; BOOS
 
 **Cards:** PL!N-bp1-028-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -916,7 +916,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE), COUNT_MEMBER(PLAYER) {FILTER="UNIT_N
 
 **Cards:** PL!N-bp1-029-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -932,7 +932,7 @@ EFFECT: BOOST_SCORE(2) -> SELF
 
 **Cards:** PL!SP-bp1-001-R, PL!SP-bp1-001-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -948,7 +948,7 @@ EFFECT: PREVENT_LIVE -> PLAYER
 
 **Cards:** PL!SP-bp1-002-R＋, PL!SP-bp1-002-P, PL!SP-bp1-002-P＋, PL!SP-bp1-002-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -965,7 +965,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); DRAW(2)
 
 **Cards:** PL!SP-bp1-003-R＋, PL!SP-bp1-003-P, PL!SP-bp1-003-P＋, PL!SP-bp1-003-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -981,7 +981,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); BOOST_SCORE(1) -> SELF {DURATION="UN
 
 **Cards:** PL!SP-bp1-004-R, PL!SP-bp1-004-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -997,7 +997,7 @@ EFFECT: ADD_BLADES(5) -> SELF
 
 **Cards:** PL!SP-bp1-005-R, PL!SP-bp1-005-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1013,7 +1013,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_AND_CHOOSE_REVEAL(5) {FILTER="G
 
 **Cards:** PL!SP-bp1-007-R＋, PL!SP-bp1-007-P, PL!SP-bp1-007-P＋, PL!SP-bp1-007-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1029,7 +1029,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) -> CARD_HAND
 
 **Cards:** PL!SP-bp1-008-R, PL!SP-bp1-008-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1044,7 +1044,7 @@ EFFECT: DRAW(1); CONDITION: COUNT_MEMBER(PLAYER) {FILTER="NAME=米女メイ", GE
 
 **Cards:** PL!SP-bp1-009-R, PL!SP-bp1-009-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1060,7 +1060,7 @@ EFFECT: DRAW(1); DISCARD_HAND(1)
 
 **Cards:** PL!SP-bp1-010-R, PL!SP-bp1-010-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1076,7 +1076,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_AND_CHOOSE_REVEAL(5) {FILTER="G
 
 **Cards:** PL!SP-bp1-012-N, PL!SP-sd1-008-SD, PL!SP-sd1-017-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1094,7 +1094,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_AND_CHOOSE_REVEAL(3) -> CARD_HA
 
 **Cards:** PL!SP-bp1-023-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1113,7 +1113,7 @@ EFFECT: ENERGY_CHARGE(1)
 
 **Cards:** PL!SP-bp1-024-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1135,7 +1135,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!SP-bp1-026-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1153,7 +1153,7 @@ EFFECT: SET_HEART_COST {RED=2, YELLOW=2, PURPLE=2}
 
 **Cards:** PL!SP-bp1-027-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1169,7 +1169,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!HS-bp1-001-R, PL!HS-bp1-001-P, PL!N-sd1-008-SD, PL!N-sd1-008-RM
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1184,7 +1184,7 @@ EFFECT: ACTIVATE_ENERGY(2) -> PLAYER
 
 **Cards:** PL!HS-bp1-002-R, PL!HS-bp1-002-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1201,7 +1201,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_CARDS(1) {ZONE="DISCARD", FIL
 
 **Cards:** PL!HS-bp1-003-R＋, PL!HS-bp1-003-P, PL!HS-bp1-003-P＋, PL!HS-bp1-003-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1222,7 +1222,7 @@ EFFECT: SELECT_RECOVER_MEMBER(1) {FILTER="UNIT_HASUNOSORA, COST_LE=4"} -> CARD_H
 
 **Cards:** PL!HS-bp1-004-R＋, PL!HS-bp1-004-P, PL!HS-bp1-004-P＋, PL!HS-bp1-004-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1242,7 +1242,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_CARDS(ZONE="LIVE_SLOTS") -> CO
 
 **Cards:** PL!HS-bp1-005-R, PL!HS-bp1-005-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1259,7 +1259,7 @@ EFFECT: DRAW(COUNT_CARDS(DISCARDED))
 
 **Cards:** PL!HS-bp1-006-R＋, PL!HS-bp1-006-P, PL!HS-bp1-006-P＋, PL!HS-bp1-006-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1279,7 +1279,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_COLOR() -> COLOR_VAL; ADD_HEA
 
 **Cards:** PL!HS-bp1-007-R, PL!HS-bp1-007-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1296,7 +1296,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!HS-bp1-008-R, PL!HS-bp1-008-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1311,7 +1311,7 @@ EFFECT: MOVE_TO_DISCARD(3, FROM="DECK_TOP") -> DISCARDED; CONDITION: COUNT_CARDS
 
 **Cards:** PL!HS-bp1-009-R, PL!HS-bp1-009-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1327,7 +1327,7 @@ EFFECT: LOOK_AND_CHOOSE(5) {FILTER="UNIT_MIRAKURA"} -> CARD_HAND, DISCARD_REMAIN
 
 **Cards:** PL!HS-bp1-011-N, PL!-bp3-010-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1343,7 +1343,7 @@ EFFECT: LOOK_AND_CHOOSE(5) {FILTER="TYPE_LIVE"} -> CARD_HAND, DISCARD_REMAINDER
 
 **Cards:** PL!HS-bp1-019-L, PL!N-sd1-025-SD, PL!SP-sd1-023-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:** *[No pseudocode defined]*
 
@@ -1356,7 +1356,7 @@ EFFECT: LOOK_AND_CHOOSE(5) {FILTER="TYPE_LIVE"} -> CARD_HAND, DISCARD_REMAINDER
 
 **Cards:** PL!HS-bp1-021-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1373,7 +1373,7 @@ EFFECT: SELECT_CARDS(1) {ZONE="YELL_REVEALED", FILTER="UNIT_HASUNOSORA, TYPE_LIV
 
 **Cards:** PL!HS-bp1-022-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1391,7 +1391,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!HS-bp1-023-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1408,7 +1408,7 @@ EFFECT: ENERGY_CHARGE(1)
 
 **Cards:** PL!N-sd1-001-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1427,7 +1427,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_MEMBER(ALL) {FILTER="UNIT_NIJ
 
 **Cards:** PL!N-sd1-004-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1443,7 +1443,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); ADD_BLADES(2) -> SELF {DURATION="UNT
 
 **Cards:** PL!N-sd1-005-SD, PL!N-sd1-005-PRproteinbar
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1459,7 +1459,7 @@ EFFECT: SELECT_RECOVER_MEMBER(1) {FILTER="UNIT_NIJIGASAKI"} -> CARD_HAND
 
 **Cards:** PL!N-sd1-007-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1475,7 +1475,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="UNIT_NIJIGASAKI"} -> CARD_HAND
 
 **Cards:** PL!N-sd1-009-SD, PL!N-bp5-014-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1492,7 +1492,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="UNIT_NIJIGASAKI"} -> CARD_HAND
 
 **Cards:** PL!N-sd1-010-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1513,7 +1513,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); ADD_HEARTS(1) -> SELF {HEART_TYPE=4,
 
 **Cards:** PL!N-sd1-028-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1529,7 +1529,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!SP-sd1-001-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1545,7 +1545,7 @@ EFFECT: COUNT_ENERGY(PLAYER) -> COUNT_VAL; DIV_VAL(COUNT_VAL, 6) -> DRAW_COUNT; 
 
 **Cards:** PL!SP-sd1-002-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1560,7 +1560,7 @@ EFFECT: SELECT_CARDS(1) {FROM="HAND", FILTER="GROUP_ID=3, COST_LE=4"} (Optional)
 
 **Cards:** PL!SP-sd1-003-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1576,7 +1576,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); ADD_BLADES(5) -> SELF {DURATION="UNT
 
 **Cards:** PL!SP-sd1-004-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1591,7 +1591,7 @@ EFFECT: GRANT_ABILITY(SELF, TRIGGER="CONSTANT", CONDITION="IS_ON_STAGE", EFFECT=
 
 **Cards:** PL!SP-sd1-005-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1607,7 +1607,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) -> CARD_HAND
 
 **Cards:** PL!SP-sd1-007-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1623,7 +1623,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_MEMBER(1) {FILTER="GR
 
 **Cards:** PL!SP-sd1-009-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1640,7 +1640,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_AND_CHOOSE_REVEAL(5) -> CARD_HA
 
 **Cards:** PL!SP-sd1-011-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1658,7 +1658,7 @@ EFFECT: ENERGY_CHARGE(1)
 
 **Cards:** PL!SP-sd1-026-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1675,7 +1675,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!SP-pb1-001-R, PL!SP-pb1-001-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1694,7 +1694,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!SP-pb1-002-R, PL!SP-pb1-002-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1710,7 +1710,7 @@ EFFECT: BOOST_SCORE(1) -> PLAYER {TARGET="LIVE"}
 
 **Cards:** PL!SP-pb1-003-R, PL!SP-pb1-003-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1727,7 +1727,7 @@ EFFECT: CYCLE_AREAS(PLAYER, MODE="LEFT"); CYCLE_AREAS(OPPONENT, MODE="LEFT")
 
 **Cards:** PL!SP-pb1-004-R, PL!SP-pb1-004-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1747,7 +1747,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); DRAW(1)
 
 **Cards:** PL!SP-pb1-005-R, PL!SP-pb1-005-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1763,7 +1763,7 @@ EFFECT: ENERGY_CHARGE(1, MODE="WAIT") -> PLAYER
 
 **Cards:** PL!SP-pb1-006-R, PL!SP-pb1-006-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1778,7 +1778,7 @@ EFFECT: ADD_BLADES(2) -> SELF {DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!SP-pb1-007-R, PL!SP-pb1-007-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1793,7 +1793,7 @@ EFFECT: ACTIVATE_ENERGY(2) -> PLAYER
 
 **Cards:** PL!SP-pb1-008-R, PL!SP-pb1-008-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1808,7 +1808,7 @@ EFFECT: DRAW(1); SELECT_AREA(OTHER_AREA) -> TARGET_AREA; SWAP_AREA(SELF, TARGET_
 
 **Cards:** PL!SP-pb1-009-R, PL!SP-pb1-009-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1824,7 +1824,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!SP-pb1-010-R, PL!SP-pb1-010-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1840,7 +1840,7 @@ EFFECT: INCREASE_COST(4) -> SELF
 
 **Cards:** PL!SP-pb1-011-R, PL!SP-pb1-011-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1856,7 +1856,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); PLAY_MEMBER(TARGET) {REPRO_AREA=TRUE
 
 **Cards:** PL!SP-pb1-015-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1872,7 +1872,7 @@ EFFECT: LOOK_AND_CHOOSE(5) {FILTER="UNIT_CATCHU"} -> CARD_HAND, DISCARD_REMAINDE
 
 **Cards:** PL!SP-pb1-016-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1888,7 +1888,7 @@ EFFECT: LOOK_AND_CHOOSE(5) {FILTER="UNIT_KALEIDOSCORE"} -> CARD_HAND, DISCARD_RE
 
 **Cards:** PL!SP-pb1-017-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1905,7 +1905,7 @@ EFFECT: LOOK_AND_CHOOSE(5) {FILTER="UNIT_SYNCRISE"} -> CARD_HAND, DISCARD_REMAIN
 
 **Cards:** PL!SP-pb1-020-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1920,7 +1920,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!SP-pb1-023-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1939,7 +1939,7 @@ EFFECT: META_RULE(SCORE_RULE, ALL_ENERGY_ACTIVE) -> BOOST_SCORE(1)
 
 **Cards:** PL!SP-pb1-024-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1955,7 +1955,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!SP-pb1-025-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1970,7 +1970,7 @@ EFFECT: COUNT_MEMBER(PLAYER) {FILTER="UNIT_SYNCRISE, STATUS=ENTERED_OR_MOVED_THI
 
 **Cards:** PL!S-bp2-001-R, PL!S-bp2-001-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -1986,7 +1986,7 @@ EFFECT: ADD_BLADES(3) -> SELF
 
 **Cards:** PL!S-bp2-002-R, PL!S-bp2-002-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2002,7 +2002,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_LIVE(1) {FILTER="GROU
 
 **Cards:** PL!S-bp2-003-R, PL!S-bp2-003-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2018,7 +2018,7 @@ EFFECT: ADD_HEARTS(1) -> SELF {HEART_TYPE=3, DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!S-bp2-004-R, PL!S-bp2-004-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2034,7 +2034,7 @@ EFFECT: YELL_MULLIGAN
 
 **Cards:** PL!S-bp2-005-R＋, PL!S-bp2-005-P, PL!S-bp2-005-P＋, PL!S-bp2-005-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2050,7 +2050,7 @@ EFFECT: LOOK_AND_CHOOSE_REVEAL(7, choose_count=3) {COLOR_FILTER="RED/GREEN/BLUE"
 
 **Cards:** PL!S-bp2-006-R, PL!S-bp2-006-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2067,7 +2067,7 @@ EFFECT: PLAY_MEMBER_FROM_DISCARD(2) {TOTAL_COST_LE=4}
 
 **Cards:** PL!S-bp2-007-R＋, PL!S-bp2-007-P, PL!S-bp2-007-P＋, PL!S-bp2-007-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2088,7 +2088,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_REORDER_DISCARD(2)
 
 **Cards:** PL!S-bp2-008-R＋, PL!S-bp2-008-P, PL!S-bp2-008-P＋, PL!S-bp2-008-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2107,7 +2107,7 @@ EFFECT: COUNT_CARDS(ZONE="YELL_REVEALED", FILTER="TYPE_LIVE") -> LIVE_COUNT; CON
 
 **Cards:** PL!S-bp2-021-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2122,7 +2122,7 @@ EFFECT: MOVE_TO_DECK(1) {ZONE="YELL_REVEALED", TYPE_LIVE, TO="DECK_BOTTOM"}
 
 **Cards:** PL!S-bp2-022-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2138,7 +2138,7 @@ EFFECT: BOOST_SCORE(2) -> SELF
 
 **Cards:** PL!S-bp2-023-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2155,7 +2155,7 @@ EFFECT: SELECT_MEMBER(ALL) -> TARGETS; ADD_BLADES(1) -> TARGETS {DURATION="UNTIL
 
 **Cards:** PL!S-bp2-024-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2173,7 +2173,7 @@ EFFECT: DRAW(2); DISCARD_HAND(1)
 
 **Cards:** PL!S-bp2-025-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2189,7 +2189,7 @@ EFFECT: SELECT_MEMBER(1) -> TARGET; ADD_BLADES(2) -> TARGET {DURATION="UNTIL_LIV
 
 **Cards:** PL!SP-bp2-001-R＋, PL!SP-bp2-001-P, PL!SP-bp2-001-P＋, PL!SP-bp2-001-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2204,7 +2204,7 @@ EFFECT: SELECT_MEMBER(1) {FILTER="GROUP_ID=3"} (Optional) -> TARGET; NEGATE_EFFE
 
 **Cards:** PL!SP-bp2-002-R, PL!SP-bp2-002-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2219,7 +2219,7 @@ EFFECT: LOOK_AND_CHOOSE_REVEAL(3) {FILTER="COST_GE=11"} -> CARD_HAND, DISCARD_RE
 
 **Cards:** PL!SP-bp2-003-R, PL!SP-bp2-003-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2235,7 +2235,7 @@ EFFECT: ENERGY_CHARGE(1, MODE="WAIT") -> PLAYER
 
 **Cards:** PL!SP-bp2-004-R, PL!SP-bp2-004-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2251,7 +2251,7 @@ EFFECT: ADD_HEARTS(1) -> SELF {HEART_TYPE=3}
 
 **Cards:** PL!SP-bp2-005-R, PL!SP-bp2-005-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2269,7 +2269,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_AND_CHOOSE(7) {FILTER="GROUP_ID
 
 **Cards:** PL!SP-bp2-006-R＋, PL!SP-bp2-006-P, PL!SP-bp2-006-P＋, PL!SP-bp2-006-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2289,7 +2289,7 @@ EFFECT: TRIGGER_REMOTE(DISCARDED, TRIGGER="ON_PLAY")
 
 **Cards:** PL!SP-bp2-007-R, PL!SP-bp2-007-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2305,7 +2305,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_AND_CHOOSE(5) {FILTER="GROUP_ID
 
 **Cards:** PL!SP-bp2-008-R, PL!SP-bp2-008-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2322,7 +2322,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_AREA(PLAYER, NOT_SELF) -> TAR
 
 **Cards:** PL!SP-bp2-009-R＋, PL!SP-bp2-009-P, PL!SP-bp2-009-P＋, PL!SP-bp2-009-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2341,7 +2341,7 @@ EFFECT: DRAW(2); DISCARD_HAND(1)
 
 **Cards:** PL!SP-bp2-010-R＋, PL!SP-bp2-010-P, PL!SP-bp2-010-P＋, PL!SP-bp2-010-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2360,7 +2360,7 @@ EFFECT: REDUCE_YELL_COUNT(8) -> SELF {DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!SP-bp2-011-R, PL!SP-bp2-011-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2375,7 +2375,7 @@ EFFECT: SELECT_CARDS(2) {FROM="DISCARD", TYPE_LIVE, UNIQUE_NAMES} -> OPTIONS; OP
 
 **Cards:** PL!SP-bp2-013-N, PL!SP-bp2-014-N, PL!SP-bp2-018-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2390,7 +2390,7 @@ EFFECT: SELECT_CARDS(1) -> TARGET {FROM="DISCARD"}; MOVE_TO_DECK(TARGET, TO="DEC
 
 **Cards:** PL!SP-bp2-015-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2406,7 +2406,7 @@ EFFECT: ADD_HEARTS(1) -> SELF {HEART_TYPE=5, DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!SP-bp2-020-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2422,7 +2422,7 @@ EFFECT: ADD_HEARTS(1) -> SELF {HEART_TYPE=1, DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!SP-bp2-021-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2438,7 +2438,7 @@ EFFECT: ADD_HEARTS(1) -> SELF {HEART_TYPE=2, DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!SP-bp2-023-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2454,7 +2454,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!SP-bp2-024-L, PL!SP-bp2-024-SECL
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2470,7 +2470,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!SP-bp2-025-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2486,7 +2486,7 @@ EFFECT: SELECT_RECOVER_CARD(1) -> CARD_HAND {ZONE="YELL_REVEALED"}
 
 **Cards:** PL!HS-bp2-001-R, PL!HS-bp2-001-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2503,7 +2503,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_LIVE(1) {FILTER="GROU
 
 **Cards:** PL!HS-bp2-002-R＋, PL!HS-bp2-002-P, PL!HS-bp2-002-P＋, PL!HS-bp2-002-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2522,7 +2522,7 @@ EFFECT: ADD_BLADES(3) -> SELF
 
 **Cards:** PL!HS-bp2-003-R, PL!HS-bp2-003-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2539,7 +2539,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_REORDER_DISCARD(3)
 
 **Cards:** PL!HS-bp2-005-R＋, PL!HS-bp2-005-P, PL!HS-bp2-005-P＋, PL!HS-bp2-005-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2560,7 +2560,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER="AREA_L
 
 **Cards:** PL!HS-bp2-006-R, PL!HS-bp2-006-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2579,7 +2579,7 @@ EFFECT: COUNT_MEMBER(PLAYER) {FILTER="UNIT_MIRAKURA, NOT_SELF"} -> COUNT_VAL; AD
 
 **Cards:** PL!HS-bp2-007-R＋, PL!HS-bp2-007-P, PL!HS-bp2-007-P＋, PL!HS-bp2-007-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2599,7 +2599,7 @@ EFFECT: CONDITION: TYPE_EQ(DISCARDED, "MEMBER"); GET_NAME(DISCARDED) -> NAME_VAL
 
 **Cards:** PL!HS-bp2-008-R, PL!HS-bp2-008-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2615,7 +2615,7 @@ EFFECT: ADD_BLADES(2) -> SELF {DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!HS-bp2-009-R, PL!HS-bp2-009-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2632,7 +2632,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); ADD_HEARTS(2) -> SELF {HEART_TYPE=1,
 
 **Cards:** PL!HS-bp2-012-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2647,7 +2647,7 @@ EFFECT: LOOK_AND_CHOOSE(5) {FILTER="TYPE_MEMBER"} -> CARD_HAND, DISCARD_REMAINDE
 
 **Cards:** PL!HS-bp2-013-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2662,7 +2662,7 @@ EFFECT: LOOK_AND_CHOOSE(5) {FILTER="TYPE_LIVE"} -> CARD_HAND, DISCARD_REMAINDER
 
 **Cards:** PL!HS-bp2-014-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2677,7 +2677,7 @@ EFFECT: DRAW(1); RESTRICTION(LIVE, DURATION="UNTIL_LIVE_END")
 
 **Cards:** PL!HS-bp2-015-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2692,7 +2692,7 @@ EFFECT: DRAW(2); DISCARD_HAND(1)
 
 **Cards:** PL!HS-bp2-016-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2707,7 +2707,7 @@ EFFECT: LOOK_REORDER_DISCARD(2)
 
 **Cards:** PL!HS-bp2-017-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2723,7 +2723,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!HS-bp2-018-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2741,7 +2741,7 @@ EFFECT: REDUCE_LIVE_SET_LIMIT(1) {TARGET="NEXT_LIVE_SET"}
 
 **Cards:** PL!HS-bp2-019-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2762,7 +2762,7 @@ EFFECT: CHOICE_MODE -> PLAYER
 
 **Cards:** PL!HS-bp2-020-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2780,7 +2780,7 @@ EFFECT: BOOST_SCORE(2) -> SELF {PER_CARD="STAGE", FILTER="UNIT_HASU, UNIQUE_NAME
 
 **Cards:** PL!HS-bp2-021-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2796,7 +2796,7 @@ EFFECT: REDUCE_HEART_REQ(1, HEART_TYPE=4) -> SELF
 
 **Cards:** PL!HS-bp2-022-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2812,7 +2812,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!HS-bp2-023-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2828,7 +2828,7 @@ EFFECT: REDUCE_HEART_REQ(1, HEART_TYPE=5) -> SELF
 
 **Cards:** PL!HS-bp2-024-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2844,7 +2844,7 @@ EFFECT: REDUCE_HEART_REQ(3, HEART_TYPE=ANY) -> SELF
 
 **Cards:** PL!HS-bp2-025-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2860,7 +2860,7 @@ EFFECT: REDUCE_HEART_REQ(1, HEART_TYPE=1) -> SELF
 
 **Cards:** PL!HS-bp2-026-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2879,7 +2879,7 @@ EFFECT: BOOST_SCORE(2) -> SELF
 
 **Cards:** LL-bp2-001-R＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2901,7 +2901,7 @@ EFFECT: CONDITION: VALUE_GT(DISCARD_COUNT, 0); ADD_BLADES(1, PER_CARD=DISCARD_CO
 
 **Cards:** PL!S-pb1-001-R, PL!S-pb1-001-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2917,7 +2917,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) -> CARD_HAND
 
 **Cards:** PL!S-pb1-002-R, PL!S-pb1-002-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2934,7 +2934,7 @@ EFFECT: CHOICE_MODE -> OPPONENT
 
 **Cards:** PL!S-pb1-003-R, PL!S-pb1-003-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2953,7 +2953,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) -> CARD_HAND {ZONE="YELL_REVEALED"}
 
 **Cards:** PL!S-pb1-005-R, PL!S-pb1-005-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2969,7 +2969,7 @@ EFFECT: ADD_BLADES(3) -> SELF
 
 **Cards:** PL!S-pb1-006-R, PL!S-pb1-006-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -2987,7 +2987,7 @@ EFFECT: CHOICE_MODE -> OPPONENT
 
 **Cards:** PL!S-pb1-007-R, PL!S-pb1-007-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3003,7 +3003,7 @@ EFFECT: ENERGY_CHARGE(1, STATUS="TAPPED")
 
 **Cards:** PL!S-pb1-008-R, PL!S-pb1-008-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3018,7 +3018,7 @@ EFFECT: CHOICE_PLAYER(BOTH) -> TARGET_PLAYER; LOOK_REORDER_DISCARD(2, TARGET=TAR
 
 **Cards:** PL!S-pb1-009-R, PL!S-pb1-009-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3034,7 +3034,7 @@ EFFECT: ADD_BLADES(3) -> SELF
 
 **Cards:** PL!S-pb1-013-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3050,7 +3050,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_AND_CHOOSE(4) {FILTER="(TYPE_ME
 
 **Cards:** PL!S-pb1-014-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3066,7 +3066,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_AND_CHOOSE(4) {FILTER="(TYPE_ME
 
 **Cards:** PL!S-pb1-015-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3082,7 +3082,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_AND_CHOOSE(4) {FILTER="(TYPE_ME
 
 **Cards:** PL!S-pb1-019-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3101,7 +3101,7 @@ EFFECT: ENERGY_CHARGE(1, STATUS="TAPPED") -> OPPONENT
 
 **Cards:** PL!S-pb1-020-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3117,7 +3117,7 @@ EFFECT: BOOST_SCORE(2) -> SELF
 
 **Cards:** PL!S-pb1-021-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3133,7 +3133,7 @@ EFFECT: BOOST_SCORE(2) -> SELF
 
 **Cards:** PL!S-pb1-022-L, PL!S-pb1-022-L＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3149,7 +3149,7 @@ EFFECT: PREVENT_SET_TO_SUCCESS_PILE {TARGET="BOTH"}
 
 **Cards:** PL!S-pb1-024-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3165,7 +3165,7 @@ EFFECT: DRAW(2) -> PLAYER; DISCARD_HAND(2) -> PLAYER
 
 **Cards:** PL!-bp3-001-R, PL!-bp3-001-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3185,7 +3185,7 @@ EFFECT: SELECT_MEMBER(1) {FILTER="STATUS=TAPPED"} -> TARGET; ACTIVATE_MEMBER(TAR
 
 **Cards:** PL!-bp3-002-R, PL!-bp3-002-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3204,7 +3204,7 @@ EFFECT: COUNT_MEMBER {FILTER="OPPONENT, STATUS=TAPPED"} -> COUNT_VAL; ADD_BLADES
 
 **Cards:** PL!-bp3-003-R, PL!-bp3-003-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3221,7 +3221,7 @@ EFFECT: RECOVER_MEMBER(1) -> CARD_HAND
 
 **Cards:** PL!-bp3-004-R＋, PL!-bp3-004-P, PL!-bp3-004-P＋, PL!-bp3-004-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3241,7 +3241,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_LIVE(1) {FILTER="GROU
 
 **Cards:** PL!-bp3-005-R, PL!-bp3-005-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3256,7 +3256,7 @@ EFFECT: SELECT_MEMBER(ALL) {FILTER="STATUS=TAPPED"} -> TARGETS; ACTIVATE_MEMBER(
 
 **Cards:** PL!-bp3-006-R, PL!-bp3-006-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3272,7 +3272,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_SUCCESS_LIVE(PLAYER) -> COUNT_
 
 **Cards:** PL!-bp3-007-R, PL!-bp3-007-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3289,7 +3289,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_AND_CHOOSE_SPLIT(3) -> CARD_HAN
 
 **Cards:** PL!-bp3-008-R＋, PL!-bp3-008-P, PL!-bp3-008-P＋, PL!-bp3-008-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3310,7 +3310,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); ADD_HEARTS(2) -> SELF {HEART_TYPE=3,
 
 **Cards:** PL!-bp3-009-R＋, PL!-bp3-009-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3334,7 +3334,7 @@ EFFECT: CHOICE_MODE -> PLAYER
 
 **Cards:** PL!-bp3-009-P＋, PL!-bp3-009-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3357,7 +3357,7 @@ EFFECT: CHOICE_MODE -> PLAYER
 
 **Cards:** PL!-bp3-014-N, PL!-bp3-017-N, PL!-bp3-018-N, PL!N-bp3-022-N, PL!N-bp4-016-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3375,7 +3375,7 @@ EFFECT: DISCARD_REMAINDER
 
 **Cards:** PL!-bp3-019-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3391,7 +3391,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!-bp3-022-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3407,7 +3407,7 @@ EFFECT: BOOST_SCORE(1, PER_CARD=LIVE_COUNT) -> SELF
 
 **Cards:** PL!-bp3-023-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3424,7 +3424,7 @@ EFFECT: REDUCE_HEART_REQ(2) -> SELF
 
 **Cards:** PL!-bp3-024-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3447,7 +3447,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!-bp3-025-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3464,7 +3464,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!-bp3-026-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3484,7 +3484,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!S-bp3-001-R＋, PL!S-bp3-001-P, PL!S-bp3-001-P＋, PL!S-bp3-001-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3501,7 +3501,7 @@ EFFECT: GRANT_ABILITY(TARGET) {ABILITY="TRIGGER: CONSTANT, EFFECT: BOOST_SCORE(1
 
 **Cards:** PL!S-bp3-002-R, PL!S-bp3-002-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3518,7 +3518,7 @@ EFFECT: MOVE_TO_HAND(SELF) (Optional)
 
 **Cards:** PL!S-bp3-003-R＋, PL!S-bp3-003-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3539,7 +3539,7 @@ EFFECT: CONDITION: VALUE_GT(DISCARD_COUNT, 0); SELECT_MEMBER(1) -> TARGET; ADD_B
 
 **Cards:** PL!S-bp3-003-P＋, PL!S-bp3-003-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3559,7 +3559,7 @@ EFFECT: CONDITION: VALUE_GT(DISCARD_COUNT, 0); SELECT_MEMBER(1) -> TARGET; ADD_B
 
 **Cards:** PL!S-bp3-004-R, PL!S-bp3-004-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3575,7 +3575,7 @@ EFFECT: LOOK_AND_CHOOSE(4) {FILTER="TYPE_MEMBER"} -> CARD_HAND, DISCARD_REMAINDE
 
 **Cards:** PL!S-bp3-005-R, PL!S-bp3-005-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3591,7 +3591,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!S-bp3-006-R＋, PL!S-bp3-006-P, PL!S-bp3-006-P＋, PL!S-bp3-006-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3609,7 +3609,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_MEMBER(1) {FILTER="GR
 
 **Cards:** PL!S-bp3-007-R, PL!S-bp3-007-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3626,7 +3626,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); DRAW(1)
 
 **Cards:** PL!S-bp3-008-R, PL!S-bp3-008-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3643,7 +3643,7 @@ EFFECT: CONDITION: SELECT_CARD(CHOSEN_CARD) {FILTER="GROUP_ID=1, SCORE_GE=6"}; A
 
 **Cards:** PL!S-bp3-009-R, PL!S-bp3-009-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3659,7 +3659,7 @@ EFFECT: LOOK_AND_CHOOSE(6) {FILTER="GROUP_ID=1, TYPE_MEMBER"} -> CARD_HAND, DISC
 
 **Cards:** PL!S-bp3-010-N, PL!S-bp3-011-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3674,7 +3674,7 @@ EFFECT: SELECT_MEMBER(1) {FILTER="STATUS=TAPPED"} -> TARGET; ACTIVATE_MEMBER(TAR
 
 **Cards:** PL!S-bp3-016-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3689,7 +3689,7 @@ EFFECT: INCREASE_COST(1, PER_CARD="SUCCESS_LIVE") -> SELF
 
 **Cards:** PL!S-bp3-019-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3705,7 +3705,7 @@ EFFECT: SET_SCORE(4) -> SELF
 
 **Cards:** PL!S-bp3-020-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3721,7 +3721,7 @@ EFFECT: DISCARD_YELL_PILE (Optional); RE_YELL
 
 **Cards:** PL!S-bp3-021-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3739,7 +3739,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_MEMBER(1) -> TARGET; ADD_BLAD
 
 **Cards:** PL!S-bp3-024-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3757,7 +3757,7 @@ EFFECT: SELECT_MODE(1)
 
 **Cards:** PL!S-bp3-025-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3774,7 +3774,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!N-bp3-001-R＋, PL!N-bp3-001-P, PL!N-bp3-001-P＋, PL!N-bp3-001-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3790,7 +3790,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); DRAW(1); SELECT_MEMBER(ALL) {FILTER=
 
 **Cards:** PL!N-bp3-002-R, PL!N-bp3-002-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3807,7 +3807,7 @@ EFFECT: COLOR_SELECT(1) -> COLOR; SELECT_MEMBER(1) {FILTER="NOT_SELF, GROUP_ID=2
 
 **Cards:** PL!N-bp3-003-R, PL!N-bp3-003-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3822,7 +3822,7 @@ EFFECT: TRIGGER_REMOTE(1) {FILTER="GROUP_ID=2, TYPE_MEMBER, COST_LE_4", FROM="DI
 
 **Cards:** PL!N-bp3-004-R, PL!N-bp3-004-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3839,7 +3839,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="GROUP_ID=2"} -> CARD_HAND
 
 **Cards:** PL!N-bp3-005-R＋, PL!N-bp3-005-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3860,7 +3860,7 @@ EFFECT: BOOST_SCORE(1) -> PLAYER
 
 **Cards:** PL!N-bp3-005-P＋, PL!N-bp3-005-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3880,7 +3880,7 @@ EFFECT: GRANT_ABILITY(SELF) {ABILITY="TRIGGER: CONSTANT, EFFECT: BOOST_SCORE(1) 
 
 **Cards:** PL!N-bp3-006-R, PL!N-bp3-006-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3895,7 +3895,7 @@ EFFECT: TAP_SELF
 
 **Cards:** PL!N-bp3-007-R, PL!N-bp3-007-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3913,7 +3913,7 @@ EFFECT: SELECT_ENERGY(1) -> ATTACH_MEMBER(TARGET_PLAYED)
 
 **Cards:** PL!N-bp3-008-R＋, PL!N-bp3-008-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3935,7 +3935,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); ADD_HEARTS(1) -> SELF {HEART_TYPE=4,
 
 **Cards:** PL!N-bp3-008-P＋, PL!N-bp3-008-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3956,7 +3956,7 @@ EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); ADD_HEARTS(1) -> SELF {HEART_TYPE=4,
 
 **Cards:** PL!N-bp3-009-R＋, PL!N-bp3-009-P, PL!N-bp3-009-P＋, PL!N-bp3-009-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3974,7 +3974,7 @@ EFFECT: CONDITION: VALUE_EQ(TOTAL_VAL, 25); GRANT_ABILITY(SELF) {ABILITY="TRIGGE
 
 **Cards:** PL!N-bp3-010-R, PL!N-bp3-010-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -3991,7 +3991,7 @@ EFFECT: CHOICE_MODE -> PLAYER
 
 **Cards:** PL!N-bp3-011-R, PL!N-bp3-011-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4009,7 +4009,7 @@ EFFECT: CONDITION: HAS_MATCHING_BASE_BLADE(SELF, TARGET_MEMBER); ADD_BLADES(1) -
 
 **Cards:** PL!N-bp3-012-R, PL!N-bp3-012-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4025,7 +4025,7 @@ EFFECT: LOOK_AND_CHOOSE(4) {FILTER="GROUP_ID=2"} -> CARD_HAND, DISCARD_REMAINDER
 
 **Cards:** PL!N-bp3-013-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4041,7 +4041,7 @@ EFFECT: DRAW(2)
 
 **Cards:** PL!N-bp3-014-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4059,7 +4059,7 @@ EFFECT: CHOICE_MODE -> PLAYER
 
 **Cards:** PL!N-bp3-015-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4077,7 +4077,7 @@ EFFECT: CHOICE_MODE -> PLAYER
 
 **Cards:** PL!N-bp3-025-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4093,7 +4093,7 @@ EFFECT: ADD_HEARTS(3) -> TARGET_MEMBER {HEART_TYPE=1, PER_CARD=REMOVED_COUNT, DU
 
 **Cards:** PL!N-bp3-026-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4109,7 +4109,7 @@ EFFECT: IF (SUCCESS_PILE_CONTAINS_SCORE(5)) { BOOST_SCORE(1) -> SELF }
 
 **Cards:** PL!N-bp3-027-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4126,7 +4126,7 @@ EFFECT: PLACE_ENERGY_WAIT(1) -> PLAYER
 
 **Cards:** PL!N-bp3-028-L, PL!N-bp3-028-SECL
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4144,7 +4144,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!N-bp3-030-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4160,7 +4160,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!N-bp3-031-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4176,7 +4176,7 @@ EFFECT: BOOST_SCORE(1, PER_CARD="STAGE", FILTER="STATUS=TAPPED") -> SELF
 
 **Cards:** LL-bp3-001-R＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4196,7 +4196,7 @@ EFFECT: ADD_BLADES(3) -> PLAYER
 
 **Cards:** PL!-pb1-001-R, PL!-pb1-001-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4216,7 +4216,7 @@ EFFECT: CHOICE_MODE -> PLAYER
 
 **Cards:** PL!-pb1-002-R, PL!-pb1-002-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4237,7 +4237,7 @@ EFFECT: ADD_HEARTS(1) -> SELF {HEART_TYPE=6, PER_CARD=TARGET_VAL}
 
 **Cards:** PL!-pb1-003-R, PL!-pb1-003-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4253,7 +4253,7 @@ EFFECT: COUNT_MEMBER {FILTER="UNIT_PRINTEMPS"} -> COUNT_VAL; ACTIVATE_ENERGY(COU
 
 **Cards:** PL!-pb1-004-R, PL!-pb1-004-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4271,7 +4271,7 @@ EFFECT: GRANT_ABILITY(SELF) {ABILITY="TRIGGER: CONSTANT, EFFECT: BOOST_SCORE(2) 
 
 **Cards:** PL!-pb1-005-R, PL!-pb1-005-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4287,7 +4287,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!-pb1-006-R, PL!-pb1-006-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4304,7 +4304,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!-pb1-007-R, PL!-pb1-007-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4321,7 +4321,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="GROUP_ID=0"} -> CARD_HAND
 
 **Cards:** PL!-pb1-008-R, PL!-pb1-008-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4338,7 +4338,7 @@ EFFECT: DRAW(TAPPED_COUNT)
 
 **Cards:** PL!-pb1-009-R, PL!-pb1-009-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4354,7 +4354,7 @@ EFFECT: DISABLE_ACTIVATE_BY_EFFECT(ALL_MEMBERS) {DURATION="UNTIL_TURN_END"}
 
 **Cards:** PL!-pb1-010-R, PL!-pb1-010-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4370,7 +4370,7 @@ EFFECT: SELECT_MEMBER(ALL) {FILTER="OTHER_MEMBERS"} -> TARGET; ADD_BLADES(1) -> 
 
 **Cards:** PL!-pb1-011-R, PL!-pb1-011-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4386,7 +4386,7 @@ EFFECT: TAP_OPPONENT(1) -> OPPONENT {FILTER="COST_LE_4"}
 
 **Cards:** PL!-pb1-012-R, PL!-pb1-012-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4401,7 +4401,7 @@ EFFECT: ACTIVATE_MEMBER(1) -> PLAYER {FILTER="UNIT_PRINTEMPS"}
 
 **Cards:** PL!-pb1-013-R, PL!-pb1-013-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4419,7 +4419,7 @@ EFFECT: GRANT_ABILITY(SELF) {ABILITY="TRIGGER: CONSTANT, EFFECT: BOOST_SCORE(1) 
 
 **Cards:** PL!-pb1-014-R, PL!-pb1-014-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4436,7 +4436,7 @@ EFFECT: REDUCE_COST(2) -> PLAYER {ZONE="HAND"}
 
 **Cards:** PL!-pb1-015-R, PL!-pb1-015-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4456,7 +4456,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!-pb1-016-R, PL!-pb1-016-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4472,7 +4472,7 @@ EFFECT: LOOK_AND_CHOOSE(4) {UNIT="lilywhite"} -> CARD_HAND, DISCARD_REMAINDER
 
 **Cards:** PL!-pb1-017-R, PL!-pb1-017-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4489,12 +4489,12 @@ EFFECT: DISCARD_HAND(1)
 
 **Cards:** PL!-pb1-018-R, PL!-pb1-018-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
 TRIGGER: ON_PLAY
-EFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER="COST_LE_2", DESTINATION="STAGE_EMPTY", STATE="WAIT"}; PREVENT_PLAY_TO_SLOT -> SLOT 
+EFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER="COST_LE_2", DESTINATION="STAGE_EMPTY", STATE="WAIT"}; PREVENT_PLAY_TO_SLOT -> SLOT
 EFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER="COST_LE_2", DESTINATION="STAGE_EMPTY", STATE="WAIT"} -> OPPONENT; PREVENT_PLAY_TO_SLOT -> SLOT
 ```
 
@@ -4505,7 +4505,7 @@ EFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER="COST_LE_2", DESTINATION="STAGE_EMPT
 
 **Cards:** PL!-pb1-028-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4522,7 +4522,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!-pb1-029-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4539,7 +4539,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!-pb1-030-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4559,7 +4559,7 @@ EFFECT: SELECT_RECOVER_MEMBER(1) {FILTER="UNIT_BIBI"} -> CARD_HAND
 
 **Cards:** PL!-pb1-031-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4575,7 +4575,7 @@ EFFECT: LOOK_AND_CHOOSE(1) {FILTER="GROUP_ID=0", SOURCE="YELL"} -> CARD_HAND
 
 **Cards:** PL!-pb1-032-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4591,7 +4591,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!-bp4-001-R, PL!-bp4-001-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4608,7 +4608,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!-bp4-002-R＋, PL!-bp4-002-P, PL!-bp4-002-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4630,7 +4630,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="GROUP_ID=0"} -> CARD_HAND
 
 **Cards:** PL!-bp4-002-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4651,7 +4651,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="GROUP_ID=0"} -> CARD_HAND
 
 **Cards:** PL!-bp4-004-R, PL!-bp4-004-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4669,7 +4669,7 @@ EFFECT: ACTIVATE_ENERGY(2) -> PLAYER
 
 **Cards:** PL!-bp4-005-R＋, PL!-bp4-005-P, PL!-bp4-005-P＋, PL!-bp4-005-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4692,7 +4692,7 @@ EFFECT: MOVE_MEMBER(SELF) -> PLAYER {MODE="OUT_OF_CENTER"}
 
 **Cards:** PL!-bp4-006-R, PL!-bp4-006-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4708,7 +4708,7 @@ EFFECT: LOOK_AND_CHOOSE(5) {FILTER="GROUP_ID=0"} -> CARD_HAND, DISCARD_REMAINDER
 
 **Cards:** PL!-bp4-007-R, PL!-bp4-007-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4724,7 +4724,7 @@ EFFECT: GRANT_ABILITY(SELF) {ABILITY="TRIGGER: CONSTANT, EFFECT: BOOST_SCORE(1) 
 
 **Cards:** PL!-bp4-008-R, PL!-bp4-008-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4740,7 +4740,7 @@ EFFECT: INCREASE_COST(3) -> SELF
 
 **Cards:** PL!-bp4-009-R, PL!-bp4-009-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4755,7 +4755,7 @@ EFFECT: TAP_OPPONENT(1) -> OPPONENT
 
 **Cards:** PL!-bp4-011-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4771,7 +4771,7 @@ EFFECT: SELECT_MEMBER(ALL) {FILTER="GROUP_ID=0, AREA=CENTER"} -> TARGET; ADD_BLA
 
 **Cards:** PL!-bp4-013-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4787,7 +4787,7 @@ EFFECT: ADD_HEARTS(1) -> OTHER_MEMBER
 
 **Cards:** PL!-bp4-014-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4803,7 +4803,7 @@ EFFECT: ADD_BLADES(2) -> OTHER_MEMBER
 
 **Cards:** PL!-bp4-016-N, PL!-bp5-015-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4819,7 +4819,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!-bp4-017-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4835,7 +4835,7 @@ EFFECT: ADD_BLADES(1) -> PLAYER {TARGET="CENTER", FILTER="GROUP_ID=0"}
 
 **Cards:** PL!-bp4-018-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4851,7 +4851,7 @@ EFFECT: ADD_BLADES(2) -> PLAYER
 
 **Cards:** PL!-bp4-019-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4868,7 +4868,7 @@ EFFECT: BOOST_SCORE(5) -> SELF
 
 **Cards:** PL!-bp4-020-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4888,7 +4888,7 @@ EFFECT: ADD_BLADES(1) -> TARGET_CENTER
 
 **Cards:** PL!-bp4-021-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4907,7 +4907,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!-bp4-022-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4923,7 +4923,7 @@ EFFECT: BOOST_SCORE(2) -> SELF
 
 **Cards:** PL!-bp4-023-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4939,7 +4939,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!-bp4-024-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4954,7 +4954,7 @@ EFFECT: ADD_BLADES(1) -> PLAYER {FILTER="GROUP_ID=0"}
 
 **Cards:** PL!N-bp4-001-R, PL!N-bp4-001-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4970,7 +4970,7 @@ EFFECT: ACTIVATE_ENERGY(1, MODE="WAIT") -> PLAYER
 
 **Cards:** PL!N-bp4-002-R, PL!N-bp4-002-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -4989,7 +4989,7 @@ EFFECT: CHOICE_MODE -> PLAYER
 
 **Cards:** PL!N-bp4-003-R, PL!N-bp4-003-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5006,7 +5006,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!N-bp4-004-R＋, PL!N-bp4-004-P, PL!N-bp4-004-P＋, PL!N-bp4-004-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5023,7 +5023,7 @@ EFFECT: SELECT_RECOVER_MEMBER(COUNT_VAL) {FILTER="GROUP_ID=2", ZONE="DISCARD"} -
 
 **Cards:** PL!N-bp4-005-R, PL!N-bp4-005-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5039,7 +5039,7 @@ EFFECT: TAP_OPPONENT(2) {FILTER="COST_LE_4"}
 
 **Cards:** PL!N-bp4-006-R, PL!N-bp4-006-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5059,7 +5059,7 @@ EFFECT: TAP_MEMBER(TARGET_PLAYED)
 
 **Cards:** PL!N-bp4-007-R＋, PL!N-bp4-007-P, PL!N-bp4-007-P＋, PL!N-bp4-007-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5081,7 +5081,7 @@ EFFECT: PLACE_ENERGY_WAIT(1) -> PLAYER; PLACE_ENERGY_WAIT(1) -> OPPONENT
 
 **Cards:** PL!N-bp4-008-R, PL!N-bp4-008-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5099,7 +5099,7 @@ EFFECT: CHOICE_MODE -> PLAYER
 
 **Cards:** PL!N-bp4-009-R, PL!N-bp4-009-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5116,7 +5116,7 @@ EFFECT: DRAW(2) -> PLAYER; MOVE_TO_DECK(1) {FROM="HAND", TO="DECK_TOP"}
 
 **Cards:** PL!N-bp4-010-R＋, PL!N-bp4-010-P, PL!N-bp4-010-P＋, PL!N-bp4-010-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5137,7 +5137,7 @@ EFFECT: ADD_HEARTS(1) -> SELF {HEART_TYPE=4, DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!N-bp4-011-R＋, PL!N-bp4-011-P, PL!N-bp4-011-P＋, PL!N-bp4-011-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5158,7 +5158,7 @@ EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="GROUP_ID=2"} -> CARD_HAND
 
 **Cards:** PL!N-bp4-012-R, PL!N-bp4-012-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5174,7 +5174,7 @@ EFFECT: BOOST_SCORE(1) -> PLAYER
 
 **Cards:** PL!N-bp4-018-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5190,7 +5190,7 @@ EFFECT: DRAW(1); DISCARD_HAND(1) (Once per turn)
 
 **Cards:** PL!N-bp4-021-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5205,7 +5205,7 @@ EFFECT: MOVE_TO_DECK(1) {FROM="DISCARD", TO="DECK_TOP"}
 
 **Cards:** PL!N-bp4-023-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5222,7 +5222,7 @@ EFFECT: DRAW(1); DISCARD_HAND(1)
 
 **Cards:** PL!N-bp4-025-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5242,7 +5242,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!N-bp4-026-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5262,7 +5262,7 @@ EFFECT: SELECT_MEMBER(1) {FILTER="GROUP_ID=2"} -> TARGET; ADD_BLADES(2) -> TARGE
 
 **Cards:** PL!N-bp4-027-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5278,7 +5278,7 @@ EFFECT: INCREASE_HEART_COST(3) {HEART_TYPE=0} -> SELF {PER_CARD="SUCCESS_LIVE", 
 
 **Cards:** PL!N-bp4-028-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5296,7 +5296,7 @@ EFFECT: BOOST_SCORE(2) -> SELF
 
 **Cards:** PL!N-bp4-029-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5314,7 +5314,7 @@ EFFECT: BOOST_SCORE(1) -> SELF; ADD_BLADES(1) -> PLAYER {FILTER="GROUP_ID=2", TA
 
 **Cards:** PL!N-bp4-030-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5332,7 +5332,7 @@ EFFECT: CHOICE_MODE (MIN=1) -> PLAYER
 
 **Cards:** PL!N-bp4-031-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5348,7 +5348,7 @@ EFFECT: DRAW(3); SELECT_HAND(3) -> DECK_TOP {ORDER="CHOICE"}
 
 **Cards:** PL!SP-bp4-001-R, PL!SP-bp4-001-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5364,7 +5364,7 @@ EFFECT: PLACE_ENERGY_WAIT(1) -> PLAYER
 
 **Cards:** PL!SP-bp4-002-R, PL!SP-bp4-002-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5381,7 +5381,7 @@ EFFECT: LOOK_AND_CHOOSE(4) {FILTER="SUM_HEART_TOTAL_GE=8, GROUP_ID=3, TYPE_LIVE"
 
 **Cards:** PL!SP-bp4-003-R, PL!SP-bp4-003-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5402,7 +5402,7 @@ EFFECT: ADD_BLADES(2) -> PLAYER
 
 **Cards:** PL!SP-bp4-004-R＋, PL!SP-bp4-004-P, PL!SP-bp4-004-P＋, PL!SP-bp4-004-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5422,7 +5422,7 @@ EFFECT: DRAW(2); PLAY_MEMBER_FROM_DISCARD(1) {FILTER="GROUP_ID=3, COST_LE_4"}
 
 **Cards:** PL!SP-bp4-005-R＋, PL!SP-bp4-005-P, PL!SP-bp4-005-P＋, PL!SP-bp4-005-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5442,7 +5442,7 @@ EFFECT: ADD_BLADES(3) -> SELF
 
 **Cards:** PL!SP-bp4-006-R, PL!SP-bp4-006-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5458,7 +5458,7 @@ EFFECT: SELECT_YELL(1) {FILTER="GROUP_ID=3, TYPE_LIVE"} -> CARD_HAND
 
 **Cards:** PL!SP-bp4-007-R, PL!SP-bp4-007-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5476,7 +5476,7 @@ EFFECT: RECOVER_LIVE(1) {FILTER="GROUP_ID=3, SCORE_LE_3", ZONE="DISCARD"} -> CAR
 
 **Cards:** PL!SP-bp4-008-R＋, PL!SP-bp4-008-P, PL!SP-bp4-008-P＋, PL!SP-bp4-008-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5499,7 +5499,7 @@ EFFECT: POSITION_CHANGE (Optional) -> SELF
 
 **Cards:** PL!SP-bp4-009-R, PL!SP-bp4-009-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5515,7 +5515,7 @@ EFFECT: ADD_BLADES(3) -> PLAYER
 
 **Cards:** PL!SP-bp4-010-R, PL!SP-bp4-010-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5531,7 +5531,7 @@ EFFECT: PLACE_ENERGY_WAIT(1) -> PLAYER
 
 **Cards:** PL!SP-bp4-011-R＋, PL!SP-bp4-011-P, PL!SP-bp4-011-P＋, PL!SP-bp4-011-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5548,7 +5548,7 @@ EFFECT: SELECT_MEMBER(1) {FILTER="OPPONENT, BASE_BLADES_LE_3"} -> TARGET; TAP_ME
 
 **Cards:** PL!SP-bp4-012-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5564,7 +5564,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=2} -> SELF
 
 **Cards:** PL!SP-bp4-013-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5579,7 +5579,7 @@ EFFECT: POSITION_CHANGE (Optional) -> SELF
 
 **Cards:** PL!SP-bp4-016-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5594,7 +5594,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=6, DURATION="UNTIL_LIVE_END"} -> SELF
 
 **Cards:** PL!SP-bp4-017-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5610,7 +5610,7 @@ EFFECT: ADD_BLADES(2) -> PLAYER
 
 **Cards:** PL!SP-bp4-018-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5626,7 +5626,7 @@ EFFECT: RECOVER_MEMBER(1) {FILTER="Liella!", FROM="DISCARD"} -> CARD_HAND
 
 **Cards:** PL!SP-bp4-020-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5642,7 +5642,7 @@ EFFECT: ADD_BLADES(2) -> PLAYER
 
 **Cards:** PL!SP-bp4-021-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5658,7 +5658,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=6} -> SELF
 
 **Cards:** PL!SP-bp4-022-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5675,7 +5675,7 @@ EFFECT: ADD_BLADES(1) -> PLAYER {PER_ENERGY_PAID=1}
 
 **Cards:** PL!SP-bp4-023-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5694,7 +5694,7 @@ EFFECT: TRANSFORM_YELL_BLADES(ALL) -> 6 {FILTER="NOT_BLADE_TYPE_6", DURATION="UN
 
 **Cards:** PL!SP-bp4-024-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5715,7 +5715,7 @@ EFFECT: SELECT_MEMBER(1) {AREA="LEFT_SIDE", FILTER="GROUP_ID=3, HAS_HEART_02_X3"
 
 **Cards:** PL!SP-bp4-025-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5735,7 +5735,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!SP-bp4-026-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5755,7 +5755,7 @@ EFFECT: DRAW(2); DISCARD_HAND(1)
 
 **Cards:** PL!SP-bp4-027-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5771,7 +5771,7 @@ EFFECT: FORMATION_CHANGE (Optional) -> PLAYER
 
 **Cards:** PL!SP-bp4-028-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5787,7 +5787,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** LL-bp4-001-R＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5808,7 +5808,7 @@ EFFECT: TAP_OPPONENT(99) -> OPPONENT {FILTER="COST_LE_REVEALED, BLADE_LE_3"}
 
 **Cards:** PL!N-pb1-001-R, PL!N-pb1-001-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5831,7 +5831,7 @@ EFFECT: ADD_BLADES(2) -> SELF
 
 **Cards:** PL!N-pb1-002-R, PL!N-pb1-002-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5850,7 +5850,7 @@ EFFECT: BOOST_SCORE(1) -> PLAYER
 
 **Cards:** PL!N-pb1-003-R, PL!N-pb1-003-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5867,7 +5867,7 @@ EFFECT: DRAW(1); SELECT_MEMBER(1) {TARGET="PLAYER", FILTER="GROUP_ID=2"} -> TARG
 
 **Cards:** PL!N-pb1-004-R, PL!N-pb1-004-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5890,7 +5890,7 @@ EFFECT: MOVE_TO_DISCARD {FROM="REVEALED"}
 
 **Cards:** PL!N-pb1-005-R, PL!N-pb1-005-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5906,7 +5906,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!N-pb1-006-R, PL!N-pb1-006-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5922,7 +5922,7 @@ EFFECT: ACTIVATE_ENERGY(1)
 
 **Cards:** PL!N-pb1-007-R, PL!N-pb1-007-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5939,7 +5939,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=0} -> SELF
 
 **Cards:** PL!N-pb1-008-R, PL!N-pb1-008-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5960,7 +5960,7 @@ EFFECT: SELECT_MODE(1) -> PLAYER
 
 **Cards:** PL!N-pb1-009-R, PL!N-pb1-009-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5978,7 +5978,7 @@ EFFECT: DRAW(1) -> PLAYER; ADD_HEARTS(3) {HEART_COLORS="3,5,6"}
 
 **Cards:** PL!N-pb1-010-R, PL!N-pb1-010-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -5997,7 +5997,7 @@ EFFECT: SELECT_MODE(1) -> PLAYER
 
 **Cards:** PL!N-pb1-011-R, PL!N-pb1-011-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6017,7 +6017,7 @@ EFFECT: RECOVER_LIVE(1) {FILTER="GROUP_ID=2"} -> CARD_HAND
 
 **Cards:** PL!N-pb1-012-R, PL!N-pb1-012-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6036,7 +6036,7 @@ EFFECT: RECOVER_MEMBER(1) {FILTER="GROUP_ID=2", ZONE="YELL_REVEALED"} -> CARD_HA
 
 **Cards:** PL!N-pb1-013-R, PL!N-pb1-013-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6052,7 +6052,7 @@ EFFECT: SELECT_MEMBER(1) {FILTER="NAME='上原歩夢', COST_LE_4", ZONE="HAND"} 
 
 **Cards:** PL!N-pb1-014-R, PL!N-pb1-014-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6068,7 +6068,7 @@ EFFECT: DRAW(2); DISCARD_HAND(1)
 
 **Cards:** PL!N-pb1-015-R, PL!N-pb1-015-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6084,7 +6084,7 @@ EFFECT: SELECT_MEMBER(1) {FILTER="NAME='桜坂しずく', COST_LE_4", ZONE="HAND
 
 **Cards:** PL!N-pb1-016-R, PL!N-pb1-016-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6099,7 +6099,7 @@ EFFECT: LOOK_AND_CHOOSE_REVEAL(2) {FILTER="NAME=朝香果林"} -> CARD_HAND, DIS
 
 **Cards:** PL!N-pb1-017-R, PL!N-pb1-017-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6115,7 +6115,7 @@ EFFECT: SELECT_MEMBER(1) {FILTER="NAME='宮下愛', COST_LE_4", ZONE="HAND"} -> 
 
 **Cards:** PL!N-pb1-018-R, PL!N-pb1-018-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6130,7 +6130,7 @@ EFFECT: LOOK_AND_CHOOSE_REVEAL(2) {FILTER="NAME=近江彼方"} -> CARD_HAND, DIS
 
 **Cards:** PL!N-pb1-019-R, PL!N-pb1-019-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6146,7 +6146,7 @@ EFFECT: DRAW(2) -> PLAYER; DISCARD_HAND(2) -> PLAYER
 
 **Cards:** PL!N-pb1-020-R, PL!N-pb1-020-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6162,7 +6162,7 @@ EFFECT: DRAW(2); DISCARD_HAND(2)
 
 **Cards:** PL!N-pb1-021-R, PL!N-pb1-021-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6177,7 +6177,7 @@ EFFECT: LOOK_AND_CHOOSE_REVEAL(2) {FILTER="NAME=天王寺璃奈"} -> CARD_HAND, 
 
 **Cards:** PL!N-pb1-022-R, PL!N-pb1-022-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6193,7 +6193,7 @@ EFFECT: DRAW(2) -> PLAYER; DISCARD_HAND(1) -> PLAYER
 
 **Cards:** PL!N-pb1-023-R, PL!N-pb1-023-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6209,7 +6209,7 @@ EFFECT: SELECT_MEMBER(1) {FILTER="NAME='ミア・テイラー', COST_LE_4", ZONE
 
 **Cards:** PL!N-pb1-024-R, PL!N-pb1-024-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6224,7 +6224,7 @@ EFFECT: LOOK_AND_CHOOSE_REVEAL(2) {FILTER="NAME=鐘嵐珠"} -> CARD_HAND, DISCAR
 
 **Cards:** PL!N-pb1-028-N, PL!N-pb1-035-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6240,7 +6240,7 @@ EFFECT: LOOK_AND_CHOOSE_REVEAL(2) -> CARD_HAND, DISCARD_REMAINDER
 
 **Cards:** PL!N-pb1-034-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6256,7 +6256,7 @@ EFFECT: TRANSFORM_HEARTS(ALL) -> HEART_TYPE_CHOICE {TARGET=SELF, DURATION="UNTIL
 
 **Cards:** PL!N-pb1-036-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6272,7 +6272,7 @@ EFFECT: TRANSFORM_HEARTS(ALL) -> HEART_TYPE_CHOICE {TARGET=SELF, DURATION="UNTIL
 
 **Cards:** PL!N-pb1-037-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6290,7 +6290,7 @@ EFFECT: BOOST_SCORE(2) -> SELF {REPLACE=TRUE}
 
 **Cards:** PL!N-pb1-038-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6306,7 +6306,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!N-pb1-039-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6322,7 +6322,7 @@ EFFECT: SELECT_MEMBER(1) {FILTER="GROUP_ID=2, HAS_HEART_PURPLE"} -> TARGET; ADD_
 
 **Cards:** PL!N-pb1-042-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6341,7 +6341,7 @@ EFFECT: REDUCE_HEART_REQ(3) -> SELF
 
 **Cards:** PL!SP-bp5-001-SEC, PL!SP-bp5-001-R＋, PL!SP-bp5-001-P, PL!SP-bp5-001-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6367,7 +6367,7 @@ EFFECT: ACTIVATE_ENERGY(1)
 
 **Cards:** PL!HS-bp5-007-AR, PL!HS-bp5-007-R, PL!HS-bp5-007-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6388,7 +6388,7 @@ EFFECT: ADD_BLADES(2) -> SELF
 
 **Cards:** PL!SP-bp5-020-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6408,7 +6408,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!S-bp5-009-P, PL!S-bp5-009-AR, PL!S-bp5-009-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6426,7 +6426,7 @@ EFFECT: ADD_BLADES(2) -> SELF {DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!N-bp5-002-R, PL!N-bp5-002-P, PL!N-bp5-002-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6444,7 +6444,7 @@ EFFECT: BOOST_SCORE(1) -> PLAYER
 
 **Cards:** PL!S-bp5-004-P, PL!S-bp5-004-R, PL!S-bp5-004-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6462,7 +6462,7 @@ EFFECT: SELECT_MODE(1) -> PLAYER
 
 **Cards:** PL!-bp5-004-R＋, PL!-bp5-004-P, PL!-bp5-004-SEC, PL!-bp5-004-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6482,7 +6482,7 @@ EFFECT: ADD_HEARTS(1) -> SELF {DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!-bp5-007-AR, PL!-bp5-007-R, PL!-bp5-007-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6498,7 +6498,7 @@ EFFECT: DISCARD_UNTIL(3) -> PLAYER_AND_OPPONENT; DRAW_UNTIL(3) -> PLAYER_AND_OPP
 
 **Cards:** PL!SP-bp5-009-R, PL!SP-bp5-009-P, PL!SP-bp5-009-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6517,7 +6517,7 @@ EFFECT: LOOP(5)
 
 **Cards:** PL!SP-bp5-024-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6533,7 +6533,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=CHOICE, DURATION="UNTIL_LIVE_END" } -> MEMBER 
 
 **Cards:** PL!HS-bp5-005-P, PL!HS-bp5-005-R, PL!HS-bp5-005-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6552,7 +6552,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=5, DURATION="UNTIL_LIVE_END"} -> SELF
 
 **Cards:** PL!-bp5-008-AR, PL!-bp5-008-R, PL!-bp5-008-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6568,7 +6568,7 @@ EFFECT: ADD_HEARTS(2) {HEART_TYPE=3} -> SELF
 
 **Cards:** PL!S-sd1-018-SD, PL!S-bp5-014-N, PL!S-sd1-017-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6583,7 +6583,7 @@ EFFECT: DRAW(1); MOVE_TO_DECK_BOTTOM(1)
 
 **Cards:** PL!N-bp5-023-N, PL!S-sd1-014-SD, PL!N-bp5-016-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6599,7 +6599,7 @@ EFFECT: DRAW(1); DISCARD_HAND(1) (Optional)
 
 **Cards:** PL!SP-bp5-005-SEC, PL!SP-bp5-005-R＋, PL!SP-bp5-005-P, PL!SP-bp5-005-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6620,7 +6620,7 @@ EFFECT: RECOVER_MEMBER(1) {FILTER="SELECTED_DISCARD"} -> CARD_HAND
 
 **Cards:** PL!-bp5-001-P, PL!-bp5-001-AR, PL!-bp5-001-SEC, PL!-bp5-001-R＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6637,7 +6637,7 @@ EFFECT: LOOK_DECK_DYNAMIC_SCORE(2) -> CARD_HAND, DISCARD_REMAINDER
 
 **Cards:** PL!S-bp5-111-R, PL!S-bp5-111-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6658,7 +6658,7 @@ EFFECT: SELECT_MEMBER(1) {FILTER="OPPONENT, BLADE_LE_2"} -> TARGET; TAP_MEMBER(1
 
 **Cards:** PL!S-bp5-001-SEC, PL!S-bp5-001-R＋, PL!S-bp5-001-P, PL!S-bp5-001-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6677,7 +6677,7 @@ EFFECT: REDUCE_COST(1) {FILTER="NOT_ABILITY"} -> PLAYER
 
 **Cards:** PL!S-bp5-006-R, PL!S-bp5-006-P, PL!S-bp5-006-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6693,7 +6693,7 @@ EFFECT: LOOK_DECK(5) {FILTER="GROUP_ID=1, COST_GE_9, TYPE_MEMBER"}; MOVE_TO_HAND
 
 **Cards:** PL!-bp5-006-AR, PL!-bp5-006-P, PL!-bp5-006-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6709,7 +6709,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!S-sd1-005-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6725,7 +6725,7 @@ EFFECT: RECOVER_LIVE(1) {FILTER="GROUP_ID=1"} -> CARD_HAND
 
 **Cards:** PL!N-PR-020-PR, PL!S-PR-037-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6741,7 +6741,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=5} -> SELF; ADD_BLADES(1) -> SELF
 
 **Cards:** PL!N-bp5-009-R, PL!N-bp5-009-P, PL!N-bp5-009-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6757,7 +6757,7 @@ EFFECT: LOOK_DECK(5) {FILTER="GROUP_ID=2, COST_GE_9, TYPE_MEMBER"}; MOVE_TO_HAND
 
 **Cards:** PL!N-bp5-005-R＋, PL!N-bp5-005-SEC, PL!N-bp5-005-AR, PL!N-bp5-005-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6775,7 +6775,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!SP-bp5-002-P, PL!SP-bp5-002-R＋, PL!SP-bp5-002-SEC, PL!SP-bp5-002-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6796,7 +6796,7 @@ EFFECT: ADD_BLADES(2) -> SELF {DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!S-sd1-002-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6813,7 +6813,7 @@ EFFECT: RECOVER_MEMBER(1) {FILTER="GROUP_ID=1"} -> CARD_HAND
 
 **Cards:** PL!N-bp5-006-P, PL!N-bp5-006-AR, PL!N-bp5-006-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6833,7 +6833,7 @@ EFFECT: TAP_SELF
 
 **Cards:** PL!N-bp5-012-P, PL!N-bp5-012-R＋, PL!N-bp5-012-SEC, PL!N-bp5-012-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6853,7 +6853,7 @@ EFFECT: PLACE_ENERGY_WAIT(COUNT_UNDER_SELF + 1) -> PLAYER
 
 **Cards:** PL!HS-bp1-002-RM
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6869,7 +6869,7 @@ EFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER="GROUP_ID=4, COST_LE_15"} -> TARGET_
 
 **Cards:** PL!N-bp5-008-AR, PL!N-bp5-008-P, PL!N-bp5-008-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6886,7 +6886,7 @@ EFFECT: ACTIVATE_ENERGY(2)
 
 **Cards:** PL!SP-bp5-111-R, PL!SP-bp5-111-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6908,7 +6908,7 @@ EFFECT: RECOVER_LIVE(1) -> CARD_HAND
 
 **Cards:** PL!N-bp5-011-AR, PL!N-bp5-011-P, PL!N-bp5-011-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6926,7 +6926,7 @@ EFFECT: SELECT_MODE(1) -> PLAYER
 
 **Cards:** PL!HS-bp5-002-SEC, PL!HS-bp5-002-AR, PL!HS-bp5-002-P, PL!HS-bp5-002-R＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6946,7 +6946,7 @@ EFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER="COST_LE_2"} -> EMPTY_SLOT
 
 **Cards:** PL!-bp5-002-AR, PL!-bp5-002-P, PL!-bp5-002-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6963,7 +6963,7 @@ EFFECT: LOOK_DECK(5) {FILTER="GROUP_ID=0, COST_GE_9, TYPE_MEMBER"}; MOVE_TO_HAND
 
 **Cards:** PL!SP-bp5-003-R＋, PL!SP-bp5-003-P, PL!SP-bp5-003-SEC, PL!SP-bp5-003-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6981,7 +6981,7 @@ EFFECT: ACTIVATE_MEMBER(ALL) {FILTER="GROUP_ID=3"}; ACTIVATE_ENERGY(ALL)
 
 **Cards:** PL!N-bp5-010-R, PL!N-bp5-010-AR, PL!N-bp5-010-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -6999,7 +6999,7 @@ EFFECT: BOOST_SCORE(-1) -> SELF {MIN_SCORE=0}
 
 **Cards:** PL!SP-bp5-007-AR, PL!SP-bp5-007-P, PL!SP-bp5-007-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7015,7 +7015,7 @@ EFFECT: LOOK_DECK(5); SELECT_FROM_LOOKED(ANY, target_count=3) {FILTER="UNIQUE_GR
 
 **Cards:** PL!S-sd1-001-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7031,7 +7031,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=2, DURATION="UNTIL_LIVE_END"} -> SELF {PER_CAR
 
 **Cards:** PL!HS-bp5-021-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7051,7 +7051,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!HS-bp5-001-P, PL!HS-bp5-001-R＋, PL!HS-bp5-001-AR, PL!HS-bp5-001-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7072,7 +7072,7 @@ EFFECT: RECOVER_LIVE(1) {FILTER="SAME_NAME_AS_REVEALED"} -> CARD_HAND
 
 **Cards:** PL!SP-bp5-004-SEC, PL!SP-bp5-004-R＋, PL!SP-bp5-004-P, PL!SP-bp5-004-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7088,7 +7088,7 @@ EFFECT: DRAW(1); ADD_HEARTS(1) {HEART_TYPE=2, DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!-bp5-009-R, PL!-bp5-009-P, PL!-bp5-009-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7104,7 +7104,7 @@ EFFECT: RECOVER_LIVE(1) {FILTER="HEARTS_GE_3, HEART_TYPE=6"} -> CARD_HAND
 
 **Cards:** PL!N-bp5-013-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7121,7 +7121,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=1, DURATION="UNTIL_LIVE_END"} -> SELF
 
 **Cards:** PL!HS-sd1-005-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7141,7 +7141,7 @@ EFFECT: ADD_BLADES(1) -> SELF
 
 **Cards:** PL!S-sd1-013-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7157,7 +7157,7 @@ EFFECT: MOVE_TO_DISCARD(5) {FROM="DECK_TOP"}
 
 **Cards:** PL!N-bp5-007-AR, PL!N-bp5-007-P, PL!N-bp5-007-SEC, PL!N-bp5-007-R＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7177,7 +7177,7 @@ EFFECT: DRAW(2); DISCARD_HAND(1)
 
 **Cards:** PL!SP-bp5-006-R, PL!SP-bp5-006-AR, PL!SP-bp5-006-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7194,7 +7194,7 @@ EFFECT: POSITION_CHANGE(SELF)
 
 **Cards:** PL!HS-bp5-003-R＋, PL!HS-bp5-003-P, PL!HS-bp5-003-AR, PL!HS-bp5-003-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7213,7 +7213,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=0} -> MEMBER {FILTER="SAME_GROUP_AS_DISCARDED"
 
 **Cards:** PL!SP-bp5-017-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7229,7 +7229,7 @@ EFFECT: REDUCE_COST(2) -> SELF
 
 **Cards:** PL!N-bp5-001-P, PL!N-bp5-001-R＋, PL!N-bp5-001-AR, PL!N-bp5-001-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7250,7 +7250,7 @@ EFFECT: GRANT_ABILITY(SELF, "TRIGGER: CONSTANT\nEFFECT: BOOST_SCORE(1) -> PLAYER
 
 **Cards:** PL!S-bp5-222-R, PL!S-bp5-222-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7270,7 +7270,7 @@ EFFECT: ACTIVATE_ENERGY(2)
 
 **Cards:** PL!N-PR-021-PR, PL!SP-PR-016-PR, PL!HS-PR-027-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7286,7 +7286,7 @@ EFFECT: SELECT_YELL(1) {FILTER="(TYPE_MEMBER, COST_LE_2) OR (TYPE_LIVE, SCORE_LE
 
 **Cards:** PL!S-bp5-008-R, PL!S-bp5-008-P, PL!S-bp5-008-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7302,7 +7302,7 @@ EFFECT: BOOST_SCORE(1) -> PLAYER
 
 **Cards:** PL!HS-bp5-006-R, PL!HS-bp5-006-AR, PL!HS-bp5-006-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7320,7 +7320,7 @@ EFFECT: ADD_HEARTS(2) {HEART_TYPE=1, DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!-bp5-024-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7338,7 +7338,7 @@ EFFECT: SELECT_MODE(1) -> PLAYER
 
 **Cards:** PL!S-bp5-005-AR, PL!S-bp5-005-R＋, PL!S-bp5-005-P, PL!S-bp5-005-SEC
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7356,7 +7356,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=CHOICE} -> MEMBER {FILTER="NOT_GROUP_AQOURS, P
 
 **Cards:** PL!HS-sd1-020-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7375,7 +7375,7 @@ EFFECT: SELECT_MEMBER(1) -> TARGET; ADD_BLADES(1) -> TARGET {PER_CARD="DISCARDED
 
 **Cards:** PL!S-bp5-007-P, PL!S-bp5-007-AR, PL!S-bp5-007-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7391,7 +7391,7 @@ EFFECT: LOOK_DECK(4) {FILTER="TYPE_MEMBER, HEARTS_BLUE_GE_2"}; MOVE_TO_HAND(1) (
 
 **Cards:** PL!-bp5-333-R, PL!-bp5-333-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7412,7 +7412,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=5} -> SELF
 
 **Cards:** PL!SP-bp5-222-R, PL!SP-bp5-222-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7432,7 +7432,7 @@ EFFECT: PLACE_ENERGY_WAIT(1) -> PLAYER
 
 **Cards:** PL!S-bp5-003-P, PL!S-bp5-003-R, PL!S-bp5-003-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7448,7 +7448,7 @@ EFFECT: RECOVER_LIVE(COUNT_DISCARDED) {FILTER="GROUP_ID=1"} -> CARD_HAND
 
 **Cards:** PL!-bp5-222-R, PL!-bp5-222-P＋
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7466,7 +7466,7 @@ EFFECT: LOOK_DECK(3); MOVE_TO_HAND(1); DISCARD_REMAINDER
 
 **Cards:** PL!HS-bp5-022-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7485,7 +7485,7 @@ EFFECT: SELECT_MODE(1) -> PLAYER
 
 **Cards:** PL!S-bp5-016-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7501,7 +7501,7 @@ EFFECT: ADD_BLADES(2) -> SELF
 
 **Cards:** PL!S-bp5-010-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7517,7 +7517,7 @@ EFFECT: NEXT_OPPONENT_LIVE_START_MOD {HEART_REQ_INC(ALL, 0)}
 
 **Cards:** PL!SP-bp5-013-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7533,7 +7533,7 @@ EFFECT: LOOK_DECK(5) {FILTER="UNIT_SUNNY_PASSION OR (GROUP_ID=3, HAS_BLADE_HEART
 
 **Cards:** PL!SP-bp5-021-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7550,7 +7550,7 @@ EFFECT: PLACE_ENERGY_WAIT(1) -> PLAYER
 
 **Cards:** PL!-bp5-010-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7567,7 +7567,7 @@ EFFECT: MOVE_TO_DISCARD(3) {FROM="DECK_TOP"}; RECOVER_MEMBER(1) {FILTER="GROUP_A
 
 **Cards:** PL!S-bp5-022-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7586,7 +7586,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!SP-bp5-026-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7603,7 +7603,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** LL-bp5-002-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:** *[No pseudocode defined]*
 
@@ -7614,7 +7614,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!HS-bp5-004-AR, PL!HS-bp5-004-R, PL!HS-bp5-004-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7630,7 +7630,7 @@ EFFECT: ADD_BLADES(SELF, MULTIPLIER)
 
 **Cards:** PL!S-bp5-013-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7645,7 +7645,7 @@ EFFECT: DRAW(1); DISCARD_HAND(1)
 
 **Cards:** PL!S-bp5-019-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:** *[No pseudocode defined]*
 
@@ -7657,7 +7657,7 @@ EFFECT: DRAW(1); DISCARD_HAND(1)
 
 **Cards:** PL!-bp5-003-SEC, PL!-bp5-003-R＋, PL!-bp5-003-P, PL!-bp5-003-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7680,7 +7680,7 @@ EFFECT: RECOVER_LIVE(1) -> CARD_HAND
 
 **Cards:** PL!S-bp5-015-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7695,7 +7695,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!SP-bp5-010-AR, PL!SP-bp5-010-P, PL!SP-bp5-010-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7710,7 +7710,7 @@ EFFECT: POSITION_CHANGE_ALL {FILTER="AREA=CENTER"}
 
 **Cards:** PL!HS-bp5-013-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7725,7 +7725,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!S-bp5-011-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:** *[No pseudocode defined]*
 
@@ -7738,7 +7738,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!SP-bp5-011-R, PL!SP-bp5-011-AR, PL!SP-bp5-011-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7762,7 +7762,7 @@ EFFECT: ADD_HEARTS(3) {HEART_TYPE=5}
 
 **Cards:** PL!HS-sd1-018-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7778,7 +7778,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!N-bp5-028-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7794,7 +7794,7 @@ EFFECT: BOOST_SCORE(2) -> SELF; OVERRIDE_HEART_REQ {HEARTS=[2, 2, 2, 2, 2, 2]} -
 
 **Cards:** PL!SP-bp5-008-AR, PL!SP-bp5-008-P, PL!SP-bp5-008-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7810,7 +7810,7 @@ EFFECT: LOOK_DECK(5) {FILTER="GROUP_ID=3, COST_GE_9, TYPE_MEMBER"}; MOVE_TO_HAND
 
 **Cards:** PL!S-bp5-017-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7826,7 +7826,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=5} -> SELF
 
 **Cards:** PL!-bp5-005-P, PL!-bp5-005-AR, PL!-bp5-005-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7843,7 +7843,7 @@ EFFECT: PLACE_ENERGY_WAIT(1) {ACTIVE=TRUE} -> PLAYER
 
 **Cards:** PL!N-bp5-026-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7863,7 +7863,7 @@ EFFECT: RECOVER_LIVE(1) {FILTER="GROUP_ID=2"} -> CARD_HAND
 
 **Cards:** PL!S-sd1-019-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7878,7 +7878,7 @@ EFFECT: SELECT_YELL(1) {FILTER="GROUP_ID=1, TYPE_LIVE"} -> CARD_HAND
 
 **Cards:** PL!HS-bp5-008-P, PL!HS-bp5-008-AR, PL!HS-bp5-008-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7894,7 +7894,7 @@ EFFECT: LOOK_DECK(5) {FILTER="GROUP_ID=4, COST_GE_9, TYPE_MEMBER"}; MOVE_TO_HAND
 
 **Cards:** PL!-bp5-014-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7910,7 +7910,7 @@ EFFECT: LOOK_DECK(4); MOVE_TO_HAND(1) {FILTER="TYPE_MEMBER, HEART_TYPE_ANY=[5,6]
 
 **Cards:** PL!N-bp5-021-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7926,7 +7926,7 @@ EFFECT: MOVE_TO_DECK_TOP(1) {FILTER="TYPE_LIVE, FROM='DISCARD'", POS=4} (Optiona
 
 **Cards:** PL!SP-bp5-014-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7942,7 +7942,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!N-bp5-003-AR, PL!N-bp5-003-P, PL!N-bp5-003-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7959,7 +7959,7 @@ EFFECT: RECOVER_LIVE(1) {FILTER="SELECTED_DISCARD"} -> CARD_HAND
 
 **Cards:** PL!S-sd1-006-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7975,7 +7975,7 @@ EFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER="GROUP_ID=1, COST_LE_2" -> EMPTY_SLO
 
 **Cards:** PL!-PR-012-PR, PL!S-PR-038-PR, PL!SP-PR-017-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -7991,7 +7991,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!HS-bp5-020-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8007,7 +8007,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!SP-bp5-023-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8024,7 +8024,7 @@ EFFECT: BOOST_SCORE(2) -> SELF
 
 **Cards:** PL!HS-sd1-004-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8044,7 +8044,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=4} -> SELF
 
 **Cards:** PL!SP-PR-018-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8061,7 +8061,7 @@ EFFECT: PLACE_ENERGY_WAIT(1) -> PLAYER
 
 **Cards:** PL!-bp5-111-P＋, PL!-bp5-111-R
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8082,7 +8082,7 @@ EFFECT: RECOVER_LIVE(1) -> CARD_HAND
 
 **Cards:** PL!HS-bp5-019-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8097,7 +8097,7 @@ EFFECT: REDUCE_HEART_REQ(2) {HEART_TYPE=4, PER_CARD="SUCCESS_LIVE", FILTER="GROU
 
 **Cards:** PL!HS-sd1-014-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8113,7 +8113,7 @@ EFFECT: RECOVER_MEMBER(1) {FILTER="GROUP_ID=4"} -> CARD_HAND
 
 **Cards:** PL!N-bp5-004-R, PL!N-bp5-004-P, PL!N-bp5-004-AR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8130,7 +8130,7 @@ EFFECT: TAP_OPPONENT(1) {FILTER="BLADE=4"} -> OPPONENT
 
 **Cards:** PL!S-sd1-003-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8145,7 +8145,7 @@ EFFECT: LOOK_DECK(5) {FILTER="GROUP_ID=1, TYPE_LIVE"}; MOVE_TO_HAND(1) (Optional
 
 **Cards:** PL!N-bp5-027-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8161,7 +8161,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!HS-sd1-013-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8178,7 +8178,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=5} -> SELF
 
 **Cards:** PL!N-bp5-019-N, PL!N-bp5-022-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8195,7 +8195,7 @@ EFFECT: RECOVER_LIVE(1) {FILTER="GROUP_ID=2"} -> CARD_HAND
 
 **Cards:** PL!N-bp5-030-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8214,7 +8214,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!S-bp5-002-SEC, PL!S-bp5-002-AR, PL!S-bp5-002-R＋, PL!S-bp5-002-P
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8230,7 +8230,7 @@ EFFECT: TAP_OPPONENT(ALL) {FILTER="BLADE_LE_3"}
 
 **Cards:** PL!-bp5-021-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8250,7 +8250,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!HS-sd1-017-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8266,7 +8266,7 @@ EFFECT: DRAW(1); DISCARD_HAND(1) -> PLAYER
 
 **Cards:** PL!N-bp5-029-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8284,7 +8284,7 @@ EFFECT: DISCARD_REMAINDER
 
 **Cards:** PL!N-bp5-015-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8301,7 +8301,7 @@ EFFECT: ADD_BLADES(2) -> SELF {DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!HS-sd1-008-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8320,7 +8320,7 @@ EFFECT: HEART_SELECT(1) {CHOICES=[1, 4, 5, 6]} -> CHOICE; SELECT_MEMBER(1) {FILT
 
 **Cards:** PL!SP-bp5-027-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8337,7 +8337,7 @@ EFFECT: DRAW(1) -> OPPONENT
 
 **Cards:** PL!HS-bp5-018-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8356,7 +8356,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!SP-bp5-025-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8372,7 +8372,7 @@ EFFECT: BOOST_SCORE(1) {PER_ENERGY=4} -> SELF
 
 **Cards:** LL-bp5-001-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8389,7 +8389,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!HS-sd1-006-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8409,7 +8409,7 @@ EFFECT: ADD_BLADES(2) -> SELF
 
 **Cards:** PL!S-sd1-007-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8425,7 +8425,7 @@ EFFECT: RECOVER_LIVE(1) {FILTER="GROUP_ID=1, HAS_SCORE"} -> CARD_HAND
 
 **Cards:** PL!HS-sd1-002-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8443,7 +8443,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=5} -> SELF; ADD_BLADES(1) -> SELF
 
 **Cards:** PL!HS-sd1-003-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8460,7 +8460,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=1} -> TARGET; ADD_BLADES(1) -> TARGET
 
 **Cards:** PL!HS-bp5-011-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8475,7 +8475,7 @@ EFFECT: DRAW(1)
 
 **Cards:** PL!-bp5-013-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8490,7 +8490,7 @@ EFFECT: TAP_OPPONENT(1) {FILTER="COST_LE_4"}
 
 **Cards:** PL!S-bp5-020-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8506,7 +8506,7 @@ EFFECT: CONSUME_EXTRA_HEARTS(ALL); BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!S-sd1-020-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8522,7 +8522,7 @@ EFFECT: DRAW(1) {PER_CARD="STAGE", FILTER="GROUP_ID=1"}; DISCARD_HAND(1) {PER_CA
 
 **Cards:** PL!HS-sd1-001-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8538,7 +8538,7 @@ EFFECT: ACTIVATE_ENERGY(2)
 
 **Cards:** PL!HS-bp5-017-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8555,7 +8555,7 @@ EFFECT: BOOST_SCORE(1) -> SELF
 
 **Cards:** PL!HS-PR-029-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8571,7 +8571,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=1} -> SELF
 
 **Cards:** PL!SP-bp5-015-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8586,7 +8586,7 @@ EFFECT: ADD_BLADES(2) -> SELF {DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!-bp5-020-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8602,7 +8602,7 @@ EFFECT: REDUCE_HEART_REQ(1) {HEART_TYPE=0, SCALE="0.5_PER_HEART_03_OF_CENTER", M
 
 **Cards:** PL!HS-bp5-014-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8617,7 +8617,7 @@ EFFECT: ADD_BLADES(1) -> SELF {DURATION="UNTIL_LIVE_END"}
 
 **Cards:** PL!-bp5-011-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8634,7 +8634,7 @@ EFFECT: ADD_HEARTS(SUCCESS_LIVE_COUNT) {HEART_TYPE=CHOICE, DURATION="UNTIL_LIVE_
 
 **Cards:** PL!HS-bp5-016-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8654,7 +8654,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=6}
 
 **Cards:** PL!S-bp5-023-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8670,7 +8670,7 @@ EFFECT: MOVE_TO_DECK(4) {FROM="DISCARD", FILTER="GROUP_ID=1 OR NAME=SaintSnow", 
 
 **Cards:** PL!-bp5-022-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8686,7 +8686,7 @@ EFFECT: INCREASE_HEART_REQ(1) {HEART_TYPE="01/03/06/00", PER_CARD="SUCCESS_LIVE"
 
 **Cards:** PL!HS-PR-028-PR
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8702,7 +8702,7 @@ EFFECT: DRAW(1) -> PLAYER
 
 **Cards:** PL!SP-bp5-016-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8718,7 +8718,7 @@ EFFECT: ADD_HEARTS(2) {HEART_TYPE=6}
 
 **Cards:** PL!S-sd1-022-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8733,7 +8733,7 @@ EFFECT: ADD_BLADES(1) -> PLAYER {FILTER="GROUP_ID=1", AREA="STAGE"}
 
 **Cards:** PL!S-sd1-004-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8748,7 +8748,7 @@ EFFECT: DRAW(1) (Optional); MOVE_TO_DECK(2) {FROM="HAND", TO="DECK_TOP"}
 
 **Cards:** PL!S-sd1-009-SD
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8764,7 +8764,7 @@ EFFECT: MOVE_TO_DECK(1) {FROM="REVEALED", TO="DECK_TOP_OR_BOTTOM"}; ADD_BLADES(1
 
 **Cards:** PL!SP-bp5-012-N
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```
@@ -8780,7 +8780,7 @@ EFFECT: ADD_HEARTS(1) {HEART_TYPE=3} -> SELF
 
 **Cards:** PL!-bp5-023-L
 
-**Known Rust Tests:** *None found* 
+**Known Rust Tests:** *None found*
 
 **Pseudocode:**
 ```

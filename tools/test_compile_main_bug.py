@@ -1,7 +1,8 @@
-import sys
 import json
-sys.path.append('.')
-from compiler.main import compile_cards, _consolidated_abilities, _v2_parser
+import sys
+
+sys.path.append(".")
+from compiler.main import _consolidated_abilities, _v2_parser
 
 # Overwrite sys.stdout to catch print statements
 with open("data/cards.json", "r", encoding="utf-8") as f:
@@ -30,6 +31,7 @@ for idx, ab in enumerate(abilities):
     try:
         bytecode = ab.compile()
         print(f"  Bytecode: {bytecode}")
-    except Exception as e:
+    except Exception:
         import traceback
+
         traceback.print_exc()

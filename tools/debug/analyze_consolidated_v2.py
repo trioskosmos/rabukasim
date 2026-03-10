@@ -6,7 +6,7 @@ import re
 from collections import defaultdict
 
 # Load consolidated abilities
-with open('data/consolidated_abilities.json', 'r', encoding='utf-8') as f:
+with open("data/consolidated_abilities.json", "r", encoding="utf-8") as f:
     consolidated = json.load(f)
 
 # Collect all unique pseudocode patterns
@@ -18,29 +18,30 @@ triggers = set()
 for ability_text, pseudo in consolidated.items():
     if not pseudo:
         continue
-    lines = pseudo.split('\n')
+    lines = pseudo.split("\n")
     for line in lines:
         line = line.strip()
-        if line.startswith('EFFECT:'):
+        if line.startswith("EFFECT:"):
             effect_part = line[7:].strip()
-            match = re.match(r'(\w+)', effect_part)
+            match = re.match(r"(\w+)", effect_part)
             if match:
                 effects.add(match.group(1))
-        elif line.startswith('CONDITION:'):
+        elif line.startswith("CONDITION:"):
             cond_part = line[10:].strip()
-            match = re.match(r'(\w+)', cond_part)
+            match = re.match(r"(\w+)", cond_part)
             if match:
                 conditions.add(match.group(1))
-        elif line.startswith('TRIGGER:'):
+        elif line.startswith("TRIGGER:"):
             trig_part = line[8:].strip()
-            match = re.match(r'(\w+)', trig_part)
+            match = re.match(r"(\w+)", trig_part)
             if match:
                 triggers.add(match.group(1))
 
 # Now load the parser aliases
 import sys
-sys.path.insert(0, 'compiler')
-from parser_v2 import EFFECT_ALIASES, EFFECT_ALIASES_WITH_PARAMS, CONDITION_ALIASES, TRIGGER_ALIASES
+
+sys.path.insert(0, "compiler")
+from parser_v2 import CONDITION_ALIASES, EFFECT_ALIASES, EFFECT_ALIASES_WITH_PARAMS, TRIGGER_ALIASES
 
 # Build a full mapping of aliases to canonical names
 all_effect_aliases = {}
@@ -68,8 +69,8 @@ from patterns.effects import EFFECT_PATTERNS
 
 parser_effects = set()
 for p in EFFECT_PATTERNS:
-    if hasattr(p, 'output_type') and p.output_type:
-        match = re.search(r'EffectType\.(\w+)', str(p.output_type))
+    if hasattr(p, "output_type") and p.output_type:
+        match = re.search(r"EffectType\.(\w+)", str(p.output_type))
         if match:
             parser_effects.add(match.group(1))
 
@@ -83,8 +84,8 @@ from patterns.conditions import CONDITION_PATTERNS
 
 parser_conditions = set()
 for p in CONDITION_PATTERNS:
-    if hasattr(p, 'output_type') and p.output_type:
-        match = re.search(r'ConditionType\.(\w+)', str(p.output_type))
+    if hasattr(p, "output_type") and p.output_type:
+        match = re.search(r"ConditionType\.(\w+)", str(p.output_type))
         if match:
             parser_conditions.add(match.group(1))
 
@@ -98,8 +99,8 @@ from patterns.triggers import TRIGGER_PATTERNS
 
 parser_triggers = set()
 for p in TRIGGER_PATTERNS:
-    if hasattr(p, 'output_type') and p.output_type:
-        match = re.search(r'TriggerType\.(\w+)', str(p.output_type))
+    if hasattr(p, "output_type") and p.output_type:
+        match = re.search(r"TriggerType\.(\w+)", str(p.output_type))
         if match:
             parser_triggers.add(match.group(1))
 
@@ -142,14 +143,12 @@ print("=" * 60)
 print("\n--- LIKELY ALIASES/EDGE CASES (probably don't need new opcodes) ---")
 # These are likely aliases that weren't caught or are edge cases
 edge_case_effects = [
-    e for e in missing_effects 
-    if 'SELECT' in e or 'CHOICE' in e or 'COUNT' in e or e in ['IF', 'LOOP', 'CONDITION']
+    e for e in missing_effects if "SELECT" in e or "CHOICE" in e or "COUNT" in e or e in ["IF", "LOOP", "CONDITION"]
 ]
 print(f"Potential edge case effects ({len(edge_case_effects)}): {sorted(edge_case_effects)}")
 
 edge_case_conditions = [
-    c for c in missing_conditions 
-    if 'COUNT' in c or 'SUM' in c or c in ['FILTER', 'OR', 'ZONE_EQ', 'AREA', 'AREA_IN']
+    c for c in missing_conditions if "COUNT" in c or "SUM" in c or c in ["FILTER", "OR", "ZONE_EQ", "AREA", "AREA_IN"]
 ]
 print(f"Potential edge case conditions ({len(edge_case_conditions)}): {sorted(edge_case_conditions)}")
 
@@ -176,26 +175,26 @@ trigger_usage = defaultdict(int)
 for ability_text, pseudo in consolidated.items():
     if not pseudo:
         continue
-    lines = pseudo.split('\n')
+    lines = pseudo.split("\n")
     for line in lines:
         line = line.strip()
-        if line.startswith('EFFECT:'):
+        if line.startswith("EFFECT:"):
             effect_part = line[7:].strip()
-            match = re.match(r'(\w+)', effect_part)
+            match = re.match(r"(\w+)", effect_part)
             if match:
                 e = match.group(1)
                 if e in real_gap_effects:
                     effect_usage[e] += 1
-        elif line.startswith('CONDITION:'):
+        elif line.startswith("CONDITION:"):
             cond_part = line[10:].strip()
-            match = re.match(r'(\w+)', cond_part)
+            match = re.match(r"(\w+)", cond_part)
             if match:
                 c = match.group(1)
                 if c in real_gap_conditions:
                     condition_usage[c] += 1
-        elif line.startswith('TRIGGER:'):
+        elif line.startswith("TRIGGER:"):
             trig_part = line[8:].strip()
-            match = re.match(r'(\w+)', trig_part)
+            match = re.match(r"(\w+)", trig_part)
             if match:
                 t = match.group(1)
                 if t in missing_triggers:

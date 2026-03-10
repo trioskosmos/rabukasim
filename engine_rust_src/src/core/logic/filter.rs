@@ -262,7 +262,7 @@ impl CardFilter {
                     0
                 }
             };
-            
+
             let threshold = if self.compare_accumulated {
                 ctx.v_accumulated as u8
             } else {
@@ -371,7 +371,7 @@ impl CardFilter {
             if state.players[p_idx].revealed_cards.is_empty() {
                 return false;
             }
-            
+
             let name = if let Some(m) = db.get_member(cid) {
                 m.name.as_str()
             } else if let Some(l) = db.get_live(cid) {

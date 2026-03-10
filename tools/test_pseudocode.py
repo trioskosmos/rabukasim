@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+
 os.environ["PYTHONUTF8"] = "1"  # Force UTF-8 on Windows before any I/O
 """Quick pseudocode → bytecode tester.
 
@@ -65,6 +66,7 @@ def test_one_pseudocode(pseudocode: str, label: str = "", metadata: str = "", pa
 
     # GRANT_ABILITY flattening (same as compiler/main.py)
     from engine.models.ability import EffectType
+
     extra_abilities = []
     for ab in abilities:
         for eff in ab.effects:
@@ -135,9 +137,9 @@ def format_result(result: dict, verbose: bool = True) -> str:
     lines = []
     status = "✅" if result["ok"] else "❌"
     label = result["label"] or "Direct Input"
-    lines.append(f"\n{'='*60}")
+    lines.append(f"\n{'=' * 60}")
     lines.append(f"{status} {label}")
-    lines.append(f"{'='*60}")
+    lines.append(f"{'=' * 60}")
 
     if result["errors"]:
         for err in result["errors"]:
@@ -176,7 +178,7 @@ def format_result(result: dict, verbose: bool = True) -> str:
             legend_idx = decoded.find("\n--- BYTECODE LEGEND ---")
             if legend_idx >= 0:
                 decoded = decoded[:legend_idx].rstrip()
-            lines.append(f"    Decoded:")
+            lines.append("    Decoded:")
             for dl in decoded.split("\n"):
                 lines.append(f"      {dl}")
 
@@ -206,12 +208,12 @@ def find_by_card_no(card_no: str, consolidated: dict) -> tuple:
 def dump_reference():
     """Dump a cheat sheet of all available keywords and aliases."""
     import compiler.parser_v2 as p2
-    from engine.models.ability import TriggerType, EffectType, ConditionType, AbilityCostType
+    from engine.models.ability import AbilityCostType, ConditionType, EffectType, TriggerType
 
     lines = []
-    lines.append("="*60)
+    lines.append("=" * 60)
     lines.append(" PSEUDOCODE CHEAT SHEET ")
-    lines.append("="*60)
+    lines.append("=" * 60)
 
     lines.append("\n--- BASE TRIGGERS ---")
     vals = [t.name for t in TriggerType if t.name != "NONE"]
@@ -240,7 +242,7 @@ def dump_reference():
     lines.append("\n--- CONDITION ALIASES ---")
     for alias, (target, params) in sorted(p2.CONDITION_ALIASES.items()):
         lines.append(f"  {alias:<25} -> {target} {params}")
-        
+
     lines.append("\n--- KEYWORD CONDITIONS ---")
     for alias, kw in sorted(p2.KEYWORD_CONDITIONS.items()):
         lines.append(f"  {alias:<25} -> HAS_KEYWORD (key={kw})")
@@ -256,42 +258,55 @@ def fetch_card_metadata(card_no: str) -> str:
     """Dynamically pull metadata, QA, and tests similar to card_finder."""
     try:
         import tools.card_finder as cf
+
         cards_raw = cf.load_json("data/cards.json") or {}
         cards_compiled = cf.load_json("data/cards_compiled.json") or {}
         qa_data = cf.load_json("data/qa_data.json") or []
-        
+
         query = cf.extract_card_no(card_no)
         raw, compiled, cid = cf.find_card_by_no(query, cards_raw, cards_compiled)
         if not raw and not compiled and query.isdigit():
             compiled, cid = cf.find_card_by_id(query, cards_compiled)
             if compiled:
                 raw = cards_raw.get(compiled.get("card_no"))
-                
+
         lines = []
         if raw:
             lines.append(f"  Name:    {raw.get('name')}")
             lines.append(f"  JP Text: {raw.get('ability').strip()}")
         else:
-            lines.append(f"  Name:    Unknown (Not found in data/cards.json)")
-            
+            lines.append("  Name:    Unknown (Not found in data/cards.json)")
+
         real_card_no = compiled.get("card_no") if compiled else raw.get("card_no") if raw else query
-        
+
         if real_card_no:
             # QA Data
-            related_qas = [qa for qa in qa_data for rc in qa.get("related_cards", []) if rc.get("card_no") == real_card_no]
+            related_qas = [
+                qa for qa in qa_data for rc in qa.get("related_cards", []) if rc.get("card_no") == real_card_no
+            ]
             # Shared Cards
             shared_cards = []
             baseline_ability = raw.get("ability", "").strip() if raw else ""
             if baseline_ability:
-                shared_cards = [no for no, c in cards_raw.items() if no != real_card_no and c.get("ability", "").strip() == baseline_ability]
+                shared_cards = [
+                    no
+                    for no, c in cards_raw.items()
+                    if no != real_card_no and c.get("ability", "").strip() == baseline_ability
+                ]
             # Rust Tests
             rust_tests = []
-            search_terms = set([real_card_no, real_card_no.replace("＋", "+")] + [q.get("id") for q in related_qas] + [sc for sc in shared_cards] + [sc.replace("＋", "+") for sc in shared_cards])
+            search_terms = set(
+                [real_card_no, real_card_no.replace("＋", "+")]
+                + [q.get("id") for q in related_qas]
+                + [sc for sc in shared_cards]
+                + [sc.replace("＋", "+") for sc in shared_cards]
+            )
             rust_dir = "engine_rust_src/src"
             if os.path.exists(rust_dir):
                 for root, dirs, files in os.walk(rust_dir):
                     for file in files:
-                        if not file.endswith(".rs"): continue
+                        if not file.endswith(".rs"):
+                            continue
                         with open(os.path.join(root, file), "r", encoding="utf-8", errors="ignore") as f:
                             file_lines = f.readlines()
                         for i, line in enumerate(file_lines):
@@ -304,12 +319,16 @@ def fetch_card_metadata(card_no: str) -> str:
                                         break
                                 rust_tests.append(f"{file}::{func_name}")
             rust_tests = sorted(list(set(rust_tests)))
-            
-            if related_qas: lines.append(f"  QA:      {len(related_qas)} rulings found")
-            if shared_cards: lines.append(f"  Shared:  {len(shared_cards)} other cards have this ability")
-            if rust_tests: lines.append(f"  Tests:   {len(rust_tests)} covered in Rust")
-            else: lines.append(f"  Tests:   0 covered (WARNING)")
-            
+
+            if related_qas:
+                lines.append(f"  QA:      {len(related_qas)} rulings found")
+            if shared_cards:
+                lines.append(f"  Shared:  {len(shared_cards)} other cards have this ability")
+            if rust_tests:
+                lines.append(f"  Tests:   {len(rust_tests)} covered in Rust")
+            else:
+                lines.append("  Tests:   0 covered (WARNING)")
+
         return "\n".join(lines) if lines else ""
     except Exception as e:
         return f"  Metadata Error: {e}"
@@ -321,7 +340,9 @@ def main():
     ap.add_argument("--card", help="Look up by card number in consolidated_abilities.json")
     ap.add_argument("--jp", help="Look up by JP text key in consolidated_abilities.json")
     ap.add_argument("--all", action="store_true", help="Test ALL consolidated abilities")
-    ap.add_argument("--reference", action="store_true", help="Dump a cheat sheet of all available keywords and parameters")
+    ap.add_argument(
+        "--reference", action="store_true", help="Dump a cheat sheet of all available keywords and parameters"
+    )
     ap.add_argument("--output", "-o", help="Write output to file instead of stdout")
     ap.add_argument("--errors-only", action="store_true", help="Only show entries with errors")
     args = ap.parse_args()
@@ -366,7 +387,7 @@ def main():
         consolidated = load_consolidated()
         entry = consolidated.get(args.jp)
         if entry is None:
-            print(f"ERROR: JP text key not found in consolidated_abilities.json")
+            print("ERROR: JP text key not found in consolidated_abilities.json")
             sys.exit(1)
         pseudocode = entry.get("pseudocode", args.jp) if isinstance(entry, dict) else entry
         results.append(test_one_pseudocode(pseudocode, label="JP lookup", parser=parser))
@@ -393,10 +414,10 @@ def main():
 
     # Summary for --all
     if args.all:
-        output_lines.insert(0, f"\n{'='*60}")
-        output_lines.insert(1, f"  PSEUDOCODE COMPILATION AUDIT")
+        output_lines.insert(0, f"\n{'=' * 60}")
+        output_lines.insert(1, "  PSEUDOCODE COMPILATION AUDIT")
         output_lines.insert(2, f"  Total: {total} | ✅ Passed: {passed} | ❌ Failed: {failed}")
-        output_lines.insert(3, f"{'='*60}")
+        output_lines.insert(3, f"{'=' * 60}")
 
     output = "\n".join(output_lines)
 

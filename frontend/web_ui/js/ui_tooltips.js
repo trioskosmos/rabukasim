@@ -115,7 +115,7 @@ export const Tooltips = {
                 // If the action text is non-generic (like a translated sub-ability), prioritize it
                 finalAbilityText = actionRichText;
             } else if (rawActionRichText && !finalAbilityText.includes(rawActionRichText)) {
-                // If it's a generic mechanical instruction (like "Play X to Slot 0"), 
+                // If it's a generic mechanical instruction (like "Play X to Slot 0"),
                 // and it's not already in the text, we might want to keep it as a label.
                 actionLabel = actionRichText;
             }

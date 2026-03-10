@@ -201,7 +201,7 @@ class VectorGameState:
             # 1. Count unique abilities for bytecode_map
             # We'll build a temp list of bytecodes to populate the map
             bytecode_list = []
-            
+
             self.bytecode_index = np.full((self.max_cards, self.max_abilities), 0, dtype=np.int32)
             self.card_stats = np.zeros((self.max_cards, 80), dtype=np.int32)
 
@@ -223,10 +223,10 @@ class VectorGameState:
 
                 # --- STATS ---
                 is_member = cid_str in db.get("member_db", {})
-                self.card_stats[cid, 10] = 1 if is_member else 2 # Type
+                self.card_stats[cid, 10] = 1 if is_member else 2  # Type
                 self.card_stats[cid, 0] = card.get("cost", 0)
                 self.card_stats[cid, 1] = card.get("blades", 0)
-                
+
                 h_arr = card.get("hearts", card.get("required_hearts", []))
                 self.card_stats[cid, 2] = sum(h_arr)
                 for r_idx in range(min(len(h_arr), 7)):
@@ -256,14 +256,15 @@ class VectorGameState:
                 # --- BYTECODE ---
                 ab_list = card.get("abilities", [])
                 for ab_idx, ab in enumerate(ab_list):
-                    if ab_idx >= self.max_abilities: break
-                    
+                    if ab_idx >= self.max_abilities:
+                        break
+
                     # Pack fixed geography stats
                     base_idx = 20 + (ab_idx * 12) if ab_idx > 0 else 20
-                    # Note: Ability 1 (idx 0) has extra logic for Options in some builds, 
+                    # Note: Ability 1 (idx 0) has extra logic for Options in some builds,
                     # but here we follow the standard logic.
                     self.card_stats[cid, base_idx] = ab.get("trigger", 0)
-                    
+
                     bc = ab.get("bytecode", [])
                     if bc:
                         bc_np = np.array(bc, dtype=np.int32)
@@ -271,7 +272,7 @@ class VectorGameState:
                             pad_size = 4 - (bc_np.size % 4)
                             bc_np = np.concatenate((bc_np, np.zeros(pad_size, dtype=np.int32)))
                         # Register in bytecode_map
-                        bc_idx = len(bytecode_list) + 1 # 1-based
+                        bc_idx = len(bytecode_list) + 1  # 1-based
                         bytecode_list.append(bc_np)
                         self.bytecode_index[cid, ab_idx] = bc_idx
 
@@ -284,17 +285,20 @@ class VectorGameState:
                 length = min(bc_reshaped.shape[0], self.max_len)
                 self.bytecode_map[i + 1, :length] = bc_reshaped[:length]
 
-            print(f" [VectorEnv] Loaded {processed_count} cards and {len(bytecode_list)} abilities from cards_compiled.json.")
+            print(
+                f" [VectorEnv] Loaded {processed_count} cards and {len(bytecode_list)} abilities from cards_compiled.json."
+            )
 
             # --- BATON PASS PATCHING ---
             baton_pattern = re.compile(r"「(.+?)」からバトンタッチして")
             patched_count = 0
             idx_counter = len(bytecode_list) + 1
-            
+
             for cid_str, card in all_cards.items():
                 cid = int(cid_str)
-                if cid >= self.max_cards: continue
-                
+                if cid >= self.max_cards:
+                    continue
+
                 for ab_idx, ab in enumerate(card.get("abilities", [])):
                     raw_text = ab.get("raw_text", "")
                     match = baton_pattern.search(raw_text)
@@ -325,6 +329,7 @@ class VectorGameState:
         except Exception as e:
             print(f" [VectorEnv] ERROR loading bytecode/stats: {e}")
             import traceback
+
             traceback.print_exc()
             self.bytecode_map = np.zeros((1, 64, 4), dtype=np.int32)
             self.bytecode_index = np.zeros((self.max_cards, self.max_abilities), dtype=np.int32)

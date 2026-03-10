@@ -1,4 +1,3 @@
-import os
 import re
 
 CHOICE_MAP = {
@@ -25,8 +24,9 @@ CHOICE_MAP = {
     '"SELECT_LIVE"': "crate::core::enums::ChoiceType::SelectLive",
 }
 
+
 def process_file(filepath):
-    with open(filepath, 'r', encoding='utf-8') as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Just replace all occurrences of these exact string literals in handlers.rs with the ChoiceType variant
@@ -34,7 +34,7 @@ def process_file(filepath):
     for k, v in CHOICE_MAP.items():
         # Only replace if not immediately followed by .to_string() or similar,
         # but honestly we can just replace all of them.
-        content = re.sub(r'(?<!\w)' + k + r'(?!\w)', v, content)
+        content = re.sub(r"(?<!\w)" + k + r"(?!\w)", v, content)
 
     # We also need to find any choice_type.to_string() leftovers, though they might not exist here.
     content = content.replace("choice_type.to_string()", "choice_type")
@@ -42,8 +42,11 @@ def process_file(filepath):
     # Fix any println! string formatting if choice_type is now an enum
     # We can change {} to {:?} for choice_type printing.
     # We know choice_type is often passed to suspend_interaction as a variable.
-    
-    with open(filepath, 'w', encoding='utf-8') as f:
+
+    with open(filepath, "w", encoding="utf-8") as f:
         f.write(content)
 
-process_file(r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\engine_rust_src\src\core\logic\interpreter\handlers.rs")
+
+process_file(
+    r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\engine_rust_src\src\core\logic\interpreter\handlers.rs"
+)

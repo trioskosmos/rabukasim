@@ -10,10 +10,10 @@ pub use crate::core::generated_constants::*;
 // --- Filter Bitfield Shifts (Revision 5) ---
 // These shifts define the "A" parameter (attribute/filter) in the bytecode.
 // Alignment: This uses the `A_STANDARD` layout from `generated_layout.rs`.
-// 
+//
 // Layout Mapping (Revision 5):
 pub const FILTER_TARGET_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_TARGET_PLAYER_SHIFT as u64;
-pub const FILTER_TYPE_SHIFT_R5: u64 = crate::core::generated_layout::A_STANDARD_CARD_TYPE_SHIFT as u64; 
+pub const FILTER_TYPE_SHIFT_R5: u64 = crate::core::generated_layout::A_STANDARD_CARD_TYPE_SHIFT as u64;
 pub const FILTER_GROUP_ENABLE_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_GROUP_ENABLED_SHIFT as u64;
 pub const FILTER_GROUP_ID_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_GROUP_ID_SHIFT as u64;
 pub const FILTER_STATE_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_IS_TAPPED_SHIFT as u64;
@@ -38,6 +38,12 @@ pub const FILTER_KW_MEMBER_SHIFT: u64 = crate::core::generated_layout::A_STANDAR
 // Use `crate::core::generated_layout::A_HEART_COST_...` for those.
 
 // --- Interpreter / Filter Constants ---
+pub const OPCODE_NEGATION_OFFSET: i32 = 1000;
+
+pub const CONDITION_START_1: i32 = 200;
+pub const CONDITION_END_1: i32 = 255;
+pub const CONDITION_START_2: i32 = 301;
+pub const CONDITION_END_2: i32 = 399;
 
 /// Mask for the 7-bit color flags (Standardized to 32).
 pub const FILTER_COLOR_MASK: u64 = 545460846592; // 0x7F << 32

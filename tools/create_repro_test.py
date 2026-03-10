@@ -1,6 +1,6 @@
-import json
-import sys
 import os
+import sys
+
 
 def generate_repro_script(state_json_path, output_py_path):
     """
@@ -20,7 +20,7 @@ def run_repro():
     db_path = "data/cards_compiled.bin"
     if not os.path.exists(db_path):
         db_path = "../data/cards_compiled.bin"
-        
+
     print(f"Loading DB from {{db_path}}...")
     with open(db_path, "rb") as f:
         db = engine_rust.CardDatabase.from_binary(f.read())
@@ -44,16 +44,17 @@ def run_repro():
     print(f"Current Turn: {{gs.turn}}")
     print(f"Active Player: {{gs.current_player}}")
     # print(f"Legal Actions: {{gs.get_legal_actions(db)}}")
-    
+
     # gs.step(db, action_id) # Example: step the game
 
 if __name__ == "__main__":
     run_repro()
 """
-    
-    with open(output_py_path, 'w', encoding='utf-8') as f:
+
+    with open(output_py_path, "w", encoding="utf-8") as f:
         f.write(script_content)
     print(f"Repro script generated: {output_py_path}")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

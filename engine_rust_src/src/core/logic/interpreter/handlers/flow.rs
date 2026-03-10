@@ -136,7 +136,7 @@ pub fn handle_meta_control(
             if ctx.choice_index == -1 {
                 // Flip player_id BEFORE suspension so that the interaction is attributed to the opponent
                 ctx.player_id = 1 - ctx.player_id;
-                
+
                 let choice_text = get_choice_text(db, ctx);
                 if suspend_interaction(
                     state,

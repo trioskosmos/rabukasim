@@ -319,12 +319,12 @@ impl GameState {
     pub fn render_debug_board(&self, db: &CardDatabase) -> String {
         let mut out = String::new();
         out.push_str(&format!("\n=== GAME STATE (Turn {}, Phase {:?}, Player {}) ===\n", self.turn, self.phase, self.current_player));
-        
+
         for p_idx in 0..2 {
             let p = &self.players[p_idx];
             out.push_str(&format!("--- PLAYER {} ---\n", p_idx));
             out.push_str(&format!("  HAND:    {:?}\n", p.hand));
-            
+
             out.push_str("  STAGE:   [");
             for (i, &cid) in p.stage.iter().enumerate() {
                 if cid == -1 {
@@ -371,6 +371,3 @@ impl std::ops::DerefMut for GameState {
         &mut self.core
     }
 }
-
-
-

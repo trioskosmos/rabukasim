@@ -537,4 +537,3 @@ pub fn get_unit_name(id: u8, lang: &str) -> &'static str {
         }
     }
 }
-

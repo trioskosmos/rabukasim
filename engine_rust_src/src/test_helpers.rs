@@ -112,7 +112,7 @@ impl BytecodeBuilder {
         self.bytecode[idx + 4] = s as i32;
         self
     }
-    
+
     pub fn target(mut self, slot: u8) -> Self {
         let idx = self.last_idx();
         let mut s = self.bytecode[idx + 4] as u32;
@@ -400,7 +400,7 @@ impl TestUtils for GameState {
         }
         println!("===========================");
     }
-    
+
     fn dump_trace(&self) {
         println!("=== TRACE LOG ===");
         if self.debug.trace_log.is_empty() {

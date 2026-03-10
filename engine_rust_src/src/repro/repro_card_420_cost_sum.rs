@@ -79,7 +79,7 @@ fn test_repro_card_420_cost_sum_limit() {
             .expect("Cost 4 card not in looked_cards");
 
         state.step(&db, ACTION_BASE_CHOICE + idx as i32).unwrap(); // Select Card
-        
+
         // Find an empty slot
         let slot_idx = state.players[p_idx].stage.iter().position(|&c| c == -1).unwrap_or(1);
         state.step(&db, ACTION_BASE_STAGE_SLOTS + slot_idx as i32).unwrap(); // Select Slot

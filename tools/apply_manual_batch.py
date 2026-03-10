@@ -34,7 +34,7 @@ def apply_mappings(mappings):
 
     for jp_text, pcode in mappings.items():
         n_jp = normalize(jp_text)
-        
+
         # In the new consolidated system, we map JP text directly to pseudocode
         if jp_text in consolidated:
             consolidated[jp_text]["pseudocode"] = pcode
@@ -48,7 +48,7 @@ def apply_mappings(mappings):
             print(f"DEBUG: No entry found in consolidated_abilities for: [{jp_text}]. Adding new entry.")
             consolidated[jp_text] = {
                 "pseudocode": pcode,
-                "cards": [] # Unknown which cards this belongs to without more context
+                "cards": [],  # Unknown which cards this belongs to without more context
             }
             count += 1
 

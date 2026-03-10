@@ -361,7 +361,7 @@ pub fn pay_cost(
             // Clear previous looked_cards and revealed_cards
             state.players[p_idx].looked_cards.clear();
             state.players[p_idx].revealed_cards.clear();
-            
+
             // Collect the first N cards that match the filter for auto-reveal
             let hand = state.players[p_idx].hand.to_vec();
             for cid in hand {

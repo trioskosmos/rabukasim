@@ -1,7 +1,7 @@
 use crate::core::logic::{CardDatabase, GameState, PlayerState};
 
 /// AlphaZero Analysis Utilities
-/// 
+///
 /// Contains mathematical and statistical logic for generating AlphaZero analytical hints (Pro Vision).
 /// Keeps AI-specific calculations out of the core GameState logic.
 
@@ -14,7 +14,7 @@ pub struct ProVisionHints {
 impl ProVisionHints {
     pub fn calculate(state: &GameState, db: &CardDatabase, player_idx: usize) -> Self {
         let player = &state.players[player_idx];
-        
+
         Self {
             win_probabilities: calculate_win_probabilities(state, db, player_idx),
             deck_distribution: calculate_deck_distribution(player, db),
@@ -34,7 +34,7 @@ fn calculate_win_probabilities(_state: &GameState, _db: &CardDatabase, _player_i
 fn calculate_deck_distribution(player: &PlayerState, db: &CardDatabase) -> [f32; 7] {
     let mut counts = [0.0; 7];
     let deck_size = player.deck.len();
-    
+
     if deck_size == 0 {
         return counts;
     }
@@ -52,7 +52,7 @@ fn calculate_deck_distribution(player: &PlayerState, db: &CardDatabase) -> [f32;
     for i in 0..7 {
         counts[i] /= deck_size as f32;
     }
-    
+
     counts
 }
 
@@ -62,7 +62,7 @@ fn project_energy(state: &GameState, player_idx: usize) -> f32 {
     let player = &state.players[player_idx];
     let energy_deck_count = player.energy_deck.len();
     let current_energy = player.energy_zone.len();
-    
+
     if energy_deck_count > 0 {
         ((current_energy + 1) as f32 / 12.0).min(1.0)
     } else {

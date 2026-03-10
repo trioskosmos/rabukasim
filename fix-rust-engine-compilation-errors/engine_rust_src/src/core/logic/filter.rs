@@ -263,7 +263,7 @@ impl CardFilter {
                     0
                 }
             };
-            
+
             let threshold = if self.compare_accumulated {
                 ctx.v_accumulated as u8
             } else {

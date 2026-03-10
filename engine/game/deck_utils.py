@@ -103,6 +103,7 @@ class UnifiedDeckParser:
         Returns the content between the matching <h3> and the next <h3> (or end of string).
         """
         import re as _re
+
         pattern = rf"<h3[^>]*>\s*{_re.escape(heading)}\s*</h3>([\s\S]*?)(?=<h3|$)"
         m = _re.search(pattern, content, _re.IGNORECASE)
         return m.group(1) if m else ""

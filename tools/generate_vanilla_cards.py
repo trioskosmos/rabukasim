@@ -1,6 +1,7 @@
 import json
 import os
 
+
 def generate_vanilla_cards(input_path="data/cards_compiled.json", output_path="data/cards_vanilla.json"):
     if not os.path.exists(input_path):
         print(f"Error: {input_path} not found.")
@@ -29,6 +30,7 @@ def generate_vanilla_cards(input_path="data/cards_compiled.json", output_path="d
     with open(output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print("Done.")
+
 
 if __name__ == "__main__":
     generate_vanilla_cards()

@@ -6,16 +6,16 @@ c`
 ts/all_tests.txt 2>&1
 + ~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo     
-         : NotSpecifi  
-  ed: (warning: unus   
- ed import: `std::s    
+    + CategoryInfo
+         : NotSpecifi
+  ed: (warning: unus
+ ed import: `std::s
 ync::Arc`:String)     [
 ], RemoteExceptio    n
-    + FullyQualifiedEr 
-   rorId : NativeComm  
+    + FullyQualifiedEr
+   rorId : NativeComm
   andError
- 
+
  --> src\core\alphazero
 _evaluator.rs:6:5
   |
@@ -66,13 +66,13 @@ nterpreter\handlers\mov
 ement.rs:779:9
     |
 779 | ...et s = inst...
-    |       ^ help: if 
+    |       ^ help: if
 this is intentional, pr
 efix it with an undersc
 ore: `_s`
     |
     = note: `#[warn(unu
-sed_variables)]` (part 
+sed_variables)]` (part
 of `#[warn(unused)]`) o
 n by default
 
@@ -83,7 +83,7 @@ nterpreter\handlers\int
 eraction.rs:569:9
     |
 569 | ...et s = inst...
-    |       ^ help: if 
+    |       ^ help: if
 this is intentional, pr
 efix it with an undersc
 ore: `_s`
@@ -156,7 +156,7 @@ nerated_constants::*;
   |     ^^^^^^^^^^^^^^^
 ^^^^^^^^^^^^^^^^^^^^
 
-warning: variable does 
+warning: variable does
 not need to be mutable
    --> src\mechanics_te
 sts.rs:148:9
@@ -173,12 +173,12 @@ sed_mut)]` (part of `#[
 warn(unused)]`) on by d
 efault
 
-warning: `engine_rust` 
+warning: `engine_rust`
 (lib) generated 6 warni
 ngs (run `cargo fix --l
 ib -p engine_rust` to a
 pply 6 suggestions)
-warning: `engine_rust` 
+warning: `engine_rust`
 (lib test) generated 10
  warnings (6 duplicates
 ) (run `cargo fix --lib
@@ -186,14 +186,14 @@ warning: `engine_rust`
 ` to apply 2 suggestion
 s)
 warning: unused imports
-: `AbilityContext` and 
+: `AbilityContext` and
 `CardDatabase`
  --> src\bin\dump_faile
 d_tests.rs:3:43
   |
 3 | ...e, CardDatabase,
  AbilityContext};
-  |       ^^^^^^^^^^^^ 
+  |       ^^^^^^^^^^^^
  ^^^^^^^^^^^^^^
   |
   = note: `#[warn(unuse
@@ -217,19 +217,19 @@ d_imports)]` (part of `
 #[warn(unused)]`) on by
  default
 
-warning: `engine_rust` 
+warning: `engine_rust`
 (bin "dump_failed_tests
-") generated 1 warning 
+") generated 1 warning
 (run `cargo fix --bin "
 dump_failed_tests" -p e
-ngine_rust` to apply 1 
+ngine_rust` to apply 1
 suggestion)
-warning: `engine_rust` 
+warning: `engine_rust`
 (bin "test_serializatio
 n") generated 1 warning
- (run `cargo fix --bin 
+ (run `cargo fix --bin
 "test_serialization" -p
- engine_rust` to apply 
+ engine_rust` to apply
 1 suggestion)
 warning: unexpected `cf
 g` condition value: `gp
@@ -243,18 +243,18 @@ pu")]
 ^^^
    |
    = note: expected val
-ues for `feature` are: 
+ues for `feature` are:
 `default`, `extension-m
 odule`, `nn`, and `para
 llel`
    = help: consider add
-ing `gpu` as a feature 
+ing `gpu` as a feature
 in `Cargo.toml`
    = note: see <https:/
 /doc.rust-lang.org/nigh
 tly/rustc/check-cfg/car
-go-specifics.html> for 
-more information about 
+go-specifics.html> for
+more information about
 checking conditional co
 nfiguration
    = note: `#[warn(unex
@@ -273,18 +273,18 @@ pu")]
 ^^^
    |
    = note: expected val
-ues for `feature` are: 
+ues for `feature` are:
 `default`, `extension-m
 odule`, `nn`, and `para
 llel`
    = help: consider add
-ing `gpu` as a feature 
+ing `gpu` as a feature
 in `Cargo.toml`
    = note: see <https:/
 /doc.rust-lang.org/nigh
 tly/rustc/check-cfg/car
-go-specifics.html> for 
-more information about 
+go-specifics.html> for
+more information about
 checking conditional co
 nfiguration
 
@@ -342,15 +342,15 @@ rgo-specifics.html> for
  checking conditional c
 onfiguration
 
-warning: `engine_rust` 
+warning: `engine_rust`
 (test "repro_catchu_q10
 3") generated 4 warning
 s
-warning: `engine_rust` 
+warning: `engine_rust`
 (bin "dump_failed_tests
 " test) generated 1 war
 ning (1 duplicate)
-warning: `engine_rust` 
+warning: `engine_rust`
 (bin "test_serializatio
 n" test) generated 1 wa
 rning (1 duplicate)
@@ -369,9 +369,9 @@ d_imports)]` (part of `
 #[warn(unused)]`) on by
  default
 
-warning: `engine_rust` 
+warning: `engine_rust`
 (test "repro_pb1_018_ex
-haustive") generated 1 
+haustive") generated 1
 warning (run `cargo fix
  --test "repro_pb1_018_
 exhaustive" -p engine_r
@@ -381,7 +381,7 @@ ion)
 file [optimized + debug
 info] target(s) in 0.25
 s
-     Running unittests 
+     Running unittests
 src\lib.rs (target\debu
 g\deps\engine_rust-e489
 9d9bfae2c4d0.exe)
@@ -640,39 +640,39 @@ failures:
 [DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
 [TEST] Card ID for PL!SP-bp1-024-L: 517
 [DEBUG] trigger_abilities_from: trigger=OnLiveStart, queue_len=2
-[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:1    a:-9223372036854775808 s:0   
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:1    a:-9223372036854775808 s:0
 [DEBUG] O_PAY_ENERGY: attempting optional suspension (instr_ip=0).
 [DEBUG] suspend_interaction: choice_type=Optional, v_remaining=-1, actions=2
 [TEST] Resolving interaction: Optional
-[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:1    a:-9223372036854775808 s:0   
-[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:8    a:0          s:0   
-[DEBUG] BC_STEP: ip=10  NONE            | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:1    a:-9223372036854775808 s:0
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:8    a:0          s:0
+[DEBUG] BC_STEP: ip=10  NONE            | v:2    a:0          s:0
 [DEBUG] suspend_interaction: choice_type=SelectMode, v_remaining=2, actions=3
-[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:1    a:22539988369409 s:4   
+[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:1    a:22539988369409 s:4
 [DEBUG] generate_select_member_actions: p_idx=0, filter_attr=148000000001
 [DEBUG] suspend_interaction: choice_type=SelectMember, v_remaining=-1, actions=2
 [TEST] Resolving interaction: SelectMember
-[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:1    a:22539988369409 s:4   
+[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:1    a:22539988369409 s:4
 [DEBUG] BC_STEP: ip=5   ADD_HEARTS      | v:1    a:0          s:4    (Added +1 HEART_WILD)
 [DEBUG] BC_STEP: ip=10  ADD_BLADES      | v:1    a:0          s:4    (Added +1 BLADE)
-[DEBUG] BC_STEP: ip=15  SELECT_MEMBER   | v:1    a:23089744183297 s:4   
+[DEBUG] BC_STEP: ip=15  SELECT_MEMBER   | v:1    a:23089744183297 s:4
 [DEBUG] generate_select_member_actions: p_idx=0, filter_attr=150000000001
 [DEBUG] suspend_interaction: choice_type=SelectMember, v_remaining=-1, actions=1
 [TEST] Resolving interaction: SelectMember
-[DEBUG] BC_STEP: ip=15  SELECT_MEMBER   | v:1    a:23089744183297 s:4   
+[DEBUG] BC_STEP: ip=15  SELECT_MEMBER   | v:1    a:23089744183297 s:4
 [DEBUG] BC_STEP: ip=20  ADD_HEARTS      | v:1    a:0          s:4    (Added +1 HEART_WILD)
 [DEBUG] BC_STEP: ip=25  ADD_BLADES      | v:1    a:0          s:4    (Added +1 BLADE)
 [TEST] Resolving interaction: SelectMode
-[DEBUG] BC_STEP: ip=10  NONE            | v:2    a:0          s:0   
-[DEBUG] BC_STEP: ip=20  JUMP            | v:3    a:0          s:0   
-[DEBUG] BC_STEP: ip=40  JUMP            | v:1    a:0          s:0   
+[DEBUG] BC_STEP: ip=10  NONE            | v:2    a:0          s:0
+[DEBUG] BC_STEP: ip=20  JUMP            | v:3    a:0          s:0
+[DEBUG] BC_STEP: ip=40  JUMP            | v:1    a:0          s:0
 
 thread 'meta_rule_card_tests::test_meta_rule_pl_sp_bp1_024_l_heart_buffs' (1984) panicked at src\meta_rule_card_tests.rs:94:5:
 Kanon should have heart01 buff, got: HeartBoard(0)
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 
 ---- opcode_missing_tests::test_opcode_opponent_choose stdout ----
-[DEBUG] BC_STEP: ip=0   NONE            | v:1    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   NONE            | v:1    a:0          s:0
 [DEBUG] suspend_interaction: choice_type=OpponentChoose, v_remaining=-1, actions=4
 
 thread 'opcode_missing_tests::test_opcode_opponent_choose' (11684) panicked at src\opcode_missing_tests.rs:108:9:
@@ -681,7 +681,7 @@ assertion `left == right` failed: Pending context should be for opponent (player
  right: 1
 
 ---- opcode_rigor_tests::test_opcode_opponent_choose_rigor stdout ----
-[DEBUG] BC_STEP: ip=0   NONE            | v:1    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   NONE            | v:1    a:0          s:0
 [DEBUG] suspend_interaction: choice_type=OpponentChoose, v_remaining=-1, actions=4
 DEBUG: interaction.ctx.player_id = 0
 
@@ -695,13 +695,13 @@ assertion `left == right` failed: Opponent (P1) should be the chooser
 [DEBUG] get_member_cost: card_id=4189, base_cost=11
 [DEBUG] trigger_abilities_from: trigger=OnLeaves, queue_len=0
 [DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=2
-[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:3    a:0          s:0
 [DEBUG] generate_select_member_actions: p_idx=0, filter_attr=0
 [DEBUG] suspend_interaction: choice_type=SelectMember, v_remaining=-1, actions=3
-[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:3    a:0          s:0
 [DEBUG] generate_select_member_actions: p_idx=0, filter_attr=0
 [DEBUG] suspend_interaction: choice_type=SelectMember, v_remaining=-1, actions=3
-[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:3    a:0          s:0
 [DEBUG] BC_STEP: ip=5   TAP_MEMBER      | v:0    a:-9223372036854775808 s:4    (Tapped member)
 [DEBUG] suspend_interaction: choice_type=Optional, v_remaining=-1, actions=2
 
@@ -747,5 +747,5 @@ failures:
 
 test result: FAILED. 239 passed; 7 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.26s
 
-error: test failed, to 
+error: test failed, to
 rerun pass `--lib`

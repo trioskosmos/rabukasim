@@ -6,12 +6,14 @@ each move as a transition in the PersistentBuffer.
 Runs single-process to avoid RAM exhaustion from multiple engine instances.
 Reports buffer fill progress periodically.
 """
-import sys
+
 import json
 import random
+import sys
 import time
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 
 # Add project root to sys.path
 root_dir = Path(__file__).resolve().parent.parent.parent
@@ -22,15 +24,16 @@ sys.path.insert(0, str(root_dir / "alphazero" / "training"))
 
 import engine_rust
 from disk_buffer import PersistentBuffer
+
 from engine.game.deck_utils import UnifiedDeckParser
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────
 MAX_BUFFER_SIZE = 500_000
-OBS_DIM         = 20_500
-NUM_ACTIONS     = 22_000
-TURN_LIMIT      = 10     # Only keep games where state.turn < TURN_LIMIT at end
-REPORT_INTERVAL = 200   # Print progress every N total games
-FLOAT16_MAX     = 65_504.0  # Max safe float16 value
+OBS_DIM = 20_500
+NUM_ACTIONS = 22_000
+TURN_LIMIT = 10  # Only keep games where state.turn < TURN_LIMIT at end
+REPORT_INTERVAL = 200  # Print progress every N total games
+FLOAT16_MAX = 65_504.0  # Max safe float16 value
 # ───────────────────────────────────────────────────────────────────────────
 
 
@@ -61,11 +64,13 @@ def load_decks(full_db: dict) -> list:
                 if cdata:
                     e.append(cdata["card_id"])
             if len(m) >= 30:
-                decks.append({
-                    "members": (m + m * 4)[:48],
-                    "lives":   (l + l * 4)[:12],
-                    "energy":  (e + standard_energy_ids * 12)[:12],
-                })
+                decks.append(
+                    {
+                        "members": (m + m * 4)[:48],
+                        "lives": (l + l * 4)[:12],
+                        "energy": (e + standard_energy_ids * 12)[:12],
+                    }
+                )
         except Exception:
             continue
     return decks
@@ -84,7 +89,8 @@ def generate_random_game(db, d0: dict, d1: dict) -> tuple[list | None, int]:
             d1["members"] + d1["lives"],
             d0["energy"],
             d1["energy"],
-            [], [],
+            [],
+            [],
         )
         state.silent = True
 
@@ -107,13 +113,15 @@ def generate_random_game(db, d0: dict, d1: dict) -> tuple[list | None, int]:
             # Capture raw obs as float32 BEFORE stepping (clipped to float16 safe range)
             obs_raw = np.array(state.to_alphazero_tensor(), dtype=np.float32)
 
-            game_history.append({
-                "obs":    obs_raw,
-                "action": action,
-                "player": state.acting_player,
-                "mask":   mask,
-                "turn":   state.turn,
-            })
+            game_history.append(
+                {
+                    "obs": obs_raw,
+                    "action": action,
+                    "player": state.acting_player,
+                    "mask": mask,
+                    "turn": state.turn,
+                }
+            )
 
             state.step(action)
             state.auto_step(db)
@@ -131,12 +139,12 @@ def generate_random_game(db, d0: dict, d1: dict) -> tuple[list | None, int]:
         transitions = []
         for t in game_history:
             # Value targets
-            win_prob   = 1.0 if t["player"] == winner else (0.5 if winner < 0 else 0.0)
-            my_lives   = p0_lives if t["player"] == 0 else p1_lives
-            opp_lives  = p1_lives if t["player"] == 0 else p0_lives
-            momentum   = np.clip((my_lives - opp_lives) / 5.0, -1.0, 1.0)
+            win_prob = 1.0 if t["player"] == winner else (0.5 if winner < 0 else 0.0)
+            my_lives = p0_lives if t["player"] == 0 else p1_lives
+            opp_lives = p1_lives if t["player"] == 0 else p0_lives
+            momentum = np.clip((my_lives - opp_lives) / 5.0, -1.0, 1.0)
             efficiency = max(0.0, 1.0 - final_turn / (TURN_LIMIT * 20))
-            target_v   = np.array([win_prob, float(momentum), efficiency], dtype=np.float32)
+            target_v = np.array([win_prob, float(momentum), efficiency], dtype=np.float32)
 
             # Clip obs to float16 safe range to avoid overflow in disk_buffer
             obs_clipped = np.clip(t["obs"], -FLOAT16_MAX, FLOAT16_MAX)
@@ -185,16 +193,16 @@ def main():
         num_actions=NUM_ACTIONS,
     )
 
-    print(f"\n{'='*55}")
+    print(f"\n{'=' * 55}")
     print("AlphaZero Bootstrap - Single Process Mode")
     print(f"Target: {MAX_BUFFER_SIZE:,} transitions  |  Filter: turn < {TURN_LIMIT}")
     print(f"Buffer state: {buffer.count:,} / {MAX_BUFFER_SIZE:,} already filled")
-    print(f"{'='*55}\n")
+    print(f"{'=' * 55}\n")
 
-    total_games       = 0
-    short_games       = 0
+    total_games = 0
+    short_games = 0
     total_transitions = buffer.count
-    start_time        = time.time()
+    start_time = time.time()
 
     while total_transitions < MAX_BUFFER_SIZE:
         d0 = random.choice(decks)
@@ -212,16 +220,16 @@ def main():
                     break
 
         if total_games % REPORT_INTERVAL == 0:
-            elapsed   = time.time() - start_time
-            gps       = total_games / elapsed
-            hit_rate  = short_games / total_games * 100
+            elapsed = time.time() - start_time
+            gps = total_games / elapsed
+            hit_rate = short_games / total_games * 100
             avg_trans = (total_transitions - buffer.count + total_transitions) / max(1, short_games)
             remaining = MAX_BUFFER_SIZE - total_transitions
-            eta_s     = remaining / max(1, (total_transitions / elapsed)) if elapsed > 0 else 0
+            eta_s = remaining / max(1, (total_transitions / elapsed)) if elapsed > 0 else 0
             print(
                 f"Games: {total_games:>7,} | Short: {short_games:>6,} ({hit_rate:5.1f}%) | "
                 f"Buffer: {total_transitions:>7,}/{MAX_BUFFER_SIZE:,} | "
-                f"GPS: {gps:6.1f} | ETA: {eta_s/60:.1f}min"
+                f"GPS: {gps:6.1f} | ETA: {eta_s / 60:.1f}min"
             )
 
         if total_transitions >= MAX_BUFFER_SIZE:
@@ -229,12 +237,12 @@ def main():
 
     buffer.flush()
     elapsed = time.time() - start_time
-    print(f"\n{'='*55}")
-    print(f"Bootstrap Complete!")
+    print(f"\n{'=' * 55}")
+    print("Bootstrap Complete!")
     print(f"Total Games: {total_games:,}  |  Short Games: {short_games:,}")
-    print(f"Buffer: {buffer.count:,} transitions  |  Time: {elapsed/60:.1f}min")
+    print(f"Buffer: {buffer.count:,} transitions  |  Time: {elapsed / 60:.1f}min")
     print(f"Output: {buffer_dir}")
-    print(f"{'='*54}")
+    print(f"{'=' * 54}")
 
 
 if __name__ == "__main__":

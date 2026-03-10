@@ -87,9 +87,9 @@ fn test_meta_rule_pl_sp_bp1_024_l_heart_buffs() {
         use crate::core::logic::action_gen::{ActionGenerator, response::ResponseGenerator};
         let mut receiver: Vec<usize> = Vec::new();
         ResponseGenerator.generate(&db, 0, &state, &mut receiver);
-        
+
         let mut act = receiver[0];
-        
+
         // If it's a member selection, the receiver contains valid slot actions plus 0 (pass).
         let is_select = state.interaction_stack.last().unwrap().choice_type == ChoiceType::SelectMember;
         if is_select {
@@ -104,7 +104,7 @@ fn test_meta_rule_pl_sp_bp1_024_l_heart_buffs() {
                 choose_second = !choose_second; // Toggle for the next selection
             }
         }
-        
+
         state.step(&db, act as i32).expect("Step failed");
         state.process_trigger_queue(&db);
     }

@@ -1034,7 +1034,7 @@ pub fn handle_score_hearts(
         O_TRANSFORM_BLADES => {
             let target_p = if instr.s.is_opponent { 1 - p_idx } else { p_idx };
             if !state.ui.silent && state.debug.debug_mode {
-                println!("[DEBUG] O_TRANSFORM_BLADES: target_p={}, target_slot={}, resolved_slot={}, v={}", 
+                println!("[DEBUG] O_TRANSFORM_BLADES: target_p={}, target_slot={}, resolved_slot={}, v={}",
                     target_p, target_slot, resolved_slot, v);
             }
             if target_slot == 1 {

@@ -2,6 +2,9 @@
 
 This document defines the 2,000-dimensional action space used by the game engine. Each ID corresponds to a specific atomic action in the game.
 
+> [!NOTE]
+> This mapping is primarily used by the **Rust Engine** (`engine_rust_src/`). The Python engine is legacy and may not perfectly align with all identifiers.
+
 ## Main Map (Sorted by ID)
 
 | ID Range | Category | Description | Parameters |

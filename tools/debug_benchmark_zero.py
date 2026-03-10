@@ -1,7 +1,6 @@
-import sys, os, json
+import os
+import sys
 from pathlib import Path
-import numpy as np
-import torch
 
 # Add project root to sys.path
 root_dir = Path(os.getcwd())
@@ -9,6 +8,7 @@ if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
 
 import engine_rust
+
 print(f"Engine loaded from: {engine_rust.__file__}")
 
 with open("data/cards_compiled.json", "r", encoding="utf-8") as f:

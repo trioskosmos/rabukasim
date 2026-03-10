@@ -137,7 +137,7 @@ const stateInternal = {
         state.players.forEach((p, playerIdx) => {
             if (!p) return;
 
-            // Index all zones (p.hand here usually contains integer IDs in raw data, 
+            // Index all zones (p.hand here usually contains integer IDs in raw data,
             // but the launcher might provide rich objects)
             const indexZone = (zoneData) => {
                 if (!zoneData) return;

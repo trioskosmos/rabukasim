@@ -22,7 +22,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from game.data_loader import CardDataLoader
 from game.game_state import GameState, Phase
 from headless_runner import RandomAgent, SmartHeuristicAgent, TrueRandomAgent
-
 from tools.agent_tournament_fast import FastGameState, FastRandomAgent, FastSmartAgent, FastTrueRandomAgent
 
 # ============================================================================

@@ -27,7 +27,7 @@ While fast, it evaluates linearly. It says "You have 3 Red Hearts and 1 Blue Hea
 **Yes. Absolutely.**
 
 The simulation engine is no longer the bottleneck. The engine can step the game state at **~630,000 steps/s** (multi-threaded) and **~139,000 steps/s** (single-threaded).
-Right now, the MCTS logic (the physical act of building the tree in RAM) takes 90% of the time, while the heuristic takes <5%. 
+Right now, the MCTS logic (the physical act of building the tree in RAM) takes 90% of the time, while the heuristic takes <5%.
 
 ### The Transition Plan
 We have the `GpuManager` architecture stubbed out in `mcts.rs` (lines 463-479). The plan to transition from the linear `OriginalHeuristic` to the Transformer/Neural Net is:

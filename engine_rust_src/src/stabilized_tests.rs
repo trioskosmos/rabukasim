@@ -57,7 +57,7 @@ fn verify_manual_recovery_pattern() {
     // SETUP: Put Card 121 (a member) in discard
     state.players[0].discard = vec![121].into();
     state.players[0].hand.clear();
-    
+
     // EXECUTE: Trigger RECOVER_MEMBER (Card 120 Honoka has it at ab_idx 0)
     let ctx = AbilityContext { player_id: 0, source_card_id: 120, ..Default::default() };
     state.resolve_bytecode_cref(&db, &db.get_member(120).unwrap().abilities[0].bytecode, &ctx);

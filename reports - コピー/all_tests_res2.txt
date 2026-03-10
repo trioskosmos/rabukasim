@@ -1,18 +1,18 @@
-cargo : warning: unused imports: 
-`CardDatabase`, `GameState`, and 
+cargo : warning: unused imports:
+`CardDatabase`, `GameState`, and
 `Phase`
 ???? ?:1 ??:1
 + cargo test 2>&1 | Out-File -Enc
 oding ASCII ..\reports\all_tests_
 res2. ...
 + ~~~~~~~~~~~~~~~
-    + CategoryInfo          : No 
-   tSpecified: (warning: unused  
-  ...e`, and `Phase`:String) [   
+    + CategoryInfo          : No
+   tSpecified: (warning: unused
+  ...e`, and `Phase`:String) [
  ], RemoteException
-    + FullyQualifiedErrorId : Na 
+    + FullyQualifiedErrorId : Na
    tiveCommandError
- 
+
  --> src\repro\fix_kimi_no_kokoro
 .rs:1:26
   |

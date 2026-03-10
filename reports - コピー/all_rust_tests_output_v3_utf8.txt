@@ -9,14 +9,14 @@ l_rust_tests_output_v3.txt 2
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~
-    + CategoryInfo          
-    : NotSpecified: (   Co  
-  mpiling en...ngine_rust   
- _src):String) [], Remot    
+    + CategoryInfo
+    : NotSpecified: (   Co
+  mpiling en...ngine_rust
+ _src):String) [], Remot
 eException
-    + FullyQualifiedErrorId 
+    + FullyQualifiedErrorId
     : NativeCommandError
- 
+
 warning: unexpected `cfg` co
 ndition value: `gpu`
  --> src\size_test.rs:1:8
@@ -25,7 +25,7 @@ ndition value: `gpu`
   |        ^^^^^^^^^^^^^^^
   |
   = note: expected values fo
-r `feature` are: `default`, 
+r `feature` are: `default`,
 `extension-module`, `nn`, an
 d `parallel`
   = help: consider adding `g
@@ -49,7 +49,7 @@ ndition value: `gpu`
   |        ^^^^^^^^^^^^^^^
   |
   = note: expected values fo
-r `feature` are: `default`, 
+r `feature` are: `default`,
 `extension-module`, `nn`, an
 d `parallel`
   = help: consider adding `g
@@ -104,16 +104,16 @@ cDeque;
 orts)]` (part of `#[warn(unu
 sed)]`) on by default
 
-warning: `engine_rust` (bin 
+warning: `engine_rust` (bin
 "test_serialization" test) g
 enerated 1 warning (run `car
 go fix --bin "test_serializa
 tion" -p engine_rust --tests
 ` to apply 1 suggestion)
-warning: `engine_rust` (lib 
+warning: `engine_rust` (lib
 test) generated 4 warnings (
 run `cargo fix --lib -p engi
-ne_rust --tests` to apply 2 
+ne_rust --tests` to apply 2
 suggestions)
 warning: unexpected `cfg` co
 ndition value: `gpu`
@@ -216,10 +216,10 @@ iguration
 warning: `engine_rust` (test
  "repro_catchu_q103") genera
 ted 4 warnings
-warning: `engine_rust` (bin 
+warning: `engine_rust` (bin
 "test_serialization") genera
 ted 1 warning (1 duplicate)
-    Finished `test` profile 
+    Finished `test` profile
 [optimized + debuginfo] targ
 et(s) in 23.92s
      Running unittests src\l
@@ -494,10 +494,10 @@ thread 'qa_verification_tests::tests::test_q203_niji_score_buff' (13108) panicke
 Energy activation mask should track Group 2
 
 ---- repro::repro_card_420_cost_sum::test_repro_card_420_cost_sum_limit stdout ----
-[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:4    a:-9223372036854775808 s:0   
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:4    a:-9223372036854775808 s:0
 [DEBUG] O_PAY_ENERGY: cost=4, available=2, is_optional=true, attr=-9223372036854775808
 [DEBUG] O_PAY_ENERGY: cannot afford optional cost.
-[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0
 [DEBUG] auto_step: Phase=Main, Player=0
 [DEBUG] auto_step: Phase=Main, Player=0
 
@@ -513,7 +513,7 @@ filter_attr=0x0000000000000000, s_word=0
 Initial looked_cards: 3 members
 
 === Step 1: Pick first card (index 0) ===
-[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0
 [DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:-9223372033482555392 s:458756
 [DEBUG] auto_step: Phase=Main, Player=0
 

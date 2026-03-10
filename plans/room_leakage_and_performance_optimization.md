@@ -93,12 +93,12 @@ flowchart TD
     H -->|Yes > 30min| I[Mark for Cleanup]
     H -->|No| F
     I --> J[Remove Room]
-    
+
     K[Player Leave] -->|API: /rooms/leave| L[Remove Session]
     L --> M{Room Empty?}
     M -->|Yes| I
     M -->|No| C
-    
+
     N[Frontend State] -->|Join Room| O{Clear History?}
     O -->|No - BUG| P[Old Performance Data Visible]
     O -->|Yes - FIX| Q[Reset performanceHistory]
@@ -114,7 +114,7 @@ flowchart TD
    - Add `/api/rooms/leave` endpoint
    - Add `ROOM_INACTIVE_TIMEOUT_MINUTES` constant
 
-### Frontend  
+### Frontend
 2. `frontend/web_ui/js/state.js`
    - Add `resetGameState()` function to clear all game-related state
 3. `frontend/web_ui/js/network.js`

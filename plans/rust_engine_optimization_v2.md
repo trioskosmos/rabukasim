@@ -6,7 +6,7 @@ I've examined the benchmark code flow and found the actual performance bottlenec
 
 The Hot Path in Benchmark
 benchmark_unified.rs line 74: sim.step(db, chosen_action)
-    └── handle_main() 
+    └── handle_main()
         └── play_member_with_choice()     ← MOST EXPENSIVE
             └── get_member_cost()          ← CALLED 2-4x PER ACTION!
             └── execute_play_member_state()

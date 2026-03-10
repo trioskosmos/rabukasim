@@ -26,4 +26,3 @@ fn test_repro_count_success_live_comparison() {
     // current buggy engine: does 1 >= 0 -> true. Correct: 1 == 0 -> false.
     assert!(!passed, "COUNT=0 should FAIL when lives=1");
 }
-

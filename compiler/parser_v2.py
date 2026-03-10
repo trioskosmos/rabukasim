@@ -9,10 +9,9 @@ modular architecture based on:
 4. Structural Lexing: Balanced-brace scanning instead of greedy regex
 """
 
-import copy
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Match, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from engine.models.ability import (
     Ability,
@@ -26,15 +25,14 @@ from engine.models.ability import (
     TriggerType,
 )
 
-
 from .aliases import (
-    TRIGGER_ALIASES,
+    CONDITION_ALIASES,
     EFFECT_ALIASES,
     EFFECT_ALIASES_WITH_PARAMS,
-    CONDITION_ALIASES,
-    KEYWORD_CONDITIONS,
     IGNORED_CONDITIONS,
+    KEYWORD_CONDITIONS,
     MAX_SELECT_ALL,
+    TRIGGER_ALIASES,
 )
 
 # =============================================================================
@@ -61,7 +59,6 @@ _RE_TRIGGER_PARENS = re.compile(r"\(.*?\)")
 # Value parsing patterns
 _RE_COST_GE = re.compile(r"COST_GE=(\d+)")
 _RE_COST_COMPARISON = re.compile(r"COST_(GE|LE|GT|LT|EQ)=(\d+)")
-
 
 
 # =============================================================================
@@ -378,17 +375,15 @@ class AbilityParserV2:
 
         # Detect format
         triggers = ["TRIGGER:", "CONDITION:", "EFFECT:", "COST:"]
-        
+
         # Behavior blocks are handled if present, else fallback to pseudocode
         if text.strip().upper().startswith("BEHAVIOR:"):
             # Check if behavior parser exists (it was legacy/retired in some versions)
             if hasattr(self, "_parse_behavior_block"):
                 return self._parse_behavior_block(text)
             return self._parse_pseudocode_block(text)
-            
+
         return self._parse_pseudocode_block(text)
-
-
 
     # =========================================================================
     # Pseudocode Parsing (Inverse of tools/simplify_cards.py)
@@ -540,7 +535,7 @@ class AbilityParserV2:
                     # Optional or Mid-Ability costs go to 'instructions' for interpreter handling.
                     # Complex costs (SELECT_MEMBER, etc.) MUST be in bytecode
                     is_complex = c.type == AbilityCostType.NONE
-                    
+
                     if not c.is_optional and not instructions and not is_complex:
                         costs.append(c)
                     else:
@@ -559,7 +554,7 @@ class AbilityParserV2:
                 new_effects = self._parse_pseudocode_effects(eff_str, last_target=last_target)
                 if new_effects:
                     last_target = new_effects[-1].target if isinstance(new_effects[-1], Effect) else last_target
-                
+
                 # Filter out Conditions from the 'effects' list to avoid AttributeErrors in compiler
                 effects.extend([e for e in new_effects if isinstance(e, Effect)])
                 instructions.extend(new_effects)
@@ -746,11 +741,11 @@ class AbilityParserV2:
         for char in content:
             if char == '"':
                 in_quotes = not in_quotes
-            elif char == '[':
+            elif char == "[":
                 depth += 1
-            elif char == ']':
+            elif char == "]":
                 depth -= 1
-            
+
             if char == "," and not in_quotes and depth == 0:
                 parts.append(current.strip())
                 current = ""
@@ -833,7 +828,10 @@ class AbilityParserV2:
 
                 # Manual Mapping for specific cost names
                 if name == "MOVE_TO_DECK":
-                    if 'from="discard"' in (brace_params or "").lower() or "from='discard'" in (brace_params or "").lower():
+                    if (
+                        'from="discard"' in (brace_params or "").lower()
+                        or "from='discard'" in (brace_params or "").lower()
+                    ):
                         name = "RETURN_DISCARD_TO_DECK"
                     else:
                         name = "RETURN_MEMBER_TO_DECK"
@@ -855,7 +853,7 @@ class AbilityParserV2:
                     cost_name = "SACRIFICE_SELF"
                 else:
                     cost_name = name.upper()
-                
+
                 if cost_name == "DISCARD_SELF":
                     cost_name = "DISCARD_HAND"
                     val = 1
@@ -1026,8 +1024,9 @@ class AbilityParserV2:
                                 params["target"] = "opponent"
                             else:
                                 params["target"] = "self"
-                            
-                            if "PLAYER" in params: del params["PLAYER"]
+
+                            if "PLAYER" in params:
+                                del params["PLAYER"]
                             if "val" in params and params["val"].upper() in ["PLAYER", "OPPONENT"]:
                                 del params["val"]
                         if "COUNT" in params:
@@ -1329,10 +1328,10 @@ class AbilityParserV2:
                             # The engine uses 0-indexed (0=Pink, 4=Blue).
                             val_int = int(target_name) - 1
                         except (ValueError, TypeError):
-                            val_int = 0 # Default to pink if unknown
+                            val_int = 0  # Default to pink if unknown
                         # Source (a) is encoded in attr in ability.py, so we just set it here
-                        params["source_color"] = 0 
-                        target = TargetType.PLAYER # Reset target so it doesn't try to target member '5'
+                        params["source_color"] = 0
+                        target = TargetType.PLAYER  # Reset target so it doesn't try to target member '5'
                     elif val and val.isdigit():
                         # Standard TRANSFORM_COLOR(src) -> dst
                         try:

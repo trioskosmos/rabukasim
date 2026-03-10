@@ -9,14 +9,14 @@ t 2>&1
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~
-    + CategoryInfo          
-    : NotSpecified: (   Co  
-  mpiling en...ngine_rust   
- _src):String) [], Remot    
+    + CategoryInfo
+    : NotSpecified: (   Co
+  mpiling en...ngine_rust
+ _src):String) [], Remot
 eException
-    + FullyQualifiedErrorId 
+    + FullyQualifiedErrorId
     : NativeCommandError
- 
+
 error[E0425]: cannot find va
 lue `CHOICE_DONE` in this sc
 ope
@@ -24,12 +24,12 @@ ope
 eter\handlers\member_state.r
 s:63:44
    |
-63 |                     if 
+63 |                     if
 ctx.choice_index == CHOICE_D
 ONE || ctx.choice_index == 1
  { return Some(HandlerResult
 ::SetCond(false)); }
-   |                        
+   |
                     ^^^^^^^^
 ^^^ not found in this scope
    |
@@ -48,12 +48,12 @@ ope
 eter\handlers\member_state.r
 s:63:44
    |
-63 |                     if 
+63 |                     if
 ctx.choice_index == CHOICE_D
 ONE || ctx.choice_index == 1
  { return Some(HandlerResult
 ::SetCond(false)); }
-   |                        
+   |
                     ^^^^^^^^
 ^^^ not found in this scope
    |
@@ -65,7 +65,7 @@ ible
   --> src\core\logic\interpr
 eter\constants.rs:88:1
    |
-88 | pub const CHOICE_DONE: 
+88 | pub const CHOICE_DONE:
 i16 = 99;
    | ^^^^^^^^^^^^^^^^^^^^^^^
 ^^^^^^^^^ not accessible
@@ -78,7 +78,7 @@ ndition value: `gpu`
   |        ^^^^^^^^^^^^^^^
   |
   = note: expected values fo
-r `feature` are: `default`, 
+r `feature` are: `default`,
 `extension-module`, `nn`, an
 d `parallel`
   = help: consider adding `g
@@ -102,7 +102,7 @@ ndition value: `gpu`
   |        ^^^^^^^^^^^^^^^
   |
   = note: expected values fo
-r `feature` are: `default`, 
+r `feature` are: `default`,
 `extension-module`, `nn`, an
 d `parallel`
   = help: consider adding `g
@@ -152,7 +152,7 @@ tyContext {
    |         help: remove th
 is `mut`
 
-warning: `engine_rust` (lib 
+warning: `engine_rust` (lib
 test) generated 4 warnings
 error: could not compile `en
 gine_rust` (lib test) due to

@@ -17,11 +17,11 @@ This document provides concrete code changes for the highest-impact optimization
 for (hand_idx, &cid) in player.hand.iter().enumerate().take(60) {
     if let Some(card) = db.get_member(cid) {  // DB LOOKUP #1
         let base_cost = (card.cost as i32 - player.cost_reduction as i32).max(0);
-        
+
         for slot_idx in 0..3 {
             // ... more logic
         }
-        
+
         // Later in same loop (line 115):
         for (ab_idx, ab) in card.abilities.iter().enumerate() {  // Uses cached card
             // but this is inside ANOTHER db.get_member call at line 112!
@@ -65,7 +65,7 @@ impl ActionGenerator for MainPhaseGenerator {
                 let base_cost = (card.cost as i32 - player.cost_reduction as i32).max(0);
 
                 for slot_idx in 0..3 {
-                    // ... existing logic but using cached 'card' 
+                    // ... existing logic but using cached 'card'
                     // No database lookups here!
                 }
             }
@@ -88,14 +88,14 @@ fn run_single_thread(...) -> (u64, u64) {
     let mut total_steps: u64 = 0;
     let start = Instant::now();
     let mut rng_state = seed;
-    
+
     // PROBLEM: Allocates new Vec on EVERY iteration!
     let mut mask = vec![false; ACTION_SPACE];
 
     while start.elapsed() < duration {
         let mut sim = initial_state.clone();
         let mut steps: u64 = 0;
-        
+
         while !sim.is_terminal() && steps < 1000 {
             // PROBLEM: This reallocates!
             mask.iter_mut().for_each(|b| *b = false);
@@ -113,23 +113,23 @@ fn run_single_thread(...) -> (u64, u64) {
     let mut total_steps: u64 = 0;
     let start = Instant::now();
     let mut rng_state = seed;
-    
+
     // === ALLOCATE ONCE OUTSIDE LOOP ===
     let mut mask = vec![false; ACTION_SPACE];
 
     while start.elapsed() < duration {
         let mut sim = initial_state.clone();
         let mut steps: u64 = 0;
-        
+
         while !sim.is_terminal() && steps < 1000 {
             // === USE fill() INSTEAD OF iter_mut() ===
             // This is faster and doesn't reallocate
             mask.fill(false);
-            
+
             sim.get_legal_actions_into(db, sim.current_player as usize, &mut mask);
             // ... rest of logic
         }
-        
+
         total_games += 1;
         total_steps += steps;
     }
@@ -248,22 +248,22 @@ pub fn dispatch(&self, ...) -> HandlerResult {
     match op {
         // Meta control: 0-9, 100-199
         0..=9 | 100..=199 => meta_control::handle_meta_control(...)?,
-        
+
         // Draw/hand: 10-29
         10..=29 => draw_hand::handle_draw(...)?,
-        
+
         // Member state: 30-59
         30..=59 => member_state::handle_member_state(...)?,
-        
+
         // Energy: 60-79
         60..=79 => energy::handle_energy(...)?,
-        
+
         // Deck/zones: 80-99
         80..=99 => deck_zones::handle_deck_zones(...)?,
-        
+
         // Score/hearts: 300+
         300..=399 => score_hearts::handle_score_hearts(...)?,
-        
+
         _ => return HandlerResult::Continue,
     }
 }
@@ -296,12 +296,12 @@ pub struct GameState {
 // In evaluate_player:
 fn evaluate_player(state: &GameState, db: &CardDatabase, ...) -> f32 {
     let deck_ptr = p.deck.as_ptr() as usize;
-    
+
     let stats = p.deck_stats_cache
         .borrow_mut()
         .entry(deck_ptr)
         .or_insert_with(|| calculate_deck_expectations(&p.deck, db));
-    
+
     // Use cached stats...
 }
 ```
@@ -334,13 +334,13 @@ Currently, `get_member_cost` is called in `main_phase.rs` (to generate actions) 
 
 **Strategy:**
 Instead of recalculating the cost in `play_member_with_choice`, we should pass the calculated cost from the `ActionGenerator` into the action itself, OR cache it in a transient frame structure on `GameState`.
-Wait, Action IDs carry limited bits. A better approach: 
+Wait, Action IDs carry limited bits. A better approach:
 - `GameState` tracks a `transient_costs` array mapping `(hand_idx, slot_idx) -> cost`.
 - Or, simplify `get_member_cost` by pre-caching constant reduction effects when the card enters the field, rather than scanning the whole field *every time* someone asks for a cost.
 
 **Better Architecture for rule.rs::get_member_cost:**
 `get_member_cost` currently loops over *every* card on the field looking for `O_REDUCE_COST`.
-We already have `PlayerState::cost_reduction`! 
-Why are we scanning the field again? 
+We already have `PlayerState::cost_reduction`!
+Why are we scanning the field again?
 Ah! "Granted Abilities" and "Temporary cost modifiers".
 We should eagerly compile these into a single integer `cost_reduction` or `cost_modifier` field on `PlayerState` whenever state changes, rather than computing it lazily on every cost check.

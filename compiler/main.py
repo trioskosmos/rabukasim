@@ -15,12 +15,14 @@ from pydantic import TypeAdapter
 from engine.models.ability import AbilityCostType, ConditionType, EffectType, TriggerType
 from engine.models.card import EnergyCard, LiveCard, MemberCard
 from engine.models.enums import CHAR_MAP
+from engine.models.generated_metadata import CONDITIONS, COSTS, OPCODES
 from engine.models.opcodes import Opcode
-from engine.models.generated_metadata import OPCODES, CONDITIONS, COSTS
 
 # --- Compile-time Bytecode Validation ---
 # Combined: all valid base opcodes derived from source metadata
-_ALL_VALID_OPS = set(OPCODES.values()) | set(CONDITIONS.values()) | set(COSTS.values()) | {0, 1} # Ensure basic ops are included
+_ALL_VALID_OPS = (
+    set(OPCODES.values()) | set(CONDITIONS.values()) | set(COSTS.values()) | {0, 1}
+)  # Ensure basic ops are included
 
 
 def validate_bytecode(bytecode: list, card_no: str, ab_idx: int) -> list:
@@ -210,6 +212,7 @@ def compile_cards(input_path: str, output_path: str):
 
     # Output Automatic Documentation
     from compiler.doc_generator import generate_opcode_docs
+
     generate_opcode_docs(compiled_data, "reports/opcode_reference.md")
 
     # Write output (always write, even with errors)
@@ -235,6 +238,7 @@ def compile_cards(input_path: str, output_path: str):
             return
         # Extract first line (the summary) as key, collect card identifiers
         from collections import defaultdict
+
         groups: dict[str, list[str]] = defaultdict(list)
         for entry in error_list:
             first_line = entry.split("\n")[0].strip()
@@ -286,7 +290,7 @@ def compile_cards(input_path: str, output_path: str):
                 f_err.write("=== BYTECODE VALIDATION ISSUES ===\n")
                 for issue in validation_issues:
                     f_err.write(f"{issue}\n")
-        print(f"  Full log: compiler_errors.log")
+        print("  Full log: compiler_errors.log")
 
     print("Done.")
 
@@ -367,7 +371,6 @@ if os.path.exists(MANUAL_TRANSLATIONS_EN_PATH):
 
 def compute_flags(card):
     """Replicates Rust flag calculation logic in the Python compiler."""
-    from engine.models.opcodes import Opcode
 
     ability_flags = 0
     semantic_flags = 0
@@ -511,7 +514,7 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
     raw_jp = str(data.get("ability", ""))
     raw_ability = ""
     found_pseudocode = False
-    
+
     if raw_jp in _consolidated_abilities:
         entry = _consolidated_abilities[raw_jp]
         raw_ability = entry.get("pseudocode") if isinstance(entry, dict) else entry
@@ -573,6 +576,7 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
             ab.bytecode = ab.compile()
         except Exception as e:
             import traceback
+
             tb_str = traceback.format_exc()
             _bytecode_compile_errors.append(f"[MEMBER] {card_no} ab#{idx}: {e}\n{tb_str}")
 
@@ -588,7 +592,7 @@ def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
     raw_jp = str(data.get("ability", ""))
     raw_ability = ""
     found_pseudocode = False
-    
+
     if raw_jp in _consolidated_abilities:
         entry = _consolidated_abilities[raw_jp]
         raw_ability = entry.get("pseudocode") if isinstance(entry, dict) else entry
@@ -647,6 +651,7 @@ def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
             ab.bytecode = ab.compile()
         except Exception as e:
             import traceback
+
             tb_str = traceback.format_exc()
             _bytecode_compile_errors.append(f"[LIVE] {card_no} ab#{idx}: {e}\n{tb_str}")
 
@@ -713,11 +718,13 @@ def parse_live_reqs(req_dict: dict) -> np.ndarray:
 
 import hashlib
 
+
 def calculate_hash(path):
     if not os.path.exists(path):
         return None
     with open(path, "rb") as f:
         return hashlib.sha256(f.read()).hexdigest()
+
 
 def load_json(path):
     """Safely load a JSON file with UTF-8 encoding."""
@@ -729,17 +736,18 @@ def load_json(path):
     except Exception:
         return None
 
+
 def check_parity(input_path, output_path):
     print(f"Checking parity between {input_path} and {output_path}...")
     compiled_data = load_json(output_path)
     if not compiled_data:
         print("Error: Compiled data not found.")
         return False
-    
+
     # Check if meta contains the source hash
     stored_hash = compiled_data.get("meta", {}).get("source_hash")
     current_hash = calculate_hash(input_path)
-    
+
     if stored_hash == current_hash:
         print("SUCCESS: Parity check passed. Compiled data is up to date.")
         return True
@@ -748,6 +756,7 @@ def check_parity(input_path, output_path):
         print(f"Stored:  {stored_hash}")
         print(f"Current: {current_hash}")
         return False
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -763,7 +772,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
     compile_cards(args.input, args.output)
-    
+
     # Update hash in the output file
     print("Updating source hash in compiled file...")
     compiled_data = load_json(args.output)

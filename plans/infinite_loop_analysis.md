@@ -12,7 +12,7 @@ Analysis of infinite loop causes in the Loveca game engine, focusing on serializ
 
 ### 2. Trace Analysis (trace_it51_g5_Loop.json)
 - **Reason**: "Loop" (not "Turn" or "Terminal")
-- **Pattern Found**: 
+- **Pattern Found**:
   - Phase 10 (LiveResult) repeated with Action ID 11000 (Select Choice Index 0)
   - Actions 599-716 show repeated "Select Choice Index 0" on phase 10
   - This suggests a failure to progress past LiveResult phase
@@ -46,7 +46,7 @@ Analysis of infinite loop causes in the Loveca game engine, focusing on serializ
 - When `live_result_selection_pending` is true, `auto_step` breaks early (game.rs line 869-870)
 - If the AI keeps selecting the same action (11000), it may not progress
 
-#### B. RPS Draw Loop  
+#### B. RPS Draw Loop
 - RPS draws restart RPS with `rps_choices = [-1, -1]`
 - Could loop indefinitely if both players keep choosing same move
 

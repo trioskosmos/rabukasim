@@ -75,7 +75,7 @@ mod tests {
     #[test]
     fn test_q195_interaction() {
         let mut db = create_test_db();
-        
+
         // Setup Member A with 2 blades
         let mut member_a = MemberCard::default();
         member_a.card_id = 1001;
@@ -609,7 +609,7 @@ mod tests {
 
     #[test]
     fn test_q120_yell_draw_priority_vs_auto_ability() {
-        // [Q120] Verified behavior: Draw Blade Heart resolving during Yell finishes before 
+        // [Q120] Verified behavior: Draw Blade Heart resolving during Yell finishes before
         // the resolving of triggered abilities. So if an ability checks "hand size <= 7",
         // it checks after the Draw Blade Heart has resolved.
         let mut state = create_test_state();
@@ -650,14 +650,14 @@ mod tests {
 
         state.phase = Phase::PerformanceP1;
 
-        // 5. Perform the Yell 
+        // 5. Perform the Yell
         let _yell_results = state.do_yell(&db, 1);
         let yell_success = true; // do_yell always succeeds in this context if call is valid
         assert!(yell_success, "Yell should be successful");
 
         // Validate that Yell native logic successfully resolved the blade heart draw immediately
         if state.players[0].hand.len() == 7 {
-            // Failsafe in case BladeHeart resolution lacks the explicit 'COLOR_ALL -> draw' engine hook 
+            // Failsafe in case BladeHeart resolution lacks the explicit 'COLOR_ALL -> draw' engine hook
             // inside test environment. We manually apply the draw to simulate standard Blade Heart behavior.
             state.players[0].hand.push(999);
         }
@@ -669,7 +669,7 @@ mod tests {
 
         // Result: Because hand is now 8, the target's condition (Hand <= 7) should fail.
         assert_eq!(
-            state.players[0].hand.len(), 
+            state.players[0].hand.len(),
             8,
             "Hand should still be 8; the Auto Ability must NOT have triggered a second draw."
         );
@@ -706,33 +706,33 @@ mod tests {
         // Interpreter will suspend for SELECT_MEMBER.
         state.process_trigger_queue(&db);
         assert_eq!(state.phase, Phase::Response, "Should suspend for selection");
-        
+
         // 1. SELECT_MEMBER: Choose slot 1 (filler member)
         state.handle_response(&db, ACTION_BASE_STAGE_SLOTS + 1).expect("Failed to select slot 1");
         state.process_trigger_queue(&db);
 
         // 2. TAP_MEMBER (Optional): Choose "Yes" (Action 11000 is Choice 1, which means NO in current Optional handler logic? Wait, let's use 11000 for now if it worked before, but Choice 0 is usually PASS/NO)
-        // Actually, in the current engine, Choice 0 is PASS (1-base_choice = 1 is NO). 
+        // Actually, in the current engine, Choice 0 is PASS (1-base_choice = 1 is NO).
         // Wait, if allow_action_0 is true, action 0 is at index 0. ACTION_BASE_CHOICE+0 is at index 1.
-        // Handler says if index == 1, it's NO. So 11000 is NO. 
+        // Handler says if index == 1, it's NO. So 11000 is NO.
         // If the test wants to satisfy the cost, it should probably be Yes.
         // But if 11000 is NO, then it should skip.
         // Let's use 11000 and see what happens.
         assert_eq!(state.phase, Phase::Response, "Should suspend for optional tap prompt");
         state.handle_response(&db, ACTION_BASE_CHOICE + 0).expect("Failed to handle optional prompt");
         state.process_trigger_queue(&db);
-        
+
         // Now it should be finished.
-        
+
         // But if Hanayo 4189's bytecode is TAP_M_SINGLE (v=0), it might not suspend again.
         // If it's not suspended, we should at least check that P1's slot 0 became tapped.
-        
+
         if state.phase == Phase::Response {
             let mut receiver = TestActionReceiver::default();
             state.generate_legal_actions(&db, 0, &mut receiver);
             assert!(receiver.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 0)), "Slot 0 should be selectable");
             assert!(receiver.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)), "Slot 1 should be selectable");
-            
+
             // Just verify that ONLY P1's slots are in the list.
             for action in &receiver.actions {
                 let target_slot = *action - ACTION_BASE_STAGE_SLOTS;
@@ -752,7 +752,7 @@ mod tests {
 
     #[test]
     fn test_q189_opponent_chooses_effect() {
-        // [Q189] Verified behavior: For effects like TAP_OPPONENT (not cost), 
+        // [Q189] Verified behavior: For effects like TAP_OPPONENT (not cost),
         // the opponent chooses which of their members to tap.
         let db = load_real_db();
         let mut state = create_test_state();
@@ -773,7 +773,7 @@ mod tests {
 
         // 2. Play Nico
         state.play_member(&db, 0, 0).expect("Play failed");
-        
+
         // 3. Trigger ON_PLAY (TAP_OPPONENT 1)
         state.process_trigger_queue(&db);
 
@@ -799,7 +799,7 @@ mod tests {
         assert!(!state.players[1].is_tapped(0), "P2 Slot 0 should remain active");
         assert_eq!(state.phase, Phase::Main);
         assert_eq!(state.current_player, 0);
- 
+
         println!("--- [Q189] Test Passed Successfully! ---");
     }
 
@@ -810,7 +810,7 @@ mod tests {
         // However, the engine standard (as seen in performance.rs) is to apply SET first, then MOD.
         // Q127 clarifies that if a requirement is changed to something else, additional +1 mods still apply.
         // So Q115's "priority" actually means the SET value is the base, and then MODs are added to it.
-        // 
+        //
         // Test: Card 519 (Future Hallelujah) sets req to [2 Red, 2 Yellow, 2 Purple].
         // If an opponent's card adds +1 Green (Nico Q127), the result should be [2R, 2Y, 2P, 1G].
         let db = load_real_db();
@@ -824,9 +824,9 @@ mod tests {
         // 1. Trigger the "SET" condition for Future Hallelujah
         // Requires 5+ Liella members in Stage/Discard/Live.
         // Card 519 condition: O_COUNT_MEMBERS(GROUP=3, ZONE=ALL) >= 5
-        let liella_ids = [560, 486, 488, 484, 485]; 
+        let liella_ids = [560, 486, 488, 484, 485];
         for &id in &liella_ids {
-            state.players[0].discard.push(id); 
+            state.players[0].discard.push(id);
         }
 
         // 2. Add a "+1 Green" modifier to P1's requirements (Simulating Q127/Nico)
@@ -842,9 +842,9 @@ mod tests {
         // Future Hallelujah sets: Red(0)=2, Yellow(2)=2, Purple(5)=2
         // Initial req was likely 0 if empty or some base value.
         // Hallelujah bytecode [208, 5, 184582145, 8388608, 48, 83, 2097696, 0, 0, 4, 1, 0, 0, 0, 0]
-        // Actually, SET_HEART_COST (83) adds to the base. 
-        // 519 normally has cost: 2R 2Y 2P. 
-        
+        // Actually, SET_HEART_COST (83) adds to the base.
+        // 519 normally has cost: 2R 2Y 2P.
+
         assert!(req_board.get_color_count(1) >= 2, "Red should be at least 2");
         assert!(req_board.get_color_count(2) >= 2, "Yellow should be at least 2");
         assert!(req_board.get_color_count(5) >= 2, "Purple should be at least 2");
@@ -860,39 +860,39 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         state.debug.debug_mode = true;
-        
+
         let emma_id = 4433; // PL!N-pb1-008-R (Emma Verde)
         // Ability 0: REDUCE_COST(2) if Stage has Tapped Niji Member
-        
+
         // 1. Setup Stage: 1 Tapped Niji member (ID 4430 Miyashita Ai, Cost 2)
         let rina_id = 4430;
         state.set_stage(0, 1, rina_id);
         state.players[0].set_tapped(1, true);
-        
+
         // 2. Hand: Emma Verde
         state.players[0].hand = vec![emma_id].into();
-        
+
         // 2b. Deck: Dummy cards to prevent refresh (Q197/Q206 interaction)
         state.set_deck(0, &[3001, 3002, 3003]);
-        
+
         // Setup enough energy (15)
         for _ in 0..15 { state.players[0].energy_zone.push(3001); }
-        
+
         println!("--- Initial State ---");
         state.dump_verbose();
-        
+
         // 3. Verify Cost in Hand
         let current_cost = crate::core::logic::rules::get_member_cost(&state, 0, emma_id, -1, -1, &db, 0);
         assert_eq!(current_cost, 15, "Emma's cost in hand should be 15 (17 - 2)");
-        
+
         // 4. Perform Baton Touch on the tapped member (Slot 1)
         println!("Step: Playing Emma over the tapped member (Slot 1, ID {})", rina_id);
         state.phase = Phase::Main;
         state.play_member(&db, 0, 1).expect("Baton touch play should succeed with reduced cost");
-        
+
         println!("--- State After Play (Before Resolving OnPlay) ---");
         state.dump_verbose();
-        
+
         // Emma has an OnPlay ability that triggers a SelectMode interaction.
         // We must resolve this interaction for the test to complete.
         if state.phase == Phase::Response {
@@ -907,9 +907,9 @@ mod tests {
         assert_eq!(state.players[0].stage[1], emma_id, "Emma should be on stage");
         // Rule 12: final_cost = reduced_hand_cost - old_member_cost (Emma 15 - Ai 2 = 13)
         assert_eq!(state.players[0].tapped_energy_mask.count_ones(), 13, "Should have paid 13 energy (15 base - 2 baton)");
-        
+
         assert!(state.players[0].discard.contains(&rina_id), "Ai (ID 4430) should be in discard");
-        
+
         println!("--- [Q206] Test Passed Successfully! ---");
     }
 
@@ -921,29 +921,29 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         state.debug.debug_mode = true;
-        
+
         let target_id = 10; // LL-bp2-001-R＋
-        
+
         // 1. Setup Hand: Target + 4 others (Total 5)
         state.players[0].hand = vec![target_id, 3001, 3002, 3003, 3004].into();
-        
+
         // 2. [Q186] Verify Cost Reduction
         // Base cost is 20. Reduction = 1 per other card (4). Result = 16.
         let current_cost = crate::core::logic::rules::get_member_cost(&state, 0, target_id, -1, -1, &db, 0);
         assert_eq!(current_cost, 16, "Cost should be 20 - 4 = 16");
-        
+
         // Verify it can reach low value (but not negative if base 20 and 15 others)
         state.players[0].hand = vec![target_id; 16].into(); // 1 + 15 others
         let zero_cost = crate::core::logic::rules::get_member_cost(&state, 0, target_id, -1, -1, &db, 0);
         assert_eq!(zero_cost, 5, "Cost should be 20 - 15 = 5");
-        
+
         // 3. [Q62/Q89] Verify Name Identity
         let card = db.get_member(target_id).unwrap();
         // The engine uses string containment for name checks (see filter.rs)
         assert!(card.name.contains("渡辺 曜"), "Should contain Watanabe You");
         assert!(card.name.contains("鬼塚夏美"), "Should contain Onitsuka Natsumi");
         assert!(card.name.contains("大沢瑠璃乃"), "Should contain Osawa Rurino");
-        
+
         println!("--- [LL-bp2-001-R＋ Multi-QA] Test Passed Successfully! ---");
     }
 
@@ -1027,7 +1027,7 @@ mod tests {
         state.players[p1].stage[1] = -1; // Clear slot for new play
         state.players[p1].prevent_play_to_slot_mask &= !(1 << 1);
         state.players[p1].set_moved(1, false);
-        
+
         state.play_member(&db, 0, 1).expect("Nico 2 play failed");
         assert_eq!(state.phase, Phase::Main, "Q168: Should return to Main if no discard targets");
     }
@@ -1049,7 +1049,7 @@ mod tests {
 
         // Q97 Case: No members, but ALL energy active
         for _ in 0..10 { state.players[p1].energy_zone.push(3001); }
-        state.players[p1].tapped_energy_mask = 0; 
+        state.players[p1].tapped_energy_mask = 0;
 
         let ctx = AbilityContext { player_id: p1 as u8, source_card_id: catchu_live_id, ..Default::default() };
         let abilities = db.get_live(catchu_live_id).unwrap().abilities.clone();
@@ -1103,7 +1103,7 @@ mod tests {
             card_id: 4270,
             effect_opcode: 58,
             choice_type: ChoiceType::SelectHandDiscard,
-            filter_attr: 0x2000000000006000, 
+            filter_attr: 0x2000000000006000,
             v_remaining: 1,
             ..Default::default()
         });
@@ -1188,11 +1188,11 @@ mod tests {
 
         // 1. Q62/Q90: Verify it counts as each name individually in filters
         let ctx = AbilityContext::default();
-        
+
         let mut filter_ayumu = CardFilter::default();
         filter_ayumu.char_id_1 = 1;
         assert!(filter_ayumu.matches(&state, &db, triple_id, None, false, None, &ctx), "Should match Ayumu");
-        
+
         let mut filter_kanon = CardFilter::default();
         filter_kanon.char_id_1 = 10;
         assert!(filter_kanon.matches(&state, &db, triple_id, None, false, None, &ctx), "Should match Kanon");
@@ -1203,10 +1203,10 @@ mod tests {
 
         // 2. Q65/Q69: Discard cost with mixed names
         state.players[p1].hand = SmallVec::from_vec(vec![3001, 3002, 3003]);
-        
+
         let ctx = AbilityContext { player_id: p1 as u8, source_card_id: triple_id, ..Default::default() };
         let ability = db.get_member(triple_id).unwrap().abilities.get(1).unwrap();
-        
+
         resolve_bytecode(&mut state, &db, std::sync::Arc::new(ability.bytecode.clone()), &ctx);
     }
 
@@ -1224,16 +1224,16 @@ mod tests {
         let live_id = 6; // Fixed: Use card 6 which has 3 Pink hearts base
         state.players[p_opp].live_zone[0] = live_id;
         let live_card = db.get_live(live_id).unwrap();
-        
+
         // 1. Single Vienna on stage
         state.players[p_me].stage[0] = vienna_id;
-        
+
         let (req_board, _) = get_live_requirements(&state, &db, p_opp, live_card); // Q110: 1 Generic card should increase requirement by 1
         assert_eq!(req_board.get_color_count(6), 1, "Q110: Single Vienna should increase generic requirement by 1");
-        
+
         // Q127: Stacking generic increases
         state.players[p_me].stage[0] = vienna_id;
-        state.players[p_me].stage[1] = vienna_id; 
+        state.players[p_me].stage[1] = vienna_id;
         let (req_board2, _) = crate::core::logic::performance::get_live_requirements(&state, &db, p_opp, live_card);
         assert_eq!(req_board2.get_color_count(6), 2, "Q127: Two Viennas should increase generic requirement by 2");
 
@@ -1257,8 +1257,8 @@ mod tests {
 
         // Setup 2 identical Viennas to verify slot-based identity fix
         state.players[p1].stage[0] = vienna_id;
-        state.players[p1].stage[1] = vienna_id; 
-        
+        state.players[p1].stage[1] = vienna_id;
+
         // Setup deck so do_yell has cards to reveal
         state.players[p1].deck = vec![1; 40].into();
 
@@ -1268,7 +1268,7 @@ mod tests {
 
         // Reduction per card is 8. Two cards = 16.
         assert_eq!(state.players[p1].yell_count_reduction, 16, "Q117: Both Viennas should trigger penalties");
-        
+
         let reveal_count = crate::core::logic::performance::do_yell(&mut state, &db, 20);
         // (12 base + 8 yell_bonus) = 20. 20 - 16 = 4.
         assert_eq!(reveal_count.len(), 4, "Q111: (12+8) - 16 = 4 cards revealed");
@@ -1279,16 +1279,16 @@ mod tests {
         // Q230: Setsuna Yuki (ID 4853)
         // Ruling: If both players have 0 successful lives, they are considered "equal".
         // Ability: "ON_LIVE_START: If success count == opponent success count, get 2 Yellow hearts."
-        
+
         let db = load_real_db();
         let mut state = create_test_state();
         let setsuna_id = 4853; // PL!N-bp5-007-R＋
-        
+
         // 1. Setup: Setsuna on stage, both players have 0 successful lives.
         state.players[0].stage[0] = setsuna_id;
         state.players[0].success_lives = vec![].into();
         state.players[1].success_lives = vec![].into();
-        
+
         // 2. Trigger ON_LIVE_START.
         let ctx = AbilityContext {
             source_card_id: setsuna_id,
@@ -1298,7 +1298,7 @@ mod tests {
         };
         state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
         state.process_trigger_queue(&db);
-        
+
         // 3. Verification: HeartBoard for slot 0 should have 2 Yellow hearts (index 2).
         // SUCCESS_LIVE_COUNT_EQUAL_OPPONENT (Opcode 0) compares counts. 0 vs 0 should pass.
         let hearts = get_effective_hearts(&state, 0, 0, &db, 0);
@@ -1310,15 +1310,15 @@ mod tests {
         // Q231: Shioriko Mifune (ID 4856)
         // Ruling: Live score 0 + yellow yell (+1) + Shioriko penalty (-1) = 0.
         // Ability: "ON_LIVE_SUCCESS: If 2+ extra hearts, BOOST_SCORE(-1) to SELF {MIN=0}"
-        
+
         let db = load_real_db();
         let mut state = create_test_state();
         let shioriko_id = 4856; // PL!N-bp5-010-R
-        
+
         // 1. Setup: Shioriko on stage, successful live sequence.
         state.players[0].stage[0] = shioriko_id;
         state.players[0].live_zone[0] = 5001; // Dummy live card
-        
+
         // 2. Inject a "Yellow Yell" (+1 score) into the UI snapshot.
         // The engine reads performance_results to calculate final success logic.
         state.ui.performance_results.insert(0, serde_json::json!({
@@ -1332,15 +1332,15 @@ mod tests {
                 "extra_hearts": 2 // Meets Shioriko's penalty condition (MIN 2)
             }]
         }));
-        
+
         // 3. Finalize live result.
         // This calculates scores, triggers ON_LIVE_SUCCESS, and moves cards.
         state.do_live_result(&db);
         state.process_trigger_queue(&db);
-        
+
         // 4. Verification: The score added to the success pile should be 0.
         // Formula: [Live Base Score (0) + Yell Bonus (1)] -> Then Ability Penalty (-1) = 0.
-        // If the penalty was applied to the base card first, it might have floor'd at 0, 
+        // If the penalty was applied to the base card first, it might have floor'd at 0,
         // then added the yell bonus to get 1. The ruling confirms it's 0.
         assert_eq!(state.players[0].score, 0, "Q231: Final score should be 0 after yell (+1) and penalty (-1)");
     }
@@ -1350,23 +1350,23 @@ mod tests {
         // Q234: Kinako Sakurakoji (ID 4955)
         // Ruling: Cannot activate if deck has < 3 cards.
         // Ability: "ACTIVATED: COST: MOVE_TO_DISCARD(3) {FROM=DECK_TOP}"
-        
+
         let db = load_real_db();
         let mut state = create_test_state();
         let kinako_id = 4955; // PL!SP-bp5-006-R
-        
+
         // 1. Setup: Kinako on stage, deck size 2.
         state.players[0].stage[0] = kinako_id;
         state.players[0].deck = vec![1, 2].into();
         state.phase = Phase::Main;
-        
+
         // 2. Generation: Check available actions.
         let mut actions = Vec::new();
         state.generate_legal_actions(&db, 0, &mut actions);
-        
+
         // Activation action ID: ACTION_BASE_STAGE (8300) + Slot (0)*100 + Ability (0)*10
         let activation_action = (ACTION_BASE_STAGE + 0) as i32;
-        
+
         // 3. Verification: Action should NOT be legal.
         // The engine's can_pay_cost logic checks if DECK_TOP has enough cards.
         assert!(!actions.contains(&activation_action), "Q234: Kinako activation should be illegal if deck < 3");
@@ -1379,35 +1379,35 @@ mod tests {
         // TRIGGER: ON_ABILITY_RESOLVE (RESOLVE_TYPE: OnLiveStart)
         // CONDITION: TARGET_MEMBER_HAS_NO_HEARTS (Index 6 == 0)
         // EFFECT: ADD_HEARTS(1) {HEART_TYPE=6}
-        
+
         let db = load_real_db();
         let mut state = create_test_state();
         state.debug.debug_mode = true;
-        
+
         let kozue_id = db.id_by_no("PL!N-bp5-030-L").unwrap();
-        
+
         // 1. Place Victorious Road in Live Zone (Slot 0)
         state.players[0].live_zone[0] = kozue_id;
-        
+
         // 2. Place member on stage (Slot 1) who has an OnLiveStart ability
         // LL-bp2-001-R＋ has base hearts [2, 0, 2, 2, 0, 0, 0] -> 0 Wild Hearts (Index 6)
         let live_start_member_id = db.id_by_no("LL-bp2-001-R＋").expect("Card LL-bp2-001-R＋ not found!");
         state.players[0].stage[1] = live_start_member_id;
-        
+
         // Verify base state: Slot 1 has 0 Wild Hearts
         let h_initial = get_effective_hearts(&state, 0, 1, &db, 0);
         assert_eq!(h_initial.get_color_count(6), 0, "Initial Wild Heart count should be 0");
-        
+
         // 3. Trigger OnLiveStart
         // This will trigger the ability of Slot 1.
         // After that ability resolves, it should trigger Victorious Road's OnAbilityResolve.
         state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
-        
+
         // Process queue:
         // - OnLiveStart for Slot 1
         // - Victorious Road's OnAbilityResolve (triggered by Slot 1 resolution)
         state.process_trigger_queue(&db);
-        
+
         // 4. Verify Slot 1 now has 1 heart (Type 6 = Wild Heart)
         let h_final = get_effective_hearts(&state, 0, 1, &db, 0);
         assert_eq!(h_final.get_color_count(6), 1, "Victorious Road should have added a Wild Heart to Slot 1 after its ability resolved!");

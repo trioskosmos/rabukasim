@@ -8,12 +8,12 @@ Warning: nopython is set for njit and is
 tillation_data.py --games 100 - ...
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecif 
-   ied: (C:\Users\trios\... and is ign  
+    + CategoryInfo          : NotSpecif
+   ied: (C:\Users\trios\... and is ign
   ored:String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCom 
+    + FullyQualifiedErrorId : NativeCom
    mandError
- 
+
   warnings.warn('nopython is set for nji
 t and is ignored', RuntimeWarning)
 Generating distillation data using SuperHeuristicAgent...
@@ -1041,4 +1041,3 @@ DEBUG: Pushed choices: 1
 DEBUG: Pushed choices: 1
 DEBUG: Pushed choices: 1
 Saved 10000 samples to data/full_distill_v1.npz
-

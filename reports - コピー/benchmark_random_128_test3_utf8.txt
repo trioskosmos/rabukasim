@@ -9,17 +9,17 @@ _t ...
 ~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~
 ~~
-    + CategoryInfo     
-         : NotSpecifi  
-  ed: (Uninstalled 1   
-  package in 235ms:    
+    + CategoryInfo
+         : NotSpecifi
+  ed: (Uninstalled 1
+  package in 235ms:
 String) [], Remote    E
 xception
-    + FullyQualifiedEr 
-   rorId : NativeComm  
+    + FullyQualifiedEr
+   rorId : NativeComm
   andError
- 
-Installed 1 package in 
+
+Installed 1 package in
 1.12s
 Sample Deck (ai/decks\aqours_cup.txt): Members=48, Energy=12, Lives=12
 Loaded 5 decks.

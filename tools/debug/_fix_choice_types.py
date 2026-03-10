@@ -26,8 +26,9 @@ CHOICE_MAP = {
     '"SELECT_LIVE"': "crate::core::enums::ChoiceType::SelectLive",
 }
 
+
 def process_file(filepath):
-    with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+    with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
         content = f.read()
 
     original_content = content
@@ -38,25 +39,26 @@ def process_file(filepath):
         # But for assignment/arguments it's fine.
         # Let's use a regex to replace the string if it's passed as an argument
         # or used in equality.
-        
+
         # equality check
-        content = re.sub(r'==\s*' + k, f'== {v}', content)
-        content = re.sub(k + r'\s*==', f'{v} ==', content)
-        content = re.sub(r'!=\s*' + k, f'!= {v}', content)
-        content = re.sub(k + r'\s*!=', f'{v} !=', content)
+        content = re.sub(r"==\s*" + k, f"== {v}", content)
+        content = re.sub(k + r"\s*==", f"{v} ==", content)
+        content = re.sub(r"!=\s*" + k, f"!= {v}", content)
+        content = re.sub(k + r"\s*!=", f"{v} !=", content)
 
         # assignments
-        content = re.sub(r'choice_type:\s*' + k + r'\.to_string\(\)', f'choice_type: {v}', content)
-        content = re.sub(r'choice_type:\s*' + k, f'choice_type: {v}', content)
+        content = re.sub(r"choice_type:\s*" + k + r"\.to_string\(\)", f"choice_type: {v}", content)
+        content = re.sub(r"choice_type:\s*" + k, f"choice_type: {v}", content)
 
         # arguments in suspend_interaction
         # it might look like: `\n            "SELECT_MEMBER",\n`
-        content = re.sub(r'(suspend_interaction\([^)]*?)' + k + r'([,;)])', r'\1' + v + r'\2', content, flags=re.DOTALL)
+        content = re.sub(r"(suspend_interaction\([^)]*?)" + k + r"([,;)])", r"\1" + v + r"\2", content, flags=re.DOTALL)
 
     if content != original_content:
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
         print(f"Updated {filepath}")
+
 
 def main():
     directory = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\engine_rust_src\src"
@@ -64,6 +66,7 @@ def main():
         for file in files:
             if file.endswith(".rs"):
                 process_file(os.path.join(root, file))
+
 
 if __name__ == "__main__":
     main()

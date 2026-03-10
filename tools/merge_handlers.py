@@ -12,7 +12,7 @@ with open(mod_file, "r", encoding="utf-8") as f:
     mod_content = f.read()
 
 # Remove 'pub mod' lines
-mod_content = re.sub(r'pub mod [a_z_]+;\n', '', mod_content)
+mod_content = re.sub(r"pub mod [a_z_]+;\n", "", mod_content)
 # Remove prefix from dispatch calls like draw_hand::handle_draw -> handle_draw
 for sub in [f.replace(".rs", "") for f in sub_files]:
     mod_content = mod_content.replace(f"{sub}::", "")
@@ -24,15 +24,15 @@ all_code = []
 for sub in sub_files:
     with open(os.path.join(handlers_dir, sub), "r", encoding="utf-8") as f:
         lines = f.readlines()
-    
+
     code_lines = []
     for line in lines:
         if line.startswith("use "):
-            if not line.startswith("use super::"): # ignore internal relative imports
+            if not line.startswith("use super::"):  # ignore internal relative imports
                 all_imports.add(line.strip())
         else:
             code_lines.append(line)
-            
+
     all_code.append("".join(code_lines))
 
 final_content = []

@@ -171,11 +171,11 @@ fn test_card_579_ability_1_heart_filter() {
     filter.value_threshold = 3;       // 3+ Hearts
     filter.color_mask = 1 << 2;      // Yellow (Color 2)
     filter.is_enabled = true;
-        
+
     let member_id = liella_member_id;
     let hearts = state.players[0].heart_buffs[0].to_array();
     assert!(
-        filter.matches(&state, &db, member_id, None, false, Some(&hearts), &crate::core::logic::AbilityContext::default()), 
+        filter.matches(&state, &db, member_id, None, false, Some(&hearts), &crate::core::logic::AbilityContext::default()),
         "Builder filter should match the stage member with hearts"
     );
 

@@ -78,19 +78,19 @@ fn test_q38_live_card_definition() {
     let db = load_real_db();
     let mut state = create_test_state();
     state.debug.debug_mode = true;
-    
+
     // Setup: Initialize game state with required conditions
     let live_card_id = db.id_by_no("PL!N-bp1-012-R＋").unwrap_or(100);
-    
+
     // Verify: Initial state matches expectation (per QA)
     assert_eq!(state.players[0].live_zone[0], -1, "Q38: Zone empty initially");
-    
+
     // Action: Perform the operation described in QA
     state.players[0].live_zone[0] = live_card_id;
-    
+
     // Assert: Final state matches QA expectation
     assert_eq!(state.players[0].live_zone[0], live_card_id, "Q38: Card placed");
-    
+
     println!("[Q38] PASS: Live card correctly placed");
 }
 ```
@@ -161,12 +161,118 @@ In one session, 4 tests were created covering:
 - Some QA rulings may require engine-level fixes before test implementation
 - Document such findings via `println!("[QA_ID] ISSUE: description")` in test
 
-## 3. Best Practices
+## 4. Test Fidelity Scoring System
+
+The QA matrix uses a **fidelity scoring system** to distinguish high-quality engine-driven tests from placeholder tests:
+
+### Score Calculation
+- **Base**: 0 points
+- **Assertions**: +1 per assertion_* (max 4) = **4 points**
+- **Engine Signals**: +3 per engine call found (max 12) = **12 points**
+  - Direct engine calls: `do_live_result()`, `do_draw_phase()`, `do_performance_phase()`, `play_member()`, `auto_step()`, `handle_liveresult()`, `generate_legal_actions()`, etc.
+- **Real DB**: +3 bonus for `load_real_db()`
+- **Penalties**: -6 per suspicious pattern (simplified, structural verification, no actual placement needed, etc.)
+- **Penalties**: -5 if no engine signals, -4 if no assertions
+
+### Minimum Threshold: 2 points
+Tests scoring below 2 are excluded from coverage.
+
+### Examples
+- ✅ `test_q83_choose_exactly_one_success_live` (Score: 10) – sets up state, calls `do_live_result()`, calls `handle_liveresult()`, verifies discard, asserts
+- ❌ `test_q50_both_success_same_score_order_unchanged` (Score: < 2) – manually sets flags, no real game flow
+- ❌ Legacy setup tests – manual vector manipulation, comment-based rules, no engine interaction
+
+## 5. Weak Test Audit & Remediation
+
+### Identified Weak Tests (March 2026)
+
+| Test ID | Current Score | Issue | Status |
+|---------|---------------|-------|--------|
+| Q14 | -3 | Manual deck/energy vectors, no engine calls | **TO FIX** |
+| Q15 | -2 | Energy zone orientation only validated via comment | **TO FIX** |
+| Q27 | -1 | Baton touch – no actual play_member() call | **TO FIX** |
+| Q30 | 1 | Duplicate checking – manual assertion only | **TO FIX** |
+| Q31 | 1 | Live zone duplicates – structural only | **TO FIX** |
+| Q50 | -2 | Turn order – manually set obtained_success_live | **TO FIX** |
+| Q51 | -2 | Turn order – manually set obtained_success_live | **TO FIX** |
+| Q83 | 10 | ✅ FIXED – real selection flow with handle_liveresult() | **DONE** |
+| Q139 | 0 | Placeholder – needs real two-player baton mechanics | **TO FIX** |
+| Q141 | -1 | Under-member energy – needs engine flow verification | **TO FIX** |
+
+### Weak Test Remediation Strategy
+
+Each weak test is **replaced** (not patched) with a **high-fidelity engine-driven test**:
+
+1. **Identify Real Engine Path**: Use `grep` to find existing tests that drive the same code path
+2. **Build Minimal Repro**: Set up minimal state needed to trigger the ruling
+3. **Call Real Engine**: Drive `do_live_result()`, `play_member()`, `handle_member_leaves_stage()`, etc.
+4. **Assert State Changes**: Verify both forward and side effects
+5. **Document QA**: Include original Japanese + English + intended engine behavior
+
+### Example Remediation: Q50
+
+**Before (Weak)**:
+```rust
+#[test]
+fn test_q50_both_success_same_score_order_unchanged() {
+    let db = load_real_db();
+    let mut state = create_test_state();
+
+    // No actual placement needed - just check logic
+    state.players[0].live_score_bonus = 10;
+    state.players[1].live_score_bonus = 10;
+    state.players[0].success_lives.push(live_card);
+    state.players[1].success_lives.push(live_card);
+    // Not calling finalize_live_result() - just comment-based verification
+}
+```
+
+**After (Fixed)**:
+```rust
+#[test]
+fn test_q50_both_success_same_score_order_unchanged() {
+    // Q50: 両方のプレイヤーがスコアが同じためライブに勝利して、
+    //      両方のプレイヤーが成功ライブカード置き場にカードを置きました。
+    //      次のターンの先攻・後攻はどうなりますか？
+    // A50: Aさんが先攻、Bさんが後攻のままです。
+
+    let db = load_real_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+    state.phase = Phase::LiveResult;
+    state.first_player = 0;
+
+    // Setup: Both players with identical performance results
+    let live_id = 6;
+    state.players[0].live_zone[0] = live_id;
+    state.players[1].live_zone[0] = live_id;
+
+    state.ui.performance_results.insert(0, serde_json::json!({
+        "success": true, "lives": [{"passed": true, "score": 10}]
+    }));
+    state.ui.performance_results.insert(1, serde_json::json!({
+        "success": true, "lives": [{"passed": true, "score": 10}]
+    }));
+    state.live_result_processed_mask = [0x80, 0x80];
+
+    // Action: Call real engine finalization
+    state.do_live_result(&db);
+    state.finalize_live_result();
+
+    // Assert: Turn order unchanged (first_player still 0)
+    assert_eq!(state.first_player, 0, "Q50: Turn order should remain unchanged when both win");
+}
+```
+
+## 6. Best Practices
 - **Real Data Only**: **CRITICAL POLICY:** Always use `load_real_db()` and real card IDs. NEVER mock card abilities or bytecode manually via `add_card()` or similar methods.
 - **Isolation**: Use `create_test_state()` to ensure a pristine game state for each test.
+- **Engine Calls Required**: Every QA test MUST call at least one engine function (`do_*()`, `play_member()`, `handle_*()`, etc.)
 - **Documentation**: Every test MUST include comments detailing:
-  - **Ability**: The relevant card text or pseudocode.
-  - **Intended Effect**: What the engine logic is supposed to do.
-  - **QA**: The QA ID (e.g., Q195) and official ruling summary.
-- **Traceability**: Always link tests to their QID in doc comments or test names.
-- **Negative Tests**: When the official answer is "No", ensure the engine rejects the action or condition.
+  - **QA**: Q&A ID, original Japanese, English translation
+  - **Ability**: The relevant card text or pseudocode (if applicable)
+  - **Intended Effect**: What the engine logic is supposed to do
+- **Traceability**: Always link tests to their QID in doc comments or test names
+- **Negative Tests**: When the official answer is "No", ensure the engine rejects or doesn't apply the action/condition
+- **State Snapshots**: For complex phases (Performance, LiveResult), always set up `ui.performance_results` snapshots that the engine trusts
+- **Fidelity Scoring**: Target tests with score >= 4 to ensure coverage counts in the matrix

@@ -60,17 +60,17 @@ impl AlphaZeroEncoding for GameState {
 
         // 2.5 Pro Vision Analytical Hints (Indices 70-80)
         let hints = ProVisionHints::calculate(self, db, me);
-        
+
         // Indices 70, 71, 72: Win Probabilities for the 3 live slots
         tensor.push(hints.win_probabilities[0]);
         tensor.push(hints.win_probabilities[1]);
         tensor.push(hints.win_probabilities[2]);
-        
+
         // Indices 73-79: Deck Heart Distribution (7 colors)
         for &dist in &hints.deck_distribution {
             tensor.push(dist);
         }
-        
+
         // Index 80: Energy Projection
         tensor.push(hints.energy_projection);
 

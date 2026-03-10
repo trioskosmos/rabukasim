@@ -277,7 +277,7 @@ export const PerformanceRenderer = {
                                             </div>
                                              ${(m.base_notes > 0 || m.bonus_notes > 0) ? `<span>${i18n.t('notes')}: <b>${m.base_notes}${m.bonus_notes > 0 ? ` <span class="perf-bonus-tag">(+${m.bonus_notes})</span>` : ''}</b></span>` : ''}
                                             ${m.draw_icons ? `<span>${i18n.t('cards_draw')}: <b>${m.draw_icons}</b></span>` : ''}
-                                            
+
                                             ${(res.breakdown && res.breakdown.allocations) ? (() => {
                         const memberAllocations = res.breakdown.allocations.filter(a => a.source_id === m.source_id && a.source_slot === m.slot);
                         if (memberAllocations.length === 0) return '';

@@ -97,7 +97,7 @@ pub fn get_effective_blades(
                                 let a_low = bc[i + 2];
                                 let a_high = bc[i + 3];
                                 let a = ((a_high as u64) << 32) | (a_low as u64);
-                                
+
                                 let mut multiplier = 1;
                                 if (s & 0x10000) != 0 {
                                     // Dynamic multiplier: slot (bc[i+4]) bits 8-23 contains the count opcode
@@ -146,7 +146,7 @@ pub fn get_effective_blades(
                                     let a_low = bc[i + 2];
                                     let a_high = bc[i + 3];
                                     let a = ((a_high as u64) << 32) | (a_low as u64);
-                                    
+
                                     let mut multiplier = 1;
                                     if (s & 0x10000) != 0 {
                                         let count_op = (s >> 8) & 0xFFFF;
@@ -167,7 +167,7 @@ pub fn get_effective_blades(
 
     let buff = state.players[player_idx].blade_buffs[slot_idx];
     if state.debug.debug_mode && !state.ui.silent {
-        println!("[DEBUG] get_effective_blades: slot={}, base={}, override={:?}, val_accum={}, buff={}, total={}", 
+        println!("[DEBUG] get_effective_blades: slot={}, base={}, override={:?}, val_accum={}, buff={}, total={}",
             slot_idx, m.blades, state.players[player_idx].blade_overrides[slot_idx], val, buff, (val + buff as i32).max(0));
     }
     (val + buff as i32).max(0) as u32

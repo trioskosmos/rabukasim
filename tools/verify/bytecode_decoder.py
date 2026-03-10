@@ -163,19 +163,19 @@ def decode_filter(f):
     if f & 0x10:
         group_id = (f >> 5) & 0x7F
         parts.append(f"Group:{group_id}")
-        
+
     # Is Tapped (Bit 12)
     if f & 0x1000:
         parts.append("Is:Tapped")
-        
+
     # Has Blade/Heart (Bit 13)
     if f & 0x2000:
         parts.append("Has:Blade/Heart")
-        
+
     # Not Has Blade/Heart (Bit 14)
     if f & 0x4000:
         parts.append("NotHas:Blade/Heart")
-        
+
     # Unique Names (Bit 15)
     if f & 0x8000:
         parts.append("Unique_Names")
@@ -191,11 +191,11 @@ def decode_filter(f):
         is_le = (f & 0x40000000) != 0
         op = "<=" if is_le else ">="
         parts.append(f"Cost/Hearts {op} {threshold}")
-        
+
     # ALL flag
     if f & 0x80000000:
         parts.append("ALL")
-        
+
     # Color Shift (Bit 46)
     if f & (0x7F << 46):
         color_val = (f >> 46) & 0x7F
@@ -318,16 +318,16 @@ def decode_chunk(chunk):
         # New 5-width condition packing (BP05+)
         # [op, val, attr_low, attr_high, packed_slot]
         val_val = v
-        attr = a # This is already (a_high << 32) | a_low
+        attr = a  # This is already (a_high << 32) | a_low
         packed_slot = s
-        
+
         comp_val = (packed_slot >> 4) & 0x0F
         comp = COMPARISONS.get(comp_val, f"C_{comp_val}")
-        
+
         area_val = (packed_slot >> 28) & 0x07
         area_map = {1: "LEFT", 2: "CENTER", 3: "RIGHT"}
         area_name = area_map.get(area_val, f"None({area_val})")
-        
+
         params = f"v(Val):{val_val}, a(Filter):[{decode_filter(attr)}], s(Comp):{comp}, s(Area):{area_name}, s(Raw_Slot):{packed_slot}"
 
     return f"{op_name:<20} | {params}"

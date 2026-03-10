@@ -144,4 +144,3 @@
 ### PL!-bp4-008-R (小泉花陽)
 
 **effect**: Effect 'INCREASE_COST' not found in manual pseudocode
-

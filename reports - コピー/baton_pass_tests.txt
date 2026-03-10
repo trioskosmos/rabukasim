@@ -8,23 +8,23 @@ il ...
 + ~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~
-    + CategoryInfo     
-         : NotSpecifi  
-  ed: (warning: unus   
- ed import: `TestUt    
+    + CategoryInfo
+         : NotSpecifi
+  ed: (warning: unus
+ ed import: `TestUt
 ils`:String) [], R    e
 moteException
-    + FullyQualifiedEr 
-   rorId : NativeComm  
+    + FullyQualifiedEr
+   rorId : NativeComm
   andError
- 
+
  --> src\repro\repro_ca
 rd_pb1_001_r.rs:2:41
   |
 2 | use crate::test_hel
 pers::{load_real_db, Te
 stUtils};
-  |                    
+  |
                      ^^
 ^^^^^^^
   |
@@ -41,7 +41,7 @@ e: `player_id`
    |
 31 |         player_id:
  usize,
-   |         ^^^^^^^^^ 
+   |         ^^^^^^^^^
 help: if this is intent
 ional, prefix it with a
 n underscore: `_player_
@@ -63,22 +63,22 @@ on_10 = 1005; // Play t
 o slot 1, also replacin
 g slot 0
    |         ^^^^^^^^^^
-^^^^^ help: if this is 
-intentional, prefix it 
+^^^^^ help: if this is
+intentional, prefix it
 with an underscore: `_d
 ouble_baton_10`
 
-warning: `engine_rust` 
-(lib test) generated 3 
+warning: `engine_rust`
+(lib test) generated 3
 warnings (run `cargo fi
-x --lib -p engine_rust 
+x --lib -p engine_rust
 --tests` to apply 3 sug
 gestions)
     Finished `test` pro
 file [optimized + debug
 info] target(s) in 0.70
 s
-     Running unittests 
+     Running unittests
 src\lib.rs (target\debu
 g\deps\engine_rust-a1ff
 13fe007cd499.exe)
@@ -89,4 +89,3 @@ running 1 test
 test baton_pass_tests::test_baton_pass_restriction ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 163 filtered out; finished in 0.01s
-

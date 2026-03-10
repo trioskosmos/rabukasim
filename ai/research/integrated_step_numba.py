@@ -484,14 +484,14 @@ def encode_observation_imax_single(
                 for h_idx in range(7):
                     if card_stats[bid, 12 + h_idx] > 0:
                         observations[i, 63 + h_idx] += 1.0
-    
+
     deck_size = batch_global_ctx[i, 6]
     if deck_size > 0:
         for h_idx in range(7):
             observations[i, 63 + h_idx] /= deck_size
 
     # 7.3 Win Probability placeholder (60-62)
-    observations[i, 60] = 0.5 # Default neutral
+    observations[i, 60] = 0.5  # Default neutral
 
     # --- 2. MY UNIVERSE ---
     u_idx = 0
@@ -822,9 +822,9 @@ def encode_observation_standard_single(
 
     # --- 7. PRO VISION HINTS (60-80) ---
     # Index 63-69: Deck Heart Distribution (Simplified: Count in Deck or use Heuristic)
-    # For now, we'll use a placeholder or dummy logic in Numba to avoid per-card scans 
+    # For now, we'll use a placeholder or dummy logic in Numba to avoid per-card scans
     # if it's too slow, but deck is small (60), so we can scan.
-    
+
     # 7.1 Energy Projection (Index 80)
     # If Energy Deck (idx 11) > 0, project current + 1
     ed_count = batch_global_ctx[i, 11]
@@ -842,7 +842,7 @@ def encode_observation_standard_single(
             for h_idx in range(7):
                 if card_stats[cid, 12 + h_idx] > 0:
                     observations[i, 63 + h_idx] += 1.0
-    
+
     # Normalize distribution
     deck_size = batch_global_ctx[i, 6]
     if deck_size > 0:
@@ -851,7 +851,7 @@ def encode_observation_standard_single(
 
     # 7.3 Win Probability placeholder (60-62)
     # In a full impl, this would call a simplified version of the Rust solver
-    observations[i, 60] = 0.5 # Default neutral
+    observations[i, 60] = 0.5  # Default neutral
 
     # Mulligan Selection Flags (120-125) -> Map to 50-55
     for k in range(6):
@@ -1597,9 +1597,9 @@ def reset_single(
     opp_global_ctx[i, 5] = 3  # Initial Energy
     opp_global_ctx[i, 8] = -1  # PH = MULLIGAN_P1
     opp_global_ctx[i, 54] = 1  # Turn
-    
+
     # Initialize Energy Decks (Index 11)
-    batch_global_ctx[i, 11] = 12 # 15 total - 3 starting
+    batch_global_ctx[i, 11] = 12  # 15 total - 3 starting
     opp_global_ctx[i, 11] = 12
 
     # --- START ORDER ---

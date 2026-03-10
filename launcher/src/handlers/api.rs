@@ -312,7 +312,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                             let parsed = resolve_deck(&body.deck, &body.energy_deck.unwrap_or_default(), &state.card_db);
                             room.pending_decks[p_idx] = Some(parsed);
                             response_json = json!({"success": true}).to_string();
-                            
+
                             if room.pending_decks[0].is_some() && room.pending_decks[1].is_some() {
                                 let p0 = room.pending_decks[0].clone().unwrap();
                                 let p1 = room.pending_decks[1].clone().unwrap();
@@ -700,7 +700,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                             let legal_mask = new_state.get_legal_actions(&state.card_db);
                             let mut action_ids = Vec::new();
                             let mut nn_mask = vec![0.0f32; 22000];
-                            
+
                             for (id, &is_legal) in legal_mask.iter().enumerate() {
                                 if is_legal {
                                     action_ids.push(id as i32);
@@ -748,7 +748,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                                             }));
                                         }
                                     }
-                                    
+
                                     action_results.sort_by(|a, b| b["logit"].as_f64().unwrap().partial_cmp(&a["logit"].as_f64().unwrap()).unwrap());
 
                                     response_json = json!({

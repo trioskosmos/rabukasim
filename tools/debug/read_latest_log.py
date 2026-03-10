@@ -1,5 +1,5 @@
-from pathlib import Path
 import os
+from pathlib import Path
 
 log_dir = Path("alphazero/logs/loops")
 files = sorted(log_dir.glob("*.txt"), key=os.path.getmtime, reverse=True)

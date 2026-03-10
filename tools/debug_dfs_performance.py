@@ -1,8 +1,5 @@
 import os
 import sys
-import json
-import time
-import random
 from pathlib import Path
 
 # Add project root to path
@@ -15,10 +12,12 @@ except ImportError:
     sys.path.append(str(root_path / "alphazero" / "training"))
     import engine_rust
 
+
 def get_action_label(action_id, state, db):
     if action_id == 0:
         return "Pass / Done"
     return f"Action {action_id}"
+
 
 def run_diagnostic():
     print("=" * 100)
@@ -34,10 +33,10 @@ def run_diagnostic():
 
     with open(cards_path, "r", encoding="utf-8") as f:
         db = engine_rust.PyCardDatabase(f.read())
-    
+
     # Enable Vanilla-specific heuristics in Rust
     db.is_vanilla = True
-    
+
     # 2. Initialize Game
     print("[2/3] Initializing game...")
     state = engine_rust.PyGameState(db)
@@ -48,7 +47,7 @@ def run_diagnostic():
     p1_deck = [30011, 30012, 30013, 30014, 30015, 30016, 30017, 30018, 30019, 30020]
     p0_lives = [35001, 35002, 35003]
     p1_lives = [35004, 35005, 35006]
-    
+
     # Vanilla card IDs are often in the 30000+ range. Let's try to find some valid once if available
     member_ids = db.get_member_ids()
     live_ids = db.get_live_ids()
@@ -74,27 +73,30 @@ def run_diagnostic():
 
     while not state.is_terminal() and state.turn < 50 and move_count < 1000:
         phase_name = state.phase_name
-        
+
         if phase_name in ["Main", "LiveSet"]:
             # plan_full_turn_with_stats returns (evals, best_seq, nodes, duration, breakdown)
             evals, best_seq, nodes, duration, breakdown = state.plan_full_turn_with_stats(db)
-            
+
             total_nodes += nodes
             total_time += duration
             dfs_turns += 1
-            
+
             best_val = breakdown[0] + breakdown[1] if breakdown else 0.0
             breakdown_str = f"{breakdown[0]:.2f}/{breakdown[1]:.2f}" if breakdown else "N/A"
-            
-            print(f"{state.turn:<5} | {phase_name:<15} | {nodes:<8} | {duration:<10.3f} | {best_val:<10.2f} | {breakdown_str:<15}")
-            
+
+            print(
+                f"{state.turn:<5} | {phase_name:<15} | {nodes:<8} | {duration:<10.3f} | {best_val:<10.2f} | {breakdown_str:<15}"
+            )
+
             if not best_seq:
                 state.step(0)
                 move_count += 1
             else:
                 current_phase = state.phase
                 for aid in best_seq:
-                    if state.phase != current_phase: break
+                    if state.phase != current_phase:
+                        break
                     state.step(aid)
                     move_count += 1
             state.auto_step(db)
@@ -107,7 +109,7 @@ def run_diagnostic():
                 state.step(legal_ids[0])
             move_count += 1
             state.auto_step(db)
-            
+
     # 4. Final Stats
     print("-" * 100)
     print(f"\nPERFORMANCE SUMMARY (Stopped after {move_count} moves)")
@@ -119,6 +121,7 @@ def run_diagnostic():
     print(f"  Total DFS Time:     {total_time:.3f} s")
     print(f"  Winner:             P{state.get_winner()}")
     print("=" * 100)
+
 
 if __name__ == "__main__":
     run_diagnostic()

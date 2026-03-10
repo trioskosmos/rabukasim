@@ -77,7 +77,7 @@ def find_card_by_no(no, cards_raw, cards_compiled):
 
     compiled_data = None
     compiled_id = None
-    
+
     # Search for all variants in compiled data
     for n_compiled in nos_to_try:
         db_names = ["member_db", "live_db", "energy_db"]
@@ -218,10 +218,10 @@ def main():
             if len(args.queries) > 1 or os.path.isdir(args.output):
                 if not os.path.exists(args.output):
                     os.makedirs(args.output, exist_ok=True)
-                
+
                 safe_no = card_no.replace("!", "_").replace("+", "plus").replace("＋", "plus")
                 out_file = os.path.join(args.output, f"card_{safe_no}.md")
-            
+
             generate_report(
                 out_file,
                 query,
@@ -296,7 +296,7 @@ def display_card(query, raw, compiled, cid, manual_pseudo, consolidated_pseudo, 
             print(f"  Trigger: {trigger_id}")
             print(f"  Bytecode: {bytecode}")
             print(f"  Decoded:\n{decode_bytecode(bytecode)}")
-        
+
         print("\n--- RAW JSON DUMP ---")
         print(json.dumps(compiled, indent=2, ensure_ascii=False))
     else:
@@ -372,7 +372,7 @@ def generate_report(
             lines.append(f"- **Bytecode**: `{bytecode}`")
             lines.append("\n#### Decoded Bytecode")
             lines.append(f"```\n{decode_bytecode(bytecode)}\n```")
-        
+
         lines.append("\n### Raw Compiled JSON Data")
         lines.append(f"```json\n{json.dumps(compiled, indent=2, ensure_ascii=False)}\n```")
     else:

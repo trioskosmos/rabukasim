@@ -1,6 +1,6 @@
 # AlphaZero TCG Research Module
 
-This directory is a dedicated space for AI research, prototypes, and comparative analysis in LovecaSim. 
+This directory is a dedicated space for AI research, prototypes, and comparative analysis in LovecaSim.
 
 ## Structure
 - `simple_mcts.py`: A pure-Python implementation of Monte Carlo Tree Search designed for readability and debugging.

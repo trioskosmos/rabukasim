@@ -1,7 +1,6 @@
+import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
 
 # ============================================================
 # ACTION SPACE DECOMPOSITION
@@ -33,33 +32,32 @@ NUM_ACTIONS = 22000
 # TurnChoice (5000-5001) must come AFTER HandChoice (which also covers those IDs)
 # so TurnChoice wins the overwrite for positions 5000 and 5001.
 ACTION_TYPE_RANGES = [
-    (ACTION_BASE_PASS, ACTION_BASE_PASS + 1, 0),               # Pass
-    (ACTION_BASE_MULLIGAN, ACTION_BASE_MULLIGAN + 60, 1),       # Mulligan
-    (ACTION_BASE_LIVESET, ACTION_BASE_LIVESET + 100, 2),        # SetLive
-    (ACTION_BASE_MODE, ACTION_BASE_MODE + 100, 3),              # SelectMode
-    (ACTION_BASE_COLOR, ACTION_BASE_COLOR + 10, 4),             # SelectColor
-    (ACTION_BASE_STAGE_SLOTS, ACTION_BASE_STAGE_SLOTS + 20, 5), # SelectStageSlot
-    (ACTION_BASE_HAND, ACTION_BASE_HAND_ACTIVATE, 6),           # PlayMember
-    (ACTION_BASE_HAND_ACTIVATE, ACTION_BASE_HAND_CHOICE, 7),    # HandActivate
-    (ACTION_BASE_HAND_CHOICE, ACTION_BASE_HAND_SELECT, 8),      # PlayMemberChoice
+    (ACTION_BASE_PASS, ACTION_BASE_PASS + 1, 0),  # Pass
+    (ACTION_BASE_MULLIGAN, ACTION_BASE_MULLIGAN + 60, 1),  # Mulligan
+    (ACTION_BASE_LIVESET, ACTION_BASE_LIVESET + 100, 2),  # SetLive
+    (ACTION_BASE_MODE, ACTION_BASE_MODE + 100, 3),  # SelectMode
+    (ACTION_BASE_COLOR, ACTION_BASE_COLOR + 10, 4),  # SelectColor
+    (ACTION_BASE_STAGE_SLOTS, ACTION_BASE_STAGE_SLOTS + 20, 5),  # SelectStageSlot
+    (ACTION_BASE_HAND, ACTION_BASE_HAND_ACTIVATE, 6),  # PlayMember
+    (ACTION_BASE_HAND_ACTIVATE, ACTION_BASE_HAND_CHOICE, 7),  # HandActivate
+    (ACTION_BASE_HAND_CHOICE, ACTION_BASE_HAND_SELECT, 8),  # PlayMemberChoice
     # TurnChoice AFTER HandChoice so it overwrites positions 5000/5001.
     # Without this, 5000 → HandChoice sub-idx 2800 (5000-2200). With this → sub-idx 0.
-    (ACTION_BASE_TURN_CHOICE, ACTION_BASE_TURN_CHOICE + 2, 17), # TurnChoice (overwrites)
-    (ACTION_BASE_HAND_SELECT, ACTION_BASE_STAGE, 9),            # HandSelect (Targets)
-    (ACTION_BASE_STAGE, ACTION_BASE_STAGE_CHOICE, 10),          # ActivateMember (Tableau)
-    (ACTION_BASE_STAGE_CHOICE, ACTION_BASE_DISCARD_ACTIVATE, 11), # ActivateMemberChoice
-    (ACTION_BASE_DISCARD_ACTIVATE, ACTION_BASE_ENERGY, 12),     # DiscardActivate
-    (ACTION_BASE_ENERGY, ACTION_BASE_CHOICE, 13),               # SelectEnergy
-    (ACTION_BASE_CHOICE, ACTION_BASE_CHOICE + 5000, 14),        # SelectChoice
-    (ACTION_BASE_RPS, ACTION_BASE_RPS + 10, 15),                # RPS (P0)
-    (ACTION_BASE_RPS_P2, ACTION_BASE_RPS_P2 + 10, 16),          # RPS (P1)
+    (ACTION_BASE_TURN_CHOICE, ACTION_BASE_TURN_CHOICE + 2, 17),  # TurnChoice (overwrites)
+    (ACTION_BASE_HAND_SELECT, ACTION_BASE_STAGE, 9),  # HandSelect (Targets)
+    (ACTION_BASE_STAGE, ACTION_BASE_STAGE_CHOICE, 10),  # ActivateMember (Tableau)
+    (ACTION_BASE_STAGE_CHOICE, ACTION_BASE_DISCARD_ACTIVATE, 11),  # ActivateMemberChoice
+    (ACTION_BASE_DISCARD_ACTIVATE, ACTION_BASE_ENERGY, 12),  # DiscardActivate
+    (ACTION_BASE_ENERGY, ACTION_BASE_CHOICE, 13),  # SelectEnergy
+    (ACTION_BASE_CHOICE, ACTION_BASE_CHOICE + 5000, 14),  # SelectChoice
+    (ACTION_BASE_RPS, ACTION_BASE_RPS + 10, 15),  # RPS (P0)
+    (ACTION_BASE_RPS_P2, ACTION_BASE_RPS_P2 + 10, 16),  # RPS (P1)
 ]
 NUM_ACTION_TYPES = 18  # 0-16 original + 17 TurnChoice
 # Max sub-index cap. All type ranges have meaningful sub-indices <= 100 in practice.
 # HandChoice/SelectChoice have larger raw ranges but the action mask enforces
 # correctness; the sub-head learns within [0, MAX_SUB_INDEX).
 MAX_SUB_INDEX = 100
-
 
 
 def build_action_decomposition_table():
@@ -117,16 +115,19 @@ class AlphaNet(nn.Module):
         3. Action-branching policy head (type + sub-index, combined additively)
         4. SiLU activations in value head
     """
-    def __init__(self,
-                 global_dim=100,
-                 card_dim=170,
-                 num_cards=120,
-                 embed_dim=512,
-                 num_heads=8,
-                 num_layers=4,
-                 num_actions=NUM_ACTIONS,
-                 num_action_types=NUM_ACTION_TYPES,
-                 max_sub_index=100):
+
+    def __init__(
+        self,
+        global_dim=100,
+        card_dim=170,
+        num_cards=120,
+        embed_dim=512,
+        num_heads=8,
+        num_layers=4,
+        num_actions=NUM_ACTIONS,
+        num_action_types=NUM_ACTION_TYPES,
+        max_sub_index=100,
+    ):
         super().__init__()
 
         self.num_cards = num_cards
@@ -139,8 +140,8 @@ class AlphaNet(nn.Module):
         # Zone layout: 60 entities for Me, 60 for Opponent
         self.num_zones = 3
         zone_ids = [0] * 60 + [1] * 60
-        self.register_buffer('card_zone_ids', torch.tensor(zone_ids, dtype=torch.long))
-        self.register_buffer('global_zone_id', torch.tensor([2], dtype=torch.long))
+        self.register_buffer("card_zone_ids", torch.tensor(zone_ids, dtype=torch.long))
+        self.register_buffer("global_zone_id", torch.tensor([2], dtype=torch.long))
 
         # 1. Feature Encoders
         self.card_encoder = nn.Sequential(
@@ -148,7 +149,7 @@ class AlphaNet(nn.Module):
             nn.Linear(card_dim, embed_dim),
             nn.SiLU(),
             nn.Linear(embed_dim, embed_dim),
-            nn.LayerNorm(embed_dim)
+            nn.LayerNorm(embed_dim),
         )
 
         self.global_encoder = nn.Sequential(
@@ -156,7 +157,7 @@ class AlphaNet(nn.Module):
             nn.Linear(global_dim, embed_dim),
             nn.SiLU(),
             nn.Linear(embed_dim, embed_dim),
-            nn.LayerNorm(embed_dim)
+            nn.LayerNorm(embed_dim),
         )
 
         # 2. Zone-Aware Positional Embeddings
@@ -169,10 +170,9 @@ class AlphaNet(nn.Module):
             dim_feedforward=embed_dim * 2,
             batch_first=True,
             norm_first=True,
-            activation='gelu'
+            activation="gelu",
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers, enable_nested_tensor=False)
-        
 
         # 4. Aggregation dimension (Pure CLS Token)
         summary_dim = embed_dim
@@ -180,9 +180,7 @@ class AlphaNet(nn.Module):
         # 5. Action-Branching Policy Head
         # Type head: "What kind of action?" (18 types)
         self.policy_type_head = nn.Sequential(
-            nn.Linear(summary_dim, embed_dim),
-            nn.SiLU(),
-            nn.Linear(embed_dim, num_action_types)
+            nn.Linear(summary_dim, embed_dim), nn.SiLU(), nn.Linear(embed_dim, num_action_types)
         )
         # Dense Sub-Head: replaces the old pointer network.
         # Pointer attention to 121 tokens was broken because sub-indices are
@@ -191,19 +189,19 @@ class AlphaNet(nn.Module):
         self.sub_head = nn.Sequential(
             nn.Linear(summary_dim, embed_dim),
             nn.SiLU(),
-            nn.Linear(embed_dim, num_action_types * max_sub_index)  # (B, 18*100 = 1800)
+            nn.Linear(embed_dim, num_action_types * max_sub_index),  # (B, 18*100 = 1800)
         )
-        
+
         # Zero-initialize the final policy layers to output uniform distribution initially
         nn.init.zeros_(self.policy_type_head[-1].weight)
         nn.init.zeros_(self.policy_type_head[-1].bias)
         nn.init.zeros_(self.sub_head[-1].weight)
         nn.init.zeros_(self.sub_head[-1].bias)
 
-        # Use the pre-calculated tables from build_action_decomposition_table() 
+        # Use the pre-calculated tables from build_action_decomposition_table()
         # for 100% parity with the engine and training logic.
-        self.register_buffer('action_type_lut', torch.from_numpy(ACTION_TYPE_TABLE).long())
-        self.register_buffer('action_sub_lut', torch.from_numpy(ACTION_SUB_TABLE).long())
+        self.register_buffer("action_type_lut", torch.from_numpy(ACTION_TYPE_TABLE).long())
+        self.register_buffer("action_sub_lut", torch.from_numpy(ACTION_SUB_TABLE).long())
 
         # 6. Multi-Objective Value Head
         # Output: [Prob (Win/Loss), Momentum (Score Diff), Efficiency (Turns)]
@@ -212,7 +210,7 @@ class AlphaNet(nn.Module):
             nn.SiLU(),
             nn.Linear(embed_dim, embed_dim // 2),
             nn.SiLU(),
-            nn.Linear(embed_dim // 2, 3) 
+            nn.Linear(embed_dim // 2, 3),
         )
 
     def forward(self, x, mask=None):
@@ -222,7 +220,7 @@ class AlphaNet(nn.Module):
         # ========================================
         # 1. PARSE THE FLAT TENSOR
         # ========================================
-        global_part = x[:, :self.global_dim]  # (Batch, 100)
+        global_part = x[:, : self.global_dim]  # (Batch, 100)
 
         cards_start = self.global_dim
         cards_part = x[:, cards_start:]  # (Batch, 20400)
@@ -240,7 +238,7 @@ class AlphaNet(nn.Module):
         # ========================================
         # Card zone embeddings: zones 0-1
         card_zones = self.zone_embedding(self.card_zone_ids)  # (120, 256)
-        card_tokens = card_tokens + card_zones.unsqueeze(0)   # Broadcast over batch
+        card_tokens = card_tokens + card_zones.unsqueeze(0)  # Broadcast over batch
 
         # Global token gets zone 2 (pre-registered buffer)
         global_zone = self.zone_embedding(self.global_zone_id)  # (1, 256)
@@ -255,13 +253,13 @@ class AlphaNet(nn.Module):
         # ========================================
         # 5. AGGREGATION (Pure CLS Token)
         # ========================================
-        summary = latent[:, 0, :]                  # (Batch, 512)
+        summary = latent[:, 0, :]  # (Batch, 512)
 
         # ========================================
         # 6. RELATIONAL ACTION-BRANCHING POLICY
         # ========================================
-        type_logits = self.policy_type_head(summary)   # (Batch, num_action_types)
-        
+        type_logits = self.policy_type_head(summary)  # (Batch, num_action_types)
+
         # Dense Sub-Head: (Batch, num_action_types * max_sub_index)
         # e.g. (B, 18*100 = 1800)
         sub_logits = self.sub_head(summary)
@@ -269,7 +267,7 @@ class AlphaNet(nn.Module):
         # Reconstruct full policy via additive hierarchical decomposition:
         # policy[a] = type_logit[type_of(a)] + sub_logit[type_of(a), sub_of(a)]
         type_lut = self.action_type_lut  # (NUM_ACTIONS,)
-        sub_lut = self.action_sub_lut    # (NUM_ACTIONS,)
+        sub_lut = self.action_sub_lut  # (NUM_ACTIONS,)
 
         # Clamp -1 types to 0 for indexing, we'll mask them out below
         # IMPORTANT: Also mask out types that are >= num_action_types for this model instance!
@@ -280,8 +278,8 @@ class AlphaNet(nn.Module):
         # Hierarchical indexing: (type_idx * 100 + sub_idx)
         # Each action ID maps to a unique (type, sub) pair in the flattened sub-head
         flat_sub_indices = safe_type * self.max_sub_index + safe_sub
-        
-        type_contrib = type_logits[:, safe_type]      # (Batch, NUM_ACTIONS)
+
+        type_contrib = type_logits[:, safe_type]  # (Batch, NUM_ACTIONS)
         sub_contrib = sub_logits[:, flat_sub_indices]  # (Batch, NUM_ACTIONS)
 
         policy = type_contrib + sub_contrib  # (Batch, NUM_ACTIONS)
@@ -297,48 +295,50 @@ class AlphaNet(nn.Module):
         # 7. MULTI-OBJECTIVE VALUE HEAD
         # ========================================
         val_logits = self.value_head(summary)  # (Batch, 3)
-        
-        # Constraints: 
+
+        # Constraints:
         # Prob -> Sigmoid [0,1], Momentum -> Tanh [-1, 1], Turns -> Sigmoid [0,1]
         v_prob = torch.sigmoid(val_logits[:, 0:1])
         v_momentum = torch.tanh(val_logits[:, 1:2])
         v_turns = torch.sigmoid(val_logits[:, 2:3])
-        
-        value = torch.cat([v_prob, v_momentum, v_turns], dim=1) # (Batch, 3)
+
+        value = torch.cat([v_prob, v_momentum, v_turns], dim=1)  # (Batch, 3)
 
         return policy, value
-
 
     def forward_heads(self, x, mask=None):
         """Like forward() but returns raw (type_logits, sub_logits, value) in compressed space.
         Use this for training — backward stays in (B,18)+(B,1800) space instead of (B,22000).
         """
         batch_size = x.size(0)
-        global_part = x[:, :self.global_dim]
-        cards_part  = x[:, self.global_dim:].view(batch_size, self.num_cards, self.card_dim)
+        global_part = x[:, : self.global_dim]
+        cards_part = x[:, self.global_dim :].view(batch_size, self.num_cards, self.card_dim)
 
-        card_tokens  = self.card_encoder(cards_part)
+        card_tokens = self.card_encoder(cards_part)
         global_token = self.global_encoder(global_part).unsqueeze(1)
 
-        card_zones   = self.zone_embedding(self.card_zone_ids)
-        card_tokens  = card_tokens + card_zones.unsqueeze(0)
-        global_zone  = self.zone_embedding(self.global_zone_id)
+        card_zones = self.zone_embedding(self.card_zone_ids)
+        card_tokens = card_tokens + card_zones.unsqueeze(0)
+        global_zone = self.zone_embedding(self.global_zone_id)
         global_token = global_token + global_zone.unsqueeze(0)
 
         tokens = torch.cat([global_token, card_tokens], dim=1)
         latent = self.transformer(tokens)
         summary = latent[:, 0, :]
 
-        type_logits = self.policy_type_head(summary)              # (B, 18)
-        sub_logits  = self.sub_head(summary)                      # (B, 1800)
+        type_logits = self.policy_type_head(summary)  # (B, 18)
+        sub_logits = self.sub_head(summary)  # (B, 1800)
 
         # Value head (same as forward)
         val_logits = self.value_head(summary)
-        value = torch.cat([
-            torch.sigmoid(val_logits[:, 0:1]),
-            torch.tanh(val_logits[:, 1:2]),
-            torch.sigmoid(val_logits[:, 2:3]),
-        ], dim=1)
+        value = torch.cat(
+            [
+                torch.sigmoid(val_logits[:, 0:1]),
+                torch.tanh(val_logits[:, 1:2]),
+                torch.sigmoid(val_logits[:, 2:3]),
+            ],
+            dim=1,
+        )
 
         return type_logits, sub_logits, value
 
@@ -346,24 +346,26 @@ class AlphaNet(nn.Module):
 def save_model(model, path="alphanet_latest.pt"):
     torch.save(model.state_dict(), path)
 
+
 def load_model(path, device="cpu"):
     state_dict = torch.load(path, map_location=device)
-    
+
     # Detect head sizes from checkpoint (default to current NUM_ACTION_TYPES=18)
     num_action_types = state_dict.get("policy_type_head.2.weight", torch.zeros(18, 1)).shape[0]
-    
+
     model = AlphaNet(num_action_types=num_action_types).to(device)
-    
+
     # Check for architecture mismatch (v7 vs v8)
     if "global_zone_id" not in state_dict:
         state_dict["global_zone_id"] = torch.tensor([4], dtype=torch.long)
     if "card_zone_ids" not in state_dict:
-        zone_ids = ([0] * 3 + [1] * 3 + [2] * 15 + [3] * 3)
+        zone_ids = [0] * 3 + [1] * 3 + [2] * 15 + [3] * 3
         state_dict["card_zone_ids"] = torch.tensor(zone_ids, dtype=torch.long)
 
     model.load_state_dict(state_dict, strict=False)
     model.eval()
     return model
+
 
 if __name__ == "__main__":
     # Smoke test dimensions
@@ -372,7 +374,7 @@ if __name__ == "__main__":
     dummy_mask = torch.ones(8, NUM_ACTIONS, dtype=torch.bool)
     p, v = model(dummy_input, mask=dummy_mask)
     print(f"Policy shape: {p.shape}")  # Expected: [8, 22000]
-    print(f"Value shape: {v.shape}")   # Expected: [8, 1]
+    print(f"Value shape: {v.shape}")  # Expected: [8, 1]
     print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
     print(f"Zone embeddings: {model.zone_embedding.weight.shape}")
     print("Smoke test passed!")

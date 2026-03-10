@@ -188,16 +188,16 @@ impl ActionFactory {
             };
         }
 
-        if action_id >= 20000 && action_id < 20010 {
+        if action_id >= ACTION_BASE_RPS && action_id < ACTION_BASE_RPS + 10 {
             return DecodedAction::Rps {
                 p_idx: 0,
-                choice: (action_id - 20000) as i8,
+                choice: (action_id - ACTION_BASE_RPS) as i8,
             };
         }
-        if action_id >= 21000 && action_id < 21010 {
+        if action_id >= ACTION_BASE_RPS_P2 && action_id < ACTION_BASE_RPS_P2 + 10 {
             return DecodedAction::Rps {
                 p_idx: 1,
-                choice: (action_id - 21000) as i8,
+                choice: (action_id - ACTION_BASE_RPS_P2) as i8,
             };
         }
 
@@ -210,12 +210,11 @@ impl ActionFactory {
         state: &super::game::GameState,
         db: &CardDatabase,
     ) -> String {
-        // Special Contextual Collision Handling for ID 5000/5001 (Turn Choice vs Discard Activate)
         if state.phase == crate::core::enums::Phase::TurnChoice {
-            if action_id == 5000 {
+            if action_id == ACTION_BASE_TURN_ORDER_FIRST {
                 return "Turn Choice: Go First".to_string();
             }
-            if action_id == 5001 {
+            if action_id == ACTION_BASE_TURN_ORDER_FIRST + 1 {
                 return "Turn Choice: Go Second".to_string();
             }
         }
@@ -362,12 +361,11 @@ impl ActionFactory {
                 )
             }
             _ => {
-                // Special Contextual Collision Handling for ID 5000/5001
                 if state.phase == crate::core::enums::Phase::TurnChoice {
-                    if action_id == 5000 {
+                    if action_id == ACTION_BASE_TURN_ORDER_FIRST {
                         return "Turn Choice: Go First".to_string();
                     }
-                    if action_id == 5001 {
+                    if action_id == ACTION_BASE_TURN_ORDER_FIRST + 1 {
                         return "Turn Choice: Go Second".to_string();
                     }
                 }

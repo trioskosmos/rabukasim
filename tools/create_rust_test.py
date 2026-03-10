@@ -1,6 +1,6 @@
-import json
-import sys
 import os
+import sys
+
 
 def generate_rust_test(state_json_path, output_rs_path, test_name="test_repro_state"):
     """
@@ -42,16 +42,17 @@ fn {test_name}() {{
     // Example: Step the game
     // let action_id = 0; // Replace with desired action, or PASS (0 normally)
     // state.step(&db, action_id).expect("Step failed");
-    
+
     // Add your assertions here
     // assert_eq!(state.players[0].score, 100);
 }}
 """
-    
-    with open(output_rs_path, 'w', encoding='utf-8') as f:
+
+    with open(output_rs_path, "w", encoding="utf-8") as f:
         f.write(script_content)
     print(f"Rust repro test generated: {output_rs_path}")
     print(f"Run it with: `cd engine_rust_src && cargo test {test_name} -- --nocapture`")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

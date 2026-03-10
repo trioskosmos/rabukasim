@@ -137,7 +137,7 @@ pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
     }
 
     let a_hex = if a != 0 { format!("0x{:012X}", a) } else { "0".to_string() };
-    
+
     // Check if the opcode might have a target slot in `s`
     let slot = crate::core::logic::interpreter::instruction::DecodedSlot::decode(s);
     let s_desc = format!("S:{:?}/{} -> D:{:?}/{}", slot.source_zone, slot.target_slot, slot.dest_zone, slot.area_idx);

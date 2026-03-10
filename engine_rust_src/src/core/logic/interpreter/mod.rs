@@ -154,14 +154,14 @@ pub fn resolve_bytecode(
         // Handle negation
         let mut real_op = op;
         let mut is_negated = false;
-        if real_op >= 1000 {
+        if real_op >= crate::core::logic::constants::OPCODE_NEGATION_OFFSET {
             is_negated = true;
-            real_op -= 1000;
+            real_op -= crate::core::logic::constants::OPCODE_NEGATION_OFFSET;
         }
 
         if state.debug.debug_mode {
             let desc = logging::describe_bytecode(real_op, v, a, s);
-            
+
             // Get card info for context
             let card_name = db.get_member(frame.ctx.source_card_id)
                 .map(|c| c.name.as_str())
@@ -186,13 +186,14 @@ pub fn resolve_bytecode(
         // }
 
         let mut target_slot = s;
-        if (s & 0xFF) == 10 {
+        if (s & 0xFF) == crate::core::generated_constants::SLOT_CONTEXT {
             // Resolve Choice Target (10) while preserving upper bits (flags/area)
             target_slot = (s & !0xFF) | (frame.ctx.target_slot as i32);
         }
 
         // Condition opcodes (200-255 and 301-399 for extended conditions)
-        if (real_op >= 200 && real_op <= 255) || (real_op >= 301 && real_op <= 399) {
+        if (real_op >= crate::core::logic::constants::CONDITION_START_1 && real_op <= crate::core::logic::constants::CONDITION_END_1)
+            || (real_op >= crate::core::logic::constants::CONDITION_START_2 && real_op <= crate::core::logic::constants::CONDITION_END_2) {
             if state.debug.debug_mode {
                 println!(
                     "[DEBUG] CALLING check_condition_opcode: op={}, a={:x}",
@@ -297,7 +298,7 @@ pub fn resolve_bytecode(
 
         // Obtaining frame again after dispatch might be necessary if we popped, but the loop head handles it.
         if let Some(f) = executor.stack.last_mut() {
-            // CRITICAL: Only reset these if we aren't suspended, 
+            // CRITICAL: Only reset these if we aren't suspended,
             // otherwise we lose the budget (v_remaining) and choice state for resumption.
             if do_reset {
                 f.ctx.choice_index = -1; // Reset choice index after each instruction

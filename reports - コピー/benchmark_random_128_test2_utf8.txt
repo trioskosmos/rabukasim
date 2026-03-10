@@ -9,16 +9,16 @@ _t ...
 ~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~
 ~~
-    + CategoryInfo     
-         : NotSpecifi  
-  ed: (Traceback (mo   
- st recent call las    
+    + CategoryInfo
+         : NotSpecifi
+  ed: (Traceback (mo
+ st recent call las
 t)::String) [], Re    m
 oteException
-    + FullyQualifiedEr 
-   rorId : NativeComm  
+    + FullyQualifiedEr
+   rorId : NativeComm
   andError
- 
+
   File "C:\Users\trios\
 .gemini\antigravity\vsc
 ode\loveca-copy\.venv\L
@@ -42,17 +42,17 @@ ib\site-packages\numpy\
 _core\overrides.py", li
 ne 8, in <module>
     from numpy._core._m
-ultiarray_umath import 
+ultiarray_umath import
 (
 ModuleNotFoundError: No
  module named 'numpy._c
 ore._multiarray_umath'
 
-During handling of the 
+During handling of the
 above exception, anothe
 r exception occurred:
 
-Traceback (most recent 
+Traceback (most recent
 call last):
   File "C:\Users\trios\
 .gemini\antigravity\vsc
@@ -70,7 +70,7 @@ ib\site-packages\numpy\
 __config__.py", line 4,
  in <module>
     from numpy._core._m
-ultiarray_umath import 
+ultiarray_umath import
 (
   File "C:\Users\trios\
 .gemini\antigravity\vsc
@@ -80,14 +80,14 @@ _core\__init__.py", lin
 e 49, in <module>
     raise ImportError(m
 sg)
-ImportError: 
+ImportError:
 
-IMPORTANT: PLEASE READ 
-THIS FOR ADVICE ON HOW 
+IMPORTANT: PLEASE READ
+THIS FOR ADVICE ON HOW
 TO SOLVE THIS ISSUE!
 
 Importing the numpy C-e
-xtensions failed. This 
+xtensions failed. This
 error can happen for
 many reasons, often due
  to issues with your se
@@ -105,7 +105,7 @@ ting-importerror.html
 Please note and check t
 he following:
 
-  * The Python version 
+  * The Python version
 is: Python3.12 from "C:
 \Users\trios\.gemini\an
 tigravity\vscode\loveca
@@ -117,12 +117,12 @@ s: "2.0.2"
 and make sure that they
  are the versions you e
 xpect.
-Please carefully study 
+Please carefully study
 the documentation linke
 d above for further hel
 p.
 
-Original error was: No 
+Original error was: No
 module named 'numpy._co
 re._multiarray_umath'
 
@@ -131,7 +131,7 @@ The above exception was
  the direct cause of th
 e following exception:
 
-Traceback (most recent 
+Traceback (most recent
 call last):
   File "C:\Users\trios\
 .gemini\antigravity\vsc
@@ -153,8 +153,8 @@ rting numpy: you should
  not try to import nump
 y from
         its source dire
-ctory; please exit the 
-numpy source tree, and 
+ctory; please exit the
+numpy source tree, and
 relaunch
         your python int
 erpreter from there.

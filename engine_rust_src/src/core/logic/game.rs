@@ -41,8 +41,8 @@ use crate::core::mcts::{SearchHorizon, MCTS};
 pub use super::state::*;
 
 impl GameState {
-    pub(crate) const ACTION_TURN_CHOICE_FIRST: i32 = 5000;
-    pub(crate) const ACTION_TURN_CHOICE_SECOND: i32 = 5001;
+    pub(crate) const ACTION_TURN_CHOICE_FIRST: i32 = ACTION_BASE_TURN_ORDER_FIRST;
+    pub(crate) const ACTION_TURN_CHOICE_SECOND: i32 = ACTION_BASE_TURN_ORDER_FIRST + 1;
 
     // Helper to calculate other slot index for Double Baton (offset 3-8)
     pub(crate) fn get_combo_other_slot(primary_slot: usize, is_next: bool) -> usize {
@@ -403,11 +403,11 @@ impl GameState {
 
         // Rule 6.2.1.5: Both players draw 6 cards.
         // Rule: In LL! OCG, starting deck is 60. 12 lives are in that 60.
-        // When drawing 6, if you draw a live, you keep it in hand? 
+        // When drawing 6, if you draw a live, you keep it in hand?
         // No, actually 12 Lives are logically distinct.
         // Looking at 4.6.1: Live Zone is where you put lives.
         // The common interpretation is that of the 60, you MUST have 48/12.
-        
+
         // Fix: To ensure 6 members in hand and 12 lives in zone, we MUST filter.
         // We've already combined them in the deck forRule awareness, but for the actual setup:
         self.draw_cards(0, 6);
@@ -781,7 +781,7 @@ impl GameState {
                 if self.players[p].stage[s] == cid {
                     let s_idx = s as i16;
                     let p_idx = p as u8;
-                    
+
                     let tapped = self.players[p].is_tapped(s);
                     let h_arr = if needs_dynamic_hearts {
                         self.get_effective_hearts(p, s, db, 0).to_array()

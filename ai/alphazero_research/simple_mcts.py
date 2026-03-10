@@ -1,7 +1,6 @@
 import math
 import random
-import time
-from typing import List, Dict, Any
+
 
 class MCTSNode:
     def __init__(self, state, parent=None, action=None):
@@ -14,7 +13,10 @@ class MCTSNode:
         self.untried_actions = state.get_legal_action_ids()
 
     def uct_select_child(self, exploration_weight=1.41):
-        return max(self.children, key=lambda c: (c.value / c.visits) + exploration_weight * math.sqrt(math.log(self.visits) / c.visits))
+        return max(
+            self.children,
+            key=lambda c: (c.value / c.visits) + exploration_weight * math.sqrt(math.log(self.visits) / c.visits),
+        )
 
     def add_child(self, action, state):
         child = MCTSNode(state, parent=self, action=action)
@@ -26,10 +28,12 @@ class MCTSNode:
         self.visits += 1
         self.value += result
 
+
 class SimpleMCTS:
     """
     A readable, pure-Python MCTS implementation for research and debugging.
     """
+
     def __init__(self, simulation_limit=100, horizon=20):
         self.simulation_limit = simulation_limit
         self.horizon = horizon
@@ -71,6 +75,7 @@ class SimpleMCTS:
                 node = node.parent
 
         return sorted(root.children, key=lambda c: c.visits, reverse=True)[0].action
+
 
 if __name__ == "__main__":
     # Example usage (requires engine setup)

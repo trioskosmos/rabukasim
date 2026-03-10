@@ -1,5 +1,6 @@
 import sys
-sys.path.append('.')
+
+sys.path.append(".")
 from compiler.parser_v2 import AbilityParserV2
 
 parser = AbilityParserV2()
@@ -23,9 +24,10 @@ try:
                 print(f"    {i}: [COND/COST] {inst.type}")
             else:
                 print(f"    {i}: [UNKNOWN] {type(inst)}")
-        
+
         # Test compilation
         print(f"  Compiled bytecode: {ab.compile()}")
 except Exception as e:
     import traceback
+
     traceback.print_exc()

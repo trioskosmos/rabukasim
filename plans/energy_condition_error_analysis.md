@@ -11,7 +11,7 @@ The user has **8 energy** but the ability still fails to activate. This is a cri
 ## Card Ability Details
 From [`reports/aaaa.md`](reports/aaaa.md):
 - **Trigger**: ON_PLAY
-- **Conditions**: 
+- **Conditions**:
   1. `ALL_MEMBERS {FILTER="GROUP_ID=3"}` - All members on stage must be from group ID 3 (Liella!)
   2. `ENERGY_COUNT {MIN=7}` - Player must have at least 7 energy
 - **Effect**: Place 1 energy card in wait state

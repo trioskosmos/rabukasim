@@ -1,15 +1,14 @@
 import numpy as np
 import torch
-import torch.nn.functional as F
 from alphanet import AlphaNet
 
-data_path = 'trajectories.npz'
+data_path = "trajectories.npz"
 data = np.load(data_path)
 
-obs = torch.from_numpy(data['obs'][0:2])
-policy = torch.from_numpy(data['policy'][0:2])
-mask = torch.from_numpy(data['mask'][0:2])
-value = torch.from_numpy(data['value'][0:2]).unsqueeze(1)
+obs = torch.from_numpy(data["obs"][0:2])
+policy = torch.from_numpy(data["policy"][0:2])
+mask = torch.from_numpy(data["mask"][0:2])
+value = torch.from_numpy(data["value"][0:2]).unsqueeze(1)
 
 model = AlphaNet()
 

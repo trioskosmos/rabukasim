@@ -1,25 +1,25 @@
-﻿cargo : warning: unexpected 
+﻿cargo : warning: unexpected
 `cfg` condition value: `gpu`
 発生場所 行:1 文字:1
 + cargo test > ..\reports\al
 l_rust_tests_output.txt 2>&1
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          
+    + CategoryInfo
     : NotSpecified: (warning
     : unexpe...on value: `gp
     u`:String) [], RemoteExc
     eption
-    + FullyQualifiedErrorId 
+    + FullyQualifiedErrorId
     : NativeCommandError
- 
+
  --> src\size_test.rs:1:8
   |
 1 | #![cfg(feature = "gpu")]
   |        ^^^^^^^^^^^^^^^
   |
   = note: expected values fo
-r `feature` are: `default`, 
+r `feature` are: `default`,
 `extension-module`, `nn`, an
 d `parallel`
   = help: consider adding `g
@@ -43,7 +43,7 @@ ndition value: `gpu`
   |        ^^^^^^^^^^^^^^^
   |
   = note: expected values fo
-r `feature` are: `default`, 
+r `feature` are: `default`,
 `extension-module`, `nn`, an
 d `parallel`
   = help: consider adding `g
@@ -82,10 +82,10 @@ s:76:9
    |       help: remove this
  `mut`
 
-warning: `engine_rust` (lib 
+warning: `engine_rust` (lib
 test) generated 4 warnings (
 run `cargo fix --lib -p engi
-ne_rust --tests` to apply 2 
+ne_rust --tests` to apply 2
 suggestions)
 warning: unused import: `std
 ::collections::VecDeque`
@@ -101,7 +101,7 @@ cDeque;
 orts)]` (part of `#[warn(unu
 sed)]`) on by default
 
-warning: `engine_rust` (bin 
+warning: `engine_rust` (bin
 "test_serialization" test) g
 enerated 1 warning (run `car
 go fix --bin "test_serializa
@@ -205,13 +205,13 @@ ml> for more information abo
 ut checking conditional conf
 iguration
 
-warning: `engine_rust` (bin 
+warning: `engine_rust` (bin
 "test_serialization") genera
 ted 1 warning (1 duplicate)
 warning: `engine_rust` (test
  "repro_catchu_q103") genera
 ted 4 warnings
-    Finished `test` profile 
+    Finished `test` profile
 [optimized + debuginfo] targ
 et(s) in 0.23s
      Running unittests src\l
@@ -493,10 +493,10 @@ thread 'repro::card_579_verification::test_card_579_ability_0_cost_comparison' (
 Could not find Liella target card with SYNC_COST for test 0
 
 ---- repro::repro_card_420_cost_sum::test_repro_card_420_cost_sum_limit stdout ----
-[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:4    a:-9223372036854775808 s:0   
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:4    a:-9223372036854775808 s:0
 [DEBUG] O_PAY_ENERGY: cost=4, available=2, is_optional=true, attr=-9223372036854775808
 [DEBUG] O_PAY_ENERGY: cannot afford optional cost.
-[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0
 [DEBUG] auto_step: Phase=Main, Player=0
 [DEBUG] auto_step: Phase=Main, Player=0
 
@@ -512,7 +512,7 @@ filter_attr=0x0000000000000000, s_word=0
 Initial looked_cards: 3 members
 
 === Step 1: Pick first card (index 0) ===
-[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0
 [DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:-9223372033482555392 s:458756
 [DEBUG] auto_step: Phase=Main, Player=0
 

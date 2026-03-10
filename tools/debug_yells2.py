@@ -1,6 +1,6 @@
 import json
 
-with open(r'c:\Users\trios\Downloads\lovecasim_report_2026-03-03T10-16-30-454Z.json', encoding='utf-8') as f:
+with open(r"c:\Users\trios\Downloads\lovecasim_report_2026-03-03T10-16-30-454Z.json", encoding="utf-8") as f:
     d = json.load(f)
 
 print("Explanation:", d.get("explanation"))
@@ -26,4 +26,4 @@ if ph:
     last_ph = ph[-1]
     for k, v in last_ph.items():
         if isinstance(v, dict):
-             print(f"Player {k} yell_count: {v.get('yell_count')} actual yell_cards: {len(v.get('yell_cards', []))}")
+            print(f"Player {k} yell_count: {v.get('yell_count')} actual yell_cards: {len(v.get('yell_cards', []))}")

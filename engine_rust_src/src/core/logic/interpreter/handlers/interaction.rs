@@ -388,12 +388,12 @@ pub fn handle_look_and_choose(
             ChoiceType::LookAndChoose
         };
         let choice_text = get_choice_text(db, ctx);
-        
+
         let mut filter = crate::core::logic::filter::CardFilter::from_attr(a);
         filter.char_id_1 = char_id_1;
         filter.char_id_2 = char_id_2;
         filter.char_id_3 = char_id_3;
-        
+
         let final_attr = filter.to_attr();
         let pick_count = 1;
 
@@ -500,7 +500,7 @@ pub fn handle_look_and_choose(
                         }
                     }
                 }
-                
+
                 // --- Multi-pick loop ---
                 let rem = if ctx.v_remaining > 0 {
                     ctx.v_remaining - 1

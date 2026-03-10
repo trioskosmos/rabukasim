@@ -10,16 +10,16 @@ ile -Encoding utf8 carg
 o_ ...
 +                     ~
 ~~~~~~~~~~~~~~~
-    + CategoryInfo     
-         : NotSpecifi  
-  ed: (    Checking    
- en...ngine_rust_sr    
+    + CategoryInfo
+         : NotSpecifi
+  ed: (    Checking
+ en...ngine_rust_sr
 c):String) [], Rem    o
 teException
-    + FullyQualifiedEr 
-   rorId : NativeComm  
+    + FullyQualifiedEr
+   rorId : NativeComm
   andError
- 
+
 warning: unused import:
  `PlayerState`
  --> src\core\alphazero
@@ -29,8 +29,8 @@ _encoding_vanilla.rs:1:
 1 | use crate::core::lo
 gic::{CardDatabase, Gam
 eState, PlayerState};
-  |                    
-                       
+  |
+
         ^^^^^^^^^^^
   |
   = note: `#[warn(unuse
@@ -38,7 +38,7 @@ d_imports)]` (part of `
 #[warn(unused)]`) on by
  default
 
-warning: variable does 
+warning: variable does
 not need to be mutable
    --> src\core\alphaze
 ro_encoding_vanilla.rs:
@@ -63,21 +63,21 @@ e: `slot`
 nterpreter\handlers\sta
 te.rs:378:25
     |
-378 |                  
+378 |
    let slot = ctx.choic
 e_index as usize;
-    |                  
+    |
        ^^^^ help: if th
 is is intentional, pref
 ix it with an underscor
 e: `_slot`
     |
     = note: `#[warn(unu
-sed_variables)]` (part 
+sed_variables)]` (part
 of `#[warn(unused)]`) o
 n by default
 
-warning: `engine_rust` 
+warning: `engine_rust`
 (lib) generated 3 warni
 ngs (run `cargo fix --l
 ib -p engine_rust` to a

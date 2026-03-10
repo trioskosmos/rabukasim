@@ -592,10 +592,10 @@ impl ResponseController for GameState {
 
             // SYSTEMIC FIX: If this is an optional effect and the user chose PASS (99),
             // and we are NOT using the ability bytecode (cid == -1, virtual BC),
-            // ensure we pop it properly. Actually, even for cid != -1, if it's an optional 
+            // ensure we pop it properly. Actually, even for cid != -1, if it's an optional
             // discard cost inside bytecode, the PASS action (99) should jump past it.
             // If the interpreter returns without suspending, we need to restore phase.
-            
+
             // For virtual bytecode (pi.card_id == -1), we must pop.
             // For actual ability bytecode, we pop because resolve_bytecode will use ctx.choice_index
             // to jump or skip, and if it doesn't suspend again, we restore the phase below.

@@ -6,7 +6,7 @@ import re
 from collections import defaultdict
 
 # Load consolidated abilities
-with open('data/consolidated_abilities.json', 'r', encoding='utf-8') as f:
+with open("data/consolidated_abilities.json", "r", encoding="utf-8") as f:
     consolidated = json.load(f)
 
 # Collect all unique pseudocode patterns
@@ -18,60 +18,60 @@ triggers = set()
 for ability_text, pseudo in consolidated.items():
     if not pseudo:
         continue
-    lines = pseudo.split('\n')
+    lines = pseudo.split("\n")
     for line in lines:
         line = line.strip()
-        if line.startswith('EFFECT:'):
+        if line.startswith("EFFECT:"):
             effect_part = line[7:].strip()
-            match = re.match(r'(\w+)', effect_part)
+            match = re.match(r"(\w+)", effect_part)
             if match:
                 effects.add(match.group(1))
-        elif line.startswith('CONDITION:'):
+        elif line.startswith("CONDITION:"):
             cond_part = line[10:].strip()
-            match = re.match(r'(\w+)', cond_part)
+            match = re.match(r"(\w+)", cond_part)
             if match:
                 conditions.add(match.group(1))
-        elif line.startswith('TRIGGER:'):
+        elif line.startswith("TRIGGER:"):
             trig_part = line[8:].strip()
-            match = re.match(r'(\w+)', trig_part)
+            match = re.match(r"(\w+)", trig_part)
             if match:
                 triggers.add(match.group(1))
 
 # Read parser_v2.py to extract aliases
-with open('compiler/parser_v2.py', 'r', encoding='utf-8') as f:
+with open("compiler/parser_v2.py", "r", encoding="utf-8") as f:
     parser_code = f.read()
 
 # Extract EFFECT_ALIASES
-effect_alias_match = re.search(r'EFFECT_ALIASES\s*=\s*\{([^}]+)\}', parser_code, re.DOTALL)
+effect_alias_match = re.search(r"EFFECT_ALIASES\s*=\s*\{([^}]+)\}", parser_code, re.DOTALL)
 all_effect_aliases = {}
 if effect_alias_match:
-    for line in effect_alias_match.group(1).split('\n'):
+    for line in effect_alias_match.group(1).split("\n"):
         m = re.match(r'\s*"(\w+)":\s*"(\w+)"', line)
         if m:
             all_effect_aliases[m.group(1)] = m.group(2)
 
-# Extract EFFECT_ALIASES_WITH_PARAMS  
-effect_alias_params_match = re.search(r'EFFECT_ALIASES_WITH_PARAMS\s*=\s*\{([^}]+)\}', parser_code, re.DOTALL)
+# Extract EFFECT_ALIASES_WITH_PARAMS
+effect_alias_params_match = re.search(r"EFFECT_ALIASES_WITH_PARAMS\s*=\s*\{([^}]+)\}", parser_code, re.DOTALL)
 if effect_alias_params_match:
-    for line in effect_alias_params_match.group(1).split('\n'):
+    for line in effect_alias_params_match.group(1).split("\n"):
         m = re.match(r'\s*"(\w+)":\s*\(("[^"]+")', line)
         if m:
             all_effect_aliases[m.group(1)] = m.group(2).strip('"')
 
 # Extract CONDITION_ALIASES
-cond_alias_match = re.search(r'CONDITION_ALIASES\s*=\s*\{([^}]+)\}', parser_code, re.DOTALL)
+cond_alias_match = re.search(r"CONDITION_ALIASES\s*=\s*\{([^}]+)\}", parser_code, re.DOTALL)
 all_condition_aliases = {}
 if cond_alias_match:
-    for line in cond_alias_match.group(1).split('\n'):
+    for line in cond_alias_match.group(1).split("\n"):
         m = re.match(r'\s*"(\w+)":\s*\(("[^"]+")', line)
         if m:
             all_condition_aliases[m.group(1)] = m.group(2).strip('"')
 
 # Extract TRIGGER_ALIASES
-trigger_alias_match = re.search(r'TRIGGER_ALIASES\s*=\s*\{([^}]+)\}', parser_code, re.DOTALL)
+trigger_alias_match = re.search(r"TRIGGER_ALIASES\s*=\s*\{([^}]+)\}", parser_code, re.DOTALL)
 all_trigger_aliases = {}
 if trigger_alias_match:
-    for line in trigger_alias_match.group(1).split('\n'):
+    for line in trigger_alias_match.group(1).split("\n"):
         m = re.match(r'\s*"(\w+)":\s*"(\w+)"', line)
         if m:
             all_trigger_aliases[m.group(1)] = m.group(2)
@@ -84,13 +84,14 @@ print(sorted(all_effect_aliases.keys())[:30])
 
 # Now load effect patterns from parser to get canonical types
 import sys
-sys.path.insert(0, 'compiler')
+
+sys.path.insert(0, "compiler")
 from patterns.effects import EFFECT_PATTERNS
 
 parser_effects = set()
 for p in EFFECT_PATTERNS:
-    if hasattr(p, 'output_type') and p.output_type:
-        match = re.search(r'EffectType\.(\w+)', str(p.output_type))
+    if hasattr(p, "output_type") and p.output_type:
+        match = re.search(r"EffectType\.(\w+)", str(p.output_type))
         if match:
             parser_effects.add(match.group(1))
 
@@ -104,8 +105,8 @@ from patterns.conditions import CONDITION_PATTERNS
 
 parser_conditions = set()
 for p in CONDITION_PATTERNS:
-    if hasattr(p, 'output_type') and p.output_type:
-        match = re.search(r'ConditionType\.(\w+)', str(p.output_type))
+    if hasattr(p, "output_type") and p.output_type:
+        match = re.search(r"ConditionType\.(\w+)", str(p.output_type))
         if match:
             parser_conditions.add(match.group(1))
 
@@ -119,8 +120,8 @@ from patterns.triggers import TRIGGER_PATTERNS
 
 parser_triggers = set()
 for p in TRIGGER_PATTERNS:
-    if hasattr(p, 'output_type') and p.output_type:
-        match = re.search(r'TriggerType\.(\w+)', str(p.output_type))
+    if hasattr(p, "output_type") and p.output_type:
+        match = re.search(r"TriggerType\.(\w+)", str(p.output_type))
         if match:
             parser_triggers.add(match.group(1))
 
@@ -165,26 +166,26 @@ trigger_usage = defaultdict(int)
 for ability_text, pseudo in consolidated.items():
     if not pseudo:
         continue
-    lines = pseudo.split('\n')
+    lines = pseudo.split("\n")
     for line in lines:
         line = line.strip()
-        if line.startswith('EFFECT:'):
+        if line.startswith("EFFECT:"):
             effect_part = line[7:].strip()
-            match = re.match(r'(\w+)', effect_part)
+            match = re.match(r"(\w+)", effect_part)
             if match:
                 e = match.group(1)
                 if e in missing_effects:
                     effect_usage[e] += 1
-        elif line.startswith('CONDITION:'):
+        elif line.startswith("CONDITION:"):
             cond_part = line[10:].strip()
-            match = re.match(r'(\w+)', cond_part)
+            match = re.match(r"(\w+)", cond_part)
             if match:
                 c = match.group(1)
                 if c in missing_conditions:
                     condition_usage[c] += 1
-        elif line.startswith('TRIGGER:'):
+        elif line.startswith("TRIGGER:"):
             trig_part = line[8:].strip()
-            match = re.match(r'(\w+)', trig_part)
+            match = re.match(r"(\w+)", trig_part)
             if match:
                 t = match.group(1)
                 if t in missing_triggers:
@@ -209,15 +210,15 @@ print("CHECKING OPCODES MAP")
 print("=" * 60)
 
 # Read the opcode map to see what's already defined
-with open('docs/spec/opcode_map.md', 'r', encoding='utf-8') as f:
+with open("docs/spec/opcode_map.md", "r", encoding="utf-8") as f:
     opcode_content = f.read()
 
 # Extract effect opcodes
-effect_opcode_match = re.search(r'##\s+Opcodes\s+Mapping.*?(?=##|\Z)', opcode_content, re.DOTALL)
+effect_opcode_match = re.search(r"##\s+Opcodes\s+Mapping.*?(?=##|\Z)", opcode_content, re.DOTALL)
 defined_opcodes = set()
 if effect_opcode_match:
-    for line in effect_opcode_match.group(0).split('\n'):
-        m = re.search(r'\|\s*\d+\s+\|\s+(\w+)\s+\|', line)
+    for line in effect_opcode_match.group(0).split("\n"):
+        m = re.search(r"\|\s*\d+\s+\|\s+(\w+)\s+\|", line)
         if m:
             defined_opcodes.add(m.group(1))
 

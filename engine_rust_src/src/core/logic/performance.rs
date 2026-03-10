@@ -841,7 +841,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 let (req_board, _) = get_live_requirements(state, db, p_idx, live);
                 if check_live_success(state, db, p_idx, live, &remaining_hearts) {
                     let req_arr = req_board.to_array();
-                    
+
                     // NEW: Allocate hearts from sources and record them
                     // 1. Specific colors 0-5
                     for color_idx in 0..6 {
@@ -858,7 +858,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                 let base_available = src.base_hearts[color_idx];
                                 let from_base = base_available.min(take);
                                 src.base_hearts[color_idx] -= from_base;
-                                
+
                                 src.hearts[color_idx] -= take;
                                 needed -= take;
                                 allocations.push(json!({

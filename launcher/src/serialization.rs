@@ -540,7 +540,7 @@ pub fn get_action_desc_rich(
              } else if opcode == O_SELECT_MODE {
                    let member = if card_id >= 0 { db.get_member(card_id) } else { None };
                    let live = if member.is_none() && card_id >= 0 { db.get_live(card_id) } else { None };
-                   
+
                    let ab = if let Some(m) = member {
                        m.abilities.get(ab_idx as usize)
                    } else if let Some(l) = live {
@@ -571,7 +571,7 @@ pub fn get_action_desc_rich(
                             if instr_ip + 5 + (choice_idx * 5) + 1 < ab.bytecode.len() {
                                 // For SELECT_MODE, Choice i is followed by an O_JUMP instruction at instr_ip + 5 + i*5
                                 let mut jump_instr_ip = instr_ip + 5 + (choice_idx * 5);
-                                
+
                                 // Recursive Jump Following (Safety Limit: 5)
                                 for _ in 0..5 {
                                     if jump_instr_ip + 1 >= ab.bytecode.len() { break; }
@@ -583,7 +583,7 @@ pub fn get_action_desc_rich(
                                         if target_instr_ip + 1 < ab.bytecode.len() {
                                             let op = ab.bytecode[target_instr_ip] as i32;
                                             let val = ab.bytecode[target_instr_ip + 1];
-                                            
+
                                             // Handle various opcodes
                                             match op {
                                                 O_PAY_ENERGY | O_PAY_ENERGY_DYNAMIC => {
@@ -1153,17 +1153,17 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool) -> Value {
                 obj_map.insert("ability_flags".to_string(), json!(m.ability_flags));
                 obj_map.insert("synergy_flags".to_string(), json!(m.synergy_flags));
                 obj_map.insert("cost_flags".to_string(), json!(m.cost_flags));
-                
+
                 // Metadata Enrichments
                 obj_map.insert("char_id".to_string(), json!(m.char_id));
                 obj_map.insert("groups".to_string(), json!(m.groups));
                 obj_map.insert("units".to_string(), json!(m.units));
-                
+
                 let group_names: Vec<&str> = m.groups.iter().map(|&g| get_group_name(g, "en")).collect();
                 let unit_names: Vec<&str> = m.units.iter().map(|&u| get_unit_name(u, "en")).collect();
                 obj_map.insert("group_names".to_string(), json!(group_names));
                 obj_map.insert("unit_names".to_string(), json!(unit_names));
-                    
+
                 let abilities: Vec<Value> = m.abilities.iter().map(|ab| {
                     let mut ab_val = serde_json::to_value(ab).unwrap();
                     if let Some(ab_obj) = ab_val.as_object_mut() {
@@ -1172,7 +1172,7 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool) -> Value {
                     ab_val
                 }).collect();
                 obj_map.insert("abilities".to_string(), json!(abilities));
-                    
+
                 if !m.abilities.is_empty() {
                     obj_map.insert("pseudocode".to_string(), json!(m.abilities[0].pseudocode));
                 }
@@ -1183,16 +1183,16 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool) -> Value {
                 obj_map.insert("blade_hearts".to_string(), json!(l.blade_hearts));
                 obj_map.insert("semantic_flags".to_string(), json!(l.semantic_flags));
                 obj_map.insert("synergy_flags".to_string(), json!(l.synergy_flags));
-                
+
                 // Metadata Enrichments
                 obj_map.insert("groups".to_string(), json!(l.groups));
                 obj_map.insert("units".to_string(), json!(l.units));
-                
+
                 let group_names: Vec<&str> = l.groups.iter().map(|&g| get_group_name(g, "en")).collect();
                 let unit_names: Vec<&str> = l.units.iter().map(|&u| get_unit_name(u, "en")).collect();
                 obj_map.insert("group_names".to_string(), json!(group_names));
                 obj_map.insert("unit_names".to_string(), json!(unit_names));
-                    
+
                 let abilities: Vec<Value> = l.abilities.iter().map(|ab| {
                     let mut ab_val = serde_json::to_value(ab).unwrap();
                     if let Some(ab_obj) = ab_val.as_object_mut() {

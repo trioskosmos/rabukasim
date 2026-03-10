@@ -7,12 +7,12 @@ ython is set for njit and is ignored
 ation_data.py --games 5 --o ...
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: 
-    (C:\Users\trios\... and is ignored:Str  
+    + CategoryInfo          : NotSpecified:
+    (C:\Users\trios\... and is ignored:Str
   ing) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommand 
+    + FullyQualifiedErrorId : NativeCommand
    Error
- 
+
   warnings.warn('nopython is set for njit an
 d is ignored', RuntimeWarning)
 Generating distillation data using SuperHeuristicAgent...
@@ -337,4 +337,3 @@ DEBUG: Pushed choices: 1
 DEBUG: Pushed choices: 1
 DEBUG: Pushed choices: 1
 Saved 3272 samples to data/test_distill.npz
-

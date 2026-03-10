@@ -9,14 +9,14 @@ txt 2>&1
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~
-    + CategoryInfo          
-    : NotSpecified: (   Co  
-  mpiling en...ngine_rust   
- _src):String) [], Remot    
+    + CategoryInfo
+    : NotSpecified: (   Co
+  mpiling en...ngine_rust
+ _src):String) [], Remot
 eException
-    + FullyQualifiedErrorId 
+    + FullyQualifiedErrorId
     : NativeCommandError
- 
+
 warning: unused import: `std
 ::collections::VecDeque`
  --> src\bin\test_serializat
@@ -31,11 +31,11 @@ cDeque;
 orts)]` (part of `#[warn(unu
 sed)]`) on by default
 
-warning: `engine_rust` (bin 
+warning: `engine_rust` (bin
 "test_serialization") genera
 ted 1 warning (run `cargo fi
 x --bin "test_serialization"
- -p engine_rust` to apply 1 
+ -p engine_rust` to apply 1
 suggestion)
 warning: unexpected `cfg` co
 ndition value: `gpu`
@@ -138,7 +138,7 @@ iguration
 warning: `engine_rust` (test
  "repro_catchu_q103") genera
 ted 4 warnings
-warning: `engine_rust` (bin 
+warning: `engine_rust` (bin
 "test_serialization" test) g
 enerated 1 warning (1 duplic
 ate)
@@ -150,7 +150,7 @@ ndition value: `gpu`
   |        ^^^^^^^^^^^^^^^
   |
   = note: expected values fo
-r `feature` are: `default`, 
+r `feature` are: `default`,
 `extension-module`, `nn`, an
 d `parallel`
   = help: consider adding `g
@@ -174,7 +174,7 @@ ndition value: `gpu`
   |        ^^^^^^^^^^^^^^^
   |
   = note: expected values fo
-r `feature` are: `default`, 
+r `feature` are: `default`,
 `extension-module`, `nn`, an
 d `parallel`
   = help: consider adding `g
@@ -215,12 +215,12 @@ tyContext {
    |         help: remove th
 is `mut`
 
-warning: `engine_rust` (lib 
+warning: `engine_rust` (lib
 test) generated 4 warnings (
 run `cargo fix --lib -p engi
-ne_rust --tests` to apply 2 
+ne_rust --tests` to apply 2
 suggestions)
-    Finished `test` profile 
+    Finished `test` profile
 [optimized + debuginfo] targ
 et(s) in 4.23s
      Running unittests src\l
@@ -482,7 +482,7 @@ thread 'opcode_tests::test_opcode_reveal_until_cost_ge' (9552) panicked at src\o
 assertion failed: state.core.players[0].hand.contains(&60015)
 
 ---- repro::repro_card_420_cost_sum::test_repro_card_420_cost_sum_limit stdout ----
-[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:4    a:-9223372036854775808 s:0   
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:4    a:-9223372036854775808 s:0
 [DEBUG] O_PAY_ENERGY: cost=4, available=2, is_optional=true, attr=-9223372036854775808
 [DEBUG] O_PAY_ENERGY: cannot afford optional cost.
 [DEBUG] BC_STEP: ip=5   PLAY_MEMBER_FROM_DISCARD | v:2    a:-9223372033482555392 s:458756

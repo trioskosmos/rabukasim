@@ -23,7 +23,7 @@ This script builds the engine, links the `.pyd`, compiles the card data, and **s
 ### 1. Continuous Training (Overnight Loop)
 For long-term improvement, use the unified script which combines self-play and training into a single iterative cycle.
 - **Command**: `uv run python alphazero/training/overnight_vanilla.py`
-- **Behavior**: 
+- **Behavior**:
     - Spawns parallel workers to generate games.
     - **Ability Stripping**: Automatically strips abilities from cards to ensure a pure vanilla environment.
     - **Buffer**: Trains on a persistent disk-backed experience buffer.

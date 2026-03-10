@@ -3,10 +3,9 @@
 
 import json
 import re
-from collections import defaultdict
 
 # Load consolidated abilities
-with open('data/consolidated_abilities.json', 'r', encoding='utf-8') as f:
+with open("data/consolidated_abilities.json", "r", encoding="utf-8") as f:
     consolidated = json.load(f)
 
 # Collect all unique pseudocode patterns
@@ -18,22 +17,22 @@ triggers = set()
 for ability_text, pseudo in consolidated.items():
     if not pseudo:
         continue
-    lines = pseudo.split('\n')
+    lines = pseudo.split("\n")
     for line in lines:
         line = line.strip()
-        if line.startswith('EFFECT:'):
+        if line.startswith("EFFECT:"):
             effect_part = line[7:].strip()
-            match = re.match(r'(\w+)', effect_part)
+            match = re.match(r"(\w+)", effect_part)
             if match:
                 effects.add(match.group(1))
-        elif line.startswith('CONDITION:'):
+        elif line.startswith("CONDITION:"):
             cond_part = line[10:].strip()
-            match = re.match(r'(\w+)', cond_part)
+            match = re.match(r"(\w+)", cond_part)
             if match:
                 conditions.add(match.group(1))
-        elif line.startswith('TRIGGER:'):
+        elif line.startswith("TRIGGER:"):
             trig_part = line[8:].strip()
-            match = re.match(r'(\w+)', trig_part)
+            match = re.match(r"(\w+)", trig_part)
             if match:
                 triggers.add(match.group(1))
 
@@ -55,30 +54,31 @@ print("=" * 60)
 
 # Load effect patterns from parser
 import sys
-sys.path.insert(0, 'compiler')
-from patterns.effects import EFFECT_PATTERNS
+
+sys.path.insert(0, "compiler")
 from patterns.conditions import CONDITION_PATTERNS
+from patterns.effects import EFFECT_PATTERNS
 from patterns.triggers import TRIGGER_PATTERNS
 
 parser_effects = set()
 for p in EFFECT_PATTERNS:
-    if hasattr(p, 'output_type') and p.output_type:
+    if hasattr(p, "output_type") and p.output_type:
         # Extract the EffectType enum name
-        match = re.search(r'EffectType\.(\w+)', str(p.output_type))
+        match = re.search(r"EffectType\.(\w+)", str(p.output_type))
         if match:
             parser_effects.add(match.group(1))
 
 parser_conditions = set()
 for p in CONDITION_PATTERNS:
-    if hasattr(p, 'output_type') and p.output_type:
-        match = re.search(r'ConditionType\.(\w+)', str(p.output_type))
+    if hasattr(p, "output_type") and p.output_type:
+        match = re.search(r"ConditionType\.(\w+)", str(p.output_type))
         if match:
             parser_conditions.add(match.group(1))
 
 parser_triggers = set()
 for p in TRIGGER_PATTERNS:
-    if hasattr(p, 'output_type') and p.output_type:
-        match = re.search(r'TriggerType\.(\w+)', str(p.output_type))
+    if hasattr(p, "output_type") and p.output_type:
+        match = re.search(r"TriggerType\.(\w+)", str(p.output_type))
         if match:
             parser_triggers.add(match.group(1))
 

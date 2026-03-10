@@ -374,7 +374,7 @@ pub fn handle_move_to_discard(
                 }
 
                 next_ctx.choice_index = -1;
-                
+
                 // If auto_pick is true and it's mandatory, try to move the next card immediately
                 // Or if it's mandatory and count >= items, we also auto-pick
                 let is_forced_pick = !is_optional && (count as usize) >= (state.players[target_player_idx].hand.len()); // simplified for hand
@@ -385,7 +385,7 @@ pub fn handle_move_to_discard(
                         Zone::Stage => state.players[target_player_idx].stage.iter().any(|&c| c >= 0),
                         _ => true,
                     };
-                    
+
                     if still_available {
                         next_ctx.choice_index = 0;
                         // LOOP: Recursive-style but safe because we already removed one card

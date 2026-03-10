@@ -27,7 +27,8 @@ This project is a web-based implementation of the "Love Live! School Idol Collec
 ## Architecture
 The project follows a modular architecture separating the game engine, backend server, and frontend assets.
 
-- **Engine** (`engine/`): Core game logic, state management, and data models.
+- **Engine (Rust)** (`engine_rust_src/`): **PRIMARY ENGINE**. Core game logic, state management, and MCTS/AlphaZero support.
+- **Engine (Python)** (`engine/`): **LEGACY / DEPRECATED**. Original logic, kept for reference but no longer maintained.
 - **Backend** (`backend/server.py`): Flask server exposing the game via API.
 - **Frontend** (`frontend/web_ui/`): Vanilla HTML/JS interface. Served static assets.
 - **Compiler** (`compiler/`): Utilities for processing raw card data into `cards_compiled.json`.
@@ -37,7 +38,7 @@ The project follows a modular architecture separating the game engine, backend s
 The project uses a localized translation system for card abilities.
 - **Master Translator**: `frontend/web_ui/js/ability_translator.js`.
 - **Process**: Compiles raw Japanese text into "pseudocode" strings in `cards_compiled.json`, which are then translated by the frontend for display (supporting JP and EN).
-- **Parity**: Opcode constants in `ability_translator.js` MUST match `engine_rust_src/src/core/logic.rs` and `engine/models/opcodes.py`.
+- **Parity**: Opcode constants in `ability_translator.js` MUST match `engine_rust_src/src/core/logic.rs`. Opcodes in `engine/models/opcodes.py` are legacy.
 - **Maintenance**: Use `uv run python tools/analyze_translation_coverage.py` to ensure 100% coverage after engine changes.
 
 ## Key Directories
@@ -46,9 +47,8 @@ The project uses a localized translation system for card abilities.
 | `data/` | **MASTER DATA**. Edit `cards.json` here. |
 | `frontend/web_ui/` | **MASTER FRONTEND**. All CSS/JS/HTML lives here. |
 | `backend/` | Server logic. |
-| `engine/game/` | Game state, logic, and turn orchestration. |
-| `engine/models/` | Pydantic models. |
-| `engine/tests/` | Comprehensive test suite (Pytest). |
+| `engine_rust_src/` | **MASTER ENGINE**. Core logic (Rust). |
+| `engine/` | **LEGACY ENGINE**. Python version (Deprecated). |
 | `tools/_legacy_scripts/` | Archived old scripts. |
 
 ## Development Standards

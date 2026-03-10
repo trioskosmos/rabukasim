@@ -288,7 +288,7 @@ export const TextEnricher = {
 
         if (blocks.length === 1) return blocks[0];
 
-        // 3. Last resort: if we have multiple blocks but no clear match, 
+        // 3. Last resort: if we have multiple blocks but no clear match,
         // return empty string to avoid showing unrelated ability text if it's a generic choice
         return "";
     },

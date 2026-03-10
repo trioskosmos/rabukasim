@@ -305,7 +305,7 @@ impl OriginalHeuristic {
             // to break deterministic Rock-vs-Rock loops in greedy agents.
             let p0_seed = (state.players[0].deck.len() as u32).wrapping_shl(8) ^ state.turn as u32;
             let p1_seed = (state.players[1].deck.len() as u32).wrapping_shl(16) ^ state.turn as u32;
-            
+
             // Add a tiny deterministic noise (+/- 0.0001)
             let noise = ((p0_seed.wrapping_sub(p1_seed) % 100) as f32) / 1000000.0;
             final_val += noise;

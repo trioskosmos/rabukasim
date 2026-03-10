@@ -30,7 +30,7 @@ impl TurnSequencer {
         for &action in &legal_ids {
             let mut sim_state = state.clone();
             sim_state.ui.silent = true;
-            
+
             if sim_state.step(db, action).is_ok() {
                 let mut current_seq = vec![action];
                 let mut best_seq = vec![action];
@@ -39,7 +39,7 @@ impl TurnSequencer {
 
                 // Continue DFS from this action until turn end
                 Self::dfs_turn(&mut sim_state, db, &mut current_seq, &mut best_seq, &mut best_val, &mut best_breakdown, &mut total_nodes);
-                
+
                 evaluations.push((action, best_val, best_breakdown.0, best_breakdown.1));
                 if best_val > best_overall_val {
                     best_overall_val = best_val;
@@ -87,7 +87,7 @@ impl TurnSequencer {
             // Option A: Stop Main and evaluate LiveSet result
             let (board_score, live_ev) = Self::evaluate_state(state, db);
             let current_val = board_score + live_ev;
-            
+
             if current_val > *best_val {
                 *best_val = current_val;
                 *best_seq = current_seq.clone();
@@ -107,12 +107,12 @@ impl TurnSequencer {
                     for slot in 0..3 {
                         if slot == 2 && skip_s2 { continue; }
                         let action = ACTION_BASE_HAND + (h_idx as i32) * 10 + (slot as i32);
-                        
+
                         let cid = state.players[p_idx].hand[h_idx];
                         if state.players[p_idx].stage[slot] == -1 && !state.players[p_idx].is_moved(slot) {
                             let cost = state.get_member_cost(p_idx, cid, slot as i16, -1, db, 0);
                             let energy = state.players[p_idx].get_untapped_energy_indices(cost as usize).len();
-                            
+
                             if energy >= cost as usize {
                                 let mut next_state = state.clone();
                                 if next_state.step(db, action).is_ok() {
@@ -134,7 +134,7 @@ impl TurnSequencer {
             }
             let (board_score, live_ev) = Self::evaluate_state(&final_state, db);
             let current_val = board_score + live_ev;
-            
+
             if current_val > *best_val {
                 *best_val = current_val;
                 *best_breakdown = (board_score, live_ev);
@@ -146,7 +146,7 @@ impl TurnSequencer {
             // Other phases: just evaluate
             let (board_score, live_ev) = Self::evaluate_state(state, db);
             let current_val = board_score + live_ev;
-            
+
             if current_val > *best_val {
                 *best_val = current_val;
                 *best_breakdown = (board_score, live_ev);
@@ -165,7 +165,7 @@ impl TurnSequencer {
                 filled_slots += 1;
                 // Board Presence Bonus: Higher per-slot value to reward fielding
                 score += 1.5;
-                
+
                 if let Some(m) = db.get_member(cid) {
                     // Blades (Yell) is still very important for scoring later
                     score += m.blades as f32 * 1.5;
@@ -174,19 +174,19 @@ impl TurnSequencer {
                 }
             }
         }
-        
+
         // Super-linear saturation bonus: filling all 3 slots is disproportionately valuable
         // because it maximizes hearts available for live judgement
         if filled_slots == 3 {
             score += 3.0;
         }
-        
+
         // --- AGGRESSIVE: PENALIZE ENERGY HOARDING ---
         // In a stochastic game, saving energy for "later" is high variance.
         // We want the AI to play its hand NOW if it has valid slots.
         let untapped = state.players[p_idx].energy_zone.len() - state.players[p_idx].tapped_energy_count() as usize;
         score -= untapped as f32 * 0.5; // Strong penalty per untapped energy to force spending.
-        
+
         score
     }
 
@@ -229,7 +229,7 @@ impl TurnSequencer {
                 let ev_score = Self::predict_best_liveset_score(&sim_state, db);
                 // Tiny bonus for each live card set to encourage using slots
                 let score_with_bonus = ev_score + (live_combo.len() as f32 * 0.01);
-                
+
                 if score_with_bonus > best_ev {
                     best_ev = score_with_bonus;
                     best_actions = actions;
@@ -242,12 +242,12 @@ impl TurnSequencer {
 
     fn evaluate_state(state: &GameState, db: &CardDatabase) -> (f32, f32) {
         let p_idx = state.current_player as usize;
-        
+
         // --- 1. Scoring Potential (The Primary Driver) ---
         // Amplified multiplier: live success is THE way to win.
         let live_score_ev = Self::predict_best_liveset_score(state, db);
         let live_ev = live_score_ev * 15.0;
-        
+
         // --- 2. Board State (Secondary) ---
         let board_score = Self::evaluate_members_only(state, db);
 
@@ -261,7 +261,7 @@ impl TurnSequencer {
             .cloned()
             .filter(|&cid| db.get_live(cid).is_some())
             .collect();
-        
+
         if lives_in_hand.is_empty() { return 0.0; }
 
         let mut best_total_ev = 0.0;
@@ -296,7 +296,7 @@ impl TurnSequencer {
                         // Fallback for non-vanilla: just a rough estimate since we're in a heuristic
                         0.5
                     };
-                    
+
                     // Super-linear: punish uncertainty. prob^1.5 makes 90%→0.86, 50%→0.35
                     // This strongly favors lives the AI can almost certainly pass
                     let ev = prob.powf(1.5) * live.score as f32;
@@ -319,7 +319,7 @@ impl TurnSequencer {
     fn estimate_live_ev(state: &GameState, db: &CardDatabase) -> f32 {
         let p_idx = state.current_player as usize;
         let mut total_ev = 0.0;
-        
+
         // For each card in the live zone, estimate success
         for i in 0..3 {
             let cid = state.players[p_idx].live_zone[i];
@@ -330,18 +330,18 @@ impl TurnSequencer {
                 total_ev += success_prob * score;
             }
         }
-        
+
         total_ev
     }
-    
+
     fn monte_carlo_success_prob(state: &GameState, db: &CardDatabase, slot_idx: usize) -> f32 {
         let p_idx = state.current_player as usize;
         let cid = state.players[p_idx].live_zone[slot_idx];
         let live = db.get_live(cid).unwrap();
-        
+
         let board_hearts = state.get_total_hearts(p_idx, db, 0);
         let yell_count = state.get_total_blades(p_idx, db, 0);
-        
+
         if yell_count == 0 {
             return if board_hearts.satisfies(live.hearts_board) { 1.0 } else { 0.0 };
         }
@@ -351,7 +351,7 @@ impl TurnSequencer {
             use crate::core::heuristics::{calculate_deck_expectations, calculate_live_success_prob};
             let stats = calculate_deck_expectations(&state.players[p_idx].deck, db);
             let expected_yell_hearts: Vec<f32> = stats.avg_hearts.iter().map(|&h| h * yell_count as f32).collect();
-            
+
             // Use the soft probability estimation from heuristics
             return calculate_live_success_prob(
                 live,
@@ -364,7 +364,7 @@ impl TurnSequencer {
         let mut successes = 0;
         let trials = 100;
         let deck_cards = state.players[p_idx].deck.to_vec();
-        
+
         let mut rng = rand::thread_rng();
 
         for _ in 0..trials {
@@ -372,14 +372,14 @@ impl TurnSequencer {
             trial_deck.shuffle(&mut rng);
             let mut trial_hearts = board_hearts.clone();
             let to_draw = yell_count.min(trial_deck.len() as u32) as usize;
-            
+
             for j in 0..to_draw {
                 let yid = trial_deck[j];
                 if let Some(ym) = db.get_member(yid) {
                     trial_hearts.add(ym.blade_hearts_board);
                 }
             }
-            
+
             if trial_hearts.satisfies(live.hearts_board) {
                 successes += 1;
             }

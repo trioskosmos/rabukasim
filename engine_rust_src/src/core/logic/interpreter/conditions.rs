@@ -249,7 +249,7 @@ pub fn resolve_count(
         // Special Group ID auto-encoding for C_COUNT_GROUP if not enabled (Legacy Support)
         // CRITICAL: Disable if any high-bits are set (Revision 5) or if it looks like a packed attribute
         // However, allow IDs (0-127 in bits 5-11) or raw IDs (0-127 in bits 0-6) to pass if Type bits (bits 2-3) are not Member/Live.
-        let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0; 
+        let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0;
         let group_id_bits = (attr & 0x00000000FFFFFFFF) & !FILTER_UNIQUE_NAMES;
         let should_auto_encode_group = (op == C_COUNT_GROUP)
             && !is_packed_r5
@@ -261,7 +261,7 @@ pub fn resolve_count(
         if should_auto_encode_group {
             let gid = group_id_bits;
             // Clear bits 0-11 and insert new group flag+id (bit 4 + bits 5-11)
-            let group_mask = 0xFFF; 
+            let group_mask = 0xFFF;
             let new_group_bits = 0x10 | (gid << 5);
             filter_attr = (filter_attr & !group_mask) | new_group_bits;
         }
@@ -362,7 +362,7 @@ pub fn resolve_count(
                 } else if op == C_COUNT_HEARTS {
                     // Revision 5: Color mask is bits 32-38
                     let color_mask = (attr >> FILTER_COLOR_SHIFT_R5) & 0x7F;
-                    
+
                     if resolved_slot < 3 {
                         let h = state.get_effective_hearts(p_idx, resolved_slot, db, depth);
                         if color_mask == 0 {
@@ -447,7 +447,7 @@ pub fn check_condition_opcode(
     };
 
     let cid = get_cid();
-    let area_val = ((slot as u32 >> S_STANDARD_AREA_IDX_SHIFT) & S_STANDARD_AREA_IDX_MASK) as u8; 
+    let area_val = ((slot as u32 >> S_STANDARD_AREA_IDX_SHIFT) & S_STANDARD_AREA_IDX_MASK) as u8;
     let real_slot = slot & 0xFF;
 
     if state.debug.debug_mode {
@@ -469,7 +469,7 @@ pub fn check_condition_opcode(
             let filter = CardFilter::from_attr(attr as i64);
             let p_target = if filter.target_player == 2 { 1 - p_idx } else { p_idx };
             let target_player = &state.players[p_target as usize];
-            
+
             target_player.stage.iter().filter(|&&id| id >= 0).any(|&id| {
                 (id == val || id == (attr as i32))
                     || (attr != 0 && state.card_matches_filter(db, id, attr))
@@ -580,7 +580,7 @@ pub fn check_condition_opcode(
         C_OPPONENT_HAS => {
             let filter = CardFilter::from_attr(attr as i64);
             let _p_target = if filter.target_player == 1 { 1 - p_idx } else { 1 - p_idx }; // Usually opponent
-            // Actually, Revision 5 target_player=2 is OPPT. 
+            // Actually, Revision 5 target_player=2 is OPPT.
             // If the opcode is explicitly C_OPPONENT_HAS, we force opponent.
             let p_opp = 1 - p_idx;
             state.players[p_opp].stage.iter().filter(|&&id| id >= 0).any(|&cid| {

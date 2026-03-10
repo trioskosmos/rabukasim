@@ -9,14 +9,14 @@ l_rust_tests_output_final_v2
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~
-    + CategoryInfo          
-    : NotSpecified: (   Co  
-  mpiling en...ngine_rust   
- _src):String) [], Remot    
+    + CategoryInfo
+    : NotSpecified: (   Co
+  mpiling en...ngine_rust
+ _src):String) [], Remot
 eException
-    + FullyQualifiedErrorId 
+    + FullyQualifiedErrorId
     : NativeCommandError
- 
+
 warning: unexpected `cfg` co
 ndition value: `gpu`
  --> src\size_test.rs:1:8
@@ -25,7 +25,7 @@ ndition value: `gpu`
   |        ^^^^^^^^^^^^^^^
   |
   = note: expected values fo
-r `feature` are: `default`, 
+r `feature` are: `default`,
 `extension-module`, `nn`, an
 d `parallel`
   = help: consider adding `g
@@ -49,7 +49,7 @@ ndition value: `gpu`
   |        ^^^^^^^^^^^^^^^
   |
   = note: expected values fo
-r `feature` are: `default`, 
+r `feature` are: `default`,
 `extension-module`, `nn`, an
 d `parallel`
   = help: consider adding `g
@@ -104,19 +104,19 @@ cDeque;
 orts)]` (part of `#[warn(unu
 sed)]`) on by default
 
-warning: `engine_rust` (bin 
+warning: `engine_rust` (bin
 "test_serialization" test) g
 enerated 1 warning (run `car
 go fix --bin "test_serializa
 tion" -p engine_rust --tests
 ` to apply 1 suggestion)
-warning: `engine_rust` (bin 
+warning: `engine_rust` (bin
 "test_serialization") genera
 ted 1 warning (1 duplicate)
-warning: `engine_rust` (lib 
+warning: `engine_rust` (lib
 test) generated 4 warnings (
 run `cargo fix --lib -p engi
-ne_rust --tests` to apply 2 
+ne_rust --tests` to apply 2
 suggestions)
 warning: unexpected `cfg` co
 ndition value: `gpu`
@@ -219,7 +219,7 @@ iguration
 warning: `engine_rust` (test
  "repro_catchu_q103") genera
 ted 4 warnings
-    Finished `test` profile 
+    Finished `test` profile
 [optimized + debuginfo] targ
 et(s) in 22.54s
      Running unittests src\l
@@ -503,9 +503,9 @@ assertion `left == right` failed: Should have drawn until 5 cards
 
 --- [Q202] Starting Test: Mia plays Mia ---
 Step 1: Playing Rina (ID 4448) from Hand index 0.
-[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:2    a:-9223372036854775808 s:0   
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:2    a:-9223372036854775808 s:0
 [DEBUG] O_PAY_ENERGY: cost=2, available=2, is_optional=false, attr=0
-[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:3    a:0          s:0
 [DEBUG] BC_STEP: ip=10  SELECT_MEMBER   | v:1    a:-9223226900095172604 s:393220
 [DEBUG] Card 4448 FAILED cost_filter: 13 > 4
 [DEBUG] suspend_interaction: choice_type=SELECT_MEMBER, v_remaining=-1, actions=1
@@ -523,8 +523,8 @@ Step 3: Selecting Mia from Hand for Rina effect.
 [DEBUG] suspend_interaction: choice_type=SELECT_HAND_DISCARD, v_remaining=1, actions=1
 Step 4: Selecting Slot 1 for Mia placement.
 [DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:-9223372036854775808 s:6    (Moved 1 card(s) from Deck to Discard)
-[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:3    a:0          s:0   
-[DEBUG] BC_STEP: ip=10  META_RULE       | v:1    a:0          s:4   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:3    a:0          s:0
+[DEBUG] BC_STEP: ip=10  META_RULE       | v:1    a:0          s:4
 [DEBUG] BC_STEP: ip=15  LOOK_AND_CHOOSE | v:259  a:-9223372036854775808 s:524294 (Looked at cards and chose 1)
 [DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=3
 Step 5: Verifying Nested Trigger: Mia ON_PLAY (DISCARD 1).
@@ -547,9 +547,9 @@ Energy activation mask should track Group 2
 
 ---- qa_verification_tests::tests::test_q201_nested_on_play stdout ----
 [DEBUG Q201] --- Step 1: Playing Root Ai (4442) to Slot 0 ---
-[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:2    a:-9223372036854775808 s:0   
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:2    a:-9223372036854775808 s:0
 [DEBUG] O_PAY_ENERGY: cost=2, available=3, is_optional=false, attr=0
-[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:3    a:0          s:0
 [DEBUG] BC_STEP: ip=10  SELECT_MEMBER   | v:1    a:-9223226900095172604 s:393220
 [DEBUG] Card 4442 FAILED cost_filter: 7 > 4
 [DEBUG] suspend_interaction: choice_type=SELECT_MEMBER, v_remaining=-1, actions=1
@@ -564,7 +564,7 @@ Energy activation mask should track Group 2
 [DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:-9223372036854775808 s:6    (Moved 1 card(s) from Deck to Discard)
 [DEBUG] suspend_interaction: choice_type=SELECT_HAND_DISCARD, v_remaining=1, actions=1
 [DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:-9223372036854775808 s:6    (Moved 1 card(s) from Deck to Discard)
-[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0
 [DEBUG] BC_STEP: ip=10  TAP_OPPONENT    | v:2    a:-9223372035630039036 s:4    (Tapped opponent member)
 [DEBUG] suspend_interaction: choice_type=TAP_O, v_remaining=2, actions=1
 [DEBUG] BC_STEP: ip=10  TAP_OPPONENT    | v:2    a:-9223372035630039036 s:4    (Tapped opponent member)
@@ -577,9 +577,9 @@ assertion `left == right` failed
  right: Response
 
 ---- repro::repro_card_420_cost_sum::test_repro_card_420_cost_sum_limit stdout ----
-[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:4    a:-9223372036854775808 s:0   
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:4    a:-9223372036854775808 s:0
 [DEBUG] O_PAY_ENERGY: cost=4, available=2, is_optional=false, attr=0
-[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0
 [DEBUG] auto_step: Phase=Main, Player=0
 [DEBUG] auto_step: Phase=Main, Player=0
 
@@ -602,7 +602,7 @@ filter_attr=0x0000000000000000, s_word=0
 Initial looked_cards: 3 members
 
 === Step 1: Pick first card (index 0) ===
-[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0
 [DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:-9223372033482555392 s:458756
 [DEBUG] auto_step: Phase=Main, Player=0
 

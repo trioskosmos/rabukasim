@@ -133,7 +133,7 @@ export const DebugModal = {
                 <p style="margin: 0; opacity: 0.8; font-size: 12px; line-height: 1.4;">
                     Game State Sequence (Base64). Paste a sequence here and click <b>Load</b> to warp the board.
                 </p>
-                <textarea id="debug-string-textarea" 
+                <textarea id="debug-string-textarea"
                     style="flex: 1; background: #1a1a1a; color: #00ff00; border: 1px solid #333; border-radius: 4px; padding: 10px; font-family: monospace; font-size: 11px; resize: none; min-height: 200px;"
                     spellcheck="false">${blob}</textarea>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">

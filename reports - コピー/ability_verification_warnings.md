@@ -219,27 +219,27 @@ EFFECT_PATTERNS = {
 ```python
 def _verify_bytecode(self, card_no: str, ability_idx: int, ability: dict) -> list:
     # ... 既存のコード ...
-    
+
     for eff_idx, effect in enumerate(effects):
         effect_type = effect.get("effect_type", 0)
         value = effect.get("value", 0)
         value_cond = effect.get("value_cond", None)
-        
+
         # 特殊ケース: SELECT_MODE
         if effect_type == 30:  # SELECT_MODE
             # バイトコードの値はオプション数
             continue
-        
+
         # 特殊ケース: TAP_OPPONENT
         if effect_type == 32:  # TAP_OPPONENT
             # バイトコードの値は最大タップ数（99の場合がある）
             continue
-        
+
         # 特殊ケース: 条件付き値
         if value_cond:
             # バイトコードの値は0、実行時に計算
             continue
-        
+
         # ... 通常の検証処理 ...
 ```
 

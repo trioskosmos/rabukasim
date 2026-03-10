@@ -1,22 +1,18 @@
 import re
 from dataclasses import dataclass, field
-from enum import IntEnum
-from typing import Any, Dict, List, Optional, Tuple, Union
-import pydantic
-from pydantic import ConfigDict
+from typing import Any, Dict, List, Tuple, Union
+
 from engine.models.enums import CHAR_MAP
 from engine.models.opcodes import Opcode
 
-from .generated_metadata import (
-    EXTRA_CONSTANTS, COMPARISONS, ZONES, HEART_COLOR_MAP, 
-    META_RULE_TYPES, COUNT_SOURCES
-)
-from .generated_enums import (
-    TriggerType, TargetType, EffectType, ConditionType, AbilityCostType
-)
+from .generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
+from .generated_metadata import COMPARISONS, COUNT_SOURCES, EXTRA_CONSTANTS, HEART_COLOR_MAP, META_RULE_TYPES, ZONES
 from .generated_packer import (
-    pack_a_standard, pack_a_heart_cost, pack_a_look_choose,
-    pack_v_heart_counts, pack_v_look_choose, pack_s_standard
+    pack_a_heart_cost,
+    pack_a_standard,
+    pack_s_standard,
+    pack_v_heart_counts,
+    pack_v_look_choose,
 )
 
 
@@ -194,7 +190,7 @@ class Ability:
     bytecode: List[int] = field(default_factory=list)
     # Ordered list of operations (Union[Effect, Condition]) for precise execution order
     instructions: List[Union[Effect, Condition, Cost]] = field(default_factory=list)
-    card_no: str = "" # Metadata for debugging/tracing
+    card_no: str = ""  # Metadata for debugging/tracing
     requires_selection: bool = False
     choice_flags: int = 0
     choice_count: int = 0
@@ -206,7 +202,7 @@ class Ability:
         if "103" in str(self.card_no) or "018" in str(self.card_no):
             print(f"DEBUG: Compiling card {self.card_no}")
         bytecode = []
-        self.filters = [] # Reset filters for this compilation
+        self.filters = []  # Reset filters for this compilation
 
         # 0. Compile Ordered Instructions (If present - New Parser V2.1)
         if self.instructions:
@@ -216,7 +212,7 @@ class Ability:
             for instr in self.instructions:
                 if isinstance(instr, Effect) and instr.params.get("raw_effect") == "COUNT_CARDS":
                     self._last_counted_zone = (instr.params.get("zone") or instr.params.get("ZONE") or "").upper()
-                
+
                 temp_bc = []
                 if isinstance(instr, Condition):
                     self._compile_single_condition(instr, temp_bc)
@@ -231,9 +227,13 @@ class Ability:
                         AbilityCostType.RETURN_HAND: Opcode.MOVE_MEMBER,
                         AbilityCostType.SACRIFICE_SELF: Opcode.MOVE_TO_DISCARD,
                         AbilityCostType.RETURN_DISCARD_TO_DECK: Opcode.MOVE_TO_DECK,
-                        AbilityCostType.NONE: Opcode.SELECT_CARDS, # Fallback for named costs
+                        AbilityCostType.NONE: Opcode.SELECT_CARDS,  # Fallback for named costs
                     }
-                    if instr.is_optional or instr.type in mapping or instr.params.get("cost_type_name") in ["CALC_SUM_COST", "SELECT_CARDS", "SELECT_MEMBER"]:
+                    if (
+                        instr.is_optional
+                        or instr.type in mapping
+                        or instr.params.get("cost_type_name") in ["CALC_SUM_COST", "SELECT_CARDS", "SELECT_MEMBER"]
+                    ):
                         self._compile_single_cost(instr, temp_bc)
                 instr_bytecodes.append(temp_bc)
 
@@ -241,11 +241,11 @@ class Ability:
             for i, instr in enumerate(self.instructions):
                 bc_chunk = instr_bytecodes[i]
                 bytecode.extend(bc_chunk)
-                
+
                 if isinstance(instr, Cost) and instr.is_optional:
                     # Calculate jump target based on BYTECODE size, not instruction count
                     # skip_size = sum of lengths of remaining bytecode chunks / 5
-                    remaining_bc_sum = sum(len(c) for c in instr_bytecodes[i+1:])
+                    remaining_bc_sum = sum(len(c) for c in instr_bytecodes[i + 1 :])
                     # We jump to the instruction AFTER the remaining ones (the RETURN)
                     skip_count = remaining_bc_sum // 5
                     bytecode.extend([int(Opcode.JUMP_IF_FALSE), to_signed_32(skip_count), 0, 0, 0])
@@ -273,7 +273,9 @@ class Ability:
                     j += 1
 
                 # Emit block for SELF
-                bytecode.extend([int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
+                bytecode.extend(
+                    [int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)]
+                )
                 for e in block:
                     # Create a copy with target=PLAYER (Self)
                     e_self = Effect(e.effect_type, e.value, e.value_cond, TargetType.PLAYER, e.params)
@@ -281,7 +283,15 @@ class Ability:
                     self._compile_effect_wrapper(e_self, bytecode)
 
                 # Emit block for OPPONENT
-                bytecode.extend([int(Opcode.SET_TARGET_OPPONENT), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
+                bytecode.extend(
+                    [
+                        int(Opcode.SET_TARGET_OPPONENT),
+                        to_signed_32(0),
+                        to_signed_32(0),
+                        to_signed_32(0),
+                        to_signed_32(0),
+                    ]
+                )
                 for e in block:
                     # Create a copy with target=OPPONENT
                     e_opp = Effect(e.effect_type, e.value, e.value_cond, TargetType.OPPONENT, e.params)
@@ -289,7 +299,9 @@ class Ability:
                     self._compile_effect_wrapper(e_opp, bytecode)
 
                 # Reset context
-                bytecode.extend([int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
+                bytecode.extend(
+                    [int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)]
+                )
 
                 i = j
             else:
@@ -318,7 +330,14 @@ class Ability:
 
                 # Value: expected baton touch count
                 val = 0
-                count_eq = cond.params.get("count_eq") or params_upper.get("COUNT_EQ") or cond.params.get("val") or cond.params.get("value") or params_upper.get("VAL") or params_upper.get("VALUE")
+                count_eq = (
+                    cond.params.get("count_eq")
+                    or params_upper.get("COUNT_EQ")
+                    or cond.params.get("val")
+                    or cond.params.get("value")
+                    or params_upper.get("VAL")
+                    or params_upper.get("VALUE")
+                )
                 if count_eq:
                     try:
                         val = int(count_eq)
@@ -328,13 +347,15 @@ class Ability:
                 # Attr: Standardized packing for filters
                 attr = self._pack_filter_attr(cond)
 
-                bytecode.extend([
-                    int(Opcode.CHECK_BATON), 
-                    to_signed_32(val), 
-                    to_signed_32(attr & 0xFFFFFFFF), 
-                    to_signed_32((attr >> 32) & 0xFFFFFFFF), 
-                    to_signed_32(0)
-                ])
+                bytecode.extend(
+                    [
+                        int(Opcode.CHECK_BATON),
+                        to_signed_32(val),
+                        to_signed_32(attr & 0xFFFFFFFF),
+                        to_signed_32((attr >> 32) & 0xFFFFFFFF),
+                        to_signed_32(0),
+                    ]
+                )
             return
 
         op_name = f"CHECK_{cond.type.name}"
@@ -388,42 +409,50 @@ class Ability:
             if op == int(Opcode.CHECK_HAS_KEYWORD):
                 attr = 0
                 kw = str(cond.params.get("keyword") or "").upper()
-                if "PLAYED_THIS_TURN" in kw: 
-                    attr |= (1 << 44)
-                elif "YELL_COUNT" in kw: 
-                    attr |= (1 << 45)
-                elif "HAS_LIVE_SET" in kw: 
-                    attr |= (1 << 46)
-                elif "ENERGY" in kw: 
-                    attr |= (1 << 62)
+                if "PLAYED_THIS_TURN" in kw:
+                    attr |= 1 << 44
+                elif "YELL_COUNT" in kw:
+                    attr |= 1 << 45
+                elif "HAS_LIVE_SET" in kw:
+                    attr |= 1 << 46
+                elif "ENERGY" in kw:
+                    attr |= 1 << 62
                     attr |= self._pack_filter_attr(cond)
-                elif "MEMBER" in kw: 
-                    attr |= (1 << 63)
+                elif "MEMBER" in kw:
+                    attr |= 1 << 63
                     attr |= self._pack_filter_attr(cond)
-                else: 
-                     # Fallback for implicit keywords
-                     if cond.type == ConditionType.HAS_KEYWORD:
-                         cond.params["keyword"] = "PLAYED_THIS_TURN"
-                         attr |= (1 << 44)
+                else:
+                    # Fallback for implicit keywords
+                    if cond.type == ConditionType.HAS_KEYWORD:
+                        cond.params["keyword"] = "PLAYED_THIS_TURN"
+                        attr |= 1 << 44
             elif op == int(Opcode.CHECK_HEART_COMPARE):
                 # Heart compare uses raw color index in bits 0-6
                 from engine.models.enums import HeartColor
+
                 color_name = str(cond.params.get("color") or "").upper()
                 try:
                     attr = int(HeartColor[color_name])
                 except:
                     # Fallback: try to extract from filter string if directly missing
                     f_str = str(cond.params.get("filter", "")).upper()
-                    if "YELLOW" in f_str: attr = 2
-                    elif "RED" in f_str: attr = 1
-                    elif "PINK" in f_str: attr = 0
-                    elif "BLUE" in f_str: attr = 4
-                    elif "GREEN" in f_str: attr = 3
-                    elif "PURPLE" in f_str: attr = 5
-                    else: attr = 7 # Total count fallback
+                    if "YELLOW" in f_str:
+                        attr = 2
+                    elif "RED" in f_str:
+                        attr = 1
+                    elif "PINK" in f_str:
+                        attr = 0
+                    elif "BLUE" in f_str:
+                        attr = 4
+                    elif "GREEN" in f_str:
+                        attr = 3
+                    elif "PURPLE" in f_str:
+                        attr = 5
+                    else:
+                        attr = 7  # Total count fallback
             else:
                 attr = self._pack_filter_attr(cond)
-            
+
             # Persist back to the Condition object for JSON serialization
             cond.value = val
             cond.attr = attr
@@ -434,10 +463,14 @@ class Ability:
 
             slot = 0
             zone = str(cond.params.get("zone") or params_upper.get("ZONE") or "").upper()
-            if zone == "LIVE_ZONE": slot = 13 # LIVE_SET
-            elif zone == "STAGE": slot = int(TargetType.MEMBER_SELF)
-            elif zone == "YELL" or zone == "YELL_REVEALED": slot = ZONES.get("YELL", 17)
-            elif str(cond.params.get("context", "")).lower() == "excess": slot = 2
+            if zone == "LIVE_ZONE":
+                slot = 13  # LIVE_SET
+            elif zone == "STAGE":
+                slot = int(TargetType.MEMBER_SELF)
+            elif zone == "YELL" or zone == "YELL_REVEALED":
+                slot = ZONES.get("YELL", 17)
+            elif str(cond.params.get("context", "")).lower() == "excess":
+                slot = 2
             else:
                 slot_raw = cond.params.get("TargetSlot") or params_upper.get("TARGETSLOT") or 0
                 slot = int(slot_raw)
@@ -445,30 +478,51 @@ class Ability:
             area_val = cond.params.get("area") or params_upper.get("AREA")
             if area_val:
                 a_str = str(area_val).upper()
-                if "LEFT" in a_str: slot |= (1 << 29)
-                elif "CENTER" in a_str: slot |= (2 << 29)
-                elif "RIGHT" in a_str: slot |= (3 << 29)
+                if "LEFT" in a_str:
+                    slot |= 1 << 29
+                elif "CENTER" in a_str:
+                    slot |= 2 << 29
+                elif "RIGHT" in a_str:
+                    slot |= 3 << 29
 
             packed_slot = (slot & 0x0F) | ((comp_val & 0x0F) << 4) | (slot & 0xFFFFFF00)
 
-            bytecode.extend([
-                to_signed_32(int(op) + (1000 if cond.is_negated else 0)),
-                to_signed_32(val),
-                to_signed_32(attr & 0xFFFFFFFF),
-                to_signed_32((attr >> 32) & 0xFFFFFFFF),
-                to_signed_32(packed_slot)
-            ])
+            bytecode.extend(
+                [
+                    to_signed_32(int(op) + (1000 if cond.is_negated else 0)),
+                    to_signed_32(val),
+                    to_signed_32(attr & 0xFFFFFFFF),
+                    to_signed_32((attr >> 32) & 0xFFFFFFFF),
+                    to_signed_32(packed_slot),
+                ]
+            )
 
         elif cond.type == ConditionType.TYPE_CHECK:
             if hasattr(Opcode, "CHECK_TYPE_CHECK"):
                 # card_type: "live" = 1, "member" = 0
                 ctype = 1 if str(cond.params.get("card_type", "")).lower() == "live" else 0
-                bytecode.extend([int(Opcode.CHECK_TYPE_CHECK), to_signed_32(ctype), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
+                bytecode.extend(
+                    [
+                        int(Opcode.CHECK_TYPE_CHECK),
+                        to_signed_32(ctype),
+                        to_signed_32(0),
+                        to_signed_32(0),
+                        to_signed_32(0),
+                    ]
+                )
         elif cond.type == ConditionType.SELECT_MEMBER:
             # Format: SELECT_MEMBER(1) {FILTER="HAS_HEART_02_X3", AREA="LEFT"}
             attr = self._pack_filter_attr(cond)
             slot = self._pack_filter_slot(str(cond.params.get("area", "")).upper())
-            bytecode.extend([int(Opcode.SELECT_MEMBER), to_signed_32(1), to_signed_32(attr & 0xFFFFFFFF), to_signed_32((attr >> 32) & 0xFFFFFFFF), to_signed_32(slot)])
+            bytecode.extend(
+                [
+                    int(Opcode.SELECT_MEMBER),
+                    to_signed_32(1),
+                    to_signed_32(attr & 0xFFFFFFFF),
+                    to_signed_32((attr >> 32) & 0xFFFFFFFF),
+                    to_signed_32(slot),
+                ]
+            )
         else:
             if cond.type != ConditionType.NONE:
                 print(f"CRITICAL WARNING: No opcode mapping for condition type: {cond.type.name}")
@@ -516,7 +570,7 @@ class Ability:
                 "is_empty_slot": False,
                 "is_wait": False,
                 "is_dynamic": False,
-                "area_idx": 0
+                "area_idx": 0,
             }
 
             # --- Resolve Slot (Source) ---
@@ -549,15 +603,19 @@ class Ability:
                 elif to == "top":
                     slot_params["remainder_zone"] = int(EXTRA_CONSTANTS.get("DECK_POSITION_TOP", 1))
 
-
             # O_SELECT_MEMBER / O_PLAY_MEMBER_FROM_HAND / MOVE_TO_DISCARD, encode filters into 'attr' (a)
             # O_SELECT_MEMBER / O_PLAY_MEMBER_FROM_HAND / MOVE_TO_DISCARD, encode filters into 'attr' (a)
-            if op in [Opcode.SELECT_MEMBER, Opcode.PLAY_MEMBER_FROM_HAND, Opcode.PLAY_MEMBER_FROM_DISCARD, Opcode.MOVE_TO_DISCARD]:
+            if op in [
+                Opcode.SELECT_MEMBER,
+                Opcode.PLAY_MEMBER_FROM_HAND,
+                Opcode.PLAY_MEMBER_FROM_DISCARD,
+                Opcode.MOVE_TO_DISCARD,
+            ]:
                 attr = self._pack_filter_attr(cost)
                 # Value capture flag (Bit 25 of slot)
                 if cost.params.get("destination") == "target_val" or params_upper.get("DESTINATION") == "TARGET_VAL":
-                    slot_params["is_reveal_until_live"] = True # Reuse bit 25 for capture
-            
+                    slot_params["is_reveal_until_live"] = True  # Reuse bit 25 for capture
+
             if cost.is_optional:
                 attr |= EXTRA_CONSTANTS.get("FILTER_IS_OPTIONAL", 1 << 61)
 
@@ -566,14 +624,27 @@ class Ability:
             count_raw = cost.params.get("count") or params_upper.get("COUNT")
             if not value and count_raw is not None:
                 value = int(count_raw)
-            
+
             # Fix: Default MOVE_TO_DISCARD for members to 1
             cur_slot_val = slot_params["target_slot"]
-            if op == Opcode.MOVE_TO_DISCARD and value == 0 and cur_slot_val in (int(TargetType.MEMBER_SELF), int(TargetType.MEMBER_OTHER), int(TargetType.MEMBER_SELECT)):
+            if (
+                op == Opcode.MOVE_TO_DISCARD
+                and value == 0
+                and cur_slot_val
+                in (int(TargetType.MEMBER_SELF), int(TargetType.MEMBER_OTHER), int(TargetType.MEMBER_SELECT))
+            ):
                 value = 1
 
             slot = pack_s_standard(**slot_params)
-            bytecode.extend([int(op), to_signed_32(int(value)), to_signed_32(attr & 0xFFFFFFFF), to_signed_32((attr >> 32) & 0xFFFFFFFF), to_signed_32(slot)])
+            bytecode.extend(
+                [
+                    int(op),
+                    to_signed_32(int(value)),
+                    to_signed_32(attr & 0xFFFFFFFF),
+                    to_signed_32((attr >> 32) & 0xFFFFFFFF),
+                    to_signed_32(slot),
+                ]
+            )
         else:
             if cost.type != AbilityCostType.NONE:
                 # This ensures we don't silently drop costs like we did with TAP_MEMBER
@@ -592,8 +663,18 @@ class Ability:
             elif rem == "deck_bottom":
                 attr = 2
 
-            bytecode.extend([int(Opcode.LOOK_DECK), to_signed_32(eff.value), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
-            bytecode.extend([int(Opcode.ORDER_DECK), to_signed_32(eff.value), to_signed_32(attr & 0xFFFFFFFF), to_signed_32((attr >> 32) & 0xFFFFFFFF), to_signed_32(0)])
+            bytecode.extend(
+                [int(Opcode.LOOK_DECK), to_signed_32(eff.value), to_signed_32(0), to_signed_32(0), to_signed_32(0)]
+            )
+            bytecode.extend(
+                [
+                    int(Opcode.ORDER_DECK),
+                    to_signed_32(eff.value),
+                    to_signed_32(attr & 0xFFFFFFFF),
+                    to_signed_32((attr >> 32) & 0xFFFFFFFF),
+                    to_signed_32(0),
+                ]
+            )
             return
 
         # Check for modal options on Effect OR Ability (fallback)
@@ -607,7 +688,15 @@ class Ability:
                 slot |= 1 << 24
             # Emit header: [SELECT_MODE, NumOptions, 0, 0, slot]
             if hasattr(Opcode, "SELECT_MODE"):
-                bytecode.extend([int(Opcode.SELECT_MODE), to_signed_32(num_options), to_signed_32(0), to_signed_32(0), to_signed_32(slot)])
+                bytecode.extend(
+                    [
+                        int(Opcode.SELECT_MODE),
+                        to_signed_32(num_options),
+                        to_signed_32(0),
+                        to_signed_32(0),
+                        to_signed_32(slot),
+                    ]
+                )
 
             # Placeholders for Jump Table
             jump_table_start_idx = len(bytecode)
@@ -656,21 +745,33 @@ class Ability:
             if eff.target == TargetType.ALL_PLAYERS:
                 # ALL_PLAYERS: Emit sequences for both SELF and OPPONENT
                 # 1. SET_TARGET_SELF
-                bytecode.extend([int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
+                bytecode.extend(
+                    [int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)]
+                )
                 # 2. Compile for SELF
                 eff_self = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.PLAYER, eff.params)
                 eff_self.is_optional = eff.is_optional
                 self._compile_single_effect(eff_self, bytecode)
 
                 # 3. SET_TARGET_OPPONENT
-                bytecode.extend([int(Opcode.SET_TARGET_OPPONENT), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
+                bytecode.extend(
+                    [
+                        int(Opcode.SET_TARGET_OPPONENT),
+                        to_signed_32(0),
+                        to_signed_32(0),
+                        to_signed_32(0),
+                        to_signed_32(0),
+                    ]
+                )
                 # 4. Compile for OPPONENT
                 eff_opp = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.OPPONENT, eff.params)
                 eff_opp.is_optional = eff.is_optional
                 self._compile_single_effect(eff_opp, bytecode)
 
                 # 5. Restore context to SELF (optional safety)
-                bytecode.extend([int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
+                bytecode.extend(
+                    [int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)]
+                )
             else:
                 self._compile_single_effect(eff, bytecode)
 
@@ -690,7 +791,8 @@ class Ability:
                 except (ValueError, TypeError):
                     val = 1
                 attr = eff.params.get("color", eff.params.get("heart_type", 0))
-                if not isinstance(attr, int): attr = 0
+                if not isinstance(attr, int):
+                    attr = 0
 
             slot_params = {
                 "target_slot": eff.target.value if hasattr(eff.target, "value") else int(eff.target),
@@ -702,7 +804,7 @@ class Ability:
                 "is_empty_slot": False,
                 "is_wait": False,
                 "area_idx": 0,
-                "is_dynamic": False
+                "is_dynamic": False,
             }
 
             self._resolve_effect_target(eff, slot_params)
@@ -711,15 +813,21 @@ class Ability:
             area_raw = eff.params.get("area", "")
             if not area_raw:
                 f_str = str(eff.params.get("filter", "")).upper()
-                if "AREA=CENTER" in f_str: area_raw = "CENTER"
-                elif "AREA=LEFT" in f_str: area_raw = "LEFT_SIDE"
-                elif "AREA=RIGHT" in f_str: area_raw = "RIGHT_SIDE"
-            
+                if "AREA=CENTER" in f_str:
+                    area_raw = "CENTER"
+                elif "AREA=LEFT" in f_str:
+                    area_raw = "LEFT_SIDE"
+                elif "AREA=RIGHT" in f_str:
+                    area_raw = "RIGHT_SIDE"
+
             if area_raw:
                 a_str = str(area_raw).upper()
-                if "LEFT" in a_str: slot_params["area_idx"] = 1
-                elif "CENTER" in a_str: slot_params["area_idx"] = 2
-                elif "RIGHT" in a_str: slot_params["area_idx"] = 3
+                if "LEFT" in a_str:
+                    slot_params["area_idx"] = 1
+                elif "CENTER" in a_str:
+                    slot_params["area_idx"] = 2
+                elif "RIGHT" in a_str:
+                    slot_params["area_idx"] = 3
 
             self._resolve_effect_source_zone(eff, slot_params)
 
@@ -733,8 +841,10 @@ class Ability:
             if eff.effect_type == EffectType.PLACE_UNDER:
                 source = str(eff.params.get("from") or eff.params.get("source") or "").lower()
                 u_src_val = 0
-                if source == "energy": u_src_val = ZONES.get("ENERGY", 3)
-                elif source == "discard": u_src_val = ZONES.get("DISCARD", 7)
+                if source == "energy":
+                    u_src_val = ZONES.get("ENERGY", 3)
+                elif source == "discard":
+                    u_src_val = ZONES.get("DISCARD", 7)
                 slot_params["source_zone"] = u_src_val
 
             # ENERGY_CHARGE params
@@ -774,14 +884,15 @@ class Ability:
                 EffectType.RECOVER_MEMBER,
             ):
                 attr = self._pack_filter_attr(eff)
-                src_zone_str = str(
-                    eff.params.get("source") or eff.params.get("zone") or "DECK"
-                ).upper()
+                src_zone_str = str(eff.params.get("source") or eff.params.get("zone") or "DECK").upper()
                 if "," not in src_zone_str:
                     src_val = ZONES.get("DECK_TOP", 1)
-                    if src_zone_str == "HAND": src_val = ZONES.get("HAND", 6)
-                    elif src_zone_str == "DISCARD": src_val = ZONES.get("DISCARD", 7)
-                    elif src_zone_str in ("YELL", "REVEALED", "CHEER"): src_val = ZONES.get("YELL", 15)
+                    if src_zone_str == "HAND":
+                        src_val = ZONES.get("HAND", 6)
+                    elif src_zone_str == "DISCARD":
+                        src_val = ZONES.get("DISCARD", 7)
+                    elif src_zone_str in ("YELL", "REVEALED", "CHEER"):
+                        src_val = ZONES.get("YELL", 15)
                     slot_params["source_zone"] = src_val
 
                 rem_val = eff.params.get("remainder_zone", 0)
@@ -791,7 +902,7 @@ class Ability:
                         "DECK": ZONES.get("DECK_TOP", 1),
                         "HAND": ZONES.get("HAND", 6),
                         "DECK_TOP": EXTRA_CONSTANTS.get("DECK_POSITION_TOP", 1),
-                        "DECK_BOTTOM": EXTRA_CONSTANTS.get("DECK_POSITION_BOTTOM", 2)
+                        "DECK_BOTTOM": EXTRA_CONSTANTS.get("DECK_POSITION_BOTTOM", 2),
                     }
                     rem_val = rem_map.get(rem_val.upper(), 0)
                 slot_params["remainder_zone"] = rem_val
@@ -801,7 +912,10 @@ class Ability:
 
             if eff.effect_type == EffectType.REVEAL_UNTIL:
                 attr = self._pack_filter_attr(eff)
-                if eff.value_cond == ConditionType.TYPE_CHECK and str(eff.params.get("card_type", "")).lower() == "live":
+                if (
+                    eff.value_cond == ConditionType.TYPE_CHECK
+                    and str(eff.params.get("card_type", "")).lower() == "live"
+                ):
                     slot_params["is_reveal_until_live"] = True
                 elif eff.value_cond == ConditionType.COST_CHECK:
                     attr = int(eff.params.get("min", 0))
@@ -811,10 +925,17 @@ class Ability:
                 attr = META_RULE_TYPES.get(m_type, 0)
                 if attr == 1:
                     src = str(eff.params.get("source", "")).lower()
-                    if src == "all_blade" or m_type == "ALL_BLADE_AS_ANY_HEART": val = 1
-                    elif src == "blade": val = 2
+                    if src == "all_blade" or m_type == "ALL_BLADE_AS_ANY_HEART":
+                        val = 1
+                    elif src == "blade":
+                        val = 2
 
-            if eff.effect_type in (EffectType.MOVE_TO_DISCARD, EffectType.COLOR_SELECT, EffectType.TRANSFORM_HEART, EffectType.TRANSFORM_COLOR):
+            if eff.effect_type in (
+                EffectType.MOVE_TO_DISCARD,
+                EffectType.COLOR_SELECT,
+                EffectType.TRANSFORM_HEART,
+                EffectType.TRANSFORM_COLOR,
+            ):
                 attr = self._pack_filter_attr(eff)
                 if eff.effect_type == EffectType.MOVE_TO_DISCARD and eff.params.get("operation") == "UNTIL_SIZE":
                     val = (int(val) & 0x7FFFFFFF) | (1 << 31)
@@ -822,10 +943,17 @@ class Ability:
             attr = self._resolve_effect_dynamic_multiplier(eff, val, slot_params, attr)
 
             # Default to Choice (slot 4) if target is generic
-            is_non_stage_discard = eff.effect_type == EffectType.MOVE_TO_DISCARD and slot_params["source_zone"] in (ZONES.get("HAND", 6), ZONES.get("DECK", 5))
-            if eff.target in (TargetType.SELF, TargetType.PLAYER) and not is_non_stage_discard and not slot_params.get("is_dynamic", False):
+            is_non_stage_discard = eff.effect_type == EffectType.MOVE_TO_DISCARD and slot_params["source_zone"] in (
+                ZONES.get("HAND", 6),
+                ZONES.get("DECK", 5),
+            )
+            if (
+                eff.target in (TargetType.SELF, TargetType.PLAYER)
+                and not is_non_stage_discard
+                and not slot_params.get("is_dynamic", False)
+            ):
                 slot_params["target_slot"] = 4
-            
+
             # SYSTEMIC FIX: If this is REDUCE_COST with dynamic multiplier, base value should be 1
             if eff.effect_type == EffectType.REDUCE_COST and slot_params.get("is_dynamic"):
                 val = 1
@@ -836,11 +964,9 @@ class Ability:
 
             slot = pack_s_standard(**slot_params)
 
-
             # Redundant setting for PREVENT_PLAY_TO_SLOT (relies on slot bit 24)
             if eff.effect_type == EffectType.PREVENT_PLAY_TO_SLOT:
-                pass # Target opponent bit 24 handles this generically
-
+                pass  # Target opponent bit 24 handles this generically
 
             # ENSURE OPTIONAL BIT 61 SET FOR ALL OPCODES
             if eff.is_optional or eff.params.get("is_optional"):
@@ -852,7 +978,15 @@ class Ability:
             if eff.effect_type == EffectType.LOOK_REORDER_DISCARD:
                 op = Opcode.LOOK_REORDER_DISCARD
                 v = int(val)
-                bytecode.extend([int(op), to_signed_32(v), to_signed_32(attr_val & 0xFFFFFFFF), to_signed_32((attr_val >> 32) & 0xFFFFFFFF), to_signed_32(slot)])
+                bytecode.extend(
+                    [
+                        int(op),
+                        to_signed_32(v),
+                        to_signed_32(attr_val & 0xFFFFFFFF),
+                        to_signed_32((attr_val >> 32) & 0xFFFFFFFF),
+                        to_signed_32(slot),
+                    ]
+                )
             elif eff.effect_type == EffectType.DIV_VALUE:
                 op = Opcode.DIV_VALUE
                 v = int(eff.params.get("divisor") or eff.value or 2)
@@ -860,15 +994,36 @@ class Ability:
             elif eff.effect_type == EffectType.REVEAL_UNTIL:
                 op = Opcode.REVEAL_UNTIL
                 v = int(val)
-                bytecode.extend([int(op), to_signed_32(v), to_signed_32(attr_val & 0xFFFFFFFF), to_signed_32((attr_val >> 32) & 0xFFFFFFFF), to_signed_32(slot)])
+                bytecode.extend(
+                    [
+                        int(op),
+                        to_signed_32(v),
+                        to_signed_32(attr_val & 0xFFFFFFFF),
+                        to_signed_32((attr_val >> 32) & 0xFFFFFFFF),
+                        to_signed_32(slot),
+                    ]
+                )
             elif eff.effect_type == EffectType.CALC_SUM_COST:
                 op = Opcode.CALC_SUM_COST
-                bytecode.extend([int(op), to_signed_32(val), to_signed_32(attr_val & 0xFFFFFFFF), to_signed_32((attr_val >> 32) & 0xFFFFFFFF), to_signed_32(slot)])
+                bytecode.extend(
+                    [
+                        int(op),
+                        to_signed_32(val),
+                        to_signed_32(attr_val & 0xFFFFFFFF),
+                        to_signed_32((attr_val >> 32) & 0xFFFFFFFF),
+                        to_signed_32(slot),
+                    ]
+                )
             else:
                 # Fix: Default MOVE_TO_DISCARD for members to 1
-                if op == Opcode.MOVE_TO_DISCARD and val == 0 and slot in (int(TargetType.MEMBER_SELF), int(TargetType.MEMBER_OTHER), int(TargetType.MEMBER_SELECT)):
+                if (
+                    op == Opcode.MOVE_TO_DISCARD
+                    and val == 0
+                    and slot
+                    in (int(TargetType.MEMBER_SELF), int(TargetType.MEMBER_OTHER), int(TargetType.MEMBER_SELECT))
+                ):
                     val = 1
-                    
+
                 bytecode.extend(
                     [
                         int(op),
@@ -904,15 +1059,19 @@ class Ability:
         """--- Zone Relocation ---"""
         src_val = 0
         if eff.effect_type in (
-            EffectType.RECOVER_MEMBER, EffectType.RECOVER_LIVE,
-            EffectType.PLAY_MEMBER_FROM_DISCARD, EffectType.PLAY_LIVE_FROM_DISCARD,
+            EffectType.RECOVER_MEMBER,
+            EffectType.RECOVER_LIVE,
+            EffectType.PLAY_MEMBER_FROM_DISCARD,
+            EffectType.PLAY_LIVE_FROM_DISCARD,
         ):
             source = str(eff.params.get("source") or eff.params.get("zone") or "discard").lower()
             src_val = ZONES.get("DISCARD", 7) if source == "discard" else 0
-            if source == "yell": src_val = ZONES.get("YELL", 15)
-            elif source in ("deck", "deck_top"): src_val = ZONES.get("DECK_TOP", 1)
+            if source == "yell":
+                src_val = ZONES.get("YELL", 15)
+            elif source in ("deck", "deck_top"):
+                src_val = ZONES.get("DECK_TOP", 1)
             slot_params["source_zone"] = src_val
-        
+
         # TAP/Interactive selection also uses source zone
         if eff.effect_type in (EffectType.TAP_OPPONENT, EffectType.TAP_MEMBER):
             slot_params["source_zone"] = src_val
@@ -926,39 +1085,49 @@ class Ability:
             parts = raw_names.replace(",", "/").split("/")
             for p in parts[:3]:
                 p = p.strip()
-                if p in CHAR_MAP: char_ids.append(CHAR_MAP[p])
+                if p in CHAR_MAP:
+                    char_ids.append(CHAR_MAP[p])
 
         look_v = {
-            "count": val, 
+            "count": val,
             "char_id_1": char_ids[0] if char_ids else 0,
             "char_id_2": char_ids[1] if len(char_ids) > 1 else 0,
             "char_id_3": char_ids[2] if len(char_ids) > 2 else 0,
             "reveal": 1 if eff.params.get("reveal") else 0,
-            "dest_discard": 1 if eff.params.get("destination") == "discard" or eff.params.get("dest_discard") else 0
+            "dest_discard": 1 if eff.params.get("destination") == "discard" or eff.params.get("dest_discard") else 0,
         }
         val = pack_v_look_choose(**look_v)
 
         src = str(eff.params.get("source") or eff.params.get("zone") or "DECK").upper()
         src_val = ZONES.get("DECK_TOP", 1)
-        if src == "HAND": src_val = ZONES.get("HAND", 6)
-        elif src == "DISCARD": src_val = ZONES.get("DISCARD", 7)
-        elif src in ("YELL", "REVEALED", "CHEER"): src_val = ZONES.get("YELL", 15)
-        elif src == "ENERGY": src_val = ZONES.get("ENERGY", 3)
+        if src == "HAND":
+            src_val = ZONES.get("HAND", 6)
+        elif src == "DISCARD":
+            src_val = ZONES.get("DISCARD", 7)
+        elif src in ("YELL", "REVEALED", "CHEER"):
+            src_val = ZONES.get("YELL", 15)
+        elif src == "ENERGY":
+            src_val = ZONES.get("ENERGY", 3)
         slot_params["source_zone"] = src_val
 
         rem_dest_str = str(eff.params.get("remainder") or eff.params.get("destination") or "").upper()
         rem_val = 0
-        if rem_dest_str == "DISCARD": rem_val = ZONES.get("DISCARD", 7)
-        elif rem_dest_str == "DECK": rem_val = ZONES.get("DECK_TOP", 1)
-        elif rem_dest_str == "HAND": rem_val = ZONES.get("HAND", 6)
-        elif rem_dest_str == "DECK_TOP": rem_val = EXTRA_CONSTANTS.get("DECK_POSITION_TOP", 1)
-        elif rem_dest_str == "DECK_BOTTOM": rem_val = EXTRA_CONSTANTS.get("DECK_POSITION_BOTTOM", 2)
+        if rem_dest_str == "DISCARD":
+            rem_val = ZONES.get("DISCARD", 7)
+        elif rem_dest_str == "DECK":
+            rem_val = ZONES.get("DECK_TOP", 1)
+        elif rem_dest_str == "HAND":
+            rem_val = ZONES.get("HAND", 6)
+        elif rem_dest_str == "DECK_TOP":
+            rem_val = EXTRA_CONSTANTS.get("DECK_POSITION_TOP", 1)
+        elif rem_dest_str == "DECK_BOTTOM":
+            rem_val = EXTRA_CONSTANTS.get("DECK_POSITION_BOTTOM", 2)
         slot_params["remainder_zone"] = rem_val
-        
+
         # Parity Fix: Set is_wait if 'wait' parameter is present
         if eff.params.get("wait") or eff.params.get("wait_flow"):
             slot_params["is_wait"] = True
-        
+
         return val
 
     def _pack_effect_heart_cost(self, eff: Effect, val: int, attr: int) -> Tuple[int, int]:
@@ -973,20 +1142,23 @@ class Ability:
         if isinstance(add_val, (str, list)):
             parts = add_val.replace(",", "/").split("/") if isinstance(add_val, str) else add_val
             req_list = [color_map.get(str(p).strip().upper(), 0) for p in parts[:8]]
-        
+
         any_count = int(eff.params.get("any", 0))
         for _ in range(any_count):
-            if len(req_list) < 8: req_list.append(HEART_COLOR_MAP.get("ANY", 7))
-        
-        a_params = {f"req_{i+1}": req_list[i] if i < len(req_list) else 0 for i in range(8)}
+            if len(req_list) < 8:
+                req_list.append(HEART_COLOR_MAP.get("ANY", 7))
+
+        a_params = {f"req_{i + 1}": req_list[i] if i < len(req_list) else 0 for i in range(8)}
         unit_val = eff.params.get("unit")
         if unit_val:
             try:
                 from engine.models.enums import Unit
+
                 u_id = int(str(unit_val)) if str(unit_val).isdigit() else int(Unit.from_japanese_name(str(unit_val)))
                 a_params["unit_enabled"] = True
                 a_params["unit_id"] = u_id & 0x7F
-            except: pass
+            except:
+                pass
         attr = pack_a_heart_cost(**a_params)
         return val, attr
 
@@ -994,20 +1166,20 @@ class Ability:
         """Resolve dynamic multiplier logic for effects."""
         if not (eff.params.get("per_card") or eff.params.get("per_member") or eff.params.get("has_multiplier")):
             return attr
-            
+
         count_src = str(eff.params.get("per_card", "")).upper()
         if count_src == "COUNT" and hasattr(self, "_last_counted_zone") and self._last_counted_zone:
             count_src = self._last_counted_zone
-        
+
         count_op = COUNT_SOURCES.get(count_src, int(ConditionType.COUNT_STAGE))
         slot_params["remainder_zone"] = count_op
         slot_params["is_dynamic"] = True
-        
+
         # Ensure multiplier threshold is 1 if not specified
         if not eff.params.get("value_enabled") and not eff.params.get("cost_ge") and not eff.params.get("cost_le"):
             eff.params["value_enabled"] = True
             eff.params["value_threshold"] = 1
-        
+
         # SYSTEMIC FIX: If this is REDUCE_COST, base value should be 1
         if eff.effect_type == EffectType.REDUCE_COST:
             # We can't easily change 'val' here because it's passed by value
@@ -1023,13 +1195,12 @@ class Ability:
         slot = 0
         a_str = area_str.upper()
         if "LEFT" in a_str:
-            slot |= (1 << 29)
+            slot |= 1 << 29
         elif "CENTER" in a_str:
-            slot |= (2 << 29)
+            slot |= 2 << 29
         elif "RIGHT" in a_str:
-            slot |= (3 << 29)
+            slot |= 3 << 29
         return slot
-
 
     def _pack_filter_attr(self, source: Any) -> int:
         """
@@ -1037,9 +1208,8 @@ class Ability:
         'source' can be an Effect, Condition, or direct Dict params.
         """
         attr = 0
-        from engine.models.enums import Group, Unit, HeartColor, CHAR_MAP
-        import re
-        
+        from engine.models.enums import CHAR_MAP, Group, HeartColor, Unit
+
         # 0. Initialize params from various sources
         if hasattr(source, "params"):
             params = source.params
@@ -1047,15 +1217,20 @@ class Ability:
             params = source
         else:
             params = {}
-            
+
         params_upper = {str(k).upper(): v for k, v in params.items() if isinstance(k, str)}
-        
+
         # Extract filter string and other parameters
-        filter_str = str(params.get("filter") or params_upper.get("FILTER") 
-                        or params.get("player_center_filter") or params_upper.get("PLAYER_CENTER_FILTER")
-                        or params.get("opponent_center_filter") or params_upper.get("OPPONENT_CENTER_FILTER")
-                        or "").upper()
-        
+        filter_str = str(
+            params.get("filter")
+            or params_upper.get("FILTER")
+            or params.get("player_center_filter")
+            or params_upper.get("PLAYER_CENTER_FILTER")
+            or params.get("opponent_center_filter")
+            or params_upper.get("OPPONENT_CENTER_FILTER")
+            or ""
+        ).upper()
+
         # Structured object for Phase 3 parity
         filter_obj = {
             "target_player": 0,
@@ -1081,15 +1256,15 @@ class Ability:
             "compare_accumulated": False,
             "is_optional": False,
             "keyword_energy": False,
-            "keyword_member": False
+            "keyword_member": False,
         }
-        
+
         # Use a separate local variable for filter-specific value thresholding
         # to avoid 'val' contamination from the parent command (e.g. COUNT_MEMBER(2) shouldn't require 2 hearts)
         f_val = 0
         colors = params.get("colors") or params.get("choices") or ([params.get("color")] if "color" in params else [])
         sid = params.get("special_id") or params_upper.get("SPECIAL_ID")
-        
+
         # 1. Target Player (Bits 0-1)
         if hasattr(source, "target") and source.target == TargetType.OPPONENT:
             filter_obj["target_player"] = 2
@@ -1100,65 +1275,86 @@ class Ability:
         elif hasattr(source, "target") and source.target in (TargetType.PLAYER, TargetType.SELF):
             filter_obj["target_player"] = 1
         else:
-            filter_obj["target_player"] = 0 # Parity Fix: Default to 0 (Unspecified)
+            filter_obj["target_player"] = 0  # Parity Fix: Default to 0 (Unspecified)
 
         # 2. Card Type (Bits 2-3)
         ctype = str(params.get("type") or params.get("card_type") or "").lower()
         if not ctype and "TYPE=" in filter_str:
             m = re.search(r"TYPE=(\w+)", filter_str)
-            if m: ctype = m.group(1).lower()
-        
-        if "live" in ctype: 
+            if m:
+                ctype = m.group(1).lower()
+
+        if "live" in ctype:
             filter_obj["card_type"] = 2
-        elif "member" in ctype: 
+        elif "member" in ctype:
             filter_obj["card_type"] = 1
 
         # 3. Group Filter (Bit 4 + Bits 5-11)
         group_val = params.get("group") or params.get("group_id") or params_upper.get("GROUP_ID")
         if not group_val and "GROUP_ID=" in filter_str:
             m = re.search(r"GROUP_ID=(\d+)", filter_str)
-            if m: group_val = m.group(1)
+            if m:
+                group_val = m.group(1)
         elif not group_val and "GROUP_" in filter_str:
             m = re.search(r"GROUP_([A-Z]+)", filter_str)
-            if m: group_val = m.group(1)
-        elif not group_val and "NIJIGASAKI" in filter_str: group_val = 2
-        elif not group_val and "LIELLA" in filter_str: group_val = 3
-        elif not group_val and "HASUNOSORA" in filter_str: group_val = 4
+            if m:
+                group_val = m.group(1)
+        elif not group_val and "NIJIGASAKI" in filter_str:
+            group_val = 2
+        elif not group_val and "LIELLA" in filter_str:
+            group_val = 3
+        elif not group_val and "HASUNOSORA" in filter_str:
+            group_val = 4
 
         if group_val:
             try:
-                g_id = int(str(group_val)) if str(group_val).isdigit() else int(Group.from_japanese_name(str(group_val).replace("_", " ")))
+                g_id = (
+                    int(str(group_val))
+                    if str(group_val).isdigit()
+                    else int(Group.from_japanese_name(str(group_val).replace("_", " ")))
+                )
                 filter_obj["group_enabled"] = True
                 filter_obj["group_id"] = g_id & 0x7F
-            except: pass
+            except:
+                pass
 
         # 4. Unit Filter (Bit 16 + Bits 17-23)
         unit_val = params.get("unit") or params.get("unit_id") or params_upper.get("UNIT_ID")
         if not unit_val and "UNIT_ID=" in filter_str:
             m = re.search(r"UNIT_ID=(\d+)", filter_str)
-            if m: unit_val = m.group(1)
+            if m:
+                unit_val = m.group(1)
         elif not unit_val and "UNIT_" in filter_str:
             m = re.search(r"UNIT_([A-Z0-9_]+)", filter_str)
-            if m: unit_val = m.group(1)
-        elif not unit_val and "UNIT_BIBI" in filter_str: unit_val = 2
+            if m:
+                unit_val = m.group(1)
+        elif not unit_val and "UNIT_BIBI" in filter_str:
+            unit_val = 2
 
         if unit_val:
             try:
-                u_id = int(str(unit_val)) if str(unit_val).isdigit() else int(Unit.from_japanese_name(str(unit_val).replace("_", " ")))
+                u_id = (
+                    int(str(unit_val))
+                    if str(unit_val).isdigit()
+                    else int(Unit.from_japanese_name(str(unit_val).replace("_", " ")))
+                )
                 filter_obj["unit_enabled"] = True
                 filter_obj["unit_id"] = u_id & 0x7F
-            except: pass
+            except:
+                pass
 
         # 5. Cost Filter (Bit 24 + Bits 25-29 + Bit 30=Mode + Bit 31=Type=1)
-        c_min = params.get("cost_ge") # Only check explicit cost GE/LE params
+        c_min = params.get("cost_ge")  # Only check explicit cost GE/LE params
         c_max = params.get("cost_le") or params.get("total_cost_le")
-        
+
         if c_min is None and "COST_GE=" in filter_str:
             m = re.search(r"COST_GE=(\d+)", filter_str)
-            if m: c_min = m.group(1)
+            if m:
+                c_min = m.group(1)
         if c_max is None and "COST_LE=" in filter_str:
             m = re.search(r"COST_LE=(\d+)", filter_str)
-            if m: c_max = m.group(1)
+            if m:
+                c_max = m.group(1)
 
         if "COST_LT_TARGET_VAL" in filter_str:
             filter_obj["value_enabled"] = True
@@ -1172,7 +1368,8 @@ class Ability:
                 filter_obj["value_threshold"] = val_c & 0x1F
                 filter_obj["is_cost_type"] = True
                 filter_obj["is_le"] = False
-            except: pass
+            except:
+                pass
         elif c_max is not None:
             try:
                 val_c = int(c_max)
@@ -1180,22 +1377,25 @@ class Ability:
                 filter_obj["value_threshold"] = val_c & 0x1F
                 filter_obj["is_cost_type"] = True
                 filter_obj["is_le"] = True
-            except: pass
-        
+            except:
+                pass
+
         # 5.1 Heart Sum Support
         sum_ge = params.get("sum_heart_total_ge") or params_upper.get("SUM_HEART_TOTAL_GE")
         sum_le = params.get("sum_heart_total_le") or params_upper.get("SUM_HEART_TOTAL_LE")
         # Also check filter_str for SUM_HEART_TOTAL_GE (e.g. "SUM_HEART_TOTAL_GE=8")
         if not sum_ge and "SUM_HEART_TOTAL_GE=" in filter_str:
             m = re.search(r"SUM_HEART_TOTAL_GE=(\d+)", filter_str)
-            if m: sum_ge = m.group(1)
+            if m:
+                sum_ge = m.group(1)
         if not sum_le and "SUM_HEART_TOTAL_LE=" in filter_str:
             m = re.search(r"SUM_HEART_TOTAL_LE=(\d+)", filter_str)
-            if m: sum_le = m.group(1)
+            if m:
+                sum_le = m.group(1)
         if sum_ge is not None:
             filter_obj["value_enabled"] = True
             filter_obj["value_threshold"] = int(sum_ge) & 0x1F
-            filter_obj["is_cost_type"] = False # Must be False for heart sum in engine
+            filter_obj["is_cost_type"] = False  # Must be False for heart sum in engine
             filter_obj["is_le"] = False
         elif sum_le is not None:
             filter_obj["value_enabled"] = True
@@ -1207,7 +1407,8 @@ class Ability:
         names = params.get("name") or params_upper.get("NAME")
         if not names and "NAME=" in filter_str:
             m = re.search(r"NAME=([^,]+)", filter_str)
-            if m: names = m.group(1)
+            if m:
+                names = m.group(1)
 
         if names:
             n_list = str(names).split("/")
@@ -1220,8 +1421,9 @@ class Ability:
                             c_id = cid
                             break
                     if c_id > 0:
-                        filter_obj[f"char_id_{i+1}"] = c_id & 0x7F
-                except: pass
+                        filter_obj[f"char_id_{i + 1}"] = c_id & 0x7F
+                except:
+                    pass
 
         # 7. Heart Value and Color Filter (Bits 25-29 Threshold + Bit 31=Type=0 + Bits 32-38 Color Mask)
         if "HAS_HEART_" in filter_str:
@@ -1231,9 +1433,12 @@ class Ability:
                 count = match.group(2)
                 try:
                     c_idx = int(color_code)
-                    if not colors: colors = [c_idx]
-                    if count: f_val = int(count)
-                except: pass
+                    if not colors:
+                        colors = [c_idx]
+                    if count:
+                        f_val = int(count)
+                except:
+                    pass
         elif "HAS_COLOR_" in filter_str:
             match = re.search(r"HAS_COLOR_([A-Z]+)(?:_X(\d+))?", filter_str)
             if match:
@@ -1241,27 +1446,34 @@ class Ability:
                 count = match.group(2)
                 try:
                     c_idx = int(HeartColor[color_name])
-                    if not colors: colors = [c_idx]
-                    if count: f_val = int(count)
-                except: pass
+                    if not colors:
+                        colors = [c_idx]
+                    if count:
+                        f_val = int(count)
+                except:
+                    pass
 
         if f_val > 0:
             filter_obj["value_enabled"] = True
             filter_obj["value_threshold"] = f_val & 0x1F
             filter_obj["is_cost_type"] = False
-            
+
         if colors or "COLOR=" in filter_str:
             color_mask = 0
-            for c in (colors if isinstance(colors, list) else [colors]):
-                if c is None: continue
+            for c in colors if isinstance(colors, list) else [colors]:
+                if c is None:
+                    continue
                 try:
                     if isinstance(c, str):
-                        if c.isdigit(): c_idx = int(c)
-                        else: c_idx = int(HeartColor[c.upper()])
+                        if c.isdigit():
+                            c_idx = int(c)
+                        else:
+                            c_idx = int(HeartColor[c.upper()])
                     else:
                         c_idx = int(c)
                     color_mask |= 1 << c_idx
-                except: pass
+                except:
+                    pass
             if color_mask > 0:
                 filter_obj["color_mask"] = color_mask & 0x7F
 
@@ -1271,9 +1483,12 @@ class Ability:
         if zone_val:
             z_str = str(zone_val).upper()
             z_mask = 0
-            if "STAGE" in z_str: z_mask = int(EXTRA_CONSTANTS.get("ZONE_MASK_STAGE", 4))
-            elif "HAND" in z_str: z_mask = int(EXTRA_CONSTANTS.get("ZONE_MASK_HAND", 6))
-            elif "DISCARD" in z_str: z_mask = int(EXTRA_CONSTANTS.get("ZONE_MASK_DISCARD", 7))
+            if "STAGE" in z_str:
+                z_mask = int(EXTRA_CONSTANTS.get("ZONE_MASK_STAGE", 4))
+            elif "HAND" in z_str:
+                z_mask = int(EXTRA_CONSTANTS.get("ZONE_MASK_HAND", 6))
+            elif "DISCARD" in z_str:
+                z_mask = int(EXTRA_CONSTANTS.get("ZONE_MASK_DISCARD", 7))
             if z_mask > 0:
                 filter_obj["zone_mask"] = z_mask & 0x07
 
@@ -1282,21 +1497,26 @@ class Ability:
             sid = 3
         elif not sid and "SAME_NAME_AS_REVEALED" in filter_str:
             sid = 4
-            
+
         if sid:
             try:
                 sid_int = int(sid)
                 filter_obj["special_id"] = sid_int & 0x07
-            except: pass
+            except:
+                pass
 
         # Setsuna (Bit 59)
         if names and any(s in str(names) for s in ["優木", "せつ菜"]):
             filter_obj["is_setsuna"] = True
 
         # Internal Flags
-        if getattr(source, "is_optional", False) or params.get("is_optional") or "(Optional)" in str(params.get("pseudocode", "")):
+        if (
+            getattr(source, "is_optional", False)
+            or params.get("is_optional")
+            or "(Optional)" in str(params.get("pseudocode", ""))
+        ):
             filter_obj["is_optional"] = True
-        
+
         # Keywords (Bits 62-63)
         keyword = str(params.get("keyword") or params.get("filter") or "").upper()
         if params.get("KEYWORD_ENERGY") or "ACTIVATED_ENERGY" in keyword or "DID_ACTIVATE_ENERGY" in keyword:
@@ -1318,8 +1538,6 @@ class Ability:
         self.filters.append(filter_obj)
         # Use generated packer to ensure bit parity with Rust
         return pack_a_standard(**filter_obj)
-
-
 
     def reconstruct_text(self, lang: str = "en") -> str:
         """Generate standardized text description."""

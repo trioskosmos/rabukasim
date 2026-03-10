@@ -28,11 +28,11 @@ impl AlphaZeroVanillaEncoding for GameState {
         tensor.push(self.core.players[me].yell_cards.len() as f32 / 10.0);
         tensor.push(self.core.players[opp].yell_cards.len() as f32 / 10.0);
         tensor.push(if self.core.performance_yell_done[me] { 1.0 } else { 0.0 });
-        
+
         // 2.1 Portfolio Synergies
         let (portfolio_stats, participation_hints) = self.analyze_portfolio_synergies(me, db);
         for &val in &portfolio_stats { tensor.push(val); }
-        
+
         while tensor.len() < 20 { tensor.push(0.0); }
 
         // 3. High-Fidelity Card State (60 cards)
@@ -128,7 +128,7 @@ impl GameState {
             let p1 = crate::core::heuristics::calculate_live_success_prob(l1, &stage_hearts, &exp_yell_hearts, p.heart_req_reductions.to_array());
             let ev_raw = l1.score as f32 * p1;
             let ev_ra = l1.score as f32 * p1.powf(1.5);
-            
+
             stats[0] = stats[0].max(ev_raw);
             stats[3] = stats[3].max(ev_ra);
             if ev_ra > best_global_ra_ev {
@@ -148,7 +148,7 @@ impl GameState {
                     let p2 = crate::core::heuristics::calculate_live_success_prob(&combined, &stage_hearts, &exp_yell_hearts, p.heart_req_reductions.to_array());
                     let ev_raw = (l1.score + l2.score) as f32 * p2;
                     let ev_ra = (l1.score + l2.score) as f32 * p2.powf(1.5);
-                    
+
                     stats[1] = stats[1].max(ev_raw);
                     stats[4] = stats[4].max(ev_ra);
                     if ev_ra > best_global_ra_ev {
@@ -172,7 +172,7 @@ impl GameState {
                         let p3 = crate::core::heuristics::calculate_live_success_prob(&combined, &stage_hearts, &exp_yell_hearts, p.heart_req_reductions.to_array());
                         let ev_raw = (l1.score + l2.score + l3.score) as f32 * p3;
                         let ev_ra = (l1.score + l2.score + l3.score) as f32 * p3.powf(1.5);
-                        
+
                         stats[2] = stats[2].max(ev_raw);
                         stats[5] = stats[5].max(ev_ra);
                         if ev_ra > best_global_ra_ev {
@@ -183,7 +183,7 @@ impl GameState {
                 }
             }
         }
-        
+
         // 4. Exhaustion Statistics
         let total_avail: u32 = stage_hearts.iter().sum::<u32>() + exp_yell_hearts.iter().sum::<f32>() as u32;
         if total_avail > 0 {
