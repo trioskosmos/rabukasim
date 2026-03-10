@@ -15,6 +15,7 @@ pub mod player;
 pub mod rules;
 pub mod state;
 pub mod standard_state;
+pub mod turn_sequencer;
 
 // Constants
 pub use constants::*;

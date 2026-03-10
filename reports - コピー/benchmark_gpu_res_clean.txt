@@ -1,0 +1,60 @@
+﻿Initializing GPU Benchmark...
+GpuGameState size: 1280 bytes
+[DB] Loading 755 member entries...
+[DB] Loading 131 live entries...
+[DB] Loading 443 energy entries...
+Database loaded. Members: 755
+DEBUG [game]: Player 0 drawing card_id=255. Hand size before: 0, Deck len after: 59
+DEBUG [game]: Player 0 drawing card_id=4394. Hand size before: 1, Deck len after: 58
+DEBUG [game]: Player 0 drawing card_id=4341. Hand size before: 2, Deck len after: 57
+DEBUG [game]: Player 0 drawing card_id=4398. Hand size before: 3, Deck len after: 56
+DEBUG [game]: Player 0 drawing card_id=8441. Hand size before: 4, Deck len after: 55
+DEBUG [game]: Player 0 drawing card_id=4593. Hand size before: 5, Deck len after: 54
+DEBUG [game]: Player 1 drawing card_id=12540. Hand size before: 0, Deck len after: 59
+DEBUG [game]: Player 1 drawing card_id=382. Hand size before: 1, Deck len after: 58
+DEBUG [game]: Player 1 drawing card_id=252. Hand size before: 2, Deck len after: 57
+DEBUG [game]: Player 1 drawing card_id=12774. Hand size before: 3, Deck len after: 56
+DEBUG [game]: Player 1 drawing card_id=4535. Hand size before: 4, Deck len after: 55
+DEBUG [game]: Player 1 drawing card_id=372. Hand size before: 5, Deck len after: 54
+
+=== TESTING BACKEND: Backends(VULKAN) ===
+Selected Adapter: "NVIDIA GeForce RTX 3050 Ti Laptop GPU" (Backend: Vulkan, Max Binding Size: 2048 MB)
+DEBUG: Requesting device...
+DEBUG: Creating shader module...
+DEBUG: Creating pipeline layout...
+DEBUG: Creating compute pipeline...
+DEBUG: Creating buffers...
+DEBUG: Allocated static buffers.
+DEBUG: Allocating state buffer (Size: 128000000 bytes, MAX_BATCH: 100000)...
+DEBUG: Allocating readback buffer...
+DEBUG: Allocated simulation buffers.
+
+Testing Batch Size: 100
+  Time: 35.4214 ms
+  Throughput: 2823 sims/sec
+
+Testing Batch Size: 500
+  Time: 0.8939 ms
+  Throughput: 559347 sims/sec
+
+Testing Batch Size: 1000
+  Time: 1.3381 ms
+  Throughput: 747328 sims/sec
+
+Testing Batch Size: 2500
+  Time: 3.1288 ms
+  Throughput: 799028 sims/sec
+
+Testing Batch Size: 5000
+  Time: 6.0226 ms
+  Throughput: 830206 sims/sec
+
+Testing Batch Size: 10000
+  Time: 11.9757 ms
+  Throughput: 835024 sims/sec
+
+=== Testing Sequential Batching (10 batches of 10000) ===
+  Sum of Individual Latencies: 118.5802 ms
+  Overall Wall-clock Time: 218.6977 ms
+  Avg Time per 10k batch:  11.8580 ms
+  Overall Throughput: 457252 sims/sec

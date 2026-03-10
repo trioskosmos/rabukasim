@@ -1,0 +1,164 @@
+﻿{
+  "card_id": 4430,
+  "card_no": "PL!N-pb1-005-R",
+  "name": "\u5bae\u4e0b \u611b",
+  "cost": 2,
+  "hearts": [
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0
+  ],
+  "blade_hearts": [
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0
+  ],
+  "blades": 1,
+  "groups": [
+    2
+  ],
+  "units": [
+    6
+  ],
+  "abilities": [
+    {
+      "raw_text": "TRIGGER: ON_STAGE_ENTRY (Once per turn)\nCONDITION: FILTER=\"COST=10\"\nEFFECT: DRAW(1) -> PLAYER",
+      "trigger": 1,
+      "effects": [
+        {
+          "effect_type": 10,
+          "value": 1,
+          "value_cond": 0,
+          "target": 1,
+          "params": {},
+          "is_optional": false,
+          "modal_options": []
+        }
+      ],
+      "conditions": [
+        {
+          "type": 209,
+          "params": {
+            "comparison": "EQ",
+            "val": "COST=10",
+            "raw_cond": "FILTER"
+          },
+          "is_negated": false,
+          "value": 0,
+          "attr": 1
+        }
+      ],
+      "costs": [],
+      "modal_options": [],
+      "is_once_per_turn": true,
+      "bytecode": [
+        209,
+        0,
+        1,
+        0,
+        0,
+        10,
+        1,
+        0,
+        0,
+        4,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "instructions": [
+        {
+          "type": 209,
+          "params": {
+            "comparison": "EQ",
+            "val": "COST=10",
+            "raw_cond": "FILTER"
+          },
+          "is_negated": false,
+          "value": 0,
+          "attr": 1
+        },
+        {
+          "effect_type": 10,
+          "value": 1,
+          "value_cond": 0,
+          "target": 1,
+          "params": {},
+          "is_optional": false,
+          "modal_options": []
+        }
+      ],
+      "card_no": "PL!N-pb1-005-R",
+      "requires_selection": false,
+      "choice_flags": 0,
+      "choice_count": 0,
+      "pseudocode": "TRIGGER: ON_STAGE_ENTRY (Once per turn)\nCONDITION: FILTER=\"COST=10\"\nEFFECT: DRAW(1) -> PLAYER",
+      "filters": [
+        {
+          "target_player": 1,
+          "card_type": 0,
+          "group_enabled": false,
+          "group_id": 0,
+          "is_tapped": false,
+          "has_blade_heart": false,
+          "not_has_blade_heart": false,
+          "unique_names": false,
+          "unit_enabled": false,
+          "unit_id": 0,
+          "value_enabled": false,
+          "value_threshold": 0,
+          "is_le": false,
+          "is_cost_type": false,
+          "color_mask": 0,
+          "char_id_1": 0,
+          "char_id_2": 0,
+          "zone_mask": 0,
+          "special_id": 0,
+          "is_setsuna": false,
+          "compare_accumulated": false,
+          "is_optional": false,
+          "keyword_energy": false,
+          "keyword_member": false
+        }
+      ]
+    }
+  ],
+  "img_path": "cards_webp/PL!N-pb1-005-P2.webp",
+  "rare": "P+",
+  "ability_text": "TRIGGER: ON_STAGE_ENTRY (Once per turn)\nCONDITION: FILTER=\"COST=10\"\nEFFECT: DRAW(1) -> PLAYER",
+  "original_text": "{{jidou.png|\u81ea\u52d5}}{{turn1.png|\u30bf\u30fc\u30f31\u56de}}\u81ea\u5206\u306e\u30b9\u30c6\u30fc\u30b8\u306b\u30b3\u30b9\u30c810\u306e\u30e1\u30f3\u30d0\u30fc\u304c\u767b\u5834\u3057\u305f\u3068\u304d\u3001\u30ab\u30fc\u30c9\u30921\u679a\u5f15\u304f\u3002",
+  "original_text_en": "[Auto] [Turn 1] When a Cost 10 member enters your stage, draw 1 card.",
+  "volume_icons": 0,
+  "draw_icons": 0,
+  "semantic_flags": 9,
+  "ability_flags": 1,
+  "synergy_flags": 0,
+  "cost_flags": 0,
+  "faq": [
+    {
+      "title": "Q197\uff082025.12.17\uff09",
+      "question": "\u3053\u306e\u30ab\u30fc\u30c9\u3068\u30d0\u30c8\u30f3\u30bf\u30c3\u30c1\u3057\u3066\u30b3\u30b9\u30c810\u306e\u30e1\u30f3\u30d0\u30fc\u304c\u767b\u5834\u3057\u305f\u5834\u5408\u3001\u3053\u306e\u30ab\u30fc\u30c9\u306e\u81ea\u52d5\u80fd\u529b\u3092\u306f\u767a\u52d5\u3067\u304d\u307e\u3059\u304b\uff1f",
+      "answer": "\u3044\u3044\u3048\u3002\u3067\u304d\u307e\u305b\u3093\u3002",
+      "relation": [
+        {
+          "card_no": "PL!N-pb1-005-P\uff0b",
+          "name": "\u5bae\u4e0b \u611b"
+        },
+        {
+          "card_no": "PL!N-pb1-005-R",
+          "name": "\u5bae\u4e0b \u611b"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,454 @@
+﻿Step 0: sys.path updated
+Step 1: Imports done
+Benchmark Init (Sims: 128)
+
+--- DEBUG START: Deck aqours_cup, Seed 101 ---
+Post-Init: Phase -3, Turn 1, Hand 6
+  [Move 0] Phase -3, Turn 1, Player 0, Legal: [20000, 20001, 20002]
+    Random RPS Choice: 20001
+  [Move 1] Phase -3, Turn 1, Player 1, Legal: [21000, 21001, 21002]
+    Random RPS Choice: 21002
+  [Move 2] Phase -2, Turn 1, Player 1, Legal: [5000, 5001]
+    Random Turn Choice: 5000
+  [Move 3] Phase -1, Turn 1, Player 1, Legal: [0, 300, 301, 302, 303, 304, 305]
+    Chose EID 0 (Pass / Done)
+  [Move 4] Phase 0, Turn 1, Player 0, Legal: [0, 300, 301, 302, 303, 304, 305]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 5] Phase 4, Turn 1, Player 1, Legal: [0, 1010, 1011, 1012, 1020, 1021, 1022, 1030, 1031, 1032, 1040, 1041, 1042]
+    Chose EID 1020 (Play ([PL!S-PR-017-PR] 渡辺 曜) (Hand[2]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 6] Phase 4, Turn 1, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 7] Phase 4, Turn 1, Player 0, Legal: [0, 1000, 1001, 1002, 1010, 1011, 1012, 1040, 1041, 1042, 1050, 1051, 1052]
+    Chose EID 1051 (Play ([PL!S-PR-025-PR] 高海千歌) (Hand[5]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 8] Phase 4, Turn 1, Player 0, Legal: [0, 1000, 1002, 1040, 1042]
+    Chose EID 1000 (Play ([PL!S-bp2-009-P] 黒澤ルビィ) (Hand[0]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 9] Phase 4, Turn 1, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 10] Phase 5, Turn 1, Player 1, Legal: [0, 400, 401, 402, 403, 404, 405]
+    Chose EID 0 (Pass / Done)
+  [Move 11] Phase 5, Turn 1, Player 0, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 12] Phase 4, Turn 2, Player 1, Legal: [0, 1010, 1011, 1012, 1020, 1021, 1022, 1030, 1031, 1032]
+    Chose EID 1032 (Play ([PL!S-PR-026-PR] 桜内梨子) (Hand[3]) to Slot 2)
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 13] Phase 4, Turn 2, Player 1, Legal: [0, 1010, 1020]
+    Chose EID 1020 (Play ([PL!S-bp3-010-N] 高海千歌) (Hand[2]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 14] Phase 4, Turn 2, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 15] Phase 4, Turn 2, Player 0, Legal: [0, 1000, 1001, 1002, 1030, 1031, 1032]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 16] Phase 5, Turn 2, Player 1, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+  [Move 17] Phase 5, Turn 2, Player 0, Legal: [0, 400, 401, 402, 403, 404, 405]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 18] Phase 4, Turn 3, Player 1, Legal: [0, 1010, 1011, 1012, 1050, 1051, 1052]
+    Chose EID 1011 (Play ([PL!S-bp2-014-N] 渡辺 曜) (Hand[1]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 19] Phase 4, Turn 3, Player 1, Legal: [0, 1040, 1042]
+    Chose EID 1040 (Play ([PL!S-bp2-009-P] 黒澤ルビィ) (Hand[4]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 20] Phase 4, Turn 3, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 21] Phase 4, Turn 3, Player 0, Legal: [0, 1000, 1001, 1002, 1030, 1031, 1032]
+    Chose EID 1031 (Play ([PL!S-bp2-009-P] 黒澤ルビィ) (Hand[3]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 22] Phase 4, Turn 3, Player 0, Legal: [0, 1000, 1002]
+    Chose EID 1000 (Play ([PL!S-PR-017-PR] 渡辺 曜) (Hand[0]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 23] Phase 4, Turn 3, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 24] Phase 5, Turn 3, Player 1, Legal: [0, 400, 401, 402, 403]
+    Chose EID 0 (Pass / Done)
+  [Move 25] Phase 5, Turn 3, Player 0, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 26] Phase 4, Turn 4, Player 1, Legal: [0, 1031]
+    Chose EID 1031 (Play ([PL!S-bp2-006-P] 津島善子) (Hand[3]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 27] Phase 4, Turn 4, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 28] Phase 4, Turn 4, Player 0, Legal: [0, 1040, 1041]
+    Chose EID 1040 (Play ([PL!S-PR-029-PR] 渡辺 曜) (Hand[4]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 29] Phase 4, Turn 4, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 30] Phase 5, Turn 4, Player 1, Legal: [0, 400, 401, 402, 403]
+    Chose EID 0 (Pass / Done)
+  [Move 31] Phase 5, Turn 4, Player 0, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 32] Phase 4, Turn 5, Player 1, Legal: [0, 1031, 1040, 1041, 1042]
+    Chose EID 1041 (Play ([PL!S-bp2-009-P] 黒澤ルビィ) (Hand[4]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 33] Phase 4, Turn 5, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 34] Phase 4, Turn 5, Player 0, Legal: [0, 1000, 1050, 1051, 1052]
+    Chose EID 1052 (Play ([PL!S-PR-025-PR] 高海千歌) (Hand[5]) to Slot 2)
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 35] Phase 4, Turn 5, Player 0, Legal: [0, 1000]
+    Chose EID 1000 (Play ([PL!S-pb1-003-P＋] 松浦果南) (Hand[0]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 36] Phase 4, Turn 5, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 37] Phase 5, Turn 5, Player 1, Legal: [0, 400, 401, 402, 403]
+    Chose EID 0 (Pass / Done)
+  [Move 38] Phase 5, Turn 5, Player 0, Legal: [0, 400, 401, 402, 403]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 39] Phase 4, Turn 6, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 40] Phase 4, Turn 6, Player 0, Legal: [0, 1020, 1040, 1041, 1042]
+    Chose EID 1040 (Play ([PL!S-bp2-014-N] 渡辺 曜) (Hand[4]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 41] Phase 4, Turn 6, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 42] Phase 5, Turn 6, Player 1, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+  [Move 43] Phase 5, Turn 6, Player 0, Legal: [0, 400, 401, 402, 403]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 44] Phase 4, Turn 7, Player 1, Legal: [0, 1050, 1051, 1052]
+    Chose EID 1051 (Play ([PL!S-bp3-010-N] 高海千歌) (Hand[5]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 45] Phase 4, Turn 7, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 46] Phase 4, Turn 7, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 47] Phase 5, Turn 7, Player 1, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+  [Move 48] Phase 5, Turn 7, Player 0, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 49] Phase 4, Turn 8, Player 1, Legal: [0, 1030, 1031, 1032, 1050, 1051, 1052]
+    Chose EID 1052 (Play ([PL!S-bp2-014-N] 渡辺 曜) (Hand[5]) to Slot 2)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 50] Phase 4, Turn 8, Player 1, Legal: [0, 1031]
+    Chose EID 1031 (Play ([PL!S-bp2-005-SEC] 渡辺 曜) (Hand[3]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 51] Phase 4, Turn 8, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 52] Phase 4, Turn 8, Player 0, Legal: [0, 1050, 1051, 1052]
+    Chose EID 1050 (Play ([PL!S-bp2-005-SEC] 渡辺 曜) (Hand[5]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 53] Phase 4, Turn 8, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 54] Phase 5, Turn 8, Player 1, Legal: [0, 400, 401, 402, 403]
+    Chose EID 0 (Pass / Done)
+  [Move 55] Phase 5, Turn 8, Player 0, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 56] Phase 4, Turn 9, Player 1, Legal: [0, 1040, 1041, 1042]
+    Chose EID 1040 (Play ([PL!S-bp2-006-P] 津島善子) (Hand[4]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 57] Phase 4, Turn 9, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 58] Phase 4, Turn 9, Player 0, Legal: [0, 1020, 1050, 1051, 1052]
+    Chose EID 1051 (Play ([PL!S-PR-029-PR] 渡辺 曜) (Hand[5]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 59] Phase 4, Turn 9, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 60] Phase 5, Turn 9, Player 1, Legal: [0, 400, 401, 402, 403]
+    Chose EID 0 (Pass / Done)
+  [Move 61] Phase 5, Turn 9, Player 0, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 62] Phase 4, Turn 10, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 63] Phase 4, Turn 10, Player 0, Legal: [0, 1020, 1021, 1050, 1051, 1052]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 64] Phase 5, Turn 10, Player 1, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+  [Move 65] Phase 5, Turn 10, Player 0, Legal: [0, 400, 401, 402, 403, 404, 405]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 66] Phase 4, Turn 11, Player 1, Legal: [0, 1050, 1051, 1052]
+    Chose EID 1051 (Play ([PL!S-bp3-010-N] 高海千歌) (Hand[5]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 67] Phase 4, Turn 11, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 68] Phase 4, Turn 11, Player 0, Legal: [0, 1020, 1021, 1050, 1051, 1052, 1060, 1061]
+    Chose EID 1051 (Play ([PL!S-bp2-001-P] 高海千歌) (Hand[5]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 69] Phase 4, Turn 11, Player 0, Legal: [0, 1020, 1050]
+    Chose EID 1050 (Play ([LL-bp2-001-R＋] 渡辺 曜&鬼塚夏美&大沢瑠璃乃) (Hand[5]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 70] Phase 4, Turn 11, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 71] Phase 5, Turn 11, Player 1, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+  [Move 72] Phase 5, Turn 11, Player 0, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 73] Phase 4, Turn 12, Player 1, Legal: [0, 1050, 1051, 1052]
+    Chose EID 1051 (Play ([PL!S-PR-029-PR] 渡辺 曜) (Hand[5]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 74] Phase 4, Turn 12, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 75] Phase 4, Turn 12, Player 0, Legal: [0, 1020, 1021, 1050, 1051, 1052]
+    Chose EID 1051 (Play ([PL!S-bp2-014-N] 渡辺 曜) (Hand[5]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 76] Phase 4, Turn 12, Player 0, Legal: [0, 1020]
+    Chose EID 1020 (Play ([LL-bp2-001-R＋] 渡辺 曜&鬼塚夏美&大沢瑠璃乃) (Hand[2]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 77] Phase 4, Turn 12, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 78] Phase 5, Turn 12, Player 1, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+  [Move 79] Phase 5, Turn 12, Player 0, Legal: [0, 400, 401, 402, 403]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 80] Phase 4, Turn 13, Player 1, Legal: [0, 1050, 1051, 1052]
+    Chose EID 1051 (Play ([PL!S-bp2-005-SEC] 渡辺 曜) (Hand[5]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 81] Phase 4, Turn 13, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 82] Phase 4, Turn 13, Player 0, Legal: [0, 1040, 1041, 1042]
+    Chose EID 1041 (Play ([PL!S-bp2-006-P] 津島善子) (Hand[4]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 83] Phase 4, Turn 13, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 84] Phase 5, Turn 13, Player 1, Legal: [0, 400, 401, 402, 403, 404]
+    Chose EID 0 (Pass / Done)
+  [Move 85] Phase 5, Turn 13, Player 0, Legal: [0, 400, 401, 402, 403]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 86] Phase 4, Turn 14, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 87] Phase 4, Turn 14, Player 0, Legal: [0, 1040, 1041, 1042]
+    Chose EID 1042 (Play ([PL!S-PR-026-PR] 桜内梨子) (Hand[4]) to Slot 2)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 88] Phase 4, Turn 14, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 89] Phase 5, Turn 14, Player 1, Legal: [0, 400, 401, 402, 403, 404, 405]
+    Chose EID 0 (Pass / Done)
+  [Move 90] Phase 5, Turn 14, Player 0, Legal: [0, 400, 401, 402, 403]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 91] Phase 4, Turn 15, Player 1, Legal: [0, 1060, 1061, 1062]
+    Chose EID 1060 (Play ([PL!S-PR-026-PR] 桜内梨子) (Hand[6]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 92] Phase 4, Turn 15, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 93] Phase 4, Turn 15, Player 0, Legal: [0, 1040, 1041, 1042]
+    Chose EID 1040 (Play ([PL!S-bp2-009-P] 黒澤ルビィ) (Hand[4]) to Slot 0)
+[DEBUG] trigger_abilities_from: OnLeaves for player 0
+[DEBUG] trigger_abilities_from: OnPlay for player 0
+  [Move 94] Phase 4, Turn 15, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+  [Move 95] Phase 5, Turn 15, Player 1, Legal: [0, 400, 401, 402, 403, 404, 405]
+    Chose EID 0 (Pass / Done)
+  [Move 96] Phase 5, Turn 15, Player 0, Legal: [0, 400, 401, 402, 403]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: OnLiveStart for player 1
+[DEBUG] P0 has_live=false, snapshot_success=false
+[DEBUG] P1 has_live=false, snapshot_success=false
+[DEBUG] Rule 8.4.6: p0_wins=false, p1_wins=false, has_success=[false, false], scores=[0, 0]
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 1
+  [Move 97] Phase 4, Turn 16, Player 1, Legal: [0, 1060, 1061, 1062]
+    Chose EID 1061 (Play ([PL!S-PR-017-PR] 渡辺 曜) (Hand[6]) to Slot 1)
+[DEBUG] trigger_abilities_from: OnLeaves for player 1
+[DEBUG] trigger_abilities_from: OnPlay for player 1
+  [Move 98] Phase 4, Turn 16, Player 1, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 1
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+[DEBUG] trigger_abilities_from: TurnStart for player 0
+  [Move 99] Phase 4, Turn 16, Player 0, Legal: [0]
+    Chose EID 0 (Pass / Done)
+[DEBUG] trigger_abilities_from: TurnEnd for player 0
+Done: Deck aqours_cup, Seed 101, Turns 16, Score 0-0, Moves 100
+Benchmark Results: Avg Turns 16.00, count 1

@@ -43,15 +43,32 @@ class PersistentBuffer:
 
     def _init_mmap(self, filename, shape, dtype):
         path = self.buffer_dir / filename
+        if path.exists():
+            # Validate file size matches expected shape.
+            # On Windows, opening with wrong shape can cause a silent hang or OOM.
+            expected_bytes = int(np.prod(shape)) * np.dtype(dtype).itemsize
+            actual_bytes = path.stat().st_size
+            if actual_bytes != expected_bytes:
+                print(f"[Buffer] Size mismatch for {filename} "
+                      f"(expected {expected_bytes:,}, got {actual_bytes:,}). Recreating.")
+                path.unlink()
         mode = 'r+' if path.exists() else 'w+'
         return np.memmap(path, dtype=dtype, mode=mode, shape=shape)
+
 
     def _load_meta(self):
         if self.meta_path.exists():
             with open(self.meta_path, "r") as f:
                 meta = json.load(f)
-                self.ptr = meta.get("ptr", 0)
-                self.count = meta.get("count", 0)
+                loaded_ptr = meta.get("ptr", 0)
+                loaded_count = meta.get("count", 0)
+                if loaded_ptr >= self.max_size or loaded_count > self.max_size:
+                    print(f"[Buffer] Meta pointer out of bounds (ptr {loaded_ptr}, max {self.max_size}). Resetting.")
+                    self.ptr = 0
+                    self.count = 0
+                else:
+                    self.ptr = loaded_ptr
+                    self.count = loaded_count
 
     def _save_meta(self):
         with open(self.meta_path, "w") as f:

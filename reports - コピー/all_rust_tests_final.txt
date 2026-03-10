@@ -1,0 +1,413 @@
+
+running 268 tests
+test card_interaction_tests::test_granted_abilities_removal ... ok
+test comprehensive_tests::test_conditions_exhaustive ... ok
+test comprehensive_tests::test_conditions_group_ab_state ... ok
+test comprehensive_tests::test_costs_all_groups ... ok
+test comprehensive_tests::test_conditions_group_cd_context_input ... ok
+test baton_pass_tests::test_baton_pass_restriction ... ok
+test comprehensive_tests::test_effects_group_f_system ... ok
+test comprehensive_tests::test_effects_group_ce_info_modal ... ok
+test comprehensive_tests::test_mechanics_optional_once_per_turn ... ok
+test comprehensive_tests::test_effects_group_ab_stats_zone ... ok
+test comprehensive_tests::test_effects_exhaustive ... ok
+test comprehensive_tests::test_opcode_reveal_until_cost_ge ... ok
+test comprehensive_tests::test_pattern_exhaustive_sampling ... ok
+test comprehensive_tests::test_reproduce_example_draw_discard ... ok
+test comprehensive_tests::test_triggers_exhaustive ... ok
+test comprehensive_tests::test_targets_all_groups ... ok
+test comprehensive_tests::test_pattern_performance ... ok
+test comprehensive_tests::test_pattern_on_play ... ok
+test core::gpu_semantic_bridge::tests::test_apply_hand_delta ... ok
+test core::gpu_semantic_bridge::tests::test_delta_tag_conversion ... ok
+test core::gpu_state::tests::test_layout_consistency ... ok
+test core::logic::filter::tests::test_character_filter ... ok
+test comprehensive_tests::test_triggers_group_a_action ... ok
+test comprehensive_tests::test_triggers_group_c_persistent ... ok
+test core::logic::filter::tests::test_filter_roundtrip ... ok
+test comprehensive_tests::test_triggers_group_b_phase ... ok
+test coverage_gap_tests::test_conditions_basic_state ... ok
+test coverage_gap_tests::test_conditions_member_properties ... ok
+test count_group_tests::tests::test_count_group_unique_names ... ok
+test coverage_gap_tests::test_conditions_comparison_and_baton ... ok
+test coverage_gap_tests::test_opcodes_meta_rules ... ok
+test coverage_gap_tests::test_opcodes_movement_control ... ok
+test coverage_gap_tests::test_conditions_misc ... ok
+test coverage_gap_tests::test_opcodes_selection ... ok
+test coverage_gap_tests::test_opcodes_complex_mod ... ok
+test coverage_gap_tests::test_opcodes_state_modifiers_simple ... ok
+test ability_tests::test_opcode_tap_untap ... ok
+test ability_tests::test_opcode_stats_boost ... ok
+test ability_tests::test_conditions_basic ... ok
+test deck_refresh_tests::test_refresh_order_preservation ... ok
+test enforcement_tests::test_enforce_condition_failure ... ok
+test enforcement_tests::test_enforce_cost_failure ... ok
+test enforcement_tests::test_enforce_play_member_cost_failure ... ok
+test enforcement_tests::test_enforce_once_per_turn_failure ... ok
+test filter_audit_tests::tests::test_discard_success_live_filter ... ok
+test deck_refresh_tests::test_refresh_on_empty_draw ... ok
+test filter_audit_tests::tests::test_name_in_filter ... ok
+test card_interaction_tests::test_granted_abilities_stacking ... ok
+test filter_audit_tests::tests::test_filtered_cost_discard ... ok
+test filter_audit_tests::tests::test_tapped_filter ... ok
+test filter_audit_tests::tests::test_unique_names_filter ... ok
+test card_interaction_tests::test_stat_buff_combination ... ok
+test deck_refresh_tests::test_refresh_on_look_and_choose ... ok
+test filter_audit_tests::tests::test_hand_filter_liella ... ok
+test ability_tests::test_opcode_draw_discard ... ok
+test ability_tests::test_look_and_choose_remainder ... ok
+test deck_refresh_tests::test_refresh_on_look_at_top_x ... ok
+test database_tests::test_bytecode_sanity_all_cards ... ok
+test database_tests::test_database_integrity ... ok
+test game_end_tests::test_deck_out_not_yet_implemented ... ok
+test game_flow_tests::test_mulligan_logic_discard_and_draw ... ok
+test game_end_tests::test_win_by_lives ... ok
+test game_end_tests::test_true_draw_lives_and_score_equal ... ok
+test game_end_tests::test_draw_simultaneous_lives ... ok
+test mechanics_tests::test_condition_count_hand ... ok
+test game_flow_tests::test_mulligan_empty_keep ... ok
+test mechanics_tests::test_opcode_reduce_cost ... ok
+test mechanics_tests::test_opcode_draw ... ok
+test meta_rule_card_tests::test_meta_rule_cheer_mod_increment ... ok
+test meta_rule_tests::test_opcode_meta_rule ... ok
+test mechanics_tests::test_opcode_blades ... ok
+test mechanics_tests::test_opcode_hearts ... ok
+test mechanics_tests::test_opcode_play_member_from_hand ... ok
+test meta_rule_card_tests::test_meta_rule_pl_sp_bp1_024_l_live_success_draw ... ok
+test meta_rule_card_tests::test_meta_rule_pl_sp_bp1_024_l_heart_buffs ... ok
+test meta_rule_card_tests::test_meta_rule_cheer_mod_multiple ... ok
+test meta_rule_card_tests::test_meta_rule_pl_sp_bp1_026_l_condition_check ... ok
+test meta_rule_card_tests::test_meta_rule_pl_sp_bp1_024_l_no_draw_without_both ... ok
+test new_opcode_tests::test_opcode_reduce_score ... ok
+test opcode_missing_tests::test_opcode_heart_modifiers ... ok
+test new_opcode_tests::test_opcode_reduce_score_not_negative ... ok
+test opcode_missing_tests::test_opcode_opponent_choose ... ok
+test new_opcode_tests::test_condition_opponent_has_excess_heart ... ok
+test opcode_missing_tests::test_opcode_prevent_activate ... ok
+test new_opcode_tests::test_condition_score_total_check ... ok
+test opcode_missing_tests::test_opcode_select_live ... ok
+test new_opcode_tests::test_opcode_look_deck_dynamic ... ok
+test opcode_missing_tests::test_opcode_prevent_play_to_slot ... ok
+test new_opcode_tests::test_condition_count_energy_exact ... ok
+test opcode_missing_tests::test_opcode_prevent_baton_touch ... ok
+test opcode_rigor_tests::test_opcode_add_stage_energy_functional ... ok
+test opcode_missing_tests::test_opcode_select_member ... ok
+test opcode_rigor_tests::test_opcode_increase_cost_ripple ... ok
+test opcode_rigor_tests::test_opcode_prevent_activate_rigor ... ok
+test opcode_rigor_tests::test_opcode_reduce_yell_count_functional ... ok
+test opcode_rigor_tests::test_opcode_opponent_choose_rigor ... ok
+test opcode_rigor_tests::test_opcode_select_live_rigor ... ok
+test opcode_coverage_gap_2::test_opcode_color_select_real_card_122 ... ok
+test opcode_tests::test_card_matches_filter_live_hearts ... ok
+test opcode_rigor_tests::test_opcode_swap_cards_deck_refresh ... ok
+test opcode_tests::test_opcode_immunity ... ok
+test opcode_tests::test_look_and_choose_source_zone_fix ... ok
+test opcode_tests::test_opcode_draw_until ... ok
+test opcode_tests::test_opcode_look_and_choose_filter_cost_ge ... ok
+test parity_tests::parity_tests::test_parity_add_hearts ... ok
+test opcode_tests::test_opcode_reveal_until_type_live ... ok
+test parity_tests::parity_tests::test_parity_add_to_hand ... ok
+test opcode_tests::test_opcode_pay_energy ... ok
+test opcode_tests::test_opcode_look_deck ... ok
+test parity_tests::parity_tests::test_parity_card_play_sequence ... ok
+test parity_tests::parity_tests::test_parity_baton_condition ... ok
+test parity_tests::parity_tests::test_parity_boost_score ... ok
+test opcode_tests::test_opcode_reveal_until_cost_ge ... ok
+test parity_tests::parity_tests::test_parity_conditional_execution ... ok
+test parity_tests::parity_tests::test_parity_count_blades ... ok
+test parity_tests::parity_tests::test_parity_complex_sequence ... ok
+test parity_tests::parity_tests::test_parity_count_hand ... ok
+test parity_tests::parity_tests::test_parity_count_stage ... ok
+test parity_tests::parity_tests::test_parity_count_hearts ... ok
+test parity_tests::parity_tests::test_parity_count_energy ... ok
+test parity_tests::parity_tests::test_parity_count_discard ... ok
+test parity_tests::parity_tests::test_parity_draw ... ok
+test parity_tests::parity_tests::test_parity_draw_until ... ok
+test parity_tests::parity_tests::test_parity_energy_charge ... ok
+test parity_tests::parity_tests::test_parity_pay_energy ... ok
+test parity_tests::parity_tests::test_parity_is_center ... ok
+test parity_tests::parity_tests::test_parity_negated_condition ... ok
+test opcode_coverage_gap_2::test_opcode_buff_power_dynamic ... ok
+test parity_tests::parity_tests::test_parity_recover_member ... ok
+test parity_tests::parity_tests::test_parity_play_member_from_discard ... ok
+test parity_tests::parity_tests::test_parity_set_score ... ok
+test parity_tests::parity_tests::test_parity_transform_color ... ok
+test parity_tests::parity_tests::test_parity_score_compare ... ok
+test parity_tests::parity_tests::test_parity_reduce_heart_req ... ok
+test parity_tests::parity_tests::test_parity_reduce_live_set_limit ... ok
+test parity_tests::parity_tests::test_parity_turn_1 ... ok
+test qa_verification_tests::tests::test_insufficient_energy_no_prompt ... ok
+test qa_verification_tests::tests::test_optional_interaction_actions ... ok
+test qa_verification_tests::tests::test_q23_normal_play ... ok
+test qa_verification_tests::tests::test_q16_rps_selection ... ok
+test new_opcode_tests::test_opcode_skip_activate_phase ... ok
+test qa_verification_tests::tests::test_q17_q18_q19_mulligan ... ok
+test qa_verification_tests::tests::test_q27_baton_limit ... ok
+test qa_verification_tests::tests::test_q32_empty_live_yell ... ok
+test qa_verification_tests::tests::test_q29_q70_q87_slot_reuse ... ok
+test qa_verification_tests::tests::test_q49_turn_passing ... ok
+test qa_verification_tests::tests::test_q53_deckout_shuffle ... ok
+test qa_verification_tests::tests::test_q34_q35_zone_movement ... ok
+test qa_verification_tests::tests::test_q47_q48_score_zero ... ok
+test qa_verification_tests::tests::test_q24_q25_q26_baton_cost ... ok
+test opcode_coverage_gap_2::test_opcode_tap_opponent_dynamic ... ok
+test opcode_coverage_gap_2::test_opcode_jump_real_card_19 ... ok
+test database_tests::test_dry_run_all_cards ... ok
+test phase_transition_tests::test_phase_flow_mulligan_to_main ... ok
+test repro::special_mechanics_tests::test_meta_rule_yell_mulligan ... ok
+test phase_transition_tests::test_phase_flow_main_to_next_turn ... ok
+test repro::special_mechanics_tests::test_opponent_choice_penalty_maki ... ok
+test repro::special_mechanics_tests::test_area_rotation_mei ... ok
+test repro::special_mechanics_tests::test_heart_transformation_kanan_via_reduction ... ok
+test repro::repro_card_pb1_001_r::test_repro_pb1_001_r_softlock_fix ... ok
+test phase_transition_tests::test_phase_flow_active_to_main ... ok
+test repro::repro_card_560_double_baton::test_repro_card_560_double_baton ... ok
+test repro_bp3_002_p::tests::test_repro_bp3_002_p_tap_targeting ... ok
+test repro_color_filter::tests::test_look_and_choose_color_filter_parity ... ok
+test repro::crash_triage::test_state_delta_verification ... ok
+test repro::yell_persistence_repro::test_yell_persistence_and_selection ... ok
+test repro::special_mechanics_tests::test_selective_retrieval_natsumi ... ok
+test repro_optionality::tests::test_trigger_even_if_already_tapped ... ok
+test repro_optionality::tests::test_optional_tap_cost_manual_choice ... ok
+test repro_bp4_002_p::test_repro_bp4_002_p_wait_flow ... ok
+test repro_card_fixes::tests::test_card_275_sequential_interaction_resumption ... ok
+test repro_optionality::tests::test_optional_tap_cost_accept ... ok
+test repro_card_fixes::tests::test_pay_energy_high_cost_softlock_fix ... ok
+test repro_card_fixes::tests::test_card_528_movement_fix ... ok
+test repro_card_fixes::tests::test_rurino_filter_masking_fix ... ok
+test repro_softlock::tests::test_repro_softlock_full_flow ... ok
+test repro::special_mechanics_tests::test_selective_reveal_kanon ... ok
+test response_flow_tests::test_ability_resumption_after_choice ... ok
+test repro_discard_bug::tests::test_move_to_discard_deck_top_slot_1_repro ... ok
+test repro_task::tests::test_prevent_activate_blocks_all ... ok
+test response_flow_tests::test_ability_pause_for_selection ... ok
+test repro_task::tests::test_stage_choice_ability_generation ... ok
+test response_flow_tests::test_nested_trigger_flow_simple ... ok
+test response_flow_tests::test_nested_suspension_real_flow ... ok
+test rule_alignment_tests::test_priority_p1_choice_selection ... ok
+test rule_alignment_tests::test_rule_8_4_13_first_player_no_change_both_success ... ok
+test response_flow_tests::test_nested_suspension_preserves_original_phase ... ok
+test rule_alignment_tests::test_rule_8_3_16_all_or_nothing_failure ... ok
+test rule_alignment_tests::test_rule_8_4_13_first_player_change ... ok
+test repro_card_fixes::tests::test_hime_optional_discard_resumption ... ok
+test rule_alignment_tests::test_priority_p1_triggers_first ... ok
+test semantic_assertions::tests::generate_v3_truth ... ignored
+test repro_task::tests::test_multi_ability_encoding_slots ... ok
+test repro_task::tests::test_ability_activation_zone_repro ... ok
+test repro_task::tests::test_tapped_member_can_activate_non_tapself ... ok
+test repro_task::tests::test_cost_13_passive_repro ... ok
+test repro_task::tests::test_once_per_turn_slot_movement_known_issue ... ok
+test rule_parity_regression_tests::test_energy_initialization ... ok
+test size_test::test_state_size ... ok
+test semantic_assertions::tests::test_archetype_sd1_001_success_live_cond ... ok
+test semantic_assertions::tests::test_archetype_sd1_003_optional_discard ... ok
+test semantic_assertions::tests::test_archetype_n_pr_005_draw_2_discard_2 ... ok
+test stabilized_tests::verify_buff_logic ... ok
+test rule_parity_regression_tests::test_yell_source_deck_parity ... ok
+test semantic_assertions::tests::debug_hand_delta_failure ... ok
+test structural_tests::test_exile_zone_exists ... ok
+test structural_tests::test_play_member_from_hand_opcode_preserves_energy ... ok
+test rule_parity_regression_tests::test_phase_auto_advance_from_mulligan ... ok
+test tests::test_gpu_integration ... ignored
+test structural_tests::test_rule_10_5_3_orphan_energy_cleanup ... ok
+test tests::test_database_load ... ok
+test tests::test_game_initialization ... ok
+test tests::test_play_member ... ok
+test stabilized_tests::verify_full_win_condition ... ok
+test stabilized_tests::verify_manual_recovery_pattern ... ok
+test semantic_assertions::tests::test_targeted_scoring_audit ... ok
+test stabilized_tests::verify_on_reveal_trigger ... ok
+test trigger_tests::test_look_and_choose_filter ... ok
+test trigger_tests::test_enrichment_look_and_choose ... ok
+test tie_breaker_tests::test_rule_8_4_13_first_player_logic ... ok
+test tie_breaker_tests::test_rule_8_4_7_1_success_cap_on_tie ... ok
+test stabilized_tests::verify_performance_transition_history ... ok
+test unique_ability_tests::test_condition_count_unique_colors ... ok
+test unique_ability_tests::test_condition_has_live_card ... ok
+test tie_breaker_tests::test_megaphone_scoring_accumulation ... ok
+test unique_ability_tests::test_condition_is_tapped ... ok
+test unique_ability_tests::test_opcode_cheer_reveal ... ok
+test unique_ability_tests::test_condition_has_member ... ok
+test trigger_tests::test_trigger_activated_eli ... ok
+test unique_ability_tests::test_opcode_increase_heart_cost ... ok
+test unique_ability_tests::test_opcode_restriction ... ok
+test untested_opcode_tests::test_condition_has_color_false ... ok
+test unique_ability_tests::test_opcode_modify_score_rule ... ok
+test trigger_tests::test_trigger_on_play_honoka ... ok
+test unique_ability_tests::test_opcode_baton_touch_mod ... ok
+test unique_ability_tests::test_opcode_lose_excess_hearts ... ok
+test untested_opcode_tests::test_opcode_formation_change_basic ... ok
+test untested_opcode_tests::test_formation_change_with_group_condition ... ok
+test unique_ability_tests::test_opcode_reveal_cards ... ok
+test untested_opcode_tests::test_condition_has_moved_true ... ok
+test unique_ability_tests::test_condition_live_performed ... ok
+test untested_opcode_tests::test_condition_has_color_true ... ok
+test untested_opcode_tests::test_condition_has_moved_false ... ok
+test untested_opcode_tests::test_opcode_set_heart_cost ... ok
+test verification_tests::test_deck_refresh_caps_at_60 ... ok
+test untested_opcode_tests::test_opcode_set_heart_cost_multiple_colors ... ok
+test untested_opcode_tests::test_prevent_success_pile_integration ... ok
+test untested_opcode_tests::test_opcode_formation_change_triggers_position_change ... ok
+test untested_opcode_tests::test_opcode_prevent_set_to_success_pile ... ok
+test verification_tests::test_recov_l_only_shows_lives ... ok
+test wave2_tests::test_granted_ability_propagation_cost ... ok
+test wave2_tests::test_granted_ability_propagation_hearts ... ok
+test verification_tests::test_recov_l_no_lives_returns_early ... ok
+test verification_tests::test_poppin_up_success_repro ... ok
+test wave2_tests::test_opcode_reduce_yell_count ... ok
+test untested_opcode_tests::test_opcode_reduce_live_set_limit_stacking ... ok
+test wave6_tests::tests::test_baton_touch_restriction ... ok
+test wave2_tests::test_granted_ability_propagation_score ... ok
+test wave6_tests::tests::test_kimi_no_kokoro_prevention ... ok
+test wave2_tests::test_opcode_swap_area ... ok
+test verification_tests::test_pay_energy_auto_pays ... ok
+test wave6_tests::tests::test_live_success_with_reduction ... ok
+test wave2_tests::test_opcode_negate ... ok
+test unique_ability_tests::test_opcode_play_live_from_discard ... ok
+test unique_ability_tests::test_opcode_trigger_remote ... ok
+test unique_ability_tests::test_opcode_repeat_ability ... ok
+test semantic_assertions::tests::test_semantic_mass_verification ... ok
+test semantic_assertions::tests::test_multi_environment_verification ... ok
+
+test result: ok. 266 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 8.55s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test test_card_557_logic_fail_if_not_only_liella ... ok
+test test_card_557_logic_repro ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+
+
+running 1 test
+test test_repro_card_4654_hand_clearing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+
+running 1 test
+test test_card_selection_filtering ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+
+running 2 tests
+test test_rurino_filter_masking_fix ... ok
+test test_hime_optional_discard_resumption ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+
+running 3 tests
+test tests::test_heart_filter_explicit_live ... ok
+test tests::test_cost_filter_member_only_by_default ... ok
+test tests::test_cost_filter_explicit_member ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+
+running 1 test
+test test_card_558_wait_repro ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -18,13 +18,15 @@ import numpy as np
 # 68-127: Play card [0-59] to SLOT 0 during main phase
 # 128-187: Play card [0-59] to SLOT 1 during main phase
 # 188-247: Play card [0-59] to SLOT 2 during main phase
+# 248-250: Targeting slot [0-2]
+# 251-255: Hand select [0-4]
 #
 # Masking:
 #   Main phase: 0, 8-247 (generic + all slot-specific)
 #   Live phase: 0, 8-67 (pass + generic only)
 #   Mulligan: 1-7 (toggles + confirm)
 
-NUM_ACTIONS = 248
+NUM_ACTIONS = 256
 
 ACTION_BASE_PASS = 0
 ACTION_BASE_MULLIGAN = 300
@@ -59,9 +61,9 @@ ACTION_MAP = build_vanilla_action_table()
 class HighFidelityAlphaNet(nn.Module):
     def __init__(self,
                  input_dim=800,
-                 num_actions=248,
-                 embed_dim=384,
-                 num_heads=12,
+                 num_actions=256,
+                 embed_dim=256,
+                 num_heads=4,
                  num_layers=6):
         super().__init__()
 
@@ -84,6 +86,32 @@ class HighFidelityAlphaNet(nn.Module):
         self.value_head = nn.Linear(embed_dim, 1)
 
         self.register_buffer('action_map', torch.from_numpy(ACTION_MAP).long())
+
+    def predict_batch(self, tensors):
+        """
+        AlphaZero evaluation hook for Rust MCTS.
+        Expected output: (values: List[f32], policies: List[List[f32]], weights: List[List[f32]])
+        """
+        import torch
+        device = next(self.parameters()).device
+        
+        # tensors is a list of lists from Rust
+        obs_t = torch.tensor(tensors, dtype=torch.float32).to(device)
+        
+        with torch.no_grad():
+            # No mask available here easily, so we compute raw logits
+            # Rust side handles masking if needed, or PUCT takes care of it
+            logits, value = self.forward(obs_t)
+            
+            # Policy softmax
+            probs = torch.softmax(logits, dim=1).cpu().numpy().tolist()
+            values = value.cpu().numpy().flatten().tolist()
+            
+            # Weights (HeuristicConfig) - currently just default placeholders
+            # and scaling_factor as last element (index 16)
+            dummy_weights = [[1.0] * 17 for _ in range(len(tensors))]
+            
+        return values, probs, dummy_weights
 
     def forward(self, x, mask=None):
         # x: (Batch, input_dim)

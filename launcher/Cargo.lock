@@ -225,6 +225,7 @@ version = "0.1.2"
 dependencies = [
  "bincode",
  "getrandom 0.3.4",
+ "itertools",
  "lru",
  "ndarray 0.16.1",
  "once_cell",
@@ -481,6 +482,15 @@ checksum = "3acae9609540aa318d1bc588455225fb2085b9ed0c4f6bd0d9d5bcd86f1a0344"
 dependencies = [
  "icu_normalizer",
  "icu_properties",
+]
+
+[[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
 ]
 
 [[package]]

@@ -1,0 +1,46 @@
+﻿Sample Deck (ai/decks\aqours_cup.txt): Members=48, Energy=12, Lives=12
+Loaded 5 decks.
+Starting Tournament: 25 matches using 11 workers...
+Matchup: random (128 MCTS) vs original (128 MCTS)
+Game 1: Winner=Draw, Turns=17
+Game 2: Winner=original, Turns=15
+Game 3: Winner=original, Turns=14
+Game 4: Winner=original, Turns=29
+Game 5: Winner=random, Turns=17
+Game 6: Winner=original, Turns=8
+Game 7: Winner=original, Turns=8
+Game 8: Winner=original, Turns=15
+Game 9: Winner=original, Turns=5
+Game 10: Winner=random, Turns=15
+Game 11: Winner=random, Turns=27
+Game 12: Winner=random, Turns=9
+Game 13: Winner=original, Turns=23
+Game 14: Winner=original, Turns=16
+Game 15: Winner=random, Turns=13
+Game 16: Winner=random, Turns=4
+Game 17: Winner=original, Turns=9
+Game 18: Winner=original, Turns=9
+Game 19: Winner=original, Turns=9
+Game 20: Winner=original, Turns=7
+Game 21: Winner=Draw, Turns=12
+Game 22: Winner=random, Turns=9
+Game 23: Winner=random, Turns=15
+Game 24: Winner=original, Turns=8
+Game 25: Winner=original, Turns=10
+
+==================================================
+TOURNAMENT RESULTS
+==================================================
+Total Matches:  25
+Total Time:     59.28s (2.371s/game)
+Avg Turns:      12.9
+--------------------------------------------------
+P0 (random) Wins: 8 (32.0%)
+P1 (original) Wins: 15 (60.0%)
+Draws:               2 (8.0%)
+--------------------------------------------------
+
+ELO RATINGS:
+  original    : 1059
+  random      : 940
+==================================================

@@ -16,15 +16,15 @@ from alphazero.vanilla_net import HighFidelityAlphaNet
 def test_model_output_shape():
     """Test that model outputs 248-dim policy with slot awareness"""
     print("[TEST] Model output shape...")
-    model = HighFidelityAlphaNet(input_dim=800, num_actions=248)
+    model = HighFidelityAlphaNet(input_dim=800, num_actions=256)
     
     # Dummy input
     obs = torch.randn(4, 800)  # Batch of 4
-    mask = torch.ones(4, 248, dtype=torch.bool)
+    mask = torch.ones(4, 256, dtype=torch.bool)
     
     policy, value = model(obs, mask=mask)
     
-    assert policy.shape == (4, 248), f"Expected (4, 248), got {policy.shape}"
+    assert policy.shape == (4, 256), f"Expected (4, 256), got {policy.shape}"
     assert value.shape == (4, 1), f"Expected (4, 1), got {value.shape}"
     print(f"✓ Policy shape: {policy.shape}, Value shape: {value.shape}")
     print(f"✓ Action space: 8 phase + 60 generic + 180 slot-specific (60×3)")
@@ -35,16 +35,15 @@ def test_action_mapping_functions():
     
     # These should be importable from vanilla_training
     try:
-        from alphazero.training.vanilla_training import (
-            get_card_zone,
-            engine_action_to_action_248,
-            action_248_to_engine_action,
+        from alphazero.training.vanilla_utils import (
+            map_engine_to_vanilla,
+            engine_action_to_action_256,
+            action_256_to_engine_action,
             build_action_mask_248
         )
         print("✓ All mapping functions imported successfully")
-        print(f"  - get_card_zone: zone lookup (0-5)")
-        print(f"  - engine_action_to_action_248: 22k→248 mapping")
-        print(f"  - action_248_to_engine_action: 248→22k mapping")
+        print(f"  - engine_action_to_action_256: 22k→256 mapping")
+        print(f"  - action_256_to_engine_action: 256→22k mapping")
         print(f"  - build_action_mask_248: phase-aware masking")
     except ImportError as e:
         print(f"✗ Import error: {e}")
@@ -57,9 +56,9 @@ def test_neural_mcts():
     print("[TEST] NeuralMCTS card + slot aware...")
     
     try:
-        from alphazero.training.vanilla_training import NeuralMCTS
+        from alphazero.training.vanilla_utils import NeuralMCTS
         
-        model = HighFidelityAlphaNet(input_dim=800, num_actions=248)
+        model = HighFidelityAlphaNet(input_dim=800, num_actions=256)
         device = torch.device('cpu')
         initial_deck = list(range(60))  # Dummy deck
         
@@ -81,32 +80,32 @@ def test_neural_mcts():
     return True
 
 def test_sparse_policy_conversion():
-    """Test sparse policy representation for 248-dim space"""
-    print("[TEST] Sparse policy conversion (248-dim)...")
+    """Test sparse policy representation for 256-dim space"""
+    print("[TEST] Sparse policy conversion (256-dim)...")
     
-    policy_248 = np.zeros(248)
-    policy_248[0] = 0.2  # Pass
-    policy_248[10] = 0.3  # Generic card play idx 2
-    policy_248[100] = 0.15  # Slot 0 play
-    policy_248[180] = 0.15  # Slot 1 play
-    policy_248[220] = 0.2  # Slot 2 play
+    policy_256 = np.zeros(256)
+    policy_256[0] = 0.2  # Pass
+    policy_256[10] = 0.3  # Generic card play idx 2
+    policy_256[100] = 0.15  # Slot 0 play
+    policy_256[180] = 0.15  # Slot 1 play
+    policy_256[220] = 0.2  # Slot 2 play
     
     # Get non-zero indices
-    nonzero_idx = np.where(policy_248 > 1e-6)[0]
-    nonzero_val = policy_248[nonzero_idx]
+    nonzero_idx = np.where(policy_256 > 1e-6)[0]
+    nonzero_val = policy_256[nonzero_idx]
     
-    print(f"  Dense policy shape: {policy_248.shape}")
-    print(f"  Non-zero actions: {len(nonzero_idx)} / 248")
+    print(f"  Dense policy shape: {policy_256.shape}")
+    print(f"  Non-zero actions: {len(nonzero_idx)} / 256")
     print(f"  Indices: {nonzero_idx}")
     print(f"  Values: {nonzero_val}")
     print(f"  Coverage: {np.sum(nonzero_val):.1%}")
-    print(f"✓ Sparse representation works (sparse ratio: {len(nonzero_idx)}/248 ≈ {len(nonzero_idx)/248:.1%})")
+    print(f"✓ Sparse representation works (sparse ratio: {len(nonzero_idx)}/256 ≈ {len(nonzero_idx)/256:.1%})")
     
     return True
 
 if __name__ == "__main__":
     print("\n" + "="*60)
-    print("CARD-CENTRIC + SLOT-AWARE 248-DIM ACTION SPACE")
+    print("CARD-CENTRIC + SLOT-AWARE 256-DIM ACTION SPACE")
     print("="*60 + "\n")
     
     all_pass = True

@@ -708,29 +708,13 @@ pub fn handle_deck_zones(
                 }
             }
         }
-                O_REVEAL_UNTIL => {
+        O_REVEAL_UNTIL => {
             let mut found = false;
             let mut revealed_count = 0;
-            let mut revealed_cards = smallvec::SmallVec::<[i32; 60]>::new();
-            let mut has_refreshed = false;
-
-            while !found {
-                if state.players[p_idx].deck.is_empty() {
-                    if !has_refreshed {
-                        state.resolve_deck_refresh(p_idx);
-                        has_refreshed = true;
-                        if state.players[p_idx].deck.is_empty() {
-                            break;
-                        }
-                    } else {
-                        break;
-                    }
-                }
-
-                if revealed_count > 120 {
+            while !found && !state.players[p_idx].deck.is_empty() {
+                if revealed_count > 60 {
                     break;
                 }
-
                 if let Some(cid) = state.players[p_idx].deck.pop() {
                     revealed_count += 1;
                     let mut new_ctx = ctx.clone();
@@ -759,16 +743,9 @@ pub fn handle_deck_zones(
                         }
                         found = true;
                     } else {
-                        revealed_cards.push(cid);
+                        state.players[p_idx].discard.push(cid);
                     }
                 }
-            }
-
-            for cid in revealed_cards {
-                state.players[p_idx].discard.push(cid);
-            }
-            if !found && has_refreshed && state.players[p_idx].deck.is_empty() {
-                state.resolve_deck_refresh(p_idx);
             }
         }
         O_LOOK_DECK | O_REVEAL_CARDS | O_CHEER_REVEAL => {

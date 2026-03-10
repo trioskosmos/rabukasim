@@ -1,0 +1,11 @@
+consider: mcts is wasted calculations as it is just guessing every deck draw. the longer it goes the more it is thinking about games that have less and less chance of happening. instead, if we focus on one turn we can instead calculate the expected judgement score from a sequence of actions. at most there are 8 post mulligan: setting three members during main phase then pressing done, and setting 3 cards in live zone during live set phase then pressing done, in fact there are only really 6 since pressing done is mandatory after choosing three cards, there is no other option, selecting 2 then done is also 3+3=6 actions per turn. 
+
+the actual sequence only matters in the main phase due to energy costs of playing cards, and which card to baton pass, live set the order does not matter.
+
+neither player will effect the other's actions for this, only at the end of the turn whoever has the highest judgement score will get a card in live success zone.
+
+now 60 choose 6 is over 50 million combinations per turn, but this assumes all cards are in the hand and can be played everywhere, which is not true. however there still needs to be a balance between conservative plays that have a chance of being beaten by gambles. there is also which cards are best to be rid of during the live set phase.
+
+there is also the mulligan. perhaps mcts can be used to compare other hands and their likelihood of getting a win vs the current hand, or even on a card level.
+
+in conclusion rather than thinking action per action each turn the full sequence of moves for the main and live set phase can be decided from the start of the turn, as there is no luck component or drawing until the yell/live set draws, and these cards can not be played. consider.

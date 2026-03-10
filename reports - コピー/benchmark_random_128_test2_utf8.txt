@@ -1,0 +1,160 @@
+﻿uv : Traceback (most re
+cent call last):
+発生場所 行:1 文字:1
++ uv run python alphaze
+ro/benchmarks/ai_tourna
+ment.py --sims 128 --p0
+_t ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Traceback (mo   
+ st recent call las    
+t)::String) [], Re    m
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+  File "C:\Users\trios\
+.gemini\antigravity\vsc
+ode\loveca-copy\.venv\L
+ib\site-packages\numpy\
+_core\__init__.py", lin
+e 23, in <module>
+    from . import multi
+array
+  File "C:\Users\trios\
+.gemini\antigravity\vsc
+ode\loveca-copy\.venv\L
+ib\site-packages\numpy\
+_core\multiarray.py", l
+ine 10, in <module>
+    from . import overr
+ides
+  File "C:\Users\trios\
+.gemini\antigravity\vsc
+ode\loveca-copy\.venv\L
+ib\site-packages\numpy\
+_core\overrides.py", li
+ne 8, in <module>
+    from numpy._core._m
+ultiarray_umath import 
+(
+ModuleNotFoundError: No
+ module named 'numpy._c
+ore._multiarray_umath'
+
+During handling of the 
+above exception, anothe
+r exception occurred:
+
+Traceback (most recent 
+call last):
+  File "C:\Users\trios\
+.gemini\antigravity\vsc
+ode\loveca-copy\.venv\L
+ib\site-packages\numpy\
+__init__.py", line 128,
+ in <module>
+    from numpy.__config
+__ import show as show_
+config
+  File "C:\Users\trios\
+.gemini\antigravity\vsc
+ode\loveca-copy\.venv\L
+ib\site-packages\numpy\
+__config__.py", line 4,
+ in <module>
+    from numpy._core._m
+ultiarray_umath import 
+(
+  File "C:\Users\trios\
+.gemini\antigravity\vsc
+ode\loveca-copy\.venv\L
+ib\site-packages\numpy\
+_core\__init__.py", lin
+e 49, in <module>
+    raise ImportError(m
+sg)
+ImportError: 
+
+IMPORTANT: PLEASE READ 
+THIS FOR ADVICE ON HOW 
+TO SOLVE THIS ISSUE!
+
+Importing the numpy C-e
+xtensions failed. This 
+error can happen for
+many reasons, often due
+ to issues with your se
+tup or how NumPy was
+installed.
+
+We have compiled some c
+ommon reasons and troub
+leshooting tips at:
+
+    https://numpy.org/d
+evdocs/user/troubleshoo
+ting-importerror.html
+
+Please note and check t
+he following:
+
+  * The Python version 
+is: Python3.12 from "C:
+\Users\trios\.gemini\an
+tigravity\vscode\loveca
+-copy\.venv\Scripts\pyt
+hon.exe"
+  * The NumPy version i
+s: "2.0.2"
+
+and make sure that they
+ are the versions you e
+xpect.
+Please carefully study 
+the documentation linke
+d above for further hel
+p.
+
+Original error was: No 
+module named 'numpy._co
+re._multiarray_umath'
+
+
+The above exception was
+ the direct cause of th
+e following exception:
+
+Traceback (most recent 
+call last):
+  File "C:\Users\trios\
+.gemini\antigravity\vsc
+ode\loveca-copy\alphaze
+ro\benchmarks\ai_tourna
+ment.py", line 10, in <
+module>
+    import numpy as np
+  File "C:\Users\trios\
+.gemini\antigravity\vsc
+ode\loveca-copy\.venv\L
+ib\site-packages\numpy\
+__init__.py", line 133,
+ in <module>
+    raise ImportError(m
+sg) from e
+ImportError: Error impo
+rting numpy: you should
+ not try to import nump
+y from
+        its source dire
+ctory; please exit the 
+numpy source tree, and 
+relaunch
+        your python int
+erpreter from there.

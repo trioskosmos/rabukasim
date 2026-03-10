@@ -113,6 +113,8 @@ pub struct CardDatabase {
     // Optimization 2: String No Lookup
     pub card_no_to_id: HashMap<String, i32>,
     pub energy_db: HashMap<i32, EnergyCard>,
+    #[serde(default)]
+    pub is_vanilla: bool,
 }
 
 pub const LOGIC_ID_MASK: i32 = 0x0FFF;
@@ -138,6 +140,7 @@ impl Default for CardDatabase {
             lives_vec: vec![None; 4096],
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
+            is_vanilla: false,
         }
     }
 }
@@ -156,6 +159,7 @@ impl CardDatabase {
             lives_vec: vec![None; 4096],
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
+            is_vanilla: false,
         };
 
         if let Some(members_raw) = raw.get("member_db").and_then(|m| m.as_object()) {

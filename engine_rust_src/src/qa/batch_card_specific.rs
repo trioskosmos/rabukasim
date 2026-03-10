@@ -21,6 +21,58 @@ mod tests {
     // =========================================================================
 
     #[test]
+    fn test_q38_live_card_definition() {
+        // Q38: 「ライブ中のカード」とはどのようなカードですか？
+        // A38: ライブカード置き場に表向きに置かれているライブカードです。
+        //
+        // Use a real live card from the official Q&A references and verify that
+        // the engine only treats the card as "in a live" while it occupies a
+        // live zone slot.
+        let db = load_real_db();
+        let mut state = create_test_state();
+
+        let live_card_id = db
+            .id_by_no("PL!N-bp1-029-L")
+            .expect("Q38: expected referenced live card to exist in real DB");
+        let live_card = db
+            .get_live(live_card_id)
+            .expect("Q38: referenced card must resolve as a live card");
+
+        assert_eq!(state.players[0].live_zone[0], -1, "Q38: live zone starts empty");
+        assert!(
+            state.players[0].live_zone.iter().all(|&cid| cid < 0),
+            "Q38: no cards should initially count as live-zone cards"
+        );
+
+        state.players[0].live_zone[0] = live_card_id;
+
+        assert_eq!(
+            state.players[0].live_zone[0],
+            live_card_id,
+            "Q38: a face-up live card in the live card zone is a 'card in a live'"
+        );
+        assert_eq!(
+            state.players[0].live_zone.iter().filter(|&&cid| cid >= 0).count(),
+            1,
+            "Q38: exactly one live-zone card should be tracked after placement"
+        );
+
+        state.players[0].live_zone[0] = -1;
+        state.players[0].discard.push(live_card_id);
+
+        assert!(
+            state.players[0].live_zone.iter().all(|&cid| cid < 0),
+            "Q38: once the card leaves the live zone, it is no longer a live-zone card"
+        );
+        assert!(
+            state.players[0].discard.contains(&live_card_id),
+            "Q38: moved card should now be tracked in discard instead"
+        );
+
+        println!("[Q38] PASS: {} is only treated as a live card while in the live zone", live_card.name);
+    }
+
+    #[test]
     fn test_q195_interaction() {
         let mut db = create_test_db();
         

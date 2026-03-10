@@ -441,8 +441,20 @@ impl PyCardDatabase {
         self.inner.energy_db.keys().map(|&k| k as u32).collect()
     }
 
-    fn id_by_no(&self, card_no: &str) -> Option<i32> {
-        self.inner.id_by_no(card_no)
+    #[getter]
+    fn is_vanilla(&self) -> bool {
+        self.inner.is_vanilla
+    }
+
+    #[setter]
+    fn set_is_vanilla(&mut self, val: bool) {
+        if let Some(db) = std::sync::Arc::get_mut(&mut self.inner) {
+            db.is_vanilla = val;
+        } else {
+            let mut new_inner = (*self.inner).clone();
+            new_inner.is_vanilla = val;
+            self.inner = std::sync::Arc::new(new_inner);
+        }
     }
 }
 
@@ -563,6 +575,11 @@ impl PyGameState {
     #[getter]
     fn phase(&self) -> i8 {
         self.inner.phase as i8
+    }
+
+    #[getter]
+    fn phase_name(&self) -> String {
+        format!("{:?}", self.inner.phase)
     }
 
     #[getter]
@@ -1410,6 +1427,18 @@ impl PyGameState {
                 )
             }
         }
+    }
+
+    #[pyo3(signature = (db))]
+    pub fn plan_full_turn(&self, db: &PyCardDatabase) -> (Vec<(i32, f32, f32, f32)>, Vec<i32>, usize, (f32, f32)) {
+        use crate::core::logic::turn_sequencer::TurnSequencer;
+        TurnSequencer::plan_full_turn(&self.inner, &db.inner)
+    }
+
+    #[pyo3(signature = (db))]
+    pub fn plan_full_turn_with_stats(&self, db: &PyCardDatabase) -> (Vec<(i32, f32, f32, f32)>, Vec<i32>, usize, f32, (f32, f32)) {
+        use crate::core::logic::turn_sequencer::TurnSequencer;
+        TurnSequencer::plan_full_turn_with_stats(&self.inner, &db.inner)
     }
 }
 

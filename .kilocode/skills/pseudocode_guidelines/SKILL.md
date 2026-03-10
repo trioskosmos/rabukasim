@@ -7,13 +7,13 @@ description: Definitions, standards, and workflows for writing card ability pseu
 
 > [!IMPORTANT]
 > **Source of Truth**:
-> - `data/manual_pseudocode.json` is the **ONLY** place to add or modify pseudocode.
+> - `data/consolidated_abilities.json` is the **ONLY** place to add or modify pseudocode.
 > - **NEVER** edit `data/cards.json` directly for pseudocode, as it will be overwritten by the compiler or sync scripts.
 
 ## Core Workflow
 
 1. **Locate Card**: Find the card ID using `tools/card_finder.py`.
-2. **Edit Pseudocode**: Add or update the entry in `data/manual_pseudocode.json`.
+2. **Edit Pseudocode**: Add or update the entry in `data/consolidated_abilities.json`.
 3. **Compile**: Run `uv run python -m compiler.main` to apply changes to `cards_compiled.json`.
 4. **Verify**: Use `tools/card_finder.py <ID>` to check the compiled bytecode.
 

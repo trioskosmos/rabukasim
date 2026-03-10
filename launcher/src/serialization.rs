@@ -550,7 +550,9 @@ pub fn get_action_desc_rich(
                    };
 
                    if let Some(ab) = ab {
-                       if let Some(arr) = ab.modal_options.as_array() {
+                       if choice_idx < ab.option_names.len() {
+                           name = ab.option_names[choice_idx].clone();
+                       } else if let Some(arr) = ab.modal_options.as_array() {
                            if !arr.is_empty() {
                                if let Some(opt) = arr.get(choice_idx) {
                                    if let Some(s) = opt.as_str() {
@@ -773,7 +775,13 @@ pub fn get_action_desc_rich(
                   metadata.insert("slot_idx".into(), json!(choice_idx));
                   metadata.insert("target_player".into(), json!(1 - viewer_idx));
               } else if opcode == O_SELECT_MEMBER || opcode == O_TAP_MEMBER || opcode == O_SET_TAPPED || opcode == O_ACTIVATE_MEMBER || opcode == O_SWAP_AREA {
-                  metadata.insert("slot_idx".into(), json!(choice_idx));
+                  let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
+                  let s_idx = if choice_type == "OPTIONAL" {
+                      pending.map(|p| p.target_slot).unwrap_or(0)
+                  } else {
+                      choice_idx as i32
+                  };
+                  metadata.insert("slot_idx".into(), json!(s_idx));
                   metadata.insert("target_player".into(), json!(viewer_idx));
               } else if opcode == O_MOVE_TO_DISCARD || opcode == O_PLAY_MEMBER_FROM_HAND || opcode == O_LOOK_DECK || opcode == O_REVEAL_CARDS || opcode == O_SWAP_ZONE {
                   let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
@@ -794,7 +802,17 @@ pub fn get_action_desc_rich(
                   metadata.insert("target_player".into(), json!(viewer_idx));
               }
 
-             (name, text, type_str, if opcode == O_SELECT_MEMBER || opcode == O_TAP_OPPONENT || opcode == O_SET_TAPPED { Some(choice_idx) } else { None })
+              let highlight_idx = if opcode == O_SELECT_MEMBER || opcode == O_TAP_OPPONENT || opcode == O_SET_TAPPED || opcode == O_TAP_MEMBER {
+                  let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
+                  if choice_type == "OPTIONAL" {
+                      Some(pending.map(|p| p.target_slot as usize).unwrap_or(0))
+                  } else {
+                      Some(choice_idx)
+                  }
+              } else {
+                  None
+              };
+             (name, text, type_str, highlight_idx)
         },
         Action::SelectEnergy { energy_idx } => {
             let cid = p.energy_zone.get(energy_idx).cloned().unwrap_or(-1);

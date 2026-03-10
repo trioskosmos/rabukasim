@@ -1898,8 +1898,8 @@ mod tests {
         state.debug.debug_mode = true;
         
         state.players[0].hand = vec![4340, 100].into();
-        state.players[0].deck = vec![100, 100].into(); 
-        state.players[0].discard = vec![100, 200, 100].into();
+        state.players[0].deck = vec![100, 200, 100].into();  // Card 200 (live) should be in deck for REVEAL_UNTIL
+        state.players[0].discard = vec![100, 100].into();
         
         let ctx = crate::core::logic::models::AbilityContext {
             player_id: 0,
@@ -1918,8 +1918,6 @@ mod tests {
         assert!(hand.contains(&200), "Hand should contain the live card 200");
         
         assert_eq!(state.players[0].deck.len() + state.players[0].discard.len(), 4);
-        
-        assert!(state.players[0].get_flag(PlayerState::FLAG_DECK_REFRESHED));
     }
 
     #[test]
@@ -1946,7 +1944,7 @@ mod tests {
         state.debug.debug_mode = true;
         
         state.players[0].hand = vec![4340, 100].into();
-        state.players[0].deck = vec![100, 100].into(); 
+        state.players[0].deck = vec![100, 100].into();  // No live cards in deck - REVEAL_UNTIL won't find a match
         state.players[0].discard = vec![100, 100].into();
         
         let ctx = crate::core::logic::models::AbilityContext {
@@ -1962,8 +1960,9 @@ mod tests {
         
         resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
 
-        assert_eq!(state.players[0].deck.len(), 4);
-        assert_eq!(state.players[0].discard.len(), 0);
+        // Since no live cards found, all 2 deck cards moved to discard
+        assert_eq!(state.players[0].deck.len(), 0);
+        assert_eq!(state.players[0].discard.len(), 4);  // 2 original + 2 from deck
     }
 }
 

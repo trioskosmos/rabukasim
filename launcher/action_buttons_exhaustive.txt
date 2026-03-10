@@ -1,0 +1,211 @@
+
+=== Scenario: Rock-Paper-Scissors Phase ===
+Phase: Rps
+ID 20000 | [JP] 【じゃんけん】グー       |  (RPS)
+       | [EN] Choose Rock     |  (RPS)
+-------
+ID 20001 | [JP] 【じゃんけん】パー       |  (RPS)
+       | [EN] Choose Paper    |  (RPS)
+-------
+ID 20002 | [JP] 【じゃんけん】チョキ      |  (RPS)
+       | [EN] Choose Scissors |  (RPS)
+-------
+
+=== Scenario: Turn Choice (Winner chooses order) ===
+Phase: TurnChoice
+ID 5000 | [JP] 【選択】先攻          |  (TURN_ORDER)
+       | [EN] Go First        |  (TURN_ORDER)
+-------
+ID 5001 | [JP] 【選択】後攻          |  (TURN_ORDER)
+       | [EN] Go Second       |  (TURN_ORDER)
+-------
+
+=== Scenario: Mulligan Phase (Mixing Member/Live) ===
+Phase: MulliganP1
+ID   0 | [JP] 【確定】マリガン        | 手札を確定してマリガンを終了します。 (PASS)
+       | [EN] Confirm Mulligan | Finish Mulligan and start the game. (PASS)
+-------
+ID 300 | [JP] 【マリガン】Card #1   | このカードをデッキに戻して引き直します。 (MULLIGAN)
+       | [EN] Mulligan: Card #1 | Return this card to deck and draw a new one. (MULLIGAN)
+-------
+ID 301 | [JP] 【マリガン】Card #10001 | このカードをデッキに戻して引き直します。 (MULLIGAN)
+       | [EN] Mulligan: Card #10001 | Return this card to deck and draw a new one. (MULLIGAN)
+-------
+ID 302 | [JP] 【マリガン】渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | このカードをデッキに戻して引き直します。 (MULLIGAN)
+       | [EN] Mulligan: 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | Return this card to deck and draw a new one. (MULLIGAN)
+-------
+ID 303 | [JP] 【マリガン】園田海未&津島善子&天王寺璃奈 (LL-bp3-001-R＋) | このカードをデッキに戻して引き直します。 (MULLIGAN)
+       | [EN] Mulligan: 園田海未&津島善子&天王寺璃奈 (LL-bp3-001-R＋) | Return this card to deck and draw a new one. (MULLIGAN)
+-------
+
+=== Scenario: Energy Phase (Auto-draw logic prompt) ===
+Phase: Energy
+ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
+       | [EN] Pass / Confirm  | Skip or confirm current action. (PASS)
+-------
+
+=== Scenario: Main Phase - Variety in Hand (Member/Live/Energy) ===
+Phase: Main
+ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
+       | [EN] Pass / Confirm  | Skip or confirm current action. (PASS)
+-------
+
+=== Scenario: Main Phase - Activated Ability (Umi #2) ===
+Phase: Main
+ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
+       | [EN] Pass / Confirm  | Skip or confirm current action. (PASS)
+-------
+
+=== Scenario: Live Set Phase (Mixed Hand) ===
+Phase: LiveSet
+ID   0 | [JP] 【確定】セット完了       | ライブカードのセットを終了します。 (PASS)
+       | [EN] Confirm Live Set | Finish setting cards for the live zone. (PASS)
+-------
+ID 400 | [JP] 【セット】Energy #1  | このライブをライブゾーンにセットします。 (LIVE_SET)
+       | [EN] Set Live: Energy #1 | Set this live card to the live zone. (LIVE_SET)
+-------
+ID 401 | [JP] 【セット】Unknown Card #10001 | このライブをライブゾーンにセットします。 (LIVE_SET)
+       | [EN] Set Live: Unknown Card #10001 | Set this live card to the live zone. (LIVE_SET)
+-------
+
+=== Scenario: Choice: Color Selection ===
+Phase: Response
+[Logic Entry] Opcode: 45 | CardID: 17 | AbIdx: 0
+ID 580 | [JP] 【色を選択】ピンク       |  (COLOR)
+       | [EN] Choose Pink     |  (COLOR)
+-------
+ID 581 | [JP] 【色を選択】赤         |  (COLOR)
+       | [EN] Choose Red      |  (COLOR)
+-------
+ID 582 | [JP] 【色を選択】黄         |  (COLOR)
+       | [EN] Choose Yellow   |  (COLOR)
+-------
+ID 583 | [JP] 【色を選択】緑         |  (COLOR)
+       | [EN] Choose Green    |  (COLOR)
+-------
+ID 584 | [JP] 【色を選択】青         |  (COLOR)
+       | [EN] Choose Blue     |  (COLOR)
+-------
+ID 585 | [JP] 【色を選択】紫         |  (COLOR)
+       | [EN] Choose Purple   |  (COLOR)
+-------
+
+=== Scenario: Choice: Select Mode ===
+Phase: Response
+[Logic Entry] Opcode: 30 | CardID: 17 | AbIdx: 0
+ID 500 | [JP] 1枚捨てる           |  (CHOICE)
+       | [EN] Discard 1       |  (CHOICE)
+-------
+ID 501 | [JP] メンバーをタップ        |  (CHOICE)
+       | [EN] Tap Member      |  (CHOICE)
+-------
+ID 502 | [JP] 選択肢 3           |  (CHOICE)
+       | [EN] Choice 3        |  (CHOICE)
+-------
+ID 503 | [JP] 選択肢 4           |  (CHOICE)
+       | [EN] Choice 4        |  (CHOICE)
+-------
+
+=== Scenario: Choice: Look and Choose (Filtering Members from Mix) ===
+Phase: Response
+[Logic Entry] Opcode: 41 | CardID: 17 | AbIdx: 0
+ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
+       | [EN] Pass / Confirm  | Skip or confirm current action. (PASS)
+-------
+
+=== Scenario: Choice: Recover Live to Hand ===
+Phase: Response
+[Logic Entry] Opcode: 15 | CardID: 17 | AbIdx: 0
+ID 11000 | [JP] Unknown Card #10001 |  (CHOICE)
+       | [EN] Unknown Card #10001 |  (CHOICE)
+-------
+ID 11001 | [JP] Unknown Card #10002 |  (CHOICE)
+       | [EN] Unknown Card #10002 |  (CHOICE)
+-------
+
+=== Scenario: Choice: Recover Member to Hand ===
+Phase: Response
+[Logic Entry] Opcode: 17 | CardID: 17 | AbIdx: 0
+ID 11000 | [JP] Energy #1       |  (CHOICE)
+       | [EN] Energy #1       |  (CHOICE)
+-------
+ID 11001 | [JP] Energy #2       |  (CHOICE)
+       | [EN] Energy #2       |  (CHOICE)
+-------
+ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) |  (CHOICE)
+       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) |  (CHOICE)
+-------
+
+=== Scenario: Choice: Put Card to Discard (from Mixed Hand) ===
+Phase: Response
+[Logic Entry] Opcode: 58 | CardID: 17 | AbIdx: 0
+ID 8200 | [JP] 【控え室】Card       | このカードを控え室に置きます。 (SELECT)
+       | [EN] Discard: Card   | Put this card into the discard pile. (SELECT)
+-------
+ID 8201 | [JP] 【控え室】Card       | このカードを控え室に置きます。 (SELECT)
+       | [EN] Discard: Card   | Put this card into the discard pile. (SELECT)
+-------
+ID 8202 | [JP] 【控え室】Card       | このカードを控え室に置きます。 (SELECT)
+       | [EN] Discard: Card   | Put this card into the discard pile. (SELECT)
+-------
+
+=== Scenario: Choice: Tap Opponent's Slot ===
+Phase: Response
+[Logic Entry] Opcode: 32 | CardID: 17 | AbIdx: 0
+ID 600 | [JP] 左枠を選択           |  (SELECT)
+       | [EN] Select Left Slot |  (SELECT)
+-------
+
+=== Scenario: Choice: Order Deck Top ===
+Phase: Response
+[Logic Entry] Opcode: 28 | CardID: 17 | AbIdx: 0
+ID 11000 | [JP] Energy #1       |  (CHOICE)
+       | [EN] Energy #1       |  (CHOICE)
+-------
+ID 11001 | [JP] Energy #2       |  (CHOICE)
+       | [EN] Energy #2       |  (CHOICE)
+-------
+ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) |  (CHOICE)
+       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) |  (CHOICE)
+-------
+
+=== Scenario: Choice: Select Cards (Generic) ===
+Phase: Response
+[Logic Entry] Opcode: 74 | CardID: 17 | AbIdx: 0
+ID 11000 | [JP] Energy #1       |  (CHOICE)
+       | [EN] Energy #1       |  (CHOICE)
+-------
+ID 11001 | [JP] Energy #2       |  (CHOICE)
+       | [EN] Energy #2       |  (CHOICE)
+-------
+ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) |  (CHOICE)
+       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) |  (CHOICE)
+-------
+
+=== Scenario: Choice: Select Target Slot for Played Member ===
+Phase: Response
+[Logic Entry] Opcode: 57 | CardID: 17 | AbIdx: 0
+ID 1000 | [JP] 【選択】Card        | このカードを選択します。 (SELECT)
+       | [EN] Select: Card    | Select this card. (SELECT)
+-------
+ID 1001 | [JP] 【選択】Card        | このカードを選択します。 (SELECT)
+       | [EN] Select: Card    | Select this card. (SELECT)
+-------
+
+=== Scenario: Choice: Select Slot to Swap Member to ===
+Phase: Response
+[Logic Entry] Opcode: 72 | CardID: 17 | AbIdx: 0
+ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
+       | [EN] Pass / Confirm  | Skip or confirm current action. (PASS)
+-------
+
+=== Scenario: Main Phase - Kanata Konoe (ID 374) Activated Ability ===
+Phase: Main
+ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
+       | [EN] Pass / Confirm  | Skip or confirm current action. (PASS)
+-------
+ID 8300 | [JP] 近江彼方 (PL!N-sd1-006-SD): 【起動】自身を退場させて: 手札へ: メンバーを回収: 1 (左) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
+       | [EN] Use 近江彼方 (PL!N-sd1-006-SD): [Act]Sacrifice self: To Hand: Recov Member: 1 (Left) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
+-------
+
+[Dump Complete]

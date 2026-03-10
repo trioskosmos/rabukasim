@@ -1,0 +1,69 @@
+﻿uv : Uninstalled 1 pack
+age in 235ms
+発生場所 行:1 文字:1
++ uv run python alphaze
+ro/benchmarks/ai_tourna
+ment.py --sims 128 --p0
+_t ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Uninstalled 1   
+  package in 235ms:    
+String) [], Remote    E
+xception
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Installed 1 package in 
+1.12s
+Sample Deck (ai/decks\aqours_cup.txt): Members=48, Energy=12, Lives=12
+Loaded 5 decks.
+Starting Tournament: 25 matches using 11 workers...
+Matchup: random (128 MCTS) vs original (128 MCTS)
+Game 1: Winner=original, Turns=12
+Game 2: Winner=original, Turns=15
+Game 3: Winner=original, Turns=16
+Game 4: Winner=original, Turns=13
+Game 5: Winner=random, Turns=9
+Game 6: Winner=random, Turns=8
+Game 7: Winner=random, Turns=10
+Game 8: Winner=random, Turns=16
+Game 9: Winner=random, Turns=7
+Game 10: Winner=random, Turns=7
+Game 11: Winner=original, Turns=10
+Game 12: Winner=original, Turns=10
+Game 13: Winner=original, Turns=7
+Game 14: Winner=original, Turns=15
+Game 15: Winner=original, Turns=16
+Game 16: Winner=random, Turns=10
+Game 17: Winner=random, Turns=10
+Game 18: Winner=original, Turns=7
+Game 19: Winner=original, Turns=7
+Game 20: Winner=original, Turns=7
+Game 21: Winner=random, Turns=15
+Game 22: Winner=original, Turns=6
+Game 23: Winner=original, Turns=8
+Game 24: Winner=original, Turns=11
+Game 25: Winner=original, Turns=26
+
+==================================================
+TOURNAMENT RESULTS
+==================================================
+Total Matches:  25
+Total Time:     72.20s (2.888s/game)
+Avg Turns:      11.1
+--------------------------------------------------
+P0 (random) Wins: 9 (36.0%)
+P1 (original) Wins: 16 (64.0%)
+Draws:               0 (0.0%)
+--------------------------------------------------
+
+ELO RATINGS:
+  original    : 1093
+  random      : 906
+==================================================

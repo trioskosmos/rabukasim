@@ -1,3 +1,5 @@
+# [LEGACY] AlphaZero Training Script
+# DEPRECATED: Uses old AlphaNet architecture. Use overnight_vanilla.py.
 import json
 import os
 import torch

@@ -1,8 +1,15 @@
+# ============================================================
+# PRIMARY ENTRY POINT: AlphaZero Vanilla Training Loop
+# Optimized for 4GB VRAM and High Performance Self-Play
+# ============================================================
+import os
+# Reduce CUDA memory fragmentation (Recommended for 4GB cards)
+os.environ.setdefault('PYTORCH_CUDA_ALLOC_CONF', 'expandable_segments:True')
+
 import torch
 import numpy as np
 import random
 import time
-import os
 import json
 import sys
 import collections
@@ -20,19 +27,23 @@ sys.path.insert(0, str(root_dir))
 search_paths = [
     root_dir / "engine_rust_src" / "target" / "release",
     root_dir / "engine_rust_src" / "target" / "debug",
+    root_dir # Root/Current dir fallback
 ]
 for p in search_paths:
     if (p / "engine_rust.pyd").exists() or (p / "engine_rust.dll").exists():
-        if str(p) not in sys.path:
-            sys.path.insert(0, str(p))
-            break
+        p_str = str(p)
+        if p_str in sys.path:
+            sys.path.remove(p_str)
+        sys.path.insert(0, p_str)
+        print(f"[INIT] Prioritizing engine at {p_str}")
+        break
 
 from alphazero.vanilla_net import HighFidelityAlphaNet
 import torch.nn.functional as F
 import engine_rust
 from engine.game.deck_utils import UnifiedDeckParser
 from disk_buffer import PersistentBuffer
-from alphazero.training.vanilla_training import run_benchmark
+from alphazero.training.vanilla_utils import map_engine_to_vanilla, run_benchmark
 
 # Also import the game loop helper from benchmark if needed
 # For now, we'll modify play_one_game to match benchmark's logic
@@ -41,63 +52,78 @@ from alphazero.training.vanilla_training import run_benchmark
 # CONFIGURATION (Vanilla AlphaZero Loop)
 # ============================================================
 NUM_ITERATIONS = 1000000
-ACTION_SPACE = 128
+ACTION_SPACE = 256
 OBS_DIM = 800
 
-# --- Self-Play ---
-GAMES_PER_ITER = 16        
-SIMS_PER_MOVE = 128         
+# --- Self-Play & Parallelism ---
+# Workers must use CPU: CUDA+multiprocessing+PyO3 causes silent evaluator failures
+# GPU is reserved exclusively for the Trainer (training loop)
+NUM_WORKERS = 4             # Reduced from 8: PyTorch workers ~400MB each, 8 exhausted RAM
+GAMES_PER_ITER = 64        
+SIMS_PER_MOVE = 64          # Increased: more sims = better policy targets for learning
 SRR = 8.0                   # Sample Reuse Ratio
 MIRROR = True               # Reduction of variance
 
 # --- Training ---
 TRAIN_STEPS_PER_ITER = 200  
-BATCH_SIZE = 512            
-ACCUM_STEPS = 4             
+BATCH_SIZE = 1024           # Back to 1024; GPU is no longer shared with workers
+ACCUM_STEPS = 4             # Back to 4 (effective batch = 4096)
 LR = 0.001                  
 DIRICHLET_ALPHA = 0.3       
-DIRICHLET_EPS = 0.25        
+DIRICHLET_EPS = 0.25
+DFS_SOFTMAX_TEMP = 0.5      # Warmer temp: alternatives get real probability mass for learning
+EXPLORE_EPS = 0.05          # 5% of moves: play a random legal action for diversity
+CURRICULUM_SWITCH_ITER = 25  # Reduced: model already has 100+ iter of knowledge. 25 is enough to re-tune.
 
 # --- Buffer ---
-MAX_BUFFER_SIZE = 8000000    # ~16.1 GB on disk using uint8 indices
-SPARSE_LIMIT = 128           # Matches Vanilla Action Space
+MAX_BUFFER_SIZE = 2000000   # Increased to 2 million. Disk-backed (memmap), minimal RAM impact.
+SPARSE_LIMIT = 256           # Matches Vanilla Action Space
 
 # --- Global worker variables ---
 db_engine_global = None
 model_global = None
+evaluator_global = None
 
-def init_worker(db_path_str, model_path_str=None, device_str="cpu", strip=True):
+def init_worker(db_json_str, model_path_str=None, device_str="cpu"):
     global db_engine_global, model_global
-    import engine_rust, json, torch
+    import engine_rust, torch
+    print(f"Worker process starting init... (PID: {os.getpid()})", flush=True)
+    # Optimized: 2 threads allows Transformer to evaluate significantly faster on CPU
+    torch.set_num_threads(2)
     from alphazero.vanilla_net import HighFidelityAlphaNet
     
-    with open(db_path_str, "r", encoding="utf-8") as f:
-        db_json = json.load(f)
-    
-    if strip:
-        # Strip all abilities to create a pure 'Vanilla' environment
-        for cat in ["member_db", "live_db"]:
-            for cid, data in db_json.get(cat, {}).items():
-                data["abilities"] = []
-                data["ability_flags"] = 0
-                if "synergy_flags" in data:
-                    data["synergy_flags"] &= 1
-                    
-    db_json_str = json.dumps(db_json)
+    # Use the pre-stripped JSON string directly
     db_engine_global = engine_rust.PyCardDatabase(db_json_str)
     
     if model_path_str and Path(model_path_str).exists():
-        model_global = HighFidelityAlphaNet(input_dim=800, num_actions=128).to(device_str)
+        # Standard FP32 model — PyTorch autocast handles mixed precision where needed
+        model_global = HighFidelityAlphaNet(input_dim=800, num_actions=256).to(device_str)
         try:
-            ckpt = torch.load(model_path_str, map_location=device_str, weights_only=True)
+            # Check if it's a weights-only file or a full checkpoint
+            # Added mmap=True for faster loading on Windows
+            ckpt = torch.load(model_path_str, map_location=device_str, weights_only=True, mmap=True)
             if isinstance(ckpt, dict) and 'model' in ckpt:
                 model_global.load_state_dict(ckpt['model'])
+            elif isinstance(ckpt, dict):
+                # Probably a state_dict
+                model_global.load_state_dict(ckpt)
             else:
+                # Fallback for unexpected formats
                 model_global.load_state_dict(ckpt)
             print(f"Worker loaded model: {model_path_str}")
         except Exception as e:
             print(f"Worker failed to load model: {e}")
         model_global.eval()
+
+    # Initialize AlphaZero Evaluator for the worker
+    global evaluator_global
+    if model_global:
+        evaluator_global = engine_rust.PyAlphaZeroEvaluator(
+            model_global, 
+            engine_rust.AlphaZeroTensorType.Vanilla
+        )
+    else:
+        evaluator_global = None
 
 def load_tournament_decks(full_db):
     decks_dir = Path(__file__).resolve().parent.parent.parent / "ai" / "decks"
@@ -128,81 +154,10 @@ def load_tournament_decks(full_db):
             })
     return loaded_decks
 
-LOGIC_ID_MASK = 0x0FFF
-
-def map_engine_to_vanilla(p_data, engine_id, initial_deck, current_phase=None):
-    """Maps engine action ID to vanilla 128-dim action space.
-    
-    current_phase: helps distinguish context for multi-purpose IDs (like EID 0)
-    """
-    # 0 is "Pass" in Active phases (Main), but "Confirm" in setup/cleanup phases
-    if engine_id == 0:
-        # Phases: Mulligan(-1,0), LiveSet(5), LiveResult(8), Response(10)
-        if current_phase in [-1, 0, 5, 8, 10]:
-            return 7 # Confirm / Done
-        return 0 # Pass (Active/Main phase)
-    
-    # Mulligan actions (300-305) -> Map to 1-6
-    if 300 <= engine_id <= 305:
-        return 1 + (engine_id - 300)
-    
-    # Confirm
-    if engine_id == 11000:
-        return 7
-    
-    # Play Member from hand (1000-1599)
-    if 1000 <= engine_id < 1600:
-        hand_idx = (engine_id - 1000) // 10
-        if hand_idx < len(p_data['hand']):
-            card_id = p_data['hand'][hand_idx]
-            if initial_deck and card_id in initial_deck:
-                try:
-                    deck_idx = initial_deck.index(card_id)
-                    if deck_idx < 60:
-                        return 8 + deck_idx
-                except ValueError:
-                    pass
-            if hand_idx < 60:
-                return 8 + hand_idx
-        return -1
-    
-    # Set Live (400-499)
-    if 400 <= engine_id < 500:
-        hand_idx = engine_id - 400
-        if hand_idx < len(p_data['hand']):
-            card_id = p_data['hand'][hand_idx]
-            if initial_deck and card_id in initial_deck:
-                try:
-                    deck_idx = initial_deck.index(card_id)
-                    if deck_idx < 60:
-                        return 68 + deck_idx
-                except ValueError:
-                    pass
-            if hand_idx < 60:
-                return 68 + hand_idx
-        return -1
-    
-    # Success Selection (600-602)
-    if 600 <= engine_id <= 602:
-        return 7 # Map to Confirm for now since it's "Done picking success"
-    
-    # RPS Actions (20000-20002)
-    if 20000 <= engine_id <= 20002:
-        return 125 + (engine_id - 20000) # 125, 126, 127
-        
-    # Turn Choice (5000-5001) - Use Dedicated Slot? 
-    # Let's map to 7 (Confirm) or dedicate 124 for Turn Choice
-    if engine_id in [5000, 5001]:
-        return 124 # Dedicate 124
-    
-    # RPS P2 (21000-21002) - map to same as P1
-    if 21000 <= engine_id <= 21002:
-        return 125 + (engine_id - 21000)
-    
-    return -1
+# Removed redundant map_engine_to_vanilla (now in vanilla_utils.py)
 
 
-def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
+def play_one_game(d0, d1, sims_per_move, mirror_seed=None, iteration=0):
     global db_engine_global, model_global
     import engine_rust, json, torch, random, traceback
     import numpy as np
@@ -220,8 +175,8 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
         
         if mirror_seed:
             state.initialize_game_with_seed(
-                d0["members"]+d0["lives"], d0["members"]+d0["lives"], 
-                d0["energy"], d0["energy"], [], [], mirror_seed
+                d0["members"]+d0["lives"], d1["members"]+d1["lives"], 
+                d0["energy"], d1["energy"], [], [], mirror_seed
             )
         else:
             state.initialize_game(
@@ -229,21 +184,18 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
                 d0["energy"], d1["energy"], [], []
             )
         
-        initial_decks = [state.get_player(0).initial_deck, state.get_player(1).initial_deck]
+        initial_decks = [d0["members"] + d0["lives"], d1["members"] + d1["lives"]]
         game_history = []
         max_moves = 1000
         moves_taken = 0
-        winner = None  # Track winner like benchmark
+        winner = None 
         
         # Stall detection
         last_state_hash = None
         stall_count = 0
+        exit_reason = "Unknown"
         
-        # Debug: Check initial state
-        initial_legal = state.get_legal_action_ids()
-        print(f"[DEBUG] Game init - term:{state.is_terminal()} turn:{state.turn} player:{state.current_player} legal:{len(initial_legal)}")
-        
-        while not state.is_terminal() and state.turn < 25 and moves_taken < max_moves:
+        while not state.is_terminal() and state.turn < 40 and moves_taken < max_moves:
             # Hash-based stall detection
             current_state_str = f"{state.turn}_{state.current_player}_{state.phase}_{len(state.get_legal_action_ids())}"
             if current_state_str == last_state_hash:
@@ -252,52 +204,117 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
                 stall_count = 0
                 last_state_hash = current_state_str
             
-            if stall_count >= 10:
-                print(f"[WARNING] Game stalled at turn {state.turn}, phase {state.phase}. Terminating.")
+            if stall_count >= 50: 
                 break
             legal_ids = state.get_legal_action_ids()
             if not legal_ids:
-                print(f"[DEBUG] No legal actions! Turn: {state.turn}, is_terminal: {state.is_terminal()}")
                 break
             
-            # Debug: Check if loop is about to exit (only occasionally to reduce noise)
-            if moves_taken >= 3 and moves_taken % 10 == 0:
-                print(f"[DEBUG] Loop check: term={state.is_terminal()}, turn={state.turn}, moves={moves_taken}")
-            
-            # 1. Choose move source
             state_json = json.loads(state.to_json())
             current_phase = state_json.get('phase', -4)
-            legal_ids = state.get_legal_action_ids()
             curr_p_data = state_json['players'][state.current_player]
             
-            # FAST BYPASS FOR SETUP/INTERACTIVE PHASES
-            # This ensures we get to the Main phase where the model actually learns
+            # Move selection
             action_engine = None
             
-            if current_phase == -4: # Initial Setup
+            # FAST BYPASS FOR NON-LEARNING PHASES
+            # Phase -4: Setup (Waiting for players)
+            # Phase -3: RPS
+            # Phase -2: Turn Choice
+            if current_phase == -4: 
                 if 0 in legal_ids: action_engine = 0
-            elif current_phase == -3: # RPS
+            elif current_phase in [-3, -2]:
                 action_engine = random.choice(legal_ids)
-                print(f"[DEBUG] Random RPS: {action_engine}")
-            elif current_phase == -2: # Turn Choice
-                action_engine = random.choice(legal_ids)
-                print(f"[DEBUG] Random Turn Choice: {action_engine}")
             
-            # Mulligan, LiveSet, etc. will now use normal move selection below
-            
-            # FIXED: Use MCTS for phases -1 (Mulligan), 0 (Energy), 4 (Main), 5 (LiveSet)
-            # Same as benchmark_vanilla.py
             if action_engine is not None:
-                # Still record history if we want (though setup moves are low entropy)
-                # But for simplicity, we just step
                 state.step(action_engine)
                 state.auto_step(db_engine_global)
                 moves_taken += 1
                 continue
 
-            # FIXED: Use MCTS for multiple phases (not just Phase 4)
-            if sims_per_move > 0 and current_phase in [4, 5, -1, 0]:
-                # MCTS simulation
+            # MCTS / Neural Search for Interactive Phases
+            # -1: Mulligan, 0: Energy, 4: Main, 5: LiveSet, 8: LiveResult, 10: Response
+            interactive_phases = [-1, 0, 4, 5, 8, 10]
+            
+            # --- VANILLA OPTIMIZATION: Full-Turn Planning & Soft Policy ---
+            # Curriculum: Use DFS teacher early, switch to neural MCTS later
+            # This allows the model to learn the basics from DFS and then surpass it!
+            use_dfs = (current_phase in [4, 5]) and (iteration < CURRICULUM_SWITCH_ITER)
+            
+            if use_dfs:
+                evals, sequence = state.plan_full_turn(db_engine_global)
+                if sequence:
+                    # Execute ONLY the first action of the evaluation to keep states and evaluations perfectly paired
+                    seq_action = sequence[0]
+                    
+                    # Record current state
+                    obs_np = state.to_vanilla_tensor()
+                    mask = np.zeros(ACTION_SPACE, dtype=np.bool_)
+                    legal_ids = state.get_legal_action_ids()
+                    v_to_e = {}
+                    for aid in legal_ids:
+                        vid = map_engine_to_vanilla(curr_p_data, aid, initial_decks[state.current_player], current_phase)
+                        if 0 <= vid < ACTION_SPACE:
+                            mask[vid] = True
+                            v_to_e[vid] = aid
+                    
+                    # Soft Policy from DFS evaluations
+                    policy_target = np.zeros(ACTION_SPACE, dtype=np.float32)
+                    
+                    if evals:
+                        valid_evs = []
+                        vids = []
+                        for aid, ev in evals:
+                            vid = map_engine_to_vanilla(curr_p_data, aid, initial_decks[state.current_player], current_phase)
+                            if 0 <= vid < ACTION_SPACE:
+                                valid_evs.append(ev)
+                                vids.append(vid)
+                        
+                        if valid_evs:
+                            evs_arr = np.array(valid_evs)
+                            # Warmer temperature (0.5) so alternatives get meaningful probability
+                            exp_evs = np.exp((evs_arr - np.max(evs_arr)) / DFS_SOFTMAX_TEMP)
+                            probs = exp_evs / np.sum(exp_evs)
+                            for vid, p in zip(vids, probs):
+                                policy_target[vid] = p
+                        else:
+                            target_vid = map_engine_to_vanilla(curr_p_data, seq_action, initial_decks[state.current_player], current_phase)
+                            if 0 <= target_vid < ACTION_SPACE:
+                                policy_target[target_vid] = 1.0
+                    else:
+                        target_vid = map_engine_to_vanilla(curr_p_data, seq_action, initial_decks[state.current_player], current_phase)
+                        if 0 <= target_vid < ACTION_SPACE:
+                            policy_target[target_vid] = 1.0
+
+                    game_history.append({
+                        "obs": obs_np,
+                        "policy": policy_target,
+                        "player": state.current_player,
+                        "mask": mask,
+                        "turn": state.turn
+                    })
+                    
+                    # Exploration: occasionally deviate from the DFS pick.
+                    # Because we re-plan EVERY step now, exploration is totally safe and won't break sequences.
+                    if random.random() < EXPLORE_EPS and len(legal_ids) > 1:
+                        actual_action = random.choice(legal_ids)
+                    else:
+                        actual_action = seq_action
+                    
+                    state.step(actual_action)
+                    state.auto_step(db_engine_global)
+                    moves_taken += 1
+                    
+                    # Refresh data for next game loop iteration
+                    if not state.is_terminal():
+                        state_json = json.loads(state.to_json())
+                        curr_p_data = state_json['players'][state.current_player]
+
+                    continue # Move to next game loop iteration
+
+            if sims_per_move > 0 and current_phase in interactive_phases and evaluator_global:
+                suggestions = state.search_mcts_alphazero(sims_per_move, evaluator_global, 64)
+            elif sims_per_move > 0 and current_phase in interactive_phases:
                 suggestions = state.search_mcts(sims_per_move, 0.0, "original", engine_rust.SearchHorizon.GameEnd(), engine_rust.EvalMode.Normal, None)
             else:
                 suggestions = []
@@ -322,25 +339,8 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
                     mask[vid] = True
                     v_to_e[vid] = aid
 
-            # Log legal actions and mapping status to file (User Request)
-            p_label = "P1" if state.current_player == 0 else "P2"
-            p_data = state_json['players'][state.current_player]
-            log_path = "reports/mapping_diag.txt"
-            with open(log_path, "a", encoding="utf-8") as f:
-                if total_visits > 0 and (policy_target.sum() < 1e-11 or random.random() < 0.005):
-                    f.write(f"\n--- DEBUG [{p_label}, Turn {state.turn}, Phase {state_json['phase']}] ---\n")
-                    f.write(f"Hand: {p_data['hand']}\n")
-                    f.write(f"Initial Deck: {initial_decks[state.current_player]}\n")
-                    f.write(f"Legal Actions (First 20):\n")
-                    for aid in legal_ids[:20]:
-                        vid = map_engine_to_vanilla(p_data, aid, initial_decks[state.current_player])
-                        label = state.get_verbose_label(aid)
-                        f.write(f"  ID {aid} -> VID {vid}: {label}\n")
-                    if policy_target.sum() < 1e-11:
-                        f.write(f"CRITICAL: Zero-sum policy! Total suggestions: {len(suggestions)}\n")
-                        for eid, q, v in suggestions:
-                            vid = map_engine_to_vanilla(p_data, eid, initial_decks[state.current_player])
-                            f.write(f"  Suggestion: EID {eid} -> VID {vid} (Visits: {v})\n")
+            # Mapping diagnostics disabled during production training
+            # (was causing disk I/O contention across workers)
 
             # Move selection: Model-guided or MCTS-weighted?
             if model_global:
@@ -378,8 +378,13 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
                             probs[mask] = 1.0 / mask.sum() if mask.any() else 0
                             if probs.sum() == 0: probs[0] = 1.0 # Absolute fallback
                         
-                        if moves_taken < 10:
+                        if moves_taken < 15:
                             action_vid = np.random.choice(vids, p=probs)
+                        elif moves_taken < 30:
+                            # Warm sampling: bias toward best but still explore
+                            temp_probs = probs ** 2
+                            temp_probs = temp_probs / temp_probs.sum()
+                            action_vid = np.random.choice(vids, p=temp_probs)
                         else:
                             action_vid = np.argmax(probs)
                     except Exception as e:
@@ -424,26 +429,32 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
             state.step(action_engine)
             state.auto_step(db_engine_global)
             
-            # Debug: Show detailed step info (less verbose)
-            if moves_taken % 10 == 0:
-                state_json_after = json.loads(state.to_json())
-                print(f"[DEBUG] Step: move={moves_taken}, phase={state_json_after.get('phase')}, turn={state_json_after.get('turn')}, player={state.current_player}, action={action_engine}")
+            # Debug: Reduced per-step logging
+            # if moves_taken % 50 == 0:
+            #    state_json_after = json.loads(state.to_json())
+            #    print(f"[DEBUG] Step: move={moves_taken}, phase={state_json_after.get('phase')}, turn={state_json_after.get('turn')}, player={state.current_player}, action={action_engine}")
             
             # Check for terminal state after each move (like benchmark)
             if state.is_terminal():
                 winner = state.get_winner()
-                print(f"[DEBUG] Game terminated at move {moves_taken}, turn {state.turn}, winner={winner}")
+                exit_reason = "Terminal"
                 break
             
             moves_taken += 1
         
-        print(f"[DEBUG] While loop exited - term:{state.is_terminal()}, turn:{state.turn}, moves:{moves_taken}")
+        if moves_taken >= max_moves:
+            exit_reason = "Max moves reached"
+        elif state.turn >= 40:
+            exit_reason = "Turn limit reached"
+            
+        if exit_reason != "Terminal" and state.turn == 0:
+            print(f"[DEBUG] 0-Turn Game! Reason: {exit_reason}, Phase: {state.phase}, Legal: {len(state.get_legal_action_ids())}")
         
         # Debug: Check final state
         print(f"[DEBUG] Game ending - is_terminal: {state.is_terminal()}, turn: {state.turn}, winner: {state.get_winner()}")
         
         # Force terminal check
-        if not state.is_terminal() and state.turn >= 25:
+        if not state.is_terminal() and state.turn >= 40:
             print("[DEBUG] Game ended by turn limit, checking winner...")
             # Calculate winner based on success lives (score)
             p0_score = len(state.get_player(0).success_lives)
@@ -458,18 +469,41 @@ def play_one_game(d0, d1, sims_per_move, mirror_seed=None):
             print(f"[DEBUG] Determined winner: {winner}")
         else:
             winner = state.get_winner()
+        # Reward Curve Tuning:
+        # 1.0 until turn 5 (Elite Speed)
+        # 0.5 by turn 10 (Mediocre/Bad for competitive play)
+        # Exponential decay after turn 5: 0.87 per turn
+        p0_final_lives = len(state.get_player(0).success_lives)
+        p1_final_lives = len(state.get_player(1).success_lives)
+        game_turns = max(state.turn, 1)
+        
+        if winner == -1: # Draw/Timeout logic handled separately in h-loop
+            win_discount = 0.5 
+        elif game_turns <= 5:
+            win_discount = 1.0
+        else:
+            # 1.0 * (0.87 ^ (turns - 5)) => Turn 10 is exactly ~0.50
+            win_discount = max(1.0 * (0.87 ** (game_turns - 5)), 0.1)
+        
         new_transitions = []
         for h in game_history:
-            # Value is 1 if that player won, 0 if lost, 0.5 if tie
-            val = 0.5
-            if winner == h['player']: val = 1.0
-            elif winner == 1 - h['player']: val = 0.0
+            if winner == h['player']:
+                # Win: uses the speed-adjusted discount
+                val = win_discount
+            elif winner == 1 - h['player']:
+                # Loss: surviving longer is slightly less bad, capped at 0.15
+                val = min(0.005 * game_turns, 0.15)
+            else:
+                # Tie or Timeout: reward shaping based on live count diff
+                my_lives = p0_final_lives if h['player'] == 0 else p1_final_lives
+                opp_lives = p1_final_lives if h['player'] == 0 else p0_final_lives
+                val = np.clip(0.5 + (my_lives - opp_lives) * 0.1, 0.0, 1.0)
             
             new_transitions.append((
                 h['obs'],
                 _dense_to_sparse(h['policy']),
                 h['mask'],
-                np.array([val], dtype=np.float32)
+                np.array([float(val)], dtype=np.float32)
             ))
             
         stats = {
@@ -529,9 +563,15 @@ def train_fixed_steps(model, buffer, optimizer, scaler, device, num_steps, batch
         total_loss += loss.item() * ACCUM_STEPS
         actual_steps += 1
         
-    return total_loss / max(1, actual_steps)
+    total_loss /= max(1, actual_steps)
+    
+    # Aggressive VRAM cleanup after training
+    torch.cuda.empty_cache()
+    
+    return total_loss
 
 def main():
+    print("[DEBUG] Entered main()", flush=True)
     checkpoint_dir = Path(__file__).parent / "vanilla_checkpoints"
     checkpoint_dir.mkdir(exist_ok=True)
     db_path = root_dir / "data" / "cards_compiled.json"
@@ -540,15 +580,29 @@ def main():
     tournament_decks = load_tournament_decks(full_db)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # FP32 trainer — GradScaler + autocast handles mixed precision in training loop
     model = HighFidelityAlphaNet(input_dim=OBS_DIM, num_actions=ACTION_SPACE).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=1e-4)
-    scaler = torch.amp.GradScaler(device.type if device.type == 'cuda' else 'cpu')
+    scaler = torch.amp.GradScaler('cuda' if device.type == 'cuda' else 'cpu')
+    
+    # Prepare stripped DB for main-process benchmarks (avoids redundant loads)
+    stripped_db = json.loads(json.dumps(full_db))
+    for cat in ["member_db", "live_db"]:
+        for cid, data in stripped_db.get(cat, {}).items():
+            data["abilities"] = []
+            data["ability_flags"] = 0
+            if "synergy_flags" in data:
+                data["synergy_flags"] &= 1
+    db_json_str_vanilla = json.dumps(stripped_db)
+    db_engine_main = engine_rust.PyCardDatabase(db_json_str_vanilla)
     
     checkpoint_path = checkpoint_dir / "latest.pt"
+    weights_path = checkpoint_dir / "weights_only.pt"
     start_it = 0
     if checkpoint_path.exists():
         print(f"Resuming: {checkpoint_path}")
-        ckpt = torch.load(str(checkpoint_path), map_location=device, weights_only=True)
+        # Added mmap=True for faster loading on Windows
+        ckpt = torch.load(str(checkpoint_path), map_location=device, weights_only=True, mmap=True)
         model.load_state_dict(ckpt['model'])
         optimizer.load_state_dict(ckpt['optimizer'])
         start_it = ckpt['it'] + 1
@@ -563,31 +617,38 @@ def main():
         index_dtype=np.uint8
     )
     
+    # Set env var for workers before creating executor
+    os.environ["WORKER"] = "1"
+    
     log_file = open(str(checkpoint_dir / "training_log.csv"), "a", encoding="utf-8")
     if start_it == 0:
         log_file.write("iter,loss,avg_turns,p0_wins,p1_wins,buffer_size,bench_turns,bench_score,gen_time,train_time\n")
         
-    print(f"--- Vanilla Loop: Iter {start_it} onwards ---")
+    print(f"--- Vanilla Loop: Iter {start_it} onwards ---", flush=True)
     
+    print(f"[DEBUG] Creating ProcessPoolExecutor with {NUM_WORKERS} workers...", flush=True)
+    # Flush cache before starting workers
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
     try:
-        # Use 1 worker to avoid GPU contention between workers
         with concurrent.futures.ProcessPoolExecutor(
-            max_workers=1, 
+            max_workers=NUM_WORKERS, 
             initializer=init_worker, 
-            initargs=(str(db_path), str(checkpoint_path) if checkpoint_path.exists() else None, device.type, True)
+            initargs=(db_json_str_vanilla, str(weights_path) if weights_path.exists() else (str(checkpoint_path) if checkpoint_path.exists() else None), "cpu")
         ) as executor:
             for it in range(start_it, NUM_ITERATIONS):
-                print(f"\n=== Starting Iteration {it} ===")
+                print(f"\n=== Starting Iteration {it} ===", flush=True)
                 gen_start = time.time()
                 futures = []
-                for _ in range(GAMES_PER_ITER):
+                for i in range(GAMES_PER_ITER):
                     d0 = random.choice(tournament_decks)
                     d1 = random.choice(tournament_decks)
                     seed = random.getrandbits(64) if MIRROR else None
-                    futures.append(executor.submit(play_one_game, d0, d1, SIMS_PER_MOVE, seed))
+                    futures.append(executor.submit(play_one_game, d0, d1, SIMS_PER_MOVE, seed, it))
                 
-                new_transitions = []
                 game_stats = []
+                new_transitions = []
                 for future in concurrent.futures.as_completed(futures):
                     transitions, stat = future.result()
                     new_transitions.extend(transitions)
@@ -623,7 +684,8 @@ def main():
                 if it % 10 == 0:
                     model.eval()
                     print(f"[BENCHMARK] Running benchmark...")
-                    bench_turns, bench_score = run_benchmark(str(checkpoint_path), sims=128)
+                    # Pass existing model and db_engine to avoid redundant disk I/O
+                    bench_turns, bench_score = run_benchmark(model=model, db=db_engine_main, sims=128)
                     model.train()
                     print(f"[BENCHMARK] Turns: {bench_turns:.1f}, Score: {bench_score:.1f}")
 
@@ -638,10 +700,17 @@ def main():
                 
                 if it % 5 == 0:
                     torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'it': it}, str(checkpoint_path))
-                    print(f"[CHECKPOINT] Saved to {checkpoint_path}")
+                    # Save a lighter weights-only version for workers
+                    torch.save(model.state_dict(), str(weights_path))
+                    print(f"[CHECKPOINT] Saved to {checkpoint_path} and {weights_path}")
                     
     except KeyboardInterrupt:
-        print("Stopping...")
+        print("\n[STOP] KeyboardInterrupt detected. Saving progress...")
+        torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'it': it}, str(checkpoint_path))
+        torch.save(model.state_dict(), str(weights_path))
+        print(f"[CHECKPOINT] Saved to {checkpoint_path} and {weights_path}")
+        buffer.flush()
+        print("[BUFFER] Flushed to disk.")
     finally:
         log_file.close()
 

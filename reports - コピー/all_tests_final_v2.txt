@@ -1,0 +1,2094 @@
+﻿cargo :    Compiling engine_rust v0.1.2 (C:\Users\tri
+os\.gemini\antigravity\vscode\loveca-copy\engine_rust
+_src)
+発生場所 行:1 文字:1
++ cargo test --lib -- --nocapture 2>&1 | Out-File -Fi
+lePath ..\reports\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (   Comp 
+   iling en...ngine_rust_src):String) [], RemoteExc  
+  eption
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: unexpected `cfg` condition value: `gpu`
+ --> src\size_test.rs:1:8
+  |
+1 | #![cfg(feature = "gpu")]
+  |        ^^^^^^^^^^^^^^^
+  |
+  = note: expected values for `feature` are: `default
+`, `extension-module`, `nn`, and `parallel`
+  = help: consider adding `gpu` as a feature in `Carg
+o.toml`
+  = note: see <https://doc.rust-lang.org/nightly/rust
+c/check-cfg/cargo-specifics.html> for more informatio
+n about checking conditional configuration
+  = note: `#[warn(unexpected_cfgs)]` on by default
+
+warning: unexpected `cfg` condition value: `gpu`
+ --> src\semantic_assertions.rs:1:8
+  |
+1 | #![cfg(feature = "gpu")]
+  |        ^^^^^^^^^^^^^^^
+  |
+  = note: expected values for `feature` are: `default
+`, `extension-module`, `nn`, and `parallel`
+  = help: consider adding `gpu` as a feature in `Carg
+o.toml`
+  = note: see <https://doc.rust-lang.org/nightly/rust
+c/check-cfg/cargo-specifics.html> for more informatio
+n about checking conditional configuration
+
+warning: unused import: `crate::core::alphazero_encod
+ing::AlphaZeroEncoding`
+ --> src\core\alphazero_evaluator.rs:1:5
+  |
+1 | use crate::core::alphazero_encoding::AlphaZeroEnc
+oding;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(
+unused)]`) on by default
+
+warning: unnecessary parentheses around block return 
+value
+   --> src\core\logic\interpreter\conditions.rs:526:3
+8
+    |
+526 |             let diff = if reversed { (opp_lives
+ - my_lives) } else { (my_lives - opp_lives) };
+    |                                      ^         
+           ^
+    |
+    = note: `#[warn(unused_parens)]` (part of `#[warn
+(unused)]`) on by default
+help: remove these parentheses
+    |
+526 -             let diff = if reversed { (opp_lives
+ - my_lives) } else { (my_lives - opp_lives) };
+526 +             let diff = if reversed { opp_lives 
+- my_lives } else { (my_lives - opp_lives) };
+    |
+
+warning: unnecessary parentheses around block return 
+value
+   --> src\core\logic\interpreter\conditions.rs:526:7
+0
+    |
+526 |             let diff = if reversed { (opp_lives
+ - my_lives) } else { (my_lives - opp_lives) };
+    |                                                
+                      ^                    ^
+    |
+help: remove these parentheses
+    |
+526 -             let diff = if reversed { (opp_lives
+ - my_lives) } else { (my_lives - opp_lives) };
+526 +             let diff = if reversed { (opp_lives
+ - my_lives) } else { my_lives - opp_lives };
+    |
+
+warning: unnecessary parentheses around block return 
+value
+   --> src\core\logic\interpreter\conditions.rs:798:3
+8
+    |
+798 |             let diff = if reversed { (opp_total
+ - self_total) } else { (self_total - opp_total) };
+    |                                      ^         
+             ^
+    |
+help: remove these parentheses
+    |
+798 -             let diff = if reversed { (opp_total
+ - self_total) } else { (self_total - opp_total) };
+798 +             let diff = if reversed { opp_total 
+- self_total } else { (self_total - opp_total) };
+    |
+
+warning: unnecessary parentheses around block return 
+value
+   --> src\core\logic\interpreter\conditions.rs:798:7
+2
+    |
+798 |             let diff = if reversed { (opp_total
+ - self_total) } else { (self_total - opp_total) };
+    |                                                
+                        ^                      ^
+    |
+help: remove these parentheses
+    |
+798 -             let diff = if reversed { (opp_total
+ - self_total) } else { (self_total - opp_total) };
+798 +             let diff = if reversed { (opp_total
+ - self_total) } else { self_total - opp_total };
+    |
+
+warning: unused import: `crate::core::generated_const
+ants::*`
+ --> src\structural_tests.rs:1:5
+  |
+1 | use crate::core::generated_constants::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: variable does not need to be mutable
+   --> src\mechanics_tests.rs:148:9
+    |
+148 |     let mut ctx = AbilityContext {
+    |         ----^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(un
+used)]`) on by default
+
+warning: `engine_rust` (lib test) generated 9 warning
+s (run `cargo fix --lib -p engine_rust --tests` to ap
+ply 7 suggestions)
+    Finished `test` profile [optimized + debuginfo] t
+arget(s) in 11.52s
+     Running unittests src\lib.rs (target\debug\deps\
+engine_rust-54c47f8ce86c306f.exe)
+
+running 242 tests
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test card_interaction_tests::test_granted_abilities_removal ... ok
+test baton_pass_tests::test_baton_pass_restriction ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] Condition Opcode: 227, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 217, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 217, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 228, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 231, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+test alphazero_verification_tests::test_alphazero_volatile_flags ... ok
+test comprehensive_tests::test_conditions_exhaustive ... ok
+[DEBUG] Condition Opcode: 204, Value: 3, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 206, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: 5901
+[DEBUG] Condition Opcode: 209, Value: 0, Attr: 1, Slot: 0 (Area: 0), Source: 3001
+[DEBUG] Condition Opcode: 209, Value: 0, Attr: 2, Slot: 0 (Area: 0), Source: 3001
+[DEBUG] Condition Opcode: 223, Value: 1, Attr: 0, Slot: 0 (Area: 0), Source: 3001
+[DEBUG] Condition Opcode: 201, Value: 5901, Attr: 0, Slot: 0 (Area: 0), Source: 3001
+[DEBUG] Condition Opcode: 232, Value: 0, Attr: 1, Slot: 0 (Area: 0), Source: 55001
+test comprehensive_tests::test_conditions_group_ab_state ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:1          s:0   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:1          s:1   
+[DEBUG] Condition Opcode: 207, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 220, Value: 5, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] BC_STEP: ip=0   ADD_HEARTS      | v:2    a:0          s:4    (Added +2 HEART_WILD)
+[DEBUG] BC_STEP: ip=0   RECOVER_MEMBER  | v:1    a:0          s:0    (Recovered 1 member(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=-1, s=0, a=0
+[DEBUG] handle_recovery scan: cid=5901, type_matches=true, attr=0
+[DEBUG] handle_recovery: populated looked_cards with 1 cards
+[DEBUG] suspend_interaction: choice_type=RECOV_M, v_remaining=-1, actions=1
+[DEBUG] BC_STEP: ip=0   RECOVER_MEMBER  | v:1    a:0          s:0    (Recovered 1 member(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=0, s=0, a=0
+[DEBUG] handle_recovery: resolving choice=0, real_idx=Some(0), looked_cards=[5901]
+[DEBUG] handle_recovery: chosen card 5901
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:2          s:0   
+test comprehensive_tests::test_effects_exhaustive ... ok
+test comprehensive_tests::test_effects_group_ab_stats_zone ... ok
+test comprehensive_tests::test_conditions_group_cd_context_input ... ok
+test comprehensive_tests::test_costs_all_groups ... ok
+[DEBUG] BC_STEP: ip=0   ENERGY_CHARGE   | v:1    a:0          s:0    (Charge 1 Energy)
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   LOOK_AND_CHOOSE | v:2    a:0          s:0    (Looked at cards and chose 0)
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=2
+test comprehensive_tests::test_effects_group_f_system ... ok
+test comprehensive_tests::test_effects_group_ce_info_modal ... ok
+[DEBUG] BC_STEP: ip=0   REVEAL_UNTIL    | v:215  a:10         s:54   (Revealed cards until condition met)
+[DEBUG] trigger_abilities_from: trigger=OnReveal, queue_len=0
+[DEBUG] Condition Opcode: 215, Value: 10, Attr: 10, Slot: 54 (Area: 0), Source: 60010
+[DEBUG] REVEAL_UNTIL: cid=60010, matches=false
+[DEBUG] trigger_abilities_from: trigger=OnReveal, queue_len=0
+[DEBUG] Condition Opcode: 215, Value: 10, Attr: 10, Slot: 54 (Area: 0), Source: 60015
+[DEBUG] REVEAL_UNTIL: cid=60015, matches=true
+[DEBUG] get_member_cost: card_id=5999, base_cost=1
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] get_member_cost: card_id=5999, base_cost=1
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=2
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] get_member_cost: card_id=5900, base_cost=1
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] auto_step: Phase=Main, Player=0
+test comprehensive_tests::test_opcode_reveal_until_cost_ge ... ok
+test comprehensive_tests::test_mechanics_optional_once_per_turn ... ok
+[DEBUG] get_member_cost: card_id=5916, base_cost=1
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] get_member_cost: card_id=5917, base_cost=1
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] Condition Opcode: 200, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: 5917
+[DEBUG] BC_STEP: ip=0   RECOVER_MEMBER  | v:1    a:0          s:0    (Recovered 1 member(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=-1, s=0, a=0
+[DEBUG] handle_recovery scan: cid=5990, type_matches=true, attr=0
+[DEBUG] handle_recovery: populated looked_cards with 1 cards
+[DEBUG] suspend_interaction: choice_type=RECOV_M, v_remaining=-1, actions=1
+[DEBUG] BC_STEP: ip=0   RECOVER_MEMBER  | v:1    a:0          s:0    (Recovered 1 member(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=0, s=0, a=0
+[DEBUG] handle_recovery: resolving choice=0, real_idx=Some(0), looked_cards=[5990]
+[DEBUG] handle_recovery: chosen card 5990
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] get_member_cost: card_id=5918, base_cost=1
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   LOOK_AND_CHOOSE | v:3    a:0          s:0    (Looked at cards and chose 0)
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=3
+[DEBUG] BC_STEP: ip=0   LOOK_AND_CHOOSE | v:3    a:0          s:0    (Looked at cards and chose 0)
+[DEBUG] auto_step: Phase=Main, Player=0
+test comprehensive_tests::test_pattern_on_play ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] trigger_abilities_from: trigger=OnReveal, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] trigger_abilities_from: trigger=OnLiveSuccess, queue_len=1
+[DEBUG] Condition Opcode: 207, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: 5963
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] get_member_cost: card_id=5801, base_cost=1
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] Cost Payment FAILED
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:1          s:0   
+[DEBUG] BC_STEP: ip=5   UNKNOWN         | v:3    a:0          s:0   
+[DEBUG] get_member_cost: card_id=5500, base_cost=1
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:1    (Draw 1 card(s))
+[DEBUG] BC_STEP: ip=5   MOVE_TO_DISCARD | v:1    a:1          s:6    (Moved 1 card(s) from Deck to Discard)
+[DEBUG] suspend_interaction: choice_type=SELECT_HAND_DISCARD, v_remaining=1, actions=2
+DEBUG TEST: Phase after PlayMember: Response. Hand: [5001, 5902]
+[DEBUG] BC_STEP: ip=5   MOVE_TO_DISCARD | v:1    a:1          s:6    (Moved 1 card(s) from Deck to Discard)
+[DEBUG] auto_step: Phase=Main, Player=0
+test comprehensive_tests::test_pattern_exhaustive_sampling ... ok
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=0
+test comprehensive_tests::test_reproduce_example_draw_discard ... ok
+test comprehensive_tests::test_pattern_performance ... ok
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:1    (Draw 1 card(s))
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:2    (Draw 1 card(s))
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:3    (Draw 1 card(s))
+test comprehensive_tests::test_targets_all_groups ... ok
+[DEBUG] get_member_cost: card_id=5910, base_cost=1
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:0          s:4    (Moved 1 card(s) from Deck to Discard)
+[DEBUG] trigger_abilities_from: trigger=OnLeaves, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] trigger_abilities_from: trigger=TurnStart, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] trigger_abilities_from: trigger=OnReveal, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] trigger_abilities_from: trigger=OnLiveStart, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] BC_STEP: ip=0   MOVE_MEMBER     | v:0    a:0          s:0    (Moved member/Changed formation)
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] trigger_abilities_from: trigger=OnPositionChange, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+test comprehensive_tests::test_triggers_group_b_phase ... ok
+test comprehensive_tests::test_triggers_group_a_action ... ok
+test comprehensive_tests::test_triggers_group_c_persistent ... ok
+test core::logic::filter::tests::test_filter_from_python_attr ... ok
+test comprehensive_tests::test_triggers_exhaustive ... ok
+[DEBUG] Condition Opcode: 208, Value: 3, Attr: 10, Slot: 255 (Area: 7), Source: -1
+[DEBUG] Condition Opcode: 208, Value: 3, Attr: 32778, Slot: 255 (Area: 7), Source: -1
+[DEBUG] Condition Opcode: 208, Value: 2, Attr: 32778, Slot: 255 (Area: 7), Source: -1
+test core::logic::filter::tests::test_filter_roundtrip_group ... ok
+test core::logic::filter::tests::test_filter_roundtrip ... ok
+test core::logic::filter::tests::test_filter_roundtrip_full ... ok
+test count_group_tests::tests::test_count_group_unique_names ... ok
+[DEBUG] Condition Opcode: 220, Value: 0, Attr: 0, Slot: 16 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 220, Value: 0, Attr: 0, Slot: 32 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 231, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: 3010
+test coverage_gap_tests::test_conditions_comparison_and_baton ... ok
+[DEBUG] Condition Opcode: 200, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 200, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 203, Value: 1, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 203, Value: 2, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 204, Value: 3, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 204, Value: 4, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 213, Value: 2, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 205, Value: 1, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 207, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 207, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+test coverage_gap_tests::test_conditions_basic_state ... ok
+[DEBUG] Condition Opcode: 227, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 233, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: 4594
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[WARN] Unhandled opcode: 49 (v=1, a=0, s=0) at IP 0
+[DEBUG] BC_STEP: ip=0   COUNT_HAND      | v:3    a:0          s:0   
+[DEBUG] CALLING check_condition_opcode: op=204, a=0
+[DEBUG] Condition Opcode: 204, Value: 3, Attr: 0, Slot: 0 (Area: 0), Source: -1
+      | [COND] BC_COND: ip=0   Need 3 card(s) in Hand -> passed=true, final=true
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:1    a:0          s:0   
+test coverage_gap_tests::test_opcodes_meta_rules ... ok
+[DEBUG] BC_STEP: ip=10  DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] BC_STEP: ip=0   COUNT_HAND      | v:5    a:0          s:0   
+[DEBUG] CALLING check_condition_opcode: op=204, a=0
+[DEBUG] Condition Opcode: 204, Value: 5, Attr: 0, Slot: 0 (Area: 0), Source: -1
+      | [COND] BC_COND: ip=0   Need 5 card(s) in Hand -> passed=false, final=false
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:1    a:0          s:0   
+test coverage_gap_tests::test_conditions_misc ... ok
+test card_interaction_tests::test_granted_abilities_stacking ... ok
+[DEBUG] BC_STEP: ip=0   ADD_HEARTS      | v:1    a:4          s:4    (Added +1 HEART_BLUE)
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:4   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+test coverage_gap_tests::test_opcodes_complex_mod ... ok
+[DEBUG] Condition Opcode: 206, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: 3020
+[DEBUG] Condition Opcode: 206, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: 19
+[DEBUG] Condition Opcode: 201, Value: 19, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 201, Value: 3999, Attr: 0, Slot: 0 (Area: 0), Source: -1
+[DEBUG] Condition Opcode: 202, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+DEBUG [C_HAS_COLOR]: color_idx=0, stage=[19, 3020, -1]
+DEBUG [C_HAS_COLOR]: cid=19, hearts=[10, 0, 0, 0, 0, 0, 0], color_idx=0, result=true
+[DEBUG] Condition Opcode: 202, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+DEBUG [C_HAS_COLOR]: color_idx=0, stage=[19, 3020, -1]
+DEBUG [C_HAS_COLOR]: cid=19, hearts=[10, 0, 0, 0, 0, 0, 0], color_idx=0, result=true
+[DEBUG] BC_STEP: ip=0   ADD_BLADES      | v:2    a:0          s:4    (Added +2 BLADE)
+[DEBUG] BC_STEP: ip=0   ADD_HEARTS      | v:3    a:0          s:4    (Added +3 HEART_WILD)
+[DEBUG] BC_STEP: ip=0   BOOST_SCORE     | v:5    a:0          s:0    (Score +5)
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:2    a:1          s:0   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:5000 a:0          s:0   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:6   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   ORDER_DECK      | v:3    a:0          s:0    (Reordered top 3 cards of deck)
+[ENERGY_DEBUG] card NOT FOUND for id=-1
+[DEBUG] suspend_interaction: choice_type=ORDER_DECK, v_remaining=-1, actions=3
+[DEBUG] BC_STEP: ip=0   ACTIVATE_MEMBER | v:1    a:0          s:4    (Activated member/energy)
+[DEBUG] BC_STEP: ip=0   PLAY_MEMBER_FROM_DISCARD | v:1    a:2          s:0   
+[DEBUG] BC_STEP: ip=0   TAP_MEMBER      | v:1    a:0          s:4    (Tapped member)
+[DEBUG] BC_STEP: ip=0   ADD_STAGE_ENERGY | v:1    a:0          s:4    (Added 1 energy to stage slot)
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:5    a:0          s:4   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   GRANT_ABILITY   | v:0    a:0          s:4    (Granted ability to member(s))
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:4          s:4   
+test ability_tests::test_conditions_basic ... ok
+test coverage_gap_tests::test_conditions_member_properties ... ok
+test coverage_gap_tests::test_opcodes_movement_control ... ok
+test ability_tests::test_opcode_stats_boost ... ok
+test coverage_gap_tests::test_opcodes_state_modifiers_simple ... ok
+test coverage_gap_tests::test_opcodes_selection ... ok
+test card_interaction_tests::test_stat_buff_combination ... ok
+AlphaZero Baseline Suggestion: (0, 0.5, 1)
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test deck_refresh_tests::test_refresh_order_preservation ... ok
+test alphazero_verification_tests::test_alphazero_baseline_smoke ... ok
+[DEBUG] Condition Opcode: 203, Value: 3, Attr: 0, Slot: 0 (Area: 0), Source: 3992
+test enforcement_tests::test_enforce_condition_failure ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test enforcement_tests::test_enforce_cost_failure ... ok
+[DEBUG] BC_STEP: ip=0   SET_TAPPED      | v:1    a:0          s:4    (Set member tapped state to true)
+[DEBUG] BC_STEP: ip=0   SET_TAPPED      | v:0    a:0          s:4    (Set member tapped state to false)
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:1    (Draw 1 card(s))
+test enforcement_tests::test_enforce_once_per_turn_failure ... ok
+test ability_tests::test_opcode_tap_untap ... ok
+test filter_audit_tests::tests::test_filtered_cost_discard ... ok
+test filter_audit_tests::tests::test_hand_filter_liella ... ok
+test filter_audit_tests::tests::test_name_in_filter ... ok
+test filter_audit_tests::tests::test_tapped_filter ... ok
+test filter_audit_tests::tests::test_discard_success_live_filter ... ok
+[DEBUG] get_member_cost: card_id=3994, base_cost=2
+[DEBUG] play_member_with_choice: FAILED! cost=2, available=0
+test enforcement_tests::test_enforce_play_member_cost_failure ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] BC_STEP: ip=0   DRAW            | v:2    a:0          s:0    (Draw 2 card(s))
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+Database Integrity Check Passed: 1056 members, 175 lives
+test filter_audit_tests::tests::test_unique_names_filter ... ok
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:2          s:6    (Moved 1 card(s) from Deck to Discard)
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test database_tests::test_database_integrity ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test ability_tests::test_opcode_draw_discard ... ok
+test deck_refresh_tests::test_refresh_on_empty_draw ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+=== MEMBER LOOKUP ===
+get_member(4430) = Some(("螳ｮ荳・諢・, [2], 4430))
+=== LIVE LOOKUP ===
+get_live(358) = Some(("Cara Tesoro", 358))
+Live abilities count: 1
+Ability 0 trigger: OnLiveStart
+Ability 0 bytecode: [226, 0, 81, 1073741824, 48, 16, 1, 0, 0, 4, 226, 0, 81, -2147483648, 48, 16, 2, 0, 0, 4, 1, 0, 0, 0, 0]
+Ability 0 conditions count: 1
+
+=== HANDLE_ENERGY ===
+[ENERGY_DEBUG] source_card_id=4430, card_no=PL!N-pb1-005-R, groups=[2]
+activated_energy_group_mask = 4 (binary: 100)
+Expected: bit 2 set = 4 (binary: 100)
+
+=== TRIGGER ON_LIVE_START ===
+[DEBUG] trigger_abilities_from: trigger=OnLiveStart, queue_len=1
+[DEBUG] Condition Opcode: 226, Value: 0, Attr: 4611686018427387985, Slot: 0 (Area: 0), Source: 358
+[KEYWORD-DEBUG] Energy Check: group_id=2, mask=100, bit=100, matches=true
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 81, a_high: 1073741824, s: 48
+[DEBUG] BC_STEP: ip=0   HAS_KEYWORD     | v:0    a:4611686018427387985 s:48  
+[DEBUG] CALLING check_condition_opcode: op=226, a=4000000000000051
+[DEBUG] Condition Opcode: 226, Value: 0, Attr: 4611686018427387985, Slot: 48 (Area: 0), Source: 358
+[KEYWORD-DEBUG] Energy Check: group_id=2, mask=100, bit=100, matches=true
+      | [COND] BC_COND: ip=0   Condition 226 (val=0) -> passed=true, final=true
+[DEBUG] BC_STEP: ip=5   BOOST_SCORE     | v:1    a:0          s:4    (Score +1)
+[DECODE-DEBUG] Op: 226, IP: 10, v: 0, a_low: 81, a_high: 2147483648, s: 48
+[DEBUG] BC_STEP: ip=10  HAS_KEYWORD     | v:0    a:-9223372036854775727 s:48  
+[DEBUG] CALLING check_condition_opcode: op=226, a=8000000000000051
+[DEBUG] Condition Opcode: 226, Value: 0, Attr: 9223372036854775889, Slot: 48 (Area: 0), Source: 358
+[KEYWORD-DEBUG] Member Check: group_id=2, mask=0, bit=100, matches=false
+      | [COND] BC_COND: ip=10  Condition 226 (val=0) -> passed=false, final=false
+[DEBUG] BC_STEP: ip=15  BOOST_SCORE     | v:2    a:0          s:4    (Score +2)
+      | [SKIP] Opcode BOOST_SCORE skipped (cond=false)
+
+=== RESULT ===
+live_score_bonus = 1 (expected: 1)
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:4    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   LOOK_AND_CHOOSE | v:1    a:0          s:6    (Looked at cards and chose 0)
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=4
+[DEBUG] BC_STEP: ip=5   LOOK_AND_CHOOSE | v:1    a:0          s:6    (Looked at cards and chose 0)
+[DEBUG] BC_STEP: ip=5   LOOK_AND_CHOOSE | v:1    a:0          s:6    (Looked at cards and chose 0)
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 3, a_low: 0, a_high: 4096, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 2, a_low: 0, a_high: 4096, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186961
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187089
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186961
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 3, a_low: 0, a_high: 4096, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 2, a_low: 0, a_high: 4096, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=81
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=17235970, a=63050394783186946
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=81
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458756, a=63050394783187025
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187025
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394796228689
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186993
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=17235970, a=63050394783186946
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=1215971902628036609
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 10, v: 1, a_low: 0, a_high: 4096, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050398088298497
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=17235970, a=63050394783186946
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187025
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458756, a=63050394783187025
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187089
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458756, a=63050394783186961
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458756, a=63050394783187025
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187089
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=17235970, a=63050394783186946
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 10, v: 1, a_low: 0, a_high: 4096, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458756, a=63050394783186961
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050398088298497
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187057
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458756, a=63050394783187025
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186961
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187025
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394796228609
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187025
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 3, a_low: 0, a_high: 4096, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 2, a_low: 0, a_high: 4096, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 10, v: 1, a_low: 0, a_high: 4096, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 3, a_low: 0, a_high: 4096, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 2, a_low: 0, a_high: 4096, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186961
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=1215971902628036609
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050398088298497
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050398088298497
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187089
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 10, v: 1, a_low: 0, a_high: 4096, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+test debug_q203::tests::debug_q203_trace ... ok
+test ability_tests::test_look_and_choose_remainder ... ok
+test database_tests::test_dry_run_all_cards ... ok
+test game_end_tests::test_draw_simultaneous_lives ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+Bytecode Sanity Passed for 1331 abilities.
+Unique Opcodes Found in Production: 97
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test game_end_tests::test_true_draw_lives_and_score_equal ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] execute_mulligan: player=0, discards_len=0, current_phase=MulliganP1
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:3    a:0          s:1   
+[DEBUG] execute_mulligan: transition MulliganP1 -> MulliganP2
+[DEBUG] BC_STEP: ip=0   LOOK_AND_CHOOSE | v:259  a:25769803776 s:1    (Looked at cards and chose 1)
+test database_tests::test_bytecode_sanity_all_cards ... ok
+test deck_refresh_tests::test_refresh_on_look_at_top_x ... ok
+test game_flow_tests::test_mulligan_empty_keep ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test game_end_tests::test_win_by_lives ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test deck_refresh_tests::test_refresh_on_look_and_choose ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test game_end_tests::test_deck_out_not_yet_implemented ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test mechanics_tests::test_opcode_hearts ... ok
+[DEBUG] trigger_abilities_from: trigger=OnLiveSuccess, queue_len=1
+[DEBUG] Condition Opcode: 203, Value: 1, Attr: 22539988369409, Slot: 0 (Area: 0), Source: 517
+test meta_rule_card_tests::test_meta_rule_pl_sp_bp1_024_l_live_success_draw ... ok
+test mechanics_tests::test_opcode_blades ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test mechanics_tests::test_condition_count_hand ... ok
+[DEBUG] BC_STEP: ip=0   META_RULE       | v:3    a:0          s:1   
+test mechanics_tests::test_opcode_draw ... ok
+test mechanics_tests::test_opcode_play_member_from_hand ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:15   a:0          s:0   
+[DEBUG] CALLING check_condition_opcode: op=304, a=0
+[DEBUG] Condition Opcode: 304, Value: 15, Attr: 0, Slot: 0 (Area: 0), Source: 0
+      | [COND] BC_COND: ip=0   Score Total >= 15 -> passed=true, final=true
+[DEBUG] BC_STEP: ip=5   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:20   a:0          s:0   
+[DEBUG] CALLING check_condition_opcode: op=304, a=0
+[DEBUG] Condition Opcode: 304, Value: 20, Attr: 0, Slot: 0 (Area: 0), Source: 0
+      | [COND] BC_COND: ip=0   Score Total >= 20 -> passed=false, final=false
+[DEBUG] BC_STEP: ip=5   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+      | [SKIP] Opcode DRAW skipped (cond=false)
+[DEBUG] execute_mulligan: player=0, discards_len=3, current_phase=MulliganP1
+[DEBUG] execute_mulligan: transition MulliganP1 -> MulliganP2
+test new_opcode_tests::test_condition_score_total_check ... ok
+test meta_rule_card_tests::test_meta_rule_cheer_mod_multiple ... ok
+test game_flow_tests::test_mulligan_logic_discard_and_draw ... ok
+test meta_rule_tests::test_opcode_meta_rule ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[TEST] Card ID for PL!SP-bp1-024-L: 517
+[DEBUG] trigger_abilities_from: trigger=OnLiveStart, queue_len=1
+[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:1    a:22539988369409 s:4   
+[DEBUG] suspend_interaction: choice_type=SELECT_MEMBER, v_remaining=-1, actions=2
+[TEST] Resolving interaction: "SELECT_MEMBER"
+[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:1    a:22539988369409 s:4   
+[DEBUG] BC_STEP: ip=5   ADD_HEARTS      | v:1    a:0          s:4    (Added +1 HEART_WILD)
+[DEBUG] BC_STEP: ip=10  ADD_BLADES      | v:1    a:0          s:4    (Added +1 BLADE)
+[DEBUG] BC_STEP: ip=15  SELECT_MEMBER   | v:1    a:23089744183297 s:4   
+[DEBUG] suspend_interaction: choice_type=SELECT_MEMBER, v_remaining=-1, actions=1
+[TEST] Resolving interaction: "SELECT_MEMBER"
+[DEBUG] BC_STEP: ip=15  SELECT_MEMBER   | v:1    a:23089744183297 s:4   
+[DEBUG] BC_STEP: ip=20  ADD_HEARTS      | v:1    a:0          s:4    (Added +1 HEART_WILD)
+[DEBUG] BC_STEP: ip=25  ADD_BLADES      | v:1    a:0          s:4    (Added +1 BLADE)
+test meta_rule_card_tests::test_meta_rule_pl_sp_bp1_024_l_heart_buffs ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] trigger_abilities_from: trigger=OnLiveSuccess, queue_len=1
+[DEBUG] Condition Opcode: 203, Value: 1, Attr: 22539988369409, Slot: 0 (Area: 0), Source: 517
+[DEBUG] BC_STEP: ip=0   META_RULE       | v:1    a:0          s:1   
+test meta_rule_card_tests::test_meta_rule_pl_sp_bp1_024_l_no_draw_without_both ... ok
+[DEBUG] BC_STEP: ip=0   COUNT_ENERGY    | v:3    a:0          s:0   
+test meta_rule_card_tests::test_meta_rule_cheer_mod_increment ... [DEBUG] CALLING check_condition_opcode: op=213, a=0
+[DEBUG] Condition Opcode: 213, Value: 3, Attr: 0, Slot: 0 (Area: 0), Source: 0
+ok
+      | [COND] BC_COND: ip=0   Need 3 Energy -> passed=true, final=true
+[DEBUG] BC_STEP: ip=5   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:4    a:0          s:0   
+[DEBUG] CALLING check_condition_opcode: op=301, a=0
+[DEBUG] Condition Opcode: 301, Value: 4, Attr: 0, Slot: 0 (Area: 0), Source: 0
+      | [COND] BC_COND: ip=0   Condition 301 (val=4) -> passed=false, final=false
+[DEBUG] BC_STEP: ip=5   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+      | [SKIP] Opcode DRAW skipped (cond=false)
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test new_opcode_tests::test_condition_count_energy_exact ... ok
+test opcode_missing_tests::test_opcode_heart_modifiers ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test_opcode_buff_power_dynamic: SKIPPED (no card with O_BUFF_POWER in DB)
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:0   
+[DEBUG] CALLING check_condition_opcode: op=303, a=0
+[DEBUG] Condition Opcode: 303, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: 0
+      | [COND] BC_COND: ip=0   Condition 303 (val=0) -> passed=true, final=true
+[DEBUG] BC_STEP: ip=5   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:0   
+[DEBUG] CALLING check_condition_opcode: op=303, a=0
+[DEBUG] Condition Opcode: 303, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: 0
+      | [COND] BC_COND: ip=0   Condition 303 (val=0) -> passed=false, final=false
+[DEBUG] BC_STEP: ip=5   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+      | [SKIP] Opcode DRAW skipped (cond=false)
+test opcode_coverage_gap_2::test_opcode_buff_power_dynamic ... ok
+test mechanics_tests::test_opcode_reduce_cost ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:0   
+test new_opcode_tests::test_condition_opponent_has_excess_heart ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] suspend_interaction: choice_type=OPPONENT_CHOOSE, v_remaining=-1, actions=4
+test new_opcode_tests::test_opcode_look_deck_dynamic ... ok
+test opcode_missing_tests::test_opcode_opponent_choose ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:0   
+test opcode_missing_tests::test_opcode_prevent_baton_touch ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   ADD_STAGE_ENERGY | v:2    a:0          s:4    (Added 2 energy to stage slot)
+test opcode_missing_tests::test_opcode_prevent_activate ... ok
+test opcode_rigor_tests::test_opcode_add_stage_energy_functional ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:1   
+test new_opcode_tests::test_opcode_skip_activate_phase ... ok
+[DEBUG] get_member_cost: card_id=3000, base_cost=1
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:2    a:0          s:0   
+[DEBUG] get_member_cost: card_id=3000, base_cost=1
+test opcode_missing_tests::test_opcode_prevent_play_to_slot ... ok
+test opcode_rigor_tests::test_opcode_increase_cost_ripple ... ok
+test_opcode_color_select_real_card_122: SKIPPED (card 122 has no O_COLOR_SELECT in DB)
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] suspend_interaction: choice_type=OPPONENT_CHOOSE, v_remaining=-1, actions=4
+DEBUG: interaction.ctx.player_id = 1
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] auto_step: Phase=Main, Player=1
+DEBUG: P0 hand len = 0, P1 hand len = 1
+test opcode_rigor_tests::test_opcode_prevent_activate_rigor ... ok
+test opcode_rigor_tests::test_opcode_opponent_choose_rigor ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:2    a:0          s:6   
+DECK: [202, 201]
+HAND: [101, 203]
+test opcode_rigor_tests::test_opcode_swap_cards_deck_refresh ... ok
+[DEBUG_FILTER] Comparing Hearts: mask=0, threshold=8, values=[1, 1, 1, 1, 1, 1, 2]
+[DEBUG_FILTER] Comparing Hearts: mask=0, threshold=9, values=[1, 1, 1, 1, 1, 1, 2]
+[DEBUG_FILTER] Comparing Hearts: mask=0, threshold=8, values=[1, 1, 1, 1, 1, 1, 2]
+test opcode_tests::test_card_matches_filter_live_hearts ... ok
+test opcode_coverage_gap_2::test_opcode_color_select_real_card_122 ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:5    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   LOOK_AND_CHOOSE | v:2    a:-9223372036854775808 s:6    (Looked at cards and chose 0)
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=3
+[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:1    a:0          s:0   
+[DEBUG] suspend_interaction: choice_type=SELECT_MEMBER, v_remaining=-1, actions=2
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] trigger_abilities_from: trigger=OnReveal, queue_len=0
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] suspend_interaction: choice_type=SELECT_LIVE, v_remaining=-1, actions=1
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:-1   a:0          s:0   
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:5    a:0          s:0   
+test opcode_tests::test_opcode_draw_until ... ok
+test opcode_missing_tests::test_opcode_select_member ... ok
+test opcode_tests::test_look_and_choose_source_zone_fix ... ok
+test opcode_rigor_tests::test_opcode_reduce_yell_count_functional ... ok
+test opcode_rigor_tests::test_opcode_select_live_rigor ... ok
+test new_opcode_tests::test_opcode_reduce_score_not_negative ... ok
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] suspend_interaction: choice_type=SELECT_LIVE, v_remaining=-1, actions=1
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   REVEAL_UNTIL    | v:232  a:1          s:33554438 (Revealed cards until condition met)
+[DEBUG] trigger_abilities_from: trigger=OnReveal, queue_len=0
+[DEBUG] REVEAL_UNTIL: cid=10, matches=false
+[DEBUG] trigger_abilities_from: trigger=OnReveal, queue_len=0
+[DEBUG] REVEAL_UNTIL: cid=15, matches=false
+[DEBUG] trigger_abilities_from: trigger=OnReveal, queue_len=0
+[DEBUG] REVEAL_UNTIL: cid=10050, matches=true
+[DEBUG] BC_STEP: ip=0   REVEAL_UNTIL    | v:215  a:10         s:54   (Revealed cards until condition met)
+[DEBUG] trigger_abilities_from: trigger=OnReveal, queue_len=0
+[DEBUG] Condition Opcode: 215, Value: 10, Attr: 10, Slot: 54 (Area: 0), Source: 60010
+[DEBUG] REVEAL_UNTIL: cid=60010, matches=false
+[DEBUG] trigger_abilities_from: trigger=OnReveal, queue_len=0
+[DEBUG] Condition Opcode: 215, Value: 10, Attr: 10, Slot: 54 (Area: 0), Source: 60015
+[DEBUG] REVEAL_UNTIL: cid=60015, matches=true
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   LOOK_AND_CHOOSE | v:2    a:2499805184 s:0    (Looked at cards and chose 0)
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:0   
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=1
+DEBUG: Actions: [11001]
+test opcode_tests::test_opcode_look_deck ... ok
+test opcode_tests::test_opcode_pay_energy ... ok
+test opcode_tests::test_opcode_reveal_until_type_live ... ok
+test opcode_tests::test_opcode_immunity ... ok
+test opcode_tests::test_opcode_look_and_choose_filter_cost_ge ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test opcode_missing_tests::test_opcode_select_live ... ok
+test opcode_tests::test_opcode_reveal_until_cost_ge ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test qa_verification_tests::tests::test_optional_interaction_actions ... ok
+test qa_verification_tests::tests::test_insufficient_energy_no_prompt ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] trigger_abilities_from: trigger=OnLiveStart, queue_len=1
+[DEBUG] Condition Opcode: 208, Value: 5, Attr: 36028797203546113, Slot: 0 (Area: 0), Source: 519
+test_opcode_jump_real_card_19: SKIPPED (card 19 has no O_JUMP in DB)
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test opcode_coverage_gap_2::test_opcode_jump_real_card_19 ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:3    a:0          s:0   
+test new_opcode_tests::test_opcode_reduce_score ... ok
+test qa_verification_tests::tests::test_q16_rps_selection ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test qa_verification_tests::tests::test_q17_q18_q19_mulligan ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test meta_rule_card_tests::test_meta_rule_pl_sp_bp1_026_l_condition_check ... ok
+test qa_verification_tests::tests::test_q23_normal_play ... ok
+[DEBUG Q196] Hand: [3002], Discard: [332]
+[DEBUG] execute_mulligan: player=0, discards_len=0, current_phase=MulliganP1
+[DEBUG] execute_mulligan: transition MulliganP1 -> MulliganP2
+[DEBUG] execute_mulligan: player=1, discards_len=0, current_phase=MulliganP2
+[DEBUG] execute_mulligan: transition MulliganP2 -> Active
+test qa_verification_tests::tests::test_q24_q25_q26_baton_cost ... ok
+test qa_verification_tests::tests::test_q27_baton_limit ... ok
+test qa_verification_tests::tests::test_q196_select_member_empty ... ok
+
+--- [Q197] Starting Test: Baton Touch Trigger ---
+Step 1: Playing Cost 10 Member over Rina (Baton Touch).
+[DEBUG] get_member_cost: card_id=4750, base_cost=10
+[DEBUG] trigger_abilities_from: trigger=OnLeaves, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=2
+[DEBUG] Condition Opcode: 220, Value: 6, Attr: 1, Slot: 0 (Area: 0), Source: 4750
+[DEBUG] Condition Opcode: 220, Value: 6, Attr: 1, Slot: 0 (Area: 0), Source: 4750
+[DEBUG] Condition Opcode: 209, Value: 0, Attr: 1, Slot: 0 (Area: 0), Source: 4430
+[DEBUG] Condition Opcode: 209, Value: 0, Attr: 1, Slot: 0 (Area: 0), Source: 4430
+Step 2: Checking if Rina triggered.
+--- [Q197] Test Passed Successfully! ---
+test phase_transition_tests::test_phase_flow_mulligan_to_main ... ok
+test qa_verification_tests::tests::test_q32_empty_live_yell ... ok
+[DEBUG Q201] --- Step 1: Playing Root Ai (4442) to Slot 0 ---
+[DEBUG] get_member_cost: card_id=4442, base_cost=7
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:2    a:-9223372036854775808 s:0   
+[DEBUG] O_PAY_ENERGY: attempting optional suspension (instr_ip=0).
+[DEBUG] suspend_interaction: choice_type=OPTIONAL, v_remaining=-1, actions=2
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:2    a:-9223372036854775808 s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=10  SELECT_MEMBER   | v:1    a:54043195528445953 s:393220
+[DEBUG] suspend_interaction: choice_type=SELECT_MEMBER, v_remaining=-1, actions=2
+[DEBUG] BC_STEP: ip=10  SELECT_MEMBER   | v:1    a:54043195528445953 s:393220
+[DEBUG] BC_STEP: ip=15  PLAY_MEMBER_FROM_HAND | v:1    a:1          s:4    (Played member from hand via effect)
+[DEBUG] O_PLAY_MEMBER_FROM_HAND: v=1, remaining=1, target_slot=0, choice_index=-1
+[DEBUG] suspend_interaction: choice_type=SELECT_STAGE, v_remaining=1, actions=3
+[DEBUG] BC_STEP: ip=15  PLAY_MEMBER_FROM_HAND | v:1    a:1          s:4    (Played member from hand via effect)
+[DEBUG] O_PLAY_MEMBER_FROM_HAND: v=1, remaining=1, target_slot=0, choice_index=1
+[DEBUG] O_PLAY_MEMBER_FROM_HAND: Step 2 Selection. slot_idx=1
+[DEBUG] O_PLAY_MEMBER_FROM_HAND: Executing Play of cid=4397 to slot=1
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:-9223372036854775808 s:6    (Moved 1 card(s) from Deck to Discard)
+[DEBUG] suspend_interaction: choice_type=SELECT_HAND_DISCARD, v_remaining=1, actions=2
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:-9223372036854775808 s:6    (Moved 1 card(s) from Deck to Discard)
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=10  TAP_OPPONENT    | v:2    a:1          s:4    (Tapped opponent member)
+[DEBUG] suspend_interaction: choice_type=TAP_O, v_remaining=2, actions=1
+[DEBUG] BC_STEP: ip=10  TAP_OPPONENT    | v:2    a:1          s:4    (Tapped opponent member)
+[DEBUG] suspend_interaction: choice_type=TAP_O, v_remaining=1, actions=1
+[DEBUG] BC_STEP: ip=10  TAP_OPPONENT    | v:2    a:1          s:4    (Tapped opponent member)
+test qa_verification_tests::tests::test_q29_q70_q87_slot_reuse ... ok
+test qa_verification_tests::tests::test_q49_turn_passing ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test qa_verification_tests::tests::test_q197_baton_auto_trigger ... ok
+test qa_verification_tests::tests::test_q53_deckout_shuffle ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DECODE-DEBUG] Op: 226, IP: 0, v: 3, a_low: 0, a_high: 4096, s: 48
+Testing O_TAP_OPPONENT with Card ID=12, NO=LL-bp4-001-R・・[DEBUG] BC_STEP: ip=0   LOOK_AND_CHOOSE | v:261  a:2147483649 s:1798 (Looked at cards and chose 1)
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=5
+test_opcode_tap_opponent_dynamic: PASSED
+test qa_verification_tests::tests::test_q201_nested_on_play ... ok
+test qa_verification_tests::tests::test_q34_q35_zone_movement ... ok
+test opcode_coverage_gap_2::test_opcode_tap_opponent_dynamic ... ok
+test qa_verification_tests::tests::test_q160_q161_q162_play_count_trigger ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test qa_verification_tests::tests::test_q47_q48_score_zero ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+
+--- [Q202] Starting Test: Mia plays Mia ---
+Step 1: Playing Rina (ID 4448) from Hand index 0.
+[DEBUG] get_member_cost: card_id=4448, base_cost=13
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:2    a:-9223372036854775808 s:0   
+[DEBUG] O_PAY_ENERGY: attempting optional suspension (instr_ip=0).
+[DEBUG] suspend_interaction: choice_type=OPTIONAL, v_remaining=-1, actions=2
+Step 2: Checking Rina ON_PLAY suspension (PAY_ENERGY 2).
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:2    a:-9223372036854775808 s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=10  SELECT_MEMBER   | v:1    a:54043195528445953 s:393220
+[DEBUG] suspend_interaction: choice_type=SELECT_MEMBER, v_remaining=-1, actions=2
+Step 3: Selecting Mia from Hand for Rina effect.
+[DEBUG] BC_STEP: ip=10  SELECT_MEMBER   | v:1    a:54043195528445953 s:393220
+[DEBUG] BC_STEP: ip=15  PLAY_MEMBER_FROM_HAND | v:1    a:1          s:4    (Played member from hand via effect)
+[DEBUG] O_PLAY_MEMBER_FROM_HAND: v=1, remaining=1, target_slot=0, choice_index=-1
+[DEBUG] suspend_interaction: choice_type=SELECT_STAGE, v_remaining=1, actions=3
+Step 4: Selecting Slot 1 for Mia placement.
+[DEBUG] BC_STEP: ip=15  PLAY_MEMBER_FROM_HAND | v:1    a:1          s:4    (Played member from hand via effect)
+[DEBUG] O_PLAY_MEMBER_FROM_HAND: v=1, remaining=1, target_slot=0, choice_index=1
+[DEBUG] O_PLAY_MEMBER_FROM_HAND: Step 2 Selection. slot_idx=1
+[DEBUG] O_PLAY_MEMBER_FROM_HAND: Executing Play of cid=231 to slot=1
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:-9223372036854775808 s:6    (Moved 1 card(s) from Deck to Discard)
+[DEBUG] suspend_interaction: choice_type=SELECT_HAND_DISCARD, v_remaining=1, actions=2
+Step 5: Verifying Nested Trigger: Mia ON_PLAY (DISCARD 1).
+Step 6: selecting card to discard for Mia's cost.
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:-9223372036854775808 s:6    (Moved 1 card(s) from Deck to Discard)
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=10  SUM_VALUE       | v:0    a:1          s:48  
+[DEBUG] CALLING check_condition_opcode: op=312, a=1
+[DEBUG] Condition Opcode: 312, Value: 0, Attr: 1, Slot: 48 (Area: 0), Source: 231
+      | [COND] BC_COND: ip=10  Sum Value check (val=0) -> passed=true, final=true
+[DEBUG] BC_STEP: ip=15  LOOK_AND_CHOOSE | v:259  a:1          s:6    (Looked at cards and chose 1)
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=3
+Step 7: Resolving Mia effect (Look 3, Choose 1).
+[DEBUG] BC_STEP: ip=15  LOOK_AND_CHOOSE | v:259  a:1          s:6    (Looked at cards and chose 1)
+Step 8: Verifying Final State.
+--- [Q202] Test Passed Successfully! ---
+
+test qa_verification_tests::tests::test_q202_nested_on_play_optional ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+Kanon groups: [3] - is Liella!: true
+Keke groups: [3] - is Liella!: true
+Found Liella! low cost member: PL!SP-bp5-008-R (cost=
+4)
+Hand size after play: 0
+test repro::repro_card_560_double_baton::test_card_560_second_ability_condition ... ok
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=0
+[DEBUG] BC_STEP: ip=0   SYNC_COST       | v:0    a:113        s:536870928
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] CALLING check_condition_opcode: op=311, a=71
+[DEBUG] Condition Opcode: 311, Value: 0, Attr: 113, Slot: 16 (Area: 2), Source: 579
+      | [COND] BC_COND: ip=0   Relative Cost comparison (val=0) -> passed=true, final=true
+[DEBUG] BC_STEP: ip=5   BOOST_SCORE     | v:1    a:0          s:4    (Score +1)
+[DEBUG] BC_STEP: ip=0   SYNC_COST       | v:0    a:113        s:536870928
+[DEBUG] CALLING check_condition_opcode: op=311, a=71
+[DEBUG] Condition Opcode: 311, Value: 0, Attr: 113, Slot: 16 (Area: 2), Source: 579
+      | [COND] BC_COND: ip=0   Relative Cost comparison (val=0) -> passed=false, final=false
+[DEBUG] BC_STEP: ip=5   BOOST_SCORE     | v:1    a:0          s:4    (Score +1)
+      | [SKIP] Opcode BOOST_SCORE skipped (cond=false)
+Card 420: 豢･蟲ｶ蝟・ｭ・(PL!S-bp2-006-P)
+  Discard candidate: 闍･闖懷屁蟄｣ (cost=2)
+  Discard candidate: 鬯ｼ蝪壼､冗ｾ・(cost=2)
+  Discard candidate: 蠏・蜊・る・ (cost=2)
+filter_attr=0x0000000000000000, s_word=0
+Initial looked_cards: 3 members
+
+=== Step 1: Pick first card (index 0) ===
+[DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:1125903279063041 s:4   
+[DEBUG] suspend_interaction: choice_type=SELECT_STAGE, v_remaining=3, actions=3
+  Pending: type=SELECT_STAGE, v_remaining=3
+
+=== Step 2: Pick slot 0 ===
+[DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:1125903279063041 s:4   
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=0
+[DEBUG] suspend_interaction: choice_type=SELECT_DISCARD_PLAY, v_remaining=2, actions=2
+  Stage after 1st placement: [20992, -1, -1]
+  Phase: Response, interaction_stack len: 1
+  Pending: type=SELECT_DISCARD_PLAY, v_remaining=2
+  looked_cards after 1st placement: 2 cards
+
+=== Step 3: Pick second card (index 0) ===
+[DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:1125903279063041 s:4   
+[DEBUG] suspend_interaction: choice_type=SELECT_STAGE, v_remaining=1, actions=2
+
+=== Step 4: Pick slot 1 ===
+[DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:1125903279063041 s:4   
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=0
+[DEBUG] auto_step: Phase=Main, Player=0
+  Stage after 2nd placement: [20992, 9044, -1]
+
+[PASS] Multi-pick PLAY_MEMBER_FROM_DISCARD(v=2) works
+ correctly!
+test repro::card_579_verification::test_card_579_ability_0_cost_comparison ... ok
+test repro::repro_card_420_multi_pick::test_repro_card_420_multi_pick_from_discard ... ok
+test phase_transition_tests::test_phase_flow_main_to_next_turn ... ok
+[DEBUG] trigger_abilities_from: trigger=OnLiveSuccess, queue_len=0
+[DEBUG] auto_step: Phase=Active, Player=0
+[DEBUG] trigger_abilities_from: trigger=TurnStart, queue_len=0
+[DEBUG] auto_step: Phase=Energy, Player=0
+[DEBUG] auto_step: Phase=Draw, Player=0
+[DEBUG] trigger_abilities_from: trigger=TurnStart, queue_len=0
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=0
+[TEST_DEBUG] Requesting report for Card ID: 579
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+
+--- [Q203] Starting Test: Niji Score Buff Tracking ---
+[DEBUG] Bytecode for card 358: [226, 0, 81, 1073741824, 48, 16, 1, 0, 0, 4, 226, 0, 81, -2147483648, 48, 16, 2, 0, 0, 4, 1, 0, 0, 0, 0]
+test phase_transition_tests::test_phase_flow_active_to_main ... Step 1: Activating energy using Nijigasaki member.
+[ENERGY_DEBUG] source_card_id=4430, card_no=PL!N-pb1-005-R, groups=[2]
+DEBUG: activated_energy_group_mask = 100
+Step 2: Triggering OnLiveStart for Cara Tesoro.
+[DEBUG] trigger_abilities_from: trigger=OnLiveStart, queue_len=1
+[DEBUG] Condition Opcode: 226, Value: 0, Attr: 4611686018427387985, Slot: 0 (Area: 0), Source: 358
+[KEYWORD-DEBUG] Energy Check: group_id=2, mask=100, bit=100, matches=true
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 81, a_high: 1073741824, s: 48
+[DEBUG] BC_STEP: ip=0   HAS_KEYWORD     | v:0    a:4611686018427387985 s:48  
+[DEBUG] CALLING check_condition_opcode: op=226, a=4000000000000051
+[DEBUG] Condition Opcode: 226, Value: 0, Attr: 4611686018427387985, Slot: 48 (Area: 0), Source: 358
+[KEYWORD-DEBUG] Energy Check: group_id=2, mask=100, bit=100, matches=true
+      | [COND] BC_COND: ip=0   Condition 226 (val=0) -> passed=true, final=true
+[DEBUG] BC_STEP: ip=5   BOOST_SCORE     | v:1    a:0          s:4    (Score +1)
+[DECODE-DEBUG] Op: 226, IP: 10, v: 0, a_low: 81, a_high: 2147483648, s: 48
+[DEBUG] BC_STEP: ip=10  HAS_KEYWORD     | v:0    a:-9223372036854775727 s:48  
+[DEBUG] CALLING check_condition_opcode: op=226, a=8000000000000051
+[DEBUG] Condition Opcode: 226, Value: 0, Attr: 9223372036854775889, Slot: 48 (Area: 0), Source: 358
+[KEYWORD-DEBUG] Member Check: group_id=2, mask=0, bit=100, matches=false
+      | [COND] BC_COND: ip=10  Condition 226 (val=0) -> passed=false, final=false
+[DEBUG] BC_STEP: ip=15  BOOST_SCORE     | v:2    a:0          s:4    (Score +2)
+      | [SKIP] Opcode BOOST_SCORE skipped (cond=false)
+Step 3: Activating member using Nijigasaki member.
+DEBUG: activated_member_group_mask = 100 (expected bit 2 (4) to be set)
+[DEBUG] trigger_abilities_from: trigger=OnLiveStart, queue_len=1
+[DEBUG] Condition Opcode: 226, Value: 0, Attr: 4611686018427387985, Slot: 0 (Area: 0), Source: 358
+[KEYWORD-DEBUG] Energy Check: group_id=2, mask=100, bit=100, matches=true
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 81, a_high: 1073741824, s: 48
+[DEBUG] BC_STEP: ip=0   HAS_KEYWORD     | v:0    a:4611686018427387985 s:48  
+[DEBUG] CALLING check_condition_opcode: op=226, a=4000000000000051
+[DEBUG] Condition Opcode: 226, Value: 0, Attr: 4611686018427387985, Slot: 48 (Area: 0), Source: 358
+[KEYWORD-DEBUG] Energy Check: group_id=2, mask=100, bit=100, matches=true
+      | [COND] BC_COND: ip=0   Condition 226 (val=0) -> passed=true, final=true
+[DEBUG] BC_STEP: ip=5   BOOST_SCORE     | v:1    a:0          s:4    (Score +1)
+[DECODE-DEBUG] Op: 226, IP: 10, v: 0, a_low: 81, a_high: 2147483648, s: 48
+[DEBUG] BC_STEP: ip=10  HAS_KEYWORD     | v:0    a:-9223372036854775727 s:48  
+[DEBUG] CALLING check_condition_opcode: op=226, a=8000000000000051
+[DEBUG] Condition Opcode: 226, Value: 0, Attr: 9223372036854775889, Slot: 48 (Area: 0), Source: 358
+[KEYWORD-DEBUG] Member Check: group_id=2, mask=100, bit=100, matches=true
+      | [COND] BC_COND: ip=10  Condition 226 (val=0) -> passed=true, final=true
+[DEBUG] BC_STEP: ip=15  BOOST_SCORE     | v:2    a:0          s:4    (Score +2)
+--- [Q203] Test Passed Successfully! ---
+ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test repro::repro_score_jump::test_score_jump_repro ... ok
+test qa_verification_tests::tests::test_q203_niji_score_buff ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+Kanon: id=557, cost=4, groups=[3]
+Keke: id=558, cost=2, groups=[3]
+Standard cost slot 0 (replace Kanon): 18
+Standard cost slot 1 (replace Keke): 20
+Double baton cost (replace both): 16
+Generated actions: [0, 1000, 1004, 1001, 1005, 1002]
+Expected tapped energy: 16
+
+=== Testing Second Ability ===
+baton_touch_count: 2
+prev_card_id: 557
+Is in CENTER (slot 0): true
+baton_touch_count == 2: true
+Kanon groups: [3]
+Keke groups: [3]
+Kanon is Liella! (GROUP_ID=3): true
+Keke is Liella! (GROUP_ID=3): true
+
+Card 560 abilities: 2
+Ability 0: trigger=Constant, bytecode=[36, 2, 1, 0, 4
+, 1, 0, 0, 0, 0]
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+=== VERBOSE STATE DUMP ===
+Phase: Setup
+Current Player: 0
+Interaction Stack: []
+Player 0:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: [103]
+  Energy: [] (Tapped Mask: 0)
+  Stage: [1001, 1002, 1003]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+Ability 1: trigger=OnPlay, bytecode=[226, 0, 0, 4096,
+ 0, 231, 2, 113, 0, 0, 10, 2, 0, 0, 4, 63, 1, 113, 0,
+ 4, 1, 0, 0, 0, 0]
+
+=== ISSUE IDENTIFIED ===
+The BATON_TOUCH condition params (FILTER, COUNT_EQ_2)
+ are not encoded in bytecode!
+Current C_BATON only checks if baton_touch_count > 0,
+ not == 2
+And it doesn't check if baton sources match the FILTE
+R
+test repro::repro_card_pb1_001_r::test_repro_card_103_full_board ... ok
+[DEBUG] get_member_cost: card_id=420, base_cost=11
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:4    a:-9223372036854775808 s:0   
+[DEBUG] O_PAY_ENERGY: attempting optional suspension (instr_ip=0).
+[DEBUG] suspend_interaction: choice_type=OPTIONAL, v_remaining=-1, actions=2
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:4    a:-9223372036854775808 s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:1125903279063041 s:4   
+[DEBUG] suspend_interaction: choice_type=SELECT_DISCARD_PLAY, v_remaining=4, actions=2
+[DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:1125903279063041 s:4   
+[DEBUG] suspend_interaction: choice_type=SELECT_STAGE, v_remaining=3, actions=3
+[DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:1125903279063041 s:4   
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=0
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] get_member_cost: card_id=420, base_cost=11
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:4    a:-9223372036854775808 s:0   
+[DEBUG] O_PAY_ENERGY: attempting optional suspension (instr_ip=0).
+[DEBUG] suspend_interaction: choice_type=OPTIONAL, v_remaining=-1, actions=2
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:4    a:-9223372036854775808 s:0   
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:1125903279063041 s:4   
+[DEBUG] suspend_interaction: choice_type=SELECT_DISCARD_PLAY, v_remaining=4, actions=3
+[DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:1125903279063041 s:4   
+[DEBUG] suspend_interaction: choice_type=SELECT_STAGE, v_remaining=3, actions=3
+[DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:1125903279063041 s:4   
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=0
+[DEBUG] suspend_interaction: choice_type=SELECT_DISCARD_PLAY, v_remaining=2, actions=1
+[DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:1125903279063041 s:4   
+[DEBUG] suspend_interaction: choice_type=SELECT_STAGE, v_remaining=1, actions=2
+[DEBUG] BC_STEP: ip=10  PLAY_MEMBER_FROM_DISCARD | v:2    a:1125903279063041 s:4   
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=0
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 5 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186961
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG_FILTER] Comparing Hearts: mask=0, threshold=1, values=[1, 0, 2, 0, 0, 2, 0]
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] handle_recovery: Start. choice=-1, s=458756, a=63050394783186961
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG_FILTER] Comparing Hearts: mask=0, threshold=1, values=[0, 0, 2, 0, 0, 3, 0]
+[DEBUG_FILTER] Comparing Hearts: mask=0, threshold=1, values=[3, 0, 1, 0, 0, 2, 0]
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186961
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 5 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394796228609
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050398168449169
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394796228753
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050398088298497
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187089
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 3, a_low: 0, a_high: 4096, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 2, a_low: 0, a_high: 4096, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=17235970, a=63050394783186946
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458756, a=63050394783187025
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187025
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=81
+[DEBUG] handle_recovery: populated looked_cards with 5 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 8192, s: 48
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187057
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783187089
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+[DECODE-DEBUG] Op: 226, IP: 0, v: 0, a_low: 0, a_high: 4096, s: 0
+
+=== CRASH TRIAGE RESULTS ===
+Unique signatures tested: 407
+Pass: 407
+Crashed: 0
+Flagged mismatches: 157
+No-ops (buff/condition only): 157
+Suspended (needs interaction): 192
+Report written to: reports/state_delta_verification.md
+test repro::repro_card_560_double_baton::test_repro_card_560_double_baton ... ok
+test repro::repro_card_420_cost_sum::test_repro_card_420_cost_sum_limit ... ok
+test repro::crash_triage::test_state_delta_verification ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[TEST_DEBUG] Requesting report for Card ID: 590
+[TEST_DEBUG] Requesting report for Card ID: 4684
+=== VERBOSE STATE DUMP ===
+Phase: Response
+Current Player: 0
+Interaction Stack: [PendingInteraction { ctx: AbilityContext { player_id: 0, activator_id: 0, area_idx: -1, source_card_id: 4684, target_card_id: -1, target_slot: -1, choice_index: -1, v_accumulated: 0, selected_color: 0, program_counter: 0, ability_index: 0, v_remaining: 2, trigger_type: None, original_phase: Some(Setup), repeat_count: 0, selected_cards: [] }, card_id: 4684, ability_index: 0, effect_opcode: 30, target_slot: 0, choice_type: "SELECT_MODE", filter_attr: 0, choice_text: "{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}{{icon_energy.png|E}}{{icon_energy.png|E}}謾ｯ謇輔ｏ縺ｪ縺・°縺弱ｊ縲∬・蛻・・謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺上・n{{live_success.png|繝ｩ繧､繝匁・蜉滓凾}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}謾ｯ謇輔▲縺ｦ繧ゅｈ縺・ｼ壹Λ繧､繝悶・蜷郁ｨ医せ繧ｳ繧｢繧抵ｼ具ｼ代☆繧九・, v_remaining: 2, original_phase: Setup, original_current_player: 0, actions: [], execution_id: 1 }]
+Player 0:
+  Score: 0
+  Hand: [1000, 1001]
+  Deck: (len=0)
+  Discard: []
+  Energy: [2000, 2001] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+=== VERBOSE STATE DUMP ===
+Phase: Response
+Current Player: 0
+Interaction Stack: [PendingInteraction { ctx: AbilityContext { player_id: 0, activator_id: 0, area_idx: -1, source_card_id: 4684, target_card_id: -1, target_slot: -1, choice_index: -1, v_accumulated: 0, selected_color: 0, program_counter: 0, ability_index: 0, v_remaining: 2, trigger_type: None, original_phase: Some(Setup), repeat_count: 0, selected_cards: [] }, card_id: 4684, ability_index: 0, effect_opcode: 30, target_slot: 0, choice_type: "SELECT_MODE", filter_attr: 0, choice_text: "{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}{{icon_energy.png|E}}{{icon_energy.png|E}}謾ｯ謇輔ｏ縺ｪ縺・°縺弱ｊ縲∬・蛻・・謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺上・n{{live_success.png|繝ｩ繧､繝匁・蜉滓凾}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}謾ｯ謇輔▲縺ｦ繧ゅｈ縺・ｼ壹Λ繧､繝悶・蜷郁ｨ医せ繧ｳ繧｢繧抵ｼ具ｼ代☆繧九・, v_remaining: 2, original_phase: Setup, original_current_player: 0, actions: [], execution_id: 1 }]
+Player 0:
+  Score: 0
+  Hand: [1000, 1001]
+  Deck: (len=0)
+  Discard: []
+  Energy: [] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+=== VERBOSE STATE DUMP ===
+Phase: Response
+Current Player: 0
+Interaction Stack: [PendingInteraction { ctx: AbilityContext { player_id: 0, activator_id: 0, area_idx: -1, source_card_id: 4684, target_card_id: -1, target_slot: -1, choice_index: -1, v_accumulated: 0, selected_color: 0, program_counter: 0, ability_index: 0, v_remaining: 2, trigger_type: None, original_phase: Some(Setup), repeat_count: 0, selected_cards: [] }, card_id: 4684, ability_index: 0, effect_opcode: 30, target_slot: 0, choice_type: "SELECT_MODE", filter_attr: 0, choice_text: "{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}{{icon_energy.png|E}}{{icon_energy.png|E}}謾ｯ謇輔ｏ縺ｪ縺・°縺弱ｊ縲∬・蛻・・謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺上・n{{live_success.png|繝ｩ繧､繝匁・蜉滓凾}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}謾ｯ謇輔▲縺ｦ繧ゅｈ縺・ｼ壹Λ繧､繝悶・蜷郁ｨ医せ繧ｳ繧｢繧抵ｼ具ｼ代☆繧九・, v_remaining: 2, original_phase: Setup, original_current_player: 0, actions: [], execution_id: 1 }]
+Player 0:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [2000, 2001] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+=== VERBOSE STATE DUMP ===
+Phase: Response
+Current Player: 0
+Interaction Stack: [PendingInteraction { ctx: AbilityContext { player_id: 0, activator_id: 0, area_idx: -1, source_card_id: 4684, target_card_id: -1, target_slot: -1, choice_index: -1, v_accumulated: 0, selected_color: 0, program_counter: 0, ability_index: 0, v_remaining: 2, trigger_type: None, original_phase: Some(Setup), repeat_count: 0, selected_cards: [] }, card_id: 4684, ability_index: 0, effect_opcode: 30, target_slot: 0, choice_type: "SELECT_MODE", filter_attr: 0, choice_text: "{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}{{icon_energy.png|E}}{{icon_energy.png|E}}謾ｯ謇輔ｏ縺ｪ縺・°縺弱ｊ縲∬・蛻・・謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺上・n{{live_success.png|繝ｩ繧､繝匁・蜉滓凾}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}謾ｯ謇輔▲縺ｦ繧ゅｈ縺・ｼ壹Λ繧､繝悶・蜷郁ｨ医せ繧ｳ繧｢繧抵ｼ具ｼ代☆繧九・, v_remaining: 2, original_phase: Setup, original_current_player: 0, actions: [], execution_id: 1 }]
+Player 0:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+test repro::special_mechanics_tests::test_heart_transformation_kanan_via_reduction ... ok
+test repro::special_mechanics_tests::test_meta_rule_yell_mulligan ... ok
+[TEST_DEBUG] Requesting report for Card ID: 588
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test repro::repro_card_pb1_001_r::test_repro_pb1_001_r_all_combinations ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+DEBUG: Using card_id 111
+DEBUG: Card found in Live DB: 霈晏､懊・蝓弱〒雕翫ｊ縺溘＞
+[DEBUG] trigger_abilities_from: trigger=OnLiveSuccess, queue_len=1
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:-9223372036854775808 s:6    (Moved 1 card(s) from Deck to Discard)
+[DEBUG] suspend_interaction: choice_type=SELECT_HAND_DISCARD, v_remaining=1, actions=7
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:-9223372036854775808 s:6    (Moved 1 card(s) from Deck to Discard)
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=10  LOOK_AND_CHOOSE | v:257  a:17         s:983046 (Looked at cards and chose 1)
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=2
+DEBUG: Discarding card 500 at hand index 5
+[DEBUG] BC_STEP: ip=10  LOOK_AND_CHOOSE | v:257  a:17         s:983046 (Looked at cards and chose 1)
+[DEBUG] auto_step: Phase=LiveResult, Player=0
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=0
+[DEBUG] auto_step: Phase=Active, Player=0
+[DEBUG] trigger_abilities_from: trigger=TurnStart, queue_len=0
+[DEBUG] auto_step: Phase=Energy, Player=0
+[DEBUG] auto_step: Phase=Draw, Player=0
+[DEBUG] trigger_abilities_from: trigger=TurnStart, queue_len=0
+[DEBUG] auto_step: Phase=Main, Player=0
+DEBUG: Phase after discard: Main
+DEBUG: looked_cards: []
+DEBUG: interaction_stack: 0
+DEBUG: LOOK_AND_CHOOSE phase was skipped or completed differently
+[DEBUG] auto_step: Phase=Main, Player=0
+DEBUG: Final hand: [101, 101, 101, 101, 101, 500, 101]
+DEBUG: Final discard: [101, 111]
+Yell persistence test completed (documenting current engine behavior)
+test repro::yell_persistence_repro::test_yell_persistence_and_selection ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+--- INIT STATE ---
+DEBUG STATE: Phase=Main, InteractionStack="EMPTY"
+P0: Score=0, HandLen=1, DeckLen=4, DiscardLen=0, EnergyLen=5, Stage=[-1, -1, -1]
+P1: Score=0, HandLen=0, DeckLen=5, DiscardLen=0, EnergyLen=3, Stage=[-1, -1, -1]
+--- ACTION: Playing Card 558 to Slot 0 ---
+[DEBUG] get_member_cost: card_id=558, base_cost=2
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   TAP_MEMBER      | v:0    a:-9223372036854775808 s:4    (Tapped member)
+[DEBUG] suspend_interaction: choice_type=OPTIONAL, v_remaining=-1, actions=2
+--- STATE AFTER PLAY ---
+DEBUG STATE: Phase=Response, InteractionStack="OPTIONAL"
+P0: Score=0, HandLen=0, DeckLen=4, DiscardLen=0, EnergyLen=5, Stage=[558, -1, -1]
+P1: Score=0, HandLen=0, DeckLen=5, DiscardLen=0, EnergyLen=3, Stage=[-1, -1, -1]
+Rule Log: Some(["[Turn 1] [STEP] Action: 1000 (Play Hand[0] to Slot 0)", "[Turn 1][Rule 7.7.2.2] Player 0 plays 蜚・蜿ｯ蜿ｯ to Slot 1", "[Turn 1][OnPlay] Triggered for 蜚・蜿ｯ蜿ｯ: TRIGGER: ON_PLAY\nCOST: TAP_MEMBER (Optional)\nEFFECT: LOOK_AND_CHOOSE(4) {FILTER=\"SUM_HEART_TOTAL_GE=8, GROUP_ID=3, TYPE_LIVE\"} -> CARD_HAND, DISCARD_REMAINDER"])
+Trigger Queue Depth: 0
+Interaction Stack Depth: 1
+DEBUG: Interaction type: OPTIONAL
+--- ACTION: Choosing YES (WAIT) ---
+[DEBUG] BC_STEP: ip=0   TAP_MEMBER      | v:0    a:-9223372036854775808 s:4    (Tapped member)
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=10  LOOK_AND_CHOOSE | v:260  a:2147483761 s:1798 (Looked at cards and chose 1)
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=1
+DEBUG STATE: Phase=Response, InteractionStack="LOOK_AND_CHOOSE"
+P0: Score=0, HandLen=0, DeckLen=0, DiscardLen=0, EnergyLen=5, Stage=[558, -1, -1]
+P1: Score=0, HandLen=0, DeckLen=5, DiscardLen=0, EnergyLen=3, Stage=[-1, -1, -1]
+DEBUG: Current Interaction: LOOK_AND_CHOOSE
+DEBUG: Resolving interaction: LOOK_AND_CHOOSE
+[DEBUG] BC_STEP: ip=10  LOOK_AND_CHOOSE | v:260  a:2147483761 s:1798 (Looked at cards and chose 1)
+[DEBUG] auto_step: Phase=Main, Player=0
+--- AFTER LOOK_AND_CHOOSE ---
+DEBUG STATE: Phase=Main, InteractionStack="EMPTY"
+P0: Score=0, HandLen=1, DeckLen=3, DiscardLen=0, EnergyLen=5, Stage=[558, -1, -1]
+P1: Score=0, HandLen=0, DeckLen=5, DiscardLen=0, EnergyLen=3, Stage=[-1, -1, -1]
+SUCCESS: Ability flow verified for PL!SP-bp4-002-P
+test repro::special_mechanics_tests::test_selective_retrieval_natsumi ... ok
+test repro_bp4_002_p::test_repro_bp4_002_p_wait_flow ... ok
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:-9223372036854775808 s:6    (Moved 1 card(s) from Deck to Discard)
+[DEBUG] suspend_interaction: choice_type=SELECT_HAND_DISCARD, v_remaining=1, actions=2
+DEBUG: First interaction type: SELECT_HAND_DISCARD
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:-9223372036854775808 s:6    (Moved 1 card(s) from Deck to Discard)
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:4    a:0          s:0   
+[DEBUG] auto_step: Phase=Main, Player=0
+No TAP_O interaction - ability may have completed without targeting
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test repro::special_mechanics_tests::test_opponent_choice_penalty_maki ... ok
+test repro_bp3_002_p::tests::test_repro_bp3_002_p_tap_targeting ... ok
+[DEBUG] get_member_cost: card_id=1000, base_cost=0
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   LOOK_AND_CHOOSE | v:117441287 a:5          s:526086 (Looked at cards and chose 3)
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=3, actions=3
+=== VERBOSE STATE DUMP ===
+Phase: Response
+Current Player: 0
+Interaction Stack: [PendingInteraction { ctx: AbilityContext { player_id: 0, activator_id: 0, area_idx: 0, source_card_id: 1000, target_card_id: -1, target_slot: -1, choice_index: -1, v_accumulated: 0, selected_color: 0, program_counter: 0, ability_index: 0, v_remaining: 3, trigger_type: OnPlay, original_phase: Some(Main), repeat_count: 0, selected_cards: [] }, card_id: 1000, ability_index: 0, effect_opcode: 41, target_slot: 526086, choice_type: "LOOK_AND_CHOOSE", filter_attr: 62277025797, choice_text: "BP2-005", v_remaining: 3, original_phase: Main, original_current_player: 0, actions: [], execution_id: 1 }]
+Player 0:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [3101, 3102, 3103] (Tapped Mask: 0)
+  Stage: [1000, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=5)
+  Discard: []
+  Energy: [3101, 3102, 3103] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+Legal Choice Actions: [11002, 11003, 11004]
+=== VERBOSE STATE DUMP ===
+Phase: Response
+Current Player: 0
+Interaction Stack: [PendingInteraction { ctx: AbilityContext { player_id: 0, activator_id: 0, area_idx: 0, source_card_id: 1000, target_card_id: -1, target_slot: -1, choice_index: -1, v_accumulated: 0, selected_color: 0, program_counter: 0, ability_index: 0, v_remaining: 3, trigger_type: OnPlay, original_phase: Some(Main), repeat_count: 0, selected_cards: [] }, card_id: 1000, ability_index: 0, effect_opcode: 41, target_slot: 526086, choice_type: "LOOK_AND_CHOOSE", filter_attr: 62277025797, choice_text: "BP2-005", v_remaining: 3, original_phase: Main, original_current_player: 0, actions: [], execution_id: 1 }]
+Player 0:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [3101, 3102, 3103] (Tapped Mask: 0)
+  Stage: [1000, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=5)
+  Discard: []
+  Energy: [3101, 3102, 3103] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+test repro_color_filter::tests::test_look_and_choose_color_filter_parity ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test repro_flags::test_q29_baton_touch_restriction_same_turn ... ok
+--- Live Success for Card 431 ---
+[TEST_DEBUG] Requesting report for Card ID: 431
+test repro_flags::test_q68_cannot_live_state ... ok
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:1    a:-9223372036854775808 s:6    (Moved 1 card(s) from Deck to Discard)
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:2    a:0          s:0   
+[DEBUG] auto_step: Phase=Main, Player=0
+test repro_flags::test_q68_normal_live_without_restriction ... ok
+test repro_flags::test_q70_cannot_place_in_occupied_area_same_turn ... ok
+test repro_card_fixes::tests::test_hime_optional_discard_resumption ... ok
+test repro_flags::test_q72_can_set_live_cards_no_members ... ok
+test repro_flags::test_q79_area_available_after_activation_cost ... ok
+test repro_flags::test_q80_effect_can_place_after_activation_cost ... ok
+test repro_flags::test_q91_onlivestart_no_trigger_without_live ... ok
+test repro_flags::test_q71_can_place_after_member_moved_away ... ok
+[DEBUG] get_member_cost: card_id=30032, base_cost=0
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=0
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] auto_step: Phase=Main, Player=0
+test repro_optionality::tests::test_optional_tap_cost_accept ... ok
+test repro_card_fixes::tests::test_rurino_filter_masking_fix ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] trigger_abilities_from: trigger=OnLeaves, queue_len=0
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   MOVE_TO_DISCARD | v:0    a:0          s:4    (Moved 0 card(s) from Deck to Discard)
+[DEBUG] BC_STEP: ip=10  META_RULE       | v:1    a:0          s:4   
+[DEBUG] BC_STEP: ip=15  META_RULE       | v:1    a:1          s:4   
+[DEBUG] BC_STEP: ip=20  META_RULE       | v:1    a:0          s:4   
+[DEBUG] get_member_cost: card_id=30033, base_cost=0
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] auto_step: Phase=Main, Player=0
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:2    a:0          s:0   
+[DEBUG] suspend_interaction: choice_type=PAY_ENERGY, v_remaining=1, actions=2
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:1    a:0          s:0   
+[DEBUG] auto_step: Phase=Main, Player=0
+test repro_optionality::tests::test_trigger_even_if_already_tapped ... ok
+test repro_card_fixes::tests::test_pay_energy_high_cost_softlock_fix ... ok
+test repro_card_fixes::tests::test_card_275_sequential_interaction_resumption ... ok
+test repro_optionality::tests::test_optional_tap_cost_manual_choice ... ok
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   LOOK_AND_CHOOSE | v:259  a:2533359617 s:1798 (Looked at cards and chose 1)
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=3
+[DEBUG] BC_STEP: ip=0   LOOK_AND_CHOOSE | v:259  a:2533359617 s:1798 (Looked at cards and chose 1)
+[DEBUG] auto_step: Phase=Main, Player=0
+test repro_card_fixes::tests::test_card_528_movement_fix ... ok
+DEBUG [test]: Card 4332 found. Ability count: 2
+DEBUG [test]: Triggering OnLiveStart for 4332...
+test_repro_softlock_full_flow: PASSED
+test repro_softlock::tests::test_repro_softlock_full_flow ... ok
+[DEBUG] Condition Opcode: 203, Value: 1, Attr: 1102112096257, Slot: 0 (Area: 0), Source: 410
+Blades (solitary): 3
+[DEBUG] Condition Opcode: 203, Value: 1, Attr: 1102112096257, Slot: 0 (Area: 0), Source: 410
+Blades (with cost 11): 3
+[DEBUG] Condition Opcode: 203, Value: 1, Attr: 1102112096257, Slot: 0 (Area: 0), Source: 410
+Blades (with cost 13): 3
+Discard Actions (IDs): []
+Stage Actions (IDs): [8310]
+[TEST_DEBUG] Requesting report for Card ID: 126
+test repro_task::tests::test_ability_activation_zone_repro ... ok
+test repro_task::tests::test_cost_13_passive_repro ... ok
+DEBUG: Discard before recovery: [99]
+[DEBUG] BC_STEP: ip=0   RECOVER_MEMBER  | v:1    a:0          s:0    (Recovered 1 member(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=-1, s=0, a=0
+[DEBUG] handle_recovery scan: cid=99, type_matches=true, attr=0
+[DEBUG] handle_recovery: populated looked_cards with 1 cards
+[DEBUG] suspend_interaction: choice_type=RECOV_M, v_remaining=-1, actions=1
+test response_flow_tests::test_ability_pause_for_selection ... ok
+[DEBUG] BC_STEP: ip=0   RECOVER_MEMBER  | v:1    a:0          s:0    (Recovered 1 member(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=-1, s=0, a=0
+[DEBUG] handle_recovery scan: cid=99, type_matches=true, attr=0
+[DEBUG] handle_recovery: populated looked_cards with 1 cards
+[DEBUG] suspend_interaction: choice_type=RECOV_M, v_remaining=-1, actions=1
+[DEBUG] BC_STEP: ip=0   RECOVER_MEMBER  | v:1    a:0          s:0    (Recovered 1 member(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=0, s=0, a=0
+[DEBUG] handle_recovery: resolving choice=0, real_idx=Some(0), looked_cards=[99]
+[DEBUG] handle_recovery: chosen card 99
+test response_flow_tests::test_ability_resumption_after_choice ... ok
+[DEBUG] suspend_interaction: choice_type=OPTIONAL, v_remaining=-1, actions=2
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=1
+test response_flow_tests::test_nested_suspension_preserves_original_phase ... ok
+Slot 0 actions: [8310]
+Slot 2 actions: [8510]
+[DEBUG] BC_STEP: ip=0   TAP_MEMBER      | v:0    a:2          s:0    (Tapped member)
+[DEBUG] suspend_interaction: choice_type=TAP_M_SELECT, v_remaining=0, actions=1
+[DEBUG] BC_STEP: ip=0   TAP_MEMBER      | v:0    a:2          s:0    (Tapped member)
+[DEBUG] BC_STEP: ip=5   RECOVER_MEMBER  | v:1    a:0          s:0    (Recovered 1 member(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=-1, s=0, a=0
+[DEBUG] handle_recovery scan: cid=99, type_matches=true, attr=0
+[DEBUG] handle_recovery: populated looked_cards with 1 cards
+[DEBUG] suspend_interaction: choice_type=RECOV_M, v_remaining=-1, actions=1
+test response_flow_tests::test_nested_suspension_real_flow ... ok
+test repro_task::tests::test_multi_ability_encoding_slots ... ok
+[DEBUG] trigger_abilities_from: trigger=TurnStart, queue_len=0
+test response_flow_tests::test_nested_trigger_flow_simple ... ok
+test rule_alignment_tests::test_priority_p1_choice_selection ... ok
+test rule_alignment_tests::test_priority_p1_triggers_first ... ok
+test rule_alignment_tests::test_rule_8_3_16_all_or_nothing_failure ... ok
+test rule_alignment_tests::test_rule_8_4_13_first_player_change ... ok
+test rule_alignment_tests::test_rule_8_4_13_first_player_no_change_both_success ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+Found choice card: ID=31, ab_idx=1, choice_flags=2, choice_count=3
+Choice actions (4300-4599): []
+Non-choice actions (4000-4299): []
+test repro_task::tests::test_stage_choice_ability_generation ... ok
+Untapped: [8310]
+Tapped: [8310]
+test repro_task::tests::test_tapped_member_can_activate_non_tapself ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+Initial slot 0 actions: [8310]
+After consume at slot 0: []
+After baton touch to slot 1: []
+test repro_task::tests::test_once_per_turn_slot_movement ... ok
+Baseline stage actions: [8310]
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+Blocked stage: []
+Blocked discard: []
+test repro_task::tests::test_prevent_activate_blocks_all ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] auto_step: Phase=Rps, Player=1
+[DEBUG] auto_step: Phase=TurnChoice, Player=0
+[DEBUG] auto_step: Phase=MulliganP1, Player=0
+[DEBUG] handle_mulligan: current_player=0, phase=MulliganP1
+[DEBUG] execute_mulligan: player=0, discards_len=0, current_phase=MulliganP1
+[DEBUG] execute_mulligan: transition MulliganP1 -> MulliganP2
+[DEBUG] auto_step: Phase=MulliganP2, Player=1
+[DEBUG] handle_mulligan: current_player=1, phase=MulliganP2
+[DEBUG] execute_mulligan: player=1, discards_len=0, current_phase=MulliganP2
+[DEBUG] execute_mulligan: transition MulliganP2 -> Active
+[DEBUG] auto_step: Phase=Active, Player=0
+[DEBUG] trigger_abilities_from: trigger=TurnStart, queue_len=0
+[DEBUG] auto_step: Phase=Energy, Player=0
+[DEBUG] auto_step: Phase=Draw, Player=0
+[DEBUG] trigger_abilities_from: trigger=TurnStart, queue_len=0
+[DEBUG] auto_step: Phase=Main, Player=0
+test rule_parity_regression_tests::test_phase_auto_advance_from_mulligan ... ok
+test rule_parity_regression_tests::test_energy_initialization ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test stabilized_tests::verify_buff_logic ... ok
+test structural_tests::test_exile_zone_exists ... ok
+test structural_tests::test_play_member_from_hand_opcode_preserves_energy ... ok
+test rule_parity_regression_tests::test_yell_source_deck_parity ... ok
+test structural_tests::test_rule_10_5_3_orphan_energy_cleanup ... ok
+test tests::test_game_initialization ... ok
+test tests::test_play_member ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test tests::test_database_load ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test stabilized_tests::verify_full_win_condition ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 2 cards
+[DEBUG] handle_recovery: Start. choice=0, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: resolving choice=0, real_idx=Some(0), looked_cards=[121, 406]
+[DEBUG] handle_recovery: chosen card 121
+test stabilized_tests::verify_on_reveal_trigger ... ok
+test stabilized_tests::verify_manual_recovery_pattern ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test stabilized_tests::verify_performance_transition_history ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+test tie_breaker_tests::test_megaphone_scoring_accumulation ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] BC_STEP: ip=0   LOOK_AND_CHOOSE | v:3    a:2533359617 s:1    (Looked at cards and chose 0)
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=2
+test trigger_tests::test_look_and_choose_filter ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:0   
+[DEBUG] CALLING check_condition_opcode: op=202, a=0
+[DEBUG] Condition Opcode: 202, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+DEBUG [C_HAS_COLOR]: color_idx=0, stage=[3501, -1, -1]
+DEBUG [C_HAS_COLOR]: cid=3501, hearts=[0, 2, 0, 0, 0, 0, 0], color_idx=0, result=false
+      | [COND] BC_COND: ip=0   Condition 202 (val=0) -> passed=false, final=false
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:1    a:0          s:0   
+test untested_opcode_tests::test_condition_has_color_false ... ok
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:0    a:0          s:4    (Moved 0 card(s) from Deck to Discard)
+[DEBUG] BC_STEP: ip=5   RECOVER_MEMBER  | v:1    a:63050394783186945 s:458758 (Recovered 1 member(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery scan: cid=124, type_matches=true, attr=63050394783186945
+[DEBUG] handle_recovery scan: cid=121, type_matches=true, attr=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 2 cards
+[DEBUG] suspend_interaction: choice_type=RECOV_M, v_remaining=-1, actions=2
+[DEBUG] BC_STEP: ip=5   RECOVER_MEMBER  | v:1    a:63050394783186945 s:458758 (Recovered 1 member(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=0, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: resolving choice=0, real_idx=Some(0), looked_cards=[124, 121]
+[DEBUG] handle_recovery: chosen card 124
+[DEBUG] trigger_abilities_from: trigger=OnLiveSuccess, queue_len=1
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   ORDER_DECK      | v:3    a:0          s:0    (Reordered top 3 cards of deck)
+[DEBUG] suspend_interaction: choice_type=ORDER_DECK, v_remaining=-1, actions=3
+P0 success_lives: 1 (expected 2)
+P1 success_lives: 0 (expected 1)
+[DEBUG] trigger_abilities_from: trigger=OnLiveSuccess, queue_len=1
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   ORDER_DECK      | v:3    a:0          s:0    (Reordered top 3 cards of deck)
+[DEBUG] suspend_interaction: choice_type=ORDER_DECK, v_remaining=-1, actions=3
+SCENARIO 2: P0 success_lives: 2, P1 success_lives: 1
+[DEBUG] trigger_abilities_from: trigger=OnLiveSuccess, queue_len=1
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=5   ORDER_DECK      | v:3    a:0          s:0    (Reordered top 3 cards of deck)
+[DEBUG] suspend_interaction: choice_type=ORDER_DECK, v_remaining=-1, actions=3
+SCENARIO 3: P0 success_lives: 2, P1 success_lives: 2
+test_rule_8_4_7_1_success_cap_on_tie: PASSED (documenting current behavior)
+test trigger_tests::test_trigger_activated_eli ... ok
+test tie_breaker_tests::test_rule_8_4_7_1_success_cap_on_tie ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:0   
+[DEBUG] CALLING check_condition_opcode: op=228, a=0
+[DEBUG] Condition Opcode: 228, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: 3000
+      | [COND] BC_COND: ip=0   Condition 228 (val=0) -> passed=true, final=true
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:1    a:0          s:0   
+[DEBUG] BC_STEP: ip=10  DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+test untested_opcode_tests::test_condition_has_moved_true ... ok
+[DEBUG] BC_STEP: ip=0   FORMATION_CHANGE | v:1    a:2          s:4    (Moved member/Changed formation)
+[DEBUG] trigger_abilities_from: trigger=OnPositionChange, queue_len=0
+test untested_opcode_tests::test_formation_change_with_group_condition ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:0   
+[DEBUG] CALLING check_condition_opcode: op=202, a=0
+[DEBUG] Condition Opcode: 202, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: -1
+DEBUG [C_HAS_COLOR]: color_idx=0, stage=[3500, -1, -1]
+DEBUG [C_HAS_COLOR]: cid=3500, hearts=[2, 0, 0, 0, 0, 0, 0], color_idx=0, result=true
+      | [COND] BC_COND: ip=0   Condition 202 (val=0) -> passed=true, final=true
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:1    a:0          s:0   
+[DEBUG] BC_STEP: ip=10  DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] BC_STEP: ip=0   LOOK_AND_CHOOSE | v:1    a:0          s:1    (Looked at cards and chose 0)
+[DEBUG] suspend_interaction: choice_type=LOOK_AND_CHOOSE, v_remaining=1, actions=1
+[DEBUG] BC_STEP: ip=0   FORMATION_CHANGE | v:1    a:1          s:4    (Moved member/Changed formation)
+[DEBUG] trigger_abilities_from: trigger=OnPositionChange, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=OnPositionChange, queue_len=0
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:0   
+[DEBUG] CALLING check_condition_opcode: op=228, a=0
+[DEBUG] Condition Opcode: 228, Value: 0, Attr: 0, Slot: 0 (Area: 0), Source: 3000
+      | [COND] BC_COND: ip=0   Condition 228 (val=0) -> passed=false, final=false
+[DEBUG] BC_STEP: ip=5   JUMP_IF_FALSE   | v:1    a:0          s:0   
+test untested_opcode_tests::test_condition_has_color_true ... ok
+test tie_breaker_tests::test_rule_8_4_13_first_player_logic ... ok
+test trigger_tests::test_enrichment_look_and_choose ... ok
+test untested_opcode_tests::test_opcode_formation_change_basic ... ok
+test untested_opcode_tests::test_condition_has_moved_false ... ok
+[DEBUG] BC_STEP: ip=0   FORMATION_CHANGE | v:1    a:1          s:4    (Moved member/Changed formation)
+[DEBUG] trigger_abilities_from: trigger=OnPositionChange, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] trigger_abilities_from: trigger=OnPositionChange, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:3    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:2    a:0          s:1   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:4    a:0          s:2   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:2    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:2    a:0          s:0   
+test untested_opcode_tests::test_opcode_set_heart_cost_multiple_colors ... ok
+test untested_opcode_tests::test_opcode_set_heart_cost ... ok
+test untested_opcode_tests::test_opcode_reduce_live_set_limit_stacking ... ok
+test untested_opcode_tests::test_opcode_formation_change_triggers_position_change ... ok
+test verification_tests::test_deck_refresh_caps_at_60 ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+test untested_opcode_tests::test_opcode_prevent_set_to_success_pile ... ok
+[DEBUG] BC_STEP: ip=0   RECOVER_LIVE    | v:1    a:0          s:1    (Recovered 1 live card(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=-1, s=1, a=0
+[DEBUG] handle_recovery scan: cid=19, type_matches=false, attr=0
+[DEBUG] handle_recovery: populated looked_cards with 0 cards
+DEBUG: P0 Hearts: [10, 2, 1, 0, 1, 1, 1]
+DEBUG: Req: [9, 0, 1, 0, 0, 0, 2]
+DEBUG: Satisfies? true
+[DEBUG] trigger_abilities_from: trigger=OnLiveSuccess, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=0
+LOG: [Turn 1] Rule 8.4: --- LIVE RESULT PHASE ---
+LOG: [Turn 1] Rule 8.4.6: P0 Score: 1 (Success: true wins: true)
+LOG: [Turn 1] Rule 8.4.6: P1 Score: 0 (Success: false wins: false)
+LOG: [Turn 1] Rule 8.4.7: P0 obtained Success Live: Card ID 30047
+LOG: [Turn 1] Rule 8.4.10: Triggering [Turn End] abilities for Player 0.
+LOG: [Turn 1] Rule 8.4.10: Triggering [Turn End] abilities for Player 1.
+LOG: [Turn 2] Rule 8.4.13: P0 obtained Success Live. Now First Player.
+[DEBUG] BC_STEP: ip=0   PAY_ENERGY      | v:2    a:0          s:1   
+[DEBUG] BC_STEP: ip=0   RECOVER_LIVE    | v:1    a:0          s:1    (Recovered 1 live card(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=-1, s=1, a=0
+[DEBUG] handle_recovery scan: cid=19, type_matches=false, attr=0
+[DEBUG] handle_recovery scan: cid=55001, type_matches=true, attr=0
+[DEBUG] handle_recovery: populated looked_cards with 1 cards
+[DEBUG] suspend_interaction: choice_type=RECOV_L, v_remaining=-1, actions=1
+test untested_opcode_tests::test_prevent_success_pile_integration ... ok
+test verification_tests::test_pay_energy_auto_pays ... ok
+test verification_tests::test_recov_l_no_lives_returns_early ... ok
+test verification_tests::test_recov_l_only_shows_lives ... ok
+DEBUG: Adding Member ID 3003 to database.
+DEBUG: Member ID 3003 added to members_vec at index 3003.
+DEBUG: Adding Member ID 3900 to database.
+DEBUG: Member ID 3900 added to members_vec at index 3900.
+DEBUG: Adding Member ID 1900 to database.
+DEBUG: Member ID 1900 added to members_vec at index 1900.
+DEBUG: Adding Member ID 110 to database.
+DEBUG: Member ID 110 added to members_vec at index 110.
+[DEBUG] get_member_cost: card_id=110, base_cost=5
+test verification_tests::test_poppin_up_success_repro ... ok
+test wave2_tests::test_granted_ability_propagation_cost ... ok
+test wave2_tests::test_granted_ability_propagation_hearts ... ok
+[DB_LOAD] Loading CardDatabase from: "\\\\?\\C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json"
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:2    a:1          s:48  
+[DEBUG] CALLING check_condition_opcode: op=218, a=1
+[DEBUG] Condition Opcode: 218, Value: 2, Attr: 1, Slot: 48 (Area: 0), Source: 120
+      | [COND] BC_COND: ip=0   Condition 218 (val=2) -> passed=true, final=true
+[DEBUG] BC_STEP: ip=5   RECOVER_LIVE    | v:1    a:63050394783186945 s:458758 (Recovered 1 live card(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=-1, s=458758, a=63050394783186945
+[DEBUG] handle_recovery scan: cid=30001, type_matches=true, attr=63050394783186945
+[DEBUG] handle_recovery: populated looked_cards with 1 cards
+[DEBUG] suspend_interaction: choice_type=RECOV_L, v_remaining=-1, actions=1
+[DEBUG] BC_STEP: ip=5   RECOVER_LIVE    | v:1    a:63050394783186945 s:458758 (Recovered 1 live card(s) from Discard)
+[DEBUG] handle_recovery: Start. choice=0, s=458758, a=63050394783186945
+[DEBUG] handle_recovery: resolving choice=0, real_idx=Some(0), looked_cards=[30001]
+[DEBUG] handle_recovery: chosen card 30001
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:1    a:0          s:0   
+[DEBUG] trigger_abilities_from: trigger=OnReveal, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=OnReveal, queue_len=0
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:0    a:0          s:0   
+DEBUG: Adding Member ID 900 to database.
+DEBUG: Member ID 900 added to members_vec at index 900.
+DEBUG: Adding Member ID 110 to database.
+DEBUG: Member ID 110 added to members_vec at index 110.
+[DEBUG] trigger_abilities_from: trigger=OnLiveSuccess, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=TurnEnd, queue_len=0
+DEBUG: test_score: res JSON: Object {"lives": Array [Object {"passed": Bool(true), "score": Number(1000), "slot_idx": Number(0)}, Object {"passed": Bool(false), "score": Number(0), "slot_idx": Number(1)}, Object {"passed": Bool(false), "score": Number(0), "slot_idx": Number(2)}], "success": Bool(true), "total_score": Number(1500), "volume_icons": Number(0), "yell_score_bonus": Number(0)}
+test wave2_tests::test_opcode_reduce_yell_count ... ok
+test trigger_tests::test_trigger_on_play_honoka ... ok
+test wave2_tests::test_opcode_swap_area ... ok
+test wave2_tests::test_granted_ability_propagation_score ... ok
+[DEBUG] BC_STEP: ip=0   UNKNOWN         | v:2    a:0          s:0   
+DEBUG: Adding Member ID 99999 to database.
+DEBUG: Member ID 99999 added to members_vec at index 1695.
+DEBUG: Triggering OnLiveStart. Negated: [(99999, OnLiveStart, 1)]
+[DEBUG] trigger_abilities_from: trigger=OnLiveStart, queue_len=0
+[DEBUG] trigger_abilities_from: trigger=OnLiveStart, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:1    a:0          s:0    (Draw 1 card(s))
+test wave2_tests::test_opcode_negate ... ok
+test wave6_tests::tests::test_kimi_no_kokoro_prevention ... ok
+test wave6_tests::tests::test_live_success_with_reduction ... ok
+[TEST_DEBUG] Report generated: reports/card_431.md
+[DEBUG] trigger_abilities_from: trigger=OnLiveSuccess, queue_len=1
+[DEBUG] BC_STEP: ip=0   DRAW            | v:2    a:0          s:4    (Draw 2 card(s))
+[DEBUG] BC_STEP: ip=5   MOVE_TO_DISCARD | v:1    a:54043195528445953 s:393217 (Moved 1 card(s) from Deck to Discard)
+[DEBUG] suspend_interaction: choice_type=SELECT_HAND_DISCARD, v_remaining=1, actions=4
+=== VERBOSE STATE DUMP ===
+Phase: Response
+Current Player: 0
+Interaction Stack: [PendingInteraction { ctx: AbilityContext { player_id: 0, activator_id: 0, area_idx: 0, source_card_id: 431, target_card_id: -1, target_slot: -1, choice_index: -1, v_accumulated: 0, selected_color: 0, program_counter: 5, ability_index: 1, v_remaining: 1, trigger_type: None, original_phase: Some(Main), repeat_count: 0, selected_cards: [] }, card_id: 431, ability_index: 1, effect_opcode: 58, target_slot: 393217, choice_type: "SELECT_HAND_DISCARD", filter_attr: 54043195528445953, choice_text: "", v_remaining: 1, original_phase: Main, original_current_player: 0, actions: [], execution_id: 1 }]
+Player 0:
+  Score: 0
+  Hand: [100, 101, 202, 201]
+  Deck: (len=1)
+  Discard: []
+  Energy: [3101, 3102, 3103] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=5)
+  Discard: []
+  Energy: [3101, 3102, 3103] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+[DEBUG] BC_STEP: ip=5   MOVE_TO_DISCARD | v:1    a:54043195528445953 s:393217 (Moved 1 card(s) from Deck to Discard)
+[DEBUG] auto_step: Phase=Main, Player=0
+test repro_card_fixes::tests::test_card_bp2_024_discard_hand_fix ... ok
+[TEST_DEBUG] Report generated: reports/card_126.md
+--- Triggering OnPlay for Card 126 ---
+[DEBUG] trigger_abilities_from: trigger=OnPlay, queue_len=1
+[DEBUG] BC_STEP: ip=0   MOVE_TO_DISCARD | v:5    a:1          s:524289 (Moved 5 card(s) from Deck to Discard)
+[DEBUG] BC_STEP: ip=5   DISCARDED_CARDS | v:1    a:1          s:48  
+[DEBUG] CALLING check_condition_opcode: op=309, a=1
+[DEBUG] Condition Opcode: 309, Value: 1, Attr: 1, Slot: 48 (Area: 0), Source: 126
+      | [COND] BC_COND: ip=5   Discarded 1 card(s) this turn -> passed=false, final=false
+[DEBUG] BC_STEP: ip=10  DRAW            | v:1    a:0          s:4    (Draw 1 card(s))
+      | [SKIP] Opcode DRAW skipped (cond=false)
+=== VERBOSE STATE DUMP ===
+Phase: Main
+Current Player: 0
+Interaction Stack: []
+Player 0:
+  Score: 0
+  Hand: []
+  Deck: (len=5)
+  Discard: [10, 9, 8, 7, 6]
+  Energy: [3101, 3102, 3103] (Tapped Mask: 0)
+  Stage: [-1, 126, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=5)
+  Discard: []
+  Energy: [3101, 3102, 3103] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+test repro_discard_bug::tests::test_move_to_discard_deck_top_slot_1_repro ... ok
+[TEST_DEBUG] Report generated: reports/card_4684.md
+--- Starting Ability for Card 4684 ---
+=== VERBOSE STATE DUMP ===
+Phase: Response
+Current Player: 0
+Interaction Stack: [PendingInteraction { ctx: AbilityContext { player_id: 0, activator_id: 0, area_idx: -1, source_card_id: 4684, target_card_id: -1, target_slot: -1, choice_index: -1, v_accumulated: 0, selected_color: 0, program_counter: 0, ability_index: 0, v_remaining: 2, trigger_type: None, original_phase: Some(Setup), repeat_count: 0, selected_cards: [] }, card_id: 4684, ability_index: 0, effect_opcode: 30, target_slot: 0, choice_type: "SELECT_MODE", filter_attr: 0, choice_text: "{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}{{icon_energy.png|E}}{{icon_energy.png|E}}謾ｯ謇輔ｏ縺ｪ縺・°縺弱ｊ縲∬・蛻・・謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺上・n{{live_success.png|繝ｩ繧､繝匁・蜉滓凾}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}謾ｯ謇輔▲縺ｦ繧ゅｈ縺・ｼ壹Λ繧､繝悶・蜷郁ｨ医せ繧ｳ繧｢繧抵ｼ具ｼ代☆繧九・, v_remaining: 2, original_phase: Setup, original_current_player: 0, actions: [], execution_id: 1 }]
+Player 0:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [100, 101] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+DEBUG: Actual error message: Baton Touch is not allowed for this member
+test repro::repro_card_pb1_001_r::test_repro_pb1_001_r_softlock_fix ... ok
+test wave6_tests::tests::test_baton_touch_restriction ... ok
+[TEST_DEBUG] Report generated: reports/card_579.md
+[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:1    a:17297309809 s:268435504
+[DEBUG] CALLING check_condition_opcode: op=306, a=407000071
+[DEBUG] Condition Opcode: 306, Value: 1, Attr: 17297309809, Slot: 48 (Area: 1), Source: 579
+[DEBUG_FILTER] Comparing Hearts: mask=100, threshold=3, values=[0, 1, 1, 0, 0, 1, 0]
+[DEBUG_FILTER] Mask Sum: 1 vs threshold 3
+      | [COND] BC_COND: ip=0   Target must match filter -> passed=false, final=false
+[DEBUG] BC_STEP: ip=5   SELECT_MEMBER   | v:1    a:17297309809 s:268435460
+      | [SKIP] Opcode SELECT_MEMBER skipped (cond=false)
+[DEBUG] BC_STEP: ip=10  ADD_BLADES      | v:2    a:0          s:4    (Added +2 BLADE)
+      | [SKIP] Opcode ADD_BLADES skipped (cond=false)
+--- Test Case 2: Sufficient Hearts ---
+[DEBUG_FILTER] Comparing Hearts: mask=100, threshold=3, values=[0, 0, 3, 0, 0, 0, 0]
+[DEBUG_FILTER] Mask Sum: 3 vs threshold 3
+[DEBUG] BC_STEP: ip=0   SELECT_MEMBER   | v:1    a:17297309809 s:268435504
+[DEBUG] CALLING check_condition_opcode: op=306, a=407000071
+[DEBUG] Condition Opcode: 306, Value: 1, Attr: 17297309809, Slot: 48 (Area: 1), Source: 579
+[DEBUG_FILTER] Comparing Hearts: mask=100, threshold=3, values=[0, 1, 4, 0, 0, 1, 0]
+[DEBUG_FILTER] Mask Sum: 4 vs threshold 3
+      | [COND] BC_COND: ip=0   Target must match filter -> passed=true, final=true
+[DEBUG] BC_STEP: ip=5   SELECT_MEMBER   | v:1    a:17297309809 s:268435460
+[DEBUG] O_SELECT_MEMBER: Auto-selecting slot 0 based on area bits
+[DEBUG] BC_STEP: ip=10  ADD_BLADES      | v:2    a:0          s:4    (Added +2 BLADE)
+=== VERBOSE STATE DUMP ===
+Phase: Main
+Current Player: 0
+Interaction Stack: []
+Player 0:
+  Score: 0
+  Hand: []
+  Deck: (len=5)
+  Discard: []
+  Energy: [3101, 3102, 3103] (Tapped Mask: 0)
+  Stage: [567, 567, -1]
+  Hearts: [HeartBoard(196608), HeartBoard(0), HeartBoard(0)]
+  Blades: [2, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=5)
+  Discard: []
+  Energy: [3101, 3102, 3103] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+test repro::card_579_verification::test_card_579_ability_1_heart_filter ... ok
+[TEST_DEBUG] Report generated: reports/card_588.md
+--- Testing Kanon (588) ---
+=== VERBOSE STATE DUMP ===
+Phase: Response
+Current Player: 0
+Interaction Stack: [PendingInteraction { ctx: AbilityContext { player_id: 0, activator_id: 0, area_idx: 1, source_card_id: 588, target_card_id: -1, target_slot: -1, choice_index: -1, v_accumulated: 0, selected_color: 0, program_counter: 0, ability_index: -1, v_remaining: 2, trigger_type: None, original_phase: Some(Main), repeat_count: 0, selected_cards: [] }, card_id: 588, ability_index: -1, effect_opcode: 30, target_slot: 0, choice_type: "SELECT_MODE", filter_attr: 0, choice_text: "{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}{{icon_energy.png|E}}{{icon_energy.png|E}}謾ｯ謇輔ｏ縺ｪ縺・°縺弱ｊ縲∬・蛻・・謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺上・n{{live_success.png|繝ｩ繧､繝匁・蜉滓凾}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}謾ｯ謇輔▲縺ｦ繧ゅｈ縺・ｼ壹Λ繧､繝悶・蜷郁ｨ医せ繧ｳ繧｢繧抵ｼ具ｼ代☆繧九・, v_remaining: 2, original_phase: Main, original_current_player: 0, actions: [], execution_id: 1 }]
+Player 0:
+  Score: 0
+  Hand: [588]
+  Deck: (len=0)
+  Discard: []
+  Energy: [] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+test repro::special_mechanics_tests::test_selective_reveal_kanon ... ok
+[TEST_DEBUG] Report generated: reports/card_590.md
+--- Playing Mei (590) ---
+=== VERBOSE STATE DUMP ===
+Phase: Main
+Current Player: 0
+Interaction Stack: []
+Player 0:
+  Score: 0
+  Hand: []
+  Deck: (len=1)
+  Discard: []
+  Energy: [] (Tapped Mask: 0)
+  Stage: [20, 30, 590]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+Player 1:
+  Score: 0
+  Hand: []
+  Deck: (len=0)
+  Discard: []
+  Energy: [] (Tapped Mask: 0)
+  Stage: [-1, -1, -1]
+  Hearts: [HeartBoard(0), HeartBoard(0), HeartBoard(0)]
+  Blades: [0, 0, 0]
+===========================
+test repro::special_mechanics_tests::test_area_rotation_mei ... ok
+
+test result: ok. 242 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.32s
+
