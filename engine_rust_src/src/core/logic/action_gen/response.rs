@@ -138,6 +138,19 @@ impl ResponseGenerator {
                 }
                 return;
             }
+            ChoiceType::SelectStageEmptyBaton => {
+                for i in 0..3 {
+                    if player.stage[i] == -1 
+                        && (player.prevent_play_to_slot_mask & (1 << i) as u8) == 0 
+                        && player.baton_source_slots.contains(&i)
+                    {
+                        receiver.add_action(
+                            (ACTION_BASE_CHOICE + i as i32) as usize,
+                        );
+                    }
+                }
+                return;
+            }
             ChoiceType::SelectLiveSlot => {
                 for i in 0..3 {
                     // Usually there's no prevent_play for live slots, but we verify it's open

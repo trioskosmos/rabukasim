@@ -104,6 +104,19 @@ pub fn handle_meta_control(
                     flip_ctx.player_id = 1 - (p_idx as u8);
                 } else if s == 3 {
                     flip_ctx.player_id = 1;
+                } else {
+                    // Check filter_attr for target_player encoding (Bits 0-1)
+                    let target_player = ((a as u64) & 0x3) as u8;
+                    if target_player == 2 {
+                        // OPPONENT flag: flip to opponent (1 - current player_id)
+                        flip_ctx.player_id = 1 - (p_idx as u8);
+                    } else if target_player == 3 {
+                        // BOTH flag: always use opponent
+                        flip_ctx.player_id = 1;
+                    }
+                    if state.debug.debug_mode {
+                        println!("[DEBUG] Filter target_player: {}, flip_ctx.player_id: {}", target_player, flip_ctx.player_id);
+                    }
                 }
                 let choice_text = get_choice_text(db, ctx);
                 if suspend_interaction(

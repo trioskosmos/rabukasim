@@ -874,6 +874,8 @@ class Ability:
                 dest_raw = str(eff.params.get("destination") or "").upper()
                 if dest_raw == "STAGE_EMPTY":
                     slot_params["target_slot"] = 4
+                elif "BATON" in dest_raw:
+                    slot_params["is_baton_slot"] = True
 
             if eff.effect_type == EffectType.PLAY_LIVE_FROM_DISCARD:
                 attr = self._pack_filter_attr(eff)
@@ -1355,12 +1357,12 @@ class Ability:
         c_min = params.get("cost_ge")  # Only check explicit cost GE/LE params
         c_max = params.get("cost_le") or params.get("total_cost_le")
 
-        if c_min is None and "COST_GE=" in filter_str:
-            m = re.search(r"COST_GE=(\d+)", filter_str)
+        if c_min is None and ("COST_GE=" in filter_str or "COST_GE_" in filter_str):
+            m = re.search(r"COST_GE[=_](\d+)", filter_str)
             if m:
                 c_min = m.group(1)
-        if c_max is None and "COST_LE=" in filter_str:
-            m = re.search(r"COST_LE=(\d+)", filter_str)
+        if c_max is None and ("COST_LE=" in filter_str or "COST_LE_" in filter_str):
+            m = re.search(r"COST_LE[=_](\d+)", filter_str)
             if m:
                 c_max = m.group(1)
 

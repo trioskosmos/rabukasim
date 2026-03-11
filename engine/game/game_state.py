@@ -365,6 +365,7 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
         "pending_effects",
         "pending_choices",
         "rule_log",
+        "turn_history",
         "current_resolving_ability",
         "current_resolving_member",
         "current_resolving_member_id",
@@ -382,6 +383,8 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
         "fast_mode",
         "suppress_logs",
         "enable_loop_detection",
+        "next_execution_id",
+        "current_execution_id",
         "_trigger_buffers",
     )
 
@@ -457,6 +460,13 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
 
         self.state_history: List[int] = []
 
+        # Structured turn history for richer frontend rendering
+        self.turn_history: List[Dict[str, Any]] = []
+
+        # Execution id tracking for grouping related log entries
+        self.next_execution_id: int = 1
+        self.current_execution_id: Optional[int] = None
+
         self.loop_draw = False
 
         self.removed_cards: List[int] = []
@@ -468,19 +478,84 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
         if self.suppress_logs:
             return
 
-        # Add Turn and Phase context
+        # Use structured event logging so frontend can prefer metadata
+        try:
+            self.log_event(
+                "RULE",
+                description,
+                source_cid=-1,
+                ability_idx=-1,
+                player_id=self.current_player,
+                rule_ref=rule_id,
+                log_to_rule_log=True,
+            )
+        except Exception:
+            # Fallback to legacy string append if structured logging fails
+            phase_name = self.phase.name if hasattr(self.phase, "name") else str(self.phase)
+            entry = f"[Turn {self.turn_number}] [{phase_name}] [{rule_id}] {description}"
+            self.rule_log.append(entry)
+            if self.verbose:
+                print(f"RULE_LOG: {entry}")
 
-        phase_name = self.phase.name if hasattr(self.phase, "name") else str(self.phase)
+    def log_event(self, event_type: str, description: str, source_cid: int, ability_idx: int, player_id: int, rule_ref: Optional[str] = None, log_to_rule_log: bool = False):
+        """Record a structured event and optionally append to the legacy text rule_log.
 
-        entry = f"[Turn {self.turn_number}] [{phase_name}] [{rule_id}] {description}"
+        Mirrors the Rust-side `log_event` shape so frontend can use structured data.
+        """
+        if self.suppress_logs:
+            return
 
-        self.rule_log.append(entry)
+        # 1) Append to turn_history (cap to avoid unbounded growth)
+        if getattr(self, "turn_history", None) is None:
+            self.turn_history = []
 
-        # Also print to stdout for server console debugging
+        if len(self.turn_history) < 2000:
+            try:
+                ev = {
+                    "turn": int(self.turn_number),
+                    "phase": int(self.phase) if isinstance(self.phase, int) else getattr(self.phase, "value", str(self.phase)),
+                    "player_id": int(player_id) if player_id is not None else -1,
+                    "event_type": str(event_type),
+                    "source_cid": int(source_cid) if source_cid is not None else -1,
+                    "ability_idx": int(ability_idx) if ability_idx is not None else -1,
+                    "description": str(description),
+                    "rule_ref": rule_ref,
+                }
+            except Exception:
+                ev = {
+                    "turn": self.turn_number,
+                    "phase": str(self.phase),
+                    "player_id": player_id,
+                    "event_type": event_type,
+                    "source_cid": source_cid,
+                    "ability_idx": ability_idx,
+                    "description": description,
+                    "rule_ref": rule_ref,
+                }
+            # Attach execution id if present
+            if getattr(self, "current_execution_id", None) is not None:
+                ev["execution_id"] = int(self.current_execution_id)
+            self.turn_history.append(ev)
 
-        if self.verbose:
-            print(f"RULE_LOG: {entry}")
-            pass
+        # 2) Optionally also append a legacy text line for backward compatibility
+        if log_to_rule_log:
+            rule_prefix = f"[{rule_ref}] " if rule_ref else ""
+            full_msg = f"[Turn {self.turn_number}] {rule_prefix}{description}"
+            if self.rule_log is None:
+                self.rule_log = []
+            self.rule_log.append(full_msg)
+            if self.verbose:
+                print(f"RULE_LOG: {full_msg}")
+
+    def generate_execution_id(self) -> int:
+        eid = int(self.next_execution_id)
+        # wrap-around like unsigned 32-bit
+        self.next_execution_id = (self.next_execution_id + 1) & 0xFFFFFFFF
+        self.current_execution_id = eid
+        return eid
+
+    def clear_execution_id(self) -> None:
+        self.current_execution_id = None
 
     def _reset(self) -> None:
         """Reset state for pool reuse - avoids object allocation."""
@@ -1947,10 +2022,14 @@ def initialize_game(use_real_data: bool = True, deck_type: str = "normal") -> Ga
                 p.hand.append(p.main_deck.pop(0))
 
     # Log initial setup rules (Rule 6.2.1.5 and 6.2.1.7)
-    state.rule_log.append({"rule": "Rule 6.2.1.5", "description": "Both players draw 6 cards as starting hand."})
-    state.rule_log.append(
-        {"rule": "Rule 6.2.1.7", "description": "Both players place 3 cards from Energy Deck to Energy Zone."}
-    )
+    # Use structured events for initial setup so frontend can consume metadata
+    try:
+        state.log_event("RULE", "Both players draw 6 cards as starting hand.", source_cid=-1, ability_idx=-1, player_id=-1, rule_ref="Rule 6.2.1.5", log_to_rule_log=True)
+        state.log_event("RULE", "Both players place 3 cards from Energy Deck to Energy Zone.", source_cid=-1, ability_idx=-1, player_id=-1, rule_ref="Rule 6.2.1.7", log_to_rule_log=True)
+    except Exception:
+        # Fallback — append legacy dicts if structured logging not available
+        state.rule_log.append({"rule": "Rule 6.2.1.5", "description": "Both players draw 6 cards as starting hand."})
+        state.rule_log.append({"rule": "Rule 6.2.1.7", "description": "Both players place 3 cards from Energy Deck to Energy Zone."})
 
     # Set initial phase to Mulligan
 

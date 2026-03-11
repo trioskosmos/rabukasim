@@ -131,7 +131,27 @@ export async function initialize() {
         // Legacy alias for ui_modals.js
         window.onRoomUpdate = () => Network.triggerRoomUpdate ? Network.triggerRoomUpdate() : Rendering.render();
 
-        Network.setOpenDeckModalCallback(Modals.openDeckModal);
+        Network.setOpenDeckModalCallback((pid) => {
+            try {
+                // Only show the deck modal to the player who needs a deck
+                if (pid === undefined || pid === null) {
+                    Modals.openDeckModal();
+                    return;
+                }
+                if (State.perspectivePlayer === undefined || State.perspectivePlayer === null) {
+                    // If we don't yet know our perspective, avoid forcing the modal open for others.
+                    console.log('[Init] Deck modal requested but perspective unknown; skipping.');
+                    return;
+                }
+                if (pid === State.perspectivePlayer) {
+                    Modals.openDeckModal();
+                } else {
+                    console.log(`[Init] Deck modal requested for P${pid + 1}, not current perspective P${State.perspectivePlayer + 1}; ignoring.`);
+                }
+            } catch (e) {
+                console.error('Error handling openDeckModal callback', e);
+            }
+        });
         Modals.updateLanguage();
 
         // 2. Initial State Check (Important for re-joining)

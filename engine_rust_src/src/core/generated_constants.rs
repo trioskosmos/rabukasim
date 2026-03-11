@@ -295,6 +295,7 @@ pub const CHOICE_TAP_M_SELECT: i32 = 24;
 pub const CHOICE_MOVE_MEMBER_DEST: i32 = 25;
 pub const CHOICE_RECOV_L: i32 = 26;
 pub const CHOICE_RECOV_M: i32 = 27;
+pub const CHOICE_SELECT_STAGE_EMPTY_BATON: i32 = 28;
 
 // Extra Constants
 pub const FLAG_DRAW: u64 = 1u64;
@@ -372,6 +373,7 @@ pub const ZONE_MASK_HAND: i32 = 6;
 pub const ZONE_MASK_DISCARD: i32 = 7;
 pub const ZONE_LOOKED_CARDS: i32 = 90;
 pub const FILTER_ZONE_MASK_SHIFT: u64 = 53u64;
+pub const FLAG_BATON_SLOT_ONLY: u64 = 33554432u64;
 
 // Zone Types
 pub const ZONE_DEFAULT: i32 = 0;

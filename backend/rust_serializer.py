@@ -219,6 +219,7 @@ class RustGameStateSerializer:
                 "blade_hearts": list(m.blade_hearts),
                 "text": at,
                 "original_text": m.original_text,
+                "original_text_en": getattr(m, "original_text_en", ""),
                 "ability": m.original_text,
             }
         elif bid_str in self.live_db:
@@ -239,6 +240,7 @@ class RustGameStateSerializer:
                 "required_hearts": list(l.required_hearts),
                 "text": at,
                 "original_text": l.original_text,
+                "original_text_en": getattr(l, "original_text_en", ""),
                 "ability": l.original_text,
             }
         elif bid_str in self.energy_db:
@@ -776,13 +778,13 @@ class RustGameStateSerializer:
                 curr_p = gs.get_player(gs.current_player)
                 params = {"cards": list(curr_p.hand), "description": s.get("select_hand_play", "Select a card to play")}
             elif choice_type == "SELECT_MODE":
-                choice_type = "SELECT_OPTION"  # Frontend likely has this or SELECT_MODE handler
-                # Generate generic options since we don't have labels in engine
-                # We need num_options. It's not in params.
-                # Fallback to 2 options or rely on frontend?
-                # Actually, check if frontend supports SELECT_MODE.
-                # If not, map to SELECT_OPTION.
-                params = {"options": ["Option 1", "Option 2"], "description": "Select an effect"}  # Placeholder
+                # Don't overwrite params — preserve any options that are already in them.
+                # Count available options from legal mask range 570-579
+                if not params.get("options"):
+                    num_options = sum(1 for i in range(570, 580) if i < len(legal_mask) and legal_mask[i])
+                    params = {**params, "options": [f"Option {i + 1}" for i in range(num_options)], "description": s["select_mode"]}
+                # Keep type as SELECT_MODE for frontend handler
+                choice_type = "SELECT_MODE"
 
             source_name = params.get("source_member", s["card_effect"])
             source_img = None

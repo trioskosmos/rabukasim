@@ -2,22 +2,30 @@ import os
 import sys
 from pathlib import Path
 
-# Add project root to path
+# Add project root to path and prioritize it for engine_rust.pyd
 root_path = Path(__file__).resolve().parent.parent
-sys.path.append(str(root_path))
+if str(root_path) not in sys.path:
+    sys.path.insert(0, str(root_path))
 
 try:
     import engine_rust
+    print(f"DEBUG: engine_rust loaded from {engine_rust.__file__}")
+    # Verify attribute existence
+    db_test = engine_rust.PyCardDatabase("{}")
+    has_v = hasattr(db_test, 'is_vanilla')
+    print(f"DEBUG: PyCardDatabase has is_vanilla: {has_v}")
+    if not has_v:
+        print("WARNING: is_vanilla missing! Check if engine_rust.pyd in root is correct.")
 except ImportError:
-    sys.path.append(str(root_path / "alphazero" / "training"))
-    import engine_rust
+    print("Error: engine_rust not found in project root or path.")
+    sys.exit(1)
 
 
 def get_action_label(action_id, state, db):
-    if action_id == 0:
-        return "Pass / Done"
-    return f"Action {action_id}"
-
+    try:
+        return state.get_verbose_action_label(action_id, db)
+    except:
+        return f"Action {action_id}"
 
 def run_diagnostic():
     print("=" * 100)
@@ -59,7 +67,7 @@ def run_diagnostic():
         p1_lives = live_ids[3:6]
 
     state.initialize_game(p0_deck, p1_deck, [], [], p0_lives, p1_lives)
-
+    
     # 3. Simulate and Profile
     print("[3/3] Running game with DFS profiling...")
     print("-" * 100)
@@ -71,11 +79,23 @@ def run_diagnostic():
     total_time = 0.0
     dfs_turns = 0
 
+    print(f"DEBUG: Initial state - is_terminal: {state.is_terminal()}, turn: {state.turn}, phase: {state.phase_name} ({state.phase})")
+
+    import random
+
     while not state.is_terminal() and state.turn < 50 and move_count < 1000:
+        p_idx = state.current_player
+        player = state.get_player(p_idx)
+        hand_len = len(player.hand)
+        deck_len = len(player.deck)
+        live_len = sum(1 for cid in player.live_zone if cid > 0)
+        
+        print(f"DEBUG: Loop start - Move: {move_count}, Turn: {state.turn}, P{p_idx} Hand: {hand_len}, Deck: {deck_len}, Live: {live_len}, Phase: {state.phase_name} ({state.phase})")
         phase_name = state.phase_name
+        # print(f"DEBUG: Move {move_count}, Turn {state.turn}, Phase {phase_name}")
 
         if phase_name in ["Main", "LiveSet"]:
-            # plan_full_turn_with_stats returns (evals, best_seq, nodes, duration, breakdown)
+            # ... (DFS logic)
             evals, best_seq, nodes, duration, breakdown = state.plan_full_turn_with_stats(db)
 
             total_nodes += nodes
@@ -102,11 +122,24 @@ def run_diagnostic():
             state.auto_step(db)
         else:
             # Handle other phases (Mulligan, Energy, Draw, etc.)
-            legal_ids = state.get_legal_action_ids(db)
+            legal_ids = state.get_legal_action_ids()
             if not legal_ids:
-                state.step(0)
+                print(f"DEBUG: No legal actions in {phase_name} at move {move_count}")
+                try:
+                    state.step(0)
+                except Exception as e:
+                    print(f"DEBUG: Step(0) failed in {phase_name}: {e}")
+                    break
             else:
-                state.step(legal_ids[0])
+                if phase_name == "Rps":
+                    aid = random.choice(legal_ids)
+                else:
+                    aid = legal_ids[0]
+
+                label = get_action_label(aid, state, db)
+                if move_count < 20 or move_count % 50 == 0:
+                    print(f"DEBUG: Move {move_count} ({phase_name}): {label}")
+                state.step(aid)
             move_count += 1
             state.auto_step(db)
 

@@ -1564,8 +1564,13 @@ def do_action():
                             {"success": False, "error": f"Not your turn! It's P{gs.current_player + 1}'s turn."}
                         ), 403
             elif game_mode == "pve":
-                # In PvE, if it's AI turn (P1), don't allow manual action from UI
-                if gs.current_player == 1:
+                # In PvE, normally block manual actions when it's the AI player's turn (P1).
+                # However, special setup phases like RPS and TurnChoice allow both players
+                # to submit choices independently — permit those here.
+                is_special = (gs.phase in (Phase.RPS, Phase.TurnChoice)) or (
+                    hasattr(gs.phase, "name") and gs.phase.name in ("RPS", "TurnChoice")
+                )
+                if gs.current_player == 1 and not is_special:
                     return jsonify({"success": False, "error": "AI is playing, please wait."}), 403
 
             is_legal = legal_mask[action_id]

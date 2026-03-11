@@ -144,6 +144,8 @@ pub struct PlayerState {
     pub discarded_this_turn: u16,
     #[serde(default)]
     pub baton_source_ids: SmallVec<[i32; 4]>,
+    #[serde(default)]
+    pub baton_source_slots: SmallVec<[usize; 4]>,
 }
 
 impl Default for PlayerState {
@@ -210,6 +212,7 @@ impl Default for PlayerState {
             activated_member_group_mask: 0,
             discarded_this_turn: 0,
             baton_source_ids: SmallVec::new(),
+            baton_source_slots: SmallVec::new(),
         }
     }
 }
@@ -308,6 +311,7 @@ impl PlayerState {
 
         self.baton_touch_count = 0;
         self.baton_source_ids.clear();
+        self.baton_source_slots.clear();
         self.blade_buffs = [0; 3];
         self.blade_overrides = [-1; 3];
         self.heart_buffs = [HeartBoard::default(); 3];
@@ -429,6 +433,7 @@ impl PlayerState {
         self.activated_member_group_mask = other.activated_member_group_mask;
         self.discarded_this_turn = other.discarded_this_turn;
         copy_smallvec!(self.baton_source_ids, other.baton_source_ids);
+        copy_smallvec!(self.baton_source_slots, other.baton_source_slots);
     }
     pub fn is_energy_tapped(&self, idx: usize) -> bool {
         if idx >= 64 {

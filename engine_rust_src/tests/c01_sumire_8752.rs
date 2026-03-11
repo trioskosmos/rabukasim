@@ -49,7 +49,7 @@ fn test_sumire_8752_repro() {
     let p1 = 0;
     state.core.players[p1].stage[1] = sumire_id;
     state.core.players[p1].baton_touch_count = 2;
-    state.core.players[p1].baton_touch_source_bitmask = 1 << 3;
+    state.core.players[p1].baton_source_slots.push(1); // Baton touched slot 1
     state.core.players[p1].discard.push(cheap_liella_id);
     for i in 0..10 { state.core.players[p1].deck.push(100 + i); }
 
@@ -71,7 +71,7 @@ fn test_sumire_8752_repro() {
     if let Some(pending) = state.core.interaction_stack.last() {
         println!("Opcode: {}, ChoiceType: {:?}", pending.effect_opcode, pending.choice_type);
         assert_eq!(pending.effect_opcode, 63);
-        assert_eq!(pending.choice_type, ChoiceType::SelectDiscardPlay);
+        assert_eq!(pending.choice_type, ChoiceType::SelectStageEmptyBaton);
     } else {
         panic!("Should have a pending interaction for PLAY_MEMBER_FROM_DISCARD");
     }

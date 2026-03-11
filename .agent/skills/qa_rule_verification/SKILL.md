@@ -8,7 +8,7 @@ description: Unified workflow for extracting official Q&A data, maintaining the 
 This skill provides a standardized approach to ensuring the LovecaSim engine aligns with official "Love Live! School Idol Collection" Q&A rulings.
 
 ## 1. Components
-- **Data Source**: `data/qa_data.json` (Managed by `tools/qa_scraper.py`).
+- **Data Source**: `data/qa_data.json`.
 - **Card Text / Translation Inputs**: `data/consolidated_abilities.json` and the compiler/parser under `compiler/`.
 - **Matrix**: [.agent/skills/qa_rule_verification/qa_test_matrix.md](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/.agent/skills/qa_rule_verification/qa_test_matrix.md) (Automated via `tools/gen_full_matrix.py`).
 - **Test Suites**:
@@ -293,3 +293,292 @@ fn test_q50_both_success_same_score_order_unchanged() {
 - **Negative Tests**: When the official answer is "No", ensure the engine rejects or doesn't apply the action/condition
 - **State Snapshots**: For complex phases (Performance, LiveResult), always set up `ui.performance_results` snapshots that the engine trusts
 - **Fidelity Scoring**: Target tests with score >= 4 to ensure coverage counts in the matrix
+
+## 7. Troubleshooting Common Test Failures
+
+### Compilation Errors
+
+#### Error: `cannot find function 'load_real_db'`
+**Cause**: Missing import or function not exposed in test scope.
+**Fix**: Ensure `qa_verification_tests.rs` is in the correct module path and has:
+```rust
+use crate::prelude::*; // Brings in load_real_db()
+use crate::qa::*;      // Brings in test utilities
+```
+
+#### Error: `PlayerState` field does not exist
+**Cause**: Field name changed or does not exist in the current schema.
+**Fix**: 
+1. Check `engine_rust_src/src/state.rs` for actual field names
+2. Use `cargo doc --open` and navigate to `PlayerState` struct
+3. Common renames: `stage_members` → `stage`, `live_cards` → `live_zone`
+
+### Runtime Panics
+
+#### Panic: `index out of bounds: the len is 3 but the index is 5`
+**Cause**: Attempting to access a fixed-size array beyond its bounds.
+**Fix**: 
+```rust
+// Before (unsafe):
+state.players[0].stage[5] = card_id;  // stage only has 3 slots
+
+// After (correct):
+state.players[0].stage[0] = card_id;  // Valid indices: 0, 1, 2
+```
+
+#### Panic: `called 'Option::unwrap()' on a 'None' value`
+**Cause**: Card lookup failed (card number not found in database).
+**Fix**:
+```rust
+// Use card_finder.py to verify the card number exists:
+// python tools/card_finder.py "PL!N-bp1-012-R"
+
+// Use unwrap_or() with a known fallback:
+let card_id = db.id_by_no("PL!N-bp1-012-R＋")
+    .unwrap_or_else(|| {
+        eprintln!("[TEST] Card ID not found, using fallback");
+        0
+    });
+```
+
+### Assertion Failures
+
+#### Assertion: `assertion failed: state.players[0].live_zone[0] == card_id`
+**Cause**: Card was not placed in the expected zone; engine may have discarded or rejected it.
+**Fix**:
+1. Add debug output to trace state changes:
+```rust
+println!("[DEBUG] Before: live_zone = {:?}", state.players[0].live_zone);
+state.do_live_result(&db);
+println!("[DEBUG] After: live_zone = {:?}", state.players[0].live_zone);
+```
+2. Check if the card is in discard or a different zone:
+```rust
+let in_discard = state.players[0].discard.contains(&card_id);
+assert!(!in_discard, "Card was discarded instead");
+```
+
+#### Assertion: `assertion failed: state.players[0].score == expected_score`
+**Cause**: Scoring calculation incorrect; card ability text may override base scoring.
+**Fix**:
+1. Verify card ability in `data/consolidated_abilities.json`:
+```bash
+python tools/card_finder.py "Q89" | grep -A5 "name.*description"
+```
+2. Check `data/cards_compiled.json` for the compiled bytecode of the card:
+```bash
+cat data/cards_compiled.json | jq '.[] | select(.id == 1234) | .bytecode'
+```
+
+### Matrix Inconsistencies
+
+#### Issue: Matrix shows ✅ but test actually fails
+**Cause**: Test was passing before, but recent changes broke it; or matrix cache is stale.
+**Fix**:
+```bash
+# Rebuild the matrix from scratch:
+python tools/gen_full_matrix.py --rebuild
+
+# Run all tests to identify failures:
+cargo test --lib qa_verification_tests 2>&1 | grep -E "test.*FAILED|error"
+```
+
+#### Issue: Matrix shows ℹ️ (no test) for a ruled QA, but I wrote a test
+**Cause**: Test name does not match naming convention or is in the wrong file.
+**Fix**: Ensure:
+1. Test filename follows: `test_q{ID}_{descriptor}`
+2. Test is located in `engine_rust_src/src/qa/batch_card_specific.rs` or `qa_verification_tests.rs`
+3. Re-run: `python tools/gen_full_matrix.py --rebuild`
+
+## 8. Integration with Continuous Verification
+
+### Pre-Commit Hook
+To verify test integrity before committing changes:
+
+```bash
+# Run lightweight checks:
+cargo test --lib qa_verification_tests --quiet
+python tools/gen_full_matrix.py --validate
+
+# If either fails, abort commit with:
+echo "FAILED: QA tests did not pass" && exit 1
+```
+
+### CI Pipeline Integration
+When pushing to a repository, the following workflow runs automatically:
+1. **Compile Rust Tests**: `cargo test --lib qa_verification_tests --no-run`
+2. **Run QA Tests**: `cargo test --lib qa_verification_tests -- --nocapture`
+3. **Regenerate Matrix**: `python tools/gen_full_matrix.py`
+4. **Check Coverage**: Abort if coverage drops below committed minimum (e.g., 95/237)
+
+### Local Verification Command
+Before submitting QA test work, run:
+```bash
+# Full validation suite
+python tools/gen_full_matrix.py && \
+cargo test --lib qa_verification_tests --nocapture && \
+echo "✅ All QA checks passed"
+```
+
+## 9. Common Pitfalls & Prevention
+
+### Pitfall 1: "Manual Setup is Faster than Engine Calls"
+**Why It's Wrong**: Bypassing the engine prevents discovering bugs in the actual game flow.
+**Prevention**:
+- Rule #1: If the test doesn't call `do_*()` or `play_*()`, it's not testing the engine.
+- Refactor any test that manually sets state variables without corresponding engine calls.
+
+### Pitfall 2: "This Test Passes, So the Rule Must Be Implemented"
+**Why It's Wrong**: A passing test may exercise a shortcut rather than the real code path.
+**Prevention**:
+- Use `cargo test qa_verification_tests -- --nocapture` to see all debug output.
+- Add `println!("[Q{ID}] Engine path taken: ...")` assertions in your test.
+- Verify the actual engine function was invoked by grepping the source.
+
+### Pitfall 3: "Using Simplified Card IDs (My Test Uses Card 0)"
+**Why It's Wrong**: Tests must exercise the real bytecode; simplified cards may not have the ability text.
+**Prevention**:
+- **ALWAYS** use `load_real_db()`.
+- Look up the real card ID via `db.id_by_no("CARD_NUMBER")`.
+- If a card number doesn't exist, report it as a data bug, not a test problem.
+
+### Pitfall 4: "The QA Says 'Yes', But I Don't Know How to Test It"
+**Why It's Wrong**: Uncertainty is resolved by understanding the engine architecture, not by skipping the test.
+**Prevention**:
+- Examine existing tests in `batch_card_specific.rs` that cover similar rules.
+- Use `card_finder.py` to identify real cards that trigger the rule.
+- Ask: "What engine state change should happen if this rule is true?"
+- Build a minimal test around that state change.
+
+### Pitfall 5: "Score Calculation Test Always Passes Because I'm Just Checking the Numbers"
+**Why It's Wrong**: If you don't call the scoring engine, you're not testing scoring.
+**Prevention**:
+- Call `do_live_result()` or the appropriate scoring phase function.
+- Verify both the intermediate state (`ui.performance_results`) and the final score.
+
+## 10. Hands-On Command Reference
+
+### Discovering Q&A Information
+```bash
+# Find all Q&A rulings mentioning "baton"
+python tools/card_finder.py "baton"
+
+# Find Q147 specifically
+python tools/card_finder.py "Q147"
+
+# List related cards for Q89
+python tools/card_finder.py "Q89" | grep -i "related\|card_no"
+```
+
+### Test Execution & Debugging
+```bash
+# Run a single test with output
+cargo test --lib qa_verification_tests::test_q147_* -- --nocapture
+
+# Run all Q147 variants
+cargo test --lib qa_verification_tests test_q147 -- --nocapture
+
+# Run and capture output to file for analysis
+cargo test --lib qa_verification_tests -- --nocapture >> qa_test_output.log 2>&1
+
+# Show all panic messages (no truncation)
+cargo test --lib qa_verification_tests -- --nocapture --diag-format=short 2>&1 | head -200
+```
+
+### Matrix Operations
+```bash
+# Generate matrix with detailed coverage breakdown
+python tools/gen_full_matrix.py --verbose
+
+# Force rebuild from source (ignores cache)
+python tools/gen_full_matrix.py --rebuild --verbose
+
+# Export matrix in JSON for parsing
+python tools/gen_full_matrix.py --output-json
+
+# Compare coverage before/after a change
+python tools/gen_full_matrix.py > before.txt
+# ... make your changes ...
+python tools/gen_full_matrix.py > after.txt
+diff before.txt after.txt
+```
+
+### Interactive Testing (God Mode)
+```bash
+# Start interactive CLI with full state injection
+python tools/play_interactive.py exec
+
+# Within the REPL:
+# >> state.players[0].score = 999
+# >> state.draw_card(42)
+# >> state.do_live_result(db)
+# >> print(state.players[0].discard)
+```
+
+## 11. Decision Tree: Should I Write a Test?
+
+```
+START: You found an unmapped QA ruling (marked ℹ️ in matrix)
+  │
+  ├─ Does it reference a specific card number or ability?
+  │   ├─ YES → Look up card via card_finder.py
+  │   │         ├─ Can I resolve it to a real card? → YES: Continue to "Define Setup"
+  │   │         └─ NO: Mark as "Data Gap" and skip (report separately)
+  │   │
+  │   └─ NO (ruling is generic/procedural)
+  │       └─ Example: "How are ties broken?" → Jump to "Define Setup" with db.get_rules()
+  │
+  └─ [Define Setup] What engine state must be true for this ruling to apply?
+      ├─ Can I construct it via player zone assignments (stage, live, hand)?
+      │   └─ YES → Proceed to "Choose Engine Path"
+      │
+      └─ NO (requires specific game phase or event)
+          ├─ Is it during LiveResult phase?
+          │   └─ YES: Use do_live_result() + finalize_live_result()
+          ├─ Is it during Performance?
+          │   └─ YES: Use handle_performance_phase()
+          └─ Other → Consult existing test patterns in batch_card_specific.rs
+  
+      [Choose Engine Path]
+      ├─ Call the MOST SPECIFIC engine function for this ruling
+      ├─ Example: For member placement, call play_member() not a general step()
+      └─ If unsure, grep for similar QA IDs in batch_card_specific.rs
+  
+      [Write Test]
+      └─ Document: QA ID, original text, ability text, expected result
+      └─ Assert: Final state matches QA answer
+      └─ Verify: test_q{ID}_* naming and module placement
+      └─ Run: cargo test --lib qa_verification_tests::test_q* -- --nocapture
+      
+  [After Running]
+  ├─ Test PASSED
+  │   └─ Run: python tools/gen_full_matrix.py
+  │   └─ Confirm: ℹ️ changed to ✅
+  │   └─ Done!
+  │
+  └─ Test FAILED
+      ├─ Is it a missing import or function not found?
+      │   └─ YES: Check compiler/prelude sections
+      ├─ Is it an assertion failure after engine call?
+      │   └─ YES: Review troubleshooting section 7
+      └─ Is the test hanging?
+          └─ Likely infinite loop in engine; add timeout and debug
+```
+
+## 12. Session Workflow
+
+### 1-Hour Focused Session (Single QA Implementation)
+1. **Pick Target**: Choose one unmapped QA from matrix (5 min)
+2. **Research**: Use `card_finder.py` to understand scope (5 min)
+3. **Write Test**: Implement in `batch_card_specific.rs` (30 min)
+4. **Debug**: Run and fix test errors (15 min)
+5. **Verify**: Re-run matrix and document findings (5 min)
+
+### Multi-Hour Batch Session (5-10 QAs)
+1. **Identify Cluster**: Pick 5-10 related unmapped QAs (e.g., all member placement rules) (10 min)
+2. **Plan Order**: Sequence by dependency (foundational first) (5 min)
+3. **Implement Batch**: Write all tests, minimal documentation (60–90 min)
+4. **Test**: Run full suite, fix compilation errors (15 min)
+5. **Matrix Update**: Single `gen_full_matrix.py` run covers all (2 min)
+6. **Document**: Record any engine/data issues discovered (10 min)
+7. **Summary**: Update `SKILL.md` or session notes with findings (5 min)

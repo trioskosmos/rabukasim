@@ -35,21 +35,37 @@ pub fn handle_draw(
     } else {
         v as u32
     };
-    let target_p = if s == 2 {
+    let target_p = if instr.s.is_opponent {
         1 - p_idx
-    } else if s == 3 {
-        0
     } else {
         p_idx
     };
 
     match op {
         O_DRAW => {
-            if s == 3 {
-                state.draw_cards(0, count);
-                state.draw_cards(1, count);
-            } else {
-                state.draw_cards(target_p, count);
+            // Draw to hand (or specified destination zone)
+            for _ in 0..count {
+                if state.core.players[target_p].deck.is_empty() {
+                    state.resolve_deck_refresh(target_p);
+                }
+                if let Some(card_id) = state.core.players[target_p].deck.pop() {
+                    let t = state.turn as i32;
+                    // Route to destination zone based on instr.s.dest_zone
+                    match instr.s.dest_zone {
+                        Zone::Hand => {
+                            state.core.players[target_p].hand.push(card_id);
+                            state.core.players[target_p].hand_added_turn.push(t);
+                        }
+                        Zone::Discard => {
+                            state.core.players[target_p].discard.push(card_id);
+                        }
+                        _ => {
+                            // Default to hand if zone is not explicitly specified
+                            state.core.players[target_p].hand.push(card_id);
+                            state.core.players[target_p].hand_added_turn.push(t);
+                        }
+                    }
+                }
             }
             state.log_event(
                 "EFFECT",

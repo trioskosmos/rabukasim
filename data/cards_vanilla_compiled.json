@@ -1,0 +1,51 @@
+{
+  "member_db": {},
+  "live_db": {},
+  "energy_db": {
+    "888": {
+      "card_id": 888,
+      "card_no": "energy_db",
+      "name": "Energy",
+      "img_path": "",
+      "ability_text": "",
+      "original_text": "",
+      "original_text_en": "",
+      "rare": "N"
+    },
+    "4984": {
+      "card_id": 4984,
+      "card_no": "live_db",
+      "name": "Energy",
+      "img_path": "",
+      "ability_text": "",
+      "original_text": "",
+      "original_text_en": "",
+      "rare": "N"
+    },
+    "9080": {
+      "card_id": 9080,
+      "card_no": "member_db",
+      "name": "Energy",
+      "img_path": "",
+      "ability_text": "",
+      "original_text": "",
+      "original_text_en": "",
+      "rare": "N"
+    },
+    "13176": {
+      "card_id": 13176,
+      "card_no": "meta",
+      "name": "Energy",
+      "img_path": "",
+      "ability_text": "",
+      "original_text": "",
+      "original_text_en": "",
+      "rare": "N"
+    }
+  },
+  "meta": {
+    "version": "1.0",
+    "source": "data/cards_vanilla.json",
+    "source_hash": "846972160c09694dcc38ff98f3941e5cd69a0b735b8fefb0862b69a8c69c411c"
+  }
+}

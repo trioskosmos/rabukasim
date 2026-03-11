@@ -679,7 +679,8 @@ pub fn handle_member_state(
                 (a as u64, t_idx)
             };
 
-            let empty_slot_only = ((s as u64) & FLAG_EMPTY_SLOT_ONLY) != 0;
+             let empty_slot_only = ((s as u64) & FLAG_EMPTY_SLOT_ONLY) != 0;
+             let baton_slot_only = ((s as u64) & FLAG_BATON_SLOT_ONLY) != 0;
 
             // Total Cost detection:
             // Support modern bit 60 (compare_accumulated)
@@ -774,7 +775,9 @@ pub fn handle_member_state(
                     target_ctx.v_accumulated = ctx.v_accumulated;
                     target_ctx.choice_index = -1; // CRITICAL FIX: Reset choice_index so SelectStage doesn't reuse the card index
 
-                    let choice_type = if empty_slot_only {
+                    let choice_type = if baton_slot_only {
+                        ChoiceType::SelectStageEmptyBaton
+                    } else if empty_slot_only {
                         ChoiceType::SelectStageEmpty
                     } else {
                         ChoiceType::SelectStage
@@ -852,16 +855,9 @@ pub fn handle_member_state(
                         state.register_played_member(target_p_idx, card_id, db);
                         state.players[target_p_idx].prevent_play_to_slot_mask |= 1 << slot_idx;
 
-                        let new_ctx = AbilityContext {
-                            source_card_id: card_id,
-                            player_id: target_p_idx as u8,
-                            activator_id: target_p_idx as u8,
-                            area_idx: slot_idx as i16,
-                            v_accumulated: ctx.v_accumulated,
-                            v_remaining: ctx.v_remaining,
-                            ..Default::default()
-                        };
-                        state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
+                        // Cards placed in WAIT state from discard should not trigger OnPlay abilities
+                        // since they were not actually "played" - they were summoned in a tapped state.
+                        // The Rule 8.8.1 states: "Members summoned in WAIT state do not trigger abilities."
                     }
                 }
 

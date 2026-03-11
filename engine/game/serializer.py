@@ -693,6 +693,7 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
         "legal_actions": legal_actions,
         "pending_choice": pending_choice,
         "rule_log": gs.rule_log[-200:],  # Truncate log for transport
+        "turn_history": getattr(gs, 'turn_history', [])[-200:],
         "performance_results": getattr(gs, "performance_results", {}),
         "last_performance_results": getattr(gs, "last_performance_results", {}),
         "performance_history": getattr(gs, "performance_history", []),

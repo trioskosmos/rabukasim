@@ -3,6 +3,7 @@ import * as i18n from '../i18n/index.js';
 import { Tooltips } from '../ui_tooltips.js';
 import { LogFilter } from '../utils/LogFilter.js';
 import { PerformanceMonitor } from '../utils/PerformanceMonitor.js';
+import { LogViewerModal } from '../modals/LogViewerModal.js';
 
 const Phase = {
     RPS: 0, SETUP: 1, MULLIGAN_P1: 2, MULLIGAN_P2: 3,
@@ -313,18 +314,24 @@ export const LogRenderer = {
 
         const headerDiv = document.createElement('div');
         headerDiv.className = 'log-entry ability group-header';
+        headerDiv.setAttribute('data-group-id', group.id);
 
         const headerContent = LogRenderer.formatLogEntry(headerEntry, group.turnPrefix, currentLang, showFriendlyAbilities);
         const enrichedHeader = Tooltips.enrichAbilityText(headerContent);
 
+        // Add modal viewer button for expanded reading
+        const modalButton = `<button class="log-modal-btn" title="View in expanded window" onclick="event.stopPropagation(); LogViewerModal.open('${group.id}')">◻</button>`;
+
         headerDiv.innerHTML = `
             <div class="log-entry-icon"></div>
             <div class="log-entry-content">${enrichedHeader}</div>
-            <div class="log-group-toggle">▼</div>
+            ${detailEntries.length > 0 ? '<div class="log-group-toggle">▼</div>' : ''}
+            ${modalButton}
         `;
 
         blockDiv.appendChild(headerDiv);
 
+        // Headers are now non-clickable - use modal button for expanded view
         if (detailEntries.length > 0) {
             const detailsContainer = document.createElement('div');
             detailsContainer.className = 'log-group-details';
@@ -341,11 +348,6 @@ export const LogRenderer = {
                 detailsContainer.appendChild(detailDiv);
             });
             blockDiv.appendChild(detailsContainer);
-
-            headerDiv.onclick = () => {
-                const isCollapsed = detailsContainer.classList.toggle('collapsed');
-                blockDiv.classList.toggle('open', !isCollapsed);
-            };
         }
 
         return blockDiv;

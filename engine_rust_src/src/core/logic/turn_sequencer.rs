@@ -3,6 +3,59 @@ use crate::core::enums::Phase;
 use crate::core::{ACTION_BASE_HAND, ACTION_BASE_LIVESET};
 use std::time::Instant;
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
+use once_cell::sync::Lazy;
+use std::fs;
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct WeightsConfig {
+    pub board_presence: f32,
+    pub blades: f32,
+    pub hearts: f32,
+    pub saturation_bonus: f32,
+    pub energy_penalty: f32,
+    pub live_ev_multiplier: f32,
+    pub uncertainty_penalty_pow: f32,
+    pub liveset_placement_bonus: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SearchConfig {
+    pub max_dfs_depth: usize,
+    pub mc_trials: usize,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SequencerConfig {
+    pub weights: WeightsConfig,
+    pub search: SearchConfig,
+}
+
+pub static CONFIG: Lazy<SequencerConfig> = Lazy::new(|| {
+    let path = "sequencer_config.json";
+    if let Ok(content) = fs::read_to_string(path) {
+        if let Ok(config) = serde_json::from_str(&content) {
+            return config;
+        }
+    }
+    // Default fallback if file missing or invalid
+    SequencerConfig {
+        weights: WeightsConfig {
+            board_presence: 1.5,
+            blades: 1.5,
+            hearts: 1.0,
+            saturation_bonus: 3.0,
+            energy_penalty: 0.5,
+            live_ev_multiplier: 15.0,
+            uncertainty_penalty_pow: 1.5,
+            liveset_placement_bonus: 0.01,
+        },
+        search: SearchConfig {
+            max_dfs_depth: 10,
+            mc_trials: 100,
+        },
+    }
+});
 
 pub struct TurnSequencer;
 
@@ -94,7 +147,7 @@ impl TurnSequencer {
             }
 
             // Option B: Continue playing members
-            if current_seq.len() < 10 { // Depth safety
+            if current_seq.len() < CONFIG.search.max_dfs_depth { // User-defined depth
                 let p_idx = state.current_player as usize;
                 let hand_len = state.players[p_idx].hand.len();
 
@@ -163,28 +216,25 @@ impl TurnSequencer {
             if cid >= 0 {
                 filled_slots += 1;
                 // Board Presence Bonus: Higher per-slot value to reward fielding
-                score += 1.5;
+                score += CONFIG.weights.board_presence;
 
                 if let Some(m) = db.get_member(cid) {
                     // Blades (Yell) is still very important for scoring later
-                    score += m.blades as f32 * 1.5;
-                    // Hearts directly satisfy live requirements — weight raised to match importance
-                    score += m.hearts.iter().sum::<u8>() as f32 * 1.0;
+                    score += m.blades as f32 * CONFIG.weights.blades;
+                    // Hearts directly satisfy live requirements
+                    score += m.hearts.iter().sum::<u8>() as f32 * CONFIG.weights.hearts;
                 }
             }
         }
 
-        // Super-linear saturation bonus: filling all 3 slots is disproportionately valuable
-        // because it maximizes hearts available for live judgement
+        // Super-linear saturation bonus
         if filled_slots == 3 {
-            score += 3.0;
+            score += CONFIG.weights.saturation_bonus;
         }
 
-        // --- AGGRESSIVE: PENALIZE ENERGY HOARDING ---
-        // In a stochastic game, saving energy for "later" is high variance.
-        // We want the AI to play its hand NOW if it has valid slots.
+        // --- PENALIZE ENERGY HOARDING ---
         let untapped = state.players[p_idx].energy_zone.len() - state.players[p_idx].tapped_energy_count() as usize;
-        score -= untapped as f32 * 0.5; // Strong penalty per untapped energy to force spending.
+        score -= untapped as f32 * CONFIG.weights.energy_penalty;
 
         score
     }
@@ -213,7 +263,7 @@ impl TurnSequencer {
                 let mut sim_state = state.clone();
                 sim_state.ui.silent = true;
 
-                let mut combo_indices: Vec<usize> = live_combo.iter().map(|&&i| i).collect();
+                let mut combo_indices: Vec<usize> = live_combo.iter().map(|&i| *i).collect();
                 combo_indices.sort_by(|a: &usize, b: &usize| b.cmp(a)); // Sort descending for index stability
 
                 for &h_idx in &combo_indices {
@@ -223,11 +273,9 @@ impl TurnSequencer {
                 }
 
                 // Optimization: In vanilla mode, we usually play members AFTER setting lives.
-                // We don't need to recursively call find_best_main_sequence deep inside combinations
-                // for a full evaluation. Instead, we predict the best possible score from members.
                 let ev_score = Self::predict_best_liveset_score(&sim_state, db);
                 // Tiny bonus for each live card set to encourage using slots
-                let score_with_bonus = ev_score + (live_combo.len() as f32 * 0.01);
+                let score_with_bonus = ev_score + (live_combo.len() as f32 * CONFIG.weights.liveset_placement_bonus);
 
                 if score_with_bonus > best_ev {
                     best_ev = score_with_bonus;
@@ -296,9 +344,9 @@ impl TurnSequencer {
                         0.5
                     };
 
-                    // Super-linear: punish uncertainty. prob^1.5 makes 90%→0.86, 50%→0.35
+                    // Super-linear: punish uncertainty.
                     // This strongly favors lives the AI can almost certainly pass
-                    let ev = prob.powf(1.5) * live.score as f32;
+                    let ev = prob.powf(CONFIG.weights.uncertainty_penalty_pow) * live.score as f32;
                     if ev > best_slot_ev {
                         best_slot_ev = ev;
                         best_l_idx = Some(l_idx);

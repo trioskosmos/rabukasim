@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/unified_log_styles.css">
     <link rel="stylesheet" href="css/deck_validation.css">
+    <link rel="stylesheet" href="css/log_viewer_modal.css">
 </head>
 
 <body>
@@ -709,6 +710,17 @@
                     <button class="btn btn-p2" onclick="setPerspective(1)">Player 2 (Joiner)</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Log Viewer Modal -->
+    <div id="log-viewer-modal" style="display: none;">
+        <div class="log-viewer-modal-content">
+            <div class="log-viewer-modal-header">
+                <div class="log-viewer-modal-title" data-i18n="rule_log">ルールログ</div>
+                <button class="log-viewer-close-btn" onclick="LogViewerModal.close()">✕</button>
+            </div>
+            <div id="log-viewer-content" class="log-viewer-content"></div>
         </div>
     </div>
 

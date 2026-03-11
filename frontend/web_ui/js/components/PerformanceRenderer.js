@@ -177,30 +177,42 @@ export const PerformanceRenderer = {
                                         ${PerformanceRenderer.renderHeartProgress(l.filled, l.required)}
                                     </div>
                                     <div style="display:flex; flex-wrap:wrap; gap:15px; margin-top:5px; font-size:0.75rem;">
-                                        <div style="display:flex; align-items:center; gap:8px;">
                                             ${PerformanceRenderer.renderHeartsCompact(l.filled)}
+                                            ${l.spare && l.spare.some(v => v > 0) ? `
+                                                <div class="perf-spare-pile" title="${i18n.t('extra_hearts_title') || 'Spare Hearts (Excess)'}">
+                                                    ${l.spare.map((count, idx) => {
+                    const icon = idx === 6 ? 'img/texticon/icon_all.png' : `img/texticon/heart_0${idx + 1}.png`;
+                    return Array(count).fill(0).map(() => `<img src="${icon}" class="heart-mini-icon spare-heart">`).join('');
+                }).join('')}
+                                                </div>
+                                            ` : ''}
                                         </div>
-                                    </div>
                                     ${Object.keys(sourceGroups).length > 0 ? `
-                                    <div class="perf-live-sources" style="font-size: 0.7rem; opacity: 0.8; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 6px;">
-                                        <span style="opacity: 0.6;">Sources:</span>
-                                        ${Object.values(sourceGroups).map(sg => {
+                                    <div class="perf-live-sources" style="font-size: 0.70rem; opacity: 0.9; margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+                                        <div style="opacity: 0.6; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 2px; margin-bottom: 2px;">${i18n.t('source_breakdown') || 'Heart Sources'}:</div>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                            ${Object.values(sourceGroups).map(sg => {
                     const allocationsForSource = liveAllocations.filter(a => a.source_id == sg.id && a.source_slot == sg.slot);
                     const isBonus = allocationsForSource.some(a => a.is_bonus);
                     const isYell = allocationsForSource.some(a => a.source_type === 'yell');
-                    let label = '';
-                    if (isYell) label = '(Yell)';
-                    else if (isBonus) label = '(Ability)';
+
+                    // Get color counts for this specific source
+                    const counts = [0, 0, 0, 0, 0, 0, 0];
+                    allocationsForSource.forEach(a => {
+                        if (a.color >= 0 && a.color < 7) counts[a.color] += a.amount;
+                    });
 
                     return `
-                                            <span class="perf-source-tag ${isYell ? 'yell' : ''} ${isBonus ? 'bonus' : ''}"
-                                                data-source-id="${sg.id}"
-                                                data-source-slot="${sg.slot}"
-                                                data-card-id="${sg.id}"
-                                                ${sg.name ? `data-card-name="${sg.name.replace(/"/g, '&quot;')}"` : ''}>
-                                                ${Tooltips.enrichAbilityText(sg.name)} ${label} (+${sg.amount})
-                                            </span>
-                                        `}).join('')}
+                                                    <span class="perf-source-tag ${isYell ? 'yell' : ''} ${isBonus ? 'bonus' : ''}"
+                                                        data-source-id="${sg.id}"
+                                                        data-source-slot="${sg.slot}"
+                                                        data-card-id="${sg.id}"
+                                                        ${sg.name ? `data-card-name="${sg.name.replace(/"/g, '&quot;')}"` : ''}>
+                                                        ${Tooltips.enrichAbilityText(sg.name)}: 
+                                                        <span class="perf-source-counts">${PerformanceRenderer.renderHeartsCompact(counts)}</span>
+                                                    </span>
+                                                `}).join('')}
+                                        </div>
                                     </div>
                                     ` : ''}
 
@@ -237,50 +249,50 @@ export const PerformanceRenderer = {
                                         <div class="perf-member-name">${Tooltips.enrichAbilityText(m.source || "Member")}</div>
                                         <div class="perf-member-stats">
                                             <div class="contrib-row">
-                                                ${PerformanceRenderer.renderHeartsCompact(m.base_hearts)}
-                                                ${m.bonus_hearts && m.bonus_hearts.some(v => v > 0) ? `
-                                                    <div class="perf-bonus-tooltip-wrapper">
-                                                        <span class="perf-bonus-tag">+${PerformanceRenderer.renderHeartsCompact(m.bonus_hearts)}</span>
-                                                        ${m.ability_heart_bonuses && m.ability_heart_bonuses.length > 0 ? `
-                                                            <div class="perf-bonus-source-tooltip">
-                                                                ${m.ability_heart_bonuses.map(b => `
-                                                                    <div class="perf-bonus-source-line">
-                                                                        <div class="perf-bonus-source-header">
-                                                                            ${b.img ? `<img src="${fixImg(b.img)}" class="perf-bonus-source-icon">` : ''}
-                                                                            <span class="perf-bonus-source-name">${b.source}</span>
-                                                                            <span class="perf-bonus-source-amount">+${b.amount} ${['Pink', 'Red', 'Yellow', 'Green', 'Blue', 'Purple', 'Any'][b.color] || ''}</span>
-                                                                        </div>
-                                                                        ${b.ability_text ? `<div class="perf-bonus-source-ability">${Tooltips.enrichAbilityText(b.ability_text)}</div>` : ''}
-                                                                    </div>
-                                                                `).join('')}
-                                                            </div>
-                                                        ` : ''}
-                                                    </div>
-                                                ` : ''}
+241:                                                 ${PerformanceRenderer.renderHeartsCompact(m.base_hearts)}
+242:                                                 ${m.bonus_hearts && m.bonus_hearts.some(v => v > 0) ? `
+243:                                                     <div class="perf-bonus-tooltip-wrapper">
+244:                                                         <span class="perf-member-bonus-label">+${PerformanceRenderer.renderHeartsCompact(m.bonus_hearts)}</span>
+245:                                                         ${m.ability_heart_bonuses && m.ability_heart_bonuses.length > 0 ? `
+246:                                                             <div class="perf-bonus-source-tooltip">
+247:                                                                 ${m.ability_heart_bonuses.map(b => `
+248:                                                                     <div class="perf-bonus-source-line">
+249:                                                                         <div class="perf-bonus-source-header">
+250:                                                                             ${b.img ? `<img src="${fixImg(b.img)}" class="perf-bonus-source-icon">` : ''}
+251:                                                                             <span class="perf-bonus-source-name">${b.source}</span>
+252:                                                                             <span class="perf-bonus-source-amount">+${b.amount} ${['Pink', 'Red', 'Yellow', 'Green', 'Blue', 'Purple', 'Any'][b.color] || ''}</span>
+253:                                                                         </div>
+254:                                                                         ${b.ability_text ? `<div class="perf-bonus-source-ability">${Tooltips.enrichAbilityText(b.ability_text)}</div>` : ''}
+255:                                                                     </div>
+256:                                                                 `).join('')}
+257:                                                             </div>
+258:                                                         ` : ''}
+259:                                                     </div>
+260:                                                 ` : ''}
                                             </div>
                                             <div class="contrib-row">
-                                                ${PerformanceRenderer.renderBladesCompact(m.base_blades)}
-                                                ${m.bonus_blades > 0 ? `
-                                                    <div class="perf-bonus-tooltip-wrapper">
-                                                        <span class="perf-bonus-tag"> +${m.bonus_blades}</span>
-                                                        ${m.ability_blade_bonuses && m.ability_blade_bonuses.length > 0 ? `
-                                                            <div class="perf-bonus-source-tooltip">
-                                                                ${m.ability_blade_bonuses.map(b => `
-                                                                    <div class="perf-bonus-source-line">
-                                                                        <div class="perf-bonus-source-header">
-                                                                            ${b.img ? `<img src="${fixImg(b.img)}" class="perf-bonus-source-icon">` : ''}
-                                                                            <span class="perf-bonus-source-name">${b.source}</span>
-                                                                            <span class="perf-bonus-source-amount">+${b.amount}</span>
-                                                                        </div>
-                                                                        ${b.ability_text ? `<div class="perf-bonus-source-ability">${Tooltips.enrichAbilityText(b.ability_text)}</div>` : ''}
-                                                                    </div>
-                                                                `).join('')}
-                                                            </div>
-                                                        ` : ''}
-                                                    </div>
-                                                ` : ''}
+263:                                                 ${PerformanceRenderer.renderBladesCompact(m.base_blades)}
+264:                                                 ${m.bonus_blades > 0 ? `
+265:                                                     <div class="perf-bonus-tooltip-wrapper">
+266:                                                         <span class="perf-member-bonus-label"> +${m.bonus_blades}</span>
+267:                                                         ${m.ability_blade_bonuses && m.ability_blade_bonuses.length > 0 ? `
+268:                                                             <div class="perf-bonus-source-tooltip">
+269:                                                                 ${m.ability_blade_bonuses.map(b => `
+270:                                                                     <div class="perf-bonus-source-line">
+271:                                                                         <div class="perf-bonus-source-header">
+272:                                                                             ${b.img ? `<img src="${fixImg(b.img)}" class="perf-bonus-source-icon">` : ''}
+273:                                                                             <span class="perf-bonus-source-name">${b.source}</span>
+274:                                                                             <span class="perf-bonus-source-amount">+${b.amount}</span>
+275:                                                                         </div>
+276:                                                                         ${b.ability_text ? `<div class="perf-bonus-source-ability">${Tooltips.enrichAbilityText(b.ability_text)}</div>` : ''}
+277:                                                                     </div>
+278:                                                                 `).join('')}
+279:                                                             </div>
+280:                                                         ` : ''}
+281:                                                     </div>
+282:                                                 ` : ''}
                                             </div>
-                                             ${(m.base_notes > 0 || m.bonus_notes > 0) ? `<span>${i18n.t('notes')}: <b>${m.base_notes}${m.bonus_notes > 0 ? ` <span class="perf-bonus-tag">(+${m.bonus_notes})</span>` : ''}</b></span>` : ''}
+283:                                              ${(m.base_notes > 0 || m.bonus_notes > 0) ? `<span>${i18n.t('notes')}: <b>${m.base_notes}${m.bonus_notes > 0 ? ` <span class="perf-member-bonus-label">(+${m.bonus_notes})</span>` : ''}</b></span>` : ''}
                                             ${m.draw_icons ? `<span>${i18n.t('cards_draw')}: <b>${m.draw_icons}</b></span>` : ''}
 
                                             ${(res.breakdown && res.breakdown.allocations) ? (() => {

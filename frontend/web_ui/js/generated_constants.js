@@ -364,6 +364,7 @@ export const ChoiceTypes = {
     MOVE_MEMBER_DEST: 25,
     RECOV_L: 26,
     RECOV_M: 27,
+    SELECT_STAGE_EMPTY_BATON: 28,
 };
 
 export const ExtraConstants = {
@@ -442,6 +443,7 @@ export const ExtraConstants = {
     ZONE_MASK_DISCARD: 7,
     ZONE_LOOKED_CARDS: 90,
     FILTER_ZONE_MASK_SHIFT: 53,
+    FLAG_BATON_SLOT_ONLY: 33554432,
 };
 
 export const Zones = {

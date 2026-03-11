@@ -340,7 +340,8 @@
         "TAP_M_SELECT": 24,
         "MOVE_MEMBER_DEST": 25,
         "RECOV_L": 26,
-        "RECOV_M": 27
+        "RECOV_M": 27,
+        "SELECT_STAGE_EMPTY_BATON": 28
     },
     "extra_constants": {
         "FLAG_DRAW": 1,
@@ -417,7 +418,8 @@
         "ZONE_MASK_HAND": 6,
         "ZONE_MASK_DISCARD": 7,
         "ZONE_LOOKED_CARDS": 90,
-        "FILTER_ZONE_MASK_SHIFT": 53
+        "FILTER_ZONE_MASK_SHIFT": 53,
+        "FLAG_BATON_SLOT_ONLY": 33554432
     },
     "zones": {
         "DEFAULT": 0,
@@ -686,6 +688,10 @@
                 "area_idx": [
                     29,
                     31
+                ],
+                "is_baton_slot": [
+                    25,
+                    25
                 ]
             }
         },
@@ -869,15 +875,15 @@
     },
     "group_names": {
         "0": {
-            "jp": "μ's",
-            "en": "μ's"
+            "jp": "\u03bc's",
+            "en": "\u03bc's"
         },
         "1": {
             "jp": "Aqours",
             "en": "Aqours"
         },
         "2": {
-            "jp": "虹ヶ咲学園スクールアイドル同好会",
+            "jp": "\u8679\u30f6\u54b2\u5b66\u5712\u30b9\u30af\u30fc\u30eb\u30a2\u30a4\u30c9\u30eb\u540c\u597d\u4f1a",
             "en": "Nijigasaki High School Idol Club"
         },
         "3": {
@@ -885,7 +891,7 @@
             "en": "Liella!"
         },
         "4": {
-            "jp": "蓮ノ空女学院スクールアイドルクラブ",
+            "jp": "\u84ee\u30ce\u7a7a\u5973\u5b66\u9662\u30b9\u30af\u30fc\u30eb\u30a2\u30a4\u30c9\u30eb\u30af\u30e9\u30d6",
             "en": "Hasunosora Girls' High School Idol Club"
         },
         "10": {
@@ -901,11 +907,11 @@
             "en": "Sunny Passion"
         },
         "13": {
-            "jp": "スクールアイドルミュージカル",
+            "jp": "\u30b9\u30af\u30fc\u30eb\u30a2\u30a4\u30c9\u30eb\u30df\u30e5\u30fc\u30b8\u30ab\u30eb",
             "en": "School Idol Musical"
         },
         "99": {
-            "jp": "その他",
+            "jp": "\u305d\u306e\u4ed6",
             "en": "Other"
         },
         "100": {
@@ -943,8 +949,8 @@
             "en": "DiverDiva"
         },
         "7": {
-            "jp": "A・ZU・NA",
-            "en": "A・ZU・NA"
+            "jp": "A\u30fbZU\u30fbNA",
+            "en": "A\u30fbZU\u30fbNA"
         },
         "8": {
             "jp": "QU4RTZ",
@@ -967,7 +973,7 @@
             "en": "5yncri5e!"
         },
         "13": {
-            "jp": "スリーズブーケ",
+            "jp": "\u30b9\u30ea\u30fc\u30ba\u30d6\u30fc\u30b1",
             "en": "Cerise Bouquet"
         },
         "14": {
@@ -975,15 +981,15 @@
             "en": "DOLLCHESTRA"
         },
         "15": {
-            "jp": "みらぱーくらぶ",
+            "jp": "\u307f\u3089\u3071\u30fc\u304f\u3089\u3076",
             "en": "Mira-Cra Park!"
         },
         "16": {
-            "jp": "エデルノート",
+            "jp": "\u30a8\u30c7\u30eb\u30ce\u30fc\u30c8",
             "en": "Edel Note"
         },
         "17": {
-            "jp": "アアイスクリーム",
+            "jp": "\u30a2\u30a2\u30a4\u30b9\u30af\u30ea\u30fc\u30e0",
             "en": "Aiscream"
         },
         "100": {

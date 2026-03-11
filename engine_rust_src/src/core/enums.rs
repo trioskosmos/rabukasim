@@ -334,6 +334,7 @@ pub enum ChoiceType {
     MoveMemberDest = 25,
     RecovL = 26,
     RecovM = 27,
+    SelectStageEmptyBaton = 28,
 }
 
 impl ChoiceType {
@@ -366,6 +367,7 @@ impl ChoiceType {
             "MOVE_MEMBER_DEST" => ChoiceType::MoveMemberDest,
             "RECOV_L" => ChoiceType::RecovL,
             "RECOV_M" => ChoiceType::RecovM,
+            "SELECT_STAGE_EMPTY_BATON" => ChoiceType::SelectStageEmptyBaton,
             _ => ChoiceType::None,
         }
     }
@@ -398,6 +400,7 @@ impl ChoiceType {
             ChoiceType::MoveMemberDest => "MOVE_MEMBER_DEST",
             ChoiceType::RecovL => "RECOV_L",
             ChoiceType::RecovM => "RECOV_M",
+            ChoiceType::SelectStageEmptyBaton => "SELECT_STAGE_EMPTY_BATON",
             ChoiceType::None => "NONE",
         }
     }
@@ -537,3 +540,4 @@ pub fn get_unit_name(id: u8, lang: &str) -> &'static str {
         }
     }
 }
+
