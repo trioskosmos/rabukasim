@@ -12,6 +12,7 @@ pub mod suspension;
 
 use crate::core::enums::Phase;
 use crate::core::models::{GameState, AbilityContext};
+use crate::core::logic::constants::*;
 use super::CardDatabase;
 pub use conditions::{check_condition, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
@@ -92,7 +93,7 @@ pub fn resolve_bytecode(
     }
 
     while !executor.stack.is_empty() {
-        if executor.steps >= 1000 {
+        if executor.steps >= MAX_INTERPRETER_STEPS {
             if state.debug.debug_mode {
                 if !state.ui.silent {
                     println!("[ERROR] Interpreter infinite loop detected (1000 steps)");

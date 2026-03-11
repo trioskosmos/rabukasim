@@ -2,6 +2,9 @@ use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use serde::{Deserialize, Serialize};
 
+// Re-export constants so they're available to all modules using `use super::models::*;`
+pub use crate::core::logic::constants::*;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct Condition {
     #[serde(rename = "type")]

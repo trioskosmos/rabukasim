@@ -32,7 +32,7 @@ pub fn get_effective_blades(
     db: &CardDatabase,
     depth: u32,
 ) -> u32 {
-    if depth > 5 {
+    if depth > MAX_BLADE_CALC_DEPTH {
         return 0;
     }
     let cid = state.players[player_idx].stage[slot_idx];
@@ -188,7 +188,7 @@ pub fn get_effective_hearts(
     db: &CardDatabase,
     depth: u32,
 ) -> HeartBoard {
-    if depth > 5 {
+    if depth > MAX_BLADE_CALC_DEPTH {
         return HeartBoard::default();
     }
     let cid = state.players[player_idx].stage[slot_idx];
@@ -364,7 +364,7 @@ pub fn get_member_cost(
     db: &CardDatabase,
     depth: u32,
 ) -> i32 {
-    if depth > 5 {
+    if depth > MAX_BLADE_CALC_DEPTH {
         return 0;
     } // Recursion limit
     let base_id = card_id;
@@ -385,7 +385,7 @@ pub fn get_member_cost(
     cost -= state.players[p_idx].cost_reduction as i32;
 
     // 2. Baton Touch & Cached Position Modifiers (Rule 12 & Auras)
-    if slot_idx >= 0 && slot_idx < 3 {
+    if slot_idx >= 0 && slot_idx < STAGE_SLOT_COUNT as i16 {
         // Apply cached slot modifiers (from other members & granted abilities)
         cost += state.players[p_idx].slot_cost_modifiers[slot_idx as usize] as i32;
 
@@ -397,7 +397,7 @@ pub fn get_member_cost(
         }
     }
 
-    if secondary_slot_idx >= 0 && secondary_slot_idx < 3 {
+    if secondary_slot_idx >= 0 && secondary_slot_idx < STAGE_SLOT_COUNT as i16 {
         let old_cid = state.players[p_idx].stage[secondary_slot_idx as usize];
         if old_cid >= 0 {
             if let Some(old_m) = db.get_member(old_cid) {

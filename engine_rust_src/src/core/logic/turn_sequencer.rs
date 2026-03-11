@@ -1,6 +1,9 @@
+//for use with cards_vanilla.json
+
 use crate::core::logic::{GameState, CardDatabase};
 use crate::core::enums::Phase;
 use crate::core::{ACTION_BASE_HAND, ACTION_BASE_LIVESET};
+use crate::core::logic::constants::*;
 use std::time::Instant;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -156,7 +159,7 @@ impl TurnSequencer {
                     let s2_empty = state.players[p_idx].stage[2] == -1;
                     let skip_s2 = s0_empty && s2_empty;
 
-                    for slot in 0..3 {
+                    for slot in 0..STAGE_SLOT_COUNT {
                         if slot == 2 && skip_s2 { continue; }
                         let action = ACTION_BASE_HAND + (h_idx as i32) * 10 + (slot as i32);
 

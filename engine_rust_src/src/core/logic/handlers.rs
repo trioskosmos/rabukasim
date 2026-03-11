@@ -4,6 +4,7 @@ use crate::core::logic::{
     action_factory::DecodedAction, interpreter::costs, AbilityContext, ActionFactory, CardDatabase,
     GameState, Phase,
 };
+use crate::core::logic::constants::STAGE_SLOT_COUNT;
 // use crate::core::hearts::*;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
@@ -629,7 +630,7 @@ impl ResponseController for GameState {
             return Ok(());
         }
 
-        let cid = if slot_idx < 3 {
+        let cid = if slot_idx < STAGE_SLOT_COUNT {
             let scid = self.core.players[p_idx].stage[slot_idx];
             if scid >= 0 {
                 scid
@@ -700,7 +701,7 @@ impl ResponseController for GameState {
         if target_slot >= 0 {
             ctx.target_slot = target_slot as i16;
         }
-        let source_type = if slot_idx < 3 { 0 } else { 1 }; // 0=Stage, 1=Other
+        let source_type = if slot_idx < STAGE_SLOT_COUNT { 0 } else { 1 }; // 0=Stage, 1=Other
 
         // ENFORCEMENT PHASE: Check conditions and costs
         if !self.debug.debug_ignore_conditions {

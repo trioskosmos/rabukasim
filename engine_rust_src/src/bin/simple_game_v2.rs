@@ -161,7 +161,7 @@ fn main() {
         // Decide action based on phase
         let action = match state.phase {
             Phase::Main => {
-                let (_evals, best_seq, nodes, _breakdown) = TurnSequencer::plan_full_turn(&state, &db);
+                let (_evals, best_seq, _nodes, _breakdown) = TurnSequencer::plan_full_turn(&state, &db);
                 if best_seq.is_empty() {
                     ACTION_BASE_PASS
                 } else {

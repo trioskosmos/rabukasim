@@ -541,3 +541,111 @@ pub fn get_unit_name(id: u8, lang: &str) -> &'static str {
     }
 }
 
+// --- Game-Specific Enums ---
+
+/// Stage slot positions. There are exactly 3 slots per player.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr)]
+#[repr(usize)]
+pub enum StageSlot {
+    Left = 0,
+    Center = 1,
+    Right = 2,
+}
+
+impl StageSlot {
+    pub const COUNT: usize = 3;
+
+    /// Iterate over all stage slots.
+    pub fn all() -> impl Iterator<Item = Self> {
+        [Self::Left, Self::Center, Self::Right].into_iter()
+    }
+
+    /// Create from index with bounds checking.
+    pub fn from_index(idx: usize) -> Option<Self> {
+        match idx {
+            0 => Some(Self::Left),
+            1 => Some(Self::Center),
+            2 => Some(Self::Right),
+            _ => None,
+        }
+    }
+
+    /// Convert to index.
+    pub fn as_index(&self) -> usize {
+        *self as usize
+    }
+}
+
+/// Card colors in the game (corresponds to attribute 1-7 in card data).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr)]
+#[repr(u8)]
+pub enum CardColor {
+    Smile = 0,      // Red
+    Pure = 1,       // Green
+    Cool = 2,       // Blue
+    Active = 3,
+    Natural = 4,
+    Elegant = 5,
+    All = 6,        // Wildcard/Any color (used for multi-color matches)
+}
+
+impl CardColor {
+    pub const COUNT: usize = 7;
+
+    /// Check if color index is valid.
+    pub fn is_valid(idx: usize) -> bool {
+        idx < Self::COUNT
+    }
+
+    /// Create from attribute value (1-7 maps to colors 0-6, 0 or 7 maps to All).
+    pub fn from_attr(attr: u8) -> Self {
+        match attr {
+            0 | 7 => Self::All,
+            1 => Self::Smile,
+            2 => Self::Pure,
+            3 => Self::Cool,
+            4 => Self::Active,
+            5 => Self::Natural,
+            6 => Self::Elegant,
+            _ => Self::All,
+        }
+    }
+
+    /// Convert to string name.
+    pub fn name(&self) -> &'static str {
+        match self {
+            Self::Smile => "Smile",
+            Self::Pure => "Pure",
+            Self::Cool => "Cool",
+            Self::Active => "Active",
+            Self::Natural => "Natural",
+            Self::Elegant => "Elegant",
+            Self::All => "All",
+        }
+    }
+}
+
+/// Rock-Paper-Scissors choices.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr)]
+#[repr(u8)]
+pub enum RpsChoice {
+    Rock = 0,
+    Paper = 1,
+    Scissors = 2,
+}
+
+impl RpsChoice {
+    /// Determine winner in RPS battle.
+    pub fn beats(self, other: RpsChoice) -> bool {
+        (self == RpsChoice::Rock && other == RpsChoice::Scissors)
+            || (self == RpsChoice::Paper && other == RpsChoice::Rock)
+            || (self == RpsChoice::Scissors && other == RpsChoice::Paper)
+    }
+}
+
+/// Special card ID sentinel values.
+pub mod card_id {
+    pub const NO_CARD: i32 = -1;
+    pub const INVALID: i32 = 0;
+}
+

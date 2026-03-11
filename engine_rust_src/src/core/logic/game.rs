@@ -1226,7 +1226,7 @@ impl GameState {
         ctx: &AbilityContext,
         start_ab_idx: usize,
     ) {
-        if self.trigger_depth > 10 {
+        if self.trigger_depth as u32 > MAX_CONDITION_CHECK_DEPTH {
             if !self.ui.silent {
                 println!("[DEBUG] Trigger depth limit reached for {:?}.", trigger);
             }

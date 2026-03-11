@@ -25,7 +25,7 @@ fn load_vanilla_db() -> CardDatabase {
         }
         let abs = std::fs::canonicalize(path)
             .unwrap_or_else(|_| std::path::PathBuf::from(path));
-        println!("[DB] {} loaded\n", abs);
+        println!("[DB] {} loaded\n", abs.display());
         let json = fs::read_to_string(path).expect("Failed to read vanilla DB");
         let mut db = CardDatabase::from_json(&json).expect("Failed to parse vanilla DB");
         db.is_vanilla = true;
@@ -122,7 +122,7 @@ fn main() {
         }
 
         // ─ MAIN PHASE ─
-        let (evals, best_seq, nodes, (board_score, live_ev)) = TurnSequencer::plan_full_turn(&state, &db);
+        let (_evals, best_seq, nodes, (board_score, live_ev)) = TurnSequencer::plan_full_turn(&state, &db);
         println!("│  Main Phase: {} legal actions, {} DFS nodes", 
             state.get_legal_action_ids(&db).len(), nodes);
         println!("│    Best Score: Board={:.2} + Live={:.2} = {:.2}", 

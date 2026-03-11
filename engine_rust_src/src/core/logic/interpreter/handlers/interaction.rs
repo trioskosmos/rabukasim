@@ -1,5 +1,5 @@
 use crate::core::enums::*;
-use crate::core::logic::constants::{CHOICE_DONE, CHOICE_ALL, FILTER_IS_OPTIONAL};
+use crate::core::logic::constants::{CHOICE_DONE, CHOICE_ALL, FILTER_IS_OPTIONAL, STAGE_SLOT_COUNT};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
 use crate::core::models::interpreter::{get_choice_text, HandlerResult};
 use crate::core::models::suspend_interaction;
@@ -113,7 +113,7 @@ pub fn handle_play_live_from_discard(
             .position(|&cid| cid == card_id)
         {
             state.players[target_p_idx].discard.remove(pos);
-            if slot_idx < 3 {
+            if slot_idx < STAGE_SLOT_COUNT {
                 let old = state.players[target_p_idx].live_zone[slot_idx];
                 if old >= 0 {
                     state.players[target_p_idx].discard.push(old);

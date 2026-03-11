@@ -1,6 +1,7 @@
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::card_db::CardDatabase;
 use crate::core::logic::game::GameState;
+use crate::core::logic::constants::*;
 
 /// Analysis tool to calculate mathematical probabilities during the performance phase.
 pub struct PerformanceProbabilitySolver;
@@ -382,7 +383,7 @@ impl PerformanceProbabilitySolver {
             };
 
             // Try playing to each slot to find the best impact (important for IS_CENTER)
-            for slot in 0..3 {
+            for slot in 0..STAGE_SLOT_COUNT {
                 // Simple heuristic: what is the cost to play here?
                 let cost = state.get_member_cost(player_id, cid, slot as i16, -1, db, 0);
                 if available_energy < cost as u32 {

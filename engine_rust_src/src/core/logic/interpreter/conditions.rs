@@ -39,7 +39,7 @@ pub fn check_condition(
     if state.debug.debug_ignore_conditions {
         return true;
     }
-    if depth > 10 {
+    if depth > MAX_CONDITION_CHECK_DEPTH {
         return false;
     }
 

@@ -1263,13 +1263,13 @@ impl PyGameState {
     }
 
     fn set_stage_card(&mut self, p_idx: usize, slot_idx: usize, card_id: i32) {
-        if p_idx < 2 && slot_idx < 3 {
+        if p_idx < 2 && slot_idx < STAGE_SLOT_COUNT {
             self.inner.players[p_idx].stage[slot_idx] = card_id;
         }
     }
 
     fn set_live_card(&mut self, p_idx: usize, slot_idx: usize, card_id: i32, revealed: bool) {
-        if p_idx < 2 && slot_idx < 3 {
+        if p_idx < 2 && slot_idx < STAGE_SLOT_COUNT {
             self.inner.players[p_idx].live_zone[slot_idx] = card_id;
             self.inner.players[p_idx].set_revealed(slot_idx, revealed);
         }

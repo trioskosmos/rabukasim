@@ -55,7 +55,7 @@ struct TurnStats {
 fn run_diagnostic_turn(
     state: &GameState,
     db: &CardDatabase,
-    rng: &mut impl rand::RngCore,
+    _rng: &mut impl rand::RngCore,
 ) -> TurnStats {
     let p_idx = state.current_player as usize;
     let hand_size = state.players[p_idx].hand.len();

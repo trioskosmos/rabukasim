@@ -13,7 +13,7 @@
 const NUM_GAMES: usize = 5;
 const VERBOSE: bool = true;
 const TURN_LIMIT: u16 = 6;  // Quick games for diagnostics
-const ACTIONS_PER_TURN_LIMIT: usize = 50;  // Max play actions per turn
+const _ACTIONS_PER_TURN_LIMIT: usize = 50;  // Max play actions per turn
 /// ─────────────────────────────────────────────────────────────────────────────
 
 use std::fs;
@@ -21,7 +21,7 @@ use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::{TurnSequencer, CONFIG};
-use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS, ACTION_BASE_LIVESET};
+use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
 use rand::seq::IndexedRandom;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,19 +30,19 @@ use rand::seq::IndexedRandom;
 
 #[derive(Debug, Clone, Default)]
 struct ActionDiagnostic {
-    action_id: i32,
+    _action_id: i32,
     action_label: String,
     board_score: f32,
     live_ev: f32,
     total_score: f32,
-    nodes_explored: usize,
-    time_us: u128,
+    _nodes_explored: usize,
+    _time_us: u128,
 }
 
 #[derive(Debug, Clone, Default)]
 struct TurnDiagnostic {
-    turn_number: u16,
-    phase_name: String,
+    _turn_number: u16,
+    _phase_name: String,
     actions: Vec<ActionDiagnostic>,
     final_board_score: f32,
     final_live_ev: f32,

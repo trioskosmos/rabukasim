@@ -12,7 +12,6 @@ use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::TurnSequencer;
 use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
 use rand::seq::IndexedRandom;
-use rand::SeedableRng;
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 
@@ -108,12 +107,12 @@ fn fallback_deck(db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
 struct TurnDiagnostic {
     turn_num: u16,
     player: u8,
-    phase: Phase,
+    _phase: Phase,
     hand_size: usize,
     legal_actions: usize,
     search_time_ms: u128,
     iterations: usize,
-    best_action: Option<i32>,
+    _best_action: Option<i32>,
     board_score: f32,
     live_ev: f32,
     total_score: f32,

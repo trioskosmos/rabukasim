@@ -67,3 +67,38 @@ pub const FILTER_TYPE_MASK: u64 = 16842780; // 0x101001C - CardType, Group, Unit
 pub const FILTER_TARGET_PLAYER_FLAG: u64 = 0x01;
 /// Flag indicating targeting Opponent (A word bit 1)
 pub const FILTER_TARGET_OPPONENT_FLAG: u64 = 0x02;
+
+// --- Recursion Depth Limits (Safety Guards) ---
+
+/// Maximum recursion depth for blade calculation.
+pub const MAX_BLADE_CALC_DEPTH: u32 = 5;
+
+/// Maximum recursion depth for condition checking.
+pub const MAX_CONDITION_CHECK_DEPTH: u32 = 10;
+
+/// Maximum recursion depth for interpreter execution.
+pub const MAX_INTERPRETER_DEPTH: usize = 8;
+
+/// Maximum interpreter steps before infinite loop detection.
+pub const MAX_INTERPRETER_STEPS: u32 = 1000;
+
+// --- Special Index Values ---
+
+/// Special slot value for "no decision" or "default".
+pub const TARGET_SLOT_NONE: i32 = -1;
+
+/// Special slot value meaning "use context target slot".
+pub const TARGET_SLOT_USE_CONTEXT: i32 = 0;
+
+/// Special slot value for "use area index".
+pub const TARGET_SLOT_AREA_IDX: i32 = 4;
+
+/// Special slot value for "use target slot from context".
+pub const TARGET_SLOT_FROM_CONTEXT: i32 = 10;
+
+// --- Stage Configuration ---
+
+/// Number of stage slots per player.
+pub const STAGE_SLOT_COUNT: usize = 3;
+
+

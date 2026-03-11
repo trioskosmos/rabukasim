@@ -15,7 +15,7 @@ use std::time::Instant;
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::{TurnSequencer, CONFIG};
 use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
-use rand::seq::SliceRandom;
+use rand::prelude::*;
 
 // ── DB loading ────────────────────────────────────────────────────────────────
 
@@ -122,7 +122,7 @@ fn pick_action(state: &GameState, db: &CardDatabase, rng: &mut impl rand::RngCor
             AIDecision { action, nodes: _nodes, board_score: 0.0, live_ev: score, duration_us: duration }
         }
         // Randomize RPS, Mulligan, and Choice phases for variability
-        Phase::Rps | Phase::Mulligan | Phase::TurnChoice | Phase::Response => {
+        Phase::Rps | Phase::MulliganP1 | Phase::TurnChoice | Phase::Response => {
             let duration = start.elapsed().as_micros();
             let action = Some(*legal.choose(rng).unwrap_or(&legal[0]) as usize);
             AIDecision { action, nodes: 0, board_score: 0.0, live_ev: 0.0, duration_us: duration }
@@ -170,6 +170,7 @@ fn run_game(
     println!("══════════════════════════════════════════════");
 
     let mut current_step = 0;
+    let mut last_turn_phase = (0u16, Phase::Main);
     while !state.is_terminal() && current_step < STEP_LIMIT && state.turn <= TURN_LIMIT {
         state.auto_step(db);
         if state.is_terminal() { 

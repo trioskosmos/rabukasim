@@ -176,7 +176,7 @@ pub fn get_live_requirements(
 
     // 2. Scan all members on the stage (both players) - Fix for Q115
     for p in 0..2 {
-        for slot in 0..3 {
+        for slot in 0..STAGE_SLOT_COUNT {
             let cid = state.players[p].stage[slot];
             if cid >= 0 {
                 if let Some(m) = db.get_member(cid) {
@@ -1362,7 +1362,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
 
         // Pool O_BOOST_SCORE from constant abilities
         let mut constant_bonuses = std::collections::HashMap::new();
-        for slot in 0..3 {
+        for slot in 0..STAGE_SLOT_COUNT {
             let cid = state.players[p].stage[slot];
             if cid >= 0 {
                 if let Some(m) = db.get_member(cid) {

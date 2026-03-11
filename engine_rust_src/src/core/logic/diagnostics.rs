@@ -1,6 +1,7 @@
 use crate::core::logic::player::PlayerState;
 use crate::core::logic::CardDatabase;
 use crate::core::logic::GameState;
+use crate::core::logic::constants::STAGE_SLOT_COUNT;
 
 impl GameState {
     pub fn dump_diagnostics(&self, db: &CardDatabase) {
@@ -44,7 +45,7 @@ impl GameState {
             println!();
 
             println!("  [STAGE]");
-            for slot in 0..3 {
+            for slot in 0..STAGE_SLOT_COUNT {
                 let cid = p.stage[slot];
                 if cid >= 0 {
                     let card_no = db

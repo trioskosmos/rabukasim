@@ -149,7 +149,7 @@ fn main() {
                 let _ = state.step(&db, ACTION_BASE_PASS);
             },
             Phase::LiveSet => {
-                let (seq, _nodes, val) = TurnSequencer::find_best_liveset_selection(&state, &db);
+                let (seq, _nodes, _val) = TurnSequencer::find_best_liveset_selection(&state, &db);
                 
                 if !seq.is_empty() {
                     println!("  [LiveSet] {} actions", seq.len());
