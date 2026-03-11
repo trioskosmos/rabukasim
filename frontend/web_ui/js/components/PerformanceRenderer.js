@@ -176,21 +176,39 @@ export const PerformanceRenderer = {
                                     <div class="perf-heart-progress">
                                         ${PerformanceRenderer.renderHeartProgress(l.filled, l.required)}
                                     </div>
-                                    <div style="display:flex; flex-wrap:wrap; gap:15px; margin-top:5px; font-size:0.75rem;">
-                                            ${PerformanceRenderer.renderHeartsCompact(l.filled)}
-                                            ${l.spare && l.spare.some(v => v > 0) ? `
+                                    
+                                    <!-- Sum-style Alignment: Source vs Required -->
+                                    <div class="perf-heart-sum-comparison" style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+                                        <div class="perf-sum-row drain" style="display: flex; align-items: center; gap: 10px; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 8px; margin-top: 4px;">
+                                            <span style="width: 70px; font-size: 0.7rem; opacity: 0.7; font-weight: bold; color: var(--accent-pink);">${i18n.t('sum_drain') || 'REQUIRED'}</span>
+                                            <div class="perf-hearts-grid">
+                                                ${PerformanceRenderer.renderHeartsGrid(l.required)}
+                                            </div>
+                                        </div>
+                                        <div class="perf-sum-row source" style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="width: 70px; font-size: 0.7rem; opacity: 0.7; font-weight: bold; color: var(--accent-blue);">${i18n.t('sum_source') || 'SOURCES'}</span>
+                                            <div class="perf-hearts-grid">
+                                                ${PerformanceRenderer.renderHeartsGrid(l.filled)}
+                                            </div>
+                                        </div>
+                                        
+                                        ${l.spare && l.spare.some(v => v > 0) ? `
+                                            <div class="perf-sum-row spare" style="display: flex; align-items: center; gap: 10px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px;">
+                                                <span style="width: 70px; font-size: 0.7rem; opacity: 0.7; font-weight: bold; color: var(--accent-gold);">${i18n.t('sum_spare') || 'SPARE'}</span>
                                                 <div class="perf-spare-pile" title="${i18n.t('extra_hearts_title') || 'Spare Hearts (Excess)'}">
                                                     ${l.spare.map((count, idx) => {
                     const icon = idx === 6 ? 'img/texticon/icon_all.png' : `img/texticon/heart_0${idx + 1}.png`;
                     return Array(count).fill(0).map(() => `<img src="${icon}" class="heart-mini-icon spare-heart">`).join('');
                 }).join('')}
                                                 </div>
-                                            ` : ''}
-                                        </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+
                                     ${Object.keys(sourceGroups).length > 0 ? `
-                                    <div class="perf-live-sources" style="font-size: 0.70rem; opacity: 0.9; margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
-                                        <div style="opacity: 0.6; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 2px; margin-bottom: 2px;">${i18n.t('source_breakdown') || 'Heart Sources'}:</div>
-                                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                    <div class="perf-live-sources" style="font-size: 0.70rem; opacity: 0.9; margin-top: 10px; display: flex; flex-direction: column; gap: 4px;">
+                                        <div style="opacity: 0.6; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 2px; margin-bottom: 4px;">${i18n.t('source_breakdown') || 'Allocation Breakdown'}:</div>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                                             ${Object.values(sourceGroups).map(sg => {
                     const allocationsForSource = liveAllocations.filter(a => a.source_id == sg.id && a.source_slot == sg.slot);
                     const isBonus = allocationsForSource.some(a => a.is_bonus);
@@ -203,13 +221,16 @@ export const PerformanceRenderer = {
                     });
 
                     return `
-                                                    <span class="perf-source-tag ${isYell ? 'yell' : ''} ${isBonus ? 'bonus' : ''}"
+                                                    <span class="perf-source-tag ${isYell ? 'yell' : ''}"
                                                         data-source-id="${sg.id}"
                                                         data-source-slot="${sg.slot}"
                                                         data-card-id="${sg.id}"
                                                         ${sg.name ? `data-card-name="${sg.name.replace(/"/g, '&quot;')}"` : ''}>
-                                                        ${Tooltips.enrichAbilityText(sg.name)}: 
-                                                        <span class="perf-source-counts">${PerformanceRenderer.renderHeartsCompact(counts)}</span>
+                                                        <div style="display:flex; flex-direction:column; gap:2px;">
+                                                            <div style="font-weight:bold;">${Tooltips.enrichAbilityText(sg.name)}</div>
+                                                            ${allocationsForSource[0]?.ability_text ? `<div class="perf-ability-text" style="font-size:0.65rem; opacity:0.8; font-style:italic; line-height:1.1;">${Tooltips.enrichAbilityText(allocationsForSource[0].ability_text)}</div>` : ''}
+                                                        </div>
+                                                        <span class="perf-source-counts">${PerformanceRenderer.renderHeartsGrid(counts)}</span>
                                                     </span>
                                                 `}).join('')}
                                         </div>
@@ -225,7 +246,10 @@ export const PerformanceRenderer = {
                             <h4>${i18n.t('blades_breakdown', { total: res.yell_count || 0 })}</h4>
                             ${res.breakdown && res.breakdown.blades ? res.breakdown.blades.map(b => `
                                 <div class="perf-line">
-                                    <span>${Tooltips.enrichAbilityText(b.source)}</span>
+                                    <div style="display:flex; flex-direction:column; gap:2px;">
+                                        <span style="font-weight:bold;">${Tooltips.enrichAbilityText(b.source)}</span>
+                                        ${b.ability_text ? `<div class="perf-ability-text" style="font-size:0.65rem; opacity:0.8; font-style:italic;">${Tooltips.enrichAbilityText(b.ability_text)}</div>` : ''}
+                                    </div>
                                     <span class="value">+${b.value}</span>
                                 </div>
                             `).join('') : ''}
@@ -249,50 +273,44 @@ export const PerformanceRenderer = {
                                         <div class="perf-member-name">${Tooltips.enrichAbilityText(m.source || "Member")}</div>
                                         <div class="perf-member-stats">
                                             <div class="contrib-row">
-241:                                                 ${PerformanceRenderer.renderHeartsCompact(m.base_hearts)}
-242:                                                 ${m.bonus_hearts && m.bonus_hearts.some(v => v > 0) ? `
-243:                                                     <div class="perf-bonus-tooltip-wrapper">
-244:                                                         <span class="perf-member-bonus-label">+${PerformanceRenderer.renderHeartsCompact(m.bonus_hearts)}</span>
-245:                                                         ${m.ability_heart_bonuses && m.ability_heart_bonuses.length > 0 ? `
-246:                                                             <div class="perf-bonus-source-tooltip">
-247:                                                                 ${m.ability_heart_bonuses.map(b => `
-248:                                                                     <div class="perf-bonus-source-line">
-249:                                                                         <div class="perf-bonus-source-header">
-250:                                                                             ${b.img ? `<img src="${fixImg(b.img)}" class="perf-bonus-source-icon">` : ''}
-251:                                                                             <span class="perf-bonus-source-name">${b.source}</span>
-252:                                                                             <span class="perf-bonus-source-amount">+${b.amount} ${['Pink', 'Red', 'Yellow', 'Green', 'Blue', 'Purple', 'Any'][b.color] || ''}</span>
-253:                                                                         </div>
-254:                                                                         ${b.ability_text ? `<div class="perf-bonus-source-ability">${Tooltips.enrichAbilityText(b.ability_text)}</div>` : ''}
-255:                                                                     </div>
-256:                                                                 `).join('')}
-257:                                                             </div>
-258:                                                         ` : ''}
-259:                                                     </div>
-260:                                                 ` : ''}
+                                                ${PerformanceRenderer.renderHeartsCompact(m.base_hearts)}
+                                                ${m.bonus_hearts && m.bonus_hearts.some(v => v > 0) ? `
+                                                    <span class="perf-member-bonus-label" style="margin-left:5px;">+${PerformanceRenderer.renderHeartsCompact(m.bonus_hearts)}</span>
+                                                    ${m.ability_heart_bonuses && m.ability_heart_bonuses.length > 0 ? `
+                                                        <div class="perf-member-ability-details" style="margin-top:4px; padding-left:10px; border-left:2px solid rgba(255,255,255,0.1);">
+                                                            ${m.ability_heart_bonuses.map(b => `
+                                                                <div class="perf-bonus-source-line" style="font-size:0.65rem; margin-bottom:4px;">
+                                                                    <div style="display:flex; align-items:center; gap:4px; font-weight:bold; opacity:0.9;">
+                                                                        ${b.img ? `<img src="${fixImg(b.img)}" style="width:12px; height:12px; border-radius:2px;">` : ''}
+                                                                        <span>${b.source}: +${b.amount} ${['Pink', 'Red', 'Yellow', 'Green', 'Blue', 'Purple', 'Any'][b.color] || ''}</span>
+                                                                    </div>
+                                                                    ${b.ability_text ? `<div class="perf-ability-text" style="opacity:0.8; font-style:italic; line-height:1.1;">${Tooltips.enrichAbilityText(b.ability_text)}</div>` : ''}
+                                                                </div>
+                                                            `).join('')}
+                                                        </div>
+                                                    ` : ''}
+                                                ` : ''}
                                             </div>
                                             <div class="contrib-row">
-263:                                                 ${PerformanceRenderer.renderBladesCompact(m.base_blades)}
-264:                                                 ${m.bonus_blades > 0 ? `
-265:                                                     <div class="perf-bonus-tooltip-wrapper">
-266:                                                         <span class="perf-member-bonus-label"> +${m.bonus_blades}</span>
-267:                                                         ${m.ability_blade_bonuses && m.ability_blade_bonuses.length > 0 ? `
-268:                                                             <div class="perf-bonus-source-tooltip">
-269:                                                                 ${m.ability_blade_bonuses.map(b => `
-270:                                                                     <div class="perf-bonus-source-line">
-271:                                                                         <div class="perf-bonus-source-header">
-272:                                                                             ${b.img ? `<img src="${fixImg(b.img)}" class="perf-bonus-source-icon">` : ''}
-273:                                                                             <span class="perf-bonus-source-name">${b.source}</span>
-274:                                                                             <span class="perf-bonus-source-amount">+${b.amount}</span>
-275:                                                                         </div>
-276:                                                                         ${b.ability_text ? `<div class="perf-bonus-source-ability">${Tooltips.enrichAbilityText(b.ability_text)}</div>` : ''}
-277:                                                                     </div>
-278:                                                                 `).join('')}
-279:                                                             </div>
-280:                                                         ` : ''}
-281:                                                     </div>
-282:                                                 ` : ''}
+                                                ${PerformanceRenderer.renderBladesCompact(m.base_blades)}
+                                                ${m.bonus_blades > 0 ? `
+                                                    <span class="perf-member-bonus-label" style="margin-left:5px;"> +${m.bonus_blades}</span>
+                                                    ${m.ability_blade_bonuses && m.ability_blade_bonuses.length > 0 ? `
+                                                        <div class="perf-member-ability-details" style="margin-top:4px; padding-left:10px; border-left:2px solid rgba(255,255,255,0.1);">
+                                                            ${m.ability_blade_bonuses.map(b => `
+                                                                <div class="perf-bonus-source-line" style="font-size:0.65rem; margin-bottom:4px;">
+                                                                    <div style="display:flex; align-items:center; gap:4px; font-weight:bold; opacity:0.9;">
+                                                                        ${b.img ? `<img src="${fixImg(b.img)}" style="width:12px; height:12px; border-radius:2px;">` : ''}
+                                                                        <span>${b.source}: +${b.value}</span>
+                                                                    </div>
+                                                                    ${b.ability_text ? `<div class="perf-ability-text" style="opacity:0.8; font-style:italic; line-height:1.1;">${Tooltips.enrichAbilityText(b.ability_text)}</div>` : ''}
+                                                                </div>
+                                                            `).join('')}
+                                                        </div>
+                                                    ` : ''}
+                                                ` : ''}
                                             </div>
-283:                                              ${(m.base_notes > 0 || m.bonus_notes > 0) ? `<span>${i18n.t('notes')}: <b>${m.base_notes}${m.bonus_notes > 0 ? ` <span class="perf-member-bonus-label">(+${m.bonus_notes})</span>` : ''}</b></span>` : ''}
+                                              ${(m.base_notes > 0 || m.bonus_notes > 0) ? `<span>${i18n.t('notes')}: <b>${m.base_notes}${m.bonus_notes > 0 ? ` <span class="perf-member-bonus-label">(+${m.bonus_notes})</span>` : ''}</b></span>` : ''}
                                             ${m.draw_icons ? `<span>${i18n.t('cards_draw')}: <b>${m.draw_icons}</b></span>` : ''}
 
                                             ${(res.breakdown && res.breakdown.allocations) ? (() => {
@@ -320,7 +338,7 @@ export const PerformanceRenderer = {
                             else if (isBonus) label = '(Ability)';
 
                             return `
-                                                            <span class="perf-target-tag ${isYell ? 'yell' : ''} ${isBonus ? 'bonus' : ''}"
+                                                            <span style="padding: 2px 4px; background: rgba(255,255,255,0.05); border-radius: 3px;"
                                                                 data-target-idx="${idx}"
                                                                 data-card-id="${res.lives[idx]?.id}"
                                                                 ${res.lives[idx]?.name ? `data-card-name="${res.lives[idx].name.replace(/"/g, '&quot;')}"` : ''}>
@@ -377,9 +395,12 @@ export const PerformanceRenderer = {
                         <div class="perf-section">
                             <h4>${i18n.t('activated_abilities', { defaultValue: 'Activated Abilities' })}</h4>
                             ${res.triggered_abilities.map(ta => `
-                                <div class="perf-line" style="font-size: 0.8rem; gap: 4px;">
-                                    <span style="opacity:0.7;">${Tooltips.enrichAbilityText(ta.name)}:</span>
-                                    <span>${Tooltips.enrichAbilityText(ta.card_name || 'Unknown Card')} (Ability ${ta.id + 1})</span>
+                                <div class="perf-line" style="font-size: 0.8rem; gap: 4px; flex-direction: column; align-items: flex-start;">
+                                    <div style="display:flex; align-items:center; gap:4px;">
+                                        <span style="opacity:0.7; font-weight:bold;">${Tooltips.enrichAbilityText(ta.name)}:</span>
+                                        <span>${Tooltips.enrichAbilityText(ta.card_name || 'Unknown Card')} (Ability ${ta.id + 1})</span>
+                                    </div>
+                                    ${ta.ability_text ? `<div class="perf-ability-text" style="font-size:0.75rem; opacity:0.8; font-style:italic; padding-left:10px;">${Tooltips.enrichAbilityText(ta.ability_text)}</div>` : ''}
                                 </div>
                             `).join('')}
                         </div>
@@ -421,7 +442,7 @@ export const PerformanceRenderer = {
 
     attachAllocationFlashListeners: (container) => {
         const sourceTags = container.querySelectorAll('.perf-source-tag');
-        const targetTags = container.querySelectorAll('.perf-target-tag');
+        const targetTags = container.querySelectorAll('.perf-member-targets span[data-target-idx]');
         const memberRows = container.querySelectorAll('.perf-member-contribution');
         const liveRows = container.querySelectorAll('.perf-live-card-row');
 
@@ -582,5 +603,23 @@ export const PerformanceRenderer = {
         if (phase === Phase.PERFORMANCE_P2) return (perspectivePlayer === 1) ? 'perf_p1' : 'perf_p2';
         if (phase === Phase.LIVE_RESULT) return 'live_result';
         return 'wait';
-    }
+    },
+    renderHeartsGrid: (hearts) => {
+        if (!hearts) return '';
+        let html = '';
+        // Always iterate 7 slots to keep them aligned
+        for (let idx = 0; idx < 7; idx++) {
+            const count = hearts[idx] || 0;
+            const isAny = idx === 6;
+            const colorClass = isAny ? 'color-any' : `color-${idx}`;
+            const icon = isAny ? 'img/texticon/icon_all.png' : `img/texticon/heart_0${idx + 1}.png`;
+
+            html += `
+                <div class="heart-grid-cell ${count > 0 ? 'has-value' : 'empty'}">
+                    <img src="${icon}" class="heart-mini-icon" style="opacity: ${count > 0 ? 1 : 0.15}">
+                    <span class="count-value" style="visibility: ${count > 0 ? 'visible' : 'hidden'}">${count}</span>
+                </div>`;
+        }
+        return html;
+    },
 };

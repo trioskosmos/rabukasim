@@ -554,13 +554,23 @@ impl ResponseController for GameState {
         let p_idx = self.current_player as usize;
         if self.phase == Phase::Response {
             let (cid, ctx, orig_phase, orig_cp) = if let Some(pi) = self.interaction_stack.last() {
+                let restored_phase = pi
+                    .ctx
+                    .original_phase
+                    .unwrap_or_else(|| {
+                        if pi.original_phase == Phase::Setup {
+                            self.phase
+                        } else {
+                            pi.original_phase
+                        }
+                    });
                 let mut c = pi.ctx.clone();
                 c.choice_index = choice_idx as i16;
-                c.original_phase = Some(pi.original_phase);
+                c.original_phase = Some(restored_phase);
                 if target_slot >= 0 {
                     c.target_slot = target_slot as i16;
                 }
-                (pi.card_id, c, pi.original_phase, pi.original_current_player)
+                (pi.card_id, c, restored_phase, pi.original_current_player)
             } else {
                 return Err("No pending interaction".to_string());
             };

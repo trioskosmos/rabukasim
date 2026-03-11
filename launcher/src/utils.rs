@@ -28,6 +28,15 @@ pub fn resolve_deck(main_codes: &[String], energy_codes: &[String], db: &CardDat
         }
     }
 
+    // Validation: 48 members + 12 lives (total 60)
+    if members.len() > 48 {
+        println!("[Deck] WARNING: Member deck too large ({} cards). The game engine only uses the first 48.", members.len());
+        // We don't truncate here because initialize_game handles it, but warning is good.
+    }
+    if lives.len() > 12 {
+        println!("[Deck] WARNING: Live deck too large ({} cards). The game engine only uses the first 12.", lives.len());
+    }
+
     let mut energy = Vec::new();
     for code in energy_codes {
         let norm_code = normalize_code(code);

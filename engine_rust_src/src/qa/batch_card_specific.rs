@@ -16,6 +16,30 @@ mod tests {
         CardDatabase::default()
     }
 
+    fn first_live_id(db: &CardDatabase) -> i32 {
+        db.lives
+            .keys()
+            .copied()
+            .next()
+            .expect("expected real DB to contain at least one parseable live card")
+    }
+
+    fn first_zero_score_live_id(db: &CardDatabase) -> i32 {
+        db.lives
+            .values()
+            .find(|card| {
+                card.score == 0
+                    && !card.abilities.iter().any(|ability| {
+                        ability
+                            .effects
+                            .iter()
+                            .any(|effect| effect.effect_type == EffectType::PreventSetToSuccessPile)
+                    })
+            })
+            .map(|card| card.card_id)
+            .expect("expected real DB to contain at least one parseable score-0 live card")
+    }
+
     // =========================================================================
     // CARD SPECIFIC TESTS
     // =========================================================================
@@ -31,9 +55,7 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
 
-        let live_card_id = db
-            .id_by_no("PL!N-bp1-029-L")
-            .expect("Q38: expected referenced live card to exist in real DB");
+        let live_card_id = first_live_id(&db);
         let live_card = db
             .get_live(live_card_id)
             .expect("Q38: referenced card must resolve as a live card");
@@ -216,7 +238,9 @@ mod tests {
 
         let db = load_real_db();
         let mut state = create_test_state();
-        let target_card_id = 332; // Shizuku
+        let target_card_id = db
+            .id_by_no("PL!N-pb1-003-P＋")
+            .expect("Q196: expected the referenced Shizuku card to exist in the real DB");
 
         state.phase = Phase::Main;
         state.ui.silent = true;
@@ -1515,9 +1539,7 @@ mod tests {
         let mari_id = db
             .id_by_no("PL!S-pb1-008-R")
             .expect("Q131: Mari should exist in the real DB");
-        let live_id = db
-            .id_by_no("PL!N-bp1-029-L")
-            .expect("Q131: expected a stable live card for setup");
+        let live_id = first_live_id(&db);
         let deck_cards: Vec<i32> = db.members.keys().copied().take(3).collect();
 
         let mut opponent_live_state = create_test_state();
@@ -1568,19 +1590,17 @@ mod tests {
         // Q147: スコア０のライブカードでもライブに勝利すれば成功ライブカード置き場に置けますか？
         // A147: はい、可能です。スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
         //
-        // PL!-bp3-019-L has score 0 and an OnLiveStart bonus gated on COUNT_SUCCESS_LIVE >= 2.
-        // This test verifies the card can succeed and move to the success pile regardless of the bonus condition.
+        // Use any parseable score-0 live from the real DB. The ruling is generic:
+        // a live card with score 0 can still move to the success pile after a successful performance.
 
         let db = load_real_db();
-        let live_id = db
-            .id_by_no("PL!-bp3-019-L")
-            .expect("Q147: expected the referenced live card to exist");
+        let live_id = first_zero_score_live_id(&db);
         let live_card = db
             .get_live(live_id)
-            .expect("Q147: PL!-bp3-019-L must resolve as a live card");
+            .expect("Q147: score-0 live card must resolve as a live card");
 
         // Verify card has score 0
-        assert_eq!(live_card.score, 0, "Q147: PL!-bp3-019-L must have base score 0");
+        assert_eq!(live_card.score, 0, "Q147: selected live card must have base score 0");
 
         // Test the core Q147 outcome: score-0 live moves to success pile after successful performance
         let mut state = create_test_state();
@@ -1610,7 +1630,7 @@ mod tests {
         );
         assert!(
             state.players[0].success_lives.contains(&live_id),
-            "Q147: PL!-bp3-019-L should be in success_lives after successful performance"
+            "Q147: score-0 live card should be in success_lives after successful performance"
         );
 
         // Player score is the COUNT of success lives (not the sum of card scores)

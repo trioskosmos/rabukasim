@@ -206,8 +206,12 @@ mod tests {
         );
         assert_eq!(
             state.phase,
-            Phase::Response,
-            "Should suspend on LOOK_AND_CHOOSE after passing optional cost"
+            Phase::Main,
+            "Should return to the recorded original phase when the skipped optional discard does not suspend again"
+        );
+        assert!(
+            state.interaction_stack.is_empty(),
+            "No follow-up interaction should remain after skipping the optional discard"
         );
     }
 

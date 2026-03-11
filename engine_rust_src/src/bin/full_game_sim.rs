@@ -1,156 +1,233 @@
-use engine_rust::core::logic::{GameState, Phase, ACTION_BASE_PASS};
-use engine_rust::core::logic::turn_sequencer::TurnSequencer;
-use engine_rust::test_helpers::load_real_db;
-use std::time::Instant;
+/// full_game_sim.rs — Official Rule Compliant AI Simulation
+///
+/// Run with: cargo run --bin full_game_sim [--release]
+///
+/// ─── TUNABLE PARAMETERS ──────────────────────────────────────────────────────
+const NUM_GAMES: usize = 1;
+const VERBOSE: bool = true;
+const STEP_LIMIT: usize = 500;
+const TURN_LIMIT: u16 = 20;
+/// ─────────────────────────────────────────────────────────────────────────────
+
 use std::fs;
+use std::time::Instant;
+
+use engine_rust::core::enums::Phase;
+use engine_rust::core::logic::turn_sequencer::{TurnSequencer, CONFIG};
+use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
 use rand::seq::SliceRandom;
 
-fn load_deck_and_lives(path: &str, db: &engine_rust::core::logic::CardDatabase) -> (Vec<i32>, Vec<i32>) {
-    let content = fs::read_to_string(path).expect("Could not read deck file");
+// ── DB loading ────────────────────────────────────────────────────────────────
+
+fn load_vanilla_db() -> CardDatabase {
+    let candidates = [
+        "data/cards_vanilla.json",
+        "../data/cards_vanilla.json",
+        "../../data/cards_vanilla.json",
+    ];
+
+    for path in &candidates {
+        if !std::path::Path::new(path).exists() {
+            continue;
+        }
+        let abs = std::fs::canonicalize(path)
+            .unwrap_or_else(|_| std::path::PathBuf::from(path));
+        println!("[DB_LOAD] Loading vanilla DB from: {:?}", abs);
+        let json = fs::read_to_string(path).expect("Failed to read vanilla DB");
+        let mut db = CardDatabase::from_json(&json).expect("Failed to parse vanilla DB");
+        db.is_vanilla = true;
+        return db;
+    }
+
+    panic!("Could not find cards_vanilla.json");
+}
+
+// ── Deck loading ──────────────────────────────────────────────────────────────
+
+fn load_deck_combined(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
+    let content = fs::read_to_string(path).expect("Failed to read deck file");
     let mut members = Vec::new();
     let mut lives = Vec::new();
-    
+
     for line in content.lines() {
         let line = line.trim();
         if line.is_empty() || line.starts_with('#') { continue; }
-        
-        let parts: Vec<&str> = line.split(' ').collect();
+        let parts: Vec<&str> = line.split_whitespace().collect();
         let card_no = parts[0];
-        let count = if parts.len() >= 3 && parts[1] == "x" {
-            parts[2].parse::<usize>().unwrap_or(1)
-        } else {
-            1
-        };
-        
+        let count: usize = if parts.len() >= 3 && parts[1] == "x" {
+            parts[2].parse().unwrap_or(1)
+        } else { 1 };
+
         if let Some(id) = db.id_by_no(card_no) {
-            if db.get_live(id).is_some() {
-                for _ in 0..count {
+            for _ in 0..count {
+                if db.lives.contains_key(&id) {
                     lives.push(id);
-                }
-            } else {
-                for _ in 0..count {
+                } else {
                     members.push(id);
                 }
             }
         }
     }
+
+    // Official Rules: 48 members + 12 lives = 60 cards
+    // If deck is invalid, pad with anything from the DB to avoid Turn 0 termination
+    while members.len() < 48 {
+        if let Some(&id) = db.members.keys().next() { members.push(id); } else { break; }
+    }
+    while lives.len() < 12 {
+        if let Some(&id) = db.lives.keys().next() { lives.push(id); } else { break; }
+    }
+    
+    members.truncate(48);
+    lives.truncate(12);
+    
     (members, lives)
 }
 
-fn main() {
-    println!("Loading Database...");
-    let db = load_real_db();
-    
-    let mut deck_path = "../ai/decks/liella_cup.txt".to_string();
-    if !std::path::Path::new(&deck_path).exists() {
-        deck_path = "ai/decks/liella_cup.txt".to_string();
+fn fallback_deck(db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
+    let members: Vec<i32> = db.members.keys().take(48).cloned().collect();
+    let lives: Vec<i32> = db.lives.keys().take(12).cloned().collect();
+    (members, lives)
+}
+
+// ── AI decision ───────────────────────────────────────────────────────────────
+
+struct AIDecision {
+    action: Option<usize>,
+    nodes: usize,
+    board_score: f32,
+    live_ev: f32,
+    duration_us: u128,
+}
+
+fn pick_action(state: &GameState, db: &CardDatabase, rng: &mut impl rand::RngCore) -> AIDecision {
+    let legal = state.get_legal_action_ids(db);
+    if legal.is_empty() {
+        return AIDecision { action: None, nodes: 0, board_score: 0.0, live_ev: 0.0, duration_us: 0 };
     }
-    
-    let (p_members, p_lives) = load_deck_and_lives(&deck_path, &db);
-    let energy_ids: Vec<i32> = db.energy_db.keys().take(10).cloned().collect();
-    
-    println!("Loaded {} members, {} lives, and {} energy cards.", p_members.len(), p_lives.len(), energy_ids.len());
 
-    let mut rng = rand::rng();
-    let mut p0_deck = p_members.clone();
-    let mut p1_deck = p_members.clone();
-    p0_deck.shuffle(&mut rng);
-    p1_deck.shuffle(&mut rng);
+    let start = Instant::now();
+    match state.phase {
+        Phase::Main => {
+            let (_evals, best_seq, nodes, breakdown) = TurnSequencer::plan_full_turn(state, db);
+            let duration = start.elapsed().as_micros();
+            let action = if best_seq.is_empty() { Some(ACTION_BASE_PASS as usize) } else { Some(best_seq[0] as usize) };
+            AIDecision { action, nodes, board_score: breakdown.0, live_ev: breakdown.1, duration_us: duration }
+        }
+        Phase::LiveSet => {
+            let (seq, _nodes, val_encoded) = TurnSequencer::find_best_liveset_selection(state, db);
+            let duration = start.elapsed().as_micros();
+            let action = if seq.is_empty() { Some(ACTION_BASE_PASS as usize) } else { Some(seq[0] as usize) };
+            let score = val_encoded as f32 / 1000.0;
+            AIDecision { action, nodes: _nodes, board_score: 0.0, live_ev: score, duration_us: duration }
+        }
+        // Randomize RPS, Mulligan, and Choice phases for variability
+        Phase::Rps | Phase::Mulligan | Phase::TurnChoice | Phase::Response => {
+            let duration = start.elapsed().as_micros();
+            let action = Some(*legal.choose(rng).unwrap_or(&legal[0]) as usize);
+            AIDecision { action, nodes: 0, board_score: 0.0, live_ev: 0.0, duration_us: duration }
+        }
+        _ => {
+            let duration = start.elapsed().as_micros();
+            AIDecision { action: Some(legal[0] as usize), nodes: 0, board_score: 0.0, live_ev: 0.0, duration_us: duration }
+        }
+    }
+}
 
+// ── Single game runner ────────────────────────────────────────────────────────
+
+fn run_game(
+    game_idx: usize,
+    member_cards: &[i32],
+    live_cards: &[i32],
+    energy_ids: &[i32],
+    db: &CardDatabase,
+    rng: &mut impl rand::RngCore,
+) {
     let mut state = GameState::default();
-    state.initialize_game(
-        p0_deck,
-        p1_deck,
-        energy_ids.clone(),
-        energy_ids.clone(),
-        p_lives.clone(),
-        p_lives.clone(),
-    );
     
-    // IMPORTANT: start silent to avoid flooding, but we'll print key events
+    // Official Rules: Combined Deck (48+12)
+    let p0_deck = member_cards.to_vec();
+    let p1_deck = member_cards.to_vec();
+    let p0_lives = live_cards.to_vec();
+    let p1_lives = live_cards.to_vec();
+    
+    // Note: initialize_game will combine members+lives into the deck and shuffle.
+    // Starting lives zone is empty.
+    state.initialize_game(
+        p0_deck, p1_deck, 
+        energy_ids.to_vec(), energy_ids.to_vec(), 
+        p0_lives, p1_lives
+    );
+
+    println!("[INIT] Phase: {:?}, P0 Hand: {}, P0 Deck: {}, P0 Lives: {}", 
+        state.phase, state.players[0].hand.len(), state.players[0].deck.len(), state.players[0].success_lives.len());
+
     state.ui.silent = true;
 
-    println!("\nSequencer Configuration Loaded: {:?}", engine_rust::core::logic::turn_sequencer::CONFIG.clone());
-    println!("\nStarting Realistic AI vs AI Game Simulation...");
+    println!("\n══════════════════════════════════════════════");
+    println!("  GAME {} (Official Rules: Mixed Deck)", game_idx + 1);
+    println!("══════════════════════════════════════════════");
 
-    let mut step_count = 0;
-    let mut total_seqs = 0;
-    let mut total_micros: u128 = 0;
-    let start_all = Instant::now();
-
-    while !state.is_terminal() && step_count < 1000 {
-        // 1. Process deterministic transitions (Energy, Draw, Active, Performance Result)
-        state.auto_step(&db);
-        
-        if state.is_terminal() { break; }
-
-        let p_idx = state.current_player as usize;
-        let phase = state.phase;
-
-        // 2. Decide actions for the current phase
-        match phase {
-            Phase::Rps => {
-                // Just pick a fixed choice to move on (0 = Rock)
-                let _ = state.step(&db, 4000); 
-            }
-            Phase::MulliganP1 | Phase::MulliganP2 => {
-                // Pass mulligan (id=1)
-                let _ = state.step(&db, 1);
-            }
-            Phase::Main => {
-                let hand_len = state.core.players[p_idx].hand.iter().filter(|&&c| c != -1).count();
-                let untapped_energy = state.core.players[p_idx].energy_zone.len() - state.core.players[p_idx].tapped_energy_count() as usize;
-                
-                println!("[Turn {}] Player {} - Main Phase (Hand: {}, Energy: {})", 
-                         state.turn, p_idx, hand_len, untapped_energy);
-
-                let (evals, best_seq, count, _) = TurnSequencer::plan_full_turn(&state, &db);
-                total_seqs += count;
-                
-                if best_seq.is_empty() {
-                    let _ = state.step(&db, 1); // Pass
-                } else {
-                    for &action in &best_seq {
-                        let label = state.get_verbose_action_label(action, &db);
-                        println!("  Action: {}", label);
-                        let _ = state.step(&db, action);
-                    }
-                }
-            }
-            Phase::LiveSet => {
-                let (seq, _, _) = TurnSequencer::find_best_liveset_selection(&state, &db);
-                if seq.is_empty() {
-                    let _ = state.step(&db, 1); // Pass
-                } else {
-                    for &action in &seq {
-                        let label = state.get_verbose_action_label(action, &db);
-                        println!("  Action: {}", label);
-                        let _ = state.step(&db, action);
-                    }
-                }
-            }
-            _ => {
-                // For other decision phases like ColorSelect or Interaction, just pass or pick index 0
-                let legal = state.get_legal_action_ids(&db);
-                if !legal.is_empty() {
-                    let _ = state.step(&db, legal[0]);
-                } else {
-                    let _ = state.step(&db, 1); // Fallback pass
-                }
-            }
+    let mut current_step = 0;
+    while !state.is_terminal() && current_step < STEP_LIMIT && state.turn <= TURN_LIMIT {
+        state.auto_step(db);
+        if state.is_terminal() { 
+            println!("[TERMINAL] Game ended at turn {} (Steps: {}, Phase: {:?}, P0 Score: {}, P1 Score: {})", 
+                state.turn, current_step, state.phase, state.players[0].score, state.players[1].score);
+            break; 
         }
 
-        step_count += 1;
+        if (state.turn, state.phase) != last_turn_phase {
+            last_turn_phase = (state.turn, state.phase);
+            println!("\n[Turn {} | P{} | {:?}] Space Score: P0={} P1={}", 
+                state.turn, state.current_player, state.phase, state.players[0].score, state.players[1].score);
+        }
+
+        let decision = pick_action(&state, db, rng);
+        if let Some(action) = decision.action {
+            let label = state.get_verbose_action_label(action as i32, db);
+            if decision.nodes > 0 || state.phase != Phase::Main {
+                println!("  P{} @ {:?} → {} [Nodes: {}, Board: {:.2}, LiveEV: {:.2}, Time: {}us]", 
+                    state.current_player, state.phase, label, decision.nodes, decision.board_score, decision.live_ev, decision.duration_us);
+            }
+            
+            if state.step(db, action as i32).is_err() {
+                let _ = state.step(db, ACTION_BASE_PASS);
+            }
+        } else {
+            println!("  [WARN] No actions for P{} at {:?}", state.current_player, state.phase);
+            let _ = state.step(db, ACTION_BASE_PASS);
+        }
+        current_step += 1;
     }
 
-    let elapsed_all = start_all.elapsed();
-    println!("\n--- Simulation Results ---");
-    println!("Final Turn Count: {}", state.turn);
-    println!("Winning Player: {}", state.get_winner());
-    println!("Final Score: Player 0: {} - Player 1: {}", state.core.players[0].score, state.core.players[1].score);
-    println!("Total Sequences Analyzed: {}", total_seqs);
-    println!("Overall Simulation Time: {:?}", elapsed_all);
-    if total_micros > 0 {
-        println!("Average Performance: {} seq/s", (total_seqs as f64 / (total_micros as f64 / 1_000_000.0)) as u64);
+    if current_step >= STEP_LIMIT { println!("[TERMINAL] Step limit reached!"); }
+    if state.turn > TURN_LIMIT { println!("[TERMINAL] Turn limit reached!"); }
+
+    let winner = state.get_winner();
+    println!("\n  ── Game {} finished: Winner=P{} | Turns={}", game_idx + 1, winner, state.turn);
+    println!("  Final Score: P0={} P1={}", state.players[0].score, state.players[1].score);
+}
+
+fn main() {
+    println!("Vanilla AI Simulation Runner (Official Rules Alignment)\n");
+    let cfg = CONFIG.clone();
+    println!("DFS Max Depth: {}", cfg.search.max_dfs_depth);
+
+    let db = load_vanilla_db();
+    let deck_path = "ai/decks/liella_cup.txt";
+    let (member_cards, live_cards) = if std::path::Path::new(deck_path).exists() {
+        load_deck_combined(deck_path, &db)
+    } else {
+        fallback_deck(&db)
+    };
+
+    // Grab first 12 energy cards for the energy deck
+    let energy_ids: Vec<i32> = db.energy_db.keys().take(12).cloned().collect();
+    let mut rng = rand::rng();
+
+    for i in 0..NUM_GAMES {
+        run_game(i, &member_cards, &live_cards, &energy_ids, &db, &mut rng);
     }
 }

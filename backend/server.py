@@ -49,6 +49,7 @@ except ImportError:
 
 
 from engine.game.data_loader import CardDataLoader
+from engine.game.deck_utils import UnifiedDeckParser
 from engine.game.desc_utils import get_action_desc
 from engine.game.enums import Phase
 from engine.game.game_state import GameState
@@ -333,7 +334,9 @@ def build_card_no_mapping():
                 card_no = card_data.get("card_no")
                 if card_no:
                     # Convert string key to integer ID
-                    card_no_to_id[card_no] = int(internal_id)
+                    # USE NORMALIZED KEY
+                    norm_key = UnifiedDeckParser.normalize_code(card_no)
+                    card_no_to_id[norm_key] = int(internal_id)
                     count += 1
 
         print(f"Built card_no_to_id mapping from compiled data: {count} entries")
@@ -354,14 +357,15 @@ def convert_deck_strings_to_ids(deck_strings):
     ids = []
     counts = {}
     for card_no in deck_strings:
-        if card_no in card_no_to_id:
-            base_id = card_no_to_id[card_no]
+        norm_code = UnifiedDeckParser.normalize_code(card_no)
+        if norm_code in card_no_to_id:
+            base_id = card_no_to_id[norm_code]
             count = counts.get(base_id, 0)
             uid = create_uid(base_id, count)
             counts[base_id] = count + 1
             ids.append(uid)
         else:
-            print(f"Warning: Unknown card_no '{card_no}', skipping.")
+            print(f"Warning: Unknown card_no '{card_no}' (norm: '{norm_code}'), skipping.")
     return ids
 
 
@@ -708,30 +712,39 @@ def create_room_internal(
             cdeck = custom_decks.get(str(pid)) or custom_decks.get(pid)
             if cdeck and cdeck.get("main"):
                 # Convert strings to IDs
-                main_ids = convert_deck_strings_to_ids(cdeck["main"])
-                random.shuffle(main_ids)
+                all_main_ids = convert_deck_strings_to_ids(cdeck["main"])
+                random.shuffle(all_main_ids)
 
-                # Extract Live cards for the initial Live Zone (3 cards)
-                # Note: cid is a UID, so we must mask it to compare with live_db keys
-                live_ids = [cid for cid in main_ids if (cid & BASE_ID_MASK) in live_db]
+                # Partition into Members and Lives
+                members = []
+                lives = []
+                for uid in all_main_ids:
+                    base_id = uid & BASE_ID_MASK
+                    if base_id in member_db:
+                        members.append(uid)
+                    elif base_id in live_db:
+                        lives.append(uid)
+                
+                # Truncate to standard limits (48 members, 12 lives)
+                # This ensures the engine receives exactly what it expects
+                if len(members) > 48:
+                    members = members[:48]
+                if len(lives) > 12:
+                    lives = lives[:12]
 
-                if len(main_ids) > 0:
-                    if pid == 0:
-                        p0_m = main_ids
-                        if len(live_ids) >= 3:
-                            p0_l = live_ids[:3]  # Pick first 3 as starting lives
-                        elif len(live_ids) > 0:
-                            p0_l = live_ids  # Use whatever lives are available
-                    else:
-                        p1_m = main_ids
-                        if len(live_ids) >= 3:
-                            p1_l = live_ids[:3]
-                        elif len(live_ids) > 0:
-                            p1_l = live_ids
+                if pid == 0:
+                    p0_m = members
+                    p0_l = lives
+                else:
+                    p1_m = members
+                    p1_l = lives
 
-                # Energy
+                # Energy (Strictly 12)
                 if cdeck.get("energy"):
                     e_ids = convert_deck_strings_to_ids(cdeck["energy"])
+                    if len(e_ids) > 12:
+                        e_ids = e_ids[:12]
+                    
                     if pid == 0:
                         p0_e = e_ids
                     else:
@@ -814,20 +827,23 @@ def create_new_room():
         print(f"DEBUG: Failed to parse JSON: {e}", file=sys.stderr)
         data = {}
 
-    mode = data.get("mode", "pve")
-    is_public = data.get("public", False)
-    custom_decks = data.get("decks", None)  # Optional initial decks
-
-    # Generate 4-char code
-    import string
-
-    chars = string.ascii_uppercase + string.digits
-    while True:
-        room_id = "".join(random.choices(chars, k=4))
-        if room_id not in ROOMS:
-            break
-
     print(f"DEBUG: Generated room_id {room_id}, acquiring lock...", file=sys.stderr)
+    
+    # Handle frontend parameters if 'decks' is not present
+    if not custom_decks:
+        p0_main = data.get("p0_deck")
+        p0_energy = data.get("p0_energy", [])
+        p1_main = data.get("p1_deck")
+        p1_energy = data.get("p1_energy", [])
+        
+        if p0_main or p1_main:
+            custom_decks = {}
+            if p0_main:
+                custom_decks["0"] = {"main": p0_main, "energy": p0_energy}
+            if p1_main:
+                custom_decks["1"] = {"main": p1_main, "energy": p1_energy}
+
+    res = {}
     res = {}
     with game_lock:
         print("DEBUG: Lock acquired. Creating room internal...", file=sys.stderr)
@@ -1444,8 +1460,9 @@ def validate_cards():
     for card_id in card_ids:
         # print(f"DEBUG: Checking {card_id}", flush=True)
         qty = card_counts.get(card_id, 1)
-        if card_id in card_no_to_id:
-            internal_id = card_no_to_id[card_id]
+        norm_id = UnifiedDeckParser.normalize_code(card_id)
+        if norm_id in card_no_to_id:
+            internal_id = card_no_to_id[norm_id]
             known.append(card_id)
 
             # Determine type and get name

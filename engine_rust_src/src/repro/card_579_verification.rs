@@ -25,7 +25,7 @@ fn test_card_579_ability_0_cost_comparison() { // Card No: PL!N-bp1-006-P
         .expect("Could not find ノンフィクション!! target card for test 0");
     let target_id = *target_id;
 
-    // Find a Liella member for stage setup
+    // Find a Liella member for stage setup.
     let liella_member_id = *db
         .members
         .iter()
@@ -130,13 +130,12 @@ fn test_card_579_ability_1_heart_filter() {
     let target_id = *target_id;
     crate::test_helpers::generate_card_report(target_id);
 
-    // Find a Liella member for stage setup
-    let liella_member_id = *db
+    let (liella_member_id, base_yellow_hearts) = db
         .members
         .iter()
-        .find(|(_, m)| m.groups.contains(&3))
-        .map(|(id, _)| id)
-        .expect("Need a Liella member for stage");
+        .find(|(_, m)| m.groups.contains(&3) && m.hearts[2] < 3)
+        .map(|(id, m)| (*id, m.hearts[2]))
+        .expect("Need a Liella member with fewer than 3 yellow hearts for test 1");
 
     state.set_stage(0, 1, liella_member_id); // Source card (Member)
     state.set_stage(0, 0, liella_member_id); // Member in Left Side (0) - Group 3
@@ -158,9 +157,12 @@ fn test_card_579_ability_1_heart_filter() {
         "Should NOT add blades if heart count is insufficient"
     );
 
-    // Test Case 2: Left side has 3 Yellow hearts (Color 2)
+    // Test Case 2: Raise the same member to 3 Yellow hearts total.
     println!("--- Test Case 2: Sufficient Hearts ---");
-    state.players[0].heart_buffs[0].add_to_color(2, 3);
+    state
+        .players[0]
+        .heart_buffs[0]
+        .add_to_color(2, (3 - base_yellow_hearts) as i32);
 
     // Verify filter matches manually using the builder (Proof of Phase 3 readability)
     let mut filter = CardFilter::new();
@@ -173,7 +175,7 @@ fn test_card_579_ability_1_heart_filter() {
     filter.is_enabled = true;
 
     let member_id = liella_member_id;
-    let hearts = state.players[0].heart_buffs[0].to_array();
+    let hearts = state.get_effective_hearts(0, 0, &db, 0).to_array();
     assert!(
         filter.matches(&state, &db, member_id, None, false, Some(&hearts), &crate::core::logic::AbilityContext::default()),
         "Builder filter should match the stage member with hearts"

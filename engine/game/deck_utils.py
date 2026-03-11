@@ -39,12 +39,16 @@ class UnifiedDeckParser:
 
     @staticmethod
     def normalize_code(code: str) -> str:
-        """Normalizes card codes for consistent matching."""
+        """Normalize card codes for matching."""
         if not code:
             return ""
-        # Convert common full-width characters to half-width for alignment
-        code = code.replace("＋", "+").replace("ー", "-").strip()
-        return code
+        return (
+            code.strip()
+            .replace("＋", "+")
+            .replace("－", "-")
+            .replace("ー", "-")
+            .upper()
+        )
 
     def resolve_card(self, code_or_id: str) -> Dict:
         """Finds card data by Card No or Internal ID."""

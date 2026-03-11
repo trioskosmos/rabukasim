@@ -453,20 +453,58 @@ pub fn p_state(state: &GameState, p_idx: usize) -> &PlayerState {
 
 // const DB_JSON: &str = include_str!("../../data/cards_compiled.json");
 
+fn try_load_db_from_path(path: &str) -> Option<CardDatabase> {
+    if !std::path::Path::new(path).exists() {
+        return None;
+    }
+
+    let json = std::fs::read_to_string(path).ok()?;
+    let db = CardDatabase::from_json(&json).ok()?;
+
+    // Some workspace copies contain a tiny stub file with empty member/live DBs.
+    // Treat that as invalid for engine QA tests and continue searching.
+    if db.members.is_empty() || db.lives.is_empty() {
+        return None;
+    }
+
+    Some(db)
+}
+
 pub fn load_real_db() -> CardDatabase {
-    let mut path = std::env::var("CARDS_JSON_PATH")
-        .unwrap_or_else(|_| "../../data/cards_compiled.json".to_string());
-    if !std::path::Path::new(&path).exists() {
-        path = "../data/cards_compiled.json".to_string();
+    let mut candidate_paths = Vec::new();
+
+    if let Ok(env_path) = std::env::var("CARDS_JSON_PATH") {
+        candidate_paths.push(env_path);
     }
-    if !std::path::Path::new(&path).exists() {
-        path = "data/cards_compiled.json".to_string();
+
+    candidate_paths.extend(
+        [
+            "../../data/cards_compiled.json",
+            "../data/cards_compiled.json",
+            "data/cards_compiled.json",
+            "../../web_dist/data/cards_compiled.json",
+            "../web_dist/data/cards_compiled.json",
+            "web_dist/data/cards_compiled.json",
+            "../../launcher/static_content/data/cards_compiled.json",
+            "../launcher/static_content/data/cards_compiled.json",
+            "launcher/static_content/data/cards_compiled.json",
+        ]
+        .into_iter()
+        .map(str::to_string),
+    );
+
+    for path in candidate_paths {
+        let abs_path = std::fs::canonicalize(&path)
+            .unwrap_or_else(|_| std::path::PathBuf::from(&path));
+        if let Some(db) = try_load_db_from_path(&path) {
+            println!("[DB_LOAD] Loading CardDatabase from: {:?}", abs_path);
+            return db;
+        }
     }
-    let abs_path = std::fs::canonicalize(&path).unwrap_or_else(|_| std::path::PathBuf::from(&path));
-    println!("[DB_LOAD] Loading CardDatabase from: {:?}", abs_path);
-    let json = std::fs::read_to_string(&path)
-        .expect(&format!("Failed to read CardDatabase from {}", path));
-    CardDatabase::from_json(&json).expect("Failed to parse production CardDatabase in test_helpers")
+
+    panic!(
+        "Failed to locate a usable CardDatabase. Checked env path plus data/cards_compiled.json, web_dist/data/cards_compiled.json, and launcher/static_content/data/cards_compiled.json"
+    );
 }
 
 pub fn create_test_db() -> CardDatabase {

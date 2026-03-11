@@ -604,7 +604,9 @@ mod tests {
 
         let db = load_real_db();
         let mut state = create_test_state();
-        let target_card_id = 332; // Shizuku
+        let target_card_id = db
+            .id_by_no("PL!N-pb1-003-P＋")
+            .expect("Q196: expected the referenced Shizuku card to exist in the real DB");
 
         state.phase = Phase::Main;
         state.ui.silent = true;
@@ -1507,7 +1509,7 @@ mod tests {
 
         state.step(&db, 0).expect("Pass failed");
         assert_eq!(state.players[p_idx].hand.len(), 3, "Hand should not change on Pass");
-        assert_eq!(state.phase, Phase::Response, "Should return to Response phase if started there");
+        assert_eq!(state.phase, Phase::Main, "Skipping the optional discard should collapse the transient Response phase back to Main");
     }
 
     #[test]

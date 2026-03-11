@@ -1,5 +1,6 @@
 use crate::core::logic::card_db::LOGIC_ID_MASK;
 use crate::core::logic::*;
+use crate::core::generated_layout::S_STANDARD_IS_OPPONENT_SHIFT;
 // use crate::core::enums::*;
 use crate::test_helpers::{create_test_db, create_test_state, Action};
 // use std::collections::HashMap;
@@ -664,10 +665,11 @@ fn test_targets_all_groups() {
     );
     assert_eq!(state.players[0].hand.len(), 1);
 
-    // [TargetType::Opponent] (Target 2)
+    // Opponent targeting is encoded through the standard `is_opponent` bit.
+    let opponent_raw_s = 1 << S_STANDARD_IS_OPPONENT_SHIFT;
     state.resolve_bytecode_cref(
         &db,
-        &vec![O_DRAW, 1, 0, 0, 2, O_RETURN, 0, 0, 0, 0],
+        &vec![O_DRAW, 1, 0, 0, opponent_raw_s as i32, O_RETURN, 0, 0, 0, 0],
         &AbilityContext {
             player_id: 0,
             ..Default::default()
@@ -675,11 +677,27 @@ fn test_targets_all_groups() {
     );
     assert_eq!(state.players[1].hand.len(), 1);
 
-    // [TargetType::AllPlayers] (Target 3)
-    // Draw 1 each
+    // All-players behavior is represented as one self-targeting draw plus one
+    // opponent-targeting draw under the current standard-slot encoding.
     state.resolve_bytecode_cref(
         &db,
-        &vec![O_DRAW, 1, 0, 0, 3, O_RETURN, 0, 0, 0, 0],
+        &vec![
+            O_DRAW,
+            1,
+            0,
+            0,
+            0,
+            O_DRAW,
+            1,
+            0,
+            0,
+            opponent_raw_s as i32,
+            O_RETURN,
+            0,
+            0,
+            0,
+            0,
+        ],
         &AbilityContext {
             player_id: 0,
             ..Default::default()

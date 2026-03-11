@@ -90,6 +90,8 @@ mod qa;
 #[cfg(test)]
 mod repro_flags;
 
+pub mod repro_kanon_557;
+
 #[cfg(test)]
 mod meta_rule_card_tests;
 

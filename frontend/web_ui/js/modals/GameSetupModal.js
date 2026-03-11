@@ -102,18 +102,27 @@ export const GameSetupModal = {
             };
         } else if (config.type === 'manual') {
             const content = config.content || "";
-            let matches = content.match(/(PL![A-Za-z0-9\-]+)/g);
-            if (!matches || matches.length === 0) {
-                const lines = content.split(/\r?\n|,\s*/);
-                matches = [];
-                for (const line of lines) {
-                    const trimmed = line.trim();
-                    if (!trimmed || trimmed.startsWith('#')) continue;
-                    let code = trimmed.replace(/^(\d+)[xX]\s*/, '').replace(/\s*[xX](\d+)$/, '').trim();
-                    if (code.length > 0) matches.push(code);
+            const validation = validator.validateDeckString(content);
+
+            const main = [];
+            for (const item of validation.parsed) {
+                if (item.valid) {
+                    for (let i = 0; i < item.count; i++) {
+                        main.push(item.code);
+                    }
                 }
             }
-            return { main: matches || [], energy: [] };
+
+            const energy = [];
+            for (const item of validation.parsedEnergy) {
+                if (item.valid) {
+                    for (let i = 0; i < item.count; i++) {
+                        energy.push(item.code);
+                    }
+                }
+            }
+
+            return { main, energy };
         }
         return null;
     },
