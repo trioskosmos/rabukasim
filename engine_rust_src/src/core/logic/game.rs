@@ -1153,7 +1153,7 @@ impl GameState {
             area_idx: slot,
             trigger_type: trigger,
             choice_index: choice,
-            auto_pick: true,
+            auto_pick: false,
             ..Default::default()
         };
         self.trigger_abilities_from(db, trigger, &ctx, start_ab_idx);

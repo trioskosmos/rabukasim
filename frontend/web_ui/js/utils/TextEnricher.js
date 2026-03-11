@@ -195,6 +195,13 @@ export const TextEnricher = {
             }
         }
 
+        // 4. If EXPLICITLY English but we only have Japanese text, attempt heuristic translation
+        if (lang === 'en' && text && /[亜-熙ぁ-んァ-ヶ]/.test(text)) {
+            if (window.translateAbility) {
+                text = window.translateAbility(text, 'en');
+            }
+        }
+
         return text || "";
     },
 

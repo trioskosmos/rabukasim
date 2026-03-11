@@ -1293,6 +1293,11 @@ class Ability:
             m = re.search(r"TYPE=(\w+)", filter_str)
             if m:
                 ctype = m.group(1).lower()
+        elif not ctype and "TYPE_" in filter_str:
+            # Handle TYPE_MEMBER, TYPE_LIVE format in filter string
+            m = re.search(r"TYPE_(\w+)", filter_str)
+            if m:
+                ctype = m.group(1).lower()
 
         if "live" in ctype:
             filter_obj["card_type"] = 2

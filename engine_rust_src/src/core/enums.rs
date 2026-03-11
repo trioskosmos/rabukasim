@@ -335,6 +335,7 @@ pub enum ChoiceType {
     RecovL = 26,
     RecovM = 27,
     SelectStageEmptyBaton = 28,
+    RearrangeFormation = 29,
 }
 
 impl ChoiceType {
@@ -368,6 +369,7 @@ impl ChoiceType {
             "RECOV_L" => ChoiceType::RecovL,
             "RECOV_M" => ChoiceType::RecovM,
             "SELECT_STAGE_EMPTY_BATON" => ChoiceType::SelectStageEmptyBaton,
+            "REARRANGE_FORMATION" => ChoiceType::RearrangeFormation,
             _ => ChoiceType::None,
         }
     }
@@ -401,6 +403,7 @@ impl ChoiceType {
             ChoiceType::RecovL => "RECOV_L",
             ChoiceType::RecovM => "RECOV_M",
             ChoiceType::SelectStageEmptyBaton => "SELECT_STAGE_EMPTY_BATON",
+            ChoiceType::RearrangeFormation => "REARRANGE_FORMATION",
             ChoiceType::None => "NONE",
         }
     }

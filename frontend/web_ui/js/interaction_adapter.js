@@ -96,6 +96,16 @@ export const InteractionAdapter = {
             });
         }
 
+        if (state.pending_choice && state.pending_choice.options) {
+            // ... (existing logic)
+        }
+
+        // Special Mode: Rearrange Formation (Manual Interaction)
+        if (state.pending_choice && state.pending_choice.choice_type === 29) {
+            valid.myStage = { 0: true, 1: true, 2: true };
+            valid.hasSelection = true;
+        }
+
         return valid;
     }
 };

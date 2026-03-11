@@ -272,13 +272,13 @@ export const Rendering = {
         const title = document.getElementById('discard-modal-title');
         const container = document.getElementById('discard-modal-cards');
 
-        if (!modal || !container) return;
-
-        title.textContent = (playerIdx === State.perspectivePlayer ? "Your" : "Opponent's") + " Discard Pile (" + discard.length + ")";
+        const isMe = playerIdx === State.perspectivePlayer;
+        const count = discard.length;
+        title.textContent = isMe ? i18n.t('your_discard_title', { count }) : i18n.t('opp_discard_title', { count });
         container.innerHTML = '';
 
         if (discard.length === 0) {
-            container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 40px;">No cards in discard pile.</div>';
+            container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 40px;">${i18n.t('no_cards_discard')}</div>`;
         } else {
             discard.forEach((card) => {
                 if (!card) return;
@@ -305,10 +305,8 @@ export const Rendering = {
         const title = document.getElementById('discard-modal-title');
         const container = document.getElementById('discard-modal-cards');
 
-        if (!modal || !container) return;
-
         const isMe = playerIdx === State.perspectivePlayer;
-        title.textContent = (isMe ? "Your" : "Opponent's") + " Card Viewer";
+        title.textContent = isMe ? i18n.t('your_viewer_title') : i18n.t('opp_viewer_title');
         container.innerHTML = '';
         container.className = 'zone-viewer-grid'; // Use a different grid if needed
 
@@ -347,7 +345,7 @@ export const Rendering = {
         const addEmptySection = (label) => {
             const section = document.createElement('div');
             section.className = 'zone-viewer-section';
-            section.innerHTML = `<h3>${label} (0)</h3><div style="opacity:0.5; padding:10px;">No cards found in this zone or zone is private.</div>`;
+            section.innerHTML = `<h3>${label} (0)</h3><div style="opacity:0.5; padding:10px;">${i18n.t('no_cards_zone')}</div>`;
             container.appendChild(section);
         };
 
@@ -355,17 +353,17 @@ export const Rendering = {
         const deck = player.deck_cards || player.deck || player.full_deck || [];
         const energyDeck = player.energy_deck_cards || player.energy_deck || [];
 
-        if (deck.length > 0) addSection("Member Deck (Remaining)", deck, true);
-        else addEmptySection("Member Deck");
+        if (deck.length > 0) addSection(i18n.t('member_deck_rem'), deck, true);
+        else addEmptySection(i18n.t('member_deck_rem'));
 
-        if (energyDeck.length > 0) addSection("Energy Deck (Remaining)", energyDeck, true);
-        else addEmptySection("Energy Deck");
+        if (energyDeck.length > 0) addSection(i18n.t('energy_deck_rem'), energyDeck, true);
+        else addEmptySection(i18n.t('energy_deck_rem'));
 
-        addSection("Hand", player.hand);
-        addSection("Stage", player.stage);
-        addSection("Energy", player.energy ? player.energy.map(e => e.card || e) : []);
-        addSection("Success Zone", player.success_lives || player.success_pile);
-        addSection("Discard Pile", player.discard);
+        addSection(i18n.t('hand'), player.hand);
+        addSection(i18n.t('stage'), player.stage);
+        addSection(i18n.t('energy'), player.energy ? player.energy.map(e => e.card || e) : []);
+        addSection(i18n.t('success_zone'), player.success_lives || player.success_pile);
+        addSection(i18n.t('discard_pile'), player.discard);
 
         modal.style.display = 'flex';
     },

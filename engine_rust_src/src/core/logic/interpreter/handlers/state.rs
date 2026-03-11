@@ -462,16 +462,14 @@ pub fn handle_member_state(
                 }
             }
         }
-        O_MOVE_MEMBER | O_FORMATION_CHANGE => {
-            let src_slot = if op == O_FORMATION_CHANGE && target_slot == 4 {
-                ctx.area_idx as usize
-            } else if op == O_MOVE_MEMBER && ctx.area_idx >= 0 {
+        O_MOVE_MEMBER => {
+            let src_slot = if ctx.area_idx >= 0 {
                 ctx.area_idx as usize
             } else {
                 resolved_slot as usize
             };
 
-            if op == O_MOVE_MEMBER && a == 99 && ctx.choice_index == -1 {
+            if a == 99 && ctx.choice_index == -1 {
                 let choice_text = get_choice_text(db, ctx);
                 if suspend_interaction(
                     state,
@@ -489,7 +487,7 @@ pub fn handle_member_state(
                 }
             }
 
-            let dst_slot = if op == O_MOVE_MEMBER && a == 99 && ctx.choice_index != -1 {
+            let dst_slot = if a == 99 && ctx.choice_index != -1 {
                 let slot = ctx.choice_index as usize;
                 ctx.choice_index = -1;
                 slot
@@ -507,6 +505,70 @@ pub fn handle_member_state(
                         pos_ctx.source_card_id = cid;
                         pos_ctx.area_idx = slot as i16;
                         state.trigger_abilities(db, TriggerType::OnPositionChange, &pos_ctx);
+                    }
+                }
+            }
+        }
+        O_FORMATION_CHANGE => {
+            // SIC "Formation Change" usually implies a full reorganization of members.
+            // We use a specific ChoiceType to trigger a UI rearrangement mode.
+            if ctx.choice_index == -1 {
+                let choice_text = get_choice_text(db, ctx);
+                if suspend_interaction(
+                    state,
+                    db,
+                    ctx,
+                    instr_ip,
+                    O_FORMATION_CHANGE,
+                    s,
+                    ChoiceType::RearrangeFormation,
+                    &choice_text,
+                    0,
+                    -1,
+                ) {
+                    return HandlerResult::Suspend;
+                }
+            } else {
+                // Choice index represents a permutation 0-5.
+                // 0: [0,1,2], 1: [0,2,1], 2: [1,0,2], 3: [1,2,0], 4: [2,0,1], 5: [2,1,0]
+                let perm_idx = ctx.choice_index as usize;
+                ctx.choice_index = -1;
+                
+                if perm_idx < 6 {
+                    let perms = [
+                        [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]
+                    ];
+                    let p = perms[perm_idx];
+                    
+                    // Original data
+                    let old_data: Vec<_> = (0..3).map(|i| {
+                        (state.players[p_idx].stage[i], 
+                        state.players[p_idx].is_tapped(i),
+                         state.players[p_idx].stage_energy[i].clone())
+                    }).collect();
+                    
+                    let mut moved = false;
+                    for i in 0..3 {
+                        let target_orig_idx = p[i];
+                        if target_orig_idx != i {
+                            moved = true;
+                        }
+                        state.players[p_idx].stage[i] = old_data[target_orig_idx].0;
+                        state.players[p_idx].set_tapped(i, old_data[target_orig_idx].1);
+                        state.players[p_idx].stage_energy[i] = old_data[target_orig_idx].2.clone();
+                        state.players[p_idx].sync_stage_energy_count(i);
+                    }
+                    
+                    if moved {
+                        for i in 0..3 {
+                            let cid = state.players[p_idx].stage[i];
+                            if cid >= 0 {
+                                let mut pos_ctx = ctx.clone();
+                                pos_ctx.source_card_id = cid;
+                                pos_ctx.area_idx = i as i16;
+                                state.trigger_abilities(db, TriggerType::OnPositionChange, &pos_ctx);
+                            }
+                        }
                     }
                 }
             }

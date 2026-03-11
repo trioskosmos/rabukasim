@@ -170,13 +170,13 @@ fn handle_main_phase(state: &GameState, db: &CardDatabase) -> MainPhaseResult {
     for (action_id, total_val, b_score, l_ev) in evals {
         let label = state.get_verbose_action_label(action_id, db);
         evaluated_actions.push(ActionDiagnostic {
-            action_id,
+            _action_id: action_id,
             action_label: label,
             board_score: b_score,
             live_ev: l_ev,
             total_score: total_val,
-            nodes_explored: 0,
-            time_us: 0,
+            _nodes_explored: 0,
+            _time_us: 0,
         });
     }
 
@@ -222,8 +222,8 @@ fn handle_liveset_phase(state: &GameState, db: &CardDatabase) -> LiveSetPhaseRes
 
 fn run_single_turn(state: &mut GameState, db: &CardDatabase, turn_num: u16) -> TurnDiagnostic {
     let mut turn_diag = TurnDiagnostic {
-        turn_number: turn_num,
-        phase_name: "Main→LiveSet".to_string(),
+        _turn_number: turn_num,
+        _phase_name: "Main→LiveSet".to_string(),
         ..Default::default()
     };
 

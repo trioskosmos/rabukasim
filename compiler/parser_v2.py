@@ -1358,6 +1358,22 @@ class AbilityParserV2:
                         except:
                             pass
 
+                # Special parsing for TRANSFORM_BLADES(ALL) -> X
+                if etype == EffectType.TRANSFORM_BLADES:
+                    # If val was "ALL", we want to extract the destination from target_name
+                    if val == "ALL" and target_name:
+                        try:
+                            val_int = int(target_name)
+                            # Clear destination since we've extracted the value
+                            if "destination" in params and params["destination"] == target_name:
+                                del params["destination"]
+                            target = TargetType.MEMBER_SELF  # targeting the selected member
+                        except (ValueError, TypeError):
+                            val_int = 99  # Fallback to ALL if not a number
+                    elif val and val.isdigit():
+                        # Direct value: TRANSFORM_BLADES(3) -> TARGET
+                        val_int = int(val)
+
                 if etype == EffectType.LOOK_AND_CHOOSE and "choose_count" not in params:
                     params["choose_count"] = 1
 

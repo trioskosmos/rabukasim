@@ -129,8 +129,21 @@ impl ResponseGenerator {
                 return;
             }
             ChoiceType::SelectStageEmpty => {
+                // Count empty slots first to check if forced
+                let mut empty_slots = Vec::new();
                 for i in 0..3 {
                     if player.stage[i] == -1 && (player.prevent_play_to_slot_mask & (1 << i)) == 0 {
+                        empty_slots.push(i);
+                    }
+                }
+                // If only one empty slot, auto-select it (forced choice)
+                if empty_slots.len() == 1 {
+                    receiver.add_action(
+                        (ACTION_BASE_CHOICE + empty_slots[0] as i32) as usize,
+                    );
+                } else {
+                    // Multiple or no choices - present all
+                    for i in empty_slots {
                         receiver.add_action(
                             (ACTION_BASE_CHOICE + i as i32) as usize,
                         );

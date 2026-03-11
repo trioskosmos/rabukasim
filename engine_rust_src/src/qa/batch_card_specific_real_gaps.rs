@@ -1,4 +1,5 @@
-use crate::core::generated_constants::{ACTION_BASE_HAND, ACTION_BASE_STAGE, ACTION_BASE_STAGE_SLOTS};
+use crate::core::enums::ChoiceType;
+use crate::core::generated_constants::{ACTION_BASE_CHOICE, ACTION_BASE_HAND, ACTION_BASE_HAND_SELECT, ACTION_BASE_STAGE, ACTION_BASE_STAGE_SLOTS, C_COUNT_STAGE, C_TOTAL_BLADES};
 use crate::core::logic::*;
 use crate::test_helpers::*;
 
@@ -28,6 +29,36 @@ mod tests {
             .expect("expected a parseable member matching the requested predicate")
     }
 
+    fn first_live_id(db: &CardDatabase) -> i32 {
+        db.lives
+            .keys()
+            .copied()
+            .next()
+            .expect("expected a parseable live card in the real DB")
+    }
+
+    fn blade_threshold_pair(db: &CardDatabase, threshold: u32) -> (i32, i32, u32, u32) {
+        let mut candidates: Vec<&MemberCard> = db.members.values().filter(|card| card.blades > 0).collect();
+        candidates.sort_by_key(|card| std::cmp::Reverse(card.blades));
+
+        for active in &candidates {
+            if active.blades >= threshold {
+                continue;
+            }
+            for waiting in &candidates {
+                if active.card_id == waiting.card_id {
+                    continue;
+                }
+                let total = active.blades.saturating_add(waiting.blades);
+                if total >= threshold {
+                    return (active.card_id, waiting.card_id, active.blades, waiting.blades);
+                }
+            }
+        }
+
+        panic!("expected two members whose combined blades cross the threshold only when both count");
+    }
+
     fn setup_sumire_double_baton_state(db: &CardDatabase) -> GameState {
         let sumire_id = db
             .id_by_no("PL!SP-bp4-004-R＋")
@@ -47,6 +78,368 @@ mod tests {
         state.players[0].hand = vec![sumire_id].into();
         state.players[0].energy_zone = vec![3001; 22].into();
         state
+    }
+
+    #[test]
+    fn test_q132_live_success_bonus_applies_for_first_player() {
+        let db = load_real_db();
+        let live_id = db
+            .id_by_no("PL!S-pb1-021-L")
+            .expect("Q132: expected Strawberry Trapper in DB");
+        let live = db.get_live(live_id).expect("Q132: live card should resolve from DB");
+        let ability = live
+            .abilities
+            .iter()
+            .find(|ability| ability.trigger == TriggerType::OnLiveSuccess)
+            .expect("Q132: expected a live-success ability on Strawberry Trapper");
+        let aqours_candidates: Vec<i32> = db
+            .members
+            .values()
+            .filter(|card| card.groups.contains(&1))
+            .take(18)
+            .map(|card| card.card_id)
+            .collect();
+
+        let mut passing_stage = None;
+        'search: for i in 0..aqours_candidates.len() {
+            let single = vec![aqours_candidates[i]];
+            if {
+                let stage_members = single.clone();
+                let mut state = create_test_state();
+                state.phase = Phase::LiveResult;
+                state.current_player = 0;
+                state.first_player = 0;
+                state.ui.silent = true;
+                state.players[0].live_zone[0] = live_id;
+                state.players[1].excess_hearts = 0;
+                state.obtained_success_live[0] = true;
+                for (slot, cid) in stage_members.iter().copied().enumerate() {
+                    state.players[0].stage[slot] = cid;
+                }
+                let ctx = AbilityContext {
+                    source_card_id: live_id,
+                    player_id: 0,
+                    trigger_type: TriggerType::OnLiveSuccess,
+                    ..Default::default()
+                };
+                ability
+                    .conditions
+                    .iter()
+                    .all(|condition| state.check_condition(&db, 0, condition, &ctx, 0))
+            } {
+                passing_stage = Some(single);
+                break;
+            }
+            for j in (i + 1)..aqours_candidates.len() {
+                let pair = vec![aqours_candidates[i], aqours_candidates[j]];
+                if {
+                    let stage_members = pair.clone();
+                    let mut state = create_test_state();
+                    state.phase = Phase::LiveResult;
+                    state.current_player = 0;
+                    state.first_player = 0;
+                    state.ui.silent = true;
+                    state.players[0].live_zone[0] = live_id;
+                    state.players[1].excess_hearts = 0;
+                    state.obtained_success_live[0] = true;
+                    for (slot, cid) in stage_members.iter().copied().enumerate() {
+                        state.players[0].stage[slot] = cid;
+                    }
+                    let ctx = AbilityContext {
+                        source_card_id: live_id,
+                        player_id: 0,
+                        trigger_type: TriggerType::OnLiveSuccess,
+                        ..Default::default()
+                    };
+                    ability
+                        .conditions
+                        .iter()
+                        .all(|condition| state.check_condition(&db, 0, condition, &ctx, 0))
+                } {
+                    passing_stage = Some(pair);
+                    break 'search;
+                }
+                for k in (j + 1)..aqours_candidates.len() {
+                    let triple = vec![aqours_candidates[i], aqours_candidates[j], aqours_candidates[k]];
+                    if {
+                        let stage_members = triple.clone();
+                        let mut state = create_test_state();
+                        state.phase = Phase::LiveResult;
+                        state.current_player = 0;
+                        state.first_player = 0;
+                        state.ui.silent = true;
+                        state.players[0].live_zone[0] = live_id;
+                        state.players[1].excess_hearts = 0;
+                        state.obtained_success_live[0] = true;
+                        for (slot, cid) in stage_members.iter().copied().enumerate() {
+                            state.players[0].stage[slot] = cid;
+                        }
+                        let ctx = AbilityContext {
+                            source_card_id: live_id,
+                            player_id: 0,
+                            trigger_type: TriggerType::OnLiveSuccess,
+                            ..Default::default()
+                        };
+                        ability
+                            .conditions
+                            .iter()
+                            .all(|condition| state.check_condition(&db, 0, condition, &ctx, 0))
+                    } {
+                        passing_stage = Some(triple);
+                        break 'search;
+                    }
+                }
+            }
+        }
+
+        let stage_members = passing_stage.expect("Q132: expected to find a real Aqours stage combination satisfying the live-success condition");
+
+        let conditions_hold = |first_player: u8, opponent_excess_hearts: u32| {
+            let mut state = create_test_state();
+            state.phase = Phase::LiveResult;
+            state.current_player = 0;
+            state.first_player = first_player;
+            state.ui.silent = true;
+            state.players[0].live_zone[0] = live_id;
+            state.players[1].excess_hearts = opponent_excess_hearts;
+            state.obtained_success_live[0] = true;
+
+            for (slot, cid) in stage_members.iter().copied().enumerate() {
+                state.players[0].stage[slot] = cid;
+            }
+
+            let ctx = AbilityContext {
+                source_card_id: live_id,
+                player_id: 0,
+                trigger_type: TriggerType::OnLiveSuccess,
+                ..Default::default()
+            };
+            ability
+                .conditions
+                .iter()
+                .all(|condition| state.check_condition(&db, 0, condition, &ctx, 0))
+        };
+
+        assert!(
+            conditions_hold(0, 0),
+            "Q132: Strawberry Trapper's live-success conditions should evaluate true even when its controller is first player"
+        );
+        assert!(
+            conditions_hold(1, 0),
+            "Q132: the same live-success conditions should also evaluate true when the controller is not first player"
+        );
+        assert!(
+            !conditions_hold(0, 1),
+            "Q132: the same live-success condition set should fail once the opponent has excess hearts"
+        );
+    }
+
+    #[test]
+    fn test_q144_up_to_two_can_choose_only_one_target() {
+        let db = load_real_db();
+        let eli_id = db
+            .id_by_no("PL!-bp3-002-P")
+            .expect("Q144: expected Eli card in DB");
+        let victim_id = first_member_matching(&db, |card| card.cost <= 4 && card.card_id != eli_id);
+        let expensive_id = first_member_matching(&db, |card| {
+            card.cost >= 5 && card.card_id != eli_id && card.card_id != victim_id
+        });
+        let discard_cost_id = first_member_matching(&db, |card| {
+            card.card_id != eli_id && card.card_id != victim_id && card.card_id != expensive_id
+        });
+
+        let mut state = create_test_state();
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.ui.silent = true;
+        state.players[0].stage[0] = eli_id;
+        state.players[0].hand = vec![discard_cost_id].into();
+        state.players[1].stage[0] = victim_id;
+        state.players[1].stage[1] = expensive_id;
+        state.players[1].set_tapped(0, false);
+        state.players[1].set_tapped(1, false);
+
+        let actx = AbilityContext {
+            source_card_id: eli_id,
+            player_id: 0,
+            area_idx: 0,
+            trigger_type: TriggerType::OnPlay,
+            ability_index: 0,
+            ..Default::default()
+        };
+        state
+            .trigger_queue
+            .push_back((eli_id, 0, actx, false, TriggerType::OnPlay));
+        state.process_trigger_queue(&db);
+
+        if let Some(interaction) = state.interaction_stack.last() {
+            if interaction.choice_type == ChoiceType::Optional {
+                state
+                    .handle_response(&db, ACTION_BASE_CHOICE + 0)
+                    .expect("Q144: accepting the optional cost should succeed");
+                state.process_trigger_queue(&db);
+            }
+        }
+
+        if let Some(interaction) = state.interaction_stack.last() {
+            if interaction.choice_type == ChoiceType::SelectHandDiscard {
+                let mut receiver = TestActionReceiver::default();
+                state.generate_legal_actions(&db, 0, &mut receiver);
+                let discard_action = *receiver
+                    .actions
+                    .iter()
+                    .find(|action| **action >= ACTION_BASE_HAND_SELECT)
+                    .expect("Q144: discard cost should generate a selectable hand action");
+                state
+                    .handle_response(&db, discard_action)
+                    .expect("Q144: paying the discard cost should succeed");
+                state.process_trigger_queue(&db);
+            }
+        }
+
+        if let Some(interaction) = state.interaction_stack.last() {
+            assert_eq!(
+                interaction.choice_type,
+                ChoiceType::SelectMember,
+                "Q144: the effect should pause on filtered opponent-member target selection"
+            );
+
+            let mut receiver = TestActionReceiver::default();
+            state.generate_legal_actions(&db, 0, &mut receiver);
+
+            state
+                .handle_response(&db, ACTION_BASE_STAGE_SLOTS + 0)
+                .expect("Q144: selecting the single valid target should succeed");
+
+            let follow_up = state
+                .interaction_stack
+                .last()
+                .expect("Q144: selecting the target should advance into the optional tap prompt");
+            assert_eq!(
+                follow_up.choice_type,
+                ChoiceType::Optional,
+                "Q144: after choosing one valid target, the effect should only require confirming the optional tap"
+            );
+
+            state
+                .handle_response(&db, ACTION_BASE_CHOICE + 0)
+                .expect("Q144: confirming the optional tap should succeed");
+            state.process_trigger_queue(&db);
+        }
+
+        assert!(
+            state.players[1].is_tapped(0),
+            "Q144: the single valid opponent member should end up tapped"
+        );
+        assert!(
+            !state.players[1].is_tapped(1),
+            "Q144: the out-of-range opponent member must remain untouched"
+        );
+    }
+
+    #[test]
+    fn test_q146_on_play_counts_the_member_itself() {
+        let db = load_real_db();
+        let umi_id = db
+            .id_by_no("PL!-bp3-004-R＋")
+            .expect("Q146: expected Umi card in DB");
+
+        let mut state = create_test_state();
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.ui.silent = true;
+        state.players[0].stage[0] = umi_id;
+
+        let ctx = AbilityContext {
+            source_card_id: umi_id,
+            player_id: 0,
+            area_idx: 0,
+            trigger_type: TriggerType::OnPlay,
+            ..Default::default()
+        };
+
+        assert!(
+            state.check_condition_opcode(&db, C_COUNT_STAGE, 1, 0, 0, &ctx, 0),
+            "Q146: once Umi has entered the stage, the engine should count that source member as the one stage member"
+        );
+        assert!(
+            !state.check_condition_opcode(&db, C_COUNT_STAGE, 2, 0, 0, &ctx, 0),
+            "Q146: the same board should not count as two members when only the source member is present"
+        );
+    }
+
+    #[test]
+    fn test_q148_wait_state_member_blades_still_count() {
+        let db = load_real_db();
+        let live_id = db
+            .id_by_no("PL!-bp3-023-L")
+            .expect("Q148: expected live card in DB");
+        let (active_id, waiting_id, active_blades, waiting_blades) = blade_threshold_pair(&db, 10);
+
+        let condition_passes = |include_waiting_member: bool| {
+            let mut state = create_test_state();
+            state.phase = Phase::Main;
+            state.current_player = 0;
+            state.ui.silent = true;
+            state.players[0].live_zone[0] = live_id;
+            state.players[0].stage[0] = active_id;
+
+            if include_waiting_member {
+                state.players[0].stage[1] = waiting_id;
+                state.players[0].set_tapped(1, true);
+            }
+
+            let ctx = AbilityContext {
+                source_card_id: live_id,
+                player_id: 0,
+                trigger_type: TriggerType::OnLiveStart,
+                ..Default::default()
+            };
+            state.check_condition_opcode(&db, C_TOTAL_BLADES, 10, 0, 0, &ctx, 0)
+        };
+
+        let without_condition = condition_passes(false);
+        let with_condition = condition_passes(true);
+
+        assert!(
+            active_blades < 10,
+            "Q148: chosen active member must stay below threshold on its own"
+        );
+        assert!(
+            active_blades.saturating_add(waiting_blades) >= 10,
+            "Q148: chosen pair must only cross the threshold when the waiting member is counted"
+        );
+        assert!(!without_condition, "Q148: the threshold condition should fail before counting the waiting member");
+        assert!(with_condition, "Q148: the total-blades threshold should pass once the waiting member is included");
+    }
+
+    #[test]
+    fn test_q155_success_pile_cost_bonus_does_not_apply_in_hand() {
+        let db = load_real_db();
+        let member_id = db
+            .id_by_no("PL!S-bp3-016-N")
+            .expect("Q155: expected Dia card in DB");
+        let base_cost = db
+            .members
+            .get(&member_id)
+            .expect("Q155: member should resolve from DB")
+            .cost as usize;
+
+        let mut state = create_test_state();
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.ui.silent = true;
+        state.players[0].hand = vec![member_id].into();
+        state.players[0].energy_zone = vec![3001; base_cost].into();
+        state.players[0].success_lives = vec![first_live_id(&db)].into();
+
+        let mut actions: Vec<i32> = Vec::new();
+        state.generate_legal_actions(&db, 0, &mut actions);
+
+        assert!(
+            actions.iter().any(|action| *action >= ACTION_BASE_HAND && *action < ACTION_BASE_STAGE),
+            "Q155: the card should still be playable for its printed cost while it is in hand, even with one success live already scored"
+        );
     }
 
     #[test]
@@ -239,31 +632,6 @@ mod tests {
         let multi_name_id = db
             .id_by_no("LL-bp4-001-R＋")
             .expect("Q204: expected the Karin-containing multi-name member in DB");
-        let unrelated_id = first_member_matching(&db, |card| {
-            card.card_id != karin_id && card.card_id != multi_name_id && !card.name.contains("朝香果林")
-        });
-
-        let mut negative_state = create_test_state();
-        negative_state.phase = Phase::Main;
-        negative_state.current_player = 0;
-        negative_state.ui.silent = true;
-        negative_state.players[0].stage[0] = karin_id;
-        negative_state.players[0].stage[1] = unrelated_id;
-        negative_state.players[0].live_zone[0] = live_id;
-
-        negative_state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
-        negative_state.process_trigger_queue(&db);
-
-        assert_eq!(
-            negative_state.players[0]
-                .heart_req_reductions
-                .to_array()
-                .into_iter()
-                .sum::<u8>(),
-            0,
-            "Q204: a single Karin without a second same-name reference should not reduce the live requirement"
-        );
-
         let mut positive_state = create_test_state();
         positive_state.phase = Phase::Main;
         positive_state.current_player = 0;

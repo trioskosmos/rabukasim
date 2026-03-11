@@ -582,3 +582,373 @@ START: You found an unmapped QA ruling (marked ℹ️ in matrix)
 5. **Matrix Update**: Single `gen_full_matrix.py` run covers all (2 min)
 6. **Document**: Record any engine/data issues discovered (10 min)
 7. **Summary**: Update `SKILL.md` or session notes with findings (5 min)
+
+## 13. Advanced Card-Specific Test Patterns (Remaining 59 QAs)
+
+### Overview
+**59 card-specific QAs remain untested** (as of March 2026). These tests require advanced patterns beyond simple state verification. This section provides templates for the most common card ability types.
+
+### Pattern Category 1: Conditional Activation (15 QAs)
+**Examples**: Q122, Q132, Q144, Q148, Q151–153, Q163–164, Q166–167
+
+**Pattern**:
+```rust
+#[test]
+fn test_q122_deck_peek_refresh_logic() {
+    // Q122: 『登場 自分のデッキの上からカードを3枚見る。
+    //       その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』
+    // If deck has 3 cards, does refresh occur? A: No.
+
+    let db = load_real_db();
+    let mut state = create_test_state();
+    
+    // Setup: Deck with exactly 3 cards (boundary condition)
+    state.players[0].deck = SmallVec::from_slice(&[db.id_by_no("PL!N-bp1-001-R").unwrap(), 
+                                                    db.id_by_no("PL!N-bp1-002-R").unwrap(), 
+                                                    db.id_by_no("PL!N-bp1-003-R").unwrap()]);
+    let initial_deck_len = state.players[0].deck.len();
+    let initial_discard_len = state.players[0].discard.len();
+    
+    // Action: Play member with peek-3 ability
+    let member_id = db.id_by_no("PL!N-bp1-002-R＋").unwrap();
+    state.play_member(0, member_id, 0, &db); // Slot 0
+    
+    // Assert: No refresh occurred (discard pile unchanged)
+    assert_eq!(state.players[0].discard.len(), initial_discard_len, 
+        "Q122: Refresh should NOT occur when peeking entire deck");
+}
+```
+
+**Key Points**:
+- Boundary conditions: Peek amount = Deck size, Peek > Deck size
+- Refresh flag tracking: Verify `refresh_pending` state
+- Deck reorganization: Check that cards returned to top are in correct order
+
+### Pattern Category 2: Score Modification (12 QAs)
+**Examples**: Q132, Q148–150, Q155, Q157–158
+
+**Pattern**:
+```rust
+#[test]
+fn test_q149_member_heart_total_comparison() {
+    // Q149: 『ライブ成功時 自分のステージにいるメンバーが持つハートの総数が、
+    //       相手のステージにいるメンバーが持つハートの総数より多い場合、
+    //       このカードのスコアを＋１する。』
+    // "Total heart count" ignores color, counts all hearts.
+
+    let db = load_real_db();
+    let mut state = create_test_state();
+    
+    // Setup: Both players with specific member configurations
+    let aqours_card_1 = db.id_by_no("PL!-bp3-026-L").unwrap(); // Example Aqours live card
+    let member_p0_1 = db.id_by_no("PL!N-bp3-011-R").unwrap(); // 3 hearts
+    let member_p0_2 = db.id_by_no("PL!N-bp3-012-R").unwrap(); // 5 hearts
+    let member_p1_1 = db.id_by_no("PL!N-bp3-013-R").unwrap(); // 2 hearts
+    let member_p1_2 = db.id_by_no("PL!N-bp3-014-R").unwrap(); // 2 hearts
+    
+    state.players[0].stage[0] = member_p0_1;
+    state.players[0].stage[1] = member_p0_2;
+    state.players[1].stage[0] = member_p1_1;
+    state.players[1].stage[1] = member_p1_2;
+    
+    let base_score = state.players[0].score;
+    
+    // Action: Execute LiveResult with player 0 winning
+    state.phase = Phase::LiveResult;
+    state.players[0].live_zone[0] = aqours_card_1;
+    state.ui.performance_results.insert(0, serde_json::json!({
+        "success": true, "lives": [{"passed": true, "score": 5}]
+    }));
+    state.do_live_result(&db);
+    
+    // Assert: Score increased by 1 for heart comparison
+    assert_eq!(state.players[0].score, base_score + 1 + 5,
+        "Q149: Score should increase due to heart comparison + base live score");
+}
+```
+
+**Key Points**:
+- Real card member data: Fetch actual heart counts from `db.members`
+- Score delta calculation: Verify only the delta, not absolute score
+- Condition verification: Test both true and false branches
+
+### Pattern Category 3: Ability Interaction (11 QAs)
+**Examples**: Q151–154, Q156, Q159, Q163–165
+
+**Pattern**:
+```rust
+#[test]
+fn test_q151_center_ability_grant() {
+    // Q151: 『起動 センター ターン1回 メンバー1人をウェイトにする：
+    //       ライブ終了時まで、これによってウェイト状態になったメンバーは、
+    //       『常時 ライブの合計スコアを＋１する。』を得る。』
+    // If center member leaves stage, granted ability is lost.
+
+    let db = load_real_db();
+    let mut state = create_test_state();
+    
+    // Setup: Center member with activate ability
+    let center_member_id = db.id_by_no("PL!S-bp3-001-R＋").unwrap();
+    let target_member_id = db.id_by_no("PL!S-bp3-002-R").unwrap();
+    
+    state.players[0].stage[1] = center_member_id; // Center slot
+    state.players[0].stage[2] = target_member_id; // Right slot
+    
+    // Action 1: Activate center ability to grant bonus
+    state.activate_ability(0, center_member_id, vec![target_member_id], &db);
+    let score_before = state.players[0].score;
+    
+    // Trigger live result with member on stage
+    state.phase = Phase::LiveResult;
+    state.players[0].live_zone[0] = db.id_by_no("PL!S-bp3-020-L").unwrap();
+    state.do_live_result(&db);
+    
+    let score_with_bonus = state.players[0].score;
+    assert!(score_with_bonus > score_before, "Q151: Score should increase with granted ability");
+    
+    // Action 2: Verify bonus is lost if member leaves
+    state.players[0].stage[2] = -1; // Remove member
+    state.phase = Phase::LiveResult;
+    state.do_live_result(&db);
+    
+    // Bonus would no longer apply (manual check since state was modified)
+}
+```
+
+**Key Points**:
+- Ability grant lifecycle: Verify abilities exist only while conditions hold
+- Scope of effects: Live-end, turn-end, permanent
+- Cleanup on zone change: Abilities granted to members remove when member leaves
+
+### Pattern Category 4: Zone Management (8 QAs)
+**Examples**: Q145, Q146, Q157, Q160–161, Q169–170
+
+**Pattern**:
+```rust
+#[test]
+fn test_q146_member_count_for_draw() {
+    // Q146: 『登場 自分のステージにいるメンバー1人につき、
+    //       カードを1枚引く。その後、手札を1枚控え室に置く。』
+    // Does count include the member activating the ability?
+
+    let db = load_real_db();
+    let mut state = create_test_state();
+    
+    // Setup: 3 members on stage (including the one activating)
+    let activating_member = db.id_by_no("PL!-bp3-004-R＋").unwrap();
+    let other_member_1 = db.id_by_no("PL!-bp3-005-R").unwrap();
+    let other_member_2 = db.id_by_no("PL!-bp3-006-R").unwrap();
+    
+    state.players[0].stage[0] = activating_member;
+    state.players[0].stage[1] = other_member_1;
+    state.players[0].stage[2] = other_member_2;
+    
+    let initial_hand = state.players[0].hand.len();
+    
+    // Action: Activate ability
+    state.activate_ability(0, activating_member, vec![], &db);
+    
+    // Assert: Drew 3 cards (including activator), discarded 1
+    assert_eq!(state.players[0].hand.len(), initial_hand + 3 - 1,
+        "Q146: Should draw 3 (one per stage member) then discard 1");
+}
+```
+
+**Key Points**:
+- Zone state verification: Count members correctly
+- Self-reference: Does count include the source?
+- Effect resolution order: Draw before discard
+
+### Pattern Category 5: LiveResult Phase Specifics (7 QAs)
+**Examples**: Q132, Q153–154, Q156
+
+**Pattern**:
+```rust
+#[test]
+fn test_q132_aqours_heart_excess_check() {
+    // Q132: 『ライブ成功時 自分のステージにいる『Aqours』のメンバーが持つハートに、
+    //       ❤が合計4個以上あり、このターン、相手が余剰のハートを持たずに
+    //       ライブを成功させていた場合、このカードのスコアを＋２する。』
+    // Does this activate even if I'm first (opponent hasn't acted)?
+
+    let db = load_real_db();
+    let mut state = create_test_state();
+    
+    // Setup: P0 (first player) wins, P1 (second player) has no excess hearts
+    state.first_player = 0;
+    state.phase = Phase::LiveResult;
+    
+    // P0 members with hearts
+    let live_card_p0 = db.id_by_no("PL!S-pb1-021-L").unwrap();
+    state.players[0].live_zone[0] = live_card_p0;
+    
+    // Simulate both players executing performance
+    state.ui.performance_results.insert(0, serde_json::json!({
+        "success": true, 
+        "live": {"lives": [], "passed": true},
+        "excess_hearts": 2
+    }));
+    state.ui.performance_results.insert(1, serde_json::json!({
+        "success": true,
+        "live": {"lives": [], "passed": true},
+        "excess_hearts": 0  // No excess
+    }));
+    
+    let score_before = state.players[0].score;
+    
+    // Action: Finalize live result
+    state.do_live_result(&db);
+    state.finalize_live_result();
+    
+    // Assert: Bonus applied (+2 to score)
+    assert_eq!(state.players[0].score - score_before, 
+        expected_base_score + 2,
+        "Q132: Score bonus should apply even if P0 is first player");
+}
+```
+
+**Key Points**:
+- Turn order independence: Bonuses work regardless of first/second player
+- Excess heart tracking: Use `ui.performance_results` snapshots
+- LiveStart vs LiveSuccess timing: Execute at correct phase
+
+### Remaining Categories Summary
+
+| Category | Count | Key Challenges |
+|----------|-------|---|
+| Conditional Activation | 15 | Boundary conditions, state flags |
+| Score Modification | 12 | Real card data, delta calculations |
+| Ability Interaction | 11 | Ability lifecycle, scope validation |
+| Zone Management | 8 | State consistency, count accuracy |
+| LiveResult Specifics | 7 | Phase-locked rules, turn-order-independent |
+| Cost & Resource | 4 | Energy accounting, partial resolution |
+| Deck Manipulation | 2 | Refresh triggers, deck ordering |
+
+## 14. Batch Implementation Roadmap (59 Remaining QAs)
+
+### Sprint 1: Foundation (Q122–Q125) – 2 hours
+**Goal**: Establish patterns for deck peek/manipulation tests.
+- **Q122**: Refresh logic on exact-size peek ✓ Pattern above
+- **Q123**: Related card discovery during peek
+- **Q124**: Deck shuffling side effects
+- **Q125**: Refresh during active skill resolution
+
+**Success Criteria**: All 4 tests compile, ≥2 points each, deck manipulation paths verified.
+
+### Sprint 2: Score Mechanics (Q132, Q148–150, Q155, Q157–158) – 3 hours
+**Goal**: Implement all score-delta tests with real member data.
+- Use `db.members.get(card_id)` to fetch actual heart/blade counts
+- Real LiveResult phase execution
+- Multi-condition bonus stacking
+
+**Success Criteria**: Score tests account for >50% coverage increase.
+
+### Sprint 3: Ability Lifecycle (Q151–154, Q156, Q159) – 4 hours
+**Goal**: Verify ability grant/revoke mechanics.
+- Granted abilities removed on zone change
+- Center-locked abilities
+- Turn-once ability boundaries
+
+**Success Criteria**: Ability state transitions fully specified.
+
+### Sprint 4: Zone & Interaction (Q146, Q160–165, Q169–170) – 3 hours
+**Goal**: Complete zone state management and card interaction tests.
+- Member count for effects (self-inclusive)
+- Deck manipulation with refresh
+- Partial resolution handling
+
+**Success Criteria**: >80% coverage target reached.
+
+### Sprint 5: Edge Cases & Hardening (Q166–170, remaining if >170) – 2 hours
+**Goal**: Complex multi-effect scenarios.
+- Nested ability resolution
+- Refresh during active effect
+- Multiple choice scenarios
+
+**Success Criteria**: Coverage reaches 95%+, all tests ≥2 points.
+
+## 15. Real Card ID Reference (For Most Common Test Patterns)
+
+```rust
+// Multi-name members (Q62, Q65, Q69, Q90)
+const TRIPLE_NAME_CARD: &str = "PL!N-bp1-001-R＋";  // 上原歩夢&澁谷かのん&日野下花帆
+
+// Aqours members (Q132, Q148–150, Q151–154, Q157–158)
+const AQOURS_LIVE_CARD: &str = "PL!S-pb1-021-L";
+
+// Liella! condition checks (Q64, Q74)
+const LIELLA_MEMBER: &str = "PL!N-bp3-011-R";
+
+// Niji condition checks (Q67, Q81)
+const NIJI_MEMBER: &str = "PL!N-bp3-001-R＋";
+
+// Common peek-ability card
+const PEEK_CARD: &str = "PL!N-bp1-002-R＋";
+
+// Center-lock ability cards
+const CENTER_CARD: &str = "PL!S-bp3-001-R＋";
+
+// Deck-to-bottom shuffle
+const SHUFFLE_CARD: &str = "LL-bp3-001-R＋";
+```
+
+**Usage**:
+```rust
+let card_id = db.id_by_no(TRIPLE_NAME_CARD)
+    .unwrap_or_else(|| panic!("Card {} not found", TRIPLE_NAME_CARD));
+```
+
+## 16. Coverage Projection
+
+### Current State (March 2026)
+- **Total**: 237 QAs
+- **Verified**: 179 (75.5%)
+- **Remaining**: 59 (24.5%)
+
+### Projected Milestones
+| Phase | Hours | QAs | Coverage | Target |
+|-------|-------|-----|----------|--------|
+| Now | – | 0 | 75.5% | – |
+| Sprint 1 | 2 | 4 | 76.4% | Foundation |
+| Sprint 2 | 3 | 8 | 79.0% | Score mechanics |
+| Sprint 3 | 4 | 9 | 82.9% | Ability lifecycle |
+| Sprint 4 | 3 | 16 | 89.9% | Zone management |
+| Sprint 5 | 2 | 20 | 100% | Complete |
+| **Total** | **14** | **59** | **100%** | ✅ |
+
+**Estimated Time to 100%**: 14 focused hours (distributed over multiple sessions).
+
+## 17. Quality Assurance Checklist
+
+Before marking a test as "ready for merge":
+
+- [ ] Test name follows `test_q{ID}_{descriptor}` convention
+- [ ] Test calls at least one engine function (`do_*()`, `play_*()`, etc.)
+- [ ] Test uses `load_real_db()` and real card IDs
+- [ ] Assertions verify final state, not just initial setup
+- [ ] Comments include: QA ID, original Japanese, English translation,
+
+ intended effect
+- [ ] Test compiles without warnings
+- [ ] Test passes: `cargo test --lib qa_verification_tests::test_q{ID}`
+- [ ] Matrix regenerates: `python tools/gen_full_matrix.py`
+- [ ] Test score ≥ 2 points (verified by matrix scanner)
+- [ ] No test regression: All 500+ existing tests still pass
+- [ ] Debug output includes `[Q{ID}] PASS` message
+
+## 18. Getting to 100%: Action Plan
+
+**Immediate Next Steps** (for next user session):
+
+1. **Pick First Batch**: Choose 5 QAs from Sprint 1 above
+2. **Implement Tests**: Use patterns from Section 13
+3. **Run Test Suite**: 
+   ```bash
+   cd engine_rust_src
+   cargo test --lib qa_verification_tests --no-fail-fast -- --nocapture
+   python ../tools/gen_full_matrix.py
+   ```
+4. **Record Results**: Document coverage delta
+5. **Iterate**: Move to next batch
+
+**Completion Timeline**: With consistent 1-2 hour sessions, **100% coverage achievable in 2-3 weeks**.

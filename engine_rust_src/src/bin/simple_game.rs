@@ -1,16 +1,58 @@
-/// simple_game.rs — Simple Game Runner Using TurnSequencer
-///
-/// Run with: cargo run --bin simple_game --release
-///
-/// Loads deck from ai/decks/, runs game until someone reaches score 3
-
+use std::env;
 use std::fs;
 use std::time::Instant;
+use serde::{Serialize, Deserialize};
 
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::TurnSequencer;
 use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
 use rand::seq::IndexedRandom;
+use rand::SeedableRng;
+use rand::prelude::StdRng;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct GameResult {
+    game_id: usize,
+    seed: u64,
+    winner: i32,
+    score_p0: u32,
+    score_p1: u32,
+    turns: u32,
+    duration_secs: f32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct BatchSummary {
+    total_games: usize,
+    p0_wins: usize,
+    p1_wins: usize,
+    draws: usize,
+    avg_score_p0: f32,
+    avg_score_p1: f32,
+    avg_turns: f32,
+    results: Vec<GameResult>,
+}
+
+fn choose_best_live_result_action(state: &GameState, db: &CardDatabase) -> i32 {
+    let p_idx = state.current_player as usize;
+    let legal = state.get_legal_action_ids(db);
+    let mut best_action = ACTION_BASE_PASS;
+    let mut best_score = i32::MIN;
+
+    for action in legal {
+        if (600..=602).contains(&action) {
+            let slot_idx = (action - 600) as usize;
+            let cid = state.players[p_idx].live_zone[slot_idx];
+            let live_score = db.get_live(cid).map(|live| live.score as i32).unwrap_or(-1);
+            if live_score > best_score {
+                best_score = live_score;
+                best_action = action;
+            }
+        }
+    }
+
+    best_action
+}
 
 fn load_vanilla_db() -> CardDatabase {
     let candidates = [
@@ -23,7 +65,6 @@ fn load_vanilla_db() -> CardDatabase {
         if !std::path::Path::new(path).exists() {
             continue;
         }
-        println!("[DB] Loading: {}", path);
         let json = fs::read_to_string(path).expect("Failed to read DB");
         let mut db = CardDatabase::from_json(&json).expect("Failed to parse DB");
         db.is_vanilla = true;
@@ -33,7 +74,6 @@ fn load_vanilla_db() -> CardDatabase {
 }
 
 fn load_deck(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
-    println!("[DECK] Loading: {}", path);
     let content = fs::read_to_string(path).expect("Failed to read deck");
     let mut members = Vec::new();
     let mut lives = Vec::new();
@@ -84,123 +124,219 @@ fn load_deck(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
     members.truncate(48);
     lives.truncate(12);
 
-    println!("[DECK] Members: {} | Lives: {}", members.len(), lives.len());
     (members, lives)
 }
 
-fn main() {
-    println!("\n╔═══════════════════════════════════════╗");
-    println!("║  Simple Game Runner - TurnSequencer  ║");
-    println!("╚═══════════════════════════════════════╝\n");
-
-    let db = load_vanilla_db();
-    let (members, lives) = load_deck("../ai/decks/liella_cup.txt", &db);
+fn run_single_game(
+    game_id: usize,
+    seed: u64,
+    db: &CardDatabase,
+    p0_deck: &(Vec<i32>, Vec<i32>),
+    p1_deck: &(Vec<i32>, Vec<i32>),
+    silent: bool,
+) -> GameResult {
+    let mut state = GameState::default();
     let energy: Vec<i32> = db.energy_db.keys().take(12).cloned().collect();
 
-    let mut state = GameState::default();
     state.initialize_game(
-        members.clone(),
-        members.clone(),
+        p0_deck.0.clone(),
+        p1_deck.0.clone(),
         energy.clone(),
         energy.clone(),
-        lives.clone(),
-        lives.clone(),
+        p0_deck.1.clone(),
+        p1_deck.1.clone(),
     );
-    state.ui.silent = true;
+    state.ui.silent = true; // Always silent engine-wise
 
-    println!("[GAME] Starting game...\n");
     let game_start = Instant::now();
-    let mut rng = rand::rng();
-    let mut steps = 0;
-    let mut last_phase = state.phase;
+    let mut rng = StdRng::seed_from_u64(seed);
+    let max_turns = 20;
+    const TIMEOUT_SECONDS: u64 = 30;
 
-    while !state.is_terminal() && game_start.elapsed().as_secs() < 300 && steps < 50000 {
-        steps += 1;
+    if !silent {
+        println!("\n[GAME {}] Seed: {}", game_id, seed);
+    }
 
-        // Track all phase transitions
-        if state.phase != last_phase {
-            println!("[{}] Phase: {:?} (P{})", steps, state.phase, state.current_player);
-            last_phase = state.phase;
-        }
-
-        // Handle each phase type appropriately
+    // Advance to first Main phase (RPS, Mulligan, etc.)
+    while state.phase != Phase::Main && !state.is_terminal() {
         match state.phase {
-            Phase::Main => {
-                println!("[Turn {}] Main | Score: P0={} P1={}", 
-                    state.turn, state.players[0].score, state.players[1].score);
-
-                let start = Instant::now();
-                let (_evals, best_seq, nodes, breakdown) = TurnSequencer::plan_full_turn(&state, &db);
-                let elapsed = start.elapsed().as_micros();
-
-                println!("  DFS: {} nodes, {}μs | Board: {:.2} | Live: {:.2}",
-                    nodes, elapsed, breakdown.0, breakdown.1);
-
-                // Execute sequence
-                for &action in &best_seq {
-                    if state.step(&db, action).is_err() {
-                        break;
-                    }
-                    if state.phase != Phase::Main {
-                        break;
-                    }
-                }
-                // Pass to end Main
-                let _ = state.step(&db, ACTION_BASE_PASS);
-            },
-            Phase::LiveSet => {
-                let (seq, _nodes, _val) = TurnSequencer::find_best_liveset_selection(&state, &db);
-                
-                if !seq.is_empty() {
-                    println!("  [LiveSet] {} actions", seq.len());
-                    for &action in &seq {
-                        if state.step(&db, action).is_err() {
-                            break;
-                        }
-                    }
-                }
-                
-                // Pass to end LiveSet
-                let _ = state.step(&db, ACTION_BASE_PASS);
-            },
-            Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | 
-            Phase::TurnChoice | Phase::Response => {
-                // Random action for non-deterministic phases
-                let legal = state.get_legal_action_ids(&db);
+            Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+                let legal = state.get_legal_action_ids(db);
                 if !legal.is_empty() {
-                    if let Some(&action) = legal.choose(&mut rng) {
-                        let _ = state.step(&db, action as i32);
-                    }
+                    let &action = legal.choose(&mut rng).unwrap_or(&ACTION_BASE_PASS);
+                    let _ = state.step(db, action);
                 } else {
-                    let _ = state.step(&db, ACTION_BASE_PASS);
+                    let _ = state.step(db, ACTION_BASE_PASS);
                 }
-            },
+            }
             _ => {
-                // All other phases: auto-advance
-                state.auto_step(&db);
+                state.auto_step(db);
             }
         }
-
-        // Termination check with score debug
-        if state.is_terminal() {
-            println!("[TERMINAL] Game ended at turn {}, score P0={}, P1={}", 
-                state.turn, state.players[0].score, state.players[1].score);
+        
+        if game_start.elapsed().as_secs() > TIMEOUT_SECONDS {
             break;
-        }
-
-        if steps % 100 == 0 {
-            println!("  [{}] Still running... Score: P0={} P1={}", 
-                steps, state.players[0].score, state.players[1].score);
         }
     }
 
-    let elapsed = game_start.elapsed().as_secs_f32();
-    let winner = state.get_winner();
+    while !state.is_terminal() && state.turn <= max_turns {
+        if game_start.elapsed().as_secs() > TIMEOUT_SECONDS {
+            break;
+        }
 
-    println!("\n╔═══════════════════════════════════════╗");
-    println!("║  Game Complete                      ║");
-    println!("╚═══════════════════════════════════════╝");
-    println!("Steps: {} | Time: {:.2}s", steps, elapsed);
-    println!("Final Score: P0={} P1={} | Winner: P{}", 
-        state.players[0].score, state.players[1].score, winner);
+        match state.phase {
+            Phase::Main => {
+                let (_, best_seq, _, _) = TurnSequencer::plan_full_turn(&state, db);
+                
+                for &action in &best_seq {
+                    let _ = state.step(db, action);
+                    if state.phase != Phase::Main { break; }
+                }
+                
+                if state.phase == Phase::Main {
+                    let _ = state.step(db, ACTION_BASE_PASS);
+                }
+            },
+            Phase::Active | Phase::Draw | Phase::Energy => {
+                state.auto_step(db);
+            },
+            Phase::LiveSet => {
+                let (seq, _, _) = TurnSequencer::find_best_liveset_selection(&state, db);
+                for &action in &seq {
+                    let _ = state.step(db, action);
+                }
+                let _ = state.step(db, ACTION_BASE_PASS);
+            },
+            Phase::PerformanceP1 | Phase::PerformanceP2 => {
+                state.auto_step(db);
+            },
+            Phase::LiveResult => {
+                let action = choose_best_live_result_action(&state, db);
+                let _ = state.step(db, action);
+            },
+            Phase::Terminal => break,
+            _ => {
+                // For RPS/Mulligan if they happen mid-game (unlikely but safe)
+                let legal = state.get_legal_action_ids(db);
+                if !legal.is_empty() {
+                    let &action = legal.choose(&mut rng).unwrap_or(&ACTION_BASE_PASS);
+                    let _ = state.step(db, action);
+                } else {
+                    state.auto_step(db);
+                }
+            }
+        }
+    }
+
+    let result = GameResult {
+        game_id,
+        seed,
+        winner: state.get_winner(),
+        score_p0: state.players[0].score,
+        score_p1: state.players[1].score,
+        turns: state.turn,
+        duration_secs: game_start.elapsed().as_secs_f32(),
+    };
+
+    if !silent {
+        println!("  Winner: P{} | Score: {}-{} | Turns: {} | {:.2}s", 
+            result.winner, result.score_p0, result.score_p1, result.turns, result.duration_secs);
+    }
+
+    result
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    let mut count = 1;
+    let mut seed_base = 100;
+    let mut silent = false;
+    let mut json_mode = false;
+    let mut deck0_path = "../ai/decks/liella_cup.txt".to_string();
+    let mut deck1_path = "../ai/decks/liella_cup.txt".to_string();
+
+    let mut i = 1;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--count" => {
+                count = args[i+1].parse().unwrap_or(1);
+                i += 2;
+            }
+            "--seed" => {
+                seed_base = args[i+1].parse().unwrap_or(100);
+                i += 2;
+            }
+            "--silent" => {
+                silent = true;
+                i += 1;
+            }
+            "--json" => {
+                json_mode = true;
+                i += 1;
+            }
+            "--deck-p0" => {
+                deck0_path = args[i+1].clone();
+                i += 2;
+            }
+            "--deck-p1" => {
+                deck1_path = args[i+1].clone();
+                i += 2;
+            }
+            _ => i += 1,
+        }
+    }
+
+    let db = load_vanilla_db();
+    let p0_deck = load_deck(&deck0_path, &db);
+    let p1_deck = load_deck(&deck1_path, &db);
+
+    if !json_mode {
+        println!("\n╔═══════════════════════════════════════╗");
+        println!("║  Simple Game Runner - Batch Mode    ║");
+        println!("╚═══════════════════════════════════════╝");
+        println!("[DB] Loaded vanilla data");
+        println!("[DECK] P0: {} | P1: {}", deck0_path, deck1_path);
+        println!("[BATCH] Running {} games starting with seed {}", count, seed_base);
+    }
+
+    let mut results = Vec::new();
+    let start_all = Instant::now();
+
+    for g_idx in 0..count {
+        let res = run_single_game(g_idx, seed_base + g_idx as u64, &db, &p0_deck, &p1_deck, silent);
+        results.push(res);
+    }
+
+    let total_games = results.len();
+    let p0_wins = results.iter().filter(|r| r.winner == 0).count();
+    let p1_wins = results.iter().filter(|r| r.winner == 1).count();
+    let draws = results.iter().filter(|r| r.winner == 2).count();
+    let avg_p0 = results.iter().map(|r| r.score_p0 as f32).sum::<f32>() / total_games as f32;
+    let avg_p1 = results.iter().map(|r| r.score_p1 as f32).sum::<f32>() / total_games as f32;
+    let avg_turns = results.iter().map(|r| r.turns as f32).sum::<f32>() / total_games as f32;
+
+    if json_mode {
+        let summary = BatchSummary {
+            total_games,
+            p0_wins,
+            p1_wins,
+            draws,
+            avg_score_p0: avg_p0,
+            avg_score_p1: avg_p1,
+            avg_turns,
+            results,
+        };
+        println!("{}", serde_json::to_string_pretty(&summary).unwrap());
+    } else {
+        println!("\n╔═══════════════════════════════════════╗");
+        println!("║  Batch Complete                     ║");
+        println!("╚═══════════════════════════════════════╝");
+        println!("Total Time: {:.2}s", start_all.elapsed().as_secs_f32());
+        println!("Wins: P0={} ({:.1}%) | P1={} ({:.1}%) | Draws={}", 
+            p0_wins, (p0_wins as f32 / total_games as f32) * 100.0,
+            p1_wins, (p1_wins as f32 / total_games as f32) * 100.0,
+            draws);
+        println!("Avg Score: P0={:.2} | P1={:.2}", avg_p0, avg_p1);
+        println!("Avg Turns: {:.2}", avg_turns);
+    }
 }

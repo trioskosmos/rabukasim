@@ -221,6 +221,7 @@ const stateInternal = {
      * Traverses the state object and converts "Rich Card" objects back into
      * simple integer IDs (card_id) that the Rust engine expects for deserialization.
      * Also maps frontend-specific keys (like active_player) back to engine-specific keys (current_player).
+     * Preserves history data for undo/redo compatibility.
      */
     stripRichData: (obj) => {
         if (obj === null || obj === undefined) return obj;
@@ -238,16 +239,23 @@ const stateInternal = {
             // 2. Regular object: recurse but purge UI-only fields
             const stripped = {};
 
-            // Map keys if needed
+            // Map keys if needed for engine compatibility
             if (obj.active_player !== undefined && obj.current_player === undefined) {
                 obj.current_player = obj.active_player;
             }
 
+            // Blacklist only UI-specific fields, preserve gameplay state and history
             const blacklistedKeys = [
                 'ai_status', 'is_ai_thinking', 'last_action',
-                'mode', 'my_player_id', 'needs_deck', 'spectators',
-                'triggered_abilities', 'opponent_triggered_abilities',
-                'game_over', 'winner', 'queue_depth'
+                'mode',  // UI mode, not game state
+                'my_player_id',  // Frontend viewer perspective
+                'needs_deck',  // UI state
+                'spectators',  // Server metadata
+                'triggered_abilities', 'opponent_triggered_abilities',  // UI renderings
+                'game_over',  // Derivable from game state
+                'queue_depth'  // UI state
+                // NOTE: Preserve 'winner' for proper state restoration
+                // NOTE: Preserve 'undo_stack', 'redo_stack' if they exist for history replay
             ];
 
             for (const [key, value] of Object.entries(obj)) {

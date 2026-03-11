@@ -365,6 +365,7 @@ export const ChoiceTypes = {
     RECOV_L: 26,
     RECOV_M: 27,
     SELECT_STAGE_EMPTY_BATON: 28,
+    REARRANGE_FORMATION: 29,
 };
 
 export const ExtraConstants = {

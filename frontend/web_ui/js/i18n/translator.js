@@ -29,6 +29,7 @@ export async function loadTranslations(lang = 'jp') {
         if (typeof window !== 'undefined') {
             if (lang === 'jp') window.currentTranslationsJP = data;
             if (lang === 'en') window.currentTranslationsEN = data;
+            window.translations = translations; // Expose the full map
         }
 
         currentLanguage = lang;

@@ -229,7 +229,35 @@ export const ActionMenu = {
 
             choiceDiv.innerHTML = content;
 
-            if (choice.options && choice.options.length > 0) {
+            if (choice.choice_type === 29) { // REARRANGE_FORMATION
+                const confirmBtn = document.createElement('button');
+                confirmBtn.className = 'action-btn confirm';
+                confirmBtn.style.width = '100%';
+                confirmBtn.style.marginTop = '10px';
+                confirmBtn.innerHTML = i18n.t('confirm_formation') || (State.currentLang === 'jp' ? 'フォーメーションを確定' : 'Confirm Formation');
+
+                confirmBtn.onclick = () => {
+                    const pIdx = State.perspectivePlayer;
+                    const oldStage = State.rawData.players[pIdx].stage;
+                    const newStage = state.players[pIdx].stage;
+
+                    const perms = [
+                        [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]
+                    ];
+                    let permIdx = 0;
+                    for (let i = 0; i < perms.length; i++) {
+                        const p = perms[i];
+                        if (newStage[0] === oldStage[p[0]] &&
+                            newStage[1] === oldStage[p[1]] &&
+                            newStage[2] === oldStage[p[2]]) {
+                            permIdx = i;
+                            break;
+                        }
+                    }
+                    if (window.doAction) window.doAction(permIdx);
+                };
+                choiceDiv.appendChild(confirmBtn);
+            } else if (choice.options && choice.options.length > 0) {
                 const optContainer = document.createElement('div');
                 optContainer.className = 'action-list choice-options-container';
 

@@ -126,6 +126,58 @@ pub fn check_condition(
         }
     }
 
+    let raw_cond_result = || {
+        let Some(params) = cond.params.as_object() else {
+            return true;
+        };
+        let Some(raw_cond) = params
+            .get("raw_cond")
+            .or_else(|| params.get("RAW_COND"))
+            .and_then(|v| v.as_str())
+        else {
+            return true;
+        };
+
+        match raw_cond {
+            "SURPLUS_HEARTS_COUNT" => {
+                let target_is_opponent = params
+                    .get("val")
+                    .or_else(|| params.get("VAL"))
+                    .and_then(|v| v.as_str())
+                    .map(|v| v.eq_ignore_ascii_case("OPPONENT"))
+                    .unwrap_or(false);
+                let target_hearts = if target_is_opponent {
+                    state.players[1 - ctx.player_id as usize].excess_hearts as i32
+                } else {
+                    state.players[ctx.player_id as usize].excess_hearts as i32
+                };
+
+                if let Some(eq) = params
+                    .get("EQ")
+                    .or_else(|| params.get("eq"))
+                    .and_then(|v| v.as_i64())
+                {
+                    target_hearts == eq as i32
+                } else if let Some(min) = params
+                    .get("MIN")
+                    .or_else(|| params.get("min"))
+                    .and_then(|v| v.as_i64())
+                {
+                    target_hearts >= min as i32
+                } else if let Some(max) = params
+                    .get("MAX")
+                    .or_else(|| params.get("max"))
+                    .and_then(|v| v.as_i64())
+                {
+                    target_hearts <= max as i32
+                } else {
+                    target_hearts > 0
+                }
+            }
+            _ => true,
+        }
+    };
+
     let result = if cond.condition_type != ConditionType::None {
         check_condition_opcode(
             state,
@@ -138,7 +190,7 @@ pub fn check_condition(
             depth + 1,
         )
     } else {
-        true
+        raw_cond_result()
     };
 
     let result = if cond.is_negated { !result } else { result };
@@ -895,7 +947,26 @@ pub fn check_condition_opcode(
         }
         C_NOT_HAS_EXCESS_HEART => player.excess_hearts == 0,
         C_TOTAL_BLADES => {
-            let total = state.get_total_blades(p_idx, db, depth + 1);
+            let mut total = 0u32;
+            for slot_idx in 0..3 {
+                let cid = player.stage[slot_idx];
+                if cid < 0 {
+                    continue;
+                }
+                let Some(member) = db.get_member(cid) else {
+                    continue;
+                };
+
+                let mut slot_total = if player.blade_overrides[slot_idx] != -1 {
+                    player.blade_overrides[slot_idx] as i32
+                } else {
+                    member.blades as i32
+                };
+                slot_total += player.blade_buffs[slot_idx] as i32;
+                if slot_total > 0 {
+                    total = total.saturating_add(slot_total as u32);
+                }
+            }
             total >= val as u32
         }
         C_COST_COMPARE => {

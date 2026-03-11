@@ -222,7 +222,35 @@ export const DragDrop = {
 
     executeDrop: async (source, index, targetZone, targetIndex) => {
         const state = State.data;
-        if (!state || !state.legal_actions) return;
+        if (!state || !state.players) return;
+
+        // Special Case: Rearrange Formation (Local Swapping)
+        if (state.pending_choice && state.pending_choice.choice_type === 29) {
+            if (source === 'stage' && targetZone === 'stage' && index !== targetIndex) {
+                const stage = state.players[State.perspectivePlayer].stage;
+                const stageTapped = state.players[State.perspectivePlayer].stage_tapped;
+                const stageEnergy = state.players[State.perspectivePlayer].stage_energy;
+
+                // Local Swap
+                const temp = stage[index];
+                stage[index] = stage[targetIndex];
+                stage[targetIndex] = temp;
+
+                const tempT = stageTapped[index];
+                stageTapped[index] = stageTapped[targetIndex];
+                stageTapped[targetIndex] = tempT;
+
+                const tempE = stageEnergy[index];
+                stageEnergy[index] = stageEnergy[targetIndex];
+                stageEnergy[targetIndex] = tempE;
+
+                // Trigger Re-render
+                if (window.Rendering) window.Rendering.render();
+                return;
+            }
+        }
+
+        if (!state.legal_actions) return;
 
         let action = null;
         if (source === 'hand') {

@@ -23,8 +23,14 @@ export const SettingsModal = {
         if (slider && slider.value != val) slider.value = val;
     },
 
-    toggleLang: () => {
+    toggleLang: async () => {
         State.currentLang = State.currentLang === 'jp' ? 'en' : 'jp';
+        localStorage.setItem('lovelive_lang', State.currentLang);
+
+        // Ensure translations are loaded before updating UI
+        const { loadTranslations } = await import('../i18n/index.js');
+        await loadTranslations(State.currentLang);
+
         SettingsModal.updateLanguage();
     },
 
@@ -36,8 +42,14 @@ export const SettingsModal = {
     },
 
     updateLanguage: () => {
-        if (!window.translations) return;
-        const t = window.translations[State.currentLang];
+        const translations = window.translations || (window.Translations ? {
+            jp: window.currentTranslationsJP,
+            en: window.currentTranslationsEN
+        } : null);
+
+        if (!translations || !translations[State.currentLang]) return;
+
+        const t = translations[State.currentLang].ui || {};
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if (t[key]) {

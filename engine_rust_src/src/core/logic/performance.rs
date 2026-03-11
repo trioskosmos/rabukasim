@@ -1150,11 +1150,19 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     let total_score = live_score + note_icons as u32 + state.players[p_idx].live_score_bonus.max(0) as u32;
 
     let mut score_breakdown = Vec::new();
-    score_breakdown.push(json!({
-        "source": "Base (Lives)",
-        "value": live_score,
-        "type": "base"
-    }));
+    // Breakdown each individual live card score for better visibility (Rule 8.3 Judgment)
+    for l in &lives_list {
+        if l.get("passed").and_then(|v| v.as_bool()).unwrap_or(false) {
+            let score = l.get("score").and_then(|v| v.as_u64()).unwrap_or(0);
+            if score > 0 {
+                score_breakdown.push(json!({
+                    "source": format!("Live: {}", l.get("name").and_then(|v| v.as_str()).unwrap_or("Unknown")),
+                    "value": score,
+                    "type": "base_live"
+                }));
+            }
+        }
+    }
     if note_icons > 0 {
         score_breakdown.push(json!({
             "source": "Note Bonus",

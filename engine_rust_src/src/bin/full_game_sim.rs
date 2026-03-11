@@ -4,7 +4,6 @@
 ///
 /// ─── TUNABLE PARAMETERS ──────────────────────────────────────────────────────
 const NUM_GAMES: usize = 1;
-const VERBOSE: bool = true;
 const STEP_LIMIT: usize = 500;
 const TURN_LIMIT: u16 = 20;
 /// ─────────────────────────────────────────────────────────────────────────────
