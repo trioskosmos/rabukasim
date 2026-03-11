@@ -205,11 +205,13 @@ pub fn handle_select_mode(
 
     let choice = ctx.choice_index as usize;
     if choice >= v as usize {
+        ctx.choice_index = -1;
         return HandlerResult::Branch(instr_ip + 5 + ((v as usize).saturating_sub(1)) * 5);
     }
 
     let jump_instr_offset = instr_ip + 5 + (choice * 5);
     let target = jump_instr_offset as i32 + 5 + (bc[jump_instr_offset + 1] * 5);
 
+    ctx.choice_index = -1; // Reset after branching
     HandlerResult::Branch(target as usize)
 }

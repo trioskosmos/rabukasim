@@ -1190,6 +1190,16 @@ class AbilityParserV2:
 
                 etype = getattr(EffectType, name_up, None)
 
+                # Special handling for SELECT_MODE labels in inline params
+                if etype == EffectType.SELECT_MODE:
+                    option_names = []
+                    for j in range(1, 11):
+                        key = f"OPTION_{j}"
+                        if val_from_params := (params.get(key) or params.get(key.lower())):
+                            option_names.append(str(val_from_params))
+                    if option_names:
+                        params["options"] = option_names
+
                 if target_name and not is_chained:
                     target_name_up = target_name.upper()
                     if "CARD_HAND" in target_name_up:

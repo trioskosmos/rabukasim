@@ -222,8 +222,14 @@ impl ActionFactory {
         let decoded = Self::parse_action(action_id);
         if let DecodedAction::SelectMode { mode_idx } = decoded {
             if let Some(pi) = state.interaction_stack.last() {
-                if let Some(card) = db.get_member(pi.card_id) {
+                let card_id = if pi.card_id != -1 { pi.card_id } else { pi.ctx.source_card_id };
+                if let Some(card) = db.get_member(card_id) {
                     if let Some(ab) = card.abilities.get(pi.ability_index as usize) {
+                        if let Some(name) = ab.option_names.get(mode_idx as usize) {
+                            if !name.is_empty() {
+                                return format!("Mode: {}", name);
+                            }
+                        }
                         if let Some(options) = ab.modal_options.as_object() {
                             if let Some(name) = options.get(&mode_idx.to_string()) {
                                 if let Some(s) = name.as_str() {

@@ -196,6 +196,7 @@ class Ability:
     choice_count: int = 0
     pseudocode: str = ""
     filters: List[Dict[str, Any]] = field(default_factory=list)
+    option_names: List[str] = field(default_factory=list)
 
     def compile(self) -> List[int]:
         """Compile ability into fixed-width bytecode sequence (groups of 4 ints)."""
@@ -697,6 +698,10 @@ class Ability:
                         to_signed_32(slot),
                     ]
                 )
+            
+            # Populate descriptive option names for the UI
+            if "options" in eff.params:
+                self.option_names = [str(opt) for opt in eff.params["options"]]
 
             # Placeholders for Jump Table
             jump_table_start_idx = len(bytecode)
@@ -732,7 +737,10 @@ class Ability:
             for i in range(num_options):
                 jump_instr_idx = (jump_table_start_idx // 5) + i
                 target_idx = option_start_offsets[i]
-                offset = target_idx - jump_instr_idx
+                # Fix: Subtract 1 because SELECT_MODE handler in engine_rust adds 1 back unintentionally or
+                # simply because the jump table itself counts as an instruction block in some offsets.
+                # Specifically, the engine jump is handled as current_ip + 1 + offset.
+                offset = target_idx - jump_instr_idx - 1
                 bytecode[jump_instr_idx * 5 + 1] = offset
 
             # Patch End Jumps
