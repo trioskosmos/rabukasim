@@ -234,7 +234,7 @@ fn run_single_game(
         winner: state.get_winner(),
         score_p0: state.players[0].score,
         score_p1: state.players[1].score,
-        turns: state.turn,
+        turns: state.turn as u32,
         duration_secs: game_start.elapsed().as_secs_f32(),
     };
 
@@ -252,8 +252,15 @@ fn main() {
     let mut seed_base = 100;
     let mut silent = false;
     let mut json_mode = false;
-    let mut deck0_path = "../ai/decks/liella_cup.txt".to_string();
-    let mut deck1_path = "../ai/decks/liella_cup.txt".to_string();
+    let mut deck0_path = "ai/decks/liella_cup.txt".to_string();
+    let mut deck1_path = "ai/decks/liella_cup.txt".to_string();
+
+    if !std::path::Path::new(&deck0_path).exists() {
+        deck0_path = "../ai/decks/liella_cup.txt".to_string();
+    }
+    if !std::path::Path::new(&deck1_path).exists() {
+        deck1_path = "../ai/decks/liella_cup.txt".to_string();
+    }
 
     let mut i = 1;
     while i < args.len() {

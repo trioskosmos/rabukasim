@@ -77,6 +77,8 @@ def compile_cards(input_path: str, output_path: str):
     with open(input_path, "r", encoding="utf-8") as f:
         raw_data = json.load(f)
 
+    _reset_compile_stats()
+
     compiled_data = {"member_db": {}, "live_db": {}, "energy_db": {}, "meta": {"version": "1.0", "source": input_path}}
 
     # Load existing card_id mapping if available (for ID stability)
@@ -271,6 +273,35 @@ def compile_cards(input_path: str, output_path: str):
         for issue in validation_issues:
             print(f"  {issue}")
 
+    total_consolidated = len(_consolidated_abilities)
+    used_consolidated = len(_compile_stats["consolidated_used"])
+    unused_consolidated = max(0, total_consolidated - used_consolidated)
+    inline_used = len(_compile_stats["inline_used"])
+    missing_pseudocode = len(_compile_stats["missing"])
+    empty_pseudocode = len(_compile_stats["empty"])
+
+    print(f"\n{sep_thin}")
+    print("  PSEUDOCODE PIPELINE")
+    print(sep_thin)
+    print(f"  Consolidated entries: {total_consolidated}")
+    print(f"  Consolidated used:    {used_consolidated}")
+    print(f"  Consolidated unused:  {unused_consolidated}")
+    print(f"  Inline fallbacks:     {inline_used}")
+    print(f"  Missing pseudocode:   {missing_pseudocode}")
+    print(f"  Empty pseudocode:     {empty_pseudocode}")
+
+    if _compile_stats["missing"]:
+        preview = ", ".join(card_no for card_no, _ in _compile_stats["missing"][:5])
+        if len(_compile_stats["missing"]) > 5:
+            preview += ", ..."
+        print(f"  Missing cards:        {preview}")
+
+    if _compile_stats["empty"]:
+        preview = ", ".join(card_no for card_no, _ in _compile_stats["empty"][:5])
+        if len(_compile_stats["empty"]) > 5:
+            preview += ", ..."
+        print(f"  Empty-entry cards:    {preview}")
+
     if total_errors == 0:
         print("\n  All cards compiled and validated successfully!")
     print(sep_thick)
@@ -352,6 +383,14 @@ _v2_parser = AbilityParserV2()
 # Module-level error collector for bytecode compilation errors in parse_member/parse_live
 _bytecode_compile_errors: list[str] = []
 
+# Compile-time stats for consolidated ability coverage in the main pipeline.
+_compile_stats = {
+    "consolidated_used": set(),
+    "inline_used": set(),
+    "missing": [],
+    "empty": [],
+}
+
 # Load consolidated ability mappings
 CONSOLIDATED_ABILITIES_PATH = "data/consolidated_abilities.json"
 _consolidated_abilities = {}
@@ -367,6 +406,57 @@ if os.path.exists(MANUAL_TRANSLATIONS_EN_PATH):
     print(f"Loading manual English translations from {MANUAL_TRANSLATIONS_EN_PATH}")
     with open(MANUAL_TRANSLATIONS_EN_PATH, "r", encoding="utf-8") as f:
         _manual_translations_en = json.load(f)
+
+
+def _reset_compile_stats() -> None:
+    _compile_stats["consolidated_used"].clear()
+    _compile_stats["inline_used"].clear()
+    _compile_stats["missing"].clear()
+    _compile_stats["empty"].clear()
+
+
+def _record_unique_issue(kind: str, card_no: str, raw_jp: str) -> None:
+    entry = (card_no, raw_jp)
+    if entry not in _compile_stats[kind]:
+        _compile_stats[kind].append(entry)
+
+
+def _extract_pseudocode_from_entry(entry) -> str:
+    if isinstance(entry, dict):
+        value = entry.get("pseudocode", "")
+    elif isinstance(entry, str):
+        value = entry
+    else:
+        value = ""
+    return str(value).strip()
+
+
+def _resolve_card_pseudocode(card_kind: str, card_no: str, data: dict) -> str:
+    raw_jp = str(data.get("ability", "")).strip()
+    inline_pseudocode = str(data.get("pseudocode", "")).strip()
+
+    if not raw_jp:
+        return inline_pseudocode
+
+    if raw_jp in _consolidated_abilities:
+        pseudocode = _extract_pseudocode_from_entry(_consolidated_abilities[raw_jp])
+        if pseudocode:
+            _compile_stats["consolidated_used"].add(raw_jp)
+            return pseudocode
+
+        _record_unique_issue("empty", card_no, raw_jp)
+        _bytecode_compile_errors.append(
+            f"[{card_kind}] {card_no}: Consolidated pseudocode entry is empty for ability: {raw_jp[:80]}..."
+        )
+        return ""
+
+    if inline_pseudocode:
+        _compile_stats["inline_used"].add(card_no)
+        return inline_pseudocode
+
+    _record_unique_issue("missing", card_no, raw_jp)
+    _bytecode_compile_errors.append(f"[{card_kind}] {card_no}: Missing pseudocode for ability: {raw_jp[:80]}...")
+    return ""
 
 
 def compute_flags(card):
@@ -510,25 +600,8 @@ def compute_flags(card):
 def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
     spec = data.get("special_heart", {})
     translation_en = _manual_translations_en.get(card_no)
-    # Ensure we use pseudocode
-    raw_jp = str(data.get("ability", ""))
-    raw_ability = ""
-    found_pseudocode = False
-
-    if raw_jp in _consolidated_abilities:
-        entry = _consolidated_abilities[raw_jp]
-        raw_ability = entry.get("pseudocode") if isinstance(entry, dict) else entry
-        found_pseudocode = True
-    elif "pseudocode" in data:
-        raw_ability = str(data.get("pseudocode", ""))
-        found_pseudocode = True
-
-    # Validation: If ability exists but no pseudocode found
-    if raw_jp and not found_pseudocode:
-        _bytecode_compile_errors.append(f"[MEMBER] {card_no}: Missing pseudocode for ability: {raw_jp[:50]}...")
-        abilities = []
-    else:
-        abilities = _v2_parser.parse(raw_ability)
+    raw_ability = _resolve_card_pseudocode("MEMBER", card_no, data)
+    abilities = _v2_parser.parse(raw_ability) if raw_ability else []
 
     # --- GRANT_ABILITY FLATTENING ---
     extra_abilities = []
@@ -587,26 +660,8 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
 def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
     spec = data.get("special_heart", {})
     translation_en = _manual_translations_en.get(card_no)
-
-    # Ensure we use pseudocode
-    raw_jp = str(data.get("ability", ""))
-    raw_ability = ""
-    found_pseudocode = False
-
-    if raw_jp in _consolidated_abilities:
-        entry = _consolidated_abilities[raw_jp]
-        raw_ability = entry.get("pseudocode") if isinstance(entry, dict) else entry
-        found_pseudocode = True
-    elif "pseudocode" in data:
-        raw_ability = str(data.get("pseudocode", ""))
-        found_pseudocode = True
-
-    # Validation: If ability exists but no pseudocode found
-    if raw_jp and not found_pseudocode:
-        _bytecode_compile_errors.append(f"[LIVE] {card_no}: Missing pseudocode for ability: {raw_jp[:50]}...")
-        abilities = []
-    else:
-        abilities = _v2_parser.parse(raw_ability)
+    raw_ability = _resolve_card_pseudocode("LIVE", card_no, data)
+    abilities = _v2_parser.parse(raw_ability) if raw_ability else []
 
     # --- GRANT_ABILITY FLATTENING ---
     extra_abilities = []
