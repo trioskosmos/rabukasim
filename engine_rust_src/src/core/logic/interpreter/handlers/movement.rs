@@ -275,7 +275,7 @@ pub fn handle_move_to_discard(
     if next_ctx.choice_index != -1 {
         if next_ctx.choice_index == CHOICE_DONE {
             if is_optional {
-                return HandlerResult::Continue;
+                return HandlerResult::SetCond(false);
             } else {
                 if (next_ctx.v_remaining > 0) || (next_ctx.v_remaining == -1 && count > 0) {
                     if suspend_interaction(

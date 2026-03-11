@@ -550,12 +550,12 @@ impl ResponseGenerator {
                             // The JUMP target points to the skip-to-end instruction AFTER the option's effect block.
                             // The actual first effect instruction is 5 bytes BEFORE that target.
                             let jump_target = jump_instr_ip + 5 + (jump_val as usize * 5);
-                            let effect_ip = if jump_target >= 5 { jump_target - 5 } else { 0 };
+                            let effect_ip = jump_target;
 
                             if effect_ip + 4 < bc.len() {
                                 let target_op = bc[effect_ip];
                                 let v = bc[effect_ip + 1];
-                                let s = bc[effect_ip + 4];
+                                let _s = bc[effect_ip + 4];
 
                                 if target_op == O_PAY_ENERGY {
                                     let available = (0..state.players[p_idx].energy_zone.len())

@@ -140,6 +140,7 @@ def serialize_card(cid, member_db, live_db, energy_db, is_viewable=True, peek=Fa
             "blade_hearts": m.blade_hearts.tolist() if hasattr(m.blade_hearts, "tolist") else list(m.blade_hearts),
             "text": ability_text,
             "original_text": getattr(m, "original_text", ""),
+            "original_text_en": getattr(m, "original_text_en", ""),
         }
     elif base_cid in live_db:
         l = live_db[base_cid]
@@ -165,6 +166,7 @@ def serialize_card(cid, member_db, live_db, energy_db, is_viewable=True, peek=Fa
             else list(l.required_hearts),
             "text": ability_text,
             "original_text": getattr(l, "original_text", ""),
+            "original_text_en": getattr(l, "original_text_en", ""),
         }
     elif base_cid in energy_db:
         e = energy_db[base_cid]

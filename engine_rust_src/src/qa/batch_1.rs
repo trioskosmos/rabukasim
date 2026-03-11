@@ -587,7 +587,7 @@ mod tests {
         state.players[1].live_score_bonus = 10;
 
         // Check: Turn order logic. If both succeed with same score, P0 stays first
-        let p0_first_before = state.first_player == 0;
+        let _p0_first_before = state.first_player == 0;
         state.players[0].success_lives.push(live_card);
         state.players[1].success_lives.push(live_card);
 
@@ -639,7 +639,7 @@ mod tests {
     // Q57: Restriction effect blocks action even if other effect enables it
     #[test]
     fn test_q57_restriction_blocks_enabled_effect() {
-        let db = load_real_db();
+        let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
 
@@ -655,7 +655,7 @@ mod tests {
     // Q58: Same card ×2 on stage = 2 separate turn-once uses
     #[test]
     fn test_q58_duplicate_card_separate_turn_once_uses() {
-        let db = load_real_db();
+        let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
 
@@ -674,7 +674,7 @@ mod tests {
     // Q59: Card that moves = new card (resets turn-once)
     #[test]
     fn test_q59_moved_card_resets_turn_once() {
-        let db = load_real_db();
+        let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
 
@@ -698,7 +698,7 @@ mod tests {
     // Q60: Forced vs optional abilities
     #[test]
     fn test_q60_forced_auto_ability_required() {
-        let db = load_real_db();
+        let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
 
@@ -709,7 +709,8 @@ mod tests {
 
         // This is structural - engine validates ability requirements
         // Test just confirms state is consistent
-        assert!(state.players[0].hand.len() >= 0, "Q60: State consistent");
+        // state.players[0].hand.len() >= 0 is always true for usize
+        assert!(true, "Q60: State consistent");
     }
 
     // Q61: Can defer turn-once ability to later timing
@@ -725,13 +726,14 @@ mod tests {
 
         // Engine verification: State initialized correctly
         assert!(state.players.len() == 2, "Q61: Two players exist");
-        assert!(state.turn >= 0, "Q61: Turn counter valid");
+        // state.turn >= 0 is always true for unsigned types
+        assert!(true, "Q61: Turn counter valid");
     }
 
     // BONUS: Turn order tests (Q49-Q52 variations to ensure comprehensive coverage)
     #[test]
     fn test_q49_no_success_order_unchanged() {
-        let db = load_real_db();
+        let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
 
@@ -752,7 +754,7 @@ mod tests {
     // Q40-Q39: Yell checks must all complete; cannot check partial
     #[test]
     fn test_q39_q40_yell_all_or_none() {
-        let db = load_real_db();
+        let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
 
@@ -773,7 +775,7 @@ mod tests {
     // Q43: Draw icon from yell becomes card draw AFTER all yells done
     #[test]
     fn test_q43_draw_icon_applies_after_yell_complete() {
-        let db = load_real_db();
+        let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
 
@@ -794,7 +796,7 @@ mod tests {
     // Q44: Score icon adds to LIVE CARD score (not live score)
     #[test]
     fn test_q44_score_icon_live_card_score() {
-        let db = load_real_db();
+        let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
 
@@ -812,7 +814,7 @@ mod tests {
     // Q45: ALL Blade (wildcard) from yell
     #[test]
     fn test_q45_all_blade_wildcard_heart() {
-        let db = load_real_db();
+        let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
 
@@ -823,7 +825,7 @@ mod tests {
         // If all blade appears in yell, can substitute for any missing color
 
         // Test: Verify wildcard heart support
-        let required_hearts = [1, 0, 1, 0, 0, 0, 0];  // Example requirement
+        let _required_hearts = [1, 0, 1, 0, 0, 0, 0];  // Example requirement
         let has_all_blade = true;
 
         // With wildcard, gaps can be filled
@@ -852,7 +854,7 @@ mod tests {
     // Q42: Blade heart effects from yell
     #[test]
     fn test_q42_blade_effect_timing_after_yell() {
-        let db = load_real_db();
+        let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
 
@@ -869,7 +871,7 @@ mod tests {
     // Q46: ALL Heart color selection
     #[test]
     fn test_q46_all_heart_color_selection() {
-        let db = load_real_db();
+        let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
 

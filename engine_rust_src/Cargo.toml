@@ -47,3 +47,11 @@ opt-level = 3
 [[test]]
 name = "repro_card_4654_hand_bug"
 path = "src/repro/repro_card_4654_hand_bug.rs"
+
+[[test]]
+name = "sumire_8752_trigger"
+path = "src/repro/repro_sumire_8752_trigger.rs"
+
+[[test]]
+name = "c01_sumire_8752"
+path = "src/repro/c01_sumire_8752.rs"

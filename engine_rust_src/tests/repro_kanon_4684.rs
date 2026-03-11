@@ -13,7 +13,7 @@ fn test_repro_kanon_4684() {
 
     let p1 = 0;
     let card_id = *db.card_no_to_id.get("PL!SP-pb1-001-R").unwrap();
-    
+
     // Ability 0: ON_LIVE_START
     let ab = db.get_member(card_id).unwrap().abilities.get(0).unwrap().clone();
 

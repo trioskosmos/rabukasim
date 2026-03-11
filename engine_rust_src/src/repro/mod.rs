@@ -23,3 +23,7 @@ pub mod repro_score_jump;
 pub mod special_mechanics_tests;
 #[cfg(test)]
 pub mod yell_persistence_repro;
+#[cfg(test)]
+pub mod repro_performance_modal;
+#[cfg(test)]
+pub mod repro_hazuki_500;

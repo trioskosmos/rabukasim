@@ -698,7 +698,7 @@ class Ability:
                         to_signed_32(slot),
                     ]
                 )
-            
+
             # Populate descriptive option names for the UI
             if "options" in eff.params:
                 self.option_names = [str(opt) for opt in eff.params["options"]]

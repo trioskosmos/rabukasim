@@ -898,15 +898,20 @@ class AbilityParserV2:
                 negated = True
                 name_part = name_part[1:]
 
+            # Conditions can legitimately carry multiple brace blocks, e.g.
+            # COUNT_SUCCESS_LIVE(PLAYER) {FILTER="GROUP_ID=0"} {MIN=2}
+            # Parse and merge all of them before matching the condition name.
+            params = {}
+            for brace_block in re.findall(r"\{([^{}]*)\}", name_part):
+                params.update(self._parse_pseudocode_params("{" + brace_block + "}"))
+
+            name_part_no_braces = re.sub(r"\s*\{[^{}]*\}", "", name_part).strip()
+
             # Match "NAME(VAL) {PARAMS}" or "NAME {PARAMS}" or "NAME"
-            m = re.match(r"(\w+)(?:\((.*?)\))?\s*(?:\{(.*)\})?", name_part)
+            m = re.match(r"(\w+)(?:\((.*?)\))?", name_part_no_braces)
             if m:
                 name = m.group(1).upper()
                 val_in_parens = m.group(2)
-                params_str = m.group(3)
-
-                # Initialize params from the {KEY=VAL} part
-                params = self._parse_pseudocode_params(f"{{{params_str}}}") if params_str else {}
 
                 if val_in_parens:
                     # Handle positional arguments in parentheses like COUNT_MEMBER(UNIT_CATCHU, STAGE)
@@ -937,9 +942,9 @@ class AbilityParserV2:
                             params["val"] = vp
 
                 # Check for target arrow -> TARGET
-                if "->" in name_part:
-                    arrow_pos = name_part.find("->")
-                    target_part = name_part[arrow_pos + 2 :].strip()
+                if "->" in name_part_no_braces:
+                    arrow_pos = name_part_no_braces.find("->")
+                    target_part = name_part_no_braces[arrow_pos + 2 :].strip()
                     # Target might have trailing content (like another condition), take first word
                     target_word = target_part.split()[0].strip().upper()
                     if target_word:
@@ -949,7 +954,7 @@ class AbilityParserV2:
                     # double-process it in remaining_part if it was handled here.
 
                 # Check for comparison operators outside of {PARAMS}
-                remaining_part = name_part[len(m.group(0)) :].strip()
+                remaining_part = name_part_no_braces[len(m.group(0)) :].strip()
                 if "->" in remaining_part:
                     # Strip the arrow and target from remaining_part to avoid confusing the comparison regex
                     arrow_pos = remaining_part.find("->")

@@ -1147,7 +1147,38 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
             }
         })
         .sum();
-    let total_score = live_score + note_icons as u32;
+    let total_score = live_score + note_icons as u32 + state.players[p_idx].live_score_bonus.max(0) as u32;
+
+    let mut score_breakdown = Vec::new();
+    score_breakdown.push(json!({
+        "source": "Base (Lives)",
+        "value": live_score,
+        "type": "base"
+    }));
+    if note_icons > 0 {
+        score_breakdown.push(json!({
+            "source": "Note Bonus",
+            "value": note_icons,
+            "type": "note"
+        }));
+    }
+    for &(cid, bonus) in &state.players[p_idx].live_score_bonus_logs {
+        let name = if cid >= 0 {
+            db.get_member(cid)
+                .map(|m| m.name.clone())
+                .or_else(|| db.get_live(cid).map(|l| l.name.clone()))
+                .unwrap_or_else(|| format!("Card {}", cid))
+        } else {
+            "Ability Effect".to_string()
+        };
+        score_breakdown.push(json!({
+            "source": name,
+            "source_id": cid,
+            "value": bonus,
+            "type": "triggered_ability"
+        }));
+    }
+
     let member_contributions: Vec<_> = member_summary.values().collect();
     state.ui.performance_results.insert(
         p_idx as u8,
@@ -1166,11 +1197,15 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 "requirements": requirement_logs,
                 "transforms": transform_logs,
                 "score_bonus_logs": state.players[p_idx].live_score_bonus_logs,
+                "scores": score_breakdown,
             },
             "total_score_bonus": state.players[p_idx].live_score_bonus,
             "total_score": total_score
         }),
     );
+
+
+
     // state.yell_cards.clear(); // REMOVED: Now cleared in untap_all() for persistence
     advance_from_performance(state);
 }

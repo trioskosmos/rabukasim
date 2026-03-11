@@ -4,7 +4,6 @@
 
 #[cfg(test)]
 mod card_specific_ability_tests {
-    use crate::core::logic::*;
     use crate::test_helpers::*;
 
     // =========================================================================
@@ -15,7 +14,7 @@ mod card_specific_ability_tests {
 
     #[test]
     fn test_q76_slot_occupancy_check() {
-        let db = load_real_db();
+        let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
 
@@ -35,10 +34,10 @@ mod card_specific_ability_tests {
         // Count occupied vs empty
         let occupied = state.players[0].stage.iter().filter(|&&id| id != -1).count();
         let empty = state.players[0].stage.iter().filter(|&&id| id == -1).count();
-        
+
         assert_eq!(occupied, 1, "Should have 1 occupied slot");
         assert_eq!(empty, 2, "Should have 2 empty slots");
-        
+
         println!("[Q76] PASS: Slot occupancy tracking works correctly");
     }
 
@@ -67,7 +66,7 @@ mod card_specific_ability_tests {
 
         // Place another
         state.players[0].stage[1] = 5101;
-        
+
         // Should still detect (any)
         let has_member = state.players[0].stage.iter().any(|&id| id != -1);
         assert!(has_member, "Q77 PASS: Multiple members detected");
@@ -102,7 +101,7 @@ mod card_specific_ability_tests {
             49, 51,     // Off by one from 50
             15, 25, 35, 45,  // Between valid sums
         ];
-        
+
         for cost in &invalid_costs {
             let matches = cost == &10 || cost == &20 || cost == &30 || cost == &40 || cost == &50;
             assert!(!matches, "Q78 FAIL: Cost {} should NOT match (off-by-one bug?)", cost);
@@ -147,11 +146,12 @@ mod card_specific_ability_tests {
         let _db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
+        state.players[0].energy_zone.clear();
 
         // Setup: Add energy to pay cost
         state.players[0].energy_zone.push(3001);
         state.players[0].energy_zone.push(3002);
-        
+
         let initial_energy = state.players[0].energy_zone.len();
         assert_eq!(initial_energy, 2, "Setup: Should have 2 energy cards");
 
@@ -208,14 +208,14 @@ mod card_specific_ability_tests {
         if let Some(card) = db.get_member(triple_name_card_id) {
             // Card has a single name field (even if it contains multiple names like "A&B&C")
             println!("[Q81] Triple-name card name: {}", card.name);
-            
+
             // The key test: does the card count as 1 member, not 3?
             // This would be caught if name parsing incorrectly splits it
         }
 
         // Place the triple-name card
         state.players[0].stage[0] = triple_name_card_id;
-        
+
         // Count members on stage
         let member_count = state.players[0].stage.iter().filter(|&&id| id != -1).count();
         assert_eq!(member_count, 1, "Q81 PASS: Triple-name card counts as 1 member");
@@ -278,6 +278,7 @@ mod card_specific_ability_tests {
         // Verify zone state doesn't corrupt across multiple operations
         let mut state = create_test_state();
         state.ui.silent = true;
+        state.players[0].energy_zone.clear();
 
         // Stage operations
         state.players[0].stage[0] = 100;
@@ -359,4 +360,3 @@ mod card_specific_ability_tests {
         println!("[Boundary Values] PASS: -1 empty sentinel correctly distinguished from 0");
     }
 }
-

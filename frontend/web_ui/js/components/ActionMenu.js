@@ -83,6 +83,11 @@ export const ActionMenu = {
                         : a.metadata.areas_desc;
                 }
 
+                // Translate the name if possible (especially for pseudo-English labels from the engine)
+                if (window.translateAbility) {
+                    displayName = window.translateAbility(displayName, currentLang);
+                }
+
                 displayName = Tooltips.enrichAbilityText(displayName);
 
                 let label = `<div class="action-title" style="${(displayName.includes('&') || displayName.includes('＆')) ? 'font-size:0.85em;' : ''}">${displayName}</div>`;

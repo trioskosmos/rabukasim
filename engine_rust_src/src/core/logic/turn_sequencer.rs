@@ -3,7 +3,6 @@ use crate::core::enums::Phase;
 use crate::core::{ACTION_BASE_HAND, ACTION_BASE_LIVESET};
 use std::time::Instant;
 use itertools::Itertools;
-use rand::seq::SliceRandom;
 
 pub struct TurnSequencer;
 
@@ -24,7 +23,7 @@ impl TurnSequencer {
         let mut best_overall_breakdown = (0.0, 0.0);
         let mut total_nodes = 0;
 
-        let p_idx = state.current_player as usize;
+        let _p_idx = state.current_player as usize;
         let legal_ids = state.get_legal_action_ids(db);
 
         for &action in &legal_ids {
@@ -241,7 +240,7 @@ impl TurnSequencer {
     }
 
     fn evaluate_state(state: &GameState, db: &CardDatabase) -> (f32, f32) {
-        let p_idx = state.current_player as usize;
+        let _p_idx = state.current_player as usize;
 
         // --- 1. Scoring Potential (The Primary Driver) ---
         // Amplified multiplier: live success is THE way to win.
@@ -316,6 +315,7 @@ impl TurnSequencer {
         best_total_ev
     }
 
+    /*
     fn estimate_live_ev(state: &GameState, db: &CardDatabase) -> f32 {
         let p_idx = state.current_player as usize;
         let mut total_ev = 0.0;
@@ -333,7 +333,9 @@ impl TurnSequencer {
 
         total_ev
     }
+    */
 
+    /*
     fn monte_carlo_success_prob(state: &GameState, db: &CardDatabase, slot_idx: usize) -> f32 {
         let p_idx = state.current_player as usize;
         let cid = state.players[p_idx].live_zone[slot_idx];
@@ -365,7 +367,7 @@ impl TurnSequencer {
         let trials = 100;
         let deck_cards = state.players[p_idx].deck.to_vec();
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         for _ in 0..trials {
             let mut trial_deck = deck_cards.clone();
@@ -387,4 +389,5 @@ impl TurnSequencer {
 
         successes as f32 / trials as f32
     }
+    */
 }

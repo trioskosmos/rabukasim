@@ -165,6 +165,8 @@ pub struct Ability {
     #[serde(default)]
     pub modal_options: serde_json::Value,
     #[serde(default)]
+    pub option_names: Vec<String>,
+    #[serde(default)]
     pub pseudocode: String,
     #[serde(default)]
     pub requires_selection: bool,
@@ -186,6 +188,7 @@ impl std::hash::Hash for Ability {
         self.is_once_per_turn.hash(state);
         self.bytecode.hash(state);
         // modal_options is skipped
+        self.option_names.hash(state);
         self.pseudocode.hash(state);
         self.requires_selection.hash(state);
         self.choice_flags.hash(state);

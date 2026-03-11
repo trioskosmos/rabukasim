@@ -138,7 +138,7 @@ export const PerformanceRenderer = {
                     <div class="perf-breakdown">
                         <div class="perf-section">
                             <h4>${i18n.t('target_lives')}</h4>
-                            ${res.lives && res.lives.length > 0 ? res.lives.map(l => {
+                            ${res.lives && res.lives.length > 0 ? res.lives.map((l, i) => {
                 if (!l) return '';
                 const filledSum = (l.filled || [0, 0, 0, 0, 0, 0, 0]).reduce((a, b) => a + b, 0);
                 const reqSum = (l.required || [0, 0, 0, 0, 0, 0, 0]).reduce((a, b) => a + b, 0);
@@ -193,12 +193,17 @@ export const PerformanceRenderer = {
                     else if (isBonus) label = '(Ability)';
 
                     return `
-                                            <span class="perf-source-tag ${isYell ? 'yell' : ''} ${isBonus ? 'bonus' : ''}" data-source-id="${sg.id}" data-source-slot="${sg.slot}">
+                                            <span class="perf-source-tag ${isYell ? 'yell' : ''} ${isBonus ? 'bonus' : ''}"
+                                                data-source-id="${sg.id}"
+                                                data-source-slot="${sg.slot}"
+                                                data-card-id="${sg.id}"
+                                                ${sg.name ? `data-card-name="${sg.name.replace(/"/g, '&quot;')}"` : ''}>
                                                 ${Tooltips.enrichAbilityText(sg.name)} ${label} (+${sg.amount})
                                             </span>
                                         `}).join('')}
                                     </div>
                                     ` : ''}
+
                                 </div>
                                 `;
             }).join('') : 'None'}
@@ -303,7 +308,10 @@ export const PerformanceRenderer = {
                             else if (isBonus) label = '(Ability)';
 
                             return `
-                                                            <span class="perf-target-tag ${isYell ? 'yell' : ''} ${isBonus ? 'bonus' : ''}" data-target-idx="${idx}">
+                                                            <span class="perf-target-tag ${isYell ? 'yell' : ''} ${isBonus ? 'bonus' : ''}"
+                                                                data-target-idx="${idx}"
+                                                                data-card-id="${res.lives[idx]?.id}"
+                                                                ${res.lives[idx]?.name ? `data-card-name="${res.lives[idx].name.replace(/"/g, '&quot;')}"` : ''}>
                                                                 ${Tooltips.enrichAbilityText(tg.name)} ${label} (+${tg.amount})
                                                             </span>
                                                         `}).join('')}
@@ -311,6 +319,7 @@ export const PerformanceRenderer = {
                                                 </div>
                                                 `;
                     })() : ''}
+
                                         </div>
                                     </div>
                                 </div>

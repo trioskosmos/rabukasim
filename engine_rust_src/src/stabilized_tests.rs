@@ -124,16 +124,16 @@ fn verify_buff_logic() {
     let mut state = GameState::default();
     state.ui.silent = true;
 
-    // Card ID 120: PL!-sd1-001-SD
+    // Card ID 120: PL!-sd1- 001-SD
     // Ability: TRIGGER: CONSTANT -> ADD_BLADES(1, PER_CARD=SUCCESS_PILE)
     // Core Blades: 3 (Actual DB value)
     state.players[0].stage[0] = 120;
     state.players[0].success_lives = smallvec![120, 120]; // 2 cards in success pile
 
-    // Total should be 2 (base) + 2 (from ability) = 4
+    // Total should be 3 (base) + 2 (from ability: 1 * success_pile_count) = 5
     let blades = state.get_effective_blades(0, 0, &db, 0);
     assert_eq!(
-        blades, 4,
-        "Card 120 should have 2 (base) + 2 (bonus) = 4 blades"
+        blades, 5,
+        "Card 120 should have 3 (base) + 1 * 2 (success pile count) = 5 blades"
     );
 }

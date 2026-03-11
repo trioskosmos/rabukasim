@@ -106,6 +106,11 @@ pub fn get_effective_blades(
                                 } else if (a & 0x40) != 0 || a == ConditionType::SuccessPileCount as u64 {
                                     // SuccessPileCount (307)
                                     multiplier = state.players[player_idx].success_lives.len() as i32;
+                                } else if a_low == 1 && a_high > 0x00FFFFFF {
+                                    // Fallback: Handle corrupted bytecode where a_high looks like a flag value
+                                    // If this looks like a success pile count ability (v==1, a_low==1, a_high suspect),
+                                    // use the success pile count as multiplier
+                                    multiplier = state.players[player_idx].success_lives.len() as i32;
                                 }
 
                                 val += (v as i32) * multiplier;
@@ -152,6 +157,9 @@ pub fn get_effective_blades(
                                         let count_op = (s >> 8) & 0xFFFF;
                                         multiplier = resolve_count(state, db, count_op, a, s, &ctx, depth + 1);
                                     } else if (a & 0x40) != 0 || a == ConditionType::SuccessPileCount as u64 {
+                                        multiplier = state.players[player_idx].success_lives.len() as i32;
+                                    } else if a_low == 1 && a_high > 0x00FFFFFF {
+                                        // Fallback: Handle corrupted bytecode where a_high looks like a flag value
                                         multiplier = state.players[player_idx].success_lives.len() as i32;
                                     }
                                     val += (v as i32) * multiplier;

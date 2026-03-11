@@ -330,7 +330,7 @@ pub fn handle_member_state(
                         ctx,
                         instr_ip,
                         O_TAP_MEMBER,
-                        0,
+                        resolved_slot as i32,
                         ChoiceType::Optional,
                         &choice_text,
                         a as u64,
@@ -347,7 +347,7 @@ pub fn handle_member_state(
                         ctx,
                         instr_ip,
                         O_TAP_MEMBER,
-                        0,
+                        resolved_slot as i32,
                         ChoiceType::TapMSelect,
                         &choice_text,
                         a as u64,
@@ -372,7 +372,7 @@ pub fn handle_member_state(
                          }
                          }
                          // Re-suspend to get a proper choice
-                         if suspend_interaction(state, db, ctx, instr_ip, O_TAP_MEMBER, 0, ChoiceType::Optional, "", a as u64, -1) {
+                         if suspend_interaction(state, db, ctx, instr_ip, O_TAP_MEMBER, resolved_slot as i32, ChoiceType::Optional, "", a as u64, -1) {
                              return HandlerResult::Suspend;
                          }
                          return HandlerResult::Continue;
@@ -716,9 +716,8 @@ pub fn handle_member_state(
                     return HandlerResult::Continue;
                 }
 
-                // IMPORTANT: Only clear looked_cards if we are STARTING a new pick.
-                // If we have a choice_index, it means we just resumed from SelectDiscardPlay.
-                if is_total_cost && ctx.choice_index == -1 {
+                // IMPORTANT: Always clear looked_cards if we are STARTING a new pick.
+                if ctx.choice_index == -1 {
                     state.players[target_p_idx].looked_cards.clear();
                 }
 
@@ -741,7 +740,7 @@ pub fn handle_member_state(
                     target_ctx.player_id = target_p_idx as u8;
                     target_ctx.v_remaining = remaining;
                     target_ctx.v_accumulated = ctx.v_accumulated;
-                    target_ctx.choice_index = -1; // Reset for suspension
+                    target_ctx.choice_index = -1; // Standard reset for suspension
 
                     let choice_text = get_choice_text(db, &target_ctx);
                     if suspend_interaction(
@@ -773,7 +772,7 @@ pub fn handle_member_state(
                     target_ctx.player_id = target_p_idx as u8;
                     target_ctx.v_remaining = remaining;
                     target_ctx.v_accumulated = ctx.v_accumulated;
-                    target_ctx.choice_index = -1; // Reset for suspension
+                    target_ctx.choice_index = -1; // CRITICAL FIX: Reset choice_index so SelectStage doesn't reuse the card index
 
                     let choice_type = if empty_slot_only {
                         ChoiceType::SelectStageEmpty

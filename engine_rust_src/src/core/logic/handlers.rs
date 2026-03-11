@@ -923,10 +923,15 @@ impl GameState {
         let old_card_id = self.core.players[p_idx].stage[slot_idx];
         if old_card_id >= 0 {
             self.core.players[p_idx].baton_touch_count += 1;
+            self.core.players[p_idx].baton_source_ids.push(old_card_id);
         }
         if secondary_slot_idx >= 0 {
             self.core.players[p_idx].baton_touch_count += 1;
             let s_idx = secondary_slot_idx as usize;
+            let secondary_old_id = self.core.players[p_idx].stage[s_idx];
+            if secondary_old_id >= 0 {
+                self.core.players[p_idx].baton_source_ids.push(secondary_old_id);
+            }
             if let Some(old) = self.handle_member_leaves_stage(
                 p_idx,
                 s_idx,

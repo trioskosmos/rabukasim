@@ -9,6 +9,7 @@ This skill provides a standardized approach to ensuring the LovecaSim engine ali
 
 ## 1. Components
 - **Data Source**: `data/qa_data.json` (Managed by `tools/qa_scraper.py`).
+- **Card Text / Translation Inputs**: `data/consolidated_abilities.json` and the compiler/parser under `compiler/`.
 - **Matrix**: [.agent/skills/qa_rule_verification/qa_test_matrix.md](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/.agent/skills/qa_rule_verification/qa_test_matrix.md) (Automated via `tools/gen_full_matrix.py`).
 - **Test Suites**:
     - **Engine (Rust)**: `engine_rust_src/src/qa_verification_tests.rs`, `engine_rust_src/src/qa/batch_card_specific.rs`.
@@ -24,6 +25,21 @@ This skill provides a standardized approach to ensuring the LovecaSim engine ali
 
 ## 2. Workflows
 
+## Priority Rule
+The first priority of QA verification is **not** to write tests that merely pass with the current engine.
+
+The first priority is to:
+1. Write tests that expose real engine, compiler, card-data, or bytecode defects.
+2. Fix the root cause when a ruling and the current implementation disagree.
+3. Only count coverage after the test is exercising the real rule path with the correct card behavior.
+
+If a ruling appears to fail, check all of these before assuming the Rust runtime is correct:
+- `data/consolidated_abilities.json` may show that the card-text simplification or translation is wrong.
+- `compiler/` may show that the parser/compiler translated the pseudocode to conditions/effects incorrectly.
+- The compiled `bytecode` in `data/cards_compiled.json` may not actually represent the behavior printed on the card.
+
+Do not prefer “easy passing coverage” over finding defects. A good QA test is allowed to fail first if that failure exposes a real engine or card-data bug.
+
 ### Phase 1: Data Update
 1. Run `uv run python tools/qa_scraper.py` to fetch latest rulings.
 2. Verify JSON integrity: `uv run pytest tests/test_qa_data.py`.
@@ -36,6 +52,7 @@ This skill provides a standardized approach to ensuring the LovecaSim engine ali
 ### Phase 3: Engine Verification (Rust)
 1. Identify the rule ID (e.g., Q195).
 2. Use `card_finder.py "Q195"` to find related cards and original ability text.
+3. Cross-check the ruling against `data/consolidated_abilities.json`, `compiler/`, and the compiled `bytecode` for the referenced card before assuming the current data is correct.
 3. Implement a focused test in `qa_verification_tests.rs`.
    - **CRITICAL:** Include original ability text and QA ruling as comments.
 4. Run `cargo test qa_verification_tests` to verify compliance.
@@ -48,7 +65,7 @@ This skill provides a standardized approach to ensuring the LovecaSim engine ali
 
 ### High-Level Process
 1. **Identify Unmapped QAs**: Review `qa_test_matrix.md` and filter for entries marked with `ℹ️` (no test) that have card-specific references
-2. **Prioritize by Impact**: Focus on foundational rules first (conditions, cost mechanics, state transitions) before complex ability interactions
+2. **Prioritize by Defect Exposure**: Prefer tests most likely to uncover engine/runtime bugs, parser/compiler mistranslations, or bad compiled bytecode before chasing easy green coverage
 3. **Group by Category**: Create test batches organized by theme (e.g., "Live Card Mechanics", "Activation Rules", "Member Placement")
 4. **Implement Tests**: Write tests in `engine_rust_src/src/qa/batch_card_specific.rs` following the pattern below
 5. **Update Matrix**: Run `python tools/gen_full_matrix.py` to verify coverage increase
@@ -158,7 +175,7 @@ In one session, 4 tests were created covering:
 ### Known Limitations & Findings
 - `entered_this_turn` field does NOT exist; use game flow flags instead
 - `live_zone` is on `PlayerState`, not `GameState`
-- Some QA rulings may require engine-level fixes before test implementation
+- Some QA rulings require engine-level fixes, compiler/parser fixes, or card-data/bytecode fixes before the final test should be accepted
 - Document such findings via `println!("[QA_ID] ISSUE: description")` in test
 
 ## 4. Test Fidelity Scoring System

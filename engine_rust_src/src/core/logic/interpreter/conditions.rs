@@ -710,6 +710,9 @@ pub fn check_condition_opcode(
                 if (attr & FILTER_GROUP_ENABLE) != 0 {
                     let group_id = (attr >> FILTER_GROUP_SHIFT) & 0x7F;
                     res = (player.played_group_mask & (1 << group_id)) != 0;
+                } else if val == 0 && attr == KEYWORD_PLAYED_THIS_TURN {
+                    // WORKAROUND: AREA="CENTER" is sometimes incorrectly encoded as this opcode
+                    res = ctx.area_idx == 1;
                 } else {
                     res = compare_i32(player.play_count_this_turn as i32, val, slot);
                 }
@@ -769,19 +772,35 @@ pub fn check_condition_opcode(
         C_HAND_INCREASED => player.hand_increased_this_turn > 0,
         C_BATON => {
             // val = expected baton touch count (0 means any > 0)
-            // attr = filter for baton source cards (GROUP_ID filter encoded in lower 32 bits)
+            // attr = filter for baton source cards (encoded in bits 0-31 or packed)
             let count_ok = if val > 0 {
                 player.baton_touch_count == val as u8
             } else {
                 player.baton_touch_count > 0 || state.prev_card_id != -1
             };
 
-            // If filter is specified in attr, check if prev_card matches
-            // Note: For double baton, we only track the last replaced card (prev_card_id)
-            // A complete solution would track all baton source cards
-            let filter_attr = attr & 0x00000000FFFFFFFF;
-            if count_ok && filter_attr != 0 && state.prev_card_id >= 0 {
-                state.card_matches_filter(db, state.prev_card_id, filter_attr)
+            if !count_ok {
+                return false;
+            }
+
+            // Check if any baton source matches the filter if attr is specified
+            let filter_attr = if (attr & 0xFFFFFFFF00000000) == 0 && (attr & 0x1F) == 0 && attr != 0 && attr < 300 {
+                // Auto-encode group if it looks like a raw ID (Legacy support)
+                0x10 | (attr << 5)
+            } else {
+                attr
+            };
+
+            if filter_attr != 0 {
+                // Check all tracked baton sources
+                if player.baton_source_ids.iter().any(|&bid| state.card_matches_filter(db, bid, filter_attr)) {
+                    true
+                } else if state.prev_card_id >= 0 && state.card_matches_filter(db, state.prev_card_id, filter_attr) {
+                    // Fallback for prev_card_id if sources aren't populated for some reason
+                    true
+                } else {
+                    false
+                }
             } else {
                 count_ok
             }
