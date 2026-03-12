@@ -757,9 +757,6 @@ def create_room_internal(
 
     gs.initialize_game(p0_m, p1_m, p0_e, p1_e, p0_l, p1_l)
 
-    # Serialize initial state for history
-    initial_serialized = rust_serializer.serialize_state(gs, viewer_idx=0, mode=mode, lang="jp")
-
     return {
         "state": gs,
         "mode": mode,
@@ -772,7 +769,7 @@ def create_room_internal(
         "usernames": {},  # PID -> username
         "engine": "rust",
         # History tracking for undo/redo
-        "history_stack": [initial_serialized],
+        "history_stack": [gs], # Store raw state for on-demand localization
         "history_index": 0,
     }
 
@@ -1171,9 +1168,16 @@ def get_state():
         
         if history_stack and history_index < len(history_stack):
             # Return state from history
-            s_state = history_stack[history_index]
+            gs_history = history_stack[history_index]
             mode = room["mode"]
+            lang = get_lang()
             
+            # Serialize on-demand with correct language
+            if room.get("engine") == "rust":
+                 s_state = rust_serializer.serialize_state(gs_history, viewer_idx=0, mode=mode, is_pvp=False, lang=lang)
+            else:
+                 s_state = serialize_state(gs_history, viewer_idx=0, is_pvp=False, mode=mode, lang=lang)
+
             cdecks = room.get("custom_decks", {})
             meta = {
                 "p0_deck_set": bool(cdecks.get(0, {}).get("main") or cdecks.get("0", {}).get("main")),
@@ -1544,14 +1548,13 @@ def record_game_state_to_history(room):
     
     try:
         gs = room["state"]
-        game_mode = room["mode"]
-        
-        # Serialize current state
-        serialized = rust_serializer.serialize_state(gs, viewer_idx=0, mode=game_mode, lang="jp")
+        # In Rust engine, gs is typically a new object from gs.step().
+        # We store the object itself to allow on-demand localization later.
+        state_to_store = gs
         
         # Initialize history if not present (for backward compatibility)
         if "history_stack" not in room:
-            room["history_stack"] = [serialized]
+            room["history_stack"] = [state_to_store]
             room["history_index"] = 0
             return
         
@@ -1562,7 +1565,7 @@ def record_game_state_to_history(room):
             room["history_stack"] = history[:idx + 1]
         
         # Add new state
-        room["history_stack"].append(serialized)
+        room["history_stack"].append(state_to_store)
         room["history_index"] = len(room["history_stack"]) - 1
         
         # Limit history size to prevent memory bloat (keep last 100 states)

@@ -1042,6 +1042,15 @@ impl GameState {
         self.resolve_bytecode(db, std::sync::Arc::new(bytecode.to_vec()), ctx_in);
     }
 
+    pub fn resolve_ability(
+        &mut self,
+        db: &CardDatabase,
+        ability: &Ability,
+        ctx_in: &AbilityContext,
+    ) {
+        super::interpreter::resolve_ability(self, db, ability, ctx_in);
+    }
+
     pub fn check_condition(
         &self,
         db: &CardDatabase,

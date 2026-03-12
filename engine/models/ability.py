@@ -1,3 +1,4 @@
+import copy
 import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple, Union
@@ -151,6 +152,10 @@ class Effect:
     params: Dict[str, Any] = field(default_factory=dict)
     is_optional: bool = False  # ～てもよい
     modal_options: List[List[Any]] = field(default_factory=list)  # For SELECT_MODE
+    runtime_opcode: int = 0
+    runtime_value: int = 0
+    runtime_attr: int = 0
+    runtime_slot: int = 0
 
 
 @dataclass(slots=True)
@@ -204,6 +209,7 @@ class Ability:
             print(f"DEBUG: Compiling card {self.card_no}")
         bytecode = []
         self.filters = []  # Reset filters for this compilation
+        self._annotate_effect_runtime_metadata()
 
         # 0. Compile Ordered Instructions (If present - New Parser V2.1)
         if self.instructions:
@@ -318,6 +324,36 @@ class Ability:
         # Terminator
         bytecode.extend([int(Opcode.RETURN), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
         return bytecode
+
+    def _annotate_effect_runtime_metadata(self):
+        for eff in self.effects:
+            self._annotate_single_effect_runtime(eff)
+
+    def _annotate_single_effect_runtime(self, eff: Effect):
+        eff.runtime_opcode = 0
+        eff.runtime_value = 0
+        eff.runtime_attr = 0
+        eff.runtime_slot = 0
+
+        for option in eff.modal_options:
+            for option_item in option:
+                if isinstance(option_item, Effect):
+                    self._annotate_single_effect_runtime(option_item)
+
+        temp_bc: List[int] = []
+        eff_copy = copy.deepcopy(eff)
+        try:
+            self._compile_single_effect(eff_copy, temp_bc)
+        except Exception:
+            return
+
+        if len(temp_bc) != 5:
+            return
+
+        eff.runtime_opcode = int(temp_bc[0])
+        eff.runtime_value = int(temp_bc[1])
+        eff.runtime_attr = ((int(temp_bc[3]) & 0xFFFFFFFF) << 32) | (int(temp_bc[2]) & 0xFFFFFFFF)
+        eff.runtime_slot = int(temp_bc[4])
 
     def _compile_single_condition(self, cond: Condition, bytecode: List[int]):
         # Special handling for BATON condition - must be first since it uses different param keys

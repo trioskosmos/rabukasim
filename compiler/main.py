@@ -183,7 +183,7 @@ def compile_cards(input_path: str, output_path: str):
                 print(f"DEBUG: Assigned new ID for card_no={v_key}, packed_id={packed_id}")
             # Define fields to exclude from compiled output to reduce bloat
             # No source data is lost; these are either redundant with bytecode or stay in cards.json/consolidated_abilities.json
-            exclude_ability_fields = {"instructions": True, "filters": True, "effects": True, "pseudocode": True}
+            exclude_ability_fields = {"instructions": True, "filters": True}
             exclude_card_fields = {"faq": True, "abilities": {"__all__": exclude_ability_fields}}
 
             try:

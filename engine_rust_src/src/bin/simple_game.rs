@@ -292,26 +292,33 @@ fn run_single_game(
                     .ok()
                     .and_then(|value| value.parse().ok())
                     .unwrap_or(10000usize);
-                let exact_seq_start = Instant::now();
-                let exact_sequences = count_exact_main_sequences(&state, db, search_depth);
-
-                if !silent {
-                    println!(
-                        "[TURN {}] P{} exact_main_sequences={} depth={} counted_in={:.3}s",
-                        main_turns_played,
-                        current_player,
-                        exact_sequences,
-                        search_depth,
-                        exact_seq_start.elapsed().as_secs_f32(),
-                    );
-                    std::env::set_var("TURNSEQ_PROGRESS", "1");
-                    std::env::set_var("TURNSEQ_STALL_SECS", "5");
-                }
-
-                let (best_seq, _, _, evals) = if exact_sequences <= exact_threshold {
-                    TurnSequencer::plan_full_turn_exact(&state, db)
-                } else {
+                
+                // For vanilla mode, skip sequence counting and always use exact
+                let (best_seq, _, _, evals) = if db.is_vanilla {
                     TurnSequencer::plan_full_turn(&state, db)
+                } else {
+                    // For non-vanilla, count sequences to decide routing
+                    let exact_seq_start = Instant::now();
+                    let exact_sequences = count_exact_main_sequences(&state, db, search_depth);
+
+                    if !silent {
+                        println!(
+                            "[TURN {}] P{} exact_main_sequences={} depth={} counted_in={:.3}s",
+                            main_turns_played,
+                            current_player,
+                            exact_sequences,
+                            search_depth,
+                            exact_seq_start.elapsed().as_secs_f32(),
+                        );
+                        std::env::set_var("TURNSEQ_PROGRESS", "1");
+                        std::env::set_var("TURNSEQ_STALL_SECS", "5");
+                    }
+
+                    if exact_sequences <= exact_threshold {
+                        TurnSequencer::plan_full_turn_exact(&state, db)
+                    } else {
+                        TurnSequencer::plan_full_turn(&state, db)
+                    }
                 };
                 total_evaluations += evals;
                 let executed_actions = execute_main_sequence(&mut state, db, &best_seq);

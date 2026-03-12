@@ -778,6 +778,22 @@
     {
       "jp": "の",
       "en": " "
+    },
+    {
+      "jp": "このライブをクリアした時",
+      "en": "When this Live is cleared"
+    },
+    {
+      "jp": "を控え室に置く",
+      "en": " move to Waiting Room"
+    },
+    {
+      "jp": "バトンタッチする",
+      "en": "Baton Touch"
+    },
+    {
+       "jp": "ライブ成功時",
+       "en": "[Live Success]"
     }
   ]
 }

@@ -37,19 +37,37 @@ pub struct Effect {
     #[serde(default)]
     pub value: i32,
     #[serde(default)]
+    pub value_cond: ConditionType,
+    #[serde(default)]
     pub target: TargetType,
     #[serde(default)]
     pub is_optional: bool,
     #[serde(default)]
     pub params: serde_json::Value,
+    #[serde(default)]
+    pub runtime_opcode: i32,
+    #[serde(default)]
+    pub runtime_value: i32,
+    #[serde(default)]
+    pub runtime_attr: u64,
+    #[serde(default)]
+    pub runtime_slot: i32,
+    #[serde(default)]
+    pub modal_options: serde_json::Value,
 }
 
 impl std::hash::Hash for Effect {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.effect_type.hash(state);
         self.value.hash(state);
+        self.value_cond.hash(state);
         self.target.hash(state);
         self.is_optional.hash(state);
+        self.runtime_opcode.hash(state);
+        self.runtime_value.hash(state);
+        self.runtime_attr.hash(state);
+        self.runtime_slot.hash(state);
+        self.modal_options.to_string().hash(state);
     }
 }
 

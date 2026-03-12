@@ -576,7 +576,7 @@ impl ResponseController for GameState {
                 return Err("No pending interaction".to_string());
             };
 
-            let (_card_name, bytecode) = if cid == -1 {
+            let bytecode = if cid == -1 {
                 let pi = self.interaction_stack.last().unwrap();
                 let virtual_bc = vec![
                     pi.effect_opcode,
@@ -590,15 +590,9 @@ impl ResponseController for GameState {
                     0,
                     0,
                 ];
-                ("System".to_string(), virtual_bc)
-            } else if let Some(mem) = db.get_member(cid) {
-                let ab = mem.abilities.get(ab_idx).ok_or("Ability not found")?;
-                (mem.name.clone(), ab.bytecode.clone())
-            } else if let Some(live) = db.get_live(cid) {
-                let ab = live.abilities.get(ab_idx).ok_or("Ability not found")?;
-                (live.name.clone(), ab.bytecode.clone())
+                Some(virtual_bc)
             } else {
-                return Err("Card not found".to_string());
+                None
             };
 
             // SYSTEMIC FIX: If this is an optional effect and the user chose PASS (99),
@@ -612,7 +606,17 @@ impl ResponseController for GameState {
             // to jump or skip, and if it doesn't suspend again, we restore the phase below.
             self.interaction_stack.pop();
 
-            self.resolve_bytecode(db, std::sync::Arc::new(bytecode), &ctx);
+            if let Some(bytecode) = bytecode {
+                self.resolve_bytecode(db, std::sync::Arc::new(bytecode), &ctx);
+            } else if let Some(mem) = db.get_member(cid) {
+                let ab = mem.abilities.get(ab_idx).ok_or("Ability not found")?;
+                self.resolve_ability(db, ab, &ctx);
+            } else if let Some(live) = db.get_live(cid) {
+                let ab = live.abilities.get(ab_idx).ok_or("Ability not found")?;
+                self.resolve_ability(db, ab, &ctx);
+            } else {
+                return Err("Card not found".to_string());
+            }
             self.process_rule_checks(db);
 
             // Restore phase only if no new suspension occurred
@@ -745,7 +749,7 @@ impl ResponseController for GameState {
             }
         }
 
-        self.resolve_bytecode(db, std::sync::Arc::new(ab.bytecode.clone()), &ctx);
+        self.resolve_ability(db, ab, &ctx);
         self.process_rule_checks(db);
         Ok(())
     }

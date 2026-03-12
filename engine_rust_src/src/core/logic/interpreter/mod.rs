@@ -14,6 +14,7 @@ use crate::core::enums::Phase;
 use crate::core::models::{GameState, AbilityContext};
 use crate::core::logic::constants::*;
 use super::CardDatabase;
+use super::Ability;
 pub use conditions::{check_condition, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
 pub use handlers::{HandlerRegistry, HandlerResult};
@@ -52,6 +53,134 @@ struct BytecodeExecutor {
     stack: Vec<ExecutionFrame>,
     cond: bool,
     steps: u32,
+}
+
+fn effect_has_modal_options(effect: &crate::core::logic::Effect) -> bool {
+    match &effect.modal_options {
+        serde_json::Value::Null => false,
+        serde_json::Value::Array(values) => !values.is_empty(),
+        serde_json::Value::Object(values) => !values.is_empty(),
+        _ => true,
+    }
+}
+
+fn ability_uses_structured_runtime(ability: &Ability) -> bool {
+    if ability.effects.is_empty() {
+        return false;
+    }
+    if ability.bytecode.len() != ability.effects.len() * 5 + 5 {
+        return false;
+    }
+
+    for (idx, effect) in ability.effects.iter().enumerate() {
+        if effect.runtime_opcode == 0 || effect_has_modal_options(effect) {
+            return false;
+        }
+
+        let ip = idx * 5;
+        let a_low = effect.runtime_attr as u32 as i32;
+        let a_high = (effect.runtime_attr >> 32) as u32 as i32;
+
+        if ability.bytecode[ip] != effect.runtime_opcode
+            || ability.bytecode[ip + 1] != effect.runtime_value
+            || ability.bytecode[ip + 2] != a_low
+            || ability.bytecode[ip + 3] != a_high
+            || ability.bytecode[ip + 4] != effect.runtime_slot
+        {
+            return false;
+        }
+    }
+
+    ability.bytecode.last().copied() == Some(0)
+        && ability.bytecode.get(ability.bytecode.len().saturating_sub(5)).copied() == Some(O_RETURN)
+}
+
+pub fn resolve_ability(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ability: &Ability,
+    ctx_in: &AbilityContext,
+) {
+    if !ability_uses_structured_runtime(ability) {
+        resolve_bytecode(state, db, std::sync::Arc::new(ability.bytecode.clone()), ctx_in);
+        return;
+    }
+
+    let _id = if state.ui.current_execution_id.is_none() && ctx_in.program_counter == 0 {
+        Some(state.generate_execution_id())
+    } else {
+        None
+    };
+
+    let registry = HandlerRegistry::new();
+    let mut ctx = ctx_in.clone();
+    let mut effect_idx = (ctx_in.program_counter as usize) / 5;
+
+    while effect_idx < ability.effects.len() {
+        let effect = &ability.effects[effect_idx];
+        let ip = effect_idx * 5;
+        ctx.program_counter = ip as u16;
+        if effect_idx == (ctx_in.program_counter as usize) / 5 && ctx_in.choice_index != -1 {
+            ctx.choice_index = ctx_in.choice_index;
+        }
+
+        let instr = instruction::BytecodeInstruction::new(
+            effect.runtime_opcode,
+            effect.runtime_value,
+            effect.runtime_attr as i64,
+            effect.runtime_slot,
+        );
+
+        match registry.dispatch(state, db, &mut ctx, &instr, ip, &[]) {
+            HandlerResult::Continue => {
+                ctx.choice_index = -1;
+                ctx.v_remaining = -1;
+                effect_idx += 1;
+            }
+            HandlerResult::SetCond(_) => {
+                ctx.choice_index = -1;
+                ctx.v_remaining = -1;
+                effect_idx += 1;
+            }
+            HandlerResult::Suspend => return,
+            HandlerResult::Return => break,
+            HandlerResult::Branch(new_ip) => {
+                ctx.choice_index = -1;
+                ctx.v_remaining = -1;
+                effect_idx = new_ip / 5;
+            }
+            HandlerResult::BranchToBytecode(new_bc) => {
+                resolve_bytecode(state, db, new_bc, &ctx);
+                if state.phase == Phase::Response {
+                    return;
+                }
+                ctx.choice_index = -1;
+                ctx.v_remaining = -1;
+                effect_idx += 1;
+            }
+        }
+    }
+
+    state.players[ctx_in.player_id as usize].revealed_cards.clear();
+
+    if _id.is_some() {
+        state.clear_execution_id();
+    }
+
+    if ctx_in.choice_index != -1
+        && (state.phase == Phase::Response || state.phase == Phase::Setup)
+        && state.interaction_stack.is_empty()
+    {
+        let orig = ctx_in.original_phase.unwrap_or(Phase::Main);
+        state.phase = if orig == Phase::Response || orig == Phase::Setup {
+            Phase::Main
+        } else {
+            orig
+        };
+        if let Some(p) = ctx_in.original_current_player {
+            state.current_player = p;
+        }
+    }
 }
 
 impl BytecodeExecutor {
@@ -340,12 +469,12 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
         // Generate a new ID for the activation
         state.generate_execution_id();
 
-        let (bytecode, costs) = if is_live {
+        let (ability, costs) = if is_live {
             let ab = &db.get_live(cid).unwrap().abilities[ab_idx as usize];
-            (ab.bytecode.clone(), &ab.costs)
+            (ab, &ab.costs)
         } else {
             let ab = &db.get_member(cid).unwrap().abilities[ab_idx as usize];
-            (ab.bytecode.clone(), &ab.costs)
+            (ab, &ab.costs)
         };
 
         if costs::pay_costs_transactional(state, db, costs, &ctx) {
@@ -353,7 +482,7 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                 let p_idx = ctx.player_id as usize;
                 state.players[p_idx].perf_triggered_abilities.push((cid, ab_idx as i16, _trigger));
             }
-            resolve_bytecode(state, db, std::sync::Arc::new(bytecode), &ctx);
+            resolve_ability(state, db, ability, &ctx);
 
             // Fire resolution triggers
             let res_trigger = match _trigger {

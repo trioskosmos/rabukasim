@@ -23,6 +23,13 @@ impl ActionGenerator for ResponseGenerator {
 }
 
 impl ResponseGenerator {
+    fn effect_runtime_attr_for_opcode(ab: &Ability, opcode: i32) -> Option<u64> {
+        ab.effects
+            .iter()
+            .find(|effect| effect.runtime_opcode == opcode)
+            .map(|effect| effect.runtime_attr)
+    }
+
     fn generate_internal<R: ActionReceiver + ?Sized>(
         &self,
         db: &CardDatabase,
@@ -395,7 +402,10 @@ impl ResponseGenerator {
                 };
 
                 if let Some(ab) = abs.get(ab_idx_real) {
-                    if let Some(chunk) = ab.bytecode.chunks(5).find(|ch| ch[0] == O_LOOK_AND_CHOOSE)
+                    if let Some(attr) = Self::effect_runtime_attr_for_opcode(ab, O_LOOK_AND_CHOOSE)
+                    {
+                        final_filter_attr = attr;
+                    } else if let Some(chunk) = ab.bytecode.chunks(5).find(|ch| ch[0] == O_LOOK_AND_CHOOSE)
                     {
                         let a_low = chunk[2] as u32;
                         let a_high = chunk[3] as u32;

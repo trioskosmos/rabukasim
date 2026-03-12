@@ -133,9 +133,21 @@ export function translateCard(card) {
     let units = card.units || [];
 
     if (currentLanguage === 'en') {
-        // Translate Name
+        // Translate Name (Handle compound names like A & B & C)
         if (NAME_MAP[name]) {
             name = NAME_MAP[name];
+        } else if (name.includes('&') || name.includes('/') || name.includes('／') || name.includes('＆') || name.includes('・')) {
+            // Split by various delimiters common in multi-character cards
+            const delimiters = /(&|\/|／|＆|・)/;
+            const parts = name.split(delimiters);
+            const translatedParts = parts.map(part => {
+                const trimmed = part.trim();
+                if (!trimmed) return part;
+                // If it's a delimiter, keep it
+                if (trimmed.length === 1 && "&/／＆・".includes(trimmed)) return part;
+                return NAME_MAP[trimmed] || trimmed;
+            });
+            name = translatedParts.join('');
         }
 
         // Translate Groups/Series (handle IDs or strings)
