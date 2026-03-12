@@ -14,11 +14,20 @@ from engine.game.desc_utils import get_action_desc
 from engine.game.enums import Phase
 
 TRIGGER_ICONS = {
-    1: "【登場】",
-    2: "【ライブ開始】",
-    3: "【ライブ成功時】",
-    6: "【常時】",
-    7: "【起動】",
+    "jp": {
+        1: "【登場】",
+        2: "【ライブ開始】",
+        3: "【ライブ成功時】",
+        6: "【常時】",
+        7: "【起動】",
+    },
+    "en": {
+        1: "[Play]",
+        2: "[Live Start]",
+        3: "[Live Success]",
+        6: "[Constant]",
+        7: "[Activate]",
+    }
 }
 
 SERIALIZER_STRINGS = {
@@ -41,6 +50,9 @@ SERIALIZER_STRINGS = {
         "select_discard_hand": "捨てるカードを選択してください",
         "select_hand_play": "プレイするカードを選択してください",
         "pay_energy": "エネルギーを選択してください",
+        "rock": "グー",
+        "paper": "パー",
+        "scissors": "チョキ",
         "unknown": "???",
         "unknown_type": "不明",
     },
@@ -63,6 +75,9 @@ SERIALIZER_STRINGS = {
         "select_discard_hand": "Select card to discard",
         "select_hand_play": "Select card to play",
         "pay_energy": "Select Energy to Pay",
+        "rock": "Rock",
+        "paper": "Paper",
+        "scissors": "Scissors",
         "unknown": "???",
         "unknown_type": "Unknown",
     },
@@ -478,10 +493,10 @@ class RustGameStateSerializer:
                         meta["choice"] = i - 5000
                     elif 10000 <= i <= 12000:
                         meta["type"] = "RPS"
-                        names = ["Rock", "Paper", "Scissors"] if lang == "en" else ["グー", "パー", "チョキ"]
+                        signs = [s["rock"], s["paper"], s["scissors"]]
                         choice_idx = (i - 10000) % 1000
-                        if choice_idx < len(names):
-                            meta["name"] = f"【じゃんけん】 {names[choice_idx]}"
+                        if choice_idx < len(signs):
+                            meta["name"] = f"【RPS】 {signs[choice_idx]}"
                             meta["choice"] = choice_idx
                     elif 1 <= i <= 180:
                         meta["type"] = "PLAY"

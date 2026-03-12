@@ -225,7 +225,7 @@ export const CardRenderer = {
 
         if (!discard || discard.length === 0) {
             el.classList.add('empty');
-            DOMUtils.setHTML(containerId, '<span style="opacity:0.3; font-size:0.8rem;">Discard</span>');
+            DOMUtils.setHTML(containerId, `<span style="opacity:0.3; font-size:0.8rem;">${i18n.t('discard_pile')}</span>`);
         } else {
             const showCount = Math.min(3, discard.length);
             for (let i = 0; i < showCount; i++) {

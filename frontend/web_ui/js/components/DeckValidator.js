@@ -33,9 +33,9 @@ export class DeckValidator {
         let isHtml = content.includes('<h3') || content.includes('card-item') || content.includes('title=');
 
         if (isHtml) {
-            // HTML Section Parsing
-            const mainHtml = this._extractHtmlSection(content, "メインデッキ");
-            const energyHtml = this._extractHtmlSection(content, "エネルギーデッキ");
+            // HTML Section Parsing - Try both JP and EN markers for robustness
+            let mainHtml = this._extractHtmlSection(content, "メインデッキ") || this._extractHtmlSection(content, "Main Deck");
+            let energyHtml = this._extractHtmlSection(content, "エネルギーデッキ") || this._extractHtmlSection(content, "Energy Deck");
 
             if (mainHtml || energyHtml) {
                 main = this._parseCardSection(mainHtml);
@@ -162,34 +162,34 @@ export class DeckValidator {
         if (!targetEl) return;
 
         if (results.parsed.length === 0 && results.parsedEnergy.length === 0) {
-            targetEl.innerHTML = '<div class="format-hint">Paste DECK LOG HTML or "CardID x Count" list</div>';
+            targetEl.innerHTML = `<div class="format-hint">${i18n.t('format_hint')}</div>`;
             return;
         }
 
         let html = `
             <div class="deck-validation-summary">
-                <span class="stat ${results.members === 48 ? 'valid' : 'warning'}">Members: ${results.members}/48</span>
-                <span class="stat ${results.lives === 12 ? 'valid' : 'warning'}">Lives: ${results.lives}/12</span>
-                <span class="stat ${results.energy === 12 ? 'valid' : (results.energy > 0 ? 'warning' : '')}">Energy: ${results.energy}/12</span>
+                <span class="stat ${results.members === 48 ? 'valid' : 'warning'}">${i18n.t('members')}: ${results.members}/48</span>
+                <span class="stat ${results.lives === 12 ? 'valid' : 'warning'}">${i18n.t('lives')}: ${results.lives}/12</span>
+                <span class="stat ${results.energy === 12 ? 'valid' : (results.energy > 0 ? 'warning' : '')}">${i18n.t('energy')}: ${results.energy}/12</span>
             </div>
         `;
 
         if (results.invalid.length > 0) {
             html += `
                 <div class="deck-validation-errors">
-                    <strong>Invalid Codes:</strong>
+                    <strong>${i18n.t('invalid_codes')}:</strong>
                     <div class="error-list">${results.invalid.join(', ')}</div>
                 </div>
             `;
         }
 
-        html += `<div class="preview-section-title">Main Deck (${results.members + results.lives} cards)</div>`;
+        html += `<div class="preview-section-title">${i18n.t('main_deck')} (${results.members + results.lives} cards)</div>`;
         html += `<div class="deck-preview-grid">`;
         html += results.parsed.map(p => this._renderItem(p)).join('');
         html += `</div>`;
 
         if (results.parsedEnergy.length > 0) {
-            html += `<div class="preview-section-title">Energy Deck (${results.energy} cards)</div>`;
+            html += `<div class="preview-section-title">${i18n.t('energy_deck')} (${results.energy} cards)</div>`;
             html += `<div class="deck-preview-grid">`;
             html += results.parsedEnergy.map(p => this._renderItem(p)).join('');
             html += `</div>`;

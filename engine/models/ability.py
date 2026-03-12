@@ -1,6 +1,6 @@
 import copy
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import Any, Dict, List, Tuple, Union
 
 from engine.models.enums import CHAR_MAP
@@ -14,6 +14,7 @@ from .generated_packer import (
     pack_s_standard,
     pack_v_heart_counts,
     pack_v_look_choose,
+    unpack_a_standard,
 )
 
 
@@ -158,6 +159,247 @@ class Effect:
     runtime_slot: int = 0
 
 
+_BOOL_FILTER_FIELDS = {
+    "group_enabled",
+    "is_tapped",
+    "has_blade_heart",
+    "not_has_blade_heart",
+    "unique_names",
+    "unit_enabled",
+    "value_enabled",
+    "is_le",
+    "is_cost_type",
+    "is_setsuna",
+    "compare_accumulated",
+    "is_optional",
+    "keyword_energy",
+    "keyword_member",
+}
+
+_TARGET_PLAYER_LABELS = {
+    0: "unspecified",
+    1: "self",
+    2: "opponent",
+    3: "both",
+}
+
+_CARD_TYPE_LABELS = {
+    0: "any",
+    1: "member",
+    2: "live",
+}
+
+_ZONE_MASK_LABELS = {
+    4: "stage",
+    6: "hand",
+    7: "discard",
+}
+
+_COLOR_NAMES = ["pink", "red", "yellow", "green", "blue", "purple", "any"]
+
+
+@dataclass(slots=True)
+class PackedFilterSpec:
+    target_player: int = 0
+    card_type: int = 0
+    group_enabled: bool = False
+    group_id: int = 0
+    is_tapped: bool = False
+    has_blade_heart: bool = False
+    not_has_blade_heart: bool = False
+    unique_names: bool = False
+    unit_enabled: bool = False
+    unit_id: int = 0
+    value_enabled: bool = False
+    value_threshold: int = 0
+    is_le: bool = False
+    is_cost_type: bool = False
+    color_mask: int = 0
+    char_id_1: int = 0
+    char_id_2: int = 0
+    zone_mask: int = 0
+    special_id: int = 0
+    is_setsuna: bool = False
+    compare_accumulated: bool = False
+    is_optional: bool = False
+    keyword_energy: bool = False
+    keyword_member: bool = False
+
+    def pack(self) -> int:
+        return pack_a_standard(**{field_info.name: getattr(self, field_info.name) for field_info in fields(self)})
+
+    @classmethod
+    def unpack(cls, packed_attr: int) -> "PackedFilterSpec":
+        return cls(**unpack_a_standard(packed_attr & 0xFFFFFFFFFFFFFFFF))
+
+    def to_debug_dict(self) -> Dict[str, Any]:
+        debug_data: Dict[str, Any] = {}
+        for field_info in fields(self):
+            value = getattr(self, field_info.name)
+            if field_info.name in _BOOL_FILTER_FIELDS:
+                value = bool(value)
+            debug_data[field_info.name] = value
+
+        packed_attr = self.pack()
+        debug_data["packed_attr"] = packed_attr
+        debug_data["packed_attr_hex"] = f"0x{packed_attr:016X}"
+        debug_data["summary"] = format_filter_attr(packed_attr)
+        return debug_data
+
+
+def explain_filter_attr(packed_attr: int) -> Dict[str, Any]:
+    return PackedFilterSpec.unpack(packed_attr).to_debug_dict()
+
+
+def format_filter_attr(packed_attr: int) -> str:
+    spec = PackedFilterSpec.unpack(packed_attr)
+    parts: List[str] = []
+
+    if spec.target_player:
+        parts.append(f"target={_TARGET_PLAYER_LABELS.get(int(spec.target_player), spec.target_player)}")
+    if spec.card_type:
+        parts.append(f"type={_CARD_TYPE_LABELS.get(int(spec.card_type), spec.card_type)}")
+    if spec.group_enabled:
+        parts.append(f"group={int(spec.group_id)}")
+    if spec.unit_enabled:
+        parts.append(f"unit={int(spec.unit_id)}")
+    if spec.value_enabled:
+        compare_op = "<=" if spec.is_le else ">="
+        compare_subject = "cost" if spec.is_cost_type else "value"
+        parts.append(f"{compare_subject}{compare_op}{int(spec.value_threshold)}")
+    if spec.color_mask:
+        colors = [name for idx, name in enumerate(_COLOR_NAMES) if spec.color_mask & (1 << idx)]
+        parts.append(f"colors={'/'.join(colors) if colors else spec.color_mask}")
+    if spec.char_id_1:
+        parts.append(f"char1={int(spec.char_id_1)}")
+    if spec.char_id_2:
+        parts.append(f"char2={int(spec.char_id_2)}")
+    if spec.zone_mask:
+        parts.append(f"zone={_ZONE_MASK_LABELS.get(int(spec.zone_mask), spec.zone_mask)}")
+    if spec.special_id:
+        parts.append(f"special={int(spec.special_id)}")
+    if spec.is_tapped:
+        parts.append("status=tapped")
+    if spec.has_blade_heart:
+        parts.append("has_blade_heart")
+    if spec.not_has_blade_heart:
+        parts.append("not_has_blade_heart")
+    if spec.unique_names:
+        parts.append("unique_names")
+    if spec.is_setsuna:
+        parts.append("setsuna")
+    if spec.compare_accumulated:
+        parts.append("compare_accumulated")
+    if spec.is_optional:
+        parts.append("optional")
+    if spec.keyword_energy:
+        parts.append("keyword_energy")
+    if spec.keyword_member:
+        parts.append("keyword_member")
+
+    return ", ".join(parts) if parts else "none"
+
+
+# --- SEMANTIC ABILITY FORM (Human-Readable Layer) ---
+# These dataclasses represent the compiled ability in human-readable form
+# using enum names instead of bytecode integers.
+
+
+@dataclass
+class SemanticEffect:
+    """Human-readable representation of an effect."""
+
+    effect_type: str  # e.g., "DRAW", "ADD_BLADES" (from enum name)
+    value: int = 0
+    target: str = "SELF"  # e.g., "SELF", "OPPONENT", "BOTH"
+    params: Dict[str, Any] = field(default_factory=dict)  # Named parameters
+    conditions: List[str] = field(default_factory=list)  # Readable filter strings
+    is_optional: bool = False
+    description: str = ""  # Human description of the effect
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "type": self.effect_type,
+            "value": self.value,
+            "target": self.target,
+            "params": self.params,
+            "conditions": self.conditions,
+            "optional": self.is_optional,
+            "description": self.description,
+        }
+
+
+@dataclass
+class SemanticCondition:
+    """Human-readable representation of a condition."""
+
+    condition_type: str  # e.g., "COUNT_STAGE", "COUNT_HAND" (from enum name)
+    value: int = 0
+    comparison: str = "GE"  # e.g., ">=", "<=", "=="
+    filter_summary: str = ""  # Human-readable filter like "target=both, cost>=13"
+    area: str = ""  # e.g., "ANY_STAGE", "LEFT", "CENTER", "RIGHT"
+    is_negated: bool = False
+    description: str = ""  # Human description of the condition
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "type": self.condition_type,
+            "value": self.value,
+            "comparison": self.comparison,
+            "filter": self.filter_summary,
+            "area": self.area,
+            "negated": self.is_negated,
+            "description": self.description,
+        }
+
+
+@dataclass
+class SemanticCost:
+    """Human-readable representation of a cost."""
+
+    cost_type: str  # e.g., "ENERGY", "TAP_SELF" (from enum name)
+    value: int = 0
+    target: str = "SELF"
+    filter_summary: str = ""  # Human-readable filter if applicable
+    is_optional: bool = False
+    description: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "type": self.cost_type,
+            "value": self.value,
+            "target": self.target,
+            "filter": self.filter_summary,
+            "optional": self.is_optional,
+            "description": self.description,
+        }
+
+
+@dataclass
+class SemanticAbility:
+    """Human-readable semantic form of a compiled ability."""
+
+    trigger: str  # e.g., "ON_PLAY", "CONSTANT" (from enum name)
+    effects: List[SemanticEffect] = field(default_factory=list)
+    conditions: List[SemanticCondition] = field(default_factory=list)
+    costs: List[SemanticCost] = field(default_factory=list)
+    is_once_per_turn: bool = False
+    description: str = ""  # Original pseudocode or raw text
+    instructions_summary: str = ""  # Summary of instruction order
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to JSON-serializable dict."""
+        return {
+            "trigger": self.trigger,
+            "effects": [e.to_dict() for e in self.effects],
+            "conditions": [c.to_dict() for c in self.conditions],
+            "costs": [c.to_dict() for c in self.costs],
+            "once_per_turn": self.is_once_per_turn,
+            "description": self.description,
+            "instructions_summary": self.instructions_summary,
+        }
+
+
 @dataclass(slots=True)
 class ResolvingEffect:
     """Wrapper for an effect currently being resolved to track its source and progress."""
@@ -202,6 +444,7 @@ class Ability:
     pseudocode: str = ""
     filters: List[Dict[str, Any]] = field(default_factory=list)
     option_names: List[str] = field(default_factory=list)
+    semantic_form: Dict[str, Any] = field(default_factory=dict)  # Human-readable form
 
     def compile(self) -> List[int]:
         """Compile ability into fixed-width bytecode sequence (groups of 4 ints)."""
@@ -258,6 +501,11 @@ class Ability:
                     bytecode.extend([int(Opcode.JUMP_IF_FALSE), to_signed_32(skip_count), 0, 0, 0])
 
             bytecode.extend([int(Opcode.RETURN), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
+            
+            # Build semantic form for debugging/inspection (before returning)
+            # Note: Only build if explicitly called, not during normal compilation to avoid side effects
+            # self.build_semantic_form()
+            
             return bytecode
 
         # 1. Compile Conditions (Legacy/Split Mode)
@@ -323,7 +571,99 @@ class Ability:
 
         # Terminator
         bytecode.extend([int(Opcode.RETURN), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
+        
+        # Build semantic form for debugging/inspection
+        # Note: Only build if explicitly called, not during normal compilation to avoid side effects
+        # self.build_semantic_form()
+        
         return bytecode
+
+    def build_semantic_form(self) -> Dict[str, Any]:
+        """Build a human-readable semantic representation of this ability.
+        
+        This converts bytecode back into named enums and readable descriptions,
+        creating an intermediate form that's easier to inspect than bytecode.
+        """
+        semantic_effects: List[SemanticEffect] = []
+        for eff in self.effects:
+            # Safely copy params
+            params_copy = {}
+            try:
+                params_copy = eff.params.copy() if hasattr(eff.params, 'copy') and callable(eff.params.copy) else dict(eff.params or {})
+            except:
+                params_copy = {}
+                
+            sem_eff = SemanticEffect(
+                effect_type=eff.effect_type.name if hasattr(eff.effect_type, "name") else str(eff.effect_type),
+                value=eff.value,
+                target=eff.target.name if hasattr(eff.target, "name") else str(eff.target),
+                params=params_copy,
+                is_optional=eff.is_optional,
+            )
+            semantic_effects.append(sem_eff)
+
+        semantic_conditions: List[SemanticCondition] = []
+        for cond in self.conditions:
+            # Try to get the comparison type from params
+            try:
+                params_upper = {k.upper(): v for k, v in cond.params.items() if isinstance(k, str)}
+            except:
+                params_upper = {}
+                
+            comp_str = str(cond.params.get("comparison") or params_upper.get("COMPARISON") or "GE").upper() if cond.params else "GE"
+
+            # Only try to get filter_summary if attr exists (after compilation)
+            filter_summary = ""
+            if hasattr(cond, "attr") and cond.attr:
+                try:
+                    filter_summary = format_filter_attr(cond.attr)
+                except:
+                    filter_summary = ""
+
+            sem_cond = SemanticCondition(
+                condition_type=cond.type.name if hasattr(cond.type, "name") else str(cond.type),
+                value=cond.value if hasattr(cond, "value") else 0,
+                comparison=comp_str,
+                filter_summary=filter_summary,
+                area=str(cond.params.get("area", "")).upper() if cond.params else "",
+                is_negated=cond.is_negated if hasattr(cond, "is_negated") else False,
+            )
+            semantic_conditions.append(sem_cond)
+
+        semantic_costs: List[SemanticCost] = []
+        for cost in self.costs:
+            sem_cost = SemanticCost(
+                cost_type=cost.type.name if hasattr(cost.type, "name") else str(cost.type),
+                value=cost.value,
+                is_optional=cost.is_optional,
+            )
+            semantic_costs.append(sem_cost)
+
+        # Build summary of instructions if present
+        instructions_summary = ""
+        if self.instructions:
+            parts = []
+            for instr in self.instructions:
+                if isinstance(instr, Effect):
+                    parts.append(f"Effect({instr.effect_type.name})")
+                elif isinstance(instr, Condition):
+                    parts.append(f"Condition({instr.type.name})")
+                elif isinstance(instr, Cost):
+                    parts.append(f"Cost({instr.type.name})")
+            instructions_summary = " → ".join(parts)
+
+        semantic_form = SemanticAbility(
+            trigger=self.trigger.name if hasattr(self.trigger, "name") else str(self.trigger),
+            effects=semantic_effects,
+            conditions=semantic_conditions,
+            costs=semantic_costs,
+            is_once_per_turn=self.is_once_per_turn,
+            description=self.pseudocode or self.raw_text,
+            instructions_summary=instructions_summary,
+        )
+
+        self.semantic_form = semantic_form.to_dict()
+        return self.semantic_form
 
     def _annotate_effect_runtime_metadata(self):
         for eff in self.effects:
@@ -1608,9 +1948,10 @@ class Ability:
         if params.get("UNIQUE_NAMES") or params_upper.get("UNIQUE_NAMES"):
             filter_obj["unique_names"] = True
 
-        self.filters.append(filter_obj)
+        filter_spec = PackedFilterSpec(**filter_obj)
+        self.filters.append(filter_spec.to_debug_dict())
         # Use generated packer to ensure bit parity with Rust
-        return pack_a_standard(**filter_obj)
+        return filter_spec.pack()
 
     def reconstruct_text(self, lang: str = "en") -> str:
         """Generate standardized text description."""

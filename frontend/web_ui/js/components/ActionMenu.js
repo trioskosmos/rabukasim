@@ -25,9 +25,9 @@ export const ActionMenu = {
         const getActionLabel = (a, isMini = false) => {
             if (a.id === 0 && state.pending_choice) {
                 if (state.phase === Phase.MulliganP1 || state.phase === Phase.MulliganP2) {
-                    return i18n.t('done') || (currentLang === 'jp' ? '完了' : 'Done');
+                    return i18n.t('done');
                 }
-                return i18n.t('pass_no') || (currentLang === 'jp' ? 'パス / いいえ' : 'Pass / No');
+                return i18n.t('pass_no');
             }
             const energyIcon = `<img src="img/texticon/icon_energy.png" style="height:14px; vertical-align:middle; margin:0 2px;">`;
             const heartIcon = `<img src="img/texticon/icon_heart.png" style="height:14px; vertical-align:middle; margin:0 2px;">`;
@@ -62,7 +62,7 @@ export const ActionMenu = {
                     if (pc && pc.options_text && pc.options_text[modeIdx]) {
                         name = pc.options_text[modeIdx];
                     } else {
-                        name = (currentLang === 'jp' ? "モード " : "Mode ") + modeIdx;
+                        name = i18n.t('mode_n', { n: modeIdx });
                     }
                 } else if (a.id >= 600 && a.id <= 602) {
                     const slotIdx = a.id - 600;
@@ -148,14 +148,14 @@ export const ActionMenu = {
 
             const baseId = (perspectivePlayer === 1) ? ActionBases.RPS_P2 : ActionBases.RPS;
             const signs = [
-                { id: baseId + 0, name: 'Rock', jp: 'グー' },
-                { id: baseId + 1, name: 'Paper', jp: 'パー' },
-                { id: baseId + 2, name: 'Scissors', jp: 'チョキ' }
+                { id: baseId + 0, name: i18n.t('rock') },
+                { id: baseId + 1, name: i18n.t('paper') },
+                { id: baseId + 2, name: i18n.t('scissors') }
             ];
 
             signs.forEach(sign => {
                 const hasAction = state.legal_actions && state.legal_actions.some(a => a.id === sign.id);
-                const a = { id: sign.id, name: currentLang === 'en' ? sign.name : sign.jp };
+                const a = { id: sign.id, name: sign.name };
                 const btn = createActionButton(a, false, 'rps-btn');
                 btn.style.width = '120px';
                 btn.style.opacity = hasAction ? '1' : '0.4';
@@ -239,7 +239,7 @@ export const ActionMenu = {
                 confirmBtn.className = 'action-btn confirm';
                 confirmBtn.style.width = '100%';
                 confirmBtn.style.marginTop = '10px';
-                confirmBtn.innerHTML = i18n.t('confirm_formation') || (State.currentLang === 'jp' ? 'フォーメーションを確定' : 'Confirm Formation');
+                confirmBtn.innerHTML = i18n.t('confirm_formation');
 
                 confirmBtn.onclick = () => {
                     const pIdx = State.perspectivePlayer;
@@ -425,7 +425,7 @@ export const ActionMenu = {
                             } else if (pairSlots.has(i)) {
                                 const spacer = document.createElement('div');
                                 spacer.className = 'pair-spacer';
-                                spacer.innerText = currentLang === 'jp' ? '間' : 'GAP';
+                                spacer.innerText = i18n.t('gap');
                                 doubleDiv.appendChild(spacer);
                             } else {
                                 const spacer = document.createElement('div');

@@ -171,11 +171,11 @@ export const LogViewerModal = {
             <div style="display: flex; gap: 8px;">
                 <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem;">
                     <input type="checkbox" id="${DOM_IDS.FILTER_TRIGGER}" checked onchange="LogViewerModal.filterLogs()">
-                    <span data-i18n="triggers">トリガー</span>
+                    <span>${i18n.t('triggers')}</span>
                 </label>
                 <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem;">
                     <input type="checkbox" id="${DOM_IDS.FILTER_EFFECT}" checked onchange="LogViewerModal.filterLogs()">
-                    <span data-i18n="effects">効果</span>
+                    <span>${i18n.t('effects')}</span>
                 </label>
             </div>
         `;

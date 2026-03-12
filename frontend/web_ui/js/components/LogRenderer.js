@@ -320,7 +320,7 @@ export const LogRenderer = {
         const enrichedHeader = Tooltips.enrichAbilityText(headerContent);
 
         // Add modal viewer button for expanded reading
-        const modalButton = `<button class="log-modal-btn" title="View in expanded window" onclick="event.stopPropagation(); LogViewerModal.open('${group.id}')">◻</button>`;
+        const modalButton = `<button class="log-modal-btn" title="${i18n.t('view_expanded')}" onclick="event.stopPropagation(); LogViewerModal.open('${group.id}')">◻</button>`;
 
         headerDiv.innerHTML = `
             <div class="log-entry-icon"></div>
@@ -443,7 +443,7 @@ export const LogRenderer = {
         const mulliganMatch = body.match(/(Mulligan): (.*)/i);
         if (mulliganMatch) {
             const cardName = mulliganMatch[2].trim();
-            let displayPhase = currentLang === 'jp' ? "マリガン" : "Mulligan";
+            let displayPhase = i18n.t('mulligan');
             let displayCardName = cardName;
             if (currentLang === 'en' && window.NAME_MAP && window.NAME_MAP[cardName]) {
                 displayCardName = window.NAME_MAP[cardName];
@@ -488,7 +488,7 @@ export const LogRenderer = {
         // 1. Render Triggered Abilities (Transient)
         const triggersHtml = LogRenderer.renderActiveAbilities(null, state.triggered_abilities || []);
         if (triggersHtml) {
-            html += `<div class="effects-group-header">Pending Triggers</div>${triggersHtml}`;
+            html += `<div class="effects-group-header">${i18n.t('pending_triggers')}</div>${triggersHtml}`;
         }
 
         // 2. Render Long-term Buffs/Restrictions
@@ -554,7 +554,6 @@ export const LogRenderer = {
             }
 
             if (effects.length === 0) return '';
-
             let pStats = `<div class="effect-player-badge ${badgeClass}">${badgeLabel}</div>`;
             return pStats + effects.map(e => {
                 const sourceCard = e.source_card_id ? Tooltips.findCardById(e.source_card_id) : null;
@@ -575,7 +574,7 @@ export const LogRenderer = {
         const p1Effects = renderPlayerEffects(p1, 1 - State.perspectivePlayer);
 
         if (p0Effects || p1Effects) {
-            html += `<div class="effects-group-header" style="margin-top:10px;">Active Effects</div>`;
+            html += `<div class="effects-group-header" style="margin-top:10px;">${i18n.t('active_effects')}</div>`;
             html += p0Effects + p1Effects;
         }
 

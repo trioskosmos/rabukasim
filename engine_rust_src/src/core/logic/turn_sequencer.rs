@@ -593,6 +593,17 @@ impl TurnSequencer {
             .unwrap_or(10000)
     }
 
+    fn vanilla_exact_turn_threshold() -> usize {
+        std::env::var("TURNSEQ_VANILLA_EXACT_THRESHOLD")
+            .ok()
+            .and_then(|value| value.parse().ok())
+            .unwrap_or(200000)
+    }
+
+    fn vanilla_exact_depth_limit(search: &SearchConfig) -> usize {
+        search.max_dfs_depth.max(24)
+    }
+
     fn count_main_end_sequences(state: &GameState, db: &CardDatabase, depth: usize) -> usize {
         if state.phase != Phase::Main || depth == 0 {
             return 1;
@@ -607,6 +618,42 @@ impl TurnSequencer {
             if next_state.step(db, action).is_ok() {
                 total += Self::count_main_end_sequences(&next_state, db, depth.saturating_sub(1));
             }
+        }
+
+        total
+    }
+
+    fn count_main_end_sequences_capped(
+        state: &GameState,
+        db: &CardDatabase,
+        depth: usize,
+        cap: usize,
+    ) -> usize {
+        if state.phase != Phase::Main || depth == 0 {
+            return 1;
+        }
+
+        let mut actions = SmallVec::<[i32; 64]>::new();
+        state.generate_legal_actions(db, state.current_player as usize, &mut actions);
+
+        let mut total = 1usize;
+        for action in actions.into_iter().filter(|&action| action != ACTION_BASE_PASS) {
+            if total > cap {
+                return cap + 1;
+            }
+
+            let mut next_state = state.clone();
+            if next_state.step(db, action).is_err() {
+                continue;
+            }
+
+            let remaining_cap = cap.saturating_sub(total);
+            total = total.saturating_add(Self::count_main_end_sequences_capped(
+                &next_state,
+                db,
+                depth.saturating_sub(1),
+                remaining_cap,
+            ));
         }
 
         total
@@ -639,7 +686,18 @@ impl TurnSequencer {
     ) -> (Vec<i32>, f32, (f32, f32)) {
         total_count.fetch_add(1, Ordering::Relaxed);
 
-        if state.phase != Phase::Main || depth == 0 {
+        if state.phase != Phase::Main {
+            let (val, brk) = Self::evaluate_stop_state(state, db, root_player, weights);
+            return (vec![], val, brk);
+        }
+
+        if depth == 0 {
+            let mut pass_state = state.clone();
+            if pass_state.step(db, ACTION_BASE_PASS).is_ok() {
+                let (val, brk) = Self::evaluate_stop_state(&pass_state, db, root_player, weights);
+                return (vec![ACTION_BASE_PASS], val, brk);
+            }
+
             let (val, brk) = Self::evaluate_stop_state(state, db, root_player, weights);
             return (vec![], val, brk);
         }
@@ -697,28 +755,24 @@ impl TurnSequencer {
             return (vec![ACTION_BASE_PASS], 0.0, (0.0, 0.0), 1);
         }
 
-        // VANILLA OPTIMIZATION: Skip sequence counting, always use exact planner
-        if db.is_vanilla {
+        let exact_depth = if db.is_vanilla {
+            Self::vanilla_exact_depth_limit(&search)
+        } else {
+            search.max_dfs_depth
+        };
+        let exact_threshold = if db.is_vanilla {
+            Self::vanilla_exact_turn_threshold()
+        } else {
+            Self::exact_turn_threshold()
+        };
+        let exact_sequences = Self::count_main_end_sequences_capped(state, db, exact_depth, exact_threshold);
+        if exact_sequences <= exact_threshold {
             let total_evals = AtomicUsize::new(0);
             let (seq, val, brk) = Self::exact_small_turn_search(
                 state,
                 db,
                 p_idx,
-                search.max_dfs_depth,
-                &weights,
-                &total_evals,
-            );
-            return (seq, val, brk, total_evals.load(Ordering::Relaxed));
-        }
-
-        let exact_sequences = Self::count_main_end_sequences(state, db, search.max_dfs_depth);
-        if exact_sequences <= Self::exact_turn_threshold() {
-            let total_evals = AtomicUsize::new(0);
-            let (seq, val, brk) = Self::exact_small_turn_search(
-                state,
-                db,
-                p_idx,
-                search.max_dfs_depth,
+                exact_depth,
                 &weights,
                 &total_evals,
             );
@@ -1399,6 +1453,19 @@ impl TurnSequencer {
         }
 
         let untapped = state.players[p_idx].energy_zone.len() - state.players[p_idx].tapped_energy_count() as usize;
+        let mut reserve_member_values = SmallVec::<[f32; 16]>::new();
+        for &cid in &state.players[p_idx].hand {
+            if let Some(m) = db.get_member(cid) {
+                let immediate_value = (weights.board_presence * 0.35)
+                    + (m.blades as f32 * weights.blades * 0.35)
+                    + (m.hearts.iter().sum::<u8>() as f32 * weights.hearts * 0.25);
+                let cost_drag = (m.cost as usize).saturating_sub(untapped) as f32 * weights.energy_penalty;
+                reserve_member_values.push((immediate_value - cost_drag).max(0.0));
+            }
+        }
+        reserve_member_values.sort_by(|a, b| b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal));
+        score += reserve_member_values.into_iter().take(3).sum::<f32>() * 0.5;
+
         score -= untapped as f32 * weights.energy_penalty;
         score
     }
@@ -1758,12 +1825,36 @@ impl TurnSequencer {
         use crate::core::heuristics::calculate_deck_expectations;
 
         let deck_stats = calculate_deck_expectations(&state.players[p_idx].deck, db);
-        let yell_count = state.get_total_blades(p_idx, db, 0);
+        let mut expected_yell_count = state.get_total_blades(p_idx, db, 0) as f32;
+        let hand_added_blades = state.players[p_idx]
+            .hand
+            .iter()
+            .filter_map(|&cid| db.get_member(cid))
+            .map(|m| m.blades as f32)
+            .sum::<f32>();
+        let playable_member_count = state.players[p_idx]
+            .hand
+            .iter()
+            .filter(|&&cid| db.get_member(cid).is_some())
+            .count()
+            .max(1) as f32;
+        let untapped_energy = state.players[p_idx]
+            .energy_zone
+            .len()
+            .saturating_sub(state.players[p_idx].tapped_energy_count() as usize);
+
+        if untapped_energy > 0 {
+            expected_yell_count += (hand_added_blades / playable_member_count).min(2.0);
+        }
+
+        let draw_potential = deck_stats.avg_draw * expected_yell_count;
+        expected_yell_count += draw_potential * 0.1;
+
         let board_hearts = state.get_total_hearts(p_idx, db, 0).to_array().map(|v| v as u32);
         let expected_yell_hearts: Vec<f32> = deck_stats
             .avg_hearts
             .iter()
-            .map(|&h| h * yell_count as f32)
+            .map(|&h| h * expected_yell_count)
             .collect();
         let heart_reductions = state.players[p_idx].heart_req_reductions.to_array();
         Some((board_hearts, expected_yell_hearts, heart_reductions))

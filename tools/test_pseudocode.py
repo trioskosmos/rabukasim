@@ -90,6 +90,7 @@ def test_one_pseudocode(pseudocode: str, label: str = "", metadata: str = "", pa
             "conditions": [],
             "costs": [],
             "effects": [],
+            "filters": [],
             "bytecode_raw": [],
             "bytecode_decoded": "",
             "compile_error": None,
@@ -120,6 +121,8 @@ def test_one_pseudocode(pseudocode: str, label: str = "", metadata: str = "", pa
         ab.card_no = label or "TEST"
         try:
             bytecode = ab.compile()
+            ab_info["filters"] = ab.filters
+            ab_info["semantic_form"] = ab.semantic_form
             ab_info["bytecode_raw"] = bytecode
             ab_info["bytecode_decoded"] = decode_bytecode(bytecode)
         except Exception as e:
@@ -167,6 +170,35 @@ def format_result(result: dict, verbose: bool = True) -> str:
         lines.append(f"  Effects:    {len(ab['effects'])}")
         for eff in ab["effects"]:
             lines.append(f"    • {eff}")
+
+        if ab["filters"]:
+            lines.append(f"  Filters:    {len(ab['filters'])}")
+            for filt in ab["filters"]:
+                summary = filt.get("summary", "none")
+                packed_attr_hex = filt.get("packed_attr_hex", "0x0000000000000000")
+                lines.append(f"    • {summary} [{packed_attr_hex}]")
+
+        if ab.get("semantic_form"):
+            lines.append(f"  📖 Semantic Form:")
+            sem = ab["semantic_form"]
+            if sem.get("effects"):
+                lines.append(f"     Effects: {len(sem['effects'])}")
+                for eff in sem["effects"]:
+                    eff_desc = f"{eff.get('type', '?')} value={eff.get('value', 0)} target={eff.get('target', '?')}"
+                    if eff.get("optional"):
+                        eff_desc += " [optional]"
+                    lines.append(f"       • {eff_desc}")
+            if sem.get("conditions"):
+                lines.append(f"     Conditions: {len(sem['conditions'])}")
+                for cond in sem["conditions"]:
+                    cond_desc = f"{cond.get('type', '?')} {cond.get('comparison', 'GE')} {cond.get('value', 0)}"
+                    if cond.get("filter"):
+                        cond_desc += f" filter:{cond.get('filter')}"
+                    if cond.get("negated"):
+                        cond_desc = "NOT " + cond_desc
+                    lines.append(f"       • {cond_desc}")
+            if sem.get("instructions_summary"):
+                lines.append(f"     Order: {sem['instructions_summary']}")
 
         if ab["compile_error"]:
             lines.append(f"  ❌ {ab['compile_error']}")

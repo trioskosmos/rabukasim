@@ -311,4 +311,5 @@ mod tests {
         assert!(state.players[p_idx].discard.len() > 0);
         assert_eq!(state.phase, Phase::Main);
     }
+
 }

@@ -232,7 +232,7 @@ impl ResponseGenerator {
             O_LOOK_AND_CHOOSE => {
                 self.generate_look_and_choose_actions(db, p_idx, state, receiver, pi, abilities);
                 if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0 {
-                    receiver.add_action(0);
+                    receiver.add_action((ACTION_BASE_CHOICE + crate::core::logic::constants::CHOICE_DONE as i32) as usize);
                 }
                 return;
             }
@@ -265,7 +265,7 @@ impl ResponseGenerator {
                     }
                 }
                 if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0 {
-                    receiver.add_action(0);
+                    receiver.add_action((ACTION_BASE_CHOICE + crate::core::logic::constants::CHOICE_DONE as i32) as usize);
                 }
                 return;
             }
@@ -284,7 +284,7 @@ impl ResponseGenerator {
             O_PLAY_MEMBER_FROM_DISCARD | O_PLAY_LIVE_FROM_DISCARD => {
                 self.generate_look_and_choose_actions(db, p_idx, state, receiver, pi, abilities);
                 if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0 {
-                    receiver.add_action(0);
+                    receiver.add_action((ACTION_BASE_CHOICE + crate::core::logic::constants::CHOICE_DONE as i32) as usize);
                 }
                 return;
             }
@@ -321,7 +321,7 @@ impl ResponseGenerator {
             O_SELECT_CARDS => {
                 self.generate_look_and_choose_actions(db, p_idx, state, receiver, pi, abilities);
                 if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0 {
-                    receiver.add_action(0);
+                    receiver.add_action((ACTION_BASE_CHOICE + crate::core::logic::constants::CHOICE_DONE as i32) as usize);
                 }
                 return;
             }

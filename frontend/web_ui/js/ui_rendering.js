@@ -434,23 +434,28 @@ export const Rendering = {
         const liveWatchBtn = document.getElementById('live-watch-btn');
         if (liveWatchBtn) {
             const label = i18n.t('live_watch');
-            liveWatchBtn.textContent = `${label}: ${State.isLiveWatchOn ? 'ON' : 'OFF'}`;
+            const stateLabel = State.isLiveWatchOn ? i18n.t('on') : i18n.t('off');
+            liveWatchBtn.textContent = `${label}: ${stateLabel}`;
         }
 
         const hotseatBtn = document.getElementById('pvp-btn');
         if (hotseatBtn) {
-            hotseatBtn.textContent = `Shared Screen: ${State.hotseatMode ? 'ON' : 'OFF'}`;
+            const label = i18n.t('shared_screen');
+            const stateLabel = State.hotseatMode ? i18n.t('on') : i18n.t('off');
+            hotseatBtn.textContent = `${label}: ${stateLabel}`;
         }
 
         const perspectiveBtn = document.getElementById('switch-btn');
         if (perspectiveBtn) {
-            perspectiveBtn.textContent = `View: P${State.perspectivePlayer + 1}`;
+            const label = i18n.t('view_persp');
+            perspectiveBtn.textContent = `${label}: P${State.perspectivePlayer + 1}`;
         }
 
         const friendlyBtn = document.getElementById('friendly-abilities-btn');
         if (friendlyBtn) {
             const label = i18n.t('friendly_abilities');
-            friendlyBtn.textContent = `${label}: ${State.showFriendlyAbilities ? 'ON' : 'OFF'}`;
+            const stateLabel = State.showFriendlyAbilities ? i18n.t('on') : i18n.t('off');
+            friendlyBtn.textContent = `${label}: ${stateLabel}`;
         }
 
         const langBtn = document.getElementById('lang-btn');

@@ -426,6 +426,9 @@ def generate_report(
             bytecode = ab.get("bytecode", [])
             lines.append(f"\n### Ability {i}")
             lines.append(f"- **Trigger**: `{trigger_id}`")
+            if ab.get("filters"):
+                lines.append("- **Normalized Filters**:")
+                lines.append(f"```json\n{json.dumps(ab.get('filters'), indent=2, ensure_ascii=False)}\n```")
             lines.append(f"- **Bytecode**: `{bytecode}`")
             lines.append("\n#### Decoded Bytecode")
             lines.append(f"```\n{decode_bytecode(bytecode)}\n```")

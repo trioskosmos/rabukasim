@@ -53,8 +53,9 @@ export const SettingsModal = {
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if (t[key]) {
-                if (key === 'friendly_abilities') {
-                    el.textContent = `${t[key]}: ${State.showFriendlyAbilities ? 'ON' : 'OFF'}`;
+                if (key === 'friendly_abilities' || key === 'live_watch') {
+                    const stateLabel = (key === 'friendly_abilities' ? State.showFriendlyAbilities : State.isLiveWatchOn) ? (t['on'] || 'ON') : (t['off'] || 'OFF');
+                    el.textContent = `${t[key]}: ${stateLabel}`;
                 } else {
                     el.textContent = t[key];
                 }
@@ -70,8 +71,10 @@ export const SettingsModal = {
     toggleDebugMode: async () => {
         const res = await Network.toggleDebugMode();
         if (res !== null) {
-            alert(`Debug Mode (Bytecode Logging): ${res ? 'ENABLED' : 'DISABLED'}`);
-            // Force status badge update if needed, but next fetchState will update it.
+            const label = i18n.t('debug_mode');
+            const subLabel = i18n.t('debug_bytecode_log');
+            const stateLabel = res ? i18n.t('enabled') : i18n.t('disabled');
+            alert(`${label} (${subLabel}): ${stateLabel}`);
         }
     }
 };

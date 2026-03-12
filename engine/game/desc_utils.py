@@ -33,7 +33,7 @@ def get_ability_summary(ab, lang="jp"):
         t_desc = t_map.get(trigger, "")
         prefix = f"【{t_desc}】" if t_desc else ""
     else:
-        t_map = {1: "OnPlay", 2: "LiveStart", 3: "Success", 4: "TurnStart", 5: "TurnEnd", 6: "Constant", 7: "Act"}
+        t_map = {1: "Play", 2: "LiveStart", 3: "Success", 4: "TurnStart", 5: "TurnEnd", 6: "Constant", 7: "Act"}
         t_desc = t_map.get(trigger, "")
         prefix = f"[{t_desc}]" if t_desc else ""
 

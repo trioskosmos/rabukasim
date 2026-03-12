@@ -66,6 +66,10 @@ pub fn handle_play_live_from_discard(
         }
 
         let choice = ctx.choice_index as i32;
+        if choice == CHOICE_DONE as i32 {
+            state.players[target_p_idx].looked_cards.clear();
+            return HandlerResult::Continue;
+        }
         let real_idx = if choice >= 0
             && (choice as usize) < state.players[target_p_idx].looked_cards.len()
         {
@@ -633,6 +637,10 @@ pub fn handle_recovery(
     }
 
     let choice = ctx.choice_index as i32;
+    if choice == CHOICE_DONE as i32 {
+        state.players[p_idx].looked_cards.clear();
+        return HandlerResult::Continue;
+    }
     let real_idx =
         if choice >= 0 && (choice as usize) < state.players[p_idx].looked_cards.len() {
             Some(choice as usize)

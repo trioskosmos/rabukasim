@@ -1,209 +1,24 @@
 import sys
-from enum import IntEnum
+from io import TextIOWrapper
 
-# --- Mappings (Extracted from engine_rust_src and engine/models) ---
+from engine.models.ability import format_filter_attr
+from engine.models.generated_metadata import CONDITIONS, COSTS, OPCODES
+from engine.models.generated_packer import unpack_s_standard
 
+OP = {name: int(value) for name, value in OPCODES.items()}
+OPCODE_NAMES = {int(value): name for name, value in OPCODES.items()}
 
-class Opcode(IntEnum):
-    NOP = 0
-    RETURN = 1
-    JUMP = 2
-    JUMP_IF_FALSE = 3
-    DRAW = 10
-    ADD_BLADES = 11
-    ADD_HEARTS = 12
-    REDUCE_COST = 13
-    LOOK_DECK = 14
-    RECOVER_LIVE = 15
-    BOOST_SCORE = 16
-    RECOVER_MEMBER = 17
-    BUFF_POWER = 18
-    IMMUNITY = 19
-    MOVE_MEMBER = 20
-    SWAP_CARDS = 21
-    SEARCH_DECK = 22
-    ENERGY_CHARGE = 23
-    SET_BLADES = 24
-    SET_HEARTS = 25
-    FORMATION_CHANGE = 26
-    NEGATE_EFFECT = 27
-    ORDER_DECK = 28
-    META_RULE = 29
-    SELECT_MODE = 30
-    MOVE_TO_DECK = 31
-    TAP_OPPONENT = 32
-    PLACE_UNDER = 33
-    FLAVOR_ACTION = 34
-    RESTRICTION = 35
-    BATON_TOUCH_MOD = 36
-    SET_SCORE = 37
-    SWAP_ZONE = 38
-    TRANSFORM_COLOR = 39
-    REVEAL_CARDS = 40
-    LOOK_AND_CHOOSE = 41
-    CHEER_REVEAL = 42
-    ACTIVATE_MEMBER = 43
-    ADD_TO_HAND = 44
-    COLOR_SELECT = 45
-    REPLACE_EFFECT = 46
-    TRIGGER_REMOTE = 47
-    REDUCE_HEART_REQ = 48
-    MODIFY_SCORE_RULE = 49
-    TAP_MEMBER = 53
-    PLAY_MEMBER_FROM_HAND = 57
-    MOVE_TO_DISCARD = 58
-    GRANT_ABILITY = 60
-    INCREASE_HEART_COST = 61
-    REDUCE_YELL_COUNT = 62
-    PLAY_MEMBER_FROM_DISCARD = 63
-    PAY_ENERGY = 64
-    SELECT_MEMBER = 65
-    DRAW_UNTIL = 66
-    SELECT_PLAYER = 67
-    SELECT_LIVE = 68
-    REVEAL_UNTIL = 69
-    INCREASE_COST = 70
-    PREVENT_PLAY_TO_SLOT = 71
-    SWAP_AREA = 72
-    TRANSFORM_HEART = 73
-    SELECT_CARDS = 74
-    OPPONENT_CHOOSE = 75
-    PLAY_LIVE_FROM_DISCARD = 76
-    REDUCE_LIVE_SET_LIMIT = 77
-    SET_TARGET_SELF = 78
-    SET_TARGET_OPPONENT = 79
-    PREVENT_ACTIVATE = 82
-    ACTIVATE_ENERGY = 81
-    PREVENT_SET_TO_SUCCESS_PILE = 80
-    PREVENT_BATON_TOUCH = 90
+for name, value in CONDITIONS.items():
+    OPCODE_NAMES.setdefault(int(value), f"CHECK_{name}")
 
-    # Condition Checks (Pre-defined for decoding)
-    CHECK_TURN_1 = 200
-    CHECK_HAS_MEMBER = 201
-    CHECK_HAS_COLOR = 202
-    CHECK_COUNT_STAGE = 203
-    CHECK_COUNT_HAND = 204
-    CHECK_COUNT_DISCARD = 205
-    CHECK_IS_CENTER = 206
-    CHECK_LIFE_LEAD = 207
-    CHECK_COUNT_GROUP = 208
-    CHECK_GROUP_FILTER = 209
-    CHECK_OPPONENT_HAS = 210
-    CHECK_SELF_IS_GROUP = 211
-    CHECK_MODAL_ANSWER = 212
-    CHECK_COUNT_ENERGY = 213
-    CHECK_HAS_LIVE_CARD = 214
-    CHECK_COST_CHECK = 215
-    CHECK_RARITY_CHECK = 216
-    CHECK_HAND_HAS_NO_LIVE = 217
-    CHECK_COUNT_SUCCESS_LIVE = 218
-    CHECK_OPPONENT_HAND_DIFF = 219
-    CHECK_SCORE_COMPARE = 220
-    CHECK_HAS_CHOICE = 221
-    CHECK_OPPONENT_CHOICE = 222
-    CHECK_COUNT_HEARTS = 223
-    CHECK_COUNT_BLADES = 224
-    CHECK_OPPONENT_ENERGY_DIFF = 225
-    CHECK_HAS_KEYWORD = 226
-    CHECK_DECK_REFRESHED = 227
-    CHECK_HAS_MOVED = 228
-    CHECK_HAND_INCREASED = 229
-    CHECK_COUNT_LIVE_ZONE = 230
-    CHECK_BATON = 231
-    CHECK_TYPE_CHECK = 232
-    CHECK_IS_IN_DISCARD = 233
-    CHECK_AREA_CHECK = 234
-    # BP05+ Opcodes
-    CHECK_COUNT_ENERGY_EXACT = 301
-    CHECK_COUNT_BLADE_HEART_TYPES = 302
-    CHECK_OPPONENT_HAS_EXCESS_HEART = 303
-    CHECK_SCORE_TOTAL_CHECK = 304
-    CHECK_MAIN_PHASE = 305
-    CHECK_SELECT_MEMBER = 306
-    CHECK_SUCCESS_PILE_COUNT = 307
-    CHECK_IS_SELF_MOVE = 308
-    CHECK_DISCARDED_CARDS = 309
-    CHECK_YELL_REVEALED_UNIQUE_COLORS = 310
-    CHECK_SYNC_COST = 311
-    CHECK_SUM_VALUE = 312
-    CHECK_IS_WAIT = 313
-
-
-class TriggerType(IntEnum):
-    NONE = 0
-    ON_PLAY = 1
-    ON_LIVE_START = 2
-    ON_LIVE_SUCCESS = 3
-    TURN_START = 4
-    TURN_END = 5
-    CONSTANT = 6
-    ACTIVATED = 7
-    ON_LEAVES = 8
-    ON_REVEAL = 9
-    ON_POSITION_CHANGE = 10
+for name, value in COSTS.items():
+    OPCODE_NAMES.setdefault(int(value), f"COST_{name}")
 
 
 def decode_filter(f):
     if f == 0:
-        return "None"
-    parts = []
-
-    # Optional flags
-    if f & 0x02:
-        parts.append("Optional(0x02)")
-
-    # Type Filter (Bits 2-3)
-    type_f = (f >> 2) & 0x03
-    if type_f == 1:
-        parts.append("Type:Member")
-    elif type_f == 2:
-        parts.append("Type:Live")
-
-    # Group Filter (Bit 4 = enabled, Bits 5-11 = ID)
-    if f & 0x10:
-        group_id = (f >> 5) & 0x7F
-        parts.append(f"Group:{group_id}")
-
-    # Is Tapped (Bit 12)
-    if f & 0x1000:
-        parts.append("Is:Tapped")
-
-    # Has Blade/Heart (Bit 13)
-    if f & 0x2000:
-        parts.append("Has:Blade/Heart")
-
-    # Not Has Blade/Heart (Bit 14)
-    if f & 0x4000:
-        parts.append("NotHas:Blade/Heart")
-
-    # Unique Names (Bit 15)
-    if f & 0x8000:
-        parts.append("Unique_Names")
-
-    # Unit Filter (Bit 16 = enabled, Bits 17-23 = ID)
-    if f & 0x10000:
-        unit_id = (f >> 17) & 0x7F
-        parts.append(f"Unit:{unit_id}")
-
-    # Cost Filter (Bit 24 = enabled, Bits 25-29 = Val, Bit 30 = LE, Bit 31 = ALL)
-    if f & 0x01000000:
-        threshold = (f >> 25) & 0x1F
-        is_le = (f & 0x40000000) != 0
-        op = "<=" if is_le else ">="
-        parts.append(f"Cost/Hearts {op} {threshold}")
-
-    # ALL flag
-    if f & 0x80000000:
-        parts.append("ALL")
-
-    # Color Shift (Bit 46)
-    if f & (0x7F << 46):
-        color_val = (f >> 46) & 0x7F
-        parts.append(f"ColorMask:{color_val:07b}")
-
-    if not parts:
-        return f"Unknown({f})"
-    return " | ".join(parts)
+        return "none"
+    return format_filter_attr(f)
 
 
 # --- Legends (For human-readable decoding) ---
@@ -239,6 +54,70 @@ COMPARISONS = {
     4: "LE (<=)",
 }
 
+AREA_NAMES = {
+    0: "any",
+    1: "left",
+    2: "center",
+    3: "right",
+}
+
+
+def _slot_name(slot_id):
+    return SLOTS.get(slot_id, f"Slot_{slot_id}")
+
+
+def _zone_name(zone_id):
+    return ZONES.get(zone_id, f"Zone_{zone_id}")
+
+
+def decode_standard_slot(raw_slot):
+    if raw_slot == 0:
+        return "none"
+
+    slot = unpack_s_standard(raw_slot & 0xFFFFFFFF)
+    parts = []
+
+    if slot["target_slot"]:
+        parts.append(f"target={_slot_name(slot['target_slot'])}")
+    if slot["remainder_zone"]:
+        parts.append(f"remainder={_zone_name(slot['remainder_zone'])}")
+    if slot["source_zone"]:
+        parts.append(f"source={_zone_name(slot['source_zone'])}")
+    if slot["dest_zone"]:
+        parts.append(f"dest={_zone_name(slot['dest_zone'])}")
+    if slot["is_opponent"]:
+        parts.append("opponent")
+    if slot["is_reveal_until_live"]:
+        parts.append("reveal_until_live")
+    if slot["is_empty_slot"]:
+        parts.append("empty_slot")
+    if slot["is_wait"]:
+        parts.append("wait")
+    if slot["is_dynamic"]:
+        parts.append("dynamic")
+    if slot["area_idx"]:
+        parts.append(f"area={AREA_NAMES.get(slot['area_idx'], slot['area_idx'])}")
+    if slot["is_baton_slot"]:
+        parts.append("baton_slot")
+
+    parts.append(f"raw={raw_slot}")
+    return ", ".join(parts)
+
+
+def decode_condition_slot(raw_slot):
+    comp_val = (raw_slot >> 4) & 0x0F
+    base_slot = raw_slot & 0x0F
+    area_val = (raw_slot >> 29) & 0x07
+
+    parts = [
+        f"compare={COMPARISONS.get(comp_val, f'C_{comp_val}')}",
+        f"slot={_slot_name(base_slot)}",
+    ]
+    if area_val:
+        parts.append(f"area={AREA_NAMES.get(area_val, area_val)}")
+    parts.append(f"raw={raw_slot}")
+    return ", ".join(parts)
+
 
 def get_legend_str():
     lines = ["\n--- BYTECODE LEGEND ---"]
@@ -257,78 +136,54 @@ def decode_chunk(chunk):
         is_negated = True
         base_op = op - 1000
 
-    try:
-        op_name = Opcode(base_op).name
-    except ValueError:
-        op_name = f"OP_{base_op}"
+    op_name = OPCODE_NAMES.get(base_op, f"OP_{base_op}")
 
     if is_negated:
         op_name = f"NOT {op_name}"
 
-    # Standard fallback
-    params = f"v={v}, a={a}, s={s}"
+    params = f"value={v}, attr={a}, slot={s}"
 
-    if base_op == Opcode.LOOK_AND_CHOOSE:
-        # v = look_count | pick_count<<8, a = filter/source, s = target/remainder
-        src_val = (a >> 12) & 0x0F
-        src_zone_id = src_val if src_val != 0 else 8
-        src_zone = ZONES.get(src_zone_id, f"Zone_{src_zone_id}")
-        target_id = s & 0xFF
-        target = SLOTS.get(target_id, f"Slot_{target_id}")
-        params = f"v(Reveal):{v & 0xFF}, v(Pick):{(v >> 8) & 0xFF}, a(Filter):[{decode_filter(a)}], a(Source):{src_zone}, s(Target):{target}"
-    elif base_op == Opcode.BUFF_POWER:
-        params = f"v(Value):{v}, a(Attr):{a}, s(Slot):{SLOTS.get(s, s)}"
-    elif base_op == Opcode.RECOVER_MEMBER or base_op == Opcode.RECOVER_LIVE:
-        src_val = (s >> 16) & 0xFF
-        src_zone_id = src_val if src_val != 0 else 7  # Default recovery to discard
-        params = f"v(Count):{v}, a(Filter):[{decode_filter(a)}], s(Source):{ZONES.get(src_zone_id, src_zone_id)}, s(Dest):{SLOTS.get(s & 0xFF, s & 0xFF)}"
+    if base_op == OP["LOOK_AND_CHOOSE"]:
+        params = (
+            f"look={v & 0xFF}, pick={(v >> 8) & 0xFF}, "
+            f"filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s)}]"
+        )
+    elif base_op == OP["BUFF_POWER"]:
+        params = f"value={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s)}]"
+    elif base_op == OP["RECOVER_MEMBER"] or base_op == OP["RECOVER_LIVE"]:
+        params = f"count={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s)}]"
     elif (
-        base_op == Opcode.DRAW
-        or base_op == Opcode.MOVE_TO_DISCARD
-        or base_op == Opcode.ADD_HEARTS
-        or base_op == Opcode.ADD_BLADES
+        base_op == OP["DRAW"]
+        or base_op == OP["MOVE_TO_DISCARD"]
+        or base_op == OP["ADD_HEARTS"]
+        or base_op == OP["ADD_BLADES"]
     ):
-        src_val = (s >> 16) & 0xFF
-        if base_op == Opcode.MOVE_TO_DISCARD and src_val != 0:
-            params = f"v(Count):{v}, a(Filter):[{decode_filter(a)}], s(Source):{ZONES.get(src_val, src_val)}, s(Target):{SLOTS.get(s & 0xFF, s & 0xFF)}"
-        else:
-            area_val = (s >> 28) & 0x07
-            area_name = {1: "LEFT", 2: "CENTER", 3: "RIGHT"}.get(area_val, "None")
-            params = f"v(Count):{v}, a(Attr/Source):{a}, s(Area):{area_name}, s(Slot/Target):{SLOTS.get(s & 0xFF, s & 0xFF)} (Raw:{s})"
-    elif base_op == Opcode.PAY_ENERGY:
-        params = f"v(Cost):{v}, a(Optional):{a}, s(Type):{s}"
-    elif base_op == Opcode.SELECT_MEMBER:
-        area_val = (s >> 28) & 0x07
-        area_name = {1: "LEFT", 2: "CENTER", 3: "RIGHT"}.get(area_val, "None")
-        params = f"v(Unused):{v}, a(Filter):[{decode_filter(a)}], s(Area):{area_name}, s(Target_Slot):{SLOTS.get(s & 0xFF, s & 0xFF)} (Raw:{s})"
-    elif base_op == Opcode.GRANT_ABILITY:
-        params = f"v(Unused):{v}, a(Source_CID):{a}, s(Target_Slot):{SLOTS.get(s, s)}"
-    elif base_op == Opcode.MOVE_MEMBER:
-        params = f"v(From):{SLOTS.get(v, v)}, a(To):{SLOTS.get(a, a)}, s(Unused):{s}"
+        params = f"count={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s)}]"
+    elif base_op == OP["PAY_ENERGY"]:
+        params = f"cost={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s)}]"
+    elif base_op == OP["SELECT_MEMBER"]:
+        params = f"value={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s)}]"
+    elif base_op == OP["GRANT_ABILITY"]:
+        params = f"granted_index={v}, source_card={a}, slot=[{decode_standard_slot(s)}]"
+    elif base_op == OP["MOVE_MEMBER"]:
+        params = f"from={_slot_name(v)}, to={_slot_name(a)}, raw_slot={s}"
+    elif base_op in (OP["JUMP"], OP["JUMP_IF_FALSE"]):
+        params = f"offset={v}"
+    elif base_op == OP["RETURN"]:
+        params = "done"
     elif base_op >= 100 and base_op < 200:
-        params = f"v={v}, a={a}, s={s}"  # Target setters
+        params = f"value={v}, attr={a}, slot={s}"
     elif base_op >= 200 and base_op < 300:
-        # Comparison logic for conditions (Legacy 4-width like, but in 5-width array)
-        comp_val = (s >> 4) & 0x0F
-        slot = s & 0x0F
-        comp_map = COMPARISONS
-        comp = comp_map.get(comp_val, f"C_{comp_val}")
-        params = f"v(Val):{v}, a(Attr):{a}, s(Comp):{comp}, s(Slot):{SLOTS.get(slot, slot)}"
+        params = f"value={v}, filter=[{decode_filter(a)}], slot=[{decode_condition_slot(s)}]"
     elif base_op >= 300 and base_op < 400:
-        # New 5-width condition packing (BP05+)
-        # [op, val, attr_low, attr_high, packed_slot]
-        val_val = v
-        attr = a  # This is already (a_high << 32) | a_low
-        packed_slot = s
-
-        comp_val = (packed_slot >> 4) & 0x0F
-        comp = COMPARISONS.get(comp_val, f"C_{comp_val}")
-
-        area_val = (packed_slot >> 28) & 0x07
-        area_map = {1: "LEFT", 2: "CENTER", 3: "RIGHT"}
-        area_name = area_map.get(area_val, f"None({area_val})")
-
-        params = f"v(Val):{val_val}, a(Filter):[{decode_filter(attr)}], s(Comp):{comp}, s(Area):{area_name}, s(Raw_Slot):{packed_slot}"
+        params = f"value={v}, filter=[{decode_filter(a)}], slot=[{decode_condition_slot(s)}]"
+    else:
+        parts = [f"value={v}"]
+        if a:
+            parts.append(f"filter=[{decode_filter(a)}]")
+        if s:
+            parts.append(f"slot=[{decode_standard_slot(s)}]")
+        params = ", ".join(parts)
 
     return f"{op_name:<20} | {params}"
 
@@ -352,9 +207,7 @@ def decode_bytecode(bytecode):
 if __name__ == "__main__":
     # Standardized UTF-8 Handling
     if sys.stdout.encoding.lower() != "utf-8":
-        import io
-
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+        sys.stdout = TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
     if len(sys.argv) < 2:
         print('Usage: python bytecode_decoder.py "[41, 3, 385876097, 0, 1, 0, 0, 0]"')

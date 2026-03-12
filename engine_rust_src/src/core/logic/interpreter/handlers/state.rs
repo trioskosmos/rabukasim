@@ -821,7 +821,6 @@ pub fn handle_member_state(
                         return HandlerResult::Suspend;
                     }
                 }
-
                 let idx = ctx.choice_index as usize;
                 let cards_len = state.players[target_p_idx].looked_cards.len();
 
