@@ -48,9 +48,6 @@ After syncing, verify that everything still compiles and tests pass:
 cd engine_rust_src
 cargo check
 
-# Verify Python Compiler/Models
-uv run pytest
-
 # Verify Frontend
 # Open index.html and ensure ability text is still rendered correctly.
 ```

@@ -150,7 +150,7 @@ fn run_diagnostic_turn(
     DFS_ITERATION_COUNT.store(0, Ordering::Relaxed);
     let search_start = Instant::now();
 
-    let (_evals, best_seq, total_nodes, breakdown) =
+    let (best_seq, _best_val, breakdown, total_nodes) =
         TurnSequencer::plan_full_turn(state, db);
 
     let elapsed_ms = search_start.elapsed().as_millis();

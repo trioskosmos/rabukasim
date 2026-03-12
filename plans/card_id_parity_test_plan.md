@@ -117,11 +117,8 @@ def compile_cards_to_mapping(cards_path: str) -> dict[str, int]:
 ### テストの実行方法
 
 ```bash
-# pytestで実行
-pytest tests/test_card_id_parity.py -v
-
-# または直接実行
-python tests/test_card_id_parity.py
+# Rust テストで実行
+cargo test --manifest-path engine_rust_src/Cargo.toml card_id_parity -- --nocapture
 ```
 
 ## 期待される結果

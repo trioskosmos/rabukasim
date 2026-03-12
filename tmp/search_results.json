@@ -1,0 +1,841 @@
+{
+  "10": {
+    "card_id": 10,
+    "card_no": "LL-bp2-001-R＋",
+    "name": "渡辺 曜&鬼塚夏美&大沢瑠璃乃",
+    "cost": 20,
+    "hearts": [
+      2,
+      0,
+      2,
+      2,
+      0,
+      0,
+      0
+    ],
+    "blade_hearts": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "blades": 6,
+    "groups": [
+      1,
+      3,
+      4
+    ],
+    "units": [],
+    "abilities": [
+      {
+        "raw_text": "TRIGGER: CONSTANT\nEFFECT: REDUCE_COST(1) {PER_CARD=\"HAND\", FILTER=\"NOT_SELF\"} -> SELF",
+        "trigger": 6,
+        "conditions": [],
+        "costs": [],
+        "modal_options": [],
+        "is_once_per_turn": false,
+        "bytecode": [
+          13,
+          1,
+          1,
+          318767104,
+          268487680,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "card_no": "LL-bp2-001-R＋",
+        "requires_selection": false,
+        "choice_flags": 0,
+        "choice_count": 0,
+        "option_names": []
+      },
+      {
+        "raw_text": "TRIGGER: CONSTANT\nEFFECT: PREVENT_BATON_TOUCH(SELF)",
+        "trigger": 6,
+        "conditions": [],
+        "costs": [],
+        "modal_options": [],
+        "is_once_per_turn": false,
+        "bytecode": [
+          90,
+          1,
+          0,
+          0,
+          4,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "card_no": "LL-bp2-001-R＋",
+        "requires_selection": false,
+        "choice_flags": 0,
+        "choice_count": 0,
+        "option_names": []
+      },
+      {
+        "raw_text": "TRIGGER: ON_LIVE_START\nCOST: SELECT_HAND(VARIABLE) {FILTER=\"NAME_IN=['渡辺 曜', '鬼塚 夏美', '大沢 瑠璃乃']\"} (Optional) -> DISCARD_COUNT\nEFFECT: CONDITION: VALUE_GT(DISCARD_COUNT, 0); ADD_BLADES(1, PER_CARD=DISCARD_COUNT) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
+        "trigger": 2,
+        "conditions": [],
+        "costs": [],
+        "modal_options": [],
+        "is_once_per_turn": false,
+        "bytecode": [
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          48,
+          11,
+          1,
+          1,
+          268435456,
+          268487424,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "card_no": "LL-bp2-001-R＋",
+        "requires_selection": false,
+        "choice_flags": 0,
+        "choice_count": 0,
+        "option_names": []
+      }
+    ],
+    "img_path": "cards_webp/LL-bp2-001-R2.webp",
+    "rare": "R+",
+    "ability_text": "TRIGGER: CONSTANT\nEFFECT: REDUCE_COST(1) {PER_CARD=\"HAND\", FILTER=\"NOT_SELF\"} -> SELF\n\nTRIGGER: CONSTANT\nEFFECT: PREVENT_BATON_TOUCH(SELF)\n\nTRIGGER: ON_LIVE_START\nCOST: SELECT_HAND(VARIABLE) {FILTER=\"NAME_IN=['渡辺 曜', '鬼塚 夏美', '大沢 瑠璃乃']\"} (Optional) -> DISCARD_COUNT\nEFFECT: CONDITION: VALUE_GT(DISCARD_COUNT, 0); ADD_BLADES(1, PER_CARD=DISCARD_COUNT) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
+    "original_text": "{{jyouji.png|常時}}手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる。\n{{jyouji.png|常時}}このメンバーはバトンタッチで控え室に置けない。\n{{live_start.png|ライブ開始時}}手札の「渡辺曜」と「鬼塚夏美」と「大沢瑠璃乃」を、好きな枚数控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いた枚数1枚につき、{{icon_blade.png|ブレード}}を得る。\n（手札のこのカードもこの効果で控え室に置ける。）",
+    "original_text_en": "[Continuous] The Cost of this member card in your hand is reduced by 1 for each other card in your hand.\n[Continuous] This member cannot be put into the waiting room by Baton Touch.\n[Live Start] You may put any number of 'You Watanabe', 'Natsumi Onitsuka', and 'Rurino Osawa' cards from your hand into the waiting room: This member gets +1 Blade for each card put into the waiting room by this effect until the end of the live phase.\n(This card in your hand can also be put into the waiting room by this effect.)",
+    "volume_icons": 0,
+    "draw_icons": 0,
+    "semantic_flags": 16,
+    "ability_flags": 73,
+    "synergy_flags": 0,
+    "cost_flags": 0
+  },
+  "188": {
+    "card_id": 188,
+    "card_no": "PL!HS-bp2-001-P",
+    "name": "日野下花帆",
+    "cost": 13,
+    "hearts": [
+      1,
+      0,
+      0,
+      3,
+      1,
+      0,
+      0
+    ],
+    "blade_hearts": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "blades": 4,
+    "groups": [
+      4
+    ],
+    "units": [
+      13
+    ],
+    "abilities": [
+      {
+        "raw_text": "TRIGGER: ACTIVATED (Once per turn)\nCOST: PAY_ENERGY(2) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_LIVE(1) {FILTER=\"GROUP_ID=4, SCORE_LE=3\"} -> CARD_HAND",
+        "trigger": 7,
+        "conditions": [],
+        "costs": [
+          {
+            "type": 1,
+            "value": 2,
+            "params": {
+              "destination": "success"
+            },
+            "is_optional": false
+          }
+        ],
+        "modal_options": [],
+        "is_once_per_turn": true,
+        "bytecode": [
+          312,
+          0,
+          0,
+          0,
+          48,
+          15,
+          1,
+          144,
+          14680064,
+          458758,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "card_no": "PL!HS-bp2-001-P",
+        "requires_selection": false,
+        "choice_flags": 0,
+        "choice_count": 0,
+        "option_names": []
+      }
+    ],
+    "img_path": "cards_webp/PL!HS-bp2-001-P.webp",
+    "rare": "P",
+    "ability_text": "TRIGGER: ACTIVATED (Once per turn)\nCOST: PAY_ENERGY(2) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_LIVE(1) {FILTER=\"GROUP_ID=4, SCORE_LE=3\"} -> CARD_HAND",
+    "original_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室からスコア3以下の『蓮ノ空』のライブカードを1枚手札に加える。",
+    "original_text_en": "[Activate] [Once per Turn] (E)(E): Add 1 'Hasunosora' Live card with score 3 or less from your waiting room to your hand.",
+    "volume_icons": 0,
+    "draw_icons": 0,
+    "semantic_flags": 10,
+    "ability_flags": 5,
+    "synergy_flags": 0,
+    "cost_flags": 0
+  },
+  "4284": {
+    "card_id": 4284,
+    "card_no": "PL!HS-bp2-001-R",
+    "name": "日野下花帆",
+    "cost": 13,
+    "hearts": [
+      1,
+      0,
+      0,
+      3,
+      1,
+      0,
+      0
+    ],
+    "blade_hearts": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "blades": 4,
+    "groups": [
+      4
+    ],
+    "units": [
+      13
+    ],
+    "abilities": [
+      {
+        "raw_text": "TRIGGER: ACTIVATED (Once per turn)\nCOST: PAY_ENERGY(2) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_LIVE(1) {FILTER=\"GROUP_ID=4, SCORE_LE=3\"} -> CARD_HAND",
+        "trigger": 7,
+        "conditions": [],
+        "costs": [
+          {
+            "type": 1,
+            "value": 2,
+            "params": {
+              "destination": "success"
+            },
+            "is_optional": false
+          }
+        ],
+        "modal_options": [],
+        "is_once_per_turn": true,
+        "bytecode": [
+          312,
+          0,
+          0,
+          0,
+          48,
+          15,
+          1,
+          144,
+          14680064,
+          458758,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "card_no": "PL!HS-bp2-001-R",
+        "requires_selection": false,
+        "choice_flags": 0,
+        "choice_count": 0,
+        "option_names": []
+      }
+    ],
+    "img_path": "cards_webp/PL!HS-bp2-001-P.webp",
+    "rare": "P",
+    "ability_text": "TRIGGER: ACTIVATED (Once per turn)\nCOST: PAY_ENERGY(2) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_LIVE(1) {FILTER=\"GROUP_ID=4, SCORE_LE=3\"} -> CARD_HAND",
+    "original_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室からスコア3以下の『蓮ノ空』のライブカードを1枚手札に加える。",
+    "original_text_en": "[Activate] [Once per Turn] (E)(E): Add 1 'Hasunosora' Live card with score 3 or less from your waiting room to your hand.",
+    "volume_icons": 0,
+    "draw_icons": 0,
+    "semantic_flags": 10,
+    "ability_flags": 5,
+    "synergy_flags": 0,
+    "cost_flags": 0
+  },
+  "415": {
+    "card_id": 415,
+    "card_no": "PL!S-bp2-001-P",
+    "name": "高海千歌",
+    "cost": 9,
+    "hearts": [
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0
+    ],
+    "blade_hearts": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "blades": 4,
+    "groups": [
+      1
+    ],
+    "units": [
+      3
+    ],
+    "abilities": [
+      {
+        "raw_text": "TRIGGER: CONSTANT\nCONDITION: COUNT_SUCCESS_LIVE(PLAYER) == 0, COUNT_SUCCESS_LIVE(OPPONENT) >= 1\nEFFECT: ADD_BLADES(3) -> SELF",
+        "trigger": 6,
+        "conditions": [
+          {
+            "type": 218,
+            "params": {
+              "val": "= 0",
+              "comparison": "EQ",
+              "raw_cond": "COUNT_SUCCESS_LIVE",
+              "target": "self"
+            },
+            "is_negated": false,
+            "value": 0,
+            "attr": 0
+          },
+          {
+            "type": 218,
+            "params": {
+              "val": "1",
+              "comparison": "GE",
+              "raw_cond": "COUNT_SUCCESS_LIVE",
+              "target": "opponent"
+            },
+            "is_negated": false,
+            "value": 1,
+            "attr": 0
+          }
+        ],
+        "costs": [],
+        "modal_options": [],
+        "is_once_per_turn": false,
+        "bytecode": [
+          218,
+          0,
+          0,
+          0,
+          0,
+          218,
+          1,
+          0,
+          0,
+          48,
+          11,
+          3,
+          0,
+          0,
+          4,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "card_no": "PL!S-bp2-001-P",
+        "requires_selection": false,
+        "choice_flags": 0,
+        "choice_count": 0,
+        "option_names": []
+      }
+    ],
+    "img_path": "cards_webp/PL!S-bp2-001-P.webp",
+    "rare": "P",
+    "ability_text": "TRIGGER: CONSTANT\nCONDITION: COUNT_SUCCESS_LIVE(PLAYER) == 0, COUNT_SUCCESS_LIVE(OPPONENT) >= 1\nEFFECT: ADD_BLADES(3) -> SELF",
+    "original_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場のカードが0枚で、かつ相手の成功ライブカード置き場にカードが1枚以上ある場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+    "original_text_en": "[Always] If you have 0 cards in your score pile and your opponent has 1 or more cards in their score pile, you gain (Blade)(Blade)(Blade).",
+    "volume_icons": 0,
+    "draw_icons": 0,
+    "semantic_flags": 0,
+    "ability_flags": 9,
+    "synergy_flags": 0,
+    "cost_flags": 0
+  },
+  "4511": {
+    "card_id": 4511,
+    "card_no": "PL!S-bp2-001-R",
+    "name": "高海千歌",
+    "cost": 9,
+    "hearts": [
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0
+    ],
+    "blade_hearts": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "blades": 4,
+    "groups": [
+      1
+    ],
+    "units": [
+      3
+    ],
+    "abilities": [
+      {
+        "raw_text": "TRIGGER: CONSTANT\nCONDITION: COUNT_SUCCESS_LIVE(PLAYER) == 0, COUNT_SUCCESS_LIVE(OPPONENT) >= 1\nEFFECT: ADD_BLADES(3) -> SELF",
+        "trigger": 6,
+        "conditions": [
+          {
+            "type": 218,
+            "params": {
+              "val": "= 0",
+              "comparison": "EQ",
+              "raw_cond": "COUNT_SUCCESS_LIVE",
+              "target": "self"
+            },
+            "is_negated": false,
+            "value": 0,
+            "attr": 0
+          },
+          {
+            "type": 218,
+            "params": {
+              "val": "1",
+              "comparison": "GE",
+              "raw_cond": "COUNT_SUCCESS_LIVE",
+              "target": "opponent"
+            },
+            "is_negated": false,
+            "value": 1,
+            "attr": 0
+          }
+        ],
+        "costs": [],
+        "modal_options": [],
+        "is_once_per_turn": false,
+        "bytecode": [
+          218,
+          0,
+          0,
+          0,
+          0,
+          218,
+          1,
+          0,
+          0,
+          48,
+          11,
+          3,
+          0,
+          0,
+          4,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "card_no": "PL!S-bp2-001-R",
+        "requires_selection": false,
+        "choice_flags": 0,
+        "choice_count": 0,
+        "option_names": []
+      }
+    ],
+    "img_path": "cards_webp/PL!S-bp2-001-P.webp",
+    "rare": "P",
+    "ability_text": "TRIGGER: CONSTANT\nCONDITION: COUNT_SUCCESS_LIVE(PLAYER) == 0, COUNT_SUCCESS_LIVE(OPPONENT) >= 1\nEFFECT: ADD_BLADES(3) -> SELF",
+    "original_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場のカードが0枚で、かつ相手の成功ライブカード置き場にカードが1枚以上ある場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+    "original_text_en": "[Always] If you have 0 cards in your score pile and your opponent has 1 or more cards in their score pile, you gain (Blade)(Blade)(Blade).",
+    "volume_icons": 0,
+    "draw_icons": 0,
+    "semantic_flags": 0,
+    "ability_flags": 9,
+    "synergy_flags": 0,
+    "cost_flags": 0
+  },
+  "527": {
+    "card_id": 527,
+    "card_no": "PL!SP-bp2-001-P",
+    "name": "澁谷かのん",
+    "cost": 13,
+    "hearts": [
+      0,
+      2,
+      2,
+      0,
+      0,
+      2,
+      0
+    ],
+    "blade_hearts": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "blades": 3,
+    "groups": [
+      3
+    ],
+    "units": [
+      10
+    ],
+    "abilities": [
+      {
+        "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MEMBER(1) {FILTER=\"GROUP_ID=3\"} (Optional) -> TARGET; NEGATE_EFFECT(TARGET, TRIGGER=\"ON_LIVE_START\") -> SUCCESS\nCONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_MEMBER(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=3\"} -> CARD_HAND",
+        "trigger": 1,
+        "conditions": [],
+        "costs": [],
+        "modal_options": [],
+        "is_once_per_turn": false,
+        "bytecode": [
+          65,
+          1,
+          113,
+          536870912,
+          65540,
+          27,
+          0,
+          0,
+          0,
+          4,
+          312,
+          0,
+          0,
+          0,
+          48,
+          0,
+          1,
+          112,
+          14680064,
+          48,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "card_no": "PL!SP-bp2-001-P",
+        "requires_selection": false,
+        "choice_flags": 0,
+        "choice_count": 0,
+        "option_names": []
+      }
+    ],
+    "img_path": "cards_webp/PL!SP-bp2-001-P.webp",
+    "rare": "P",
+    "ability_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MEMBER(1) {FILTER=\"GROUP_ID=3\"} (Optional) -> TARGET; NEGATE_EFFECT(TARGET, TRIGGER=\"ON_LIVE_START\") -> SUCCESS; CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_MEMBER(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=3\"} -> CARD_HAND",
+    "original_text": "{{toujyou.png|登場}}自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい。これにより無効にした場合、自分の控え室から『Liella!』のカードを1枚手札に加える。",
+    "original_text_en": "[On Play] You may negate all [Live Start] abilities of 1 'Liella!' member on your stage until the end of the live phase. If you do, add 1 'Liella!' card from your waiting room to your hand.",
+    "volume_icons": 0,
+    "draw_icons": 0,
+    "semantic_flags": 17,
+    "ability_flags": 1,
+    "synergy_flags": 0,
+    "cost_flags": 0
+  },
+  "4623": {
+    "card_id": 4623,
+    "card_no": "PL!SP-bp2-001-R＋",
+    "name": "澁谷かのん",
+    "cost": 13,
+    "hearts": [
+      0,
+      2,
+      2,
+      0,
+      0,
+      2,
+      0
+    ],
+    "blade_hearts": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "blades": 3,
+    "groups": [
+      3
+    ],
+    "units": [
+      10
+    ],
+    "abilities": [
+      {
+        "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MEMBER(1) {FILTER=\"GROUP_ID=3\"} (Optional) -> TARGET; NEGATE_EFFECT(TARGET, TRIGGER=\"ON_LIVE_START\") -> SUCCESS\nCONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_MEMBER(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=3\"} -> CARD_HAND",
+        "trigger": 1,
+        "conditions": [],
+        "costs": [],
+        "modal_options": [],
+        "is_once_per_turn": false,
+        "bytecode": [
+          65,
+          1,
+          113,
+          536870912,
+          65540,
+          27,
+          0,
+          0,
+          0,
+          4,
+          312,
+          0,
+          0,
+          0,
+          48,
+          0,
+          1,
+          112,
+          14680064,
+          48,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "card_no": "PL!SP-bp2-001-R＋",
+        "requires_selection": false,
+        "choice_flags": 0,
+        "choice_count": 0,
+        "option_names": []
+      }
+    ],
+    "img_path": "cards_webp/PL!SP-bp2-001-P.webp",
+    "rare": "P",
+    "ability_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MEMBER(1) {FILTER=\"GROUP_ID=3\"} (Optional) -> TARGET; NEGATE_EFFECT(TARGET, TRIGGER=\"ON_LIVE_START\") -> SUCCESS; CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_MEMBER(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=3\"} -> CARD_HAND",
+    "original_text": "{{toujyou.png|登場}}自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい。これにより無効にした場合、自分の控え室から『Liella!』のカードを1枚手札に加える。",
+    "original_text_en": "[On Play] You may negate all [Live Start] abilities of 1 'Liella!' member on your stage until the end of the live phase. If you do, add 1 'Liella!' card from your waiting room to your hand.",
+    "volume_icons": 0,
+    "draw_icons": 0,
+    "semantic_flags": 17,
+    "ability_flags": 1,
+    "synergy_flags": 0,
+    "cost_flags": 0
+  },
+  "8719": {
+    "card_id": 8719,
+    "card_no": "PL!SP-bp2-001-P＋",
+    "name": "澁谷かのん",
+    "cost": 13,
+    "hearts": [
+      0,
+      2,
+      2,
+      0,
+      0,
+      2,
+      0
+    ],
+    "blade_hearts": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "blades": 3,
+    "groups": [
+      3
+    ],
+    "units": [
+      10
+    ],
+    "abilities": [
+      {
+        "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MEMBER(1) {FILTER=\"GROUP_ID=3\"} (Optional) -> TARGET; NEGATE_EFFECT(TARGET, TRIGGER=\"ON_LIVE_START\") -> SUCCESS\nCONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_MEMBER(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=3\"} -> CARD_HAND",
+        "trigger": 1,
+        "conditions": [],
+        "costs": [],
+        "modal_options": [],
+        "is_once_per_turn": false,
+        "bytecode": [
+          65,
+          1,
+          113,
+          536870912,
+          65540,
+          27,
+          0,
+          0,
+          0,
+          4,
+          312,
+          0,
+          0,
+          0,
+          48,
+          0,
+          1,
+          112,
+          14680064,
+          48,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "card_no": "PL!SP-bp2-001-P＋",
+        "requires_selection": false,
+        "choice_flags": 0,
+        "choice_count": 0,
+        "option_names": []
+      }
+    ],
+    "img_path": "cards_webp/PL!SP-bp2-001-P.webp",
+    "rare": "P",
+    "ability_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MEMBER(1) {FILTER=\"GROUP_ID=3\"} (Optional) -> TARGET; NEGATE_EFFECT(TARGET, TRIGGER=\"ON_LIVE_START\") -> SUCCESS; CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_MEMBER(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=3\"} -> CARD_HAND",
+    "original_text": "{{toujyou.png|登場}}自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい。これにより無効にした場合、自分の控え室から『Liella!』のカードを1枚手札に加える。",
+    "original_text_en": "[On Play] You may negate all [Live Start] abilities of 1 'Liella!' member on your stage until the end of the live phase. If you do, add 1 'Liella!' card from your waiting room to your hand.",
+    "volume_icons": 0,
+    "draw_icons": 0,
+    "semantic_flags": 17,
+    "ability_flags": 1,
+    "synergy_flags": 0,
+    "cost_flags": 0
+  },
+  "12815": {
+    "card_id": 12815,
+    "card_no": "PL!SP-bp2-001-SEC",
+    "name": "澁谷かのん",
+    "cost": 13,
+    "hearts": [
+      0,
+      2,
+      2,
+      0,
+      0,
+      2,
+      0
+    ],
+    "blade_hearts": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "blades": 3,
+    "groups": [
+      3
+    ],
+    "units": [
+      10
+    ],
+    "abilities": [
+      {
+        "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MEMBER(1) {FILTER=\"GROUP_ID=3\"} (Optional) -> TARGET; NEGATE_EFFECT(TARGET, TRIGGER=\"ON_LIVE_START\") -> SUCCESS\nCONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_MEMBER(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=3\"} -> CARD_HAND",
+        "trigger": 1,
+        "conditions": [],
+        "costs": [],
+        "modal_options": [],
+        "is_once_per_turn": false,
+        "bytecode": [
+          65,
+          1,
+          113,
+          536870912,
+          65540,
+          27,
+          0,
+          0,
+          0,
+          4,
+          312,
+          0,
+          0,
+          0,
+          48,
+          0,
+          1,
+          112,
+          14680064,
+          48,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "card_no": "PL!SP-bp2-001-SEC",
+        "requires_selection": false,
+        "choice_flags": 0,
+        "choice_count": 0,
+        "option_names": []
+      }
+    ],
+    "img_path": "cards_webp/PL!SP-bp2-001-P.webp",
+    "rare": "P",
+    "ability_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MEMBER(1) {FILTER=\"GROUP_ID=3\"} (Optional) -> TARGET; NEGATE_EFFECT(TARGET, TRIGGER=\"ON_LIVE_START\") -> SUCCESS; CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_MEMBER(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=3\"} -> CARD_HAND",
+    "original_text": "{{toujyou.png|登場}}自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい。これにより無効にした場合、自分の控え室から『Liella!』のカードを1枚手札に加える。",
+    "original_text_en": "[On Play] You may negate all [Live Start] abilities of 1 'Liella!' member on your stage until the end of the live phase. If you do, add 1 'Liella!' card from your waiting room to your hand.",
+    "volume_icons": 0,
+    "draw_icons": 0,
+    "semantic_flags": 17,
+    "ability_flags": 1,
+    "synergy_flags": 0,
+    "cost_flags": 0
+  }
+}

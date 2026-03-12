@@ -125,7 +125,6 @@ qwen-code/
 # Compiled and Cache
 .mypy_cache/
 .ruff_cache/
-.pytest_cache/
 .hypothesis/
 .python-version
 .venv/

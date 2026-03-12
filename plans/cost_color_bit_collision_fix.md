@@ -166,7 +166,6 @@ fn test_cost_and_color_no_collision() {
 
 既存のテストがすべてパスすることを確認:
 - `cargo test` (Rust)
-- `pytest` (Python)
 
 ## 影響範囲
 

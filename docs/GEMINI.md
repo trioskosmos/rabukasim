@@ -70,9 +70,9 @@ uv run mypy .
 ```
 
 ### Testing
-Tests are run using **Pytest**.
-- **Run all tests:** `uv run pytest`
-- **Data Source:** Tests read from `engine/data/`, which is auto-synced from `data/` by the compiler.
+Tests are run using the Rust test suite.
+- **Run all tests:** `cargo test --manifest-path engine_rust_src/Cargo.toml --no-fail-fast -- --nocapture`
+- **Data Source:** Rust tests read compiled card data from `engine/data/`, which is auto-synced from `data/` by the compiler.
 
 ## Windows Environment Notes
 - **Search**: Use `findstr` or `Select-String` (PowerShell) instead of `grep`.

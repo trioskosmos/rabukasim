@@ -49,8 +49,8 @@
     *   Legacy scripts in `tools/_legacy_scripts/` may need migration.
 
 4.  **Tests:**
-    *   Run `uv run pytest`.
-    *   Tests read from `engine/data/` (which is synced from `data/`).
+    *   Run `cargo test --manifest-path engine_rust_src/Cargo.toml --no-fail-fast -- --nocapture`.
+    *   Rust tests read from `engine/data/` (which is synced from `data/`).
 
 ---
 
@@ -69,7 +69,7 @@ loveca-copy/
 ├── engine/             # Python Game Engine
 │   ├── data/           # Symlinked/Synced from ../data
 │   ├── game/           # Game Logic
-│   └── tests/          # Pytest Suite
+│   └── tests/          # Engine support code, not the canonical test suite
 ├── engine_rust_src/    # Rust Implementation
 ├── frontend/           # Web Interface
 │   └── web_ui/         # SERVED Directory

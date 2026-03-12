@@ -214,16 +214,11 @@ else:
 
 ### 6. テストケースの追加
 
-**新規ファイル**: `tests/test_pseudocode_pipeline.py`
+**新規ファイル**: `engine_rust_src/tests/pseudocode_pipeline.rs`
 
-```python
-import pytest
-from compiler.parser_v2 import AbilityParserV2
-from engine.models.ability import TriggerType, EffectType, ConditionType
-
-class TestPseudocodePipeline:
-
-    def test_filter_blade_le(self):
+```rust
+#[test]
+fn test_filter_blade_le() {
         """BLADE_LE_* フィルタが正しくパースされる"""
         parser = AbilityParserV2()
         abilities = parser.parse("TRIGGER: ON_PLAY\nEFFECT: TAP_OPPONENT(1) {FILTER=\"BLADE_LE_3\"}")

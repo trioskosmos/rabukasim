@@ -159,8 +159,8 @@ struct MainPhaseResult {
 
 fn handle_main_phase(state: &GameState, db: &CardDatabase) -> MainPhaseResult {
     let start = Instant::now();
-    let (evals, best_seq, total_nodes, (board_score, live_ev)) =
-        TurnSequencer::plan_full_turn(state, db);
+    let (evals, best_seq, total_nodes, _search_secs, (board_score, live_ev)) =
+        TurnSequencer::plan_full_turn_with_stats(state, db);
 
     let total_score = board_score + live_ev;
     let duration = start.elapsed().as_micros();
@@ -520,7 +520,7 @@ fn main() {
     println!("║  No Abilities | Exhaustive DFS | Fast Training Mode      ║");
     println!("╚════════════════════════════════════════════════════════════╝\n");
 
-    let cfg = CONFIG.clone();
+    let cfg = CONFIG.read().unwrap().clone();
     println!(
         "Config: DFS_Depth={}, MC_Trials={}\n",
         cfg.search.max_dfs_depth, cfg.search.mc_trials

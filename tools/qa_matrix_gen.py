@@ -46,7 +46,7 @@ def generate_matrix():
             f.write(f"| {qid} | {question} | {category} | {status} | {notes} |\n")
 
         f.write("\n> [!NOTE]\n")
-        f.write("> Status [x] indicates verified by Rust or Python tests.\n")
+        f.write("> Status [x] indicates verified by Rust tests.\n")
 
     print(f"Matrix generated at {matrix_file}")
 

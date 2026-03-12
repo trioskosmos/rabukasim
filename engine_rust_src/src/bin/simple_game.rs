@@ -189,6 +189,7 @@ fn count_exact_main_sequences(state: &GameState, db: &CardDatabase, max_depth: u
     recurse(state, db, 0, max_depth)
 }
 
+
 fn execute_main_sequence(state: &mut GameState, db: &CardDatabase, planned_seq: &[i32]) -> Vec<i32> {
     let mut executed = Vec::new();
     let mut ended_with_pass = false;

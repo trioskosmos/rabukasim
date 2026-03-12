@@ -1226,6 +1226,11 @@ impl GameState {
         ctx: &AbilityContext,
         start_ab_idx: usize,
     ) {
+        // VANILLA OPTIMIZATION: No abilities in vanilla mode
+        if db.is_vanilla {
+            return;
+        }
+
         if self.trigger_depth as u32 > MAX_CONDITION_CHECK_DEPTH {
             if !self.ui.silent {
                 println!("[DEBUG] Trigger depth limit reached for {:?}.", trigger);

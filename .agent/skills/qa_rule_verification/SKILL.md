@@ -42,7 +42,7 @@ Do not prefer “easy passing coverage” over finding defects. A good QA test i
 
 ### Phase 1: Data Update
 1. Run `uv run python tools/qa_scraper.py` to fetch latest rulings.
-2. Verify JSON integrity: `uv run pytest tests/test_qa_data.py`.
+2. Verify the Rust test harness still compiles: `cargo test --manifest-path engine_rust_src/Cargo.toml --no-run`.
 
 ### Phase 2: Matrix Synchronization
 1. Sync the matrix: `uv run python tools/gen_full_matrix.py`.

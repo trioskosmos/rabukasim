@@ -108,5 +108,5 @@ New tests in `tests/test_vm_opcodes.py` verify these features:
 
 Run tests with:
 ```bash
-uv run --extra ai pytest tests/test_vm_opcodes.py
+cargo test --manifest-path engine_rust_src/Cargo.toml test_vm_opcodes -- --nocapture
 ```

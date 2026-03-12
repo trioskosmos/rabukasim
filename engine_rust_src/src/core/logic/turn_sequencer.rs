@@ -697,6 +697,20 @@ impl TurnSequencer {
             return (vec![ACTION_BASE_PASS], 0.0, (0.0, 0.0), 1);
         }
 
+        // VANILLA OPTIMIZATION: Skip sequence counting, always use exact planner
+        if db.is_vanilla {
+            let total_evals = AtomicUsize::new(0);
+            let (seq, val, brk) = Self::exact_small_turn_search(
+                state,
+                db,
+                p_idx,
+                search.max_dfs_depth,
+                &weights,
+                &total_evals,
+            );
+            return (seq, val, brk, total_evals.load(Ordering::Relaxed));
+        }
+
         let exact_sequences = Self::count_main_end_sequences(state, db, search.max_dfs_depth);
         if exact_sequences <= Self::exact_turn_threshold() {
             let total_evals = AtomicUsize::new(0);
