@@ -308,7 +308,7 @@ use crate::qa::*;      // Brings in test utilities
 
 #### Error: `PlayerState` field does not exist
 **Cause**: Field name changed or does not exist in the current schema.
-**Fix**: 
+**Fix**:
 1. Check `engine_rust_src/src/state.rs` for actual field names
 2. Use `cargo doc --open` and navigate to `PlayerState` struct
 3. Common renames: `stage_members` → `stage`, `live_cards` → `live_zone`
@@ -317,7 +317,7 @@ use crate::qa::*;      // Brings in test utilities
 
 #### Panic: `index out of bounds: the len is 3 but the index is 5`
 **Cause**: Attempting to access a fixed-size array beyond its bounds.
-**Fix**: 
+**Fix**:
 ```rust
 // Before (unsafe):
 state.players[0].stage[5] = card_id;  // stage only has 3 slots
@@ -538,18 +538,18 @@ START: You found an unmapped QA ruling (marked ℹ️ in matrix)
           ├─ Is it during Performance?
           │   └─ YES: Use handle_performance_phase()
           └─ Other → Consult existing test patterns in batch_card_specific.rs
-  
+
       [Choose Engine Path]
       ├─ Call the MOST SPECIFIC engine function for this ruling
       ├─ Example: For member placement, call play_member() not a general step()
       └─ If unsure, grep for similar QA IDs in batch_card_specific.rs
-  
+
       [Write Test]
       └─ Document: QA ID, original text, ability text, expected result
       └─ Assert: Final state matches QA answer
       └─ Verify: test_q{ID}_* naming and module placement
       └─ Run: cargo test --lib qa_verification_tests::test_q* -- --nocapture
-      
+
   [After Running]
   ├─ Test PASSED
   │   └─ Run: python tools/gen_full_matrix.py
@@ -601,20 +601,20 @@ fn test_q122_deck_peek_refresh_logic() {
 
     let db = load_real_db();
     let mut state = create_test_state();
-    
+
     // Setup: Deck with exactly 3 cards (boundary condition)
-    state.players[0].deck = SmallVec::from_slice(&[db.id_by_no("PL!N-bp1-001-R").unwrap(), 
-                                                    db.id_by_no("PL!N-bp1-002-R").unwrap(), 
+    state.players[0].deck = SmallVec::from_slice(&[db.id_by_no("PL!N-bp1-001-R").unwrap(),
+                                                    db.id_by_no("PL!N-bp1-002-R").unwrap(),
                                                     db.id_by_no("PL!N-bp1-003-R").unwrap()]);
     let initial_deck_len = state.players[0].deck.len();
     let initial_discard_len = state.players[0].discard.len();
-    
+
     // Action: Play member with peek-3 ability
     let member_id = db.id_by_no("PL!N-bp1-002-R＋").unwrap();
     state.play_member(0, member_id, 0, &db); // Slot 0
-    
+
     // Assert: No refresh occurred (discard pile unchanged)
-    assert_eq!(state.players[0].discard.len(), initial_discard_len, 
+    assert_eq!(state.players[0].discard.len(), initial_discard_len,
         "Q122: Refresh should NOT occur when peeking entire deck");
 }
 ```
@@ -638,21 +638,21 @@ fn test_q149_member_heart_total_comparison() {
 
     let db = load_real_db();
     let mut state = create_test_state();
-    
+
     // Setup: Both players with specific member configurations
     let aqours_card_1 = db.id_by_no("PL!-bp3-026-L").unwrap(); // Example Aqours live card
     let member_p0_1 = db.id_by_no("PL!N-bp3-011-R").unwrap(); // 3 hearts
     let member_p0_2 = db.id_by_no("PL!N-bp3-012-R").unwrap(); // 5 hearts
     let member_p1_1 = db.id_by_no("PL!N-bp3-013-R").unwrap(); // 2 hearts
     let member_p1_2 = db.id_by_no("PL!N-bp3-014-R").unwrap(); // 2 hearts
-    
+
     state.players[0].stage[0] = member_p0_1;
     state.players[0].stage[1] = member_p0_2;
     state.players[1].stage[0] = member_p1_1;
     state.players[1].stage[1] = member_p1_2;
-    
+
     let base_score = state.players[0].score;
-    
+
     // Action: Execute LiveResult with player 0 winning
     state.phase = Phase::LiveResult;
     state.players[0].live_zone[0] = aqours_card_1;
@@ -660,7 +660,7 @@ fn test_q149_member_heart_total_comparison() {
         "success": true, "lives": [{"passed": true, "score": 5}]
     }));
     state.do_live_result(&db);
-    
+
     // Assert: Score increased by 1 for heart comparison
     assert_eq!(state.players[0].score, base_score + 1 + 5,
         "Q149: Score should increase due to heart comparison + base live score");
@@ -686,31 +686,31 @@ fn test_q151_center_ability_grant() {
 
     let db = load_real_db();
     let mut state = create_test_state();
-    
+
     // Setup: Center member with activate ability
     let center_member_id = db.id_by_no("PL!S-bp3-001-R＋").unwrap();
     let target_member_id = db.id_by_no("PL!S-bp3-002-R").unwrap();
-    
+
     state.players[0].stage[1] = center_member_id; // Center slot
     state.players[0].stage[2] = target_member_id; // Right slot
-    
+
     // Action 1: Activate center ability to grant bonus
     state.activate_ability(0, center_member_id, vec![target_member_id], &db);
     let score_before = state.players[0].score;
-    
+
     // Trigger live result with member on stage
     state.phase = Phase::LiveResult;
     state.players[0].live_zone[0] = db.id_by_no("PL!S-bp3-020-L").unwrap();
     state.do_live_result(&db);
-    
+
     let score_with_bonus = state.players[0].score;
     assert!(score_with_bonus > score_before, "Q151: Score should increase with granted ability");
-    
+
     // Action 2: Verify bonus is lost if member leaves
     state.players[0].stage[2] = -1; // Remove member
     state.phase = Phase::LiveResult;
     state.do_live_result(&db);
-    
+
     // Bonus would no longer apply (manual check since state was modified)
 }
 ```
@@ -733,21 +733,21 @@ fn test_q146_member_count_for_draw() {
 
     let db = load_real_db();
     let mut state = create_test_state();
-    
+
     // Setup: 3 members on stage (including the one activating)
     let activating_member = db.id_by_no("PL!-bp3-004-R＋").unwrap();
     let other_member_1 = db.id_by_no("PL!-bp3-005-R").unwrap();
     let other_member_2 = db.id_by_no("PL!-bp3-006-R").unwrap();
-    
+
     state.players[0].stage[0] = activating_member;
     state.players[0].stage[1] = other_member_1;
     state.players[0].stage[2] = other_member_2;
-    
+
     let initial_hand = state.players[0].hand.len();
-    
+
     // Action: Activate ability
     state.activate_ability(0, activating_member, vec![], &db);
-    
+
     // Assert: Drew 3 cards (including activator), discarded 1
     assert_eq!(state.players[0].hand.len(), initial_hand + 3 - 1,
         "Q146: Should draw 3 (one per stage member) then discard 1");
@@ -773,18 +773,18 @@ fn test_q132_aqours_heart_excess_check() {
 
     let db = load_real_db();
     let mut state = create_test_state();
-    
+
     // Setup: P0 (first player) wins, P1 (second player) has no excess hearts
     state.first_player = 0;
     state.phase = Phase::LiveResult;
-    
+
     // P0 members with hearts
     let live_card_p0 = db.id_by_no("PL!S-pb1-021-L").unwrap();
     state.players[0].live_zone[0] = live_card_p0;
-    
+
     // Simulate both players executing performance
     state.ui.performance_results.insert(0, serde_json::json!({
-        "success": true, 
+        "success": true,
         "live": {"lives": [], "passed": true},
         "excess_hearts": 2
     }));
@@ -793,15 +793,15 @@ fn test_q132_aqours_heart_excess_check() {
         "live": {"lives": [], "passed": true},
         "excess_hearts": 0  // No excess
     }));
-    
+
     let score_before = state.players[0].score;
-    
+
     // Action: Finalize live result
     state.do_live_result(&db);
     state.finalize_live_result();
-    
+
     // Assert: Bonus applied (+2 to score)
-    assert_eq!(state.players[0].score - score_before, 
+    assert_eq!(state.players[0].score - score_before,
         expected_base_score + 2,
         "Q132: Score bonus should apply even if P0 is first player");
 }
@@ -942,7 +942,7 @@ Before marking a test as "ready for merge":
 
 1. **Pick First Batch**: Choose 5 QAs from Sprint 1 above
 2. **Implement Tests**: Use patterns from Section 13
-3. **Run Test Suite**: 
+3. **Run Test Suite**:
    ```bash
    cd engine_rust_src
    cargo test --lib qa_verification_tests --no-fail-fast -- --nocapture

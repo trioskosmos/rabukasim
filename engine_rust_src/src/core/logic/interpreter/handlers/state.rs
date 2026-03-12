@@ -533,20 +533,20 @@ pub fn handle_member_state(
                 // 0: [0,1,2], 1: [0,2,1], 2: [1,0,2], 3: [1,2,0], 4: [2,0,1], 5: [2,1,0]
                 let perm_idx = ctx.choice_index as usize;
                 ctx.choice_index = -1;
-                
+
                 if perm_idx < 6 {
                     let perms = [
                         [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]
                     ];
                     let p = perms[perm_idx];
-                    
+
                     // Original data
                     let old_data: Vec<_> = (0..3).map(|i| {
-                        (state.players[p_idx].stage[i], 
+                        (state.players[p_idx].stage[i],
                         state.players[p_idx].is_tapped(i),
                          state.players[p_idx].stage_energy[i].clone())
                     }).collect();
-                    
+
                     let mut moved = false;
                     for i in 0..3 {
                         let target_orig_idx = p[i];
@@ -558,7 +558,7 @@ pub fn handle_member_state(
                         state.players[p_idx].stage_energy[i] = old_data[target_orig_idx].2.clone();
                         state.players[p_idx].sync_stage_energy_count(i);
                     }
-                    
+
                     if moved {
                         for i in 0..3 {
                             let cid = state.players[p_idx].stage[i];
@@ -756,7 +756,7 @@ pub fn handle_member_state(
             let mut remaining = if ctx.v_remaining == -1 {
                 if is_total_cost {
                     ctx.v_accumulated = ((filter_attr_base
-                        >> crate::core::generated_constants::FILTER_COST_SHIFT)
+                        >> crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT)
                         & 0x1F) as i16;
                 }
                 v as i16 * 2

@@ -651,4 +651,3 @@ pub mod card_id {
     pub const NO_CARD: i32 = -1;
     pub const INVALID: i32 = 0;
 }
-

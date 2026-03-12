@@ -37,7 +37,7 @@ const stateInternal = {
     lastIndexedStateId: null,
 
     // Config
-    currentLang: 'jp',
+    currentLang: localStorage.getItem('lovelive_lang') || 'jp',
     showFriendlyAbilities: localStorage.getItem('lovelive_friendly_abilities') === 'true', // Defaults to false if not set to 'true'
 
     // Card ID Constants (Must match Rust engine)
@@ -239,11 +239,6 @@ const stateInternal = {
             // 2. Regular object: recurse but purge UI-only fields
             const stripped = {};
 
-            // Map keys if needed for engine compatibility
-            if (obj.active_player !== undefined && obj.current_player === undefined) {
-                obj.current_player = obj.active_player;
-            }
-
             // Blacklist only UI-specific fields, preserve gameplay state and history
             const blacklistedKeys = [
                 'ai_status', 'is_ai_thinking', 'last_action',
@@ -258,6 +253,11 @@ const stateInternal = {
                 // NOTE: Preserve 'undo_stack', 'redo_stack' if they exist for history replay
             ];
 
+            // Map keys for engine compatibility without mutating the source object.
+            if (obj.active_player !== undefined && obj.current_player === undefined) {
+                stripped.current_player = obj.active_player;
+            }
+
             for (const [key, value] of Object.entries(obj)) {
                 if (blacklistedKeys.includes(key)) continue;
                 stripped[key] = State.stripRichData(value);
@@ -266,6 +266,52 @@ const stateInternal = {
         }
 
         return obj;
+    },
+
+    /**
+     * Produces a compact, editable checkpoint payload for the debug tools.
+     * This keeps mutable game state while dropping static card catalogs and
+     * heavyweight derived debug data that the backend can reconstruct.
+     * KEEPS: bytecode_log, rule_log (needed for backend deserialization and debugging)
+     */
+    createCheckpointData: (obj = null) => {
+        const baseSource = obj ?? State.rawData ?? State.data;
+        if (baseSource === null || baseSource === undefined) return baseSource;
+
+        if (typeof baseSource === 'object' && !Array.isArray(baseSource)) {
+            if (baseSource.raw_state && typeof baseSource.raw_state === 'object') {
+                return JSON.parse(JSON.stringify(baseSource.raw_state));
+            }
+            if (baseSource.checkpoint_state && typeof baseSource.checkpoint_state === 'object') {
+                return JSON.parse(JSON.stringify(baseSource.checkpoint_state));
+            }
+        }
+
+        const clonedSource = (typeof baseSource === 'object')
+            ? JSON.parse(JSON.stringify(baseSource))
+            : baseSource;
+        const checkpoint = State.stripRichData(clonedSource);
+
+        if (!checkpoint || typeof checkpoint !== 'object' || Array.isArray(checkpoint)) {
+            return checkpoint;
+        }
+
+        const removableTopLevelKeys = [
+            'master_cards',
+            'all_cards',
+            'legal_actions',
+            'performance_history',
+            'performance_history_turns',
+            'action_log',
+            'full_log',
+            'turn_log'
+        ];
+
+        removableTopLevelKeys.forEach((key) => {
+            delete checkpoint[key];
+        });
+
+        return checkpoint;
     }
 };
 

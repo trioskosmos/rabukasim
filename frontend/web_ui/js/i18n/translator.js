@@ -34,13 +34,20 @@ export async function loadTranslations(lang = 'jp') {
 
         currentLanguage = lang;
         return data;
-
     } catch (error) {
         console.error('Translation load error:', error);
         // Fallback to empty structure if failed
         translations[lang] = { triggers: {}, opcodes: {}, params: {}, misc: {} };
         return translations[lang];
     }
+}
+
+// Global exposure for TextEnricher.js and UI components
+if (typeof window !== 'undefined') {
+    window.translateAbility = translateAbility;
+    window.translateCard = translateCard;
+    window.translateMetadata = translateMetadata;
+    window.t = t;
 }
 
 /**
@@ -58,6 +65,93 @@ export function t(key, params = {}) {
         text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
     }
     return text;
+}
+
+export const GROUP_ID_MAP = {
+    0: "μ's",
+    1: "Aqours",
+    2: "虹ヶ咲",
+    3: "リエラ",
+    4: "蓮ノ空",
+    10: "A-RISE",
+    11: "Saint Snow",
+    12: "Sunny Passion",
+    13: "スクールアイドルミュージカル",
+    98: "LIVE",
+    99: "OTHER"
+};
+
+export const UNIT_ID_MAP = {
+    0: "Printemps",
+    1: "lily white",
+    2: "BiBi",
+    3: "CYaRon!",
+    4: "AZALEA",
+    5: "Guilty Kiss",
+    6: "DiverDiva",
+    7: "A・ZU・NA",
+    8: "QU4RTZ",
+    9: "R3BIRTH",
+    10: "CatChu!",
+    11: "KALEIDOSCORE",
+    12: "5yncri5e!",
+    13: "スリーズブーケ",
+    14: "DOLLCHESTRA",
+    15: "みらくらぱーく！",
+    16: "Edel Stein",
+    17: "AIscream",
+    99: "OTHER"
+};
+
+/**
+ * Translates a piece of metadata like a series or unit name.
+ * @param {string} text 
+ * @param {string} category 'GROUPS' or 'UNITS'
+ * @returns {string}
+ */
+export function translateMetadata(text, category) {
+    if (!text) return "";
+    if (currentLanguage === 'jp') return text;
+
+    const langData = translations[currentLanguage] || {};
+    if (langData.params && langData.params[category] && langData.params[category][text]) {
+        return langData.params[category][text];
+    }
+    return text;
+}
+
+/**
+ * Translates all metadata for a card.
+ * @param {Object} card 
+ * @returns {Object} { name, groups, units }
+ */
+export function translateCard(card) {
+    if (!card) return { name: "", groups: [], units: [] };
+
+    let name = card.name || "";
+    let groups = card.groups || [];
+    let units = card.units || [];
+
+    if (currentLanguage === 'en') {
+        // Translate Name
+        if (NAME_MAP[name]) {
+            name = NAME_MAP[name];
+        }
+
+        // Translate Groups/Series (handle IDs or strings)
+        groups = groups.map(g => {
+            const str = typeof g === 'number' ? GROUP_ID_MAP[g] : g;
+            return translateMetadata(str, 'GROUPS');
+        });
+
+        // Translate Units (handle IDs or strings)
+        units = units.map(u => {
+            const str = typeof u === 'number' ? UNIT_ID_MAP[u] : u;
+            return translateMetadata(str, 'UNITS');
+        });
+    }
+
+    return { name, groups, units };
 }
 
 export function translateAbility(rawText, lang = 'jp') {

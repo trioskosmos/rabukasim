@@ -56,7 +56,7 @@ Two new comprehensive test modules:
 
 - **Advanced Interactions** (Q174-Q186)
   - Group member counting
-  - Unit name cost matching  
+  - Unit name cost matching
   - Opponent effect boundaries
   - Mandatory vs optional abilities
   - Area activation override
@@ -67,7 +67,7 @@ Two new comprehensive test modules:
 
 ### Matrix Updates
 **Key Entries Converted** from ℹ️ (Gap) to ✅ (Verified):
-1. Q85-Q86: Peek/refresh mechanics 
+1. Q85-Q86: Peek/refresh mechanics
 2. Q100: Yell-revealed cards exclusion
 3. Q104: All-cards-moved edge case
 4. Q107: Live start opponent check

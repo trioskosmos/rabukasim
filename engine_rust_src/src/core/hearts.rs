@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use crate::core::enums::CardColor;
+
+const HEART_COLOR_COUNT: usize = 7;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct HeartBoard(pub u64);
@@ -8,18 +9,18 @@ impl HeartBoard {
     pub const MASK: u64 = 0xFF; // 8 bits per color
 
     pub fn get_color_count(&self, color: usize) -> u8 {
-        if color >= CardColor::COUNT { return 0; }
+        if color >= HEART_COLOR_COUNT { return 0; }
         ((self.0 >> (color * 8)) & Self::MASK) as u8
     }
 
     pub fn set_color_count(&mut self, color: usize, val: u8) {
-        if color >= CardColor::COUNT { return; }
+        if color >= HEART_COLOR_COUNT { return; }
         let mask = Self::MASK << (color * 8);
         self.0 = (self.0 & !mask) | ((val as u64) << (color * 8));
     }
 
     pub fn add_to_color(&mut self, color: usize, val: i32) {
-        if color >= CardColor::COUNT { return; }
+        if color >= HEART_COLOR_COUNT { return; }
         let current = self.get_color_count(color) as i32;
         self.set_color_count(color, (current + val).max(0).min(255) as u8);
     }

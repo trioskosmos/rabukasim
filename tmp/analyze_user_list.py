@@ -1,4 +1,3 @@
-
 import json
 import os
 import sys
@@ -8,6 +7,7 @@ sys.path.append(os.getcwd())
 
 from engine.game.deck_utils import UnifiedDeckParser
 
+
 def main():
     db_path = "data/cards.json"
     if not os.path.exists(db_path):
@@ -16,13 +16,13 @@ def main():
 
     with open(db_path, "r", encoding="utf-8") as f:
         cards_raw = json.load(f)
-    
+
     # UnifiedDeckParser expects { "member_db": {...}, "live_db": {...}, "energy_db": {...} }
     # But data/cards.json is a flat dict. Let's adapt it.
     card_db = {
         "member_db": {k: v for k, v in cards_raw.items() if v.get("type") == "メンバー"},
         "live_db": {k: v for k, v in cards_raw.items() if v.get("type") == "ライブ"},
-        "energy_db": {k: v for k, v in cards_raw.items() if v.get("type") == "エネルギー"}
+        "energy_db": {k: v for k, v in cards_raw.items() if v.get("type") == "エネルギー"},
     }
 
     parser = UnifiedDeckParser(card_db)
@@ -65,7 +65,7 @@ PL!SP-SD1-019-SD x 4
 """
 
     results = parser.extract_from_content(content)
-    
+
     if not results:
         print("No results found.")
         return
@@ -77,12 +77,12 @@ PL!SP-SD1-019-SD x 4
     print(f"Total Energy cards: {len(deck['energy'])}")
     print("-" * 40)
     print("Type Counts:")
-    for k, v in deck['type_counts'].items():
+    for k, v in deck["type_counts"].items():
         print(f"  {k}: {v}")
-    
+
     print("-" * 40)
     print("Resolution Check:")
-    unique_ids = set(deck['main'] + deck['energy'])
+    unique_ids = set(deck["main"] + deck["energy"])
     resolved_count = 0
     missing = []
     for uid in unique_ids:
@@ -91,12 +91,13 @@ PL!SP-SD1-019-SD x 4
             resolved_count += 1
         else:
             missing.append(uid)
-    
+
     print(f"Resolved Unique IDs: {resolved_count} / {len(unique_ids)}")
     if missing:
         print("Missing IDs:")
         for m in missing:
             print(f"  - {m}")
+
 
 if __name__ == "__main__":
     main()

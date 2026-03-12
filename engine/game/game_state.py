@@ -497,7 +497,16 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
             if self.verbose:
                 print(f"RULE_LOG: {entry}")
 
-    def log_event(self, event_type: str, description: str, source_cid: int, ability_idx: int, player_id: int, rule_ref: Optional[str] = None, log_to_rule_log: bool = False):
+    def log_event(
+        self,
+        event_type: str,
+        description: str,
+        source_cid: int,
+        ability_idx: int,
+        player_id: int,
+        rule_ref: Optional[str] = None,
+        log_to_rule_log: bool = False,
+    ):
         """Record a structured event and optionally append to the legacy text rule_log.
 
         Mirrors the Rust-side `log_event` shape so frontend can use structured data.
@@ -513,7 +522,9 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
             try:
                 ev = {
                     "turn": int(self.turn_number),
-                    "phase": int(self.phase) if isinstance(self.phase, int) else getattr(self.phase, "value", str(self.phase)),
+                    "phase": int(self.phase)
+                    if isinstance(self.phase, int)
+                    else getattr(self.phase, "value", str(self.phase)),
                     "player_id": int(player_id) if player_id is not None else -1,
                     "event_type": str(event_type),
                     "source_cid": int(source_cid) if source_cid is not None else -1,
@@ -2024,12 +2035,30 @@ def initialize_game(use_real_data: bool = True, deck_type: str = "normal") -> Ga
     # Log initial setup rules (Rule 6.2.1.5 and 6.2.1.7)
     # Use structured events for initial setup so frontend can consume metadata
     try:
-        state.log_event("RULE", "Both players draw 6 cards as starting hand.", source_cid=-1, ability_idx=-1, player_id=-1, rule_ref="Rule 6.2.1.5", log_to_rule_log=True)
-        state.log_event("RULE", "Both players place 3 cards from Energy Deck to Energy Zone.", source_cid=-1, ability_idx=-1, player_id=-1, rule_ref="Rule 6.2.1.7", log_to_rule_log=True)
+        state.log_event(
+            "RULE",
+            "Both players draw 6 cards as starting hand.",
+            source_cid=-1,
+            ability_idx=-1,
+            player_id=-1,
+            rule_ref="Rule 6.2.1.5",
+            log_to_rule_log=True,
+        )
+        state.log_event(
+            "RULE",
+            "Both players place 3 cards from Energy Deck to Energy Zone.",
+            source_cid=-1,
+            ability_idx=-1,
+            player_id=-1,
+            rule_ref="Rule 6.2.1.7",
+            log_to_rule_log=True,
+        )
     except Exception:
         # Fallback — append legacy dicts if structured logging not available
         state.rule_log.append({"rule": "Rule 6.2.1.5", "description": "Both players draw 6 cards as starting hand."})
-        state.rule_log.append({"rule": "Rule 6.2.1.7", "description": "Both players place 3 cards from Energy Deck to Energy Zone."})
+        state.rule_log.append(
+            {"rule": "Rule 6.2.1.7", "description": "Both players place 3 cards from Energy Deck to Energy Zone."}
+        )
 
     # Set initial phase to Mulligan
 

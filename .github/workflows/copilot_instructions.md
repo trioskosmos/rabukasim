@@ -78,4 +78,3 @@ Tests are run using **Pytest**.
 - **Search**: Use `findstr` or `Select-String` (PowerShell) instead of `grep`.
 - **Paths**: Use backslashes `\` or ensure cross-platform compatibility.
 - **Tools**: Preference for `uv run python` for script execution.
-

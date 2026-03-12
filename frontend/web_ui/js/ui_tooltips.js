@@ -140,15 +140,29 @@ export const Tooltips = {
         }
 
         const cardIdLabel = (cardObj && cardObj.id !== undefined && cardObj.id >= 0) ? ` <span style="opacity:0.6; font-size:0.8em;">(ID: ${cardObj.id})</span>` : "";
-        const titleText = (cardObj && cardObj.name) ? cardObj.name + cardIdLabel : (dataSource.dataset.cardName || "Card Detail");
+        
+        let titleText = (dataSource.dataset.cardName || "Card Detail");
+        let metadataHtml = "";
 
+        if (cardObj) {
+            const translated = window.translateCard ? window.translateCard(cardObj) : { name: cardObj.name, groups: cardObj.groups, units: cardObj.units };
+            titleText = translated.name;
+
+            if (translated.groups && translated.groups.length > 0) {
+                metadataHtml += `<div class="tooltip-metadata"><strong>Series:</strong> ${translated.groups.join(', ')}</div>`;
+            }
+            if (translated.units && translated.units.length > 0) {
+                metadataHtml += `<div class="tooltip-metadata"><strong>Unit:</strong> ${translated.units.join(', ')}</div>`;
+            }
+        }
+        
         if (descTitle) {
-            descTitle.innerHTML = titleText;
+            descTitle.innerHTML = titleText + cardIdLabel;
             descTitle.style.display = titleText ? 'block' : 'none';
         }
 
         const enrichedText = combinedText ? TextEnricher.enrichAbilityText(combinedText) : "";
-        descContent.innerHTML = enrichedText;
+        descContent.innerHTML = metadataHtml + enrichedText;
         descContent.dataset.rawText = enrichedText;
         descPanel.classList.add('active');
 

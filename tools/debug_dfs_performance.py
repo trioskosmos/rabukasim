@@ -9,10 +9,11 @@ if str(root_path) not in sys.path:
 
 try:
     import engine_rust
+
     print(f"DEBUG: engine_rust loaded from {engine_rust.__file__}")
     # Verify attribute existence
     db_test = engine_rust.PyCardDatabase("{}")
-    has_v = hasattr(db_test, 'is_vanilla')
+    has_v = hasattr(db_test, "is_vanilla")
     print(f"DEBUG: PyCardDatabase has is_vanilla: {has_v}")
     if not has_v:
         print("WARNING: is_vanilla missing! Check if engine_rust.pyd in root is correct.")
@@ -26,6 +27,7 @@ def get_action_label(action_id, state, db):
         return state.get_verbose_action_label(action_id, db)
     except:
         return f"Action {action_id}"
+
 
 def run_diagnostic():
     print("=" * 100)
@@ -67,7 +69,7 @@ def run_diagnostic():
         p1_lives = live_ids[3:6]
 
     state.initialize_game(p0_deck, p1_deck, [], [], p0_lives, p1_lives)
-    
+
     # 3. Simulate and Profile
     print("[3/3] Running game with DFS profiling...")
     print("-" * 100)
@@ -79,7 +81,9 @@ def run_diagnostic():
     total_time = 0.0
     dfs_turns = 0
 
-    print(f"DEBUG: Initial state - is_terminal: {state.is_terminal()}, turn: {state.turn}, phase: {state.phase_name} ({state.phase})")
+    print(
+        f"DEBUG: Initial state - is_terminal: {state.is_terminal()}, turn: {state.turn}, phase: {state.phase_name} ({state.phase})"
+    )
 
     import random
 
@@ -89,8 +93,10 @@ def run_diagnostic():
         hand_len = len(player.hand)
         deck_len = len(player.deck)
         live_len = sum(1 for cid in player.live_zone if cid > 0)
-        
-        print(f"DEBUG: Loop start - Move: {move_count}, Turn: {state.turn}, P{p_idx} Hand: {hand_len}, Deck: {deck_len}, Live: {live_len}, Phase: {state.phase_name} ({state.phase})")
+
+        print(
+            f"DEBUG: Loop start - Move: {move_count}, Turn: {state.turn}, P{p_idx} Hand: {hand_len}, Deck: {deck_len}, Live: {live_len}, Phase: {state.phase_name} ({state.phase})"
+        )
         phase_name = state.phase_name
         # print(f"DEBUG: Move {move_count}, Turn {state.turn}, Phase {phase_name}")
 

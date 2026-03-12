@@ -3673,10 +3673,10 @@
     "pseudocode": "TRIGGER: ON_LIVE_START; CONDITION: COUNT_GROUP(FILTER=\"UNIQUE\", MIN=3); EFFECT: GRANT_ABILITY(FILTER=\"AREA=CENTER\", \"TRIGGER: CONSTANT; EFFECT: ADD_HEARTS(1) {HEART_TYPE=6} {ATTR=\\\"ALL\\\"}\", UNTIL=\"LIVE_END\")\nTRIGGER: ON_LIVE_SUCCESS; EFFECT: ADD_TO_HAND(1) {FILTER=\"GROUP=NOT_ON_STAGE\", ZONE=\"DISCARD\"}"
   },
   "(エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1を加算する。)": {
-    "pseudocode": ""
+    "pseudocode": "// INTERNAL_RULE"
   },
   "(エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計にプラス1する。)": {
-    "pseudocode": ""
+    "pseudocode": "// INTERNAL_RULE"
   },
   "{{live_start.png|ライブ開始時}}手札のライブカードを1枚控え室に置いてもよい：好きな色の{{icon_any.png|エネ}}を1増やす。": {
     "pseudocode": "TRIGGER: ON_LIVE_START; COST: DISCARD_HAND(1) {FILTER=\"TYPE=LIVE\", OPTIONAL=TRUE}; EFFECT: ENERGY_CHARGE(1) {ATTR=\"ANY\"}"

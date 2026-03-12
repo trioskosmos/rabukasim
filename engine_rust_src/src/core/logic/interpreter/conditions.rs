@@ -760,7 +760,7 @@ pub fn check_condition_opcode(
             let mut res = false;
             if (attr & KEYWORD_PLAYED_THIS_TURN) != 0 || attr == 0 {
                 if (attr & FILTER_GROUP_ENABLE) != 0 {
-                    let group_id = (attr >> FILTER_GROUP_SHIFT) & 0x7F;
+                    let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
                     res = (player.played_group_mask & (1 << group_id)) != 0;
                 } else if val == 0 && attr == KEYWORD_PLAYED_THIS_TURN {
                     // WORKAROUND: AREA="CENTER" is sometimes incorrectly encoded as this opcode
@@ -791,7 +791,7 @@ pub fn check_condition_opcode(
             }
             if (attr & KEYWORD_ACTIVATED_ENERGY_BY_GROUP) != 0 {
                 if (attr & crate::core::logic::constants::FILTER_GROUP_ENABLE) != 0 {
-                    let group_id = (attr >> FILTER_GROUP_SHIFT) & 0x7F;
+                    let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
                     let bit = 1 << group_id;
                     let matches = (player.activated_energy_group_mask & bit) != 0;
                     if state.debug.debug_mode {
@@ -804,7 +804,7 @@ pub fn check_condition_opcode(
             }
             if (attr & KEYWORD_ACTIVATED_MEMBER_BY_GROUP) != 0 {
                 if (attr & crate::core::logic::constants::FILTER_GROUP_ENABLE) != 0 {
-                    let group_id = (attr >> FILTER_GROUP_SHIFT) & 0x7F;
+                    let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
                     let bit = 1 << group_id;
                     let matches = (player.activated_member_group_mask & bit) != 0;
                     if state.debug.debug_mode {

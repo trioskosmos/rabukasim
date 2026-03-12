@@ -13,7 +13,7 @@ fn test_kanon_557_repro() {
     let mut kanon = engine_rust::core::logic::MemberCard::default();
     kanon.card_id = kanon_id;
     kanon.groups = vec![3]; // Liella
-    
+
     // Ability 1: ON_PLAY -> PLACE_ENERGY_WAIT(1)
     let _filter_attr = 209u64 | (3u64 << 5) | 16u64 | (112u64 << 32); // ALL_MEMBERS {GROUP_ID=3}
     let mut ab = engine_rust::core::logic::Ability::default();

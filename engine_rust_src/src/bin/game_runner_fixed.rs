@@ -65,7 +65,7 @@ fn run_game(
     rng: &mut impl rand::RngCore,
 ) -> GameStats {
     let game_start = Instant::now();
-    
+
     let mut state = GameState::default();
     state.initialize_game(
         member_cards.to_vec(),
@@ -92,7 +92,7 @@ fn run_game(
         if (state.turn, state.phase.clone()) != last_turn_phase {
             last_turn_phase = (state.turn, state.phase.clone());
             if VERBOSE {
-                println!("[Turn {} | {:?}] P0: {} | P1: {}", 
+                println!("[Turn {} | {:?}] P0: {} | P1: {}",
                     state.turn, state.phase, state.players[0].score, state.players[1].score);
             }
         }
@@ -104,18 +104,18 @@ fn run_game(
                 let _ = state.step(db, ACTION_BASE_PASS);
             } else {
                 // Use TurnSequencer to get best move
-                let (_evals, best_seq, _nodes, _breakdown) = TurnSequencer::plan_full_turn(&state, db);
+                let (best_seq, _best_val, _breakdown, _nodes) = TurnSequencer::plan_full_turn(&state, db);
                 let action = if best_seq.is_empty() {
                     ACTION_BASE_PASS as i32
                 } else {
                     best_seq[0]
                 };
-                
+
                 if state.step(db, action).is_err() {
                     let _ = state.step(db, ACTION_BASE_PASS);
                 }
             }
-        } 
+        }
         // Handle LiveSet phase with AI
         else if state.phase == Phase::LiveSet {
             let legal = state.get_legal_action_ids(db);
@@ -201,12 +201,12 @@ fn main() {
 
     let total_time: f32 = games.iter().map(|g| g.time_ms).sum();
     let avg_time = total_time / games.len() as f32;
-    
+
     for g in &games {
         println!("Game {}: {} turns, {} steps, P0={} P1={}, {:.2}ms",
             g.game_num, g.final_turn, g.total_steps, g.p0_score, g.p1_score, g.time_ms);
     }
-    
+
     println!("\nOverall: {} games, {:.2}ms avg/game", games.len(), avg_time);
     println!("✓ Games completed successfully!\n");
 }

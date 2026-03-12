@@ -100,5 +100,3 @@ pub const TARGET_SLOT_FROM_CONTEXT: i32 = 10;
 
 /// Number of stage slots per player.
 pub const STAGE_SLOT_COUNT: usize = 3;
-
-

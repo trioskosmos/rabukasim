@@ -365,7 +365,6 @@ export const ChoiceTypes = {
     RECOV_L: 26,
     RECOV_M: 27,
     SELECT_STAGE_EMPTY_BATON: 28,
-    REARRANGE_FORMATION: 29,
 };
 
 export const ExtraConstants = {
@@ -407,7 +406,7 @@ export const ExtraConstants = {
     FILTER_CHARACTER_ENABLE: 0,
     FILTER_SPECIAL_SHIFT: 56,
     FILTER_COLOR_ENABLE: 0,
-    FILTER_COLOR_SHIFT: 46,
+    FILTER_COLOR_SHIFT: 32,
     FILTER_COST_ENABLE: 16777216,
     FILTER_COST_SHIFT: 25,
     FILTER_COST_LE: 1073741824,

@@ -1,8 +1,8 @@
 # QA Card-Specific High-Fidelity Tests Summary
 
-**Date**: 2026-03-11  
-**File**: `engine_rust_src/src/qa/qa_card_specific_batch_tests.rs`  
-**Status**: ✅ CREATED  
+**Date**: 2026-03-11
+**File**: `engine_rust_src/src/qa/qa_card_specific_batch_tests.rs`
+**Status**: ✅ CREATED
 
 ## Overview
 
@@ -45,7 +45,7 @@ This batch focuses on **card-specific scenarios requiring real card data** from 
 
 #### Q126: Area Movement Boundary (Stage-Only)
 - **Rule**: `『自動 このメンバーがエリアを移動したとき...』` only triggers for stage-to-stage moves
-- **Test**: 
+- **Test**:
   - ✅ Center→Left move within stage: **triggers**
   - ❌ Center→Discard move leaves stage: **does not trigger**
 - **Engine Call**: Check trigger conditions before movement callback
@@ -58,7 +58,7 @@ This batch focuses on **card-specific scenarios requiring real card data** from 
 
 #### Q128: Draw Timing at Live Success
 - **Rule**: Draw icons resolve DURING live result phase, BEFORE live-success ability checks
-- **Test**: 
+- **Test**:
   - Setup: Player has 3 cards, opponent has 5
   - Epioch: Living succeeds with draw icon
   - Draw 3: Player now has 6 cards
@@ -77,7 +77,7 @@ This batch focuses on **card-specific scenarios requiring real card data** from 
 
 #### Q130: "Until Live End" Duration Expiry
 - **Rule**: Effects last "until live end" expire at live result phase termination, even if no live occurred
-- **Test**: 
+- **Test**:
   - Activate ability with `DurationMode::UntilLiveEnd`
   - Proceed to next phase without performing a live
   - Effect removed from active_effects

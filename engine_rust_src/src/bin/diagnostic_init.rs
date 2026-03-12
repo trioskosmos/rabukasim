@@ -35,8 +35,8 @@ fn main() {
     println!("Game Initialization Diagnostic\n");
 
     let db = load_vanilla_db();
-    
-    println!("DB loaded: {} members, {} lives, {} energy", 
+
+    println!("DB loaded: {} members, {} lives, {} energy",
         db.members.len(), db.lives.len(), db.energy_db.len());
 
     // Get sample cards
@@ -59,7 +59,7 @@ fn main() {
 
     // Initialize the game
     let mut state = GameState::default();
-    
+
     println!("\nBefore initialize_game:");
     println!("  Phase: {:?}", state.phase);
     println!("  Current Player: {}", state.current_player);
@@ -96,14 +96,14 @@ fn main() {
     // Try advancing to Main phase with proper handling
     state.ui.silent = true;
     println!("\nAdvancing to Main phase:");
-    
+
     let mut count = 0;
     const MAX_STEPS: usize = 100;
     let mut rng = rand::rng();
-    
+
     while !state.is_terminal() && state.phase != Phase::Main && count < MAX_STEPS {
         let phase_str = format!("{:?}", state.phase);
-        
+
         // Handle non-auto phases that require player actions
         match state.phase {
             Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
@@ -125,9 +125,9 @@ fn main() {
                 state.auto_step(&db);
             }
         }
-        
+
         count += 1;
-        
+
         if count <= 10 || count % 5 == 0 {
             println!("  Step {}: Phase = {:?}", count, state.phase);
         }

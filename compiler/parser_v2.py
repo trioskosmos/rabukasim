@@ -1131,6 +1131,13 @@ class AbilityParserV2:
 
                 # Extract params only from the isolated {...} block if found
                 params = self._parse_pseudocode_params(param_block) if param_block else {}
+                
+                # FALLBACK: If params block was at the end (after target), it will be in 'rest'
+                if not params and rest and "{" in rest:
+                    import re as re_mod
+                    m_param = re_mod.search(r"(\{.*?\})", rest)
+                    if m_param:
+                        params = self._parse_pseudocode_params(m_param.group(1))
 
                 # Target Resolution
                 target = last_target

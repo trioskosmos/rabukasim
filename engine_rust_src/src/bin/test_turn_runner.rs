@@ -386,7 +386,7 @@ fn run_game(
     let mut init_step_count = 0;
     const MAX_INIT_STEPS: usize = 50;
     let mut rng = rand::rng();
-    
+
     while !state.is_terminal() && state.phase != Phase::Main && init_step_count < MAX_INIT_STEPS {
         match state.phase {
             Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
@@ -407,7 +407,7 @@ fn run_game(
         }
         init_step_count += 1;
     }
-    
+
     if init_step_count >= MAX_INIT_STEPS {
         eprintln!("⚠️  WARNING: Could not reach first Main phase after {} steps", MAX_INIT_STEPS);
     }
@@ -452,7 +452,7 @@ fn run_game(
         game_diag.turns.push(turn_diag);
         step_count += 1;
     }
-    
+
     if step_count >= MAX_STEPS_TOTAL {
         eprintln!("⚠️  WARNING: Reached max step limit ({}) - game may have infinite loop", MAX_STEPS_TOTAL);
     }

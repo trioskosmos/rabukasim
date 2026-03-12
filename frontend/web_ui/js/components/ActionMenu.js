@@ -3,19 +3,24 @@ import { Phase } from '../constants.js';
 import * as i18n from '../i18n/index.js';
 import { Tooltips } from '../ui_tooltips.js';
 import { ActionBases } from '../generated_constants.js';
+import { DOMUtils } from '../utils/DOMUtils.js';
+import { DOM_IDS, COLORS } from '../constants_dom.js';
 
 export const ActionMenu = {
     renderActions: () => {
         const state = State.data;
-        const actionsDiv = document.getElementById('actions');
-        if (!state || !actionsDiv || state.game_over) return;
+        if (!state || state.game_over) return;
 
         const currentLang = State.currentLang;
         const perspectivePlayer = State.perspectivePlayer;
-        const mobileActionBar = document.getElementById('mobile-action-bar');
 
-        if (mobileActionBar) mobileActionBar.innerHTML = '';
-        actionsDiv.innerHTML = '';
+        // Clear both action containers
+        DOMUtils.clear(DOM_IDS.CONTAINER_ACTIONS);
+        DOMUtils.clear(DOM_IDS.CONTAINER_MOBILE_ACTION_BAR);
+
+        // Get action container for appending elements
+        const actionsDiv = DOMUtils.getElement(DOM_IDS.CONTAINER_ACTIONS);
+        if (!actionsDiv) return;
 
         const getActionLabel = (a, isMini = false) => {
             if (a.id === 0 && state.pending_choice) {
@@ -442,16 +447,14 @@ export const ActionMenu = {
     },
 
     renderGameOver: (state) => {
-        const actionsDiv = document.getElementById('actions');
-        if (actionsDiv) {
-            const winnerName = state.winner === State.perspectivePlayer ? "YOU" : `Player ${state.winner + 1}`;
-            actionsDiv.innerHTML = `
+        const winnerName = state.winner === State.perspectivePlayer ? "YOU" : `Player ${state.winner + 1}`;
+        const gameOverHTML = `
                 <div class="game-over-banner">
                     <h2>GAME OVER</h2>
                     <div class="winner-announcement">Winner: ${winnerName}</div>
                     <button class="btn btn-primary" onclick="location.reload()">New Game</button>
                 </div>
             `;
-        }
+        DOMUtils.setHTML(DOM_IDS.CONTAINER_ACTIONS, gameOverHTML);
     }
 };

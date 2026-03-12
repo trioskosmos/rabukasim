@@ -42,13 +42,7 @@ class UnifiedDeckParser:
         """Normalize card codes for matching."""
         if not code:
             return ""
-        return (
-            code.strip()
-            .replace("＋", "+")
-            .replace("－", "-")
-            .replace("ー", "-")
-            .upper()
-        )
+        return code.strip().replace("＋", "+").replace("－", "-").replace("ー", "-").upper()
 
     def resolve_card(self, code_or_id: str) -> Dict:
         """Finds card data by Card No or Internal ID."""

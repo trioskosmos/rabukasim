@@ -76,10 +76,10 @@ fn load_deck_combined(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
     while lives.len() < 12 {
         if let Some(&id) = db.lives.keys().next() { lives.push(id); } else { break; }
     }
-    
+
     members.truncate(48);
     lives.truncate(12);
-    
+
     (members, lives)
 }
 
@@ -108,7 +108,7 @@ fn pick_action(state: &GameState, db: &CardDatabase, rng: &mut impl rand::RngCor
     let start = Instant::now();
     match state.phase {
         Phase::Main => {
-            let (_evals, best_seq, nodes, breakdown) = TurnSequencer::plan_full_turn(state, db);
+            let (best_seq, _best_val, breakdown, nodes) = TurnSequencer::plan_full_turn(state, db);
             let duration = start.elapsed().as_micros();
             let action = if best_seq.is_empty() { Some(ACTION_BASE_PASS as usize) } else { Some(best_seq[0] as usize) };
             AIDecision { action, nodes, board_score: breakdown.0, live_ev: breakdown.1, duration_us: duration }
@@ -144,22 +144,22 @@ fn run_game(
     rng: &mut impl rand::RngCore,
 ) {
     let mut state = GameState::default();
-    
+
     // Official Rules: Combined Deck (48+12)
     let p0_deck = member_cards.to_vec();
     let p1_deck = member_cards.to_vec();
     let p0_lives = live_cards.to_vec();
     let p1_lives = live_cards.to_vec();
-    
+
     // Note: initialize_game will combine members+lives into the deck and shuffle.
     // Starting lives zone is empty.
     state.initialize_game(
-        p0_deck, p1_deck, 
-        energy_ids.to_vec(), energy_ids.to_vec(), 
+        p0_deck, p1_deck,
+        energy_ids.to_vec(), energy_ids.to_vec(),
         p0_lives, p1_lives
     );
 
-    println!("[INIT] Phase: {:?}, P0 Hand: {}, P0 Deck: {}, P0 Lives: {}", 
+    println!("[INIT] Phase: {:?}, P0 Hand: {}, P0 Deck: {}, P0 Lives: {}",
         state.phase, state.players[0].hand.len(), state.players[0].deck.len(), state.players[0].success_lives.len());
 
     state.ui.silent = true;
@@ -172,15 +172,15 @@ fn run_game(
     let mut last_turn_phase = (0u16, Phase::Main);
     while !state.is_terminal() && current_step < STEP_LIMIT && state.turn <= TURN_LIMIT {
         state.auto_step(db);
-        if state.is_terminal() { 
-            println!("[TERMINAL] Game ended at turn {} (Steps: {}, Phase: {:?}, P0 Score: {}, P1 Score: {})", 
+        if state.is_terminal() {
+            println!("[TERMINAL] Game ended at turn {} (Steps: {}, Phase: {:?}, P0 Score: {}, P1 Score: {})",
                 state.turn, current_step, state.phase, state.players[0].score, state.players[1].score);
-            break; 
+            break;
         }
 
         if (state.turn, state.phase) != last_turn_phase {
             last_turn_phase = (state.turn, state.phase);
-            println!("\n[Turn {} | P{} | {:?}] Space Score: P0={} P1={}", 
+            println!("\n[Turn {} | P{} | {:?}] Space Score: P0={} P1={}",
                 state.turn, state.current_player, state.phase, state.players[0].score, state.players[1].score);
         }
 
@@ -188,10 +188,10 @@ fn run_game(
         if let Some(action) = decision.action {
             let label = state.get_verbose_action_label(action as i32, db);
             if decision.nodes > 0 || state.phase != Phase::Main {
-                println!("  P{} @ {:?} → {} [Nodes: {}, Board: {:.2}, LiveEV: {:.2}, Time: {}us]", 
+                println!("  P{} @ {:?} → {} [Nodes: {}, Board: {:.2}, LiveEV: {:.2}, Time: {}us]",
                     state.current_player, state.phase, label, decision.nodes, decision.board_score, decision.live_ev, decision.duration_us);
             }
-            
+
             if state.step(db, action as i32).is_err() {
                 let _ = state.step(db, ACTION_BASE_PASS);
             }
@@ -212,7 +212,7 @@ fn run_game(
 
 fn main() {
     println!("Vanilla AI Simulation Runner (Official Rules Alignment)\n");
-    let cfg = CONFIG.clone();
+    let cfg = CONFIG.read().unwrap().clone();
     println!("DFS Max Depth: {}", cfg.search.max_dfs_depth);
 
     let db = load_vanilla_db();

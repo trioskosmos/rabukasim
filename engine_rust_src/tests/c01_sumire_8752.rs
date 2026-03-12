@@ -10,7 +10,7 @@ use std::sync::Arc;
 #[test]
 fn test_sumire_8752_repro() {
     let mut db = CardDatabase::default();
-    
+
     let sumire_id = 8752;
     let cheap_liella_id = 557;
 
@@ -18,7 +18,7 @@ fn test_sumire_8752_repro() {
     let mut sumire = MemberCard::default();
     sumire.card_id = sumire_id;
     sumire.groups = vec![3];
-    
+
     // Ability 1: DRAW(2); PLAY_MEMBER_FROM_DISCARD(1) {FILTER="GROUP_ID=3, COST_LE_4"}
     // Attribute calculation for "GROUP_ID=3, COST_LE_4, TARGET=SELF":
     // GROUP_ENABLE (bit 4) | (3 << 5) | TARGET=SELF (1) = 113
@@ -64,10 +64,10 @@ fn test_sumire_8752_repro() {
     println!("--- Running Bytecode ---");
     let bc = Arc::new(db.members[&sumire_id].abilities[0].bytecode.clone());
     state.resolve_bytecode(&db, bc, &ctx);
-    
+
     println!("Hand size after DRAW: {}", state.core.players[p1].hand.len());
     println!("Interaction stack size: {}", state.core.interaction_stack.len());
-    
+
     if let Some(pending) = state.core.interaction_stack.last() {
         println!("Opcode: {}, ChoiceType: {:?}", pending.effect_opcode, pending.choice_type);
         assert_eq!(pending.effect_opcode, 63);

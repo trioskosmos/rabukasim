@@ -1432,7 +1432,8 @@ impl PyGameState {
     #[pyo3(signature = (db))]
     pub fn plan_full_turn(&self, db: &PyCardDatabase) -> (Vec<(i32, f32, f32, f32)>, Vec<i32>, usize, (f32, f32)) {
         use crate::core::logic::turn_sequencer::TurnSequencer;
-        TurnSequencer::plan_full_turn(&self.inner, &db.inner)
+        let (seq, _val, breakdown, nodes) = TurnSequencer::plan_full_turn(&self.inner, &db.inner);
+        (Vec::new(), seq, nodes, breakdown)
     }
 
     #[pyo3(signature = (db))]

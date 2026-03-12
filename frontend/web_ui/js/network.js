@@ -5,6 +5,9 @@
 import { State, updateStateData } from './state.js';
 import { log } from './logger.js';
 import { Phase, getAppBaseUrl } from './constants.js';
+import { DOMUtils } from './utils/DOMUtils.js';
+import { ModalManager } from './utils/ModalManager.js';
+import { DOM_IDS, COLORS } from './constants_dom.js';
 
 let onRender = () => { console.warn("Network: No render callback set"); };
 let onRoomUpdate = () => { console.warn("Network: No room update callback set"); };
@@ -27,15 +30,15 @@ export const Network = {
     },
 
     checkSystemStatus: async () => {
-        const badge = document.getElementById('system-status-badge');
+        const badge = DOMUtils.getElement(DOM_IDS.SYSTEM_STATUS_BADGE);
         if (!badge) return;
         try {
             const res = await fetch('api/status');
             const data = await res.json();
             if (data.status === 'rust_server') {
                 const cardCount = (data.members || 0) + (data.lives || 0);
-                badge.textContent = cardCount > 0 ? `ONLINE: ${cardCount} Cards` : "ONLINE: 0 Cards (ERROR)";
-                badge.style.background = cardCount > 100 ? '#2ecc71' : '#f59e0b';
+                DOMUtils.setText(DOM_IDS.SYSTEM_STATUS_BADGE, cardCount > 0 ? `ONLINE: ${cardCount} Cards` : "ONLINE: 0 Cards (ERROR)");
+                DOMUtils.setBackground(DOM_IDS.SYSTEM_STATUS_BADGE, cardCount > 100 ? COLORS.ONLINE : COLORS.WARNING);
                 badge.title = `Members: ${data.members}, Lives: ${data.lives} | ID: ${data.instance_id}`;
 
                 // Automatic Reset on Server Restart
@@ -54,12 +57,12 @@ export const Network = {
 
                 return data;
             } else {
-                badge.textContent = "UNKNOWN";
-                badge.style.background = "#e74c3c";
+                DOMUtils.setText(DOM_IDS.SYSTEM_STATUS_BADGE, "UNKNOWN");
+                DOMUtils.setBackground(DOM_IDS.SYSTEM_STATUS_BADGE, COLORS.UNKNOWN);
             }
         } catch (e) {
-            badge.textContent = "OFFLINE";
-            badge.style.background = "#e74c3c";
+            DOMUtils.setText(DOM_IDS.SYSTEM_STATUS_BADGE, "OFFLINE");
+            DOMUtils.setBackground(DOM_IDS.SYSTEM_STATUS_BADGE, COLORS.OFFLINE);
         }
         return null;
     },
@@ -111,7 +114,7 @@ export const Network = {
                 State.sessionToken = null;
                 localStorage.removeItem(`lovelive_session_${State.roomCode}`);
 
-                document.getElementById('room-modal').style.display = 'none';
+                ModalManager.hide(DOM_IDS.MODAL_ROOM);
                 log(`Created Room: ${State.roomCode} (${mode})`);
 
                 // Initial fetch
@@ -134,8 +137,8 @@ export const Network = {
 
     joinRoom: async (code = null) => {
         if (!code) {
-            const input = document.getElementById('room-code-input');
-            code = input.value.toUpperCase();
+            const input = DOMUtils.getElement(DOM_IDS.ROOM_CODE_INPUT);
+            if (input) code = input.value.toUpperCase();
         }
         if (!code || code.length !== 4) {
             alert('Please enter a 4-letter room code.');
@@ -170,7 +173,7 @@ export const Network = {
             console.error("Join API error", e);
         }
 
-        document.getElementById('room-modal').style.display = 'none';
+        ModalManager.hide(DOM_IDS.MODAL_ROOM);
         log(`Joining Room: ${State.roomCode}...`);
 
         onRoomUpdate();
@@ -260,13 +263,7 @@ export const Network = {
                     if (typeof onRoomUpdate === 'function') onRoomUpdate();
 
                     // Force lobby visibility
-                    const roomModal = document.getElementById('room-modal');
-                    if (roomModal) {
-                        roomModal.style.display = 'flex';
-                    } else {
-                        // Fallback: If modal not found, maybe just reload?
-                        window.location.reload();
-                    }
+                    ModalManager.show(DOM_IDS.MODAL_ROOM);
 
                     log(`Room ${codeToClear} expired or not found.`, 'error');
                 }
@@ -292,8 +289,7 @@ export const Network = {
                     console.log("[Network] needs_deck detected. triggering onOpenDeckModal.");
                     // We need to trigger deck modal
                     // We can check if setup-modal is open
-                    const setupModal = document.getElementById('setup-modal');
-                    if (setupModal && setupModal.style.display !== 'flex') {
+                    if (!ModalManager.isVisible(DOM_IDS.MODAL_SETUP)) {
                         console.log("[Network] needs_deck detected.");
                         onOpenDeckModal(State.perspectivePlayer);
                     }
@@ -338,8 +334,7 @@ export const Network = {
                     updateStateData(null);
                     if (typeof onRoomUpdate === 'function') onRoomUpdate();
 
-                    const roomModal = document.getElementById('room-modal');
-                    if (roomModal) roomModal.style.display = 'flex';
+                    ModalManager.show(DOM_IDS.MODAL_ROOM);
                     log("Connection lost or server unreachable.", 'error');
                 }
             }
@@ -545,8 +540,8 @@ export const Network = {
             State.sessionToken = null;
             updateStateData(null);
 
-            document.getElementById('room-modal').style.display = 'none';
-            document.getElementById('header-debug-info').textContent = "Offline (WASM)";
+            ModalManager.hide(DOM_IDS.MODAL_ROOM);
+            DOMUtils.setText(DOM_IDS.HEADER_DEBUG_INFO, "Offline (WASM)");
 
             onRoomUpdate();
 
@@ -588,26 +583,28 @@ export const Network = {
         State.sessionToken = null;
         updateStateData(null);
         localStorage.removeItem('lovelive_room_code');
-        document.getElementById('room-modal').style.display = 'flex';
+        ModalManager.show(DOM_IDS.MODAL_ROOM);
         // Cleanup URL if needed
         history.pushState({}, document.title, window.location.pathname);
         onRoomUpdate();
     },
 
     fetchPublicRooms: async () => {
-        const list = document.getElementById('public-rooms-list');
-        list.innerHTML = '<div style="color:#666;text-align:center;padding-top:20px;">Loading...</div>';
+        const list = DOMUtils.getElement(DOM_IDS.PUBLIC_ROOMS_LIST);
+        if (!list) return;
+
+        DOMUtils.setHTML(DOM_IDS.PUBLIC_ROOMS_LIST, '<div style="color:#666;text-align:center;padding-top:20px;">Loading...</div>');
 
         try {
             const res = await fetch('api/rooms/list');
             const data = await res.json();
 
             if (!data.rooms || data.rooms.length === 0) {
-                list.innerHTML = '<div style="color:#666;text-align:center;padding-top:20px;">No active public rooms.</div>';
+                DOMUtils.setHTML(DOM_IDS.PUBLIC_ROOMS_LIST, '<div style="color:#666;text-align:center;padding-top:20px;">No active public rooms.</div>');
                 return;
             }
 
-            list.innerHTML = '';
+            DOMUtils.clear(DOM_IDS.PUBLIC_ROOMS_LIST);
             data.rooms.forEach(r => {
                 const div = document.createElement('div');
                 div.style.padding = '5px';
@@ -620,13 +617,14 @@ export const Network = {
                         <span style="color:#aaa; font-size:0.8rem;">${r.players_count}/2</span>
                      `;
                 div.onclick = () => {
-                    document.getElementById('room-code-input').value = r.id;
+                    const input = DOMUtils.getElement(DOM_IDS.ROOM_CODE_INPUT);
+                    if (input) input.value = r.id;
                     Network.joinRoom(r.id);
                 };
                 list.appendChild(div);
             });
         } catch (e) {
-            list.innerHTML = '<div style="color:#e74c3c;text-align:center;padding-top:20px;">Failed to load rooms.</div>';
+            DOMUtils.setHTML(DOM_IDS.PUBLIC_ROOMS_LIST, '<div style="color:#e74c3c;text-align:center;padding-top:20px;">Failed to load rooms.</div>');
         }
     },
 
@@ -895,7 +893,7 @@ export const Network = {
 
     applyState: async (jsonStr) => {
         const roomCode = localStorage.getItem("lovelive_room_code");
-        if (!roomCode) return false;
+        if (!roomCode) return { ok: false, error: 'No room code' };
 
         try {
             const res = await fetch('/api/debug/apply_state', {
@@ -906,10 +904,45 @@ export const Network = {
                 },
                 body: jsonStr
             });
-            return res.ok;
+
+            let data = null;
+            try {
+                data = await res.json();
+            } catch (_error) {
+                data = null;
+            }
+
+            return {
+                ok: res.ok,
+                error: data?.error || null,
+                data,
+            };
         } catch (e) {
             console.error("Apply state failed", e);
-            return false;
+            return {
+                ok: false,
+                error: e.message || 'Network error',
+            };
+        }
+    },
+
+    fetchDebugSnapshot: async () => {
+        const roomCode = localStorage.getItem("lovelive_room_code");
+        if (!roomCode) return null;
+
+        try {
+            const res = await fetch('/api/debug/snapshot', {
+                method: 'GET',
+                headers: {
+                    'X-Room-Id': roomCode
+                }
+            });
+
+            if (!res.ok) return null;
+            return await res.json();
+        } catch (e) {
+            console.error("Fetch debug snapshot failed", e);
+            return null;
         }
     },
 
@@ -956,6 +989,10 @@ export const Network = {
                 headers: { 'X-Room-ID': roomCode }
             });
             const data = await res.json();
+            if (data.success) {
+                // Fetch updated state after rewind
+                await Network.fetchState();
+            }
             return data.success;
         } catch (e) {
             console.error("Rewind failed", e);
@@ -973,9 +1010,59 @@ export const Network = {
                 headers: { 'X-Room-ID': roomCode }
             });
             const data = await res.json();
+            if (data.success) {
+                // Fetch updated state after redo
+                await Network.fetchState();
+            }
             return data.success;
         } catch (e) {
             console.error("Redo failed", e);
+            return false;
+        }
+    },
+
+    exportGame: async () => {
+        const roomCode = localStorage.getItem("lovelive_room_code");
+        if (!roomCode) return null;
+
+        try {
+            const res = await fetch('/api/export_game', {
+                method: 'GET',
+                headers: { 'X-Room-ID': roomCode }
+            });
+            const data = await res.json();
+            if (data.success === false) {
+                console.error("Export failed:", data.error);
+                return null;
+            }
+            return data;
+        } catch (e) {
+            console.error("Export failed", e);
+            return null;
+        }
+    },
+
+    importGame: async (exportData) => {
+        const roomCode = localStorage.getItem("lovelive_room_code");
+        if (!roomCode) return false;
+
+        try {
+            const res = await fetch('/api/import_game', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Room-ID': roomCode
+                },
+                body: JSON.stringify(exportData)
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Fetch updated state after import
+                await Network.fetchState();
+            }
+            return data.success;
+        } catch (e) {
+            console.error("Import failed", e);
             return false;
         }
     },

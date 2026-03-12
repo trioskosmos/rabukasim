@@ -786,78 +786,47 @@
     </script>
     <!-- Debug / State Editor Modal -->
     <div id="debug-modal" class="modal" style="display: none;">
-        <div class="modal-content large" style="height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
+        <div class="modal-content large" style="height: 92vh; width: min(96vw, 1800px); max-width: 1800px; display: flex; flex-direction: column; overflow: hidden;">
             <div class="modal-header">
-                <h2>Board Debugger & State Editor</h2>
-                <div style="display: flex; gap: 8px; margin-left: auto; margin-right: 15px;">
-                    <button class="btn btn-secondary btn-sm" onclick="DebugModal.rewind()"
-                        title="Undo last action">Undo</button>
-                    <button class="btn btn-secondary btn-sm" onclick="DebugModal.redo()"
-                        title="Redo action">Redo</button>
+                <h2>Debug Inspector and State Editor</h2>
+                <div style="display: flex; gap: 8px; margin-left: auto; margin-right: 15px; font-size: 12px;">
+                    <button class="btn btn-secondary btn-sm" onclick="DebugModal.rewind()" title="Undo">Undo</button>
+                    <button class="btn btn-secondary btn-sm" onclick="DebugModal.redo()" title="Redo">Redo</button>
                     <div style="width: 1px; background: var(--border); margin: 0 4px;"></div>
-                    <button class="btn btn-secondary btn-sm" onclick="DebugModal.toggleEngineDebug()"
-                        title="Enable engine bytecode logging">Toggle Debug</button>
-                    <button class="btn btn-secondary btn-sm" onclick="DebugModal.renderAll()"
-                        title="Refresh Data">Refresh</button>
-                    <button class="btn btn-secondary btn-sm" onclick="Modals.saveState()">Download JSON</button>
-                    <button class="btn btn-accent btn-sm" onclick="DebugModal.applyBoardOnly()"
-                        title="Modify only stage/resources">Apply Board Only</button>
-                    <button class="btn btn-primary btn-sm" onclick="applyDebugState()">Apply All</button>
+                    <button class="btn btn-secondary btn-sm" onclick="DebugModal.toggleDebugMode()" title="Engine Debug">Debug Mode</button>
+                    <button class="btn btn-secondary btn-sm" onclick="DebugModal.renderAll()" title="Refresh">Refresh</button>
                 </div>
-                <button class="close-btn" onclick="Modals.closeDebugModal()">✕</button>
+                <button class="close-btn" onclick="DebugModal.closeDebugModal()">✕</button>
             </div>
-            <div class="modal-body" style="padding: 0; display: flex; flex-direction: column;">
-                <div class="debug-tabs"
-                    style="display: flex; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border);">
-                    <button class="debug-tab-btn active"
-                        style="flex:1; padding: 10px; background: none; border: none; border-bottom: 2px solid var(--accent-blue); color: #fff; cursor: pointer;"
-                        onclick="switchDebugTab('flags')">Flags / Info</button>
-                    <button class="debug-tab-btn"
-                        style="flex:1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer;"
-                        onclick="switchDebugTab('bytecode')">Bytecode Log</button>
-                    <button class="debug-tab-btn"
-                        style="flex:1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer;"
-                        onclick="switchDebugTab('string')">State String</button>
-                    <button class="debug-tab-btn"
-                        style="flex:1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer;"
-                        onclick="switchDebugTab('json')">JSON Editor</button>
+
+            <div class="modal-body" style="padding: 0; display: flex; flex: 1; gap: 0; overflow: hidden; flex-direction: column;">
+                <div style="display: flex; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); gap: 0; flex-wrap: wrap;">
+                        <button data-tab-btn="inspector" onclick="DebugModal.switchTab('inspector')"
+                            style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid var(--accent-blue); color: #fff; cursor: pointer; font-size: 12px; font-weight: bold;">
+                            Inspector</button>
+                        <button data-tab-btn="trace" onclick="DebugModal.switchTab('trace')"
+                            style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 12px;">
+                            Trace</button>
+                        <button data-tab-btn="string" onclick="DebugModal.switchTab('string')"
+                            style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 12px;">
+                            State String</button>
+                        <button data-tab-btn="json" onclick="DebugModal.switchTab('json')"
+                            style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 12px;">
+                            JSON Editor</button>
                 </div>
 
-                <div id="debug-flags-tab" class="debug-tab-content" style="padding: 20px; overflow-y: auto; flex: 1;">
-                    <div id="debug-flags-content"></div>
-                </div>
-
-                <div id="debug-bytecode-tab" class="debug-tab-content"
-                    style="display: none; padding: 10px; font-family: monospace; font-size: 12px; background: #000; color: #0f0; overflow-y: auto; flex: 1;">
-                    <div id="debug-bytecode-content"></div>
-                </div>
-
-                <div id="debug-string-tab" class="debug-tab-content"
-                    style="display: none; padding: 20px; overflow-y: auto; flex: 1;">
-                    <div id="debug-string-content"></div>
-                </div>
-
-                <div id="debug-json-tab" class="debug-tab-content"
-                    style="display: none; padding: 10px; flex: 1; min-height: 0; flex-direction: column;">
-                    <div style="margin-bottom: 8px; display: flex; gap: 8px;">
-                        <button class="btn btn-secondary btn-xs" onclick="DebugModal.renderMinimalJSON()">Minimal Board
-                            (IDs only)</button>
-                        <button class="btn btn-secondary btn-xs" onclick="renderFullJSON()">Full State</button>
-                        <button class="btn btn-ai btn-xs" onclick="DebugModal.runModelAnalysis()">Analyze with
-                            Model</button>
+                <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0;">
+                    <div data-tab-pane="inspector" style="flex: 1; overflow-y: auto; display: block; min-height: 0;">
                     </div>
-                    <div id="debug-json-content" style="flex: 1; display: flex; flex-direction: column;">
-                        <textarea id="debug-json-textarea" spellcheck="false"
-                            style="flex: 1; width: 100%; height: 100%; background: #1a2332; color: #fff; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: monospace; font-size: 13px; resize: none;"></textarea>
-                    </div>
-                    <div id="debug-analysis-results"
-                        style="margin-top: 10px; max-height: 200px; overflow-y: auto; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border: 1px solid #444; display: none;">
-                    </div>
-                </div>
 
-                <div id="debug-string-content" class="debug-tab-content"
-                    style="display: none; padding: 10px; flex: 1; min-height: 200px;">
-                    <!-- Populated by DebugModal.js -->
+                    <div data-tab-pane="trace" style="flex: 1; overflow: hidden; display: none; min-height: 0;">
+                    </div>
+
+                    <div data-tab-pane="string" style="flex: 1; overflow-y: auto; display: none; min-height: 0;">
+                    </div>
+
+                    <div data-tab-pane="json" style="flex: 1; overflow: hidden; display: none; min-height: 0;">
+                    </div>
                 </div>
             </div>
         </div>

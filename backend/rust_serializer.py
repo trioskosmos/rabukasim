@@ -782,7 +782,11 @@ class RustGameStateSerializer:
                 # Count available options from legal mask range 570-579
                 if not params.get("options"):
                     num_options = sum(1 for i in range(570, 580) if i < len(legal_mask) and legal_mask[i])
-                    params = {**params, "options": [f"Option {i + 1}" for i in range(num_options)], "description": s["select_mode"]}
+                    params = {
+                        **params,
+                        "options": [f"Option {i + 1}" for i in range(num_options)],
+                        "description": s["select_mode"],
+                    }
                 # Keep type as SELECT_MODE for frontend handler
                 choice_type = "SELECT_MODE"
 

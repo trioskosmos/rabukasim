@@ -4,14 +4,14 @@ use std::sync::Arc;
 #[test]
 fn test_sumire_8752_repro() {
     let mut db = CardDatabase::default();
-    
+
     let sumire_id = 8752;
     let cheap_liella_id = 557;
 
     let mut sumire = MemberCard::default();
     sumire.card_id = sumire_id;
     sumire.groups = vec![3];
-    
+
     // Attribute: GROUP=3 (112) | TARGET=SELF (1) | VALUE_ENABLE (0x01000000) | 4 (0x08000000) | LE (0x40000000) | COST (0x80000000)
     // 0x80000000 | 0x40000000 | 0x08000000 | 0x01000000 | 113 = 0xC9000071
     let filter_attr: u64 = 0xC9000071;
@@ -52,10 +52,10 @@ fn test_sumire_8752_repro() {
     println!("--- Running Bytecode ---");
     let bc = Arc::new(db.members[&sumire_id].abilities[0].bytecode.clone());
     state.resolve_bytecode(&db, bc, &ctx);
-    
+
     println!("Hand size after DRAW: {}", state.players[p1].hand.len());
     println!("Interaction stack size: {}", state.interaction_stack.len());
-    
+
     if let Some(pending) = state.interaction_stack.last() {
         println!("Opcode: {}, ChoiceType: {:?}", pending.effect_opcode, pending.choice_type);
         assert_eq!(pending.effect_opcode, O_PLAY_MEMBER_FROM_DISCARD as i32);
@@ -67,11 +67,11 @@ fn test_sumire_8752_repro() {
     // Step 2: Choose the card from discard.
     // In a real game, this would be handled by handle_response which pops the interaction stack.
     state.interaction_stack.pop();
-    
+
     let mut resume_ctx = ctx.clone();
     resume_ctx.choice_index = 0; // Choose first matched card
     resume_ctx.program_counter = 5; // Pointing to O_PLAY_MEMBER_FROM_DISCARD
-    
+
     println!("--- Resuming for Slot Selection ---");
     let bc2 = Arc::new(db.members[&sumire_id].abilities[0].bytecode.clone());
     state.resolve_bytecode(&db, bc2, &resume_ctx);

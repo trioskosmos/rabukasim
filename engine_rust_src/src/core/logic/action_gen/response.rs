@@ -153,8 +153,8 @@ impl ResponseGenerator {
             }
             ChoiceType::SelectStageEmptyBaton => {
                 for i in 0..3 {
-                    if player.stage[i] == -1 
-                        && (player.prevent_play_to_slot_mask & (1 << i) as u8) == 0 
+                    if player.stage[i] == -1
+                        && (player.prevent_play_to_slot_mask & (1 << i) as u8) == 0
                         && player.baton_source_slots.contains(&i)
                     {
                         receiver.add_action(

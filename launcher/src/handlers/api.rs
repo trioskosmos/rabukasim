@@ -486,6 +486,22 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                 } else { status = 404; }
             } else { status = 400; }
         },
+        "api/debug/snapshot" => {
+            let room_id = get_header(&request, "X-Room-Id");
+            if let Some(rid) = room_id {
+                let rooms = state.rooms.lock().unwrap();
+                if let Some(room_arc) = rooms.get(&rid) {
+                    let room = room_arc.lock().unwrap();
+                    response_json = json!({
+                        "success": true,
+                        "raw_state": room.state.clone(),
+                        "trace_log": room.state.debug.trace_log.clone(),
+                        "bytecode_log": room.state.ui.bytecode_log.clone(),
+                        "debug_mode": room.state.debug.debug_mode,
+                    }).to_string();
+                } else { status = 404; }
+            } else { status = 400; }
+        },
         "api/debug/board_override" => {
             let room_id = get_header(&request, "X-Room-Id");
             if let Some(rid) = room_id {

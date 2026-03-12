@@ -36,7 +36,7 @@ stage: [i32; 3],  // In player.rs
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StageSlot {
     Left = 0,
-    Center = 1, 
+    Center = 1,
     Right = 2,
 }
 
@@ -73,7 +73,7 @@ let idx = if attr == 0 || attr == 7 { 6 } else if attr <= 6 { attr - 1 } else { 
 pub enum Color {
     #[default]
     Smile = 0,     // Red
-    Pure = 1,      // Green  
+    Pure = 1,      // Green
     Cool = 2,      // Blue
     Active = 3,
     Natural = 4,
@@ -350,7 +350,7 @@ pub const INVALID_CARD_ID: i32 = 0;
 
 The codebase already has good patterns in place:
 - `Phase` enum in [`core/enums.rs`](engine_rust_src/src/core/enums.rs)
-- `Zone` enum in [`core/enums.rs`](engine_rust_src/src/core/enums.rs) 
+- `Zone` enum in [`core/enums.rs`](engine_rust_src/src/core/enums.rs)
 - `TriggerType`, `EffectType`, `ConditionType` enums
 - `generated_constants.rs` for opcode and action ID bases
 - `constants.rs` for interpreter constants

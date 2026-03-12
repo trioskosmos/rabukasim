@@ -1,9 +1,12 @@
+import { DOMUtils } from './utils/DOMUtils.js';
+import { DOM_IDS } from './constants_dom.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     // Elements
-    const leftSidebar = document.getElementById('sidebar-left');
-    const rightSidebar = document.getElementById('sidebar-right');
-    const resizerLeft = document.getElementById('resizer-left');
-    const resizerRight = document.getElementById('resizer-right');
+    const leftSidebar = DOMUtils.getElement(DOM_IDS.SIDEBAR_LEFT);
+    const rightSidebar = DOMUtils.getElement(DOM_IDS.SIDEBAR_RIGHT);
+    const resizerLeft = DOMUtils.getElement(DOM_IDS.RESIZER_LEFT);
+    const resizerRight = DOMUtils.getElement(DOM_IDS.RESIZER_RIGHT);
 
     const STORAGE_KEY_LEFT = 'lovelive_layout_left_width';
     const STORAGE_KEY_RIGHT = 'lovelive_layout_right_width';
@@ -16,28 +19,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedLeftObj = localStorage.getItem(STORAGE_KEY_LEFT);
     const savedRightObj = localStorage.getItem(STORAGE_KEY_RIGHT);
 
-    if (savedLeftObj) leftSidebar.style.width = savedLeftObj + 'px';
-    if (savedRightObj) rightSidebar.style.width = savedRightObj + 'px';
+    if (savedLeftObj && leftSidebar) DOMUtils.setStyle(DOM_IDS.SIDEBAR_LEFT, 'width', savedLeftObj + 'px');
+    if (savedRightObj && rightSidebar) DOMUtils.setStyle(DOM_IDS.SIDEBAR_RIGHT, 'width', savedRightObj + 'px');
 
     // Drag State
     let isResizingLeft = false;
     let isResizingRight = false;
 
     // --- Left Resizer Logic ---
-    resizerLeft.addEventListener('mousedown', (e) => {
-        isResizingLeft = true;
-        resizerLeft.classList.add('resizing');
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none'; // Prevent text selection
-    });
+    if (resizerLeft) {
+        resizerLeft.addEventListener('mousedown', (e) => {
+            isResizingLeft = true;
+            resizerLeft.classList.add('resizing');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none'; // Prevent text selection
+        });
+    }
 
     // --- Right Resizer Logic ---
-    resizerRight.addEventListener('mousedown', (e) => {
-        isResizingRight = true;
-        resizerRight.classList.add('resizing');
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-    });
+    if (resizerRight) {
+        resizerRight.addEventListener('mousedown', (e) => {
+            isResizingRight = true;
+            resizerRight.classList.add('resizing');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        });
+    }
 
     // --- Global Mouse Move ---
     document.addEventListener('mousemove', (e) => {
@@ -45,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const containerWidth = window.innerWidth;
 
-        if (isResizingLeft) {
+            if (isResizingLeft && leftSidebar) {
             // New Width = Mouse X position
             let newWidth = e.clientX;
 
@@ -56,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
             leftSidebar.style.width = newWidth + 'px';
         }
 
-        if (isResizingRight) {
+            if (isResizingRight && rightSidebar) {
             // New Width = Container Width - Mouse X position
             let newWidth = containerWidth - e.clientX;
 
@@ -72,13 +79,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mouseup', () => {
         if (isResizingLeft) {
             isResizingLeft = false;
-            resizerLeft.classList.remove('resizing');
-            localStorage.setItem(STORAGE_KEY_LEFT, parseInt(leftSidebar.style.width));
+            if (resizerLeft) resizerLeft.classList.remove('resizing');
+            if (leftSidebar) localStorage.setItem(STORAGE_KEY_LEFT, parseInt(leftSidebar.style.width));
         }
         if (isResizingRight) {
             isResizingRight = false;
-            resizerRight.classList.remove('resizing');
-            localStorage.setItem(STORAGE_KEY_RIGHT, parseInt(rightSidebar.style.width));
+            if (resizerRight) resizerRight.classList.remove('resizing');
+            if (rightSidebar) localStorage.setItem(STORAGE_KEY_RIGHT, parseInt(rightSidebar.style.width));
         }
 
         document.body.style.cursor = '';
@@ -91,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 export function toggleSidebar() {
     const sidebars = document.querySelectorAll('.sidebar');
-    const btn = document.getElementById('mobile-sidebar-toggle');
+    const btn = DOMUtils.getElement(DOM_IDS.MOBILE_SIDEBAR_TOGGLE);
     if (!sidebars.length || !btn) return;
 
     let isActive = false;
@@ -115,22 +122,22 @@ export function toggleSidebar() {
  * Tabbed Board Switching
  */
 export function switchBoard(side) {
-    const playerBoard = document.getElementById('board-player');
-    const opponentBoard = document.getElementById('board-opponent');
-    const playerBtn = document.getElementById('btn-show-player');
-    const opponentBtn = document.getElementById('btn-show-opponent');
+    const playerBoard = DOMUtils.getElement(DOM_IDS.CONTAINER_BOARD_PLAYER);
+    const opponentBoard = DOMUtils.getElement(DOM_IDS.CONTAINER_BOARD_OPPONENT);
+    const playerBtn = DOMUtils.getElement(DOM_IDS.BTN_SHOW_PLAYER);
+    const opponentBtn = DOMUtils.getElement(DOM_IDS.BTN_SHOW_OPPONENT);
 
     if (!playerBoard || !opponentBoard || !playerBtn || !opponentBtn) return;
 
     if (side === 'player') {
-        playerBoard.style.display = 'block';
-        opponentBoard.style.display = 'none';
-        playerBtn.classList.add('active');
-        opponentBtn.classList.remove('active');
+        DOMUtils.show(DOM_IDS.CONTAINER_BOARD_PLAYER);
+        DOMUtils.hide(DOM_IDS.CONTAINER_BOARD_OPPONENT);
+        DOMUtils.addClass(DOM_IDS.BTN_SHOW_PLAYER, 'active');
+        DOMUtils.removeClass(DOM_IDS.BTN_SHOW_OPPONENT, 'active');
     } else {
-        playerBoard.style.display = 'none';
-        opponentBoard.style.display = 'block';
-        playerBtn.classList.remove('active');
-        opponentBtn.classList.add('active');
+        DOMUtils.hide(DOM_IDS.CONTAINER_BOARD_PLAYER);
+        DOMUtils.show(DOM_IDS.CONTAINER_BOARD_OPPONENT);
+        DOMUtils.removeClass(DOM_IDS.BTN_SHOW_PLAYER, 'active');
+        DOMUtils.addClass(DOM_IDS.BTN_SHOW_OPPONENT, 'active');
     }
 }

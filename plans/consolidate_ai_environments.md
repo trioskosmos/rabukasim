@@ -39,7 +39,7 @@ Consolidate backup/legacy files in `ai/environments/` and `ai/utils/` that are n
 ### ai/environments/
 ```
 vector_env.py       - Main CPU vector environment
-vector_env_gpu.py   - GPU vector environment  
+vector_env_gpu.py   - GPU vector environment
 vec_env_adapter.py - SB3-compatible wrapper
 rust_env_lite.py   - Rust engine lite version
 ```

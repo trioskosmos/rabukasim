@@ -1,18 +1,20 @@
 import json
 import subprocess
-import os
 import sys
 
 CONFIG_PATH = "engine_rust_src/sequencer_config.json"
 SIM_CMD = "cargo run --bin full_game_sim"
 
+
 def load_config():
     with open(CONFIG_PATH, "r") as f:
         return json.load(f)
 
+
 def save_config(config):
     with open(CONFIG_PATH, "w") as f:
         json.dump(config, f, indent=2)
+
 
 def run_simulation():
     print(f"Running simulation: {SIM_CMD}...")
@@ -22,6 +24,7 @@ def run_simulation():
         print(result.stderr)
         return None
     return result.stdout
+
 
 def parse_results(output):
     lines = output.splitlines()
@@ -34,6 +37,7 @@ def parse_results(output):
         if "Winning Player:" in line:
             results["winner"] = line.split("Winning Player:")[1].strip()
     return results
+
 
 def main():
     if len(sys.argv) < 3:
@@ -73,6 +77,7 @@ def main():
         print("\nFull output saved to reports/tune_result.txt")
         with open("reports/tune_result.txt", "w", encoding="utf-8") as f:
             f.write(output)
+
 
 if __name__ == "__main__":
     main()

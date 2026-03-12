@@ -1,15 +1,16 @@
 import { State } from '../state.js';
 import * as i18n from '../i18n/index.js';
 import { Tooltips } from '../ui_tooltips.js';
+import { DOMUtils } from '../utils/DOMUtils.js';
+import { DOM_IDS } from '../constants_dom.js';
+import { ModalManager } from '../utils/ModalManager.js';
 
 export const LogViewerModal = {
     init: () => {
         // Initialize modal if needed
-        const modal = document.getElementById('log-viewer-modal');
+        const modal = DOMUtils.getElement(DOM_IDS.MODAL_LOG_VIEWER);
         if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) LogViewerModal.close();
-            });
+            ModalManager.setupBackdropClose(DOM_IDS.MODAL_LOG_VIEWER, LogViewerModal.close);
         }
         // Load metadata enums for enhanced annotations
         LogViewerModal._metadata = null;
@@ -45,15 +46,14 @@ export const LogViewerModal = {
     },
 
     open: (focusedGroupId = null) => {
-        const modal = document.getElementById('log-viewer-modal');
-        if (!modal) return;
-        
-        modal.style.display = 'flex';
-        const contentContainer = document.getElementById('log-viewer-content');
+        const modalShown = ModalManager.show(DOM_IDS.MODAL_LOG_VIEWER);
+        if (!modalShown) return;
+
+        const contentContainer = DOMUtils.getElement(DOM_IDS.LOG_VIEWER_CONTENT);
         if (!contentContainer) return;
 
         LogViewerModal.renderLogs(contentContainer, focusedGroupId);
-        
+
         // Focus on specific group if provided
         if (focusedGroupId) {
             setTimeout(() => {
@@ -68,8 +68,7 @@ export const LogViewerModal = {
     },
 
     close: () => {
-        const modal = document.getElementById('log-viewer-modal');
-        if (modal) modal.style.display = 'none';
+        ModalManager.hide(DOM_IDS.MODAL_LOG_VIEWER);
     },
 
     renderLogs: (container, focusedGroupId) => {
@@ -84,7 +83,7 @@ export const LogViewerModal = {
         const legacyLog = state.rule_log || [];
         const structured = state.turn_history || [];
 
-        container.innerHTML = '';
+        DOMUtils.clear(container.id || DOM_IDS.LOG_VIEWER_CONTENT);
         const fragment = document.createDocumentFragment();
 
         // Add search and filter bar
@@ -112,22 +111,22 @@ export const LogViewerModal = {
 
                 if (executionId) {
                     if (!currentGroup || currentGroup.id !== executionId) {
-                        currentGroup = { 
-                            id: executionId, 
-                            entries: [], 
+                        currentGroup = {
+                            id: executionId,
+                            entries: [],
                             turnNumber,
-                            fullEntry: entry 
+                            fullEntry: entry
                         };
                         groupedLogs.push(currentGroup);
                     }
                     currentGroup.entries.push(body);
                 } else {
                     currentGroup = null;
-                    groupedLogs.push({ 
-                        entry, 
-                        body, 
+                    groupedLogs.push({
+                        entry,
+                        body,
                         turnNumber,
-                        isStandalone: true 
+                        isStandalone: true
                     });
                 }
             });
@@ -140,16 +139,16 @@ export const LogViewerModal = {
         groupedLogs.forEach((group, idx) => {
             if (group.entries) {
                 const blockEl = LogViewerModal.createExpandedLogBlock(
-                    group, 
-                    currentLang, 
+                    group,
+                    currentLang,
                     showFriendlyAbilities,
                     focusedGroupId
                 );
                 logContent.appendChild(blockEl);
             } else {
                 const entryEl = LogViewerModal.createStandaloneEntry(
-                    group, 
-                    currentLang, 
+                    group,
+                    currentLang,
                     showFriendlyAbilities
                 );
                 logContent.appendChild(entryEl);
@@ -163,19 +162,19 @@ export const LogViewerModal = {
     createFilterBar: () => {
         const bar = document.createElement('div');
         bar.className = 'log-viewer-filter-bar';
-        
+
         bar.innerHTML = `
-            <input type="text" 
-                   class="log-viewer-search" 
-                   placeholder="${i18n.t('search') || 'Search logs...'}"
+            <input type="text"
+                   class="log-viewer-search"
+                   placeholder="${i18n.t('search') || 'Search logs...' }"
                    onkeyup="LogViewerModal.filterLogs(this.value)">
             <div style="display: flex; gap: 8px;">
                 <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem;">
-                    <input type="checkbox" id="filter-trigger" checked onchange="LogViewerModal.filterLogs()">
+                    <input type="checkbox" id="${DOM_IDS.FILTER_TRIGGER}" checked onchange="LogViewerModal.filterLogs()">
                     <span data-i18n="triggers">トリガー</span>
                 </label>
                 <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem;">
-                    <input type="checkbox" id="filter-effect" checked onchange="LogViewerModal.filterLogs()">
+                    <input type="checkbox" id="${DOM_IDS.FILTER_EFFECT}" checked onchange="LogViewerModal.filterLogs()">
                     <span data-i18n="effects">効果</span>
                 </label>
             </div>
@@ -185,8 +184,8 @@ export const LogViewerModal = {
 
     filterLogs: (searchText = '') => {
         const entries = document.querySelectorAll('.log-viewer-entries > div');
-        const filterTrigger = document.getElementById('filter-trigger')?.checked ?? true;
-        const filterEffect = document.getElementById('filter-effect')?.checked ?? true;
+        const filterTrigger = DOMUtils.getElement(DOM_IDS.FILTER_TRIGGER)?.checked ?? true;
+        const filterEffect = DOMUtils.getElement(DOM_IDS.FILTER_EFFECT)?.checked ?? true;
         const searchLower = searchText.toLowerCase();
 
         entries.forEach(entry => {
@@ -209,7 +208,7 @@ export const LogViewerModal = {
 
     createExpandedLogBlock: (group, currentLang, showFriendlyAbilities, focusedGroupId) => {
         const isExpanded = focusedGroupId && parseInt(focusedGroupId) === parseInt(group.id);
-        
+
         const block = document.createElement('div');
         block.className = `log-viewer-block log-entry-trigger ${isExpanded ? 'expanded' : ''}`;
         block.setAttribute('data-group-id', group.id);
@@ -219,8 +218,8 @@ export const LogViewerModal = {
 
         // Parse and enhance header
         const enhancedHeader = LogViewerModal.enhanceAbilityDescription(
-            headerEntry, 
-            currentLang, 
+            headerEntry,
+            currentLang,
             showFriendlyAbilities,
             group.fullEntry
         );
@@ -244,8 +243,8 @@ export const LogViewerModal = {
 
             detailEntries.forEach((detail, idx) => {
                 const enhancedDetail = LogViewerModal.enhanceAbilityDescription(
-                    detail, 
-                    currentLang, 
+                    detail,
+                    currentLang,
                     showFriendlyAbilities
                 );
 
@@ -276,10 +275,10 @@ export const LogViewerModal = {
     createStandaloneEntry: (group, currentLang, showFriendlyAbilities) => {
         const div = document.createElement('div');
         div.className = 'log-viewer-standalone log-entry-effect';
-        
+
         const enhanced = LogViewerModal.enhanceAbilityDescription(
-            group.body, 
-            currentLang, 
+            group.body,
+            currentLang,
             showFriendlyAbilities
         );
 
@@ -296,7 +295,7 @@ export const LogViewerModal = {
 
     enhanceAbilityDescription: (text, currentLang, showFriendlyAbilities, fullEntryRaw = null) => {
         // Parse and provide human-readable condition + result format
-        
+
         // Look for ability trigger patterns
         const triggerMatch = text.match(/\[Trigger:(\d+)\](.*?): (.*)/i) ||
                             text.match(/\[Rule (.*?)\](.*?): (.*)/i) ||

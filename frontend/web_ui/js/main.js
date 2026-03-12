@@ -10,6 +10,9 @@ import { Modals } from './ui_modals.js';
 import { Replay } from './replay_system.js';
 import { toggleSidebar, switchBoard } from './layout.js';
 import { loadTranslations } from './i18n/index.js';
+import { DOMUtils } from './utils/DOMUtils.js';
+import { ModalManager } from './utils/ModalManager.js';
+import { DOM_IDS, COLORS } from './constants_dom.js';
 
 // Global UI object for layout/switching
 window.UI = {
@@ -29,36 +32,55 @@ const fetchState = Network.fetchState;
 // Polling Logic
 let pollingTimeout = null;
 
+// Cache debug elements for performance
+const debugElements = {
+    sync: null,
+    room: null,
+    session: null,
+    view: null,
+    poll: null,
+    delay: null
+};
+
+function initializeDebugElementCache() {
+    debugElements.sync = DOMUtils.getElement(DOM_IDS.DEBUG_SYNC);
+    debugElements.room = DOMUtils.getElement(DOM_IDS.DEBUG_ROOM);
+    debugElements.session = DOMUtils.getElement(DOM_IDS.DEBUG_SESSION);
+    debugElements.view = DOMUtils.getElement(DOM_IDS.DEBUG_VIEW);
+    debugElements.poll = DOMUtils.getElement(DOM_IDS.DEBUG_POLL);
+    debugElements.delay = DOMUtils.getElement(DOM_IDS.DEBUG_DELAY);
+}
+
 function updatePolling() {
     if (pollingTimeout) clearTimeout(pollingTimeout);
+    if (!debugElements.sync) initializeDebugElementCache();
 
     let heartbeat = 0;
     const poll = async () => {
         try {
             heartbeat++;
 
-            // Phase 5: SYNC Check
-            const syncEl = document.getElementById('debug-sync');
-            if (syncEl) {
-                const isSynced = (window.StateMaster === State);
-                syncEl.textContent = isSynced ? 'OK' : 'MISMATCH';
-                syncEl.style.color = isSynced ? '#00ff00' : '#ff0000';
+            // Batch debug info updates
+            const isSynced = (window.StateMaster === State);
+            const debugUpdates = {
+                [DOM_IDS.DEBUG_SYNC]: isSynced ? 'OK' : 'MISMATCH',
+                [DOM_IDS.DEBUG_ROOM]: String(State.roomCode) || 'NULL',
+                [DOM_IDS.DEBUG_SESSION]: State.sessionToken ? 'VALID' : 'MISSING',
+                [DOM_IDS.DEBUG_VIEW]: `P${State.perspectivePlayer + 1}`,
+                [DOM_IDS.DEBUG_POLL]: heartbeat,
+                [DOM_IDS.DEBUG_DELAY]: State.offlineMode ? 'OFFLINE' : (State.replayMode ? 'REPLAY' : 'LIVE')
+            };
+            DOMUtils.updateText(debugUpdates);
+
+            // Update sync color
+            if (debugElements.sync) {
+                debugElements.sync.style.color = isSynced ? '#00ff00' : '#ff0000';
             }
 
-            // Phase 4: Update Debug Overlay
-            const roomEl = document.getElementById('debug-room');
-            if (roomEl) roomEl.textContent = String(State.roomCode) || 'NULL';
-            const sessEl = document.getElementById('debug-session');
-            if (sessEl) sessEl.textContent = State.sessionToken ? 'VALID' : 'MISSING';
-            const viewEl = document.getElementById('debug-view');
-            if (viewEl) viewEl.textContent = `P${State.perspectivePlayer + 1}`;
-            const pollEl = document.getElementById('debug-poll');
-            if (pollEl) pollEl.textContent = heartbeat;
-
-            // Phase 6: Expanded Visibility
-            const delayEl = document.getElementById('debug-delay');
-            if (delayEl) delayEl.textContent = (State.offlineMode ? 'OFFLINE' : (State.replayMode ? 'REPLAY' : 'LIVE'));
-            if (delayEl) delayEl.style.color = (State.offlineMode || State.replayMode) ? '#f1c40f' : '#00ff00';
+            // Update delay color
+            if (debugElements.delay) {
+                debugElements.delay.style.color = (State.offlineMode || State.replayMode) ? COLORS.ACCENT_GOLD : '#00ff00';
+            }
 
             // Verbose logging for Phase 6
             console.log(`[Poll#${heartbeat}] room="${State.roomCode}" | offline=${State.offlineMode} | replay=${State.replayMode} | sync=${window.StateMaster === State}`);
@@ -108,8 +130,7 @@ export async function initialize() {
     try {
         // 0. Load translations
         console.log("[Init] Loading translations...");
-        const defaultLang = localStorage.getItem('lovelive_lang') || 'jp';
-        await loadTranslations(defaultLang);
+        await loadTranslations(State.currentLang);
 
         // 0.5 Start Adaptive Polling (PROMOTED to first step)
         console.log("[Init] Starting polling (immediate)...");
@@ -121,9 +142,8 @@ export async function initialize() {
         Replay.setRenderCallback(Rendering.render);
 
         Network.setRoomUpdateCallback(() => {
-            const roomCodeEl = document.getElementById('room-code-header');
-            const roomDisplay = document.getElementById('room-display');
-            if (roomCodeEl) roomCodeEl.textContent = State.roomCode || '---';
+            DOMUtils.setText(DOM_IDS.ROOM_CODE_HEADER, State.roomCode || '---');
+            const roomDisplay = DOMUtils.getElement(DOM_IDS.ROOM_DISPLAY);
             if (roomDisplay) roomDisplay.style.display = State.roomCode ? 'flex' : 'none';
             Rendering.render();
         });
@@ -181,13 +201,11 @@ export async function initialize() {
         // Show Lobby if not in a room and not in offline mode
         if (!State.roomCode && !State.offlineMode && !State.replayMode) {
             console.log("[Init] No room detected, showing lobby.");
-            const roomModal = document.getElementById('room-modal');
-            if (roomModal) roomModal.style.display = 'flex';
+            ModalManager.show(DOM_IDS.MODAL_ROOM);
         }
     } catch (e) {
         console.error("[Init] Initialization Failed:", e);
-        const roomModal = document.getElementById('room-modal');
-        if (roomModal) roomModal.style.display = 'flex';
+        ModalManager.show(DOM_IDS.MODAL_ROOM);
     }
 
     console.log("[Init] Done.");
@@ -278,9 +296,8 @@ window.togglePerspective = () => {
 
 window.setPerspective = (id) => {
     State.perspectivePlayer = parseInt(id);
-    document.getElementById('perspective-modal').style.display = 'none';
-    const btn = document.getElementById('switch-btn');
-    if (btn) btn.textContent = `View: P${State.perspectivePlayer + 1}`;
+    ModalManager.hide(DOM_IDS.MODAL_PERSPECTIVE);
+    DOMUtils.setText(DOM_IDS.SWITCH_BTN, `View: P${State.perspectivePlayer + 1}`);
     fetchState();
 };
 

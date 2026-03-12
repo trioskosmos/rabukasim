@@ -1025,6 +1025,13 @@ class Ability:
                     ]
                 )
             else:
+                # SYSTEMIC FIX: Ensure filter is packed if present in params for generic effects
+                # This fixes data loss for ADD_BLADES, ADD_HEARTS, BOOST_SCORE etc when they carry a filter.
+                if "filter" in eff.params and attr == 0:
+                    attr_val = self._pack_filter_attr(eff)
+                    if eff.is_optional or eff.params.get("is_optional"):
+                        attr_val |= EXTRA_CONSTANTS.get("FILTER_IS_OPTIONAL", 1 << 61)
+
                 # Fix: Default MOVE_TO_DISCARD for members to 1
                 if (
                     op == Opcode.MOVE_TO_DISCARD
@@ -1064,6 +1071,14 @@ class Ability:
             }
             if target_str in target_map:
                 eff.target = target_map[target_str]
+            elif "MEMBER" in target_str:
+                if "OTHER" in target_str:
+                    eff.target = TargetType.MEMBER_OTHER
+                else:
+                    eff.target = TargetType.MEMBER_SELECT
+            
+            # Update slot_params with the new target
+            slot_params["target_slot"] = eff.target.value if hasattr(eff.target, "value") else int(eff.target)
 
     def _resolve_effect_source_zone(self, eff: Effect, slot_params: Dict[str, Any]):
         """--- Zone Relocation ---"""
@@ -1286,6 +1301,13 @@ class Ability:
             filter_obj["target_player"] = 1
         else:
             filter_obj["target_player"] = 0  # Parity Fix: Default to 0 (Unspecified)
+
+        # Check for ANY_STAGE area parameter which indicates checking both players' stages
+        area_val = params.get("area") or params_upper.get("AREA")
+        if area_val:
+            area_str = str(area_val).upper()
+            if "ANY_STAGE" in area_str:
+                filter_obj["target_player"] = 3  # BOTH players' stages
 
         # 2. Card Type (Bits 2-3)
         ctype = str(params.get("type") or params.get("card_type") or "").lower()

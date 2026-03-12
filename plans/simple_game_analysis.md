@@ -2,7 +2,7 @@
 
 ## Problem
 The game gives a score but doesn't actually play any cards in sequence. Looking at the output:
-- DFS explores nodes (41, 42, 193, etc.) 
+- DFS explores nodes (41, 42, 193, etc.)
 - But Main phase has no card plays - goes directly to LiveSet
 - Score stays at P0=0 P1=0
 
@@ -73,7 +73,7 @@ graph TD
     J -->|No| L[Return]
     K --> D
     E -->|No| M[Evaluate other phases]
-    
+
     style F fill:#ff9999
     style H fill:#ff9999
 ```

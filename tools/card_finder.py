@@ -107,6 +107,7 @@ def main():
     parser.add_argument("queries", nargs="+", help="Card No, URL, Packed ID, or Logic ID (one or more)")
     parser.add_argument("-o", "--output", help="Write report(s) to folder or specific file (if single query)", type=str)
     parser.add_argument("--json", action="store_true", help="Output raw JSON for the first matched card and exit")
+    parser.add_argument("--legacy", action="store_true", help="Output legacy verbose terminal format instead of AI-optimized markdown")
 
     args = parser.parse_args()
 
@@ -234,13 +235,19 @@ def main():
                 shared_cards,
                 rust_tests,
             )
+        elif args.legacy:
+            display_card_legacy(
+                query, raw, compiled, cid, manual_pseudo, consolidated_pseudo, related_qas, shared_cards, rust_tests
+            )
         else:
-            display_card(
+            display_card_ai(
                 query, raw, compiled, cid, manual_pseudo, consolidated_pseudo, related_qas, shared_cards, rust_tests
             )
 
 
-def display_card(query, raw, compiled, cid, manual_pseudo, consolidated_pseudo, related_qas, shared_cards, rust_tests):
+def display_card_legacy(
+    query, raw, compiled, cid, manual_pseudo, consolidated_pseudo, related_qas, shared_cards, rust_tests
+):
     print(f"\n[ CARD: {compiled.get('card_no') if compiled else query} ]")
     if cid is not None:
         packed_id = int(cid)
@@ -301,6 +308,56 @@ def display_card(query, raw, compiled, cid, manual_pseudo, consolidated_pseudo, 
         print(json.dumps(compiled, indent=2, ensure_ascii=False))
     else:
         print("NOT FOUND IN COMPILED DATA")
+
+
+def display_card_ai(query, raw, compiled, cid, manual_pseudo, consolidated_pseudo, related_qas, shared_cards, rust_tests):
+    """Output a dense, structured markdown summary optimized for AI consumption."""
+    card_no = compiled.get("card_no") if compiled else raw.get("card_no") if raw else query
+    print(f"\n### Card Analysis: {card_no}")
+
+    if cid is not None:
+        packed_id = int(cid)
+        logic_id = packed_id & 0x0FFF
+        variant = packed_id >> 12
+        print(f"- **IDs**: Packed=`{packed_id}`, Logic=`{logic_id}`, Var=`{variant}`")
+
+    if raw:
+        print(f"- **Name**: {raw.get('name')}")
+        print(f"- **JP Ability**: {raw.get('ability').replace('\n', ' ')}")
+
+        # Pseudocode resolution
+        ab_norm = raw.get("ability", "").strip()
+        pseudo = ""
+        if card_no in manual_pseudo:
+            pseudo = manual_pseudo[card_no].get("pseudocode")
+            print(f"- **Pseudocode (Manual)**: `{pseudo}`")
+        elif ab_norm in consolidated_pseudo:
+            pseudo = consolidated_pseudo[ab_norm]
+            if isinstance(pseudo, dict):
+                pseudo = pseudo.get("pseudocode", "")
+            print(f"- **Pseudocode (Consolidated)**: `{pseudo}`")
+        else:
+            pseudo = raw.get("pseudocode", "")
+            print(f"- **Pseudocode (Raw)**: `{pseudo}`")
+
+    if compiled:
+        for i, ab in enumerate(compiled.get("abilities", [])):
+            trigger_id = ab.get("trigger", 0)
+            bytecode = ab.get("bytecode", [])
+            print(f"\n#### Ability {i} (Trigger: {trigger_id})")
+            print(f"**Bytecode**: `{bytecode}`")
+            print("**Decoded**:")
+            print("```")
+            print(decode_bytecode(bytecode))
+            print("```")
+
+    if related_qas:
+        print(f"- **QA Rulings**: {len(related_qas)} items found.")
+
+    if rust_tests:
+        print(f"- **Rust Tests**: {', '.join(rust_tests[:3])}{'...' if len(rust_tests) > 3 else ''}")
+
+    print("\n---\n")
 
 
 def generate_report(

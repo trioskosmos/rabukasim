@@ -62,7 +62,7 @@ fn run_diagnostic_turn(
     let legal_actions = state.get_legal_action_ids(db).len();
 
     let start = Instant::now();
-    let (_evals, _best_seq, total_nodes, breakdown) = TurnSequencer::plan_full_turn(state, db);
+    let (_best_seq, _best_val, breakdown, total_nodes) = TurnSequencer::plan_full_turn(state, db);
     let elapsed_us = start.elapsed().as_micros();
 
     TurnStats {

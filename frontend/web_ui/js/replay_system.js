@@ -202,6 +202,108 @@ export const Replay = {
     }
 };
 
+/**
+ * Export current game state with undo/redo history in minimal JSON format.
+ * Generates a minimal state JSON suitable for board editing and sharing.
+ */
+export const GameExport = {
+    exportCurrentGame: async () => {
+        try {
+            const { Network } = await import('./network.js');
+            const data = await Network.exportGame();
+            if (!data) {
+                log('Failed to export game');
+                return null;
+            }
+            
+            // Create minimal export format
+            const minimal = {
+                timestamp: data.export_timestamp,
+                mode: data.game_mode,
+                state: data.current_state,
+                history: data.history || [],
+                history_index: data.history_index || 0,
+            };
+            
+            log(`Game exported: ${Object.keys(minimal.state).length} state fields`);
+            return minimal;
+        } catch (e) {
+            log(`Export error: ${e.message}`);
+            return null;
+        }
+    },
+
+    downloadGameAsJSON: async () => {
+        const data = await GameExport.exportCurrentGame();
+        if (!data) return;
+        
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `game_export_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        log('Game exported to file');
+    },
+
+    copyGameToClipboard: async () => {
+        const data = await GameExport.exportCurrentGame();
+        if (!data) return;
+        
+        const json = JSON.stringify(data);
+        try {
+            await navigator.clipboard.writeText(json);
+            log('Game copied to clipboard');
+        } catch (e) {
+            log(`Failed to copy: ${e.message}`);
+        }
+    },
+
+    importGameFromPaste: async (jsonText) => {
+        try {
+            const data = JSON.parse(jsonText);
+            if (!data.state) {
+                throw new Error('Invalid export format: missing state');
+            }
+            
+            const { Network } = await import('./network.js');
+            const success = await Network.importGame(data);
+            if (success) {
+                log('Game imported successfully');
+            } else {
+                log('Failed to import game');
+            }
+            return success;
+        } catch (e) {
+            log(`Import error: ${e.message}`);
+            return false;
+        }
+    },
+
+    importGameFromFile: async (input) => {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const success = await GameExport.importGameFromPaste(e.target.result);
+                if (success && typeof onRender === 'function') {
+                    onRender();
+                }
+            } catch(err) {
+                log(`Error reading file: ${err.message}`);
+            }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    },
+};
+
 // Keyboard listener
 if (typeof window !== 'undefined') {
     window.addEventListener('keydown', (e) => {

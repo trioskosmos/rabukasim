@@ -111,7 +111,7 @@ fn main() {
     let mut turn = 0;
 
     while !state.is_terminal() && state.players[0].score < 3 && state.players[1].score < 3  && turn < max_turns {
-        println!("┌─ Turn {} (P{}) Score: P0={} P1={}", 
+        println!("┌─ Turn {} (P{}) Score: P0={} P1={}",
             state.turn, state.current_player, state.players[0].score, state.players[1].score);
 
         if state.phase != Phase::Main {
@@ -122,10 +122,10 @@ fn main() {
         }
 
         // ─ MAIN PHASE ─
-        let (_evals, best_seq, nodes, (board_score, live_ev)) = TurnSequencer::plan_full_turn(&state, &db);
-        println!("│  Main Phase: {} legal actions, {} DFS nodes", 
+        let (best_seq, _best_val, (board_score, live_ev), nodes) = TurnSequencer::plan_full_turn(&state, &db);
+        println!("│  Main Phase: {} legal actions, {} DFS nodes",
             state.get_legal_action_ids(&db).len(), nodes);
-        println!("│    Best Score: Board={:.2} + Live={:.2} = {:.2}", 
+        println!("│    Best Score: Board={:.2} + Live={:.2} = {:.2}",
             board_score, live_ev, board_score + live_ev);
 
         // Execute best sequence
@@ -172,7 +172,7 @@ fn main() {
             }
         }
 
-        println!("│  End-of-turn Score: P0={} P1={}", 
+        println!("│  End-of-turn Score: P0={} P1={}",
             state.players[0].score, state.players[1].score);
         println!("└─ Turn {} Complete\n", state.turn);
 

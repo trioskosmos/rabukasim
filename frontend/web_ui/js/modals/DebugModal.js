@@ -1,76 +1,211 @@
 import { State } from '../state.js';
-import { fixImg } from '../constants.js';
 import { Network } from '../network.js';
+import {
+    ChoiceTypes,
+    ConditionTypes,
+    CostTypes,
+    ExtraConstants,
+    Opcodes,
+    Phases,
+    TargetType,
+    TriggerType,
+} from '../generated_constants.js';
 
-// Metadata Constants for Debug Display (mirrors data/metadata.json)
-const DEBUG_CONSTANTS = {
-    // Ability Effect Flags
-    FLAG_DRAW: 1,
-    FLAG_SEARCH: 2,
-    FLAG_RECOVER: 4,
-    FLAG_BUFF: 8,
-    FLAG_CHARGE: 16,
-    FLAG_TEMPO: 32,
-    FLAG_REDUCE: 64,
-    FLAG_BOOST: 128,
-    FLAG_TRANSFORM: 256,
-    FLAG_WIN_COND: 512,
-    FLAG_MOVE: 1024,
-    FLAG_TAP: 2048,
-    // Cost Flags
-    COST_FLAG_DISCARD: 1,
-    COST_FLAG_TAP: 2,
-    // Choice Flags
-    CHOICE_FLAG_LOOK: 1,
-    CHOICE_FLAG_DISCARD: 2,
-    CHOICE_FLAG_MODE: 4,
-    CHOICE_FLAG_COLOR: 8,
-    CHOICE_FLAG_ORDER: 16,
-    // Synergy Flags
-    SYN_FLAG_GROUP: 1,
-    SYN_FLAG_COLOR: 2,
-    SYN_FLAG_BATON: 4,
-    SYN_FLAG_CENTER: 8,
-    SYN_FLAG_LIFE_LEAD: 16,
-    // Filter Flags (partial)
-    FILTER_TYPE_MEMBER: 4,
-    FILTER_TYPE_LIVE: 8,
-    FILTER_GROUP_ENABLE: 16,
-    FILTER_TAPPED: 4096,
-    FILTER_HAS_BLADE_HEART: 8192,
-    FILTER_NOT_HAS_BLADE_HEART: 16384,
-    FILTER_UNIQUE_NAMES: 32768,
-    FILTER_UNIT_ENABLE: 65536,
-    // Area Constants
-    AREA_LEFT: 1,
-    AREA_CENTER: 2,
-    AREA_RIGHT: 3,
-    // Zones
-    ZONE_MASK_STAGE: 4,
-    ZONE_MASK_HAND: 6,
-    ZONE_MASK_DISCARD: 7,
+const buildReverseLookup = (source) => Object.fromEntries(
+    Object.entries(source)
+        .filter(([key, value]) => typeof value === 'number' && !/^[-]?\d+$/.test(key))
+        .map(([key, value]) => [value, key])
+);
+
+const TRIGGER_NAMES = buildReverseLookup(TriggerType);
+const CONDITION_NAMES = buildReverseLookup(ConditionTypes);
+const EFFECT_NAMES = buildReverseLookup(Opcodes);
+const COST_NAMES = buildReverseLookup(CostTypes);
+const CHOICE_NAMES = buildReverseLookup(ChoiceTypes);
+const TARGET_NAMES = buildReverseLookup(TargetType);
+const PHASE_NAMES = buildReverseLookup(Phases);
+
+const pickBits = (names) => names
+    .filter((name) => Number.isSafeInteger(ExtraConstants[name]))
+    .map((name) => ({ name, value: ExtraConstants[name] }));
+
+const ABILITY_FLAG_BITS = pickBits([
+    'FLAG_DRAW',
+    'FLAG_SEARCH',
+    'FLAG_RECOVER',
+    'FLAG_BUFF',
+    'FLAG_CHARGE',
+    'FLAG_TEMPO',
+    'FLAG_REDUCE',
+    'FLAG_BOOST',
+    'FLAG_TRANSFORM',
+    'FLAG_WIN_COND',
+    'FLAG_MOVE',
+    'FLAG_TAP',
+]);
+
+const COST_FLAG_BITS = pickBits(['COST_FLAG_DISCARD', 'COST_FLAG_TAP']);
+const CHOICE_FLAG_BITS = pickBits(['CHOICE_FLAG_LOOK', 'CHOICE_FLAG_DISCARD', 'CHOICE_FLAG_MODE', 'CHOICE_FLAG_COLOR', 'CHOICE_FLAG_ORDER']);
+const SYNERGY_FLAG_BITS = pickBits(['SYN_FLAG_GROUP', 'SYN_FLAG_COLOR', 'SYN_FLAG_BATON', 'SYN_FLAG_CENTER', 'SYN_FLAG_LIFE_LEAD']);
+const FILTER_FLAG_BITS = pickBits([
+    'FILTER_TYPE_MEMBER',
+    'FILTER_TYPE_LIVE',
+    'FILTER_GROUP_ENABLE',
+    'FILTER_TAPPED',
+    'FILTER_HAS_BLADE_HEART',
+    'FILTER_NOT_HAS_BLADE_HEART',
+    'FILTER_UNIQUE_NAMES',
+    'FILTER_UNIT_ENABLE',
+    'FILTER_COST_ENABLE',
+    'FILTER_COST_LE',
+    'FILTER_BLADE_FILTER_FLAG',
+    'FILTER_ANY_STAGE',
+    'FILTER_OPPONENT',
+    'FILTER_REVEALED_CONTEXT',
+    'FILTER_TOTAL_COST',
+    'FILTER_COST_TYPE_FLAG',
+    'FILTER_IS_OPTIONAL',
+]);
+
+const cloneDeep = (value) => JSON.parse(JSON.stringify(value));
+
+const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const summarizeObject = (value) => {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    return JSON.stringify(value);
+};
+
+const formatPacked = (value) => {
+    if (value === undefined || value === null) return '0';
+    if (typeof value !== 'number' || !Number.isFinite(value)) return summarizeObject(value);
+    return `0x${value.toString(16)}`;
+};
+
+const decodeBitmask = (value, bits) => {
+    if (!Number.isSafeInteger(value) || value <= 0) return [];
+    return bits
+        .filter((bit) => bit.value !== 0 && (value & bit.value) === bit.value)
+        .map((bit) => bit.name);
+};
+
+const renderChips = (items, accent = '#7dd3fc') => {
+    if (!items || items.length === 0) {
+        return '<span style="opacity:0.45; font-size:10px;">none</span>';
+    }
+
+    return items.map((item) => `
+        <span style="display:inline-flex; align-items:center; padding:2px 7px; border-radius:999px; border:1px solid ${accent}; color:${accent}; background:rgba(0,0,0,0.22); font-size:10px; line-height:1.2;">${escapeHtml(item)}</span>
+    `).join('');
+};
+
+const zoneDefinitions = (player) => [
+    { key: 'stage', label: 'Stage', cards: player?.stage || [] },
+    { key: 'live', label: 'Live', cards: player?.live_zone || [] },
+    { key: 'hand', label: 'Hand', cards: player?.hand || [] },
+    { key: 'success', label: 'Success', cards: player?.success_lives || player?.success_zone || player?.success_pile || [] },
+    { key: 'energy', label: 'Energy', cards: player?.energy || [] },
+    { key: 'discard', label: 'Discard', cards: player?.discard || [] },
+    { key: 'looked', label: 'Looked', cards: player?.looked_cards || [] },
+];
+
+const extractScalarEntries = (value) => Object.entries(value || {})
+    .filter(([, item]) => item === null || ['string', 'number', 'boolean'].includes(typeof item));
+
+const describeNumber = (key, value, itemType) => {
+    if (key === 'trigger') return `${TRIGGER_NAMES[value] || value} (${value})`;
+    if (key === 'condition_type') return `${CONDITION_NAMES[value] || value} (${value})`;
+    if (key === 'effect_type') return `${EFFECT_NAMES[value] || value} (${value})`;
+    if (key === 'cost_type') return `${COST_NAMES[value] || value} (${value})`;
+    if (key === 'choice_type' || key === 'choice') return `${CHOICE_NAMES[value] || value} (${value})`;
+    if (key === 'target') return `${TARGET_NAMES[value] || value} (${value})`;
+    if (key === 'phase') return `${PHASE_NAMES[value] || value} (${value})`;
+    if (key.includes('flags') || key.includes('filter') || key === 'attr') {
+        const bits = key.startsWith('choice')
+            ? CHOICE_FLAG_BITS
+            : (itemType === 'cost' && key.includes('flag'))
+                ? COST_FLAG_BITS
+                : FILTER_FLAG_BITS;
+        const decoded = decodeBitmask(value, bits);
+        return decoded.length > 0 ? `${value} [${decoded.join(', ')}]` : String(value);
+    }
+    return String(value);
+};
+
+const renderScalarCell = (label, value) => `
+    <div style="padding:7px 8px; border-radius:6px; background:rgba(255,255,255,0.04); font-size:10px; line-height:1.35; min-width:0;">
+        <div style="opacity:0.6; text-transform:uppercase; letter-spacing:0.04em;">${escapeHtml(label)}</div>
+        <div style="font-family:'Cascadia Code', monospace; word-break:break-word;">${escapeHtml(value)}</div>
+    </div>
+`;
+
+const renderStatusBanner = (status) => {
+    if (!status?.message) return '';
+    const colors = status.kind === 'error'
+        ? { border: '#ef4444', background: 'rgba(239,68,68,0.12)', text: '#fecaca' }
+        : { border: '#22c55e', background: 'rgba(34,197,94,0.12)', text: '#bbf7d0' };
+
+    return `
+        <div style="padding:9px 12px; border-radius:6px; border-left:3px solid ${colors.border}; background:${colors.background}; color:${colors.text}; font-size:11px; line-height:1.45;">
+            ${escapeHtml(status.message)}
+        </div>
+    `;
+};
+
+const renderLogLines = (lines, emptyMessage) => {
+    if (!lines || lines.length === 0) {
+        return `<div style="padding:20px; opacity:0.55; font-size:11px; text-align:center;">${emptyMessage}</div>`;
+    }
+
+    return lines.map((line) => {
+        let color = '#94a3b8';
+        let background = 'transparent';
+        if (line.includes('ERR')) {
+            color = '#f87171';
+            background = 'rgba(248,113,113,0.08)';
+        } else if (line.includes('BC_COND') || line.includes('COND')) {
+            color = '#38bdf8';
+            background = 'rgba(56,189,248,0.08)';
+        } else if (line.includes('TRIGGER')) {
+            color = '#4ade80';
+            background = 'rgba(74,222,128,0.08)';
+        } else if (line.includes('EXECUTE') || line.includes('BC_STEP')) {
+            color = '#fbbf24';
+            background = 'rgba(251,191,36,0.08)';
+        }
+
+        return `<div style="padding:4px 8px; color:${color}; background:${background}; font-size:10px; border-bottom:1px solid #16202f; white-space:pre-wrap; word-break:break-word; line-height:1.35;">${escapeHtml(line)}</div>`;
+    }).join('');
 };
 
 export const DebugModal = {
-    init: () => { },
+    _filters: {
+        selectedPlayer: 0,
+        selectedZone: 'all',
+        abilitySearch: '',
+    },
 
-    openDebugModal: () => {
+    _activeTab: 'inspector',
+    _snapshot: null,
+    _status: null,
+
+    init: () => {},
+
+    openDebugModal: async () => {
         const modal = document.getElementById('debug-modal');
-        if (modal) {
-            modal.style.display = 'flex';
-            if (!State.data) {
-                const containers = ['debug-flags-content', 'debug-bytecode-content', 'debug-json-content'];
-                containers.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        if (el.tagName === 'TEXTAREA') el.value = 'Loading state...';
-                        else el.innerHTML = '<div class="debug-loading">Waiting for game state...</div>';
-                    }
-                });
-                return;
-            }
-            DebugModal.renderAll();
-        }
+        if (!modal) return;
+
+        modal.style.display = 'flex';
+        await DebugModal.renderAll();
+        DebugModal.switchTab(DebugModal._activeTab);
     },
 
     closeDebugModal: () => {
@@ -78,1009 +213,936 @@ export const DebugModal = {
         if (modal) modal.style.display = 'none';
     },
 
+    _setStatus: (kind, message) => {
+        DebugModal._status = message ? { kind, message } : null;
+    },
+
+    _clearStatus: () => {
+        DebugModal._status = null;
+    },
+
     switchTab: (tabId) => {
-        const contents = document.querySelectorAll('.debug-tab-content');
-        contents.forEach(c => { c.style.display = 'none'; });
+        DebugModal._activeTab = tabId;
 
-        const selected = document.getElementById(`debug-${tabId}-tab`);
-        if (selected) {
-            selected.style.display = tabId === 'json' ? 'flex' : 'block';
-        }
-
-        const buttons = document.querySelectorAll('.debug-tab-btn');
-        buttons.forEach(b => {
-            if (b.getAttribute('onclick')?.includes(`'${tabId}'`)) {
-                b.classList.add('active');
-                b.style.borderBottom = '2px solid var(--accent-blue)';
-                b.style.color = '#fff';
-            } else {
-                b.classList.remove('active');
-                b.style.borderBottom = '2px solid transparent';
-                b.style.color = 'var(--text-dim)';
-            }
+        document.querySelectorAll('[data-tab-pane]').forEach((el) => {
+            el.style.display = 'none';
         });
 
-        if (tabId === 'json') DebugModal.renderJson();
+        const pane = document.querySelector(`[data-tab-pane="${tabId}"]`);
+        if (pane) pane.style.display = 'block';
+
+        document.querySelectorAll('[data-tab-btn]').forEach((btn) => {
+            const active = btn.getAttribute('data-tab-btn') === tabId;
+            btn.style.borderBottom = active ? '2px solid var(--accent-blue)' : '2px solid transparent';
+            btn.style.color = active ? '#fff' : 'var(--text-dim)';
+        });
+
+        if (tabId === 'inspector') DebugModal.renderInspectorTab();
+        if (tabId === 'trace') DebugModal.renderTraceTab();
         if (tabId === 'string') DebugModal.renderStringTab();
-        if (tabId === 'bytecode') DebugModal.renderBytecode();
+        if (tabId === 'json') DebugModal.renderJsonTab();
     },
 
     renderAll: async () => {
-        if (State.roomCode) { await Network.fetchState(); }
-        if (!State.data) return;
-        try { DebugModal.renderFlags(); } catch (e) { console.error("Debug Flags Render Fail:", e); }
-        try { DebugModal.renderBytecode(); } catch (e) { console.error("Debug Bytecode Error:", e); }
-        try { DebugModal.renderJson(); } catch (e) { console.error("Debug JSON Error:", e); }
-        try { DebugModal.renderStringTab(); } catch (e) { console.error("Debug String Error:", e); }
-    },
+        if (State.roomCode) await Network.fetchState();
+        await DebugModal._refreshSnapshot();
 
-    renderStringTab: () => {
-        const container = document.getElementById('debug-string-content');
-        if (!container || !State.data) return;
-
-        // Generate current state string
-        let blob = "";
-        let stateSize = 0;
-        try {
-            // Strip rich objects away before serializing
-            const source = State.stripRichData(State.data);
-            const jsonStr = JSON.stringify(source);
-            stateSize = jsonStr.length;
-            blob = btoa(unescape(encodeURIComponent(jsonStr)));
-        } catch (e) {
-            blob = "Error generating blob: " + e.message;
+        if (!State.data) {
+            const emptyMarkup = '<div style="padding:24px; opacity:0.6; text-align:center; font-size:12px;">Waiting for game state...</div>';
+            document.querySelectorAll('[data-tab-pane]').forEach((pane) => {
+                pane.innerHTML = emptyMarkup;
+            });
+            return;
         }
 
-        container.innerHTML = `
-            <div style="display: flex; flex-direction: column; height: 100%; padding: 10px; gap: 10px;">
-                <div style="font-size: 12px; line-height: 1.5; opacity: 0.9; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 4px; border-left: 3px solid var(--accent-blue);">
-                    <p style="margin: 0 0 6px 0;"><strong>Game State Export (Base64-Encoded JSON)</strong></p>
-                    <p style="margin: 0 0 6px 0; opacity: 0.8; font-size: 11px;">
-                        This state string contains the full game board, player resources, and ability tracking. 
-                        <strong>Copy</strong> to save a game checkpoint or <strong>paste</strong> and click <strong>Load</strong> to restore.
-                    </p>
-                    <p style="margin: 0; opacity: 0.7; font-size: 10px; font-family: monospace;">
-                        Size: ${(stateSize / 1024).toFixed(2)} KB | Compressed: ${blob.length} chars | Undo/Redo included ✓
-                    </p>
+        DebugModal.renderInspectorTab();
+        DebugModal.renderTraceTab();
+        DebugModal.renderStringTab();
+        DebugModal.renderJsonTab();
+        DebugModal.switchTab(DebugModal._activeTab);
+    },
+
+    _refreshSnapshot: async () => {
+        const snapshot = await Network.fetchDebugSnapshot();
+        DebugModal._snapshot = snapshot && snapshot.success ? snapshot : null;
+    },
+
+    _getCheckpointPayload: (source = null) => {
+        if (!source && DebugModal._snapshot?.raw_state) {
+            return cloneDeep(DebugModal._snapshot.raw_state);
+        }
+        if (typeof State.createCheckpointData === 'function') {
+            return State.createCheckpointData(source);
+        }
+        return State.stripRichData(source ?? State.data);
+    },
+
+    _decodeStateInput: (rawInput) => {
+        const content = String(rawInput || '').trim();
+        if (!content) throw new Error('No state payload provided');
+
+        if (/^[\[{]/.test(content)) {
+            return JSON.parse(content);
+        }
+
+        if (/^[A-Za-z0-9+/=\s_-]+$/.test(content)) {
+            const normalized = content.replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '');
+            return JSON.parse(decodeURIComponent(escape(atob(normalized))));
+        }
+
+        throw new Error('Unrecognized state payload format');
+    },
+
+    _extractApplyMessage: (result) => {
+        if (!result) return 'Apply failed with no response.';
+        if (result.ok) {
+            return result.data?.message || result.data?.status || 'Checkpoint applied successfully.';
+        }
+
+        if (typeof result.error === 'string') return result.error;
+        if (result.error?.error) return result.error.error;
+        if (result.error?.message) return result.error.message;
+        if (result.data?.error) return result.data.error;
+        return 'Apply failed.';
+    },
+
+    _applyCheckpointPayload: async (payload) => {
+        const cleanState = DebugModal._getCheckpointPayload(payload);
+        return Network.applyState(JSON.stringify(cleanState));
+    },
+
+    _normalizeCard: (rawEntry) => {
+        if (rawEntry === null || rawEntry === undefined) return null;
+        if (typeof rawEntry === 'number') return State.resolveCardData(rawEntry);
+
+        if (typeof rawEntry === 'object' && rawEntry.card) {
+            const { card, ...rest } = rawEntry;
+            const resolvedCard = DebugModal._normalizeCard(card);
+            if (!resolvedCard) return null;
+            return { ...resolvedCard, ...rest };
+        }
+
+        if (typeof rawEntry === 'object') {
+            if (rawEntry.id === undefined && rawEntry.card_id !== undefined) {
+                return { ...rawEntry, id: rawEntry.card_id };
+            }
+            return rawEntry;
+        }
+
+        return null;
+    },
+
+    _collectVisibleCards: (player, zoneKey) => {
+        const defs = zoneDefinitions(player);
+        const selectedDefs = zoneKey === 'all' ? defs : defs.filter((zone) => zone.key === zoneKey);
+        return selectedDefs.flatMap((zone) => zone.cards.map((rawEntry, index) => ({
+            zoneKey: zone.key,
+            zoneLabel: zone.label,
+            slotLabel: `${zone.label} ${index + 1}`,
+            slotIndex: index,
+            card: DebugModal._normalizeCard(rawEntry),
+        })));
+    },
+
+    _matchesSearch: (entry, search) => {
+        if (!search) return true;
+        const card = entry.card;
+        if (!card) return false;
+
+        const needle = search.toLowerCase();
+        if ((card.name || '').toLowerCase().includes(needle)) return true;
+        if (String(card.id || '').includes(needle)) return true;
+        if ((entry.zoneLabel || '').toLowerCase().includes(needle)) return true;
+
+        return (card.abilities || []).some((ability) => {
+            if ((ability.pseudocode || '').toLowerCase().includes(needle)) return true;
+            const triggerName = TRIGGER_NAMES[ability.trigger] || '';
+            if (triggerName.toLowerCase().includes(needle)) return true;
+            return (ability.conditions || []).some((condition) => {
+                const conditionName = CONDITION_NAMES[condition.condition_type] || '';
+                return conditionName.toLowerCase().includes(needle);
+            });
+        });
+    },
+
+    _renderSummaryCards: (players, visibleCards) => {
+        const phaseName = PHASE_NAMES[State.data.phase] || String(State.data.phase ?? '?');
+        const traceCount = DebugModal._snapshot?.trace_log?.length || 0;
+        const bytecodeCount = DebugModal._snapshot?.bytecode_log?.length || State.data.bytecode_log?.length || 0;
+
+        return `
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">
+                <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:6px;">
+                    <div style="font-size:10px; letter-spacing:0.08em; text-transform:uppercase; opacity:0.6;">State</div>
+                    <div style="display:grid; grid-template-columns:repeat(2, minmax(60px, 1fr)); gap:8px; font-size:11px;">
+                        ${renderScalarCell('turn', summarizeObject(State.data.turn ?? '?'))}
+                        ${renderScalarCell('phase', phaseName)}
+                        ${renderScalarCell('active', `P${(State.data.active_player ?? 0) + 1}`)}
+                        ${renderScalarCell('visible cards', String(visibleCards.length))}
+                    </div>
                 </div>
-                <textarea id="debug-string-textarea"
-                    style="flex: 1; background: #1a1a1a; color: #00ff00; border: 1px solid #333; border-radius: 4px; padding: 10px; font-family: 'Cascadia Code', monospace; font-size: 11px; resize: none; min-height: 200px; word-break: break-all; white-space: pre-wrap;"
-                    spellcheck="false">${blob}</textarea>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" style="flex: 1; min-width: 150px;" onclick="DebugModal.copyStateString()">📋 Copy to Clipboard</button>
-                    <button class="btn btn-secondary" style="flex: 1; min-width: 150px;" onclick="DebugModal.loadStateString()">📁 Load from Textarea</button>
-                    <button class="btn btn-accent" style="flex: 1; min-width: 150px; background: var(--accent-gold); color: #000;" onclick="DebugModal.triggerFileLoad()">📂 Load JSON File</button>
+                <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:6px;">
+                    <div style="font-size:10px; letter-spacing:0.08em; text-transform:uppercase; opacity:0.6;">Debug Snapshot</div>
+                    <div style="display:grid; grid-template-columns:repeat(2, minmax(60px, 1fr)); gap:8px; font-size:11px;">
+                        ${renderScalarCell('snapshot', DebugModal._snapshot ? 'available' : 'fallback')}
+                        ${renderScalarCell('debug_mode', DebugModal._snapshot?.debug_mode ? 'enabled' : 'disabled')}
+                        ${renderScalarCell('trace lines', String(traceCount))}
+                        ${renderScalarCell('bytecode lines', String(bytecodeCount))}
+                    </div>
                 </div>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <button class="btn" style="flex: 1; background: #9b59b6; color: #fff; border: none;" onclick="DebugModal.copyStandardizedJson()">💾 Copy Master JSON</button>
-                    <button class="btn" style="flex: 1; background: #2c3e50; color: #fff; border: none;" onclick="DebugModal.saveStandardizedJson()">💿 Save Master JSON</button>
-                    <input type="file" id="debug-state-file-input" style="display: none;" accept=".json,.txt" onchange="DebugModal.loadStateFile(this)">
+                ${players.map((player, index) => `
+                    <div style="background:${index === DebugModal._filters.selectedPlayer ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.04)'}; border:1px solid ${index === DebugModal._filters.selectedPlayer ? 'rgba(56,189,248,0.4)' : 'rgba(255,255,255,0.08)'}; border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:6px;">
+                        <div style="display:flex; justify-content:space-between; gap:8px; align-items:center;">
+                            <strong style="font-size:11px; color:${index === DebugModal._filters.selectedPlayer ? '#7dd3fc' : '#fff'};">Player ${index + 1}${State.data.active_player === index ? ' [active]' : ''}</strong>
+                            <span style="font-size:10px; opacity:0.72;">Score ${escapeHtml(player?.score ?? 0)}</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(2, minmax(70px, 1fr)); gap:6px;">
+                            ${zoneDefinitions(player).map((zone) => renderScalarCell(zone.label, String(zone.cards.length))).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    },
+
+    _renderPendingChoice: () => {
+        if (!State.data?.pending_choice) return '';
+
+        const pending = State.data.pending_choice;
+        const choiceType = CHOICE_NAMES[pending.choice_type] || CHOICE_NAMES[pending.type] || 'PENDING_CHOICE';
+
+        return `
+            <div style="background:rgba(251,191,36,0.08); border-left:3px solid #fbbf24; padding:10px 12px; border-radius:6px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <strong style="font-size:11px; color:#fbbf24; letter-spacing:0.06em; text-transform:uppercase;">Pending Choice</strong>
+                    <span style="font-size:10px; opacity:0.85;">${escapeHtml(choiceType)}</span>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:6px;">
+                    ${extractScalarEntries(pending).map(([key, value]) => renderScalarCell(key, summarizeObject(value))).join('')}
                 </div>
             </div>
         `;
     },
 
+    _buildZoneDiagnostic: (player, zone) => {
+        const entries = zone.cards.map((entry, index) => ({
+            index,
+            card: DebugModal._normalizeCard(entry),
+        })).filter((entry) => entry.card && entry.card.id !== -1 && entry.card.id !== -2);
+
+        const triggers = new Set();
+        const conditions = new Set();
+        const effects = new Set();
+        const costs = new Set();
+        const abilityFlags = new Set();
+        const synergyFlags = new Set();
+        const semanticFlags = new Set();
+
+        let tapped = 0;
+        let moved = 0;
+        let revealed = 0;
+        let totalAbilities = 0;
+        let totalNotes = 0;
+
+        entries.forEach(({ card }) => {
+            if (card.tapped) tapped += 1;
+            if (card.moved) moved += 1;
+            if (card.revealed) revealed += 1;
+            totalNotes += Number(card.note_icons || 0);
+            decodeBitmask(card.ability_flags || 0, ABILITY_FLAG_BITS).forEach((item) => abilityFlags.add(item));
+            decodeBitmask(card.synergy_flags || 0, SYNERGY_FLAG_BITS).forEach((item) => synergyFlags.add(item));
+            if (Number.isFinite(card.semantic_flags)) semanticFlags.add(formatPacked(card.semantic_flags));
+
+            (card.abilities || []).forEach((ability) => {
+                totalAbilities += 1;
+                triggers.add(TRIGGER_NAMES[ability.trigger] || `TRIGGER_${ability.trigger ?? '?'}`);
+                (ability.conditions || []).forEach((condition) => {
+                    conditions.add(CONDITION_NAMES[condition.condition_type] || `COND_${condition.condition_type ?? '?'}`);
+                });
+                (ability.effects || []).forEach((effect) => {
+                    effects.add(EFFECT_NAMES[effect.effect_type] || `EFFECT_${effect.effect_type ?? '?'}`);
+                });
+                (ability.costs || []).forEach((cost) => {
+                    costs.add(COST_NAMES[cost.cost_type] || `COST_${cost.cost_type ?? '?'}`);
+                });
+            });
+        });
+
+        return {
+            cards: entries.length,
+            tapped,
+            moved,
+            revealed,
+            totalAbilities,
+            totalNotes,
+            triggers: Array.from(triggers).sort(),
+            conditions: Array.from(conditions).sort(),
+            effects: Array.from(effects).sort(),
+            costs: Array.from(costs).sort(),
+            abilityFlags: Array.from(abilityFlags).sort(),
+            synergyFlags: Array.from(synergyFlags).sort(),
+            semanticFlags: Array.from(semanticFlags).sort(),
+        };
+    },
+
+    _renderZoneDiagnostics: (player) => {
+        const zones = zoneDefinitions(player);
+        return `
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:10px; overflow:hidden;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <strong style="font-size:12px;">Zone Diagnostics</strong>
+                    <span style="font-size:10px; opacity:0.7;">All visible trigger, condition, cost, effect, and flag surfaces per zone</span>
+                </div>
+                <div style="overflow:auto; border:1px solid rgba(255,255,255,0.06); border-radius:6px;">
+                    <table style="width:100%; border-collapse:collapse; min-width:1180px; font-size:10px;">
+                        <thead>
+                            <tr style="background:rgba(15,23,42,0.95); text-transform:uppercase; letter-spacing:0.04em;">
+                                <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Zone</th>
+                                <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Counts</th>
+                                <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Triggers</th>
+                                <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Conditions</th>
+                                <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Costs</th>
+                                <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Effects</th>
+                                <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Flags</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${zones.map((zone) => {
+                                const diag = DebugModal._buildZoneDiagnostic(player, zone);
+                                return `
+                                    <tr style="vertical-align:top; background:${DebugModal._filters.selectedZone === zone.key ? 'rgba(56,189,248,0.06)' : 'transparent'};">
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); font-weight:700;">${escapeHtml(zone.label)}</td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:180px;">
+                                            <div style="display:grid; grid-template-columns:repeat(2, minmax(80px, 1fr)); gap:6px;">
+                                                ${renderScalarCell('cards', String(diag.cards))}
+                                                ${renderScalarCell('abilities', String(diag.totalAbilities))}
+                                                ${renderScalarCell('tapped', String(diag.tapped))}
+                                                ${renderScalarCell('revealed', String(diag.revealed))}
+                                                ${renderScalarCell('moved', String(diag.moved))}
+                                                ${renderScalarCell('notes', String(diag.totalNotes))}
+                                            </div>
+                                        </td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:180px;"><div style="display:flex; flex-wrap:wrap; gap:4px;">${renderChips(diag.triggers, '#4ade80')}</div></td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:240px;"><div style="display:flex; flex-wrap:wrap; gap:4px;">${renderChips(diag.conditions, '#38bdf8')}</div></td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:180px;"><div style="display:flex; flex-wrap:wrap; gap:4px;">${renderChips(diag.costs, '#fb923c')}</div></td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:220px;"><div style="display:flex; flex-wrap:wrap; gap:4px;">${renderChips(diag.effects, '#facc15')}</div></td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:260px;">
+                                            <div style="display:flex; flex-direction:column; gap:6px;">
+                                                <div><span style="opacity:0.65;">ability</span><div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">${renderChips(diag.abilityFlags, '#22c55e')}</div></div>
+                                                <div><span style="opacity:0.65;">synergy</span><div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">${renderChips(diag.synergyFlags, '#eab308')}</div></div>
+                                                <div><span style="opacity:0.65;">semantic</span><div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">${renderChips(diag.semanticFlags, '#c084fc')}</div></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    },
+
+    _collectAbilityRows: (visibleCards) => visibleCards.flatMap((entry) => {
+        const card = entry.card;
+        return (card.abilities || []).map((ability, abilityIndex) => ({
+            cardName: card.name || `Card ${card.id}`,
+            cardId: card.id ?? card.card_id ?? '?',
+            slotLabel: entry.slotLabel,
+            abilityIndex,
+            trigger: TRIGGER_NAMES[ability.trigger] || `TRIGGER_${ability.trigger ?? '?'}`,
+            conditions: (ability.conditions || []).map((condition) => CONDITION_NAMES[condition.condition_type] || `COND_${condition.condition_type ?? '?'}`),
+            costs: (ability.costs || []).map((cost) => COST_NAMES[cost.cost_type] || `COST_${cost.cost_type ?? '?'}`),
+            effects: (ability.effects || []).map((effect) => EFFECT_NAMES[effect.effect_type] || `EFFECT_${effect.effect_type ?? '?'}`),
+            flags: [
+                ...(ability.choice_flags !== undefined ? decodeBitmask(ability.choice_flags, CHOICE_FLAG_BITS) : []),
+                ...(ability.filter_flags !== undefined ? decodeBitmask(ability.filter_flags, FILTER_FLAG_BITS) : []),
+                ...(ability.cost_flags !== undefined ? decodeBitmask(ability.cost_flags, COST_FLAG_BITS) : []),
+            ],
+            pseudocode: ability.pseudocode || '',
+        }));
+    }),
+
+    _renderAbilityMatrix: (visibleCards) => {
+        const rows = DebugModal._collectAbilityRows(visibleCards);
+        return `
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:10px; overflow:hidden;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <strong style="font-size:12px;">Ability Matrix</strong>
+                    <span style="font-size:10px; opacity:0.7;">Every visible ability in the current filter window</span>
+                </div>
+                ${rows.length === 0 ? '<div style="opacity:0.55; text-align:center; padding:20px; font-size:11px;">No abilities match the current zone/search filter.</div>' : `
+                    <div style="overflow:auto; border:1px solid rgba(255,255,255,0.06); border-radius:6px;">
+                        <table style="width:100%; border-collapse:collapse; min-width:1350px; font-size:10px;">
+                            <thead>
+                                <tr style="background:rgba(15,23,42,0.95); text-transform:uppercase; letter-spacing:0.04em;">
+                                    <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Card</th>
+                                    <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Zone</th>
+                                    <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Trigger</th>
+                                    <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Conditions</th>
+                                    <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Costs</th>
+                                    <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Effects</th>
+                                    <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Flags</th>
+                                    <th style="padding:8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">Pseudocode</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows.map((row) => `
+                                    <tr style="vertical-align:top;">
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:180px;">
+                                            <strong>${escapeHtml(row.cardName)}</strong><br/>
+                                            <span style="opacity:0.6; font-family:'Cascadia Code', monospace;">id=${escapeHtml(row.cardId)} a${row.abilityIndex + 1}</span>
+                                        </td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:120px;">${escapeHtml(row.slotLabel)}</td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:140px;">${escapeHtml(row.trigger)}</td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:220px;"><div style="display:flex; flex-wrap:wrap; gap:4px;">${renderChips(row.conditions, '#38bdf8')}</div></td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:180px;"><div style="display:flex; flex-wrap:wrap; gap:4px;">${renderChips(row.costs, '#fb923c')}</div></td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:220px;"><div style="display:flex; flex-wrap:wrap; gap:4px;">${renderChips(row.effects, '#facc15')}</div></td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:190px;"><div style="display:flex; flex-wrap:wrap; gap:4px;">${renderChips(row.flags, '#22c55e')}</div></td>
+                                        <td style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.06); min-width:280px; line-height:1.4;">${escapeHtml(row.pseudocode || '-')}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `}
+            </div>
+        `;
+    },
+
+    _renderFlagRow: (label, value, bits, accent) => {
+        if (value === undefined || value === null) return '';
+        const decoded = bits.length > 0 ? decodeBitmask(value, bits) : [];
+
+        return `
+            <div style="border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:8px; background:rgba(255,255,255,0.025); display:flex; flex-direction:column; gap:6px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:10px;">
+                    <strong style="color:${accent};">${escapeHtml(label)}</strong>
+                    <span style="font-family:'Cascadia Code', monospace; opacity:0.7;">${escapeHtml(formatPacked(value))}</span>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:4px;">${renderChips(decoded.length > 0 ? decoded : [formatPacked(value)], accent)}</div>
+            </div>
+        `;
+    },
+
+    _renderLogicItem: (item, itemType, accent) => {
+        const typeField = itemType === 'condition' ? 'condition_type' : itemType === 'effect' ? 'effect_type' : 'cost_type';
+        const labelMap = itemType === 'condition' ? CONDITION_NAMES : itemType === 'effect' ? EFFECT_NAMES : COST_NAMES;
+        const typeValue = item[typeField];
+        const itemLabel = labelMap[typeValue] || `${itemType.toUpperCase()}_${typeValue ?? '?'}`;
+        const scalarEntries = extractScalarEntries(item);
+
+        return `
+            <div style="border:1px solid rgba(255,255,255,0.08); border-left:3px solid ${accent}; border-radius:6px; padding:8px; background:rgba(255,255,255,0.025); display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <strong style="font-size:10px; color:${accent};">${escapeHtml(itemLabel)}</strong>
+                    <span style="font-size:9px; opacity:0.65; font-family:'Cascadia Code', monospace;">${escapeHtml(typeField)}=${escapeHtml(typeValue ?? '?')}</span>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:6px;">
+                    ${scalarEntries.map(([key, value]) => renderScalarCell(key, typeof value === 'number' ? describeNumber(key, value, itemType) : summarizeObject(value))).join('')}
+                </div>
+                <details>
+                    <summary style="cursor:pointer; opacity:0.65; font-size:9px;">Raw JSON</summary>
+                    <pre style="margin:6px 0 0 0; padding:8px; background:#05070d; border-radius:4px; font-size:9px; line-height:1.35; color:#dbeafe; white-space:pre-wrap; word-break:break-word;">${escapeHtml(JSON.stringify(item, null, 2))}</pre>
+                </details>
+            </div>
+        `;
+    },
+
+    _renderLogicGroup: (title, items, itemType, accent) => {
+        if (!items || items.length === 0) return '';
+        return `
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color:${accent};">${title} (${items.length})</div>
+                ${items.map((item) => DebugModal._renderLogicItem(item, itemType, accent)).join('')}
+            </div>
+        `;
+    },
+
+    _renderAbilityBlock: (ability, abilityIndex) => {
+        const triggerLabel = TRIGGER_NAMES[ability.trigger] || `TRIGGER_${ability.trigger ?? '?'}`;
+        const abilityTags = [
+            ability.is_once_per_turn ? 'ONCE_PER_TURN' : null,
+            ability.requires_selection ? 'REQUIRES_SELECTION' : null,
+            ability.choice_count ? `CHOICE_COUNT=${ability.choice_count}` : null,
+        ].filter(Boolean);
+
+        return `
+            <div style="display:flex; flex-direction:column; gap:8px; padding:10px; border-radius:8px; background:rgba(0,0,0,0.18); border:1px solid rgba(255,255,255,0.08);">
+                <div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
+                    <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
+                        <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+                            <strong style="font-size:11px; color:#fbbf24;">Ability ${abilityIndex + 1}</strong>
+                            <span style="font-size:9px; padding:2px 6px; border-radius:999px; background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.35); color:#fbbf24;">${escapeHtml(triggerLabel)}</span>
+                            ${abilityTags.map((tag) => `<span style="font-size:9px; padding:2px 6px; border-radius:999px; background:rgba(255,255,255,0.08);">${escapeHtml(tag)}</span>`).join('')}
+                        </div>
+                        <div style="font-size:10px; line-height:1.45; opacity:0.88;">${escapeHtml(ability.pseudocode || 'No pseudocode')}</div>
+                    </div>
+                    <div style="font-size:9px; opacity:0.65; font-family:'Cascadia Code', monospace;">trigger=${escapeHtml(ability.trigger ?? '?')}</div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:6px;">
+                    ${ability.choice_type !== undefined ? renderScalarCell('choice_type', describeNumber('choice_type', ability.choice_type)) : ''}
+                    ${ability.choice_flags !== undefined ? renderScalarCell('choice_flags', describeNumber('choice_flags', ability.choice_flags)) : ''}
+                    ${ability.filter_flags !== undefined ? renderScalarCell('filter_flags', describeNumber('filter_flags', ability.filter_flags)) : ''}
+                </div>
+
+                ${DebugModal._renderLogicGroup('Conditions', ability.conditions, 'condition', '#38bdf8')}
+                ${DebugModal._renderLogicGroup('Costs', ability.costs, 'cost', '#fb923c')}
+                ${DebugModal._renderLogicGroup('Effects', ability.effects, 'effect', '#22c55e')}
+
+                ${(ability.decoded_bytecode && ability.decoded_bytecode.length > 0) ? `
+                    <details>
+                        <summary style="cursor:pointer; opacity:0.65; font-size:9px;">Decoded Bytecode (${ability.decoded_bytecode.length})</summary>
+                        <pre style="margin:6px 0 0 0; padding:8px; background:#05070d; border-radius:4px; font-size:9px; line-height:1.3; color:#8df58d; white-space:pre-wrap; word-break:break-word;">${escapeHtml(ability.decoded_bytecode.join('\n'))}</pre>
+                    </details>
+                ` : ''}
+            </div>
+        `;
+    },
+
+    _renderCardInspector: (entry, index) => {
+        const card = entry.card;
+        if (!card) return '';
+
+        const abilities = card.abilities || [];
+        const cardType = card.type || (card.score !== undefined ? 'live' : 'member');
+        const statusBits = [
+            card.tapped ? 'TAPPED' : null,
+            card.moved ? 'MOVED' : null,
+            card.revealed ? 'REVEALED' : null,
+            card.is_active ? 'ACTIVE' : null,
+            card.waiting ? 'WAIT' : null,
+        ].filter(Boolean);
+
+        return `
+            <div style="background:rgba(255,255,255,0.045); border:1px solid #334155; border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.08);">
+                    <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
+                        <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+                            <strong style="font-size:13px; color:${cardType === 'live' ? '#f87171' : '#7dd3fc'};">${escapeHtml(card.name || `Card ${card.id}`)}</strong>
+                            <span style="font-size:9px; padding:2px 6px; border-radius:999px; background:rgba(255,255,255,0.08); opacity:0.75;">${escapeHtml(entry.zoneLabel)}</span>
+                            <span style="font-size:9px; padding:2px 6px; border-radius:999px; background:rgba(255,255,255,0.08); opacity:0.75;">${escapeHtml(cardType.toUpperCase())}</span>
+                            <span style="font-size:9px; opacity:0.55;">#${index + 1}</span>
+                        </div>
+                        <div style="font-size:10px; opacity:0.72;">${escapeHtml(entry.slotLabel)}</div>
+                    </div>
+                    <div style="font-size:10px; opacity:0.72; font-family:'Cascadia Code', monospace; text-align:right;">ID ${escapeHtml(card.id ?? card.card_id ?? '?')}</div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(115px, 1fr)); gap:6px;">
+                    ${renderScalarCell('type', cardType)}
+                    ${renderScalarCell(cardType === 'live' ? 'score' : 'cost', String(cardType === 'live' ? (card.score ?? 0) : (card.cost ?? 0)))}
+                    ${renderScalarCell('blades', String(card.blades ?? 0))}
+                    ${renderScalarCell('hearts', summarizeObject(card.hearts ?? card.required_hearts ?? []))}
+                    ${renderScalarCell('notes', String(card.note_icons ?? 0))}
+                    ${renderScalarCell('status', statusBits.join(', ') || 'none')}
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px;">
+                    ${DebugModal._renderFlagRow('Semantic Flags', card.semantic_flags ?? 0, [], '#c084fc')}
+                    ${DebugModal._renderFlagRow('Ability Flags', card.ability_flags ?? 0, ABILITY_FLAG_BITS, '#22c55e')}
+                    ${DebugModal._renderFlagRow('Synergy Flags', card.synergy_flags ?? 0, SYNERGY_FLAG_BITS, '#eab308')}
+                    ${DebugModal._renderFlagRow('Cost Flags', card.cost_flags ?? 0, COST_FLAG_BITS, '#f97316')}
+                </div>
+
+                ${abilities.length === 0 ? '<div style="opacity:0.5; font-size:10px;">No abilities on this card.</div>' : `
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        ${abilities.map((ability, abilityIndex) => DebugModal._renderAbilityBlock(ability, abilityIndex)).join('')}
+                    </div>
+                `}
+            </div>
+        `;
+    },
+
+    renderInspectorTab: () => {
+        const container = document.querySelector('[data-tab-pane="inspector"]');
+        if (!container || !State.data) return;
+
+        const players = State.data.players || [];
+        const playerIdx = DebugModal._filters.selectedPlayer;
+        const currentPlayer = players[playerIdx] || players[0] || null;
+        const zone = DebugModal._filters.selectedZone;
+        const search = DebugModal._filters.abilitySearch.trim();
+        const visibleCards = DebugModal._collectVisibleCards(currentPlayer, zone)
+            .filter((entry) => entry.card && entry.card.id !== -1 && entry.card.id !== -2)
+            .filter((entry) => DebugModal._matchesSearch(entry, search));
+
+        container.innerHTML = `
+            <div style="display:flex; flex-direction:column; height:100%; padding:14px; gap:12px; overflow:auto;">
+                ${renderStatusBanner(DebugModal._status)}
+                <div style="display:grid; grid-template-columns:minmax(140px, 0.9fr) minmax(140px, 0.9fr) minmax(220px, 1.4fr); gap:8px;">
+                    <div>
+                        <label style="font-size:10px; opacity:0.7; display:block; margin-bottom:4px;">Player</label>
+                        <select onchange="DebugModal.onPlayerChange(this.value)" style="width:100%; padding:6px; background:rgba(0,0,0,0.3); border:1px solid #475569; color:#fff; border-radius:6px; font-size:11px;">
+                            ${players.map((player, index) => `<option value="${index}" ${index === playerIdx ? 'selected' : ''}>Player ${index + 1}${State.data.active_player === index ? ' [active]' : ''}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:10px; opacity:0.7; display:block; margin-bottom:4px;">Zone</label>
+                        <select onchange="DebugModal.onZoneChange(this.value)" style="width:100%; padding:6px; background:rgba(0,0,0,0.3); border:1px solid #475569; color:#fff; border-radius:6px; font-size:11px;">
+                            <option value="all" ${zone === 'all' ? 'selected' : ''}>All Zones</option>
+                            <option value="stage" ${zone === 'stage' ? 'selected' : ''}>Stage</option>
+                            <option value="live" ${zone === 'live' ? 'selected' : ''}>Live</option>
+                            <option value="hand" ${zone === 'hand' ? 'selected' : ''}>Hand</option>
+                            <option value="success" ${zone === 'success' ? 'selected' : ''}>Success</option>
+                            <option value="energy" ${zone === 'energy' ? 'selected' : ''}>Energy</option>
+                            <option value="discard" ${zone === 'discard' ? 'selected' : ''}>Discard</option>
+                            <option value="looked" ${zone === 'looked' ? 'selected' : ''}>Looked</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:10px; opacity:0.7; display:block; margin-bottom:4px;">Search</label>
+                        <input type="text" placeholder="card, trigger, condition, pseudocode" value="${escapeHtml(DebugModal._filters.abilitySearch)}" oninput="DebugModal.onSearchChange(this.value)" style="width:100%; padding:8px; background:rgba(0,0,0,0.3); border:1px solid #475569; color:#fff; border-radius:6px; font-size:11px; box-sizing:border-box;">
+                    </div>
+                </div>
+
+                ${DebugModal._renderSummaryCards(players, visibleCards)}
+                ${DebugModal._renderPendingChoice()}
+                ${currentPlayer ? DebugModal._renderZoneDiagnostics(currentPlayer) : ''}
+                ${DebugModal._renderAbilityMatrix(visibleCards)}
+
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <strong style="font-size:12px;">Card Detail</strong>
+                    ${visibleCards.length === 0
+                        ? '<div style="opacity:0.55; text-align:center; padding:24px; font-size:11px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px;">No cards match the current zone/search filters.</div>'
+                        : visibleCards.map((entry, index) => DebugModal._renderCardInspector(entry, index)).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    renderTraceTab: () => {
+        const container = document.querySelector('[data-tab-pane="trace"]');
+        if (!container || !State.data) return;
+
+        const traceLines = DebugModal._snapshot?.trace_log || [];
+        const bytecodeLines = DebugModal._snapshot?.bytecode_log || State.data.bytecode_log || [];
+
+        container.innerHTML = `
+            <div style="display:flex; flex-direction:column; height:100%; padding:14px; gap:12px; overflow:hidden;">
+                ${renderStatusBanner(DebugModal._status)}
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">
+                    ${renderScalarCell('debug_mode', DebugModal._snapshot?.debug_mode ? 'enabled' : 'disabled')}
+                    ${renderScalarCell('trace lines', String(traceLines.length))}
+                    ${renderScalarCell('bytecode lines', String(bytecodeLines.length))}
+                    ${renderScalarCell('snapshot', DebugModal._snapshot ? 'backend /api/debug/snapshot' : 'viewer fallback')}
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:12px; flex:1; min-height:0;">
+                    <div style="display:flex; flex-direction:column; min-height:0; background:#020617; border:1px solid #1e293b; border-radius:8px; overflow:hidden;">
+                        <div style="padding:8px 10px; border-bottom:1px solid #1e293b; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#7dd3fc;">Engine Trace</div>
+                        <div id="debug-trace-log" style="flex:1; overflow:auto; font-family:'Cascadia Code', monospace;">${renderLogLines(traceLines, 'No engine trace has been captured. Enable Debug Mode, then execute game actions.')}</div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; min-height:0; background:#020617; border:1px solid #1e293b; border-radius:8px; overflow:hidden;">
+                        <div style="padding:8px 10px; border-bottom:1px solid #1e293b; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#86efac;">UI Bytecode Log</div>
+                        <div id="debug-bytecode-log" style="flex:1; overflow:auto; font-family:'Cascadia Code', monospace;">${renderLogLines(bytecodeLines, 'No bytecode log has been captured for the current state.')}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    renderStringTab: () => {
+        const container = document.querySelector('[data-tab-pane="string"]');
+        if (!container || !State.data) return;
+
+        let serialized = '';
+        try {
+            serialized = JSON.stringify(DebugModal._getCheckpointPayload());
+        } catch (error) {
+            serialized = `Error: ${error.message}`;
+        }
+
+        container.innerHTML = `
+            <div style="display:flex; flex-direction:column; height:100%; padding:14px; gap:10px; overflow:hidden;">
+                ${renderStatusBanner(DebugModal._status)}
+                <div style="font-size:11px; opacity:0.88; background:rgba(56,189,248,0.1); padding:10px 12px; border-radius:6px; border-left:3px solid #38bdf8; line-height:1.45;">
+                    <strong>Raw GameState snapshot</strong><br/>
+                    <span style="font-size:10px;">This payload comes from the backend snapshot route when available, so apply uses the same raw shape the Rust endpoint expects.</span><br/>
+                    <span style="font-size:9px; font-family:'Cascadia Code', monospace; opacity:0.72;">${(serialized.length / 1024).toFixed(2)} KB</span>
+                </div>
+                <textarea id="debug-string-textarea" spellcheck="false" style="flex:1; width:100%; background:#020617; color:#dbeafe; border:1px solid #334155; border-radius:6px; padding:10px; font-family:'Cascadia Code', monospace; font-size:11px; resize:none; word-break:break-all; box-sizing:border-box;">${escapeHtml(serialized)}</textarea>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; font-size:11px;">
+                    <button class="btn btn-primary" style="flex:1; min-width:110px;" onclick="DebugModal.copyStateString()">Copy</button>
+                    <button class="btn btn-secondary" style="flex:1; min-width:110px;" onclick="DebugModal.loadStateString()">Apply</button>
+                    <button class="btn btn-accent" style="flex:1; min-width:110px; background:var(--accent-gold); color:#000;" onclick="DebugModal.triggerFileLoad()">Load File</button>
+                    <input type="file" id="debug-state-file" style="display:none;" accept=".json,.txt,.b64" onchange="DebugModal.loadStateFile(this)">
+                </div>
+            </div>
+        `;
+    },
+
+    renderJsonTab: () => {
+        const container = document.querySelector('[data-tab-pane="json"]');
+        if (!container || !State.data) return;
+
+        container.innerHTML = `
+            <div style="display:flex; flex-direction:column; height:100%; padding:14px; gap:10px; overflow:hidden;">
+                ${renderStatusBanner(DebugModal._status)}
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="btn btn-secondary btn-xs" onclick="DebugModal.renderMinimalJSON()">Minimal</button>
+                    <button class="btn btn-secondary btn-xs" onclick="DebugModal.renderCheckpointJSON()">Raw Snapshot</button>
+                    <button class="btn btn-secondary btn-xs" onclick="DebugModal.renderRichJSON()">Viewer State</button>
+                    <button class="btn btn-secondary btn-xs" onclick="DebugModal.copyJsonState()">Copy</button>
+                    <button class="btn btn-secondary btn-xs" onclick="DebugModal.loadJsonFile()">Load File</button>
+                    <button class="btn btn-primary btn-xs" onclick="DebugModal.applyJsonState()">Apply</button>
+                    <input type="file" id="debug-json-file" style="display:none;" accept=".json,.txt,.b64" onchange="DebugModal.onJsonFileSelected(this)">
+                    <span style="flex-grow:1;"></span>
+                    <button class="btn btn-success btn-xs" onclick="DebugModal.exportGameWithHistory()">Export Game</button>
+                    <button class="btn btn-accent btn-xs" style="background:#059669; color:#fff;" onclick="DebugModal.importGameWithHistory()">Import Game</button>
+                </div>
+                <textarea id="debug-json-textarea" spellcheck="false" style="flex:1; width:100%; background:#020617; color:#e2e8f0; border:1px solid #334155; border-radius:6px; padding:10px; font-family:'Cascadia Code', monospace; font-size:12px; resize:none; box-sizing:border-box;"></textarea>
+                <div id="debug-json-result" style="font-size:10px; opacity:0.84; background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; border-left:2px solid #666; display:none;"></div>
+            </div>
+        `;
+
+        DebugModal.renderCheckpointJSON();
+    },
+
+    renderMinimalJSON: () => {
+        if (!State.data) return;
+
+        const getId = (entry) => {
+            const card = DebugModal._normalizeCard(entry);
+            return card?.id ?? card?.card_id ?? -1;
+        };
+
+        const minimal = {
+            phase: State.data.phase,
+            turn: State.data.turn,
+            active_player: State.data.active_player,
+            pending_choice: State.data.pending_choice || null,
+            players: (State.data.players || []).map((player, index) => ({
+                _label: `Player ${index + 1}`,
+                score: player.score,
+                stage: (player.stage || []).map(getId),
+                live_zone: (player.live_zone || []).map(getId),
+                hand: (player.hand || []).map(getId),
+                energy: (player.energy || []).map(getId),
+                discard: (player.discard || []).map(getId),
+                success_lives: (player.success_lives || player.success_zone || player.success_pile || []).map(getId),
+            })),
+        };
+
+        const textarea = document.getElementById('debug-json-textarea');
+        if (textarea) textarea.value = JSON.stringify(minimal, null, 2);
+    },
+
+    renderCheckpointJSON: () => {
+        const textarea = document.getElementById('debug-json-textarea');
+        if (textarea) textarea.value = JSON.stringify(DebugModal._getCheckpointPayload(), null, 2);
+    },
+
+    renderFullJSON: () => {
+        DebugModal.renderCheckpointJSON();
+    },
+
+    renderRichJSON: () => {
+        const textarea = document.getElementById('debug-json-textarea');
+        if (textarea) textarea.value = JSON.stringify(State.data, null, 2);
+    },
+
+    applyJsonState: async () => {
+        const textarea = document.getElementById('debug-json-textarea');
+        const result = document.getElementById('debug-json-result');
+        if (!textarea || !result) return;
+
+        try {
+            const payload = DebugModal._decodeStateInput(textarea.value);
+            const response = await DebugModal._applyCheckpointPayload(payload);
+            const ok = Boolean(response?.ok);
+            const message = DebugModal._extractApplyMessage(response);
+
+            result.style.display = 'block';
+            result.style.borderLeftColor = ok ? '#22c55e' : '#ef4444';
+            result.textContent = message;
+            DebugModal._setStatus(ok ? 'success' : 'error', message);
+
+            if (ok) {
+                await DebugModal.renderAll();
+                if (window.Rendering) window.Rendering.render();
+            }
+        } catch (error) {
+            const message = `Parse error: ${error.message}`;
+            result.style.display = 'block';
+            result.style.borderLeftColor = '#ef4444';
+            result.textContent = message;
+            DebugModal._setStatus('error', message);
+        }
+    },
+
+    copyJsonState: () => {
+        const textarea = document.getElementById('debug-json-textarea');
+        if (!textarea) return;
+        textarea.select();
+        document.execCommand('copy');
+        DebugModal._setStatus('success', 'JSON copied to clipboard.');
+        DebugModal.renderJsonTab();
+    },
+
+    loadJsonFile: () => {
+        const input = document.getElementById('debug-json-file');
+        if (input) input.click();
+    },
+
+    onJsonFileSelected: (input) => {
+        if (!input.files || !input.files[0]) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const textarea = document.getElementById('debug-json-textarea');
+            if (textarea) textarea.value = event.target.result;
+            input.value = '';
+        };
+        reader.readAsText(input.files[0]);
+    },
+
     triggerFileLoad: () => {
-        const input = document.getElementById('debug-state-file-input');
+        const input = document.getElementById('debug-state-file');
         if (input) input.click();
     },
 
     loadStateFile: (input) => {
         if (!input.files || !input.files[0]) return;
-        const file = input.files[0];
         const reader = new FileReader();
-        reader.onload = async (e) => {
+        reader.onload = async (event) => {
             try {
-                let json;
-                // Try to detect if it's base64-encoded state string or JSON
-                const content = e.target.result.trim();
-                
-                // Check if it looks like base64 (contains typical base64 chars and likely starts with { when decoded)
-                if (!/^[\s\n\r{[]/.test(content) && /^[A-Za-z0-9+/=]+$/.test(content)) {
-                    // Looks like base64, decode it
-                    const decoded = JSON.parse(decodeURIComponent(escape(atob(content))));
-                    json = decoded;
-                } else {
-                    // Try to parse as JSON directly
-                    json = JSON.parse(content);
-                }
-                
-                // Strip if it's rich data
-                const source = State.stripRichData(json);
-                const ok = await Network.applyState(JSON.stringify(source));
+                const payload = DebugModal._decodeStateInput(event.target.result);
+                const response = await DebugModal._applyCheckpointPayload(payload);
+                const ok = Boolean(response?.ok);
+                const message = DebugModal._extractApplyMessage(response);
+                DebugModal._setStatus(ok ? 'success' : 'error', message);
                 if (ok) {
-                    alert("State Loaded from File and Applied Successfully.");
-                    DebugModal.renderAll();
+                    await DebugModal.renderAll();
+                    if (window.Rendering) window.Rendering.render();
                 } else {
-                    alert("Apply failed — check server console.");
+                    DebugModal.renderStringTab();
                 }
-            } catch (err) {
-                alert("File Read/Parse Error: " + err.message);
+            } catch (error) {
+                DebugModal._setStatus('error', `File error: ${error.message}`);
+                DebugModal.renderStringTab();
             }
-            // Reset input so the same file can be picked again
-            input.value = "";
+            input.value = '';
         };
-        reader.readAsText(file);
-    },
-
-    _flag: (label, val, color = '#ccc') => {
-        if (val === undefined || val === null) return '';
-        const display = typeof val === 'boolean' ? (val ? 'YES' : 'NO') : val;
-        const c = (typeof val === 'boolean' && val) ? '#e74c3c' : (typeof val === 'boolean' ? '#2ecc71' : color);
-        return `<div style="font-size:11px;"><span style="opacity:0.5;">${label}:</span> <span style="color:${c}">${display}</span></div>`;
-    },
-
-    _renderLogicList: (title, items, color) => {
-        if (!items || items.length === 0) return '';
-        return `
-            <div style="margin-top:5px; border-left: 2px solid ${color}; padding-left: 8px;">
-                <div style="font-size: 9px; opacity: 0.5; text-transform: uppercase;">${title}</div>
-                ${items.map(item => {
-            const typeName = item.condition_type || item.effect_type || item.cost_type || item.type || 'Unknown';
-            return `
-                    <div style="font-size: 10px; margin-bottom: 2px;">
-                        <span style="color:${color}">${typeName}:</span>
-                        ${item.value !== undefined ? `v=${item.value}` : ''}
-                        ${item.attr !== undefined ? `a=0x${Number(item.attr).toString(16)}` : ''}
-                        ${item.target !== undefined ? `t=${item.target}` : ''}
-                        ${item.is_negated ? '<span style="color:#e74c3c">[NEG]</span>' : ''}
-                        ${item.is_optional ? '<span style="color:#3498db">[OPT]</span>' : ''}
-                    </div>`;
-        }).join('')}
-            </div>
-        `;
-    },
-
-    _renderSlotEnums: (card) => {
-        if (!card || card.id === -1 || card.id === -2) return '';
-        
-        const triggers = new Set();
-        const conditions = new Set();
-        const effects = new Set();
-        const costs = new Set();
-
-        const triggerMap = {0:'NONE',1:'ON_PLAY',2:'ON_LIVE_START',3:'ON_LIVE_SUCCESS',4:'TURN_START',5:'TURN_END',6:'CONSTANT',7:'ACTIVATED',8:'ON_LEAVES',9:'ON_REVEAL',10:'ON_POSITION_CHANGE',11:'ON_ABILITY_RESOLVE',12:'ON_ABILITY_SUCCESS'};
-        const conditionMap = {200:'TURN_1',201:'HAS_MEMBER',202:'HAS_COLOR',203:'COUNT_STAGE',204:'COUNT_HAND',205:'COUNT_DISCARD',206:'IS_CENTER',207:'LIFE_LEAD',208:'COUNT_GROUP',209:'GROUP_FILTER',210:'OPPONENT_HAS',211:'SELF_IS_GROUP',212:'MODAL_ANSWER',213:'COUNT_ENERGY',214:'HAS_LIVE_CARD',215:'COST_CHECK',216:'RARITY_CHECK',217:'HAND_HAS_NO_LIVE',218:'COUNT_SUCCESS_LIVE',219:'OPPONENT_HAND_DIFF',220:'SCORE_COMPARE',221:'HAS_CHOICE',222:'OPPONENT_CHOICE',223:'COUNT_HEARTS',224:'COUNT_BLADES',225:'OPPONENT_ENERGY_DIFF',226:'HAS_KEYWORD',227:'DECK_REFRESHED',228:'HAS_MOVED',229:'HAND_INCREASED',230:'COUNT_LIVE_ZONE',231:'BATON',232:'TYPE_CHECK',233:'IS_IN_DISCARD',234:'AREA_CHECK',235:'COST_LEAD',236:'SCORE_LEAD',237:'HEART_LEAD',238:'HAS_EXCESS_HEART',239:'NOT_HAS_EXCESS_HEART',240:'TOTAL_BLADES',241:'COST_COMPARE',242:'BLADE_COMPARE',243:'HEART_COMPARE',244:'OPPONENT_HAS_WAIT',245:'IS_TAPPED',246:'IS_ACTIVE',247:'LIVE_PERFORMED',248:'IS_PLAYER',249:'IS_OPPONENT',250:'COUNT_UNIQUE_COLORS',301:'COUNT_ENERGY_EXACT',302:'COUNT_BLADE_HEART_TYPES',303:'OPPONENT_HAS_EXCESS_HEART',304:'SCORE_TOTAL_CHECK',305:'MAIN_PHASE',306:'SELECT_MEMBER',307:'SUCCESS_PILE_COUNT',308:'IS_SELF_MOVE',309:'DISCARDED_CARDS',310:'YELL_REVEALED_UNIQUE_COLORS',311:'SYNC_COST',312:'SUM_VALUE',313:'IS_WAIT',314:'ON_ABILITY_RESOLVE',315:'TARGET_MEMBER_HAS_NO_HEARTS'};
-        const effectMap = {0:'NOP',1:'RETURN',2:'JUMP',3:'JUMP_IF_FALSE',10:'DRAW',11:'ADD_BLADES',12:'ADD_HEARTS',13:'REDUCE_COST',14:'LOOK_DECK',15:'RECOVER_LIVE',16:'BOOST_SCORE',17:'RECOVER_MEMBER',18:'BUFF_POWER',19:'IMMUNITY',20:'MOVE_MEMBER',21:'SWAP_CARDS',22:'SEARCH_DECK',23:'ENERGY_CHARGE',24:'SET_BLADES',25:'SET_HEARTS',26:'FORMATION_CHANGE',27:'NEGATE_EFFECT',28:'ORDER_DECK',29:'META_RULE',30:'SELECT_MODE',31:'MOVE_TO_DECK',32:'TAP_OPPONENT',33:'PLACE_UNDER',34:'FLAVOR_ACTION',35:'RESTRICTION',36:'BATON_TOUCH_MOD',37:'SET_SCORE',38:'SWAP_ZONE',39:'TRANSFORM_COLOR',40:'REVEAL_CARDS',41:'LOOK_AND_CHOOSE',42:'CHEER_REVEAL',43:'ACTIVATE_MEMBER',44:'ADD_TO_HAND',45:'COLOR_SELECT',47:'TRIGGER_REMOTE',48:'REDUCE_HEART_REQ',49:'MODIFY_SCORE_RULE',50:'ADD_STAGE_ENERGY',51:'SET_TAPPED',53:'TAP_MEMBER',57:'PLAY_MEMBER_FROM_HAND',58:'MOVE_TO_DISCARD',60:'GRANT_ABILITY',61:'INCREASE_HEART_COST',62:'REDUCE_YELL_COUNT',63:'PLAY_MEMBER_FROM_DISCARD',64:'PAY_ENERGY',65:'SELECT_MEMBER',66:'DRAW_UNTIL',67:'SELECT_PLAYER',68:'SELECT_LIVE',69:'REVEAL_UNTIL',70:'INCREASE_COST',71:'PREVENT_PLAY_TO_SLOT',72:'SWAP_AREA',73:'TRANSFORM_HEART',74:'SELECT_CARDS',75:'OPPONENT_CHOOSE',76:'PLAY_LIVE_FROM_DISCARD',77:'REDUCE_LIVE_SET_LIMIT',78:'SET_TARGET_SELF',79:'SET_TARGET_OPPONENT',80:'PREVENT_SET_TO_SUCCESS_PILE',81:'ACTIVATE_ENERGY',82:'PREVENT_ACTIVATE',83:'SET_HEART_COST',90:'PREVENT_BATON_TOUCH',91:'LOOK_DECK_DYNAMIC',92:'REDUCE_SCORE',93:'REPEAT_ABILITY',94:'LOSE_EXCESS_HEARTS',95:'SKIP_ACTIVATE_PHASE',96:'PAY_ENERGY_DYNAMIC',97:'PLACE_ENERGY_UNDER_MEMBER',106:'CALC_SUM_COST',125:'LOOK_REORDER_DISCARD',126:'DIV_VALUE',127:'TRANSFORM_BLADES'};
-        const costMap = {0:'NONE',1:'ENERGY',2:'TAP_SELF',3:'DISCARD_HAND',4:'RETURN_HAND',5:'SACRIFICE_SELF',8:'DISCARD_ENERGY',20:'TAP_MEMBER',21:'TAP_ENERGY',22:'REST_MEMBER',23:'RETURN_MEMBER_TO_HAND',24:'DISCARD_MEMBER',25:'DISCARD_LIVE',26:'REMOVE_LIVE',27:'REMOVE_MEMBER',31:'PLACE_MEMBER_FROM_HAND',32:'PLACE_LIVE_FROM_HAND',33:'PLACE_ENERGY_FROM_HAND',34:'PLACE_MEMBER_FROM_DISCARD',35:'PLACE_LIVE_FROM_DISCARD',36:'PLACE_ENERGY_FROM_DISCARD',37:'PLACE_MEMBER_FROM_DECK',38:'PLACE_LIVE_FROM_DECK',39:'PLACE_ENERGY_FROM_DECK'};
-
-        if (card.abilities) {
-            card.abilities.forEach(ab => {
-                if (ab.trigger !== undefined) triggers.add(triggerMap[ab.trigger] || ab.trigger);
-                if (ab.conditions) ab.conditions.forEach(c => {
-                    if (c.condition_type !== undefined) conditions.add(conditionMap[c.condition_type] || c.condition_type);
-                });
-                if (ab.effects) ab.effects.forEach(e => {
-                    if (e.effect_type !== undefined) effects.add(effectMap[e.effect_type] || e.effect_type);
-                });
-                if (ab.costs) ab.costs.forEach(c => {
-                    if (c.cost_type !== undefined) costs.add(costMap[c.cost_type] || c.cost_type);
-                });
-            });
-        }
-
-        if (!triggers.size && !conditions.size && !effects.size && !costs.size) return '';
-
-        return `
-            <div style="margin-top: 6px; padding: 6px; background: rgba(255,255,255,0.02); border-radius: 3px; border: 1px dashed rgba(255,255,255,0.1);">
-                <div style="font-size: 9px; font-weight: bold; text-transform: uppercase; opacity: 0.6; margin-bottom: 3px;">Enums on This Card:</div>
-                ${triggers.size ? `<div style="font-size: 8px; margin-bottom: 2px;"><strong style="color:#2ecc71;">Triggers:</strong> ${Array.from(triggers).join(', ')}</div>` : ''}
-                ${conditions.size ? `<div style="font-size: 8px; margin-bottom: 2px;"><strong style="color:#3498db;">Conditions:</strong> ${Array.from(conditions).join(', ')}</div>` : ''}
-                ${effects.size ? `<div style="font-size: 8px; margin-bottom: 2px;"><strong style="color:#f39c12;">Effects:</strong> ${Array.from(effects).join(', ')}</div>` : ''}
-                ${costs.size ? `<div style="font-size: 8px;"><strong style="color:#1abc9c;">Cost Types:</strong> ${Array.from(costs).join(', ')}</div>` : ''}
-            </div>
-        `;
-    },
-
-    _renderCardDiag: (c, slotLabel) => {
-        if (!c || c === -1 || c.id === -1 || c.id === -2) {
-            return `<div style="font-size:11px; opacity:0.3; padding:8px; border:1px dashed #444; border-radius:4px; text-align:center;">EMPTY (${slotLabel})</div>`;
-        }
-        const flags = [];
-        if (c.tapped) flags.push('<span style="color:#e74c3c">TAPPED</span>');
-        if (c.moved) flags.push('<span style="color:#3498db">MOVED</span>');
-        if (c.revealed) flags.push('<span style="color:#2ecc71">REVEALED</span>');
-
-        const type = c.type || (c.score !== undefined ? 'live' : 'member');
-        const isLive = type === 'live';
-
-        return `
-            <div style="font-size:11px; background: rgba(255,255,255,0.03); padding: 10px; border: 1px solid #444; border-radius: 4px; display:flex; flex-direction:column; gap:6px;">
-                <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <strong style="color:${isLive ? '#e74c3c' : 'var(--accent-blue)'}; font-size:12px;">${c.name}</strong>
-                        <span style="opacity:0.5; font-size:10px;">[${slotLabel}]</span>
-                        <span style="opacity:0.4; font-size:9px; background:rgba(255,255,255,0.1); padding:0 4px; border-radius:3px;">${type.toUpperCase()}</span>
-                    </div>
-                    <span style="opacity:0.5; font-family:monospace; font-size:10px;">ID ${c.id}</span>
-                </div>
-
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap:6px; background: rgba(0,0,0,0.2); padding:4px 6px; border-radius:4px; font-size:10px;">
-                    ${isLive ? `<span><strong>Score:</strong> ${c.score ?? 0}</span>` : `<span><strong>Cost:</strong> ${c.cost ?? 0}</span>`}
-                    ${isLive ? `<span><strong>Req:</strong> ${JSON.stringify(c.required_hearts || [])}</span>` : `<span><strong>Hearts:</strong> ${JSON.stringify(c.hearts || [])}</span>`}
-                    ${!isLive ? `<span><strong>Blades:</strong> ${c.blades ?? 0}</span>` : ''}
-                    <span><strong>Vol:</strong> ${c.note_icons ?? 0}</span>
-                </div>
-
-                <div style="display:flex; flex-wrap:wrap; gap:8px; font-size:9px;">
-                    <div title="Semantic Flags">Sem: <span style="color:#3498db">0x${(c.semantic_flags || 0).toString(16)}</span></div>
-                    ${!isLive ? `<div title="Ability Flags">Ab: <span style="color:#2ecc71">0x${(c.ability_flags || 0).toString(16)}</span></div>` : ''}
-                    <div title="Synergy Flags">Syn: <span style="color:#f1c40f">0x${(c.synergy_flags || 0).toString(16)}</span></div>
-                    ${!isLive ? `<div title="Cost Flags">CostF: <span style="color:#9b59b6">0x${(c.cost_flags || 0).toString(16)}</span></div>` : ''}
-                </div>
-
-                ${flags.length ? `<div style="display:flex; flex-wrap:wrap; gap:4px; font-size:9px; font-weight:bold;">${flags.join(' ')}</div>` : ''}
-
-                <div class="debug-abilities" style="margin-top:4px; border-top:1px solid rgba(255,255,255,0.05); padding-top:6px; display:flex; flex-direction:column; gap:10px;">
-                    ${(c.abilities || []).map((ab, ai) => `
-                        <div style="background: rgba(255,255,255,0.02); padding:6px; border-radius:4px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                                <div style="color:#f1c40f; font-size:10px; font-weight:bold;">Ab#${ai + 1} [${ab.trigger}]</div>
-                                <div style="display:flex; gap:4px;">
-                                    ${ab.is_once_per_turn ? '<span style="font-size:8px; color:#e67e22; border:1px solid #e67e22; padding:0 3px; border-radius:3px;">1/TURN</span>' : ''}
-                                    ${ab.requires_selection ? '<span style="font-size:8px; color:#9b59b6; border:1px solid #9b59b6; padding:0 3px; border-radius:3px;">CHOICE</span>' : ''}
-                                    ${ab.choice_count > 0 ? `<span style="font-size:8px; color:#3498db; border:1px solid #3498db; padding:0 3px; border-radius:3px;">x${ab.choice_count}</span>` : ''}
-                                </div>
-                            </div>
-                            <div style="opacity:0.8; font-style:italic; margin-bottom:6px; font-size:10px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom:4px;">"${ab.pseudocode || 'No pseudocode'}"</div>
-
-                            ${DebugModal._renderLogicList('Conditions', ab.conditions, '#3498db')}
-                            ${DebugModal._renderLogicList('Costs', ab.costs, '#e67e22')}
-                            ${DebugModal._renderLogicList('Effects', ab.effects, '#2ecc71')}
-
-                            ${(ab.decoded_bytecode && ab.decoded_bytecode.length > 0) ? `
-                            <details style="margin-top:4px;">
-                                <summary style="cursor:pointer; opacity:0.5; font-size:9px; padding:2px; background:rgba(255,255,255,0.05); border-radius:3px;">Decoded Bytecode (${ab.decoded_bytecode.length})</summary>
-                                <pre style="font-size:9px; background:#000; padding:6px; border-radius:4px; margin:4px 0; max-height:150px; overflow-y:auto; color:#0f0; font-family: 'Cascadia Code', monospace; line-height:1.2;">${ab.decoded_bytecode.join('\n')}</pre>
-                            </details>` : ''}
-
-                            ${(ab.bytecode && ab.bytecode.length > 0) ? `
-                            <details style="margin-top:2px;">
-                                <summary style="cursor:pointer; opacity:0.4; font-size:8px; padding:1px 2px; background:rgba(255,255,255,0.03); border-radius:3px;">Raw Bytecode (${ab.bytecode.length} words)</summary>
-                                <pre style="font-size:8px; background:#000; padding:4px; border-radius:4px; margin:2px 0; max-height:80px; overflow-y:auto; color:#888; font-family:monospace;">${ab.bytecode.join(', ')}</pre>
-                            </details>` : ''}
-                        </div>
-                    `).join('')}
-                </div>
-
-                ${DebugModal._renderSlotEnums(c)}
-            </div>
-        `;
-    },
-
-    // Render constants reference section
-    _renderConstantsRef: () => {
-        const C = DEBUG_CONSTANTS;
-        return `
-            <details style="margin-top:8px;">
-                <summary style="cursor:pointer; font-size:10px; font-weight:bold; text-transform:uppercase; opacity:0.6; letter-spacing:1px;">Constants Reference</summary>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-top:4px; font-size:9px;">
-                    <div style="grid-column: span 4; font-weight:bold; color:#f1c40f; border-bottom:1px solid #444; margin-bottom:4px;">Ability Flags</div>
-                    ${Object.entries({ FLAG_DRAW: 1, FLAG_SEARCH: 2, FLAG_RECOVER: 4, FLAG_BUFF: 8, FLAG_CHARGE: 16, FLAG_TEMPO: 32, FLAG_REDUCE: 64, FLAG_BOOST: 128, FLAG_TRANSFORM: 256, FLAG_WIN_COND: 512, FLAG_MOVE: 1024, FLAG_TAP: 2048 }).map(([k, v]) => `<span>${k}:${v}</span>`).join('')}
-                    <div style="grid-column: span 4; font-weight:bold; color:#e67e22; border-bottom:1px solid #444; margin-bottom:4px; margin-top:4px;">Cost Flags</div>
-                    ${Object.entries({ COST_FLAG_DISCARD: 1, COST_FLAG_TAP: 2 }).map(([k, v]) => `<span>${k}:${v}</span>`).join('')}
-                    <div style="grid-column: span 4; font-weight:bold; color:#3498db; border-bottom:1px solid #444; margin-bottom:4px; margin-top:4px;">Choice Flags</div>
-                    ${Object.entries({ CHOICE_FLAG_LOOK: 1, CHOICE_FLAG_DISCARD: 2, CHOICE_FLAG_MODE: 4, CHOICE_FLAG_COLOR: 8, CHOICE_FLAG_ORDER: 16 }).map(([k, v]) => `<span>${k}:${v}</span>`).join('')}
-                    <div style="grid-column: span 4; font-weight:bold; color:#9b59b6; border-bottom:1px solid #444; margin-bottom:4px; margin-top:4px;">Synergy Flags</div>
-                    ${Object.entries({ SYN_FLAG_GROUP: 1, SYN_FLAG_COLOR: 2, SYN_FLAG_BATON: 4, SYN_FLAG_CENTER: 8, SYN_FLAG_LIFE_LEAD: 16 }).map(([k, v]) => `<span>${k}:${v}</span>`).join('')}
-                    <div style="grid-column: span 4; font-weight:bold; color:#2ecc71; border-bottom:1px solid #444; margin-bottom:4px; margin-top:4px;">Filter Flags</div>
-                    ${Object.entries({ FILTER_TYPE_MEMBER: 4, FILTER_TYPE_LIVE: 8, FILTER_GROUP_ENABLE: 16, FILTER_TAPPED: 4096, FILTER_HAS_BLADE_HEART: 8192, FILTER_NOT_HAS_BLADE_HEART: 16384, FILTER_UNIQUE_NAMES: 32768, FILTER_UNIT_ENABLE: 65536 }).map(([k, v]) => `<span>${k}:${v}</span>`).join('')}
-                    <div style="grid-column: span 4; font-weight:bold; color:#e74c3c; border-bottom:1px solid #444; margin-bottom:4px; margin-top:4px;">Area/Zones</div>
-                    ${Object.entries({ AREA_LEFT: 1, AREA_CENTER: 2, AREA_RIGHT: 3, ZONE_MASK_STAGE: 4, ZONE_MASK_HAND: 6, ZONE_MASK_DISCARD: 7 }).map(([k, v]) => `<span>${k}:${v}</span>`).join('')}
-                </div>
-            </details>
-        `;
-    },
-
-    // Render conditions reference
-    _renderConditionsRef: () => {
-        const conditions = [
-            { n: 'TURN_1', v: 200 }, { n: 'HAS_MEMBER', v: 201 }, { n: 'HAS_COLOR', v: 202 }, { n: 'COUNT_STAGE', v: 203 }, { n: 'COUNT_HAND', v: 204 }, { n: 'COUNT_DISCARD', v: 205 }, { n: 'IS_CENTER', v: 206 }, { n: 'LIFE_LEAD', v: 207 }, { n: 'COUNT_GROUP', v: 208 }, { n: 'GROUP_FILTER', v: 209 }, { n: 'OPPONENT_HAS', v: 210 }, { n: 'SELF_IS_GROUP', v: 211 }, { n: 'MODAL_ANSWER', v: 212 }, { n: 'COUNT_ENERGY', v: 213 }, { n: 'HAS_LIVE_CARD', v: 214 }, { n: 'COST_CHECK', v: 215 }, { n: 'RARITY_CHECK', v: 216 }, { n: 'HAND_HAS_NO_LIVE', v: 217 }, { n: 'COUNT_SUCCESS_LIVE', v: 218 }, { n: 'OPPONENT_HAND_DIFF', v: 219 }, { n: 'SCORE_COMPARE', v: 220 }, { n: 'HAS_CHOICE', v: 221 }, { n: 'OPPONENT_CHOICE', v: 222 }, { n: 'COUNT_HEARTS', v: 223 }, { n: 'COUNT_BLADES', v: 224 }, { n: 'OPPONENT_ENERGY_DIFF', v: 225 }, { n: 'HAS_KEYWORD', v: 226 }, { n: 'DECK_REFRESHED', v: 227 }, { n: 'HAS_MOVED', v: 228 }, { n: 'HAND_INCREASED', v: 229 }, { n: 'COUNT_LIVE_ZONE', v: 230 }, { n: 'BATON', v: 231 }, { n: 'TYPE_CHECK', v: 232 }, { n: 'IS_IN_DISCARD', v: 233 }, { n: 'AREA_CHECK', v: 234 }, { n: 'COST_LEAD', v: 235 }, { n: 'SCORE_LEAD', v: 236 }, { n: 'HEART_LEAD', v: 237 }, { n: 'HAS_EXCESS_HEART', v: 238 }, { n: 'NOT_HAS_EXCESS_HEART', v: 239 }, { n: 'TOTAL_BLADES', v: 240 }, { n: 'COST_COMPARE', v: 241 }, { n: 'BLADE_COMPARE', v: 242 }, { n: 'HEART_COMPARE', v: 243 }, { n: 'OPPONENT_HAS_WAIT', v: 244 }, { n: 'IS_TAPPED', v: 245 }, { n: 'IS_ACTIVE', v: 246 }, { n: 'LIVE_PERFORMED', v: 247 }, { n: 'IS_PLAYER', v: 248 }, { n: 'IS_OPPONENT', v: 249 }, { n: 'COUNT_UNIQUE_COLORS', v: 250 }, { n: 'COUNT_ENERGY_EXACT', v: 301 }, { n: 'COUNT_BLADE_HEART_TYPES', v: 302 }, { n: 'OPPONENT_HAS_EXCESS_HEART', v: 303 }, { n: 'SCORE_TOTAL_CHECK', v: 304 }, { n: 'MAIN_PHASE', v: 305 }, { n: 'SELECT_MEMBER', v: 306 }, { n: 'SUCCESS_PILE_COUNT', v: 307 }, { n: 'IS_SELF_MOVE', v: 308 }, { n: 'DISCARDED_CARDS', v: 309 }, { n: 'YELL_REVEALED_UNIQUE_COLORS', v: 310 }, { n: 'SYNC_COST', v: 311 }, { n: 'SUM_VALUE', v: 312 }, { n: 'IS_WAIT', v: 313 }, { n: 'ON_ABILITY_RESOLVE', v: 314 }, { n: 'TARGET_MEMBER_HAS_NO_HEARTS', v: 315 }
-        ];
-        return `
-            <details style="margin-top:8px;">
-                <summary style="cursor:pointer; font-size:10px; font-weight:bold; text-transform:uppercase; opacity:0.6; letter-spacing:1px;">Conditions Reference (${conditions.length})</summary>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 2px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-top:4px; font-size:8px; max-height:250px; overflow-y:auto;">
-                    ${conditions.map(c => `<span style="color:#3498db;">${c.n}:${c.v}</span>`).join('')}
-                </div>
-            </details>
-        `;
-    },
-
-    // Render phases reference
-    _renderPhasesRef: () => {
-        const phases = [
-            { n: 'SETUP', v: -4 }, { n: 'RPS', v: -3 }, { n: 'TURN_CHOICE', v: -2 }, { n: 'MULLIGAN_P1', v: -1 }, { n: 'MULLIGAN_P2', v: 0 }, { n: 'ACTIVE', v: 1 }, { n: 'ENERGY', v: 2 }, { n: 'DRAW', v: 3 }, { n: 'MAIN', v: 4 }, { n: 'LIVE_SET', v: 5 }, { n: 'PERFORMANCE_P1', v: 6 }, { n: 'PERFORMANCE_P2', v: 7 }, { n: 'LIVE_RESULT', v: 8 }, { n: 'TERMINAL', v: 9 }, { n: 'RESPONSE', v: 10 }
-        ];
-        return `
-            <details style="margin-top:8px;">
-                <summary style="cursor:pointer; font-size:10px; font-weight:bold; text-transform:uppercase; opacity:0.6; letter-spacing:1px;">Phases Reference</summary>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 2px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-top:4px; font-size:9px;">
-                    ${phases.map(p => `<span style="color:#f1c40f;">${p.n}:${p.v}</span>`).join('')}
-                </div>
-            </details>
-        `;
-    },
-
-    // Render triggers reference
-    _renderTriggersRef: () => {
-        const triggers = [
-            { n: 'NONE', v: 0 }, { n: 'ON_PLAY', v: 1 }, { n: 'ON_LIVE_START', v: 2 }, { n: 'ON_LIVE_SUCCESS', v: 3 }, { n: 'TURN_START', v: 4 }, { n: 'TURN_END', v: 5 }, { n: 'CONSTANT', v: 6 }, { n: 'ACTIVATED', v: 7 }, { n: 'ON_LEAVES', v: 8 }, { n: 'ON_REVEAL', v: 9 }, { n: 'ON_POSITION_CHANGE', v: 10 }, { n: 'ON_ABILITY_RESOLVE', v: 11 }, { n: 'ON_ABILITY_SUCCESS', v: 12 }
-        ];
-        return `
-            <details style="margin-top:8px;">
-                <summary style="cursor:pointer; font-size:10px; font-weight:bold; text-transform:uppercase; opacity:0.6; letter-spacing:1px;">Triggers Reference</summary>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 2px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-top:4px; font-size:9px;">
-                    ${triggers.map(t => `<span style="color:#2ecc71;">${t.n}:${t.v}</span>`).join('')}
-                </div>
-            </details>
-        `;
-    },
-
-    // Render target types reference
-    _renderTargetTypesRef: () => {
-        const targets = [
-            { n: 'SELF', v: 0 }, { n: 'PLAYER', v: 1 }, { n: 'OPPONENT', v: 2 }, { n: 'ALL_PLAYERS', v: 3 }, { n: 'MEMBER_SELF', v: 4 }, { n: 'MEMBER_OTHER', v: 5 }, { n: 'CARD_HAND', v: 6 }, { n: 'CARD_DISCARD', v: 7 }, { n: 'CARD_DECK_TOP', v: 8 }, { n: 'OPPONENT_HAND', v: 9 }, { n: 'MEMBER_SELECT', v: 10 }, { n: 'MEMBER_NAMED', v: 11 }, { n: 'OPPONENT_MEMBER', v: 12 }, { n: 'PLAYER_SELECT', v: 20 }
-        ];
-        return `
-            <details style="margin-top:8px;">
-                <summary style="cursor:pointer; font-size:10px; font-weight:bold; text-transform:uppercase; opacity:0.6; letter-spacing:1px;">Target Types Reference</summary>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 2px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-top:4px; font-size:9px;">
-                    ${targets.map(t => `<span style="color:#9b59b6;">${t.n}:${t.v}</span>`).join('')}
-                </div>
-            </details>
-        `;
-    },
-
-    // Render effect types reference
-    _renderEffectTypesRef: () => {
-        const effects = [
-            { n: 'NOP', v: 0 }, { n: 'RETURN', v: 1 }, { n: 'JUMP', v: 2 }, { n: 'JUMP_IF_FALSE', v: 3 }, { n: 'DRAW', v: 10 }, { n: 'ADD_BLADES', v: 11 }, { n: 'ADD_HEARTS', v: 12 }, { n: 'REDUCE_COST', v: 13 }, { n: 'LOOK_DECK', v: 14 }, { n: 'RECOVER_LIVE', v: 15 }, { n: 'BOOST_SCORE', v: 16 }, { n: 'RECOVER_MEMBER', v: 17 }, { n: 'BUFF_POWER', v: 18 }, { n: 'IMMUNITY', v: 19 }, { n: 'MOVE_MEMBER', v: 20 }, { n: 'SWAP_CARDS', v: 21 }, { n: 'SEARCH_DECK', v: 22 }, { n: 'ENERGY_CHARGE', v: 23 }, { n: 'SET_BLADES', v: 24 }, { n: 'SET_HEARTS', v: 25 }, { n: 'FORMATION_CHANGE', v: 26 }, { n: 'NEGATE_EFFECT', v: 27 }, { n: 'ORDER_DECK', v: 28 }, { n: 'META_RULE', v: 29 }, { n: 'SELECT_MODE', v: 30 }, { n: 'MOVE_TO_DECK', v: 31 }, { n: 'TAP_OPPONENT', v: 32 }, { n: 'PLACE_UNDER', v: 33 }, { n: 'FLAVOR_ACTION', v: 34 }, { n: 'RESTRICTION', v: 35 }, { n: 'BATON_TOUCH_MOD', v: 36 }, { n: 'SET_SCORE', v: 37 }, { n: 'SWAP_ZONE', v: 38 }, { n: 'TRANSFORM_COLOR', v: 39 }, { n: 'REVEAL_CARDS', v: 40 }, { n: 'LOOK_AND_CHOOSE', v: 41 }, { n: 'CHEER_REVEAL', v: 42 }, { n: 'ACTIVATE_MEMBER', v: 43 }, { n: 'ADD_TO_HAND', v: 44 }, { n: 'COLOR_SELECT', v: 45 }, { n: 'TRIGGER_REMOTE', v: 47 }, { n: 'REDUCE_HEART_REQ', v: 48 }, { n: 'MODIFY_SCORE_RULE', v: 49 }, { n: 'ADD_STAGE_ENERGY', v: 50 }, { n: 'SET_TAPPED', v: 51 }, { n: 'TAP_MEMBER', v: 53 }, { n: 'PLAY_MEMBER_FROM_HAND', v: 57 }, { n: 'MOVE_TO_DISCARD', v: 58 }, { n: 'GRANT_ABILITY', v: 60 }, { n: 'INCREASE_HEART_COST', v: 61 }, { n: 'REDUCE_YELL_COUNT', v: 62 }, { n: 'PLAY_MEMBER_FROM_DISCARD', v: 63 }, { n: 'PAY_ENERGY', v: 64 }, { n: 'SELECT_MEMBER', v: 65 }, { n: 'DRAW_UNTIL', v: 66 }, { n: 'SELECT_PLAYER', v: 67 }, { n: 'SELECT_LIVE', v: 68 }, { n: 'REVEAL_UNTIL', v: 69 }, { n: 'INCREASE_COST', v: 70 }, { n: 'PREVENT_PLAY_TO_SLOT', v: 71 }, { n: 'SWAP_AREA', v: 72 }, { n: 'TRANSFORM_HEART', v: 73 }, { n: 'SELECT_CARDS', v: 74 }, { n: 'OPPONENT_CHOOSE', v: 75 }, { n: 'PLAY_LIVE_FROM_DISCARD', v: 76 }, { n: 'REDUCE_LIVE_SET_LIMIT', v: 77 }, { n: 'SET_TARGET_SELF', v: 78 }, { n: 'SET_TARGET_OPPONENT', v: 79 }, { n: 'PREVENT_SET_TO_SUCCESS_PILE', v: 80 }, { n: 'ACTIVATE_ENERGY', v: 81 }, { n: 'PREVENT_ACTIVATE', v: 82 }, { n: 'SET_HEART_COST', v: 83 }, { n: 'PREVENT_BATON_TOUCH', v: 90 }, { n: 'LOOK_DECK_DYNAMIC', v: 91 }, { n: 'REDUCE_SCORE', v: 92 }, { n: 'REPEAT_ABILITY', v: 93 }, { n: 'LOSE_EXCESS_HEARTS', v: 94 }, { n: 'SKIP_ACTIVATE_PHASE', v: 95 }, { n: 'PAY_ENERGY_DYNAMIC', v: 96 }, { n: 'PLACE_ENERGY_UNDER_MEMBER', v: 97 }, { n: 'CALC_SUM_COST', v: 106 }, { n: 'LOOK_REORDER_DISCARD', v: 125 }, { n: 'DIV_VALUE', v: 126 }, { n: 'TRANSFORM_BLADES', v: 127 }
-        ];
-        return `
-            <details style="margin-top:8px;">
-                <summary style="cursor:pointer; font-size:10px; font-weight:bold; text-transform:uppercase; opacity:0.6; letter-spacing:1px;">Effect Types Reference (${effects.length})</summary>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 2px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-top:4px; font-size:8px; max-height:250px; overflow-y:auto;">
-                    ${effects.map(e => `<span style="color:#f39c12;">${e.n}:${e.v}</span>`).join('')}
-                </div>
-            </details>
-        `;
-    },
-
-    // Render ability cost types reference
-    _renderAbilityCostTypesRef: () => {
-        const costs = [
-            { n: 'NONE', v: 0 }, { n: 'ENERGY', v: 1 }, { n: 'TAP_SELF', v: 2 }, { n: 'DISCARD_HAND', v: 3 }, { n: 'RETURN_HAND', v: 4 }, { n: 'SACRIFICE_SELF', v: 5 }, { n: 'REVEAL_HAND_ALL', v: 6 }, { n: 'SACRIFICE_UNDER', v: 7 }, { n: 'DISCARD_ENERGY', v: 8 }, { n: 'REVEAL_HAND', v: 9 }, { n: 'TAP_MEMBER', v: 20 }, { n: 'TAP_ENERGY', v: 21 }, { n: 'REST_MEMBER', v: 22 }, { n: 'RETURN_MEMBER_TO_HAND', v: 23 }, { n: 'DISCARD_MEMBER', v: 24 }, { n: 'DISCARD_LIVE', v: 25 }, { n: 'REMOVE_LIVE', v: 26 }, { n: 'REMOVE_MEMBER', v: 27 }, { n: 'RETURN_LIVE_TO_HAND', v: 28 }, { n: 'RETURN_LIVE_TO_DECK', v: 29 }, { n: 'RETURN_MEMBER_TO_DECK', v: 30 }, { n: 'PLACE_MEMBER_FROM_HAND', v: 31 }, { n: 'PLACE_LIVE_FROM_HAND', v: 32 }, { n: 'PLACE_ENERGY_FROM_HAND', v: 33 }, { n: 'PLACE_MEMBER_FROM_DISCARD', v: 34 }, { n: 'PLACE_LIVE_FROM_DISCARD', v: 35 }, { n: 'PLACE_ENERGY_FROM_DISCARD', v: 36 }, { n: 'PLACE_MEMBER_FROM_DECK', v: 37 }, { n: 'PLACE_LIVE_FROM_DECK', v: 38 }, { n: 'PLACE_ENERGY_FROM_DECK', v: 39 }, { n: 'SHUFFLE_DECK', v: 41 }, { n: 'DRAW_CARD', v: 42 }, { n: 'DISCARD_TOP_DECK', v: 43 }, { n: 'REMOVE_TOP_DECK', v: 44 }, { n: 'RETURN_DISCARD_TO_DECK', v: 45 }, { n: 'RETURN_REMOVED_TO_DECK', v: 46 }, { n: 'RETURN_REMOVED_TO_HAND', v: 47 }, { n: 'RETURN_REMOVED_TO_DISCARD', v: 48 }
-        ];
-        return `
-            <details style="margin-top:8px;">
-                <summary style="cursor:pointer; font-size:10px; font-weight:bold; text-transform:uppercase; opacity:0.6; letter-spacing:1px;">Cost Types Reference (${costs.length})</summary>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 2px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-top:4px; font-size:8px; max-height:250px; overflow-y:auto;">
-                    ${costs.map(c => `<span style="color:#1abc9c;">${c.n}:${c.v}</span>`).join('')}
-                </div>
-            </details>
-        `;
-    },
-
-    // Render choice types reference
-    _renderChoiceTypesRef: () => {
-        const choices = [
-            { n: 'NONE', v: 0 }, { n: 'OPTIONAL', v: 1 }, { n: 'PAY_ENERGY', v: 2 }, { n: 'REVEAL_HAND', v: 3 }, { n: 'SELECT_DISCARD', v: 4 }, { n: 'SELECT_SWAP_SOURCE', v: 5 }, { n: 'SELECT_STAGE', v: 6 }, { n: 'SELECT_STAGE_EMPTY', v: 7 }, { n: 'SELECT_LIVE_SLOT', v: 8 }, { n: 'SELECT_SWAP_TARGET', v: 9 }, { n: 'SELECT_MEMBER', v: 10 }, { n: 'SELECT_DISCARD_PLAY', v: 11 }, { n: 'SELECT_HAND_DISCARD', v: 12 }, { n: 'COLOR_SELECT', v: 13 }, { n: 'SELECT_MODE', v: 14 }, { n: 'OPPONENT_CHOOSE', v: 15 }, { n: 'SELECT_CARDS_ORDER', v: 16 }, { n: 'TAP_O', v: 17 }, { n: 'LOOK_AND_CHOOSE', v: 18 }, { n: 'SELECT_CARDS', v: 19 }, { n: 'SELECT_PLAYER', v: 20 }, { n: 'SELECT_LIVE', v: 21 }, { n: 'ORDER_DECK', v: 22 }, { n: 'SELECT_HAND_PLAY', v: 23 }, { n: 'TAP_M_SELECT', v: 24 }, { n: 'MOVE_MEMBER_DEST', v: 25 }, { n: 'RECOV_L', v: 26 }, { n: 'RECOV_M', v: 27 }, { n: 'SELECT_STAGE_EMPTY_BATON', v: 28 }, { n: 'REARRANGE_FORMATION', v: 29 }
-        ];
-        return `
-            <details style="margin-top:8px;">
-                <summary style="cursor:pointer; font-size:10px; font-weight:bold; text-transform:uppercase; opacity:0.6; letter-spacing:1px;">Choice Types Reference (${choices.length})</summary>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 2px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-top:4px; font-size:9px;">
-                    ${choices.map(c => `<span style="color:#e74c3c;">${c.n}:${c.v}</span>`).join('')}
-                </div>
-            </details>
-        `;
-    },
-
-    renderFlags: () => {
-        const container = document.getElementById('debug-flags-content');
-        if (!container || !State.data) return;
-
-        const d = State.data;
-        const F = DebugModal._flag;
-
-        let html = `
-            <div class="debug-grid" style="display: flex; flex-direction: column; gap: 16px; padding-bottom: 20px;">
-                ${DebugModal._renderActiveEnumsSection()}
-
-                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
-                    <h3 style="margin-top:0; color: var(--accent-blue); display:flex; justify-content:space-between;">
-                        <span>System Engine Tracer</span>
-                        <span style="font-size: 11px; opacity: 0.5;">v2.0-deep-diag</span>
-                    </h3>
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 12px;">
-                        ${F('Phase', `${d.phase}`, '#f1c40f')}
-                        ${F('Turn', d.turn)}
-                        ${F('Active', `P${(d.active_player ?? 0) + 1}`, '#3498db')}
-                        ${F('Queue', d.queue_depth || 0)}
-                        ${F('RPS', JSON.stringify(d.rps_choices || []))}
-                        ${F('Winner', d.winner !== undefined && d.winner !== -1 ? 'P' + (d.winner + 1) : 'NONE')}
-                        ${F('FirstPl', `P${(d.first_player ?? 0) + 1}`)}
-                        ${F('TrigDepth', d.trigger_depth || 0)}
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 11px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
-                        ${F('InteractDepth', d.pending_choice ? 1 : 0)}
-                        ${F('LiveResPend', d.live_result_selection_pending ? 'YES' : 'NO')}
-                        ${F('NeedsDeck', d.needs_deck ? 'YES' : 'NO')}
-                        ${F('Spectators', d.spectators || 0)}
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 11px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
-                        ${F('PrevPhase', d.prev_phase ?? '-')}
-                        ${F('PrevCard', d.prev_card_id ?? -1)}
-                        ${F('LiveSetDraws', JSON.stringify(d.live_set_pending_draws || [0, 0]))}
-                        ${F('LiveResTrigDone', d.live_result_triggers_done ? 'YES' : 'NO')}
-                        ${F('LiveStartTrigDone', d.live_start_triggers_done ? 'YES' : 'NO')}
-                        ${F('ScoreReqPlayer', d.score_req_player ?? -1)}
-                        ${F('ScoreReqList', JSON.stringify(d.score_req_list || []))}
-                    </div>
-                </div>
-        `;
-
-        d.players.forEach((p, i) => {
-            const isViewer = (i === State.perspectivePlayer);
-            const hearts = p.total_hearts || [0, 0, 0, 0, 0, 0, 0];
-
-            html += `
-                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
-                    <h4 style="margin-top:0; border-bottom: 1px solid var(--border); padding-bottom: 5px; display:flex; justify-content:space-between;">
-                        <span>Player ${i + 1} ${isViewer ? '<span style="font-size:10px; opacity:0.6;">(VIEWER)</span>' : ''}</span>
-                        <span style="font-size:12px; color:var(--accent-blue);">Score: ${p.score}</span>
-                    </h4>
-
-                    <!-- RESOURCES -->
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px;">
-                        ${F('Energy', `${p.energy_untapped ?? 0}/${p.energy_count ?? 0}`)}
-                        ${F('Hand', p.hand?.length || 0)}
-                        ${F('Deck', p.deck_count ?? 0)}
-                        ${F('Discard', p.discard_count ?? 0)}
-                        ${F('EnergyDeck', p.energy_deck_count ?? 0)}
-                        ${F('SuccessLives', p.success_lives?.length || 0)}
-                        ${F('LiveZone', (p.live_zone || []).filter(c => c && c.id !== -1).length)}
-                        ${F('YellCards', p.yell_cards?.length || 0)}
-                        ${F('Exile', p.exile_count || 0)}
-                        ${F('LiveDeck', p.live_deck_count || 0)}
-                    </div>
-
-                    <!-- HEARTS BAR -->
-                    <div style="display: flex; gap: 2px; margin-bottom: 10px;">
-                        ${hearts.map((h, hi) => `<div style="flex:1; height:20px; background:var(--color-${hi}); color:#000; font-size:10px; font-weight:bold; display:flex; align-items:center; justify-content:center; border-radius:2px;" title="Color ${hi}">${h}</div>`).join('')}
-                    </div>
-
-                    <!-- ALL FLAGS -->
-                    <details open>
-                        <summary style="cursor:pointer; font-size:11px; font-weight:bold; text-transform:uppercase; opacity:0.7; letter-spacing:1px; margin-bottom:6px;">Engine Flags & Conditions</summary>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-bottom:10px;">
-                            ${F('CostReduction', p.cost_reduction ?? 0)}
-                            ${F('BatonCount', `${p.baton_touch_count ?? 0}/${p.baton_touch_limit ?? 3}`)}
-                            ${F('PrevActivate', p.prevent_activate, p.prevent_activate ? '#e74c3c' : '#2ecc71')}
-                            ${F('PrevBaton', p.prevent_baton_touch, p.prevent_baton_touch ? '#e74c3c' : '#2ecc71')}
-                            ${F('PrevSuccess', p.prevent_success_pile_set, p.prevent_success_pile_set ? '#e74c3c' : '#2ecc71')}
-                            ${F('PrevPlaySlotMask', `0x${(p.prevent_play_to_slot_mask || 0).toString(16)}`)}
-                            ${F('SkipNextAct', p.skip_next_activate)}
-                            ${F('LiveScoreBonus', p.live_score_bonus ?? 0)}
-                            ${F('YellReduction', p.yell_count_reduction ?? 0)}
-                            ${F('CheerMod', p.cheer_mod_count ?? 0)}
-                            ${F('PlayCount', p.play_count_this_turn ?? 0)}
-                            ${F('HandIncrTurn', p.hand_increased_this_turn ?? 0)}
-                            ${F('DiscardedTurn', p.discarded_this_turn ?? 0)}
-                            ${F('TurnVolume', p.current_turn_notes ?? 0)}
-                            ${F('ExcessHearts', p.excess_hearts ?? 0)}
-                            ${F('FlagsBits', `0x${(p.flags || 0).toString(16).toUpperCase()}`)}
-                            ${F('PlayedGrpMask', `0x${(p.played_group_mask || 0).toString(16).toUpperCase()}`)}
-                            ${F('ActEnergyGrp', `0x${(p.activated_energy_group_mask || 0).toString(16).toUpperCase()}`)}
-                            ${F('ActMemberGrp', `0x${(p.activated_member_group_mask || 0).toString(16).toUpperCase()}`)}
-                            ${F('ColorXforms', p.color_transforms_count ?? 0)}
-                            ${F('NegatedTrigs', p.negated_triggers_count ?? 0)}
-                            ${F('GrantedAbs', p.granted_abilities_count ?? 0)}
-                            ${F('UsedAbs', p.used_abilities_count ?? 0)}
-                            ${F('Restrictions', JSON.stringify(p.restrictions || []))}
-                            ${F('MullSelection', `0x${(p.mulligan_selection || 0).toString(16).toUpperCase()}`)}
-                            ${F('ObtSuccess', p.obtained_success_live ? 'YES' : 'NO')}
-                            ${F('LvRevealed', JSON.stringify(p.live_zone_revealed || [false, false, false]))}
-                            <!-- NEW: Additional Missing Fields -->
-                            ${F('TappedEnergyMask', `0x${(p.tapped_energy_mask || 0).toString(16).toUpperCase()}`)}
-                            ${F('CostMods', JSON.stringify(p.cost_modifiers || []))}
-                            ${F('BladeBuffLogs', JSON.stringify(p.blade_buff_logs || []))}
-                            ${F('HeartBuffLogs', JSON.stringify(p.heart_buff_logs || []))}
-                            ${F('HandAddedTurn', JSON.stringify(p.hand_added_turn || []))}
-                            ${F('PerfTrigAbs', JSON.stringify(p.perf_triggered_abilities || []))}
-                            <!-- NEW: Flags Bit Breakdown -->
-                            <div style="grid-column: span 4; display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; padding: 4px; background: rgba(0,0,0,0.3); border-radius: 4px;">
-                                <span style="font-size:9px; color: ${(p.flags || 0) & 1 ? '#e74c3c' : '#2ecc71'}">CANNOT_LIVE:${(p.flags || 0) & 1 ? 'Y' : 'N'}</span>
-                                <span style="font-size:9px; color: ${(p.flags || 0) & 2 ? '#e74c3c' : '#2ecc71'}">DECK_REFRESHED:${(p.flags || 0) & 2 ? 'Y' : 'N'}</span>
-                                <span style="font-size:9px; color: ${(p.flags || 0) & 4 ? '#e74c3c' : '#2ecc71'}">IMMUNITY:${(p.flags || 0) & 4 ? 'Y' : 'N'}</span>
-                                <span style="font-size:9px; color: ${(p.flags || 0) & 8 ? '#e74c3c' : '#2ecc71'}">TAPPED_M0:${(p.flags || 0) & 8 ? 'Y' : 'N'}</span>
-                                <span style="font-size:9px; color: ${(p.flags || 0) & 16 ? '#e74c3c' : '#2ecc71'}">TAPPED_M1:${(p.flags || 0) & 16 ? 'Y' : 'N'}</span>
-                                <span style="font-size:9px; color: ${(p.flags || 0) & 32 ? '#e74c3c' : '#2ecc71'}">TAPPED_M2:${(p.flags || 0) & 32 ? 'Y' : 'N'}</span>
-                                <span style="font-size:9px; color: ${(p.flags || 0) & 64 ? '#e74c3c' : '#2ecc71'}">MOVED_M0:${(p.flags || 0) & 64 ? 'Y' : 'N'}</span>
-                                <span style="font-size:9px; color: ${(p.flags || 0) & 128 ? '#e74c3c' : '#2ecc71'}">MOVED_M1:${(p.flags || 0) & 128 ? 'Y' : 'N'}</span>
-                                <span style="font-size:9px; color: ${(p.flags || 0) & 256 ? '#e74c3c' : '#2ecc71'}">MOVED_M2:${(p.flags || 0) & 256 ? 'Y' : 'N'}</span>
-                                <span style="font-size:9px; color: ${(p.flags || 0) & 512 ? '#e74c3c' : '#2ecc71'}">LIVE_REV0:${(p.flags || 0) & 512 ? 'Y' : 'N'}</span>
-                                <span style="font-size:9px; color: ${(p.flags || 0) & 1024 ? '#e74c3c' : '#2ecc71'}">LIVE_REV1:${(p.flags || 0) & 1024 ? 'Y' : 'N'}</span>
-                                <span style="font-size:9px; color: ${(p.flags || 0) & 2048 ? '#e74c3c' : '#2ecc71'}">LIVE_REV2:${(p.flags || 0) & 2048 ? 'Y' : 'N'}</span>
-                            </div>
-                        </div>
-                    </details>
-
-                    <!-- PER-SLOT DATA -->
-                    <details open>
-                        <summary style="cursor:pointer; font-size:11px; font-weight:bold; text-transform:uppercase; opacity:0.7; letter-spacing:1px; margin-bottom:6px;">Per-Slot Buffs & Energy</summary>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-bottom:10px;">
-                            ${[0, 1, 2].map(s => `
-                                <div style="padding:4px; border:1px solid #333; border-radius:4px; font-size:10px;">
-                                    <div style="font-weight:bold; margin-bottom:3px;">Slot ${s + 1}</div>
-                                    ${F('BladeBuffs', (p.blade_buffs || [])[s] ?? 0)}
-                                    ${F('HeartBuffs', JSON.stringify((p.heart_buffs || [])[s] || []))}
-                                    ${F('CostMod', (p.slot_cost_modifiers || [])[s] ?? 0)}
-                                    ${F('StgEnergy', (p.stage_energy_count || [])[s] ?? 0)}
-                                    ${F('StgEnergyCards', JSON.stringify((p.stage_energy || [])[s] || []))}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </details>
-
-                    ${(p.heart_req_reductions && p.heart_req_reductions.some(v => v > 0)) || (p.heart_req_additions && p.heart_req_additions.some(v => v > 0)) ? `
-                    <details>
-                        <summary style="cursor:pointer; font-size:11px; font-weight:bold; text-transform:uppercase; opacity:0.7; letter-spacing:1px; margin-bottom:6px;">Heart Requirement Mods</summary>
-                        <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-bottom:10px; font-size:10px;">
-                            ${F('Reductions', JSON.stringify(p.heart_req_reductions || []))}
-                            ${F('Additions', JSON.stringify(p.heart_req_additions || []))}
-                        </div>
-                    </details>` : ''}
-
-                    ${(p.live_score_bonus_logs && p.live_score_bonus_logs.length > 0) ? `
-                    <details>
-                        <summary style="cursor:pointer; font-size:11px; font-weight:bold; text-transform:uppercase; opacity:0.7; letter-spacing:1px; margin-bottom:6px;">Score Bonus Logs (${p.live_score_bonus_logs.length})</summary>
-                        <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:4px; margin-bottom:10px; font-size:10px;">
-                            ${p.live_score_bonus_logs.map(l => `<div>Source: ${l.source}, Amount: +${l.amount}</div>`).join('')}
-                        </div>
-                    </details>` : ''}
-
-                    <!-- STAGE DIAGNOSTICS -->
-                    <h5 style="margin: 8px 0 6px 0; font-size: 11px; text-transform: uppercase; opacity: 0.7; letter-spacing: 1px;">Stage Cards</h5>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        ${(p.stage || []).map((c, si) => DebugModal._renderCardDiag(c, `Stage ${si + 1}`)).join('')}
-                    </div>
-
-                    <!-- LIVE ZONE DIAGNOSTICS -->
-                    <h5 style="margin: 12px 0 6px 0; font-size: 11px; text-transform: uppercase; opacity: 0.7; letter-spacing: 1px;">Live Set Slots</h5>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        ${(p.live_zone || []).map((c, li) => DebugModal._renderCardDiag(c, `Live ${li + 1}`)).join('')}
-                    </div>
-                </div>
-            `;
-        });
-
-        html += '</div>';
-
-        // Add Constants Reference Section at the end
-        html += `
-            <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
-                <h4 style="margin-top:0; color: var(--accent-gold);">Metadata Constants Reference</h4>
-                ${DebugModal._renderConstantsRef()}
-                ${DebugModal._renderConditionsRef()}
-                ${DebugModal._renderPhasesRef()}
-                ${DebugModal._renderTriggersRef()}
-                ${DebugModal._renderTargetTypesRef()}
-                ${DebugModal._renderEffectTypesRef()}
-                ${DebugModal._renderAbilityCostTypesRef()}
-                ${DebugModal._renderChoiceTypesRef()}
-            </div>
-        `;
-
-        container.innerHTML = html;
-    },
-
-    _analyzeActiveEnums: () => {
-        if (!State.data || !State.data.players) return { triggers: [], conditions: [], effects: [], costs: [], choices: [] };
-
-        const activeTriggers = new Set();
-        const activeConditions = new Set();
-        const activeEffects = new Set();
-        const activeCosts = new Set();
-        const activeChoices = new Set();
-
-        // Trigger Type Mappings
-        const triggerMap = {0:'NONE',1:'ON_PLAY',2:'ON_LIVE_START',3:'ON_LIVE_SUCCESS',4:'TURN_START',5:'TURN_END',6:'CONSTANT',7:'ACTIVATED',8:'ON_LEAVES',9:'ON_REVEAL',10:'ON_POSITION_CHANGE',11:'ON_ABILITY_RESOLVE',12:'ON_ABILITY_SUCCESS'};
-        
-        // Condition Type Mappings
-        const conditionMap = {200:'TURN_1',201:'HAS_MEMBER',202:'HAS_COLOR',203:'COUNT_STAGE',204:'COUNT_HAND',205:'COUNT_DISCARD',206:'IS_CENTER',207:'LIFE_LEAD',208:'COUNT_GROUP',209:'GROUP_FILTER',210:'OPPONENT_HAS',211:'SELF_IS_GROUP',212:'MODAL_ANSWER',213:'COUNT_ENERGY',214:'HAS_LIVE_CARD',215:'COST_CHECK',216:'RARITY_CHECK',217:'HAND_HAS_NO_LIVE',218:'COUNT_SUCCESS_LIVE',219:'OPPONENT_HAND_DIFF',220:'SCORE_COMPARE',221:'HAS_CHOICE',222:'OPPONENT_CHOICE',223:'COUNT_HEARTS',224:'COUNT_BLADES',225:'OPPONENT_ENERGY_DIFF',226:'HAS_KEYWORD',227:'DECK_REFRESHED',228:'HAS_MOVED',229:'HAND_INCREASED',230:'COUNT_LIVE_ZONE',231:'BATON',232:'TYPE_CHECK',233:'IS_IN_DISCARD',234:'AREA_CHECK',235:'COST_LEAD',236:'SCORE_LEAD',237:'HEART_LEAD',238:'HAS_EXCESS_HEART',239:'NOT_HAS_EXCESS_HEART',240:'TOTAL_BLADES',241:'COST_COMPARE',242:'BLADE_COMPARE',243:'HEART_COMPARE',244:'OPPONENT_HAS_WAIT',245:'IS_TAPPED',246:'IS_ACTIVE',247:'LIVE_PERFORMED',248:'IS_PLAYER',249:'IS_OPPONENT',250:'COUNT_UNIQUE_COLORS',301:'COUNT_ENERGY_EXACT',302:'COUNT_BLADE_HEART_TYPES',303:'OPPONENT_HAS_EXCESS_HEART',304:'SCORE_TOTAL_CHECK',305:'MAIN_PHASE',306:'SELECT_MEMBER',307:'SUCCESS_PILE_COUNT',308:'IS_SELF_MOVE',309:'DISCARDED_CARDS',310:'YELL_REVEALED_UNIQUE_COLORS',311:'SYNC_COST',312:'SUM_VALUE',313:'IS_WAIT',314:'ON_ABILITY_RESOLVE',315:'TARGET_MEMBER_HAS_NO_HEARTS'};
-        
-        // Effect Type Mappings (partial key set for common ones)
-        const effectMap = {0:'NOP',1:'RETURN',2:'JUMP',3:'JUMP_IF_FALSE',10:'DRAW',11:'ADD_BLADES',12:'ADD_HEARTS',13:'REDUCE_COST',14:'LOOK_DECK',15:'RECOVER_LIVE',16:'BOOST_SCORE',17:'RECOVER_MEMBER',18:'BUFF_POWER',19:'IMMUNITY',20:'MOVE_MEMBER',21:'SWAP_CARDS',22:'SEARCH_DECK',23:'ENERGY_CHARGE',24:'SET_BLADES',25:'SET_HEARTS',26:'FORMATION_CHANGE',27:'NEGATE_EFFECT',28:'ORDER_DECK',29:'META_RULE',30:'SELECT_MODE',31:'MOVE_TO_DECK',32:'TAP_OPPONENT',33:'PLACE_UNDER',34:'FLAVOR_ACTION',35:'RESTRICTION',36:'BATON_TOUCH_MOD',37:'SET_SCORE',38:'SWAP_ZONE',39:'TRANSFORM_COLOR',40:'REVEAL_CARDS',41:'LOOK_AND_CHOOSE',42:'CHEER_REVEAL',43:'ACTIVATE_MEMBER',44:'ADD_TO_HAND',45:'COLOR_SELECT',47:'TRIGGER_REMOTE',48:'REDUCE_HEART_REQ',49:'MODIFY_SCORE_RULE',50:'ADD_STAGE_ENERGY',51:'SET_TAPPED',53:'TAP_MEMBER',57:'PLAY_MEMBER_FROM_HAND',58:'MOVE_TO_DISCARD',60:'GRANT_ABILITY',61:'INCREASE_HEART_COST',62:'REDUCE_YELL_COUNT',63:'PLAY_MEMBER_FROM_DISCARD',64:'PAY_ENERGY',65:'SELECT_MEMBER',66:'DRAW_UNTIL',67:'SELECT_PLAYER',68:'SELECT_LIVE',69:'REVEAL_UNTIL',70:'INCREASE_COST',71:'PREVENT_PLAY_TO_SLOT',72:'SWAP_AREA',73:'TRANSFORM_HEART',74:'SELECT_CARDS',75:'OPPONENT_CHOOSE',76:'PLAY_LIVE_FROM_DISCARD',77:'REDUCE_LIVE_SET_LIMIT',78:'SET_TARGET_SELF',79:'SET_TARGET_OPPONENT',80:'PREVENT_SET_TO_SUCCESS_PILE',81:'ACTIVATE_ENERGY',82:'PREVENT_ACTIVATE',83:'SET_HEART_COST',90:'PREVENT_BATON_TOUCH',91:'LOOK_DECK_DYNAMIC',92:'REDUCE_SCORE',93:'REPEAT_ABILITY',94:'LOSE_EXCESS_HEARTS',95:'SKIP_ACTIVATE_PHASE',96:'PAY_ENERGY_DYNAMIC',97:'PLACE_ENERGY_UNDER_MEMBER',106:'CALC_SUM_COST',125:'LOOK_REORDER_DISCARD',126:'DIV_VALUE',127:'TRANSFORM_BLADES'};
-
-        // Cost Type Mappings (partial for key ones)
-        const costMap = {0:'NONE',1:'ENERGY',2:'TAP_SELF',3:'DISCARD_HAND',4:'RETURN_HAND',5:'SACRIFICE_SELF',8:'DISCARD_ENERGY',20:'TAP_MEMBER',21:'TAP_ENERGY',22:'REST_MEMBER',23:'RETURN_MEMBER_TO_HAND',24:'DISCARD_MEMBER',25:'DISCARD_LIVE',26:'REMOVE_LIVE',27:'REMOVE_MEMBER',31:'PLACE_MEMBER_FROM_HAND',32:'PLACE_LIVE_FROM_HAND',33:'PLACE_ENERGY_FROM_HAND',34:'PLACE_MEMBER_FROM_DISCARD',35:'PLACE_LIVE_FROM_DISCARD',36:'PLACE_ENERGY_FROM_DISCARD',37:'PLACE_MEMBER_FROM_DECK',38:'PLACE_LIVE_FROM_DECK',39:'PLACE_ENERGY_FROM_DECK'};
-
-        // Choice Type Mappings
-        const choiceMap = {0:'NONE',1:'OPTIONAL',2:'PAY_ENERGY',3:'REVEAL_HAND',4:'SELECT_DISCARD',5:'SELECT_SWAP_SOURCE',6:'SELECT_STAGE',7:'SELECT_STAGE_EMPTY',8:'SELECT_LIVE_SLOT',9:'SELECT_SWAP_TARGET',10:'SELECT_MEMBER',11:'SELECT_DISCARD_PLAY',12:'SELECT_HAND_DISCARD',13:'COLOR_SELECT',14:'SELECT_MODE',15:'OPPONENT_CHOOSE',16:'SELECT_CARDS_ORDER',17:'TAP_O',18:'LOOK_AND_CHOOSE',19:'SELECT_CARDS',20:'SELECT_PLAYER',21:'SELECT_LIVE',22:'ORDER_DECK',23:'SELECT_HAND_PLAY',24:'TAP_M_SELECT',25:'MOVE_MEMBER_DEST',26:'RECOV_L',27:'RECOV_M',28:'SELECT_STAGE_EMPTY_BATON',29:'REARRANGE_FORMATION'};
-
-        // Analyze abilities from all stages and live zones
-        State.data.players.forEach((p, pi) => {
-            // Stage cards
-            (p.stage || []).forEach(card => {
-                if (card && card.abilities) {
-                    card.abilities.forEach(ab => {
-                        if (ab.trigger !== undefined) activeTriggers.add(`${triggerMap[ab.trigger] || ab.trigger}`);
-                        if (ab.conditions) ab.conditions.forEach(c => {
-                            if (c.condition_type !== undefined) activeConditions.add(`${conditionMap[c.condition_type] || c.condition_type}`);
-                        });
-                        if (ab.effects) ab.effects.forEach(e => {
-                            if (e.effect_type !== undefined) activeEffects.add(`${effectMap[e.effect_type] || e.effect_type}`);
-                        });
-                        if (ab.costs) ab.costs.forEach(c => {
-                            if (c.cost_type !== undefined) activeCosts.add(`${costMap[c.cost_type] || c.cost_type}`);
-                        });
-                    });
-                }
-            });
-            // Live zone cards
-            (p.live_zone || []).forEach(card => {
-                if (card && card.abilities) {
-                    card.abilities.forEach(ab => {
-                        if (ab.trigger !== undefined) activeTriggers.add(`${triggerMap[ab.trigger] || ab.trigger}`);
-                        if (ab.conditions) ab.conditions.forEach(c => {
-                            if (c.condition_type !== undefined) activeConditions.add(`${conditionMap[c.condition_type] || c.condition_type}`);
-                        });
-                        if (ab.effects) ab.effects.forEach(e => {
-                            if (e.effect_type !== undefined) activeEffects.add(`${effectMap[e.effect_type] || e.effect_type}`);
-                        });
-                        if (ab.costs) ab.costs.forEach(c => {
-                            if (c.cost_type !== undefined) activeCosts.add(`${costMap[c.cost_type] || c.cost_type}`);
-                        });
-                    });
-                }
-            });
-        });
-
-        // Check if pending choice exists
-        if (State.data.pending_choice) activeChoices.add('ACTIVE_PENDING_CHOICE');
-
-        return {
-            triggers: Array.from(activeTriggers).sort(),
-            conditions: Array.from(activeConditions).sort(),
-            effects: Array.from(activeEffects).sort(),
-            costs: Array.from(activeCosts).sort(),
-            choices: Array.from(activeChoices).sort()
-        };
-    },
-
-    _renderActiveEnumsSection: () => {
-        const enums = DebugModal._analyzeActiveEnums();
-        if (!enums.triggers.length && !enums.conditions.length && !enums.effects.length && !enums.costs.length) {
-            return '<div style="opacity:0.5; font-size:11px; padding:8px;">No active enums in current board state.</div>';
-        }
-
-        return `
-            <div style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-green); padding: 12px; border-radius: 4px; margin-bottom: 16px;">
-                <h3 style="margin-top:0; color:var(--accent-green); font-size:12px; text-transform:uppercase; letter-spacing:1px;">Active Enums (On Board Now)</h3>
-                
-                ${enums.triggers.length ? `
-                <div style="margin-bottom: 10px;">
-                    <div style="font-size: 10px; font-weight: bold; color: #2ecc71; text-transform: uppercase; margin-bottom: 4px;">Triggers:</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                        ${enums.triggers.map(t => `<span style="background: rgba(46,204,113,0.2); border: 1px solid rgba(46,204,113,0.5); color:#2ecc71; padding: 2px 6px; border-radius: 3px; font-size: 9px;">${t}</span>`).join('')}
-                    </div>
-                </div>
-                ` : ''}
-
-                ${enums.conditions.length ? `
-                <div style="margin-bottom: 10px;">
-                    <div style="font-size: 10px; font-weight: bold; color: #3498db; text-transform: uppercase; margin-bottom: 4px;">Conditions:</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                        ${enums.conditions.map(c => `<span style="background: rgba(52,152,219,0.2); border: 1px solid rgba(52,152,219,0.5); color:#3498db; padding: 2px 6px; border-radius: 3px; font-size: 9px;">${c}</span>`).join('')}
-                    </div>
-                </div>
-                ` : ''}
-
-                ${enums.effects.length ? `
-                <div style="margin-bottom: 10px;">
-                    <div style="font-size: 10px; font-weight: bold; color: #f39c12; text-transform: uppercase; margin-bottom: 4px;">Effects:</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                        ${enums.effects.map(e => `<span style="background: rgba(243,156,18,0.2); border: 1px solid rgba(243,156,18,0.5); color:#f39c12; padding: 2px 6px; border-radius: 3px; font-size: 9px;">${e}</span>`).join('')}
-                    </div>
-                </div>
-                ` : ''}
-
-                ${enums.costs.length ? `
-                <div style="margin-bottom: 10px;">
-                    <div style="font-size: 10px; font-weight: bold; color: #1abc9c; text-transform: uppercase; margin-bottom: 4px;">Cost Types:</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                        ${enums.costs.map(c => `<span style="background: rgba(26,188,156,0.2); border: 1px solid rgba(26,188,156,0.5); color:#1abc9c; padding: 2px 6px; border-radius: 3px; font-size: 9px;">${c}</span>`).join('')}
-                    </div>
-                </div>
-                ` : ''}
-
-                ${enums.choices.length ? `
-                <div>
-                    <div style="font-size: 10px; font-weight: bold; color: #e74c3c; text-transform: uppercase; margin-bottom: 4px;">Choice States:</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                        ${enums.choices.map(c => `<span style="background: rgba(231,76,60,0.2); border: 1px solid rgba(231,76,60,0.5); color:#e74c3c; padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: bold;">${c}</span>`).join('')}
-                    </div>
-                </div>
-                ` : ''}
-            </div>
-        `;
-    },
-
-    renderBytecode: () => {
-        const container = document.getElementById('debug-bytecode-content');
-        if (!container || !State.data) return;
-        const logs = State.data.bytecode_log || [];
-        if (logs.length === 0) {
-            container.innerHTML = '<div style="padding:40px; text-align:center; opacity:0.5;">No execution traces. Enable Debug Mode (<code>Network.toggleDebugMode()</code>) to capture bytecode execution logs.</div>';
-            return;
-        }
-        container.innerHTML = logs.map(l => {
-            let color = '#ccc';
-            let bg = 'transparent';
-            if (l.includes('ERR')) color = '#ff5555';
-            if (l.includes('TRIGGER')) { color = '#fff'; bg = 'rgba(52, 152, 219, 0.2)'; }
-            if (l.includes('EXECUTE')) { color = '#fff'; bg = 'rgba(46, 204, 113, 0.1)'; }
-            return `<div style="padding: 2px 5px; border-bottom: 1px solid #222; color:${color}; background:${bg}; white-space: pre-wrap; word-break: break-all;">${l}</div>`;
-        }).join('');
-        container.scrollTop = container.scrollHeight;
-    },
-
-    renderJson: () => {
-        const tx = document.getElementById('debug-json-textarea');
-        if (!tx || !State.data) return;
-        // Default to minimal board view (card IDs by zone only)
-        DebugModal.renderMinimalJSON();
-    },
-
-    renderMinimalJSON: () => {
-        if (!State.data) return;
-        const getId = c => {
-            if (!c) return -1;
-            if (typeof c === 'object') return c.id ?? -1;
-            return c;
-        };
-        const minimal = {
-            phase: State.data.phase,
-            turn: State.data.turn,
-            players: State.data.players.map((p, pi) => ({
-                _label: `Player ${pi + 1}`,
-                stage: (p.stage || []).map(getId),
-                live_zone: (p.live_zone || []).map(getId),
-                hand: (p.hand || []).map(getId),
-                success_lives: (p.success_lives || []).map(getId),
-                energy: (p.energy || []).map(getId),
-                discard: (p.discard || []).map(getId),
-            }))
-        };
-        const tx = document.getElementById('debug-json-textarea');
-        if (tx) tx.value = JSON.stringify(minimal, null, 2);
-    },
-
-    renderFullJSON: () => {
-        const tx = document.getElementById('debug-json-textarea');
-        if (tx && State.data) {
-            tx.value = JSON.stringify(State.data, null, 2);
-        }
-    },
-
-    applyCustomState: async () => {
-        const tx = document.getElementById('debug-json-textarea');
-        if (!tx) return;
-        try {
-            let newState = JSON.parse(tx.value);
-            // Ensure any objects in the JSON are converted back to IDs
-            newState = State.stripRichData(newState);
-            const ok = await Network.applyState(JSON.stringify(newState));
-            if (ok) {
-                alert("Game Engine Overridden Successfully.");
-                DebugModal.renderAll();
-            } else {
-                alert("Apply failed. Check server console for errors.");
-            }
-        } catch (e) {
-            alert("Parse Error: " + e.message);
-        }
-    },
-
-    applyBoardOnly: async () => {
-        const tx = document.getElementById('debug-json-textarea');
-        if (!tx || !State.data) return;
-        try {
-            let editState = JSON.parse(tx.value);
-            // Ensure ID format for board override too
-            editState = State.stripRichData(editState);
-            const ok = await Network.boardOverride(JSON.stringify(editState));
-            if (ok) {
-                alert("Board Override Success.");
-                DebugModal.renderAll();
-            } else {
-                alert("Override failed. Check server console.");
-            }
-        } catch (e) {
-            alert("JSON Error: " + e.message);
-        }
-    },
-
-    toggleEngineDebug: async () => {
-        const ok = await Network.toggleDebugMode();
-        if (ok) {
-            alert("Engine Debug Mode Toggled.");
-            DebugModal.renderAll();
-        } else {
-            alert("Toggle failed.");
-        }
-    },
-
-    rewind: async () => {
-        const ok = await Network.rewind();
-        if (ok) {
-            await DebugModal.renderAll();
-            if (window.Rendering) Rendering.render();
-        } else { alert("Undo failed (History empty?)"); }
-    },
-
-    redo: async () => {
-        const ok = await Network.redo();
-        if (ok) {
-            await DebugModal.renderAll();
-            if (window.Rendering) Rendering.render();
-        } else { alert("Redo failed (Redo history empty?)"); }
+        reader.readAsText(input.files[0]);
     },
 
     copyStateString: () => {
         const textarea = document.getElementById('debug-string-textarea');
-        if (textarea) {
-            textarea.select();
-            textarea.setSelectionRange(0, 99999); // For mobile devices
-            try {
-                document.execCommand('copy');
-                alert('✓ State string copied to clipboard! Paste it in the textarea to restore this board state.');
-            } catch (err) {
-                // Fallback for some browsers
-                navigator.clipboard.writeText(textarea.value).then(() => {
-                    alert('✓ State string copied to clipboard! Paste it in the textarea to restore this board state.');
-                });
-            }
-        } else if (State.data) {
-            // Strip before copying from memory
-            const source = State.stripRichData(State.data);
-            const blob = btoa(unescape(encodeURIComponent(JSON.stringify(source))));
-            navigator.clipboard.writeText(blob).then(() => alert("✓ State Sequence Copied to Clipboard."));
-        }
+        if (!textarea) return;
+        textarea.select();
+        document.execCommand('copy');
+        DebugModal._setStatus('success', 'State snapshot copied to clipboard.');
+        DebugModal.renderStringTab();
     },
 
     loadStateString: async () => {
         const textarea = document.getElementById('debug-string-textarea');
-        const blob = textarea ? textarea.value : prompt("Input State Sequence:");
-        if (!blob) return;
+        const rawValue = textarea ? textarea.value : '';
+        if (!rawValue) return;
+
         try {
-            const json = JSON.parse(decodeURIComponent(escape(atob(blob))));
-            // Ensure the state is clean before applying
-            const cleanState = State.stripRichData(json);
-            const ok = await Network.applyState(JSON.stringify(cleanState));
+            const payload = DebugModal._decodeStateInput(rawValue);
+            const response = await DebugModal._applyCheckpointPayload(payload);
+            const ok = Boolean(response?.ok);
+            const message = DebugModal._extractApplyMessage(response);
+            DebugModal._setStatus(ok ? 'success' : 'error', message);
+
             if (ok) {
-                alert("State Decoded and Applied. The undo/redo history will be preserved if the engines are compatible.");
-                DebugModal.renderAll();
-            } else { alert("Apply failed — check server console."); }
-        } catch (e) { alert("Decode Error: " + e.message); }
-    },
-
-    saveState: () => {
-        if (!State.data) return;
-        // Strip rich data before saving to file
-        const source = State.stripRichData(State.data);
-        
-        // Save both formats: JSON and Base64-encoded
-        const jsonStr = JSON.stringify(source, null, 2);
-        const base64Str = btoa(unescape(encodeURIComponent(JSON.stringify(source))));
-        
-        // Save JSON version
-        const jsonBlob = new Blob([jsonStr], { type: 'application/json' });
-        const jsonUrl = URL.createObjectURL(jsonBlob);
-        const jsonLink = document.createElement('a');
-        jsonLink.href = jsonUrl;
-        jsonLink.download = `loveca_state_${Date.now()}.json`;
-        document.body.appendChild(jsonLink);
-        jsonLink.click();
-        document.body.removeChild(jsonLink);
-        URL.revokeObjectURL(jsonUrl);
-        
-        // Also save Base64 version for easy clipboard transfer
-        const b64Blob = new Blob([base64Str], { type: 'text/plain' });
-        const b64Url = URL.createObjectURL(b64Blob);
-        const b64Link = document.createElement('a');
-        b64Link.href = b64Url;
-        b64Link.download = `loveca_state_${Date.now()}.b64`;
-        document.body.appendChild(b64Link);
-        b64Link.click();
-        document.body.removeChild(b64Link);
-        URL.revokeObjectURL(b64Url);
-        
-        alert(`State saved! 2 files created:\n- .json (readable)\n- .b64 (compact base64)`);
-    },
-
-    copyStandardizedJson: async () => {
-        const data = await Network.fetchStandardizedState();
-        if (data) {
-            navigator.clipboard.writeText(JSON.stringify(data, null, 2))
-                .then(() => alert("Standardized JSON copied to clipboard!"))
-                .catch(err => alert("Failed to copy: " + err));
-        } else {
-            alert("Failed to fetch standardized state from server.");
-        }
-    },
-
-    saveStandardizedJson: async () => {
-        const data = await Network.fetchStandardizedState();
-        if (data) {
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `lovecasim_master_${Date.now()}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        } else {
-            alert("Failed to fetch standardized state from server.");
-        }
-    },
-
-    async runModelAnalysis() {
-        const tx = document.getElementById('debug-json-textarea');
-        const resultsDiv = document.getElementById('debug-analysis-results');
-        if (!tx || !resultsDiv) return;
-
-        try {
-            const state = JSON.parse(tx.value);
-            resultsDiv.style.display = 'block';
-            resultsDiv.innerHTML = '<div style="color: #aaa;">Analyzing with Neural Network...</div>';
-
-            const res = await fetch('/api/v1/analyze_model', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(state)
-            });
-            const data = await res.json();
-
-            if (data.success) {
-                let html = `
-                    <div style="display: flex; gap: 10px; margin-bottom: 8px; font-weight: bold; border-bottom: 2px solid #444; padding-bottom: 4px;">
-                        <span style="color: #2ecc71;">Win: ${(data.value.win_prob * 100).toFixed(1)}%</span>
-                        <span style="color: #4a9eff;">Mom: ${data.value.momentum.toFixed(2)}</span>
-                        <span style="color: #f1c40f;">Eff: ${(data.value.efficiency * 100).toFixed(1)}%</span>
-                    </div>
-                    <div style="font-family: monospace; display: flex; flex-direction: column; gap: 4px;">`;
-
-                data.actions.forEach(a => {
-                    const probColor = a.logit > 0 ? '#2ecc71' : (a.logit > -2 ? '#f1c40f' : '#aaa');
-                    html += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 3px;">
-                            <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 10px;">${a.desc}</span>
-                            <span style="color: ${probColor}; font-weight: bold; min-width: 45px; text-align: right;">${a.logit.toFixed(2)}</span>
-                        </div>`;
-                });
-                html += '</div>';
-                resultsDiv.innerHTML = html;
+                await DebugModal.renderAll();
+                if (window.Rendering) window.Rendering.render();
             } else {
-                resultsDiv.innerHTML = `<div style="color: #e74c3c;">Error: ${data.error || 'Unknown error'}</div>`;
+                DebugModal.renderStringTab();
+            }
+        } catch (error) {
+            DebugModal._setStatus('error', `Decode error: ${error.message}`);
+            DebugModal.renderStringTab();
+        }
+    },
+
+    onPlayerChange: (value) => {
+        DebugModal._filters.selectedPlayer = parseInt(value, 10);
+        DebugModal.renderInspectorTab();
+    },
+
+    onZoneChange: (value) => {
+        DebugModal._filters.selectedZone = value;
+        DebugModal.renderInspectorTab();
+    },
+
+    onSearchChange: (value) => {
+        DebugModal._filters.abilitySearch = value;
+        DebugModal.renderInspectorTab();
+    },
+
+    rewind: async () => {
+        const ok = await Network.rewind();
+        if (!ok) {
+            DebugModal._setStatus('error', 'Undo failed.');
+            await DebugModal.renderAll();
+            return;
+        }
+        DebugModal._clearStatus();
+        await DebugModal.renderAll();
+        if (window.Rendering) window.Rendering.render();
+    },
+
+    redo: async () => {
+        const ok = await Network.redo();
+        if (!ok) {
+            DebugModal._setStatus('error', 'Redo failed.');
+            await DebugModal.renderAll();
+            return;
+        }
+        DebugModal._clearStatus();
+        await DebugModal.renderAll();
+        if (window.Rendering) window.Rendering.render();
+    },
+
+    toggleDebugMode: async () => {
+        const ok = await Network.toggleDebugMode();
+        DebugModal._setStatus(ok ? 'success' : 'error', ok ? 'Debug mode toggled.' : 'Toggle debug mode failed.');
+        await DebugModal.renderAll();
+    },
+
+    exportGameWithHistory: async () => {
+        try {
+            const { GameExport } = await import('../replay_system.js');
+            await GameExport.downloadGameAsJSON();
+            DebugModal._setStatus('success', 'Game exported to file');
+        } catch (e) {
+            console.error('Export error:', e);
+            DebugModal._setStatus('error', `Export failed: ${e.message}`);
+        }
+    },
+
+    importGameWithHistory: async () => {
+        try {
+            const text = prompt('Paste exported game JSON:', '');
+            if (!text || !text.trim()) return;
+            const { GameExport } = await import('../replay_system.js');
+            const success = await GameExport.importGameFromPaste(text);
+            if (success) {
+                DebugModal._clearStatus();
+                await DebugModal.renderAll();
+                if (window.Rendering) window.Rendering.render();
+            } else {
+                DebugModal._setStatus('error', 'Failed to import game');
             }
         } catch (e) {
-            resultsDiv.innerHTML = `<div style="color: #e74c3c;">Failed to analyze: ${e.message}</div>`;
+            console.error('Import error:', e);
+            DebugModal._setStatus('error', `Import failed: ${e.message}`);
         }
-    }
+    },
 };
 
-// Wired to Globals
-window.openDebugModal = DebugModal.openDebugModal;
-window.closeDebugModal = DebugModal.closeDebugModal;
-window.switchDebugTab = DebugModal.switchTab;
-window.applyDebugState = DebugModal.applyCustomState;
-window.copyDebugState = DebugModal.copyStateString;
-window.loadDebugState = DebugModal.loadStateString;
-window.renderFullJSON = DebugModal.renderFullJSON;
-window.renderMinimalJSON = DebugModal.renderMinimalJSON;
 window.DebugModal = DebugModal;
+window.openDebugModal = () => DebugModal.openDebugModal();
+window.closeDebugModal = () => DebugModal.closeDebugModal();
+window.switchDebugTab = (tab) => DebugModal.switchTab(tab);
+
+window.Modals = window.Modals || {};
+window.Modals.openDebugModal = () => DebugModal.openDebugModal();
+window.Modals.closeDebugModal = () => DebugModal.closeDebugModal();
+window.Modals.toggleDebugMode = () => DebugModal.toggleDebugMode();
+window.Modals.rewind = () => DebugModal.rewind();
+window.Modals.redo = () => DebugModal.redo();

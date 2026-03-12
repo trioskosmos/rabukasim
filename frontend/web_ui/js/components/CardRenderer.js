@@ -2,12 +2,14 @@ import { State } from '../state.js';
 import { Phase, fixImg as fixImgPath } from '../constants.js';
 import * as i18n from '../i18n/index.js';
 import { Tooltips } from '../ui_tooltips.js';
+import { DOMUtils } from '../utils/DOMUtils.js';
+import { DOM_IDS } from '../constants_dom.js';
 
 export const CardRenderer = {
     renderCards: (containerId, cards, clickable = false, mini = false, selectedIndices = [], validActionMap = {}, hasGlobalSelection = false) => {
-        const el = document.getElementById(containerId);
+        const el = DOMUtils.getElement(containerId);
         if (!el) return;
-        el.innerHTML = '';
+        DOMUtils.clear(containerId);
         if (!cards) return;
 
         const state = State.data;
@@ -57,10 +59,10 @@ export const CardRenderer = {
             if (!isHidden) {
                 let imgPath = card.img || card.img_path || '';
                 const imgHtml = imgPath ? `<img src="${fixImgPath(imgPath)}" draggable="false" onerror="this.style.display='none'">` : '';
-                div.innerHTML = `${imgHtml}${card.cost !== undefined ? `<span class="cost">${card.cost}</span>` : ''}<div class="name">${card.name || ''}</div>`;
+                const displayName = i18n.translateCard(card).name || '';
+                div.innerHTML = `${imgHtml}${card.cost !== undefined ? `<span class="cost">${card.cost}</span>` : ''}<div class="name">${displayName}</div>`;
             } else {
                 div.classList.add('card-back');
-                div.innerHTML = '';
             }
 
             if (clickable) {
@@ -90,9 +92,9 @@ export const CardRenderer = {
     },
 
     renderStage: (containerId, stage, clickable, validActionMap = {}, hasGlobalSelection = false) => {
-        const el = document.getElementById(containerId);
+        const el = DOMUtils.getElement(containerId);
         if (!el) return;
-        el.innerHTML = '';
+        DOMUtils.clear(containerId);
         for (let i = 0; i < 3; i++) {
             const slot = stage[i];
             const area = document.createElement('div');
@@ -153,9 +155,9 @@ export const CardRenderer = {
 
     renderLiveZone: (containerId, liveCards, visible, validActionMap = {}, hasGlobalSelection = false) => {
         const state = State.data;
-        const el = document.getElementById(containerId);
+        const el = DOMUtils.getElement(containerId);
         if (!el) return;
-        el.innerHTML = '';
+        DOMUtils.clear(containerId);
         for (let i = 0; i < 3; i++) {
             const card = liveCards[i];
 
@@ -211,19 +213,19 @@ export const CardRenderer = {
     },
 
     renderDiscardPile: (containerId, discard, playerIdx, validActionMap = {}, hasGlobalSelection = false, showModalCallback = null) => {
-        const el = document.getElementById(containerId);
+        const el = DOMUtils.getElement(containerId);
         if (!el) return;
 
         const actionId = validActionMap && validActionMap['all'];
         const isValid = actionId !== undefined;
         let highlightClass = isValid ? ' valid-target' : '';
 
-        el.innerHTML = '';
+        DOMUtils.clear(containerId);
         el.className = 'discard-pile-visual ' + highlightClass;
 
         if (!discard || discard.length === 0) {
             el.classList.add('empty');
-            el.innerHTML = '<span style="opacity:0.3; font-size:0.8rem;">Discard</span>';
+            DOMUtils.setHTML(containerId, '<span style="opacity:0.3; font-size:0.8rem;">Discard</span>');
         } else {
             const showCount = Math.min(3, discard.length);
             for (let i = 0; i < showCount; i++) {
@@ -266,16 +268,15 @@ export const CardRenderer = {
 
     renderLookedCards: (validActionMap = {}) => {
         const state = State.data;
-        const panel = document.getElementById('looked-cards-panel');
-        const content = document.getElementById('looked-cards-content');
+        const panel = DOMUtils.getElement(DOM_IDS.LOOKED_CARDS_PANEL);
+        const content = DOMUtils.getElement(DOM_IDS.LOOKED_CARDS_CONTENT);
         if (!panel || !content) return;
-
         const cards = state.looked_cards || [];
         if (cards.length === 0) {
-            panel.style.display = 'none';
+            DOMUtils.hide(DOM_IDS.LOOKED_CARDS_PANEL);
             return;
         }
-        panel.style.display = 'block';
+        DOMUtils.show(DOM_IDS.LOOKED_CARDS_PANEL);
 
         let html = "";
         if (state.pending_choice && (state.pending_choice.title || state.pending_choice.text)) {
@@ -297,7 +298,7 @@ export const CardRenderer = {
             }
         }
 
-        content.innerHTML = '';
+        DOMUtils.clear(DOM_IDS.LOOKED_CARDS_CONTENT);
         cards.forEach((c, idx) => {
             if (c === null) {
                 const placeholder = document.createElement('div');
@@ -328,7 +329,7 @@ export const CardRenderer = {
 
             itemDiv.innerHTML = `
                 <img src="${fixImgPath(c.img)}" class="looked-card-img">
-                <div class="looked-card-name">${c.name}</div>
+                <div class="looked-card-name">${i18n.translateCard(c).name}</div>
             `;
             content.appendChild(itemDiv);
         });

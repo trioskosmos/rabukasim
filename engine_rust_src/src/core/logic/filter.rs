@@ -624,15 +624,15 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
         }
 
         if part_trimmed.contains("NAME_IN") && part_trimmed.contains("澁谷かのん") {
-            attr |= 1u64 << FILTER_SPECIAL_SHIFT;
+            attr |= 1u64 << FILTER_SPECIAL_ID_SHIFT;
             continue;
         }
         if part_trimmed.contains("NOT_NAME=MY舞") {
-            attr |= 2u64 << FILTER_SPECIAL_SHIFT;
+            attr |= 2u64 << FILTER_SPECIAL_ID_SHIFT;
             continue;
         }
         if part == "SAME_NAME_AS_REVEALED" {
-            attr |= 4u64 << FILTER_SPECIAL_SHIFT;
+            attr |= 4u64 << FILTER_SPECIAL_ID_SHIFT;
             continue;
         }
 
@@ -685,7 +685,7 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
                 _ => -1,
             };
             if unit_id >= 0 {
-                attr |= crate::core::logic::constants::FILTER_UNIT_ENABLE | ((unit_id as u64) << FILTER_UNIT_SHIFT);
+                attr |= crate::core::logic::constants::FILTER_UNIT_ENABLE | ((unit_id as u64) << FILTER_UNIT_ID_SHIFT);
             }
         } else if part == "TAPPED" {
             attr |= FILTER_TAPPED;

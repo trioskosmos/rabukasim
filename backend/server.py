@@ -724,7 +724,7 @@ def create_room_internal(
                         members.append(uid)
                     elif base_id in live_db:
                         lives.append(uid)
-                
+
                 # Truncate to standard limits (48 members, 12 lives)
                 # This ensures the engine receives exactly what it expects
                 if len(members) > 48:
@@ -744,7 +744,7 @@ def create_room_internal(
                     e_ids = convert_deck_strings_to_ids(cdeck["energy"])
                     if len(e_ids) > 12:
                         e_ids = e_ids[:12]
-                    
+
                     if pid == 0:
                         p0_e = e_ids
                     else:
@@ -757,6 +757,9 @@ def create_room_internal(
 
     gs.initialize_game(p0_m, p1_m, p0_e, p1_e, p0_l, p1_l)
 
+    # Serialize initial state for history
+    initial_serialized = rust_serializer.serialize_state(gs, viewer_idx=0, mode=mode, lang="jp")
+
     return {
         "state": gs,
         "mode": mode,
@@ -768,6 +771,9 @@ def create_room_internal(
         "sessions": {},
         "usernames": {},  # PID -> username
         "engine": "rust",
+        # History tracking for undo/redo
+        "history_stack": [initial_serialized],
+        "history_index": 0,
     }
 
 
@@ -828,14 +834,14 @@ def create_new_room():
         data = {}
 
     print(f"DEBUG: Generated room_id {room_id}, acquiring lock...", file=sys.stderr)
-    
+
     # Handle frontend parameters if 'decks' is not present
     if not custom_decks:
         p0_main = data.get("p0_deck")
         p0_energy = data.get("p0_energy", [])
         p1_main = data.get("p1_deck")
         p1_energy = data.get("p1_energy", [])
-        
+
         if p0_main or p1_main:
             custom_decks = {}
             if p0_main:
@@ -1158,6 +1164,27 @@ def get_state():
         room = get_room(room_id)
         if not room:
             return jsonify({"success": False, "error": "Room not found or expired"}), 404
+
+        # Check if we're in history navigation mode (rewind/redo)
+        history_stack = room.get("history_stack", [])
+        history_index = room.get("history_index", 0)
+        
+        if history_stack and history_index < len(history_stack):
+            # Return state from history
+            s_state = history_stack[history_index]
+            mode = room["mode"]
+            
+            cdecks = room.get("custom_decks", {})
+            meta = {
+                "p0_deck_set": bool(cdecks.get(0, {}).get("main") or cdecks.get("0", {}).get("main")),
+                "p1_deck_set": bool(cdecks.get(1, {}).get("main") or cdecks.get("1", {}).get("main")),
+                "mode": mode,
+                "history_mode": True,
+                "history_index": history_index,
+                "history_length": len(history_stack),
+            }
+            
+            return jsonify({"success": True, "state": s_state, "meta": meta})
 
         gs = room["state"]
         mode = room["mode"]
@@ -1510,6 +1537,44 @@ def clear_performance():
     return jsonify({"status": "ok"})
 
 
+def record_game_state_to_history(room):
+    """Save the current game state to the history stack, truncating any redo states."""
+    if not room:
+        return
+    
+    try:
+        gs = room["state"]
+        game_mode = room["mode"]
+        
+        # Serialize current state
+        serialized = rust_serializer.serialize_state(gs, viewer_idx=0, mode=game_mode, lang="jp")
+        
+        # Initialize history if not present (for backward compatibility)
+        if "history_stack" not in room:
+            room["history_stack"] = [serialized]
+            room["history_index"] = 0
+            return
+        
+        # Truncate redo states (if we're not at the end of history)
+        history = room["history_stack"]
+        idx = room["history_index"]
+        if idx < len(history) - 1:
+            room["history_stack"] = history[:idx + 1]
+        
+        # Add new state
+        room["history_stack"].append(serialized)
+        room["history_index"] = len(room["history_stack"]) - 1
+        
+        # Limit history size to prevent memory bloat (keep last 100 states)
+        if len(room["history_stack"]) > 100:
+            # Trim from the beginning
+            excess = len(room["history_stack"]) - 100
+            room["history_stack"] = room["history_stack"][excess:]
+            room["history_index"] = max(0, room["history_index"] - excess)
+    except Exception as e:
+        print(f"Error recording game state to history: {e}")
+
+
 @app.route("/api/action", methods=["POST"])
 def do_action():
     room_id = get_room_id()
@@ -1521,6 +1586,14 @@ def do_action():
             room = get_room(room_id)
             if not room:
                 return jsonify({"success": False, "error": "Room not found"}), 404
+
+            # Exit history mode if actively in it (history_index < end of history)
+            history_stack = room.get("history_stack", [])
+            history_index = room.get("history_index", 0)
+            if history_stack and history_index < len(history_stack) - 1:
+                # We're rewound/redone, truncate future history and continue from here
+                room["history_stack"] = history_stack[:history_index + 1]
+                room["history_index"] = history_index
 
             gs = room["state"]
             game_mode = room["mode"]
@@ -1636,6 +1709,10 @@ def do_action():
                 lang = get_lang()
                 duration = time.time() - start_time
                 print(f"[PERF] /api/action took {duration:.3f}s (Action: {action_id})")
+                
+                # Record state to history stack after successful action
+                record_game_state_to_history(room)
+                
                 return jsonify(
                     {
                         "success": True,
@@ -2020,6 +2097,122 @@ def report_issue():
 
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/debug/rewind", methods=["POST"])
+def debug_rewind():
+    """Undo the last action by moving back in history."""
+    room_id = get_room_id()
+    
+    with game_lock:
+        room = get_room(room_id)
+        if not room:
+            return jsonify({"success": False, "error": "Room not found"}), 404
+        
+        if "history_stack" not in room or not room["history_stack"]:
+            return jsonify({"success": False, "error": "No history to rewind"}), 400
+        
+        # Move back one step if possible
+        idx = room.get("history_index", 0)
+        if idx > 0:
+            room["history_index"] = idx - 1
+            # Restore the previous state from history
+            serialized_state = room["history_stack"][room["history_index"]]
+            
+            # We need to reconstruct the GameState from the serialized state
+            # For now, we'll just return success and let the frontend fetch the new state
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Already at start of history"}), 400
+
+
+@app.route("/api/debug/redo", methods=["POST"])
+def debug_redo():
+    """Redo the last undone action by moving forward in history."""
+    room_id = get_room_id()
+    
+    with game_lock:
+        room = get_room(room_id)
+        if not room:
+            return jsonify({"success": False, "error": "Room not found"}), 404
+        
+        if "history_stack" not in room or not room["history_stack"]:
+            return jsonify({"success": False, "error": "No history to redo"}), 400
+        
+        # Move forward one step if possible
+        idx = room.get("history_index", 0)
+        max_idx = len(room["history_stack"]) - 1
+        if idx < max_idx:
+            room["history_index"] = idx + 1
+            # Restore the next state from history
+            serialized_state = room["history_stack"][room["history_index"]]
+            
+            # We need to reconstruct the GameState from the serialized state
+            # For now, we'll just return success and let the frontend fetch the new state
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Already at end of history"}), 400
+
+
+@app.route("/api/export_game", methods=["GET"])
+def export_game():
+    """Export the current game state with history as minimal JSON."""
+    room_id = get_room_id()
+    
+    with game_lock:
+        room = get_room(room_id)
+        if not room:
+            return jsonify({"success": False, "error": "Room not found"}), 404
+        
+        # Get current state
+        gs = room["state"]
+        game_mode = room["mode"]
+        history_stack = room.get("history_stack", [])
+        history_index = room.get("history_index", 0)
+        
+        # Serialize current state
+        serialized = rust_serializer.serialize_state(gs, viewer_idx=0, mode=game_mode, lang=get_lang())
+        
+        export_data = {
+            "export_timestamp": datetime.now().isoformat(),
+            "game_mode": game_mode,
+            "current_state": serialized,
+            "history": history_stack,
+            "history_index": history_index,
+            "custom_decks": room.get("custom_decks", {}),
+        }
+        
+        return jsonify(export_data)
+
+
+@app.route("/api/import_game", methods=["POST"])
+def import_game():
+    """Import a previously exported game state with full history."""
+    room_id = get_room_id()
+    data = request.json
+    
+    if not data or "current_state" not in data:
+        return jsonify({"success": False, "error": "Invalid import data"}), 400
+    
+    with game_lock:
+        room = get_room(room_id)
+        if not room:
+            return jsonify({"success": False, "error": "Room not found"}), 404
+        
+        try:
+            # Restore history
+            room["history_stack"] = data.get("history", [data.get("current_state")])
+            room["history_index"] = data.get("history_index", 0)
+            
+            # The frontend should fetch the state after import to reconstruct GameState
+            # For now, we'll store the import data and let the next fetchState reconstruct it
+            room["pending_import_state"] = data.get("current_state")
+            
+            return jsonify({"success": True, "message": "Game imported successfully"})
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({"success": False, "error": str(e)}), 500
 
 
 def generate_random_deck_list(member_db, live_db) -> list[str]:

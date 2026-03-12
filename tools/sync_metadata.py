@@ -11,6 +11,37 @@ def to_pascal_case(snake_str):
     return "".join(x.capitalize() for x in parts)
 
 
+def resolve_extra_constants(metadata):
+    extra_constants = dict(metadata.get("extra_constants", {}))
+    layout_fields = metadata.get("bytecode_layout", {}).get("A", {}).get("standard", {})
+
+    shift_mappings = {
+        "FILTER_TYPE_SHIFT": "card_type",
+        "FILTER_GROUP_SHIFT": "group_id",
+        "FILTER_UNIT_SHIFT": "unit_id",
+        "FILTER_COST_SHIFT": "value_threshold",
+        "FILTER_COLOR_SHIFT": "color_mask",
+        "FILTER_SPECIAL_SHIFT": "special_id",
+        "FILTER_ZONE_MASK_SHIFT": "zone_mask",
+    }
+    for constant_name, field_name in shift_mappings.items():
+        if field_name in layout_fields:
+            extra_constants[constant_name] = layout_fields[field_name][0]
+
+    bit_mappings = {
+        "FILTER_SETSUNA": "is_setsuna",
+        "DYNAMIC_VALUE": "compare_accumulated",
+        "FILTER_IS_OPTIONAL": "is_optional",
+        "KEYWORD_ACTIVATED_ENERGY_BY_GROUP": "keyword_energy",
+        "KEYWORD_ACTIVATED_MEMBER_BY_GROUP": "keyword_member",
+    }
+    for constant_name, field_name in bit_mappings.items():
+        if field_name in layout_fields:
+            extra_constants[constant_name] = 1 << layout_fields[field_name][0]
+
+    return extra_constants
+
+
 def sync():
     metadata_path = "data/metadata.json"
     if not os.path.exists(metadata_path):
@@ -21,6 +52,7 @@ def sync():
         metadata = json.load(f)
 
     unused_list = metadata.get("unused", [])
+    resolved_extra_constants = resolve_extra_constants(metadata)
 
     # --- Generate Rust Constants (Generated Constants file) ---
     # This file remains for i32 constant access (direct bytecode usage)
@@ -52,7 +84,7 @@ def sync():
             f.write(f"pub const CHOICE_{key}: i32 = {val};\n")
 
         f.write("\n// Extra Constants\n")
-        for key, val in metadata.get("extra_constants", {}).items():
+        for key, val in resolved_extra_constants.items():
             const_type = "i32"
             if (
                 key.startswith("FLAG_")
@@ -336,7 +368,7 @@ def sync():
         f.write("};\n\n")
 
         f.write("export const ExtraConstants = {\n")
-        for key, val in metadata.get("extra_constants", {}).items():
+        for key, val in resolved_extra_constants.items():
             f.write(f"    {key}: {val},\n")
         f.write("};\n\n")
 
@@ -425,7 +457,7 @@ def sync():
             ("CHOICES", "choices"),
             ("PHASES", "phases"),
             ("ZONES", "zones"),
-            ("EXTRA_CONSTANTS", "extra_constants"),
+            ("EXTRA_CONSTANTS", None),
             ("COMPARISONS", "comparisons"),
             ("HEART_COLOR_MAP", "heart_color_map"),
             ("META_RULE_TYPES", "meta_rule_types"),
@@ -441,7 +473,8 @@ def sync():
 
         for var_name, meta_key in sections:
             f.write(f"{var_name} = {{\n")
-            for key, val in metadata.get(meta_key, {}).items():
+            section_data = resolved_extra_constants if var_name == "EXTRA_CONSTANTS" else metadata.get(meta_key, {})
+            for key, val in section_data.items():
                 comment = " # [UNUSED]" if key in unused_list else ""
                 if isinstance(key, str):
                     f.write(f'    "{key}": {val},{comment}\n')
@@ -695,13 +728,13 @@ def sync():
 
         # Ability Flags (for heuristic evaluation)
         f.write("\n// --- ABILITY FLAGS (lo) ---\n")
-        flag_constants = {k: v for k, v in metadata.get("extra_constants", {}).items() if k.startswith("FLAG_")}
+        flag_constants = {k: v for k, v in resolved_extra_constants.items() if k.startswith("FLAG_")}
         for key, val in flag_constants.items():
             f.write(f"const F_{key[5:]}: u32 = {val}u;\n")
 
         # Synergy Flags
         f.write("\n// --- SYNERGY FLAGS ---\n")
-        syn_constants = {k: v for k, v in metadata.get("extra_constants", {}).items() if k.startswith("SYN_FLAG_")}
+        syn_constants = {k: v for k, v in resolved_extra_constants.items() if k.startswith("SYN_FLAG_")}
         for key, val in syn_constants.items():
             f.write(f"const SYN_{key[9:]}: u32 = {val}u;\n")
 
