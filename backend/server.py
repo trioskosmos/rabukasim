@@ -190,6 +190,7 @@ try:
     vanilla_data_path = os.path.join(DATA_DIR, "cards_vanilla.json")
     with open(vanilla_data_path, "r", encoding="utf-8") as f:
         RUST_DB_VANILLA = engine_rust.PyCardDatabase(f.read())
+        RUST_DB_VANILLA.set_is_vanilla(True)  # Disable abilities in vanilla mode
 except Exception as e:
     print(f"Warning: Failed to load RUST_DB_VANILLA from {vanilla_data_path}: {e}")
 
@@ -198,6 +199,11 @@ except Exception as e:
 member_db: dict[int, Any] = {}
 live_db: dict[int, Any] = {}
 energy_db: dict[int, Any] = {}
+
+# Vanilla card databases (separate from compiled for card set selection)
+vanilla_member_db: dict[int, Any] = {}
+vanilla_live_db: dict[int, Any] = {}
+vanilla_energy_db: dict[int, Any] = {}
 
 rust_serializer = None  # Initialized after data load
 game_history: list[dict] = []  # Global replay history (might need per-room later)
@@ -210,24 +216,38 @@ custom_energy_deck_p1: list[str] | None = None
 
 
 def load_game_data():
-    """Load card data into global databases."""
-    global member_db, live_db, energy_db, rust_serializer
+    """Load card data into global databases (both compiled and vanilla)."""
+    global member_db, live_db, energy_db, vanilla_member_db, vanilla_live_db, vanilla_energy_db, rust_serializer
     try:
+        # Load compiled data (default/main)
         cards_path = os.path.join(DATA_DIR, "cards.json")
-        print(f"Loading card data from: {cards_path}")
+        print(f"Loading compiled card data from: {cards_path}")
         loader = CardDataLoader(cards_path)
         m, l, e = loader.load()
         member_db.update(m)
         live_db.update(l)
         energy_db.update(e)
 
-        # Initialize rust_serializer
+        # Load vanilla data separately
+        print(f"Loading vanilla card data from: data/cards_vanilla.json")
+        try:
+            vanilla_path = os.path.join(DATA_DIR, "cards_vanilla.json")
+            vanilla_loader = CardDataLoader(vanilla_path)
+            vm, vl, ve = vanilla_loader.load()
+            vanilla_member_db.update(vm)
+            vanilla_live_db.update(vl)
+            vanilla_energy_db.update(ve)
+            print(f"Vanilla data loaded: {len(vanilla_member_db)} Members, {len(vanilla_live_db)} Lives, {len(vanilla_energy_db)} Energy")
+        except Exception as ex:
+            print(f"Warning: Failed to load vanilla card data: {ex}")
+
+        # Initialize rust_serializer with compiled data
         rust_serializer = RustGameStateSerializer(member_db, live_db, energy_db)
 
-        # Build mapping
+        # Build mappings
         build_card_no_mapping()
 
-        print(f"Data loaded: {len(member_db)} Members, {len(live_db)} Lives, {len(energy_db)} Energy")
+        print(f"Compiled data loaded: {len(member_db)} Members, {len(live_db)} Lives, {len(energy_db)} Energy")
         print(f"DEBUG PATHS: PROJECT_ROOT={PROJECT_ROOT}")
         print(f"DEBUG PATHS: FRONTEND_DIR={FRONTEND_DIR}")
         print(f"DEBUG PATHS: WEB_UI_DIR={WEB_UI_DIR}")
@@ -595,40 +615,67 @@ def build_planner_payload(room: dict[str, Any], gs: engine_rust.PyGameState, pla
 
 # Reverse mapping: card_no string -> internal integer ID
 card_no_to_id: dict[str, int] = {}
+vanilla_card_no_to_id: dict[str, int] = {}
 
 
 def build_card_no_mapping():
-    """Build reverse lookup from card_no string to internal ID using compiled data.
+    """Build reverse lookup from card_no string to internal ID for both compiled and vanilla.
     Ensures consistency with the Rust engine's internal ID assignments.
     """
-    global card_no_to_id
+    global card_no_to_id, vanilla_card_no_to_id
     card_no_to_id = {}
+    vanilla_card_no_to_id = {}
 
+    # Build mapping for compiled data
     try:
         compiled_path = os.path.join(DATA_DIR, "cards_compiled.json")
         if not os.path.exists(compiled_path):
-            print(f"Warning: {compiled_path} not found. Mapping will be empty.")
-            return
+            print(f"Warning: {compiled_path} not found. Compiled mapping will be empty.")
+        else:
+            with open(compiled_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
 
-        with open(compiled_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+            # Build mapping from dbs
+            count = 0
+            for db_name in ["member_db", "live_db", "energy_db"]:
+                db = data.get(db_name, {})
+                for internal_id, card_data in db.items():
+                    card_no = card_data.get("card_no")
+                    if card_no:
+                        # Convert string key to integer ID
+                        # USE NORMALIZED KEY
+                        norm_key = UnifiedDeckParser.normalize_code(card_no)
+                        card_no_to_id[norm_key] = int(internal_id)
+                        count += 1
 
-        # Build mapping from dbs
-        count = 0
-        for db_name in ["member_db", "live_db", "energy_db"]:
-            db = data.get(db_name, {})
-            for internal_id, card_data in db.items():
-                card_no = card_data.get("card_no")
-                if card_no:
-                    # Convert string key to integer ID
-                    # USE NORMALIZED KEY
-                    norm_key = UnifiedDeckParser.normalize_code(card_no)
-                    card_no_to_id[norm_key] = int(internal_id)
-                    count += 1
-
-        print(f"Built card_no_to_id mapping from compiled data: {count} entries")
+            print(f"Built card_no_to_id mapping from compiled data: {count} entries")
     except Exception as e:
         print(f"Error building mapping from compiled data: {e}")
+
+    # Build mapping for vanilla data
+    try:
+        vanilla_path = os.path.join(DATA_DIR, "cards_vanilla.json")
+        if not os.path.exists(vanilla_path):
+            print(f"Warning: {vanilla_path} not found. Vanilla mapping will be empty.")
+        else:
+            with open(vanilla_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            # Build mapping from dbs
+            count = 0
+            for db_name in ["member_db", "live_db", "energy_db"]:
+                db = data.get(db_name, {})
+                for internal_id, card_data in db.items():
+                    card_no = card_data.get("card_no")
+                    if card_no:
+                        # Convert string key to integer ID
+                        norm_key = UnifiedDeckParser.normalize_code(card_no)
+                        vanilla_card_no_to_id[norm_key] = int(internal_id)
+                        count += 1
+
+            print(f"Built vanilla_card_no_to_id mapping from vanilla data: {count} entries")
+    except Exception as e:
+        print(f"Error building mapping from vanilla data: {e}")
 
 
 # Load data immediately on import
@@ -639,20 +686,31 @@ load_game_data()
 build_card_no_mapping()
 
 
-def convert_deck_strings_to_ids(deck_strings):
-    """Convert list of card_no strings to internal IDs (Unique Instance IDs)."""
+def get_card_no_mapping(card_set: str = "compiled") -> dict[str, int]:
+    """Get the appropriate card_no_to_id mapping based on card set."""
+    if card_set == "vanilla":
+        return vanilla_card_no_to_id
+    else:
+        return card_no_to_id
+
+
+def convert_deck_strings_to_ids(deck_strings, card_set: str = "compiled"):
+    """Convert list of card_no strings to internal IDs (Unique Instance IDs).
+    Uses the appropriate mapping based on card_set ("vanilla" or "compiled").
+    """
+    mapping = get_card_no_mapping(card_set)
     ids = []
     counts = {}
     for card_no in deck_strings:
         norm_code = UnifiedDeckParser.normalize_code(card_no)
-        if norm_code in card_no_to_id:
-            base_id = card_no_to_id[norm_code]
+        if norm_code in mapping:
+            base_id = mapping[norm_code]
             count = counts.get(base_id, 0)
             uid = create_uid(base_id, count)
             counts[base_id] = count + 1
             ids.append(uid)
         else:
-            print(f"Warning: Unknown card_no '{card_no}' (norm: '{norm_code}'), skipping.")
+            print(f"Warning: Unknown card_no '{card_no}' (norm: '{norm_code}') in {card_set} set, skipping.")
     return ids
 
 
@@ -948,11 +1006,16 @@ def create_room_internal(
     rust_db = get_rust_db_for_card_set(card_set)
     gs = engine_rust.PyGameState(rust_db)
 
+    # Get the correct card databases based on card_set
+    current_member_db = vanilla_member_db if card_set == "vanilla" else member_db
+    current_live_db = vanilla_live_db if card_set == "vanilla" else live_db
+    current_energy_db = vanilla_energy_db if card_set == "vanilla" else energy_db
+
     # helper for deck generation
     # helper for deck generation
     def get_random_decks():
-        m_ids = list(member_db.keys())
-        l_ids = list(live_db.keys())
+        m_ids = list(current_member_db.keys())
+        l_ids = list(current_live_db.keys())
         random.shuffle(m_ids)
         random.shuffle(l_ids)
 
@@ -993,7 +1056,7 @@ def create_room_internal(
         # So p0_deck should be ONLY members (48), and p0_lives should be ONLY lives (12).
 
         # Energy
-        e_deck = [list(energy_db.keys())[0]] * 12 if energy_db else [40000] * 12
+        e_deck = [list(current_energy_db.keys())[0]] * 12 if current_energy_db else [40000] * 12
 
         # Return strict separated vectors
         return member_deck, e_deck, live_deck
@@ -1009,8 +1072,8 @@ def create_room_internal(
         for pid in [0, 1]:
             cdeck = custom_decks.get(str(pid)) or custom_decks.get(pid)
             if cdeck and cdeck.get("main"):
-                # Convert strings to IDs
-                all_main_ids = convert_deck_strings_to_ids(cdeck["main"])
+                # Convert strings to IDs using the appropriate card set mapping
+                all_main_ids = convert_deck_strings_to_ids(cdeck["main"], card_set=card_set)
                 random.shuffle(all_main_ids)
 
                 # Partition into Members and Lives
@@ -1018,9 +1081,9 @@ def create_room_internal(
                 lives = []
                 for uid in all_main_ids:
                     base_id = uid & BASE_ID_MASK
-                    if base_id in member_db:
+                    if base_id in current_member_db:
                         members.append(uid)
-                    elif base_id in live_db:
+                    elif base_id in current_live_db:
                         lives.append(uid)
 
                 # Truncate to standard limits (48 members, 12 lives)
@@ -1039,7 +1102,7 @@ def create_room_internal(
 
                 # Energy (Strictly 12)
                 if cdeck.get("energy"):
-                    e_ids = convert_deck_strings_to_ids(cdeck["energy"])
+                    e_ids = convert_deck_strings_to_ids(cdeck["energy"], card_set=card_set)
                     if len(e_ids) > 12:
                         e_ids = e_ids[:12]
 
@@ -1439,8 +1502,11 @@ def background_game_loop():
                                         room["state"] = res
                                 else:
                                     if room.get("engine") == "rust":
-                                        # Use Greedy (1-ply) AI for Rust engine in PVE to maximize responsiveness
-                                        gs.step_opponent_greedy()
+                                        # Use TurnSequencer planner for vanilla mode, greedy for others
+                                        if room.get("card_set") == "vanilla":
+                                            gs.step_opponent_turnseq()
+                                        else:
+                                            gs.step_opponent_greedy()
                                     else:
                                         aid = ai_agent.choose_action(gs, 1)
                                         res = gs.step(aid)
@@ -2009,7 +2075,11 @@ def do_action():
                     if gs.current_player == 1 and game_mode == "pve":
                         print(f"[DEBUG] AI taking turn in phase {gs.phase}")
                         if room.get("engine") == "rust":
-                            gs.step_opponent_mcts(10)
+                            # Use TurnSequencer planner for vanilla mode (optimized for lower turn counts)
+                            if room.get("card_set") == "vanilla":
+                                gs.step_opponent_turnseq()
+                            else:
+                                gs.step_opponent_mcts(10)
                         else:
                             # Python AI
                             aid = ai_agent.choose_action(gs, 1)

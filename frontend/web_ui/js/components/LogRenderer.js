@@ -383,6 +383,28 @@ export const LogRenderer = {
     },
 
     formatLogEntry: (body, turnPrefix, currentLang, showFriendlyAbilities) => {
+        if (!body) return "";
+
+        // Handle translatable markers [[key:p1=v1:p2=v2]]
+        if (body.startsWith("[[") && body.endsWith("]]")) {
+            const content = body.slice(2, -2);
+            const parts = content.split(":");
+            const key = parts[0];
+            const params = {};
+            for (let i = 1; i < parts.length; i++) {
+                const [k, v] = parts[i].split("=");
+                if (k && v !== undefined) {
+                    // If the value itself is an i18n key (like rps_rock), translate it
+                    if (v.startsWith("rps_")) {
+                        params[k] = i18n.t(v);
+                    } else {
+                        params[k] = v;
+                    }
+                }
+            }
+            return i18n.t(key, params);
+        }
+
         let displayText = body;
         let playerTag = "";
 

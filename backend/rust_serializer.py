@@ -164,6 +164,22 @@ class RustCompatGameState:
     def get_legal_actions(self):
         return self._gs.get_legal_actions()
 
+    def step_opponent_turnseq(self):
+        """Execute opponent's turn using TurnSequencer heuristic (vanilla mode AI)."""
+        return self._gs.step_opponent_turnseq()
+
+    def step_opponent_greedy(self, config=None):
+        """Execute opponent's turn using greedy heuristic."""
+        return self._gs.step_opponent_greedy(config)
+
+    def step_opponent_mcts(self, sims, config=None):
+        """Execute opponent's turn using MCTS."""
+        return self._gs.step_opponent_mcts(sims, config)
+
+    def __getattr__(self, name):
+        """Delegate any other attribute/method access to self._gs."""
+        return getattr(self._gs, name)
+
 
 def serialize_card_rust(card_id, db: engine_rust.PyCardDatabase, is_viewable=True):
     if card_id < 0:
@@ -190,7 +206,7 @@ class RustGameStateSerializer:
         self.energy_db = py_energy_db if isinstance(py_energy_db, MaskedDB) else MaskedDB(py_energy_db)
         self._card_cache = {}  # Cache for base card metadata
 
-    def serialize_card(self, cid, is_viewable=True, peek=False, lang="jp"):
+    def serialize_card(self, cid, is_viewable=True, peek=False, lang="jp", is_vanilla=False):
         s = SERIALIZER_STRINGS.get(lang, SERIALIZER_STRINGS["jp"])
         if cid < 0:
             return None
@@ -214,8 +230,9 @@ class RustGameStateSerializer:
         cid_int = int(cid)
         base_id = cid_int & 0xFFFFF  # Mask with BASE_ID_MASK (20 bits)
 
-        if base_id in self._card_cache:
-            res = self._card_cache[base_id].copy()
+        cache_key = (base_id, is_vanilla)
+        if cache_key in self._card_cache:
+            res = self._card_cache[cache_key].copy()
             res["id"] = cid_int
             return res
 
@@ -281,7 +298,12 @@ class RustGameStateSerializer:
             }
 
         if res:
-            self._card_cache[base_id] = res
+            if is_vanilla:
+                res["text"] = ""
+                res["ability"] = ""
+                res["original_text"] = ""
+                res["original_text_en"] = ""
+            self._card_cache[cache_key] = res
             res_instance = res.copy()
             res_instance["id"] = cid_int
             return res_instance
@@ -292,6 +314,7 @@ class RustGameStateSerializer:
         self, p: engine_rust.PyPlayerState, gs: engine_rust.PyGameState, p_idx, viewer_idx=0, legal_mask=None, lang="jp"
     ):
         is_viewable = p_idx == viewer_idx
+        is_vanilla = gs.db.is_vanilla
 
         hand = []
         # Use cached legal_mask if provided, otherwise fetch (fallback for direct calls)
@@ -301,7 +324,7 @@ class RustGameStateSerializer:
             legal_mask = []  # Clear mask for non-active player
 
         for i, cid in enumerate(p.hand):
-            c = self.serialize_card(cid, is_viewable=is_viewable, lang=lang)
+            c = self.serialize_card(cid, is_viewable=is_viewable, lang=lang, is_vanilla=is_vanilla)
             if is_viewable:
                 c["is_new"] = (p.hand_added_turn[i] == gs.turn) if i < len(p.hand_added_turn) else False
 
@@ -334,7 +357,7 @@ class RustGameStateSerializer:
         for i in range(3):
             cid = rust_stage[i]
             if cid >= 0:
-                c = self.serialize_card(cid, is_viewable=True, lang=lang)
+                c = self.serialize_card(cid, is_viewable=True, lang=lang, is_vanilla=is_vanilla)
                 c["tapped"] = bool(rust_tapped[i])
                 c["energy"] = int(getattr(p, "stage_energy_count", [0, 0, 0])[i])
                 c["locked"] = False  # Rust doesn't track locked members yet
@@ -404,7 +427,7 @@ class RustGameStateSerializer:
         for i in range(3):
             cid = rust_lives[i]
             if cid >= 0:
-                c = self.serialize_card(cid, is_viewable=rust_revealed[i], peek=is_viewable, lang=lang)
+                c = self.serialize_card(cid, is_viewable=rust_revealed[i], peek=is_viewable, lang=lang, is_vanilla=is_vanilla)
 
                 # Fulfillment (Rule 8.4.1)
                 if cid in self.live_db:
@@ -440,7 +463,7 @@ class RustGameStateSerializer:
                 {
                     "id": i,
                     "tapped": rust_tapped_energy[i],
-                    "card": self.serialize_card(cid, is_viewable=False, lang=lang),
+                "card": self.serialize_card(cid, is_viewable=False, lang=lang, is_vanilla=is_vanilla),
                 }
             )
 
@@ -455,7 +478,7 @@ class RustGameStateSerializer:
             "hand_count": len(hand),
             "deck_count": p.deck_count,
             "energy_deck_count": p.energy_deck_count,
-            "discard": [self.serialize_card(cid, lang=lang) for cid in p.discard],
+            "discard": [self.serialize_card(cid, lang=lang, is_vanilla=is_vanilla) for cid in p.discard],
             "discard_count": len(p.discard),
             "energy": energy,
             "energy_count": len(energy),
@@ -463,12 +486,12 @@ class RustGameStateSerializer:
             "live_zone": live_zone,
             "live_zone_count": sum(1 for cid in rust_lives if cid >= 0),
             "stage": stage,
-            "success_lives": [self.serialize_card(cid, lang=lang) for cid in p.success_lives],
+            "success_lives": [self.serialize_card(cid, lang=lang, is_vanilla=is_vanilla) for cid in p.success_lives],
             "restrictions": [],
             "total_hearts": [int(h) for h in total_hearts],
             "total_blades": int(gs.get_total_blades(p_idx)),
             "mulligan_selection": mulligan_selection_list,
-            "looked_cards": [self.serialize_card(cid, lang=lang) for cid in getattr(p, "looked_cards", [])],
+            "looked_cards": [self.serialize_card(cid, lang=lang, is_vanilla=is_vanilla) for cid in getattr(p, "looked_cards", [])],
         }
 
     def serialize_state(self, gs: engine_rust.PyGameState, viewer_idx=0, mode="pve", is_pvp=False, lang="jp"):
@@ -515,7 +538,7 @@ class RustGameStateSerializer:
                         curr_p = gs.get_player(gs.current_player)
                         if meta["hand_idx"] < len(curr_p.hand):
                             cid = curr_p.hand[meta["hand_idx"]]
-                            c = self.serialize_card(cid, lang=lang)
+                            c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                             hand_cost = gs.get_member_cost(gs.current_player, cid, -1)
                             net_cost = gs.get_member_cost(gs.current_player, cid, meta["area_idx"])
                             meta.update(
@@ -537,7 +560,7 @@ class RustGameStateSerializer:
                         if meta["area_idx"] < len(curr_p.stage):
                             cid = curr_p.stage[meta["area_idx"]]
                             if cid >= 0:
-                                c = self.serialize_card(cid, lang=lang)
+                                c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                                 # Extract specific ability trigger/text
                                 base_id = int(cid) & 0xFFFFF
                                 triggers = []
@@ -567,7 +590,7 @@ class RustGameStateSerializer:
                         curr_p = gs.get_player(gs.current_player)
                         if meta["hand_idx"] < len(curr_p.hand):
                             cid = curr_p.hand[meta["hand_idx"]]
-                            c = self.serialize_card(cid, lang=lang)
+                            c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                             meta.update(
                                 {"img": c["img"], "name": c["name"], "text": c.get("text", ""), "description": desc}
                             )
@@ -577,7 +600,7 @@ class RustGameStateSerializer:
                         curr_p = gs.get_player(gs.current_player)
                         if meta["hand_idx"] < len(curr_p.hand):
                             cid = curr_p.hand[meta["hand_idx"]]
-                            c = self.serialize_card(cid, lang=lang)
+                            c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                             meta.update(
                                 {"img": c["img"], "name": c["name"], "text": c.get("text", ""), "description": desc}
                             )
@@ -587,7 +610,7 @@ class RustGameStateSerializer:
                         curr_p = gs.get_player(gs.current_player)
                         if meta["hand_idx"] < len(curr_p.hand):
                             cid = curr_p.hand[meta["hand_idx"]]
-                            c = self.serialize_card(cid, lang=lang)
+                            c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                             meta.update(
                                 {"img": c["img"], "name": c["name"], "text": c.get("text", ""), "description": desc}
                             )
@@ -597,13 +620,13 @@ class RustGameStateSerializer:
                         curr_p = gs.get_player(gs.current_player)
                         cid = curr_p.stage[meta["area_idx"]]
                         if cid >= 0:
-                            c = self.serialize_card(cid, lang=lang)
+                            c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                             meta.update({"img": c["img"], "name": c["name"], "text": "", "description": desc})
 
                         # Add pending context for UI grouping
                         if gs.pending_card_id >= 0:
                             meta["source_card_id"] = int(gs.pending_card_id)
-                            c = self.serialize_card(gs.pending_card_id, lang=lang)
+                            c = self.serialize_card(gs.pending_card_id, lang=lang, is_vanilla=gs.db.is_vanilla)
                             meta["source_name"] = c["name"]
                             meta["source_img"] = c["img"]
                     elif 570 <= i <= 579:
@@ -627,7 +650,7 @@ class RustGameStateSerializer:
                         if meta["area_idx"] < len(curr_p.live_zone):
                             cid = curr_p.live_zone[meta["area_idx"]]
                             if cid >= 0:
-                                c = self.serialize_card(cid, lang=lang)
+                                c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                                 meta.update(
                                     {
                                         "img": c["img"],
@@ -648,7 +671,7 @@ class RustGameStateSerializer:
                             t_src = t_obj[2] if len(t_obj) > 2 else None
                             cid = getattr(t_src, "card_id", -1) if t_src else -1
                             if cid >= 0:
-                                c = self.serialize_card(cid, lang=lang)
+                                c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                                 meta.update(
                                     {
                                         "source_card_id": int(cid),
@@ -680,7 +703,7 @@ class RustGameStateSerializer:
                                 cards = cparams.get("cards", [])
                                 if choice_idx < len(cards):
                                     cid = cards[choice_idx]
-                                    c = self.serialize_card(cid, lang=lang)
+                                    c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                                     meta.update(
                                         {
                                             "type": "SELECT",
@@ -704,7 +727,7 @@ class RustGameStateSerializer:
                                 opp = gs.get_player(1 - gs.current_player)
                                 cid = opp.stage[meta["index"]]
                                 if cid >= 0:
-                                    c = self.serialize_card(cid, lang=lang)
+                                    c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                                     meta.update(
                                         {
                                             "img": c["img"],
@@ -719,7 +742,7 @@ class RustGameStateSerializer:
                             else:
                                 cid = gs.pending_card_id
                                 if cid >= 0:
-                                    c = self.serialize_card(cid, lang=lang)
+                                    c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                                     meta.update(
                                         {"img": c["img"], "name": desc, "text": c.get("text", ""), "description": desc}
                                     )
@@ -727,7 +750,7 @@ class RustGameStateSerializer:
                             # Fallback if no pending choice context
                             cid = gs.pending_card_id
                             if cid >= 0:
-                                c = self.serialize_card(cid, lang=lang)
+                                c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                                 meta.update(
                                     {"img": c["img"], "name": desc, "text": c.get("text", ""), "description": desc}
                                 )
@@ -740,7 +763,7 @@ class RustGameStateSerializer:
                         curr_p = gs.get_player(gs.current_player)
                         if discard_idx < len(curr_p.discard):
                             cid = curr_p.discard[discard_idx]
-                            c = self.serialize_card(cid, lang=lang)
+                            c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                             meta.update(
                                 {
                                     "img": c["img"],
@@ -762,7 +785,7 @@ class RustGameStateSerializer:
                         curr_p = gs.get_player(gs.current_player)
                         if meta["hand_idx"] < len(curr_p.hand):
                             cid = curr_p.hand[meta["hand_idx"]]
-                            c = self.serialize_card(cid, lang=lang)
+                            c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                             # Get costs for UI if applicable
                             hand_cost = gs.get_member_cost(gs.current_player, cid, -1)
                             net_cost = gs.get_member_cost(gs.current_player, cid, meta["area_idx"])
@@ -820,14 +843,14 @@ class RustGameStateSerializer:
             source_id = params.get("source_card_id", -1)
 
             if source_id != -1:
-                c = self.serialize_card(source_id, lang=lang)
+                c = self.serialize_card(source_id, lang=lang, is_vanilla=gs.db.is_vanilla)
                 source_name = c["name"]
                 source_img = c["img"]
             elif "area" in params:
                 curr_p = gs.get_player(gs.current_player)
                 cid = curr_p.stage[params["area"]]
                 if cid >= 0:
-                    c = self.serialize_card(cid, lang=lang)
+                    c = self.serialize_card(cid, lang=lang, is_vanilla=gs.db.is_vanilla)
                     source_name = c["name"]
                     source_img = c["img"]
                     source_id = int(cid)
@@ -923,7 +946,7 @@ class RustGameStateSerializer:
                 source_img = None
                 source_id = int(gs.pending_card_id)
                 if source_id >= 0:
-                    c = self.serialize_card(source_id, lang=lang)
+                    c = self.serialize_card(source_id, lang=lang, is_vanilla=gs.db.is_vanilla)
                     source_name = c["name"]
                     source_img = c["img"]
 
@@ -953,7 +976,7 @@ class RustGameStateSerializer:
                 curr_p = gs.get_player(gs.current_player)
                 inferred_params["cards"] = list(curr_p.looked_cards)
             elif pending_card_id >= 0:
-                c = self.serialize_card(pending_card_id, lang=lang)
+                c = self.serialize_card(pending_card_id, lang=lang, is_vanilla=gs.db.is_vanilla)
                 # Infer type from legal actions as fallback
                 has_color = any(legal_mask[i] for i in range(1000, 2000) if i % 10 == 5) or any(
                     legal_mask[i] for i in range(550, 850) if i % 10 == 5

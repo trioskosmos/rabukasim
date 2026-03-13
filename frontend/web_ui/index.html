@@ -295,12 +295,7 @@
                 </div>
                 <div class="action-list" id="actions"></div>
             </div>
-            <div class="sidebar-section">
-                <h3 data-i18n="active_effects">適用中の効果 (Active Effects)</h3>
-                <div id="active-effects-list" class="effect-list">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
+
             <div class="sidebar-section diagnostic-section" id="diagnostic-panel">
                 <h3 class="diag-title" data-i18n="diagnostic">診断情報 (Diag)</h3>
                 <div id="diag-content" class="diag-content">
@@ -336,28 +331,7 @@
                     <button class="btn btn-ai" onclick="runAiAnalysis()">分析実行 (Run Analysis)</button>
                 </div>
             </div>
-            <div class="sidebar-section planner-panel" id="turn-planner-panel">
-                <h3 class="planner-title">Turn Planner</h3>
-                <div class="planner-controls">
-                    <button id="turn-planner-refresh-btn" class="btn btn-ai" onclick="refreshTurnPlanner()">Refresh Best Line</button>
-                    <button id="turn-planner-score-btn" class="btn btn-secondary" onclick="scoreTurnPlanner()">Score My Line</button>
-                </div>
-                <div id="turn-planner-status" class="planner-status">Planner appears on your Main or Live Set turn.</div>
-                <div class="planner-block">
-                    <div class="planner-block-header">
-                        <span>Best Sequence</span>
-                        <div id="turn-planner-best-meta" class="planner-meta"></div>
-                    </div>
-                    <div id="turn-planner-best-sequence" class="planner-sequence"></div>
-                </div>
-                <div class="planner-block">
-                    <div class="planner-block-header">
-                        <span>My Sequence</span>
-                        <div id="turn-planner-my-meta" class="planner-meta"></div>
-                    </div>
-                    <div id="turn-planner-my-sequence" class="planner-sequence"></div>
-                </div>
-            </div>
+
         </div>
     </div>
 

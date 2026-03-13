@@ -38,7 +38,8 @@ export const Tooltips = {
         if (card.name) el.setAttribute('data-card-name', card.name);
 
         // Always attach card text - ability text is public knowledge from master data
-        const rawText = TextEnricher.getEffectiveRawText(card);
+        // VANILLA MODE: Don't attach ability text in vanilla/abilityless mode
+        const rawText = (State.cardSet === 'vanilla') ? "" : TextEnricher.getEffectiveRawText(card);
         if (rawText) el.setAttribute('data-text', rawText);
 
         if (actionId !== undefined && actionId !== 0) el.setAttribute('data-action-id', actionId);
@@ -99,7 +100,8 @@ export const Tooltips = {
         const dText = dataSource.dataset.text;
         // Always get card text - hidden flag should only hide instance-specific data,
         // not the card's ability which is public knowledge from master data
-        const cardText = cardObj ? (TextEnricher.getEffectiveRawText(cardObj) || "") : "";
+        // VANILLA MODE: Suppress ability text in vanilla/abilityless mode
+        const cardText = (State.cardSet === 'vanilla') ? "" : (cardObj ? (TextEnricher.getEffectiveRawText(cardObj) || "") : "");
         let finalAbilityText = cardText;
 
         // 2. Fallback or additional text

@@ -178,6 +178,12 @@ export const TextEnricher = {
 
     getEffectiveRawText: (card) => {
         if (!card) return "";
+        
+        // VANILLA MODE: Hide all ability text in vanilla/abilityless mode
+        if (State.cardSet === 'vanilla') {
+            return "";
+        }
+        
         const lang = State.currentLang;
 
         // 1. Try language-specific original text first
@@ -302,6 +308,11 @@ export const TextEnricher = {
 
     getEffectiveActionText: (action) => {
         if (!action) return "";
+        
+        // VANILLA MODE: Hide all ability text in vanilla/abilityless mode
+        if (State.cardSet === 'vanilla') {
+            return "";
+        }
 
         // If the backend provided source_ability (which we patched to be the full block), use it!
         if (action.source_ability && action.source_ability.length > 5) {

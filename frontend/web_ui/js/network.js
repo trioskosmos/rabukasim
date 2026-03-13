@@ -249,6 +249,7 @@ export const Network = {
 
     // Core Game loop
     fetchState: async () => {
+        let receivedResponse = false;
         try {
             // [TRACE] Start fetchState
             if (State.replayMode) {
@@ -305,6 +306,7 @@ export const Network = {
                 headers,
                 signal: controller.signal
             });
+            receivedResponse = true;
             clearTimeout(timeoutId);
 
             if (res.status === 404) {
@@ -312,17 +314,7 @@ export const Network = {
                     console.warn(`[Network] Room ${State.roomCode} not found (404). Resetting local state.`);
                     const codeToClear = State.roomCode;
                     localStorage.removeItem('lovelive_room_code');
-
-                    // Clean up session storage for this room
-                    try {
-                        let sessions = JSON.parse(localStorage.getItem('lovelive_sessions') || '{}');
-                        if (sessions[codeToClear]) {
-                            delete sessions[codeToClear];
-                            localStorage.setItem('lovelive_sessions', JSON.stringify(sessions));
-                        }
-                    } catch (e) {
-                        console.error("[Network] Failed to clean up sessions:", e);
-                    }
+                    localStorage.removeItem(`lovelive_session_${codeToClear}`);
 
                     State.roomCode = null;
                     State.sessionToken = null;
@@ -353,13 +345,25 @@ export const Network = {
                     State.perspectivePlayer = State.data.my_player_id;
                 }
 
-                // Needs deck check
-                if (State.data.needs_deck && !State.hotseatMode && !State.offlineMode) {
+                // Needs deck check (only in Setup phase to avoid interrupting gameplay)
+                // Safety: Only show modal if:
+                // 1. needs_deck is true
+                // 2. We're in SETUP phase
+                // 3. Game hasn't progressed (no legal_actions means game hasn't started)
+                // 4. Not hotseat/offline mode
+                // 5. Game flag confirms we haven't entered real gameplay yet
+                const currentState = State.data;
+                const hasGameStarted = !!(currentState && currentState.legal_actions && currentState.legal_actions.length > 0);
+                if (hasGameStarted && currentState.phase !== Phase.SETUP) {
+                    State.gameHasStarted = true;
+                }
+                
+                if (State.data.needs_deck && State.data.phase === Phase.SETUP && !State.gameHasStarted && !hasGameStarted && !State.hotseatMode && !State.offlineMode) {
                     console.log("[Network] needs_deck detected. triggering onOpenDeckModal.");
                     // We need to trigger deck modal
                     // We can check if setup-modal is open
                     if (!ModalManager.isVisible(DOM_IDS.MODAL_SETUP)) {
-                        console.log("[Network] needs_deck detected.");
+                        console.log("[Network] needs_deck detected in Setup phase (no game progress yet).");
                         onOpenDeckModal(State.perspectivePlayer);
                     }
                 }
@@ -400,30 +404,34 @@ export const Network = {
             if (e.name === 'AbortError') {
                 console.warn("[Network] Fetch state timed out.");
             } else {
-                if (State.roomCode) {
+                if (State.roomCode && !receivedResponse) {
                     console.error("[Network] Critical connection failure. Returning to lobby.");
+                    const codeToClear = State.roomCode;
                     State.roomCode = null;
                     State.sessionToken = null;
                     Network.clearPlannerData();
                     localStorage.removeItem('lovelive_room_code');
+                    localStorage.removeItem(`lovelive_session_${codeToClear}`);
                     updateStateData(null);
                     if (typeof onRoomUpdate === 'function') onRoomUpdate();
 
                     ModalManager.show(DOM_IDS.MODAL_ROOM);
                     log("Connection lost or server unreachable.", 'error');
+                } else {
+                    console.error("[Network] Client-side state processing error; preserving current room/session.");
                 }
             }
         }
     },
 
     sendAction: async (id) => {
-        // RPS phase logic: check active player?
-        // Main.js logic:
-        // const isRpsPhase = state && state.phase === Phase.RPS;
-        // if (!isRpsPhase && state.active_player !== perspectivePlayer && !hotseatMode) ...
-
         const state = State.data;
-        const isRpsPhase = state && state.phase === Phase.RPS;
+        if (!state) {
+            console.warn('[Network] sendAction: no state loaded yet, ignoring.');
+            return;
+        }
+
+        const isRpsPhase = state.phase === Phase.RPS;
 
         if (!isRpsPhase && state.active_player !== State.perspectivePlayer && !State.hotseatMode) {
             console.warn("[Network] Action blocked: Not your turn.");

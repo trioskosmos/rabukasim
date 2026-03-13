@@ -234,6 +234,8 @@ export const ActionMenu = {
 
             choiceDiv.innerHTML = content;
 
+            let hasContent = false;
+
             if (choice.choice_type === 29) { // REARRANGE_FORMATION
                 const confirmBtn = document.createElement('button');
                 confirmBtn.className = 'action-btn confirm';
@@ -243,6 +245,10 @@ export const ActionMenu = {
 
                 confirmBtn.onclick = () => {
                     const pIdx = State.perspectivePlayer;
+                    if (!State.rawData || !State.rawData.players || !State.rawData.players[pIdx]) {
+                        console.warn('[ActionMenu] rawData not available for REARRANGE_FORMATION');
+                        return;
+                    }
                     const oldStage = State.rawData.players[pIdx].stage;
                     const newStage = state.players[pIdx].stage;
 
@@ -262,6 +268,7 @@ export const ActionMenu = {
                     if (window.doAction) window.doAction(permIdx);
                 };
                 choiceDiv.appendChild(confirmBtn);
+                hasContent = true;
             } else if (choice.options && choice.options.length > 0) {
                 const optContainer = document.createElement('div');
                 optContainer.className = 'action-list choice-options-container';
@@ -279,8 +286,12 @@ export const ActionMenu = {
                     optContainer.appendChild(btn);
                 });
                 choiceDiv.appendChild(optContainer);
+                hasContent = true;
             }
-            actionsDiv.appendChild(choiceDiv);
+            
+            if (hasContent) {
+                actionsDiv.appendChild(choiceDiv);
+            }
             return;
         }
 

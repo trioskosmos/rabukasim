@@ -74,8 +74,9 @@ def validate_bytecode(bytecode: list, card_no: str, ab_idx: int) -> list:
     return issues
 
 
-def compile_cards(input_path: str, output_path: str):
-    print(f"Loading raw cards from {input_path}...")
+def compile_cards(input_path: str, output_path: str, quiet: bool = False):
+    if not quiet:
+        print(f"Loading raw cards from {input_path}...")
     with open(input_path, "r", encoding="utf-8") as f:
         raw_data = json.load(f)
 
@@ -99,10 +100,12 @@ def compile_cards(input_path: str, output_path: str):
     existing_id_mapping = {}
     mapping_path = "data/card_id_mapping.json"
     if os.path.exists(mapping_path):
-        print(f"Loading existing ID mapping from {mapping_path}...")
+        if not quiet:
+            print(f"Loading existing ID mapping from {mapping_path}...")
         with open(mapping_path, "r", encoding="utf-8") as f:
             existing_id_mapping = json.load(f)
-        print(f"Loaded {len(existing_id_mapping)} existing ID mappings")
+        if not quiet:
+            print(f"Loaded {len(existing_id_mapping)} existing ID mappings")
 
     sorted_keys = sorted(raw_data.keys())
     # Logic for bit-packed IDs
@@ -165,7 +168,7 @@ def compile_cards(input_path: str, output_path: str):
             # Check if this card already has an ID in the existing mapping
             if v_key in existing_id_mapping:
                 packed_id = existing_id_mapping[v_key]
-                print(f"DEBUG: Using existing ID for card_no={v_key}, packed_id={packed_id}")
+                # print(f"DEBUG: Using existing ID for card_no={v_key}, packed_id={packed_id}")
             else:
                 # Determine Logical Identity for new cards
                 # We use Name + Original Text (Ability) as the unique logical key
@@ -193,7 +196,7 @@ def compile_cards(input_path: str, output_path: str):
                     variant_idx = 15  # Cap at maximum to prevent overflow
 
                 packed_id = (variant_idx << 12) | logic_id
-                print(f"DEBUG: Assigned new ID for card_no={v_key}, packed_id={packed_id}")
+                # print(f"DEBUG: Assigned new ID for card_no={v_key}, packed_id={packed_id}")
             # Define fields to exclude from compiled output to reduce bloat
             # No source data is lost; these are either redundant with bytecode or stay in cards.json/consolidated_abilities.json
             exclude_ability_fields = {"instructions": True}
@@ -242,7 +245,8 @@ def compile_cards(input_path: str, output_path: str):
     generate_opcode_docs(compiled_data, "reports/opcode_reference.md")
 
     # Write output (always write, even with errors)
-    print(f"Writing compiled data to {output_path}...")
+    if not quiet:
+        print(f"Writing compiled data to {output_path}...")
     with open(output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(compiled_data, f, ensure_ascii=False, indent=2)
 
@@ -252,11 +256,12 @@ def compile_cards(input_path: str, output_path: str):
     total_errors = len(errors) + len(bc_errors) + len(validation_issues)
     sep_thick = "=" * 60
     sep_thin = "-" * 60
-    print(f"\n{sep_thick}")
-    print("  COMPILATION SUMMARY")
-    print(sep_thick)
-    print(f"  Cards compiled: {success_count}")
-    print(f"  Total issues:   {total_errors}")
+    if not quiet or total_errors > 0:
+        print(f"\n{sep_thick}")
+        print("  COMPILATION SUMMARY")
+        print(sep_thick)
+        print(f"  Cards compiled: {success_count}")
+        print(f"  Total issues:   {total_errors}")
 
     def _print_grouped_errors(title: str, error_list: list[str]):
         """Group errors by root cause and print a compact summary."""
@@ -287,39 +292,41 @@ def compile_cards(input_path: str, output_path: str):
                 line = line[:197] + "..."
             print(line)
 
-    _print_grouped_errors("CARD PARSE ERRORS", errors)
-    _print_grouped_errors("BYTECODE COMPILE ERRORS", bc_errors)
+    if not quiet or (total_errors > 0 and (errors or bc_errors)):
+        _print_grouped_errors("CARD PARSE ERRORS", errors)
+        _print_grouped_errors("BYTECODE COMPILE ERRORS", bc_errors)
 
-    if validation_issues:
+    if not quiet or total_errors > 0:
+        if validation_issues:
+            print(f"\n{sep_thin}")
+            print(f"  BYTECODE VALIDATION ISSUES ({len(validation_issues)})")
+            print(sep_thin)
+            for issue in validation_issues:
+                print(f"  {issue}")
+
+        pipeline_summary = _pseudocode_resolver.summary()
+
         print(f"\n{sep_thin}")
-        print(f"  BYTECODE VALIDATION ISSUES ({len(validation_issues)})")
+        print("  PSEUDOCODE PIPELINE")
         print(sep_thin)
-        for issue in validation_issues:
-            print(f"  {issue}")
+        print(f"  Consolidated entries: {pipeline_summary.consolidated_total}")
+        print(f"  Consolidated used:    {pipeline_summary.consolidated_used}")
+        print(f"  Consolidated unused:  {pipeline_summary.consolidated_unused}")
+        print(f"  Inline fallbacks:     {pipeline_summary.inline_used}")
+        print(f"  Missing pseudocode:   {len(pipeline_summary.missing)}")
+        print(f"  Empty pseudocode:     {len(pipeline_summary.empty)}")
 
-    pipeline_summary = _pseudocode_resolver.summary()
+        if pipeline_summary.missing:
+            preview = pipeline_summary.preview(pipeline_summary.missing)
+            print(f"  Missing cards:        {preview}")
 
-    print(f"\n{sep_thin}")
-    print("  PSEUDOCODE PIPELINE")
-    print(sep_thin)
-    print(f"  Consolidated entries: {pipeline_summary.consolidated_total}")
-    print(f"  Consolidated used:    {pipeline_summary.consolidated_used}")
-    print(f"  Consolidated unused:  {pipeline_summary.consolidated_unused}")
-    print(f"  Inline fallbacks:     {pipeline_summary.inline_used}")
-    print(f"  Missing pseudocode:   {len(pipeline_summary.missing)}")
-    print(f"  Empty pseudocode:     {len(pipeline_summary.empty)}")
+        if pipeline_summary.empty:
+            preview = pipeline_summary.preview(pipeline_summary.empty)
+            print(f"  Empty-entry cards:    {preview}")
 
-    if pipeline_summary.missing:
-        preview = pipeline_summary.preview(pipeline_summary.missing)
-        print(f"  Missing cards:        {preview}")
-
-    if pipeline_summary.empty:
-        preview = pipeline_summary.preview(pipeline_summary.empty)
-        print(f"  Empty-entry cards:    {preview}")
-
-    if total_errors == 0:
-        print("\n  All cards compiled and validated successfully!")
-    print(sep_thick)
+        if total_errors == 0:
+            print("\n  All cards compiled and validated successfully!")
+        print(sep_thick)
 
     # Write detailed log for reference (with full tracebacks)
     if errors or bc_errors or validation_issues:
@@ -338,7 +345,8 @@ def compile_cards(input_path: str, output_path: str):
                     f_err.write(f"{issue}\n")
         print("  Full log: compiler_errors.log")
 
-    print("Done.")
+    if not quiet:
+        print("Done.")
 
 
 def _resolve_img_path(data: dict) -> str:
@@ -808,6 +816,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--check", action="store_true", help="Only check parity and exit"
     )
+    parser.add_argument(
+        "--quiet", "-q", action="store_true", help="Minimize output"
+    )
     args = parser.parse_args()
 
     # Set up version gate if non-default version requested
@@ -825,10 +836,11 @@ if __name__ == "__main__":
         else:
             sys.exit(1)
 
-    compile_cards(args.input, args.output)
+    compile_cards(args.input, args.output, quiet=args.quiet)
 
     # Update hash in the output file
-    print("Updating source hash in compiled file...")
+    if not args.quiet:
+        print("Updating source hash in compiled file...")
     compiled_data = load_json(args.output)
     if compiled_data:
         if "meta" not in compiled_data:
@@ -847,14 +859,18 @@ if __name__ == "__main__":
     if os.path.abspath(args.output) != os.path.abspath(root_data_path):
         try:
             shutil.copy(args.output, root_data_path)
-            print(f"Copied compiled data to {root_data_path}")
+            if not args.quiet:
+                print(f"Copied compiled data to {root_data_path}")
         except Exception as e:
-            print(f"Warning: Failed to copy to root data directory: {e}")
+            if not args.quiet:
+                print(f"Warning: Failed to copy to root data directory: {e}")
 
     # Sync to engine/data/ to keep paths consistent
     try:
         os.makedirs(os.path.dirname(engine_data_path), exist_ok=True)
         shutil.copy(root_data_path, engine_data_path)
-        print(f"Synced compiled data to {engine_data_path}")
+        if not args.quiet:
+            print(f"Synced compiled data to {engine_data_path}")
     except Exception as e:
-        print(f"Warning: Failed to sync to engine/data directory: {e}")
+        if not args.quiet:
+            print(f"Warning: Failed to sync to engine/data directory: {e}")

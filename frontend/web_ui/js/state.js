@@ -14,6 +14,7 @@ const stateInternal = {
     sessionToken: null,
     perspectivePlayer: 0, // 0 or 1 (Who are we viewing?)
     cardSet: 'compiled', // 'compiled' or 'vanilla'
+    gameHasStarted: false, // Track if we've moved past Setup phase (prevents deck modal from showing during gameplay)
 
     // Connectivity & Mode
     offlineMode: false,
@@ -173,7 +174,18 @@ const stateInternal = {
      * This prevents old performance data from leaking into new games.
      */
     resetForNewGame: () => {
-        // ... (existing reset logic)
+        State.selectedTurn = -1;
+        State.selectedHandIdx = -1;
+        State.selectedPerfTurn = -1;
+        State.lastPerformanceTurn = -1;
+        State.showingFullLog = false;
+        State.fullLogData = null;
+        State.lastActionsHash = null;
+        State.lastShownPerformanceHash = null;
+        State.performanceHistory = {};
+        State.performanceHistoryTurns = [];
+        State.gameHasStarted = false;
+        window.lastShownPerformanceHash = "";
     },
 
     resolveCardData: (cid) => {

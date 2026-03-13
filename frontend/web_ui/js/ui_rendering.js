@@ -175,7 +175,7 @@ export const Rendering = {
         Rendering.renderSelectionModal();
         Rendering.renderRuleLog();
         Rendering.renderActiveEffects(state);
-        Rendering.renderTurnPlanner();
+        Rendering.renderActiveEffects(state);
         // Toggle the panel visibility based on content
         const abPanel = document.getElementById('active-abilities-panel');
         const hasContent = (state.triggered_abilities && state.triggered_abilities.length > 0) ||
@@ -247,97 +247,7 @@ export const Rendering = {
 
     renderRuleLog: (containerId = 'rule-log') => Logs.renderRuleLog(containerId),
 
-    renderTurnPlanner: () => {
-        const panel = document.getElementById('turn-planner-panel');
-        const status = document.getElementById('turn-planner-status');
-        const bestMeta = document.getElementById('turn-planner-best-meta');
-        const bestList = document.getElementById('turn-planner-best-sequence');
-        const myMeta = document.getElementById('turn-planner-my-meta');
-        const myList = document.getElementById('turn-planner-my-sequence');
-        const refreshBtn = document.getElementById('turn-planner-refresh-btn');
-        const scoreBtn = document.getElementById('turn-planner-score-btn');
 
-        if (!panel || !status || !bestMeta || !bestList || !myMeta || !myList) return;
-
-        const planner = State.plannerData;
-        const state = State.data;
-        const trackedPhases = [Phase.MAIN, Phase.LIVE_SET, Phase.RESPONSE];
-        const availableNow = !!state && trackedPhases.includes(state.phase) && state.active_player === State.perspectivePlayer && !state.game_over;
-
-        if (refreshBtn) refreshBtn.disabled = State.plannerLoading || !State.roomCode || State.offlineMode;
-        if (scoreBtn) scoreBtn.disabled = State.plannerLoading || !planner?.your_sequence;
-
-        const escapeHtml = (value) => String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-
-        const renderSequence = (sequence, emptyText) => {
-            if (!Array.isArray(sequence) || sequence.length === 0) {
-                return `<div class="planner-empty">${escapeHtml(emptyText)}</div>`;
-            }
-
-            return `<ol class="planner-sequence-list">${sequence.map((entry) => `
-                <li class="planner-sequence-item${entry.legal === false ? ' invalid' : ''}">
-                    <span class="planner-step-index">${entry.index}.</span>
-                    <span class="planner-step-text">${escapeHtml(entry.desc || `Action ${entry.action_id}`)}</span>
-                </li>
-            `).join('')}</ol>`;
-        };
-
-        panel.style.display = 'block';
-
-        if (!planner) {
-            status.textContent = availableNow ? 'Planner ready. Refresh to analyze this turn.' : 'Planner appears on your Main or Live Set turn.';
-            bestMeta.innerHTML = '<span class="planner-muted">No best line loaded.</span>';
-            bestList.innerHTML = renderSequence([], 'No best line loaded.');
-            myMeta.innerHTML = '<span class="planner-muted">No tracked sequence yet.</span>';
-            myList.innerHTML = renderSequence([], 'Your played sequence will appear here.');
-            return;
-        }
-
-        const optimal = planner.optimal;
-        const yourSequence = planner.your_sequence;
-        const bestTotal = optimal?.breakdown?.total;
-        const yourTotal = yourSequence?.breakdown?.total;
-
-        status.textContent = planner.active
-            ? `Tracking turn ${planner.root_turn}.`
-            : (planner.message || 'Showing the latest scored sequence.');
-
-        if (optimal) {
-            const nodeText = optimal.nodes !== undefined ? `Nodes ${optimal.nodes}` : 'Nodes -';
-            const totalText = Number.isFinite(bestTotal) ? `Score ${bestTotal.toFixed(2)}` : 'Score -';
-            bestMeta.innerHTML = `
-                <span class="planner-chip planner-chip-best">${escapeHtml(totalText)}</span>
-                <span class="planner-chip">${escapeHtml(nodeText)}</span>
-                <span class="planner-chip">Line ${optimal.action_ids.length}</span>
-            `;
-            bestList.innerHTML = renderSequence(optimal.sequence, 'No recommended actions available.');
-        } else {
-            bestMeta.innerHTML = '<span class="planner-muted">No planner line available from this state.</span>';
-            bestList.innerHTML = renderSequence([], 'No recommended actions available.');
-        }
-
-        if (yourSequence) {
-            const prefixText = yourSequence.optimal_length
-                ? `Match ${yourSequence.matched_prefix}/${yourSequence.optimal_length}`
-                : 'Match -';
-            const totalText = Number.isFinite(yourTotal) ? `Score ${yourTotal.toFixed(2)}` : 'Score -';
-            const statusText = yourSequence.status === 'completed' ? 'Completed' : 'In progress';
-            myMeta.innerHTML = `
-                <span class="planner-chip planner-chip-player">${escapeHtml(totalText)}</span>
-                <span class="planner-chip">${escapeHtml(prefixText)}</span>
-                <span class="planner-chip">${escapeHtml(statusText)}</span>
-            `;
-            myList.innerHTML = renderSequence(yourSequence.sequence, 'You have not taken any tracked actions yet.');
-        } else {
-            myMeta.innerHTML = '<span class="planner-muted">No tracked sequence yet.</span>';
-            myList.innerHTML = renderSequence([], 'You have not taken any tracked actions yet.');
-        }
-    },
 
     renderActiveAbilities: (containerId, abilities) => Logs.renderActiveAbilities(containerId, abilities),
 

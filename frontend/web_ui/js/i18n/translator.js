@@ -104,12 +104,6 @@ export const UNIT_ID_MAP = {
 };
 
 /**
- * Translates a piece of metadata like a series or unit name.
- * @param {string} text 
- * @param {string} category 'GROUPS' or 'UNITS'
- * @returns {string}
- */
-/**
  * Translates card type (Member, Live, Energy)
  * @param {string} typeJp - Japanese card type
  * @returns {string} - Translated type or original if not found
@@ -153,6 +147,14 @@ export function translateSeries(seriesJp) {
     
     return series[seriesJp] || seriesJp;
 }
+
+/**
+ * Translates a piece of metadata like a series or unit name.
+ * @param {string} text 
+ * @param {string} category 'GROUPS' or 'UNITS'
+ * @returns {string}
+ */
+export function translateMetadata(text, category) {
     if (!text) return "";
     if (currentLanguage === 'jp') return text;
 
