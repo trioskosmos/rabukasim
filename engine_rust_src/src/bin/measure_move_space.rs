@@ -2,13 +2,10 @@ use std::fs;
 use std::time::Instant;
 use engine_rust::core::logic::{CardDatabase, GameState};
 use engine_rust::core::enums::Phase;
-use smallvec::SmallVec;
 use engine_rust::core::ACTION_BASE_PASS;
 use rand::seq::IndexedRandom;
 use rand::SeedableRng;
 use rand::prelude::StdRng;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 
 fn main() {
     let db = load_vanilla_db();
@@ -89,6 +86,7 @@ fn main() {
             let current_count = sample_idx + 1;
             let rate = current_count as f32 / total_elapsed;
             let elapsed_secs = total_elapsed as u32;
+            let stalled = current_count == last_count;
             println!(
                 "[{:2}s] Progress: {}/{} samples | {:.1} states/s",
                 elapsed_secs, current_count, num_samples, rate
@@ -97,7 +95,7 @@ fn main() {
             last_count = current_count;
             
             // Timeout check
-            if elapsed_secs > 10 && current_count == last_count {
+            if elapsed_secs > 10 && stalled {
                 println!("[TIMEOUT] No progress for 10+ seconds, terminating...\n");
                 println!("Partial results ({}/{} samples completed):", current_count, num_samples);
                 break;

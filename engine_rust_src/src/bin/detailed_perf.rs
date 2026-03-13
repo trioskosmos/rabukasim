@@ -1,7 +1,7 @@
 use std::fs;
 use std::time::Instant;
 use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
-use engine_rust::core::logic::turn_sequencer::{SearchConfig, SequencerConfig, TurnSequencer, WeightsConfig};
+use engine_rust::core::logic::turn_sequencer::TurnSequencer;
 use engine_rust::core::enums::Phase;
 
 fn load_vanilla_db() -> CardDatabase {
@@ -24,55 +24,64 @@ fn load_vanilla_db() -> CardDatabase {
 }
 
 fn load_deck(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
-    let content = fs::read_to_string(path).expect("Failed to read deck");
-    let mut members = Vec::new();
-    let mut lives = Vec::new();
+    let candidates = [path, &format!("../{}", path), &format!("../../{}", path)];
 
-    for line in content.lines() {
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
+    for candidate in &candidates {
+        let Ok(content) = fs::read_to_string(candidate) else {
             continue;
-        }
-        let parts: Vec<&str> = line.split_whitespace().collect();
-        if parts.is_empty() {
-            continue;
-        }
-        let card_no = parts[0];
-        let count: usize = if parts.len() >= 3 && parts[1] == "x" {
-            parts[2].parse().unwrap_or(1)
-        } else {
-            1
         };
 
-        if let Some(id) = db.id_by_no(card_no) {
-            for _ in 0..count {
-                if db.lives.contains_key(&id) {
-                    lives.push(id);
-                } else {
-                    members.push(id);
+        let mut members = Vec::new();
+        let mut lives = Vec::new();
+
+        for line in content.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.is_empty() {
+                continue;
+            }
+            let card_no = parts[0];
+            let count: usize = if parts.len() >= 3 && parts[1] == "x" {
+                parts[2].parse().unwrap_or(1)
+            } else {
+                1
+            };
+
+            if let Some(id) = db.id_by_no(card_no) {
+                for _ in 0..count {
+                    if db.lives.contains_key(&id) {
+                        lives.push(id);
+                    } else {
+                        members.push(id);
+                    }
                 }
             }
         }
+
+        while members.len() < 48 {
+            if let Some(&id) = db.members.keys().next() {
+                members.push(id);
+            } else {
+                break;
+            }
+        }
+        while lives.len() < 12 {
+            if let Some(&id) = db.lives.keys().next() {
+                lives.push(id);
+            } else {
+                break;
+            }
+        }
+
+        members.truncate(48);
+        lives.truncate(12);
+        return (members, lives);
     }
 
-    while members.len() < 48 {
-        if let Some(&id) = db.members.keys().next() {
-            members.push(id);
-        } else {
-            break;
-        }
-    }
-    while lives.len() < 12 {
-        if let Some(&id) = db.lives.keys().next() {
-            lives.push(id);
-        } else {
-            break;
-        }
-    }
-
-    members.truncate(48);
-    lives.truncate(12);
-    (members, lives)
+    panic!("Failed to read deck from any candidate path for {}", path);
 }
 
 fn main() {

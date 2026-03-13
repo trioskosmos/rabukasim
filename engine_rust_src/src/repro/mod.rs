@@ -27,3 +27,29 @@ pub mod yell_persistence_repro;
 pub mod repro_performance_modal;
 #[cfg(test)]
 pub mod repro_hazuki_500;
+#[cfg(test)]
+pub mod test_card_4558;
+#[cfg(test)]
+pub mod repro_bp3_002_p;
+#[cfg(test)]
+pub mod repro_bp4_002_p;
+#[cfg(test)]
+pub mod repro_card_fixes;
+#[cfg(test)]
+pub mod repro_color_filter;
+#[cfg(test)]
+pub mod repro_discard_bug;
+#[cfg(test)]
+pub mod repro_flags;
+#[cfg(test)]
+pub mod repro_kanon_557;
+#[cfg(test)]
+pub mod repro_optionality;
+#[cfg(test)]
+pub mod repro_softlock;
+#[cfg(test)]
+pub mod repro_softlock_tests;
+#[cfg(test)]
+pub mod repro_task;
+#[cfg(test)]
+pub mod repro_card_103_placement;

@@ -1,10 +1,8 @@
-use std::env;
 use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
-use engine_rust::core::ACTION_BASE_LIVESET;
 use rand::seq::IndexedRandom;
 use rand::SeedableRng;
 use rand::prelude::StdRng;
@@ -218,7 +216,6 @@ fn main() {
             }
             Phase::LiveSet => {
                 let liveset_start = Instant::now();
-                let p_idx = state.current_player as usize;
 
                 // Auto-select random live card
                 let legal = state.get_legal_action_ids(&db);

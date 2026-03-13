@@ -1,150 +1,261 @@
-import numpy as np
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass, replace
+from typing import Optional
+
 import torch
 import torch.nn as nn
 
-# ============================================================
-# CARD-CENTRIC + SLOT-AWARE ACTION SPACE (248 dims)
-# ============================================================
-# Hierarchy: Phase actions < Generic cards < Slot-specific cards
-#
-# Actions indexed by initial_deck position + target slot:
-# 0: Pass
-# 1-6: Mulligan Toggles (hand[0-5])
-# 7: Confirm/Done
-# 8-67: Generic card play [0-59]
-#       - During live phase: play to live zone
-#       - During main phase: auto-select best slot (baton pass optimization)
-# 68-127: Play card [0-59] to SLOT 0 during main phase
-# 128-187: Play card [0-59] to SLOT 1 during main phase
-# 188-247: Play card [0-59] to SLOT 2 during main phase
-# 248-250: Targeting slot [0-2]
-# 251-255: Hand select [0-4]
-#
-# Masking:
-#   Main phase: 0, 8-247 (generic + all slot-specific)
-#   Live phase: 0, 8-67 (pass + generic only)
-#   Mulligan: 1-7 (toggles + confirm)
+from alphazero.training.vanilla_action_codec import ACTION_SPACE
+from alphazero.training.vanilla_observation import CARD_FEATURES, GLOBAL_FEATURES, MAX_INITIAL_DECK, OBS_DIM
 
-NUM_ACTIONS = 256
-
-ACTION_BASE_PASS = 0
-ACTION_BASE_MULLIGAN = 300
-ACTION_BASE_LIVESET = 400
-ACTION_BASE_HAND = 1000
+DEFAULT_HEURISTIC_WEIGHTS = [1.0] * 17
 
 
-def build_vanilla_action_table():
-    """Maps engine action IDs to 128 buckets."""
-    # We create a lookup table for all 22k actions
-    type_table = np.full(22000, -1, dtype=np.int32)
+@dataclass(frozen=True)
+class VanillaTransformerConfig:
+    input_dim: int = OBS_DIM
+    global_dim: int = GLOBAL_FEATURES
+    total_cards: int = MAX_INITIAL_DECK
+    card_features: int = CARD_FEATURES
+    num_actions: int = ACTION_SPACE
+    preset: str = "small"
+    embed_dim: int = 128
+    num_heads: int = 8
+    num_layers: int = 4
+    ff_multiplier: int = 4
+    dropout: float = 0.1
+    summary_dim: int = 256
 
-    # 0: Pass
-    type_table[ACTION_BASE_PASS] = 0
-
-    # 1-6: Mulligan (Hand slots 0-5)
-    for i in range(6):
-        aid = ACTION_BASE_MULLIGAN + i
-        if aid < 22000:
-            type_table[aid] = 1 + i
-
-    # 7: Confirm (Typical ID for Done/Confirm is in the 11000 range)
-    type_table[11000] = 7
-
-    # Note: In a REAL environment, we'd need a mapping from (HandIndex -> DeckIndex)
-    # to correctly populate Play Member (8-67).
-    # For a smoke test, we just set the ranges.
-
-    return type_table
+    @classmethod
+    def from_preset(cls, preset: str = "small", **overrides) -> "VanillaTransformerConfig":
+        preset_name = preset.lower()
+        presets = {
+            "tiny": dict(embed_dim=96, num_heads=4, num_layers=3, ff_multiplier=3, summary_dim=192, dropout=0.08),
+            "small": dict(embed_dim=128, num_heads=8, num_layers=4, ff_multiplier=4, summary_dim=256, dropout=0.10),
+            "base": dict(embed_dim=160, num_heads=8, num_layers=6, ff_multiplier=4, summary_dim=320, dropout=0.10),
+            "large": dict(embed_dim=192, num_heads=8, num_layers=8, ff_multiplier=4, summary_dim=384, dropout=0.12),
+        }
+        if preset_name not in presets:
+            raise ValueError(f"Unknown vanilla model preset: {preset}")
+        return cls(preset=preset_name, **presets[preset_name], **overrides)
 
 
-ACTION_MAP = build_vanilla_action_table()
+def build_vanilla_transformer_config(
+    preset: str = "small",
+    *,
+    embed_dim: Optional[int] = None,
+    num_heads: Optional[int] = None,
+    num_layers: Optional[int] = None,
+    ff_multiplier: Optional[int] = None,
+    dropout: Optional[float] = None,
+    summary_dim: Optional[int] = None,
+) -> VanillaTransformerConfig:
+    config = VanillaTransformerConfig.from_preset(preset)
+    overrides = {}
+    if embed_dim is not None:
+        overrides["embed_dim"] = embed_dim
+    if num_heads is not None:
+        overrides["num_heads"] = num_heads
+    if num_layers is not None:
+        overrides["num_layers"] = num_layers
+    if ff_multiplier is not None:
+        overrides["ff_multiplier"] = ff_multiplier
+    if dropout is not None:
+        overrides["dropout"] = dropout
+    if summary_dim is not None:
+        overrides["summary_dim"] = summary_dim
+    return replace(config, **overrides) if overrides else config
+
+
+def list_vanilla_presets() -> list[dict]:
+    presets = []
+    for preset_name in ("tiny", "small", "base", "large"):
+        config = VanillaTransformerConfig.from_preset(preset_name)
+        model = HighFidelityAlphaNet(config=config)
+        presets.append(
+            {
+                "preset": preset_name,
+                "config": config,
+                "parameters": model.parameter_count(),
+                "parameters_millions": model.parameter_count_millions(),
+            }
+        )
+    return presets
+
+
+def choose_vanilla_config_for_budget(
+    budget_millions: float,
+    *,
+    fallback_preset: str = "small",
+) -> VanillaTransformerConfig:
+    candidates = list_vanilla_presets()
+    within_budget = [entry for entry in candidates if entry["parameters_millions"] <= budget_millions]
+    if within_budget:
+        return within_budget[-1]["config"]
+
+    for entry in candidates:
+        if entry["preset"] == fallback_preset:
+            return entry["config"]
+    return candidates[0]["config"]
 
 
 class HighFidelityAlphaNet(nn.Module):
-    def __init__(self, input_dim=800, num_actions=256, embed_dim=256, num_heads=4, num_layers=6):
+    """
+        Compact masked transformer for the structured abilityless vanilla tensor.
+
+    The model is intentionally parameter-budgeted so it can handle:
+    - CPU inference inside self-play workers
+    - GPU training from large overnight replay buffers
+        - masked compact policy outputs tailored to abilityless game flow
+    """
+
+    def __init__(
+        self,
+        input_dim: int = OBS_DIM,
+        num_actions: int = ACTION_SPACE,
+        embed_dim: int = 128,
+        num_heads: int = 8,
+        num_layers: int = 4,
+        ff_multiplier: int = 4,
+        dropout: float = 0.1,
+        summary_dim: int = 256,
+        config: Optional[VanillaTransformerConfig] = None,
+    ):
         super().__init__()
 
-        self.input_dim = input_dim
-        self.num_actions = num_actions
+        self.config = config or VanillaTransformerConfig(
+            input_dim=input_dim,
+            num_actions=num_actions,
+            embed_dim=embed_dim,
+            num_heads=num_heads,
+            num_layers=num_layers,
+            ff_multiplier=ff_multiplier,
+            dropout=dropout,
+            summary_dim=summary_dim,
+        )
 
-        # Encoder: Project card features and global features
-        self.feature_encoder = nn.Linear(13, embed_dim)
-        self.global_encoder = nn.Linear(20, embed_dim)
+        cfg = self.config
+        if cfg.input_dim != OBS_DIM:
+            raise ValueError(f"Vanilla net expects input_dim={OBS_DIM}, got {cfg.input_dim}")
+
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, cfg.embed_dim))
+        self.card_index_embedding = nn.Embedding(cfg.total_cards, cfg.embed_dim)
+        self.zone_embedding = nn.Embedding(8, cfg.embed_dim)
+
+        self.global_projection = nn.Sequential(
+            nn.Linear(cfg.global_dim, cfg.embed_dim),
+            nn.LayerNorm(cfg.embed_dim),
+            nn.GELU(),
+        )
+        self.card_projection = nn.Sequential(
+            nn.Linear(cfg.card_features, cfg.embed_dim),
+            nn.LayerNorm(cfg.embed_dim),
+            nn.GELU(),
+        )
 
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=embed_dim, nhead=num_heads, dim_feedforward=embed_dim * 2, batch_first=True
+            d_model=cfg.embed_dim,
+            nhead=cfg.num_heads,
+            dim_feedforward=cfg.embed_dim * cfg.ff_multiplier,
+            dropout=cfg.dropout,
+            activation="gelu",
+            batch_first=True,
+            norm_first=True,
         )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=cfg.num_layers)
 
-        self.policy_head = nn.Linear(embed_dim, num_actions)
-        self.value_head = nn.Linear(embed_dim, 1)
+        pooled_dim = cfg.embed_dim * 3
+        self.summary = nn.Sequential(
+            nn.Linear(pooled_dim, cfg.summary_dim),
+            nn.GELU(),
+            nn.LayerNorm(cfg.summary_dim),
+            nn.Dropout(cfg.dropout),
+            nn.Linear(cfg.summary_dim, cfg.summary_dim),
+            nn.GELU(),
+            nn.LayerNorm(cfg.summary_dim),
+        )
+        self.policy_head = nn.Linear(cfg.summary_dim, cfg.num_actions)
+        self.value_head = nn.Sequential(
+            nn.Linear(cfg.summary_dim, cfg.summary_dim // 2),
+            nn.GELU(),
+            nn.Linear(cfg.summary_dim // 2, 3),
+        )
 
-        self.register_buffer("action_map", torch.from_numpy(ACTION_MAP).long())
+        self.register_buffer("card_positions", torch.arange(cfg.total_cards, dtype=torch.long), persistent=False)
+        self.reset_parameters()
 
-    def predict_batch(self, tensors):
-        """
-        AlphaZero evaluation hook for Rust MCTS.
-        Expected output: (values: List[f32], policies: List[List[f32]], weights: List[List[f32]])
-        """
-        import torch
+    def reset_parameters(self) -> None:
+        nn.init.normal_(self.cls_token, mean=0.0, std=0.02)
 
-        device = next(self.parameters()).device
+    def parameter_count(self) -> int:
+        return sum(parameter.numel() for parameter in self.parameters())
 
-        # tensors is a list of lists from Rust
-        obs_t = torch.tensor(tensors, dtype=torch.float32).to(device)
+    def parameter_count_millions(self) -> float:
+        return self.parameter_count() / 1_000_000.0
 
-        with torch.no_grad():
-            # No mask available here easily, so we compute raw logits
-            # Rust side handles masking if needed, or PUCT takes care of it
-            logits, value = self.forward(obs_t)
+    def describe(self) -> dict:
+        data = asdict(self.config)
+        data["parameters"] = self.parameter_count()
+        data["parameters_millions"] = round(self.parameter_count_millions(), 3)
+        return data
 
-            # Policy softmax
-            probs = torch.softmax(logits, dim=1).cpu().numpy().tolist()
-            values = value.cpu().numpy().flatten().tolist()
-
-            # Weights (HeuristicConfig) - currently just default placeholders
-            # and scaling_factor as last element (index 16)
-            dummy_weights = [[1.0] * 17 for _ in range(len(tensors))]
-
-        return values, probs, dummy_weights
-
-    def forward(self, x, mask=None):
-        # x: (Batch, input_dim)
+    def _encode(self, x: torch.Tensor) -> torch.Tensor:
+        cfg = self.config
         batch_size = x.size(0)
 
-        # New High-Fi (800) vs Old High-Fi (791) logic
-        global_dim = self.input_dim - (60 * 13)
-        global_part = x[:, :global_dim]  # (B, global_dim)
-        cards_part = x[:, global_dim:].view(batch_size, 60, 13)  # (B, 60, 13)
+        global_features = x[:, : cfg.global_dim]
+        card_features = x[:, cfg.global_dim :].view(batch_size, cfg.total_cards, cfg.card_features)
+        zone_ids = torch.round(card_features[:, :, 0] * 7.0).long().clamp_(0, 7)
 
-        # We need a linear layer that matches the global_dim
-        # During __init__, we set global_encoder = nn.Linear(20, embed_dim)
-        # For benchmarking 791, we'd need to re-init this, or just pad.
-        # Let's just padding the global part if it's smaller than the expected 20.
+        global_token = self.global_projection(global_features).unsqueeze(1)
+        cls = self.cls_token.expand(batch_size, -1, -1) + global_token
 
-        if global_dim < 20:
-            padded_global = torch.zeros(batch_size, 20, device=x.device)
-            padded_global[:, :global_dim] = global_part
-            global_part = padded_global
+        card_tokens = self.card_projection(card_features)
+        card_tokens = card_tokens + self.card_index_embedding(self.card_positions).unsqueeze(0)
+        card_tokens = card_tokens + self.zone_embedding(zone_ids)
 
-        global_token = self.global_encoder(global_part).unsqueeze(1)  # (B, 1, E)
-        card_tokens = self.feature_encoder(cards_part)  # (B, 60, E)
+        tokens = torch.cat([cls, card_tokens], dim=1)
+        return self.transformer(tokens)
 
-        tokens = torch.cat([global_token, card_tokens], dim=1)  # (B, 61, E)
-        latent = self.transformer(tokens)
+    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None):
+        x = x.float()
+        encoded = self._encode(x)
 
-        summary = latent[:, 0, :]  # Use global token as summary
+        cls_out = encoded[:, 0, :]
+        card_tokens = encoded[:, 1:, :]
+        card_mean = card_tokens.mean(dim=1)
+        card_max = card_tokens.max(dim=1).values
+        summary = self.summary(torch.cat([cls_out, card_mean, card_max], dim=1))
 
-        policy_logits = self.policy_head(summary)  # (B, 64)
-        value = torch.sigmoid(self.value_head(summary))
+        policy_logits = self.policy_head(summary)
+        if mask is not None:
+            policy_logits = policy_logits.masked_fill(~mask.bool(), -1e9)
 
-        return policy_logits, value
+        value_outputs = self.value_head(summary)
+        return policy_logits, value_outputs
+
+    def predict_batch(self, tensors):
+        device = next(self.parameters()).device
+        obs_t = torch.tensor(tensors, dtype=torch.float32, device=device)
+
+        with torch.no_grad():
+            policy_logits, value_outputs = self.forward(obs_t)
+            probs = torch.softmax(policy_logits, dim=1).cpu().numpy().tolist()
+            win_values = torch.sigmoid(value_outputs[:, 0]).cpu().numpy().tolist()
+
+        weights = [DEFAULT_HEURISTIC_WEIGHTS[:] for _ in range(len(tensors))]
+        return win_values, probs, weights
+
+
+VanillaPolicyValueNet = HighFidelityAlphaNet
 
 
 if __name__ == "__main__":
-    model = HighFidelityAlphaNet(input_dim=800, num_actions=64)
-    dummy_input = torch.randn(2, 800)
-    p, v = model(dummy_input)
-    print(f"Policy: {p.shape}, Value: {v.shape}")
-    print(f"Total parameters: {sum(p.numel() for p in model.parameters()):,}")
-    print("HighFidelityAlphaNet (800x64) smoke test passed!")
+    for preset_name in ("tiny", "small", "base"):
+        cfg = VanillaTransformerConfig.from_preset(preset_name)
+        model = HighFidelityAlphaNet(config=cfg)
+        dummy_input = torch.randn(2, OBS_DIM)
+        dummy_mask = torch.ones(2, ACTION_SPACE, dtype=torch.bool)
+        policy_logits, values = model(dummy_input, dummy_mask)
+        print(f"[{preset_name}] policy={tuple(policy_logits.shape)} value={tuple(values.shape)} params={model.parameter_count():,}")

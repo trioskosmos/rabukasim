@@ -40,6 +40,31 @@ use crate::core::mcts::{SearchHorizon, MCTS};
 
 pub use super::state::*;
 
+fn parse_resolution_trigger_subtype(raw_text: &str) -> Option<TriggerType> {
+    let type_start = raw_text.find("TYPE=\"")? + 6;
+    let type_end = raw_text[type_start..].find('"')? + type_start;
+    match &raw_text[type_start..type_end] {
+        "ON_LIVE_START" => Some(TriggerType::OnLiveStart),
+        "ON_LIVE_SUCCESS" => Some(TriggerType::OnLiveSuccess),
+        "ON_PLAY" => Some(TriggerType::OnPlay),
+        _ => None,
+    }
+}
+
+fn resolution_trigger_matches_context(
+    trigger: TriggerType,
+    raw_text: &str,
+    ctx_trigger_type: TriggerType,
+) -> bool {
+    if trigger != TriggerType::OnAbilityResolve && trigger != TriggerType::OnAbilitySuccess {
+        return true;
+    }
+
+    parse_resolution_trigger_subtype(raw_text)
+        .map(|required| required == ctx_trigger_type)
+        .unwrap_or(true)
+}
+
 impl GameState {
     pub(crate) const ACTION_TURN_CHOICE_FIRST: i32 = ACTION_BASE_TURN_ORDER_FIRST;
     pub(crate) const ACTION_TURN_CHOICE_SECOND: i32 = ACTION_BASE_TURN_ORDER_FIRST + 1;
@@ -83,6 +108,7 @@ impl GameState {
     pub fn generate_execution_id(&mut self) -> u32 {
         let id = self.ui.next_execution_id;
         self.ui.next_execution_id = self.ui.next_execution_id.wrapping_add(1);
+        self.ui.cancelled_execution_ids.remove(&id);
         self.ui.current_execution_id = Some(id);
         id
     }
@@ -240,6 +266,13 @@ impl GameState {
         // Trigger OnLeaves
         self.trigger_abilities(db, TriggerType::OnLeaves, &leave_ctx);
 
+        // Granted abilities are currently keyed by target card ID. Once that
+        // target leaves stage, the grant must end immediately so it cannot leak
+        // onto another copy of the same card that remains on stage.
+        self.core.players[p_idx]
+            .granted_abilities
+            .retain(|(target_cid, _, _)| *target_cid != cid);
+
         // Clear slot data (Buffs are attached to member, Energy stays in slot)
         self.core.players[p_idx].stage[slot] = -1;
         self.core.players[p_idx].blade_buffs[slot] = 0;
@@ -251,6 +284,29 @@ impl GameState {
         self.core.players[p_idx].set_moved(slot, false);
 
         Some(cid as i32)
+    }
+
+    pub fn trigger_move_to_discard(
+        &mut self,
+        db: &CardDatabase,
+        p_idx: usize,
+        ctx: &AbilityContext,
+        moved_cards: &[i32],
+    ) {
+        if moved_cards.is_empty() {
+            return;
+        }
+
+        let mut discard_ctx = ctx.clone();
+        discard_ctx.player_id = p_idx as u8;
+        discard_ctx.activator_id = p_idx as u8;
+        discard_ctx.trigger_type = TriggerType::OnMoveToDiscard;
+        discard_ctx.selected_cards = moved_cards.to_vec();
+        if discard_ctx.source_card_id < 0 {
+            discard_ctx.source_card_id = moved_cards[0];
+        }
+
+        self.trigger_abilities(db, TriggerType::OnMoveToDiscard, &discard_ctx);
     }
 
     pub fn setup_turn_log(&mut self) {
@@ -535,8 +591,26 @@ impl GameState {
         }
     }
 
-    pub fn set_member_tapped(&mut self, player_idx: usize, slot_idx: usize, tapped: bool) {
+    pub fn set_member_tapped(&mut self, player_idx: usize, slot_idx: usize, tapped: bool, db: &CardDatabase) {
+        let was_tapped = self.core.players[player_idx].is_tapped(slot_idx);
         self.core.players[player_idx].set_tapped(slot_idx, tapped);
+        
+        // When member becomes tapped (not untapped), trigger ON_MEMBER_TAP abilities on opponent
+        if tapped && !was_tapped {
+            let other_player = 1 - player_idx;
+            let card_id = self.core.players[player_idx].stage[slot_idx];
+            
+            let ctx = AbilityContext {
+                player_id: other_player as u8,
+                activator_id: other_player as u8,
+                source_card_id: card_id,
+                area_idx: slot_idx as i16,
+                trigger_type: TriggerType::OnMemberTap,
+                target_slot: slot_idx as i16,
+                ..Default::default()
+            };
+            self.trigger_abilities(db, TriggerType::OnMemberTap, &ctx);
+        }
     }
 
     // --- Performance Phase Wrappers ---
@@ -643,6 +717,20 @@ impl GameState {
 
     pub fn get_total_hearts(&self, p_idx: usize, db: &CardDatabase, depth: u32) -> HeartBoard {
         super::rules::get_total_hearts(self, p_idx, db, depth)
+    }
+
+    pub fn get_effective_member_hearts(
+        &self,
+        player_idx: usize,
+        slot_idx: usize,
+        db: &CardDatabase,
+        depth: u32,
+    ) -> HeartBoard {
+        super::rules::get_effective_member_hearts(self, player_idx, slot_idx, db, depth)
+    }
+
+    pub fn get_total_member_hearts(&self, p_idx: usize, db: &CardDatabase, depth: u32) -> HeartBoard {
+        super::rules::get_total_member_hearts(self, p_idx, db, depth)
     }
 
     /// Pre-calculates and caches constant cost modifiers for stage slots
@@ -1103,14 +1191,52 @@ impl GameState {
         &self,
         p_idx: usize,
         source_type: u8,
+        instance_key: u8,
         id: u32,
         ab_idx: usize,
     ) -> bool {
-        super::interpreter::check_once_per_turn(self, p_idx, source_type, id, ab_idx)
+        super::interpreter::check_once_per_turn(self, p_idx, source_type, instance_key, id, ab_idx)
     }
 
-    pub fn consume_once_per_turn(&mut self, p_idx: usize, source_type: u8, id: u32, ab_idx: usize) {
-        super::interpreter::consume_once_per_turn(self, p_idx, source_type, id, ab_idx);
+    pub fn consume_once_per_turn(
+        &mut self,
+        p_idx: usize,
+        source_type: u8,
+        instance_key: u8,
+        id: u32,
+        ab_idx: usize,
+    ) {
+        super::interpreter::consume_once_per_turn(self, p_idx, source_type, instance_key, id, ab_idx);
+    }
+
+    pub fn get_once_per_turn_instance_key(
+        &self,
+        p_idx: usize,
+        source_type: u8,
+        area_idx: i16,
+        card_id: i32,
+    ) -> u8 {
+        if source_type != 0 {
+            return if area_idx >= 0 {
+                (area_idx as u8) & 0x0F
+            } else {
+                0x0F
+            };
+        }
+
+        let matching_stage_count = self.core.players[p_idx]
+            .stage
+            .iter()
+            .filter(|&&cid| cid == card_id)
+            .count();
+
+        if matching_stage_count <= 1 {
+            0
+        } else if area_idx >= 0 {
+            (area_idx as u8) & 0x0F
+        } else {
+            0x0F
+        }
     }
 
     pub fn is_trigger_negated(&self, p_idx: usize, cid: i32, trigger_type: TriggerType) -> bool {
@@ -1349,14 +1475,36 @@ impl GameState {
                 &db.get_member(def_cid).unwrap().abilities[ab_idx as usize].costs
             };
 
+            let skip_precheck_for_compensation = if is_live {
+                db.get_live(def_cid)
+                    .map(|card| {
+                        (card.card_no == "PL!-bp5-021-L"
+                            && trigger == TriggerType::OnLiveStart
+                            && ab_idx == 0)
+                            || (card.card_no == "PL!N-bp4-030-L"
+                                && trigger == TriggerType::OnLiveSuccess
+                                && ab_idx == 0
+                                && self.core.players[p_idx]
+                                    .success_lives
+                                    .iter()
+                                    .copied()
+                                    .any(|success_cid| self.card_matches_filter(db, success_cid, 80)))
+                    })
+                    .unwrap_or(false)
+            } else {
+                false
+            };
+
             // Check conditions before resolving bytecode
             let mut all_met = true;
-            for cond in conditions {
-                if !super::interpreter::conditions::check_condition(
-                    self, db, p_idx, cond, &ab_ctx, 1,
-                ) {
-                    all_met = false;
-                    break;
+            if !skip_precheck_for_compensation {
+                for cond in conditions {
+                    if !super::interpreter::conditions::check_condition(
+                        self, db, p_idx, cond, &ab_ctx, 1,
+                    ) {
+                        all_met = false;
+                        break;
+                    }
                 }
             }
 
@@ -1433,6 +1581,9 @@ impl GameState {
         if let Some(abs) = abilities {
             for (ab_idx, ab) in abs.iter().enumerate() {
                 if ab.trigger == trigger {
+                    if !resolution_trigger_matches_context(trigger, &ab.raw_text, ctx.trigger_type) {
+                        continue;
+                    }
                     // println!("[DEBUG] Found matching trigger for card {}: {:?}", cid, trigger);
                     // Filter OnPlay/OnLeaves to only the specific card being moved
                     // UNLESS it is a monitoring ability (has a GroupFilter/Score/etc condition)
@@ -1493,6 +1644,9 @@ impl GameState {
                     if let Some(src_m) = db.get_member(source_cid) {
                         if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                             if ab.trigger == trigger {
+                                if !resolution_trigger_matches_context(trigger, &ab.raw_text, ctx.trigger_type) {
+                                    continue;
+                                }
                                 if (trigger == TriggerType::OnPlay
                                     || trigger == TriggerType::OnLeaves)
                                     && cid != ctx.source_card_id

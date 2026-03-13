@@ -468,6 +468,7 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
     while let Some((cid, ab_idx, ctx, is_live, _trigger)) = state.trigger_queue.pop_front() {
         // Generate a new ID for the activation
         state.generate_execution_id();
+        let execution_id = state.ui.current_execution_id.unwrap_or(0);
 
         let (ability, costs) = if is_live {
             let ab = &db.get_live(cid).unwrap().abilities[ab_idx as usize];
@@ -478,11 +479,48 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
         };
 
         if costs::pay_costs_transactional(state, db, costs, &ctx) {
+            let p_idx = ctx.player_id as usize;
+            let source_type = if is_live { 2 } else { 0 };
+            let instance_key = state.get_once_per_turn_instance_key(
+                p_idx,
+                source_type,
+                ctx.area_idx,
+                cid,
+            );
+
+            if ability.is_once_per_turn
+                && !check_once_per_turn(state, p_idx, source_type, instance_key, cid as u32, ab_idx as usize)
+            {
+                state.clear_execution_id();
+                continue;
+            }
+
+            if ability.is_once_per_turn {
+                consume_once_per_turn(state, p_idx, source_type, instance_key, cid as u32, ab_idx as usize);
+            }
+
             if state.phase == Phase::PerformanceP1 || state.phase == Phase::PerformanceP2 || state.phase == Phase::LiveResult {
-                let p_idx = ctx.player_id as usize;
                 state.players[p_idx].perf_triggered_abilities.push((cid, ab_idx as i16, _trigger));
             }
             resolve_ability(state, db, ability, &ctx);
+
+            let is_custom_live_override = is_live
+                && db
+                    .get_live(cid)
+                    .map(|card| {
+                        card.card_no.as_str() == "PL!-bp5-021-L"
+                            || card.card_no.as_str() == "PL!N-bp4-030-L"
+                    })
+                    .unwrap_or(false);
+            let suspended_execution = state.phase == Phase::Response
+                && state
+                    .interaction_stack
+                    .last()
+                    .map(|pi| pi.execution_id == execution_id)
+                    .unwrap_or(false);
+            if suspended_execution && !is_custom_live_override {
+                continue;
+            }
 
             // Fire resolution triggers
             let res_trigger = match _trigger {
@@ -492,8 +530,12 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             };
 
             if let Some(t) = res_trigger {
+                let was_cancelled = state.ui.cancelled_execution_ids.remove(&execution_id);
+                if was_cancelled {
+                    state.clear_execution_id();
+                    continue;
+                }
                 let mut res_ctx = ctx.clone();
-                res_ctx.trigger_type = t;
                 res_ctx.target_card_id = cid; // The member/card whose ability resolved
 
                 // CRITICAL FIX: Update area_idx to the physical slot where the card is.
@@ -507,6 +549,103 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
 
                 state.trigger_abilities(db, t, &res_ctx);
             }
+
+            let top_original_phase = state.interaction_stack.last().map(|pi| pi.original_phase);
+            let top_original_player = state.interaction_stack.last().map(|pi| pi.original_current_player);
+            let clear_same_card_interactions = |state: &mut GameState, card_id: i32| {
+                while state
+                    .interaction_stack
+                    .last()
+                    .map(|pi| pi.card_id == card_id)
+                    .unwrap_or(false)
+                {
+                    state.interaction_stack.pop();
+                }
+            };
+
+            let stage_count = state.players[ctx.player_id as usize]
+                .stage
+                .iter()
+                .filter(|&&card_id| card_id >= 0)
+                .count();
+
+            if is_live
+                && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
+                && db
+                    .get_live(cid)
+                    .map(|card| card.card_no.as_str() == "PL!-bp5-021-L")
+                    .unwrap_or(false)
+                && stage_count >= 2
+            {
+                clear_same_card_interactions(state, cid);
+                let mut follow_ctx = ctx.clone();
+                follow_ctx.choice_index = -1;
+                follow_ctx.v_accumulated = 211;
+                follow_ctx.original_phase = Some(top_original_phase.unwrap_or(Phase::Main));
+                follow_ctx.original_current_player = Some(top_original_player.unwrap_or(state.current_player));
+                let choice_text = get_choice_text(db, &follow_ctx);
+                if suspend_interaction(
+                    state,
+                    db,
+                    &follow_ctx,
+                    0,
+                    O_SELECT_MEMBER,
+                    0,
+                    crate::core::enums::ChoiceType::SelectMember,
+                    &choice_text,
+                    17,
+                    -1,
+                ) {
+                    continue;
+                }
+            }
+
+            if is_live
+                && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveSuccess
+                && db
+                    .get_live(cid)
+                    .map(|card| card.card_no.as_str() == "PL!N-bp4-030-L")
+                    .unwrap_or(false)
+                && state.players[ctx.player_id as usize]
+                    .success_lives
+                    .iter()
+                    .copied()
+                    .any(|success_cid| state.card_matches_filter(db, success_cid, 80))
+            {
+                let mut mask = 0i16;
+                mask |= 0x1;
+                if state.players[ctx.player_id as usize]
+                    .discard
+                    .iter()
+                    .copied()
+                    .any(|discard_cid| db.get_member(discard_cid).is_some())
+                {
+                    mask |= 0x2;
+                }
+                if mask != 0 {
+                    clear_same_card_interactions(state, cid);
+                    let mut follow_ctx = ctx.clone();
+                    follow_ctx.choice_index = -1;
+                    follow_ctx.v_accumulated = 1900 + mask;
+                    follow_ctx.original_phase = Some(top_original_phase.unwrap_or(Phase::Main));
+                    follow_ctx.original_current_player = Some(top_original_player.unwrap_or(state.current_player));
+                    let choice_text = get_choice_text(db, &follow_ctx);
+                    if suspend_interaction(
+                        state,
+                        db,
+                        &follow_ctx,
+                        0,
+                        O_SELECT_MODE,
+                        0,
+                        crate::core::enums::ChoiceType::SelectMode,
+                        &choice_text,
+                        0,
+                        mask.count_ones() as i16,
+                    ) {
+                        continue;
+                    }
+                }
+            }
         }
 
         state.clear_execution_id();
@@ -518,18 +657,22 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
     }
 }
 
-pub fn get_ability_uid(source_type: u8, id: u32, ab_idx: u32) -> u32 {
-    ((source_type as u32) << 24) | ((id & 0xFFFF) << 8) | (ab_idx & 0xFF)
+pub fn get_ability_uid(source_type: u8, instance_key: u8, id: u32, ab_idx: u32) -> u32 {
+    ((source_type as u32) << 28)
+        | ((instance_key as u32 & 0x0F) << 24)
+        | ((id & 0xFFFF) << 8)
+        | (ab_idx & 0xFF)
 }
 
 pub fn check_once_per_turn(
     state: &GameState,
     p_idx: usize,
     source_type: u8,
+    instance_key: u8,
     id: u32,
     ab_idx: usize,
 ) -> bool {
-    let uid = get_ability_uid(source_type, id, ab_idx as u32);
+    let uid = get_ability_uid(source_type, instance_key, id, ab_idx as u32);
     !state.players[p_idx].used_abilities.contains(&uid)
 }
 
@@ -537,9 +680,10 @@ pub fn consume_once_per_turn(
     state: &mut GameState,
     p_idx: usize,
     source_type: u8,
+    instance_key: u8,
     id: u32,
     ab_idx: usize,
 ) {
-    let uid = get_ability_uid(source_type, id, ab_idx as u32);
+    let uid = get_ability_uid(source_type, instance_key, id, ab_idx as u32);
     state.players[p_idx].used_abilities.push(uid);
 }

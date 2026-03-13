@@ -9,12 +9,17 @@ export const BoardRenderer = {
         CardRenderer.renderStage('opp-stage', p1.stage, true, validTargets.oppStage, validTargets.hasSelection);
         CardRenderer.renderLiveZone('my-live', p0.live_zone, true, validTargets.myLive, validTargets.hasSelection);
         CardRenderer.renderLiveZone('opp-live', p1.live_zone, true, validTargets.oppLive, validTargets.hasSelection);
+        
+        CardRenderer.renderDiscardPile('my-discard-visual', p0.discard || [], 0, validTargets.discard, validTargets.hasSelection, showDiscardModalCallback);
+        CardRenderer.renderDiscardPile('opp-discard-visual', p1.discard || [], 1, validTargets.discard, validTargets.hasSelection, showDiscardModalCallback);
+
         BoardRenderer.renderEnergy('my-energy', p0.energy, true, validTargets.myEnergy, validTargets.hasSelection, state);
         BoardRenderer.renderEnergy('opp-energy', p1.energy, true, validTargets.oppEnergy, validTargets.hasSelection, state);
 
-
-        CardRenderer.renderCards('my-success', p0.success_pile || p0.success_lives, true, true);
-        CardRenderer.renderCards('opp-success', p1.success_pile || p1.success_lives, false, true);
+        const mySuccess = p0.success_pile || p0.success_lives || [];
+        const oppSuccess = p1.success_pile || p1.success_lives || [];
+        CardRenderer.renderCards('my-success', mySuccess, true, true);
+        CardRenderer.renderCards('opp-success', oppSuccess, false, true);
 
         BoardRenderer.renderDeckCounts(p0, p1);
     },

@@ -58,9 +58,9 @@ from engine.game.serializer import serialize_state
 from engine.game.state_utils import create_uid
 
 try:
-    from rust_serializer import RustGameStateSerializer
+    from rust_serializer import RustCompatGameState, RustGameStateSerializer
 except ImportError:
-    from backend.rust_serializer import RustGameStateSerializer
+    from backend.rust_serializer import RustCompatGameState, RustGameStateSerializer
 
 INSTANCE_SHIFT = 20
 BASE_ID_MASK = 0xFFFFF
@@ -178,12 +178,21 @@ ROOM_CLEANUP_INTERVAL = 60  # Run cleanup every 60 seconds (loops)
 
 # Rust Card DB (Global Singleton for performance)
 RUST_DB = None
+RUST_DB_VANILLA = None
 try:
     compiled_data_path = os.path.join(DATA_DIR, "cards_compiled.json")
     with open(compiled_data_path, "r", encoding="utf-8") as f:
         RUST_DB = engine_rust.PyCardDatabase(f.read())
 except Exception as e:
     print(f"Warning: Failed to load RUST_DB from {compiled_data_path}: {e}")
+
+try:
+    vanilla_data_path = os.path.join(DATA_DIR, "cards_vanilla.json")
+    with open(vanilla_data_path, "r", encoding="utf-8") as f:
+        RUST_DB_VANILLA = engine_rust.PyCardDatabase(f.read())
+except Exception as e:
+    print(f"Warning: Failed to load RUST_DB_VANILLA from {vanilla_data_path}: {e}")
+
 
 # Python DBs (for metadata/serialization)
 member_db: dict[int, Any] = {}
@@ -304,6 +313,284 @@ def get_room(room_id: str) -> dict[str, Any] | None:
         if room:
             room["last_active"] = datetime.now()
         return room
+
+
+PLANNER_ROOT_PHASES = (Phase.MAIN, Phase.LIVE_SET)
+PLANNER_TRACKED_PHASES = (Phase.MAIN, Phase.LIVE_SET, Phase.RESPONSE)
+
+
+def is_planner_root_phase(phase: Any) -> bool:
+    try:
+        return int(phase) in {int(p) for p in PLANNER_ROOT_PHASES}
+    except (TypeError, ValueError):
+        return False
+
+
+def is_planner_tracked_phase(phase: Any) -> bool:
+    try:
+        return int(phase) in {int(p) for p in PLANNER_TRACKED_PHASES}
+    except (TypeError, ValueError):
+        return False
+
+
+def get_planner_store(room: dict[str, Any]) -> dict[str, Any]:
+    planner_store = room.setdefault("planner_lab", {})
+    planner_store.setdefault("sessions", {})
+    planner_store.setdefault("last_results", {})
+    return planner_store
+
+
+def get_planner_session_key(gs: engine_rust.PyGameState, player_idx: int) -> str:
+    return f"{int(gs.turn)}:{player_idx}"
+
+
+def clone_rust_state(gs: engine_rust.PyGameState) -> engine_rust.PyGameState:
+    cloned = engine_rust.PyGameState(RUST_DB)
+    cloned.apply_state_json(gs.to_json())
+    return cloned
+
+
+def get_score_breakdown_dict(gs: engine_rust.PyGameState, player_idx: int, rust_db: engine_rust.PyCardDatabase | None = None) -> dict[str, float]:
+    if rust_db is None:
+        rust_db = RUST_DB
+    board, live, success, win, hand, cycling, total = gs.get_score_breakdown(rust_db, player_idx)
+    return {
+        "board": float(board),
+        "live": float(live),
+        "success": float(success),
+        "win": float(win),
+        "hand": float(hand),
+        "cycling": float(cycling),
+        "total": float(total),
+    }
+
+
+def describe_action_for_state(gs: engine_rust.PyGameState, action_id: int, lang: str) -> str:
+    compat_gs = RustCompatGameState(gs, member_db, live_db, energy_db)
+    return get_action_desc(action_id, compat_gs, lang=lang, text=gs.pending_choice_text)
+
+
+def apply_sequence_with_descriptions(
+    root_state_json: str,
+    action_ids: list[int],
+    player_idx: int,
+    lang: str,
+    rust_db: engine_rust.PyCardDatabase | None = None,
+) -> dict[str, Any]:
+    if rust_db is None:
+        rust_db = RUST_DB
+    sim_state = engine_rust.PyGameState(rust_db)
+    sim_state.apply_state_json(root_state_json)
+    entries: list[dict[str, Any]] = []
+    invalid_step = None
+
+    for seq_index, action_id in enumerate(action_ids, start=1):
+        legal_ids = set(sim_state.get_legal_action_ids())
+        desc = describe_action_for_state(sim_state, action_id, lang)
+        entry = {
+            "index": seq_index,
+            "action_id": int(action_id),
+            "desc": desc,
+            "legal": action_id in legal_ids,
+        }
+        entries.append(entry)
+
+        if action_id not in legal_ids:
+            invalid_step = seq_index
+            entry["error"] = "Illegal from recreated state"
+            break
+
+        sim_state.step(action_id)
+
+    return {
+        "action_ids": [int(action_id) for action_id in action_ids],
+        "sequence": entries,
+        "invalid_step": invalid_step,
+        "is_valid": invalid_step is None,
+        "breakdown": get_score_breakdown_dict(sim_state, player_idx, rust_db),
+        "phase_after": int(sim_state.phase),
+        "turn_after": int(sim_state.turn),
+        "current_player_after": int(sim_state.current_player),
+        "is_terminal": bool(sim_state.is_terminal()),
+    }
+
+
+def build_optimal_sequence_payload(root_state_json: str, player_idx: int, lang: str, rust_db: engine_rust.PyCardDatabase | None = None) -> dict[str, Any]:
+    if rust_db is None:
+        rust_db = RUST_DB
+    root_state = engine_rust.PyGameState(rust_db)
+    root_state.apply_state_json(root_state_json)
+
+    liveset_nodes = 0
+    if int(root_state.phase) == int(Phase.LIVE_SET):
+        optimal_ids, liveset_nodes, _ = root_state.find_best_liveset_selection(rust_db)
+        planner_breakdown = {"board": 0.0, "live": 0.0, "total": 0.0}
+    else:
+        _, optimal_ids, planner_nodes, planner_breakdown_raw = root_state.plan_full_turn(rust_db)
+        optimal_ids = list(optimal_ids)
+        planner_breakdown = {
+            "board": float(planner_breakdown_raw[0]),
+            "live": float(planner_breakdown_raw[1]),
+            "total": float(planner_breakdown_raw[0] + planner_breakdown_raw[1]),
+        }
+        liveset_nodes = int(planner_nodes)
+
+    full_ids = list(optimal_ids)
+    main_state = engine_rust.PyGameState(rust_db)
+    main_state.apply_state_json(root_state_json)
+    for action_id in optimal_ids:
+        main_state.step(action_id)
+
+    appended_liveset = []
+    if int(main_state.phase) == int(Phase.LIVE_SET):
+        liveset_ids, extra_nodes, _ = main_state.find_best_liveset_selection(rust_db)
+        appended_liveset = list(liveset_ids)
+        full_ids.extend(appended_liveset)
+        liveset_nodes += int(extra_nodes)
+
+    applied = apply_sequence_with_descriptions(root_state_json, full_ids, player_idx, lang, rust_db)
+    applied["nodes"] = int(liveset_nodes)
+    applied["planner_breakdown"] = planner_breakdown
+    applied["main_action_ids"] = [int(action_id) for action_id in optimal_ids]
+    applied["liveset_action_ids"] = [int(action_id) for action_id in appended_liveset]
+    return applied
+
+
+def build_planner_analysis_from_session(session: dict[str, Any], lang: str, rust_db: engine_rust.PyCardDatabase | None = None) -> dict[str, Any]:
+    if rust_db is None:
+        rust_db = RUST_DB
+    player_idx = int(session["player_idx"])
+    optimal = build_optimal_sequence_payload(session["root_state_json"], player_idx, lang, rust_db)
+    your_sequence = apply_sequence_with_descriptions(
+        session["root_state_json"],
+        session.get("actions", []),
+        player_idx,
+        lang,
+        rust_db,
+    )
+
+    matched_prefix = 0
+    for own_action, optimal_action in zip(your_sequence["action_ids"], optimal["action_ids"]):
+        if own_action != optimal_action:
+            break
+        matched_prefix += 1
+
+    your_sequence["matched_prefix"] = matched_prefix
+    your_sequence["optimal_length"] = len(optimal["action_ids"])
+    your_sequence["status"] = "completed" if session.get("completed") else "in_progress"
+    your_sequence["root_turn"] = int(session["root_turn"])
+    your_sequence["root_phase"] = int(session["root_phase"])
+
+    return {
+        "session_key": session["session_key"],
+        "player_id": player_idx,
+        "root_turn": int(session["root_turn"]),
+        "root_phase": int(session["root_phase"]),
+        "optimal": optimal,
+        "your_sequence": your_sequence,
+    }
+
+
+def ensure_planner_session(room: dict[str, Any], gs: engine_rust.PyGameState, player_idx: int) -> dict[str, Any] | None:
+    if not is_planner_root_phase(gs.phase):
+        return None
+
+    planner_store = get_planner_store(room)
+    session_key = get_planner_session_key(gs, player_idx)
+    session_id = str(player_idx)
+    existing = planner_store["sessions"].get(session_id)
+    if existing and existing.get("session_key") == session_key:
+        return existing
+
+    session = {
+        "session_key": session_key,
+        "player_idx": int(player_idx),
+        "root_turn": int(gs.turn),
+        "root_phase": int(gs.phase),
+        "root_state_json": gs.to_json(),
+        "actions": [],
+        "completed": False,
+    }
+    planner_store["sessions"][session_id] = session
+    return session
+
+
+def append_planner_action(room: dict[str, Any], player_idx: int, action_id: int) -> None:
+    planner_store = get_planner_store(room)
+    session = planner_store["sessions"].get(str(player_idx))
+    if not session:
+        return
+    session.setdefault("actions", []).append(int(action_id))
+
+
+def finalize_planner_session(room: dict[str, Any], player_idx: int, lang: str) -> None:
+    planner_store = get_planner_store(room)
+    session = planner_store["sessions"].pop(str(player_idx), None)
+    if not session:
+        return
+
+    session["completed"] = True
+    result = build_planner_analysis_from_session(session, lang)
+    result["your_sequence"]["status"] = "completed"
+    planner_store["last_results"][str(player_idx)] = result
+
+
+def maybe_finalize_planner_session(
+    room: dict[str, Any],
+    gs: engine_rust.PyGameState,
+    player_idx: int,
+    lang: str,
+) -> None:
+    planner_store = get_planner_store(room)
+    session = planner_store["sessions"].get(str(player_idx))
+    if not session:
+        return
+
+    if (
+        int(gs.turn) == int(session["root_turn"])
+        and int(gs.current_player) == int(player_idx)
+        and is_planner_tracked_phase(gs.phase)
+        and not gs.is_terminal()
+    ):
+        return
+
+    finalize_planner_session(room, player_idx, lang)
+
+
+def build_planner_payload(room: dict[str, Any], gs: engine_rust.PyGameState, player_idx: int, lang: str) -> dict[str, Any]:
+    planner_store = get_planner_store(room)
+    active = False
+    session = planner_store["sessions"].get(str(player_idx))
+    rust_db = get_rust_db_for_card_set(room.get("card_set", "compiled"))
+
+    if not session and int(gs.current_player) == int(player_idx) and is_planner_root_phase(gs.phase) and not gs.is_terminal():
+        session = ensure_planner_session(room, gs, player_idx)
+
+    if session:
+        active = True
+        analysis = build_planner_analysis_from_session(session, lang, rust_db)
+        analysis["active"] = True
+        analysis["available"] = True
+        return analysis
+
+    last_result = planner_store["last_results"].get(str(player_idx))
+    if last_result:
+        payload = dict(last_result)
+        payload["active"] = False
+        payload["available"] = True
+        payload["message"] = "Showing your last completed scored sequence."
+        return payload
+
+    return {
+        "available": bool(int(gs.current_player) == int(player_idx) and is_planner_root_phase(gs.phase) and not gs.is_terminal()),
+        "active": False,
+        "message": "Turn planner becomes available on your Main or Live Set turn.",
+        "player_id": int(player_idx),
+        "root_turn": int(gs.turn),
+        "root_phase": int(gs.phase),
+        "optimal": None,
+        "your_sequence": None,
+    }
 
 
 # Reverse mapping: card_no string -> internal integer ID
@@ -633,22 +920,33 @@ def init_game(deck_type="normal"):
     game_state.phase = Phase.MULLIGAN_P1
 
 
+def get_rust_db_for_card_set(card_set: str = "compiled"):
+    """Get the appropriate Rust database based on card_set selection."""
+    if card_set == "vanilla":
+        if RUST_DB_VANILLA is None:
+            raise Exception("RUST_DB_VANILLA not initialized")
+        return RUST_DB_VANILLA
+    else:
+        if RUST_DB is None:
+            raise Exception("RUST_DB not initialized")
+        return RUST_DB
+
+
 def create_room_internal(
     room_id: str,
     mode: str = "pve",
     deck_type: str = "normal",
     public: bool = False,
     custom_decks: dict = None,
+    card_set: str = "compiled",
 ) -> dict[str, Any]:
     """Helper to initialize a room using the RUST engine."""
     print(
-        f"DEBUG: Creating Rust Room {room_id} (Mode: {mode}, Deck: {deck_type}, Public: {public}, CustomDecks: {bool(custom_decks)})"
+        f"DEBUG: Creating Rust Room {room_id} (Mode: {mode}, Deck: {deck_type}, Public: {public}, CustomDecks: {bool(custom_decks)}, CardSet: {card_set})"
     )
 
-    if RUST_DB is None:
-        raise Exception("RUST_DB not initialized")
-
-    gs = engine_rust.PyGameState(RUST_DB)
+    rust_db = get_rust_db_for_card_set(card_set)
+    gs = engine_rust.PyGameState(rust_db)
 
     # helper for deck generation
     # helper for deck generation
@@ -760,6 +1058,7 @@ def create_room_internal(
     return {
         "state": gs,
         "mode": mode,
+        "card_set": card_set,
         "public": public,
         "created_at": datetime.now(),
         "last_active": datetime.now(),
@@ -768,6 +1067,7 @@ def create_room_internal(
         "sessions": {},
         "usernames": {},  # PID -> username
         "engine": "rust",
+        "planner_lab": {"sessions": {}, "last_results": {}},
         # History tracking for undo/redo
         "history_stack": [gs], # Store raw state for on-demand localization
         "history_index": 0,
@@ -830,6 +1130,13 @@ def create_new_room():
         print(f"DEBUG: Failed to parse JSON: {e}", file=sys.stderr)
         data = {}
 
+    # Extract parameters
+    room_id = get_room_id()
+    mode = data.get("mode", "pve")
+    is_public = data.get("public", False)
+    card_set = data.get("card_set", "compiled")
+    custom_decks = None
+
     print(f"DEBUG: Generated room_id {room_id}, acquiring lock...", file=sys.stderr)
 
     # Handle frontend parameters if 'decks' is not present
@@ -850,7 +1157,7 @@ def create_new_room():
     res = {}
     with game_lock:
         print("DEBUG: Lock acquired. Creating room internal...", file=sys.stderr)
-        ROOMS[room_id] = create_room_internal(room_id, mode, public=is_public, custom_decks=custom_decks)
+        ROOMS[room_id] = create_room_internal(room_id, mode, public=is_public, custom_decks=custom_decks, card_set=card_set)
         print("DEBUG: Room created internally. Joining creator...", file=sys.stderr)
 
         # Auto-join creator with username if provided
@@ -858,7 +1165,7 @@ def create_new_room():
         join_res = join_room_logic(room_id, username=username)
 
     print("DEBUG: Returning response.", file=sys.stderr)
-    return jsonify({"success": True, "room_id": room_id, "mode": mode, "session": join_res})
+    return jsonify({"success": True, "room_id": room_id, "mode": mode, "card_set": card_set, "session": join_res})
 
 
 @app.route("/api/rooms/list", methods=["GET"])
@@ -911,7 +1218,8 @@ def join_room():
     with game_lock:
         if room_id in ROOMS:
             mode = ROOMS[room_id]["mode"]
-            print(f"DEBUG: Found room {room_id}, mode={mode}", file=sys.stderr)
+            card_set = ROOMS[room_id].get("card_set", "compiled")
+            print(f"DEBUG: Found room {room_id}, mode={mode}, card_set={card_set}", file=sys.stderr)
 
             # Assign a session/seat to the joining player
             username = data.get("username")
@@ -925,6 +1233,7 @@ def join_room():
                     "success": True,
                     "room_id": room_id,
                     "mode": mode,
+                    "card_set": card_set,
                     "session": join_res,
                     "recovered": join_res.get("recovered", False),
                 }
@@ -1632,6 +1941,10 @@ def do_action():
             data = request.json
             action_id = data.get("action_id", 0)
             force = data.get("force", False)
+            requester_idx = get_player_idx(room)
+
+            if room.get("engine") == "rust" and requester_idx == gs.current_player and is_planner_root_phase(gs.phase):
+                ensure_planner_session(room, gs, requester_idx)
 
             legal_mask = gs.get_legal_actions()
 
@@ -1640,7 +1953,6 @@ def do_action():
                 return jsonify({"success": False, "error": "Invalid action ID"}), 400
 
             # Enforce Perspective/Active Player consistency in PvP
-            requester_idx = get_player_idx(room)
             if game_mode == "pvp":
                 if requester_idx != gs.current_player:
                     # Special check for RPS phase: both players can act independently
@@ -1672,6 +1984,8 @@ def do_action():
                 print(f"[DEBUG] Executing action {action_id} in phase {gs.phase} for player {gs.current_player}")
                 # Step 1: Execute User Action
                 res = gs.step(action_id)
+                if room.get("engine") == "rust":
+                    append_planner_action(room, requester_idx, action_id)
                 if res is not None:
                     room["state"] = res
                     gs = res
@@ -1712,6 +2026,8 @@ def do_action():
                 lang = get_lang()
                 duration = time.time() - start_time
                 print(f"[PERF] /api/action took {duration:.3f}s (Action: {action_id})")
+                if room.get("engine") == "rust":
+                    maybe_finalize_planner_session(room, gs, requester_idx, lang)
                 
                 # Record state to history stack after successful action
                 record_game_state_to_history(room)
@@ -1912,6 +2228,49 @@ def ai_suggest():
             enriched.append({"action_id": action, "value": float(value), "visits": int(visits), "desc": desc})
 
         return jsonify({"success": True, "suggestions": enriched})
+
+
+@app.route("/api/planner", methods=["GET"])
+def get_turn_planner():
+    room_id = get_room_id()
+
+    with game_lock:
+        room = ROOMS.get(room_id)
+        if not room:
+            return jsonify({"success": False, "error": "Room not found"}), 404
+
+        if room.get("engine") != "rust":
+            return jsonify({"success": False, "error": "Turn planner is only available with the Rust engine."}), 400
+
+        gs = room["state"]
+        player_idx = get_player_idx(room)
+        planner = build_planner_payload(room, gs, player_idx, get_lang())
+        return jsonify({"success": True, "planner": planner})
+
+
+@app.route("/api/planner/score", methods=["POST"])
+def score_turn_planner_sequence():
+    room_id = get_room_id()
+
+    with game_lock:
+        room = ROOMS.get(room_id)
+        if not room:
+            return jsonify({"success": False, "error": "Room not found"}), 404
+
+        if room.get("engine") != "rust":
+            return jsonify({"success": False, "error": "Turn planner is only available with the Rust engine."}), 400
+
+        gs = room["state"]
+        player_idx = get_player_idx(room)
+        planner_store = get_planner_store(room)
+        session = planner_store["sessions"].get(str(player_idx))
+        if not session:
+            return jsonify({"success": False, "error": "No tracked player sequence is available to score."}), 400
+
+        planner = build_planner_analysis_from_session(session, get_lang())
+        planner["active"] = True
+        planner["available"] = True
+        return jsonify({"success": True, "planner": planner})
 
 
 @app.route("/api/replays", methods=["GET"])

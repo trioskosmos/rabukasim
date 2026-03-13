@@ -64,7 +64,6 @@ fn main() {
     let setup_start = Instant::now();
     let mut setup_turns = 0;
     while state.phase != Phase::Main && !state.is_terminal() {
-        let turn_start = Instant::now();
         match state.phase {
             Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice => {
                 let legal = state.get_legal_action_ids(&db);
@@ -104,7 +103,6 @@ fn main() {
                 let plan_time = plan_start.elapsed();
                 
                 let exec_start = Instant::now();
-                let mut executed = 0;
                 for &action in &best_seq {
                     if state.phase != Phase::Main {
                         break;
@@ -112,11 +110,9 @@ fn main() {
                     if state.step(&db, action).is_err() {
                         break;
                     }
-                    executed += 1;
                 }
                 if state.phase == Phase::Main {
                     let _ = state.step(&db, ACTION_BASE_PASS);
-                    executed += 1;
                 }
                 let exec_time = exec_start.elapsed();
                 

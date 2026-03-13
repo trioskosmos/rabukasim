@@ -757,6 +757,8 @@ pub fn get_trigger_label(trigger: TriggerType) -> &'static str {
         TriggerType::OnPositionChange => "【移動】",
         TriggerType::OnAbilityResolve => "【解決】",
         TriggerType::OnAbilitySuccess => "【成功】",
+        TriggerType::OnMoveToDiscard => "【控え室】",
+        TriggerType::OnMemberTap => "【タップ】",
         TriggerType::None => "",
     }
 }

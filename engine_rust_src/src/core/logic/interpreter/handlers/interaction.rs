@@ -148,6 +148,41 @@ pub fn handle_select_cards(
     let a = instr.a;
     let s = instr.raw_s;
     let p_idx = ctx.player_id as usize;
+    let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
+    let optional_prompt_marker = -((v as i16) + 2);
+
+    if is_optional && v == 99 && ctx.choice_index == -1 && ctx.v_remaining == -1 {
+        let choice_text = get_choice_text(db, ctx);
+        if suspend_interaction(
+            state,
+            db,
+            ctx,
+            instr_ip,
+            O_SELECT_CARDS,
+            0,
+            ChoiceType::Optional,
+            &choice_text,
+            a as u64,
+            optional_prompt_marker,
+        ) {
+            return HandlerResult::Suspend;
+        }
+    }
+
+    if is_optional && v == 99 && ctx.v_remaining == optional_prompt_marker {
+        if ctx.choice_index == 1 || ctx.choice_index == CHOICE_DONE {
+            if let Some(execution_id) = state.ui.current_execution_id {
+                state.ui.cancelled_execution_ids.insert(execution_id);
+            }
+            return HandlerResult::Continue;
+        }
+
+        if ctx.choice_index == 0 {
+            ctx.choice_index = -1;
+            ctx.v_remaining = v as i16;
+        }
+    }
+
     if ctx.choice_index == -1 {
         let source_zone = instr.s.source_zone as u8;
         let ts = instr.s.target_slot;
@@ -172,14 +207,14 @@ pub fn handle_select_cards(
             _ => state.players[p_idx].discard.to_vec(),
         };
 
-        let filter_attr = (a as u64) & 0x00000000FFFFFFFF;
+        let filter_attr = a as u64;
         for cid in cards_to_filter {
             if state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx) {
                 state.players[p_idx].looked_cards.push(cid);
             }
         }
 
-        if state.players[p_idx].looked_cards.is_empty() {
+        if state.players[p_idx].looked_cards.is_empty() && !is_optional {
             return HandlerResult::Continue;
         }
 
@@ -199,7 +234,7 @@ pub fn handle_select_cards(
             choice_type,
             &choice_text,
             a as u64,
-            v as i16,
+            if ctx.v_remaining >= 0 { ctx.v_remaining } else { v as i16 },
         ) {
             return HandlerResult::Suspend;
         }

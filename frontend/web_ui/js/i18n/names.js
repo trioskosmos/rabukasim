@@ -74,7 +74,27 @@ export const COMMON_NAMES = {
     "鹿角 理亞": "Ria Kazuno",
     "鹿角 聖良": "Seira Kazuno",
     "高咲 侑": "Yu Takasaki",
-    "優木 あんじゅ": "Anju Yuki"
+    "優木 あんじゅ": "Anju Yuki",
+
+    // Multi-character cards
+    "上原 歩夢&澁谷 かのん&日野下 花帆": "Ayumu Uehara & Kanon Shibuya & Kaho Hinoshita",
+    "園田 海未&津島 善子&天王寺 璃奈": "Umi Sonoda & Yoshiko Tsushima & Rina Tennoji",
+
+    // Character variants without spaces
+    "三船栞子": "Shioriko Mifune",
+    "天王寺璃奈": "Rina Tennoji",
+    "セラス柳田リリエンフェルト": "Ceras Yanagita Lilienfeld",
+
+    // Generic card names and special types
+    "エネルギーカード": "Energy Card",
+    "ライブカード": "Live Card",
+    "メンバーカード": "Member Card",
+    "ライブカードゴールド": "Live Card Gold",
+    "ライブカード プレシャス": "Live Card Precious",
+    "ライブカード＆エネルギーカード": "Live Card & Energy Card",
+    "謎のメンバー": "Mystery Member",
+    "???": "Unknown",
+    "???メンバー": "Secret Member"
 };
 
 /**

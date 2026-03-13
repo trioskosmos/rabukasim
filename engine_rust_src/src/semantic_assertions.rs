@@ -1895,6 +1895,7 @@ impl SemanticAssertionEngine {
             "ON_LIVE_SUCCESS" | "ONLIVESUCCESS" => TriggerType::OnLiveSuccess,
             "ACTIVATED" => TriggerType::Activated,
             "CONSTANT" => TriggerType::Constant,
+            "ON_MOVE_TO_DISCARD" | "ONMOVETODISCARD" => TriggerType::OnMoveToDiscard,
             _ => TriggerType::None,
         }
     }

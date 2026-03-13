@@ -93,11 +93,11 @@ ID 585 | [JP] 【色を選択】紫         |  (COLOR)
 === Scenario: Choice: Select Mode ===
 Phase: Response
 [Logic Entry] Opcode: 30 | CardID: 17 | AbIdx: 0
-ID 500 | [JP] 1枚捨てる           |  (CHOICE)
-       | [EN] Discard 1       |  (CHOICE)
+ID 500 | [JP] DRAW            |  (CHOICE)
+       | [EN] DRAW            |  (CHOICE)
 -------
-ID 501 | [JP] メンバーをタップ        |  (CHOICE)
-       | [EN] Tap Member      |  (CHOICE)
+ID 501 | [JP] TAP_ALL_LE_2    |  (CHOICE)
+       | [EN] TAP_ALL_LE_2    |  (CHOICE)
 -------
 ID 502 | [JP] 選択肢 3           |  (CHOICE)
        | [EN] Choice 3        |  (CHOICE)

@@ -20,6 +20,10 @@ pub fn do_yell(state: &mut GameState, db: &CardDatabase, count: u32) -> Vec<i32>
         }
         if let Some(card_id) = state.players[p_idx].deck.pop() {
             revealed.push(card_id);
+            state.players[p_idx].yell_cards.push(card_id);
+            let slot = (revealed.len() - 1) % 3;
+            state.players[p_idx].stage_energy[slot].push(card_id);
+            state.players[p_idx].sync_stage_energy_count(slot);
             // Dispatch OnReveal trigger
             state.trigger_event(db, TriggerType::OnReveal, p_idx, card_id, -1, 0, -1);
         }
@@ -512,14 +516,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         let yell_count = total_blades;
         let yelled_cards = do_yell(state, db, yell_count);
         let mut yelled_names = Vec::new();
-        for (idx, cid) in yelled_cards.into_iter().enumerate() {
+        for cid in yelled_cards {
             let cid_i32 = cid as i32;
-            state.players[p_idx].yell_cards.push(cid_i32);
-            // Rule 8.3.11: Place as energy. We distribute them across slots 0-2.
-            let slot = idx % 3;
-            state.players[p_idx].stage_energy[slot].push(cid_i32);
-            state.players[p_idx].sync_stage_energy_count(slot);
-
             if let Some(m) = db.get_member(cid_i32) {
                 yelled_names.push(format!("{} ({})", m.name, m.card_no));
             } else if let Some(l) = db.get_live(cid_i32) {
@@ -1033,8 +1031,10 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         }
         // Update excess hearts for Rule Q142
         state.players[p_idx].excess_hearts = remaining_hearts.iter().map(|&x| x as u32).sum();
+        state.players[p_idx].excess_hearts_by_color = remaining_hearts;
     } else {
         state.players[p_idx].excess_hearts = 0;
+        state.players[p_idx].excess_hearts_by_color = [0; 7];
     }
 
     // --- Store Performance Results for UI ---
@@ -1150,6 +1150,14 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     let total_score = live_score + note_icons as u32 + state.players[p_idx].live_score_bonus.max(0) as u32;
 
     let mut score_breakdown = Vec::new();
+    if live_score > 0 {
+        score_breakdown.push(json!({
+            "source": "Base Live Score",
+            "value": live_score,
+            "type": "base"
+        }));
+    }
+
     // Breakdown each individual live card score for better visibility (Rule 8.3 Judgment)
     for l in &lives_list {
         if l.get("passed").and_then(|v| v.as_bool()).unwrap_or(false) {
@@ -1528,6 +1536,8 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             })
         }).collect();
 
+        state.players[p].score = scores[p];
+
         if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
             if let serde_json::Value::Object(ref mut map) = res {
                 map.insert("total_score".to_string(), json!(scores[p]));
@@ -1721,6 +1731,35 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
 }
 
 pub fn finalize_live_result(state: &mut GameState) {
+    for p in 0..2 {
+        let success_count = state.players[p].success_lives.len() as i32;
+        let resolved_live_score = state
+            .ui
+            .performance_results
+            .get(&(p as u8))
+            .and_then(|res| res.get("lives"))
+            .and_then(|lives| lives.as_array())
+            .map(|lives| {
+                lives
+                    .iter()
+                    .filter(|live| live.get("passed").and_then(|value| value.as_bool()).unwrap_or(false))
+                    .map(|live| live.get("score").and_then(|value| value.as_i64()).unwrap_or(0) as i32)
+                    .sum::<i32>()
+            })
+            .unwrap_or(0);
+        let live_score_bonus = state
+            .ui
+            .performance_results
+            .get(&(p as u8))
+            .and_then(|res| res.get("total_score_bonus"))
+            .and_then(|value| value.as_i64())
+            .unwrap_or(0) as i32;
+
+        state.players[p].score = (state.players[p].score as i32)
+            .max(success_count.max(resolved_live_score + live_score_bonus))
+            .max(0) as u32;
+    }
+
     // 8.4.8 Cleanup all live zones
     for i in 0..2 {
         let p = (state.first_player as usize + i) % 2;
@@ -1739,9 +1778,6 @@ pub fn finalize_live_result(state: &mut GameState) {
             }
             state.players[p].sync_stage_energy_count(i);
         }
-
-        // Player Score (persistent win condition) is the count of success lives
-        state.players[p].score = state.players[p].success_lives.len() as u32;
 
         state.players[p].current_turn_notes = 0;
     }

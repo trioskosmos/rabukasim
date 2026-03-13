@@ -306,6 +306,7 @@ fn append_entity_vector(
                 };
                 let uid = crate::core::logic::interpreter::get_ability_uid(
                     s_type,
+                    0,
                     template_id as u32,
                     ab_idx as u32,
                 );

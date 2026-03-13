@@ -3,4 +3,14 @@
  */
 
 export * from './names.js';
-export * from './translator.js';
+export { 
+    translateAbility, 
+    loadTranslations, 
+    t, 
+    translateCard, 
+    translateMetadata,
+    translateCardType,
+    translateProduct,
+    translateSeries,
+    getCurrentTranslations
+} from './translator.js';

@@ -1,6 +1,3 @@
-// Simple timing diagnostic for evaluations
-use std::time::Instant;
-
 fn main() {
     println!("\n=== Per-Evaluation Cost Diagnostic ===\n");
     

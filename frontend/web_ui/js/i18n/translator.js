@@ -109,7 +109,50 @@ export const UNIT_ID_MAP = {
  * @param {string} category 'GROUPS' or 'UNITS'
  * @returns {string}
  */
-export function translateMetadata(text, category) {
+/**
+ * Translates card type (Member, Live, Energy)
+ * @param {string} typeJp - Japanese card type
+ * @returns {string} - Translated type or original if not found
+ */
+export function translateCardType(typeJp) {
+    if (!typeJp) return '';
+    if (currentLanguage === 'jp') return typeJp;
+    
+    const langData = translations[currentLanguage] || {};
+    const cardTypes = langData.params?.CARD_TYPES || {};
+    
+    return cardTypes[typeJp] || typeJp;
+}
+
+/**
+ * Translates products
+ * @param {string} productJp - Japanese product name
+ * @returns {string} - Translated product or original if not found
+ */
+export function translateProduct(productJp) {
+    if (!productJp) return '';
+    if (currentLanguage === 'jp') return productJp;
+    
+    const langData = translations[currentLanguage] || {};
+    const products = langData.params?.PRODUCTS || {};
+    
+    return products[productJp] || productJp;
+}
+
+/**
+ * Translates series
+ * @param {string} seriesJp - Japanese series name
+ * @returns {string} - Translated series or original if not found
+ */
+export function translateSeries(seriesJp) {
+    if (!seriesJp) return '';
+    if (currentLanguage === 'jp') return seriesJp;
+    
+    const langData = translations[currentLanguage] || {};
+    const series = langData.params?.SERIES || {};
+    
+    return series[seriesJp] || seriesJp;
+}
     if (!text) return "";
     if (currentLanguage === 'jp') return text;
 

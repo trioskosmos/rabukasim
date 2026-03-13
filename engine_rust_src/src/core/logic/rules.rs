@@ -251,7 +251,7 @@ pub fn get_effective_hearts(
                                 if (s & 0x10000) != 0 {
                                     let count_op = (s >> 8) & 0xFFFF;
                                     multiplier = resolve_count(state, db, count_op, a as u64, s, &ctx, depth + 1);
-                                } else if (a & 0x02) != 0 {
+                                } else if (a & 0x02) != 0 && ((s >> 8) & 0xFF) != 0 {
                                     let count_op = (s >> 8) & 0xFF; // Legacy 8-bit
                                     multiplier = resolve_count(state, db, count_op, a as u64, count_op, &ctx, depth + 1);
                                 }
@@ -351,6 +351,40 @@ pub fn get_total_hearts(
     let mut total = HeartBoard::default();
     for i in 0..3 {
         total.add(get_effective_hearts(state, p_idx, i, db, depth + 1));
+    }
+    total
+}
+
+pub fn get_effective_member_hearts(
+    state: &GameState,
+    player_idx: usize,
+    slot_idx: usize,
+    db: &CardDatabase,
+    depth: u32,
+) -> HeartBoard {
+    let mut board = get_effective_hearts(state, player_idx, slot_idx, db, depth + 1);
+    for &yid in &state.players[player_idx].stage_energy[slot_idx] {
+        if let Some(ym) = db.get_member(yid) {
+            let blade_hearts = ym.blade_hearts_board.to_array();
+            for (color, &count) in blade_hearts.iter().enumerate() {
+                if count > 0 {
+                    board.add_to_color(color, -(count as i32));
+                }
+            }
+        }
+    }
+    board
+}
+
+pub fn get_total_member_hearts(
+    state: &GameState,
+    p_idx: usize,
+    db: &CardDatabase,
+    depth: u32,
+) -> HeartBoard {
+    let mut total = HeartBoard::default();
+    for i in 0..3 {
+        total.add(get_effective_member_hearts(state, p_idx, i, db, depth + 1));
     }
     total
 }

@@ -231,6 +231,8 @@ pub struct UIState {
     #[serde(default)]
     pub current_execution_id: Option<u32>,
     #[serde(default)]
+    pub cancelled_execution_ids: HashSet<u32>,
+    #[serde(default)]
     pub bytecode_log: Vec<String>,
 }
 
@@ -244,6 +246,7 @@ impl Default for UIState {
             performance_history: Vec::new(),
             next_execution_id: 1,
             current_execution_id: None,
+            cancelled_execution_ids: HashSet::new(),
             bytecode_log: Vec::new(),
         }
     }

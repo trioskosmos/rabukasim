@@ -13,10 +13,9 @@ def update_abilities():
     for jp, entry in data.items():
         pseudo = entry.get('pseudocode', '')
         
-        # Check if JP contains "まで" or "枚まで" or similar "up to" expressions
-        # but Pseudo is missing (Optional)
-        if 'まで' in jp and '(Optional)' not in pseudo:
-            # List of opcodes that should be marked (Optional) if they are "up to X"
+        # Check if JP contains "まで" (up to), "の中から" (from among), "選ぶ" (choose)
+        if ('まで' in jp or 'の中から' in jp or '個選ぶ' in jp or '枚選ぶ' in jp):
+            # List of opcodes that should be marked (Optional) if they are "up to X" or choice-based
             target_ops = [
                 'PLAY_MEMBER_FROM_DISCARD', 
                 'RECOVER_LIVE', 
@@ -24,7 +23,8 @@ def update_abilities():
                 'SELECT_CARDS', 
                 'MOVE_TO_DISCARD',
                 'MOVE_TO_DECK',
-                'ACTIVATE_MEMBER'
+                'ACTIVATE_MEMBER',
+                'PLAY_MEMBER_FROM_HAND'
             ]
             
             lines = pseudo.split('\n')

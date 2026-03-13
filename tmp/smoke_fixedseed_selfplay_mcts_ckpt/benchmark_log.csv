@@ -1,0 +1,6 @@
+cycle,random_wins,random_losses,random_draws,greedy_wins,greedy_losses,greedy_draws
+1,0,3,13,3,0,13
+2,2,1,13,1,1,14
+3,2,1,13,1,0,15
+4,6,2,8,3,0,13
+5,2,5,9,0,0,16

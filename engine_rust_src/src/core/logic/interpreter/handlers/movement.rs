@@ -206,13 +206,35 @@ pub fn handle_move_to_discard(
         ChoiceType::SelectDiscard
     };
 
+    if is_optional
+        && next_ctx.choice_index == -1
+        && matches!(source_zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default)
+    {
+        if suspend_interaction(
+            state,
+            db,
+            &next_ctx,
+            instr_ip,
+            O_MOVE_TO_DISCARD,
+            s,
+            ChoiceType::Optional,
+            "",
+            filter_attr,
+            count as i16,
+        ) {
+            return HandlerResult::Suspend;
+        }
+    }
+
     if source_zone == Zone::Stage && next_ctx.choice_index == -1 && count == 1 {
-        let slot = if next_ctx.area_idx >= 0 {
+        let slot = if ctx.target_slot >= 0 {
+            ctx.target_slot as usize
+        } else if next_ctx.area_idx >= 0 {
             next_ctx.area_idx as usize
         } else {
             0
         };
-        if slot < 3 && state.players[p_idx].stage[slot] == ctx.source_card_id {
+        if slot < 3 && state.players[target_player_idx].stage[slot] >= 0 {
             next_ctx.choice_index = slot as i16;
         }
     }
@@ -288,7 +310,15 @@ pub fn handle_move_to_discard(
         }
     }
 
+    let mut moved_cards = Vec::new();
+
     if next_ctx.choice_index != -1 {
+        if is_optional
+            && matches!(source_zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default)
+            && next_ctx.choice_index == 1
+        {
+            return HandlerResult::SetCond(false);
+        }
         if next_ctx.choice_index == CHOICE_DONE {
             if is_optional {
                 return HandlerResult::SetCond(false);
@@ -344,6 +374,9 @@ pub fn handle_move_to_discard(
                 };
                 if let Some(cid) = state.handle_member_leaves_stage(target_player_idx, slot, db, &next_ctx) {
                     removed_cid = cid;
+                    if let Some(member) = db.get_member(cid) {
+                        ctx.v_accumulated = member.cost as i16;
+                    }
                 }
             }
             Zone::LiveSet | Zone::SuccessPile => {
@@ -365,6 +398,7 @@ pub fn handle_move_to_discard(
         }
         if removed_cid >= 0 {
             state.players[target_player_idx].discard.push(removed_cid as i32);
+            moved_cards.push(removed_cid as i32);
             next_ctx.v_remaining = if next_ctx.v_remaining > 0 {
                 next_ctx.v_remaining - 1
             } else {
@@ -390,6 +424,8 @@ pub fn handle_move_to_discard(
                 }
 
                 next_ctx.choice_index = -1;
+                // BATCH CONTEXT PRESERVATION: Accumulate all moved cards in selected_cards across recursion
+                next_ctx.selected_cards.push(removed_cid);
 
                 // If auto_pick is true and it's mandatory, try to move the next card immediately
                 // Or if it's mandatory and count >= items, we also auto-pick
@@ -405,6 +441,7 @@ pub fn handle_move_to_discard(
                     if still_available {
                         next_ctx.choice_index = 0;
                         // LOOP: Recursive-style but safe because we already removed one card
+                        // NOTE: selected_cards persists across recursion via next_ctx
                         return handle_move_to_discard(state, db, &mut next_ctx, instr, instr_ip);
                     }
                 }
@@ -431,6 +468,8 @@ pub fn handle_move_to_discard(
                 Zone::Hand => {
                     if let Some(cid) = state.players[target_player_idx].hand.pop() {
                         state.players[target_player_idx].discard.push(cid);
+                        moved_cards.push(cid);
+                        next_ctx.selected_cards.push(cid);
                     }
                 }
                 Zone::Stage => {
@@ -442,26 +481,53 @@ pub fn handle_move_to_discard(
                     if let Some(cid) = state.handle_member_leaves_stage(target_player_idx, slot, db, &next_ctx)
                     {
                         state.players[target_player_idx].discard.push(cid as i32);
+                        moved_cards.push(cid as i32);
+                        next_ctx.selected_cards.push(cid as i32);
                     }
                 }
                 Zone::LiveSet | Zone::SuccessPile => {
                     if let Some(cid) = state.players[target_player_idx].success_lives.pop() {
                         state.players[target_player_idx].discard.push(cid);
+                        moved_cards.push(cid);
+                        next_ctx.selected_cards.push(cid);
                     }
                 }
                 Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
                     if let Some(cid) = state.players[target_player_idx].deck.pop() {
                         state.players[target_player_idx].discard.push(cid);
+                        moved_cards.push(cid);
+                        next_ctx.selected_cards.push(cid);
                     }
                 }
                 Zone::Energy => {
                     if let Some(cid) = state.players[target_player_idx].energy_zone.pop() {
                         state.players[target_player_idx].discard.push(cid);
+                        moved_cards.push(cid);
+                        next_ctx.selected_cards.push(cid);
                     }
                 }
                 _ => {}
             }
         }
+    }
+
+    if next_ctx.selected_cards.is_empty() && !moved_cards.is_empty() {
+        next_ctx.selected_cards.extend(moved_cards.iter().copied());
+    }
+
+    // Preserve the moved-card batch on the current execution context so
+    // subsequent DISCARDED_CARDS conditions in the same ability can see it.
+    if !next_ctx.selected_cards.is_empty() {
+        ctx.selected_cards = next_ctx.selected_cards.clone();
+    }
+
+    // BATCH CONTEXT PRESERVATION: Use accumulated selected_cards from context, not local moved_cards
+    // This ensures all cards accumulated across recursive calls are in the trigger batch
+    if !next_ctx.selected_cards.is_empty() {
+        state.trigger_move_to_discard(db, target_player_idx, &next_ctx, &next_ctx.selected_cards);
+    } else if !moved_cards.is_empty() {
+        // Fallback for non-recursive (multi-pop) case
+        state.trigger_move_to_discard(db, target_player_idx, &next_ctx, &moved_cards);
     }
 
     if !state.ui.silent {
@@ -675,6 +741,48 @@ pub fn handle_deck_zones(
             }
         }
         O_MOVE_TO_DECK => {
+            if !ctx.selected_cards.is_empty() {
+                let move_count = if v > 0 {
+                    (v as usize).min(ctx.selected_cards.len())
+                } else {
+                    ctx.selected_cards.len()
+                };
+                let moved_cards: Vec<i32> = ctx.selected_cards.iter().take(move_count).copied().collect();
+
+                for &cid in &moved_cards {
+                    if let Some(pos) = state.players[p_idx].discard.iter().position(|&c| c == cid) {
+                        state.players[p_idx].discard.remove(pos);
+                    } else if let Some(pos) = state.players[p_idx].hand.iter().position(|&c| c == cid) {
+                        state.players[p_idx].hand.remove(pos);
+                    } else if let Some(pos) = state.players[p_idx].success_lives.iter().position(|&c| c == cid) {
+                        state.players[p_idx].success_lives.remove(pos);
+                    } else if let Some(slot) = state.players[p_idx].stage.iter().position(|&c| c == cid) {
+                        state.handle_member_leaves_stage(p_idx, slot, db, ctx);
+                    }
+                }
+
+                match instr.s.count_op {
+                    2 => {
+                        for &cid in moved_cards.iter().rev() {
+                            state.players[p_idx].deck.insert(0, cid);
+                        }
+                    }
+                    1 => {
+                        for &cid in moved_cards.iter().rev() {
+                            state.players[p_idx].deck.push(cid);
+                        }
+                    }
+                    _ => {
+                        for &cid in &moved_cards {
+                            state.players[p_idx].deck.push(cid);
+                        }
+                        let mut rng = Pcg64::from_os_rng();
+                        state.players[p_idx].deck.shuffle(&mut rng);
+                    }
+                }
+                return HandlerResult::Continue;
+            }
+
             for _ in 0..(v as usize) {
                 match a as u64 & FILTER_MASK_LOWER {
                     1 => {
@@ -727,10 +835,21 @@ pub fn handle_deck_zones(
         O_REVEAL_UNTIL => {
             let mut found = false;
             let mut revealed_count = 0;
-            while !found && !state.players[p_idx].deck.is_empty() {
+            let mut revealed_non_matches = Vec::new();
+            while !found {
                 if revealed_count > 60 {
                     break;
                 }
+                if state.players[p_idx].deck.is_empty() {
+                    if state.players[p_idx].discard.is_empty() {
+                        break;
+                    }
+                    state.resolve_deck_refresh(p_idx);
+                    if state.players[p_idx].deck.is_empty() {
+                        break;
+                    }
+                }
+
                 if let Some(cid) = state.players[p_idx].deck.pop() {
                     revealed_count += 1;
                     let mut new_ctx = ctx.clone();
@@ -759,9 +878,13 @@ pub fn handle_deck_zones(
                         }
                         found = true;
                     } else {
-                        state.players[p_idx].discard.push(cid);
+                        revealed_non_matches.push(cid);
                     }
                 }
+            }
+
+            for cid in revealed_non_matches {
+                state.players[p_idx].discard.push(cid);
             }
         }
         O_LOOK_DECK | O_REVEAL_CARDS | O_CHEER_REVEAL => {

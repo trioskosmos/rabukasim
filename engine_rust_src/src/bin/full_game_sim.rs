@@ -5,7 +5,7 @@
 /// ─── TUNABLE PARAMETERS ──────────────────────────────────────────────────────
 const NUM_GAMES: usize = 1;
 const STEP_LIMIT: usize = 500;
-const TURN_LIMIT: u16 = 20;
+const TURN_LIMIT: u16 = 10;
 /// ─────────────────────────────────────────────────────────────────────────────
 
 use std::fs;

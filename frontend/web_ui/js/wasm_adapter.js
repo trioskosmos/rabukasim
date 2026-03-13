@@ -2,6 +2,7 @@
 import init, { WasmEngine } from '../pkg/engine_rust.js';
 import { ActionBases } from './generated_constants.js';
 import { wasmLoader } from './wasm_loader.js';
+import { State } from './state.js';
 
 export class WasmAdapter {
     constructor() {
@@ -22,9 +23,10 @@ export class WasmAdapter {
                 await init();
                 console.log("[WASM] Loaded.");
 
-                // Load Card DB
+                // Load Card DB - select file based on cardSet
                 const base = getAppBaseUrl();
-                const res = await fetch(`${base}data/cards_compiled.json`);
+                const cardFile = State.cardSet === 'vanilla' ? 'cards_vanilla.json' : 'cards_compiled.json';
+                const res = await fetch(`${base}data/${cardFile}`);
                 const text = await res.text();
                 this.cardDbRaw = text;
                 this.cardDb = JSON.parse(text); // Keep a JS copy for lookups

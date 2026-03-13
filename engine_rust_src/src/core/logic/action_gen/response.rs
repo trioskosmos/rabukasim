@@ -94,7 +94,7 @@ impl ResponseGenerator {
             }
             ChoiceType::PayEnergy => {
                 for i in 0..player.energy_zone.len().min(16) {
-                    if !player.is_energy_tapped(i) {
+                    if pi.effect_opcode == O_PLACE_ENERGY_UNDER_MEMBER || !player.is_energy_tapped(i) {
                         receiver.add_action(
                             (ACTION_BASE_ENERGY + i as i32) as usize,
                         );
@@ -202,8 +202,8 @@ impl ResponseGenerator {
                 return;
             }
             O_TAP_OPPONENT => {
-                // If it's TAP_O, p_idx IS the opponent making the choice for themselves.
-                for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
+                let target_p_idx = 1 - (ctx.activator_id as usize);
+                for (i, &cid) in state.players[target_p_idx].stage.iter().enumerate() {
                     if cid != -1 {
                         receiver.add_action(
                             (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
@@ -238,11 +238,22 @@ impl ResponseGenerator {
             }
             O_MOVE_TO_DISCARD => {
                 let masked_filter = pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
-                for (i, &cid) in player.hand.iter().enumerate() {
-                    if state.card_matches_filter(db, cid, masked_filter) {
-                        receiver.add_action(
-                            (ACTION_BASE_HAND_SELECT + i as i32) as usize,
-                        );
+                let decoded_slot = crate::core::logic::interpreter::instruction::DecodedSlot::decode(pi.target_slot);
+                if decoded_slot.source_zone == crate::core::enums::Zone::Stage {
+                    for (i, &cid) in player.stage.iter().enumerate() {
+                        if cid >= 0 && state.card_matches_filter_with_ctx(db, cid, masked_filter, &pi.ctx) {
+                            receiver.add_action(
+                                (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
+                            );
+                        }
+                    }
+                } else {
+                    for (i, &cid) in player.hand.iter().enumerate() {
+                        if state.card_matches_filter(db, cid, masked_filter) {
+                            receiver.add_action(
+                                (ACTION_BASE_HAND_SELECT + i as i32) as usize,
+                            );
+                        }
                     }
                 }
                 if (pi.filter_attr & FILTER_IS_OPTIONAL)
@@ -340,7 +351,7 @@ impl ResponseGenerator {
                 return;
             }
             _ => {
-                if choice_type == ChoiceType::SelectMember {
+                if choice_type == ChoiceType::SelectMember || choice_type == ChoiceType::TapMSelect {
                     self.generate_select_member_actions(
                         db,
                         p_idx,
@@ -356,6 +367,16 @@ impl ResponseGenerator {
                         receiver.add_action(
                             (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                         );
+                    }
+                    return;
+                }
+                if choice_type == ChoiceType::MoveMemberDest {
+                    for i in 0..3 {
+                        if i != pi.ctx.area_idx as usize {
+                            receiver.add_action(
+                                (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
+                            );
+                        }
                     }
                     return;
                 }
@@ -452,7 +473,7 @@ impl ResponseGenerator {
             }
             ChoiceType::PayEnergy => {
                 for i in 0..player.energy_zone.len().min(10) {
-                    if !player.is_energy_tapped(i) {
+                    if pi.effect_opcode == O_PLACE_ENERGY_UNDER_MEMBER || !player.is_energy_tapped(i) {
                         receiver.add_action(
                             (ACTION_BASE_ENERGY + i as i32) as usize,
                         );
@@ -462,7 +483,7 @@ impl ResponseGenerator {
             _ => {
                 for (i, &cid) in player.looked_cards.iter().enumerate() {
                     let filter_only = final_filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
-                    if state.card_matches_filter(db, cid, filter_only) {
+                    if state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx) {
                         receiver.add_action(
                             (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
@@ -484,12 +505,37 @@ impl ResponseGenerator {
         if state.debug.debug_mode {
             println!("[DEBUG] generate_select_member_actions: p_idx={}, filter_attr={:X}", p_idx, filter_attr);
         }
-        let player = &state.players[p_idx];
+        let is_sunny_day_song_follow_up = pi.ctx.v_accumulated == 211
+            && db
+                .get_live(pi.card_id)
+                .map(|card| card.card_no.as_str() == "PL!-bp5-021-L")
+                .unwrap_or(false);
+        if is_sunny_day_song_follow_up {
+            for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
+                if cid >= 0
+                    && db
+                        .get_member(cid)
+                        .map(|card| card.groups.contains(&0))
+                        .unwrap_or(false)
+                {
+                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                }
+            }
+            receiver.add_action(0);
+            return;
+        }
+        let target_player = match (filter_attr & 0x3) as u8 {
+            2 => 1 - p_idx,
+            3 => 1,
+            _ => p_idx,
+        };
+        let player = &state.players[target_player];
         let packed_zone = (filter_attr >> 12) & 0x0F;
         let target_slot = if packed_zone > 0 {
             packed_zone as usize
         } else {
             if pi.effect_opcode == O_SELECT_MEMBER
+                || pi.choice_type == ChoiceType::TapMSelect
                 || (pi.choice_type == ChoiceType::SelectMember && pi.effect_opcode == 0)
             {
                 pi.target_slot as usize
@@ -502,7 +548,7 @@ impl ResponseGenerator {
             6 => {
                 // Hand
                 for (i, &cid) in player.hand.iter().enumerate() {
-                    if state.card_matches_filter(db, cid, filter_attr) {
+                    if state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx) {
                         receiver.add_action(
                             (ACTION_BASE_HAND_SELECT + i as i32) as usize,
                         );
@@ -512,7 +558,7 @@ impl ResponseGenerator {
             7 => {
                 // Discard
                 for (i, &cid) in player.discard.iter().enumerate() {
-                    if state.card_matches_filter(db, cid, filter_attr) {
+                    if state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx) {
                         receiver.add_action(
                             (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
@@ -522,7 +568,7 @@ impl ResponseGenerator {
             _ => {
                 // Stage (0-2) or Default
                 for (i, &cid) in player.stage.iter().enumerate() {
-                    if cid >= 0 && state.card_matches_filter(db, cid, filter_attr) {
+                    if cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx) {
                         receiver.add_action(
                             (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                         );
@@ -535,13 +581,30 @@ impl ResponseGenerator {
 
     fn generate_select_mode_actions<R: ActionReceiver + ?Sized>(
         &self,
-        _db: &CardDatabase,
+        db: &CardDatabase,
         p_idx: usize,
         state: &GameState,
         receiver: &mut R,
         pi: &PendingInteraction,
         abilities: Option<&Vec<Ability>>,
     ) {
+        if pi.ctx.v_accumulated >= 1900 {
+            let is_daydream_mermaid = db
+                .get_live(pi.card_id)
+                .map(|card| card.card_no.as_str() == "PL!N-bp4-030-L")
+                .unwrap_or(false);
+            if is_daydream_mermaid {
+                let mask = (pi.ctx.v_accumulated - 1900) as i32;
+                if (mask & 0x1) != 0 {
+                    receiver.add_action(ACTION_BASE_MODE as usize);
+                }
+                if (mask & 0x2) != 0 {
+                    receiver.add_action((ACTION_BASE_MODE + 1) as usize);
+                }
+                return;
+            }
+        }
+
         let count = if pi.v_remaining > 0 {
             pi.v_remaining as i32
         } else {

@@ -58,8 +58,14 @@ def inspect_card(query_id):
     for i, ab in enumerate(abilities):
         trigger = ab.get("trigger")
         stored_bc = ab.get("bytecode", [])
+        semantic_form = ab.get("semantic_form", {})
         print(f"\n### Ability {i} (Trigger: {trigger})")
         print(f"**Stored Bytecode**: `{stored_bc}`")
+        if semantic_form:
+            print("**Stored Semantic Form**:")
+            print("```")
+            print(json.dumps(semantic_form, indent=2, ensure_ascii=False))
+            print("```")
         print("\n**Decoded Stored Bytecode**:")
         print("```")
         print(decode_bytecode(stored_bc))

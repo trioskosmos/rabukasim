@@ -1,11 +1,14 @@
 use crate::core::alphazero_encoding::AlphaZeroEncoding;
+use crate::core::alphazero_evaluator::AlphaZeroEvaluator;
 use crate::core::heuristics::{EvalMode, HeuristicConfig, LegacyHeuristic, OriginalHeuristic};
+use crate::core::logic::constants::STAGE_SLOT_COUNT;
 use crate::core::logic::{ChoiceType, GameState, Phase, PlayerState, StandardizedState};
-use crate::core::mcts::SearchHorizon;
+use crate::core::mcts::{SearchHorizon, MCTS};
 use numpy::{PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray1};
 use pyo3::prelude::*;
 use rayon::prelude::*;
 use smallvec::SmallVec;
+use std::sync::Arc;
 // use crate::core::heuristics::{OriginalHeuristic, SimpleHeuristic};
 
 #[pyclass]
@@ -1227,6 +1230,27 @@ impl PyGameState {
             .get_mcts_suggestions_ext(db, sims, timeout_sec, horizon, eval_mode, &h)
     }
 
+    #[pyo3(signature = (sims, evaluator, batch_size=16))]
+    fn search_mcts_alphazero(
+        &mut self,
+        sims: usize,
+        evaluator: &PyAlphaZeroEvaluator,
+        batch_size: usize,
+    ) -> Vec<(i32, f32, u32)> {
+        let db = &self.db.inner;
+        let mut mcts = MCTS::with_evaluator(evaluator.evaluator.clone(), batch_size);
+        let h = OriginalHeuristic::default();
+        let (suggestions, _profiler) = mcts.search(
+            &self.inner,
+            db,
+            sims,
+            0.0,
+            SearchHorizon::GameEnd(),
+            &h,
+        );
+        suggestions
+    }
+
     #[setter]
     fn set_phase(&mut self, val: i8) {
         self.inner.phase = match val {
@@ -1440,6 +1464,31 @@ impl PyGameState {
     pub fn plan_full_turn_with_stats(&self, db: &PyCardDatabase) -> (Vec<(i32, f32, f32, f32)>, Vec<i32>, usize, f32, (f32, f32)) {
         use crate::core::logic::turn_sequencer::TurnSequencer;
         TurnSequencer::plan_full_turn_with_stats(&self.inner, &db.inner)
+    }
+
+    #[pyo3(signature = (db))]
+    pub fn find_best_liveset_selection(&self, db: &PyCardDatabase) -> (Vec<i32>, usize, u128) {
+        use crate::core::logic::turn_sequencer::TurnSequencer;
+        TurnSequencer::find_best_liveset_selection(&self.inner, &db.inner)
+    }
+
+    #[pyo3(signature = (db, p_idx))]
+    pub fn get_score_breakdown(
+        &self,
+        db: &PyCardDatabase,
+        p_idx: usize,
+    ) -> (f32, f32, f32, f32, f32, f32, f32) {
+        use crate::core::logic::turn_sequencer::TurnSequencer;
+        let brk = TurnSequencer::get_score_breakdown(&self.inner, &db.inner, p_idx);
+        (
+            brk.board_score,
+            brk.live_ev,
+            brk.success_val,
+            brk.win_bonus,
+            brk.hand_momentum,
+            brk.cycling_bonus,
+            brk.total,
+        )
     }
 }
 
@@ -1686,6 +1735,39 @@ impl PyHybridMCTS {
     }
 }
 
+// AlphaZero Tensor Type Enum
+#[pyclass]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum AlphaZeroTensorType {
+    #[default]
+    Vanilla = 0,
+    Original = 1,
+}
+
+// PyAlphaZeroEvaluator wrapper for network-guided MCTS
+#[pyclass]
+pub struct PyAlphaZeroEvaluator {
+    evaluator: Arc<Box<dyn AlphaZeroEvaluator>>,
+}
+
+#[pymethods]
+impl PyAlphaZeroEvaluator {
+    #[new]
+    fn new(model: PyObject, _tensor_type: AlphaZeroTensorType) -> Self {
+        #[cfg(feature = "extension-module")]
+        {
+            let evaluator_impl = crate::core::alphazero_evaluator::PyAlphaZeroEvaluator::new(model);
+            Self {
+                evaluator: Arc::new(Box::new(evaluator_impl)),
+            }
+        }
+        #[cfg(not(feature = "extension-module"))]
+        {
+            panic!("PyAlphaZeroEvaluator requires extension-module feature");
+        }
+    }
+}
+
 pub fn register_python_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyPlayerState>()?;
     m.add_class::<PyGameState>()?;
@@ -1697,5 +1779,7 @@ pub fn register_python_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SearchHorizon>()?;
     m.add_class::<EvalMode>()?;
     m.add_class::<HeuristicConfig>()?;
+    m.add_class::<AlphaZeroTensorType>()?;
+    m.add_class::<PyAlphaZeroEvaluator>()?;
     Ok(())
 }

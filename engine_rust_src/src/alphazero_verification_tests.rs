@@ -137,7 +137,7 @@ fn test_alphazero_volatile_flags() {
     assert_eq!(tensor_not_spent[117], 103.0 / 50.0, "CharID should be normalized 103/50");
 
     // 4. Test SPENT
-    let uid = crate::core::logic::interpreter::get_ability_uid(0, 103, 0);
+    let uid = crate::core::logic::interpreter::get_ability_uid(0, 0, 103, 0);
     state.players[0].used_abilities.push(uid);
 
     let tensor_spent = state.to_alphazero_tensor(&db);

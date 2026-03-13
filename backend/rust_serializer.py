@@ -55,6 +55,11 @@ SERIALIZER_STRINGS = {
         "scissors": "チョキ",
         "unknown": "???",
         "unknown_type": "不明",
+        "card_types": {
+            "メンバー": "メンバー",
+            "ライブ": "ライブ",
+            "エネルギー": "エネルギー"
+        }
     },
     "en": {
         "ability_root": "Ability",
@@ -80,6 +85,11 @@ SERIALIZER_STRINGS = {
         "scissors": "Scissors",
         "unknown": "???",
         "unknown_type": "Unknown",
+        "card_types": {
+            "メンバー": "Member",
+            "ライブ": "Live",
+            "エネルギー": "Energy"
+        }
     },
 }
 

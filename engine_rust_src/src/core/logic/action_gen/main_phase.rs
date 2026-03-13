@@ -183,7 +183,18 @@ impl ActionGenerator for MainPhaseGenerator {
 
                                 if cond_ok
                                     && cost_ok
-                                    && state.check_once_per_turn(p_idx, 0, cid as u32, ab_idx)
+                                    && state.check_once_per_turn(
+                                        p_idx,
+                                        0,
+                                        state.get_once_per_turn_instance_key(
+                                            p_idx,
+                                            0,
+                                            slot_idx as i16,
+                                            cid,
+                                        ),
+                                        cid as u32,
+                                        ab_idx,
+                                    )
                                 {
                                     let ab_aid = crate::core::logic::ACTION_BASE_STAGE
                                         + (slot_idx as i32 * 100)
@@ -224,7 +235,7 @@ impl ActionGenerator for MainPhaseGenerator {
                                 .all(|c| state.check_cost(db, p_idx, c, &ctx));
                             if cond_ok
                                 && cost_ok
-                                && state.check_once_per_turn(p_idx, 1, cid as u32, ab_idx)
+                                && state.check_once_per_turn(p_idx, 1, hand_idx as u8, cid as u32, ab_idx)
                             {
                                 let ab_aid = crate::core::logic::ACTION_BASE_HAND_ACTIVATE
                                     + (i * 10)

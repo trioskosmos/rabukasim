@@ -439,7 +439,11 @@ class AbilityParserV2:
                 for m in matches:
                     t_text = m.group(1).strip()
                     if t_text:
-                        current_triggers.append(t_text)
+                        split_triggers = StructuralLexer.split_respecting_nesting(t_text, delimiter=",")
+                        for split_trigger in split_triggers:
+                            split_trigger = split_trigger.strip()
+                            if split_trigger:
+                                current_triggers.append(split_trigger)
             else:
                 current_body.append(line)
 
@@ -820,11 +824,19 @@ class AbilityParserV2:
         for p in parts:
             if not p:
                 continue
-            # Format: NAME(VAL) {PARAMS} -> DEST (Optional)
-            m = re.match(r"^([\w_]+)(?:\((.*?)\))?\s*(?:(\{.*?\})\s*)?(?:->\s*([\w, _]+))?(.*)$", p.strip())
+            # Format: NAME(VAL) (Optional)? {PARAMS}? -> DEST? REST
+            m = re.match(r"^([\w_]+)(?:\((.*?)\))?\s*(?:\(Optional\)\s*)?(?:(\{.*?\})\s*)?(?:\(Optional\)\s*)?(?:->\s*([\w, _]+))?(.*)$", p.strip())
             if m:
                 name, val_str, brace_params, destination, rest = m.groups()
                 rest = rest or ""
+                if not brace_params and "{" in rest:
+                    brace_start = rest.find("{")
+                    if brace_start != -1:
+                        recovered_params, _ = StructuralLexer.extract_balanced(rest, brace_start, "{", "}")
+                        if recovered_params:
+                            brace_params = "{" + recovered_params + "}"
+                if not destination and "->" in rest:
+                    destination = rest.split("->", 1)[1].split("->", 1)[0].strip()
 
                 # Manual Mapping for specific cost names
                 if name == "MOVE_TO_DECK":
@@ -859,33 +871,84 @@ class AbilityParserV2:
                     val = 1
                 if cost_name == "PAY_ENERGY":
                     cost_name = "ENERGY"
+                if cost_name == "SELECT_HAND":
+                    cost_name = "SELECT_CARDS"
+                if cost_name == "PLACE_UNDER":
+                    source_hint = (brace_params or "").lower()
+                    if 'from="energy"' in source_hint or "from='energy'" in source_hint:
+                        cost_name = "SELECT_ENERGY"
                 if cost_name == "ENERGY":
                     cost_name = "ENERGY"
                 if "REVEAL_HAND" in cost_name:
                     cost_name = "REVEAL_HAND"
 
-                # Special mapping for ENERGY_CHARGE as a cost (optional/conditional)
-                if cost_name == "ENERGY_CHARGE":
+                if val_str and val_str.upper() == "VARIABLE":
+                    val = 99
+
+                # Special mapping for complex costs that must be handled in bytecode.
+                if cost_name in ["ENERGY_CHARGE", "SELECT_ENERGY"]:
                     ctype = AbilityCostType.NONE
                 else:
                     ctype = getattr(AbilityCostType, cost_name, AbilityCostType.NONE)
 
-                is_opt = "(Optional)" in rest or "(Optional)" in (brace_params or "") or " OR " in text
+                is_opt = "(Optional)" in p or "(Optional)" in rest or "(Optional)" in (brace_params or "") or " OR " in text
                 params = self._parse_pseudocode_params(brace_params or "")
+                if name.upper() == "SELECT_HAND":
+                    params.setdefault("from", "hand")
                 if destination:
                     params["destination"] = destination.strip().lower()
 
                 # If it was ENERGY_CHARGE or CALC_SUM_COST or SELECT_CARDS or SELECT_MEMBER, ensure we have enough info
-                if cost_name in ["ENERGY_CHARGE", "CALC_SUM_COST", "SELECT_CARDS", "SELECT_MEMBER"]:
+                if cost_name in ["ENERGY_CHARGE", "CALC_SUM_COST", "SELECT_CARDS", "SELECT_MEMBER", "SELECT_ENERGY"]:
                     params["cost_type_name"] = cost_name
+
+                if cost_name == "SELECT_ENERGY":
+                    params.setdefault("source", "energy")
 
                 costs.append(Cost(ctype, val, is_optional=is_opt, params=params))
         return costs
 
+    def _serialize_condition_clause(self, cond: Condition) -> Dict[str, Any]:
+        return {
+            "type": int(cond.type),
+            "value": int(cond.value),
+            "attr": int(cond.attr),
+            "is_negated": bool(cond.is_negated),
+            "params": dict(cond.params),
+        }
+
     def _parse_pseudocode_conditions(self, text: str) -> List[Condition]:
         conditions = []
+        stripped_text = text.strip()
+
+        if stripped_text.upper().startswith("OR(") and stripped_text.endswith(")"):
+            inner = stripped_text[3:-1].strip()
+            clauses = []
+            for clause_text in StructuralLexer.split_respecting_nesting(inner, delimiter=","):
+                clause_text = clause_text.strip()
+                if not clause_text:
+                    continue
+                parsed_clause = self._parse_pseudocode_conditions(clause_text)
+                if parsed_clause:
+                    clauses.append(self._serialize_condition_clause(parsed_clause[0]))
+            if clauses:
+                return [Condition(ConditionType.NONE, {"raw_cond": "OR", "clauses": clauses})]
+
+        top_level_or_parts = StructuralLexer.split_respecting_nesting(text, delimiter=" OR ")
+        if len(top_level_or_parts) > 1:
+            clauses = []
+            for clause_text in top_level_or_parts:
+                clause_text = clause_text.strip()
+                if not clause_text:
+                    continue
+                parsed_clause = self._parse_pseudocode_conditions(clause_text)
+                if parsed_clause:
+                    clauses.append(self._serialize_condition_clause(parsed_clause[0]))
+            if clauses:
+                return [Condition(ConditionType.NONE, {"raw_cond": "OR", "clauses": clauses})]
+
         # Use the shared split method with multiple delimiters
-        parts = StructuralLexer.split_respecting_nesting(text, delimiter=",", extra_delimiters=[" OR ", ";"])
+        parts = StructuralLexer.split_respecting_nesting(text, delimiter=",", extra_delimiters=[";"])
 
         for p in parts:
             if not p:
@@ -1084,6 +1147,17 @@ class AbilityParserV2:
                     if "TYPE_MEMBER" in params:
                         params["value"] = "member"
 
+                if name == "SELECT_CARD" and str(params.get("val", "")).upper() == "REVEALED_CARD":
+                    filter_str = str(params.get("FILTER") or params.get("filter") or "").upper()
+                    if "TYPE_LIVE" in filter_str:
+                        params["card_type"] = "live"
+                        conditions.append(Condition(ConditionType.TYPE_CHECK, params, is_negated=is_negated))
+                        continue
+                    if "TYPE_MEMBER" in filter_str:
+                        params["card_type"] = "member"
+                        conditions.append(Condition(ConditionType.TYPE_CHECK, params, is_negated=is_negated))
+                        continue
+
                 # Default: try to resolve from ConditionType enum
                 ctype = getattr(ConditionType, name, ConditionType.NONE)
 
@@ -1193,6 +1267,14 @@ class AbilityParserV2:
                 if name_up == "ADD_TAG":
                     name_up = "META_RULE"
                     params["tag"] = val
+
+                if name_up == "SELECT_HAND" and str(params.get("destination", "")).upper() == "REVEAL":
+                    name_up = "REVEAL_CARDS"
+                    target = TargetType.CARD_HAND
+                    params["reveal_target"] = params.get("target", "OPPONENT_HIDDEN")
+                    params["target"] = "CARD_HAND"
+                    params["source"] = "HAND"
+                    params.setdefault("selection_mode", "HIDDEN")
 
                 if name_up.startswith("PLAY_MEMBER"):
                     if params.get("zone") == "DISCARD" or "DISCARD" in p.upper() or "DISCARD" in text.upper():
@@ -1327,6 +1409,8 @@ class AbilityParserV2:
                         val_int = int(val) if val else 1
                     except ValueError:
                         val_int = 1  # Fallback for non-numeric val (e.g. "ALL")
+                        if val:
+                            params["raw_val"] = val
                         if val == "ALL":
                             val_int = MAX_SELECT_ALL
                         elif val == "OPPONENT":

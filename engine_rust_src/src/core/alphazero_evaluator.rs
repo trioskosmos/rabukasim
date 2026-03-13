@@ -1,4 +1,5 @@
 // Basic imports
+use crate::core::alphazero_encoding::AlphaZeroEncoding;
 use crate::core::logic::state::GameState;
 use crate::core::logic::card_db::CardDatabase;
 use crate::core::heuristics::{Heuristic, HeuristicConfig};

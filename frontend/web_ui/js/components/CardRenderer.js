@@ -59,7 +59,20 @@ export const CardRenderer = {
             if (!isHidden) {
                 let imgPath = card.img || card.img_path || '';
                 const imgHtml = imgPath ? `<img src="${fixImgPath(imgPath)}" draggable="false" onerror="this.style.display='none'">` : '';
-                const displayName = i18n.translateCard(card).name || '';
+                
+                // Translate card name with proper fallback
+                let displayName = i18n.translateCard(card).name || '';
+                if (!displayName && card.name) {
+                    displayName = card.name;  // Fallback to original if translation fails
+                }
+                if (!displayName && card.type) {
+                    // Last resort: show translated type label if no name
+                    displayName = `[${i18n.translateCardType(card.type)}]`;
+                }
+                if (!displayName) {
+                    displayName = 'Card';
+                }
+                
                 div.innerHTML = `${imgHtml}${card.cost !== undefined ? `<span class="cost">${card.cost}</span>` : ''}<div class="name">${displayName}</div>`;
             } else {
                 div.classList.add('card-back');

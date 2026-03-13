@@ -296,6 +296,7 @@ pub const CHOICE_MOVE_MEMBER_DEST: i32 = 25;
 pub const CHOICE_RECOV_L: i32 = 26;
 pub const CHOICE_RECOV_M: i32 = 27;
 pub const CHOICE_SELECT_STAGE_EMPTY_BATON: i32 = 28;
+pub const CHOICE_REARRANGE_FORMATION: i32 = 29;
 
 // Extra Constants
 pub const FLAG_DRAW: u64 = 1u64;

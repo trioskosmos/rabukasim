@@ -1,0 +1,2 @@
+cycle,games,decisive_games,avg_turns,avg_duration_secs,p0_success_avg,p1_success_avg,buffer_count,train_loss,policy_loss,value_loss
+1,2,0,11.0000,0.8879,1.0000,0.5000,196,1.895711,1.143040,0.752912

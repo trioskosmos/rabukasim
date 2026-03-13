@@ -13,6 +13,7 @@ from pydantic import TypeAdapter
 
 # from compiler.parser import AbilityParser
 from compiler.pseudocode_pipeline import PseudocodeResolver
+from engine.models.ability_ir import BYTECODE_LAYOUT_NAME, BYTECODE_LAYOUT_VERSION, SEMANTIC_FORM_VERSION, VersionGate
 from engine.models.ability import AbilityCostType, ConditionType, EffectType, TriggerType
 from engine.models.card import EnergyCard, LiveCard, MemberCard
 from engine.models.enums import CHAR_MAP
@@ -80,7 +81,19 @@ def compile_cards(input_path: str, output_path: str):
 
     _pseudocode_resolver.reset()
 
-    compiled_data = {"member_db": {}, "live_db": {}, "energy_db": {}, "meta": {"version": "1.0", "source": input_path}}
+    compiled_data = {
+        "member_db": {},
+        "live_db": {},
+        "energy_db": {},
+        "meta": {
+            "version": "1.0",
+            "source": input_path,
+            "bytecode_layout_version": BYTECODE_LAYOUT_VERSION,
+            "bytecode_layout_name": BYTECODE_LAYOUT_NAME,
+            "semantic_form_version": SEMANTIC_FORM_VERSION,
+            "semantic_form_enabled": True,
+        },
+    }
 
     # Load existing card_id mapping if available (for ID stability)
     existing_id_mapping = {}
@@ -385,6 +398,44 @@ _v2_parser = AbilityParserV2()
 # Module-level error collector for bytecode compilation errors in parse_member/parse_live
 _bytecode_compile_errors: list[str] = []
 
+# Global compilation version gate (can be overridden per compilation run)
+_COMPILATION_VERSION_GATE: VersionGate = VersionGate(
+    bytecode_version=BYTECODE_LAYOUT_VERSION,
+    semantic_version=SEMANTIC_FORM_VERSION
+)
+
+
+def _compile_abilities_for_export(abilities: list, card_no: str, scope: str, version_gate: VersionGate = None) -> None:
+    """
+    Compile abilities for export with optional version gating.
+    
+    Args:
+        abilities: List of Ability objects to compile
+        card_no: Card number for error reporting
+        scope: Scope string ("MEMBER" or "LIVE") for error reporting
+        version_gate: Optional VersionGate for controlling compilation version
+    """
+    gate = version_gate or _COMPILATION_VERSION_GATE
+    
+    for idx, ab in enumerate(abilities):
+        ab.card_no = card_no
+        try:
+            ab.bytecode = ab.compile()
+        except Exception as e:
+            import traceback
+
+            tb_str = traceback.format_exc()
+            _bytecode_compile_errors.append(f"[{scope}] {card_no} ab#{idx}: {e}\n{tb_str}")
+            continue
+
+        try:
+            ab.build_semantic_form()
+        except Exception as e:
+            import traceback
+
+            tb_str = traceback.format_exc()
+            _bytecode_compile_errors.append(f"[{scope} SEMANTIC] {card_no} ab#{idx}: {e}\n{tb_str}")
+
 # Load consolidated ability mappings
 CONSOLIDATED_ABILITIES_PATH = "data/consolidated_abilities.json"
 _pseudocode_resolver = PseudocodeResolver.from_file(CONSOLIDATED_ABILITIES_PATH)
@@ -547,8 +598,16 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
     for ab in abilities:
         for eff in ab.effects:
             if eff.effect_type == EffectType.GRANT_ABILITY:
-                if "granted_ability_text" in eff.params:
-                    inner_text = str(eff.params.pop("granted_ability_text"))
+                granted_text = None
+                for key in ("granted_ability_text", "ability", "ABILITY"):
+                    if key in eff.params:
+                        granted_text = str(eff.params.pop(key))
+                        break
+
+                if granted_text:
+                    inner_text = granted_text
+                    for section_name in ("TRIGGER:", "COST:", "CONDITION:", "EFFECT:"):
+                        inner_text = inner_text.replace(f", {section_name}", f"\n{section_name}")
                     granted_abs = _v2_parser.parse(inner_text)
                     if granted_abs:
                         start_idx = len(abilities) + len(extra_abilities)
@@ -581,16 +640,7 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
         faq=data.get("faq", []),
     )
 
-    # Compile bytecode on the FINAL objects to ensure Pydantic doesn't strip them
-    for idx, ab in enumerate(card.abilities):
-        ab.card_no = card_no
-        try:
-            ab.bytecode = ab.compile()
-        except Exception as e:
-            import traceback
-
-            tb_str = traceback.format_exc()
-            _bytecode_compile_errors.append(f"[MEMBER] {card_no} ab#{idx}: {e}\n{tb_str}")
+    _compile_abilities_for_export(card.abilities, card_no, "MEMBER")
 
     compute_flags(card)
     return card
@@ -638,16 +688,7 @@ def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
         faq=data.get("faq", []),
     )
 
-    # Compile bytecode on the FINAL objects to ensure Pydantic doesn't strip them
-    for idx, ab in enumerate(card.abilities):
-        ab.card_no = card_no
-        try:
-            ab.bytecode = ab.compile()
-        except Exception as e:
-            import traceback
-
-            tb_str = traceback.format_exc()
-            _bytecode_compile_errors.append(f"[LIVE] {card_no} ab#{idx}: {e}\n{tb_str}")
+    _compile_abilities_for_export(card.abilities, card_no, "LIVE")
 
     compute_flags(card)
     return card
@@ -753,11 +794,30 @@ def check_parity(input_path, output_path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Compile raw card data to bytecode with optional version gating"
+    )
     parser.add_argument("--input", default="data/cards.json", help="Path to raw cards.json")
     parser.add_argument("--output", default="data/cards_compiled.json", help="Output path")
-    parser.add_argument("--check", action="store_true", help="Only check parity and exit")
+    parser.add_argument(
+        "--bytecode-version",
+        type=int,
+        default=BYTECODE_LAYOUT_VERSION,
+        help=f"Bytecode layout version (default: {BYTECODE_LAYOUT_VERSION})"
+    )
+    parser.add_argument(
+        "--check", action="store_true", help="Only check parity and exit"
+    )
     args = parser.parse_args()
+
+    # Set up version gate if non-default version requested
+    if args.bytecode_version != BYTECODE_LAYOUT_VERSION:
+        _COMPILATION_VERSION_GATE = VersionGate(
+            bytecode_version=args.bytecode_version,
+            semantic_version=SEMANTIC_FORM_VERSION
+        )
+        print(f"Using bytecode layout version {args.bytecode_version} "
+              f"({_COMPILATION_VERSION_GATE.get_layout_name()})")
 
     if args.check:
         if check_parity(args.input, args.output):

@@ -1,10 +1,13 @@
-import { translateAbility as modularTranslate, NAME_MAP, loadTranslations, t } from './i18n/index.js';
+import { translateAbility as modularTranslate, NAME_MAP, loadTranslations, t, translateCardType, translateProduct, translateSeries } from './i18n/index.js';
 
 // Re-expose to global window for legacy onclick handlers and direct access
 window.translateAbility = modularTranslate;
 window.NAME_MAP = NAME_MAP;
 window.loadTranslations = loadTranslations;
 window.t = t;
+window.translateCardType = translateCardType;
+window.translateProduct = translateProduct;
+window.translateSeries = translateSeries;
 
 // For backward compatibility with any code directly accessing window.Translations
 // Note: This will only be populated AFTER loadTranslations is called.
@@ -21,5 +24,5 @@ Object.defineProperty(window, 'Translations', {
     configurable: true
 });
 
-export { modularTranslate as translateAbility, NAME_MAP, t };
+export { modularTranslate as translateAbility, NAME_MAP, t, translateCardType, translateProduct, translateSeries };
 export default modularTranslate;

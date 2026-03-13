@@ -42,6 +42,45 @@ def resolve_extra_constants(metadata):
     return extra_constants
 
 
+def analyze_layout_fields(fields, layout_name):
+    groups = []
+
+    for field_name, bits in fields.items():
+        start, end = bits
+        if end < start:
+            raise ValueError(f"Invalid bit range for {layout_name}.{field_name}: [{start}, {end}]")
+
+        matched_group = None
+        for group in groups:
+            if start == group["start"] and end == group["end"]:
+                matched_group = group
+                break
+
+            overlaps = not (end < group["start"] or start > group["end"])
+            if overlaps:
+                raise ValueError(
+                    "Overlapping bytecode layout fields detected: "
+                    f"{layout_name}.{field_name}[{start},{end}] overlaps with "
+                    f"{layout_name}.{group['canonical']}[{group['start']},{group['end']}]"
+                )
+
+        if matched_group is None:
+            mask = (1 << (end - start + 1)) - 1
+            groups.append(
+                {
+                    "canonical": field_name,
+                    "aliases": [],
+                    "start": start,
+                    "end": end,
+                    "mask": mask,
+                }
+            )
+        else:
+            matched_group["aliases"].append(field_name)
+
+    return groups
+
+
 def sync():
     metadata_path = "data/metadata.json"
     if not os.path.exists(metadata_path):
@@ -781,25 +820,28 @@ def sync():
                     if not isinstance(fields, dict):
                         continue
 
+                    field_groups = analyze_layout_fields(fields, f"{word_name}.{variant_name}")
+
                     # Packer function
                     func_name = f"pack_{word_name.lower()}_{variant_name}"
                     args = ", ".join([f"{fname}=0" for fname in fields.keys()])
                     f.write(f"def {func_name}({args}):\n")
                     f.write("    res = 0\n")
-                    for fname, bits in fields.items():
-                        start, end = bits
-                        mask = (1 << (end - start + 1)) - 1
-                        f.write(f"    res |= ({fname} & {hex(mask)}) << {start}\n")
+                    for group in field_groups:
+                        merged_names = [group["canonical"], *group["aliases"]]
+                        merged_expr = " | ".join(merged_names)
+                        f.write(f"    res |= (({merged_expr}) & {hex(group['mask'])}) << {group['start']}\n")
                     f.write("    return res\n\n")
 
                     # Unpacker function
                     func_name = f"unpack_{word_name.lower()}_{variant_name}"
                     f.write(f"def {func_name}(val):\n")
                     f.write("    return {\n")
-                    for fname, bits in fields.items():
-                        start, end = bits
-                        mask = (1 << (end - start + 1)) - 1
-                        f.write(f"        '{fname}': (val >> {start}) & {hex(mask)},\n")
+                    for group in field_groups:
+                        decoded_expr = f"(val >> {group['start']}) & {hex(group['mask'])}"
+                        f.write(f"        '{group['canonical']}': {decoded_expr},\n")
+                        for alias in group["aliases"]:
+                            f.write(f"        '{alias}': {decoded_expr},\n")
                     f.write("    }\n\n")
 
         # 2. Rust Generated Layout
@@ -814,16 +856,19 @@ def sync():
                     if not isinstance(fields, dict):
                         continue
 
+                    field_groups = analyze_layout_fields(fields, f"{word_name}.{variant_name}")
+
                     prefix = f"{word_name}_{variant_name}".upper()
                     f.write(f"// --- {prefix} ---\n")
-                    for fname, bits in fields.items():
-                        start, end = bits
-                        mask = (1 << (end - start + 1)) - 1
-                        const_base = f"{prefix}_{fname.upper()}"
-                        f.write(f"pub const {const_base}_SHIFT: u32 = {start};\n")
-                        # Use u64 for A word masks to avoid overflow
+                    for group in field_groups:
+                        const_base = f"{prefix}_{group['canonical'].upper()}"
                         mask_type = "u64" if word_name == "A" else "u32"
-                        f.write(f"pub const {const_base}_MASK: {mask_type} = {hex(mask)};\n")
+                        f.write(f"pub const {const_base}_SHIFT: u32 = {group['start']};\n")
+                        f.write(f"pub const {const_base}_MASK: {mask_type} = {hex(group['mask'])};\n")
+                        for alias in group["aliases"]:
+                            alias_const_base = f"{prefix}_{alias.upper()}"
+                            f.write(f"pub const {alias_const_base}_SHIFT: u32 = {const_base}_SHIFT;\n")
+                            f.write(f"pub const {alias_const_base}_MASK: {mask_type} = {const_base}_MASK;\n")
                     f.write("\n")
 
     print("Successfully synchronized metadata to Rust, JS, Python, and WGSL!")

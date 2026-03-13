@@ -420,6 +420,7 @@ pub fn get_action_desc_rich(
             metadata.insert("full_label".into(), json!(label.clone()));
             metadata.insert("cost_label".into(), json!(cost_label));
             metadata.insert("cost".into(), json!(actual_cost));
+            metadata.insert("base_cost".into(), json!(base_cost));
             metadata.insert("name".into(), json!(card_name_full));
             metadata.insert("card_id".into(), json!(cid));
             (label, card.map(|m| m.original_text.clone()).unwrap_or_default(), "PLAY".into(), Some(slot_idx))
@@ -475,6 +476,7 @@ pub fn get_action_desc_rich(
             metadata.insert("full_label".into(), json!(label.clone()));
             metadata.insert("cost_label".into(), json!(cost_label));
             metadata.insert("cost".into(), json!(actual_cost));
+            metadata.insert("base_cost".into(), json!(base_cost));
             metadata.insert("name".into(), json!(card_name_full));
             metadata.insert("target_player".into(), json!(viewer_idx));
             metadata.insert("hand_idx".into(), json!(hand_idx));
@@ -1019,6 +1021,7 @@ pub fn get_action_desc_rich(
              metadata.insert("full_label".into(), json!(label.clone()));
              metadata.insert("cost_label".into(), json!(cost_label));
              metadata.insert("cost".into(), json!(actual_cost));
+             metadata.insert("base_cost".into(), json!(base_cost));
              metadata.insert("name".into(), json!(card_name_full));
              metadata.insert("card_id".into(), json!(cid));
              (label, card.map(|m| m.original_text.clone()).unwrap_or_default(), "PLAY".into(), Some(slot_idx))

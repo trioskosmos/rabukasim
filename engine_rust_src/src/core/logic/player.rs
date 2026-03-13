@@ -135,6 +135,8 @@ pub struct PlayerState {
     #[serde(default)]
     pub excess_hearts: u32,
     #[serde(default)]
+    pub excess_hearts_by_color: [u8; 7],
+    #[serde(default)]
     pub skip_next_activate: bool,
     #[serde(default)]
     pub activated_energy_group_mask: u32,
@@ -207,6 +209,7 @@ impl Default for PlayerState {
             play_count_this_turn: 0,
             yell_cards: SmallVec::new(),
             excess_hearts: 0,
+            excess_hearts_by_color: [0; 7],
             skip_next_activate: false,
             activated_energy_group_mask: 0,
             activated_member_group_mask: 0,
@@ -341,6 +344,7 @@ impl PlayerState {
         self.play_count_this_turn = 0;
         self.yell_cards.clear();
         self.excess_hearts = 0;
+        self.excess_hearts_by_color = [0; 7];
         self.activated_energy_group_mask = 0;
         self.activated_member_group_mask = 0;
         self.discarded_this_turn = 0;
@@ -428,6 +432,7 @@ impl PlayerState {
         self.play_count_this_turn = other.play_count_this_turn;
         copy_smallvec!(self.yell_cards, other.yell_cards);
         self.excess_hearts = other.excess_hearts;
+        self.excess_hearts_by_color = other.excess_hearts_by_color;
         self.skip_next_activate = other.skip_next_activate;
         self.activated_energy_group_mask = other.activated_energy_group_mask;
         self.activated_member_group_mask = other.activated_member_group_mask;

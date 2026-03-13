@@ -266,6 +266,126 @@ body {
     position: relative;
 }
 
+.planner-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.planner-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.planner-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+}
+
+.planner-status {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.planner-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.planner-block-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.planner-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.planner-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-dim);
+}
+
+.planner-chip-best {
+    background: rgba(245, 158, 11, 0.18);
+    color: #ffd58a;
+}
+
+.planner-chip-player {
+    background: rgba(74, 158, 255, 0.18);
+    color: #9ac7ff;
+}
+
+.planner-sequence {
+    max-height: 220px;
+    overflow: auto;
+}
+
+.planner-sequence-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.planner-sequence-item {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: var(--space-sm);
+    align-items: start;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.planner-sequence-item.invalid {
+    border-color: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.planner-step-index {
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.planner-step-text {
+    color: var(--text);
+}
+
+.planner-empty,
+.planner-muted {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+
 .game-board {
     flex: 1;
     display: flex;
@@ -480,6 +600,32 @@ body {
     min-height: 40px;
     min-width: 0;
     align-items: center;
+}
+
+.discard-pile-visual {
+    width: 60px;
+    height: 84px;
+    border: 2px dashed rgba(255,255,255,0.2);
+    border-radius: 5px;
+    background: rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.discard-pile-visual.hover-highlight {
+    border: 2px solid var(--accent-green) !important;
+    box-shadow: 0 0 15px var(--accent-green) !important;
+    background: rgba(0, 255, 0, 0.1) !important;
+}
+
+.discard-pile-visual.valid-target {
+    border-color: var(--accent-gold) !important;
+    box-shadow: 0 0 10px var(--accent-gold) !important;
 }
 
 /* Stage: 3-Slot Grid */
@@ -4059,5 +4205,6 @@ body {
          f o n t - s i z e :   0 . 7 r e m ; 
          t e x t - t r a n s f o r m :   u p p e r c a s e ; 
          m a r g i n - r i g h t :   4 p x ; 
- }  
+ } 
+ 
  

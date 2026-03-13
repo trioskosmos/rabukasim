@@ -198,6 +198,7 @@
                                         id="opp-energy-deck-count">0</span></div>
                                 <button class="btn btn-mini btn-discard" onclick="UI.showDiscardModal(1)">Discard (<span
                                         id="opp-discard-count">0</span>)</button>
+                                <div id="opp-discard-visual" class="discard-pile-visual"></div>
                             </div>
                             <div class="successful-live-area-container">
                                 <div class="card-area" id="opp-success"></div>
@@ -253,6 +254,7 @@
                                         id="my-energy-deck-count">0</span></div>
                                 <button class="btn btn-mini btn-discard" onclick="UI.showDiscardModal(0)">Discard (<span
                                         id="my-discard-count">0</span>)</button>
+                                <div id="my-discard-visual" class="discard-pile-visual"></div>
                             </div>
                             <div class="successful-live-area-container">
                                 <div class="card-area" id="my-success"></div>
@@ -332,6 +334,28 @@
                 </div>
                 <div class="ai-controls">
                     <button class="btn btn-ai" onclick="runAiAnalysis()">分析実行 (Run Analysis)</button>
+                </div>
+            </div>
+            <div class="sidebar-section planner-panel" id="turn-planner-panel">
+                <h3 class="planner-title">Turn Planner</h3>
+                <div class="planner-controls">
+                    <button id="turn-planner-refresh-btn" class="btn btn-ai" onclick="refreshTurnPlanner()">Refresh Best Line</button>
+                    <button id="turn-planner-score-btn" class="btn btn-secondary" onclick="scoreTurnPlanner()">Score My Line</button>
+                </div>
+                <div id="turn-planner-status" class="planner-status">Planner appears on your Main or Live Set turn.</div>
+                <div class="planner-block">
+                    <div class="planner-block-header">
+                        <span>Best Sequence</span>
+                        <div id="turn-planner-best-meta" class="planner-meta"></div>
+                    </div>
+                    <div id="turn-planner-best-sequence" class="planner-sequence"></div>
+                </div>
+                <div class="planner-block">
+                    <div class="planner-block-header">
+                        <span>My Sequence</span>
+                        <div id="turn-planner-my-meta" class="planner-meta"></div>
+                    </div>
+                    <div id="turn-planner-my-sequence" class="planner-sequence"></div>
                 </div>
             </div>
         </div>
@@ -592,6 +616,14 @@
             <div class="modal-body">
                 <div id="setup-mode-display" class="setup-mode-badge">
                     Mode: Solo (PvE)
+                </div>
+
+                <div class="setting-item" style="margin-bottom: 15px;">
+                    <label>Card Set:</label>
+                    <select id="card-set-select" class="form-select highlight-hover">
+                        <option value="compiled">Standard (Compiled)</option>
+                        <option value="vanilla">Vanilla (Base Set)</option>
+                    </select>
                 </div>
 
                 <div class="setup-grid">

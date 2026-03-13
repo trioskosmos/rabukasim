@@ -1,10 +1,10 @@
 use std::fs;
 use std::time::Instant;
-use std::sync::{Arc, Mutex};
 use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
 use engine_rust::core::logic::turn_sequencer::TurnSequencer;
 use engine_rust::core::enums::Phase;
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 struct EvalMetrics {
     total_nodes: usize,
@@ -181,7 +181,7 @@ fn main() {
     // Profile what's actually slow
     let t = Instant::now();
     for _ in 0..100 {
-        let mut s = state.clone();
+        let _state_clone = state.clone();
     }
     println!("[CLONE x100] {:.3}ms ({:.3}µs each)", t.elapsed().as_secs_f32() * 1000.0, t.elapsed().as_secs_f32() * 1000.0 / 100.0);
     

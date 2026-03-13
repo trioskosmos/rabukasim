@@ -19,6 +19,70 @@ export const Network = {
     setOpenDeckModalCallback: (cb) => { onOpenDeckModal = cb; },
     triggerRoomUpdate: () => { if (typeof onRoomUpdate === 'function') onRoomUpdate(); },
 
+    clearPlannerData: () => {
+        State.plannerData = null;
+        State.lastPlannerFetchKey = null;
+        State.plannerLoading = false;
+    },
+
+    getPlannerFetchKey: () => {
+        const state = State.data;
+        if (!state || !State.roomCode) return null;
+        return `${State.roomCode}:${state.turn}:${state.active_player}:${state.phase}`;
+    },
+
+    shouldAutoFetchPlanner: () => {
+        const state = State.data;
+        if (!state || !State.roomCode || State.offlineMode || State.replayMode || State.hotseatMode) {
+            return false;
+        }
+
+        const trackedPhases = [Phase.MAIN, Phase.LIVE_SET, Phase.RESPONSE];
+        const isRelevantTurn = trackedPhases.includes(state.phase) && state.active_player === State.perspectivePlayer && !state.game_over;
+        const needsCompletionRefresh = State.plannerData?.your_sequence?.status === 'in_progress' && !isRelevantTurn;
+        return isRelevantTurn || needsCompletionRefresh;
+    },
+
+    fetchPlannerData: async ({ score = false, silent = false } = {}) => {
+        if (State.offlineMode || State.replayMode || !State.roomCode) {
+            Network.clearPlannerData();
+            if (!silent) onRender();
+            return null;
+        }
+
+        if (State.plannerLoading && !score) {
+            return State.plannerData;
+        }
+
+        State.plannerLoading = true;
+
+        try {
+            const endpoint = score ? 'api/planner/score' : 'api/planner';
+            const res = await fetch(endpoint, {
+                method: score ? 'POST' : 'GET',
+                headers: Network.getHeaders(),
+                body: score ? JSON.stringify({}) : undefined
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                State.plannerData = data.planner;
+                State.lastPlannerFetchKey = Network.getPlannerFetchKey();
+            } else if (!score) {
+                State.plannerData = null;
+            }
+
+            if (!silent) onRender();
+            return data;
+        } catch (e) {
+            console.error('[Planner] Failed to fetch planner data:', e);
+            if (!silent) onRender();
+            return null;
+        } finally {
+            State.plannerLoading = false;
+        }
+    },
+
     // Helpers
     getHeaders: () => {
         const headers = { 'Content-Type': 'application/json' };
@@ -108,6 +172,7 @@ export const Network = {
             if (data.success) {
                 State.roomCode = data.room_id;
                 State.offlineMode = false;
+                Network.clearPlannerData();
                 localStorage.setItem('lovelive_room_code', State.roomCode);
 
                 // Clear old session for new room
@@ -149,6 +214,7 @@ export const Network = {
 
         State.roomCode = code;
         State.offlineMode = false;
+    Network.clearPlannerData();
         localStorage.setItem('lovelive_room_code', State.roomCode);
 
         // Try to load existing session first
@@ -164,6 +230,7 @@ export const Network = {
             });
             const data = await res.json();
             if (data.success) {
+                State.cardSet = data.card_set || 'compiled';
                 Network.saveSession(code, { token: data.session, playerId: data.player_idx });
             } else {
                 console.warn("Join failed or room full:", data.error);
@@ -200,6 +267,7 @@ export const Network = {
                     if (raw === State.lastStateJson) return;
                     State.lastStateJson = raw;
                     updateStateData(res.state);
+                    Network.clearPlannerData();
                     onRender();
                 }
                 return;
@@ -258,6 +326,7 @@ export const Network = {
 
                     State.roomCode = null;
                     State.sessionToken = null;
+                    Network.clearPlannerData();
                     updateStateData(null);
 
                     if (typeof onRoomUpdate === 'function') onRoomUpdate();
@@ -319,6 +388,11 @@ export const Network = {
             }
 
             onRender();
+
+            const plannerKey = Network.getPlannerFetchKey();
+            if (Network.shouldAutoFetchPlanner() && plannerKey !== State.lastPlannerFetchKey) {
+                Network.fetchPlannerData({ silent: true });
+            }
         } catch (e) {
             console.error("Fetch Error:", e);
             // If we have a room code but the fetch failed (network/server down),
@@ -330,6 +404,7 @@ export const Network = {
                     console.error("[Network] Critical connection failure. Returning to lobby.");
                     State.roomCode = null;
                     State.sessionToken = null;
+                    Network.clearPlannerData();
                     localStorage.removeItem('lovelive_room_code');
                     updateStateData(null);
                     if (typeof onRoomUpdate === 'function') onRoomUpdate();
@@ -365,6 +440,7 @@ export const Network = {
                 const res = await State.wasmAdapter.doAction(id);
                 if (res.success) {
                     updateStateData(res.state);
+                    Network.clearPlannerData();
                     State.lastStateJson = JSON.stringify(res.state);
                     onRender();
                     log('Action completed');
@@ -389,6 +465,7 @@ export const Network = {
                     State.perspectivePlayer = State.data.my_player_id;
                 }
                 onRender();
+                await Network.fetchPlannerData({ silent: true });
                 log('Action completed');
                 // adaptive polling logic? omitted for brevity or passed in?
             } else {
@@ -405,11 +482,13 @@ export const Network = {
 
         // Reset game-specific state
         State.resetForNewGame();
+        Network.clearPlannerData();
 
         if (State.offlineMode) {
             const res = await State.wasmAdapter.resetGame();
             if (res.success) {
                 updateStateData(res.state);
+                Network.clearPlannerData();
                 window.lastShownPerformanceHash = "";
                 onRender();
                 log('New game started');
@@ -480,6 +559,7 @@ export const Network = {
         const data = JSON.parse(text);
         if (data.success) {
             updateStateData(data.state);
+            Network.clearPlannerData();
             onRender();
             console.log('Forced');
         } else {
@@ -504,6 +584,7 @@ export const Network = {
         const data = JSON.parse(text);
         if (data.success) {
             updateStateData(data.state);
+            Network.clearPlannerData();
             onRender();
             log('Code executed');
         } else {
@@ -538,6 +619,7 @@ export const Network = {
             State.offlineMode = true;
             State.roomCode = null;
             State.sessionToken = null;
+            Network.clearPlannerData();
             updateStateData(null);
 
             ModalManager.hide(DOM_IDS.MODAL_ROOM);

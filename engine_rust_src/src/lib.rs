@@ -3,8 +3,6 @@ pub mod core;
 #[cfg(feature = "extension-module")]
 pub mod py_bindings;
 pub mod repro;
-#[cfg(test)]
-mod repro_discard_bug;
 pub mod test_helpers;
 pub mod wasm_bindings;
 
@@ -73,14 +71,6 @@ mod filter_audit_tests;
 #[cfg(test)]
 mod qa_verification_tests;
 #[cfg(test)]
-mod repro_bp3_002_p;
-#[cfg(test)]
-mod repro_card_fixes;
-#[cfg(test)]
-mod repro_optionality;
-#[cfg(test)]
-mod repro_task;
-#[cfg(test)]
 mod rule_alignment_tests;
 #[cfg(test)]
 mod semantic_assertions;
@@ -88,21 +78,10 @@ mod semantic_assertions;
 mod qa;
 
 #[cfg(test)]
-mod repro_flags;
-
-pub mod repro_kanon_557;
-
-#[cfg(test)]
 mod meta_rule_card_tests;
 
 #[cfg(test)]
 mod opcode_rigor_tests;
-#[cfg(test)]
-mod repro_bp4_002_p;
-#[cfg(test)]
-mod repro_color_filter;
-#[cfg(test)]
-mod repro_softlock;
 
 #[cfg(test)]
 mod untested_opcode_tests;

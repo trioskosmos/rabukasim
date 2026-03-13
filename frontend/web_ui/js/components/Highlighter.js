@@ -152,17 +152,26 @@ export const Highlighter = {
 
         if (!specificHighlighted) {
             const aid = a.id;
-            if (aid >= 600 && aid <= 602) {
-                const prefix = (state.phase === 'LiveResult' ? selfPrefix : oppPrefix);
-                const targetId = state.phase === 'LiveResult' ? `${prefix}-live-slot-${aid - 600}` : `${prefix}-stage-slot-${aid - 600}`;
-                Highlighter.addHighlight(targetId, 'highlight-target');
+            if (aid >= 600 && aid < 610) {
+                const liveIdx = aid - 600;
+                if (state.phase === 'LiveResult' || a.type === 'LIVE_PERFORM' || (a.metadata && a.metadata.category === 'LIVE')) {
+                    Highlighter.addHighlight(`${selfPrefix}-live-slot-${liveIdx}`, 'highlight-target');
+                } else {
+                    Highlighter.addHighlight(`${oppPrefix}-stage-slot-${liveIdx}`, 'highlight-target');
+                }
+                specificHighlighted = true;
+            } else if (a.type === 'SELECT_DISCARD' || (a.metadata && (a.metadata.from_discard || a.metadata.category === 'DISCARD'))) {
+                Highlighter.addHighlight(`${selfPrefix}-discard-visual`, 'highlight-target');
+                specificHighlighted = true;
             } else if (aid >= 300 && aid <= 399) {
                 if (state.phase && state.phase.includes('Mulligan')) {
                     Highlighter.addHighlight(`${selfPrefix}-hand-card-${aid - 300}`, 'highlight-target');
+                    specificHighlighted = true;
                 }
             } else if (aid >= 400 && aid <= 499) {
                 Highlighter.addHighlight(`${selfPrefix}-hand-card-${aid - 400}`, 'highlight-source');
                 Highlighter.addHighlight(`${selfPrefix}-live`, 'highlight-target');
+                specificHighlighted = true;
             } else if (aid >= 500 && aid <= 509) {
                 // Do nothing
             } else if (aid >= 8000 && aid <= 8999) {
@@ -272,7 +281,7 @@ export const Highlighter = {
                 }
             }
             if (p.discard && p.discard.some(c => (typeof c === 'object' ? c.id === srcId : c === srcId))) {
-                Highlighter.addHighlight(`${pMap.prefix}-discard`, className);
+                Highlighter.addHighlight(`${pMap.prefix}-discard-visual`, className);
                 if (firstOnly) return;
             }
             if (p.energy) {
@@ -312,7 +321,7 @@ export const Highlighter = {
                 }
                 if ((a.hand_idx === handIdx || a.index === handIdx) &&
                     (a.type === 'SELECT_HAND' || (a.name && a.name.includes('Discard')))) {
-                    validTargets.add('my-discard');
+                    validTargets.add('my-discard-visual');
                 }
                 if (a.hand_idx === handIdx && a.id >= 600 && a.id <= 602) {
                     validTargets.add(`opp-stage-slot-${a.id - 600}`);

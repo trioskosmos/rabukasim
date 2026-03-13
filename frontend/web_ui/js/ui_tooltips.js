@@ -149,10 +149,10 @@ export const Tooltips = {
             titleText = translated.name;
 
             if (translated.groups && translated.groups.length > 0) {
-                metadataHtml += `<div class="tooltip-metadata"><strong>Series:</strong> ${translated.groups.join(', ')}</div>`;
+                metadataHtml += `<div><strong>Series:</strong> ${translated.groups.join(', ')}</div>`;
             }
             if (translated.units && translated.units.length > 0) {
-                metadataHtml += `<div class="tooltip-metadata"><strong>Unit:</strong> ${translated.units.join(', ')}</div>`;
+                metadataHtml += `<div><strong>Unit:</strong> ${translated.units.join(', ')}</div>`;
             }
         }
         

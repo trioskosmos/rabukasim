@@ -175,8 +175,6 @@ fn main() {
     println!("  1. COUNT SEQUENCES: {} sequences in {:.3}s", exact_sequences, count_time.as_secs_f64());
 
     // Save state for next step
-    let state_before_main = state.clone();
-
     // STEP 2: Execute one random move
     println!("\n  2. EXECUTE RANDOM MOVE:");
     let main_start = Instant::now();
@@ -216,7 +214,6 @@ fn main() {
     // STEP 3: Rest of turn (LiveSet, auto_step, etc.)
     println!("\n  3. LIVESETS & AUTO-STEP:");
     let rest_start = Instant::now();
-    let mut phase_count = 0;
     while !state.is_terminal() {
         if state.phase == Phase::Main {
             break; // Next turn
@@ -234,7 +231,6 @@ fn main() {
         let phase_time = phase_start.elapsed();
         
         if phase_time.as_millis() > 0 {
-            phase_count += 1;
             println!("     Phase {:?}: {:.3}s", phase, phase_time.as_secs_f64());
         }
     }

@@ -209,6 +209,7 @@ def generate_matrix():
     rust_root = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\engine_rust_src"
     output_paths = [
         r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\.agent\skills\qa_rule_verification\qa_test_matrix.md",
+        r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\.github\skills\qa_rule_verification\qa_test_matrix.md",
         r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\.kilocode\skills\qa_rule_verification\qa_test_matrix.md",
     ]
 

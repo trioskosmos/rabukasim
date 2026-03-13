@@ -1,8 +1,10 @@
-use engine_rust::core::logic::GameState;
+use engine_rust::core::logic::interpreter::conditions::check_condition;
+use engine_rust::core::logic::{AbilityContext, GameState};
+use engine_rust::test_helpers::load_real_db;
 
 #[test]
 fn test_sumire_8752_trigger_repro() {
-    let db = engine_rust::test_helpers::load_real_db();
+    let db = load_real_db();
 
     // Card 8752: PL!SP-bp4-004-P＋
     let sumire_id = 8752;
@@ -27,7 +29,7 @@ fn test_sumire_8752_trigger_repro() {
     state.prev_card_id = kanon_id as i32; // Primary baton source (Liella)
     state.players[p1].play_count_this_turn = 1; // Just played a card
 
-    let ctx = engine_rust::core::logic::AbilityContext {
+    let ctx = AbilityContext {
         player_id: p1 as u8,
         source_card_id: sumire_id,
         area_idx: 1, // Center
@@ -43,9 +45,7 @@ fn test_sumire_8752_trigger_repro() {
     // In real execution, check_condition is called
     let mut cond_results = Vec::new();
     for cond in &ab.conditions {
-        let res = engine_rust::core::logic::interpreter::conditions::check_condition(
-            &state, &db, p1, cond, &ctx, 0
-        );
+        let res = check_condition(&state, &db, p1, cond, &ctx, 0);
         println!("Condition {:?} Result: {}", cond.condition_type, res);
         cond_results.push(res);
     }

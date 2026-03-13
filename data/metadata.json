@@ -341,7 +341,8 @@
         "MOVE_MEMBER_DEST": 25,
         "RECOV_L": 26,
         "RECOV_M": 27,
-        "SELECT_STAGE_EMPTY_BATON": 28
+        "SELECT_STAGE_EMPTY_BATON": 28,
+        "REARRANGE_FORMATION": 29
     },
     "extra_constants": {
         "FLAG_DRAW": 1,

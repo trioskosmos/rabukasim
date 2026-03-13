@@ -1,8 +1,7 @@
 use std::fs;
-use std::time::Instant;
-use engine_rust::core::logic::{GameState, CardDatabase};
-use engine_rust::core::{ACTION_BASE_PASS};
+use engine_rust::core::logic::CardDatabase;
 
+#[allow(dead_code)]
 fn load_vanilla_db() -> CardDatabase {
     let candidates = [
         "data/cards_vanilla.json",
@@ -22,6 +21,7 @@ fn load_vanilla_db() -> CardDatabase {
     panic!("cards_vanilla.json not found");
 }
 
+#[allow(dead_code)]
 fn load_deck(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
     let content = fs::read_to_string(path).expect("Failed to read deck");
     let mut members = Vec::new();

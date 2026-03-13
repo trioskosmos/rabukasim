@@ -28,10 +28,82 @@ fn compare_i32(actual: i32, target: i32, slot: i32) -> bool {
     }
 }
 
+fn parse_condition_type(value: i32) -> ConditionType {
+    match value {
+        200 => ConditionType::Turn1,
+        201 => ConditionType::HasMember,
+        202 => ConditionType::HasColor,
+        203 => ConditionType::CountStage,
+        204 => ConditionType::CountHand,
+        205 => ConditionType::CountDiscard,
+        206 => ConditionType::IsCenter,
+        207 => ConditionType::LifeLead,
+        208 => ConditionType::CountGroup,
+        209 => ConditionType::GroupFilter,
+        210 => ConditionType::OpponentHas,
+        211 => ConditionType::SelfIsGroup,
+        212 => ConditionType::ModalAnswer,
+        213 => ConditionType::CountEnergy,
+        214 => ConditionType::HasLiveCard,
+        215 => ConditionType::CostCheck,
+        216 => ConditionType::RarityCheck,
+        217 => ConditionType::HandHasNoLive,
+        218 => ConditionType::CountSuccessLive,
+        219 => ConditionType::OpponentHandDiff,
+        220 => ConditionType::ScoreCompare,
+        221 => ConditionType::HasChoice,
+        222 => ConditionType::OpponentChoice,
+        223 => ConditionType::CountHearts,
+        224 => ConditionType::CountBlades,
+        225 => ConditionType::OpponentEnergyDiff,
+        226 => ConditionType::HasKeyword,
+        227 => ConditionType::DeckRefreshed,
+        228 => ConditionType::HasMoved,
+        229 => ConditionType::HandIncreased,
+        230 => ConditionType::CountLiveZone,
+        231 => ConditionType::Baton,
+        232 => ConditionType::TypeCheck,
+        233 => ConditionType::IsInDiscard,
+        234 => ConditionType::AreaCheck,
+        235 => ConditionType::CostLead,
+        236 => ConditionType::ScoreLead,
+        237 => ConditionType::HeartLead,
+        238 => ConditionType::HasExcessHeart,
+        239 => ConditionType::NotHasExcessHeart,
+        240 => ConditionType::TotalBlades,
+        241 => ConditionType::CostCompare,
+        242 => ConditionType::BladeCompare,
+        243 => ConditionType::HeartCompare,
+        244 => ConditionType::OpponentHasWait,
+        245 => ConditionType::IsTapped,
+        246 => ConditionType::IsActive,
+        247 => ConditionType::LivePerformed,
+        248 => ConditionType::IsPlayer,
+        249 => ConditionType::IsOpponent,
+        250 => ConditionType::CountUniqueColors,
+        301 => ConditionType::CountEnergyExact,
+        302 => ConditionType::CountBladeHeartTypes,
+        303 => ConditionType::OpponentHasExcessHeart,
+        304 => ConditionType::ScoreTotalCheck,
+        305 => ConditionType::MainPhase,
+        306 => ConditionType::SelectMember,
+        307 => ConditionType::SuccessPileCount,
+        308 => ConditionType::IsSelfMove,
+        309 => ConditionType::DiscardedCards,
+        310 => ConditionType::YellRevealedUniqueColors,
+        311 => ConditionType::SyncCost,
+        312 => ConditionType::SumValue,
+        313 => ConditionType::IsWait,
+        314 => ConditionType::OnAbilityResolve,
+        315 => ConditionType::TargetMemberHasNoHearts,
+        _ => ConditionType::None,
+    }
+}
+
 pub fn check_condition(
     state: &GameState,
     db: &CardDatabase,
-    _p_idx: usize,
+    p_idx: usize,
     cond: &Condition,
     ctx: &AbilityContext,
     depth: u32,
@@ -139,6 +211,189 @@ pub fn check_condition(
         };
 
         match raw_cond {
+            "HAS_SUCCESS_LIVE" | "NOT_HAS_SUCCESS_LIVE" => {
+                let filter_attr = params
+                    .get("FILTER")
+                    .or_else(|| params.get("filter"))
+                    .and_then(|value| value.as_str())
+                    .map(map_filter_string_to_attr)
+                    .filter(|&attr| attr != 0)
+                    .unwrap_or(cond.attr);
+
+                let has_matching_success_live = state.players[ctx.player_id as usize]
+                    .success_lives
+                    .iter()
+                    .copied()
+                    .any(|cid| cid >= 0 && (filter_attr == 0 || state.card_matches_filter(db, cid, filter_attr)));
+
+                if raw_cond == "HAS_SUCCESS_LIVE" {
+                    has_matching_success_live
+                } else {
+                    !has_matching_success_live
+                }
+            }
+            "OR" => {
+                if let Some(clauses) = params.get("clauses").and_then(|value| value.as_array()) {
+                    for clause in clauses {
+                        let nested = Condition {
+                            condition_type: clause
+                                .get("type")
+                                .and_then(|value| value.as_i64())
+                                .map(|value| parse_condition_type(value as i32))
+                                .unwrap_or(ConditionType::None),
+                            value: clause
+                                .get("value")
+                                .and_then(|value| value.as_i64())
+                                .unwrap_or_default() as i32,
+                            attr: clause
+                                .get("attr")
+                                .and_then(|value| value.as_u64())
+                                .unwrap_or_default(),
+                            target_slot: 0,
+                            is_negated: clause
+                                .get("is_negated")
+                                .and_then(|value| value.as_bool())
+                                .unwrap_or(false),
+                            params: clause.get("params").cloned().unwrap_or_default(),
+                        };
+                        if check_condition(state, db, p_idx, &nested, ctx, depth + 1) {
+                            return true;
+                        }
+                    }
+                    false
+                } else {
+                    let first_branch = Condition {
+                        condition_type: ConditionType::None,
+                        value: 0,
+                        attr: 0,
+                        target_slot: 0,
+                        is_negated: false,
+                        params: serde_json::json!({
+                            "raw_cond": "YELL_PILE_CONTAINS",
+                            "FILTER": params.get("FILTER").cloned().unwrap_or_default(),
+                            "MAX": params.get("MAX").cloned().unwrap_or_default()
+                        }),
+                    };
+                    let second_branch = Condition {
+                        condition_type: ConditionType::None,
+                        value: 0,
+                        attr: 0,
+                        target_slot: 0,
+                        is_negated: false,
+                        params: serde_json::json!({
+                            "raw_cond": params.get("val").cloned().unwrap_or(serde_json::Value::String(String::new())),
+                            "MIN": params.get("MIN").cloned().unwrap_or_default()
+                        }),
+                    };
+                    check_condition(state, db, p_idx, &first_branch, ctx, depth + 1)
+                        || check_condition(state, db, p_idx, &second_branch, ctx, depth + 1)
+                }
+            }
+            "SELF_SCORE" => {
+                let perf_res = state
+                    .ui
+                    .performance_results
+                    .get(&(ctx.player_id as u8))
+                    .or_else(|| state.ui.last_performance_results.get(&(ctx.player_id as u8)));
+
+                let live_score = perf_res
+                    .and_then(|res| res.get("lives"))
+                    .and_then(|lives| lives.as_array())
+                    .and_then(|lives| {
+                        lives.iter().find_map(|live_res| {
+                            let card_matches = live_res
+                                .get("card_id")
+                                .and_then(|v| v.as_i64())
+                                .map(|card_id| card_id as i32 == ctx.source_card_id)
+                                .unwrap_or(false);
+                            let slot_matches = live_res
+                                .get("slot_idx")
+                                .and_then(|v| v.as_i64())
+                                .map(|slot_idx| slot_idx as i16 == ctx.area_idx)
+                                .unwrap_or(false);
+
+                            if card_matches || slot_matches {
+                                live_res
+                                    .get("score")
+                                    .and_then(|v| v.as_i64())
+                                    .map(|score| score as i32)
+                            } else {
+                                None
+                            }
+                        })
+                    })
+                    .or_else(|| db.get_live(ctx.source_card_id).map(|live| live.score as i32))
+                    .unwrap_or_default();
+
+                if let Some(eq) = params
+                    .get("EQUAL")
+                    .or_else(|| params.get("equal"))
+                    .or_else(|| params.get("EQ"))
+                    .or_else(|| params.get("eq"))
+                    .and_then(|v| v.as_i64())
+                {
+                    live_score == eq as i32
+                } else if let Some(min) = params
+                    .get("MIN")
+                    .or_else(|| params.get("min"))
+                    .and_then(|v| v.as_i64())
+                {
+                    live_score >= min as i32
+                } else if let Some(max) = params
+                    .get("MAX")
+                    .or_else(|| params.get("max"))
+                    .and_then(|v| v.as_i64())
+                {
+                    live_score <= max as i32
+                } else {
+                    live_score > 0
+                }
+            }
+            "SURPLUS_HEARTS_CONTAINS" => {
+                let target_is_opponent = params
+                    .get("val")
+                    .or_else(|| params.get("VAL"))
+                    .and_then(|v| v.as_str())
+                    .map(|v| v.eq_ignore_ascii_case("OPPONENT"))
+                    .unwrap_or(false);
+                let target_player = if target_is_opponent {
+                    &state.players[1 - ctx.player_id as usize]
+                } else {
+                    &state.players[ctx.player_id as usize]
+                };
+
+                let heart_type = params
+                    .get("HEART_TYPE")
+                    .or_else(|| params.get("heart_type"))
+                    .and_then(|v| v.as_u64())
+                    .map(|v| v as usize);
+                let target_count = heart_type
+                    .filter(|&heart_type| heart_type < 7)
+                    .map(|heart_type| target_player.excess_hearts_by_color[heart_type] as i32)
+                    .unwrap_or_else(|| target_player.excess_hearts as i32);
+
+                if let Some(eq) = params
+                    .get("EQ")
+                    .or_else(|| params.get("eq"))
+                    .and_then(|v| v.as_i64())
+                {
+                    target_count == eq as i32
+                } else if let Some(min) = params
+                    .get("MIN")
+                    .or_else(|| params.get("min"))
+                    .and_then(|v| v.as_i64())
+                {
+                    target_count >= min as i32
+                } else if let Some(max) = params
+                    .get("MAX")
+                    .or_else(|| params.get("max"))
+                    .and_then(|v| v.as_i64())
+                {
+                    target_count <= max as i32
+                } else {
+                    target_count > 0
+                }
+            }
             "SURPLUS_HEARTS_COUNT" => {
                 let target_is_opponent = params
                     .get("val")
@@ -172,6 +427,235 @@ pub fn check_condition(
                     target_hearts <= max as i32
                 } else {
                     target_hearts > 0
+                }
+            }
+            "REDUCE_YELL_COUNT" => {
+                let player_yell_count = state.players[ctx.player_id as usize].yell_cards.len() as i32;
+                let opponent_yell_count = state.players[1 - ctx.player_id as usize].yell_cards.len() as i32;
+
+                if params
+                    .get("LESS_THAN")
+                    .or_else(|| params.get("less_than"))
+                    .and_then(|v| v.as_str())
+                    .map(|v| v.eq_ignore_ascii_case("OPPONENT"))
+                    .unwrap_or(false)
+                {
+                    player_yell_count < opponent_yell_count
+                } else if params
+                    .get("GREATER_THAN")
+                    .or_else(|| params.get("greater_than"))
+                    .and_then(|v| v.as_str())
+                    .map(|v| v.eq_ignore_ascii_case("OPPONENT"))
+                    .unwrap_or(false)
+                {
+                    player_yell_count > opponent_yell_count
+                } else if params
+                    .get("EQ")
+                    .or_else(|| params.get("eq"))
+                    .and_then(|v| v.as_i64())
+                    .is_some()
+                {
+                    player_yell_count
+                        == params
+                            .get("EQ")
+                            .or_else(|| params.get("eq"))
+                            .and_then(|v| v.as_i64())
+                            .unwrap_or_default() as i32
+                } else {
+                    player_yell_count > 0
+                }
+            }
+            "YELL_PILE_CONTAINS" => {
+                let yell_cards = &state.players[ctx.player_id as usize].yell_cards;
+                let filter = params
+                    .get("FILTER")
+                    .or_else(|| params.get("filter"))
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+
+                let card_has_blade_heart = |cid: i32| {
+                    db.get_member(cid)
+                        .map(|card| card.blade_hearts.iter().any(|&heart| heart > 0))
+                        .or_else(|| {
+                            db.get_live(cid)
+                                .map(|card| card.blade_hearts.iter().any(|&heart| heart > 0))
+                        })
+                        .unwrap_or(false)
+                };
+
+                let matches_filter = |cid: i32| match filter {
+                    "TYPE=BLADE_HEART" => card_has_blade_heart(cid),
+                    "TYPE_NOT=BLADE_HEART" => !card_has_blade_heart(cid),
+                    "HAS_ALL_BLADE" => card_has_blade_heart(cid),
+                    _ => true,
+                };
+
+                let matching_count = yell_cards
+                    .iter()
+                    .copied()
+                    .filter(|&cid| matches_filter(cid))
+                    .count() as i32;
+
+                if filter.eq_ignore_ascii_case("HAS_ALL_BLADE")
+                    && params.get("EQ").is_none()
+                    && params.get("eq").is_none()
+                    && params.get("MIN").is_none()
+                    && params.get("min").is_none()
+                    && params.get("MAX").is_none()
+                    && params.get("max").is_none()
+                {
+                    !yell_cards.is_empty() && matching_count == yell_cards.len() as i32
+                } else if let Some(eq) = params
+                    .get("EQ")
+                    .or_else(|| params.get("eq"))
+                    .and_then(|v| v.as_i64())
+                {
+                    matching_count == eq as i32
+                } else if let Some(min) = params
+                    .get("MIN")
+                    .or_else(|| params.get("min"))
+                    .and_then(|v| v.as_i64())
+                {
+                    matching_count >= min as i32
+                } else if let Some(max) = params
+                    .get("MAX")
+                    .or_else(|| params.get("max"))
+                    .and_then(|v| v.as_i64())
+                {
+                    matching_count <= max as i32
+                } else {
+                    matching_count > 0
+                }
+            }
+            "UNIQUE_NAMES_COUNT" => {
+                let mut name_pool = Vec::<String>::new();
+                let mut stage_name_options = Vec::<Vec<usize>>::new();
+                for &cid in &state.players[ctx.player_id as usize].stage {
+                    if cid < 0 {
+                        continue;
+                    }
+                    if let Some(member) = db.get_member(cid) {
+                        let mut options = Vec::new();
+                        for part in member.name.split(['&', '＆']) {
+                            let normalized = part.trim();
+                            if !normalized.is_empty() {
+                                let name_index = if let Some(existing_index) = name_pool
+                                    .iter()
+                                    .position(|existing| existing == normalized)
+                                {
+                                    existing_index
+                                } else {
+                                    name_pool.push(normalized.to_string());
+                                    name_pool.len() - 1
+                                };
+                                if !options.contains(&name_index) {
+                                    options.push(name_index);
+                                }
+                            }
+                        }
+                        if !options.is_empty() {
+                            stage_name_options.push(options);
+                        }
+                    }
+                }
+                fn assign_name(
+                    card_index: usize,
+                    stage_name_options: &[Vec<usize>],
+                    name_owner: &mut [Option<usize>],
+                    seen_names: &mut [bool],
+                ) -> bool {
+                    for &name_index in &stage_name_options[card_index] {
+                        if seen_names[name_index] {
+                            continue;
+                        }
+                        seen_names[name_index] = true;
+                        if name_owner[name_index].is_none()
+                            || assign_name(
+                                name_owner[name_index].unwrap(),
+                                stage_name_options,
+                                name_owner,
+                                seen_names,
+                            )
+                        {
+                            name_owner[name_index] = Some(card_index);
+                            return true;
+                        }
+                    }
+                    false
+                }
+
+                let mut name_owner = vec![None; name_pool.len()];
+                let mut unique_count = 0;
+                for card_index in 0..stage_name_options.len() {
+                    let mut seen_names = vec![false; name_pool.len()];
+                    if assign_name(
+                        card_index,
+                        &stage_name_options,
+                        &mut name_owner,
+                        &mut seen_names,
+                    ) {
+                        unique_count += 1;
+                    }
+                }
+
+                if let Some(eq) = params
+                    .get("EQ")
+                    .or_else(|| params.get("eq"))
+                    .and_then(|value| value.as_i64())
+                {
+                    unique_count == eq as i32
+                } else if let Some(min) = params
+                    .get("MIN")
+                    .or_else(|| params.get("min"))
+                    .and_then(|value| value.as_i64())
+                {
+                    unique_count >= min as i32
+                } else if let Some(max) = params
+                    .get("MAX")
+                    .or_else(|| params.get("max"))
+                    .and_then(|value| value.as_i64())
+                {
+                    unique_count <= max as i32
+                } else {
+                    unique_count > 0
+                }
+            }
+            "UNIQUE_HEART_TYPES" => {
+                let mut color_mask: u8 = 0;
+                for &cid in &state.players[ctx.player_id as usize].stage {
+                    if cid < 0 {
+                        continue;
+                    }
+                    if let Some(member) = db.get_member(cid) {
+                        for (color_idx, &count) in member.hearts.iter().enumerate().take(6) {
+                            if count > 0 {
+                                color_mask |= 1u8 << color_idx;
+                            }
+                        }
+                    }
+                }
+                let unique_colors = color_mask.count_ones() as i32;
+
+                if let Some(eq) = params
+                    .get("EQ")
+                    .or_else(|| params.get("eq"))
+                    .and_then(|value| value.as_i64())
+                {
+                    unique_colors == eq as i32
+                } else if let Some(min) = params
+                    .get("MIN")
+                    .or_else(|| params.get("min"))
+                    .and_then(|value| value.as_i64())
+                {
+                    unique_colors >= min as i32
+                } else if let Some(max) = params
+                    .get("MAX")
+                    .or_else(|| params.get("max"))
+                    .and_then(|value| value.as_i64())
+                {
+                    unique_colors <= max as i32
+                } else {
+                    unique_colors > 0
                 }
             }
             _ => true,
@@ -373,9 +857,6 @@ pub fn resolve_count(
                 .count() as i32;
 
             let mut res = raw_count;
-            if ctx.player_id == 0 && ids.contains(&4632) {
-                 println!("[DEBUG_COND] resolve_count: raw={}, filter=0x{:x}, ids={:?}, source_id={}", raw_count, final_filter, ids, ctx.source_card_id);
-            }
             if do_subtraction {
                 let target_id = if special_id == 3 { ctx.source_card_id } else if special_id == 2 { ctx.activator_id as i32 } else { -2 };
                 if ids.contains(&target_id) && if state.debug.debug_mode { state.card_matches_filter_with_ctx_logs(db, target_id, final_filter, ctx) } else { state.card_matches_filter_with_ctx(db, target_id, final_filter, ctx) } {
@@ -554,14 +1035,21 @@ pub fn check_condition_opcode(
                 }
                 if color_idx < 7 {
                     player.stage.iter().filter(|&&c| c >= 0).any(|&c| {
-                         if let Some(m) = db.get_member(c) {
-                             let has_heart = m.hearts[color_idx] > 0;
-                             if state.debug.debug_mode { println!("DEBUG [C_HAS_COLOR]: cid={}, hearts={:?}, color_idx={}, result={}", c, m.hearts, color_idx, has_heart); }
-                             has_heart
-                         } else {
-                             if state.debug.debug_mode { println!("DEBUG [C_HAS_COLOR]: cid={} NOT FOUND IN DB", c); }
-                             false
-                         }
+                        if let Some(m) = db.get_member(c) {
+                            let has_heart = m.hearts[color_idx] > 0;
+                            if state.debug.debug_mode {
+                                println!(
+                                    "DEBUG [C_HAS_COLOR]: cid={}, hearts={:?}, color_idx={}, result={}",
+                                    c, m.hearts, color_idx, has_heart
+                                );
+                            }
+                            has_heart
+                        } else {
+                            if state.debug.debug_mode {
+                                println!("DEBUG [C_HAS_COLOR]: cid={} NOT FOUND IN DB", c);
+                            }
+                            false
+                        }
                     })
                 } else {
                     false
@@ -884,7 +1372,13 @@ pub fn check_condition_opcode(
             } else {
                 val
             };
-            if let Some(card_id) = state.get_context_card_id(ctx) {
+            let card_id = player
+                .looked_cards
+                .first()
+                .copied()
+                .filter(|&cid| cid >= 0)
+                .or_else(|| state.get_context_card_id(ctx));
+            if let Some(card_id) = card_id {
                 if check_val == 1 {
                     db.get_live(card_id).is_some()
                 } else {
@@ -929,8 +1423,8 @@ pub fn check_condition_opcode(
             if val == 0 { diff > 0 } else { diff >= val }
         }
         C_HEART_LEAD => {
-            let self_hearts = state.get_total_hearts(p_idx, db, depth + 1);
-            let opp_hearts = state.get_total_hearts(1 - p_idx, db, depth + 1);
+            let self_hearts = state.get_total_member_hearts(p_idx, db, depth + 1);
+            let opp_hearts = state.get_total_member_hearts(1 - p_idx, db, depth + 1);
             let self_total = self_hearts
                 .to_array()
                 .iter()
@@ -1148,8 +1642,16 @@ pub fn check_condition_opcode(
         }
         309 => {
             // DISCARDED_CARDS
-            // Count cards discarded this turn
-            compare_i32(player.discarded_this_turn as i32, val, slot)
+            let matching_count = if !ctx.selected_cards.is_empty() {
+                ctx.selected_cards
+                    .iter()
+                    .copied()
+                    .filter(|&cid| attr == 0 || state.card_matches_filter(db, cid, attr))
+                    .count() as i32
+            } else {
+                player.discarded_this_turn as i32
+            };
+            compare_i32(matching_count, val, slot)
         }
         310 => {
             // YELL_REVEALED_UNIQUE_COLORS

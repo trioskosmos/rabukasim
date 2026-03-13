@@ -3,6 +3,8 @@
 
 import json
 
+from engine.models.bytecode_readable import OPCODE_NAMES, TRIGGER_NAMES
+
 # Cards compiled
 with open("data/cards_compiled.json", "r", encoding="utf-8") as f:
     data = json.load(f)
@@ -36,7 +38,7 @@ for db_key in ["member_db", "live_db"]:
                 empty_bc += 1
             else:
                 has_bc += 1
-                for i in range(0, len(bc), 4):
+                for i in range(0, len(bc), 5):
                     if i < len(bc):
                         op = bc[i]
                         if op >= 200:
@@ -48,9 +50,7 @@ for db_key in ["member_db", "live_db"]:
             if trig is not None:
                 used_triggers.add(trig)
 
-opcode_names = {v: k for k, v in meta["opcodes"].items()}
 cond_names = {v: k for k, v in meta["conditions"].items()}
-trigger_names = {v: k for k, v in meta["triggers"].items()}
 
 defined_opcodes = set(meta["opcodes"].values()) - {0, 1, 2, 3}
 defined_conditions = set(meta["conditions"].values())
@@ -79,7 +79,7 @@ print(
 if unused_opcodes:
     print(f"\nUnused opcodes ({len(unused_opcodes)}):")
     for op in sorted(unused_opcodes):
-        print(f"  {op:3d} = {opcode_names.get(op, '???')}")
+        print(f"  {op:3d} = {OPCODE_NAMES.get(op, '???')}")
 
 print()
 print("--- Condition Usage ---")
@@ -96,7 +96,7 @@ if unused_conditions:
 print()
 print("--- Trigger Usage ---")
 for t in sorted(used_triggers):
-    print(f"  {t} = {trigger_names.get(t, '???')}")
+    print(f"  {t} = {TRIGGER_NAMES.get(t, '???')}")
 
 print()
 print("--- Metadata Totals ---")

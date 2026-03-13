@@ -583,6 +583,35 @@
       "CatChu!": "CatChu!",
       "KALEIDOSCORE": "KALEIDOSCORE",
       "5yncri5e!": "5yncri5e!"
+    },
+    "CARD_TYPES": {
+      "メンバー": "Member",
+      "ライブ": "Live",
+      "エネルギー": "Energy"
+    },
+    "PRODUCTS": {
+      "PRカード": "PR Card",
+      "スタートデッキラブライブ！": "Love Live! Starter Deck",
+      "スタートデッキラブライブ！サンシャイン!!": "Love Live! Sunshine!! Starter Deck",
+      "スタートデッキラブライブ！スーパースター!!": "Love Live! Superstar!! Starter Deck",
+      "スタートデッキラブライブ！虹ヶ咲学園スクールアイドル同好会": "Love Live! Nijigasaki Starter Deck",
+      "スタートデッキラブライブ！蓮ノ空女学院スクールアイドルクラブ": "Love Live! Hasunosora Starter Deck",
+      "ブースターパックvol.1": "Booster Pack Vol.1",
+      "ブースターパック夏、はじまる。": "Booster Pack Summer Begins",
+      "ブースターパックSAPPHIREMOON": "Booster Pack Sapphire Moon",
+      "ブースターパックNEXTSTEP": "Booster Pack Next Step",
+      "ブースターパックAnniversary2026": "Booster Pack Anniversary 2026",
+      "プレミアムブースターラブライブ！": "Premium Booster Love Live!",
+      "プレミアムブースターラブライブ！サンシャイン!!": "Premium Booster Love Live! Sunshine!!",
+      "プレミアムブースターラブライブ！スーパースター!!": "Premium Booster Love Live! Superstar!!",
+      "プレミアムブースターラブライブ！虹ヶ咲学園スクールアイドル同好会": "Premium Booster Love Live! Nijigasaki"
+    },
+    "SERIES": {
+      "ラブライブ！": "Love Live!",
+      "ラブライブ！サンシャイン!!": "Love Live! Sunshine!!",
+      "ラブライブ！虹ヶ咲学園スクールアイドル同好会": "Love Live! Nijigasaki High School Idol Club",
+      "ラブライブ！スーパースター!!": "Love Live! Superstar!!",
+      "蓮ノ空女学院スクールアイドルクラブ": "Hasunosora Girls' High School Idol Club"
     }
   },
   "misc": {

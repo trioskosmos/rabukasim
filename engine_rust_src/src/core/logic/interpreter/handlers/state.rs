@@ -1,4 +1,5 @@
 use crate::core::enums::*;
+use crate::core::hearts::HeartBoard;
 use crate::core::logic::constants::CHOICE_DONE;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
 use crate::core::models::interpreter::{resolve_target_slot, get_choice_text};
@@ -7,6 +8,89 @@ use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::logging;
 use crate::core::generated_layout::*;
 use super::HandlerResult;
+
+fn update_live_score_snapshot(
+    state: &mut GameState,
+    player_idx: usize,
+    source_card_id: i32,
+    area_idx: i16,
+    new_score: i32,
+) -> bool {
+    let score_value = serde_json::Value::from(new_score.max(0));
+
+    for results in [
+        &mut state.ui.performance_results,
+        &mut state.ui.last_performance_results,
+    ] {
+        let Some(serde_json::Value::Object(map)) = results.get_mut(&(player_idx as u8)) else {
+            continue;
+        };
+        let Some(serde_json::Value::Array(lives)) = map.get_mut("lives") else {
+            continue;
+        };
+
+        let mut updated = false;
+        for live_res in lives.iter_mut() {
+            let Some(live_map) = live_res.as_object_mut() else {
+                continue;
+            };
+            let card_matches = live_map
+                .get("card_id")
+                .and_then(|value| value.as_i64())
+                .map(|value| value as i32 == source_card_id)
+                .unwrap_or(false);
+            let slot_matches = live_map
+                .get("slot_idx")
+                .and_then(|value| value.as_i64())
+                .map(|value| value as i16 == area_idx)
+                .unwrap_or(false);
+
+            if card_matches || slot_matches {
+                live_map.insert("score".to_string(), score_value.clone());
+                updated = true;
+            }
+        }
+
+        if updated {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn inline_value_ge_threshold(db: &CardDatabase, ctx: &AbilityContext) -> Option<i32> {
+    let abilities = db.get_live(ctx.source_card_id)
+        .map(|card| &card.abilities)
+        .or_else(|| db.get_member(ctx.source_card_id).map(|card| &card.abilities))?;
+
+    let ability = usize::try_from(ctx.ability_index)
+        .ok()
+        .and_then(|ability_index| abilities.get(ability_index))
+        .or_else(|| abilities.iter().find(|ability| ability.raw_text.contains("VALUE_GE(")))?;
+
+    let raw_text = ability.raw_text.as_str();
+    let marker = "VALUE_GE(";
+    let start = raw_text.find(marker)? + marker.len();
+    let tail = &raw_text[start..];
+    let comma = tail.find(',')?;
+    let close = tail[comma + 1..].find(')')? + comma + 1;
+    tail[comma + 1..close].trim().parse::<i32>().ok()
+}
+
+fn source_card_no<'a>(db: &'a CardDatabase, source_card_id: i32) -> Option<&'a str> {
+    db.get_member(source_card_id)
+        .map(|card| card.card_no.as_str())
+        .or_else(|| db.get_live(source_card_id).map(|card| card.card_no.as_str()))
+}
+
+fn tap_opponent_chooser_player(db: &CardDatabase, ctx: &AbilityContext) -> u8 {
+    if matches!(source_card_no(db, ctx.source_card_id), Some("PL!-pb1-015-R")) {
+        ctx.activator_id
+    } else {
+        (1 - (ctx.activator_id as usize)) as u8
+    }
+}
 
 pub fn handle_energy(
     state: &mut GameState,
@@ -213,6 +297,69 @@ pub fn handle_energy(
                 0
             };
 
+            let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
+            if src_zone == 3 {
+                if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
+                    if suspend_interaction(
+                        state,
+                        db,
+                        ctx,
+                        instr_ip,
+                        O_PLACE_ENERGY_UNDER_MEMBER,
+                        0,
+                        ChoiceType::Optional,
+                        "",
+                        a as u64,
+                        -1,
+                    ) {
+                        return HandlerResult::Suspend;
+                    }
+                }
+
+                if ctx.choice_index == 99 {
+                    return HandlerResult::SetCond(false);
+                }
+
+                let mut next_ctx = ctx.clone();
+                if is_optional && ctx.choice_index != -1 && ctx.v_remaining == -1 {
+                    if ctx.choice_index == 1 {
+                        return HandlerResult::SetCond(false);
+                    }
+                    next_ctx.choice_index = -1;
+                    next_ctx.v_remaining = 1;
+                }
+
+                if next_ctx.choice_index == -1 {
+                    if state.players[p_idx].energy_zone.is_empty() {
+                        return HandlerResult::SetCond(false);
+                    }
+
+                    if suspend_interaction(
+                        state,
+                        db,
+                        &next_ctx,
+                        instr_ip,
+                        O_PLACE_ENERGY_UNDER_MEMBER,
+                        0,
+                        ChoiceType::PayEnergy,
+                        "",
+                        a as u64,
+                        1,
+                    ) {
+                        return HandlerResult::Suspend;
+                    }
+                }
+
+                let idx = next_ctx.choice_index as usize;
+                if idx >= state.players[p_idx].energy_zone.len() || slot >= 3 {
+                    return HandlerResult::SetCond(false);
+                }
+
+                let energy_cid = state.players[p_idx].energy_zone.remove(idx);
+                state.players[p_idx].stage_energy[slot].push(energy_cid);
+                return HandlerResult::SetCond(true);
+            }
+
             if slot < 3 {
                 match src_zone {
                     7 => {
@@ -220,8 +367,27 @@ pub fn handle_energy(
                             state.players[p_idx].stage_energy[slot].push(cid);
                         }
                     }
-                    8 | 0 => {
+                    8 => {
                         if let Some(cid) = state.players[p_idx].deck.pop() {
+                            state.players[p_idx].stage_energy[slot].push(cid);
+                        }
+                    }
+                    0 => {
+                        if !state.players[p_idx].energy_zone.is_empty() {
+                            let selected_idx = if ctx.choice_index >= 0 {
+                                Some(ctx.choice_index as usize)
+                            } else {
+                                None
+                            };
+
+                            if let Some(idx) = selected_idx.filter(|&idx| idx < state.players[p_idx].energy_zone.len()) {
+                                let energy_cid = state.players[p_idx].energy_zone.remove(idx);
+                                state.players[p_idx].stage_energy[slot].push(energy_cid);
+                            } else {
+                                let energy_cid = state.players[p_idx].energy_zone.remove(0);
+                                state.players[p_idx].stage_energy[slot].push(energy_cid);
+                            }
+                        } else if let Some(cid) = state.players[p_idx].deck.pop() {
                             state.players[p_idx].stage_energy[slot].push(cid);
                         }
                     }
@@ -275,7 +441,21 @@ pub fn handle_member_state(
                 }
             }
 
-            if target_slot == 1 {
+            if v == 99 || (a != 0 && resolved_slot >= 3) {
+                for i in 0..3 {
+                    let cid = state.players[p_idx].stage[i];
+                    if cid < 0 {
+                        continue;
+                    }
+                    if a != 0 && !state.card_matches_filter_with_ctx(db, cid, a as u64, ctx) {
+                        continue;
+                    }
+                    if state.players[p_idx].is_tapped(i) {
+                        state.players[p_idx].set_tapped(i, false);
+                        state.players[p_idx].activated_member_group_mask |= group_bits;
+                    }
+                }
+            } else if target_slot == 1 {
                 for i in 0..3 {
                     if state.players[p_idx].is_tapped(i) {
                         state.players[p_idx].set_tapped(i, false);
@@ -295,8 +475,27 @@ pub fn handle_member_state(
             }
         }
         O_TAP_MEMBER => {
-            let resolved_slot = resolve_target_slot(target_slot, ctx);
-            let target_p_idx = if instr.s.is_opponent { 1 - (ctx.player_id as usize) } else { ctx.player_id as usize };
+            let mut resolved_slot = resolve_target_slot(target_slot, ctx);
+            let filter_target = (a as u64 & 0x3) as u8;
+            let mut target_p_idx = match filter_target {
+                2 => 1 - (ctx.player_id as usize),
+                3 => 1,
+                _ if instr.s.is_opponent || instr.s.target_slot == 2 => 1 - (ctx.player_id as usize),
+                _ => ctx.player_id as usize,
+            };
+            if let Some(&selected_cid) = ctx.selected_cards.last() {
+                for candidate_p_idx in 0..=1 {
+                    if let Some(slot) = state.players[candidate_p_idx]
+                        .stage
+                        .iter()
+                        .position(|&cid| cid == selected_cid)
+                    {
+                        target_p_idx = candidate_p_idx;
+                        resolved_slot = slot;
+                        break;
+                    }
+                }
+            }
 
             if v == 0 && resolved_slot == 4 && a & 0x02 == 0 {
                 if a & 0x01 != 0 || a & 0x80 != 0 {
@@ -362,7 +561,96 @@ pub fn handle_member_state(
                 }
             } else {
                 let is_choice_done = ctx.choice_index == CHOICE_DONE;
+                let stale_select_member_choice = is_optional
+                    && ctx.v_remaining == -1
+                    && ctx.choice_index >= 0
+                    && ctx.choice_index < 3
+                    && ctx
+                        .selected_cards
+                        .last()
+                        .copied()
+                        .map(|selected_cid| {
+                            state.players[target_p_idx]
+                                .stage
+                                .get(ctx.choice_index as usize)
+                                .copied()
+                                .unwrap_or(-1)
+                                == selected_cid
+                        })
+                        .unwrap_or(false);
                 if is_optional || (a & 0x01) != 0 {
+                    if stale_select_member_choice {
+                        let choice_text = get_choice_text(db, ctx);
+                        if suspend_interaction(
+                            state,
+                            db,
+                            ctx,
+                            instr_ip,
+                            O_TAP_MEMBER,
+                            resolved_slot as i32,
+                            ChoiceType::Optional,
+                            &choice_text,
+                            a as u64,
+                            -1,
+                        ) {
+                            return HandlerResult::Suspend;
+                        }
+                    }
+                    if is_optional && (a & 0x02) != 0 && ctx.v_remaining == -1 {
+                        if is_choice_done || ctx.choice_index == 1 {
+                            return HandlerResult::SetCond(false);
+                        }
+                        if ctx.choice_index == 0 {
+                            let choice_text = get_choice_text(db, ctx);
+                            if suspend_interaction(
+                                state,
+                                db,
+                                ctx,
+                                instr_ip,
+                                O_TAP_MEMBER,
+                                0,
+                                ChoiceType::TapMSelect,
+                                &choice_text,
+                                a as u64,
+                                v as i16,
+                            ) {
+                                return HandlerResult::Suspend;
+                            }
+                        }
+                    }
+                    if is_optional && ctx.v_remaining == -1 && ctx.choice_index == 0 && (a & 0x02) == 0 {
+                        let legal_targets = state.players[target_p_idx]
+                            .stage
+                            .iter()
+                            .copied()
+                            .filter(|&cid| cid >= 0 && state.card_matches_filter_with_ctx(db, cid, a as u64, ctx))
+                            .count();
+                        if legal_targets > 1 {
+                            let choice_text = get_choice_text(db, ctx);
+                            if suspend_interaction(
+                                state,
+                                db,
+                                ctx,
+                                instr_ip,
+                                O_TAP_MEMBER,
+                                0,
+                                ChoiceType::TapMSelect,
+                                &choice_text,
+                                a as u64,
+                                v as i16,
+                            ) {
+                                return HandlerResult::Suspend;
+                            }
+                        }
+                    }
+                    if (a & 0x02) != 0 && ctx.v_remaining != -1 && ctx.choice_index >= 0 && ctx.choice_index < 3 {
+                        state.players[target_p_idx].set_tapped(ctx.choice_index as usize, true);
+                        return HandlerResult::SetCond(true);
+                    }
+                    if is_optional && (a & 0x02) == 0 && ctx.v_remaining != -1 && ctx.choice_index >= 0 && ctx.choice_index < 3 {
+                        state.players[target_p_idx].set_tapped(ctx.choice_index as usize, true);
+                        return HandlerResult::SetCond(true);
+                    }
                     // VALIDATION FIX: Only consume choice if it's 0, 1, or 99.
                     // If it's a card slot (like 601), it was probably meant for a DIFFERENT interaction.
                     if ctx.choice_index != 0 && ctx.choice_index != 1 && !is_choice_done {
@@ -380,8 +668,25 @@ pub fn handle_member_state(
                     if is_choice_done || ctx.choice_index == 1 {
                         return HandlerResult::SetCond(false);
                     }
+                    if resolved_slot == 4 && (a & 0x02) == 0 {
+                        let choice_text = get_choice_text(db, ctx);
+                        if suspend_interaction(
+                            state,
+                            db,
+                            ctx,
+                            instr_ip,
+                            O_TAP_MEMBER,
+                            0,
+                            ChoiceType::TapMSelect,
+                            &choice_text,
+                            (a | 0x02) as u64,
+                            v as i16,
+                        ) {
+                            return HandlerResult::Suspend;
+                        }
+                    }
                     if resolved_slot < 3 {
-                        state.players[p_idx].set_tapped(resolved_slot as usize, true);
+                        state.players[target_p_idx].set_tapped(resolved_slot as usize, true);
                     }
                     return HandlerResult::SetCond(true);
                 } else {
@@ -409,14 +714,12 @@ pub fn handle_member_state(
                 if !state.ui.silent && state.debug.debug_mode {
                     println!("[DEBUG] O_TAP_OPPONENT: Suspending for opponent.");
                 }
-                // Pre-flip: suspension.rs now uses ctx.player_id directly for current_player
-                let orig_player_id = ctx.player_id;
-                ctx.player_id = target_p_idx as u8;
-
+                let mut choice_ctx = ctx.clone();
+                choice_ctx.player_id = tap_opponent_chooser_player(db, ctx);
                 let suspended = suspend_interaction(
                     state,
                     db,
-                    ctx,
+                    &choice_ctx,
                     instr_ip,
                     O_TAP_OPPONENT,
                     0,
@@ -429,22 +732,32 @@ pub fn handle_member_state(
                 if suspended {
                     return HandlerResult::Suspend;
                 }
-                // Restore if not suspended
-                ctx.player_id = orig_player_id;
             } else {
                 let slot_idx = ctx.choice_index as usize;
                 if slot_idx < 3 {
                     state.players[target_p_idx].set_tapped(slot_idx, true);
+                    if matches!(source_card_no(db, ctx.source_card_id), Some("PL!-pb1-015-R")) {
+                        let target_cid = state.players[target_p_idx].stage[slot_idx];
+                        let target_cost = db
+                            .get_member(target_cid)
+                            .map(|card| card.cost)
+                            .unwrap_or(u32::MAX);
+                        if target_cost <= 4 {
+                            if let Some(drawn) = state.players[p_idx].deck.pop() {
+                                state.players[p_idx].hand.push(drawn);
+                            }
+                        }
+                    }
                     ctx.v_remaining = count - 1;
                     ctx.choice_index = -1;
                     if ctx.v_remaining > 0 {
                         let choice_text = get_choice_text(db, ctx);
-                        let orig_player_id = ctx.player_id;
-                        ctx.player_id = target_p_idx as u8;
+                        let mut choice_ctx = ctx.clone();
+                        choice_ctx.player_id = tap_opponent_chooser_player(db, ctx);
                         let suspended = suspend_interaction(
                             state,
                             db,
-                            ctx,
+                            &choice_ctx,
                             instr_ip,
                             O_TAP_OPPONENT,
                             0,
@@ -457,7 +770,6 @@ pub fn handle_member_state(
                         if suspended {
                             return HandlerResult::Suspend;
                         }
-                        ctx.player_id = orig_player_id;
                     }
                 }
             }
@@ -471,10 +783,14 @@ pub fn handle_member_state(
 
             if a == 99 && ctx.choice_index == -1 {
                 let choice_text = get_choice_text(db, ctx);
+                let mut choice_ctx = ctx.clone();
+                if instr.s.is_opponent || instr.s.target_slot == 2 {
+                    choice_ctx.player_id = 1 - ctx.player_id;
+                }
                 if suspend_interaction(
                     state,
                     db,
-                    ctx,
+                    &choice_ctx,
                     instr_ip,
                     O_MOVE_MEMBER,
                     s,
@@ -510,9 +826,63 @@ pub fn handle_member_state(
             }
         }
         O_FORMATION_CHANGE => {
-            // SIC "Formation Change" usually implies a full reorganization of members.
-            // We use a specific ChoiceType to trigger a UI rearrangement mode.
-            if ctx.choice_index == -1 {
+            let direct_dst_slot = if a >= 0 && a < 3 {
+                Some(a as usize)
+            } else if ctx.target_slot >= 0 && ctx.target_slot < 3 {
+                Some(ctx.target_slot as usize)
+            } else {
+                None
+            };
+
+            if let Some(dst_slot) = direct_dst_slot {
+                let src_slot = if ctx.area_idx >= 0 {
+                    ctx.area_idx as usize
+                } else {
+                    resolved_slot as usize
+                };
+
+                if src_slot < 3 && dst_slot < 3 && src_slot != dst_slot {
+                    if state.players[p_idx].stage[dst_slot] == -1 {
+                        let src_cid = state.players[p_idx].stage[src_slot];
+                        let src_tapped = state.players[p_idx].is_tapped(src_slot);
+                        let src_energy = state.players[p_idx].stage_energy[src_slot].clone();
+                        let src_energy_count = state.players[p_idx].stage_energy_count[src_slot];
+                        let src_blade_buffs = state.players[p_idx].blade_buffs[src_slot];
+                        let src_blade_override = state.players[p_idx].blade_overrides[src_slot];
+                        let src_heart_buffs = state.players[p_idx].heart_buffs[src_slot];
+
+                        state.players[p_idx].stage[dst_slot] = src_cid;
+                        state.players[p_idx].set_tapped(dst_slot, src_tapped);
+                        state.players[p_idx].stage_energy[dst_slot] = src_energy;
+                        state.players[p_idx].stage_energy_count[dst_slot] = src_energy_count;
+                        state.players[p_idx].blade_buffs[dst_slot] = src_blade_buffs;
+                        state.players[p_idx].blade_overrides[dst_slot] = src_blade_override;
+                        state.players[p_idx].heart_buffs[dst_slot] = src_heart_buffs;
+
+                        state.players[p_idx].stage[src_slot] = -1;
+                        state.players[p_idx].set_tapped(src_slot, false);
+                        state.players[p_idx].stage_energy[src_slot].clear();
+                        state.players[p_idx].stage_energy_count[src_slot] = 0;
+                        state.players[p_idx].blade_buffs[src_slot] = 0;
+                        state.players[p_idx].blade_overrides[src_slot] = -1;
+                        state.players[p_idx].heart_buffs[src_slot] = HeartBoard::default();
+                        state.players[p_idx].set_moved(src_slot, true);
+                        state.players[p_idx].set_moved(dst_slot, true);
+                    } else {
+                        state.players[p_idx].swap_slot_data(src_slot, dst_slot);
+                    }
+
+                    for &slot in &[src_slot, dst_slot] {
+                        let cid = state.players[p_idx].stage[slot];
+                        if cid >= 0 {
+                            let mut pos_ctx = ctx.clone();
+                            pos_ctx.source_card_id = cid;
+                            pos_ctx.area_idx = slot as i16;
+                            state.trigger_abilities(db, TriggerType::OnPositionChange, &pos_ctx);
+                        }
+                    }
+                }
+            } else if ctx.choice_index == -1 {
                 let choice_text = get_choice_text(db, ctx);
                 if suspend_interaction(
                     state,
@@ -970,6 +1340,19 @@ pub fn handle_score_hearts(
 
     match op {
         O_BOOST_SCORE => {
+            if matches!(source_card_no(db, ctx.source_card_id), Some("PL!-pb1-028-L"))
+                && (ctx.v_accumulated as i32) < 3
+            {
+                return HandlerResult::Continue;
+            }
+            if ctx.v_accumulated >= 0 {
+                if let Some(min_required) = inline_value_ge_threshold(db, ctx) {
+                    if (ctx.v_accumulated as i32) < min_required {
+                        return HandlerResult::Continue;
+                    }
+                }
+            }
+
             let mut final_v = v;
             if (a as u64 & DYNAMIC_VALUE) != 0 {
                 let count = resolve_count(
@@ -994,7 +1377,22 @@ pub fn handle_score_hearts(
             }
         }
         O_REDUCE_COST => state.players[p_idx].cost_reduction += v as i16,
-        O_SET_SCORE => state.players[p_idx].score = v as u32,
+        O_SET_SCORE => {
+            let mut applied_to_live_snapshot = false;
+            if db.get_live(ctx.source_card_id).is_some() {
+                applied_to_live_snapshot = update_live_score_snapshot(
+                    state,
+                    target_p,
+                    ctx.source_card_id,
+                    ctx.area_idx,
+                    v,
+                );
+            }
+
+            if !applied_to_live_snapshot {
+                state.players[target_p].score = v.max(0) as u32;
+            }
+        }
         O_ADD_BLADES | O_BUFF_POWER => {
             if target_slot == 1 {
                 for t in 0..3 {
@@ -1195,6 +1593,11 @@ pub fn handle_score_hearts(
                 ];
 
                 for (i, &count) in counts.iter().enumerate() {
+                    if matches!(source_card_no(db, ctx.source_card_id), Some("PL!-pb1-028-L"))
+                        && (ctx.v_accumulated as i32) < 3
+                    {
+                        return HandlerResult::Continue;
+                    }
                     if count > 0 {
                         let old = player.heart_req_additions.get_color_count(i);
                         player.heart_req_additions.set_color_count(i, old.saturating_add(count as u8));

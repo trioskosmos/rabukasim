@@ -217,6 +217,8 @@ initialize();
 // --- Re-attach Globals (For legacy onclick handlers in index.html) ---
 window.render = Rendering.render;
 window.fetchState = Network.fetchState;
+window.refreshTurnPlanner = () => Network.fetchPlannerData();
+window.scoreTurnPlanner = () => Network.fetchPlannerData({ score: true });
 
 // Modal Actions
 window.openDeckModal = Modals.openDeckModal;

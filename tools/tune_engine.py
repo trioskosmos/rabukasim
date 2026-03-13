@@ -73,7 +73,9 @@ def build_worker_env():
 
 
 def config_sort_key(entry):
-    return (entry["win_rate"], entry["avg_score"], entry["sqps"])
+    # Higher Win Rate is still good, but for equal WR, lower AVG Turns is better.
+    # Entry with 100% WR in 5 turns > 100% WR in 8 turns.
+    return (entry["win_rate"], -entry["avg_turns"], entry["avg_score"], entry["sqps"])
 
 
 def run_benchmark(weights):

@@ -177,6 +177,8 @@ pub fn trigger_as_str(t: TriggerType) -> &'static str {
         TriggerType::OnPositionChange => "OnPositionChange",
         TriggerType::OnAbilityResolve => "OnAbilityResolve",
         TriggerType::OnAbilitySuccess => "OnAbilitySuccess",
+        TriggerType::OnMoveToDiscard => "OnMoveToDiscard",
+        TriggerType::OnMemberTap => "OnMemberTap",
     }
 }
 

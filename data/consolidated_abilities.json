@@ -95,7 +95,7 @@
     ]
   },
   "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにこのメンバー以外のコスト11のメンバーが登場したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『虹ヶ咲』のメンバーカードを1枚手札に加える。": {
-    "pseudocode": "TRIGGER: ON_STAGE_ENTRY (Once per turn)\nCONDITION: COUNT_STAGE {MIN=1, TARGET=\"OTHER_MEMBER\", FILTER=\"COST=11\"}\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: RECOVER_MEMBER(1) {FILTER=\"GROUP_ID=2\", ZONE=\"YELL_REVEALED\"} -> CARD_HAND",
+    "pseudocode": "TRIGGER: ON_STAGE_ENTRY (Once per turn)\nCONDITION: COUNT_STAGE {MIN=1, TARGET=\"OTHER_MEMBER\", FILTER=\"COST=11\"}\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: RECOVER_MEMBER(1) (Optional) {FILTER=\"GROUP_ID=2\", ZONE=\"YELL_REVEALED\"} -> CARD_HAND",
     "cards": [
       "PL!N-pb1-012-P＋",
       "PL!N-pb1-012-R"
@@ -227,7 +227,7 @@
     ]
   },
   "{{jidou.png|自動}}［ターン1回］エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分の手札が7枚以下の場合、カードを1枚引く。\n{{live_start.png|ライブ開始時}}手札のライブカードを1枚公開し、デッキの一番下に置いてもよい：自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。": {
-    "pseudocode": "TRIGGER: ON_YELL_REVEAL (Once per turn)\nCONDITION: COUNT_YELL_REVEALED(PLAYER) {FILTER=\"TYPE_LIVE\", MIN=1}, HAND_COUNT(PLAYER) {LE=7}\nEFFECT: DRAW(1)\n\nTRIGGER: ON_LIVE_START\nCOST: SELECT_CARDS(1) {FROM=\"HAND\", FILTER=\"TYPE_LIVE\"} -> TARGET; REVEAL(TARGET); MOVE_TO_DECK(TARGET, TO=\"DECK_BOTTOM\") -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_REORDER_DISCARD(2)",
+    "pseudocode": "TRIGGER: ON_YELL_REVEAL (Once per turn)\nCONDITION: COUNT_YELL_REVEALED(PLAYER) {FILTER=\"TYPE_LIVE\", MIN=1}, HAND_COUNT(PLAYER) {LE=7}\nEFFECT: DRAW(1)\n\nTRIGGER: ON_LIVE_START\nCOST: SELECT_CARDS(1) (Optional) {FROM=\"HAND\", FILTER=\"TYPE_LIVE\"} -> TARGET; REVEAL(TARGET); MOVE_TO_DECK(TARGET, TO=\"DECK_BOTTOM\") -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); LOOK_REORDER_DISCARD(2)",
     "cards": [
       "PL!S-bp2-007-P",
       "PL!S-bp2-007-P＋",
@@ -334,7 +334,7 @@
     ]
   },
   "{{jyouji.png|常時}}手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる。\n{{jyouji.png|常時}}このメンバーはバトンタッチで控え室に置けない。\n{{live_start.png|ライブ開始時}}手札の「渡辺曜」と「鬼塚夏美」と「大沢瑠璃乃」を、好きな枚数控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いた枚数1枚につき、{{icon_blade.png|ブレード}}を得る。\n（手札のこのカードもこの効果で控え室に置ける。）": {
-    "pseudocode": "TRIGGER: CONSTANT\nEFFECT: REDUCE_COST(1) {PER_CARD=\"HAND\", FILTER=\"NOT_SELF\"} -> SELF\n\nTRIGGER: CONSTANT\nEFFECT: PREVENT_BATON_TOUCH(SELF)\n\nTRIGGER: ON_LIVE_START\nCOST: SELECT_HAND(VARIABLE) {FILTER=\"NAME_IN=['渡辺 曜', '鬼塚 夏美', '大沢 瑠璃乃']\"} (Optional) -> DISCARD_COUNT\nEFFECT: CONDITION: VALUE_GT(DISCARD_COUNT, 0); ADD_BLADES(1, PER_CARD=DISCARD_COUNT) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
+    "pseudocode": "TRIGGER: CONSTANT\nEFFECT: REDUCE_COST(1) {PER_CARD=\"HAND\", FILTER=\"NOT_SELF\"} -> SELF\n\nTRIGGER: CONSTANT\nEFFECT: PREVENT_BATON_TOUCH(SELF)\n\nTRIGGER: ON_LIVE_START\nCOST: SELECT_HAND(VARIABLE) {FILTER=\"NAME_IN=['渡辺曜', '鬼塚夏美', '大沢瑠璃乃']\"} (Optional) -> DISCARD_COUNT\nEFFECT: CONDITION: VALUE_GT(DISCARD_COUNT, 0); ADD_BLADES(1, PER_CARD=DISCARD_COUNT) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
     "cards": [
       "LL-bp2-001-R＋"
     ]
@@ -499,7 +499,7 @@
     ]
   },
   "{{jyouji.png|常時}}自分のステージに名前が異なるメンバーが3人以上いるかぎり、{{heart_03.png|heart03}}を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：これにより控え室に置いたカードが『μ's』のカードの場合、自分のデッキの上からカードを4枚見る。その中からカードを2枚手札に加える。残りを控え室に置く。『μ's』のカード以外の場合、自分の控え室からライブカードを1枚手札に加える。": {
-    "pseudocode": "TRIGGER: CONSTANT\nCONDITION: UNIQUE_NAMES_COUNT {MIN=3}\nEFFECT: ADD_HEARTS(1) {HEART_TYPE=3} -> SELF\n\nTRIGGER: ACTIVATED (Once per turn)\nCOST: PAY_ENERGY(2); DISCARD_HAND(1)\nCONDITION: DISCARDED_CARDS {FILTER=\"GROUP_ID=0\"}\nEFFECT: DRAW_MEMBER_FROM_DECK(2) {FILTER=\"ANY\", LOOK=4}\nCONDITION: NOT_DISCARDED_CARDS {FILTER=\"GROUP_ID=0\"}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND",
+    "pseudocode": "TRIGGER: CONSTANT\nCONDITION: UNIQUE_NAMES_COUNT {MIN=3}\nEFFECT: ADD_HEARTS(1) {HEART_TYPE=3} -> SELF\n\nTRIGGER: ACTIVATED (Once per turn)\nCOST: PAY_ENERGY(2); DISCARD_HAND(1)\nCONDITION: DISCARDED_CARDS {FILTER=\"GROUP_ID=0\"}\nEFFECT: DRAW_MEMBER_FROM_DECK(2) {FILTER=\"ANY\", LOOK=4}\nCONDITION: NOT_DISCARDED_CARDS {FILTER=\"GROUP_ID=0\"}\nEFFECT: RECOVER_LIVE(1) (Optional) -> CARD_HAND",
     "cards": [
       "PL!-bp5-003-AR",
       "PL!-bp5-003-P",
@@ -840,7 +840,7 @@
     ]
   },
   "{{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを3枚控え室に置く：ライブ終了時まで、これにより控え室に置いた『Liella!』のメンバーカード1枚につき、{{icon_blade.png|ブレード}}を得る。\n{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のメインフェイズの間、自分のカードが1枚以上いずれかの領域から控え室に置かれるたび、{{icon_energy.png|E}}支払ってもよい。そうした場合、それらのカードの中から1枚手札に加える。": {
-    "pseudocode": "TRIGGER: ACTIVATED (Once per turn)\nCOST: MOVE_TO_DISCARD(3) {FROM=\"DECK_TOP\"}\nEFFECT: ADD_BLADES(COUNT_MEMBER_LIELLA_DISCARDED) (Optional) -> SELF {DURATION=\"UNTIL_LIVE_END\"}\n\nTRIGGER: ON_MOVE_TO_DISCARD\nCONDITION: MAIN_PHASE\nCOST: PAY_ENERGY(1) (Optional)\nEFFECT: RECOVER_MEMBER(1) {FILTER=\"SELECTED_DISCARD\"} (Optional) -> CARD_HAND",
+    "pseudocode": "TRIGGER: ACTIVATED (Once per turn)\nCOST: MOVE_TO_DISCARD(3) (Optional) {FROM=\"DECK_TOP\"}\nEFFECT: ADD_BLADES(COUNT_MEMBER_LIELLA_DISCARDED) (Optional) -> SELF {DURATION=\"UNTIL_LIVE_END\"}\n\nTRIGGER: ON_MOVE_TO_DISCARD (Optional)\nCONDITION: MAIN_PHASE\nCOST: PAY_ENERGY(1) (Optional)\nEFFECT: RECOVER_MEMBER(1) {FILTER=\"SELECTED_DISCARD\"} (Optional) -> CARD_HAND",
     "cards": [
       "PL!SP-bp5-005-AR",
       "PL!SP-bp5-005-P",
@@ -947,7 +947,7 @@
     ]
   },
   "{{kidou.png|起動}}{{turn1.png|ターン1回}}自分の控え室にある「園田海未」と「津島善子」と「天王寺璃奈」を、合計6枚をシャッフルしてデッキの一番下に置く：エネルギーを6枚までアクティブにする。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。": {
-    "pseudocode": "TRIGGER: ACTIVATED\nCOST: MOVE_TO_DECK(6) {FILTER=\"Umi/Yoshiko/Rina\", FROM=\"DISCARD\"}\nEFFECT: ACTIVATE_ENERGY(6) -> PLAYER\n\nTRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(6)\nEFFECT: ADD_BLADES(3) (Optional) -> PLAYER",
+    "pseudocode": "TRIGGER: ACTIVATED\nCOST: MOVE_TO_DECK(6) (Optional) {FILTER=\"Umi/Yoshiko/Rina\", FROM=\"DISCARD\"}\nEFFECT: ACTIVATE_ENERGY(6) -> PLAYER\n\nTRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(6) (Optional)\nEFFECT: ADD_BLADES(3) -> PLAYER",
     "cards": [
       "LL-bp3-001-R＋"
     ]
@@ -1098,7 +1098,7 @@
     ]
   },
   "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、このメンバーが元々持つハートはすべて{{heart_04.png|heart04}}になる。{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、ライブカードを1枚手札に加える。": {
-    "pseudocode": "TRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(2) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); TRANSFORM_HEART(SELF, FILTER=\"BASE\") -> COLOR_GREEN {DURATION=\"UNTIL_LIVE_END\"}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: SELECT_RECOVER_LIVE(1) -> CARD_HAND {ZONE=\"YELL_REVEALED\"}",
+    "pseudocode": "TRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(2) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); TRANSFORM_HEART(SELF, FILTER=\"BASE\") -> COLOR_GREEN {DURATION=\"UNTIL_LIVE_END\"}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: SELECT_RECOVER_LIVE(1) -> CARD_HAND (Optional) {ZONE=\"YELL_REVEALED\"}",
     "cards": [
       "PL!S-pb1-003-P＋",
       "PL!S-pb1-003-R"
@@ -1254,7 +1254,7 @@
     ]
   },
   "{{live_start.png|ライブ開始時}}カードを1枚引く。相手のステージにいるコスト9以下のメンバーを1人までウェイトにする。\n{{live_start.png|ライブ開始時}}相手のステージにいるウェイト状態のメンバーの数まで、自分の控え室にある『虹ヶ咲』のメンバーカードを選ぶ。それらを好きな順番でデッキの上に置く。": {
-    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: DRAW(1); SELECT_MEMBER(1) {FILTER=\"OPPONENT, COST_LE_9\"} -> TARGET; TAP_MEMBER(1) -> TARGET (Optional)\nEFFECT: COUNT_MEMBER {FILTER=\"OPPONENT, STATUS=TAPPED\"} -> COUNT_VAL\nEFFECT: SELECT_RECOVER_MEMBER(COUNT_VAL) {FILTER=\"GROUP_ID=2\", ZONE=\"DISCARD\"} -> DECK_TOP {ORDER=\"CHOICE\"}",
+    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: DRAW(1); SELECT_MEMBER(1) {FILTER=\"OPPONENT, COST_LE_9\"} -> TARGET; TAP_MEMBER(1) -> TARGET (Optional)\nEFFECT: COUNT_MEMBER {FILTER=\"OPPONENT, STATUS=TAPPED\"} -> COUNT_VAL\nEFFECT: SELECT_RECOVER_MEMBER(COUNT_VAL) (Optional) {FILTER=\"GROUP_ID=2\", ZONE=\"DISCARD\"} -> DECK_TOP {ORDER=\"CHOICE\"}",
     "cards": [
       "PL!N-bp4-004-P",
       "PL!N-bp4-004-P＋",
@@ -1320,7 +1320,7 @@
     ]
   },
   "{{live_start.png|ライブ開始時}}手札の『Aqours』のカードを1枚公開してもよい：これにより公開したカードをデッキの一番上か一番下に置き、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。": {
-    "pseudocode": "TRIGGER: ON_LIVE_START\nCOST: REVEAL_HAND(1) {FILTER=\"GROUP_ID=1\"} (Optional)\nEFFECT: MOVE_TO_DECK(1) {FROM=\"REVEALED\", TO=\"DECK_TOP_OR_BOTTOM\"}; ADD_BLADES(1) -> SELF",
+    "pseudocode": "TRIGGER: ON_LIVE_START\nCOST: REVEAL_HAND(1) {FILTER=\"GROUP_ID=1\"} (Optional)\nEFFECT: MOVE_TO_DECK(1) (Optional) {FROM=\"REVEALED\", TO=\"DECK_TOP_OR_BOTTOM\"}; ADD_BLADES(1) -> SELF",
     "cards": [
       "PL!S-sd1-009-SD"
     ]
@@ -1632,7 +1632,7 @@
     ]
   },
   "{{live_start.png|ライブ開始時}}自分のステージにいる『Printemps』のメンバーをアクティブにする。これによりウェイト状態のメンバーが3人以上アクティブ状態になったとき、このカードのスコアを＋１する。": {
-    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: ACTIVATE_MEMBER(ALL) {FILTER=\"UNIT_PRINTEMPS\"} -> PLAYER -> RECOVERY_COUNT\nCONDITION: VALUE_GE(RECOVERY_COUNT, 3)\nEFFECT: BOOST_SCORE(1) -> SELF",
+    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: COUNT_MEMBER {FILTER=\"UNIT_PRINTEMPS, STATUS=TAPPED\"} -> RECOVERY_COUNT; ACTIVATE_MEMBER(ALL) {FILTER=\"UNIT_PRINTEMPS\"} -> PLAYER\nCONDITION: VALUE_GE(RECOVERY_COUNT, 3)\nEFFECT: BOOST_SCORE(1) -> SELF",
     "cards": [
       "PL!-pb1-028-L"
     ]
@@ -1773,7 +1773,7 @@
     ]
   },
   "{{live_start.png|ライブ開始時}}自分のデッキの一番上のカードを控え室に置いてもよい。そうした場合、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。これにより控え室に置いたカードがライブカードの場合、このメンバーをウェイトにする。自分はこの手順をさらに4回まで繰り返してもよい。": {
-    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: LOOP(5)\n  COST: MOVE_TO_DISCARD(1) {FROM=\"DECK_TOP\"} (Optional)\n  EFFECT: ADD_BLADES(1) -> SELF {DURATION=\"UNTIL_LIVE_END\"}\n  CONDITION: DISCARDED_CARDS {FILTER=\"TYPE_LIVE\"}\n  EFFECT: TAP_SELF; BREAK_LOOP",
+    "pseudocode": "TRIGGER: ON_LIVE_START\nCOST: MOVE_TO_DISCARD(1) {FROM=\"DECK_TOP\"} (Optional)\nEFFECT: ADD_BLADES(1) -> SELF {DURATION=\"UNTIL_LIVE_END\"}\nCONDITION: DISCARDED_CARDS {FILTER=\"TYPE_LIVE\"}\nEFFECT: TAP_SELF\nCOST: MOVE_TO_DISCARD(1) {FROM=\"DECK_TOP\"} (Optional)\nEFFECT: ADD_BLADES(1) -> SELF {DURATION=\"UNTIL_LIVE_END\"}\nCONDITION: DISCARDED_CARDS {FILTER=\"TYPE_LIVE\"}\nEFFECT: TAP_SELF\nCOST: MOVE_TO_DISCARD(1) {FROM=\"DECK_TOP\"} (Optional)\nEFFECT: ADD_BLADES(1) -> SELF {DURATION=\"UNTIL_LIVE_END\"}\nCONDITION: DISCARDED_CARDS {FILTER=\"TYPE_LIVE\"}\nEFFECT: TAP_SELF\nCOST: MOVE_TO_DISCARD(1) {FROM=\"DECK_TOP\"} (Optional)\nEFFECT: ADD_BLADES(1) -> SELF {DURATION=\"UNTIL_LIVE_END\"}\nCONDITION: DISCARDED_CARDS {FILTER=\"TYPE_LIVE\"}\nEFFECT: TAP_SELF\nCOST: MOVE_TO_DISCARD(1) {FROM=\"DECK_TOP\"} (Optional)\nEFFECT: ADD_BLADES(1) -> SELF {DURATION=\"UNTIL_LIVE_END\"}\nCONDITION: DISCARDED_CARDS {FILTER=\"TYPE_LIVE\"}\nEFFECT: TAP_SELF",
     "cards": [
       "PL!SP-bp5-009-AR",
       "PL!SP-bp5-009-P",
@@ -1976,7 +1976,7 @@
     ]
   },
   "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『蓮ノ空』のライブカードを1枚手札に加える。\n\n(必要ハートを確認する時、エールで出た{{icon_b_all.png|ALLブレード}}は任意の色のハートとして扱う。)": {
-    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: SELECT_CARDS(1) {ZONE=\"YELL_REVEALED\", FILTER=\"UNIT_HASUNOSORA, TYPE_LIVE\"} -> CARD_HAND",
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: SELECT_CARDS(1) (Optional) {ZONE=\"YELL_REVEALED\", FILTER=\"UNIT_HASUNOSORA, TYPE_LIVE\"} -> CARD_HAND",
     "cards": [
       "PL!HS-bp1-021-L"
     ]
@@ -2020,7 +2020,7 @@
     ]
   },
   "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが2枚以上あるか、自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_06.png|heart06}}のうち合計5種類以上あるか、このターンに自分のステージにいるメンバーがエリアを移動している場合、このカードのスコアを＋１する。": {
-    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: YELL_REVEALED {FILTER=\"TYPE_LIVE\", MIN=2} OR UNIQUE_HEART_TYPES {MIN=5} OR MEMBER_MOVED_THIS_TURN\nEFFECT: BOOST_SCORE(1) -> SELF",
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: OR(YELL_REVEALED {FILTER=\"TYPE_LIVE\", MIN=2}, UNIQUE_HEART_TYPES {MIN=5}, MEMBER_MOVED_THIS_TURN)\nEFFECT: BOOST_SCORE(1) -> SELF",
     "cards": [
       "LL-bp5-001-L"
     ]
@@ -2060,7 +2060,7 @@
     ]
   },
   "{{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、エールにより公開された自分のカードの中から、『虹ヶ咲』のカードを1枚手札に加える。\n\n(必要ハートを確認する時、エールで出た{{icon_b_all.png|ALLブレード}}は任意の色のハートとして扱う。)": {
-    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: SCORE_LEAD(PLAYER)\nEFFECT: SELECT_CARDS(1, reveal=True, pick=1) {ZONE=\"YELL_REVEALED\", FILTER=\"UNIT_NIJIGASAKI\"} -> CARD_HAND",
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: SCORE_LEAD(PLAYER)\nEFFECT: SELECT_CARDS(1, reveal=True, pick=1) (Optional) {ZONE=\"YELL_REVEALED\", FILTER=\"UNIT_NIJIGASAKI\"} -> CARD_HAND",
     "cards": [
       "PL!N-bp1-026-L"
     ]
@@ -2085,7 +2085,7 @@
     ]
   },
   "{{live_success.png|ライブ成功時}}以下から1つを選ぶ。自分の成功ライブカード置き場に『虹ヶ咲』のカードがある場合、代わりに1つ以上を選ぶ。\n・自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n・自分の控え室からメンバーカードを1枚手札に加える。": {
-    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: CHOICE_MODE (MIN=1) -> PLAYER\n  CONDITION: NOT_HAS_SUCCESS_LIVE {FILTER=\"GROUP_ID=2\"} -> CHOICE_MODE(COUNT=1)\n  OPTION: エネルギー | EFFECT: PLACE_ENERGY_WAIT(1) -> PLAYER\n  OPTION: メンバー | EFFECT: SELECT_RECOVER_MEMBER(1) -> CARD_HAND",
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: HAS_SUCCESS_LIVE {FILTER=\"GROUP_ID=2\"}\nEFFECT: PLACE_ENERGY_WAIT(1) -> PLAYER (Optional)\nEFFECT: SELECT_RECOVER_MEMBER(1) -> CARD_HAND (Optional)\n\nTRIGGER: ON_LIVE_SUCCESS\nCONDITION: NOT_HAS_SUCCESS_LIVE {FILTER=\"GROUP_ID=2\"}\nEFFECT: SELECT_MODE(1) -> PLAYER\n  OPTION: エネルギー | EFFECT: PLACE_ENERGY_WAIT(1) -> PLAYER\n  OPTION: メンバー | EFFECT: SELECT_RECOVER_MEMBER(1) -> CARD_HAND",
     "cards": [
       "PL!N-bp4-030-L"
     ]
@@ -2195,7 +2195,7 @@
     ]
   },
   "{{live_success.png|ライブ成功時}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。": {
-    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: LOOK_AND_CHOOSE_ORDER(3, ANY) -> DECK_TOP; MOVE_TO_DISCARD(REMAINDER)",
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: LOOK_AND_CHOOSE_ORDER(3, ANY) (Optional) -> DECK_TOP; MOVE_TO_DISCARD(REMAINDER)",
     "cards": [
       "PL!-sd1-019-SD"
     ]
@@ -2222,7 +2222,7 @@
     ]
   },
   "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{center.png|センター}}『BiBi』のメンバー1人をウェイトにしてもよい：相手は、自身のステージにいるアクティブ状態のメンバー1人をウェイトにする。（この能力はセンターエリアにいる場合のみ発動する。）\n{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のカードの効果によって、相手のステージにいるアクティブ状態のコスト4以下のメンバーがウェイト状態になったとき、カードを1枚引く。": {
-    "pseudocode": "TRIGGER: ON_PLAY, ON_LIVE_START\nCONDITION: IS_CENTER\nCOST: SELECT_MEMBER(1) {FILTER=\"UNIT_BIBI\"} -> TARGET; TAP_MEMBER(TARGET) (Optional)\nEFFECT: TAP_OPPONENT(1)\n\nTRIGGER: ON_MEMBER_TAP {FILTER=\"OPPONENT, COST_LE_4\", REASON=\"EFFECT\"} (Once per turn)\nEFFECT: DRAW(1)",
+    "pseudocode": "TRIGGER: ON_PLAY, ON_LIVE_START\nCONDITION: IS_CENTER\nCOST: TAP_MEMBER(1) {FILTER=\"UNIT_BIBI\"} (Optional) -> TARGET\nEFFECT: TAP_OPPONENT(1)\n\nTRIGGER: ON_MEMBER_TAP {FILTER=\"OPPONENT, COST_LE_4\", REASON=\"EFFECT\"} (Once per turn)\nEFFECT: DRAW(1)",
     "cards": [
       "PL!-pb1-015-P＋",
       "PL!-pb1-015-R"
@@ -2283,7 +2283,7 @@
     ]
   },
   "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の控え室から、コストの合計が4以下になるようにメンバーカードを2枚までステージに登場させる。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCOST: PAY_ENERGY(4) (Optional)\nEFFECT: PLAY_MEMBER_FROM_DISCARD(2) {TOTAL_COST_LE=4}",
+    "pseudocode": "TRIGGER: ON_PLAY\nCOST: PAY_ENERGY(4) (Optional)\nEFFECT: PLAY_MEMBER_FROM_DISCARD(2) (Optional) {TOTAL_COST_LE=4}",
     "cards": [
       "PL!S-bp2-006-P",
       "PL!S-bp2-006-R"
@@ -2368,7 +2368,7 @@
     ]
   },
   "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：自分の控え室から『SaintSnow』のカードを1枚手札に加える。そうした場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCOST: PAY_ENERGY(1) (Optional)\nEFFECT: RECOVER_MEMBER(1) {FILTER=\"Unit='Saint Snow'\"} -> CARD_HAND\nCONDITION: RECOVERED_CARDS {MIN=1}\nEFFECT: ADD_BLADES(2) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
+    "pseudocode": "TRIGGER: ON_PLAY\nCOST: PAY_ENERGY(1) (Optional)\nEFFECT: RECOVER_MEMBER(1) (Optional) {FILTER=\"Unit='Saint Snow'\"} -> CARD_HAND\nCONDITION: RECOVERED_CARDS {MIN=1}\nEFFECT: ADD_BLADES(2) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
     "cards": [
       "PL!S-bp5-009-AR",
       "PL!S-bp5-009-P",
@@ -2461,7 +2461,7 @@
     ]
   },
   "{{toujyou.png|登場}}このメンバーよりコストが低い『スリーズブーケ』のメンバーからバトンタッチして登場した場合、自分の控え室から『蓮ノ空』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：これにより控え室に置いたカードがメンバーカードの場合、控え室に置いたカードと同じ名前を持つメンバー1人は、ライブ終了時まで、{{heart_04.png|heart04}}{{icon_blade.png|ブレード}}を得る。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCONDITION: BATON_PASS(PLAYER) {FILTER=\"UNIT_CERISE, COST_LT=SELF\"}\nEFFECT: SELECT_RECOVER_LIVE(1) {FILTER=\"GROUP_ID=4\"} -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(1) (Optional) -> DISCARDED\nEFFECT: CONDITION: TYPE_EQ(DISCARDED, \"MEMBER\"); GET_NAME(DISCARDED) -> NAME_VAL; SELECT_MEMBER(1) {FILTER=\"NAME=NAME_VAL\"} -> TARGET; ADD_HEARTS(1, HEART_TYPE=3) -> TARGET {DURATION=\"UNTIL_LIVE_END\"}; ADD_BLADES(1) -> TARGET {DURATION=\"UNTIL_LIVE_END\"}",
+    "pseudocode": "TRIGGER: ON_PLAY\nCONDITION: BATON_PASS(PLAYER) {FILTER=\"UNIT_CERISE, COST_LT=SELF\"}\nEFFECT: SELECT_RECOVER_LIVE(1) (Optional) {FILTER=\"GROUP_ID=4\"} -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(1) (Optional) -> DISCARDED\nEFFECT: CONDITION: TYPE_EQ(DISCARDED, \"MEMBER\"); GET_NAME(DISCARDED) -> NAME_VAL; SELECT_MEMBER(1) {FILTER=\"NAME=NAME_VAL\"} -> TARGET; ADD_HEARTS(1, HEART_TYPE=3) -> TARGET {DURATION=\"UNTIL_LIVE_END\"}; ADD_BLADES(1) -> TARGET {DURATION=\"UNTIL_LIVE_END\"}",
     "cards": [
       "PL!HS-bp2-007-P",
       "PL!HS-bp2-007-P＋",
@@ -2470,7 +2470,7 @@
     ]
   },
   "{{toujyou.png|登場}}このメンバーよりコストが低いメンバーからバトンタッチして登場した場合、自分と相手はそれぞれ自身の手札の枚数が3枚になるまで手札を控え室に置き、その後、自分と相手はそれぞれカードを3枚引く。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"COST_LT_SELF\"}\nEFFECT: DISCARD_UNTIL(3) -> PLAYER_AND_OPPONENT; DRAW_UNTIL(3) -> PLAYER_AND_OPPONENT",
+    "pseudocode": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"COST_LT_SELF\"}\nEFFECT: DISCARD_UNTIL(3) -> PLAYER_AND_OPPONENT; DRAW(3) -> PLAYER_AND_OPPONENT",
     "cards": [
       "PL!-bp5-007-AR",
       "PL!-bp5-007-P",
@@ -2757,7 +2757,7 @@
     ]
   },
   "{{toujyou.png|登場}}手札のブレードハートを持たないメンバーカードを2枚まで控え室に置いてもよい：自分の控え室から、これにより控え室に置いたカードと同じ枚数の『Aqours』のライブカードを手札に加える。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(2) {FILTER=\"NOT_HAS_BLADE_HEART\"} (Optional)\nEFFECT: RECOVER_LIVE(COUNT_DISCARDED) {FILTER=\"GROUP_ID=1\"} -> CARD_HAND",
+    "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(2) {FILTER=\"NOT_HAS_BLADE_HEART\"} (Optional)\nEFFECT: RECOVER_LIVE(COUNT_DISCARDED) (Optional) {FILTER=\"GROUP_ID=1\"} -> CARD_HAND",
     "cards": [
       "PL!S-bp5-003-AR",
       "PL!S-bp5-003-P",
@@ -2780,7 +2780,7 @@
     ]
   },
   "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：ライブカードが公開されるまで、自分のデッキの一番上のカードを公開し続ける。そのライブカードを手札に加え、これにより公開されたほかのすべてのカードを控え室に置く。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); REVEAL_UNTIL(FILTER=\"TYPE=LIVE\") -> TARGET; MOVE_TO_HAND(TARGET); MOVE_TO_DISCARD(REMAINDER)",
+    "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); REVEAL_UNTIL(FILTER=\"TYPE=LIVE\") (Optional) -> TARGET; MOVE_TO_HAND(TARGET); MOVE_TO_DISCARD(REMAINDER)",
     "cards": [
       "PL!N-bp1-011-P",
       "PL!N-bp1-011-R"
@@ -3107,7 +3107,7 @@
     ]
   },
   "{{toujyou.png|登場}}自分と相手は、自身のステージのセンターにいるメンバーをポジションチェンジする。(センターにいるメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはセンターエリアに移動させる。)": {
-    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: POSITION_CHANGE_ALL {FILTER=\"AREA=CENTER\"}",
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MEMBER(1) {FILTER=\"AREA=CENTER\"} -> TARGET; MOVE_MEMBER(TARGET) -> PLAYER\nEFFECT: SELECT_MEMBER(1) {TARGET=\"OPPONENT\", FILTER=\"AREA=CENTER\"} -> TARGET; MOVE_MEMBER(TARGET) -> OPPONENT",
     "cards": [
       "PL!SP-bp5-010-AR",
       "PL!SP-bp5-010-P",
@@ -3175,7 +3175,7 @@
     ]
   },
   "{{toujyou.png|登場}}自分のステージに「大沢瑠璃乃」か「百生吟子」か「徒町小鈴」がいる場合、エネルギーを1枚アクティブにし、自分の控え室から『蓮ノ空』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCONDITION: HAS_MEMBER {FILTER=\"NAME=大沢瑠璃乃 OR NAME=百生吟子 OR NAME=徒町小鈴\"}\nEFFECT: ACTIVATE_ENERGY(1); RECOVER_LIVE(1) {FILTER=\"GROUP_ID=4\"} -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(1) (Optional)\nEFFECT: ADD_BLADES(2) -> SELF",
+    "pseudocode": "TRIGGER: ON_PLAY\nCONDITION: HAS_MEMBER {FILTER=\"NAME=大沢瑠璃乃 OR NAME=百生吟子 OR NAME=徒町小鈴\"}\nEFFECT: ACTIVATE_ENERGY(1); RECOVER_LIVE(1) (Optional) {FILTER=\"GROUP_ID=4\"} -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(1) (Optional)\nEFFECT: ADD_BLADES(2) -> SELF",
     "cards": [
       "PL!HS-sd1-006-SD"
     ]
@@ -3357,7 +3357,7 @@
     ]
   },
   "{{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: LOOK_AND_CHOOSE_ORDER(3, ANY) -> DECK_TOP; MOVE_TO_DISCARD(REMAINDER)",
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: LOOK_AND_CHOOSE_ORDER(3, ANY) (Optional) -> DECK_TOP; MOVE_TO_DISCARD(REMAINDER)",
     "cards": [
       "PL!S-PR-028-PR",
       "PL!S-PR-032-PR",
@@ -3365,7 +3365,7 @@
     ]
   },
   "{{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。\n{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：このカードを控え室からステージに登場させる。この能力は、このカードが控え室にある場合のみ起動できる。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: LOOK_AND_CHOOSE_ORDER(3, ANY) -> DECK_TOP; MOVE_TO_DISCARD(REMAINDER)\n\nTRIGGER: ACTIVATED (In Discard)\nCOST: PAY_ENERGY(2); DISCARD_HAND(1) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); PLAY_MEMBER(SELF)",
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: LOOK_AND_CHOOSE_ORDER(3, ANY) (Optional) -> DECK_TOP; MOVE_TO_DISCARD(REMAINDER)\n\nTRIGGER: ACTIVATED (In Discard)\nCOST: PAY_ENERGY(2); DISCARD_HAND(1) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); PLAY_MEMBER(SELF)",
     "cards": [
       "PL!N-bp1-002-P",
       "PL!N-bp1-002-P＋",
@@ -3414,7 +3414,7 @@
     ]
   },
   "{{toujyou.png|登場}}自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい。そうした場合、自分の控え室にある『虹ヶ咲』のライブカードを1枚成功ライブカード置き場に置く。\n{{live_start.png|ライブ開始時}}自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCOST: SELECT_SUCCESS_LIVE(1) {FILTER=\"GROUP_ID=2\"} -> DISCARD (Optional)\nEFFECT: SELECT_RECOVER_LIVE(1) {FILTER=\"GROUP_ID=2\", ZONE=\"DISCARD\"} -> SUCCESS_PILE\n\nTRIGGER: ON_LIVE_START\nEFFECT: SELECT_LIVE_CARD(1) -> TARGET_LIVE; CONDITION: SUCCESS_PILE_CONTAINS_NAME(TARGET_LIVE)\nEFFECT: ADD_HEARTS(1) -> SELF {HEART_TYPE=4, DURATION=\"UNTIL_LIVE_END\"}",
+    "pseudocode": "TRIGGER: ON_PLAY\nCOST: SELECT_SUCCESS_LIVE(1) {FILTER=\"GROUP_ID=2\"} -> DISCARD (Optional)\nEFFECT: SELECT_RECOVER_LIVE(1) (Optional) {FILTER=\"GROUP_ID=2\", ZONE=\"DISCARD\"} -> SUCCESS_PILE\n\nTRIGGER: ON_LIVE_START\nEFFECT: SELECT_LIVE_CARD(1) -> TARGET_LIVE; CONDITION: SUCCESS_PILE_CONTAINS_NAME(TARGET_LIVE)\nEFFECT: ADD_HEARTS(1) -> SELF {HEART_TYPE=4, DURATION=\"UNTIL_LIVE_END\"}",
     "cards": [
       "PL!N-bp4-010-P",
       "PL!N-bp4-010-P＋",
@@ -3505,13 +3505,13 @@
     ]
   },
   "{{toujyou.png|登場}}自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、選んだハートを1つ得る。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_M_S, COST_LE_4\"} -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_OPTION(PLAYER) {OPTIONS=[\"RED\", \"GREEN\", \"PURPLE\"]} -> COLOR; ADD_HEARTS(1) -> SELF {HEART_TYPE=COLOR, DURATION=\"UNTIL_LIVE_END\"}",
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_RECOVER_MEMBER(1) (Optional) {FILTER=\"UNIT_M_S, COST_LE_4\"} -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_OPTION(PLAYER) {OPTIONS=[\"RED\", \"GREEN\", \"PURPLE\"]} -> COLOR; ADD_HEARTS(1) -> SELF {HEART_TYPE=COLOR, DURATION=\"UNTIL_LIVE_END\"}",
     "cards": [
       "PL!-sd1-003-SD"
     ]
   },
   "{{toujyou.png|登場}}自分の控え室からメンバーカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」を、好きな組み合わせで合計3枚、控え室に置いてもよい：ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋３する。」を得る。\n（手札のこのカードもこの効果で控え室に置ける。）": {
-    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(3) {FILTER=\"Ayumu/Kanon/Kaho\"} (Optional)\nEFFECT: BOOST_SCORE(3) -> SELF",
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_MEMBER(1) (Optional) -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(3) {FILTER=\"Ayumu/Kanon/Kaho\"} (Optional)\nEFFECT: BOOST_SCORE(3) -> SELF",
     "cards": [
       "LL-bp1-001-R＋"
     ]
@@ -3526,7 +3526,7 @@
     ]
   },
   "{{toujyou.png|登場}}自分の控え室にある、カード名の異なるライブカードを2枚選ぶ。そうした場合、相手はそれらのカードのうち1枚を選ぶ。これにより相手に選ばれたカードを自分の手札に加える。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_CARDS(2) {FROM=\"DISCARD\", TYPE_LIVE, UNIQUE_NAMES} -> OPTIONS; OPPONENT_CHOOSE(OPTIONS) -> TARGET; ADD_TO_HAND(TARGET)",
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_CARDS(2) (Optional) {FROM=\"DISCARD\", TYPE_LIVE, UNIQUE_NAMES} -> OPTIONS; OPPONENT_CHOOSE(OPTIONS) -> TARGET; ADD_TO_HAND(TARGET)",
     "cards": [
       "PL!SP-bp2-011-P",
       "PL!SP-bp2-011-R"
@@ -3634,7 +3634,7 @@
     ]
   },
   "{{live_start.png|ライブ開始時}}手札の『Aqours』のカードを1枚公開してもよい：これにより公開したカードをデッキの一番上か一番下に置き, ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。": {
-    "pseudocode": "TRIGGER: ON_LIVE_START\nCOST: REVEAL_HAND(1) {FILTER=\"GROUP_ID=1\"} (Optional)\nEFFECT: MOVE_TO_DECK(1) {FROM=\"REVEALED\", TO=\"DECK_TOP_OR_BOTTOM\"}; ADD_BLADES(1) -> SELF",
+    "pseudocode": "TRIGGER: ON_LIVE_START\nCOST: REVEAL_HAND(1) {FILTER=\"GROUP_ID=1\"} (Optional)\nEFFECT: MOVE_TO_DECK(1) (Optional) {FROM=\"REVEALED\", TO=\"DECK_TOP_OR_BOTTOM\"}; ADD_BLADES(1) -> SELF",
     "cards": [
       "PL!S-sd1-009-SD"
     ]

@@ -105,7 +105,6 @@ impl CardFilter {
                      _ => ctx.player_id,
                  };
                  if target_p != 255 && p_idx != target_p {
-                     if state.debug.debug_mode && cid == 4632 { println!("[DEBUG_MATCH] Fails Player check (Expected {}, Got {})", target_p, p_idx); }
                      return false;
                  }
              }
@@ -116,13 +115,11 @@ impl CardFilter {
             if self.card_type == 1 {
                 // Member
                 if !db.members.contains_key(&cid) {
-                    if cid == 4632 { println!("[DEBUG_MATCH] Fails Type check (Member)"); }
                     return false;
                 }
             } else if self.card_type == 2 {
                 // Live
                 if !db.lives.contains_key(&cid) {
-                    if cid == 4632 { println!("[DEBUG_MATCH] Fails Type check (Live)"); }
                     return false;
                 }
             }
@@ -134,25 +131,20 @@ impl CardFilter {
                 if self.group_id == 101 {
                     // Special case for AQOURS_OR_SAINT_SNOW
                     if !m.groups.contains(&1) && !m.groups.contains(&11) {
-                        if cid == 4632 { println!("[DEBUG_MATCH] Fails Group Special 101"); }
                         return false;
                     }
                 } else if !m.groups.contains(&self.group_id) {
-                    if cid == 4632 { println!("[DEBUG_MATCH] Fails Group check (Expected {}, card has {:?})", self.group_id, m.groups); }
                     return false;
                 }
             } else if let Some(l) = db.get_live(cid) {
                 if self.group_id == 101 {
                     if !l.groups.contains(&1) && !l.groups.contains(&11) {
-                        if cid == 4632 { println!("[DEBUG_MATCH] Fails Live Group Special 101"); }
                         return false;
                     }
                 } else if !l.groups.contains(&self.group_id) {
-                    if cid == 4632 { println!("[DEBUG_MATCH] Fails Live Group check (Expected {})", self.group_id); }
                     return false;
                 }
             } else {
-                if cid == 4632 { println!("[DEBUG_MATCH] Fails Group check (Not found in DB)"); }
                 return false;
             }
         }
@@ -161,6 +153,10 @@ impl CardFilter {
         if self.unit_enabled {
             if let Some(m) = db.get_member(cid) {
                 if !m.units.contains(&self.unit_id) {
+                    return false;
+                }
+            } else if let Some(l) = db.get_live(cid) {
+                if !l.units.contains(&self.unit_id) {
                     return false;
                 }
             } else {
@@ -183,6 +179,13 @@ impl CardFilter {
                 .replace(" ", "")
                 .contains(&target_name.replace(" ", ""))
             {
+                let fallback_char_id_3 = if self.char_id_3 > 0 {
+                    self.char_id_3
+                } else if !self.unit_enabled && self.unit_id > 0 {
+                    self.unit_id
+                } else {
+                    0
+                };
                 // Check char_id_2 as alternate match
                 if self.char_id_2 > 0 {
                     let target_name_2 =
@@ -192,9 +195,9 @@ impl CardFilter {
                         .contains(&target_name_2.replace(" ", ""))
                     {
                         // Check char_id_3 as alternate match
-                        if self.char_id_3 > 0 {
+                        if fallback_char_id_3 > 0 {
                             let target_name_3 =
-                                crate::core::logic::card_db::get_character_name(self.char_id_3);
+                                crate::core::logic::card_db::get_character_name(fallback_char_id_3);
                             if !name
                                 .replace(" ", "")
                                 .contains(&target_name_3.replace(" ", ""))
@@ -204,6 +207,15 @@ impl CardFilter {
                         } else {
                             return false;
                         }
+                    }
+                } else if fallback_char_id_3 > 0 {
+                    let target_name_3 =
+                        crate::core::logic::card_db::get_character_name(fallback_char_id_3);
+                    if !name
+                        .replace(" ", "")
+                        .contains(&target_name_3.replace(" ", ""))
+                    {
+                        return false;
                     }
                 } else {
                     return false;
@@ -269,13 +281,20 @@ impl CardFilter {
                 self.value_threshold
             };
 
-            if self.is_le {
-                if actual_val > threshold {
+            if self.special_id == 5 && self.is_cost_type && self.compare_accumulated {
+                let expected = (ctx.v_accumulated + self.value_threshold as i16).max(0) as u8;
+                if actual_val != expected {
                     return false;
                 }
             } else {
-                if actual_val < threshold {
-                    return false;
+                if self.is_le {
+                    if actual_val > threshold {
+                        return false;
+                    }
+                } else {
+                    if actual_val < threshold {
+                        return false;
+                    }
                 }
             }
         }
@@ -358,6 +377,19 @@ impl CardFilter {
                             return false;
                         }
                     } else if cid == ctx.source_card_id {
+                        return false;
+                    }
+                }
+                5 => {
+                    // Dynamic exact-cost comparison is handled in the value filter.
+                }
+                6 => {
+                    if !ctx.selected_cards.contains(&cid) {
+                        return false;
+                    }
+                }
+                7 => {
+                    if ctx.selected_cards.contains(&cid) {
                         return false;
                     }
                 }
@@ -635,6 +667,10 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             attr |= 4u64 << FILTER_SPECIAL_ID_SHIFT;
             continue;
         }
+        if part == "SELECTED_DISCARD" {
+            attr |= 6u64 << FILTER_SPECIAL_ID_SHIFT;
+            continue;
+        }
 
         if part.starts_with("COST") {
             let val_str = if part.contains('=') {
@@ -687,7 +723,7 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             if unit_id >= 0 {
                 attr |= crate::core::logic::constants::FILTER_UNIT_ENABLE | ((unit_id as u64) << FILTER_UNIT_ID_SHIFT);
             }
-        } else if part == "TAPPED" {
+        } else if part == "TAPPED" || part == "STATUS=TAPPED" {
             attr |= FILTER_TAPPED;
         } else if part == "HAS_BLADE_HEART" {
             attr |= FILTER_HAS_BLADE_HEART;

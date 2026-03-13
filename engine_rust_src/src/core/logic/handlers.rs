@@ -167,7 +167,7 @@ impl MulliganController for GameState {
         }
         if action == 0 {
             let mut discards = Vec::new();
-            for i in 0..60 {
+            for i in 0..self.core.players[p_idx].hand.len() {
                 if (self.core.players[p_idx].mulligan_selection >> i) & 1 == 1 {
                     discards.push(i as usize);
                 }
@@ -411,14 +411,141 @@ impl MainPhaseController for GameState {
         if self.current_player == self.first_player {
             self.current_player = 1 - self.first_player;
             self.phase = Phase::Active;
+            if !self.ui.silent {
+                self.log_rule("Rule 7.4", &format!("Entering Active Phase for Player {}.", self.current_player));
+            }
         } else {
             self.phase = Phase::LiveSet;
             self.current_player = self.first_player;
+            if !self.ui.silent {
+                self.log_rule("Rule 8.2", &format!("Entering Live Set Phase."));
+            }
         }
     }
 }
 impl ResponseController for GameState {
     fn handle_response(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
+        if let Some(pi) = self.interaction_stack.last().cloned() {
+            let choice_idx = match ActionFactory::parse_action(action) {
+                DecodedAction::Pass => 99,
+                DecodedAction::SelectMode { mode_idx } => mode_idx,
+                DecodedAction::PlayMember { hand_idx, .. } => hand_idx as i32,
+                DecodedAction::SelectChoice { choice_idx } => choice_idx,
+                DecodedAction::SelectColor { color_idx } => color_idx,
+                DecodedAction::SelectEnergy { energy_idx } => energy_idx as i32,
+                DecodedAction::SelectStageSlot { slot_idx } => slot_idx as i32,
+                _ => -1,
+            };
+
+            let daydream_mermaid_mode_mask = pi.ctx.v_accumulated - 1900;
+            let is_daydream_mermaid_mode = pi.choice_type == ChoiceType::SelectMode
+                && daydream_mermaid_mode_mask >= 0
+                && db
+                    .get_live(pi.card_id)
+                    .map(|card| card.card_no.as_str() == "PL!N-bp4-030-L")
+                    .unwrap_or(false);
+            if is_daydream_mermaid_mode {
+                let p_idx = pi.ctx.player_id as usize;
+                let selected_bit = match choice_idx {
+                    0 => 0x1,
+                    1 => 0x2,
+                    _ => 0,
+                };
+                if selected_bit == 0 || (daydream_mermaid_mode_mask & selected_bit) == 0 {
+                    return Err("Invalid Daydream Mermaid mode selection".to_string());
+                }
+
+                self.interaction_stack.pop();
+
+                if choice_idx == 0 {
+                    if let Some(cid) = self.players[p_idx].energy_deck.pop() {
+                        self.players[p_idx].energy_zone.push(cid);
+                        let new_idx = self.players[p_idx].energy_zone.len() - 1;
+                        self.players[p_idx].set_energy_tapped(new_idx, true);
+                    }
+                } else if let Some(recover_pos) = self.players[p_idx]
+                    .discard
+                    .iter()
+                    .position(|&cid| db.get_member(cid).is_some())
+                {
+                    let cid = self.players[p_idx].discard.remove(recover_pos);
+                    self.players[p_idx].hand.push(cid);
+                    self.players[p_idx].hand_increased_this_turn = self.players[p_idx]
+                        .hand_increased_this_turn
+                        .saturating_add(1);
+                }
+
+                let remaining_mask = daydream_mermaid_mode_mask & !selected_bit;
+                if remaining_mask > 0 {
+                    let mut next_ctx = pi.ctx.clone();
+                    next_ctx.choice_index = -1;
+                    next_ctx.v_accumulated = 1900 + remaining_mask;
+                    let choice_text = crate::core::logic::interpreter::get_choice_text(db, &next_ctx);
+                    crate::core::logic::interpreter::suspend_interaction(
+                        self,
+                        db,
+                        &next_ctx,
+                        0,
+                        O_SELECT_MODE,
+                        0,
+                        ChoiceType::SelectMode,
+                        &choice_text,
+                        0,
+                        remaining_mask.count_ones() as i16,
+                    );
+                    return Ok(());
+                }
+
+                self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
+                    Phase::Main
+                } else {
+                    pi.original_phase
+                };
+                self.current_player = pi.original_current_player;
+                self.clear_execution_id();
+                self.check_win_condition();
+                return Ok(());
+            }
+
+            let is_sunny_day_song_target = pi.choice_type == ChoiceType::SelectMember
+                && pi.ctx.v_accumulated == 211
+                && db
+                    .get_live(pi.card_id)
+                    .map(|card| card.card_no.as_str() == "PL!-bp5-021-L")
+                    .unwrap_or(false);
+            if is_sunny_day_song_target {
+                let p_idx = pi.ctx.player_id as usize;
+                if !(0..3).contains(&choice_idx) {
+                    return Err("Invalid SUNNY DAY SONG target".to_string());
+                }
+                let slot_idx = choice_idx as usize;
+                let target_cid = self.players[p_idx].stage[slot_idx];
+                if target_cid < 0
+                    || !db
+                        .get_member(target_cid)
+                        .map(|card| card.groups.contains(&0))
+                        .unwrap_or(false)
+                {
+                    return Err("Selected target does not satisfy SUNNY DAY SONG filter".to_string());
+                }
+
+                self.interaction_stack.pop();
+                self.players[p_idx].heart_buffs[slot_idx].add_to_color(3, 1);
+                self.players[p_idx]
+                    .heart_buff_logs
+                    .push((pi.card_id, 1, 3, slot_idx as u8));
+                self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
+                    Phase::Main
+                } else {
+                    pi.original_phase
+                };
+                self.current_player = pi.original_current_player;
+                self.clear_execution_id();
+                self.check_win_condition();
+                return Ok(());
+            }
+        }
+
         let (execution_id, ctx_res) = {
             let pi = if let Some(p) = self.interaction_stack.last() {
                 p
@@ -621,6 +748,22 @@ impl ResponseController for GameState {
 
             // Restore phase only if no new suspension occurred
             if self.interaction_stack.is_empty() {
+                let current_execution_id = self.ui.current_execution_id.unwrap_or(0);
+                let was_cancelled = current_execution_id > 0
+                    && self.ui.cancelled_execution_ids.remove(&current_execution_id);
+                if !was_cancelled {
+                    let res_trigger = match ctx.trigger_type {
+                        crate::core::enums::TriggerType::OnLiveStart => Some(crate::core::enums::TriggerType::OnAbilityResolve),
+                        crate::core::enums::TriggerType::OnLiveSuccess => Some(crate::core::enums::TriggerType::OnAbilitySuccess),
+                        _ => None,
+                    };
+
+                    if let Some(t) = res_trigger {
+                        let mut res_ctx = ctx.clone();
+                        res_ctx.target_card_id = cid;
+                        self.trigger_abilities_from(db, t, &res_ctx, 0);
+                    }
+                }
                 if self.debug.debug_mode {
                     println!("[DEBUG_RES] Restoring phase. orig_phase={:?}, stack_len={}", orig_phase, self.interaction_stack.len());
                 }
@@ -634,7 +777,7 @@ impl ResponseController for GameState {
             return Ok(());
         }
 
-        let cid = if slot_idx < STAGE_SLOT_COUNT {
+        let cid = if slot_idx < STAGE_SLOT_COUNT as usize {
             let scid = self.core.players[p_idx].stage[slot_idx];
             if scid >= 0 {
                 scid
@@ -705,7 +848,13 @@ impl ResponseController for GameState {
         if target_slot >= 0 {
             ctx.target_slot = target_slot as i16;
         }
-        let source_type = if slot_idx < STAGE_SLOT_COUNT { 0 } else { 1 }; // 0=Stage, 1=Other
+        let source_type = if slot_idx < STAGE_SLOT_COUNT as usize { 0 } else { 1 }; // 0=Stage, 1=Other
+        let instance_key = self.get_once_per_turn_instance_key(
+            p_idx,
+            source_type,
+            slot_idx as i16,
+            cid,
+        );
 
         // ENFORCEMENT PHASE: Check conditions and costs
         if !self.debug.debug_ignore_conditions {
@@ -714,7 +863,7 @@ impl ResponseController for GameState {
             }
 
             if ab.is_once_per_turn {
-                if !self.check_once_per_turn(p_idx, source_type, cid as u32, ab_idx) {
+                if !self.check_once_per_turn(p_idx, source_type, instance_key, cid as u32, ab_idx) {
                     return Err("Ability already used this turn".to_string());
                 }
             }
@@ -745,7 +894,7 @@ impl ResponseController for GameState {
             }
 
             if ab.is_once_per_turn {
-                self.consume_once_per_turn(p_idx, source_type, cid as u32, ab_idx);
+                self.consume_once_per_turn(p_idx, source_type, instance_key, cid as u32, ab_idx);
             }
         }
 
@@ -792,6 +941,9 @@ impl TurnPhaseController for GameState {
         self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
         if self.phase == Phase::Active {
             self.phase = Phase::Energy;
+            if !self.ui.silent {
+                self.log_rule("Rule 7.5", &format!("Entering Energy Phase for Player {}.", p_idx));
+            }
         }
     }
 
@@ -812,6 +964,9 @@ impl TurnPhaseController for GameState {
             self.core.players[p_idx].set_energy_tapped(idx, false);
         }
         self.phase = Phase::Draw;
+        if !self.ui.silent {
+            self.log_rule("Rule 7.6", &format!("Entering Draw Phase for Player {}.", p_idx));
+        }
     }
 
     fn do_draw_phase(&mut self, db: &CardDatabase) {
@@ -830,9 +985,13 @@ impl TurnPhaseController for GameState {
         }
         if !self.ui.silent {
             self.log(format!("Rule 7.6.2: Player {} draws a card.", p_idx));
+            self.log_event("DRAW", "Player draws 1 card", -1, -1, p_idx as u8, Some("Rule 7.6.2"), true);
         }
         self.draw_cards(p_idx, 1);
         self.phase = Phase::Main;
+        if !self.ui.silent {
+            self.log_rule("Rule 7.7", &format!("Entering Main Phase for Player {}.", p_idx));
+        }
     }
 }
 
@@ -865,9 +1024,8 @@ impl GameState {
         }
 
         self.phase = orig_phase;
-        if self.phase == Phase::Response || self.phase == Phase::Setup {
-            self.phase = Phase::Main;
-        }
+        // Don't force phase to Main - let the ability execution determine phase transitions
+        // If there are more effects to process, they should handle phase changes appropriately
         self.interaction_stack.pop();
 
         self.trigger_event(

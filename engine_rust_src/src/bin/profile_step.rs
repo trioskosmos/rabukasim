@@ -143,7 +143,7 @@ fn main() {
         let legal = state.get_legal_action_ids(&db);
         if legal.is_empty() {
             let move_start = Instant::now();
-            let res = state.step(&db, ACTION_BASE_PASS);
+            let _ = state.step(&db, ACTION_BASE_PASS);
             let move_time = move_start.elapsed().as_micros() as f64 / 1000.0;
             println!("  Move {}: [PASS] - {:.3}ms", move_count + 1, move_time);
             total_moves_time += move_time;

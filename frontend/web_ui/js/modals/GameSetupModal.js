@@ -130,6 +130,8 @@ export const GameSetupModal = {
     submitGameSetup: async () => {
         const p0Config = GameSetupModal.getDeckConfig(0);
         const p1Config = GameSetupModal.getDeckConfig(1);
+        const cardSetSelect = document.getElementById('card-set-select');
+        const cardSet = cardSetSelect ? cardSetSelect.value : 'compiled';
 
         try {
             const p0Deck = await GameSetupModal.resolveDeck(p0Config);
@@ -145,6 +147,7 @@ export const GameSetupModal = {
                 headers: Network.getHeaders(),
                 body: JSON.stringify({
                     mode: Modals.setupMode,
+                    card_set: cardSet,
                     p0_deck: p0Deck.main,
                     p1_deck: p1Deck.main,
                     p0_energy: p0Deck.energy,
@@ -161,6 +164,7 @@ export const GameSetupModal = {
             const data = await res.json();
             if (data.success) {
                 State.roomCode = data.room_id;
+                State.cardSet = cardSet;
                 State.offlineMode = false;
                 if (data.session) {
                     Network.saveSession(data.room_id, { token: data.session, playerId: data.player_idx });

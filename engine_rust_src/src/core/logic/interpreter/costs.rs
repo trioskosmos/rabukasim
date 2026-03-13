@@ -3,6 +3,34 @@ use crate::core::enums::*;
 use crate::core::logic::filter::map_filter_string_to_attr;
 use crate::core::logic::{AbilityContext, CardDatabase, Cost, GameState, TriggerType};
 
+fn resolve_energy_cost(state: &GameState, db: &CardDatabase, p_idx: usize, cost: &Cost) -> i32 {
+    let mut resolved_cost = cost.value;
+    if let Some(params) = cost.params.as_object() {
+        let reduction = params
+            .get("REDUCTION")
+            .or_else(|| params.get("reduction"))
+            .and_then(|value| value.as_str())
+            .unwrap_or("");
+        if reduction.eq_ignore_ascii_case("COUNT_GROUPS") {
+            let mut group_mask: u32 = 0;
+            for &cid in &state.players[p_idx].stage {
+                if cid < 0 {
+                    continue;
+                }
+                if let Some(member) = db.get_member(cid) {
+                    for &group_id in &member.groups {
+                        if group_id < 32 {
+                            group_mask |= 1u32 << group_id;
+                        }
+                    }
+                }
+            }
+            resolved_cost = (resolved_cost - group_mask.count_ones() as i32).max(0);
+        }
+    }
+    resolved_cost
+}
+
 pub fn pay_costs_transactional(
     state: &mut GameState,
     db: &CardDatabase,
@@ -61,7 +89,7 @@ pub fn check_cost(
         AbilityCostType::Energy => {
             let available =
                 (player.energy_zone.len() as u32 - player.tapped_energy_mask.count_ones()) as i32;
-            available >= cost.value
+            available >= resolve_energy_cost(state, db, p_idx, cost)
         }
         AbilityCostType::TapSelf => {
             if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
@@ -217,11 +245,12 @@ pub fn pay_cost(
     let result = match cost.cost_type {
         AbilityCostType::None => true,
         AbilityCostType::Energy => {
+            let resolved_cost = resolve_energy_cost(state, db, p_idx, cost);
             let untap_indices: Vec<usize> = (0..state.players[p_idx].energy_zone.len())
                 .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
-                .take(cost.value as usize)
+                .take(resolved_cost as usize)
                 .collect();
-            if untap_indices.len() < cost.value as usize {
+            if untap_indices.len() < resolved_cost as usize {
                 return false;
             }
             for idx in untap_indices {

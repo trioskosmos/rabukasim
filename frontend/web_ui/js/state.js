@@ -13,6 +13,7 @@ const stateInternal = {
     roomCode: localStorage.getItem('lovelive_room_code'),
     sessionToken: null,
     perspectivePlayer: 0, // 0 or 1 (Who are we viewing?)
+    cardSet: 'compiled', // 'compiled' or 'vanilla'
 
     // Connectivity & Mode
     offlineMode: false,
@@ -31,6 +32,9 @@ const stateInternal = {
     lastStateJson: null,
     lastPerformanceData: null,
     lastAssetsHash: null,
+    plannerData: null,
+    lastPlannerFetchKey: null,
+    plannerLoading: false,
 
     // Card ID Index for O(1) lookups (performance optimization)
     cardIndex: null,

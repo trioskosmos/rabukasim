@@ -3,15 +3,14 @@
 
 import json
 
+from engine.models.bytecode_readable import CONDITION_NAMES, OPCODE_NAMES
+
 with open("data/cards_compiled.json", "r", encoding="utf-8") as f:
     data = json.load(f)
 with open("data/metadata.json", "r", encoding="utf-8") as f:
     meta = json.load(f)
 
 opcode_by_name = meta["opcodes"]
-opcode_names = {v: k for k, v in opcode_by_name.items()}
-cond_names = {v: k for k, v in meta["conditions"].items()}
-
 TRACE_EFFECTS = {
     "SELECT_CARDS": opcode_by_name.get("SELECT_CARDS", -1),
     "LOSE_EXCESS_HEARTS": opcode_by_name.get("LOSE_EXCESS_HEARTS", -1),
@@ -103,7 +102,7 @@ for db_key in ["member_db", "live_db"]:
                 all_ops[real_op] = all_ops.get(real_op, 0) + 1
 
 for op_id in sorted(all_ops.keys()):
-    nm = opcode_names.get(op_id, cond_names.get(op_id, f"UNK_{op_id}"))
+    nm = OPCODE_NAMES.get(op_id, CONDITION_NAMES.get(op_id, f"UNK_{op_id}"))
     p(f"  {op_id:4d} {nm:35s} {all_ops[op_id]:4d} uses")
 
 with open("reports/trace_impact.txt", "w", encoding="utf-8") as f:
