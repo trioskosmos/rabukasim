@@ -5,14 +5,15 @@ use crate::core::generated_constants::*;
 #[derive(Debug, Clone, Copy, Default)]
 pub struct DecodedSlot {
     pub target_slot: u8,
+    pub remainder_zone: u8,
     pub source_zone: Zone,
     pub dest_zone: Zone,
-    pub count_op: u8,
-    pub is_dynamic: bool,
     pub is_opponent: bool,
     pub is_reveal_until_live: bool,
-    pub is_empty_slot_only: bool,
+    pub is_baton_slot: bool,
+    pub is_empty_slot: bool,
     pub is_wait: bool,
+    pub is_dynamic: bool,
     pub area_idx: u8,
 }
 
@@ -24,14 +25,15 @@ impl DecodedSlot {
 
         Self {
             target_slot: ((s >> S_STANDARD_TARGET_SLOT_SHIFT) & S_STANDARD_TARGET_SLOT_MASK as u32) as u8,
+            remainder_zone: ((s >> S_STANDARD_REMAINDER_ZONE_SHIFT) & S_STANDARD_REMAINDER_ZONE_MASK as u32) as u8,
             source_zone: Self::decode_zone(source_zone_val),
             dest_zone: Self::decode_zone(dest_zone_val),
-            count_op: ((s >> S_STANDARD_REMAINDER_ZONE_SHIFT) & S_STANDARD_REMAINDER_ZONE_MASK as u32) as u8,
-            is_dynamic: ((s >> S_STANDARD_IS_DYNAMIC_SHIFT) & S_STANDARD_IS_DYNAMIC_MASK as u32) != 0,
             is_opponent: ((s >> S_STANDARD_IS_OPPONENT_SHIFT) & S_STANDARD_IS_OPPONENT_MASK as u32) != 0,
             is_reveal_until_live: ((s >> S_STANDARD_IS_REVEAL_UNTIL_LIVE_SHIFT) & S_STANDARD_IS_REVEAL_UNTIL_LIVE_MASK as u32) != 0,
-            is_empty_slot_only: ((s >> S_STANDARD_IS_EMPTY_SLOT_SHIFT) & S_STANDARD_IS_EMPTY_SLOT_MASK as u32) != 0,
+            is_baton_slot: ((s >> S_STANDARD_IS_BATON_SLOT_SHIFT) & S_STANDARD_IS_BATON_SLOT_MASK as u32) != 0,
+            is_empty_slot: ((s >> S_STANDARD_IS_EMPTY_SLOT_SHIFT) & S_STANDARD_IS_EMPTY_SLOT_MASK as u32) != 0,
             is_wait: ((s >> S_STANDARD_IS_WAIT_SHIFT) & S_STANDARD_IS_WAIT_MASK as u32) != 0,
+            is_dynamic: ((s >> S_STANDARD_IS_DYNAMIC_SHIFT) & S_STANDARD_IS_DYNAMIC_MASK as u32) != 0,
             area_idx: ((s >> S_STANDARD_AREA_IDX_SHIFT) & S_STANDARD_AREA_IDX_MASK as u32) as u8,
         }
     }
