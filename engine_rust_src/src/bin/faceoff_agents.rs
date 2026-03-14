@@ -1,5 +1,7 @@
 use engine_rust::core::heuristics::OriginalHeuristic;
-use engine_rust::core::logic::{GameState, Phase};
+use engine_rust::core::logic::{GameState, CardDatabase, Phase};
+use rand::SeedableRng;
+use rand::rngs::SmallRng;
 use engine_rust::core::mcts::{SearchHorizon, MCTS};
 use engine_rust::test_helpers::load_real_db;
 use rand::Rng;
@@ -21,13 +23,13 @@ impl Agent {
     }
 }
 
-fn get_action(
+fn get_action<R: Rng>(
     agent: Agent,
     state: &GameState,
     db: &engine_rust::core::logic::CardDatabase,
     mcts: &mut MCTS,
     heuristic: &OriginalHeuristic,
-    rng: &mut rand::rngs::ThreadRng,
+    rng: &mut R,
 ) -> i32 {
     let p_idx = state.current_player as usize;
     let mut mask = vec![false; engine_rust::core::logic::ACTION_SPACE];
@@ -180,7 +182,7 @@ fn run_matchup(agent0: Agent, agent1: Agent, num_games: usize) {
         let mut mcts = MCTS::new();
         let heuristic = OriginalHeuristic::default();
         let mut steps = 0;
-        let mut rng = rand::rng();
+        let mut rng = rand::rngs::SmallRng::from_os_rng();
 
         while !sim.is_terminal() && steps < 500 {
             let action = if sim.current_player == 0 {

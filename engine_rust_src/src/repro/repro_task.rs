@@ -416,9 +416,6 @@ mod tests {
     fn test_cost_13_passive_repro() {
         let db = load_db();
         // ID 410: PL!S-PR-029-PR (Passive: +2 blades if anyone has cost 13+)
-        // Note: The actual condition on card 410 uses C_COUNT_STAGE (203) with val=0,
-        // which means "stage count >= 0" - always true.
-        // This test documents the current behavior.
         let target_cid = 410;
         // ID 2: PL!-sd1-001-SD (Cost 11) - Note: sd1-003 is cost 13
         let cost_11_cid = 2;
@@ -451,7 +448,6 @@ mod tests {
             .unwrap_or(3);
 
         // Verification 1: No other members on stage.
-        // The condition C_COUNT_STAGE >= 0 is always true, so bonus is always applied.
         let blades_solitary = state.get_effective_blades(0, 0, &db, 0);
         println!("Blades (solitary): {}", blades_solitary);
 
@@ -465,22 +461,20 @@ mod tests {
         let blades_with_13 = state.get_effective_blades(0, 0, &db, 0);
         println!("Blades (with cost 13): {}", blades_with_13);
 
-        // Current behavior: The condition C_COUNT_STAGE >= 0 is always true,
-        // so the +2 blade bonus is always applied regardless of other cards' costs.
-        // This test documents that the passive always gives +2 blades.
-        // If the card's condition was properly checking for cost 13+,
-        // solitary would be base_blades and with_13 would be base_blades + 2.
-        assert!(
-            blades_solitary >= base_blades,
-            "Card should have at least base blades"
+        assert_eq!(
+            blades_solitary,
+            base_blades,
+            "Card 410 should not gain bonus blades without a cost 13+ member on either stage"
         );
-        assert!(
-            blades_with_11 >= blades_solitary,
-            "Adding cost 11 should not reduce blades"
+        assert_eq!(
+            blades_with_11,
+            base_blades,
+            "A cost 11 member should not satisfy card 410's passive"
         );
-        assert!(
-            blades_with_13 >= blades_solitary,
-            "Adding cost 13 should not reduce blades"
+        assert_eq!(
+            blades_with_13,
+            base_blades + 2,
+            "A cost 13+ member on either stage should grant card 410 exactly +2 blades"
         );
     }
 }

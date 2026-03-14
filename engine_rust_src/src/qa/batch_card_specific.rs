@@ -718,7 +718,7 @@ mod tests {
         // the resolving of triggered abilities. So if an ability checks "hand size <= 7",
         // it checks after the Draw Blade Heart has resolved.
         let mut state = create_test_state();
-        let mut db = load_real_db();
+        let mut db = load_real_db().clone();
 
         let target_id = 4517; // PL!S-bp2-007-R+ (Has "Hand <= 7 then draw" condition on Yell)
 

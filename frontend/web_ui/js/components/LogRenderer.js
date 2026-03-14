@@ -115,6 +115,58 @@ export const LogRenderer = {
                 });
             }
 
+            if (p.color_transforms && p.color_transforms.length > 0) {
+                const colors = ['Smile', 'Pure', 'Cool', 'Green', 'Blue', 'Purple', 'Wildcard'];
+                p.color_transforms.forEach(ct => {
+                    const srcColor = ct[1] === 7 ? 'Any' : colors[ct[1]] || ct[1];
+                    const dstColor = colors[ct[2]] || ct[2];
+                    result.push({
+                        player: playerLabel,
+                        desc: i18n.t('color_transform_all', { src: srcColor, dst: dstColor }),
+                        type: 'buff-heart',
+                        source_card_id: ct[0]
+                    });
+                });
+            }
+
+            if (p.heart_req_reductions) {
+                const colors = ['Smile', 'Pure', 'Cool', 'Green', 'Blue', 'Purple', 'Wildcard'];
+                p.heart_req_reductions.forEach((amt, cIdx) => {
+                    if (amt > 0) {
+                        result.push({
+                            player: playerLabel,
+                            desc: `${colors[cIdx] || cIdx}: ${i18n.t('heart_req_reduction', { amt })}`,
+                            type: 'buff-heart'
+                        });
+                    }
+                });
+            }
+
+            if (p.heart_req_additions) {
+                const colors = ['Smile', 'Pure', 'Cool', 'Green', 'Blue', 'Purple', 'Wildcard'];
+                p.heart_req_additions.forEach((amt, cIdx) => {
+                    if (amt > 0) {
+                        result.push({
+                            player: playerLabel,
+                            desc: `${colors[cIdx] || cIdx}: ${i18n.t('heart_req_addition', { amt })}`,
+                            type: 'debuff'
+                        });
+                    }
+                });
+            }
+
+            if (p.blade_overrides) {
+                p.blade_overrides.forEach((val, idx) => {
+                    if (val >= 0) {
+                        result.push({
+                            player: playerLabel,
+                            desc: `${i18n.t('slot')} ${idx + 1}: ${i18n.t('appeal_override', { val })}`,
+                            type: 'buff-blade'
+                        });
+                    }
+                });
+            }
+
             return result;
         };
 

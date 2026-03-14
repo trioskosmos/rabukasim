@@ -97,7 +97,7 @@ impl TurnController for GameState {
             let p0 = self.rps_choices[0];
             let p1 = self.rps_choices[1];
             if !self.ui.silent {
-                self.log(format!("Rule 11.1.1: RPS Result: P0={}, P1={}", p0, p1));
+                self.log(format!("[[rps_result:p0={}:p1={}]]", p0, p1));
             }
 
             if p0 == p1 {
@@ -107,7 +107,7 @@ impl TurnController for GameState {
                 self.turn = (self.turn & !0x7) | (draw_count & 0x7);
 
                 if !self.ui.silent {
-                    self.log(format!("Rule 11.1.1: Draw #{}! Restarting RPS.", draw_count));
+                    self.log(format!("[[rps_draw:count={}]]", draw_count));
                 }
 
                 if draw_count >= 5 {
@@ -127,7 +127,7 @@ impl TurnController for GameState {
                 let winner = if p0_wins { 0 } else { 1 };
                 if !self.ui.silent {
                     self.log(format!(
-                        "Rule 11.1.1: Player {} wins the RPS and chooses turn order.",
+                        "[[rps_winner_chooses:winner={}]]",
                         winner
                     ));
                 }
@@ -213,9 +213,8 @@ impl MulliganController for GameState {
             if self.core.players[player_idx].deck.is_empty() {
                 self.resolve_deck_refresh(player_idx);
             }
-            if let Some(card_id) = self.core.players[player_idx].deck.pop() {
-                self.core.players[player_idx].hand.push(card_id);
-                self.core.players[player_idx].hand_added_turn.push(t);
+            if let Some(card_id) = self.core.players[player_idx].pop_deck_card() {
+                self.core.players[player_idx].draw_hand_card(card_id, t);
             }
         }
         self.core.players[player_idx].deck.extend(discards);
@@ -241,7 +240,24 @@ impl MulliganController for GameState {
 
 impl MainPhaseController for GameState {
     fn handle_main(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
-        match ActionFactory::parse_action(action) {
+        let decoded = ActionFactory::parse_action(action);
+
+        if db.is_vanilla {
+            match decoded {
+                DecodedAction::ActivateMember { .. }
+                | DecodedAction::ActivateFromDiscard { .. }
+                | DecodedAction::ActivateFromHand { .. }
+                | DecodedAction::PlayMember {
+                    choice_idx: Some(_),
+                    ..
+                } => {
+                    return Err("Abilities are disabled in vanilla mode".to_string());
+                }
+                _ => {}
+            }
+        }
+
+        match decoded {
             DecodedAction::Pass => {
                 self.end_main_phase(db);
             }
@@ -312,10 +328,7 @@ impl MainPhaseController for GameState {
             let hand_idx = (action - ACTION_BASE_LIVESET) as usize;
             if hand_idx < self.core.players[p_idx].hand.len() {
                 let cid = self.core.players[p_idx].hand[hand_idx];
-                self.core.players[p_idx].hand.remove(hand_idx);
-                if hand_idx < self.core.players[p_idx].hand_added_turn.len() {
-                    self.core.players[p_idx].hand_added_turn.remove(hand_idx);
-                }
+                self.core.players[p_idx].remove_hand_card(hand_idx);
                 for i in 0..3 {
                     if self.core.players[p_idx].live_zone[i] == -1 {
                         self.core.players[p_idx].live_zone[i] = cid;
@@ -367,7 +380,7 @@ impl MainPhaseController for GameState {
                             p_idx, reason, cid
                         ));
                     }
-                    self.core.players[p_idx].discard.push(cid);
+                        self.core.players[p_idx].push_discard_card(cid);
                 } else {
                     self.core.players[p_idx].success_lives.push(cid);
                     self.obtained_success_live[p_idx] = true;
@@ -425,8 +438,9 @@ impl MainPhaseController for GameState {
 }
 impl ResponseController for GameState {
     fn handle_response(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
+        let decoded_action = ActionFactory::parse_action(action);
         if let Some(pi) = self.interaction_stack.last().cloned() {
-            let choice_idx = match ActionFactory::parse_action(action) {
+            let choice_idx = match decoded_action {
                 DecodedAction::Pass => 99,
                 DecodedAction::SelectMode { mode_idx } => mode_idx,
                 DecodedAction::PlayMember { hand_idx, .. } => hand_idx as i32,
@@ -437,13 +451,22 @@ impl ResponseController for GameState {
                 _ => -1,
             };
 
-            let daydream_mermaid_mode_mask = pi.ctx.v_accumulated - 1900;
-            let is_daydream_mermaid_mode = pi.choice_type == ChoiceType::SelectMode
+            let is_daydream_mermaid = db
+                .get_live(pi.card_id)
+                .map(|card| card.card_no.as_str() == "PL!N-bp4-030-L")
+                .unwrap_or(false);
+            let is_sunny_day_song = db
+                .get_live(pi.card_id)
+                .map(|card| card.card_no.as_str() == "PL!-bp5-021-L")
+                .unwrap_or(false);
+            let daydream_mermaid_mode_mask = if is_daydream_mermaid && pi.ctx.v_accumulated < 1900 {
+                0x3
+            } else {
+                pi.ctx.v_accumulated - 1900
+            };
+            let is_daydream_mermaid_mode = matches!(decoded_action, DecodedAction::SelectMode { .. })
                 && daydream_mermaid_mode_mask >= 0
-                && db
-                    .get_live(pi.card_id)
-                    .map(|card| card.card_no.as_str() == "PL!N-bp4-030-L")
-                    .unwrap_or(false);
+                && is_daydream_mermaid;
             if is_daydream_mermaid_mode {
                 let p_idx = pi.ctx.player_id as usize;
                 let selected_bit = match choice_idx {
@@ -459,20 +482,15 @@ impl ResponseController for GameState {
 
                 if choice_idx == 0 {
                     if let Some(cid) = self.players[p_idx].energy_deck.pop() {
-                        self.players[p_idx].energy_zone.push(cid);
-                        let new_idx = self.players[p_idx].energy_zone.len() - 1;
-                        self.players[p_idx].set_energy_tapped(new_idx, true);
+                        self.players[p_idx].push_energy_card(cid, true);
                     }
                 } else if let Some(recover_pos) = self.players[p_idx]
                     .discard
                     .iter()
                     .position(|&cid| db.get_member(cid).is_some())
                 {
-                    let cid = self.players[p_idx].discard.remove(recover_pos);
-                    self.players[p_idx].hand.push(cid);
-                    self.players[p_idx].hand_increased_this_turn = self.players[p_idx]
-                        .hand_increased_this_turn
-                        .saturating_add(1);
+                    let cid = self.players[p_idx].remove_discard_card(recover_pos).unwrap();
+                    self.players[p_idx].gain_hand_card(cid);
                 }
 
                 let remaining_mask = daydream_mermaid_mode_mask & !selected_bit;
@@ -507,43 +525,40 @@ impl ResponseController for GameState {
                 return Ok(());
             }
 
-            let is_sunny_day_song_target = pi.choice_type == ChoiceType::SelectMember
-                && pi.ctx.v_accumulated == 211
-                && db
-                    .get_live(pi.card_id)
-                    .map(|card| card.card_no.as_str() == "PL!-bp5-021-L")
-                    .unwrap_or(false);
-            if is_sunny_day_song_target {
-                let p_idx = pi.ctx.player_id as usize;
-                if !(0..3).contains(&choice_idx) {
-                    return Err("Invalid SUNNY DAY SONG target".to_string());
+            if is_sunny_day_song {
+                if let DecodedAction::SelectStageSlot { slot_idx } = decoded_action {
+                    let p_idx = pi.ctx.player_id as usize;
+                    if (slot_idx as usize) < STAGE_SLOT_COUNT {
+                        self.players[p_idx].heart_buffs[slot_idx as usize].add_to_color(2, 1);
+                    }
+                    self.interaction_stack.pop();
+                    self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
+                        Phase::Main
+                    } else {
+                        pi.original_phase
+                    };
+                    self.current_player = pi.original_current_player;
+                    self.clear_execution_id();
+                    self.check_win_condition();
+                    return Ok(());
                 }
-                let slot_idx = choice_idx as usize;
-                let target_cid = self.players[p_idx].stage[slot_idx];
-                if target_cid < 0
-                    || !db
-                        .get_member(target_cid)
-                        .map(|card| card.groups.contains(&0))
-                        .unwrap_or(false)
-                {
-                    return Err("Selected target does not satisfy SUNNY DAY SONG filter".to_string());
-                }
-
-                self.interaction_stack.pop();
-                self.players[p_idx].heart_buffs[slot_idx].add_to_color(3, 1);
-                self.players[p_idx]
-                    .heart_buff_logs
-                    .push((pi.card_id, 1, 3, slot_idx as u8));
-                self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
-                    Phase::Main
-                } else {
-                    pi.original_phase
-                };
-                self.current_player = pi.original_current_player;
-                self.clear_execution_id();
-                self.check_win_condition();
-                return Ok(());
             }
+
+            let declined_ll_bp2_live_start = choice_idx == 1
+                && pi.ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
+                && db
+                    .get_member(pi.ctx.source_card_id)
+                    .map(|card| {
+                        card.card_no.as_str() == "LL-bp2-001-R+"
+                            || card.card_no.as_str() == "LL-bp2-001-R＋"
+                    })
+                    .unwrap_or(false);
+            if declined_ll_bp2_live_start {
+                if let Some(execution_id) = self.ui.current_execution_id {
+                    self.ui.cancelled_execution_ids.insert(execution_id);
+                }
+            }
+
         }
 
         let (execution_id, ctx_res) = {
@@ -679,6 +694,10 @@ impl ResponseController for GameState {
         choice_idx: i32,
         target_slot: i32,
     ) -> Result<(), String> {
+        if db.is_vanilla {
+            return Err("Abilities are disabled in vanilla mode".to_string());
+        }
+
         let p_idx = self.current_player as usize;
         if self.phase == Phase::Response {
             let (cid, ctx, orig_phase, orig_cp) = if let Some(pi) = self.interaction_stack.last() {
@@ -746,11 +765,37 @@ impl ResponseController for GameState {
             }
             self.process_rule_checks(db);
 
+            let declined_ll_bp2_live_start_cleanup = choice_idx == 1
+                && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
+                && db
+                    .get_member(ctx.source_card_id)
+                    .map(|card| {
+                        card.card_no.as_str() == "LL-bp2-001-R+"
+                            || card.card_no.as_str() == "LL-bp2-001-R＋"
+                    })
+                    .unwrap_or(false);
+            if declined_ll_bp2_live_start_cleanup {
+                let p_idx = ctx.player_id as usize;
+                let slot_idx = ctx.area_idx as usize;
+                if slot_idx < STAGE_SLOT_COUNT {
+                    self.players[p_idx].heart_buffs[slot_idx].add_to_color(6, -1);
+                }
+            }
+
             // Restore phase only if no new suspension occurred
             if self.interaction_stack.is_empty() {
                 let current_execution_id = self.ui.current_execution_id.unwrap_or(0);
                 let was_cancelled = current_execution_id > 0
                     && self.ui.cancelled_execution_ids.remove(&current_execution_id);
+                let suppress_resolve_trigger = choice_idx == 1
+                    && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
+                    && db
+                        .get_member(ctx.source_card_id)
+                        .map(|card| {
+                            card.card_no.as_str() == "LL-bp2-001-R+"
+                                || card.card_no.as_str() == "LL-bp2-001-R＋"
+                        })
+                        .unwrap_or(false);
                 if !was_cancelled {
                     let res_trigger = match ctx.trigger_type {
                         crate::core::enums::TriggerType::OnLiveStart => Some(crate::core::enums::TriggerType::OnAbilityResolve),
@@ -759,9 +804,11 @@ impl ResponseController for GameState {
                     };
 
                     if let Some(t) = res_trigger {
-                        let mut res_ctx = ctx.clone();
-                        res_ctx.target_card_id = cid;
-                        self.trigger_abilities_from(db, t, &res_ctx, 0);
+                        if !suppress_resolve_trigger {
+                            let mut res_ctx = ctx.clone();
+                            res_ctx.target_card_id = cid;
+                            self.trigger_abilities_from(db, t, &res_ctx, 0);
+                        }
                     }
                 }
                 if self.debug.debug_mode {
@@ -904,6 +951,47 @@ impl ResponseController for GameState {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::generated_constants::ACTION_BASE_STAGE;
+    use crate::core::logic::card_db::LOGIC_ID_MASK;
+    use crate::core::models::{Ability, MemberCard};
+    use crate::test_helpers::create_test_state;
+
+    #[test]
+    fn vanilla_mode_rejects_manual_activated_ability_actions() {
+        let mut db = CardDatabase::default();
+        db.is_vanilla = true;
+
+        let member = MemberCard {
+            card_id: 700,
+            abilities: vec![Ability {
+                trigger: TriggerType::Activated,
+                bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+
+        db.members.insert(700, member.clone());
+        let logic_id = (700 & LOGIC_ID_MASK) as usize;
+        if logic_id >= db.members_vec.len() {
+            db.members_vec.resize(logic_id + 1, None);
+        }
+        db.members_vec[logic_id] = Some(member);
+
+        let mut state = create_test_state();
+        state.players[0].stage[0] = 700;
+
+        let err = state.step(&db, ACTION_BASE_STAGE).unwrap_err();
+        assert!(
+            err.contains("Abilities are disabled in vanilla mode"),
+            "unexpected error: {err}"
+        );
+    }
+}
+
 impl TurnPhaseController for GameState {
     fn do_active_phase(&mut self, db: &CardDatabase) {
         if self.phase != Phase::Active {
@@ -959,9 +1047,7 @@ impl TurnPhaseController for GameState {
                     p_idx
                 ));
             }
-            let idx = self.core.players[p_idx].energy_zone.len();
-            self.core.players[p_idx].energy_zone.push(card_id);
-            self.core.players[p_idx].set_energy_tapped(idx, false);
+            self.core.players[p_idx].push_energy_card(card_id, false);
         }
         self.phase = Phase::Draw;
         if !self.ui.silent {
@@ -1118,15 +1204,12 @@ impl GameState {
                     ..Default::default()
                 },
             ) {
-                self.core.players[p_idx].discard.push(old);
+                self.core.players[p_idx].push_discard_card(old);
             }
             self.core.players[p_idx].set_moved(s_idx, true);
         }
 
-        self.core.players[p_idx].hand.remove(hand_idx);
-        if hand_idx < self.core.players[p_idx].hand_added_turn.len() {
-            self.core.players[p_idx].hand_added_turn.remove(hand_idx);
-        }
+        self.core.players[p_idx].remove_hand_card(hand_idx);
 
         if old_card_id >= 0 {
             if let Some(old) = self.handle_member_leaves_stage(
@@ -1140,7 +1223,7 @@ impl GameState {
                     ..Default::default()
                 },
             ) {
-                self.core.players[p_idx].discard.push(old);
+                self.core.players[p_idx].push_discard_card(old);
             }
         }
 

@@ -117,6 +117,7 @@ pub fn check_condition(
 
     let mut val = cond.value;
     let mut attr = cond.attr;
+    let mut slot = cond.target_slot as i32;
 
     if let Some(params) = cond.params.as_object() {
         // Helper: case-insensitive param getter (compiled JSON uses UPPERCASE keys)
@@ -141,14 +142,22 @@ pub fn check_condition(
 
         if let Some(area_str) = get_param("area").and_then(|v| v.as_str()) {
             if area_str == "ANY_STAGE" || area_str == "ALL_AREAS" {
-                mapped_attr |= FILTER_ANY_STAGE;
+                mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_BOTH as u64;
             }
         }
 
         if let Some(p_val) = get_param("player").and_then(|v| v.as_i64()) {
-            if p_val == TARGET_PLAYER_OPPONENT as i64 {
-                // Opponent
-                mapped_attr |= FILTER_OPPONENT;
+            match p_val {
+                x if x == TARGET_PLAYER_SELF as i64 => {
+                    mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_SELF as u64;
+                }
+                x if x == TARGET_PLAYER_OPPONENT as i64 => {
+                    mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_OPPONENT as u64;
+                }
+                x if x == TARGET_PLAYER_BOTH as i64 => {
+                    mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_BOTH as u64;
+                }
+                _ => {}
             }
         }
 
@@ -194,6 +203,35 @@ pub fn check_condition(
         if cond.condition_type == ConditionType::GroupFilter {
             if params.get("all").and_then(|v| v.as_bool()).unwrap_or(false) {
                 val |= 0x04; // Bit 2: ALL_MEMBERS
+            }
+        }
+
+        if ((slot >> 4) & 0x0F) == 0 {
+            let comparison_mode = if get_param("gt")
+                .or_else(|| get_param("greater_than"))
+                .is_some()
+            {
+                Some(COMP_GT)
+            } else if get_param("lt")
+                .or_else(|| get_param("less_than"))
+                .is_some()
+            {
+                Some(COMP_LT)
+            } else if get_param("min").is_some() {
+                Some(COMP_GE)
+            } else if get_param("max").is_some() {
+                Some(COMP_LE)
+            } else if get_param("eq")
+                .or_else(|| get_param("equal"))
+                .is_some()
+            {
+                Some(COMP_EQ)
+            } else {
+                None
+            };
+
+            if let Some(mode) = comparison_mode {
+                slot = (slot & 0x0F) | ((mode as i32) << 4);
             }
         }
     }
@@ -669,7 +707,7 @@ pub fn check_condition(
             cond.condition_type as i32,
             val,
             attr,
-            0,
+            slot,
             ctx,
             depth + 1,
         )
@@ -901,8 +939,14 @@ pub fn resolve_count(
                         if color_mask == 0 {
                             h.get_total_count() as i32
                         } else {
-                            // If mask is used, we currently sum all colors in the mask.
-                            // Most cards only check 1 color, but mask allows multiple.
+                            // FAST PATH: If only one color is checked
+                            if color_mask.count_ones() == 1 {
+                                let color = color_mask.trailing_zeros() as usize;
+                                if color < 7 {
+                                    return h.get_color_count(color) as i32;
+                                }
+                            }
+                            // SLOW PATH: Sum multiple colors
                             let mut sum = 0;
                             let h_arr = h.to_array();
                             for i in 0..6 {
@@ -1012,12 +1056,9 @@ pub fn check_condition_opcode(
             let color_mask = (attr >> 32) & 0x7F;
             if color_mask != 0 {
                 player.stage.iter().filter(|&&cid| cid >= 0).any(|&cid| {
-                    if let Some(m) = db.get_member(cid) {
-                        for i in 0..7 {
-                            if (color_mask & (1 << i)) != 0 && m.hearts[i] > 0 {
-                                return true;
-                            }
-                        }
+                    if let Some(_m) = db.get_member(cid) {
+                        let eff_h = state.get_effective_hearts(p_idx, player.get_slot_of(cid).unwrap_or(0), db, depth + 1);
+                        return (eff_h.get_color_mask() as u64 & color_mask) != 0;
                     }
                     false
                 })

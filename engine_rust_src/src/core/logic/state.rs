@@ -321,7 +321,7 @@ impl GameState {
 
     pub fn render_debug_board(&self, db: &CardDatabase) -> String {
         let mut out = String::new();
-        out.push_str(&format!("\n=== GAME STATE (Turn {}, Phase {:?}, Player {}) ===\n", self.turn, self.phase, self.current_player));
+        out.push_str(&format!("\n=== GAME STATE (Turn {}, Phase {:?}, Player {}) ===\n", self.core.turn, self.core.phase, self.core.current_player));
 
         for p_idx in 0..2 {
             let p = &self.players[p_idx];

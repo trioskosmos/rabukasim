@@ -116,11 +116,11 @@ pub fn handle_play_live_from_discard(
             .iter()
             .position(|&cid| cid == card_id)
         {
-            state.players[target_p_idx].discard.remove(pos);
+            state.players[target_p_idx].remove_discard_card(pos);
             if slot_idx < STAGE_SLOT_COUNT {
                 let old = state.players[target_p_idx].live_zone[slot_idx];
                 if old >= 0 {
-                    state.players[target_p_idx].discard.push(old);
+                    state.players[target_p_idx].push_discard_card(old);
                 }
                 state.players[target_p_idx].live_zone[slot_idx] = card_id;
                 state.players[target_p_idx].set_revealed(slot_idx, true);
@@ -265,7 +265,7 @@ pub fn handle_select_cards(
                         .iter()
                         .position(|&c| c == chosen)
                     {
-                        state.players[p_idx].hand.remove(pos);
+                        state.players[p_idx].remove_hand_card(pos);
                         found = true;
                     }
                 }
@@ -275,7 +275,7 @@ pub fn handle_select_cards(
                         .iter()
                         .position(|&c| c == chosen)
                     {
-                        state.players[p_idx].discard.remove(pos);
+                        state.players[p_idx].remove_discard_card(pos);
                         found = true;
                     }
                 }
@@ -294,23 +294,19 @@ pub fn handle_select_cards(
             if found {
                 match dest_zone {
                     6 => {
-                        state.players[p_idx].hand.push(chosen);
-                        state.players[p_idx].hand_increased_this_turn = state.players
-                            [p_idx]
-                            .hand_increased_this_turn
-                            .saturating_add(1);
+                        state.players[p_idx].gain_hand_card(chosen);
                     }
                     7 => {
-                        state.players[p_idx].discard.push(chosen);
+                        state.players[p_idx].push_discard_card(chosen);
                     }
                     8 | 0 => {
-                        state.players[p_idx].deck.push(chosen);
+                        state.players[p_idx].push_deck_card(chosen);
                     }
                     13 => {
                         state.players[p_idx].success_lives.push(chosen);
                     }
                     _ => {
-                        state.players[p_idx].hand.push(chosen);
+                        state.players[p_idx].push_hand_card(chosen);
                     }
                 }
             }
@@ -391,14 +387,14 @@ pub fn handle_look_and_choose(
         match source_zone {
             6 => {
                 for _ in 0..reveal_count {
-                    if let Some(cid) = state.players[p_idx].hand.pop() {
+                    if let Some(cid) = state.players[p_idx].pop_hand_card() {
                         state.players[p_idx].looked_cards.push(cid);
                     }
                 }
             }
             7 => {
                 for _ in 0..reveal_count {
-                    if let Some(cid) = state.players[p_idx].discard.pop() {
+                    if let Some(cid) = state.players[p_idx].pop_discard_card() {
                         state.players[p_idx].looked_cards.push(cid);
                     }
                 }
@@ -412,7 +408,7 @@ pub fn handle_look_and_choose(
                     state.resolve_deck_refresh(p_idx);
                 }
                 for _ in 0..reveal_count.min(state.players[p_idx].deck.len()) {
-                    if let Some(cid) = state.players[p_idx].deck.pop() {
+                    if let Some(cid) = state.players[p_idx].pop_deck_card() {
                         state.players[p_idx].looked_cards.push(cid);
                     }
                 }
@@ -478,10 +474,10 @@ pub fn handle_look_and_choose(
                 };
                 match destination {
                     7 => {
-                        state.players[p_idx].discard.push(chosen);
+                        state.players[p_idx].push_discard_card(chosen);
                     }
                     8 => {
-                        state.players[p_idx].deck.push(chosen);
+                        state.players[p_idx].push_deck_card(chosen);
                     }
                     4 => {
                         let slot = (s as u32 & S_STANDARD_TARGET_SLOT_MASK) as usize;
@@ -489,7 +485,7 @@ pub fn handle_look_and_choose(
                             if let Some(cid) =
                                 state.handle_member_leaves_stage(p_idx, slot, db, ctx)
                             {
-                                state.players[p_idx].discard.push(cid as i32);
+                                state.players[p_idx].push_discard_card(cid as i32);
                             }
                             state.players[p_idx].stage[slot] = chosen;
                             state.players[p_idx].set_tapped(slot, false);
@@ -504,18 +500,14 @@ pub fn handle_look_and_choose(
                             };
                             state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
                         } else {
-                            state.players[p_idx].hand.push(chosen);
-                            state.players[p_idx].hand_increased_this_turn = state.players
-                                [p_idx]
-                                .hand_increased_this_turn
-                                .saturating_add(1);
+                            state.players[p_idx].gain_hand_card(chosen);
                         }
                     }
                     13 => {
                         state.players[p_idx].success_lives.push(chosen);
                     }
                     _ => {
-                        state.players[p_idx].hand.push(chosen);
+                        state.players[p_idx].push_hand_card(chosen);
                     }
                 }
                 if reveal_flag {
@@ -582,7 +574,11 @@ pub fn handle_look_and_choose(
             source_zone_bits as i32
         };
         match dest {
-            6 => state.players[p_idx].hand.extend(revealed),
+            6 => {
+                for cid in revealed {
+                    state.players[p_idx].push_hand_card(cid);
+                }
+            }
             7 => state.players[p_idx].discard.extend(revealed),
             15 => state.players[p_idx].yell_cards.extend(revealed),
             0 | 8 => {
@@ -687,10 +683,7 @@ pub fn handle_recovery(
         let cid = state.players[p_idx].looked_cards[idx];
         if cid != -1 {
             state.players[p_idx].looked_cards[idx] = -1;
-            state.players[p_idx].hand.push(cid);
-            state.players[p_idx].hand_increased_this_turn = state.players[p_idx]
-                .hand_increased_this_turn
-                .saturating_add(1);
+            state.players[p_idx].gain_hand_card(cid);
             ctx.selected_cards.push(cid);
 
             let mut source_zone = instr.s.source_zone;
@@ -710,13 +703,13 @@ pub fn handle_recovery(
                 Zone::Hand => {
                     if let Some(pos) = state.players[p_idx].hand.iter().position(|&x| x == cid)
                     {
-                        state.players[p_idx].hand.remove(pos);
+                        state.players[p_idx].remove_hand_card(pos);
                     }
                 }
                 Zone::Deck => {
                     if let Some(pos) = state.players[p_idx].deck.iter().position(|&x| x == cid)
                     {
-                        state.players[p_idx].deck.remove(pos);
+                        state.players[p_idx].remove_deck_card(pos);
                     }
                 }
                 _ => {
@@ -725,7 +718,7 @@ pub fn handle_recovery(
                         .iter()
                         .position(|&x| x == cid)
                     {
-                        state.players[p_idx].discard.remove(pos);
+                        state.players[p_idx].remove_discard_card(pos);
                     }
                 }
             }

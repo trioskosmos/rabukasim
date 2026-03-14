@@ -62,6 +62,20 @@ pub struct MemberCard {
     pub hearts_board: HeartBoard,
     #[serde(default)]
     pub blade_hearts_board: HeartBoard,
+    #[serde(default)]
+    pub effect_mask: u64,
+    #[serde(default)]
+    pub ability_opcodes_mask: u128,
+    #[serde(default)]
+    pub trigger_mask: u32,
+    #[serde(default)]
+    pub has_on_play_choice: bool,
+    #[serde(default)]
+    pub has_multi_baton: bool,
+    #[serde(default)]
+    pub has_activated_hand: bool,
+    #[serde(default)]
+    pub has_activated_stage: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -95,6 +109,8 @@ pub struct LiveCard {
     pub hearts_board: HeartBoard,
     #[serde(default)]
     pub blade_hearts_board: HeartBoard,
+    #[serde(default)]
+    pub effect_mask: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -129,6 +145,69 @@ impl CardDatabase {
     pub fn to_variant_idx(packed_id: i32) -> u8 {
         ((packed_id >> 12) & 0x0F) as u8
     }
+
+    pub fn compute_effect_mask(abilities: &[Ability]) -> u64 {
+        let mut mask = 0u64;
+        for ab in abilities {
+            let bc = &ab.bytecode;
+            if Self::has_opcode_static_fast(bc, O_ADD_BLADES as i32)
+                || Self::has_opcode_static_fast(bc, O_SET_BLADES as i32)
+                || Self::has_opcode_static_fast(bc, O_BUFF_POWER as i32)
+                || Self::has_opcode_static_fast(bc, O_TRANSFORM_BLADES as i32)
+            {
+                mask |= EFFECT_MASK_BLADE;
+            }
+            if Self::has_opcode_static_fast(bc, O_ADD_HEARTS as i32)
+                || Self::has_opcode_static_fast(bc, O_SET_HEARTS as i32)
+                || Self::has_opcode_static_fast(bc, O_TRANSFORM_HEART as i32)
+            {
+                mask |= EFFECT_MASK_HEART;
+            }
+            if Self::has_opcode_static_fast(bc, O_REDUCE_COST as i32)
+                || Self::has_opcode_static_fast(bc, O_INCREASE_COST as i32)
+                || Self::has_opcode_static_fast(bc, O_CALC_SUM_COST as i32)
+            {
+                mask |= EFFECT_MASK_COST;
+            }
+            if Self::has_opcode_static_fast(bc, O_REDUCE_HEART_REQ as i32)
+                || Self::has_opcode_static_fast(bc, O_SET_HEART_COST as i32)
+                || Self::has_opcode_static_fast(bc, O_INCREASE_HEART_COST as i32)
+                || Self::has_opcode_static_fast(bc, O_REDUCE_LIVE_SET_LIMIT as i32)
+            {
+                mask |= EFFECT_MASK_REQ;
+            }
+            if Self::has_opcode_static_fast(bc, O_GRANT_ABILITY as i32) {
+                mask |= EFFECT_MASK_GRANT;
+            }
+            if Self::has_opcode_static_fast(bc, O_META_RULE as i32)
+                || Self::has_opcode_static_fast(bc, O_RESTRICTION as i32)
+                || Self::has_opcode_static_fast(bc, O_PREVENT_PLAY_TO_SLOT as i32)
+                || Self::has_opcode_static_fast(bc, O_PREVENT_SET_TO_SUCCESS_PILE as i32)
+                || Self::has_opcode_static_fast(bc, O_PREVENT_ACTIVATE as i32)
+                || Self::has_opcode_static_fast(bc, O_PREVENT_BATON_TOUCH as i32)
+            {
+                mask |= EFFECT_MASK_RULE;
+            }
+            if Self::has_opcode_static_fast(bc, O_BOOST_SCORE as i32)
+                || Self::has_opcode_static_fast(bc, O_SET_SCORE as i32)
+                || Self::has_opcode_static_fast(bc, O_REDUCE_SCORE as i32)
+                || Self::has_opcode_static_fast(bc, O_MODIFY_SCORE_RULE as i32)
+            {
+                mask |= EFFECT_MASK_SCORE;
+            }
+            if Self::has_opcode_static_fast(bc, O_DRAW as i32)
+                || Self::has_opcode_static_fast(bc, O_LOOK_DECK as i32)
+                || Self::has_opcode_static_fast(bc, O_SEARCH_DECK as i32)
+                || Self::has_opcode_static_fast(bc, O_LOOK_AND_CHOOSE as i32)
+                || Self::has_opcode_static_fast(bc, O_ADD_TO_HAND as i32)
+                || Self::has_opcode_static_fast(bc, O_DRAW_UNTIL as i32)
+                || Self::has_opcode_static_fast(bc, O_REVEAL_UNTIL as i32)
+            {
+                mask |= EFFECT_MASK_DRAW;
+            }
+        }
+        mask
+    }
 }
 
 impl Default for CardDatabase {
@@ -146,6 +225,260 @@ impl Default for CardDatabase {
 }
 
 impl CardDatabase {
+    fn enrich_member_runtime_metadata(card: &mut MemberCard) {
+        let mut flags = 0u64;
+        let mut s_flags = 0u32;
+        let mut synergy_flags = 0u32;
+        let mut cost_flags = 0u32;
+        let mut ability_opcodes_mask = 0u128;
+        let mut trigger_mask = 0u32;
+        let mut has_on_play_choice = false;
+        let mut has_multi_baton = false;
+        let mut has_activated_hand = false;
+        let mut has_activated_stage = false;
+
+        let flagged_ops = [
+            O_DRAW,
+            O_RECOVER_MEMBER,
+            O_RECOVER_LIVE,
+            O_ADD_BLADES,
+            O_ADD_HEARTS,
+            O_SEARCH_DECK,
+            O_BOOST_SCORE,
+            O_ENERGY_CHARGE,
+            O_MOVE_MEMBER,
+            O_SWAP_CARDS,
+            O_TAP_OPPONENT,
+            O_MODIFY_SCORE_RULE,
+            O_REDUCE_COST,
+            O_REDUCE_HEART_REQ,
+            O_RETURN,
+            O_LOOK_AND_CHOOSE,
+            O_TAP_MEMBER,
+            O_ACTIVATE_MEMBER,
+            O_SET_TAPPED,
+            O_TRANSFORM_COLOR,
+        ];
+
+        for ab in &mut card.abilities {
+            if ab.trigger == TriggerType::OnPlay {
+                s_flags |= 0x01;
+            }
+            if ab.trigger == TriggerType::Activated {
+                s_flags |= 0x02;
+            }
+            if ab.trigger == TriggerType::TurnStart || ab.trigger == TriggerType::TurnEnd {
+                s_flags |= 0x04;
+            }
+            if ab.is_once_per_turn {
+                s_flags |= 0x08;
+            }
+
+            ab.preparsed_modifiers.clear();
+            ab.opcodes_mask = 0;
+
+            let mut ability_flags_for_ab = 0u64;
+            let mut unflagged_logic_present = false;
+
+            for chunk in ab.bytecode.chunks(5) {
+                if chunk.is_empty() {
+                    continue;
+                }
+
+                let op = chunk[0];
+
+                match op {
+                    O_RETURN | O_LOOK_AND_CHOOSE => ability_flags_for_ab |= FLAG_DRAW as u64,
+                    O_SEARCH_DECK => ability_flags_for_ab |= FLAG_SEARCH as u64,
+                    O_RECOVER_LIVE | O_RECOVER_MEMBER => ability_flags_for_ab |= FLAG_RECOVER as u64,
+                    O_ADD_BLADES | O_ADD_HEARTS => ability_flags_for_ab |= FLAG_BUFF as u64,
+                    O_MOVE_MEMBER | O_SWAP_CARDS => ability_flags_for_ab |= FLAG_MOVE as u64,
+                    O_TAP_OPPONENT | O_TAP_MEMBER => ability_flags_for_ab |= FLAG_TAP as u64,
+                    O_ENERGY_CHARGE => ability_flags_for_ab |= FLAG_CHARGE as u64,
+                    O_ACTIVATE_MEMBER | O_SET_TAPPED => ability_flags_for_ab |= FLAG_TEMPO as u64,
+                    O_REDUCE_COST => ability_flags_for_ab |= FLAG_REDUCE as u64,
+                    O_BOOST_SCORE => ability_flags_for_ab |= FLAG_BOOST as u64,
+                    O_TRANSFORM_COLOR => ability_flags_for_ab |= FLAG_TRANSFORM as u64,
+                    O_REDUCE_HEART_REQ => ability_flags_for_ab |= FLAG_WIN_COND as u64,
+                    _ => {}
+                }
+
+                match op {
+                    O_LOOK_AND_CHOOSE => {
+                        ab.choice_flags |= CHOICE_FLAG_LOOK;
+                        if ab.choice_count == 0 {
+                            let v = chunk.get(1).copied().unwrap_or(0);
+                            let pick = (v >> 8) & 0xFF;
+                            ab.choice_count = if pick > 0 { pick as u8 } else { 3 };
+                        }
+                    }
+                    O_SELECT_MODE => {
+                        ab.choice_flags |= CHOICE_FLAG_MODE;
+                        if ab.choice_count == 0 {
+                            ab.choice_count = chunk.get(1).copied().unwrap_or(2) as u8;
+                        }
+                    }
+                    O_COLOR_SELECT => {
+                        ab.choice_flags |= CHOICE_FLAG_COLOR;
+                        if ab.choice_count == 0 {
+                            ab.choice_count = 6;
+                        }
+                    }
+                    O_ORDER_DECK => {
+                        ab.choice_flags |= CHOICE_FLAG_ORDER;
+                        if ab.choice_count == 0 {
+                            ab.choice_count = 3;
+                        }
+                    }
+                    _ => {}
+                }
+
+                ab.opcodes_mask |= 1u128 << (op as u32 % 128);
+                ability_opcodes_mask |= ab.opcodes_mask;
+                trigger_mask |= 1u32 << (ab.trigger as u32 % 32);
+
+                if op == O_BATON_TOUCH_MOD && chunk.len() >= 2 && chunk[1] >= 2 {
+                    has_multi_baton = true;
+                }
+
+                if [O_ADD_BLADES, O_ADD_HEARTS, O_BUFF_POWER, O_REDUCE_COST, O_INCREASE_COST, O_SET_HEART_COST]
+                    .contains(&op)
+                    && chunk.len() == 5
+                {
+                    let val = chunk[1];
+                    let a_low = chunk[2] as u32;
+                    let a_high = chunk[3] as u32;
+                    let attr = ((a_high as u64) << 32) | (a_low as u64);
+                    let slot = chunk[4];
+                    ab.preparsed_modifiers.push(PreparsedModifier { op, val, attr, slot });
+                }
+
+                if !flagged_ops.contains(&op) {
+                    unflagged_logic_present = true;
+                }
+            }
+
+            if ab.trigger == TriggerType::OnPlay && ab.choice_flags != 0 {
+                has_on_play_choice = true;
+            }
+
+            if ab.trigger == TriggerType::Activated {
+                let mut area_hand = false;
+                let mut area_stage = false;
+                for cond in &ab.conditions {
+                    if cond.condition_type == ConditionType::AreaCheck {
+                        if let Some(arr) = cond.params.as_array() {
+                            if arr.iter().any(|v| v.as_i64() == Some(6)) {
+                                area_hand = true;
+                            }
+                            if arr
+                                .iter()
+                                .any(|v| (0..3).any(|s| v.as_i64() == Some(s as i64)))
+                            {
+                                area_stage = true;
+                            }
+                        }
+                    }
+                }
+                if !area_hand && !area_stage {
+                    area_stage = true;
+                }
+                if area_hand {
+                    has_activated_hand = true;
+                }
+                if area_stage {
+                    has_activated_stage = true;
+                }
+            }
+
+            flags |= ability_flags_for_ab;
+            if unflagged_logic_present {
+                s_flags |= 0x10;
+            }
+
+            for c in &ab.conditions {
+                match c.condition_type {
+                    ConditionType::CountGroup | ConditionType::SelfIsGroup => {
+                        synergy_flags |= SYN_FLAG_GROUP
+                    }
+                    ConditionType::HasColor => synergy_flags |= SYN_FLAG_COLOR,
+                    ConditionType::Baton => synergy_flags |= SYN_FLAG_BATON,
+                    ConditionType::IsCenter => synergy_flags |= SYN_FLAG_CENTER,
+                    ConditionType::LifeLead => synergy_flags |= SYN_FLAG_LIFE_LEAD,
+                    _ => {}
+                }
+            }
+
+            for c in &ab.costs {
+                match c.cost_type {
+                    AbilityCostType::DiscardHand | AbilityCostType::DiscardMember => {
+                        cost_flags |= COST_FLAG_DISCARD as u32
+                    }
+                    AbilityCostType::TapSelf | AbilityCostType::TapMember => {
+                        cost_flags |= COST_FLAG_TAP as u32
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        card.ability_flags = flags;
+        card.semantic_flags = s_flags;
+        card.synergy_flags = synergy_flags;
+        card.cost_flags = cost_flags;
+        card.ability_opcodes_mask = ability_opcodes_mask;
+        card.trigger_mask = trigger_mask;
+        card.has_on_play_choice = has_on_play_choice;
+        card.has_multi_baton = has_multi_baton;
+        card.has_activated_hand = has_activated_hand;
+        card.has_activated_stage = has_activated_stage;
+
+        if card.hearts_board.0 == 0 {
+            card.hearts_board = HeartBoard::from_array(&card.hearts);
+        }
+        if card.blade_hearts_board.0 == 0 {
+            card.blade_hearts_board = HeartBoard::from_array(&card.blade_hearts);
+        }
+
+        card.effect_mask = Self::compute_effect_mask(&card.abilities);
+    }
+
+    fn enrich_live_runtime_metadata(card: &mut LiveCard) {
+        let mut s_flags = 0u32;
+        let mut synergy_flags = 0u32;
+
+        for ab in &card.abilities {
+            if ab.trigger == TriggerType::OnPlay {
+                s_flags |= 0x01;
+            }
+
+            for c in &ab.conditions {
+                match c.condition_type {
+                    ConditionType::CountGroup | ConditionType::SelfIsGroup => {
+                        synergy_flags |= SYN_FLAG_GROUP
+                    }
+                    ConditionType::HasColor => synergy_flags |= SYN_FLAG_COLOR,
+                    ConditionType::Baton => synergy_flags |= SYN_FLAG_BATON,
+                    ConditionType::IsCenter => synergy_flags |= SYN_FLAG_CENTER,
+                    ConditionType::LifeLead => synergy_flags |= SYN_FLAG_LIFE_LEAD,
+                    _ => {}
+                }
+            }
+        }
+
+        card.semantic_flags = s_flags;
+        card.synergy_flags = synergy_flags;
+
+        if card.hearts_board.0 == 0 {
+            card.hearts_board = HeartBoard::from_array(&card.required_hearts);
+        }
+        if card.blade_hearts_board.0 == 0 {
+            card.blade_hearts_board = HeartBoard::from_array(&card.blade_hearts);
+        }
+
+        card.effect_mask = Self::compute_effect_mask(&card.abilities);
+    }
+
     pub fn from_json(json_str: &str) -> serde_json::Result<Self> {
         let raw: serde_json::Value = serde_json::from_str(json_str)?;
         Self::from_value(raw)
@@ -166,263 +499,7 @@ impl CardDatabase {
             for (_, val) in members_raw {
                 match serde_json::from_value::<MemberCard>(val.clone()) {
                     Ok(mut card) => {
-                        // Trust pre-computed flags if present (non-zero)
-                        if card.ability_flags == 0 && card.semantic_flags == 0 {
-                            // Pre-compute ability flags
-                            let mut flags = 0u64;
-                            let mut s_flags = 0u32;
-                            for ab in &mut card.abilities {
-                                if Self::has_opcode_static_fast(&ab.bytecode, O_RETURN as i32)
-                                    || Self::has_opcode_static_fast(
-                                        &ab.bytecode,
-                                        O_LOOK_AND_CHOOSE as i32,
-                                    )
-                                {
-                                    flags |= FLAG_DRAW as u64;
-                                }
-                                if Self::has_opcode_static_fast(&ab.bytecode, O_SEARCH_DECK as i32)
-                                {
-                                    flags |= FLAG_SEARCH as u64;
-                                }
-                                if Self::has_opcode_static_fast(&ab.bytecode, O_RECOVER_LIVE as i32)
-                                    || Self::has_opcode_static_fast(
-                                        &ab.bytecode,
-                                        O_RECOVER_MEMBER as i32,
-                                    )
-                                {
-                                    flags |= FLAG_RECOVER as u64;
-                                }
-                                if Self::has_opcode_static_fast(&ab.bytecode, O_ADD_BLADES as i32)
-                                    || Self::has_opcode_static_fast(
-                                        &ab.bytecode,
-                                        O_ADD_HEARTS as i32,
-                                    )
-                                {
-                                    flags |= FLAG_BUFF as u64;
-                                }
-                                if Self::has_opcode_static_fast(&ab.bytecode, O_MOVE_MEMBER as i32)
-                                    || Self::has_opcode_static_fast(
-                                        &ab.bytecode,
-                                        O_SWAP_CARDS as i32,
-                                    )
-                                {
-                                    flags |= FLAG_MOVE as u64;
-                                }
-                                if Self::has_opcode_static_fast(&ab.bytecode, O_TAP_OPPONENT as i32)
-                                    || Self::has_opcode_static_fast(
-                                        &ab.bytecode,
-                                        O_TAP_MEMBER as i32,
-                                    )
-                                {
-                                    flags |= FLAG_TAP as u64;
-                                }
-                                if Self::has_opcode_static_fast(
-                                    &ab.bytecode,
-                                    O_ENERGY_CHARGE as i32,
-                                ) {
-                                    flags |= FLAG_CHARGE as u64;
-                                }
-                                if Self::has_opcode_static_fast(
-                                    &ab.bytecode,
-                                    O_ACTIVATE_MEMBER as i32,
-                                ) || Self::has_opcode_static_fast(
-                                    &ab.bytecode,
-                                    O_SET_TAPPED as i32,
-                                ) {
-                                    flags |= FLAG_TEMPO as u64;
-                                }
-
-                                if Self::has_opcode_static_fast(&ab.bytecode, O_REDUCE_COST as i32)
-                                {
-                                    flags |= FLAG_REDUCE as u64;
-                                }
-                                if Self::has_opcode_static_fast(&ab.bytecode, O_BOOST_SCORE as i32)
-                                {
-                                    flags |= FLAG_BOOST as u64;
-                                }
-                                if Self::has_opcode_static_fast(
-                                    &ab.bytecode,
-                                    O_TRANSFORM_COLOR as i32,
-                                ) {
-                                    flags |= FLAG_TRANSFORM as u64;
-                                }
-                                if Self::has_opcode_static_fast(
-                                    &ab.bytecode,
-                                    O_REDUCE_HEART_REQ as i32,
-                                ) {
-                                    flags |= FLAG_WIN_COND as u64;
-                                }
-
-                                if ab.trigger == TriggerType::OnPlay {
-                                    s_flags |= 0x01;
-                                }
-                                if ab.trigger == TriggerType::Activated {
-                                    s_flags |= 0x02;
-                                }
-                                if ab.trigger == TriggerType::TurnStart
-                                    || ab.trigger == TriggerType::TurnEnd
-                                {
-                                    s_flags |= 0x04;
-                                }
-                                if ab.is_once_per_turn {
-                                    s_flags |= 0x08;
-                                }
-
-                                // Compute Choice Flags and counts, and Ability Flags
-                                let mut ability_flags_for_ab = 0u64;
-                                let mut unflagged_logic_present = false;
-                                let flagged_ops = [
-                                    O_DRAW,
-                                    O_RECOVER_MEMBER,
-                                    O_RECOVER_LIVE,
-                                    O_ADD_BLADES,
-                                    O_ADD_HEARTS,
-                                    O_SEARCH_DECK,
-                                    O_BOOST_SCORE,
-                                    O_ENERGY_CHARGE,
-                                    O_MOVE_MEMBER,
-                                    O_SWAP_CARDS,
-                                    O_TAP_OPPONENT,
-                                    O_MODIFY_SCORE_RULE,
-                                    O_REDUCE_COST,
-                                    O_REDUCE_HEART_REQ,
-                                    O_RETURN,
-                                    O_LOOK_AND_CHOOSE,
-                                    O_TAP_MEMBER,
-                                    O_ACTIVATE_MEMBER,
-                                    O_SET_TAPPED,
-                                    O_TRANSFORM_COLOR,
-                                ];
-
-                                for chunk in ab.bytecode.chunks(5) {
-                                    if chunk.is_empty() {
-                                        continue;
-                                    }
-                                    let op = chunk[0];
-
-                                    // Ability Flags
-                                    match op {
-                                        O_RETURN | O_LOOK_AND_CHOOSE => {
-                                            ability_flags_for_ab |= FLAG_DRAW as u64
-                                        }
-                                        O_SEARCH_DECK => ability_flags_for_ab |= FLAG_SEARCH as u64,
-                                        O_RECOVER_LIVE | O_RECOVER_MEMBER => {
-                                            ability_flags_for_ab |= FLAG_RECOVER as u64
-                                        }
-                                        O_ADD_BLADES | O_ADD_HEARTS => {
-                                            ability_flags_for_ab |= FLAG_BUFF as u64
-                                        }
-                                        O_MOVE_MEMBER | O_SWAP_CARDS => {
-                                            ability_flags_for_ab |= FLAG_MOVE as u64
-                                        }
-                                        O_TAP_OPPONENT | O_TAP_MEMBER => {
-                                            ability_flags_for_ab |= FLAG_TAP as u64
-                                        }
-                                        O_ENERGY_CHARGE => {
-                                            ability_flags_for_ab |= FLAG_CHARGE as u64
-                                        }
-                                        O_ACTIVATE_MEMBER | O_SET_TAPPED => {
-                                            ability_flags_for_ab |= FLAG_TEMPO as u64
-                                        }
-                                        O_REDUCE_COST => ability_flags_for_ab |= FLAG_REDUCE as u64,
-                                        O_BOOST_SCORE => ability_flags_for_ab |= FLAG_BOOST as u64,
-                                        O_TRANSFORM_COLOR => {
-                                            ability_flags_for_ab |= FLAG_TRANSFORM as u64
-                                        }
-                                        O_REDUCE_HEART_REQ => {
-                                            ability_flags_for_ab |= FLAG_WIN_COND as u64
-                                        }
-                                        _ => {}
-                                    }
-
-                                    // Choice Flags
-                                    match op {
-                                        O_LOOK_AND_CHOOSE => {
-                                            ab.choice_flags |= CHOICE_FLAG_LOOK;
-                                            // choice_count for UI: Unpack from v (Byte 2) or default to 3
-                                            if ab.choice_count == 0 {
-                                                let v = chunk.get(1).copied().unwrap_or(0);
-                                                let pick = (v >> 8) & 0xFF;
-                                                ab.choice_count =
-                                                    if pick > 0 { pick as u8 } else { 3 };
-                                            }
-                                        }
-                                        O_SELECT_MODE => {
-                                            ab.choice_flags |= CHOICE_FLAG_MODE;
-                                            if ab.choice_count == 0 {
-                                                ab.choice_count =
-                                                    chunk.get(1).copied().unwrap_or(2) as u8;
-                                            }
-                                        }
-                                        O_COLOR_SELECT => {
-                                            ab.choice_flags |= CHOICE_FLAG_COLOR;
-                                            if ab.choice_count == 0 {
-                                                ab.choice_count = 6;
-                                            }
-                                        }
-                                        O_ORDER_DECK => {
-                                            ab.choice_flags |= CHOICE_FLAG_ORDER;
-                                            if ab.choice_count == 0 {
-                                                ab.choice_count = 3;
-                                            }
-                                        }
-                                        _ => {}
-                                    }
-
-                                    // Check for unflagged logic (semantic extension)
-                                    if !flagged_ops.contains(&op) {
-                                        unflagged_logic_present = true;
-                                    }
-                                }
-                                flags |= ability_flags_for_ab; // Accumulate ability flags for the card
-
-                                if unflagged_logic_present {
-                                    s_flags |= 0x10;
-                                }
-
-                                // Compute Synergy Flags
-                                let mut syn_flags = 0u32;
-                                for c in &ab.conditions {
-                                    match c.condition_type {
-                                        ConditionType::CountGroup | ConditionType::SelfIsGroup => {
-                                            syn_flags |= SYN_FLAG_GROUP
-                                        }
-                                        ConditionType::HasColor => syn_flags |= SYN_FLAG_COLOR,
-                                        ConditionType::Baton => syn_flags |= SYN_FLAG_BATON,
-                                        ConditionType::IsCenter => syn_flags |= SYN_FLAG_CENTER,
-                                        ConditionType::LifeLead => syn_flags |= SYN_FLAG_LIFE_LEAD,
-                                        _ => {}
-                                    }
-                                }
-                                card.synergy_flags |= syn_flags;
-
-                                // Compute Cost Flags
-                                let mut c_flags = 0u32;
-                                for c in &ab.costs {
-                                    match c.cost_type {
-                                        AbilityCostType::DiscardHand
-                                        | AbilityCostType::DiscardMember => {
-                                            c_flags |= COST_FLAG_DISCARD as u32
-                                        }
-                                        AbilityCostType::TapSelf | AbilityCostType::TapMember => {
-                                            c_flags |= COST_FLAG_TAP as u32
-                                        }
-                                        _ => {}
-                                    }
-                                }
-                                card.cost_flags |= c_flags;
-                            }
-                            card.ability_flags = flags;
-                            card.semantic_flags |= s_flags; // Apply accumulated semantic flags
-                        }
-
-                        // HeartBoard population (always needed if deserialized as default/0)
-                        if card.hearts_board.0 == 0 {
-                            card.hearts_board = HeartBoard::from_array(&card.hearts);
-                        }
-                        if card.blade_hearts_board.0 == 0 {
-                            card.blade_hearts_board = HeartBoard::from_array(&card.blade_hearts);
-                        }
+                        Self::enrich_member_runtime_metadata(&mut card);
 
                         db.members.insert(card.card_id, card.clone());
                         db.card_no_to_id.insert(card.card_no.clone(), card.card_id);
@@ -451,37 +528,7 @@ impl CardDatabase {
             for (_, val) in lives_raw {
                 match serde_json::from_value::<LiveCard>(val.clone()) {
                     Ok(mut card) => {
-                        if card.semantic_flags == 0 {
-                            let mut s_flags = 0u32;
-                            for ab in &card.abilities {
-                                if ab.trigger == TriggerType::OnPlay {
-                                    s_flags |= 0x01;
-                                }
-
-                                let mut syn_flags = 0u32;
-                                for c in &ab.conditions {
-                                    match c.condition_type {
-                                        ConditionType::CountGroup | ConditionType::SelfIsGroup => {
-                                            syn_flags |= SYN_FLAG_GROUP
-                                        }
-                                        ConditionType::HasColor => syn_flags |= SYN_FLAG_COLOR,
-                                        ConditionType::Baton => syn_flags |= SYN_FLAG_BATON,
-                                        ConditionType::IsCenter => syn_flags |= SYN_FLAG_CENTER,
-                                        ConditionType::LifeLead => syn_flags |= SYN_FLAG_LIFE_LEAD,
-                                        _ => {}
-                                    }
-                                }
-                                card.synergy_flags |= syn_flags;
-                            }
-                            card.semantic_flags = s_flags;
-                        }
-
-                        if card.hearts_board.0 == 0 {
-                            card.hearts_board = HeartBoard::from_array(&card.required_hearts);
-                        }
-                        if card.blade_hearts_board.0 == 0 {
-                            card.blade_hearts_board = HeartBoard::from_array(&card.blade_hearts);
-                        }
+                        Self::enrich_live_runtime_metadata(&mut card);
 
                         db.lives.insert(card.card_id, card.clone());
                         db.card_no_to_id.insert(card.card_no.clone(), card.card_id);
@@ -579,6 +626,23 @@ impl CardDatabase {
         }
         None
     }
+
+    /// Detect vanilla mode by checking if **all** member cards have empty abilities.
+    /// This is more reliable than the is_vanilla flag which might not propagate correctly through Arc cloning.
+    pub fn detect_abilityless(&self) -> bool {
+        if self.members.is_empty() {
+            return false; // If no members loaded, not vanilla
+        }
+
+        self.members.values().all(|card| card.abilities.is_empty())
+    }
+
+    /// Check if vanilla mode is enabled (explicitly set OR detected from database).
+    /// Use this instead of just checking is_vanilla flag.
+    pub fn is_truly_vanilla(&self) -> bool {
+        self.is_vanilla || self.detect_abilityless()
+    }
+
     // Static opcode check
     pub fn has_opcode_static(bytecode: &[i32], target_op: i32) -> bool {
         let mut i = 0;

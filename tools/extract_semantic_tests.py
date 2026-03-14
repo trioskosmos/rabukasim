@@ -446,7 +446,7 @@ def main():
         "--output", "-o", default="../engine_rust_src/tests/generated_semantic_parity_tests.rs", help="Output Rust file"
     )
     parser.add_argument(
-        "--format", "-f", choices=["unit", "gpu_parity", "both"], default="gpu_parity", help="Output format"
+        "--format", "-f", choices=["unit"], default="unit", help="Output format"
     )
     parser.add_argument("--limit", "-l", type=int, default=0, help="Limit number of tests to generate (0 = all)")
 
@@ -462,13 +462,7 @@ def main():
     print(f"Loaded {len(cards)} cards")
 
     # Generate tests
-    if args.format == "unit":
-        output = generate_unit_tests(cards, args.limit)
-    elif args.format == "gpu_parity":
-        output = generate_gpu_parity_tests(cards, args.limit)
-    else:
-        output = generate_unit_tests(cards, args.limit)
-        output += "\n\n" + generate_gpu_parity_tests(cards, args.limit)
+    output = generate_unit_tests(cards, args.limit)
 
     # Write output
     output_path = Path(args.output)

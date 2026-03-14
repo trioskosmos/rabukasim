@@ -1,3 +1,4 @@
+#![cfg(feature = "wasm")]
 use crate::core::heuristics::EvalMode;
 use crate::core::mcts::SearchHorizon;
 use crate::core::models::{CardDatabase, GameState};

@@ -1,14 +1,53 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// turn_sequencer – LOVECA vanilla heuristic and exact/beam DFS search
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// OVERVIEW
+// ┌──────────────────────────────────────────────────────────────────────┐
+// │ plan_full_turn()  →  exact_root_turn_search() or beam_search_turn() │
+// │      ↓ leaf evaluation                                               │
+// │ evaluate_turn_goal_breakdown()   ← main heuristic (see below)       │
+// │      ↓ used during LiveSet selection                                 │
+// │ find_best_liveset_selection_internal()                               │
+// └──────────────────────────────────────────────────────────────────────┘
+//
+// HEURISTIC PRIORITY (evaluate_turn_goal_breakdown)
+//  1. WIN  – terminal win or guaranteed zone slam (success_count + guaranteed ≥ 3)
+//            → TURN_GOAL_WIN_WEIGHT + speed bonus (earlier wins worth more)
+//  2. SUCCESS COUNT – confirmed past successes × TURN_GOAL_SUCCESS_WEIGHT
+//  3. ZONE – lives currently in live zone
+//     a. Guaranteed (prob ≥ 1.2): GUARANTEED_CLEAR_BASE
+//     b. Uncertain: net_ev = p × PASS_WEIGHT − (1−p) × DISCARD_COST
+//        Negative for low-probability lives → AI will NOT commit them until the
+//        stage is strong enough to pass.
+//  4. CLOSEOUT PRESSURE – as the turn cap approaches, current zone pressure matters
+//     more than theoretical future value from deck/hand lives.
+//  5. PENALTIES – deadline, empty live zone when must commit, uncertain overcommit
+//
+// KEY CONSTANTS – tune here to change play-style:
+//   GUARANTEED_CLEAR_BASE       base value for a certain zone clear
+//   LIVE_DISCARD_COST_SCALE     opportunity cost of wasting a failed live card
+//   SPEED_PER_TURN_BONUS        per-remaining-turn reward when winning is guaranteed
+//   TURN_GOAL_WIN_WEIGHT        terminal or committed-win absolute value
+//   TURN_GOAL_SUCCESS_WEIGHT    each confirmed success live (past rounds)
+//   HARD_TURN_LIMIT             maximum rounds the game is allowed to run
+//
+// DECK ORDER NOTE
+//   The heuristic NEVER uses the order of cards in player.deck.
+//   Future deck live EV is computed via HashMap<card_id, count> (composition-only).
+// ─────────────────────────────────────────────────────────────────────────────
 use std::collections::HashMap;
 use std::fs;
 use std::hash::{Hash, Hasher};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, RwLock};
 use std::thread;
-use std::time::Duration;
-use std::time::Instant;
-
-use once_cell::sync::Lazy;
+use std::time::{Duration, Instant};
+use std::sync::OnceLock;
 use rand::seq::IndexedRandom;
+use rand::rngs::SmallRng;
+use rand::SeedableRng;
+#[cfg(feature = "parallel")]
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
@@ -17,24 +56,50 @@ use crate::core::enums::Phase;
 use crate::core::logic::constants::*;
 use crate::core::logic::{CardDatabase, GameState};
 use crate::core::{ACTION_BASE_HAND, ACTION_BASE_LIVESET, ACTION_BASE_PASS};
+use std::ops::BitXor;
+
+// ═════════════════════════════════════════════════════════════════════════════
+// MODULE: CONSTANTS & CONFIGURATION
+// ═════════════════════════════════════════════════════════════════════════════
 
 // MCTS Constants
 #[allow(dead_code)]
 const MCTS_EXPLORATION_CONST: f32 = 1.414; // sqrt(2) for UCB1
 const HARD_TURN_LIMIT: u16 = 10;
-const TURN_GOAL_LIVE_PASS_WEIGHT: f32 = 4000.0;
-const TURN_GOAL_SUCCESS_WEIGHT: f32 = 2500.0;
-const TURN_GOAL_WIN_WEIGHT: f32 = 25_000.0;
-const TURN_GOAL_COMPLETION_WEIGHT: f32 = 3000.0;
-const TURN_GOAL_DEADLINE_PENALTY: f32 = 2000.0;
-const TURN_GOAL_OVERCOMMIT_PENALTY: f32 = 1800.0;
-const TURN_GOAL_EMPTY_LIVE_PENALTY: f32 = 2200.0;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Heuristic weight constants
+// ─────────────────────────────────────────────────────────────────────────────
+// Win/Loss detection (terminal or committed-to-win this pass)
+const TURN_GOAL_WIN_WEIGHT: f32 = 100_000.0;
+// Reward winning earlier: each turn of headroom at a guaranteed-win moment
+const SPEED_PER_TURN_BONUS: f32 = 800.0;
+// Each confirmed success (live already passed)
+const TURN_GOAL_SUCCESS_WEIGHT: f32 = 10_000.0;
+// Guaranteed zone clear (prob >= 1.2): base value
+// MUST be far above the max non-guaranteed zone value so a certain clear always beats uncertain
+const GUARANTEED_CLEAR_BASE: f32 = 30_000.0;
+// Non-guaranteed zone clear: expected-value weight
+const TURN_GOAL_LIVE_PASS_WEIGHT: f32 = 4_000.0;  // max ~4000 for prob=1.0
+// Opportunity cost of discarding a live card when it fails.
+// net_ev = p × PASS_WEIGHT - (1-p) × DISCARD_COST
+// At scale=1400, breakeven is ~26% regardless of a live's printed judgement value.
+// This keeps the planner focused on reaching 3 successes quickly instead of hoarding lives.
+const LIVE_DISCARD_COST_SCALE: f32 = 1_400.0;
+// Future potential (hand/deck lives not yet placed)
+const FUTURE_LIVE_WEIGHT_HAND: f32 = 24.0;   // immediate access, probability-weighted only
+const FUTURE_LIVE_WEIGHT_DECK: f32 = 9.0;    // lower than hand because it still must be drawn
+// Momentum / completion acceleration
+const TURN_GOAL_COMPLETION_WEIGHT: f32 = 3_000.0;
+const TURN_GOAL_ZONE_PRESSURE_WEIGHT: f32 = 4_500.0;
+// Penalties
+const TURN_GOAL_DEADLINE_PENALTY: f32 = 5_000.0;    // cannot reach 3 in time
+const TURN_GOAL_OVERCOMMIT_PENALTY: f32 = 1_800.0;  // risky excess uncertain lives in zone
+const TURN_GOAL_EMPTY_LIVE_PENALTY: f32 = 4_000.0;  // must commit but zone is empty
+const TURN_GOAL_LATE_EMPTY_LIVE_PENALTY: f32 = 6_500.0;
+// Weak-member cycling (useless hand card can be replaced)
 #[allow(dead_code)]
-const TURN_GOAL_SCORE_TIEBREAKER: f32 = 1.0;
-// Future live clearing potential weights:
-// Hand lives are accessible next turn; deck lives depend on remaining draws.
-const FUTURE_LIVE_WEIGHT_HAND: f32 = 500.0;
-const FUTURE_LIVE_WEIGHT_DECK: f32 = 150.0;
+const WEAK_MEMBER_CYCLE_BONUS: f32 = 100.0;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct WeightsConfig {
@@ -59,24 +124,74 @@ pub struct SearchConfig {
     pub use_alpha_beta: bool,
 }
 
+#[derive(Debug, Clone)]
+pub struct EvaluationContext {
+    pub deck_stats: [crate::core::logic::DeckStats; 2],
+    pub deck_live_counts: [HashMap<i32, u32>; 2],
+    pub yell_bonus_table: [[[f32; 7]; 61]; 2],
+    pub notes_bonus_table: [[f32; 61]; 2],
+}
+
+impl EvaluationContext {
+    pub fn new(state: &crate::core::logic::GameState, db: &crate::core::logic::CardDatabase) -> Self {
+        use crate::core::heuristics::calculate_deck_expectations;
+        let mut deck_stats = [crate::core::logic::DeckStats::default(), crate::core::logic::DeckStats::default()];
+        let mut deck_live_counts = [HashMap::new(), HashMap::new()];
+        let mut yell_bonus_table = [[[0.0; 7]; 61]; 2];
+        let mut notes_bonus_table = [[0.0; 61]; 2];
+
+        for p_idx in 0..2 {
+            let player = &state.players[p_idx];
+            let stats = calculate_deck_expectations(&player.deck, db);
+            deck_stats[p_idx] = stats;
+            
+            // Pre-calculate yell bonus table for all possible counts (0-60)
+            for count in 0..61 {
+                for color in 0..7 {
+                    yell_bonus_table[p_idx][count][color] = stats.avg_hearts[color] * count as f32;
+                }
+                notes_bonus_table[p_idx][count] = stats.avg_notes * count as f32;
+            }
+
+            let mut live_counts = HashMap::new();
+            for &cid in &player.deck {
+                if db.get_live(cid).is_some() {
+                    *live_counts.entry(cid).or_insert(0) += 1;
+                }
+            }
+            deck_live_counts[p_idx] = live_counts;
+        }
+
+        Self {
+            deck_stats,
+            deck_live_counts,
+            yell_bonus_table,
+            notes_bonus_table,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SequencerConfig {
     pub weights: WeightsConfig,
     pub search: SearchConfig,
 }
 
-pub static CONFIG: Lazy<RwLock<SequencerConfig>> = Lazy::new(|| {
-    let path = "sequencer_config.json";
-    let base = if let Ok(content) = fs::read_to_string(path) {
-        serde_json::from_str(&content).unwrap_or_default()
-    } else {
-        SequencerConfig::default()
-    };
-    RwLock::new(base)
-});
+pub static CONFIG: OnceLock<RwLock<SequencerConfig>> = OnceLock::new();
 
-#[allow(dead_code)]
-struct SearchTelemetry {
+pub fn get_config() -> &'static RwLock<SequencerConfig> {
+    CONFIG.get_or_init(|| {
+        let path = "sequencer_config.json";
+        let base = if let Ok(content) = fs::read_to_string(path) {
+            serde_json::from_str(&content).unwrap_or_default()
+        } else {
+            SequencerConfig::default()
+        };
+        RwLock::new(base)
+    })
+}
+
+pub struct SearchTelemetry {
     enabled: bool,
     done: AtomicBool,
     aborted: AtomicBool,
@@ -87,7 +202,6 @@ struct SearchTelemetry {
     best_val_bits: AtomicU32Compat,
 }
 
-#[allow(dead_code)]
 struct AtomicU32Compat(std::sync::atomic::AtomicU32);
 
 #[allow(dead_code)]
@@ -121,7 +235,11 @@ impl SearchTelemetry {
     }
 }
 
-static SEARCH_TELEMETRY: Lazy<RwLock<Option<Arc<SearchTelemetry>>>> = Lazy::new(|| RwLock::new(None));
+static SEARCH_TELEMETRY: OnceLock<RwLock<Option<Arc<SearchTelemetry>>>> = OnceLock::new();
+
+pub fn get_search_telemetry() -> &'static RwLock<Option<Arc<SearchTelemetry>>> {
+    SEARCH_TELEMETRY.get_or_init(|| RwLock::new(None))
+}
 
 impl Default for SequencerConfig {
     fn default() -> Self {
@@ -159,23 +277,72 @@ pub struct HeuristicBreakdown {
     pub total: f32,
 }
 
-struct TranspositionTable {
-    entries: HashMap<(u64, usize), (Vec<i32>, f32, (f32, f32))>,
+// ═════════════════════════════════════════════════════════════════════════════
+// MODULE: STATE CACHING & HASHING
+// ═════════════════════════════════════════════════════════════════════════════
+
+const TT_SIZE: usize = 262144; // 2^18
+const TT_MASK: u64 = (TT_SIZE - 1) as u64;
+
+#[derive(Clone)]
+struct TTEntry {
+    key: u64,
+    depth: usize,
+    value: (SmallVec<[i32; 16]>, f32, (f32, f32)),
 }
 
+struct TranspositionTable {
+    entries: Vec<Option<TTEntry>>,
+}
+
+#[allow(dead_code)]
 impl TranspositionTable {
     fn new() -> Self {
         Self {
-            entries: HashMap::new(),
+            entries: vec![None; TT_SIZE],
         }
     }
 
-    fn get(&self, state: &GameState, depth: usize) -> Option<(Vec<i32>, f32, (f32, f32))> {
-        self.entries.get(&(state_cache_key(state), depth)).cloned()
+    fn get(&self, _state: &GameState, depth: usize) -> Option<(Vec<i32>, f32, (f32, f32))> {
+        // Simple manual hash of key state fields for TT indexing
+        let mut key = _state.turn as u64;
+        key ^= (_state.current_player as u64) << 16;
+        key ^= (_state.phase as u64) << 24;
+        key ^= _state.players[0].cached_total_hearts.0.rotate_left(17);
+        key ^= _state.players[1].cached_total_hearts.0.rotate_left(41);
+        
+        let idx = (key & TT_MASK) as usize;
+        
+        if let Some(entry) = &self.entries[idx] {
+            if entry.key == key && entry.depth >= depth {
+                return Some((entry.value.0.to_vec(), entry.value.1, entry.value.2));
+            }
+        }
+        None
     }
 
-    fn insert(&mut self, state: &GameState, depth: usize, value: (Vec<i32>, f32, (f32, f32))) {
-        self.entries.insert((state_cache_key(state), depth), value);
+    fn insert(&mut self, _state: &GameState, depth: usize, value: (Vec<i32>, f32, (f32, f32))) {
+        // Simple manual hash of key state fields for TT indexing
+        let mut key = _state.turn as u64;
+        key ^= (_state.current_player as u64) << 16;
+        key ^= (_state.phase as u64) << 24;
+        key ^= _state.players[0].cached_total_hearts.0.rotate_left(17);
+        key ^= _state.players[1].cached_total_hearts.0.rotate_left(41);
+        let idx = (key & TT_MASK) as usize;
+
+        // Depth-preferred replacement
+        let replace = match &self.entries[idx] {
+            Some(existing) => depth >= existing.depth,
+            None => true,
+        };
+
+        if replace {
+            self.entries[idx] = Some(TTEntry { 
+                key, 
+                depth, 
+                value: (SmallVec::from(value.0), value.1, value.2) 
+            });
+        }
     }
 }
 
@@ -185,13 +352,14 @@ impl Default for SearchConfig {
             max_dfs_depth: HARD_TURN_LIMIT as usize,
             mc_trials: 100,
             beam_width: 8,
-            use_memoization: true,
+            use_memoization: false,
             beam_search: false,
             use_alpha_beta: false,
         }
     }
 }
 
+#[allow(dead_code)]
 fn hash_pending_interaction<H: Hasher>(pending: &crate::core::logic::PendingInteraction, state: &mut H) {
     pending.ctx.hash(state);
     pending.card_id.hash(state);
@@ -208,29 +376,84 @@ fn hash_pending_interaction<H: Hasher>(pending: &crate::core::logic::PendingInte
     pending.execution_id.hash(state);
 }
 
+/// A fast, non-cryptographic hasher based on rustc-hash (FxHash)
+/// specifically for use in the Transposition Table where speed is critical.
+pub struct FxHasher {
+    hash: u64,
+}
+
+impl Default for FxHasher {
+    #[inline]
+    fn default() -> Self {
+        Self { hash: 0 }
+    }
+}
+
+impl std::hash::Hasher for FxHasher {
+    #[inline]
+    fn finish(&self) -> u64 {
+        self.hash
+    }
+
+    #[inline]
+    fn write(&mut self, bytes: &[u8]) {
+        let mut hash = self.hash;
+        for &byte in bytes {
+            // FxHash constant: 0x517cc1b727220a95
+            hash = hash.rotate_left(5).bitxor(byte as u64).wrapping_mul(0x517cc1b727220a95);
+        }
+        self.hash = hash;
+    }
+
+    #[inline]
+    fn write_u64(&mut self, i: u64) {
+        self.hash = self.hash.rotate_left(5).bitxor(i).wrapping_mul(0x517cc1b727220a95);
+    }
+
+    #[inline]
+    fn write_u32(&mut self, i: u32) {
+        self.hash = self.hash.rotate_left(5).bitxor(i as u64).wrapping_mul(0x517cc1b727220a95);
+    }
+
+    #[inline]
+    fn write_usize(&mut self, i: usize) {
+        self.hash = self.hash.rotate_left(5).bitxor(i as u64).wrapping_mul(0x517cc1b727220a95);
+    }
+}
+
+#[allow(dead_code)]
 fn state_cache_key(state: &GameState) -> u64 {
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
-    state.players.hash(&mut hasher);
+    use std::hash::Hasher;
+    let mut hasher = FxHasher::default();
+    
+    // Hash players manually to avoid full struct overhead
+    for p in &state.players {
+        p.player_id.hash(&mut hasher);
+        p.hand.hash(&mut hasher);
+        p.deck.hash(&mut hasher);
+        p.discard.hash(&mut hasher);
+        p.energy_zone.hash(&mut hasher);
+        p.stage.hash(&mut hasher);
+        p.score.hash(&mut hasher);
+        p.flags.hash(&mut hasher);
+        p.tapped_energy_mask.hash(&mut hasher);
+        p.success_lives.hash(&mut hasher);
+        p.live_zone.hash(&mut hasher);
+        p.baton_touch_count.hash(&mut hasher);
+        p.blade_buffs.hash(&mut hasher);
+        p.blade_overrides.hash(&mut hasher);
+        p.heart_buffs.hash(&mut hasher);
+        p.slot_cost_modifiers.hash(&mut hasher);
+        p.hand_increased_this_turn.hash(&mut hasher);
+        p.play_count_this_turn.hash(&mut hasher);
+        p.board_aura.hash(&mut hasher);
+    }
+
     state.current_player.hash(&mut hasher);
     state.first_player.hash(&mut hasher);
     state.phase.hash(&mut hasher);
-    state.prev_phase.hash(&mut hasher);
-    state.prev_card_id.hash(&mut hasher);
     state.turn.hash(&mut hasher);
     state.trigger_depth.hash(&mut hasher);
-    state.live_set_pending_draws.hash(&mut hasher);
-    state.live_result_selection_pending.hash(&mut hasher);
-    state.live_result_triggers_done.hash(&mut hasher);
-    state.live_start_triggers_done.hash(&mut hasher);
-    state.live_result_processed_mask.hash(&mut hasher);
-    state.live_start_processed_mask.hash(&mut hasher);
-    state.live_success_processed_mask.hash(&mut hasher);
-    state.performance_reveals_done.hash(&mut hasher);
-    state.performance_yell_done.hash(&mut hasher);
-    state.rps_choices.hash(&mut hasher);
-    state.score_req_list.hash(&mut hasher);
-    state.score_req_player.hash(&mut hasher);
-    state.obtained_success_live.hash(&mut hasher);
 
     for pending in &state.interaction_stack {
         hash_pending_interaction(pending, &mut hasher);
@@ -247,6 +470,10 @@ fn state_cache_key(state: &GameState) -> u64 {
 }
 
 pub struct TurnSequencer;
+
+// ═════════════════════════════════════════════════════════════════════════════
+// MODULE: MCTS IMPLEMENTATION
+// ═════════════════════════════════════════════════════════════════════════════
 
 /// MCTS Node for Monte Carlo Tree Search
 #[allow(dead_code)]
@@ -423,28 +650,34 @@ impl MctsTree {
         let mut sim_state = node.state.clone();
         sim_state.ui.silent = true;
 
-        // Continue playing until we're past Main phase
         // Use random playout for the rest of the turn
-        let mut rng = rand::rng();
-        let mut steps = 0;
-        let max_steps = 100; // Safety limit for simulation
-
-        while sim_state.phase == Phase::Main && steps < max_steps {
-            let legal = sim_state.get_legal_action_ids(&self.db);
-            if legal.is_empty() {
-                break;
-            }
-            if let Some(&action) = legal.choose(&mut rng) {
-                let _ = sim_state.step(&self.db, action);
-            }
-            steps += 1;
+        thread_local! {
+            static LOCAL_RNG: std::cell::RefCell<SmallRng> = std::cell::RefCell::new(SmallRng::from_os_rng());
         }
+        
+        LOCAL_RNG.with(|rng_cell| {
+            let mut rng = rng_cell.borrow_mut();
+            let mut steps = 0;
+            let max_steps = 100; // Safety limit for simulation
+
+            while sim_state.phase == Phase::Main && steps < max_steps {
+                let legal = sim_state.get_legal_action_ids(&self.db);
+                if legal.is_empty() {
+                    break;
+                }
+                if let Some(&action) = legal.choose(&mut *rng) {
+                    let _ = sim_state.step(&self.db, action);
+                }
+                steps += 1;
+            }
+        });
 
         // Handle LiveSet phase
         if sim_state.phase == Phase::LiveSet {
             // Use the best liveset selection for simulation
             let weights = TurnSequencer::config_snapshot().weights;
-            let (ls_actions, _, _) = TurnSequencer::find_best_liveset_selection_internal(&sim_state, &self.db, &weights);
+            let eval_ctx = EvaluationContext::new(&sim_state, &self.db);
+            let (ls_actions, _, _) = TurnSequencer::find_best_liveset_selection_internal(&sim_state, &self.db, &weights, &eval_ctx);
             for &act in &ls_actions {
                 let _ = sim_state.step(&self.db, act);
             }
@@ -522,9 +755,16 @@ pub struct SequenceResult {
     pub success_prob: f32,
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// MODULE: MAIN SEARCH & EVALUATION ENGINE
+// ═════════════════════════════════════════════════════════════════════════════
+// Contains: Telemetry helpers, Search algorithms (exact/beam), Evaluation heuristics,
+//            LiveSet selection, and the main turn planning API.
+// ═════════════════════════════════════════════════════════════════════════════
+
 impl TurnSequencer {
     fn config_snapshot() -> SequencerConfig {
-        CONFIG.read().unwrap().clone()
+        get_config().read().unwrap().clone()
     }
 
     #[allow(dead_code)]
@@ -557,7 +797,7 @@ impl TurnSequencer {
             SearchTelemetry::disabled()
         });
 
-        *SEARCH_TELEMETRY.write().unwrap() = Some(Arc::clone(&telemetry));
+        *get_search_telemetry().write().unwrap() = Some(Arc::clone(&telemetry));
 
         if !telemetry.enabled {
             return (telemetry, None);
@@ -619,12 +859,12 @@ impl TurnSequencer {
         if let Some(join_handle) = handle {
             let _ = join_handle.join();
         }
-        *SEARCH_TELEMETRY.write().unwrap() = None;
+        *get_search_telemetry().write().unwrap() = None;
     }
 
     #[allow(dead_code)]
     fn telemetry_snapshot() -> Option<Arc<SearchTelemetry>> {
-        SEARCH_TELEMETRY.read().unwrap().clone()
+        get_search_telemetry().read().unwrap().clone()
     }
 
     #[allow(dead_code)]
@@ -717,20 +957,29 @@ impl TurnSequencer {
         candidate_seq.len() < best_seq.len()
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // SEARCH ALGORITHMS
+    // ─────────────────────────────────────────────────────────────────────────
+
     fn exact_root_turn_search(
         state: &GameState,
         db: &CardDatabase,
-        root_player: usize,
-        depth: usize,
-        weights: &WeightsConfig,
-        total_count: &AtomicUsize,
-    ) -> (Vec<i32>, f32, (f32, f32)) {
+        eval_ctx: &EvaluationContext,
+    ) -> (Vec<i32>, f32, (f32, f32), usize) {
+        let root_player = state.current_player as usize;
+        let mut total_nodes = 0;
+        let p_idx = root_player;
+        let _hand_len = state.players[p_idx].hand.len();
+        let weights = Self::config_snapshot().weights;
+        let depth = Self::config_snapshot().search.max_dfs_depth.min(HARD_TURN_LIMIT as usize);
+
         let mut actions = SmallVec::<[i32; 64]>::new();
         state.generate_legal_actions(db, state.current_player as usize, &mut actions);
 
         let mut pass_state = state.clone();
         let _ = pass_state.step(db, ACTION_BASE_PASS);
-        let (mut best_val, mut best_brk) = Self::evaluate_stop_state(&pass_state, db, root_player, weights);
+        let (mut best_val, mut best_brk, nodes) = Self::evaluate_stop_state_with_nodes(&pass_state, db, root_player, &weights, eval_ctx);
+        total_nodes += nodes;
         let mut best_seq = vec![ACTION_BASE_PASS];
 
         let mut ordered_actions = Vec::new();
@@ -751,26 +1000,44 @@ impl TurnSequencer {
         });
 
         if Self::exact_parallel_enabled() && ordered_actions.len() >= Self::exact_parallel_min_actions() {
-            let results: Vec<(Vec<i32>, f32, (f32, f32))> = ordered_actions
+            #[cfg(feature = "parallel")]
+            let results: Vec<(Vec<i32>, f32, (f32, f32), usize)> = ordered_actions
                 .into_par_iter()
-                .map(|(action, _, next_state)| {
-                    let mut local_tt = TranspositionTable::new();
-                    let (mut suffix, val, brk) = Self::exact_small_turn_search(
-                        &next_state,
+                .map(|(action, _, mut next_state)| {
+                    let (mut suffix, val, brk, nodes) = Self::exact_small_turn_search(
+                        &mut next_state,
                         db,
-                        root_player,
                         depth.saturating_sub(1),
-                        weights,
-                        total_count,
-                        &mut local_tt,
+                        root_player,
+                        &weights,
+                        eval_ctx,
                     );
                     let mut full = vec![action];
                     full.append(&mut suffix);
-                    (full, val, brk)
+                    (full, val, brk, nodes)
                 })
                 .collect();
 
-            for (seq, val, brk) in results {
+            #[cfg(not(feature = "parallel"))]
+            let results: Vec<(Vec<i32>, f32, (f32, f32), usize)> = ordered_actions
+                .into_iter()
+                .map(|(action, _, mut next_state)| {
+                    let (mut suffix, val, brk, nodes) = Self::exact_small_turn_search(
+                        &mut next_state,
+                        db,
+                        depth.saturating_sub(1),
+                        root_player,
+                        &weights,
+                        eval_ctx,
+                    );
+                    let mut full = vec![action];
+                    full.append(&mut suffix);
+                    (full, val, brk, nodes)
+                })
+                .collect();
+
+            for (seq, val, brk, nodes) in results {
+                total_nodes += nodes;
                 if Self::exact_result_is_better(val, &seq, brk, best_val, &best_seq, best_brk) {
                     best_seq = seq;
                     best_val = val;
@@ -778,20 +1045,19 @@ impl TurnSequencer {
                 }
             }
 
-            return (best_seq, best_val, best_brk);
+            return (best_seq, best_val, best_brk, total_nodes);
         }
 
-        let mut tt = TranspositionTable::new();
-        for (action, _, next_state) in ordered_actions {
-            let (mut suffix, val, brk) = Self::exact_small_turn_search(
-                &next_state,
+        for (action, _, mut next_state) in ordered_actions {
+            let (mut suffix, val, brk, nodes) = Self::exact_small_turn_search(
+                &mut next_state,
                 db,
-                root_player,
                 depth.saturating_sub(1),
-                weights,
-                total_count,
-                &mut tt,
+                root_player,
+                &weights,
+                eval_ctx,
             );
+            total_nodes += nodes;
 
             let mut full = vec![action];
             full.append(&mut suffix);
@@ -802,7 +1068,7 @@ impl TurnSequencer {
             }
         }
 
-        (best_seq, best_val, best_brk)
+        (best_seq, best_val, best_brk, total_nodes)
     }
 
     fn beam_width_for_state(state: &GameState, search: &SearchConfig) -> usize {
@@ -888,21 +1154,36 @@ impl TurnSequencer {
         total
     }
 
+    #[allow(dead_code)]
     fn evaluate_stop_state(
         state: &GameState,
         db: &CardDatabase,
         root_player: usize,
         weights: &WeightsConfig,
     ) -> (f32, (f32, f32)) {
+        let eval_ctx = EvaluationContext::new(state, db);
+        let res = Self::evaluate_stop_state_with_nodes(state, db, root_player, weights, &eval_ctx);
+        (res.0, res.1)
+    }
+
+    fn evaluate_stop_state_with_nodes(
+        state: &GameState,
+        db: &CardDatabase,
+        root_player: usize,
+        weights: &WeightsConfig,
+        eval_ctx: &EvaluationContext,
+    ) -> (f32, (f32, f32), usize) {
         let mut final_state = state.clone();
+        let mut nodes = 1;
         if final_state.phase == Phase::LiveSet {
-            let (ls_actions, _, _) = Self::find_best_liveset_selection_with_weights(&final_state, db, weights);
+            let (ls_actions, _, ls_nodes) = Self::find_best_liveset_selection_with_weights(&final_state, db, weights, eval_ctx);
+            nodes += ls_nodes as usize;
             for &ls_act in &ls_actions {
                 let _ = final_state.step(db, ls_act);
             }
         }
-        let brk = Self::evaluate_state_for_player_with_weights(&final_state, db, root_player, weights);
-        (brk.0 + brk.1, brk)
+        let brk = Self::evaluate_state_for_player_with_weights_ctx(&final_state, db, root_player, weights, eval_ctx);
+        (brk.0 + brk.1, brk, nodes)
     }
 
     /// Fast board state hash: stage composition + hand count + energy state
@@ -929,46 +1210,41 @@ impl TurnSequencer {
     }
 
     fn exact_small_turn_search(
-        state: &GameState,
+        state: &mut GameState,
         db: &CardDatabase,
-        root_player: usize,
         depth: usize,
+        root_player: usize,
         weights: &WeightsConfig,
-        total_count: &AtomicUsize,
-        tt: &mut TranspositionTable,
-    ) -> (Vec<i32>, f32, (f32, f32)) {
-        total_count.fetch_add(1, Ordering::Relaxed);
+        eval_ctx: &EvaluationContext,
+    ) -> (Vec<i32>, f32, (f32, f32), usize) {
+        let mut node_count = 1;
 
-        if let Some(entry) = tt.get(state, depth) {
-            return entry;
+        if depth >= Self::config_snapshot().search.max_dfs_depth {
+            let (board, live) = Self::evaluate_state_for_player_with_weights_ctx(state, db, root_player, weights, eval_ctx);
+            return (Vec::new(), board + live, (board, live), 1);
         }
 
         if state.phase != Phase::Main {
-            let (val, brk) = Self::evaluate_stop_state(state, db, root_player, weights);
-            let result = (vec![], val, brk);
-            tt.insert(state, depth, result.clone());
-            return result;
+            let (val, brk, nodes) = Self::evaluate_stop_state_with_nodes(state, db, root_player, weights, eval_ctx);
+            return (vec![], val, brk, nodes);
         }
 
         if depth == 0 {
             let mut pass_state = state.clone();
             if pass_state.step(db, ACTION_BASE_PASS).is_ok() {
-                let (val, brk) = Self::evaluate_stop_state(&pass_state, db, root_player, weights);
-                let result = (vec![ACTION_BASE_PASS], val, brk);
-                tt.insert(state, depth, result.clone());
-                return result;
+                let (val, brk, nodes) = Self::evaluate_stop_state_with_nodes(&pass_state, db, root_player, weights, eval_ctx);
+                return (vec![ACTION_BASE_PASS], val, brk, nodes);
             }
 
-            let (val, brk) = Self::evaluate_stop_state(state, db, root_player, weights);
-            let result = (vec![], val, brk);
-            tt.insert(state, depth, result.clone());
-            return result;
+            let (val, brk, nodes) = Self::evaluate_stop_state_with_nodes(state, db, root_player, weights, eval_ctx);
+            return (vec![], val, brk, nodes);
         }
 
         let mut best_seq = vec![ACTION_BASE_PASS];
         let mut pass_state = state.clone();
         let _ = pass_state.step(db, ACTION_BASE_PASS);
-        let (mut best_val, mut best_brk) = Self::evaluate_stop_state(&pass_state, db, root_player, weights);
+        let (mut best_val, mut best_brk, nodes) = Self::evaluate_stop_state_with_nodes(&pass_state, db, root_player, weights, eval_ctx);
+        node_count += nodes;
 
         let mut actions = SmallVec::<[i32; 64]>::new();
         state.generate_legal_actions(db, state.current_player as usize, &mut actions);
@@ -979,15 +1255,15 @@ impl TurnSequencer {
                 continue;
             }
 
-            let (mut suffix, val, brk) = Self::exact_small_turn_search(
-                &next_state,
+            let (mut suffix, val, brk, nodes) = Self::exact_small_turn_search(
+                &mut next_state,
                 db,
-                root_player,
                 depth.saturating_sub(1),
+                root_player,
                 weights,
-                total_count,
-                tt,
+                eval_ctx,
             );
+            node_count += nodes;
 
             if val > best_val {
                 let mut full = vec![action];
@@ -998,9 +1274,7 @@ impl TurnSequencer {
             }
         }
 
-        let result = (best_seq, best_val, best_brk);
-        tt.insert(state, depth, result.clone());
-        result
+        (best_seq, best_val, best_brk, node_count)
     }
 
     /// Returns a list of (ActionID, Total, Board, Live) for all legal actions,
@@ -1012,18 +1286,16 @@ impl TurnSequencer {
         let capped_depth = config.search.max_dfs_depth.min(HARD_TURN_LIMIT as usize);
 
         if state.phase != Phase::Main {
-            let total_evals = AtomicUsize::new(0);
-            let mut tt = TranspositionTable::new();
-            let (seq, val, brk) = Self::exact_small_turn_search(
-                state,
+            let eval_ctx = EvaluationContext::new(state, db);
+            let (seq, val, brk, nodes) = Self::exact_small_turn_search(
+                &mut state.clone(), // exact_small_turn_search expects &mut GameState
                 db,
-                p_idx,
                 capped_depth,
+                p_idx,
                 &weights,
-                &total_evals,
-                &mut tt,
+                &eval_ctx,
             );
-            return (seq, val, brk, total_evals.load(Ordering::Relaxed));
+            return (seq, val, brk, nodes);
         }
 
         let exact_threshold = Self::exact_turn_threshold_for_state(state, db);
@@ -1032,6 +1304,8 @@ impl TurnSequencer {
         } else {
             Self::count_main_end_sequences_capped(state, db, capped_depth, exact_threshold)
         };
+
+        let eval_ctx = EvaluationContext::new(state, db);
 
         if config.search.beam_search || sequence_estimate > exact_threshold {
             let mut beam_width = Self::beam_width_for_state(state, &config.search);
@@ -1045,20 +1319,17 @@ impl TurnSequencer {
                 capped_depth,
                 beam_width,
                 &weights,
+                &eval_ctx,
             );
             return (seq, val, brk, sequence_estimate.min(exact_threshold.saturating_add(1)));
         }
 
-        let total_evals = AtomicUsize::new(0);
-        let (seq, val, brk) = Self::exact_root_turn_search(
+        let (seq, val, brk, total_evals) = Self::exact_root_turn_search(
             state,
             db,
-            p_idx,
-            capped_depth,
-            &weights,
-            &total_evals,
+            &eval_ctx,
         );
-        (seq, val, brk, total_evals.load(Ordering::Relaxed))
+        (seq, val, brk, total_evals)
     }
 
     /// Compatibility wrapper for the rest of the engine (e.g. MCTS and Heuristics)
@@ -1070,31 +1341,26 @@ impl TurnSequencer {
     pub fn plan_full_turn_exact(state: &GameState, db: &CardDatabase) -> (Vec<i32>, f32, (f32, f32), usize) {
         let config = Self::config_snapshot();
         let weights = config.weights;
-        let total_evals = AtomicUsize::new(0);
         let p_idx = state.current_player as usize;
         let depth = config.search.max_dfs_depth.min(HARD_TURN_LIMIT as usize);
-        let (seq, val, brk) = if state.phase == Phase::Main {
+        let eval_ctx = EvaluationContext::new(state, db);
+        let (seq, val, brk, total_evals) = if state.phase == Phase::Main {
             Self::exact_root_turn_search(
                 state,
                 db,
-                p_idx,
-                depth,
-                &weights,
-                &total_evals,
+                &eval_ctx,
             )
         } else {
-            let mut tt = TranspositionTable::new();
             Self::exact_small_turn_search(
-                state,
+                &mut state.clone(),
                 db,
-                p_idx,
                 depth,
+                p_idx,
                 &weights,
-                &total_evals,
-                &mut tt,
+                &eval_ctx,
             )
         };
-        (seq, val, brk, total_evals.load(Ordering::Relaxed))
+        (seq, val, brk, total_evals)
     }
 
     /// Run exhaustive search to find the best sequence of moves for the current turn
@@ -1104,6 +1370,8 @@ impl TurnSequencer {
         let mut best_seq = Vec::new();
         let mut best_val = f32::NEG_INFINITY;
         let mut nodes_visited = 0;
+
+        let eval_ctx = EvaluationContext::new(state, db);
 
         // Get all legal actions for the current state
         let legal_actions = state.get_legal_action_ids(db);
@@ -1118,7 +1386,7 @@ impl TurnSequencer {
                 let mut current_seq = vec![action];
 
                 // Recursively explore remaining moves in Main phase
-                Self::exhaustive_search_main(&mut sim_state, db, &mut current_seq, &mut best_seq, &mut best_val, &mut nodes_visited);
+                Self::exhaustive_search_main(&mut sim_state, db, &mut current_seq, &mut best_seq, &mut best_val, &mut nodes_visited, &eval_ctx);
             }
         }
 
@@ -1134,6 +1402,7 @@ impl TurnSequencer {
         best_seq: &mut Vec<i32>,
         best_val: &mut f32,
         nodes_visited: &mut usize,
+        eval_ctx: &EvaluationContext,
     ) {
         *nodes_visited += 1;
 
@@ -1145,7 +1414,7 @@ impl TurnSequencer {
         // Check if we're still in Main phase
         if state.phase != Phase::Main {
             // We've exited Main, now handle LiveSet
-            Self::exhaustive_search_liveset(state, db, current_seq, best_seq, best_val, nodes_visited);
+            Self::exhaustive_search_liveset(state, db, current_seq, best_seq, best_val, nodes_visited, eval_ctx);
             return;
         }
 
@@ -1154,7 +1423,7 @@ impl TurnSequencer {
 
         // If no more actions in Main, try LiveSet
         if legal_actions.is_empty() {
-            Self::exhaustive_search_liveset(state, db, current_seq, best_seq, best_val, nodes_visited);
+            Self::exhaustive_search_liveset(state, db, current_seq, best_seq, best_val, nodes_visited, eval_ctx);
             return;
         }
 
@@ -1170,7 +1439,7 @@ impl TurnSequencer {
 
             if sim_state.step(db, action).is_ok() {
                 current_seq.push(action);
-                Self::exhaustive_search_main(&mut sim_state, db, current_seq, best_seq, best_val, nodes_visited);
+                Self::exhaustive_search_main(&mut sim_state, db, current_seq, best_seq, best_val, nodes_visited, eval_ctx);
                 current_seq.pop();
             }
         }
@@ -1184,12 +1453,14 @@ impl TurnSequencer {
         best_seq: &mut Vec<i32>,
         best_val: &mut f32,
         nodes_visited: &mut usize,
+        eval_ctx: &EvaluationContext,
     ) {
         *nodes_visited += 1;
 
         // If we're not in LiveSet phase, just evaluate
         if state.phase != Phase::LiveSet {
-            let (board_score, live_ev) = Self::evaluate_state_internal(state, db);
+            let weights = Self::config_snapshot().weights;
+            let (board_score, live_ev) = Self::evaluate_state_for_player_with_weights_ctx(state, db, state.current_player as usize, &weights, eval_ctx);
             let total_val = board_score + live_ev;
 
             if total_val > *best_val {
@@ -1204,7 +1475,8 @@ impl TurnSequencer {
 
         // If no more LiveSet actions, evaluate
         if legal_actions.is_empty() {
-            let (board_score, live_ev) = Self::evaluate_state_internal(state, db);
+            let weights = Self::config_snapshot().weights;
+            let (board_score, live_ev) = Self::evaluate_state_for_player_with_weights_ctx(state, db, state.current_player as usize, &weights, eval_ctx);
             let total_val = board_score + live_ev;
 
             if total_val > *best_val {
@@ -1221,7 +1493,7 @@ impl TurnSequencer {
 
             if sim_state.step(db, action).is_ok() {
                 current_seq.push(action);
-                Self::exhaustive_search_liveset(&mut sim_state, db, current_seq, best_seq, best_val, nodes_visited);
+                Self::exhaustive_search_liveset(&mut sim_state, db, current_seq, best_seq, best_val, nodes_visited, eval_ctx);
                 current_seq.pop();
             }
         }
@@ -1235,7 +1507,8 @@ impl TurnSequencer {
     }
     pub fn find_best_liveset_selection(state: &GameState, db: &CardDatabase) -> (Vec<i32>, usize, u128) {
         let weights = Self::config_snapshot().weights;
-        Self::find_best_liveset_selection_internal(state, db, &weights)
+        let eval_ctx = EvaluationContext::new(state, db);
+        Self::find_best_liveset_selection_internal(state, db, &weights, &eval_ctx)
     }
 
     pub fn beam_search_turn(
@@ -1245,6 +1518,7 @@ impl TurnSequencer {
         depth: usize,
         beam_width: usize,
         weights: &WeightsConfig,
+        eval_ctx: &EvaluationContext,
     ) -> (Vec<i32>, f32, (f32, f32)) {
         let mut beam: Vec<(GameState, Vec<i32>, f32, (f32, f32))> = vec![(state.clone(), Vec::new(), 0.0, (0.0, 0.0))];
         let mut best_overall_seq = Vec::new();
@@ -1272,16 +1546,16 @@ impl TurnSequencer {
                             // Evaluate transition to LiveSet
                             let mut final_state = next_state.clone();
                             if final_state.phase == Phase::LiveSet {
-                                let (ls_actions, _, _) = Self::find_best_liveset_selection_with_weights(&final_state, db, weights);
+                                let (ls_actions, _, _) = Self::find_best_liveset_selection_with_weights(&final_state, db, weights, eval_ctx);
                                 for &ls_act in &ls_actions {
                                     let _ = final_state.step(db, ls_act);
                                 }
                             }
-                            let (b, l) = Self::evaluate_state_for_player_with_weights(&final_state, db, root_player, weights);
+                            let (b, l) = Self::evaluate_state_for_player_with_weights_ctx(&final_state, db, root_player, weights, eval_ctx);
                             candidates.push((next_state, action, b + l, (b, l)));
                         } else {
                             // Immediate heuristic for move ordering
-                            let (b, l) = Self::evaluate_state_for_player_with_weights(&next_state, db, root_player, weights);
+                            let (b, l) = Self::evaluate_state_for_player_with_weights_ctx(&next_state, db, root_player, weights, eval_ctx);
                             candidates.push((next_state, action, b + l, (b, l)));
                         }
                     }
@@ -1324,13 +1598,14 @@ impl TurnSequencer {
         tt: &mut TranspositionTable,
         total_count: &AtomicUsize,
     ) -> (Vec<i32>, f32, (f32, f32)) {
+        let eval_ctx = EvaluationContext::new(state, db);
         if search.use_alpha_beta {
             Self::dfs_alpha_beta(
                 state, db, root_player, depth, search, weights, tt, total_count,
-                f32::NEG_INFINITY, f32::INFINITY,
+                f32::NEG_INFINITY, f32::INFINITY, &eval_ctx
             )
         } else {
-            Self::dfs_negamax(state, db, root_player, depth, search, weights, tt, total_count)
+            Self::dfs_negamax(state, db, root_player, depth, search, weights, tt, total_count, &eval_ctx)
         }
     }
 
@@ -1347,6 +1622,7 @@ impl TurnSequencer {
         total_count: &AtomicUsize,
         mut alpha: f32,
         beta: f32,
+        eval_ctx: &EvaluationContext,
     ) -> (Vec<i32>, f32, (f32, f32)) {
         total_count.fetch_add(1, Ordering::Relaxed);
 
@@ -1358,15 +1634,8 @@ impl TurnSequencer {
         }
 
         if depth == 0 || state.phase != Phase::Main {
-            let mut final_state = state.clone();
-            if final_state.phase == Phase::LiveSet {
-                let (ls_actions, _, _) = Self::find_best_liveset_selection_with_weights(&final_state, db, weights);
-                for &act in &ls_actions {
-                    let _ = final_state.step(db, act);
-                }
-            }
-            let brk = Self::evaluate_state_for_player_with_weights(&final_state, db, root_player, weights);
-            return (vec![], brk.0 + brk.1, brk);
+            let res = Self::evaluate_stop_state_with_nodes(state, db, root_player, weights, eval_ctx);
+            return (vec![], res.0, res.1);
         }
 
         if search.use_memoization {
@@ -1383,15 +1652,13 @@ impl TurnSequencer {
         state.generate_legal_actions(db, state.current_player as usize, &mut actions);
 
         // Quick heuristic scoring and sorting (ESSENTIAL for AB pruning) - but cheap!
-        // Note: depth counts DOWN from max_dfs_depth (15->1), so depth > 10 is SHALLOW (close to root)
-        let do_order = depth > 8;  // Only order in first ~7 moves where pruning helps most
+        let do_order = depth > 8; 
         let mut sorted_actions = Vec::with_capacity(actions.len());
         
         if do_order {
             for action in actions {
                 let mut next_state = state.clone();
                 if next_state.step(db, action).is_ok() {
-                    // Board-state heuristic for move ordering (good pruning signal)
                     let board_score = Self::move_order_score(&next_state, db, root_player, weights);
                     sorted_actions.push((action, board_score, next_state));
                 }
@@ -1401,7 +1668,7 @@ impl TurnSequencer {
             for action in actions {
                 let mut next_state = state.clone();
                 if next_state.step(db, action).is_ok() {
-                    sorted_actions.push((action, 0.0, next_state));  // No ordering, random exploration
+                    sorted_actions.push((action, 0.0, next_state));
                 }
             }
         }
@@ -1418,6 +1685,7 @@ impl TurnSequencer {
                 total_count,
                 alpha,
                 beta,
+                eval_ctx,
             );
             
             if val > best_val {
@@ -1429,23 +1697,15 @@ impl TurnSequencer {
                 alpha = alpha.max(val);
             }
             
-            // Beta cutoff: if we found a move better than beta, parent won't choose this branch
             if alpha >= beta {
                 break;
             }
         }
 
         if best_val == f32::NEG_INFINITY {
-            let mut final_state = state.clone();
-            if final_state.phase == Phase::LiveSet {
-                let (ls_actions, _, _) = Self::find_best_liveset_selection_with_weights(&final_state, db, weights);
-                for &act in &ls_actions {
-                    let _ = final_state.step(db, act);
-                }
-            }
-            let brk = Self::evaluate_state_for_player_with_weights(&final_state, db, root_player, weights);
-            best_val = brk.0 + brk.1;
-            best_brk = brk;
+            let res = Self::evaluate_stop_state_with_nodes(state, db, root_player, weights, eval_ctx);
+            best_val = res.0;
+            best_brk = res.1;
         }
 
         let result = (best_seq, best_val, best_brk);
@@ -1466,6 +1726,7 @@ impl TurnSequencer {
         weights: &WeightsConfig,
         tt: &mut TranspositionTable,
         total_count: &AtomicUsize,
+        eval_ctx: &EvaluationContext,
     ) -> (Vec<i32>, f32, (f32, f32)) {
         total_count.fetch_add(1, Ordering::Relaxed);
 
@@ -1477,15 +1738,8 @@ impl TurnSequencer {
         }
 
         if depth == 0 || state.phase != Phase::Main {
-            let mut final_state = state.clone();
-            if final_state.phase == Phase::LiveSet {
-                let (ls_actions, _, _) = Self::find_best_liveset_selection_with_weights(&final_state, db, weights);
-                for &act in &ls_actions {
-                    let _ = final_state.step(db, act);
-                }
-            }
-            let brk = Self::evaluate_state_for_player_with_weights(&final_state, db, root_player, weights);
-            return (vec![], brk.0 + brk.1, brk);
+            let res = Self::evaluate_stop_state_with_nodes(state, db, root_player, weights, eval_ctx);
+            return (vec![], res.0, res.1);
         }
 
         if search.use_memoization {
@@ -1527,6 +1781,7 @@ impl TurnSequencer {
                     weights,
                     tt,
                     total_count,
+                    eval_ctx,
                 );
                 if val > best_val {
                     best_val = val;
@@ -1541,16 +1796,17 @@ impl TurnSequencer {
             for action in actions {
                 let mut next_state = state.clone();
                 if next_state.step(db, action).is_ok() {
-                    let (mut suffix, val, brk) = Self::dfs_negamax(
-                        &next_state,
-                        db,
-                        root_player,
-                        depth.saturating_sub(1),
-                        search,
-                        weights,
-                        tt,
-                        total_count,
-                    );
+                let (mut suffix, val, brk) = Self::dfs_negamax(
+                    &next_state,
+                    db,
+                    root_player,
+                    depth.saturating_sub(1),
+                    search,
+                    weights,
+                    tt,
+                    total_count,
+                    eval_ctx,
+                );
                     if val > best_val {
                         best_val = val;
                         best_brk = brk;
@@ -1563,16 +1819,9 @@ impl TurnSequencer {
         }
 
         if best_val == f32::NEG_INFINITY {
-            let mut final_state = state.clone();
-            if final_state.phase == Phase::LiveSet {
-                let (ls_actions, _, _) = Self::find_best_liveset_selection_with_weights(&final_state, db, weights);
-                for &act in &ls_actions {
-                    let _ = final_state.step(db, act);
-                }
-            }
-            let brk = Self::evaluate_state_for_player_with_weights(&final_state, db, root_player, weights);
-            best_val = brk.0 + brk.1;
-            best_brk = brk;
+            let res = Self::evaluate_stop_state_with_nodes(state, db, root_player, weights, eval_ctx);
+            best_val = res.0;
+            best_brk = res.1;
         }
 
         let result = (best_seq, best_val, best_brk);
@@ -1586,8 +1835,9 @@ impl TurnSequencer {
         state: &GameState,
         db: &CardDatabase,
         weights: &WeightsConfig,
+        eval_ctx: &EvaluationContext,
     ) -> (Vec<i32>, usize, u128) {
-        Self::find_best_liveset_selection_internal(state, db, weights)
+        Self::find_best_liveset_selection_internal(state, db, weights, eval_ctx)
     }
 
     /// Strategic turn phase detector (early/mid/late game)
@@ -1930,8 +2180,9 @@ impl TurnSequencer {
     ) -> (f32, f32, usize) {
         use crate::core::heuristics::calculate_live_success_prob;
 
+        let eval_ctx = EvaluationContext::new(state, db);
         let Some((board_hearts, expected_yell_hearts, heart_reductions)) =
-            Self::build_live_eval_context(state, db, p_idx)
+            Self::build_live_eval_context_ctx(state, db, p_idx, &eval_ctx)
         else {
             return (0.0, 0.0, 0);
         };
@@ -1966,34 +2217,41 @@ impl TurnSequencer {
         (prob, best_live_score, live_count)
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // EVALUATION & HEURISTIC SCORING
+    // ─────────────────────────────────────────────────────────────────────────
+
     fn evaluate_turn_goal_breakdown(
         state: &GameState,
         db: &CardDatabase,
         p_idx: usize,
         _weights: &WeightsConfig,
+        eval_ctx: &EvaluationContext,
     ) -> HeuristicBreakdown {
         use crate::core::heuristics::calculate_live_success_prob;
 
         let player = &state.players[p_idx];
         let success_count = player.success_lives.len();
 
-        // ── Terminal / win detection ───────────────────────────────────────────
-        let win_bonus = if success_count >= 3
-            || (state.is_terminal() && state.get_winner() == p_idx as i32)
-        {
-            TURN_GOAL_WIN_WEIGHT
-        } else if state.is_terminal() && state.get_winner() != 2 {
-            -TURN_GOAL_WIN_WEIGHT * 0.5
-        } else {
-            0.0
-        };
-        let success_val = success_count as f32 * TURN_GOAL_SUCCESS_WEIGHT;
+        // Track actual score earned from past successes.
+        let turns_remaining = Self::turns_remaining_after_current(state);
+        let needed_successes = 3usize.saturating_sub(success_count);
 
         // ── Build context for live probability calculations ────────────────────
         let (board_hearts, expected_yell_hearts, heart_reductions) =
-            match Self::build_live_eval_context(state, db, p_idx) {
+            match Self::build_live_eval_context_ctx(state, db, p_idx, eval_ctx) {
                 Some(ctx) => ctx,
                 None => {
+                    let success_val = success_count as f32 * TURN_GOAL_SUCCESS_WEIGHT;
+                    let win_bonus = if success_count >= 3
+                        || (state.is_terminal() && state.get_winner() == p_idx as i32)
+                    {
+                        TURN_GOAL_WIN_WEIGHT
+                    } else if state.is_terminal() && state.get_winner() != p_idx as i32 && state.get_winner() != 2 {
+                        -TURN_GOAL_WIN_WEIGHT * 0.5
+                    } else {
+                        0.0
+                    };
                     return HeuristicBreakdown {
                         board_score: 0.0,
                         live_ev: 0.0,
@@ -2007,10 +2265,13 @@ impl TurnSequencer {
             };
 
         // ── Priority 1: Lives currently in live zone ───────────────────────────
-        // Guaranteed (prob ≥ 1.2): absolute bonus.  Otherwise: prob × pass weight.
+        // Guaranteed (prob >= 1.2): every heart requirement satisfied → certain pass.
+        //   Zone value = GUARANTEED_CLEAR_BASE
+        // Non-guaranteed: expected value = prob × TURN_GOAL_LIVE_PASS_WEIGHT.
         let mut zone_ev_total = 0.0f32;
         let mut zone_prob_sum = 0.0f32;
         let mut live_count = 0usize;
+        let mut guaranteed_count = 0usize;  // lives with certainty (prob >= 1.2)
         for &cid in &player.live_zone {
             if cid < 0 {
                 continue;
@@ -2023,21 +2284,51 @@ impl TurnSequencer {
                     heart_reductions,
                 );
                 if prob >= 1.2 {
-                    // Guaranteed clear: highest possible priority
-                    zone_ev_total += 1_000_000.0 + live.score as f32;
+                    zone_ev_total += GUARANTEED_CLEAR_BASE;
                     zone_prob_sum += 1.0;
+                    guaranteed_count += 1;
                 } else {
                     let p = prob.min(1.0);
-                    zone_ev_total += p * TURN_GOAL_LIVE_PASS_WEIGHT;
+                    let gross_ev = p * TURN_GOAL_LIVE_PASS_WEIGHT;
+                    let discard_cost = (1.0 - p) * LIVE_DISCARD_COST_SCALE;
+                    let net_ev = gross_ev - discard_cost;
+                    zone_ev_total += net_ev;  // May be negative → AI prefers not placing this live
                     zone_prob_sum += p;
                 }
                 live_count += 1;
             }
         }
 
+        // ── Win detection: already won, terminal, or guaranteed this pass ──────
+        // "Will win this pass" = the guaranteed zone clears will push success_count to 3+.
+        // This is the most valuable state: assign near-WIN bonus plus a speed reward
+        // so earlier wins score higher (forces decisive play, shorter games).
+        let will_win_this_pass = (success_count + guaranteed_count) >= 3;
+        let already_won = success_count >= 3
+            || (state.is_terminal() && state.get_winner() == p_idx as i32);
+
+        let win_bonus = if already_won {
+            TURN_GOAL_WIN_WEIGHT
+        } else if will_win_this_pass {
+            // Committed win this turn: near-full win value + speed bonus
+            let turns_left = HARD_TURN_LIMIT.saturating_sub(state.turn) as f32;
+            TURN_GOAL_WIN_WEIGHT * 0.95 + turns_left * SPEED_PER_TURN_BONUS
+        } else if state.is_terminal()
+            && state.get_winner() != p_idx as i32
+            && state.get_winner() != 2  // 2 = draw
+        {
+            -TURN_GOAL_WIN_WEIGHT * 0.5
+        } else {
+            0.0
+        };
+
+        let success_val = success_count as f32 * TURN_GOAL_SUCCESS_WEIGHT;
+
         // ── Priority 2a: Future clearing potential – lives in hand ────────────
-        // These can be placed into the live zone as soon as next turn.
+        // Lives in hand can be placed next LiveSet phase (immediate access).
+        // Uses composition-only knowledge: does not peek at deck order.
         let mut hand_live_ev = 0.0f32;
+        let mut hand_live_count = 0usize;
         for &cid in &player.hand {
             if let Some(live) = db.get_live(cid) {
                 let prob = calculate_live_success_prob(
@@ -2047,39 +2338,68 @@ impl TurnSequencer {
                     heart_reductions,
                 )
                 .min(1.0);
-                hand_live_ev += prob;
+                hand_live_ev += prob * FUTURE_LIVE_WEIGHT_HAND;
+                hand_live_count += 1;
             }
         }
 
         // ── Priority 2b: Future clearing potential – lives in deck ────────────
-        // We know the deck composition exactly; scale by how many turns remain
-        // (fewer turns → fewer chances to draw and play a live card).
-        let turns_left = HARD_TURN_LIMIT.saturating_sub(state.turn) as f32;
-        let deck_access = (turns_left / HARD_TURN_LIMIT as f32).clamp(0.05, 1.0);
-        let mut deck_live_ev = 0.0f32;
-        for &cid in &player.deck {
-            if let Some(live) = db.get_live(cid) {
-                let prob = calculate_live_success_prob(
-                    live,
-                    &board_hearts,
-                    &expected_yell_hearts,
-                    heart_reductions,
-                )
-                .min(1.0);
-                deck_live_ev += prob;
+        // Composition-based only: count how many copies of each live card ID are in the
+        // deck, then estimate P(draw ≥1 copy) over remaining turns.  This never uses
+        // deck order, only composition (which a human player could also estimate).
+        let turns_left_now = HARD_TURN_LIMIT.saturating_sub(state.turn) as f32;
+        let deck_access = ((turns_left_now / HARD_TURN_LIMIT as f32) * 4.0).clamp(0.1, 4.0);
+        let deck_size = player.deck.len() as f32;
+
+        let mut deck_live_ev = 0f32;
+        if deck_size > 0.0 {
+            let live_counts = &eval_ctx.deck_live_counts[p_idx];
+            for (&cid, &count) in live_counts {
+                if let Some(live) = db.get_live(cid) {
+                    let prob = calculate_live_success_prob(
+                        live,
+                        &board_hearts,
+                        &expected_yell_hearts,
+                        heart_reductions,
+                    )
+                    .min(1.0);
+                    // P(drawing ≥1 copy) approximation
+                    let draw_prob = 1.0
+                        - ((deck_size - count as f32) / deck_size).powf(deck_access);
+                    deck_live_ev += draw_prob * prob * FUTURE_LIVE_WEIGHT_DECK;
+                }
+            }
+        }
+
+        // ── Weak member cycling bonus ─────────────────────────────────────────
+        // A member with no hearts and no blades is dead weight – cycling it out
+        // gives a small bonus to encourage setting it in LiveSet.
+        let mut weak_member_bonus = 0.0f32;
+        for &cid in &player.hand {
+            if let Some(m) = db.get_member(cid) {
+                let heart_total: u32 = m.hearts.iter().map(|&h| h as u32).sum();
+                if heart_total == 0 && m.blades == 0 {
+                    weak_member_bonus += WEAK_MEMBER_CYCLE_BONUS;
+                }
             }
         }
 
         // ── Completion pressure and deadline penalties ─────────────────────────
-        let turns_remaining = Self::turns_remaining_after_current(state);
         let avg_zone_prob = if live_count > 0 {
             zone_prob_sum / live_count as f32
         } else {
             0.0
         };
         let projected_success = success_count as f32 + avg_zone_prob;
-        let completion_bonus = projected_success * projected_success * TURN_GOAL_COMPLETION_WEIGHT;
+        let late_game_urgency = 1.0 + state.turn as f32 / HARD_TURN_LIMIT as f32;
+        let zone_pressure_bonus = zone_prob_sum
+            * TURN_GOAL_ZONE_PRESSURE_WEIGHT
+            * late_game_urgency
+            / needed_successes.max(1) as f32;
+        let completion_bonus = projected_success * projected_success * TURN_GOAL_COMPLETION_WEIGHT
+            + zone_pressure_bonus;
 
+        // Deadline: if we can no longer reach 3 successes even with perfect draws
         let deadline_cap = success_count + 1 + turns_remaining;
         let deadline_penalty = if deadline_cap < 3 {
             TURN_GOAL_DEADLINE_PENALTY
@@ -2087,16 +2407,25 @@ impl TurnSequencer {
             0.0
         };
 
-        let needed_successes = 3usize.saturating_sub(success_count);
-        let must_commit_live = needed_successes > 0 && turns_remaining + 1 <= needed_successes;
+        // Must-commit: as the cap approaches, empty live zone is expensive.
+        let must_commit_live = needed_successes > 0 && turns_remaining <= needed_successes + 1;
         let empty_live_penalty = if must_commit_live && live_count == 0 {
+            TURN_GOAL_LATE_EMPTY_LIVE_PENALTY
+        } else if needed_successes > 0
+            && turns_remaining <= needed_successes + 2
+            && live_count == 0
+            && hand_live_count > 0
+        {
             TURN_GOAL_EMPTY_LIVE_PENALTY
         } else {
             0.0
         };
 
-        let overcommit_penalty = if success_count >= 1 && live_count > 1 {
-            live_count.saturating_sub(1) as f32
+        // Overcommit: penalise only UNCERTAIN (non-guaranteed) excess lives.
+        // If all zone lives are guaranteed there is no overcommit risk – every one succeeds.
+        let uncertain_live_count = live_count.saturating_sub(guaranteed_count);
+        let overcommit_penalty = if success_count >= 1 && uncertain_live_count > 1 {
+            uncertain_live_count.saturating_sub(1) as f32
                 * TURN_GOAL_OVERCOMMIT_PENALTY
                 * (1.1 - avg_zone_prob * 0.6).max(0.3)
         } else {
@@ -2104,25 +2433,30 @@ impl TurnSequencer {
         };
 
         // ── Assemble final score ───────────────────────────────────────────────
-        let future_live_score = hand_live_ev * FUTURE_LIVE_WEIGHT_HAND
-            + deck_live_ev * deck_access * FUTURE_LIVE_WEIGHT_DECK;
+        let hand_future_decay = ((turns_remaining as f32 + 1.0) / 4.0).clamp(0.35, 1.0);
+        let deck_future_decay = ((turns_remaining as f32 + 1.0) / HARD_TURN_LIMIT as f32)
+            .powi(2)
+            .clamp(0.05, 1.0);
+        let future_live_score = hand_live_ev * hand_future_decay
+            + deck_live_ev * deck_future_decay
+            + weak_member_bonus * hand_future_decay;
 
         let total = win_bonus
             + success_val
-            + zone_ev_total                   // Priority 1: zone live clearing
-            + future_live_score               // Priority 2: future clearing potential
+            + zone_ev_total
+            + future_live_score
             + completion_bonus
             - deadline_penalty
             - empty_live_penalty
             - overcommit_penalty;
 
         HeuristicBreakdown {
-            board_score: future_live_score,   // repurposed for diagnostics
+            board_score: future_live_score,
             live_ev: avg_zone_prob * 100.0,
             success_val,
             win_bonus,
-            hand_momentum: hand_live_ev * FUTURE_LIVE_WEIGHT_HAND,
-            cycling_bonus: deck_live_ev * deck_access * FUTURE_LIVE_WEIGHT_DECK,
+            hand_momentum: hand_live_ev,
+            cycling_bonus: deck_live_ev + weak_member_bonus,
             total,
         }
     }
@@ -2133,7 +2467,19 @@ impl TurnSequencer {
         p_idx: usize,
     ) -> HeuristicBreakdown {
         let weights = Self::config_snapshot().weights;
-        Self::evaluate_turn_goal_breakdown(state, db, p_idx, &weights)
+        let eval_ctx = EvaluationContext::new(state, db);
+        Self::evaluate_turn_goal_breakdown(state, db, p_idx, &weights, &eval_ctx)
+    }
+
+    fn evaluate_state_for_player_with_weights_ctx(
+        state: &GameState,
+        db: &CardDatabase,
+        p_idx: usize,
+        weights: &WeightsConfig,
+        eval_ctx: &EvaluationContext,
+    ) -> (f32, f32) {
+        let breakdown = Self::evaluate_turn_goal_breakdown(state, db, p_idx, weights, eval_ctx);
+        (breakdown.total - breakdown.live_ev, breakdown.live_ev)
     }
 
     fn evaluate_state_for_player_with_weights(
@@ -2142,8 +2488,8 @@ impl TurnSequencer {
         p_idx: usize,
         weights: &WeightsConfig,
     ) -> (f32, f32) {
-        let breakdown = Self::evaluate_turn_goal_breakdown(state, db, p_idx, weights);
-        (breakdown.total - breakdown.live_ev, breakdown.live_ev)
+        let eval_ctx = EvaluationContext::new(state, db);
+        Self::evaluate_state_for_player_with_weights_ctx(state, db, p_idx, weights, &eval_ctx)
     }
 
     #[allow(dead_code)]
@@ -2244,6 +2590,7 @@ impl TurnSequencer {
         best_val: &mut f32,
         best_breakdown: &mut (f32, f32),
         total_count: &mut usize,
+        eval_ctx: &EvaluationContext,
     ) {
         *total_count += 1;
 
@@ -2281,6 +2628,7 @@ impl TurnSequencer {
                                         best_val,
                                         best_breakdown,
                                         total_count,
+                                        eval_ctx,
                                     );
                                     current_seq.pop();
                                 }
@@ -2295,7 +2643,7 @@ impl TurnSequencer {
             let _ = stop_state.step(db, ACTION_BASE_PASS);
             let weights = Self::config_snapshot().weights;
             let (board_score, live_ev) =
-                Self::evaluate_state_for_player_with_weights(&stop_state, db, root_player, &weights);
+                Self::evaluate_state_for_player_with_weights_ctx(&stop_state, db, root_player, &weights, eval_ctx);
             let current_val = board_score + live_ev;
 
             if current_val > *best_val || (!current_seq.is_empty() && current_val >= *best_val) {
@@ -2305,13 +2653,13 @@ impl TurnSequencer {
             }
         } else if state.phase == Phase::LiveSet {
             let weights = Self::config_snapshot().weights;
-            let (ls_actions, _, _) = Self::find_best_liveset_selection_with_weights(state, db, &weights);
+            let (ls_actions, _, _) = Self::find_best_liveset_selection_with_weights(state, db, &weights, eval_ctx);
             let mut final_state = state.clone();
             for &act in &ls_actions {
                 let _ = final_state.step(db, act);
             }
             let (board_score, live_ev) =
-                Self::evaluate_state_for_player_with_weights(&final_state, db, root_player, &weights);
+                Self::evaluate_state_for_player_with_weights_ctx(&final_state, db, root_player, &weights, eval_ctx);
             let current_val = board_score + live_ev;
 
             if current_val > *best_val {
@@ -2339,6 +2687,7 @@ impl TurnSequencer {
         state: &GameState,
         db: &CardDatabase,
         weights: &WeightsConfig,
+        eval_ctx: &EvaluationContext,
     ) -> (Vec<i32>, usize, u128) {
         let p_idx = state.current_player as usize;
         let hand_len = state.players[p_idx].hand.len();
@@ -2377,7 +2726,7 @@ impl TurnSequencer {
         let mut best_actions = Vec::new();
         let mut best_total = f32::NEG_INFINITY;
         let mut best_live_pct = 0.0;
-
+ 
         for subset in &subsets {
             let mut sim_state = state.clone();
             let mut ordered = subset.clone();
@@ -2398,7 +2747,7 @@ impl TurnSequencer {
             }
 
             let _ = sim_state.step(db, ACTION_BASE_PASS);
-            let breakdown = Self::evaluate_turn_goal_breakdown(&sim_state, db, p_idx, weights);
+            let breakdown = Self::evaluate_turn_goal_breakdown(&sim_state, db, p_idx, weights, &eval_ctx);
             if breakdown.total > best_total {
                 best_total = breakdown.total;
                 best_live_pct = breakdown.live_ev;
@@ -2436,24 +2785,21 @@ impl TurnSequencer {
         Self::predict_best_liveset_score_with_weights(state, db, p_idx, &weights)
     }
 
-    fn build_live_eval_context(
+    fn build_live_eval_context_ctx(
         state: &GameState,
         db: &CardDatabase,
         p_idx: usize,
+        eval_ctx: &EvaluationContext,
     ) -> Option<([u32; 7], Vec<f32>, [u8; 7])> {
-        use crate::core::heuristics::calculate_deck_expectations;
-
-        let deck_stats = calculate_deck_expectations(&state.players[p_idx].deck, db);
-        let expected_yell_count = state.get_total_blades(p_idx, db, 0) as f32;
-
+        let expected_yell_count = state.get_total_blades(p_idx, db, 0) as usize;
         let board_hearts = state.get_total_hearts(p_idx, db, 0).to_array().map(|v| v as u32);
         
-        // Fast computation: just scale deck avg_hearts by yell_count (no per-color lookup)
-        let expected_yell_hearts: Vec<f32> = deck_stats
-            .avg_hearts
-            .iter()
-            .map(|&h| h * expected_yell_count)
-            .collect();
+        let expected_yell_hearts = if expected_yell_count < 61 {
+            eval_ctx.yell_bonus_table[p_idx][expected_yell_count].to_vec()
+        } else {
+            let stats = &eval_ctx.deck_stats[p_idx];
+            stats.avg_hearts.iter().map(|&h| h * expected_yell_count as f32).collect()
+        };
         
         let heart_reductions = state.players[p_idx].heart_req_reductions.to_array();
         Some((board_hearts, expected_yell_hearts, heart_reductions))
@@ -2530,7 +2876,7 @@ impl TurnSequencer {
         let trials = 100;
         let deck_cards = state.players[p_idx].deck.to_vec();
 
-        let mut rng = rand::rng();
+        let mut rng = rand::rngs::SmallRng::from_os_rng();
 
         for _ in 0..trials {
             let mut trial_deck = deck_cards.clone();

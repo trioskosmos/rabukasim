@@ -1,9 +1,0 @@
-cycle,random_wins,random_losses,random_draws,greedy_wins,greedy_losses,greedy_draws
-1,4,5,23,3,0,29
-2,1,4,27,2,0,30
-3,2,6,24,1,2,29
-4,0,4,28,1,0,31
-5,5,7,20,3,0,29
-6,3,4,25,0,2,30
-7,1,4,27,1,0,31
-8,0,6,26,0,0,32

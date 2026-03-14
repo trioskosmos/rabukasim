@@ -128,14 +128,19 @@ fn test_card_579_ability_1_heart_filter() {
         .find(|(_, m)| m.name == "ノンフィクション!!")
         .expect("Could not find ノンフィクション!! target card for test 1");
     let target_id = *target_id;
-    crate::test_helpers::generate_card_report(target_id);
 
     let (liella_member_id, base_yellow_hearts) = db
         .members
         .iter()
-        .find(|(_, m)| m.groups.contains(&3) && m.hearts[2] < 3)
+        .filter(|(_, m)| m.groups.contains(&3) && m.hearts[2] == 0)
+        .min_by_key(|(id, _)| *id)
         .map(|(id, m)| (*id, m.hearts[2]))
-        .expect("Need a Liella member with fewer than 3 yellow hearts for test 1");
+        .expect("Need a deterministic Liella member with zero yellow hearts for test 1");
+
+    assert_eq!(
+        base_yellow_hearts, 0,
+        "Test fixture must start with zero yellow hearts so the initial filter check is deterministic"
+    );
 
     state.set_stage(0, 1, liella_member_id); // Source card (Member)
     state.set_stage(0, 0, liella_member_id); // Member in Left Side (0) - Group 3

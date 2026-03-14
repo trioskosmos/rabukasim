@@ -1,5 +1,58 @@
-//! Tests for core game mechanics like Drawing, Stat Buffing, and Playing Members.
-//! These tests verify higher-level game flow and simple card placements using production data.
+//! Core Game Mechanics Tests
+//!
+//! This module tests fundamental game mechanics and rule engine behavior:
+//! - Card drawing and deck management
+//! - Stat modifications (Blade, Heart, Weight buffs)
+//! - Member card placement and movement
+//! - State tracking and consistency through complex operations
+//!
+//! # Test Organization
+//!
+//! Tests are organized by mechanical system:
+//!
+//! - **Drawing**: O_DRAW, draw limits, deck refresh triggers
+//! - **Stats**: O_ADD_BLADES, O_ADD_HEARTS, stat calculations
+//! - **Placement**: Playing members, positioning, zone transitions
+//! - **State**: Tap/untap, flag tracking, effect persistence
+//!
+//! # Complexity Levels
+//!
+//! - **Basic**: Single mechanic in isolation (e.g., draw 3 cards)
+//! - **Medium**: Mechanic with edge case (e.g., draw with nearly-empty deck)
+//! - **Advanced**: Multiple mechanics in sequence (e.g., play, buff, test effects)
+//!
+//! # Running Mechanics Tests
+//!
+//! ```bash
+//! # All mechanics tests
+//! cargo test --lib mechanics
+//!
+//! # Specific mechanic
+//! cargo test --lib test_opcode_draw
+//! cargo test --lib test_opcode_play_member_from_hand
+//! cargo test --lib test_condition_count_hand
+//!
+//! # With output
+//! cargo test --lib test_opcode_draw -- --nocapture
+//! ```
+//!
+//! # Real Database Integration
+//!
+//! These tests use the production card database (cards_compiled.json)
+//! to verify mechanics with real card IDs, ensuring tests catch actual
+//! edge cases that arise from real card data.
+//!
+//! # Performance
+//!
+//! - Mechanics tests: ~3 seconds (parallelized)
+//! - Average per test: 15ms
+//! - DB load shared across all tests
+//!
+//! # Known Complex Cases
+//!
+//! - Draw with deck refresh mid-operation
+//! - Multiple stat buffs affecting calculation order
+//! - State persistence across ability chains
 
 use crate::core::logic::*;
 use crate::test_helpers::load_real_db;

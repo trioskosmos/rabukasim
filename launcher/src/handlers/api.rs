@@ -83,12 +83,14 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                 }
 
                 let mode_str = body.mode.clone().unwrap_or_else(|| "pve".to_string());
+                let is_vanilla = body.card_set.as_deref() == Some("vanilla");
                 let new_room = Room {
                     _id: room_id.clone(),
                     state: game_state,
                     players,
                     username_to_token,
                     mode: mode_str.clone(),
+                    is_vanilla,
                     last_update: std::time::SystemTime::now(),
                     created_at: std::time::SystemTime::now(),
                     is_public: body.public.unwrap_or(false),
@@ -101,12 +103,13 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
 
                 let room_arc = Arc::new(Mutex::new(new_room));
                 rooms.insert(room_id.clone(), room_arc);
-                println!("[API] SUCCESS: Created room {} (mode: {}). Decks: P0={}, P1={}",
-                    room_id, mode_str,
+                println!("[API] SUCCESS: Created room {} (mode: {}, vanilla: {}). Decks: P0={}, P1={}",
+                    room_id, mode_str, is_vanilla,
                     body.p0_deck.as_ref().map(|d| d.len()).unwrap_or(0),
                     body.p1_deck.as_ref().map(|d| d.len()).unwrap_or(0)
                 );
-                response_json = json!({ "success": true, "room_id": room_id, "session": token, "player_idx": 0 }).to_string();
+                let card_set_str = if is_vanilla { "vanilla" } else { "compiled" };
+                response_json = json!({ "success": true, "room_id": room_id, "session": token, "player_idx": 0, "card_set": card_set_str }).to_string();
             } else {
                 status = 400;
                 let err_msg = body_res.err().unwrap_or_else(|| "Unknown error".to_string());
@@ -141,7 +144,8 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                          if let Some(user) = &body.username {
                              room.username_to_token.insert(user.clone(), token.clone());
                          }
-                         response_json = json!({ "success": true, "session": token, "player_idx": 1 }).to_string();
+                         let card_set_str = if room.is_vanilla { "vanilla" } else { "compiled" };
+                         response_json = json!({ "success": true, "session": token, "player_idx": 1, "card_set": card_set_str }).to_string();
                     }
                 } else { status = 404; response_json = json!({"error": "Not found"}).to_string(); }
             } else { status = 400; }
@@ -164,7 +168,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
 
                     let state_val = serialize_state_rich(
                         &room.state,
-                        &state.card_db,
+                        if room.is_vanilla { &state.vanilla_card_db } else { &state.card_db },
                         &room.mode,
                         viewer_idx,
                         0,
@@ -204,15 +208,15 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                             if room.history.len() > 50 { room.history.pop_front(); }
                             room.redo_history.clear(); // Clear redo on action
 
-                            if let Err(e) = room.state.step(&state.card_db, body.action_id) {
+                            let room_is_vanilla = room.is_vanilla;
+                            let active_db = if room_is_vanilla { &state.vanilla_card_db } else { &state.card_db };
+                            if let Err(e) = room.state.step(active_db, body.action_id) {
                                 response_json = json!({"success": false, "error": e.to_string()}).to_string();
                             } else {
                                 room.last_update = std::time::SystemTime::now();
 
                                 // 1. Synchronous AI Reaction (snappy response)
                                 if room.mode == "pve" && room.state.phase != Phase::Terminal {
-                                    use engine_rust::core::heuristics::OriginalHeuristic;
-                                    let heuristic = OriginalHeuristic::default();
                                     let mut steps = 0;
 
                                     loop {
@@ -223,7 +227,15 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                                         };
 
                                         if ai_needed && room.state.phase != Phase::Terminal && steps < 5 {
-                                            room.state.step_opponent_greedy(&state.card_db, &heuristic);
+                                            // Use TurnSequencer for vanilla mode AI (faster closeouts, no turn limit)
+                                            if room.is_vanilla {
+                                                room.state.step_opponent_turnseq(&state.vanilla_card_db);
+                                            } else {
+                                                // Use greedy heuristic for full game mode
+                                                use engine_rust::core::heuristics::OriginalHeuristic;
+                                                let heuristic = OriginalHeuristic::default();
+                                                room.state.step_opponent_greedy(&state.card_db, &heuristic);
+                                            }
                                             steps += 1;
                                         } else {
                                             break;
@@ -251,7 +263,7 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
 
                                 let state_val = serialize_state_rich(
                                     &room.state,
-                                    &state.card_db,
+                                    if room.is_vanilla { &state.vanilla_card_db } else { &state.card_db },
                                     &room.mode,
                                     viewer_idx,
                                     0,
@@ -266,11 +278,10 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                                 if will_think_in_background {
                                     let state_clone = state.clone();
                                     let room_arc_clone = room_arc.clone();
+                                    let room_is_vanilla = room.is_vanilla;
 
                                     thread::spawn(move || {
                                         use engine_rust::core::logic::Phase;
-                                        use engine_rust::core::heuristics::OriginalHeuristic;
-                                        let heuristic = OriginalHeuristic::default();
                                         let mut steps = 0;
                                         loop {
                                             {
@@ -282,7 +293,15 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                                                 };
 
                                                 if ai_needed && room.state.phase != Phase::Terminal && steps < 50 {
-                                                    room.state.step_opponent_greedy(&state_clone.card_db, &heuristic);
+                                                    // Use TurnSequencer for vanilla mode AI
+                                                    if room_is_vanilla {
+                                                        room.state.step_opponent_turnseq(&state_clone.vanilla_card_db);
+                                                    } else {
+                                                        // Use greedy heuristic for full game mode
+                                                        use engine_rust::core::heuristics::OriginalHeuristic;
+                                                        let heuristic = OriginalHeuristic::default();
+                                                        room.state.step_opponent_greedy(&state_clone.card_db, &heuristic);
+                                                    }
                                                     steps += 1;
                                                     room.last_update = std::time::SystemTime::now();
                                                 } else {

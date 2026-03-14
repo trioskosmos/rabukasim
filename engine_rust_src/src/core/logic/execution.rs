@@ -64,6 +64,114 @@ impl GameState {
         let _ = self.step(db, action);
     }
 
+    fn choose_phase_aware_action(&self, db: &CardDatabase) -> i32 {
+        let legal = self.get_legal_action_ids(db);
+        if legal.is_empty() {
+            return 0;
+        }
+
+        match self.phase {
+            Phase::Response => {
+                if legal.contains(&0) {
+                    0
+                } else {
+                    legal[0]
+                }
+            }
+            Phase::MulliganP1 | Phase::MulliganP2 => 0,
+            Phase::Energy | Phase::LiveResult => legal[0],
+            Phase::Rps => {
+                if self.phase == Phase::Rps {
+                    let other_player = 1 - self.current_player as usize;
+                    let known_choice = self.rps_choices[other_player];
+                    if known_choice != -1 {
+                        let avoid_draw_action = legal.iter().copied().find(|action| {
+                            let choice = if *action >= crate::core::generated_constants::ACTION_BASE_RPS_P2 {
+                                *action - crate::core::generated_constants::ACTION_BASE_RPS_P2
+                            } else if *action >= crate::core::generated_constants::ACTION_BASE_RPS {
+                                *action - crate::core::generated_constants::ACTION_BASE_RPS
+                            } else {
+                                -1
+                            };
+                            choice >= 0 && choice as i8 != known_choice
+                        });
+                        if let Some(action) = avoid_draw_action {
+                            return action;
+                        }
+                    }
+                }
+
+                // Use random selection for unresolved RPS and TurnChoice states.
+                let mut rng = Pcg64::from_os_rng();
+                *legal.choose(&mut rng).unwrap_or(&0)
+            }
+            Phase::TurnChoice => legal[0],
+            _ => legal[0],
+        }
+    }
+
+    /// Execute opponent's full turn using TurnSequencer planner (vanilla mode AI).
+    /// This uses the success-count-first heuristic optimized for lower turn counts without the turn limit.
+    pub fn step_opponent_turnseq(&mut self, db: &CardDatabase) {
+        use crate::core::logic::turn_sequencer::TurnSequencer;
+
+        match self.phase {
+            Phase::Main => {
+                let initial_player = self.current_player;
+                let (action_seq, _, _, _) = TurnSequencer::plan_full_turn(self, db);
+
+                for &action in &action_seq {
+                    if self.is_terminal()
+                        || self.phase != Phase::Main
+                        || self.current_player != initial_player
+                    {
+                        break;
+                    }
+                    if !self.get_legal_action_ids(db).contains(&action) {
+                        break;
+                    }
+                    if self.step(db, action).is_err() {
+                        break;
+                    }
+                }
+
+                // Only pass if we are still the same player — avoid accidentally
+                // consuming the human player's main phase when auto_step has already
+                // advanced the game past the AI's pass.
+                if self.phase == Phase::Main && self.current_player == initial_player {
+                    let _ = self.step(db, 0);
+                }
+            }
+            Phase::LiveSet => {
+                let initial_player = self.current_player;
+                let (action_seq, _, _) = TurnSequencer::find_best_liveset_selection(self, db);
+
+                for &action in &action_seq {
+                    if self.is_terminal()
+                        || self.phase != Phase::LiveSet
+                        || self.current_player != initial_player
+                    {
+                        break;
+                    }
+                    if !self.get_legal_action_ids(db).contains(&action) {
+                        break;
+                    }
+                    if self.step(db, action).is_err() {
+                        break;
+                    }
+                }
+
+                if self.phase == Phase::LiveSet && self.current_player == initial_player {
+                    let _ = self.step(db, 0);
+                }
+            }
+            _ => {
+                let action = self.choose_phase_aware_action(db);
+                let _ = self.step(db, action);
+            }
+        }
+    }
+
     pub fn get_mcts_suggestions(
         &self,
         db: &CardDatabase,
@@ -288,5 +396,61 @@ impl GameState {
         } else {
             2
         } // Fallback draw for any other equality
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_helpers::create_test_db;
+
+    #[test]
+    fn turnseq_ai_handles_rps_with_single_choice() {
+        let db = create_test_db();
+        let mut state = GameState::default();
+        state.phase = Phase::Rps;
+        state.current_player = 1;
+        state.rps_choices = [1, -1];
+
+        state.step_opponent_turnseq(&db);
+
+        // AI should have made a choice (not -1) and phase should advance to TurnChoice
+        assert_ne!(state.rps_choices[1], -1);
+        assert_eq!(state.phase, Phase::TurnChoice);
+        // current_player depends on who won RPS, so we don't assert it
+    }
+
+    #[test]
+    fn turnseq_ai_advances_turn_choice_into_mulligan() {
+        let db = create_test_db();
+        let mut state = GameState::default();
+        state.phase = Phase::TurnChoice;
+        state.current_player = 1;
+
+        state.step_opponent_turnseq(&db);
+
+        assert_eq!(state.phase, Phase::MulliganP1);
+        assert_eq!(state.first_player, 1);
+        assert_eq!(state.current_player, 1);
+
+        state.step_opponent_turnseq(&db);
+
+        assert_eq!(state.phase, Phase::MulliganP2);
+        assert_eq!(state.current_player, 0);
+    }
+
+    #[test]
+    fn turnseq_ai_exits_liveset_phase() {
+        let db = create_test_db();
+        let mut state = GameState::default();
+        state.phase = Phase::LiveSet;
+        state.first_player = 0;
+        state.current_player = 1;
+        state.players[1].hand = vec![3000].into();
+        state.players[1].live_zone = [-1, -1, -1];
+
+        state.step_opponent_turnseq(&db);
+
+        assert_ne!(state.phase, Phase::LiveSet);
     }
 }

@@ -45,12 +45,40 @@ impl HeartBoard {
         Self(val)
     }
 
+    pub fn from_array_u32(arr: &[u32; 7]) -> Self {
+        let mut val = 0u64;
+        for i in 0..7 {
+            val |= (arr[i].min(255) as u64) << (i * 8);
+        }
+        Self(val)
+    }
+
     pub fn to_array(&self) -> [u8; 7] {
         let mut arr = [0u8; 7];
         for i in 0..7 {
             arr[i] = ((self.0 >> (i * 8)) & Self::MASK) as u8;
         }
         arr
+    }
+
+    pub fn to_array_u32(&self) -> [u32; 7] {
+        let mut arr = [0u32; 7];
+        for i in 0..7 {
+            arr[i] = ((self.0 >> (i * 8)) & Self::MASK) as u32;
+        }
+        arr
+    }
+
+    /// Returns a bitmask of colors present (0-6).
+    /// Used for O(1) intersection check with color filters.
+    pub fn get_color_mask(&self) -> u8 {
+        let mut mask = 0u8;
+        for i in 0..7 {
+            if ((self.0 >> (i * 8)) & Self::MASK) != 0 {
+                mask |= 1 << i;
+            }
+        }
+        mask
     }
 
     pub fn add(&mut self, other: Self) {

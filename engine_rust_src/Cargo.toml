@@ -9,34 +9,41 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 ort = { version = "2.0.0-rc.9", features = ["ndarray"], optional = true }
-ndarray = "0.16"
+ndarray = { version = "0.16", optional = true }
+
+# Optional dev-only / heavy features
 rayon = { version = "1.10", optional = true }
 numpy = { version = "0.23", optional = true }
 pyo3 = { version = "0.23.3", features = ["extension-module", "abi3-py37", "multiple-pymethods"], optional = true }
-rand = { version = "0.9.0", features = ["small_rng"] }
+
+# WASM components (Feature-gated)
+wasm-bindgen = { version = "0.2", optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
+
+# Core dependencies (Optimized)
+rand = { version = "0.9.0", default-features = false, features = ["small_rng", "std", "std_rng", "os_rng"] }
 rand_pcg = "0.9.0"
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 lru = "0.13"
 serde_json = "1.0"
 serde_repr = "0.1"
 bincode = "1.3"
-wasm-bindgen = "0.2"
 getrandom = { version = "0.3", features = ["wasm_js"] }
 
-serde-wasm-bindgen = "0.6"
-once_cell = "1.19"
 smallvec = { version = "1.13", features = ["serde", "union", "const_generics", "write"] }
-itertools = "0.13.0"
 
 [features]
-extension-module = ["dep:pyo3", "dep:numpy", "pyo3/extension-module"]
-parallel = ["dep:rayon"]
-nn = ["dep:ort"]
-gpu = []
 default = ["parallel"]
+parallel = ["dep:rayon"]
+wasm = ["dep:wasm-bindgen", "dep:serde-wasm-bindgen"]
+nn = ["dep:ort", "dep:ndarray"]
+extension-module = ["dep:pyo3", "dep:numpy", "pyo3/extension-module"]
+gpu = []
 
 [profile.dev]
-opt-level = 2
+opt-level = 1
+overflow-checks = false
+debug = true
 
 [profile.release]
 lto = false
@@ -55,3 +62,6 @@ path = "src/repro/repro_sumire_8752_trigger.rs"
 [[test]]
 name = "c01_sumire_8752"
 path = "src/repro/c01_sumire_8752.rs"
+[[test]]
+name = "benchmark_sequencer"
+path = "src/repro/benchmark_sequencer.rs"

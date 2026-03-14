@@ -5,7 +5,7 @@ use engine_rust::test_helpers::{load_real_db, TestUtils};
 #[test]
 fn test_repro_card_4654_hand_clearing() {
     let mut state = GameState::default();
-    let mut db = load_real_db();
+    let mut db = load_real_db().clone();
 
     // Create a mock live card that meets the filter: Type:Live, Group:3 (Liella), Hearts >= 8
     let mut mock_live = LiveCard::default();

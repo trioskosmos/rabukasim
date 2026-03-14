@@ -83,7 +83,7 @@ fn test_look_and_choose_filter() {
 /// Verifies that Honoka's OnPlay trigger (ID 120) works correctly with production bytecode.
 #[test]
 fn test_trigger_on_play_honoka() {
-    let mut db = load_real_db();
+    let mut db = load_real_db().clone();
 
     // Inject fake live card 30001 (used for recovery)
     db.lives.insert(

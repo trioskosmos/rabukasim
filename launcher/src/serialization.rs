@@ -12,6 +12,83 @@ pub fn get_unit_name(id: u8, lang: &str) -> &'static str {
     enums::get_unit_name(id, lang)
 }
 
+pub fn translate_card_name(jp_name: &str, lang: &str) -> String {
+    if lang == "jp" {
+        return jp_name.to_string();
+    }
+
+    // Normalization helper: remove common separators and spaces for fuzzy matching
+    let normalize = |s: &str| -> String {
+        s.chars()
+            .filter(|c| !c.is_whitespace() && *c != '・' && *c != '＆' && *c != '&' && *c != '／' && *c != '/')
+            .collect::<String>()
+    };
+
+    let target_norm = normalize(jp_name);
+
+    // English translations for character names (include variants without spaces)
+    let translations = [
+        ("高坂 穂乃果", "Honoka Kosaka"), ("高坂穂乃果", "Honoka Kosaka"),
+        ("絢瀬 絵里", "Eli Ayase"), ("絢瀬絵里", "Eli Ayase"),
+        ("南 ことり", "Kotori Minami"), ("南ことり", "Kotori Minami"),
+        ("園田 海未", "Umi Sonoda"), ("園田海未", "Umi Sonoda"),
+        ("星空 凛", "Rin Hoshizora"), ("星空凛", "Rin Hoshizora"),
+        ("西木野 真姫", "Maki Nishikino"), ("西木野真姫", "Maki Nishikino"),
+        ("東條 希", "Nozomi Tojo"), ("東條希", "Nozomi Tojo"),
+        ("小泉 花陽", "Hanayo Koizumi"), ("小泉花陽", "Hanayo Koizumi"),
+        ("矢澤 にこ", "Nico Yazawa"), ("矢澤にこ", "Nico Yazawa"),
+        ("高海 千歌", "Chika Takami"), ("高海千歌", "Chika Takami"),
+        ("桜内 梨子", "Riko Sakurauchi"), ("桜内梨子", "Riko Sakurauchi"),
+        ("松浦 果南", "Kanan Matsuura"), ("松浦果南", "Kanan Matsuura"),
+        ("黒澤 ダイヤ", "Dia Kurosawa"), ("黒澤ダイヤ", "Dia Kurosawa"),
+        ("渡辺 曜", "You Watanabe"), ("渡辺曜", "You Watanabe"),
+        ("津島 善子", "Yoshiko Tsushima"), ("津島善子", "Yoshiko Tsushima"),
+        ("国木田 花丸", "Hanamaru Kunikida"), ("国木田花丸", "Hanamaru Kunikida"),
+        ("小原 鞠莉", "Mari Ohara"), ("小原鞠莉", "Mari Ohara"),
+        ("黒澤 ルビィ", "Ruby Kurosawa"), ("黒澤ルビィ", "Ruby Kurosawa"),
+        ("上原 歩夢", "Ayumu Uehara"), ("上原歩夢", "Ayumu Uehara"),
+        ("中須 かすみ", "Kasumi Nakasu"), ("中須かすみ", "Kasumi Nakasu"),
+        ("桜坂 しずく", "Shizuku Osaka"), ("桜坂しずく", "Shizuku Osaka"),
+        ("朝香 果林", "Karin Asaka"), ("朝香果林", "Karin Asaka"),
+        ("宮下 愛", "Ai Miyashita"), ("宮下愛", "Ai Miyashita"),
+        ("近江 彼方", "Kanata Konoe"), ("近江彼方", "Kanata Konoe"),
+        ("優木 せつ菜", "Setsuna Yuki"), ("優木せつ菜", "Setsuna Yuki"),
+        ("エマ・ヴェルデ", "Emma Verde"), ("エマヴェルデ", "Emma Verde"),
+        ("天王寺 璃奈", "Rina Tennoji"), ("天王寺璃奈", "Rina Tennoji"),
+        ("三船 栞子", "Shioriko Mifune"), ("三船栞子", "Shioriko Mifune"),
+        ("ミア・テイラー", "Mia Taylor"), ("ミアテイラー", "Mia Taylor"),
+        ("鐘 嵐珠", "Lanzhu Zhong"), ("鐘嵐珠", "Lanzhu Zhong"),
+        ("澁谷 かのん", "Kanon Shibuya"), ("澁谷かのん", "Kanon Shibuya"),
+        ("唐 可可", "Keke Tang"), ("唐可可", "Keke Tang"),
+        ("嵐 千砂都", "Chisato Arashi"), ("嵐千砂都", "Chisato Arashi"),
+        ("平安名 すみれ", "Sumire Heanna"), ("平安名すみれ", "Sumire Heanna"),
+        ("葉月 恋", "Ren Hazuki"), ("葉月恋", "Ren Hazuki"),
+        ("桜小路 きな子", "Kinako Sakurakoji"), ("桜小路きな子", "Kinako Sakurakoji"),
+        ("米女 メイ", "Mei Yoneme"), ("米女メイ", "Mei Yoneme"),
+        ("若菜 四季", "Shiki Wakana"), ("若菜四季", "Shiki Wakana"),
+        ("鬼塚 夏美", "Natsumi Onitsuka"), ("鬼塚夏美", "Natsumi Onitsuka"),
+        ("ウィーン・マルガレーテ", "Wien Margarete"), ("ウィーンマルガレーテ", "Wien Margarete"),
+        ("鬼塚 冬毬", "Tomari Onitsuka"), ("鬼塚冬毬", "Tomari Onitsuka"),
+        ("日野下 花帆", "Kaho Hinoshita"), ("日野下花帆", "Kaho Hinoshita"),
+        ("乙宗 梢", "Kozue Otomune"), ("乙宗梢", "Kozue Otomune"),
+        ("村野 さやか", "Sayaka Murano"), ("村野さやか", "Sayaka Murano"),
+        ("夕霧 綴理", "Tsuzuri Yugiri"), ("夕霧綴理", "Tsuzuri Yugiri"),
+        ("大沢 瑠璃乃", "Rurino Osawa"), ("大沢瑠璃乃", "Rurino Osawa"),
+        ("藤島 慈", "Megumi Fujishima"), ("藤島慈", "Megumi Fujishima"),
+        ("徒町 小鈴", "Kosuzu Kachimachi"), ("徒町小鈴", "Kosuzu Kachimachi"),
+        ("百生 吟子", "Ginko Momose"), ("百生吟子", "Ginko Momose"),
+        ("安養寺 姫芽", "Hime Anyoji"), ("安養寺姫芽", "Hime Anyoji"),
+    ];
+
+    for (jp, en) in &translations {
+        if jp_name == *jp || normalize(jp) == target_norm {
+            return en.to_string();
+        }
+    }
+
+    jp_name.to_string()
+}
+
 pub fn get_filter_description(filter_attr: u64, lang: &str) -> String {
     if filter_attr == 0 { return String::new(); }
     let mut parts: Vec<String> = Vec::new();
@@ -113,9 +190,11 @@ pub fn decode_bytecode_to_strings(bytecode: &[i32]) -> Vec<String> {
 pub fn resolve_card_name(cid: i32, db: &CardDatabase, lang: &str) -> String {
     if cid == -1 { return if lang == "jp" { "カード" } else { "Card" }.to_string(); }
     if let Some(m) = db.get_member(cid) {
-        format!("{} ({})", m.name, m.card_no)
+        let display_name = translate_card_name(&m.name, lang);
+        format!("{} ({})", display_name, m.card_no)
     } else if let Some(l) = db.get_live(cid) {
-        format!("{} ({})", l.name, l.card_no)
+        let display_name = translate_card_name(&l.name, lang);
+        format!("{} ({})", display_name, l.card_no)
     } else if db.energy_db.contains_key(&cid) {
         format!("Energy #{}", cid)
     } else {
@@ -347,9 +426,11 @@ pub fn get_action_desc_rich(
         Action::ToggleMulligan { hand_idx } => {
             let cid = p.hand.get(hand_idx).cloned().unwrap_or(-1);
             let card_name = if let Some(m) = db.get_member(cid) {
-                format!("{} ({})", m.name, m.card_no)
+                let display_name = translate_card_name(&m.name, lang);
+                format!("{} ({})", display_name, m.card_no)
             } else if let Some(l) = db.get_live(cid) {
-                format!("{} ({})", l.name, l.card_no)
+                let display_name = translate_card_name(&l.name, lang);
+                format!("{} ({})", display_name, l.card_no)
             } else if cid == -1 {
                 "Card".to_string()
             } else {
@@ -374,7 +455,7 @@ pub fn get_action_desc_rich(
             };
             let (_l_name, _c_name, _r_name, suffix_str, _to_str, baton_str, leaves_str, pay_str, cost_str) = lang_data;
 
-            let raw_name = card.map(|m| m.name.clone()).unwrap_or_else(|| "Member".into());
+            let raw_name = card.map(|m| translate_card_name(&m.name, lang)).unwrap_or_else(|| "Member".into());
             let card_no = card.map(|m| m.card_no.clone()).unwrap_or_else(|| "??".into());
             let suffix = if let Some(m) = card {
                  if m.abilities.iter().any(|ab| ab.trigger == engine_rust::core::enums::TriggerType::OnPlay) { format!(" [{}]", suffix_str) } else { "".into() }
@@ -384,11 +465,10 @@ pub fn get_action_desc_rich(
             let prev_cid = p.stage.get(slot_idx).cloned().unwrap_or(-1);
             let mut old_name = "".to_string();
             let base_cost = (new_cost - p.cost_reduction as i32).max(0);
-            let mut actual_cost = base_cost;
+            let actual_cost = engine_rust::core::logic::rules::get_member_cost(gs, p_idx, cid, slot_idx as i16, -1, db, 0).max(0);
             if prev_cid >= 0 {
                 if let Some(old_m) = db.get_member(prev_cid) {
-                    old_name = old_m.name.clone();
-                    actual_cost = (base_cost - old_m.cost as i32).max(0);
+                    old_name = translate_card_name(&old_m.name, lang);
                 }
             }
 
@@ -436,7 +516,7 @@ pub fn get_action_desc_rich(
             let (l_name, c_name, r_name, suffix_str, _to_str, baton_str, leaves_str, pay_str, _cost_str) = lang_data;
             let areas = [l_name, c_name, r_name];
 
-            let raw_name = card.map(|m| m.name.clone()).unwrap_or_else(|| "Member".into());
+            let raw_name = card.map(|m| translate_card_name(&m.name, lang)).unwrap_or_else(|| "Member".into());
             let card_no = card.map(|m| m.card_no.clone()).unwrap_or_else(|| "??".into());
             let suffix = if let Some(m) = card {
                  if m.abilities.iter().any(|ab| ab.trigger == engine_rust::core::enums::TriggerType::OnPlay) { format!(" [{}]", suffix_str) } else { "".into() }
@@ -447,18 +527,15 @@ pub fn get_action_desc_rich(
             let prev2 = p.stage.get(other_slot).cloned().unwrap_or(-1);
 
             let mut old_names = Vec::new();
-            let mut reduction = 0;
             if let Some(m1) = if prev1 >= 0 { db.get_member(prev1) } else { None } {
-                old_names.push(m1.name.clone());
-                reduction += m1.cost as i32;
+                old_names.push(translate_card_name(&m1.name, lang));
             }
             if let Some(m2) = if prev2 >= 0 { db.get_member(prev2) } else { None } {
-                old_names.push(m2.name.clone());
-                reduction += m2.cost as i32;
+                old_names.push(translate_card_name(&m2.name, lang));
             }
 
             let base_cost = (new_cost - p.cost_reduction as i32).max(0);
-            let actual_cost = (base_cost - reduction).max(0);
+            let actual_cost = engine_rust::core::logic::rules::get_member_cost(gs, p_idx, cid, slot_idx as i16, other_slot as i16, db, 0).max(0);
 
             let old_names_str = old_names.join(if lang == "jp" { "＆" } else { " & " });
             let target_area = areas.get(slot_idx).unwrap_or(&"");
@@ -488,7 +565,10 @@ pub fn get_action_desc_rich(
         Action::ActivateAbility { slot_idx, ab_idx } => {
             let cid = p.stage.get(slot_idx).cloned().unwrap_or(-1);
             let card = if cid >= 0 { db.get_member(cid) } else { None };
-            let name = card.map(|m| format!("{} ({})", m.name, m.card_no)).unwrap_or_else(|| "Member".into());
+            let name = card.map(|m| {
+                let display_name = translate_card_name(&m.name, lang);
+                format!("{} ({})", display_name, m.card_no)
+            }).unwrap_or_else(|| "Member".into());
             let summary = card.and_then(|c| c.abilities.get(ab_idx as usize))
                 .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
                 .unwrap_or_else(|| if lang == "jp" { "アビリティ".into() } else { "Ability".into() });
@@ -509,7 +589,10 @@ pub fn get_action_desc_rich(
         Action::ActivateFromHand { hand_idx, ab_idx } => {
             let cid = p.hand.get(hand_idx).cloned().unwrap_or(-1);
             let card = if cid >= 0 { db.get_member(cid) } else { None };
-            let name = card.map(|m| format!("{} ({})", m.name, m.card_no)).unwrap_or_else(|| "Member".into());
+            let name = card.map(|m| {
+                let display_name = translate_card_name(&m.name, lang);
+                format!("{} ({})", display_name, m.card_no)
+            }).unwrap_or_else(|| "Member".into());
             let summary = card.and_then(|c| c.abilities.get(ab_idx as usize))
                 .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
                 .unwrap_or_else(|| if lang == "jp" { "アビリティ".into() } else { "Ability".into() });
@@ -529,7 +612,7 @@ pub fn get_action_desc_rich(
 
         Action::SelectChoice { choice_idx } => {
              let mut name = String::new();
-             let text = String::new();
+             let mut text = String::new();
              let type_str = "CHOICE".to_string();
 
              let pending = gs.interaction_stack.last();
@@ -558,7 +641,13 @@ pub fn get_action_desc_rich(
                            if !arr.is_empty() {
                                if let Some(opt) = arr.get(choice_idx) {
                                    if let Some(s) = opt.as_str() {
-                                       let source_name = if let Some(m) = member { m.name.clone() } else if let Some(l) = live { l.name.clone() } else { String::new() };
+                                       let source_name = if let Some(m) = member {
+                                           translate_card_name(&m.name, lang)
+                                       } else if let Some(l) = live {
+                                           translate_card_name(&l.name, lang)
+                                       } else {
+                                           String::new()
+                                       };
                                        if !source_name.is_empty() {
                                            name = if lang == "jp" { format!("{} ({})", s, source_name) } else { format!("{} ({})", s, source_name) };
                                        } else {
@@ -768,6 +857,32 @@ pub fn get_action_desc_rich(
                       name = if lang == "jp" { format!("選択肢 {}", choice_idx + 1) } else { format!("Choice {}", choice_idx + 1) };
                   }
               }
+
+              // Populate text description based on opcode if not already set
+              if text.is_empty() {
+                  let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
+                  text = match opcode {
+                      O_SELECT_MODE => if lang == "jp" { "モードを選択します。".into() } else { "Select mode.".into() },
+                      O_LOOK_AND_CHOOSE => if lang == "jp" { "このカードを選択します。".into() } else { "Select this card.".into() },
+                      O_SELECT_CARDS => if lang == "jp" { "カードを選択します。".into() } else { "Select a card.".into() },
+                      O_COLOR_SELECT => if lang == "jp" { "色を選択します。".into() } else { "Select a color.".into() },
+                      O_TAP_OPPONENT | O_TAP_MEMBER => if lang == "jp" { "タップします。".into() } else { "Tap.".into() },
+                      O_RECOVER_LIVE | O_RECOVER_MEMBER => if lang == "jp" { "このカードを回収します。".into() } else { "Recover this card.".into() },
+                      O_MOVE_TO_DISCARD => if lang == "jp" { "このカードを控え室に置きます。".into() } else { "Discard this card.".into() },
+                      O_PLAY_MEMBER_FROM_DISCARD | O_PLAY_LIVE_FROM_DISCARD => if lang == "jp" { "このカードをプレイします。".into() } else { "Play this card.".into() },
+                      O_ORDER_DECK => if lang == "jp" { "この順番で戻します。".into() } else { "Return in this order.".into() },
+                      O_SELECT_PLAYER => if lang == "jp" { "拳者を選択します。".into() } else { "Select player.".into() },
+                      O_PAY_ENERGY => {
+                          if choice_type == "OPTIONAL" {
+                              if lang == "jp" { "エネルギーを支払います。".into() } else { "Pay energy.".into() }
+                          } else {
+                              if lang == "jp" { "このエネルギーを選択します。".into() } else { "Select this energy.".into() }
+                          }
+                      },
+                      _ => if lang == "jp" { "選択肢を確認します。".into() } else { "Confirm choice.".into() },
+                  };
+              }
+
               metadata.insert("choice_idx".into(), json!(choice_idx));
               metadata.insert("opcode".into(), json!(opcode));
               metadata.insert("category".into(), json!("CHOICE"));
@@ -829,9 +944,10 @@ pub fn get_action_desc_rich(
         Action::SelectHand { hand_idx } => {
             let cid = p.hand.get(hand_idx).cloned().unwrap_or(-1);
             let card_name = if let Some(m) = db.get_member(cid) {
-                format!("{} ({})", m.name, m.card_no)
+                let display_name = translate_card_name(&m.name, lang);
+                format!("{} ({})", display_name, m.card_no)
             } else if let Some(l) = db.get_live(cid) {
-                l.name.clone()
+                translate_card_name(&l.name, lang)
             } else { "Card".to_string() };
 
             let mut desc = if lang == "jp" { "このカードを選択します。".to_string() } else { "Select this card.".to_string() };
@@ -888,15 +1004,21 @@ pub fn get_action_desc_rich(
                 if card_name.is_empty() { format!("Select {} Slot", areas.get(slot_idx).unwrap_or(&"")) }
                 else { format!("{} ({})", card_name, areas.get(slot_idx).unwrap_or(&"")) }
             };
+            let desc = if opcode == O_TAP_OPPONENT {
+                if lang == "jp" { "相手をタップします。".into() } else { "Tap opponent.".into() }
+            } else {
+                if lang == "jp" { "このスロットを選択します。".into() } else { "Select this slot.".into() }
+            };
             metadata.insert("slot_idx".into(), json!(slot_idx));
             metadata.insert("target_player".into(), json!(target_player));
-            (label, "".into(), "SELECT".into(), Some(slot_idx))
+            (label, desc, "SELECT".into(), Some(slot_idx))
         },
         Action::SelectResponseColor { color_idx } => {
             let colors = if lang == "jp" { ["ピンク", "赤", "黄", "緑", "青", "紫"] } else { ["Pink", "Red", "Yellow", "Green", "Blue", "Purple"] };
             let label = if lang == "jp" { format!("【色を選択】{}", colors.get(color_idx as usize).unwrap_or(&"")) } else { format!("Choose {}", colors.get(color_idx as usize).unwrap_or(&"")) };
+            let desc = if lang == "jp" { "この色を選択します。".into() } else { "Select this color.".into() };
             metadata.insert("color_idx".into(), json!(color_idx));
-            (label, "".into(), "COLOR".into(), None)
+            (label, desc, "COLOR".into(), None)
         },
         Action::ActivateAbilityWithChoice { slot_idx, ab_idx, choice_idx } => {
             let cid = p.stage.get(slot_idx).cloned().unwrap_or(-1);
@@ -965,7 +1087,7 @@ pub fn get_action_desc_rich(
              };
              let (_l_name, _c_name, _r_name, suffix_str, _to_str, baton_str, leaves_str, pay_str, cost_str) = lang_data;
 
-             let raw_name = card.map(|m| m.name.clone()).unwrap_or_else(|| "Member".into());
+             let raw_name = card.map(|m| translate_card_name(&m.name, lang)).unwrap_or_else(|| "Member".into());
              let card_no = card.map(|m| m.card_no.clone()).unwrap_or_else(|| "??".into());
              let suffix = if let Some(m) = card {
                   if m.abilities.iter().any(|ab| ab.trigger == engine_rust::core::enums::TriggerType::OnPlay) { format!(" [{}]", suffix_str) } else { "".into() }
@@ -975,11 +1097,10 @@ pub fn get_action_desc_rich(
              let prev_cid = p.stage.get(slot_idx).cloned().unwrap_or(-1);
              let mut old_name = "".to_string();
              let base_cost = (new_cost - p.cost_reduction as i32).max(0);
-             let mut actual_cost = base_cost;
+             let actual_cost = engine_rust::core::logic::rules::get_member_cost(gs, p_idx, cid, slot_idx as i16, -1, db, 0).max(0);
              if prev_cid >= 0 {
                  if let Some(old_m) = db.get_member(prev_cid) {
-                     old_name = old_m.name.clone();
-                     actual_cost = (base_cost - old_m.cost as i32).max(0);
+                     old_name = translate_card_name(&old_m.name, lang);
                  }
              }
 
@@ -1005,7 +1126,10 @@ pub fn get_action_desc_rich(
                  else { format!("({} {})", cost_str, actual_cost) }
              };
 
-             let card_name_full = card.map(|m| format!("{} ({})", m.name, m.card_no)).unwrap_or_else(|| {
+             let card_name_full = card.map(|m| {
+                let display_name = translate_card_name(&m.name, lang);
+                format!("{} ({})", display_name, m.card_no)
+            }).unwrap_or_else(|| {
                  if let Some(m) = db.get_member(cid) {
                     format!("{} ({})", m.name, m.card_no)
                  } else if let Some(l) = db.get_live(cid) {
@@ -1118,32 +1242,59 @@ pub fn get_action_desc_rich(
     (name, text, type_str, area_idx_opt, metadata)
 }
 
-pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool) -> Value {
+pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool, lang: &str) -> Value {
     if cid == -1 { return json!(null); }
     // Use get_member/get_live which mask with TEMPLATE_MASK internally,
     // since the CID contains packed instance bits in the upper bits.
     let member = db.get_member(cid);
     let live = db.get_live(cid);
 
-    let (name, ability, rare, img) = if let Some(m) = member {
-        (m.name.clone(), m.original_text.clone(), "M".to_string(), m.img_path.clone())
+    let (name, ability, ability_en, rare, img) = if let Some(m) = member {
+        (
+            m.name.clone(),
+            m.original_text.clone(),
+            m.original_text_en.clone(),
+            "M".to_string(),
+            m.img_path.clone(),
+        )
     } else if let Some(l) = live {
-        (l.name.clone(), l.original_text.clone(), "LIVE".to_string(), l.img_path.clone())
+        (
+            l.name.clone(),
+            l.original_text.clone(),
+            l.original_text_en.clone(),
+            "LIVE".to_string(),
+            l.img_path.clone(),
+        )
     } else {
         let template_id = cid;
         let e_name = db.energy_db.get(&template_id).map(|e| e.name.as_str()).unwrap_or("Energy");
-        (e_name.to_string(), "".to_string(), "E".to_string(), "img/texticon/icon_energy.png".to_string())
+        (
+            e_name.to_string(),
+            "".to_string(),
+            "".to_string(),
+            "E".to_string(),
+            "img/texticon/icon_energy.png".to_string(),
+        )
     };
 
     if viewable {
         let is_member = member.is_some();
         let is_live = live.is_some();
+        let display_name = translate_card_name(&name, lang);
         let mut obj = json!({
             "id": cid,
-            "name": name,
+            "name": display_name,
             "ability": ability,
+            "original_text": ability,
+            "original_text_en": ability_en,
             "rarity": rare,
-            "type": if is_member { "member" } else if is_live { "live" } else { "energy" },
+            "type": if is_member {
+                if lang == "jp" { "メンバー" } else { "Member" }
+            } else if is_live {
+                if lang == "jp" { "ライブ" } else { "Live" }
+            } else {
+                if lang == "jp" { "エネルギー" } else { "Energy" }
+            },
             "img": img
         });
         if let Some(obj_map) = obj.as_object_mut() {
@@ -1162,8 +1313,8 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool) -> Value {
                 obj_map.insert("groups".to_string(), json!(m.groups));
                 obj_map.insert("units".to_string(), json!(m.units));
 
-                let group_names: Vec<&str> = m.groups.iter().map(|&g| get_group_name(g, "en")).collect();
-                let unit_names: Vec<&str> = m.units.iter().map(|&u| get_unit_name(u, "en")).collect();
+                let group_names: Vec<&str> = m.groups.iter().map(|&g| get_group_name(g, lang)).collect();
+                let unit_names: Vec<&str> = m.units.iter().map(|&u| get_unit_name(u, lang)).collect();
                 obj_map.insert("group_names".to_string(), json!(group_names));
                 obj_map.insert("unit_names".to_string(), json!(unit_names));
 
@@ -1191,8 +1342,8 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool) -> Value {
                 obj_map.insert("groups".to_string(), json!(l.groups));
                 obj_map.insert("units".to_string(), json!(l.units));
 
-                let group_names: Vec<&str> = l.groups.iter().map(|&g| get_group_name(g, "en")).collect();
-                let unit_names: Vec<&str> = l.units.iter().map(|&u| get_unit_name(u, "en")).collect();
+                let group_names: Vec<&str> = l.groups.iter().map(|&g| get_group_name(g, lang)).collect();
+                let unit_names: Vec<&str> = l.units.iter().map(|&u| get_unit_name(u, lang)).collect();
                 obj_map.insert("group_names".to_string(), json!(group_names));
                 obj_map.insert("unit_names".to_string(), json!(unit_names));
 
@@ -1222,14 +1373,15 @@ pub fn serialize_player_rich(
     db: &CardDatabase,
     p_idx: usize,
     viewer_idx: usize,
-    legal_mask: &[bool]
+    legal_mask: &[bool],
+    lang: &str,
 ) -> Value {
     let is_viewer = p_idx == viewer_idx;
 
     let viewer_is_acting = gs.current_player == viewer_idx as u8;
 
     let hand: Vec<Value> = p.hand.iter().enumerate().map(|(i, &cid)| {
-        let mut v = serialize_card(cid as i32, db, p_idx == viewer_idx);
+        let mut v = serialize_card(cid as i32, db, p_idx == viewer_idx, lang);
         if viewer_is_acting {
              if let Some(obj) = v.as_object_mut() {
                  // Positional indices for mulligan, live set, and hand selections
@@ -1271,7 +1423,7 @@ pub fn serialize_player_rich(
     }).collect();
 
     let stage: Vec<Value> = p.stage.iter().enumerate().map(|(i, &cid)| {
-        let mut v = serialize_card(cid, db, true);
+        let mut v = serialize_card(cid, db, true, lang);
         if let Some(obj) = v.as_object_mut() {
             obj.insert("tapped".to_string(), json!(p.is_tapped(i)));
             obj.insert("moved".to_string(), json!(p.is_moved(i)));
@@ -1306,7 +1458,7 @@ pub fn serialize_player_rich(
     }).collect();
 
     let lives: Vec<Value> = p.live_zone.iter().enumerate().map(|(i, &cid)| {
-        let mut v = serialize_card(cid, db, p.is_revealed(i) || is_viewer);
+        let mut v = serialize_card(cid, db, p.is_revealed(i) || is_viewer, lang);
         if let Some(obj) = v.as_object_mut() {
             obj.insert("revealed".to_string(), json!(p.is_revealed(i)));
 
@@ -1326,7 +1478,7 @@ pub fn serialize_player_rich(
     }).collect();
 
     let energy: Vec<Value> = p.energy_zone.iter().enumerate().map(|(i, &cid)| {
-        let mut v = serialize_card(cid as i32, db, true);
+        let mut v = serialize_card(cid as i32, db, true, lang);
         if let Some(obj) = v.as_object_mut() {
             obj.insert("tapped".to_string(), json!(p.is_energy_tapped(i)));
             if viewer_is_acting {
@@ -1344,7 +1496,7 @@ pub fn serialize_player_rich(
     }).collect();
 
     let success_pile: Vec<Value> = p.success_lives.iter().enumerate().map(|(i, &cid)| {
-        let mut v = serialize_card(cid as i32, db, true);
+        let mut v = serialize_card(cid as i32, db, true, lang);
         if viewer_is_acting {
             if let Some(obj) = v.as_object_mut() {
                 let action_id = ACTION_BASE_CHOICE + i as i32;
@@ -1357,14 +1509,14 @@ pub fn serialize_player_rich(
     }).collect();
 
     let discard_pile: Vec<Value> = p.discard.iter().map(|&cid| {
-        serialize_card(cid as i32, db, true)
+        serialize_card(cid as i32, db, true, lang)
     }).collect();
 
     let mut obj = json!({
         "score": p.score,
         "energy_untapped": p.energy_zone.len() as u32 - p.tapped_energy_count(),
         "energy_count": p.energy_zone.len() as u32,
-        "total_hearts": gs.get_total_hearts(p_idx, db, 0).to_array(),
+        "total_hearts": gs.get_total_member_hearts(p_idx, db, 0).to_array(),
         "total_blades": gs.get_total_blades(p_idx, db, 0),
         "hand": hand,
         "stage": stage,
@@ -1386,7 +1538,7 @@ pub fn serialize_player_rich(
 
     // Add remaining fields incrementally to avoid json! recursion limit
     let m = obj.as_object_mut().unwrap();
-    m.insert("looked_cards".into(), json!(p.looked_cards.iter().map(|&cid| serialize_card(cid as i32, db, is_viewer)).collect::<Vec<Value>>()));
+    m.insert("looked_cards".into(), json!(p.looked_cards.iter().map(|&cid| serialize_card(cid as i32, db, is_viewer, lang)).collect::<Vec<Value>>()));
     m.insert("heart_buffs".into(), json!(p.heart_buffs.iter().map(|hb| hb.to_array()).collect::<Vec<[u8; 7]>>()));
     m.insert("prevent_activate".into(), json!(p.prevent_activate));
     m.insert("prevent_baton_touch".into(), json!(p.prevent_baton_touch));
@@ -1394,7 +1546,7 @@ pub fn serialize_player_rich(
     m.insert("activated_energy_group_mask".into(), json!(p.activated_energy_group_mask));
     m.insert("activated_member_group_mask".into(), json!(p.activated_member_group_mask));
     m.insert("discarded_this_turn".into(), json!(p.discarded_this_turn));
-    m.insert("yell_cards".into(), json!(p.yell_cards.iter().map(|&cid| serialize_card(cid, db, true)).collect::<Vec<Value>>()));
+    m.insert("yell_cards".into(), json!(p.yell_cards.iter().map(|&cid| serialize_card(cid, db, true, lang)).collect::<Vec<Value>>()));
     m.insert("heart_req_reductions".into(), json!(p.heart_req_reductions.to_array()));
     m.insert("heart_req_additions".into(), json!(p.heart_req_additions.to_array()));
     // Deep diagnostics
@@ -1451,8 +1603,8 @@ pub fn serialize_state_rich(
         }
     }
 
-    let p0 = serialize_player_rich(&gs.players[0], gs, db, 0, viewer_idx, &legal_mask);
-    let p1 = serialize_player_rich(&gs.players[1], gs, db, 1, viewer_idx, &legal_mask);
+    let p0 = serialize_player_rich(&gs.players[0], gs, db, 0, viewer_idx, &legal_mask, lang);
+    let p1 = serialize_player_rich(&gs.players[1], gs, db, 1, viewer_idx, &legal_mask, lang);
 
     let triggered_abilities: Vec<Value> = gs.trigger_queue.iter()
         .filter(|(_cid, _, ctx, _, _)| ctx.player_id == 0)
@@ -1462,7 +1614,7 @@ pub fn serialize_state_rich(
             let text = member.and_then(|m| m.abilities.get(*ab_idx as usize))
                 .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
                 .unwrap_or_default();
-            json!({ "name": name, "text": text })
+            json!({ "name": name, "card_name": name, "source_card_id": cid, "text": text })
         }).collect();
 
     let opponent_triggered_abilities: Vec<Value> = gs.trigger_queue.iter()
@@ -1473,7 +1625,7 @@ pub fn serialize_state_rich(
             let text = member.and_then(|m| m.abilities.get(*ab_idx as usize))
                 .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
                 .unwrap_or_default();
-            json!({ "name": name, "text": text })
+            json!({ "name": name, "card_name": name, "source_card_id": cid, "text": text })
         }).collect();
 
     let last_action_text = gs.ui.rule_log.as_ref().and_then(|v| v.last()).cloned().unwrap_or_default();

@@ -4,6 +4,7 @@ use crate::core::logic::*;
 use crate::core::enums::Zone;
 use crate::core::generated_layout::*;
 use crate::core::logic::constants::FILTER_IS_OPTIONAL;
+use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Default)]
 pub struct AbilityBuilder {
@@ -470,41 +471,43 @@ fn try_load_db_from_path(path: &str) -> Option<CardDatabase> {
     Some(db)
 }
 
-pub fn load_real_db() -> CardDatabase {
-    let mut candidate_paths = Vec::new();
 
-    if let Ok(env_path) = std::env::var("CARDS_JSON_PATH") {
-        candidate_paths.push(env_path);
-    }
+static REAL_DB: OnceLock<CardDatabase> = OnceLock::new();
 
-    candidate_paths.extend(
-        [
-            "../../data/cards_compiled.json",
-            "../data/cards_compiled.json",
-            "data/cards_compiled.json",
-            "../../web_dist/data/cards_compiled.json",
-            "../web_dist/data/cards_compiled.json",
-            "web_dist/data/cards_compiled.json",
-            "../../launcher/static_content/data/cards_compiled.json",
-            "../launcher/static_content/data/cards_compiled.json",
-            "launcher/static_content/data/cards_compiled.json",
-        ]
-        .into_iter()
-        .map(str::to_string),
-    );
+pub fn load_real_db() -> &'static CardDatabase {
+    REAL_DB.get_or_init(|| {
+        let mut candidate_paths = Vec::new();
 
-    for path in candidate_paths {
-        let abs_path = std::fs::canonicalize(&path)
-            .unwrap_or_else(|_| std::path::PathBuf::from(&path));
-        if let Some(db) = try_load_db_from_path(&path) {
-            println!("[DB_LOAD] Loading CardDatabase from: {:?}", abs_path);
-            return db;
+        if let Ok(env_path) = std::env::var("CARDS_JSON_PATH") {
+            candidate_paths.push(env_path);
         }
-    }
 
-    panic!(
-        "Failed to locate a usable CardDatabase. Checked env path plus data/cards_compiled.json, web_dist/data/cards_compiled.json, and launcher/static_content/data/cards_compiled.json"
-    );
+        candidate_paths.extend(
+            [
+                "../../data/cards_compiled.json",
+                "../data/cards_compiled.json",
+                "data/cards_compiled.json",
+                "../../web_dist/data/cards_compiled.json",
+                "../web_dist/data/cards_compiled.json",
+                "web_dist/data/cards_compiled.json",
+                "../../launcher/static_content/data/cards_compiled.json",
+                "../launcher/static_content/data/cards_compiled.json",
+                "launcher/static_content/data/cards_compiled.json",
+            ]
+            .into_iter()
+            .map(str::to_string),
+        );
+
+        for path in candidate_paths {
+            if let Some(db) = try_load_db_from_path(&path) {
+                return db;
+            }
+        }
+
+        panic!(
+            "Failed to locate a usable CardDatabase. Checked env path plus data/cards_compiled.json etc."
+        );
+    })
 }
 
 pub fn create_test_db() -> CardDatabase {

@@ -1119,6 +1119,25 @@ impl PyGameState {
         self.inner.step_opponent_greedy(db, &h);
     }
 
+    /// Execute opponent's full turn using TurnSequencer planner for vanilla mode.
+    /// This uses the success-count-first heuristic optimized for lower turn counts.
+    #[pyo3(signature = ())]
+    fn step_opponent_turnseq(&mut self) {
+        use crate::core::logic::turn_sequencer::TurnSequencer;
+        let db = &self.db.inner;
+        let (action_seq, _, _, _) = TurnSequencer::plan_full_turn(&self.inner, db);
+
+        // Execute each action in the sequence until PASS or game ends
+        for &action in &action_seq {
+            if self.inner.is_terminal() {
+                break;
+            }
+            if let Err(_) = self.inner.step(db, action) {
+                break;
+            }
+        }
+    }
+
     #[pyo3(signature = (_db, p_idx, heuristic_id, config=None))]
     fn get_greedy_action(
         &mut self,

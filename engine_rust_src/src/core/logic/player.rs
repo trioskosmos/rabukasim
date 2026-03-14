@@ -15,6 +15,7 @@
 //! heap allocations, which is critical for MCTS performance.
 
 use super::models::*;
+use super::rules::BoardAura;
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
 use serde::{Deserialize, Serialize};
@@ -105,6 +106,8 @@ pub struct PlayerState {
     pub granted_abilities: Vec<(i32, i32, u16)>, // (target_cid, source_cid, ab_idx)
     #[serde(default)]
     pub perf_triggered_abilities: Vec<(i32, i16, TriggerType)>, // (source_cid, ab_idx, trigger)
+    #[serde(default)]
+    pub board_aura: BoardAura,
 
     #[serde(default)]
     pub cost_modifiers: Vec<(Condition, i32)>, // (condition, amount)
@@ -148,6 +151,20 @@ pub struct PlayerState {
     pub baton_source_ids: SmallVec<[i32; 4]>,
     #[serde(default)]
     pub baton_source_slots: SmallVec<[usize; 4]>,
+    #[serde(default)]
+    pub cached_total_hearts: HeartBoard,
+    #[serde(default)]
+    pub cached_total_blades: u32,
+    #[serde(default)]
+    pub cached_slot_blades: [u32; 3],
+    #[serde(default)]
+    pub cached_slot_hearts: [HeartBoard; 3],
+    #[serde(default)]
+    pub cached_deck_stats: DeckStats,
+    #[serde(default)]
+    pub yell_heart_bonus: [HeartBoard; 3],
+    #[serde(default)]
+    pub yell_blade_bonus: [u32; 3],
 }
 
 impl Default for PlayerState {
@@ -196,7 +213,7 @@ impl Default for PlayerState {
             granted_abilities: Vec::new(),
             perf_triggered_abilities: Vec::new(),
             cost_modifiers: Vec::new(),
-
+            board_aura: BoardAura::default(),
             flags: 0,
             cheer_mod_count: 0,
             yell_count_reduction: 0,
@@ -216,6 +233,13 @@ impl Default for PlayerState {
             discarded_this_turn: 0,
             baton_source_ids: SmallVec::new(),
             baton_source_slots: SmallVec::new(),
+            cached_total_hearts: HeartBoard::default(),
+            cached_total_blades: 0,
+            cached_slot_blades: [0; 3],
+            cached_slot_hearts: [HeartBoard::default(); 3],
+            cached_deck_stats: DeckStats::default(),
+            yell_heart_bonus: [HeartBoard::default(); 3],
+            yell_blade_bonus: [0; 3],
         }
     }
 }
@@ -224,6 +248,7 @@ impl PlayerState {
     pub const FLAG_CANNOT_LIVE: u8 = 0;
     pub const FLAG_DECK_REFRESHED: u8 = 1;
     pub const FLAG_IMMUNITY: u8 = 2;
+    pub const FLAG_SUPPRESS_AUTO_DECK_REFRESH: u8 = 12;
     pub const OFFSET_TAPPED: u8 = 3;
     pub const OFFSET_MOVED: u8 = 6;
     pub const OFFSET_REVEALED: u8 = 9;
@@ -285,6 +310,101 @@ impl PlayerState {
         }
     }
 
+    pub fn push_hand_card(&mut self, card_id: i32) {
+        self.hand.push(card_id);
+    }
+
+    pub fn draw_hand_card(&mut self, card_id: i32, turn: i32) {
+        self.hand.push(card_id);
+        self.hand_added_turn.push(turn);
+    }
+
+    pub fn gain_hand_card(&mut self, card_id: i32) {
+        self.hand.push(card_id);
+        self.hand_increased_this_turn = self.hand_increased_this_turn.saturating_add(1);
+    }
+
+    pub fn push_discard_card(&mut self, card_id: i32) {
+        self.discard.push(card_id);
+    }
+
+    pub fn pop_discard_card(&mut self) -> Option<i32> {
+        self.discard.pop()
+    }
+
+    pub fn remove_discard_card(&mut self, idx: usize) -> Option<i32> {
+        if idx >= self.discard.len() {
+            return None;
+        }
+
+        Some(self.discard.remove(idx))
+    }
+
+    pub fn push_deck_card(&mut self, card_id: i32) {
+        self.deck.push(card_id);
+    }
+
+    pub fn pop_deck_card(&mut self) -> Option<i32> {
+        self.deck.pop()
+    }
+
+    pub fn remove_deck_card(&mut self, idx: usize) -> Option<i32> {
+        if idx >= self.deck.len() {
+            return None;
+        }
+
+        Some(self.deck.remove(idx))
+    }
+
+    pub fn push_energy_card(&mut self, card_id: i32, tapped: bool) {
+        let idx = self.energy_zone.len();
+        self.energy_zone.push(card_id);
+        self.set_energy_tapped(idx, tapped);
+    }
+
+    pub fn pop_energy_card(&mut self) -> Option<i32> {
+        let idx = self.energy_zone.len().checked_sub(1)?;
+        let card_id = self.energy_zone.pop();
+        self.set_energy_tapped(idx, false);
+        card_id
+    }
+
+    pub fn remove_energy_card(&mut self, idx: usize) -> Option<i32> {
+        if idx >= self.energy_zone.len() {
+            return None;
+        }
+
+        let card_id = self.energy_zone.remove(idx);
+        let lower_mask = if idx == 0 {
+            0
+        } else {
+            self.tapped_energy_mask & ((1u64 << idx) - 1)
+        };
+        let upper_mask = self.tapped_energy_mask >> (idx + 1);
+        self.tapped_energy_mask = lower_mask | (upper_mask << idx);
+        Some(card_id)
+    }
+
+    pub fn remove_hand_card(&mut self, idx: usize) -> Option<i32> {
+        if idx >= self.hand.len() {
+            return None;
+        }
+
+        let card_id = self.hand.remove(idx);
+        if idx < self.hand_added_turn.len() {
+            self.hand_added_turn.remove(idx);
+        }
+        Some(card_id)
+    }
+
+    pub fn pop_hand_card(&mut self) -> Option<i32> {
+        let card_id = self.hand.pop();
+        if card_id.is_some() && self.hand_added_turn.len() > self.hand.len() {
+            self.hand_added_turn.pop();
+        }
+        card_id
+    }
+
     /// Swaps all data associated with two stage slots and marks them as moved.
     pub fn swap_slot_data(&mut self, i: usize, j: usize) {
         if i < 3 && j < 3 && i != j {
@@ -300,6 +420,10 @@ impl PlayerState {
             self.blade_overrides.swap(i, j);
             self.heart_buffs.swap(i, j);
         }
+    }
+
+    pub fn get_slot_of(&self, card_id: i32) -> Option<usize> {
+        self.stage.iter().position(|&stage_card_id| stage_card_id == card_id)
     }
 
     pub fn untap_all(&mut self, skip_physical_untap: bool) {
@@ -348,6 +472,11 @@ impl PlayerState {
         self.activated_energy_group_mask = 0;
         self.activated_member_group_mask = 0;
         self.discarded_this_turn = 0;
+        self.cached_total_hearts = HeartBoard::default();
+        self.cached_total_blades = 0;
+        self.cached_deck_stats = DeckStats::default();
+        self.yell_heart_bonus = [HeartBoard::default(); 3];
+        self.yell_blade_bonus = [0; 3];
     }
 
     pub fn copy_from(&mut self, other: &PlayerState) {
@@ -439,6 +568,11 @@ impl PlayerState {
         self.discarded_this_turn = other.discarded_this_turn;
         copy_smallvec!(self.baton_source_ids, other.baton_source_ids);
         copy_smallvec!(self.baton_source_slots, other.baton_source_slots);
+        self.cached_total_hearts = other.cached_total_hearts;
+        self.cached_total_blades = other.cached_total_blades;
+        self.cached_deck_stats = other.cached_deck_stats;
+        self.yell_heart_bonus = other.yell_heart_bonus;
+        self.yell_blade_bonus = other.yell_blade_bonus;
     }
     pub fn is_energy_tapped(&self, idx: usize) -> bool {
         if idx >= 64 {

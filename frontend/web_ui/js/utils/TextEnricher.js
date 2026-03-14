@@ -108,7 +108,13 @@ for (const [key, data] of Object.entries(ICON_MAP)) {
 }
 
 
+const REGEX_PSEUDOCODE = /^(TRIGGER|COST|CONDITION|EFFECT|SELECT|PLAY|JUMP|RETURN|NOP):/i;
+
 export const TextEnricher = {
+    isPseudocode: (text) => {
+        if (!text) return false;
+        return REGEX_PSEUDOCODE.test(text.trim());
+    },
     enrichAbilityText: (text) => {
         if (!text) return "";
 
@@ -206,6 +212,11 @@ export const TextEnricher = {
             if (window.translateAbility) {
                 text = window.translateAbility(text, 'en');
             }
+        }
+
+        // 5. Safety: NEVER return pseudocode
+        if (TextEnricher.isPseudocode(text)) {
+            return "";
         }
 
         return text || "";
@@ -315,7 +326,7 @@ export const TextEnricher = {
         }
 
         // If the backend provided source_ability (which we patched to be the full block), use it!
-        if (action.source_ability && action.source_ability.length > 5) {
+        if (action.source_ability && action.source_ability.length > 5 && !TextEnricher.isPseudocode(action.source_ability)) {
             return TextEnricher.enrichAbilityText(action.source_ability);
         }
 

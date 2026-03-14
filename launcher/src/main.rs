@@ -32,6 +32,7 @@ fn main() {
     println!("Loading card database...");
     let bin_path = "../data/cards_compiled.bin";
 
+    let mut need_new_snapshot = false;
     let card_db = match std::fs::read(bin_path) {
         Ok(bin_data) => {
             match CardDatabase::from_binary(&bin_data) {
@@ -41,23 +42,29 @@ fn main() {
                 },
                 Err(e) => {
                     println!("[DB] Binary load failed, falling back to JSON: {}", e);
+                    need_new_snapshot = true;
                     load_db_from_json()
                 }
             }
         },
         Err(_) => {
             println!("[DB] No binary snapshot found, loading from JSON...");
+            need_new_snapshot = true;
             load_db_from_json()
         }
     };
 
-    // Save binary snapshot if it doesn't exist or we just reloaded
-    if !std::path::Path::new(bin_path).exists() {
+    // Regenerate binary snapshot when missing or stale
+    if need_new_snapshot {
         if let Ok(bin_data) = card_db.to_binary() {
             let _ = std::fs::write(bin_path, bin_data);
             println!("[DB] Produced binary snapshot for next run.");
         }
     }
+
+    // Vanilla DB: same card data but with ability suppression enabled
+    let mut vanilla_card_db = card_db.clone();
+    vanilla_card_db.is_vanilla = true;
 
     println!("==========================================");
     println!("Database Initialization (v2):");
@@ -98,6 +105,7 @@ fn main() {
     let app_state = Arc::new(AppState {
         rooms: Mutex::new(HashMap::new()),
         card_db,
+        vanilla_card_db,
         server_instance_id: start_time,
         debug_mode,
         #[cfg(feature = "nn")]

@@ -11,6 +11,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::TurnSequencer;
 use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
+use rand::SeedableRng;
+use rand::rngs::SmallRng;
 use rand::seq::IndexedRandom;
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
@@ -266,7 +268,7 @@ fn main() {
     };
 
     let energy_ids: Vec<i32> = db.energy_db.keys().take(12).cloned().collect();
-    let mut rng = rand::rng();
+    let mut rng = rand::rngs::SmallRng::from_os_rng();
 
     test_turns(&member_cards, &live_cards, &energy_ids, &db, &mut rng);
 }

@@ -132,7 +132,7 @@ mod tests {
         // Engine Verification: play_member() with occupied stage slot MUST discard exactly 1 member.
         // Multiple members cannot be combined into a single baton cost.
 
-        let mut db = load_real_db();
+        let mut db = load_real_db().clone();
         let mut stage_member = MemberCard::default();
         stage_member.card_id = 5001;
         stage_member.name = "Stage Member".to_string();
@@ -200,7 +200,7 @@ mod tests {
         // Engine Verification: play_member() MUST allow placing same card_id in multiple slots
         // without raising errors. No "duplicate card at position" restrictions.
 
-        let mut db = load_real_db();
+        let mut db = load_real_db().clone();
         let mut card = MemberCard::default();
         card.card_id = 5100;
         card.name = "Test Member".to_string();
@@ -248,7 +248,7 @@ mod tests {
         // Engine Verification: Game state MUST allow same live_card_id in multiple live_zone slots
         // during LiveSet and LiveResult processing without rejection.
 
-        let mut db = load_real_db();
+        let mut db = load_real_db().clone();
         let mut live = LiveCard::default();
         live.card_id = 5200;
         live.name = "Test Live".to_string();
@@ -583,7 +583,7 @@ mod tests {
         // the energy underneath must follow the member to the new slot.
         // If baton touch happens, member moves and energy stays intact in the new location.
 
-        let mut db = load_real_db();
+        let mut db = load_real_db().clone();
         
         // Create stage member (with energy underneath)
         let mut member_slot0 = MemberCard::default();
@@ -718,7 +718,7 @@ mod tests {
         //       アクティブ状態で登場させます。ただし、このターン登場したメンバーと
         //       バトンタッチは行えません。
 
-        let mut db = load_real_db();
+        let mut db = load_real_db().clone();
 
         let mut wait_member = MemberCard::default();
         wait_member.card_id = 7001;

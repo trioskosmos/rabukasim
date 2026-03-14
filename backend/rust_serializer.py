@@ -418,7 +418,8 @@ class RustGameStateSerializer:
                 stage.append(None)
 
         # Live Guide Logic
-        total_hearts = gs.get_total_hearts(p_idx)  # [u32; 7]
+        total_hearts = gs.get_total_hearts(p_idx)  # [u32; 7] - includes yell hearts for fulfillment
+        member_hearts = gs.get_total_member_hearts(p_idx)  # [u32; 7] - only member stage hearts, no yells
         temp_hearts = list(total_hearts)
 
         live_zone = []
@@ -488,7 +489,7 @@ class RustGameStateSerializer:
             "stage": stage,
             "success_lives": [self.serialize_card(cid, lang=lang, is_vanilla=is_vanilla) for cid in p.success_lives],
             "restrictions": [],
-            "total_hearts": [int(h) for h in total_hearts],
+            "total_hearts": [int(h) for h in member_hearts],
             "total_blades": int(gs.get_total_blades(p_idx)),
             "mulligan_selection": mulligan_selection_list,
             "looked_cards": [self.serialize_card(cid, lang=lang, is_vanilla=is_vanilla) for cid in getattr(p, "looked_cards", [])],

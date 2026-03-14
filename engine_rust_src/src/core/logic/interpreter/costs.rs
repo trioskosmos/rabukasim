@@ -342,8 +342,8 @@ pub fn pay_cost(
                         .iter()
                         .position(|&x| x == cid)
                     {
-                        state.players[p_idx].hand.remove(pos);
-                        state.players[p_idx].discard.push(cid);
+                        state.players[p_idx].remove_hand_card(pos);
+                        state.players[p_idx].push_discard_card(cid);
                     }
                 }
                 true
@@ -353,8 +353,8 @@ pub fn pay_cost(
                     return false;
                 }
                 for _ in 0..count {
-                    if let Some(cid) = player.hand.pop() {
-                        player.discard.push(cid);
+                    if let Some(cid) = player.pop_hand_card() {
+                        player.push_discard_card(cid);
                     }
                 }
                 true
@@ -372,7 +372,7 @@ pub fn pay_cost(
 
                     let player = &mut state.players[p_idx];
                     player.stage[slot] = -1;
-                    player.discard.push(cid as i32);
+                    player.push_discard_card(cid as i32);
                     let under_cards = std::mem::take(&mut player.stage_energy[slot]);
                     player.discard.extend(under_cards);
                     player.stage_energy_count[slot] = 0;
@@ -415,7 +415,7 @@ pub fn pay_cost(
                 }
                 for _ in 0..count {
                     if let Some(cid) = player.stage_energy[slot].pop() {
-                        player.discard.push(cid);
+                        player.push_discard_card(cid);
                     }
                 }
                 player.stage_energy_count[slot] = player.stage_energy[slot].len() as u8;
@@ -431,8 +431,8 @@ pub fn pay_cost(
                 return false;
             }
             for _ in 0..count {
-                if let Some(cid) = player.energy_zone.pop() {
-                    player.discard.push(cid);
+                if let Some(cid) = player.pop_energy_card() {
+                    player.push_discard_card(cid);
                 }
             }
             true
@@ -465,8 +465,8 @@ pub fn pay_cost(
                 return false;
             }
             for _ in 0..count {
-                if let Some(cid) = player.discard.pop() {
-                    player.deck.push(cid);
+                if let Some(cid) = player.pop_discard_card() {
+                    player.push_deck_card(cid);
                 }
             }
             true
@@ -497,9 +497,9 @@ pub fn pay_cost(
             for slot in slots_to_move {
                 if let Some(old) = state.handle_member_leaves_stage(p_idx, slot, db, ctx) {
                     if is_discard {
-                        state.players[p_idx].discard.push(old);
+                        state.players[p_idx].push_discard_card(old);
                     } else {
-                        state.players[p_idx].hand.push(old);
+                        state.players[p_idx].push_hand_card(old);
                     }
                 }
             }
@@ -524,7 +524,7 @@ pub fn pay_cost(
             }
             for &idx in indices.iter().rev() {
                 let cid = state.players[p_idx].success_lives.remove(idx);
-                state.players[p_idx].discard.push(cid);
+                state.players[p_idx].push_discard_card(cid);
             }
             true
         }
@@ -536,8 +536,8 @@ pub fn pay_cost(
             }
             for _ in 0..count {
                 if !player.deck.is_empty() {
-                    let cid = player.deck.remove(0);
-                    player.discard.push(cid);
+                    let cid = player.remove_deck_card(0).unwrap();
+                    player.push_discard_card(cid);
                 }
             }
             true

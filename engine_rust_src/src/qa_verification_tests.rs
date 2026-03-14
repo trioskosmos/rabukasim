@@ -1003,7 +1003,7 @@ mod tests {
         // the resolving of triggered abilities. So if an ability checks "hand size <= 7",
         // it checks after the Draw Blade Heart has resolved.
         let mut state = create_test_state();
-        let mut db = load_real_db();
+        let mut db = load_real_db().clone();
 
         let target_id = 4517; // PL!S-bp2-007-R+ (Has "Hand <= 7 then draw" condition on Yell)
 
@@ -1566,6 +1566,52 @@ mod tests {
         state.players[p1].stage[1] = 143; // Muse member
         state.resolve_bytecode_cref(&db, bytecode, &ctx);
         assert_eq!(state.players[p1].energy_zone.len(), 7, "Should not charge with mixed groups");
+    }
+
+    #[test]
+    fn test_rule_bp4_001_triggers_on_both_sequential_plays() {
+        let db = load_real_db();
+        let mut state = create_test_state();
+        state.ui.silent = true;
+
+        let p1 = 0;
+        let card_id = 557;
+
+        state.players[p1].stage = [-1; 3];
+        state.players[p1].hand = vec![card_id, card_id].into();
+        state.players[p1].energy_zone.clear();
+        state.players[p1].tapped_energy_mask = 0;
+        state.players[p1].energy_deck = vec![9001, 9002, 9003, 9004, 9005].into();
+
+        let play_cost = db.get_member(card_id).unwrap().cost as usize;
+        let starting_energy = play_cost + 8;
+        for i in 0..starting_energy {
+            state.players[p1].energy_zone.push(7000 + i as i32);
+        }
+
+        let energy_before_first = state.players[p1].energy_zone.len();
+        state.play_member(&db, 0, 0).expect("first 557 play should succeed");
+        let energy_after_first = state.players[p1].energy_zone.len();
+
+        let energy_before_second = state.players[p1].energy_zone.len();
+        state.play_member(&db, 0, 1).expect("second 557 play should succeed");
+        let energy_after_second = state.players[p1].energy_zone.len();
+
+        assert_eq!(
+            energy_after_first as isize - energy_before_first as isize,
+            1,
+            "first play should add exactly 1 energy card",
+        );
+        assert_eq!(
+            energy_after_second as isize - energy_before_second as isize,
+            1,
+            "second play should also add exactly 1 energy card",
+        );
+        assert_eq!(
+            state.players[p1].tapped_energy_mask.count_ones(),
+            (play_cost * 2 + 2) as u32,
+            "each play should tap its cost and add one tapped energy",
+        );
     }
 
     #[test]

@@ -343,13 +343,13 @@ impl ActionFactory {
                 format!("Activate from Hand Index {}, Ability {}", hand_idx, ab_idx)
             }
             DecodedAction::Rps { p_idx, choice } => {
-                let move_name = match choice {
-                    0 => "Rock",
-                    1 => "Paper",
-                    2 => "Scissors",
-                    _ => "Unknown",
+                let move_key = match choice {
+                    0 => "rps_rock",
+                    1 => "rps_paper",
+                    2 => "rps_scissors",
+                    _ => "unknown",
                 };
-                format!("RPS: Player {} chose {}", p_idx, move_name)
+                format!("[[rps_p_chose:p_idx={}:move={}]]", p_idx, move_key)
             }
             DecodedAction::SelectStageSlot { slot_idx } => {
                 let cid = player.stage[slot_idx];
@@ -451,13 +451,13 @@ impl ActionFactory {
                 format!("Select Choice Index {}", choice_idx)
             }
             DecodedAction::Rps { p_idx, choice } => {
-                let move_name = match choice {
-                    0 => "Rock",
-                    1 => "Paper",
-                    2 => "Scissors",
-                    _ => "Unknown",
+                let move_key = match choice {
+                    0 => "rps_rock",
+                    1 => "rps_paper",
+                    2 => "rps_scissors",
+                    _ => "unknown",
                 };
-                format!("RPS: Player {} chose {}", p_idx, move_name)
+                format!("[[rps_p_chose:p_idx={}:move={}]]", p_idx, move_key)
             }
             DecodedAction::TurnChoice { choice } => {
                 format!(

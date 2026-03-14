@@ -87,6 +87,34 @@ impl ResponseGenerator {
             live.map(|l| &l.abilities)
         };
 
+        let is_daydream_mermaid = db
+            .get_live(pi.card_id)
+            .map(|card| card.card_no.as_str() == "PL!N-bp4-030-L")
+            .unwrap_or(false);
+        if is_daydream_mermaid {
+            self.generate_select_mode_actions(db, p_idx, state, receiver, pi, abilities);
+            return;
+        }
+
+        let is_sunny_day_song_target = db
+            .get_live(pi.card_id)
+            .map(|card| card.card_no.as_str() == "PL!-bp5-021-L")
+            .unwrap_or(false);
+        if is_sunny_day_song_target {
+            for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
+                if cid >= 0
+                    && db
+                        .get_member(cid)
+                        .map(|card| card.groups.contains(&0))
+                        .unwrap_or(false)
+                {
+                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                }
+            }
+            receiver.add_action(0);
+            return;
+        }
+
         match choice_type {
             ChoiceType::Optional => {
                 receiver.add_action((ACTION_BASE_CHOICE + 0) as usize);
@@ -423,14 +451,16 @@ impl ResponseGenerator {
                 };
 
                 if let Some(ab) = abs.get(ab_idx_real) {
-                    if let Some(attr) = Self::effect_runtime_attr_for_opcode(ab, O_LOOK_AND_CHOOSE)
-                    {
-                        final_filter_attr = attr;
-                    } else if let Some(chunk) = ab.bytecode.chunks(5).find(|ch| ch[0] == O_LOOK_AND_CHOOSE)
-                    {
-                        let a_low = chunk[2] as u32;
-                        let a_high = chunk[3] as u32;
-                        final_filter_attr = ((a_high as u64) << 32) | (a_low as u64);
+                    if (ab.opcodes_mask & (1u128 << (O_LOOK_AND_CHOOSE as u32 % 128))) != 0 {
+                        if let Some(attr) = Self::effect_runtime_attr_for_opcode(ab, O_LOOK_AND_CHOOSE)
+                        {
+                            final_filter_attr = attr;
+                        } else if let Some(chunk) = ab.bytecode.chunks(5).find(|ch| ch[0] == O_LOOK_AND_CHOOSE)
+                        {
+                            let a_low = chunk[2] as u32;
+                            let a_high = chunk[3] as u32;
+                            final_filter_attr = ((a_high as u64) << 32) | (a_low as u64);
+                        }
                     }
                 }
             }
@@ -505,7 +535,9 @@ impl ResponseGenerator {
         if state.debug.debug_mode {
             println!("[DEBUG] generate_select_member_actions: p_idx={}, filter_attr={:X}", p_idx, filter_attr);
         }
-        let is_sunny_day_song_follow_up = pi.ctx.v_accumulated == 211
+        let is_sunny_day_song_follow_up = (pi.effect_opcode == O_SELECT_MEMBER
+            || pi.choice_type == ChoiceType::SelectMember
+            || (filter_attr & !0x3) == 16)
             && db
                 .get_live(pi.card_id)
                 .map(|card| card.card_no.as_str() == "PL!-bp5-021-L")
@@ -588,21 +620,23 @@ impl ResponseGenerator {
         pi: &PendingInteraction,
         abilities: Option<&Vec<Ability>>,
     ) {
-        if pi.ctx.v_accumulated >= 1900 {
-            let is_daydream_mermaid = db
-                .get_live(pi.card_id)
-                .map(|card| card.card_no.as_str() == "PL!N-bp4-030-L")
-                .unwrap_or(false);
-            if is_daydream_mermaid {
-                let mask = (pi.ctx.v_accumulated - 1900) as i32;
-                if (mask & 0x1) != 0 {
-                    receiver.add_action(ACTION_BASE_MODE as usize);
-                }
-                if (mask & 0x2) != 0 {
-                    receiver.add_action((ACTION_BASE_MODE + 1) as usize);
-                }
-                return;
+        let is_daydream_mermaid = db
+            .get_live(pi.card_id)
+            .map(|card| card.card_no.as_str() == "PL!N-bp4-030-L")
+            .unwrap_or(false);
+        if is_daydream_mermaid {
+            let mask = if pi.ctx.v_accumulated >= 1900 {
+                (pi.ctx.v_accumulated - 1900) as i32
+            } else {
+                0x3
+            };
+            if (mask & 0x1) != 0 {
+                receiver.add_action(ACTION_BASE_MODE as usize);
             }
+            if (mask & 0x2) != 0 {
+                receiver.add_action((ACTION_BASE_MODE + 1) as usize);
+            }
+            return;
         }
 
         let count = if pi.v_remaining > 0 {
@@ -657,12 +691,8 @@ impl ResponseGenerator {
                                 let _s = bc[effect_ip + 4];
 
                                 if target_op == O_PAY_ENERGY {
-                                    let available = (0..state.players[p_idx].energy_zone.len())
-                                        .filter(|&idx| {
-                                            !state.players[p_idx].is_energy_tapped(idx)
-                                        })
-                                        .count()
-                                        as i32;
+                                    let player = &state.players[p_idx];
+                                    let available = player.energy_zone.len() as i32 - player.tapped_energy_count() as i32;
                                     if available < v {
                                         option_valid = false;
                                     }

@@ -2,7 +2,9 @@ use engine_rust::core::heuristics::OriginalHeuristic;
 use engine_rust::core::logic::{GameState, Phase};
 use engine_rust::core::mcts::{SearchHorizon, MCTS};
 use engine_rust::test_helpers::load_real_db;
-use rand::Rng;
+use rand::prelude::*;
+use rand::rngs::SmallRng;
+use rand::SeedableRng;
 use std::time::Instant;
 
 fn parse_deck(path: &str, db: &engine_rust::core::logic::CardDatabase) -> Vec<i32> {
@@ -113,7 +115,7 @@ fn main() {
     analyze_state("State 1: Main Phase (Turn 1)", &state, &db, &time_limits);
 
     // Play through randomly for 20 steps
-    let mut rng = rand::rng();
+    let mut rng = rand::rngs::SmallRng::from_os_rng();
     for _ in 0..20 {
         if state.is_terminal() {
             break;

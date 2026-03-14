@@ -43,7 +43,7 @@ fn discard_current_yell_pile(state: &mut GameState, p_idx: usize) -> usize {
                 break;
             }
         }
-        state.players[p_idx].discard.push(cid);
+        state.players[p_idx].push_discard_card(cid);
     }
     removed_count
 }

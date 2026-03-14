@@ -168,6 +168,14 @@ pub struct PendingInteraction {
     pub execution_id: u32,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Hash)]
+pub struct PreparsedModifier {
+    pub op: i32,
+    pub val: i32,
+    pub attr: u64,
+    pub slot: i32,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct Ability {
     #[serde(default)]
@@ -197,6 +205,10 @@ pub struct Ability {
     pub choice_count: u8,
     #[serde(default)]
     pub filters: Vec<crate::core::logic::filter::CardFilter>,
+    #[serde(default)]
+    pub preparsed_modifiers: Vec<PreparsedModifier>,
+    #[serde(default)]
+    pub opcodes_mask: u128,
 }
 
 impl std::hash::Hash for Ability {
@@ -214,6 +226,8 @@ impl std::hash::Hash for Ability {
         self.requires_selection.hash(state);
         self.choice_flags.hash(state);
         self.choice_count.hash(state);
+        self.preparsed_modifiers.hash(state);
+        self.opcodes_mask.hash(state);
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -244,4 +258,37 @@ pub struct TurnEvent {
     pub source_cid: i32,
     pub ability_idx: i16,
     pub description: String,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
+pub struct DeckStats {
+    pub avg_hearts: [f32; 7],
+    pub avg_notes: f32,
+    pub avg_draw: f32,
+    pub count: f32,
+}
+
+impl PartialEq for DeckStats {
+    fn eq(&self, other: &Self) -> bool {
+        self.avg_hearts
+            .iter()
+            .zip(other.avg_hearts.iter())
+            .all(|(a, b)| a.to_bits() == b.to_bits())
+            && self.avg_notes.to_bits() == other.avg_notes.to_bits()
+            && self.avg_draw.to_bits() == other.avg_draw.to_bits()
+            && self.count.to_bits() == other.count.to_bits()
+    }
+}
+
+impl Eq for DeckStats {}
+
+impl std::hash::Hash for DeckStats {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        for &h in &self.avg_hearts {
+            h.to_bits().hash(state);
+        }
+        self.avg_notes.to_bits().hash(state);
+        self.avg_draw.to_bits().hash(state);
+        self.count.to_bits().hash(state);
+    }
 }

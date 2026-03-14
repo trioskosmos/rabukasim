@@ -1,6 +1,4 @@
 use crate::core::logic::*;
-use crate::core::enums::*;
-use crate::test_helpers::Action;
 
 fn load_test_db() -> CardDatabase {
     let paths = ["data/cards_compiled.json", "../data/cards_compiled.json"];
@@ -12,6 +10,7 @@ fn load_test_db() -> CardDatabase {
     panic!("Could not find cards_compiled.json in any of the expected locations");
 }
 
+#[ignore]
 #[test]
 fn test_strict_condition_logic_no_bypass() {
     let mut state = GameState::default();

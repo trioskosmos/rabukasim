@@ -9,7 +9,7 @@ import sys
 import threading
 import uuid
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Dict
 
 import numpy as np
 from flask import Flask, jsonify, request, send_from_directory
@@ -271,8 +271,23 @@ def get_local_ip():
         local_ip = s.getsockname()[0]
         s.close()
         return local_ip
-    except Exception:
+    except OSError:
         return "127.0.0.1"
+
+
+def _coerce_pending_choice_params(raw_params: Any) -> Dict[str, Any]:
+    """Normalize pending-choice params from either Rust JSON strings or Python dicts."""
+    if isinstance(raw_params, dict):
+        return raw_params
+    if not isinstance(raw_params, str):
+        return {}
+
+    try:
+        parsed = json.loads(raw_params)
+    except json.JSONDecodeError:
+        return {}
+
+    return parsed if isinstance(parsed, dict) else {}
 
 
 # Load data immediately on import
@@ -1986,13 +2001,7 @@ def do_action():
                     p_choices = getattr(gs, "pending_choices", [])
                     if p_choices:
                         # Handle both Rust (str, str) and Python (str, dict) formats
-                        params = p_choices[0][1]
-                        if isinstance(params, str):
-                            # Rust format: parse JSON
-                            try:
-                                params = json.loads(params)
-                            except:
-                                params = {}
+                        params = _coerce_pending_choice_params(p_choices[0][1])
                         choice_pid = params.get("player_id", gs.current_player)
                         if choice_pid != pid:
                             return jsonify(
@@ -2153,7 +2162,7 @@ def do_action():
                                 {"error": str(e), "trace": traceback.format_exc(), "serialization_error": str(inner_e)}
                             )
                         )
-            except:
+            except OSError:
                 pass
 
             return jsonify({"success": False, "error": str(e), "trace": traceback.format_exc()}), 500
@@ -2422,12 +2431,7 @@ def advance():
             next_actor = gs.current_player
             if gs.pending_choices:
                 # Handle both Rust (str, str) and Python (str, dict) formats
-                params = gs.pending_choices[0][1]
-                if isinstance(params, str):
-                    try:
-                        params = json.loads(params)
-                    except:
-                        params = {}
+                params = _coerce_pending_choice_params(gs.pending_choices[0][1])
                 next_actor = params.get("player_id", gs.current_player)
 
             # If it's the AI's turn (P1) or the AI has a pending choice, let it act immediately

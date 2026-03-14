@@ -1,5 +1,58 @@
-//! Specialized tests for complex opcodes like REVEAL_UNTIL, DRAW_UNTIL, and LOOK_AND_CHOOSE.
-//! These tests verify advanced card filtering and response-phase behaviors.
+//! Specialized Opcode Tests for Complex Instructions
+//!
+//! This module tests advanced bytecode opcodes and their interactions:
+//! - O_REVEAL_UNTIL: Reveal cards until condition met
+//! - O_DRAW_UNTIL: Draw cards until hand size reached
+//! - O_LOOK_AND_CHOOSE: Peek at cards and select subset
+//! - O_LOOK_DECK: Examine top N cards
+//! - Complex filter expressions and state transitions
+//!
+//! # Test Organization
+//!
+//! Tests are organized by opcode family:
+//!
+//! - **Reveal/Draw Operations**: O_REVEAL_UNTIL, O_DRAW_UNTIL, O_DRAW, O_LOOK_DECK
+//! - **Selection Mechanics**: O_LOOK_AND_CHOOSE, selection filters
+//! - **State Modifiers**: Tap, untap, state tracking
+//! - **Edge Cases**: Boundary conditions, special scenarios
+//!
+//! # Complexity Levels
+//!
+//! Each test is tagged with complexity:
+//! - **Basic**: Single opcode in isolation
+//! - **Medium**: Opcode with multiple filter conditions
+//! - **Advanced**: Multiple opcodes or complex filtering
+//! - **Edge Case**: Boundary conditions or rare scenarios
+//!
+//! # Running Opcode Tests
+//!
+//! ```bash
+//! # All opcode tests
+//! cargo test --lib opcode
+//!
+//! # Specific opcode family
+//! cargo test --lib test_opcode_reveal_until
+//! cargo test --lib test_opcode_draw_until
+//! cargo test --lib test_opcode_look_and_choose
+//!
+//! # With output
+//! cargo test --lib test_opcode_reveal_until -- --nocapture
+//! ```
+//!
+//! # Key Test Areas
+//!
+//! | Opcode | Test Count | Priority |
+//! |--------|-----------|----------|
+//! | O_REVEAL_UNTIL | 4+ | Critical |
+//! | O_DRAW_UNTIL | 3+ | High |
+//! | O_LOOK_AND_CHOOSE | 3+ | High |
+//! | O_LOOK_DECK | 2+ | Medium |
+//!
+//! # Known Issues & Notes
+//!
+//! - REVEAL_UNTIL refresh semantics require careful state management
+//! - Filter expressions need comprehensive condition testing
+//! - Edge cases: empty deck, maximum hand size, rapid state changes
 
 use crate::core::logic::card_db::LOGIC_ID_MASK;
 use crate::core::logic::*;

@@ -175,7 +175,7 @@ fn main() {
             Phase::Main => {
                 main_turns_played += 1;
                 let player = state.current_player;
-                let search_depth = engine_rust::core::logic::turn_sequencer::CONFIG.read().unwrap().search.max_dfs_depth;
+                let search_depth = engine_rust::core::logic::turn_sequencer::get_config().read().unwrap().search.max_dfs_depth;
 
                 let turn_start = Instant::now();
                 

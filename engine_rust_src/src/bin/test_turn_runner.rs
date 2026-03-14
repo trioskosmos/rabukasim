@@ -22,6 +22,8 @@ use std::time::Instant;
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::{TurnSequencer, CONFIG};
 use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
+use rand::SeedableRng;
+use rand::rngs::SmallRng;
 use rand::seq::IndexedRandom;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -385,7 +387,7 @@ fn run_game(
     // Auto-advance to first Main phase (with proper handling of RPS/Mulligan/etc)
     let mut init_step_count = 0;
     const MAX_INIT_STEPS: usize = 50;
-    let mut rng = rand::rng();
+    let mut rng = rand::rngs::SmallRng::from_os_rng();
 
     while !state.is_terminal() && state.phase != Phase::Main && init_step_count < MAX_INIT_STEPS {
         match state.phase {
@@ -520,7 +522,7 @@ fn main() {
     println!("║  No Abilities | Exhaustive DFS | Fast Training Mode      ║");
     println!("╚════════════════════════════════════════════════════════════╝\n");
 
-    let cfg = CONFIG.read().unwrap().clone();
+    let cfg = engine_rust::core::logic::turn_sequencer::get_config().read().unwrap().clone();
     println!(
         "Config: DFS_Depth={}, MC_Trials={}\n",
         cfg.search.max_dfs_depth, cfg.search.mc_trials

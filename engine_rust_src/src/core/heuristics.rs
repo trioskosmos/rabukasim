@@ -1,6 +1,6 @@
 use crate::core::logic::{
-    CardDatabase, GameState, LiveCard, Phase, FLAG_CHARGE, FLAG_DRAW, FLAG_RECOVER, FLAG_SEARCH,
-    FLAG_WIN_COND,
+    CardDatabase, DeckStats, GameState, LiveCard, Phase, FLAG_CHARGE, FLAG_DRAW, FLAG_RECOVER,
+    FLAG_SEARCH, FLAG_WIN_COND,
 };
 #[cfg(feature = "extension-module")]
 use pyo3::prelude::*;
@@ -56,20 +56,7 @@ impl Default for HeuristicConfig {
 
 #[cfg(feature = "extension-module")]
 #[pymethods]
-impl HeuristicConfig {
-    #[new]
-    fn new() -> Self {
-        Self::default()
-    }
-}
-
-#[derive(Debug, Clone, Copy, Default)]
-pub struct DeckStats {
-    pub avg_hearts: [f32; 7],
-    pub avg_notes: f32,
-    pub avg_draw: f32,
-    pub count: f32,
-}
+impl HeuristicConfig {}
 
 #[cfg_attr(feature = "extension-module", pyclass(eq, eq_int))]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -184,10 +171,7 @@ impl LegacyHeuristic {
         }
 
         // 3. Power on Board (Capabilities) - 0.02 per blade
-        let mut my_power = 0;
-        for i in 0..3 {
-            my_power += state.get_effective_blades(p_idx, i, db, 0);
-        }
+        let my_power = state.get_total_blades(p_idx, db, 0);
         score += my_power as f32 * 0.02; // Increased from 0.01
 
         // 4. Energy Zone (Fuel) - 0.05 per energy
@@ -195,14 +179,7 @@ impl LegacyHeuristic {
         score += p.energy_zone.len() as f32 * 0.05;
 
         // 5. Board Hearts / Proximity
-        let mut stage_hearts = [0u32; 7];
-        for i in 0..3 {
-            let h = state.get_effective_hearts(p_idx, i, db, 0);
-            let h_arr = h.to_array();
-            for color in 0..7 {
-                stage_hearts[color] += h_arr[color] as u32;
-            }
-        }
+        let stage_hearts = state.get_total_hearts(p_idx, db, 0).to_array_u32();
 
         // Conservative Yell + Volume Icons estimation
         let mut expected_hearts = stage_hearts;
@@ -341,8 +318,8 @@ pub fn evaluate_player(
         score += cfg.weight_success_bonus;
     }
 
-    let mut stage_hearts = [0u32; 7];
-    let mut stage_blades = 0;
+    let _stage_hearts = [0u32; 7];
+    let _stage_blades = 0;
     let mut stage_val = 0.0;
     let mut occupied_slots = 0;
 
@@ -391,14 +368,12 @@ pub fn evaluate_player(
                 stage_val += ability_val;
             }
         }
-        let h = state.get_effective_hearts(p_idx, i, db, 0);
-        let h_arr = h.to_array();
-        for color in 0..7 {
-            stage_hearts[color] += h_arr[color] as u32;
-        }
-        stage_blades += state.get_effective_blades(p_idx, i, db, 0);
     }
     score += stage_val;
+
+    let stage_hearts_board = state.get_total_hearts(p_idx, db, 0);
+    let stage_hearts = stage_hearts_board.to_array_u32();
+    let stage_blades = state.get_total_blades(p_idx, db, 0);
 
     let total_hearts: u32 = stage_hearts.iter().sum();
     let heart_val = total_hearts as f32 * cfg.weight_heart;
@@ -414,6 +389,8 @@ pub fn evaluate_player(
 
     let stats = if let Some(s) = deck_stats {
         s
+    } else if p.cached_deck_stats.count > 0.0 {
+        p.cached_deck_stats
     } else {
         calculate_deck_expectations(&p.deck, db)
     };

@@ -10,6 +10,7 @@ pub struct Room {
     pub players: HashMap<String, usize>, // Token -> Player ID (0 or 1)
     pub username_to_token: HashMap<String, String>, // Username -> Token (for recovery)
     pub mode: String, // "pve" or "pvp"
+    pub is_vanilla: bool,
     pub last_update: SystemTime,
     pub created_at: SystemTime,
     pub is_public: bool,
@@ -23,6 +24,7 @@ pub struct Room {
 pub struct AppState {
     pub rooms: Mutex<HashMap<String, Arc<Mutex<Room>>>>,
     pub card_db: CardDatabase,
+    pub vanilla_card_db: CardDatabase,
     pub server_instance_id: u64,
     pub debug_mode: bool,
     #[cfg(feature = "nn")]
@@ -33,6 +35,7 @@ pub struct AppState {
 #[derive(Deserialize)]
 pub struct CreateRoomReq {
     pub mode: Option<String>,
+    pub card_set: Option<String>,
     pub public: Option<bool>,
     pub username: Option<String>,
     pub p0_deck: Option<Vec<String>>,

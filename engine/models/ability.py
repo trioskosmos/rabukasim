@@ -351,26 +351,55 @@ class Ability:
 
     def compile(self) -> List[int]:
         """Compile ability into fixed-width bytecode sequence (groups of 4 ints)."""
-        if "103" in str(self.card_no) or "018" in str(self.card_no):
-            print(f"DEBUG: Compiling card {self.card_no}")
         bytecode = []
         self.filters = []  # Reset filters for this compilation
         self._annotate_effect_runtime_metadata()
+
+        # CONSTANT abilities are enforced from serialized conditions rather than
+        # condition opcodes in bytecode, so keep their numeric fields hydrated.
+        if self.trigger == TriggerType.CONSTANT:
+            self._normalize_serialized_conditions()
 
         # 0. Compile Ordered Instructions (If present - New Parser V2.1)
         if self.instructions:
             # Pass 1: Pre-calculate individual instruction sizes
             instr_bytecodes = []
             self._last_counted_zone = None
-            for instr in self.instructions:
+            last_emitted_target = None
+            i = 0
+            while i < len(self.instructions):
+                instr = self.instructions[i]
                 if isinstance(instr, Effect) and instr.params.get("raw_effect") == "COUNT_CARDS":
                     self._last_counted_zone = (instr.params.get("zone") or instr.params.get("ZONE") or "").upper()
 
                 temp_bc = []
                 if isinstance(instr, Condition):
-                    self._compile_single_condition(instr, temp_bc)
+                    # CRITICAL FIX: For CONSTANT trigger abilities, do NOT compile conditions into bytecode.
+                    # The Rust engine evaluates CONSTANT ability conditions from the 'conditions' array separately
+                    # and expects bytecode to contain ONLY effect opcodes.
+                    if self.trigger != TriggerType.CONSTANT:
+                        self._compile_single_condition(instr, temp_bc)
+                elif isinstance(instr, Effect) and instr.target == TargetType.ALL_PLAYERS:
+                    block = [instr]
+                    j = i + 1
+                    while (
+                        j < len(self.instructions)
+                        and isinstance(self.instructions[j], Effect)
+                        and self.instructions[j].target == TargetType.ALL_PLAYERS
+                    ):
+                        block.append(self.instructions[j])
+                        j += 1
+
+                    last_emitted_target = self._compile_all_players_block(temp_bc, block, last_emitted_target)
+                    instr_bytecodes.append(temp_bc)
+                    for _ in range(i + 1, j):
+                        instr_bytecodes.append([])
+                    i = j
+                    continue
                 elif isinstance(instr, Effect):
-                    self._compile_effect_wrapper(instr, temp_bc)
+                    last_emitted_target = self._compile_effect_with_target_persistence(
+                        instr, temp_bc, last_emitted_target
+                    )
                 elif isinstance(instr, Cost):
                     mapping = {
                         AbilityCostType.ENERGY: Opcode.PAY_ENERGY,
@@ -388,7 +417,10 @@ class Ability:
                         or instr.params.get("cost_type_name") in ["CALC_SUM_COST", "SELECT_CARDS", "SELECT_MEMBER", "SELECT_ENERGY"]
                     ):
                         self._compile_single_cost(instr, temp_bc)
+                    if instr.is_optional:
+                        last_emitted_target = None
                 instr_bytecodes.append(temp_bc)
+                i += 1
 
             # Pass 2: Emit bytecode with accurate jump targets
             for i, instr in enumerate(self.instructions):
@@ -412,57 +444,92 @@ class Ability:
             return bytecode
 
         # 1. Compile Conditions (Legacy/Split Mode)
-        for cond in self.conditions:
-            self._compile_single_condition(cond, bytecode)
+        # CRITICAL FIX: For CONSTANT trigger abilities, do NOT compile conditions into bytecode.
+        # The Rust engine evaluates CONSTANT ability conditions from the 'conditions' array separately
+        # and expects bytecode to contain ONLY effect opcodes (ADD_BLADES, etc).
+        # If conditions are embedded in bytecode, they interfere with effect processing.
+        if self.trigger != TriggerType.CONSTANT:
+            for cond in self.conditions:
+                self._compile_single_condition(cond, bytecode)
 
         # 1.5. Compile Costs (Note: Modern engine handles costs via pay_cost shell)
         # We don't compile costs into bytecode unless they are meant for mid-ability execution.
 
-        # 2. Compile Effects (with ALL_PLAYERS grouping)
+        # 2. Compile Effects (with ALL_PLAYERS grouping and target persistence optimization)
+        # TARGET PERSISTENCE: Only emit SET_TARGET if it differs from last_emitted_target.
+        # This reduces redundant target-switching opcodes by ~5 words (1 instruction) per target switch.
         i = 0
+        last_emitted_target = None  # Track the last SET_TARGET that was emitted
         while i < len(self.effects):
             eff = self.effects[i]
             if eff.target == TargetType.ALL_PLAYERS:
-                # Group consecutive ALL_PLAYERS effects
+                # Group consecutive ALL_PLAYERS effects into a single block
                 block = [eff]
                 j = i + 1
                 while j < len(self.effects) and self.effects[j].target == TargetType.ALL_PLAYERS:
                     block.append(self.effects[j])
                     j += 1
 
-                # Emit block for SELF
-                bytecode.extend(
-                    [int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)]
-                )
+                # Emit block for SELF (only emit SET_TARGET_SELF if needed)
+                if last_emitted_target != TargetType.PLAYER:
+                    bytecode.extend(
+                        [int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)]
+                    )
+                    last_emitted_target = TargetType.PLAYER
+                
                 for e in block:
                     # Create a copy with target=PLAYER (Self)
                     e_self = Effect(e.effect_type, e.value, e.value_cond, TargetType.PLAYER, e.params)
                     e_self.is_optional = e.is_optional
                     self._compile_effect_wrapper(e_self, bytecode)
 
-                # Emit block for OPPONENT
-                bytecode.extend(
-                    [
-                        int(Opcode.SET_TARGET_OPPONENT),
-                        to_signed_32(0),
-                        to_signed_32(0),
-                        to_signed_32(0),
-                        to_signed_32(0),
-                    ]
-                )
+                # Emit block for OPPONENT (only emit SET_TARGET_OPPONENT if needed)
+                if last_emitted_target != TargetType.OPPONENT:
+                    bytecode.extend(
+                        [
+                            int(Opcode.SET_TARGET_OPPONENT),
+                            to_signed_32(0),
+                            to_signed_32(0),
+                            to_signed_32(0),
+                            to_signed_32(0),
+                        ]
+                    )
+                    last_emitted_target = TargetType.OPPONENT
+                
                 for e in block:
                     # Create a copy with target=OPPONENT
                     e_opp = Effect(e.effect_type, e.value, e.value_cond, TargetType.OPPONENT, e.params)
                     e_opp.is_optional = e.is_optional
                     self._compile_effect_wrapper(e_opp, bytecode)
 
-                # Reset context
-                bytecode.extend(
-                    [int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)]
-                )
+                # Reset context to SELF for consistency (required for state consistency)
+                # Only emit if the next effect isn't going to emit its own target immediately
+                if j < len(self.effects):
+                    # Check if next effect will set its own target
+                    next_eff = self.effects[j]
+                    if next_eff.target != TargetType.PLAYER and next_eff.target != TargetType.ALL_PLAYERS:
+                        # Next effect sets its own target, skip the reset
+                        last_emitted_target = None
+                    else:
+                        # Next is PLAYER or ALL_PLAYERS, emit reset
+                        if last_emitted_target != TargetType.PLAYER:
+                            bytecode.extend(
+                                [int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)]
+                            )
+                            last_emitted_target = TargetType.PLAYER
+                else:
+                    # End of effects, reset to SELF for cleanliness
+                    if last_emitted_target != TargetType.PLAYER:
+                        bytecode.extend(
+                            [int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)]
+                        )
+                        last_emitted_target = TargetType.PLAYER
 
                 i = j
             else:
+                # Non-ALL_PLAYERS effect - it will set its own target internally if needed
+                # Reset tracking since this effect handles targeting
+                last_emitted_target = None
                 self._compile_effect_wrapper(eff, bytecode)
                 i += 1
 
@@ -481,6 +548,64 @@ class Ability:
         
         return bytecode
 
+    def _emit_target_opcode_if_needed(self, bytecode: List[int], target: TargetType, last_emitted_target: TargetType | None):
+        desired_target = None
+        if target in (TargetType.SELF, TargetType.PLAYER):
+            desired_target = TargetType.PLAYER
+        elif target == TargetType.OPPONENT:
+            desired_target = TargetType.OPPONENT
+
+        if desired_target is None:
+            return None
+
+        if desired_target == last_emitted_target:
+            return last_emitted_target
+
+        opcode = Opcode.SET_TARGET_SELF if desired_target == TargetType.PLAYER else Opcode.SET_TARGET_OPPONENT
+        bytecode.extend([int(opcode), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
+        return desired_target
+
+    def _compile_effect_with_target_persistence(
+        self, eff: Effect, bytecode: List[int], last_emitted_target: TargetType | None
+    ) -> TargetType | None:
+        if eff.target == TargetType.ALL_PLAYERS:
+            return self._compile_all_players_block(bytecode, [eff], last_emitted_target)
+
+        next_target = None
+        if last_emitted_target is not None and eff.target in (TargetType.SELF, TargetType.PLAYER, TargetType.OPPONENT):
+            next_target = self._emit_target_opcode_if_needed(bytecode, eff.target, last_emitted_target)
+
+        self._compile_effect_wrapper(eff, bytecode)
+
+        if last_emitted_target is None:
+            return None
+
+        if eff.target in (TargetType.SELF, TargetType.PLAYER, TargetType.OPPONENT):
+            return next_target
+        return None
+
+    def _compile_all_players_block(
+        self, bytecode: List[int], block: List[Effect], last_emitted_target: TargetType | None
+    ) -> TargetType | None:
+        last_emitted_target = self._emit_target_opcode_if_needed(bytecode, TargetType.PLAYER, last_emitted_target)
+        for eff in block:
+            eff_self = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.PLAYER, eff.params)
+            eff_self.is_optional = eff.is_optional
+            self._compile_effect_wrapper(eff_self, bytecode)
+
+        last_emitted_target = self._emit_target_opcode_if_needed(bytecode, TargetType.OPPONENT, last_emitted_target)
+        for eff in block:
+            eff_opp = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.OPPONENT, eff.params)
+            eff_opp.is_optional = eff.is_optional
+            self._compile_effect_wrapper(eff_opp, bytecode)
+        return last_emitted_target
+
+
+    def _normalize_serialized_conditions(self):
+        for cond in self.conditions:
+            temp_bc: List[int] = []
+            self._compile_single_condition(cond, temp_bc)
+
     def build_semantic_form(self) -> Dict[str, Any]:
         """Build a human-readable semantic representation of this ability.
         
@@ -493,7 +618,7 @@ class Ability:
             params_copy = {}
             try:
                 params_copy = eff.params.copy() if hasattr(eff.params, 'copy') and callable(eff.params.copy) else dict(eff.params or {})
-            except:
+            except (AttributeError, TypeError, ValueError):
                 params_copy = {}
                 
             sem_eff = SemanticEffect(
@@ -510,7 +635,7 @@ class Ability:
             # Try to get the comparison type from params
             try:
                 params_upper = {k.upper(): v for k, v in cond.params.items() if isinstance(k, str)}
-            except:
+            except (AttributeError, TypeError):
                 params_upper = {}
                 
             comp_str = str(cond.params.get("comparison") or params_upper.get("COMPARISON") or "GE").upper() if cond.params else "GE"
@@ -520,7 +645,7 @@ class Ability:
             if hasattr(cond, "attr") and cond.attr:
                 try:
                     filter_summary = format_filter_attr(cond.attr)
-                except:
+                except (AttributeError, TypeError, ValueError):
                     filter_summary = ""
 
             sem_cond = SemanticCondition(
@@ -636,6 +761,8 @@ class Ability:
                         to_signed_32(0),
                     ]
                 )
+                cond.value = val
+                cond.attr = attr
             return
 
         if cond.type == ConditionType.TYPE_CHECK:
@@ -650,6 +777,8 @@ class Ability:
                         to_signed_32(0),
                     ]
                 )
+                cond.value = ctype
+                cond.attr = 0
             return
 
         op_name = f"CHECK_{cond.type.name}"
@@ -727,7 +856,7 @@ class Ability:
                 color_name = str(cond.params.get("color") or "").upper()
                 try:
                     attr = int(HeartColor[color_name])
-                except:
+                except (KeyError, TypeError, ValueError):
                     # Fallback: try to extract from filter string if directly missing
                     f_str = str(cond.params.get("filter", "")).upper()
                     if "YELLOW" in f_str:
@@ -791,19 +920,32 @@ class Ability:
                 ]
             )
 
-        elif cond.type == ConditionType.SELECT_MEMBER:
-            # Format: SELECT_MEMBER(1) {FILTER="HAS_HEART_02_X3", AREA="LEFT"}
+        elif cond.type == ConditionType.UNIQUE_NAMES_COUNT:
+            # Map UNIQUE_NAMES_COUNT to CHECK_COUNT_STAGE with FILTER_UNIQUE_NAMES bit (32768)
             attr = self._pack_filter_attr(cond)
-            slot = self._pack_filter_slot(str(cond.params.get("area", "")).upper())
+            attr |= EXTRA_CONSTANTS.get("FILTER_UNIQUE_NAMES", 32768)
+            val = cond.value
+            if val == 0:
+                val = int(cond.params.get("min") or cond.params.get("count") or 0)
+            
+            comp_str = str(cond.params.get("comparison") or "GE").upper()
+            comp_val = COMPARISONS.get(comp_str, 3) # Default GE
+            slot = (int(TargetType.MEMBER_SELF) & 0x0F) | ((comp_val & 0x0F) << 4)
+
+            # Use CONDITIONS directly to avoid dynamic attribute issues
+            op_code = CONDITIONS.get("COUNT_STAGE", 203)
+            
             bytecode.extend(
                 [
-                    int(Opcode.SELECT_MEMBER),
-                    to_signed_32(1),
+                    to_signed_32(op_code),
+                    to_signed_32(val),
                     to_signed_32(attr & 0xFFFFFFFF),
                     to_signed_32((attr >> 32) & 0xFFFFFFFF),
                     to_signed_32(slot),
                 ]
             )
+            cond.value = val
+            cond.attr = attr
         else:
             if cond.type != ConditionType.NONE:
                 print(f"CRITICAL WARNING: No opcode mapping for condition type: {cond.type.name}")
@@ -1621,7 +1763,7 @@ class Ability:
                 u_id = int(str(unit_val)) if str(unit_val).isdigit() else int(Unit.from_japanese_name(str(unit_val)))
                 a_params["unit_enabled"] = True
                 a_params["unit_id"] = u_id & 0x7F
-            except:
+            except (AttributeError, TypeError, ValueError):
                 pass
         attr = pack_a_heart_cost(**a_params)
         return val, attr
@@ -1793,7 +1935,7 @@ class Ability:
                 )
                 filter_obj["group_enabled"] = True
                 filter_obj["group_id"] = g_id & 0x7F
-            except:
+            except (AttributeError, TypeError, ValueError):
                 pass
 
         # 4. Unit Filter (Bit 16 + Bits 17-23)
@@ -1818,7 +1960,7 @@ class Ability:
                 )
                 filter_obj["unit_enabled"] = True
                 filter_obj["unit_id"] = u_id & 0x7F
-            except:
+            except (AttributeError, TypeError, ValueError):
                 pass
 
         # 5. Cost Filter (Bit 24 + Bits 25-29 + Bit 30=Mode + Bit 31=Type=1)
@@ -1862,7 +2004,7 @@ class Ability:
                 filter_obj["value_threshold"] = val_c & 0x1F
                 filter_obj["is_cost_type"] = True
                 filter_obj["is_le"] = False
-            except:
+            except (TypeError, ValueError):
                 pass
         elif c_max is not None:
             try:
@@ -1871,7 +2013,7 @@ class Ability:
                 filter_obj["value_threshold"] = val_c & 0x1F
                 filter_obj["is_cost_type"] = True
                 filter_obj["is_le"] = True
-            except:
+            except (TypeError, ValueError):
                 pass
 
         # 5.1 Heart Sum Support
@@ -1946,7 +2088,7 @@ class Ability:
                         colors = [c_idx]
                     if count:
                         f_val = int(count)
-                except:
+                except (TypeError, ValueError):
                     pass
         elif "HAS_COLOR_" in filter_str:
             match = re.search(r"HAS_COLOR_([A-Z]+)(?:_X(\d+))?", filter_str)
@@ -1959,7 +2101,7 @@ class Ability:
                         colors = [c_idx]
                     if count:
                         f_val = int(count)
-                except:
+                except (KeyError, TypeError, ValueError):
                     pass
 
         if f_val > 0:
@@ -1981,7 +2123,7 @@ class Ability:
                     else:
                         c_idx = int(c)
                     color_mask |= 1 << c_idx
-                except:
+                except (KeyError, TypeError, ValueError):
                     pass
             if color_mask > 0:
                 filter_obj["color_mask"] = color_mask & 0x7F
@@ -2015,7 +2157,7 @@ class Ability:
             try:
                 sid_int = int(sid)
                 filter_obj["special_id"] = sid_int & 0x07
-            except:
+            except (TypeError, ValueError):
                 pass
 
         # Setsuna (Bit 59)

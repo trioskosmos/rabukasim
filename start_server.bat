@@ -22,7 +22,7 @@ echo [3/3] Preparing Environment...
 if not exist "data\cards.json" goto NO_DATA
 
 echo Compiling Card Data...
-uv run python -m compiler.main
+uv run python -m compiler.main --quiet
 if %errorlevel% neq 0 goto CMD_FAIL
 
 :: Handle arguments
@@ -46,10 +46,6 @@ echo Skipping Maturin build (use --full to build Python extension).
 :SYNC_ASSETS
 echo Synchronizing Frontend Assets...
 uv run python tools/sync_launcher_assets.py
-if %errorlevel% neq 0 goto CMD_FAIL
-
-echo Running Translation Coverage Analysis...
-uv run python tools/analysis/analyze_translation_coverage.py
 if %errorlevel% neq 0 goto CMD_FAIL
 
 echo.

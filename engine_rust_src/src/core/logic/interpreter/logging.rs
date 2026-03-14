@@ -53,6 +53,38 @@ pub fn get_opcode_log(op: i32, v: i32, a: i64, _s: i32, result_count: i32) -> Op
         O_SET_TAPPED => Some(format!("Set member tapped state to {}", v != 0)),
         O_ORDER_DECK => Some(format!("Reordered top {} cards of deck", v)),
         O_REVEAL_UNTIL => Some("Revealed cards until condition met".to_string()),
+        O_REDUCE_HEART_REQ => {
+            let color_str = match _s {
+                0 => "PINK", 1 => "RED", 2 => "YELLOW", 3 => "GREEN", 4 => "BLUE", 5 => "PURPLE", 6 => "ANY",
+                _ => "UNKNOWN",
+            };
+            Some(format!("Reduced {} heart requirement by {}", color_str, v))
+        }
+        O_TRANSFORM_HEART => {
+            let src_str = match a {
+                0 => "PINK", 1 => "RED", 2 => "YELLOW", 3 => "GREEN", 4 => "BLUE", 5 => "PURPLE", 6 => "ANY",
+                _ => "UNKNOWN",
+            };
+            let dst_str = match _s {
+                0 => "PINK", 1 => "RED", 2 => "YELLOW", 3 => "GREEN", 4 => "BLUE", 5 => "PURPLE", 6 => "ANY",
+                _ => "UNKNOWN",
+            };
+            Some(format!("Transformed {} required hearts to {} (qty={})", src_str, dst_str, v))
+        }
+        O_INCREASE_HEART_COST => {
+            let color_str = match _s {
+                0 => "PINK", 1 => "RED", 2 => "YELLOW", 3 => "GREEN", 4 => "BLUE", 5 => "PURPLE", 6 => "ANY",
+                _ => "UNKNOWN",
+            };
+            Some(format!("Increased {} heart requirement by {}", color_str, v))
+        }
+        O_TRANSFORM_COLOR => {
+            let dst_str = match v {
+                0 => "PINK", 1 => "RED", 2 => "YELLOW", 3 => "GREEN", 4 => "BLUE", 5 => "PURPLE", 6 => "ANY",
+                _ => "UNKNOWN",
+            };
+            Some(format!("All hearts transform to {}", dst_str))
+        }
         _ => None,
     }
 }

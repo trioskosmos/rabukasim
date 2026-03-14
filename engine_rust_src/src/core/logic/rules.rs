@@ -2,39 +2,54 @@ use super::card_db::{CardDatabase, MemberCard};
 use super::game::GameState;
 use crate::core::logic::interpreter::check_condition;
 use crate::core::logic::interpreter::conditions::resolve_count;
+use std::cell::Cell;
 
 use crate::core::enums::*;
 pub use crate::core::generated_constants::*;
 use crate::core::hearts::*;
 pub use crate::core::logic::models::*;
 
-pub fn has_multi_baton(m: &MemberCard) -> u8 {
-    let mut limit = 1;
-    for ab in &m.abilities {
-        if ab.trigger == TriggerType::Constant {
-            let bc = &ab.bytecode;
-            let mut i = 0;
-            while i + 4 < bc.len() {
-                if bc[i] == O_BATON_TOUCH_MOD {
-                    limit = limit.max(bc[i + 1] as u8);
-                }
-                i += 5;
-            }
-        }
-    }
-    limit
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub struct BoardAura {
+    pub blades: [i32; 3],
+    pub hearts: [HeartBoard; 3],
+    pub slot_cost_modifiers: [i16; 3],
+    pub heart_req_reductions: HeartBoard,
+    pub heart_req_additions: HeartBoard,
 }
 
-pub fn get_effective_blades(
+thread_local! {
+    static ON_DEMAND_AURA_QUERY: Cell<bool> = const { Cell::new(false) };
+}
+
+fn get_query_aura(
+    state: &GameState,
+    player_idx: usize,
+    db: &CardDatabase,
+    depth: u32,
+) -> Option<BoardAura> {
+    if depth != 0 {
+        return None;
+    }
+
+    ON_DEMAND_AURA_QUERY.with(|flag| {
+        if flag.get() {
+            return None;
+        }
+        flag.set(true);
+        let aura = calculate_board_aura(state, player_idx, db);
+        flag.set(false);
+        Some(aura)
+    })
+}
+
+fn get_effective_blades_with_aura(
     state: &GameState,
     player_idx: usize,
     slot_idx: usize,
     db: &CardDatabase,
-    depth: u32,
+    aura: &BoardAura,
 ) -> u32 {
-    if depth > MAX_BLADE_CALC_DEPTH {
-        return 0;
-    }
     let cid = state.players[player_idx].stage[slot_idx];
     if cid < 0 || state.players[player_idx].is_tapped(slot_idx) {
         return 0;
@@ -51,127 +66,7 @@ pub fn get_effective_blades(
         m.blades as i32
     };
 
-    // Wave 1: Constant abilities from ALL members on stage (Global/Area buffs)
-    for other_slot in 0..3 {
-        let other_cid = state.players[player_idx].stage[other_slot];
-        if other_cid < 0 {
-            continue;
-        }
-        if let Some(other_m) = db.get_member(other_cid) {
-            for ab in &other_m.abilities {
-                if ab.trigger == TriggerType::Constant {
-                    let ctx = AbilityContext {
-                        source_card_id: other_cid,
-                        player_id: player_idx as u8,
-                        activator_id: player_idx as u8,
-                        area_idx: other_slot as i16,
-                        target_slot: slot_idx as i16, // The slot being evaluated
-                        ..Default::default()
-                    };
-                    if ab
-                        .conditions
-                        .iter()
-                        .all(|c| check_condition(state, db, player_idx, c, &ctx, depth + 1))
-                    {
-                        let bc = &ab.bytecode;
-                        let mut i = 0;
-                        while i + 4 < bc.len() {
-                            let op = bc[i];
-                            let v = bc[i + 1];
-                            let s = bc[i + 4];
-                            let target_area = s & 0xFF;
-
-                            // Does this O_ADD_BLADES/O_BUFF_POWER target our slot?
-                            // Target 1=All, 4=This Slot (if area_idx matching target_slot),
-                            // 0=This Slot (often used as default)
-                            let mut targets_us = false;
-                            if target_area == 1 {
-                                targets_us = true;
-                            } else if (target_area == 4 || target_area == 0) && other_slot == slot_idx {
-                                targets_us = true;
-                            } else if target_area == 10 && slot_idx as i16 == ctx.target_slot {
-                                targets_us = true;
-                            }
-
-                            if (op == O_ADD_BLADES || op == O_BUFF_POWER) && targets_us {
-                                let a_low = bc[i + 2];
-                                let a_high = bc[i + 3];
-                                let a = ((a_high as u64) << 32) | (a_low as u64);
-
-                                let mut multiplier = 1;
-                                if (s & 0x10000) != 0 {
-                                    // Dynamic multiplier: slot (bc[i+4]) bits 8-23 contains the count opcode
-                                    let count_op = (s >> 8) & 0xFFFF;
-                                    multiplier = resolve_count(state, db, count_op, a, s, &ctx, depth + 1);
-                                } else if (a & 0x40) != 0 || a == ConditionType::SuccessPileCount as u64 {
-                                    // SuccessPileCount (307)
-                                    multiplier = state.players[player_idx].success_lives.len() as i32;
-                                } else if a_low == 1 && a_high > 0x00FFFFFF {
-                                    // Fallback: Handle corrupted bytecode where a_high looks like a flag value
-                                    // If this looks like a success pile count ability (v==1, a_low==1, a_high suspect),
-                                    // use the success pile count as multiplier
-                                    multiplier = state.players[player_idx].success_lives.len() as i32;
-                                }
-
-                                val += (v as i32) * multiplier;
-                            }
-                            i += 5;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // --- Wave 2: Granted Abilities ---
-    for &(target_cid, source_cid, ab_idx) in &state.players[player_idx].granted_abilities {
-        if target_cid == cid {
-            if let Some(src_m) = db.get_member(source_cid) {
-                if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
-                    if ab.trigger == TriggerType::Constant {
-                        let ctx = AbilityContext {
-                            source_card_id: cid,
-                            player_id: player_idx as u8,
-                            activator_id: player_idx as u8,
-                            area_idx: slot_idx as i16,
-                            ..Default::default()
-                        };
-                        if ab
-                            .conditions
-                            .iter()
-                            .all(|c| check_condition(state, db, player_idx, c, &ctx, depth + 1))
-                        {
-                            let bc = &ab.bytecode;
-                            let mut i = 0;
-                            while i + 4 < bc.len() {
-                                let op = bc[i];
-                                let v = bc[i + 1];
-                                let s = bc[i + 4];
-                                if op == O_ADD_BLADES {
-                                    let a_low = bc[i + 2];
-                                    let a_high = bc[i + 3];
-                                    let a = ((a_high as u64) << 32) | (a_low as u64);
-
-                                    let mut multiplier = 1;
-                                    if (s & 0x10000) != 0 {
-                                        let count_op = (s >> 8) & 0xFFFF;
-                                        multiplier = resolve_count(state, db, count_op, a, s, &ctx, depth + 1);
-                                    } else if (a & 0x40) != 0 || a == ConditionType::SuccessPileCount as u64 {
-                                        multiplier = state.players[player_idx].success_lives.len() as i32;
-                                    } else if a_low == 1 && a_high > 0x00FFFFFF {
-                                        // Fallback: Handle corrupted bytecode where a_high looks like a flag value
-                                        multiplier = state.players[player_idx].success_lives.len() as i32;
-                                    }
-                                    val += (v as i32) * multiplier;
-                                }
-                                i += 5;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    val += aura.blades[slot_idx];
 
     let buff = state.players[player_idx].blade_buffs[slot_idx];
     if state.debug.debug_mode && !state.ui.silent {
@@ -179,6 +74,184 @@ pub fn get_effective_blades(
             slot_idx, m.blades, state.players[player_idx].blade_overrides[slot_idx], val, buff, (val + buff as i32).max(0));
     }
     (val + buff as i32).max(0) as u32
+}
+
+fn get_effective_hearts_with_aura(
+    state: &GameState,
+    player_idx: usize,
+    slot_idx: usize,
+    db: &CardDatabase,
+    aura: &BoardAura,
+) -> HeartBoard {
+    let cid = state.players[player_idx].stage[slot_idx];
+    if cid < 0 {
+        return state.players[player_idx].heart_buffs[slot_idx];
+    }
+    let base_id = cid;
+    let m = if let Some(m) = db.get_member(base_id) {
+        m
+    } else {
+        return state.players[player_idx].heart_buffs[slot_idx];
+    };
+    let mut board = m.hearts_board.clone();
+
+    board.add(aura.hearts[slot_idx]);
+    board.add(state.players[player_idx].yell_heart_bonus[slot_idx]);
+    board.add(state.players[player_idx].heart_buffs[slot_idx]);
+    board
+}
+
+pub fn has_multi_baton(m: &MemberCard) -> u8 {
+    if m.has_multi_baton { 2 } else { 1 }
+}
+
+fn apply_reduce_cost_modifiers(
+    cost: &mut i32,
+    ab: &Ability,
+    state: &GameState,
+    db: &CardDatabase,
+    p_idx: usize,
+    ctx: &AbilityContext,
+    depth: u32,
+) {
+    if !ab
+        .conditions
+        .iter()
+        .all(|c| check_condition(state, db, p_idx, c, ctx, depth + 1))
+    {
+        return;
+    }
+
+    if !ab.preparsed_modifiers.is_empty() {
+        for pm in &ab.preparsed_modifiers {
+            if (pm.op == O_REDUCE_COST || pm.op == O_INCREASE_COST) && ((pm.slot as u32) & 0xFF == 0 || (pm.slot as u32) & 0xFF == 4) {
+                let mut multiplier = 1;
+                if (pm.attr & DYNAMIC_VALUE) != 0 {
+                    let count_op = (pm.slot >> 8) & 0xFFFF;
+                    multiplier = resolve_count(
+                        state,
+                        db,
+                        count_op as i32,
+                        pm.attr & !DYNAMIC_VALUE,
+                        pm.slot,
+                        ctx,
+                        depth + 1,
+                    );
+                }
+                if pm.op == O_REDUCE_COST {
+                    *cost -= pm.val * multiplier;
+                } else {
+                    *cost += pm.val * multiplier;
+                }
+            }
+        }
+        return;
+    }
+
+    for chunk in ab.bytecode.chunks(5) {
+        let op = chunk[0];
+        if chunk.len() != 5 || (op != O_REDUCE_COST && op != O_INCREASE_COST) {
+            continue;
+        }
+
+        let val = chunk[1];
+        let attr_low = chunk[2] as u32;
+        let attr_high = chunk[3] as u32;
+        let attr = ((attr_high as u64) << 32) | attr_low as u64;
+        let slot = chunk[4];
+
+        if ((slot as u32) & 0xFF) != 0 && ((slot as u32) & 0xFF) != 4 {
+            continue;
+        }
+
+        let mut multiplier = 1;
+        if (attr & DYNAMIC_VALUE) != 0 {
+            let count_op = (slot >> 8) & 0xFFFF;
+            multiplier = resolve_count(
+                state,
+                db,
+                count_op as i32,
+                attr & !DYNAMIC_VALUE,
+                slot,
+                ctx,
+                depth + 1,
+            );
+        }
+        if op == O_REDUCE_COST {
+            *cost -= val * multiplier;
+        } else {
+            *cost += val * multiplier;
+        }
+    }
+}
+
+fn apply_external_reduce_cost_modifiers(
+    cost: &mut i32,
+    ab: &Ability,
+    state: &GameState,
+    db: &CardDatabase,
+    p_idx: usize,
+    ctx: &AbilityContext,
+    target_card_id: i32,
+    depth: u32,
+) {
+    if ab.filters.is_empty()
+        || !ab
+            .conditions
+            .iter()
+            .all(|c| check_condition(state, db, p_idx, c, ctx, depth + 1))
+    {
+        return;
+    }
+
+    if !ab.filters.iter().any(|filter| {
+        filter.matches(state, db, target_card_id, None, false, None, ctx)
+    }) {
+        return;
+    }
+
+    for pm in &ab.preparsed_modifiers {
+        if pm.op == O_REDUCE_COST || pm.op == O_INCREASE_COST {
+            if pm.op == O_REDUCE_COST {
+                *cost -= pm.val;
+            } else {
+                *cost += pm.val;
+            }
+        }
+    }
+
+    if !ab.preparsed_modifiers.is_empty() {
+        return;
+    }
+
+    for chunk in ab.bytecode.chunks(5) {
+        if chunk.len() != 5 {
+            continue;
+        }
+        let op = chunk[0];
+        if op == O_REDUCE_COST {
+            *cost -= chunk[1];
+        } else if op == O_INCREASE_COST {
+            *cost += chunk[1];
+        }
+    }
+}
+
+pub fn get_effective_blades(
+    state: &GameState,
+    player_idx: usize,
+    slot_idx: usize,
+    db: &CardDatabase,
+    depth: u32,
+) -> u32 {
+    if depth > MAX_BLADE_CALC_DEPTH {
+        return 0;
+    }
+    let query_aura = get_query_aura(state, player_idx, db, depth);
+    let aura = query_aura
+        .as_ref()
+        .unwrap_or(&state.players[player_idx].board_aura);
+    get_effective_blades_with_aura(state, player_idx, slot_idx, db, aura)
 }
 
 pub fn get_effective_hearts(
@@ -191,150 +264,21 @@ pub fn get_effective_hearts(
     if depth > MAX_BLADE_CALC_DEPTH {
         return HeartBoard::default();
     }
-    let cid = state.players[player_idx].stage[slot_idx];
-    if cid < 0 {
-        // Even without a member, heart buffs for the slot might apply
-        return state.players[player_idx].heart_buffs[slot_idx];
-    }
-    let base_id = cid;
-    let m = if let Some(m) = db.get_member(base_id) {
-        m
-    } else {
-        return state.players[player_idx].heart_buffs[slot_idx];
-    };
-    let mut board = m.hearts_board.clone();
-
-    // Wave 1: Constant abilities from ALL members on stage (Global/Area buffs)
-    for other_slot in 0..3 {
-        let other_cid = state.players[player_idx].stage[other_slot];
-        if other_cid < 0 {
-            continue;
-        }
-        if let Some(other_m) = db.get_member(other_cid) {
-            for ab in &other_m.abilities {
-                if ab.trigger == TriggerType::Constant {
-                    let ctx = AbilityContext {
-                        source_card_id: other_cid,
-                        player_id: player_idx as u8,
-                        activator_id: player_idx as u8,
-                        area_idx: other_slot as i16,
-                        target_slot: slot_idx as i16,
-                        ..Default::default()
-                    };
-                    if ab
-                        .conditions
-                        .iter()
-                        .all(|c| check_condition(state, db, player_idx, c, &ctx, depth + 1))
-                    {
-                        let bc = &ab.bytecode;
-                        let mut i = 0;
-                        while i + 4 < bc.len() {
-                            let op = bc[i];
-                            let v = bc[i + 1];
-                            let a_low = bc[i + 2];
-                            let a_high = bc[i + 3];
-                            let a = ((a_high as i64) << 32) | (a_low as i64);
-                            let s = bc[i + 4];
-
-                            let target_area = s & 0xFF;
-                            let mut targets_us = false;
-                            if target_area == 1 {
-                                targets_us = true;
-                            } else if (target_area == 4 || target_area == 0) && other_slot == slot_idx {
-                                targets_us = true;
-                            } else if target_area == 10 && slot_idx as i16 == ctx.target_slot {
-                                targets_us = true;
-                            }
-
-                            if op == O_ADD_HEARTS && targets_us {
-                                let mut multiplier = 1;
-                                if (s & 0x10000) != 0 {
-                                    let count_op = (s >> 8) & 0xFFFF;
-                                    multiplier = resolve_count(state, db, count_op, a as u64, s, &ctx, depth + 1);
-                                } else if (a & 0x02) != 0 && ((s >> 8) & 0xFF) != 0 {
-                                    let count_op = (s >> 8) & 0xFF; // Legacy 8-bit
-                                    multiplier = resolve_count(state, db, count_op, a as u64, count_op, &ctx, depth + 1);
-                                }
-
-                                let mut color = a as usize;
-                                if color == 0 {
-                                    color = ctx.selected_color as usize;
-                                }
-                                if color < 7 {
-                                    board.add_to_color(color, (v as i32) * multiplier);
-                                }
-                            }
-                            i += 5;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // --- Wave 2: Granted Abilities ---
-    for &(target_cid, source_cid, ab_idx) in &state.players[player_idx].granted_abilities {
-        if target_cid == cid {
-            if let Some(src_m) = db.get_member(source_cid) {
-                if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
-                    if ab.trigger == TriggerType::Constant {
-                        let ctx = AbilityContext {
-                            source_card_id: cid,
-                            player_id: player_idx as u8,
-                            activator_id: player_idx as u8,
-                            area_idx: slot_idx as i16,
-                            ..Default::default()
-                        };
-                        if ab
-                            .conditions
-                            .iter()
-                            .all(|c| check_condition(state, db, player_idx, c, &ctx, depth + 1))
-                        {
-                            let bc = &ab.bytecode;
-                            let mut i = 0;
-                            while i + 4 < bc.len() {
-                                let op = bc[i];
-                                let v = bc[i + 1];
-                                let a_low = bc[i + 2];
-                                let a_high = bc[i + 3];
-                                let a = ((a_high as i64) << 32) | (a_low as i64);
-                                let s = bc[i + 4];
-                                if op == O_ADD_HEARTS {
-                                    let mut multiplier = 1;
-                                    if (s & 0x10000) != 0 {
-                                        let count_op = (s >> 8) & 0xFF;
-                                        multiplier = resolve_count(state, db, count_op, a as u64, s, &ctx, depth + 1);
-                                    }
-
-                                    let mut color = a as usize;
-                                    if color == 0 {
-                                        color = ctx.selected_color as usize;
-                                    }
-                                    if color < 7 {
-                                        board.add_to_color(color, (v as i32) * multiplier);
-                                    }
-                                }
-                                i += 5;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Add hearts from yelled cards (Rule 8.3.1)
-    for &yid in &state.players[player_idx].stage_energy[slot_idx] {
-        if let Some(ym) = db.get_member(yid) {
-            board.add(ym.blade_hearts_board);
-        }
-    }
-
-    board.add(state.players[player_idx].heart_buffs[slot_idx]);
-    board
+    let query_aura = get_query_aura(state, player_idx, db, depth);
+    let aura = query_aura
+        .as_ref()
+        .unwrap_or(&state.players[player_idx].board_aura);
+    get_effective_hearts_with_aura(state, player_idx, slot_idx, db, aura)
 }
 
 pub fn get_total_blades(state: &GameState, p_idx: usize, db: &CardDatabase, depth: u32) -> u32 {
+    if let Some(aura) = get_query_aura(state, p_idx, db, depth) {
+        let mut total = 0u32;
+        for i in 0..3 {
+            total += get_effective_blades_with_aura(state, p_idx, i, db, &aura);
+        }
+        return total;
+    }
     let mut total = 0u32;
     for i in 0..3 {
         total += get_effective_blades(state, p_idx, i, db, depth + 1);
@@ -348,6 +292,13 @@ pub fn get_total_hearts(
     db: &CardDatabase,
     depth: u32,
 ) -> HeartBoard {
+    if let Some(aura) = get_query_aura(state, p_idx, db, depth) {
+        let mut total = HeartBoard::default();
+        for i in 0..3 {
+            total.add(get_effective_hearts_with_aura(state, p_idx, i, db, &aura));
+        }
+        return total;
+    }
     let mut total = HeartBoard::default();
     for i in 0..3 {
         total.add(get_effective_hearts(state, p_idx, i, db, depth + 1));
@@ -363,14 +314,10 @@ pub fn get_effective_member_hearts(
     depth: u32,
 ) -> HeartBoard {
     let mut board = get_effective_hearts(state, player_idx, slot_idx, db, depth + 1);
-    for &yid in &state.players[player_idx].stage_energy[slot_idx] {
-        if let Some(ym) = db.get_member(yid) {
-            let blade_hearts = ym.blade_hearts_board.to_array();
-            for (color, &count) in blade_hearts.iter().enumerate() {
-                if count > 0 {
-                    board.add_to_color(color, -(count as i32));
-                }
-            }
+    let yell_bonus = state.players[player_idx].yell_heart_bonus[slot_idx].to_array();
+    for (color, &count) in yell_bonus.iter().enumerate() {
+        if count > 0 {
+            board.add_to_color(color, -(count as i32));
         }
     }
     board
@@ -387,6 +334,15 @@ pub fn get_total_member_hearts(
         total.add(get_effective_member_hearts(state, p_idx, i, db, depth + 1));
     }
     total
+}
+
+pub fn calculate_cost_delta(state: &GameState, db: &CardDatabase, card_id: i32, p_idx: usize) -> i32 {
+    let effective = get_member_cost(state, p_idx, card_id, -1, -1, db, 0);
+    if let Some(m) = db.get_member(card_id) {
+        effective - (m.cost as i32)
+    } else {
+        0
+    }
 }
 
 pub fn get_member_cost(
@@ -415,13 +371,18 @@ pub fn get_member_cost(
         );
     }
 
+    let query_aura = get_query_aura(state, p_idx, db, depth);
+
     // 1. Global reduction
     cost -= state.players[p_idx].cost_reduction as i32;
 
     // 2. Baton Touch & Cached Position Modifiers (Rule 12 & Auras)
     if slot_idx >= 0 && slot_idx < STAGE_SLOT_COUNT as i16 {
-        // Apply cached slot modifiers (from other members & granted abilities)
-        cost += state.players[p_idx].slot_cost_modifiers[slot_idx as usize] as i32;
+        let slot_modifier = query_aura
+            .as_ref()
+            .map(|aura| aura.slot_cost_modifiers[slot_idx as usize])
+            .unwrap_or(state.players[p_idx].slot_cost_modifiers[slot_idx as usize]);
+        cost += slot_modifier as i32;
 
         let old_cid = state.players[p_idx].stage[slot_idx as usize];
         if old_cid >= 0 {
@@ -440,6 +401,41 @@ pub fn get_member_cost(
         }
     }
 
+    // VANILLA MODE: Skip constant ability cost reductions in abilityless mode
+    if db.is_truly_vanilla() {
+        return cost.max(0);
+    }
+
+    for source_slot in 0..3 {
+        let source_cid = state.players[p_idx].stage[source_slot];
+        if source_cid < 0 || source_cid == card_id {
+            continue;
+        }
+        if let Some(source_member) = db.get_member(source_cid) {
+            let source_ctx = AbilityContext {
+                source_card_id: source_cid,
+                player_id: p_idx as u8,
+                activator_id: p_idx as u8,
+                area_idx: source_slot as i16,
+                ..Default::default()
+            };
+            for ab in &source_member.abilities {
+                if ab.trigger == TriggerType::Constant {
+                    apply_external_reduce_cost_modifiers(
+                        &mut cost,
+                        ab,
+                        state,
+                        db,
+                        p_idx,
+                        &source_ctx,
+                        card_id,
+                        depth,
+                    );
+                }
+            }
+        }
+    }
+
     // 3. Self constant abilities that reduce own cost
     for ab in &m.abilities {
         if ab.trigger == TriggerType::Constant {
@@ -450,59 +446,38 @@ pub fn get_member_cost(
                 area_idx: slot_idx as i16,
                 ..Default::default()
             };
-                if state.debug.debug_mode && !state.ui.silent {
-                    println!("[DEBUG] Checking ability: trigger={:?}, conditions_len={}", ab.trigger, ab.conditions.len());
-                }
-                let mut cond_match = true;
-                for c in &ab.conditions {
-                    if !check_condition(state, db, p_idx, c, &ctx, depth + 1) {
-                        if state.debug.debug_mode && !state.ui.silent {
-                           println!("[DEBUG] Condition failed: type={:?}, value={}", c.condition_type, c.value);
-                        }
-                        cond_match = false;
-                        break;
-                    }
-                }
 
-            if cond_match {
-                let bc = &ab.bytecode;
-                let mut i = 0;
-                if state.debug.debug_mode && !state.ui.silent {
-                    println!("[DEBUG] Conditions PASSED. Running bytecode loop, len={}", bc.len());
-                }
-                while i + 4 < bc.len() {
-                    let op = bc[i];
-                    let v = bc[i + 1];
-                    let _target_type = bc[i + 4];
-
-                        if op == O_REDUCE_COST && ((bc[i + 4] as u32) & 0xFF == 0 || (bc[i + 4] as u32) & 0xFF == 4) {
-                            let a_low = bc[i + 2] as u32;
-                            let a_high = bc[i + 3] as u32;
-                            let a = ((a_high as u64) << 32) | (a_low as u64);
-                            let s = bc[i + 4] as u32;
-
-                            let mut multiplier = 1;
-                            if (a & DYNAMIC_VALUE) != 0 {
-                                // DYNAMIC_VALUE bit set
-                                let count_op = (s >> 8) & 0xFFFF;
-                                multiplier = resolve_count(state, db, count_op as i32, a & !DYNAMIC_VALUE, s as i32, &ctx, depth + 1);
-                                if state.debug.debug_mode && !state.ui.silent {
-                                    println!("[DEBUG] resolve_count returned: {}, for op: {}, a: {:X}", multiplier, count_op, a);
-                                }
-                            }
-                            cost -= (v as i32) * multiplier;
-                            if state.debug.debug_mode && !state.ui.silent {
-                                println!("[DEBUG] Applied REDUCE_COST: v={}, multiplier={}, new_cost={}", v, multiplier, cost);
-                            }
-                        }
-                    i += 5;
-                }
-            }
+            apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth);
         }
     }
 
     // 4. Granted constant abilities that reduce own cost
     for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
+        if target_cid != card_id {
+            if let Some(src_m) = db.get_member(source_cid) {
+                if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                    if ab.trigger == TriggerType::Constant {
+                        let ctx = AbilityContext {
+                            source_card_id: source_cid,
+                            player_id: p_idx as u8,
+                            activator_id: p_idx as u8,
+                            area_idx: slot_idx as i16,
+                            ..Default::default()
+                        };
+                        apply_external_reduce_cost_modifiers(
+                            &mut cost,
+                            ab,
+                            state,
+                            db,
+                            p_idx,
+                            &ctx,
+                            card_id,
+                            depth,
+                        );
+                    }
+                }
+            }
+        }
         if target_cid == card_id {
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
@@ -514,33 +489,7 @@ pub fn get_member_cost(
                             area_idx: slot_idx as i16,
                             ..Default::default()
                         };
-                        if ab
-                            .conditions
-                            .iter()
-                            .all(|c| check_condition(state, db, p_idx, c, &ctx, depth + 1))
-                        {
-                            let bc = &ab.bytecode;
-                            let mut i = 0;
-                            while i + 4 < bc.len() {
-                                let op = bc[i];
-                                let v = bc[i + 1];
-                                if op == O_REDUCE_COST && ((bc[i + 4] as u32) & 0xFF == 0 || (bc[i + 4] as u32) & 0xFF == 4) {
-                                    let a_low = bc[i + 2] as u32;
-                                    let a_high = bc[i + 3] as u32;
-                                    let a = ((a_high as u64) << 32) | (a_low as u64);
-                                    let s = bc[i + 4] as u32;
-
-                                    let mut multiplier = 1;
-                                    if (a & DYNAMIC_VALUE) != 0 {
-                                        // DYNAMIC_VALUE bit set
-                                        let count_op = (s >> 8) & 0xFFFF;
-                                        multiplier = resolve_count(state, db, count_op as i32, a & !DYNAMIC_VALUE, s as i32, &ctx, depth + 1);
-                                    }
-                                    cost -= (v as i32) * multiplier;
-                                }
-                                i += 5;
-                            }
-                        }
+                        apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth);
                     }
                 }
             }
@@ -571,6 +520,11 @@ pub fn has_restriction(
     opcode: i32,
     db: &CardDatabase,
 ) -> bool {
+    // VANILLA MODE: No restrictions from abilities in abilityless mode
+    if db.is_truly_vanilla() {
+        return false;
+    }
+    
     let cid = state.players[p_idx].stage[slot_idx];
     if cid < 0 {
         return false;
@@ -581,58 +535,69 @@ pub fn has_restriction(
         return false;
     };
 
+    // Fast rejection via bitmask
+    if (m.ability_opcodes_mask & (1u128 << (opcode as u32 % 128))) == 0 {
+        return false;
+    }
+
     // 1. Self constant abilities
-    for ab in &m.abilities {
-        if ab.trigger == TriggerType::Constant {
-            let ctx = AbilityContext {
-                source_card_id: cid,
-                player_id: p_idx as u8,
-                activator_id: p_idx as u8,
-                area_idx: slot_idx as i16,
-                ..Default::default()
-            };
-            if ab
-                .conditions
-                .iter()
-                .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
-            {
-                let bc = &ab.bytecode;
-                let mut i = 0;
-                while i + 4 < bc.len() {
-                    if bc[i] == opcode {
-                        return true;
+    if (m.effect_mask & EFFECT_MASK_RULE) != 0 {
+        for ab in &m.abilities {
+            if ab.trigger == TriggerType::Constant {
+                if (ab.opcodes_mask & (1u128 << (opcode as u32 % 128))) != 0 {
+                    let ctx = AbilityContext {
+                        source_card_id: cid,
+                        player_id: p_idx as u8,
+                        activator_id: p_idx as u8,
+                        area_idx: slot_idx as i16,
+                        ..Default::default()
+                    };
+                    if ab
+                        .conditions
+                        .iter()
+                        .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
+                    {
+                        let bc = &ab.bytecode;
+                        let mut i = 0;
+                        while i + 4 < bc.len() {
+                            if bc[i] == opcode {
+                                return true;
+                            }
+                            i += 5;
+                        }
                     }
-                    i += 5;
                 }
             }
         }
     }
 
-    // 2. Granted abilities
+    // 2. Granted constant abilities
     for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
         if target_cid == cid {
             if let Some(src_m) = db.get_member(source_cid) {
                 if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                     if ab.trigger == TriggerType::Constant {
-                        let ctx = AbilityContext {
-                            source_card_id: cid,
-                            player_id: p_idx as u8,
-                            activator_id: p_idx as u8,
-                            area_idx: slot_idx as i16,
-                            ..Default::default()
-                        };
-                        if ab
-                            .conditions
-                            .iter()
-                            .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
-                        {
-                            let bc = &ab.bytecode;
-                            let mut i = 0;
-                            while i + 4 < bc.len() {
-                                if bc[i] == opcode {
-                                    return true;
+                        if (ab.opcodes_mask & (1u128 << (opcode as u32 % 128))) != 0 {
+                            let ctx = AbilityContext {
+                                source_card_id: cid,
+                                player_id: p_idx as u8,
+                                activator_id: p_idx as u8,
+                                area_idx: slot_idx as i16,
+                                ..Default::default()
+                            };
+                            if ab
+                                .conditions
+                                .iter()
+                                .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
+                            {
+                                let bc = &ab.bytecode;
+                                let mut i = 0;
+                                while i + 4 < bc.len() {
+                                    if bc[i] == opcode {
+                                        return true;
+                                    }
+                                    i += 5;
                                 }
-                                i += 5;
                             }
                         }
                     }
@@ -642,4 +607,178 @@ pub fn has_restriction(
     }
 
     false
+}
+
+pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatabase) -> BoardAura {
+    let mut aura = BoardAura::default();
+    if db.is_truly_vanilla() {
+        return aura;
+    }
+
+    // 1. Constant abilities from members on stage
+    for source_slot in 0..3 {
+        let cid = state.players[player_idx].stage[source_slot];
+        if cid < 0 {
+            continue;
+        }
+        if let Some(m) = db.get_member(cid) {
+            for ab in &m.abilities {
+                if ab.trigger == TriggerType::Constant {
+                    let ctx = AbilityContext {
+                        source_card_id: cid,
+                        player_id: player_idx as u8,
+                        activator_id: player_idx as u8,
+                        area_idx: source_slot as i16,
+                        ..Default::default()
+                    };
+                    if ab
+                        .conditions
+                        .iter()
+                        .all(|c| check_condition(state, db, player_idx, c, &ctx, 1))
+                    {
+                        for pm in &ab.preparsed_modifiers {
+                            let op = pm.op;
+                            let v = pm.val;
+                            let s = pm.slot;
+                            let a = pm.attr;
+                            let target_area = s & 0xFF;
+
+                            // Determine target slots
+                            let mut target_mask = 0u8;
+                            if target_area == 1 {
+                                target_mask = 0b111;
+                            } else if target_area == 4 || target_area == 0 {
+                                target_mask = 1 << source_slot;
+                            } else if target_area == 10 {
+                                // This usually depends on target_slot in ctx, which is for triggers.
+                                // Constant area-targeting "10" is rare but we handle it if possible.
+                            }
+
+                            for target_slot in 0..3 {
+                                if (target_mask & (1 << target_slot)) != 0 {
+                                    apply_aura_modifier(&mut aura, op, v, s, a, &ctx, state, db, player_idx, target_slot);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Granted abilities
+    for &(target_cid, source_cid, ab_idx) in &state.players[player_idx].granted_abilities {
+        if let Some(src_m) = db.get_member(source_cid) {
+            if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                if ab.trigger == TriggerType::Constant {
+                    // Check if target is on stage
+                    let mut target_slot_opt = None;
+                    for s in 0..3 {
+                        if state.players[player_idx].stage[s] == target_cid {
+                            target_slot_opt = Some(s);
+                            break;
+                        }
+                    }
+
+                    if let Some(target_slot) = target_slot_opt {
+                        let ctx = AbilityContext {
+                            source_card_id: target_cid,
+                            player_id: player_idx as u8,
+                            activator_id: player_idx as u8,
+                            area_idx: target_slot as i16,
+                            ..Default::default()
+                        };
+                        if ab
+                            .conditions
+                            .iter()
+                            .all(|c| check_condition(state, db, player_idx, c, &ctx, 1))
+                        {
+                            let bc = &ab.bytecode;
+                            let mut i = 0;
+                            while i + 4 < bc.len() {
+                                let op = bc[i];
+                                let v = bc[i + 1];
+                                let a_low = bc[i + 2];
+                                let a_high = bc[i + 3];
+                                let a = ((a_high as u64) << 32) | (a_low as u64);
+                                let s = bc[i + 4];
+
+                                apply_aura_modifier(&mut aura, op, v, s, a, &ctx, state, db, player_idx, target_slot);
+                                i += 5;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    aura
+}
+
+fn apply_aura_modifier(
+    aura: &mut BoardAura,
+    op: i32,
+    v: i32,
+    s: i32,
+    a: u64,
+    ctx: &AbilityContext,
+    state: &GameState,
+    db: &CardDatabase,
+    p_idx: usize,
+    target_slot: usize,
+) {
+    let mut multiplier = 1;
+    if (s & 0x10000) != 0 {
+        let count_op = (s >> 8) & 0xFFFF;
+        multiplier = resolve_count(state, db, count_op, a, s, ctx, 2);
+    }
+
+    match op {
+        O_ADD_BLADES | O_BUFF_POWER => {
+            if (a & 0x40) != 0 || a == ConditionType::SuccessPileCount as u64 {
+                multiplier = state.players[p_idx].success_lives.len() as i32;
+            } else if (a & 0xFFFFFFFF) == 1 && (a >> 32) > 0x00FFFFFF {
+                multiplier = state.players[p_idx].success_lives.len() as i32;
+            }
+            aura.blades[target_slot] += v * multiplier;
+        }
+        O_ADD_HEARTS => {
+            if (a & 0x02) != 0 && ((s >> 8) & 0xFF) != 0 {
+                let count_op = (s >> 8) & 0xFF;
+                multiplier = resolve_count(state, db, count_op, a, count_op, ctx, 2);
+            }
+            let mut color = a as usize;
+            if color == 0 {
+                color = ctx.selected_color as usize;
+            }
+            if color < 7 {
+                aura.hearts[target_slot].add_to_color(color, v * multiplier);
+            }
+        }
+        O_REDUCE_COST => {
+            aura.slot_cost_modifiers[target_slot] -= v as i16 * multiplier as i16;
+        }
+        O_INCREASE_COST => {
+            aura.slot_cost_modifiers[target_slot] += v as i16 * multiplier as i16;
+        }
+        O_REDUCE_HEART_REQ => {
+             // Implementation for heart requirement reductions
+             let mut color = a as usize;
+             if color == 0 { color = ctx.selected_color as usize; }
+             if color < 7 {
+                 aura.heart_req_reductions.add_to_color(color, v * multiplier);
+             }
+        }
+        O_SET_HEART_COST => {
+            // Unpack up to 8 values from A (each 4 bits)
+            for i in 0..6 {
+                let req_val = (a >> (i * 4)) & 0xF;
+                if req_val > 0 {
+                    aura.heart_req_reductions.add_to_color(i, -(req_val as i32)); // Negative reduction = addition
+                }
+            }
+        }
+        _ => {}
+    }
 }

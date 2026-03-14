@@ -100,3 +100,13 @@ pub const TARGET_SLOT_FROM_CONTEXT: i32 = 10;
 
 /// Number of stage slots per player.
 pub const STAGE_SLOT_COUNT: usize = 3;
+
+// --- Ability Effect Mask Bits ---
+pub const EFFECT_MASK_BLADE: u64 = 1 << 0;
+pub const EFFECT_MASK_HEART: u64 = 1 << 1;
+pub const EFFECT_MASK_COST: u64 = 1 << 2;
+pub const EFFECT_MASK_REQ: u64 = 1 << 3;
+pub const EFFECT_MASK_GRANT: u64 = 1 << 4;
+pub const EFFECT_MASK_RULE: u64 = 1 << 5;
+pub const EFFECT_MASK_SCORE: u64 = 1 << 6;
+pub const EFFECT_MASK_DRAW: u64 = 1 << 7;

@@ -10,6 +10,8 @@ use std::time::Instant;
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::TurnSequencer;
 use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
+use rand::SeedableRng;
+use rand::rngs::SmallRng;
 use rand::seq::IndexedRandom;
 
 fn load_vanilla_db() -> CardDatabase {
@@ -95,7 +97,7 @@ fn main() {
     println!("  Energy: {}", db.energy_db.len());
     println!("  Deck Size: 48 members + 12 lives\n");
 
-    let mut rng = rand::rng();
+    let mut rng = rand::rngs::SmallRng::from_os_rng();
     let mut all_stats = Vec::new();
 
     // Run a few sample games

@@ -3,6 +3,9 @@
 linker = "rust-lld.exe"
 
 # Maximize parallel jobs automatically (default behavior)
+[build]
+# Uncomment the following line if using a nightly toolchain for faster parallel frontend
+# rustflags = ["-Zthreads=8"]
 
 [alias]
 # Build and install the extension into the current Python environment

@@ -147,7 +147,7 @@ fn execute_main_sequence(state: &mut GameState, db: &CardDatabase, planned_seq: 
 }
 
 fn set_config(cfg: &SequencerConfig) {
-    *CONFIG.write().unwrap() = cfg.clone();
+    *engine_rust::core::logic::turn_sequencer::get_config().write().unwrap() = cfg.clone();
 }
 
 fn run_single_game(
@@ -326,7 +326,7 @@ fn main() {
     let db = load_vanilla_db();
     let p0_deck = load_deck(&deck0_path, &db);
     let p1_deck = load_deck(&deck1_path, &db);
-    let baseline = CONFIG.read().unwrap().clone();
+    let baseline = engine_rust::core::logic::turn_sequencer::get_config().read().unwrap().clone();
     let candidates = make_candidates(&baseline);
 
     let mut results = Vec::new();

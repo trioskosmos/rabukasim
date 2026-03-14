@@ -704,7 +704,7 @@ class AbilityParserV2:
                                 try:
                                     if val_int == 0:
                                         val_int = int(vp)
-                                except:
+                                except (TypeError, ValueError):
                                     pass
                 elif hasattr(ConditionType, val_up):
                     val_cond = getattr(ConditionType, val_up)
@@ -792,7 +792,7 @@ class AbilityParserV2:
                         # Map HEART_00..05 to 0..5
                         try:
                             v = int(v[7:])
-                        except:
+                        except ValueError:
                             pass
 
                 # Special color mapping for FILTER strings
@@ -1235,7 +1235,7 @@ class AbilityParserV2:
                     else:
                         try:
                             target = TargetType[target_name]
-                        except:
+                        except KeyError:
                             # If not a valid target type, it might be a destination (e.g. DECK_BOTTOM)
                             params["destination"] = target_name.lower()
                             target = last_target
@@ -1349,7 +1349,7 @@ class AbilityParserV2:
                                 try:
                                     if val_int == 0:
                                         val_int = int(vp)
-                                except:
+                                except (TypeError, ValueError):
                                     pass
                 # Check if val is a condition type (e.g. COUNT_STAGE)
                 elif val and hasattr(ConditionType, val):
@@ -1446,7 +1446,7 @@ class AbilityParserV2:
                             val_int = max(0, dest_color)
                             params["source_color"] = source_color
                             target = TargetType.PLAYER
-                        except:
+                        except (TypeError, ValueError):
                             pass
 
                 # Special parsing for TRANSFORM_BLADES(ALL) -> X

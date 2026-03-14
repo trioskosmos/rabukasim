@@ -2487,7 +2487,7 @@ mod tests {
         state.players[0].hand = vec![target_id].into();
         state.players[0].energy_zone = vec![3001; 20].into();
 
-        state.sync_cost_modifiers(0, &db);
+        state.sync_stat_caches(0, &db);
         let current_cost = state.get_member_cost(0, target_id, 0, -1, &db, 0);
 
         assert_eq!(
@@ -2561,7 +2561,7 @@ mod tests {
         state.players[0].hand = vec![target_id].into();
         state.players[0].energy_zone = vec![3001; 20].into();
 
-        state.sync_cost_modifiers(0, &db);
+        state.sync_stat_caches(0, &db);
         let current_cost = state.get_member_cost(0, target_id, 0, -1, &db, 0);
 
         assert_eq!(

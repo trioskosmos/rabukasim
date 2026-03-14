@@ -20,12 +20,15 @@ pub use costs::{check_cost, pay_cost};
 pub use handlers::{HandlerRegistry, HandlerResult};
 pub use suspension::{get_choice_text, resolve_target_slot, suspend_interaction};
 
-use once_cell::sync::Lazy;
+use std::sync::OnceLock;
 use std::collections::HashSet;
 use std::sync::Mutex;
 
-pub static GLOBAL_OPCODE_TRACKER: Lazy<Mutex<HashSet<i32>>> =
-    Lazy::new(|| Mutex::new(HashSet::<i32>::new()));
+pub static GLOBAL_OPCODE_TRACKER: OnceLock<Mutex<HashSet<i32>>> = OnceLock::new();
+
+pub fn get_global_opcode_tracker() -> &'static Mutex<HashSet<i32>> {
+    GLOBAL_OPCODE_TRACKER.get_or_init(|| Mutex::new(HashSet::<i32>::new()))
+}
 
 // fn log_opcode_to_file(_op: i32) {
 //     use std::io::Write;
@@ -101,6 +104,11 @@ pub fn resolve_ability(
     ability: &Ability,
     ctx_in: &AbilityContext,
 ) {
+    // VANILLA MODE: Skip all ability execution
+    if db.is_truly_vanilla() {
+        return;
+    }
+
     if !ability_uses_structured_runtime(ability) {
         resolve_bytecode(state, db, std::sync::Arc::new(ability.bytecode.clone()), ctx_in);
         return;
@@ -208,6 +216,11 @@ pub fn resolve_bytecode(
     bytecode: std::sync::Arc<Vec<i32>>,
     ctx_in: &AbilityContext,
 ) {
+    // VANILLA MODE: Skip all bytecode execution
+    if db.is_vanilla {
+        return;
+    }
+
     let _id = if state.ui.current_execution_id.is_none() && ctx_in.program_counter == 0 {
         Some(state.generate_execution_id())
     } else {
@@ -465,6 +478,12 @@ pub fn is_condition_opcode(op: i32) -> bool {
 }
 
 pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
+    // VANILLA MODE: Skip all ability triggering
+    if db.is_vanilla {
+        state.trigger_queue.clear();
+        return;
+    }
+
     while let Some((cid, ab_idx, ctx, is_live, _trigger)) = state.trigger_queue.pop_front() {
         // Generate a new ID for the activation
         state.generate_execution_id();
@@ -504,24 +523,6 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             }
             resolve_ability(state, db, ability, &ctx);
 
-            let is_custom_live_override = is_live
-                && db
-                    .get_live(cid)
-                    .map(|card| {
-                        card.card_no.as_str() == "PL!-bp5-021-L"
-                            || card.card_no.as_str() == "PL!N-bp4-030-L"
-                    })
-                    .unwrap_or(false);
-            let suspended_execution = state.phase == Phase::Response
-                && state
-                    .interaction_stack
-                    .last()
-                    .map(|pi| pi.execution_id == execution_id)
-                    .unwrap_or(false);
-            if suspended_execution && !is_custom_live_override {
-                continue;
-            }
-
             // Fire resolution triggers
             let res_trigger = match _trigger {
                 crate::core::enums::TriggerType::OnLiveStart => Some(crate::core::enums::TriggerType::OnAbilityResolve),
@@ -550,9 +551,9 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                 state.trigger_abilities(db, t, &res_ctx);
             }
 
-            let top_original_phase = state.interaction_stack.last().map(|pi| pi.original_phase);
-            let top_original_player = state.interaction_stack.last().map(|pi| pi.original_current_player);
-            let clear_same_card_interactions = |state: &mut GameState, card_id: i32| {
+            let _top_original_phase = state.interaction_stack.last().map(|pi| pi.original_phase);
+            let _top_original_player = state.interaction_stack.last().map(|pi| pi.original_current_player);
+            let _clear_same_card_interactions = |state: &mut GameState, card_id: i32| {
                 while state
                     .interaction_stack
                     .last()
@@ -563,89 +564,12 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                 }
             };
 
-            let stage_count = state.players[ctx.player_id as usize]
+            let _stage_count = state.players[ctx.player_id as usize]
                 .stage
                 .iter()
                 .filter(|&&card_id| card_id >= 0)
                 .count();
 
-            if is_live
-                && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
-                && db
-                    .get_live(cid)
-                    .map(|card| card.card_no.as_str() == "PL!-bp5-021-L")
-                    .unwrap_or(false)
-                && stage_count >= 2
-            {
-                clear_same_card_interactions(state, cid);
-                let mut follow_ctx = ctx.clone();
-                follow_ctx.choice_index = -1;
-                follow_ctx.v_accumulated = 211;
-                follow_ctx.original_phase = Some(top_original_phase.unwrap_or(Phase::Main));
-                follow_ctx.original_current_player = Some(top_original_player.unwrap_or(state.current_player));
-                let choice_text = get_choice_text(db, &follow_ctx);
-                if suspend_interaction(
-                    state,
-                    db,
-                    &follow_ctx,
-                    0,
-                    O_SELECT_MEMBER,
-                    0,
-                    crate::core::enums::ChoiceType::SelectMember,
-                    &choice_text,
-                    17,
-                    -1,
-                ) {
-                    continue;
-                }
-            }
-
-            if is_live
-                && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveSuccess
-                && db
-                    .get_live(cid)
-                    .map(|card| card.card_no.as_str() == "PL!N-bp4-030-L")
-                    .unwrap_or(false)
-                && state.players[ctx.player_id as usize]
-                    .success_lives
-                    .iter()
-                    .copied()
-                    .any(|success_cid| state.card_matches_filter(db, success_cid, 80))
-            {
-                let mut mask = 0i16;
-                mask |= 0x1;
-                if state.players[ctx.player_id as usize]
-                    .discard
-                    .iter()
-                    .copied()
-                    .any(|discard_cid| db.get_member(discard_cid).is_some())
-                {
-                    mask |= 0x2;
-                }
-                if mask != 0 {
-                    clear_same_card_interactions(state, cid);
-                    let mut follow_ctx = ctx.clone();
-                    follow_ctx.choice_index = -1;
-                    follow_ctx.v_accumulated = 1900 + mask;
-                    follow_ctx.original_phase = Some(top_original_phase.unwrap_or(Phase::Main));
-                    follow_ctx.original_current_player = Some(top_original_player.unwrap_or(state.current_player));
-                    let choice_text = get_choice_text(db, &follow_ctx);
-                    if suspend_interaction(
-                        state,
-                        db,
-                        &follow_ctx,
-                        0,
-                        O_SELECT_MODE,
-                        0,
-                        crate::core::enums::ChoiceType::SelectMode,
-                        &choice_text,
-                        0,
-                        mask.count_ones() as i16,
-                    ) {
-                        continue;
-                    }
-                }
-            }
         }
 
         state.clear_execution_id();

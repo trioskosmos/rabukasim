@@ -606,8 +606,8 @@ impl MCTS {
                         let action = self.nodes[node_idx].untried_actions.swap_remove(idx);
                         let actor = state.current_player;
                         let _ = state.step(db, action);
-                        state.sync_cost_modifiers(0, db);
-                        state.sync_cost_modifiers(1, db);
+                        state.sync_stat_caches(0, db);
+                        state.sync_stat_caches(1, db);
 
                         self.legal_buffer.clear();
                         state.generate_legal_actions(
@@ -762,8 +762,8 @@ impl MCTS {
                     let actor = state.current_player;
                     let _ = state.step(db, action);
 
-                    state.sync_cost_modifiers(0, db);
-                    state.sync_cost_modifiers(1, db);
+                    state.sync_stat_caches(0, db);
+                    state.sync_stat_caches(1, db);
 
                     self.legal_buffer.clear();
                     let mut is_capped = false;

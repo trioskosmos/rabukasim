@@ -111,9 +111,7 @@ pub fn handle_energy(
             let is_wait = (s as u64 & FLAG_IS_WAIT) != 0;
             for _ in 0..v {
                 if let Some(cid) = state.players[target_p].energy_deck.pop() {
-                    state.players[target_p].energy_zone.push(cid);
-                    let new_idx = state.players[target_p].energy_zone.len() - 1;
-                    state.players[target_p].set_energy_tapped(new_idx, is_wait);
+                    state.players[target_p].push_energy_card(cid, is_wait);
                 }
             }
             HandlerResult::Continue
@@ -355,7 +353,7 @@ pub fn handle_energy(
                     return HandlerResult::SetCond(false);
                 }
 
-                let energy_cid = state.players[p_idx].energy_zone.remove(idx);
+                let energy_cid = state.players[p_idx].remove_energy_card(idx).unwrap();
                 state.players[p_idx].stage_energy[slot].push(energy_cid);
                 return HandlerResult::SetCond(true);
             }
@@ -363,12 +361,12 @@ pub fn handle_energy(
             if slot < 3 {
                 match src_zone {
                     7 => {
-                        if let Some(cid) = state.players[p_idx].discard.pop() {
+                        if let Some(cid) = state.players[p_idx].pop_discard_card() {
                             state.players[p_idx].stage_energy[slot].push(cid);
                         }
                     }
                     8 => {
-                        if let Some(cid) = state.players[p_idx].deck.pop() {
+                        if let Some(cid) = state.players[p_idx].pop_deck_card() {
                             state.players[p_idx].stage_energy[slot].push(cid);
                         }
                     }
@@ -381,13 +379,13 @@ pub fn handle_energy(
                             };
 
                             if let Some(idx) = selected_idx.filter(|&idx| idx < state.players[p_idx].energy_zone.len()) {
-                                let energy_cid = state.players[p_idx].energy_zone.remove(idx);
+                                let energy_cid = state.players[p_idx].remove_energy_card(idx).unwrap();
                                 state.players[p_idx].stage_energy[slot].push(energy_cid);
                             } else {
-                                let energy_cid = state.players[p_idx].energy_zone.remove(0);
+                                let energy_cid = state.players[p_idx].remove_energy_card(0).unwrap();
                                 state.players[p_idx].stage_energy[slot].push(energy_cid);
                             }
-                        } else if let Some(cid) = state.players[p_idx].deck.pop() {
+                        } else if let Some(cid) = state.players[p_idx].pop_deck_card() {
                             state.players[p_idx].stage_energy[slot].push(cid);
                         }
                     }
@@ -395,8 +393,7 @@ pub fn handle_energy(
                         if !state.players[p_idx].energy_zone.is_empty() {
                             for i in 0..state.players[p_idx].energy_zone.len() {
                                 if !state.players[p_idx].is_energy_tapped(i) {
-                                    let energy_cid =
-                                        state.players[p_idx].energy_zone.remove(i);
+                                    let energy_cid = state.players[p_idx].remove_energy_card(i).unwrap();
                                     state.players[p_idx].stage_energy[slot].push(energy_cid);
                                     break;
                                 }
@@ -743,8 +740,9 @@ pub fn handle_member_state(
                             .map(|card| card.cost)
                             .unwrap_or(u32::MAX);
                         if target_cost <= 4 {
-                            if let Some(drawn) = state.players[p_idx].deck.pop() {
-                                state.players[p_idx].hand.push(drawn);
+                            let turn = state.turn as i32;
+                            if let Some(drawn) = state.players[p_idx].pop_deck_card() {
+                                state.players[p_idx].draw_hand_card(drawn, turn);
                             }
                         }
                     }
@@ -957,11 +955,13 @@ pub fn handle_member_state(
                         state.players[p_idx].hand.len() - 1
                     };
                     if hand_idx < state.players[p_idx].hand.len() {
-                        let cid = state.players[p_idx].hand.remove(hand_idx);
+                        let Some(cid) = state.players[p_idx].remove_hand_card(hand_idx) else {
+                            return HandlerResult::Continue;
+                        };
                         state.players[p_idx].stage_energy[slot].push(cid);
                     }
                 } else if a == 1 {
-                    if let Some(cid) = state.players[p_idx].energy_zone.pop() {
+                    if let Some(cid) = state.players[p_idx].pop_energy_card() {
                         state.players[p_idx].stage_energy[slot].push(cid);
                     }
                 }
@@ -1061,11 +1061,13 @@ pub fn handle_member_state(
                 if slot_idx < 3 {
                     let h_idx = ctx.target_slot as usize;
                     if h_idx < state.players[p_idx].hand.len() {
-                        let cid = state.players[p_idx].hand.remove(h_idx);
+                        let Some(cid) = state.players[p_idx].remove_hand_card(h_idx) else {
+                            return HandlerResult::Continue;
+                        };
                         if let Some(old) =
                             state.handle_member_leaves_stage(p_idx, slot_idx, db, ctx)
                         {
-                            state.players[p_idx].discard.push(old);
+                            state.players[p_idx].push_discard_card(old);
                         }
                         state.players[p_idx].stage[slot_idx] = cid;
                         state.players[p_idx].set_tapped(slot_idx, false);
@@ -1274,11 +1276,11 @@ pub fn handle_member_state(
                             }
                         }
 
-                        state.players[target_p_idx].discard.remove(pos);
+                        state.players[target_p_idx].remove_discard_card(pos);
                         if let Some(old) =
                             state.handle_member_leaves_stage(target_p_idx, slot_idx, db, ctx)
                         {
-                            state.players[target_p_idx].discard.push(old);
+                            state.players[target_p_idx].push_discard_card(old);
                         }
                         state.players[target_p_idx].stage[slot_idx] = card_id;
                         state.players[target_p_idx].set_tapped(slot_idx, true);
@@ -1394,26 +1396,42 @@ pub fn handle_score_hearts(
             }
         }
         O_ADD_BLADES | O_BUFF_POWER => {
-            if target_slot == 1 {
+            // Strip bit 7 which encodes UNTIL_LIVE_END duration flag (compiler convention)
+            let effective_target = target_slot & 0x7F;
+            let effective_slot = if effective_target == 10 {
+                ctx.target_slot as i32
+            } else if effective_target == 0 && ctx.area_idx >= 0 {
+                // SELF target (0) with UNTIL_LIVE_END: use activator's own stage slot
+                ctx.area_idx as i32
+            } else {
+                resolve_target_slot(effective_target, ctx) as i32
+            };
+            // Apply DYNAMIC_VALUE multiplier (e.g. PER_CARD=DISCARD_COUNT)
+            let mut final_v = v;
+            if (a as u64 & DYNAMIC_VALUE) != 0 {
+                let count = ctx.selected_cards.len() as i32;
+                final_v = v * count;
+            }
+            if effective_target == 1 {
                 for t in 0..3 {
-                    state.players[p_idx].blade_buffs[t] += v as i16;
+                    state.players[p_idx].blade_buffs[t] += final_v as i16;
                     state.players[p_idx].blade_buff_logs.push((
                         ctx.source_card_id,
-                        v as i16,
+                        final_v as i16,
                         t as u8,
                     ));
                 }
-            } else if resolved_slot < 3 {
-                state.players[p_idx].blade_buffs[resolved_slot as usize] += v as i16;
+            } else if effective_slot >= 0 && effective_slot < 3 {
+                state.players[p_idx].blade_buffs[effective_slot as usize] += final_v as i16;
                 state.players[p_idx].blade_buff_logs.push((
                     ctx.source_card_id,
-                    v as i16,
-                    resolved_slot as u8,
+                    final_v as i16,
+                    effective_slot as u8,
                 ));
             }
             state.log_event(
                 "EFFECT",
-                &format!("+{} Appeal", v),
+                &format!("+{} Appeal", final_v),
                 ctx.source_card_id,
                 ctx.ability_index,
                 p_idx as u8,
@@ -1484,6 +1502,11 @@ pub fn handle_score_hearts(
             state.players[p_idx]
                 .color_transforms
                 .push((ctx.source_card_id, 0, v as u8));
+            if !state.ui.silent {
+                if let Some(msg) = logging::get_opcode_log(O_TRANSFORM_COLOR, v, a, s, 0) {
+                    state.log(msg);
+                }
+            }
         }
         O_TRANSFORM_BLADES => {
             let target_p = if instr.s.is_opponent { 1 - p_idx } else { p_idx };
@@ -1515,6 +1538,11 @@ pub fn handle_score_hearts(
                     s as u8,
                     v as u8,
                 ));
+                if !state.ui.silent {
+                    if let Some(msg) = logging::get_opcode_log(O_REDUCE_HEART_REQ, v, a, s, 0) {
+                        state.log(msg);
+                    }
+                }
             }
         }
         O_TRANSFORM_HEART => {
@@ -1533,6 +1561,11 @@ pub fn handle_score_hearts(
                     state.players[p_idx]
                         .heart_req_reductions
                         .add_to_color(dst, amt as i32);
+                    if !state.ui.silent {
+                        if let Some(msg) = logging::get_opcode_log(O_TRANSFORM_HEART, v, a, s, 0) {
+                            state.log(msg);
+                        }
+                    }
                 }
             }
         }
@@ -1546,6 +1579,11 @@ pub fn handle_score_hearts(
                     s as u8,
                     v as u8,
                 ));
+                if !state.ui.silent {
+                    if let Some(msg) = logging::get_opcode_log(O_INCREASE_HEART_COST, v, a, s, 0) {
+                        state.log(msg);
+                    }
+                }
             }
         }
         O_SET_HEART_COST => {

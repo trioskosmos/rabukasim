@@ -1,7 +1,0 @@
-rps and turn choice can be random only make sense with abilities
-
-mulligan: essentially high energy cost members and high requirement lives should be replaced in hope for lower ones that can be played turn one
-
-main: should prioritise playing members to the field. while position does not matter due to no abilities, the baton pass depends on what card is in what zone so likely will need to multiply the output here by three unless you have a smarter method
-
-live set: can put up to three cards in live set zone, these actually do not matter order or position.

@@ -175,7 +175,7 @@ fn main() {
         match state.phase {
             Phase::Main => {
                 main_turns_played += 1;
-                let search_depth = engine_rust::core::logic::turn_sequencer::CONFIG.read().unwrap().search.max_dfs_depth;
+                let search_depth = engine_rust::core::logic::turn_sequencer::get_config().read().unwrap().search.max_dfs_depth;
 
                 // Count exact sequences (diagnostic only, not used for move selection)
                 let count_start = Instant::now();

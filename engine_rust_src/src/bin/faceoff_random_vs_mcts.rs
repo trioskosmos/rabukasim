@@ -1,5 +1,7 @@
 use engine_rust::core::heuristics::OriginalHeuristic;
-use engine_rust::core::logic::{GameState, Phase};
+use engine_rust::core::logic::{GameState, Phase, CardDatabase};
+use rand::SeedableRng;
+use rand::rngs::SmallRng;
 use engine_rust::core::mcts::{SearchHorizon, MCTS};
 use engine_rust::test_helpers::load_real_db;
 use rand::Rng;
@@ -37,7 +39,7 @@ fn main() {
         let heuristic = OriginalHeuristic::default();
 
         let mut steps = 0;
-        let mut rng = rand::rng();
+        let mut rng = rand::rngs::SmallRng::from_os_rng();
 
         while !sim.is_terminal() && steps < 500 {
             let current_player = sim.current_player;

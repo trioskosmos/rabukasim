@@ -15,6 +15,8 @@ use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::{TurnSequencer, CONFIG};
 use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
 use rand::prelude::*;
+use rand::SeedableRng;
+use rand::rngs::SmallRng;
 
 // ── DB loading ────────────────────────────────────────────────────────────────
 
@@ -212,7 +214,7 @@ fn run_game(
 
 fn main() {
     println!("Vanilla AI Simulation Runner (Official Rules Alignment)\n");
-    let cfg = CONFIG.read().unwrap().clone();
+    let cfg = engine_rust::core::logic::turn_sequencer::get_config().read().unwrap().clone();
     println!("DFS Max Depth: {}", cfg.search.max_dfs_depth);
 
     let db = load_vanilla_db();
@@ -225,7 +227,7 @@ fn main() {
 
     // Grab first 12 energy cards for the energy deck
     let energy_ids: Vec<i32> = db.energy_db.keys().take(12).cloned().collect();
-    let mut rng = rand::rng();
+    let mut rng = rand::rngs::SmallRng::from_os_rng();
 
     for i in 0..NUM_GAMES {
         run_game(i, &member_cards, &live_cards, &energy_ids, &db, &mut rng);

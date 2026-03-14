@@ -7,10 +7,17 @@ pub mod diagnostics;
 pub mod execution;
 pub mod filter;
 pub mod game;
+mod game_logging;
+mod game_trigger;
+mod game_setup;
+mod game_action_processor;
+mod game_rules_ext;
 pub mod handlers;
 pub mod interpreter;
 pub mod models;
 pub mod performance;
+pub mod performance_allocation;
+pub mod performance_requirements;
 pub mod player;
 pub mod rules;
 pub mod state;
@@ -33,11 +40,13 @@ pub use standard_state::StandardizedState;
 
 // Re-export models
 pub use models::{
-    Ability, AbilityContext, Condition, Cost, Effect, EnergyCard, PendingInteraction, TurnEvent,
+    Ability, AbilityContext, Condition, Cost, DeckStats, Effect, EnergyCard, PendingInteraction,
+    TurnEvent,
 };
 
 // Re-export enums and constants
 pub use crate::core::enums::*;
+pub use crate::core::hearts::HeartBoard;
 
 // Heuristic utility re-exports
 pub use interpreter::conditions::{check_condition, check_condition_opcode};

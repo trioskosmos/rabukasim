@@ -48,21 +48,19 @@ pub fn handle_draw(
                 if state.core.players[target_p].deck.is_empty() {
                     state.resolve_deck_refresh(target_p);
                 }
-                if let Some(card_id) = state.core.players[target_p].deck.pop() {
+                if let Some(card_id) = state.core.players[target_p].pop_deck_card() {
                     let t = state.turn as i32;
                     // Route to destination zone based on instr.s.dest_zone
                     match instr.s.dest_zone {
                         Zone::Hand => {
-                            state.core.players[target_p].hand.push(card_id);
-                            state.core.players[target_p].hand_added_turn.push(t);
+                            state.core.players[target_p].draw_hand_card(card_id, t);
                         }
                         Zone::Discard => {
-                            state.core.players[target_p].discard.push(card_id);
+                            state.core.players[target_p].push_discard_card(card_id);
                         }
                         _ => {
                             // Default to hand if zone is not explicitly specified
-                            state.core.players[target_p].hand.push(card_id);
-                            state.core.players[target_p].hand_added_turn.push(t);
+                            state.core.players[target_p].draw_hand_card(card_id, t);
                         }
                     }
                 }
@@ -90,11 +88,7 @@ pub fn handle_draw(
                 for _ in 0..v as usize {
                     if !state.players[p_idx].looked_cards.is_empty() {
                         let cid = state.players[p_idx].looked_cards.remove(0);
-                        state.players[p_idx].hand.push(cid);
-                        state.players[p_idx].hand_increased_this_turn = state.players
-                            [p_idx]
-                            .hand_increased_this_turn
-                            .saturating_add(1);
+                        state.players[p_idx].gain_hand_card(cid);
                     }
                 }
             } else {
@@ -386,18 +380,18 @@ pub fn handle_move_to_discard(
             }
             Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
                 if !state.players[target_player_idx].deck.is_empty() {
-                    removed_cid = state.players[target_player_idx].deck.pop().unwrap() as i32;
+                    removed_cid = state.players[target_player_idx].pop_deck_card().unwrap() as i32;
                 }
             }
             Zone::Energy => {
                 if !state.players[target_player_idx].energy_zone.is_empty() {
-                    removed_cid = state.players[target_player_idx].energy_zone.pop().unwrap() as i32;
+                    removed_cid = state.players[target_player_idx].pop_energy_card().unwrap() as i32;
                 }
             }
             _ => {}
         }
         if removed_cid >= 0 {
-            state.players[target_player_idx].discard.push(removed_cid as i32);
+            state.players[target_player_idx].push_discard_card(removed_cid as i32);
             moved_cards.push(removed_cid as i32);
             next_ctx.v_remaining = if next_ctx.v_remaining > 0 {
                 next_ctx.v_remaining - 1
@@ -466,8 +460,8 @@ pub fn handle_move_to_discard(
         for _ in 0..count {
             match source_zone {
                 Zone::Hand => {
-                    if let Some(cid) = state.players[target_player_idx].hand.pop() {
-                        state.players[target_player_idx].discard.push(cid);
+                    if let Some(cid) = state.players[target_player_idx].pop_hand_card() {
+                        state.players[target_player_idx].push_discard_card(cid);
                         moved_cards.push(cid);
                         next_ctx.selected_cards.push(cid);
                     }
@@ -480,28 +474,28 @@ pub fn handle_move_to_discard(
                     };
                     if let Some(cid) = state.handle_member_leaves_stage(target_player_idx, slot, db, &next_ctx)
                     {
-                        state.players[target_player_idx].discard.push(cid as i32);
+                        state.players[target_player_idx].push_discard_card(cid as i32);
                         moved_cards.push(cid as i32);
                         next_ctx.selected_cards.push(cid as i32);
                     }
                 }
                 Zone::LiveSet | Zone::SuccessPile => {
                     if let Some(cid) = state.players[target_player_idx].success_lives.pop() {
-                        state.players[target_player_idx].discard.push(cid);
+                        state.players[target_player_idx].push_discard_card(cid);
                         moved_cards.push(cid);
                         next_ctx.selected_cards.push(cid);
                     }
                 }
                 Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
-                    if let Some(cid) = state.players[target_player_idx].deck.pop() {
-                        state.players[target_player_idx].discard.push(cid);
+                    if let Some(cid) = state.players[target_player_idx].pop_deck_card() {
+                        state.players[target_player_idx].push_discard_card(cid);
                         moved_cards.push(cid);
                         next_ctx.selected_cards.push(cid);
                     }
                 }
                 Zone::Energy => {
-                    if let Some(cid) = state.players[target_player_idx].energy_zone.pop() {
-                        state.players[target_player_idx].discard.push(cid);
+                    if let Some(cid) = state.players[target_player_idx].pop_energy_card() {
+                        state.players[target_player_idx].push_discard_card(cid);
                         moved_cards.push(cid);
                         next_ctx.selected_cards.push(cid);
                     }
@@ -563,7 +557,7 @@ pub fn handle_deck_zones(
         O_SEARCH_DECK => {
             let search_target = ctx.target_slot as usize;
             if search_target < state.players[p_idx].deck.len() {
-                let cid = state.players[p_idx].deck.remove(search_target);
+                let cid = state.players[p_idx].remove_deck_card(search_target).unwrap();
                 match s {
                     4 => {
                         let slot = (a as u64 & FILTER_MASK_LOWER) as usize;
@@ -571,7 +565,7 @@ pub fn handle_deck_zones(
                             if let Some(old) =
                                 state.handle_member_leaves_stage(p_idx, slot, db, ctx)
                             {
-                                state.players[p_idx].discard.push(old);
+                                state.players[p_idx].push_discard_card(old);
                             }
                             state.players[p_idx].stage[slot] = cid;
                             state.players[p_idx].set_tapped(slot, false);
@@ -586,22 +580,14 @@ pub fn handle_deck_zones(
                             };
                             state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
                         } else {
-                            state.players[p_idx].hand.push(cid);
-                            state.players[p_idx].hand_increased_this_turn = state.players
-                                [p_idx]
-                                .hand_increased_this_turn
-                                .saturating_add(1);
+                            state.players[p_idx].gain_hand_card(cid);
                         }
                     }
                     13 => {
                         state.players[p_idx].success_lives.push(cid);
                     }
                     _ => {
-                        state.players[p_idx].hand.push(cid);
-                        state.players[p_idx].hand_increased_this_turn = state.players
-                            [p_idx]
-                            .hand_increased_this_turn
-                            .saturating_add(1);
+                        state.players[p_idx].gain_hand_card(cid);
                     }
                 }
                 let mut rng = Pcg64::from_os_rng();
@@ -614,7 +600,7 @@ pub fn handle_deck_zones(
                     state.resolve_deck_refresh(p_idx);
                 }
                 for _ in 0..(v as usize).min(state.players[p_idx].deck.len()) {
-                    if let Some(cid) = state.players[p_idx].deck.pop() {
+                    if let Some(cid) = state.players[p_idx].pop_deck_card() {
                         state.players[p_idx].looked_cards.push(cid);
                     }
                 }
@@ -648,7 +634,7 @@ pub fn handle_deck_zones(
 
                 if let Some(idx) = real_idx {
                     let cid = state.players[p_idx].looked_cards.remove(idx);
-                    state.players[p_idx].deck.push(cid);
+                    state.players[p_idx].push_deck_card(cid);
                     if !state.players[p_idx].looked_cards.is_empty() {
                         if suspend_interaction(
                             state,
@@ -682,7 +668,7 @@ pub fn handle_deck_zones(
         O_LOOK_REORDER_DISCARD => {
             if state.players[p_idx].looked_cards.is_empty() && v > 0 {
                 for _ in 0..(v as usize).min(state.players[p_idx].deck.len()) {
-                    if let Some(cid) = state.players[p_idx].deck.pop() {
+                    if let Some(cid) = state.players[p_idx].pop_deck_card() {
                         state.players[p_idx].looked_cards.push(cid);
                     }
                 }
@@ -710,14 +696,14 @@ pub fn handle_deck_zones(
                 if choice == 99 {
                     let looked = std::mem::take(&mut state.players[p_idx].looked_cards);
                     for &cid in looked.iter() {
-                        state.players[p_idx].deck.push(cid);
+                        state.players[p_idx].push_deck_card(cid);
                     }
                     return HandlerResult::Continue;
                 }
 
                 if choice >= 0 && (choice as usize) < state.players[p_idx].looked_cards.len() {
                     let cid = state.players[p_idx].looked_cards.remove(choice as usize);
-                    state.players[p_idx].deck.push(cid);
+                    state.players[p_idx].push_deck_card(cid);
 
                     if !state.players[p_idx].looked_cards.is_empty() {
                         if suspend_interaction(
@@ -751,9 +737,9 @@ pub fn handle_deck_zones(
 
                 for &cid in &moved_cards {
                     if let Some(pos) = state.players[p_idx].discard.iter().position(|&c| c == cid) {
-                        state.players[p_idx].discard.remove(pos);
+                        state.players[p_idx].remove_discard_card(pos);
                     } else if let Some(pos) = state.players[p_idx].hand.iter().position(|&c| c == cid) {
-                        state.players[p_idx].hand.remove(pos);
+                        state.players[p_idx].remove_hand_card(pos);
                     } else if let Some(pos) = state.players[p_idx].success_lives.iter().position(|&c| c == cid) {
                         state.players[p_idx].success_lives.remove(pos);
                     } else if let Some(slot) = state.players[p_idx].stage.iter().position(|&c| c == cid) {
@@ -769,12 +755,12 @@ pub fn handle_deck_zones(
                     }
                     1 => {
                         for &cid in moved_cards.iter().rev() {
-                            state.players[p_idx].deck.push(cid);
+                            state.players[p_idx].push_deck_card(cid);
                         }
                     }
                     _ => {
                         for &cid in &moved_cards {
-                            state.players[p_idx].deck.push(cid);
+                            state.players[p_idx].push_deck_card(cid);
                         }
                         let mut rng = Pcg64::from_os_rng();
                         state.players[p_idx].deck.shuffle(&mut rng);
@@ -786,24 +772,24 @@ pub fn handle_deck_zones(
             for _ in 0..(v as usize) {
                 match a as u64 & FILTER_MASK_LOWER {
                     1 => {
-                        if let Some(cid) = state.players[p_idx].discard.pop() {
-                            state.players[p_idx].deck.push(cid);
+                        if let Some(cid) = state.players[p_idx].pop_discard_card() {
+                            state.players[p_idx].push_deck_card(cid);
                         }
                     }
                     4 => {
                         let slot = ctx.area_idx as usize;
                         if let Some(cid) = state.handle_member_leaves_stage(p_idx, slot, db, ctx) {
-                            state.players[p_idx].deck.push(cid);
+                            state.players[p_idx].push_deck_card(cid);
                         }
                     }
                     13 => {
                         if let Some(cid) = state.players[p_idx].success_lives.pop() {
-                            state.players[p_idx].deck.push(cid);
+                            state.players[p_idx].push_deck_card(cid);
                         }
                     }
                     _ => {
-                        if let Some(cid) = state.players[p_idx].hand.pop() {
-                            state.players[p_idx].deck.push(cid);
+                        if let Some(cid) = state.players[p_idx].pop_hand_card() {
+                            state.players[p_idx].push_deck_card(cid);
                         }
                     }
                 }
@@ -816,18 +802,14 @@ pub fn handle_deck_zones(
                 if state.players[p_idx].deck.is_empty() {
                     state.resolve_deck_refresh(p_idx);
                 }
-                if let Some(cid) = state.players[p_idx].deck.pop() {
+                if let Some(cid) = state.players[p_idx].pop_deck_card() {
                     match resolved_slot {
-                        7 => state.players[p_idx].discard.push(cid),
-                        8 => state.players[p_idx].deck.push(cid),
+                        7 => state.players[p_idx].push_discard_card(cid),
+                        8 => state.players[p_idx].push_deck_card(cid),
                         6 => {
-                            state.players[p_idx].hand.push(cid);
-                            state.players[p_idx].hand_increased_this_turn = state.players
-                                [p_idx]
-                                .hand_increased_this_turn
-                                .saturating_add(1);
+                            state.players[p_idx].gain_hand_card(cid);
                         }
-                        _ => state.players[p_idx].discard.push(cid),
+                        _ => state.players[p_idx].push_discard_card(cid),
                     }
                 }
             }
@@ -850,7 +832,7 @@ pub fn handle_deck_zones(
                     }
                 }
 
-                if let Some(cid) = state.players[p_idx].deck.pop() {
+                if let Some(cid) = state.players[p_idx].pop_deck_card() {
                     revealed_count += 1;
                     let mut new_ctx = ctx.clone();
                     new_ctx.source_card_id = cid;
@@ -868,13 +850,9 @@ pub fn handle_deck_zones(
                     if matches {
                         let dest_slot = resolved_slot & 0x0F;
                         if dest_slot == 6 {
-                            state.players[p_idx].hand.push(cid);
-                            state.players[p_idx].hand_increased_this_turn = state.players
-                                [p_idx]
-                                .hand_increased_this_turn
-                                .saturating_add(1);
+                            state.players[p_idx].gain_hand_card(cid);
                         } else if dest_slot == 7 {
-                            state.players[p_idx].discard.push(cid);
+                            state.players[p_idx].push_discard_card(cid);
                         }
                         found = true;
                     } else {
@@ -884,7 +862,13 @@ pub fn handle_deck_zones(
             }
 
             for cid in revealed_non_matches {
-                state.players[p_idx].discard.push(cid);
+                state.players[p_idx].push_discard_card(cid);
+            }
+            if found
+                && state.players[p_idx].deck.is_empty()
+                && !state.players[p_idx].discard.is_empty()
+            {
+                state.players[p_idx].set_flag(PlayerState::FLAG_SUPPRESS_AUTO_DECK_REFRESH, true);
             }
         }
         O_LOOK_DECK | O_REVEAL_CARDS | O_CHEER_REVEAL => {
@@ -955,7 +939,7 @@ pub fn handle_deck_zones(
                 let deck_len = state.players[p_idx].deck.len();
                 let mut revealed_cids = Vec::new();
                 for _ in 0..count.min(deck_len) {
-                    if let Some(cid) = state.players[p_idx].deck.pop() {
+                    if let Some(cid) = state.players[p_idx].pop_deck_card() {
                         state.players[p_idx].looked_cards.push(cid);
                         revealed_cids.push(cid);
                     }
@@ -990,7 +974,7 @@ pub fn handle_deck_zones(
                 }
                 let deck_len = state.players[p_idx].deck.len();
                 for _ in 0..count.min(deck_len) {
-                    if let Some(cid) = state.players[p_idx].deck.pop() {
+                    if let Some(cid) = state.players[p_idx].pop_deck_card() {
                         state.players[p_idx].looked_cards.push(cid);
                     }
                 }
@@ -1078,7 +1062,10 @@ pub fn handle_swap_zone(
         if hand_idx < state.players[p_idx].hand.len()
             && !state.players[p_idx].looked_cards.is_empty()
         {
-            let hand_cid = state.players[p_idx].hand.remove(hand_idx);
+            let Some(hand_cid) = state.players[p_idx].remove_hand_card(hand_idx) else {
+                state.players[p_idx].looked_cards.clear();
+                return HandlerResult::Continue;
+            };
             let success_cid = state.players[p_idx].looked_cards.remove(0);
             if let Some(pos) = state.players[p_idx]
                 .success_lives
@@ -1086,10 +1073,7 @@ pub fn handle_swap_zone(
                 .position(|&x| x == success_cid)
             {
                 state.players[p_idx].success_lives[pos] = hand_cid;
-                state.players[p_idx].hand.push(success_cid);
-                state.players[p_idx].hand_increased_this_turn = state.players[p_idx]
-                    .hand_increased_this_turn
-                    .saturating_add(1);
+                state.players[p_idx].gain_hand_card(success_cid);
             }
         }
     }

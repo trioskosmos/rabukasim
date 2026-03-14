@@ -163,7 +163,7 @@ fn main() {
     println!("[SETUP] took {:.3}s\n", setup_start.elapsed().as_secs_f64());
 
     // Now analyze the first Main turn
-    let search_depth = engine_rust::core::logic::turn_sequencer::CONFIG.read().unwrap().search.max_dfs_depth;
+    let search_depth = engine_rust::core::logic::turn_sequencer::get_config().read().unwrap().search.max_dfs_depth;
     println!("[TURN 1 ANALYSIS]");
     println!("  Player: P{}", state.current_player);
     println!("  Phase: {:?}", state.phase);

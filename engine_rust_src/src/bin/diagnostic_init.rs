@@ -7,6 +7,8 @@
 use std::fs;
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::{GameState, CardDatabase};
+use rand::SeedableRng;
+use rand::rngs::SmallRng;
 use rand::seq::IndexedRandom;
 
 fn load_vanilla_db() -> CardDatabase {
@@ -99,7 +101,7 @@ fn main() {
 
     let mut count = 0;
     const MAX_STEPS: usize = 100;
-    let mut rng = rand::rng();
+    let mut rng = rand::rngs::SmallRng::from_os_rng();
 
     while !state.is_terminal() && state.phase != Phase::Main && count < MAX_STEPS {
         let phase_str = format!("{:?}", state.phase);
