@@ -13,8 +13,17 @@ export const Highlighter = {
     },
 
     clearHighlights: () => {
-        document.querySelectorAll('.highlight-source, .highlight-target, .highlight-target-opp, .valid-drop-target, .drop-hover, .highlight-hover').forEach(el => {
-            el.classList.remove('highlight-source', 'highlight-target', 'highlight-target-opp', 'valid-drop-target', 'drop-hover', 'highlight-hover');
+        const selectors = [
+            '.highlight-source', '.highlight-target', '.highlight-target-opp',
+            '.valid-drop-target', '.drop-hover', '.highlight-hover',
+            '.hover-highlight', '.selected', '.mulligan-selected'
+        ];
+        document.querySelectorAll(selectors.join(', ')).forEach(el => {
+            el.classList.remove(
+                'highlight-source', 'highlight-target', 'highlight-target-opp',
+                'valid-drop-target', 'drop-hover', 'highlight-hover',
+                'hover-highlight', 'selected', 'mulligan-selected'
+            );
         });
     },
 

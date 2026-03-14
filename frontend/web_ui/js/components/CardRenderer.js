@@ -6,122 +6,266 @@ import { DOMUtils } from '../utils/DOMUtils.js';
 import { DOM_IDS } from '../constants_dom.js';
 
 export const CardRenderer = {
+    /**
+     * Maps engine card data to UI-specific properties (CSS classes, labels, etc.)
+     */
+    getCardViewModel: (card, options = {}) => {
+        if (!card) return null;
+
+        const state = State.data;
+        const { isSelected, isValid, mini, containerId } = options;
+
+        const isHidden = card.hidden || card.id === -2;
+        const isLive = card.type === 'live';
+
+        // 1. Determine CSS Classes
+        const classNames = ['card'];
+        if (isHidden) classNames.push('hidden');
+        if (isLive) classNames.push('type-live');
+        if (mini) classNames.push('card-mini');
+        if (card.is_new) classNames.push('new-card');
+
+        if (isSelected) {
+            const isMulligan = (state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2);
+            classNames.push(isMulligan ? 'mulligan-selected' : 'selected');
+        }
+
+        if (isValid) classNames.push('valid-target');
+
+        if (!isLive && containerId) {
+            if (containerId.includes('live') || containerId.includes('success')) {
+                classNames.push('rotated-90');
+            }
+        }
+
+        if (isHidden) classNames.push('card-back');
+
+        // 2. Determine Display Name & Image
+        let displayName = 'Card';
+        let imgPath = '';
+
+        if (!isHidden) {
+            imgPath = card.img || card.img_path || '';
+            displayName = i18n.translateCard(card).name || card.name || `[${i18n.translateCardType(card.type)}]` || 'Card';
+        }
+
+        return {
+            classes: classNames.join(' '),
+            displayName,
+            imgPath: imgPath ? fixImgPath(imgPath) : '',
+            cost: card.cost,
+            isHidden,
+            isValid,
+            actionId: options.actionId
+        };
+    },
+
+    /**
+     * Creates a single card DOM element from a ViewModel
+     */
+    createCardDOM: (viewModel, cardData, onClick = null) => {
+        const div = document.createElement('div');
+        div.className = viewModel.classes;
+
+        if (viewModel.actionId !== undefined || cardData.id !== undefined) {
+            Tooltips.attachCardData(div, cardData, viewModel.actionId);
+        }
+
+        if (!viewModel.isHidden) {
+            const imgHtml = viewModel.imgPath ? `<img src="${viewModel.imgPath}" draggable="false" onerror="this.style.display='none'">` : '';
+            const costHtml = viewModel.cost !== undefined ? `<span class="cost">${viewModel.cost}</span>` : '';
+            div.innerHTML = `${imgHtml}${costHtml}<div class="name">${viewModel.displayName}</div>`;
+        }
+
+        if (onClick) {
+            div.style.cursor = 'pointer';
+            div.onclick = (e) => {
+                e.stopPropagation();
+                onClick(viewModel.actionId);
+            };
+
+            if (viewModel.isValid) {
+                div.onmouseenter = () => {
+                    if (window.highlightActionBtn) window.highlightActionBtn(viewModel.actionId, true);
+                };
+                div.onmouseleave = () => {
+                    if (window.highlightActionBtn) window.highlightActionBtn(viewModel.actionId, false);
+                };
+            }
+        }
+
+        return div;
+    },
+
+    /**
+     * Updates an existing card DOM element with new ViewModel
+     */
+    updateCardDOM: (el, viewModel, cardData, onClick = null) => {
+        DOMUtils.patchClasses(el, viewModel.classes);
+        
+        if (viewModel.actionId !== undefined || cardData.id !== undefined) {
+            Tooltips.attachCardData(el, cardData, viewModel.actionId);
+        }
+
+        if (viewModel.isHidden) {
+            el.innerHTML = '';
+            el.classList.add('card-back');
+        } else {
+            const imgPath = viewModel.imgPath;
+            const existingImg = el.querySelector('img');
+            
+            if (existingImg) {
+                if (imgPath && existingImg.getAttribute('src') !== imgPath) {
+                    existingImg.setAttribute('src', imgPath);
+                    existingImg.style.display = '';
+                } else if (!imgPath) {
+                    existingImg.style.display = 'none';
+                }
+            } else if (imgPath) {
+                const img = document.createElement('img');
+                img.src = imgPath;
+                img.draggable = false;
+                img.onerror = () => img.style.display = 'none';
+                el.prepend(img);
+            }
+
+            const existingCost = el.querySelector('.cost');
+            const costText = viewModel.cost !== undefined ? String(viewModel.cost) : '';
+            if (existingCost) {
+                if (existingCost.textContent !== costText) existingCost.textContent = costText;
+            } else if (costText !== '') {
+                const costSpan = document.createElement('span');
+                costSpan.className = 'cost';
+                costSpan.textContent = costText;
+                el.appendChild(costSpan);
+            }
+
+            const existingName = el.querySelector('.name');
+            if (existingName) {
+                if (existingName.textContent !== viewModel.displayName) existingName.textContent = viewModel.displayName;
+            } else {
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'name';
+                nameDiv.textContent = viewModel.displayName;
+                el.appendChild(nameDiv);
+            }
+        }
+
+        el.style.cursor = onClick ? 'pointer' : '';
+        el.onclick = onClick ? (e) => {
+            e.stopPropagation();
+            onClick(viewModel.actionId);
+        } : null;
+
+        if (onClick && viewModel.isValid) {
+            el.onmouseenter = () => {
+                if (window.highlightActionBtn) window.highlightActionBtn(viewModel.actionId, true);
+            };
+            el.onmouseleave = () => {
+                if (window.highlightActionBtn) window.highlightActionBtn(viewModel.actionId, false);
+            };
+        } else {
+            el.onmouseenter = null;
+            el.onmouseleave = null;
+        }
+
+        return el;
+    },
+
     renderCards: (containerId, cards, clickable = false, mini = false, selectedIndices = [], validActionMap = {}, hasGlobalSelection = false) => {
         const el = DOMUtils.getElement(containerId);
         if (!el) return;
-        DOMUtils.clear(containerId);
-        if (!cards) return;
+        if (!cards) {
+            DOMUtils.clear(containerId);
+            return;
+        }
 
-        const state = State.data;
+        const existingChildren = Array.from(el.children);
+        const cardCount = cards.length;
+
+        // Synchronize children count
+        while (el.children.length > cardCount) {
+            el.removeChild(el.lastChild);
+        }
+
         cards.forEach((card, idx) => {
-            const div = document.createElement('div');
+            const isSelected = selectedIndices.includes(idx);
+            const actionId = validActionMap[idx];
+            const isValid = actionId !== undefined;
+            const existingChild = existingChildren[idx];
 
-            // Handle placeholders (null cards from engine tombstones)
             if (card === null) {
-                div.className = 'card placeholder' + (mini ? ' card-mini' : '');
-                div.style.visibility = 'hidden';
-                div.style.pointerEvents = 'none';
-                el.appendChild(div);
+                if (existingChild && existingChild.classList.contains('placeholder')) {
+                    existingChild.style.visibility = 'hidden';
+                } else {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'card placeholder' + (mini ? ' card-mini' : '');
+                    placeholder.style.visibility = 'hidden';
+                    if (existingChild) el.replaceChild(placeholder, existingChild);
+                    else el.appendChild(placeholder);
+                }
                 return;
             }
 
-            const isSelected = selectedIndices.includes(idx);
+            const viewModel = CardRenderer.getCardViewModel(card, {
+                isSelected,
+                isValid,
+                mini,
+                containerId,
+                actionId
+            });
 
-            // Validation Logic
-            const actionId = validActionMap[idx];
-            const isValid = actionId !== undefined;
-
-            let highlightClass = '';
-            if (isSelected) {
-                highlightClass = (state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2) ? ' mulligan-selected' : ' selected';
-            }
-            if (card.is_new) highlightClass += ' new-card';
-            if (isValid) highlightClass += ' valid-target';
-
-            const isHidden = card.hidden || card.id === -2;
-            const isLive = card.type === 'live';
-
-            let rotationClass = '';
-            if (!isLive) {
-                if (containerId.includes('live') || containerId.includes('success')) {
-                    rotationClass = ' rotated-90';
+            const onClick = clickable && (isValid || !hasGlobalSelection) ? (aid) => {
+                if (isValid && window.doAction) {
+                    window.doAction(aid);
+                } else if (window.playCard) {
+                    window.playCard(idx);
                 }
-            }
+            } : null;
 
-            div.className = 'card' + (isHidden ? ' hidden' : '') +
-                (isLive ? ' type-live' : '') +
-                (mini ? ' card-mini' : '') + rotationClass + highlightClass;
-
-            div.id = `${containerId}-card-${idx}`;
-
-            Tooltips.attachCardData(div, card, isValid ? actionId : undefined);
-
-            if (!isHidden) {
-                let imgPath = card.img || card.img_path || '';
-                const imgHtml = imgPath ? `<img src="${fixImgPath(imgPath)}" draggable="false" onerror="this.style.display='none'">` : '';
-                
-                // Translate card name with proper fallback
-                let displayName = i18n.translateCard(card).name || '';
-                if (!displayName && card.name) {
-                    displayName = card.name;  // Fallback to original if translation fails
-                }
-                if (!displayName && card.type) {
-                    // Last resort: show translated type label if no name
-                    displayName = `[${i18n.translateCardType(card.type)}]`;
-                }
-                if (!displayName) {
-                    displayName = 'Card';
-                }
-                
-                div.innerHTML = `${imgHtml}${card.cost !== undefined ? `<span class="cost">${card.cost}</span>` : ''}<div class="name">${displayName}</div>`;
+            if (existingChild && !existingChild.classList.contains('placeholder')) {
+                CardRenderer.updateCardDOM(existingChild, viewModel, card, onClick);
+                existingChild.id = `${containerId}-card-${idx}`;
             } else {
-                div.classList.add('card-back');
+                const cardEl = CardRenderer.createCardDOM(viewModel, card, onClick);
+                cardEl.id = `${containerId}-card-${idx}`;
+                if (existingChild) el.replaceChild(cardEl, existingChild);
+                else el.appendChild(cardEl);
             }
-
-            if (clickable) {
-                if (isValid || !hasGlobalSelection) {
-                    div.style.cursor = 'pointer';
-                    div.onclick = () => {
-                        if (isValid && window.doAction) {
-                            window.doAction(actionId);
-                        } else if (window.playCard) {
-                            window.playCard(idx);
-                        }
-                    };
-                    if (isValid) {
-                        div.onmouseenter = () => {
-                            if (window.highlightActionBtn) window.highlightActionBtn(actionId, true);
-                        };
-                        div.onmouseleave = () => {
-                            if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
-                        };
-                    }
-                } else {
-                    div.onclick = null;
-                }
-            }
-            el.appendChild(div);
         });
     },
 
     renderStage: (containerId, stage, clickable, validActionMap = {}, hasGlobalSelection = false) => {
         const el = DOMUtils.getElement(containerId);
         if (!el) return;
-        DOMUtils.clear(containerId);
+
+        const existingAreas = Array.from(el.children);
+        
         for (let i = 0; i < 3; i++) {
             const slot = stage[i];
-            const area = document.createElement('div');
-            area.className = 'member-area board-slot-container';
-
             const actionId = validActionMap[i];
             const isValid = actionId !== undefined;
+            const existingArea = existingAreas[i];
 
-            let highlightClass = '';
-            if (isValid) highlightClass += ' valid-target';
+            let area, slotDiv;
+            if (existingArea) {
+                area = existingArea;
+                slotDiv = area.querySelector('.member-slot');
+            } else {
+                area = document.createElement('div');
+                area.className = 'member-area board-slot-container';
+                slotDiv = document.createElement('div');
+                area.appendChild(slotDiv);
+                el.appendChild(area);
+            }
 
-            const slotDiv = document.createElement('div');
             const isTapped = slot && typeof slot === 'object' && slot.tapped;
-            slotDiv.className = 'member-slot' + (slot && slot !== -1 ? ' filled' : '') + (isTapped ? ' tapped' : '') + highlightClass;
+            const filledClass = (slot && slot !== -1 ? ' filled' : '');
+            const tappedClass = isTapped ? ' tapped' : '';
+            const validClass = isValid ? ' valid-target' : '';
+
+            const newClassName = `member-slot${filledClass}${tappedClass}${validClass}`;
+            if (slotDiv.className !== newClassName) slotDiv.className = newClassName;
             slotDiv.id = `${containerId}-slot-${i}`;
 
             if (slot && typeof slot === 'object' && slot.id !== undefined && slot.id !== -1) {
@@ -131,37 +275,44 @@ export const CardRenderer = {
                     modifiersHtml = `<div class="member-modifiers">${slot.modifiers.map(m => `<div class="modifier-tag ${m.type}">${m.label || (m.type === 'heart' ? '+' : m.value)}</div>`).join('')}</div>`;
                 }
 
-                slotDiv.innerHTML = imgPath ? `<img src="${fixImgPath(imgPath)}">${modifiersHtml}` : modifiersHtml;
+                const expectedHtml = imgPath ? `<img src="${fixImgPath(imgPath)}">${modifiersHtml}` : modifiersHtml;
+                if (slotDiv.innerHTML !== expectedHtml) slotDiv.innerHTML = expectedHtml;
 
                 Tooltips.attachCardData(area, slot, isValid ? actionId : undefined);
                 Tooltips.attachCardData(slotDiv, slot, isValid ? actionId : undefined);
+            } else {
+                slotDiv.innerHTML = '';
             }
 
-            area.appendChild(slotDiv);
-            el.appendChild(area);
-
-            if (clickable) {
-                if (isValid || !hasGlobalSelection) {
-                    area.onclick = () => {
-                        if (isValid && window.doAction) {
-                            window.doAction(actionId);
-                        } else if (window.onStageSlotClick) {
-                            window.onStageSlotClick(i);
-                        }
-                    };
-                    slotDiv.onclick = area.onclick;
-                    area.style.cursor = 'pointer';
-                    if (isValid) {
-                        area.onmouseenter = () => {
-                            if (window.highlightActionBtn) window.highlightActionBtn(actionId, true);
-                        };
-                        area.onmouseleave = () => {
-                            if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
-                        };
+            if (clickable && (isValid || !hasGlobalSelection)) {
+                const clickHandler = () => {
+                    if (isValid && window.doAction) {
+                        window.doAction(actionId);
+                    } else if (window.onStageSlotClick) {
+                        window.onStageSlotClick(i);
                     }
+                };
+                area.onclick = clickHandler;
+                slotDiv.onclick = clickHandler;
+                area.style.cursor = 'pointer';
+
+                if (isValid) {
+                    area.onmouseenter = () => {
+                        if (window.highlightActionBtn) window.highlightActionBtn(actionId, true);
+                    };
+                    area.onmouseleave = () => {
+                        if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
+                    };
                 } else {
-                    area.onclick = null;
+                    area.onmouseenter = null;
+                    area.onmouseleave = null;
                 }
+            } else {
+                area.onclick = null;
+                slotDiv.onclick = null;
+                area.style.cursor = '';
+                area.onmouseenter = null;
+                area.onmouseleave = null;
             }
         }
     },
@@ -170,58 +321,81 @@ export const CardRenderer = {
         const state = State.data;
         const el = DOMUtils.getElement(containerId);
         if (!el) return;
-        DOMUtils.clear(containerId);
+
+        const existingSlots = Array.from(el.children);
+
         for (let i = 0; i < 3; i++) {
             const card = liveCards[i];
-
             const actionId = validActionMap[i];
             const isValid = actionId !== undefined;
-            let highlightClass = '';
-            if (isValid) highlightClass += ' valid-target';
+            const validClass = isValid ? ' valid-target' : '';
+            const existingSlot = existingSlots[i];
 
-            const slot = document.createElement('div');
+            let slot;
+            if (existingSlot) {
+                slot = existingSlot;
+            } else {
+                slot = document.createElement('div');
+                el.appendChild(slot);
+            }
+
             const isLiveCard = card && card.type === 'live';
-
-            slot.className = 'card card-mini' + (card ? (isLiveCard ? ' type-live' : '') : ' empty') + highlightClass;
+            const newClassName = 'card card-mini' + (card ? (isLiveCard ? ' type-live' : '') : ' empty') + validClass;
+            if (slot.className !== newClassName) slot.className = newClassName;
             slot.id = `${containerId}-slot-${i}`;
+
             if (card && typeof card === 'object' && card.id !== undefined && card.id !== -1) {
                 const isPerfLegal = card.is_perf_legal;
                 const imgPath = card.img || card.img_path || '';
-                slot.innerHTML = `
+                const expectedInnerHtml = `
                     <div class="live-card-inner ${isPerfLegal ? 'perf-legal' : ''}">
                         ${imgPath ? `<img src="${fixImgPath(imgPath)}">` : ''}
                         <div class="cost">${card.score || (card.cost !== undefined ? card.cost : 0)}</div>
                         ${isPerfLegal ? '<div class="perf-badge">LIVE!</div>' : ''}
                     </div>
                 `;
+                
+                if (slot.innerHTML !== expectedInnerHtml) slot.innerHTML = expectedInnerHtml;
+                
                 const rawText = Tooltips.getEffectiveRawText(card);
-                if (rawText) slot.setAttribute('data-text', rawText);
-                slot.setAttribute('data-card-id', card.id);
+                if (rawText) DOMUtils.patchAttributes(slot, { 'data-text': rawText });
+                DOMUtils.patchAttributes(slot, { 'data-card-id': card.id });
 
-                if (isValid) {
-                    slot.style.cursor = 'pointer';
-                    slot.onclick = () => { if (window.doAction) window.doAction(actionId); };
-                    slot.onmouseenter = () => {
-                        if (window.highlightActionBtn) window.highlightActionBtn(actionId, true);
-                    };
-                    slot.onmouseleave = () => {
-                        if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
-                    };
-                } else if (isPerfLegal) {
-                    const fallbackId = state.legal_actions?.find(a => (a.id === 600 + i || a.id === 900 + i || (a.metadata && a.metadata.slot_idx === i && a.metadata.category === 'LIVE')))?.id;
-                    if (fallbackId !== undefined) {
+                if (isValid || isPerfLegal) {
+                    const finalActionId = isValid ? actionId : state.legal_actions?.find(a => (a.id === 600 + i || a.id === 900 + i || (a.metadata && a.metadata.slot_idx === i && a.metadata.category === 'LIVE')))?.id;
+                    
+                    if (finalActionId !== undefined) {
                         slot.style.cursor = 'pointer';
-                        slot.onclick = () => { if (window.doAction) window.doAction(fallbackId); };
+                        slot.onclick = () => { if (window.doAction) window.doAction(finalActionId); };
+                        
+                        if (isValid) {
+                            slot.onmouseenter = () => {
+                                if (window.highlightActionBtn) window.highlightActionBtn(finalActionId, true);
+                            };
+                            slot.onmouseleave = () => {
+                                if (window.highlightActionBtn) window.highlightActionBtn(finalActionId, false);
+                            };
+                        } else {
+                            slot.onmouseenter = null;
+                            slot.onmouseleave = null;
+                        }
                     } else {
                         slot.onclick = null;
+                        slot.style.cursor = '';
+                        slot.onmouseenter = null;
+                        slot.onmouseleave = null;
                     }
                 } else {
                     slot.onclick = null;
+                    slot.style.cursor = '';
+                    slot.onmouseenter = null;
+                    slot.onmouseleave = null;
                 }
             } else {
-                slot.innerHTML = ``;
+                slot.innerHTML = '';
+                slot.onclick = null;
+                slot.style.cursor = '';
             }
-            el.appendChild(slot);
         }
     },
 
@@ -231,10 +405,9 @@ export const CardRenderer = {
 
         const actionId = validActionMap && validActionMap['all'];
         const isValid = actionId !== undefined;
-        let highlightClass = isValid ? ' valid-target' : '';
+        el.className = 'discard-pile-visual ' + (isValid ? 'valid-target' : '');
 
         DOMUtils.clear(containerId);
-        el.className = 'discard-pile-visual ' + highlightClass;
 
         if (!discard || discard.length === 0) {
             el.classList.add('empty');
@@ -254,26 +427,28 @@ export const CardRenderer = {
                     const rawText = Tooltips.getEffectiveRawText(card);
                     if (rawText) div.setAttribute('data-text', rawText);
                 }
-
                 el.appendChild(div);
             }
         }
 
-        if (isValid) {
+        if (isValid || (!hasGlobalSelection && discard && discard.length > 0)) {
             el.style.cursor = 'pointer';
             el.onclick = (e) => {
                 e.stopPropagation();
-                if (window.doAction) window.doAction(actionId);
+                if (isValid && window.doAction) {
+                    window.doAction(actionId);
+                } else if (!isValid && showModalCallback) {
+                    showModalCallback(playerIdx);
+                }
             };
-            el.onmouseenter = () => {
-                if (window.highlightActionBtn) window.highlightActionBtn(actionId, true);
-            };
-            el.onmouseleave = () => {
-                if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
-            };
-        } else if (!hasGlobalSelection && discard && discard.length > 0) {
-            el.style.cursor = 'pointer';
-            el.onclick = () => { if (showModalCallback) showModalCallback(playerIdx); };
+            if (isValid) {
+                el.onmouseenter = () => {
+                    if (window.highlightActionBtn) window.highlightActionBtn(actionId, true);
+                };
+                el.onmouseleave = () => {
+                    if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
+                };
+            }
         } else {
             el.onclick = null;
         }
@@ -284,6 +459,7 @@ export const CardRenderer = {
         const panel = DOMUtils.getElement(DOM_IDS.LOOKED_CARDS_PANEL);
         const content = DOMUtils.getElement(DOM_IDS.LOOKED_CARDS_CONTENT);
         if (!panel || !content) return;
+
         const cards = state.looked_cards || [];
         if (cards.length === 0) {
             DOMUtils.hide(DOM_IDS.LOOKED_CARDS_PANEL);
@@ -291,33 +467,33 @@ export const CardRenderer = {
         }
         DOMUtils.show(DOM_IDS.LOOKED_CARDS_PANEL);
 
-        let html = "";
+        let headerHtml = "";
         if (state.pending_choice && (state.pending_choice.title || state.pending_choice.text)) {
             const title = state.pending_choice.title || state.pending_choice.text;
-            html += `<div class="looked-cards-header" style="width:100%; color: var(--accent-gold); font-size: 0.8rem; padding: 5px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: bold;">${title}</div>`;
+            headerHtml = `<div class="looked-cards-header">${title}</div>`;
         }
 
         if (state.pending_choice && state.pending_choice.choose_count > 1) {
             const total = state.pending_choice.choose_count;
             const v_rem = state.pending_choice.v_remaining;
             const remaining = (v_rem === -1) ? total : (v_rem + 1);
-
-            if (remaining > 1) {
-                const label = i18n.t('pick_more', { count: remaining });
-                html += `<div style="padding: 0 5px 8px 5px; font-size: 0.75rem; color: var(--accent-pink); font-style: italic;">${label}</div>`;
-            } else {
-                const label = i18n.t('pick_last');
-                html += `<div style="padding: 0 5px 8px 5px; font-size: 0.75rem; color: var(--accent-green); font-style: italic;">${label}</div>`;
-            }
+            const label = remaining > 1 ? i18n.t('pick_more', { count: remaining }) : i18n.t('pick_last');
+            headerHtml += `<div class="looked-cards-subtitle">${label}</div>`;
         }
 
         DOMUtils.clear(DOM_IDS.LOOKED_CARDS_CONTENT);
+        if (headerHtml) {
+            const headerDiv = document.createElement('div');
+            headerDiv.style.width = '100%';
+            headerDiv.innerHTML = headerHtml;
+            content.appendChild(headerDiv);
+        }
+
         cards.forEach((c, idx) => {
             if (c === null) {
                 const placeholder = document.createElement('div');
                 placeholder.className = 'looked-card-item placeholder';
                 placeholder.style.visibility = 'hidden';
-                placeholder.style.pointerEvents = 'none';
                 content.appendChild(placeholder);
                 return;
             }
@@ -325,26 +501,19 @@ export const CardRenderer = {
             const aid = validActionMap[idx];
             const isClickable = (aid !== undefined && aid !== 0);
 
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'looked-card-item card card-mini' + (isClickable ? ' valid-target' : '');
-            if (isClickable) {
-                itemDiv.style.cursor = 'pointer';
-                itemDiv.onclick = () => { if (window.doAction) window.doAction(aid); };
-                itemDiv.onmouseenter = () => {
-                    if (window.highlightActionBtn) window.highlightActionBtn(aid, true);
-                };
-                itemDiv.onmouseleave = () => {
-                    if (window.highlightActionBtn) window.highlightActionBtn(aid, false);
-                };
-            }
+            const viewModel = CardRenderer.getCardViewModel(c, {
+                mini: true,
+                isValid: isClickable,
+                actionId: aid
+            });
 
-            Tooltips.attachCardData(itemDiv, c, aid);
+            const onClick = isClickable ? (actionId) => {
+                if (window.doAction) window.doAction(actionId);
+            } : null;
 
-            itemDiv.innerHTML = `
-                <img src="${fixImgPath(c.img)}" class="looked-card-img">
-                <div class="looked-card-name">${i18n.translateCard(c).name}</div>
-            `;
-            content.appendChild(itemDiv);
+            const cardEl = CardRenderer.createCardDOM(viewModel, c, onClick);
+            cardEl.className = `looked-card-item ${viewModel.classes}`;
+            content.appendChild(cardEl);
         });
     }
 };

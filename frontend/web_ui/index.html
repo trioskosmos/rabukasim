@@ -10,6 +10,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/modals.css">
+    <link rel="stylesheet" href="css/performance.css">
+    <link rel="stylesheet" href="css/debug.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/unified_log_styles.css">
     <link rel="stylesheet" href="css/deck_validation.css">
@@ -44,7 +50,7 @@
             <div id="room-display" class="room-display">
                 <span id="room-display-pill" class="room-display-pill">
                     <span class="room-label">ROOM: <span id="room-code-header">---</span></span>
-                    <button class="btn btn-exit" onclick="leaveRoom()" title="Exit to Lobby">Exit</button>
+                    <button type="button" class="btn btn-exit" onclick="leaveRoom()" aria-label="Exit to Lobby" title="Exit to Lobby">Exit</button>
                 </span>
             </div>
             <div class="info-bar">
@@ -191,11 +197,11 @@
                         <!-- RIGHT: Utility Area (Deck, Discard, Success) -->
                         <div class="utility-column-right">
                             <div class="deck-discard-group simplified">
-                                <div id="opp-deck-pill" class="deck-pill btn btn-mini btn-deck" title="Main Deck"
-                                    onclick="UI.showZoneViewer(1)">D: <span id="opp-deck-count">0</span></div>
-                                <div id="opp-energy-deck-pill" class="deck-pill energy btn btn-mini btn-deck"
-                                    title="Energy Deck" onclick="UI.showZoneViewer(1)">E: <span
-                                        id="opp-energy-deck-count">0</span></div>
+                                <button id="opp-deck-pill" class="deck-pill btn btn-mini btn-deck" title="Main Deck"
+                                    onclick="UI.showZoneViewer(1)" aria-label="View Opponent Main Deck">D: <span id="opp-deck-count">0</span></button>
+                                <button id="opp-energy-deck-pill" class="deck-pill energy btn btn-mini btn-deck"
+                                    title="Energy Deck" onclick="UI.showZoneViewer(1)" aria-label="View Opponent Energy Deck">E: <span
+                                        id="opp-energy-deck-count">0</span></button>
                                 <button class="btn btn-mini btn-discard" onclick="UI.showDiscardModal(1)">Discard (<span
                                         id="opp-discard-count">0</span>)</button>
                                 <div id="opp-discard-visual" class="discard-pile-visual"></div>
@@ -247,11 +253,11 @@
                         <!-- RIGHT: Utility Area (Deck, Discard, Success) -->
                         <div class="utility-column-right">
                             <div class="deck-discard-group simplified">
-                                <div id="my-deck-pill" class="deck-pill btn btn-mini btn-deck" title="Main Deck"
-                                    onclick="UI.showZoneViewer(0)">D: <span id="my-deck-count">0</span></div>
-                                <div id="my-energy-deck-pill" class="deck-pill energy btn btn-mini btn-deck"
-                                    title="Energy Deck" onclick="UI.showZoneViewer(0)">E: <span
-                                        id="my-energy-deck-count">0</span></div>
+                                <button id="my-deck-pill" class="deck-pill btn btn-mini btn-deck" title="Main Deck"
+                                    onclick="UI.showZoneViewer(0)" aria-label="View My Main Deck">D: <span id="my-deck-count">0</span></button>
+                                <button id="my-energy-deck-pill" class="deck-pill energy btn btn-mini btn-deck"
+                                    title="Energy Deck" onclick="UI.showZoneViewer(0)" aria-label="View My Energy Deck">E: <span
+                                        id="my-energy-deck-count">0</span></button>
                                 <button class="btn btn-mini btn-discard" onclick="UI.showDiscardModal(0)">Discard (<span
                                         id="my-discard-count">0</span>)</button>
                                 <div id="my-discard-visual" class="discard-pile-visual"></div>

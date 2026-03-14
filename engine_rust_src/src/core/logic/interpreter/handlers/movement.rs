@@ -747,7 +747,7 @@ pub fn handle_deck_zones(
                     }
                 }
 
-                match instr.s.count_op {
+                match instr.s.remainder_zone {
                     2 => {
                         for &cid in moved_cards.iter().rev() {
                             state.players[p_idx].deck.insert(0, cid);

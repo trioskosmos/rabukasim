@@ -76,6 +76,8 @@ pub struct MemberCard {
     pub has_activated_hand: bool,
     #[serde(default)]
     pub has_activated_stage: bool,
+    #[serde(default)]
+    pub normalized_name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -111,6 +113,8 @@ pub struct LiveCard {
     pub blade_hearts_board: HeartBoard,
     #[serde(default)]
     pub effect_mask: u64,
+    #[serde(default)]
+    pub normalized_name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -441,6 +445,7 @@ impl CardDatabase {
         }
 
         card.effect_mask = Self::compute_effect_mask(&card.abilities);
+        card.normalized_name = card.name.replace(" ", "");
     }
 
     fn enrich_live_runtime_metadata(card: &mut LiveCard) {
@@ -477,6 +482,7 @@ impl CardDatabase {
         }
 
         card.effect_mask = Self::compute_effect_mask(&card.abilities);
+        card.normalized_name = card.name.replace(" ", "");
     }
 
     pub fn from_json(json_str: &str) -> serde_json::Result<Self> {

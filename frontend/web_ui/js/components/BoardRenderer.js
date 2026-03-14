@@ -53,29 +53,50 @@ export const BoardRenderer = {
     renderEnergy: (containerId, energy, clickable = false, validActionMap = {}, hasGlobalSelection = false, state = null) => {
         const el = document.getElementById(containerId);
         if (!el) return;
-        el.innerHTML = '';
-        if (!energy) return;
+        if (!energy) {
+            el.innerHTML = '';
+            return;
+        }
+
+        const existingPips = Array.from(el.children);
+        const energyCount = energy.length;
+
+        // Synchronize pip count
+        while (el.children.length > energyCount) {
+            el.removeChild(el.lastChild);
+        }
 
         energy.forEach((e, i) => {
-            const div = document.createElement('div');
-
             const actionId = validActionMap[i];
             const isValid = actionId !== undefined;
-            let highlightClass = isValid ? ' valid-target' : '';
+            const highlightClass = isValid ? ' valid-target' : '';
+            const tappedClass = e.tapped ? ' tapped' : '';
+            const existingPip = existingPips[i];
 
-            div.className = 'energy-pip' + (e.tapped ? ' tapped' : '') + highlightClass;
+            let div;
+            if (existingPip) {
+                div = existingPip;
+            } else {
+                div = document.createElement('div');
+                el.appendChild(div);
+            }
+
+            const newClassName = 'energy-pip' + tappedClass + highlightClass;
+            if (div.className !== newClassName) div.className = newClassName;
             div.id = `${containerId}-slot-${i}`;
 
             let imgPath = e.img || e.img_path || 'img/texticon/icon_energy.png';
-            div.innerHTML = `
+            const expectedInnerHtml = `
                 <img src="${fixImg(imgPath)}" onerror="this.src='img/texticon/icon_energy.png'">
                 <div class="energy-num">${i + 1}</div>
             `;
+            
+            if (div.innerHTML !== expectedInnerHtml) div.innerHTML = expectedInnerHtml;
 
             if (e && e.card) {
                 Tooltips.attachCardData(div, e.card, isValid ? actionId : undefined);
             } else if (isValid) {
-                div.setAttribute('data-action-id', actionId);
+                DOMUtils.patchAttributes(div, { 'data-action-id': actionId });
             }
 
             if (clickable && isValid) {
@@ -88,9 +109,12 @@ export const BoardRenderer = {
                 div.onmouseleave = () => {
                     if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
                 };
+            } else {
+                div.style.cursor = '';
+                div.onclick = null;
+                div.onmouseenter = null;
+                div.onmouseleave = null;
             }
-
-            el.appendChild(div);
         });
     }
 };

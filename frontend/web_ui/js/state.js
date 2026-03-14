@@ -3,8 +3,15 @@
  * Holds the current game state, configuration, and connectivity flags.
  */
 
+const _target = new EventTarget();
+
 // We use a mutable object to share state across modules
 const stateInternal = {
+    // Event System
+    on: (name, cb) => _target.addEventListener(name, cb),
+    off: (name, cb) => _target.removeEventListener(name, cb),
+    emit: (name, detail) => _target.dispatchEvent(new CustomEvent(name, { detail })),
+
     // Core Game Data (from backend)
     data: null, // The "state" object from JSON (may be enriched with objects)
     rawData: null, // The "original" state object from server (IDs only, for debugging/warping)
@@ -92,6 +99,7 @@ const stateInternal = {
             });
             State.performanceHistoryTurns.sort((a, b) => b - a);
         }
+        State.emit('change', State.data);
     },
 
     /**
@@ -185,6 +193,12 @@ const stateInternal = {
         State.performanceHistory = {};
         State.performanceHistoryTurns = [];
         State.gameHasStarted = false;
+        State.lastPerformanceData = null;
+        State.lastStateJson = null;
+        State.lastAssetsHash = null;
+        State.plannerData = null;
+        State.lastPlannerFetchKey = null;
+        State.perspectivePlayer = 0;
         window.lastShownPerformanceHash = "";
     },
 

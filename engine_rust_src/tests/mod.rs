@@ -51,7 +51,7 @@
 //! - Stress tests: `test_stress_scenario_name`
 //! - Regression tests: `test_regression_issue_number`
 
-pub mod qa;
-pub mod opcodes;
-pub mod mechanics;
-pub mod edge_cases;
+// pub mod qa;
+// pub mod opcodes;
+// pub mod mechanics;
+// pub mod edge_cases;

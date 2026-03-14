@@ -120,7 +120,6 @@ export const Replay = {
 
         if (frame.players && frame.players.length >= 2) {
             updateStateData(frame);
-            onRender();
             log(`Frame ${State.currentFrame}: T${frame.turn} ${frame.phase} P${frame.current_player} (Act: ${frame.action_taken || 0})`);
         } else {
             // Fallback to minimal display
@@ -292,9 +291,6 @@ export const GameExport = {
         reader.onload = async (e) => {
             try {
                 const success = await GameExport.importGameFromPaste(e.target.result);
-                if (success && typeof onRender === 'function') {
-                    onRender();
-                }
             } catch(err) {
                 log(`Error reading file: ${err.message}`);
             }

@@ -1,0 +1,94 @@
+/* --- Performance Results UI --- */
+
+.perf-overview-shell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+.perf-comparison-banner {
+    padding: var(--space-xl);
+    background: linear-gradient(135deg, rgba(241, 186, 76, 0.1), transparent);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+.perf-player-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-xl);
+}
+
+.perf-panel {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+    padding: var(--space-xl);
+    border-left: 5px solid #666;
+    transition: transform 0.3s var(--ease-out-expo);
+}
+
+.perf-panel:hover {
+    transform: scale(1.01);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.perf-panel.success { border-left-color: var(--accent-green); }
+.perf-panel.failure { border-left-color: var(--accent-pink); }
+
+.perf-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+}
+
+.perf-metric-card {
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+.perf-metric-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent-gold);
+}
+
+/* Heart Progress */
+.heart-progress-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.heart-pip {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.heart-pip.filled { background: white; border-color: white; }
+.heart-pip.color-0.filled { background: var(--accent-pink); }
+.heart-pip.color-1.filled { background: var(--accent-red); }
+.heart-pip.color-2.filled { background: var(--accent-gold); }
+.heart-pip.color-3.filled { background: var(--accent-green); }
+.heart-pip.color-4.filled { background: var(--accent-blue); }
+
+/* History List */
+.turn-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.turn-event-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid #666;
+    padding: var(--space-sm) var(--space-md);
+}
+
+.turn-event-item.play { border-left-color: var(--accent-blue); }
+.turn-event-item.activate { border-left-color: var(--accent-pink); }

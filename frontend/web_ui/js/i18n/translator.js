@@ -211,55 +211,33 @@ export function translateCard(card) {
     return { name, groups, units };
 }
 
-export function translateAbility(rawText, lang = 'jp') {
-    if (!rawText) return '';
-    const tData = translations[lang] || translations.jp; // Fallback to JP if loaded, or raw if not
-    if (!tData || Object.keys(tData).length === 0) return rawText;
-
-    const lines = rawText.split('\n');
-    const translatedLines = [];
-
-    for (let line of lines) {
+/**
+ * Structured Parser for Game Logic Pseudocode
+ */
+class OpcodeParser {
+    /**
+     * Parses a raw line of pseudocode into structured components.
+     * @param {string} line 
+     */
+    static parse(line) {
         line = line.trim();
-        if (!line || line.startsWith('//')) {
-            translatedLines.push(line);
-            continue;
-        }
-
-        // --- Heuristic Check for Raw Japanese ---
-        if (lang === 'en' && /[亜-熙ぁ-んァ-ヶ]/.test(line) && !line.includes('EFFECT:') && !line.includes('CONDITION:') && !line.includes('COST:')) {
-            translatedLines.push(translateHeuristic(line, tData));
-            continue;
-        }
+        if (!line || line.startsWith('//')) return { type: 'comment', value: line };
 
         if (line.startsWith('TRIGGER:')) {
-            const triggerKey = line.replace('TRIGGER:', '').trim();
-            const id = TriggerType[triggerKey];
-            if (id !== undefined && tData.triggers[id]) {
-                translatedLines.push(tData.triggers[id]);
-            } else {
-                const displayLabel = triggerKey.toLowerCase()
-                    .split('_')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ');
-                translatedLines.push(lang === 'jp' ? `【${triggerKey}】` : `[${displayLabel}]`);
-            }
-            continue;
+            return { type: 'trigger', value: line.replace('TRIGGER:', '').trim() };
         }
 
-        let prefix = "", body = line, isPseudo = false;
+        let prefix = "";
+        let body = line;
         const upperLine = line.toUpperCase();
-        if (upperLine.startsWith('CONDITION:')) { prefix = tData.misc.condition_prefix; body = line.substr(10).trim(); isPseudo = true; }
-        else if (upperLine.startsWith('COST:')) { prefix = tData.misc.cost_prefix; body = line.substr(5).trim(); isPseudo = true; }
-        else if (upperLine.startsWith('EFFECT:')) { prefix = tData.misc.effect_prefix; body = line.substr(7).trim(); isPseudo = true; }
-        else if (line.match(/^\d+:/)) { const m = line.match(/^\d+:/); prefix = m[0] + " "; body = line.replace(m[0], '').trim(); isPseudo = true; }
-        else if (line.includes('->') || Object.keys(EffectType).some(op => line.includes(op + '('))) {
-            isPseudo = true;
-        }
 
-        if (!isPseudo) {
-            translatedLines.push(line);
-            continue;
+        if (upperLine.startsWith('CONDITION:')) { prefix = 'CONDITION:'; body = line.substring(10).trim(); }
+        else if (upperLine.startsWith('COST:')) { prefix = 'COST:'; body = line.substring(5).trim(); }
+        else if (upperLine.startsWith('EFFECT:')) { prefix = 'EFFECT:'; body = line.substring(7).trim(); }
+        else if (line.match(/^\d+:/)) { 
+            const m = line.match(/^\d+:/); 
+            prefix = m[0]; 
+            body = line.replace(m[0], '').trim(); 
         }
 
         const isOnce = body.toLowerCase().includes('(once per turn)');
@@ -267,53 +245,139 @@ export function translateAbility(rawText, lang = 'jp') {
         const isOpt = body.toLowerCase().includes('(optional)');
         if (isOpt) body = body.replace(/\(optional\)/i, '').trim();
 
-        const translatedBody = body.split(';').map(sub => {
-            const parts = sub.split('->').map(s => s.trim());
-            const consumedKeys = new Set();
-            if (parts.length > 1) {
-                const trgtMatch = parts[1].match(/^(\w+)(?:\s*\{(.*?)\})?/);
-                const allParams = (trgtMatch && trgtMatch[2]) ? parseParams(trgtMatch[2]) : {};
-                const actOp = parts[0].split('(')[0];
-                const joiner = (lang === 'en' ? ((actOp.startsWith('RECOVER') || actOp === 'MOVE_TO_DECK') ? " from " : " to ") : " ");
-                const actionPart = translatePart(parts[0], tData, lang, allParams, consumedKeys);
-                const targetPart = translatePart(parts[1], tData, lang, allParams, consumedKeys);
-                return actionPart + joiner + targetPart;
-            }
-            return translatePart(parts[0], tData, lang, {}, consumedKeys);
-        }).join('; ');
+        const sequences = body.split(';').map(s => s.trim()).filter(Boolean);
+        const parsedSequences = sequences.map(seq => {
+            const chains = seq.split('->').map(c => c.trim()).filter(Boolean);
+            return chains.map(chain => OpcodeParser.parseInstruction(chain));
+        });
 
-        let result = prefix + translatedBody;
-        if (isOnce) result = tData.misc.once_per_turn + "\n" + result;
-        if (isOpt) result += tData.misc.optional;
-        translatedLines.push(result);
+        return {
+            type: 'logic',
+            prefix,
+            isOnce,
+            isOpt,
+            sequences: parsedSequences
+        };
+    }
+
+    /**
+     * Parses a single instruction: Opcode(args){Params}
+     * @param {string} raw 
+     */
+    static parseInstruction(raw) {
+        const match = raw.match(/^(\w+)(?:\((.*)\))?(?:\s*\{(.*?)\})?/);
+        if (!match) return { opcode: raw, args: [], params: {} };
+
+        const opcode = match[1];
+        const args = match[2] ? match[2].split(',').map(s => s.trim()) : [];
+        const paramsStr = match[3] || "";
+        const params = {};
+
+        if (paramsStr) {
+            paramsStr.split(',').forEach(pair => {
+                const [k, v] = pair.split('=').map(s => s.trim());
+                if (k && v) params[k] = v;
+            });
+        }
+
+        return { opcode, args, params };
+    }
+}
+
+export function translateAbility(rawText, lang = 'jp') {
+    if (!rawText) return '';
+    const tData = translations[lang] || translations.jp;
+    if (!tData || Object.keys(tData).length === 0) return rawText;
+
+    const lines = rawText.split('\n');
+    const translatedLines = [];
+
+    for (const rawLine of lines) {
+        const parsed = OpcodeParser.parse(rawLine);
+
+        if (parsed.type === 'comment') {
+            translatedLines.push(parsed.value);
+            continue;
+        }
+
+        if (parsed.type === 'trigger') {
+            const id = TriggerType[parsed.value];
+            if (id !== undefined && tData.triggers[id]) {
+                translatedLines.push(tData.triggers[id]);
+            } else {
+                const displayLabel = parsed.value.toLowerCase()
+                    .split('_')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+                translatedLines.push(lang === 'jp' ? `【${parsed.value}】` : `[${displayLabel}]`);
+            }
+            continue;
+        }
+
+        if (parsed.type === 'logic') {
+            // Heuristic check for raw Japanese in what should be pseudocode
+            if (lang === 'en' && /[亜-熙ぁ-んァ-ヶ]/.test(rawLine) && !parsed.prefix) {
+                translatedLines.push(translateHeuristic(rawLine, tData));
+                continue;
+            }
+
+            let prefixText = "";
+            if (parsed.prefix === 'CONDITION:') prefixText = tData.misc.condition_prefix || "Condition: ";
+            else if (parsed.prefix === 'COST:') prefixText = tData.misc.cost_prefix || "Cost: ";
+            else if (parsed.prefix === 'EFFECT:') prefixText = tData.misc.effect_prefix || "Effect: ";
+            else if (parsed.prefix) prefixText = parsed.prefix + " ";
+
+            const translatedSequences = parsed.sequences.map(chainList => {
+                const blockParams = chainList.reduce((acc, inst) => ({ ...acc, ...inst.params }), {});
+                
+                return chainList.map((inst, index) => {
+                    const nextInst = chainList[index + 1];
+                    let joiner = "";
+                    
+                    if (nextInst) {
+                        const actOp = inst.opcode;
+                        if (lang === 'en') {
+                            joiner = (actOp.startsWith('RECOVER') || actOp === 'MOVE_TO_DECK') ? " from " : " to ";
+                        } else {
+                            joiner = " ";
+                        }
+                    }
+
+                    return translateInstruction(inst, tData, lang, blockParams) + joiner;
+                }).join('');
+            }).join('; ');
+
+            let result = prefixText + translatedSequences;
+            if (parsed.isOnce) result = (tData.misc.once_per_turn || "(Once per turn)") + "\n" + result;
+            if (parsed.isOpt) result += (tData.misc.optional || " (Optional)");
+            translatedLines.push(result);
+        } else {
+            translatedLines.push(rawLine);
+        }
     }
 
     return translatedLines.join('\n');
 }
 
-function translatePart(part, tData, lang, allParams, consumedKeys) {
-    if (!part) return '';
-    const opcodeMatch = part.match(/^(\w+)(?:\((.*)\))?(?:\s*\{(.*?)\})?/);
-    if (!opcodeMatch) return part;
-
-    const opcode = opcodeMatch[1];
-    const args = opcodeMatch[2] ? opcodeMatch[2].split(',') : [];
-    const localParams = opcodeMatch[3] ? parseParams(opcodeMatch[3]) : {};
-
-    // Merge params: local part params override global block params
-    const combinedParams = { ...allParams, ...localParams };
+/**
+ * Translates a single structured instruction.
+ */
+function translateInstruction(inst, tData, lang, blockParams) {
+    const { opcode, args, params } = inst;
+    const combinedParams = { ...blockParams, ...params };
+    const consumedKeys = new Set();
 
     let template = tData.opcodes[opcode] || opcode;
     let translated = template;
 
-    // Numerical value substitution
+    // Value substitution
     if (args.length > 0) {
         translated = translated.replace(/{value}/g, args[0]);
     }
 
     let targetNames = "";
     let pStrings = [];
-    let colorVal = combinedParams.COLOR;
+    const colorVal = combinedParams.COLOR;
 
     // Parameter substitution
     for (const [k, v] of Object.entries(combinedParams)) {
@@ -334,18 +398,10 @@ function translatePart(part, tData, lang, allParams, consumedKeys) {
             if (translated.includes(placeholder)) {
                 translated = translated.replace(placeholder, replacement);
                 consumedKeys.add(k);
-            } else if (k === 'KEYWORD' && translated.includes('{keyword}')) {
-                translated = translated.replace('{keyword}', replacement);
-                consumedKeys.add(k);
-            } else if (k === 'GROUP' && translated.includes('{group}')) {
-                translated = translated.replace('{group}', replacement);
-                consumedKeys.add(k);
-            } else if (k === 'ZONE' && translated.includes('{zone}')) {
-                translated = translated.replace('{zone}', replacement);
-                consumedKeys.add(k);
             } else if (k === 'NAME' || k === 'NAMES') {
                 targetNames = replacement;
-            } else if (!consumedKeys.has(k)) {
+            } else if (!consumedKeys.has(k) && !opcode.includes(k)) { 
+                // Only add extra params as [] if they aren't obviously part of the opcode name or already consumed
                 pStrings.push(replacement);
                 consumedKeys.add(k);
             }
@@ -353,7 +409,7 @@ function translatePart(part, tData, lang, allParams, consumedKeys) {
     }
 
     // Color/Icon handling
-    if (colorVal && (opcode === 'HEARTS' || opcode === 'ADD_HEARTS' || opcode === 'SET_HEARTS' || opcode === 'PAY_ENERGY' || opcode === 'ENERGY')) {
+    if (colorVal && (opcode.includes('HEART') || opcode.includes('ENERGY'))) {
         const cName = tData.params.COLOR[colorVal] || colorVal;
         const iconTag = (opcode.includes('HEART')) ? `【${cName} Hearts】` : `【${cName} Energy】`;
         if (lang === 'jp') {
@@ -365,15 +421,22 @@ function translatePart(part, tData, lang, allParams, consumedKeys) {
         }
     }
 
-    if (lang === 'en') translated = translated.replace('{filter}', "").replace('{to}', "the Deck");
+    if (lang === 'en') {
+        translated = translated.replace('{filter}', "").replace('{to}', "the Deck");
+    }
 
     if (opcode === 'CARD_DISCARD') {
         const discardText = (lang === 'en' ? "Discard" : "控え室");
         translated = targetNames ? `${discardText} (${targetNames})` : discardText;
     } else {
-        if (translated.includes('{name}')) translated = translated.replace('{name}', targetNames || "");
-        else if (targetNames) translated += ` (${targetNames})`;
-        if (pStrings.length > 0) translated += ` [${pStrings.join(', ')}]`;
+        if (translated.includes('{name}')) {
+            translated = translated.replace('{name}', targetNames || "");
+        } else if (targetNames) {
+            translated += ` (${targetNames})`;
+        }
+        if (pStrings.length > 0) {
+            translated += ` [${pStrings.join(', ')}]`;
+        }
     }
 
     return translated.trim().replace(/\s+/g, ' ');

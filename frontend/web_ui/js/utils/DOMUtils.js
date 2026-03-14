@@ -168,6 +168,32 @@ export const DOMUtils = {
   },
 
   /**
+   * Patch attributes of an element (only updates if changed)
+   * @param {HTMLElement} el - Element to patch
+   * @param {Object} attrs - { attribute: value, ... }
+   */
+  patchAttributes: (el, attrs) => {
+    if (!el) return;
+    Object.entries(attrs).forEach(([name, value]) => {
+      if (value === undefined || value === null) {
+        if (el.hasAttribute(name)) el.removeAttribute(name);
+      } else if (el.getAttribute(name) !== String(value)) {
+        el.setAttribute(name, String(value));
+      }
+    });
+  },
+
+  /**
+   * Patch classes of an element (only updates if changed)
+   * @param {HTMLElement} el - Element to patch
+   * @param {string} classString - New class string
+   */
+  patchClasses: (el, classString) => {
+    if (!el || el.className === classString) return;
+    el.className = classString;
+  },
+
+  /**
    * Check if element has class
    * @param {string} id - Element ID
    * @param {string} className - Class name

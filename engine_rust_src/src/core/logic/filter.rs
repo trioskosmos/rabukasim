@@ -164,62 +164,51 @@ impl CardFilter {
             }
         }
 
-        // 4. Character ID Filter (bits 39-45)
+        // 4. Character ID Filter
         if self.char_id_1 > 0 {
-            let name = if let Some(m) = db.get_member(cid) {
-                &m.name
+            let normalized_name = if let Some(m) = db.get_member(cid) {
+                &m.normalized_name
             } else if let Some(l) = db.get_live(cid) {
-                &l.name
+                &l.normalized_name
             } else {
                 ""
             };
 
-            let target_name = crate::core::logic::card_db::get_character_name(self.char_id_1);
-            if !name
-                .replace(" ", "")
-                .contains(&target_name.replace(" ", ""))
-            {
-                let fallback_char_id_3 = if self.char_id_3 > 0 {
+            let mut matched = false;
+
+            // Check char_id_1
+            let target1 = crate::core::logic::card_db::get_character_name(self.char_id_1);
+            if normalized_name.contains(&target1.replace(" ", "")) {
+                matched = true;
+            }
+
+            // Check char_id_2
+            if !matched && self.char_id_2 > 0 {
+                let target2 = crate::core::logic::card_db::get_character_name(self.char_id_2);
+                if normalized_name.contains(&target2.replace(" ", "")) {
+                    matched = true;
+                }
+            }
+
+            // Check char_id_3 (including fallback to unit_id if unit is disabled)
+            if !matched {
+                let actual_char_id_3 = if self.char_id_3 > 0 {
                     self.char_id_3
                 } else if !self.unit_enabled && self.unit_id > 0 {
                     self.unit_id
                 } else {
                     0
                 };
-                // Check char_id_2 as alternate match
-                if self.char_id_2 > 0 {
-                    let target_name_2 =
-                        crate::core::logic::card_db::get_character_name(self.char_id_2);
-                    if !name
-                        .replace(" ", "")
-                        .contains(&target_name_2.replace(" ", ""))
-                    {
-                        // Check char_id_3 as alternate match
-                        if fallback_char_id_3 > 0 {
-                            let target_name_3 =
-                                crate::core::logic::card_db::get_character_name(fallback_char_id_3);
-                            if !name
-                                .replace(" ", "")
-                                .contains(&target_name_3.replace(" ", ""))
-                            {
-                                return false;
-                            }
-                        } else {
-                            return false;
-                        }
+                if actual_char_id_3 > 0 {
+                    let target3 = crate::core::logic::card_db::get_character_name(actual_char_id_3);
+                    if normalized_name.contains(&target3.replace(" ", "")) {
+                        matched = true;
                     }
-                } else if fallback_char_id_3 > 0 {
-                    let target_name_3 =
-                        crate::core::logic::card_db::get_character_name(fallback_char_id_3);
-                    if !name
-                        .replace(" ", "")
-                        .contains(&target_name_3.replace(" ", ""))
-                    {
-                        return false;
-                    }
-                } else {
-                    return false;
                 }
+            }
+
+            if !matched {
+                return false;
             }
         }
 
@@ -472,6 +461,9 @@ impl CardFilter {
         // Bits 0-1: Target Player (0=Self, 1=Active, 2=Opponent)
         // Bits 2-3: Card Type (1=Member, 2=Live)
         // Bits 32-38: Color Mask
+        let unit_enabled = ((a >> FILTER_UNIT_ENABLE_SHIFT) & 0x1) != 0;
+        let unit_id = ((a >> FILTER_UNIT_ID_SHIFT) & 0x7F) as u8;
+
         Self {
             is_enabled: true,
             target_player: ((a >> FILTER_TARGET_SHIFT) & 0x3) as u8,
@@ -482,8 +474,8 @@ impl CardFilter {
             has_blade_heart: ((a >> (FILTER_STATE_SHIFT + 1)) & 0x1) != 0,
             not_has_blade_heart: ((a >> (FILTER_STATE_SHIFT + 2)) & 0x1) != 0,
             unique_names: ((a >> (FILTER_STATE_SHIFT + 3)) & 0x1) != 0,
-            unit_enabled: ((a >> FILTER_UNIT_ENABLE_SHIFT) & 0x1) != 0,
-            unit_id: ((a >> FILTER_UNIT_ID_SHIFT) & 0x7F) as u8,
+            unit_enabled,
+            unit_id,
             value_enabled: ((a >> FILTER_VALUE_ENABLE_SHIFT) & 0x1) != 0,
             value_threshold: ((a >> FILTER_VALUE_THRESHOLD_SHIFT) & 0x1F) as u8,
             is_le: ((a >> FILTER_VALUE_LE_SHIFT) & 0x1) != 0,
@@ -491,7 +483,7 @@ impl CardFilter {
             color_mask: ((a >> FILTER_COLOR_SHIFT_R5) & 0x7F) as u8,
             char_id_1: ((a >> FILTER_CHAR_1_SHIFT) & 0x7F) as u8,
             char_id_2: ((a >> FILTER_CHAR_2_SHIFT) & 0x7F) as u8,
-            char_id_3: 0,
+            char_id_3: if !unit_enabled { unit_id } else { 0 },
             zone_mask: ((a >> FILTER_ZONE_MASK_SHIFT_R5) & 0x7) as u8,
             special_id: ((a >> FILTER_SPECIAL_ID_SHIFT) & 0x7) as u8,
             is_setsuna: ((a >> FILTER_SETSUNA_SHIFT) & 0x1) != 0,
@@ -521,13 +513,18 @@ impl CardFilter {
         if self.unit_enabled {
             a |= 1u64 << FILTER_UNIT_ENABLE_SHIFT;
             a |= (self.unit_id as u64 & 0x7F) << FILTER_UNIT_ID_SHIFT;
+        } else if self.char_id_3 > 0 {
+            // Pack char_id_3 into unit_id bits if unit is not enabled
+            a |= (self.char_id_3 as u64 & 0x7F) << FILTER_UNIT_ID_SHIFT;
         }
+
         if self.value_enabled {
             a |= 1u64 << FILTER_VALUE_ENABLE_SHIFT;
             a |= (self.value_threshold as u64 & 0x1F) << FILTER_VALUE_THRESHOLD_SHIFT;
             if self.is_le { a |= 1u64 << FILTER_VALUE_LE_SHIFT; }
             if self.is_cost_type { a |= 1u64 << FILTER_VALUE_TYPE_SHIFT; }
         }
+
         a |= (self.color_mask as u64 & 0x7F) << FILTER_COLOR_SHIFT_R5;
         a |= (self.char_id_1 as u64 & 0x7F) << FILTER_CHAR_1_SHIFT;
         a |= (self.char_id_2 as u64 & 0x7F) << FILTER_CHAR_2_SHIFT;

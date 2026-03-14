@@ -11,17 +11,14 @@ import { Phase, fixImg } from './constants.js';
 import * as i18n from './i18n/index.js';
 import { Tooltips } from './ui_tooltips.js';
 import { InteractionAdapter } from './interaction_adapter.js';
-import { Logs } from './ui_logs.js';
-import { PerformanceRenderer } from './ui_performance.js';
+import { LogRenderer as Logs } from './components/LogRenderer.js';
+import { PerformanceRenderer } from './components/PerformanceRenderer.js';
+
+import { HeaderStats } from './components/HeaderStats.js';
+import { ZoneViewer } from './components/ZoneViewer.js';
 
 // Cached DOM element references for performance
 const DOM_CACHE = {
-    turn: null,
-    phase: null,
-    score: null,
-    headerEnergy: null,
-    totalHearts: null,
-    totalBlades: null,
     myHand: null,
     oppHand: null,
     myStage: null,
@@ -46,12 +43,6 @@ function initDomCache() {
     if (domCacheInitialized) return;
     domCacheInitialized = true;
     for (const [key, id] of Object.entries({
-        turn: 'turn',
-        phase: 'phase',
-        score: 'score',
-        headerEnergy: 'header-energy',
-        totalHearts: 'total-hearts-summary',
-        totalBlades: 'total-blades-summary',
         myHand: 'my-hand',
         oppHand: 'opp-hand',
         myStage: 'my-stage',
@@ -77,45 +68,33 @@ export const Rendering = {
     render: () => {
         if (State.renderRequested) return;
         State.renderRequested = true;
+        
+        // Initial fade-in for the entire app if it's the first render
+        if (!State.firstRenderDone) {
+            const app = document.getElementById('app');
+            if (app) {
+                app.style.opacity = '0';
+                app.style.transition = 'opacity 0.8s ease-out';
+                setTimeout(() => app.style.opacity = '1', 50);
+            }
+            State.firstRenderDone = true;
+        }
+
         requestAnimationFrame(() => {
-            initDomCache();
-            Rendering.renderInternal();
-            State.renderRequested = false;
+            try {
+                initDomCache();
+                initAccessibility();
+                Rendering.renderInternal();
+            } catch (error) {
+                console.error('Fatal Rendering Error:', error);
+            } finally {
+                State.renderRequested = false;
+            }
         });
     },
 
-    renderHeaderStats: (state, p0, p1, t) => {
-        // RPS, Setup, etc. phase names
-        let phaseKey = Rendering.getPhaseKey(state.phase);
-
-        if (DOM_CACHE.turn) DOM_CACHE.turn.textContent = state.turn_number || state.turn || 1;
-        if (DOM_CACHE.phase) DOM_CACHE.phase.textContent = i18n.t(phaseKey);
-
-        if (DOM_CACHE.score) {
-            const p0Score = state.players[0].success_lives ? state.players[0].success_lives.length : 0;
-            const p1Score = state.players[1].success_lives ? state.players[1].success_lives.length : 0;
-            DOM_CACHE.score.textContent = `${p0Score} - ${p1Score}`;
-        }
-
-        // Energy and Hearts
-        if (DOM_CACHE.headerEnergy && p0) {
-            DOM_CACHE.headerEnergy.textContent = `${p0.energy_untapped || 0}/${p0.energy_count || 0}`;
-        }
-
-        // Hearts summary
-        if (DOM_CACHE.totalHearts && p0) {
-            const hearts = p0.total_hearts || [0, 0, 0, 0, 0, 0, 0];
-            DOM_CACHE.totalHearts.innerHTML = Rendering.renderHeartsCompact(hearts);
-        }
-
-        // Blades summary
-        if (DOM_CACHE.totalBlades && p0) {
-            const bladesCount = p0.total_blades !== undefined ? p0.total_blades : 0;
-            DOM_CACHE.totalBlades.innerHTML = `<span class="stat-item" title="Total Blades">
-                <img src="img/texticon/icon_blade.png" class="heart-mini-icon">
-                <span class="stat-value">${bladesCount}</span>
-             </span>`;
-        }
+    renderHeaderStats: (state, p0) => {
+        HeaderStats.render(state, p0, Rendering.getPhaseKey);
     },
 
     get_valid_targets: InteractionAdapter.get_valid_targets,
@@ -158,7 +137,7 @@ export const Rendering = {
         const validTargets = Rendering.get_valid_targets(state);
 
         // Update UI Headers, Stats, etc. (Logic moved from main.js)
-        Rendering.renderHeaderStats(state, p0, p1, t);
+        Rendering.renderHeaderStats(state, p0);
         Rendering.renderBoard(state, p0, p1, validTargets);
 
         let selectedIndices = [];
@@ -174,7 +153,6 @@ export const Rendering = {
         Rendering.renderLookedCards(validTargets.selection);
         Rendering.renderSelectionModal();
         Rendering.renderRuleLog();
-        Rendering.renderActiveEffects(state);
         Rendering.renderActiveEffects(state);
         // Toggle the panel visibility based on content
         const abPanel = document.getElementById('active-abilities-panel');
@@ -243,12 +221,6 @@ export const Rendering = {
         CardRenderer.renderDiscardPile(containerId, discard, playerIdx, validActionMap, hasGlobalSelection, Rendering.showDiscardModal);
     },
 
-    renderActiveEffects: (state, p0, p1) => Logs.renderActiveEffects(state, p0, p1),
-
-    renderRuleLog: (containerId = 'rule-log') => Logs.renderRuleLog(containerId),
-
-
-
     renderActiveAbilities: (containerId, abilities) => Logs.renderActiveAbilities(containerId, abilities),
 
     renderSelectionModal: () => {
@@ -262,113 +234,8 @@ export const Rendering = {
         ActionMenu.renderGameOver(state);
     },
 
-    showDiscardModal: (playerIdx) => {
-        console.log("[Rendering] showDiscardModal triggered for player:", playerIdx);
-        const state = State.data;
-        if (!state || !state.players) return;
-
-        const player = state.players[playerIdx];
-        const discard = player.discard || [];
-
-        const modal = document.getElementById('discard-modal');
-        const title = document.getElementById('discard-modal-title');
-        const container = document.getElementById('discard-modal-cards');
-
-        const isMe = playerIdx === State.perspectivePlayer;
-        const count = discard.length;
-        title.textContent = isMe ? i18n.t('your_discard_title', { count }) : i18n.t('opp_discard_title', { count });
-        container.innerHTML = '';
-
-        if (discard.length === 0) {
-            container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 40px;">${i18n.t('no_cards_discard')}</div>`;
-        } else {
-            discard.forEach((card) => {
-                if (!card) return;
-                const div = document.createElement('div');
-                div.className = 'card';
-                let imgPath = card.img || card.img_path || '';
-                div.innerHTML = `<img src="${fixImg(imgPath)}">`;
-                const rawText = Tooltips.getEffectiveRawText(card);
-                if (rawText) div.setAttribute('data-text', rawText);
-                if (card.id !== undefined) div.setAttribute('data-card-id', card.id);
-                container.appendChild(div);
-            });
-        }
-        modal.style.display = 'flex';
-    },
-
-    showZoneViewer: (playerIdx) => {
-        console.log("[Rendering] showZoneViewer triggered for player:", playerIdx);
-        const state = State.data;
-        if (!state || !state.players) return;
-
-        const player = state.players[playerIdx];
-        const modal = document.getElementById('discard-modal'); // Reusing discard modal for now
-        const title = document.getElementById('discard-modal-title');
-        const container = document.getElementById('discard-modal-cards');
-
-        const isMe = playerIdx === State.perspectivePlayer;
-        title.textContent = isMe ? i18n.t('your_viewer_title') : i18n.t('opp_viewer_title');
-        container.innerHTML = '';
-        container.className = 'zone-viewer-grid'; // Use a different grid if needed
-
-        const addSection = (label, cards, isDeck = false) => {
-            if (!cards || cards.length === 0) return;
-
-            const section = document.createElement('div');
-            section.className = 'zone-viewer-section';
-            section.innerHTML = `<h3>${label} (${cards.length})</h3>`;
-
-            const grid = document.createElement('div');
-            grid.className = 'selection-grid';
-
-            // For deck, we want "input order". Since we don't have the original deck,
-            // we sort by card ID as a stable substitute for now, or use alphabetic.
-            let sortedCards = [...cards];
-            if (isDeck) {
-                sortedCards.sort((a, b) => (a.id || 0) - (b.id || 0));
-            }
-
-            sortedCards.forEach(card => {
-                if (!card) return;
-                const div = document.createElement('div');
-                div.className = 'card card-mini';
-                const imgPath = card.img || card.img_path || '';
-                div.innerHTML = `<img src="${fixImg(imgPath)}" onerror="this.src='img/texticon/icon_energy.png'">`;
-
-                Tooltips.attachCardData(div, card);
-                grid.appendChild(div);
-            });
-
-            section.appendChild(grid);
-            container.appendChild(section);
-        };
-
-        const addEmptySection = (label) => {
-            const section = document.createElement('div');
-            section.className = 'zone-viewer-section';
-            section.innerHTML = `<h3>${label} (0)</h3><div style="opacity:0.5; padding:10px;">${i18n.t('no_cards_zone')}</div>`;
-            container.appendChild(section);
-        };
-
-        // Deck Sections
-        const deck = player.deck_cards || player.deck || player.full_deck || [];
-        const energyDeck = player.energy_deck_cards || player.energy_deck || [];
-
-        if (deck.length > 0) addSection(i18n.t('member_deck_rem'), deck, true);
-        else addEmptySection(i18n.t('member_deck_rem'));
-
-        if (energyDeck.length > 0) addSection(i18n.t('energy_deck_rem'), energyDeck, true);
-        else addEmptySection(i18n.t('energy_deck_rem'));
-
-        addSection(i18n.t('hand'), player.hand);
-        addSection(i18n.t('stage'), player.stage);
-        addSection(i18n.t('energy'), player.energy ? player.energy.map(e => e.card || e) : []);
-        addSection(i18n.t('success_zone'), player.success_lives || player.success_pile);
-        addSection(i18n.t('discard_pile'), player.discard);
-
-        modal.style.display = 'flex';
-    },
+    showDiscardModal: (playerIdx) => ZoneViewer.showDiscard(playerIdx),
+    showZoneViewer: (playerIdx) => ZoneViewer.showZoneViewer(playerIdx),
 
     renderActions: () => {
         ActionMenu.renderActions();
@@ -403,19 +270,6 @@ export const Rendering = {
 
     renderActiveEffects: (state) => Logs.renderActiveEffects(state),
 
-    renderActiveAbilities: (containerId, abilities) => {
-        const el = document.getElementById(containerId);
-        if (!el) return;
-        el.innerHTML = abilities.map(a => {
-            const card = Tooltips.findCardById(a.source_card_id);
-            const name = card ? card.name : i18n.t('card');
-            const dataText = a.description || (card ? Tooltips.getEffectiveRawText(card) : '');
-
-            return `<div class="active-ability-item" data-card-id="${a.source_card_id}" data-text="${dataText.replace(/"/g, '&quot;')}">
-                <span class="ability-source">${name}:</span> ${a.description}
-            </div>`;
-        }).join('');
-    },
 
     renderLookedCards: (selectionTargets = {}) => {
         CardRenderer.renderLookedCards(selectionTargets);
@@ -470,6 +324,11 @@ export const Rendering = {
 
     renderTurnHistory: () => PerformanceRenderer.renderTurnHistory(Rendering.getPhaseKey)
 };
+
+// Automatic rendering on state change
+if (typeof window !== 'undefined') {
+    State.on('change', () => Rendering.render());
+}
 
 // Global Highlighting Logic for Bidirectional Linkage
 window.highlightActionBtn = (actionId, active) => {
