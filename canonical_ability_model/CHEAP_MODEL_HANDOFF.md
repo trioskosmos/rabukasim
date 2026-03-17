@@ -83,6 +83,16 @@ Filter clause shape:
 - Use named fields like `count`, `target`, `zone`, `duration`, `filter`, `args`.
 - Do not think in terms of bytecode words, packed attrs, bit positions, or storage layout.
 
+## Target and binding rule
+
+- Use `target` for who an effect applies to.
+- Use `store_as` only for values or selections that later steps reference.
+- Never put `SELF`, `PLAYER`, or `OPPONENT` in `store_as`.
+- If the target is explicit or clearly implied by a stable pattern, fill `target`.
+- If the target is uncertain, leave it unset and add review markers instead of guessing.
+- If a step selects something for later reuse, that is usually `store_as`, not `target`.
+- If a step applies an effect to someone immediately, that is usually `target`, not `store_as`.
+
 ## Legacy/unsafe surface forms
 
 If these appear and cannot be normalized safely, mark for review instead of guessing:

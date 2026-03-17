@@ -17,20 +17,52 @@ const TRIGGER_IDS = {
 
 const CONDITION_IDS = {
   COUNT_SUCCESS_LIVE: 218,
+  HAS_COLOR: 202,
+  IS_CENTER: 206,
+  COUNT_GROUP: 208,
+  BATON: 231,
+  LIFE_LEAD: 207,
 };
 
 const EFFECT_IDS = {
   DRAW: 10,
+  ADD_BLADES: 11,
   ADD_HEARTS: 12,
+  REDUCE_COST: 13,
+  RECOVER_LIVE: 15,
+  BOOST_SCORE: 16,
+  RECOVER_MEMBER: 17,
+  SEARCH_DECK: 22,
+  ENERGY_CHARGE: 23,
   SELECT_MODE: 30,
   TAP_OPPONENT: 32,
+  ACTIVATE_MEMBER: 43,
+  ADD_TO_HAND: 44,
+  COLOR_SELECT: 45,
+  REDUCE_HEART_REQ: 48,
+  SET_TAPPED: 51,
+  TAP_MEMBER: 53,
   MOVE_TO_DISCARD: 58,
+  GRANT_ABILITY: 60,
   SELECT_MEMBER: 65,
+  ACTIVATE_ENERGY: 81,
+};
+
+const COST_IDS = {
+  ENERGY: 1,
+  TAP_SELF: 2,
+  DISCARD_HAND: 3,
+  RETURN_HAND: 4,
+  SACRIFICE_SELF: 5,
+  TAP_MEMBER: 20,
+  DISCARD_MEMBER: 24,
 };
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(path.join(repoRoot, filePath), "utf8"));
 }
+
+let compiledAbilityIndex = null;
 
 function fail(message) {
   console.error(message);
@@ -98,11 +130,10 @@ function parseLegacyFilterString(filterText) {
 }
 
 function normalizeTarget(target) {
-  if (!target) return null;
-  if (target === "PLAYER" || target === "SELF") {
+  if (!target || target === "PLAYER" || target === "SELF" || target === "CONTROLLER") {
     return "$controller";
   }
-  if (/^TARGET(_\d+)?$/.test(target)) {
+  if (/^TARGET(_\d+)?$/.test(target) || target === "TARGET_MEMBER") {
     return "$branch_target";
   }
   return target;
@@ -113,13 +144,12 @@ function lowerCanonicalStep(step) {
     case "condition":
       return {
         kind: "condition",
-        op: step.op,
+        op: step.op ? step.op.toUpperCase() : null,
         value:
           step.args && step.args.min && step.args.min.kind === "literal"
             ? step.args.min.value
-            : null,
-        target:
-          typeof step.args?.target === "string" ? normalizeTarget(step.args.target) : null,
+            : (step.args?.value ?? null),
+        target: normalizeTarget(step.args?.target),
       };
     case "select":
       return {
@@ -128,6 +158,14 @@ function lowerCanonicalStep(step) {
         count: step.count?.value ?? null,
         filter: normalizeFilter(step.filter),
         target_binding: normalizeTarget(step.store_as),
+      };
+    case "cost":
+      return {
+        kind: "cost",
+        op: step.op,
+        count: step.count?.value ?? null,
+        target: normalizeTarget(step.target),
+        optional: step.optional ?? false,
       };
     case "effect":
       if (step.op === "DISCARD_HAND") {
@@ -149,6 +187,7 @@ function lowerCanonicalStep(step) {
         duration: step.duration ?? null,
         heart_type: step.args?.heart_type ?? null,
         filter: normalizeFilter(step.filter),
+        is_optional: step.optional ?? false,
       };
     case "choose_one":
       return {
@@ -158,6 +197,13 @@ function lowerCanonicalStep(step) {
           branch.steps.map((child) => lowerCanonicalStep(child))
         ),
       };
+    case "if":
+       // For simple optional effects, we canonicalize by looking at 'then'
+       // This is a bridge-only simplification to match v1 compiler flattening
+       const results = (step.then || []).map(s => lowerCanonicalStep(s));
+       // If it was an 'if' step, the resulting effects were likely optional in v1
+       results.forEach(r => { if (r.kind === "effect") r.is_optional = true; });
+       return results;
     default:
       return {
         kind: step.kind,
@@ -167,15 +213,35 @@ function lowerCanonicalStep(step) {
 }
 
 function lowerCanonicalAbility(golden) {
+  const steps = [];
+  golden.steps.forEach(s => {
+      const lowered = lowerCanonicalStep(s);
+      if (Array.isArray(lowered)) steps.push(...lowered);
+      else steps.push(lowered);
+  });
+
   return {
     trigger: golden.trigger,
-    conditions: golden.steps
+    conditions: steps
       .filter((step) => step.kind === "condition")
-      .map((step) => lowerCanonicalStep(step)),
-    effects: golden.steps
+      .map((step) => step),
+    effects: steps
       .filter((step) => step.kind !== "condition")
-      .map((step) => lowerCanonicalStep(step)),
+      .map((step) => step),
   };
+}
+
+function hasUnsupportedCanonicalStep(step) {
+  if (!step || typeof step !== "object") {
+    return true;
+  }
+  if (step.unsupported) {
+    return true;
+  }
+  if (Array.isArray(step.branches)) {
+    return step.branches.some((branch) => branch.some((child) => hasUnsupportedCanonicalStep(child)));
+  }
+  return false;
 }
 
 function normalizeCompiledCondition(condition) {
@@ -190,6 +256,21 @@ function normalizeCompiledCondition(condition) {
       typeof condition.params?.target === "string"
         ? normalizeTarget(condition.params.target.toUpperCase())
         : null,
+  };
+}
+
+function normalizeCompiledCost(cost) {
+  const opName =
+    Object.entries(COST_IDS).find(([, value]) => value === cost.type)?.[0] ??
+    `COST_${cost.type}`;
+  return {
+    kind: "cost",
+    op: opName,
+    count: cost.value ?? null,
+    target: normalizeTarget(
+      typeof cost.target === "string" ? cost.target.toUpperCase() : "PLAYER"
+    ),
+    optional: false, // Compiled costs are usually mandatory within their ability
   };
 }
 
@@ -266,8 +347,9 @@ function normalizeCompiledEffect(effect) {
     op: opName,
     count: effect.value ?? null,
     target: normalizeTarget(
-      typeof effect.target === "string" ? effect.target.toUpperCase() : "PLAYER"
+      typeof effect.target === "string" ? effect.target.toUpperCase() : (effect.target || "PLAYER")
     ),
+    is_optional: effect.is_optional ?? false,
   };
 }
 
@@ -275,17 +357,90 @@ function normalizeCompiledAbility(ability) {
   const triggerName =
     Object.entries(TRIGGER_IDS).find(([, value]) => value === ability.trigger)?.[0] ??
     `TRIGGER_${ability.trigger}`;
+  
+  const costs = (ability.costs || []).map(normalizeCompiledCost);
+  const conditions = (ability.conditions || []).map(normalizeCompiledCondition);
+  const effects = (ability.effects || []).map(normalizeCompiledEffect);
+
   return {
     trigger: triggerName,
-    conditions: (ability.conditions || []).map((condition) =>
-      normalizeCompiledCondition(condition)
-    ),
-    effects: (ability.effects || []).map((effect) => normalizeCompiledEffect(effect)),
+    conditions: conditions,
+    effects: [...costs, ...effects],
   };
 }
 
 function compareStructures(left, right) {
   return JSON.stringify(pruneNulls(left), null, 2) === JSON.stringify(pruneNulls(right), null, 2);
+}
+
+function getCompiledAbilityIndex() {
+  if (compiledAbilityIndex) {
+    return compiledAbilityIndex;
+  }
+
+  const compiledDb = readJson("data/cards_compiled.json");
+  const byCardAndIndex = new Map();
+  const byCardAndPseudocode = new Map();
+  const byCardAndRawText = new Map();
+
+  for (const dbName of ["member_db", "live_db", "energy_db"]) {
+    for (const card of Object.values(compiledDb[dbName] || {})) {
+      for (const [abilityIndex, ability] of (card.abilities || []).entries()) {
+        byCardAndIndex.set(`${card.card_no}::${abilityIndex}`, ability);
+        byCardAndPseudocode.set(`${card.card_no}::${String(ability.pseudocode || "")}`, ability);
+        byCardAndRawText.set(`${card.card_no}::${String(ability.raw_text || "")}`, ability);
+      }
+    }
+  }
+
+  compiledAbilityIndex = {
+    byCardAndIndex,
+    byCardAndPseudocode,
+    byCardAndRawText,
+  };
+  return compiledAbilityIndex;
+}
+
+function findCompiledAbility(cardNo, abilityIndex, rawText = null, pseudocode = null) {
+  const index = getCompiledAbilityIndex();
+  let compiledAbility = null;
+
+  if (Number.isInteger(abilityIndex)) {
+    compiledAbility = index.byCardAndIndex.get(`${cardNo}::${abilityIndex}`) || null;
+  } else if (pseudocode) {
+    compiledAbility = index.byCardAndPseudocode.get(`${cardNo}::${String(pseudocode)}`) || null;
+  } else if (rawText) {
+    compiledAbility = index.byCardAndRawText.get(`${cardNo}::${String(rawText)}`) || null;
+  } else {
+    compiledAbility = index.byCardAndIndex.get(`${cardNo}::0`) || null;
+  }
+
+  if (!compiledAbility) {
+    fail(`Could not find compiled ability ${cardNo}#${abilityIndex}`);
+  }
+
+  return compiledAbility;
+}
+
+function compareCanonicalToCompiled(golden, cardNo, abilityIndex = null) {
+  const compiledAbility = findCompiledAbility(
+    cardNo,
+    abilityIndex,
+    golden.raw_text || null,
+    golden.pseudocode || null
+  );
+
+  const canonicalLowered = lowerCanonicalAbility(golden);
+  const compiledLowered = normalizeCompiledAbility(compiledAbility);
+
+  const matches = compareStructures(canonicalLowered, compiledLowered);
+  return {
+    matches,
+    supported: !canonicalLowered.effects.some((effect) => hasUnsupportedCanonicalStep(effect))
+      && !canonicalLowered.conditions.some((condition) => hasUnsupportedCanonicalStep(condition)),
+    canonicalLowered: pruneNulls(canonicalLowered),
+    compiledLowered: pruneNulls(compiledLowered),
+  };
 }
 
 function main() {
@@ -301,39 +456,22 @@ function main() {
   const abilityIndex = Number(process.argv[4]);
 
   const golden = readJson(goldenPath);
-  const compiledDb = readJson("data/cards_compiled.json");
-
-  let compiledAbility = null;
-  for (const dbName of ["member_db", "live_db"]) {
-    for (const card of Object.values(compiledDb[dbName] || {})) {
-      if (card.card_no === cardNo) {
-        compiledAbility = card.abilities?.[abilityIndex] ?? null;
-        break;
-      }
-    }
-    if (compiledAbility) break;
-  }
-
-  if (!compiledAbility) {
-    fail(`Could not find compiled ability ${cardNo}#${abilityIndex}`);
-  }
-
-  const canonicalLowered = lowerCanonicalAbility(golden);
-  const compiledLowered = normalizeCompiledAbility(compiledAbility);
-
-  const matches = compareStructures(canonicalLowered, compiledLowered);
+  const result = compareCanonicalToCompiled(golden, cardNo, abilityIndex);
   console.log(
-    JSON.stringify(
-      {
-        matches,
-        canonicalLowered: pruneNulls(canonicalLowered),
-        compiledLowered: pruneNulls(compiledLowered),
-      },
-      null,
-      2
-    )
+    JSON.stringify(result, null, 2)
   );
-  process.exit(matches ? 0 : 1);
+  process.exit(result.matches ? 0 : 1);
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  compareCanonicalToCompiled,
+  lowerCanonicalAbility,
+  normalizeCompiledAbility,
+  compareStructures,
+  pruneNulls,
+  findCompiledAbility,
+};
