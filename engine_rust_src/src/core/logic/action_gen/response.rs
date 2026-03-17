@@ -297,7 +297,7 @@ impl ResponseGenerator {
                     }
                 } else {
                     for (i, &cid) in player.hand.iter().enumerate() {
-                        if state.card_matches_filter(db, cid, masked_filter) {
+                        if state.card_matches_filter_with_ctx(db, cid, masked_filter, &pi.ctx) {
                             receiver.add_action(
                                 (ACTION_BASE_HAND_SELECT + i as i32) as usize,
                             );

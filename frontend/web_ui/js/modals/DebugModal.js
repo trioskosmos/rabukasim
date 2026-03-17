@@ -191,8 +191,11 @@ export const DebugModal = {
         abilitySearch: '',
     },
 
-    _activeTab: 'inspector',
+    _activeTab: 'trace',
     _snapshot: null,
+    _historyExport: null,
+    _selectedHistoryIndex: null,
+    _jsonMode: 'minimal',
     _status: null,
 
     init: () => {},
@@ -202,6 +205,7 @@ export const DebugModal = {
         if (!modal) return;
 
         modal.style.display = 'flex';
+        await DebugModal._ensureTraceEnabled();
         await DebugModal.renderAll();
         DebugModal.switchTab(DebugModal._activeTab);
     },
@@ -244,6 +248,7 @@ export const DebugModal = {
     renderAll: async () => {
         if (State.roomCode) await Network.fetchState();
         await DebugModal._refreshSnapshot();
+        await DebugModal._refreshHistoryExport();
 
         if (!State.data) {
             const emptyMarkup = '<div style="padding:24px; opacity:0.6; text-align:center; font-size:12px;">Waiting for game state...</div>';
@@ -263,6 +268,80 @@ export const DebugModal = {
     _refreshSnapshot: async () => {
         const snapshot = await Network.fetchDebugSnapshot();
         DebugModal._snapshot = snapshot && snapshot.success ? snapshot : null;
+    },
+
+    _refreshHistoryExport: async () => {
+        const exportData = await Network.exportGame();
+        DebugModal._historyExport = exportData && exportData.success !== false ? exportData : null;
+        DebugModal._syncHistorySelection();
+    },
+
+    _syncHistorySelection: () => {
+        const history = DebugModal._historyExport?.history || [];
+        if (!history.length) {
+            DebugModal._selectedHistoryIndex = null;
+            return;
+        }
+
+        const preferredIndex = DebugModal._snapshot?.history_index
+            ?? DebugModal._historyExport?.history_index
+            ?? (history.length - 1);
+        const safeIndex = Math.max(0, Math.min(preferredIndex, history.length - 1));
+        if (DebugModal._selectedHistoryIndex === null || DebugModal._selectedHistoryIndex >= history.length) {
+            DebugModal._selectedHistoryIndex = safeIndex;
+        }
+    },
+
+    _ensureTraceEnabled: async () => {
+        await DebugModal._refreshSnapshot();
+        if (DebugModal._snapshot?.debug_mode) {
+            return;
+        }
+
+        const enabled = await Network.toggleDebugMode();
+        if (enabled) {
+            DebugModal._setStatus('success', 'Trace capture enabled.');
+            await DebugModal._refreshSnapshot();
+        }
+    },
+
+    _getHistoryEntries: () => {
+        const exportData = DebugModal._historyExport;
+        if (!exportData) return [];
+        const history = Array.isArray(exportData.history) ? exportData.history : [];
+
+        return history.map((state, index) => ({
+            index,
+            state,
+            serialized: JSON.stringify(state),
+            isCurrent: index === (DebugModal._snapshot?.history_index ?? exportData.history_index),
+            turn: state?.turn ?? '?',
+            phase: PHASE_NAMES[state?.phase] || state?.phase || '?',
+            currentPlayer: (state?.current_player ?? 0) + 1,
+            score: Array.isArray(state?.players)
+                ? state.players.map((player) => player?.score ?? 0).join(' - ')
+                : '?',
+        }));
+    },
+
+    _getSelectedHistoryEntry: () => {
+        const entries = DebugModal._getHistoryEntries();
+        if (!entries.length) return null;
+        const selectedIndex = DebugModal._selectedHistoryIndex ?? entries.length - 1;
+        return entries.find((entry) => entry.index === selectedIndex) || entries[entries.length - 1];
+    },
+
+    _updateJsonModeBanner: () => {
+        const labels = {
+            minimal: ['Minimal editor', 'Small editable checkpoint focused on board zones and counts.'],
+            checkpoint: ['Checkpoint snapshot', 'Raw engine-shaped snapshot used for apply/import and history playback.'],
+            viewer: ['Viewer state', 'Fully enriched frontend state including resolved cards and derived debug fields.'],
+        };
+        const [title, hint] = labels[DebugModal._jsonMode] || labels.checkpoint;
+        const titleEl = document.getElementById('debug-json-mode-title');
+        const hintEl = document.getElementById('debug-json-mode-hint');
+        if (titleEl) titleEl.textContent = title;
+        if (hintEl) hintEl.textContent = hint;
     },
 
     _getCheckpointPayload: (source = null) => {
@@ -699,6 +778,45 @@ export const DebugModal = {
         `;
     },
 
+    _renderMetadataRows: (card) => {
+        const metadataFields = [
+            'card_no',
+            'attribute',
+            'group',
+            'group_mask',
+            'unit',
+            'unit_mask',
+            'school',
+            'year',
+            'character',
+            'traits',
+            'keywords',
+            'required_member',
+            'required_group',
+            'required_unit',
+            'required_color',
+            'activation_limit',
+            'activation_count',
+            'prevent_activate',
+            'prevent_baton_touch',
+            'prevent_success_pile_set',
+        ];
+
+        const present = metadataFields
+            .filter((key) => card[key] !== undefined && card[key] !== null && card[key] !== '')
+            .map((key) => renderScalarCell(key, summarizeObject(card[key])));
+
+        if (present.length === 0) {
+            return '<div style="opacity:0.5; font-size:10px;">No extra metadata surfaced on this card snapshot.</div>';
+        }
+
+        return `
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:6px;">
+                ${present.join('')}
+            </div>
+        `;
+    },
+
     _renderCardInspector: (entry, index) => {
         const card = entry.card;
         if (!card) return '';
@@ -742,6 +860,11 @@ export const DebugModal = {
                     ${DebugModal._renderFlagRow('Ability Flags', card.ability_flags ?? 0, ABILITY_FLAG_BITS, '#22c55e')}
                     ${DebugModal._renderFlagRow('Synergy Flags', card.synergy_flags ?? 0, SYNERGY_FLAG_BITS, '#eab308')}
                     ${DebugModal._renderFlagRow('Cost Flags', card.cost_flags ?? 0, COST_FLAG_BITS, '#f97316')}
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <strong style="font-size:11px;">Metadata Surface</strong>
+                    ${DebugModal._renderMetadataRows(card)}
                 </div>
 
                 ${abilities.length === 0 ? '<div style="opacity:0.5; font-size:10px;">No abilities on this card.</div>' : `
@@ -816,10 +939,16 @@ export const DebugModal = {
 
         const traceLines = DebugModal._snapshot?.trace_log || [];
         const bytecodeLines = DebugModal._snapshot?.bytecode_log || State.data.bytecode_log || [];
+        const historyEntry = DebugModal._getSelectedHistoryEntry();
 
         container.innerHTML = `
             <div style="display:flex; flex-direction:column; height:100%; padding:14px; gap:12px; overflow:hidden;">
                 ${renderStatusBanner(DebugModal._status)}
+                <div class="debug-action-row">
+                    <button class="btn btn-secondary btn-xs" data-action="toggle-debug-mode">Trace ${DebugModal._snapshot?.debug_mode ? 'On' : 'Off'}</button>
+                    <button class="btn btn-secondary btn-xs" data-action="debug-render-all">Refresh</button>
+                    <span style="margin-left:auto; font-size:10px; opacity:0.7;">${historyEntry ? `Checkpoint ${historyEntry.index + 1}/${DebugModal._getHistoryEntries().length}` : 'No checkpoint timeline yet'}</span>
+                </div>
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">
                     ${renderScalarCell('debug_mode', DebugModal._snapshot?.debug_mode ? 'enabled' : 'disabled')}
                     ${renderScalarCell('trace lines', String(traceLines.length))}
@@ -844,27 +973,49 @@ export const DebugModal = {
         const container = document.querySelector('[data-tab-pane="string"]');
         if (!container || !State.data) return;
 
-        let serialized = '';
-        try {
-            serialized = JSON.stringify(DebugModal._getCheckpointPayload());
-        } catch (error) {
-            serialized = `Error: ${error.message}`;
-        }
+        const entries = DebugModal._getHistoryEntries();
+        const selectedEntry = DebugModal._getSelectedHistoryEntry();
+        const serialized = selectedEntry?.serialized || JSON.stringify(DebugModal._getCheckpointPayload());
 
         container.innerHTML = `
             <div style="display:flex; flex-direction:column; height:100%; padding:14px; gap:10px; overflow:hidden;">
                 ${renderStatusBanner(DebugModal._status)}
                 <div style="font-size:11px; opacity:0.88; background:rgba(56,189,248,0.1); padding:10px 12px; border-radius:6px; border-left:3px solid #38bdf8; line-height:1.45;">
-                    <strong>Raw GameState snapshot</strong><br/>
-                    <span style="font-size:10px;">This payload comes from the backend snapshot route when available, so apply uses the same raw shape the Rust endpoint expects.</span><br/>
-                    <span style="font-size:9px; font-family:'Cascadia Code', monospace; opacity:0.72;">${(serialized.length / 1024).toFixed(2)} KB</span>
+                    <strong>Checkpoint state strings</strong><br/>
+                    <span style="font-size:10px;">Pick any history entry, copy the one-line state string, or apply/import it directly.</span><br/>
+                    <span style="font-size:9px; font-family:'Cascadia Code', monospace; opacity:0.72;">${(serialized.length / 1024).toFixed(2)} KB${selectedEntry ? ` | turn ${selectedEntry.turn} | ${selectedEntry.phase}` : ''}</span>
                 </div>
-                <textarea id="debug-string-textarea" spellcheck="false" style="flex:1; width:100%; background:#020617; color:#dbeafe; border:1px solid #334155; border-radius:6px; padding:10px; font-family:'Cascadia Code', monospace; font-size:11px; resize:none; word-break:break-all; box-sizing:border-box;">${escapeHtml(serialized)}</textarea>
-                <div class="debug-action-row">
-                    <button class="btn btn-primary" data-action="debug-copy-state-string">Copy</button>
-                    <button class="btn btn-secondary" data-action="debug-load-state-string">Apply</button>
-                    <button class="btn btn-accent-gray" data-action="debug-trigger-file-load">Load File</button>
-                    <input type="file" id="debug-state-file" style="display:none;" accept=".json,.txt,.b64">
+                <div style="display:grid; grid-template-columns:minmax(260px, 0.9fr) minmax(0, 2.1fr); gap:12px; flex:1; min-height:0;">
+                    <div style="display:flex; flex-direction:column; min-height:0; background:#020617; border:1px solid #334155; border-radius:8px; overflow:hidden;">
+                        <div style="padding:8px 10px; border-bottom:1px solid #1e293b; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#7dd3fc;">Checkpoint Timeline</div>
+                        <div style="flex:1; overflow:auto; padding:8px; display:flex; flex-direction:column; gap:6px;">
+                            ${entries.length === 0 ? '<div style="opacity:0.5; font-size:11px; padding:12px;">No history exported yet.</div>' : entries.map((entry) => `
+                                <button
+                                    type="button"
+                                    onclick="DebugModal.onHistorySelect(${entry.index})"
+                                    style="text-align:left; padding:10px; border-radius:8px; border:1px solid ${entry.index === selectedEntry?.index ? 'rgba(56,189,248,0.5)' : 'rgba(255,255,255,0.08)'}; background:${entry.index === selectedEntry?.index ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.03)'}; color:#e2e8f0; cursor:pointer;"
+                                >
+                                    <div style="display:flex; justify-content:space-between; gap:8px; align-items:center;">
+                                        <strong style="font-size:11px;">#${entry.index + 1}${entry.isCurrent ? ' current' : ''}</strong>
+                                        <span style="font-size:10px; opacity:0.7;">P${entry.currentPlayer}</span>
+                                    </div>
+                                    <div style="font-size:10px; opacity:0.8; margin-top:4px;">Turn ${entry.turn} | ${escapeHtml(entry.phase)}</div>
+                                    <div style="font-size:10px; opacity:0.55; margin-top:2px;">Score ${escapeHtml(entry.score)}</div>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; min-height:0; gap:10px;">
+                        <textarea id="debug-string-textarea" spellcheck="false" style="flex:1; width:100%; background:#020617; color:#dbeafe; border:1px solid #334155; border-radius:6px; padding:10px; font-family:'Cascadia Code', monospace; font-size:11px; resize:none; word-break:break-all; box-sizing:border-box;">${escapeHtml(serialized)}</textarea>
+                        <div class="debug-action-row">
+                            <button class="btn btn-primary" data-action="debug-copy-state-string">Copy</button>
+                            <button class="btn btn-secondary" data-action="debug-load-state-string">Apply</button>
+                            <button class="btn btn-accent-gray" data-action="debug-trigger-file-load">Load File</button>
+                            <button class="btn btn-accent-green" data-action="debug-export-game">Download Timeline</button>
+                            <button class="btn btn-accent-blue" data-action="debug-import-game">Import Timeline</button>
+                            <input type="file" id="debug-state-file" style="display:none;" accept=".json,.txt,.b64">
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -879,20 +1030,28 @@ export const DebugModal = {
         const container = document.querySelector('[data-tab-pane="json"]');
         if (!container || !State.data) return;
 
+        const labels = {
+            minimal: ['Minimal editor', 'Small editable checkpoint focused on board zones and counts.'],
+            checkpoint: ['Checkpoint snapshot', 'Raw engine-shaped snapshot used for apply/import and history playback.'],
+            viewer: ['Viewer state', 'Fully enriched frontend state including resolved cards and derived debug fields.'],
+        };
+        const [modeTitle, modeHint] = labels[DebugModal._jsonMode] || labels.checkpoint;
+
         container.innerHTML = `
             <div style="display:flex; flex-direction:column; height:100%; padding:14px; gap:10px; overflow:hidden;">
                 ${renderStatusBanner(DebugModal._status)}
                 <div class="debug-action-row">
                     <button class="btn btn-secondary btn-xs" data-action="debug-render-minimal-json">Minimal</button>
-                    <button class="btn btn-secondary btn-xs" data-action="debug-render-checkpoint-json">Raw Snapshot</button>
+                    <button class="btn btn-secondary btn-xs" data-action="debug-render-checkpoint-json">Checkpoint Snapshot</button>
                     <button class="btn btn-secondary btn-xs" data-action="debug-render-rich-json">Viewer State</button>
                     <button class="btn btn-secondary btn-xs" data-action="debug-copy-json-state">Copy</button>
                     <button class="btn btn-secondary btn-xs" data-action="debug-load-json-file">Load File</button>
                     <button class="btn btn-primary btn-xs" data-action="debug-apply-json-state">Apply</button>
                     <input type="file" id="debug-json-file" style="display:none;" accept=".json,.txt,.b64">
-                    <span style="flex-grow:1;"></span>
-                    <button class="btn btn-accent-green btn-xs" data-action="debug-export-game">Export Game</button>
-                    <button class="btn btn-accent-blue btn-xs" data-action="debug-import-game">Import Game</button>
+                </div>
+                <div style="font-size:11px; opacity:0.88; background:rgba(255,255,255,0.05); padding:10px 12px; border-radius:6px; border-left:3px solid #64748b; line-height:1.45;">
+                    <strong id="debug-json-mode-title">${modeTitle}</strong><br/>
+                    <span id="debug-json-mode-hint" style="font-size:10px;">${modeHint}</span>
                 </div>
                 <textarea id="debug-json-textarea" spellcheck="false" style="flex:1; width:100%; background:#020617; color:#e2e8f0; border:1px solid #334155; border-radius:6px; padding:10px; font-family:'Cascadia Code', monospace; font-size:12px; resize:none; box-sizing:border-box;"></textarea>
                 <div id="debug-json-result" style="font-size:10px; opacity:0.84; background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; border-left:2px solid #666; display:none;"></div>
@@ -904,11 +1063,14 @@ export const DebugModal = {
             jsonFileInput.addEventListener('change', (event) => DebugModal.onJsonFileSelected(event.target));
         }
 
-        DebugModal.renderCheckpointJSON();
+        if (DebugModal._jsonMode === 'minimal') DebugModal.renderMinimalJSON();
+        else if (DebugModal._jsonMode === 'viewer') DebugModal.renderRichJSON();
+        else DebugModal.renderCheckpointJSON();
     },
 
     renderMinimalJSON: () => {
         if (!State.data) return;
+        DebugModal._jsonMode = 'minimal';
 
         const source = DebugModal._getCheckpointPayload();
         const players = source?.players || [];
@@ -943,11 +1105,14 @@ export const DebugModal = {
 
         const textarea = document.getElementById('debug-json-textarea');
         if (textarea) textarea.value = JSON.stringify(minimal, null, 2);
+        DebugModal._updateJsonModeBanner();
     },
 
     renderCheckpointJSON: () => {
+        DebugModal._jsonMode = 'checkpoint';
         const textarea = document.getElementById('debug-json-textarea');
         if (textarea) textarea.value = JSON.stringify(DebugModal._getCheckpointPayload(), null, 2);
+        DebugModal._updateJsonModeBanner();
     },
 
     renderFullJSON: () => {
@@ -955,8 +1120,10 @@ export const DebugModal = {
     },
 
     renderRichJSON: () => {
+        DebugModal._jsonMode = 'viewer';
         const textarea = document.getElementById('debug-json-textarea');
         if (textarea) textarea.value = JSON.stringify(State.data, null, 2);
+        DebugModal._updateJsonModeBanner();
     },
 
     applyJsonState: async () => {
@@ -1089,6 +1256,11 @@ export const DebugModal = {
     onSearchChange: (value) => {
         DebugModal._filters.abilitySearch = value;
         DebugModal.renderInspectorTab();
+    },
+
+    onHistorySelect: (value) => {
+        DebugModal._selectedHistoryIndex = parseInt(value, 10);
+        DebugModal.renderStringTab();
     },
 
     rewind: async () => {

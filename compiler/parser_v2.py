@@ -1199,6 +1199,7 @@ class AbilityParserV2:
             m = re.match(r"^([\w_]+)(?:\((.*?)\))?\s*(?:\(Optional\)\s*)?(?:(\{.*?\})\s*)?(?:->\s*([\w, _]+))?(.*)$", p)
             if m:
                 name, val, param_block, target_name, rest = m.groups()
+                rest = rest or ""
 
                 # If we matched (Optional) via the explicit group, we should ensure is_optional is set later.
                 # The current logic checks for "(Optional)" in rest or p, which is sufficient.
@@ -1213,6 +1214,19 @@ class AbilityParserV2:
                     if m_param:
                         params = self._parse_pseudocode_params(m_param.group(1))
 
+                # Preserve chained destinations like:
+                # SELECT_HAND(...) -> PLAY_STAGE_EMPTY -> TARGET_PLAYED
+                chain_destinations = []
+                if target_name:
+                    chain_destinations.append(target_name.strip().upper())
+                if rest:
+                    chain_destinations.extend(m.group(1).strip().upper() for m in re.finditer(r"->\s*([\w_]+)", rest))
+                if chain_destinations:
+                    params["chain_destinations"] = chain_destinations
+                    params.setdefault("destination", chain_destinations[0].lower())
+                    if len(chain_destinations) > 1:
+                        params["capture"] = chain_destinations[-1].lower()
+
                 # Target Resolution
                 target = last_target
                 is_chained = False
@@ -1226,7 +1240,7 @@ class AbilityParserV2:
                         target = TargetType.PLAYER
                     elif target_name == "OPPONENT":
                         target = TargetType.OPPONENT
-                    elif target_name == "ALL_PLAYERS":
+                    elif target_name in {"ALL_PLAYERS", "PLAYER_AND_OPPONENT"}:
                         target = TargetType.ALL_PLAYERS
                     elif target_name == "CARD_HAND":
                         target = TargetType.CARD_HAND
@@ -1268,13 +1282,26 @@ class AbilityParserV2:
                     name_up = "META_RULE"
                     params["tag"] = val
 
-                if name_up == "SELECT_HAND" and str(params.get("destination", "")).upper() == "REVEAL":
-                    name_up = "REVEAL_CARDS"
-                    target = TargetType.CARD_HAND
-                    params["reveal_target"] = params.get("target", "OPPONENT_HIDDEN")
-                    params["target"] = "CARD_HAND"
-                    params["source"] = "HAND"
-                    params.setdefault("selection_mode", "HIDDEN")
+                if name_up == "SELECT_HAND":
+                    params.setdefault("source", "HAND")
+                    dest_up = str(params.get("destination", "")).upper()
+                    if dest_up == "REVEAL":
+                        name_up = "REVEAL_CARDS"
+                        target = TargetType.CARD_HAND
+                        params["reveal_target"] = params.get("target", "OPPONENT_HIDDEN")
+                        params["target"] = "CARD_HAND"
+                        params.setdefault("selection_mode", "HIDDEN")
+                    elif dest_up in {"TARGET", "TARGET_VAL", "TARGETS"}:
+                        name_up = "SELECT_CARDS"
+                        target = TargetType.CARD_HAND
+                    elif dest_up in {"PLAY_STAGE_EMPTY", "STAGE_EMPTY"}:
+                        name_up = "PLAY_MEMBER_FROM_HAND"
+                        params["destination"] = "stage_empty"
+                        target = TargetType.PLAYER
+                    elif dest_up == "LIVE_PLAY":
+                        name_up = "PLAY_LIVE_FROM_DISCARD"
+                        params["destination"] = "live_play"
+                        target = TargetType.PLAYER
 
                 if name_up.startswith("PLAY_MEMBER"):
                     # Check if trigger specifies (In Discard) or similar
@@ -1307,6 +1334,8 @@ class AbilityParserV2:
                         target = TargetType.CARD_HAND
                     elif "CARD_DISCARD" in target_name_up:
                         target = TargetType.CARD_DISCARD
+                    elif target_name_up in {"ALL_PLAYERS", "PLAYER_AND_OPPONENT"}:
+                        target = TargetType.ALL_PLAYERS
                     else:
                         t_part = target_name.split(",")[0].strip()
                         target = getattr(TargetType, t_part.upper(), last_target)

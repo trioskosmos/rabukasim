@@ -592,13 +592,13 @@ class Ability:
     ) -> TargetType | None:
         last_emitted_target = self._emit_target_opcode_if_needed(bytecode, TargetType.PLAYER, last_emitted_target)
         for eff in block:
-            eff_self = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.PLAYER, eff.params)
+            eff_self = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.PLAYER, eff.params.copy())
             eff_self.is_optional = eff.is_optional
             self._compile_effect_wrapper(eff_self, bytecode)
 
         last_emitted_target = self._emit_target_opcode_if_needed(bytecode, TargetType.OPPONENT, last_emitted_target)
         for eff in block:
-            eff_opp = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.OPPONENT, eff.params)
+            eff_opp = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.OPPONENT, eff.params.copy())
             eff_opp.is_optional = eff.is_optional
             self._compile_effect_wrapper(eff_opp, bytecode)
         return last_emitted_target
@@ -1282,8 +1282,8 @@ class Ability:
                 bytecode.extend(
                     [int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)]
                 )
-                # 2. Compile for SELF
-                eff_self = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.PLAYER, eff.params)
+                # 2. Compile for SELF - COPY params to avoid shared mutations
+                eff_self = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.PLAYER, eff.params.copy())
                 eff_self.is_optional = eff.is_optional
                 self._compile_single_effect(eff_self, bytecode)
 
@@ -1297,8 +1297,8 @@ class Ability:
                         to_signed_32(0),
                     ]
                 )
-                # 4. Compile for OPPONENT
-                eff_opp = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.OPPONENT, eff.params)
+                # 4. Compile for OPPONENT - COPY params to avoid shared mutations
+                eff_opp = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.OPPONENT, eff.params.copy())
                 eff_opp.is_optional = eff.is_optional
                 self._compile_single_effect(eff_opp, bytecode)
 
@@ -1502,7 +1502,10 @@ class Ability:
                     rem_val = "DISCARD"
                     slot_params["target_slot"] = 0
                 
-                src_val = eff.params.get("source", "stage").upper()
+                # For UNTIL_SIZE operations, default source is HAND (not STAGE)
+                # as UNTIL_SIZE is used for hand size checks
+                default_source = "hand" if eff.params.get("operation") == "UNTIL_SIZE" else "stage"
+                src_val = eff.params.get("source", default_source).upper()
                 if src_val == "HAND":
                     src_val = ZONES.get("HAND", 6)
                 elif src_val == "DISCARD":
@@ -1663,6 +1666,14 @@ class Ability:
                         val = 1
                     elif src == "blade":
                         val = 2
+
+            if eff.effect_type == EffectType.RESTRICTION:
+                restriction_type = str(eff.params.get("type", "")).lower()
+                restriction_map = {
+                    "live": 1,
+                    "placement": 2,
+                }
+                attr = restriction_map.get(restriction_type, attr)
 
             if eff.effect_type in (
                 EffectType.MOVE_TO_DISCARD,

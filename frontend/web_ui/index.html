@@ -442,16 +442,15 @@
             </div>
             <div class="modal-body">
                 <p class="modal-hint">
-                    Describe what happened or the failure point. The current game state and your last few actions will
-                    be saved for debugging.
+                    Describe what happened or the failure point. Downloading saves the current snapshot, raw checkpoint
+                    timeline, and viewer diagnostics in one bundle for debugging.
                 </p>
                 <textarea id="report-explanation" class="report-textarea"
                     placeholder="Explain the issue here..."></textarea>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" data-action="download-report">Download JSON</button>
+                <button class="btn btn-outline" data-action="download-report">Download Report</button>
                 <button class="btn" data-action="close-report-modal">Cancel</button>
-                <button class="btn btn-primary" data-action="submit-report">Submit to Server</button>
             </div>
         </div>
     </div>

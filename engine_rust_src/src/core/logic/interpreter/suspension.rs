@@ -96,8 +96,7 @@ pub fn suspend_interaction(
         );
     }
 
-    if should_check_skip
-        && actions.is_empty()
+    if should_check_skip && actions.is_empty()
         && choice_type != crate::core::enums::ChoiceType::OpponentChoose
     {
         if state.debug.debug_mode {

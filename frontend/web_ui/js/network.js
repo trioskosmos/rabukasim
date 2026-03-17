@@ -68,6 +68,7 @@ export const Network = {
     execCode: (code) => DebugService.execCode(code, Network),
     fetchDebugSnapshot: () => DebugService.fetchDebugSnapshot(),
     fetchStandardizedState: () => DebugService.fetchStandardizedState(),
+    buildDownloadReport: (explanation) => DebugService.buildDownloadReport(explanation),
 
     // UI Callback hooks (can be overridden by Controller/UI)
     onOpenDeckModal: (playerIdx) => {

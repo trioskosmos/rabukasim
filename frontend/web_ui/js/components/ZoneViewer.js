@@ -101,7 +101,7 @@ export const ZoneViewer = {
         if (deck.length > 0) addSection(i18n.t('member_deck_rem'), deck);
         if (energyDeck.length > 0) addSection(i18n.t('energy_deck_rem'), energyDeck);
 
-        if (deck.length === 0 && energyDeck.length === 0) {
+        if (initialDeck.length === 0 && deck.length === 0 && energyDeck.length === 0) {
             ZoneViewer.cache.container.innerHTML = `<div style="opacity:0.5; padding:40px; text-align:center;">${i18n.t('no_cards_zone')}</div>`;
         }
 

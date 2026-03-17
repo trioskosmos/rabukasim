@@ -11,27 +11,16 @@ export const ReportModal = {
         if (modal) modal.style.display = 'none';
     },
 
-    submitReport: async () => {
+    submitReport: async () => ReportModal.downloadReport(),
+
+    downloadReport: async () => {
         const explanation = document.getElementById('report-explanation').value;
         if (!explanation) {
             alert("Please provide an explanation of the issue.");
             return;
         }
 
-        const success = await Network.submitReport(explanation);
-        if (success) {
-            alert("Report submitted successfully! Thank you for your feedback.");
-            document.getElementById('report-explanation').value = "";
-            ReportModal.closeReportModal();
-        } else {
-            alert("Failed to submit report. You can still 'Download JSON' to save it manually.");
-        }
-    },
-
-    downloadReport: () => {
-        const explanation = document.getElementById('report-explanation').value;
-        const reportData = Network._buildSlimReport(explanation);
-        reportData.userAgent = navigator.userAgent;
+        const reportData = await Network.buildDownloadReport(explanation);
 
         const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -43,5 +32,7 @@ export const ReportModal = {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        document.getElementById('report-explanation').value = "";
+        ReportModal.closeReportModal();
     }
 };
