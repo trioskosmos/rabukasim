@@ -1,0 +1,126 @@
+
+> data\consolidated_abi
+lities_decoded.json:195
+6:    "pseudocode": "TR
+IGGER: ON_PLAY\nEFFECT:
+ DRAW(1); RESTRICTION(L
+IVE, DURATION=\"UNTIL_L
+IVE_END\")",
+  data\consolidated_abi
+lities_decoded.json:195
+7:    "cards": [
+  data\consolidated_abi
+lities_decoded.json:195
+8:      "PL!HS-bp2-014-
+N"
+  data\consolidated_abi
+lities_decoded.json:195
+9:    ],
+  data\consolidated_abi
+lities_decoded.json:196
+0:    "decoded_bytecode
+": [
+  data\consolidated_abi
+lities_decoded.json:196
+1:      [
+  data\consolidated_abi
+lities_decoded.json:196
+2:        "00: DRAW    
+             | count=1,
+ filter=[none], slot=[t
+arget=Context Area, raw
+=4]",
+> data\consolidated_abi
+lities_decoded.json:196
+3:        "05: RESTRICT
+ION          | value=0,
+ slot=[target=Context A
+rea, raw=4]",
+  data\consolidated_abi
+lities_decoded.json:196
+4:        "10: RETURN  
+             | done"
+  data\consolidated_abi
+lities_decoded.json:196
+5:      ]
+  data\consolidated_abi
+lities_decoded.json:196
+6:    ]
+  data\consolidated_abi
+lities_decoded.json:196
+7:  },
+  data\consolidated_abi
+lities_decoded.json:196
+8:  "{{jidou.png|??}}??
+???????????????????????
+???2???????1????????": 
+{
+  data\consolidated_abi
+lities_decoded.json:196
+9:    "pseudocode": "TR
+IGGER: ON_LEAVES(SELF)\
+nEFFECT: DRAW(2); DISCA
+RD_HAND(1)",
+  data\consolidated_abi
+lities_decoded.json:197
+0:    "cards": [
+  data\consolidated_abi
+lities_decoded.json:197
+1:      "PL!HS-bp2-015-
+N"
+  data\consolidated_abi
+lities_decoded.json:197
+2:    ],
+  data\consolidated_abi
+lities_decoded.json:197
+3:    "decoded_bytecode
+": [
+  data\consolidated_abi
+lities_decoded.json:197
+4:      [
+  data\consolidated_abi
+lities_decoded.json:197
+5:        "00: DRAW    
+             | count=2,
+ filter=[none], slot=[t
+arget=Context Area, raw
+=4]",
+  data\consolidated_abi
+lities_decoded.json:197
+6:        "05: MOVE_TO_
+DISCARD      | count=1,
+ filter=[target=self, z
+one=hand], slot=[target
+=Center Slot, source=Ha
+nd, dest=Discard, raw=7
+733249]",
+  data\consolidated_abi
+lities_decoded.json:197
+7:        "10: RETURN  
+             | done"
+  data\consolidated_abi
+lities_decoded.json:197
+8:      ]
+  data\consolidated_abi
+lities_decoded.json:197
+9:    ]
+  data\consolidated_abi
+lities_decoded.json:198
+0:  },
+  data\consolidated_abi
+lities_decoded.json:198
+1:  "{{toujyou.png|??}}
+??????????????2????????
+???????????????????????
+?????????": {
+  data\consolidated_abi
+lities_decoded.json:198
+2:    "pseudocode": "TR
+IGGER: ON_PLAY\nEFFECT:
+ LOOK_REORDER_DISCARD(2
+)",
+  data\consolidated_abi
+lities_decoded.json:198
+3:    "cards": [
+
+

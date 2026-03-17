@@ -1,0 +1,2130 @@
+{
+  "DRAW_MISMATCH": [],
+  "RECOVER_MISMATCH": [],
+  "TAP_MISMATCH": [
+    {
+      "card_no": "PL!-pb1-006-P＋",
+      "text": "{{toujyou.png|登場}}自分の控え室から『μ's』のライブカードを1枚までデッキの一番上に置く。その後、相手のステージにウェイト状態のメンバーがいる場合、カードを1枚引く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: MOVE_TO_DECK(1) {FILTER=\"TYPE_LIVE, GROUP_ID=0\", FROM=\"DISCARD\"} -> DECK_TOP; DRAW(1) -> PLAYER {CONDITION=\"OPPONENT_HAS_WAIT\"}"
+    },
+    {
+      "card_no": "PL!-pb1-006-R",
+      "text": "{{toujyou.png|登場}}自分の控え室から『μ's』のライブカードを1枚までデッキの一番上に置く。その後、相手のステージにウェイト状態のメンバーがいる場合、カードを1枚引く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: MOVE_TO_DECK(1) {FILTER=\"TYPE_LIVE, GROUP_ID=0\", FROM=\"DISCARD\"} -> DECK_TOP; DRAW(1) -> PLAYER {CONDITION=\"OPPONENT_HAS_WAIT\"}"
+    },
+    {
+      "card_no": "PL!-pb1-006-R",
+      "text": "{{toujyou.png|登場}}自分の控え室から『μ's』のライブカードを1枚までデッキの一番上に置く。その後、相手のステージにウェイト状態のメンバーがいる場合、カードを1枚引く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: MOVE_TO_DECK(1) {FILTER=\"TYPE_LIVE, GROUP_ID=0\", FROM=\"DISCARD\"} -> DECK_TOP; DRAW(1) -> PLAYER {CONDITION=\"OPPONENT_HAS_WAIT\"}"
+    },
+    {
+      "card_no": "PL!-pb1-006-P＋",
+      "text": "{{toujyou.png|登場}}自分の控え室から『μ's』のライブカードを1枚までデッキの一番上に置く。その後、相手のステージにウェイト状態のメンバーがいる場合、カードを1枚引く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: MOVE_TO_DECK(1) {FILTER=\"TYPE_LIVE, GROUP_ID=0\", FROM=\"DISCARD\"} -> DECK_TOP; DRAW(1) -> PLAYER {CONDITION=\"OPPONENT_HAS_WAIT\"}"
+    },
+    {
+      "card_no": "PL!-pb1-018-P＋",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカードを1枚、メンバーのいないエリアにウェイト状態で登場させる。（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER=\"COST_LE_2\", MODE=\"WAIT\"}, PREVENT_PLAY_TO_SLOT(1)\nEFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER=\"COST_LE_2\", MODE=\"WAIT\"}, PREVENT_PLAY_TO_SLOT(1) -> OPPONENT"
+    },
+    {
+      "card_no": "PL!-pb1-018-R",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカードを1枚、メンバーのいないエリアにウェイト状態で登場させる。（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER=\"COST_LE_2\", MODE=\"WAIT\"}, PREVENT_PLAY_TO_SLOT(1)\nEFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER=\"COST_LE_2\", MODE=\"WAIT\"}, PREVENT_PLAY_TO_SLOT(1) -> OPPONENT"
+    },
+    {
+      "card_no": "PL!-pb1-018-R",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカードを1枚、メンバーのいないエリアにウェイト状態で登場させる。（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER=\"COST_LE_2\", MODE=\"WAIT\"}, PREVENT_PLAY_TO_SLOT(1)\nEFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER=\"COST_LE_2\", MODE=\"WAIT\"}, PREVENT_PLAY_TO_SLOT(1) -> OPPONENT"
+    },
+    {
+      "card_no": "PL!-pb1-018-P＋",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカードを1枚、メンバーのいないエリアにウェイト状態で登場させる。（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER=\"COST_LE_2\", MODE=\"WAIT\"}, PREVENT_PLAY_TO_SLOT(1)\nEFFECT: PLAY_MEMBER_FROM_DISCARD(1) {FILTER=\"COST_LE_2\", MODE=\"WAIT\"}, PREVENT_PLAY_TO_SLOT(1) -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-001-P",
+      "text": "{{live_success.png|ライブ成功時}}自分のエネルギーが相手より少ない場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: ENERGY_LAGGING\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp4-001-R",
+      "text": "{{live_success.png|ライブ成功時}}自分のエネルギーが相手より少ない場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: ENERGY_LAGGING\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp4-001-R",
+      "text": "{{live_success.png|ライブ成功時}}自分のエネルギーが相手より少ない場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: ENERGY_LAGGING\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp4-001-P",
+      "text": "{{live_success.png|ライブ成功時}}自分のエネルギーが相手より少ない場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: ENERGY_LAGGING\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp4-007-P",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-R＋",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-P＋",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-SEC",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-P＋",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-R＋",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-P",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-SEC",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-R＋",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-P",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-P＋",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-SEC",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-SEC",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-R＋",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-P",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-bp4-007-P＋",
+      "text": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。\n{{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_LIVE(1) -> PLAYER; RECOVER_LIVE(1) -> OPPONENT\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=15, TARGET=\"BOTH\"}\nEFFECT: ADD_HEARTS(2) {HEART_TYPE=2}\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER; ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> OPPONENT"
+    },
+    {
+      "card_no": "PL!N-pb1-012-P＋",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにこのメンバー以外のコスト11のメンバーが登場したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『虹ヶ咲』のメンバーカードを1枚手札に加える。",
+      "code": "TRIGGER: ON_STAGE_ENTRY\nCONDITION: TURN_1, TARGET=\"OTHER_MEMBER\", FILTER=\"COST=11\"\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: RECOVER_MEMBER(1) {FILTER=\"GROUP_ID=3\", ZONE=\"YELL_REVEALED\"} -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-012-R",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにこのメンバー以外のコスト11のメンバーが登場したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『虹ヶ咲』のメンバーカードを1枚手札に加える。",
+      "code": "TRIGGER: ON_STAGE_ENTRY\nCONDITION: TURN_1, TARGET=\"OTHER_MEMBER\", FILTER=\"COST=11\"\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: RECOVER_MEMBER(1) {FILTER=\"GROUP_ID=3\", ZONE=\"YELL_REVEALED\"} -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-012-R",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにこのメンバー以外のコスト11のメンバーが登場したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『虹ヶ咲』のメンバーカードを1枚手札に加える。",
+      "code": "TRIGGER: ON_STAGE_ENTRY\nCONDITION: TURN_1, TARGET=\"OTHER_MEMBER\", FILTER=\"COST=11\"\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: RECOVER_MEMBER(1) {FILTER=\"GROUP_ID=3\", ZONE=\"YELL_REVEALED\"} -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-012-P＋",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにこのメンバー以外のコスト11のメンバーが登場したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『虹ヶ咲』のメンバーカードを1枚手札に加える。",
+      "code": "TRIGGER: ON_STAGE_ENTRY\nCONDITION: TURN_1, TARGET=\"OTHER_MEMBER\", FILTER=\"COST=11\"\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: RECOVER_MEMBER(1) {FILTER=\"GROUP_ID=3\", ZONE=\"YELL_REVEALED\"} -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-pb1-007-P＋",
+      "text": "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: COUNT_YELL_REVEALED {MIN=1, TYPE_LIVE}\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-pb1-007-R",
+      "text": "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: COUNT_YELL_REVEALED {MIN=1, TYPE_LIVE}\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-pb1-007-R",
+      "text": "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: COUNT_YELL_REVEALED {MIN=1, TYPE_LIVE}\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-pb1-007-P＋",
+      "text": "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_LIVE_SUCCESS\nCONDITION: COUNT_YELL_REVEALED {MIN=1, TYPE_LIVE}\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-PR-004-PR",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1)\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-PR-006-PR",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1)\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-PR-013-PR",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1)\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp1-021-N",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1)\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp2-003-P",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}このメンバーがエリアを移動したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_POSITION_CHANGE\nCONDITION: TURN_1\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp2-003-R",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}このメンバーがエリアを移動したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_POSITION_CHANGE\nCONDITION: TURN_1\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp2-003-R",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}このメンバーがエリアを移動したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_POSITION_CHANGE\nCONDITION: TURN_1\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp2-003-P",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}このメンバーがエリアを移動したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_POSITION_CHANGE\nCONDITION: TURN_1\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-001-P",
+      "text": "{{toujyou.png|登場}}自分のステージにいるメンバーが『Liella!』のみで、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: ALL_MEMBER {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-001-R",
+      "text": "{{toujyou.png|登場}}自分のステージにいるメンバーが『Liella!』のみで、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: ALL_MEMBER {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-001-R",
+      "text": "{{toujyou.png|登場}}自分のステージにいるメンバーが『Liella!』のみで、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: ALL_MEMBER {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-001-P",
+      "text": "{{toujyou.png|登場}}自分のステージにいるメンバーが『Liella!』のみで、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: ALL_MEMBER {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-P",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-R＋",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-P＋",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-SEC",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-P＋",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-R＋",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-P",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-SEC",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-R＋",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-P",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-P＋",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-SEC",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-SEC",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-R＋",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-P",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-bp4-005-P＋",
+      "text": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "TRIGGER: ON_PLAY\nCONDITION: BATON_TOUCH {FILTER=\"GROUP_ID=5\"}, SUM_ENERGY {MIN=7}\nEFFECT: ENERGY_CHARGE(2, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: CONSTANT\nCONDITION: SUM_ENERGY {MIN=10}\nEFFECT: ADD_BLADES(3) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-pb1-004-P＋",
+      "text": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：カードを1枚引く。",
+      "code": "TRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(2)\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nCOST: PAY_ENERGY(3)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-pb1-004-R",
+      "text": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：カードを1枚引く。",
+      "code": "TRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(2)\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nCOST: PAY_ENERGY(3)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-pb1-004-R",
+      "text": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：カードを1枚引く。",
+      "code": "TRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(2)\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nCOST: PAY_ENERGY(3)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-pb1-004-P＋",
+      "text": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：カードを1枚引く。",
+      "code": "TRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(2)\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nCOST: PAY_ENERGY(3)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-pb1-005-P＋",
+      "text": "{{toujyou.png|登場}}自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-pb1-005-R",
+      "text": "{{toujyou.png|登場}}自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-pb1-005-R",
+      "text": "{{toujyou.png|登場}}自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-pb1-005-P＋",
+      "text": "{{toujyou.png|登場}}自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-sd1-011-SD",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-sd1-014-SD",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1)\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    },
+    {
+      "card_no": "PL!SP-sd1-016-SD",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+      "code": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1)\nEFFECT: ENERGY_CHARGE(1, MODE=\"WAIT\") -> PLAYER"
+    }
+  ],
+  "SCORE_MISMATCH": [],
+  "TRIGGER_MISMATCH": [
+    {
+      "card_no": "PL!-bp3-003-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分の控え室から『μ's』のメンバーカードを1枚手札に加える。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+      "code": "COST: TAP_SELF\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-bp3-003-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分の控え室から『μ's』のメンバーカードを1枚手札に加える。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+      "code": "COST: TAP_SELF\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-bp3-003-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分の控え室から『μ's』のメンバーカードを1枚手札に加える。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+      "code": "COST: TAP_SELF\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-bp3-003-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分の控え室から『μ's』のメンバーカードを1枚手札に加える。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+      "code": "COST: TAP_SELF\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-bp3-010-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-bp4-006-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、自分のデッキの上からカードを5枚見る。その中から『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-bp4-006-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、自分のデッキの上からカードを5枚見る。その中から『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-bp4-006-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、自分のデッキの上からカードを5枚見る。その中から『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-bp4-006-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、自分のデッキの上からカードを5枚見る。その中から『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-pb1-016-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中から『lilywhite』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-pb1-016-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中から『lilywhite』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-pb1-016-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中から『lilywhite』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-pb1-016-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中から『lilywhite』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-sd1-001-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
+      "code": "CONDITION: COUNT_SUCCESS_LIVE {MIN=2}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!-sd1-004-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを5枚見る。その中から『μ's』のライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-sd1-011-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-sd1-012-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-sd1-015-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!-sd1-016-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-001-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}エネルギーを2枚アクティブにする。",
+      "code": "EFFECT: ACTIVATE_MEMBER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp1-001-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}エネルギーを2枚アクティブにする。",
+      "code": "EFFECT: ACTIVATE_MEMBER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp1-001-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}エネルギーを2枚アクティブにする。",
+      "code": "EFFECT: ACTIVATE_MEMBER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp1-001-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}エネルギーを2枚アクティブにする。",
+      "code": "EFFECT: ACTIVATE_MEMBER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp1-002-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}、このメンバーをステージから控え室に置く：自分の控え室からコスト15以下の『蓮ノ空』のメンバーカードを1枚、このメンバーがいたエリアに登場させる。",
+      "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!HS-bp1-002-R",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}、このメンバーをステージから控え室に置く：自分の控え室からコスト15以下の『蓮ノ空』のメンバーカードを1枚、このメンバーがいたエリアに登場させる。",
+      "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!HS-bp1-002-R",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}、このメンバーをステージから控え室に置く：自分の控え室からコスト15以下の『蓮ノ空』のメンバーカードを1枚、このメンバーがいたエリアに登場させる。",
+      "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!HS-bp1-002-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}、このメンバーをステージから控え室に置く：自分の控え室からコスト15以下の『蓮ノ空』のメンバーカードを1枚、このメンバーがいたエリアに登場させる。",
+      "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-P",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-P",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-P",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-P",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-003-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-009-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『みらくらぱーく！』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-009-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『みらくらぱーく！』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-009-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『みらくらぱーく！』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-009-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『みらくらぱーく！』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp1-011-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-002-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。\n{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!HS-bp2-010-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!HS-bp2-018-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のメインフェイズの場合、{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の控え室からライブカードを1枚、表向きでライブカード置き場に置く。次のライブカードセットフェイズで自分がライブカード置き場に置けるカード枚数の上限が1枚減る。",
+      "code": "EFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-PR-004-PR",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-PR-006-PR",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-PR-013-PR",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp1-006-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-006-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: DISCARD_HAND(1)\nCONDITION: COUNT_PLAYED_THIS_TURN {MIN=1, FILTER=\"GROUP_ID=3\"}\nEFFECT: ACTIVATE_ENERGY(2) -> PLAYER\n\nTRIGGER: ON_ACTIVATE\nCONDITION: TURN_1\nCOST: PAY_ENERGY(2)\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp1-007-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp1-007-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp1-007-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp1-007-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp1-009-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを2枚控え室に置く。その後、自分の控え室からメンバーカードを1枚手札に加える。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(2) -> CARD_HAND; RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp1-009-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを2枚控え室に置く。その後、自分の控え室からメンバーカードを1枚手札に加える。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(2) -> CARD_HAND; RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp1-009-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを2枚控え室に置く。その後、自分の控え室からメンバーカードを1枚手札に加える。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(2) -> CARD_HAND; RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp1-009-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを2枚控え室に置く。その後、自分の控え室からメンバーカードを1枚手札に加える。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(2) -> CARD_HAND; RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp1-010-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp1-010-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp1-010-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp1-010-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp3-003-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室にあるコスト4以下の『虹ヶ咲』のメンバーカードを1枚選ぶ。そのカードの{{toujyou.png|登場}}能力1つを発動させる。\n（{{toujyou.png|登場}}能力がコストを持つ場合、支払って発動させる。）",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-003-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室にあるコスト4以下の『虹ヶ咲』のメンバーカードを1枚選ぶ。そのカードの{{toujyou.png|登場}}能力1つを発動させる。\n（{{toujyou.png|登場}}能力がコストを持つ場合、支払って発動させる。）",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-003-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室にあるコスト4以下の『虹ヶ咲』のメンバーカードを1枚選ぶ。そのカードの{{toujyou.png|登場}}能力1つを発動させる。\n（{{toujyou.png|登場}}能力がコストを持つ場合、支払って発動させる。）",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-003-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室にあるコスト4以下の『虹ヶ咲』のメンバーカードを1枚選ぶ。そのカードの{{toujyou.png|登場}}能力1つを発動させる。\n（{{toujyou.png|登場}}能力がコストを持つ場合、支払って発動させる。）",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-P",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-P＋",
+      "missing": "ON_PLAY",
+      "text": "\"{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\"",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-R＋",
+      "missing": "ON_PLAY",
+      "text": "\"{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\"",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-P",
+      "missing": "ON_PLAY",
+      "text": "\"{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\"",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-SEC",
+      "missing": "ON_PLAY",
+      "text": "\"{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\"",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-P",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-SEC",
+      "missing": "ON_PLAY",
+      "text": "\"{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\"",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-R＋",
+      "missing": "ON_PLAY",
+      "text": "\"{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\"",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-P",
+      "missing": "ON_PLAY",
+      "text": "\"{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\"",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-005-P＋",
+      "missing": "ON_PLAY",
+      "text": "\"{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。\n{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。\"",
+      "code": "TRIGGER: ON_STAGE_ENTRY_COUNT\nCONDITION: COUNT_THIS_TURN {MIN=3}\nEFFECT: DRAW_UNTIL(5)\n\nTRIGGER: ON_LIVE_START\nCONDITION: COUNT_THIS_TURN {MIN=2, TYPE=\"STAGE_ENTRY\"}\nEFFECT: BOOST_SCORE(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-bp3-007-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このメンバーをステージから控え室に置く：自分の手札からコスト13以下の「優木せつ菜」のメンバーカードを1枚、このメンバーがいたエリアに登場させる。その後、自分のエネルギー置き場にあるエネルギー1枚をそのメンバーの下に置く。（メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCOST: PAY_ENERGY(2); MOVE_TO_DISCARD(1) -> SELF\nEFFECT: PLAY_MEMBER_FROM_HAND(1) {FILTER=\"NAME=优木雪菜, COST_LE_13\", ZONE=\"SAME_SLOT\"}; CHARGE_ENERGY(1) {FROM=\"ENERGY_DECK\", TARGET=\"PLAYED\"}"
+    },
+    {
+      "card_no": "PL!N-bp3-007-R",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このメンバーをステージから控え室に置く：自分の手札からコスト13以下の「優木せつ菜」のメンバーカードを1枚、このメンバーがいたエリアに登場させる。その後、自分のエネルギー置き場にあるエネルギー1枚をそのメンバーの下に置く。（メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCOST: PAY_ENERGY(2); MOVE_TO_DISCARD(1) -> SELF\nEFFECT: PLAY_MEMBER_FROM_HAND(1) {FILTER=\"NAME=优木雪菜, COST_LE_13\", ZONE=\"SAME_SLOT\"}; CHARGE_ENERGY(1) {FROM=\"ENERGY_DECK\", TARGET=\"PLAYED\"}"
+    },
+    {
+      "card_no": "PL!N-bp3-007-R",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このメンバーをステージから控え室に置く：自分の手札からコスト13以下の「優木せつ菜」のメンバーカードを1枚、このメンバーがいたエリアに登場させる。その後、自分のエネルギー置き場にあるエネルギー1枚をそのメンバーの下に置く。（メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCOST: PAY_ENERGY(2); MOVE_TO_DISCARD(1) -> SELF\nEFFECT: PLAY_MEMBER_FROM_HAND(1) {FILTER=\"NAME=优木雪菜, COST_LE_13\", ZONE=\"SAME_SLOT\"}; CHARGE_ENERGY(1) {FROM=\"ENERGY_DECK\", TARGET=\"PLAYED\"}"
+    },
+    {
+      "card_no": "PL!N-bp3-007-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このメンバーをステージから控え室に置く：自分の手札からコスト13以下の「優木せつ菜」のメンバーカードを1枚、このメンバーがいたエリアに登場させる。その後、自分のエネルギー置き場にあるエネルギー1枚をそのメンバーの下に置く。（メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCOST: PAY_ENERGY(2); MOVE_TO_DISCARD(1) -> SELF\nEFFECT: PLAY_MEMBER_FROM_HAND(1) {FILTER=\"NAME=优木雪菜, COST_LE_13\", ZONE=\"SAME_SLOT\"}; CHARGE_ENERGY(1) {FROM=\"ENERGY_DECK\", TARGET=\"PLAYED\"}"
+    },
+    {
+      "card_no": "PL!N-bp3-012-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中から『虹ヶ咲』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp3-012-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中から『虹ヶ咲』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp3-012-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中から『虹ヶ咲』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-bp3-012-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中から『虹ヶ咲』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-001-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のステージにこのメンバー以外のコスト11のメンバーがいる場合、自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分のライブ中のライブカードが2枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-pb1-001-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のステージにこのメンバー以外のコスト11のメンバーがいる場合、自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分のライブ中のライブカードが2枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-pb1-001-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のステージにこのメンバー以外のコスト11のメンバーがいる場合、自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分のライブ中のライブカードが2枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-pb1-001-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のステージにこのメンバー以外のコスト11のメンバーがいる場合、自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{jyouji.png|常時}}自分のライブ中のライブカードが2枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-pb1-005-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにコスト10のメンバーが登場したとき、カードを1枚引く。",
+      "code": "TRIGGER: ON_STAGE_ENTRY\nCONDITION: TURN_1, FILTER=\"COST=10\"\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-pb1-005-R",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにコスト10のメンバーが登場したとき、カードを1枚引く。",
+      "code": "TRIGGER: ON_STAGE_ENTRY\nCONDITION: TURN_1, FILTER=\"COST=10\"\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-pb1-005-R",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにコスト10のメンバーが登場したとき、カードを1枚引く。",
+      "code": "TRIGGER: ON_STAGE_ENTRY\nCONDITION: TURN_1, FILTER=\"COST=10\"\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-pb1-005-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにコスト10のメンバーが登場したとき、カードを1枚引く。",
+      "code": "TRIGGER: ON_STAGE_ENTRY\nCONDITION: TURN_1, FILTER=\"COST=10\"\nEFFECT: DRAW(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-pb1-012-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにこのメンバー以外のコスト11のメンバーが登場したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『虹ヶ咲』のメンバーカードを1枚手札に加える。",
+      "code": "TRIGGER: ON_STAGE_ENTRY\nCONDITION: TURN_1, TARGET=\"OTHER_MEMBER\", FILTER=\"COST=11\"\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: RECOVER_MEMBER(1) {FILTER=\"GROUP_ID=3\", ZONE=\"YELL_REVEALED\"} -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-012-R",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにこのメンバー以外のコスト11のメンバーが登場したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『虹ヶ咲』のメンバーカードを1枚手札に加える。",
+      "code": "TRIGGER: ON_STAGE_ENTRY\nCONDITION: TURN_1, TARGET=\"OTHER_MEMBER\", FILTER=\"COST=11\"\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: RECOVER_MEMBER(1) {FILTER=\"GROUP_ID=3\", ZONE=\"YELL_REVEALED\"} -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-012-R",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにこのメンバー以外のコスト11のメンバーが登場したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『虹ヶ咲』のメンバーカードを1枚手札に加える。",
+      "code": "TRIGGER: ON_STAGE_ENTRY\nCONDITION: TURN_1, TARGET=\"OTHER_MEMBER\", FILTER=\"COST=11\"\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: RECOVER_MEMBER(1) {FILTER=\"GROUP_ID=3\", ZONE=\"YELL_REVEALED\"} -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-012-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにこのメンバー以外のコスト11のメンバーが登場したとき、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。\n{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『虹ヶ咲』のメンバーカードを1枚手札に加える。",
+      "code": "TRIGGER: ON_STAGE_ENTRY\nCONDITION: TURN_1, TARGET=\"OTHER_MEMBER\", FILTER=\"COST=11\"\nEFFECT: ACTIVATE_ENERGY(1, MODE=\"WAIT\") -> PLAYER\n\nTRIGGER: ON_LIVE_SUCCESS\nEFFECT: RECOVER_MEMBER(1) {FILTER=\"GROUP_ID=3\", ZONE=\"YELL_REVEALED\"} -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-016-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「朝香果林」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-016-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「朝香果林」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-016-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「朝香果林」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-016-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「朝香果林」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-018-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「近江彼方」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-018-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「近江彼方」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-018-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「近江彼方」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-018-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「近江彼方」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-021-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「天王寺璃奈」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-021-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「天王寺璃奈」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-021-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「天王寺璃奈」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-021-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「天王寺璃奈」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-024-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「鐘嵐珠」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-024-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「鐘嵐珠」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-024-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「鐘嵐珠」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-024-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「鐘嵐珠」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-028-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを2枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-pb1-035-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを2枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-sd1-002-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-sd1-003-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!N-sd1-008-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}エネルギーを2枚アクティブにする。",
+      "code": "EFFECT: ACTIVATE_ENERGY(2) -> PLAYER"
+    },
+    {
+      "card_no": "PL!N-sd1-013-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}カードを1枚引き、手札を1枚控え室に置く。",
+      "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!N-sd1-021-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}カードを1枚引き、手札を1枚控え室に置く。",
+      "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!N-sd1-022-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}カードを1枚引き、手札を1枚控え室に置く。",
+      "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!S-PR-016-PR",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-PR-020-PR",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-PR-021-PR",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+      "code": "EFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-PR-028-PR",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。",
+      "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!S-PR-032-PR",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。",
+      "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!S-PR-033-PR",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。",
+      "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!S-bp2-005-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-005-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp2-006-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の控え室から、コストの合計が4以下になるようにメンバーカードを2枚までステージに登場させる。",
+      "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!S-bp2-006-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の控え室から、コストの合計が4以下になるようにメンバーカードを2枚までステージに登場させる。",
+      "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!S-bp2-006-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の控え室から、コストの合計が4以下になるようにメンバーカードを2枚までステージに登場させる。",
+      "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!S-bp2-006-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の控え室から、コストの合計が4以下になるようにメンバーカードを2枚までステージに登場させる。",
+      "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!S-bp2-008-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-008-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。\n{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを＋１する。ライブカードが3枚以上ある場合、代わりに合計スコアを＋２する。」を得る。",
+      "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER"
+    },
+    {
+      "card_no": "PL!S-bp2-010-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}カードを2枚引き、手札を2枚控え室に置く。",
+      "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD"
+    },
+    {
+      "card_no": "PL!S-bp3-001-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-001-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_MEMBER(1) -> TARGET_MEMBER\nEFFECT: GRANT_ABILITY(TARGET_MEMBER, \"TRIGGER: CONSTANT\\nEFFECT: BOOST_SCORE(1) -> PLAYER\")"
+    },
+    {
+      "card_no": "PL!S-bp3-004-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp3-004-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp3-004-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp3-004-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp3-006-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-P",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-006-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "code": "TRIGGER: ON_ACTIVATE\nCONDITION: IS_CENTER, TURN_1\nCOST: TAP_PLAYER(1) -> SELF; DISCARD_HAND(1)\nEFFECT: MOVE_TO_DISCARD(1) {TARGET=\"OTHER_MEMBER\", FILTER=\"GROUP_ID=1\"} -> TARGET_MEMBER; PLAY_MEMBER_FROM_HAND(1) {ZONE=\"DISCARD\", FILTER=\"GROUP_ID=1, COST_EQUAL_TARGET_PLUS_2\"} -> TARGET_AREA"
+    },
+    {
+      "card_no": "PL!S-bp3-009-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを6枚見る。その中から『Aqours』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp3-009-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを6枚見る。その中から『Aqours』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp3-009-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを6枚見る。その中から『Aqours』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-bp3-009-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを6枚見る。その中から『Aqours』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-pb1-013-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_04.png|heart04}}を2個以上持つメンバーカードか、必要ハートに{{heart_04.png|heart04}}を2以上含むライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nCONDITION: COUNT_HEARTS {MIN=2}\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-pb1-014-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_02.png|heart02}}を2個以上持つメンバーカードか、必要ハートに{{heart_02.png|heart02}}を2以上含むライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nCONDITION: COUNT_HEARTS {MIN=2}\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!S-pb1-015-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_05.png|heart05}}を2個以上持つメンバーカードか、必要ハートに{{heart_05.png|heart05}}を2以上含むライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nCONDITION: COUNT_HEARTS {MIN=2}\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-005-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『Liella!』のカードを1枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-005-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『Liella!』のカードを1枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-005-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『Liella!』のカードを1枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-005-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『Liella!』のカードを1枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-SEC",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-R＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-007-P＋",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp1-012-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp2-002-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中からコスト11以上のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp2-002-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中からコスト11以上のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp2-002-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中からコスト11以上のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp2-002-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中からコスト11以上のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp2-005-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のデッキの上からカードを7枚見る。その中から『Liella!』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp2-005-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のデッキの上からカードを7枚見る。その中から『Liella!』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp2-005-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のデッキの上からカードを7枚見る。その中から『Liella!』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp2-005-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のデッキの上からカードを7枚見る。その中から『Liella!』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp2-007-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『Liella!』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp2-007-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『Liella!』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp2-007-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『Liella!』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp2-007-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『Liella!』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp4-002-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを4枚見る。その中から必要ハートの合計が8以上の『Liella!』のライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: TAP_SELF\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp4-002-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを4枚見る。その中から必要ハートの合計が8以上の『Liella!』のライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: TAP_SELF\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp4-002-R",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを4枚見る。その中から必要ハートの合計が8以上の『Liella!』のライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: TAP_SELF\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-bp4-002-P",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを4枚見る。その中から必要ハートの合計が8以上の『Liella!』のライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: TAP_SELF\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-pb1-015-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『CatChu!』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-pb1-016-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『KALEIDOSCORE』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-pb1-017-N",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『5yncri5e!』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+      "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-sd1-007-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の控え室から『Liella!』のメンバーカードを1枚手札に加える。",
+      "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-sd1-008-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-sd1-009-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：自分のエネルギーが9枚以上ある場合、自分のデッキの上からカードを5枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "CONDITION: COUNT_ENERGY {MIN=9}\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    },
+    {
+      "card_no": "PL!SP-sd1-017-SD",
+      "missing": "ON_PLAY",
+      "text": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+      "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_HAND; SWAP_CARDS(1) -> CARD_HAND"
+    }
+  ]
+}

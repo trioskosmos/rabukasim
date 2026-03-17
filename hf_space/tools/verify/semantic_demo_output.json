@@ -1,0 +1,17 @@
+{
+  "card_no": "PL!HS-bp2-001-R",
+  "scenarios": [
+    {
+      "name": "Ab0_CostCheck_Energy",
+      "trigger": "ACTIVATED",
+      "setup": {},
+      "action": {
+        "type": "ACTIVATE"
+      },
+      "expect": {
+        "energy_paid": 2,
+        "notes": "Must pay 2 Energy."
+      }
+    }
+  ]
+}

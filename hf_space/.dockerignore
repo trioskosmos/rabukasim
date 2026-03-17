@@ -1,0 +1,37 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.env
+.env.*
+
+# Rust artifacts
+target/
+engine_rust_src/target/
+
+# PyInstaller artifacts
+build/
+dist/
+*.spec
+build_staging/
+build_pyinstaller/
+source_staging/
+
+# Node/Frontend
+node_modules/
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Misc
+*.log
+replies/
+tests/
+docs/
+.gemini/
+.agent/
+brain/

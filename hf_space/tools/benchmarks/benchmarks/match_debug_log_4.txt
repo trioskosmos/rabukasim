@@ -1,0 +1,2 @@
+C:\Users\trios\.gemini\antigravity\vscode\loveca-copy\.venv\Lib\site-packages\numba\core\decorators.py:248: RuntimeWarning: nopython is set for njit and is ignored
+  warnings.warn('nopython is set for njit and is ignored', RuntimeWarning)

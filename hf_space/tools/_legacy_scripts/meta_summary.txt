@@ -1,0 +1,21 @@
+Effects: 39
+Opcodes: 43
+UniqueCardsCount: 17
+CardIDs:
+PL!-pb1-009-P＋
+PL!-pb1-009-R
+PL!HS-bp2-019-L
+PL!HS-bp2-020-L
+PL!N-bp4-010-P
+PL!N-bp4-010-P＋
+PL!N-bp4-010-R＋
+PL!N-bp4-010-SEC
+PL!N-bp4-026-L
+PL!S-bp2-004-P
+PL!S-bp2-004-R
+PL!S-bp2-024-L
+PL!S-bp3-020-L
+PL!S-pb1-022-L
+PL!S-pb1-022-L＋
+PL!SP-bp1-024-L
+PL!SP-bp1-026-L

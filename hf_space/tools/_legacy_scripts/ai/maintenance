@@ -1,0 +1,72 @@
+import os
+import shutil
+import time
+import json
+import glob
+import sys
+from datetime import datetime
+
+# Script to manually snapshot a model and its context
+# Usage: python -m ai.archive_model [path_to_model_zip] [notes]
+
+
+def archive_model(model_path=None, notes="Manual Archive"):
+    # 1. Resolve Model Path
+    if not model_path:
+        # Find latest in checkpoints/vector
+        pattern = "checkpoints/vector/*.zip"
+        files = glob.glob(pattern)
+        if not files:
+            print("No models found in checkpoints/vector/")
+            return
+        model_path = max(files, key=os.path.getctime)
+
+    if not os.path.exists(model_path):
+        print(f"Model not found: {model_path}")
+        return
+
+    print(f"Archiving model: {model_path}")
+
+    # 2. Create Snapshot Directory
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    snapshot_name = f"{timestamp}_manual_archive"
+    snapshot_dir = os.path.join("historiccheckpoints", snapshot_name)
+    os.makedirs(snapshot_dir, exist_ok=True)
+
+    # 3. Copy Model
+    dest_model = os.path.join(snapshot_dir, "model.zip")
+    shutil.copy(model_path, dest_model)
+
+    # 4. Copy Context (Card Pool)
+    if os.path.exists("verified_card_pool.json"):
+        shutil.copy("verified_card_pool.json", os.path.join(snapshot_dir, "verified_card_pool.json"))
+        pool_size = len(json.load(open("verified_card_pool.json", encoding="utf-8")).get("verified_abilities", []))
+    else:
+        print("Warning: verified_card_pool.json not found.")
+        pool_size = "Unknown"
+
+    # 5. Generate Meta
+    # We can't know for sure the obs_dim of a zip without loading it,
+    # but we assume it matches the current environment codebase if we are archiving now.
+    meta = {
+        "timestamp": timestamp,
+        "original_path": model_path,
+        "notes": notes,
+        "obs_dim": 2048,  # Assumed based on current codebase
+        "features": ["GlobalVolumes", "LiveZone", "Traits", "TurnNumber"],
+        "action_space_size": 1000,
+        "card_pool_size": pool_size,
+    }
+
+    with open(os.path.join(snapshot_dir, "snapshot_meta.json"), "w") as f:
+        json.dump(meta, f, indent=2)
+
+    print(f"Snapshot created at: {snapshot_dir}")
+    print(f"  - Model: {os.path.basename(dest_model)}")
+    print(f"  - Meta: snapshot_meta.json")
+
+
+if __name__ == "__main__":
+    path = sys.argv[1] if len(sys.argv) > 1 else None
+    note = sys.argv[2] if len(sys.argv) > 2 else "Manual Archive"
+    archive_model(path, note)

@@ -1,0 +1,40 @@
+================================================================================
+LOVE LIVE! OCG - AI TRAINING INSTRUCTIONS
+================================================================================
+
+PREREQUISITES:
+- Ensure you have installed the Visual C++ Redistributable (x64).
+- Ensure you are in the project folder.
+
+--------------------------------------------------------------------------------
+STEP 1: OPEN A TERMINAL (PowerShell)
+Navigate to the project folder:
+--------------------------------------------------------------------------------
+cd 'C:\Users\trios\.gemini\antigravity\vscode\loveca-copy'
+
+
+--------------------------------------------------------------------------------
+STEP 2: START THE LOGGER (TensorBoard)
+Run this command to see the graphs. Keep this terminal OPEN.
+--------------------------------------------------------------------------------
+$env:PYTHONPATH="."; uv run tensorboard --logdir logs/
+
+> Open http://localhost:6006 in your browser once it starts.
+
+
+--------------------------------------------------------------------------------
+STEP 3: START THE TRAINING
+Open a NEW Terminal tab/window, navigate to the folder again, and run:
+--------------------------------------------------------------------------------
+cd 'C:\Users\trios\.gemini\antigravity\vscode\loveca-copy'
+$env:PYTHONPATH="."; uv run ai/train_optimized.py
+
+
+--------------------------------------------------------------------------------
+TROUBLESHOOTING
+--------------------------------------------------------------------------------
+- If it crashes with "missing DLL", re-install vc_redist.x64.exe.
+- If it says "CUDA not available", check your NVIDIA drivers.
+- To stop training: Press Ctrl+C in the training terminal. It will save a checkpoint.
+
+================================================================================

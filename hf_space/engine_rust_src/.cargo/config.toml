@@ -1,0 +1,15 @@
+# Use the MSVC LLD linker for significantly faster linking on Windows
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld.exe"
+
+# Maximize parallel jobs automatically (default behavior)
+[build]
+# Uncomment the following line if using a nightly toolchain for faster parallel frontend
+# rustflags = ["-Zthreads=8"]
+
+[alias]
+# Build and install the extension into the current Python environment
+dev = "!cmd /c uv run maturin develop"
+# Optimized dev build with good balance of speed and performance
+dev-opt = "!cmd /c uv run maturin develop --profile dev-release"
+test-alias = "build"

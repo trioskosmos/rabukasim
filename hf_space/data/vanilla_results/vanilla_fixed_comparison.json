@@ -1,0 +1,57 @@
+{
+  "neural_vs_random": {
+    "strategy1": "neural",
+    "strategy2": "random",
+    "games": 4,
+    "strategy1_wins": 2,
+    "strategy2_wins": 2,
+    "draws": 0,
+    "avg_turns_s1": 8.5,
+    "avg_turns_s2": 8.5,
+    "total_time": 1.6655185222625732
+  },
+  "turnseq_vs_random": {
+    "strategy1": "turnseq",
+    "strategy2": "random",
+    "games": 4,
+    "strategy1_wins": 0,
+    "strategy2_wins": 4,
+    "draws": 0,
+    "avg_turns_s1": 10.0,
+    "avg_turns_s2": 10.0,
+    "total_time": 1.7414729595184326
+  },
+  "mcts_vs_random": {
+    "strategy1": "mcts",
+    "strategy2": "random",
+    "games": 4,
+    "strategy1_wins": 4,
+    "strategy2_wins": 0,
+    "draws": 0,
+    "avg_turns_s1": 7.0,
+    "avg_turns_s2": 7.0,
+    "total_time": 7.312495946884155
+  },
+  "neural_vs_turnseq": {
+    "strategy1": "neural",
+    "strategy2": "turnseq",
+    "games": 4,
+    "strategy1_wins": 4,
+    "strategy2_wins": 0,
+    "draws": 0,
+    "avg_turns_s1": 10.25,
+    "avg_turns_s2": 10.25,
+    "total_time": 1.8549299240112305
+  },
+  "neural_vs_mcts": {
+    "strategy1": "neural",
+    "strategy2": "mcts",
+    "games": 4,
+    "strategy1_wins": 2,
+    "strategy2_wins": 2,
+    "draws": 0,
+    "avg_turns_s1": 6.5,
+    "avg_turns_s2": 6.5,
+    "total_time": 6.034651279449463
+  }
+}

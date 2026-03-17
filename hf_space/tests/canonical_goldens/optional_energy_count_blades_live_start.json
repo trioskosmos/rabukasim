@@ -1,0 +1,131 @@
+{
+  "schema_version": "v0",
+  "trigger": "ON_LIVE_START",
+  "once_per_turn": false,
+  "pseudocode": "TRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"AREA_LEFT\"} (Optional) -> LEFT_VAL; COUNT_MEMBER(PLAYER) {FILTER=\"AREA_CENTER\"} -> CENTER_VAL; COUNT_MEMBER(PLAYER) {FILTER=\"AREA_RIGHT\"} -> RIGHT_VAL\nCONDITION: VALUE_GT(LEFT_VAL, 0), VALUE_GT(CENTER_VAL, 0), VALUE_GT(RIGHT_VAL, 0); ADD_BLADES(2) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
+  "raw_text": "TRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"AREA_LEFT\"} (Optional) -> LEFT_VAL; COUNT_MEMBER(PLAYER) {FILTER=\"AREA_CENTER\"} -> CENTER_VAL; COUNT_MEMBER(PLAYER) {FILTER=\"AREA_RIGHT\"} -> RIGHT_VAL\nCONDITION: VALUE_GT(LEFT_VAL, 0), VALUE_GT(CENTER_VAL, 0), VALUE_GT(RIGHT_VAL, 0); ADD_BLADES(2) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
+  "confidence": "medium",
+  "review_reasons": [],
+  "steps": [
+    {
+      "kind": "cost",
+      "op": "PAY_ENERGY",
+      "count": {
+        "kind": "literal",
+        "value": 1
+      },
+      "optional": true,
+      "target": "PLAYER",
+      "store_as": "SUCCESS"
+    },
+    {
+      "kind": "if",
+      "condition": {
+        "kind": "condition",
+        "op": "VALUE_EQ",
+        "args": {
+          "left": {
+            "kind": "reference",
+            "name": "SUCCESS"
+          },
+          "right": {
+            "kind": "literal",
+            "value": true
+          }
+        }
+      },
+      "then": [
+        {
+          "kind": "effect",
+          "op": "COUNT_MEMBER",
+          "target": "PLAYER",
+          "filter": {
+            "all_of": [
+              {
+                "field": "area",
+                "op": "eq",
+                "value": "LEFT"
+              }
+            ]
+          },
+          "store_as": "LEFT_VAL",
+          "args": {}
+        },
+        {
+          "kind": "effect",
+          "op": "COUNT_MEMBER",
+          "target": "PLAYER",
+          "filter": {
+            "all_of": [
+              {
+                "field": "area",
+                "op": "eq",
+                "value": "CENTER"
+              }
+            ]
+          },
+          "store_as": "CENTER_VAL",
+          "args": {}
+        },
+        {
+          "kind": "effect",
+          "op": "COUNT_MEMBER",
+          "target": "PLAYER",
+          "filter": {
+            "all_of": [
+              {
+                "field": "area",
+                "op": "eq",
+                "value": "RIGHT"
+              }
+            ]
+          },
+          "store_as": "RIGHT_VAL",
+          "args": {}
+        },
+        {
+          "kind": "if",
+          "condition": {
+            "kind": "condition",
+            "op": "ALL_OF",
+            "args": {
+              "conditions": [
+                {
+                  "kind": "reference",
+                  "name": "LEFT_VAL"
+                },
+                {
+                  "kind": "reference",
+                  "name": "CENTER_VAL"
+                },
+                {
+                  "kind": "reference",
+                  "name": "RIGHT_VAL"
+                }
+              ]
+            },
+            "review_markers": [
+              "needs_review"
+            ],
+            "notes": [
+              "Temporary placeholder until canonical boolean-combinator conditions are formalized"
+            ]
+          },
+          "then": [
+            {
+              "kind": "effect",
+              "op": "ADD_BLADES",
+              "count": {
+                "kind": "literal",
+                "value": 2
+              },
+              "target": "SELF",
+              "duration": "UNTIL_LIVE_END",
+              "args": {}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

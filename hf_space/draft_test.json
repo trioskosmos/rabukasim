@@ -1,0 +1,65 @@
+﻿{
+  "total_entries": 614,
+  "wrapper_issue_free": 529,
+  "wrapper_with_issues": 85,
+  "canonical_validation_pass": 614,
+  "canonical_validation_fail": 0,
+  "bridge_supported": 408,
+  "bridge_match": 10,
+  "bridge_mismatch": 604,
+  "samples": {
+    "validation_fail": [],
+    "bridge_match": [
+      {
+        "card_no": "PL!HS-bp1-006-P"
+      },
+      {
+        "card_no": "PL!HS-bp1-010-N"
+      },
+      {
+        "card_no": "PL!HS-bp5-011-N"
+      },
+      {
+        "card_no": "PL!HS-bp5-013-N"
+      },
+      {
+        "card_no": "PL!N-PR-005-PR"
+      },
+      {
+        "card_no": "PL!N-bp5-014-N"
+      },
+      {
+        "card_no": "PL!N-bp5-016-N"
+      },
+      {
+        "card_no": "PL!S-bp5-013-N"
+      }
+    ],
+    "bridge_mismatch": [
+      {
+        "card_no": "LL-bp1-001-R・・
+      },
+      {
+        "card_no": "LL-bp1-001-R・・
+      },
+      {
+        "card_no": "LL-bp2-001-R・・
+      },
+      {
+        "card_no": "LL-bp2-001-R・・
+      },
+      {
+        "card_no": "LL-bp2-001-R・・
+      },
+      {
+        "card_no": "LL-bp3-001-R・・
+      },
+      {
+        "card_no": "LL-bp3-001-R・・
+      },
+      {
+        "card_no": "LL-bp4-001-R・・
+      }
+    ]
+  }
+}
