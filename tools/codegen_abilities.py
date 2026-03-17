@@ -132,6 +132,12 @@ def generate_rust():
 
             if valid and rust_lines:
                 out.append(f"        ({cid}, {i}) => {{")
+                pseudo = " ".join((ab.get("pseudocode") or "").strip().splitlines())
+                raw_text = " ".join((ab.get("raw_text") or "").strip().splitlines())
+                if pseudo:
+                    out.append(f"            // pseudocode: {pseudo}")
+                elif raw_text:
+                    out.append(f"            // raw_text: {raw_text}")
                 for line in rust_lines:
                     line = line.strip()
                     if not line:

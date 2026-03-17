@@ -1,4 +1,5 @@
 use crate::core::enums::*;
+use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use crate::core::logic::{Ability, CardDatabase, PendingInteraction};
 
 pub const OPTIONAL_MODE_MASK_BASE: i16 = 1900;
@@ -145,12 +146,11 @@ pub fn pending_targeted_live_heart_bonus(db: &CardDatabase, pi: &PendingInteract
 }
 
 pub fn is_optional_live_start_discard_count_ability(ability: &Ability) -> bool {
+    let program = BytecodeProgram::from_slice(&ability.bytecode);
     ability.trigger == TriggerType::OnLiveStart
-        && ability
-            .bytecode
-            .chunks(5)
-            .next()
-            .map(|chunk| chunk.first().copied() == Some(O_SELECT_CARDS) && chunk.get(1).copied() == Some(99))
+        && program
+            .instruction_at(0)
+            .map(|instr| instr.op == O_SELECT_CARDS && instr.v == 99)
             .unwrap_or(false)
         && ability.effects.iter().any(|effect| {
             effect.runtime_opcode == O_ADD_BLADES

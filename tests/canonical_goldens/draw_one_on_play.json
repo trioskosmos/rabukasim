@@ -1,0 +1,21 @@
+{
+  "schema_version": "v0",
+  "trigger": "ON_PLAY",
+  "once_per_turn": false,
+  "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)",
+  "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)",
+  "confidence": "high",
+  "review_reasons": [],
+  "steps": [
+    {
+      "kind": "effect",
+      "op": "DRAW",
+      "count": {
+        "kind": "literal",
+        "value": 1
+      },
+      "target": "PLAYER",
+      "args": {}
+    }
+  ]
+}

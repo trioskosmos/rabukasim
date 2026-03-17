@@ -15,6 +15,7 @@ use crate::core::models::{GameState, AbilityContext};
 use crate::core::logic::constants::*;
 use super::CardDatabase;
 use super::Ability;
+use self::instruction::{BytecodeProgram, WORDS_PER_INSTRUCTION};
 pub use conditions::{check_condition, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
 pub use handlers::{HandlerRegistry, HandlerResult};
@@ -47,7 +48,7 @@ pub const MAX_DEPTH: usize = 8;
 pub const MAX_BYTECODE_LOG_SIZE: usize = 500;
 
 struct ExecutionFrame {
-    bytecode: std::sync::Arc<Vec<i32>>,
+    program: BytecodeProgram,
     ip: usize,
     ctx: AbilityContext,
 }
@@ -71,7 +72,7 @@ fn ability_uses_structured_runtime(ability: &Ability) -> bool {
     if ability.effects.is_empty() {
         return false;
     }
-    if ability.bytecode.len() != ability.effects.len() * 5 + 5 {
+    if ability.bytecode.len() != ability.effects.len() * WORDS_PER_INSTRUCTION + WORDS_PER_INSTRUCTION {
         return false;
     }
 
@@ -80,7 +81,7 @@ fn ability_uses_structured_runtime(ability: &Ability) -> bool {
             return false;
         }
 
-        let ip = idx * 5;
+        let ip = BytecodeProgram::effect_ip(idx);
         let a_low = effect.runtime_attr as u32 as i32;
         let a_high = (effect.runtime_attr >> 32) as u32 as i32;
 
@@ -122,13 +123,13 @@ pub fn resolve_ability(
 
     let registry = HandlerRegistry::new();
     let mut ctx = ctx_in.clone();
-    let mut effect_idx = (ctx_in.program_counter as usize) / 5;
+    let mut effect_idx = BytecodeProgram::effect_idx(ctx_in.program_counter as usize);
 
     while effect_idx < ability.effects.len() {
         let effect = &ability.effects[effect_idx];
-        let ip = effect_idx * 5;
+        let ip = BytecodeProgram::effect_ip(effect_idx);
         ctx.program_counter = ip as u16;
-        if effect_idx == (ctx_in.program_counter as usize) / 5 && ctx_in.choice_index != -1 {
+        if effect_idx == BytecodeProgram::effect_idx(ctx_in.program_counter as usize) && ctx_in.choice_index != -1 {
             ctx.choice_index = ctx_in.choice_index;
         }
 
@@ -155,7 +156,7 @@ pub fn resolve_ability(
             HandlerResult::Branch(new_ip) => {
                 ctx.choice_index = -1;
                 ctx.v_remaining = -1;
-                effect_idx = new_ip / 5;
+                effect_idx = BytecodeProgram::effect_idx(new_ip);
             }
             HandlerResult::BranchToBytecode(new_bc) => {
                 resolve_bytecode(state, db, new_bc, &ctx);
@@ -195,7 +196,7 @@ impl BytecodeExecutor {
     fn new(bytecode: std::sync::Arc<Vec<i32>>, ctx: &AbilityContext) -> Self {
         Self {
             stack: vec![ExecutionFrame {
-                bytecode,
+                program: BytecodeProgram::new(bytecode),
                 ip: ctx.program_counter as usize,
                 ctx: ctx.clone(),
             }],
@@ -250,18 +251,18 @@ pub fn resolve_bytecode(
         let frame = executor.stack.last_mut().unwrap();
 
         let ip = frame.ip;
-        if ip >= frame.bytecode.len() {
+        if !frame.program.is_word_ip_valid(ip) {
             executor.pop_frame();
             continue;
         }
 
-        let instr = instruction::BytecodeInstruction::decode(&frame.bytecode, ip);
+        let instr = frame.program.instruction_at(ip).unwrap();
         let op = instr.op;
         let v = instr.v;
         let a = instr.a;
         let s = instr.raw_s;
 
-        frame.ip += 5; // Advance IP
+        frame.ip = frame.program.next_ip(ip);
         frame.ctx.program_counter = ip as u16;
 
         // Resumption logic: inject choice index if we're at the suspension point
@@ -303,7 +304,7 @@ pub fn resolve_bytecode(
         }
 
         if state.debug.debug_mode {
-            let desc = logging::describe_bytecode(real_op, v, a, s);
+            let desc = logging::describe_trace_step(real_op, v, a, s, is_negated);
 
             // Get card info for context
             let card_name = db.get_member(frame.ctx.source_card_id)
@@ -357,6 +358,19 @@ pub fn resolve_bytecode(
                     0,
                 )
             };
+            if state.debug.debug_mode {
+                let result_line = format!(
+                    "BC_RESULT: ip={:<3} {}",
+                    ip,
+                    if is_negated { !passed } else { passed }
+                );
+                println!("[DEBUG] {}", result_line);
+                let b_log = &mut state.ui.bytecode_log;
+                if b_log.len() < MAX_BYTECODE_LOG_SIZE {
+                    b_log.push(result_line.clone());
+                }
+                state.trace_internal(&result_line);
+            }
             executor.cond = executor.cond && if is_negated { !passed } else { passed };
             if state.debug.debug_mode {
                 let cond_desc = format!(
@@ -380,13 +394,19 @@ pub fn resolve_bytecode(
 
         // Control flow
         if real_op == crate::core::enums::O_JUMP as i32 {
-            frame.ip = (ip as i32 + 5 + (v * 5)) as usize;
+            frame.ip = frame
+                .program
+                .jump_target(ip, v)
+                .unwrap_or(frame.program.len_words());
             frame.ctx.choice_index = -1;
             continue;
         }
         if real_op == crate::core::enums::O_JUMP_IF_FALSE as i32 {
             if !executor.cond {
-                frame.ip = (ip as i32 + 5 + (v * 5)) as usize;
+                frame.ip = frame
+                    .program
+                    .jump_target(ip, v)
+                    .unwrap_or(frame.program.len_words());
             }
             // Reset cond ONLY after JUMP_IF_FALSE (end of current condition block)
             executor.cond = true;
@@ -415,7 +435,7 @@ pub fn resolve_bytecode(
             &mut frame.ctx,
             &instr,
             ip,
-            &frame.bytecode,
+            frame.program.words(),
         ) {
             HandlerResult::Continue => {}
             HandlerResult::SetCond(c) => executor.cond = c,
@@ -432,7 +452,7 @@ pub fn resolve_bytecode(
             HandlerResult::BranchToBytecode(new_bc) => {
                 let next_ctx = frame.ctx.clone();
                 executor.stack.push(ExecutionFrame {
-                    bytecode: new_bc,
+                    program: BytecodeProgram::new(new_bc),
                     ip: 0,
                     ctx: next_ctx,
                 });

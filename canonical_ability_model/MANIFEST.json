@@ -1,0 +1,49 @@
+{
+  "schema_version": "v0",
+  "entries": [
+    {
+      "golden": "tests/canonical_goldens/draw_one_on_play.json",
+      "card_no": "PL!N-sd1-009-SD",
+      "status": "legacy_plan_match",
+      "qa_tests": []
+    },
+    {
+      "golden": "tests/canonical_goldens/draw_then_discard_on_play.json",
+      "card_no": "PL!HS-bp1-006-P",
+      "status": "legacy_plan_match",
+      "qa_tests": []
+    },
+    {
+      "golden": "tests/canonical_goldens/optional_energy_count_blades_live_start.json",
+      "card_no": "PL!HS-bp2-005-P",
+      "status": "schema_only_needs_review",
+      "qa_tests": []
+    },
+    {
+      "golden": "tests/canonical_goldens/choice_mode_select_member_add_hearts.json",
+      "card_no": "PL!-bp3-024-L",
+      "status": "schema_only",
+      "qa_tests": [
+        "qa::batch_4_unmapped_qa::tests::test_q191_daydream_mermaid_cannot_choose_the_same_live_success_mode_twice",
+        "qa::batch_3::tests::test_q144_up_to_x_allows_choosing_fewer",
+        "qa::batch_card_specific_real_gaps::tests::test_q144_up_to_two_can_choose_only_one_target"
+      ]
+    },
+    {
+      "golden": "tests/canonical_goldens/pl_bp3_024_l_natsuiro_egao_choice_mode.json",
+      "card_no": "PL!-bp3-024-L",
+      "status": "legacy_plan_match_qa_anchored",
+      "qa_tests": [
+        "qa::batch_4_unmapped_qa::tests::test_q191_daydream_mermaid_cannot_choose_the_same_live_success_mode_twice",
+        "qa::batch_3::tests::test_q144_up_to_x_allows_choosing_fewer",
+        "qa::batch_card_specific_real_gaps::tests::test_q144_up_to_two_can_choose_only_one_target"
+      ]
+    },
+    {
+      "golden": "tests/canonical_goldens/tap_opponent_cost_le_4_on_play.json",
+      "card_no": "PL!-bp5-013-N",
+      "status": "legacy_plan_match",
+      "qa_tests": []
+    }
+  ]
+}

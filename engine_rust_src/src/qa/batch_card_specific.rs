@@ -2033,6 +2033,30 @@ mod tests {
     }
 
     #[test]
+    fn test_card_448_optional_activate_member_does_not_suspend_without_targets() {
+        let db = load_real_db();
+        let mut state = create_test_state();
+
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.ui.silent = true;
+        state.players[0].hand = vec![448].into();
+        state.players[0].energy_zone = vec![3001; 10].into();
+
+        state
+            .play_member(&db, 0, 0)
+            .expect("Card 448 should be playable to an empty stage");
+        state.process_trigger_queue(&db);
+
+        assert_ne!(
+            state.phase,
+            Phase::Response,
+            "Card 448 should skip its optional activate-member selection when there are no waiting members"
+        );
+        assert_eq!(state.players[0].stage[0], 448);
+    }
+
+    #[test]
     fn test_q209_simple_recovery_without_cost() {
         // Simpler test: Just try recovery without optional cost
         // This verifies recovery works at all

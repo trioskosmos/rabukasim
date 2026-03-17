@@ -89894,14 +89894,13 @@
               "value_cond": 0,
               "target": 1,
               "params": {
-                "duration": "UNTIL_LIVE_END",
-                "type": "live"
+                "duration": "UNTIL_LIVE_END"
               },
               "is_optional": false,
               "modal_options": [],
               "runtime_opcode": 35,
               "runtime_value": 0,
-              "runtime_attr": 1,
+              "runtime_attr": 0,
               "runtime_slot": 4
             }
           ],
@@ -89917,7 +89916,7 @@
             4,
             35,
             0,
-            1,
+            0,
             0,
             4,
             1,
@@ -353302,8 +353301,9 @@
     "bytecode_layout_name": "fixed5x32-v1",
     "semantic_form_version": 1,
     "semantic_form_enabled": true,
+    "export_profile": "full",
     "source_hash": "fd5f3c04fc14c0e64cbe7813e248a3b8bb8d2ebe957b3a2ec392c8ae02c37afb",
     "generated_by": "compiler/main.py",
-    "generated_at": "2026-03-17T18:18:27.856557"
+    "generated_at": "2026-03-17T21:19:37.708104"
   }
 }

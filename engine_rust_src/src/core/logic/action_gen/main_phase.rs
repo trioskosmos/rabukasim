@@ -1,5 +1,6 @@
 use crate::core::enums::*;
 use crate::core::logic::action_gen::ActionGenerator;
+use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use crate::core::logic::{Ability, AbilityContext, ActionReceiver, CardDatabase, GameState, MemberCard};
 
 pub struct MainPhaseGenerator;
@@ -35,22 +36,27 @@ fn activation_area_flags(ab: &Ability) -> (bool, bool) {
 fn has_on_play_choice(card: &MemberCard) -> bool {
     card.has_on_play_choice
         || card.abilities.iter().any(|ab| {
+            let program = BytecodeProgram::from_slice(&ab.bytecode);
             ab.trigger == TriggerType::OnPlay
                 && (ab.choice_flags != 0
-                    || ab.bytecode.chunks(5).any(|chunk| {
-                        chunk.len() == 5
-                            && [O_LOOK_AND_CHOOSE, O_SELECT_MODE, O_COLOR_SELECT, O_ORDER_DECK]
-                                .contains(&chunk[0])
-                    }))
+                    || [O_LOOK_AND_CHOOSE, O_SELECT_MODE, O_COLOR_SELECT, O_ORDER_DECK]
+                        .iter()
+                        .any(|&op| program.has_opcode(op)))
         })
 }
 
 fn has_multi_baton(card: &MemberCard) -> bool {
     card.has_multi_baton
         || card.abilities.iter().any(|ab| {
-            ab.bytecode
-                .chunks(5)
-                .any(|chunk| chunk.len() == 5 && chunk[0] == O_BATON_TOUCH_MOD && chunk[1] >= 2)
+            let program = BytecodeProgram::from_slice(&ab.bytecode);
+            let mut ip = 0;
+            while let Some(instr) = program.instruction_at(ip) {
+                if instr.op == O_BATON_TOUCH_MOD && instr.v >= 2 {
+                    return true;
+                }
+                ip = program.next_ip(ip);
+            }
+            false
         })
 }
 

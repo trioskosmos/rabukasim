@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Tuple, Union
 from engine.models.enums import CHAR_MAP
 from engine.models.opcodes import Opcode
 from .ability_ir import SemanticAbility, SemanticCondition, SemanticCost, SemanticEffect
+from .structured_instruction_ir import build_structured_instruction_ir
 
 from .generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
 from .generated_metadata import COMPARISONS, COUNT_SOURCES, EXTRA_CONSTANTS, HEART_COLOR_MAP, META_RULE_TYPES, ZONES
@@ -351,6 +352,9 @@ class Ability:
     filters: List[Dict[str, Any]] = field(default_factory=list)
     option_names: List[str] = field(default_factory=list)
     semantic_form: Dict[str, Any] = field(default_factory=dict)  # Human-readable form
+
+    def build_structured_ir(self) -> Dict[str, Any]:
+        return build_structured_instruction_ir(self).to_dict()
 
     def compile(self) -> List[int]:
         """Compile ability into fixed-width bytecode sequence (groups of 4 ints)."""

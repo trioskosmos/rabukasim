@@ -2,6 +2,7 @@ use super::card_db::{CardDatabase, MemberCard};
 use super::game::GameState;
 use crate::core::logic::interpreter::check_condition;
 use crate::core::logic::interpreter::conditions::resolve_count;
+use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use std::cell::Cell;
 
 use crate::core::enums::*;
@@ -147,19 +148,21 @@ fn apply_reduce_cost_modifiers(
         return;
     }
 
-    for chunk in ab.bytecode.chunks(5) {
-        let op = chunk[0];
-        if chunk.len() != 5 || (op != O_REDUCE_COST && op != O_INCREASE_COST) {
+    let program = BytecodeProgram::from_slice(&ab.bytecode);
+    let mut ip = 0;
+    while let Some(instr) = program.instruction_at(ip) {
+        let op = instr.op;
+        if op != O_REDUCE_COST && op != O_INCREASE_COST {
+            ip = program.next_ip(ip);
             continue;
         }
 
-        let val = chunk[1];
-        let attr_low = chunk[2] as u32;
-        let attr_high = chunk[3] as u32;
-        let attr = ((attr_high as u64) << 32) | attr_low as u64;
-        let slot = chunk[4];
+        let val = instr.v;
+        let attr = instr.a as u64;
+        let slot = instr.raw_s;
 
         if ((slot as u32) & 0xFF) != 0 && ((slot as u32) & 0xFF) != 4 {
+            ip = program.next_ip(ip);
             continue;
         }
 
@@ -181,6 +184,7 @@ fn apply_reduce_cost_modifiers(
         } else {
             *cost += val * multiplier;
         }
+        ip = program.next_ip(ip);
     }
 }
 
@@ -223,16 +227,16 @@ fn apply_external_reduce_cost_modifiers(
         return;
     }
 
-    for chunk in ab.bytecode.chunks(5) {
-        if chunk.len() != 5 {
-            continue;
-        }
-        let op = chunk[0];
+    let program = BytecodeProgram::from_slice(&ab.bytecode);
+    let mut ip = 0;
+    while let Some(instr) = program.instruction_at(ip) {
+        let op = instr.op;
         if op == O_REDUCE_COST {
-            *cost -= chunk[1];
+            *cost -= instr.v;
         } else if op == O_INCREASE_COST {
-            *cost += chunk[1];
+            *cost += instr.v;
         }
+        ip = program.next_ip(ip);
     }
 }
 

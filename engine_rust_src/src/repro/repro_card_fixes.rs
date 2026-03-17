@@ -258,21 +258,3 @@ mod tests {
     }
 }
 
-        assert_eq!(state.interaction_stack.last().unwrap().effect_opcode, 58);
-        assert_eq!(
-            state.interaction_stack.last().unwrap().choice_type,
-            ChoiceType::SelectHandDiscard
-        );
-
-        // 3. Perform a hand selection (index 0)
-        state
-            .step(&db, ACTION_BASE_HAND_SELECT + 0)
-            .expect("Step failed");
-
-        // 4. Verification
-        assert_eq!(state.players[p_idx].hand.len(), 3);
-        assert!(state.players[p_idx].discard.len() > 0);
-        assert_eq!(state.phase, Phase::Main);
-    }
-
-}

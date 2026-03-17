@@ -77,7 +77,21 @@ def validate_bytecode(bytecode: list, card_no: str, ab_idx: int) -> list:
     return issues
 
 
-def compile_cards(input_path: str, output_path: str, quiet: bool = False):
+def _build_export_excludes(export_profile: str) -> tuple[dict, dict]:
+    exclude_ability_fields = {"instructions": True}
+    exclude_card_fields = {"faq": True, "abilities": {"__all__": exclude_ability_fields}}
+
+    if export_profile == "runtime":
+        exclude_ability_fields.update(
+            {
+                "semantic_form": True,
+            }
+        )
+
+    return exclude_ability_fields, exclude_card_fields
+
+
+def compile_cards(input_path: str, output_path: str, quiet: bool = False, export_profile: str = "full"):
     if not quiet:
         print(f"Loading raw cards from {input_path}...")
     with open(input_path, "r", encoding="utf-8") as f:
@@ -95,7 +109,8 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False):
             "bytecode_layout_version": BYTECODE_LAYOUT_VERSION,
             "bytecode_layout_name": BYTECODE_LAYOUT_NAME,
             "semantic_form_version": SEMANTIC_FORM_VERSION,
-            "semantic_form_enabled": True,
+            "semantic_form_enabled": export_profile != "runtime",
+            "export_profile": export_profile,
         },
     }
 
@@ -200,10 +215,10 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False):
 
                 packed_id = (variant_idx << 12) | logic_id
                 # print(f"DEBUG: Assigned new ID for card_no={v_key}, packed_id={packed_id}")
-            # Define fields to exclude from compiled output to reduce bloat
-            # No source data is lost; these are either redundant with bytecode or stay in cards.json/consolidated_abilities.json
-            exclude_ability_fields = {"instructions": True}
-            exclude_card_fields = {"faq": True, "abilities": {"__all__": exclude_ability_fields}}
+            # Define fields to exclude from compiled output to reduce bloat.
+            # The runtime profile keeps the schema needed by the Rust engine and launcher,
+            # while dropping inspection-only fields that are redundant with source data.
+            _, exclude_card_fields = _build_export_excludes(export_profile)
 
             try:
                 if ctype == "メンバー":
@@ -1004,6 +1019,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--quiet", "-q", action="store_true", help="Minimize output"
     )
+    parser.add_argument(
+        "--export-profile",
+        choices=["full", "runtime"],
+        default="full",
+        help="Export schema profile: 'full' keeps inspection fields, 'runtime' prunes inspection-only fields",
+    )
     args = parser.parse_args()
 
     # Set up version gate if non-default version requested
@@ -1021,7 +1042,7 @@ if __name__ == "__main__":
         else:
             sys.exit(1)
 
-    compile_cards(args.input, args.output, quiet=args.quiet)
+    compile_cards(args.input, args.output, quiet=args.quiet, export_profile=args.export_profile)
 
     # Update hash in the output file
     if not args.quiet:

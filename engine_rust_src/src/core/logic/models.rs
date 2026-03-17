@@ -1,6 +1,7 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use serde::{Deserialize, Serialize};
+use crate::core::logic::interpreter::instruction::BytecodeProgram;
 
 // Re-export constants so they're available to all modules using `use super::models::*;`
 pub use crate::core::logic::constants::*;
@@ -229,6 +230,12 @@ impl std::hash::Hash for Ability {
         self.choice_count.hash(state);
         self.preparsed_modifiers.hash(state);
         self.opcodes_mask.hash(state);
+    }
+}
+
+impl Ability {
+    pub fn bytecode_program(&self) -> BytecodeProgram {
+        BytecodeProgram::from_slice(&self.bytecode)
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

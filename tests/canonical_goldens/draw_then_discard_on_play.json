@@ -1,0 +1,31 @@
+{
+  "schema_version": "v0",
+  "trigger": "ON_PLAY",
+  "once_per_turn": false,
+  "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+  "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+  "confidence": "high",
+  "review_reasons": [],
+  "steps": [
+    {
+      "kind": "effect",
+      "op": "DRAW",
+      "count": {
+        "kind": "literal",
+        "value": 2
+      },
+      "target": "PLAYER",
+      "args": {}
+    },
+    {
+      "kind": "effect",
+      "op": "DISCARD_HAND",
+      "count": {
+        "kind": "literal",
+        "value": 1
+      },
+      "target": "PLAYER",
+      "args": {}
+    }
+  ]
+}

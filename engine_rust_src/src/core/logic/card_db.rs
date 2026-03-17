@@ -17,6 +17,7 @@
 
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
+use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 // use crate::core::generated_constants::*; // Redundant due to enums.rs re-export
@@ -296,12 +297,10 @@ impl CardDatabase {
             let mut ability_flags_for_ab = 0u64;
             let mut unflagged_logic_present = false;
 
-            for chunk in ab.bytecode.chunks(5) {
-                if chunk.is_empty() {
-                    continue;
-                }
-
-                let op = chunk[0];
+            let program = ab.bytecode_program();
+            let mut ip = 0;
+            while let Some(instr) = program.instruction_at(ip) {
+                let op = instr.op;
 
                 match op {
                     O_RETURN | O_LOOK_AND_CHOOSE => ability_flags_for_ab |= FLAG_DRAW as u64,
@@ -323,7 +322,7 @@ impl CardDatabase {
                     O_LOOK_AND_CHOOSE => {
                         ab.choice_flags |= CHOICE_FLAG_LOOK;
                         if ab.choice_count == 0 {
-                            let v = chunk.get(1).copied().unwrap_or(0);
+                            let v = instr.v;
                             let pick = (v >> 8) & 0xFF;
                             ab.choice_count = if pick > 0 { pick as u8 } else { 3 };
                         }
@@ -331,7 +330,7 @@ impl CardDatabase {
                     O_SELECT_MODE => {
                         ab.choice_flags |= CHOICE_FLAG_MODE;
                         if ab.choice_count == 0 {
-                            ab.choice_count = chunk.get(1).copied().unwrap_or(2) as u8;
+                            ab.choice_count = instr.v as u8;
                         }
                     }
                     O_COLOR_SELECT => {
@@ -353,25 +352,24 @@ impl CardDatabase {
                 ability_opcodes_mask |= ab.opcodes_mask;
                 trigger_mask |= 1u32 << (ab.trigger as u32 % 32);
 
-                if op == O_BATON_TOUCH_MOD && chunk.len() >= 2 && chunk[1] >= 2 {
+                if op == O_BATON_TOUCH_MOD && instr.v >= 2 {
                     has_multi_baton = true;
                 }
 
                 if [O_ADD_BLADES, O_ADD_HEARTS, O_BUFF_POWER, O_REDUCE_COST, O_INCREASE_COST, O_SET_HEART_COST]
                     .contains(&op)
-                    && chunk.len() == 5
                 {
-                    let val = chunk[1];
-                    let a_low = chunk[2] as u32;
-                    let a_high = chunk[3] as u32;
-                    let attr = ((a_high as u64) << 32) | (a_low as u64);
-                    let slot = chunk[4];
+                    let val = instr.v;
+                    let attr = instr.a as u64;
+                    let slot = instr.raw_s;
                     ab.preparsed_modifiers.push(PreparsedModifier { op, val, attr, slot });
                 }
 
                 if !flagged_ops.contains(&op) {
                     unflagged_logic_present = true;
                 }
+
+                ip = program.next_ip(ip);
             }
 
             if ab.trigger == TriggerType::OnPlay && ab.choice_flags != 0 {
@@ -710,31 +708,12 @@ impl CardDatabase {
 
     // Static opcode check
     pub fn has_opcode_static(bytecode: &[i32], target_op: i32) -> bool {
-        let mut i = 0;
-        while i < bytecode.len() {
-            if i + 4 >= bytecode.len() {
-                break;
-            }
-            let op = bytecode[i];
-            if op == target_op {
-                return true;
-            }
-            i += 5;
-        }
-        false
+        BytecodeProgram::from_slice(bytecode).has_opcode(target_op)
     }
 
     // Optimized opcode check that just checks 0th element of chunks(5)
     pub fn has_opcode_static_fast(bytecode: &[i32], target_op: i32) -> bool {
-        let len = bytecode.len();
-        let mut i = 0;
-        while i < len {
-            if bytecode[i] == target_op {
-                return true;
-            }
-            i += 5;
-        }
-        false
+        BytecodeProgram::from_slice(bytecode).has_opcode(target_op)
     }
 
     pub fn to_binary(&self) -> bincode::Result<Vec<u8>> {
@@ -747,12 +726,11 @@ impl CardDatabase {
 }
 
 pub fn bytecode_has_choice(bytecode: &[i32]) -> bool {
-    bytecode.chunks(5).any(|chunk| {
-        if chunk.is_empty() {
-            return false;
-        }
-        let op = chunk[0];
-        op == O_SELECT_MODE
+    let program = BytecodeProgram::from_slice(bytecode);
+    let mut ip = 0;
+    while let Some(instr) = program.instruction_at(ip) {
+        let op = instr.op;
+        if op == O_SELECT_MODE
             || op == O_LOOK_AND_CHOOSE
             || op == O_COLOR_SELECT
             || op == O_TAP_OPPONENT
@@ -760,31 +738,38 @@ pub fn bytecode_has_choice(bytecode: &[i32]) -> bool {
             || op == O_PLAY_MEMBER_FROM_HAND
             || op == O_PLAY_MEMBER_FROM_DISCARD
             || op == O_OPPONENT_CHOOSE
-    })
+        {
+            return true;
+        }
+        ip = program.next_ip(ip);
+    }
+    false
 }
 
 pub fn bytecode_needs_early_pause(bytecode: &[i32]) -> bool {
-    bytecode.chunks(5).any(|chunk| {
-        if chunk.is_empty() {
-            return false;
+    let program = BytecodeProgram::from_slice(bytecode);
+    let mut ip = 0;
+    while let Some(instr) = program.instruction_at(ip) {
+        let op = instr.op;
+        if op == O_SELECT_MODE || op == O_COLOR_SELECT || op == O_LOOK_AND_CHOOSE {
+            return true;
         }
-        let op = chunk[0];
-        op == O_SELECT_MODE || op == O_COLOR_SELECT || op == O_LOOK_AND_CHOOSE
-    })
+        ip = program.next_ip(ip);
+    }
+    false
 }
 
 pub fn bytecode_needs_early_pause_opcode(bytecode: &[i32]) -> i32 {
-    bytecode
-        .chunks(5)
-        .find(|chunk| {
-            if chunk.is_empty() {
-                return false;
-            }
-            let op = chunk[0];
-            op == O_SELECT_MODE || op == O_COLOR_SELECT || op == O_LOOK_AND_CHOOSE
-        })
-        .map(|chunk| chunk[0])
-        .unwrap_or(-1)
+    let program = BytecodeProgram::from_slice(bytecode);
+    let mut ip = 0;
+    while let Some(instr) = program.instruction_at(ip) {
+        let op = instr.op;
+        if op == O_SELECT_MODE || op == O_COLOR_SELECT || op == O_LOOK_AND_CHOOSE {
+            return op;
+        }
+        ip = program.next_ip(ip);
+    }
+    -1
 }
 
 pub const CHARACTER_NAMES: [&str; 78] = [

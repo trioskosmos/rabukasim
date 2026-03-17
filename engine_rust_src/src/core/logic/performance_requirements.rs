@@ -1,5 +1,6 @@
 use super::card_db::{CardDatabase, LiveCard};
 use super::game::GameState;
+use super::interpreter::instruction::BytecodeProgram;
 use super::models::*;
 use super::player::PlayerState;
 use super::rules::calculate_board_aura;
@@ -15,12 +16,13 @@ pub fn process_heart_modifiers_bytecode(
     source_name: &str,
     source_id: i32,
 ) {
-    let mut i = 0;
-    while i + 4 < bc.len() {
-        let op = bc[i];
+    let program = BytecodeProgram::from_slice(bc);
+    let mut ip = 0;
+    while let Some(instr) = program.instruction_at(ip) {
+        let op = instr.op;
         if op == O_SET_HEART_COST {
-            let val = bc[i + 1];
-            let attr = bc[i + 2];
+            let val = instr.v;
+            let attr = instr.a as i32;
 
             adjustments.push(json!({
                 "source": source_name,
@@ -50,8 +52,8 @@ pub fn process_heart_modifiers_bytecode(
                 }
             }
         } else if op == O_INCREASE_HEART_COST {
-            let val = bc[i + 1];
-            let attr = bc[i + 2] as usize;
+            let val = instr.v;
+            let attr = instr.a as usize;
             let idx = if attr == 0 || attr == 7 { 6 } else if attr <= 6 { attr - 1 } else { 99 };
             if idx < 7 {
                 let old = req_board.get_color_count(idx);
@@ -65,8 +67,8 @@ pub fn process_heart_modifiers_bytecode(
                 }));
             }
         } else if op == O_TRANSFORM_HEART {
-            let from_attr = bc[i + 1] as usize;
-            let to_attr = bc[i + 2] as usize;
+            let from_attr = instr.v as usize;
+            let to_attr = instr.a as usize;
             let from_idx = if from_attr == 7 { 6 } else if from_attr >= 1 && from_attr <= 6 { from_attr - 1 } else { 99 };
             let to_idx = if to_attr == 7 { 6 } else if to_attr >= 1 && to_attr <= 6 { to_attr - 1 } else { 99 };
 
@@ -87,7 +89,7 @@ pub fn process_heart_modifiers_bytecode(
                 }
             }
         }
-        i += 5;
+        ip = program.next_ip(ip);
     }
 }
 
@@ -127,12 +129,13 @@ pub fn get_live_requirements(
                     continue;
                 }
 
-                let mut i = 0;
-                while i + 4 < ab.bytecode.len() {
-                    let op = ab.bytecode[i];
+                let program = ab.bytecode_program();
+                let mut ip = 0;
+                while let Some(instr) = program.instruction_at(ip) {
+                    let op = instr.op;
                     if op == O_INCREASE_HEART_COST {
-                        let val = ab.bytecode[i + 1];
-                        let attr = ab.bytecode[i + 2] as usize;
+                        let val = instr.v;
+                        let attr = instr.a as usize;
                         let idx = if attr == 0 || attr == 7 {
                             6
                         } else if attr <= 6 {
@@ -146,7 +149,13 @@ pub fn get_live_requirements(
                     } else if op == O_SET_HEART_COST {
                         let mut override_board = HeartBoard::default();
                         process_heart_modifiers_bytecode(
-                            &ab.bytecode[i..i + 5],
+                            &[
+                                instr.op,
+                                instr.v,
+                                instr.a as i32,
+                                (instr.a >> 32) as i32,
+                                instr.raw_s,
+                            ],
                             &mut override_board,
                             &mut Vec::new(),
                             &member.name,
@@ -154,7 +163,7 @@ pub fn get_live_requirements(
                         );
                         aura.heart_req_additions = override_board;
                     }
-                    i += 5;
+                    ip = program.next_ip(ip);
                 }
             }
         }

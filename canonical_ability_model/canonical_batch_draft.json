@@ -1,0 +1,1737 @@
+[
+  {
+    "card_no": "PL!-PR-005-PR",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_OPTION(PLAYER) {OPTIONS=[\"DRAW\", \"TAP_ALL_LE_2\"]}\nOPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\nOPTION: TAP_ALL_LE_2 | EFFECT: SELECT_MEMBER(99) {FILTER=\"OPPONENT, COST_LE_2\"} -> TARGETS; TAP_MEMBER(TARGETS)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_OPTION(PLAYER) {OPTIONS=[\"DRAW\", \"TAP_ALL_LE_2\"]}\nOPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\nOPTION: TAP_ALL_LE_2 | EFFECT: SELECT_MEMBER(99) {FILTER=\"OPPONENT, COST_LE_2\"} -> TARGETS; TAP_MEMBER(TARGETS)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": []
+  },
+  {
+    "card_no": "PL!-PR-006-PR",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_OPTION(PLAYER) {OPTIONS=[\"DRAW\", \"TAP_ALL_LE_2\"]}\nOPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\nOPTION: TAP_ALL_LE_2 | EFFECT: SELECT_MEMBER(99) {FILTER=\"OPPONENT, COST_LE_2\"} -> TARGETS; TAP_MEMBER(TARGETS)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_OPTION(PLAYER) {OPTIONS=[\"DRAW\", \"TAP_ALL_LE_2\"]}\nOPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\nOPTION: TAP_ALL_LE_2 | EFFECT: SELECT_MEMBER(99) {FILTER=\"OPPONENT, COST_LE_2\"} -> TARGETS; TAP_MEMBER(TARGETS)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": []
+  },
+  {
+    "card_no": "PL!-PR-008-PR",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_OPTION(PLAYER) {OPTIONS=[\"DRAW\", \"TAP_ALL_LE_2\"]}\nOPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\nOPTION: TAP_ALL_LE_2 | EFFECT: SELECT_MEMBER(99) {FILTER=\"OPPONENT, COST_LE_2\"} -> TARGETS; TAP_MEMBER(TARGETS)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: SELECT_OPTION(PLAYER) {OPTIONS=[\"DRAW\", \"TAP_ALL_LE_2\"]}\nOPTION: DRAW | EFFECT: DRAW(1); DISCARD_HAND(1)\nOPTION: TAP_ALL_LE_2 | EFFECT: SELECT_MEMBER(99) {FILTER=\"OPPONENT, COST_LE_2\"} -> TARGETS; TAP_MEMBER(TARGETS)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": []
+  },
+  {
+    "card_no": "PL!-bp5-013-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: TAP_OPPONENT(1) {FILTER=\"COST_LE_4\"}",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: TAP_OPPONENT(1) {FILTER=\"COST_LE_4\"}",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "TAP_OPPONENT",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {},
+        "filter": {
+          "all_of": [
+            {
+              "field": "cost",
+              "op": "le",
+              "value": 4
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "card_no": "PL!-pb1-015-P＋",
+    "schema_version": "v0",
+    "trigger": "ON_MEMBER_TAP {FILTER=\"OPPONENT, COST_LE_4\", REASON=\"EFFECT\"}",
+    "once_per_turn": true,
+    "pseudocode": "TRIGGER: ON_MEMBER_TAP {FILTER=\"OPPONENT, COST_LE_4\", REASON=\"EFFECT\"} (Once per turn)\nEFFECT: DRAW(1)",
+    "raw_text": "TRIGGER: ON_MEMBER_TAP {FILTER=\"OPPONENT, COST_LE_4\", REASON=\"EFFECT\"} (Once per turn)\nEFFECT: DRAW(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!-pb1-015-R",
+    "schema_version": "v0",
+    "trigger": "ON_MEMBER_TAP {FILTER=\"OPPONENT, COST_LE_4\", REASON=\"EFFECT\"}",
+    "once_per_turn": true,
+    "pseudocode": "TRIGGER: ON_MEMBER_TAP {FILTER=\"OPPONENT, COST_LE_4\", REASON=\"EFFECT\"} (Once per turn)\nEFFECT: DRAW(1)",
+    "raw_text": "TRIGGER: ON_MEMBER_TAP {FILTER=\"OPPONENT, COST_LE_4\", REASON=\"EFFECT\"} (Once per turn)\nEFFECT: DRAW(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!HS-bp1-006-P",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!HS-bp1-006-R＋",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!HS-bp1-006-P＋",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!HS-bp1-006-SEC",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!HS-bp1-010-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!HS-bp1-014-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!HS-bp2-014-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); RESTRICTION(LIVE, DURATION=\"UNTIL_LIVE_END\")",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); RESTRICTION(LIVE, DURATION=\"UNTIL_LIVE_END\")",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!HS-bp2-015-N",
+    "schema_version": "v0",
+    "trigger": "ON_LEAVES(SELF)",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LEAVES(SELF)\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_LEAVES(SELF)\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!HS-bp5-011-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!HS-bp5-013-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!HS-sd1-008-SD",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1) -> PLAYER",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1) -> PLAYER",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-PR-005-PR",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(2)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(2)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-PR-007-PR",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(2)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(2)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-PR-011-PR",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(2)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(2)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp1-014-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp1-014-PRproteinbar",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp1-015-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp1-015-PRproteinbar",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp1-019-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp1-019-PR",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp1-019-PRproteinbar",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp3-006-P",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: TAP_SELF",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: TAP_SELF",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "TAP_SELF",
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp3-006-R",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: TAP_SELF",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: TAP_SELF",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "TAP_SELF",
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp3-024-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(2)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(2)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp4-004-P",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_START",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: DRAW(1); SELECT_MEMBER(1) {FILTER=\"OPPONENT, COST_LE_9\"} -> TARGET; TAP_MEMBER(1) -> TARGET (Optional)\nEFFECT: COUNT_MEMBER {FILTER=\"OPPONENT, STATUS=TAPPED\"} -> COUNT_VAL\nEFFECT: SELECT_RECOVER_MEMBER(COUNT_VAL) (Optional) {FILTER=\"GROUP_ID=2\", ZONE=\"DISCARD\"} -> DECK_TOP {ORDER=\"CHOICE\"}",
+    "raw_text": "TRIGGER: ON_LIVE_START\nEFFECT: DRAW(1); SELECT_MEMBER(1) {FILTER=\"OPPONENT, COST_LE_9\"} -> TARGET; TAP_MEMBER(1) -> TARGET (Optional)\nEFFECT: COUNT_MEMBER {FILTER=\"OPPONENT, STATUS=TAPPED\"} -> COUNT_VAL\nEFFECT: SELECT_RECOVER_MEMBER(COUNT_VAL) (Optional) {FILTER=\"GROUP_ID=2\", ZONE=\"DISCARD\"} -> DECK_TOP {ORDER=\"CHOICE\"}",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp4-004-R＋",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_START",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: DRAW(1); SELECT_MEMBER(1) {FILTER=\"OPPONENT, COST_LE_9\"} -> TARGET; TAP_MEMBER(1) -> TARGET (Optional)\nEFFECT: COUNT_MEMBER {FILTER=\"OPPONENT, STATUS=TAPPED\"} -> COUNT_VAL\nEFFECT: SELECT_RECOVER_MEMBER(COUNT_VAL) (Optional) {FILTER=\"GROUP_ID=2\", ZONE=\"DISCARD\"} -> DECK_TOP {ORDER=\"CHOICE\"}",
+    "raw_text": "TRIGGER: ON_LIVE_START\nEFFECT: DRAW(1); SELECT_MEMBER(1) {FILTER=\"OPPONENT, COST_LE_9\"} -> TARGET; TAP_MEMBER(1) -> TARGET (Optional)\nEFFECT: COUNT_MEMBER {FILTER=\"OPPONENT, STATUS=TAPPED\"} -> COUNT_VAL\nEFFECT: SELECT_RECOVER_MEMBER(COUNT_VAL) (Optional) {FILTER=\"GROUP_ID=2\", ZONE=\"DISCARD\"} -> DECK_TOP {ORDER=\"CHOICE\"}",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp4-004-P＋",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_START",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: DRAW(1); SELECT_MEMBER(1) {FILTER=\"OPPONENT, COST_LE_9\"} -> TARGET; TAP_MEMBER(1) -> TARGET (Optional)\nEFFECT: COUNT_MEMBER {FILTER=\"OPPONENT, STATUS=TAPPED\"} -> COUNT_VAL\nEFFECT: SELECT_RECOVER_MEMBER(COUNT_VAL) (Optional) {FILTER=\"GROUP_ID=2\", ZONE=\"DISCARD\"} -> DECK_TOP {ORDER=\"CHOICE\"}",
+    "raw_text": "TRIGGER: ON_LIVE_START\nEFFECT: DRAW(1); SELECT_MEMBER(1) {FILTER=\"OPPONENT, COST_LE_9\"} -> TARGET; TAP_MEMBER(1) -> TARGET (Optional)\nEFFECT: COUNT_MEMBER {FILTER=\"OPPONENT, STATUS=TAPPED\"} -> COUNT_VAL\nEFFECT: SELECT_RECOVER_MEMBER(COUNT_VAL) (Optional) {FILTER=\"GROUP_ID=2\", ZONE=\"DISCARD\"} -> DECK_TOP {ORDER=\"CHOICE\"}",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp4-004-SEC",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_START",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: DRAW(1); SELECT_MEMBER(1) {FILTER=\"OPPONENT, COST_LE_9\"} -> TARGET; TAP_MEMBER(1) -> TARGET (Optional)\nEFFECT: COUNT_MEMBER {FILTER=\"OPPONENT, STATUS=TAPPED\"} -> COUNT_VAL\nEFFECT: SELECT_RECOVER_MEMBER(COUNT_VAL) (Optional) {FILTER=\"GROUP_ID=2\", ZONE=\"DISCARD\"} -> DECK_TOP {ORDER=\"CHOICE\"}",
+    "raw_text": "TRIGGER: ON_LIVE_START\nEFFECT: DRAW(1); SELECT_MEMBER(1) {FILTER=\"OPPONENT, COST_LE_9\"} -> TARGET; TAP_MEMBER(1) -> TARGET (Optional)\nEFFECT: COUNT_MEMBER {FILTER=\"OPPONENT, STATUS=TAPPED\"} -> COUNT_VAL\nEFFECT: SELECT_RECOVER_MEMBER(COUNT_VAL) (Optional) {FILTER=\"GROUP_ID=2\", ZONE=\"DISCARD\"} -> DECK_TOP {ORDER=\"CHOICE\"}",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp5-014-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp5-016-N",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_SUCCESS",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(1); DISCARD_HAND(1) (Optional)",
+    "raw_text": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(1); DISCARD_HAND(1) (Optional)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-bp5-023-N",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_SUCCESS",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(1); DISCARD_HAND(1) (Optional)",
+    "raw_text": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(1); DISCARD_HAND(1) (Optional)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-sd1-009-SD",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-sd1-010-SD",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-sd1-013-PRproteinbar",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-sd1-013-SD",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-sd1-021-PRproteinbar",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-sd1-021-SD",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-sd1-022-PRproteinbar",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!N-sd1-022-SD",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!S-bp2-010-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(2)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(2); DISCARD_HAND(2)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!S-bp5-013-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!S-bp5-014-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); MOVE_TO_DECK_BOTTOM(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); MOVE_TO_DECK_BOTTOM(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!S-bp5-015-N",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!S-sd1-004-SD",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_START",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: DRAW(1) (Optional); MOVE_TO_DECK(2) {FROM=\"HAND\", TO=\"DECK_TOP\"}",
+    "raw_text": "TRIGGER: ON_LIVE_START\nEFFECT: DRAW(1) (Optional); MOVE_TO_DECK(2) {FROM=\"HAND\", TO=\"DECK_TOP\"}",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!S-sd1-014-SD",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_SUCCESS",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(1); DISCARD_HAND(1) (Optional)",
+    "raw_text": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(1); DISCARD_HAND(1) (Optional)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!S-sd1-017-SD",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); MOVE_TO_DECK_BOTTOM(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); MOVE_TO_DECK_BOTTOM(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!S-sd1-018-SD",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); MOVE_TO_DECK_BOTTOM(1)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); MOVE_TO_DECK_BOTTOM(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!SP-bp2-009-P",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_SUCCESS",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!SP-bp2-009-R＋",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_SUCCESS",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!SP-bp2-009-P＋",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_SUCCESS",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!SP-bp2-009-SEC",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_SUCCESS",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!SP-pb1-008-P＋",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); SELECT_AREA(OTHER_AREA) -> TARGET_AREA; SWAP_AREA(SELF, TARGET_AREA)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); SELECT_AREA(OTHER_AREA) -> TARGET_AREA; SWAP_AREA(SELF, TARGET_AREA)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!SP-pb1-008-R",
+    "schema_version": "v0",
+    "trigger": "ON_PLAY",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); SELECT_AREA(OTHER_AREA) -> TARGET_AREA; SWAP_AREA(SELF, TARGET_AREA)",
+    "raw_text": "TRIGGER: ON_PLAY\nEFFECT: DRAW(1); SELECT_AREA(OTHER_AREA) -> TARGET_AREA; SWAP_AREA(SELF, TARGET_AREA)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!SP-pb1-020-N",
+    "schema_version": "v0",
+    "trigger": "ON_POSITION_CHANGE",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_POSITION_CHANGE\nEFFECT: DRAW(1) -> PLAYER",
+    "raw_text": "TRIGGER: ON_POSITION_CHANGE\nEFFECT: DRAW(1) -> PLAYER",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "LL-PR-004-PR",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_START",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: SELECT_MODE() -> OPPONENT\nOPTION: 「大好き！」と答える | EFFECT: DRAW(1) -> PLAYER; DRAW(1) -> OPPONENT\nOPTION: 「まあまあ」と答える | EFFECT: ADD_BLADES(1) -> PLAYER; ADD_BLADES(1) -> OPPONENT",
+    "raw_text": "TRIGGER: ON_LIVE_START\nEFFECT: SELECT_MODE() -> OPPONENT\nOPTION: 「大好き！」と答える | EFFECT: DRAW(1) -> PLAYER; DRAW(1) -> OPPONENT\nOPTION: 「まあまあ」と答える | EFFECT: ADD_BLADES(1) -> PLAYER; ADD_BLADES(1) -> OPPONENT",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": []
+  },
+  {
+    "card_no": "PL!N-bp5-030-L",
+    "schema_version": "v0",
+    "trigger": "ON_ABILITY_RESOLVE {TYPE=\"ON_LIVE_SUCCESS\"}",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_ABILITY_RESOLVE {TYPE=\"ON_LIVE_SUCCESS\"}\nEFFECT: DRAW(1)",
+    "raw_text": "TRIGGER: ON_ABILITY_RESOLVE {TYPE=\"ON_LIVE_SUCCESS\"}\nEFFECT: DRAW(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!S-bp2-024-L",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_SUCCESS",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "raw_text": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(2); DISCARD_HAND(1)",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 2
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  },
+  {
+    "card_no": "PL!S-sd1-020-SD",
+    "schema_version": "v0",
+    "trigger": "ON_LIVE_SUCCESS",
+    "once_per_turn": false,
+    "pseudocode": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(1) {PER_CARD=\"STAGE\", FILTER=\"GROUP_ID=1\"}; DISCARD_HAND(1) {PER_CARD=\"DRAWN\"}",
+    "raw_text": "TRIGGER: ON_LIVE_SUCCESS\nEFFECT: DRAW(1) {PER_CARD=\"STAGE\", FILTER=\"GROUP_ID=1\"}; DISCARD_HAND(1) {PER_CARD=\"DRAWN\"}",
+    "confidence": "high",
+    "review_reasons": [],
+    "steps": [
+      {
+        "kind": "effect",
+        "op": "DRAW",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      },
+      {
+        "kind": "effect",
+        "op": "DISCARD_HAND",
+        "count": {
+          "kind": "literal",
+          "value": 1
+        },
+        "target": "PLAYER",
+        "args": {}
+      }
+    ]
+  }
+]
