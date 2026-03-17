@@ -1,3 +1,12 @@
+---
+title: Rabukasim
+emoji: 💃
+colorFrom: pink
+colorTo: purple
+sdk: docker
+app_port: 7860
+---
+
 # Love Live Card Game Engine
 # Rabukasim (Love Live! School Idol Collection Simulator)
 
