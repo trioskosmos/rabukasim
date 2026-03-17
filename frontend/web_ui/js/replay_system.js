@@ -5,6 +5,8 @@
 import { State, updateStateData } from './state.js';
 import { log } from './logger.js';
 import { fixImg } from './constants.js';
+import { DOM_IDS, DISPLAY_VALUES } from './constants_dom.js';
+import { ModalManager } from './utils/ModalManager.js';
 
 let onRender = () => { console.warn("Replay: No render callback set"); };
 
@@ -13,8 +15,8 @@ export const Replay = {
 
     toggleReplayMode: () => {
         State.replayMode = !State.replayMode;
-        const controls = document.getElementById('replay-controls');
-        if (controls) controls.style.display = State.replayMode ? 'flex' : 'none';
+        const controls = document.getElementById(DOM_IDS.REPLAY_CONTROLS);
+        if (controls) controls.style.display = State.replayMode ? DISPLAY_VALUES.FLEX : DISPLAY_VALUES.NONE;
         if (!State.replayMode && State.playInterval) Replay.stopPlay();
     },
 
@@ -67,14 +69,14 @@ export const Replay = {
     },
 
     openPasteReplayModal: () => {
-        document.getElementById('paste-replay-modal').style.display = 'flex';
+        ModalManager.show(DOM_IDS.MODAL_PASTE_REPLAY);
         const input = document.getElementById('paste-replay-input');
         input.value = '';
         input.focus();
     },
 
     closePasteReplayModal: () => {
-        document.getElementById('paste-replay-modal').style.display = 'none';
+        ModalManager.hide(DOM_IDS.MODAL_PASTE_REPLAY);
     },
 
     submitPasteReplay: () => {

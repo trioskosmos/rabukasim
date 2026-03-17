@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -127,13 +126,12 @@ def build_legal_policy_mask(
     phase: int,
     legal_engine_actions: Optional[Iterable[int]] = None,
 ) -> np.ndarray:
-    player_json = json.loads(state.to_json())["players"][player_idx]
     if legal_engine_actions is None:
         legal_engine_actions = state.get_legal_action_ids()
 
     mask = np.zeros(ACTION_SPACE, dtype=np.bool_)
     for engine_action in legal_engine_actions:
-        policy_id = engine_action_to_policy_id(player_json, engine_action, initial_deck, phase)
+        policy_id = engine_action_to_policy_id(None, engine_action, initial_deck, phase)
         if 0 <= policy_id < ACTION_SPACE:
             mask[policy_id] = True
     return mask
@@ -147,10 +145,26 @@ def build_policy_engine_mapping(
 ) -> Dict[int, int]:
     mapping: Dict[int, int] = {}
     for engine_action in legal_engine_actions:
-        policy_id = engine_action_to_policy_id(player_json, engine_action, initial_deck, phase)
+        policy_id = engine_action_to_policy_id(None, engine_action, initial_deck, phase)
         if 0 <= policy_id < ACTION_SPACE and policy_id not in mapping:
             mapping[policy_id] = engine_action
     return mapping
+
+
+def build_legal_policy_context(
+    legal_engine_actions: Iterable[int],
+    initial_deck: Sequence[int],
+    phase: int,
+) -> tuple[np.ndarray, np.ndarray, Dict[int, int]]:
+    mask = np.zeros(ACTION_SPACE, dtype=np.bool_)
+    mapping: Dict[int, int] = {}
+    for raw_action in legal_engine_actions:
+        engine_action = int(raw_action)
+        policy_id = engine_action_to_policy_id(None, engine_action, initial_deck, phase)
+        if 0 <= policy_id < ACTION_SPACE:
+            mask[policy_id] = True
+            mapping.setdefault(policy_id, engine_action)
+    return mask, np.flatnonzero(mask), mapping
 
 
 def sparse_policy_from_engine_visits(
@@ -165,7 +179,7 @@ def sparse_policy_from_engine_visits(
         return dense
 
     for engine_action, _score, visits in suggestions:
-        policy_id = engine_action_to_policy_id(player_json, engine_action, initial_deck, phase)
+        policy_id = engine_action_to_policy_id(None, engine_action, initial_deck, phase)
         if 0 <= policy_id < ACTION_SPACE:
             dense[policy_id] += visits / total_visits
 

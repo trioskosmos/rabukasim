@@ -10,6 +10,8 @@ export const DOM_IDS = {
   MODAL_LOG_VIEWER: 'log-viewer-modal',
   MODAL_PERFORMANCE: 'performance-modal',
   MODAL_SETUP: 'setup-modal',
+  MODAL_DISCARD: 'discard-modal',
+  MODAL_PASTE_REPLAY: 'paste-replay-modal',
 
   // Main Containers
   CONTAINER_ACTIONS: 'actions',
@@ -18,6 +20,12 @@ export const DOM_IDS = {
   CONTAINER_BOARD_OPPONENT: 'board-opponent',
   CONTAINER_GAME_FEED: 'game-feed',
   CONTAINER_RULE_LOG: 'rule-log',
+  REPLAY_CONTROLS: 'replay-controls',
+  SELECTION_MODAL: 'selection-modal',
+  SELECTION_CONTENT: 'selection-content',
+  ACTIVE_ABILITIES_PANEL: 'active-abilities-panel',
+  MY_DECK_BOTTOM: 'my-deck-bottom',
+  OPP_DECK_BOTTOM: 'opp-deck-bottom',
 
   // Log Viewer Specific
   LOG_VIEWER_CONTENT: 'log-viewer-content',

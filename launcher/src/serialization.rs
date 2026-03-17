@@ -2,7 +2,26 @@ use engine_rust::core::logic::{GameState, PlayerState, CardDatabase, card_db};
 use engine_rust::core::logic::*;
 use engine_rust::core::enums;
 use std::collections::HashMap;
+use serde::Serialize;
 use serde_json::{json, Value};
+
+fn safe_json_value<T: Serialize>(value: &T, context: &str) -> Value {
+    match serde_json::to_value(value) {
+        Ok(serialized) => serialized,
+        Err(err) => {
+            eprintln!("[Serialize] Failed to serialize {}: {}", context, err);
+            json!({
+                "serialization_error": err.to_string(),
+                "context": context,
+            })
+        }
+    }
+}
+
+fn safe_ability_summary<T: Serialize>(ability: &T, lang: &str, context: &str) -> String {
+    let value = safe_json_value(ability, context);
+    get_ability_summary(&value, lang)
+}
 
 pub fn get_group_name(id: u8, lang: &str) -> &'static str {
     enums::get_group_name(id, lang)
@@ -363,6 +382,63 @@ pub fn get_ability_summary(ab: &Value, lang: &str) -> String {
     format!("{}{}{}: {}{}", trigger_prefix, cost_str, tg_name, eff_name, val_str)
 }
 
+fn source_card_id_for_pending(gs: &GameState) -> Option<i32> {
+    gs.interaction_stack.last().and_then(|pending| {
+        if pending.card_id >= 0 {
+            Some(pending.card_id)
+        } else if pending.ctx.source_card_id >= 0 {
+            Some(pending.ctx.source_card_id)
+        } else {
+            None
+        }
+    })
+}
+
+fn attach_card_metadata(
+    metadata: &mut HashMap<String, Value>,
+    selected_card_id: Option<i32>,
+    source_card_id: Option<i32>,
+) {
+    if let Some(cid) = selected_card_id.filter(|cid| *cid >= 0) {
+        metadata.insert("card_id".into(), json!(cid));
+    }
+    if let Some(src) = source_card_id.or(selected_card_id).filter(|cid| *cid >= 0) {
+        metadata.insert("source_card_id".into(), json!(src));
+    }
+}
+
+fn find_card_location(gs: &GameState, cid: i32) -> Option<(usize, &'static str, usize)> {
+    if cid < 0 {
+        return None;
+    }
+
+    for (p_idx, player) in gs.players.iter().enumerate() {
+        if let Some(idx) = player.stage.iter().position(|&card| card == cid) {
+            return Some((p_idx, "stage", idx));
+        }
+        if let Some(idx) = player.hand.iter().position(|&card| card == cid) {
+            return Some((p_idx, "hand", idx));
+        }
+        if let Some(idx) = player.live_zone.iter().position(|&card| card == cid) {
+            return Some((p_idx, "live", idx));
+        }
+        if let Some(idx) = player.energy_zone.iter().position(|&card| card == cid) {
+            return Some((p_idx, "energy", idx));
+        }
+        if let Some(idx) = player.discard.iter().position(|&card| card == cid) {
+            return Some((p_idx, "discard", idx));
+        }
+        if let Some(idx) = player.success_lives.iter().position(|&card| card == cid) {
+            return Some((p_idx, "success_live", idx));
+        }
+        if let Some(idx) = player.looked_cards.iter().position(|&card| card == cid) {
+            return Some((p_idx, "looked", idx));
+        }
+    }
+
+    None
+}
+
 pub fn get_action_desc_rich(
     id: i32,
     gs: &GameState,
@@ -381,6 +457,8 @@ pub fn get_action_desc_rich(
         active_idx as usize
     };
     let p = &gs.players[p_idx];
+    let pending = gs.interaction_stack.last();
+    let pending_source_card_id = source_card_id_for_pending(gs);
 
     let action = Action::from_id(id, gs.phase);
     let mut metadata = HashMap::new();
@@ -502,7 +580,7 @@ pub fn get_action_desc_rich(
             metadata.insert("cost".into(), json!(actual_cost));
             metadata.insert("base_cost".into(), json!(base_cost));
             metadata.insert("name".into(), json!(card_name_full));
-            metadata.insert("card_id".into(), json!(cid));
+            attach_card_metadata(&mut metadata, Some(cid), Some(cid));
             (label, card.map(|m| m.original_text.clone()).unwrap_or_default(), "PLAY".into(), Some(slot_idx))
         },
         Action::PlayMemberDouble { hand_idx, slot_idx, other_slot } => {
@@ -559,7 +637,7 @@ pub fn get_action_desc_rich(
             metadata.insert("hand_idx".into(), json!(hand_idx));
             metadata.insert("slot_idx".into(), json!(slot_idx));
             metadata.insert("areas_desc".into(), json!(areas_desc));
-            metadata.insert("card_id".into(), json!(cid));
+            attach_card_metadata(&mut metadata, Some(cid), Some(cid));
             (label, card.map(|m| m.original_text.clone()).unwrap_or_default(), "PLAY".into(), Some(slot_idx))
         },
         Action::ActivateAbility { slot_idx, ab_idx } => {
@@ -570,7 +648,7 @@ pub fn get_action_desc_rich(
                 format!("{} ({})", display_name, m.card_no)
             }).unwrap_or_else(|| "Member".into());
             let summary = card.and_then(|c| c.abilities.get(ab_idx as usize))
-                .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
+                .map(|ab| safe_ability_summary(ab, lang, "member.abilities.summary"))
                 .unwrap_or_else(|| if lang == "jp" { "アビリティ".into() } else { "Ability".into() });
 
             let areas = if lang == "jp" { ["左", "中", "右"] } else { ["Left", "Mid", "Right"] };
@@ -583,7 +661,9 @@ pub fn get_action_desc_rich(
             };
             metadata.insert("category".into(), json!("ABILITY"));
             metadata.insert("target_player".into(), json!(viewer_idx));
-            metadata.insert("card_id".into(), json!(cid));
+            metadata.insert("slot_idx".into(), json!(slot_idx));
+            metadata.insert("ab_idx".into(), json!(ab_idx));
+            attach_card_metadata(&mut metadata, Some(cid), Some(cid));
             (label, resolve_card_desc(cid, db), "ABILITY".into(), Some(slot_idx))
         },
         Action::ActivateFromHand { hand_idx, ab_idx } => {
@@ -594,7 +674,7 @@ pub fn get_action_desc_rich(
                 format!("{} ({})", display_name, m.card_no)
             }).unwrap_or_else(|| "Member".into());
             let summary = card.and_then(|c| c.abilities.get(ab_idx as usize))
-                .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
+                .map(|ab| safe_ability_summary(ab, lang, "member.abilities.summary"))
                 .unwrap_or_else(|| if lang == "jp" { "アビリティ".into() } else { "Ability".into() });
 
             let label = if lang == "jp" {
@@ -605,8 +685,8 @@ pub fn get_action_desc_rich(
             metadata.insert("category".into(), json!("HAND_ABILITY"));
             metadata.insert("hand_idx".into(), json!(hand_idx));
             metadata.insert("ab_idx".into(), json!(ab_idx));
-            metadata.insert("card_id".into(), json!(cid));
             metadata.insert("target_player".into(), json!(viewer_idx)); // Added for consistency
+            attach_card_metadata(&mut metadata, Some(cid), Some(cid));
             (label, resolve_card_desc(cid, db), "ABILITY".into(), None)
         },
 
@@ -615,13 +695,29 @@ pub fn get_action_desc_rich(
              let mut text = String::new();
              let type_str = "CHOICE".to_string();
 
-             let pending = gs.interaction_stack.last();
              let opcode = pending.map(|p| p.effect_opcode).unwrap_or(0);
              let card_id = pending.map(|p| p.card_id).unwrap_or(-1);
              let ab_idx = pending.map(|p| p.ability_index).unwrap_or(-1);
+             let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
+             let mut selected_card_id: Option<i32> = None;
 
              if gs.phase == Phase::LiveResult {
                  name = if lang == "jp" { format!("第{}枠を選択", choice_idx + 1) } else { format!("Select Slot {}", choice_idx + 1) };
+             } else if choice_idx as i16 == engine_rust::core::logic::constants::CHOICE_DONE {
+                 name = if lang == "jp" { "完了".into() } else { "Done".into() };
+                 text = if lang == "jp" { "選択を確定します。".into() } else { "Finish selecting cards.".into() };
+             } else if choice_type == "SELECT_STAGE" || choice_type == "SELECT_STAGE_EMPTY" {
+                 let areas = if lang == "jp" { ["左ステージ", "中央ステージ", "右ステージ"] } else { ["Left Slot", "Mid Slot", "Right Slot"] };
+                 name = areas.get(choice_idx).unwrap_or(&"Slot").to_string();
+             } else if choice_type == "SELECT_LIVE_SLOT" {
+                 let areas = if lang == "jp" { ["ライブスロット 1", "ライブスロット 2", "ライブスロット 3"] } else { ["Live Slot 1", "Live Slot 2", "Live Slot 3"] };
+                 name = areas.get(choice_idx).unwrap_or(&"Slot").to_string();
+             } else if choice_type == "SELECT_PLAYER" {
+                 name = if choice_idx == 0 {
+                     if lang == "jp" { "自分".into() } else { "Self".into() }
+                 } else {
+                     if lang == "jp" { "相手".into() } else { "Opponent".into() }
+                 };
              } else if opcode == O_SELECT_MODE {
                    let member = if card_id >= 0 { db.get_member(card_id) } else { None };
                    let live = if member.is_none() && card_id >= 0 { db.get_live(card_id) } else { None };
@@ -883,14 +979,43 @@ pub fn get_action_desc_rich(
                   };
               }
 
+              if selected_card_id.is_none() {
+                  selected_card_id = match opcode {
+                      O_TAP_OPPONENT | O_OPPONENT_CHOOSE => gs.players[1 - p_idx].stage.get(choice_idx).cloned(),
+                      O_SELECT_MEMBER | O_TAP_MEMBER | O_SET_TAPPED | O_ACTIVATE_MEMBER | O_SWAP_AREA => gs.players[p_idx].stage.get(choice_idx).cloned(),
+                      O_SELECT_LIVE => gs.players[p_idx].live_zone.get(choice_idx).cloned(),
+                      O_MOVE_TO_DISCARD | O_PLAY_MEMBER_FROM_HAND => gs.players[p_idx].hand.get(choice_idx).cloned(),
+                      O_PAY_ENERGY | O_ACTIVATE_ENERGY | O_ENERGY_CHARGE => gs.players[p_idx].energy_zone.get(choice_idx).cloned(),
+                      O_RECOVER_LIVE | O_RECOVER_MEMBER | O_ORDER_DECK | O_PLAY_MEMBER_FROM_DISCARD | O_PLAY_LIVE_FROM_DISCARD | O_SELECT_CARDS | O_LOOK_AND_CHOOSE | O_LOOK_DECK | O_REVEAL_CARDS | O_CHEER_REVEAL => gs.players[p_idx].looked_cards.get(choice_idx).cloned(),
+                      _ => None,
+                  };
+
+                  if selected_card_id.is_none() && choice_type == "SELECT_SWAP_TARGET" {
+                      selected_card_id = gs.players[p_idx].hand.get(choice_idx).cloned();
+                  } else if selected_card_id.is_none() && choice_type == "SELECT_SWAP_SOURCE" {
+                      selected_card_id = gs.players[p_idx].success_lives.get(choice_idx).cloned();
+                  } else if selected_card_id.is_none() && choice_type == "REVEAL_HAND" {
+                      selected_card_id = gs.players[p_idx].hand.get(choice_idx).cloned();
+                  }
+              }
+
               metadata.insert("choice_idx".into(), json!(choice_idx));
               metadata.insert("opcode".into(), json!(opcode));
               metadata.insert("category".into(), json!("CHOICE"));
+              attach_card_metadata(&mut metadata, selected_card_id, pending_source_card_id);
 
               // For opcodes that target stage slots, re-add slot_idx so frontend can highlight
               if opcode == O_TAP_OPPONENT {
                   metadata.insert("slot_idx".into(), json!(choice_idx));
                   metadata.insert("target_player".into(), json!(1 - viewer_idx));
+              } else if choice_type == "SELECT_STAGE" || choice_type == "SELECT_STAGE_EMPTY" {
+                  metadata.insert("slot_idx".into(), json!(choice_idx));
+                  metadata.insert("target_player".into(), json!(viewer_idx));
+              } else if choice_type == "SELECT_LIVE_SLOT" {
+                  metadata.insert("slot_idx".into(), json!(choice_idx));
+                  metadata.insert("live_idx".into(), json!(choice_idx));
+                  metadata.insert("category".into(), json!("LIVE"));
+                  metadata.insert("target_player".into(), json!(viewer_idx));
               } else if opcode == O_SELECT_MEMBER || opcode == O_TAP_MEMBER || opcode == O_SET_TAPPED || opcode == O_ACTIVATE_MEMBER || opcode == O_SWAP_AREA {
                   let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
                   let s_idx = if choice_type == "OPTIONAL" {
@@ -908,6 +1033,7 @@ pub fn get_action_desc_rich(
                   }
               } else if opcode == O_SELECT_LIVE || opcode == O_RECOVER_LIVE {
                   metadata.insert("slot_idx".into(), json!(choice_idx));
+                  metadata.insert("live_idx".into(), json!(choice_idx));
                   metadata.insert("category".into(), json!("LIVE"));
                   metadata.insert("target_player".into(), json!(viewer_idx));
               } else if opcode == O_PAY_ENERGY || opcode == O_ACTIVATE_ENERGY || opcode == O_ENERGY_CHARGE {
@@ -917,6 +1043,8 @@ pub fn get_action_desc_rich(
                   metadata.insert("discard_idx".into(), json!(choice_idx));
                   metadata.insert("category".into(), json!("DISCARD"));
                   metadata.insert("target_player".into(), json!(viewer_idx));
+              } else if opcode == O_SELECT_CARDS || opcode == O_LOOK_AND_CHOOSE || opcode == O_ORDER_DECK || opcode == O_RECOVER_MEMBER || opcode == O_RECOVER_LIVE {
+                  metadata.insert("selection_idx".into(), json!(choice_idx));
               }
 
               let highlight_idx = if opcode == O_SELECT_MEMBER || opcode == O_TAP_OPPONENT || opcode == O_SET_TAPPED || opcode == O_TAP_MEMBER {
@@ -938,7 +1066,8 @@ pub fn get_action_desc_rich(
             let type_str = "ENERGY".to_string();
             metadata.insert("energy_idx".into(), json!(energy_idx));
             metadata.insert("category".into(), json!("ENERGY"));
-            metadata.insert("card_id".into(), json!(cid));
+            metadata.insert("target_player".into(), json!(viewer_idx));
+            attach_card_metadata(&mut metadata, Some(cid), pending_source_card_id.or(Some(cid)));
             (name, text, type_str, None)
         },
         Action::SelectHand { hand_idx } => {
@@ -981,10 +1110,11 @@ pub fn get_action_desc_rich(
             metadata.insert("hand_idx".into(), json!(hand_idx));
             metadata.insert("category".into(), json!("SELECT"));
             metadata.insert("opcode".into(), json!(opcode));
+            metadata.insert("target_player".into(), json!(viewer_idx));
+            attach_card_metadata(&mut metadata, Some(cid), pending_source_card_id.or(Some(cid)));
             (label, desc, "SELECT".into(), None)
         },
         Action::SelectResponseSlot { slot_idx } => {
-            let pending = gs.interaction_stack.last();
             let opcode = pending.map(|p| p.effect_opcode).unwrap_or(0);
 
             let target_player = if opcode == O_TAP_OPPONENT { 1 - viewer_idx } else { viewer_idx };
@@ -1011,6 +1141,11 @@ pub fn get_action_desc_rich(
             };
             metadata.insert("slot_idx".into(), json!(slot_idx));
             metadata.insert("target_player".into(), json!(target_player));
+            if opcode == O_SELECT_LIVE {
+                metadata.insert("live_idx".into(), json!(slot_idx));
+                metadata.insert("category".into(), json!("LIVE"));
+            }
+            attach_card_metadata(&mut metadata, (cid >= 0).then_some(cid), pending_source_card_id);
             (label, desc, "SELECT".into(), Some(slot_idx))
         },
         Action::SelectResponseColor { color_idx } => {
@@ -1018,6 +1153,7 @@ pub fn get_action_desc_rich(
             let label = if lang == "jp" { format!("【色を選択】{}", colors.get(color_idx as usize).unwrap_or(&"")) } else { format!("Choose {}", colors.get(color_idx as usize).unwrap_or(&"")) };
             let desc = if lang == "jp" { "この色を選択します。".into() } else { "Select this color.".into() };
             metadata.insert("color_idx".into(), json!(color_idx));
+            attach_card_metadata(&mut metadata, None, pending_source_card_id);
             (label, desc, "COLOR".into(), None)
         },
         Action::ActivateAbilityWithChoice { slot_idx, ab_idx, choice_idx } => {
@@ -1025,7 +1161,7 @@ pub fn get_action_desc_rich(
             let card = if cid >= 0 { db.get_member(cid) } else { None };
             let mut name = card.map(|m| format!("{} ({})", m.name, m.card_no)).unwrap_or_else(|| "Member".into());
             let summary = card.and_then(|c| c.abilities.get(ab_idx as usize))
-                .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
+                .map(|ab| safe_ability_summary(ab, lang, "member.abilities.summary"))
                 .unwrap_or_else(|| if lang == "jp" { "アビリティ".into() } else { "Ability".into() });
 
             let pending = gs.interaction_stack.last();
@@ -1071,10 +1207,10 @@ pub fn get_action_desc_rich(
             metadata.insert("slot_idx".into(), json!(slot_idx));
             metadata.insert("ab_idx".into(), json!(ab_idx));
             metadata.insert("choice_idx".into(), json!(choice_idx));
-            metadata.insert("card_id".into(), json!(cid));
             metadata.insert("category".into(), json!("ABILITY"));
             metadata.insert("opcode".into(), json!(opcode));
             metadata.insert("target_player".into(), json!(viewer_idx));
+            attach_card_metadata(&mut metadata, Some(cid), Some(cid));
             (label, resolve_card_desc(cid, db), "ABILITY".into(), Some(slot_idx))
         },
         Action::PlayMemberWithChoice { hand_idx, slot_idx, choice_idx } => {
@@ -1147,7 +1283,7 @@ pub fn get_action_desc_rich(
              metadata.insert("cost".into(), json!(actual_cost));
              metadata.insert("base_cost".into(), json!(base_cost));
              metadata.insert("name".into(), json!(card_name_full));
-             metadata.insert("card_id".into(), json!(cid));
+             attach_card_metadata(&mut metadata, Some(cid), Some(cid));
              (label, card.map(|m| m.original_text.clone()).unwrap_or_default(), "PLAY".into(), Some(slot_idx))
         },
         Action::ActivateFromDiscard { discard_idx, ab_idx } => {
@@ -1155,7 +1291,7 @@ pub fn get_action_desc_rich(
             let card = if cid != -1 { db.get_member(cid) } else { None };
             let name = card.map(|m| format!("{} ({})", m.name, m.card_no)).unwrap_or_else(|| "Member".into());
             let summary = card.and_then(|c| c.abilities.get(ab_idx as usize))
-                .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
+                .map(|ab| safe_ability_summary(ab, lang, "live.abilities.summary"))
                 .unwrap_or_else(|| if lang == "jp" { "アビリティ".into() } else { "Ability".into() });
 
             let (label, _desc): (String, String) = if lang == "jp" {
@@ -1165,7 +1301,9 @@ pub fn get_action_desc_rich(
             };
             metadata.insert("discard_idx".into(), json!(discard_idx));
             metadata.insert("ab_idx".into(), json!(ab_idx));
-            metadata.insert("card_id".into(), json!(cid));
+            metadata.insert("location".into(), json!("discard"));
+            metadata.insert("target_player".into(), json!(viewer_idx));
+            attach_card_metadata(&mut metadata, Some(cid), Some(cid));
             (label, resolve_card_desc(cid, db), "ABILITY".into(), None)
         },
         Action::PlaceLive { hand_idx } => {
@@ -1183,7 +1321,7 @@ pub fn get_action_desc_rich(
                 if !l.original_text.is_empty() {
                     l.original_text.clone()
                 } else if !l.abilities.is_empty() {
-                    get_ability_summary(&serde_json::to_value(&l.abilities[0]).unwrap(), lang)
+                    safe_ability_summary(&l.abilities[0], lang, "live.abilities.summary")
                 } else {
                     "".to_string()
                 }
@@ -1201,6 +1339,7 @@ pub fn get_action_desc_rich(
 
             metadata.insert("hand_idx".into(), json!(hand_idx));
             metadata.insert("name".into(), json!(name));
+            attach_card_metadata(&mut metadata, Some(cid), Some(cid));
             (label, desc, "LIVE_SET".into(), None)
         },
         Action::Rps { choice, .. } => {
@@ -1319,7 +1458,7 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool, lang: &str) -
                 obj_map.insert("unit_names".to_string(), json!(unit_names));
 
                 let abilities: Vec<Value> = m.abilities.iter().map(|ab| {
-                    let mut ab_val = serde_json::to_value(ab).unwrap();
+                    let mut ab_val = safe_json_value(ab, "member.abilities.detail");
                     if let Some(ab_obj) = ab_val.as_object_mut() {
                         ab_obj.insert("decoded_bytecode".to_string(), json!(decode_bytecode_to_strings(&ab.bytecode)));
                     }
@@ -1348,7 +1487,7 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool, lang: &str) -
                 obj_map.insert("unit_names".to_string(), json!(unit_names));
 
                 let abilities: Vec<Value> = l.abilities.iter().map(|ab| {
-                    let mut ab_val = serde_json::to_value(ab).unwrap();
+                    let mut ab_val = safe_json_value(ab, "live.abilities.detail");
                     if let Some(ab_obj) = ab_val.as_object_mut() {
                         ab_obj.insert("decoded_bytecode".to_string(), json!(decode_bytecode_to_strings(&ab.bytecode)));
                     }
@@ -1591,7 +1730,7 @@ pub fn serialize_state_rich(
     needs_deck: bool,
 ) -> Value {
     // Phase 1: Engine standard serialization (Everything)
-    let mut root = serde_json::to_value(gs).unwrap();
+    let mut root = safe_json_value(gs, "game_state.root");
     let map = root.as_object_mut().expect("GameState should serialize to a JSON object");
 
     // Phase 2: Compute UI helper data
@@ -1612,7 +1751,7 @@ pub fn serialize_state_rich(
             let member = db.get_member(*cid);
             let name = member.map(|m| m.name.clone()).unwrap_or_else(|| "Member".to_string());
             let text = member.and_then(|m| m.abilities.get(*ab_idx as usize))
-                .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
+                .map(|ab| safe_ability_summary(ab, lang, "member.abilities.summary"))
                 .unwrap_or_default();
             json!({ "name": name, "card_name": name, "source_card_id": cid, "text": text })
         }).collect();
@@ -1623,7 +1762,7 @@ pub fn serialize_state_rich(
             let member = db.get_member(*cid);
             let name = member.map(|m| m.name.clone()).unwrap_or_else(|| "Member".to_string());
             let text = member.and_then(|m| m.abilities.get(*ab_idx as usize))
-                .map(|ab| get_ability_summary(&serde_json::to_value(ab).unwrap(), lang))
+                .map(|ab| safe_ability_summary(ab, lang, "live.abilities.summary"))
                 .unwrap_or_default();
             json!({ "name": name, "card_name": name, "source_card_id": cid, "text": text })
         }).collect();
@@ -1777,7 +1916,7 @@ pub fn serialize_state_rich(
                         _ => ""
                     }.to_string();
 
-                    let ab_summary = get_ability_summary(&serde_json::to_value(ab).unwrap(), lang);
+                    let ab_summary = safe_ability_summary(ab, lang, "card.abilities.summary");
                     let source_info = if let Some(m) = member { format!("{} ({})", m.name, m.card_no) }
                                      else if let Some(l) = live { format!("{} ({})", l.name, l.card_no) }
                                      else { "".to_string() };
@@ -1795,11 +1934,17 @@ pub fn serialize_state_rich(
             title = format!("{} ({})", title, filter_desc);
         }
 
+        let source_card_id = source_card_id_for_pending(gs).unwrap_or(pending.card_id);
+        let source_location = find_card_location(gs, source_card_id);
+
         json!({
             "type": pending.choice_type,
+            "choice_type": pending.choice_type,
             "title": title,
             "text": pending.choice_text,
             "card_id": pending.card_id,
+            "source_card_id": source_card_id,
+            "opcode": pending.effect_opcode,
             "source_ability": source_ability,
             "options": options,
             "actions": actions,
@@ -1807,7 +1952,13 @@ pub fn serialize_state_rich(
             "choose_count": choose_count,
             "v_remaining": pending.v_remaining,
             "ability_index": pending.ability_index,
-            "trigger_label": trigger_label
+            "trigger_label": trigger_label,
+            "source_player": source_location.map(|(p_idx, _, _)| p_idx),
+            "area": source_location.and_then(|(_, zone, idx)| if zone == "stage" { Some(idx) } else { None }),
+            "hand_idx": source_location.and_then(|(_, zone, idx)| if zone == "hand" { Some(idx) } else { None }),
+            "live_idx": source_location.and_then(|(_, zone, idx)| if zone == "live" { Some(idx) } else { None }),
+            "energy_idx": source_location.and_then(|(_, zone, idx)| if zone == "energy" { Some(idx) } else { None }),
+            "discard_idx": source_location.and_then(|(_, zone, idx)| if zone == "discard" { Some(idx) } else { None })
         })
     } else {
         Value::Null
@@ -1844,6 +1995,7 @@ pub fn serialize_state_rich(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use engine_rust::core::enums::ChoiceType;
     use engine_rust::core::logic::{CardDatabase, PendingInteraction, AbilityContext};
     use std::fs;
 
@@ -2018,5 +2170,52 @@ mod tests {
 
         writeln!(f, "\n[Dump Complete]").unwrap();
         println!("Exhaustive dump written to {}", out_path);
+    }
+
+    #[test]
+    fn select_choice_metadata_keeps_source_and_selected_card_ids_separate() {
+        let db = CardDatabase::default();
+        let mut gs = GameState::default();
+        gs.phase = Phase::Response;
+        gs.current_player = 0;
+        gs.players[0].looked_cards = vec![42].into();
+        gs.interaction_stack.push(PendingInteraction {
+            card_id: 7,
+            effect_opcode: engine_rust::core::logic::O_SELECT_CARDS,
+            choice_type: ChoiceType::LookAndChoose,
+            ctx: AbilityContext { player_id: 0, source_card_id: 7, ..Default::default() },
+            ..Default::default()
+        });
+
+        let (_, _, _, _, meta) = get_action_desc_rich(engine_rust::core::logic::ACTION_BASE_CHOICE, &gs, &db, 0, "en");
+
+        assert_eq!(meta.get("source_card_id").and_then(|v| v.as_i64()), Some(7));
+        assert_eq!(meta.get("card_id").and_then(|v| v.as_i64()), Some(42));
+        assert_eq!(meta.get("selection_idx").and_then(|v| v.as_u64()), Some(0));
+    }
+
+    #[test]
+    fn pending_choice_serialization_exposes_source_location() {
+        let db = CardDatabase::default();
+        let mut gs = GameState::default();
+        gs.phase = Phase::Response;
+        gs.current_player = 0;
+        gs.players[0].stage = [42, 7, -1];
+        gs.interaction_stack.push(PendingInteraction {
+            card_id: 7,
+            effect_opcode: engine_rust::core::logic::O_SELECT_MEMBER,
+            choice_type: ChoiceType::SelectMember,
+            target_slot: 0,
+            ctx: AbilityContext { player_id: 0, source_card_id: 7, ..Default::default() },
+            ..Default::default()
+        });
+
+        let state = serialize_state_rich(&gs, &db, "pve", 0, 0, false, String::new(), "en", false);
+        let pending = state.get("pending_choice").and_then(|v| v.as_object()).expect("pending_choice");
+
+        assert_eq!(pending.get("source_card_id").and_then(|v| v.as_i64()), Some(7));
+        assert_eq!(pending.get("source_player").and_then(|v| v.as_u64()), Some(0));
+        assert_eq!(pending.get("area").and_then(|v| v.as_u64()), Some(1));
+        assert_eq!(pending.get("opcode").and_then(|v| v.as_i64()), Some(engine_rust::core::logic::O_SELECT_MEMBER as i64));
     }
 }

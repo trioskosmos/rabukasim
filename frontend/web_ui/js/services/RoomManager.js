@@ -1,4 +1,4 @@
-import { State } from '../state.js';
+import { State, updateStateData } from '../state.js';
 import { log } from '../logger.js';
 import { ModalManager } from '../utils/ModalManager.js';
 import { DOMUtils } from '../utils/DOMUtils.js';
@@ -125,12 +125,7 @@ export const RoomManager = {
         State.resetForNewGame();
         State.roomCode = null;
         State.sessionToken = null;
-        if (typeof networkFacade?.updateStateData === 'function') {
-             networkFacade.updateStateData(null);
-        } else {
-             // Fallback if facade not passed
-             import('../state.js').then(m => m.updateStateData(null));
-        }
+        updateStateData(null);
         
         localStorage.removeItem('lovelive_room_code');
         ModalManager.show(DOM_IDS.MODAL_ROOM);

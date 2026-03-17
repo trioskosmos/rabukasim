@@ -835,7 +835,7 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
 
         return True
 
-    def get_legal_actions(self) -> np.ndarray:
+    def get_legal_actions(self, player_idx: int = -1) -> np.ndarray:
         """
 
         Returns a mask of legal actions (Rule 9.5.4:
@@ -857,18 +857,22 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
         """
 
         mask = np.zeros(2000, dtype=bool)
-
         if self.game_over:
             return mask
 
-        # Priority: If there are choices to be made for a pending effect
+        # If player_idx is -1, we assume request is for the current active player
+        check_p_idx = player_idx if player_idx >= 0 else self.current_player
 
+        # Priority: If there are choices to be made for a pending effect
         if self.pending_choices:
             choice_type, params = self.pending_choices[0]
+            target_p_idx = params.get("player_id", self.current_player)
 
-            p_idx = params.get("player_id", self.current_player)
+            # If request is for a player who is NOT the one supposed to make a choice, return empty
+            if check_p_idx != target_p_idx:
+                return mask
 
-            p = self.players[p_idx]
+            p = self.players[target_p_idx]
 
             if choice_type == "TARGET_HAND":
                 # Allow skip for optional costs
@@ -1084,7 +1088,7 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
         # MULLIGAN phases: Select cards to return or confirm mulligan
 
         elif self.phase in (Phase.MULLIGAN_P1, Phase.MULLIGAN_P2):
-            p = self.active_player
+            p = self.players[check_p_idx]
 
             mask[0] = True  # Confirm mulligan (done selecting)
 

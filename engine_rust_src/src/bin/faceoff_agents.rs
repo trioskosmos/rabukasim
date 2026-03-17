@@ -1,7 +1,7 @@
 use engine_rust::core::heuristics::OriginalHeuristic;
-use engine_rust::core::logic::{GameState, CardDatabase, Phase};
+use engine_rust::core::logic::{GameState, CardDatabase};
 use rand::SeedableRng;
-use rand::rngs::SmallRng;
+
 use engine_rust::core::mcts::{SearchHorizon, MCTS};
 use engine_rust::test_helpers::load_real_db;
 use rand::Rng;
@@ -26,7 +26,7 @@ impl Agent {
 fn get_action<R: Rng>(
     agent: Agent,
     state: &GameState,
-    db: &engine_rust::core::logic::CardDatabase,
+    db: &CardDatabase,
     mcts: &mut MCTS,
     heuristic: &OriginalHeuristic,
     rng: &mut R,
@@ -113,7 +113,7 @@ fn get_action<R: Rng>(
     }
 }
 
-fn parse_deck(path: &str, db: &engine_rust::core::logic::CardDatabase) -> Vec<i32> {
+fn parse_deck(path: &str, db: &CardDatabase) -> Vec<i32> {
     let mut main_deck = Vec::new();
     if let Ok(content) = std::fs::read_to_string(path) {
         for line in content.lines() {
@@ -177,7 +177,7 @@ fn run_matchup(agent0: Agent, agent1: Agent, num_games: usize) {
             Vec::new(),
         );
         sim.ui.silent = true;
-        sim.phase = Phase::Main;
+        sim.phase = engine_rust::core::enums::Phase::Main; // Use absolute enum path
 
         let mut mcts = MCTS::new();
         let heuristic = OriginalHeuristic::default();

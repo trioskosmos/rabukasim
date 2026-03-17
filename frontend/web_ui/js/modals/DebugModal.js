@@ -103,7 +103,7 @@ const renderChips = (items, accent = '#7dd3fc') => {
     }
 
     return items.map((item) => `
-        <span style="display:inline-flex; align-items:center; padding:2px 7px; border-radius:999px; border:1px solid ${accent}; color:${accent}; background:rgba(0,0,0,0.22); font-size:10px; line-height:1.2;">${escapeHtml(item)}</span>
+        <span class="debug-badge" style="--accent: ${accent}">${escapeHtml(item)}</span>
     `).join('');
 };
 
@@ -141,20 +141,18 @@ const describeNumber = (key, value, itemType) => {
 };
 
 const renderScalarCell = (label, value) => `
-    <div style="padding:7px 8px; border-radius:6px; background:rgba(255,255,255,0.04); font-size:10px; line-height:1.35; min-width:0;">
-        <div style="opacity:0.6; text-transform:uppercase; letter-spacing:0.04em;">${escapeHtml(label)}</div>
-        <div style="font-family:'Cascadia Code', monospace; word-break:break-word;">${escapeHtml(value)}</div>
+    <div class="debug-scalar-cell">
+        <div class="debug-scalar-label">${escapeHtml(label)}</div>
+        <div class="debug-scalar-value">${escapeHtml(value)}</div>
     </div>
 `;
 
 const renderStatusBanner = (status) => {
     if (!status?.message) return '';
-    const colors = status.kind === 'error'
-        ? { border: '#ef4444', background: 'rgba(239,68,68,0.12)', text: '#fecaca' }
-        : { border: '#22c55e', background: 'rgba(34,197,94,0.12)', text: '#bbf7d0' };
+    const bannerClass = status.kind === 'error' ? 'debug-status-error' : 'debug-status-success';
 
     return `
-        <div style="padding:9px 12px; border-radius:6px; border-left:3px solid ${colors.border}; background:${colors.background}; color:${colors.text}; font-size:11px; line-height:1.45;">
+        <div class="debug-status-banner ${bannerClass}">
             ${escapeHtml(status.message)}
         </div>
     `;
@@ -182,7 +180,7 @@ const renderLogLines = (lines, emptyMessage) => {
             background = 'rgba(251,191,36,0.08)';
         }
 
-        return `<div style="padding:4px 8px; color:${color}; background:${background}; font-size:10px; border-bottom:1px solid #16202f; white-space:pre-wrap; word-break:break-word; line-height:1.35;">${escapeHtml(line)}</div>`;
+        return `<div class="debug-log-line" style="--line-color: ${color}; --line-bg: ${background};">${escapeHtml(line)}</div>`;
     }).join('');
 };
 
@@ -773,14 +771,14 @@ export const DebugModal = {
                 ${renderStatusBanner(DebugModal._status)}
                 <div style="display:grid; grid-template-columns:minmax(140px, 0.9fr) minmax(140px, 0.9fr) minmax(220px, 1.4fr); gap:8px;">
                     <div>
-                        <label style="font-size:10px; opacity:0.7; display:block; margin-bottom:4px;">Player</label>
-                        <select onchange="DebugModal.onPlayerChange(this.value)" style="width:100%; padding:6px; background:rgba(0,0,0,0.3); border:1px solid #475569; color:#fff; border-radius:6px; font-size:11px;">
+                        <label class="form-label-xs">Player</label>
+                        <select onchange="DebugModal.onPlayerChange(this.value)" class="form-select form-select-sm">
                             ${players.map((player, index) => `<option value="${index}" ${index === playerIdx ? 'selected' : ''}>Player ${index + 1}${State.data.active_player === index ? ' [active]' : ''}</option>`).join('')}
                         </select>
                     </div>
                     <div>
-                        <label style="font-size:10px; opacity:0.7; display:block; margin-bottom:4px;">Zone</label>
-                        <select onchange="DebugModal.onZoneChange(this.value)" style="width:100%; padding:6px; background:rgba(0,0,0,0.3); border:1px solid #475569; color:#fff; border-radius:6px; font-size:11px;">
+                        <label class="form-label-xs">Zone</label>
+                        <select onchange="DebugModal.onZoneChange(this.value)" class="form-select form-select-sm">
                             <option value="all" ${zone === 'all' ? 'selected' : ''}>All Zones</option>
                             <option value="stage" ${zone === 'stage' ? 'selected' : ''}>Stage</option>
                             <option value="live" ${zone === 'live' ? 'selected' : ''}>Live</option>
@@ -792,8 +790,8 @@ export const DebugModal = {
                         </select>
                     </div>
                     <div>
-                        <label style="font-size:10px; opacity:0.7; display:block; margin-bottom:4px;">Search</label>
-                        <input type="text" placeholder="card, trigger, condition, pseudocode" value="${escapeHtml(DebugModal._filters.abilitySearch)}" oninput="DebugModal.onSearchChange(this.value)" style="width:100%; padding:8px; background:rgba(0,0,0,0.3); border:1px solid #475569; color:#fff; border-radius:6px; font-size:11px; box-sizing:border-box;">
+                        <label class="form-label-xs">Search</label>
+                        <input type="text" placeholder="card, trigger, condition, pseudocode" value="${escapeHtml(DebugModal._filters.abilitySearch)}" oninput="DebugModal.onSearchChange(this.value)" class="form-input form-input-sm">
                     </div>
                 </div>
 
@@ -862,14 +860,19 @@ export const DebugModal = {
                     <span style="font-size:9px; font-family:'Cascadia Code', monospace; opacity:0.72;">${(serialized.length / 1024).toFixed(2)} KB</span>
                 </div>
                 <textarea id="debug-string-textarea" spellcheck="false" style="flex:1; width:100%; background:#020617; color:#dbeafe; border:1px solid #334155; border-radius:6px; padding:10px; font-family:'Cascadia Code', monospace; font-size:11px; resize:none; word-break:break-all; box-sizing:border-box;">${escapeHtml(serialized)}</textarea>
-                <div style="display:flex; gap:8px; flex-wrap:wrap; font-size:11px;">
-                    <button class="btn btn-primary" style="flex:1; min-width:110px;" onclick="DebugModal.copyStateString()">Copy</button>
-                    <button class="btn btn-secondary" style="flex:1; min-width:110px;" onclick="DebugModal.loadStateString()">Apply</button>
-                    <button class="btn btn-accent" style="flex:1; min-width:110px; background:var(--accent-gold); color:#000;" onclick="DebugModal.triggerFileLoad()">Load File</button>
-                    <input type="file" id="debug-state-file" style="display:none;" accept=".json,.txt,.b64" onchange="DebugModal.loadStateFile(this)">
+                <div class="debug-action-row">
+                    <button class="btn btn-primary" data-action="debug-copy-state-string">Copy</button>
+                    <button class="btn btn-secondary" data-action="debug-load-state-string">Apply</button>
+                    <button class="btn btn-accent-gray" data-action="debug-trigger-file-load">Load File</button>
+                    <input type="file" id="debug-state-file" style="display:none;" accept=".json,.txt,.b64">
                 </div>
             </div>
         `;
+
+        const stateFileInput = container.querySelector('#debug-state-file');
+        if (stateFileInput) {
+            stateFileInput.addEventListener('change', (event) => DebugModal.loadStateFile(event.target));
+        }
     },
 
     renderJsonTab: () => {
@@ -879,22 +882,27 @@ export const DebugModal = {
         container.innerHTML = `
             <div style="display:flex; flex-direction:column; height:100%; padding:14px; gap:10px; overflow:hidden;">
                 ${renderStatusBanner(DebugModal._status)}
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button class="btn btn-secondary btn-xs" onclick="DebugModal.renderMinimalJSON()">Minimal</button>
-                    <button class="btn btn-secondary btn-xs" onclick="DebugModal.renderCheckpointJSON()">Raw Snapshot</button>
-                    <button class="btn btn-secondary btn-xs" onclick="DebugModal.renderRichJSON()">Viewer State</button>
-                    <button class="btn btn-secondary btn-xs" onclick="DebugModal.copyJsonState()">Copy</button>
-                    <button class="btn btn-secondary btn-xs" onclick="DebugModal.loadJsonFile()">Load File</button>
-                    <button class="btn btn-primary btn-xs" onclick="DebugModal.applyJsonState()">Apply</button>
-                    <input type="file" id="debug-json-file" style="display:none;" accept=".json,.txt,.b64" onchange="DebugModal.onJsonFileSelected(this)">
+                <div class="debug-action-row">
+                    <button class="btn btn-secondary btn-xs" data-action="debug-render-minimal-json">Minimal</button>
+                    <button class="btn btn-secondary btn-xs" data-action="debug-render-checkpoint-json">Raw Snapshot</button>
+                    <button class="btn btn-secondary btn-xs" data-action="debug-render-rich-json">Viewer State</button>
+                    <button class="btn btn-secondary btn-xs" data-action="debug-copy-json-state">Copy</button>
+                    <button class="btn btn-secondary btn-xs" data-action="debug-load-json-file">Load File</button>
+                    <button class="btn btn-primary btn-xs" data-action="debug-apply-json-state">Apply</button>
+                    <input type="file" id="debug-json-file" style="display:none;" accept=".json,.txt,.b64">
                     <span style="flex-grow:1;"></span>
-                    <button class="btn btn-success btn-xs" onclick="DebugModal.exportGameWithHistory()">Export Game</button>
-                    <button class="btn btn-accent btn-xs" style="background:#059669; color:#fff;" onclick="DebugModal.importGameWithHistory()">Import Game</button>
+                    <button class="btn btn-accent-green btn-xs" data-action="debug-export-game">Export Game</button>
+                    <button class="btn btn-accent-blue btn-xs" data-action="debug-import-game">Import Game</button>
                 </div>
                 <textarea id="debug-json-textarea" spellcheck="false" style="flex:1; width:100%; background:#020617; color:#e2e8f0; border:1px solid #334155; border-radius:6px; padding:10px; font-family:'Cascadia Code', monospace; font-size:12px; resize:none; box-sizing:border-box;"></textarea>
                 <div id="debug-json-result" style="font-size:10px; opacity:0.84; background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; border-left:2px solid #666; display:none;"></div>
             </div>
         `;
+
+        const jsonFileInput = container.querySelector('#debug-json-file');
+        if (jsonFileInput) {
+            jsonFileInput.addEventListener('change', (event) => DebugModal.onJsonFileSelected(event.target));
+        }
 
         DebugModal.renderCheckpointJSON();
     },
@@ -902,25 +910,34 @@ export const DebugModal = {
     renderMinimalJSON: () => {
         if (!State.data) return;
 
-        const getId = (entry) => {
-            const card = DebugModal._normalizeCard(entry);
-            return card?.id ?? card?.card_id ?? -1;
-        };
+        const source = DebugModal._getCheckpointPayload();
+        const players = source?.players || [];
+        const getIds = (entries = []) => entries.map((entry) => {
+            if (entry === null || entry === undefined) return -1;
+            if (typeof entry === 'number') return entry;
+            if (typeof entry === 'object') return entry.id ?? entry.card_id ?? -1;
+            return -1;
+        });
 
         const minimal = {
-            phase: State.data.phase,
-            turn: State.data.turn,
-            active_player: State.data.active_player,
-            pending_choice: State.data.pending_choice || null,
-            players: (State.data.players || []).map((player, index) => ({
+            phase: source?.phase ?? State.data.phase,
+            prev_phase: source?.prev_phase ?? null,
+            turn: source?.turn ?? State.data.turn,
+            current_player: source?.current_player ?? State.data.active_player ?? 0,
+            first_player: source?.first_player ?? 0,
+            prev_card_id: source?.prev_card_id ?? -1,
+            debug_mode: Boolean(DebugModal._snapshot?.debug_mode),
+            players: players.map((player, index) => ({
                 _label: `Player ${index + 1}`,
-                score: player.score,
-                stage: (player.stage || []).map(getId),
-                live_zone: (player.live_zone || []).map(getId),
-                hand: (player.hand || []).map(getId),
-                energy: (player.energy || []).map(getId),
-                discard: (player.discard || []).map(getId),
-                success_lives: (player.success_lives || player.success_zone || player.success_pile || []).map(getId),
+                score: player.score ?? 0,
+                stage: getIds(player.stage || []),
+                live_zone: getIds(player.live_zone || []),
+                hand: getIds(player.hand || []),
+                energy: getIds(player.energy_zone || player.energy || []),
+                tapped_energy_mask: player.tapped_energy_mask ?? 0,
+                discard: getIds(player.discard || []),
+                success_lives: getIds(player.success_lives || player.success_zone || player.success_pile || []),
+                looked_cards: getIds(player.looked_cards || []),
             })),
         };
 

@@ -7,8 +7,11 @@ use crate::core::mcts::{SearchHorizon, MCTS};
 use numpy::{PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray1};
 use pyo3::prelude::*;
 use rayon::prelude::*;
+use rand::prelude::*;
+use rand::rngs::SmallRng;
 use smallvec::SmallVec;
 use std::sync::Arc;
+use serde_json::json;
 // use crate::core::heuristics::{OriginalHeuristic, SimpleHeuristic};
 
 #[pyclass]
@@ -680,7 +683,13 @@ impl PyGameState {
         self.inner
             .interaction_stack
             .last()
-            .map(|p| p.card_id as i32)
+            .map(|p| {
+                if p.card_id >= 0 {
+                    p.card_id as i32
+                } else {
+                    p.ctx.source_card_id as i32
+                }
+            })
             .unwrap_or(-1)
     }
 
@@ -792,6 +801,29 @@ impl PyGameState {
             self.inner.current_player as usize
         };
 
+        let base_params = self
+            .inner
+            .interaction_stack
+            .last()
+            .map(|pi| {
+                let source_card_id = if pi.card_id >= 0 {
+                    pi.card_id
+                } else {
+                    pi.ctx.source_card_id
+                };
+                serde_json::json!({
+                    "source_card_id": source_card_id,
+                    "source_player": pi.ctx.player_id,
+                    "source_area": pi.ctx.area_idx,
+                    "area": pi.ctx.area_idx,
+                    "ability_index": pi.ability_index,
+                    "effect_opcode": pi.effect_opcode,
+                    "target_slot": pi.target_slot,
+                    "choice_text": pi.choice_text,
+                })
+            })
+            .unwrap_or_else(|| serde_json::json!({}));
+
         if op == O_ORDER_DECK
             || op == O_LOOK_AND_CHOOSE
             || op == O_REVEAL_CARDS
@@ -799,9 +831,10 @@ impl PyGameState {
             || op == O_RECOVER_MEMBER
         {
             let looked = &self.inner.players[p_idx].looked_cards;
-            let params = serde_json::json!({
-                "cards": looked
-            });
+            let mut params = base_params;
+            if let Some(obj) = params.as_object_mut() {
+                obj.insert("cards".to_string(), serde_json::json!(looked));
+            }
             let type_str = if op == O_ORDER_DECK {
                 ChoiceType::OrderDeck.as_str()
             } else {
@@ -809,24 +842,31 @@ impl PyGameState {
             };
             result.push((type_str.to_string(), params.to_string()));
         } else if op == O_TAP_OPPONENT {
-            result.push(("TARGET_OPPONENT_MEMBER".to_string(), "{}".to_string()));
+            let mut params = base_params;
+            if let Some(obj) = params.as_object_mut() {
+                obj.insert(
+                    "target_player".to_string(),
+                    serde_json::json!(1 - self.inner.interaction_stack.last().map(|pi| pi.ctx.activator_id).unwrap_or(self.inner.current_player)),
+                );
+            }
+            result.push(("TARGET_OPPONENT_MEMBER".to_string(), params.to_string()));
         } else if op == O_MOVE_MEMBER {
-            result.push(("MOVE_MEMBER".to_string(), "{}".to_string()));
+            result.push(("MOVE_MEMBER".to_string(), base_params.to_string()));
         } else if op == O_ACTIVATE_MEMBER {
-            result.push(("TAP_MEMBER".to_string(), "{}".to_string()));
+            result.push(("TAP_MEMBER".to_string(), base_params.to_string()));
         } else if op == O_COLOR_SELECT {
-            result.push((ChoiceType::ColorSelect.as_str().to_string(), "{}".to_string()));
+            result.push((ChoiceType::ColorSelect.as_str().to_string(), base_params.to_string()));
         } else if op == O_MOVE_TO_DISCARD {
-            result.push((ChoiceType::SelectHandDiscard.as_str().to_string(), "{}".to_string()));
+            result.push((ChoiceType::SelectHandDiscard.as_str().to_string(), base_params.to_string()));
         } else if op == O_PLAY_MEMBER_FROM_HAND {
-            result.push((ChoiceType::SelectHandPlay.to_string(), "{}".to_string()));
+            result.push((ChoiceType::SelectHandPlay.to_string(), base_params.to_string()));
         } else if op == O_SELECT_CARDS {
-            result.push(("SELECT_FROM_LIST".to_string(), "{}".to_string()));
+            result.push(("SELECT_FROM_LIST".to_string(), base_params.to_string()));
         } else if op == O_OPPONENT_CHOOSE {
-            result.push((ChoiceType::OpponentChoose.to_string(), "{}".to_string()));
+            result.push((ChoiceType::OpponentChoose.to_string(), base_params.to_string()));
         } else if op == O_SELECT_MODE {
             // We might need to store the options in the state if we want better labels
-            result.push((ChoiceType::SelectMode.to_string(), "{}".to_string()));
+            result.push((ChoiceType::SelectMode.to_string(), base_params.to_string()));
         }
 
         result
@@ -1472,6 +1512,57 @@ impl PyGameState {
         }
     }
 
+    #[pyo3(signature = (db, num_games))]
+    pub fn sim_random_games(&self, db: &PyCardDatabase, num_games: usize) -> PyObject {
+        let mut rng = SmallRng::from_os_rng();
+        let mut total_moves = 0;
+        let mut total_meaningful_moves = 0;
+        let mut gameplay_seconds = 0.0;
+
+        for _ in 0..num_games {
+            let mut state = self.inner.clone();
+            state.ui.silent = true;
+            
+            let start = std::time::Instant::now();
+            while state.phase != crate::core::logic::Phase::Terminal {
+                let mut actions = SmallVec::<[i32; 64]>::new();
+                state.generate_legal_actions(&db.inner, state.current_player as usize, &mut actions);
+                
+                let action = if actions.is_empty() {
+                    0
+                } else {
+                    *actions.choose(&mut rng).unwrap()
+                };
+                
+                let _ = state.step(&db.inner, action);
+                total_moves += 1;
+                if action != 0 {
+                    total_meaningful_moves += 1;
+                }
+                
+                if total_moves > 1000000 {
+                    // Safety break for extreme cases
+                    break;
+                }
+            }
+            gameplay_seconds += start.elapsed().as_secs_f64();
+        }
+
+        Python::with_gil(|py| {
+            let mps = if gameplay_seconds > 0.0 { total_moves as f64 / gameplay_seconds } else { 0.0 };
+            let results = json!({
+                "total_games": num_games,
+                "total_moves": total_moves,
+                "total_meaningful_moves": total_meaningful_moves,
+                "gameplay_seconds": gameplay_seconds,
+                "mps": mps,
+            });
+            let json_str = results.to_string();
+            let json_mod = py.import("json").unwrap();
+            json_mod.call_method1("loads", (json_str,)).unwrap().to_object(py)
+        })
+    }
+
     #[pyo3(signature = (db))]
     pub fn plan_full_turn(&self, db: &PyCardDatabase) -> (Vec<(i32, f32, f32, f32)>, Vec<i32>, usize, (f32, f32)) {
         use crate::core::logic::turn_sequencer::TurnSequencer;
@@ -1755,7 +1846,7 @@ impl PyHybridMCTS {
 }
 
 // AlphaZero Tensor Type Enum
-#[pyclass]
+#[pyclass(eq, eq_int)]
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum AlphaZeroTensorType {
     #[default]
@@ -1772,10 +1863,14 @@ pub struct PyAlphaZeroEvaluator {
 #[pymethods]
 impl PyAlphaZeroEvaluator {
     #[new]
-    fn new(model: PyObject, _tensor_type: AlphaZeroTensorType) -> Self {
+    fn new(model: PyObject, tensor_type: AlphaZeroTensorType) -> Self {
         #[cfg(feature = "extension-module")]
         {
-            let evaluator_impl = crate::core::alphazero_evaluator::PyAlphaZeroEvaluator::new(model);
+            let tensor_encoding = match tensor_type {
+                AlphaZeroTensorType::Vanilla => crate::core::alphazero_evaluator::PythonTensorEncoding::Vanilla,
+                AlphaZeroTensorType::Original => crate::core::alphazero_evaluator::PythonTensorEncoding::Original,
+            };
+            let evaluator_impl = crate::core::alphazero_evaluator::PyAlphaZeroEvaluator::new(model, tensor_encoding);
             Self {
                 evaluator: Arc::new(Box::new(evaluator_impl)),
             }

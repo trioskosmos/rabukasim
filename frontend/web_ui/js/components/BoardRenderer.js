@@ -2,6 +2,7 @@ import { State } from '../state.js';
 import { fixImg } from '../constants.js';
 import { Tooltips } from '../ui_tooltips.js';
 import { CardRenderer } from './CardRenderer.js';
+import { DOMUtils } from '../utils/DOMUtils.js';
 
 export const BoardRenderer = {
     renderBoard: (state, p0, p1, validTargets, showDiscardModalCallback) => {
@@ -85,13 +86,31 @@ export const BoardRenderer = {
             if (div.className !== newClassName) div.className = newClassName;
             div.id = `${containerId}-slot-${i}`;
 
-            let imgPath = e.img || e.img_path || 'img/texticon/icon_energy.png';
-            const expectedInnerHtml = `
-                <img src="${fixImg(imgPath)}" onerror="this.src='img/texticon/icon_energy.png'">
-                <div class="energy-num">${i + 1}</div>
-            `;
-            
-            if (div.innerHTML !== expectedInnerHtml) div.innerHTML = expectedInnerHtml;
+            const imgPath = fixImg(e.img || e.img_path || 'img/texticon/icon_energy.png');
+            let img = div.querySelector('img');
+            if (!img) {
+                img = document.createElement('img');
+                div.appendChild(img);
+            }
+            if (img.getAttribute('src') !== imgPath) {
+                img.setAttribute('src', imgPath);
+            }
+            img.onerror = () => {
+                if (img.getAttribute('src') !== 'img/texticon/icon_energy.png') {
+                    img.setAttribute('src', 'img/texticon/icon_energy.png');
+                    return;
+                }
+                img.onerror = null;
+            };
+
+            let numberEl = div.querySelector('.energy-num');
+            if (!numberEl) {
+                numberEl = document.createElement('div');
+                numberEl.className = 'energy-num';
+                div.appendChild(numberEl);
+            }
+            const numberText = String(i + 1);
+            if (numberEl.textContent !== numberText) numberEl.textContent = numberText;
 
             if (e && e.card) {
                 Tooltips.attachCardData(div, e.card, isValid ? actionId : undefined);

@@ -53,3 +53,11 @@ pub mod repro_softlock_tests;
 pub mod repro_task;
 #[cfg(test)]
 pub mod repro_card_103_placement;
+#[cfg(test)]
+pub mod test_yell_cards_condition;
+#[cfg(test)]
+pub mod card_10_cost_bug;
+#[cfg(test)]
+pub mod card126_tests;
+#[cfg(test)]
+pub mod test_card_162_fix;

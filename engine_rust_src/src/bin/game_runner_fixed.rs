@@ -1,4 +1,4 @@
-/// game_runner_fixed.rs — Fixed Game Runner with Proper Phase Handling
+/// game_runner_fixed.rs Fixed Game Runner with Proper Phase Handling
 ///
 /// Run with: cargo run --bin game_runner_fixed --release
 ///
@@ -9,9 +9,9 @@ use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::TurnSequencer;
-use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
 use rand::SeedableRng;
-use rand::rngs::SmallRng;
+
 use rand::seq::IndexedRandom;
 
 const NUM_GAMES: usize = 5;
@@ -80,9 +80,9 @@ fn run_game(
 
     state.ui.silent = true;
 
-    println!("\n╔════════════════════════════════════════════╗");
-    println!("║  GAME {} (Official Rules)        ║", game_idx + 1);
-    println!("╚════════════════════════════════════════════╝");
+    println!("=======================================================");
+    println!("-------------------------------------------------------");
+    println!("=======================================================");
 
     let mut current_step = 0;
     let mut last_turn_phase = (0u16, Phase::Setup);
@@ -161,11 +161,11 @@ fn run_game(
     let time_ms = game_start.elapsed().as_secs_f32() * 1000.0;
 
     if VERBOSE {
-        println!("\n  ════════════════════════════════════════════");
+        println!("=======================================================");
         println!("  Final: Winner=P{} | Turns={} | Steps={}", winner, state.turn, current_step);
         println!("  Score: P0={} P1={} | Time: {:.2}ms",
             state.players[0].score, state.players[1].score, time_ms);
-        println!("  ════════════════════════════════════════════");
+        println!("=======================================================");
     }
 
     GameStats {
@@ -180,10 +180,10 @@ fn run_game(
 }
 
 fn main() {
-    println!("╔════════════════════════════════════════════╗");
-    println!("║  FIXED GAME RUNNER                         ║");
-    println!("║  Running until score >= 3                 ║");
-    println!("╚════════════════════════════════════════════╝\n");
+    println!("=======================================================");
+    println!("-------------------------------------------------------");
+    println!("-------------------------------------------------------");
+    println!("=======================================================");
 
     let db = load_vanilla_db();
     let (member_cards, live_cards) = fallback_deck(&db);
@@ -197,9 +197,9 @@ fn main() {
     }
 
     // Summary
-    println!("\n╔════════════════════════════════════════════╗");
-    println!("║              BATCH SUMMARY                 ║");
-    println!("╚════════════════════════════════════════════╝\n");
+    println!("=======================================================");
+    println!("-------------------------------------------------------");
+    println!("=======================================================");
 
     let total_time: f32 = games.iter().map(|g| g.time_ms).sum();
     let avg_time = total_time / games.len() as f32;
@@ -210,5 +210,5 @@ fn main() {
     }
 
     println!("\nOverall: {} games, {:.2}ms avg/game", games.len(), avg_time);
-    println!("✓ Games completed successfully!\n");
+    println!("-------------------------------------------------------");
 }

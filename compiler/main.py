@@ -19,6 +19,7 @@ from engine.models.card import EnergyCard, LiveCard, MemberCard
 from engine.models.enums import CHAR_MAP
 from engine.models.generated_metadata import CONDITIONS, COSTS, OPCODES
 from engine.models.opcodes import Opcode
+from engine.models.bytecode_readable import decode_bytecode
 
 # --- Compile-time Bytecode Validation ---
 # Combined: all valid base opcodes derived from source metadata
@@ -250,6 +251,52 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False):
     with open(output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(compiled_data, f, ensure_ascii=False, indent=2)
 
+    # --- Generate Decoded Consolidated Abilities ---
+    if not quiet:
+        print("Generating consolidated_abilities_decoded.json...")
+    
+    decoded_output_path = "data/consolidated_abilities_decoded.json"
+    consolidated_decoded = {}
+    
+    # We'll use the original consolidated_abilities structure as a template
+    # but only for the keys that were actually compiled
+    for db_name in ["member_db", "live_db"]:
+        for cid_str, card_data in compiled_data[db_name].items():
+            raw_jp = card_data.get("original_text", "")
+            if not raw_jp or raw_jp in consolidated_decoded:
+                continue
+            
+            # Find the original entry from consolidated_abilities to get metadata (like card lists)
+            original_entry = _pseudocode_resolver.consolidated.get(raw_jp)
+            if not original_entry:
+                continue
+            
+            decoded_abs = []
+            for ab in card_data.get("abilities", []):
+                bc = ab.get("bytecode", [])
+                if bc:
+                    # Clean up the decoded bytecode to be more JSON friendly (list of lines)
+                    # We strip the legend to keep it concise per ability
+                    decoded_str = decode_bytecode(bc)
+                    # Split into lines and remove the legend if present
+                    lines = decoded_str.split("\n")
+                    if "--- BYTECODE LEGEND ---" in lines:
+                        legend_idx = lines.index("--- BYTECODE LEGEND ---")
+                        lines = lines[:legend_idx]
+                    
+                    # Also strip "  00: " prefixes if we want it cleaner, but the user asked for "like in the debug menu"
+                    # The debug menu shows the prefixes.
+                    decoded_abs.append([line.strip() for line in lines if line.strip()])
+            
+            if decoded_abs:
+                # Copy the original entry and add decoded_bytecode
+                new_entry = dict(original_entry) if isinstance(original_entry, dict) else {"pseudocode": original_entry}
+                new_entry["decoded_bytecode"] = decoded_abs
+                consolidated_decoded[raw_jp] = new_entry
+
+    with open(decoded_output_path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(consolidated_decoded, f, ensure_ascii=False, indent=2)
+
     # ============================================================
     #  COMPILATION SUMMARY
     # ============================================================
@@ -386,10 +433,11 @@ FLAG_WIN_COND = 1 << 9
 FLAG_MOVE = 1 << 10
 FLAG_TAP = 1 << 11
 
-CHOICE_FLAG_LOOK = 1 << 0
-CHOICE_FLAG_MODE = 1 << 1
-CHOICE_FLAG_COLOR = 1 << 2
-CHOICE_FLAG_ORDER = 1 << 3
+CHOICE_FLAG_LOOK = 1
+CHOICE_FLAG_DISCARD = 2
+CHOICE_FLAG_MODE = 4
+CHOICE_FLAG_COLOR = 8
+CHOICE_FLAG_ORDER = 16
 
 SYN_FLAG_GROUP = 1 << 0
 SYN_FLAG_COLOR = 1 << 1
@@ -559,11 +607,23 @@ def compute_flags(card):
             elif op == int(Opcode.COLOR_SELECT):
                 ab.choice_flags |= CHOICE_FLAG_COLOR
                 if ab.choice_count == 0:
-                    ab.choice_count = 6
+                    # Try to get the actual choice count from the effect's params
+                    choice_count_from_effect = None
+                    color_select_effect_type = int(Opcode.COLOR_SELECT)
+                    for eff in ab.effects:
+                        if eff.effect_type == color_select_effect_type:
+                            if "choices" in eff.params:
+                                choice_count_from_effect = len(eff.params["choices"])
+                            break
+                    ab.choice_count = choice_count_from_effect if choice_count_from_effect else 6
             elif op == int(Opcode.ORDER_DECK):
                 ab.choice_flags |= CHOICE_FLAG_ORDER
                 if ab.choice_count == 0:
                     ab.choice_count = 3
+                # Check if this ability also has a REMAINDER discard instruction
+                for eff in ab.effects:
+                    if eff.params.get("remainder") == "discard" or eff.params.get("destination") == "discard" or eff.params.get("raw_val") == "REMAINDER":
+                        ab.choice_flags |= CHOICE_FLAG_DISCARD
 
         if unflagged_logic:
             semantic_flags |= 0x10

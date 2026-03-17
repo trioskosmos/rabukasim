@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deck Viewer (Interactive)</title>
+    <link rel="stylesheet" href="css/base.css?v=17">
+    <link rel="stylesheet" href="css/components.css?v=17">
+    <link rel="stylesheet" href="css/cards.css?v=17">
     <style>
         * {
             margin: 0;
@@ -13,11 +16,11 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Noto Sans JP', 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
             min-height: 100vh;
-            padding: 20px;
-            color: #fff;
+            padding: var(--space-xl);
+            color: var(--text);
         }
 
         h1 {
@@ -237,8 +240,8 @@
         <h3>Paste DECK LOG HTML here (full page source or deck section):</h3>
         <textarea id="deckInput" placeholder="Paste the full HTML source of a DECK LOG view page here..."></textarea>
         <div class="btn-row">
-            <button onclick="parseAndRender()">Visualize Deck</button>
-            <button onclick="clearAll()" style="background: rgba(255,255,255,0.1);">Clear</button>
+            <button class="btn btn-primary" id="visualizeDeckBtn">Visualize Deck</button>
+            <button class="btn btn-secondary" id="clearDeckBtn">Clear</button>
             <span class="format-hint">Supports: Bushiroad DECK LOG HTML · Text format (ID x N / N x ID)</span>
         </div>
     </div>
@@ -259,6 +262,14 @@
             }
         }
         init();
+
+        function attachCardImageFallback(img, placeholder) {
+            if (!img || !placeholder) return;
+            img.onerror = () => {
+                img.style.display = 'none';
+                placeholder.style.display = 'flex';
+            };
+        }
 
         function clearAll() {
             document.getElementById('deckInput').value = '';
@@ -438,25 +449,44 @@
                 item.title = `${cardId}\n${cardName}${count > 1 ? ` ×${count}` : ''}`;
 
                 if (imgSrc) {
-                    item.innerHTML = `
-                        <img src="${imgSrc}" alt="${cardName}" loading="lazy"
-                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                        <div class="card-placeholder" style="display:none;">?</div>
-                        ${count > 1 ? `<div class="card-qty-badge">×${count}</div>` : ''}
-                        <div class="card-code">${cardId}</div>
-                    `;
+                    const img = document.createElement('img');
+                    img.src = imgSrc;
+                    img.alt = cardName;
+                    img.loading = 'lazy';
+
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'card-placeholder';
+                    placeholder.style.display = 'none';
+                    placeholder.textContent = '?';
+
+                    item.appendChild(img);
+                    item.appendChild(placeholder);
+                    attachCardImageFallback(img, placeholder);
                 } else {
-                    // No local image — show remote image from title attribute or placeholder
-                    item.innerHTML = `
-                        <div class="card-placeholder">?</div>
-                        ${count > 1 ? `<div class="card-qty-badge">×${count}</div>` : ''}
-                        <div class="card-code">${cardId}</div>
-                    `;
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'card-placeholder';
+                    placeholder.textContent = '?';
+                    item.appendChild(placeholder);
                 }
+
+                if (count > 1) {
+                    const qtyBadge = document.createElement('div');
+                    qtyBadge.className = 'card-qty-badge';
+                    qtyBadge.textContent = `×${count}`;
+                    item.appendChild(qtyBadge);
+                }
+
+                const code = document.createElement('div');
+                code.className = 'card-code';
+                code.textContent = cardId;
+                item.appendChild(code);
 
                 grid.appendChild(item);
             }
         }
+
+        document.getElementById('visualizeDeckBtn').addEventListener('click', parseAndRender);
+        document.getElementById('clearDeckBtn').addEventListener('click', clearAll);
     </script>
 </body>
 

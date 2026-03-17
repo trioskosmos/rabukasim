@@ -1,5 +1,25 @@
 import { DOMUtils } from './utils/DOMUtils.js';
-import { DOM_IDS } from './constants_dom.js';
+import { CSS_CLASSES, DOM_IDS } from './constants_dom.js';
+
+function setSidebarButtonState(button, isActive) {
+    if (!button) return;
+    button.textContent = isActive ? 'X' : '=';
+    button.style.background = isActive ? '#444' : 'var(--accent-pink)';
+}
+
+function setBoardVisibility(showPlayerBoard) {
+    DOMUtils.setVisible(DOM_IDS.CONTAINER_BOARD_PLAYER, showPlayerBoard);
+    DOMUtils.setVisible(DOM_IDS.CONTAINER_BOARD_OPPONENT, !showPlayerBoard);
+
+    if (showPlayerBoard) {
+        DOMUtils.addClass(DOM_IDS.BTN_SHOW_PLAYER, CSS_CLASSES.ACTIVE);
+        DOMUtils.removeClass(DOM_IDS.BTN_SHOW_OPPONENT, CSS_CLASSES.ACTIVE);
+        return;
+    }
+
+    DOMUtils.removeClass(DOM_IDS.BTN_SHOW_PLAYER, CSS_CLASSES.ACTIVE);
+    DOMUtils.addClass(DOM_IDS.BTN_SHOW_OPPONENT, CSS_CLASSES.ACTIVE);
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     // Elements
@@ -107,37 +127,13 @@ export function toggleSidebar() {
         if (s.classList.contains('active')) isActive = true;
     });
 
-    document.body.classList.toggle('sidebar-open');
-
-    if (isActive) {
-        btn.textContent = 'X';
-        btn.style.background = '#444';
-    } else {
-        btn.textContent = '=';
-        btn.style.background = 'var(--accent-pink)';
-    }
+    document.body.classList.toggle(CSS_CLASSES.SIDEBAR_OPEN);
+    setSidebarButtonState(btn, isActive);
 }
 
 /**
  * Tabbed Board Switching
  */
 export function switchBoard(side) {
-    const playerBoard = DOMUtils.getElement(DOM_IDS.CONTAINER_BOARD_PLAYER);
-    const opponentBoard = DOMUtils.getElement(DOM_IDS.CONTAINER_BOARD_OPPONENT);
-    const playerBtn = DOMUtils.getElement(DOM_IDS.BTN_SHOW_PLAYER);
-    const opponentBtn = DOMUtils.getElement(DOM_IDS.BTN_SHOW_OPPONENT);
-
-    if (!playerBoard || !opponentBoard || !playerBtn || !opponentBtn) return;
-
-    if (side === 'player') {
-        DOMUtils.show(DOM_IDS.CONTAINER_BOARD_PLAYER);
-        DOMUtils.hide(DOM_IDS.CONTAINER_BOARD_OPPONENT);
-        DOMUtils.addClass(DOM_IDS.BTN_SHOW_PLAYER, 'active');
-        DOMUtils.removeClass(DOM_IDS.BTN_SHOW_OPPONENT, 'active');
-    } else {
-        DOMUtils.hide(DOM_IDS.CONTAINER_BOARD_PLAYER);
-        DOMUtils.show(DOM_IDS.CONTAINER_BOARD_OPPONENT);
-        DOMUtils.removeClass(DOM_IDS.BTN_SHOW_PLAYER, 'active');
-        DOMUtils.addClass(DOM_IDS.BTN_SHOW_OPPONENT, 'active');
-    }
+    setBoardVisibility(side === 'player');
 }

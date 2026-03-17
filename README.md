@@ -1,20 +1,26 @@
 # Love Live Card Game Engine
+# Rabukasim (Love Live! School Idol Collection Simulator)
 
-Rust-based game engine for the Love Live Card Game with Python bindings.
+Rabukasim is a high-performance simulation engine and RL pipeline for the Love Live! School Idol Collection card game.
 
-## Building
+## Project Structure
 
-```bash
-# Build Python extension
-uv run maturin develop
+- `engine_rust_src/`: Core game engine written in Rust for high performance.
+- `ai/`: Reinforcement Learning pipeline and training scripts.
+- `compiler/`: Card and ability compilation system.
+- `backend/`: Flask-based server for game orchestration.
+- `frontend/`: Web-based user interface for game interaction and visualization.
+- `docs/`: Project documentation and architecture overviews.
+- `reports/`: Diagnostic reports, probe results, and performance metrics.
+- `logs/`: Build and execution logs.
 
-# Build server
-cargo build --release
-```
+## Setup and Usage
 
-## Running
+Refer to `docs/` for detailed setup instructions and developer guides.
+For RL training, see `ai/training/` and the `CLEANUP_ARCHIVE_SUMMARY.md` in `docs/archive/` for context on the recent pipeline consolidation.
 
-```bash
-# Start the server
-./start_server.bat
-```
+## Development
+
+- **Engine**: Rebuild the Rust extension using `maturin`.
+- **AI**: Run the main RL loop via `vanilla_loop.py`.
+- **Tests**: Use `cargo test` in `engine_rust_src` or the root test suite.

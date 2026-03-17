@@ -266,6 +266,9 @@ def format_filter_attr(packed_attr: int) -> str:
         parts.append(f"group={int(spec.group_id)}")
     if spec.unit_enabled:
         parts.append(f"unit={int(spec.unit_id)}")
+        # Check if unit_id is being used as char_id_3 (ID > 60 usually for characters)
+        if spec.unit_id >= 60:
+            parts.append(f"char3={int(spec.unit_id)}")
     if spec.value_enabled:
         compare_op = "<=" if spec.is_le else ">="
         compare_subject = "cost" if spec.is_cost_type else "value"
@@ -403,7 +406,7 @@ class Ability:
                 elif isinstance(instr, Cost):
                     mapping = {
                         AbilityCostType.ENERGY: Opcode.PAY_ENERGY,
-                        AbilityCostType.TAP_SELF: Opcode.TAP_MEMBER,
+                        AbilityCostType.TAP_SELF: Opcode.SET_TAPPED,
                         AbilityCostType.TAP_MEMBER: Opcode.TAP_MEMBER,
                         AbilityCostType.DISCARD_HAND: Opcode.MOVE_TO_DISCARD,
                         AbilityCostType.RETURN_HAND: Opcode.MOVE_MEMBER,
@@ -954,7 +957,7 @@ class Ability:
         """Compile a cost into its corresponding opcode."""
         mapping = {
             AbilityCostType.ENERGY: Opcode.PAY_ENERGY,
-            AbilityCostType.TAP_SELF: Opcode.TAP_MEMBER,
+            AbilityCostType.TAP_SELF: Opcode.SET_TAPPED,
             AbilityCostType.TAP_MEMBER: Opcode.TAP_MEMBER,
             AbilityCostType.DISCARD_HAND: Opcode.MOVE_TO_DISCARD,
             AbilityCostType.DISCARD_TOP_DECK: Opcode.MOVE_TO_DISCARD,
@@ -1118,10 +1121,10 @@ class Ability:
             if not value and count_raw is not None:
                 value = int(count_raw)
 
-            # Fix: Default MOVE_TO_DISCARD for members to 1
+            # Fix: Default MOVE_TO_DISCARD, SET_TAPPED, and ACTIVATE_MEMBER for members to 1
             cur_slot_val = slot_params["target_slot"]
             if (
-                op == Opcode.MOVE_TO_DISCARD
+                op in [Opcode.MOVE_TO_DISCARD, Opcode.SET_TAPPED, Opcode.ACTIVATE_MEMBER]
                 and value == 0
                 and cur_slot_val
                 in (int(TargetType.MEMBER_SELF), int(TargetType.MEMBER_OTHER), int(TargetType.MEMBER_SELECT))
@@ -1448,6 +1451,9 @@ class Ability:
                     slot_params["source_zone"] = src_val
 
                 rem_val = eff.params.get("remainder_zone", 0)
+                if not rem_val and eff.params.get("raw_val") == "REMAINDER":
+                    rem_val = "DISCARD"
+                    slot_params["target_slot"] = 0
                 if isinstance(rem_val, str):
                     rem_map = {
                         "DISCARD": ZONES.get("DISCARD", 7),
@@ -1476,6 +1482,154 @@ class Ability:
                     slot_params["source_zone"] = src_val
 
                 rem_val = eff.params.get("remainder_zone", 0)
+                if not rem_val and eff.params.get("raw_val") == "REMAINDER":
+                    rem_val = "DISCARD"
+                    slot_params["target_slot"] = 0
+                if isinstance(rem_val, str):
+                    rem_map = {
+                        "DISCARD": ZONES.get("DISCARD", 7),
+                        "DECK": ZONES.get("DECK_TOP", 1),
+                        "HAND": ZONES.get("HAND", 6),
+                        "DECK_TOP": EXTRA_CONSTANTS.get("DECK_POSITION_TOP", 1),
+                        "DECK_BOTTOM": EXTRA_CONSTANTS.get("DECK_POSITION_BOTTOM", 2),
+                    }
+                    rem_val = rem_map.get(rem_val.upper(), 0)
+                slot_params["remainder_zone"] = rem_val
+
+            if eff.effect_type == EffectType.MOVE_TO_DISCARD:
+                # REMAINDER handling for LOOK_AND_CHOOSE_ORDER
+                if not rem_val and eff.params.get("raw_val") == "REMAINDER":
+                    rem_val = "DISCARD"
+                    slot_params["target_slot"] = 0
+                
+                src_val = eff.params.get("source", "stage").upper()
+                if src_val == "HAND":
+                    src_val = ZONES.get("HAND", 6)
+                elif src_val == "DISCARD":
+                    src_val = ZONES.get("DISCARD", 7)
+                elif any(k in src_val for k in ["DECK", "LOOKED"]):
+                    src_val = ZONES.get("DECK_TOP", 1)
+                else:
+                    src_val = ZONES.get("STAGE", 4)
+                slot_params["source_zone"] = src_val
+
+                if isinstance(rem_val, str):
+                    rem_map = {
+                        "DISCARD": ZONES.get("DISCARD", 7),
+                        "DECK_TOP": ZONES.get("DECK_TOP", 1),
+                        "DECK_BOTTOM": ZONES.get("DECK_BOTTOM", 2),
+                        "HAND": ZONES.get("HAND", 6),
+                    }
+                    slot_params["remainder_zone"] = rem_map.get(rem_val.upper(), 0)
+                
+                slot_params["dest_zone"] = ZONES.get("DISCARD", 7)
+
+            if eff.effect_type == EffectType.PLACE_UNDER:
+                source = str(eff.params.get("from") or eff.params.get("source") or "").lower()
+                u_src_val = 0
+                if source == "energy":
+                    u_src_val = ZONES.get("ENERGY", 3)
+                elif source == "discard":
+                    u_src_val = ZONES.get("DISCARD", 7)
+                slot_params["source_zone"] = u_src_val
+
+            # ENERGY_CHARGE params
+            if eff.effect_type == EffectType.ENERGY_CHARGE:
+                if eff.params.get("wait") or eff.params.get("state") == "wait":
+                    slot_params["is_wait"] = True
+
+            # Empty Slot flag
+            dest = str(eff.params.get("destination") or "").lower()
+            if eff.params.get("is_empty_slot") or dest == "stage_empty" or "EMPTY" in dest:
+                slot_params["is_empty_slot"] = True
+
+            # Specialized Opcode Packing
+            if eff.effect_type == EffectType.SELECT_MEMBER:
+                attr = self._pack_filter_attr(eff)
+
+            if eff.effect_type == EffectType.MOVE_MEMBER:
+                destination = str(eff.params.get("destination") or "").lower()
+                if destination == "target" or move_member_raw_value in ["TARGET", "TARGETS"]:
+                    attr = 99
+
+            if eff.effect_type in (EffectType.PLAY_MEMBER_FROM_HAND, EffectType.PLAY_MEMBER_FROM_DISCARD):
+                attr = self._pack_filter_attr(eff)
+                dest_raw = str(eff.params.get("destination") or "").upper()
+                if dest_raw == "STAGE_EMPTY":
+                    slot_params["target_slot"] = 4
+                elif "BATON" in dest_raw:
+                    slot_params["is_baton_slot"] = True
+
+            if eff.effect_type == EffectType.PLAY_LIVE_FROM_DISCARD:
+                attr = self._pack_filter_attr(eff)
+
+            if eff.effect_type == EffectType.LOOK_AND_CHOOSE:
+                val = self._pack_effect_look_and_choose(eff, val, slot_params)
+                attr |= self._pack_filter_attr(eff)
+
+            if eff.effect_type in (
+                EffectType.SELECT_CARDS,
+                EffectType.SELECT_MEMBER,
+                EffectType.SELECT_LIVE,
+                EffectType.MOVE_TO_DISCARD,
+                EffectType.RECOVER_LIVE,
+                EffectType.RECOVER_MEMBER,
+            ):
+                attr = self._pack_filter_attr(eff)
+                src_zone_str = str(eff.params.get("source") or eff.params.get("from") or eff.params.get("zone") or "DECK").upper()
+                if "," not in src_zone_str:
+                    if src_zone_str == "HAND":
+                        src_val = ZONES.get("HAND", 6)
+                    elif src_zone_str == "DISCARD":
+                        src_val = ZONES.get("DISCARD", 7)
+                    elif src_zone_str in ("YELL", "REVEALED", "CHEER"):
+                        src_val = ZONES.get("YELL", 15)
+                    elif src_zone_str in ("STAGE", "TARGET_STAGE"):
+                        src_val = ZONES.get("STAGE", 4)
+                    elif (
+                        src_zone_str == "DECK"
+                        and eff.effect_type in (EffectType.SELECT_MEMBER, EffectType.MOVE_TO_DISCARD)
+                    ):
+                        src_val = ZONES.get("STAGE", 4)
+                    else:
+                        src_val = ZONES.get("DECK_TOP", 1)
+                    slot_params["source_zone"] = src_val
+
+                rem_val = eff.params.get("remainder_zone", 0)
+                if not rem_val and eff.params.get("raw_val") == "REMAINDER":
+                    rem_val = "DISCARD"
+                    slot_params["target_slot"] = 0
+                if isinstance(rem_val, str):
+                    rem_map = {
+                        "DISCARD": ZONES.get("DISCARD", 7),
+                        "DECK": ZONES.get("DECK_TOP", 1),
+                        "HAND": ZONES.get("HAND", 6),
+                        "DECK_TOP": EXTRA_CONSTANTS.get("DECK_POSITION_TOP", 1),
+                        "DECK_BOTTOM": EXTRA_CONSTANTS.get("DECK_POSITION_BOTTOM", 2),
+                    }
+                    rem_val = rem_map.get(rem_val.upper(), 0)
+                slot_params["remainder_zone"] = rem_val
+
+            if eff.effect_type == EffectType.MOVE_MEMBER and attr != 99:
+                attr = self._pack_filter_attr(eff)
+                src_zone_str = str(eff.params.get("source") or eff.params.get("from") or eff.params.get("zone") or "DECK").upper()
+                if "," not in src_zone_str:
+                    if src_zone_str == "HAND":
+                        src_val = ZONES.get("HAND", 6)
+                    elif src_zone_str == "DISCARD":
+                        src_val = ZONES.get("DISCARD", 7)
+                    elif src_zone_str in ("YELL", "REVEALED", "CHEER"):
+                        src_val = ZONES.get("YELL", 15)
+                    elif src_zone_str in ("STAGE", "TARGET_STAGE"):
+                        src_val = ZONES.get("STAGE", 4)
+                    else:
+                        src_val = ZONES.get("DECK_TOP", 1)
+                    slot_params["source_zone"] = src_val
+
+                rem_val = eff.params.get("remainder_zone", 0)
+                if not rem_val and eff.params.get("raw_val") == "REMAINDER":
+                    rem_val = "DISCARD"
+                    slot_params["target_slot"] = 0
                 if isinstance(rem_val, str):
                     rem_map = {
                         "DISCARD": ZONES.get("DISCARD", 7),
@@ -1939,6 +2093,8 @@ class Ability:
                 pass
 
         # 4. Unit Filter (Bit 16 + Bits 17-23)
+        # NOTE: Some keywords like "UNIT_HASUNOSORA" are actually GROUP constraints, not UNIT constraints.
+        # We must intercept these and treat them as groups instead of trying to resolve them as units.
         unit_val = params.get("unit") or params.get("unit_id") or params_upper.get("UNIT_ID")
         if not unit_val and "UNIT_ID=" in filter_str:
             m = re.search(r"UNIT_ID=(\d+)", filter_str)
@@ -1950,6 +2106,25 @@ class Ability:
                 unit_val = m.group(1)
         elif not unit_val and "UNIT_BIBI" in filter_str:
             unit_val = 2
+
+        # Check if unit_val is actually a GROUP keyword (HASUNOSORA, LIELLA, NIJIGASAKI, etc.)
+        # If so, treat it as a group constraint instead of a unit constraint
+        if unit_val and isinstance(unit_val, str):
+            unit_val_upper = str(unit_val).upper()
+            # Map group-like keywords that might appear as UNIT_*
+            group_keyword_map = {
+                "HASUNOSORA": 4,
+                "LIELLA": 3,
+                "NIJIGASAKI": 2,
+                "AQUOURS": 1,
+                "MUS": 0,
+            }
+            # If this keyword is actually a group, handle it as a group instead
+            if unit_val_upper in group_keyword_map:
+                if not filter_obj.get("group_enabled"):
+                    filter_obj["group_enabled"] = True
+                    filter_obj["group_id"] = group_keyword_map[unit_val_upper]
+                unit_val = None  # Clear so we don't process it as a unit below
 
         if unit_val:
             try:
@@ -2180,14 +2355,19 @@ class Ability:
             filter_obj["keyword_member"] = True
 
         # Legacy flags (Bits 12-15)
-        if params.get("is_tapped"):
+        # Parse STATUS=TAPPED from filter string or params
+        if params.get("is_tapped") or "STATUS=TAPPED" in filter_str or "STATUS=TAP" in filter_str:
             filter_obj["is_tapped"] = True
+        
+        # Parse HAS_BLADE_HEART / NOT_HAS_BLADE_HEART from filter string or params
         bh = params.get("has_blade_heart")
-        if bh is True:
+        if bh is True or "HAS_BLADE_HEART" in filter_str:
             filter_obj["has_blade_heart"] = True
-        elif bh is False:
+        elif bh is False or "NOT_HAS_BLADE_HEART" in filter_str:
             filter_obj["not_has_blade_heart"] = True
-        if params.get("UNIQUE_NAMES") or params_upper.get("UNIQUE_NAMES"):
+        
+        # Parse UNIQUE_NAMES from filter string or params
+        if params.get("UNIQUE_NAMES") or params_upper.get("UNIQUE_NAMES") or "UNIQUE_NAMES" in filter_str:
             filter_obj["unique_names"] = True
 
         filter_spec = PackedFilterSpec(**filter_obj)

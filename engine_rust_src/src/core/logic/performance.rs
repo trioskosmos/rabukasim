@@ -344,13 +344,13 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
             .get_effective_hearts(p_idx, i, db, 0)
             .to_array()
             .map(|h| h as u32);
+        let mut printed_h = [0u32; 7];
 
         let cid = state.players[p_idx].stage[i];
-        let mut true_bonus_h = [0i32; 7];
         if cid >= 0 {
             if let Some(m) = db.get_member(cid) {
                 for k in 0..7 {
-                    true_bonus_h[k] = eff_h[k] as i32 - m.hearts[k] as i32;
+                    printed_h[k] = m.hearts[k] as u32;
                 }
             }
         }
@@ -361,6 +361,10 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 let sum: u32 = eff_h.iter().sum();
                 eff_h = [0u32; 7];
                 eff_h[dst_col as usize] = sum;
+
+                let printed_sum: u32 = printed_h.iter().sum();
+                printed_h = [0u32; 7];
+                printed_h[dst_col as usize] = printed_sum;
 
                 if transform_logs.is_empty() {
                     // Log once per transform type
@@ -377,6 +381,22 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         let cid = state.players[p_idx].stage[i];
         if cid >= 0 {
             if let Some(m) = db.get_member(cid) {
+                let mut source_base_h = [0u8; 7];
+                let mut true_bonus_h = [0u32; 7];
+                let mut documented_bonus_h = [0u8; 7];
+                for k in 0..7 {
+                    let base_amt = printed_h[k].min(eff_h[k]);
+                    source_base_h[k] = base_amt.min(u8::MAX as u32) as u8;
+                    true_bonus_h[k] = eff_h[k].saturating_sub(base_amt);
+                }
+
+                // Calculate documented bonus hearts from heart_buff_logs  
+                for &(_, amt, color, slot) in &state.players[p_idx].heart_buff_logs {
+                    if slot == i as u8 && (color as usize) < 7 {
+                        documented_bonus_h[color as usize] = documented_bonus_h[color as usize].saturating_add(amt as u8);
+                    }
+                }
+
                 if eff_h.iter().any(|&v| v > 0) {
                     let mut h8 = [0u8; 7];
                     for k in 0..7 { h8[k] = eff_h[k] as u8; }
@@ -385,7 +405,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                         slot: i as i16,
                         name: m.name.clone(),
                         hearts: h8,
-                        base_hearts: m.hearts,
+                        base_hearts: source_base_h,
+                        documented_bonus_hearts: documented_bonus_h,
                         is_yell: false,
                     });
 
@@ -512,6 +533,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     let key = format!("{}_{}", i, cid);
                     if let Some(entry) = member_summary.get_mut(&key) {
                         entry["hearts"] = json!(eff_h);
+                        entry["base_hearts"] = json!(source_base_h);
                         entry["bonus_hearts"] = json!(true_bonus_h);
                         entry["note_icons"] = json!(m.note_icons);
                         entry["base_notes"] = json!(m.note_icons);
@@ -543,6 +565,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 name: format!("Yell: {}", name),
                 hearts: bh,
                 base_hearts: bh, // For yells, everything is "base" (printed on yell card)
+                documented_bonus_hearts: [0u8; 7], // Yells don't have documented bonuses
                 is_yell: true,
             });
 

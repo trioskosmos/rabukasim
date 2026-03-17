@@ -70,6 +70,20 @@ def inspect_card(query_id):
         print("```")
         print(decode_bytecode(stored_bc))
         print("```")
+        
+        # Breakdown filters
+        chunks = [stored_bc[i : i + 5] for i in range(0, len(stored_bc), 5)]
+        for j, chunk in enumerate(chunks):
+            if len(chunk) < 5: continue
+            op, v, a_low, a_high, s = chunk
+            attr = ((a_high & 0xFFFFFFFF) << 32) | (a_low & 0xFFFFFFFF)
+            if attr != 0:
+                print(f"**Filter Breakdown (Ability {i}, Step {j})**:")
+                from engine.models.ability import PackedFilterSpec
+                spec = PackedFilterSpec.unpack(attr)
+                print("```json")
+                print(json.dumps(spec.to_debug_dict(), indent=2))
+                print("```")
 
     # 2. Live Re-compilation Check
     print("\n## Live Re-compilation Check")

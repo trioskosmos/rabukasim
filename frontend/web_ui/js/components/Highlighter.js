@@ -53,25 +53,36 @@ export const Highlighter = {
 
         let specificHighlighted = false;
 
-        if (a.type === 'PLAY') {
-            if (a.hand_idx !== undefined) {
-                Highlighter.addHighlight(`${selfPrefix}-hand-card-${a.hand_idx}`, 'highlight-source');
+        if (a.type === 'PLAY' || (a.id >= 1000 && a.id <= 1599)) {
+            const hIdx = a.hand_idx !== undefined ? a.hand_idx : (a.id >= 1000 && a.id <= 1599 ? Math.floor((a.id - 1000) / 10) : undefined);
+            const sIdx = a.area_idx !== undefined ? a.area_idx : (a.id >= 1000 && a.id <= 1599 ? (a.id - 1000) % 10 : undefined);
+            if (hIdx !== undefined) {
+                Highlighter.addHighlight(`${selfPrefix}-hand-card-${hIdx}`, 'highlight-source');
                 specificHighlighted = true;
             }
-            if (a.area_idx !== undefined) {
-                Highlighter.addHighlight(`${selfPrefix}-stage-slot-${a.area_idx}`, 'highlight-target');
+            if (sIdx !== undefined) {
+                Highlighter.addHighlight(`${selfPrefix}-stage-slot-${sIdx}`, 'highlight-target');
                 specificHighlighted = true;
             }
-        } else if (a.type === 'LIVE_SET') {
-            if (a.hand_idx !== undefined) {
-                Highlighter.addHighlight(`${selfPrefix}-hand-card-${a.hand_idx}`, 'highlight-source');
+        } else if (a.type === 'LIVE_SET' || (a.id >= 400 && a.id <= 459)) {
+            const hIdx = a.hand_idx !== undefined ? a.hand_idx : (a.id >= 400 && a.id <= 459 ? a.id - 400 : undefined);
+            if (hIdx !== undefined) {
+                Highlighter.addHighlight(`${selfPrefix}-hand-card-${hIdx}`, 'highlight-source');
                 specificHighlighted = true;
             }
             Highlighter.addHighlight(`${selfPrefix}-live`, 'highlight-target');
             specificHighlighted = true;
-        } else if (a.type === 'ABILITY' || (a.metadata && a.metadata.category === 'ABILITY')) {
-            if (a.location === 'discard' || (a.metadata && a.metadata.location === 'discard')) {
+        } else if (a.type === 'ABILITY' || m.category === 'ABILITY' || (a.id >= 8300 && a.id <= 8599) || (a.id >= 1600 && a.id <= 2199) || (a.id >= 9300 && a.id <= 9999)) {
+            if (a.location === 'discard' || m.location === 'discard' || (a.id >= 9300 && a.id <= 9999)) {
                 Highlighter.addHighlight(`${selfPrefix}-discard`, 'highlight-source');
+                specificHighlighted = true;
+            } else if (a.id >= 8300 && a.id <= 8599) {
+                const sIdx = Math.floor((a.id - 8300) / 100);
+                Highlighter.addHighlight(`${selfPrefix}-stage-slot-${sIdx}`, 'highlight-source');
+                specificHighlighted = true;
+            } else if (a.id >= 1600 && a.id <= 2199) {
+                const hIdx = Math.floor((a.id - 1600) / 10);
+                Highlighter.addHighlight(`${selfPrefix}-hand-card-${hIdx}`, 'highlight-source');
                 specificHighlighted = true;
             } else if (a.area_idx !== undefined) {
                 Highlighter.addHighlight(`${selfPrefix}-stage-slot-${a.area_idx}`, 'highlight-source');
@@ -79,83 +90,52 @@ export const Highlighter = {
             } else if (a.slot_idx !== undefined) {
                 Highlighter.addHighlight(`${targetPrefix}-stage-slot-${a.slot_idx}`, 'highlight-source');
                 specificHighlighted = true;
-            } else if (a.source_card_id !== undefined && a.source_card_id !== -1) {
-                Highlighter.highlightCardById(a.source_card_id);
+            }
+        } else if (a.type === 'CHOICE' || (a.id >= 2200 && a.id <= 2799) || (a.id >= 8600 && a.id <= 8899)) {
+            const hIdx = a.hand_idx !== undefined ? a.hand_idx : (a.id >= 2200 && a.id <= 2799 ? Math.floor((a.id - 2200) / 10) : undefined);
+            const sIdx = a.area_idx !== undefined ? a.area_idx : a.slot_idx !== undefined ? a.slot_idx : (a.id >= 8600 && a.id <= 8899 ? Math.floor((a.id - 8600) / 100) : undefined);
+            if (hIdx !== undefined) {
+                Highlighter.addHighlight(`${selfPrefix}-hand-card-${hIdx}`, 'highlight-target');
+                specificHighlighted = true;
+            } else if (sIdx !== undefined) {
+                Highlighter.addHighlight(`${selfPrefix}-stage-slot-${sIdx}`, 'highlight-target');
+                specificHighlighted = true;
+            } else if (a.index !== undefined || a.id !== undefined) {
+                Highlighter.addHighlight(`select-list-item-${a.index ?? a.id}`, 'highlight-target');
                 specificHighlighted = true;
             }
-        } else if (a.type === 'MULLIGAN') {
-            if (a.hand_idx !== undefined) {
-                Highlighter.addHighlight(`${selfPrefix}-hand-card-${a.hand_idx}`, 'highlight-target');
+        } else if (a.type === 'MULLIGAN' || (a.id >= 300 && a.id <= 359)) {
+            const hIdx = a.hand_idx !== undefined ? a.hand_idx : (a.id >= 300 && a.id <= 359 ? a.id - 300 : undefined);
+            if (hIdx !== undefined) {
+                Highlighter.addHighlight(`${selfPrefix}-hand-card-${hIdx}`, 'highlight-target');
                 specificHighlighted = true;
             }
-        } else if (a.type === 'SELECT_HAND') {
-            const hIdx = a.hand_idx ?? m.hand_idx;
+        } else if (a.type === 'SELECT_HAND' || (a.id >= 100 && a.id <= 159) || (a.id >= 500 && a.id <= 559) || (a.id >= 8200 && a.id <= 8259)) {
+            let hIdx = a.hand_idx ?? m.hand_idx;
+            if (hIdx === undefined) {
+                if (a.id >= 100 && a.id <= 159) hIdx = a.id - 100;
+                else if (a.id >= 500 && a.id <= 559) hIdx = a.id - 500;
+                else if (a.id >= 8200 && a.id <= 8259) hIdx = a.id - 8200;
+            }
             if (hIdx !== undefined) {
                 const id = `${targetPrefix}-hand-card-${hIdx}`;
                 Highlighter.addHighlight(id, 'highlight-source');
                 specificHighlighted = true;
-                const card = document.getElementById(id);
-                if (card && card.dataset.text) {
-                    Tooltips.showTooltip(card, { clientX: card.getBoundingClientRect().right + 10, clientY: card.getBoundingClientRect().top });
-                }
             }
-        } else if (a.type === 'SELECT_STAGE' || a.type === 'SELECT_MEMBER') {
-            const idx = a.slot_idx ?? a.area_idx ?? m.slot_idx;
+        } else if (a.type === 'SELECT_STAGE' || (a.id >= 600 && a.id <= 602)) {
+            const idx = a.slot_idx ?? a.area_idx ?? m.slot_idx ?? (a.id >= 600 && a.id <= 602 ? a.id - 600 : undefined);
             if (idx !== undefined) {
-                const id = `${targetPrefix}-stage-slot-${idx}`;
-                Highlighter.addHighlight(id, 'highlight-target');
-                specificHighlighted = true;
-                const slot = document.getElementById(id);
-                if (slot && slot.dataset.text) {
-                    Tooltips.showTooltip(slot, { clientX: slot.getBoundingClientRect().right + 10, clientY: slot.getBoundingClientRect().top });
-                }
-            }
-        } else if (a.type === 'SELECT' || a.type === 'TARGET_OPPONENT' || m.category === 'CHOICE' || m.category === 'SELECT') {
-            if (a.type === 'TARGET_OPPONENT' || (state.pending_choice && state.pending_choice.type === 'TARGET_OPPONENT_MEMBER') || m.opcode === 32) {
-                const idx = a.index ?? a.slot_idx ?? m.slot_idx;
-                if (idx !== undefined) {
-                    const prefix = (a.type === 'TARGET_OPPONENT' || m.opcode === 32) ? oppPrefix : targetPrefix;
-                    const id = `${prefix}-stage-slot-${idx}`;
-                    Highlighter.addHighlight(id, 'highlight-target');
-                    specificHighlighted = true;
-                }
-            } else if (m.hand_idx !== undefined) {
-                const id = `${targetPrefix}-hand-card-${m.hand_idx}`;
-                Highlighter.addHighlight(id, 'highlight-target');
-                specificHighlighted = true;
-            } else if (m.slot_idx !== undefined) {
-                const id = `${targetPrefix}-stage-slot-${m.slot_idx}`;
-                Highlighter.addHighlight(id, 'highlight-target');
-                specificHighlighted = true;
-            } else if (m.energy_idx !== undefined) {
-                const id = `${targetPrefix}-energy-slot-${m.energy_idx}`;
-                Highlighter.addHighlight(id, 'highlight-target');
-                specificHighlighted = true;
-            } else {
-                Highlighter.addHighlight(`select-list-item-${a.index ?? a.id}`, 'highlight-target');
-                specificHighlighted = true;
-            }
-        } else if (a.type === 'SELECT_DISCARD' || m.category === 'DISCARD') {
-            Highlighter.addHighlight(`${targetPrefix}-discard`, 'highlight-target');
-            specificHighlighted = true;
-        } else if (a.type === 'COLOR' || (a.id >= 580 && a.id <= 586)) {
-            specificHighlighted = true;
-        } else if (a.type === 'SELECT_LIVE' || a.type === 'LIVE_PERFORM' || (a.id >= 900 && a.id <= 902) || m.category === 'LIVE') {
-            const idx = (a.area_idx !== undefined) ? a.area_idx : (a.slot_idx !== undefined ? a.slot_idx : (a.id >= 900 && a.id <= 902 ? a.id - 900 : (a.id >= 600 && a.id <= 602 ? a.id - 600 : -1)));
-            if (idx !== -1) {
-                const id = `${targetPrefix}-live-slot-${idx}`;
-                Highlighter.addHighlight(id, 'highlight-target');
-                specificHighlighted = true;
-            }
-        } else if (a.type === 'FORMATION' || a.type === 'MOVE') {
-            if (a.src_idx !== undefined || a.source_idx !== undefined || a.prev_idx !== undefined) {
-                const idx = a.src_idx !== undefined ? a.src_idx : (a.source_idx !== undefined ? a.source_idx : a.prev_idx);
-                Highlighter.addHighlight(`${targetPrefix}-stage-slot-${idx}`, 'highlight-source');
-            }
-            if (a.dst_idx !== undefined || a.area_idx !== undefined || a.slot_idx !== undefined) {
-                const idx = a.dst_idx !== undefined ? a.dst_idx : (a.area_idx !== undefined ? a.area_idx : a.slot_idx);
                 Highlighter.addHighlight(`${targetPrefix}-stage-slot-${idx}`, 'highlight-target');
+                specificHighlighted = true;
             }
+        } else if (a.type === 'SELECT_LIVE' || (a.id >= 900 && a.id <= 929)) {
+            const idx = a.area_idx ?? a.slot_idx ?? (a.id >= 900 && a.id <= 929 ? a.id - 900 : undefined);
+            if (idx !== undefined) {
+                Highlighter.addHighlight(`${targetPrefix}-live-slot-${idx}`, 'highlight-target');
+                specificHighlighted = true;
+            }
+        } else if (a.id >= 10000 && a.id <= 10999) {
+            Highlighter.addHighlight(`${selfPrefix}-energy-slot-${a.id - 10000}`, 'highlight-target');
             specificHighlighted = true;
         }
 

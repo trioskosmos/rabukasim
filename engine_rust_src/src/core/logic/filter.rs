@@ -166,63 +166,78 @@ impl CardFilter {
 
         // 4. Character ID Filter
         if self.char_id_1 > 0 {
-            let normalized_name = if let Some(m) = db.get_member(cid) {
-                &m.normalized_name
+            let (char_mask, normalized_name, _card_name) = if let Some(m) = db.get_member(cid) {
+                (m.char_mask, Some(&m.normalized_name), Some(&m.name))
             } else if let Some(l) = db.get_live(cid) {
-                &l.normalized_name
+                (l.char_mask, Some(&l.normalized_name), Some(&l.name))
             } else {
-                ""
+                (0, None, None)
             };
 
-            let mut matched = false;
-
-            // Check char_id_1
-            let target1 = crate::core::logic::card_db::get_character_name(self.char_id_1);
-            if normalized_name.contains(&target1.replace(" ", "")) {
-                matched = true;
+            let mut filter_mask = 1u128 << self.char_id_1;
+            if self.char_id_2 > 0 {
+                filter_mask |= 1u128 << self.char_id_2;
+            }
+            let actual_char_id_3 = if self.char_id_3 > 0 {
+                self.char_id_3
+            } else if !self.unit_enabled && self.unit_id > 0 {
+                self.unit_id
+            } else {
+                0
+            };
+            if actual_char_id_3 > 0 {
+                filter_mask |= 1u128 << actual_char_id_3;
             }
 
-            // Check char_id_2
-            if !matched && self.char_id_2 > 0 {
-                let target2 = crate::core::logic::card_db::get_character_name(self.char_id_2);
-                if normalized_name.contains(&target2.replace(" ", "")) {
+            if char_mask != 0 {
+                if (char_mask & filter_mask) == 0 {
+                    return false;
+                }
+            } else if let Some(name) = normalized_name {
+                // FALLBACK for manual test cards
+                let mut matched = false;
+                let target1 = crate::core::logic::card_db::get_character_name(self.char_id_1);
+                if name.contains(&target1.replace(" ", "")) {
                     matched = true;
                 }
-            }
-
-            // Check char_id_3 (including fallback to unit_id if unit is disabled)
-            if !matched {
-                let actual_char_id_3 = if self.char_id_3 > 0 {
-                    self.char_id_3
-                } else if !self.unit_enabled && self.unit_id > 0 {
-                    self.unit_id
-                } else {
-                    0
-                };
-                if actual_char_id_3 > 0 {
-                    let target3 = crate::core::logic::card_db::get_character_name(actual_char_id_3);
-                    if normalized_name.contains(&target3.replace(" ", "")) {
+                if !matched && self.char_id_2 > 0 {
+                    let target2 = crate::core::logic::card_db::get_character_name(self.char_id_2);
+                    if name.contains(&target2.replace(" ", "")) {
                         matched = true;
                     }
                 }
-            }
-
-            if !matched {
+                if !matched && actual_char_id_3 > 0 {
+                    let target3 = crate::core::logic::card_db::get_character_name(actual_char_id_3);
+                    if name.contains(&target3.replace(" ", "")) {
+                        matched = true;
+                    }
+                }
+                if !matched {
+                    return false;
+                }
+            } else {
                 return false;
             }
         }
 
         // 5. Setsuna Filter (bit 59)
         if self.is_setsuna {
-            let name = if let Some(m) = db.get_member(cid) {
-                &m.name
+            let (s_flags, name) = if let Some(m) = db.get_member(cid) {
+                (m.semantic_flags, Some(&m.name))
             } else if let Some(l) = db.get_live(cid) {
-                &l.name
+                (l.semantic_flags, Some(&l.name))
             } else {
-                ""
+                (0, None)
             };
-            if !name.contains("せつ菜") {
-                return false;
+            if (s_flags & 0x100) == 0 {
+                // Fallback for manual tests that didn't set flags but HAVE name
+                if let Some(n) = name {
+                    if !n.contains("せつ菜") {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
             }
         }
 
@@ -340,22 +355,34 @@ impl CardFilter {
 
         // 10. Special ID Name Filter (bits 56-58)
         if self.special_id > 0 {
-            let name = if let Some(m) = db.get_member(cid) {
-                m.name.as_str()
+            let (s_flags, name) = if let Some(m) = db.get_member(cid) {
+                (m.semantic_flags, Some(&m.name))
             } else if let Some(l) = db.get_live(cid) {
-                l.name.as_str()
+                (l.semantic_flags, Some(&l.name))
             } else {
-                ""
+                (0, None)
             };
             match self.special_id {
                 1 => {
-                    if !name.contains("澁谷かのん") {
-                        return false;
+                    if (s_flags & 0x200) == 0 {
+                        if let Some(n) = name {
+                            if !n.contains("澁谷かのん") {
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
                     }
                 }
                 2 => {
-                    if name.contains("MY舞") {
+                    // Bit 10 is "Contains MY舞"
+                    if (s_flags & 0x400) != 0 {
                         return false;
+                    }
+                    if let Some(n) = name {
+                        if n.contains("MY舞") {
+                            return false;
+                        }
                     }
                 }
                 3 => {

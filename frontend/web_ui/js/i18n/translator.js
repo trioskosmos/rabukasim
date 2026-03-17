@@ -183,7 +183,7 @@ export function translateCard(card) {
             name = NAME_MAP[name];
         } else if (name.includes('&') || name.includes('/') || name.includes('／') || name.includes('＆') || name.includes('・')) {
             // Split by various delimiters common in multi-character cards
-            const delimiters = /(&|\/|／|＆|・)/;
+            const delimiters = /([&\/／＆・])/;
             const parts = name.split(delimiters);
             const translatedParts = parts.map(part => {
                 const trimmed = part.trim();
@@ -265,7 +265,7 @@ class OpcodeParser {
      * @param {string} raw 
      */
     static parseInstruction(raw) {
-        const match = raw.match(/^(\w+)(?:\((.*)\))?(?:\s*\{(.*?)\})?/);
+        const match = raw.match(/^(\w+)(?:\((.*)\))?(?:\s*\{(.*?)\})?$/);
         if (!match) return { opcode: raw, args: [], params: {} };
 
         const opcode = match[1];

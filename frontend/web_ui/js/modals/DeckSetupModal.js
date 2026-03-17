@@ -2,17 +2,20 @@ import { State } from '../state.js';
 import { Network } from '../network.js';
 import { Modals } from '../ui_modals.js';
 import { validator } from '../components/DeckValidator.js';
+import { ModalManager } from '../utils/ModalManager.js';
+
+let deckModalInputBound = false;
 
 export const DeckSetupModal = {
     openDeckModal: () => {
-        const modal = document.getElementById('deck-modal');
-        if (modal) modal.style.display = 'flex';
+        ModalManager.show('deck-modal');
         validator.init();
         Modals.fetchAndPopulateDecks();
 
         const input = document.getElementById('deck-html-input');
-        if (input) {
+        if (input && !deckModalInputBound) {
             input.addEventListener('input', () => DeckSetupModal.validateInline());
+            deckModalInputBound = true;
         }
     },
 
@@ -26,8 +29,7 @@ export const DeckSetupModal = {
     },
 
     closeDeckModal: () => {
-        const modal = document.getElementById('deck-modal');
-        if (modal) modal.style.display = 'none';
+        ModalManager.hide('deck-modal');
     },
 
     fetchAndPopulateDecks: async () => {
@@ -139,7 +141,9 @@ export const DeckSetupModal = {
             }
         }
         DeckSetupModal.closeDeckModal();
-        if (window.fetchState) window.fetchState();
+        if (State.roomCode || State.offlineMode) {
+            await Network.fetchState();
+        }
     },
 
     loadTestDeck: async () => {
@@ -173,7 +177,9 @@ export const DeckSetupModal = {
                 }
             }
             DeckSetupModal.closeDeckModal();
-            if (window.fetchState) window.fetchState();
+            if (State.roomCode || State.offlineMode) {
+                await Network.fetchState();
+            }
         } catch (e) {
             console.error(e);
             alert("Error loading test deck: " + e.message);
@@ -211,7 +217,9 @@ export const DeckSetupModal = {
                 }
             }
             DeckSetupModal.closeDeckModal();
-            if (window.fetchState) window.fetchState();
+            if (State.roomCode || State.offlineMode) {
+                await Network.fetchState();
+            }
         } catch (e) {
             console.error(e);
             alert("Error loading random deck: " + e.message);

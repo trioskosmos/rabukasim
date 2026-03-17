@@ -122,9 +122,9 @@
     </div>
 
     <div class="controls">
-        <button class="btn-en" onclick="switchLanguage('en')">🇺🇸 Switch to English</button>
-        <button class="btn-jp" onclick="switchLanguage('jp')">🇯🇵 Switch to Japanese</button>
-        <button onclick="testTranslations()">🧪 Run Tests</button>
+        <button class="btn-en" id="switchEnBtn">🇺🇸 Switch to English</button>
+        <button class="btn-jp" id="switchJpBtn">🇯🇵 Switch to Japanese</button>
+        <button id="runTranslationTestsBtn">🧪 Run Tests</button>
     </div>
 
     <div class="info-box">
@@ -152,7 +152,7 @@
             updateDisplay();
         }
 
-        window.switchLanguage = async function(lang) {
+        async function switchLanguage(lang) {
             console.log(`Switching to: ${lang}`);
             await i18n.loadTranslations(lang);
             window.testI18n.currentLang = lang;
@@ -167,7 +167,7 @@
             langDisplay.style.color = lang === 'en' ? '#4CAF50' : '#ff6b6b';
         }
 
-        window.testTranslations = async function() {
+        async function testTranslations() {
             if (!window.testI18n.loaded) {
                 alert('i18n not loaded. Retrying...');
                 await init();
@@ -299,6 +299,10 @@
             resultsDiv.innerHTML = html;
             console.log('Tests completed for language:', lang);
         }
+
+        document.getElementById('switchEnBtn').addEventListener('click', () => switchLanguage('en'));
+        document.getElementById('switchJpBtn').addEventListener('click', () => switchLanguage('jp'));
+        document.getElementById('runTranslationTestsBtn').addEventListener('click', testTranslations);
 
         // Initialize on load
         init().catch(err => {

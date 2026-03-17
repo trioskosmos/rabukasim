@@ -21,6 +21,7 @@ dist/
 
 # Generated data
 logs/
+_logs_archive/
 checkpoints/
 replays/
 stress_reports/
@@ -147,6 +148,10 @@ historiccheckpoints/
 frontend/img/cards/**/*.png
 launcher/static_content/img/cards/
 launcher/static_content/
+launcher/static_content.old/
+launcher/.static_content_staging/
+frontend/web_ui/dist/
+frontend/web_ui/node_modules/
 
 # Web Distribution
 web_dist/

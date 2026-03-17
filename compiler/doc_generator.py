@@ -214,6 +214,8 @@ def generate_opcode_docs(compiled_data: dict, output_path: str = "reports/opcode
     format_section("Condition Opcodes", condition_stats, is_condition=True)
 
     # Write to file
+    import os
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("\n".join(md_lines))
 

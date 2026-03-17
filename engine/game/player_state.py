@@ -738,6 +738,7 @@ class PlayerState(StateMixin):
         # 4. Process Lives & Requirements
         lives = []
         req_breakdown = []  # Log for requirement reductions
+        available_hearts = total_hearts.copy()
 
         for live_id in self.live_zone:
             l_base = get_base_id(live_id)
@@ -784,29 +785,39 @@ class PlayerState(StateMixin):
                         )
                         req = np.maximum(0, req - reduction_val)
 
-            # Calculate Success (Greedy)
-            temp_hearts = total_hearts.copy()
+            # Calculate Success (Greedy), consuming from the shared pool in slot order.
+            sim_hearts = available_hearts.copy()
+            filled = np.zeros(7, dtype=np.int32)
 
-            # 1. Match specific colors
-            needed_specific = req[:6]
-            have_specific = temp_hearts[:6]
-            used_specific = np.minimum(needed_specific, have_specific)
+            for ci in range(6):
+                take = min(sim_hearts[ci], req[ci])
+                filled[ci] = int(take)
+                sim_hearts[ci] -= take
 
-            temp_hearts[:6] -= used_specific
-            remaining_req = req.copy()
-            remaining_req[:6] -= used_specific
+            for ci in range(6):
+                remaining = req[ci] - filled[ci]
+                if remaining <= 0:
+                    continue
+                take = min(sim_hearts[6], remaining)
+                filled[ci] += int(take)
+                sim_hearts[6] -= take
 
-            # 2. Match Any with remaining specific
-            needed_any = remaining_req[6]
-            have_any_from_specific = np.sum(temp_hearts[:6])
-            used_any_from_specific = min(needed_any, have_any_from_specific)
+            req_any = int(req[6])
+            take_any_wild = min(sim_hearts[6], req_any)
+            filled[6] = int(take_any_wild)
+            sim_hearts[6] -= take_any_wild
+            req_any -= take_any_wild
 
-            # 3. Match Any with Any
-            needed_any -= used_any_from_specific
-            have_wild = temp_hearts[6]
-            used_wild = min(needed_any, have_wild)
+            if req_any > 0:
+                for ci in range(6):
+                    if req_any <= 0:
+                        break
+                    take = min(sim_hearts[ci], req_any)
+                    filled[6] += int(take)
+                    sim_hearts[ci] -= take
+                    req_any -= take
 
-            met = np.all(remaining_req[:6] == 0) and (needed_any - used_wild <= 0)
+            met = bool(np.all(filled[:6] >= req[:6]) and filled[6] >= req[6])
 
             lives.append(
                 {
@@ -818,8 +829,12 @@ class PlayerState(StateMixin):
                     "reason": "" if met else "Not met",
                     "base_score": int(live_card.score),
                     "bonus_score": self.live_score_bonus,
+                    "filled": filled.tolist(),
                 }
             )
+
+            if met:
+                available_hearts = sim_hearts
 
         return {
             "can_perform": True,

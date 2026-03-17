@@ -259,6 +259,23 @@ impl MCTS {
         stats
     }
 
+    fn root_action_tiebreak(
+        root_state: &GameState,
+        db: &CardDatabase,
+        action: i32,
+    ) -> (i32, i32) {
+        let mut sim = root_state.clone();
+        if sim.step(db, action).is_err() {
+            return (i32::MIN, i32::MIN);
+        }
+        let me = root_state.current_player as usize;
+        let opp = 1 - me;
+        let live_diff = sim.core.players[me].success_lives.len() as i32
+            - sim.core.players[opp].success_lives.len() as i32;
+        let score_diff = sim.core.players[me].score as i32 - sim.core.players[opp].score as i32;
+        (live_diff, score_diff)
+    }
+
     pub fn search_parallel_mode(
         &self,
         root_state: &GameState,
@@ -553,12 +570,16 @@ impl MCTS {
                 break;
             } // Safety
 
-            let is_trace = num_sims == 1;
+            let is_trace = num_sims == 1
+                && std::env::var("RABUKA_MCTS_TRACE")
+                    .map(|value| value == "1")
+                    .unwrap_or(false);
             let t_setup = std::time::Instant::now();
 
             // --- BRANCH: AlphaZero Batch or Sequential ---
             if let Some(ref evaluator) = self.evaluator {
-                let batch_size = self.cpu_batch_size;
+                let remaining_sims = num_sims.saturating_sub(sims_done).max(1);
+                let batch_size = self.cpu_batch_size.max(1).min(remaining_sims);
                 let mut batch_leaf_indices = Vec::with_capacity(batch_size);
                 let mut batch_leaf_states = Vec::with_capacity(batch_size);
 
@@ -664,22 +685,12 @@ impl MCTS {
                             _ => 0.5,
                         }
                     } else {
-                        // Meta-Heuristic: Use NN-predicted weights!
-                        use crate::core::heuristics::{EvalMode, OriginalHeuristic};
-                        let h = OriginalHeuristic {
-                            config: output.weights,
-                        };
-                        let h_val = h.evaluate(
-                            &batch_leaf_states[i],
-                            db,
-                            root_state.players[0].score,
-                            root_state.players[1].score,
-                            EvalMode::Normal,
-                            None,
-                            None,
-                        );
-                        // Blend: 50/50 NN Value and Heuristic Assessment
-                        (output.value * 0.5) + (h_val * 0.5)
+                        let current_player_win_prob = ((output.value.clamp(-1.0, 1.0) + 1.0) * 0.5).clamp(0.0, 1.0);
+                        if leaf_state.current_player == 0 {
+                            current_player_win_prob
+                        } else {
+                            1.0 - current_player_win_prob
+                        }
                     };
 
                     // Backprop
@@ -868,7 +879,16 @@ impl MCTS {
             })
             .collect();
 
-        stats.sort_by_key(|&(_, _, v)| std::cmp::Reverse(v));
+        stats.sort_by(|left, right| {
+            let left_tiebreak = Self::root_action_tiebreak(root_state, db, left.0);
+            let right_tiebreak = Self::root_action_tiebreak(root_state, db, right.0);
+            right
+                .2
+                .cmp(&left.2)
+                .then_with(|| right.1.partial_cmp(&left.1).unwrap_or(std::cmp::Ordering::Equal))
+                .then_with(|| right_tiebreak.0.cmp(&left_tiebreak.0))
+                .then_with(|| right_tiebreak.1.cmp(&left_tiebreak.1))
+        });
         (stats, profiler)
     }
 

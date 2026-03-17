@@ -1,8 +1,8 @@
-use std::fs;
+﻿use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::turn_sequencer::{SearchConfig, SequencerConfig, TurnSequencer, WeightsConfig, CONFIG};
+use engine_rust::core::logic::turn_sequencer::{SearchConfig, SequencerConfig, TurnSequencer, WeightsConfig};
 use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
 use rand::prelude::StdRng;
 use rand::seq::IndexedRandom;

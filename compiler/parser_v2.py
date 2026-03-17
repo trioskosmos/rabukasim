@@ -555,7 +555,7 @@ class AbilityParserV2:
 
             elif upper_line.startswith("EFFECT:"):
                 eff_str = line[len("EFFECT:") :].strip()
-                new_effects = self._parse_pseudocode_effects(eff_str, last_target=last_target)
+                new_effects = self._parse_pseudocode_effects(eff_str, last_target=last_target, full_text=text)
                 if new_effects:
                     last_target = new_effects[-1].target if isinstance(new_effects[-1], Effect) else last_target
 
@@ -953,7 +953,7 @@ class AbilityParserV2:
         for p in parts:
             if not p:
                 continue
-            negated = p.startswith("NOT ")
+            negated = p.startswith("NOT ") or p.startswith("NOT_")
             name_part = p[4:] if negated else p
 
             # Support ! as prefix for negation
@@ -1164,7 +1164,7 @@ class AbilityParserV2:
                 conditions.append(Condition(ctype, params, is_negated=is_negated))
         return conditions
 
-    def _parse_pseudocode_effects(self, text: str, last_target: TargetType = TargetType.PLAYER) -> List[Effect]:
+    def _parse_pseudocode_effects(self, text: str, last_target: TargetType = TargetType.PLAYER, full_text: str = "") -> List[Effect]:
         effects = []
         # Use the shared split method
         parts = StructuralLexer.split_respecting_nesting(text, delimiter=";")
@@ -1277,7 +1277,14 @@ class AbilityParserV2:
                     params.setdefault("selection_mode", "HIDDEN")
 
                 if name_up.startswith("PLAY_MEMBER"):
-                    if params.get("zone") == "DISCARD" or "DISCARD" in p.upper() or "DISCARD" in text.upper():
+                    # Check if trigger specifies (In Discard) or similar
+                    is_from_discard = (
+                        params.get("zone") == "DISCARD" 
+                        or "DISCARD" in p.upper() 
+                        or "(IN DISCARD)" in full_text.upper()
+                        or "TRIGGER: ACTIVATED_FROM_DISCARD" in full_text.upper()
+                    )
+                    if is_from_discard:
                         name_up = "PLAY_MEMBER_FROM_DISCARD"
                     else:
                         name_up = "PLAY_MEMBER_FROM_HAND"
@@ -1331,8 +1338,32 @@ class AbilityParserV2:
                 val_int = 0
                 val_cond = ConditionType.NONE
 
+                # SPECIAL HANDLING FOR REVEAL_UNTIL WITH COMMA-SEPARATED FILTERS
+                # Must happen BEFORE comma parsing to properly extract TYPE and COST conditions
+                if etype == EffectType.REVEAL_UNTIL and val and "," in val:
+                    # Process: REVEAL_UNTIL(TYPE_LIVE, COST_GE_10) or REVEAL_UNTIL(TYPE_MEMBER, COST_GE_10)
+                    parts = [p.strip() for p in val.split(",")]
+                    for part in parts:
+                        if "TYPE_LIVE" in part:
+                            val_cond = ConditionType.TYPE_CHECK
+                            params["card_type"] = "live"
+                        elif "TYPE_MEMBER" in part:
+                            val_cond = ConditionType.TYPE_CHECK
+                            params["card_type"] = "member"
+                        elif part.startswith("COST_"):
+                            # Extract COST_GE=10 or COST_GE_10, COST_LE=X, etc.
+                            cost_match = re.search(r"COST_(GE|LE|GT|LT|EQ)([=_])(\d+)", part)
+                            if cost_match:
+                                comp, sep, cval = cost_match.groups()
+                                val_cond = ConditionType.COST_CHECK
+                                params["comparison"] = comp
+                                params["value"] = int(cval)
+                        else:
+                            # Unknown part, store as raw
+                            if part and not part.startswith("COST_"):
+                                params[part.lower()] = True
                 # Check for comma-separated positional params in val (e.g. META_RULE(SCORE_RULE, ALL_ENERGY_ACTIVE))
-                if val and "," in val:
+                elif val and "," in val:
                     v_parts = [vp.strip() for vp in val.split(",")]
                     for vp in v_parts:
                         vp_up = vp.upper()
@@ -1355,7 +1386,7 @@ class AbilityParserV2:
                 elif val and hasattr(ConditionType, val):
                     val_cond = getattr(ConditionType, val)
                 elif etype == EffectType.REVEAL_UNTIL and val:
-                    # Special parsing for REVEAL_UNTIL(CONDITION)
+                    # Special parsing for REVEAL_UNTIL(CONDITION) - single condition
                     if "TYPE_LIVE" in val:
                         val_cond = ConditionType.TYPE_CHECK
                         params["card_type"] = "live"
@@ -1363,12 +1394,12 @@ class AbilityParserV2:
                         val_cond = ConditionType.TYPE_CHECK
                         params["card_type"] = "member"
 
-                    # Handle COST_GE/LE in REVEAL_UNTIL
+                    # Handle COST_GE/LE in REVEAL_UNTIL (supports both = and _ separators)
                     if "COST_" in val:
-                        # Extract COST_GE=10 or COST_LE=X
-                        cost_match = re.search(r"COST_(GE|LE|GT|LT|EQ)=(\d+)", val)
+                        # Extract COST_GE=10 or COST_GE_10, COST_LE=X, etc.
+                        cost_match = re.search(r"COST_(GE|LE|GT|LT|EQ)([=_])(\d+)", val)
                         if cost_match:
-                            comp, cval = cost_match.groups()
+                            comp, sep, cval = cost_match.groups()
                             # If we also have TYPE check, we need to combine them?
                             # Bytecode only supports one condition on REVEAL_UNTIL.
                             # We'll prioritize COST check if present, or maybe the engine supports compound?
@@ -1377,11 +1408,11 @@ class AbilityParserV2:
                             params["comparison"] = comp
                             params["value"] = int(cval)
 
-                    if "COST_GE" in val:
+                    if "COST_GE" in val and val_cond == ConditionType.NONE:
                         val_cond = ConditionType.COST_CHECK
-                        m_cost = re.search(r"COST_GE=(\d+)", val)
+                        m_cost = re.search(r"COST_GE([=_])(\d+)", val)
                         if m_cost:
-                            params["min"] = int(m_cost.group(1))
+                            params["min"] = int(m_cost.group(2))
 
                     if val_cond == ConditionType.NONE:
                         try:

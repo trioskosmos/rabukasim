@@ -4,6 +4,10 @@ import os
 import re
 import sys
 
+# Add project root to path to allow imports from engine/compiler
+if __name__ == "__main__":
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from verify.bytecode_decoder import decode_bytecode
 
 
@@ -323,7 +327,8 @@ def display_card_ai(query, raw, compiled, cid, manual_pseudo, consolidated_pseud
 
     if raw:
         print(f"- **Name**: {raw.get('name')}")
-        print(f"- **JP Ability**: {raw.get('ability').replace('\n', ' ')}")
+        ability_text = raw.get('ability', '').replace('\n', ' ')
+        print(f"- **JP Ability**: {ability_text}")
 
         # Pseudocode resolution
         ab_norm = raw.get("ability", "").strip()

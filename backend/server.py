@@ -2,6 +2,8 @@
 Flask Backend for Love Live Card Game Web UI
 """
 
+from __future__ import annotations
+
 import json
 import os
 import random
@@ -375,20 +377,38 @@ def get_planner_store(room: dict[str, Any]) -> dict[str, Any]:
     return planner_store
 
 
-def get_planner_session_key(gs: engine_rust.PyGameState, player_idx: int) -> str:
-    return f"{int(gs.turn)}:{player_idx}"
+def get_planner_session_key(gs, player_idx):
+    """Generate a planner session key from game state."""
+    try:
+        return f"{int(gs.turn)}:{player_idx}"
+    except AttributeError:
+        return f"unknown:{player_idx}"
 
 
-def clone_rust_state(gs: engine_rust.PyGameState) -> engine_rust.PyGameState:
-    cloned = engine_rust.PyGameState(RUST_DB)
-    cloned.apply_state_json(gs.to_json())
-    return cloned
+def clone_rust_state(gs):
+    """Clone a Rust game state (requires Rust engine)."""
+    if RUST_DB is None:
+        raise RuntimeError("Rust engine not initialized")
+    try:
+        cloned = engine_rust.PyGameState(RUST_DB)
+        cloned.apply_state_json(gs.to_json())
+        return cloned
+    except (AttributeError, Exception) as e:
+        print(f"Error cloning rust state: {e}")
+        raise
 
 
-def get_score_breakdown_dict(gs: engine_rust.PyGameState, player_idx: int, rust_db: engine_rust.PyCardDatabase | None = None) -> dict[str, float]:
+def get_score_breakdown_dict(gs, player_idx, rust_db=None):
+    """Get score breakdown from Rust game state."""
     if rust_db is None:
         rust_db = RUST_DB
-    board, live, success, win, hand, cycling, total = gs.get_score_breakdown(rust_db, player_idx)
+    if rust_db is None or gs is None:
+        return {"board": 0.0, "live": 0.0, "success": 0.0, "win": 0.0, "hand": 0.0, "cycling": 0.0, "total": 0.0}
+    try:
+        board, live, success, win, hand, cycling, total = gs.get_score_breakdown(rust_db, player_idx)
+    except (AttributeError, TypeError, Exception) as e:
+        print(f"Error getting score breakdown: {e}")
+        return {"board": 0.0, "live": 0.0, "success": 0.0, "win": 0.0, "hand": 0.0, "cycling": 0.0, "total": 0.0}
     return {
         "board": float(board),
         "live": float(live),
@@ -400,28 +420,44 @@ def get_score_breakdown_dict(gs: engine_rust.PyGameState, player_idx: int, rust_
     }
 
 
-def describe_action_for_state(gs: engine_rust.PyGameState, action_id: int, lang: str) -> str:
-    compat_gs = RustCompatGameState(gs, member_db, live_db, energy_db)
-    return get_action_desc(action_id, compat_gs, lang=lang, text=gs.pending_choice_text)
+def describe_action_for_state(gs, action_id, lang="jp"):
+    """Describe an action from game state."""
+    try:
+        compat_gs = RustCompatGameState(gs, member_db, live_db, energy_db)
+        return get_action_desc(action_id, compat_gs, lang=lang, text=getattr(gs, 'pending_choice_text', ''))
+    except Exception as e:
+        print(f"Error describing action: {e}")
+        return f"Action {action_id}"
 
 
 def apply_sequence_with_descriptions(
-    root_state_json: str,
-    action_ids: list[int],
-    player_idx: int,
-    lang: str,
-    rust_db: engine_rust.PyCardDatabase | None = None,
-) -> dict[str, Any]:
+    root_state_json,
+    action_ids,
+    player_idx,
+    lang="jp",
+    rust_db=None,
+):
+    """Apply a sequence of actions with descriptions (Rust engine only)."""
     if rust_db is None:
         rust_db = RUST_DB
-    sim_state = engine_rust.PyGameState(rust_db)
-    sim_state.apply_state_json(root_state_json)
-    entries: list[dict[str, Any]] = []
+    if rust_db is None:
+        return {"error": "Rust engine not initialized", "sequence": []}
+    try:
+        sim_state = engine_rust.PyGameState(rust_db)
+        sim_state.apply_state_json(root_state_json)
+    except (AttributeError, TypeError, Exception) as e:
+        print(f"Error creating Rust game state: {e}")
+        return {"error": f"Failed to create game state: {e}", "sequence": []}  
+    entries = []
     invalid_step = None
 
     for seq_index, action_id in enumerate(action_ids, start=1):
-        legal_ids = set(sim_state.get_legal_action_ids())
-        desc = describe_action_for_state(sim_state, action_id, lang)
+        try:
+            legal_ids = set(sim_state.get_legal_action_ids())
+            desc = describe_action_for_state(sim_state, action_id, lang)
+        except Exception as e:
+            print(f"Error processing action: {e}")
+            break
         entry = {
             "index": seq_index,
             "action_id": int(action_id),
@@ -435,7 +471,12 @@ def apply_sequence_with_descriptions(
             entry["error"] = "Illegal from recreated state"
             break
 
-        sim_state.step(action_id)
+        try:
+            sim_state.step(action_id)
+        except Exception as e:
+            print(f"Error stepping game state: {e}")
+            invalid_step = seq_index
+            break
 
     return {
         "action_ids": [int(action_id) for action_id in action_ids],
@@ -450,11 +491,19 @@ def apply_sequence_with_descriptions(
     }
 
 
-def build_optimal_sequence_payload(root_state_json: str, player_idx: int, lang: str, rust_db: engine_rust.PyCardDatabase | None = None) -> dict[str, Any]:
+def build_optimal_sequence_payload(root_state_json, player_idx, lang="jp", rust_db=None):
+    """Build optimal action sequence from game state (Rust engine only)."""
     if rust_db is None:
         rust_db = RUST_DB
-    root_state = engine_rust.PyGameState(rust_db)
-    root_state.apply_state_json(root_state_json)
+    if rust_db is None:
+        return {"error": "Rust engine not initialized", "sequence": [], "action_ids": []}
+    
+    try:
+        root_state = engine_rust.PyGameState(rust_db)
+        root_state.apply_state_json(root_state_json)
+    except (AttributeError, TypeError, Exception) as e:
+        print(f"Error in build_optimal_sequence_payload: {e}")
+        return {"error": str(e), "sequence": [], "action_ids": []}
 
     liveset_nodes = 0
     if int(root_state.phase) == int(Phase.LIVE_SET):
@@ -491,9 +540,12 @@ def build_optimal_sequence_payload(root_state_json: str, player_idx: int, lang: 
     return applied
 
 
-def build_planner_analysis_from_session(session: dict[str, Any], lang: str, rust_db: engine_rust.PyCardDatabase | None = None) -> dict[str, Any]:
+def build_planner_analysis_from_session(session, lang="jp", rust_db=None):
+    """Build planner analysis from a recorded session (Rust engine only)."""
     if rust_db is None:
         rust_db = RUST_DB
+    if rust_db is None:
+        return {"error": "Rust engine not initialized", "optimal": {}, "your_sequence": {}}
     player_idx = int(session["player_idx"])
     optimal = build_optimal_sequence_payload(session["root_state_json"], player_idx, lang, rust_db)
     your_sequence = apply_sequence_with_descriptions(
@@ -526,7 +578,8 @@ def build_planner_analysis_from_session(session: dict[str, Any], lang: str, rust
     }
 
 
-def ensure_planner_session(room: dict[str, Any], gs: engine_rust.PyGameState, player_idx: int) -> dict[str, Any] | None:
+def ensure_planner_session(room, gs, player_idx):
+    """Ensure a planner session exists for tracking player actions (Rust engine only)."""
     if not is_planner_root_phase(gs.phase):
         return None
 
@@ -589,10 +642,10 @@ def maybe_finalize_planner_session(
     ):
         return
 
-    finalize_planner_session(room, player_idx, lang)
 
 
-def build_planner_payload(room: dict[str, Any], gs: engine_rust.PyGameState, player_idx: int, lang: str) -> dict[str, Any]:
+def build_planner_payload(room, gs, player_idx, lang="jp"):
+    """Build planner payload for displaying planning analysis to player (Rust engine only)."""
     planner_store = get_planner_store(room)
     active = False
     session = planner_store["sessions"].get(str(player_idx))
@@ -885,8 +938,7 @@ def init_game(deck_type="normal"):
         if custom_deck:
             # Use custom deck
             p.main_deck = convert_deck_strings_to_ids(custom_deck)
-            random.shuffle(p.main_deck)  # Shuffle custom deck for variety
-            print(f"Player {pidx}: Using custom deck ({len(p.main_deck)} cards, shuffled)")
+            print(f"Player {pidx}: Using custom deck ({len(p.main_deck)} cards)")
         elif deck_type == "easy":
             # Use Easy Cards (888/999) but mapped to real images
             p.main_deck = [888] * 48 + [999] * 12
@@ -967,7 +1019,8 @@ def init_game(deck_type="normal"):
             print(f"Player {pidx}: Using custom energy deck ({len(p.energy_deck)} cards)")
 
         # Explicit shuffle before drawing
-        random.shuffle(p.main_deck)
+        if not custom_deck:
+            random.shuffle(p.main_deck)
         if game_state.players.index(p) == 0:
             print(f"DEBUG: P0 Deck Shuffled. Top 5: {p.main_deck[-5:]}")
 
@@ -1013,13 +1066,30 @@ def create_room_internal(
     custom_decks: dict = None,
     card_set: str = "compiled",
 ) -> dict[str, Any]:
-    """Helper to initialize a room using the RUST engine."""
+    """Helper to initialize a room using the RUST engine or Python fallback."""
     print(
-        f"DEBUG: Creating Rust Room {room_id} (Mode: {mode}, Deck: {deck_type}, Public: {public}, CustomDecks: {bool(custom_decks)}, CardSet: {card_set})"
+        f"DEBUG: Creating Room {room_id} (Mode: {mode}, Deck: {deck_type}, Public: {public}, CustomDecks: {bool(custom_decks)}, CardSet: {card_set})"
     )
 
-    rust_db = get_rust_db_for_card_set(card_set)
-    gs = engine_rust.PyGameState(rust_db)
+    # Try to use Rust engine, fall back to Python if unavailable
+    gs = None
+    engine_type = "python"  # Default to Python
+    
+    try:
+        rust_db = get_rust_db_for_card_set(card_set)
+        if rust_db is not None:
+            gs = engine_rust.PyGameState(rust_db)
+            engine_type = "rust"
+            print(f"Using RUST engine for room {room_id}")
+    except (AttributeError, TypeError, Exception) as e:
+        print(f"Rust engine unavailable ({e}), falling back to Python engine")
+        gs = None
+    
+    # Fall back to Python engine if Rust failed
+    if gs is None:
+        print(f"Using PYTHON engine for room {room_id}")
+        gs = GameState()
+        engine_type = "python"
 
     # Get the correct card databases based on card_set
     current_member_db = vanilla_member_db if card_set == "vanilla" else member_db
@@ -1089,7 +1159,6 @@ def create_room_internal(
             if cdeck and cdeck.get("main"):
                 # Convert strings to IDs using the appropriate card set mapping
                 all_main_ids = convert_deck_strings_to_ids(cdeck["main"], card_set=card_set)
-                random.shuffle(all_main_ids)
 
                 # Partition into Members and Lives
                 members = []
@@ -1118,6 +1187,11 @@ def create_room_internal(
                 # Energy (Strictly 12)
                 if cdeck.get("energy"):
                     e_ids = convert_deck_strings_to_ids(cdeck["energy"], card_set=card_set)
+                    # Filter to only valid energy cards 
+                    e_ids = [e_id for e_id in e_ids if (e_id & BASE_ID_MASK) in current_energy_db]
+                    # Pad with default energy if needed
+                    while len(e_ids) < 12 and current_energy_db:
+                        e_ids.append(list(current_energy_db.keys())[0])
                     if len(e_ids) > 12:
                         e_ids = e_ids[:12]
 
@@ -1126,12 +1200,59 @@ def create_room_internal(
                     else:
                         p1_e = e_ids
 
+    # Validate energy decks: ensure they only contain valid energy cards
+    def validate_energy_deck(p_idx, e_deck, db_name="energy"):
+        """Filter energy deck to only valid energy card IDs"""
+        if not e_deck:
+            return []
+        valid_ids = []
+        for card_id in e_deck:
+            base_id = card_id & BASE_ID_MASK
+            if base_id in current_energy_db:
+                valid_ids.append(card_id)
+            else:
+                print(f"WARNING: Card ID {card_id} (base {base_id}) in Player {p_idx}'s {db_name} deck is NOT an energy card - filtering out")
+        return valid_ids
+    
+    # Validate and filter energy decks
+    p0_e = validate_energy_deck(0, p0_e)
+    p1_e = validate_energy_deck(1, p1_e)
+    
+    # Pad with default energy cards if needed
+    if current_energy_db:
+        default_energy = list(current_energy_db.keys())[0]
+        while len(p0_e) < 12:
+            p0_e.append(default_energy)
+        while len(p1_e) < 12:
+            p1_e.append(default_energy)
+
     # Warning: We are not extracting initial lives from main deck for p0_l/p1_l if custom.
     # The engine probably draws them?
     # If `p0_l` is required, we should pick random 3 from lives in deck or DB?
     # For now, let's keep random lives for the Live Zone if not specified, or just reuse random ones.
 
-    gs.initialize_game(p0_m, p1_m, p0_e, p1_e, p0_l, p1_l)
+    # Initialize game based on engine type  
+    try:
+        if engine_type == "rust":
+            # Rust engine initialization
+            gs.initialize_game(p0_m, p1_m, p0_e, p1_e, p0_l, p1_l)
+        else:
+            # Python engine initialization - for now provide sensible defaults
+            print(f"Python engine doesn't require explicit initialize_game call")
+            # GameState should auto-init on creation
+    except Exception as init_error:
+        print(f"Warning: initialization error: {init_error}")
+
+    # Set up AI agent based on engine and game mode
+    room_ai_agent = None
+    if engine_type == "python" and mode == "pve":
+        # For Python engine in PvE mode, we need an AI agent
+        try:
+            if AI_AVAILABLE:
+                room_ai_agent = SmartAgent()
+        except Exception as ai_error:
+            print(f"Warning: Could not instantiate AI agent: {ai_error}")
+            # Fall back to None if AI creation fails - the game will still work
 
     return {
         "state": gs,
@@ -1140,11 +1261,11 @@ def create_room_internal(
         "public": public,
         "created_at": datetime.now(),
         "last_active": datetime.now(),
-        "ai_agent": None,  # MCTS is built-in
+        "ai_agent": room_ai_agent,  # MCTS is built-in for Rust; AI agent for Python in PvE
         "custom_decks": final_custom_decks,
         "sessions": {},
         "usernames": {},  # PID -> username
-        "engine": "rust",
+        "engine": engine_type,
         "planner_lab": {"sessions": {}, "last_results": {}},
         # History tracking for undo/redo
         "history_stack": [gs], # Store raw state for on-demand localization
@@ -1523,7 +1644,10 @@ def background_game_loop():
                                         else:
                                             gs.step_opponent_greedy()
                                     else:
-                                        aid = ai_agent.choose_action(gs, 1)
+                                        if ai_agent is not None:
+                                            aid = ai_agent.choose_action(gs, 1)
+                                        else:
+                                            aid = 0
                                         res = gs.step(aid)
                                         if res is not None:
                                             room["state"] = res
@@ -1540,71 +1664,106 @@ def background_game_loop():
 
 @app.route("/api/state")
 def get_state():
-    room_id = get_room_id()
-    session_token = request.headers.get("X-Session-Token")
+    try:
+        room_id = get_room_id()
+        session_token = request.headers.get("X-Session-Token")
 
-    with game_lock:
-        # Development convenience: Auto-create room if missing IF it's "SINGLE_PLAYER"
-        if room_id == "SINGLE_PLAYER" and room_id not in ROOMS:
-            ROOMS[room_id] = create_room_internal(room_id)
+        with game_lock:
+            # Development convenience: Auto-create room if missing IF it's "SINGLE_PLAYER"
+            if room_id == "SINGLE_PLAYER" and room_id not in ROOMS:
+                try:
+                    ROOMS[room_id] = create_room_internal(room_id)
+                except Exception as e:
+                    print(f"Error creating room: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    return jsonify({"success": False, "error": f"Failed to create room: {e}"}), 500
 
-        room = get_room(room_id)
-        if not room:
-            return jsonify({"success": False, "error": "Room not found or expired"}), 404
+            room = get_room(room_id)
+            if not room:
+                return jsonify({"success": False, "error": "Room not found or expired"}), 404
 
-        # Check if we're in history navigation mode (rewind/redo)
-        history_stack = room.get("history_stack", [])
-        history_index = room.get("history_index", 0)
-        
-        if history_stack and history_index < len(history_stack):
-            # Return state from history
-            gs_history = history_stack[history_index]
-            mode = room["mode"]
-            lang = get_lang()
+            # Check if we're in history navigation mode (rewind/redo)
+            history_stack = room.get("history_stack", [])
+            history_index = room.get("history_index", 0)
             
-            # Serialize on-demand with correct language
-            if room.get("engine") == "rust":
-                 s_state = rust_serializer.serialize_state(gs_history, viewer_idx=0, mode=mode, is_pvp=False, lang=lang)
-            else:
-                 s_state = serialize_state(gs_history, viewer_idx=0, is_pvp=False, mode=mode, lang=lang)
+            if history_stack and history_index < len(history_stack):
+                # Return state from history
+                try:
+                    gs_history = history_stack[history_index]
+                    mode = room["mode"]
+                    lang = get_lang()
+                    
+                    # Serialize on-demand with correct language
+                    if room.get("engine") == "rust":
+                        try:
+                            s_state = rust_serializer.serialize_state(gs_history, viewer_idx=0, mode=mode, is_pvp=False, lang=lang)
+                        except Exception as e:
+                            print(f"Error serializing Rust state: {e}")
+                            return jsonify({"success": False, "error": f"Serialization error: {e}"}), 500
+                    else:
+                        s_state = serialize_state(gs_history, viewer_idx=0, is_pvp=False, mode=mode, lang=lang)
 
-            cdecks = room.get("custom_decks", {})
-            meta = {
-                "p0_deck_set": bool(cdecks.get(0, {}).get("main") or cdecks.get("0", {}).get("main")),
-                "p1_deck_set": bool(cdecks.get(1, {}).get("main") or cdecks.get("1", {}).get("main")),
-                "mode": mode,
-                "history_mode": True,
-                "history_index": history_index,
-                "history_length": len(history_stack),
-            }
-            
-            return jsonify({"success": True, "state": s_state, "meta": meta})
+                    cdecks = room.get("custom_decks", {})
+                    meta = {
+                        "p0_deck_set": bool(cdecks.get(0, {}).get("main") or cdecks.get("0", {}).get("main")),
+                        "p1_deck_set": bool(cdecks.get(1, {}).get("main") or cdecks.get("1", {}).get("main")),
+                        "mode": mode,
+                        "history_mode": True,
+                        "history_index": history_index,
+                        "history_length": len(history_stack),
+                    }
+                    
+                    return jsonify({"success": True, "state": s_state, "meta": meta})
+                except Exception as history_error:
+                    print(f"Error processing history state: {history_error}")
+                    import traceback
+                    traceback.print_exc()
 
-        gs = room["state"]
-        mode = room["mode"]
-        viewer_idx = get_player_idx(room)
+            # Non-history case: current game state
+            try:
+                gs = room["state"]
+                mode = room["mode"]
+                viewer_idx = get_player_idx(room)
 
-        lang = get_lang()
-        if room.get("engine") == "rust":
-            s_state = rust_serializer.serialize_state(gs, viewer_idx=viewer_idx, mode=mode, is_pvp=False, lang=lang)
-        else:
-            s_state = serialize_state(
-                gs,
-                viewer_idx=viewer_idx,
-                is_pvp=False,
-                mode=mode,
-                lang=lang,
-            )
+                lang = get_lang()
+                if room.get("engine") == "rust":
+                    try:
+                        s_state = rust_serializer.serialize_state(gs, viewer_idx=viewer_idx, mode=mode, is_pvp=False, lang=lang)
+                    except Exception as e:
+                        print(f"Error serializing Rust state: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        return jsonify({"success": False, "error": f"Serialization error: {e}"}), 500
+                else:
+                    s_state = serialize_state(
+                        gs,
+                        viewer_idx=viewer_idx,
+                        is_pvp=False,
+                        mode=mode,
+                        lang=lang,
+                    )
 
-        # Meta info about decks
-        cdecks = room.get("custom_decks", {})
-        meta = {
-            "p0_deck_set": bool(cdecks.get(0, {}).get("main") or cdecks.get("0", {}).get("main")),
-            "p1_deck_set": bool(cdecks.get(1, {}).get("main") or cdecks.get("1", {}).get("main")),
-            "mode": mode,
-        }
+                # Meta info about decks
+                cdecks = room.get("custom_decks", {})
+                meta = {
+                    "p0_deck_set": bool(cdecks.get(0, {}).get("main") or cdecks.get("0", {}).get("main")),
+                    "p1_deck_set": bool(cdecks.get(1, {}).get("main") or cdecks.get("1", {}).get("main")),
+                    "mode": mode,
+                }
 
-        return jsonify({"success": True, "state": s_state, "meta": meta})
+                return jsonify({"success": True, "state": s_state, "meta": meta})
+            except Exception as state_error:
+                print(f"Error processing current state: {state_error}")
+                import traceback
+                traceback.print_exc()
+                return jsonify({"success": False, "error": f"Failed to serialize state: {state_error}"}), 500
+    
+    except Exception as e:
+        print(f"Unexpected error in get_state: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": f"Internal error: {e}"}), 500
 
 
 @app.route("/api/set_deck", methods=["POST"])
@@ -2091,7 +2250,10 @@ def do_action():
                                 gs.step_opponent_mcts(10)
                         else:
                             # Python AI
-                            aid = ai_agent.choose_action(gs, 1)
+                            if ai_agent is not None:
+                                aid = ai_agent.choose_action(gs, 1)
+                            else:
+                                aid = 0
                             res = gs.step(aid)
                             if res is not None:
                                 room["state"] = res
@@ -2111,10 +2273,16 @@ def do_action():
                 # Record state to history stack after successful action
                 record_game_state_to_history(room)
                 
+                # Serialize state appropriately based on engine type
+                if room.get("engine") == "rust":
+                    serialized_state = rust_serializer.serialize_state(gs, viewer_idx=viewer_idx, mode=game_mode, lang=lang)
+                else:
+                    serialized_state = serialize_state(gs, viewer_idx=viewer_idx, is_pvp=False, mode=game_mode, lang=lang)
+                
                 return jsonify(
                     {
                         "success": True,
-                        "state": rust_serializer.serialize_state(gs, viewer_idx=viewer_idx, mode=game_mode, lang=lang),
+                        "state": serialized_state,
                     }
                 )
             else:
@@ -2436,7 +2604,10 @@ def advance():
 
             # If it's the AI's turn (P1) or the AI has a pending choice, let it act immediately
             if next_actor == 1 and not gs.is_terminal():
-                aid = ai_agent.choose_action(gs, 1)
+                if ai_agent is not None:
+                    aid = ai_agent.choose_action(gs, 1)
+                else:
+                    aid = 0
                 gs = gs.step(aid)
                 room["state"] = gs
                 continue

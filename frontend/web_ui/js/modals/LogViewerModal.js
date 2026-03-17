@@ -165,15 +165,15 @@ export const LogViewerModal = {
 
         bar.innerHTML = `
             <input type="text"
-                   class="log-viewer-search"
+                   class="form-input log-viewer-search"
                    placeholder="${i18n.t('search') || 'Search logs...' }"
                    onkeyup="LogViewerModal.filterLogs(this.value)">
-            <div style="display: flex; gap: 8px;">
-                <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem;">
+            <div class="log-viewer-filter-toggles">
+                <label class="filter-checkbox-label">
                     <input type="checkbox" id="${DOM_IDS.FILTER_TRIGGER}" checked onchange="LogViewerModal.filterLogs()">
                     <span>${i18n.t('triggers')}</span>
                 </label>
-                <label style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem;">
+                <label class="filter-checkbox-label">
                     <input type="checkbox" id="${DOM_IDS.FILTER_EFFECT}" checked onchange="LogViewerModal.filterLogs()">
                     <span>${i18n.t('effects')}</span>
                 </label>

@@ -2,15 +2,30 @@ import { State } from '../state.js';
 import { Network } from '../network.js';
 import { Modals } from '../ui_modals.js';
 import { validator } from '../components/DeckValidator.js';
+import { ModalManager } from '../utils/ModalManager.js';
+import { DOM_IDS, DISPLAY_VALUES } from '../constants_dom.js';
+
+const inlineValidationBound = new Set();
+
+function bindInlineValidation(playerId) {
+    if (inlineValidationBound.has(playerId)) {
+        return;
+    }
+
+    const input = document.getElementById(`p${playerId}-deck-paste`);
+    if (!input) {
+        return;
+    }
+
+    input.addEventListener('input', () => GameSetupModal.validateInline(playerId));
+    inlineValidationBound.add(playerId);
+}
 
 export const GameSetupModal = {
     openSetupModal: (mode) => {
         Modals.setupMode = mode;
-        const modal = document.getElementById('setup-modal');
-        if (modal) modal.style.display = 'flex';
-
-        const roomModal = document.getElementById('room-modal');
-        if (roomModal) roomModal.style.display = 'none';
+        ModalManager.show(DOM_IDS.MODAL_SETUP);
+        ModalManager.hide(DOM_IDS.MODAL_ROOM);
 
         validator.init();
 
@@ -19,24 +34,17 @@ export const GameSetupModal = {
             Modals.populateDeckSelect('p1-deck-select', Modals.deckPresets);
         });
 
-        // Add real-time validation listeners
-        const p0Input = document.getElementById('p0-deck-paste');
-        if (p0Input) {
-            p0Input.addEventListener('input', () => GameSetupModal.validateInline(0));
-        }
-        const p1Input = document.getElementById('p1-deck-paste');
-        if (p1Input) {
-            p1Input.addEventListener('input', () => GameSetupModal.validateInline(1));
-        }
+        bindInlineValidation(0);
+        bindInlineValidation(1);
 
         const p0Col = document.getElementById('setup-p0-col');
         const p1Col = document.getElementById('setup-p1-col');
         const title = document.getElementById('setup-title');
         if (title) title.textContent = (mode === 'pvp') ? 'PvP Setup' : 'PvE Setup';
 
-        if (p0Col) p0Col.style.display = 'block';
+        if (p0Col) p0Col.style.display = DISPLAY_VALUES.BLOCK;
         if (p1Col) {
-            p1Col.style.display = 'block';
+            p1Col.style.display = DISPLAY_VALUES.BLOCK;
             p1Col.style.opacity = '1';
             p1Col.style.pointerEvents = 'auto';
             const p1Title = p1Col.querySelector('h4');
@@ -54,12 +62,10 @@ export const GameSetupModal = {
     },
 
     closeSetupModal: () => {
-        const modal = document.getElementById('setup-modal');
-        if (modal) modal.style.display = 'none';
+        ModalManager.hide(DOM_IDS.MODAL_SETUP);
 
         if (!State.roomCode && !State.offlineMode && !State.replayMode) {
-            const roomModal = document.getElementById('room-modal');
-            if (roomModal) roomModal.style.display = 'flex';
+            ModalManager.show(DOM_IDS.MODAL_ROOM);
         }
     },
 
@@ -171,13 +177,12 @@ export const GameSetupModal = {
                 }
                 localStorage.setItem('lovelive_room_code', State.roomCode);
 
-                const roomModal = document.getElementById('room-modal');
-                if (roomModal) roomModal.style.display = 'none';
+                ModalManager.hide(DOM_IDS.MODAL_ROOM);
 
                 GameSetupModal.closeSetupModal();
 
-                if (window.onRoomUpdate) window.onRoomUpdate();
-                if (window.fetchState) window.fetchState();
+                window.onRoomUpdate?.();
+                await Network.fetchState();
             } else {
                 alert("Failed to create game: " + data.error);
             }
@@ -189,8 +194,7 @@ export const GameSetupModal = {
 
     openDeckSelectionForPvP: (pid) => {
         Modals.pvpJoinPid = pid;
-        const modal = document.getElementById('setup-modal');
-        if (modal) modal.style.display = 'flex';
+        ModalManager.show(DOM_IDS.MODAL_SETUP);
 
         const p0Col = document.getElementById('setup-p0-col');
         const p1Col = document.getElementById('setup-p1-col');
@@ -200,12 +204,12 @@ export const GameSetupModal = {
         if (title) title.textContent = 'Select Your Deck';
 
         if (pid === 0) {
-            if (p0Col) p0Col.style.display = 'block';
-            if (p1Col) p1Col.style.display = 'none';
+            if (p0Col) p0Col.style.display = DISPLAY_VALUES.BLOCK;
+            if (p1Col) p1Col.style.display = DISPLAY_VALUES.NONE;
         } else {
-            if (p0Col) p0Col.style.display = 'none';
+            if (p0Col) p0Col.style.display = DISPLAY_VALUES.NONE;
             if (p1Col) {
-                p1Col.style.display = 'block';
+                p1Col.style.display = DISPLAY_VALUES.BLOCK;
                 p1Col.style.opacity = '1';
                 p1Col.style.pointerEvents = 'auto';
             }
@@ -238,7 +242,7 @@ export const GameSetupModal = {
             const data = await res.json();
             if (data.success || data.status === 'ok') {
                 GameSetupModal.closeSetupModal();
-                if (window.fetchState) window.fetchState();
+                await Network.fetchState();
                 alert("Deck Submitted! Waiting for game to start.");
             } else {
                 alert("Error setting deck: " + (data.error || "Unknown"));
@@ -258,7 +262,7 @@ export const GameSetupModal = {
         console.log(`Player ${pid} selected deck: ${finalValue}`);
         const pasteArea = document.getElementById(`p${pid}-paste-area`);
         if (pasteArea) {
-            pasteArea.style.display = (finalValue === 'paste' || finalValue === 'manual') ? 'block' : 'none';
+            pasteArea.style.display = (finalValue === 'paste' || finalValue === 'manual') ? DISPLAY_VALUES.BLOCK : DISPLAY_VALUES.NONE;
         }
     }
 };

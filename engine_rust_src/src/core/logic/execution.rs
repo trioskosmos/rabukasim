@@ -81,27 +81,7 @@ impl GameState {
             Phase::MulliganP1 | Phase::MulliganP2 => 0,
             Phase::Energy | Phase::LiveResult => legal[0],
             Phase::Rps => {
-                if self.phase == Phase::Rps {
-                    let other_player = 1 - self.current_player as usize;
-                    let known_choice = self.rps_choices[other_player];
-                    if known_choice != -1 {
-                        let avoid_draw_action = legal.iter().copied().find(|action| {
-                            let choice = if *action >= crate::core::generated_constants::ACTION_BASE_RPS_P2 {
-                                *action - crate::core::generated_constants::ACTION_BASE_RPS_P2
-                            } else if *action >= crate::core::generated_constants::ACTION_BASE_RPS {
-                                *action - crate::core::generated_constants::ACTION_BASE_RPS
-                            } else {
-                                -1
-                            };
-                            choice >= 0 && choice as i8 != known_choice
-                        });
-                        if let Some(action) = avoid_draw_action {
-                            return action;
-                        }
-                    }
-                }
-
-                // Use random selection for unresolved RPS and TurnChoice states.
+                // Determine RPS choice randomly to ensure fairness and avoid predictability.
                 let mut rng = Pcg64::from_os_rng();
                 *legal.choose(&mut rng).unwrap_or(&0)
             }
@@ -141,6 +121,30 @@ impl GameState {
                 if self.phase == Phase::Main && self.current_player == initial_player {
                     let _ = self.step(db, 0);
                 }
+            }
+            Phase::Rps => {
+                let mut legal = self.get_legal_action_ids(db);
+                let opponent_choice = self.rps_choices[1 - self.current_player as usize];
+
+                if opponent_choice >= 0 {
+                    legal.retain(|action| {
+                        let choice = if self.current_player == 0 {
+                            action - crate::core::generated_constants::ACTION_BASE_RPS
+                        } else {
+                            action - crate::core::generated_constants::ACTION_BASE_RPS_P2
+                        };
+                        choice != opponent_choice as i32
+                    });
+                }
+
+                let action = if legal.is_empty() {
+                    self.choose_phase_aware_action(db)
+                } else {
+                    let mut rng = Pcg64::from_os_rng();
+                    *legal.choose(&mut rng).unwrap()
+                };
+
+                let _ = self.step(db, action);
             }
             Phase::LiveSet => {
                 let initial_player = self.current_player;
@@ -452,5 +456,28 @@ mod tests {
         state.step_opponent_turnseq(&db);
 
         assert_ne!(state.phase, Phase::LiveSet);
+    }
+
+    #[test]
+    fn rps_pure_randomness_test() {
+        let db = create_test_db();
+        let mut choices = std::collections::HashSet::new();
+
+        for _ in 0..100 {
+            let mut state = GameState::default();
+            state.phase = Phase::Rps;
+            state.current_player = 1;
+            state.rps_choices = [1, -1]; // Player 0 chose Paper
+
+            let action = state.choose_phase_aware_action(&db);
+            let choice = action - crate::core::generated_constants::ACTION_BASE_RPS_P2;
+            choices.insert(choice);
+        }
+
+        // With 100 trials, the AI should have picked all 3 options (0, 1, 2) eventually.
+        assert!(choices.contains(&0), "AI should pick Rock");
+        assert!(choices.contains(&1), "AI should pick Paper (Draw)");
+        assert!(choices.contains(&2), "AI should pick Scissors");
+        assert_eq!(choices.len(), 3, "AI should pick all RPS options randomly");
     }
 }

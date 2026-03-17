@@ -372,7 +372,7 @@ export const LogRenderer = {
         const enrichedHeader = Tooltips.enrichAbilityText(headerContent);
 
         // Add modal viewer button for expanded reading
-        const modalButton = `<button class="log-modal-btn" title="${i18n.t('view_expanded')}" onclick="event.stopPropagation(); LogViewerModal.open('${group.id}')">◻</button>`;
+        const modalButton = `<button class="log-modal-btn" title="${i18n.t('view_expanded')}" data-action="open-log-viewer" data-value="${group.id}">◻</button>`;
 
         headerDiv.innerHTML = `
             <div class="log-entry-icon"></div>

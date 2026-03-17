@@ -1,6 +1,11 @@
 use crate::core::enums::*;
 use crate::core::generated_constants::{ACTION_BASE_RPS, ACTION_BASE_RPS_P2};
 use crate::core::logic::{
+    ability_patterns::{
+        encode_optional_mode_mask, is_optional_live_start_discard_count_ability,
+        optional_mode_effect, pending_live_ability, pending_member_ability, pending_optional_mode_mask,
+        pending_targeted_live_heart_bonus,
+    },
     action_factory::DecodedAction, interpreter::costs, AbilityContext, ActionFactory, CardDatabase,
     GameState, Phase,
 };
@@ -85,6 +90,10 @@ impl TurnController for GameState {
             ));
         }
 
+        if !self.ui.silent {
+            self.log(format!("[[rps_choice:player={}:choice={}]]", p_idx, choice));
+        }
+
         self.rps_choices[p_idx] = choice as i8;
 
         if self.rps_choices[0] != -1 && self.rps_choices[1] == -1 {
@@ -101,10 +110,8 @@ impl TurnController for GameState {
             }
 
             if p0 == p1 {
-                // Track draw count in turn - using turn field as a temporary overflow for RPS draws
-                // if turn is 0 (RPS phase).
-                let draw_count = (self.turn & 0x7) + 1;
-                self.turn = (self.turn & !0x7) | (draw_count & 0x7);
+                self.rps_draw_count = self.rps_draw_count.saturating_add(1);
+                let draw_count = self.rps_draw_count;
 
                 if !self.ui.silent {
                     self.log(format!("[[rps_draw:count={}]]", draw_count));
@@ -117,12 +124,13 @@ impl TurnController for GameState {
                     self.current_player = 0;
                     self.first_player = 0;
                     self.phase = Phase::Setup;
-                    self.turn = 0; // Reset turn for game start
+                    self.rps_draw_count = 0;
                 } else {
                     self.rps_choices = [-1, -1];
                     self.current_player = 0;
                 }
             } else {
+                self.rps_draw_count = 0;
                 let p0_wins = (p0 == 0 && p1 == 2) || (p0 == 1 && p1 == 0) || (p0 == 2 && p1 == 1);
                 let winner = if p0_wins { 0 } else { 1 };
                 if !self.ui.silent {
@@ -451,85 +459,82 @@ impl ResponseController for GameState {
                 _ => -1,
             };
 
-            let is_daydream_mermaid = db
-                .get_live(pi.card_id)
-                .map(|card| card.card_no.as_str() == "PL!N-bp4-030-L")
-                .unwrap_or(false);
-            let is_sunny_day_song = db
-                .get_live(pi.card_id)
-                .map(|card| card.card_no.as_str() == "PL!-bp5-021-L")
-                .unwrap_or(false);
-            let daydream_mermaid_mode_mask = if is_daydream_mermaid && pi.ctx.v_accumulated < 1900 {
-                0x3
-            } else {
-                pi.ctx.v_accumulated - 1900
-            };
-            let is_daydream_mermaid_mode = matches!(decoded_action, DecodedAction::SelectMode { .. })
-                && daydream_mermaid_mode_mask >= 0
-                && is_daydream_mermaid;
-            if is_daydream_mermaid_mode {
-                let p_idx = pi.ctx.player_id as usize;
-                let selected_bit = match choice_idx {
-                    0 => 0x1,
-                    1 => 0x2,
-                    _ => 0,
-                };
-                if selected_bit == 0 || (daydream_mermaid_mode_mask & selected_bit) == 0 {
-                    return Err("Invalid Daydream Mermaid mode selection".to_string());
-                }
+            if let Some(mask) = pending_optional_mode_mask(db, &pi) {
+                if matches!(decoded_action, DecodedAction::SelectMode { .. }) {
+                    let ability = pending_live_ability(db, &pi).ok_or("Ability not found")?;
+                    let (selected_effect, remaining_mask) = optional_mode_effect(ability, mask, choice_idx)
+                        .ok_or("Invalid optional mode selection".to_string())?;
 
-                self.interaction_stack.pop();
+                    self.interaction_stack.pop();
 
-                if choice_idx == 0 {
-                    if let Some(cid) = self.players[p_idx].energy_deck.pop() {
-                        self.players[p_idx].push_energy_card(cid, true);
+                    let p_idx = pi.ctx.player_id as usize;
+                    if selected_effect.runtime_opcode == O_ENERGY_CHARGE {
+                        if let Some(cid) = self.players[p_idx].energy_deck.pop() {
+                            let is_wait = selected_effect
+                                .params
+                                .get("wait")
+                                .and_then(|value| value.as_bool())
+                                .unwrap_or(false);
+                            self.players[p_idx].push_energy_card(cid, is_wait);
+                        }
+                    } else if selected_effect.runtime_opcode == O_RECOVER_MEMBER {
+                        if let Some(recover_pos) = self.players[p_idx]
+                            .discard
+                            .iter()
+                            .position(|&cid| {
+                                db.get_member(cid).is_some()
+                                    && self.card_matches_filter_with_ctx(
+                                        db,
+                                        cid,
+                                        selected_effect.runtime_attr,
+                                        &pi.ctx,
+                                    )
+                            })
+                        {
+                            if let Some(cid) = self.players[p_idx].remove_discard_card(recover_pos) {
+                                self.players[p_idx].gain_hand_card(cid);
+                            }
+                        }
                     }
-                } else if let Some(recover_pos) = self.players[p_idx]
-                    .discard
-                    .iter()
-                    .position(|&cid| db.get_member(cid).is_some())
-                {
-                    let cid = self.players[p_idx].remove_discard_card(recover_pos).unwrap();
-                    self.players[p_idx].gain_hand_card(cid);
-                }
 
-                let remaining_mask = daydream_mermaid_mode_mask & !selected_bit;
-                if remaining_mask > 0 {
-                    let mut next_ctx = pi.ctx.clone();
-                    next_ctx.choice_index = -1;
-                    next_ctx.v_accumulated = 1900 + remaining_mask;
-                    let choice_text = crate::core::logic::interpreter::get_choice_text(db, &next_ctx);
-                    crate::core::logic::interpreter::suspend_interaction(
-                        self,
-                        db,
-                        &next_ctx,
-                        0,
-                        O_SELECT_MODE,
-                        0,
-                        ChoiceType::SelectMode,
-                        &choice_text,
-                        0,
-                        remaining_mask.count_ones() as i16,
-                    );
+                    if remaining_mask > 0 {
+                        let mut next_ctx = pi.ctx.clone();
+                        next_ctx.choice_index = -1;
+                        next_ctx.v_accumulated = encode_optional_mode_mask(remaining_mask);
+                        let choice_text = crate::core::logic::interpreter::get_choice_text(db, &next_ctx);
+                        crate::core::logic::interpreter::suspend_interaction(
+                            self,
+                            db,
+                            &next_ctx,
+                            0,
+                            O_SELECT_MODE,
+                            0,
+                            ChoiceType::SelectMode,
+                            &choice_text,
+                            0,
+                            remaining_mask.count_ones() as i16,
+                        );
+                        return Ok(());
+                    }
+
+                    self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
+                        Phase::Main
+                    } else {
+                        pi.original_phase
+                    };
+                    self.current_player = pi.original_current_player;
+                    self.clear_execution_id();
+                    self.check_win_condition();
                     return Ok(());
                 }
-
-                self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
-                    Phase::Main
-                } else {
-                    pi.original_phase
-                };
-                self.current_player = pi.original_current_player;
-                self.clear_execution_id();
-                self.check_win_condition();
-                return Ok(());
             }
 
-            if is_sunny_day_song {
+            if let Some((_filter_attr, heart_color_idx)) = pending_targeted_live_heart_bonus(db, &pi) {
                 if let DecodedAction::SelectStageSlot { slot_idx } = decoded_action {
                     let p_idx = pi.ctx.player_id as usize;
                     if (slot_idx as usize) < STAGE_SLOT_COUNT {
-                        self.players[p_idx].heart_buffs[slot_idx as usize].add_to_color(2, 1);
+                        self.players[p_idx].heart_buffs[slot_idx as usize]
+                            .add_to_color(heart_color_idx as usize, 1);
                     }
                     self.interaction_stack.pop();
                     self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
@@ -546,12 +551,8 @@ impl ResponseController for GameState {
 
             let declined_ll_bp2_live_start = choice_idx == 1
                 && pi.ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
-                && db
-                    .get_member(pi.ctx.source_card_id)
-                    .map(|card| {
-                        card.card_no.as_str() == "LL-bp2-001-R+"
-                            || card.card_no.as_str() == "LL-bp2-001-R＋"
-                    })
+                && pending_member_ability(db, pi.ctx.source_card_id, pi.ctx.ability_index)
+                    .map(is_optional_live_start_discard_count_ability)
                     .unwrap_or(false);
             if declined_ll_bp2_live_start {
                 if let Some(execution_id) = self.ui.current_execution_id {
@@ -767,12 +768,8 @@ impl ResponseController for GameState {
 
             let declined_ll_bp2_live_start_cleanup = choice_idx == 1
                 && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
-                && db
-                    .get_member(ctx.source_card_id)
-                    .map(|card| {
-                        card.card_no.as_str() == "LL-bp2-001-R+"
-                            || card.card_no.as_str() == "LL-bp2-001-R＋"
-                    })
+                && pending_member_ability(db, ctx.source_card_id, ctx.ability_index)
+                    .map(is_optional_live_start_discard_count_ability)
                     .unwrap_or(false);
             if declined_ll_bp2_live_start_cleanup {
                 let p_idx = ctx.player_id as usize;
@@ -789,12 +786,8 @@ impl ResponseController for GameState {
                     && self.ui.cancelled_execution_ids.remove(&current_execution_id);
                 let suppress_resolve_trigger = choice_idx == 1
                     && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
-                    && db
-                        .get_member(ctx.source_card_id)
-                        .map(|card| {
-                            card.card_no.as_str() == "LL-bp2-001-R+"
-                                || card.card_no.as_str() == "LL-bp2-001-R＋"
-                        })
+                    && pending_member_ability(db, ctx.source_card_id, ctx.ability_index)
+                        .map(is_optional_live_start_discard_count_ability)
                         .unwrap_or(false);
                 if !was_cancelled {
                     let res_trigger = match ctx.trigger_type {

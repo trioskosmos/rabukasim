@@ -1,9 +1,10 @@
 import { validator } from '../components/DeckValidator.js';
+import { ModalManager } from '../utils/ModalManager.js';
+import { DOM_IDS } from '../constants_dom.js';
 
 export const LobbyModal = {
     openLobby: () => {
-        const modal = document.getElementById('room-modal');
-        if (modal) modal.style.display = 'flex';
+        ModalManager.show(DOM_IDS.MODAL_ROOM);
         validator.init();
         if (window.fetchPublicRooms) window.fetchPublicRooms();
 
@@ -23,7 +24,6 @@ export const LobbyModal = {
     },
 
     closeLobby: () => {
-        const modal = document.getElementById('room-modal');
-        if (modal) modal.style.display = 'none';
+        ModalManager.hide(DOM_IDS.MODAL_ROOM);
     }
 };

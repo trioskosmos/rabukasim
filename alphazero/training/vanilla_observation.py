@@ -10,10 +10,10 @@ MAX_HAND_SLOTS = 20
 MAX_STAGE_SLOTS = 3
 MAX_LIVE_SLOTS = 3
 
-PHASE_FEATURE_ORDER = (-3, -2, -1, 0, 4, 5, 8, 10)
+PHASE_FEATURE_ORDER = (-3, -2, -1, 0, 1, 4, 5, 8, 10)
 
-GLOBAL_FEATURES = 40
-CARD_FEATURES = 20
+GLOBAL_FEATURES = 64
+CARD_FEATURES = 24
 OBS_DIM = GLOBAL_FEATURES + MAX_INITIAL_DECK * CARD_FEATURES
 
 ZONE_DECK = 0
@@ -46,6 +46,12 @@ def _norm(value: float, scale: float) -> float:
     return float(np.clip(value / scale, 0.0, 1.0))
 
 
+def _signed_norm(value: float, scale: float) -> float:
+    if scale <= 0:
+        return 0.0
+    return float(np.clip((value / scale + 1.0) * 0.5, 0.0, 1.0))
+
+
 def _build_occurrence_positions(initial_deck: Sequence[int]) -> dict[int, list[int]]:
     positions: dict[int, list[int]] = {}
     for deck_idx, card_id in enumerate(initial_deck[:MAX_INITIAL_DECK]):
@@ -68,7 +74,6 @@ def _claim_card_occurrence(
 
 def build_card_feature_lookup(full_db: dict[str, Any]) -> dict[int, dict[str, Any]]:
     lookup: dict[int, dict[str, Any]] = {}
-
     for raw in full_db.get("member_db", {}).values():
         card_id = int(raw.get("card_id", -1))
         if card_id < 0:
@@ -77,8 +82,10 @@ def build_card_feature_lookup(full_db: dict[str, Any]) -> dict[int, dict[str, An
         hearts += [0.0] * (7 - len(hearts))
         lookup[card_id] = {
             "type": "member",
+            "name": str(raw.get("name", card_id)),
             "primary_value": float(raw.get("cost", 0)),
             "hearts": hearts,
+            "hearts_total": float(sum(hearts)),
             "aux_icons": float(raw.get("blades", 0)) + float(raw.get("volume_icons", 0)),
             "group_count": float(len(raw.get("groups", []) or [])),
         }
@@ -91,12 +98,13 @@ def build_card_feature_lookup(full_db: dict[str, Any]) -> dict[int, dict[str, An
         hearts += [0.0] * (7 - len(hearts))
         lookup[card_id] = {
             "type": "live",
+            "name": str(raw.get("name", card_id)),
             "primary_value": float(raw.get("score", 0)),
             "hearts": hearts,
+            "hearts_total": float(sum(hearts)),
             "aux_icons": float(raw.get("draw_icons", 0)) + float(raw.get("volume_icons", 0)),
             "group_count": float(len(raw.get("groups", []) or [])),
         }
-
     return lookup
 
 
@@ -106,9 +114,9 @@ def _sum_stage_hearts(player_json: dict[str, Any], card_lookup: dict[int, dict[s
         if int(card_id) < 0:
             continue
         static = card_lookup.get(int(card_id))
-        if not static or static["type"] != "member":
+        if not static or static.get("type") != "member":
             continue
-        for color_idx, value in enumerate(static["hearts"]):
+        for color_idx, value in enumerate(static.get("hearts", [])):
             totals[color_idx] += float(value)
     return totals
 
@@ -119,9 +127,9 @@ def _sum_live_requirements(player_json: dict[str, Any], card_lookup: dict[int, d
         if int(card_id) < 0:
             continue
         static = card_lookup.get(int(card_id))
-        if not static or static["type"] != "live":
+        if not static or static.get("type") != "live":
             continue
-        for color_idx, value in enumerate(static["hearts"]):
+        for color_idx, value in enumerate(static.get("hearts", [])):
             totals[color_idx] += float(value)
     return totals
 
@@ -134,23 +142,28 @@ def build_vanilla_observation(
 ) -> np.ndarray:
     player_json = state_json["players"][current_player]
     opp_json = state_json["players"][1 - current_player]
-
     phase = int(state_json.get("phase", -4))
-    stage_hearts = _sum_stage_hearts(player_json, card_lookup)
-    live_requirements = _sum_live_requirements(player_json, card_lookup)
-    live_deficits = [max(required - available, 0.0) for required, available in zip(live_requirements, stage_hearts)]
 
-    tapped_energy_mask = int(player_json.get("tapped_energy_mask", 0))
-    energy_total = len(player_json.get("energy_zone", []))
-    energy_untapped = max(0, energy_total - tapped_energy_mask.bit_count())
-    stage_count = sum(1 for card_id in player_json.get("stage", []) if int(card_id) >= 0)
+    my_stage_hearts = _sum_stage_hearts(player_json, card_lookup)
+    opp_stage_hearts = _sum_stage_hearts(opp_json, card_lookup)
+    live_requirements = _sum_live_requirements(player_json, card_lookup)
+    live_deficits = [max(required - available, 0.0) for required, available in zip(live_requirements, my_stage_hearts)]
+
+    my_tapped_mask = int(player_json.get("tapped_energy_mask", 0))
+    opp_tapped_mask = int(opp_json.get("tapped_energy_mask", 0))
+    my_energy_total = len(player_json.get("energy_zone", []))
+    opp_energy_total = len(opp_json.get("energy_zone", []))
+    my_energy_untapped = max(0, my_energy_total - my_tapped_mask.bit_count())
+    opp_energy_untapped = max(0, opp_energy_total - opp_tapped_mask.bit_count())
+    my_stage_count = sum(1 for card_id in player_json.get("stage", []) if int(card_id) >= 0)
+    opp_stage_count = sum(1 for card_id in opp_json.get("stage", []) if int(card_id) >= 0)
+    my_live_count = sum(1 for card_id in player_json.get("live_zone", []) if int(card_id) >= 0)
+    opp_live_count = sum(1 for card_id in opp_json.get("live_zone", []) if int(card_id) >= 0)
 
     global_features = [0.0] * GLOBAL_FEATURES
-    phase_offset = 0
     for idx, phase_id in enumerate(PHASE_FEATURE_ORDER):
-        global_features[phase_offset + idx] = 1.0 if phase == phase_id else 0.0
+        global_features[idx] = 1.0 if phase == phase_id else 0.0
 
-    scalar_offset = len(PHASE_FEATURE_ORDER)
     scalar_values = [
         _norm(float(state_json.get("turn", 0)), 20.0),
         1.0 if int(state_json.get("first_player", 0)) == current_player else 0.0,
@@ -158,29 +171,41 @@ def build_vanilla_observation(
         _norm(float(opp_json.get("score", 0)), 20.0),
         _norm(float(len(player_json.get("hand", []))), float(MAX_HAND_SLOTS)),
         _norm(float(len(player_json.get("deck", []))), 60.0),
-        _norm(float(len(player_json.get("discard", []))), 20.0),
+        _norm(float(len(player_json.get("discard", []))), 30.0),
         _norm(float(len(player_json.get("success_lives", []))), 3.0),
-        _norm(float(sum(1 for card_id in player_json.get("live_zone", []) if int(card_id) >= 0)), 3.0),
-        _norm(float(stage_count), 3.0),
+        _norm(float(my_live_count), 3.0),
+        _norm(float(my_stage_count), 3.0),
         _norm(float(len(player_json.get("yell_cards", []))), 12.0),
-        _norm(float(energy_total), 12.0),
-        _norm(float(energy_untapped), 12.0),
-        _norm(float(len(opp_json.get("success_lives", []))), 3.0),
-        _norm(float(sum(1 for card_id in opp_json.get("stage", []) if int(card_id) >= 0)), 3.0),
+        _norm(float(my_energy_total), 12.0),
+        _norm(float(my_energy_untapped), 12.0),
         _norm(float(player_json.get("play_count_this_turn", 0)), 6.0),
         _norm(float(player_json.get("cost_reduction", 0)), 6.0),
         _norm(float(player_json.get("baton_touch_count", 0)), 3.0),
+        _norm(float(len(opp_json.get("discard", []))), 30.0),
+        _norm(float(len(opp_json.get("success_lives", []))), 3.0),
+        _norm(float(opp_live_count), 3.0),
+        _norm(float(opp_stage_count), 3.0),
+        _norm(float(len(opp_json.get("yell_cards", []))), 12.0),
+        _norm(float(opp_energy_total), 12.0),
+        _norm(float(opp_energy_untapped), 12.0),
+        _norm(float(opp_json.get("play_count_this_turn", 0)), 6.0),
+        _norm(float(state_json.get("turn", 0)), 10.0),
+        _signed_norm(float(len(player_json.get("success_lives", [])) - len(opp_json.get("success_lives", []))), 3.0),
+        _signed_norm(float(my_energy_untapped - opp_energy_untapped), 12.0),
     ]
+    scalar_offset = len(PHASE_FEATURE_ORDER)
     for idx, value in enumerate(scalar_values):
         global_features[scalar_offset + idx] = value
 
-    stage_heart_offset = scalar_offset + len(scalar_values)
-    for idx, value in enumerate(stage_hearts):
-        global_features[stage_heart_offset + idx] = _norm(value, 10.0)
-
-    deficit_offset = stage_heart_offset + 7
+    block_offset = scalar_offset + len(scalar_values)
+    for idx, value in enumerate(my_stage_hearts):
+        global_features[block_offset + idx] = _norm(value, 12.0)
+    for idx, value in enumerate(opp_stage_hearts):
+        global_features[block_offset + 7 + idx] = _norm(value, 12.0)
+    for idx, value in enumerate(live_requirements):
+        global_features[block_offset + 14 + idx] = _norm(value, 12.0)
     for idx, value in enumerate(live_deficits):
-        global_features[deficit_offset + idx] = _norm(value, 10.0)
+        global_features[block_offset + 21 + idx] = _norm(value, 12.0)
 
     positions_by_card = _build_occurrence_positions(initial_deck)
     next_occurrence: dict[int, int] = {}
@@ -223,7 +248,6 @@ def build_vanilla_observation(
 
     revealed_cards = {int(card_id) for card_id in player_json.get("revealed_cards", [])}
     stage_energy_count = [int(value) for value in player_json.get("stage_energy_count", [0] * MAX_STAGE_SLOTS)]
-
     card_features: list[float] = []
     for deck_pos in range(MAX_INITIAL_DECK):
         card_id = int(initial_deck[deck_pos]) if deck_pos < len(initial_deck) else -1
@@ -231,22 +255,23 @@ def build_vanilla_observation(
             card_features.extend([0.0] * CARD_FEATURES)
             continue
 
-        static = card_lookup.get(card_id, None)
+        static = card_lookup.get(card_id)
         zone_id = zone_by_pos[deck_pos]
         hand_idx = hand_pos_by_pos[deck_pos]
         stage_slot = stage_slot_by_pos[deck_pos]
         live_slot = live_slot_by_pos[deck_pos]
         stage_energy = stage_energy_count[stage_slot] if 0 <= stage_slot < len(stage_energy_count) else 0
-
         is_member = 1.0 if static and static.get("type") == "member" else 0.0
         is_live = 1.0 if static and static.get("type") == "live" else 0.0
         primary_value = float(static.get("primary_value", 0.0)) if static else 0.0
         hearts = [float(value) for value in static.get("hearts", [0.0] * 7)] if static else [0.0] * 7
         aux_icons = float(static.get("aux_icons", 0.0)) if static else 0.0
         group_count = float(static.get("group_count", 0.0)) if static else 0.0
+        hearts_total = float(static.get("hearts_total", 0.0)) if static else 0.0
 
-        playable_now = 1.0 if zone_id == ZONE_HAND and is_member and phase == 4 and stage_count < MAX_STAGE_SLOTS and primary_value <= energy_untapped else 0.0
+        playable_now = 1.0 if zone_id == ZONE_HAND and is_member and phase == 4 and my_stage_count < MAX_STAGE_SLOTS and primary_value <= my_energy_untapped else 0.0
         settable_now = 1.0 if zone_id == ZONE_HAND and is_live and phase == 5 else 0.0
+        is_public_zone = 1.0 if zone_id in (ZONE_STAGE, ZONE_LIVE, ZONE_DISCARD, ZONE_SUCCESS, ZONE_YELL) else 0.0
         revealed_now = 1.0 if zone_id == ZONE_LIVE and card_id in revealed_cards else 0.0
 
         token = [
@@ -255,25 +280,30 @@ def build_vanilla_observation(
             _norm(float(stage_slot + 1), float(MAX_STAGE_SLOTS)) if stage_slot >= 0 else 0.0,
             _norm(float(live_slot + 1), float(MAX_LIVE_SLOTS)) if live_slot >= 0 else 0.0,
             _norm(float(stage_energy), 6.0),
-            playable_now,
-            settable_now,
             revealed_now,
             is_member,
             is_live,
             _norm(primary_value, 10.0),
-            _norm(hearts[0], 5.0),
-            _norm(hearts[1], 5.0),
-            _norm(hearts[2], 5.0),
-            _norm(hearts[3], 5.0),
-            _norm(hearts[4], 5.0),
-            _norm(hearts[5], 5.0),
-            _norm(hearts[6], 5.0),
+            _norm(hearts_total, 20.0),
+            _norm(hearts[0], 6.0),
+            _norm(hearts[1], 6.0),
+            _norm(hearts[2], 6.0),
+            _norm(hearts[3], 6.0),
+            _norm(hearts[4], 6.0),
+            _norm(hearts[5], 6.0),
+            _norm(hearts[6], 6.0),
             _norm(aux_icons, 10.0),
             _norm(group_count, 4.0),
+            playable_now,
+            settable_now,
+            is_public_zone,
+            1.0 if zone_id == ZONE_SUCCESS else 0.0,
+            _norm(float(deck_pos + 1), float(MAX_INITIAL_DECK)),
         ]
         card_features.extend(token)
 
     obs = np.asarray(global_features + card_features, dtype=np.float32)
     if obs.shape[0] != OBS_DIM:
         raise RuntimeError(f"Vanilla observation size mismatch: expected {OBS_DIM}, got {obs.shape[0]}")
+    return obs
     return obs

@@ -206,21 +206,21 @@
             <button id="processBtn">Extract Deck</button>
             <button class="secondary" id="clearBtn">Clear</button>
             <button class="secondary" id="sampleBtn">Load Sample HTML</button>
-            <button class="secondary" onclick="window.close();">Back to Game</button>
+            <button class="secondary" id="backBtn">Back to Game</button>
         </div>
 
         <div class="output-container">
             <div class="output-box">
                 <div class="label">
                     <span>Clean List (ID x Count)</span>
-                    <span class="copy-link" onclick="copy('output1')">Copy</span>
+                    <span class="copy-link" id="copyOutput1">Copy</span>
                 </div>
                 <pre id="output1"></pre>
             </div>
             <div class="output-box">
                 <div class="label">
                     <span>Flat List (One ID per line)</span>
-                    <span class="copy-link" onclick="copy('output2')">Copy</span>
+                    <span class="copy-link" id="copyOutput2">Copy</span>
                 </div>
                 <pre id="output2"></pre>
             </div>
@@ -344,6 +344,10 @@
 </div>`;
             process();
         });
+
+        document.getElementById('backBtn').addEventListener('click', () => window.close());
+        document.getElementById('copyOutput1').addEventListener('click', () => copy('output1'));
+        document.getElementById('copyOutput2').addEventListener('click', () => copy('output2'));
     </script>
 </body>
 

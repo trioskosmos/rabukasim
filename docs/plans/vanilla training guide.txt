@@ -4,7 +4,7 @@ mulligan: essentially high energy cost members and high requirement lives should
 
 main: should prioritise playing members to the field. while position does not matter due to no abilities, the baton pass, which allows an energy cost to equal the cost of card minus the card currently in the slot depends on what card is in what zone so likely will need to multiply the output here by three unless you have a smarter method
 
-live set: can put up to three cards in live set zone, these actually do not matter order or position. number of cards set is the number of cards drawn. can get rid of unneeded cards, low cost members are less useful in later turns due to no abilities.
+live set: can put up to three cards in live set zone, these actually do not matter order or position. number of cards set is the number of cards drawn. can get rid of unneeded cards, if a card has lower blades/hearts than the cards on the stage there is no reason not to be rid of them, assuming the colors are the same.
 
 performance: if heart requirement vectors are made up by stage member heart vectors plus yell heart vectors and judgement score is higher than opponents (full rules have more nuance) win a live card to live success zone. having three live cards in that zone is a win. have to consider having successful performances before your opponent but also having a higher score at all turns, so prioritizing low scores for fast wins may not work if opponent can get high scores working fast enough. also combinations of live cards can be played and their scores are added together, have to consider what combinations of live cards will give best balance of  score but also success chance
 

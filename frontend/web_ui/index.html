@@ -10,19 +10,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/cards.css">
-    <link rel="stylesheet" href="css/modals.css">
-    <link rel="stylesheet" href="css/performance.css">
-    <link rel="stylesheet" href="css/debug.css">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/unified_log_styles.css">
-    <link rel="stylesheet" href="css/deck_validation.css">
-    <link rel="stylesheet" href="css/log_viewer_modal.css">
+    
+    <!-- CSS Load Order managed by Vite via style.css -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body>
+<body class="rabukasim-root">
     <!-- Floating Tooltip -->
     <div id="floating-tooltip" class="floating-tooltip" style="display: none;"></div>
 
@@ -39,98 +32,96 @@
         </div>
     </div>
 
-    <button id="mobile-sidebar-toggle" onclick="toggleSidebar()">
+    <button id="mobile-sidebar-toggle" data-action="toggle-sidebar">
         <span class="icon">Menu</span>
         <span class="label">ACTIONS</span>
     </button>
-    <header class="header">
-        <div class="header-main-row">
-            <h1 data-i18n="app_title">ラブカ Solo</h1>
+    
+    <!-- Mobile Action Bar -->
+    <div id="mobile-action-bar" class="mobile-action-bar"></div>
 
-            <div id="room-display" class="room-display">
-                <span id="room-display-pill" class="room-display-pill">
-                    <span class="room-label">ROOM: <span id="room-code-header">---</span></span>
-                    <button type="button" class="btn btn-exit" onclick="leaveRoom()" aria-label="Exit to Lobby" title="Exit to Lobby">Exit</button>
+    <header class="header">
+        <div class="info-bar">
+            <!-- Group: Game Connectivity/Meta -->
+
+            <div class="stat-group">
+                <span class="stat" title="Connection"><span class="stat-icon"></span> <strong id="header-debug-info"
+                        class="debug-badge">PvE</strong></span>
+                <span id="room-display" class="stat" title="Room Code" style="display: none;">
+                    <span class="stat-icon"></span> <span>Room</span> <strong id="room-code-header">----</strong>
+                </span>
+                <span class="stat" title="System Status" style="display: none;"><span class="stat-icon"></span> <strong
+                        id="system-status-badge" class="debug-badge">Checking...</strong></span>
+                <span class="stat" title="Spectators"><span class="stat-icon"></span> <strong
+                        id="spectator-count">0</strong></span>
+            </div>
+
+            <!-- Group: Turn & Phase -->
+            <div class="stat-group main-game-stats">
+                <span class="stat" title="Turn"><span class="stat-icon"></span> <span class="stat-label"
+                        data-i18n="turn">ターン</span> <strong id="turn">1</strong></span>
+                <span class="stat" title="Phase"><span class="stat-icon"></span> <span class="stat-label"
+                        data-i18n="phase">フェーズ</span> <strong id="phase">MAIN</strong></span>
+            </div>
+
+            <!-- Group: Score & Progress -->
+            <div class="stat-group score-stats">
+                <span class="stat" title="Score"><span class="stat-icon"></span> <span class="stat-label"
+                        data-i18n="score">スコア</span> <strong id="score">0 - 0</strong></span>
+                <span class="stat summary-pips" title="Hearts">
+                    <div id="total-hearts-summary"></div>
+                </span>
+                <span class="stat summary-pips" title="Blades">
+                    <div id="total-blades-summary"></div>
                 </span>
             </div>
-            <div class="info-bar">
-                <!-- Group: Game Connectivity/Meta -->
-                <div class="stat-group">
-                    <span class="stat" title="Connection"><span class="stat-icon"></span> <strong id="header-debug-info"
-                            class="debug-badge">PvE</strong></span>
-                    <span class="stat" title="System Status"><span class="stat-icon"></span> <strong
-                            id="system-status-badge" class="debug-badge">Checking...</strong></span>
-                    <span class="stat" title="Spectators"><span class="stat-icon"></span> <strong
-                            id="spectator-count">0</strong></span>
-                </div>
 
-                <!-- Group: Turn & Phase -->
-                <div class="stat-group main-game-stats">
-                    <span class="stat" title="Turn"><span class="stat-icon"></span> <span class="stat-label"
-                            data-i18n="turn">ターン</span> <strong id="turn">1</strong></span>
-                    <span class="stat" title="Phase"><span class="stat-icon"></span> <span class="stat-label"
-                            data-i18n="phase">フェーズ</span> <strong id="phase">MAIN</strong></span>
-                </div>
-
-                <!-- Group: Score & Progress -->
-                <div class="stat-group score-stats">
-                    <span class="stat" title="Score"><span class="stat-icon"></span> <span class="stat-label"
-                            data-i18n="score">スコア</span> <strong id="score">0 - 0</strong></span>
-                    <span class="stat summary-pips" title="Hearts">
-                        <div id="total-hearts-summary"></div>
-                    </span>
-                    <span class="stat summary-pips" title="Blades">
-                        <div id="total-blades-summary"></div>
-                    </span>
-                </div>
-
-                <!-- Group: Energy -->
-                <div class="stat-group energy-stats">
-                    <span class="stat" title="Energy"><span class="stat-icon">En</span>
-                        <span class="stat-label" data-i18n="energy">エネルギー</span> <strong id="header-energy">0 /
-                            0</strong></span>
-                </div>
+            <!-- Group: Energy -->
+            <div class="stat-group energy-stats">
+                <span class="stat" title="Energy"><span class="stat-icon">En</span>
+                    <span class="stat-label" data-i18n="energy">エネルギー</span> <strong id="header-energy">0 /
+                        0</strong></span>
             </div>
+
             <div class="controls">
-                <button id="save-state-btn" class="btn btn-secondary" onclick="Modals.saveState()"
-                    title="Save Board State to JSON File"><span class="btn-text">Save State</span></button>
-                <button id="load-state-btn" class="btn btn-secondary" onclick="Modals.loadState()"
-                    title="Load Board State String"><span class="btn-text">Load State</span></button>
-                <button id="undo-btn" class="btn btn-secondary" onclick="Modals.rewind()" title="Undo last action"><span
-                        class="btn-text">Undo</span></button>
-                <button id="redo-btn" class="btn btn-secondary" onclick="Modals.redo()" title="Redo last undo"><span
-                        class="btn-text">Redo</span></button>
-                <button id="debug-modal-btn" class="btn btn-secondary" onclick="Modals.openDebugModal()"
-                    title="Debug / State Editor"><span class="btn-text">Debug</span></button>
-                <button id="report-btn-header" class="btn btn-primary" onclick="openReportModal()" data-i18n="report"
-                    title="Report Issue"><span class="btn-text" data-i18n="report">バグ報告</span></button>
-                <button class="btn btn-settings" onclick="openSettingsModal()" title="Settings"><span class="btn-text"
-                        data-i18n="settings">設定</span></button>
+                <button id="save-state-btn" class="btn btn-secondary btn-sm" data-action="save-state"
+                    title="Save Board State to JSON File">Save</button>
+                <button id="load-state-btn" class="btn btn-secondary btn-sm" data-action="load-state"
+                    title="Load Board State String">Load</button>
+                <button id="undo-btn" class="btn btn-secondary btn-sm" data-action="rewind" title="Undo last action">Undo</button>
+                <button id="redo-btn" class="btn btn-secondary btn-sm" data-action="redo" title="Redo last undo">Redo</button>
+                <button id="debug-modal-btn" class="btn btn-secondary btn-sm" data-action="open-debug-modal"
+                    title="Debug / State Editor">Debug</button>
+                <button id="report-btn-header" class="btn btn-primary btn-sm" data-action="open-report-modal" data-i18n="report"
+                    title="Report Issue">報告</button>
+                <button class="btn btn-accent-gray btn-sm" data-action="open-settings-modal" title="Settings"
+                        data-i18n="settings">設定</button>
+                <button id="exit-room-btn" class="btn btn-accent-gray btn-sm" data-action="leave-room" title="Exit Room">Exit</button>
             </div>
         </div>
 
         <div class="replay-controls" id="replay-controls" style="display: none;">
-            <button class="btn" onclick="document.getElementById('replay-file-input').click()"
+            <button class="btn" data-action="click-target" data-target-id="replay-file-input"
                 style="font-size:0.8rem; padding:2px 8px;">Open</button>
             <input type="file" id="replay-file-input" accept=".json" style="display:none"
                 onchange="loadReplayFromFile(this)">
-            <button class="btn" onclick="openPasteReplayModal()" style="font-size:0.8rem; padding:2px 8px;">
+            <button class="btn" data-action="open-paste-replay-modal" style="font-size:0.8rem; padding:2px 8px;">
                 Paste</button>
-            <button class="btn" onclick="loadReplay()" style="font-size:0.8rem; padding:2px 8px;">Load</button>
+            <button class="btn" data-action="load-replay" style="font-size:0.8rem; padding:2px 8px;">Load</button>
             <input type="text" id="replay-file" value="ai_match.json" placeholder="ai_match.json"
                 style="width:120px; padding:2px 6px; background:rgba(0,0,0,0.5); border:1px solid #444; color:white; border-radius:4px; font-size: 0.8rem;">
             <div style="width:1px; height:20px; background:#555; margin:0 4px;"></div>
-            <button class="btn" onclick="replayPrevTurn()"
+            <button class="btn" data-action="replay-prev-turn"
                 style="font-size:0.75rem; padding:2px 6px; background:#444;">[Turn]</button>
-            <button class="btn" onclick="replayPrevPhase()"
+            <button class="btn" data-action="replay-prev-phase"
                 style="font-size:0.75rem; padding:2px 6px; background:#555;">[Phase]</button>
-            <button class="btn" onclick="replayPrev()" style="font-size:0.8rem; padding:2px 10px;">Prev</button>
-            <button class="btn" id="play-btn" onclick="togglePlay()"
+            <button class="btn" data-action="replay-prev" style="font-size:0.8rem; padding:2px 10px;">Prev</button>
+            <button class="btn" id="play-btn" data-action="toggle-play"
                 style="font-size:0.8rem; padding:2px 10px; min-width:60px; background:#4a9eff;">Play / Pause</button>
-            <button class="btn" onclick="replayNext()" style="font-size:0.8rem; padding:2px 10px;">Next</button>
-            <button class="btn" onclick="replayNextPhase()"
+            <button class="btn" data-action="replay-next" style="font-size:0.8rem; padding:2px 10px;">Next</button>
+            <button class="btn" data-action="replay-next-phase"
                 style="font-size:0.75rem; padding:2px 6px; background:#555;">Phase [Next]</button>
-            <button class="btn" onclick="replayNextTurn()"
+            <button class="btn" data-action="replay-next-turn"
                 style="font-size:0.75rem; padding:2px 6px; background:#444;">Turn [Next]</button>
             <span style="color:#aaa; font-size:0.8rem; margin-left:8px;">Fr: <span id="frame-num">0</span>/<span
                     id="total-frames">0</span></span>
@@ -168,9 +159,9 @@
         <div class="game-board">
             <!-- Board Toggle (Tabbed View) -->
             <div class="board-toggle">
-                <button class="btn btn-toggle active" id="btn-show-player" onclick="UI.switchBoard('player')">My Board
+                <button class="btn btn-toggle active" id="btn-show-player" data-action="switch-board" data-value="player">My Board
                     (Player 1)</button>
-                <button class="btn btn-toggle" id="btn-show-opponent" onclick="UI.switchBoard('opponent')">Opponent
+                <button class="btn btn-toggle" id="btn-show-opponent" data-action="switch-board" data-value="opponent">Opponent
                     (Player 2)</button>
             </div>
 
@@ -182,28 +173,31 @@
                     <span class="score-badge" id="opp-score">0 <span data-i18n="live_unit">ライブ</span></span>
                 </div>
                 <div class="board-inner">
+                    <!-- TOP: Live Zone (Full Width) -->
+                    <div class="live-group-row">
+                        <div class="live-group">
+                            <div class="card-area live-zone-cards" id="opp-live"></div>
+                        </div>
+                    </div>
+
                     <!-- MAIN FIELD: 2 COLUMNS -->
                     <div class="field-row">
-                        <!-- LEFT: Play Area (Stage & Live Zone) -->
+                        <!-- LEFT: Play Area (Stage) -->
                         <div class="play-area-left">
-                            <div class="live-group">
-                                <div class="card-area live-zone-cards" id="opp-live"></div>
-                            </div>
                             <div class="stage-group">
                                 <div class="card-area stage" id="opp-stage"></div>
                             </div>
                         </div>
 
-                        <!-- RIGHT: Utility Area (Deck, Discard, Success) -->
+                        <!-- RIGHT: Utility Area (Success & Decks) -->
                         <div class="utility-column-right">
-                            <div class="deck-discard-group simplified">
-                                <button id="opp-deck-pill" class="deck-pill btn btn-mini btn-deck" title="Main Deck"
-                                    onclick="UI.showZoneViewer(1)" aria-label="View Opponent Main Deck">D: <span id="opp-deck-count">0</span></button>
-                                <button id="opp-energy-deck-pill" class="deck-pill energy btn btn-mini btn-deck"
-                                    title="Energy Deck" onclick="UI.showZoneViewer(1)" aria-label="View Opponent Energy Deck">E: <span
-                                        id="opp-energy-deck-count">0</span></button>
-                                <button class="btn btn-mini btn-discard" onclick="UI.showDiscardModal(1)">Discard (<span
-                                        id="opp-discard-count">0</span>)</button>
+                            <div class="utility-counts-box">
+                                <div class="stat-item clickable" data-action="show-zone-viewer" data-owner="opponent" title="Opponent's Main Deck">Main: <strong id="opp-deck-count">0</strong></div>
+                                <div id="opp-deck-bottom" class="deck-bottom-area" style="display: none;"></div>
+                                <div class="stat-item clickable" data-action="show-zone-viewer" data-owner="opponent" title="Opponent's Energy Deck">E: <strong id="opp-energy-deck-count">0</strong></div>
+                                <div class="stat-item clickable" data-action="show-discard" data-owner="opponent" title="Opponent's Discard">X: <strong id="opp-discard-count">0</strong></div>
+                            </div>
+                            <div class="discard-visual-container">
                                 <div id="opp-discard-visual" class="discard-pile-visual"></div>
                             </div>
                             <div class="successful-live-area-container">
@@ -238,28 +232,31 @@
                     <span class="score-badge" id="my-score">0 <span data-i18n="live_unit">ライブ</span></span>
                 </div>
                 <div class="board-inner">
+                    <!-- TOP: Live Zone (Full Width) -->
+                    <div class="live-group-row">
+                        <div class="live-group">
+                            <div class="card-area live-zone-cards" id="my-live"></div>
+                        </div>
+                    </div>
+
                     <!-- MAIN FIELD: 2 COLUMNS -->
                     <div class="field-row">
-                        <!-- LEFT: Play Area (Stage & Live Zone) -->
+                        <!-- LEFT: Play Area (Stage) -->
                         <div class="play-area-left">
-                            <div class="live-group">
-                                <div class="card-area live-zone-cards" id="my-live"></div>
-                            </div>
                             <div class="stage-group">
                                 <div class="card-area stage" id="my-stage"></div>
                             </div>
                         </div>
 
-                        <!-- RIGHT: Utility Area (Deck, Discard, Success) -->
+                        <!-- RIGHT: Utility Area (Success & Decks) -->
                         <div class="utility-column-right">
-                            <div class="deck-discard-group simplified">
-                                <button id="my-deck-pill" class="deck-pill btn btn-mini btn-deck" title="Main Deck"
-                                    onclick="UI.showZoneViewer(0)" aria-label="View My Main Deck">D: <span id="my-deck-count">0</span></button>
-                                <button id="my-energy-deck-pill" class="deck-pill energy btn btn-mini btn-deck"
-                                    title="Energy Deck" onclick="UI.showZoneViewer(0)" aria-label="View My Energy Deck">E: <span
-                                        id="my-energy-deck-count">0</span></button>
-                                <button class="btn btn-mini btn-discard" onclick="UI.showDiscardModal(0)">Discard (<span
-                                        id="my-discard-count">0</span>)</button>
+                            <div class="utility-counts-box">
+                                <div class="stat-item clickable" data-action="show-zone-viewer" data-owner="my" title="Main Deck">Main: <strong id="my-deck-count">0</strong></div>
+                                <div id="my-deck-bottom" class="deck-bottom-area" style="display: none;"></div>
+                                <div class="stat-item clickable" data-action="show-zone-viewer" data-owner="my" title="Your Energy Deck">E: <strong id="my-energy-deck-count">0</strong></div>
+                                <div class="stat-item clickable" data-action="show-discard" data-owner="my" title="Your Discard">X: <strong id="my-discard-count">0</strong></div>
+                            </div>
+                            <div class="discard-visual-container">
                                 <div id="my-discard-visual" class="discard-pile-visual"></div>
                             </div>
                             <div class="successful-live-area-container">
@@ -295,48 +292,26 @@
             <div class="sidebar-section">
                 <h3>アクション</h3>
                 <div class="performance-check-container">
-                    <button class="btn btn-performance" onclick="showLastPerformance()" data-i18n="check_performance">
+                    <button class="btn btn-accent-purple btn-sm" data-action="show-last-performance" data-i18n="check_performance" style="width: 100%;">
                         パフォーマンス確認
                     </button>
                 </div>
                 <div class="action-list" id="actions"></div>
             </div>
 
-            <div class="sidebar-section diagnostic-section" id="diagnostic-panel">
-                <h3 class="diag-title" data-i18n="diagnostic">診断情報 (Diag)</h3>
-                <div id="diag-content" class="diag-content">
-                    <div>Phase: <span id="diag-phase">-</span></div>
-                    <div>Player: <span id="diag-player">-</span></div>
-                    <div>Legal Actions: <span id="diag-actions">-</span></div>
-                    <div>Game Over: <span id="diag-gameover">-</span></div>
-                    <div class="diag-controls">
-                        <button class="action-btn diag-btn" onclick="forceAdvance()">Force Advance</button>
-                    </div>
-                </div>
-            </div>
-            <div class="sidebar-section performance-guide" id="perf-guide-panel">
+
+            <div id="perf-guide-panel" class="sidebar-section" style="display: none;">
                 <h3 class="guide-title" data-i18n="live_guide">ライブガイド</h3>
                 <div id="perf-guide-content" class="guide-content">
                     <!-- Content populated by JS -->
                 </div>
             </div>
             <div class="sidebar-section looked-cards-panel" id="looked-cards-panel">
-                <h3 class="looked-title" data-i18n="looked_cards">確認したカード</h3>
                 <div id="looked-cards-content" class="looked-cards-grid">
                     <!-- Populated by JS -->
                 </div>
             </div>
-            <div class="sidebar-section ai-analysis" id="ai-analysis-panel">
-                <h3 class="ai-title" data-i18n="ai_analysis">AI 分析 (MCTS)
-                    <span id="ai-thinking-dots" class="thinking-dots">...</span>
-                </h3>
-                <div id="ai-suggestions-list" class="ai-list">
-                    <!-- Top moves will be here -->
-                </div>
-                <div class="ai-controls">
-                    <button class="btn btn-ai" onclick="runAiAnalysis()">分析実行 (Run Analysis)</button>
-                </div>
-            </div>
+
 
         </div>
     </div>
@@ -346,29 +321,29 @@
         <div class="modal-content">
             <div class="modal-header">
                 <span class="modal-title"><span data-i18n="settings">設定</span></span>
-                <button class="close-btn" onclick="closeSettingsModal()">&times;</button>
+                <button class="close-btn" data-action="close-settings-modal">&times;</button>
             </div>
             <div class="modal-body settings-grid">
                 <div class="settings-group">
                     <label>Main Actions</label>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <button class="btn" onclick="fetchState()" title="Update State"><span class="btn-text"
+                        <button class="btn" data-action="fetch-state" title="Update State"><span class="btn-text"
                                 data-i18n="update">更新</span></button>
-                        <button class="btn btn-primary" onclick="resetGame()" title="Reset Game"><span class="btn-text"
+                        <button class="btn btn-primary" data-action="reset-game" title="Reset Game"><span class="btn-text"
                                 data-i18n="reset">リセット</span></button>
                     </div>
                 </div>
 
                 <div class="settings-group">
                     <label>Game Controls</label>
-                    <button class="btn btn-accent-purple" onclick="location.href='/deck_builder.html'"
+                    <button class="btn btn-accent-purple" data-action="navigate" data-href="/deck_builder.html"
                         data-i18n="deck_creator">🛠
                         デッキ作成</button>
-                    <button class="btn btn-accent-blue" onclick="openDeckModal()" data-i18n="set_deck">🎴
+                    <button class="btn btn-accent-blue" data-action="open-deck-modal" data-i18n="set_deck">🎴
                         デッキ設定</button>
-                    <button id="pvp-btn" class="btn btn-accent-gray" onclick="toggleHotseat()">Shared Screen:
+                    <button id="pvp-btn" class="btn btn-accent-gray" data-action="toggle-hotseat">Shared Screen:
                         OFF</button>
-                    <button id="switch-btn" class="btn btn-accent-blue" onclick="togglePerspective()">Switch View
+                    <button id="switch-btn" class="btn btn-accent-blue" data-action="toggle-perspective">Switch View
                         (P1/P2)</button>
                 </div>
 
@@ -380,20 +355,20 @@
                         <input type="range" id="zoom-slider" min="0.5" max="2.5" step="0.05" value="1.0"
                             class="zoom-slider-input" oninput="updateBoardScale(this.value)">
                     </div>
-                    <button id="live-watch-btn" class="btn btn-accent-pink" onclick="toggleLiveWatch()"
+                    <button id="live-watch-btn" class="btn btn-accent-pink" data-action="toggle-live-watch"
                         data-i18n="live_watch">ライブ監視: OFF</button>
-                    <button id="friendly-abilities-btn" class="btn btn-accent-green" onclick="toggleFriendlyAbilities()"
+                    <button id="friendly-abilities-btn" class="btn btn-accent-green" data-action="toggle-friendly-abilities"
                         data-i18n="friendly_abilities">読みやすい能力テキスト: ON</button>
-                    <button id="lang-btn" class="btn" onclick="toggleLang()"
+                    <button id="lang-btn" class="btn" data-action="toggle-lang"
                         style="border:1px solid #aaa;">English</button>
-                    <button class="btn" onclick="openHelpModal()"
+                    <button class="btn" data-action="open-help-modal"
                         style="border:1px solid var(--accent-gold); color:var(--accent-gold);">ヘルプ</button>
                 </div>
 
                 <div class="settings-group">
                     <label>Tools</label>
-                    <button class="btn" onclick="toggleReplayMode()" data-i18n="replay_mode">リプレイモード Toggle</button>
-                    <button id="debug-mode-btn" class="btn" onclick="Modals.toggleDebugMode()"
+                    <button class="btn" data-action="toggle-replay-mode" data-i18n="replay_mode">リプレイモード Toggle</button>
+                    <button id="debug-mode-btn" class="btn" data-action="toggle-debug-mode"
                         style="border: 1px solid var(--accent-blue); margin-top: 8px;">Toggle Bytecode Logging</button>
                 </div>
             </div>
@@ -405,20 +380,28 @@
         <div class="modal-content performance-modal-content">
             <div class="modal-header">
                 <div class="modal-title" id="perf-title" data-i18n="live_result">ライブ結果</div>
-                <button class="close-btn" onclick="UI.closePerformanceModal()">✕</button>
+                <button class="close-btn" data-action="close-performance-modal">✕</button>
             </div>
             <div class="modal-body">
                 <div class="modal-tabs">
-                    <button id="tab-btn-result" class="tab-btn active" onclick="UI.showPerfTab('result')">
+                    <button id="tab-btn-result" class="tab-btn active" data-action="show-performance-tab" data-value="result">
                         <span data-t="perf_result">結果概要</span>
                     </button>
-                    <button id="tab-btn-history" class="tab-btn" onclick="UI.showPerfTab('history')">
+                    <button id="tab-btn-engine" class="tab-btn" data-action="show-performance-tab" data-value="engine">
+                        <span data-t="engine_mechanics">エンジン解説</span>
+                    </button>
+                    <button id="tab-btn-history" class="tab-btn" data-action="show-performance-tab" data-value="history">
                         <span data-t="turn_history">ターン履歴</span>
                     </button>
                 </div>
                 <div id="perf-tab-result" class="perf-tab-content">
                     <div id="performance-result-content">
                         <!-- Performance results will be rendered here -->
+                    </div>
+                </div>
+                <div id="perf-tab-engine" class="perf-tab-content" style="display: none;">
+                    <div id="performance-engine-content">
+                        <!-- Engine flow will be rendered here -->
                     </div>
                 </div>
                 <div id="perf-tab-history" class="perf-tab-content" style="display: none;">
@@ -428,7 +411,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="UI.closePerformanceModal()" data-i18n="close">閉じる</button>
+                <button class="btn btn-primary" data-action="close-performance-modal" data-i18n="close">閉じる</button>
             </div>
         </div>
     </div>
@@ -438,8 +421,7 @@
         <div class="modal-content selection-modal-content">
             <div class="modal-header">
                 <div class="modal-title" id="selection-title">カード選択</div>
-                <button class="close-btn"
-                    onclick="document.getElementById('selection-modal').style.display='none'">✕</button>
+                <button class="close-btn" data-action="close-selection-modal">✕</button>
             </div>
             <div id="selection-description" class="modal-description"></div>
             <div class="modal-body selection-grid" id="selection-content">
@@ -456,7 +438,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title">Report Issue / Save State</div>
-                <button class="close-btn" onclick="closeReportModal()">✕</button>
+                <button class="close-btn" data-action="close-report-modal">✕</button>
             </div>
             <div class="modal-body">
                 <p class="modal-hint">
@@ -467,9 +449,9 @@
                     placeholder="Explain the issue here..."></textarea>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="downloadReport()">Download JSON</button>
-                <button class="btn" onclick="closeReportModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="submitReport()">Submit to Server</button>
+                <button class="btn btn-outline" data-action="download-report">Download JSON</button>
+                <button class="btn" data-action="close-report-modal">Cancel</button>
+                <button class="btn btn-primary" data-action="submit-report">Submit to Server</button>
             </div>
         </div>
     </div>
@@ -479,7 +461,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <span class="modal-title">ヘルプ & FAQ (Help)</span>
-                <button class="close-btn" onclick="closeHelpModal()">×</button>
+                <button class="close-btn" data-action="close-help-modal">×</button>
             </div>
             <div class="modal-body help-body">
                 <h3>デッキのセット方法 (Deck Setup)</h3>
@@ -504,7 +486,7 @@
                 </ul>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="closeHelpModal()">閉じる</button>
+                <button class="btn btn-primary" data-action="close-help-modal">閉じる</button>
             </div>
         </div>
     </div>
@@ -514,7 +496,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <span class="modal-title">デッキセット (Set Deck)</span>
-                <button class="close-btn" onclick="closeDeckModal()">×</button>
+                <button class="close-btn" data-action="close-deck-modal">×</button>
             </div>
             <div class="modal-body">
                 <div class="setting-item">
@@ -542,10 +524,10 @@
                 <div class="setup-quick-actions">
                     <label>Option 1: Quick Load</label>
                     <input type="file" id="deck-file-input" accept=".html,.txt,.json">
-                    <button class="btn btn-test-deck" onclick="loadTestDeck()">
+                    <button class="btn btn-test-deck" data-action="load-test-deck">
                         Load Test Deck (Doubled)
                     </button>
-                    <button class="btn btn-random-deck" onclick="loadRandomDeck()">
+                    <button class="btn btn-random-deck" data-action="load-random-deck">
                         Generate Random Deck
                     </button>
                 </div>
@@ -558,8 +540,8 @@
                 <div id="deck-preview" class="preview-text"></div>
             </div>
             <div class="modal-footer">
-                <button class="btn" onclick="closeDeckModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="submitDeck()">Apply Deck</button>
+                <button class="btn" data-action="close-deck-modal">Cancel</button>
+                <button class="btn btn-primary" data-action="submit-deck">Apply Deck</button>
             </div>
         </div>
     </div>
@@ -569,7 +551,7 @@
         <div class="modal-content" style="width: 600px;">
             <div class="modal-header">
                 <span class="modal-title">Paste Replay JSON</span>
-                <button onclick="closePasteReplayModal()"
+                <button data-action="close-paste-replay-modal"
                     style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">×</button>
             </div>
             <div class="modal-body">
@@ -579,8 +561,8 @@
                     placeholder='{"game_id": 123, "states": [...]}'></textarea>
             </div>
             <div class="modal-footer">
-                <button class="btn" onclick="closePasteReplayModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="submitPasteReplay()">Load Replay</button>
+                <button class="btn" data-action="close-paste-replay-modal">Cancel</button>
+                <button class="btn btn-primary" data-action="submit-paste-replay">Load Replay</button>
             </div>
         </div>
     </div>
@@ -591,7 +573,7 @@
         <div class="modal-content setup-modal-content highlight-hover">
             <div class="modal-header">
                 <span class="modal-title" id="setup-title">Game Setup</span>
-                <button class="close-btn" onclick="closeSetupModal()">×</button>
+                <button class="close-btn" data-action="close-setup-modal">×</button>
             </div>
             <div class="modal-body">
                 <div id="setup-mode-display" class="setup-mode-badge">
@@ -646,7 +628,7 @@
             </div>
 
             <div class="setup-footer-actions">
-                <button class="btn btn-primary" onclick="submitGameSetup()">Start Game</button>
+                <button class="btn btn-primary" data-action="submit-game-setup">Start Game</button>
                 <a href="deck_converter.html" target="_blank" class="btn btn-accent">Deck Converter</a>
             </div>
         </div>
@@ -662,8 +644,8 @@
             </div>
             <div class="modal-body lobby-body">
                 <div class="lobby-actions">
-                    <button class="btn btn-primary lobby-btn" onclick="openGameSetup('pve')">PvE (vs AI)</button>
-                    <button class="btn btn-accent lobby-btn" onclick="openGameSetup('pvp')">PvP (Manual)</button>
+                    <button class="btn btn-primary lobby-btn" data-action="open-setup-modal" data-value="pve">PvE (vs AI)</button>
+                    <button class="btn btn-accent lobby-btn" data-action="open-setup-modal" data-value="pvp">PvP (Manual)</button>
                 </div>
 
                 <div class="lobby-divider">OR</div>
@@ -688,16 +670,16 @@
                             placeholder="Paste deck list here..."></textarea>
                     </div>
 
-                    <button class="btn btn-primary join-btn" onclick="joinRoom()" style="width: 100%;">Join
+                    <button class="btn btn-primary join-btn" data-action="join-room" style="width: 100%; margin-top: 10px;">Join
                         Room</button>
                 </div>
 
                 <div class="lobby-offline">
-                    <button class="btn offline-btn" onclick="startOffline()">Start Offline (WASM)</button>
+                    <button class="btn offline-btn" data-action="start-offline">Start Offline (WASM)</button>
                 </div>
                 <div
                     style="margin-top: 15px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; justify-content: center;">
-                    <button class="btn" onclick="forceReset()"
+                    <button class="btn" data-action="force-reset"
                         style="font-size: 0.8rem; background: #444; color: #aaa; border: 1px solid #555;">Clear Local
                         Data & Cache</button>
                 </div>
@@ -713,8 +695,8 @@
             <div class="modal-body">
                 <p class="modal-hint">Which player are you?</p>
                 <div class="perspective-grid">
-                    <button class="btn btn-p1" onclick="setPerspective(0)">Player 1 (Host)</button>
-                    <button class="btn btn-p2" onclick="setPerspective(1)">Player 2 (Joiner)</button>
+                    <button class="btn btn-p1" data-action="set-perspective" data-value="0">Player 1 (Host)</button>
+                    <button class="btn btn-p2" data-action="set-perspective" data-value="1">Player 2 (Joiner)</button>
                 </div>
             </div>
         </div>
@@ -725,104 +707,38 @@
         <div class="log-viewer-modal-content">
             <div class="log-viewer-modal-header">
                 <div class="log-viewer-modal-title" data-i18n="rule_log">ルールログ</div>
-                <button class="log-viewer-close-btn" onclick="LogViewerModal.close()">✕</button>
+                <button class="log-viewer-close-btn" data-action="close-log-viewer">✕</button>
             </div>
             <div id="log-viewer-content" class="log-viewer-content"></div>
         </div>
     </div>
-
-    <div id="mobile-action-bar"></div>
-    <script>
-        let currentAiSims = 0;
-        let analysisInterval = null;
-
-        async function runAiAnalysis(sims = 10) {
-            const roomCode = localStorage.getItem("lovelive_room_code");
-
-            const panel = document.getElementById("ai-analysis-panel");
-            panel.style.display = "block";
-            const dots = document.getElementById("ai-thinking-dots");
-            dots.textContent = "考え中...";
-
-            try {
-                const res = await fetch("/api/ai_suggest", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "X-Room-ID": roomCode },
-                    body: JSON.stringify({ sims: sims })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    renderSuggestions(data.suggestions);
-                    currentAiSims += sims;
-                    dots.textContent = `(${currentAiSims} sims)`;
-                }
-            } catch (e) {
-                console.error("AI suggest failed", e);
-            }
-        }
-
-        function renderSuggestions(suggestions) {
-            const list = document.getElementById("ai-suggestions-list");
-            list.innerHTML = "";
-
-            // Show top 5
-            suggestions.slice(0, 5).forEach(s => {
-                const item = document.createElement("div");
-                item.style.marginBottom = "5px";
-                item.style.display = "flex";
-                item.style.justifyContent = "space-between";
-
-                const winRate = (s.value * 100).toFixed(1);
-                const color = s.value > 0.6 ? "#2ecc71" : s.value < 0.4 ? "#e74c3c" : "#f1c40f";
-
-                item.innerHTML = `
-                        <span>${s.desc}</span>
-                        <span style="color: ${color}; font-weight: bold;">${winRate}% (${s.visits})</span>
-                    `;
-                list.appendChild(item);
-            });
-        }
-
-        // Polling logic: if it's player's turn, run analysis occasionally
-        setInterval(() => {
-            const phase = document.getElementById("phase").textContent;
-            if (phase && phase !== "TERMINAL" && phase !== "SETUP") {
-                // Auto run small analysis if panel is visible
-                if (document.getElementById("ai-analysis-panel").style.display === "block") {
-                    runAiAnalysis(10);
-                }
-            } else {
-                currentAiSims = 0;
-            }
-        }, 5000);
-    </script>
     <!-- Debug / State Editor Modal -->
-    <div id="debug-modal" class="modal" style="display: none;">
+    <div id="debug-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content large" style="height: 92vh; width: min(96vw, 1800px); max-width: 1800px; display: flex; flex-direction: column; overflow: hidden;">
             <div class="modal-header">
                 <h2>Debug Inspector and State Editor</h2>
                 <div style="display: flex; gap: 8px; margin-left: auto; margin-right: 15px; font-size: 12px;">
-                    <button class="btn btn-secondary btn-sm" onclick="DebugModal.rewind()" title="Undo">Undo</button>
-                    <button class="btn btn-secondary btn-sm" onclick="DebugModal.redo()" title="Redo">Redo</button>
+                    <button class="btn btn-secondary btn-sm" data-action="debug-rewind" title="Undo">Undo</button>
+                    <button class="btn btn-secondary btn-sm" data-action="debug-redo" title="Redo">Redo</button>
                     <div style="width: 1px; background: var(--border); margin: 0 4px;"></div>
-                    <button class="btn btn-secondary btn-sm" onclick="DebugModal.toggleDebugMode()" title="Engine Debug">Debug Mode</button>
-                    <button class="btn btn-secondary btn-sm" onclick="DebugModal.renderAll()" title="Refresh">Refresh</button>
+                    <button class="btn btn-secondary btn-sm" data-action="toggle-debug-mode" title="Engine Debug">Debug Mode</button>
+                    <button class="btn btn-secondary btn-sm" data-action="debug-render-all" title="Refresh">Refresh</button>
                 </div>
-                <button class="close-btn" onclick="DebugModal.closeDebugModal()">✕</button>
+                <button class="close-btn" data-action="close-debug-modal">✕</button>
             </div>
 
             <div class="modal-body" style="padding: 0; display: flex; flex: 1; gap: 0; overflow: hidden; flex-direction: column;">
                 <div style="display: flex; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); gap: 0; flex-wrap: wrap;">
-                        <button data-tab-btn="inspector" onclick="DebugModal.switchTab('inspector')"
+                        <button data-tab-btn="inspector" data-action="debug-switch-tab" data-value="inspector"
                             style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid var(--accent-blue); color: #fff; cursor: pointer; font-size: 12px; font-weight: bold;">
                             Inspector</button>
-                        <button data-tab-btn="trace" onclick="DebugModal.switchTab('trace')"
+                        <button data-tab-btn="trace" data-action="debug-switch-tab" data-value="trace"
                             style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 12px;">
                             Trace</button>
-                        <button data-tab-btn="string" onclick="DebugModal.switchTab('string')"
+                        <button data-tab-btn="string" data-action="debug-switch-tab" data-value="string"
                             style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 12px;">
                             State String</button>
-                        <button data-tab-btn="json" onclick="DebugModal.switchTab('json')"
+                        <button data-tab-btn="json" data-action="debug-switch-tab" data-value="json"
                             style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 12px;">
                             JSON Editor</button>
                 </div>
@@ -845,12 +761,11 @@
     </div>
 
     <!-- Discard / Deck View Modal -->
-    <div id="discard-modal" class="modal" style="display: none;">
+    <div id="discard-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content large">
             <div class="modal-header">
                 <h2 id="discard-modal-title">Discard Pile</h2>
-                <button class="close-btn"
-                    onclick="document.getElementById('discard-modal').style.display='none'">✕</button>
+                <button class="close-btn" data-action="close-discard-modal">✕</button>
             </div>
             <div class="modal-body">
                 <div id="discard-modal-cards" class="discard-grid"></div>
@@ -858,9 +773,10 @@
         </div>
     </div>
 
-    <script type="module" src="js/layout.js?v=2"></script>
-    <script type="module" src="js/ability_translator.js?v=2"></script>
-    <script src="js/main.js?v=16" type="module"></script>
+    <script type="module">
+        import { initialize } from './js/main.js';
+        initialize();
+    </script>
 </body>
 
 </html>

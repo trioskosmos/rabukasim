@@ -23,9 +23,9 @@ export const RpsView = {
 
         const baseId = (perspectivePlayer === 1) ? ActionBases.RPS_P2 : ActionBases.RPS;
         const signs = [
-            { id: baseId + 0, name: i18n.t('rock') },
-            { id: baseId + 1, name: i18n.t('paper') },
-            { id: baseId + 2, name: i18n.t('scissors') }
+            { id: baseId + 0, name: i18n.t('rps_rock') },
+            { id: baseId + 1, name: i18n.t('rps_paper') },
+            { id: baseId + 2, name: i18n.t('rps_scissors') }
         ];
 
         signs.forEach(sign => {

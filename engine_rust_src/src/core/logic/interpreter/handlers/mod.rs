@@ -1,4 +1,4 @@
-﻿// --- Modularized Opcode Handlers ---
+// --- Modularized Opcode Handlers ---
 pub mod movement;
 pub mod interaction;
 pub mod state;
@@ -170,7 +170,8 @@ pub fn handle_select_mode(
             ctx.choice_index = 0;
             // fall through to choice resolution below
         } else {
-            let is_opponent = instr.s.is_opponent || instr.s.target_slot == 2;
+            let slot = instr.slot();
+            let is_opponent = slot.is_opponent || slot.target_slot == 2;
             let choice_type = if is_opponent {
                 crate::core::enums::ChoiceType::OpponentChoose
             } else {

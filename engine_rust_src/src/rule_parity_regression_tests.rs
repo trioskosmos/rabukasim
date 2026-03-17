@@ -115,6 +115,75 @@ fn test_phase_auto_advance_from_mulligan() {
 }
 
 #[test]
+fn test_rps_draws_do_not_mutate_turn_counter() {
+    let mut state = GameState::default();
+    let db = load_real_db();
+
+    state.initialize_game_with_seed(
+        vec![121i32; 60],
+        vec![121i32; 60],
+        vec![0i32; 12],
+        vec![0i32; 12],
+        Vec::new(),
+        Vec::new(),
+        Some(7),
+    );
+
+    assert_eq!(state.turn, 1);
+    assert_eq!(state.rps_draw_count, 0);
+
+    state
+        .step(
+            &db,
+            Action::Rps {
+                player_idx: 0,
+                choice: 0,
+            }
+            .id() as i32,
+        )
+        .unwrap();
+    state
+        .step(
+            &db,
+            Action::Rps {
+                player_idx: 1,
+                choice: 0,
+            }
+            .id() as i32,
+        )
+        .unwrap();
+
+    assert_eq!(state.phase, Phase::Rps);
+    assert_eq!(state.turn, 1);
+    assert_eq!(state.rps_draw_count, 1);
+
+    state
+        .step(
+            &db,
+            Action::Rps {
+                player_idx: 0,
+                choice: 1,
+            }
+            .id() as i32,
+        )
+        .unwrap();
+    state
+        .step(
+            &db,
+            Action::Rps {
+                player_idx: 1,
+                choice: 2,
+            }
+            .id() as i32,
+        )
+        .unwrap();
+
+    assert_eq!(state.phase, Phase::TurnChoice);
+    assert_eq!(state.turn, 1);
+    assert_eq!(state.rps_draw_count, 0);
+}
+
+#[test]
 fn test_yell_source_deck_parity() {
     let mut state = GameState::default();
     let db = load_real_db();

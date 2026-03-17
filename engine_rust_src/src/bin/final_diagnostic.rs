@@ -11,7 +11,7 @@ use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::TurnSequencer;
 use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
 use rand::SeedableRng;
-use rand::rngs::SmallRng;
+
 use rand::seq::IndexedRandom;
 
 fn load_vanilla_db() -> CardDatabase {

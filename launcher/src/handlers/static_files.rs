@@ -14,11 +14,21 @@ pub fn handle_static_file(request: Request) {
         path_stripped.trim_start_matches('/')
     };
 
-    // 1. Try local disk first (for live development/sync)
-    let disk_path = std::path::Path::new("static_content").join(rel_path);
-    if disk_path.exists() && disk_path.is_file() {
-        if let Ok(data) = std::fs::read(&disk_path) {
-            let mime = mime_guess::from_path(&disk_path).first_or_octet_stream();
+    // 1. Try local development disk first (for live development without sync)
+    let dev_path = std::path::Path::new("../frontend/web_ui").join(rel_path);
+    let sync_path = std::path::Path::new("static_content").join(rel_path);
+    
+    let disk_path = if dev_path.exists() && dev_path.is_file() {
+        Some(dev_path)
+    } else if sync_path.exists() && sync_path.is_file() {
+        Some(sync_path)
+    } else {
+        None
+    };
+
+    if let Some(path) = disk_path {
+        if let Ok(data) = std::fs::read(&path) {
+            let mime = mime_guess::from_path(&path).first_or_octet_stream();
             let response = Response::from_data(data)
                 .with_header(Header::from_bytes(&b"Content-Type"[..], mime.as_ref().as_bytes()).unwrap())
                 .with_header(Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]).unwrap());

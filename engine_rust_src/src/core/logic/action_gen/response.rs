@@ -1,4 +1,5 @@
 use crate::core::enums::*;
+use crate::core::logic::ability_patterns::{pending_live_ability, pending_optional_mode_mask, pending_targeted_live_heart_bonus};
 use crate::core::logic::action_gen::ActionGenerator;
 use crate::core::logic::{ChoiceType, Ability, ActionReceiver, CardDatabase, GameState, PendingInteraction};
 
@@ -87,20 +88,17 @@ impl ResponseGenerator {
             live.map(|l| &l.abilities)
         };
 
-        let is_daydream_mermaid = db
-            .get_live(pi.card_id)
-            .map(|card| card.card_no.as_str() == "PL!N-bp4-030-L")
-            .unwrap_or(false);
-        if is_daydream_mermaid {
+        if pending_optional_mode_mask(db, pi).is_some() {
             self.generate_select_mode_actions(db, p_idx, state, receiver, pi, abilities);
             return;
         }
 
-        let is_sunny_day_song_target = db
-            .get_live(pi.card_id)
-            .map(|card| card.card_no.as_str() == "PL!-bp5-021-L")
-            .unwrap_or(false);
-        if is_sunny_day_song_target {
+        let targeted_live_heart_bonus = pending_targeted_live_heart_bonus(db, pi).filter(|_| {
+            pi.choice_type != ChoiceType::SelectHandDiscard
+                || (state.players[0].hand.is_empty() && state.players[1].hand.is_empty())
+        });
+
+        if let Some((_filter_attr, _heart_color_idx)) = targeted_live_heart_bonus {
             for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
                 if cid >= 0
                     && db
@@ -117,7 +115,8 @@ impl ResponseGenerator {
 
         match choice_type {
             ChoiceType::Optional => {
-                receiver.add_action((ACTION_BASE_CHOICE + 0) as usize);
+                receiver.add_action((ACTION_BASE_CHOICE + 0) as usize); // Yes/Proceed
+                receiver.add_action((ACTION_BASE_CHOICE + 1) as usize); // No/Skip
                 return;
             }
             ChoiceType::PayEnergy => {
@@ -251,9 +250,30 @@ impl ResponseGenerator {
                 return;
             }
             O_COLOR_SELECT => {
-                for c in 0..6 {
-                    receiver
-                        .add_action((ACTION_BASE_COLOR + c as i32) as usize);
+                let mut choices_to_show = vec![0, 1, 2, 3, 4, 5]; // Default to all 6 colors
+                
+                // Try to extract the actual choices from the ability's effect params
+                if let Some(abilities_list) = abilities {
+                    if (pi.ability_index as usize) < abilities_list.len() {
+                        let ability = &abilities_list[pi.ability_index as usize];
+                        for effect in &ability.effects {
+                            if effect.runtime_opcode == O_COLOR_SELECT {
+                                // Extract choices from effect.params["choices"]
+                                if let Some(choices_val) = effect.params.get("choices") {
+                                    if let Ok(choices_arr) = serde_json::from_value::<Vec<i32>>(choices_val.clone()) {
+                                        choices_to_show = choices_arr.into_iter()
+                                            .filter(|&c| c >= 0 && c < 7)
+                                            .collect();
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                for &c in &choices_to_show {
+                    receiver.add_action((ACTION_BASE_COLOR + c) as usize);
                 }
                 return;
             }
@@ -535,14 +555,12 @@ impl ResponseGenerator {
         if state.debug.debug_mode {
             println!("[DEBUG] generate_select_member_actions: p_idx={}, filter_attr={:X}", p_idx, filter_attr);
         }
-        let is_sunny_day_song_follow_up = (pi.effect_opcode == O_SELECT_MEMBER
-            || pi.choice_type == ChoiceType::SelectMember
-            || (filter_attr & !0x3) == 16)
-            && db
-                .get_live(pi.card_id)
-                .map(|card| card.card_no.as_str() == "PL!-bp5-021-L")
-                .unwrap_or(false);
-        if is_sunny_day_song_follow_up {
+        let targeted_live_heart_bonus = pending_targeted_live_heart_bonus(db, pi).filter(|_| {
+            pi.choice_type != ChoiceType::SelectHandDiscard
+                || (state.players[0].hand.is_empty() && state.players[1].hand.is_empty())
+        });
+
+        if let Some((_follow_up_filter, _heart_color_idx)) = targeted_live_heart_bonus {
             for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
                 if cid >= 0
                     && db
@@ -620,21 +638,18 @@ impl ResponseGenerator {
         pi: &PendingInteraction,
         abilities: Option<&Vec<Ability>>,
     ) {
-        let is_daydream_mermaid = db
-            .get_live(pi.card_id)
-            .map(|card| card.card_no.as_str() == "PL!N-bp4-030-L")
-            .unwrap_or(false);
-        if is_daydream_mermaid {
-            let mask = if pi.ctx.v_accumulated >= 1900 {
-                (pi.ctx.v_accumulated - 1900) as i32
+        if let Some(mask) = pending_optional_mode_mask(db, pi) {
+            if let Some(ability) = pending_live_ability(db, pi) {
+                for effect_idx in 0..ability.effects.len() {
+                    let selected_bit = 1i16 << effect_idx;
+                    if (mask & selected_bit) != 0 {
+                        receiver.add_action((ACTION_BASE_MODE + effect_idx as i32) as usize);
+                    }
+                }
             } else {
-                0x3
-            };
-            if (mask & 0x1) != 0 {
-                receiver.add_action(ACTION_BASE_MODE as usize);
-            }
-            if (mask & 0x2) != 0 {
-                receiver.add_action((ACTION_BASE_MODE + 1) as usize);
+                for effect_idx in 0..mask.count_ones() as i32 {
+                    receiver.add_action((ACTION_BASE_MODE + effect_idx) as usize);
+                }
             }
             return;
         }

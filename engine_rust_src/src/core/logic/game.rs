@@ -97,8 +97,11 @@ impl GameState {
     }
 
     pub fn sync_all_stats(&mut self, db: &CardDatabase) {
-        self.sync_cached_stats(db, 0);
-        self.sync_cached_stats(db, 1);
+        if self.needs_stat_sync {
+            self.sync_cached_stats(db, 0);
+            self.sync_cached_stats(db, 1);
+            self.needs_stat_sync = false;
+        }
     }
 
     pub fn clear_execution_id(&mut self) {

@@ -29,28 +29,6 @@
     box-shadow: var(--shadow-lg);
 }
 
-/* Card Description Sidebar */
-#card-desc-panel.active {
-    display: flex;
-    flex-direction: column;
-    border-left: 4px solid var(--accent-pink);
-    padding: 10px;
-    background: rgba(20, 20, 20, 0.95);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--space-sm);
-}
-
-#card-desc-title {
-    color: var(--accent-pink);
-    font-weight: bold;
-    margin-bottom: 4px;
-}
-
-#card-desc-content {
-    font-size: 0.9rem;
-    line-height: 1.4;
-}
-
 /* Bytecode Viewer */
 .bytecode-log-viewer {
     background: #000;

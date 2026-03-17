@@ -1,5 +1,5 @@
 [build-system]
-requires = ["maturin>=1.11.5"]
+requires = ["maturin>=1.11.5", "cffi>=1.17", "setuptools>=75"]
 build-backend = "maturin"
 
 [project]
@@ -7,4 +7,4 @@ name = "engine_rust"
 version = "0.1.2"
 description = "Rust engine bindings"
 requires-python = ">=3.11"
-dependencies = ["numpy"]
+dependencies = ["numpy", "cffi>=1.17"]

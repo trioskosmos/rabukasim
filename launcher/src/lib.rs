@@ -13,4 +13,4 @@ pub struct Assets;
 #[folder = "../ai/decks/"]
 pub struct Decks;
 
-// Forced rebuild for static assets update
+// Forced rebuild for static assets update: v3 (filesystem-first)

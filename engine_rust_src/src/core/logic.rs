@@ -1,5 +1,6 @@
 pub mod action_factory;
 pub mod action_gen;
+pub mod ability_patterns;
 pub mod ai_encoding;
 pub mod card_db;
 pub mod constants;
@@ -23,6 +24,7 @@ pub mod rules;
 pub mod state;
 pub mod standard_state;
 pub mod turn_sequencer;
+pub mod filter_bench;
 
 // Constants
 pub use constants::*;

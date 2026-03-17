@@ -105,13 +105,35 @@
             // Use local image path (_img) if available, otherwise remote (img)
             const imgSrc = card._img || card.img || '';
 
-            item.innerHTML = `
-                <img src="${imgSrc}" alt="${card.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/150x210?text=No+Image'">
-                <div class="card-name">${card.name}</div>
-                <span class="card-type ${typeClass}">${type}</span>
-                <div class="card-count">×${count}</div>
-                <div class="card-id">${cardId}</div>
-            `;
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.alt = card.name;
+            img.loading = 'lazy';
+            img.onerror = () => {
+                img.src = 'https://via.placeholder.com/150x210?text=No+Image';
+                img.onerror = null;
+            };
+            item.appendChild(img);
+
+            const nameEl = document.createElement('div');
+            nameEl.className = 'card-name';
+            nameEl.textContent = card.name;
+            item.appendChild(nameEl);
+
+            const typeEl = document.createElement('span');
+            typeEl.className = `card-type ${typeClass}`;
+            typeEl.textContent = type;
+            item.appendChild(typeEl);
+
+            const countEl = document.createElement('div');
+            countEl.className = 'card-count';
+            countEl.textContent = `×${count}`;
+            item.appendChild(countEl);
+
+            const idEl = document.createElement('div');
+            idEl.className = 'card-id';
+            idEl.textContent = cardId;
+            item.appendChild(idEl);
             grid.appendChild(item);
         }
 

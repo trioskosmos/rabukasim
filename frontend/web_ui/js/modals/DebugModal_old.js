@@ -154,9 +154,9 @@ export const DebugModal = {
                     style="flex: 1; background: #0a0a0a; color: #00ff00; border: 1px solid #333; border-radius: 4px; padding: 10px; font-family: 'Cascadia Code', monospace; font-size: 11px; resize: none; word-break: break-all; white-space: pre-wrap;"
                     spellcheck="false">${blob}</textarea>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" style="flex: 1; min-width: 120px;" onclick="DebugModal.copyStateString()">📋 Copy</button>
-                    <button class="btn btn-secondary" style="flex: 1; min-width: 120px;" onclick="DebugModal.loadStateString()">📁 Load</button>
-                    <button class="btn btn-accent" style="flex: 1; min-width: 120px; background: var(--accent-gold); color: #000;" onclick="DebugModal.triggerFileLoad()">📂 File</button>
+                    <button class="btn btn-primary" style="flex: 1; min-width: 120px;" data-action="debug-copy-state-string">📋 Copy</button>
+                    <button class="btn btn-secondary" style="flex: 1; min-width: 120px;" data-action="debug-load-state-string">📁 Load</button>
+                    <button class="btn btn-accent" style="flex: 1; min-width: 120px; background: var(--accent-gold); color: #000;" data-action="debug-trigger-file-load">📂 File</button>
                     <input type="file" id="debug-state-file-input" style="display: none;" accept=".json,.txt,.b64" onchange="DebugModal.loadStateFile(this)">
                 </div>
             </div>

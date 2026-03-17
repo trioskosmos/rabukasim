@@ -101,6 +101,8 @@ export const TriggerType = {
     ON_POSITION_CHANGE: 10,
     ON_ABILITY_RESOLVE: 11,
     ON_ABILITY_SUCCESS: 12,
+    ON_MOVE_TO_DISCARD: 13,
+    ON_MEMBER_TAP: 14,
 };
 
 export const TargetType = {

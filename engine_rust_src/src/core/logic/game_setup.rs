@@ -40,6 +40,7 @@ impl GameState {
         self.core.prev_phase = other.core.prev_phase;
         self.core.prev_card_id = other.core.prev_card_id;
         self.core.turn = other.core.turn;
+        self.core.rps_draw_count = other.core.rps_draw_count;
         self.core.trigger_depth = other.core.trigger_depth;
         self.core.live_set_pending_draws = other.core.live_set_pending_draws;
 
@@ -174,6 +175,7 @@ impl GameState {
         self.current_player = 0;
         self.rps_choices = [-1; 2];
         self.turn = 1;
+        self.rps_draw_count = 0;
         self.ui.rule_log = None;
         self.turn_history = None;
         self.debug.executed_opcodes = None;

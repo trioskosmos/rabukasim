@@ -867,8 +867,8 @@ def sync():
                         f.write(f"pub const {const_base}_MASK: {mask_type} = {hex(group['mask'])};\n")
                         for alias in group["aliases"]:
                             alias_const_base = f"{prefix}_{alias.upper()}"
-                            f.write(f"pub const {alias_const_base}_SHIFT: u32 = {const_base}_SHIFT;\n")
-                            f.write(f"pub const {alias_const_base}_MASK: {mask_type} = {const_base}_MASK;\n")
+                            f.write(f"pub const {alias_const_base}_SHIFT: u32 = {group['start']};\n")
+                            f.write(f"pub const {alias_const_base}_MASK: {mask_type} = {hex(group['mask'])};\n")
                     f.write("\n")
 
     print("Successfully synchronized metadata to Rust, JS, Python, and WGSL!")

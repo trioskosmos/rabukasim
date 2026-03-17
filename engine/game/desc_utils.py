@@ -382,207 +382,12 @@ def get_action_desc(a, gs, lang="jp", text=None):
             return t("skip_ability", source=source_name)
         return t("pass_action")
 
-    # 580-585: Color Selection
-    if 580 <= a <= 585:
-        colors = t("colors")
-        return t("color_select_label", color=colors[a - 580])
-
-    # 560-562: Stage Slot Selection
-    if 560 <= a <= 562:
-        idx = a - 560
+    # 1000-1599: Play Member
+    if 1000 <= a <= 1599:
+        idx = (a - 1000) // 10
+        area_idx = (a - 1000) % 10
         areas = t("areas")
-        cid = p.stage[idx]
-        name = t("empty_area")
-        base_id = get_base_id(int(cid))
-        if cid >= 0:
-            m = get_from_db(member_db, base_id)
-            if m:
-                name = get_v(m, "name", t("member"))
-
-        desc = t("select")
-        choice_type, params = get_top_pending()
-        if choice_type:
-            if choice_type == "MOVE_MEMBER":
-                desc = t("move_src")
-            elif choice_type == "TAP_MEMBER":
-                desc = t("wait")
-            elif choice_type in ("PLAY_MEMBER_FROM_HAND", "PLAY_MEMBER_FROM_DISCARD"):
-                desc = t("place_to")
-        return t("stage_select_label", area=areas[idx], name=name, desc=desc)
-
-    # 500-509: Hand Card Selection
-    if 500 <= a <= 509:
-        idx = a - 500
-        if idx < len(p.hand):
-            cid = p.hand[idx]
-            name = get_card_name(cid)
-            desc = t("select")
-            choice_type, params = get_top_pending()
-            if choice_type:
-                if choice_type == "RECOVER_MEMBER":
-                    desc = t("recover")
-                elif choice_type == "DISCARD":
-                    desc = t("discard")
-            return t("hand_select_label", name=name, desc=desc)
-
-    # 570-579: Mode Selection
-    if 570 <= a <= 579:
-        choice_type, params = get_top_pending()
-        mode_label = f"Mode {a - 570 + 1}"
-        if choice_type:
-            options = params.get("options", [])
-            if a - 570 < len(options):
-                mode_label = options[a - 570]
-        return t("mode_select_label", mode=mode_label)
-
-    # 590-599: Ability Trigger/Resolution Order
-    if 590 <= a <= 599:
-        idx = a - 590
-        if idx < len(gs.triggered_abilities):
-            t_obj = gs.triggered_abilities[idx]
-            if len(t_obj) >= 2:
-                cid = getattr(t_obj[2], "card_id", -1) if len(t_obj) > 2 else -1
-                src_name = get_card_name(cid) if cid >= 0 else t("unknown")
-                return t("ability_solve", source=src_name, idx=idx + 1, total=len(gs.triggered_abilities))
-        return t("ability_solve", source="???", idx=idx + 1, total=len(gs.triggered_abilities))
-
-    # 820-822: Live Zone Targeting
-    if 820 <= a <= 822:
-        idx = a - 820
-        areas = t("areas")
-        cid = p.live_zone[idx] if idx < len(p.live_zone) else -1
-        name = t("none")
-        if cid >= 0:
-            name = get_card_name(cid)
-        return t("live_select", area=areas[idx], name=name)
-
-    # 900-902: Performance Execution
-    if 900 <= a <= 902:
-        idx = a - 900
-        areas = t("areas")
-        cid = p.live_zone[idx] if idx < len(p.live_zone) else -1
-        name = t("none")
-        summary = "Performance"
-        if cid >= 0:
-            name = get_card_name(cid)
-            base_id = get_base_id(cid)
-            live = get_from_db(live_db, base_id)
-            if live:
-                abilities = get_v(live, "abilities", [])
-                if abilities:
-                    summary = get_ability_summary(abilities[0], lang=lang)
-        return t("performance", area=areas[idx], name=name, summary=summary)
-
-    # 600-719: Broad Choice Range
-    if 600 <= a <= 719:
-        idx = a - 600
-        choice_type, params = get_top_pending()
-
-        # Context-aware mapping using choice_type
-        type_mapping = {
-            "ORDER_DECK": "order_deck",
-            "SELECT_MEMBER": "select_member",
-            "TARGET_OPPONENT_MEMBER": "target_opp_member",
-            "SELECT_FROM_LIST": "list_select",
-            "SELECT_MODE": "select",
-            "SELECT_SUCCESS_LIVE": "select_success",
-            "SELECT_FROM_DISCARD": "select_discard",
-            "SELECT_FROM_HAND": "select_hand",
-        }
-        type_key = type_mapping.get(choice_type, "generic_select")
-
-        if choice_type == "ORDER_DECK":
-            cards = params.get("cards", [])
-            if idx < len(cards):
-                return t("sort_top", name=get_card_name(cards[idx]))
-            return t("sort_confirm")
-
-        if idx <= 2 and choice_type in ("SELECT_MEMBER", "TARGET_OPPONENT_MEMBER"):
-            areas = t("areas")
-            opp = gs.get_player(1 - p_idx) if hasattr(gs, "get_player") else gs.inactive_player
-            cid = opp.stage[idx]
-            name = t("empty_area")
-            if cid >= 0:
-                base_id = get_base_id(int(cid))
-                m = get_from_db(member_db, base_id)
-                if m:
-                    name = get_v(m, "name", t("member"))
-            return t("target_opp", area=areas[idx], name=name)
-
-        # Handle list choices
-        params_cards = params.get("cards", [])
-        if idx < len(params_cards):
-            return t("list_select", name=get_card_name(params_cards[idx]))
-
-        options = params.get("options", [])
-        if idx < len(options):
-            return t("generic_select", name=options[idx])
-
-        if choice_type == "SELECT_SUCCESS_LIVE":
-            idx = a - 600
-            if idx <= 2:
-                areas = t("areas")
-                cid = p.live_zone[idx] if hasattr(p, "live_zone") and idx < len(p.live_zone) else -1
-                name = t("unknown")
-                if cid >= 0:
-                    name = get_card_name(cid)
-                return t("live_select", area=areas[idx], name=name)
-
-        return f"{t(type_key)}: {t('choice_fallback', idx=idx + 1)}"
-
-    # 550-849: Complex Choice Resolution
-    if 550 <= a <= 849:
-        adj = a - 550
-        area_idx = adj // 100
-        ab_idx = (adj % 100) // 10
-        choice_idx = adj % 10
-
-        areas_short = t("areas_short")
-        area_name = areas_short[area_idx] if area_idx < 3 else f"Slot {area_idx}"
-        cid = p.stage[area_idx] if area_idx < 3 else -1
-        card_name = t("member")
-        if cid >= 0:
-            base_id = get_base_id(cid)
-            m = get_from_db(member_db, base_id)
-            if m:
-                card_name = get_v(m, "name", t("member"))
-
-        choice_type, params = get_top_pending()
-        choice_label = t("choice_fallback", idx=choice_idx + 1)
-
-        if choice_type == "ORDER_DECK":
-            cards = params.get("cards", [])
-            if choice_idx < len(cards):
-                choice_label = t("deck_top", name=get_card_name(cards[choice_idx]))
-            else:
-                choice_label = t("confirm")
-        elif choice_type == "COLOR_SELECT":
-            colors = t("colors")
-            if choice_idx < len(colors):
-                choice_label = t("color_choice", color=colors[choice_idx])
-        elif choice_type == "SELECT_MODE":
-            options = params.get("options", [])
-            if choice_idx < len(options):
-                choice_label = options[choice_idx]
-        elif choice_type == "SELECT_FROM_LIST":
-            cards = params.get("cards", [])
-            if choice_idx < len(cards):
-                choice_label = t("list_select", name=get_card_name(cards[choice_idx]))
-        elif choice_type == "SELECT_HAND_DISCARD":
-            if choice_idx < len(p.hand):
-                cid = p.hand[choice_idx]
-                choice_label = t("select_discard_hand") + ": " + get_card_name(cid)
-            else:
-                choice_label = t("discard")
-
-        return f"[{card_name}] {choice_label} ({area_name})"
-
-    # 1-180: Playing Members (Main Phase)
-    if 1 <= a <= 180 and int(gs.phase) == int(Phase.MAIN):
-        idx = (a - 1) // 3
-        area_idx = (a - 1) % 3
-        areas = t("areas")
-        area_name = areas[area_idx]
+        area_name = areas[area_idx] if area_idx < 3 else f"Slot {area_idx}"
         card_name = f"Card[{idx}]"
         new_card_cost = 0
         suffix = ""
@@ -597,50 +402,26 @@ def get_action_desc(a, gs, lang="jp", text=None):
                 if any(get_v(ab, "trigger", 0) == 1 for ab in abilities):
                     suffix = " [On Play]" if lang == "en" else " [登場]"
 
-        stage_cid = p.stage[area_idx]
-        if stage_cid >= 0:
-            base_stage_cid = get_base_id(int(stage_cid))
-            old_card = get_from_db(member_db, base_stage_cid)
-            if old_card:
-                old_name = get_v(old_card, "name", t("member"))
-                old_cost = get_v(old_card, "cost", 0)
-                actual_cost = max(0, new_card_cost - old_cost)
-                return t("place_on", area=area_name, name=card_name, suffix=suffix, old_name=old_name, cost=actual_cost)
+        if area_idx < len(p.stage):
+            stage_cid = p.stage[area_idx]
+            if stage_cid >= 0:
+                base_stage_cid = get_base_id(int(stage_cid))
+                old_card = get_from_db(member_db, base_stage_cid)
+                if old_card:
+                    old_name = get_v(old_card, "name", t("member"))
+                    old_cost = get_v(old_card, "cost", 0)
+                    actual_cost = max(0, new_card_cost - old_cost)
+                    return t("place_on", area=area_name, name=card_name, suffix=suffix, old_name=old_name, cost=actual_cost)
         return t("place_on_new", area=area_name, name=card_name, suffix=suffix, cost=new_card_cost)
 
-    # 100-159: Energy Charge Selection
-    if 100 <= a <= 159 and int(gs.phase) == int(Phase.ENERGY):
-        idx = a - 100
-        card_name = f"Hand[{idx}]"
-        if idx < len(p.hand):
-            card_name = get_card_name(p.hand[idx])
-        return t("energy_charge", name=card_name)
-
-    # 300-359: Mulligan Selection
-    if 300 <= a <= 359:
-        idx = a - 300
-        card_name = f"Hand[{idx}]"
-        if idx < len(p.hand):
-            card_name = get_card_name(p.hand[idx])
-        return t("mulligan_toggle", name=card_name)
-
-    # 400-459: Live Set Selection
-    if 400 <= a <= 459:
-        idx = a - 400
-        card_name = f"Hand[{idx}]"
-        if idx < len(p.hand):
-            cid = p.hand[idx]
-            card_name = get_card_name(cid)
-        return t("live_set", name=card_name)
-
-    # 200-299: Activated Ability on Stage
-    if 200 <= a <= 299:
-        adj = a - 200
-        area_idx = adj // 10
-        ab_idx = adj % 10
+    # 8300-8599: Stage Ability
+    if 8300 <= a <= 8599:
+        adj = a - 8300
+        area_idx = adj // 100
+        ab_idx = (adj % 100) // 10
         areas = t("areas")
         area_name = areas[area_idx] if area_idx < 3 else f"Slot {area_idx}"
-        cid = p.stage[area_idx] if area_idx < 3 else -1
+        cid = p.stage[area_idx] if area_idx < len(p.stage) else -1
         if cid >= 0:
             base_cid = get_base_id(int(cid))
             member = get_from_db(member_db, base_cid)
@@ -653,12 +434,29 @@ def get_action_desc(a, gs, lang="jp", text=None):
                 return t("activated_ability", name=card_name, summary=summary, area=area_name)
         return f"{t('ability')} ({area_name})"
 
-    # 2000-2999: Discard Pile Activation
-    if 2000 <= a <= 2999:
-        adj = a - 2000
+    # 1600-2199: Hand Ability
+    if 1600 <= a <= 2199:
+        adj = a - 1600
+        hand_idx = adj // 10
+        ab_idx = adj % 10
+        cid = p.hand[hand_idx] if hand_idx < len(p.hand) else -1
+        if cid >= 0:
+            card_name = get_card_name(cid)
+            base_id = get_base_id(cid)
+            member = get_from_db(member_db, base_id)
+            if member:
+                abilities = get_v(member, "abilities", [])
+                summary = t("ability")
+                if len(abilities) > ab_idx:
+                    summary = get_ability_summary(abilities[ab_idx], lang=lang)
+                return t("activated_ability", name=card_name, summary=summary, area="-")
+        return t("ability")
+
+    # 9300-9999: Discard Ability
+    if 9300 <= a <= 9999:
+        adj = a - 9300
         discard_idx = adj // 10
         ab_idx = adj % 10
-        card_name = f"Discard[{discard_idx}]"
         if discard_idx < len(p.discard):
             cid = p.discard[discard_idx]
             card_name = get_card_name(cid)
@@ -670,43 +468,129 @@ def get_action_desc(a, gs, lang="jp", text=None):
                 if len(abilities) > ab_idx:
                     summary = get_ability_summary(abilities[ab_idx], lang=lang)
                 return t("discard_solve", name=card_name, summary=summary)
-        return t("discard_fallback", name=card_name)
+        return t("discard")
 
-    # 1000-1999: OnPlay Sub-Choices
-    if 1000 <= a <= 1999:
-        adj = a - 1000
-        choice_idx = adj % 10
+    elif 2200 <= a <= 2799:
+        h_idx = (a - 2200) // 10
+        c_idx = (a - 2200) % 10
+        player = gs.get_player(gs.current_player)
+        name = t("card")
+        if h_idx < len(player.hand):
+            cid = player.hand[h_idx]
+            bid = cid & 0xFFFFF
+            card_data = gs.member_db.get(str(bid)) or gs.live_db.get(str(bid)) or gs.energy_db.get(str(bid))
+            if card_data: 
+                name = getattr(card_data, 'name', f"Card #{bid}")
+        return f"{name} → {t('choice_fallback', idx=c_idx)}" if lang == "en" else f"{name}の選択肢 {c_idx + 1}"
+    elif 8600 <= a <= 8899:
+        s_idx = (a - 8600) // 100
+        c_idx = (a - 8600) % 100
+        player = gs.get_player(gs.current_player)
+        name = t("member")
+        if s_idx < len(player.stage) and player.stage[s_idx] >= 0:
+            cid = player.stage[s_idx]
+            bid = cid & 0xFFFFF
+            card_data = gs.member_db.get(str(bid))
+            if card_data: 
+                name = getattr(card_data, 'name', f"Member #{bid}")
+        return f"{name} → {t('choice_fallback', idx=c_idx)}" if lang == "en" else f"{name}の選択肢 {c_idx + 1}"
+    elif 11000 <= a <= 15999:
+        idx = a - 11000
+        
+        # Special case: LOOK_REORDER_DISCARD (opcode 125) - choice_idx 99 is "Done", else resolve to card from looked_cards
+        if idx == 99:
+            return t("confirm")
+        
+        # Try to resolve from looked_cards if available
+        if hasattr(p, 'looked_cards') and p.looked_cards:
+            if idx < len(p.looked_cards):
+                cid = p.looked_cards[idx]
+                return get_card_name(cid)
+        
+        # Fallback to text params (for modal choices, etc.)
+        _, params = get_top_pending()
+        text = params.get("text", "")
+        if text: 
+            return text.split('|')[idx] if '|' in text and idx < len(text.split('|')) else f"Option {idx}"
+        return f"Option {idx}"
+
+    # 300-359: Mulligan
+    elif 300 <= a <= 359:
+        idx = a - 300
+        card_name = get_card_name(p.hand[idx]) if idx < len(p.hand) else f"Hand[{idx}]"
+        return t("mulligan_toggle", name=card_name)
+
+    # 400-459: Live Set
+    elif 400 <= a <= 459:
+        idx = a - 400
+        card_name = get_card_name(p.hand[idx]) if idx < len(p.hand) else f"Hand[{idx}]"
+        return t("live_set", name=card_name)
+
+    # 100-159, 8200-8259: Select Hand (note: 500-599 is MODE, not hand)
+    if 100 <= a <= 159 or 8200 <= a <= 8259:
+        if 100 <= a <= 159: idx = a - 100
+        else: idx = a - 8200
+        card_name = get_card_name(p.hand[idx]) if idx < len(p.hand) else f"Hand[{idx}]"
+        desc = t("select")
         choice_type, params = get_top_pending()
+        if choice_type == "RECOVER_MEMBER": desc = t("recover")
+        elif choice_type == "DISCARD": desc = t("discard")
+        return t("hand_select_label", name=card_name, desc=desc)
 
-        if choice_type == "ORDER_DECK":
-            cards = params.get("cards", [])
-            if choice_idx < len(cards):
-                return t("sort_top", name=get_card_name(cards[choice_idx]))
-            return t("sort_confirm")
-        elif choice_type == "COLOR_SELECT":
-            colors = t("colors")
-            if choice_idx < len(colors):
-                return t("color_select_label", color=colors[choice_idx])
-        elif choice_type == "SELECT_MODE":
-            options = params.get("options", [])
-            if choice_idx < len(options):
-                return t("mode_select_label", mode=options[choice_idx])
-            return t("mode_select_label", mode=f"{choice_idx + 1}")
-        elif choice_type == "SELECT_FROM_LIST":
-            cards = params.get("cards", [])
-            if choice_idx < len(cards):
-                return t("list_select", name=get_card_name(cards[choice_idx]))
+    # 600-602: Select Stage
+    if 600 <= a <= 602:
+        idx = a - 600
+        areas = t("areas")
+        cid = p.stage[idx] if idx < len(p.stage) else -1
+        name = get_card_name(cid) if cid >= 0 else t("empty_area")
+        return t("stage_select_label", area=areas[idx], name=name, desc=t("select"))
 
-        return t("choice_fallback", idx=choice_idx + 1)
+    # 900-929: Select Live
+    if 900 <= a <= 929:
+        idx = a - 900
+        areas = t("areas")
+        cid = p.live_zone[idx] if idx < len(p.live_zone) else -1
+        name = get_card_name(cid) if cid >= 0 else t("none")
+        return t("live_select", area=areas[idx], name=name)
+    
+    # 1600-2199: Hand Ability (activate ability from hand before playing)
+    if 1600 <= a <= 2199:
+        adj = a - 1600
+        hand_idx = adj // 10
+        ab_idx = adj % 10
+        cid = p.hand[hand_idx] if hand_idx < len(p.hand) else -1
+        if cid >= 0:
+            card_name = get_card_name(cid)
+            base_id = get_base_id(cid)
+            member = get_from_db(member_db, base_id)
+            if member:
+                abilities = get_v(member, "abilities", [])
+                summary = t("ability")
+                if len(abilities) > ab_idx:
+                    summary = get_ability_summary(abilities[ab_idx], lang=lang)
+                return t("activated_ability", name=card_name, summary=summary, area="hand")
+        return t("ability")
 
-    # 510-559: Generic Hand Selection Fallback
-    if 510 <= a <= 559:
-        idx = a - 500
-        card_name = f"Hand[{idx}]"
-        if idx < len(p.hand):
-            card_name = get_card_name(p.hand[idx])
-        return t("hand_select_label", name=card_name, desc=t("select"))
+    # 10000+: Energy Select
+    if 10000 <= a <= 10999:
+        return t("energy_charge", name=f"Energy[{a-10000}]")
 
-    return f"Action {a}"
+    # 500-599: Mode Select (ACTION_BASE_MODE = 500)
+    if 500 <= a <= 599:
+        choice_type, params = get_top_pending()
+        mode_idx = a - 500
+        mode_label = f"Mode {mode_idx+1}"
+        options = params.get("options", [])
+        if mode_idx < len(options): mode_label = options[mode_idx]
+        return t("mode_select_label", mode=mode_label)
+
+    # 580-585: Color Select
+    if 580 <= a <= 585:
+        colors = t("colors")
+        return t("color_select_label", color=colors[a-580])
+
+    # 5000-5001: Turn Order
+    if 5000 <= a <= 5001:
+        return t("choose_turn_order")
 
     return f"Action {a}"

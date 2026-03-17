@@ -7,34 +7,40 @@ import torch
 import torch.nn as nn
 
 from alphazero.training.vanilla_action_codec import ACTION_SPACE
-from alphazero.training.vanilla_observation import CARD_FEATURES, GLOBAL_FEATURES, MAX_INITIAL_DECK, OBS_DIM
 
 DEFAULT_HEURISTIC_WEIGHTS = [1.0] * 17
+
+VANILLA_GLOBAL_FEATURES = 20
+VANILLA_CARD_FEATURES = 13
+VANILLA_TOTAL_CARDS = 60
+VANILLA_INPUT_DIM = VANILLA_GLOBAL_FEATURES + VANILLA_TOTAL_CARDS * VANILLA_CARD_FEATURES
+PHASE_VALUES = (-3, -2, -1, 0, 1, 4, 5, 8, 10)
 
 
 @dataclass(frozen=True)
 class VanillaTransformerConfig:
-    input_dim: int = OBS_DIM
-    global_dim: int = GLOBAL_FEATURES
-    total_cards: int = MAX_INITIAL_DECK
-    card_features: int = CARD_FEATURES
+    input_dim: int = VANILLA_INPUT_DIM
+    global_dim: int = VANILLA_GLOBAL_FEATURES
+    total_cards: int = VANILLA_TOTAL_CARDS
+    card_features: int = VANILLA_CARD_FEATURES
     num_actions: int = ACTION_SPACE
-    preset: str = "small"
-    embed_dim: int = 128
+    preset: str = "base"
+    embed_dim: int = 192
     num_heads: int = 8
-    num_layers: int = 4
+    num_layers: int = 6
     ff_multiplier: int = 4
     dropout: float = 0.1
-    summary_dim: int = 256
+    summary_dim: int = 384
+    value_dim: int = 1
 
     @classmethod
-    def from_preset(cls, preset: str = "small", **overrides) -> "VanillaTransformerConfig":
+    def from_preset(cls, preset: str = "base", **overrides) -> "VanillaTransformerConfig":
         preset_name = preset.lower()
         presets = {
-            "tiny": dict(embed_dim=96, num_heads=4, num_layers=3, ff_multiplier=3, summary_dim=192, dropout=0.08),
-            "small": dict(embed_dim=128, num_heads=8, num_layers=4, ff_multiplier=4, summary_dim=256, dropout=0.10),
-            "base": dict(embed_dim=160, num_heads=8, num_layers=6, ff_multiplier=4, summary_dim=320, dropout=0.10),
-            "large": dict(embed_dim=192, num_heads=8, num_layers=8, ff_multiplier=4, summary_dim=384, dropout=0.12),
+            "tiny": dict(embed_dim=96, num_heads=4, num_layers=3, ff_multiplier=3, summary_dim=192, dropout=0.06),
+            "small": dict(embed_dim=128, num_heads=8, num_layers=4, ff_multiplier=4, summary_dim=256, dropout=0.08),
+            "base": dict(embed_dim=192, num_heads=8, num_layers=6, ff_multiplier=4, summary_dim=384, dropout=0.10),
+            "large": dict(embed_dim=256, num_heads=8, num_layers=8, ff_multiplier=4, summary_dim=512, dropout=0.10),
         }
         if preset_name not in presets:
             raise ValueError(f"Unknown vanilla model preset: {preset}")
@@ -42,7 +48,7 @@ class VanillaTransformerConfig:
 
 
 def build_vanilla_transformer_config(
-    preset: str = "small",
+    preset: str = "base",
     *,
     embed_dim: Optional[int] = None,
     num_heads: Optional[int] = None,
@@ -50,6 +56,7 @@ def build_vanilla_transformer_config(
     ff_multiplier: Optional[int] = None,
     dropout: Optional[float] = None,
     summary_dim: Optional[int] = None,
+    value_dim: Optional[int] = None,
 ) -> VanillaTransformerConfig:
     config = VanillaTransformerConfig.from_preset(preset)
     overrides = {}
@@ -65,10 +72,12 @@ def build_vanilla_transformer_config(
         overrides["dropout"] = dropout
     if summary_dim is not None:
         overrides["summary_dim"] = summary_dim
+    if value_dim is not None:
+        overrides["value_dim"] = value_dim
     return replace(config, **overrides) if overrides else config
 
 
-def list_vanilla_presets() -> list[dict]:
+def list_vanilla_presets() -> list[dict[str, object]]:
     presets = []
     for preset_name in ("tiny", "small", "base", "large"):
         config = VanillaTransformerConfig.from_preset(preset_name)
@@ -87,7 +96,7 @@ def list_vanilla_presets() -> list[dict]:
 def choose_vanilla_config_for_budget(
     budget_millions: float,
     *,
-    fallback_preset: str = "small",
+    fallback_preset: str = "base",
 ) -> VanillaTransformerConfig:
     candidates = list_vanilla_presets()
     within_budget = [entry for entry in candidates if entry["parameters_millions"] <= budget_millions]
@@ -101,25 +110,16 @@ def choose_vanilla_config_for_budget(
 
 
 class HighFidelityAlphaNet(nn.Module):
-    """
-        Compact masked transformer for the structured abilityless vanilla tensor.
-
-    The model is intentionally parameter-budgeted so it can handle:
-    - CPU inference inside self-play workers
-    - GPU training from large overnight replay buffers
-        - masked compact policy outputs tailored to abilityless game flow
-    """
-
     def __init__(
         self,
-        input_dim: int = OBS_DIM,
+        input_dim: int = VANILLA_INPUT_DIM,
         num_actions: int = ACTION_SPACE,
-        embed_dim: int = 128,
+        embed_dim: int = 192,
         num_heads: int = 8,
-        num_layers: int = 4,
+        num_layers: int = 6,
         ff_multiplier: int = 4,
         dropout: float = 0.1,
-        summary_dim: int = 256,
+        summary_dim: int = 384,
         config: Optional[VanillaTransformerConfig] = None,
     ):
         super().__init__()
@@ -134,14 +134,19 @@ class HighFidelityAlphaNet(nn.Module):
             dropout=dropout,
             summary_dim=summary_dim,
         )
-
         cfg = self.config
-        if cfg.input_dim != OBS_DIM:
-            raise ValueError(f"Vanilla net expects input_dim={OBS_DIM}, got {cfg.input_dim}")
+        if cfg.global_dim + cfg.total_cards * cfg.card_features != cfg.input_dim:
+            raise ValueError(
+                "Vanilla net config is inconsistent: "
+                f"global_dim={cfg.global_dim}, total_cards={cfg.total_cards}, "
+                f"card_features={cfg.card_features}, input_dim={cfg.input_dim}"
+            )
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, cfg.embed_dim))
         self.card_index_embedding = nn.Embedding(cfg.total_cards, cfg.embed_dim)
         self.zone_embedding = nn.Embedding(8, cfg.embed_dim)
+        self.phase_embedding = nn.Embedding(len(PHASE_VALUES) + 1, cfg.embed_dim)
+        self.card_type_embedding = nn.Embedding(4, cfg.embed_dim)
 
         self.global_projection = nn.Sequential(
             nn.Linear(cfg.global_dim, cfg.embed_dim),
@@ -164,7 +169,6 @@ class HighFidelityAlphaNet(nn.Module):
             norm_first=True,
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=cfg.num_layers)
-
         pooled_dim = cfg.embed_dim * 3
         self.summary = nn.Sequential(
             nn.Linear(pooled_dim, cfg.summary_dim),
@@ -175,13 +179,19 @@ class HighFidelityAlphaNet(nn.Module):
             nn.GELU(),
             nn.LayerNorm(cfg.summary_dim),
         )
-        self.policy_head = nn.Linear(cfg.summary_dim, cfg.num_actions)
+        self.pool_gate = nn.Linear(cfg.embed_dim, 1)
+        self.policy_head = nn.Sequential(
+            nn.Linear(cfg.summary_dim, cfg.summary_dim),
+            nn.GELU(),
+            nn.LayerNorm(cfg.summary_dim),
+            nn.Linear(cfg.summary_dim, cfg.num_actions),
+        )
         self.value_head = nn.Sequential(
             nn.Linear(cfg.summary_dim, cfg.summary_dim // 2),
             nn.GELU(),
-            nn.Linear(cfg.summary_dim // 2, 3),
+            nn.LayerNorm(cfg.summary_dim // 2),
+            nn.Linear(cfg.summary_dim // 2, cfg.value_dim),
         )
-
         self.register_buffer("card_positions", torch.arange(cfg.total_cards, dtype=torch.long), persistent=False)
         self.reset_parameters()
 
@@ -194,68 +204,75 @@ class HighFidelityAlphaNet(nn.Module):
     def parameter_count_millions(self) -> float:
         return self.parameter_count() / 1_000_000.0
 
-    def describe(self) -> dict:
+    def describe(self) -> dict[str, object]:
         data = asdict(self.config)
         data["parameters"] = self.parameter_count()
         data["parameters_millions"] = round(self.parameter_count_millions(), 3)
         return data
 
-    def _encode(self, x: torch.Tensor) -> torch.Tensor:
+    def _phase_ids_from_scalar(self, phase_scalar: torch.Tensor) -> torch.Tensor:
+        phase_rounded = torch.round(phase_scalar).long()
+        phase_ids = torch.full_like(phase_rounded, len(PHASE_VALUES))
+        for idx, value in enumerate(PHASE_VALUES):
+            phase_ids = torch.where(phase_rounded == value, torch.full_like(phase_ids, idx), phase_ids)
+        return phase_ids.clamp_(0, len(PHASE_VALUES))
+
+    def _encode(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         cfg = self.config
         batch_size = x.size(0)
-
         global_features = x[:, : cfg.global_dim]
         card_features = x[:, cfg.global_dim :].view(batch_size, cfg.total_cards, cfg.card_features)
-        zone_ids = torch.round(card_features[:, :, 0] * 7.0).long().clamp_(0, 7)
+        zone_ids = torch.round(card_features[:, :, 0] * 10.0).long().clamp_(0, 7)
+        card_type_ids = torch.round(card_features[:, :, 1]).long().clamp_(0, 3)
+        phase_ids = self._phase_ids_from_scalar(global_features[:, 0])
+        valid_mask = card_features.abs().sum(dim=2) > 0
 
-        global_token = self.global_projection(global_features).unsqueeze(1)
-        cls = self.cls_token.expand(batch_size, -1, -1) + global_token
+        cls = self.cls_token.expand(batch_size, -1, -1)
+        cls = cls + self.global_projection(global_features).unsqueeze(1)
+        cls = cls + self.phase_embedding(phase_ids).unsqueeze(1)
 
         card_tokens = self.card_projection(card_features)
         card_tokens = card_tokens + self.card_index_embedding(self.card_positions).unsqueeze(0)
         card_tokens = card_tokens + self.zone_embedding(zone_ids)
-
+        card_tokens = card_tokens + self.card_type_embedding(card_type_ids)
         tokens = torch.cat([cls, card_tokens], dim=1)
-        return self.transformer(tokens)
+        encoded = self.transformer(tokens)
+        return encoded, valid_mask
 
     def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None):
         x = x.float()
-        encoded = self._encode(x)
-
+        encoded, valid_mask = self._encode(x)
         cls_out = encoded[:, 0, :]
         card_tokens = encoded[:, 1:, :]
-        card_mean = card_tokens.mean(dim=1)
-        card_max = card_tokens.max(dim=1).values
-        summary = self.summary(torch.cat([cls_out, card_mean, card_max], dim=1))
+
+        token_scores = self.pool_gate(card_tokens).squeeze(-1)
+        mask_fill_value = torch.finfo(token_scores.dtype).min
+        token_scores = token_scores.masked_fill(~valid_mask, mask_fill_value)
+        token_weights = torch.softmax(token_scores, dim=1)
+        attn_pool = torch.sum(card_tokens * token_weights.unsqueeze(-1), dim=1)
+        valid_counts = valid_mask.sum(dim=1, keepdim=True).clamp_min(1)
+        card_mean = torch.sum(card_tokens * valid_mask.unsqueeze(-1), dim=1) / valid_counts
+        summary = self.summary(torch.cat([cls_out, attn_pool, card_mean], dim=1))
 
         policy_logits = self.policy_head(summary)
         if mask is not None:
-            policy_logits = policy_logits.masked_fill(~mask.bool(), -1e9)
-
+            policy_mask_value = torch.finfo(policy_logits.dtype).min
+            policy_logits = policy_logits.masked_fill(~mask.bool(), policy_mask_value)
         value_outputs = self.value_head(summary)
         return policy_logits, value_outputs
 
     def predict_batch(self, tensors):
         device = next(self.parameters()).device
-        obs_t = torch.tensor(tensors, dtype=torch.float32, device=device)
-
-        with torch.no_grad():
-            policy_logits, value_outputs = self.forward(obs_t)
-            probs = torch.softmax(policy_logits, dim=1).cpu().numpy().tolist()
-            win_values = torch.sigmoid(value_outputs[:, 0]).cpu().numpy().tolist()
-
+        obs_t = torch.as_tensor(tensors, dtype=torch.float32, device=device)
+        with torch.inference_mode():
+            logits, value_outputs = self.forward(obs_t)
+            probs = torch.softmax(logits, dim=1).cpu().numpy().tolist()
+            if value_outputs.size(1) == 1:
+                win_values = torch.tanh(value_outputs[:, 0]).cpu().numpy().tolist()
+            else:
+                win_values = torch.softmax(value_outputs, dim=1)[:, 0].cpu().numpy().tolist()
         weights = [DEFAULT_HEURISTIC_WEIGHTS[:] for _ in range(len(tensors))]
         return win_values, probs, weights
 
 
 VanillaPolicyValueNet = HighFidelityAlphaNet
-
-
-if __name__ == "__main__":
-    for preset_name in ("tiny", "small", "base"):
-        cfg = VanillaTransformerConfig.from_preset(preset_name)
-        model = HighFidelityAlphaNet(config=cfg)
-        dummy_input = torch.randn(2, OBS_DIM)
-        dummy_mask = torch.ones(2, ACTION_SPACE, dtype=torch.bool)
-        policy_logits, values = model(dummy_input, dummy_mask)
-        print(f"[{preset_name}] policy={tuple(policy_logits.shape)} value={tuple(values.shape)} params={model.parameter_count():,}")

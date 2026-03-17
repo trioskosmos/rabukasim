@@ -30,13 +30,13 @@ To achieve the Target Orientation, cards must be rotated based on their Native O
 
 | Zone | Member Card (Native: Port) | Live Card (Native: Land) |
 | :--- | :--- | :--- |
-| **Hand** | **0°** (Vertical) | **90°** (Stand up to Vertical) |
+| **Hand** | **0°** (Vertical) | **0°** (Horizontal) |
 | **Stage** | **0°** (Vertical) | N/A (Live cards not in Stage) |
 | **Live Zone** | **90°** (Lay down to Landscape) | **0°** (Horizontal) |
 | **Success Zone** | **90°** (Lay down to Landscape) | (MEMBER CARDS DO NOT GO HERE) |
 
-### Key Rule: The "Vertical Hand" Policy
-All cards in the player's hand MUST be vertical. Even though Live cards are natively horizontal, they must be rotated 90 degrees to stand upright while in the hand.
+### Key Rule: The "Flexible Hand" Policy
+Most cards in the player's hand are vertical to maximize density. However, Live cards MUST remain landscape (0° rotation) to maintain their visual identity as goal cards, even while in the hand.
 
 ### Key Rule: The "Horizontal Live-Set" Policy
 The Live Set/Live Zone is a horizontal space. Any card entering this space, including Members (typically performed to the zone), must be laid down horizontally.

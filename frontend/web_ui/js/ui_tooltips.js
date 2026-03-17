@@ -63,17 +63,21 @@ export const Tooltips = {
         const actionId = dataSource.dataset.actionId;
         const cardId = dataSource.dataset.cardId;
 
+        if (cardId !== undefined) {
+            cardObj = Tooltips.findCardById(parseInt(cardId));
+        }
+
         if (actionId !== undefined && state && state.legal_actions) {
             actionObj = state.legal_actions.find(a => a.id === parseInt(actionId));
             if (actionObj) {
                 Highlighter.highlightTargetsForAction(actionObj);
                 const p = state.players[perspectivePlayer];
                 if (p) {
-                    if (actionObj.hand_idx !== undefined && p.hand) cardObj = p.hand[actionObj.hand_idx];
-                    else if (actionObj.area_idx !== undefined && p.stage) cardObj = p.stage[actionObj.area_idx];
-                    else if (actionObj.slot_idx !== undefined && p.stage) cardObj = p.stage[actionObj.slot_idx];
-                    else if (actionObj.live_idx !== undefined && p.live_zone) cardObj = p.live_zone[actionObj.live_idx];
-                    else if (actionObj.energy_idx !== undefined && p.energy) {
+                    if (!cardObj && actionObj.hand_idx !== undefined && p.hand) cardObj = p.hand[actionObj.hand_idx];
+                    else if (!cardObj && actionObj.area_idx !== undefined && p.stage) cardObj = p.stage[actionObj.area_idx];
+                    else if (!cardObj && actionObj.slot_idx !== undefined && p.stage) cardObj = p.stage[actionObj.slot_idx];
+                    else if (!cardObj && actionObj.live_idx !== undefined && p.live_zone) cardObj = p.live_zone[actionObj.live_idx];
+                    else if (!cardObj && actionObj.energy_idx !== undefined && p.energy) {
                         const energySlot = p.energy[actionObj.energy_idx];
                         if (energySlot && energySlot.card) cardObj = energySlot.card;
                     }
@@ -82,10 +86,6 @@ export const Tooltips = {
                     cardObj = Tooltips.findCardById(actionObj.source_card_id);
                 }
             }
-        }
-
-        if (!cardObj && cardId !== undefined) {
-            cardObj = Tooltips.findCardById(parseInt(cardId));
         }
 
         if (!cardObj && dataSource.dataset.cardName) {
@@ -149,13 +149,6 @@ export const Tooltips = {
         if (cardObj) {
             const translated = window.translateCard ? window.translateCard(cardObj) : { name: cardObj.name, groups: cardObj.groups, units: cardObj.units };
             titleText = translated.name;
-
-            if (translated.groups && translated.groups.length > 0) {
-                metadataHtml += `<div><strong>Series:</strong> ${translated.groups.join(', ')}</div>`;
-            }
-            if (translated.units && translated.units.length > 0) {
-                metadataHtml += `<div><strong>Unit:</strong> ${translated.units.join(', ')}</div>`;
-            }
         }
         
         if (descTitle) {

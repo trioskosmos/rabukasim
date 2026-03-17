@@ -26,75 +26,93 @@ export const InteractionAdapter = {
 
         if (!state.legal_actions) return valid;
 
-        state.legal_actions.forEach(a => {
-            const m = a.metadata || {};
-            const hIdx = a.hand_idx ?? m.hand_idx;
-            const sIdx = a.slot_idx ?? m.slot_idx;
-            const srcIdx = a.source_idx ?? m.source_idx;
-            const eIdx = m.energy_idx;
-            const tPlayer = m.target_player !== undefined ? m.target_player : State.perspectivePlayer;
-            const isMe = (tPlayer === State.perspectivePlayer);
-
-            if (hIdx !== undefined) {
-                if (isMe) valid.myHand[hIdx] = a.id;
-                else valid.oppHand[hIdx] = a.id;
-            }
-
-            if (sIdx !== undefined) {
-                // Determine if it's a stage target or live target
-                if (a.type !== 'PLAY' && a.type !== 'LIVE_SET' && m.category !== 'LIVE') {
-                    if (isMe) valid.myStage[sIdx] = a.id;
-                    else valid.oppStage[sIdx] = a.id;
-                }
-            }
-            if (srcIdx !== undefined) {
-                if (isMe) valid.myStage[srcIdx] = a.id;
-                else valid.oppStage[srcIdx] = a.id;
-            }
-
-            if (a.type === 'LIVE_PERFORM' || m.category === 'LIVE') {
-                const liveIdx = sIdx !== undefined ? sIdx : (a.id >= 600 && a.id < 610 ? a.id - 600 : (a.id >= 900 && a.id <= 902 ? a.id - 900 : undefined));
-                if (liveIdx !== undefined) {
-                    if (isMe) valid.myLive[liveIdx] = a.id;
-                    else valid.oppLive[liveIdx] = a.id;
-                }
-            }
-
-            if (a.type === 'SELECT_DISCARD' || m.from_discard || m.category === 'DISCARD') {
-                valid.discard['all'] = a.id;
-            }
-
-            if (eIdx !== undefined) {
-                if (isMe) valid.myEnergy[eIdx] = a.id;
-                else valid.oppEnergy[eIdx] = a.id;
-            }
-        });
-
-        const hasCardActions = (Object.keys(valid.myHand).length + Object.keys(valid.myStage).length + Object.keys(valid.myLive).length +
-            Object.keys(valid.oppHand).length + Object.keys(valid.oppStage).length + Object.keys(valid.oppLive).length) > 0;
-        valid.hasSelection = hasCardActions;
-
-        if (state.pending_choice && state.pending_choice.options) {
-            valid.hasSelection = true;
-            valid.myHand = {}; valid.oppHand = {};
-            valid.myStage = {}; valid.oppStage = {};
-            valid.myLive = {}; valid.oppLive = {};
-            valid.myEnergy = {}; valid.oppEnergy = {};
-            valid.selection = {}; // For "Looked Cards"
-
-            state.pending_choice.options.forEach((opt, idx) => {
-                const actionId = state.pending_choice.actions[idx];
-                const tPlayer = opt.target_player !== undefined ? opt.target_player : State.perspectivePlayer;
+            state.legal_actions.forEach(a => {
+                const m = a.metadata || a; // Some layers pass metadata flat
+                const hIdx = a.hand_idx !== undefined ? a.hand_idx : m.hand_idx;
+                const sIdx = a.slot_idx !== undefined ? a.slot_idx : m.slot_idx;
+                const eIdx = a.energy_idx !== undefined ? a.energy_idx : m.energy_idx;
+                const tPlayer = m.target_player !== undefined ? m.target_player : State.perspectivePlayer;
                 const isMe = (tPlayer === State.perspectivePlayer);
 
-                if (opt.hand_idx !== undefined) { if (isMe) valid.myHand[opt.hand_idx] = actionId; else valid.oppHand[opt.hand_idx] = actionId; }
-                if (opt.slot_idx !== undefined) { if (isMe) valid.myStage[opt.slot_idx] = actionId; else valid.oppStage[opt.slot_idx] = actionId; }
-                if (opt.energy_idx !== undefined) { if (isMe) valid.myEnergy[opt.energy_idx] = actionId; else valid.oppEnergy[opt.energy_idx] = actionId; }
-                if (opt.live_idx !== undefined) { if (isMe) valid.myLive[opt.live_idx] = actionId; else valid.oppLive[opt.live_idx] = actionId; }
-                if (opt.selection_idx !== undefined) { valid.selection[opt.selection_idx] = actionId; }
-                if (opt.discard_idx !== undefined) { valid.discard[opt.discard_idx] = actionId; }
+                // Hand Index Handling (Mulligan, LiveSet, Play, SelectHand, HandAbility)
+                if (hIdx !== undefined) {
+                    if (isMe) valid.myHand[hIdx] = a.id;
+                    else valid.oppHand[hIdx] = a.id;
+                } else {
+                    // Fallbacks for known ranges
+                    if (a.id >= 300 && a.id <= 359) { // Mulligan
+                        if (isMe) valid.myHand[a.id - 300] = a.id;
+                    } else if (a.id >= 400 && a.id <= 459) { // LiveSet
+                        if (isMe) valid.myHand[a.id - 400] = a.id;
+                    } else if (a.id >= 1000 && a.id <= 1599) { // Play Member
+                        const fIdx = Math.floor((a.id - 1000) / 10);
+                        if (isMe) valid.myHand[fIdx] = a.id;
+                    } else if (a.id >= 1600 && a.id <= 2199) { // Hand Ability
+                        const fIdx = Math.floor((a.id - 1600) / 10);
+                        if (isMe) valid.myHand[fIdx] = a.id;
+                    } else if (a.id >= 8200 && a.id <= 8259) { // Select Hand
+                        if (isMe) valid.myHand[a.id - 8200] = a.id;
+                    }
+                }
+
+                // Stage Index Handling (Stage Ability, Stage Select)
+                if (sIdx !== undefined) {
+                    if (m.category === 'LIVE' || a.type === 'LIVE_SET') {
+                        if (isMe) valid.myLive[sIdx] = a.id;
+                        else valid.oppLive[sIdx] = a.id;
+                    } else {
+                        if (isMe) valid.myStage[sIdx] = a.id;
+                        else valid.oppStage[sIdx] = a.id;
+                    }
+                } else {
+                    // Fallbacks for Stage
+                    if (a.id >= 8300 && a.id <= 8599) { // Stage Ability
+                        const fIdx = Math.floor((a.id - 8300) / 100);
+                        if (isMe) valid.myStage[fIdx] = a.id;
+                    } else if (a.id >= 1000 && a.id <= 1599) { // Play Member (Slot target)
+                        const fIdx = (a.id - 1000) % 10;
+                        if (isMe) valid.myStage[fIdx] = a.id;
+                    } else if (a.id >= 600 && a.id <= 602) { // Select Stage
+                        if (isMe) valid.myStage[a.id - 600] = a.id;
+                    }
+                }
+
+                // Live Zone Index Handling
+                if (a.id >= 900 && a.id <= 929) { // Performance / Select Live
+                    const fIdx = a.id - 900;
+                    if (isMe) valid.myLive[fIdx] = a.id;
+                }
+
+                // Energy Index Handling
+                if (eIdx !== undefined) {
+                    if (isMe) valid.myEnergy[eIdx] = a.id;
+                    else valid.oppEnergy[eIdx] = a.id;
+                } else if (a.id >= 2200 && a.id <= 2799) { // Choice related to hand
+                    const handIdx = Math.floor((a.id - 2200) / 10);
+                    if (isMe) valid.myHand[handIdx] = a.id;
+                } else if (a.id >= 8600 && a.id <= 8899) { // Choice related to stage/area
+                    const areaIdx = Math.floor((a.id - 8600) / 100);
+                    if (isMe) valid.myStage[areaIdx] = a.id; // Assuming it maps to myStage for now
+                } else if (a.id >= 10000 && a.id <= 10999) {
+                    if (isMe) valid.myEnergy[a.id - 10000] = a.id;
+                }
+
+                // Discard
+                if (a.type === 'SELECT_DISCARD' || m.from_discard || (a.id >= 9300 && a.id <= 9999)) {
+                    valid.discard['all'] = a.id;
+                }
             });
-        }
+
+            const hasCardActions = (Object.keys(valid.myHand).length + Object.keys(valid.myStage).length + Object.keys(valid.myLive).length +
+                Object.keys(valid.oppHand).length + Object.keys(valid.oppStage).length + Object.keys(valid.oppLive).length +
+                Object.keys(valid.myEnergy).length) > 0;
+            valid.hasSelection = hasCardActions;
+
+            // Handle pending choice options
+            if (state.pending_choice && state.pending_choice.params && state.pending_choice.params.cards) {
+                // If we have a list of cards to choose from, we might want to highlight them in hand/discard/etc.
+                // But usually this is handled by a separate modal.
+            }
 
         if (state.pending_choice && state.pending_choice.options) {
             // ... (existing logic)

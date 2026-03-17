@@ -153,7 +153,7 @@ def decode_chunk(chunk: List[int]) -> str:
     a = ((a_high & 0xFFFFFFFF) << 32) | (a_low & 0xFFFFFFFF)
     is_negated = False
     base_op = op
-    if 1000 <= op < 1300:
+    if 1000 <= op < 2000:
         is_negated = True
         base_op = op - 1000
 

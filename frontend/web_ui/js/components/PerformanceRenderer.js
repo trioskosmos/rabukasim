@@ -117,15 +117,25 @@ function renderTextMetric(label, value, detail = '') {
 
 function renderHeartsGrid(hearts) {
     const values = Array.isArray(hearts) ? hearts : [];
-    return HEART_ICONS.map((icon, index) => {
-        const count = values[index] || 0;
-        return `
-            <div class="heart-grid-cell ${count > 0 ? 'has-value' : 'empty'}">
-                <img src="${icon}" class="heart-mini-icon" alt="${escapeHtml(HEART_LABELS[index])}">
-                <span class="count-value">${count > 0 ? count : ''}</span>
-            </div>
-        `;
-    }).join('');
+    const filtered = HEART_LABELS.map((label, index) => ({
+        label,
+        count: values[index] || 0,
+        icon: HEART_ICONS[index],
+        index
+    })).filter(h => h.count > 0);
+
+    if (filtered.length === 0) return '<div class="perf-hearts-grid empty">None</div>';
+
+    return `
+        <div class="perf-hearts-grid">
+            ${filtered.map(h => `
+                <div class="heart-grid-cell color-${h.index}">
+                    <img src="${h.icon}" class="heart-mini-icon" alt="${escapeHtml(h.label)}">
+                    <span class="count-value">${h.count}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
 }
 
 function renderHeartsCompact(hearts) {
@@ -206,16 +216,20 @@ function renderSuccessEquation(have, need) {
 
     return `
         <div class="perf-match-summary ${success ? 'success' : 'failure'}">
-            <div class="perf-match-line">
-                <span>Raw hearts on board</span>
-                <strong>${totalHave} / ${totalNeed}</strong>
-            </div>
-            <div class="perf-match-line">
-                <span>Engine wildcard match</span>
-                <strong>${satisfied} / ${requiredTotal}</strong>
-            </div>
-            <div class="perf-match-footnote">
-                Specific colors resolve first, then Any hearts, matching the Rust heart processor.
+            <div class="perf-math-sum">
+                <div class="perf-math-operand">
+                    <div class="perf-eyebrow">Goal</div>
+                    <div class="perf-math-value">${totalNeed}</div>
+                </div>
+                <div class="perf-math-operator"> vs </div>
+                <div class="perf-math-operand">
+                    <div class="perf-eyebrow">Have</div>
+                    <div class="perf-math-value">${totalHave}</div>
+                </div>
+                <div class="perf-math-operator"> = </div>
+                <div class="perf-math-result">
+                    <div class="perf-math-value">${success ? '✓' : '✗'}</div>
+                </div>
             </div>
         </div>
     `;
@@ -236,7 +250,7 @@ function renderTurnNavigation() {
                 const label = isLatest
                     ? tr('current_turn', `Current Turn ${turn}`, { turn })
                     : tr('turn_label', `Turn ${turn}`, { turn });
-                return `<button class="perf-nav-btn ${isSelected ? 'active' : ''}" onclick="window.showPerformanceForTurn(${turn})">${escapeHtml(label)}</button>`;
+                return `<button class="perf-nav-btn ${isSelected ? 'active' : ''}" data-action="show-performance-turn" data-value="${turn}">${escapeHtml(label)}</button>`;
             }).join('')}
         </div>
     `;
@@ -314,9 +328,8 @@ function renderComparisonBanner(displayResults) {
     }
 
     return `
-        <section class="perf-comparison-banner">
-            <div class="perf-eyebrow">Live Result Snapshot</div>
-            <div class="perf-comparison-copy">${escapeHtml(summary)}</div>
+        <section class="perf-comparison-banner" style="padding: 8px 12px; margin-bottom: 4px;">
+            <div class="perf-comparison-copy" style="font-size: 0.9rem;"><b>Result:</b> ${escapeHtml(summary)}</div>
         </section>
     `;
 }
@@ -354,7 +367,6 @@ function renderStoryCards(result) {
             <div class="perf-section-heading-row compact">
                 <div>
                     <div class="perf-eyebrow">Phase Story</div>
-                    <h3>What happened for this player</h3>
                 </div>
             </div>
             <div class="perf-story-grid">
@@ -390,9 +402,7 @@ function renderLiveCards(result) {
             <div class="perf-section-heading-row compact">
                 <div>
                     <div class="perf-eyebrow">Live Checks</div>
-                    <h3>Target lives</h3>
                 </div>
-                <p>Each card shows printed score, exact requirement board, matched hearts, and what was left after that slot resolved.</p>
             </div>
             <div class="perf-live-grid">
                 ${lives.map((live, index) => {
@@ -412,18 +422,14 @@ function renderLiveCards(result) {
                                 </div>
                                 <div class="perf-status-pill ${live?.passed ? 'success' : 'failure'}">${live?.passed ? 'PASS' : 'FAIL'}</div>
                             </div>
-                            <div class="perf-live-grid-rows">
-                                <div>
-                                    <div class="perf-mini-heading">Required</div>
+                            <div class="perf-live-grid-rows" style="gap: 4px;">
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <div class="perf-mini-heading" style="margin-bottom: 0;">Goal:</div>
                                     <div class="perf-hearts-grid">${renderHeartsGrid(live?.required || [])}</div>
                                 </div>
-                                <div>
-                                    <div class="perf-mini-heading">Matched</div>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <div class="perf-mini-heading" style="margin-bottom: 0;">Hit:</div>
                                     <div class="perf-hearts-grid">${renderHeartsGrid(live?.filled || [])}</div>
-                                </div>
-                                <div>
-                                    <div class="perf-mini-heading">Remaining after this slot</div>
-                                    <div class="perf-hearts-grid">${renderHeartsGrid(spare)}</div>
                                 </div>
                             </div>
                             ${renderSuccessEquation(live?.filled || [], live?.required || [])}
@@ -479,9 +485,7 @@ function renderAllocationSection(result) {
             <div class="perf-section-heading-row compact">
                 <div>
                     <div class="perf-eyebrow">Heart Routing</div>
-                    <h3>Which sources paid which live</h3>
                 </div>
-                <p>The engine tracks whether each payment came from printed hearts or bonus hearts, and whether a wildcard was used.</p>
             </div>
             <div class="perf-route-grid">
                 ${[...groups.entries()].map((entry) => {
@@ -535,9 +539,7 @@ function renderContributionSection(result) {
             <div class="perf-section-heading-row compact">
                 <div>
                     <div class="perf-eyebrow">Stage Contributors</div>
-                    <h3>Members on stage</h3>
                 </div>
-                <p>Printed output shows card text; bonus hearts/blades come from member abilities, separate from the yell pool. Yelled cards appear in the Yell section.</p>
             </div>
             <div class="perf-contrib-grid">
                 ${members.map((member) => {
@@ -645,11 +647,13 @@ function renderYellSection(result) {
                     const rawText = Tooltips.getEffectiveRawText(card);
                     return `
                         <article class="perf-yell-card-modern" ${card?.id !== undefined ? `data-card-id="${card.id}"` : ''} ${rawText ? `data-text="${escapeHtml(rawText)}"` : ''}>
-                            ${card?.img ? `<img src="${fixImg(card.img)}" alt="Yell card">` : ''}
+                            <div class="perf-yell-card-art-wrap">
+                                ${card?.img ? `<img src="${fixImg(card.img)}" alt="Yell card">` : ''}
+                            </div>
                             <div class="perf-yell-icons">
                                 ${renderHeartsCompact(card?.blade_hearts || [])}
-                                ${(card?.note_icons || 0) > 0 ? `<span class="perf-badge note">+${card.note_icons} notes</span>` : ''}
-                                ${(card?.draw_icons || 0) > 0 ? `<span class="perf-badge draw">+${card.draw_icons} draw</span>` : ''}
+                                ${(card?.note_icons || 0) > 0 ? `<span class="perf-badge note">${card.note_icons}♪</span>` : ''}
+                                ${(card?.draw_icons || 0) > 0 ? `<span class="perf-badge draw">${card.draw_icons}⎋</span>` : ''}
                             </div>
                         </article>
                     `;
@@ -737,7 +741,7 @@ function renderPlayerPanel(playerId, result) {
     return `
         <article class="perf-panel ${result?.success ? 'success' : 'failure'}">
             <header class="perf-panel-header">
-                <div>
+                <div class="perf-panel-header-main">
                     <div class="perf-eyebrow">${escapeHtml(getPlayerName(playerId))}</div>
                     <h2>${escapeHtml(outcome)}</h2>
                     <div class="perf-panel-subtitle">Judge score ${result?.total_score || 0} with ${passedLives}/${totalLives} live cards passing.</div>
@@ -748,25 +752,38 @@ function renderPlayerPanel(playerId, result) {
                 </div>
             </header>
 
-            <section class="perf-score-hero">
-                <div class="perf-hero-score">${result?.total_score || 0}</div>
-                <div class="perf-hero-caption">Final judge score stored on the result snapshot</div>
+            <section class="perf-score-hero" style="border-bottom: 1px solid var(--border); margin-bottom: 16px; padding-bottom: 12px;">
                 <div class="perf-metric-grid">
-                    ${renderTextMetric('Passed lives', `${passedLives} / ${totalLives}`, result?.success ? 'No live failed the slot-order check.' : 'At least one live failed, so the engine discarded all lives.')}
-                    ${renderIconMetric('img/texticon/icon_score.png', 'Printed live score passed', String(baseLiveScore), 'score')}
-                    ${renderIconMetric('img/texticon/icon_score.png', 'Notes counted', String(result?.note_icons || 0), 'notes')}
-                    ${renderIconMetric('img/texticon/icon_blade.png', 'Blade total before yell', String(result?.yell_count || 0), 'blades')}
-                    ${renderTextMetric('Hearts available', String(totalHearts), 'Stage and yell hearts after modifiers.')}
-                    ${renderTextMetric('Stored score bonus', String(result?.total_score_bonus || 0), 'Positive bonus log carried by the player state.')}
+                    <div class="perf-metric-card highlight">
+                        <div class="perf-metric-label">JUDGE SCORE</div>
+                        <div class="perf-metric-value" style="font-size: 1.8rem;">${result?.total_score || 0}</div>
+                    </div>
+                    <div class="perf-metric-card">
+                        <div class="perf-metric-label">HEART VECTOR</div>
+                        <div class="perf-metric-value">
+                            ${renderHeartsCompact(result?.total_hearts || [])}
+                            <span class="total-count-dim">(${totalHearts})</span>
+                        </div>
+                    </div>
+                    ${renderTextMetric('Lives Passed', `${passedLives} / ${totalLives}`)}
+                    ${renderIconMetric('img/texticon/icon_score.png', 'Live Pts', String(baseLiveScore), 'score')}
+                    ${renderIconMetric('img/texticon/icon_score.png', 'Notes', String(result?.note_icons || 0), 'notes')}
+                    ${renderIconMetric('img/texticon/icon_blade.png', 'Blades', String(result?.yell_count || 0), 'blades')}
                 </div>
             </section>
 
-            ${renderStoryCards(result)}
-            ${renderLiveCards(result)}
-            ${renderAllocationSection(result)}
-            ${renderContributionSection(result)}
-            ${renderYellSection(result)}
-            ${renderEffectsSection(result)}
+            <div class="perf-panel-body-grid">
+                <div class="perf-body-column-left">
+                    ${renderStoryCards(result)}
+                    ${renderLiveCards(result)}
+                </div>
+                <div class="perf-body-column-right">
+                    ${renderContributionSection(result)}
+                    ${renderYellSection(result)}
+                    ${renderAllocationSection(result)}
+                    ${renderEffectsSection(result)}
+                </div>
+            </div>
         </article>
     `;
 }
@@ -840,7 +857,6 @@ export const PerformanceRenderer = {
             <div class="perf-overview-shell">
                 ${renderTurnNavigation()}
                 ${renderComparisonBanner(displayResults)}
-                ${renderEngineFlow()}
                 <div class="perf-player-grid">
                     ${[0, 1].map((playerId) => renderPlayerPanel(playerId, displayResults[playerId])).join('')}
                 </div>
@@ -850,20 +866,35 @@ export const PerformanceRenderer = {
 
     showPerfTab: (tab) => {
         const resultTab = document.getElementById('perf-tab-result');
+        const engineTab = document.getElementById('perf-tab-engine');
         const historyTab = document.getElementById('perf-tab-history');
+
         const resultBtn = document.getElementById('tab-btn-result');
+        const engineBtn = document.getElementById('tab-btn-engine');
         const historyBtn = document.getElementById('tab-btn-history');
-        if (!resultTab || !historyTab) return;
+
+        if (!resultTab || !historyTab || !engineTab) return;
+
+        resultTab.style.display = 'none';
+        engineTab.style.display = 'none';
+        historyTab.style.display = 'none';
+
+        resultBtn?.classList.remove('active');
+        engineBtn?.classList.remove('active');
+        historyBtn?.classList.remove('active');
 
         if (tab === 'result') {
             resultTab.style.display = 'block';
-            historyTab.style.display = 'none';
             resultBtn?.classList.add('active');
-            historyBtn?.classList.remove('active');
+        } else if (tab === 'engine') {
+            engineTab.style.display = 'block';
+            engineBtn?.classList.add('active');
+            const engineContent = document.getElementById('performance-engine-content');
+            if (engineContent) {
+                engineContent.innerHTML = renderEngineFlow();
+            }
         } else {
-            resultTab.style.display = 'none';
             historyTab.style.display = 'block';
-            resultBtn?.classList.remove('active');
             historyBtn?.classList.add('active');
             PerformanceRenderer.renderTurnHistory();
         }

@@ -81,6 +81,9 @@ pub fn suspend_interaction(
         ChoiceType::SelectStageEmpty,
         ChoiceType::SelectLiveSlot,
         ChoiceType::SelectMode,
+        ChoiceType::SelectHandDiscard,
+        ChoiceType::SelectHandPlay,
+        ChoiceType::SelectCardsOrder,
     ];
     let should_check_skip = !always_suspend_types.contains(&choice_type);
 

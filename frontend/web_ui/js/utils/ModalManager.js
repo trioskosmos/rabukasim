@@ -55,6 +55,18 @@ export const ModalManager = {
   },
 
   /**
+   * Hide a modal-like element directly.
+   * @param {HTMLElement} modal - Element to hide
+   */
+  hideElement: (modal) => {
+    if (!modal) {
+      return false;
+    }
+    modal.style.display = DISPLAY_VALUES.NONE;
+    return true;
+  },
+
+  /**
    * Set up auto-close on outside click (backdrop click)
    * @param {string} modalId - Modal ID
    * @param {Function} onClose - Optional callback when closed
@@ -83,6 +95,6 @@ export const ModalManager = {
   isVisible: (modalId) => {
     const modal = document.getElementById(modalId);
     if (!modal) return false;
-    return modal.style.display !== DISPLAY_VALUES.NONE;
+    return modal.style.display !== DISPLAY_VALUES.NONE && window.getComputedStyle(modal).display !== DISPLAY_VALUES.NONE;
   },
 };

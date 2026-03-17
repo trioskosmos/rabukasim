@@ -52,7 +52,7 @@ export const ActionMenu = {
                 <div class="game-over-banner">
                     <h2>GAME OVER</h2>
                     <div class="winner-announcement">Winner: ${winnerName}</div>
-                    <button class="btn btn-primary" onclick="location.reload()">New Game</button>
+                    <button class="btn btn-primary" data-action="reload-page">New Game</button>
                 </div>
             `;
         DOMUtils.setHTML(DOM_IDS.CONTAINER_ACTIONS, gameOverHTML);

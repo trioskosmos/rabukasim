@@ -16,28 +16,43 @@ export const CardRenderer = {
         const { isSelected, isValid, mini, containerId } = options;
 
         const isHidden = card.hidden || card.id === -2;
-        const isLive = card.type === 'live';
+        const isLive = card.type === 'live' || card.type === 'ライブ' || card.score !== undefined;
 
         // 1. Determine CSS Classes
         const classNames = ['card'];
         if (isHidden) classNames.push('hidden');
-        if (isLive) classNames.push('type-live');
         if (mini) classNames.push('card-mini');
         if (card.is_new) classNames.push('new-card');
+        if (isLive) classNames.push('type-live');
+
+        // Orientation Logic (Consolidated Matrix)
+        const targetLandscape = isLive || (containerId && (
+            containerId.includes('live') || 
+            containerId.includes('success') || 
+            containerId.includes('selection')
+        ));
+        const nativeLandscape = isLive;
+
+        if (targetLandscape) {
+            classNames.push('orientation-landscape');
+        }
+        
+        // Image rotation is needed if native orientation doesn't match target orientation
+        if (targetLandscape !== nativeLandscape) {
+            classNames.push('rotate-img-90');
+        }
 
         if (isSelected) {
             const isMulligan = (state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2);
             classNames.push(isMulligan ? 'mulligan-selected' : 'selected');
         }
-
-        if (isValid) classNames.push('valid-target');
-
-        if (!isLive && containerId) {
-            if (containerId.includes('live') || containerId.includes('success')) {
-                classNames.push('rotated-90');
-            }
+        if (isValid && containerId !== 'my-hand') classNames.push('valid-target');
+        
+        // Sticky class for view model: if we match current global hover, keep it
+        const isCurrentlyHovered = options.actionId !== undefined && options.actionId === State.hoveredActionId;
+        if (isCurrentlyHovered) {
+            classNames.push('hover-highlight');
         }
-
         if (isHidden) classNames.push('card-back');
 
         // 2. Determine Display Name & Image
@@ -72,9 +87,35 @@ export const CardRenderer = {
         }
 
         if (!viewModel.isHidden) {
-            const imgHtml = viewModel.imgPath ? `<img src="${viewModel.imgPath}" draggable="false" onerror="this.style.display='none'">` : '';
-            const costHtml = viewModel.cost !== undefined ? `<span class="cost">${viewModel.cost}</span>` : '';
-            div.innerHTML = `${imgHtml}${costHtml}<div class="name">${viewModel.displayName}</div>`;
+            if (viewModel.imgPath) {
+                const img = document.createElement('img');
+                img.src = viewModel.imgPath;
+                img.draggable = false;
+                img.onerror = () => {
+                    img.style.display = 'none';
+                };
+                div.appendChild(img);
+            }
+
+            if (viewModel.cost !== undefined) {
+                const costSpan = document.createElement('span');
+                costSpan.className = 'cost';
+                costSpan.textContent = String(viewModel.cost);
+                div.appendChild(costSpan);
+            }
+
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'name';
+            nameDiv.textContent = viewModel.displayName;
+
+            if (cardData.card_no) {
+                const cardNoDiv = document.createElement('div');
+                cardNoDiv.className = 'card-no';
+                cardNoDiv.textContent = cardData.card_no;
+                nameDiv.appendChild(cardNoDiv);
+            }
+
+            div.appendChild(nameDiv);
         }
 
         if (onClick) {
@@ -85,6 +126,7 @@ export const CardRenderer = {
             };
 
             if (viewModel.isValid) {
+                div.setAttribute('data-action-id', viewModel.actionId);
                 div.onmouseenter = () => {
                     if (window.highlightActionBtn) window.highlightActionBtn(viewModel.actionId, true);
                 };
@@ -103,6 +145,17 @@ export const CardRenderer = {
     updateCardDOM: (el, viewModel, cardData, onClick = null) => {
         DOMUtils.patchClasses(el, viewModel.classes);
         
+        // Stickiness: Only apply if we have a match, but DON'T aggressively remove if actionId is briefly missing
+        // or if it was already hovered (let CSS :hover handle local mouse, and highlightActionBtn handle remote)
+        const isMatch = viewModel.actionId !== undefined && viewModel.actionId === State.hoveredActionId;
+        if (isMatch) {
+            el.classList.add('hover-highlight');
+        } else if (viewModel.actionId !== undefined && State.hoveredActionId !== null) {
+            // We are hovering a different action, so remove this one
+            el.classList.remove('hover-highlight');
+        }
+        // Note: we don't remove if actionId is undefined to prevent flickering during transient states
+
         if (viewModel.actionId !== undefined || cardData.id !== undefined) {
             Tooltips.attachCardData(el, cardData, viewModel.actionId);
         }
@@ -121,6 +174,7 @@ export const CardRenderer = {
                 } else if (!imgPath) {
                     existingImg.style.display = 'none';
                 }
+                existingImg.onerror = () => existingImg.style.display = 'none';
             } else if (imgPath) {
                 const img = document.createElement('img');
                 img.src = imgPath;
@@ -142,11 +196,14 @@ export const CardRenderer = {
 
             const existingName = el.querySelector('.name');
             if (existingName) {
-                if (existingName.textContent !== viewModel.displayName) existingName.textContent = viewModel.displayName;
+                const cardNoHtml = cardData.card_no ? `<div class="card-no">${cardData.card_no}</div>` : '';
+                const expectedNameHtml = `${viewModel.displayName}${cardNoHtml}`;
+                if (existingName.innerHTML !== expectedNameHtml) existingName.innerHTML = expectedNameHtml;
             } else {
                 const nameDiv = document.createElement('div');
                 nameDiv.className = 'name';
-                nameDiv.textContent = viewModel.displayName;
+                const cardNoHtml = cardData.card_no ? `<div class="card-no">${cardData.card_no}</div>` : '';
+                nameDiv.innerHTML = `${viewModel.displayName}${cardNoHtml}`;
                 el.appendChild(nameDiv);
             }
         }
@@ -158,6 +215,7 @@ export const CardRenderer = {
         } : null;
 
         if (onClick && viewModel.isValid) {
+            el.setAttribute('data-action-id', viewModel.actionId);
             el.onmouseenter = () => {
                 if (window.highlightActionBtn) window.highlightActionBtn(viewModel.actionId, true);
             };
@@ -165,6 +223,7 @@ export const CardRenderer = {
                 if (window.highlightActionBtn) window.highlightActionBtn(viewModel.actionId, false);
             };
         } else {
+            el.removeAttribute('data-action-id');
             el.onmouseenter = null;
             el.onmouseleave = null;
         }
@@ -172,7 +231,7 @@ export const CardRenderer = {
         return el;
     },
 
-    renderCards: (containerId, cards, clickable = false, mini = false, selectedIndices = [], validActionMap = {}, hasGlobalSelection = false) => {
+    renderCards: (containerId, cards, clickable = false, mini = false, selectedIndices = [], validActionMap = {}, hasGlobalSelection = false, filter = null) => {
         const el = DOMUtils.getElement(containerId);
         if (!el) return;
         if (!cards) {
@@ -183,16 +242,22 @@ export const CardRenderer = {
         const existingChildren = Array.from(el.children);
         const cardCount = cards.length;
 
-        // Synchronize children count
-        while (el.children.length > cardCount) {
-            el.removeChild(el.lastChild);
+        if (filter) {
+            DOMUtils.clear(containerId);
+        } else {
+            // Synchronize children count
+            while (el.children.length > cardCount) {
+                el.removeChild(el.lastChild);
+            }
         }
 
         cards.forEach((card, idx) => {
+            if (filter && !filter(card, idx)) return;
+
             const isSelected = selectedIndices.includes(idx);
             const actionId = validActionMap[idx];
             const isValid = actionId !== undefined;
-            const existingChild = existingChildren[idx];
+            const existingChild = filter ? null : existingChildren[idx];
 
             if (card === null) {
                 if (existingChild && existingChild.classList.contains('placeholder')) {
@@ -263,8 +328,9 @@ export const CardRenderer = {
             const filledClass = (slot && slot !== -1 ? ' filled' : '');
             const tappedClass = isTapped ? ' tapped' : '';
             const validClass = isValid ? ' valid-target' : '';
+            const hoverClass = (isValid && actionId === State.hoveredActionId) ? ' hover-highlight' : '';
 
-            const newClassName = `member-slot${filledClass}${tappedClass}${validClass}`;
+            const newClassName = `member-slot${filledClass}${tappedClass}${validClass}${hoverClass}`;
             if (slotDiv.className !== newClassName) slotDiv.className = newClassName;
             slotDiv.id = `${containerId}-slot-${i}`;
 
@@ -280,8 +346,17 @@ export const CardRenderer = {
 
                 Tooltips.attachCardData(area, slot, isValid ? actionId : undefined);
                 Tooltips.attachCardData(slotDiv, slot, isValid ? actionId : undefined);
+                if (isValid) {
+                    area.setAttribute('data-action-id', actionId);
+                    slotDiv.setAttribute('data-action-id', actionId);
+                } else {
+                    area.removeAttribute('data-action-id');
+                    slotDiv.removeAttribute('data-action-id');
+                }
             } else {
                 slotDiv.innerHTML = '';
+                area.removeAttribute('data-action-id');
+                slotDiv.removeAttribute('data-action-id');
             }
 
             if (clickable && (isValid || !hasGlobalSelection)) {
@@ -339,8 +414,16 @@ export const CardRenderer = {
                 el.appendChild(slot);
             }
 
-            const isLiveCard = card && card.type === 'live';
-            const newClassName = 'card card-mini' + (card ? (isLiveCard ? ' type-live' : '') : ' empty') + validClass;
+            const viewModel = CardRenderer.getCardViewModel(card, {
+                isValid,
+                containerId,
+                actionId
+            });
+            
+            let newClassName = viewModel ? viewModel.classes : (`card empty orientation-landscape${validClass}`);
+            if (isValid && actionId === State.hoveredActionId) {
+                newClassName += ' hover-highlight';
+            }
             if (slot.className !== newClassName) slot.className = newClassName;
             slot.id = `${containerId}-slot-${i}`;
 
@@ -348,10 +431,10 @@ export const CardRenderer = {
                 const isPerfLegal = card.is_perf_legal;
                 const imgPath = card.img || card.img_path || '';
                 const expectedInnerHtml = `
-                    <div class="live-card-inner ${isPerfLegal ? 'perf-legal' : ''}">
+                    <div class="live-card-inner">
                         ${imgPath ? `<img src="${fixImgPath(imgPath)}">` : ''}
                         <div class="cost">${card.score || (card.cost !== undefined ? card.cost : 0)}</div>
-                        ${isPerfLegal ? '<div class="perf-badge">LIVE!</div>' : ''}
+                        ${card.card_no ? `<div class="card-no">${card.card_no}</div>` : ''}
                     </div>
                 `;
                 
@@ -360,6 +443,8 @@ export const CardRenderer = {
                 const rawText = Tooltips.getEffectiveRawText(card);
                 if (rawText) DOMUtils.patchAttributes(slot, { 'data-text': rawText });
                 DOMUtils.patchAttributes(slot, { 'data-card-id': card.id });
+                if (isValid) slot.setAttribute('data-action-id', actionId);
+                else slot.removeAttribute('data-action-id');
 
                 if (isValid || isPerfLegal) {
                     const finalActionId = isValid ? actionId : state.legal_actions?.find(a => (a.id === 600 + i || a.id === 900 + i || (a.metadata && a.metadata.slot_idx === i && a.metadata.category === 'LIVE')))?.id;
@@ -405,7 +490,8 @@ export const CardRenderer = {
 
         const actionId = validActionMap && validActionMap['all'];
         const isValid = actionId !== undefined;
-        el.className = 'discard-pile-visual ' + (isValid ? 'valid-target' : '');
+        const hoverClass = (isValid && actionId === State.hoveredActionId) ? ' hover-highlight' : '';
+        el.className = 'discard-pile-visual ' + (isValid ? 'valid-target' : '') + hoverClass;
 
         DOMUtils.clear(containerId);
 
@@ -454,21 +540,24 @@ export const CardRenderer = {
         }
     },
 
-    renderLookedCards: (validActionMap = {}) => {
+    renderLookedCards: (validActionMap = {}, overrideCards = null, overrideTitle = null) => {
         const state = State.data;
         const panel = DOMUtils.getElement(DOM_IDS.LOOKED_CARDS_PANEL);
         const content = DOMUtils.getElement(DOM_IDS.LOOKED_CARDS_CONTENT);
         if (!panel || !content) return;
 
-        const cards = state.looked_cards || [];
+        const pendingSelectionCards = state.pending_choice?.selection_cards || [];
+        const cards = overrideCards || (pendingSelectionCards.length > 0 ? pendingSelectionCards : (state.looked_cards || []));
         if (cards.length === 0) {
-            DOMUtils.hide(DOM_IDS.LOOKED_CARDS_PANEL);
+            DOMUtils.setVisible(DOM_IDS.LOOKED_CARDS_PANEL, false);
             return;
         }
-        DOMUtils.show(DOM_IDS.LOOKED_CARDS_PANEL);
+        DOMUtils.setVisible(DOM_IDS.LOOKED_CARDS_PANEL, true, 'flex');
 
         let headerHtml = "";
-        if (state.pending_choice && (state.pending_choice.title || state.pending_choice.text)) {
+        if (overrideTitle) {
+            headerHtml = `<div class="looked-cards-header">${overrideTitle}</div>`;
+        } else if (state.pending_choice && (state.pending_choice.title || state.pending_choice.text)) {
             const title = state.pending_choice.title || state.pending_choice.text;
             headerHtml = `<div class="looked-cards-header">${title}</div>`;
         }
@@ -484,7 +573,7 @@ export const CardRenderer = {
         DOMUtils.clear(DOM_IDS.LOOKED_CARDS_CONTENT);
         if (headerHtml) {
             const headerDiv = document.createElement('div');
-            headerDiv.style.width = '100%';
+            headerDiv.className = 'looked-cards-meta';
             headerDiv.innerHTML = headerHtml;
             content.appendChild(headerDiv);
         }
@@ -499,11 +588,12 @@ export const CardRenderer = {
             }
 
             const aid = validActionMap[idx];
-            const isClickable = (aid !== undefined && aid !== 0);
+            const isClickable = (aid !== undefined && aid !== null && aid !== 0);
 
             const viewModel = CardRenderer.getCardViewModel(c, {
                 mini: true,
                 isValid: isClickable,
+                containerId: DOM_IDS.LOOKED_CARDS_CONTENT,
                 actionId: aid
             });
 
@@ -512,7 +602,11 @@ export const CardRenderer = {
             } : null;
 
             const cardEl = CardRenderer.createCardDOM(viewModel, c, onClick);
-            cardEl.className = `looked-card-item ${viewModel.classes}`;
+            
+            // Explicitly set class and ID for the item
+            cardEl.classList.add('looked-card-item');
+            cardEl.id = `looked-card-${idx}`;
+            
             content.appendChild(cardEl);
         });
     }

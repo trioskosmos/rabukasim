@@ -16,6 +16,9 @@ import { PerformanceRenderer } from './components/PerformanceRenderer.js';
 
 import { HeaderStats } from './components/HeaderStats.js';
 import { ZoneViewer } from './components/ZoneViewer.js';
+import { DOM_IDS, DISPLAY_VALUES } from './constants_dom.js';
+import { DOMUtils } from './utils/DOMUtils.js';
+import { ViewState } from './view_state.js';
 
 // Cached DOM element references for performance
 const DOM_CACHE = {
@@ -69,21 +72,13 @@ export const Rendering = {
         if (State.renderRequested) return;
         State.renderRequested = true;
         
-        // Initial fade-in for the entire app if it's the first render
-        if (!State.firstRenderDone) {
-            const app = document.getElementById('app');
-            if (app) {
-                app.style.opacity = '0';
-                app.style.transition = 'opacity 0.8s ease-out';
-                setTimeout(() => app.style.opacity = '1', 50);
-            }
-            State.firstRenderDone = true;
-        }
+        // Initial fade-in - REMOVED for snappiness
+        State.firstRenderDone = true;
 
         requestAnimationFrame(() => {
             try {
                 initDomCache();
-                initAccessibility();
+                // initAccessibility(); // Missing in codebase, causes ReferenceError
                 Rendering.renderInternal();
             } catch (error) {
                 console.error('Fatal Rendering Error:', error);
@@ -103,10 +98,6 @@ export const Rendering = {
         const state = State.data;
         if (!state || !state.players) return;
 
-        const perspectivePlayer = State.perspectivePlayer;
-        const currentLang = State.currentLang;
-        const t = i18n.getCurrentTranslations();
-
         // --- Proactive Pre-loading ---
         const assetsToLoad = [];
         state.players.forEach(p => {
@@ -123,48 +114,38 @@ export const Rendering = {
             State.lastAssetsHash = assetsHash;
         }
 
-        if (State.hotseatMode && state.active_player !== undefined) {
-            State.perspectivePlayer = state.active_player;
+        const validTargets = Rendering.get_valid_targets(state);
+        const viewState = ViewState.buildRenderModel(state, State, validTargets);
+
+        if (State.hotseatMode && State.perspectivePlayer !== viewState.perspectivePlayer) {
+            State.perspectivePlayer = viewState.perspectivePlayer;
         }
 
-        const p0 = state.players[State.perspectivePlayer] || state.players[0];
-        const p1 = state.players[1 - State.perspectivePlayer] || state.players[1];
+        const { p0, p1 } = viewState;
 
         if (p0) state.looked_cards = p0.looked_cards || [];
         if (!p0 || !p1) return;
-
-        // Calculate Valid Targets for Highlighting
-        const validTargets = Rendering.get_valid_targets(state);
 
         // Update UI Headers, Stats, etc. (Logic moved from main.js)
         Rendering.renderHeaderStats(state, p0);
         Rendering.renderBoard(state, p0, p1, validTargets);
 
-        let selectedIndices = [];
-        if (state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2) {
-            selectedIndices = Array.from(p0.mulligan_selection || []);
-        } else {
-            if (State.selectedHandIdx !== -1) selectedIndices = [State.selectedHandIdx];
-        }
+        Rendering.renderMulliganReturn(viewState);
 
-        Rendering.renderCards('my-hand', p0.hand, true, false, selectedIndices, validTargets.myHand, validTargets.hasSelection);
-        Rendering.renderCards('opp-hand', p1.hand, false, true, [], validTargets.oppHand, validTargets.hasSelection);
-        Rendering.renderPerformanceGuide();
-        Rendering.renderLookedCards(validTargets.selection);
-        Rendering.renderSelectionModal();
+        if (viewState.isMulligan) {
+            // Unselected cards in Hand
+            Rendering.renderCards('my-hand', p0.hand, true, false, viewState.selectedIndices, validTargets.myHand, validTargets.hasSelection, viewState.handFilter);
+            
+            // Selected cards shown at bottom of deck during mulligan (visual representation)
+            // Do not show in "Confirmed Cards" panel during mulligan
+        } else {
+            Rendering.renderCards('my-hand', p0.hand, true, false, viewState.selectedIndices, validTargets.myHand, validTargets.hasSelection);
+            Rendering.renderLookedCards(validTargets.selection);
+        }
+        Rendering.renderSelectionModal(viewState.selectionModal);
         Rendering.renderRuleLog();
         Rendering.renderActiveEffects(state);
-        // Toggle the panel visibility based on content
-        const abPanel = document.getElementById('active-abilities-panel');
-        const hasContent = (state.triggered_abilities && state.triggered_abilities.length > 0) ||
-            (p0.blade_buffs && p0.blade_buffs.some(v => v !== 0)) ||
-            (p0.heart_buffs && p0.heart_buffs.some(hb => hb.some(v => v > 0))) ||
-            (p1.blade_buffs && p1.blade_buffs.some(v => v !== 0)) ||
-            (p1.heart_buffs && p1.heart_buffs.some(hb => hb.some(v => v > 0))) ||
-            (p0.cost_reduction !== 0) || (p1.cost_reduction !== 0) ||
-            (p0.prevent_baton_touch > 0) || (p1.prevent_baton_touch > 0);
-
-        if (abPanel) abPanel.style.display = hasContent ? 'block' : 'none';
+        DOMUtils.setVisible(DOM_IDS.ACTIVE_ABILITIES_PANEL, viewState.hasActiveEffects, DISPLAY_VALUES.BLOCK);
         if (state.game_over) {
             Rendering.renderGameOver(state);
         } else {
@@ -172,7 +153,7 @@ export const Rendering = {
         }
 
         Tooltips.highlightPendingSource();
-        Rendering.updateSettingsButtons();
+        Rendering.updateSettingsButtons(viewState.perspectivePlayer);
     },
 
     getPhaseKey: (phase) => {
@@ -201,8 +182,8 @@ export const Rendering = {
         BoardRenderer.renderDeckCounts(p0, p1);
     },
 
-    renderCards: (containerId, cards, clickable = false, mini = false, selectedIndices = [], validActionMap = {}, hasGlobalSelection = false) => {
-        CardRenderer.renderCards(containerId, cards, clickable, mini, selectedIndices, validActionMap, hasGlobalSelection);
+    renderCards: (containerId, cards, clickable = false, mini = false, selectedIndices = [], validActionMap = {}, hasGlobalSelection = false, filter = null) => {
+        CardRenderer.renderCards(containerId, cards, clickable, mini, selectedIndices, validActionMap, hasGlobalSelection, filter);
     },
 
     renderStage: (containerId, stage, clickable, validActionMap = {}, hasGlobalSelection = false) => {
@@ -223,11 +204,43 @@ export const Rendering = {
 
     renderActiveAbilities: (containerId, abilities) => Logs.renderActiveAbilities(containerId, abilities),
 
-    renderSelectionModal: () => {
-        // Disabled as per user request - all selections are now in the sidebar
-        const modal = document.getElementById('selection-modal');
-        if (modal) modal.style.display = 'none';
-        return;
+    renderMulliganReturn: (viewState) => {
+        const shouldShowMulliganCards = viewState.showMulliganReturn || (viewState.isMulligan && viewState.mulliganSelectedCards.length > 0);
+        DOMUtils.setVisible(DOM_IDS.MY_DECK_BOTTOM, shouldShowMulliganCards, DISPLAY_VALUES.FLEX);
+        DOMUtils.setVisible(DOM_IDS.OPP_DECK_BOTTOM, false);
+
+        if (shouldShowMulliganCards) {
+            const cardsToShow = viewState.showMulliganReturn ? viewState.mulliganReturnCards : viewState.mulliganSelectedCards;
+            Rendering.renderCards(DOM_IDS.MY_DECK_BOTTOM, cardsToShow, false, false);
+        }
+    },
+
+    renderSelectionModal: (selectionModal = null) => {
+        const modalState = selectionModal || { isVisible: false, cards: [], actions: [] };
+        const panel = document.getElementById(DOM_IDS.SELECTION_MODAL);
+        const content = document.getElementById(DOM_IDS.SELECTION_CONTENT);
+        if (!panel || !content) return;
+
+        const useSidebarCards = modalState.cards.length > 0 && window.innerWidth > 768;
+        if (!modalState.isVisible || useSidebarCards) {
+            panel.style.display = DISPLAY_VALUES.NONE;
+            return;
+        }
+
+        panel.style.display = DISPLAY_VALUES.FLEX;
+
+        content.innerHTML = '';
+        modalState.cards.forEach((c, idx) => {
+            const viewModel = CardRenderer.getCardViewModel(c, {
+                containerId: DOM_IDS.SELECTION_CONTENT,
+                actionId: modalState.actions[idx],
+            });
+            const cardEl = CardRenderer.createCardDOM(viewModel, c, (aid) => {
+                if (window.doAction) window.doAction(aid);
+            });
+            cardEl.className = `selection-card-item ${viewModel.classes}`;
+            content.appendChild(cardEl);
+        });
     },
 
     renderGameOver: (state) => {
@@ -243,36 +256,14 @@ export const Rendering = {
 
     renderPerformanceGuide: () => PerformanceRenderer.renderPerformanceGuide(Rendering.renderHeartProgress),
 
-    renderSelectionModal: () => {
-        const state = State.data;
-        const panel = document.getElementById('selection-modal');
-        const content = document.getElementById('selection-content');
-        if (!panel || !content || !state.pending_choice) return;
-
-        const cards = state.pending_choice.selection_cards || [];
-        if (cards.length === 0) {
-            panel.style.display = 'none';
-            return;
-        }
-        panel.style.display = 'block';
-
-        content.innerHTML = cards.map((c, idx) => {
-            const div = document.createElement('div');
-            div.className = 'selection-card-item card';
-            Tooltips.attachCardData(div, c);
-            const imgPath = c.img || c.img_path || '';
-            div.innerHTML = `<img src="${fixImg(imgPath)}" class="selection-card-img"><div class="selection-card-name">${c.name}</div>`;
-            return div.outerHTML;
-        }).join('');
-    },
 
     renderRuleLog: () => Logs.renderRuleLog('rule-log'),
 
     renderActiveEffects: (state) => Logs.renderActiveEffects(state),
 
 
-    renderLookedCards: (selectionTargets = {}) => {
-        CardRenderer.renderLookedCards(selectionTargets);
+    renderLookedCards: (selectionTargets = {}, overrideCards = null, overrideTitle = null) => {
+        CardRenderer.renderLookedCards(selectionTargets, overrideCards, overrideTitle);
     },
 
     renderPerformanceResult: (results = null) => PerformanceRenderer.renderPerformanceResult(results),
@@ -286,7 +277,7 @@ export const Rendering = {
     renderModifiers: () => { /* Placeholder for future implementation */ },
     renderGameData: () => { /* Placeholder for future implementation */ },
 
-    updateSettingsButtons: () => {
+    updateSettingsButtons: (perspectivePlayer = State.perspectivePlayer) => {
         const liveWatchBtn = document.getElementById('live-watch-btn');
         if (liveWatchBtn) {
             const label = i18n.t('live_watch');
@@ -304,7 +295,7 @@ export const Rendering = {
         const perspectiveBtn = document.getElementById('switch-btn');
         if (perspectiveBtn) {
             const label = i18n.t('view_persp');
-            perspectiveBtn.textContent = `${label}: P${State.perspectivePlayer + 1}`;
+            perspectiveBtn.textContent = `${label}: P${perspectivePlayer + 1}`;
         }
 
         const friendlyBtn = document.getElementById('friendly-abilities-btn');
@@ -332,17 +323,29 @@ if (typeof window !== 'undefined') {
 
 // Global Highlighting Logic for Bidirectional Linkage
 window.highlightActionBtn = (actionId, active) => {
+    if (actionId === undefined) return;
+    
+    // Update global hover state for persistence across re-renders
+    if (active) {
+        State.hoveredActionId = actionId;
+    } else if (State.hoveredActionId === actionId) {
+        State.hoveredActionId = null;
+    }
+
+    // 1. Highlight the button(s)
     const btns = document.querySelectorAll(`.action-btn[data-action-id="${actionId}"]`);
     btns.forEach(btn => {
         if (active) btn.classList.add('hover-highlight');
         else btn.classList.remove('hover-highlight');
     });
-};
-
-window.highlightActionTarget = (actionId, active) => {
-    const targets = document.querySelectorAll(`[data-action-id="${actionId}"]:not(.action-btn)`);
-    targets.forEach(target => {
-        if (active) target.classList.add('hover-highlight');
-        else target.classList.remove('hover-highlight');
+    
+    // 2. Highlight all linked components (Cards, Slots, etc.)
+    const linked = document.querySelectorAll(`[data-action-id="${actionId}"]:not(.action-btn)`);
+    linked.forEach(el => {
+        if (active) el.classList.add('hover-highlight');
+        else el.classList.remove('hover-highlight');
     });
 };
+
+window.highlightActionTarget = window.highlightActionBtn;
+

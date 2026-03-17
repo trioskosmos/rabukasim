@@ -1,4 +1,5 @@
 use crate::core::enums::{TriggerType, ConditionType};
+use crate::core::logic::ability_patterns::should_skip_inline_live_precheck;
 use super::state::GameState;
 use super::card_db::CardDatabase;
 use super::models::AbilityContext;
@@ -277,12 +278,12 @@ impl GameState {
             ab_ctx.source_card_id = cid;
             ab_ctx.ability_index = ab_idx as i16;
 
-            let (_bytecode, conditions, _pseudocode) = if is_live {
+            let (ability, conditions, _pseudocode) = if is_live {
                 let ab = &db.get_live(def_cid).unwrap().abilities[ab_idx as usize];
-                (&ab.bytecode, &ab.conditions, &ab.pseudocode)
+                (ab, &ab.conditions, &ab.pseudocode)
             } else {
                 let ab = &db.get_member(def_cid).unwrap().abilities[ab_idx as usize];
-                (&ab.bytecode, &ab.conditions, &ab.pseudocode)
+                (ab, &ab.conditions, &ab.pseudocode)
             };
 
             // Unified logging: TRIGGER events now go to both turn_history and rule_log
@@ -308,25 +309,7 @@ impl GameState {
                 &db.get_member(def_cid).unwrap().abilities[ab_idx as usize].costs
             };
 
-            let skip_precheck_for_compensation = if is_live {
-                db.get_live(def_cid)
-                    .map(|card| {
-                        (card.card_no == "PL!-bp5-021-L"
-                            && trigger == TriggerType::OnLiveStart
-                            && ab_idx == 0)
-                            || (card.card_no == "PL!N-bp4-030-L"
-                                && trigger == TriggerType::OnLiveSuccess
-                                && ab_idx == 0
-                                && self.core.players[p_idx]
-                                    .success_lives
-                                    .iter()
-                                    .copied()
-                                    .any(|success_cid| self.card_matches_filter(db, success_cid, 80)))
-                    })
-                    .unwrap_or(false)
-            } else {
-                false
-            };
+            let skip_precheck_for_compensation = is_live && should_skip_inline_live_precheck(ability);
 
             // Check conditions before resolving bytecode
             let mut all_met = true;

@@ -8,7 +8,7 @@ use std::fs;
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::{GameState, CardDatabase};
 use rand::SeedableRng;
-use rand::rngs::SmallRng;
+
 use rand::seq::IndexedRandom;
 
 fn load_vanilla_db() -> CardDatabase {

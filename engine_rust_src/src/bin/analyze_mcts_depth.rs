@@ -1,13 +1,13 @@
-use engine_rust::core::heuristics::OriginalHeuristic;
-use engine_rust::core::logic::{GameState, Phase};
+﻿use engine_rust::core::heuristics::OriginalHeuristic;
+use engine_rust::core::logic::{CardDatabase, GameState, Phase};
 use engine_rust::core::mcts::{SearchHorizon, MCTS};
 use engine_rust::test_helpers::load_real_db;
 use rand::prelude::*;
-use rand::rngs::SmallRng;
+
 use rand::SeedableRng;
 use std::time::Instant;
 
-fn parse_deck(path: &str, db: &engine_rust::core::logic::CardDatabase) -> Vec<i32> {
+fn parse_deck(path: &str, db: &CardDatabase) -> Vec<i32> {
     let mut main_deck = Vec::new();
     if let Ok(content) = std::fs::read_to_string(path) {
         for line in content.lines() {
@@ -35,7 +35,7 @@ fn parse_deck(path: &str, db: &engine_rust::core::logic::CardDatabase) -> Vec<i3
 fn analyze_state(
     label: &str,
     state: &GameState,
-    db: &engine_rust::core::logic::CardDatabase,
+    db: &CardDatabase,
     time_limits: &[f32],
 ) {
     println!("\n=== {} ===", label);

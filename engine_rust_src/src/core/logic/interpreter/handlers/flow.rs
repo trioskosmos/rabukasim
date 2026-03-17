@@ -61,7 +61,8 @@ pub fn handle_meta_control(
     let s = instr.raw_s;
     let base_p = ctx.activator_id as usize;
     let p_idx = ctx.player_id as usize;
-    let target_slot = instr.s.target_slot as i32;
+    let slot_info = instr.slot();
+    let target_slot = slot_info.target_slot as i32;
 
     match op {
         O_CALC_SUM_COST => {
@@ -124,12 +125,9 @@ pub fn handle_meta_control(
         }
         O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER => {
             let partial_selection_prompt = -1000 - (v as i16);
-            let partial_selection_card = db
-                .get_member(ctx.source_card_id)
-                .map(|card| card.card_no.as_str())
-                == Some("PL!-bp3-002-P");
+            let supports_partial_completion = op == O_SELECT_MEMBER && v > 1;
 
-            if op == O_SELECT_MEMBER && partial_selection_card && ctx.v_remaining == partial_selection_prompt {
+            if supports_partial_completion && ctx.v_remaining == partial_selection_prompt {
                 if ctx.choice_index == 0 || ctx.choice_index == 1 || ctx.choice_index == CHOICE_DONE {
                     ctx.choice_index = -1;
                     ctx.v_remaining = -1;
@@ -195,7 +193,7 @@ pub fn handle_meta_control(
                 }
             } else {
                 let choice = ctx.choice_index as i32;
-                let source_zone = instr.s.source_zone as u8;
+                let source_zone = slot_info.source_zone as u8;
                 let filter_attr = a as u64;
 
                 if source_zone == 6 || source_zone == 7 {
@@ -231,7 +229,7 @@ pub fn handle_meta_control(
                     ctx.selected_cards.push(selected_cid);
                 }
 
-                if op == O_SELECT_MEMBER && partial_selection_card && v > 1 && !ctx.selected_cards.is_empty() {
+                if supports_partial_completion && !ctx.selected_cards.is_empty() {
                     let remaining_candidates = match source_zone {
                         6 => state.players[target_player]
                             .hand
@@ -315,7 +313,7 @@ pub fn handle_meta_control(
             // or TargetType in some other variants.
             // We use standardized target_p_idx for these specifically.
             let filter_target = (a as u64) & 0x03;
-            let target_p_idx = if filter_target == 2 || instr.s.is_opponent || target_slot == 2 {
+            let target_p_idx = if filter_target == 2 || slot_info.is_opponent || target_slot == 2 {
                 1 - base_p
             } else {
                 base_p
@@ -431,7 +429,7 @@ pub fn handle_meta_control(
                 .saturating_add(final_v as i16);
         }
         O_META_RULE => {
-            let target_p_idx = if instr.s.is_opponent || target_slot == 2 {
+            let target_p_idx = if slot_info.is_opponent || target_slot == 2 {
                 1 - base_p
             } else {
                 base_p
@@ -553,7 +551,7 @@ pub fn handle_meta_control(
             }
         }
         O_SWAP_AREA => {
-            let target_p_idx = if instr.s.is_opponent || target_slot == 2 {
+            let target_p_idx = if slot_info.is_opponent || target_slot == 2 {
                 1 - base_p
             } else {
                 base_p

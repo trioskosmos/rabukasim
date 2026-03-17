@@ -71,39 +71,39 @@ ID 401 | [JP] 【セット】Unknown Card #10001 | このライブをライブ�
 === Scenario: Choice: Color Selection ===
 Phase: Response
 [Logic Entry] Opcode: 45 | CardID: 17 | AbIdx: 0
-ID 580 | [JP] 【色を選択】ピンク       |  (COLOR)
-       | [EN] Choose Pink     |  (COLOR)
+ID 580 | [JP] 【色を選択】ピンク       | この色を選択します。 (COLOR)
+       | [EN] Choose Pink     | Select this color. (COLOR)
 -------
-ID 581 | [JP] 【色を選択】赤         |  (COLOR)
-       | [EN] Choose Red      |  (COLOR)
+ID 581 | [JP] 【色を選択】赤         | この色を選択します。 (COLOR)
+       | [EN] Choose Red      | Select this color. (COLOR)
 -------
-ID 582 | [JP] 【色を選択】黄         |  (COLOR)
-       | [EN] Choose Yellow   |  (COLOR)
+ID 582 | [JP] 【色を選択】黄         | この色を選択します。 (COLOR)
+       | [EN] Choose Yellow   | Select this color. (COLOR)
 -------
-ID 583 | [JP] 【色を選択】緑         |  (COLOR)
-       | [EN] Choose Green    |  (COLOR)
+ID 583 | [JP] 【色を選択】緑         | この色を選択します。 (COLOR)
+       | [EN] Choose Green    | Select this color. (COLOR)
 -------
-ID 584 | [JP] 【色を選択】青         |  (COLOR)
-       | [EN] Choose Blue     |  (COLOR)
+ID 584 | [JP] 【色を選択】青         | この色を選択します。 (COLOR)
+       | [EN] Choose Blue     | Select this color. (COLOR)
 -------
-ID 585 | [JP] 【色を選択】紫         |  (COLOR)
-       | [EN] Choose Purple   |  (COLOR)
+ID 585 | [JP] 【色を選択】紫         | この色を選択します。 (COLOR)
+       | [EN] Choose Purple   | Select this color. (COLOR)
 -------
 
 === Scenario: Choice: Select Mode ===
 Phase: Response
 [Logic Entry] Opcode: 30 | CardID: 17 | AbIdx: 0
-ID 500 | [JP] DRAW            |  (CHOICE)
-       | [EN] DRAW            |  (CHOICE)
+ID 500 | [JP] DRAW            | モードを選択します。 (CHOICE)
+       | [EN] DRAW            | Select mode. (CHOICE)
 -------
-ID 501 | [JP] TAP_ALL_LE_2    |  (CHOICE)
-       | [EN] TAP_ALL_LE_2    |  (CHOICE)
+ID 501 | [JP] TAP_ALL_LE_2    | モードを選択します。 (CHOICE)
+       | [EN] TAP_ALL_LE_2    | Select mode. (CHOICE)
 -------
-ID 502 | [JP] 選択肢 3           |  (CHOICE)
-       | [EN] Choice 3        |  (CHOICE)
+ID 502 | [JP] 選択肢 3           | モードを選択します。 (CHOICE)
+       | [EN] Choice 3        | Select mode. (CHOICE)
 -------
-ID 503 | [JP] 選択肢 4           |  (CHOICE)
-       | [EN] Choice 4        |  (CHOICE)
+ID 503 | [JP] 選択肢 4           | モードを選択します。 (CHOICE)
+       | [EN] Choice 4        | Select mode. (CHOICE)
 -------
 
 === Scenario: Choice: Look and Choose (Filtering Members from Mix) ===
@@ -116,24 +116,24 @@ ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
 === Scenario: Choice: Recover Live to Hand ===
 Phase: Response
 [Logic Entry] Opcode: 15 | CardID: 17 | AbIdx: 0
-ID 11000 | [JP] Unknown Card #10001 |  (CHOICE)
-       | [EN] Unknown Card #10001 |  (CHOICE)
+ID 11000 | [JP] Unknown Card #10001 | このカードを回収します。 (CHOICE)
+       | [EN] Unknown Card #10001 | Recover this card. (CHOICE)
 -------
-ID 11001 | [JP] Unknown Card #10002 |  (CHOICE)
-       | [EN] Unknown Card #10002 |  (CHOICE)
+ID 11001 | [JP] Unknown Card #10002 | このカードを回収します。 (CHOICE)
+       | [EN] Unknown Card #10002 | Recover this card. (CHOICE)
 -------
 
 === Scenario: Choice: Recover Member to Hand ===
 Phase: Response
 [Logic Entry] Opcode: 17 | CardID: 17 | AbIdx: 0
-ID 11000 | [JP] Energy #1       |  (CHOICE)
-       | [EN] Energy #1       |  (CHOICE)
+ID 11000 | [JP] Energy #1       | このカードを回収します。 (CHOICE)
+       | [EN] Energy #1       | Recover this card. (CHOICE)
 -------
-ID 11001 | [JP] Energy #2       |  (CHOICE)
-       | [EN] Energy #2       |  (CHOICE)
+ID 11001 | [JP] Energy #2       | このカードを回収します。 (CHOICE)
+       | [EN] Energy #2       | Recover this card. (CHOICE)
 -------
-ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) |  (CHOICE)
-       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) |  (CHOICE)
+ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | このカードを回収します。 (CHOICE)
+       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | Recover this card. (CHOICE)
 -------
 
 === Scenario: Choice: Put Card to Discard (from Mixed Hand) ===
@@ -152,34 +152,34 @@ ID 8202 | [JP] 【控え室】Card       | このカードを控え室に置き�
 === Scenario: Choice: Tap Opponent's Slot ===
 Phase: Response
 [Logic Entry] Opcode: 32 | CardID: 17 | AbIdx: 0
-ID 600 | [JP] 左枠を選択           |  (SELECT)
-       | [EN] Select Left Slot |  (SELECT)
+ID   0 | [JP] いいえ             | 能力やコストの支払いをキャンセルします。 (PASS)
+       | [EN] No / Skip       | Decline the effect or cost. (PASS)
 -------
 
 === Scenario: Choice: Order Deck Top ===
 Phase: Response
 [Logic Entry] Opcode: 28 | CardID: 17 | AbIdx: 0
-ID 11000 | [JP] Energy #1       |  (CHOICE)
-       | [EN] Energy #1       |  (CHOICE)
+ID 11000 | [JP] Energy #1       | この順番で戻します。 (CHOICE)
+       | [EN] Energy #1       | Return in this order. (CHOICE)
 -------
-ID 11001 | [JP] Energy #2       |  (CHOICE)
-       | [EN] Energy #2       |  (CHOICE)
+ID 11001 | [JP] Energy #2       | この順番で戻します。 (CHOICE)
+       | [EN] Energy #2       | Return in this order. (CHOICE)
 -------
-ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) |  (CHOICE)
-       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) |  (CHOICE)
+ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | この順番で戻します。 (CHOICE)
+       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | Return in this order. (CHOICE)
 -------
 
 === Scenario: Choice: Select Cards (Generic) ===
 Phase: Response
 [Logic Entry] Opcode: 74 | CardID: 17 | AbIdx: 0
-ID 11000 | [JP] Energy #1       |  (CHOICE)
-       | [EN] Energy #1       |  (CHOICE)
+ID 11000 | [JP] Energy #1       | カードを選択します。 (CHOICE)
+       | [EN] Energy #1       | Select a card. (CHOICE)
 -------
-ID 11001 | [JP] Energy #2       |  (CHOICE)
-       | [EN] Energy #2       |  (CHOICE)
+ID 11001 | [JP] Energy #2       | カードを選択します。 (CHOICE)
+       | [EN] Energy #2       | Select a card. (CHOICE)
 -------
-ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) |  (CHOICE)
-       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) |  (CHOICE)
+ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | カードを選択します。 (CHOICE)
+       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | Select a card. (CHOICE)
 -------
 
 === Scenario: Choice: Select Target Slot for Played Member ===
@@ -205,7 +205,7 @@ ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
        | [EN] Pass / Confirm  | Skip or confirm current action. (PASS)
 -------
 ID 8300 | [JP] 近江彼方 (PL!N-sd1-006-SD): 【起動】自身を退場させて: 手札へ: メンバーを回収: 1 (左) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
-       | [EN] Use 近江彼方 (PL!N-sd1-006-SD): [Act]Sacrifice self: To Hand: Recov Member: 1 (Left) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
+       | [EN] Use Kanata Konoe (PL!N-sd1-006-SD): [Act]Sacrifice self: To Hand: Recov Member: 1 (Left) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
 -------
 
 [Dump Complete]

@@ -1,9 +1,9 @@
-use crate::core::enums::*;
-use crate::core::logic::constants::{CHOICE_DONE, CHOICE_ALL, FILTER_IS_OPTIONAL, STAGE_SLOT_COUNT};
-use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
+use crate::core::enums::{ChoiceType, TriggerType, Zone};
+use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE, FILTER_IS_OPTIONAL, STAGE_SLOT_COUNT};
+use crate::core::logic::constants::*;
+use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::interpreter::{get_choice_text, HandlerResult};
 use crate::core::models::suspend_interaction;
-use crate::core::generated_layout::*;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
@@ -19,7 +19,8 @@ pub fn handle_play_live_from_discard(
     let v = instr.v;
     let a = instr.a;
     let s = instr.raw_s;
-    let target_p_idx = if instr.s.is_opponent {
+    let slot_info = instr.slot();
+    let target_p_idx = if slot_info.is_opponent {
         1 - (ctx.activator_id as usize)
     } else {
         ctx.activator_id as usize
@@ -150,6 +151,17 @@ pub fn handle_select_cards(
     let p_idx = ctx.player_id as usize;
     let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
     let optional_prompt_marker = -((v as i16) + 2);
+    
+    let slot_info = instr.slot();
+    let source_zone = slot_info.source_zone as u8;
+    let ts = slot_info.target_slot;
+    let effective_zone = if source_zone != 0 {
+        source_zone
+    } else if ts != 0 {
+        ts
+    } else {
+        7
+    };
 
     if is_optional && v == 99 && ctx.choice_index == -1 && ctx.v_remaining == -1 {
         let choice_text = get_choice_text(db, ctx);
@@ -184,16 +196,6 @@ pub fn handle_select_cards(
     }
 
     if ctx.choice_index == -1 {
-        let source_zone = instr.s.source_zone as u8;
-        let ts = instr.s.target_slot;
-        let effective_zone = if source_zone != 0 {
-            source_zone
-        } else if ts != 0 {
-            ts
-        } else {
-            7
-        };
-
         state.players[p_idx].looked_cards.clear();
         let cards_to_filter = match effective_zone {
             6 => state.players[p_idx].hand.to_vec(),
@@ -252,9 +254,9 @@ pub fn handle_select_cards(
         let chosen = state.players[p_idx].looked_cards[choice as usize];
         ctx.selected_cards.push(chosen);
 
-        let dest_zone = instr.s.dest_zone as u8;
+        let dest_zone = slot_info.dest_zone as u8;
         if dest_zone != 0 {
-            let source_zone = instr.s.source_zone as u8;
+            let source_zone = slot_info.source_zone as u8;
             let actual_source = if source_zone != 0 { source_zone } else { 7 };
 
             let mut found = false;
@@ -323,6 +325,11 @@ pub fn handle_select_cards(
                 .remove(choice as usize);
             ctx.v_remaining = rem;
             ctx.choice_index = -1;
+            let choice_type = match effective_zone {
+                6 => ChoiceType::SelectHandDiscard,
+                7 => ChoiceType::SelectDiscardPlay,
+                _ => ChoiceType::LookAndChoose,
+            };
             if suspend_interaction(
                 state,
                 db,
@@ -330,7 +337,7 @@ pub fn handle_select_cards(
                 instr_ip,
                 O_SELECT_CARDS,
                 s,
-                ChoiceType::LookAndChoose,
+                choice_type,
                 "",
                 a as u64,
                 rem,
@@ -350,29 +357,24 @@ pub fn handle_look_and_choose(
     instr: &super::super::instruction::BytecodeInstruction,
     instr_ip: usize,
 ) -> HandlerResult {
-    let v = instr.v;
+    let _v = instr.v;
     let a = instr.a;
     let s = instr.raw_s;
     let p_idx = ctx.player_id as usize;
-    let target_slot = instr.s.target_slot;
-    let rem_dest = instr.s.dest_zone as u8;
-    let source_zone_bits = instr.s.source_zone as u8;
+    let slot_info = instr.slot();
+    let target_slot = slot_info.target_slot;
+    let rem_dest = slot_info.dest_zone as u8;
+    let source_zone_bits = slot_info.source_zone as u8;
     let source_zone = if source_zone_bits == 0 {
         8
     } else {
         source_zone_bits as i32
     };
     // --- New Layout Unpacking (V Layout: count=0-7, char_id_1=16-22, char_id_2=8-14, char_id_3=23-29, reveal=30, dest_discard=31) ---
-    let (look_count, char_id_1, char_id_2, char_id_3, reveal_flag, dest_discard_v) = {
-        let v_u32 = v as u32;
-        let count = ((v_u32 >> V_LOOK_CHOOSE_COUNT_SHIFT) & V_LOOK_CHOOSE_COUNT_MASK) as usize;
-        let char1 = ((v_u32 >> V_LOOK_CHOOSE_CHAR_ID_1_SHIFT) & V_LOOK_CHOOSE_CHAR_ID_1_MASK) as u8;
-        let char2 = ((v_u32 >> V_LOOK_CHOOSE_CHAR_ID_2_SHIFT) & V_LOOK_CHOOSE_CHAR_ID_2_MASK) as u8;
-        let char3 = ((v_u32 >> V_LOOK_CHOOSE_CHAR_ID_3_SHIFT) & V_LOOK_CHOOSE_CHAR_ID_3_MASK) as u8;
-        let reveal = ((v_u32 >> V_LOOK_CHOOSE_REVEAL_SHIFT) & V_LOOK_CHOOSE_REVEAL_MASK) != 0;
-        let dest_d = ((v_u32 >> V_LOOK_CHOOSE_DEST_DISCARD_SHIFT) & V_LOOK_CHOOSE_DEST_DISCARD_MASK) != 0;
-        (count, char1, char2, char3, reveal, dest_d)
-    };
+    let lc = instr.look_choose();
+    let look_count = lc.count as usize;
+    let reveal_flag = lc.reveal;
+    let dest_discard_v = lc.dest_discard;
 
     if state.players[p_idx].looked_cards.is_empty() {
         let reveal_count = if source_zone == 6 {
@@ -419,19 +421,20 @@ pub fn handle_look_and_choose(
     if ctx.choice_index == -1 {
         let choice_type = if source_zone == 6 {
             ChoiceType::SelectHandDiscard
+        } else if source_zone == 7 {
+            ChoiceType::SelectDiscardPlay
         } else {
             ChoiceType::LookAndChoose
         };
+        let lc = instr.look_choose();
         let choice_text = get_choice_text(db, ctx);
 
-        let mut filter = crate::core::logic::filter::CardFilter::from_attr(a);
-        filter.char_id_1 = char_id_1;
-        filter.char_id_2 = char_id_2;
-        filter.char_id_3 = char_id_3;
+        let mut filter_obj = instr.filter_attr();
+        filter_obj.char_id_1 = lc.char_id_1;
+        filter_obj.char_id_2 = lc.char_id_2;
+        filter_obj.char_id_3 = lc.char_id_3;
 
-        let final_attr = filter.to_attr();
         let pick_count = 1;
-
         if suspend_interaction(
             state,
             db,
@@ -441,10 +444,10 @@ pub fn handle_look_and_choose(
             s,
             choice_type,
             &choice_text,
-            final_attr as u64,
+            filter_obj.to_attr(),
             pick_count,
         ) {
-            let is_optional = ((a as u64 >> A_STANDARD_IS_OPTIONAL_SHIFT) & A_STANDARD_IS_OPTIONAL_MASK) != 0;
+            let is_optional = filter_obj.is_optional;
             if is_optional && ctx.choice_index == CHOICE_DONE {
                 let cards: Vec<i32> = state.players[p_idx].looked_cards.drain(..).collect();
                 // Return cards to deck
@@ -480,7 +483,7 @@ pub fn handle_look_and_choose(
                         state.players[p_idx].push_deck_card(chosen);
                     }
                     4 => {
-                        let slot = (s as u32 & S_STANDARD_TARGET_SLOT_MASK) as usize;
+                        let slot = slot_info.target_slot as usize;
                         if slot < 3 {
                             if let Some(cid) =
                                 state.handle_member_leaves_stage(p_idx, slot, db, ctx)
@@ -542,6 +545,8 @@ pub fn handle_look_and_choose(
                     state.players[p_idx].looked_cards = revealed.clone();
                     let choice_type = if source_zone == 6 {
                         ChoiceType::SelectHandDiscard
+                    } else if source_zone == 7 {
+                        ChoiceType::SelectDiscardPlay
                     } else {
                         ChoiceType::LookAndChoose
                     };
@@ -604,7 +609,8 @@ pub fn handle_recovery(
     let a = instr.a;
     let _s = instr.raw_s;
     let p_idx = ctx.player_id as usize;
-    let mut source_zone = instr.s.source_zone;
+    let slot_info = instr.slot();
+    let mut source_zone = slot_info.source_zone;
     if source_zone == Zone::Default {
         source_zone = Zone::Discard;
     }
@@ -686,7 +692,8 @@ pub fn handle_recovery(
             state.players[p_idx].gain_hand_card(cid);
             ctx.selected_cards.push(cid);
 
-            let mut source_zone = instr.s.source_zone;
+            let slot_info = instr.slot();
+            let mut source_zone = slot_info.source_zone;
             if source_zone == Zone::Default {
                 source_zone = Zone::Discard;
             }

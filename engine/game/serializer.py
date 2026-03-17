@@ -191,7 +191,7 @@ def serialize_player(p, game_state, player_idx, viewer_idx=0, is_viewable=True, 
     member_db = game_state.member_db
     live_db = game_state.live_db
     energy_db = getattr(game_state, "energy_db", {})
-    legal_mask = game_state.get_legal_actions()
+    legal_mask = game_state.get_legal_actions(player_idx)
 
     expected_yells = 0
     for i, card_id in enumerate(p.stage):
@@ -283,18 +283,19 @@ def serialize_player(p, game_state, player_idx, viewer_idx=0, is_viewable=True, 
 
                 # Any Color (Index 6)
                 req_any = req[6] if len(req) > 6 else 0
-                remaining_total = sum(temp_hearts[:6]) + temp_hearts[6]
-                take_any = min(remaining_total, req_any)
-                filled[6] = int(take_any)
-                # Note: We don't subtract from temp_hearts for 'any' because strict color matching is done,
-                # and 'any' sucks from the pool of remaining.
-                # But to be strictly correct for *subsequent* cards (if we supported multiple approvals at once),
-                # we should decrement. But the game usually checks one at a time or order matters.
-                # Use the logic from get_performance_guide:
-                # It doesn't actually decrement 'any' from specific colors in temp_hearts
-                # because 'any' is a wildcard check on the *sum*.
-                # Wait, get_performance_guide does:
-                # remaining_total = np.sum(temp_hearts[:6]) + temp_hearts[6]
+                take_any_wild = min(temp_hearts[6], req_any)
+                filled[6] = int(take_any_wild)
+                temp_hearts[6] -= take_any_wild
+                req_any -= take_any_wild
+
+                if req_any > 0:
+                    for c_idx in range(6):
+                        if req_any <= 0:
+                            break
+                        take = min(temp_hearts[c_idx], req_any)
+                        filled[6] += int(take)
+                        temp_hearts[c_idx] -= take
+                        req_any -= take
 
                 card_obj["required_hearts"] = req.tolist()
                 card_obj["filled_hearts"] = filled
@@ -361,7 +362,7 @@ def serialize_player(p, game_state, player_idx, viewer_idx=0, is_viewable=True, 
 
 def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
     active_idx = gs.current_player
-    legal_mask = gs.get_legal_actions()
+    legal_mask = gs.get_legal_actions(player_idx=viewer_idx)
     legal_actions = []
     p = gs.active_player
     member_db = gs.member_db
@@ -395,8 +396,8 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
 
                         meta.update(
                             {
+                                "category": "PLAY",
                                 "img": c["img"],
-                                "name": c["name"],
                                 "cost": int(net_cost),
                                 "base_cost": int(hand_cost),
                                 "card_no": c.get("card_no", "???"),
@@ -412,7 +413,12 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
                     if cid >= 0:
                         c = serialize_card(cid, member_db, live_db, energy_db, lang=lang)
                         meta.update(
-                            {"img": c["img"], "name": c["name"], "text": c.get("text", ""), "source_card_id": int(cid)}
+                            {
+                                "category": "ABILITY",
+                                "img": c["img"],
+                                "text": c.get("text", ""),
+                                "source_card_id": int(cid),
+                            }
                         )
                 elif 300 <= i <= 359:
                     meta["type"] = "MULLIGAN"
@@ -432,7 +438,12 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
                         cid = target_p.hand[meta["hand_idx"]]
                         c = serialize_card(cid, member_db, live_db, energy_db, lang=lang)
                         meta.update(
-                            {"img": c["img"], "name": c["name"], "text": c.get("text", ""), "source_card_id": int(cid)}
+                            {
+                                "category": "SELECT_HAND",
+                                "img": c["img"],
+                                "text": c.get("text", ""),
+                                "source_card_id": int(cid),
+                            }
                         )
                 elif 560 <= i <= 562:
                     meta["type"] = "SELECT_STAGE"
@@ -446,7 +457,12 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
                     if cid >= 0:
                         c = serialize_card(cid, member_db, live_db, energy_db, lang=lang)
                         meta.update(
-                            {"img": c["img"], "name": c["name"], "text": c.get("text", ""), "source_card_id": int(cid)}
+                            {
+                                "category": "SELECT_STAGE",
+                                "img": c["img"],
+                                "text": c.get("text", ""),
+                                "source_card_id": int(cid),
+                            }
                         )
                 elif 590 <= i <= 599:
                     meta["type"] = "ABILITY_TRIGGER"
@@ -465,8 +481,8 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
                                     c = serialize_card(cid, member_db, live_db, energy_db, lang=lang)
                                     meta.update(
                                         {
+                                            "category": "TARGET_OPPONENT_MEMBER",
                                             "img": c["img"],
-                                            "name": c["name"],
                                             "text": c.get("text", ""),
                                             "source_card_id": int(cid),
                                         }
@@ -478,8 +494,8 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
                                 c = serialize_card(cid, member_db, live_db, energy_db, lang=lang)
                                 meta.update(
                                     {
+                                        "category": ctype,
                                         "img": c["img"],
-                                        "name": c["name"],
                                         "text": c.get("text", ""),
                                         "source_card_id": int(cid),
                                     }
@@ -496,8 +512,8 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
                                 c = serialize_card(cid, member_db, live_db, energy_db, lang=lang)
                                 meta.update(
                                     {
+                                        "category": "SELECT_FROM_DISCARD",
                                         "img": c["img"],
-                                        "name": c["name"],
                                         "text": c.get("text", ""),
                                         "source_card_id": int(cid),
                                     }
@@ -536,8 +552,8 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
                             c = serialize_card(cid, member_db, live_db, energy_db, lang=lang)
                             meta.update(
                                 {
+                                    "category": "SELECT_FORMATION",
                                     "img": c["img"],
-                                    "name": c["name"],
                                     "text": c.get("text", ""),
                                     "source_card_id": int(cid),
                                 }
@@ -566,8 +582,8 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
                         c = serialize_card(cid, member_db, live_db, energy_db, lang=lang)
                         meta.update(
                             {
+                                "category": "SELECT_SUCCESS_LIVE",
                                 "img": c["img"],
-                                "name": c["name"],
                                 "text": c.get("text", ""),
                                 "source_card_id": int(cid),
                             }
@@ -585,8 +601,8 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
                         c = serialize_card(cid, member_db, live_db, energy_db, lang=lang)
                         meta.update(
                             {
+                                "category": "TARGET_LIVE",
                                 "img": c["img"],
-                                "name": c["name"],
                                 "text": c.get("text", ""),
                                 "source_card_id": int(cid),
                             }
@@ -604,8 +620,8 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
                         c = serialize_card(cid, member_db, live_db, energy_db, lang=lang)
                         meta.update(
                             {
+                                "category": "TARGET_ENERGY",
                                 "img": c["img"],
-                                "name": c["name"],
                                 "text": c.get("text", ""),
                                 "source_card_id": int(cid),
                             }
@@ -620,9 +636,10 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
                         c = serialize_card(cid, member_db, live_db, energy_db, lang=lang)
                         meta.update(
                             {
+                                "category": "TARGET_REMOVED",
                                 "img": c["img"],
-                                "name": c["name"],
                                 "text": c.get("text", ""),
+                                "source_card_id": int(cid),
                                 "source_card_id": int(cid),
                             }
                         )
@@ -699,7 +716,7 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
         "performance_history": getattr(gs, "performance_history", []),
         "looked_cards": [
             serialize_card(cid, member_db, live_db, energy_db, lang=lang)
-            for cid in getattr(gs.get_player(active_idx), "looked_cards", [])
+            for cid in getattr(gs.players[active_idx], "looked_cards", [])
         ],
         "my_player_id": viewer_idx,
         "needs_deck": gs.phase == 3,

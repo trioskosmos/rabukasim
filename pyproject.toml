@@ -1,5 +1,5 @@
 [build-system]
-requires = ["maturin>=1.0,<2.0"]
+requires = ["maturin>=1.0,<2.0", "cffi>=1.17", "setuptools>=75"]
 build-backend = "maturin"
 
 [tool.maturin]
@@ -40,7 +40,7 @@ ai = [
 ]
 
 [tool.setuptools]
-packages = ["engine", "ai", "tools", "compiler"]
+packages = ["engine", "ai", "tools", "compiler", "alphazero"]
 
 [dependency-groups]
 dev = [

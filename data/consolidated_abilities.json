@@ -3240,7 +3240,7 @@
     ]
   },
   "{{toujyou.png|登場}}自分のステージにいるメンバーを、それぞれ好きなエリアに移動させてもよい。\n{{jyouji.png|常時}}自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき、{{icon_blade.png|ブレード}}を得る。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MEMBER(ALL) -> TARGETS; MOVE_MEMBER(TARGETS)\n\nTRIGGER: CONSTANT\nEFFECT: COUNT_MEMBER(PLAYER) {FILTER=\"UNIT_MIRAKURA, NOT_SELF\"} -> COUNT_VAL; ADD_BLADES(1, PER_CARD=COUNT_VAL) -> SELF",
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: SELECT_MEMBER(1) (Optional) {FILTER=\"STAGE\"} -> M1; MOVE_MEMBER(M1) -> PLAYER (Optional);\n       SELECT_MEMBER(1) (Optional) {FILTER=\"STAGE, NOT_M1\"} -> M2; MOVE_MEMBER(M2) -> PLAYER (Optional);\n       SELECT_MEMBER(1) (Optional) {FILTER=\"STAGE, NOT_M1, NOT_M2\"} -> M3; MOVE_MEMBER(M3) -> PLAYER (Optional)\n\nTRIGGER: CONSTANT\nEFFECT: COUNT_MEMBER(PLAYER) {FILTER=\"UNIT_MIRAKURA, NOT_SELF\"} -> COUNT_VAL; ADD_BLADES(1, PER_CARD=COUNT_VAL) -> SELF",
     "cards": [
       "PL!HS-bp2-006-P",
       "PL!HS-bp2-006-R"
@@ -3323,7 +3323,7 @@
     ]
   },
   "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_01.png|heart01}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: MOVE_TO_DISCARD(3) (Optional) {FROM=\"DECK_TOP\"}\nCONDITION: ALL_MEMBERS {FILTER=\"HEART_01\", ZONE=\"DISCARDED_THIS\"}\nEFFECT: ADD_HEARTS(1) {HEART_TYPE=1} -> SELF",
+    "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: MOVE_TO_DISCARD(3) {FROM=\"DECK_TOP\"}\nCONDITION: ALL_CARDS_MATCH {FILTER=\"HEART_PINK, TYPE_MEMBER\", ZONE=\"DISCARDED_THIS\"}\nEFFECT: ADD_HEARTS(1) {HEART_TYPE=0} -> SELF",
     "cards": [
       "PL!HS-PR-021-PR",
       "PL!HS-PR-021-RM"
@@ -3646,7 +3646,7 @@
     ]
   },
   "{{toujyou.png|登場}}自分のステージにいるメンバーがセンターエリアにいる場合、相手は、相手のステージにいるメンバーをセンターエリアに、それぞれ移動させる。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCONDITION: IS_CENTER(SELF)\nEFFECT: OPPONENT_CHOOSE -> TARGET; SWAP_AREA(CENTER) -> TARGET",
+    "pseudocode": "TRIGGER: ON_PLAY\nCONDITION: IS_CENTER(SELF)\nEFFECT: SELECT_MEMBER(1) (Optional) {FILTER=\"OPPONENT, STAGE\"} -> OM1; SWAP_AREA(CENTER) -> OM1 (Optional);\n       SELECT_MEMBER(1) (Optional) {FILTER=\"OPPONENT, STAGE, NOT_OM1\"} -> OM2; SWAP_AREA(CENTER) -> OM2 (Optional);\n       SELECT_MEMBER(1) (Optional) {FILTER=\"OPPONENT, STAGE, NOT_OM1, NOT_OM2\"} -> OM3; SWAP_AREA(CENTER) -> OM3 (Optional)",
     "cards": [
       "PL!SP-pb1-003-P＋"
     ]

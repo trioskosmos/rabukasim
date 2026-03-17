@@ -68,7 +68,7 @@ export const ChoiceView = {
 
         if (choice.choice_type === 29) { // REARRANGE_FORMATION
             const confirmBtn = document.createElement('button');
-            confirmBtn.className = 'action-btn confirm';
+            confirmBtn.className = 'btn action-btn confirm';
             confirmBtn.style.width = '100%';
             confirmBtn.style.marginTop = '10px';
             confirmBtn.innerHTML = i18n.t('confirm_formation');
@@ -102,12 +102,18 @@ export const ChoiceView = {
         } else if (choice.options && choice.options.length > 0) {
             const optContainer = document.createElement('div');
             optContainer.className = 'action-list choice-options-container';
+            const sourceCardId = choice.source_card_id !== undefined ? choice.source_card_id : cardId;
 
             choice.options.forEach((opt, idx) => {
+                const actionId = choice.actions?.[idx];
+                if (actionId === undefined || actionId === null || actionId === 0) {
+                    return;
+                }
                 const optCardId = opt.card_id !== undefined ? opt.card_id : cardId;
                 const a = {
-                    id: choice.actions[idx],
-                    source_card_id: optCardId,
+                    id: actionId,
+                    source_card_id: sourceCardId,
+                    card_id: optCardId,
                     name: opt.name || opt.text || `Option ${idx + 1}`,
                     text: opt.text
                 };

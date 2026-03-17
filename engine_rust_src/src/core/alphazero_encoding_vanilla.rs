@@ -33,6 +33,11 @@ impl AlphaZeroVanillaEncoding for GameState {
         let (portfolio_stats, participation_hints) = self.analyze_portfolio_synergies(me, db);
         for &val in &portfolio_stats { tensor.push(val); }
 
+        // 2.2 Immediate live-zone pressure and current-turn clearability
+        let (active_live_ev, clearable_now) = self.analyze_active_live_zone(me, db);
+        tensor.push(active_live_ev);
+        tensor.push(clearable_now);
+
         while tensor.len() < 20 { tensor.push(0.0); }
 
         // 3. High-Fidelity Card State (60 cards)
@@ -211,6 +216,48 @@ impl GameState {
             for c in 0..7 { hearts[c] += h_arr[c] as u32; }
         }
         hearts
+    }
+
+    fn analyze_active_live_zone(&self, p_idx: usize, db: &CardDatabase) -> (f32, f32) {
+        let p = &self.core.players[p_idx];
+        let stage_hearts = self.get_total_stage_hearts(p_idx, db);
+        let yell_stats = crate::core::heuristics::calculate_deck_expectations(&p.deck, db);
+        let blades = (0..3).map(|i| self.get_effective_blades(p_idx, i, db, 0)).sum::<u32>();
+        let exp_yell_hearts: Vec<f32> = yell_stats.avg_hearts.iter().map(|&h| h * blades as f32).collect();
+        let reductions = p.heart_req_reductions.to_array();
+
+        let mut active_ev = 0.0;
+        let mut clearable_now = 0u32;
+        for &cid in &p.live_zone {
+            if cid < 0 {
+                continue;
+            }
+            let Some(live) = db.get_live(cid) else {
+                continue;
+            };
+            let prob = crate::core::heuristics::calculate_live_success_prob(
+                live,
+                &stage_hearts,
+                &exp_yell_hearts,
+                reductions,
+            )
+            .clamp(0.0, 1.0);
+            active_ev += live.score as f32 * prob;
+
+            let mut exact_clear = true;
+            for color in 0..7 {
+                let req = (live.required_hearts[color] as i32 - reductions[color] as i32).max(0) as u32;
+                if stage_hearts[color] < req {
+                    exact_clear = false;
+                    break;
+                }
+            }
+            if exact_clear {
+                clearable_now += 1;
+            }
+        }
+
+        ((active_ev / 9.0).clamp(0.0, 1.0), (clearable_now as f32 / 3.0).clamp(0.0, 1.0))
     }
 }
 

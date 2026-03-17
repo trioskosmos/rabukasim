@@ -1,13 +1,12 @@
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::constants::CHOICE_DONE;
-use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
+use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::interpreter::{resolve_target_slot, get_choice_text};
 use crate::core::models::suspend_interaction;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::logging;
-use crate::core::generated_layout::*;
-use super::HandlerResult;
+use super::HandlerResult; // Fixed
 
 fn update_live_score_snapshot(
     state: &mut GameState,
@@ -78,14 +77,29 @@ fn inline_value_ge_threshold(db: &CardDatabase, ctx: &AbilityContext) -> Option<
     tail[comma + 1..close].trim().parse::<i32>().ok()
 }
 
-fn source_card_no<'a>(db: &'a CardDatabase, source_card_id: i32) -> Option<&'a str> {
-    db.get_member(source_card_id)
-        .map(|card| card.card_no.as_str())
-        .or_else(|| db.get_live(source_card_id).map(|card| card.card_no.as_str()))
+fn source_ability<'a>(db: &'a CardDatabase, ctx: &AbilityContext) -> Option<&'a crate::core::logic::Ability> {
+    let ability_index = usize::try_from(ctx.ability_index).ok()?;
+    db.get_member(ctx.source_card_id)
+        .and_then(|card| card.abilities.get(ability_index))
+        .or_else(|| db.get_live(ctx.source_card_id).and_then(|card| card.abilities.get(ability_index)))
 }
 
 fn tap_opponent_chooser_player(db: &CardDatabase, ctx: &AbilityContext) -> u8 {
-    if matches!(source_card_no(db, ctx.source_card_id), Some("PL!-pb1-015-R")) {
+    let chooser_is_activator = source_ability(db, ctx)
+        .map(|ability| {
+            let mut saw_tap_member = false;
+            for chunk in ability.bytecode.chunks(5) {
+                match chunk.first().copied().unwrap_or(0) {
+                    O_TAP_MEMBER => saw_tap_member = true,
+                    O_TAP_OPPONENT if saw_tap_member => return true,
+                    _ => {}
+                }
+            }
+            false
+        })
+        .unwrap_or(false);
+
+    if chooser_is_activator {
         ctx.activator_id
     } else {
         (1 - (ctx.activator_id as usize)) as u8
@@ -102,13 +116,15 @@ pub fn handle_energy(
     let op = instr.op;
     let v = instr.v;
     let a = instr.a;
+    #[allow(unused_variables)]
     let s = instr.raw_s;
     let p_idx = ctx.player_id as usize;
 
     match op {
         O_ENERGY_CHARGE => {
-            let target_p = if instr.s.target_slot == 2 { 1 - p_idx } else { p_idx };
-            let is_wait = (s as u64 & FLAG_IS_WAIT) != 0;
+            let slot = instr.slot();
+            let target_p = if slot.is_opponent { 1 - p_idx } else { p_idx };
+            let is_wait = slot.is_wait;
             for _ in 0..v {
                 if let Some(cid) = state.players[target_p].energy_deck.pop() {
                     state.players[target_p].push_energy_card(cid, is_wait);
@@ -121,8 +137,7 @@ pub fn handle_energy(
                 .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
                 .count() as i32;
 
-            let is_optional =
-                (a as u64 & FILTER_IS_OPTIONAL) != 0;
+            let is_optional = instr.filter_attr().is_optional;
             if is_optional && ctx.choice_index == -1 {
                 if available < v {
                     if state.debug.debug_mode {
@@ -147,7 +162,7 @@ pub fn handle_energy(
                         0,
                         ChoiceType::Optional,
                         "",
-                        a as u64,
+                        instr.filter_attr().to_attr(),
                         -1,
                     ) {
                         return HandlerResult::Suspend;
@@ -288,7 +303,8 @@ pub fn handle_energy(
             HandlerResult::SetCond(true)
         }
         O_PLACE_ENERGY_UNDER_MEMBER => {
-            let src_zone = instr.s.source_zone as u8;
+            let slot_info = instr.slot();
+            let src_zone = slot_info.source_zone as u8;
             let slot = if ctx.area_idx >= 0 {
                 ctx.area_idx as usize
             } else {
@@ -418,9 +434,11 @@ pub fn handle_member_state(
     let op = instr.op;
     let v = instr.v;
     let a = instr.a;
+    #[allow(unused_variables)]
     let s = instr.raw_s;
     let p_idx = ctx.player_id as usize;
-    let target_slot = instr.s.target_slot as i32;
+    let slot_info = instr.slot();
+    let target_slot = slot_info.target_slot as i32;
     let resolved_slot = if target_slot == 10 {
         ctx.target_slot as i32
     } else {
@@ -467,6 +485,43 @@ pub fn handle_member_state(
             }
         }
         O_SET_TAPPED => {
+            let is_optional = instr.filter_attr().is_optional;
+            
+            // First: If optional and this is the first interaction, ask player to confirm
+            if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
+                let choice_text = get_choice_text(db, ctx);
+                if suspend_interaction(
+                    state,
+                    db,
+                    ctx,
+                    instr_ip,
+                    O_SET_TAPPED,
+                    resolved_slot as i32,
+                    ChoiceType::Optional,
+                    &choice_text,
+                    instr.filter_attr().to_attr(),
+                    -1,
+                ) {
+                    return HandlerResult::Suspend;
+                }
+            }
+            
+            // Second: Handle optional response
+            if is_optional && ctx.v_remaining == -1 && ctx.choice_index != -1 {
+                // If player chose to skip (choice_index == 1), mark execution as cancelled
+                if ctx.choice_index == 1 {
+                    if let Some(execution_id) = state.ui.current_execution_id {
+                        state.ui.cancelled_execution_ids.insert(execution_id);
+                    }
+                    return HandlerResult::Continue;
+                }
+                // If player chose to proceed (choice_index == 0), reset and continue
+                if ctx.choice_index == 0 {
+                    ctx.choice_index = -1;
+                }
+            }
+            
+            // Finally: Execute the set_tapped action
             if resolved_slot < 3 {
                 state.players[p_idx].set_tapped(resolved_slot as usize, v != 0);
             }
@@ -477,7 +532,7 @@ pub fn handle_member_state(
             let mut target_p_idx = match filter_target {
                 2 => 1 - (ctx.player_id as usize),
                 3 => 1,
-                _ if instr.s.is_opponent || instr.s.target_slot == 2 => 1 - (ctx.player_id as usize),
+                _ if slot_info.is_opponent || slot_info.target_slot == 2 => 1 - (ctx.player_id as usize),
                 _ => ctx.player_id as usize,
             };
             if let Some(&selected_cid) = ctx.selected_cards.last() {
@@ -515,8 +570,7 @@ pub fn handle_member_state(
                 }
             }
 
-            let is_optional =
-                (a as u64 & FILTER_IS_OPTIONAL) != 0;
+            let is_optional = instr.filter_attr().is_optional;
             if ctx.choice_index == -1 {
                 if is_optional || (a & 0x01) != 0 {
                     let choice_text = get_choice_text(db, ctx);
@@ -529,7 +583,7 @@ pub fn handle_member_state(
                         resolved_slot as i32,
                         ChoiceType::Optional,
                         &choice_text,
-                        a as u64,
+                        instr.filter_attr().to_attr(),
                         -1,
                     ) {
                         return HandlerResult::Suspend;
@@ -732,20 +786,7 @@ pub fn handle_member_state(
             } else {
                 let slot_idx = ctx.choice_index as usize;
                 if slot_idx < 3 {
-                    state.players[target_p_idx].set_tapped(slot_idx, true);
-                    if matches!(source_card_no(db, ctx.source_card_id), Some("PL!-pb1-015-R")) {
-                        let target_cid = state.players[target_p_idx].stage[slot_idx];
-                        let target_cost = db
-                            .get_member(target_cid)
-                            .map(|card| card.cost)
-                            .unwrap_or(u32::MAX);
-                        if target_cost <= 4 {
-                            let turn = state.turn as i32;
-                            if let Some(drawn) = state.players[p_idx].pop_deck_card() {
-                                state.players[p_idx].draw_hand_card(drawn, turn);
-                            }
-                        }
-                    }
+                    state.set_member_tapped(target_p_idx, slot_idx, true, db);
                     ctx.v_remaining = count - 1;
                     ctx.choice_index = -1;
                     if ctx.v_remaining > 0 {
@@ -782,7 +823,7 @@ pub fn handle_member_state(
             if a == 99 && ctx.choice_index == -1 {
                 let choice_text = get_choice_text(db, ctx);
                 let mut choice_ctx = ctx.clone();
-                if instr.s.is_opponent || instr.s.target_slot == 2 {
+                if slot_info.is_opponent || slot_info.target_slot == 2 {
                     choice_ctx.player_id = 1 - ctx.player_id;
                 }
                 if suspend_interaction(
@@ -1104,7 +1145,7 @@ pub fn handle_member_state(
                 )
             } else {
                 let filter_target = (a as u64) & 0x03;
-                let is_opp = filter_target == 2 || instr.s.is_opponent;
+                let is_opp = filter_target == 2 || instr.slot().is_opponent;
                 let t_idx = if is_opp {
                     1 - (ctx.activator_id as usize)
                 } else {
@@ -1329,11 +1370,13 @@ pub fn handle_score_hearts(
     let op = instr.op;
     let v = instr.v;
     let a = instr.a;
+    #[allow(unused_variables)]
     let s = instr.raw_s;
     let p_idx = ctx.player_id as usize;
 
-    let target_p = if instr.s.is_opponent { 1 - p_idx } else { p_idx };
-    let target_slot = instr.s.target_slot as i32;
+    let slot_info = instr.slot();
+    let target_p = if slot_info.is_opponent { 1 - p_idx } else { p_idx };
+    let target_slot = slot_info.target_slot as i32;
     let resolved_slot = if target_slot == 10 {
         ctx.target_slot as i32
     } else {
@@ -1342,11 +1385,6 @@ pub fn handle_score_hearts(
 
     match op {
         O_BOOST_SCORE => {
-            if matches!(source_card_no(db, ctx.source_card_id), Some("PL!-pb1-028-L"))
-                && (ctx.v_accumulated as i32) < 3
-            {
-                return HandlerResult::Continue;
-            }
             if ctx.v_accumulated >= 0 {
                 if let Some(min_required) = inline_value_ge_threshold(db, ctx) {
                     if (ctx.v_accumulated as i32) < min_required {
@@ -1356,12 +1394,12 @@ pub fn handle_score_hearts(
             }
 
             let mut final_v = v;
-            if (a as u64 & DYNAMIC_VALUE) != 0 {
+            if instr.filter_attr().compare_accumulated {
                 let count = resolve_count(
                     state,
                     db,
-                    s,
-                    a as u64 & !DYNAMIC_VALUE & FILTER_MASK_LOWER,
+                    instr.raw_s,
+                    (instr.filter_attr().to_attr() & 0xFFFFFFFF) as u64,
                     p_idx as i32,
                     ctx,
                     0,
@@ -1378,7 +1416,51 @@ pub fn handle_score_hearts(
                 }
             }
         }
-        O_REDUCE_COST => state.players[p_idx].cost_reduction += v as i16,
+        O_REDUCE_COST => {
+            let mut final_v = v;
+            
+            if instr.filter_attr().compare_accumulated {
+                // Extract count from zone indicated in filter attributes
+                // The filter tells us what zone and what cards to match
+                let filter_attr = instr.filter_attr().to_attr() & 0xFFFFFFFF;
+                let filter = crate::core::logic::filter::CardFilter::from_attr(filter_attr as i64);
+                
+                // Count cards in the appropriate zone that match the filter
+                let mut count = 0i32;
+                let player = &state.players[p_idx];
+                
+                // Check HAND zone by default (as Card 10 uses HAND)
+                // The filter's zone_mask field indicates which zones to check
+                let zone_mask = filter.zone_mask as u64;
+                if zone_mask == 0 {
+                    // No specific zone mask, check HAND by default
+                    for &card_id in player.hand.iter() {
+                        if card_id >= 0 && card_id as i32 != ctx.source_card_id {
+                            count += 1;
+                        }
+                    }
+                } else {
+                    // Use zone mask from filter
+                    if (zone_mask & crate::core::enums::ZONE_HAND as u64) != 0 {
+                        for &card_id in player.hand.iter() {
+                            if card_id >= 0 && card_id as i32 != ctx.source_card_id {
+                                count += 1;
+                            }
+                        }
+                    }
+                    if (zone_mask & crate::core::enums::ZONE_STAGE as u64) != 0 {
+                        for &card_id in player.stage.iter() {
+                            if card_id >= 0 && card_id as i32 != ctx.source_card_id {
+                                count += 1;
+                            }
+                        }
+                    }
+                }
+                
+                final_v = v * count;
+            }
+            state.players[p_idx].cost_reduction += final_v as i16;
+        }
         O_SET_SCORE => {
             let mut applied_to_live_snapshot = false;
             if db.get_live(ctx.source_card_id).is_some() {
@@ -1509,7 +1591,8 @@ pub fn handle_score_hearts(
             }
         }
         O_TRANSFORM_BLADES => {
-            let target_p = if instr.s.is_opponent { 1 - p_idx } else { p_idx };
+            let slot_info = instr.slot();
+            let target_p = if slot_info.is_opponent { 1 - p_idx } else { p_idx };
             if !state.ui.silent && state.debug.debug_mode {
                 println!("[DEBUG] O_TRANSFORM_BLADES: target_p={}, target_slot={}, resolved_slot={}, v={}",
                     target_p, target_slot, resolved_slot, v);
@@ -1588,21 +1671,10 @@ pub fn handle_score_hearts(
         }
         O_SET_HEART_COST => {
             let mut reqs = Vec::new();
-            // Unpack 8 requirements from A (4 bits each)
-            let raw_a = a as u64;
-            let req_fields = [
-                (raw_a >> A_HEART_COST_REQ_1_SHIFT) & A_HEART_COST_REQ_1_MASK,
-                (raw_a >> A_HEART_COST_REQ_2_SHIFT) & A_HEART_COST_REQ_2_MASK,
-                (raw_a >> A_HEART_COST_REQ_3_SHIFT) & A_HEART_COST_REQ_3_MASK,
-                (raw_a >> A_HEART_COST_REQ_4_SHIFT) & A_HEART_COST_REQ_4_MASK,
-                (raw_a >> A_HEART_COST_REQ_5_SHIFT) & A_HEART_COST_REQ_5_MASK,
-                (raw_a >> A_HEART_COST_REQ_6_SHIFT) & A_HEART_COST_REQ_6_MASK,
-                (raw_a >> A_HEART_COST_REQ_7_SHIFT) & A_HEART_COST_REQ_7_MASK,
-                (raw_a >> A_HEART_COST_REQ_8_SHIFT) & A_HEART_COST_REQ_8_MASK,
-            ];
-            for &r in &req_fields {
+            let hr = instr.heart_requirements();
+            for &r in &hr.reqs {
                 if r > 0 {
-                    reqs.push(r as u8);
+                    reqs.push(r);
                 }
             }
             if !reqs.is_empty() {
@@ -1620,22 +1692,18 @@ pub fn handle_score_hearts(
                 player.heart_req_addition_logs.push((ctx.source_card_id, color_idx as u8, v as u8));
             } else {
                 // Packed mode: V contains packed counts for all colors
-                let v_u32 = v as u32;
+                let hc = instr.heart_counts();
                 let counts = [
-                    (v_u32 >> V_HEART_COUNTS_PINK_SHIFT) & V_HEART_COUNTS_PINK_MASK,
-                    (v_u32 >> V_HEART_COUNTS_RED_SHIFT) & V_HEART_COUNTS_RED_MASK,
-                    (v_u32 >> V_HEART_COUNTS_YELLOW_SHIFT) & V_HEART_COUNTS_YELLOW_MASK,
-                    (v_u32 >> V_HEART_COUNTS_GREEN_SHIFT) & V_HEART_COUNTS_GREEN_MASK,
-                    (v_u32 >> V_HEART_COUNTS_BLUE_SHIFT) & V_HEART_COUNTS_BLUE_MASK,
-                    (v_u32 >> V_HEART_COUNTS_PURPLE_SHIFT) & V_HEART_COUNTS_PURPLE_MASK,
+                    hc.pink as u32,
+                    hc.red as u32,
+                    hc.yellow as u32,
+                    hc.green as u32,
+                    hc.blue as u32,
+                    hc.purple as u32,
+                    hc.any as u32,
                 ];
 
                 for (i, &count) in counts.iter().enumerate() {
-                    if matches!(source_card_no(db, ctx.source_card_id), Some("PL!-pb1-028-L"))
-                        && (ctx.v_accumulated as i32) < 3
-                    {
-                        return HandlerResult::Continue;
-                    }
                     if count > 0 {
                         let old = player.heart_req_additions.get_color_count(i);
                         player.heart_req_additions.set_color_count(i, old.saturating_add(count as u8));

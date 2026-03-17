@@ -1,6 +1,7 @@
 import { State } from '../state.js';
 import { ActionButtons } from './ActionButtons.js';
 import * as i18n from '../i18n/index.js';
+import { StringUtils } from '../utils/StringUtils.js';
 
 export const ActionListView = {
     render: (state, perspectivePlayer, container) => {
@@ -43,7 +44,7 @@ export const ActionListView = {
             } else if (category === 'PLAY' && hIdx !== undefined) {
                 if (!playActionsByHand[hIdx]) playActionsByHand[hIdx] = [];
                 playActionsByHand[hIdx].push(a);
-            } else if (a.type === 'MULLIGAN' && hIdx !== undefined) {
+            } else if ((a.type === 'MULLIGAN' || (a.id >= 300 && a.id <= 359)) && hIdx !== undefined) {
                 if (!mulliganActions[hIdx]) mulliganActions[hIdx] = [];
                 mulliganActions[hIdx].push(a);
             } else if (category === 'ABILITY') {
@@ -89,8 +90,10 @@ export const ActionListView = {
                 header.className = 'action-group-header';
                 const energyIcon = `<img src="img/texticon/icon_energy.png" style="height:14px; vertical-align:middle; margin-left: 5px;">`;
                 const displayCost = firstA.cost ?? firstA.base_cost ?? 0;
-                let cleanName = (firstA.name ?? "").replace(/[【\[].*?[】\]]/g, "").replace(/\(.*?\)/g, "").trim();
-                header.innerHTML = `<span>${cleanName}</span> <span class="header-base-cost">${energyIcon}${displayCost}</span>`;
+                const sourceCard = firstA.source_card_id !== undefined ? State.resolveCardData(firstA.source_card_id) : null;
+                let cleanName = sourceCard ? i18n.translateCard(sourceCard).name : (firstA.name ?? "");
+                cleanName = StringUtils.cleanCardName(cleanName);
+                header.innerHTML = `<span class="truncate-name" style="max-width: 180px;">${cleanName}</span> <span class="header-base-cost">${energyIcon}${displayCost}</span>`;
                 groupDiv.appendChild(header);
 
                 const btnsDiv = document.createElement('div');

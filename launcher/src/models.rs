@@ -17,8 +17,8 @@ pub struct Room {
     pub pending_decks: [Option<ParsedDecks>; 2],
     pub is_ai_thinking: bool,
     pub ai_status: String,
-    pub history: VecDeque<GameState>,
-    pub redo_history: VecDeque<GameState>,
+    pub history_timeline: VecDeque<GameState>,
+    pub history_cursor: usize,
 }
 
 pub struct AppState {

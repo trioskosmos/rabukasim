@@ -145,6 +145,8 @@ pub struct CoreGameState {
     #[serde(default)]
     pub turn: u16,
     #[serde(default)]
+    pub rps_draw_count: u8,
+    #[serde(default)]
     pub trigger_depth: u16,
     #[serde(default)]
     pub live_set_pending_draws: [u8; 2],
@@ -180,7 +182,11 @@ pub struct CoreGameState {
     pub turn_history: Option<Vec<TurnEvent>>,
     #[serde(default)]
     pub obtained_success_live: [bool; 2],
+    #[serde(default = "true_fn")]
+    pub needs_stat_sync: bool,
 }
+
+fn true_fn() -> bool { true }
 
 impl Default for CoreGameState {
     fn default() -> Self {
@@ -192,6 +198,7 @@ impl Default for CoreGameState {
             prev_phase: Phase::Setup,
             prev_card_id: -1,
             turn: 1,
+            rps_draw_count: 0,
             trigger_depth: 0,
             live_set_pending_draws: [0, 0],
             interaction_stack: Vec::new(),
@@ -210,6 +217,7 @@ impl Default for CoreGameState {
             score_req_player: 0,
             turn_history: None,
             obtained_success_live: [false; 2],
+            needs_stat_sync: true,
         }
     }
 }

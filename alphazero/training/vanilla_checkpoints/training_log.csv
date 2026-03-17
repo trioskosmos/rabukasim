@@ -1,3 +1,0 @@
-iter,loss,avg_turns,p0_wins,p1_wins,buffer_size,bench_turns,bench_score,gen_time,train_time
-0,3.0283,11.2,40,23,5824,0.0,0.0,33.4,62.8
-1,2.7566,10.5,30,34,11566,0.0,0.0,35.0,62.7

@@ -1,8 +1,7 @@
 use engine_rust::core::analysis::performance_solver::{
     AbilityAdjustments, PerformanceProbabilitySolver,
 };
-use engine_rust::core::logic::CardDatabase;
-use engine_rust::core::logic::GameState;
+use engine_rust::core::logic::{GameState, CardDatabase};
 use engine_rust::test_helpers::load_real_db;
 
 fn parse_deck(path: &str, db: &CardDatabase) -> Vec<i32> {

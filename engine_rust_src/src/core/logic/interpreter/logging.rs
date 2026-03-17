@@ -174,16 +174,56 @@ pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
     let slot = crate::core::logic::interpreter::instruction::DecodedSlot::decode(s);
     let s_desc = format!("S:{:?}/{} -> D:{:?}/{}", slot.source_zone, slot.target_slot, slot.dest_zone, slot.area_idx);
 
-    // Filter decoding if 'a' is large (likely a filter)
-    let a_desc = if a > 10000 {
+    // Filter decoding if 'a' is non-zero and we are not in a NOP/RETURN op
+    let a_desc = if a != 0 && op != O_NOP as i32 && op != O_RETURN as i32 {
         let f = crate::core::logic::filter::CardFilter::from_attr(a);
         let mut f_parts = Vec::new();
+        
+        // Basic Type/Player info
+        match f.target_player {
+            1 => f_parts.push("Self".to_string()),
+            2 => f_parts.push("Opponent".to_string()),
+            3 => f_parts.push("Both".to_string()),
+            _ => {}
+        }
+        
+        match f.card_type {
+            1 => f_parts.push("Member".to_string()),
+            2 => f_parts.push("Live".to_string()),
+            3 => f_parts.push("Energy".to_string()),
+            _ => {}
+        }
+
+        // Zone info
+        if f.zone_mask > 0 {
+            let zone_name = match f.zone_mask {
+                4 => "Stage",
+                6 => "Hand",
+                7 => "Discard",
+                13 => "Success",
+                _ => "OtherZone",
+            };
+            f_parts.push(format!("Zone:{}", zone_name));
+        }
+
+        // Identity
         if f.char_id_1 > 0 { f_parts.push(format!("Char:{}", f.char_id_1)); }
         if f.group_enabled { f_parts.push(format!("Group:{}", f.group_id)); }
         if f.unit_enabled { f_parts.push(format!("Unit:{}", f.unit_id)); }
+        
+        // Status/Values
+        if f.is_tapped { f_parts.push("Tapped".to_string()); }
+        if f.has_blade_heart { f_parts.push("HasBlade".to_string()); }
+        if f.not_has_blade_heart { f_parts.push("NoBlade".to_string()); }
         if f.value_enabled { f_parts.push(format!("V{}{}", if f.is_le { "<=" } else { ">=" }, f.value_threshold)); }
         if f.color_mask > 0 { f_parts.push(format!("Color:0x{:X}", f.color_mask)); }
-        format!("[{}]", f_parts.join(","))
+        if f.is_optional { f_parts.push("Optional".to_string()); }
+
+        if f_parts.is_empty() {
+            a_hex
+        } else {
+            format!("[{}]", f_parts.join(","))
+        }
     } else {
         a_hex
     };

@@ -69,6 +69,8 @@ pub struct MemberCard {
     #[serde(default)]
     pub trigger_mask: u32,
     #[serde(default)]
+    pub char_mask: u128,
+    #[serde(default)]
     pub has_on_play_choice: bool,
     #[serde(default)]
     pub has_multi_baton: bool,
@@ -113,6 +115,8 @@ pub struct LiveCard {
     pub blade_hearts_board: HeartBoard,
     #[serde(default)]
     pub effect_mask: u64,
+    #[serde(default)]
+    pub char_mask: u128,
     #[serde(default)]
     pub normalized_name: String,
 }
@@ -229,7 +233,15 @@ impl Default for CardDatabase {
 }
 
 impl CardDatabase {
-    fn enrich_member_runtime_metadata(card: &mut MemberCard) {
+    pub fn enrich_member(&self, card: &mut MemberCard) {
+        Self::enrich_member_runtime_metadata(card)
+    }
+
+    pub fn enrich_live(&self, card: &mut LiveCard) {
+        Self::enrich_live_runtime_metadata(card)
+    }
+
+    pub fn enrich_member_runtime_metadata(card: &mut MemberCard) {
         let mut flags = 0u64;
         let mut s_flags = 0u32;
         let mut synergy_flags = 0u32;
@@ -444,11 +456,37 @@ impl CardDatabase {
             card.blade_hearts_board = HeartBoard::from_array(&card.blade_hearts);
         }
 
+        let mut mask = 0u128;
+        if card.char_id > 0 && card.char_id < 128 {
+            mask |= 1u128 << card.char_id;
+        }
+
+        // Parity scan (matches original string-based logic)
+        for (idx, char_name) in CHARACTER_NAMES.iter().enumerate() {
+            if idx == 0 || char_name.is_empty() {
+                continue;
+            }
+            if card.name.contains(char_name) {
+                mask |= 1u128 << idx;
+            }
+        }
+        card.char_mask = mask;
+
+        if card.name.contains("せつ菜") {
+            card.semantic_flags |= 0x100; // Bit 8: Setsuna
+        }
+        if card.name.contains("澁谷かのん") {
+            card.semantic_flags |= 0x200; // Bit 9: Kanon
+        }
+        if card.name.contains("MY舞") {
+            card.semantic_flags |= 0x400; // Bit 10: MY舞
+        }
+
         card.effect_mask = Self::compute_effect_mask(&card.abilities);
         card.normalized_name = card.name.replace(" ", "");
     }
 
-    fn enrich_live_runtime_metadata(card: &mut LiveCard) {
+    pub fn enrich_live_runtime_metadata(card: &mut LiveCard) {
         let mut s_flags = 0u32;
         let mut synergy_flags = 0u32;
 
@@ -479,6 +517,27 @@ impl CardDatabase {
         }
         if card.blade_hearts_board.0 == 0 {
             card.blade_hearts_board = HeartBoard::from_array(&card.blade_hearts);
+        }
+
+        let mut mask = 0u128;
+        for (idx, char_name) in CHARACTER_NAMES.iter().enumerate() {
+            if idx == 0 || char_name.is_empty() {
+                continue;
+            }
+            if card.name.contains(char_name) {
+                mask |= 1u128 << idx;
+            }
+        }
+        card.char_mask = mask;
+
+        if card.name.contains("せつ菜") {
+            card.semantic_flags |= 0x100; // Bit 8: Setsuna
+        }
+        if card.name.contains("澁谷かのん") {
+            card.semantic_flags |= 0x200; // Bit 9: Kanon
+        }
+        if card.name.contains("MY舞") {
+            card.semantic_flags |= 0x400; // Bit 10: MY舞
         }
 
         card.effect_mask = Self::compute_effect_mask(&card.abilities);

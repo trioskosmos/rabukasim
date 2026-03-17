@@ -199,6 +199,8 @@ mod rule_alignment_tests;
 mod semantic_assertions;
 #[cfg(test)]
 mod qa;
+#[cfg(test)]
+mod perf_tests;
 
 #[cfg(test)]
 mod meta_rule_card_tests;

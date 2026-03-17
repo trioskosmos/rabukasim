@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deck Viewer</title>
+    <link rel="stylesheet" href="css/base.css?v=17">
+    <link rel="stylesheet" href="css/components.css?v=17">
     <style>
         * {
             margin: 0;
@@ -13,11 +15,11 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Noto Sans JP', 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
             min-height: 100vh;
-            padding: 20px;
-            color: #fff;
+            padding: var(--space-xl);
+            color: var(--text);
         }
 
         h1 {
@@ -44,12 +46,13 @@
         }
 
         .card-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 10px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
             text-align: center;
             transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(8px);
         }
 
         .card-item:hover {
@@ -100,8 +103,8 @@
 
         .card-id {
             font-size: 0.65rem;
-            color: #666;
-            margin-top: 4px;
+            color: var(--text-dim);
+            margin-top: var(--space-xs);
         }
 
         .loading {

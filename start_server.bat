@@ -13,9 +13,16 @@ where uv >nul 2>&1
 if %errorlevel% neq 0 goto NO_UV
 
 echo [2/3] Cleaning up processes...
+echo Syncing metadata...
+uv run python tools/sync_metadata.py
+
+title LoveLive! SIF AC - Rust Server
+:: Kill other instances of this script (using title/command line filtering)
+powershell -NoProfile -Command "$ppid = (Get-CimInstance Win32_Process -Filter \"ProcessId = $PID\").ParentProcessId; Get-CimInstance Win32_Process -Filter \"Name = 'cmd.exe'\" | Where-Object { $_.CommandLine -like '*start_server.bat*' -and $_.ProcessId -ne $PID -and $_.ProcessId -ne $ppid } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+
 taskkill /F /IM rabuka_launcher.exe /T 2>nul
-:: Simplified PowerShell cleanup
-powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8000,8080,8888,3000,5000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"
+:: Simplified PowerShell cleanup - Protecting browsers
+powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8000,8080,8888,3000,5000 -ErrorAction SilentlyContinue | ForEach-Object { $p = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue; if ($p -and $p.ProcessName -notmatch 'chrome|msedge|firefox|brave|browser') { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } }"
 
 echo.
 echo [3/3] Preparing Environment...
@@ -23,6 +30,10 @@ if not exist "data\cards.json" goto NO_DATA
 
 echo Compiling Card Data...
 uv run python -m compiler.main --quiet
+if %errorlevel% neq 0 goto CMD_FAIL
+
+echo Generating Rust Optimizations...
+uv run python tools/codegen_abilities.py
 if %errorlevel% neq 0 goto CMD_FAIL
 
 :: Handle arguments
@@ -56,6 +67,8 @@ echo.
 
 pushd launcher
 cargo run --release --features nn --bin rabuka_launcher -- %DEBUG_ARG%
+echo.
+echo TIP: For live frontend editing, run 'npm run dev' in frontend/web_ui
 set "EXIT_CODE=%errorlevel%"
 popd
 

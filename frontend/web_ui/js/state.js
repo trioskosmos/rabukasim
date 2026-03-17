@@ -71,6 +71,13 @@ const stateInternal = {
     // Error Tracking
     capturedErrors: [],
 
+    // Hover Tracking (Persistence across re-renders)
+    hoveredActionId: null,
+
+    // Mulligan Tracking (for visual movement to bottom)
+    lastMulliganCards: [],
+    showMulliganReturn: false,
+
     update: (newData) => {
         if (!newData) {
             State.data = null;
@@ -78,11 +85,31 @@ const stateInternal = {
             State.cardIndex = null;
             return;
         }
+        if (State.data) {
+            State.lastPhase = State.data.phase;
+            const pOld = State.data.players[State.perspectivePlayer] || State.data.players[0];
+            if (pOld && pOld.mulligan_selection && pOld.mulligan_selection.length > 0) {
+                State.lastMulliganCards = pOld.mulligan_selection.map(idx => pOld.hand[idx]).filter(c => c !== null);
+            }
+        }
         // Deep clone for rawData to ensure we have a pure ID-only version
         State.rawData = JSON.parse(JSON.stringify(newData));
         State.data = newData;  // Replace entirely instead of merging
         // Rebuild card index when state updates
         State.rebuildCardIndex();
+
+        // Detect Mulligan Finish
+        const isMulliganOld = State.lastPhase === -1 || State.lastPhase === 0; // Constants.Phase.MULLIGAN_P1/P2
+        const isMulliganNew = newData.phase === -1 || newData.phase === 0;
+        if (isMulliganOld && !isMulliganNew && State.lastMulliganCards.length > 0) {
+            // Transitioned out of mulligan
+            State.showMulliganReturn = true;
+            setTimeout(() => {
+                State.showMulliganReturn = false;
+                State.lastMulliganCards = [];
+                if (window.render) window.render();
+            }, 1000); // 1s is enough for mental bridge
+        }
 
         // Sync performance history on every state update
         if (newData.performance_history && Array.isArray(newData.performance_history)) {

@@ -168,6 +168,25 @@ export const DOMUtils = {
   },
 
   /**
+   * Set element display value directly.
+   * @param {string} id - Element ID
+   * @param {string} value - CSS display value
+   */
+  setDisplay: (id, value) => {
+    DOMUtils.setStyle(id, 'display', value);
+  },
+
+  /**
+   * Toggle element visibility with an explicit display mode when shown.
+   * @param {string} id - Element ID
+   * @param {boolean} visible - Whether the element should be visible
+   * @param {string} shownDisplayValue - Display value used when visible
+   */
+  setVisible: (id, visible, shownDisplayValue = '') => {
+    DOMUtils.setDisplay(id, visible ? shownDisplayValue : 'none');
+  },
+
+  /**
    * Patch attributes of an element (only updates if changed)
    * @param {HTMLElement} el - Element to patch
    * @param {Object} attrs - { attribute: value, ... }
@@ -236,10 +255,7 @@ export const DOMUtils = {
    * @param {string} id - Element ID
    */
   show: (id) => {
-    const el = DOMUtils.getElement(id);
-    if (el) {
-      el.style.display = '';
-    }
+    DOMUtils.setDisplay(id, '');
   },
 
   /**
@@ -247,10 +263,7 @@ export const DOMUtils = {
    * @param {string} id - Element ID
    */
   hide: (id) => {
-    const el = DOMUtils.getElement(id);
-    if (el) {
-      el.style.display = 'none';
-    }
+    DOMUtils.setDisplay(id, 'none');
   },
 
   /**

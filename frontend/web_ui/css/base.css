@@ -42,16 +42,16 @@
     --font-size-xxl: clamp(1.6rem, 1.4rem + 1vw, 2.2rem);
 
     /* --- Sizing - Responsive Card System --- */
-    --card-h: clamp(120px, 30vh, 280px);
+    --card-h: clamp(120px, 25vh, 260px);
     --card-w: calc(var(--card-h) * (512 / 720));
-    --card-h-mini: calc(var(--card-h) * 0.65);
-    --card-w-mini: calc(var(--card-w) * 0.65);
-    --card-h-compact: calc(var(--card-h) * 0.4);
-    --card-w-compact: calc(var(--card-w) * 0.4);
+    --card-h-mini: calc(var(--card-h) * 0.6);
+    --card-w-mini: calc(var(--card-w) * 0.6);
+    --card-h-compact: calc(var(--card-h) * 0.35);
+    --card-w-compact: calc(var(--card-w) * 0.35);
 
     /* --- Effects --- */
-    --transition-fast: 0.15s ease;
-    --transition-base: 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --transition-fast: 0s;
+    --transition-base: 0s;
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -74,6 +74,15 @@
     --glow-pink-strong: 0 0 25px rgba(255, 85, 170, 0.7), 0 0 10px rgba(255, 85, 170, 0.4);
     --glow-gold-strong: 0 0 25px rgba(245, 158, 11, 0.7), 0 0 10px rgba(245, 158, 11, 0.4);
 
+    /* --- Z-Index Stack --- */
+    --z-base: 1;
+    --z-sidebar: 100;
+    --z-header: 500;
+    --z-overlay: 1000;
+    --z-modal: 2000;
+    --z-tooltip: 3000;
+    --z-max: 9999;
+
     /* --- Animation Tokens --- */
     --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
 }
@@ -87,7 +96,6 @@
 
 @keyframes float {
     0% { transform: translateY(0px); }
-    50% { transform: translateY(-4px); }
     100% { transform: translateY(0px); }
 }
 
@@ -126,3 +134,24 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* ============================================================
+   CSS SCOPING: Rabukasim Root Namespace
+   
+   All app styles are scoped under .rabukasim-root to prevent
+   global selector collisions. Applied to <body> tag.
+   
+   This prevents conflicts when CSS from different sources
+   (individual files, built bundles) would otherwise override
+   each other due to cascade order.
+   ============================================================ */
+.rabukasim-root {
+    /* Explicitly inherit from root defaults */
+    --bg-primary: #0f141e;
+    --bg-secondary: #1a2332;
+    --text: #ffffff;
+}
+
+/* All component selectors are implicitly scoped by HTML structure hierarchy,
+   which is fine since the app uses semantic class names and explicit
+   descendant selectors. No additional prefixing needed. */

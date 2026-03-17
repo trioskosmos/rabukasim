@@ -1,10 +1,11 @@
 import { State } from '../state.js';
 import { Rendering } from '../ui_rendering.js';
+import { ModalManager } from '../utils/ModalManager.js';
+import { DOM_IDS } from '../constants_dom.js';
 
 export const PerformanceModal = {
     showLastPerformance: () => {
-        const modal = document.getElementById('performance-modal');
-        if (modal) modal.style.display = 'flex';
+        ModalManager.show(DOM_IDS.MODAL_PERFORMANCE);
         if (Rendering && Rendering.renderPerformanceResult) {
             const latestTurn = State.performanceHistoryTurns && State.performanceHistoryTurns.length > 0
                 ? Math.max(...State.performanceHistoryTurns)
@@ -24,7 +25,6 @@ export const PerformanceModal = {
     },
 
     closePerformanceModal: () => {
-        const modal = document.getElementById('performance-modal');
-        if (modal) modal.style.display = 'none';
+        ModalManager.hide(DOM_IDS.MODAL_PERFORMANCE);
     }
 };

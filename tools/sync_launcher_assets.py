@@ -5,9 +5,24 @@ import shutil
 def sync_assets():
     # Paths relative to project root
     ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    FE_SRC = os.path.join(ROOT, "frontend", "web_ui")
+    FE_BASE = os.path.join(ROOT, "frontend", "web_ui")
+    
+    # Prefer Vite build output if it exists
+    VITE_DIST = os.path.join(FE_BASE, "dist")
+    if os.path.exists(VITE_DIST):
+        FE_SRC = VITE_DIST
+        print(f"Using Vite build output: {FE_SRC}")
+    else:
+        FE_SRC = FE_BASE
+        print(f"Using raw source (Vite build not found): {FE_SRC}")
+        
     IMG_SRC = os.path.join(ROOT, "frontend", "img")
-    LAUNCH_DEST = os.path.join(ROOT, "launcher", "static_content")
+    LAUNCH_DEST_FINAL = os.path.join(ROOT, "launcher", "static_content")
+    LAUNCH_DEST = os.path.join(ROOT, "launcher", ".static_content_staging")
+    
+    if os.path.exists(LAUNCH_DEST):
+        shutil.rmtree(LAUNCH_DEST)
+    os.makedirs(LAUNCH_DEST)
 
     print("--- Syncing Assets to Launcher ---")
 
@@ -18,8 +33,8 @@ def sync_assets():
         for item in os.listdir(FE_SRC):
             s = os.path.join(FE_SRC, item)
             d = os.path.join(LAUNCH_DEST, item)
-            if item == "img":
-                continue  # Handled separately
+            if item in ["img", "dist", "node_modules", "package.json", "package-lock.json", "vite.config.js"]:
+                continue  # Handled separately or ignored
             if os.path.isdir(s):
                 shutil.copytree(s, d, dirs_exist_ok=True)
             else:
@@ -86,6 +101,45 @@ def sync_assets():
                 count += 1
 
     print(f"Done! Synced {count} image/data files.")
+
+
+    # 3. Atomic Flip (Windows-Safe)
+    print(f"--- Atomic Flip: {LAUNCH_DEST} -> {LAUNCH_DEST_FINAL} ---")
+    
+    # Use shutil.move() which is more robust on Windows for in-use directories
+    # First, remove the old destination if it exists (handles in-use directory)
+    if os.path.exists(LAUNCH_DEST_FINAL):
+        try:
+            # Try to remove the old destination and replace it with staging
+            if os.path.exists(LAUNCH_DEST_FINAL):
+                shutil.rmtree(LAUNCH_DEST_FINAL)
+            shutil.move(LAUNCH_DEST, LAUNCH_DEST_FINAL)
+        except (OSError, PermissionError) as e:
+            # If the target is in use (common on Windows with dev servers), 
+            # copy the new content directly into the existing directory
+            print(f"[!] Note: {LAUNCH_DEST_FINAL} is in use (likely dev server). Copying content instead of replacing.")
+            for item in os.listdir(LAUNCH_DEST):
+                src = os.path.join(LAUNCH_DEST, item)
+                dst = os.path.join(LAUNCH_DEST_FINAL, item)
+                try:
+                    if os.path.isdir(src):
+                        if os.path.exists(dst):
+                            shutil.rmtree(dst)
+                        shutil.copytree(src, dst)
+                    else:
+                        shutil.copy2(src, dst)
+                except Exception as inner_e:
+                    print(f"[!] Warning: Could not sync {item}: {inner_e}")
+            # Clean up staging dir
+            try:
+                shutil.rmtree(LAUNCH_DEST)
+            except Exception as cleanup_e:
+                print(f"[!] Warning: Could not clean up staging directory: {cleanup_e}")
+    else:
+        # Normal case: just rename the staging directory
+        shutil.move(LAUNCH_DEST, LAUNCH_DEST_FINAL)
+
+    print("Sync Complete!")
 
 
 if __name__ == "__main__":

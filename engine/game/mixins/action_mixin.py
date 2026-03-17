@@ -211,8 +211,9 @@ class ActionMixin:
                 if p.main_deck:
                     p.hand.append(p.main_deck.pop(0))
                     p.hand_added_turn.append(self.turn_number)
+            
+            # Rule 6.2.1.6: Return to bottom (NO SHUFFLE)
             p.main_deck.extend(cards_to_return)
-            random.shuffle(p.main_deck)
 
         if hasattr(p, "mulligan_selection"):
             p.mulligan_selection.clear()

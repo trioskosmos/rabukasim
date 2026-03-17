@@ -102,6 +102,13 @@ export const GameService = {
                 return;
             }
 
+            if (!res.ok) {
+                const errorBody = await res.text();
+                console.error(`[Network] Fetch state failed with status ${res.status}: ${errorBody}`);
+                log(`Server error: ${res.status}`, 'error');
+                return;
+            }
+
             const raw = await res.text();
             if (raw === State.lastStateJson) return;
 
@@ -190,6 +197,23 @@ export const GameService = {
         window.pendingAction = true;
         document.body.classList.add('action-pending');
         log(`Action: ${id}`, 'action');
+
+        // Capture Mulligan Cards for visual feedback before state clears them
+        if (id === 0 && (state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2)) {
+            const p0 = state.players[State.perspectivePlayer] || state.players[0];
+            if (p0 && p0.mulligan_selection && p0.mulligan_selection.length > 0) {
+                State.lastMulliganCards = p0.mulligan_selection.map(idx => p0.hand[idx]).filter(c => c !== null);
+                State.showMulliganReturn = true;
+                console.log(`[Network] Capturing ${State.lastMulliganCards.length} cards for mulligan return visual.`);
+                
+                // Hide after a delay
+                setTimeout(() => {
+                    State.showMulliganReturn = false;
+                    State.lastMulliganCards = [];
+                    if (window.render) window.render();
+                }, 3000);
+            }
+        }
 
         try {
             if (State.offlineMode) {

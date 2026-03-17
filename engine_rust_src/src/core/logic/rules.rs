@@ -96,7 +96,6 @@ fn get_effective_hearts_with_aura(
     let mut board = m.hearts_board.clone();
 
     board.add(aura.hearts[slot_idx]);
-    board.add(state.players[player_idx].yell_heart_bonus[slot_idx]);
     board.add(state.players[player_idx].heart_buffs[slot_idx]);
     board
 }
@@ -313,14 +312,7 @@ pub fn get_effective_member_hearts(
     db: &CardDatabase,
     depth: u32,
 ) -> HeartBoard {
-    let mut board = get_effective_hearts(state, player_idx, slot_idx, db, depth + 1);
-    let yell_bonus = state.players[player_idx].yell_heart_bonus[slot_idx].to_array();
-    for (color, &count) in yell_bonus.iter().enumerate() {
-        if count > 0 {
-            board.add_to_color(color, -(count as i32));
-        }
-    }
-    board
+    get_effective_hearts(state, player_idx, slot_idx, db, depth + 1)
 }
 
 pub fn get_total_member_hearts(

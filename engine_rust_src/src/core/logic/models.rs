@@ -208,6 +208,7 @@ pub struct Ability {
     #[serde(default)]
     pub preparsed_modifiers: Vec<PreparsedModifier>,
     #[serde(default)]
+    #[serde(skip_serializing)]
     pub opcodes_mask: u128,
 }
 

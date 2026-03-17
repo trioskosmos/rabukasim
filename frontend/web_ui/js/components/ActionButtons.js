@@ -1,3 +1,4 @@
+import { StringUtils } from '../utils/StringUtils.js';
 import { State } from '../state.js';
 import * as i18n from '../i18n/index.js';
 import { Tooltips } from '../ui_tooltips.js';
@@ -6,14 +7,25 @@ import { Phase } from '../constants.js';
 export const ActionButtons = {
     getActionLabel: (a, isMini = false, state) => {
         const currentLang = State.currentLang;
+        const sourceCard = a.source_card_id !== undefined ? Tooltips.findCardById(a.source_card_id) : null;
+        const displayCardId = a.card_id !== undefined ? a.card_id : a.source_card_id;
+        const displayCard = displayCardId !== undefined ? Tooltips.findCardById(displayCardId) : sourceCard;
+
         if (a.id === 0 && state.pending_choice) {
-            if (state.phase === Phase.MulliganP1 || state.phase === Phase.MulliganP2) {
-                return i18n.t('done');
+            // If backend provided a descriptive name (like "【スキップ】..."), use it.
+            // Otherwise fallback to generic i18n keys.
+            const descriptiveName = a.metadata?.name ?? a.name;
+            if (descriptiveName && (descriptiveName.includes('【') || descriptiveName.includes('['))) {
+                // Proceed to normal labeling
+            } else {
+                if (state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2) {
+                    return i18n.t('done');
+                }
+                return i18n.t('pass_no');
             }
-            return i18n.t('pass_no');
         }
-        const energyIcon = `<img src="img/texticon/icon_energy.png" style="height:14px; vertical-align:middle; margin:0 2px;">`;
-        const heartIcon = `<img src="img/texticon/icon_heart.png" style="height:14px; vertical-align:middle; margin:0 2px;">`;
+        const energyIcon = `<img src="img/texticon/icon_energy.png" class="inline-icon">`;
+        const heartIcon = `<img src="img/texticon/icon_heart.png" class="inline-icon">`;
 
         let cost = a.metadata?.cost ?? a.cost ?? a.base_cost ?? null;
         const isBaton = (a.name && (a.name.includes('Baton') || a.name.includes('バトン')));
@@ -28,7 +40,8 @@ export const ActionButtons = {
             }
         }
 
-        name = name.replace(/[【\[].*?[】\]]/g, "").trim();
+        // REMOVED: Aggressive cleaning here毀損 descriptive labels like 【起動】
+        // name = StringUtils.cleanCardName(name);
 
         if (!name || name.startsWith('Action ')) {
             if (a.id >= 580 && a.id < 590) {
@@ -57,8 +70,7 @@ export const ActionButtons = {
         if (isMini) {
             if (a.type === 'PLAY') return `<span>${cost !== null ? cost : 0}</span>${isBaton ? ' [B]' : ''}`;
             if (a.type === 'MULLIGAN') {
-                const shortName = name.length > 10 ? name.substring(0, 10) + '…' : name;
-                return `<span style="font-size:0.65rem">${shortName || '?'}</span>`;
+                return `<span class="truncate-name">${name || '?'}</span>`;
             }
             let label = `${energyIcon}${cost !== null ? cost : 0}`;
             if (isBaton) label += ' [B]';
@@ -71,8 +83,29 @@ export const ActionButtons = {
                     : a.metadata.areas_desc;
             }
 
-            if (window.translateAbility) {
+            const category = a.category || a.type;
+            if (window.translateAbility && category === 'ABILITY') {
                 displayName = window.translateAbility(displayName, currentLang);
+            } else {
+                // If the name is just a "Card #" or generic "Action #", we definitely want to translate the card name.
+                // Otherwise, if it's already descriptive (contains brackets or colons), we should respect it.
+                const isDescriptive = displayName.includes('【') || displayName.includes('】') || displayName.includes(':') || displayName.includes('[');
+                
+                if (!isDescriptive) {
+                    const shouldUseDisplayCard = Boolean(displayCard) && (
+                        !displayName ||
+                        displayName.startsWith('Action ') ||
+                        displayName.startsWith('Card ') ||
+                        a.card_id !== undefined
+                    );
+
+                    if (shouldUseDisplayCard) {
+                        displayName = i18n.translateCard(displayCard).name;
+                    }
+
+                    // Only clean if it's a naked card name being displayed without technical markers
+                    displayName = StringUtils.cleanCardName(displayName);
+                }
             }
 
             displayName = Tooltips.enrichAbilityText(displayName);
@@ -86,10 +119,15 @@ export const ActionButtons = {
 
     createActionButton: (a, isMini = false, extraClass = '', state) => {
         const btn = document.createElement('button');
-        btn.className = `action-btn ${isMini ? 'mini' : ''} ${extraClass}`.trim();
+        const isHovered = (a.id !== undefined && a.id === State.hoveredActionId);
+        const hoverClass = isHovered ? ' hover-highlight' : '';
+        btn.className = `btn action-btn ${isMini ? 'mini' : ''} ${extraClass}${hoverClass}`.trim();
 
         const sourceCard = a.source_card_id !== undefined ? Tooltips.findCardById(a.source_card_id) : null;
-        Tooltips.attachCardData(btn, sourceCard, a.id);
+        const displayCardId = a.card_id !== undefined ? a.card_id : a.source_card_id;
+        const displayCard = displayCardId !== undefined ? Tooltips.findCardById(displayCardId) : sourceCard;
+        
+        Tooltips.attachCardData(btn, displayCard || sourceCard, a.id);
 
         if (a.raw_text || a.text) btn.setAttribute('data-text', a.raw_text || a.text);
 
@@ -97,15 +135,19 @@ export const ActionButtons = {
         btn.onclick = () => { if (window.doAction && a.id !== undefined) window.doAction(a.id); };
 
         btn.onmouseenter = () => {
-            if (window.highlightActionTarget && a.id !== undefined) {
-                window.highlightActionTarget(a.id, true);
+            if (window.highlightActionBtn && a.id !== undefined) {
+                window.highlightActionBtn(a.id, true);
             }
         };
         btn.onmouseleave = () => {
-            if (window.highlightActionTarget && a.id !== undefined) {
-                window.highlightActionTarget(a.id, false);
+            if (window.highlightActionBtn && a.id !== undefined) {
+                window.highlightActionBtn(a.id, false);
             }
         };
+        
+        if (a.id !== undefined) {
+            btn.setAttribute('data-action-id', a.id);
+        }
 
         return btn;
     }

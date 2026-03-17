@@ -1,5 +1,10 @@
+import os
 import sys
 from io import TextIOWrapper
+
+# Add project root to path to allow imports from engine
+if __name__ == "__main__":
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from engine.models.bytecode_readable import decode_bytecode
 

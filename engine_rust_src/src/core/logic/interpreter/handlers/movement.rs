@@ -1,5 +1,5 @@
 use crate::core::enums::*;
-use crate::core::logic::constants::{FILTER_MASK_LOWER, FILTER_IS_OPTIONAL, FLAG_REVEAL_UNTIL_IS_LIVE, CHOICE_DONE, CHOICE_ALL, DYNAMIC_VALUE};
+use crate::core::logic::constants::{FILTER_MASK_LOWER, FLAG_REVEAL_UNTIL_IS_LIVE, CHOICE_DONE, CHOICE_ALL};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType, PlayerState};
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::models::interpreter::{resolve_target_slot, check_condition_opcode, get_choice_text};
@@ -22,12 +22,12 @@ pub fn handle_draw(
     let v = instr.v;
     let s = instr.raw_s;
     let p_idx = ctx.player_id as usize;
-    let count = if (instr.a as u64 & DYNAMIC_VALUE) != 0 {
+    let count = if instr.filter_attr().compare_accumulated {
         resolve_count(
             state,
             _db,
             s,
-            instr.a as u64 & !DYNAMIC_VALUE & FILTER_MASK_LOWER,
+            (instr.filter_attr().to_attr() & FILTER_MASK_LOWER) as u64,
             p_idx as i32,
             ctx,
             0,
@@ -35,7 +35,8 @@ pub fn handle_draw(
     } else {
         v as u32
     };
-    let target_p = if instr.s.is_opponent {
+    let slot = instr.slot();
+    let target_p = if slot.is_opponent {
         1 - p_idx
     } else {
         p_idx
@@ -50,8 +51,8 @@ pub fn handle_draw(
                 }
                 if let Some(card_id) = state.core.players[target_p].pop_deck_card() {
                     let t = state.turn as i32;
-                    // Route to destination zone based on instr.s.dest_zone
-                    match instr.s.dest_zone {
+                    // Route to destination zone based on slot.dest_zone
+                    match slot.dest_zone {
                         Zone::Hand => {
                             state.core.players[target_p].draw_hand_card(card_id, t);
                         }
@@ -110,12 +111,12 @@ pub fn handle_move_to_discard(
     let a = instr.a;
     let s = instr.raw_s;
     let p_idx = ctx.player_id as usize;
-    let v = if (a as u64 & DYNAMIC_VALUE) != 0 {
+    let v = if instr.filter_attr().compare_accumulated {
         resolve_count(
             state,
             db,
             s,
-            a as u64 & !DYNAMIC_VALUE & FILTER_MASK_LOWER,
+            (instr.filter_attr().to_attr() & FILTER_MASK_LOWER) as u64,
             p_idx as i32,
             ctx,
             0,
@@ -124,9 +125,10 @@ pub fn handle_move_to_discard(
         instr.v
     };
     let base_p = ctx.activator_id as usize;
-    let mut source_zone = instr.s.source_zone;
+    let slot = instr.slot();
+    let mut source_zone = slot.source_zone;
     if source_zone == Zone::Default {
-        let ts = instr.s.target_slot;
+        let ts = slot.target_slot;
         if ts == SLOT_CONTEXT as u8 {
             source_zone = Zone::Stage;
         } else if ts == SLOT_HAND as u8 {
@@ -137,7 +139,7 @@ pub fn handle_move_to_discard(
             source_zone = Zone::Deck;
         }
     }
-    let target_player_idx = if instr.s.is_opponent {
+    let target_player_idx = if slot.is_opponent {
         1 - base_p
     } else {
         base_p
@@ -168,7 +170,7 @@ pub fn handle_move_to_discard(
     }
 
     let filter_attr = (a as u64) & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
-    let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
+    let is_optional = instr.filter_attr().is_optional;
 
     if state.debug.debug_mode {
         println!("[DEBUG_MOV] h_m_t_d: cid={}, choice={}, optional={}, attr={:x}", ctx.source_card_id, ctx.choice_index, is_optional, a as u64);
@@ -268,14 +270,15 @@ pub fn handle_move_to_discard(
         }
 
         if next_ctx.choice_index == -1 {
-            let mut filter_attr_with_mask = a as u64;
+            let mut filter_obj = instr.filter_attr();
             if source_zone == Zone::Stage {
-                filter_attr_with_mask |= (ZONE_STAGE as u64) << 53;
+                filter_obj.zone_mask = 4; // ZONE_MASK_STAGE
             } else if source_zone == Zone::Hand {
-                filter_attr_with_mask |= (ZONE_HAND as u64) << 53;
+                filter_obj.zone_mask = 6; // ZONE_MASK_HAND
             } else if source_zone == Zone::Discard {
-                filter_attr_with_mask |= (ZONE_DISCARD as u64) << 53;
+                filter_obj.zone_mask = 7; // ZONE_MASK_DISCARD
             }
+            let filter_attr_with_mask = filter_obj.to_attr();
 
             // AUTO-PICK FIX: If mandatory and no choices remain (count >= items), auto-pick first item.
             let items_count = match source_zone {
@@ -546,7 +549,8 @@ pub fn handle_deck_zones(
     let a = instr.a;
     let s = instr.raw_s;
     let p_idx = ctx.player_id as usize;
-    let target_slot = instr.s.target_slot as i32;
+    let slot = instr.slot();
+    let target_slot = slot.target_slot as i32;
     let resolved_slot = if target_slot == 10 {
         ctx.target_slot as i32
     } else {
@@ -666,6 +670,43 @@ pub fn handle_deck_zones(
             }
         }
         O_LOOK_REORDER_DISCARD => {
+            let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
+            
+            // First: Handle optional prompt if this is the first interaction
+            if is_optional && state.players[p_idx].looked_cards.is_empty() && ctx.choice_index == -1 {
+                let choice_text = get_choice_text(db, ctx);
+                if suspend_interaction(
+                    state,
+                    db,
+                    ctx,
+                    instr_ip,
+                    O_LOOK_REORDER_DISCARD,
+                    0,
+                    ChoiceType::Optional,
+                    &choice_text,
+                    a as u64,
+                    -1,
+                ) {
+                    return HandlerResult::Suspend;
+                }
+            }
+            
+            // Second: Handle optional choice response
+            if is_optional && state.players[p_idx].looked_cards.is_empty() && ctx.choice_index != -1 {
+                // If player chose to skip (choice_index == 1), exit early
+                if ctx.choice_index == 1 {
+                    if let Some(execution_id) = state.ui.current_execution_id {
+                        state.ui.cancelled_execution_ids.insert(execution_id);
+                    }
+                    return HandlerResult::Continue;
+                }
+                // If player chose to proceed (choice_index == 0), reset and look at cards
+                if ctx.choice_index == 0 {
+                    ctx.choice_index = -1;
+                }
+            }
+            
+            // Third: Look at cards if not already done
             if state.players[p_idx].looked_cards.is_empty() && v > 0 {
                 for _ in 0..(v as usize).min(state.players[p_idx].deck.len()) {
                     if let Some(cid) = state.players[p_idx].pop_deck_card() {
@@ -673,6 +714,8 @@ pub fn handle_deck_zones(
                     }
                 }
             }
+            
+            // Fourth: Show card selection interaction
             if !state.players[p_idx].looked_cards.is_empty() {
                 if ctx.choice_index == -1 {
                     let choice_text = get_choice_text(db, ctx);
@@ -685,7 +728,7 @@ pub fn handle_deck_zones(
                         0,
                         ChoiceType::SelectCardsOrder,
                         &choice_text,
-                        0,
+                        a as u64,
                         -1,
                     ) {
                         return HandlerResult::Suspend;
@@ -715,7 +758,7 @@ pub fn handle_deck_zones(
                             0,
                             ChoiceType::SelectCardsOrder,
                             "",
-                            0,
+                            a as u64,
                             -1,
                         ) {
                             return HandlerResult::Suspend;
@@ -747,7 +790,7 @@ pub fn handle_deck_zones(
                     }
                 }
 
-                match instr.s.remainder_zone {
+                match slot.remainder_zone {
                     2 => {
                         for &cid in moved_cards.iter().rev() {
                             state.players[p_idx].deck.insert(0, cid);

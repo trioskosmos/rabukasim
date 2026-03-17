@@ -8,6 +8,7 @@ pub struct SourceInfo {
     pub name: String,
     pub hearts: [u8; 7],
     pub base_hearts: [u8; 7], // Track original card hearts for separation
+    pub documented_bonus_hearts: [u8; 7], // Only bonuses from documented abilities
     pub is_yell: bool,
 }
 
@@ -32,10 +33,10 @@ pub fn allocate_hearts_for_live(
             let available = src.hearts[color_idx];
             let take = available.min(needed);
             if take > 0 {
-                // Determine if this heart is 'base' or 'bonus'
-                let base_available = src.base_hearts[color_idx];
-                let from_base = base_available.min(take);
-                src.base_hearts[color_idx] -= from_base;
+                // Determine if this heart is from documented bonus
+                let doc_bonus_available = src.documented_bonus_hearts[color_idx];
+                let from_bonus = doc_bonus_available.min(take);
+                src.documented_bonus_hearts[color_idx] -= from_bonus;
 
                 src.hearts[color_idx] -= take;
                 needed -= take;
@@ -44,7 +45,7 @@ pub fn allocate_hearts_for_live(
                     "source_slot": src.slot,
                     "source_name": src.name,
                     "source_type": if src.is_yell { "yell" } else { "member" },
-                    "is_bonus": from_base < take,
+                    "is_bonus": from_bonus > 0,
                     "target_id": live_id,
                     "target_idx": live_idx,
                     "target_name": live_name,
@@ -61,9 +62,9 @@ pub fn allocate_hearts_for_live(
                 let available = src.hearts[6];
                 let take = available.min(needed);
                 if take > 0 {
-                    let base_available = src.base_hearts[6];
-                    let from_base = base_available.min(take);
-                    src.base_hearts[6] -= from_base;
+                    let doc_bonus_available = src.documented_bonus_hearts[6];
+                    let from_bonus = doc_bonus_available.min(take);
+                    src.documented_bonus_hearts[6] -= from_bonus;
 
                     src.hearts[6] -= take;
                     needed -= take;
@@ -72,7 +73,7 @@ pub fn allocate_hearts_for_live(
                         "source_slot": src.slot,
                         "source_name": src.name,
                         "source_type": if src.is_yell { "yell" } else { "member" },
-                        "is_bonus": from_base < take,
+                        "is_bonus": from_bonus > 0,
                         "target_id": live_id,
                         "target_idx": live_idx,
                         "target_name": live_name,
@@ -94,9 +95,9 @@ pub fn allocate_hearts_for_live(
             let available = src.hearts[6];
             let take = available.min(any_needed);
             if take > 0 {
-                let base_available = src.base_hearts[6];
-                let from_base = base_available.min(take);
-                src.base_hearts[6] -= from_base;
+                let doc_bonus_available = src.documented_bonus_hearts[6];
+                let from_bonus = doc_bonus_available.min(take);
+                src.documented_bonus_hearts[6] -= from_bonus;
 
                 src.hearts[6] -= take;
                 any_needed -= take;
@@ -105,7 +106,7 @@ pub fn allocate_hearts_for_live(
                     "source_slot": src.slot,
                     "source_name": src.name,
                     "source_type": if src.is_yell { "yell" } else { "member" },
-                    "is_bonus": from_base < take,
+                    "is_bonus": from_bonus > 0,
                     "target_id": live_id,
                     "target_idx": live_idx,
                     "target_name": live_name,
@@ -123,9 +124,9 @@ pub fn allocate_hearts_for_live(
                     let available = src.hearts[color_idx];
                     let take = available.min(any_needed);
                     if take > 0 {
-                        let base_available = src.base_hearts[color_idx];
-                        let from_base = base_available.min(take);
-                        src.base_hearts[color_idx] -= from_base;
+                        let doc_bonus_available = src.documented_bonus_hearts[color_idx];
+                        let from_bonus = doc_bonus_available.min(take);
+                        src.documented_bonus_hearts[color_idx] -= from_bonus;
 
                         src.hearts[color_idx] -= take;
                         any_needed -= take;
@@ -134,7 +135,7 @@ pub fn allocate_hearts_for_live(
                             "source_slot": src.slot,
                             "source_name": src.name,
                             "source_type": if src.is_yell { "yell" } else { "member" },
-                            "is_bonus": from_base < take,
+                            "is_bonus": from_bonus > 0,
                             "target_id": live_id,
                             "target_idx": live_idx,
                             "target_name": live_name,

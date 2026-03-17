@@ -28,8 +28,8 @@ export class DeckValidator {
     validateDeckString(content) {
         if (!this.registry) return { success: false, error: "Registry not loaded" };
 
-        let main = {};
-        let energy = {};
+        let main = [];
+        let energy = [];
         let isHtml = content.includes('<h3') || content.includes('card-item') || content.includes('title=');
 
         if (isHtml) {
@@ -42,7 +42,7 @@ export class DeckValidator {
                 energy = this._parseCardSection(energyHtml);
 
                 // If section parsing found nothing in main, fall back to flat parse
-                if (Object.keys(main).length === 0) {
+                if (main.length === 0) {
                     main = this._parseCardSection(content);
                 }
             } else {
@@ -64,8 +64,10 @@ export class DeckValidator {
             parsedEnergy: []
         };
 
-        const processMap = (map, targetArray, isEnergySection) => {
-            for (let [code, count] of Object.entries(map)) {
+        const processList = (list, targetArray, isEnergySection) => {
+            for (let item of list) {
+                const code = item.code;
+                const count = item.count;
                 const normCode = this.normalizeCode(code);
                 const card = this.registry[normCode] || this.registry[code.toUpperCase()];
 
@@ -100,8 +102,8 @@ export class DeckValidator {
             }
         };
 
-        processMap(main, results.parsed, false);
-        processMap(energy, results.parsedEnergy, true);
+        processList(main, results.parsed, false);
+        processList(energy, results.parsedEnergy, true);
 
         return results;
     }
@@ -114,19 +116,32 @@ export class DeckValidator {
     }
 
     _parseCardSection(content) {
-        if (!content) return {};
-        const result = {};
+        if (!content) return [];
+        const result = [];
 
         // 1. HTML Pattern
-        const htmlRe = /title="([^"]+?)\s*:\s*[^"]*"[\s\S]*?<span[^>]*class="num"[^>]*>(\d+)<\/span>/g;
+        const htmlRe = /title="([^"]+?)\s* : \s*[^"]*"[\s\S]*?<span[^>]*class="num"[^>]*>(\d+)<\/span>/g;
+        // Fix for potential HTML variations (note: the above title match is very specific)
+        const htmlReAlt = /class="card-item"[\s\S]*?title="([^"]+?)\s*[\s\S]*?<span[^>]*class="num"[^>]*>(\d+)<\/span>/g;
+        
         let m;
         let foundAny = false;
         while ((m = htmlRe.exec(content)) !== null) {
             const id = m[1].trim();
             const qty = parseInt(m[2], 10);
-            result[id] = (result[id] || 0) + qty;
+            result.push({ code: id, count: qty });
             foundAny = true;
         }
+
+        if (!foundAny) {
+            while ((m = htmlReAlt.exec(content)) !== null) {
+                const id = m[1].trim();
+                const qty = parseInt(m[2], 10);
+                result.push({ code: id, count: qty });
+                foundAny = true;
+            }
+        }
+
         if (foundAny) return result;
 
         // 2. Text Pattern "ID x N" or "N x ID"
@@ -139,7 +154,7 @@ export class DeckValidator {
             if (suffixMatch) {
                 const id = suffixMatch[1].trim();
                 const qty = parseInt(suffixMatch[2]);
-                result[id] = (result[id] || 0) + qty;
+                result.push({ code: id, count: qty });
                 continue;
             }
 
@@ -147,12 +162,12 @@ export class DeckValidator {
             if (prefixMatch) {
                 const qty = parseInt(prefixMatch[1]);
                 const id = prefixMatch[2].trim();
-                result[id] = (result[id] || 0) + qty;
+                result.push({ code: id, count: qty });
                 continue;
             }
 
             // Fallback: Just the ID
-            result[line] = (result[line] || 0) + 1;
+            result.push({ code: line, count: 1 });
         }
 
         return result;
@@ -201,7 +216,7 @@ export class DeckValidator {
     _renderItem(p) {
         return `
             <div class="preview-item ${p.valid ? 'valid' : 'invalid'}" title="${p.name || 'Unknown'}">
-                ${p.img ? `<img src="${p.img}" class="preview-card-img" onerror="this.style.display='none'">` : ''}
+                ${p.img ? `<img src="${p.img}" class="preview-card-img" data-hide-on-error="true">` : ''}
                 <div class="preview-badge">${p.count}x</div>
                 <div class="preview-code">${p.code}</div>
             </div>

@@ -10,10 +10,23 @@ import { DebugService } from './services/DebugService.js';
  */
 export const Network = {
     // Shared State & Utils
-    getHeaders: () => ({
-        'Content-Type': 'application/json',
-        'X-Session-Token': State.sessionToken || ''
-    }),
+    getHeaders: () => {
+        console.log(`[Network] getHeaders called. roomCode: ${State.roomCode}`);
+        return {
+            'Content-Type': 'application/json',
+            'X-Session-Token': State.sessionToken || '',
+            'X-Room-Id': State.roomCode || ''
+        };
+    },
+
+    setRenderCallback: () => {
+        // Legacy callback placeholder to prevent initialization errors in main.js
+        // The modern UI uses reactive state updates via state.js
+    },
+
+    setOpenDeckModalCallback: () => {
+        // Placeholder to prevent initialization error in main.js
+    },
 
     // --- Room Management (Delegated to RoomManager) ---
     saveSession: (room, sessionData) => RoomManager.saveSession(room, sessionData),

@@ -12,7 +12,9 @@ export const HeaderStats = {
         score: null,
         energy: null,
         hearts: null,
-        blades: null
+        blades: null,
+        p1: { deck: null, energy: null, discard: null },
+        p2: { deck: null, energy: null, discard: null }
     },
 
     init: () => {
@@ -22,6 +24,12 @@ export const HeaderStats = {
         HeaderStats.cache.energy = document.getElementById('header-energy');
         HeaderStats.cache.hearts = document.getElementById('total-hearts-summary');
         HeaderStats.cache.blades = document.getElementById('total-blades-summary');
+        HeaderStats.cache.p1.deck = document.getElementById('h-p1-deck');
+        HeaderStats.cache.p1.energy = document.getElementById('h-p1-energy');
+        HeaderStats.cache.p1.discard = document.getElementById('h-p1-discard');
+        HeaderStats.cache.p2.deck = document.getElementById('h-p2-deck');
+        HeaderStats.cache.p2.energy = document.getElementById('h-p2-energy');
+        HeaderStats.cache.p2.discard = document.getElementById('h-p2-discard');
     },
 
     render: (state, p0, getPhaseKey) => {
@@ -30,6 +38,18 @@ export const HeaderStats = {
         const phaseKey = getPhaseKey(state.phase);
         
         if (HeaderStats.cache.turn) HeaderStats.cache.turn.textContent = state.turn_number || state.turn || 1;
+
+        // Update App Title with Total Card Count
+        const appTitle = document.querySelector('[data-i18n="app_title"]');
+        if (appTitle) {
+            const totalCards = state.players.reduce((sum, p) => {
+                const zones = [p.hand, p.stage, p.live_zone, p.energy, p.success_lives, p.discard, p.deck_cards, p.deck, p.full_deck, p.energy_deck_cards, p.energy_deck];
+                return sum + zones.reduce((zSum, zone) => zSum + (Array.isArray(zone) ? zone.length : 0), 0);
+            }, 0);
+            const baseTitle = i18n.t('app_title');
+            appTitle.textContent = `${baseTitle} (${totalCards}) v3`;
+        }
+
         if (HeaderStats.cache.phase) HeaderStats.cache.phase.textContent = i18n.t(phaseKey);
 
         if (HeaderStats.cache.score) {
@@ -53,6 +73,18 @@ export const HeaderStats = {
                 <img src="img/texticon/icon_blade.png" class="heart-mini-icon">
                 <span class="stat-value">${bladesCount}</span>
             </span>`;
+        }
+
+        const players = state.players;
+        if (players[0]) {
+            if (HeaderStats.cache.p1.deck) HeaderStats.cache.p1.deck.textContent = (players[0].deck_cards || players[0].deck || []).length;
+            if (HeaderStats.cache.p1.energy) HeaderStats.cache.p1.energy.textContent = (players[0].energy_deck_cards || players[0].energy_deck || []).length;
+            if (HeaderStats.cache.p1.discard) HeaderStats.cache.p1.discard.textContent = (players[0].discard || []).length;
+        }
+        if (players[1]) {
+            if (HeaderStats.cache.p2.deck) HeaderStats.cache.p2.deck.textContent = (players[1].deck_cards || players[1].deck || []).length;
+            if (HeaderStats.cache.p2.energy) HeaderStats.cache.p2.energy.textContent = (players[1].energy_deck_cards || players[1].energy_deck || []).length;
+            if (HeaderStats.cache.p2.discard) HeaderStats.cache.p2.discard.textContent = (players[1].discard || []).length;
         }
     }
 };

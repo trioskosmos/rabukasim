@@ -12,11 +12,11 @@ use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::turn_sequencer::{TurnSequencer, CONFIG};
+use engine_rust::core::logic::turn_sequencer::{TurnSequencer};
 use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
 use rand::prelude::*;
 use rand::SeedableRng;
-use rand::rngs::SmallRng;
+
 
 // ── DB loading ────────────────────────────────────────────────────────────────
 

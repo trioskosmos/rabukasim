@@ -84,7 +84,43 @@
     "82": "起動制限",
     "83": "ハートコスト変更({value})",
     "90": "バトンタッチ制限",
-    "undefined": "名前指定",
+    "200": "ターン1回のみ",
+    "201": "メンバーがいる場合",
+    "202": "色がある場合",
+    "203": "場に{value}人以上のメンバーがいる場合",
+    "204": "手札に{value}枚以上のカードがある場合",
+    "205": "控え室に{value}枚以上のカードがある場合",
+    "206": "センターの場合",
+    "207": "リード時",
+    "208": "グループに{value}枚以上ある場合",
+    "209": "フィルタ {value}枚以上",
+    "210": "相手が所持している場合",
+    "211": "自身がグループに属する場合",
+    "212": "回答済み",
+    "213": "{value}枚以上のエネルギーがある場合",
+    "214": "ライブカードがある場合",
+    "215": "コスト{value}以上",
+    "216": "レアリティ{value}",
+    "217": "手札にライブなし",
+    "218": "成功ライブ{value}枚以上",
+    "219": "相手との手札差",
+    "220": "スコア比較",
+    "221": "選択肢が存在する場合",
+    "222": "相手の選択",
+    "223": "ハート{value}個以上",
+    "224": "ブレード{value}個以上",
+    "225": "相手とのエネルギー差",
+    "226": "{group}の{keyword}が{zone}にある場合",
+    "227": "リフレッシュ後",
+    "228": "移動があった場合",
+    "229": "手札が増えた場合",
+    "230": "ライブゾーンに{value}枚以上ある場合",
+    "231": "バトン",
+    "232": "タイプ比較",
+    "233": "控え室にある場合",
+    "234": "{value}にある場合",
+    "DISCARD_MEMBER": "メンバー控え室",
+    "undefined": "Gain 【Energy】{value}",
     "ENERGY": "[エネ{value}]支払い",
     "TAP_SELF": "自身ウェイト",
     "DISCARD_HAND": "手札{value}枚捨て",
@@ -517,7 +553,33 @@
       "リエラ": "Liella!",
       "μ's": "μ's",
       "Aqours": "Aqours",
-      "蓮ノ空": "蓮ノ空"
+      "蓮ノ空": "蓮ノ空",
+      "DOLLCHESTRA": "DOLLCHESTRA",
+      "かほめぐ": "かほめぐ",
+      "さやこず": "さやこず",
+      "つづるり": "つづるり",
+      "みらくらぱーく！": "みらくらぱーく！",
+      "スリーズブーケ": "スリーズブーケ",
+      "ラブライブ！": "ラブライブ！",
+      "スクールアイドルミュージカル": "スクールアイドルミュージカル"
+    },
+    "UNITS": {
+      "スリーズブーケ": "スリーズブーケ",
+      "DOLLCHESTRA": "DOLLCHESTRA",
+      "みらくらぱーく！": "みらくらぱーく！",
+      "Printemps": "Printemps",
+      "BiBi": "BiBi",
+      "lily white": "lily white",
+      "CYaRon!": "CYaRon!",
+      "AZALEA": "AZALEA",
+      "Guilty Kiss": "Guilty Kiss",
+      "A・ZU・NA": "A・ZU・NA",
+      "QU4RTZ": "QU4RTZ",
+      "DiverDiva": "DiverDiva",
+      "R3BIRTH": "R3BIRTH",
+      "CatChu!": "CatChu!",
+      "KALEIDOSCORE": "KALEIDOSCORE",
+      "5yncri5e!": "5yncri5e!"
     },
     "TO": {
       "bottom": "底",
@@ -574,6 +636,18 @@
     "reset": "リセット",
     "deck_creator": "デッキ作成",
     "set_deck": "デッキ設定",
+    "main_deck": "メインデッキ",
+    "energy_deck": "エネデッキ",
+    "members": "メンバー",
+    "lives": "ライブ",
+    "invalid_codes": "不正なコード",
+    "format_hint": "デッキログHTMLまたは「CardID x 枚数」のリストを貼り付けてください",
+    "confirm_formation": "編成確定",
+    "winner": "勝者: {name}",
+    "new_game": "新しいゲーム",
+    "game_over": "ゲームオーバー",
+    "mode_n": "モード {n}",
+    "gap": "差",
     "friendly_abilities": "読みやすい能力テキスト",
     "report": "不具合報告",
     "live_watch": "ライブ監視",
@@ -587,6 +661,9 @@
     "logs": "ログ",
     "last_perf": "前回のパフォーマンス",
     "god_mode": "デバッグモード",
+    "view_expanded": "拡大表示",
+    "result_overview": "結果の概要",
+    "shared_screen": "共有画面",
     "force": "強制実行",
     "exec": "実行",
     "wait": "待機",
@@ -594,6 +671,7 @@
     "mulligan_opp": "マリガン (相手)",
     "active": "通常",
     "energy": "エナジー",
+    "discard_pile": "控え室",
     "draw": "ドロー",
     "main": "メイン",
     "live_set": "ライブセット",
@@ -601,6 +679,7 @@
     "perf_p2": "パフォーマンス (P2)",
     "live_result": "ライブ結果",
     "setup": "セットアップ",
+    "pending_triggers": "保留中のトリガー",
     "rps": "じゃんけん",
     "act_ability": "能力発動",
     "perform_live": "ライブ開催",
@@ -635,6 +714,13 @@
     "cannot_baton_touch": "バトンタッチ不可",
     "cannot_activate_member": "能力発動不可",
     "restriction": "制約",
+    "view_persp": "視点",
+    "on": "オン",
+    "off": "オフ",
+    "enabled": "有効",
+    "disabled": "無効",
+    "debug_mode": "デバッグモード",
+    "debug_bytecode_log": "バイトコードログ",
     "slot": "スロット",
     "color_transform_all": "{src} → {dst} 変換",
     "heart_req_reduction": "【必要ピース】 減少 (-{amt})",
@@ -697,6 +783,89 @@
     "no_cards_discard": "控え室にカードはありません。",
     "no_cards_zone": "このゾーンにカードがないか、非公開です。",
     "member_deck_rem": "メインデッキ (残り)",
-    "energy_deck_rem": "エネデッキ (残り)"
-  }
+    "energy_deck_rem": "エネデッキ (残り)",
+    "initial_deck": "初期デッキ (シャッフル前)"
+  },
+  "heuristics": [
+    {
+      "jp": "自分のデッキの上からカードを(\\d+)枚見る",
+      "en": "Look at top $1 card(s) of Deck"
+    },
+    {
+      "jp": "その中から(.+?)を(\\d+)枚公開して手札に加えてもよい",
+      "en": "You may add $2 $1 from them to hand"
+    },
+    {
+      "jp": "残りを控え室に置く",
+      "en": "Discard the rest"
+    },
+    {
+      "jp": "ドローする",
+      "en": "Draw a card"
+    },
+    {
+      "jp": "カードを(\\d+)枚引く",
+      "en": "Draw $1 card(s)"
+    },
+    {
+      "jp": "自分の手札を(\\d+)枚控え室に置く",
+      "en": "Discard $1 card(s) from hand"
+    },
+    {
+      "jp": "手札を(\\d+)枚控え室に置いてもよい",
+      "en": "You may discard $1 card from hand"
+    },
+    {
+      "jp": "このメンバーをステージから控え室に置く",
+      "en": "Retire this Member"
+    },
+    {
+      "jp": "自分の控え室から(.+?)を(\\d+)枚手札に加える",
+      "en": "Return $2 $1 from Discard to Hand"
+    },
+    {
+      "jp": "ライブ",
+      "en": "Live"
+    },
+    {
+      "jp": "メンバー",
+      "en": "Member"
+    },
+    {
+      "jp": "カード",
+      "en": "Card"
+    },
+    {
+      "jp": "コスト",
+      "en": "Cost"
+    },
+    {
+      "jp": "以下",
+      "en": " or less"
+    },
+    {
+      "jp": "以上",
+      "en": " or more"
+    },
+    {
+      "jp": "の",
+      "en": " "
+    },
+    {
+      "jp": "このライブをクリアした時",
+      "en": "When this Live is cleared"
+    },
+    {
+      "jp": "を控え室に置く",
+      "en": " move to Waiting Room"
+    },
+    {
+      "jp": "バトンタッチする",
+      "en": "Baton Touch"
+    },
+    {
+      "jp": "ライブ成功時",
+      "en": "[Live Success]"
+    }
+  ]
 }

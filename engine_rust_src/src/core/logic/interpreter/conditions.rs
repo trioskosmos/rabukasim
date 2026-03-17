@@ -696,6 +696,88 @@ pub fn check_condition(
                     unique_colors > 0
                 }
             }
+            "YELL_CARDS" => {
+                // CONDITION: YELL_CARDS {FILTER="GROUP_ID=3, UNIQUE_NAMES", MIN=3}
+                // Check yelled cards filtered by GROUP_ID, counting unique names if specified
+                let yell_cards = &state.players[ctx.player_id as usize].yell_cards;
+                
+                let filter_str = params
+                    .get("FILTER")
+                    .or_else(|| params.get("filter"))
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                
+                // Parse group_id from filter (e.g., "GROUP_ID=3, UNIQUE_NAMES")
+                let mut group_id: u8 = 0;
+                let mut check_unique_names = false;
+                for part in filter_str.split(',') {
+                    let part = part.trim();
+                    if part.starts_with("GROUP_ID=") {
+                        if let Ok(gid) = part.strip_prefix("GROUP_ID=").unwrap_or("0").parse::<u8>() {
+                            group_id = gid;
+                        }
+                    } else if part == "UNIQUE_NAMES" || part == "unique_names" {
+                        check_unique_names = true;
+                    }
+                }
+                
+                let filtered_yell_cards: Vec<i32> = yell_cards
+                    .iter()
+                    .copied()
+                    .filter(|&cid| {
+                        if group_id > 0 {
+                            // Check if card belongs to the group
+                            db.get_member(cid)
+                                .map(|m| m.groups.contains(&group_id))
+                                .or_else(|| {
+                                    db.get_live(cid)
+                                        .map(|l| l.groups.contains(&group_id))
+                                })
+                                .unwrap_or(false)
+                        } else {
+                            true
+                        }
+                    })
+                    .collect();
+                
+                let count = if check_unique_names {
+                    // Count unique names
+                    let mut unique_names = std::collections::HashSet::new();
+                    for &cid in &filtered_yell_cards {
+                        if let Some(member) = db.get_member(cid) {
+                            unique_names.insert(member.name.clone());
+                        } else if let Some(live) = db.get_live(cid) {
+                            unique_names.insert(live.name.clone());
+                        }
+                    }
+                    unique_names.len() as i32
+                } else {
+                    filtered_yell_cards.len() as i32
+                };
+                
+                // Compare count to MIN/MAX/EQ
+                if let Some(eq) = params
+                    .get("EQ")
+                    .or_else(|| params.get("eq"))
+                    .and_then(|v| v.as_i64())
+                {
+                    count == eq as i32
+                } else if let Some(min) = params
+                    .get("MIN")
+                    .or_else(|| params.get("min"))
+                    .and_then(|v| v.as_i64())
+                {
+                    count >= min as i32
+                } else if let Some(max) = params
+                    .get("MAX")
+                    .or_else(|| params.get("max"))
+                    .and_then(|v| v.as_i64())
+                {
+                    count <= max as i32
+                } else {
+                    count > 0
+                }
+            }
             _ => true,
         }
     };
@@ -1683,16 +1765,42 @@ pub fn check_condition_opcode(
         }
         309 => {
             // DISCARDED_CARDS
+            if state.debug.debug_mode {
+                println!("[DEBUG] DISCARDED_CARDS condition check:");
+                println!("  selected_cards: {:?}", ctx.selected_cards);
+                println!("  attr: 0x{:016x}", attr);
+                println!("  val (count to match): {}", val);
+                println!("  slot (comparison): {} (mode=({} >> 4) & 0x0F)", slot, slot);
+            }
+            
             let matching_count = if !ctx.selected_cards.is_empty() {
-                ctx.selected_cards
+                let count = ctx.selected_cards
                     .iter()
                     .copied()
-                    .filter(|&cid| attr == 0 || state.card_matches_filter(db, cid, attr))
-                    .count() as i32
+                    .filter(|&cid| {
+                        let matches = attr == 0 || state.card_matches_filter(db, cid, attr);
+                        if state.debug.debug_mode {
+                            println!("    Card {}: matches={}", cid, matches);
+                        }
+                        matches
+                    })
+                    .count() as i32;
+                if state.debug.debug_mode {
+                    println!("  Total matching: {}", count);
+                }
+                count
             } else {
-                player.discarded_this_turn as i32
+                let count = player.discarded_this_turn as i32;
+                if state.debug.debug_mode {
+                    println!("  selected_cards empty, using discarded_this_turn: {}", count);
+                }
+                count
             };
-            compare_i32(matching_count, val, slot)
+            let result = compare_i32(matching_count, val, slot);
+            if state.debug.debug_mode {
+                println!("  Condition result: {}", result);
+            }
+            result
         }
         310 => {
             // YELL_REVEALED_UNIQUE_COLORS

@@ -15,6 +15,27 @@ const REGEX_NEWLINE = /\\n/g;
 const ZONE_LIST = ['控え室', 'メンバー置場', 'ライブ置場', 'エナジー置場', '待機室', '手札', 'デッキ', '山札', 'Discard', 'Stage', 'Live Zone', 'Hand', 'Deck', 'Performance'];
 const REGEX_ZONES = new RegExp(`(${ZONE_LIST.join('|')})`, 'g');
 
+if (typeof document !== 'undefined' && !document.__lovecaImageErrorHandlerBound) {
+    document.addEventListener('error', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLImageElement)) return;
+
+        if (target.dataset.hideOnError === 'true') {
+            target.style.display = 'none';
+        }
+
+        if (target.dataset.visibilityHiddenOnError === 'true') {
+            target.style.visibility = 'hidden';
+        }
+
+        if (target.dataset.showNextOnError === 'true' && target.nextElementSibling) {
+            target.style.display = 'none';
+            target.nextElementSibling.style.display = 'inline';
+        }
+    }, true);
+    document.__lovecaImageErrorHandlerBound = true;
+}
+
 // Pre-built icon map with pre-compiled regexes
 export const ICON_MAP = {
     '登場時': { path: 'toujyou.png', regex: /【登場時】/g },
@@ -103,7 +124,7 @@ for (const [key, data] of Object.entries(ICON_MAP)) {
 
     ICON_REPLACEMENTS[key] = {
         regex: data.regex,
-        replacement: `<span class="icon-wrapper"><img src="${src}" alt="${key}" style="${style}" onerror="this.style.visibility='hidden'"></span>`
+        replacement: `<span class="icon-wrapper"><img src="${src}" alt="${key}" style="${style}" data-visibility-hidden-on-error="true"></span>`
     };
 }
 
@@ -170,7 +191,7 @@ export const TextEnricher = {
             if (typeof ICON_DATA_URIs !== 'undefined' && ICON_DATA_URIs[iconKey]) {
                 src = ICON_DATA_URIs[iconKey];
             }
-            return `<span class="icon-wrapper"><img src="${src}" alt="${alt}" style="${style}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"><span style="display:none;">${alt}</span></span>`;
+            return `<span class="icon-wrapper"><img src="${src}" alt="${alt}" style="${style}" data-show-next-on-error="true"><span style="display:none;">${alt}</span></span>`;
         });
         text = text.replace(REGEX_NEWLINE, '<br>');
 
