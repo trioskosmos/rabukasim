@@ -94,14 +94,14 @@ def generate_rust():
                 75,
                 76,
             }
-            is_complex = any(op in complex_ops for op in bc[::4])
-            if len(bc) > 24 or is_complex or 2 in bc[::4] or 3 in bc[::4]:
+            is_complex = any(op in complex_ops for op in bc[::5])
+            if len(bc) > 30 or is_complex or 2 in bc[::5] or 3 in bc[::5]:
                 continue
 
             rust_lines = []
             valid = True
-            for j in range(0, len(bc), 4):
-                op, v, a, s = bc[j : j + 4]
+            for j in range(0, len(bc), 5):
+                op, v, a, ah, s = bc[j : j + 5]
                 if op == 0:
                     continue
 
