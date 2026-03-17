@@ -14,30 +14,50 @@ let currentLanguage = 'jp';
  * @param {string} lang - 'jp' or 'en'
  */
 export async function loadTranslations(lang = 'jp') {
-    if (translations[lang]) {
+    if (translations[lang] && Object.keys(translations[lang]).length > 0) {
         currentLanguage = lang;
         return translations[lang];
     }
 
     try {
         const response = await fetch(`./js/i18n/locales/${lang}.json`);
-        if (!response.ok) throw new Error(`Failed to load ${lang} translations`);
-        const data = await response.json();
-        translations[lang] = data;
-
-        // Backward compatibility globals
-        if (typeof window !== 'undefined') {
-            if (lang === 'jp') window.currentTranslationsJP = data;
-            if (lang === 'en') window.currentTranslationsEN = data;
-            window.translations = translations; // Expose the full map
+        if (!response.ok) throw new Error(`Failed to load ${lang} translations (Status: ${response.status})`);
+        
+        const text = await response.text();
+        
+        // CHECK FOR GIT LFS POINTERS
+        // Git LFS pointers start with 'version https://git-lfs.github.com/spec/v1'
+        if (text.startsWith('version https://git-lfs.github.com')) {
+            const errorMsg = `CRITICAL: Git LFS Pointer detected for ${lang}.json instead of actual content. ` +
+                             `This usually means LFS was not correctly resolved during deployment. ` +
+                             `Pointer content: ${text.substring(0, 100)}...`;
+            console.error(errorMsg);
+            throw new Error(errorMsg);
         }
 
-        currentLanguage = lang;
-        return data;
+        try {
+            const data = JSON.parse(text);
+            translations[lang] = data;
+
+            // Backward compatibility globals
+            if (typeof window !== 'undefined') {
+                if (lang === 'jp') window.currentTranslationsJP = data;
+                if (lang === 'en') window.currentTranslationsEN = data;
+                window.translations = translations; // Expose the full map
+            }
+
+            currentLanguage = lang;
+            return data;
+        } catch (jsonError) {
+            console.error(`JSON Parse Error for ${lang}.json:`, jsonError);
+            console.error(`Raw content was: ${text.substring(0, 200)}...`);
+            throw jsonError;
+        }
     } catch (error) {
         console.error('Translation load error:', error);
         // Fallback to empty structure if failed
-        translations[lang] = { triggers: {}, opcodes: {}, params: {}, misc: {} };
+        translations[lang] = { triggers: {}, opcodes: {}, params: {}, misc: {}, ui: {} };
+        currentLanguage = lang;
         return translations[lang];
     }
 }
