@@ -4,4 +4,5 @@ fn main() {
     println!("cargo:rerun-if-changed=static_content/js");
     println!("cargo:rerun-if-changed=static_content/css");
     println!("cargo:rerun-if-changed=static_content/index.html");
+    println!("cargo:rerun-if-changed=static_content/data");
 }

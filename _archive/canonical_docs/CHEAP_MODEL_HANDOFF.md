@@ -2,6 +2,10 @@
 
 Use this file as the single handoff prompt/reference for a cheaper model that will draft canonical JSON abilities.
 
+Primary authoring reference:
+
+- [CANONICAL_AUTHORING_GUIDE.md](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/canonical_ability_model/CANONICAL_AUTHORING_GUIDE.md)
+
 ## Mission
 
 Convert card ability text into the project's strict canonical JSON schema.

@@ -683,6 +683,14 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             attr |= 1u64 << FILTER_SPECIAL_ID_SHIFT;
             continue;
         }
+        if part == "NOT_ACTIVATOR" {
+            attr |= 2u64 << FILTER_SPECIAL_ID_SHIFT;
+            continue;
+        }
+        if part == "NOT_SELF" {
+            attr |= 3u64 << FILTER_SPECIAL_ID_SHIFT;
+            continue;
+        }
         if part_trimmed.contains("NOT_NAME=MY舞") {
             attr |= 2u64 << FILTER_SPECIAL_ID_SHIFT;
             continue;

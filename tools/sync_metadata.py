@@ -11,6 +11,36 @@ def to_pascal_case(snake_str):
     return "".join(x.capitalize() for x in parts)
 
 
+def write_enum_name_helpers(f, enum_name, entries, default_key=None, transform=None):
+    f.write(f"impl {enum_name} {{\n")
+    f.write("    pub fn from_metadata_key(value: &str) -> Option<Self> {\n")
+    f.write("        match value {\n")
+    if default_key is not None and default_key not in entries:
+        variant = "None" if transform is None else transform(default_key)
+        f.write(f'            "{default_key}" => Some(Self::{variant}),\n')
+    for key, val in entries.items():
+        variant = transform(key) if transform else to_pascal_case(key)
+        if key == default_key:
+            variant = "None"
+        f.write(f'            "{key}" => Some(Self::{variant}),\n')
+    f.write("            _ => None,\n")
+    f.write("        }\n")
+    f.write("    }\n\n")
+    f.write("    pub fn as_metadata_key(&self) -> &'static str {\n")
+    f.write("        match self {\n")
+    if default_key is not None and default_key not in entries:
+        variant = "None" if transform is None else transform(default_key)
+        f.write(f'            Self::{variant} => "{default_key}",\n')
+    for key, val in entries.items():
+        variant = transform(key) if transform else to_pascal_case(key)
+        if key == default_key:
+            variant = "None"
+        f.write(f'            Self::{variant} => "{key}",\n')
+    f.write("        }\n")
+    f.write("    }\n")
+    f.write("}\n\n")
+
+
 def resolve_extra_constants(metadata):
     extra_constants = dict(metadata.get("extra_constants", {}))
     layout_fields = metadata.get("bytecode_layout", {}).get("A", {}).get("standard", {})
@@ -208,6 +238,13 @@ def sync():
             comment = " /// [UNUSED]" if key in unused_list else ""
             f.write(f"    {variant} = {val},{comment}\n")
         f.write("}\n\n")
+        write_enum_name_helpers(
+            f,
+            "TriggerType",
+            metadata["triggers"],
+            default_key="NONE",
+            transform=lambda key: "None" if key == "NONE" else to_pascal_case(key),
+        )
 
         # TargetType
         f.write("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]\n")
@@ -218,6 +255,12 @@ def sync():
             variant = to_pascal_case(key) if key != "SELF" else "Self_"  # 'Self' is reserved
             f.write(f"    {variant} = {val},\n")
         f.write("}\n\n")
+        write_enum_name_helpers(
+            f,
+            "TargetType",
+            metadata["targets"],
+            transform=lambda key: "Self_" if key == "SELF" else to_pascal_case(key),
+        )
 
         # EffectType
         f.write("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]\n")
@@ -239,6 +282,12 @@ def sync():
             comment = " /// [UNUSED]" if key in unused_list else ""
             f.write(f"    {to_pascal_case(key)} = {val},{comment}\n")
         f.write("}\n\n")
+        write_enum_name_helpers(
+            f,
+            "EffectType",
+            metadata["opcodes"],
+            transform=lambda key: "Nop" if key == "NOP" else to_pascal_case(key),
+        )
 
         # ConditionType
         # Check if any condition values exceed u8 range
@@ -253,6 +302,13 @@ def sync():
             comment = " /// [UNUSED]" if key in unused_list else ""
             f.write(f"    {to_pascal_case(key)} = {val},{comment}\n")
         f.write("}\n\n")
+        write_enum_name_helpers(
+            f,
+            "ConditionType",
+            {"NONE": 0, **metadata["conditions"]},
+            default_key="NONE",
+            transform=lambda key: "None" if key == "NONE" else to_pascal_case(key),
+        )
 
         # AbilityCostType
         f.write("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]\n")
@@ -265,6 +321,13 @@ def sync():
                 continue
             f.write(f"    {to_pascal_case(key)} = {val},\n")
         f.write("}\n\n")
+        write_enum_name_helpers(
+            f,
+            "AbilityCostType",
+            metadata["costs"],
+            default_key="NONE",
+            transform=lambda key: "None" if key == "NONE" else to_pascal_case(key),
+        )
 
         # ChoiceType
         if "choices" in metadata:

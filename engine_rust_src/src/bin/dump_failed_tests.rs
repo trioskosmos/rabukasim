@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::Write;
 use engine_rust::core::logic::GameState;
-use smallvec::smallvec;
 
 fn main() {
     let mut states = vec![];
@@ -10,12 +9,12 @@ fn main() {
     let mut state1 = GameState::default();
     state1.ui.silent = true;
     state1.core.players[0].stage[0] = 120;
-    state1.core.players[0].success_lives = smallvec![6, 7];
+    state1.core.players[0].success_lives = vec![6, 7];
     states.push(("verify_buff_logic", state1));
 
     // 2. test_conditions_group_cd_context_input
     let mut state2 = GameState::default();
-    state2.core.players[0].success_lives = smallvec![10];
+    state2.core.players[0].success_lives = vec![10];
     state2.core.players[0].score = 5;
     states.push(("test_group_cd", state2));
 

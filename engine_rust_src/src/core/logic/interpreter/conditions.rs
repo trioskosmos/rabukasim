@@ -11,6 +11,10 @@ use crate::core::hearts::HeartBoard;
 use crate::core::logic::filter::map_filter_string_to_attr;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};
 
+fn is_saturated_legacy_filter_attr(attr: u64) -> bool {
+    (attr & 0x00FF_FFFF_FFFF_FFF8) == 0x00FF_FFFF_FFFF_FFF8
+}
+
 /// Compare an i32 value against a target with optional comparison mode from slot.
 /// Slot encoding: 0 = equal, 1 = greater, 2 = less, 3 = greater-or-equal, 4 = less-or-equal
 fn compare_i32(actual: i32, target: i32, slot: i32) -> bool {
@@ -193,10 +197,15 @@ pub fn check_condition(
             }
         }
 
-        if attr == 0 {
-            attr = mapped_attr;
-        } else {
-            attr |= mapped_attr;
+        if mapped_attr != 0 {
+            let special_only_filter = (mapped_attr >> FILTER_SPECIAL_ID_SHIFT) != 0
+                && (mapped_attr & 0x00FF_FFFF_FFFF_FFFF) == 0;
+
+            if attr == 0 || (special_only_filter && is_saturated_legacy_filter_attr(attr)) {
+                attr = mapped_attr;
+            } else {
+                attr |= mapped_attr;
+            }
         }
 
         // Extract 'all' flag for GROUP_FILTER conditions
@@ -1179,12 +1188,11 @@ pub fn check_condition_opcode(
                 }
             }
         }
-        C_COUNT_STAGE => compare_i32(
-            resolve_count(state, db, op, attr, slot, ctx, depth),
-            val,
-            slot,
-        ),
-        C_IS_CENTER => ctx.area_idx == 1,
+        C_IS_CENTER => {
+            // Rule 11.6: [繧ｻ繝ｳ繧ｿ繝ｼ] (Center)
+            // Rule 11.6.2/3/4: Condition check for Center slot
+            ctx.area_idx == 1
+        }
         C_COUNT_HAND => compare_i32(
             resolve_count(state, db, op, attr, slot, ctx, depth),
             val,
@@ -1511,15 +1519,12 @@ pub fn check_condition_opcode(
                 false
             }
         }
-        C_IS_IN_DISCARD => {
-            let cid = ctx.source_card_id;
-            if cid >= 0 {
-                player.discard.contains(&(cid as i32))
-            } else {
-                false
-            }
+        C_AREA_CHECK => {
+            // Rule 11.7: [蟾ｦ繧ｵ繧､繝・ (Left Side) - val=1
+            // Rule 11.6: [繧ｻ繝ｳ繧ｿ繝ｼ] (Center) - val=2
+            // Rule 11.8: [蜿ｳ繧ｵ繧､繝・ (Right Side) - val=3
+            ctx.area_idx == (val - 1) as i16
         }
-        C_AREA_CHECK => ctx.area_idx == (val - 1) as i16,
         C_COST_LEAD => {
             // 自分の場のコスト合計 vs 相手
             let self_cost: i32 = player

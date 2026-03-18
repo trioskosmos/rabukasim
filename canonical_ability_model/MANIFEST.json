@@ -1,5 +1,7 @@
 {
   "schema_version": "v0",
+  "_authoring_guide": "C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/canonical_ability_model/CANONICAL_AUTHORING_GUIDE.md",
+  "_all_abilities_worklist": "C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/canonical_ability_model/reports/all_abilities_worklist.json",
   "entries": [
     {
       "golden": "tests/canonical_goldens/draw_one_on_play.json",

@@ -45,6 +45,7 @@ fn get_query_aura(
 }
 
 fn get_effective_blades_with_aura(
+    // Rule 1.2.3: Total Blades
     state: &GameState,
     player_idx: usize,
     slot_idx: usize,
@@ -61,23 +62,30 @@ fn get_effective_blades_with_aura(
     } else {
         return 0;
     };
+    // Rule 12.2.1: [繧ｫ繝ｼ繝峨↓險倅ｺ九＆繧後◆謨ｰ蛟､ (Printed Value)]
+    // Rule 12.2.2: [迚ｹ螳壹・蛟､縺ｨ縺励※謇ｱ縺 (Treat as specific value)]
     let mut val = if state.players[player_idx].blade_overrides[slot_idx] != -1 {
         state.players[player_idx].blade_overrides[slot_idx] as i32
     } else {
         m.blades as i32
     };
-
-    val += aura.blades[slot_idx];
+    
+    // Rule 12.3.1: [閭ｽ蜉帙↓繧医ｋ謨ｰ蛟､縺ｮ螟画峩 (Ability-based value modification)]
+    val += aura.blades[slot_idx]; // Rule 1.2.3.1: Aura effect on Total Blades
 
     let buff = state.players[player_idx].blade_buffs[slot_idx];
     if state.debug.debug_mode && !state.ui.silent {
         println!("[DEBUG] get_effective_blades: slot={}, base={}, override={:?}, val_accum={}, buff={}, total={}",
             slot_idx, m.blades, state.players[player_idx].blade_overrides[slot_idx], val, buff, (val + buff as i32).max(0));
     }
+    // Rule 12.3.3: [謔呵ｮ縺ｮ縺ゅｋ謨ｰ蛟､ (Multiple Modifications - Order)]
+    // Rule 12.3.4: [謨ｰ蛟､縺ｯ 0 莉･荳・ (Numerical values are 0 or more)]
+    // Rule 1.2.3: [繝悶Ξ繝ｼ繝・謨ｰ (Total Blades)]
     (val + buff as i32).max(0) as u32
 }
 
 fn get_effective_hearts_with_aura(
+    // Rule 1.2.2: Total Hearts
     state: &GameState,
     player_idx: usize,
     slot_idx: usize,
@@ -101,8 +109,124 @@ fn get_effective_hearts_with_aura(
     board
 }
 
+// Rule 12.1.2: [繝槭Ν繝√ヰ繝医Φ (Multi-Baton)]
 pub fn has_multi_baton(m: &MemberCard) -> u8 {
     if m.has_multi_baton { 2 } else { 1 }
+}
+
+fn apply_structured_aura_effects(
+    aura: &mut BoardAura,
+    ab: &Ability,
+    ctx: &AbilityContext,
+    state: &GameState,
+    db: &CardDatabase,
+    p_idx: usize,
+    source_slot: usize,
+    forced_target_slot: Option<usize>,
+) {
+    fn structured_meta_count(
+        effect: &Effect,
+        state: &GameState,
+        db: &CardDatabase,
+        p_idx: usize,
+        ctx: &AbilityContext,
+    ) -> Option<i32> {
+        let raw_effect = effect
+            .params
+            .get("raw_effect")
+            .and_then(|value| value.as_str())?;
+
+        match raw_effect {
+            "COUNT_CARDS" => {
+                let zone = effect
+                    .params
+                    .get("zone")
+                    .and_then(|value| value.as_str())
+                    .unwrap_or("");
+
+                Some(match zone {
+                    "SUCCESS_PILE" => state.players[p_idx].success_lives.len() as i32,
+                    "HAND" => state.players[p_idx].hand.len() as i32,
+                    "DISCARD" => state.players[p_idx].discard.len() as i32,
+                    "LIVE_SLOTS" | "LIVE_ZONE" => state.players[p_idx]
+                        .live_zone
+                        .iter()
+                        .filter(|&&card_id| card_id >= 0)
+                        .count() as i32,
+                    "STAGE" => state.players[p_idx]
+                        .stage
+                        .iter()
+                        .filter(|&&card_id| card_id >= 0)
+                        .count() as i32,
+                    _ => resolve_count(
+                        state,
+                        db,
+                        effect.runtime_opcode,
+                        effect.runtime_attr,
+                        effect.runtime_slot,
+                        ctx,
+                        2,
+                    ),
+                })
+            }
+            _ => Some(resolve_count(
+                state,
+                db,
+                effect.runtime_opcode,
+                effect.runtime_attr,
+                effect.runtime_slot,
+                ctx,
+                2,
+            )),
+        }
+    }
+
+    let mut named_counts = std::collections::HashMap::<String, i32>::new();
+
+    for effect in &ab.effects {
+        if let Some(destinations) = effect
+            .params
+            .get("chain_destinations")
+            .and_then(|value| value.as_array())
+        {
+            if effect.runtime_opcode == O_META_RULE {
+                let count = structured_meta_count(effect, state, db, p_idx, ctx).unwrap_or(0);
+
+                for destination in destinations {
+                    if let Some(name) = destination.as_str() {
+                        named_counts.insert(name.to_string(), count);
+                    }
+                }
+            }
+        }
+
+        let op = effect.runtime_opcode;
+        let mut v = effect.runtime_value;
+        let s = effect.runtime_slot;
+        let a = effect.runtime_attr;
+        let target_area = s & 0xFF;
+
+        if let Some(per_card) = effect.params.get("per_card").and_then(|value| value.as_str()) {
+            if let Some(multiplier) = named_counts.get(per_card) {
+                v *= *multiplier;
+            }
+        }
+
+        let mut target_mask = 0u8;
+        if let Some(target_slot) = forced_target_slot {
+            target_mask = 1 << target_slot;
+        } else if target_area == 1 {
+            target_mask = 0b111;
+        } else if target_area == 4 || target_area == 0 {
+            target_mask = 1 << source_slot;
+        }
+
+        for target_slot in 0..3 {
+            if (target_mask & (1 << target_slot)) != 0 {
+                apply_aura_modifier(aura, op, v, s, a, ctx, state, db, p_idx, target_slot);
+            }
+        }
+    }
 }
 
 fn apply_reduce_cost_modifiers(
@@ -119,6 +243,42 @@ fn apply_reduce_cost_modifiers(
         .iter()
         .all(|c| check_condition(state, db, p_idx, c, ctx, depth + 1))
     {
+        return;
+    }
+
+    if ab.canonical_program.is_some() {
+        for effect in &ab.effects {
+            let op = effect.runtime_opcode;
+            if op != O_REDUCE_COST && op != O_INCREASE_COST {
+                continue;
+            }
+
+            let attr = effect.runtime_attr;
+            let slot = effect.runtime_slot;
+            if ((slot as u32) & 0xFF) != 0 && ((slot as u32) & 0xFF) != 4 {
+                continue;
+            }
+
+            let mut multiplier = 1;
+            if (attr & DYNAMIC_VALUE) != 0 {
+                let count_op = (slot >> 8) & 0xFFFF;
+                multiplier = resolve_count(
+                    state,
+                    db,
+                    count_op as i32,
+                    attr & !DYNAMIC_VALUE,
+                    slot,
+                    ctx,
+                    depth + 1,
+                );
+            }
+
+            if op == O_REDUCE_COST {
+                *cost -= effect.runtime_value * multiplier;
+            } else {
+                *cost += effect.runtime_value * multiplier;
+            }
+        }
         return;
     }
 
@@ -210,6 +370,17 @@ fn apply_external_reduce_cost_modifiers(
     if !ab.filters.iter().any(|filter| {
         filter.matches(state, db, target_card_id, None, false, None, ctx)
     }) {
+        return;
+    }
+
+    if ab.canonical_program.is_some() {
+        for effect in &ab.effects {
+            if effect.runtime_opcode == O_REDUCE_COST {
+                *cost -= effect.runtime_value;
+            } else if effect.runtime_opcode == O_INCREASE_COST {
+                *cost += effect.runtime_value;
+            }
+        }
         return;
     }
 
@@ -370,19 +541,27 @@ pub fn get_member_cost(
     let query_aura = get_query_aura(state, p_idx, db, depth);
 
     // 1. Global reduction
+    // Rule 12.3.1: [謨ｰ蛟､縺ｮ螟画峇 (Modification of numerical values)]
+    // Rule 12.1.1.2: Addition or subtraction
     cost -= state.players[p_idx].cost_reduction as i32;
 
     // 2. Baton Touch & Cached Position Modifiers (Rule 12 & Auras)
+    // Rule 5.9: [繝舌ヨ繝ｳ繧ｿ繝・メ (Baton Touch)]
     if slot_idx >= 0 && slot_idx < STAGE_SLOT_COUNT as i16 {
         let slot_modifier = query_aura
             .as_ref()
             .map(|aura| aura.slot_cost_modifiers[slot_idx as usize])
             .unwrap_or(state.players[p_idx].slot_cost_modifiers[slot_idx as usize]);
+        // Rule 12.1.1: [繝舌ヨ繝ｳ繧ｿ繝・メ (Baton Touch modifier)]
         cost += slot_modifier as i32;
 
         let old_cid = state.players[p_idx].stage[slot_idx as usize];
+
         if old_cid >= 0 {
             if let Some(old_m) = db.get_member(old_cid) {
+                // Rule 11.6.1: [繝舌ヨ繝ｳ繧ｿ繝・メ縺ｮ繧ｳ繧ｹ繝育分荳・ (Baton Touch cost substitution)]
+                // Rule 12.1: [繝舌ヨ繝ｳ繧ｿ繝・メ (Baton Touch cost substitution)]
+                // Rule 12.1.1.1: Replacement of values
                 cost -= old_m.cost as i32;
             }
         }
@@ -506,9 +685,11 @@ pub fn get_member_cost(
         }
     }
 
+    // Rule 12.1.1.3: [0譛ｪ貅€縺ｫ縺ｯ縺ｪ繧峨↑縺・ (Not less than 0)]
     cost.max(0)
 }
 
+// Rule 12.4: [蛻ｶ髯・ (Restrictions)]
 pub fn has_restriction(
     state: &GameState,
     p_idx: usize,
@@ -553,6 +734,13 @@ pub fn has_restriction(
                         .iter()
                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
                     {
+                        if ab.canonical_program.is_some() {
+                            if ab.effects.iter().any(|effect| effect.runtime_opcode == opcode) {
+                                return true;
+                            }
+                            continue;
+                        }
+
                         let bc = &ab.bytecode;
                         let mut i = 0;
                         while i + 4 < bc.len() {
@@ -586,6 +774,13 @@ pub fn has_restriction(
                                 .iter()
                                 .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
                             {
+                                if ab.canonical_program.is_some() {
+                                    if ab.effects.iter().any(|effect| effect.runtime_opcode == opcode) {
+                                        return true;
+                                    }
+                                    continue;
+                                }
+
                                 let bc = &ab.bytecode;
                                 let mut i = 0;
                                 while i + 4 < bc.len() {
@@ -605,6 +800,8 @@ pub fn has_restriction(
     false
 }
 
+/// Rule 5.12: [蟶ｸ譎・ (Constant Effects)]
+/// Rule 5.12.1: Constant effects are always active while card is in zone
 pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatabase) -> BoardAura {
     let mut aura = BoardAura::default();
     if db.is_truly_vanilla() {
@@ -632,6 +829,20 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                         .iter()
                         .all(|c| check_condition(state, db, player_idx, c, &ctx, 1))
                     {
+                        if ab.canonical_program.is_some() {
+                            apply_structured_aura_effects(
+                                &mut aura,
+                                ab,
+                                &ctx,
+                                state,
+                                db,
+                                player_idx,
+                                source_slot,
+                                None,
+                            );
+                            continue;
+                        }
+
                         for pm in &ab.preparsed_modifiers {
                             let op = pm.op;
                             let v = pm.val;
@@ -689,6 +900,20 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                             .iter()
                             .all(|c| check_condition(state, db, player_idx, c, &ctx, 1))
                         {
+                            if ab.canonical_program.is_some() {
+                                apply_structured_aura_effects(
+                                    &mut aura,
+                                    ab,
+                                    &ctx,
+                                    state,
+                                    db,
+                                    player_idx,
+                                    target_slot,
+                                    Some(target_slot),
+                                );
+                                continue;
+                            }
+
                             let bc = &ab.bytecode;
                             let mut i = 0;
                             while i + 4 < bc.len() {

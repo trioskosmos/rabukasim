@@ -11,6 +11,7 @@ fn resolve_energy_cost(state: &GameState, db: &CardDatabase, p_idx: usize, cost:
             .or_else(|| params.get("reduction"))
             .and_then(|value| value.as_str())
             .unwrap_or("");
+        // Rule 12.3.1: [菫晞｡梧焚蛟､縺ｮ螟画峩 (Modification of numerical values)]
         if reduction.eq_ignore_ascii_case("COUNT_GROUPS") {
             let mut group_mask: u32 = 0;
             for &cid in &state.players[p_idx].stage {
@@ -51,8 +52,8 @@ pub fn pay_costs_transactional(
 
     // 2. Pay all costs
     // Note: Since we pre-checked, these should succeed.
-    // If a cost has side effects that invalidate subsequent costs,
-    // we might need a more complex rollback mechanism.
+    // Rule 5.9: [繧ｳ繧ｹ繝医ｒ謾ｯ謇輔≧ (Pay Cost)]
+    // Rule 5.9.1: Change active energy to wait state (tapped)
     for cost in costs {
         if cost.is_optional {
             continue;
@@ -66,6 +67,8 @@ pub fn pay_costs_transactional(
     true
 }
 
+// Rule 9.7: Conditions and Costs (条件とコスト)
+// Rule 9.7.1: Costs are paid to resolve abilities
 pub fn check_cost(
     state: &GameState,
     db: &CardDatabase,
@@ -220,6 +223,7 @@ pub fn check_cost(
     result
 }
 
+// Rule 9.7: Conditions and Costs (条件とコスト)
 pub fn pay_cost(
     state: &mut GameState,
     db: &CardDatabase,

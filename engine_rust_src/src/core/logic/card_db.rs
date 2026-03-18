@@ -23,32 +23,62 @@ use std::collections::HashMap;
 // use crate::core::generated_constants::*; // Redundant due to enums.rs re-export
 // use crate::core::generated_constants::*; // Re-exported by enums.rs
 use super::models::*;
+use super::canonical;
 
+/// Rule 2.2.1: [カードの種類を表す情報 (Card Type Information)]
+/// Rule 2.2.2.2: Member Card
+/// Rule 3.2.1: [繝｡繝ｳ繝舌・繧ｫ繝ｼ繝・ (Member Card)]
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct MemberCard {
+    // Rule 2.2: [繧ｫ繝ｼ繝峨ち繧､繝・ (Card Type)]
+    // Rule 2.2.2.2: [繝｡繝ｳ繝舌・ (Member)]
+    // Rule 2.2.2.2.1: [コスト (2.6) やハート (2.9) を持つカードは、カードタイプがメンバーです (Member criteria)]
+    // Rule 3.2.1: Member Card Basics
     pub card_id: i32,
+    // Rule 2.14: Marginalia (Collector Number)
     pub card_no: String,
+    // Rule 2.3: [繧ｫ繝ｼ繝 dream名 (Card Name)]
+    // Rule 2.3.1: Card Name Location
     pub name: String,
+    // Rule 2.6: Cost
+    // Rule 2.6.1: Cost Location
     pub cost: u32,
+    // Rule 2.9: Heart
+    // Rule 2.9: [繝上・繝・ (Heart)]
+    // Rule 2.9.1: Heart Location
     pub hearts: [u8; 7],
+    // Rule 2.7: [繝悶Ξ繝ｼ繝・繝上・繝・ (Blade Heart)]
+    // Rule 2.7.1: Blade Heart Location
     pub blade_hearts: [u8; 7],
+    // Rule 2.8: [繝悶Ξ繝ｼ繝・ (Blade)]
+    // Rule 2.8.1: Blade Location
     pub blades: u32,
+    /// Rule 2.4: [繧ｰ繝ｫ繝ｼ繝 dream名 (Group Name)]
+    /// Rule 2.4.1: [カードが属するアイドルグループの名称 (Group Name definition)]
     pub groups: Vec<u8>,
+    /// Rule 2.5: [繝ｦ繝九ャ繝 dream名 (Unit Name)]
+    /// Rule 2.5.1: [ユニット名称の定義 (Unit Name definition)]
     pub units: Vec<u8>,
     pub abilities: Vec<Ability>,
+    // Rule 2.11: [蠢・ｦ√ワ繝ｼ繝・ (Necessary Hearts/Skill Icons)]
     #[serde(alias = "volume_icons")]
     pub note_icons: u32,
     pub draw_icons: u32,
+    /// Rule 2.12: Card Text
+    /// Rule 2.12.1: [カードが持つ能力や注釈などの文章 (Card Text definition)]
     #[serde(default)]
     pub ability_text: String,
     #[serde(default)]
     pub original_text: String,
     #[serde(default)]
     pub original_text_en: String,
+    /// Rule 2.14: Member Name / Character ID
     #[serde(default)]
     pub char_id: u32,
+    /// Rule 2.13: [繧､繝ｩ繧ｹ繝医Ξ繝ｼ繧ｷ繝ｧ繝ｳ (Illustration)]
     #[serde(default)]
     pub img_path: String,
+    /// Rule 2.14: [繝ｬ繧｢繝ｪ繝・ぅ (Rarity)]
     #[serde(default)]
     pub rarity: u8,
     #[serde(default)]
@@ -83,15 +113,29 @@ pub struct MemberCard {
     pub normalized_name: String,
 }
 
+/// Rule 2.2.1: [カードの種類を表す情報 (Card Type Information)]
+/// Rule 2.2.2.1: Live Card
+/// Rule 3.2.2: [繝ｩ繧､繝悶き繝ｼ繝・ (Live Card)]
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct LiveCard {
+    // Rule 2.2: [繧ｫ繝ｼ繝峨ち繧､繝・ (Card Type)]
+    // Rule 2.2.2.1: [繝ｩ繧､繝悶き繝ｼ繝・ (Live Card)]
+    // Rule 2.2.2.1.1: [スコア (2.10) や必要ハート (2.11) を持つカードは、カードタイプがライブです (Live criteria)]
     pub card_id: i32,
+    /// Rule 2.14: Marginalia
     pub card_no: String,
+    /// Rule 2.3: [繧ｫ繝ｼ繝 dream名 (Card Name)]
     pub name: String,
+    /// Rule 2.10: [繧ｹ繧ｳ繧偵ｋ (Score/Judgment)]
+    /// Rule 2.10.1: [スコアの定義 (Score definition)]
     pub score: u32,
+    /// Rule 2.11: [蠢・ｦ√ワ繝ｼ繝・ (Heart Requirements)]
+    /// Rule 2.11.1: Heart Requirement Location
     pub required_hearts: [u8; 7],
     pub abilities: Vec<Ability>,
+    /// Rule 2.4: [繧ｰ繝ｫ繝ｼ繝 dream名 (Group Name)]
     pub groups: Vec<u8>,
+    /// Rule 2.5: [繝ｦ繝九ャ繝 dream名 (Unit Name)]
     pub units: Vec<u8>,
     #[serde(alias = "volume_icons")]
     pub note_icons: u32,
@@ -122,6 +166,7 @@ pub struct LiveCard {
     pub normalized_name: String,
 }
 
+/// Rule 2.1: [繧ｫ繝ｼ繝峨ち繧､繝・ (Card Type)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Card {
     Member(MemberCard),
@@ -158,6 +203,13 @@ impl CardDatabase {
     pub fn compute_effect_mask(abilities: &[Ability]) -> u64 {
         let mut mask = 0u64;
         for ab in abilities {
+            if ab.bytecode.is_empty() {
+                if let Some(metadata) = canonical::derive_metadata_for_ability(ab) {
+                    mask |= metadata.effect_mask;
+                    continue;
+                }
+            }
+
             let bc = &ab.bytecode;
             if Self::has_opcode_static_fast(bc, O_ADD_BLADES as i32)
                 || Self::has_opcode_static_fast(bc, O_SET_BLADES as i32)
@@ -278,6 +330,21 @@ impl CardDatabase {
         ];
 
         for ab in &mut card.abilities {
+            // Detect canonical entries that still carry fallback bytecode.
+            // Canonical-only exports intentionally strip fallback bytecode and should
+            // remain marked as not needing fallback.
+            if ab.bytecode.is_empty()
+                && !ab.effects.is_empty()
+                && ab.source.is_some()
+                && !ab.fallback_bytecode.is_empty()
+            {
+                ab.needs_fallback = true;
+                // Log the detection (optional, can remove in production)
+                if cfg!(debug_assertions) {
+                    eprintln!("[FALLBACK] Card {} ability {} marked for fallback (canonical, no bytecode)", card.card_no, "?");
+                }
+            }
+
             if ab.trigger == TriggerType::OnPlay {
                 s_flags |= 0x01;
             }
@@ -297,79 +364,95 @@ impl CardDatabase {
             let mut ability_flags_for_ab = 0u64;
             let mut unflagged_logic_present = false;
 
-            let program = ab.bytecode_program();
-            let mut ip = 0;
-            while let Some(instr) = program.instruction_at(ip) {
-                let op = instr.op;
+            let should_use_canonical_metadata = ab.canonical_program.is_some();
 
-                match op {
-                    O_RETURN | O_LOOK_AND_CHOOSE => ability_flags_for_ab |= FLAG_DRAW as u64,
-                    O_SEARCH_DECK => ability_flags_for_ab |= FLAG_SEARCH as u64,
-                    O_RECOVER_LIVE | O_RECOVER_MEMBER => ability_flags_for_ab |= FLAG_RECOVER as u64,
-                    O_ADD_BLADES | O_ADD_HEARTS => ability_flags_for_ab |= FLAG_BUFF as u64,
-                    O_MOVE_MEMBER | O_SWAP_CARDS => ability_flags_for_ab |= FLAG_MOVE as u64,
-                    O_TAP_OPPONENT | O_TAP_MEMBER => ability_flags_for_ab |= FLAG_TAP as u64,
-                    O_ENERGY_CHARGE => ability_flags_for_ab |= FLAG_CHARGE as u64,
-                    O_ACTIVATE_MEMBER | O_SET_TAPPED => ability_flags_for_ab |= FLAG_TEMPO as u64,
-                    O_REDUCE_COST => ability_flags_for_ab |= FLAG_REDUCE as u64,
-                    O_BOOST_SCORE => ability_flags_for_ab |= FLAG_BOOST as u64,
-                    O_TRANSFORM_COLOR => ability_flags_for_ab |= FLAG_TRANSFORM as u64,
-                    O_REDUCE_HEART_REQ => ability_flags_for_ab |= FLAG_WIN_COND as u64,
-                    _ => {}
+            if should_use_canonical_metadata {
+                if let Some(metadata) = canonical::derive_metadata_for_ability(ab) {
+                    ability_flags_for_ab |= metadata.ability_flags;
+                    unflagged_logic_present |= metadata.has_unflagged_logic;
+                    ab.choice_flags |= metadata.choice_flags;
+                    if ab.choice_count == 0 {
+                        ab.choice_count = metadata.choice_count;
+                    }
+                    ab.opcodes_mask |= metadata.opcodes_mask;
+                    ability_opcodes_mask |= ab.opcodes_mask;
                 }
-
-                match op {
-                    O_LOOK_AND_CHOOSE => {
-                        ab.choice_flags |= CHOICE_FLAG_LOOK;
-                        if ab.choice_count == 0 {
-                            let v = instr.v;
-                            let pick = (v >> 8) & 0xFF;
-                            ab.choice_count = if pick > 0 { pick as u8 } else { 3 };
-                        }
-                    }
-                    O_SELECT_MODE => {
-                        ab.choice_flags |= CHOICE_FLAG_MODE;
-                        if ab.choice_count == 0 {
-                            ab.choice_count = instr.v as u8;
-                        }
-                    }
-                    O_COLOR_SELECT => {
-                        ab.choice_flags |= CHOICE_FLAG_COLOR;
-                        if ab.choice_count == 0 {
-                            ab.choice_count = 6;
-                        }
-                    }
-                    O_ORDER_DECK => {
-                        ab.choice_flags |= CHOICE_FLAG_ORDER;
-                        if ab.choice_count == 0 {
-                            ab.choice_count = 3;
-                        }
-                    }
-                    _ => {}
-                }
-
-                ab.opcodes_mask |= 1u128 << (op as u32 % 128);
-                ability_opcodes_mask |= ab.opcodes_mask;
                 trigger_mask |= 1u32 << (ab.trigger as u32 % 32);
+            } else {
+                let program = ab.bytecode_program();
+                let mut ip = 0;
+                while let Some(instr) = program.instruction_at(ip) {
+                    let op = instr.op;
 
-                if op == O_BATON_TOUCH_MOD && instr.v >= 2 {
-                    has_multi_baton = true;
+                    match op {
+                        O_RETURN | O_LOOK_AND_CHOOSE => ability_flags_for_ab |= FLAG_DRAW as u64,
+                        O_SEARCH_DECK => ability_flags_for_ab |= FLAG_SEARCH as u64,
+                        O_RECOVER_LIVE | O_RECOVER_MEMBER => ability_flags_for_ab |= FLAG_RECOVER as u64,
+                        O_ADD_BLADES | O_ADD_HEARTS => ability_flags_for_ab |= FLAG_BUFF as u64,
+                        O_MOVE_MEMBER | O_SWAP_CARDS => ability_flags_for_ab |= FLAG_MOVE as u64,
+                        O_TAP_OPPONENT | O_TAP_MEMBER => ability_flags_for_ab |= FLAG_TAP as u64,
+                        O_ENERGY_CHARGE => ability_flags_for_ab |= FLAG_CHARGE as u64,
+                        O_ACTIVATE_MEMBER | O_SET_TAPPED => ability_flags_for_ab |= FLAG_TEMPO as u64,
+                        O_REDUCE_COST => ability_flags_for_ab |= FLAG_REDUCE as u64,
+                        O_BOOST_SCORE => ability_flags_for_ab |= FLAG_BOOST as u64,
+                        O_TRANSFORM_COLOR => ability_flags_for_ab |= FLAG_TRANSFORM as u64,
+                        O_REDUCE_HEART_REQ => ability_flags_for_ab |= FLAG_WIN_COND as u64,
+                        _ => {}
+                    }
+
+                    match op {
+                        O_LOOK_AND_CHOOSE => {
+                            ab.choice_flags |= CHOICE_FLAG_LOOK;
+                            if ab.choice_count == 0 {
+                                let v = instr.v;
+                                let pick = (v >> 8) & 0xFF;
+                                ab.choice_count = if pick > 0 { pick as u8 } else { 3 };
+                            }
+                        }
+                        O_SELECT_MODE => {
+                            ab.choice_flags |= CHOICE_FLAG_MODE;
+                            if ab.choice_count == 0 {
+                                ab.choice_count = instr.v as u8;
+                            }
+                        }
+                        O_COLOR_SELECT => {
+                            ab.choice_flags |= CHOICE_FLAG_COLOR;
+                            if ab.choice_count == 0 {
+                                ab.choice_count = 6;
+                            }
+                        }
+                        O_ORDER_DECK => {
+                            ab.choice_flags |= CHOICE_FLAG_ORDER;
+                            if ab.choice_count == 0 {
+                                ab.choice_count = 3;
+                            }
+                        }
+                        _ => {}
+                    }
+
+                    ab.opcodes_mask |= 1u128 << (op as u32 % 128);
+                    ability_opcodes_mask |= ab.opcodes_mask;
+                    trigger_mask |= 1u32 << (ab.trigger as u32 % 32);
+
+                    if op == O_BATON_TOUCH_MOD && instr.v >= 2 {
+                        has_multi_baton = true;
+                    }
+
+                    if [O_ADD_BLADES, O_ADD_HEARTS, O_BUFF_POWER, O_REDUCE_COST, O_INCREASE_COST, O_SET_HEART_COST]
+                        .contains(&op)
+                    {
+                        let val = instr.v;
+                        let attr = instr.a as u64;
+                        let slot = instr.raw_s;
+                        ab.preparsed_modifiers.push(PreparsedModifier { op, val, attr, slot });
+                    }
+
+                    if !flagged_ops.contains(&op) {
+                        unflagged_logic_present = true;
+                    }
+
+                    ip = program.next_ip(ip);
                 }
-
-                if [O_ADD_BLADES, O_ADD_HEARTS, O_BUFF_POWER, O_REDUCE_COST, O_INCREASE_COST, O_SET_HEART_COST]
-                    .contains(&op)
-                {
-                    let val = instr.v;
-                    let attr = instr.a as u64;
-                    let slot = instr.raw_s;
-                    ab.preparsed_modifiers.push(PreparsedModifier { op, val, attr, slot });
-                }
-
-                if !flagged_ops.contains(&op) {
-                    unflagged_logic_present = true;
-                }
-
-                ip = program.next_ip(ip);
             }
 
             if ab.trigger == TriggerType::OnPlay && ab.choice_flags != 0 {

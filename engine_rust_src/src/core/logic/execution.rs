@@ -451,7 +451,7 @@ mod tests {
         state.first_player = 0;
         state.current_player = 1;
         state.players[1].hand = vec![3000].into();
-        state.players[1].live_zone = [-1, -1, -1];
+        state.players[1].live_zone = vec![-1, -1, -1];
 
         state.step_opponent_turnseq(&db);
 

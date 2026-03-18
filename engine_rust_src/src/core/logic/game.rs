@@ -104,17 +104,28 @@ impl GameState {
         }
     }
 
+    pub fn next_turn(&mut self) {
+        // Rule 1.3.1: [繧ｿ繝ｼ繝ｳ繝励Ξ繧､繝､繝ｼ (Turn Player)]
+        // Rule 3.3.1: [繧ｿ繝ｼ繝ｳ繝励Ξ繧､繝､繝ｼ (Turn Player)]
+        self.current_player = 1 - self.current_player;
+        self.turn += 1;
+        self.phase = Phase::Active;
+    }
+
     pub fn clear_execution_id(&mut self) {
         self.ui.current_execution_id = None;
     }
 
+    // Rule 5.1: Draw
     pub fn draw_cards(&mut self, player_idx: usize, count: u32) {
+        // Rule 5.1.1: Take cards from the top of the main deck
         let t = self.turn as i32;
         for _ in 0..count {
             if self.core.players[player_idx].deck.is_empty() {
                 self.resolve_deck_refresh(player_idx);
             }
             if let Some(card_id) = self.core.players[player_idx].pop_deck_card() {
+                // Rule 5.1.2: Add cards to hand
                 self.core.players[player_idx].draw_hand_card(card_id, t);
             }
         }
@@ -249,12 +260,14 @@ impl GameState {
     // --- Phase Methods ---
 
 
+    /// Rule 5.2: Play Member
     pub fn play_member(
         &mut self,
         db: &CardDatabase,
         hand_idx: usize,
         slot_idx: usize,
     ) -> Result<(), String> {
+        // Rule 5.2.1: Selection of a member card from hand
         self.play_member_with_choice(db, hand_idx, slot_idx, -1, -1, 0)
     }
 
@@ -313,6 +326,7 @@ impl GameState {
         TurnPhaseController::do_draw_phase(self, db);
     }
 
+    // Rule 5.3: Set Live
     pub fn set_live_cards(&mut self, player_idx: usize, card_ids: Vec<u32>) -> Result<(), String> {
         if card_ids.len() > 3 {
             return Err("Too many lives".to_string());
@@ -326,10 +340,12 @@ impl GameState {
             ));
         }
 
+        // Rule 5.3.1: Selection of live cards from hand
         for cid in card_ids {
             let mut placed = false;
             for i in 0..3 {
                 if self.core.players[player_idx].live_zone[i] == -1 {
+                    // Rule 5.3.2: Placing in Live Zone
                     self.core.players[player_idx].live_zone[i] = cid as i32;
                     self.core.players[player_idx].set_revealed(i, false);
                     // Rule 8.2.2: Draw same number of cards as placed

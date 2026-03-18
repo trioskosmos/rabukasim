@@ -150,7 +150,7 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         state.phase = Phase::Main;
-        state.current_player = 0;
+        state.core.current_player = 0;
         state.first_player = 0;
         state.ui.silent = true;
 
@@ -439,7 +439,7 @@ mod tests {
         let mut state = create_test_state();
         state.ui.silent = true;
         state.phase = Phase::LiveSet;
-        state.current_player = 0;
+        state.core.current_player = 0;
         state.first_player = 0;
 
         let ayumu_id = db
@@ -599,7 +599,7 @@ mod tests {
 
         let mut legal_state = create_test_state();
         legal_state.phase = Phase::Main;
-        legal_state.current_player = 0;
+        legal_state.core.current_player = 0;
         legal_state.ui.silent = true;
         legal_state.players[0].stage[0] = shizuku_id;
         legal_state.players[0].discard = vec![legal_remote_id].into();
@@ -625,7 +625,7 @@ mod tests {
 
         let mut illegal_state = create_test_state();
         illegal_state.phase = Phase::Main;
-        illegal_state.current_player = 0;
+        illegal_state.core.current_player = 0;
         illegal_state.ui.silent = true;
         illegal_state.players[0].stage[0] = shizuku_id;
         illegal_state.players[0].discard = vec![tap_self_remote_id].into();
@@ -742,7 +742,7 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         state.phase = Phase::Main;
-        state.current_player = 0;
+        state.core.current_player = 0;
         state.ui.silent = true;
 
         let emma_id = db
@@ -834,7 +834,7 @@ mod tests {
         let mut state = create_test_state();
         state.ui.silent = true;
         state.phase = Phase::LiveSet;
-        state.current_player = 0;
+        state.core.current_player = 0;
         state.first_player = 0;
 
         let rina_id = db
@@ -942,7 +942,7 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         state.phase = Phase::Main;
-        state.current_player = 0;
+        state.core.current_player = 0;
         state.first_player = 0;
         state.ui.silent = true;
 
@@ -1649,7 +1649,7 @@ mod tests {
 
         let mut state = create_test_state();
         state.phase = Phase::LiveResult;
-        state.current_player = 0;
+        state.core.current_player = 0;
         state.first_player = 0;
         state.ui.silent = true;
 

@@ -53,6 +53,13 @@ def sync_assets():
     else:
         print(f"WARNING: {COMPILED_SRC} not found!")
 
+    CANONICAL_SRC = os.path.join(ROOT, "canonical_ability_model", "reports", "canonical_runtime_preview.json")
+    if os.path.exists(CANONICAL_SRC):
+        shutil.copy2(CANONICAL_SRC, os.path.join(DATA_DEST, "canonical_runtime_preview.json"))
+        print(f"Synced canonical_runtime_preview.json to {DATA_DEST}")
+    else:
+        print(f"WARNING: {CANONICAL_SRC} not found!")
+
     # 2. Smart Sync Images
     IMG_DEST = os.path.join(LAUNCH_DEST, "img")
     print(f"Syncing Images -> {IMG_DEST} (Filtering for WebP/Icons)")

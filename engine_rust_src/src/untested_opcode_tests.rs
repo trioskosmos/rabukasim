@@ -501,7 +501,7 @@ fn test_prevent_success_pile_integration() {
     state.ui.silent = true;
 
     // Set up a live in live_zone
-    state.players[0].live_zone = [55001, -1, -1];
+    state.players[0].live_zone = vec![55001, -1, -1];
 
     let ctx = AbilityContext {
         player_id: 0,

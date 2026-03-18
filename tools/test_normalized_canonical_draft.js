@@ -111,23 +111,55 @@ function validateCanonical(canonical) {
   return issues;
 }
 
+function normalizeDraftEntries(data) {
+  return Array.isArray(data)
+    ? data.map((canonical) => ({
+        card_no: canonical.card_no || null,
+        canonical,
+        issues: [],
+      }))
+    : Array.isArray(data.entries)
+      ? data.entries
+      : [];
+}
+
+function dedupeEntries(entries) {
+  const seen = new Set();
+  const deduped = [];
+  for (const entry of entries) {
+    const key = `${entry.canonical?.pseudocode || ""}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    deduped.push(entry);
+  }
+  return deduped;
+}
+
 function main() {
-  if (process.argv.length !== 3) {
-    console.error("usage: node tools/test_normalized_canonical_draft.js <normalized-wrapper-json>");
+  if (process.argv.length < 3 || process.argv.length > 4) {
+    console.error("usage: node tools/test_normalized_canonical_draft.js <canonical-json-or-wrapper-json> [--unique]");
     process.exit(2);
   }
 
   const inputPath = path.join(repoRoot, process.argv[2]);
+  const uniqueMode = process.argv.includes("--unique");
   const data = JSON.parse(fs.readFileSync(inputPath, "utf8"));
-  const entries = Array.isArray(data.entries) ? data.entries : [];
+  const rawEntries = normalizeDraftEntries(data);
+  const entries = uniqueMode ? dedupeEntries(rawEntries) : rawEntries;
 
   const summary = {
+    input_mode: Array.isArray(data) ? "raw_array" : "wrapper",
+    unique_mode: uniqueMode,
     total_entries: entries.length,
+    original_entry_count: rawEntries.length,
     wrapper_issue_free: 0,
     wrapper_with_issues: 0,
     canonical_validation_pass: 0,
     canonical_validation_fail: 0,
     bridge_supported: 0,
+    runtime_ready: 0,
     bridge_match: 0,
     bridge_mismatch: 0,
     samples: {
@@ -136,6 +168,10 @@ function main() {
       bridge_mismatch: [],
     },
   };
+
+  if (entries.length === 0) {
+    summary.warning = "No entries found. Expected a raw array of canonical objects or a wrapper with `entries`.";
+  }
 
   for (const [idx, entry] of entries.entries()) {
     const wrapperIssues = Array.isArray(entry.issues) ? entry.issues : [];
@@ -163,6 +199,7 @@ function main() {
       const result = compareCanonicalToCompiled(entry.canonical, entry.card_no, null);
       if (result.supported) {
         summary.bridge_supported += 1;
+        summary.runtime_ready += 1;
       }
       if (result.matches) {
         summary.bridge_match += 1;
@@ -186,4 +223,12 @@ function main() {
   console.log(JSON.stringify(summary, null, 2));
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  validateCanonical,
+  dedupeEntries,
+  normalizeDraftEntries,
+};

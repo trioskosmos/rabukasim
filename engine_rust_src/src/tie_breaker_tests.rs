@@ -47,8 +47,8 @@ fn test_rule_8_4_7_1_success_cap_on_tie() {
         .ui
         .performance_results
         .insert(1, json!({"success": true, "total_score": 10}));
-    state.players[0].live_zone = [137, -1, -1];
-    state.players[1].live_zone = [137, -1, -1];
+    state.players[0].live_zone = vec![137, -1, -1];
+    state.players[1].live_zone = vec![137, -1, -1];
 
     state.do_live_result(&db);
 
@@ -79,8 +79,8 @@ fn test_rule_8_4_7_1_success_cap_on_tie() {
         .ui
         .performance_results
         .insert(1, json!({"success": true, "total_score": 10}));
-    state2.core.players[0].live_zone = [137, -1, -1];
-    state2.core.players[1].live_zone = [137, -1, -1];
+    state2.core.players[0].live_zone = vec![137, -1, -1];
+    state2.core.players[1].live_zone = vec![137, -1, -1];
 
     state2.do_live_result(&db);
 
@@ -104,8 +104,8 @@ fn test_rule_8_4_7_1_success_cap_on_tie() {
         .ui
         .performance_results
         .insert(1, json!({"success": true, "total_score": 10}));
-    state3.core.players[0].live_zone = [137, -1, -1];
-    state3.core.players[1].live_zone = [137, -1, -1];
+    state3.core.players[0].live_zone = vec![137, -1, -1];
+    state3.core.players[1].live_zone = vec![137, -1, -1];
 
     state3.do_live_result(&db);
 

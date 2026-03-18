@@ -21,6 +21,28 @@ OPCODES = {
 }
 
 
+SAFE_MEMBER_SLOT_VALUES = {0, 1, 2, 3, 4, 10}
+SAFE_HEART_COLOR_VALUES = set(range(7))
+
+
+def is_safe_hardcoded_instruction(op, v, a_low, a_high, s):
+    if op >= 1000:
+        return False
+
+    if op not in OPCODES:
+        return False
+
+    if op in {11, 12, 18, 39, 43, 51}:
+        if s not in SAFE_MEMBER_SLOT_VALUES:
+            return False
+
+    if op in {12, 39}:
+        if a_high != 0 or a_low not in SAFE_HEART_COLOR_VALUES:
+            return False
+
+    return True
+
+
 def generate_rust():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
@@ -113,12 +135,11 @@ def generate_rust():
                 if op == 0:
                     continue
 
-                # Handle negations (mapped in resolve_bytecode as op + 1000)
-                real_op = op
-                if real_op >= 1000:
+                if not is_safe_hardcoded_instruction(op, v, a_low, a_high, s):
                     valid = False
                     break
 
+                real_op = op
                 slot = "ctx.target_slot as usize" if s == 10 else f"{s} as usize"
 
                 if real_op in OPCODES:

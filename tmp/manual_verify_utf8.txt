@@ -1,0 +1,470 @@
+﻿=== MANUAL VERIFICATION REQUIRED: Low/Medium Confidence Cards ===
+
+Showing 20 cards for manual Japanese text review
+
+
+======================================================================
+1. LL-bp1-001-R・・[CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{toujyou.png|逋ｻ蝣ｴ}}閾ｪ蛻・・謗ｧ縺亥ｮ､縺九ｉ繝｡繝ｳ繝舌・繧ｫ繝ｼ繝峨ｒ1譫壽焔譛ｭ縺ｫ蜉縺医ｋ縲・{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}謇区惆縺ｮ縲御ｸ雁次豁ｩ螟｢縲阪→縲梧ｾ∬ｰｷ縺九・繧薙阪→縲梧律驥惹ｸ玖干蟶・阪ｒ縲∝･ｽ縺阪↑邨・∩蜷医ｏ縺帙〒蜷郁ｨ・譫壹∵而縺亥ｮ､縺ｫ鄂ｮ縺・※繧ゅｈ縺・ｼ壹Λ繧､繝也ｵゆｺ・凾縺ｾ縺ｧ縲√鶏{jyouji.png|蟶ｸ譎・}繝ｩ繧､繝悶・蜷郁ｨ医せ繧ｳ繧｢繧抵ｼ具ｼ薙☆繧九ゅ阪ｒ蠕励ｋ縲・・域焔譛ｭ縺ｮ縺薙・繧ｫ繝ｼ繝峨ｂ縺薙・蜉ｹ譫懊〒謗ｧ縺亥ｮ､縺ｫ鄂ｮ縺代ｋ縲ゑｼ・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_LIVE_START
+COST: DISCARD_HAND(3) {FILTER="Ayumu/Kanon/Kaho"} (Optional)
+EFFECT: BOOST_SCORE(3) -> SELF
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_PLAY
+EFFECT: RECOVER_MEMBER(1) (Optional) -> CARD_HAND
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+2. LL-bp2-001-R・・[CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{jyouji.png|蟶ｸ譎・}謇区惆縺ｫ縺ゅｋ縺薙・繝｡繝ｳ繝舌・繧ｫ繝ｼ繝峨・繧ｳ繧ｹ繝医・縲√％縺ｮ繧ｫ繝ｼ繝我ｻ･螟悶・閾ｪ蛻・・謇区惆1譫壹↓縺､縺阪・蟆代↑縺上↑繧九・{{jyouji.png|蟶ｸ譎・}縺薙・繝｡繝ｳ繝舌・縺ｯ繝舌ヨ繝ｳ繧ｿ繝・メ縺ｧ謗ｧ縺亥ｮ､縺ｫ鄂ｮ縺代↑縺・・{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}謇区惆縺ｮ縲梧ｸ｡霎ｺ譖懊阪→縲碁ｬｼ蝪壼､冗ｾ弱阪→縲悟､ｧ豐｢迹迺・ｹ・阪ｒ縲∝･ｽ縺阪↑譫壽焚謗ｧ縺亥ｮ､縺ｫ鄂ｮ縺・※繧ゅｈ縺・ｼ壹Λ繧､繝也ｵゆｺ・凾縺ｾ縺ｧ縲√％繧後↓繧医▲縺ｦ謗ｧ縺亥ｮ､縺ｫ鄂ｮ縺・◆譫壽焚1譫壹↓縺､縺阪＋{icon_blade.png|繝悶Ξ繝ｼ繝厭}繧貞ｾ励ｋ縲・・域焔譛ｭ縺ｮ縺薙・繧ｫ繝ｼ繝峨ｂ縺薙・蜉ｹ譫懊〒謗ｧ縺亥ｮ､縺ｫ鄂ｮ縺代ｋ縲ゑｼ・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: CONSTANT
+EFFECT: REDUCE_COST(1) {PER_CARD="HAND", FILTER="NOT_SELF"} -> SELF
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: CONSTANT
+EFFECT: REDUCE_COST(1) {PER_CARD="HAND", FILTER="NOT_SELF"} -> SELF
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+3. LL-bp4-001-R・・[CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{toujyou.png|逋ｻ蝣ｴ}}/{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}閾ｪ蛻・・繝・ャ繧ｭ縺ｮ荳翫°繧峨き繝ｼ繝峨ｒ5譫夊ｦ九ｋ縲ゅ◎縺ｮ荳ｭ縺九ｉ縲檎ｵ｢轢ｬ邨ｵ驥後阪°縲梧悃鬥呎棡譫励阪°縲瑚痩譛域°縲阪・繝｡繝ｳ繝舌・繧ｫ繝ｼ繝峨ｒ1譫壼・髢九＠縺ｦ謇区惆縺ｫ蜉縺医※繧ゅｈ縺・よｮ九ｊ繧呈而縺亥ｮ､縺ｫ鄂ｮ縺上ゅ◎縺ｮ蠕後∫嶌謇九・繧ｹ繝・・繧ｸ縺ｫ縺・ｋ縲√％繧後↓繧医ｊ蜈ｬ髢九＠縺溘き繝ｼ繝峨・繧ｳ繧ｹ繝井ｻ･荳九〒縲√°縺､蜈・・戟縺､{{icon_blade.png|繝悶Ξ繝ｼ繝厭}縺ｮ謨ｰ縺・縺､莉･荳九・繝｡繝ｳ繝舌・繧偵☆縺ｹ縺ｦ繧ｦ繧ｧ繧､繝医↓縺吶ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_PLAY
+EFFECT: LOOK_AND_CHOOSE(5) {FILTER="Eri/Karin/Ren"} -> CARD_HAND, DISCARD_REMAINDER
+EFFECT: TAP_OPPONENT(99) -> OPPONENT {FILTER="COST_LE_REVEALED, BLADE_LE_3"}
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_PLAY
+EFFECT: LOOK_AND_CHOOSE(5) {FILTER="Eri/Karin/Ren"} -> CARD_HAND, DISCARD_REMAINDER
+EFFECT: TAP_OPPONENT(99) -> OPPONENT {FILTER="COST_LE_REVEALED, BLADE_LE_3"}
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+4. LL-bp4-001-R・・[CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{toujyou.png|逋ｻ蝣ｴ}}/{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}閾ｪ蛻・・繝・ャ繧ｭ縺ｮ荳翫°繧峨き繝ｼ繝峨ｒ5譫夊ｦ九ｋ縲ゅ◎縺ｮ荳ｭ縺九ｉ縲檎ｵ｢轢ｬ邨ｵ驥後阪°縲梧悃鬥呎棡譫励阪°縲瑚痩譛域°縲阪・繝｡繝ｳ繝舌・繧ｫ繝ｼ繝峨ｒ1譫壼・髢九＠縺ｦ謇区惆縺ｫ蜉縺医※繧ゅｈ縺・よｮ九ｊ繧呈而縺亥ｮ､縺ｫ鄂ｮ縺上ゅ◎縺ｮ蠕後∫嶌謇九・繧ｹ繝・・繧ｸ縺ｫ縺・ｋ縲√％繧後↓繧医ｊ蜈ｬ髢九＠縺溘き繝ｼ繝峨・繧ｳ繧ｹ繝井ｻ･荳九〒縲√°縺､蜈・・戟縺､{{icon_blade.png|繝悶Ξ繝ｼ繝厭}縺ｮ謨ｰ縺・縺､莉･荳九・繝｡繝ｳ繝舌・繧偵☆縺ｹ縺ｦ繧ｦ繧ｧ繧､繝医↓縺吶ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_LIVE_START
+EFFECT: LOOK_AND_CHOOSE(5) {FILTER="Eri/Karin/Ren"} -> CARD_HAND, DISCARD_REMAINDER
+EFFECT: TAP_OPPONENT(99) -> OPPONENT {FILTER="COST_LE_REVEALED, BLADE_LE_3"}
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_PLAY
+EFFECT: LOOK_AND_CHOOSE(5) {FILTER="Eri/Karin/Ren"} -> CARD_HAND, DISCARD_REMAINDER
+EFFECT: TAP_OPPONENT(99) -> OPPONENT {FILTER="COST_LE_REVEALED, BLADE_LE_3"}
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+5. PL!-PR-003-PR [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{kidou.png|襍ｷ蜍扶}{{turn1.png|繧ｿ繝ｼ繝ｳ1蝗栲}謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺擾ｼ夊・蛻・・謗ｧ縺亥ｮ､縺九ｉ蠢・ｦ√ワ繝ｼ繝医↓{{heart_03.png|heart03}}繧・莉･荳雁性繧繝ｩ繧､繝悶き繝ｼ繝峨ｒ1譫壽焔譛ｭ縺ｫ蜉縺医ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ACTIVATED (Once per turn)
+COST: DISCARD_HAND(2)
+EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="REQS_HAS_RED_GE_3"} -> CARD_HAND
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ACTIVATED (Once per turn)
+COST: DISCARD_HAND(2)
+EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="REQS_HAS_RED_GE_3"} -> CARD_HAND
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+6. PL!-PR-004-PR [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{kidou.png|襍ｷ蜍扶}{{turn1.png|繧ｿ繝ｼ繝ｳ1蝗栲}謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺擾ｼ夊・蛻・・謗ｧ縺亥ｮ､縺九ｉ蠢・ｦ√ワ繝ｼ繝医↓{{heart_01.png|heart01}}繧・莉･荳雁性繧繝ｩ繧､繝悶き繝ｼ繝峨ｒ1譫壽焔譛ｭ縺ｫ蜉縺医ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ACTIVATED (Once per turn)
+COST: DISCARD_HAND(2)
+EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="REQS_HAS_RED_GE_3"} -> CARD_HAND
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ACTIVATED (Once per turn)
+COST: DISCARD_HAND(2)
+EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="REQS_HAS_RED_GE_3"} -> CARD_HAND
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+7. PL!-bp3-002-P [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{toujyou.png|逋ｻ蝣ｴ}}謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺・※繧ゅｈ縺・ｼ夂嶌謇九・繧ｹ繝・・繧ｸ縺ｫ縺・ｋ繧ｳ繧ｹ繝・莉･荳九・繝｡繝ｳ繝舌・繧・莠ｺ縺ｾ縺ｧ繧ｦ繧ｧ繧､繝医↓縺吶ｋ縲ゑｼ医え繧ｧ繧､繝育憾諷九・繝｡繝ｳ繝舌・縺梧戟縺､{{icon_blade.png|繝悶Ξ繝ｼ繝厭}縺ｯ縲√お繝ｼ繝ｫ縺ｧ蜈ｬ髢九☆繧区椢謨ｰ繧貞｢励ｄ縺輔↑縺・ゑｼ・{{jyouji.png|蟶ｸ譎・}逶ｸ謇九・繧ｹ繝・・繧ｸ縺ｫ縺・ｋ繧ｦ繧ｧ繧､繝育憾諷九・繝｡繝ｳ繝舌・1莠ｺ縺ｫ縺､縺阪＋{icon_blade.png|繝悶Ξ繝ｼ繝厭}繧貞ｾ励ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_PLAY
+COST: DISCARD_HAND(1) (Optional) -> SUCCESS
+EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_MEMBER(2) {FILTER="OPPONENT, COST_LE=4, STATUS=ACTIVE"} -> TARGETS; TAP_MEMBER(TARGETS)
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_PLAY
+COST: DISCARD_HAND(1) (Optional) -> SUCCESS
+EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_MEMBER(2) {FILTER="OPPONENT, COST_LE=4, STATUS=ACTIVE"} -> TARGETS; TAP_MEMBER(TARGETS)
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+8. PL!-bp3-002-P [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{toujyou.png|逋ｻ蝣ｴ}}謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺・※繧ゅｈ縺・ｼ夂嶌謇九・繧ｹ繝・・繧ｸ縺ｫ縺・ｋ繧ｳ繧ｹ繝・莉･荳九・繝｡繝ｳ繝舌・繧・莠ｺ縺ｾ縺ｧ繧ｦ繧ｧ繧､繝医↓縺吶ｋ縲ゑｼ医え繧ｧ繧､繝育憾諷九・繝｡繝ｳ繝舌・縺梧戟縺､{{icon_blade.png|繝悶Ξ繝ｼ繝厭}縺ｯ縲√お繝ｼ繝ｫ縺ｧ蜈ｬ髢九☆繧区椢謨ｰ繧貞｢励ｄ縺輔↑縺・ゑｼ・{{jyouji.png|蟶ｸ譎・}逶ｸ謇九・繧ｹ繝・・繧ｸ縺ｫ縺・ｋ繧ｦ繧ｧ繧､繝育憾諷九・繝｡繝ｳ繝舌・1莠ｺ縺ｫ縺､縺阪＋{icon_blade.png|繝悶Ξ繝ｼ繝厭}繧貞ｾ励ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: CONSTANT
+EFFECT: COUNT_MEMBER {FILTER="OPPONENT, STATUS=TAPPED"} -> COUNT_VAL; ADD_BLADES(1, PER_CARD=COUNT_VAL) -> SELF
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_PLAY
+COST: DISCARD_HAND(1) (Optional) -> SUCCESS
+EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_MEMBER(2) {FILTER="OPPONENT, COST_LE=4, STATUS=ACTIVE"} -> TARGETS; TAP_MEMBER(TARGETS)
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+9. PL!-bp3-004-P [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{toujyou.png|逋ｻ蝣ｴ}}閾ｪ蛻・・繧ｹ繝・・繧ｸ縺ｫ縺・ｋ繝｡繝ｳ繝舌・1莠ｺ縺ｫ縺､縺阪√き繝ｼ繝峨ｒ1譫壼ｼ輔￥縲ゅ◎縺ｮ蠕後∵焔譛ｭ繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺上・{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}閾ｪ蛻・・謌仙粥繝ｩ繧､繝悶き繝ｼ繝臥ｽｮ縺榊ｴ縺ｫ繧ｫ繝ｼ繝峨′縺ゅｋ蝣ｴ蜷医∵焔譛ｭ繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺・※繧ゅｈ縺・ゅ◎縺・＠縺溷ｴ蜷医∬・蛻・・謗ｧ縺亥ｮ､縺九ｉ縲斜ｼ's縲上・繝ｩ繧､繝悶き繝ｼ繝峨ｒ1譫壽焔譛ｭ縺ｫ蜉縺医ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_LIVE_START
+CONDITION: COUNT_SUCCESS_LIVE(PLAYER) {MIN=1}
+COST: DISCARD_HAND(1) (Optional) -> SUCCESS
+EFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); SELECT_RECOVER_LIVE(1) {FILTER="GROUP_ID=0"} -> CARD_HAND
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_PLAY
+EFFECT: COUNT_MEMBER(PLAYER) -> COUNT_VAL; DRAW(COUNT_VAL); DISCARD_HAND(1)
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+10. PL!-bp3-005-P [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{toujyou.png|逋ｻ蝣ｴ}}閾ｪ蛻・・繧ｹ繝・・繧ｸ縺ｫ縺・ｋ縺吶∋縺ｦ縺ｮ繝｡繝ｳ繝舌・繧偵い繧ｯ繝・ぅ繝悶↓縺吶ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_PLAY
+EFFECT: SELECT_MEMBER(ALL) {FILTER="STATUS=TAPPED"} -> TARGETS; ACTIVATE_MEMBER(TARGETS)
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_PLAY
+EFFECT: SELECT_MEMBER(ALL) {FILTER="STATUS=TAPPED"} -> TARGETS; ACTIVATE_MEMBER(TARGETS)
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+11. PL!-bp3-009-P [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{toujyou.png|逋ｻ蝣ｴ}}閾ｪ蛻・・繧ｹ繝・・繧ｸ縺ｫ繧ｳ繧ｹ繝・3莉･荳翫・繝｡繝ｳ繝舌・縺後＞繧句ｴ蜷医√き繝ｼ繝峨ｒ1譫壼ｼ輔￥縲・{{kidou.png|襍ｷ蜍扶}{{turn1.png|繧ｿ繝ｼ繝ｳ1蝗栲}縺薙・繝｡繝ｳ繝舌・繧偵え繧ｧ繧､繝医↓縺吶ｋ・嘴{heart_01.png|heart01}}縺宮{heart_03.png|heart03}}縺宮{heart_06.png|heart06}}縺ｮ縺・■縲・縺､繧帝∈縺ｶ縲ゅΛ繧､繝也ｵゆｺ・凾縺ｾ縺ｧ縲・∈繧薙□繝上・繝医ｒ1縺､蠕励ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_PLAY
+CONDITION: COUNT_STAGE {MIN=1, FILTER="COST_GE=13"}
+EFFECT: DRAW(1)
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_PLAY
+CONDITION: COUNT_STAGE {MIN=1, FILTER="COST_GE=13"}
+EFFECT: DRAW(1)
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+12. PL!-bp3-010-N [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{toujyou.png|逋ｻ蝣ｴ}}謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺・※繧ゅｈ縺・ｼ夊・蛻・・繝・ャ繧ｭ縺ｮ荳翫°繧峨き繝ｼ繝峨ｒ5譫夊ｦ九ｋ縲ゅ◎縺ｮ荳ｭ縺九ｉ繝ｩ繧､繝悶き繝ｼ繝峨ｒ1譫壼・髢九＠縺ｦ謇区惆縺ｫ蜉縺医※繧ゅｈ縺・よｮ九ｊ繧呈而縺亥ｮ､縺ｫ鄂ｮ縺上・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_PLAY
+COST: DISCARD_HAND(1) (Optional)
+EFFECT: LOOK_AND_CHOOSE(5) {FILTER="TYPE_LIVE"} (Optional) -> CARD_HAND, DISCARD_REMAINDER
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_PLAY
+COST: DISCARD_HAND(1) (Optional)
+EFFECT: LOOK_AND_CHOOSE(5) {FILTER="TYPE_LIVE"} (Optional) -> CARD_HAND, DISCARD_REMAINDER
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+13. PL!-bp3-011-N [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}{{heart_01.png|heart01}}縺宮{heart_03.png|heart03}}縺宮{heart_06.png|heart06}}縺ｮ縺・■縲・縺､繧帝∈縺ｶ縲ゅΛ繧､繝也ｵゆｺ・凾縺ｾ縺ｧ縲∬・蛻・・謌仙粥繝ｩ繧､繝悶き繝ｼ繝臥ｽｮ縺榊ｴ縺ｫ縺ゅｋ繧ｫ繝ｼ繝・譫壹↓縺､縺阪・∈繧薙□繝上・繝医ｒ1縺､蠕励ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_LIVE_START
+EFFECT: HEART_SELECT(1) {CHOICES=[1, 3, 6]} -> CHOICE
+EFFECT: ADD_HEARTS(1) {HEART_TYPE=CHOICE, PER_CARD="SUCCESS_LIVE"} -> SELF
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_LIVE_START
+EFFECT: HEART_SELECT(1) {CHOICES=[1, 3, 6]} -> CHOICE
+EFFECT: ADD_HEARTS(1) {HEART_TYPE=CHOICE, PER_CARD="SUCCESS_LIVE"} -> SELF
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+14. PL!-bp4-001-P [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}閾ｪ蛻・・繧ｹ繝・・繧ｸ縺ｫ縺・ｋ繝｡繝ｳ繝舌・縺ｮ繧ｳ繧ｹ繝医・蜷郁ｨ医′逶ｸ謇九ｈ繧贋ｽ弱＞蝣ｴ蜷医√き繝ｼ繝峨ｒ1譫壼ｼ輔￥縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_LIVE_START
+CONDITION: COST_LEAD {TARGET="OPPONENT", MODE="REVERSED"}
+EFFECT: DRAW(1) -> PLAYER
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_LIVE_START
+CONDITION: COST_LEAD {TARGET="OPPONENT", MODE="REVERSED"}
+EFFECT: DRAW(1) -> PLAYER
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+15. PL!-bp4-002-P [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{jyouji.png|蟶ｸ譎・}閾ｪ蛻・・繝ｩ繧､繝紋ｸｭ縺ｮ繝ｩ繧､繝悶き繝ｼ繝峨↓縲＋{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}閭ｽ蜉帙ｂ{{live_success.png|繝ｩ繧､繝匁・蜉滓凾}}閭ｽ蜉帙ｂ謖√◆縺ｪ縺・き繝ｼ繝峨′縺ゅｋ縺九℃繧翫＋{heart_06.png|heart06}}{{heart_06.png|heart06}}繧貞ｾ励ｋ縲・{{kidou.png|襍ｷ蜍扶}{{turn1.png|繧ｿ繝ｼ繝ｳ1蝗栲}謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺擾ｼ夊・蛻・・謗ｧ縺亥ｮ､縺九ｉ縲斜ｼ's縲上・繝ｩ繧､繝悶き繝ｼ繝峨ｒ1譫壽焔譛ｭ縺ｫ蜉縺医ｋ縲ゅ％縺ｮ閭ｽ蜉帙・縲∬・蛻・・謌仙粥繝ｩ繧､繝悶き繝ｼ繝臥ｽｮ縺榊ｴ縺ｫ縺ゅｋ繧ｫ繝ｼ繝峨・繧ｹ繧ｳ繧｢縺ｮ蜷郁ｨ医′・紋ｻ･荳翫・蝣ｴ蜷医・縺ｿ襍ｷ蜍輔〒縺阪ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: CONSTANT
+CONDITION: HAS_LIVE_CARD {HAS_ABILITY=FALSE}
+EFFECT: ADD_HEARTS(2) -> SELF {HEART_TYPE=6, DURATION="UNTIL_LIVE_END"}
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: CONSTANT
+CONDITION: HAS_LIVE_CARD {HAS_ABILITY=FALSE}
+EFFECT: ADD_HEARTS(2) -> SELF {HEART_TYPE=6, DURATION="UNTIL_LIVE_END"}
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+16. PL!-bp4-002-P [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{jyouji.png|蟶ｸ譎・}閾ｪ蛻・・繝ｩ繧､繝紋ｸｭ縺ｮ繝ｩ繧､繝悶き繝ｼ繝峨↓縲＋{live_start.png|繝ｩ繧､繝夜幕蟋区凾}}閭ｽ蜉帙ｂ{{live_success.png|繝ｩ繧､繝匁・蜉滓凾}}閭ｽ蜉帙ｂ謖√◆縺ｪ縺・き繝ｼ繝峨′縺ゅｋ縺九℃繧翫＋{heart_06.png|heart06}}{{heart_06.png|heart06}}繧貞ｾ励ｋ縲・{{kidou.png|襍ｷ蜍扶}{{turn1.png|繧ｿ繝ｼ繝ｳ1蝗栲}謇区惆繧・譫壽而縺亥ｮ､縺ｫ鄂ｮ縺擾ｼ夊・蛻・・謗ｧ縺亥ｮ､縺九ｉ縲斜ｼ's縲上・繝ｩ繧､繝悶き繝ｼ繝峨ｒ1譫壽焔譛ｭ縺ｫ蜉縺医ｋ縲ゅ％縺ｮ閭ｽ蜉帙・縲∬・蛻・・謌仙粥繝ｩ繧､繝悶き繝ｼ繝臥ｽｮ縺榊ｴ縺ｫ縺ゅｋ繧ｫ繝ｼ繝峨・繧ｹ繧ｳ繧｢縺ｮ蜷郁ｨ医′・紋ｻ･荳翫・蝣ｴ蜷医・縺ｿ襍ｷ蜍輔〒縺阪ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ACTIVATED (Once per turn)
+CONDITION: SUM_SCORE {MIN=6}
+COST: DISCARD_HAND(2)
+EFFECT: SELECT_RECOVER_LIVE(1) {FILTER="GROUP_ID=0"} -> CARD_HAND
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: CONSTANT
+CONDITION: HAS_LIVE_CARD {HAS_ABILITY=FALSE}
+EFFECT: ADD_HEARTS(2) -> SELF {HEART_TYPE=6, DURATION="UNTIL_LIVE_END"}
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+17. PL!-bp4-004-P [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{toujyou.png|逋ｻ蝣ｴ}}閾ｪ蛻・・謌仙粥繝ｩ繧､繝悶き繝ｼ繝臥ｽｮ縺榊ｴ縺ｫ縺ゅｋ繧ｫ繝ｼ繝峨・繧ｹ繧ｳ繧｢縺ｮ蜷郁ｨ医′・紋ｻ･荳翫・蝣ｴ蜷医√お繝阪Ν繧ｮ繝ｼ繧・譫壹い繧ｯ繝・ぅ繝悶↓縺吶ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_PLAY
+CONDITION: SCORE_TOTAL {MIN=6}
+EFFECT: ACTIVATE_ENERGY(2) -> PLAYER
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_PLAY
+CONDITION: SCORE_TOTAL {MIN=6}
+EFFECT: ACTIVATE_ENERGY(2) -> PLAYER
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+18. PL!-bp4-006-P [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{toujyou.png|逋ｻ蝣ｴ}}閾ｪ蛻・・謌仙粥繝ｩ繧､繝悶き繝ｼ繝臥ｽｮ縺榊ｴ縺ｫ縺ゅｋ繧ｫ繝ｼ繝峨・繧ｹ繧ｳ繧｢縺ｮ蜷郁ｨ医′・謎ｻ･荳翫・蝣ｴ蜷医∬・蛻・・繝・ャ繧ｭ縺ｮ荳翫°繧峨き繝ｼ繝峨ｒ5譫夊ｦ九ｋ縲ゅ◎縺ｮ荳ｭ縺九ｉ縲斜ｼ's縲上・繝｡繝ｳ繝舌・繧ｫ繝ｼ繝峨ｒ1譫壼・髢九＠縺ｦ謇区惆縺ｫ蜉縺医※繧ゅｈ縺・よｮ九ｊ繧呈而縺亥ｮ､縺ｫ鄂ｮ縺上・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_PLAY
+CONDITION: SCORE_TOTAL {MIN=3}
+EFFECT: LOOK_AND_CHOOSE(5) {FILTER="GROUP_ID=0"} -> CARD_HAND, DISCARD_REMAINDER
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_PLAY
+CONDITION: SCORE_TOTAL {MIN=3}
+EFFECT: LOOK_AND_CHOOSE(5) {FILTER="GROUP_ID=0"} -> CARD_HAND, DISCARD_REMAINDER
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+19. PL!-bp4-007-P [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{toujyou.png|逋ｻ蝣ｴ}}閾ｪ蛻・・謌仙粥繝ｩ繧､繝悶き繝ｼ繝臥ｽｮ縺榊ｴ縺ｫ繧ｫ繝ｼ繝峨′1譫壻ｻ･荳翫≠繧翫√°縺､繧ｹ繧ｳ繧｢縺ｮ蜷郁ｨ医′・台ｻ･荳九・蝣ｴ蜷医√Λ繧､繝也ｵゆｺ・凾縺ｾ縺ｧ縲√鶏{jyouji.png|蟶ｸ譎・}繝ｩ繧､繝悶・蜷郁ｨ医せ繧ｳ繧｢繧抵ｼ具ｼ代☆繧九ゅ阪ｒ蠕励ｋ縲・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: ON_PLAY
+CONDITION: SUCCESS_PILE_COUNT {MIN=1}, SUM_SCORE {LE=1}
+EFFECT: GRANT_ABILITY(SELF) {ABILITY="TRIGGER: CONSTANT, EFFECT: BOOST_SCORE(1) -> PLAYER", DURATION="UNTIL_LIVE_END"}
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: ON_PLAY
+CONDITION: SUCCESS_PILE_COUNT {MIN=1}, SUM_SCORE {LE=1}
+EFFECT: GRANT_ABILITY(SELF) {ABILITY="TRIGGER: CONSTANT, EFFECT: BOOST_SCORE(1) -> PLAYER", DURATION="UNTIL_LIVE_END"}
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+20. PL!-bp4-008-P [CONFIDENCE: low]
+======================================================================
+
+ORIGINAL JAPANESE TEXT:
+{{jyouji.png|蟶ｸ譎・}閾ｪ蛻・・謌仙粥繝ｩ繧､繝悶き繝ｼ繝臥ｽｮ縺榊ｴ縺ｫ縺ゅｋ繧ｫ繝ｼ繝峨・繧ｹ繧ｳ繧｢縺ｮ蜷郁ｨ医′・紋ｻ･荳翫〒縺ゅｋ縺九℃繧翫√せ繝・・繧ｸ縺ｫ縺・ｋ縺薙・繝｡繝ｳ繝舌・縺ｮ繧ｳ繧ｹ繝医ｒ・具ｼ薙☆繧九・
+----------------------------------------------------------------------
+CANONICAL PSEUDOCODE:
+TRIGGER: CONSTANT
+CONDITION: SCORE_TOTAL {MIN=6}
+EFFECT: INCREASE_COST(3) -> SELF
+
+----------------------------------------------------------------------
+COMPILED EXTRACTION:
+TRIGGER: CONSTANT
+CONDITION: SCORE_TOTAL {MIN=6}
+EFFECT: INCREASE_COST(3) -> SELF
+
+----------------------------------------------------------------------
+VERDICT: [ ] MATCHES | [ ] NEEDS FIX
+NOTES: _________________________________________________________________
+
+
+======================================================================
+INSTRUCTIONS:
+1. Review each card's Japanese text above
+2. Compare with canonical pseudocode
+3. If pseudocode doesn't match Japanese 竊・needs manual fix
+4. Edit canonical_ability_model/drafts/canonical_full_draft.json
+5. Update the 'pseudocode' and 'steps' fields to match actual Japanese
+
+After corrections, run:
+  node tools/test_normalized_canonical_draft.js canonical_ability_model/drafts/canonical_full_draft.json

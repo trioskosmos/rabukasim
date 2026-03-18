@@ -3,6 +3,19 @@
 //! This module defines the `PlayerState` struct, which encapsulates all data
 //! belonging to a single player (Hand, Deck, Stage Slots, Energy, etc.).
 //!
+//! ## Rules:
+//! - **Rule 4.1.1**: Each player has distinct zones.
+//! - **Rule 4.1.2**: Zones are categorized as Public (公開領域) or Private (非公開領域).
+//! - **Rule 13.1.1**: [公開情報 (Public Information)]
+//! - **Rule 13.1.2**: [非公開情報 (Private Information)]
+//! - **Rule 4.1.2.1**: Cards are Face-up in Public and Face-down in Private by default.
+//! - **Rule 4.1.2.2**: Player counts are always confirmable by both players.
+//! - **Rule 4.1.3**: Some zones manage card order (e.g. Deck).
+//! - **Rule 4.1.6**: Implicit zone ownership (Card's master owns the zone).
+//! - **Rule 4.1.7**: Move to owner's zone on exit.
+//! - **Rule 4.2**: Visibility states (Public/Private).
+//! - **Rule 4.3**: Positioning/Orientation (Active/Wait, Face-up/down).
+//!
 //! ## Key Data Structures:
 //! - **Stage Slots**: A fixed-size array of member IDs currently on the field.
 //! - **Energy Zone**: A `SmallVec` of booleans representing whether an energy card is tapped.
@@ -21,32 +34,81 @@ use crate::core::hearts::HeartBoard;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
+// Rule 4.1.1: Each player has distinct zones
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PlayerState {
+    // Rule 3.1.2: Master (マスター)
+    // Rule 3.1.2.1: Master of Always Ability
+    // Rule 3.1.2.2: Master of Startup Ability
+    // Rule 3.1.2.3: Master of Auto Ability
+    // Rule 3.1.2.4: Master of Effect
+    // Rule 3.3: [プレイヤー (Player)]
     pub player_id: u8,
     #[serde(default)]
+    // Rule 4.11: [手札 (Hand)]
+    // Rule 4.11.1: Private area for unused cards
+    // Rule 4.11.2: Owner can confirm, others cannot
+    // Rule 4.11.3: [‘手札にあるカードを（数値）枚’は、カードテキストにおいて単に‘手札を（数値）枚’と表記されます (Hand count notation)]
+    // Rule 3.3.1: [手札の枚数 (No hand size limit)]
     pub hand: SmallVec<[i32; 16]>,
     #[serde(default)]
+    // Rule 1.1.2: [メインデッキ (Main Deck)]
+    // Rule 4.8: [メインデッキ置き場 (Main Deck Area)]
+    // Rule 4.8.2: Private area, order managed
+    // Rule 4.8.4: Terminology "Deck"
+    // Rule 3.3.2: [メインデッキの枚数 (Main deck size: 60)]
     pub deck: SmallVec<[i32; 60]>,
     #[serde(default)]
     pub initial_deck: SmallVec<[i32; 60]>, // Stable reference for AZ
     #[serde(default)]
+    // Rule 4.12: [控え室 (Discard Area)]
+    // Rule 4.12.1: Area for used cards
+    // Rule 4.12.2: Public area, no order management
     pub discard: SmallVec<[i32; 32]>,
     #[serde(default)]
+    // Rule 4.13: [除外領域 (Exclusion Area)]
+    // Rule 4.13.1: Area for cards removed from game
+    // Rule 4.13.2: Public area by principle
     pub exile: SmallVec<[i32; 16]>,
     #[serde(default)]
+    // Rule 4.9: [エネルギーデッキ置き場 (Energy Deck Area)]
+    // Rule 4.9.2: Private area, no order management
+    // Rule 4.9.4: Terminology "Energy Deck"
     pub energy_deck: SmallVec<[i32; 16]>,
     #[serde(default)]
+    // Rule 4.7: [エネルギー置き場 (Energy Area)]
+    // Rule 4.7.1: Area for energy cards
+    // Rule 4.7.2: Public area, no order management
+    // Rule 4.7.3: [エネルギー置き場のカードは向きを示す配置状態を持ちます (Energy orientation)]
+    // Rule 4.7.4: Terminology "Energy"
     pub energy_zone: SmallVec<[i32; 16]>,
     #[serde(default)]
-    pub success_lives: SmallVec<[i32; 8]>,
+    // Rule 4.6: [ライブカード置き場 (Live Area)]
+    // Rule 4.6.1: Area for live cards to be performed
+    // Rule 4.6.2: Public area, can be face-down temporarily
+    pub live_zone: Vec<i32>,
     #[serde(default)]
-    pub live_zone: [i32; 3], // -1 or ID
+    // Rule 4.10: [成功ライブカード置き場 (Success Live Area)]
+    // Rule 4.10.1: Area for successful performance cards
+    // Rule 4.10.2: Public area, order managed
+    pub success_lives: Vec<i32>,
     #[serde(default)]
+    // Rule 4.4: [ステージ (Stage)]
+    // Rule 4.4.1: Unified area for member areas
+    // Rule 4.5: [メンバーエリア (Member Area)] (3 slots)
+    // Rule 4.5.1: 3 slots for member cards
+    // Rule 4.5.2: [プレイヤーはメンバーエリアを3 つ持ちます (3 slots)]
+    // Rule 4.5.2.1: [‘左サイドエリア’‘センターエリア’‘右サイドエリア’ (Slot names)]
+    // Rule 4.5.2.2: [左サイドはセンターの左、センターは右サイドの左 (Relative positions)]
+    // Rule 4.5.2.3: [左サイドとセンター、センターと右サイドはそれぞれ隣にあります (Adjacency)]
+    // Rule 4.5.3: [公開領域であり、並び順の管理は行われません (Public area, no order management)]
     pub stage: [i32; 3],
     #[serde(default)]
     pub stage_energy_count: [u8; 3],
     #[serde(default)]
+    // Rule 5.2: [アクティブにする/ウェイトにする (Active/Wait)]
+    // Rule 5.2.1: Orient card to active or wait state
+    // Rule 3.4.1: [カードの向き (Card Orientation)]
     pub tapped_energy_mask: u64, // Bitmask for energy_zone status
     #[serde(default)]
     pub baton_touch_count: u8,
@@ -77,6 +139,8 @@ pub struct PlayerState {
     #[serde(default)]
     pub hand_increased_this_turn: u32,
     #[serde(default)]
+    // Rule 5.11: [カードの下に置く (Put Under)]
+    // Rule 5.11.1: Move card to member area and overlap (4.5.5)
     pub stage_energy: [SmallVec<[i32; 4]>; 3],
     #[serde(default)]
     pub slot_cost_modifiers: [i16; 3], // Cached cost modifiers for each stage slot
@@ -97,6 +161,8 @@ pub struct PlayerState {
     #[serde(default)]
     pub restrictions: SmallVec<[u8; 8]>,
     #[serde(default)]
+    // Rule 5.3: [陜ｫ縺ｫ縺吶ｋ/陬上↓縺吶ｋ (Face-up/Face-down)]
+    // Rule 5.3.1: Change card orientation
     pub looked_cards: SmallVec<[i32; 16]>, // Shared buffer for revealing cards to UI
     #[serde(default)]
     pub revealed_cards: SmallVec<[i32; 16]>, // Persistent buffer for SAME_NAME_AS_REVEALED during an ability
@@ -118,6 +184,11 @@ pub struct PlayerState {
 
     // Bitfields
     #[serde(default)]
+    // Rule 4.3: [配置状態 (Card Orientation)]
+    // Rule 4.3.1: [アクティブ状態 (Active state)]
+    // Rule 4.3.2: [ウェイト状態 (Wait state)]
+    // Rule 4.3.2.1: [アクティブ状態のカードは縦向き正位置 (Vertical)]
+    // Rule 4.3.2.2: [ウェイト状態のカードは横向き (Horizontal)]
     pub flags: u32, // [cannot_live:1, deck_refreshed:1, immunity:1, tapped_m_0..3:3, moved_m_0..3:3, live_revealed_0..3:3]
     #[serde(default)]
     pub cheer_mod_count: u16,
@@ -178,8 +249,8 @@ impl Default for PlayerState {
             exile: SmallVec::new(),
             energy_deck: SmallVec::new(),
             energy_zone: SmallVec::new(),
-            success_lives: SmallVec::new(),
-            live_zone: [-1; 3],
+            success_lives: Vec::new(),
+            live_zone: vec![-1; 3],
             stage: [-1; 3],
             stage_energy_count: [0; 3],
             tapped_energy_mask: 0,
@@ -272,6 +343,10 @@ impl PlayerState {
         self.get_flag(Self::OFFSET_TAPPED + slot as u8)
     }
     pub fn set_tapped(&mut self, slot: usize, val: bool) {
+        // Rule 1.3.4: [繧ｫ繝ｼ繝峨蜷代″ (Card Orientation)]
+        // Rule 1.3.4.1: Active (Upright)
+        // Rule 1.3.4.2: Wait (Sideways)
+        // Rule 3.4.1.3: Wait state (Tapped)
         self.set_flag(Self::OFFSET_TAPPED + slot as u8, val);
     }
 
@@ -283,9 +358,11 @@ impl PlayerState {
     }
 
     pub fn is_revealed(&self, slot: usize) -> bool {
+        // Rule 3.4.2: [繧ｫ繝ｼ繝峨・蜷代″ (Card State - Face-up/down)]
         self.get_flag(Self::OFFSET_REVEALED + slot as u8)
     }
     pub fn set_revealed(&mut self, slot: usize, val: bool) {
+        // Rule 3.4.2.1: Face-up (Revealed)
         self.set_flag(Self::OFFSET_REVEALED + slot as u8, val);
     }
 
@@ -315,6 +392,8 @@ impl PlayerState {
     }
 
     pub fn draw_hand_card(&mut self, card_id: i32, turn: i32) {
+        // Rule 5.3.1: [繝峨Ο繝ｼ (Draw)]
+        // Rule 5.4.1: [繝峨Ο繝ｼ縺輔ｌ縺ｦ縺・ｋ繧ｫ繝ｼ繝峨・繧｢繧ｯ繝・ぅ繝悶↓縺吶ｋ (Cards Drawn are Active)]
         self.hand.push(card_id);
         self.hand_added_turn.push(turn);
     }
@@ -324,6 +403,7 @@ impl PlayerState {
         self.hand_increased_this_turn = self.hand_increased_this_turn.saturating_add(1);
     }
 
+    /// Rule 5.6.1: [繧ｫ繝ｼ繝峨ｒ蜊ｦ謇ｭ縺ｫ鄂ｮ縺・ (Discard)]
     pub fn push_discard_card(&mut self, card_id: i32) {
         self.discard.push(card_id);
     }
@@ -345,6 +425,7 @@ impl PlayerState {
     }
 
     pub fn pop_deck_card(&mut self) -> Option<i32> {
+        // Rule 5.3.1: Pop from top of deck
         self.deck.pop()
     }
 
@@ -426,6 +507,7 @@ impl PlayerState {
         self.stage.iter().position(|&stage_card_id| stage_card_id == card_id)
     }
 
+    /// Rule 5.10.1: [繧｢繝ｳ繧ｿ繝・・縺吶ｋ (Untap)]
     pub fn untap_all(&mut self, skip_physical_untap: bool) {
         if !skip_physical_untap {
             // Clear tapped and moved flags
@@ -500,7 +582,7 @@ impl PlayerState {
         copy_smallvec!(self.energy_deck, other.energy_deck);
         copy_smallvec!(self.energy_zone, other.energy_zone);
         copy_smallvec!(self.success_lives, other.success_lives);
-        self.live_zone = other.live_zone;
+        self.live_zone = other.live_zone.clone();
         self.stage = other.stage;
         self.stage_energy_count = other.stage_energy_count;
         self.tapped_energy_mask = other.tapped_energy_mask;

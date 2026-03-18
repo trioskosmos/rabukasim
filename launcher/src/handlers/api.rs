@@ -232,7 +232,7 @@ fn apply_editable_state_patch(current: &GameState, payload: EditableGameState) -
                 }
             }
             if let Some(live_zone) = player_patch.live_zone.as_ref() {
-                player.live_zone = parse_zone3(live_zone)?;
+                player.live_zone = parse_zone3(live_zone)?.to_vec();
             }
             if let Some(hand) = player_patch.hand.as_ref() {
                 player.hand = parse_card_vec(hand)?.into();

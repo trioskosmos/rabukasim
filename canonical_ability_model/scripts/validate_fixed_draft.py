@@ -15,7 +15,7 @@ def validate_fixed_draft():
     errors = []
     success_count = 0
     
-    for i, entry in enumerate(data):
+    for i, entry in enumerate(data.get("entries", data)):
         entry_to_validate = entry.copy()
         card_no = entry_to_validate.pop("card_no", None)
         try:

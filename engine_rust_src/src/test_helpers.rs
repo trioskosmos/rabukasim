@@ -197,7 +197,7 @@ pub struct ZoneSnapshot {
     pub tapped_energy_count: usize,
     pub active_energy: usize,
     pub stage: [i32; 3],
-    pub live_zone: [i32; 3],
+    pub live_zone: Vec<i32>,
     pub looked_cards_len: usize,
     pub score: u32,
     pub active_members_count: usize,
@@ -247,7 +247,7 @@ impl ZoneSnapshot {
                 .len()
                 .saturating_sub(p.tapped_energy_mask.count_ones() as usize),
             stage: p.stage,
-            live_zone: p.live_zone,
+            live_zone: p.live_zone.clone(),
             looked_cards_len: p.looked_cards.len(),
             score: p.score,
             active_members_count: active_members,

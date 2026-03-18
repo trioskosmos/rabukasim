@@ -13,6 +13,7 @@ pub mod suspension;
 use crate::core::enums::Phase;
 use crate::core::models::{GameState, AbilityContext};
 use crate::core::logic::constants::*;
+use crate::core::logic::canonical;
 use super::CardDatabase;
 use super::Ability;
 use self::instruction::{BytecodeProgram, WORDS_PER_INSTRUCTION};
@@ -99,6 +100,18 @@ fn ability_uses_structured_runtime(ability: &Ability) -> bool {
         && ability.bytecode.get(ability.bytecode.len().saturating_sub(5)).copied() == Some(O_RETURN)
 }
 
+fn ability_runtime_bytecode(ability: &Ability) -> Option<std::sync::Arc<Vec<i32>>> {
+    if !ability.bytecode.is_empty() {
+        Some(std::sync::Arc::new(ability.bytecode.clone()))
+    } else {
+        None
+    }
+}
+
+/// Rule 9.4: [隗｣豎ｺ謇狗ｶ・ (Resolution Procedure)]
+/// Rule 9.6: [繧｢繝薙fa繧｣繝・ぅ縺ｮ隗｣豎ｺ (Ability Resolution)]
+// Rule 1.3.1: [繧ｫ繝ｼ繝峨ユ繧ｭ繧ｹ繝育ｬｬ荳€] (Card Text Precedence)
+// Rule 1.3.2: [荳€闊ｬ逧・↑隕丞援縺ｨ迚ｹ谿翫↑隕丞援] (General vs Specific)
 pub fn resolve_ability(
     state: &mut GameState,
     db: &CardDatabase,
@@ -110,8 +123,22 @@ pub fn resolve_ability(
         return;
     }
 
+    if ability.canonical_program.is_some() {
+        let resolved = canonical::try_resolve_ability(state, db, ability, ctx_in);
+        if state.debug.debug_mode {
+            println!(
+                "[CANONICAL] Resolution {} for card {}.",
+                if resolved { "handled" } else { "rejected" },
+                ctx_in.source_card_id,
+            );
+        }
+        return;
+    }
+
     if !ability_uses_structured_runtime(ability) {
-        resolve_bytecode(state, db, std::sync::Arc::new(ability.bytecode.clone()), ctx_in);
+        if let Some(bytecode) = ability_runtime_bytecode(ability) {
+            resolve_bytecode(state, db, bytecode, ctx_in);
+        }
         return;
     }
 
@@ -128,6 +155,7 @@ pub fn resolve_ability(
     while effect_idx < ability.effects.len() {
         let effect = &ability.effects[effect_idx];
         let ip = BytecodeProgram::effect_ip(effect_idx);
+        ctx.program_counter = ip as u16;
         ctx.program_counter = ip as u16;
         if effect_idx == BytecodeProgram::effect_idx(ctx_in.program_counter as usize) && ctx_in.choice_index != -1 {
             ctx.choice_index = ctx_in.choice_index;
@@ -151,6 +179,7 @@ pub fn resolve_ability(
                 ctx.v_remaining = -1;
                 effect_idx += 1;
             }
+            // Choices are made at the time of execution
             HandlerResult::Suspend => return,
             HandlerResult::Return => break,
             HandlerResult::Branch(new_ip) => {
@@ -217,6 +246,8 @@ pub fn resolve_bytecode(
     bytecode: std::sync::Arc<Vec<i32>>,
     ctx_in: &AbilityContext,
 ) {
+    // Rule 1.3.5: [なんらかの数を選ぶ場合、0 以上の整数を選ぶ必要があります (Choosing a number >= 0)]
+    // Rule 1.3.5.1: [‘～まで’のように上限の数が定められている場合、0 を選ぶことができます (Up to N means 0 is allowed)]
     // VANILLA MODE: Skip all bytecode execution
     if db.is_vanilla {
         return;
@@ -235,8 +266,11 @@ pub fn resolve_bytecode(
         state.log("Bytecode execution started.".to_string());
     }
 
+    // Process instructions
     while !executor.stack.is_empty() {
         if executor.steps >= MAX_INTERPRETER_STEPS {
+            // Rule 12.1: [豌ｸ豎捺ｿ€迺ｰ (Permanent Loop)]
+            // Rule 12.1.1.2: Prevent same state from repeating (approximated by step limit)
             if state.debug.debug_mode {
                 if !state.ui.silent {
                     println!("[ERROR] Interpreter infinite loop detected (1000 steps)");
@@ -497,13 +531,20 @@ pub fn is_condition_opcode(op: i32) -> bool {
     (real_op >= 200 && real_op <= 255) || (real_op >= 301 && real_op <= 399)
 }
 
+/// Rule 9.1: [チェックタイミング (Check Timing)]
+/// Rule 11.4.2: [解決タイミング (Auto ability resolution timing)]
+/// Rule 9.5: [トリガーの解決 (Resolution of Triggers)]
 pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
+    // Rule 1.3.4: [同時に複数の処理の実行を求められた場合 (Simultaneous processing)]
+    // Rule 1.3.4.1: [選択を伴う処理はアクティブプレイヤーから実行します (Active player choices first)]
     // VANILLA MODE: Skip all ability triggering
     if db.is_vanilla {
         state.trigger_queue.clear();
         return;
     }
 
+    // Rule 9.5.1: [トリガーの選択 (Trigger Selection)]
+    // Rule 9.5.2: [トリガーの解決の実行 (Trigger resolution execution)]
     while let Some((cid, ab_idx, ctx, is_live, _trigger)) = state.trigger_queue.pop_front() {
         // Generate a new ID for the activation
         state.generate_execution_id();
@@ -517,6 +558,8 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             (ab, &ab.costs)
         };
 
+        // Rule 9.4: [繧ｳ繧ｹ繝育分謇・ (Cost Payment)]
+        // Rule 9.4.1: If costs cannot be paid, trigger is cancelled.
         if costs::pay_costs_transactional(state, db, costs, &ctx) {
             let p_idx = ctx.player_id as usize;
             let source_type = if is_live { 2 } else { 0 };
@@ -527,6 +570,8 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                 cid,
             );
 
+            // Rule 11.2: [1繧ｿ繝ｼ繝ｳ縺ｫ1蝗樊・ (Once per turn)]
+            // Rule 9.1.1.2.2: Once per turn restriction
             if ability.is_once_per_turn
                 && !check_once_per_turn(state, p_idx, source_type, instance_key, cid as u32, ab_idx as usize)
             {
@@ -539,9 +584,17 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             }
 
             if state.phase == Phase::PerformanceP1 || state.phase == Phase::PerformanceP2 || state.phase == Phase::LiveResult {
+                // Rule 11.2.1: [逋ｺ逕 Mario (Once-per-turn trigger fire)]
                 state.players[p_idx].perf_triggered_abilities.push((cid, ab_idx as i16, _trigger));
             }
+
+            // Rule 11.2.2: [隗｣豎ｺ (Once-per-turn resolution)]
+            // Rule 9.5.5: Resolution
             resolve_ability(state, db, ability, &ctx);
+
+            // Rule 9.5.3: [繝√ぉ繝・け繧ｿ繧､繝溘Φ繧ｰ縺ｮ隗｣豎ｺ (Processing Check Timing during resolution)]
+            // After each ability resolution, we must perform rule processing before proceeding to the next trigger.
+            state.perform_rule_processing(db);
 
             // Fire resolution triggers
             let res_trigger = match _trigger {
@@ -568,28 +621,8 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                     }
                 }
 
-                state.trigger_abilities(db, t, &res_ctx);
+                state.trigger_abilities(db, t, &res_ctx); // Rule 11.4: [繧ｪ繝ｼ繝・] (Auto ability)
             }
-
-            let _top_original_phase = state.interaction_stack.last().map(|pi| pi.original_phase);
-            let _top_original_player = state.interaction_stack.last().map(|pi| pi.original_current_player);
-            let _clear_same_card_interactions = |state: &mut GameState, card_id: i32| {
-                while state
-                    .interaction_stack
-                    .last()
-                    .map(|pi| pi.card_id == card_id)
-                    .unwrap_or(false)
-                {
-                    state.interaction_stack.pop();
-                }
-            };
-
-            let _stage_count = state.players[ctx.player_id as usize]
-                .stage
-                .iter()
-                .filter(|&&card_id| card_id >= 0)
-                .count();
-
         }
 
         state.clear_execution_id();
@@ -608,6 +641,8 @@ pub fn get_ability_uid(source_type: u8, instance_key: u8, id: u32, ab_idx: u32) 
         | (ab_idx & 0xFF)
 }
 
+// Rule 11.2: [繧ｿ繝ｼ繝・1 蝗・ (Once per Turn)]
+// Rule 3.4.3: [繧｢繝薙fa繧｣繝・ぅ縺ｮ菴ｿ逕ｨ蜃 Mario (Ability usage status)]
 pub fn check_once_per_turn(
     state: &GameState,
     p_idx: usize,
