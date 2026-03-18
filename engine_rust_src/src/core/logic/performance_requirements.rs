@@ -1,7 +1,5 @@
 use super::card_db::{CardDatabase, LiveCard};
-use super::canonical::CanonicalEffectOp;
 use super::game::GameState;
-use super::interpreter::instruction::BytecodeProgram;
 use super::models::*;
 use super::player::PlayerState;
 use super::rules::calculate_board_aura;
@@ -17,13 +15,12 @@ pub fn process_heart_modifiers_bytecode(
     source_name: &str,
     source_id: i32,
 ) {
-    let program = BytecodeProgram::from_slice(bc);
-    let mut ip = 0;
-    while let Some(instr) = program.instruction_at(ip) {
-        let op = instr.op;
+    let mut i = 0;
+    while i + 4 < bc.len() {
+        let op = bc[i];
         if op == O_SET_HEART_COST {
-            let val = instr.v;
-            let attr = instr.a as i32;
+            let val = bc[i + 1];
+            let attr = bc[i + 2];
 
             adjustments.push(json!({
                 "source": source_name,
@@ -53,8 +50,8 @@ pub fn process_heart_modifiers_bytecode(
                 }
             }
         } else if op == O_INCREASE_HEART_COST {
-            let val = instr.v;
-            let attr = instr.a as usize;
+            let val = bc[i + 1];
+            let attr = bc[i + 2] as usize;
             let idx = if attr == 0 || attr == 7 { 6 } else if attr <= 6 { attr - 1 } else { 99 };
             if idx < 7 {
                 let old = req_board.get_color_count(idx);
@@ -68,8 +65,8 @@ pub fn process_heart_modifiers_bytecode(
                 }));
             }
         } else if op == O_TRANSFORM_HEART {
-            let from_attr = instr.v as usize;
-            let to_attr = instr.a as usize;
+            let from_attr = bc[i + 1] as usize;
+            let to_attr = bc[i + 2] as usize;
             let from_idx = if from_attr == 7 { 6 } else if from_attr >= 1 && from_attr <= 6 { from_attr - 1 } else { 99 };
             let to_idx = if to_attr == 7 { 6 } else if to_attr >= 1 && to_attr <= 6 { to_attr - 1 } else { 99 };
 
@@ -90,146 +87,10 @@ pub fn process_heart_modifiers_bytecode(
                 }
             }
         }
-        ip = program.next_ip(ip);
+        i += 5;
     }
 }
 
-fn canonical_step_color_index(step: &CanonicalStep) -> Option<usize> {
-    let heart_type = step
-        .params
-        .get("heart_type")
-        .and_then(|value| value.as_str());
-
-    match heart_type {
-        Some("PINK") => Some(0),
-        Some("RED") => Some(1),
-        Some("YELLOW") => Some(2),
-        Some("GREEN") => Some(3),
-        Some("BLUE") => Some(4),
-        Some("PURPLE") => Some(5),
-        Some("ANY") => Some(6),
-        _ => step
-            .params
-            .get("heart_color")
-            .and_then(|value| value.as_u64())
-            .map(|value| value as usize),
-    }
-}
-
-fn apply_canonical_heart_modifiers(
-    ability: &Ability,
-    req_board: &mut HeartBoard,
-    adjustments: &mut Vec<serde_json::Value>,
-    source_name: &str,
-    source_id: i32,
-) {
-    let Some(program) = ability.canonical_program.as_ref() else {
-        process_heart_modifiers_bytecode(&ability.bytecode, req_board, adjustments, source_name, source_id);
-        return;
-    };
-
-    for step in &program.effects {
-        let CanonicalEffectOp::Metadata(effect_type) = CanonicalEffectOp::from_metadata_key(&step.op) else {
-            continue;
-        };
-
-        match effect_type {
-            EffectType::SetHeartCost => {
-                adjustments.push(json!({
-                    "source": source_name,
-                    "source_id": source_id,
-                    "type": "override",
-                    "desc": "Ability Override"
-                }));
-
-                *req_board = HeartBoard::default();
-
-                if let Some(value) = step.value.or(step.count) {
-                    for color_idx in 0..6 {
-                        let count = ((value >> (color_idx * 4)) & 0xF) as u8;
-                        if count > 0 {
-                            req_board.set_color_count(color_idx, count);
-                        }
-                    }
-                }
-
-                if let Some(colors) = step.extra.get("colors").and_then(|value| value.as_array()) {
-                    for color in colors {
-                        let Some(color_name) = color.as_str() else {
-                            continue;
-                        };
-
-                        let idx = match color_name {
-                            "PINK" => Some(0),
-                            "RED" => Some(1),
-                            "YELLOW" => Some(2),
-                            "GREEN" => Some(3),
-                            "BLUE" => Some(4),
-                            "PURPLE" => Some(5),
-                            "ANY" => Some(6),
-                            _ => None,
-                        };
-
-                        if let Some(idx) = idx {
-                            let old = req_board.get_color_count(idx);
-                            req_board.set_color_count(idx, old.saturating_add(1));
-                        }
-                    }
-                }
-            }
-            EffectType::IncreaseHeartCost => {
-                let value = step.value.or(step.count).unwrap_or(0).max(0) as u8;
-                let Some(idx) = canonical_step_color_index(step) else {
-                    continue;
-                };
-                let old = req_board.get_color_count(idx);
-                req_board.set_color_count(idx, old.saturating_add(value));
-                adjustments.push(json!({
-                    "source": source_name,
-                    "source_id": source_id,
-                    "color": idx,
-                    "value": -(value as i32),
-                    "type": "addition"
-                }));
-            }
-            EffectType::TransformHeart => {
-                let from_idx = step.params.get("from_heart_type").and_then(|value| value.as_str()).and_then(|value| match value {
-                    "PINK" => Some(0),
-                    "RED" => Some(1),
-                    "YELLOW" => Some(2),
-                    "GREEN" => Some(3),
-                    "BLUE" => Some(4),
-                    "PURPLE" => Some(5),
-                    "ANY" => Some(6),
-                    _ => None,
-                });
-                let to_idx = canonical_step_color_index(step);
-
-                if let (Some(from_idx), Some(to_idx)) = (from_idx, to_idx) {
-                    if from_idx != to_idx {
-                        let count = req_board.get_color_count(from_idx);
-                        if count > 0 {
-                            req_board.set_color_count(from_idx, 0);
-                            let old_to = req_board.get_color_count(to_idx);
-                            req_board.set_color_count(to_idx, old_to.saturating_add(count));
-                            adjustments.push(json!({
-                                "source": source_name,
-                                "source_id": source_id,
-                                "from_color": from_idx,
-                                "to_color": to_idx,
-                                "value": count,
-                                "type": "transform"
-                            }));
-                        }
-                    }
-                }
-            }
-            _ => {}
-        }
-    }
-}
-
-/// Rule 5.11: [繝上・繝郁ｦ∵ｱ・ (Heart Requirements)]
 pub fn get_live_requirements(
     state: &GameState,
     db: &CardDatabase,
@@ -238,11 +99,6 @@ pub fn get_live_requirements(
 ) -> (HeartBoard, Vec<serde_json::Value>) {
     let mut req_board = live.hearts_board;
     let mut adjustments = Vec::new();
-    let requirement_logs: Vec<serde_json::Value> = Vec::new();
-    let opt_results: Option<&serde_json::Value> = None;
-    
-    // Rule 8.3.10: [蠢・ｦ√ワ繝ｼ繝・縺ｮ豎ｺ螳・ (Necessary Heart Determination)]
-    // Rule 8.3.15: [繝上・繝郁ｦ∵ｱ・縺ｮ蟷ｳ蠎・ (Heart Requirement Calculation)]
     let mut aura = calculate_board_aura(state, p_idx, db);
 
     let opponent_idx = 1 - p_idx;
@@ -271,70 +127,34 @@ pub fn get_live_requirements(
                     continue;
                 }
 
-                if let Some(program) = ab.canonical_program.as_ref() {
-                    for step in &program.effects {
-                        let CanonicalEffectOp::Metadata(effect_type) = CanonicalEffectOp::from_metadata_key(&step.op) else {
-                            continue;
+                let mut i = 0;
+                while i + 4 < ab.bytecode.len() {
+                    let op = ab.bytecode[i];
+                    if op == O_INCREASE_HEART_COST {
+                        let val = ab.bytecode[i + 1];
+                        let attr = ab.bytecode[i + 2] as usize;
+                        let idx = if attr == 0 || attr == 7 {
+                            6
+                        } else if attr <= 6 {
+                            attr - 1
+                        } else {
+                            99
                         };
-
-                        match effect_type {
-                            EffectType::IncreaseHeartCost => {
-                                let value = step.value.or(step.count).unwrap_or(0);
-                                if let Some(idx) = canonical_step_color_index(step) {
-                                    aura.heart_req_additions.add_to_color(idx, value);
-                                }
-                            }
-                            EffectType::SetHeartCost => {
-                                let mut override_board = HeartBoard::default();
-                                apply_canonical_heart_modifiers(
-                                    ab,
-                                    &mut override_board,
-                                    &mut Vec::new(),
-                                    &member.name,
-                                    source_cid,
-                                );
-                                aura.heart_req_additions = override_board;
-                            }
-                            _ => {}
+                        if idx < 7 {
+                            aura.heart_req_additions.add_to_color(idx, val as i32);
                         }
+                    } else if op == O_SET_HEART_COST {
+                        let mut override_board = HeartBoard::default();
+                        process_heart_modifiers_bytecode(
+                            &ab.bytecode[i..i + 5],
+                            &mut override_board,
+                            &mut Vec::new(),
+                            &member.name,
+                            source_cid,
+                        );
+                        aura.heart_req_additions = override_board;
                     }
-                } else {
-                    let program = ab.bytecode_program();
-                    let mut ip = 0;
-                    while let Some(instr) = program.instruction_at(ip) {
-                        let op = instr.op;
-                        if op == O_INCREASE_HEART_COST {
-                            let val = instr.v;
-                            let attr = instr.a as usize;
-                            let idx = if attr == 0 || attr == 7 {
-                                6
-                            } else if attr <= 6 {
-                                attr - 1
-                            } else {
-                                99
-                            };
-                            if idx < 7 {
-                                aura.heart_req_additions.add_to_color(idx, val as i32);
-                            }
-                        } else if op == O_SET_HEART_COST {
-                            let mut override_board = HeartBoard::default();
-                            process_heart_modifiers_bytecode(
-                                &[
-                                    instr.op,
-                                    instr.v,
-                                    instr.a as i32,
-                                    (instr.a >> 32) as i32,
-                                    instr.raw_s,
-                                ],
-                                &mut override_board,
-                                &mut Vec::new(),
-                                &member.name,
-                                source_cid,
-                            );
-                            aura.heart_req_additions = override_board;
-                        }
-                        ip = program.next_ip(ip);
-                    }
+                    i += 5;
                 }
             }
         }
@@ -349,7 +169,7 @@ pub fn get_live_requirements(
                 ..Default::default()
             };
             if ab.conditions.iter().all(|c| check_condition(state, db, p_idx, c, &ctx, 1)) {
-                apply_canonical_heart_modifiers(ab, &mut req_board, &mut adjustments, &live.name, live.card_id);
+                process_heart_modifiers_bytecode(&ab.bytecode, &mut req_board, &mut adjustments, &live.name, live.card_id);
             }
         }
     }
@@ -467,7 +287,6 @@ pub fn consume_hearts_from_pool(pool: &mut [u8; 7], need: &[u8; 7]) {
     }
 }
 
-/// Rule 5.11.1: [繝上・繝郁ｦ∵ｱ弱↓驕ｩ蜷医＠縺ｦ縺・ｋ (Satisfies Heart Requirements)]
 pub fn check_hearts_suitability(have: &[u8; 7], need: &[u8; 7]) -> bool {
     let mut have_u32 = [0u32; 7];
     let mut need_u32 = [0u32; 7];

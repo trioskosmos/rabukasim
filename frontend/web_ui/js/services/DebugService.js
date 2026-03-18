@@ -240,48 +240,6 @@ export const DebugService = {
         } catch (e) { return false; }
     },
 
-    buildCheckpointStrings: (exportData) => {
-        if (!exportData) return [];
-
-        const history = Array.isArray(exportData.history) ? exportData.history : [];
-        return history.map((state, index) => ({
-            index,
-            turn: state?.turn ?? '?',
-            phase: state?.phase ?? '?',
-            current_player: state?.current_player ?? 0,
-            score: Array.isArray(state?.players) ? state.players.map((player) => player?.score ?? 0) : [],
-            serialized: JSON.stringify(state),
-            state,
-        }));
-    },
-
-    buildDownloadReport: async (explanation) => {
-        const [snapshot, exportData, standardized] = await Promise.all([
-            DebugService.fetchDebugSnapshot(),
-            DebugService.exportGame(),
-            DebugService.fetchStandardizedState(),
-        ]);
-
-        return {
-            timestamp: new Date().toISOString(),
-            explanation: explanation || "",
-            userAgent: navigator.userAgent,
-            room_id: State.roomCode || null,
-            debug_snapshot: snapshot?.success ? snapshot : null,
-            standardized_state: standardized || null,
-            export_bundle: exportData || null,
-            checkpoint_strings: DebugService.buildCheckpointStrings(exportData).map((entry) => ({
-                index: entry.index,
-                turn: entry.turn,
-                phase: entry.phase,
-                current_player: entry.current_player,
-                score: entry.score,
-                state_string: entry.serialized,
-            })),
-            fallback_summary: DebugService._buildSlimReport(explanation),
-        };
-    },
-
     forceAction: async (id, networkFacade) => {
         try {
             const res = await fetch('api/action', {

@@ -234,28 +234,6 @@ pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
     )
 }
 
-pub fn describe_trace_step(op: i32, v: i32, a: i64, s: i32, is_negated: bool) -> String {
-    let name = get_opcode_name(op);
-    let prefix = if is_condition_opcode(op) { "IF" } else { "DO" };
-    let body = if is_condition_opcode(op) {
-        describe_condition(op, v, a as u64)
-    } else if let Some(desc) = get_opcode_log(op, v, a, s, 0) {
-        desc
-    } else {
-        describe_bytecode(op, v, a, s)
-    };
-
-    if is_negated {
-        format!("{} NOT {} [{}]", prefix, body, name)
-    } else {
-        format!("{} {} [{}]", prefix, body, name)
-    }
-}
-
-pub fn is_condition_opcode(op: i32) -> bool {
-    (203..=255).contains(&op) || (301..=399).contains(&op)
-}
-
 pub fn trigger_as_str(t: TriggerType) -> &'static str {
     match t {
         TriggerType::None => "None",

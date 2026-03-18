@@ -2,10 +2,6 @@ use serde::{Deserialize, Serialize};
 
 const HEART_COLOR_COUNT: usize = 7;
 
-// Rule 2.1.1.1: Pink, Red, Yellow, Green, Blue, Purple (Indices 0-5)
-// Rule 2.1.1.2: Any/Colorless (Index 6)
-// Rule 2.1.1.3: Wild/Rainbow (Handled as Any-color in satisfies logic)
-// Rule 2.1.2: Multiple hearts (Stored as 8-bit counts per color)
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct HeartBoard(pub u64);
 

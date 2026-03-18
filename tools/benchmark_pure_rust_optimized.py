@@ -74,23 +74,6 @@ def run_benchmark(num_games=100):
     print(f"\n[EFFICIENCY]")
     print(f"  Per-Move Cost:          {gameplay_seconds/total_moves*1e6:.2f} microseconds")
     print("=" * 70)
-    print(f"\n[ACTION TIMINGS]")
-    action_timings = results.get("action_timings", {})
-    if action_timings:
-        # Sort by average time
-        sorted_actions = sorted(action_timings.items(), key=lambda x: x[1]["avg_time"], reverse=True)
-        
-        print(f"{'Action Category':<25} | {'Count':<8} | {'Avg (µs)':<10} | {'Total (s)':<10}")
-        print("-" * 70)
-        for cat, stats in sorted_actions:
-            avg_us = stats["avg_time"] * 1e6
-            print(f"{cat:<25} | {stats['count']:<8} | {avg_us:<10.2f} | {stats['total_time']:<10.4f}")
-        
-        print("-" * 70)
-        print(f"Longest Action:  {sorted_actions[0][0]} ({sorted_actions[0][1]['avg_time']*1e6:.2f} µs)")
-        print(f"Shortest Action: {sorted_actions[-1][0]} ({sorted_actions[-1][1]['avg_time']*1e6:.2f} µs)")
-    else:
-        print("No action timing data available.")
     
     # Save results
     output_data = {
@@ -103,7 +86,6 @@ def run_benchmark(num_games=100):
         "gameplay_seconds": gameplay_seconds,
         "program_time": overall_duration,
         "avg_moves_per_game": total_moves / total_games if total_games > 0 else 0,
-        "action_timings": action_timings,
     }
     with open("bench_results.json", "w") as f:
         json.dump(output_data, f, indent=4)

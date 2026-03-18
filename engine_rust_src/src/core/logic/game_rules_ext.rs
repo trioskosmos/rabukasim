@@ -10,28 +10,21 @@ use rand::seq::SliceRandom;
 use rand_pcg::Pcg64;
 
 impl GameState {
-    // Rule 10.2: [リフレッシュ (Refresh)]
-    // Rule 10.2.1: Refresh can happen any time condition is met
-    // Rule 10.2.2.1: Empty deck and non-empty discard triggers refresh
-    // Rule 10.2.3: Shuffle discard and move to bottom of deck
     pub fn resolve_deck_refresh(&mut self, player_idx: usize) {
         if !self.ui.silent {
-            self.log(format!("Rule 10.2.3: Player {}'s main deck is empty. Refreshing from discard.", player_idx));
+            self.log(format!("Rule 4.4.2: Player {}'s main deck is empty. Refreshing from discard.", player_idx));
         }
         
         // Use current state to seed the shuffle for deterministic replay if needed
         let player = &mut self.core.players[player_idx];
         let mut discard_cards: Vec<i32> = player.discard.drain(..).collect();
         
-        // Rule 10.2.3: [控え室のカードを非公開状態にしてシャッフル (Shuffle discard)]
-        // Rule 5.5: [シャッフルする (Shuffle)]
-        // Rule 5.5.1: [非公開状態にして、並び順をランダムな状態にします (Randomize order)]
-        // Rule 5.5.1.1: [指示を受けたプレイヤーがシャッフルを行います。対戦相手は、その後にその領域をシャッフルしたり、カットしたりすることを求めることができます (Non-turn player can cut/shuffle)]
+        // Shuffle discard
         use rand::SeedableRng;
         let mut rng = Pcg64::seed_from_u64(self.core.turn as u64 * 1000 + player_idx as u64);
         discard_cards.shuffle(&mut rng);
         
-        // Rule 10.2.3: [メインデッキ置き場のカードの下に移動 (Place at bottom of deck)]
+        // Main deck's new cards go AFTER any remaining cards (Rule 10.2.3)
         // Insert at bottom (index 0) to preserve top cards
         for cid in discard_cards {
             player.deck.insert(0, cid);
@@ -45,10 +38,6 @@ impl GameState {
         player.set_flag(crate::core::logic::player::PlayerState::FLAG_DECK_REFRESHED, true);
     }
 
-    // Rule 1.2: [ゲームの勝敗 (Game Win/Loss)]
-    // Rule 1.2.1: Game ends when victory/defeat is determined
-    // Rule 10.3: [勝利処理 (Victory Processing)]
-    // Rule 10.3.1: 3 or more success lives wins the game
     pub fn check_win_condition(&mut self) {
         if self.phase == Phase::Terminal {
             return;
@@ -59,10 +48,8 @@ impl GameState {
 
         if p0_win || p1_win {
             self.phase = Phase::Terminal;
-            // Rule 10.1.2: [勝利・敗北判定 (Win/Loss Determination)]
-            // Rule 10.1.3: [同時勝利・敗北 (Simultaneous Win/Loss)] (Rule 1.2.1.2)
             let msg = match (p0_win, p1_win) {
-                (true, false) => "Rule 1.2.1.1: Player 0 wins by 3 successful lives.", 
+                (true, false) => "Rule 1.2.1.1: Player 0 wins by 3 successful lives.",
                 (false, true) => "Rule 1.2.1.1: Player 1 wins by 3 successful lives.",
                 _ => "Rule 1.2.1.2: Draw (Both players reached 3 successful lives).",
             };
@@ -74,23 +61,18 @@ impl GameState {
         self.phase == Phase::Terminal
     }
 
-    // Rule 10: [ルール処理 (Rule Processing / SBA)]
-    // Rule 10.1: [ルール処理の基本 (SBA Basics)]
-    pub fn perform_rule_processing(&mut self, db: &CardDatabase) {
+    pub fn process_rule_checks(&mut self, db: &CardDatabase) {
         for i in 0..2 {
-            // Rule 10.1.1: [ルール処理のチェックタイミング (SBA Check Timing)]
-            // Rule 10.2: [リフレッシュ (Deck Refresh)]
+            // 1. Deck Refresh (Rule 4.4.2)
             if self.core.players[i].deck.is_empty() && !self.core.players[i].discard.is_empty() {
                 if self.core.players[i].get_flag(super::player::PlayerState::FLAG_SUPPRESS_AUTO_DECK_REFRESH) {
                     self.core.players[i].set_flag(super::player::PlayerState::FLAG_SUPPRESS_AUTO_DECK_REFRESH, false);
                 } else {
-                    // Rule 10.2.2: [リフレッシュの条件 (Refresh condition)]
                     self.resolve_deck_refresh(i);
                 }
             }
 
-            // Rule 10.5: [不正カード処理 (Processing of Unnecessary Cards/Energy)]
-            // Rule 10.5.3: [上に重なっているメンバーの無いエネルギーカードをエネルギーデッキに戻す]
+            // 2. Energy in empty member area -> Energy Deck (Rule 10.5.3)
             for slot_idx in 0..3 {
                 if self.core.players[i].stage[slot_idx] < 0
                     && self.core.players[i].stage_energy_count[slot_idx] > 0
@@ -104,10 +86,7 @@ impl GameState {
                     let reclaimed: Vec<i32> = self.core.players[i].stage_energy[slot_idx]
                         .drain(..)
                         .collect();
-                    for cid in reclaimed {
-                        // Rule 10.5.4: [控え室に置くカードがエネルギーカードである場合、エネルギーデッキ置き場に置く]
-                        self.core.players[i].energy_deck.push(cid);
-                    }
+                    self.core.players[i].energy_deck.extend(reclaimed);
                     self.core.players[i].stage_energy_count[slot_idx] = 0;
 
                     // Energy deck is unordered; shuffle to maintain randomness.
@@ -119,18 +98,10 @@ impl GameState {
                 }
             }
 
-            // Rule 9.6: [能力の解決 (Ability Resolution)]
-            // Eagerly synchronize constant modifiers
+            // 3. Eagerly synchronize constant modifiers
             self.sync_stat_caches(i, db);
         }
-        // Rule 1.2: [ゲームの勝敗 (Check Win Condition)]
         self.check_win_condition();
-    }
-
-    pub fn process_rule_checks(&mut self, db: &CardDatabase) {
-        // Rule 10.1: [ルール処理 (Rule Processing)]
-        self.perform_rule_processing(db);
-        // Rule 9.1: [チェックタイミング (Check Timing / Trigger Processing)]
         self.process_trigger_queue(db);
     }
 
@@ -146,11 +117,6 @@ impl GameState {
         self.core.players[p_idx].slot_cost_modifiers = aura.slot_cost_modifiers;
         self.core.players[p_idx].heart_req_reductions = aura.heart_req_reductions;
         self.core.players[p_idx].heart_req_additions = aura.heart_req_additions;
-        for &(_, color_idx, amount) in &self.core.players[p_idx].heart_req_addition_logs {
-            self.core.players[p_idx]
-                .heart_req_additions
-                .add_to_color(color_idx as usize, amount as i32);
-        }
 
         // 3. Calculate effective stats (now O(1) inside because they use board_aura)
         let mut total_blades = 0u32;
@@ -175,8 +141,7 @@ impl GameState {
         player.cached_slot_hearts = slot_hearts;
     }
 
-    // Rule 12.1: [繧｢繝薙fa繧｣繝・ぅ縺ｮ菴ｿ逕ｨ (Ability Usage)]
-    // Rule 12.1.1.2: Order of resolution (LIFO on stack / Queue)
+
     pub fn card_matches_filter(&self, db: &CardDatabase, cid: i32, filter_attr: u64) -> bool {
         self.card_matches_filter_with_ctx(db, cid, filter_attr, &AbilityContext::default())
     }
@@ -189,9 +154,7 @@ impl GameState {
         self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, ctx, true)
     }
 
-    pub fn card_matches_filter_with_ctx_internal(&self, db: &CardDatabase, cid: i32, filter_attr: u64, ctx: &AbilityContext, debug: bool) -> bool {
-        // Rule 1.3.2: Impossible actions (If card doesn't exist, it doesn't match)
-        // Rule 1.3.2.4: [繝励Ξ繧､繝､繝ｼ縺ｮ驕ｸ謚・ (Selection of player)]
+    fn card_matches_filter_with_ctx_internal(&self, db: &CardDatabase, cid: i32, filter_attr: u64, ctx: &AbilityContext, debug: bool) -> bool {
         if cid == -1 { return false; }
         if filter_attr == 0 { return true; }
 

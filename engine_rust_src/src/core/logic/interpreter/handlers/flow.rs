@@ -126,8 +126,6 @@ pub fn handle_meta_control(
         O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER => {
             let partial_selection_prompt = -1000 - (v as i16);
             let supports_partial_completion = op == O_SELECT_MEMBER && v > 1;
-            let is_optional = op == O_SELECT_MEMBER
-                && (a as u64 & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
 
             if supports_partial_completion && ctx.v_remaining == partial_selection_prompt {
                 if ctx.choice_index == 0 || ctx.choice_index == 1 || ctx.choice_index == CHOICE_DONE {
@@ -135,11 +133,6 @@ pub fn handle_meta_control(
                     ctx.v_remaining = -1;
                     return HandlerResult::Continue;
                 }
-            }
-
-            if is_optional && ctx.choice_index == CHOICE_DONE {
-                ctx.choice_index = -1;
-                return HandlerResult::Continue;
             }
 
             if op == O_SELECT_MEMBER && v == 99 && ctx.choice_index == -1 {
@@ -182,34 +175,6 @@ pub fn handle_meta_control(
                     flip_ctx.player_id = 1 - (p_idx as u8);
                 } else if s == 3 {
                     flip_ctx.player_id = 1;
-                }
-                if is_optional && op == O_SELECT_MEMBER {
-                    let source_zone = slot_info.source_zone as u8;
-                    let target_player = match (a as u64 & 0x3) as u8 {
-                        2 => 1 - (flip_ctx.player_id as usize),
-                        3 => 1,
-                        _ => flip_ctx.player_id as usize,
-                    };
-                    let has_legal_target = match source_zone {
-                        6 => state.players[target_player]
-                            .hand
-                            .iter()
-                            .copied()
-                            .any(|cid| cid >= 0 && state.card_matches_filter_with_ctx(db, cid, a as u64, ctx)),
-                        7 => state.players[target_player]
-                            .discard
-                            .iter()
-                            .copied()
-                            .any(|cid| cid >= 0 && state.card_matches_filter_with_ctx(db, cid, a as u64, ctx)),
-                        _ => state.players[target_player]
-                            .stage
-                            .iter()
-                            .copied()
-                            .any(|cid| cid >= 0 && state.card_matches_filter_with_ctx(db, cid, a as u64, ctx)),
-                    };
-                    if !has_legal_target {
-                        return HandlerResult::Continue;
-                    }
                 }
                 let choice_text = get_choice_text(db, ctx);
                 if suspend_interaction(

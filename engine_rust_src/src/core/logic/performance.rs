@@ -15,13 +15,10 @@ pub type PerformanceResults = serde_json::Value;
 // MODULE: YELL SYSTEM
 // ============================================================================
 
-// Rule 8.6: [エールの実行 (Performing Yell)]
 pub fn do_yell(state: &mut GameState, db: &CardDatabase, count: u32) -> Vec<i32> {
     let p_idx = state.current_player as usize;
     let mut revealed = Vec::new();
     let reduction = state.players[p_idx].yell_count_reduction.max(0) as u32;
-    // Rule 8.6.1: [ターンプレイヤーは、自身のメインデッキの上から（数値）枚のカードを公開し、自身のメンバーエリアそれぞれのメンバーの下に 1 枚ずつ可能な限り均等になるように置きます (Yell execution)]
-    // Rule 4.14: [解決領域 (Resolution Area)] (Implied during reveal)
     let actual_count = count.saturating_sub(reduction);
     for _ in 0..actual_count {
         if state.players[p_idx].deck.is_empty() {
@@ -31,7 +28,6 @@ pub fn do_yell(state: &mut GameState, db: &CardDatabase, count: u32) -> Vec<i32>
             revealed.push(card_id);
             state.players[p_idx].yell_cards.push(card_id);
             let slot = (revealed.len() - 1) % 3;
-            // Rule 8.6.1: [メンバーの下に 1 枚ずつ可能な限り均等になるように置きます (Place energy under members)]
             state.players[p_idx].stage_energy[slot].push(card_id);
             
             // Optimization: Update yell bonus cache
@@ -54,20 +50,16 @@ pub fn do_yell(state: &mut GameState, db: &CardDatabase, count: u32) -> Vec<i32>
 // MODULE: PERFORMANCE PHASE MAIN
 // ============================================================================
 
-/// Rule 7.5: [パフォーマンスフェイズ (Performance Phase)]
-/// Rule 8: [パフォーマンス (Performance)]
 pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     let p_idx = state.current_player as usize;
 
-    // Rule 8.1: [パフォーマンスの手順 (Performance Procedure)]
-    // Rule 8.2: [ライブカード置き場のカードの公開 (Reveal Live Cards)]
+    // 8.3.4 Flip all cards in Live Zone
     if !state.performance_reveals_done[p_idx] {
         for i in 0..3 {
             if !state.players[p_idx].is_revealed(i) {
                 let cid = state.players[p_idx].live_zone[i];
                 state.players[p_idx].set_revealed(i, true);
                 if cid >= 0 {
-                    // Rule 11.4: OnReveal trigger
                     state.trigger_event(db, TriggerType::OnReveal, p_idx, cid, i as i16, 0, -1);
                     if state.phase == Phase::Response {
                         return;
@@ -78,13 +70,13 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         state.performance_reveals_done[p_idx] = true;
     }
 
-    // Rule 8.3: [ライブカード以外のカードの捨て札 (Discard non-live cards)]
+    // Discard non-live cards (Rule 8.3.4) BEFORE triggering OnLiveStart (Rule 11.4/8.3.8)
     for i in 0..3 {
         let cid = state.players[p_idx].live_zone[i];
         if cid >= 0 && db.get_live(cid).is_none() {
             if !state.ui.silent {
                 state.log(format!(
-                    "Rule 8.3: Discarding non-live card #{} from Live Zone.",
+                    "Rule 8.3.4: Discarding non-live card #{} from Live Zone.",
                     cid
                 ));
             }
@@ -94,6 +86,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     }
 
     // Q68: If player has FLAG_CANNOT_LIVE, discard all live cards and skip live entirely
+    // (No OnLiveStart triggers, no Yell)
     if state.players[p_idx].get_flag(PlayerState::FLAG_CANNOT_LIVE) {
         if !state.ui.silent {
             state.log(
@@ -112,10 +105,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         return;
     }
 
-    // Rule 8.4: [‘ライブ開始時’の誘発 (Live Start Triggers)]
+    // Rule 11.4 [ライブ開始時] (Live Start)
     if !state.live_start_triggers_done {
         state.live_start_triggers_done = true;
-        // Rule 8.4.1: [‘ライブ開始時’に誘発する自動能力が待機状態になります (Live Start Triggers fire)]
         state.trigger_event(db, TriggerType::OnLiveStart, p_idx, -1, -1, 0, -1);
         if state.phase == Phase::Response {
             return;
@@ -123,13 +115,11 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     }
 
     if state.players[p_idx].live_zone.iter().all(|&c| c < 0) {
-        // Rule 8.1.1: If no cards in live zone, skip to end
         advance_from_performance(state);
         return;
     }
 
-    // Rule 8.5: [必要ハートの確定 (Setting heart requirements)]
-    // Rule 8.6: [エールの実行 (Performing Yell)]
+    // 8.3.10-11 Yell
     // Initialize breakdown logs Early to capture sources before they are moved by triggers
     let mut heart_breakdown = Vec::new();
     let mut blade_breakdown = Vec::new();
@@ -306,10 +296,15 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     }
 
     if !state.performance_yell_done[p_idx] {
+        if !state.ui.silent {
+            state.log(format!(
+                "Rule 8.3.11: Player {} performs Yell ({} blades).",
+                p_idx, total_blades
+            ));
+        }
+        // Rule 8.3.11: Pops from main deck.
         let yell_count = total_blades;
         let yelled_cards = do_yell(state, db, yell_count);
-        if !state.ui.silent {
-            // Rule 8.3.11: Yell process.
         let mut yelled_names = Vec::new();
         for cid in yelled_cards {
             let cid_i32 = cid as i32;
@@ -330,7 +325,6 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
             // Unified logging: YELL events now go to both turn_history and rule_log
             state.log_event("YELL", &msg, -1, -1, p_idx as u8, Some("Rule 8.3.11"), true);
         }
-        }
         state.performance_yell_done[p_idx] = true;
         if state.phase == Phase::Response {
             return;
@@ -342,7 +336,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         state.log(format!("  Blades: {}", total_blades));
     }
 
-    // Rule 8.3.14: Calculate total heart icons (Live Owned Hearts).
+    // 8.3.14 Calculate Owned Hearts & Notes
     let mut total_hearts = [0u8; 7];
     let mut note_icons = 0;
     for i in 0..3 {
@@ -960,12 +954,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
     }
 
     if !state.ui.silent {
-        state.log("Rule 8.7: LIVE JUDGMENT PHASE".to_string());
+        state.log("Rule 8.4: --- LIVE RESULT PHASE ---".to_string());
     }
 
-    // 0. Trigger ON_LIVE_SUCCESS for successful performances (Rule 8.7.3 sequence completion)
-    // 0. Trigger ON_LIVE_SUCCESS for successful performances (Rule 8.7.3 sequence completion)
-
+    // 0. Trigger ON_LIVE_SUCCESS for successful performances (Rule 8.3.15 sequence completion)
+    // 0. Trigger ON_LIVE_SUCCESS for successful performances (Rule 8.3.15 sequence completion)
     // We iterate through players and slots, using a mask to track which cards have already triggered
     // This allows us to resume correctly if an ability (like Kimi no Kokoro) pauses for input.
     for i in 0..2 {
@@ -980,7 +973,6 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 if (state.live_result_processed_mask[p] & 0x80) == 0 {
                     state.live_result_processed_mask[p] |= 0x80;
 
-                    // Rule 11.4 [繝ｩ繧､繝匁・蜉滓凾] (Live Success Event)
                     state.trigger_event(db, TriggerType::OnLiveSuccess, p, -1, -1, 0, -1);
                     if state.phase == Phase::Response {
                         return;
@@ -991,13 +983,12 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
     }
     // We no longer use a single boolean, as we track per-slot.
     // If we reach here, all triggers are done.
-    // Rule 11.1.2: [繝代ヵ繧ｩ繝ｼ繝槭Φ繧ｹ縺ｮ邨仙棡 (Performance Result)]
-    // Rule 8.4: [蛻､螳壹ヵ繧ｧ繧､繧ｺ (Judgment Phase)]
-    // Rule 8.4.1: Both players perform Judgment Phase simultaneously.
-    // Rule 11.1: [繝ｩ繧､繝戊・謨門愛螳壹ヵ繧ｧ繧､繧ｺ (Live Result Phase)]
+
     let mut scores = [0u32; 2];
     let mut has_success = [false; 2];
 
+    // 1. Judgment Phase: Calculate scores based on SUCCESSFUL lives (still in zone)
+    // IMPORTANT: We trust the snapshot from check_performance_requirements, not re-check hearts
     for p in 0..2 {
         let mut live_score = 0;
         let mut player_has_success = false;
@@ -1014,7 +1005,6 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             .unwrap_or(false);
 
         for i in 0..3 {
-            // Rule 5.5.1: Check stage member presence
             let cid = state.players[p].live_zone[i];
             if cid >= 0 {
                 has_live = true;
@@ -1043,8 +1033,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                         .unwrap_or(false);
 
                     if snapshot_passed || snapshot_score.is_some() {
-                        // Rule 5.5.2: Check live requirements (Hearts/Blades)
-                        p_score += snapshot_score.unwrap_or(card.score as u64) as u32; // Rule 1.2.4: Total Score // Rule 1.2.4: Total Score
+                        p_score += snapshot_score.unwrap_or(card.score as u64) as u32;
                     }
                 }
             }
@@ -1055,7 +1044,6 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             println!("[DEBUG] P{} has_live={}, snapshot_success={}", p, has_live, snapshot_success);
         }
         if has_live && snapshot_success {
-            // Rule 5.5.3: Success Result
             live_score = p_score;
             player_has_success = true;
         } else if has_live {
@@ -1209,9 +1197,6 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             }));
         }
 
-        // Rule 8.4.2: [繝斐繧ｹ (Blade)] (Sum of blades on stage)
-        // Rule 8.4.3: [繝代ヵ繧ｩ繝ｼ繝槭Φ繧ｹ繧ｹ繧ｳ繧｢ (Total Score)]
-        // Rule 8.4.4: [繧ｻ繝ヨ縺励えた繝ｩ繧､繝悶き繝ｼ繝峨謌仙鴨 (Success Result)]
         scores[p] = live_score
             + total_constant_bonus.max(0) as u32
             + state.players[p].live_score_bonus.max(0) as u32;
@@ -1225,15 +1210,12 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         }
     }
 
-    // Rule 8.4.3: Compare total scores.
-    // Rule 8.4.6: [蛻､螳壹邨先棡 (Judgment Result)]
     let p0_wins = has_success[0] && (!has_success[1] || scores[0] >= scores[1]);
     let p1_wins = has_success[1] && (!has_success[0] || scores[1] >= scores[0]);
 
     if !state.ui.silent || state.debug.debug_mode {
         println!("[DEBUG] Rule 8.4.6: p0_wins={}, p1_wins={}, has_success={:?}, scores={:?}", p0_wins, p1_wins, has_success, scores);
     }
-    // Rule 8.4.6.2: If scores are equal, both players win (Comparative Tie).
     let is_comparative_tie = p0_wins && p1_wins;
 
     // Update results with final scores and triggered abilities
@@ -1247,7 +1229,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             json!({
                 "source_card_id": cid,
                 "card_name": card_name,
-                "name": format!("{} ({})", card_name, trigger_label),
+                "name": format!("【{}】", trigger_label),
                 "id": ab_idx
             })
         }).collect();
@@ -1317,8 +1299,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 .collect();
 
             // Use performance_results snapshot instead of re-checking hearts
-            // Rule 8.3.15: [繝代ヵ繧ｩ繝ｼ繝槭Φ繧ｹ縺ｮ邨ゆｺ・ (End of Performance)]
-            // Rule 8.3.16: Cards that passed are still in live_zone, failed cards were already discarded
+            // Rule 8.3.15-16: Cards that passed are still in live_zone, failed cards were already discarded
             let perf_res = state.ui.performance_results.get(&(p as u8));
             let valid_candidates: Vec<usize> = cards_in_zone
                 .iter()
@@ -1360,16 +1341,16 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 })
                 .collect();
 
-            // Rule 8.4.7.1: Tie Catch-up
-            // If judge scores are tied (Both Win), a player who ALREADY has 2 success lives (the maximum)
-            // does NOT gain a new success live.
+            // Rule 8.4.7.1:
+            // If scores are tied (Both Win), a player who ALREADY has 2+ success lives
+            // does NOT move a card to success. (Catch-up mechanic).
             let is_at_limit = state.players[p].success_lives.len() >= 2;
             let is_tie_capped = is_comparative_tie && is_at_limit;
 
             if is_tie_capped {
                 if !state.ui.silent {
                     state.log(format!(
-                        "Rule 8.4.7.1: Score Tie - P{} already has 2 lives. Catch-up applied, no move.",
+                        "  Rule 8.4.7.1: Tie Penalty - P{} already at 2 lives. No move.",
                         p
                     ));
                 }
@@ -1386,8 +1367,6 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 let target_idx = valid_candidates[0];
                 let cid = state.players[p].live_zone[target_idx];
 
-                // Rule 8.4.7: [謌仙粥繝ｩ繧､繝匁夛縺ｫ鄂ｮ縺・ (Place in Success Live Area)]
-                // Rule 8.4.7.1: Success Judgment Result move
                 state.players[p].success_lives.push(cid as i32);
                 state.check_win_condition(); // NEW: Immediate win check
                 state.players[p].live_zone[target_idx] = -1;
@@ -1420,9 +1399,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
     }
 
     // 3. Finalization (Cleanup and Turn Advance)
-    // Rule 8.4: [繝ｩ繧､繝墓・謨門愛螳壹ヵ繧ｧ繧､繧ｺ (Live Victory/Defeat Determination Phase)]
     // Rule 8.4.10: Trigger [Turn End] abilities for BOTH players
-    // Rule 11.4: [繧ｪ繝ｼ繝・ (Auto ability)
     // FIX: Guard with live_result_triggers_done to prevent re-triggering on phase re-entry
     if !state.live_result_triggers_done {
         state.live_result_triggers_done = true;
@@ -1448,8 +1425,6 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         }
     }
 
-    // Rule 8.4.11: [繧ｿ繝ｼ繝ｳ縺ｮ邨ゆｺ・ (Turn End Process)]
-    // Rule 11.1.3: [繝代ヵ繧ｩ繝ｼ繝槭Φ繧ｹ縺ｮ邨ゆｺ・ (Performance End)]
     finalize_live_result(state);
 }
 
@@ -1458,7 +1433,6 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
 // ============================================================================
 
 pub fn finalize_live_result(state: &mut GameState) {
-    // Rule 8.4.14: [繧ｿ繝ｼ繝ｳ縺ｮ邨ゆｺ・ (Turn End)]
     for p in 0..2 {
         let success_count = state.players[p].success_lives.len() as i32;
         let resolved_live_score = state
@@ -1488,7 +1462,7 @@ pub fn finalize_live_result(state: &mut GameState) {
             .max(0) as u32;
     }
 
-    // Rule 8.4.8: [繝ｩ繧､繝悶そ繝・ヨ鄂置きｴ縺ｮ繧ｫ繝ｼ繝峨ｒ謗 Mario (Cleanup all live zones)]
+    // 8.4.8 Cleanup all live zones
     for i in 0..2 {
         let p = (state.first_player as usize + i) % 2;
         for i in 0..3 {
@@ -1521,8 +1495,7 @@ pub fn finalize_live_result(state: &mut GameState) {
     if state.phase != Phase::Terminal {
         state.turn += 1;
 
-        // Rule 8.4.13: [谺｡縺ｮ繝輔ぃ繝ｼ繧ｹ繝医・繝ｬ繧､繝､繝ｼ縺ｮ豎ｺ螳・ (Next First Player Determination)]
-        // Rule 8.4.13.1: Winner becomes next first player
+        // Rule 8.4.13 Winner becomes next first player (if only one player got a success live)
         let s0 = state.obtained_success_live[0];
         let s1 = state.obtained_success_live[1];
         if s0 && !s1 {
@@ -1543,7 +1516,6 @@ pub fn finalize_live_result(state: &mut GameState) {
         }
 
         state.current_player = state.first_player;
-        // Rule 8.4.15: [繝代ヵ繧ｩ繝ｼ繝槭Φ繧ｹ繧呈ｭ｣蟶ｸ縺ｫ邨ゆｺ・縺吶ｋ (Finish performance normally)]
         state.phase = Phase::Active;
         state.obtained_success_live = [false, false];
     }

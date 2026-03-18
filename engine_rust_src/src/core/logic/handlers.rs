@@ -61,17 +61,12 @@ pub trait ResponseController {
 }
 
 pub trait TurnPhaseController {
-    // Rule 7.3: [繧ｿ繝ｼ繝ｳ縺ｮ騾ｲ陦・ (Turn Progression)]
     fn do_active_phase(&mut self, db: &CardDatabase);
-    // Rule 7.5: [繧ｨ繝阪Ν繧ｮ繝ｼ繝輔ぉ繧､繧ｺ (Energy Phase)]
     fn do_energy_phase(&mut self);
-    // Rule 7.6: Draw Phase
     fn do_draw_phase(&mut self, db: &CardDatabase);
 }
 
 impl TurnController for GameState {
-    /// Rule 7.1: [繧ｪ繝ｼ繝舌・繝薙Η繝ｼ (Turn Overview)]
-    /// Rule 6.2.1.1: Determine turn order (RPS)
     fn handle_rps(&mut self, action: i32) -> Result<(), String> {
         let (p_idx, choice) = if action >= ACTION_BASE_RPS_P2 {
             (1, action - ACTION_BASE_RPS_P2)
@@ -107,10 +102,6 @@ impl TurnController for GameState {
             self.current_player = 0;
         }
 
-        // Rule 6.2.1.4: Randomly choose or RPS to select first player
-        // Rule 1.3.4: [蜷梧夛驕ｸ謚・ (Simultaneous selection)]
-        // Rule 3.1.2.4.1: [繝槭せ繧ｿ繝ｼ縺ｮ驕ｸ謚・ (Choice by Master)]
-        // Rule 1.3.4.1: Simultaneous moves (RPS)
         if self.rps_choices[0] != -1 && self.rps_choices[1] != -1 {
             let p0 = self.rps_choices[0];
             let p1 = self.rps_choices[1];
@@ -155,13 +146,9 @@ impl TurnController for GameState {
         Ok(())
     }
 
-    /// Rule 6.2.1.3: Winner chooses first or second
-    // Rule 3.1.2.4: [プレイヤーの選択 (Selection of player)]
-    // Rule 6.2.1.3: Winner chooses first or second
     fn handle_turn_choice(&mut self, action: i32) -> Result<(), String> {
         if action == Self::ACTION_TURN_CHOICE_FIRST {
             let winner = self.current_player;
-            // Rule 6.2.1.3: [勝利したプレイヤーが先攻か後攻かを選択 (Winner chooses first or second)]
             self.first_player = winner;
             self.log(format!("Player {} chose to go first!", winner));
             self.phase = Phase::MulliganP1;
@@ -178,7 +165,6 @@ impl TurnController for GameState {
 }
 
 impl MulliganController for GameState {
-    // Rule 6.2.1.5: [引き直し (Mulligan)]
     fn handle_mulligan(&mut self, action: i32) -> Result<(), String> {
         let p_idx = self.current_player as usize;
         if self.debug.debug_mode {
@@ -204,7 +190,6 @@ impl MulliganController for GameState {
         Ok(())
     }
 
-    /// Rule 6.2.1.5: Execute Mulligan
     fn execute_mulligan(&mut self, player_idx: usize, discard_indices: Vec<usize>) {
         if self.debug.debug_mode {
             println!(
@@ -215,13 +200,10 @@ impl MulliganController for GameState {
             );
         }
         self.log(format!(
-            "Rule 6.2.1.5: Player {} finished mulligan ({} cards)",
+            "Rule 6.2.1.6: Player {} finished mulligan ({} cards)",
             player_idx,
             discard_indices.len()
         ));
-        // Rule 6.2.1.5: [自分の手札から任意の枚数を選び、それを裏向きで脇に置く (Selected cards set aside)]
-        // Rule 6.2.1.5: [脇に置いた枚数と同じ枚数分、自分のメインデッキを上から引く (Draw same number)]
-        // Rule 6.2.1.5: [脇に置いたカードをメインデッキに戻してシャッフル (Shuffle back)]
         let mut count = 0;
         let mut discards = Vec::new();
         let mut new_hand = SmallVec::new();
@@ -265,8 +247,6 @@ impl MulliganController for GameState {
 }
 
 impl MainPhaseController for GameState {
-    // Rule 7.4: Main Phase
-    // Rule 7.4.1: Main Phase Actions
     fn handle_main(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
         let decoded = ActionFactory::parse_action(action);
 
@@ -331,7 +311,6 @@ impl MainPhaseController for GameState {
         Ok(())
     }
 
-    /// Rule 8.2: Live Set Phase
     fn handle_liveset(&mut self, action: i32) -> Result<(), String> {
         let p_idx = self.current_player as usize;
         if action == 0 {
@@ -377,7 +356,6 @@ impl MainPhaseController for GameState {
         Ok(())
     }
 
-    /// Rule 8.4: Judgment Phase
     fn handle_liveresult(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
         if action == 0 {
             self.do_live_result(db);
@@ -434,7 +412,6 @@ impl MainPhaseController for GameState {
         Ok(())
     }
 
-    // Rule 7.7: [繧ｨ繝ｳ繝峨ヵ繧ｧ繧､繧ｺ (End Phase)]
     fn end_main_phase(&mut self, db: &CardDatabase) {
         if !self.ui.silent {
             self.log(format!(
@@ -442,9 +419,6 @@ impl MainPhaseController for GameState {
                 self.current_player
             ));
         }
-        // Rule 11.1: Block [逋ｻ蝣ｴ]
-        // Rule 11.3: [逋ｻ蝣ｴ] (Startup ability)
-        // Rule 11.4: [繧ｪ繝ｼ繝・ (Auto ability)
         self.trigger_event(
             db,
             TriggerType::TurnEnd,
@@ -485,23 +459,6 @@ impl ResponseController for GameState {
                 _ => -1,
             };
 
-            let is_standalone_optional_pass = choice_idx == 99
-                && pi.execution_id == 0
-                && (pi.choice_type == ChoiceType::Optional
-                    || (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0);
-            if is_standalone_optional_pass {
-                self.interaction_stack.pop();
-                self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
-                    Phase::Main
-                } else {
-                    pi.original_phase
-                };
-                self.current_player = pi.original_current_player;
-                self.clear_execution_id();
-                self.check_win_condition();
-                return Ok(());
-            }
-
             if let Some(mask) = pending_optional_mode_mask(db, &pi) {
                 if matches!(decoded_action, DecodedAction::SelectMode { .. }) {
                     let ability = pending_live_ability(db, &pi).ok_or("Ability not found")?;
@@ -512,18 +469,15 @@ impl ResponseController for GameState {
 
                     let p_idx = pi.ctx.player_id as usize;
                     if selected_effect.runtime_opcode == O_ENERGY_CHARGE {
-                        // Energy Charge effect
                         if let Some(cid) = self.players[p_idx].energy_deck.pop() {
                             let is_wait = selected_effect
                                 .params
                                 .get("wait")
                                 .and_then(|value| value.as_bool())
                                 .unwrap_or(false);
-                            // Rule 5.4: [鄂ｮ縺・ (Place)]
                             self.players[p_idx].push_energy_card(cid, is_wait);
                         }
                     } else if selected_effect.runtime_opcode == O_RECOVER_MEMBER {
-                        // Recover member effect
                         if let Some(recover_pos) = self.players[p_idx]
                             .discard
                             .iter()
@@ -537,7 +491,6 @@ impl ResponseController for GameState {
                                     )
                             })
                         {
-                            // Rule 5.4: [鄂ｮ縺・ (Place)]
                             if let Some(cid) = self.players[p_idx].remove_discard_card(recover_pos) {
                                 self.players[p_idx].gain_hand_card(cid);
                             }
@@ -677,7 +630,6 @@ impl ResponseController for GameState {
         let mut cost =
             self.get_member_cost(p_idx, card_id, slot_idx as i16, secondary_slot_idx, db, 0);
         cost = cost.max(0);
-        // Rule 5.2.2: Pay the cost (Tap energy)
         let untap_energy_indices =
             self.core.players[p_idx].get_untapped_energy_indices(cost as usize);
 
@@ -914,7 +866,7 @@ impl ResponseController for GameState {
         self.log_event(
             "ACTIVATE",
             &format!(
-                "Rule 11.3: [襃蜍] (Startup Ability) - Player {} activates ability of {}{}",
+                "Player {} activates ability of {}{}",
                 p_idx, card.name, p_code
             ),
             cid,
@@ -924,8 +876,6 @@ impl ResponseController for GameState {
             true,
         );
 
-        // Rule 5.4: [起動能力の解決 (Activated Ability Resolution)]
-        // Rule 5.4.1: [起動能力を持つアクティブ状態のカードを 1 枚選び、それをウェイト状態にします (Selection and Cost)]
         let mut ctx = AbilityContext {
             source_card_id: cid,
             player_id: p_idx as u8,
@@ -958,7 +908,6 @@ impl ResponseController for GameState {
                 }
             }
 
-            // Rule 5.4.2: [解決の条件を満たしているかを確認します (Condition checks)]
             for cond in &ab.conditions {
                 if !self.check_condition_opcode(
                     db,
@@ -980,7 +929,6 @@ impl ResponseController for GameState {
                     return Err("Conditions not met".to_string());
                 }
             }
-            // Rule 5.4.3: [コストの支払いが可能であるかを確認し、可能であればそのコストを支払います (Cost payments)]
             if !costs::pay_costs_transactional(self, db, &ab.costs, &ctx) {
                 return Err("Cannot afford costs".to_string());
             }
@@ -1038,20 +986,18 @@ mod tests {
 }
 
 impl TurnPhaseController for GameState {
-    /// Rule 7.1: [アクティブフェイズ (Active Phase)]
     fn do_active_phase(&mut self, db: &CardDatabase) {
         if self.phase != Phase::Active {
             return;
         }
         let p_idx = self.current_player as usize;
-        // Rule 7.1.1: [アクティブフェイズの開始時に、‘ターン開始時’‘アクティブフェイズ開始時’に誘発する自動能力が待機状態になります (Active Phase Start Triggers)]
         self.setup_turn_log();
 
         let skip = self.core.players[p_idx].skip_next_activate;
         if skip {
             if !self.ui.silent {
                 self.log(format!(
-                    "Rule 7.1.2: [Active Phase] SKIPPED (untapping skipped) for Player {}.",
+                    "Rule 7.4.1: [Active Phase] SKIPPED (untapping skipped) for Player {}.",
                     p_idx
                 ));
             }
@@ -1059,12 +1005,12 @@ impl TurnPhaseController for GameState {
         } else {
             if !self.ui.silent {
                 self.log(format!(
-                    "Rule 7.1.2: [Active Phase] Untapping all cards for Player {}.",
+                    "Rule 7.4.1: [Active Phase] Untapping all cards for Player {}.",
                     p_idx
                 ));
             }
         }
-        // Rule 7.1.2: [エネルギー置き場とメンバーエリアのウェイトのカードをアクティブにします (Active Phase Untap)]
+
         self.core.players[p_idx].untap_all(skip);
         let ctx = AbilityContext {
             source_card_id: -1,
@@ -1075,39 +1021,33 @@ impl TurnPhaseController for GameState {
         };
         self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
         if self.phase == Phase::Active {
-            // Rule 7.1.3: [アクティブフェイズが終了し、エネルギーフェイズが開始 (Transition to Energy)]
             self.phase = Phase::Energy;
             if !self.ui.silent {
-                self.log_rule("Rule 7.2", &format!("Entering Energy Phase for Player {}.", p_idx));
+                self.log_rule("Rule 7.5", &format!("Entering Energy Phase for Player {}.", p_idx));
             }
         }
     }
 
-    // Rule 7.2: [エネルギーフェイズ (Energy Phase)]
     fn do_energy_phase(&mut self) {
         if self.phase != Phase::Energy {
             return;
         }
-        // Rule 7.2.1: [エネルギーフェイズの開始時に、‘エネルギーフェイズ開始時’に誘発する自動能力が待機状態になります (Energy Phase Start Triggers)]
-        // Rule 7.2.2: [エネルギーデッキ置き場の上から 1 枚のカードをエネルギー置き場に移動 (Draw Energy)]
         let p_idx = self.current_player as usize;
         if let Some(card_id) = self.core.players[p_idx].energy_deck.pop() {
             if !self.ui.silent {
                 self.log(format!(
-                    "Rule 7.2.2: Player {} placed Energy from Energy Deck",
+                    "Rule 7.5.2: Player {} placed Energy from Energy Deck",
                     p_idx
                 ));
             }
             self.core.players[p_idx].push_energy_card(card_id, false);
         }
-        // Rule 7.2.3: [エネルギーフェイズが終了し、ドローフェイズが開始 (Transition to Draw)]
         self.phase = Phase::Draw;
         if !self.ui.silent {
-            self.log_rule("Rule 7.3", &format!("Entering Draw Phase for Player {}.", p_idx));
+            self.log_rule("Rule 7.6", &format!("Entering Draw Phase for Player {}.", p_idx));
         }
     }
 
-    // Rule 7.3: [ドローフェイズ (Draw Phase)]
     fn do_draw_phase(&mut self, db: &CardDatabase) {
         let p_idx = self.current_player as usize;
         let ctx = AbilityContext {
@@ -1117,22 +1057,19 @@ impl TurnPhaseController for GameState {
             area_idx: -1,
             ..Default::default()
         };
-        // Rule 7.3.1: [ドローフェイズの開始時に、‘ドローフェイズ開始時’に誘発する自動能力が待機状態になります (Draw Phase Start Triggers)]
         self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
 
         if self.phase != Phase::Draw {
             return;
         }
         if !self.ui.silent {
-            self.log(format!("Rule 7.3.2: Player {} draws a card.", p_idx));
-            self.log_event("DRAW", "Player draws 1 card", -1, -1, p_idx as u8, Some("Rule 7.3.2"), true);
+            self.log(format!("Rule 7.6.2: Player {} draws a card.", p_idx));
+            self.log_event("DRAW", "Player draws 1 card", -1, -1, p_idx as u8, Some("Rule 7.6.2"), true);
         }
-        // Rule 7.3.2: [ターンプレイヤーはカードを 1 枚引きます (Turn Player draws 1 card)]
         self.draw_cards(p_idx, 1);
-        // Rule 7.3.3: [ドローフェイズが終了し、メインフェイズが開始 (Transition to Main)]
         self.phase = Phase::Main;
         if !self.ui.silent {
-            self.log_rule("Rule 7.4", &format!("Entering Main Phase for Player {}.", p_idx));
+            self.log_rule("Rule 7.7", &format!("Entering Main Phase for Player {}.", p_idx));
         }
     }
 }
@@ -1159,7 +1096,7 @@ impl GameState {
             self.log_rule(
                 "Rule 11.3",
                 &format!(
-                    "Resuming [逋ｻ蝣ｴ] (On Play) abilities for {} from idx {}.",
+                    "Resuming [登場] (On Play) abilities for {} from idx {}.",
                     card.name, start_ab_idx
                 ),
             );
@@ -1170,8 +1107,6 @@ impl GameState {
         // If there are more effects to process, they should handle phase changes appropriately
         self.interaction_stack.pop();
 
-        // Rule 11.1: Block [逋ｻ蝣ｴ]
-        // Rule 11.3: [逋ｻ蝣ｴ] (Startup ability)
         self.trigger_event(
             db,
             TriggerType::OnPlay,
@@ -1197,7 +1132,6 @@ impl GameState {
             return Ok(());
         }
         let player = &self.core.players[p_idx];
-        // Rule 12.4: [陜ｫ蛻ｶ (Restrictions)]
         if (player.prevent_play_to_slot_mask & (1 << slot_idx)) != 0 && player.stage[slot_idx] >= 0 {
             return Err("Cannot play to this slot due to restriction".to_string());
         }
@@ -1207,16 +1141,12 @@ impl GameState {
 
         let old_card_id = player.stage[slot_idx];
         if old_card_id >= 0 {
-            // Rule 11.3: [繝舌ヨ繝ｳ繧ｿ繝・メ] (Baton Touch)
-            // Rule 5.9: [繝舌ヨ繝ｳ繧ｿ繝・メ (Baton Touch Action)]
             if player.baton_touch_count >= player.baton_touch_limit {
                 return Err("Baton touch limit reached".to_string());
             }
-            // Rule 12.4: [陜ｫ蛻ｶ (Restrictions)]
             if player.prevent_baton_touch > 0 {
                 return Err("Baton Touch is restricted".to_string());
             }
-            // Rule 12.4: [陜ｫ蛻ｶ (Restrictions)]
             if GameState::has_restriction(self, p_idx, slot_idx, O_PREVENT_BATON_TOUCH, db) {
                 return Err("Baton Touch is not allowed for this member".to_string());
             }
@@ -1244,7 +1174,6 @@ impl GameState {
     ) {
         let old_card_id = self.core.players[p_idx].stage[slot_idx];
         if old_card_id >= 0 {
-            // Rule 5.12: [繝舌ヨ繝ｳ繧ｿ繝・メ (Baton Touch)]
             self.core.players[p_idx].baton_touch_count += 1;
             self.core.players[p_idx].baton_source_ids.push(old_card_id);
             self.core.players[p_idx].baton_source_slots.push(slot_idx);
@@ -1276,7 +1205,6 @@ impl GameState {
         self.core.players[p_idx].remove_hand_card(hand_idx);
 
         if old_card_id >= 0 {
-            // Rule 10.4.1: [驥崎､・Γ繝ｳ繝舌・蜃ｦ逅・ (Duplicate Member Processing)]
             if let Some(old) = self.handle_member_leaves_stage(
                 p_idx,
                 slot_idx,
@@ -1293,16 +1221,12 @@ impl GameState {
         }
 
         self.prev_card_id = old_card_id;
-        // Rule 5.2.3: Placing cards on stage
         self.core.players[p_idx].stage[slot_idx] = card_id;
-        // Rule 5.2.4: Enter as untapped
         self.core.players[p_idx].set_tapped(slot_idx, false);
         self.core.players[p_idx].set_moved(slot_idx, true);
 
         self.register_played_member(p_idx, card_id, db);
 
-        // Rule 11.1: Block [逋ｻ蝣ｴ]
-        // Rule 11.3: [逋ｻ蝣ｴ] (Startup ability)
         self.trigger_event(
             db,
             TriggerType::OnPlay,

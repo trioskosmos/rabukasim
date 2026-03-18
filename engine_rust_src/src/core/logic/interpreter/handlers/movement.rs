@@ -36,9 +36,6 @@ pub fn handle_draw(
         v as u32
     };
     let slot = instr.slot();
-    // Rule 1.3.2: [閾｢霄ｫ/逶ｸ謇・ (Self/Opponent)]
-    // Rule 1.3.2.1: Self (自分)
-    // Rule 1.3.2.2: Opponent (相手)
     let target_p = if slot.is_opponent {
         1 - p_idx
     } else {
@@ -47,9 +44,6 @@ pub fn handle_draw(
 
     match op {
         O_DRAW => {
-            // Rule 5.6: [蠑輔￥ (Draw)]
-            // Rule 5.6.1: Move top card of deck to hand
-            // Rule 5.6.2: Repeat for N cards
             // Draw to hand (or specified destination zone)
             for _ in 0..count {
                 if state.core.players[target_p].deck.is_empty() {
@@ -83,11 +77,6 @@ pub fn handle_draw(
             );
         }
         O_DRAW_UNTIL => {
-            // Rule 5.6.3: [（数値）枚まで引く (Draw up to N)]
-            // Rule 5.6.3.1: [（数値）が0 以下である場合は、この指示を終了 (End if N <= 0)]
-            // Rule 5.6.3.2: [指定プレイヤーはこの指示を終了することができます (Player choice to stop)]
-            // Rule 5.6.3.3: [指定プレイヤーはカードを1 枚引きます (Draw 1 card)]
-            // Rule 5.6.3.4: [（数値）回に達していた場合、終了 (Loop until limit)]
             let target_hand_size = v as usize;
             let current_hand_size = state.players[p_idx].hand.len();
             if current_hand_size < target_hand_size {
@@ -96,7 +85,6 @@ pub fn handle_draw(
             }
         }
         O_ADD_TO_HAND => {
-            // Rule 5.1.2: Add to hand
             if s == 90 || s == 6 {
                 for _ in 0..v as usize {
                     if !state.players[p_idx].looked_cards.is_empty() {
@@ -111,17 +99,6 @@ pub fn handle_draw(
         _ => return HandlerResult::Continue,
     }
     HandlerResult::Continue
-}
-
-// Rule 5.4: Place (Generic Movement)
-pub fn handle_move_card(
-    state: &mut GameState,
-    card_id: i32,
-    from: Zone,
-    to: Zone,
-) {
-    // Rule 4.1.4: State Reset on Zone Transition
-    // Rule 5.4: Place
 }
 
 pub fn handle_move_to_discard(
@@ -584,8 +561,6 @@ pub fn handle_deck_zones(
         O_SEARCH_DECK => {
             let search_target = ctx.target_slot as usize;
             if search_target < state.players[p_idx].deck.len() {
-                // Rule 5.4: [鄂ｮ縺・ (Place)]
-                // Rule 5.4.1: Move card to specified zone
                 let cid = state.players[p_idx].remove_deck_card(search_target).unwrap();
                 match s {
                     4 => {
@@ -597,8 +572,6 @@ pub fn handle_deck_zones(
                                 state.players[p_idx].push_discard_card(old);
                             }
                             state.players[p_idx].stage[slot] = cid;
-                            // Rule 5.2: [繧｢繧ｯ繝・ぅ繝悶↓縺吶ｋ (Set Active/Wait)]
-                            // Rule 5.2.1: Orient card to active or wait state
                             state.players[p_idx].set_tapped(slot, false);
                             state.players[p_idx].set_moved(slot, true);
                             state.register_played_member(p_idx, cid, db);
@@ -622,8 +595,6 @@ pub fn handle_deck_zones(
                     }
                 }
                 let mut rng = Pcg64::from_os_rng();
-                // Rule 5.9: [繧ｷ繝｣繝・ヵ繝ｫ縺吶ｋ (Shuffle)]
-                // Rule 5.9.1: Randomize card order in a zone
                 state.players[p_idx].deck.shuffle(&mut rng);
             }
         }
@@ -633,9 +604,7 @@ pub fn handle_deck_zones(
                     state.resolve_deck_refresh(p_idx);
                 }
                 for _ in 0..(v as usize).min(state.players[p_idx].deck.len()) {
-                    // Rule 5.9.2: [隴先椈繧呈紛逅・縺吶ｋ (Order Deck)]
                     if let Some(cid) = state.players[p_idx].pop_deck_card() {
-                        // Rule 5.5.2: Cards looked at (stored in looked_cards)
                         state.players[p_idx].looked_cards.push(cid);
                     }
                 }
@@ -740,9 +709,7 @@ pub fn handle_deck_zones(
             // Third: Look at cards if not already done
             if state.players[p_idx].looked_cards.is_empty() && v > 0 {
                 for _ in 0..(v as usize).min(state.players[p_idx].deck.len()) {
-                    // Rule 5.4.1: [隴先椈繧定ｦ九ｋ (Look at Deck)]
                     if let Some(cid) = state.players[p_idx].pop_deck_card() {
-                        // Rule 5.4.2: Cards looked at (stored in looked_cards)
                         state.players[p_idx].looked_cards.push(cid);
                     }
                 }
@@ -839,7 +806,6 @@ pub fn handle_deck_zones(
                             state.players[p_idx].push_deck_card(cid);
                         }
                         let mut rng = Pcg64::from_os_rng();
-                        // Rule 5.5.1: Shuffle after moving cards back to deck
                         state.players[p_idx].deck.shuffle(&mut rng);
                     }
                 }
@@ -872,12 +838,9 @@ pub fn handle_deck_zones(
                 }
             }
             let mut rng = Pcg64::from_os_rng();
-            // Rule 5.5.1: Shuffle deck
             state.players[p_idx].deck.shuffle(&mut rng);
         }
         O_SWAP_CARDS => {
-            // Rule 5.8: [蜈･繧梧崛縺医ｋ (Swap)]
-            // Rule 5.8.1: Move cards to each other's zones simultaneously
             for _ in 0..(v as usize) {
                 if state.players[p_idx].deck.is_empty() {
                     state.resolve_deck_refresh(p_idx);
@@ -952,9 +915,6 @@ pub fn handle_deck_zones(
             }
         }
         O_LOOK_DECK | O_REVEAL_CARDS | O_CHEER_REVEAL => {
-            // Rule 5.5: [螻ｱ譛ｭ繧呈譜繧・蜈ｬ髢九☆繧・ (Look at deck/Reveal)]
-            // Rule 5.5.1: View N cards from top of deck
-            // Rule 5.5.1.1/2: Look/Reveal up to N cards
             let count = v as usize;
             if resolved_slot == 6 {
                 if ctx.choice_index == -1 {
@@ -1022,15 +982,11 @@ pub fn handle_deck_zones(
                 let deck_len = state.players[p_idx].deck.len();
                 let mut revealed_cids = Vec::new();
                 for _ in 0..count.min(deck_len) {
-                    // Rule 5.4.1: [隴先椈繧定ｦ九ｋ (Look at Deck)]
                     if let Some(cid) = state.players[p_idx].pop_deck_card() {
-                        // Rule 5.4.2: Cards looked at (stored in looked_cards)
                         state.players[p_idx].looked_cards.push(cid);
                         revealed_cids.push(cid);
                     }
                 }
-                // Rule 5.3: [陜ｫ繝医↓縺吶ｋ/陬上↓縺吶ｋ (Face-up/Face-down)]
-                // Rule 5.7: [隴先椈繧定ｦ九ｋ (Look deck top)]
                 if op != O_LOOK_DECK {
                     for cid in revealed_cids {
                         let mut new_ctx = ctx.clone();
@@ -1061,16 +1017,12 @@ pub fn handle_deck_zones(
                 }
                 let deck_len = state.players[p_idx].deck.len();
                 for _ in 0..count.min(deck_len) {
-                    // Rule 5.4.1: [隴先椈繧定ｦ九ｋ (Look at Deck)]
                     if let Some(cid) = state.players[p_idx].pop_deck_card() {
-                        // Rule 5.4.2: Cards looked at (stored in looked_cards)
                         state.players[p_idx].looked_cards.push(cid);
                     }
                 }
             }
         }
-        // Rule 5.3: [謗ｧ縺亥ｮ､縺ｫ鄂ｮ縺上] (Discard)
-        // Rule 5.4: [繝ｪ繧ｿ繧､繧｢縺吶ｋ] (Retire)
         O_MOVE_TO_DISCARD => {
             return handle_move_to_discard(state, db, ctx, instr, instr_ip);
         }

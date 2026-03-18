@@ -55,7 +55,6 @@ impl GameState {
         Ok(())
     }
 
-    /// Rule 9.5: [繝√ぉ繝・け繧ｿ繧､繝溘Φ繧ｰ (Check Timing)]
     pub fn auto_step(&mut self, db: &CardDatabase) {
         let mut loop_count = 0;
         while loop_count < 40 {
@@ -102,8 +101,6 @@ impl GameState {
         self.sync_all_stats(db);
     }
 
-    /// Rule 4.1.4: When a card moves from a public zone to a non-public zone, 
-    /// or between certain zones, its status and temporary effects are reset.
     pub fn handle_member_leaves_stage(
         &mut self,
         p_idx: usize,
@@ -123,19 +120,11 @@ impl GameState {
         leave_ctx.source_card_id = cid;
         leave_ctx.area_idx = slot as i16;
 
-        // Rule 11.4: OnLeaves trigger
         self.trigger_abilities(db, TriggerType::OnLeaves, &leave_ctx);
 
-        // Rule 4.1.4: [繧ｫ繝ｼ繝峨′髢玖領域繧呈棡蜍輔☆繧矩嚊縺ｮ諢乗€・ (Resetting of card state on zone move)]
-        // Rule 4.1.4.1: Identity reset exception (Default: move as new card)
-        // Previous states like buffs and granted abilities are cleared.
         self.core.players[p_idx]
             .granted_abilities
             .retain(|(target_cid, _, _)| *target_cid != cid);
-
-        self.core.players[p_idx]
-            .negated_triggers
-            .retain(|&(target_cid, _, _)| target_cid != cid);
 
         self.core.players[p_idx].stage[slot] = -1;
         self.core.players[p_idx].blade_buffs[slot] = 0;

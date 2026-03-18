@@ -301,21 +301,18 @@
   },
   "{{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。\n{{live_start.png|ライブ開始時}}手札の『蓮ノ空』のメンバーカードを3枚まで控え室に置いてもよい：ライブ終了時まで、自分のステージのメンバー1人は、これにより控え室に置いたカード1枚につき、{{icon_blade.png|ブレード}}を得る。": {
     "pseudocode": "TRIGGER: CONSTANT\nEFFECT: META_RULE(7) {GROUPS=[13, 14, 15]}\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(3) {FILTER=\"GROUP_ID=4\"} (Optional) -> DISCARDED_COUNT\nEFFECT: SELECT_MEMBER(1) -> TARGET; ADD_BLADES(1) {MULTIPLIER=DISCARDED_COUNT, TARGET=TARGET, DURATION=\"UNTIL_LIVE_END\"}",
-    "units": ["CERISE_BOUQUET", "DOLLCHESTRA", "MIRA_CRA_PARK"],
     "ids": [
       "PL!HS-sd1-020-SD"
     ]
   },
   "{{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。\n{{live_start.png|ライブ開始時}}自分のステージにいる名前の異なる『蓮ノ空』のメンバー1人につき、このカードのスコアを＋２する。": {
     "pseudocode": "TRIGGER: CONSTANT\nEFFECT: ADD_TAG(\"UNIT_CERISE/UNIT_DOLL/UNIT_MIRAKURA\") -> SELF\n\nTRIGGER: ON_LIVE_START\nEFFECT: BOOST_SCORE(2) -> SELF {PER_CARD=\"STAGE\", FILTER=\"UNIT_HASU, UNIQUE_NAMES\"}",
-    "units": ["CERISE_BOUQUET", "DOLLCHESTRA", "MIRA_CRA_PARK"],
     "cards": [
       "PL!HS-bp2-020-L"
     ]
   },
   "{{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。\n{{live_start.png|ライブ開始時}}自分のステージに名前とコストが両方ともそれぞれ異なるメンバーが3人以上いる場合、このカードのスコアを＋１する。": {
     "pseudocode": "TRIGGER: CONSTANT\nEFFECT: TREAT_AS_UNIT(\"スリーズブーケ, DOLLCHESTRA, みらくらぱーく！\") -> SELF\n\nTRIGGER: ON_LIVE_START\nCONDITION: UNIQUE_NAMES_COUNT {MIN=3}, UNIQUE_COST_COUNT {MIN=3}\nEFFECT: BOOST_SCORE(1) -> SELF",
-    "units": ["CERISE_BOUQUET", "DOLLCHESTRA", "MIRA_CRA_PARK"],
     "cards": [
       "PL!HS-bp5-018-L"
     ]

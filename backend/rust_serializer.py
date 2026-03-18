@@ -423,10 +423,6 @@ class RustGameStateSerializer:
             energy.append(e_card)
 
         mulligan_selection_list = [i for i in range(len(p.hand)) if (p.mulligan_selection >> i) & 1]
-        initial_deck = [self.serialize_card(cid, lang=lang, is_vanilla=is_vanilla) for cid in getattr(p, "initial_deck", [])] if is_viewable else []
-        full_deck = [self.serialize_card(cid, lang=lang, is_vanilla=is_vanilla) for cid in getattr(p, "deck", [])] if is_viewable else []
-        energy_deck = [self.serialize_card(cid, lang=lang, is_vanilla=is_vanilla) for cid in getattr(p, "energy_deck", [])] if is_viewable else []
-
         return {
             "player_id": p.player_id,
             "score": p.score,
@@ -435,9 +431,8 @@ class RustGameStateSerializer:
             "hand_count": len(hand),
             "deck_count": p.deck_count,
             "energy_deck_count": p.energy_deck_count,
-            "initial_deck": initial_deck,
-            "full_deck": full_deck,
-            "energy_deck": energy_deck,
+            "initial_deck": [self.serialize_card(cid, lang=lang, is_vanilla=is_vanilla) for cid in getattr(p, "initial_deck", [])],
+            "full_deck": [self.serialize_card(cid, lang=lang, is_vanilla=is_vanilla) for cid in getattr(p, "deck", [])],
             "discard": [self.serialize_card(cid, lang=lang, is_vanilla=is_vanilla) for cid in p.discard],
             "discard_count": len(p.discard),
             "energy": energy,

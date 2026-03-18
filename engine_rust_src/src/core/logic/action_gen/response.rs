@@ -1,7 +1,6 @@
 use crate::core::enums::*;
 use crate::core::logic::ability_patterns::{pending_live_ability, pending_optional_mode_mask, pending_targeted_live_heart_bonus};
 use crate::core::logic::action_gen::ActionGenerator;
-use crate::core::logic::interpreter::instruction::{BytecodeProgram, WORDS_PER_INSTRUCTION};
 use crate::core::logic::{ChoiceType, Ability, ActionReceiver, CardDatabase, GameState, PendingInteraction};
 
 pub struct ResponseGenerator;
@@ -298,7 +297,7 @@ impl ResponseGenerator {
                     }
                 } else {
                     for (i, &cid) in player.hand.iter().enumerate() {
-                        if state.card_matches_filter_with_ctx(db, cid, masked_filter, &pi.ctx) {
+                        if state.card_matches_filter(db, cid, masked_filter) {
                             receiver.add_action(
                                 (ACTION_BASE_HAND_SELECT + i as i32) as usize,
                             );
@@ -476,16 +475,11 @@ impl ResponseGenerator {
                         if let Some(attr) = Self::effect_runtime_attr_for_opcode(ab, O_LOOK_AND_CHOOSE)
                         {
                             final_filter_attr = attr;
-                        } else {
-                            let program = BytecodeProgram::from_slice(&ab.bytecode);
-                            let mut ip = 0;
-                            while let Some(instr) = program.instruction_at(ip) {
-                                if instr.op == O_LOOK_AND_CHOOSE {
-                                    final_filter_attr = instr.a as u64;
-                                    break;
-                                }
-                                ip = program.next_ip(ip);
-                            }
+                        } else if let Some(chunk) = ab.bytecode.chunks(5).find(|ch| ch[0] == O_LOOK_AND_CHOOSE)
+                        {
+                            let a_low = chunk[2] as u32;
+                            let a_high = chunk[3] as u32;
+                            final_filter_attr = ((a_high as u64) << 32) | (a_low as u64);
                         }
                     }
                 }
@@ -679,14 +673,15 @@ impl ResponseGenerator {
                 if ab_idx_real < abs.len() {
                     let ab = &abs[ab_idx_real];
                     let bc = &ab.bytecode;
-                    let program = BytecodeProgram::from_slice(bc);
 
                     let mut ip = 0;
-                    while let Some(instr) = program.instruction_at(ip) {
-                        if instr.op == O_SELECT_MODE {
-                            break;
+                    if let Some(pos) = bc.chunks(5).position(|chunk| chunk[0] == O_SELECT_MODE) {
+                        ip = pos * 5;
+                    } else {
+                        // Fallback: If not found in chunks, check if it's the first instruction
+                        if bc.get(0) == Some(&(O_SELECT_MODE as i32)) {
+                            ip = 0;
                         }
-                        ip = program.next_ip(ip);
                     }
 
                     // In 5-word format:
@@ -695,17 +690,20 @@ impl ResponseGenerator {
                     // JUMP target2
                     // ...
 
-                    let jump_instr_ip = ip + WORDS_PER_INSTRUCTION + (i as usize * WORDS_PER_INSTRUCTION);
-                    if let Some(jump_instr) = program.instruction_at(jump_instr_ip) {
-                        if jump_instr.op == O_JUMP {
-                            let jump_val = jump_instr.v;
+                    let jump_instr_ip = ip + 5 + (i as usize * 5);
+                    if jump_instr_ip + 1 < bc.len() {
+                        let jump_op = bc[jump_instr_ip];
+                        if jump_op == O_JUMP {
+                            let jump_val = bc[jump_instr_ip + 1];
                             // The JUMP target points to the skip-to-end instruction AFTER the option's effect block.
                             // The actual first effect instruction is 5 bytes BEFORE that target.
-                            let effect_ip = program.jump_target(jump_instr_ip, jump_val);
+                            let jump_target = jump_instr_ip + 5 + (jump_val as usize * 5);
+                            let effect_ip = jump_target;
 
-                            if let Some(effect_instr) = effect_ip.and_then(|ip| program.instruction_at(ip)) {
-                                let target_op = effect_instr.op;
-                                let v = effect_instr.v;
+                            if effect_ip + 4 < bc.len() {
+                                let target_op = bc[effect_ip];
+                                let v = bc[effect_ip + 1];
+                                let _s = bc[effect_ip + 4];
 
                                 if target_op == O_PAY_ENERGY {
                                     let player = &state.players[p_idx];

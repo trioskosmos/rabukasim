@@ -1518,7 +1518,6 @@ impl PyGameState {
         let mut total_moves = 0;
         let mut total_meaningful_moves = 0;
         let mut gameplay_seconds = 0.0;
-        let mut action_stats: std::collections::HashMap<String, (u64, f64)> = std::collections::HashMap::new();
 
         for _ in 0..num_games {
             let mut state = self.inner.clone();
@@ -1535,44 +1534,7 @@ impl PyGameState {
                     *actions.choose(&mut rng).unwrap()
                 };
                 
-                let step_start = std::time::Instant::now();
                 let _ = state.step(&db.inner, action);
-                let step_duration = step_start.elapsed().as_secs_f64();
-
-                let label = crate::core::logic::ActionFactory::get_action_label(action);
-                // Categorize label to keep the map size reasonable
-                let category = if label.contains("Mulligan") {
-                    "Mulligan".to_string()
-                } else if label.contains("Set Live") {
-                    "SetLive".to_string()
-                } else if label.contains("Play Hand") {
-                    "PlayMember".to_string()
-                } else if label.contains("Activate Member") {
-                    "ActivateMember".to_string()
-                } else if label.contains("Activate from Hand") {
-                    "ActivateFromHand".to_string()
-                } else if label.contains("Activate from Discard") {
-                    "ActivateFromDiscard".to_string()
-                } else if label.contains("Pass") {
-                    "Pass".to_string()
-                } else if label.contains("Select Mode") {
-                    "SelectMode".to_string()
-                } else if label.contains("Select Color") {
-                    "SelectColor".to_string()
-                } else if label.contains("Select Stage Slot") {
-                    "SelectStageSlot".to_string()
-                } else if label.contains("Select Choice") {
-                    "SelectChoice".to_string()
-                } else if label.contains("Turn Choice") {
-                    "TurnChoice".to_string()
-                } else {
-                    label
-                };
-
-                let entry = action_stats.entry(category).or_insert((0, 0.0));
-                entry.0 += 1;
-                entry.1 += step_duration;
-
                 total_moves += 1;
                 if action != 0 {
                     total_meaningful_moves += 1;
@@ -1588,23 +1550,12 @@ impl PyGameState {
 
         Python::with_gil(|py| {
             let mps = if gameplay_seconds > 0.0 { total_moves as f64 / gameplay_seconds } else { 0.0 };
-            
-            let mut timing_breakdown = std::collections::HashMap::new();
-            for (cat, (count, total_time)) in action_stats {
-                timing_breakdown.insert(cat, json!({
-                    "count": count,
-                    "total_time": total_time,
-                    "avg_time": if count > 0 { total_time / count as f64 } else { 0.0 }
-                }));
-            }
-
             let results = json!({
                 "total_games": num_games,
                 "total_moves": total_moves,
                 "total_meaningful_moves": total_meaningful_moves,
                 "gameplay_seconds": gameplay_seconds,
                 "mps": mps,
-                "action_timings": timing_breakdown,
             });
             let json_str = results.to_string();
             let json_mod = py.import("json").unwrap();

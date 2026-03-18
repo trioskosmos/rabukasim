@@ -26,8 +26,6 @@ impl GameState {
         p0_lives: Vec<i32>,
         p1_lives: Vec<i32>,
     ) {
-        // Rule 6.1.1.1: Main Deck (48 Member + 12 Live)
-        // Rule 6.1.1.3: Energy Deck (12 cards)
         self.initialize_game_with_seed(
             p0_deck, p1_deck, p0_energy, p1_energy, p0_lives, p1_lives, None,
         );
@@ -109,7 +107,6 @@ impl GameState {
         seed: Option<u64>,
     ) {
         // Rule 6.1.1.1: Main Deck contains 48 member cards and 12 live cards (total 60)
-        // Rule 6.1.1.2: Choice of deck for the game
         // Rule 6.2.1.2: Place main deck and shuffle.
         let mut d0 = Vec::with_capacity(60);
         d0.extend(p0_deck);
@@ -127,14 +124,13 @@ impl GameState {
         self.core.players[0].initial_deck = SmallVec::from_vec(d0.clone());
         self.core.players[1].initial_deck = SmallVec::from_vec(d1.clone());
 
-        // Rule 6.2.1.2: [繝｡繧､繝ｳ繝・ャ繧ｭ繧貞推閾ｪ縺ｮ繝｡繧､繝ｳ繝・ャ繧ｭ鄂ｮ縺榊ｴ縺ｫ鄂ｮ縺阪€√す繝｣繝・ヵ繝ｫ (Place and Shuffle Deck)]
         d0.shuffle(&mut rng);
         d1.shuffle(&mut rng);
 
         self.core.players[0].deck = SmallVec::from_vec(d0);
         self.core.players[1].deck = SmallVec::from_vec(d1);
 
-        // Rule 6.2.1.3: [繧ｨ繝阪Ν繧ｮ繝ｼ繝・ャ繧ｭ繧偵 trail 繧ｨ繝阪Ν繧ｮ繝ｼ繝・ャ繧ｭ鄂ｮ縺榊ｴ縺ｫ鄂ｮ縺・ (Place Energy Deck)]
+        // Rule 6.2.1.3: Place energy deck.
         self.core.players[0].energy_deck = SmallVec::from_vec(p0_energy);
         self.core.players[1].energy_deck = SmallVec::from_vec(p1_energy);
         self.core.players[0].energy_deck.shuffle(&mut rng);
@@ -156,28 +152,21 @@ impl GameState {
             self.core.players[i].success_lives.clear();
             self.core.players[i].mulligan_selection = 0;
             self.core.players[i].hand_added_turn.clear();
-            self.core.players[i].live_zone = vec![-1; 3];
+            self.core.players[i].live_zone = [-1; 3];
             for j in 0..3 {
                 self.core.players[i].set_revealed(j, false);
             }
         }
 
-        // Rule 6.2.1.4: [メインデッキ置き場の上から 6 枚のカードを自分自身の手札に移動 (Draw 6)]
+        // Rule 6.2.1.5: Both players draw 6 cards.
         self.draw_cards(0, 6);
         self.draw_cards(1, 6);
 
-        // Rule 6.2.1.6: [メインデッキ置き場の上から 3 枚、エネルギーデッキ置き場の上から 3 枚をエネルギー置き場に置く (Initial 6 Energy)]
+        // Rule 6.2.1.7: 3 cards from Energy Deck to Energy Zone.
         for i in 0..2 {
-            // 3 from Energy Deck
             for _ in 0..3 {
                 if let Some(cid) = self.core.players[i].energy_deck.pop() {
                         self.core.players[i].push_energy_card(cid, false);
-                }
-            }
-            // 3 from Main Deck
-            for _ in 0..3 {
-                if let Some(cid) = self.core.players[i].deck.pop() {
-                    self.core.players[i].push_energy_card(cid, false);
                 }
             }
         }

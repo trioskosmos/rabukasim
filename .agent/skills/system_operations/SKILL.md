@@ -19,17 +19,3 @@ Registry of planned features and deferred optimizations.
 ## 📦 Deployment
 - **HF Upload**: `uv run python tools/hf_upload_staged.py`.
 - **Build Dist**: `uv run python tools/build_dist_optimized.py`.
-
-### 🚀 Hugging Face (HF) Spaces Protocol
-HF has strict limits (10MB for Git blobs, 0-tolerance for raw binaries in history).
-
-1. **Large Assets**: Use Git LFS for binaries (`.png`, `.webp`, `.pdf`, `.bin`).
-   - *Check*: `git lfs status --porcelain`.
-2. **History Scrubbing**: If HF rejects a push for "binary files", you must rewrite history to move historical blobs to LFS.
-   - *Command*: `git lfs migrate import --everything --include="*.exe,*.vsix,data/*.txt,*.pdf,*.png"`.
-   - *Final Push*: `git push origin main --force`.
-3. **Dockerfile Compliance**:
-   - **Binary Name**: The launcher binary is `rabuka_launcher` (check `launcher/Cargo.toml`).
-   - **Builds**: The Dockerfile MUST compile the Rust engine and launcher.
-   - **Port**: Must use `EXPOSE 7860` for Spaces.
-4. **Binary Exclusions**: Stricly ignore `.venv`, `.vsix`, and large simulation logs in `.gitignore`.

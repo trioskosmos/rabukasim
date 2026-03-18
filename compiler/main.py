@@ -1,4 +1,3 @@
-import datetime
 import os
 import sys
 
@@ -15,10 +14,9 @@ from pydantic import TypeAdapter
 # from compiler.parser import AbilityParser
 from compiler.pseudocode_pipeline import PseudocodeResolver
 from engine.models.ability_ir import BYTECODE_LAYOUT_NAME, BYTECODE_LAYOUT_VERSION, SEMANTIC_FORM_VERSION, VersionGate
-from engine.models.ability import AbilityCostType, ConditionType, EffectType, TriggerType, Ability, Condition, Cost, Effect, to_signed_32
-from engine.models.bytecode_readable import decode_bytecode
+from engine.models.ability import AbilityCostType, ConditionType, EffectType, TriggerType
 from engine.models.card import EnergyCard, LiveCard, MemberCard
-from engine.models.enums import CHAR_MAP, Unit
+from engine.models.enums import CHAR_MAP
 from engine.models.generated_metadata import CONDITIONS, COSTS, OPCODES
 from engine.models.opcodes import Opcode
 from engine.models.bytecode_readable import decode_bytecode
@@ -77,21 +75,7 @@ def validate_bytecode(bytecode: list, card_no: str, ab_idx: int) -> list:
     return issues
 
 
-def _build_export_excludes(export_profile: str) -> tuple[dict, dict]:
-    exclude_ability_fields = {"instructions": True}
-    exclude_card_fields = {"faq": True, "abilities": {"__all__": exclude_ability_fields}}
-
-    if export_profile == "runtime":
-        exclude_ability_fields.update(
-            {
-                "semantic_form": True,
-            }
-        )
-
-    return exclude_ability_fields, exclude_card_fields
-
-
-def compile_cards(input_path: str, output_path: str, quiet: bool = False, export_profile: str = "full"):
+def compile_cards(input_path: str, output_path: str, quiet: bool = False):
     if not quiet:
         print(f"Loading raw cards from {input_path}...")
     with open(input_path, "r", encoding="utf-8") as f:
@@ -109,8 +93,7 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
             "bytecode_layout_version": BYTECODE_LAYOUT_VERSION,
             "bytecode_layout_name": BYTECODE_LAYOUT_NAME,
             "semantic_form_version": SEMANTIC_FORM_VERSION,
-            "semantic_form_enabled": export_profile != "runtime",
-            "export_profile": export_profile,
+            "semantic_form_enabled": True,
         },
     }
 
@@ -215,10 +198,10 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
 
                 packed_id = (variant_idx << 12) | logic_id
                 # print(f"DEBUG: Assigned new ID for card_no={v_key}, packed_id={packed_id}")
-            # Define fields to exclude from compiled output to reduce bloat.
-            # The runtime profile keeps the schema needed by the Rust engine and launcher,
-            # while dropping inspection-only fields that are redundant with source data.
-            _, exclude_card_fields = _build_export_excludes(export_profile)
+            # Define fields to exclude from compiled output to reduce bloat
+            # No source data is lost; these are either redundant with bytecode or stay in cards.json/consolidated_abilities.json
+            exclude_ability_fields = {"instructions": True}
+            exclude_card_fields = {"faq": True, "abilities": {"__all__": exclude_ability_fields}}
 
             try:
                 if ctype == "メンバー":
@@ -262,9 +245,6 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
 
     generate_opcode_docs(compiled_data, "reports/opcode_reference.md")
 
-    # Note: Units extraction is now handled in parse_live() and parse_member()
-    # via consolidated_abilities metadata and ADD_TAG extraction helpers
-
     # Write output (always write, even with errors)
     if not quiet:
         print(f"Writing compiled data to {output_path}...")
@@ -276,25 +256,27 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
         print("Generating consolidated_abilities_decoded.json...")
     
     decoded_output_path = "data/consolidated_abilities_decoded.json"
-    consolidated_decoded = {
-        "_metadata": {
-            "generated_by": "compiler/main.py",
-            "generated_at": datetime.datetime.now().isoformat()
-        }
-    }
-    decoded_by_card_no = {}
+    consolidated_decoded = {}
     
     # We'll use the original consolidated_abilities structure as a template
     # but only for the keys that were actually compiled
     for db_name in ["member_db", "live_db"]:
         for cid_str, card_data in compiled_data[db_name].items():
-            card_no = str(card_data.get("card_no", "")).strip()
             raw_jp = card_data.get("original_text", "")
+            if not raw_jp or raw_jp in consolidated_decoded:
+                continue
+            
+            # Find the original entry from consolidated_abilities to get metadata (like card lists)
+            original_entry = _pseudocode_resolver.consolidated.get(raw_jp)
+            if not original_entry:
+                continue
+            
             decoded_abs = []
             for ab in card_data.get("abilities", []):
                 bc = ab.get("bytecode", [])
                 if bc:
-                    # Use the authoritative decoder from bytecode_readable
+                    # Clean up the decoded bytecode to be more JSON friendly (list of lines)
+                    # We strip the legend to keep it concise per ability
                     decoded_str = decode_bytecode(bc)
                     # Split into lines and remove the legend if present
                     lines = decoded_str.split("\n")
@@ -305,46 +287,12 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
                     # Also strip "  00: " prefixes if we want it cleaner, but the user asked for "like in the debug menu"
                     # The debug menu shows the prefixes.
                     decoded_abs.append([line.strip() for line in lines if line.strip()])
-
-            if not decoded_abs:
-                continue
-
-            if card_no:
-                decoded_by_card_no[card_no] = decoded_abs
-
-            if not raw_jp or raw_jp in consolidated_decoded:
-                continue
-
-            # Find the original entry from consolidated_abilities to get metadata (like card lists)
-            original_entry = _pseudocode_resolver.consolidated.get(raw_jp)
-            if not original_entry:
-                continue
-
-            # Copy the original entry and add decoded_bytecode
-            new_entry = dict(original_entry) if isinstance(original_entry, dict) else {"pseudocode": original_entry}
-            new_entry["decoded_bytecode"] = decoded_abs
-            consolidated_decoded[raw_jp] = new_entry
-
-    # Some consolidated keys are intentionally preserved "constant" JP strings that
-    # no longer exactly match the compiled card text. Backfill those entries by card id
-    # so the decoded export still covers every in-use consolidated ability constant.
-    for raw_jp, original_entry in _pseudocode_resolver.consolidated.items():
-        if raw_jp in consolidated_decoded or not isinstance(original_entry, dict):
-            continue
-
-        candidate_card_nos = []
-        for key in ("cards", "ids"):
-            values = original_entry.get(key, [])
-            if isinstance(values, list):
-                candidate_card_nos.extend(str(value).strip() for value in values if str(value).strip())
-
-        decoded_abs = next((decoded_by_card_no.get(card_no) for card_no in candidate_card_nos if card_no in decoded_by_card_no), None)
-        if not decoded_abs:
-            continue
-
-        new_entry = dict(original_entry)
-        new_entry["decoded_bytecode"] = decoded_abs
-        consolidated_decoded[raw_jp] = new_entry
+            
+            if decoded_abs:
+                # Copy the original entry and add decoded_bytecode
+                new_entry = dict(original_entry) if isinstance(original_entry, dict) else {"pseudocode": original_entry}
+                new_entry["decoded_bytecode"] = decoded_abs
+                consolidated_decoded[raw_jp] = new_entry
 
     with open(decoded_output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(consolidated_decoded, f, ensure_ascii=False, indent=2)
@@ -707,46 +655,6 @@ def compute_flags(card):
         card.cost_flags = cost_flags
 
 
-def _extract_units_from_add_tag(abilities):
-    """Extract unit IDs from CONSTANT trigger + ADD_TAG (META_RULE) abilities.
-
-    Returns a set of unit IDs (integers) to merge with card.units.
-    """
-    units_set = set()
-    # Mapping token names to Unit enum values
-    name_map = {
-        "UNIT_CERISE": int(Unit.CERISE_BOUQUET),
-        "UNIT_DOLL": int(Unit.DOLLCHESTRA),
-        "UNIT_MIRAKURA": int(Unit.MIRA_CRA_PARK),
-    }
-
-    for ab_idx, ab in enumerate(abilities):
-        if getattr(ab, "trigger", None) != TriggerType.CONSTANT:
-            continue
-        for eff_idx, eff in enumerate(getattr(ab, "effects", [])):
-            if getattr(eff, "effect_type", None) != EffectType.META_RULE:
-                continue
-            tag_str = eff.params.get("tag", "") if hasattr(eff, "params") else ""
-            if not tag_str:
-                continue
-            # Normalize tag string: remove surrounding quotes and whitespace
-            raw = str(tag_str).strip()
-            if (raw.startswith('"') and raw.endswith('"')) or (raw.startswith("'") and raw.endswith("'")):
-                raw = raw[1:-1]
-            parts_found = []
-            for part in raw.split("/"):
-                key = part.strip().strip('"').strip("'")
-                if key in name_map:
-                    units_set.add(name_map[key])
-                    parts_found.append((key, name_map[key]))
-            # Debug output for PL!HS-bp2-020-L
-            if parts_found:
-                print(f"[DEBUG _extract] Found META_RULE ADD_TAG in ability #{ab_idx}: raw='{raw}', matched parts: {parts_found}")
-    return units_set
-
-    return units_set
-
-
 def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
     spec = data.get("special_heart", {})
     translation_en = _manual_translations_en.get(card_no)
@@ -802,30 +710,6 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
 
     _compile_abilities_for_export(card.abilities, card_no, "MEMBER")
 
-    # Extract units from CONSTANT ADD_TAG effects and merge with existing units
-    add_tag_units = _extract_units_from_add_tag(card.abilities)
-    if add_tag_units:
-        existing_units = set(card.units) if isinstance(card.units, list) else set()
-        card.units = list(sorted(existing_units | add_tag_units))
-    
-    # Check consolidated_abilities for units metadata
-    # If the original pseudocode entry has a "units" field, merge those units into card.units
-    original_entry = _pseudocode_resolver.consolidated.get(card.original_text)
-    if original_entry and isinstance(original_entry, dict) and "units" in original_entry:
-        metadata_units = original_entry["units"]
-        if metadata_units:
-            # Map unit names (e.g., "CERISE_BOUQUET") to Unit enum values
-            unit_name_map = {
-                "CERISE_BOUQUET": int(Unit.CERISE_BOUQUET),
-                "DOLLCHESTRA": int(Unit.DOLLCHESTRA),
-                "MIRA_CRA_PARK": int(Unit.MIRA_CRA_PARK),
-            }
-            existing_units = set(card.units) if isinstance(card.units, list) else set()
-            for unit_name in metadata_units:
-                if unit_name in unit_name_map:
-                    existing_units.add(unit_name_map[unit_name])
-            card.units = list(sorted(existing_units))
-
     compute_flags(card)
     return card
 
@@ -873,30 +757,6 @@ def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
     )
 
     _compile_abilities_for_export(card.abilities, card_no, "LIVE")
-
-    # Extract units from CONSTANT ADD_TAG effects and merge with existing units
-    add_tag_units = _extract_units_from_add_tag(card.abilities)
-    if add_tag_units:
-        existing_units = set(card.units) if isinstance(card.units, list) else set()
-        card.units = list(sorted(existing_units | add_tag_units))
-    
-    # Check consolidated_abilities for units metadata
-    # If the original pseudocode entry has a "units" field, merge those units into card.units
-    original_entry = _pseudocode_resolver.consolidated.get(card.original_text)
-    if original_entry and isinstance(original_entry, dict) and "units" in original_entry:
-        metadata_units = original_entry["units"]
-        if metadata_units:
-            # Map unit names (e.g., "CERISE_BOUQUET") to Unit enum values
-            unit_name_map = {
-                "CERISE_BOUQUET": int(Unit.CERISE_BOUQUET),
-                "DOLLCHESTRA": int(Unit.DOLLCHESTRA),
-                "MIRA_CRA_PARK": int(Unit.MIRA_CRA_PARK),
-            }
-            existing_units = set(card.units) if isinstance(card.units, list) else set()
-            for unit_name in metadata_units:
-                if unit_name in unit_name_map:
-                    existing_units.add(unit_name_map[unit_name])
-            card.units = list(sorted(existing_units))
 
     compute_flags(card)
     return card
@@ -1019,12 +879,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--quiet", "-q", action="store_true", help="Minimize output"
     )
-    parser.add_argument(
-        "--export-profile",
-        choices=["full", "runtime"],
-        default="full",
-        help="Export schema profile: 'full' keeps inspection fields, 'runtime' prunes inspection-only fields",
-    )
     args = parser.parse_args()
 
     # Set up version gate if non-default version requested
@@ -1042,7 +896,7 @@ if __name__ == "__main__":
         else:
             sys.exit(1)
 
-    compile_cards(args.input, args.output, quiet=args.quiet, export_profile=args.export_profile)
+    compile_cards(args.input, args.output, quiet=args.quiet)
 
     # Update hash in the output file
     if not args.quiet:
@@ -1052,8 +906,6 @@ if __name__ == "__main__":
         if "meta" not in compiled_data:
             compiled_data["meta"] = {}
         compiled_data["meta"]["source_hash"] = calculate_hash(args.input)
-        compiled_data["meta"]["generated_by"] = "compiler/main.py"
-        compiled_data["meta"]["generated_at"] = datetime.datetime.now().isoformat()
         with open(args.output, "w", encoding="utf-8", newline="\n") as f:
             json.dump(compiled_data, f, ensure_ascii=False, indent=2)
 

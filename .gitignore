@@ -235,6 +235,3 @@ alphazero/**/*.npy
 alphazero/**/*.pt
 alphazero/**/*.pth
 alphazero/models/
-
-# Hugging Face Space (Separate Repository)
-hf_space/

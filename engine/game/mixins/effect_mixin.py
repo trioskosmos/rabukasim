@@ -4067,7 +4067,7 @@ class EffectMixin:
                             **choice_metadata,
                             "effect": "activate",
                             "effect_description": "活動させるメンバーを選んでください",
-                            "is_optional": effect.is_optional,
+                            "is_optional": False,
                         },
                     )
                 )

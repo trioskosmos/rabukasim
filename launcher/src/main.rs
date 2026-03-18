@@ -29,10 +29,30 @@ fn main() {
         println!("[DEBUG] Card ability logic will be logged to terminal.");
     }
 
-    println!("Loading canonical card database...");
+    println!("Loading card database...");
     let bin_path = "../data/cards_compiled.bin";
-    let card_db = load_canonical_runtime_db();
-    let need_new_snapshot = true;
+
+    let mut need_new_snapshot = false;
+    let card_db = match std::fs::read(bin_path) {
+        Ok(bin_data) => {
+            match CardDatabase::from_binary(&bin_data) {
+                Ok(db) => {
+                    println!("[DB] Loaded from binary snapshot (FAST)");
+                    db
+                },
+                Err(e) => {
+                    println!("[DB] Binary load failed, falling back to JSON: {}", e);
+                    need_new_snapshot = true;
+                    load_db_from_json()
+                }
+            }
+        },
+        Err(_) => {
+            println!("[DB] No binary snapshot found, loading from JSON...");
+            need_new_snapshot = true;
+            load_db_from_json()
+        }
+    };
 
     // Regenerate binary snapshot when missing or stale
     if need_new_snapshot {
@@ -161,9 +181,8 @@ fn main() {
     }
 }
 
-fn load_canonical_runtime_db() -> CardDatabase {
-    let db_file = Assets::get("data/canonical_runtime_preview.json")
-        .expect("Missing canonical_runtime_preview.json!");
+fn load_db_from_json() -> CardDatabase {
+    let db_file = Assets::get("data/cards_compiled.json").expect("Missing cards_compiled.json!");
     let db_json = std::str::from_utf8(db_file.data.as_ref()).expect("Failed to read DB json");
     CardDatabase::from_json(db_json).expect("Failed to parse CardDatabase from JSON")
 }

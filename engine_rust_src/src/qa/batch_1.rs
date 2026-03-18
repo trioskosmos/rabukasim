@@ -299,7 +299,7 @@ mod tests {
     fn test_q32_empty_live_yell() {
         let mut state = create_test_state();
         state.phase = Phase::PerformanceP1;
-        state.players[0].live_zone = vec![-1; 3];
+        state.players[0].live_zone = [-1; 3];
 
         // Q32: No lives set = no yell check.
         // state.do_performance(0) -> should skip.

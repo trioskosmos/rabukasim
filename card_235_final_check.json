@@ -1,0 +1,1414 @@
+﻿
+>       "card_no": "PL!
+N-bp1-002-P",
+        "name": "荳ｭ鬆医°縺
+吶∩",
+        "cost": 2,
+        "hearts": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "blade_hearts":
+ [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "blades": 2,
+        "groups": [
+          2
+        ],
+        "units": [
+          8
+        ],
+        "abilities": [
+          {
+            "raw_text":
+ "TRIGGER: ON_PLAY\nEFF
+ECT: LOOK_AND_CHOOSE_OR
+DER(3, ANY) (Optional) 
+-> DECK_TOP; MOVE_TO_DI
+SCARD(REMAINDER)",
+            "trigger": 
+1,
+            "effects": 
+[
+              {
+                "effect
+_type": 28,
+                "value"
+: 3,
+                "value_
+cond": 0,
+                "target
+": 1,
+                "params
+": {
+                  "dest
+ination": "deck_top"
+                },
+                "is_opt
+ional": true,
+                "modal_
+options": [],
+                "runtim
+e_opcode": 28,
+                "runtim
+e_value": 3,
+                "runtim
+e_attr": 23058430092136
+93952,
+                "runtim
+e_slot": 4
+              },
+              {
+                "effect
+_type": 58,
+                "value"
+: 1,
+                "value_
+cond": 0,
+                "target
+": 1,
+                "params
+": {
+                  "raw_
+val": "REMAINDER"
+                },
+                "is_opt
+ional": false,
+                "modal_
+options": [],
+                "runtim
+e_opcode": 58,
+                "runtim
+e_value": 1,
+                "runtim
+e_attr": 1,
+                "runtim
+e_slot": 7603972
+              }
+            ],
+            "conditions
+": [],
+            "costs": []
+,
+            "modal_opti
+ons": [],
+            "is_once_pe
+r_turn": false,
+            "bytecode":
+ [
+              14,
+              3,
+              0,
+              0,
+              0,
+              28,
+              3,
+              0,
+              0,
+              0,
+              58,
+              1,
+>           "card_no": 
+"PL!N-bp1-002-P",
+            "requires_s
+election": false,
+            "choice_fla
+gs": 16,
+            "choice_cou
+nt": 3,
+            "pseudocode
+": "TRIGGER: ON_PLAY\nE
+FFECT: LOOK_AND_CHOOSE_
+ORDER(3, ANY) (Optional
+) -> DECK_TOP; MOVE_TO_
+DISCARD(REMAINDER)",
+            "filters": 
+[
+              {
+                "target
+_player": 1,
+                "card_t
+ype": 0,
+                "group_
+enabled": false,
+                "group_
+id": 0,
+                "is_tap
+ped": false,
+                "has_bl
+ade_heart": false,
+                "not_ha
+s_blade_heart": false,
+                "unique
+_names": false,
+                "unit_e
+nabled": false,
+                "unit_i
+d": 0,
+                "value_
+enabled": false,
+                "value_
+threshold": 0,
+                "is_le"
+: false,
+                "is_cos
+t_type": false,
+                "color_
+mask": 0,
+                "char_i
+d_1": 0,
+                "char_i
+d_2": 0,
+                "zone_m
+ask": 0,
+                "specia
+l_id": 0,
+                "is_set
+suna": false,
+                "compar
+e_accumulated": false,
+                "is_opt
+ional": false,
+                "keywor
+d_energy": false,
+                "keywor
+d_member": false,
+                "packed
+_attr": 1,
+                "packed
+_attr_hex": "0x00000000
+00000001",
+                "summar
+y": "target=self"
+              },
+              {
+                "target
+_player": 1,
+                "card_t
+ype": 0,
+                "group_
+enabled": false,
+                "group_
+id": 0,
+                "is_tap
+ped": false,
+                "has_bl
+ade_heart": false,
+                "not_ha
+s_blade_heart": false,
+                "unique
+_names": false,
+                "unit_e
+nabled": false,
+                "unit_i
+d": 0,
+                "value_
+enabled": false,
+                "value_
+threshold": 0,
+                "is_le"
+: false,
+                "is_cos
+t_type": false,
+                "color_
+mask": 0,
+                "char_i
+d_1": 0,
+                "char_i
+d_2": 0,
+                "zone_m
+ask": 0,
+                "specia
+l_id": 0,
+                "is_set
+suna": false,
+                "compar
+e_accumulated": false,
+                "is_opt
+ional": false,
+                "keywor
+d_energy": false,
+                "keywor
+d_member": false,
+                "packed
+_attr": 1,
+                "packed
+_attr_hex": "0x00000000
+00000001",
+                "summar
+y": "target=self"
+              },
+              {
+                "target
+_player": 1,
+                "card_t
+ype": 0,
+                "group_
+enabled": false,
+                "group_
+id": 0,
+                "is_tap
+ped": false,
+                "has_bl
+ade_heart": false,
+                "not_ha
+s_blade_heart": false,
+                "unique
+_names": false,
+                "unit_e
+nabled": false,
+                "unit_i
+d": 0,
+                "value_
+enabled": false,
+                "value_
+threshold": 0,
+                "is_le"
+: false,
+                "is_cos
+t_type": false,
+                "color_
+mask": 0,
+                "char_i
+d_1": 0,
+>           "card_no": 
+"PL!N-bp1-002-P",
+            "requires_s
+election": false,
+            "choice_fla
+gs": 0,
+            "choice_cou
+nt": 0,
+            "pseudocode
+": "TRIGGER: ACTIVATED 
+(In Discard)\nCOST: PAY
+_ENERGY(2); DISCARD_HAN
+D(1) -> SUCCESS\nEFFECT
+: CONDITION: VALUE_EQ(S
+UCCESS, TRUE); PLAY_MEM
+BER(SELF)",
+            "filters": 
+[
+              {
+                "target
+_player": 1,
+                "card_t
+ype": 0,
+                "group_
+enabled": false,
+                "group_
+id": 0,
+                "is_tap
+ped": false,
+                "has_bl
+ade_heart": false,
+                "not_ha
+s_blade_heart": false,
+                "unique
+_names": false,
+                "unit_e
+nabled": false,
+                "unit_i
+d": 0,
+                "value_
+enabled": false,
+                "value_
+threshold": 0,
+                "is_le"
+: false,
+                "is_cos
+t_type": false,
+                "color_
+mask": 0,
+                "char_i
+d_1": 0,
+                "char_i
+d_2": 0,
+                "zone_m
+ask": 0,
+                "specia
+l_id": 0,
+                "is_set
+suna": false,
+                "compar
+e_accumulated": false,
+                "is_opt
+ional": false,
+                "keywor
+d_energy": false,
+                "keywor
+d_member": false,
+                "packed
+_attr": 1,
+                "packed
+_attr_hex": "0x00000000
+00000001",
+                "summar
+y": "target=self"
+              },
+              {
+                "target
+_player": 1,
+                "card_t
+ype": 0,
+                "group_
+enabled": false,
+                "group_
+id": 0,
+                "is_tap
+ped": false,
+                "has_bl
+ade_heart": false,
+                "not_ha
+s_blade_heart": false,
+                "unique
+_names": false,
+                "unit_e
+nabled": false,
+                "unit_i
+d": 0,
+                "value_
+enabled": false,
+                "value_
+threshold": 0,
+                "is_le"
+: false,
+                "is_cos
+t_type": false,
+                "color_
+mask": 0,
+                "char_i
+d_1": 0,
+                "char_i
+d_2": 0,
+                "zone_m
+ask": 0,
+                "specia
+l_id": 0,
+                "is_set
+suna": false,
+                "compar
+e_accumulated": false,
+                "is_opt
+ional": false,
+                "keywor
+d_energy": false,
+                "keywor
+d_member": false,
+                "packed
+_attr": 1,
+                "packed
+_attr_hex": "0x00000000
+00000001",
+                "summar
+y": "target=self"
+              },
+              {
+                "target
+_player": 0,
+                "card_t
+ype": 0,
+                "group_
+enabled": false,
+                "group_
+id": 0,
+                "is_tap
+ped": false,
+                "has_bl
+ade_heart": false,
+                "not_ha
+s_blade_heart": false,
+                "unique
+_names": false,
+                "unit_e
+nabled": false,
+                "unit_i
+d": 0,
+                "value_
+enabled": false,
+                "value_
+threshold": 0,
+                "is_le"
+: false,
+                "is_cos
+t_type": false,
+                "color_
+mask": 0,
+                "char_i
+d_1": 0,
+>       "img_path": "ca
+rds_webp/PL!N-bp1-002-P
+.webp",
+        "rare": "P",
+        "ability_text":
+ "",
+        "original_text"
+: "{{toujyou.png|逋ｻ蝣ｴ}}
+閾ｪ蛻・・繝・ャ繧ｭ縺ｮ荳翫°繧峨き繝ｼ繝峨ｒ
+3譫夊ｦ九ｋ縲ゅ◎縺ｮ荳ｭ縺九ｉ螂ｽ縺阪↑譫壽
+焚繧貞･ｽ縺阪↑鬆・分縺ｧ繝・ャ繧ｭ縺ｮ荳翫↓
+鄂ｮ縺阪∵ｮ九ｊ繧呈而縺亥ｮ､縺ｫ鄂ｮ縺上
+・n{{kidou.png|襍ｷ蜍扶}{{ic
+on_energy.png|E}}{{icon
+_energy.png|E}}謇区惆繧・譫壽而
+縺亥ｮ､縺ｫ鄂ｮ縺擾ｼ壹％縺ｮ繧ｫ繝ｼ繝峨ｒ謗
+ｧ縺亥ｮ､縺九ｉ繧ｹ繝・・繧ｸ縺ｫ逋ｻ蝣ｴ縺輔
+○繧九ゅ％縺ｮ閭ｽ蜉帙・縲√％縺ｮ繧ｫ繝ｼ繝
+峨′謗ｧ縺亥ｮ､縺ｫ縺ゅｋ蝣ｴ蜷医・縺ｿ襍ｷ蜍
+輔〒縺阪ｋ縲・,
+        "original_text_
+en": "[On Play] Look at
+ the top 3 cards of you
+r deck. Put any number 
+of them back on top of 
+your deck in any order,
+ and put the rest into 
+the waiting room.\\n[Ac
+tivate] (E)(E), Put 1 c
+ard from your hand into
+ the waiting room: Play
+ this card from your wa
+iting room to the stage
+. This ability can only
+ be activated while thi
+s card is in the waitin
+g room.",
+        "volume_icons":
+ 0,
+        "draw_icons": 0
+,
+        "semantic_flags
+": 19,
+        "ability_flags"
+: 1,
+        "synergy_flags"
+: 0,
+        "cost_flags": 1
+      },
+      "4331": {
+        "card_id": 4331
+,
+        "card_no": "PL!
+N-bp1-002-R・・,
+        "name": "荳ｭ鬆医°縺
+吶∩",
+        "cost": 2,
+        "hearts": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "blade_hearts":
+ [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "blades": 2,
+        "groups": [
+          2
+        ],
+        "units": [
+          8
+        ],
+        "abilities": [
+          {
+            "raw_text":
+ "TRIGGER: ON_PLAY\nEFF
+ECT: LOOK_AND_CHOOSE_OR
+DER(3, ANY) (Optional) 
+-> DECK_TOP; MOVE_TO_DI
+SCARD(REMAINDER)",
+            "trigger": 
+1,
+            "effects": 
+[
+              {
+                "effect
+_type": 28,
+                "value"
+: 3,
+                "value_
+cond": 0,
+                "target
+": 1,
+                "params
+": {
+                  "dest
+ination": "deck_top"
+                },
+                "is_opt
+ional": true,
+                "modal_
+options": [],
+                "runtim
+e_opcode": 28,
+                "runtim
+e_value": 3,
+                "runtim
+e_attr": 23058430092136
+93952,
+                "runtim
+e_slot": 4
+              },
+              {
+                "effect
+_type": 58,
+                "value"
+: 1,
+                "value_
+cond": 0,
+                "target
+": 1,
+                "params
+": {
+                  "raw_
+val": "REMAINDER"
+                },
+                "is_opt
+ional": false,
+                "modal_
+options": [],
+                "runtim
+e_opcode": 58,
+                "runtim
+e_value": 1,
+                "runtim
+e_attr": 1,
+                "runtim
+e_slot": 7603972
+              }
+            ],
+            "conditions
+": [],
+            "costs": []
+,
+            "modal_opti
+ons": [],
+>       "img_path": "ca
+rds_webp/PL!N-bp1-002-P
+.webp",
+        "rare": "P",
+        "ability_text":
+ "",
+        "original_text"
+: "{{toujyou.png|逋ｻ蝣ｴ}}
+閾ｪ蛻・・繝・ャ繧ｭ縺ｮ荳翫°繧峨き繝ｼ繝峨ｒ
+3譫夊ｦ九ｋ縲ゅ◎縺ｮ荳ｭ縺九ｉ螂ｽ縺阪↑譫壽
+焚繧貞･ｽ縺阪↑鬆・分縺ｧ繝・ャ繧ｭ縺ｮ荳翫↓
+鄂ｮ縺阪∵ｮ九ｊ繧呈而縺亥ｮ､縺ｫ鄂ｮ縺上
+・n{{kidou.png|襍ｷ蜍扶}{{ic
+on_energy.png|E}}{{icon
+_energy.png|E}}謇区惆繧・譫壽而
+縺亥ｮ､縺ｫ鄂ｮ縺擾ｼ壹％縺ｮ繧ｫ繝ｼ繝峨ｒ謗
+ｧ縺亥ｮ､縺九ｉ繧ｹ繝・・繧ｸ縺ｫ逋ｻ蝣ｴ縺輔
+○繧九ゅ％縺ｮ閭ｽ蜉帙・縲√％縺ｮ繧ｫ繝ｼ繝
+峨′謗ｧ縺亥ｮ､縺ｫ縺ゅｋ蝣ｴ蜷医・縺ｿ襍ｷ蜍
+輔〒縺阪ｋ縲・,
+        "original_text_
+en": "[On Play] Look at
+ the top 3 cards of you
+r deck. Put any number 
+of them back on top of 
+your deck in any order,
+ and put the rest into 
+the waiting room.\n[Act
+ivate] (E)(E), Put 1 ca
+rd from your hand into 
+the waiting room: Play 
+this card from your wai
+ting room onto the stag
+e. This ability can onl
+y be used while this ca
+rd is in the waiting ro
+om.",
+        "volume_icons":
+ 0,
+        "draw_icons": 0
+,
+        "semantic_flags
+": 19,
+        "ability_flags"
+: 1,
+        "synergy_flags"
+: 0,
+        "cost_flags": 1
+      },
+      "8427": {
+        "card_id": 8427
+,
+>       "card_no": "PL!
+N-bp1-002-P・・,
+        "name": "荳ｭ鬆医°縺
+吶∩",
+        "cost": 2,
+        "hearts": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "blade_hearts":
+ [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "blades": 2,
+        "groups": [
+          2
+        ],
+        "units": [
+          8
+        ],
+        "abilities": [
+          {
+            "raw_text":
+ "TRIGGER: ON_PLAY\nEFF
+ECT: LOOK_AND_CHOOSE_OR
+DER(3, ANY) (Optional) 
+-> DECK_TOP; MOVE_TO_DI
+SCARD(REMAINDER)",
+            "trigger": 
+1,
+            "effects": 
+[
+              {
+                "effect
+_type": 28,
+                "value"
+: 3,
+                "value_
+cond": 0,
+                "target
+": 1,
+                "params
+": {
+                  "dest
+ination": "deck_top"
+                },
+                "is_opt
+ional": true,
+                "modal_
+options": [],
+                "runtim
+e_opcode": 28,
+                "runtim
+e_value": 3,
+                "runtim
+e_attr": 23058430092136
+93952,
+                "runtim
+e_slot": 4
+              },
+              {
+                "effect
+_type": 58,
+                "value"
+: 1,
+                "value_
+cond": 0,
+                "target
+": 1,
+                "params
+": {
+                  "raw_
+val": "REMAINDER"
+                },
+                "is_opt
+ional": false,
+                "modal_
+options": [],
+                "runtim
+e_opcode": 58,
+                "runtim
+e_value": 1,
+                "runtim
+e_attr": 1,
+                "runtim
+e_slot": 7603972
+              }
+            ],
+            "conditions
+": [],
+            "costs": []
+,
+            "modal_opti
+ons": [],
+            "is_once_pe
+r_turn": false,
+            "bytecode":
+ [
+              14,
+              3,
+              0,
+              0,
+              0,
+              28,
+              3,
+              0,
+              0,
+              0,
+              58,
+              1,
+>           "card_no": 
+"PL!N-bp1-002-P・・,
+            "requires_s
+election": false,
+            "choice_fla
+gs": 16,
+            "choice_cou
+nt": 3,
+            "pseudocode
+": "TRIGGER: ON_PLAY\nE
+FFECT: LOOK_AND_CHOOSE_
+ORDER(3, ANY) (Optional
+) -> DECK_TOP; MOVE_TO_
+DISCARD(REMAINDER)",
+            "filters": 
+[
+              {
+                "target
+_player": 1,
+                "card_t
+ype": 0,
+                "group_
+enabled": false,
+                "group_
+id": 0,
+                "is_tap
+ped": false,
+                "has_bl
+ade_heart": false,
+                "not_ha
+s_blade_heart": false,
+                "unique
+_names": false,
+                "unit_e
+nabled": false,
+                "unit_i
+d": 0,
+                "value_
+enabled": false,
+                "value_
+threshold": 0,
+                "is_le"
+: false,
+                "is_cos
+t_type": false,
+                "color_
+mask": 0,
+                "char_i
+d_1": 0,
+                "char_i
+d_2": 0,
+                "zone_m
+ask": 0,
+                "specia
+l_id": 0,
+                "is_set
+suna": false,
+                "compar
+e_accumulated": false,
+                "is_opt
+ional": false,
+                "keywor
+d_energy": false,
+                "keywor
+d_member": false,
+                "packed
+_attr": 1,
+                "packed
+_attr_hex": "0x00000000
+00000001",
+                "summar
+y": "target=self"
+              },
+              {
+                "target
+_player": 1,
+                "card_t
+ype": 0,
+                "group_
+enabled": false,
+                "group_
+id": 0,
+                "is_tap
+ped": false,
+                "has_bl
+ade_heart": false,
+                "not_ha
+s_blade_heart": false,
+                "unique
+_names": false,
+                "unit_e
+nabled": false,
+                "unit_i
+d": 0,
+                "value_
+enabled": false,
+                "value_
+threshold": 0,
+                "is_le"
+: false,
+                "is_cos
+t_type": false,
+                "color_
+mask": 0,
+                "char_i
+d_1": 0,
+                "char_i
+d_2": 0,
+                "zone_m
+ask": 0,
+                "specia
+l_id": 0,
+                "is_set
+suna": false,
+                "compar
+e_accumulated": false,
+                "is_opt
+ional": false,
+                "keywor
+d_energy": false,
+                "keywor
+d_member": false,
+                "packed
+_attr": 1,
+                "packed
+_attr_hex": "0x00000000
+00000001",
+                "summar
+y": "target=self"
+              },
+              {
+                "target
+_player": 1,
+                "card_t
+ype": 0,
+                "group_
+enabled": false,
+                "group_
+id": 0,
+                "is_tap
+ped": false,
+                "has_bl
+ade_heart": false,
+                "not_ha
+s_blade_heart": false,
+                "unique
+_names": false,
+                "unit_e
+nabled": false,
+                "unit_i
+d": 0,
+                "value_
+enabled": false,
+                "value_
+threshold": 0,
+                "is_le"
+: false,
+                "is_cos
+t_type": false,
+                "color_
+mask": 0,
+                "char_i
+d_1": 0,
+>           "card_no": 
+"PL!N-bp1-002-P・・,
+            "requires_s
+election": false,
+            "choice_fla
+gs": 0,
+            "choice_cou
+nt": 0,
+            "pseudocode
+": "TRIGGER: ACTIVATED 
+(In Discard)\nCOST: PAY
+_ENERGY(2); DISCARD_HAN
+D(1) -> SUCCESS\nEFFECT
+: CONDITION: VALUE_EQ(S
+UCCESS, TRUE); PLAY_MEM
+BER(SELF)",
+            "filters": 
+[
+              {
+                "target
+_player": 1,
+                "card_t
+ype": 0,
+                "group_
+enabled": false,
+                "group_
+id": 0,
+                "is_tap
+ped": false,
+                "has_bl
+ade_heart": false,
+                "not_ha
+s_blade_heart": false,
+                "unique
+_names": false,
+                "unit_e
+nabled": false,
+                "unit_i
+d": 0,
+                "value_
+enabled": false,
+                "value_
+threshold": 0,
+                "is_le"
+: false,
+                "is_cos
+t_type": false,
+                "color_
+mask": 0,
+                "char_i
+d_1": 0,
+                "char_i
+d_2": 0,
+                "zone_m
+ask": 0,
+                "specia
+l_id": 0,
+                "is_set
+suna": false,
+                "compar
+e_accumulated": false,
+                "is_opt
+ional": false,
+                "keywor
+d_energy": false,
+                "keywor
+d_member": false,
+                "packed
+_attr": 1,
+                "packed
+_attr_hex": "0x00000000
+00000001",
+                "summar
+y": "target=self"
+              },
+              {
+                "target
+_player": 1,
+                "card_t
+ype": 0,
+                "group_
+enabled": false,
+                "group_
+id": 0,
+                "is_tap
+ped": false,
+                "has_bl
+ade_heart": false,
+                "not_ha
+s_blade_heart": false,
+                "unique
+_names": false,
+                "unit_e
+nabled": false,
+                "unit_i
+d": 0,
+                "value_
+enabled": false,
+                "value_
+threshold": 0,
+                "is_le"
+: false,
+                "is_cos
+t_type": false,
+                "color_
+mask": 0,
+                "char_i
+d_1": 0,
+                "char_i
+d_2": 0,
+                "zone_m
+ask": 0,
+                "specia
+l_id": 0,
+                "is_set
+suna": false,
+                "compar
+e_accumulated": false,
+                "is_opt
+ional": false,
+                "keywor
+d_energy": false,
+                "keywor
+d_member": false,
+                "packed
+_attr": 1,
+                "packed
+_attr_hex": "0x00000000
+00000001",
+                "summar
+y": "target=self"
+              },
+              {
+                "target
+_player": 0,
+                "card_t
+ype": 0,
+                "group_
+enabled": false,
+                "group_
+id": 0,
+                "is_tap
+ped": false,
+                "has_bl
+ade_heart": false,
+                "not_ha
+s_blade_heart": false,
+                "unique
+_names": false,
+                "unit_e
+nabled": false,
+                "unit_i
+d": 0,
+                "value_
+enabled": false,
+                "value_
+threshold": 0,
+                "is_le"
+: false,
+                "is_cos
+t_type": false,
+                "color_
+mask": 0,
+                "char_i
+d_1": 0,
+>       "img_path": "ca
+rds_webp/PL!N-bp1-002-P
+.webp",
+        "rare": "P",
+        "ability_text":
+ "",
+        "original_text"
+: "{{toujyou.png|逋ｻ蝣ｴ}}
+閾ｪ蛻・・繝・ャ繧ｭ縺ｮ荳翫°繧峨き繝ｼ繝峨ｒ
+3譫夊ｦ九ｋ縲ゅ◎縺ｮ荳ｭ縺九ｉ螂ｽ縺阪↑譫壽
+焚繧貞･ｽ縺阪↑鬆・分縺ｧ繝・ャ繧ｭ縺ｮ荳翫↓
+鄂ｮ縺阪∵ｮ九ｊ繧呈而縺亥ｮ､縺ｫ鄂ｮ縺上
+・n{{kidou.png|襍ｷ蜍扶}{{ic
+on_energy.png|E}}{{icon
+_energy.png|E}}謇区惆繧・譫壽而
+縺亥ｮ､縺ｫ鄂ｮ縺擾ｼ壹％縺ｮ繧ｫ繝ｼ繝峨ｒ謗
+ｧ縺亥ｮ､縺九ｉ繧ｹ繝・・繧ｸ縺ｫ逋ｻ蝣ｴ縺輔
+○繧九ゅ％縺ｮ閭ｽ蜉帙・縲√％縺ｮ繧ｫ繝ｼ繝
+峨′謗ｧ縺亥ｮ､縺ｫ縺ゅｋ蝣ｴ蜷医・縺ｿ襍ｷ蜍
+輔〒縺阪ｋ縲・,
+        "original_text_
+en": "[On Play] Look at
+ the top 3 cards of you
+r deck. Put any number 
+of them back on top of 
+your deck in any order,
+ and put the rest into 
+the waiting room.\n[Act
+ivate] (E)(E), Put 1 ca
+rd from your hand into 
+the waiting room: Play 
+this card from your wai
+ting room onto the stag
+e. This ability can onl
+y be used while this ca
+rd is in the waiting ro
+om.",
+        "volume_icons":
+ 0,
+        "draw_icons": 0
+,
+        "semantic_flags
+": 19,
+        "ability_flags"
+: 1,
+        "synergy_flags"
+: 0,
+        "cost_flags": 1
+      },
+      "12523": {
+        "card_id": 1252
+3,
+        "card_no": "PL!
+N-bp1-002-SEC",
+        "name": "荳ｭ鬆医°縺
+吶∩",
+        "cost": 2,
+        "hearts": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "blade_hearts":
+ [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "blades": 2,
+        "groups": [
+          2
+        ],
+        "units": [
+          8
+        ],
+        "abilities": [
+          {
+            "raw_text":
+ "TRIGGER: ON_PLAY\nEFF
+ECT: LOOK_AND_CHOOSE_OR
+DER(3, ANY) (Optional) 
+-> DECK_TOP; MOVE_TO_DI
+SCARD(REMAINDER)",
+            "trigger": 
+1,
+            "effects": 
+[
+              {
+                "effect
+_type": 28,
+                "value"
+: 3,
+                "value_
+cond": 0,
+                "target
+": 1,
+                "params
+": {
+                  "dest
+ination": "deck_top"
+                },
+                "is_opt
+ional": true,
+                "modal_
+options": [],
+                "runtim
+e_opcode": 28,
+                "runtim
+e_value": 3,
+                "runtim
+e_attr": 23058430092136
+93952,
+                "runtim
+e_slot": 4
+              },
+              {
+                "effect
+_type": 58,
+                "value"
+: 1,
+                "value_
+cond": 0,
+                "target
+": 1,
+                "params
+": {
+                  "raw_
+val": "REMAINDER"
+                },
+                "is_opt
+ional": false,
+                "modal_
+options": [],
+                "runtim
+e_opcode": 58,
+                "runtim
+e_value": 1,
+                "runtim
+e_attr": 1,
+                "runtim
+e_slot": 7603972
+              }
+            ],
+            "conditions
+": [],
+            "costs": []
+,
+            "modal_opti
+ons": [],
+>       "img_path": "ca
+rds_webp/PL!N-bp1-002-P
+.webp",
+        "rare": "P",
+        "ability_text":
+ "",
+        "original_text"
+: "{{toujyou.png|逋ｻ蝣ｴ}}
+閾ｪ蛻・・繝・ャ繧ｭ縺ｮ荳翫°繧峨き繝ｼ繝峨ｒ
+3譫夊ｦ九ｋ縲ゅ◎縺ｮ荳ｭ縺九ｉ螂ｽ縺阪↑譫壽
+焚繧貞･ｽ縺阪↑鬆・分縺ｧ繝・ャ繧ｭ縺ｮ荳翫↓
+鄂ｮ縺阪∵ｮ九ｊ繧呈而縺亥ｮ､縺ｫ鄂ｮ縺上
+・n{{kidou.png|襍ｷ蜍扶}{{ic
+on_energy.png|E}}{{icon
+_energy.png|E}}謇区惆繧・譫壽而
+縺亥ｮ､縺ｫ鄂ｮ縺擾ｼ壹％縺ｮ繧ｫ繝ｼ繝峨ｒ謗
+ｧ縺亥ｮ､縺九ｉ繧ｹ繝・・繧ｸ縺ｫ逋ｻ蝣ｴ縺輔
+○繧九ゅ％縺ｮ閭ｽ蜉帙・縲√％縺ｮ繧ｫ繝ｼ繝
+峨′謗ｧ縺亥ｮ､縺ｫ縺ゅｋ蝣ｴ蜷医・縺ｿ襍ｷ蜍
+輔〒縺阪ｋ縲・,
+        "original_text_
+en": "[On Play] Look at
+ the top 3 cards of you
+r deck. Put any number 
+of them back on top of 
+your deck in any order,
+ and put the rest into 
+the waiting room.\\n[Ac
+tivate] (E)(E), Put 1 c
+ard from your hand into
+ the waiting room: Play
+ this card from your wa
+iting room to the stage
+. This ability can only
+ be activated while thi
+s card is in the waitin
+g room.",
+        "volume_icons":
+ 0,
+        "draw_icons": 0
+,
+        "semantic_flags
+": 19,
+        "ability_flags"
+: 1,
+        "synergy_flags"
+: 0,
+        "cost_flags": 1
+      },
+      "236": {
+        "card_id": 236,
+        "card_no": "PL!
+N-bp1-003-P",
+        "name": "譯懷揩縺励★
+縺・,
+        "cost": 10,
+        "hearts": [
+          0,
+          0,
+          0,
+          1,
+          3,
+          0,
+          0
+        ],
+        "blade_hearts":
+ [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "blades": 2,
+        "groups": [
+          2
+        ],
+        "units": [
+          7
+        ],
+        "abilities": [
+          {
+            "raw_text":
+ "TRIGGER: ON_PLAY\nCOS
+T: DISCARD_HAND(1) (Opt
+ional)\nEFFECT: RECOVER
+_LIVE(1) (Optional) -> 
+CARD_HAND",
+            "trigger": 
+1,
+            "effects": 
+[
+              {
+                "effect
+_type": 15,
+                "value"
+: 1,
+                "value_
+cond": 0,
+                "target
+": 6,
+                "params
+": {
+                  "sour
+ce": "discard"
+                },
+                "is_opt
+ional": true,
+                "modal_
+options": [],
+                "runtim
+e_opcode": 15,
+                "runtim
+e_value": 1,
+                "runtim
+e_attr": 23688934039968
+80896,
+                "runtim
+e_slot": 458758
+              }
+            ],
+            "conditions
+": [],
+            "costs": []
+,
+            "modal_opti
+ons": [],
+            "is_once_pe
+r_turn": false,
+            "bytecode":
+ [
+              58,
+              1,
+              0,
+              536870912
+,
+              6,
+              3,
+              1,
+              0,
+              0,
+              0,
+              15,
+              1,
+              0,
+
+

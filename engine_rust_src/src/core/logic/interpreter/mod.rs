@@ -13,10 +13,8 @@ pub mod suspension;
 use crate::core::enums::Phase;
 use crate::core::models::{GameState, AbilityContext};
 use crate::core::logic::constants::*;
-use crate::core::logic::canonical;
 use super::CardDatabase;
 use super::Ability;
-use self::instruction::{BytecodeProgram, WORDS_PER_INSTRUCTION};
 pub use conditions::{check_condition, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
 pub use handlers::{HandlerRegistry, HandlerResult};
@@ -49,7 +47,7 @@ pub const MAX_DEPTH: usize = 8;
 pub const MAX_BYTECODE_LOG_SIZE: usize = 500;
 
 struct ExecutionFrame {
-    program: BytecodeProgram,
+    bytecode: std::sync::Arc<Vec<i32>>,
     ip: usize,
     ctx: AbilityContext,
 }
@@ -73,7 +71,7 @@ fn ability_uses_structured_runtime(ability: &Ability) -> bool {
     if ability.effects.is_empty() {
         return false;
     }
-    if ability.bytecode.len() != ability.effects.len() * WORDS_PER_INSTRUCTION + WORDS_PER_INSTRUCTION {
+    if ability.bytecode.len() != ability.effects.len() * 5 + 5 {
         return false;
     }
 
@@ -82,7 +80,7 @@ fn ability_uses_structured_runtime(ability: &Ability) -> bool {
             return false;
         }
 
-        let ip = BytecodeProgram::effect_ip(idx);
+        let ip = idx * 5;
         let a_low = effect.runtime_attr as u32 as i32;
         let a_high = (effect.runtime_attr >> 32) as u32 as i32;
 
@@ -100,18 +98,6 @@ fn ability_uses_structured_runtime(ability: &Ability) -> bool {
         && ability.bytecode.get(ability.bytecode.len().saturating_sub(5)).copied() == Some(O_RETURN)
 }
 
-fn ability_runtime_bytecode(ability: &Ability) -> Option<std::sync::Arc<Vec<i32>>> {
-    if !ability.bytecode.is_empty() {
-        Some(std::sync::Arc::new(ability.bytecode.clone()))
-    } else {
-        None
-    }
-}
-
-/// Rule 9.4: [隗｣豎ｺ謇狗ｶ・ (Resolution Procedure)]
-/// Rule 9.6: [繧｢繝薙fa繧｣繝・ぅ縺ｮ隗｣豎ｺ (Ability Resolution)]
-// Rule 1.3.1: [繧ｫ繝ｼ繝峨ユ繧ｭ繧ｹ繝育ｬｬ荳€] (Card Text Precedence)
-// Rule 1.3.2: [荳€闊ｬ逧・↑隕丞援縺ｨ迚ｹ谿翫↑隕丞援] (General vs Specific)
 pub fn resolve_ability(
     state: &mut GameState,
     db: &CardDatabase,
@@ -123,22 +109,8 @@ pub fn resolve_ability(
         return;
     }
 
-    if ability.canonical_program.is_some() {
-        let resolved = canonical::try_resolve_ability(state, db, ability, ctx_in);
-        if state.debug.debug_mode {
-            println!(
-                "[CANONICAL] Resolution {} for card {}.",
-                if resolved { "handled" } else { "rejected" },
-                ctx_in.source_card_id,
-            );
-        }
-        return;
-    }
-
     if !ability_uses_structured_runtime(ability) {
-        if let Some(bytecode) = ability_runtime_bytecode(ability) {
-            resolve_bytecode(state, db, bytecode, ctx_in);
-        }
+        resolve_bytecode(state, db, std::sync::Arc::new(ability.bytecode.clone()), ctx_in);
         return;
     }
 
@@ -150,14 +122,13 @@ pub fn resolve_ability(
 
     let registry = HandlerRegistry::new();
     let mut ctx = ctx_in.clone();
-    let mut effect_idx = BytecodeProgram::effect_idx(ctx_in.program_counter as usize);
+    let mut effect_idx = (ctx_in.program_counter as usize) / 5;
 
     while effect_idx < ability.effects.len() {
         let effect = &ability.effects[effect_idx];
-        let ip = BytecodeProgram::effect_ip(effect_idx);
+        let ip = effect_idx * 5;
         ctx.program_counter = ip as u16;
-        ctx.program_counter = ip as u16;
-        if effect_idx == BytecodeProgram::effect_idx(ctx_in.program_counter as usize) && ctx_in.choice_index != -1 {
+        if effect_idx == (ctx_in.program_counter as usize) / 5 && ctx_in.choice_index != -1 {
             ctx.choice_index = ctx_in.choice_index;
         }
 
@@ -179,13 +150,12 @@ pub fn resolve_ability(
                 ctx.v_remaining = -1;
                 effect_idx += 1;
             }
-            // Choices are made at the time of execution
             HandlerResult::Suspend => return,
             HandlerResult::Return => break,
             HandlerResult::Branch(new_ip) => {
                 ctx.choice_index = -1;
                 ctx.v_remaining = -1;
-                effect_idx = BytecodeProgram::effect_idx(new_ip);
+                effect_idx = new_ip / 5;
             }
             HandlerResult::BranchToBytecode(new_bc) => {
                 resolve_bytecode(state, db, new_bc, &ctx);
@@ -225,7 +195,7 @@ impl BytecodeExecutor {
     fn new(bytecode: std::sync::Arc<Vec<i32>>, ctx: &AbilityContext) -> Self {
         Self {
             stack: vec![ExecutionFrame {
-                program: BytecodeProgram::new(bytecode),
+                bytecode,
                 ip: ctx.program_counter as usize,
                 ctx: ctx.clone(),
             }],
@@ -246,8 +216,6 @@ pub fn resolve_bytecode(
     bytecode: std::sync::Arc<Vec<i32>>,
     ctx_in: &AbilityContext,
 ) {
-    // Rule 1.3.5: [なんらかの数を選ぶ場合、0 以上の整数を選ぶ必要があります (Choosing a number >= 0)]
-    // Rule 1.3.5.1: [‘～まで’のように上限の数が定められている場合、0 を選ぶことができます (Up to N means 0 is allowed)]
     // VANILLA MODE: Skip all bytecode execution
     if db.is_vanilla {
         return;
@@ -266,11 +234,8 @@ pub fn resolve_bytecode(
         state.log("Bytecode execution started.".to_string());
     }
 
-    // Process instructions
     while !executor.stack.is_empty() {
         if executor.steps >= MAX_INTERPRETER_STEPS {
-            // Rule 12.1: [豌ｸ豎捺ｿ€迺ｰ (Permanent Loop)]
-            // Rule 12.1.1.2: Prevent same state from repeating (approximated by step limit)
             if state.debug.debug_mode {
                 if !state.ui.silent {
                     println!("[ERROR] Interpreter infinite loop detected (1000 steps)");
@@ -285,18 +250,18 @@ pub fn resolve_bytecode(
         let frame = executor.stack.last_mut().unwrap();
 
         let ip = frame.ip;
-        if !frame.program.is_word_ip_valid(ip) {
+        if ip >= frame.bytecode.len() {
             executor.pop_frame();
             continue;
         }
 
-        let instr = frame.program.instruction_at(ip).unwrap();
+        let instr = instruction::BytecodeInstruction::decode(&frame.bytecode, ip);
         let op = instr.op;
         let v = instr.v;
         let a = instr.a;
         let s = instr.raw_s;
 
-        frame.ip = frame.program.next_ip(ip);
+        frame.ip += 5; // Advance IP
         frame.ctx.program_counter = ip as u16;
 
         // Resumption logic: inject choice index if we're at the suspension point
@@ -338,7 +303,7 @@ pub fn resolve_bytecode(
         }
 
         if state.debug.debug_mode {
-            let desc = logging::describe_trace_step(real_op, v, a, s, is_negated);
+            let desc = logging::describe_bytecode(real_op, v, a, s);
 
             // Get card info for context
             let card_name = db.get_member(frame.ctx.source_card_id)
@@ -392,19 +357,6 @@ pub fn resolve_bytecode(
                     0,
                 )
             };
-            if state.debug.debug_mode {
-                let result_line = format!(
-                    "BC_RESULT: ip={:<3} {}",
-                    ip,
-                    if is_negated { !passed } else { passed }
-                );
-                println!("[DEBUG] {}", result_line);
-                let b_log = &mut state.ui.bytecode_log;
-                if b_log.len() < MAX_BYTECODE_LOG_SIZE {
-                    b_log.push(result_line.clone());
-                }
-                state.trace_internal(&result_line);
-            }
             executor.cond = executor.cond && if is_negated { !passed } else { passed };
             if state.debug.debug_mode {
                 let cond_desc = format!(
@@ -428,19 +380,13 @@ pub fn resolve_bytecode(
 
         // Control flow
         if real_op == crate::core::enums::O_JUMP as i32 {
-            frame.ip = frame
-                .program
-                .jump_target(ip, v)
-                .unwrap_or(frame.program.len_words());
+            frame.ip = (ip as i32 + 5 + (v * 5)) as usize;
             frame.ctx.choice_index = -1;
             continue;
         }
         if real_op == crate::core::enums::O_JUMP_IF_FALSE as i32 {
             if !executor.cond {
-                frame.ip = frame
-                    .program
-                    .jump_target(ip, v)
-                    .unwrap_or(frame.program.len_words());
+                frame.ip = (ip as i32 + 5 + (v * 5)) as usize;
             }
             // Reset cond ONLY after JUMP_IF_FALSE (end of current condition block)
             executor.cond = true;
@@ -469,7 +415,7 @@ pub fn resolve_bytecode(
             &mut frame.ctx,
             &instr,
             ip,
-            frame.program.words(),
+            &frame.bytecode,
         ) {
             HandlerResult::Continue => {}
             HandlerResult::SetCond(c) => executor.cond = c,
@@ -486,7 +432,7 @@ pub fn resolve_bytecode(
             HandlerResult::BranchToBytecode(new_bc) => {
                 let next_ctx = frame.ctx.clone();
                 executor.stack.push(ExecutionFrame {
-                    program: BytecodeProgram::new(new_bc),
+                    bytecode: new_bc,
                     ip: 0,
                     ctx: next_ctx,
                 });
@@ -531,20 +477,13 @@ pub fn is_condition_opcode(op: i32) -> bool {
     (real_op >= 200 && real_op <= 255) || (real_op >= 301 && real_op <= 399)
 }
 
-/// Rule 9.1: [チェックタイミング (Check Timing)]
-/// Rule 11.4.2: [解決タイミング (Auto ability resolution timing)]
-/// Rule 9.5: [トリガーの解決 (Resolution of Triggers)]
 pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
-    // Rule 1.3.4: [同時に複数の処理の実行を求められた場合 (Simultaneous processing)]
-    // Rule 1.3.4.1: [選択を伴う処理はアクティブプレイヤーから実行します (Active player choices first)]
     // VANILLA MODE: Skip all ability triggering
     if db.is_vanilla {
         state.trigger_queue.clear();
         return;
     }
 
-    // Rule 9.5.1: [トリガーの選択 (Trigger Selection)]
-    // Rule 9.5.2: [トリガーの解決の実行 (Trigger resolution execution)]
     while let Some((cid, ab_idx, ctx, is_live, _trigger)) = state.trigger_queue.pop_front() {
         // Generate a new ID for the activation
         state.generate_execution_id();
@@ -558,8 +497,6 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             (ab, &ab.costs)
         };
 
-        // Rule 9.4: [繧ｳ繧ｹ繝育分謇・ (Cost Payment)]
-        // Rule 9.4.1: If costs cannot be paid, trigger is cancelled.
         if costs::pay_costs_transactional(state, db, costs, &ctx) {
             let p_idx = ctx.player_id as usize;
             let source_type = if is_live { 2 } else { 0 };
@@ -570,8 +507,6 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                 cid,
             );
 
-            // Rule 11.2: [1繧ｿ繝ｼ繝ｳ縺ｫ1蝗樊・ (Once per turn)]
-            // Rule 9.1.1.2.2: Once per turn restriction
             if ability.is_once_per_turn
                 && !check_once_per_turn(state, p_idx, source_type, instance_key, cid as u32, ab_idx as usize)
             {
@@ -584,17 +519,9 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             }
 
             if state.phase == Phase::PerformanceP1 || state.phase == Phase::PerformanceP2 || state.phase == Phase::LiveResult {
-                // Rule 11.2.1: [逋ｺ逕 Mario (Once-per-turn trigger fire)]
                 state.players[p_idx].perf_triggered_abilities.push((cid, ab_idx as i16, _trigger));
             }
-
-            // Rule 11.2.2: [隗｣豎ｺ (Once-per-turn resolution)]
-            // Rule 9.5.5: Resolution
             resolve_ability(state, db, ability, &ctx);
-
-            // Rule 9.5.3: [繝√ぉ繝・け繧ｿ繧､繝溘Φ繧ｰ縺ｮ隗｣豎ｺ (Processing Check Timing during resolution)]
-            // After each ability resolution, we must perform rule processing before proceeding to the next trigger.
-            state.perform_rule_processing(db);
 
             // Fire resolution triggers
             let res_trigger = match _trigger {
@@ -621,8 +548,28 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                     }
                 }
 
-                state.trigger_abilities(db, t, &res_ctx); // Rule 11.4: [繧ｪ繝ｼ繝・] (Auto ability)
+                state.trigger_abilities(db, t, &res_ctx);
             }
+
+            let _top_original_phase = state.interaction_stack.last().map(|pi| pi.original_phase);
+            let _top_original_player = state.interaction_stack.last().map(|pi| pi.original_current_player);
+            let _clear_same_card_interactions = |state: &mut GameState, card_id: i32| {
+                while state
+                    .interaction_stack
+                    .last()
+                    .map(|pi| pi.card_id == card_id)
+                    .unwrap_or(false)
+                {
+                    state.interaction_stack.pop();
+                }
+            };
+
+            let _stage_count = state.players[ctx.player_id as usize]
+                .stage
+                .iter()
+                .filter(|&&card_id| card_id >= 0)
+                .count();
+
         }
 
         state.clear_execution_id();
@@ -641,8 +588,6 @@ pub fn get_ability_uid(source_type: u8, instance_key: u8, id: u32, ab_idx: u32) 
         | (ab_idx & 0xFF)
 }
 
-// Rule 11.2: [繧ｿ繝ｼ繝・1 蝗・ (Once per Turn)]
-// Rule 3.4.3: [繧｢繝薙fa繧｣繝・ぅ縺ｮ菴ｿ逕ｨ蜃 Mario (Ability usage status)]
 pub fn check_once_per_turn(
     state: &GameState,
     p_idx: usize,

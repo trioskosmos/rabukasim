@@ -2,7 +2,6 @@ pub mod action_factory;
 pub mod action_gen;
 pub mod ability_patterns;
 pub mod ai_encoding;
-pub mod canonical;
 pub mod card_db;
 pub mod constants;
 pub mod diagnostics;
@@ -43,8 +42,8 @@ pub use standard_state::StandardizedState;
 
 // Re-export models
 pub use models::{
-    Ability, AbilityContext, CanonicalAbilityProgram, CanonicalStep, Condition, Cost, DeckStats,
-    Effect, EnergyCard, PendingInteraction, TurnEvent,
+    Ability, AbilityContext, Condition, Cost, DeckStats, Effect, EnergyCard, PendingInteraction,
+    TurnEvent,
 };
 
 // Re-export enums and constants

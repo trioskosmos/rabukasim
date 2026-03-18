@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Tuple, Union
 from engine.models.enums import CHAR_MAP
 from engine.models.opcodes import Opcode
 from .ability_ir import SemanticAbility, SemanticCondition, SemanticCost, SemanticEffect
-from .structured_instruction_ir import build_structured_instruction_ir
 
 from .generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
 from .generated_metadata import COMPARISONS, COUNT_SOURCES, EXTRA_CONSTANTS, HEART_COLOR_MAP, META_RULE_TYPES, ZONES
@@ -353,9 +352,6 @@ class Ability:
     option_names: List[str] = field(default_factory=list)
     semantic_form: Dict[str, Any] = field(default_factory=dict)  # Human-readable form
 
-    def build_structured_ir(self) -> Dict[str, Any]:
-        return build_structured_instruction_ir(self).to_dict()
-
     def compile(self) -> List[int]:
         """Compile ability into fixed-width bytecode sequence (groups of 4 ints)."""
         bytecode = []
@@ -596,13 +592,13 @@ class Ability:
     ) -> TargetType | None:
         last_emitted_target = self._emit_target_opcode_if_needed(bytecode, TargetType.PLAYER, last_emitted_target)
         for eff in block:
-            eff_self = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.PLAYER, eff.params.copy())
+            eff_self = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.PLAYER, eff.params)
             eff_self.is_optional = eff.is_optional
             self._compile_effect_wrapper(eff_self, bytecode)
 
         last_emitted_target = self._emit_target_opcode_if_needed(bytecode, TargetType.OPPONENT, last_emitted_target)
         for eff in block:
-            eff_opp = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.OPPONENT, eff.params.copy())
+            eff_opp = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.OPPONENT, eff.params)
             eff_opp.is_optional = eff.is_optional
             self._compile_effect_wrapper(eff_opp, bytecode)
         return last_emitted_target
@@ -1286,8 +1282,8 @@ class Ability:
                 bytecode.extend(
                     [int(Opcode.SET_TARGET_SELF), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)]
                 )
-                # 2. Compile for SELF - COPY params to avoid shared mutations
-                eff_self = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.PLAYER, eff.params.copy())
+                # 2. Compile for SELF
+                eff_self = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.PLAYER, eff.params)
                 eff_self.is_optional = eff.is_optional
                 self._compile_single_effect(eff_self, bytecode)
 
@@ -1301,8 +1297,8 @@ class Ability:
                         to_signed_32(0),
                     ]
                 )
-                # 4. Compile for OPPONENT - COPY params to avoid shared mutations
-                eff_opp = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.OPPONENT, eff.params.copy())
+                # 4. Compile for OPPONENT
+                eff_opp = Effect(eff.effect_type, eff.value, eff.value_cond, TargetType.OPPONENT, eff.params)
                 eff_opp.is_optional = eff.is_optional
                 self._compile_single_effect(eff_opp, bytecode)
 
@@ -1506,10 +1502,7 @@ class Ability:
                     rem_val = "DISCARD"
                     slot_params["target_slot"] = 0
                 
-                # For UNTIL_SIZE operations, default source is HAND (not STAGE)
-                # as UNTIL_SIZE is used for hand size checks
-                default_source = "hand" if eff.params.get("operation") == "UNTIL_SIZE" else "stage"
-                src_val = eff.params.get("source", default_source).upper()
+                src_val = eff.params.get("source", "stage").upper()
                 if src_val == "HAND":
                     src_val = ZONES.get("HAND", 6)
                 elif src_val == "DISCARD":
@@ -1670,14 +1663,6 @@ class Ability:
                         val = 1
                     elif src == "blade":
                         val = 2
-
-            if eff.effect_type == EffectType.RESTRICTION:
-                restriction_type = str(eff.params.get("type", "")).lower()
-                restriction_map = {
-                    "live": 1,
-                    "placement": 2,
-                }
-                attr = restriction_map.get(restriction_type, attr)
 
             if eff.effect_type in (
                 EffectType.MOVE_TO_DISCARD,

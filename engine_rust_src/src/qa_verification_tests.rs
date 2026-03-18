@@ -458,7 +458,7 @@ mod tests {
         let mut state = create_test_state();
         let db = CardDatabase::default();
         state.phase = Phase::PerformanceP1;
-        state.players[0].live_zone = vec![-1; 3];
+        state.players[0].live_zone = [-1; 3];
 
         // Q32: No lives set = skip performance phase (8.3.4)
         state.auto_step(&db);
@@ -2112,7 +2112,7 @@ mod tests {
             // Fallback: just use ID 1 even if not in DB
             state.players[0].live_zone[0] = 1;
         }
-        state.players[1].live_zone = vec![-1; 3];
+        state.players[1].live_zone = [-1; 3];
 
         // P1 having any live card should dominate P2's "no live" state per Q66
         // This is verified by checking zone occupancy
@@ -2314,7 +2314,7 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
 
-        state.players[0].live_zone = vec![-1; 3]; // No live cards
+        state.players[0].live_zone = [-1; 3]; // No live cards
 
         // OnLiveStart should NOT trigger
         state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
@@ -2491,7 +2491,7 @@ mod tests {
         let mut state = create_test_state();
 
         // Setup: No live this turn
-        state.players[0].live_zone = vec![-1; 3];
+        state.players[0].live_zone = [-1; 3];
 
         // OnLiveStart timing abilities should not execute
         state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);

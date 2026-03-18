@@ -129,22 +129,14 @@ impl<'de> Deserialize<'de> for BypassLog {
     }
 }
 
-// Rule 1.1: Game Overview (2-player)
-// Rule 1.1.1: Principally 2 players
-// Rule 3.1.1: [プレイヤー (Player)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CoreGameState {
-    // Rule 3.1.1: Each player has distinct states
     pub players: [PlayerState; 2],
     #[serde(default)]
-    // Rule 3.3.1: [ターンプレイヤー (Turn Player)]
-    // Rule 1.3.1: [アクティブプレイヤー (Active Player)]
     pub current_player: u8,
     #[serde(default)]
-    // Rule 3.3.2: [ホストプレイヤー (Host Player)]
     pub first_player: u8,
     #[serde(default)]
-    // Rule 7.3: Game Phasing
     pub phase: Phase,
     #[serde(default)]
     pub prev_phase: Phase,
@@ -199,7 +191,6 @@ fn true_fn() -> bool { true }
 impl Default for CoreGameState {
     fn default() -> Self {
         Self {
-            // Rule 3.1.1: [繝励Ξ繧､繝､繝ｼ縺ｮ謨ｰ (Number of players - 2)]
             players: [PlayerState::default(), PlayerState::default()],
             current_player: 0,
             first_player: 0,

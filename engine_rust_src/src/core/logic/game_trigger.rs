@@ -32,7 +32,6 @@ pub(super) fn resolution_trigger_matches_context(
 
 impl GameState {
     pub fn process_trigger_queue(&mut self, db: &CardDatabase) {
-        // Rule 10.1.1: [繝ｫ繝ｼ繝ｫ蜃ｦ逅・縺ｮ繝√ぉ繝・け繧ｿ繧､繝溘Φ繧ｰ (SBA Check Timing)]
         super::interpreter::process_trigger_queue(self, db);
     }
 
@@ -96,10 +95,6 @@ impl GameState {
             .any(|(t_cid, t_trigger, _)| *t_cid == cid && *t_trigger == trigger_type)
     }
 
-    // Rule 11.1: [繝医Μ繧ｬ繝ｼ (Triggers)]
-    // Rule 9.7.1: [隱倥譚｡莉ｶ (Trigger Condition)]
-    // Rule 9.7: [閾ｪ蜍募鴨縺ｮ隱倥 (Triggering of Auto Abilities)]
-    // Rule 9.2: [繝医Μ繧ｬ繝ｼ縺ｮ逋ｺ逕・ (Trigger Occurrence)]
     pub fn trigger_abilities(
         &mut self,
         db: &CardDatabase,
@@ -110,7 +105,6 @@ impl GameState {
     }
 
     /// PHASE 3: Queues a specific ability for execution.
-    // Rule 9.2.1: [繝医Μ繧ｬ繝ｼ縺ｮ隗｣豎ｺ蜍輔∪縺ｧ縺ｮ蠢亥ｾ・ (Trigger Queuing)]
     pub fn enqueue_trigger(
         &mut self,
         cid: i32,
@@ -119,7 +113,6 @@ impl GameState {
         is_live: bool,
         trigger: TriggerType,
     ) {
-        // Rule 9.7.2: [隱倥蠑ｾ蠑・ (Trigger enqueuing)]
         self.core
             .trigger_queue
             .push_back((cid, ab_idx, ctx, is_live, trigger));

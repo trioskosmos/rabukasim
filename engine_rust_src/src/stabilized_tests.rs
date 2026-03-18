@@ -1,6 +1,7 @@
 use crate::core::enums::Phase;
 use crate::core::logic::*;
 use crate::test_helpers::{load_real_db, Action};
+use smallvec::smallvec;
 
 #[test]
 fn verify_on_reveal_trigger() {
@@ -57,9 +58,9 @@ fn verify_manual_recovery_pattern() {
     state.players[0].discard = vec![121].into();
     state.players[0].hand.clear();
 
-    // EXECUTE: Trigger RECOVER_MEMBER using Eli's compiled activated ability directly.
-    let ctx = AbilityContext { player_id: 0, source_card_id: 121, ..Default::default() };
-    state.resolve_bytecode_cref(&db, &db.get_member(121).unwrap().abilities[0].bytecode, &ctx);
+    // EXECUTE: Trigger RECOVER_MEMBER (Card 120 Honoka has it at ab_idx 0)
+    let ctx = AbilityContext { player_id: 0, source_card_id: 120, ..Default::default() };
+    state.resolve_bytecode_cref(&db, &db.get_member(120).unwrap().abilities[0].bytecode, &ctx);
 
     // RESOLVE: The interactions (MOVE_TO_DISCARD then RecovM)
     let mut safety_counter = 0;
@@ -104,7 +105,7 @@ fn verify_full_win_condition() {
     state.ui.silent = true;
 
     // ID 6: Score 3 card
-    state.players[0].success_lives = vec![6, 6];
+    state.players[0].success_lives = smallvec![6, 6];
     state.players[0].score = 2; // Internal engine score (not display score)
     state.phase = Phase::LiveResult;
     state.players[0].live_zone[0] = 6;
@@ -127,7 +128,7 @@ fn verify_buff_logic() {
     // Ability: TRIGGER: CONSTANT -> ADD_BLADES(1, PER_CARD=SUCCESS_PILE)
     // Core Blades: 3 (Actual DB value)
     state.players[0].stage[0] = 120;
-    state.players[0].success_lives = vec![120, 120]; // 2 cards in success pile
+    state.players[0].success_lives = smallvec![120, 120]; // 2 cards in success pile
 
     // Total should be 3 (base) + 2 (from ability: 1 * success_pile_count) = 5
     let blades = state.get_effective_blades(0, 0, &db, 0);

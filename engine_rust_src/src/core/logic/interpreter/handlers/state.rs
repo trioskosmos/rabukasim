@@ -121,13 +121,7 @@ pub fn handle_energy(
     let p_idx = ctx.player_id as usize;
 
     match op {
-        // Rule 5.7.1: [繧ｨ繝阪Ν繧ｮ繝ｼ繝√Ε繝ｼ繧ｸ (Energy Charge)]
-        // Rule 5.7.2: Energy Charge process
-        // Rule 7.5.2: [繧ｨ繝阪Ν繧ｮ繝ｼ繝√Ε繝ｼ繧ｸ (Energy Charge Phrase)]
         O_ENERGY_CHARGE => {
-            // Rule 5.8: [繧ｨ繝翫ず繝ｼ繧貞｢励ｄ縺・ (Charge energy)
-            // Rule 5.8.1: Move top card from deck to energy zone
-            let count = v as u32;
             let slot = instr.slot();
             let target_p = if slot.is_opponent { 1 - p_idx } else { p_idx };
             let is_wait = slot.is_wait;
@@ -138,7 +132,6 @@ pub fn handle_energy(
             }
             HandlerResult::Continue
         }
-        // Rule 5.8.1: [繧ｨ繝阪Ν繧ｮ繝ｼ繧呈髪謇輔≧ (Pay Energy)]
         O_PAY_ENERGY => {
             let available = (0..state.players[p_idx].energy_zone.len())
                 .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
@@ -200,7 +193,6 @@ pub fn handle_energy(
                     if idx < state.players[p_idx].energy_zone.len()
                         && !state.players[p_idx].is_energy_tapped(idx)
                     {
-                        // Rule 5.8.1: [繧ｨ繝阪Ν繧ｮ繝ｼ繧呈髪 universo (Pay Energy - Tap)]
                         state.players[p_idx].set_energy_tapped(idx, true);
                         next_ctx.v_remaining -= 1;
                         if next_ctx.v_remaining > 0 {
@@ -454,7 +446,6 @@ pub fn handle_member_state(
     };
 
     match op {
-        // Rule 5.2: [繧｢繧ｯ繝・ぅ繝悶↓縺吶ｋ (Active)]
         O_ACTIVATE_MEMBER => {
             let mut group_bits = 0u32;
             if let Some(card) = db.get_member(ctx.source_card_id) {
@@ -493,7 +484,6 @@ pub fn handle_member_state(
                 }
             }
         }
-        // Rule 5.2: [繧ｦ繧ｧ繧､繝医↓縺吶ｋ (Wait)]
         O_SET_TAPPED => {
             let is_optional = instr.filter_attr().is_optional;
             
@@ -536,15 +526,14 @@ pub fn handle_member_state(
                 state.players[p_idx].set_tapped(resolved_slot as usize, v != 0);
             }
         }
-        // Rule 5.2: [繧ｦ繧ｧ繧､繝医↓縺吶ｋ (Wait)]
         O_TAP_MEMBER => {
             let mut resolved_slot = resolve_target_slot(target_slot, ctx);
             let filter_target = (a as u64 & 0x3) as u8;
             let mut target_p_idx = match filter_target {
-                2 => 1 - (ctx.activator_id as usize),
+                2 => 1 - (ctx.player_id as usize),
                 3 => 1,
-                _ if slot_info.is_opponent || slot_info.target_slot == 2 => 1 - (ctx.activator_id as usize),
-                _ => ctx.activator_id as usize,
+                _ if slot_info.is_opponent || slot_info.target_slot == 2 => 1 - (ctx.player_id as usize),
+                _ => ctx.player_id as usize,
             };
             if let Some(&selected_cid) = ctx.selected_cards.last() {
                 for candidate_p_idx in 0..=1 {
@@ -830,8 +819,7 @@ pub fn handle_member_state(
             } else {
                 resolved_slot as usize
             };
-            // Rule 11.9: [繝昴ず繧ｷ繝ｧ繝ｳ繝√ぉ繝ｳ繧ｸ] (Position Change)
-            // Rule 11.9.1: Moving a member to another area
+
             if a == 99 && ctx.choice_index == -1 {
                 let choice_text = get_choice_text(db, ctx);
                 let mut choice_ctx = ctx.clone();
@@ -864,7 +852,6 @@ pub fn handle_member_state(
                 a as usize
             };
             if src_slot < 3 && dst_slot < 3 && src_slot != dst_slot {
-                // Rule 11.9.2: Swapping members if the target area is occupied
                 state.players[p_idx].swap_slot_data(src_slot, dst_slot);
                 for &slot in &[src_slot, dst_slot] {
                     let cid = state.players[p_idx].stage[slot];
@@ -878,8 +865,6 @@ pub fn handle_member_state(
             }
         }
         O_FORMATION_CHANGE => {
-            // Rule 11.10: [繝輔か繝ｼ繝｡繝ｼ繧ｷ繝ｧ繝ｳ繝√ぉ繝ｳ繧ｸ] (Formation Change)
-            // Rule 11.10.1: Moving all members to desired areas
             let direct_dst_slot = if a >= 0 && a < 3 {
                 Some(a as usize)
             } else if ctx.target_slot >= 0 && ctx.target_slot < 3 {
@@ -998,26 +983,6 @@ pub fn handle_member_state(
             }
         }
         O_PLACE_UNDER => {
-            // Rule 5.11: [繧ｫ繝ｼ繝峨・荳九↓鄂ｮ縺上] (Put Under)
-            // Rule 5.11.1: Placing cards under a member on stage
-            if ctx.choice_index == -1 {
-                let choice_text = get_choice_text(db, ctx);
-                if suspend_interaction(
-                    state,
-                    db,
-                    ctx,
-                    instr_ip,
-                    O_PLACE_UNDER,
-                    s,
-                    ChoiceType::SelectHandPlay,
-                    &choice_text,
-                    a as u64,
-                    -1,
-                ) {
-                    return HandlerResult::Suspend;
-                }
-            }
-
             let slot = if ctx.target_slot != -1 {
                 ctx.target_slot as usize
             } else {
@@ -1083,8 +1048,6 @@ pub fn handle_member_state(
             }
         }
         O_PLAY_MEMBER_FROM_HAND => {
-            // Rule 5.1: [逋ｻ蝣ｴ] (Play)
-            // Rule 5.1.1: Move card from hand to stage area
             let remaining = if ctx.v_remaining == -1 {
                 if v == 1 { 1 } else { 2 }
             } else {
@@ -1093,12 +1056,10 @@ pub fn handle_member_state(
 
             if remaining == 2 {
                 if ctx.choice_index == -1 {
-                    let mut p_ctx = ctx.clone();
-                    p_ctx.player_id = p_idx as u8;
                     if suspend_interaction(
                         state,
                         db,
-                        &p_ctx,
+                        ctx,
                         instr_ip,
                         O_PLAY_MEMBER_FROM_HAND,
                         0,
@@ -1533,7 +1494,6 @@ pub fn handle_score_hearts(
                 let count = ctx.selected_cards.len() as i32;
                 final_v = v * count;
             }
-            // Rule 12.3.1: [菫晞｡梧焚蛟､縺ｮ螟画峩 (Modification of numerical values)]
             if effective_target == 1 {
                 for t in 0..3 {
                     state.players[p_idx].blade_buffs[t] += final_v as i16;
@@ -1574,7 +1534,6 @@ pub fn handle_score_hearts(
             if color < 7 {
                 if resolved_slot >= 0 && resolved_slot < 3 {
                     let slot_idx = resolved_slot as usize;
-                    // Rule 12.3.1: [菫晞｡梧焚蛟､縺ｮ螟画峩 (Modification of numerical values)]
                     state.players[p_idx].heart_buffs[slot_idx]
                         .add_to_color(color, v as i32);
                     state.players[p_idx].heart_buff_logs.push((
@@ -1621,7 +1580,6 @@ pub fn handle_score_hearts(
                 }
             }
         }
-        // Rule 12.2.1: [濶ｲ縺ｮ螟画峩 (Color Transformation)]
         O_TRANSFORM_COLOR => {
             state.players[p_idx]
                 .color_transforms

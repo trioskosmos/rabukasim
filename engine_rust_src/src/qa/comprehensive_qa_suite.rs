@@ -834,7 +834,7 @@ mod tests {
 
         // Setup: No members on stage
         state.players[0].stage = [-1, -1, -1];
-        state.players[0].live_zone = vec![-1, -1, -1];
+        state.players[0].live_zone = [-1, -1, -1];
         state.players[0].hand = vec![50, 51].into(); // Live cards in hand
         state.phase = Phase::LiveSet;
 
