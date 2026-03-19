@@ -307,7 +307,7 @@ fn test_opcodes_state_modifiers_simple() {
     let mut ctx_grant = ctx.clone();
     ctx_grant.source_card_id = 3010;
     ctx_grant.area_idx = 0; // Target Slot 0 (Self)
-    let bc = vec![O_GRANT_ABILITY, 0, 0, 0, 4, O_RETURN, 0, 0, 0, 0]; // val=0 (ability index), target=4 (Self/Slot 0)
+    let bc = vec![O_GRANT_ABILITY, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0]; // val=1 grants the first ability, target=4 (Self/Slot 0)
     state.resolve_bytecode_cref(&db, &bc, &ctx_grant);
     assert_eq!(state.players[0].granted_abilities.len(), 1);
 

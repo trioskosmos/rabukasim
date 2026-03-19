@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 
+from engine.game.effects.choices import normalize_choice_metadata, queue_target_hand_choice
 from engine.game.enums import Phase
 from engine.models.ability import Ability, AbilityCostType, ConditionType, Cost, Effect, EffectType, ResolvingEffect, TargetType, TriggerType
 from engine.models.enums import Group, Unit
@@ -485,24 +486,25 @@ def resolve_pending_effect(game: Any, action: int, context: Optional[Dict[str, A
             )
         return
 
+    if effect.effect_type == EffectType.MOVE_TO_DISCARD and effect.target == TargetType.CARD_HAND:
+        if len(p.hand) > 0:
+            queue_target_hand_choice(
+                self,
+                choice_metadata,
+                "discard",
+                "謇区惆縺九ｉ謐ｨ縺ｦ繧九き繝ｼ繝峨ｒ驕ｸ繧薙〒縺上□縺輔＞",
+                effect.params,
+            )
+        return
+
     if effect.target == TargetType.CARD_HAND and effect.effect_type != EffectType.SWAP_CARDS:
         if len(p.hand) > 0:
-            effect_desc = (
-                "謇区惆縺九ｉ謐ｨ縺ｦ繧九き繝ｼ繝峨ｒ驕ｸ繧薙〒縺上□縺輔＞"
-                if effect.effect_type == EffectType.SWAP_CARDS
-                else "謇区惆縺九ｉ繧ｫ繝ｼ繝峨ｒ驕ｸ繧薙〒縺上□縺輔＞"
-            )
-            self.pending_choices.append(
-                (
-                    "TARGET_HAND",
-                    {
-                        **choice_metadata,
-                        "effect": "discard" if effect.effect_type == EffectType.SWAP_CARDS else "select",
-                        "effect_description": effect_desc,
-                        "is_optional": False,
-                        **effect.params,
-                    },
-                )
+            queue_target_hand_choice(
+                self,
+                choice_metadata,
+                "select",
+                "謇区惆縺九ｉ繧ｫ繝ｼ繝峨ｒ驕ｸ繧薙〒縺上□縺輔＞",
+                effect.params,
             )
         return
     elif effect.target == TargetType.MEMBER_SELECT:

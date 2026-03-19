@@ -2,7 +2,7 @@
 
 ## 概要
 
-`manual_pseudocode.json` → `parser_v2.py` → `interpreter.rs` のパイプラインにおける不整合を修正する計画。
+`manual_pseudocode.json` → `parser_v2.py` (legacy parser entry point) → `interpreter.rs` のパイプラインにおける不整合を修正する計画。
 
 ---
 
@@ -44,9 +44,9 @@
 
 ---
 
-### 2. トリガーエイリアスの修正 (parser_v2.py)
+### 2. トリガーエイリアスの修正 (legacy parser layer)
 
-**ファイル**: `compiler/parser_v2.py`
+**ファイル**: `compiler/parser_v2.py` (now split across `parser_*` modules)
 **関数**: `_parse_single_pseudocode` (行765-910)
 
 **現状の問題**:
@@ -180,9 +180,9 @@ let final_v = v * multiplier;
 
 ---
 
-### 5. 動的値フラグの修正 (parser_v2.py)
+### 5. 動的値フラグの修正 (legacy parser layer)
 
-**ファイル**: `compiler/parser_v2.py`
+**ファイル**: `compiler/parser_v2.py` (now split across `parser_*` modules)
 **関数**: `_parse_pseudocode_effects`
 
 **現状の問題**:
@@ -257,8 +257,8 @@ fn test_filter_blade_le() {
    - [ ] `interpreter.rs` に条件チェックを追加
 
 2. **Phase 2: パーサー修正** (優先度: 高)
-   - [ ] `parser_v2.py` のトリガーエイリアスを修正
-   - [ ] `parser_v2.py` の動的値フラグ設定を修正
+   - [ ] legacy parser layer のトリガーエイリアスを修正
+   - [ ] legacy parser layer の動的値フラグ設定を修正
 
 3. **Phase 3: 実行ロジック修正** (優先度: 中)
    - [ ] `interpreter.rs` に PER_CARD 処理を実装
@@ -271,7 +271,7 @@ fn test_filter_blade_le() {
 
 ## 影響範囲
 
-- **parser_v2.py**: トリガーエイリアス、動的値処理
+- **parser_v2.py**: legacy parser entry point for trigger aliases and dynamic value handling
 - **interpreter.rs**: フィルタマッピング、条件チェック、PER_CARD処理
 - **generated_constants.rs**: 新しい条件タイプの定義
 - **enums.rs** (Rust): 新しいトリガータイプの追加（必要に応じて）

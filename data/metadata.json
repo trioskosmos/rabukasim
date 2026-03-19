@@ -648,6 +648,16 @@
                     31,
                     31
                 ]
+            },
+            "scalar_dynamic": {
+                "base_value": [
+                    0,
+                    15
+                ],
+                "divisor": [
+                    16,
+                    31
+                ]
             }
         },
         "S": {
@@ -706,6 +716,18 @@
             "LOOK_AND_CHOOSE": {
                 "A": "look_choose",
                 "V": "look_choose"
+            },
+            "BOOST_SCORE": {
+                "V": "scalar_dynamic"
+            },
+            "ADD_BLADES": {
+                "V": "scalar_dynamic"
+            },
+            "ADD_HEARTS": {
+                "V": "scalar_dynamic"
+            },
+            "BUFF_POWER": {
+                "V": "scalar_dynamic"
             }
         }
     },

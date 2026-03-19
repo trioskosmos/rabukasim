@@ -1263,6 +1263,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
     // All triggers are done.
     state.live_result_triggers_done = true;
 
+    // CRITICAL: Recalculate scores AFTER triggers have potentially boosted live_score_bonus
+    for p in 0..2 {
+        scores[p] = state.players[p].score;
+    }
+
     // DETERMINATION OF LEAD based on updated scores
     let p0_wins = has_success[0] && (!has_success[1] || scores[0] >= scores[1]);
     let p1_wins = has_success[1] && (!has_success[0] || scores[1] >= scores[0]);

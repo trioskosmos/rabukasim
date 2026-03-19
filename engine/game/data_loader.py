@@ -4,12 +4,51 @@ from typing import Any, Dict, Tuple
 
 from pydantic import TypeAdapter
 
+from engine.models.ability import AbilityCostType, Cost
 from engine.models.card import EnergyCard, LiveCard, MemberCard
 
 
 class CardDataLoader:
     def __init__(self, json_path: str):
         self.json_path = json_path
+
+    def _repair_stale_optional_energy_deck_costs(self, cards: Dict[int, Any]) -> None:
+        """Normalize legacy compiled abilities that lost PLACE_ENERGY_WAIT costs.
+
+        Some older compiled card files encoded
+        `COST: PLACE_ENERGY_WAIT(1) (Optional)` as an empty-cost ability with only
+        the follow-up effect preserved. Rehydrate those into a real deck-to-energy
+        cost so the runtime prompt and resolution path stay consistent.
+        """
+
+        for card in cards.values():
+            for ability in getattr(card, "abilities", []):
+                text = f"{getattr(ability, 'pseudocode', '')}\n{getattr(ability, 'raw_text', '')}".upper()
+                if "COST: PLACE_ENERGY_WAIT" not in text:
+                    continue
+                if getattr(ability, "costs", None):
+                    continue
+
+                is_optional = "(OPTIONAL)" in text
+                ability.costs = [
+                    Cost(
+                        AbilityCostType.PLACE_ENERGY_FROM_DECK,
+                        1,
+                        params={"wait": True},
+                        is_optional=is_optional,
+                    )
+                ]
+                semantic = getattr(ability, "semantic_form", None)
+                if isinstance(semantic, dict):
+                    semantic["costs"] = [
+                        {
+                            "type": "PLACE_ENERGY_FROM_DECK",
+                            "value": 1,
+                            "target": "PLAYER",
+                            "params": {"wait": True},
+                            "optional": is_optional,
+                        }
+                    ]
 
     def load(self) -> Tuple[Dict[int, MemberCard], Dict[int, LiveCard], Dict[int, Any]]:
         # Auto-detect compiled file
@@ -55,9 +94,8 @@ class CardDataLoader:
             for k, v in data["energy_db"].items():
                 energy[int(k)] = e_adapter.validate_python(v)
 
-            # --- HOTFIXES REMOVED (Parser is now accurate) ---
-            for l in lives.values():
-                pass
+            self._repair_stale_optional_energy_deck_costs(lives)
+            self._repair_stale_optional_energy_deck_costs(members)
 
         else:
             # Legacy raw format

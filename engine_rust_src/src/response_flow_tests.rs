@@ -133,6 +133,8 @@ fn test_nested_suspension_preserves_original_phase() {
         "",
         0,
         -1,
+        Vec::new(),
+        Vec::new(),
     );
 
     assert_eq!(state.phase, Phase::Response);
@@ -152,6 +154,8 @@ fn test_nested_suspension_preserves_original_phase() {
         "",
         0,
         1,
+        Vec::new(),
+        Vec::new(),
     );
 
     assert_eq!(state.phase, Phase::Response);

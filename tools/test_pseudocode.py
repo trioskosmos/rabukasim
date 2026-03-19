@@ -239,7 +239,16 @@ def find_by_card_no(card_no: str, consolidated: dict) -> tuple:
 
 def dump_reference():
     """Dump a cheat sheet of all available keywords and aliases."""
-    import compiler.parser_v2 as p2
+    from compiler.aliases import (
+        CONDITION_SEMANTIC_SPECIAL_CASES,
+        CONDITION_TRUE_ALIASES,
+        EFFECT_GRAMMAR_CONVENIENCES,
+        EFFECT_SEMANTIC_SPECIAL_CASES,
+        EFFECT_TRUE_ALIASES,
+        IGNORED_CONDITIONS,
+        KEYWORD_CONDITIONS,
+        TRIGGER_ALIASES,
+    )
     from engine.models.ability import AbilityCostType, ConditionType, EffectType, TriggerType
 
     lines = []
@@ -252,7 +261,7 @@ def dump_reference():
     lines.append(", ".join(vals))
 
     lines.append("\n--- TRIGGER ALIASES ---")
-    for alias, target in sorted(p2.TRIGGER_ALIASES.items()):
+    for alias, target in sorted(TRIGGER_ALIASES.items()):
         lines.append(f"  {alias:<25} -> {target}")
 
     lines.append("\n--- BASE EFFECTS ---")
@@ -260,11 +269,15 @@ def dump_reference():
     lines.append(", ".join(vals))
 
     lines.append("\n--- EFFECT ALIASES ---")
-    for alias, target in sorted(p2.EFFECT_ALIASES.items()):
+    for alias, target in sorted(EFFECT_TRUE_ALIASES.items()):
         lines.append(f"  {alias:<25} -> {target}")
 
-    lines.append("\n--- EFFECT ALIASES WITH PARAMS ---")
-    for alias, (target, params) in sorted(p2.EFFECT_ALIASES_WITH_PARAMS.items()):
+    lines.append("\n--- EFFECT GRAMMAR CONVENIENCES ---")
+    for alias, target in sorted(EFFECT_GRAMMAR_CONVENIENCES.items()):
+        lines.append(f"  {alias:<25} -> {target}")
+
+    lines.append("\n--- EFFECT SEMANTIC SPECIAL CASES ---")
+    for alias, (target, params) in sorted(EFFECT_SEMANTIC_SPECIAL_CASES.items()):
         lines.append(f"  {alias:<25} -> {target} {params}")
 
     lines.append("\n--- BASE CONDITIONS ---")
@@ -272,12 +285,20 @@ def dump_reference():
     lines.append(", ".join(vals))
 
     lines.append("\n--- CONDITION ALIASES ---")
-    for alias, (target, params) in sorted(p2.CONDITION_ALIASES.items()):
+    for alias, (target, params) in sorted(CONDITION_TRUE_ALIASES.items()):
+        lines.append(f"  {alias:<25} -> {target} {params}")
+
+    lines.append("\n--- CONDITION SEMANTIC SPECIAL CASES ---")
+    for alias, (target, params) in sorted(CONDITION_SEMANTIC_SPECIAL_CASES.items()):
         lines.append(f"  {alias:<25} -> {target} {params}")
 
     lines.append("\n--- KEYWORD CONDITIONS ---")
-    for alias, kw in sorted(p2.KEYWORD_CONDITIONS.items()):
+    for alias, kw in sorted(KEYWORD_CONDITIONS.items()):
         lines.append(f"  {alias:<25} -> HAS_KEYWORD (key={kw})")
+
+    lines.append("\n--- IGNORED CONDITIONS ---")
+    for alias in sorted(IGNORED_CONDITIONS):
+        lines.append(f"  {alias:<25} -> <ignored>")
 
     lines.append("\n--- BASE COSTS ---")
     vals = [c.name for c in AbilityCostType if c.name != "NONE"]

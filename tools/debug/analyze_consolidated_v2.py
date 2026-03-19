@@ -4,6 +4,21 @@
 import json
 import re
 from collections import defaultdict
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
+from compiler.aliases import (
+    CONDITION_SEMANTIC_SPECIAL_CASES,
+    CONDITION_TRUE_ALIASES,
+    EFFECT_GRAMMAR_CONVENIENCES,
+    EFFECT_SEMANTIC_SPECIAL_CASES,
+    EFFECT_TRUE_ALIASES,
+    IGNORED_CONDITIONS,
+    KEYWORD_CONDITIONS,
+    TRIGGER_ALIASES,
+)
 
 # Load consolidated abilities
 with open("data/consolidated_abilities.json", "r", encoding="utf-8") as f:
@@ -37,26 +52,16 @@ for ability_text, pseudo in consolidated.items():
             if match:
                 triggers.add(match.group(1))
 
-# Now load the parser aliases
-import sys
-
-sys.path.insert(0, "compiler")
-from parser_v2 import CONDITION_ALIASES, EFFECT_ALIASES, EFFECT_ALIASES_WITH_PARAMS, TRIGGER_ALIASES
-
-# Build a full mapping of aliases to canonical names
 all_effect_aliases = {}
-for alias, canonical in EFFECT_ALIASES.items():
-    all_effect_aliases[alias] = canonical
-for alias, (canonical, params) in EFFECT_ALIASES_WITH_PARAMS.items():
-    all_effect_aliases[alias] = canonical
+all_effect_aliases.update(EFFECT_TRUE_ALIASES)
+all_effect_aliases.update(EFFECT_GRAMMAR_CONVENIENCES)
+all_effect_aliases.update({alias: target for alias, (target, params) in EFFECT_SEMANTIC_SPECIAL_CASES.items()})
 
 all_condition_aliases = {}
-for alias, (canonical, params) in CONDITION_ALIASES.items():
-    all_condition_aliases[alias] = canonical
+all_condition_aliases.update({alias: target for alias, (target, params) in CONDITION_TRUE_ALIASES.items()})
+all_condition_aliases.update({alias: target for alias, (target, params) in CONDITION_SEMANTIC_SPECIAL_CASES.items()})
 
-all_trigger_aliases = {}
-for alias, canonical in TRIGGER_ALIASES.items():
-    all_trigger_aliases[alias] = canonical
+all_trigger_aliases = dict(TRIGGER_ALIASES)
 
 print("=" * 60)
 print("EFFECT ALIASES IN PARSER")

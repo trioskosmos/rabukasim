@@ -9,6 +9,55 @@ def normalize_choice_metadata(params: Dict[str, Any]) -> Dict[str, Any]:
     return choice_metadata
 
 
+def queue_target_hand_choice(
+    game: Any,
+    choice_metadata: Dict[str, Any],
+    effect: str,
+    effect_description: str,
+    params: Dict[str, Any],
+    is_optional: bool = False,
+) -> None:
+    """Queue a hand-target choice with an explicit effect meaning."""
+    game.pending_choices.append(
+        (
+            "TARGET_HAND",
+            {
+                **choice_metadata,
+                "effect": effect,
+                "effect_description": effect_description,
+                "is_optional": is_optional,
+                **params,
+            },
+        )
+    )
+
+
+def queue_select_from_list_choice(
+    game: Any,
+    choice_metadata: Dict[str, Any],
+    cards: list,
+    count: int,
+    reason: str,
+    effect_description: str,
+    target_player_id: int,
+    is_optional: bool = False,
+    extra_params: Dict[str, Any] | None = None,
+) -> None:
+    """Queue a list-selection choice with explicit destination context."""
+    payload = {
+        **choice_metadata,
+        "cards": cards,
+        "count": count,
+        "reason": reason,
+        "effect_description": effect_description,
+        "target_player_id": target_player_id,
+        "is_optional": is_optional,
+    }
+    if extra_params:
+        payload.update(extra_params)
+    game.pending_choices.append(("SELECT_FROM_LIST", payload))
+
+
 def is_cost_payment_choice(game: Any, choice_type: str, params: Dict[str, Any]) -> bool:
     """Return True when the choice is part of a pending cost payment flow."""
     if params.get("reason") == "cost":

@@ -235,3 +235,14 @@ alphazero/**/*.npy
 alphazero/**/*.pt
 alphazero/**/*.pth
 alphazero/models/
+
+# uv cache
+.uv-cache/
+.uv-cache-work/
+.uv_cache/
+
+# Project Temp
+tmp/
+.kilocode/
+.python/
+

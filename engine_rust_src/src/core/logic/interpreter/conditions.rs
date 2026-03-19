@@ -1869,14 +1869,7 @@ pub fn check_condition_opcode(
         312 => {
             // SUM_VALUE
             // If v_accumulated is set (e.g. by CALC_SUM_COST), compare against it.
-            // Otherwise fallback to hand size difference (legacy behavior).
-            let val_to_compare = if ctx.v_accumulated != 0 {
-                ctx.v_accumulated as i32
-            } else {
-                let my_hand = player.hand.len() as i32;
-                let opp_hand = opponent.hand.len() as i32;
-                opp_hand - my_hand
-            };
+            let val_to_compare = ctx.v_accumulated as i32;
             compare_i32(val_to_compare, val, slot)
         }
         313 => {

@@ -17,6 +17,8 @@ pub mod repro_card_420_multi_pick;
 pub mod repro_card_560_double_baton;
 #[cfg(test)]
 pub mod repro_card_162_v2;
+
+#[cfg(test)]
 pub mod repro_card_pb1_001_r;
 #[cfg(test)]
 pub mod repro_score_jump;
@@ -62,3 +64,5 @@ pub mod card_10_cost_bug;
 pub mod card126_tests;
 #[cfg(test)]
 pub mod test_card_162_fix;
+#[cfg(test)]
+pub mod repro_card_4684;

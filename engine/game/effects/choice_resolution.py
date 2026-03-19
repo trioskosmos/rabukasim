@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import random
 from typing import Any
 
 import numpy as np
@@ -11,7 +10,19 @@ from engine.game.effects.choices import (
     normalize_choice_metadata,
     store_choice_answer,
 )
-from engine.game.effects.zone_actions import move_stage_card
+from engine.game.effects.choice_actions import (
+    handle_optional_select_from_list,
+    resolve_select_from_discard_choice,
+    resolve_select_from_list_choice,
+    resolve_target_deck_choice,
+    resolve_target_energy_deck_choice,
+    resolve_target_energy_zone_choice,
+    resolve_target_hand_choice,
+    resolve_target_live_choice,
+    resolve_target_member_choice,
+    resolve_target_removed_choice,
+    resolve_target_success_lives_choice,
+)
 from engine.game.enums import Phase
 from engine.models.ability import Effect, EffectType, ResolvingEffect
 
@@ -40,49 +51,7 @@ def handle_choice(game: Any, action: int) -> None:
         if 0 <= idx < len(p.hand):
             if params.get("reason") == "cost" and params.get("count", 1) <= 1:
                 cost_paid = True
-
-            cid = p.hand.pop(idx)
-            if idx < len(p.hand_added_turn):
-                p.hand_added_turn.pop(idx)
-
-            eff = params.get("effect")
-            if eff == "discard":
-                p.discard.append(cid)
-                if self.verbose:
-                    print(f"DEBUG: TARGET_HAND discarded card {cid}. Discard size now {len(p.discard)}")
-            elif eff == "energy_charge":
-                p.energy_zone.append(cid)
-                p.tapped_energy[len(p.energy_zone) - 1] = False
-            elif eff == "place_under":
-                target = params.get("target_area", -1)
-                if target >= 0:
-                    p.add_stage_energy(target, cid)
-            elif eff == "place_member":
-                area = next((i for i in range(3) if p.stage[i] < 0), -1)
-                if area >= 0:
-                    p.stage[area] = cid
-                else:
-                    p.discard.append(cid)
-            elif eff == "place_live":
-                p.live_zone.append(cid)
-                p.live_zone_revealed.append(True)
-            elif eff == "place_energy":
-                p.energy_zone.append(cid)
-                p.tapped_energy[len(p.energy_zone) - 1] = False
-            elif eff in {
-                "place_energy_to_stage_energy",
-                "place_member_to_stage_energy",
-                "place_live_to_stage_energy",
-            }:
-                target = params.get("target_area", 0)
-                p.add_stage_energy(target, cid)
-            elif eff in {"place_energy_to_discard", "place_member_to_discard", "place_live_to_discard"}:
-                p.discard.append(cid)
-            elif eff in {"place_energy_to_success", "place_member_to_success", "place_live_to_success"}:
-                p.success_lives.append(cid)
-            elif eff in {"place_energy_to_removed", "place_member_to_removed", "place_live_to_removed"}:
-                self.removed_cards.append(cid)
-
+            resolve_target_hand_choice(self, p, params, idx)
             if params.get("count", 1) > 1:
                 params["count"] -= 1
                 self.pending_choices.insert(0, ("TARGET_HAND", params))
@@ -92,65 +61,17 @@ def handle_choice(game: Any, action: int) -> None:
         if 0 <= idx < len(p.live_zone):
             if params.get("reason") == "cost" and params.get("count", 1) <= 1:
                 cost_paid = True
-            cid = p.live_zone.pop(idx)
-            if idx < len(p.live_zone_revealed):
-                p.live_zone_revealed.pop(idx)
-
-            eff = params.get("effect")
-            if eff == "discard":
-                p.discard.append(cid)
-            elif eff == "remove":
-                self.removed_cards.append(cid)
-            elif eff == "return_to_hand":
-                p.hand.append(cid)
-                p.hand_added_turn.append(self.turn_number)
-            elif eff == "return_to_deck":
-                p.main_deck.append(cid)
-                random.shuffle(p.main_deck)
-            elif eff == "return_to_success":
-                p.success_lives.append(cid)
-
+            resolve_target_live_choice(self, p, params, idx)
             if params.get("count", 1) > 1:
                 params["count"] -= 1
                 self.pending_choices.insert(0, ("TARGET_LIVE", params))
 
     elif choice_type in ("SELECT_FROM_DISCARD", "TARGET_DISCARD"):
         idx = action - 660
-        source_list = params.get("cards", p.discard)
-        if 0 <= idx < len(source_list):
+        if 0 <= idx < len(params.get("cards", p.discard)):
             if params.get("reason") == "cost" and params.get("count", 1) <= 1:
                 cost_paid = True
-
-            cid = source_list[idx]
-            if cid in p.discard:
-                p.discard.remove(cid)
-            elif 0 <= idx < len(p.discard):
-                cid = p.discard.pop(idx)
-
-            eff = params.get("effect")
-            if eff == "place_member":
-                area = next((i for i in range(3) if p.stage[i] < 0), -1)
-                if area >= 0:
-                    p.stage[area] = cid
-                else:
-                    p.discard.append(cid)
-            elif eff == "place_live":
-                p.live_zone.append(cid)
-                p.live_zone_revealed.append(True)
-            elif eff == "place_energy":
-                p.energy_zone.append(cid)
-                p.tapped_energy[len(p.energy_zone) - 1] = False
-            elif eff == "return_to_deck":
-                p.main_deck.append(cid)
-                random.shuffle(p.main_deck)
-            elif eff == "return_to_hand":
-                p.hand.append(cid)
-                p.hand_added_turn.append(self.turn_number)
-            elif eff == "return_to_success":
-                p.success_lives.append(cid)
-            elif eff == "return_to_removed":
-                self.removed_cards.append(cid)
-
+            resolve_select_from_discard_choice(self, p, params, idx)
             if params.get("count", 1) > 1:
                 params["count"] -= 1
                 self.pending_choices.insert(0, ("TARGET_DISCARD", params))
@@ -160,37 +81,7 @@ def handle_choice(game: Any, action: int) -> None:
         if 0 <= idx < len(p.main_deck) or choice_type == "SELECT_FROM_LIST":
             if params.get("reason") == "cost" and params.get("count", 1) <= 1:
                 cost_paid = True
-
-            source_list = params.get("cards", p.main_deck)
-            cid = None
-            if 0 <= idx < len(source_list):
-                cid = source_list.pop(idx) if choice_type != "SELECT_FROM_LIST" else source_list[idx]
-
-            eff = params.get("effect")
-            if eff == "place_member":
-                area = next((i for i in range(3) if p.stage[i] < 0), -1)
-                if area >= 0:
-                    p.stage[area] = cid
-                else:
-                    p.discard.append(cid)
-            elif eff == "place_live":
-                p.live_zone.append(cid)
-                p.live_zone_revealed.append(True)
-            elif eff == "place_energy":
-                p.energy_zone.append(cid)
-                p.tapped_energy[len(p.energy_zone) - 1] = False
-            elif eff == "return_to_hand":
-                p.hand.append(cid)
-                p.hand_added_turn.append(self.turn_number)
-            elif eff == "return_to_discard":
-                p.discard.append(cid)
-            elif eff == "return_to_success":
-                p.success_lives.append(cid)
-            elif eff == "return_to_removed":
-                self.removed_cards.append(cid)
-
-            random.shuffle(p.main_deck)
-
+            resolve_target_deck_choice(self, p, params, idx, choice_type)
             if params.get("count", 1) > 1:
                 params["count"] -= 1
                 self.pending_choices.insert(0, ("TARGET_DECK", params))
@@ -200,32 +91,7 @@ def handle_choice(game: Any, action: int) -> None:
         if 0 <= idx < len(self.removed_cards):
             if params.get("reason") == "cost" and params.get("count", 1) <= 1:
                 cost_paid = True
-            cid = self.removed_cards.pop(idx)
-
-            eff = params.get("effect")
-            if eff == "return_to_deck":
-                p.main_deck.append(cid)
-                random.shuffle(p.main_deck)
-            elif eff == "return_to_hand":
-                p.hand.append(cid)
-                p.hand_added_turn.append(self.turn_number)
-            elif eff == "return_to_discard":
-                p.discard.append(cid)
-            elif eff == "return_to_success":
-                p.success_lives.append(cid)
-            elif eff == "place_member":
-                area = next((i for i in range(3) if p.stage[i] < 0), -1)
-                if area >= 0:
-                    p.stage[area] = cid
-                else:
-                    p.discard.append(cid)
-            elif eff == "place_live":
-                p.live_zone.append(cid)
-                p.live_zone_revealed.append(True)
-            elif eff == "place_energy":
-                p.energy_zone.append(cid)
-                p.tapped_energy[len(p.energy_zone) - 1] = False
-
+            resolve_target_removed_choice(self, p, params, idx)
             if params.get("count", 1) > 1:
                 params["count"] -= 1
                 self.pending_choices.insert(0, ("TARGET_REMOVED", params))
@@ -235,34 +101,7 @@ def handle_choice(game: Any, action: int) -> None:
         if 0 <= idx < len(p.success_lives):
             if params.get("reason") == "cost" and params.get("count", 1) <= 1:
                 cost_paid = True
-            cid = p.success_lives.pop(idx)
-
-            eff = params.get("effect")
-            if eff == "place_energy":
-                p.energy_zone.append(cid)
-                p.tapped_energy[len(p.energy_zone) - 1] = False
-            elif eff == "discard":
-                p.discard.append(cid)
-            elif eff == "remove":
-                self.removed_cards.append(cid)
-            elif eff == "return_to_hand":
-                p.hand.append(cid)
-                p.hand_added_turn.append(self.turn_number)
-            elif eff == "return_to_deck":
-                p.main_deck.append(cid)
-                random.shuffle(p.main_deck)
-            elif eff == "return_to_discard":
-                p.discard.append(cid)
-            elif eff == "place_member":
-                area = next((i for i in range(3) if p.stage[i] < 0), -1)
-                if area >= 0:
-                    p.stage[area] = cid
-                else:
-                    p.discard.append(cid)
-            elif eff == "place_live":
-                p.live_zone.append(cid)
-                p.live_zone_revealed.append(True)
-
+            resolve_target_success_lives_choice(self, p, params, idx)
             if params.get("count", 1) > 1:
                 params["count"] -= 1
                 self.pending_choices.insert(0, ("TARGET_SUCCESS_LIVES", params))
@@ -272,34 +111,7 @@ def handle_choice(game: Any, action: int) -> None:
         if 0 <= idx < len(p.energy_zone):
             if params.get("reason") == "cost" and params.get("count", 1) <= 1:
                 cost_paid = True
-            cid = p.energy_zone.pop(idx)
-            if idx < len(p.tapped_energy):
-                p.tapped_energy = np.delete(p.tapped_energy, idx)
-                p.tapped_energy = np.pad(p.tapped_energy, (0, 64 - len(p.tapped_energy)), "constant")
-
-            eff = params.get("effect")
-            if eff == "return_to_deck":
-                p.main_deck.append(cid)
-                random.shuffle(p.main_deck)
-            elif eff == "return_to_hand":
-                p.hand.append(cid)
-                p.hand_added_turn.append(self.turn_number)
-            elif eff == "discard":
-                p.discard.append(cid)
-            elif eff == "remove":
-                self.removed_cards.append(cid)
-            elif eff == "return_to_success":
-                p.success_lives.append(cid)
-            elif eff == "place_member":
-                area = next((i for i in range(3) if p.stage[i] < 0), -1)
-                if area >= 0:
-                    p.stage[area] = cid
-                else:
-                    p.discard.append(cid)
-            elif eff == "place_live":
-                p.live_zone.append(cid)
-                p.live_zone_revealed.append(True)
-
+            resolve_target_energy_zone_choice(self, p, params, idx)
             if params.get("count", 1) > 1:
                 params["count"] -= 1
                 self.pending_choices.insert(0, ("TARGET_ENERGY_ZONE", params))
@@ -309,31 +121,7 @@ def handle_choice(game: Any, action: int) -> None:
         if 0 <= idx < len(p.energy_deck):
             if params.get("reason") == "cost" and params.get("count", 1) <= 1:
                 cost_paid = True
-            cid = p.energy_deck.pop(idx)
-
-            eff = params.get("effect")
-            if eff == "return_to_hand":
-                p.hand.append(cid)
-                p.hand_added_turn.append(self.turn_number)
-            elif eff == "return_to_discard":
-                p.discard.append(cid)
-            elif eff == "return_to_success":
-                p.success_lives.append(cid)
-            elif eff == "return_to_removed":
-                self.removed_cards.append(cid)
-            elif eff == "place_energy":
-                p.energy_zone.append(cid)
-                p.tapped_energy[len(p.energy_zone) - 1] = False
-            elif eff == "place_member":
-                area = next((i for i in range(3) if p.stage[i] < 0), -1)
-                if area >= 0:
-                    p.stage[area] = cid
-                else:
-                    p.discard.append(cid)
-            elif eff == "place_live":
-                p.live_zone.append(cid)
-                p.live_zone_revealed.append(True)
-
+            resolve_target_energy_deck_choice(self, p, params, idx)
             if params.get("count", 1) > 1:
                 params["count"] -= 1
                 self.pending_choices.insert(0, ("TARGET_ENERGY_DECK", params))
@@ -353,6 +141,18 @@ def handle_choice(game: Any, action: int) -> None:
                 }
                 self.pending_choices.append(("TARGET_HAND", discard_params))
                 return False
+            if cost_type == "place_energy_deck":
+                energy_params = {
+                    **choice_metadata,
+                    "cards": p.energy_deck.copy(),
+                    "reason": "cost",
+                    "effect": "place_energy",
+                    "is_optional": True,
+                    "cost_index": params.get("cost_index", -1),
+                    "count": amount,
+                }
+                self.pending_choices.append(("TARGET_ENERGY_DECK", energy_params))
+                return False
 
             tapped = 0
             for i in range(len(p.energy_zone) - 1, -1, -1):
@@ -370,47 +170,7 @@ def handle_choice(game: Any, action: int) -> None:
         if 0 <= area < 3:
             if params.get("reason") == "cost" and params.get("count", 1) <= 1:
                 cost_paid = True
-            if params.get("effect") == "buff":
-                teff = params.get("target_effect")
-                if teff:
-                    p.continuous_effects.append({"effect": teff, "target_slot": area, "expiry": "TURN_END"})
-            elif params.get("effect") == "activate":
-                p.tapped_members[area] = False
-            elif params.get("effect") == "tap":
-                p.tapped_members[area] = True
-            elif params.get("effect") == "tap_self_chosen":
-                p.tapped_members[area] = True
-                p.members_tapped_by_opponent_this_turn.add(p.stage[area])
-            elif params.get("effect") == "rest":
-                p.rested_members[area] = True
-            elif params.get("reason") == "position_change":
-                step = params.get("step", "source")
-                if step == "source" and p.stage[area] >= 0:
-                    self.pending_choices.insert(
-                        0,
-                        (
-                            "TARGET_MEMBER_SLOT",
-                            {**choice_metadata, "reason": "position_change", "step": "dest", "source": area},
-                        ),
-                    )
-                elif step == "dest":
-                    src = params.get("source")
-                    if src is not None and src != area:
-                        self._move_member(p, src, area)
-            elif params.get("effect") == "return_to_hand":
-                move_stage_card(self, p, area, "hand")
-            elif params.get("effect") == "discard_member":
-                move_stage_card(self, p, area, "discard")
-            elif params.get("effect") == "remove_member":
-                move_stage_card(self, p, area, "removed")
-            elif params.get("effect") == "return_to_deck":
-                move_stage_card(self, p, area, "deck")
-            elif params.get("effect") == "return_to_success":
-                move_stage_card(self, p, area, "success")
-            elif params.get("effect") == "return_to_discard":
-                move_stage_card(self, p, area, "discard")
-            elif params.get("effect") == "return_to_removed":
-                move_stage_card(self, p, area, "removed")
+            resolve_target_member_choice(self, p, params, area)
 
     elif choice_type == "DISCARD_SELECT":
         idx = action - 500
@@ -451,6 +211,24 @@ def handle_choice(game: Any, action: int) -> None:
 
     elif choice_type == "SELECT_MODE":
         opt = action - 570
+        if params.get("cost_type_name") == "SELECT_SELF_OR_DISCARD":
+            if opt == 0:
+                area = params.get("source_area", params.get("area", -1))
+                if 0 <= area < 3:
+                    p.tapped_members[area] = True
+                cost_paid = True
+            elif opt == 1:
+                discard_params = {
+                    **choice_metadata,
+                    "reason": "cost",
+                    "effect": "discard",
+                    "is_optional": False,
+                    "cost_index": params.get("cost_index", -1),
+                    "count": 1,
+                }
+                self.pending_choices.append(("TARGET_HAND", discard_params))
+                return False
+
         bytecodes = params.get("options_bytecode")
         if bytecodes and 0 <= opt < len(bytecodes):
             self.pending_effects.insert(0, bytecodes[opt])
@@ -465,173 +243,20 @@ def handle_choice(game: Any, action: int) -> None:
                 self.pending_effects.insert(0, ResolvingEffect(copy.copy(eff), source_id, total - i, total))
 
     elif choice_type == "SELECT_FROM_LIST":
-        cards = params.get("cards", [])
         idx = action - 600
-        target_player_id = params.get("target_player_id", p.player_id)
-        tp = self.players[target_player_id]
-
         if action == 0 and params.get("is_optional", False):
-            reason = params.get("reason")
-            if reason == "look_and_reorder":
-                if self.looked_cards:
-                    for c in self.looked_cards:
-                        p.discard.append(c)
-                    self.looked_cards = []
-
-                if params.get("reorder") and hasattr(self, "_reorder_staged_cards") and self._reorder_staged_cards:
-                    self.pending_choices.insert(
-                        0,
-                        (
-                            "SELECT_ORDER",
-                            {
-                                "cards": self._reorder_staged_cards.copy(),
-                                "ordered": [],
-                                "position": "top",
-                                "player_id": p.player_id,
-                            },
-                        ),
-                    )
-                    self._reorder_staged_cards = []
-                elif hasattr(self, "_reorder_staged_cards") and self._reorder_staged_cards:
-                    for c in reversed(self._reorder_staged_cards):
-                        p.main_deck.insert(0, c)
-                    self._reorder_staged_cards = []
+            if handle_optional_select_from_list(self, p, params):
                 return
 
-            if reason == "look_and_choose":
-                if self.looked_cards:
-                    if params.get("destination") == "discard":
-                        for c in reversed(self.looked_cards):
-                            tp.main_deck.insert(0, c)
-                    else:
-                        tp.discard.extend(self.looked_cards)
-                    self.looked_cards = []
-            return
-
-        if 0 <= idx < len(cards):
-            sel = cards.pop(idx)
-
+        if 0 <= idx < len(params.get("cards", [])):
             if params.get("reason") == "cost" and params.get("count", 1) <= 1:
                 cost_paid = True
-
-            reason = params.get("reason")
-            if reason in ("look_and_choose", "search_deck"):
-                dest = params.get("destination", params.get("to", "hand"))
-                if dest == "discard":
-                    tp.discard.append(sel)
-                else:
-                    p.hand.append(sel)
-                    p.hand_added_turn.append(self.turn_number)
-                if reason == "look_and_choose" and sel in self.looked_cards:
-                    self.looked_cards.remove(sel)
-            elif reason == "look_and_reorder":
-                if not hasattr(self, "_reorder_staged_cards"):
-                    self._reorder_staged_cards = []
-                self._reorder_staged_cards.append(sel)
-                if sel in self.looked_cards:
-                    self.looked_cards.remove(sel)
-
-                any_number = params.get("any_number", False)
-                reorder = params.get("reorder", False)
-                if any_number and cards:
-                    self.pending_choices.insert(0, ("SELECT_FROM_LIST", {**params, "cards": cards}))
-                    return
-
-                if self.looked_cards:
-                    for c in self.looked_cards:
-                        p.discard.append(c)
-                    self.looked_cards = []
-
-                if reorder and self._reorder_staged_cards:
-                    self.pending_choices.insert(
-                        0,
-                        (
-                            "SELECT_ORDER",
-                            {
-                                "cards": self._reorder_staged_cards.copy(),
-                                "ordered": [],
-                                "position": "top",
-                                "player_id": p.player_id,
-                            },
-                        ),
-                    )
-                    self._reorder_staged_cards = []
-                elif self._reorder_staged_cards:
-                    for c in reversed(self._reorder_staged_cards):
-                        p.main_deck.insert(0, c)
-                    self._reorder_staged_cards = []
-                return
-
-            current_count = int(params.get("choose_count", params.get("count", 1)))
-            rem_cards = cards
-            if sel in rem_cards:
-                rem_cards.remove(sel)
-
-            looping = current_count > 1 and rem_cards
-            if self.looked_cards and not looping:
-                if reason == "look_and_choose":
-                    if params.get("destination") == "discard":
-                        for c in reversed(rem_cards):
-                            tp.main_deck.insert(0, c)
-                    else:
-                        tp.discard.extend(rem_cards)
-                self.looked_cards = []
-
-            if reason == "search_deck":
-                if sel in p.main_deck:
-                    p.main_deck.remove(sel)
-                if not looping and params.get("shuffle"):
-                    random.shuffle(p.main_deck)
-            elif reason == "activate_energy":
-                found_idx = -1
-                for i, ecid in enumerate(p.energy_zone):
-                    if ecid == sel and p.tapped_energy[i]:
-                        found_idx = i
-                        break
-                if found_idx >= 0:
-                    p.tapped_energy[found_idx] = False
-            elif reason == "place_under_from_energy":
-                target = params.get("target_area", -1)
-                if target >= 0:
-                    if isinstance(p.tapped_energy, (list, np.ndarray)):
-                        if isinstance(p.tapped_energy, np.ndarray):
-                            p.tapped_energy[idx : len(p.energy_zone)] = p.tapped_energy[idx + 1 : len(p.energy_zone) + 1]
-                        else:
-                            p.tapped_energy.pop(idx)
-                    p.add_stage_energy(target, sel)
-
-            if looping:
-                if "choose_count" in params:
-                    params["choose_count"] = (
-                        str(current_count - 1) if isinstance(params["choose_count"], str) else current_count - 1
-                    )
-                params["count"] = current_count - 1
-                params["cards"] = rem_cards
-                self.pending_choices.insert(0, ("SELECT_FROM_LIST", params))
+            resolve_select_from_list_choice(self, p, params, idx)
 
     elif choice_type == "SELECT_FROM_DISCARD":
-        cards = params.get("cards", [])
         idx = action - 660
-        if 0 <= idx < len(cards):
-            sel = int(cards[idx])
-            if sel in p.discard:
-                p.discard.remove(sel)
-                dest = params.get("destination", "hand")
-                if dest == "hand":
-                    p.hand.append(sel)
-                    p.hand_added_turn.append(self.turn_number)
-                elif dest == "stage":
-                    area = next((i for i in range(3) if p.stage[i] < 0), -1)
-                    if area >= 0:
-                        p.stage[area] = sel
-                    else:
-                        p.hand.append(sel)
-                        p.hand_added_turn.append(self.turn_number)
-                if params.get("count", 1) > 1:
-                    rem = [c for c in cards if int(c) != sel and int(c) in p.discard]
-                    if rem:
-                        params.update({"cards": rem, "count": params["count"] - 1})
-                        self.pending_choices.insert(0, ("SELECT_FROM_DISCARD", params))
+        if 0 <= idx < len(params.get("cards", [])):
+            resolve_select_from_discard_choice(self, p, params, idx)
 
     elif choice_type == "CHOOSE_FORMATION":
         mems = [(i, cid) for i, cid in enumerate(p.stage) if cid >= 0]

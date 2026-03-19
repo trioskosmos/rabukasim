@@ -123,20 +123,10 @@ impl GameState {
                 }
             }
             Phase::Rps => {
-                let mut legal = self.get_legal_action_ids(db);
-                let opponent_choice = self.rps_choices[1 - self.current_player as usize];
-
-                if opponent_choice >= 0 {
-                    legal.retain(|action| {
-                        let choice = if self.current_player == 0 {
-                            action - crate::core::generated_constants::ACTION_BASE_RPS
-                        } else {
-                            action - crate::core::generated_constants::ACTION_BASE_RPS_P2
-                        };
-                        choice != opponent_choice as i32
-                    });
-                }
-
+                // RPS is meant to allow draws. Do not filter out the opponent's
+                // previous choice here, or the AI can never mirror the human and
+                // the "second shot" rematch loop can never happen.
+                let legal = self.get_legal_action_ids(db);
                 let action = if legal.is_empty() {
                     self.choose_phase_aware_action(db)
                 } else {

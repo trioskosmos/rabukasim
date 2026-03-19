@@ -27,7 +27,8 @@ if name == "SCORE_LEAD":
 
 ```python
 # 条件エイリアス定数を追加
-CONDITION_ALIASES = {
+    # Historical note: these aliases now live in compiler/aliases.py
+    legacy condition alias table:
     "COST_LEAD": ("SCORE_COMPARE", {"type": "cost", "target": "opponent", "comparison": "GT"}),
     "SCORE_LEAD": ("SCORE_COMPARE", {"type": "score", "comparison": "GT"}),
     "TYPE_MEMBER": ("TYPE_CHECK", {"card_type": "member"}),

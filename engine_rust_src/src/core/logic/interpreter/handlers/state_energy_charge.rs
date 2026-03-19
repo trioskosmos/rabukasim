@@ -24,27 +24,86 @@ pub fn handle_pay_energy(
     instr_ip: usize,
     p_idx: usize,
     instr: &BytecodeInstruction,
-    v: i32,
+    _v: i32, // Ignore param v, use instr.v
 ) -> HandlerResult {
+    let v = instr.v;
     let available = (0..state.players[p_idx].energy_zone.len())
         .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
         .count() as i32;
 
     let is_optional = instr.filter_attr().is_optional;
+
+    // --- CASE 1: Variable Energy Payment (e.g. Card 878) ---
+    if v == -1 {
+        if ctx.choice_index == -1 {
+            // Initial call: Reset accumulation and suspend
+            ctx.v_accumulated = 0;
+            ctx.v_remaining = -2; // Marker for "variable mode"
+
+            let options = vec![serde_json::json!({
+                "name": "Done",
+                "text": "Finish paying energy"
+            })];
+            let actions = vec![11099]; // ChoiceIndices::DONE (99) + ACTION_BASE_CHOICE (11000)
+
+            return crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice_with_options(
+                state,
+                db,
+                ctx,
+                ctx,
+                instr_ip,
+                crate::core::enums::O_PAY_ENERGY,
+                0,
+                crate::core::enums::ChoiceType::PayEnergy,
+                0,
+                -2,
+                options,
+                actions,
+            );
+        } else if ctx.choice_index == 99 {
+            // "Done" button pressed
+            ctx.choice_index = -1;
+            ctx.v_remaining = -1; // Reset marker
+            return HandlerResult::Continue;
+        } else if ctx.choice_index >= 0 {
+            // An energy card was selected
+            let e_idx = ctx.choice_index as usize;
+            if e_idx < state.players[p_idx].energy_zone.len() && !state.players[p_idx].is_energy_tapped(e_idx) {
+                state.players[p_idx].set_energy_tapped(e_idx, true);
+                ctx.v_accumulated += 1;
+            }
+
+            // Loop back to suspension
+            ctx.choice_index = -1;
+            let options = vec![serde_json::json!({
+                "name": "Done",
+                "text": "Finish paying energy"
+            })];
+            let actions = vec![11099];
+
+            return crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice_with_options(
+                state,
+                db,
+                ctx,
+                ctx,
+                instr_ip,
+                crate::core::enums::O_PAY_ENERGY,
+                0,
+                crate::core::enums::ChoiceType::PayEnergy,
+                0,
+                -2,
+                options,
+                actions,
+            );
+        }
+    }
+
+    // --- CASE 2: Fixed Energy Payment (Normal) ---
     if is_optional && ctx.choice_index == -1 {
         if available < v {
-            if state.debug.debug_mode && !state.ui.silent {
-                println!("[DEBUG] O_PAY_ENERGY: cannot afford optional cost.");
-            }
             return HandlerResult::SetCond(false);
         } else {
-            if state.debug.debug_mode {
-                println!(
-                    "[DEBUG] O_PAY_ENERGY: attempting optional suspension (instr_ip={}).",
-                    instr_ip
-                );
-            }
-            if matches!(suspend_choice(
+            return suspend_choice(
                 state,
                 db,
                 ctx,
@@ -55,65 +114,37 @@ pub fn handle_pay_energy(
                 ChoiceType::Optional,
                 instr.filter_attr().to_attr(),
                 -1,
-            ), HandlerResult::Suspend) {
-                return HandlerResult::Suspend;
-            }
+            );
         }
     }
 
-    if ctx.choice_index == 99 {
-        return HandlerResult::SetCond(false);
-    }
-
-    let mut next_ctx = ctx.clone();
-    if is_optional && ctx.choice_index != -1 && ctx.v_remaining == -1 {
+    // Resumption logic for optional choice
+    let actual_v = v;
+    if is_optional && ctx.v_remaining == -1 {
         if ctx.choice_index == 1 {
+            ctx.choice_index = -1;
             return HandlerResult::SetCond(false);
         }
-        next_ctx.choice_index = -1;
-        next_ctx.v_remaining = v as i16;
+        ctx.choice_index = -1;
     }
 
-    if next_ctx.choice_index == 99 {
+    if available < actual_v {
         return HandlerResult::SetCond(false);
-    } else if available < v {
-        return HandlerResult::SetCond(false);
-    } else if next_ctx.choice_index != -1 {
-        let idx = next_ctx.choice_index as usize;
-        if idx < state.players[p_idx].energy_zone.len() && !state.players[p_idx].is_energy_tapped(idx)
-        {
-            state.players[p_idx].set_energy_tapped(idx, true);
-            next_ctx.v_remaining -= 1;
-            if next_ctx.v_remaining > 0 {
-                next_ctx.choice_index = -1;
-                if matches!(suspend_choice(
-                    state,
-                    db,
-                    &next_ctx,
-                    &next_ctx,
-                    instr_ip,
-                    O_PAY_ENERGY,
-                    0,
-                    ChoiceType::PayEnergy,
-                    0,
-                    next_ctx.v_remaining,
-                ), HandlerResult::Suspend) {
-                    return HandlerResult::Suspend;
-                }
-            }
+    }
+
+    // Perform payment
+    let mut paid = 0;
+    let player = &mut state.players[p_idx];
+    for i in 0..player.energy_zone.len() {
+        if paid >= actual_v {
+            break;
         }
-    } else {
-        let mut paid = 0;
-        let player = &mut state.players[p_idx];
-        for i in 0..player.energy_zone.len() {
-            if paid >= v {
-                break;
-            }
-            if !player.is_energy_tapped(i) {
-                player.set_energy_tapped(i, true);
-                paid += 1;
-            }
+        if !player.is_energy_tapped(i) {
+            player.set_energy_tapped(i, true);
+            paid += 1;
         }
     }
+
+    ctx.v_accumulated = paid as i16;
     HandlerResult::SetCond(true)
 }

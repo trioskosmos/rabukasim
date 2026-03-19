@@ -20,6 +20,8 @@ pub fn suspend_interaction(
     choice_text: &str,
     filter_attr: u64,
     v_remaining: i16,
+    options: Vec<serde_json::Value>,
+    actions: Vec<i32>,
 ) -> bool {
     let original_phase = if let Some(p) = ctx.original_phase {
         p
@@ -55,6 +57,8 @@ pub fn suspend_interaction(
         v_remaining,
         original_phase,
         original_current_player: original_cp,
+        options: options.clone(),
+        actions: actions.clone(),
         execution_id,
         ..Default::default()
     });
@@ -62,8 +66,13 @@ pub fn suspend_interaction(
     state.phase = Phase::Response;
     state.current_player = chooser_p_idx;
 
-    let mut actions: Vec<i32> = Vec::with_capacity(8);
-    state.generate_legal_actions(db, chooser_p_idx as usize, &mut actions);
+    let mut final_actions = actions;
+    if final_actions.is_empty() {
+        state.generate_legal_actions(db, chooser_p_idx as usize, &mut final_actions);
+    }
+    state.interaction_stack.last_mut().unwrap().actions = final_actions.clone();
+
+    let _actions_len = final_actions.len();
 
     // Don't skip suspension for OPTIONAL, LOOK_AND_CHOOSE, COLOR_SELECT, TAP_M_SELECT, etc.
     // These are legitimate choice types that should always suspend even with limited actions.
@@ -92,11 +101,11 @@ pub fn suspend_interaction(
             "[DEBUG] suspend_interaction: choice_type={:?}, v_remaining={}, actions={}",
             choice_type,
             v_remaining,
-            actions.len()
+            final_actions.len()
         );
     }
 
-    if should_check_skip && actions.is_empty()
+    if should_check_skip && final_actions.is_empty()
         && choice_type != crate::core::enums::ChoiceType::OpponentChoose
     {
         if state.debug.debug_mode {

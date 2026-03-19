@@ -128,6 +128,9 @@ impl ResponseGenerator {
                         );
                     }
                 }
+                if pi.v_remaining == -2 {
+                    receiver.add_action((ACTION_BASE_CHOICE + 99) as usize);
+                }
                 return;
             }
             ChoiceType::RevealHand => {

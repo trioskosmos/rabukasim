@@ -27,19 +27,12 @@ from engine.models.ability import (
 from .parser_lexer import StructuredEffect, StructuralLexer
 from .parser_costs import parse_pseudocode_costs
 from .parser_effect_normalization import normalize_select_hand_effect
+from .parser_effect_aliases import resolve_effect_aliases
 from .parser_grant_ability import parse_grant_ability_effect
 from .parser_play_member_resolution import resolve_play_member_source
 from .parser_target_resolution import resolve_target_type
-from .parser_semantics import parse_pseudocode_conditions
-from .parser_patterns import (
-    CONDITION_ALIASES,
-    EFFECT_ALIASES,
-    EFFECT_ALIASES_WITH_PARAMS,
-    IGNORED_CONDITIONS,
-    KEYWORD_CONDITIONS,
-    MAX_SELECT_ALL,
-    TRIGGER_ALIASES,
-)
+from .parser_semantics import looks_like_condition_instruction, parse_pseudocode_conditions
+from .parser_patterns import IGNORED_CONDITIONS, KEYWORD_CONDITIONS, MAX_SELECT_ALL, TRIGGER_ALIASES
 
 
 class AbilityParserV2:
@@ -219,7 +212,7 @@ class AbilityParserV2:
                     # Optional or mid-ability costs move to 'instructions' so the bytecode
                     # interpreter can suspend for pay/skip interactions.
                     # Complex costs (SELECT_MEMBER, etc.) MUST be in bytecode
-                    is_complex = c.type == AbilityCostType.NONE
+                    is_complex = c.type == AbilityCostType.NONE and c.params.get("cost_type_name") != "SELECT_SELF_OR_DISCARD"
 
                     if not c.is_optional and not instructions and not is_complex:
                         costs.append(c)
@@ -580,21 +573,8 @@ class AbilityParserV2:
                 # Apply effect aliases using module-level constants
                 name_up = name.upper()
 
-                # First check simple aliases (name-only transformations)
-                if name_up in EFFECT_ALIASES:
-                    name_up = EFFECT_ALIASES[name_up]
-
-                # Then check aliases with params
-                if name_up in EFFECT_ALIASES_WITH_PARAMS:
-                    canonical_name, extra_params = EFFECT_ALIASES_WITH_PARAMS[name_up]
-                    name_up = canonical_name
-                    # Merge extra params (don't overwrite existing)
-                    for pk, pv in extra_params.items():
-                        if pk not in params:
-                            params[pk] = pv
-                    # Handle target modifications
-                    if extra_params.get("target") == "MEMBER_SELF":
-                        target = TargetType.MEMBER_SELF
+                # Normalize aliases in one helper so the parser only owns structure.
+                name_up, params, target = resolve_effect_aliases(name_up, params, target)
 
                 # Special cases that need dynamic handling
                 if name_up == "ADD_TAG":
@@ -649,7 +629,7 @@ class AbilityParserV2:
 
                 if etype is None:
                     # Fallback to condition parser if name is a known condition alias
-                    if name.upper() in CONDITION_ALIASES:
+                    if looks_like_condition_instruction(p):
                         # Recursive call to condition parser for this single instruction
                         effects.extend(self._parse_pseudocode_conditions(p))
                         continue

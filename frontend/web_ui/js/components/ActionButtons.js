@@ -30,6 +30,7 @@ export const ActionButtons = {
         let cost = a.metadata?.cost ?? a.cost ?? a.base_cost ?? null;
         const isBaton = (a.name && (a.name.includes('Baton') || a.name.includes('バトン')));
         let name = a.metadata?.name ?? a.name ?? "";
+        const isChoiceAction = a.metadata?.category === 'CHOICE' || a.type === 'CHOICE';
 
         if (name.match(/^Action\s+30\d$/) && a.metadata?.category !== 'ABILITY') {
             const liveIdx = parseInt(name.replace("Action 30", ""), 10);
@@ -55,9 +56,16 @@ export const ActionButtons = {
             } else if (a.id >= 500 && a.id < 510) {
                 const modeIdx = a.id - 500;
                 const pc = state.pending_choice;
-                if (pc && pc.options_text && pc.options_text[modeIdx]) {
+                if (pc && pc.options) {
+                    const opt = pc.options[modeIdx];
+                    if (opt && (opt.name || opt.text)) {
+                        name = opt.name || opt.text;
+                    }
+                }
+                if (!name && pc && pc.options_text && pc.options_text[modeIdx]) {
                     name = pc.options_text[modeIdx];
-                } else {
+                }
+                if (!name) {
                     name = i18n.t('mode_n', { n: modeIdx });
                 }
             } else if (a.id >= 600 && a.id <= 602) {
@@ -90,9 +98,9 @@ export const ActionButtons = {
                 // If the name is just a "Card #" or generic "Action #", we definitely want to translate the card name.
                 // Otherwise, if it's already descriptive (contains brackets or colons), we should respect it.
                 const isDescriptive = displayName.includes('【') || displayName.includes('】') || displayName.includes(':') || displayName.includes('[');
-                
+
                 if (!isDescriptive) {
-                    const shouldUseDisplayCard = Boolean(displayCard) && (
+                    const shouldUseDisplayCard = !isChoiceAction && Boolean(displayCard) && (
                         !displayName ||
                         displayName.startsWith('Action ') ||
                         displayName.startsWith('Card ') ||
@@ -126,7 +134,7 @@ export const ActionButtons = {
         const sourceCard = a.source_card_id !== undefined ? Tooltips.findCardById(a.source_card_id) : null;
         const displayCardId = a.card_id !== undefined ? a.card_id : a.source_card_id;
         const displayCard = displayCardId !== undefined ? Tooltips.findCardById(displayCardId) : sourceCard;
-        
+
         Tooltips.attachCardData(btn, displayCard || sourceCard, a.id);
 
         if (a.raw_text || a.text) btn.setAttribute('data-text', a.raw_text || a.text);
@@ -144,7 +152,7 @@ export const ActionButtons = {
                 window.highlightActionBtn(a.id, false);
             }
         };
-        
+
         if (a.id !== undefined) {
             btn.setAttribute('data-action-id', a.id);
         }

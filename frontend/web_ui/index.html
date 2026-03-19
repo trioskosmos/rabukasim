@@ -96,7 +96,7 @@
                     title="Report Issue">報告</button>
                 <button class="btn btn-accent-gray btn-sm" data-action="open-settings-modal" title="Settings"
                         data-i18n="settings">設定</button>
-                <button id="exit-room-btn" class="btn btn-accent-gray btn-sm" data-action="leave-room" title="Exit Room">Exit</button>
+                <button id="exit-room-btn" class="btn btn-accent-red btn-sm" data-action="leave-room" title="Exit Room">Exit</button>
             </div>
         </div>
 
@@ -290,7 +290,10 @@
         <!-- RIGHT SIDEBAR (Actions) -->
         <div class="sidebar sidebar-right" id="sidebar-right">
             <div class="sidebar-section">
-                <h3>アクション</h3>
+                <div class="sidebar-section-header">
+                    <h3>アクション</h3>
+                    <button class="sidebar-close-btn" data-action="close-sidebar" aria-label="Close action panel">×</button>
+                </div>
                 <div class="performance-check-container">
                     <button class="btn btn-accent-purple btn-sm" data-action="show-last-performance" data-i18n="check_performance" style="width: 100%;">
                         パフォーマンス確認
@@ -642,6 +645,9 @@
 
             </div>
             <div class="modal-body lobby-body">
+                <div id="room-waiting-hint" style="margin-bottom: 12px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: rgba(255,255,255,0.03); color: var(--text-muted, #aaa); font-size: 0.9rem;">
+                    Join a private room or create a new one.
+                </div>
                 <div class="lobby-actions">
                     <button class="btn btn-primary lobby-btn" data-action="open-setup-modal" data-value="pve">PvE (vs AI)</button>
                     <button class="btn btn-accent lobby-btn" data-action="open-setup-modal" data-value="pvp">PvP (Manual)</button>
@@ -658,7 +664,7 @@
 
                     <div class="setting-item">
                         <label>Select Your Deck:</label>
-                        <select id="join-deck-select" class="form-select" onchange="onDeckSelectChange('join')">
+                        <select id="pjoin-deck-select" class="form-select" onchange="onDeckSelectChange('join')">
                             <option value="random">🎲 Random Deck</option>
                             <option value="paste">📋 Paste Deck List...</option>
                         </select>
@@ -714,14 +720,14 @@
     <!-- Debug / State Editor Modal -->
     <div id="debug-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content large" style="height: 92vh; width: min(96vw, 1800px); max-width: 1800px; display: flex; flex-direction: column; overflow: hidden;">
-            <div class="modal-header">
-                <h2>Debug Inspector and State Editor</h2>
-                <div style="display: flex; gap: 8px; margin-left: auto; margin-right: 15px; font-size: 12px;">
-                    <button class="btn btn-secondary btn-sm" data-action="debug-rewind" title="Undo">Undo</button>
-                    <button class="btn btn-secondary btn-sm" data-action="debug-redo" title="Redo">Redo</button>
+            <div class="modal-header" style="padding: 5px 12px; min-height: auto;">
+                <h3 style="margin: 0; font-size: 15px;">Debug Inspector and State Editor</h3>
+                <div style="display: flex; gap: 8px; margin-left: auto; margin-right: 15px; font-size: 11px;">
+                    <button class="btn btn-secondary btn-sm" data-action="debug-rewind" title="Undo" style="padding: 2px 8px;">Undo</button>
+                    <button class="btn btn-secondary btn-sm" data-action="debug-redo" title="Redo" style="padding: 2px 8px;">Redo</button>
                     <div style="width: 1px; background: var(--border); margin: 0 4px;"></div>
-                    <button class="btn btn-secondary btn-sm" data-action="toggle-debug-mode" title="Engine Debug">Debug Mode</button>
-                    <button class="btn btn-secondary btn-sm" data-action="debug-render-all" title="Refresh">Refresh</button>
+                    <button class="btn btn-secondary btn-sm" data-action="toggle-debug-mode" title="Engine Debug" style="padding: 2px 8px;">Debug Mode</button>
+                    <button class="btn btn-secondary btn-sm" data-action="debug-render-all" title="Refresh" style="padding: 2px 8px;">Refresh</button>
                 </div>
                 <button class="close-btn" data-action="close-debug-modal">✕</button>
             </div>
@@ -729,21 +735,21 @@
             <div class="modal-body" style="padding: 0; display: flex; flex: 1; gap: 0; overflow: hidden; flex-direction: column;">
                 <div style="display: flex; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); gap: 0; flex-wrap: wrap;">
                         <button data-tab-btn="inspector" data-action="debug-switch-tab" data-value="inspector"
-                            style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid var(--accent-blue); color: #fff; cursor: pointer; font-size: 12px; font-weight: bold;">
+                            style="flex: 1; padding: 4px 8px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 11px;">
                             Inspector</button>
                         <button data-tab-btn="trace" data-action="debug-switch-tab" data-value="trace"
-                            style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 12px;">
+                            style="flex: 1; padding: 4px 8px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 11px;">
                             Trace</button>
                         <button data-tab-btn="string" data-action="debug-switch-tab" data-value="string"
-                            style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 12px;">
+                            style="flex: 1; padding: 4px 8px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 11px;">
                             State String</button>
                         <button data-tab-btn="json" data-action="debug-switch-tab" data-value="json"
-                            style="flex: 1; padding: 10px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); cursor: pointer; font-size: 12px;">
+                            style="flex: 1; padding: 4px 8px; background: none; border: none; border-bottom: 2px solid var(--accent-blue); color: #fff; cursor: pointer; font-size: 11px; font-weight: bold;">
                             JSON Editor</button>
                 </div>
 
                 <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0;">
-                    <div data-tab-pane="inspector" style="flex: 1; overflow-y: auto; display: block; min-height: 0;">
+                    <div data-tab-pane="inspector" style="flex: 1; overflow-y: auto; display: none; min-height: 0;">
                     </div>
 
                     <div data-tab-pane="trace" style="flex: 1; overflow: hidden; display: none; min-height: 0;">
@@ -752,7 +758,7 @@
                     <div data-tab-pane="string" style="flex: 1; overflow-y: auto; display: none; min-height: 0;">
                     </div>
 
-                    <div data-tab-pane="json" style="flex: 1; overflow: hidden; display: none; min-height: 0;">
+                    <div data-tab-pane="json" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0;">
                     </div>
                 </div>
             </div>

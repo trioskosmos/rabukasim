@@ -1,6 +1,7 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use crate::core::logic::interpreter::instruction::BytecodeProgram;
 
 // Re-export constants so they're available to all modules using `use super::models::*;`
@@ -165,6 +166,8 @@ pub struct PendingInteraction {
     pub original_current_player: u8,
     #[serde(default)]
     pub actions: Vec<i32>,
+    #[serde(default)]
+    pub options: Vec<Value>,
     #[serde(default)]
     pub execution_id: u32,
 }

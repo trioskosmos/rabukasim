@@ -218,6 +218,7 @@ fn test_opcode_add_stage_energy_functional() {
 
     state.players[0].stage[0] = 3000; // Member in slot 0 (exists in test DB)
     state.players[0].stage_energy[0] = vec![].into();
+    state.players[0].deck = vec![2000, 2000].into();
 
     // Add 2 stage energy. Opcode 50.
     let bc = vec![O_ADD_STAGE_ENERGY, 2, 0, 0, 4, O_RETURN, 0, 0, 0, 0];

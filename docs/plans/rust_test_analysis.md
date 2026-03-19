@@ -31,7 +31,7 @@ Decoded:
 
 2. **Wrong Opcode for Energy Charging**: The pseudocode says `PLACE_ENERGY_WAIT(1) -> PLAYER` which means "charge 1 energy from deck to player's energy zone with wait state". This should use `O_ENERGY_CHARGE` (opcode 23), not `O_PLACE_UNDER` (opcode 33).
 
-3. **Compiler Bug**: In `compiler/parser_v2.py` line 101:
+3. **Compiler Bug**: In the legacy parser layer (`compiler/parser_v2.py` at the time), line 101:
    ```python
    "PLACE_ENERGY_WAIT": ("PLACE_UNDER", {"type": "energy", "wait": True}),
    ```
@@ -46,7 +46,7 @@ Decoded:
 ## Fix Required
 
 ### Option 1: Fix the Compiler (Recommended)
-Change `compiler/parser_v2.py` to map PLACE_ENERGY_WAIT to ENERGY_CHARGE:
+Change the legacy parser mapping for `PLACE_ENERGY_WAIT` to `ENERGY_CHARGE`:
 ```python
 "PLACE_ENERGY_WAIT": ("ENERGY_CHARGE", {"wait": True}),
 ```

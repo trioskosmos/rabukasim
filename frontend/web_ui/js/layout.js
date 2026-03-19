@@ -21,6 +21,13 @@ function setBoardVisibility(showPlayerBoard) {
     DOMUtils.addClass(DOM_IDS.BTN_SHOW_OPPONENT, CSS_CLASSES.ACTIVE);
 }
 
+function updateMobileSidebarToggleState(isOpen) {
+    const btn = DOMUtils.getElement(DOM_IDS.MOBILE_SIDEBAR_TOGGLE);
+    setSidebarButtonState(btn, isOpen);
+}
+
+let mobileSidebarOverlayHandler = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     // Elements
     const leftSidebar = DOMUtils.getElement(DOM_IDS.SIDEBAR_LEFT);
@@ -121,14 +128,55 @@ export function toggleSidebar() {
     const btn = DOMUtils.getElement(DOM_IDS.MOBILE_SIDEBAR_TOGGLE);
     if (!sidebars.length || !btn) return;
 
-    let isActive = false;
-    sidebars.forEach(s => {
-        s.classList.toggle('active');
-        if (s.classList.contains('active')) isActive = true;
-    });
+    const shouldOpen = !Array.from(sidebars).some(s => s.classList.contains('active'));
+    sidebars.forEach(s => s.classList.toggle('active', shouldOpen));
 
-    document.body.classList.toggle(CSS_CLASSES.SIDEBAR_OPEN);
-    setSidebarButtonState(btn, isActive);
+    document.body.classList.toggle(CSS_CLASSES.SIDEBAR_OPEN, shouldOpen);
+    setSidebarButtonState(btn, shouldOpen);
+
+    // If opening, add one-time listener to close on overlay click
+    if (shouldOpen) {
+        mobileSidebarOverlayHandler = (e) => {
+            // If clicking specifically on the ::after overlay (which is targetable via 'body' since it's a pseudo-element)
+            // or if clicking the main-content while sidebar is open
+            if (e.target === document.body || e.target.closest('.main-content')) {
+                closeSidebar();
+                document.removeEventListener('mousedown', mobileSidebarOverlayHandler);
+                mobileSidebarOverlayHandler = null;
+            }
+        };
+        // Use a timeout to avoid immediate trigger from the same click
+        setTimeout(() => {
+            if (mobileSidebarOverlayHandler) {
+                document.addEventListener('mousedown', mobileSidebarOverlayHandler);
+            }
+        }, 10);
+    } else if (mobileSidebarOverlayHandler) {
+        document.removeEventListener('mousedown', mobileSidebarOverlayHandler);
+        mobileSidebarOverlayHandler = null;
+    }
+}
+
+/**
+ * Explicitly closes the mobile sidebars.
+ */
+export function closeSidebar() {
+    const sidebars = document.querySelectorAll('.sidebar.active');
+    if (!sidebars.length) {
+        if (mobileSidebarOverlayHandler) {
+            document.removeEventListener('mousedown', mobileSidebarOverlayHandler);
+            mobileSidebarOverlayHandler = null;
+        }
+        return;
+    }
+
+    sidebars.forEach(s => s.classList.remove('active'));
+    document.body.classList.remove(CSS_CLASSES.SIDEBAR_OPEN);
+    updateMobileSidebarToggleState(false);
+    if (mobileSidebarOverlayHandler) {
+        document.removeEventListener('mousedown', mobileSidebarOverlayHandler);
+        mobileSidebarOverlayHandler = null;
+    }
 }
 
 /**

@@ -513,6 +513,8 @@ impl ResponseController for GameState {
                             &choice_text,
                             0,
                             remaining_mask.count_ones() as i16,
+                            Vec::new(),
+                            Vec::new(),
                         );
                         return Ok(());
                     }

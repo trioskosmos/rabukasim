@@ -1,6 +1,21 @@
 import json
 import re
 from collections import defaultdict
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
+from compiler.aliases import (
+    CONDITION_SEMANTIC_SPECIAL_CASES,
+    CONDITION_TRUE_ALIASES,
+    EFFECT_GRAMMAR_CONVENIENCES,
+    EFFECT_SEMANTIC_SPECIAL_CASES,
+    EFFECT_TRUE_ALIASES,
+    IGNORED_CONDITIONS,
+    KEYWORD_CONDITIONS,
+    TRIGGER_ALIASES,
+)
 
 
 def analyze():
@@ -8,39 +23,15 @@ def analyze():
     with open("data/metadata.json", "r", encoding="utf-8") as f:
         metadata = json.load(f)
 
-    # Load parser aliases
-    with open("compiler/parser_v2.py", "r", encoding="utf-8") as f:
-        parser_code = f.read()
-
-    def extract_aliases(dict_name):
-        match = re.search(f"{dict_name}\\s*=\\s*\\{{([^}}]+)\\}}", parser_code, re.DOTALL)
-        if not match:
-            return set()
-        aliases = set()
-        for line in match.group(1).split("\n"):
-            m = re.search(r'"(\w+)"\s*:', line)
-            if m:
-                aliases.add(m.group(1))
-        return aliases
-
-    parser_trigger_aliases = extract_aliases("TRIGGER_ALIASES")
-    parser_effect_aliases = extract_aliases("EFFECT_ALIASES").union(extract_aliases("EFFECT_ALIASES_WITH_PARAMS"))
-
-    # Keyword conditions dictionary
-    kw_cond_match = re.search(r"KEYWORD_CONDITIONS\s*=\s*\{([^}]+)\}", parser_code, re.DOTALL)
-    if kw_cond_match:
-        parser_condition_aliases = extract_aliases("CONDITION_ALIASES").union(
-            set(re.findall(r'"(\w+)"\s*:', kw_cond_match.group(1)))
-        )
-    else:
-        parser_condition_aliases = extract_aliases("CONDITION_ALIASES")
-
-    # Ignored conditions
-    ignored_cond_match = re.search(r"IGNORED_CONDITIONS\s*=\s*\{([^}]+)\}", parser_code, re.DOTALL)
-    if ignored_cond_match:
-        parser_ignored_conds = set(re.findall(r'"(\w+)"\s*:', ignored_cond_match.group(1)))
-    else:
-        parser_ignored_conds = set()
+    parser_trigger_aliases = set(TRIGGER_ALIASES)
+    parser_effect_aliases = set(EFFECT_TRUE_ALIASES) | set(EFFECT_GRAMMAR_CONVENIENCES) | set(EFFECT_SEMANTIC_SPECIAL_CASES)
+    parser_condition_aliases = (
+        set(CONDITION_TRUE_ALIASES)
+        | set(CONDITION_SEMANTIC_SPECIAL_CASES)
+        | set(KEYWORD_CONDITIONS)
+        | set(IGNORED_CONDITIONS)
+    )
+    parser_ignored_conds = set(IGNORED_CONDITIONS)
 
     # Load consolidated abilities
     with open("data/consolidated_abilities.json", "r", encoding="utf-8") as f:

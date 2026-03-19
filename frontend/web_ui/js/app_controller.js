@@ -4,7 +4,7 @@ import { DragDrop } from './ui_drag_drop.js';
 import { Modals } from './ui_modals.js';
 import { Rendering } from './ui_rendering.js';
 import { Replay } from './replay_system.js';
-import { toggleSidebar, switchBoard } from './layout.js';
+import { closeSidebar, toggleSidebar, switchBoard } from './layout.js';
 import { loadTranslations } from './i18n/index.js';
 import { DOMUtils } from './utils/DOMUtils.js';
 import { ModalManager } from './utils/ModalManager.js';
@@ -85,6 +85,7 @@ function syncRoomDisplay() {
 
 const actionHandlers = {
     'toggle-sidebar': toggleSidebar,
+    'close-sidebar': closeSidebar,
     'save-state': Modals.saveState,
     'load-state': Modals.loadState,
     'rewind': Modals.rewind,

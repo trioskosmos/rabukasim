@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 import numpy as np
 
 from engine.game.effects.metadata import resolve_source_metadata
+from engine.game.enums import Phase
 from engine.game.effects.zone_actions import move_stage_card
 from engine.models.ability import Ability, AbilityCostType, ConditionType, Effect, EffectType, TargetType, TriggerType
 
@@ -20,7 +21,7 @@ def handle_cost(game: Any, player_id: int, ability: Ability, context: Dict[str, 
     cost_metadata = resolve_source_metadata(self, cid, ability, reason="cost")
     cost_metadata["step_progress"] = "Cost"
 
-    for cost in ability.costs:
+    for cost_idx, cost in enumerate(ability.costs):
         if cost.cost_type == AbilityCostType.TAP_MEMBER:
             if cost.target == TargetType.MEMBER_SELF:
                 area = context.get("area", -1)
@@ -401,15 +402,16 @@ def handle_cost(game: Any, player_id: int, ability: Ability, context: Dict[str, 
             else:
                 return False
         elif cost.cost_type == AbilityCostType.PLACE_ENERGY_FROM_DECK:
-            if len(p.main_deck) > 0:
+            if len(p.energy_deck) > 0:
                 self.pending_choices.append(
                     (
-                        "TARGET_DECK",
+                        "TARGET_ENERGY_DECK",
                         {
                             **cost_metadata,
+                            "cards": p.energy_deck.copy(),
                             "effect": "place_energy",
-                            "effect_description": f"繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜{cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
-                            "is_optional": False,
+                            "effect_description": f"エネルギーデッキからエネルギーカードを{cost.value}枚ウェイト状態で置いてください",
+                            "is_optional": cost.is_optional,
                             "count": cost.value,
                             "filter_group": Group.ENERGY.name,
                         },
@@ -1681,6 +1683,21 @@ def handle_cost(game: Any, player_id: int, ability: Ability, context: Dict[str, 
                 return False
         elif cost.cost_type == AbilityCostType.PLACE_ENERGY_FROM_ENERGY_DECK:
             if len(p.energy_deck) > 0:
+                if cost.is_optional:
+                    game.pending_choices.append(
+                        (
+                            "PAY_COST_OPTIONAL",
+                            {
+                                **cost_metadata,
+                                "cost_index": cost_idx,
+                                "amount": cost.value,
+                                "cost_type": "place_energy_deck",
+                                "effect_description": f"Optional energy deck placement ({cost.value})",
+                            },
+                        )
+                    )
+                    game.phase = Phase.RESPONSE
+                    return False
                 self.pending_choices.append(
                     (
                         "TARGET_ENERGY_DECK",

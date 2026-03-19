@@ -462,6 +462,7 @@ pub fn get_action_desc_rich(
 
     let action = Action::from_id(id, gs.phase);
     let mut metadata = HashMap::new();
+    metadata.insert("action_id".into(), json!(id));
 
     let (name, text, type_str, area_idx_opt) = match action {
         Action::Pass => {
@@ -699,6 +700,9 @@ pub fn get_action_desc_rich(
              let card_id = pending.map(|p| p.card_id).unwrap_or(-1);
              let ab_idx = pending.map(|p| p.ability_index).unwrap_or(-1);
              let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
+             let is_stage_choice = choice_type == "SELECT_STAGE"
+                 || choice_type == "SELECT_STAGE_EMPTY"
+                 || choice_type == "SELECT_STAGE_EMPTY_BATON";
              let mut selected_card_id: Option<i32> = None;
 
              if gs.phase == Phase::LiveResult {
@@ -706,7 +710,7 @@ pub fn get_action_desc_rich(
              } else if choice_idx as i16 == engine_rust::core::logic::constants::CHOICE_DONE {
                  name = if lang == "jp" { "完了".into() } else { "Done".into() };
                  text = if lang == "jp" { "選択を確定します。".into() } else { "Finish selecting cards.".into() };
-             } else if choice_type == "SELECT_STAGE" || choice_type == "SELECT_STAGE_EMPTY" {
+             } else if is_stage_choice {
                  let areas = if lang == "jp" { ["左ステージ", "中央ステージ", "右ステージ"] } else { ["Left Slot", "Mid Slot", "Right Slot"] };
                  name = areas.get(choice_idx).unwrap_or(&"Slot").to_string();
              } else if choice_type == "SELECT_LIVE_SLOT" {
@@ -851,7 +855,7 @@ pub fn get_action_desc_rich(
                   }
              } else if opcode == O_PLAY_MEMBER_FROM_HAND || opcode == O_PLAY_MEMBER_FROM_DISCARD || opcode == O_PLAY_LIVE_FROM_DISCARD {
                   let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
-                  if choice_type == "SELECT_STAGE" || choice_type == "SELECT_STAGE_EMPTY" {
+                  if is_stage_choice {
                       let areas = if lang == "jp" { ["左枠", "中央枠", "右枠"] } else { ["Left Slot", "Mid Slot", "Right Slot"] };
                       name = areas.get(choice_idx).unwrap_or(&"Slot").to_string();
                   } else if choice_type == "SELECT_LIVE_SLOT" {
@@ -937,7 +941,11 @@ pub fn get_action_desc_rich(
               } else if opcode == O_PAY_ENERGY {
                   let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
                   if choice_type == "OPTIONAL" {
-                      name = if lang == "jp" { "はい".into() } else { "Yes / Pay".into() };
+                      name = if choice_idx == 0 {
+                          if lang == "jp" { "はい / 支払う".into() } else { "Yes / Pay".into() }
+                      } else {
+                          if lang == "jp" { "いいえ / スキップ".into() } else { "No / Skip".into() }
+                      };
                   } else {
                       if let Some(cid) = gs.players[p_idx].energy_zone.get(choice_idx) {
                           name = resolve_card_name(*cid, db, lang);
@@ -949,6 +957,8 @@ pub fn get_action_desc_rich(
                   let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
                   if choice_type == "OPTIONAL" && choice_idx == 0 {
                       name = if lang == "jp" { "はい".into() } else { "Yes".into() };
+                  } else if choice_type == "OPTIONAL" && choice_idx == 1 {
+                      name = if lang == "jp" { "スキップ".into() } else { "Skip".into() };
                   } else {
                       name = if lang == "jp" { format!("選択肢 {}", choice_idx + 1) } else { format!("Choice {}", choice_idx + 1) };
                   }
@@ -970,7 +980,11 @@ pub fn get_action_desc_rich(
                       O_SELECT_PLAYER => if lang == "jp" { "拳者を選択します。".into() } else { "Select player.".into() },
                       O_PAY_ENERGY => {
                           if choice_type == "OPTIONAL" {
-                              if lang == "jp" { "エネルギーを支払います。".into() } else { "Pay energy.".into() }
+                              if choice_idx == 0 {
+                                  if lang == "jp" { "エネルギーを支払います。".into() } else { "Pay energy.".into() }
+                              } else {
+                                  if lang == "jp" { "支払いをやめます。".into() } else { "Skip.".into() }
+                              }
                           } else {
                               if lang == "jp" { "このエネルギーを選択します。".into() } else { "Select this energy.".into() }
                           }
@@ -1777,6 +1791,7 @@ pub fn serialize_state_rich(
     map.insert("last_action".to_string(), json!(last_action_text));
     map.insert("rule_log".to_string(), json!(gs.ui.rule_log.clone().unwrap_or_default()));
     map.insert("mode".to_string(), json!(mode));
+    map.insert("players_count".to_string(), json!(gs.players.len()));
     map.insert("spectators".to_string(), json!(spectator_count));
     map.insert("is_ai_thinking".to_string(), json!(is_ai_thinking));
     map.insert("ai_status".to_string(), json!(ai_status));
@@ -1827,6 +1842,7 @@ pub fn serialize_state_rich(
             }
         }
 
+        let pending_opcode = pending.effect_opcode;
         let mut title = if !pending.choice_text.is_empty() {
             pending.choice_text.clone()
         } else if lang == "jp" {
@@ -1844,7 +1860,11 @@ pub fn serialize_state_rich(
                 "SELECT_STAGE" => "ステージを選択してください".to_string(),
                 "SELECT_DISCARD_PLAY" => "控え室からメンバーを選択してください".to_string(),
                 "PAY_ENERGY" => "エネルギーを選択してください".to_string(),
-                "OPTIONAL" => "効果を発動しますか？".to_string(),
+                "OPTIONAL" => if pending_opcode == engine_rust::core::logic::O_PAY_ENERGY {
+                    "エネルギーを支払いますか？".to_string()
+                } else {
+                    "効果を発動しますか？".to_string()
+                },
                 "TAP_M_SELECT" => "タップするメンバーを選択してください".to_string(),
                 "REVEAL_HAND" => "手札を公開してください".to_string(),
                 "OPPONENT_CHOOSE" => "相手が選択中です...".to_string(),
@@ -1854,6 +1874,7 @@ pub fn serialize_state_rich(
                 "SELECT_PLAYER" => "プレイヤーを選択してください".to_string(),
                 "SELECT_DISCARD" => "捨てるカードを選択してください".to_string(),
                 "SELECT_STAGE_EMPTY" => "空いている枠を選択してください".to_string(),
+                "SELECT_STAGE_EMPTY_BATON" => "空いている枠を選択してください".to_string(),
                 _ => "選択してください".to_string()
             }
         } else {
@@ -1868,10 +1889,14 @@ pub fn serialize_state_rich(
                 "SELECT_HAND_DISCARD" => "Select Card to Discard".to_string(),
                 "SELECT_HAND_PLAY" => "Select Card to Play".to_string(),
                 "SELECT_LIVE_SLOT" => "Select Live Slot".to_string(),
-                "SELECT_STAGE" => "Select Stage Slot".to_string(),
+                "SELECT_STAGE" => "Select a stage slot".to_string(),
                 "SELECT_DISCARD_PLAY" => "Select Member from Discard".to_string(),
                 "PAY_ENERGY" => "Select Energy".to_string(),
-                "OPTIONAL" => "Activate Effect?".to_string(),
+                "OPTIONAL" => if pending_opcode == engine_rust::core::logic::O_PAY_ENERGY {
+                    "Pay energy?".to_string()
+                } else {
+                    "Activate Effect?".to_string()
+                },
                 "TAP_M_SELECT" => "Select Member to Tap".to_string(),
                 "REVEAL_HAND" => "Reveal Hand".to_string(),
                 "OPPONENT_CHOOSE" => "Opponent is choosing...".to_string(),
@@ -1881,6 +1906,7 @@ pub fn serialize_state_rich(
                 "SELECT_PLAYER" => "Select Player".to_string(),
                 "SELECT_DISCARD" => "Select card to discard".to_string(),
                 "SELECT_STAGE_EMPTY" => "Select empty stage slot".to_string(),
+                "SELECT_STAGE_EMPTY_BATON" => "Select empty stage slot".to_string(),
                 _ => "Please Select".to_string()
             }
         };
@@ -2217,5 +2243,82 @@ mod tests {
         assert_eq!(pending.get("source_player").and_then(|v| v.as_u64()), Some(0));
         assert_eq!(pending.get("area").and_then(|v| v.as_u64()), Some(1));
         assert_eq!(pending.get("opcode").and_then(|v| v.as_i64()), Some(engine_rust::core::logic::O_SELECT_MEMBER as i64));
+    }
+
+    #[test]
+    fn select_choice_labels_stage_variants_as_slots() {
+        let db = CardDatabase::default();
+        let mut gs = GameState::default();
+        gs.phase = Phase::Response;
+        gs.current_player = 0;
+        gs.interaction_stack.push(PendingInteraction {
+            card_id: 420,
+            effect_opcode: engine_rust::core::logic::O_PLAY_MEMBER_FROM_DISCARD,
+            choice_type: ChoiceType::SelectStageEmptyBaton,
+            ctx: AbilityContext { player_id: 0, source_card_id: 420, ..Default::default() },
+            ..Default::default()
+        });
+
+        let (name0, _, _, _, _) = get_action_desc_rich(engine_rust::core::logic::ACTION_BASE_CHOICE, &gs, &db, 0, "en");
+        let (name2, _, _, _, _) = get_action_desc_rich(engine_rust::core::logic::ACTION_BASE_CHOICE + 2, &gs, &db, 0, "en");
+
+        assert_eq!(name0, "Left Slot");
+        assert_eq!(name2, "Right Slot");
+    }
+
+    #[test]
+    fn pending_choice_title_uses_semantic_fallbacks() {
+        let db = CardDatabase::default();
+        let mut gs = GameState::default();
+        gs.phase = Phase::Response;
+        gs.current_player = 0;
+
+        gs.interaction_stack.push(PendingInteraction {
+            card_id: 420,
+            effect_opcode: engine_rust::core::logic::O_PAY_ENERGY,
+            choice_type: ChoiceType::Optional,
+            ctx: AbilityContext { player_id: 0, source_card_id: 420, ..Default::default() },
+            ..Default::default()
+        });
+
+        let state = serialize_state_rich(&gs, &db, "pve", 0, 0, false, String::new(), "en", false);
+        let pending = state.get("pending_choice").and_then(|v| v.as_object()).expect("pending_choice");
+        assert_eq!(pending.get("title").and_then(|v| v.as_str()), Some("Pay energy?"));
+
+        gs.interaction_stack.clear();
+        gs.interaction_stack.push(PendingInteraction {
+            card_id: 420,
+            effect_opcode: engine_rust::core::logic::O_PLAY_MEMBER_FROM_DISCARD,
+            choice_type: ChoiceType::SelectStageEmptyBaton,
+            ctx: AbilityContext { player_id: 0, source_card_id: 420, ..Default::default() },
+            ..Default::default()
+        });
+
+        let state = serialize_state_rich(&gs, &db, "pve", 0, 0, false, String::new(), "en", false);
+        let pending = state.get("pending_choice").and_then(|v| v.as_object()).expect("pending_choice");
+        assert_eq!(pending.get("title").and_then(|v| v.as_str()), Some("Select empty stage slot"));
+    }
+
+    #[test]
+    fn optional_pay_energy_choice_labels_are_per_choice() {
+        let db = CardDatabase::default();
+        let mut gs = GameState::default();
+        gs.phase = Phase::Response;
+        gs.current_player = 0;
+        gs.interaction_stack.push(PendingInteraction {
+            card_id: 309,
+            effect_opcode: engine_rust::core::logic::O_PAY_ENERGY,
+            choice_type: ChoiceType::Optional,
+            ctx: AbilityContext { player_id: 0, source_card_id: 309, ..Default::default() },
+            ..Default::default()
+        });
+
+        let (yes_name, yes_text, _, _, _) = get_action_desc_rich(engine_rust::core::logic::ACTION_BASE_CHOICE, &gs, &db, 0, "en");
+        let (no_name, no_text, _, _, _) = get_action_desc_rich(engine_rust::core::logic::ACTION_BASE_CHOICE + 1, &gs, &db, 0, "en");
+
+        assert_eq!(yes_name, "Yes / Pay");
+        assert_eq!(yes_text, "Pay energy.");
+        assert_eq!(no_name, "No / Skip");
+        assert_eq!(no_text, "Skip.");
     }
 }

@@ -1,11 +1,23 @@
 import { Phase } from './constants.js';
 
-function getSelectedIndices(state, player, selectedHandIdx) {
+function getSelectedIndices(state, uiState, perspectivePlayer) {
     const isMulligan = state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2;
     if (isMulligan) {
-        return Array.from(player?.mulligan_selection || []);
+        const player = state.players[perspectivePlayer];
+        const serverSelection = player?.mulligan_selection;
+        const indices = new Set(uiState.localMulliganSelection || []);
+        
+        if (typeof serverSelection === 'number') {
+            for (let i = 0; i < (player?.hand?.length || 0); i++) {
+                if ((serverSelection >> i) & 1) indices.add(i);
+            }
+        } else if (Array.isArray(serverSelection)) {
+            serverSelection.forEach(idx => indices.add(Number(idx)));
+        }
+        
+        return Array.from(indices);
     }
-    return selectedHandIdx !== -1 ? [selectedHandIdx] : [];
+    return uiState.selectedHandIdx !== -1 ? [uiState.selectedHandIdx] : [];
 }
 
 function buildConfirmedActions(selectedIndices, validTargets) {
@@ -42,7 +54,7 @@ export const ViewState = {
         const p1 = state.players[1 - perspectivePlayer] || state.players[1];
 
         const isMulligan = state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2;
-        const selectedIndices = getSelectedIndices(state, p0, uiState.selectedHandIdx);
+        const selectedIndices = getSelectedIndices(state, uiState, perspectivePlayer);
         const handFilter = (_, idx) => !isMulligan || !selectedIndices.some(s => Number(s) === Number(idx));
         const mulliganSelectedCards = isMulligan ? selectedIndices.map(idx => p0?.hand?.[idx]).filter(card => card !== null && card !== undefined) : [];
         const confirmedCards = isMulligan ? [] : selectedIndices.map(idx => p0?.hand?.[idx]).filter(card => card !== null && card !== undefined);

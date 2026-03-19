@@ -746,6 +746,18 @@ impl BytecodeInstruction {
             has_s: self.raw_s != 0,
         }
     }
+
+    pub fn is_dynamic(&self) -> bool {
+        (self.a & (A_STANDARD_COMPARE_ACCUMULATED_MASK << A_STANDARD_COMPARE_ACCUMULATED_SHIFT) as i64) != 0
+    }
+
+    pub fn scalar_dynamic_base(&self) -> i32 {
+        ((self.v as u32 >> V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT) & V_SCALAR_DYNAMIC_BASE_VALUE_MASK) as i32
+    }
+
+    pub fn scalar_dynamic_divisor(&self) -> i32 {
+        ((self.v as u32 >> V_SCALAR_DYNAMIC_DIVISOR_SHIFT) & V_SCALAR_DYNAMIC_DIVISOR_MASK) as i32
+    }
 }
 
 impl BytecodeProgram {

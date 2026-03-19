@@ -634,7 +634,10 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                                 }
                             }
                         } else { status = 403; response_json = json!({"error": "Not your turn"}).to_string(); }
-                    } else { status = 401; }
+                    } else {
+                        status = 401;
+                        response_json = json!({"success": false, "error": "Unauthorized"}).to_string();
+                    }
                 } else { status = 404; }
             } else { status = 400; }
         },
@@ -667,7 +670,10 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                                 replace_history_with_single_state(&mut room);
                             }
                         } else { status = 403; }
-                    } else { status = 401; }
+                    } else {
+                        status = 401;
+                        response_json = json!({"success": false, "error": "Unauthorized"}).to_string();
+                    }
                 } else { status = 404; }
             } else { status = 400; }
         },

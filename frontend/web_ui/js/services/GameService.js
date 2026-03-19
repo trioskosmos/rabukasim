@@ -123,6 +123,21 @@ export const GameService = {
                 }
 
                 const currentState = State.data;
+                const playersCount = Number(currentState?.players_count ?? 0);
+                const isPvPWaiting = currentState?.mode === 'pvp' && playersCount < 2;
+
+                if (isPvPWaiting) {
+                    if (!ModalManager.isVisible(DOM_IDS.MODAL_ROOM)) {
+                        ModalManager.show(DOM_IDS.MODAL_ROOM);
+                    }
+                    State.gameHasStarted = false;
+                    return;
+                }
+
+                if (currentState?.mode === 'pvp' && playersCount >= 2 && ModalManager.isVisible(DOM_IDS.MODAL_ROOM)) {
+                    ModalManager.hide(DOM_IDS.MODAL_ROOM);
+                }
+
                 const hasGameStarted = !!(currentState && currentState.legal_actions && currentState.legal_actions.length > 0);
                 if (hasGameStarted && currentState.phase !== Phase.SETUP) {
                     State.gameHasStarted = true;
@@ -193,7 +208,16 @@ export const GameService = {
             return;
         }
 
-        if (window.pendingAction) return;
+        // Immediate Feedback for Mulligan
+        if (id >= 300 && id <= 359 && (state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2)) {
+            const idx = id - 300;
+            if (State.localMulliganSelection) {
+                State.localMulliganSelection.add(idx);
+                // Trigger immediate re-render
+                if (window.render) window.render();
+            }
+        }
+
         window.pendingAction = true;
         document.body.classList.add('action-pending');
         log(`Action: ${id}`, 'action');
@@ -201,17 +225,29 @@ export const GameService = {
         // Capture Mulligan Cards for visual feedback before state clears them
         if (id === 0 && (state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2)) {
             const p0 = state.players[State.perspectivePlayer] || state.players[0];
-            if (p0 && p0.mulligan_selection && p0.mulligan_selection.length > 0) {
-                State.lastMulliganCards = p0.mulligan_selection.map(idx => p0.hand[idx]).filter(c => c !== null);
-                State.showMulliganReturn = true;
-                console.log(`[Network] Capturing ${State.lastMulliganCards.length} cards for mulligan return visual.`);
+            if (p0 && p0.mulligan_selection !== undefined) {
+                const selection = p0.mulligan_selection;
+                let indices = [];
+                if (Array.isArray(selection)) {
+                    indices = selection;
+                } else if (typeof selection === 'number') {
+                    for (let i = 0; i < p0.hand.length; i++) {
+                        if ((selection >> i) & 1) indices.push(i);
+                    }
+                }
                 
-                // Hide after a delay
-                setTimeout(() => {
-                    State.showMulliganReturn = false;
-                    State.lastMulliganCards = [];
-                    if (window.render) window.render();
-                }, 3000);
+                if (indices.length > 0) {
+                    State.lastMulliganCards = indices.map(idx => p0.hand[idx]).filter(c => c !== null);
+                    State.showMulliganReturn = true;
+                    console.log(`[Network] Capturing ${State.lastMulliganCards.length} cards for mulligan return visual.`);
+                    
+                    // Hide after a delay
+                    setTimeout(() => {
+                        State.showMulliganReturn = false;
+                        State.lastMulliganCards = [];
+                        if (window.render) window.render();
+                    }, 3000);
+                }
             }
         }
 
@@ -236,7 +272,11 @@ export const GameService = {
             });
             const text = await res.text();
             State.lastStateJson = text;
-            const data = JSON.parse(text);
+            const data = text ? JSON.parse(text) : null;
+
+            if (!data) {
+                throw new Error(`Empty response from api/action (status ${res.status})`);
+            }
 
             if (data.success) {
                 updateStateData(data.state);
@@ -246,8 +286,14 @@ export const GameService = {
                 if (networkFacade?.fetchPlannerData) await networkFacade.fetchPlannerData({ silent: true });
                 log('Action completed');
             } else {
-                alert(data.error || 'Unknown error');
+                alert(data.error || `Action failed (${res.status})`);
             }
+        } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            console.error("[Network] Action request failed:", e);
+            alert(message.includes("Unexpected end of JSON input")
+                ? "The server rejected the action request and returned no JSON. Please sign out and rejoin the room to refresh your session token."
+                : message);
         } finally {
             window.pendingAction = false;
             document.body.classList.remove('action-pending');

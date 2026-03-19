@@ -75,6 +75,7 @@ const stateInternal = {
     hoveredActionId: null,
 
     // Mulligan Tracking (for visual movement to bottom)
+    localMulliganSelection: new Set(),
     lastMulliganCards: [],
     showMulliganReturn: false,
 
@@ -98,8 +99,20 @@ const stateInternal = {
         if (State.data) {
             State.lastPhase = State.data.phase;
             const pOld = State.data.players[State.perspectivePlayer] || State.data.players[0];
-            if (pOld && pOld.mulligan_selection && pOld.mulligan_selection.length > 0) {
-                State.lastMulliganCards = pOld.mulligan_selection.map(idx => pOld.hand[idx]).filter(c => c !== null);
+            if (pOld && pOld.mulligan_selection !== undefined) {
+                // If it's a number (bitmask), we need to extract indices
+                const selection = pOld.mulligan_selection;
+                let indices = [];
+                if (Array.isArray(selection)) {
+                    indices = selection;
+                } else if (typeof selection === 'number') {
+                    for (let i = 0; i < pOld.hand.length; i++) {
+                        if ((selection >> i) & 1) indices.push(i);
+                    }
+                }
+                if (indices.length > 0) {
+                    State.lastMulliganCards = indices.map(idx => pOld.hand[idx]).filter(c => c !== null);
+                }
             }
         }
 
@@ -117,6 +130,12 @@ const stateInternal = {
         // Detect Mulligan Finish
         const isMulliganOld = State.lastPhase === -1 || State.lastPhase === 0; // Constants.Phase.MULLIGAN_P1/P2
         const isMulliganNew = newData.phase === -1 || newData.phase === 0;
+
+        // Clear local selection on phase change
+        if (State.lastPhase !== newData.phase) {
+            State.localMulliganSelection.clear();
+        }
+
         if (isMulliganOld && !isMulliganNew && State.lastMulliganCards.length > 0) {
             // Transitioned out of mulligan
             State.showMulliganReturn = true;

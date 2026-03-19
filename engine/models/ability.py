@@ -23,6 +23,7 @@ from .generated_packer import (
     pack_s_standard,
     pack_v_heart_counts,
     pack_v_look_choose,
+    pack_v_scalar_dynamic,
     unpack_a_standard,
 )
 
@@ -165,6 +166,7 @@ class Ability:
                         AbilityCostType.TAP_SELF: Opcode.SET_TAPPED,
                         AbilityCostType.TAP_MEMBER: Opcode.TAP_MEMBER,
                         AbilityCostType.DISCARD_HAND: Opcode.MOVE_TO_DISCARD,
+                        AbilityCostType.PLACE_ENERGY_FROM_DECK: Opcode.PLACE_ENERGY_FROM_DECK,
                         AbilityCostType.RETURN_HAND: Opcode.MOVE_MEMBER,
                         AbilityCostType.SACRIFICE_SELF: Opcode.MOVE_TO_DISCARD,
                         AbilityCostType.RETURN_DISCARD_TO_DECK: Opcode.MOVE_TO_DECK,
@@ -635,6 +637,7 @@ class Ability:
             AbilityCostType.TAP_MEMBER: Opcode.TAP_MEMBER,
             AbilityCostType.DISCARD_HAND: Opcode.MOVE_TO_DISCARD,
             AbilityCostType.DISCARD_TOP_DECK: Opcode.MOVE_TO_DISCARD,
+            AbilityCostType.PLACE_ENERGY_FROM_DECK: Opcode.PLACE_ENERGY_FROM_DECK,
             AbilityCostType.RETURN_HAND: Opcode.MOVE_MEMBER,
             AbilityCostType.SACRIFICE_SELF: Opcode.MOVE_TO_DISCARD,
             AbilityCostType.RETURN_MEMBER_TO_DECK: Opcode.MOVE_TO_DECK,
@@ -1359,7 +1362,7 @@ class Ability:
                 if eff.effect_type == EffectType.MOVE_TO_DISCARD and eff.params.get("operation") == "UNTIL_SIZE":
                     val = (int(val) & 0x7FFFFFFF) | (1 << 31)
 
-            attr = self._resolve_effect_dynamic_multiplier(eff, val, slot_params, attr)
+            val, attr = self._resolve_effect_dynamic_multiplier(eff, val, slot_params, attr)
 
             # Default to Choice (slot 4) if target is generic
             is_non_stage_discard = eff.effect_type == EffectType.MOVE_TO_DISCARD and slot_params["source_zone"] in (
@@ -1496,9 +1499,11 @@ class Ability:
                     eff.target = TargetType.MEMBER_OTHER
                 else:
                     eff.target = TargetType.MEMBER_SELECT
+        elif eff.effect_type == EffectType.TAP_OPPONENT:
+            eff.target = TargetType.OPPONENT
             
-            # Update slot_params with the new target
-            slot_params["target_slot"] = eff.target.value if hasattr(eff.target, "value") else int(eff.target)
+        # Update slot_params with the new target
+        slot_params["target_slot"] = eff.target.value if hasattr(eff.target, "value") else int(eff.target)
 
     def _resolve_effect_source_zone(self, eff: Effect, slot_params: Dict[str, Any]):
         """--- Zone Relocation ---"""
@@ -1607,12 +1612,17 @@ class Ability:
         attr = pack_a_heart_cost(**a_params)
         return val, attr
 
-    def _resolve_effect_dynamic_multiplier(self, eff: Effect, val: int, slot_params: Dict[str, Any], attr: int) -> int:
+    def _resolve_effect_dynamic_multiplier(self, eff: Effect, val: int, slot_params: Dict[str, Any], attr: int) -> Tuple[int, int]:
         """Resolve dynamic multiplier logic for effects."""
-        if not (eff.params.get("per_card") or eff.params.get("per_member") or eff.params.get("has_multiplier")):
-            return attr
+        divisor = 1
+        params = eff.params
+        if not (params.get("per_card") or params.get("per_member") or params.get("has_multiplier") or params.get("per_energy") or params.get("per_energy_paid")):
+            return val, attr
 
-        count_src = str(eff.params.get("per_card", "")).upper()
+        # Extract scaling divisor if present
+        divisor = int(params.get("per_energy") or params.get("per_energy_paid") or params.get("per_card_divisor") or 1)
+
+        count_src = str(params.get("per_card", "")).upper()
         if count_src == "COUNT" and hasattr(self, "_last_counted_zone") and self._last_counted_zone:
             count_src = self._last_counted_zone
 
@@ -1621,9 +1631,9 @@ class Ability:
         slot_params["is_dynamic"] = True
 
         # Ensure multiplier threshold is 1 if not specified
-        if not eff.params.get("value_enabled") and not eff.params.get("cost_ge") and not eff.params.get("cost_le"):
-            eff.params["value_enabled"] = True
-            eff.params["value_threshold"] = 1
+        if not params.get("value_enabled") and not params.get("cost_ge") and not params.get("cost_le"):
+            params["value_enabled"] = True
+            params["value_threshold"] = 1
 
         # SYSTEMIC FIX: If this is REDUCE_COST, base value should be 1
         if eff.effect_type == EffectType.REDUCE_COST:
@@ -1631,9 +1641,12 @@ class Ability:
             # But we can update the effect value in place if needed, or caller handles it.
             pass
 
+        # Packed value with divisor in high bits
+        packed_val = pack_v_scalar_dynamic(base_value=val, divisor=divisor)
+
         # Ensure the DYNAMIC_VALUE bit (bit 60) is set in the attribute for the engine to recognize scaling
         dynamic_bit = EXTRA_CONSTANTS.get("DYNAMIC_VALUE", 1 << 60)
-        return self._pack_filter_attr(eff) | dynamic_bit
+        return packed_val, self._pack_filter_attr(eff) | dynamic_bit
 
     def _pack_filter_slot(self, area_str: str) -> int:
         """Helper to pack area strings into slot bits (29-31)."""

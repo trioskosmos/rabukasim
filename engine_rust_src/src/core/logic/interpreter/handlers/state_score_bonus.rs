@@ -21,7 +21,12 @@ pub fn handle_boost_score(
     let s = instr.raw_s;
 
     let mut final_v = v;
-    if instr.filter_attr().compare_accumulated {
+    if instr.is_dynamic() {
+        let divisor = instr.scalar_dynamic_divisor().max(1);
+        let base = instr.scalar_dynamic_base();
+        let paid = ctx.v_accumulated as i32;
+        final_v = base * (paid / divisor);
+    } else if instr.filter_attr().compare_accumulated {
         let count = resolve_count(
             state,
             db,
@@ -37,6 +42,14 @@ pub fn handle_boost_score(
     state.players[target_p]
         .live_score_bonus_logs
         .push((ctx.source_card_id, final_v));
+
+    if state.phase == Phase::PerformanceP1
+        || state.phase == Phase::PerformanceP2
+        || state.phase == Phase::LiveResult
+    {
+        state.players[target_p].score =
+            (state.players[target_p].score as i32 + final_v).max(0) as u32;
+    }
     if !state.ui.silent {
         if let Some(msg) = logging::get_opcode_log(O_BOOST_SCORE, final_v, a, s, 0) {
             state.log(msg);
@@ -102,6 +115,8 @@ pub fn handle_set_score(
     }
 
     if !applied_to_live_snapshot {
+        state.players[target_p].score = v.max(0) as u32;
+    } else {
         state.players[target_p].score = v.max(0) as u32;
     }
     HandlerResult::Continue

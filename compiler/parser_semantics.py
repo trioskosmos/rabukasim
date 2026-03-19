@@ -6,7 +6,12 @@ from typing import Any, Dict, List
 from engine.models.ability import Condition, ConditionType
 
 from .parser_lexer import StructuralLexer
-from .parser_patterns import CONDITION_ALIASES, IGNORED_CONDITIONS, KEYWORD_CONDITIONS
+from .parser_patterns import (
+    CONDITION_SEMANTIC_SPECIAL_CASES,
+    CONDITION_TRUE_ALIASES,
+    IGNORED_CONDITIONS,
+    KEYWORD_CONDITIONS,
+)
 
 
 def parse_pseudocode_conditions(parser: Any, text: str) -> List[Condition]:
@@ -163,8 +168,17 @@ def parse_pseudocode_conditions(parser: Any, text: str) -> List[Condition]:
                 conditions.append(Condition(ConditionType.COUNT_SUCCESS_LIVE, params, is_negated=is_negated))
                 continue
 
-        if name in CONDITION_ALIASES:
-            canonical_name, extra_params = CONDITION_ALIASES[name]
+        if name in CONDITION_TRUE_ALIASES:
+            canonical_name, extra_params = CONDITION_TRUE_ALIASES[name]
+            try:
+                condition_type = ConditionType[canonical_name]
+            except KeyError:
+                condition_type = ConditionType.NONE
+            conditions.append(Condition(condition_type, {**params, **extra_params}, is_negated=is_negated))
+            continue
+
+        if name in CONDITION_SEMANTIC_SPECIAL_CASES:
+            canonical_name, extra_params = CONDITION_SEMANTIC_SPECIAL_CASES[name]
             try:
                 condition_type = ConditionType[canonical_name]
             except KeyError:
@@ -217,4 +231,45 @@ def parse_pseudocode_conditions(parser: Any, text: str) -> List[Condition]:
     return conditions
 
 
-__all__ = ["parse_pseudocode_conditions"]
+def looks_like_condition_instruction(text: str) -> bool:
+    """Return True if the instruction text should be routed through the condition parser."""
+    stripped = text.strip()
+    if not stripped:
+        return False
+
+    upper = stripped.upper()
+    if upper.startswith("CONDITION:") or upper.startswith("OR("):
+        return True
+
+    name_match = re.match(r"^([\w_]+)", stripped)
+    if not name_match:
+        return False
+
+    name = name_match.group(1).upper()
+    if (
+        name in CONDITION_TRUE_ALIASES
+        or name in CONDITION_SEMANTIC_SPECIAL_CASES
+        or name in KEYWORD_CONDITIONS
+        or name in IGNORED_CONDITIONS
+        or hasattr(ConditionType, name)
+        or name.startswith("MATCH_")
+        or name.startswith("DID_ACTIVATE_")
+        or name in {
+            "AREA",
+            "AREA_IN",
+            "REVEALED_CONTAINS",
+            "SELECT_CARD",
+            "PLAYER_CENTER_COST_GT_OPPONENT_CENTER_COST",
+            "OPPONENT_CENTER_COST_GT_PLAYER_CENTER_COST",
+            "HEARTS_COUNT",
+            "COUNT_SUCCESS_LIVES",
+            "COUNT_SUCCESS_LIVE",
+            "COUNT_CARDS",
+        }
+    ):
+        return True
+
+    return False
+
+
+__all__ = ["parse_pseudocode_conditions", "looks_like_condition_instruction"]

@@ -1,7 +1,7 @@
 {
   "_metadata": {
     "generated_by": "compiler/main.py",
-    "generated_at": "2026-03-19T16:16:27.877222"
+    "generated_at": "2026-03-19T22:10:11.997172"
   },
   "{{toujyou.png|登場}}自分の控え室からメンバーカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」を、好きな組み合わせで合計3枚、控え室に置いてもよい：ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋３する。」を得る。\n（手札のこのカードもこの効果で控え室に置ける。）": {
     "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_MEMBER(1) (Optional) -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(3) {FILTER=\"Ayumu/Kanon/Kaho\"} (Optional)\nEFFECT: BOOST_SCORE(3) -> SELF",
@@ -36,10 +36,10 @@
         "05: RETURN                    | done"
       ],
       [
-        "00: SELECT_CARDS              | count=99, filter=[char1=You, char2=Natsumi, optional], slot=[target=Hand (Zone), source=Hand]",
+        "00: SELECT_CARDS              | count=-1, filter=[char1=You, char2=Natsumi, optional], slot=[target=Discard (Zone), source=Discard]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=GT (>), slot=Left Stage (0)]",
-        "15: ADD_BLADES                | count=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
+        "15: ADD_BLADES                | count=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "20: RETURN                    | done"
       ]
     ]
@@ -135,7 +135,7 @@
         "20: MOVE_TO_DISCARD           | count=1, filter=[target=self, zone=hand], slot=[target=Center Stage (1), source=Hand, dest=Discard]",
         "25: JUMP                      | offset=4",
         "30: SELECT_MEMBER             | count=99, filter=[target=opponent, cost<=2], slot=[target=Context Card, source=Stage]",
-        "35: TAP_MEMBER                | value=1, filter=[none], slot=[target=Context Card]",
+        "35: MOVE_MEMBER               | from=Center Stage (1), to=Left Stage (0), slot=[target=Context Card]",
         "40: JUMP                      | offset=1",
         "45: RETURN                    | done"
       ]
@@ -156,14 +156,14 @@
         "00: SET_TAPPED                | count=1, filter=[optional], slot=[target=Context Card]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: SELECT_MEMBER             | count=1, filter=[target=opponent, cost<=4], slot=[target=Context Card, source=Stage]",
-        "15: TAP_MEMBER                | value=1, filter=[none], slot=[target=Context Card]",
+        "15: MOVE_MEMBER               | from=Center Stage (1), to=Left Stage (0), slot=[target=Context Card]",
         "20: RETURN                    | done"
       ],
       [
         "00: SET_TAPPED                | count=1, filter=[optional], slot=[target=Context Card]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: SELECT_MEMBER             | count=1, filter=[target=opponent, cost<=4], slot=[target=Context Card, source=Stage]",
-        "15: TAP_MEMBER                | value=1, filter=[none], slot=[target=Context Card]",
+        "15: MOVE_MEMBER               | from=Center Stage (1), to=Left Stage (0), slot=[target=Context Card]",
         "20: RETURN                    | done"
       ]
     ]
@@ -213,11 +213,11 @@
         "05: JUMP_IF_FALSE             | offset=3",
         "10: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
         "15: SELECT_MEMBER             | count=2, filter=[target=opponent, cost<=4], slot=[target=Context Card, source=Stage]",
-        "20: TAP_MEMBER                | value=1, filter=[none], slot=[target=Context Card]",
+        "20: MOVE_MEMBER               | from=Center Stage (1), to=Left Stage (0), slot=[target=Context Card]",
         "25: RETURN                    | done"
       ],
       [
-        "00: ADD_BLADES                | count=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
+        "00: ADD_BLADES                | count=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "05: RETURN                    | done"
       ]
     ]
@@ -230,7 +230,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: TAP_MEMBER                | value=0, filter=[optional], slot=[target=Context Card]",
+        "00: MOVE_MEMBER               | from=Left Stage (0), to=Slot_2305843009213693952, slot=[target=Context Card]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: RECOVER_MEMBER            | count=1, filter=[zone=discard], slot=[target=Hand (Zone), source=Discard]",
         "15: RETURN                    | done"
@@ -285,11 +285,12 @@
     "decoded_bytecode": [
       [
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
-        "05: JUMP_IF_FALSE             | offset=3",
+        "05: JUMP_IF_FALSE             | offset=4",
         "10: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "15: SELECT_MEMBER             | count=1, filter=[target=self], slot=[target=Context Card, source=Stage]",
-        "20: ADD_BLADES                | count=2, filter=[target=self, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
-        "25: RETURN                    | done"
+        "15: CHECK_COUNT_SUCCESS_LIVE  | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "20: SELECT_MEMBER             | count=1, filter=[target=self], slot=[target=Context Card, source=Stage]",
+        "25: ADD_BLADES                | count=65538, filter=[target=self, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
+        "30: RETURN                    | done"
       ]
     ]
   },
@@ -386,7 +387,7 @@
     "decoded_bytecode": [
       [
         "00: COLOR_SELECT              | value=1, filter=[target=self, colors=red/green/any], slot=[target=Context Card]",
-        "05: ADD_HEARTS                | count=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
+        "05: ADD_HEARTS                | count=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
         "10: RETURN                    | done"
       ]
     ]
@@ -490,7 +491,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: CHECK_SCORE_COMPARE       | value=6, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: CHECK_SCORE_TOTAL_CHECK   | value=6, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: ACTIVATE_ENERGY           | count=2, filter=[none], slot=[target=Context Card]",
         "10: RETURN                    | done"
       ]
@@ -529,7 +530,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: CHECK_SCORE_COMPARE       | value=3, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: CHECK_SCORE_TOTAL_CHECK   | value=3, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: LOOK_AND_CHOOSE           | look=5, filter=[group=Muse] chars=[], reveal=False, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
         "10: RETURN                    | done"
       ]
@@ -668,7 +669,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: TAP_MEMBER                | value=1, filter=[optional], slot=[target=Context Card]",
+        "00: MOVE_MEMBER               | from=Center Stage (1), to=Slot_2305843009213693952, slot=[target=Context Card]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: ADD_BLADES                | count=1, filter=[target=self, group=Muse], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -749,7 +750,7 @@
     "decoded_bytecode": [
       [
         "00: SELECT_MEMBER             | count=1, filter=[target=opponent, cost<=10], slot=[target=Context Card, source=Stage]",
-        "05: TAP_MEMBER                | value=1, filter=[none], slot=[target=Context Card]",
+        "05: MOVE_MEMBER               | from=Center Stage (1), to=Left Stage (0), slot=[target=Context Card]",
         "10: RETURN                    | done"
       ],
       [
@@ -768,7 +769,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: CHECK_SCORE_COMPARE       | value=6, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: CHECK_SCORE_TOTAL_CHECK   | value=6, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: ENERGY_CHARGE             | count=1, filter=[none], slot=[target=Context Card, wait]",
         "10: RETURN                    | done"
       ]
@@ -872,7 +873,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: TAP_OPPONENT              | value=1, filter=[target=self, cost<=4], slot=[target=Context Card]",
+        "00: TAP_OPPONENT              | value=1, filter=[target=opponent, cost<=4], slot=[target=Right Stage (2)]",
         "05: RETURN                    | done"
       ]
     ]
@@ -900,7 +901,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: ADD_HEARTS                | count=1, filter=[target=self, group=Arise, special=3, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
+        "00: ADD_HEARTS                | count=65537, filter=[target=self, group=Arise, special=3, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
         "05: RETURN                    | done"
       ],
       [
@@ -937,7 +938,7 @@
       [
         "00: SET_TAPPED                | count=1, filter=[optional], slot=[target=Context Card]",
         "05: JUMP_IF_FALSE             | offset=1",
-        "10: TAP_OPPONENT              | value=1, filter=[target=self, cost<=9], slot=[target=Context Card]",
+        "10: TAP_OPPONENT              | value=1, filter=[target=opponent, cost<=9], slot=[target=Right Stage (2)]",
         "15: RETURN                    | done"
       ],
       [
@@ -980,7 +981,7 @@
         "05: SET_TAPPED                | count=1, filter=[optional], slot=[target=Context Card]",
         "10: JUMP_IF_FALSE             | offset=2",
         "15: SELECT_MEMBER             | count=1, filter=[target=opponent], slot=[target=Context Card, source=Stage]",
-        "20: TAP_MEMBER                | value=1, filter=[none], slot=[target=Context Card]",
+        "20: MOVE_MEMBER               | from=Center Stage (1), to=Left Stage (0), slot=[target=Context Card]",
         "25: RETURN                    | done"
       ],
       [
@@ -988,11 +989,11 @@
         "05: SET_TAPPED                | count=1, filter=[optional], slot=[target=Context Card]",
         "10: JUMP_IF_FALSE             | offset=2",
         "15: SELECT_MEMBER             | count=1, filter=[target=opponent], slot=[target=Context Card, source=Stage]",
-        "20: TAP_MEMBER                | value=1, filter=[none], slot=[target=Context Card]",
+        "20: MOVE_MEMBER               | from=Center Stage (1), to=Left Stage (0), slot=[target=Context Card]",
         "25: RETURN                    | done"
       ],
       [
-        "00: ADD_HEARTS                | count=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
+        "00: ADD_HEARTS                | count=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "05: RETURN                    | done"
       ]
     ]
@@ -1075,7 +1076,7 @@
     "decoded_bytecode": [
       [
         "00: CHECK_SELECT_MEMBER       | value=1, filter=[unit=Lily White, special=3], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: MOVE_TO_DISCARD           | count=0, filter=[none], slot=[target=Hand (Zone)]",
+        "05: MOVE_TO_DISCARD           | count=1, filter=[none], slot=[target=Hand (Zone)]",
         "10: RECOVER_LIVE              | count=1, filter=[group=Muse, zone=discard], slot=[target=Hand (Zone), source=Discard]",
         "15: RETURN                    | done"
       ]
@@ -1090,7 +1091,7 @@
     "decoded_bytecode": [
       [
         "00: SELECT_MEMBER             | count=3, filter=[none], slot=[none]",
-        "05: TAP_MEMBER                | value=0, filter=[optional], slot=[target=Context Card]",
+        "05: MOVE_MEMBER               | from=Left Stage (0), to=Slot_2305843009213693952, slot=[target=Context Card]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -1106,7 +1107,7 @@
     "decoded_bytecode": [
       [
         "00: SELECT_MEMBER             | count=1, filter=[target=opponent], slot=[target=Context Card, source=Stage]",
-        "05: TAP_MEMBER                | value=1, filter=[none], slot=[target=Context Card]",
+        "05: MOVE_MEMBER               | from=Center Stage (1), to=Left Stage (0), slot=[target=Context Card]",
         "10: RETURN                    | done"
       ]
     ]
@@ -1195,16 +1196,16 @@
     "decoded_bytecode": [
       [
         "00: CHECK_IS_CENTER           | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: TAP_MEMBER                | value=1, filter=[unit=Bibi, optional], slot=[target=Context Card]",
+        "05: MOVE_MEMBER               | from=Center Stage (1), to=Slot_2305843009214021632, slot=[target=Context Card]",
         "10: JUMP_IF_FALSE             | offset=1",
-        "15: TAP_OPPONENT              | value=1, filter=[target=self], slot=[target=Context Card]",
+        "15: TAP_OPPONENT              | value=1, filter=[target=opponent], slot=[target=Right Stage (2)]",
         "20: RETURN                    | done"
       ],
       [
         "00: CHECK_IS_CENTER           | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: TAP_MEMBER                | value=1, filter=[unit=Bibi, optional], slot=[target=Context Card]",
+        "05: MOVE_MEMBER               | from=Center Stage (1), to=Slot_2305843009214021632, slot=[target=Context Card]",
         "10: JUMP_IF_FALSE             | offset=1",
-        "15: TAP_OPPONENT              | value=1, filter=[target=self], slot=[target=Context Card]",
+        "15: TAP_OPPONENT              | value=1, filter=[target=opponent], slot=[target=Right Stage (2)]",
         "20: RETURN                    | done"
       ],
       [
@@ -1303,7 +1304,7 @@
         "10: RETURN                    | done"
       ],
       [
-        "00: ADD_BLADES                | count=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
+        "00: ADD_BLADES                | count=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "05: RETURN                    | done"
       ]
     ]
@@ -1335,7 +1336,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: LOOK_AND_CHOOSE           | look=5, filter=[type=live, unit=99, char3=99] chars=[], reveal=False, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
+        "00: LOOK_AND_CHOOSE           | look=5, filter=[type=live, unit=99, char3=99] chars=[], reveal=True, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
         "05: RETURN                    | done"
       ]
     ]
@@ -1414,7 +1415,7 @@
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "15: LOOK_AND_CHOOSE           | look=3, chars=[], reveal=False, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
+        "15: LOOK_AND_CHOOSE           | look=3, chars=[], reveal=True, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
         "20: RETURN                    | done"
       ]
     ]
@@ -1447,7 +1448,7 @@
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "15: LOOK_AND_CHOOSE           | look=3, filter=[optional] chars=[], reveal=False, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
+        "15: LOOK_AND_CHOOSE           | look=3, filter=[optional] chars=[], reveal=True, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
         "20: RETURN                    | done"
       ],
       [
@@ -1631,7 +1632,7 @@
         "05: JUMP_IF_FALSE             | offset=3",
         "10: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
         "15: CHECK_GROUP_FILTER        | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "20: ADD_BLADES                | count=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
+        "20: ADD_BLADES                | count=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "25: RETURN                    | done"
       ]
     ]
@@ -1838,7 +1839,7 @@
         "10: RETURN                    | done"
       ],
       [
-        "00: ADD_BLADES                | count=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
+        "00: ADD_BLADES                | count=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "05: RETURN                    | done"
       ]
     ]
@@ -2194,7 +2195,7 @@
       [
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "05: JUMP_IF_FALSE             | offset=1",
-        "10: TAP_OPPONENT              | value=2, filter=[target=self, cost<=4], slot=[target=Context Card]",
+        "10: TAP_OPPONENT              | value=2, filter=[target=opponent, cost<=4], slot=[target=Right Stage (2)]",
         "15: RETURN                    | done"
       ],
       [
@@ -2365,7 +2366,7 @@
       [
         "00: CHECK_COUNT_STAGE         | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: CHECK_GROUP_FILTER        | value=0, filter=[type=live], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "10: LOOK_AND_CHOOSE           | look=5, filter=[target=self, type=live, optional] chars=[], reveal=False, discard_remainder=False, slot=[target=Context Card, source=Deck Top]",
+        "10: LOOK_AND_CHOOSE           | look=5, filter=[target=self, type=live, optional] chars=[], reveal=True, discard_remainder=False, slot=[target=Context Card, source=Deck Top]",
         "15: RETURN                    | done"
       ]
     ]
@@ -2701,7 +2702,7 @@
     "decoded_bytecode": [
       [
         "00: SELECT_MEMBER             | count=1, filter=[group=Nijigasaki, special=3], slot=[none]",
-        "05: TAP_MEMBER                | value=0, filter=[none], slot=[target=Context Card]",
+        "05: MOVE_MEMBER               | from=Left Stage (0), to=Left Stage (0), slot=[target=Context Card]",
         "10: DRAW                      | count=1, filter=[optional], slot=[target=Context Card]",
         "15: RETURN                    | done"
       ],
@@ -2905,7 +2906,7 @@
       [
         "00: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "05: SELECT_MEMBER             | count=1, filter=[target=opponent, cost<=9], slot=[target=Context Card, source=Stage]",
-        "10: TAP_MEMBER                | value=1, filter=[target=both, optional], slot=[target=Context Card]",
+        "10: MOVE_MEMBER               | from=Center Stage (1), to=Slot_2305843009213693955, slot=[target=Context Card]",
         "15: CHECK_COUNT_STAGE         | value=0, filter=[target=opponent, status=tapped], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "20: RECOVER_MEMBER            | count=1, filter=[target=self, group=Nijigasaki, zone=discard, optional], slot=[target=Context Card, source=Discard]",
         "25: RETURN                    | done"
@@ -2922,7 +2923,7 @@
       [
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "05: JUMP_IF_FALSE             | offset=1",
-        "10: TAP_OPPONENT              | value=2, filter=[target=self, cost<=4], slot=[target=Context Card]",
+        "10: TAP_OPPONENT              | value=2, filter=[target=opponent, cost<=4], slot=[target=Right Stage (2)]",
         "15: RETURN                    | done"
       ]
     ]
@@ -2939,7 +2940,7 @@
         "05: JUMP_IF_FALSE             | offset=3",
         "10: PLAY_MEMBER_FROM_HAND     | value=1, filter=[target=self, type=member, group=Nijigasaki, cost<=4, zone=hand], slot=[target=Context Card, empty_slot]",
         "15: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "20: TAP_MEMBER                | value=1, filter=[target=both], slot=[target=Context Card]",
+        "20: MOVE_MEMBER               | from=Center Stage (1), to=All_Players, slot=[target=Context Card]",
         "25: RETURN                    | done"
       ]
     ]
@@ -3090,7 +3091,7 @@
     "decoded_bytecode": [
       [
         "00: SELECT_MEMBER             | count=1, filter=[group=Nijigasaki], slot=[none]",
-        "05: TAP_MEMBER                | value=1, filter=[optional], slot=[target=Context Card]",
+        "05: MOVE_MEMBER               | from=Center Stage (1), to=Slot_2305843009213693952, slot=[target=Context Card]",
         "10: JUMP_IF_FALSE             | offset=2",
         "15: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "20: MOVE_TO_DISCARD           | count=1, filter=[target=self, zone=hand], slot=[target=Center Stage (1), source=Hand, dest=Discard]",
@@ -3568,7 +3569,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: ADD_BLADES                | count=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
+        "00: ADD_BLADES                | count=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "05: RETURN                    | done"
       ],
       [
@@ -3650,7 +3651,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: LOOK_AND_CHOOSE           | look=2, filter=[char1=Karin] chars=[], reveal=False, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
+        "00: LOOK_AND_CHOOSE           | look=2, filter=[char1=Karin] chars=[], reveal=True, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
         "05: RETURN                    | done"
       ]
     ]
@@ -3679,7 +3680,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: LOOK_AND_CHOOSE           | look=2, filter=[char1=Kanata] chars=[], reveal=False, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
+        "00: LOOK_AND_CHOOSE           | look=2, filter=[char1=Kanata] chars=[], reveal=True, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
         "05: RETURN                    | done"
       ]
     ]
@@ -3722,7 +3723,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: LOOK_AND_CHOOSE           | look=2, filter=[char1=Rina] chars=[], reveal=False, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
+        "00: LOOK_AND_CHOOSE           | look=2, filter=[char1=Rina] chars=[], reveal=True, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
         "05: RETURN                    | done"
       ]
     ]
@@ -3766,7 +3767,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: LOOK_AND_CHOOSE           | look=2, filter=[char1=Lanzhu] chars=[], reveal=False, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
+        "00: LOOK_AND_CHOOSE           | look=2, filter=[char1=Lanzhu] chars=[], reveal=True, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
         "05: RETURN                    | done"
       ]
     ]
@@ -3781,7 +3782,7 @@
       [
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "05: JUMP_IF_FALSE             | offset=1",
-        "10: LOOK_AND_CHOOSE           | look=2, chars=[], reveal=False, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
+        "10: LOOK_AND_CHOOSE           | look=2, chars=[], reveal=True, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
         "15: RETURN                    | done"
       ]
     ]
@@ -3901,7 +3902,7 @@
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "15: LOOK_AND_CHOOSE           | look=3, filter=[optional] chars=[], reveal=False, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
+        "15: LOOK_AND_CHOOSE           | look=3, filter=[optional] chars=[], reveal=True, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
         "20: RETURN                    | done"
       ],
       [
@@ -4025,7 +4026,7 @@
       [
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "05: JUMP_IF_FALSE             | offset=1",
-        "10: LOOK_AND_CHOOSE           | look=7, filter=[optional] chars=[], reveal=False, discard_remainder=False, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
+        "10: LOOK_AND_CHOOSE           | look=7, filter=[optional] chars=[], reveal=True, discard_remainder=False, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
         "15: RETURN                    | done"
       ]
     ]
@@ -4108,7 +4109,7 @@
       [
         "00: CHECK_IS_CENTER           | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: SELECT_MEMBER             | count=1, filter=[none], slot=[none]",
-        "10: TAP_MEMBER                | value=0, filter=[none], slot=[target=Context Card]",
+        "10: MOVE_MEMBER               | from=Left Stage (0), to=Left Stage (0), slot=[target=Context Card]",
         "15: GRANT_ABILITY             | granted_index=1, filter=[none], slot=[target=Context Card]",
         "20: RETURN                    | done"
       ],
@@ -4148,7 +4149,7 @@
       ],
       [
         "00: SELECT_MEMBER             | count=1, filter=[target=self, optional], slot=[target=Context Card, source=Stage]",
-        "05: ADD_BLADES                | count=2, filter=[target=self, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
+        "05: ADD_BLADES                | count=65538, filter=[target=self, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
         "10: RETURN                    | done"
       ]
     ]
@@ -4270,7 +4271,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: INCREASE_COST             | value=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
+        "00: INCREASE_COST             | value=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
         "05: RETURN                    | done"
       ]
     ]
@@ -4306,7 +4307,7 @@
     "decoded_bytecode": [
       [
         "00: CHECK_SYNC_COST           | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: TAP_OPPONENT              | value=99, filter=[target=self], slot=[target=Context Card]",
+        "05: TAP_OPPONENT              | value=99, filter=[target=opponent], slot=[target=Right Stage (2)]",
         "10: RETURN                    | done"
       ]
     ]
@@ -4530,7 +4531,7 @@
       [
         "00: CHECK_IS_SELF_MOVE        | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: SELECT_MEMBER             | count=1, filter=[target=opponent], slot=[target=Context Card, source=Stage]",
-        "10: TAP_MEMBER                | value=1, filter=[target=both], slot=[target=Context Card]",
+        "10: MOVE_MEMBER               | from=Center Stage (1), to=All_Players, slot=[target=Context Card]",
         "15: RETURN                    | done"
       ]
     ]
@@ -4627,7 +4628,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: SELECT_CARDS              | count=1, filter=[type=live], slot=[target=Hand (Zone), source=Hand]",
+        "00: SELECT_CARDS              | count=1, filter=[type=live], slot=[target=Discard (Zone), source=Discard]",
         "05: SELECT_MODE               | options=2, filter=[none], slot=[opponent]",
         "10: JUMP                      | offset=1",
         "15: JUMP                      | offset=2",
@@ -4968,7 +4969,7 @@
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "15: LOOK_AND_CHOOSE           | look=5, filter=[target=self, group=Liella, optional] chars=[], reveal=False, discard_remainder=False, slot=[target=Context Card, source=Deck Top]",
+        "15: LOOK_AND_CHOOSE           | look=5, filter=[target=self, group=Liella, optional] chars=[], reveal=True, discard_remainder=False, slot=[target=Context Card, source=Deck Top]",
         "20: RETURN                    | done"
       ]
     ]
@@ -5027,7 +5028,7 @@
     "decoded_bytecode": [
       [
         "00: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "05: LOOK_AND_CHOOSE           | look=5, filter=[target=self, group=Liella, optional] chars=[], reveal=False, discard_remainder=False, slot=[target=Context Card, source=Deck Top]",
+        "05: LOOK_AND_CHOOSE           | look=5, filter=[target=self, group=Liella, optional] chars=[], reveal=True, discard_remainder=False, slot=[target=Context Card, source=Deck Top]",
         "10: RETURN                    | done"
       ]
     ]
@@ -5044,7 +5045,7 @@
         "00: PAY_ENERGY                | cost=1, filter=[optional], slot=[none]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "15: LOOK_AND_CHOOSE           | look=3, chars=[], reveal=False, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
+        "15: LOOK_AND_CHOOSE           | look=3, chars=[], reveal=True, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
         "20: RETURN                    | done"
       ]
     ]
@@ -5075,7 +5076,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: LOOK_AND_CHOOSE           | look=3, filter=[cost>=11, optional] chars=[], reveal=False, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
+        "00: LOOK_AND_CHOOSE           | look=3, filter=[cost>=11, optional] chars=[], reveal=True, discard_remainder=True, slot=[target=Hand (Zone), remainder=Discard, source=Deck Top]",
         "05: RETURN                    | done"
       ]
     ]
@@ -5182,9 +5183,10 @@
     ],
     "decoded_bytecode": [
       [
-        "00: DIV_VALUE                 | value=2, filter=[none], slot=[none]",
-        "05: ADD_BLADES                | count=1, filter=[none], slot=[target=Context Card]",
-        "10: RETURN                    | done"
+        "00: CHECK_COUNT_HAND          | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: DIV_VALUE                 | value=2, filter=[none], slot=[none]",
+        "10: ADD_BLADES                | count=1, filter=[none], slot=[target=Context Card]",
+        "15: RETURN                    | done"
       ],
       [
         "00: DRAW                      | count=2, filter=[none], slot=[target=Context Card]",
@@ -5465,13 +5467,13 @@
       [
         "00: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: SELECT_MEMBER             | count=1, filter=[target=opponent], slot=[target=Context Card, source=Stage]",
-        "10: TAP_MEMBER                | value=1, filter=[target=both], slot=[target=Context Card]",
+        "10: MOVE_MEMBER               | from=Center Stage (1), to=All_Players, slot=[target=Context Card]",
         "15: RETURN                    | done"
       ],
       [
         "00: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: SELECT_MEMBER             | count=1, filter=[target=opponent], slot=[target=Context Card, source=Stage]",
-        "10: TAP_MEMBER                | value=1, filter=[target=both], slot=[target=Context Card]",
+        "10: MOVE_MEMBER               | from=Center Stage (1), to=All_Players, slot=[target=Context Card]",
         "15: RETURN                    | done"
       ]
     ]
@@ -5575,7 +5577,7 @@
       [
         "00: PAY_ENERGY                | cost=0, filter=[optional], slot=[none]",
         "05: JUMP_IF_FALSE             | offset=1",
-        "10: ADD_BLADES                | count=1, filter=[none], slot=[target=Context Card]",
+        "10: ADD_BLADES                | count=65537, filter=[target=self, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
         "15: RETURN                    | done"
       ]
     ]
@@ -5595,7 +5597,7 @@
         "10: SELECT_MODE               | options=2, filter=[none], slot=[none]",
         "15: JUMP                      | offset=1",
         "20: JUMP                      | offset=2",
-        "25: TAP_OPPONENT              | value=1, filter=[target=self, cost<=4], slot=[target=Context Card]",
+        "25: TAP_OPPONENT              | value=1, filter=[target=opponent, cost<=4], slot=[target=Right Stage (2)]",
         "30: JUMP                      | offset=3",
         "35: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "40: JUMP                      | offset=1",
@@ -5607,7 +5609,7 @@
         "10: SELECT_MODE               | options=2, filter=[none], slot=[none]",
         "15: JUMP                      | offset=1",
         "20: JUMP                      | offset=2",
-        "25: TAP_OPPONENT              | value=1, filter=[target=self, cost<=4], slot=[target=Context Card]",
+        "25: TAP_OPPONENT              | value=1, filter=[target=opponent, cost<=4], slot=[target=Right Stage (2)]",
         "30: JUMP                      | offset=3",
         "35: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "40: JUMP                      | offset=1",
@@ -6201,8 +6203,9 @@
     ],
     "decoded_bytecode": [
       [
-        "00: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
-        "05: RETURN                    | done"
+        "00: CHECK_COUNT_ENERGY        | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
+        "10: RETURN                    | done"
       ]
     ]
   },
@@ -6284,7 +6287,7 @@
         "05: PAY_ENERGY                | cost=1, filter=[optional], slot=[none]",
         "10: JUMP_IF_FALSE             | offset=2",
         "15: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "20: LOOK_AND_CHOOSE           | look=5, chars=[], reveal=False, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
+        "20: LOOK_AND_CHOOSE           | look=5, chars=[], reveal=True, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
         "25: RETURN                    | done"
       ]
     ]
@@ -6371,7 +6374,7 @@
       [
         "00: CHECK_COUNT_STAGE         | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: MOVE_TO_DISCARD           | count=1, filter=[target=self], slot=[target=Context Card, source=Stage, dest=Discard]",
-        "10: BOOST_SCORE               | value=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
+        "10: BOOST_SCORE               | value=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "15: RETURN                    | done"
       ]
     ]
@@ -6489,9 +6492,9 @@
     ],
     "decoded_bytecode": [
       [
-        "00: CHECK_SCORE_COMPARE       | value=6, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: CHECK_SCORE_TOTAL_CHECK   | value=6, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: REDUCE_HEART_REQ          | value=99, filter=[none], slot=[target=Context Card]",
-        "10: CHECK_SCORE_COMPARE       | value=9, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "10: CHECK_SCORE_TOTAL_CHECK   | value=9, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "20: RETURN                    | done"
       ]
@@ -6583,7 +6586,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: BOOST_SCORE               | value=2, filter=[target=self, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
+        "00: BOOST_SCORE               | value=65538, filter=[target=self, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
         "05: RETURN                    | done"
       ]
     ]
@@ -6595,7 +6598,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: REDUCE_HEART_REQ          | value=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
+        "00: REDUCE_HEART_REQ          | value=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "05: RETURN                    | done"
       ]
     ]
@@ -6616,7 +6619,7 @@
         "30: ADD_BLADES                | count=1, filter=[none], slot=[target=Context Card]",
         "35: JUMP                      | offset=4",
         "40: SELECT_MEMBER             | count=1, filter=[target=opponent], slot=[target=Context Card, source=Stage]",
-        "45: TAP_MEMBER                | value=1, filter=[target=both], slot=[target=Context Card]",
+        "45: MOVE_MEMBER               | from=Center Stage (1), to=All_Players, slot=[target=Context Card]",
         "50: JUMP                      | offset=1",
         "55: RETURN                    | done"
       ]
@@ -6834,7 +6837,7 @@
         "05: RETURN                    | done"
       ],
       [
-        "00: BOOST_SCORE               | value=2, filter=[target=self, group=Hasunosora, unique_names, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
+        "00: BOOST_SCORE               | value=65538, filter=[target=self, group=Hasunosora, unique_names, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "05: RETURN                    | done"
       ]
     ]
@@ -6967,7 +6970,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: REDUCE_HEART_REQ          | value=2, filter=[target=self, group=Hasunosora, special=3, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
+        "00: REDUCE_HEART_REQ          | value=65538, filter=[target=self, group=Hasunosora, special=3, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
         "05: RETURN                    | done"
       ]
     ]
@@ -7090,7 +7093,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: BOOST_SCORE               | value=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
+        "00: BOOST_SCORE               | value=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "05: RETURN                    | done"
       ]
     ]
@@ -7132,7 +7135,7 @@
     "decoded_bytecode": [
       [
         "00: SELECT_MEMBER             | count=1, filter=[target=self], slot=[target=Context Card, source=Stage]",
-        "05: ADD_HEARTS                | count=3, filter=[target=self, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
+        "05: ADD_HEARTS                | count=65539, filter=[target=self, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
         "10: RETURN                    | done"
       ]
     ]
@@ -7196,7 +7199,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: BOOST_SCORE               | value=1, filter=[target=self, status=tapped, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
+        "00: BOOST_SCORE               | value=65537, filter=[target=self, status=tapped, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "05: RETURN                    | done"
       ]
     ]
@@ -7244,7 +7247,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: BOOST_SCORE               | value=2, filter=[target=self, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
+        "00: BOOST_SCORE               | value=65538, filter=[target=self, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
         "05: INCREASE_HEART_COST       | value=3, filter=[none], slot=[target=Context Card]",
         "10: RETURN                    | done"
       ]
@@ -7373,9 +7376,10 @@
       [
         "00: CHECK_HAS_MEMBER          | value=0, filter=[char1=Kasumi], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: LOOK_DECK                 | count=4, filter=[none], slot=[target=Context Card]",
-        "10: SELECT_MEMBER             | count=1, filter=[target=self, char1=Kasumi], slot=[target=Context Card, source=Stage]",
-        "15: ADD_HEARTS                | count=99, heart_type=pink, slot=[target=Context Card]",
-        "20: RETURN                    | done"
+        "10: CHECK_UNIQUE_NAMES_COUNT? | value=1, filter=[char1=Kasumi], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "15: SELECT_MEMBER             | count=1, filter=[target=self, char1=Kasumi], slot=[target=Context Card, source=Stage]",
+        "20: ADD_HEARTS                | count=99, heart_type=pink, slot=[target=Context Card]",
+        "25: RETURN                    | done"
       ]
     ]
   },
@@ -7590,7 +7594,7 @@
         "20: SELECT_MEMBER             | count=1, filter=[target=self], slot=[target=Context Card, source=Stage]",
         "25: ADD_BLADES                | count=2, filter=[none], slot=[target=Context Card]",
         "30: JUMP                      | offset=3",
-        "35: TAP_OPPONENT              | value=1, filter=[target=self, cost<=4], slot=[target=Context Card]",
+        "35: TAP_OPPONENT              | value=1, filter=[target=opponent, cost<=4], slot=[target=Right Stage (2)]",
         "40: JUMP                      | offset=1",
         "45: RETURN                    | done"
       ]
@@ -7758,8 +7762,8 @@
     ],
     "decoded_bytecode": [
       [
-        "00: DRAW                      | count=1, filter=[target=self, group=Aqours, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
-        "05: MOVE_TO_DISCARD           | count=1, filter=[target=self, zone=hand, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, source=Hand, dest=Discard, dynamic]",
+        "00: DRAW                      | count=65537, filter=[target=self, group=Aqours, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
+        "05: MOVE_TO_DISCARD           | count=65537, filter=[target=self, zone=hand, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, source=Hand, dest=Discard, dynamic]",
         "10: RETURN                    | done"
       ]
     ]
@@ -8012,9 +8016,9 @@
     ],
     "decoded_bytecode": [
       [
-        "00: PAY_ENERGY                | cost=0, filter=[optional], slot=[none]",
+        "00: PAY_ENERGY                | cost=-1, filter=[optional], slot=[none]",
         "05: JUMP_IF_FALSE             | offset=1",
-        "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
+        "10: BOOST_SCORE               | value=262145, filter=[target=self, compare_accumulated], slot=[multiplier_source=STAGE, dynamic]",
         "15: RETURN                    | done"
       ]
     ]
@@ -8039,9 +8043,10 @@
     ],
     "decoded_bytecode": [
       [
-        "00: JUMP_IF_FALSE             | offset=1",
-        "05: DRAW                      | count=1, filter=[none], slot=[target=Right Stage (2)]",
-        "10: RETURN                    | done"
+        "00: TRANSFORM_COLOR           | source=red, target=2305843009213693952, slot=[none]",
+        "05: JUMP_IF_FALSE             | offset=1",
+        "10: DRAW                      | count=1, filter=[none], slot=[target=Right Stage (2)]",
+        "15: RETURN                    | done"
       ]
     ]
   },
@@ -8133,7 +8138,7 @@
     "decoded_bytecode": [
       [
         "00: SELECT_MEMBER             | count=1, filter=[group=Nijigasaki, special=3], slot=[none]",
-        "05: TAP_MEMBER                | value=0, filter=[none], slot=[target=Context Card]",
+        "05: MOVE_MEMBER               | from=Left Stage (0), to=Left Stage (0), slot=[target=Context Card]",
         "10: DRAW                      | count=1, filter=[optional], slot=[target=Context Card]",
         "15: RETURN                    | done"
       ],
@@ -8164,7 +8169,7 @@
       ],
       [
         "00: SELECT_MEMBER             | count=1, filter=[target=self, optional], slot=[target=Context Card, source=Stage]",
-        "05: ADD_BLADES                | count=2, filter=[target=self, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
+        "05: ADD_BLADES                | count=65538, filter=[target=self, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
         "10: RETURN                    | done"
       ]
     ]
@@ -8258,7 +8263,7 @@
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "15: LOOK_AND_CHOOSE           | look=3, filter=[optional] chars=[], reveal=False, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
+        "15: LOOK_AND_CHOOSE           | look=3, filter=[optional] chars=[], reveal=True, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
         "20: RETURN                    | done"
       ],
       [
@@ -8307,7 +8312,7 @@
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: CHECK_SUM_VALUE           | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "15: LOOK_AND_CHOOSE           | look=3, chars=[], reveal=False, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
+        "15: LOOK_AND_CHOOSE           | look=3, chars=[], reveal=True, discard_remainder=False, slot=[target=Hand (Zone), source=Deck Top]",
         "20: RETURN                    | done"
       ]
     ]
@@ -8436,8 +8441,8 @@
     ],
     "decoded_bytecode": [
       [
-        "00: DRAW                      | count=1, filter=[target=self, group=Aqours, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
-        "05: MOVE_TO_DISCARD           | count=1, filter=[target=self, zone=hand, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, source=Hand, dest=Discard, dynamic]",
+        "00: DRAW                      | count=65537, filter=[target=self, group=Aqours, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, dynamic]",
+        "05: MOVE_TO_DISCARD           | count=65537, filter=[target=self, zone=hand, compare_accumulated], slot=[target=Center Stage (1), multiplier_source=STAGE, source=Hand, dest=Discard, dynamic]",
         "10: RETURN                    | done"
       ]
     ]

@@ -8,7 +8,7 @@ This plan focuses on:
 
 - `engine/models/ability.py`
 - `engine/game/mixins/effect_mixin.py`
-- `compiler/parser_v2.py`
+- `compiler/parser_v2.py` (legacy entry point; active parser logic is now split across `parser_*` modules)
 
 It also includes a dedicated encoding cleanup plan so mojibake does not reappear while these files are being split.
 
@@ -43,7 +43,7 @@ It currently mixes:
 
 That makes it both too broad and too fragile to maintain safely.
 
-### `compiler/parser_v2.py`
+### `compiler/parser_v2.py` (legacy entry point)
 
 This parser is a major improvement over the legacy parser shape, but it still needs a clear boundary between:
 
@@ -108,7 +108,7 @@ Suggested destinations:
 - Rust interpreter handler modules in `engine_rust_src/src/core/logic/interpreter/handlers/`
 - temporary Python helper modules only when a behavior has not yet been ported
 
-### `compiler/parser_v2.py`
+### `compiler/parser_v2.py` (legacy parser surface)
 
 Make this module a layered parser rather than a single all-purpose parser implementation.
 
@@ -184,7 +184,7 @@ Exit criteria:
 - new gameplay logic is not added to Python by default
 - helpers have one clear owner each
 
-### Phase 4: Layer `parser_v2.py`
+### Phase 4: Layer the parser pipeline
 
 1. Separate lexing from semantic parsing.
 2. Move grammar fragments and regex patterns into their own module.
@@ -243,7 +243,7 @@ The mojibake issue should be treated as an encoding hygiene problem, not as a co
 
 1. Finish the UTF-8-safe split of `ability.py`.
 2. Pull `effect_mixin.py` down toward a thin compatibility layer.
-3. Break `parser_v2.py` into lexer, semantics, and compatibility modules.
+3. Keep breaking the legacy parser surface into lexer, semantics, and compatibility modules.
 4. Add tests for the moved Japanese text and parser semantics.
 5. Keep Rust as the primary runtime target for gameplay behavior.
 

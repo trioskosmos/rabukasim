@@ -11,6 +11,13 @@ def can_pay_costs(player: Any, costs: List[Cost], source_area: int = -1, start_i
     )
 
     for cost in costs[start_index:]:
+        if cost.params.get("cost_type_name") == "SELECT_SELF_OR_DISCARD":
+            can_tap_self = source_area >= 0 and not player.tapped_members[source_area]
+            can_discard = len(player.hand) > 0
+            if not (can_tap_self or can_discard):
+                return False
+            continue
+
         if cost.type == AbilityCostType.ENERGY:
             needed = max(0, cost.value - total_reduction)
             if player.count_untapped_energy() < needed:
@@ -51,6 +58,23 @@ def pay_costs(game: Any, p: Any, costs: List[Cost], source_area: int = -1, start
 
     for i, cost in enumerate(costs[start_index:]):
         cost_idx = start_index + i
+        if cost.params.get("cost_type_name") == "SELECT_SELF_OR_DISCARD":
+            game.pending_choices.append(
+                (
+                    "SELECT_MODE",
+                    {
+                        **choice_metadata,
+                        "cost_index": cost_idx,
+                        "cost_type_name": "SELECT_SELF_OR_DISCARD",
+                        "options": ["ウェイト", "手札を1枚控え室に置く"],
+                        "effect_description": "このメンバーをウェイトにするか、手札を1枚控え室に置く",
+                        "source_area": source_area,
+                    },
+                )
+            )
+            game.phase = Phase.RESPONSE
+            return False
+
         if cost.type == AbilityCostType.ENERGY:
             if cost.is_optional:
                 if game.verbose:

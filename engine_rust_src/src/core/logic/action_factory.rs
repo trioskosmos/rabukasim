@@ -353,12 +353,18 @@ impl ActionFactory {
             }
             DecodedAction::SelectStageSlot { slot_idx } => {
                 let cid = player.stage[slot_idx];
+                let slot_name = match slot_idx {
+                    0 => "Left Slot",
+                    1 => "Mid Slot",
+                    2 => "Right Slot",
+                    _ => "Stage Slot",
+                };
                 if cid >= 0 {
                     if let Some(m) = db.get_member(cid) {
                         return format!("Select Member ([{}] {}) at Slot {}", m.card_no, m.name, slot_idx + 1);
                     }
                 }
-                format!("Select Stage Slot {}", slot_idx + 1)
+                format!("Select {}", slot_name)
             }
             DecodedAction::TurnChoice { choice } => {
                 format!(
@@ -404,7 +410,12 @@ impl ActionFactory {
                 format!("Select Color {}", color)
             }
             DecodedAction::SelectStageSlot { slot_idx } => {
-                format!("Select Stage Slot {}", slot_idx + 1)
+                match slot_idx {
+                    0 => "Select Left Slot".to_string(),
+                    1 => "Select Mid Slot".to_string(),
+                    2 => "Select Right Slot".to_string(),
+                    _ => "Select Slot".to_string(),
+                }
             }
             DecodedAction::PlayMember {
                 hand_idx,
@@ -448,7 +459,7 @@ impl ActionFactory {
                 format!("Select Energy Index {}", energy_idx)
             }
             DecodedAction::SelectChoice { choice_idx } => {
-                format!("Select Choice Index {}", choice_idx)
+                format!("Choice {}", choice_idx + 1)
             }
             DecodedAction::Rps { p_idx, choice } => {
                 let move_key = match choice {

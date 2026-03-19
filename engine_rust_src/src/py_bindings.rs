@@ -1559,7 +1559,11 @@ impl PyGameState {
                     "SelectMode".to_string()
                 } else if label.contains("Select Color") {
                     "SelectColor".to_string()
-                } else if label.contains("Select Stage Slot") {
+                } else if label.contains("Select Stage Slot")
+                    || label.contains("Select Left Slot")
+                    || label.contains("Select Mid Slot")
+                    || label.contains("Select Right Slot")
+                {
                     "SelectStageSlot".to_string()
                 } else if label.contains("Select Choice") {
                     "SelectChoice".to_string()

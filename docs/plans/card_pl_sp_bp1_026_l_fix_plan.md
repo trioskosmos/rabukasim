@@ -52,7 +52,7 @@ Manual Pseudocodeで記述されている形式:
 
 これらの形式は現在のコンパイラで1. `COUNT_CARDS` が `CONDITION_AL正しく解析できません:
 IASES` に未定義 → `ConditionType.NONE` として扱われる
-2. `SET_HEART_REQ` が `EFFECT_ALIASES` に未定義 → `EffectType.META_RULE` として扱われる
+2. `SET_HEART_REQ` が現在の effect alias bucket に未定義 → `EffectType.META_RULE` として扱われる
 3. 配列形式 `[2,2,3,3,6,6]` のパースが正しく行われない
 
 ## 修正オプション
@@ -67,7 +67,7 @@ IASES` に未定義 → `ConditionType.NONE` として扱われる
 - 実装に時間がかかる
 
 **実装内容**:
-1. `compiler/parser_v2.py` に以下を追加:
+1. 旧 `compiler/parser_v2.py` 相当の parser layer に以下を追加:
    - `COUNT_CARDS` → `GROUP_FILTER` へのマッピング
    - `SET_HEART_REQ` → `SET_HEART_COST` へのマッピング
    - 配列形式 `[2,2,3,3,6,6]` の特別処理
@@ -119,8 +119,8 @@ IASES` に未定義 → `ConditionType.NONE` として扱われる
 
 ### タスク1: パーサー修正 (Code Mode)
 
-- [ ] `compiler/parser_v2.py` の `CONDITION_ALIASES` に `COUNT_CARDS` 追加
-- [ ] `compiler/parser_v2.py` の `EFFECT_ALIASES` に `SET_HEART_REQ` 追加
+- [ ] `compiler/aliases.py` の `CONDITION_SEMANTIC_SPECIAL_CASES` に `COUNT_CARDS` 追加
+- [ ] `compiler/aliases.py` の `EFFECT_SEMANTIC_SPECIAL_CASES` に `SET_HEART_REQ` 追加
 - [ ] 配列形式 `[2,2,3,3,6,6]` のパース処理追加
 
 ### タスク2: エンジン拡張 (Code Mode)

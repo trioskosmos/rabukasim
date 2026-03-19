@@ -2233,6 +2233,10 @@ def do_action():
                     max_safety -= 1
                     print(f"[DEBUG] Loop: phase={gs.phase} current_player={gs.current_player}")
 
+                    is_special_phase = (gs.phase in (Phase.RPS, Phase.TurnChoice)) or (
+                        hasattr(gs.phase, "name") and gs.phase.name in ("RPS", "TurnChoice")
+                    )
+
                     # A. Automatic Phases (SETUP, 1=Active, 2=Energy, 3=Draw, 6=Perf1, 7=Perf2, 8=LiveResult)
                     if gs.phase == Phase.SETUP or gs.phase in (1, 2, 3, 6, 7, 8):
                         print(f"[DEBUG] Auto-advancing phase {gs.phase}")
@@ -2241,6 +2245,43 @@ def do_action():
                             room["state"] = res
                             gs = res
                         continue
+
+                    # Special setup phases in PvE can bounce between human and AI.
+                    # If the human still has a legal setup choice after a tie/reset,
+                    # stop here so the client gets another shot instead of the AI
+                    # immediately chaining through the next RPS/turn-order action.
+                    if game_mode == "pve" and is_special_phase:
+                        try:
+                            human_legal_mask = gs.get_legal_actions(player_idx=0)
+                            ai_legal_mask = gs.get_legal_actions(player_idx=1)
+                            human_can_act = bool(np.any(human_legal_mask))
+                            ai_can_act = bool(np.any(ai_legal_mask))
+                            print(
+                                f"[DEBUG] Special PvE phase readiness: "
+                                f"human_can_act={human_can_act} ai_can_act={ai_can_act}"
+                            )
+                            if human_can_act:
+                                print(f"[DEBUG] Breaking loop for human input in special phase {gs.phase}")
+                                break
+                            if ai_can_act:
+                                print(f"[DEBUG] AI handling special phase {gs.phase}")
+                                if room.get("engine") == "rust":
+                                    if room.get("card_set") == "vanilla":
+                                        gs.step_opponent_turnseq()
+                                    else:
+                                        gs.step_opponent_mcts(10)
+                                else:
+                                    if ai_agent is not None:
+                                        aid = ai_agent.choose_action(gs, 1)
+                                    else:
+                                        aid = 0
+                                    res = gs.step(aid)
+                                    if res is not None:
+                                        room["state"] = res
+                                        gs = res
+                                continue
+                        except Exception as special_phase_error:
+                            print(f"[DEBUG] Special PvE phase handling fallback: {special_phase_error}")
 
                     # B. AI Turn (P1) - ONLY if PVE
                     if gs.current_player == 1 and game_mode == "pve":

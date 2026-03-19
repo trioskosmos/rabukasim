@@ -119,6 +119,12 @@ def generate_rust():
                     valid = False
                     break
 
+                # Hardcoded output only supports plain slot literals or the ctx target sentinel.
+                # Packed slot words can carry encoded flags; those should fall back to the interpreter.
+                if s not in (0, 1, 2, 3, 4, 10):
+                    valid = False
+                    break
+
                 slot = "ctx.target_slot as usize" if s == 10 else f"{s} as usize"
 
                 if real_op in OPCODES:

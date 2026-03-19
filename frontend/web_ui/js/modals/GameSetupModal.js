@@ -44,11 +44,15 @@ export const GameSetupModal = {
 
         if (p0Col) p0Col.style.display = DISPLAY_VALUES.BLOCK;
         if (p1Col) {
-            p1Col.style.display = DISPLAY_VALUES.BLOCK;
-            p1Col.style.opacity = '1';
-            p1Col.style.pointerEvents = 'auto';
-            const p1Title = p1Col.querySelector('h4');
-            if (p1Title) p1Title.textContent = (mode === 'pve') ? '[AI] Player 2 (AI)' : '[P2] Player 2 (Opponent)';
+            if (mode === 'pvp') {
+                p1Col.style.display = DISPLAY_VALUES.NONE;
+            } else {
+                p1Col.style.display = DISPLAY_VALUES.BLOCK;
+                p1Col.style.opacity = '1';
+                p1Col.style.pointerEvents = 'auto';
+                const p1Title = p1Col.querySelector('h4');
+                if (p1Title) p1Title.textContent = (mode === 'pve') ? '[AI] Player 2 (AI)' : '[P2] Player 2 (Opponent)';
+            }
         }
     },
 
@@ -148,18 +152,26 @@ export const GameSetupModal = {
                 return;
             }
 
+            const payload = {
+                mode: Modals.setupMode,
+                card_set: cardSet,
+                p0_deck: p0Deck.main,
+                p0_energy: p0Deck.energy,
+                public: true
+            };
+
+            // Only send P1 deck if NOT in manual PVP mode (Host sets it for PvE or Hotseat)
+            // Hotseat is currently handled via 'pve' mode with toggle-hotseat,
+            // but if we ever use 'pvp' for hotseat this might need adjustment.
+            if (Modals.setupMode !== 'pvp') {
+                payload.p1_deck = p1Deck.main;
+                payload.p1_energy = p1Deck.energy;
+            }
+
             const res = await fetch('api/rooms/create', {
                 method: 'POST',
                 headers: Network.getHeaders(),
-                body: JSON.stringify({
-                    mode: Modals.setupMode,
-                    card_set: cardSet,
-                    p0_deck: p0Deck.main,
-                    p1_deck: p1Deck.main,
-                    p0_energy: p0Deck.energy,
-                    p1_energy: p1Deck.energy,
-                    public: true
-                })
+                body: JSON.stringify(payload)
             });
 
             if (!res.ok) {
@@ -173,11 +185,20 @@ export const GameSetupModal = {
                 State.cardSet = cardSet;
                 State.offlineMode = false;
                 if (data.session) {
-                    Network.saveSession(data.room_id, { token: data.session, playerId: data.player_idx });
+                    Network.saveSession(data.room_id, data.session);
                 }
                 localStorage.setItem('lovelive_room_code', State.roomCode);
 
-                ModalManager.hide(DOM_IDS.MODAL_ROOM);
+                const waitingHint = document.getElementById('room-waiting-hint');
+                if (waitingHint && Modals.setupMode === 'pvp') {
+                    waitingHint.textContent = `Waiting for an opponent. Room code: ${State.roomCode}`;
+                }
+
+                if (Modals.setupMode === 'pvp') {
+                    ModalManager.show(DOM_IDS.MODAL_ROOM);
+                } else {
+                    ModalManager.hide(DOM_IDS.MODAL_ROOM);
+                }
 
                 GameSetupModal.closeSetupModal();
 
@@ -220,7 +241,10 @@ export const GameSetupModal = {
             startBtn.onclick = GameSetupModal.submitPvPDeck;
         }
 
-        Modals.fetchAndPopulateDecks();
+        Modals.fetchAndPopulateDecks().then(() => {
+            const selectId = pid === 0 ? 'p0-deck-select' : 'p1-deck-select';
+            Modals.populateDeckSelect(selectId, Modals.deckPresets);
+        });
     },
 
     submitPvPDeck: async () => {

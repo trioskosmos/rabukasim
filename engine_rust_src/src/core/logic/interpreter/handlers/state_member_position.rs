@@ -72,7 +72,7 @@ pub fn handle_add_stage_energy(
     }
     let slot = resolved_slot as usize;
     for _ in 0..v.max(0) {
-        if let Some(cid) = state.players[p_idx].energy_deck.pop() {
+        if let Some(cid) = state.players[p_idx].deck.pop() {
             state.players[p_idx].stage_energy[slot].push(cid);
         }
     }

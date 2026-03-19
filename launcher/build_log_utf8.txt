@@ -1,0 +1,212 @@
+﻿cargo :    Compiling ze
+rovec-derive v0.11.2
+発生場所 行:1 文字:1
++ cargo build --release
+ --features nn --bin ra
+buka_launcher > build_l
+og ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (   Compiling    
+ zerovec-derive v0.    
+11.2:String) [], R    e
+moteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+   Compiling displaydoc
+ v0.2.5
+   Compiling serde_deri
+ve v1.0.228
+   Compiling zerofrom-d
+erive v0.1.6
+   Compiling yoke-deriv
+e v0.8.1
+   Compiling num-traits
+ v0.2.19
+   Compiling ureq v3.2.
+0
+   Compiling crypto-com
+mon v0.1.7
+   Compiling block-buff
+er v0.10.4
+   Compiling cfg-if v1.
+0.4
+   Compiling cpufeature
+s v0.2.17
+   Compiling once_cell 
+v1.21.3
+   Compiling rayon-core
+ v1.13.0
+   Compiling zmij v1.0.
+19
+   Compiling tracing-co
+re v0.1.36
+   Compiling digest v0.
+10.7
+   Compiling sha2 v0.10
+.9
+   Compiling same-file 
+v1.0.6
+   Compiling walkdir v2
+.5.0
+   Compiling crossbeam-
+deque v0.8.6
+   Compiling rand_chach
+a v0.9.0
+   Compiling num-intege
+r v0.1.46
+   Compiling num-comple
+x v0.4.6
+   Compiling getrandom 
+v0.2.17
+   Compiling equivalent
+ v1.0.2
+   Compiling zerofrom v
+0.1.6
+   Compiling unicase v2
+.9.0
+   Compiling serde_json
+ v1.0.149
+   Compiling foldhash v
+0.1.5
+   Compiling percent-en
+coding v2.3.2
+   Compiling yoke v0.8.
+1
+   Compiling pin-projec
+t-lite v0.2.17
+   Compiling utf8_iter 
+v1.0.4
+   Compiling allocator-
+api2 v0.2.21
+   Compiling mime_guess
+ v2.0.5
+   Compiling ndarray v0
+.17.2
+   Compiling tracing v0
+.1.44
+   Compiling form_urlen
+coded v1.2.2
+   Compiling rand_core 
+v0.6.4
+   Compiling rand v0.9.
+2
+   Compiling rust-embed
+-utils v7.8.1
+   Compiling zerovec v0
+.11.5
+   Compiling zerotrie v
+0.2.3
+   Compiling either v1.
+15.0
+   Compiling hashbrown 
+v0.15.5
+   Compiling log v0.4.2
+9
+   Compiling itoa v1.0.
+17
+   Compiling memchr v2.
+7.6
+   Compiling rayon v1.1
+1.0
+   Compiling rand_chach
+a v0.3.1
+   Compiling rust-embed
+-impl v6.8.1
+   Compiling ndarray v0
+.16.1
+   Compiling tinystr v0
+.8.2
+   Compiling potential_
+utf v0.1.4
+   Compiling ort-sys v2
+.0.0-rc.11
+   Compiling lru v0.13.
+0
+   Compiling icu_locale
+_core v2.1.1
+   Compiling serde v1.0
+.228
+   Compiling icu_collec
+tions v2.1.1
+   Compiling rand_pcg v
+0.9.0
+   Compiling serde_repr
+ v0.1.20
+   Compiling rabuka_lau
+ncher v0.1.0 (C:\Users\
+trios\.gemini\antigravi
+ty\vscode\loveca-copy\l
+auncher)
+   Compiling smallvec v
+1.15.1
+   Compiling bincode v1
+.3.3
+   Compiling httpdate v
+1.0.3
+   Compiling mime v0.3.
+17
+   Compiling ascii v1.1
+.0
+   Compiling chunked_tr
+ansfer v1.5.0
+   Compiling tiny_http 
+v0.12.0
+   Compiling rust-embed
+ v6.8.1
+   Compiling rand v0.8.
+5
+   Compiling uuid v1.20
+.0
+   Compiling icu_provid
+er v2.1.1
+error: failed to remove
+ C:\Users\trios\.gemini
+\antigravity\vscode\lov
+eca-copy\launcher\targe
+t\release\deps\serde_js
+on-8c360056eb60cdaa.ser
+de_json.ef06a1df06e3a77
+7-cgu.01.rcgu.o: 繝励Ο繧ｻ繧
+ｹ縺ｯ繝輔ぃ繧､繝ｫ縺ｫ繧｢繧ｯ繧ｻ繧ｹ縺ｧ縺
+阪∪縺帙ｓ縲ょ挨縺ｮ繝励Ο繧ｻ繧ｹ縺御ｽｿ逕ｨ
+荳ｭ縺ｧ縺吶・(os error 32)
+
+error: failed to remove
+ C:\Users\trios\.gemini
+\antigravity\vscode\lov
+eca-copy\launcher\targe
+t\release\deps\serde_js
+on-8c360056eb60cdaa.ser
+de_json.ef06a1df06e3a77
+7-cgu.07.rcgu.o: 繝励Ο繧ｻ繧
+ｹ縺ｯ繝輔ぃ繧､繝ｫ縺ｫ繧｢繧ｯ繧ｻ繧ｹ縺ｧ縺
+阪∪縺帙ｓ縲ょ挨縺ｮ繝励Ο繧ｻ繧ｹ縺御ｽｿ逕ｨ
+荳ｭ縺ｧ縺吶・(os error 32)
+
+error: could not compil
+e `serde_json` (lib) du
+e to 2 previous errors
+warning: build failed, 
+waiting for other jobs 
+to finish...
+error: failed to write 
+C:\Users\trios\.gemini\
+antigravity\vscode\love
+ca-copy\launcher\target
+\release\deps\libtiny_h
+ttp-ac5440000e4e7bc5.rm
+eta: 繝励Ο繧ｻ繧ｹ縺ｯ繝輔ぃ繧､繝ｫ縺ｫ
+繧｢繧ｯ繧ｻ繧ｹ縺ｧ縺阪∪縺帙ｓ縲ょ挨縺ｮ繝励
+Ο繧ｻ繧ｹ縺御ｽｿ逕ｨ荳ｭ縺ｧ縺吶・(os 
+error 32)
+
+error: could not compil
+e `tiny_http` (lib) due
+ to 1 previous error

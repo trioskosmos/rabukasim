@@ -191,7 +191,7 @@ export const DebugModal = {
         abilitySearch: '',
     },
 
-    _activeTab: 'trace',
+    _activeTab: 'json',
     _snapshot: null,
     _historyExport: null,
     _selectedHistoryIndex: null,
@@ -258,10 +258,6 @@ export const DebugModal = {
             return;
         }
 
-        DebugModal.renderInspectorTab();
-        DebugModal.renderTraceTab();
-        DebugModal.renderStringTab();
-        DebugModal.renderJsonTab();
         DebugModal.switchTab(DebugModal._activeTab);
     },
 
@@ -890,7 +886,7 @@ export const DebugModal = {
             .filter((entry) => DebugModal._matchesSearch(entry, search));
 
         container.innerHTML = `
-            <div style="display:flex; flex-direction:column; height:100%; padding:14px; gap:12px; overflow:auto;">
+            <div style="display:flex; flex-direction:column; height:100%; padding:0; gap:10px; overflow:auto;">
                 ${renderStatusBanner(DebugModal._status)}
                 <div style="display:grid; grid-template-columns:minmax(140px, 0.9fr) minmax(140px, 0.9fr) minmax(220px, 1.4fr); gap:8px;">
                     <div>
@@ -942,7 +938,7 @@ export const DebugModal = {
         const historyEntry = DebugModal._getSelectedHistoryEntry();
 
         container.innerHTML = `
-            <div style="display:flex; flex-direction:column; height:100%; padding:14px; gap:12px; overflow:hidden;">
+            <div style="display:flex; flex-direction:column; height:100%; padding:0; gap:10px; overflow:hidden;">
                 ${renderStatusBanner(DebugModal._status)}
                 <div class="debug-action-row">
                     <button class="btn btn-secondary btn-xs" data-action="toggle-debug-mode">Trace ${DebugModal._snapshot?.debug_mode ? 'On' : 'Off'}</button>
@@ -978,7 +974,7 @@ export const DebugModal = {
         const serialized = selectedEntry?.serialized || JSON.stringify(DebugModal._getCheckpointPayload());
 
         container.innerHTML = `
-            <div style="display:flex; flex-direction:column; height:100%; padding:14px; gap:10px; overflow:hidden;">
+            <div style="display:flex; flex-direction:column; height:100%; padding:0; gap:8px; overflow:hidden;">
                 ${renderStatusBanner(DebugModal._status)}
                 <div style="font-size:11px; opacity:0.88; background:rgba(56,189,248,0.1); padding:10px 12px; border-radius:6px; border-left:3px solid #38bdf8; line-height:1.45;">
                     <strong>Checkpoint state strings</strong><br/>
@@ -1038,7 +1034,7 @@ export const DebugModal = {
         const [modeTitle, modeHint] = labels[DebugModal._jsonMode] || labels.checkpoint;
 
         container.innerHTML = `
-            <div style="display:flex; flex-direction:column; height:100%; padding:14px; gap:10px; overflow:hidden;">
+            <div style="display:flex; flex-direction:column; height:100%; padding:0; gap:8px; overflow:hidden;">
                 ${renderStatusBanner(DebugModal._status)}
                 <div class="debug-action-row">
                     <button class="btn btn-secondary btn-xs" data-action="debug-render-minimal-json">Minimal</button>

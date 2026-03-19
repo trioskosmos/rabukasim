@@ -6,9 +6,55 @@ from typing import Any, Dict
 
 import numpy as np
 
+from engine.game.effects.choices import queue_select_from_list_choice
+from engine.game.effects.hand import discard_hand_cards
 from engine.models.ability import ConditionType, Effect, EffectType, TargetType
 from engine.models.enums import Group, Unit
 from engine.models.opcodes import Opcode
+
+
+def _decode_real_value(p: Any, v: int, a: int, s_packed: int) -> int:
+    """Resolve bytecode scaling/dynamic-count semantics into a concrete value."""
+    real_v = v
+    if (a & 0x40) == 0:
+        return real_v
+
+    cond_type = ConditionType(v)
+    if cond_type == ConditionType.COUNT_STAGE:
+        raw_count = len([c for c in p.stage if c >= 0])
+    elif cond_type == ConditionType.COUNT_HAND:
+        raw_count = len(p.hand)
+    elif cond_type == ConditionType.COUNT_DISCARD:
+        raw_count = len(p.discard)
+    elif cond_type == ConditionType.COUNT_ENERGY:
+        raw_count = len(p.energy_zone)
+    elif cond_type == ConditionType.COUNT_SUCCESS_LIVE:
+        raw_count = len(p.success_lives)
+    elif cond_type == ConditionType.COUNT_LIVE_ZONE:
+        raw_count = len(p.live_zone)
+    else:
+        raw_count = 0
+
+    if (a & 0x20) != 0:
+        scaling_factor = s_packed >> 4
+        if scaling_factor > 0:
+            return (s_packed & 0x0F) * (raw_count // scaling_factor)
+        return 0
+    return raw_count
+
+
+def _append_deck_top_to_discard(game: Any, player: Any, count: int) -> None:
+    for _ in range(count):
+        if not player.main_deck:
+            game._resolve_deck_refresh(player)
+        if player.main_deck:
+            player.discard.append(player.main_deck.pop(0))
+
+
+def _append_energy_to_discard(player: Any, count: int) -> None:
+    for _ in range(count):
+        if player.energy_zone:
+            player.discard.append(player.energy_zone.pop())
 
 
 def resolve_effect_opcode(game: Any, opcode: Opcode, seg: Any, context: Dict[str, Any]) -> None:
@@ -20,37 +66,7 @@ def resolve_effect_opcode(game: Any, opcode: Opcode, seg: Any, context: Dict[str
     a = seg[2]
     s_packed = seg[3]
 
-    # Decode dynamic flag (Bit 6 of 'a')
-    real_v = v
-    if (a & 0x40) != 0:
-        cond_type = ConditionType(v)
-        if cond_type == ConditionType.COUNT_STAGE:
-            raw_count = len([c for c in p.stage if c >= 0])
-        elif cond_type == ConditionType.COUNT_HAND:
-            raw_count = len(p.hand)
-        elif cond_type == ConditionType.COUNT_DISCARD:
-            raw_count = len(p.discard)
-        elif cond_type == ConditionType.COUNT_ENERGY:
-            raw_count = len(p.energy_zone)
-        elif cond_type == ConditionType.COUNT_SUCCESS_LIVE:
-            raw_count = len(p.success_lives)
-        elif cond_type == ConditionType.COUNT_LIVE_ZONE:
-            raw_count = len(p.live_zone)
-        else:
-            raw_count = 0
-
-        # Decode scaling flag (Bit 5 of 'a')
-        if (a & 0x20) != 0:
-            # PER_X scaling: real_v = target_v * (raw_count // scaling_factor)
-            scaling_factor = s_packed >> 4  # Top 4 bits of s_packed store scaling factor
-            if scaling_factor > 0:
-                real_v = (s_packed & 0x0F) * (raw_count // scaling_factor)
-            else:
-                real_v = 0
-        else:
-            real_v = raw_count
-
-    # Decode slot/comparison
+    real_v = _decode_real_value(p, v, a, s_packed)
     s = s_packed & 0x0F
 
     # Condition Check Opcodes (Return/Jump logic usually handled in loop, but we need 'cond' state)
@@ -137,19 +153,18 @@ def resolve_effect_opcode(game: Any, opcode: Opcode, seg: Any, context: Dict[str
         if self.looked_cards:
             dest = "discard" if (a & 0x0F) == 1 else "hand"
             target_pid = opp_idx if s == 2 else p.player_id
-            self.pending_choices.append(
-                (
-                    "SELECT_FROM_LIST",
-                    {
-                        "cards": self.looked_cards,
-                        "count": real_v,
-                        "reason": "look_and_choose",
-                        "destination": dest,
-                        "target_player_id": target_pid,
-                        "player_id": p.player_id,
-                        "source_card_id": context.get("source_card_id", context.get("card_id", -1)),
-                    },
-                )
+            queue_select_from_list_choice(
+                self,
+                {
+                    "player_id": p.player_id,
+                    "source_card_id": context.get("source_card_id", context.get("card_id", -1)),
+                },
+                self.looked_cards,
+                real_v,
+                "look_and_choose",
+                "Choose cards from looked list",
+                target_pid,
+                extra_params={"destination": dest},
             )
 
     elif opcode == Opcode.TAP_OPPONENT:
@@ -397,23 +412,11 @@ def resolve_effect_opcode(game: Any, opcode: Opcode, seg: Any, context: Dict[str
     elif opcode == Opcode.MOVE_TO_DISCARD:
         # v = count, a = source (1=deck_top, 2=hand, 3=energy), s = target_slot
         if a == 1:  # From Deck Top
-            for _ in range(v):
-                if not p.main_deck:
-                    self._resolve_deck_refresh(p)
-                if p.main_deck:
-                    cid = p.main_deck.pop(0)
-                    p.discard.append(cid)
+            _append_deck_top_to_discard(self, p, v)
         elif a == 2:  # From Hand
-            for _ in range(v):
-                if p.hand:
-                    cid = p.hand.pop()
-                    p.hand_added_turn.pop()
-                    p.discard.append(cid)
+            discard_hand_cards(p, v)
         elif a == 3:  # From Energy
-            for _ in range(v):
-                if p.energy_zone:
-                    cid = p.energy_zone.pop()
-                    p.discard.append(cid)
+            _append_energy_to_discard(p, v)
         elif s == 0:  # Target SELF (Member on stage)
             scid = context.get("source_card_id", context.get("card_id", -1))
             for i in range(3):

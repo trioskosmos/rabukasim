@@ -158,6 +158,18 @@
     box-shadow: var(--glow-purple);
 }
 
+.btn-accent-red {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+}
+
+.btn-accent-red:hover {
+    background: var(--accent-red);
+    color: white;
+    box-shadow: var(--glow-red);
+}
+
 .btn-accent-gray {
     background: rgba(255, 255, 255, 0.05);
     border-color: var(--text-dim);

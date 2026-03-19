@@ -2,7 +2,6 @@ import { State } from '../state.js';
 import { ActionButtons } from './ActionButtons.js';
 import { Tooltips } from '../ui_tooltips.js';
 import * as i18n from '../i18n/index.js';
-
 export const ChoiceView = {
     render: (state, container) => {
         const choice = state.pending_choice;
@@ -110,12 +109,19 @@ export const ChoiceView = {
                     return;
                 }
                 const optCardId = opt.card_id !== undefined ? opt.card_id : cardId;
+                const fallbackName = opt.name || opt.text || `Option ${idx + 1}`;
                 const a = {
                     id: actionId,
                     source_card_id: sourceCardId,
                     card_id: optCardId,
-                    name: opt.name || opt.text || `Option ${idx + 1}`,
-                    text: opt.text
+                    name: fallbackName,
+                    text: opt.text,
+                    metadata: {
+                        category: 'CHOICE',
+                        choice_type: choice.choice_type,
+                        opcode: choice.opcode,
+                        choice_idx: idx,
+                    }
                 };
                 const btn = ActionButtons.createActionButton(a, false, 'confirm', state);
                 btn.style.width = '100%';

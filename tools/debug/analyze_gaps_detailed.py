@@ -4,6 +4,19 @@
 import json
 import re
 from collections import defaultdict
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
+from compiler.aliases import (
+    CONDITION_SEMANTIC_SPECIAL_CASES,
+    CONDITION_TRUE_ALIASES,
+    EFFECT_GRAMMAR_CONVENIENCES,
+    EFFECT_SEMANTIC_SPECIAL_CASES,
+    EFFECT_TRUE_ALIASES,
+    TRIGGER_ALIASES,
+)
 
 # Load consolidated abilities (with card info)
 # Need to reload to get card info from the markdown or another source
@@ -89,46 +102,16 @@ for ability_text, pseudo in consolidated.items():
             if match:
                 triggers.add(match.group(1))
 
-# Now load the parser to get what's supported
-import sys
-
-sys.path.insert(0, "compiler")
-
-# Read parser_v2.py to extract aliases
-with open("compiler/parser_v2.py", "r", encoding="utf-8") as f:
-    parser_code = f.read()
-
-# Extract aliases
-effect_alias_match = re.search(r"EFFECT_ALIASES\s*=\s*\{([^}]+)\}", parser_code, re.DOTALL)
 all_effect_aliases = {}
-if effect_alias_match:
-    for line in effect_alias_match.group(1).split("\n"):
-        m = re.match(r'\s*"(\w+)":\s*"(\w+)"', line)
-        if m:
-            all_effect_aliases[m.group(1)] = m.group(2)
+all_effect_aliases.update(EFFECT_TRUE_ALIASES)
+all_effect_aliases.update(EFFECT_GRAMMAR_CONVENIENCES)
+all_effect_aliases.update({alias: target for alias, (target, params) in EFFECT_SEMANTIC_SPECIAL_CASES.items()})
 
-effect_alias_params_match = re.search(r"EFFECT_ALIASES_WITH_PARAMS\s*=\s*\{([^}]+)\}", parser_code, re.DOTALL)
-if effect_alias_params_match:
-    for line in effect_alias_params_match.group(1).split("\n"):
-        m = re.match(r'\s*"(\w+)":\s*\(("[^"]+")', line)
-        if m:
-            all_effect_aliases[m.group(1)] = m.group(2).strip('"')
-
-cond_alias_match = re.search(r"CONDITION_ALIASES\s*=\s*\{([^}]+)\}", parser_code, re.DOTALL)
 all_condition_aliases = {}
-if cond_alias_match:
-    for line in cond_alias_match.group(1).split("\n"):
-        m = re.match(r'\s*"(\w+)":\s*\(("[^"]+")', line)
-        if m:
-            all_condition_aliases[m.group(1)] = m.group(2).strip('"')
+all_condition_aliases.update({alias: target for alias, (target, params) in CONDITION_TRUE_ALIASES.items()})
+all_condition_aliases.update({alias: target for alias, (target, params) in CONDITION_SEMANTIC_SPECIAL_CASES.items()})
 
-trigger_alias_match = re.search(r"TRIGGER_ALIASES\s*=\s*\{([^}]+)\}", parser_code, re.DOTALL)
-all_trigger_aliases = {}
-if trigger_alias_match:
-    for line in trigger_alias_match.group(1).split("\n"):
-        m = re.match(r'\s*"(\w+)":\s*"(\w+)"', line)
-        if m:
-            all_trigger_aliases[m.group(1)] = m.group(2)
+all_trigger_aliases = dict(TRIGGER_ALIASES)
 
 # Load patterns
 from patterns.conditions import CONDITION_PATTERNS

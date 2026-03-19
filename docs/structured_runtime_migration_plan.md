@@ -19,7 +19,7 @@ Scope:
 
 - `engine/models/ability.py`
 - `engine/models/structured_instruction_ir.py`
-- `compiler/parser_v2.py`
+- `compiler/parser_v2.py` (legacy entry point; parser logic is now split across `parser_*` modules)
 - `compiler/main.py`
 
 Work:
@@ -108,7 +108,7 @@ Scope:
 
 - `engine/models/ability_ir.py`
 - `engine/models/ability.py`
-- `compiler/parser_v2.py`
+- `compiler/parser_v2.py` (legacy parser surface at the time of writing)
 
 Work:
 

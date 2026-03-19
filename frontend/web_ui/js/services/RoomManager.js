@@ -6,12 +6,28 @@ import { DOM_IDS } from '../constants_dom.js';
 
 export const RoomManager = {
     // Session Management
+    normalizeSession: (sessionData) => {
+        if (!sessionData) return null;
+        if (typeof sessionData === 'string') {
+            return { token: sessionData };
+        }
+        if (typeof sessionData === 'object') {
+            return {
+                token: sessionData.token || sessionData.session_id || sessionData.session || null,
+                playerId: sessionData.playerId ?? sessionData.player_id ?? sessionData.player_idx
+            };
+        }
+        return null;
+    },
+
     saveSession: (room, sessionData) => {
         if (!room) return;
+        const normalized = RoomManager.normalizeSession(sessionData);
+        if (!normalized?.token) return;
         const key = `lovelive_session_${room}`;
-        localStorage.setItem(key, JSON.stringify(sessionData));
-        State.sessionToken = sessionData.token;
-        if (sessionData.playerId !== undefined) State.perspectivePlayer = sessionData.playerId;
+        localStorage.setItem(key, JSON.stringify(normalized));
+        State.sessionToken = normalized.token;
+        if (normalized.playerId !== undefined) State.perspectivePlayer = normalized.playerId;
     },
 
     loadSession: (room) => {
@@ -21,9 +37,12 @@ export const RoomManager = {
         if (saved) {
             try {
                 const data = JSON.parse(saved);
-                State.sessionToken = data.token;
-                if (data.playerId !== undefined) State.perspectivePlayer = data.playerId;
-                return data;
+                const normalized = RoomManager.normalizeSession(data);
+                if (normalized?.token) {
+                    State.sessionToken = normalized.token;
+                    if (normalized.playerId !== undefined) State.perspectivePlayer = normalized.playerId;
+                    return normalized;
+                }
             } catch (e) {
                 console.error("Failed to load session", e);
             }
@@ -34,6 +53,7 @@ export const RoomManager = {
     // Room Management
     createRoom: async (mode = 'pve', networkFacade) => {
         try {
+            const previousRoomCode = State.roomCode;
             State.resetForNewGame();
 
             const res = await fetch('api/rooms/create', {
@@ -48,10 +68,24 @@ export const RoomManager = {
                 if (networkFacade?.clearPlannerData) networkFacade.clearPlannerData();
                 localStorage.setItem('lovelive_room_code', State.roomCode);
 
-                State.sessionToken = null;
-                localStorage.removeItem(`lovelive_session_${State.roomCode}`);
+                if (previousRoomCode && previousRoomCode !== State.roomCode) {
+                    localStorage.removeItem(`lovelive_session_${previousRoomCode}`);
+                }
+                if (data.session) {
+                    RoomManager.saveSession(State.roomCode, data.session);
+                } else {
+                    State.sessionToken = null;
+                    localStorage.removeItem(`lovelive_session_${State.roomCode}`);
+                }
 
-                ModalManager.hide(DOM_IDS.MODAL_ROOM);
+                const waitingHint = document.getElementById('room-waiting-hint');
+                if (waitingHint && mode === 'pvp') {
+                    waitingHint.textContent = `Waiting for an opponent. Room code: ${State.roomCode}`;
+                }
+
+                if (mode !== 'pvp') {
+                    ModalManager.hide(DOM_IDS.MODAL_ROOM);
+                }
                 log(`Created Room: ${State.roomCode} (${mode})`);
 
                 if (networkFacade?.fetchState) await networkFacade.fetchState();
@@ -96,7 +130,41 @@ export const RoomManager = {
             const data = await res.json();
             if (data.success) {
                 State.cardSet = data.card_set || 'compiled';
-                RoomManager.saveSession(code, { token: data.session, playerId: data.player_idx });
+                if (data.session) {
+                    RoomManager.saveSession(code, data.session);
+                }
+
+                if (window.Modals?.fetchAndPopulateDecks && (!window.Modals.deckPresets || window.Modals.deckPresets.length === 0)) {
+                    await window.Modals.fetchAndPopulateDecks();
+                }
+                if (window.Modals?.deckPresets?.length) {
+                    window.Modals.populateDeckSelect('pjoin-deck-select', window.Modals.deckPresets);
+                }
+
+                // Submit joiner deck if selected
+                if (window.Modals?.getDeckConfig) {
+                    const config = window.Modals.getDeckConfig('join');
+
+                    if (config && (config.type !== 'random' || config.id)) {
+                        try {
+                            const resolved = await window.Modals.resolveDeck(config);
+                            if (resolved) {
+                                await fetch('api/set_deck', {
+                                    method: 'POST',
+                                    headers: networkFacade.getHeaders(),
+                                    body: JSON.stringify({
+                                        player: data.session?.player_id !== undefined ? data.session.player_id : 1,
+                                        deck: resolved.main,
+                                        energy_deck: resolved.energy
+                                    })
+                                });
+                                log("[Lobby] Joiner deck submitted successfully.");
+                            }
+                        } catch (deckError) {
+                            console.error("Failed to set joiner deck", deckError);
+                        }
+                    }
+                }
             }
         } catch (e) {
             console.error("Join API error", e);
@@ -152,6 +220,8 @@ export const RoomManager = {
 
             DOMUtils.clear(DOM_IDS.PUBLIC_ROOMS_LIST);
             data.rooms.forEach(r => {
+                const roomId = r.room_id || r.id;
+                const players = r.players ?? r.players_count ?? 0;
                 const div = document.createElement('div');
                 div.className = 'public-room-item';
                 div.style.padding = '5px';
@@ -160,15 +230,15 @@ export const RoomManager = {
                 div.style.display = 'flex';
                 div.style.justifyContent = 'space-between';
                 div.innerHTML = `
-                    <span>Room <b>${r.id}</b> (${r.mode})</span>
-                    <span style="color:#aaa; font-size:0.8rem;">${r.players_count}/2</span>
+                    <span>Room <b>${roomId}</b> (${r.mode})</span>
+                    <span style="color:#aaa; font-size:0.8rem;">${players}/2</span>
                 `;
                 div.onclick = () => {
                     const input = DOMUtils.getElement(DOM_IDS.ROOM_CODE_INPUT);
-                    if (input) input.value = r.id;
+                    if (input) input.value = roomId;
                     // Note: joinRoom needs the network facade, so we'll let the UI call the facade version
                     if (window.Network && window.Network.joinRoom) {
-                        window.Network.joinRoom(r.id);
+                        window.Network.joinRoom(roomId);
                     }
                 };
                 list.appendChild(div);

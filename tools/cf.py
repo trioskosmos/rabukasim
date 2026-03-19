@@ -59,7 +59,7 @@ class DataStore:
 
         # Load Compiled
         try:
-            with open(os.path.join(self.base_path, "data/cards_compiled.json"), "r", encoding="utf-8") as f:
+            with open(os.path.join(self.base_path, "data", "cards_compiled.json"), "r", encoding="utf-8") as f:
                 self.cards_compiled = json.load(f)
                 for cid, c in self.cards_compiled.items():
                     c_no = c.get("card_no")
@@ -85,9 +85,19 @@ class DataStore:
 
         # Load Consolidated Pseudocode
         try:
-            with open(os.path.join(self.base_path, "data/consolidated_abilities.json"), "r", encoding="utf-8") as f:
-                self.consolidated_pseudo = json.load(f)
+            with open(os.path.join(self.base_path, "data", "consolidated_abilities.json"), "r", encoding="utf-8") as f:
+                data = json.load(f)
+                # Create a card_no mapping for faster lookup
+                self.consolidated_pseudo = {}
+                self.consolidated_pseudo_by_no = {}
+                for text, entry in data.items():
+                    self.consolidated_pseudo[text.strip()] = entry
+                    if isinstance(entry, dict) and "cards" in entry:
+                        for cno in entry["cards"]:
+                            self.consolidated_pseudo_by_no[cno] = entry
         except Exception as e:
+            self.consolidated_pseudo = {}
+            self.consolidated_pseudo_by_no = {}
             print(f"Warning: Failed to load consolidated_abilities.json: {e}")
 
         self.loaded = True
@@ -379,10 +389,14 @@ class CardReporter:
             if card_no in self.ds.manual_pseudo:
                 pseudo = self.ds.manual_pseudo[card_no].get("pseudocode")
                 print(f"- **Pseudocode (Manual)**: `{pseudo}`")
+            elif card_no in self.ds.consolidated_pseudo_by_no:
+                pseudo = self.ds.consolidated_pseudo_by_no[card_no]
+                if isinstance(pseudo, dict): pseudo = pseudo.get("pseudocode", "")
+                print(f"- **Pseudocode (Consolidated by Card No)**: `{pseudo}`")
             elif ab_norm in self.ds.consolidated_pseudo:
                 pseudo = self.ds.consolidated_pseudo[ab_norm]
                 if isinstance(pseudo, dict): pseudo = pseudo.get("pseudocode", "")
-                print(f"- **Pseudocode (Consolidated)**: `{pseudo}`")
+                print(f"- **Pseudocode (Consolidated by Text)**: `{pseudo}`")
             else:
                 pseudo = raw.get("pseudocode", "")
                 print(f"- **Pseudocode (Raw)**: `{pseudo}`")

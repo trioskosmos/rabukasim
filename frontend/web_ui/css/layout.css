@@ -284,6 +284,41 @@
     flex-direction: column;
 }
 
+.sidebar-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px 8px;
+}
+
+.sidebar-section-header h3 {
+    margin: 0;
+}
+
+.sidebar-close-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background var(--transition-base), border-color var(--transition-base), transform var(--transition-base);
+}
+
+.sidebar-close-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--accent-pink);
+    transform: scale(1.05);
+}
+
 .sidebar-right #actions {
     overflow: visible;
     padding-right: 0;
@@ -350,7 +385,8 @@
     cursor: pointer;
 }
 
-@media (max-width: 768px) {
+/* Mobile / Tablet Responsive Mode */
+@media (orientation: portrait), (max-aspect-ratio: 13/9) {
     #mobile-sidebar-toggle {
         display: flex;
     }
@@ -362,12 +398,49 @@
         width: 85vw;
         max-width: 320px;
         height: 100vh;
+        top: 0;
         transition: right 0.4s var(--ease-out-expo);
         z-index: var(--z-modal);
         box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
     }
 
-    .sidebar-active {
+    /* Left sidebar slides from left instead */
+    .sidebar-left {
+        left: -100%;
+        right: auto;
+        transition: left 0.4s var(--ease-out-expo);
+    }
+
+    .sidebar.active {
         right: 0;
     }
+
+    .sidebar-left.active {
+        left: 0;
+        right: auto;
+    }
+
+    .sidebar-close-btn {
+        display: inline-flex;
+    }
+
+    /* Overlay backdrop when sidebar is open */
+    body.sidebar-open::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: calc(var(--z-modal) - 1);
+        cursor: pointer;
+        animation: fade-in 0.3s ease-out;
+    }
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
