@@ -144,6 +144,17 @@ class PhaseMixin:
                     p.discard.append(cid)
             p.live_zone = new_live_zone
 
+            # Q68: If the player cannot perform a live, skip the live entirely.
+            # Live cards are discarded and no [ライブ開始時] triggers are fired.
+            if p.cannot_live:
+                if hasattr(self, "log_rule"):
+                    self.log_rule("Q68", "Player cannot perform live. Discarding all cards from Live Zone.")
+                p.discard.extend(p.live_zone)
+                p.live_zone = []
+                p.performance_abilities_processed = False
+                self._advance_performance()
+                return
+
             triggers_found = False
             for card_id in p.live_zone:
                 for ab in self.live_db[card_id].abilities:
@@ -172,13 +183,6 @@ class PhaseMixin:
             return
 
         # Phase 3: Calculation checks
-        if p.cannot_live:
-            for card_id in p.live_zone:
-                p.discard.append(card_id)
-            p.live_zone = []
-            p.performance_abilities_processed = False
-            self._advance_performance()
-            return
 
         if not p.live_zone:
             # Create empty performance result for consistency
@@ -475,7 +479,11 @@ class PhaseMixin:
         for p in self.players:
             p.continuous_effects = [e for e in p.continuous_effects if e.get("expiry") != expiry_type]
             if expiry_type == "LIVE_END":
-                p.cannot_live = False
+                p.cannot_live = any(
+                    ce["effect"].effect_type == EffectType.RESTRICTION
+                    and str(ce["effect"].params.get("type", "")).lower() == "live"
+                    for ce in p.continuous_effects
+                )
                 p.live_score_bonus = 0
                 p.live_success_triggered = False
 
@@ -622,7 +630,6 @@ class PhaseMixin:
         # Reset turn effects
         for p in self.players:
             p.continuous_effects = [e for e in p.continuous_effects if e.get("expiry") != "TURN_END"]
-            p.cannot_live = False
             p.used_abilities.clear()
             p.moved_members_this_turn.clear()
 

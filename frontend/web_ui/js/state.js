@@ -83,8 +83,18 @@ const stateInternal = {
             State.data = null;
             State.rawData = null;
             State.cardIndex = null;
+            State.lastIndexedStateId = null;
             return;
         }
+
+        // Optimization: Skip if state ID hasn't changed
+        if (State.data && newData.state_id !== undefined && newData.state_id === State.data.state_id) {
+            // Even if state_id is same, we might want to sync connectivity flags which are UI-side
+            State.data.is_ai_thinking = newData.is_ai_thinking;
+            State.data.ai_status = newData.ai_status;
+            return;
+        }
+
         if (State.data) {
             State.lastPhase = State.data.phase;
             const pOld = State.data.players[State.perspectivePlayer] || State.data.players[0];
@@ -92,11 +102,17 @@ const stateInternal = {
                 State.lastMulliganCards = pOld.mulligan_selection.map(idx => pOld.hand[idx]).filter(c => c !== null);
             }
         }
+
         // Deep clone for rawData to ensure we have a pure ID-only version
+        // Only if newData is from server (non-circular)
         State.rawData = JSON.parse(JSON.stringify(newData));
         State.data = newData;  // Replace entirely instead of merging
+        
         // Rebuild card index when state updates
         State.rebuildCardIndex();
+
+        // Adaptive Polling: Signal that something actually changed
+        State.emit('change-detected');
 
         // Detect Mulligan Finish
         const isMulliganOld = State.lastPhase === -1 || State.lastPhase === 0; // Constants.Phase.MULLIGAN_P1/P2

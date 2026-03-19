@@ -6,6 +6,13 @@ from typing import Any, Dict, List, Tuple, Union
 from engine.models.enums import CHAR_MAP
 from engine.models.opcodes import Opcode
 from .ability_ir import SemanticAbility, SemanticCondition, SemanticCost, SemanticEffect
+from .ability_descriptions import (
+    EFFECT_DESCRIPTIONS,
+    EFFECT_DESCRIPTIONS_JP,
+    TRIGGER_DESCRIPTIONS,
+    TRIGGER_DESCRIPTIONS_JP,
+)
+from .ability_filter import PackedFilterSpec, explain_filter_attr, format_filter_attr
 from .structured_instruction_ir import build_structured_instruction_ir
 
 from .generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
@@ -29,117 +36,6 @@ def to_signed_32(x):
 # Original definitions removed, now using generated_enums.
 
 
-# --- DESCRIPTIONS ---
-
-EFFECT_DESCRIPTIONS = {
-    EffectType.DRAW: "Draw {value} card(s)",
-    EffectType.LOOK_DECK: "Look at top {value} card(s) of deck",
-    EffectType.ADD_BLADES: "Gain {value} Blade(s)",
-    EffectType.ADD_HEARTS: "Gain {value} Heart(s)",
-    EffectType.REDUCE_COST: "Reduce cost by {value}",
-    EffectType.BOOST_SCORE: "Boost live score by {value}",
-    EffectType.RECOVER_LIVE: "Recover {value} Live card(s) from discard",
-    EffectType.RECOVER_MEMBER: "Recover {value} Member card(s) from discard",
-    EffectType.BUFF_POWER: "Power Up {value} (Blade/Heart)",
-    EffectType.IMMUNITY: "Gain Immunity",
-    EffectType.MOVE_MEMBER: "Move Member to another zone",
-    EffectType.SWAP_CARDS: "Discard {value} card(s) then Draw {value}",
-    EffectType.SEARCH_DECK: "Search Deck",  # [UNUSED]
-    EffectType.ENERGY_CHARGE: "Charge {value} Energy",
-    EffectType.SET_BLADES: "Set Blade(s) to {value}",
-    EffectType.SET_HEARTS: "Set Heart(s) to {value}",
-    EffectType.FORMATION_CHANGE: "Rearrange members on stage",  # [UNUSED]
-    EffectType.NEGATE_EFFECT: "Negate effect",
-    EffectType.ORDER_DECK: "Reorder top {value} cards of deck",
-    EffectType.META_RULE: "[Rule modifier]",
-    EffectType.SELECT_MODE: "Choose One:",
-    EffectType.MOVE_TO_DECK: "Return {value} card(s) to Deck",
-    EffectType.TAP_OPPONENT: "Tap {value} Opponent Member(s)",
-    EffectType.PLACE_UNDER: "Place card under Member",
-    EffectType.RESTRICTION: "Apply Restriction",
-    EffectType.BATON_TOUCH_MOD: "Modify Baton Touch rules",
-    EffectType.SET_SCORE: "Set Live Score to {value}",
-    EffectType.REVEAL_CARDS: "Reveal {value} card(s)",
-    EffectType.LOOK_AND_CHOOSE: "Look at {value} card(s) from deck and choose",
-    EffectType.ACTIVATE_MEMBER: "Active {value} Member(s)/Energy",
-    EffectType.ADD_TO_HAND: "Add {value} card(s) to Hand",
-    EffectType.TRIGGER_REMOTE: "Trigger Remote Ability",
-    EffectType.CHEER_REVEAL: "Reveal via Cheer",
-    EffectType.REDUCE_HEART_REQ: "Modify Heart Requirement",
-    EffectType.SWAP_ZONE: "Swap card zones",  # [UNUSED]
-    EffectType.MOVE_TO_DISCARD: "Move {value} card(s) to Discard",
-    EffectType.PLAY_MEMBER_FROM_HAND: "Play member from hand",
-    EffectType.TAP_MEMBER: "Tap {value} Member(s)",
-}
-
-EFFECT_DESCRIPTIONS_JP = {
-    EffectType.DRAW: "{value}枚ドロー",
-    EffectType.LOOK_DECK: "デッキの上から{value}枚見る",
-    EffectType.ADD_BLADES: "ブレード+{value}",
-    EffectType.ADD_HEARTS: "ハート+{value}",
-    EffectType.REDUCE_COST: "コスト-{value}",
-    EffectType.BOOST_SCORE: "スコア+{value}",
-    EffectType.RECOVER_LIVE: "控えライブ{value}枚回収",
-    EffectType.RECOVER_MEMBER: "控えメンバー{value}枚回収",
-    EffectType.BUFF_POWER: "パワー+{value}",
-    EffectType.IMMUNITY: "効果無効",
-    EffectType.MOVE_MEMBER: "メンバー移動",
-    EffectType.SWAP_CARDS: "手札交換({value}枚捨て{value}枚引く)",
-    EffectType.SEARCH_DECK: "デッキ検索",  # [UNUSED]
-    EffectType.ENERGY_CHARGE: "エネルギーチャージ+{value}",
-    EffectType.SET_BLADES: "ブレードを{value}にセット",
-    EffectType.SET_HEARTS: "ハートを{value}にセット",
-    EffectType.FORMATION_CHANGE: "配置変更",  # [UNUSED]
-    EffectType.NEGATE_EFFECT: "効果打ち消し",
-    EffectType.ORDER_DECK: "デッキトップ{value}枚並べ替え",
-    EffectType.META_RULE: "[ルール変更]",
-    EffectType.SELECT_MODE: "モード選択:",
-    EffectType.MOVE_TO_DECK: "{value}枚をデッキに戻す",
-    EffectType.TAP_OPPONENT: "相手メンバー{value}人をウェイトにする",
-    EffectType.PLACE_UNDER: "メンバーの下に置く",
-    EffectType.RESTRICTION: "プレイ制限適用",
-    EffectType.BATON_TOUCH_MOD: "バトンタッチルール変更",
-    EffectType.SET_SCORE: "ライブスコアを{value}にセット",
-    EffectType.REVEAL_CARDS: "{value}枚公開",
-    EffectType.LOOK_AND_CHOOSE: "デッキから{value}枚見て選ぶ",
-    EffectType.ACTIVATE_MEMBER: "{value}人/エネをアクティブにする",
-    EffectType.ADD_TO_HAND: "手札に{value}枚加える",
-    EffectType.TRIGGER_REMOTE: "リモート能力誘発",
-    EffectType.CHEER_REVEAL: "応援で公開",
-    EffectType.REDUCE_HEART_REQ: "ハート条件変更",
-    EffectType.SWAP_ZONE: "カード移動(ゾーン間)",  # [UNUSED]
-    EffectType.MOVE_TO_DISCARD: "控え室に{value}枚置く",
-    EffectType.PLAY_MEMBER_FROM_HAND: "手札からメンバーを登場させる",
-    EffectType.TAP_MEMBER: "{value}人をウェイトにする",
-    EffectType.ACTIVATE_ENERGY: "エネルギーを{value}枚アクティブにする",
-}
-
-TRIGGER_DESCRIPTIONS = {
-    TriggerType.ON_PLAY: "[On Play]",
-    TriggerType.ON_LIVE_START: "[Live Start]",
-    TriggerType.ON_LIVE_SUCCESS: "[Live Success]",
-    TriggerType.TURN_START: "[Turn Start]",
-    TriggerType.TURN_END: "[Turn End - live]",
-    TriggerType.CONSTANT: "[Constant - live]",
-    TriggerType.ACTIVATED: "[Activated]",
-    TriggerType.ON_LEAVES: "[When Leaves]",
-    TriggerType.ON_MOVE_TO_DISCARD: "[Moved To Discard]",
-}
-
-TRIGGER_DESCRIPTIONS_JP = {
-    TriggerType.ON_PLAY: "【登場時】",
-    TriggerType.ON_LIVE_START: "【ライブ開始時】",
-    TriggerType.ON_LIVE_SUCCESS: "【ライブ成功時】",
-    TriggerType.TURN_START: "【ターン開始時】",
-    TriggerType.TURN_END: "【ターン終了時】",
-    TriggerType.CONSTANT: "【常時】",
-    TriggerType.ACTIVATED: "【起動】",
-    TriggerType.ON_LEAVES: "【離脱時】",
-    TriggerType.ON_MOVE_TO_DISCARD: "【控え室に置かれた時】",
-}
-
-
-@dataclass(slots=True)
 class Condition:
     type: ConditionType
     params: Dict[str, Any] = field(default_factory=dict)
@@ -155,157 +51,12 @@ class Effect:
     value_cond: ConditionType = ConditionType.NONE
     target: TargetType = TargetType.SELF
     params: Dict[str, Any] = field(default_factory=dict)
-    is_optional: bool = False  # ～てもよい
+    is_optional: bool = False  # Optional choice flag
     modal_options: List[List[Any]] = field(default_factory=list)  # For SELECT_MODE
     runtime_opcode: int = 0
     runtime_value: int = 0
     runtime_attr: int = 0
     runtime_slot: int = 0
-
-
-_BOOL_FILTER_FIELDS = {
-    "group_enabled",
-    "is_tapped",
-    "has_blade_heart",
-    "not_has_blade_heart",
-    "unique_names",
-    "unit_enabled",
-    "value_enabled",
-    "is_le",
-    "is_cost_type",
-    "is_setsuna",
-    "compare_accumulated",
-    "is_optional",
-    "keyword_energy",
-    "keyword_member",
-}
-
-_TARGET_PLAYER_LABELS = {
-    0: "unspecified",
-    1: "self",
-    2: "opponent",
-    3: "both",
-}
-
-_CARD_TYPE_LABELS = {
-    0: "any",
-    1: "member",
-    2: "live",
-}
-
-_ZONE_MASK_LABELS = {
-    4: "stage",
-    6: "hand",
-    7: "discard",
-}
-
-_COLOR_NAMES = ["pink", "red", "yellow", "green", "blue", "purple", "any"]
-
-
-@dataclass(slots=True)
-class PackedFilterSpec:
-    target_player: int = 0
-    card_type: int = 0
-    group_enabled: bool = False
-    group_id: int = 0
-    is_tapped: bool = False
-    has_blade_heart: bool = False
-    not_has_blade_heart: bool = False
-    unique_names: bool = False
-    unit_enabled: bool = False
-    unit_id: int = 0
-    value_enabled: bool = False
-    value_threshold: int = 0
-    is_le: bool = False
-    is_cost_type: bool = False
-    color_mask: int = 0
-    char_id_1: int = 0
-    char_id_2: int = 0
-    zone_mask: int = 0
-    special_id: int = 0
-    is_setsuna: bool = False
-    compare_accumulated: bool = False
-    is_optional: bool = False
-    keyword_energy: bool = False
-    keyword_member: bool = False
-
-    def pack(self) -> int:
-        return pack_a_standard(**{field_info.name: getattr(self, field_info.name) for field_info in fields(self)})
-
-    @classmethod
-    def unpack(cls, packed_attr: int) -> "PackedFilterSpec":
-        return cls(**unpack_a_standard(packed_attr & 0xFFFFFFFFFFFFFFFF))
-
-    def to_debug_dict(self) -> Dict[str, Any]:
-        debug_data: Dict[str, Any] = {}
-        for field_info in fields(self):
-            value = getattr(self, field_info.name)
-            if field_info.name in _BOOL_FILTER_FIELDS:
-                value = bool(value)
-            debug_data[field_info.name] = value
-
-        packed_attr = self.pack()
-        debug_data["packed_attr"] = packed_attr
-        debug_data["packed_attr_hex"] = f"0x{packed_attr:016X}"
-        debug_data["summary"] = format_filter_attr(packed_attr)
-        return debug_data
-
-
-def explain_filter_attr(packed_attr: int) -> Dict[str, Any]:
-    return PackedFilterSpec.unpack(packed_attr).to_debug_dict()
-
-
-def format_filter_attr(packed_attr: int) -> str:
-    spec = PackedFilterSpec.unpack(packed_attr)
-    parts: List[str] = []
-
-    if spec.target_player:
-        parts.append(f"target={_TARGET_PLAYER_LABELS.get(int(spec.target_player), spec.target_player)}")
-    if spec.card_type:
-        parts.append(f"type={_CARD_TYPE_LABELS.get(int(spec.card_type), spec.card_type)}")
-    if spec.group_enabled:
-        parts.append(f"group={int(spec.group_id)}")
-    if spec.unit_enabled:
-        parts.append(f"unit={int(spec.unit_id)}")
-        # Check if unit_id is being used as char_id_3 (ID > 60 usually for characters)
-        if spec.unit_id >= 60:
-            parts.append(f"char3={int(spec.unit_id)}")
-    if spec.value_enabled:
-        compare_op = "<=" if spec.is_le else ">="
-        compare_subject = "cost" if spec.is_cost_type else "value"
-        parts.append(f"{compare_subject}{compare_op}{int(spec.value_threshold)}")
-    if spec.color_mask:
-        colors = [name for idx, name in enumerate(_COLOR_NAMES) if spec.color_mask & (1 << idx)]
-        parts.append(f"colors={'/'.join(colors) if colors else spec.color_mask}")
-    if spec.char_id_1:
-        parts.append(f"char1={int(spec.char_id_1)}")
-    if spec.char_id_2:
-        parts.append(f"char2={int(spec.char_id_2)}")
-    if spec.zone_mask:
-        parts.append(f"zone={_ZONE_MASK_LABELS.get(int(spec.zone_mask), spec.zone_mask)}")
-    if spec.special_id:
-        parts.append(f"special={int(spec.special_id)}")
-    if spec.is_tapped:
-        parts.append("status=tapped")
-    if spec.has_blade_heart:
-        parts.append("has_blade_heart")
-    if spec.not_has_blade_heart:
-        parts.append("not_has_blade_heart")
-    if spec.unique_names:
-        parts.append("unique_names")
-    if spec.is_setsuna:
-        parts.append("setsuna")
-    if spec.compare_accumulated:
-        parts.append("compare_accumulated")
-    if spec.is_optional:
-        parts.append("optional")
-    if spec.keyword_energy:
-        parts.append("keyword_energy")
-    if spec.keyword_member:
-        parts.append("keyword_member")
-
-    return ", ".join(parts) if parts else "none"
-
 
 @dataclass(slots=True)
 class ResolvingEffect:
@@ -685,7 +436,7 @@ class Ability:
                     parts.append(f"Condition({instr.type.name})")
                 elif isinstance(instr, Cost):
                     parts.append(f"Cost({instr.type.name})")
-            instructions_summary = " → ".join(parts)
+            instructions_summary = " 驕ｶ鄙ｫ繝ｻ".join(parts)
 
         semantic_form = SemanticAbility(
             trigger=self.trigger.name if hasattr(self.trigger, "name") else str(self.trigger),
@@ -2247,10 +1998,10 @@ class Ability:
                 n_list = str(names).split("/")
             for i, n in enumerate(n_list[:3]):
                 try:
-                    n_norm = n.strip().replace(" ", "").replace("　", "")
+                    n_norm = n.strip().replace(" ", "").replace("驍ｵ・ｲ・つ", "")
                     c_id = 0
                     for k, cid in CHAR_MAP.items():
-                        if k.replace(" ", "").replace("　", "") == n_norm:
+                        if k.replace(" ", "").replace("驍ｵ・ｲ・つ", "") == n_norm:
                             c_id = cid
                             break
                     if c_id == 0:
@@ -2351,7 +2102,7 @@ class Ability:
                 pass
 
         # Setsuna (Bit 59)
-        if names and any(s in str(names) for s in ["優木", "せつ菜"]):
+        if names and any(s in str(names) for s in ["髯ｷ繝ｻ・ｽ・ｪ髫ｴ蟷｢・ｽ・ｨ", "驍ｵ・ｺ陝ｶ蜷ｮ蜻ｽ鬮｣謔ｶ繝ｻ]):
             filter_obj["is_setsuna"] = True
 
         # Internal Flags
@@ -2399,23 +2150,23 @@ class Ability:
         t_name = getattr(self.trigger, "name", str(self.trigger))
         trigger_desc = t_desc_map.get(self.trigger, f"[{t_name}]")
         if self.trigger == TriggerType.ON_LEAVES:
-            if "discard" not in trigger_desc.lower() and "控え室" not in trigger_desc:
-                suffix = " (to discard)" if not is_jp else "(控え室へ)"
+            if "discard" not in trigger_desc.lower() and "髫ｰ證ｦ・ｽ・ｧ驍ｵ・ｺ闔・･繝ｻ・ｮ繝ｻ・､" not in trigger_desc:
+                suffix = " (to discard)" if not is_jp else "(髫ｰ證ｦ・ｽ・ｧ驍ｵ・ｺ闔・･繝ｻ・ｮ繝ｻ・､驍ｵ・ｺ繝ｻ・ｸ)"
                 trigger_desc += suffix
         parts.append(trigger_desc)
 
         for cost in self.costs:
             if is_jp:
                 if cost.type == AbilityCostType.ENERGY:
-                    parts.append(f"(コスト: エネ{cost.value}消費)")
+                    parts.append(f"(驛｢・ｧ繝ｻ・ｳ驛｢・ｧ繝ｻ・ｹ驛｢譏ｴ繝ｻ 驛｢・ｧ繝ｻ・ｨ驛｢譎会｣ｰ・ｿcost.value}髮趣ｽｸ鬩帙・・ｽ・ｲ繝ｻ・ｻ)")
                 elif cost.type == AbilityCostType.TAP_SELF:
-                    parts.append("(コスト: 自身ウェイト)")
+                    parts.append("(驛｢・ｧ繝ｻ・ｳ驛｢・ｧ繝ｻ・ｹ驛｢譏ｴ繝ｻ 鬮｢・ｾ繝ｻ・ｪ鬮ｴ繝ｻ・ｽ・ｫ驛｢・ｧ繝ｻ・ｦ驛｢・ｧ繝ｻ・ｧ驛｢・ｧ繝ｻ・､驛｢譏ｴ繝ｻ")
                 elif cost.type == AbilityCostType.DISCARD_HAND:
-                    parts.append(f"(コスト: 手札{cost.value}枚捨て)")
+                    parts.append(f"(驛｢・ｧ繝ｻ・ｳ驛｢・ｧ繝ｻ・ｹ驛｢譏ｴ繝ｻ 髫ｰ繝ｻ邇・ｫ繝ｻcost.value}髫ｴ・ｫ陞｢・ｽ隴丞・・ｸ・ｺ繝ｻ・ｦ)")
                 elif cost.type == AbilityCostType.SACRIFICE_SELF:
-                    parts.append("(コスト: 自身退場)")
+                    parts.append("(驛｢・ｧ繝ｻ・ｳ驛｢・ｧ繝ｻ・ｹ驛｢譏ｴ繝ｻ 鬮｢・ｾ繝ｻ・ｪ鬮ｴ繝ｻ・ｽ・ｫ鬯ｨ・ｾ・つ髯懶ｽ｣繝ｻ・ｴ)")
                 else:
-                    parts.append(f"(コスト: {cost.type.name} {cost.value})")
+                    parts.append(f"(驛｢・ｧ繝ｻ・ｳ驛｢・ｧ繝ｻ・ｹ驛｢譏ｴ繝ｻ {cost.type.name} {cost.value})")
             else:
                 if cost.type == AbilityCostType.ENERGY:
                     parts.append(f"(Cost: Pay {cost.value} Energy)")
@@ -2433,7 +2184,7 @@ class Ability:
                 neg = "NOT " if cond.is_negated else ""  # JP negation usually handles via suffix, but keeping simple
                 cond_desc = f"{neg}{cond.type.name}"
                 if cond.type == ConditionType.BATON:
-                    cond_desc = "条件: バトンタッチ"
+                    cond_desc = "髫ｴ螟ｲ・ｽ・｡髣比ｼ夲ｽｽ・ｶ: 驛｢譎√・郢晢ｽｨ驛｢譎｢・ｽ・ｳ驛｢・ｧ繝ｻ・ｿ驛｢譏ｴ繝ｻ郢晢ｽ｡"
                     if "unit" in cond.params:
                         cond_desc += f" ({cond.params['unit']})"
                 # ... (add more JP specific cond descs if needed, but for now fallback)
@@ -2533,29 +2284,29 @@ class Ability:
                     # Refine REDUCE_HEART_REQ
                     if eff.effect_type == EffectType.REDUCE_HEART_REQ:
                         if eff.params.get("mode") == "select_requirement":
-                            desc = "Choose Heart Requirement (hearts) (choice)" if not is_jp else "ハート条件選択"
+                            desc = "Choose Heart Requirement (hearts) (choice)" if not is_jp else "驛｢譏懶ｽｸ鄙ｫ繝ｻ驛｢譎乗ｲｺ隰ｫ繝ｻ閼ゅ・・ｶ鬯ｩ蛹・ｽｽ・ｸ髫ｰ螢ｹ繝ｻ
                         elif eff.value < 0:
                             desc = (
                                 f"Reduce Heart Requirement by {abs(eff.value)} (Live)"
                                 if not is_jp
-                                else f"ハート条件-{abs(eff.value)}"
+                                else f"驛｢譏懶ｽｸ鄙ｫ繝ｻ驛｢譎乗ｲｺ隰ｫ繝ｻ閼ゅ・・ｶ-{abs(eff.value)}"
                             )
                         else:
                             desc = (
                                 f"Increase Heart Requirement by {eff.value} (Live)"
                                 if not is_jp
-                                else f"ハート条件+{eff.value}"
+                                else f"驛｢譏懶ｽｸ鄙ｫ繝ｻ驛｢譎乗ｲｺ隰ｫ繝ｻ閼ゅ・・ｶ+{eff.value}"
                             )
                     elif eff.effect_type == EffectType.TRANSFORM_COLOR:
                         target_s = eff.params.get("target", "Color")
                         if target_s == "heart":
                             target_s = "Heart"
-                        desc = f"Transform {target_s} Color" if not is_jp else f"{target_s}の色を変換"
+                        desc = f"Transform {target_s} Color" if not is_jp else f"{target_s}驍ｵ・ｺ繝ｻ・ｮ雎ｼ・ｶ繝ｻ・ｲ驛｢・ｧ髮区ｩｸ・ｽ・､騾包ｽｻ鬩ｪ・､"
                     elif eff.effect_type == EffectType.PLACE_UNDER:
                         type_s = f" {eff.params.get('type', '')}" if "type" in eff.params else ""
-                        desc = f"Place{type_s} card under member" if not is_jp else f"メンバーの下に{type_s}置く"
+                        desc = f"Place{type_s} card under member" if not is_jp else f"驛｢譎｢・ｽ・｡驛｢譎｢・ｽ・ｳ驛｢譎√・郢晢ｽｻ驍ｵ・ｺ繝ｻ・ｮ髣包ｽｳ闕ｵ譏ｶ繝ｻ{type_s}鬩励ｑ・ｽ・ｮ驍ｵ・ｺ郢晢ｽｻ
                         if eff.params.get("type") == "energy":
-                            desc = "Place Energy under member" if not is_jp else "メンバーの下にエネルギーを置く"
+                            desc = "Place Energy under member" if not is_jp else "驛｢譎｢・ｽ・｡驛｢譎｢・ｽ・ｳ驛｢譎√・郢晢ｽｻ驍ｵ・ｺ繝ｻ・ｮ髣包ｽｳ闕ｵ譏ｶ繝ｻ驛｢・ｧ繝ｻ・ｨ驛｢譎樔ｺゑｾ取刮・ｹ・ｧ繝ｻ・ｮ驛｢譎｢・ｽ・ｼ驛｢・ｧ陜｣・､繝ｻ・ｽ繝ｻ・ｮ驍ｵ・ｺ郢晢ｽｻ
                     else:
                         try:
                             desc = template.format(**context)
@@ -2601,14 +2352,14 @@ class Ability:
                     desc += " (else Discard)"
 
             if eff.params.get("both_players"):
-                desc += " (Both Players)" if not is_jp else " (両プレイヤー)"
+                desc += " (Both Players)" if not is_jp else " (髣包ｽｳ繝ｻ・｡驛｢譎丞ｹｲ・取ｨ抵ｽｹ・ｧ繝ｻ・､驛｢譎｢・ｽ・､驛｢譎｢・ｽ・ｼ)"
 
-            if eff.params.get("filter") == "live" and "live" not in desc.lower() and "ライブ" not in desc:
-                desc += " (Live Card)" if not is_jp else " (ライブカード)"
-            if eff.params.get("filter") == "energy" and "energy" not in desc.lower() and "エネ" not in desc:
-                desc += " (Energy)" if not is_jp else " (エネルギー)"
+            if eff.params.get("filter") == "live" and "live" not in desc.lower() and "驛｢譎｢・ｽ・ｩ驛｢・ｧ繝ｻ・､驛｢譏ｴ繝ｻ not in desc:
+                desc += " (Live Card)" if not is_jp else " (驛｢譎｢・ｽ・ｩ驛｢・ｧ繝ｻ・､驛｢譎・§邵ｺ蜥ｲ・ｹ譎｢・ｽ・ｼ驛｢譏ｴ繝ｻ"
+            if eff.params.get("filter") == "energy" and "energy" not in desc.lower() and "驛｢・ｧ繝ｻ・ｨ驛｢譏ｴ繝ｻ not in desc:
+                desc += " (Energy)" if not is_jp else " (驛｢・ｧ繝ｻ・ｨ驛｢譎樔ｺゑｾ取刮・ｹ・ｧ繝ｻ・ｮ驛｢譎｢・ｽ・ｼ)"
 
-            parts.append(f"→ {desc}")
+            parts.append(f"驕ｶ鄙ｫ繝ｻ{desc}")
 
             # Check for Effect-level modal options (e.g. from parser fix)
             if eff.modal_options:
@@ -2625,7 +2376,7 @@ class Ability:
                     parts.append(
                         f"[Option {i + 1}: {' + '.join(opt_descs)}]"
                         if not is_jp
-                        else f"[選択肢 {i + 1}: {' + '.join(opt_descs)}]"
+                        else f"[鬯ｩ蛹・ｽｽ・ｸ髫ｰ螢ｽ・ｫ竏夲ｼ・{i + 1}: {' + '.join(opt_descs)}]"
                     )
 
         # Include modal options (Ability level - legacy/bullet points)
@@ -2643,7 +2394,7 @@ class Ability:
                 parts.append(
                     f"[Option {i + 1}: {' + '.join(opt_descs)}]"
                     if not is_jp
-                    else f"[選択肢 {i + 1}: {' + '.join(opt_descs)}]"
+                    else f"[鬯ｩ蛹・ｽｽ・ｸ髫ｰ螢ｽ・ｫ竏夲ｼ・{i + 1}: {' + '.join(opt_descs)}]"
                 )
 
         return " ".join(parts)

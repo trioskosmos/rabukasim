@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 from typing import Any, Dict, Iterator
 
 try:
@@ -120,3 +120,4 @@ class MaskedDB(dict):
 
     def items(self):
         return self._data.items()
+

@@ -199,10 +199,10 @@ pub fn check_condition(
             attr |= mapped_attr;
         }
 
-        // Extract 'all' flag for GROUP_FILTER conditions
-        if cond.condition_type == ConditionType::GroupFilter {
+        // Extract 'all' flag for GROUP_FILTER and DISCARDED_CARDS conditions
+        if cond.condition_type == ConditionType::GroupFilter || cond.condition_type == ConditionType::DiscardedCards {
             if params.get("all").and_then(|v| v.as_bool()).unwrap_or(false) {
-                val |= 0x04; // Bit 2: ALL_MEMBERS
+                val |= 0x04; // Bit 2: ALL_MEMBERS / ALL_CARDS_MATCH
             }
         }
 
@@ -1796,7 +1796,11 @@ pub fn check_condition_opcode(
                 }
                 count
             };
-            let result = compare_i32(matching_count, val, slot);
+            let result = if (val & 0x04) != 0 && !ctx.selected_cards.is_empty() {
+                matching_count == ctx.selected_cards.len() as i32
+            } else {
+                compare_i32(matching_count, val, slot)
+            };
             if state.debug.debug_mode {
                 println!("  Condition result: {}", result);
             }

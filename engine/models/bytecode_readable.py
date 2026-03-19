@@ -1,17 +1,22 @@
+import re
 from typing import List
 
-from engine.models.ability import format_filter_attr
+from engine.models.ability_filter import format_filter_attr
 from engine.models.generated_metadata import (
+    CARD_TYPES,
+    CHARACTER_IDS,
     COMPARISONS,
     CONDITIONS,
     COSTS,
     COUNT_SOURCES,
+    GROUP_IDS,
     HEART_COLOR_MAP,
     META_RULE_TYPES,
     OPCODES,
     SLOT_INDICES,
     TARGETS,
     TRIGGERS,
+    UNIT_IDS,
     ZONES,
 )
 from engine.models.generated_packer import unpack_a_heart_cost, unpack_s_standard, unpack_v_heart_counts, unpack_v_look_choose
@@ -27,17 +32,28 @@ COMPARISON_NAMES = {int(value): name for name, value in COMPARISONS.items()}
 COUNT_SOURCE_NAMES = {int(value): name for name, value in COUNT_SOURCES.items()}
 META_RULE_NAMES = {int(value): name for name, value in META_RULE_TYPES.items()}
 HEART_COLOR_NAMES = {int(value): name.lower() for name, value in HEART_COLOR_MAP.items()}
-SLOT_NAMES = {
-    int(value): name for name, value in SLOT_INDICES.items() if name in {"CONTEXT", "HAND", "DISCARD", "CHOICE_TARGET"}
+
+CHARACTER_NAMES = {int(value): name.title() for name, value in CHARACTER_IDS.items()}
+GROUP_NAMES = {int(value): name.title() for name, value in GROUP_IDS.items()}
+UNIT_NAMES = {int(value): name.title().replace("_", " ") for name, value in UNIT_IDS.items()}
+CARD_TYPE_NAMES = {int(value): name.title() for name, value in CARD_TYPES.items()}
+
+SPECIAL_ID_NAMES = {
+    0: "None",
+    1: "Self",
+    2: "Other than Self",
+    3: "Other than Activator",
 }
+
+SLOT_NAMES = {int(value): name for name, value in SLOT_INDICES.items()}
 SLOT_NAMES.update(
     {
-        0: "Left Slot",
-        1: "Center Slot",
-        2: "Right Slot",
-        4: "Context Area",
-        6: "Hand (Generic)",
-        7: "Discard (Generic)",
+        0: "Left Stage (0)",
+        1: "Center Stage (1)",
+        2: "Right Stage (2)",
+        4: "Context Card",
+        6: "Hand (Zone)",
+        7: "Discard (Zone)",
         10: "Choice Target",
         13: "Live Slot 0",
         14: "Live Slot 1",
@@ -52,8 +68,19 @@ for name, value in CONDITIONS.items():
 for name, value in COSTS.items():
     OPCODE_NAMES.setdefault(int(value), f"COST_{name}")
 
+# Manual overrides for unmapped or special opcodes
+if "UNIQUE_NAMES_COUNT" not in CONDITIONS:
+    # Use 316 as a virtual opcode for documentation if needed, 
+    # but the interpreter often sees 0 for unmapped conditions.
+    CONDITION_NAMES[316] = "UNIQUE_NAMES_COUNT"
+    OPCODE_NAMES[316] = "CHECK_UNIQUE_NAMES_COUNT"
 
-def opcode_name(opcode: int) -> str:
+
+def opcode_name(opcode: int, v: int = 0, a: int = 0, s: int = 0) -> str:
+    if opcode == 0 and (v != 0 or a != 0 or s != 0):
+        # In SUNNY DAY SONG and others, opcode 0 with condition-like slot params 
+        # is used for conditions handled by the interpreter's higher-level logic.
+        return "CHECK_UNIQUE_NAMES_COUNT?"
     return OPCODE_NAMES.get(int(opcode), f"OP_{opcode}")
 
 
@@ -73,11 +100,28 @@ _FLAG_25_BATON_OPS = {OP.get("PLAY_MEMBER_FROM_HAND"), OP.get("PLAY_MEMBER_FROM_
 _FLAG_25_CAPTURE_OPS = {OP.get("SELECT_MEMBER"), OP.get("MOVE_TO_DISCARD")}
 _FLAG_25_REVEAL_OPS = {OP.get("REVEAL_UNTIL")}
 
+RE_ID_REPLACEMENT = re.compile(r"(group|unit|char\d|type|special)=(\d+)")
+
 
 def decode_filter(filter_attr: int) -> str:
     if filter_attr == 0:
         return "none"
-    return format_filter_attr(filter_attr)
+    raw_filter = format_filter_attr(filter_attr)
+
+    def replacer(match):
+        key = match.group(1)
+        val = int(match.group(2))
+        if key == "group":
+            return f"group={GROUP_NAMES.get(val, val)}"
+        if key == "unit":
+            return f"unit={UNIT_NAMES.get(val, val)}"
+        if key.startswith("char"):
+            return f"{key}={CHARACTER_NAMES.get(val, val)}"
+        if key == "type":
+            return f"type={CARD_TYPE_NAMES.get(val, val)}"
+        return match.group(0)
+
+    return RE_ID_REPLACEMENT.sub(replacer, raw_filter)
 
 
 def _slot_name(slot_id: int) -> str:
@@ -165,7 +209,6 @@ def decode_standard_slot(raw_slot: int, opcode: int | None = None) -> str:
     if slot["area_idx"]:
         parts.append(f"area={AREA_NAMES.get(slot['area_idx'], slot['area_idx'])}")
 
-    parts.append(f"raw={raw_slot}")
     return ", ".join(parts)
 
 
@@ -180,7 +223,6 @@ def decode_condition_slot(raw_slot: int) -> str:
     ]
     if area_val:
         parts.append(f"area={AREA_NAMES.get(area_val, area_val)}")
-    parts.append(f"raw={raw_slot}")
     return ", ".join(parts)
 
 
@@ -196,11 +238,11 @@ def _decode_look_and_choose(value: int, attr: int, slot: int, opcode: int) -> st
     look_v = unpack_v_look_choose(value)
     chars = []
     if look_v["char_id_1"]:
-        chars.append(f"char1={look_v['char_id_1']}")
+        chars.append(CHARACTER_NAMES.get(look_v["char_id_1"], str(look_v["char_id_1"])))
     if look_v["char_id_2"]:
-        chars.append(f"char2={look_v['char_id_2']}")
+        chars.append(CHARACTER_NAMES.get(look_v["char_id_2"], str(look_v["char_id_2"])))
     if look_v["char_id_3"]:
-        chars.append(f"char3={look_v['char_id_3']}")
+        chars.append(CHARACTER_NAMES.get(look_v["char_id_3"], str(look_v["char_id_3"])))
 
     filter_str = decode_filter(attr)
     filter_part = f"filter=[{filter_str}] " if attr else ""
@@ -235,7 +277,7 @@ def _decode_set_heart_cost(value: int, attr: int, slot: int, opcode: int) -> str
         if req:
             req_parts.append(HEART_COLOR_NAMES.get(req, str(req)))
     if requirements.get("unit_enabled"):
-        req_parts.append(f"unit={requirements.get('unit_id')}")
+        req_parts.append(f"unit={UNIT_NAMES.get(requirements.get('unit_id'), requirements.get('unit_id'))}")
 
     parts = []
     if count_parts:
@@ -281,79 +323,73 @@ def decode_chunk(chunk: List[int]) -> str:
         is_negated = True
         base_op = op - 1000
 
-    op_name = OPCODE_NAMES.get(base_op, f"OP_{base_op}")
+    op_name = opcode_name(base_op, v, a, s)
     if is_negated:
         op_name = f"NOT {op_name}"
 
-    params = f"value={v}, attr={a}, slot={s}"
+    # Determine descriptive parameter labels based on opcode
+    v_label = "value"
+    a_label = "filter"
+    s_label = "slot"
 
-    if base_op == OP["LOOK_AND_CHOOSE"]:
+    if base_op in (OP.get("DRAW"), OP.get("ADD_BLADES"), OP.get("ADD_HEARTS"), 
+                   OP.get("RECOVER_MEMBER"), OP.get("RECOVER_LIVE"), 
+                   OP.get("ACTIVATE_MEMBER"), OP.get("SET_TAPPED"), 
+                   OP.get("ACTIVATE_ENERGY"), OP.get("ENERGY_CHARGE"), 
+                   OP.get("REVEAL_UNTIL"), OP.get("SELECT_MEMBER"), 
+                   OP.get("SELECT_CARDS"), OP.get("SELECT_LIVE"),
+                   OP.get("LOOK_DECK"), OP.get("ORDER_DECK")):
+        v_label = "count"
+    elif base_op in (OP.get("JUMP"), OP.get("JUMP_IF_FALSE")):
+        v_label = "offset"
+    elif base_op == OP.get("BUFF_POWER"):
+        v_label = "amount"
+    elif base_op == OP.get("PAY_ENERGY"):
+        v_label = "cost"
+    elif base_op == OP.get("GRANT_ABILITY"):
+        v_label = "granted_index"
+    elif base_op == OP.get("SELECT_MODE"):
+        v_label = "options"
+    elif base_op == OP.get("SET_HEARTS"):
+        v_label = "value"
+
+    # Default params string
+    params = f"{v_label}={v}, {a_label}=[{decode_filter(a)}], {s_label}=[{decode_standard_slot(s, base_op)}]"
+
+    # Specialized decoding logic for complex opcodes
+    if base_op == OP.get("LOOK_AND_CHOOSE"):
         params = _decode_look_and_choose(v, a, s, base_op)
-    elif base_op == OP["META_RULE"]:
+    elif base_op == OP.get("META_RULE"):
         params = _decode_meta_rule(v, a, s, base_op)
-    elif base_op == OP["SET_HEART_COST"]:
+    elif base_op == OP.get("SET_HEART_COST"):
         params = _decode_set_heart_cost(v, a, s, base_op)
-    elif base_op == OP["BUFF_POWER"]:
-        params = f"value={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op in (OP["RECOVER_MEMBER"], OP["RECOVER_LIVE"]):
-        params = f"count={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op == OP["MOVE_TO_DISCARD"]:
+    elif base_op == OP.get("MOVE_TO_DISCARD"):
         params = _decode_move_to_discard(v, a, s, base_op)
-    elif base_op == OP["ADD_HEARTS"]:
-        params = _decode_heart_effect(v, a, s, base_op)
-    elif base_op in (OP["DRAW"], OP["ADD_BLADES"]):
-        params = f"count={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op == OP["DRAW_UNTIL"]:
-        params = f"until_hand_size={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op == OP["LOOK_DECK"]:
-        params = f"look={v}, slot=[{decode_standard_slot(s, base_op)}]" if s else f"look={v}"
-    elif base_op == OP["ORDER_DECK"]:
-        params = f"count={v}, attr={a}, slot=[{decode_standard_slot(s, base_op)}]" if (a or s) else f"count={v}"
-    elif base_op == OP["PAY_ENERGY"]:
-        params = f"cost={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op == OP["SELECT_MEMBER"]:
-        params = f"value={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op == OP["SELECT_CARDS"]:
-        params = f"count={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op == OP["GRANT_ABILITY"]:
-        params = f"granted_index={v}, source_card={a}, slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op == OP["MOVE_MEMBER"]:
-        params = f"from={_slot_name(v)}, to={_slot_name(a)}, raw_slot={s}"
-    elif base_op == OP["SELECT_MODE"]:
-        params = f"options={v}, slot=[{decode_standard_slot(s, base_op)}]" if s else f"options={v}"
-    elif base_op == OP["SET_TARGET_SELF"]:
+    elif base_op == OP.get("ADD_HEARTS") or base_op == OP.get("SET_HEARTS"):
+        params = _decode_heart_effect(v, a, s, base_op, label=v_label)
+    elif base_op == OP.get("MOVE_MEMBER"):
+        params = f"from={_slot_name(v)}, to={_slot_name(a)}, slot=[{decode_standard_slot(s, base_op)}]"
+    elif base_op == OP.get("SET_TARGET_SELF"):
         params = "target_context=self"
-    elif base_op == OP["SET_TARGET_OPPONENT"]:
+    elif base_op == OP.get("SET_TARGET_OPPONENT"):
         params = "target_context=opponent"
-    elif base_op == OP["ACTIVATE_MEMBER"]:
-        params = f"count={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op == OP["SET_TAPPED"]:
-        params = f"count={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op == OP["ACTIVATE_ENERGY"]:
-        params = f"count={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op == OP["ENERGY_CHARGE"]:
-        params = f"count={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op == OP["REVEAL_UNTIL"]:
-        params = f"count={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
-    elif base_op == OP["SET_HEARTS"]:
-        params = _decode_heart_effect(v, a, s, base_op, label="value")
-    elif base_op in (OP["JUMP"], OP["JUMP_IF_FALSE"]):
+    elif base_op == OP.get("TRANSFORM_COLOR") or base_op == OP.get("TRANSFORM_HEART"):
+        params = f"source={HEART_COLOR_NAMES.get(v, v)}, target={HEART_COLOR_NAMES.get(a, a)}, slot=[{decode_standard_slot(s, base_op)}]"
+    elif base_op in (OP.get("JUMP"), OP.get("JUMP_IF_FALSE")):
         params = f"offset={v}"
-    elif base_op == OP["RETURN"]:
+    elif base_op == OP.get("RETURN"):
         params = "done"
-    elif 100 <= base_op < 200:
-        params = f"value={v}, attr={a}, slot={s}"
-    elif 200 <= base_op < 400:
+    elif base_op == 0 and (v != 0 or a != 0 or s != 0):
+        # Fallback for unmapped condition parameters (like UNIQUE_NAMES_COUNT)
         params = f"value={v}, filter=[{decode_filter(a)}], slot=[{decode_condition_slot(s)}]"
-    else:
-        parts = [f"value={v}"]
-        if a:
-            parts.append(f"filter=[{decode_filter(a)}]")
-        if s:
-            parts.append(f"slot=[{decode_standard_slot(s, base_op)}]")
-        params = ", ".join(parts)
+    elif 100 <= base_op < 200:
+        # Action opcodes
+        params = f"value={v}, filter=[{decode_filter(a)}], slot=[{decode_standard_slot(s, base_op)}]"
+    elif 200 <= base_op < 400:
+        # Condition opcodes
+        params = f"value={v}, filter=[{decode_filter(a)}], slot=[{decode_condition_slot(s)}]"
 
-    return f"{op_name:<20} | {params}"
+    return f"{op_name:<25} | {params}"
 
 
 def decode_bytecode(bytecode: List[int]) -> str:

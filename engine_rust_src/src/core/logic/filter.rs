@@ -724,28 +724,59 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             }
         } else if part.starts_with("UNIT_") {
             let unit_name = part.replace("UNIT_", "").replace("_ONLY", "");
-            let unit_id: i32 = match unit_name.as_str() {
+            let unit_id = match unit_name.as_str() {
                 "PRINTEMPS" => 0,
                 "LILY_WHITE" | "LILYWHITE" => 1,
                 "BIBI" => 2,
-                "CYARON" | "CYARON!" => 3,
+                "CYARON" => 3,
                 "AZALEA" => 4,
                 "GUILTY_KISS" | "GUILTYKISS" => 5,
                 "DIVER_DIVA" | "DIVERDIVA" => 6,
                 "A_ZU_NA" | "AZUNA" => 7,
                 "QU4RTZ" => 8,
                 "R3BIRTH" => 9,
-                "CATCHU" | "CATCHU!" => 10,
+                "CATCHU" => 10,
                 "KALEIDOSCORE" => 11,
                 "5YNCRI5E" | "SYNCRISE" => 12,
                 "CERISE_BOUQUET" | "CERISE" => 13,
-                "DOLLCHESTRA" => 14,
-                "MIRA_CRA_PARK" | "MIRACRA" | "MIRACRA_PARK" => 15,
-                "EDEL_NOTE" | "EDELNOTE" => 16,
+                "DOLLCHESTRA" | "DOLL" => 14,
+                "MIRA_CRA_PARK" | "MIRA-CRA" | "MIRAKURA" => 15,
                 _ => -1,
             };
             if unit_id >= 0 {
-                attr |= crate::core::logic::constants::FILTER_UNIT_ENABLE | ((unit_id as u64) << FILTER_UNIT_ID_SHIFT);
+                attr |= FILTER_UNIT_ENABLE | ((unit_id as u64) << FILTER_UNIT_ID_SHIFT);
+            } else {
+                // Fallback: Check if it's a group name incorrectly prefixed with UNIT_
+                match unit_name.as_str() {
+                    "HASUNOSORA" | "HASU" => {
+                        attr |= FILTER_GROUP_ENABLE | (4u64 << FILTER_GROUP_ID_SHIFT);
+                    }
+                    "LIELLA" => {
+                        attr |= FILTER_GROUP_ENABLE | (3u64 << FILTER_GROUP_ID_SHIFT);
+                    }
+                    "NIJIGASAKI" | "NIJIGAKU" | "NIJI" => {
+                        attr |= FILTER_GROUP_ENABLE | (2u64 << FILTER_GROUP_ID_SHIFT);
+                    }
+                    "AQOURS" | "AQUOURS" => {
+                        attr |= FILTER_GROUP_ENABLE | (1u64 << FILTER_GROUP_ID_SHIFT);
+                    }
+                    "MUSE" | "MUS" | "μ'S" | "Μ'S" | "U'S" | "M'S" => {
+                        attr |= FILTER_GROUP_ENABLE | (0u64 << FILTER_GROUP_ID_SHIFT);
+                    }
+                    "ARISE" => {
+                        attr |= FILTER_GROUP_ENABLE | (10u64 << FILTER_GROUP_ID_SHIFT);
+                    }
+                    "SAINT_SNOW" => {
+                        attr |= FILTER_GROUP_ENABLE | (11u64 << FILTER_GROUP_ID_SHIFT);
+                    }
+                    "SUNNY_PASSION" => {
+                        attr |= FILTER_GROUP_ENABLE | (12u64 << FILTER_GROUP_ID_SHIFT);
+                    }
+                    "MUSICAL" => {
+                        attr |= FILTER_GROUP_ENABLE | (13u64 << FILTER_GROUP_ID_SHIFT);
+                    }
+                    _ => {}
+                }
             }
         } else if part == "TAPPED" || part == "STATUS=TAPPED" {
             attr |= FILTER_TAPPED;
@@ -757,9 +788,9 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             attr |= FILTER_TYPE_MEMBER;
         } else if part == "TYPE_LIVE" {
             attr |= FILTER_TYPE_LIVE;
-        } else if part == "AQOURS" {
+        } else if part == "AQOURS" || part == "AQUOURS" {
             attr |= FILTER_GROUP_ENABLE | (1u64 << FILTER_GROUP_ID_SHIFT);
-        } else if part == "M'S" || part == "μ'S" || part == "U'S" || part == "MUSE" {
+        } else if part == "M'S" || part == "μ'S" || part == "Μ'S" || part == "U'S" || part == "MUSE" || part == "MUS" {
             attr |= FILTER_GROUP_ENABLE | (0u64 << FILTER_GROUP_ID_SHIFT);
         } else if part == "UNIQUE_NAMES=TRUE"
             || part == "UNIQUE_NAMES"
@@ -800,13 +831,66 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 0);
         } else if part == "HEART_BLUE" {
             attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 4);
-        } else if part == "HASUNOSORA" {
+        } else if part == "HASUNOSORA" || part == "HASU" {
             attr |= FILTER_GROUP_ENABLE | (4u64 << FILTER_GROUP_ID_SHIFT);
         } else if part == "LIELLA" {
             attr |= FILTER_GROUP_ENABLE | (3u64 << FILTER_GROUP_ID_SHIFT);
-        } else if part == "NIJIGASAKI" || part == "NIJIGAKU" {
+        } else if part == "NIJIGASAKI" || part == "NIJIGAKU" || part == "NIJI" {
             attr |= FILTER_GROUP_ENABLE | (2u64 << FILTER_GROUP_ID_SHIFT);
+        } else if part == "ARISE" {
+            attr |= FILTER_GROUP_ENABLE | (10u64 << FILTER_GROUP_ID_SHIFT);
+        } else if part == "SAINT_SNOW" {
+            attr |= FILTER_GROUP_ENABLE | (11u64 << FILTER_GROUP_ID_SHIFT);
+        } else if part == "SUNNY_PASSION" {
+            attr |= FILTER_GROUP_ENABLE | (12u64 << FILTER_GROUP_ID_SHIFT);
+        } else if part == "MUSICAL" {
+            attr |= FILTER_GROUP_ENABLE | (13u64 << FILTER_GROUP_ID_SHIFT);
         }
     }
     attr
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_map_filter_string_to_attr_groups() {
+        let check = |s: &str, expected_id: u64| {
+            let attr = map_filter_string_to_attr(s);
+            let group_id = (attr >> 5) & 0x7F;
+            let group_enabled = (attr >> 4) & 1;
+            println!("Testing group '{}': attr={}, id={}, enabled={}", s, attr, group_id, group_enabled);
+            assert_eq!(group_enabled, 1, "Group should be enabled for '{}'", s);
+            assert_eq!(group_id, expected_id, "Incorrect group ID for '{}'", s);
+        };
+
+        check("UNIT_HASU", 4);
+        check("UNIT_HASUNOSORA", 4);
+        check("HASU", 4);
+        check("HASUNOSORA", 4);
+
+        check("UNIT_NIJI", 2);
+        check("UNIT_NIJIGASAKI", 2);
+        check("NIJI", 2);
+        check("NIJIGASAKI", 2);
+
+        check("UNIT_AQOURS", 1);
+        check("UNIT_AQUOURS", 1);
+        check("AQOURS", 1);
+        check("AQUOURS", 1);
+
+        check("UNIT_MUSE", 0);
+        check("MUSE", 0);
+        check("μ'S", 0);
+
+        check("ARISE", 10);
+        check("UNIT_ARISE", 10);
+        check("SAINT_SNOW", 11);
+        check("UNIT_SAINT_SNOW", 11);
+        check("SUNNY_PASSION", 12);
+        check("UNIT_SUNNY_PASSION", 12);
+        check("MUSICAL", 13);
+        check("UNIT_MUSICAL", 13);
+    }
 }

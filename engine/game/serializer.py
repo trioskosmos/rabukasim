@@ -1,4 +1,4 @@
-import json
+﻿import json
 
 from engine.game.desc_utils import get_action_desc
 from engine.game.state_utils import get_base_id
@@ -119,12 +119,12 @@ def serialize_card(cid, member_db, live_db, energy_db, is_viewable=True, peek=Fa
             ability_lines = []
             for ab in m.abilities:
                 trigger_icon = {
-                    TriggerType.ACTIVATED: "【起動】",
-                    TriggerType.ON_PLAY: "【登場】",
-                    TriggerType.CONSTANT: "【常時】",
-                    TriggerType.ON_LIVE_START: "【ライブ開始】",
-                    TriggerType.ON_LIVE_SUCCESS: "【ライブ成功時】",
-                }.get(ab.trigger, "【自動】")
+                    TriggerType.ACTIVATED: "縲占ｵｷ蜍輔・,
+                    TriggerType.ON_PLAY: "縲千匳蝣ｴ縲・,
+                    TriggerType.CONSTANT: "縲仙ｸｸ譎ゅ・,
+                    TriggerType.ON_LIVE_START: "縲舌Λ繧､繝夜幕蟋九・,
+                    TriggerType.ON_LIVE_SUCCESS: "縲舌Λ繧､繝匁・蜉滓凾縲・,
+                }.get(ab.trigger, "縲占・蜍輔・)
                 ability_lines.append(f"{trigger_icon} {ab.raw_text}")
             ability_text = "\n".join(ability_lines)
 
@@ -150,7 +150,7 @@ def serialize_card(cid, member_db, live_db, energy_db, is_viewable=True, peek=Fa
         if not ability_text and hasattr(l, "abilities") and l.abilities:
             ability_lines = []
             for ab in l.abilities:
-                trigger_icon = {TriggerType.ON_LIVE_START: "【ライブ開始】"}.get(ab.trigger, "【自動】")
+                trigger_icon = {TriggerType.ON_LIVE_START: "縲舌Λ繧､繝夜幕蟋九・}.get(ab.trigger, "縲占・蜍輔・)
                 ability_lines.append(f"{trigger_icon} {ab.raw_text}")
             ability_text = "\n".join(ability_lines)
 
@@ -721,3 +721,5 @@ def serialize_state(gs, viewer_idx=0, is_pvp=False, mode="pve", lang="jp"):
         "my_player_id": viewer_idx,
         "needs_deck": gs.phase == 3,
     }
+
+

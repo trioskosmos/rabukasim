@@ -1,4 +1,4 @@
-import copy
+﻿import copy
 import random
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
@@ -8,6 +8,14 @@ if TYPE_CHECKING:
     from engine.models.ability import Ability, Cost, Effect
 
 from engine.game.enums import Phase
+from engine.game.effects.choices import (
+    is_cost_payment_choice,
+    normalize_choice_metadata,
+    store_choice_answer,
+)
+from engine.game.effects.costs import can_pay_costs, pay_costs
+from engine.game.effects.metadata import resolve_source_metadata
+from engine.game.effects.movement import move_member
 from engine.models.ability import (
     Ability,
     AbilityCostType,
@@ -158,63 +166,13 @@ class EffectMixin:
                             ctx.update({"zone": zone_name, "zone_index": i, "card_id": cid})
                             self.triggered_abilities.append((pid, ab, ctx))
 
-    def _resolve_source_metadata(
-        self, source_card_id: Optional[int], ability: "Ability", reason: str = "effect"
-    ) -> Dict[str, Any]:
-        """Helper to resolve standardized source metadata for UI/Logs."""
-        if source_card_id is None:
-            # Fallback if no specific source ID provided
-            return {
-                "source_card_id": -1,
-                "source_img": "",
-                "source_member": "Unknown Source",
-                "source_ability": ability.raw_text,
-                "step_progress": "?",
-                "reason": reason,
-            }
-
-        # Try member DB
-        if source_card_id in self.member_db:
-            card = self.member_db[source_card_id]
-            return {
-                "source_card_id": source_card_id,
-                "source_card_no": getattr(card, "card_no", "Unknown"),
-                "source_img": getattr(card, "img_path", ""),
-                "source_member": card.name,
-                "source_ability": ability.raw_text,
-                "step_progress": "?",
-                "reason": reason,
-            }
-
-        # Try live DB
-        if source_card_id in self.live_db:
-            card = self.live_db[source_card_id]
-            return {
-                "source_card_id": source_card_id,
-                "source_card_no": getattr(card, "card_no", "Unknown"),
-                "source_img": getattr(card, "img_path", ""),
-                "source_member": card.name,
-                "source_ability": ability.raw_text,
-                "step_progress": "?",
-                "reason": reason,
-            }
-
-        return {
-            "source_card_id": source_card_id,
-            "source_img": "",
-            "source_member": f"Card {source_card_id}",
-            "source_ability": ability.raw_text,
-            "step_progress": "?",
-            "reason": reason,
-        }
-
     def _handle_cost(self, player_id: int, ability: Ability, context: Dict[str, Any] = {}) -> bool:
         """Handle ability costs (Rule 9.7.2). Returns True if cost paid/resolved."""
         p = self.players[player_id]
         cid = context.get("source_card_id")
 
         # Use new helper to ensure consistent metadata
-        cost_metadata = self._resolve_source_metadata(cid, ability, reason="cost")
+        cost_metadata = resolve_source_metadata(self, cid, ability, reason="cost")
         cost_metadata["step_progress"] = "Cost"
 
         for cost in ability.costs:
@@ -230,7 +188,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "tap",
-                                "effect_description": "タップするメンバーを選んでください",
+                                "effect_description": "繧ｿ繝・・縺吶ｋ繝｡繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                                 "is_optional": False,
                             },
                         )
@@ -248,7 +206,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "discard",
-                                "effect_description": f"手札から{cost.value}枚捨ててください",
+                                "effect_description": f"謇区惆縺九ｉ{cost.value}譫壽昏縺ｦ縺ｦ縺上□縺輔＞",
                                 "is_optional": cost.is_optional,
                                 "count": cost.value,
                             },
@@ -274,7 +232,7 @@ class EffectMixin:
                             "cards": untapped_cards,
                             "count": cost.value,
                             "reason": "tap_energy",
-                            "effect_description": f"タップするエールを{cost.value}枚選んでください",
+                            "effect_description": f"エネルギーを{cost.value}枚タップしてください",
                         },
                     )
                 )
@@ -295,7 +253,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "rest",
-                                "effect_description": "レストするメンバーを選んでください",
+                                "effect_description": "繝ｬ繧ｹ繝医☆繧九Γ繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                                 "is_optional": False,
                             },
                         )
@@ -319,7 +277,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_hand",
-                                "effect_description": "手札に戻すメンバーを選んでください",
+                                "effect_description": "謇区惆縺ｫ謌ｻ縺吶Γ繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                                 "is_optional": False,
                             },
                         )
@@ -343,7 +301,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "discard_member",
-                                "effect_description": "捨てるメンバーを選んでください",
+                                "effect_description": "謐ｨ縺ｦ繧九Γ繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                                 "is_optional": False,
                             },
                         )
@@ -357,7 +315,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "discard",
-                                "effect_description": f"ライブゾーンから{cost.value}枚捨ててください",
+                                "effect_description": f"繝ｩ繧､繝悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽昏縺ｦ縺ｦ縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -374,7 +332,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "remove",
-                                "effect_description": f"ライブゾーンから{cost.value}枚除外してください",
+                                "effect_description": f"繝ｩ繧､繝悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫夐勁螟悶＠縺ｦ縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -401,7 +359,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "remove_member",
-                                "effect_description": "除外するメンバーを選んでください",
+                                "effect_description": "髯､螟悶☆繧九Γ繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                                 "is_optional": False,
                             },
                         )
@@ -415,7 +373,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_hand",
-                                "effect_description": f"ライブゾーンから{cost.value}枚手札に戻してください",
+                                "effect_description": f"繝ｩ繧､繝悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽焔譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -432,7 +390,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_deck",
-                                "effect_description": f"ライブゾーンから{cost.value}枚デッキに戻してください",
+                                "effect_description": f"繝ｩ繧､繝悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫壹ョ繝・く縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -472,7 +430,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_deck",
-                                "effect_description": "デッキに戻すメンバーを選んでください",
+                                "effect_description": "繝・ャ繧ｭ縺ｫ謌ｻ縺吶Γ繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                                 "is_optional": False,
                             },
                         )
@@ -486,7 +444,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member",
-                                "effect_description": f"手札からメンバーを{cost.value}枚配置してください",
+                                "effect_description": f"謇区惆縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -504,7 +462,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live",
-                                "effect_description": f"手札からライブを{cost.value}枚配置してください",
+                                "effect_description": f"謇区惆縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -522,7 +480,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy",
-                                "effect_description": f"手札からエールを{cost.value}枚配置してください",
+                                "effect_description": f"謇区惆縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -540,7 +498,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member",
-                                "effect_description": f"捨て札からメンバーを{cost.value}枚配置してください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -558,7 +516,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live",
-                                "effect_description": f"捨て札からライブを{cost.value}枚配置してください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -576,7 +534,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy",
-                                "effect_description": f"捨て札からエールを{cost.value}枚配置してください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -594,7 +552,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member",
-                                "effect_description": f"デッキからメンバーを{cost.value}枚配置してください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -612,7 +570,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live",
-                                "effect_description": f"デッキからライブを{cost.value}枚配置してください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -630,7 +588,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy",
-                                "effect_description": f"デッキからエールを{cost.value}枚配置してください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -668,7 +626,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_deck",
-                                "effect_description": f"捨て札から{cost.value}枚デッキに戻してください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ{cost.value}譫壹ョ繝・く縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -685,7 +643,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_deck",
-                                "effect_description": f"除外ゾーンから{cost.value}枚デッキに戻してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫壹ョ繝・く縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -702,7 +660,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_hand",
-                                "effect_description": f"除外ゾーンから{cost.value}枚手札に戻してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽焔譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -719,7 +677,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_discard",
-                                "effect_description": f"除外ゾーンから{cost.value}枚捨て札に戻してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -736,7 +694,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy",
-                                "effect_description": f"成功ライブからエールを{cost.value}枚配置してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨お繝ｼ繝ｫ繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -753,7 +711,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "discard",
-                                "effect_description": f"成功ライブから{cost.value}枚捨ててください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧閲cost.value}譫壽昏縺ｦ縺ｦ縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -770,7 +728,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "remove",
-                                "effect_description": f"成功ライブから{cost.value}枚除外してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧閲cost.value}譫夐勁螟悶＠縺ｦ縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -787,7 +745,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_hand",
-                                "effect_description": f"成功ライブから{cost.value}枚手札に戻してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧閲cost.value}譫壽焔譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -804,7 +762,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_deck",
-                                "effect_description": f"成功ライブから{cost.value}枚デッキに戻してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧閲cost.value}譫壹ョ繝・く縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -821,7 +779,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_discard",
-                                "effect_description": f"成功ライブから{cost.value}枚捨て札に戻してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧閲cost.value}譫壽昏縺ｦ譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -838,7 +796,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member",
-                                "effect_description": f"成功ライブからメンバーを{cost.value}枚配置してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨Γ繝ｳ繝舌・繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -856,7 +814,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live",
-                                "effect_description": f"成功ライブからライブを{cost.value}枚配置してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨Λ繧､繝悶ｒ{cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -874,7 +832,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy",
-                                "effect_description": f"除外ゾーンからエールを{cost.value}枚配置してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -892,7 +850,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member",
-                                "effect_description": f"除外ゾーンからメンバーを{cost.value}枚配置してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -910,7 +868,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live",
-                                "effect_description": f"除外ゾーンからライブを{cost.value}枚配置してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -928,7 +886,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_deck",
-                                "effect_description": f"エールゾーンから{cost.value}枚デッキに戻してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ{cost.value}譫壹ョ繝・く縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -945,7 +903,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_hand",
-                                "effect_description": f"エールゾーンから{cost.value}枚手札に戻してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽焔譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -962,7 +920,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "discard",
-                                "effect_description": f"エールゾーンから{cost.value}枚捨ててください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽昏縺ｦ縺ｦ縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -979,7 +937,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "remove",
-                                "effect_description": f"エールゾーンから{cost.value}枚除外してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ{cost.value}譫夐勁螟悶＠縺ｦ縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1000,7 +958,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "return_stage_energy_to_deck",
-                                "effect_description": f"ステージのエールから{cost.value}枚デッキに戻してください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ{cost.value}譫壹ョ繝・く縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                             },
@@ -1020,7 +978,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "return_stage_energy_to_hand",
-                                "effect_description": f"ステージのエールから{cost.value}枚手札に戻してください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ{cost.value}譫壽焔譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                             },
@@ -1040,7 +998,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "discard_stage_energy",
-                                "effect_description": f"ステージのエールから{cost.value}枚捨ててください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ{cost.value}譫壽昏縺ｦ縺ｦ縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                             },
@@ -1060,7 +1018,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "remove_stage_energy",
-                                "effect_description": f"ステージのエールから{cost.value}枚除外してください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ{cost.value}譫夐勁螟悶＠縺ｦ縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                             },
@@ -1080,7 +1038,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_energy_from_stage_energy",
-                                "effect_description": f"ステージのエールから{cost.value}枚エールゾーンに配置してください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ{cost.value}譫壹お繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                             },
@@ -1100,7 +1058,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_member_from_stage_energy",
-                                "effect_description": f"ステージのエールからメンバーを{cost.value}枚配置してください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.MEMBER.name,
@@ -1121,7 +1079,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_live_from_stage_energy",
-                                "effect_description": f"ステージのエールからライブを{cost.value}枚配置してください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.LIVE.name,
@@ -1139,7 +1097,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_stage_energy",
-                                "effect_description": f"手札からエールを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"謇区惆縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -1157,7 +1115,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_stage_energy",
-                                "effect_description": f"手札からメンバーを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"謇区惆縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -1175,7 +1133,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_stage_energy",
-                                "effect_description": f"手札からライブを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"謇区惆縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -1193,7 +1151,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_stage_energy",
-                                "effect_description": f"捨て札からエールを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -1211,7 +1169,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_stage_energy",
-                                "effect_description": f"捨て札からメンバーを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -1229,7 +1187,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_stage_energy",
-                                "effect_description": f"捨て札からライブを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -1247,7 +1205,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_stage_energy",
-                                "effect_description": f"デッキからエールを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -1265,7 +1223,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_stage_energy",
-                                "effect_description": f"デッキからメンバーを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -1283,7 +1241,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_stage_energy",
-                                "effect_description": f"デッキからライブを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -1301,7 +1259,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_stage_energy",
-                                "effect_description": f"成功ライブからエールを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨お繝ｼ繝ｫ繧畜cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1318,7 +1276,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_stage_energy",
-                                "effect_description": f"成功ライブからメンバーを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨Γ繝ｳ繝舌・繧畜cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -1336,7 +1294,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_stage_energy",
-                                "effect_description": f"成功ライブからライブを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨Λ繧､繝悶ｒ{cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -1354,7 +1312,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_stage_energy",
-                                "effect_description": f"除外ゾーンからエールを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -1372,7 +1330,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_stage_energy",
-                                "effect_description": f"除外ゾーンからメンバーを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -1390,7 +1348,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_stage_energy",
-                                "effect_description": f"除外ゾーンからライブを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -1411,7 +1369,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "return_stage_energy_to_success",
-                                "effect_description": f"ステージのエールから{cost.value}枚成功ライブに戻してください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ{cost.value}譫壽・蜉溘Λ繧､繝悶↓謌ｻ縺励※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                             },
@@ -1431,7 +1389,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "return_stage_energy_to_discard",
-                                "effect_description": f"ステージのエールから{cost.value}枚捨て札に戻してください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                             },
@@ -1451,7 +1409,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "return_stage_energy_to_removed",
-                                "effect_description": f"ステージのエールから{cost.value}枚除外ゾーンに戻してください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                             },
@@ -1468,7 +1426,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_success",
-                                "effect_description": f"エールゾーンから{cost.value}枚成功ライブに戻してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽・蜉溘Λ繧､繝悶↓謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1485,7 +1443,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_discard",
-                                "effect_description": f"エールゾーンから{cost.value}枚捨て札に戻してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1502,7 +1460,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_removed",
-                                "effect_description": f"エールゾーンから{cost.value}枚除外ゾーンに戻してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1529,7 +1487,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_success",
-                                "effect_description": "成功ライブに戻すメンバーを選んでください",
+                                "effect_description": "謌仙粥繝ｩ繧､繝悶↓謌ｻ縺吶Γ繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                                 "is_optional": False,
                             },
                         )
@@ -1553,7 +1511,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_discard",
-                                "effect_description": "捨て札に戻すメンバーを選んでください",
+                                "effect_description": "謐ｨ縺ｦ譛ｭ縺ｫ謌ｻ縺吶Γ繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                                 "is_optional": False,
                             },
                         )
@@ -1577,7 +1535,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_removed",
-                                "effect_description": "除外ゾーンに戻すメンバーを選んでください",
+                                "effect_description": "髯､螟悶だ繝ｼ繝ｳ縺ｫ謌ｻ縺吶Γ繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                                 "is_optional": False,
                             },
                         )
@@ -1591,7 +1549,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_success",
-                                "effect_description": f"ライブゾーンから{cost.value}枚成功ライブに戻してください",
+                                "effect_description": f"繝ｩ繧､繝悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽・蜉溘Λ繧､繝悶↓謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1608,7 +1566,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_discard",
-                                "effect_description": f"ライブゾーンから{cost.value}枚捨て札に戻してください",
+                                "effect_description": f"繝ｩ繧､繝悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1625,7 +1583,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_removed",
-                                "effect_description": f"ライブゾーンから{cost.value}枚除外ゾーンに戻してください",
+                                "effect_description": f"繝ｩ繧､繝悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1642,7 +1600,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_hand",
-                                "effect_description": f"捨て札から{cost.value}枚手札に戻してください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ{cost.value}譫壽焔譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1659,7 +1617,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_success",
-                                "effect_description": f"捨て札から{cost.value}枚成功ライブに戻してください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ{cost.value}譫壽・蜉溘Λ繧､繝悶↓謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1676,7 +1634,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_removed",
-                                "effect_description": f"捨て札から{cost.value}枚除外ゾーンに戻してください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1693,7 +1651,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_hand",
-                                "effect_description": f"デッキから{cost.value}枚手札に戻してください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ{cost.value}譫壽焔譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1710,7 +1668,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_discard",
-                                "effect_description": f"デッキから{cost.value}枚捨て札に戻してください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1727,7 +1685,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_success",
-                                "effect_description": f"デッキから{cost.value}枚成功ライブに戻してください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ{cost.value}譫壽・蜉溘Λ繧､繝悶↓謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1744,7 +1702,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_removed",
-                                "effect_description": f"デッキから{cost.value}枚除外ゾーンに戻してください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1761,7 +1719,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_discard",
-                                "effect_description": f"成功ライブから{cost.value}枚捨て札に戻してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧閲cost.value}譫壽昏縺ｦ譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1778,7 +1736,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_removed",
-                                "effect_description": f"成功ライブから{cost.value}枚除外ゾーンに戻してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧閲cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1795,7 +1753,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_hand",
-                                "effect_description": f"成功ライブから{cost.value}枚手札に戻してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧閲cost.value}譫壽焔譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1812,7 +1770,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_deck",
-                                "effect_description": f"成功ライブから{cost.value}枚デッキに戻してください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧閲cost.value}譫壹ョ繝・く縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1829,7 +1787,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_discard",
-                                "effect_description": f"除外ゾーンから{cost.value}枚捨て札に戻してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1846,7 +1804,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_success",
-                                "effect_description": f"除外ゾーンから{cost.value}枚成功ライブに戻してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽・蜉溘Λ繧､繝悶↓謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1863,7 +1821,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_deck",
-                                "effect_description": f"除外ゾーンから{cost.value}枚デッキに戻してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫壹ョ繝・く縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1880,7 +1838,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_hand",
-                                "effect_description": f"除外ゾーンから{cost.value}枚手札に戻してください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ{cost.value}譫壽焔譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1897,7 +1855,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_hand",
-                                "effect_description": f"エールデッキから{cost.value}枚手札に戻してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ{cost.value}譫壽焔譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1914,7 +1872,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_discard",
-                                "effect_description": f"エールデッキから{cost.value}枚捨て札に戻してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1931,7 +1889,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_success",
-                                "effect_description": f"エールデッキから{cost.value}枚成功ライブに戻してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ{cost.value}譫壽・蜉溘Λ繧､繝悶↓謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1948,7 +1906,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "return_to_removed",
-                                "effect_description": f"エールデッキから{cost.value}枚除外ゾーンに戻してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ謌ｻ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                             },
@@ -1965,7 +1923,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy",
-                                "effect_description": f"エールデッキからエールを{cost.value}枚配置してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -1983,7 +1941,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member",
-                                "effect_description": f"エールデッキからメンバーを{cost.value}枚配置してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2001,7 +1959,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live",
-                                "effect_description": f"エールデッキからライブを{cost.value}枚配置してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2019,7 +1977,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_stage_energy",
-                                "effect_description": f"エールデッキからエールを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2037,7 +1995,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_stage_energy",
-                                "effect_description": f"エールデッキからメンバーを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2055,7 +2013,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_stage_energy",
-                                "effect_description": f"エールデッキからライブを{cost.value}枚ステージのエールに配置してください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壹せ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺ｫ驟咲ｽｮ縺励※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2073,7 +2031,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_hand",
-                                "effect_description": f"エールデッキからエールを{cost.value}枚手札に加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2091,7 +2049,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_hand",
-                                "effect_description": f"エールデッキからメンバーを{cost.value}枚手札に加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2109,7 +2067,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_hand",
-                                "effect_description": f"エールデッキからライブを{cost.value}枚手札に加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2127,7 +2085,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_discard",
-                                "effect_description": f"エールデッキからエールを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2145,7 +2103,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_discard",
-                                "effect_description": f"エールデッキからメンバーを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2163,7 +2121,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_discard",
-                                "effect_description": f"エールデッキからライブを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2181,7 +2139,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_success",
-                                "effect_description": f"エールデッキからエールを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2199,7 +2157,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_success",
-                                "effect_description": f"エールデッキからメンバーを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2217,7 +2175,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_success",
-                                "effect_description": f"エールデッキからライブを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2235,7 +2193,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_removed",
-                                "effect_description": f"エールデッキからエールを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2253,7 +2211,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_removed",
-                                "effect_description": f"エールデッキからメンバーを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2271,7 +2229,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_removed",
-                                "effect_description": f"エールデッキからライブを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繝・ャ繧ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2289,7 +2247,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_hand",
-                                "effect_description": f"デッキからエールを{cost.value}枚手札に加えてください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2307,7 +2265,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_hand",
-                                "effect_description": f"デッキからメンバーを{cost.value}枚手札に加えてください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2325,7 +2283,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_hand",
-                                "effect_description": f"デッキからライブを{cost.value}枚手札に加えてください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2343,7 +2301,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_discard",
-                                "effect_description": f"デッキからエールを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2361,7 +2319,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_discard",
-                                "effect_description": f"デッキからメンバーを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2379,7 +2337,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_discard",
-                                "effect_description": f"デッキからライブを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2397,7 +2355,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_success",
-                                "effect_description": f"デッキからエールを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2415,7 +2373,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_success",
-                                "effect_description": f"デッキからメンバーを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2433,7 +2391,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_success",
-                                "effect_description": f"デッキからライブを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2451,7 +2409,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_removed",
-                                "effect_description": f"デッキからエールを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2469,7 +2427,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_removed",
-                                "effect_description": f"デッキからメンバーを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2487,7 +2445,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_removed",
-                                "effect_description": f"デッキからライブを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"繝・ャ繧ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2505,7 +2463,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_hand",
-                                "effect_description": f"捨て札からエールを{cost.value}枚手札に加えてください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2523,7 +2481,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_hand",
-                                "effect_description": f"捨て札からメンバーを{cost.value}枚手札に加えてください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2541,7 +2499,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_hand",
-                                "effect_description": f"捨て札からライブを{cost.value}枚手札に加えてください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2559,7 +2517,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_success",
-                                "effect_description": f"捨て札からエールを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2577,7 +2535,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_success",
-                                "effect_description": f"捨て札からメンバーを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2595,7 +2553,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_success",
-                                "effect_description": f"捨て札からライブを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2613,7 +2571,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_removed",
-                                "effect_description": f"捨て札からエールを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2631,7 +2589,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_removed",
-                                "effect_description": f"捨て札からメンバーを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2649,7 +2607,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_removed",
-                                "effect_description": f"捨て札からライブを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"謐ｨ縺ｦ譛ｭ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2667,7 +2625,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_discard",
-                                "effect_description": f"手札からエールを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"謇区惆縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2685,7 +2643,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_discard",
-                                "effect_description": f"手札からメンバーを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"謇区惆縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2703,7 +2661,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_discard",
-                                "effect_description": f"手札からライブを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"謇区惆縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2721,7 +2679,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_success",
-                                "effect_description": f"手札からエールを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"謇区惆縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2739,7 +2697,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_success",
-                                "effect_description": f"手札からメンバーを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"謇区惆縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2757,7 +2715,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_success",
-                                "effect_description": f"手札からライブを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"謇区惆縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2775,7 +2733,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_removed",
-                                "effect_description": f"手札からエールを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"謇区惆縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2793,7 +2751,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_removed",
-                                "effect_description": f"手札からメンバーを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"謇区惆縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2811,7 +2769,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_removed",
-                                "effect_description": f"手札からライブを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"謇区惆縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2829,7 +2787,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_hand",
-                                "effect_description": f"成功ライブからエールを{cost.value}枚手札に加えてください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨お繝ｼ繝ｫ繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2847,7 +2805,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_hand",
-                                "effect_description": f"成功ライブからメンバーを{cost.value}枚手札に加えてください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨Γ繝ｳ繝舌・繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2865,7 +2823,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_hand",
-                                "effect_description": f"成功ライブからライブを{cost.value}枚手札に加えてください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨Λ繧､繝悶ｒ{cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2883,7 +2841,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_discard",
-                                "effect_description": f"成功ライブからエールを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨お繝ｼ繝ｫ繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2901,7 +2859,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_discard",
-                                "effect_description": f"成功ライブからメンバーを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨Γ繝ｳ繝舌・繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2919,7 +2877,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_discard",
-                                "effect_description": f"成功ライブからライブを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨Λ繧､繝悶ｒ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2937,7 +2895,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_removed",
-                                "effect_description": f"成功ライブからエールを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨お繝ｼ繝ｫ繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -2955,7 +2913,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_removed",
-                                "effect_description": f"成功ライブからメンバーを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨Γ繝ｳ繝舌・繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -2973,7 +2931,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_removed",
-                                "effect_description": f"成功ライブからライブを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"謌仙粥繝ｩ繧､繝悶°繧峨Λ繧､繝悶ｒ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -2991,7 +2949,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_hand",
-                                "effect_description": f"除外ゾーンからエールを{cost.value}枚手札に加えてください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -3009,7 +2967,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_hand",
-                                "effect_description": f"除外ゾーンからメンバーを{cost.value}枚手札に加えてください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -3027,7 +2985,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_hand",
-                                "effect_description": f"除外ゾーンからライブを{cost.value}枚手札に加えてください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -3045,7 +3003,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_discard",
-                                "effect_description": f"除外ゾーンからエールを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -3063,7 +3021,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_discard",
-                                "effect_description": f"除外ゾーンからメンバーを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -3081,7 +3039,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_discard",
-                                "effect_description": f"除外ゾーンからライブを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -3099,7 +3057,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_success",
-                                "effect_description": f"除外ゾーンからエールを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -3117,7 +3075,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_success",
-                                "effect_description": f"除外ゾーンからメンバーを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -3135,7 +3093,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_success",
-                                "effect_description": f"除外ゾーンからライブを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"髯､螟悶だ繝ｼ繝ｳ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -3153,7 +3111,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_hand",
-                                "effect_description": f"エールゾーンからエールを{cost.value}枚手札に加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -3171,7 +3129,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_hand",
-                                "effect_description": f"エールゾーンからメンバーを{cost.value}枚手札に加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -3189,7 +3147,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_hand",
-                                "effect_description": f"エールゾーンからライブを{cost.value}枚手札に加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -3207,7 +3165,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_discard",
-                                "effect_description": f"エールゾーンからエールを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -3225,7 +3183,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_discard",
-                                "effect_description": f"エールゾーンからメンバーを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -3243,7 +3201,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_discard",
-                                "effect_description": f"エールゾーンからライブを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -3261,7 +3219,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_success",
-                                "effect_description": f"エールゾーンからエールを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -3279,7 +3237,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_success",
-                                "effect_description": f"エールゾーンからメンバーを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -3297,7 +3255,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_success",
-                                "effect_description": f"エールゾーンからライブを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -3315,7 +3273,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_energy_to_removed",
-                                "effect_description": f"エールゾーンからエールを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ繧ｨ繝ｼ繝ｫ繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.ENERGY.name,
@@ -3333,7 +3291,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_member_to_removed",
-                                "effect_description": f"エールゾーンからメンバーを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.MEMBER.name,
@@ -3351,7 +3309,7 @@ class EffectMixin:
                             {
                                 **cost_metadata,
                                 "effect": "place_live_to_removed",
-                                "effect_description": f"エールゾーンからライブを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"繧ｨ繝ｼ繝ｫ繧ｾ繝ｼ繝ｳ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "is_optional": False,
                                 "count": cost.value,
                                 "filter_group": Group.LIVE.name,
@@ -3372,7 +3330,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_energy_from_stage_energy_to_hand",
-                                "effect_description": f"ステージのエールから{cost.value}枚手札に加えてください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ{cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.ENERGY.name,
@@ -3393,7 +3351,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_member_from_stage_energy_to_hand",
-                                "effect_description": f"ステージのエールからメンバーを{cost.value}枚手札に加えてください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.MEMBER.name,
@@ -3414,7 +3372,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_live_from_stage_energy_to_hand",
-                                "effect_description": f"ステージのエールからライブを{cost.value}枚手札に加えてください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽焔譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.LIVE.name,
@@ -3435,7 +3393,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_energy_from_stage_energy_to_discard",
-                                "effect_description": f"ステージのエールから{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.ENERGY.name,
@@ -3456,7 +3414,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_member_from_stage_energy_to_discard",
-                                "effect_description": f"ステージのエールからメンバーを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.MEMBER.name,
@@ -3477,7 +3435,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_live_from_stage_energy_to_discard",
-                                "effect_description": f"ステージのエールからライブを{cost.value}枚捨て札に加えてください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽昏縺ｦ譛ｭ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.LIVE.name,
@@ -3498,7 +3456,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_energy_from_stage_energy_to_success",
-                                "effect_description": f"ステージのエールから{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ{cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.ENERGY.name,
@@ -3519,7 +3477,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_member_from_stage_energy_to_success",
-                                "effect_description": f"ステージのエールからメンバーを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.MEMBER.name,
@@ -3540,7 +3498,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_live_from_stage_energy_to_success",
-                                "effect_description": f"ステージのエールからライブを{cost.value}枚成功ライブに加えてください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫壽・蜉溘Λ繧､繝悶↓蜉縺医※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.LIVE.name,
@@ -3561,7 +3519,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_energy_from_stage_energy_to_removed",
-                                "effect_description": f"ステージのエールから{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.ENERGY.name,
@@ -3582,7 +3540,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_member_from_stage_energy_to_removed",
-                                "effect_description": f"ステージのエールからメンバーを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ繝｡繝ｳ繝舌・繧畜cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.MEMBER.name,
@@ -3603,7 +3561,7 @@ class EffectMixin:
                                 "cards": p.stage_energy[area],
                                 "count": cost.value,
                                 "reason": "place_live_from_stage_energy_to_removed",
-                                "effect_description": f"ステージのエールからライブを{cost.value}枚除外ゾーンに加えてください",
+                                "effect_description": f"繧ｹ繝・・繧ｸ縺ｮ繧ｨ繝ｼ繝ｫ縺九ｉ繝ｩ繧､繝悶ｒ{cost.value}譫夐勁螟悶だ繝ｼ繝ｳ縺ｫ蜉縺医※縺上□縺輔＞",
                                 "zone": "STAGE_ENERGY",
                                 "zone_index": area,
                                 "filter_group": Group.LIVE.name,
@@ -3784,7 +3742,7 @@ class EffectMixin:
                                 **(context or {}),
                                 "options": options_text,
                                 "options_bytecode": branch_bytecodes,
-                                "effect_description": "選択してください",
+                                "effect_description": "驕ｸ謚槭＠縺ｦ縺上□縺輔＞",
                             },
                         )
                     )
@@ -3957,7 +3915,7 @@ class EffectMixin:
                             "count": effect.value,
                             "filter": "live",
                             "effect": "return_to_hand",
-                            "effect_description": "回収するライブを選んでください",
+                            "effect_description": "蝗槫庶縺吶ｋ繝ｩ繧､繝悶ｒ驕ｸ繧薙〒縺上□縺輔＞",
                         },
                     )
                 )
@@ -4002,7 +3960,7 @@ class EffectMixin:
                             "count": effect.value,
                             "filter": "member",
                             "effect": effect.params.get("to", "return_to_hand"),
-                            "effect_description": "回収するメンバーを選んでください",
+                            "effect_description": "蝗槫庶縺吶ｋ繝｡繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                         },
                     )
                 )
@@ -4016,7 +3974,7 @@ class EffectMixin:
                         **choice_metadata,
                         "choices": effect.params.get("choices", ["pink", "red", "yellow", "green", "blue", "purple"]),
                         "count": effect.value,
-                        "effect_description": "色を選んでください",
+                        "effect_description": "濶ｲ繧帝∈繧薙〒縺上□縺輔＞",
                     },
                 )
             )
@@ -4045,7 +4003,7 @@ class EffectMixin:
                             "cards": tapped_cards,
                             "count": effect.value,
                             "reason": "activate_energy",
-                            "effect_description": f"活動させるエールを{effect.value}枚選んでください",
+                            "effect_description": f"豢ｻ蜍輔＆縺帙ｋ繧ｨ繝ｼ繝ｫ繧畜effect.value}譫夐∈繧薙〒縺上□縺輔＞",
                         },
                     )
                 )
@@ -4066,7 +4024,7 @@ class EffectMixin:
                         {
                             **choice_metadata,
                             "effect": "activate",
-                            "effect_description": "活動させるメンバーを選んでください",
+                            "effect_description": "豢ｻ蜍輔＆縺帙ｋ繝｡繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                             "is_optional": effect.is_optional,
                         },
                     )
@@ -4076,9 +4034,9 @@ class EffectMixin:
         if effect.target == TargetType.CARD_HAND and effect.effect_type != EffectType.SWAP_CARDS:
             if len(p.hand) > 0:
                 effect_desc = (
-                    "手札から捨てるカードを選んでください"
+                    "謇区惆縺九ｉ謐ｨ縺ｦ繧九き繝ｼ繝峨ｒ驕ｸ繧薙〒縺上□縺輔＞"
                     if effect.effect_type == EffectType.SWAP_CARDS
-                    else "手札からカードを選んでください"
+                    else "謇区惆縺九ｉ繧ｫ繝ｼ繝峨ｒ驕ｸ繧薙〒縺上□縺輔＞"
                 )
                 self.pending_choices.append(
                     (
@@ -4102,7 +4060,7 @@ class EffectMixin:
                             **choice_metadata,
                             "effect": "buff",
                             "target_effect": effect,
-                            "effect_description": f"{effect.effect_type.name}の対象メンバーを選んでください",
+                            "effect_description": f"{effect.effect_type.name}縺ｮ蟇ｾ雎｡繝｡繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                             "is_optional": False,
                         },
                     )
@@ -4117,7 +4075,7 @@ class EffectMixin:
                     {
                         **choice_metadata,
                         "options": options,
-                        "effect_description": "以下から1つ選んでください",
+                        "effect_description": "莉･荳九°繧・縺､驕ｸ繧薙〒縺上□縺輔＞",
                         "is_optional": False,
                     },
                 )
@@ -4129,7 +4087,7 @@ class EffectMixin:
                     "COLOR_SELECT",
                     {
                         **choice_metadata,
-                        "effect_description": "ハートの色を選んでください",
+                        "effect_description": "繝上・繝医・濶ｲ繧帝∈繧薙〒縺上□縺輔＞",
                         "is_optional": False,
                     },
                 )
@@ -4221,7 +4179,7 @@ class EffectMixin:
 
                 # Detect "Opponent chooses" logic (e.g., Nico)
                 is_opponent_choice = (
-                    self.current_resolving_ability and "相手は" in self.current_resolving_ability.raw_text
+                    self.current_resolving_ability and "逶ｸ謇九・" in self.current_resolving_ability.raw_text
                 )
 
                 if is_opponent_choice:
@@ -4233,7 +4191,7 @@ class EffectMixin:
                                 **choice_metadata,
                                 "player_id": self.inactive_player.player_id,
                                 "effect": "tap_self_chosen",
-                                "effect_description": "ウェイトにする自分のメンバーを選んでください",
+                                "effect_description": "繧ｦ繧ｧ繧､繝医↓縺吶ｋ閾ｪ蛻・・繝｡繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                                 "is_optional": False,
                             },
                         )
@@ -4245,7 +4203,7 @@ class EffectMixin:
                             {
                                 **choice_metadata,
                                 "effect": "tap",
-                                "effect_description": "相手のメンバーを選んでタップしてください",
+                                "effect_description": "逶ｸ謇九・繝｡繝ｳ繝舌・繧帝∈繧薙〒繧ｿ繝・・縺励※縺上□縺輔＞",
                                 "is_optional": False,
                             },
                         )
@@ -4289,7 +4247,7 @@ class EffectMixin:
                         **choice_metadata,
                         "reason": "position_change",
                         "count": 1,
-                        "effect_description": "移動するメンバーを選んでください",
+                        "effect_description": "遘ｻ蜍輔☆繧九Γ繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                     },
                 )
             )
@@ -4300,7 +4258,7 @@ class EffectMixin:
                         **choice_metadata,
                         "reason": "position_change",
                         "count": 1,
-                        "effect_description": "移動先を選んでください",
+                        "effect_description": "遘ｻ蜍募・繧帝∈繧薙〒縺上□縺輔＞",
                     },
                 )
             )
@@ -4316,7 +4274,7 @@ class EffectMixin:
                         **choice_metadata,
                         "cards": live_cards.copy(),
                         "source": "success_live",
-                        "effect_description": "交換に出すライブを選んでください",
+                        "effect_description": "莠､謠帙↓蜃ｺ縺吶Λ繧､繝悶ｒ驕ｸ繧薙〒縺上□縺輔＞",
                     },
                 )
             )
@@ -4341,8 +4299,11 @@ class EffectMixin:
                 }
             )
         elif effect.effect_type == EffectType.RESTRICTION:
-            r_type = effect.params.get("type", "unknown")
-            p.restrictions.add(r_type)
+            r_type = str(effect.params.get("type", "unknown")).lower()
+            if r_type == "live":
+                p.cannot_live = True
+            else:
+                p.restrictions.add(r_type)
             p.continuous_effects.append(
                 {
                     "effect": Effect(EffectType.RESTRICTION, 0, TargetType.SELF, {"type": r_type}),
@@ -4390,7 +4351,7 @@ class EffectMixin:
                 else:
                     valid_cards = self.looked_cards.copy()
 
-                    # Apply Group/Unit Filter from params (e.g. "みらくらぱーく！")
+                    # Apply Group/Unit Filter from params (e.g. "縺ｿ繧峨￥繧峨・繝ｼ縺擾ｼ・)
                     group_filter = effect.params.get("group")
                     if group_filter:
                         target_group = Group.from_japanese_name(group_filter)
@@ -4414,7 +4375,7 @@ class EffectMixin:
 
                             # Special case: If the string specifically parses to OTHER (not found),
                             # we might want to fail? But current logic returns OTHER.
-                            # If "みらくらぱーく" -> Unit.MIRA_CRA_PARK (15), Group.OTHER (99).
+                            # If "縺ｿ繧峨￥繧峨・繝ｼ縺・ -> Unit.MIRA_CRA_PARK (15), Group.OTHER (99).
                             # So match_unit will be True.
 
                             if match_group or match_unit:
@@ -4442,14 +4403,14 @@ class EffectMixin:
                     reorder = effect.params.get("reorder", False)
 
                     reason = "look_and_choose"
-                    desc = "手札に加えるカードを選んでください"
+                    desc = "謇区惆縺ｫ蜉縺医ｋ繧ｫ繝ｼ繝峨ｒ驕ｸ繧薙〒縺上□縺輔＞"
 
                     if dest == "deck_top":
                         reason = "look_and_reorder"
                         if any_number:
-                            desc = "デッキの上に置くカードを選んでください（0枚でもよい）"
+                            desc = "繝・ャ繧ｭ縺ｮ荳翫↓鄂ｮ縺上き繝ｼ繝峨ｒ驕ｸ繧薙〒縺上□縺輔＞・・譫壹〒繧ゅｈ縺・ｼ・
                         else:
-                            desc = "デッキの上に置くカードを選んでください"
+                            desc = "繝・ャ繧ｭ縺ｮ荳翫↓鄂ｮ縺上き繝ｼ繝峨ｒ驕ｸ繧薙〒縺上□縺輔＞"
 
                     self.pending_choices.append(
                         (
@@ -4513,7 +4474,7 @@ class EffectMixin:
                         {
                             **choice_metadata,
                             "effect": "tap",
-                            "effect_description": "タップするメンバーを選んでください",
+                            "effect_description": "繧ｿ繝・・縺吶ｋ繝｡繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                             "is_optional": effect.is_optional,
                         },
                     )
@@ -4607,7 +4568,7 @@ class EffectMixin:
                             **choice_metadata,
                             "cards": live_in_discard,
                             "count": effect.value,
-                            "effect_description": "控え室から手札に加えるライブカードを選んでください",
+                            "effect_description": "謗ｧ縺亥ｮ､縺九ｉ謇区惆縺ｫ蜉縺医ｋ繝ｩ繧､繝悶き繝ｼ繝峨ｒ驕ｸ繧薙〒縺上□縺輔＞",
                             "destination": "hand",
                         },
                     )
@@ -4623,7 +4584,7 @@ class EffectMixin:
                             **choice_metadata,
                             "cards": members_in_discard,
                             "count": effect.value,
-                            "effect_description": "控え室から手札に加えるメンバーを選んでください",
+                            "effect_description": "謗ｧ縺亥ｮ､縺九ｉ謇区惆縺ｫ蜉縺医ｋ繝｡繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                             "destination": "hand",
                         },
                     )
@@ -4645,7 +4606,7 @@ class EffectMixin:
                                 "player_id": tp.player_id,
                                 "effect": "discard",
                                 "count": effect.value,
-                                "effect_description": f"控え室に置く手札を{effect.value}枚選んでください",
+                                "effect_description": f"謗ｧ縺亥ｮ､縺ｫ鄂ｮ縺乗焔譛ｭ繧畜effect.value}譫夐∈繧薙〒縺上□縺輔＞",
                                 **effect.params,
                             },
                         )
@@ -4673,7 +4634,7 @@ class EffectMixin:
                                 **choice_metadata,
                                 "cards": candidates,
                                 "count": effect.value,
-                                "effect_description": "控え室から手札に加えるカードを選んでください",
+                                "effect_description": "謗ｧ縺亥ｮ､縺九ｉ謇区惆縺ｫ蜉縺医ｋ繧ｫ繝ｼ繝峨ｒ驕ｸ繧薙〒縺上□縺輔＞",
                                 "destination": "hand",
                                 "filter": effect.params.get("filter", "all"),
                             },
@@ -4699,7 +4660,7 @@ class EffectMixin:
                                 "count": 1,
                                 "filter": "member_with_ability",
                                 "destination": "trigger_ability",
-                                "effect_description": "効果を発動するメンバーを選んでください",
+                                "effect_description": "蜉ｹ譫懊ｒ逋ｺ蜍輔☆繧九Γ繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                             },
                         )
                     )
@@ -4712,7 +4673,7 @@ class EffectMixin:
                         {
                             **choice_metadata,
                             "effect": "place_member",
-                            "effect_description": f"手札からメンバーを{effect.value}枚配置してください",
+                            "effect_description": f"謇区惆縺九ｉ繝｡繝ｳ繝舌・繧畜effect.value}譫夐・鄂ｮ縺励※縺上□縺輔＞",
                             "count": effect.value,
                             **effect.params,
                         },
@@ -4738,7 +4699,7 @@ class EffectMixin:
                             **choice_metadata,
                             "effect": "energy_charge",
                             "count": count,
-                            "effect_description": "エールにする手札を選んでください",
+                            "effect_description": "繧ｨ繝ｼ繝ｫ縺ｫ縺吶ｋ謇区惆繧帝∈繧薙〒縺上□縺輔＞",
                             **effect.params,
                         },
                     )
@@ -4760,7 +4721,7 @@ class EffectMixin:
         elif effect.effect_type == EffectType.FLAVOR_ACTION:
             # Check if this flavor action is for formation change
             text_param = effect.params.get("text", "")
-            if "何が好き" in text_param or "formation" in text_param.lower():
+            if "菴輔′螂ｽ縺・ in text_param or "formation" in text_param.lower():
                 # This is a formation change flavor action
                 self.pending_choices.append(
                     (
@@ -4768,13 +4729,13 @@ class EffectMixin:
                         {
                             **choice_metadata,
                             "player_id": opp_idx,
-                            "title": text_param if text_param else "何が好き？",
+                            "title": text_param if text_param else "菴輔′螂ｽ縺搾ｼ・,
                             "options": [
-                                "チョコミント",
-                                "ストロベリーフレイバー",
-                                "クッキー＆クリーム",
-                                "あなた",
-                                "それ以外",
+                                "繝√Ι繧ｳ繝溘Φ繝・,
+                                "繧ｹ繝医Ο繝吶Μ繝ｼ繝輔Ξ繧､繝舌・",
+                                "繧ｯ繝・く繝ｼ・・け繝ｪ繝ｼ繝",
+                                "縺ゅ↑縺・,
+                                "縺昴ｌ莉･螟・,
                             ],
                             "reason": "flavor_action_formation",
                         },
@@ -4788,13 +4749,13 @@ class EffectMixin:
                         {
                             **choice_metadata,
                             "player_id": opp_idx,
-                            "title": "何が好き？",
+                            "title": "菴輔′螂ｽ縺搾ｼ・,
                             "options": [
-                                "チョコミント",
-                                "ストロベリーフレイバー",
-                                "クッキー＆クリーム",
-                                "あなた",
-                                "それ以外",
+                                "繝√Ι繧ｳ繝溘Φ繝・,
+                                "繧ｹ繝医Ο繝吶Μ繝ｼ繝輔Ξ繧､繝舌・",
+                                "繧ｯ繝・く繝ｼ・・け繝ｪ繝ｼ繝",
+                                "縺ゅ↑縺・,
+                                "縺昴ｌ莉･螟・,
                             ],
                             "reason": "flavor_action",
                         },
@@ -4829,7 +4790,7 @@ class EffectMixin:
                             "cards": top_cards,
                             "ordered": [],
                             "position": position,
-                            "effect_description": "カードの順番を選んでください",
+                            "effect_description": "繧ｫ繝ｼ繝峨・鬆・分繧帝∈繧薙〒縺上□縺輔＞",
                         },
                     )
                 )
@@ -4861,7 +4822,7 @@ class EffectMixin:
                                 "count": effect.value,
                                 "reason": "place_under_from_energy",
                                 "target_area": target_area,
-                                "effect_description": f"メンバーの下に置くエールを{effect.value}枚選んでください",
+                                "effect_description": f"繝｡繝ｳ繝舌・縺ｮ荳九↓鄂ｮ縺上お繝ｼ繝ｫ繧畜effect.value}譫夐∈繧薙〒縺上□縺輔＞",
                                 **effect.params,
                             },
                         )
@@ -4896,7 +4857,7 @@ class EffectMixin:
                             "cards": targets,
                             "reason": "search_deck",
                             "shuffle": True,
-                            "effect_description": "デッキから加えるカードを選んでください",
+                            "effect_description": "繝・ャ繧ｭ縺九ｉ蜉縺医ｋ繧ｫ繝ｼ繝峨ｒ驕ｸ繧薙〒縺上□縺輔＞",
                         },
                     )
                 )
@@ -4914,7 +4875,7 @@ class EffectMixin:
                             "slot_index": 0,
                             "available_members": members,
                             "new_stage": [-1, -1, -1],
-                            "effect_description": "移動するメンバーを選んでください",
+                            "effect_description": "遘ｻ蜍輔☆繧九Γ繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                         },
                     )
                 )
@@ -5026,7 +4987,7 @@ class EffectMixin:
         elif cond.type == ConditionType.LIFE_LEAD:
             met = len(player.success_lives) > len(self.players[1 - player.player_id].success_lives)
         elif cond.type == ConditionType.COUNT_GROUP:
-            group_str = cond.params.get("group", "").strip("「」")
+            group_str = cond.params.get("group", "").strip("縲後・)
             zone = cond.params.get("zone", "STAGE")
             min_count = cond.params.get("count", cond.params.get("min", 0))
             if not group_str:
@@ -5087,7 +5048,7 @@ class EffectMixin:
             met = count >= min_count
         elif cond.type == ConditionType.HAS_COLOR:
             active_hearts = player.get_total_hearts(self.member_db)
-            color_map = {"赤": 1, "青": 4, "緑": 3, "黄": 2, "紫": 5, "ピンク": 0}
+            color_map = {"襍､": 1, "髱・: 4, "邱・: 3, "鮟・: 2, "邏ｫ": 5, "繝斐Φ繧ｯ": 0}
             idx = color_map.get(str(cond.params.get("color", "")))
             met = active_hearts[idx] > 0 if idx is not None else False
         elif cond.type == ConditionType.OPPONENT_HAND_DIFF:
@@ -5307,7 +5268,7 @@ class EffectMixin:
             c_idx = -1
             c_name = cond.params.get("color")
             color_map = {"pink": 0, "red": 1, "yellow": 2, "green": 3, "blue": 4, "purple": 5}
-            jp_map = {"ピンク": 0, "赤": 1, "黄": 2, "緑": 3, "青": 4, "紫": 5}
+            jp_map = {"繝斐Φ繧ｯ": 0, "襍､": 1, "鮟・: 2, "邱・: 3, "髱・: 4, "邏ｫ": 5}
 
             if c_name is not None:
                 if isinstance(c_name, int):
@@ -5785,7 +5746,7 @@ class EffectMixin:
                             "count": real_v,
                             "filter": "live",
                             "effect": "return_to_hand",
-                            "effect_description": "回収するライブを選んでください",
+                            "effect_description": "蝗槫庶縺吶ｋ繝ｩ繧､繝悶ｒ驕ｸ繧薙〒縺上□縺輔＞",
                         },
                     )
                 )
@@ -5802,7 +5763,7 @@ class EffectMixin:
                             "count": real_v,
                             "filter": "member",
                             "effect": "return_to_hand",
-                            "effect_description": "回収するメンバーを選んでください",
+                            "effect_description": "蝗槫庶縺吶ｋ繝｡繝ｳ繝舌・繧帝∈繧薙〒縺上□縺輔＞",
                         },
                     )
                 )
@@ -5888,13 +5849,13 @@ class EffectMixin:
                     {
                         **context,
                         "player_id": opp_idx,
-                        "title": "何が好き？",
+                        "title": "菴輔′螂ｽ縺搾ｼ・,
                         "options": [
-                            "チョコミント",
-                            "ストロベリーフレイバー",
-                            "クッキー＆クリーム",
-                            "あなた",
-                            "それ以外",
+                            "繝√Ι繧ｳ繝溘Φ繝・,
+                            "繧ｹ繝医Ο繝吶Μ繝ｼ繝輔Ξ繧､繝舌・",
+                            "繧ｯ繝・く繝ｼ・・け繝ｪ繝ｼ繝",
+                            "縺ゅ↑縺・,
+                            "縺昴ｌ莉･螟・,
                         ],
                         "reason": "flavor_action",
                     },
@@ -5971,137 +5932,14 @@ class EffectMixin:
 
     def _can_pay_costs(self, player: Any, costs: List[Cost], source_area: int = -1, start_index: int = 0) -> bool:
         """Non-mutating check if a player can afford the costs."""
-        total_reduction = sum(
-            ce["effect"].value for ce in player.continuous_effects if ce["effect"].effect_type == EffectType.REDUCE_COST
-        )
-
-        for cost in costs[start_index:]:
-            if cost.type == AbilityCostType.ENERGY:
-                needed = max(0, cost.value - total_reduction)
-                if player.count_untapped_energy() < needed:
-                    return False
-            elif cost.type == AbilityCostType.TAP_SELF:
-                if source_area < 0 or player.tapped_members[source_area]:
-                    return False
-            elif cost.type in (AbilityCostType.SACRIFICE_SELF, AbilityCostType.RETURN_HAND):
-                if source_area < 0 or player.stage[source_area] < 0:
-                    return False
-            elif cost.type == AbilityCostType.DISCARD_HAND:
-                if len(player.hand) < cost.value:
-                    return False
-            elif cost.type == AbilityCostType.SACRIFICE_UNDER:
-                if source_area < 0 or not player.stage_energy[source_area]:
-                    return False
-            elif cost.type == AbilityCostType.DISCARD_ENERGY:
-                if player.count_untapped_energy() < 1:
-                    return False
-        return True
+        return can_pay_costs(player, costs, source_area, start_index)
 
     def _pay_costs(self, p: "PlayerState", costs: List["Cost"], source_area: int = -1, start_index: int = 0) -> bool:
         """
         Pay costs. Returns True if paid, False if cancelled/deferred (optional).
         If optional cost is encountered, it queues a choice and returns False.
         """
-        if not self._can_pay_costs(p, costs, source_area, start_index):
-            return False
-
-        total_reduction = sum(
-            ce["effect"].value for ce in p.continuous_effects if ce["effect"].effect_type == EffectType.REDUCE_COST
-        )
-
-        # Default metadata for cost payment
-        scid = getattr(self, "current_resolving_member_id", -1)
-        choice_metadata = {"source_card_id": scid, "step_progress": "Cost"}
-
-        for i, cost in enumerate(costs[start_index:]):
-            cost_idx = start_index + i
-            if cost.type == AbilityCostType.ENERGY:
-                if cost.is_optional:
-                    if self.verbose:
-                        print(f"DEBUG: Queueing PAY_COST_OPTIONAL for player {p.player_id}")
-                    # For optional energy costs, we must ask the player first
-                    self.pending_choices.append(
-                        (
-                            "PAY_COST_OPTIONAL",
-                            {
-                                **choice_metadata,
-                                "cost_index": cost_idx,
-                                "amount": cost.value,
-                                "cost_type": "energy",
-                                "effect_description": f"エールを{cost.value}枚支払いますか？",
-                            },
-                        )
-                    )
-                    self.phase = Phase.RESPONSE
-                    return False
-
-                act = max(0, cost.value - total_reduction)
-                tapped = 0
-                for i in range(len(player.energy_zone) - 1, -1, -1):
-                    if tapped >= act:
-                        break
-                    if not player.tapped_energy[i]:
-                        player.tapped_energy[i] = True
-                        tapped += 1
-            elif cost.type == AbilityCostType.TAP_SELF:
-                if source_area >= 0:
-                    player.tapped_members[source_area] = True
-            elif cost.type == AbilityCostType.SACRIFICE_SELF:
-                if source_area >= 0 and player.stage[source_area] >= 0:
-                    player.discard.append(player.stage[source_area])
-                    player.stage[source_area] = -1
-                    player.energy_deck.extend(player.stage_energy[source_area])
-                    player.stage_energy[source_area] = []
-                    player.tapped_members[source_area] = False
-                    player.members_played_this_turn[source_area] = False
-            elif cost.type == AbilityCostType.SACRIFICE_UNDER:
-                if source_area >= 0:
-                    player.energy_deck.extend(player.stage_energy[source_area])
-                    player.stage_energy[source_area] = []
-            elif cost.type == AbilityCostType.DISCARD_ENERGY:
-                for i in range(len(player.energy_zone) - 1, -1, -1):
-                    if not player.tapped_energy[i]:
-                        player.tapped_energy[i] = True
-                        break
-            elif cost.type == AbilityCostType.RETURN_HAND:
-                if source_area >= 0 and player.stage[source_area] >= 0:
-                    player.hand.append(player.stage[source_area])
-                    player.stage[source_area] = -1
-                    player.energy_deck.extend(player.stage_energy[source_area])
-                    player.stage_energy[source_area] = []
-            elif cost.type == AbilityCostType.DISCARD_HAND:
-                if cost.is_optional:
-                    self.pending_choices.append(
-                        (
-                            "PAY_COST_OPTIONAL",
-                            {
-                                **choice_metadata,
-                                "cost_index": cost_idx,
-                                "amount": cost.value,
-                                "cost_type": "discard",
-                                "effect_description": f"手札を{cost.value}枚捨てますか？",
-                            },
-                        )
-                    )
-                    self.phase = Phase.RESPONSE
-                    return False
-
-                params = {
-                    "reason": "cost",
-                    "effect": "discard",
-                    "is_optional": cost.is_optional,
-                    "cost_index": cost_idx,
-                    "count": cost.value,
-                }
-                if hasattr(cost, "params") and cost.params:
-                    params.update(cost.params)
-                self.pending_choices.append(("TARGET_HAND", {**choice_metadata, **params}))
-                return False  # Stop and wait for choice
-            # Add cost_index to other choices as well if implemented
-            elif cost.type in (AbilityCostType.TAP_MEMBER, AbilityCostType.REST_MEMBER):
-                # Pending implementation of choices for these types (if any)
-                pass
-        return True
+        return pay_costs(self, p, costs, source_area, start_index)
 
     def _handle_choice(self, action: int) -> None:
         if not self.pending_choices:
@@ -6110,33 +5948,12 @@ class EffectMixin:
         # print(f"DEBUG: _handle_choice popped: {choice_type} Action: {action}")
 
         # Check if this choice was for a cost payment of a pending activation
-        is_cost_payment = params.get("reason") == "cost" or (
-            self.pending_activation
-            and choice_type
-            in (
-                "TARGET_HAND",
-                "DISCARD_SELECT",
-                "TARGET_MEMBER_SLOT",
-                "TARGET_MEMBER",
-                "TARGET_LIVE",
-                "TARGET_DISCARD",
-                "TARGET_DECK",
-                "TARGET_REMOVED",
-                "TARGET_SUCCESS_LIVES",
-                "TARGET_ENERGY_ZONE",
-                "TARGET_ENERGY_DECK",
-                "PAY_COST_OPTIONAL",
-            )
-        )
+        is_cost_payment = is_cost_payment_choice(self, choice_type, params)
         if self.pending_activation:
             pass
 
         # Default metadata for choice chaining
-        choice_metadata = params.copy()
-        if "source_card_id" not in choice_metadata:
-            choice_metadata["source_card_id"] = -1
-        if "step_progress" not in choice_metadata:
-            choice_metadata["step_progress"] = "?"
+        choice_metadata = normalize_choice_metadata(params)
 
         p_idx = params.get("player_id", self.current_player)
         p = self.players[p_idx]
@@ -6145,12 +5962,7 @@ class EffectMixin:
         cost_paid = False
 
         # Store the choice answer for MODAL_ANSWER condition
-        if 580 <= action < 586:  # COLOR_SELECT
-            self.last_choice_answer = action - 580
-        elif 800 <= action < 810:  # MODAL_CHOICE
-            self.last_choice_answer = action - 800
-        else:
-            self.last_choice_answer = action  # Default fallback
+        store_choice_answer(self, action)
 
         if choice_type == "TARGET_HAND":
             idx = action - 500
@@ -6609,13 +6421,13 @@ class EffectMixin:
             opts = params.get("options", [])
             if 0 <= opt < len(opts):
                 choice = opts[opt]
-                if choice == "チョコミント":
+                if choice == "繝√Ι繧ｳ繝溘Φ繝・:
                     self.pending_choices.insert(
                         0, ("TARGET_HAND", {**choice_metadata, "effect": "discard", "player": "active"})
                     )
-                elif choice == "あなた":
+                elif choice == "縺ゅ↑縺・:
                     (self._draw_cards(p, 1), self._draw_cards(opp, 1))
-                elif choice == "その他":
+                elif choice == "縺昴・莉・:
                     self.pending_choices.append(
                         (
                             "CHOOSE_FORMATION",
@@ -7032,19 +6844,8 @@ class EffectMixin:
                 self._do_live_result()
 
     def _move_member(self, player: Any, from_idx: int, to_idx: int) -> None:
-        if from_idx == to_idx:
-            return
-        c1, c2 = player.stage[from_idx], player.stage[to_idx]
-        if c1 >= 0:
-            player.moved_members_this_turn.add(c1)
-        if c2 >= 0:
-            player.moved_members_this_turn.add(c2)
-        player.stage[from_idx], player.stage[to_idx] = player.stage[to_idx], player.stage[from_idx]
-        player.stage_energy[from_idx], player.stage_energy[to_idx] = (
-            player.stage_energy[to_idx],
-            player.stage_energy[from_idx],
-        )
-        player.tapped_members[from_idx], player.tapped_members[to_idx] = (
-            player.tapped_members[to_idx],
-            player.tapped_members[from_idx],
-        )
+        move_member(player, from_idx, to_idx)
+
+
+
+

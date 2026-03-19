@@ -1,4 +1,4 @@
-"""
+﻿"""
 Numba Utils for Love Live Card Game
 JIT-compiled functions for high-performance game logic.
 """
@@ -69,3 +69,4 @@ def calc_main_phase_masks(
                 action_idx = 1 + (i * 3) + area
                 if action_idx < 1000:
                     mask[action_idx] = 1
+

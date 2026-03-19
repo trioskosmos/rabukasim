@@ -195,6 +195,7 @@ CONDITION_ALIASES = {
     "SCORE_GE_OPPONENT": ("SCORE_COMPARE", {"type": "score", "comparison": "GE", "target": "opponent"}),
     "SCORE_EQUAL_OPPONENT": ("SCORE_COMPARE", {"type": "score", "comparison": "EQ", "target": "opponent"}),
     "TARGET_MEMBER_HAS_NO_HEARTS": ("TARGET_MEMBER_HAS_NO_HEARTS", {}),
+    "ALL_CARDS_MATCH": ("DISCARDED_CARDS", {"all": True}),
 }
 
 # Conditions that map to HAS_KEYWORD with a keyword param

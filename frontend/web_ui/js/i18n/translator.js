@@ -387,7 +387,7 @@ function translateInstruction(inst, tData, lang, blockParams) {
         if (tData.params[k]) {
             replacement = tData.params[k][v] || v;
         } else if (k === 'NAME' || k === 'NAMES') {
-            replacement = v.split('/').map(n => NAME_MAP[n] || n).join(lang === 'en' ? ' & ' : '＆');
+            replacement = v.split('/').map(n => (lang === 'en' ? (NAME_MAP[n] || n) : n)).join(lang === 'en' ? ' & ' : '＆');
         } else if (k === 'COLOR') {
             replacement = tData.params.COLOR[v] || v;
         } else {

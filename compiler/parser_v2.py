@@ -1358,7 +1358,14 @@ class AbilityParserV2:
                     params["destination"] = "discard"
 
                 if etype is None:
-                    etype = EffectType.META_RULE
+                    # Fallback to condition parser if name is a known condition alias
+                    if name.upper() in CONDITION_ALIASES:
+                        # Recursive call to condition parser for this single instruction
+                        effects.extend(self._parse_pseudocode_conditions(p))
+                        continue
+                    
+                    # Safe fallback: unknown instructions become NOP (NONE) instead of broken META_RULE
+                    etype = EffectType.NONE
                     params["raw_effect"] = name.upper()
 
                 if target_name and target_name.upper() == "SLOT" and params.get("self"):

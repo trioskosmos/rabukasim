@@ -173,7 +173,7 @@ ROOMS: dict[str, dict[str, Any]] = {}
 game_lock = threading.Lock()
 
 # Room cleanup configuration
-ROOM_INACTIVE_TIMEOUT_MINUTES = 30  # Remove rooms inactive for 30 minutes
+ROOM_INACTIVE_TIMEOUT_MINUTES = 10  # Remove rooms inactive for 10 minutes
 ROOM_CLEANUP_INTERVAL = 60  # Run cleanup every 60 seconds (loops)
 
 # Rust Card DB (Global Singleton for performance)
@@ -1460,9 +1460,14 @@ def leave_room():
             del sessions[session_token]
             print(f"DEBUG: Session {session_token} left room {room_id}", file=sys.stderr)
 
-        # Don't immediately delete room - let cleanup handle it
-        # But update last_active so it doesn't get cleaned up immediately
+        # Update last_active
         room["last_active"] = datetime.now()
+
+        # Check if room should be immediately deleted:
+        # If there are no sessions left, delete the room immediately.
+        if not sessions:
+            print(f"DEBUG: No sessions left. Immediately deleting room {room_id}", file=sys.stderr)
+            del ROOMS[room_id]
 
         return jsonify({"success": True})
 

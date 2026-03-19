@@ -1,4 +1,4 @@
-from engine.game.enums import Phase
+﻿from engine.game.enums import Phase
 from engine.game.state_utils import get_base_id
 
 
@@ -22,16 +22,16 @@ def get_ability_summary(ab, lang="jp"):
     trigger = int(get_v(ab, "trigger", 0))
     if lang == "jp":
         t_map = {
-            1: "登場時",
-            2: "ライブ進行時",
-            3: "ライブ成功時",
-            4: "ターン開始時",
-            5: "ターン終了時",
-            6: "常時",
-            7: "起動",
+            1: "逋ｻ蝣ｴ譎・,
+            2: "繝ｩ繧､繝夜ｲ陦梧凾",
+            3: "繝ｩ繧､繝匁・蜉滓凾",
+            4: "繧ｿ繝ｼ繝ｳ髢句ｧ区凾",
+            5: "繧ｿ繝ｼ繝ｳ邨ゆｺ・凾",
+            6: "蟶ｸ譎・,
+            7: "襍ｷ蜍・,
         }
         t_desc = t_map.get(trigger, "")
-        prefix = f"【{t_desc}】" if t_desc else ""
+        prefix = f"縲須t_desc}縲・ if t_desc else ""
     else:
         t_map = {1: "Play", 2: "LiveStart", 3: "Success", 4: "TurnStart", 5: "TurnEnd", 6: "Constant", 7: "Act"}
         t_desc = t_map.get(trigger, "")
@@ -50,7 +50,7 @@ def get_ability_summary(ab, lang="jp"):
 
     # Target Mapping
     if lang == "jp":
-        tg_map = {1: "自分", 2: "相手", 3: "全員", 4: "自身", 12: "相手メン"}
+        tg_map = {1: "閾ｪ蛻・, 2: "逶ｸ謇・, 3: "蜈ｨ蜩｡", 4: "閾ｪ霄ｫ", 12: "逶ｸ謇九Γ繝ｳ"}
     else:
         tg_map = {1: "Player", 2: "Opponent", 3: "All", 4: "Self", 12: "OppMem"}
     tg_name = tg_map.get(target, "")
@@ -58,34 +58,34 @@ def get_ability_summary(ab, lang="jp"):
     # Effect Detail Mapping
     if lang == "jp":
         e_map = {
-            0: "ドロー",
-            1: "ブレード+",
-            2: "ハート+",
-            3: "コスト-",
-            4: "デッキ確認",
-            5: "ライブ回収",
-            6: "スコア+",
-            7: "回収",
-            8: "パワー+",
-            9: "効果無効",
-            10: "移動",
-            11: "手札交換",
-            12: "サーチ",
-            13: "エネチャージ",
-            15: "並べ替え",
-            17: "選択",
-            20: "下に置く",
-            19: "タップ",
-            27: "見て選ぶ",
-            30: "手札に加える",
-            31: "ブレード固定",
-            37: "色選択",
-            38: "スコア計算変更",
-            41: "控えに置く",
-            44: "エール減",
-            46: "支払い",
-            48: "ドロー",
-            81: "エネ回復",
+            0: "繝峨Ο繝ｼ",
+            1: "繝悶Ξ繝ｼ繝・",
+            2: "繝上・繝・",
+            3: "繧ｳ繧ｹ繝・",
+            4: "繝・ャ繧ｭ遒ｺ隱・,
+            5: "繝ｩ繧､繝門屓蜿・,
+            6: "繧ｹ繧ｳ繧｢+",
+            7: "蝗槫庶",
+            8: "繝代Ρ繝ｼ+",
+            9: "蜉ｹ譫懃┌蜉ｹ",
+            10: "遘ｻ蜍・,
+            11: "謇区惆莠､謠・,
+            12: "繧ｵ繝ｼ繝・,
+            13: "繧ｨ繝阪メ繝｣繝ｼ繧ｸ",
+            15: "荳ｦ縺ｹ譖ｿ縺・,
+            17: "驕ｸ謚・,
+            20: "荳九↓鄂ｮ縺・,
+            19: "繧ｿ繝・・",
+            27: "隕九※驕ｸ縺ｶ",
+            30: "謇区惆縺ｫ蜉縺医ｋ",
+            31: "繝悶Ξ繝ｼ繝牙崋螳・,
+            37: "濶ｲ驕ｸ謚・,
+            38: "繧ｹ繧ｳ繧｢險育ｮ怜､画峩",
+            41: "謗ｧ縺医↓鄂ｮ縺・,
+            44: "繧ｨ繝ｼ繝ｫ貂・,
+            46: "謾ｯ謇輔＞",
+            48: "繝峨Ο繝ｼ",
+            81: "繧ｨ繝榊屓蠕ｩ",
         }
     else:
         e_map = {
@@ -124,13 +124,13 @@ def get_ability_summary(ab, lang="jp"):
     # Specific tweaks for common complex effects
     if etype == 17:  # SELECT_MODE
         opts = params.get("options", [])
-        e_name = f"択{len(opts)}" if lang == "jp" else f"Choose{len(opts)}"
+        e_name = f"謚桀len(opts)}" if lang == "jp" else f"Choose{len(opts)}"
         val = 0
     elif etype == 27:  # LOOK_AND_CHOOSE
-        e_name = f"{val}見選" if lang == "jp" else f"Pick{val}Deck"
+        e_name = f"{val}隕矩∈" if lang == "jp" else f"Pick{val}Deck"
         val = 0
     elif etype == 48:  # DRAW_UNTIL
-        e_name = f"手札{val}枚まで引く" if lang == "jp" else f"DrawTo{val}"
+        e_name = f"謇区惆{val}譫壹∪縺ｧ蠑輔￥" if lang == "jp" else f"DrawTo{val}"
         val = 0
 
     # Build final string
@@ -165,69 +165,69 @@ def get_action_desc(a, gs, lang="jp", text=None):
     ability_prefix = ""
     if text:
         # Use first line of ability text as prefix
-        clean_text = text.replace("【", "[").replace("】", "]").split("\n")[0].strip()
+        clean_text = text.replace("縲・, "[").replace("縲・, "]").split("\n")[0].strip()
         if len(clean_text) > 30:
             clean_text = clean_text[:27] + "..."
-        ability_prefix = f"[{clean_text}] " if lang == "en" else f"【{clean_text}】"
+        ability_prefix = f"[{clean_text}] " if lang == "en" else f"縲須clean_text}縲・
 
     # Localization helper
     def t(key, **kwargs):
         templates = {
             "jp": {
-                "pass": "【終了】メインフェイズを終了する",
-                "confirm_mulligan": "【確定】マリガンを完了する",
-                "skip_ability": "【スキップ】{source}の効果を使わない",
-                "main_end": "【メイン終了】ターンを交代する",
-                "live_confirm": "【確認】ライブをセットして進む",
-                "next": "【次へ】",
-                "color_select_label": "【色選択】{color}",
-                "stage_select_label": "【ステージ】{area}: {name}を{desc}",
-                "hand_select_label": "【手札】{name}を{desc}",
-                "mode_select_label": "【モード】{mode}",
-                "ability_solve": "【効果解決】{source} ({idx}/{total})",
-                "live_select": "【ライブ選択】{area}: {name}",
-                "performance": "【パフォーマンス】{area}: {name} ({summary})",
-                "sort_top": "【並び替え】{name}をトップへ",
-                "sort_confirm": "【確定】並び替えを完了",
-                "target_opp": "【ターゲット】相手 {area}: {name}",
-                "list_select": "【選択】{name}",
-                "generic_select": "【選択】{name}",
-                "choice_fallback": "【選択肢】{idx}",
-                "discard_solve": "【控え activation】{name}: {summary}",
-                "discard_fallback": "【控え室】{name}",
-                "deck_top": "デッキトップ: {name}",
+                "pass": "縲千ｵゆｺ・代Γ繧､繝ｳ繝輔ぉ繧､繧ｺ繧堤ｵゆｺ・☆繧・,
+                "confirm_mulligan": "縲千｢ｺ螳壹代・繝ｪ繧ｬ繝ｳ繧貞ｮ御ｺ・☆繧・,
+                "skip_ability": "縲舌せ繧ｭ繝・・縲捜source}縺ｮ蜉ｹ譫懊ｒ菴ｿ繧上↑縺・,
+                "main_end": "縲舌Γ繧､繝ｳ邨ゆｺ・代ち繝ｼ繝ｳ繧剃ｺ､莉｣縺吶ｋ",
+                "live_confirm": "縲千｢ｺ隱阪代Λ繧､繝悶ｒ繧ｻ繝・ヨ縺励※騾ｲ繧",
+                "next": "縲先ｬ｡縺ｸ縲・,
+                "color_select_label": "縲占牡驕ｸ謚槭捜color}",
+                "stage_select_label": "縲舌せ繝・・繧ｸ縲捜area}: {name}繧畜desc}",
+                "hand_select_label": "縲先焔譛ｭ縲捜name}繧畜desc}",
+                "mode_select_label": "縲舌Δ繝ｼ繝峨捜mode}",
+                "ability_solve": "縲仙柑譫懆ｧ｣豎ｺ縲捜source} ({idx}/{total})",
+                "live_select": "縲舌Λ繧､繝夜∈謚槭捜area}: {name}",
+                "performance": "縲舌ヱ繝輔か繝ｼ繝槭Φ繧ｹ縲捜area}: {name} ({summary})",
+                "sort_top": "縲蝉ｸｦ縺ｳ譖ｿ縺医捜name}繧偵ヨ繝・・縺ｸ",
+                "sort_confirm": "縲千｢ｺ螳壹台ｸｦ縺ｳ譖ｿ縺医ｒ螳御ｺ・,
+                "target_opp": "縲舌ち繝ｼ繧ｲ繝・ヨ縲醍嶌謇・{area}: {name}",
+                "list_select": "縲宣∈謚槭捜name}",
+                "generic_select": "縲宣∈謚槭捜name}",
+                "choice_fallback": "縲宣∈謚櫁い縲捜idx}",
+                "discard_solve": "縲先而縺・activation縲捜name}: {summary}",
+                "discard_fallback": "縲先而縺亥ｮ､縲捜name}",
+                "deck_top": "繝・ャ繧ｭ繝医ャ繝・ {name}",
                 "color_choice": "{color}",
-                "place_on": "【バトンタッチ】{name} (←{old_name}) 支払:{cost}",
-                "place_on_new": "【登場】{name} (コスト:{cost})",
-                "energy_charge": "【チャージ】{name}",
-                "mulligan_toggle": "【マリガン】{name}",
-                "live_set": "【ライブセット】{name}",
-                "activated_ability": "【起動】{name}: {summary}",
-                "none": "なし",
-                "empty_area": "空き",
-                "member": "メンバー",
-                "ability": "効果",
-                "unknown": "不明",
-                "discard": "破棄",
-                "recover": "回収",
-                "wait": "待機",
-                "move_src": "移動元",
-                "place_to": "配置",
-                "select": "選択",
-                "confirm": "確定",
-                "pass_action": "【パス】何もしない",
-                "order_deck": "山札操作",
-                "select_member": "メンバー選択",
-                "target_opp_member": "相手を選択",
-                "select_success": "成功ライブ選択",
-                "select_discard": "控え室回収",
-                "select_hand": "手札選択",
-                "select_discard_hand": "【手札破棄】カードを選ぶ",
-                "colors": ["赤", "青", "緑", "黄", "紫", "ピンク"],
-                "areas": ["左", "中", "右"],
-                "areas_short": ["左", "中", "右"],
-                "yes": "はい",
-                "no": "いいえ",
+                "place_on": "縲舌ヰ繝医Φ繧ｿ繝・メ縲捜name} (竊須old_name}) 謾ｯ謇・{cost}",
+                "place_on_new": "縲千匳蝣ｴ縲捜name} (繧ｳ繧ｹ繝・{cost})",
+                "energy_charge": "縲舌メ繝｣繝ｼ繧ｸ縲捜name}",
+                "mulligan_toggle": "縲舌・繝ｪ繧ｬ繝ｳ縲捜name}",
+                "live_set": "縲舌Λ繧､繝悶そ繝・ヨ縲捜name}",
+                "activated_ability": "縲占ｵｷ蜍輔捜name}: {summary}",
+                "none": "縺ｪ縺・,
+                "empty_area": "遨ｺ縺・,
+                "member": "繝｡繝ｳ繝舌・",
+                "ability": "蜉ｹ譫・,
+                "unknown": "荳肴・",
+                "discard": "遐ｴ譽・,
+                "recover": "蝗槫庶",
+                "wait": "蠕・ｩ・,
+                "move_src": "遘ｻ蜍募・",
+                "place_to": "驟咲ｽｮ",
+                "select": "驕ｸ謚・,
+                "confirm": "遒ｺ螳・,
+                "pass_action": "縲舌ヱ繧ｹ縲台ｽ輔ｂ縺励↑縺・,
+                "order_deck": "螻ｱ譛ｭ謫堺ｽ・,
+                "select_member": "繝｡繝ｳ繝舌・驕ｸ謚・,
+                "target_opp_member": "逶ｸ謇九ｒ驕ｸ謚・,
+                "select_success": "謌仙粥繝ｩ繧､繝夜∈謚・,
+                "select_discard": "謗ｧ縺亥ｮ､蝗槫庶",
+                "select_hand": "謇区惆驕ｸ謚・,
+                "select_discard_hand": "縲先焔譛ｭ遐ｴ譽・代き繝ｼ繝峨ｒ驕ｸ縺ｶ",
+                "colors": ["襍､", "髱・, "邱・, "鮟・, "邏ｫ", "繝斐Φ繧ｯ"],
+                "areas": ["蟾ｦ", "荳ｭ", "蜿ｳ"],
+                "areas_short": ["蟾ｦ", "荳ｭ", "蜿ｳ"],
+                "yes": "縺ｯ縺・,
+                "no": "縺・＞縺・,
             },
             "en": {
                 "pass": "[End] End Main Phase",
@@ -342,17 +342,17 @@ def get_action_desc(a, gs, lang="jp", text=None):
 
         l = get_from_db(live_db, base_id)
         if l:
-            name = get_v(l, "name", f"ライブ #{base_id}")
+            name = get_v(l, "name", f"繝ｩ繧､繝・#{base_id}")
             card_no = get_v(l, "card_no", "??")
             return f"{name} ({card_no})"
 
         e = get_from_db(getattr(_gs, "energy_db", None), base_id)
         if e:
-            name = get_v(e, "name", f"エネルギー #{base_id}")
+            name = get_v(e, "name", f"繧ｨ繝阪Ν繧ｮ繝ｼ #{base_id}")
             card_no = get_v(e, "card_no", "??")
             return f"{name} ({card_no})"
 
-        return f"カード #{cid}"
+        return f"繧ｫ繝ｼ繝・#{cid}"
 
     # Helper for pending choices
     def get_top_pending():
@@ -404,7 +404,7 @@ def get_action_desc(a, gs, lang="jp", text=None):
                 new_card_cost = get_v(m, "cost", 0)
                 abilities = get_v(m, "abilities", [])
                 if any(get_v(ab, "trigger", 0) == 1 for ab in abilities):
-                    suffix = " [On Play]" if lang == "en" else " [登場]"
+                    suffix = " [On Play]" if lang == "en" else " [逋ｻ蝣ｴ]"
 
         if area_idx < len(p.stage):
             stage_cid = p.stage[area_idx]
@@ -485,7 +485,7 @@ def get_action_desc(a, gs, lang="jp", text=None):
             card_data = gs.member_db.get(str(bid)) or gs.live_db.get(str(bid)) or gs.energy_db.get(str(bid))
             if card_data: 
                 name = getattr(card_data, 'name', f"Card #{bid}")
-        return f"{name} → {t('choice_fallback', idx=c_idx)}" if lang == "en" else f"{name}の選択肢 {c_idx + 1}"
+        return f"{name} 竊・{t('choice_fallback', idx=c_idx)}" if lang == "en" else f"{name}縺ｮ驕ｸ謚櫁い {c_idx + 1}"
     elif 8600 <= a <= 8899:
         s_idx = (a - 8600) // 100
         c_idx = (a - 8600) % 100
@@ -497,7 +497,7 @@ def get_action_desc(a, gs, lang="jp", text=None):
             card_data = gs.member_db.get(str(bid))
             if card_data: 
                 name = getattr(card_data, 'name', f"Member #{bid}")
-        return f"{name} → {t('choice_fallback', idx=c_idx)}" if lang == "en" else f"{name}の選択肢 {c_idx + 1}"
+        return f"{name} 竊・{t('choice_fallback', idx=c_idx)}" if lang == "en" else f"{name}縺ｮ驕ｸ謚櫁い {c_idx + 1}"
     elif 11000 <= a <= 15999:
         idx = a - 11000
         
@@ -610,3 +610,5 @@ def get_action_desc(a, gs, lang="jp", text=None):
         return t("choose_turn_order")
 
     return f"Action {a}"
+
+

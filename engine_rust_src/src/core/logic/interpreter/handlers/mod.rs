@@ -1,13 +1,15 @@
 // --- Modularized Opcode Handlers ---
-pub mod movement;
-pub mod interaction;
-pub mod state;
 pub mod flow;
+pub mod flow_helpers;
+pub mod interaction;
+pub mod movement;
+pub mod state;
+pub mod state_helpers;
 
-pub use movement::*;
-pub use interaction::*;
-pub use state::*;
 pub use flow::*;
+pub use interaction::*;
+pub use movement::*;
+pub use state::*;
 
 use crate::core::enums::*;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -83,9 +85,7 @@ impl HandlerRegistry {
             | O_CALC_SUM_COST
             | O_DIV_VALUE => flow::handle_meta_control(state, db, ctx, instr, instr_ip),
             // 2. Draw / Hand
-            O_DRAW | O_DRAW_UNTIL | O_ADD_TO_HAND => {
-                movement::handle_draw(state, db, ctx, instr)
-            }
+            O_DRAW | O_DRAW_UNTIL | O_ADD_TO_HAND => movement::handle_draw(state, db, ctx, instr),
             // 3. Member State
             O_ACTIVATE_MEMBER
             | O_SET_TAPPED

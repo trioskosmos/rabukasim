@@ -1,0 +1,110 @@
+from .generated_enums import EffectType, TriggerType
+
+EFFECT_DESCRIPTIONS = {
+    EffectType.DRAW: "Draw {value} card(s)",
+    EffectType.LOOK_DECK: "Look at top {value} card(s) of deck",
+    EffectType.ADD_BLADES: "Gain {value} Blade(s)",
+    EffectType.ADD_HEARTS: "Gain {value} Heart(s)",
+    EffectType.REDUCE_COST: "Reduce cost by {value}",
+    EffectType.BOOST_SCORE: "Boost live score by {value}",
+    EffectType.RECOVER_LIVE: "Recover {value} Live card(s) from discard",
+    EffectType.RECOVER_MEMBER: "Recover {value} Member card(s) from discard",
+    EffectType.BUFF_POWER: "Power Up {value} (Blade/Heart)",
+    EffectType.IMMUNITY: "Gain Immunity",
+    EffectType.MOVE_MEMBER: "Move Member to another zone",
+    EffectType.SWAP_CARDS: "Discard {value} card(s) then Draw {value}",
+    EffectType.SEARCH_DECK: "Search Deck",  # [UNUSED]
+    EffectType.ENERGY_CHARGE: "Charge {value} Energy",
+    EffectType.SET_BLADES: "Set Blade(s) to {value}",
+    EffectType.SET_HEARTS: "Set Heart(s) to {value}",
+    EffectType.FORMATION_CHANGE: "Rearrange members on stage",  # [UNUSED]
+    EffectType.NEGATE_EFFECT: "Negate effect",
+    EffectType.ORDER_DECK: "Reorder top {value} cards of deck",
+    EffectType.META_RULE: "[Rule modifier]",
+    EffectType.SELECT_MODE: "Choose One:",
+    EffectType.MOVE_TO_DECK: "Return {value} card(s) to Deck",
+    EffectType.TAP_OPPONENT: "Tap {value} Opponent Member(s)",
+    EffectType.PLACE_UNDER: "Place card under Member",
+    EffectType.RESTRICTION: "Apply Restriction",
+    EffectType.BATON_TOUCH_MOD: "Modify Baton Touch rules",
+    EffectType.SET_SCORE: "Set Live Score to {value}",
+    EffectType.REVEAL_CARDS: "Reveal {value} card(s)",
+    EffectType.LOOK_AND_CHOOSE: "Look at {value} card(s) from deck and choose",
+    EffectType.ACTIVATE_MEMBER: "Active {value} Member(s)/Energy",
+    EffectType.ADD_TO_HAND: "Add {value} card(s) to Hand",
+    EffectType.TRIGGER_REMOTE: "Trigger Remote Ability",
+    EffectType.CHEER_REVEAL: "Reveal via Cheer",
+    EffectType.REDUCE_HEART_REQ: "Modify Heart Requirement",
+    EffectType.SWAP_ZONE: "Swap card zones",  # [UNUSED]
+    EffectType.MOVE_TO_DISCARD: "Move {value} card(s) to Discard",
+    EffectType.PLAY_MEMBER_FROM_HAND: "Play member from hand",
+    EffectType.TAP_MEMBER: "Tap {value} Member(s)",
+}
+
+EFFECT_DESCRIPTIONS_JP = {
+    EffectType.DRAW: "{value}枚ドロー",
+    EffectType.LOOK_DECK: "デッキの上から{value}枚見る",
+    EffectType.ADD_BLADES: "ブレード+{value}",
+    EffectType.ADD_HEARTS: "ハート+{value}",
+    EffectType.REDUCE_COST: "コスト-{value}",
+    EffectType.BOOST_SCORE: "スコア+{value}",
+    EffectType.RECOVER_LIVE: "控えライブ{value}枚回収",
+    EffectType.RECOVER_MEMBER: "控えメンバー{value}枚回収",
+    EffectType.BUFF_POWER: "パワー+{value}",
+    EffectType.IMMUNITY: "効果無効",
+    EffectType.MOVE_MEMBER: "メンバー移動",
+    EffectType.SWAP_CARDS: "手札交換({value}枚捨て{value}枚引く)",
+    EffectType.SEARCH_DECK: "デッキ検索",  # [UNUSED]
+    EffectType.ENERGY_CHARGE: "エネルギーチャージ+{value}",
+    EffectType.SET_BLADES: "ブレードを{value}にセット",
+    EffectType.SET_HEARTS: "ハートを{value}にセット",
+    EffectType.FORMATION_CHANGE: "配置変更",  # [UNUSED]
+    EffectType.NEGATE_EFFECT: "効果打ち消し",
+    EffectType.ORDER_DECK: "デッキトップ{value}枚並べ替え",
+    EffectType.META_RULE: "[ルール変更]",
+    EffectType.SELECT_MODE: "モード選択:",
+    EffectType.MOVE_TO_DECK: "{value}枚をデッキに戻す",
+    EffectType.TAP_OPPONENT: "相手メンバー{value}人をウェイトにする",
+    EffectType.PLACE_UNDER: "メンバーの下に置く",
+    EffectType.RESTRICTION: "プレイ制限適用",
+    EffectType.BATON_TOUCH_MOD: "バトンタッチルール変更",
+    EffectType.SET_SCORE: "ライブスコアを{value}にセット",
+    EffectType.REVEAL_CARDS: "{value}枚公開",
+    EffectType.LOOK_AND_CHOOSE: "デッキから{value}枚見て選ぶ",
+    EffectType.ACTIVATE_MEMBER: "{value}人/エネをアクティブにする",
+    EffectType.ADD_TO_HAND: "手札に{value}枚加える",
+    EffectType.TRIGGER_REMOTE: "リモート能力誘発",
+    EffectType.CHEER_REVEAL: "応援で公開",
+    EffectType.REDUCE_HEART_REQ: "ハート条件変更",
+    EffectType.SWAP_ZONE: "カード移動(ゾーン間)",  # [UNUSED]
+    EffectType.MOVE_TO_DISCARD: "控え室に{value}枚置く",
+    EffectType.PLAY_MEMBER_FROM_HAND: "手札からメンバーを登場させる",
+    EffectType.TAP_MEMBER: "{value}人をウェイトにする",
+    EffectType.ACTIVATE_ENERGY: "エネルギーを{value}枚アクティブにする",
+}
+
+TRIGGER_DESCRIPTIONS = {
+    TriggerType.ON_PLAY: "[On Play]",
+    TriggerType.ON_LIVE_START: "[Live Start]",
+    TriggerType.ON_LIVE_SUCCESS: "[Live Success]",
+    TriggerType.TURN_START: "[Turn Start]",
+    TriggerType.TURN_END: "[Turn End - live]",
+    TriggerType.CONSTANT: "[Constant - live]",
+    TriggerType.ACTIVATED: "[Activated]",
+    TriggerType.ON_LEAVES: "[When Leaves]",
+    TriggerType.ON_MOVE_TO_DISCARD: "[Moved To Discard]",
+}
+
+TRIGGER_DESCRIPTIONS_JP = {
+    TriggerType.ON_PLAY: "【登場時】",
+    TriggerType.ON_LIVE_START: "【ライブ開始時】",
+    TriggerType.ON_LIVE_SUCCESS: "【ライブ成功時】",
+    TriggerType.TURN_START: "【ターン開始時】",
+    TriggerType.TURN_END: "【ターン終了時】",
+    TriggerType.CONSTANT: "【常時】",
+    TriggerType.ACTIVATED: "【起動】",
+    TriggerType.ON_LEAVES: "【離脱時】",
+    TriggerType.ON_MOVE_TO_DISCARD: "【控え室に置かれた時】",
+}
+
+__all__ = ["EFFECT_DESCRIPTIONS", "EFFECT_DESCRIPTIONS_JP", "TRIGGER_DESCRIPTIONS", "TRIGGER_DESCRIPTIONS_JP"]
