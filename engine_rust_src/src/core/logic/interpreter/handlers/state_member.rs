@@ -2,8 +2,8 @@ use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::logic::interpreter::instruction::BytecodeInstruction;
-use crate::core::models::interpreter::{get_choice_text, resolve_target_slot};
-use crate::core::models::suspend_interaction;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::models::interpreter::resolve_target_slot;
 
 #[path = "state_member_play.rs"]
 mod state_member_play;
@@ -34,84 +34,27 @@ pub fn handle_member_state(
 
     match op {
         O_ACTIVATE_MEMBER => {
-            let mut group_bits = 0u32;
-            if let Some(card) = db.get_member(ctx.source_card_id) {
-                for &g in &card.groups {
-                    if g < 32 {
-                        group_bits |= 1 << g;
-                    }
-                }
-            }
-
-            if v == 99 || (a != 0 && resolved_slot >= 3) {
-                for i in 0..3 {
-                    let cid = state.players[p_idx].stage[i];
-                    if cid < 0 {
-                        continue;
-                    }
-                    if a != 0 && !state.card_matches_filter_with_ctx(db, cid, a as u64, ctx) {
-                        continue;
-                    }
-                    if state.players[p_idx].is_tapped(i) {
-                        state.players[p_idx].set_tapped(i, false);
-                        state.players[p_idx].activated_member_group_mask |= group_bits;
-                    }
-                }
-            } else if target_slot == 1 {
-                for i in 0..3 {
-                    if state.players[p_idx].is_tapped(i) {
-                        state.players[p_idx].set_tapped(i, false);
-                        state.players[p_idx].activated_member_group_mask |= group_bits;
-                    }
-                }
-            } else if resolved_slot < 3 {
-                if state.players[p_idx].is_tapped(resolved_slot as usize) {
-                    state.players[p_idx].set_tapped(resolved_slot as usize, false);
-                    state.players[p_idx].activated_member_group_mask |= group_bits;
-                }
-            }
+            return state_member_tap::handle_activate_member(
+                state,
+                db,
+                ctx,
+                p_idx,
+                resolved_slot,
+                target_slot,
+                v,
+                a,
+            );
         }
         O_SET_TAPPED => {
-            let is_optional = instr.filter_attr().is_optional;
-
-            // First: If optional and this is the first interaction, ask player to confirm
-            if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
-                let choice_text = get_choice_text(db, ctx);
-                if suspend_interaction(
-                    state,
-                    db,
-                    ctx,
-                    instr_ip,
-                    O_SET_TAPPED,
-                    resolved_slot as i32,
-                    ChoiceType::Optional,
-                    &choice_text,
-                    instr.filter_attr().to_attr(),
-                    -1,
-                ) {
-                    return HandlerResult::Suspend;
-                }
-            }
-
-            // Second: Handle optional response
-            if is_optional && ctx.v_remaining == -1 && ctx.choice_index != -1 {
-                // If player chose to skip (choice_index == 1), mark execution as cancelled
-                if ctx.choice_index == 1 {
-                    if let Some(execution_id) = state.ui.current_execution_id {
-                        state.ui.cancelled_execution_ids.insert(execution_id);
-                    }
-                    return HandlerResult::Continue;
-                }
-                // If player chose to proceed (choice_index == 0), reset and continue
-                if ctx.choice_index == 0 {
-                    ctx.choice_index = -1;
-                }
-            }
-
-            // Finally: Execute the set_tapped action
-            if resolved_slot < 3 {
-                state.players[p_idx].set_tapped(resolved_slot as usize, v != 0);
-            }
+            return state_member_tap::handle_set_tapped(
+                state,
+                db,
+                ctx,
+                instr,
+                instr_ip,
+                p_idx,
+                resolved_slot,
+            );
         }
         O_TAP_MEMBER => {
             let mut resolved_slot = resolve_target_slot(target_slot, ctx);
@@ -140,19 +83,18 @@ pub fn handle_member_state(
 
             if v == 0 && resolved_slot == 4 && a & 0x02 == 0 && (a & 0x01 != 0 || a & 0x80 != 0) {
                 let mod_a = a | 0x02;
-                let choice_text = get_choice_text(db, ctx);
-                if suspend_interaction(
+                if matches!(suspend_choice(
                     state,
                     db,
+                    ctx,
                     ctx,
                     instr_ip,
                     O_TAP_MEMBER,
                     0,
                     ChoiceType::TapMSelect,
-                    &choice_text,
                     mod_a as u64,
                     v as i16,
-                ) {
+                ), HandlerResult::Suspend) {
                     return HandlerResult::Suspend;
                 }
             }
@@ -206,12 +148,9 @@ pub fn handle_member_state(
                 ctx,
                 instr,
                 instr_ip,
-                p_idx,
                 v,
                 a,
                 s,
-                target_slot,
-                resolved_slot,
             );
         }
         O_INCREASE_COST => {

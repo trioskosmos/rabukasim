@@ -1,11 +1,13 @@
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::{CHOICE_DONE, FILTER_IS_OPTIONAL};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::interpreter::instruction::BytecodeInstruction;
-use crate::core::models::interpreter::get_choice_text;
-use crate::core::models::suspend_interaction;
 use crate::core::{O_SELECT_CARDS};
+
+#[path = "interaction_select_cards_resolve.rs"]
+mod interaction_select_cards_resolve;
 
 pub fn handle_select_cards(
     state: &mut GameState,
@@ -33,19 +35,18 @@ pub fn handle_select_cards(
     };
 
     if is_optional && v == 99 && ctx.choice_index == -1 && ctx.v_remaining == -1 {
-        let choice_text = get_choice_text(db, ctx);
-        if suspend_interaction(
+        if matches!(suspend_choice(
             state,
             db,
+            ctx,
             ctx,
             instr_ip,
             O_SELECT_CARDS,
             0,
             ChoiceType::Optional,
-            &choice_text,
             a as u64,
             optional_prompt_marker,
-        ) {
+        ), HandlerResult::Suspend) {
             return HandlerResult::Suspend;
         }
     }
@@ -94,126 +95,38 @@ pub fn handle_select_cards(
             7 => ChoiceType::SelectDiscardPlay,
             _ => ChoiceType::LookAndChoose,
         };
-        let choice_text = get_choice_text(db, ctx);
-        if suspend_interaction(
+        if matches!(suspend_choice(
             state,
             db,
+            ctx,
             ctx,
             instr_ip,
             O_SELECT_CARDS,
             0,
             choice_type,
-            &choice_text,
             a as u64,
             if ctx.v_remaining >= 0 {
                 ctx.v_remaining
             } else {
                 v as i16
             },
-        ) {
+        ), HandlerResult::Suspend) {
             return HandlerResult::Suspend;
         }
     }
 
-    let choice = ctx.choice_index as i32;
-    if choice == CHOICE_DONE as i32 && (a as u64 & FILTER_IS_OPTIONAL) != 0 {
-        return HandlerResult::Continue;
-    }
-
-    if choice != CHOICE_DONE as i32
-        && choice >= 0
-        && (choice as usize) < state.players[p_idx].looked_cards.len()
-    {
-        let chosen = state.players[p_idx].looked_cards[choice as usize];
-        ctx.selected_cards.push(chosen);
-
-        let dest_zone = slot_info.dest_zone as u8;
-        if dest_zone != 0 {
-            let source_zone = slot_info.source_zone as u8;
-            let actual_source = if source_zone != 0 { source_zone } else { 7 };
-
-            let mut found = false;
-            match actual_source {
-                6 => {
-                    if let Some(pos) = state.players[p_idx].hand.iter().position(|&c| c == chosen) {
-                        state.players[p_idx].remove_hand_card(pos);
-                        found = true;
-                    }
-                }
-                7 => {
-                    if let Some(pos) = state.players[p_idx]
-                        .discard
-                        .iter()
-                        .position(|&c| c == chosen)
-                    {
-                        state.players[p_idx].remove_discard_card(pos);
-                        found = true;
-                    }
-                }
-                4 => {
-                    for i in 0..3 {
-                        if state.players[p_idx].stage[i] == chosen {
-                            state.handle_member_leaves_stage(p_idx, i, db, ctx);
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-                _ => {}
-            }
-
-            if found {
-                match dest_zone {
-                    6 => {
-                        state.players[p_idx].gain_hand_card(chosen);
-                    }
-                    7 => {
-                        state.players[p_idx].push_discard_card(chosen);
-                    }
-                    8 | 0 => {
-                        state.players[p_idx].push_deck_card(chosen);
-                    }
-                    13 => {
-                        state.players[p_idx].success_lives.push(chosen);
-                    }
-                    _ => {
-                        state.players[p_idx].push_hand_card(chosen);
-                    }
-                }
-            }
-        }
-
-        let rem = if ctx.v_remaining > 0 {
-            ctx.v_remaining - 1
-        } else {
-            (v as i16).saturating_sub(1)
-        };
-        if rem > 0 {
-            state.players[p_idx].looked_cards.remove(choice as usize);
-            ctx.v_remaining = rem;
-            ctx.choice_index = -1;
-            let choice_type = match effective_zone {
-                6 => ChoiceType::SelectHandDiscard,
-                7 => ChoiceType::SelectDiscardPlay,
-                _ => ChoiceType::LookAndChoose,
-            };
-            let choice_text = get_choice_text(db, ctx);
-            if suspend_interaction(
-                state,
-                db,
-                ctx,
-                instr_ip,
-                O_SELECT_CARDS,
-                s,
-                choice_type,
-                &choice_text,
-                a as u64,
-                rem,
-            ) {
-                return HandlerResult::Suspend;
-            }
-        }
-    }
-
-    HandlerResult::Continue
+    interaction_select_cards_resolve::resolve_select_cards(
+        state,
+        db,
+        ctx,
+        instr,
+        instr_ip,
+        p_idx,
+        s,
+        v,
+        a,
+        slot_info,
+        effective_zone,
+        is_optional,
+    )
 }

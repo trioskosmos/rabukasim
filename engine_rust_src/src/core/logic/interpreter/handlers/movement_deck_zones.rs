@@ -1,13 +1,9 @@
 ﻿use crate::core::enums::*;
 use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE, FILTER_MASK_LOWER, FLAG_REVEAL_UNTIL_IS_LIVE};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState, TriggerType};
-use crate::core::models::interpreter::{check_condition_opcode, get_choice_text, resolve_target_slot};
-use crate::core::models::suspend_interaction;
+use crate::core::models::interpreter::{check_condition_opcode, resolve_target_slot};
 use super::super::interaction::*;
 use super::super::HandlerResult;
-use rand::seq::SliceRandom;
-use rand::SeedableRng;
-use rand_pcg::Pcg64;
 
 #[path = "movement_deck_search.rs"]
 mod movement_deck_search;
@@ -42,14 +38,10 @@ pub fn handle_deck_zones(
             );
         }
         O_ORDER_DECK => {
-            return movement_deck_search::handle_order_deck(
-                state, db, ctx, p_idx, v, a, instr_ip,
-            );
+            return super::handle_order_deck(state, db, ctx, p_idx, v, a, instr_ip);
         }
         O_LOOK_REORDER_DISCARD => {
-            return movement_deck_search::handle_look_reorder_discard(
-                state, db, ctx, p_idx, v, a, instr_ip,
-            );
+            return super::handle_look_reorder_discard(state, db, ctx, p_idx, v, a, instr_ip);
         }
         O_MOVE_TO_DECK => {
             return movement_deck_move::handle_move_to_deck(

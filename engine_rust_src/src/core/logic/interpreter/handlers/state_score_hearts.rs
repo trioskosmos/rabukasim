@@ -1,16 +1,13 @@
 use crate::core::logic::interpreter::handlers::state_helpers::{
-    inline_value_ge_threshold, tap_opponent_chooser_player, update_live_score_snapshot,
+    inline_value_ge_threshold, update_live_score_snapshot,
 };
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::enums::*;
-use crate::core::hearts::HeartBoard;
-use crate::core::logic::constants::CHOICE_DONE;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::logic::interpreter::instruction::BytecodeInstruction;
-use crate::core::models::interpreter::{get_choice_text, resolve_target_slot};
-use crate::core::models::suspend_interaction;
+use crate::core::models::interpreter::resolve_target_slot;
 
 #[path = "state_score_bonus.rs"]
 mod state_score_bonus;

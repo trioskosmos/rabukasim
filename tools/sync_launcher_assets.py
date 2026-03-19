@@ -14,7 +14,7 @@ def sync_assets():
         print(f"Using Vite build output: {FE_SRC}")
     else:
         FE_SRC = FE_BASE
-        print(f"Using raw source (Vite build not found): {FE_SRC}")
+        print(f"Vite build not found at {VITE_DIST}; using raw source fallback: {FE_SRC}")
         
     IMG_SRC = os.path.join(ROOT, "frontend", "img")
     LAUNCH_DEST_FINAL = os.path.join(ROOT, "launcher", "static_content")

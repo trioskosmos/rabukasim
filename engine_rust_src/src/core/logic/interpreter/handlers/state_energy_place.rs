@@ -1,4 +1,6 @@
 use super::*;
+#[path = "state_energy_place_select.rs"]
+mod state_energy_place_select;
 
 pub fn handle_place_energy_under_member(
     state: &mut GameState,
@@ -13,69 +15,10 @@ pub fn handle_place_energy_under_member(
     let src_zone = slot_info.source_zone as u8;
     let slot = if ctx.area_idx >= 0 { ctx.area_idx as usize } else { 0 };
 
-    let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
     if src_zone == 3 {
-        if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
-            let choice_text = get_choice_text(db, ctx);
-            if suspend_interaction(
-                state,
-                db,
-                ctx,
-                instr_ip,
-                O_PLACE_ENERGY_UNDER_MEMBER,
-                0,
-                ChoiceType::Optional,
-                &choice_text,
-                a as u64,
-                -1,
-            ) {
-                return HandlerResult::Suspend;
-            }
-        }
-
-        if ctx.choice_index == 99 {
-            return HandlerResult::SetCond(false);
-        }
-
-        let mut next_ctx = ctx.clone();
-        if is_optional && ctx.choice_index != -1 && ctx.v_remaining == -1 {
-            if ctx.choice_index == 1 {
-                return HandlerResult::SetCond(false);
-            }
-            next_ctx.choice_index = -1;
-            next_ctx.v_remaining = 1;
-        }
-
-        if next_ctx.choice_index == -1 {
-            if state.players[p_idx].energy_zone.is_empty() {
-                return HandlerResult::SetCond(false);
-            }
-
-            let choice_text = get_choice_text(db, ctx);
-            if suspend_interaction(
-                state,
-                db,
-                &next_ctx,
-                instr_ip,
-                O_PLACE_ENERGY_UNDER_MEMBER,
-                0,
-                ChoiceType::PayEnergy,
-                &choice_text,
-                a as u64,
-                1,
-            ) {
-                return HandlerResult::Suspend;
-            }
-        }
-
-        let idx = next_ctx.choice_index as usize;
-        if idx >= state.players[p_idx].energy_zone.len() || slot >= 3 {
-            return HandlerResult::SetCond(false);
-        }
-
-        let energy_cid = state.players[p_idx].remove_energy_card(idx).unwrap();
-        state.players[p_idx].stage_energy[slot].push(energy_cid);
-        return HandlerResult::SetCond(true);
+        return state_energy_place_select::handle_place_energy_from_zone(
+            state, db, ctx, instr_ip, p_idx, slot, a,
+        );
     }
 
     if slot < 3 {

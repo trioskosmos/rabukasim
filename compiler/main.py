@@ -710,14 +710,14 @@ def compute_flags(card):
 def _extract_units_from_add_tag(abilities):
     """Extract unit IDs from CONSTANT trigger + ADD_TAG (META_RULE) abilities.
 
-    Returns a set of unit IDs (integers) to merge with card.units.
+    Returns a set of Unit enum values to merge with card.units.
     """
     units_set = set()
     # Mapping token names to Unit enum values
     name_map = {
-        "UNIT_CERISE": int(Unit.CERISE_BOUQUET),
-        "UNIT_DOLL": int(Unit.DOLLCHESTRA),
-        "UNIT_MIRAKURA": int(Unit.MIRA_CRA_PARK),
+        "UNIT_CERISE": Unit.CERISE_BOUQUET,
+        "UNIT_DOLL": Unit.DOLLCHESTRA,
+        "UNIT_MIRAKURA": Unit.MIRA_CRA_PARK,
     }
 
     for ab_idx, ab in enumerate(abilities):
@@ -744,7 +744,22 @@ def _extract_units_from_add_tag(abilities):
                 print(f"[DEBUG _extract] Found META_RULE ADD_TAG in ability #{ab_idx}: raw='{raw}', matched parts: {parts_found}")
     return units_set
 
-    return units_set
+
+def _normalize_unit_values(values):
+    """Coerce any stored unit values back into Unit enums."""
+    normalized = []
+    seen = set()
+    for value in values:
+        if isinstance(value, Unit):
+            unit = value
+        elif isinstance(value, int) or (isinstance(value, str) and str(value).isdigit()):
+            unit = Unit(int(value))
+        else:
+            unit = Unit.from_japanese_name(str(value))
+        if unit not in seen:
+            normalized.append(unit)
+            seen.add(unit)
+    return normalized
 
 
 def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
@@ -806,7 +821,7 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
     add_tag_units = _extract_units_from_add_tag(card.abilities)
     if add_tag_units:
         existing_units = set(card.units) if isinstance(card.units, list) else set()
-        card.units = list(sorted(existing_units | add_tag_units))
+        card.units = _normalize_unit_values(existing_units | add_tag_units)
     
     # Check consolidated_abilities for units metadata
     # If the original pseudocode entry has a "units" field, merge those units into card.units
@@ -816,15 +831,15 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
         if metadata_units:
             # Map unit names (e.g., "CERISE_BOUQUET") to Unit enum values
             unit_name_map = {
-                "CERISE_BOUQUET": int(Unit.CERISE_BOUQUET),
-                "DOLLCHESTRA": int(Unit.DOLLCHESTRA),
-                "MIRA_CRA_PARK": int(Unit.MIRA_CRA_PARK),
+                "CERISE_BOUQUET": Unit.CERISE_BOUQUET,
+                "DOLLCHESTRA": Unit.DOLLCHESTRA,
+                "MIRA_CRA_PARK": Unit.MIRA_CRA_PARK,
             }
             existing_units = set(card.units) if isinstance(card.units, list) else set()
             for unit_name in metadata_units:
                 if unit_name in unit_name_map:
                     existing_units.add(unit_name_map[unit_name])
-            card.units = list(sorted(existing_units))
+            card.units = _normalize_unit_values(existing_units)
 
     compute_flags(card)
     return card
@@ -878,7 +893,7 @@ def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
     add_tag_units = _extract_units_from_add_tag(card.abilities)
     if add_tag_units:
         existing_units = set(card.units) if isinstance(card.units, list) else set()
-        card.units = list(sorted(existing_units | add_tag_units))
+        card.units = _normalize_unit_values(existing_units | add_tag_units)
     
     # Check consolidated_abilities for units metadata
     # If the original pseudocode entry has a "units" field, merge those units into card.units
@@ -888,15 +903,15 @@ def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
         if metadata_units:
             # Map unit names (e.g., "CERISE_BOUQUET") to Unit enum values
             unit_name_map = {
-                "CERISE_BOUQUET": int(Unit.CERISE_BOUQUET),
-                "DOLLCHESTRA": int(Unit.DOLLCHESTRA),
-                "MIRA_CRA_PARK": int(Unit.MIRA_CRA_PARK),
+                "CERISE_BOUQUET": Unit.CERISE_BOUQUET,
+                "DOLLCHESTRA": Unit.DOLLCHESTRA,
+                "MIRA_CRA_PARK": Unit.MIRA_CRA_PARK,
             }
             existing_units = set(card.units) if isinstance(card.units, list) else set()
             for unit_name in metadata_units:
                 if unit_name in unit_name_map:
                     existing_units.add(unit_name_map[unit_name])
-            card.units = list(sorted(existing_units))
+            card.units = _normalize_unit_values(existing_units)
 
     compute_flags(card)
     return card

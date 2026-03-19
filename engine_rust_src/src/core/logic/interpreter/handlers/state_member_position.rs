@@ -1,6 +1,7 @@
 //! Position and formation handlers routed through focused submodules.
 
 use super::*;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
 #[path = "state_member_move.rs"]
 mod state_member_move;
@@ -33,19 +34,18 @@ pub fn handle_place_under(
     let mut next_ctx = ctx.clone();
     next_ctx.player_id = p_idx as u8;
     if a & 0x01 != 0 && next_ctx.choice_index == -1 {
-        let choice_text = get_choice_text(db, ctx);
-        if suspend_interaction(
+        if matches!(suspend_choice(
             state,
             db,
+            ctx,
             &next_ctx,
             0,
             O_PLACE_UNDER,
             0,
             ChoiceType::Optional,
-            &choice_text,
             a as u64,
             -1,
-        ) {
+        ), HandlerResult::Suspend) {
             return HandlerResult::Suspend;
         }
     }

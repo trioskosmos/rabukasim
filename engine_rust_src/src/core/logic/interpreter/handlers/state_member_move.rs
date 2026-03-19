@@ -1,12 +1,13 @@
 use crate::core::hearts::HeartBoard;
 use super::*;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_move_member(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
+    _instr: &BytecodeInstruction,
     instr_ip: usize,
     p_idx: usize,
     a: i64,
@@ -23,23 +24,22 @@ pub fn handle_move_member(
     let needs_choice = a == 99 || (a < 0 || a > 2);
 
     if needs_choice && ctx.choice_index == -1 {
-        let choice_text = get_choice_text(db, ctx);
         let mut choice_ctx = ctx.clone();
         if slot_info.is_opponent || slot_info.target_slot == 2 {
             choice_ctx.player_id = 1 - ctx.player_id;
         }
-        if suspend_interaction(
+        if matches!(suspend_choice(
             state,
             db,
+            ctx,
             &choice_ctx,
             instr_ip,
             O_MOVE_MEMBER,
             s,
             ChoiceType::MoveMemberDest,
-            &choice_text,
             0,
             -1,
-        ) {
+        ), HandlerResult::Suspend) {
             return HandlerResult::Suspend;
         }
     }

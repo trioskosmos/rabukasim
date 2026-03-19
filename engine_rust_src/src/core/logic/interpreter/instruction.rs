@@ -766,7 +766,9 @@ impl BytecodeProgram {
 
 #[cfg(test)]
 mod tests {
-    use super::{BytecodeInstruction, BytecodeLayout, BytecodeProgram};
+    use super::{BytecodeInstruction, BytecodeLayout, BytecodeProgram, DecodedFilterAttr};
+    use crate::core::enums::Zone;
+    use crate::test_helpers::BytecodeBuilder;
 
     #[test]
     fn compact_program_round_trips_instructions() {
@@ -840,5 +842,91 @@ mod tests {
         assert_eq!(BytecodeProgram::tagged_words_for_instruction(instr).len(), 3);
         assert_eq!(BytecodeProgram::compact_words_for_instruction(instr).len(), 2);
         assert_eq!(BytecodeProgram::fixed_layout_word_len(), 5);
+    }
+
+    #[test]
+    fn slot_accessor_decodes_all_slot_flags() {
+        let words = BytecodeBuilder::new(0)
+            .slot(0)
+            .source(Zone::Stage)
+            .dest(Zone::Discard)
+            .target(5)
+            .reveal_until_live(true)
+            .is_opponent(true)
+            .area_idx(3)
+            .build();
+
+        let instruction = BytecodeInstruction::decode(&words, 0);
+        let slot = instruction.slot();
+        assert_eq!(slot.target_slot, 5);
+        assert_eq!(slot.source_zone, Zone::Stage);
+        assert_eq!(slot.dest_zone, Zone::Discard);
+        assert_eq!(slot.remainder_zone, 0);
+        assert!(slot.is_opponent);
+        assert!(slot.is_reveal_until_live);
+        assert!(slot.is_baton_slot);
+        assert!(!slot.is_empty_slot);
+        assert!(!slot.is_wait);
+        assert!(!slot.is_dynamic);
+        assert_eq!(slot.area_idx, 3);
+    }
+
+    #[test]
+    fn filter_attr_accessor_round_trips_standard_fields() {
+        let original = DecodedFilterAttr {
+            target_player: 1,
+            card_type: 2,
+            group_enabled: true,
+            group_id: 5,
+            is_tapped: true,
+            has_blade_heart: true,
+            not_has_blade_heart: false,
+            unique_names: true,
+            unit_enabled: true,
+            unit_id: 7,
+            value_enabled: true,
+            value_threshold: 9,
+            is_le: true,
+            is_cost_type: true,
+            color_mask: 0b101010,
+            char_id_1: 3,
+            char_id_2: 4,
+            char_id_3: 0,
+            zone_mask: 0b011,
+            special_id: 0,
+            is_setsuna: true,
+            compare_accumulated: true,
+            is_optional: true,
+            keyword_energy: true,
+            keyword_member: false,
+        };
+
+        let instruction = BytecodeInstruction::new(0, 0, original.to_attr() as i64, 0);
+        let decoded = instruction.filter_attr();
+        assert_eq!(decoded.target_player, original.target_player);
+        assert_eq!(decoded.card_type, original.card_type);
+        assert_eq!(decoded.group_enabled, original.group_enabled);
+        assert_eq!(decoded.group_id, original.group_id);
+        assert_eq!(decoded.is_tapped, original.is_tapped);
+        assert_eq!(decoded.has_blade_heart, original.has_blade_heart);
+        assert_eq!(decoded.not_has_blade_heart, original.not_has_blade_heart);
+        assert_eq!(decoded.unique_names, original.unique_names);
+        assert_eq!(decoded.unit_enabled, original.unit_enabled);
+        assert_eq!(decoded.unit_id, original.unit_id);
+        assert_eq!(decoded.value_enabled, original.value_enabled);
+        assert_eq!(decoded.value_threshold, original.value_threshold);
+        assert_eq!(decoded.is_le, original.is_le);
+        assert_eq!(decoded.is_cost_type, original.is_cost_type);
+        assert_eq!(decoded.color_mask, original.color_mask);
+        assert_eq!(decoded.char_id_1, original.char_id_1);
+        assert_eq!(decoded.char_id_2, original.char_id_2);
+        assert_eq!(decoded.char_id_3, original.char_id_3);
+        assert_eq!(decoded.zone_mask, original.zone_mask);
+        assert_eq!(decoded.special_id, original.special_id);
+        assert_eq!(decoded.is_setsuna, original.is_setsuna);
+        assert_eq!(decoded.compare_accumulated, original.compare_accumulated);
+        assert_eq!(decoded.is_optional, original.is_optional);
+        assert_eq!(decoded.keyword_energy, original.keyword_energy);
+        assert_eq!(decoded.keyword_member, original.keyword_member);
     }
 }

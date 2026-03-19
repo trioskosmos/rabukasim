@@ -2,10 +2,9 @@ use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::*;
 use crate::core::logic::constants::{CHOICE_DONE, STAGE_SLOT_COUNT};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::interpreter::instruction::BytecodeInstruction;
-use crate::core::models::interpreter::get_choice_text;
-use crate::core::models::suspend_interaction;
 
 pub fn handle_play_live_from_discard(
     state: &mut GameState,
@@ -53,19 +52,18 @@ pub fn handle_play_live_from_discard(
             }
             let mut target_ctx = ctx.clone();
             target_ctx.player_id = target_p_idx as u8;
-            let choice_text = get_choice_text(db, &target_ctx);
-            if suspend_interaction(
+            if matches!(suspend_choice(
                 state,
                 db,
+                &target_ctx,
                 &target_ctx,
                 instr_ip,
                 O_PLAY_LIVE_FROM_DISCARD,
                 s,
                 ChoiceType::SelectDiscardPlay,
-                &choice_text,
                 a as u64,
                 remaining,
-            ) {
+            ), HandlerResult::Suspend) {
                 return HandlerResult::Suspend;
             }
         }
@@ -92,18 +90,18 @@ pub fn handle_play_live_from_discard(
                 remaining -= 1;
                 let mut target_ctx = ctx.clone();
                 target_ctx.player_id = target_p_idx as u8;
-                if suspend_interaction(
+                if matches!(suspend_choice(
                     state,
                     db,
+                    &target_ctx,
                     &target_ctx,
                     instr_ip,
                     O_PLAY_LIVE_FROM_DISCARD,
                     s,
                     ChoiceType::SelectLiveSlot,
-                    "",
                     a as u64,
                     remaining,
-                ) {
+                ), HandlerResult::Suspend) {
                     return HandlerResult::Suspend;
                 }
             }

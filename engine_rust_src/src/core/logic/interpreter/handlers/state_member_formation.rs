@@ -1,12 +1,13 @@
 use crate::core::hearts::HeartBoard;
 use super::*;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_formation_change(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
+    _instr: &BytecodeInstruction,
     instr_ip: usize,
     p_idx: usize,
     a: i64,
@@ -70,19 +71,18 @@ pub fn handle_formation_change(
             }
         }
     } else if ctx.choice_index == -1 {
-        let choice_text = get_choice_text(db, ctx);
-        if suspend_interaction(
+        if matches!(suspend_choice(
             state,
             db,
+            ctx,
             ctx,
             instr_ip,
             O_FORMATION_CHANGE,
             s,
             ChoiceType::RearrangeFormation,
-            &choice_text,
             0,
             -1,
-        ) {
+        ), HandlerResult::Suspend) {
             return HandlerResult::Suspend;
         }
     } else {

@@ -36,6 +36,7 @@ def to_signed_32(x):
 # Original definitions removed, now using generated_enums.
 
 
+@dataclass(slots=True)
 class Condition:
     type: ConditionType
     params: Dict[str, Any] = field(default_factory=dict)
@@ -365,91 +366,9 @@ class Ability:
             self._compile_single_condition(cond, temp_bc)
 
     def build_semantic_form(self) -> Dict[str, Any]:
-        """Build a human-readable semantic representation of this ability.
-        
-        This converts bytecode back into named enums and readable descriptions,
-        creating an intermediate form that's easier to inspect than bytecode.
-        """
-        semantic_effects: List[SemanticEffect] = []
-        for eff in self.effects:
-            # Safely copy params
-            params_copy = {}
-            try:
-                params_copy = eff.params.copy() if hasattr(eff.params, 'copy') and callable(eff.params.copy) else dict(eff.params or {})
-            except (AttributeError, TypeError, ValueError):
-                params_copy = {}
-                
-            sem_eff = SemanticEffect(
-                effect_type=eff.effect_type.name if hasattr(eff.effect_type, "name") else str(eff.effect_type),
-                value=eff.value,
-                target=eff.target.name if hasattr(eff.target, "name") else str(eff.target),
-                params=params_copy,
-                is_optional=eff.is_optional,
-            )
-            semantic_effects.append(sem_eff)
+        from .ability_rendering import build_semantic_form
 
-        semantic_conditions: List[SemanticCondition] = []
-        for cond in self.conditions:
-            # Try to get the comparison type from params
-            try:
-                params_upper = {k.upper(): v for k, v in cond.params.items() if isinstance(k, str)}
-            except (AttributeError, TypeError):
-                params_upper = {}
-                
-            comp_str = str(cond.params.get("comparison") or params_upper.get("COMPARISON") or "GE").upper() if cond.params else "GE"
-
-            # Only try to get filter_summary if attr exists (after compilation)
-            filter_summary = ""
-            if hasattr(cond, "attr") and cond.attr:
-                try:
-                    filter_summary = format_filter_attr(cond.attr)
-                except (AttributeError, TypeError, ValueError):
-                    filter_summary = ""
-
-            sem_cond = SemanticCondition(
-                condition_type=cond.type.name if hasattr(cond.type, "name") else str(cond.type),
-                value=cond.value if hasattr(cond, "value") else 0,
-                comparison=comp_str,
-                filter_summary=filter_summary,
-                area=str(cond.params.get("area", "")).upper() if cond.params else "",
-                is_negated=cond.is_negated if hasattr(cond, "is_negated") else False,
-            )
-            semantic_conditions.append(sem_cond)
-
-        semantic_costs: List[SemanticCost] = []
-        for cost in self.costs:
-            sem_cost = SemanticCost(
-                cost_type=cost.type.name if hasattr(cost.type, "name") else str(cost.type),
-                value=cost.value,
-                is_optional=cost.is_optional,
-            )
-            semantic_costs.append(sem_cost)
-
-        # Build summary of instructions if present
-        instructions_summary = ""
-        if self.instructions:
-            parts = []
-            for instr in self.instructions:
-                if isinstance(instr, Effect):
-                    parts.append(f"Effect({instr.effect_type.name})")
-                elif isinstance(instr, Condition):
-                    parts.append(f"Condition({instr.type.name})")
-                elif isinstance(instr, Cost):
-                    parts.append(f"Cost({instr.type.name})")
-            instructions_summary = " 驕ｶ鄙ｫ繝ｻ".join(parts)
-
-        semantic_form = SemanticAbility(
-            trigger=self.trigger.name if hasattr(self.trigger, "name") else str(self.trigger),
-            effects=semantic_effects,
-            conditions=semantic_conditions,
-            costs=semantic_costs,
-            is_once_per_turn=self.is_once_per_turn,
-            description=self.pseudocode or self.raw_text,
-            instructions_summary=instructions_summary,
-        )
-
-        self.semantic_form = semantic_form.to_dict()
-        return self.semantic_form
+        return build_semantic_form(self)
 
     def _annotate_effect_runtime_metadata(self):
         for eff in self.effects:
@@ -1879,6 +1798,7 @@ class Ability:
             unit_val_upper = str(unit_val).upper()
             # Map group-like keywords that might appear as UNIT_*
             group_keyword_map = {
+                "HASU": 4,
                 "HASUNOSORA": 4,
                 "LIELLA": 3,
                 "NIJIGASAKI": 2,
@@ -2102,7 +2022,9 @@ class Ability:
                 pass
 
         # Setsuna (Bit 59)
-        if names and any(s in str(names) for s in ["髯ｷ繝ｻ・ｽ・ｪ髫ｴ蟷｢・ｽ・ｨ", "驍ｵ・ｺ陝ｶ蜷ｮ蜻ｽ鬮｣謔ｶ繝ｻ]):
+        if params.get("is_setsuna") or params_upper.get("IS_SETSUNA"):
+            filter_obj["is_setsuna"] = True
+        elif names and "SETSUNA" in str(names).upper():
             filter_obj["is_setsuna"] = True
 
         # Internal Flags
@@ -2142,259 +2064,6 @@ class Ability:
         return filter_spec.pack()
 
     def reconstruct_text(self, lang: str = "en") -> str:
-        """Generate standardized text description."""
-        parts = []
-        is_jp = lang == "jp"
-        e_desc_map = EFFECT_DESCRIPTIONS_JP if is_jp else EFFECT_DESCRIPTIONS
+        from .ability_rendering import reconstruct_text
 
-        t_name = getattr(self.trigger, "name", str(self.trigger))
-        trigger_desc = t_desc_map.get(self.trigger, f"[{t_name}]")
-        if self.trigger == TriggerType.ON_LEAVES:
-            if "discard" not in trigger_desc.lower() and "髫ｰ證ｦ・ｽ・ｧ驍ｵ・ｺ闔・･繝ｻ・ｮ繝ｻ・､" not in trigger_desc:
-                suffix = " (to discard)" if not is_jp else "(髫ｰ證ｦ・ｽ・ｧ驍ｵ・ｺ闔・･繝ｻ・ｮ繝ｻ・､驍ｵ・ｺ繝ｻ・ｸ)"
-                trigger_desc += suffix
-        parts.append(trigger_desc)
-
-        for cost in self.costs:
-            if is_jp:
-                if cost.type == AbilityCostType.ENERGY:
-                    parts.append(f"(驛｢・ｧ繝ｻ・ｳ驛｢・ｧ繝ｻ・ｹ驛｢譏ｴ繝ｻ 驛｢・ｧ繝ｻ・ｨ驛｢譎会｣ｰ・ｿcost.value}髮趣ｽｸ鬩帙・・ｽ・ｲ繝ｻ・ｻ)")
-                elif cost.type == AbilityCostType.TAP_SELF:
-                    parts.append("(驛｢・ｧ繝ｻ・ｳ驛｢・ｧ繝ｻ・ｹ驛｢譏ｴ繝ｻ 鬮｢・ｾ繝ｻ・ｪ鬮ｴ繝ｻ・ｽ・ｫ驛｢・ｧ繝ｻ・ｦ驛｢・ｧ繝ｻ・ｧ驛｢・ｧ繝ｻ・､驛｢譏ｴ繝ｻ")
-                elif cost.type == AbilityCostType.DISCARD_HAND:
-                    parts.append(f"(驛｢・ｧ繝ｻ・ｳ驛｢・ｧ繝ｻ・ｹ驛｢譏ｴ繝ｻ 髫ｰ繝ｻ邇・ｫ繝ｻcost.value}髫ｴ・ｫ陞｢・ｽ隴丞・・ｸ・ｺ繝ｻ・ｦ)")
-                elif cost.type == AbilityCostType.SACRIFICE_SELF:
-                    parts.append("(驛｢・ｧ繝ｻ・ｳ驛｢・ｧ繝ｻ・ｹ驛｢譏ｴ繝ｻ 鬮｢・ｾ繝ｻ・ｪ鬮ｴ繝ｻ・ｽ・ｫ鬯ｨ・ｾ・つ髯懶ｽ｣繝ｻ・ｴ)")
-                else:
-                    parts.append(f"(驛｢・ｧ繝ｻ・ｳ驛｢・ｧ繝ｻ・ｹ驛｢譏ｴ繝ｻ {cost.type.name} {cost.value})")
-            else:
-                if cost.type == AbilityCostType.ENERGY:
-                    parts.append(f"(Cost: Pay {cost.value} Energy)")
-                elif cost.type == AbilityCostType.TAP_SELF:
-                    parts.append("(Cost: Rest Self)")
-                elif cost.type == AbilityCostType.DISCARD_HAND:
-                    parts.append(f"(Cost: Discard {cost.value} from hand)")
-                elif cost.type == AbilityCostType.SACRIFICE_SELF:
-                    parts.append("(Cost: Sacrifice Self)")
-                else:
-                    parts.append(f"(Cost: {cost.type.name} {cost.value})")
-
-        for cond in self.conditions:
-            if is_jp:
-                neg = "NOT " if cond.is_negated else ""  # JP negation usually handles via suffix, but keeping simple
-                cond_desc = f"{neg}{cond.type.name}"
-                if cond.type == ConditionType.BATON:
-                    cond_desc = "髫ｴ螟ｲ・ｽ・｡髣比ｼ夲ｽｽ・ｶ: 驛｢譎√・郢晢ｽｨ驛｢譎｢・ｽ・ｳ驛｢・ｧ繝ｻ・ｿ驛｢譏ｴ繝ｻ郢晢ｽ｡"
-                    if "unit" in cond.params:
-                        cond_desc += f" ({cond.params['unit']})"
-                # ... (add more JP specific cond descs if needed, but for now fallback)
-            else:
-                neg = "NOT " if cond.is_negated else ""
-                cond_desc = f"{neg}{cond.type.name}"
-            # Add basic params
-            if cond.params.get("type") == "score":
-                cond_desc += " (Score)"
-            if cond.type == ConditionType.SCORE_COMPARE:
-                target_str = " (Opponent)" if cond.params.get("target") == "opponent" else ""
-                cond_desc += f" (Score check{target_str})"
-            if cond.type == ConditionType.OPPONENT_HAS:
-                cond_desc += " (Opponent has)"
-            if cond.type == ConditionType.OPPONENT_CHOICE:
-                cond_desc += " (Opponent chooses)"
-            if cond.type == ConditionType.OPPONENT_HAND_DIFF:
-                cond_desc += " (Opponent hand check)"
-            if cond.params.get("group") is not None:
-                cond_desc += f"({cond.params['group']})"
-            if cond.params.get("unit") is not None:
-                cond_desc += f" ({cond.params['unit']})"
-            if cond.params.get("zone"):
-                cond_desc += f" (in {cond.params['zone']})"
-            if cond.params.get("zone") == "SUCCESS_LIVE":
-                cond_desc += " (in Live Area)"
-            if cond.type == ConditionType.HAS_CHOICE:
-                cond_desc = "Condition: Choose One"
-            if cond.type == ConditionType.HAS_KEYWORD:
-                cond_desc += f" (Has {cond.params.get('keyword', '?')})"
-                if cond.params.get("context") == "heart_inclusion":
-                    cond_desc += " (Heart check)"
-            if cond.type == ConditionType.COUNT_BLADES:
-                cond_desc += " (Blade count)"
-            if cond.type == ConditionType.COUNT_HEARTS:
-                cond_desc += " (Heart count)"
-                if cond.params.get("context") == "excess":
-                    cond_desc += " (Excess)"
-            if cond.type == ConditionType.COUNT_ENERGY:
-                cond_desc += " (Energy count)"
-            if cond.type == ConditionType.COUNT_SUCCESS_LIVE:
-                cond_desc += " (Success Live count)"
-            if cond.type == ConditionType.HAS_LIVE_CARD:
-                cond_desc += " (Live card check)"
-                type_str = (
-                    "Heart comparison"
-                    if cond.params.get("type") == "heart"
-                    else "Cheer comparison"
-                    if cond.params.get("type") == "cheer_count"
-                    else "Score check"
-                )
-                cond_desc += f" ({type_str}{target_str})"
-            if cond.type == ConditionType.BATON:
-                cond_desc = "Condition: Baton Pass"
-                if "unit" in cond.params:
-                    cond_desc += f" ({cond.params['unit']})"
-            parts.append(cond_desc)
-
-        for eff in self.effects:
-            # Special handling for META_RULE which relies heavily on params
-            desc = None
-            if eff.effect_type == EffectType.META_RULE:
-                if eff.params.get("type") == "opponent_trigger_allowed":
-                    desc = "[Meta: Opponent effects trigger this]"
-                elif eff.params.get("type") == "shuffle":
-                    desc = "Shuffle Deck"
-                elif eff.params.get("type") == "heart_rule":
-                    src = eff.params.get("source", "")
-                    src_text = "ALL Blades" if src == "all_blade" else "Blade" if src == "blade" else ""
-                    desc = f"[Meta: Treat {src_text} as Heart]" if src_text else "[Meta: Treat as Heart]"
-                elif eff.params.get("type") == "live":
-                    desc = "[Meta: Live Rule]"
-                elif eff.params.get("type") == "lose_blade_heart":
-                    desc = "[Meta: Lose Blade Heart]"
-                elif eff.params.get("type") == "re_cheer":
-                    desc = "[Meta: Cheer Again]"
-                elif eff.params.get("type") == "cheer_mod":
-                    val = eff.value
-                    desc = f"[Meta: Cheer Reveal Count {'+' if val > 0 else ''}{val}]"
-                elif eff.effect_type == getattr(EffectType, "TAP_OPPONENT", -1):
-                    desc = "Tap Opponent Member(s)"
-
-            if desc is None:
-                # Custom overrides for standard effects with params
-                if eff.effect_type == EffectType.DRAW and eff.params.get("multiplier") == "energy":
-                    req = eff.params.get("req_per_unit", 1)
-                    desc = f"Draw {eff.value} card(s) per {req} Energy"
-                elif eff.effect_type == EffectType.REDUCE_HEART_REQ and eff.value < 0:
-                    # e.g. value -1 means reduce requirement. value +1 means increase requirement (opp).
-                    pass
-
-                if desc is None:
-                    template = e_desc_map.get(eff.effect_type, getattr(eff.effect_type, "name", str(eff.effect_type)))
-                    context = eff.params.copy()
-                    context["value"] = eff.value
-
-                    # Refine REDUCE_HEART_REQ
-                    if eff.effect_type == EffectType.REDUCE_HEART_REQ:
-                        if eff.params.get("mode") == "select_requirement":
-                            desc = "Choose Heart Requirement (hearts) (choice)" if not is_jp else "驛｢譏懶ｽｸ鄙ｫ繝ｻ驛｢譎乗ｲｺ隰ｫ繝ｻ閼ゅ・・ｶ鬯ｩ蛹・ｽｽ・ｸ髫ｰ螢ｹ繝ｻ
-                        elif eff.value < 0:
-                            desc = (
-                                f"Reduce Heart Requirement by {abs(eff.value)} (Live)"
-                                if not is_jp
-                                else f"驛｢譏懶ｽｸ鄙ｫ繝ｻ驛｢譎乗ｲｺ隰ｫ繝ｻ閼ゅ・・ｶ-{abs(eff.value)}"
-                            )
-                        else:
-                            desc = (
-                                f"Increase Heart Requirement by {eff.value} (Live)"
-                                if not is_jp
-                                else f"驛｢譏懶ｽｸ鄙ｫ繝ｻ驛｢譎乗ｲｺ隰ｫ繝ｻ閼ゅ・・ｶ+{eff.value}"
-                            )
-                    elif eff.effect_type == EffectType.TRANSFORM_COLOR:
-                        target_s = eff.params.get("target", "Color")
-                        if target_s == "heart":
-                            target_s = "Heart"
-                        desc = f"Transform {target_s} Color" if not is_jp else f"{target_s}驍ｵ・ｺ繝ｻ・ｮ雎ｼ・ｶ繝ｻ・ｲ驛｢・ｧ髮区ｩｸ・ｽ・､騾包ｽｻ鬩ｪ・､"
-                    elif eff.effect_type == EffectType.PLACE_UNDER:
-                        type_s = f" {eff.params.get('type', '')}" if "type" in eff.params else ""
-                        desc = f"Place{type_s} card under member" if not is_jp else f"驛｢譎｢・ｽ・｡驛｢譎｢・ｽ・ｳ驛｢譎√・郢晢ｽｻ驍ｵ・ｺ繝ｻ・ｮ髣包ｽｳ闕ｵ譏ｶ繝ｻ{type_s}鬩励ｑ・ｽ・ｮ驍ｵ・ｺ郢晢ｽｻ
-                        if eff.params.get("type") == "energy":
-                            desc = "Place Energy under member" if not is_jp else "驛｢譎｢・ｽ・｡驛｢譎｢・ｽ・ｳ驛｢譎√・郢晢ｽｻ驍ｵ・ｺ繝ｻ・ｮ髣包ｽｳ闕ｵ譏ｶ繝ｻ驛｢・ｧ繝ｻ・ｨ驛｢譎樔ｺゑｾ取刮・ｹ・ｧ繝ｻ・ｮ驛｢譎｢・ｽ・ｼ驛｢・ｧ陜｣・､繝ｻ・ｽ繝ｻ・ｮ驍ｵ・ｺ郢晢ｽｻ
-                    else:
-                        try:
-                            desc = template.format(**context)
-                        except KeyError:
-                            desc = template
-
-            # Clean up descriptions
-            if eff.params.get("live") and "live" not in desc.lower() and "meta" not in desc.lower():
-                desc = f"{desc} (Live Rule)"
-
-            # Contextual refinements without spamming "Interaction" tags
-            if eff.params.get("per_energy"):
-                desc += " per Energy"
-            if eff.params.get("per_member"):
-                desc += " per Member"
-            if eff.params.get("per_live"):
-                desc += " per Live"
-
-            # Target Context
-            if eff.target == TargetType.MEMBER_SELECT:
-                desc += " (Choose member)"
-            if eff.target == TargetType.OPPONENT or eff.target == TargetType.OPPONENT_HAND:
-                if "opponent" not in desc.lower():
-                    desc += " (Opponent)"
-
-            # Trigger Remote Context
-            if eff.effect_type == EffectType.TRIGGER_REMOTE:
-                zone = eff.params.get("from", "unknown")
-                desc += f" from {zone}"
-
-            # Reveal Context
-            if eff.effect_type == EffectType.REVEAL_CARDS:
-                if "from" in eff.params and eff.params["from"] == "deck":
-                    desc += " from Deck"
-            if eff.effect_type == EffectType.MOVE_TO_DECK:
-                if eff.params.get("to_energy_deck"):
-                    desc = "Return to Energy Deck"
-                elif eff.params.get("from") == "discard":
-                    desc += " from Discard"
-
-            if eff.params.get("rest") == "discard" or eff.params.get("on_fail") == "discard":
-                if "discard" not in desc.lower():
-                    desc += " (else Discard)"
-
-            if eff.params.get("both_players"):
-                desc += " (Both Players)" if not is_jp else " (髣包ｽｳ繝ｻ・｡驛｢譎丞ｹｲ・取ｨ抵ｽｹ・ｧ繝ｻ・､驛｢譎｢・ｽ・､驛｢譎｢・ｽ・ｼ)"
-
-            if eff.params.get("filter") == "live" and "live" not in desc.lower() and "驛｢譎｢・ｽ・ｩ驛｢・ｧ繝ｻ・､驛｢譏ｴ繝ｻ not in desc:
-                desc += " (Live Card)" if not is_jp else " (驛｢譎｢・ｽ・ｩ驛｢・ｧ繝ｻ・､驛｢譎・§邵ｺ蜥ｲ・ｹ譎｢・ｽ・ｼ驛｢譏ｴ繝ｻ"
-            if eff.params.get("filter") == "energy" and "energy" not in desc.lower() and "驛｢・ｧ繝ｻ・ｨ驛｢譏ｴ繝ｻ not in desc:
-                desc += " (Energy)" if not is_jp else " (驛｢・ｧ繝ｻ・ｨ驛｢譎樔ｺゑｾ取刮・ｹ・ｧ繝ｻ・ｮ驛｢譎｢・ｽ・ｼ)"
-
-            parts.append(f"驕ｶ鄙ｫ繝ｻ{desc}")
-
-            # Check for Effect-level modal options (e.g. from parser fix)
-            if eff.modal_options:
-                for i, option in enumerate(eff.modal_options):
-                    opt_descs = []
-                    for sub_eff in option:
-                        template = e_desc_map.get(sub_eff.effect_type, sub_eff.effect_type.name)
-                        context = sub_eff.params.copy()
-                        context["value"] = sub_eff.value
-                        try:
-                            opt_descs.append(template.format(**context))
-                        except KeyError:
-                            opt_descs.append(template)
-                    parts.append(
-                        f"[Option {i + 1}: {' + '.join(opt_descs)}]"
-                        if not is_jp
-                        else f"[鬯ｩ蛹・ｽｽ・ｸ髫ｰ螢ｽ・ｫ竏夲ｼ・{i + 1}: {' + '.join(opt_descs)}]"
-                    )
-
-        # Include modal options (Ability level - legacy/bullet points)
-        if self.modal_options:
-            for i, option in enumerate(self.modal_options):
-                opt_descs = []
-                for eff in option:
-                    template = e_desc_map.get(eff.effect_type, eff.effect_type.name)
-                    context = eff.params.copy()
-                    context["value"] = eff.value
-                    try:
-                        opt_descs.append(template.format(**context))
-                    except KeyError:
-                        opt_descs.append(template)
-                parts.append(
-                    f"[Option {i + 1}: {' + '.join(opt_descs)}]"
-                    if not is_jp
-                    else f"[鬯ｩ蛹・ｽｽ・ｸ髫ｰ螢ｽ・ｫ竏夲ｼ・{i + 1}: {' + '.join(opt_descs)}]"
-                )
-
-        return " ".join(parts)
+        return reconstruct_text(self, lang=lang)

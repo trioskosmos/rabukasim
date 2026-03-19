@@ -1,5 +1,10 @@
 use super::*;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::instruction::BytecodeInstruction;
+use crate::core::models::CHOICE_DONE;
+
+#[path = "flow_select_resolve.rs"]
+mod flow_select_resolve;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_select_ops(
@@ -102,111 +107,35 @@ pub fn handle_select_ops(
                 return HandlerResult::Continue;
             }
         }
-        let choice_text = get_choice_text(db, ctx);
-        if suspend_interaction(
+        if matches!(suspend_choice(
             state,
             db,
+            ctx,
             &flip_ctx,
             instr_ip,
             op,
             s,
             choice_type,
-            &choice_text,
             a as u64,
             -1,
-        ) {
+        ), HandlerResult::Suspend) {
             return HandlerResult::Suspend;
         }
     } else {
-        let choice = ctx.choice_index as i32;
-        let source_zone = slot_info.source_zone as u8;
-        let filter_attr = a as u64;
-
-        if source_zone == 6 || source_zone == 7 {
-            ctx.target_slot = choice as i16;
-        } else {
-            ctx.target_slot = choice as i16;
-            ctx.area_idx = choice as i16;
-        }
-
-        let target_player = match (filter_attr & 0x3) as u8 {
-            2 => 1 - (ctx.player_id as usize),
-            3 => 1,
-            _ => ctx.player_id as usize,
-        };
-        let selected_cid = match source_zone {
-            6 => state.players[target_player]
-                .hand
-                .get(choice as usize)
-                .copied()
-                .unwrap_or(-1),
-            7 => state.players[target_player]
-                .discard
-                .get(choice as usize)
-                .copied()
-                .unwrap_or(-1),
-            _ => state.players[target_player]
-                .stage
-                .get(choice as usize)
-                .copied()
-                .unwrap_or(-1),
-        };
-        if selected_cid >= 0 && !ctx.selected_cards.contains(&selected_cid) {
-            ctx.selected_cards.push(selected_cid);
-        }
-
-        if supports_partial_completion && !ctx.selected_cards.is_empty() {
-            let remaining_candidates = match source_zone {
-                6 => state.players[target_player]
-                    .hand
-                    .iter()
-                    .copied()
-                    .filter(|cid| {
-                        *cid >= 0
-                            && !ctx.selected_cards.contains(cid)
-                            && state.card_matches_filter_with_ctx(db, *cid, filter_attr, ctx)
-                    })
-                    .count(),
-                7 => state.players[target_player]
-                    .discard
-                    .iter()
-                    .copied()
-                    .filter(|cid| {
-                        *cid >= 0
-                            && !ctx.selected_cards.contains(cid)
-                            && state.card_matches_filter_with_ctx(db, *cid, filter_attr, ctx)
-                    })
-                    .count(),
-                _ => state.players[target_player]
-                    .stage
-                    .iter()
-                    .copied()
-                    .filter(|cid| {
-                        *cid >= 0
-                            && !ctx.selected_cards.contains(cid)
-                            && state.card_matches_filter_with_ctx(db, *cid, filter_attr, ctx)
-                    })
-                    .count(),
-            };
-
-            if remaining_candidates == 0 {
-                let choice_text = get_choice_text(db, ctx);
-                if suspend_interaction(
-                    state,
-                    db,
-                    ctx,
-                    instr_ip,
-                    op,
-                    s,
-                    ChoiceType::Optional,
-                    &choice_text,
-                    0,
-                    partial_selection_prompt,
-                ) {
-                    return HandlerResult::Suspend;
-                }
-            }
-        }
+        return flow_select_resolve::resolve_select_choice(
+            state,
+            db,
+            ctx,
+            instr_ip,
+            op,
+            v,
+            a,
+            s,
+            p_idx,
+            slot_info,
+            supports_partial_completion,
+            partial_selection_prompt,
+        );
     }
 
     HandlerResult::Continue

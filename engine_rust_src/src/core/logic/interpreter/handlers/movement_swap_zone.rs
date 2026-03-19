@@ -1,8 +1,8 @@
-﻿use crate::core::enums::*;
-use crate::core::logic::{AbilityContext, CardDatabase, GameState};
-use crate::core::models::interpreter::get_choice_text;
-use crate::core::models::suspend_interaction;
 use super::super::HandlerResult;
+use crate::core::enums::*;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::{AbilityContext, CardDatabase, GameState};
+
 pub fn handle_swap_zone(
     state: &mut GameState,
     db: &CardDatabase,
@@ -19,19 +19,18 @@ pub fn handle_swap_zone(
         }
         state.players[p_idx].looked_cards.clear();
         state.players[p_idx].looked_cards.extend(cards);
-        let choice_text = get_choice_text(db, ctx);
-        if suspend_interaction(
+        if matches!(suspend_choice(
             state,
             db,
+            ctx,
             ctx,
             instr_ip,
             O_SWAP_ZONE,
             0,
             ChoiceType::SelectSwapSource,
-            &choice_text,
             0,
             1,
-        ) {
+        ), HandlerResult::Suspend) {
             return HandlerResult::Suspend;
         }
     }
@@ -44,18 +43,18 @@ pub fn handle_swap_zone(
             let mut next_ctx = ctx.clone();
             next_ctx.choice_index = -1;
             next_ctx.v_remaining = 0;
-            if suspend_interaction(
+            if matches!(suspend_choice(
                 state,
                 db,
+                &next_ctx,
                 &next_ctx,
                 instr_ip,
                 O_SWAP_ZONE,
                 0,
                 ChoiceType::SelectHandPlay,
-                "",
                 0,
                 1,
-            ) {
+            ), HandlerResult::Suspend) {
                 return HandlerResult::Suspend;
             }
         }
@@ -82,5 +81,3 @@ pub fn handle_swap_zone(
     state.players[p_idx].looked_cards.clear();
     HandlerResult::Continue
 }
-
-

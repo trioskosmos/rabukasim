@@ -1,4 +1,5 @@
 use super::*;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
 pub fn handle_energy_charge(
     state: &mut GameState,
@@ -43,19 +44,18 @@ pub fn handle_pay_energy(
                     instr_ip
                 );
             }
-            let choice_text = get_choice_text(db, ctx);
-            if suspend_interaction(
+            if matches!(suspend_choice(
                 state,
                 db,
+                ctx,
                 ctx,
                 instr_ip,
                 O_PAY_ENERGY,
                 0,
                 ChoiceType::Optional,
-                &choice_text,
                 instr.filter_attr().to_attr(),
                 -1,
-            ) {
+            ), HandlerResult::Suspend) {
                 return HandlerResult::Suspend;
             }
         }
@@ -86,18 +86,18 @@ pub fn handle_pay_energy(
             next_ctx.v_remaining -= 1;
             if next_ctx.v_remaining > 0 {
                 next_ctx.choice_index = -1;
-                if suspend_interaction(
+                if matches!(suspend_choice(
                     state,
                     db,
+                    &next_ctx,
                     &next_ctx,
                     instr_ip,
                     O_PAY_ENERGY,
                     0,
                     ChoiceType::PayEnergy,
-                    "",
                     0,
                     next_ctx.v_remaining,
-                ) {
+                ), HandlerResult::Suspend) {
                     return HandlerResult::Suspend;
                 }
             }

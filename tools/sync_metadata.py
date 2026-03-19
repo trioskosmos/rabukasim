@@ -545,6 +545,7 @@ def sync():
 
         # EffectType (Opcodes)
         f.write("class EffectType(IntEnum):\n")
+        f.write("    NONE = 0\n")
         if "NOP" not in metadata["opcodes"]:
             f.write("    NOP = 0\n")
         for key, val in metadata["opcodes"].items():

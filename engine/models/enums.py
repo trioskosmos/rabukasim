@@ -60,6 +60,8 @@ class Group(IntEnum):
             return cls.NIJIGASAKI
         if "スーパースター" in name or "liella" in name_lower:
             return cls.LIELLA
+        if name_lower == "hasu":
+            return cls.HASUNOSORA
         if "蓮ノ空" in name or "hasunosora" in name_lower:
             return cls.HASUNOSORA
         if "a-rise" in name_lower or "arise" in name_lower:
@@ -128,14 +130,13 @@ class Unit(IntEnum):
             return cls.KALEIDOSCORE
         if "5yncri5e" in name_lower or "syncrise" in name_lower:
             return cls.SYNCRISE
-        if "スリーズブーケ" in name or "cerise" in name_lower or "hasu" in name_lower:
-            # Note: "Hasu" maps to Cerise if it's a unit, but usually it's a group.
+        if "スリーズブーケ" in name or "cerise" in name_lower:
             return cls.CERISE_BOUQUET
         if "dollchestra" in name_lower or "doll" in name_lower:
             return cls.DOLLCHESTRA
         if "みらくらぱーく" in name or "mira-cra" in name_lower or "mirakura" in name_lower:
             return cls.MIRA_CRA_PARK
-        if "edelnote" in name_lower or "edel_note" in name_lower:
+        if "edelnote" in name_lower or "edel note" in name_lower or "edel_note" in name_lower:
             return cls.EDEL_NOTE
         if "aiscream" in name_lower:
             return cls.AISCREAM

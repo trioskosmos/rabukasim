@@ -2,8 +2,6 @@ use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::logic::interpreter::instruction::BytecodeInstruction;
-use crate::core::models::interpreter::get_choice_text;
-use crate::core::models::suspend_interaction;
 
 #[path = "state_energy_charge.rs"]
 mod state_energy_charge;

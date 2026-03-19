@@ -307,7 +307,7 @@
     ]
   },
   "{{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。\n{{live_start.png|ライブ開始時}}自分のステージにいる名前の異なる『蓮ノ空』のメンバー1人につき、このカードのスコアを＋２する。": {
-    "pseudocode": "TRIGGER: CONSTANT\nEFFECT: ADD_TAG(\"UNIT_CERISE/UNIT_DOLL/UNIT_MIRAKURA\") -> SELF\n\nTRIGGER: ON_LIVE_START\nEFFECT: BOOST_SCORE(2) -> SELF {PER_CARD=\"STAGE\", FILTER=\"UNIT_HASU, UNIQUE_NAMES\"}",
+    "pseudocode": "TRIGGER: CONSTANT\nEFFECT: ADD_TAG(\"UNIT_CERISE/UNIT_DOLL/UNIT_MIRAKURA\") -> SELF\n\nTRIGGER: ON_LIVE_START\nEFFECT: BOOST_SCORE(2) -> SELF {PER_CARD=\"STAGE\", FILTER=\"UNIT_HASUNOSORA, UNIQUE_NAMES\"}",
     "units": ["CERISE_BOUQUET", "DOLLCHESTRA", "MIRA_CRA_PARK"],
     "cards": [
       "PL!HS-bp2-020-L"
