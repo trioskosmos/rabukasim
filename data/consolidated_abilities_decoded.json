@@ -1,7 +1,7 @@
 {
   "_metadata": {
     "generated_by": "compiler/main.py",
-    "generated_at": "2026-03-17T21:19:37.517152"
+    "generated_at": "2026-03-19T12:19:54.806302"
   },
   "{{toujyou.png|登場}}自分の控え室からメンバーカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」を、好きな組み合わせで合計3枚、控え室に置いてもよい：ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋３する。」を得る。\n（手札のこのカードもこの効果で控え室に置ける。）": {
     "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_MEMBER(1) (Optional) -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(3) {FILTER=\"Ayumu/Kanon/Kaho\"} (Optional)\nEFFECT: BOOST_SCORE(3) -> SELF",
@@ -1807,7 +1807,7 @@
     ]
   },
   "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のステージにほかのメンバーがいる場合、自分の控え室から『みらくらぱーく！』のカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分のステージのエリアすべてにメンバーが登場している場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。": {
-    "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL; CONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"AREA_LEFT\"} (Optional) -> LEFT_VAL; COUNT_MEMBER(PLAYER) {FILTER=\"AREA_CENTER\"} -> CENTER_VAL; COUNT_MEMBER(PLAYER) {FILTER=\"AREA_RIGHT\"} -> RIGHT_VAL; CONDITION: VALUE_GT(LEFT_VAL, 0), VALUE_GT(CENTER_VAL, 0), VALUE_GT(RIGHT_VAL, 0); ADD_BLADES(2) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
+    "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: PAY_ENERGY(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"AREA_LEFT\"} (Optional) -> LEFT_VAL; COUNT_MEMBER(PLAYER) {FILTER=\"AREA_CENTER\"} -> CENTER_VAL; COUNT_MEMBER(PLAYER) {FILTER=\"AREA_RIGHT\"} -> RIGHT_VAL; CONDITION: VALUE_GT(LEFT_VAL, 0), VALUE_GT(CENTER_VAL, 0), VALUE_GT(RIGHT_VAL, 0); ADD_BLADES(2) -> SELF {DURATION=\"UNTIL_LIVE_END\"}",
     "cards": [
       "PL!HS-bp2-005-P",
       "PL!HS-bp2-005-P＋",
@@ -1821,7 +1821,7 @@
         "10: CHECK_SUM_VALUE      | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Slot, raw=0]",
         "15: META_RULE            | type=META_2305843009213693952, value=1, slot=[target=Context Area, raw=4]",
         "20: CHECK_SUM_VALUE      | value=0, filter=[none], slot=[compare=GT (>), slot=Left Slot, raw=16]",
-        "25: NOP                  | value=1, filter=[unit=15], slot=[target=Slot_48, raw=48]",
+        "25: RECOVER_MEMBER       | count=1, filter=[unit=15, zone=discard], slot=[target=Hand (Generic), source=Discard, raw=458758]",
         "30: RETURN               | done"
       ],
       [

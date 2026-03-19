@@ -287,9 +287,9 @@ def dump_reference():
 
 
 def fetch_card_metadata(card_no: str) -> str:
-    """Dynamically pull metadata, QA, and tests similar to card_finder."""
+    """Dynamically pull metadata, QA, and tests similar to cf."""
     try:
-        import tools.card_finder as cf
+        import tools.cf as cf
 
         cards_raw = cf.load_json("data/cards.json") or {}
         cards_compiled = cf.load_json("data/cards_compiled.json") or {}

@@ -6070,6 +6070,22 @@ class EffectMixin:
                     player.energy_deck.extend(player.stage_energy[source_area])
                     player.stage_energy[source_area] = []
             elif cost.type == AbilityCostType.DISCARD_HAND:
+                if cost.is_optional:
+                    self.pending_choices.append(
+                        (
+                            "PAY_COST_OPTIONAL",
+                            {
+                                **choice_metadata,
+                                "cost_index": cost_idx,
+                                "amount": cost.value,
+                                "cost_type": "discard",
+                                "effect_description": f"手札を{cost.value}枚捨てますか？",
+                            },
+                        )
+                    )
+                    self.phase = Phase.RESPONSE
+                    return False
+
                 params = {
                     "reason": "cost",
                     "effect": "discard",
@@ -6465,7 +6481,20 @@ class EffectMixin:
         elif choice_type == "PAY_COST_OPTIONAL":
             # Action 570 for Yes, 0 for No
             if action == 570:
+                cost_type = params.get("cost_type")
                 amount = params.get("amount", 0)
+                if cost_type == "discard":
+                    discard_params = {
+                        **choice_metadata,
+                        "reason": "cost",
+                        "effect": "discard",
+                        "is_optional": True,
+                        "cost_index": params.get("cost_index", -1),
+                        "count": amount,
+                    }
+                    self.pending_choices.append(("TARGET_HAND", discard_params))
+                    return False
+
                 # Deduct energy
                 tapped = 0
                 for i in range(len(p.energy_zone) - 1, -1, -1):
@@ -6686,6 +6715,8 @@ class EffectMixin:
                     else:
                         p.hand.append(sel)
                         p.hand_added_turn.append(self.turn_number)
+                    if reason == "look_and_choose" and sel in self.looked_cards:
+                        self.looked_cards.remove(sel)
 
                 # Logic for staging cards for deck top reordering
                 elif reason == "look_and_reorder":
@@ -6741,22 +6772,29 @@ class EffectMixin:
                         self._reorder_staged_cards = []
                     return  # Exit early
 
-                if self.looked_cards:
-                    # Discard others ONLY if they were looked at (not search)
+                current_count = int(params.get("choose_count", params.get("count", 1)))
+                rem_cards = cards
+                if sel in rem_cards:
+                    rem_cards.remove(sel)
+
+                looping = current_count > 1 and rem_cards
+
+                if self.looked_cards and not looping:
+                    # Discard others ONLY if they were looked at (not search) and we are done picking
                     if reason == "look_and_choose":
                         if params.get("destination") == "discard":
                             # Return rest to owner's deck
-                            for c in reversed(cards):
+                            for c in reversed(rem_cards):
                                 tp.main_deck.insert(0, c)
                         else:
                             # Discard rest
-                            tp.discard.extend(cards)
+                            tp.discard.extend(rem_cards)
                     self.looked_cards = []
 
                 if reason == "search_deck":
                     if sel in p.main_deck:
                         p.main_deck.remove(sel)
-                    if params.get("shuffle"):
+                    if not looping and params.get("shuffle"):
                         random.shuffle(p.main_deck)
                 elif reason == "activate_energy":
                     found_idx = -1
@@ -6780,15 +6818,12 @@ class EffectMixin:
                                 p.tapped_energy.pop(idx)
                         p.add_stage_energy(target, sel)
 
-                if params.get("count", 1) > 1 and reason == "activate_energy":
-                    # Handle multi-select for energy activation
-                    rem_cards = params.get("cards")
-                    if sel in rem_cards:
-                        rem_cards.remove(sel)
-                    if rem_cards:
-                        params["count"] -= 1
-                        params["cards"] = rem_cards
-                        self.pending_choices.insert(0, ("SELECT_FROM_LIST", params))
+                if looping:
+                    if "choose_count" in params:
+                        params["choose_count"] = str(current_count - 1) if isinstance(params["choose_count"], str) else current_count - 1
+                    params["count"] = current_count - 1
+                    params["cards"] = rem_cards
+                    self.pending_choices.insert(0, ("SELECT_FROM_LIST", params))
         elif choice_type == "SELECT_FROM_DISCARD":
             cards = params.get("cards", [])
             idx = action - 660

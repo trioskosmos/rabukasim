@@ -1,7 +1,7 @@
 use crate::core::logic::*;
 /// CPU Opcode Coverage Gap Tests (Batch 1)
 /// Uses REAL cards from cards_compiled.json to verify opcode execution.
-/// Card IDs verified via `tools/card_finder.py` and Python bytecode audit.
+/// Card IDs verified via `tools/cf.py` and Python bytecode audit.
 use crate::test_helpers::{create_test_state, load_real_db};
 
 /// Card ID 122: PL!-sd1-003-SD (南 ことり / Kotori)

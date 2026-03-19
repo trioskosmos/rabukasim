@@ -113,10 +113,11 @@ pub fn handle_meta_control(
             }
         }
         O_RESTRICTION => {
+            let restriction_id = (a as u64 & FILTER_MASK_LOWER) as u8;
             state.players[p_idx]
                 .restrictions
-                .push((a as u64 & FILTER_MASK_LOWER) as u8);
-            if (a as u64 & FILTER_MASK_LOWER) == 1 {
+                .push(restriction_id);
+            if restriction_id == 1 || v == 1 {
                 state.players[p_idx].set_flag(
                     crate::core::logic::player::PlayerState::FLAG_CANNOT_LIVE,
                     true,

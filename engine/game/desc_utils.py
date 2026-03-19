@@ -226,6 +226,8 @@ def get_action_desc(a, gs, lang="jp", text=None):
                 "colors": ["赤", "青", "緑", "黄", "紫", "ピンク"],
                 "areas": ["左", "中", "右"],
                 "areas_short": ["左", "中", "右"],
+                "yes": "はい",
+                "no": "いいえ",
             },
             "en": {
                 "pass": "[End] End Main Phase",
@@ -275,7 +277,9 @@ def get_action_desc(a, gs, lang="jp", text=None):
                 "target_opp_member": "Target Opponent",
                 "select_success": "Select Success Live",
                 "select_discard": "Recover from Discard",
-                "select_hand": "Select from Hand",
+                "select_hand": "Select Hand",
+                "yes": "Yes",
+                "no": "No",
                 "select_discard_hand": "[Discard] Choose card",
                 "colors": ["Red", "Blue", "Green", "Yellow", "Purple", "Pink"],
                 "areas": ["Left", "Center", "Right"],
@@ -508,11 +512,23 @@ def get_action_desc(a, gs, lang="jp", text=None):
                 return get_card_name(cid)
         
         # Fallback to text params (for modal choices, etc.)
-        _, params = get_top_pending()
-        text = params.get("text", "")
-        if text: 
-            return text.split('|')[idx] if '|' in text and idx < len(text.split('|')) else f"Option {idx}"
-        return f"Option {idx}"
+        ctype, params = get_top_pending()
+        choice_text = text or params.get("text") or params.get("choice_text", "")
+        if choice_text:
+            # Protect icon tags {{...|...}} from being split by replacing their pipes temporarily
+            import re
+            protected_text = re.sub(r'\{\{([^}]*)\|([^}]*)\}\}', r'{{\1__PIPE__\2}}', choice_text)
+            if '|' in protected_text:
+                parts = protected_text.split('|')
+                if idx < len(parts):
+                    return parts[idx].replace('__PIPE__', '|')
+            
+        # Better defaults for Optional Yes/No
+        if ctype == "Optional":
+            if idx == 0: return t("yes")
+            if idx == 1: return t("no")
+            
+        return choice_text if choice_text and idx == 0 and '|' not in choice_text else f"Option {idx}"
 
     # 300-359: Mulligan
     elif 300 <= a <= 359:

@@ -153,6 +153,7 @@ pub fn handle_energy(
                             instr_ip
                         );
                     }
+                    let choice_text = get_choice_text(db, ctx);
                     if suspend_interaction(
                         state,
                         db,
@@ -161,7 +162,7 @@ pub fn handle_energy(
                         O_PAY_ENERGY,
                         0,
                         ChoiceType::Optional,
-                        "",
+                        &choice_text,
                         instr.filter_attr().to_attr(),
                         -1,
                     ) {
@@ -314,6 +315,7 @@ pub fn handle_energy(
             let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
             if src_zone == 3 {
                 if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
+                    let choice_text = get_choice_text(db, ctx);
                     if suspend_interaction(
                         state,
                         db,
@@ -322,7 +324,7 @@ pub fn handle_energy(
                         O_PLACE_ENERGY_UNDER_MEMBER,
                         0,
                         ChoiceType::Optional,
-                        "",
+                        &choice_text,
                         a as u64,
                         -1,
                     ) {
@@ -348,6 +350,7 @@ pub fn handle_energy(
                         return HandlerResult::SetCond(false);
                     }
 
+                    let choice_text = get_choice_text(db, ctx);
                     if suspend_interaction(
                         state,
                         db,
@@ -356,7 +359,7 @@ pub fn handle_energy(
                         O_PLACE_ENERGY_UNDER_MEMBER,
                         0,
                         ChoiceType::PayEnergy,
-                        "",
+                        &choice_text,
                         a as u64,
                         1,
                     ) {
@@ -820,7 +823,9 @@ pub fn handle_member_state(
                 resolved_slot as usize
             };
 
-            if a == 99 && ctx.choice_index == -1 {
+            let needs_choice = a == 99 || (a < 0 || a > 2);
+
+            if needs_choice && ctx.choice_index == -1 {
                 let choice_text = get_choice_text(db, ctx);
                 let mut choice_ctx = ctx.clone();
                 if slot_info.is_opponent || slot_info.target_slot == 2 {
@@ -842,7 +847,7 @@ pub fn handle_member_state(
                 }
             }
 
-            let dst_slot = if a == 99 && ctx.choice_index != -1 {
+            let dst_slot = if needs_choice && ctx.choice_index != -1 {
                 let slot = ctx.choice_index as usize;
                 ctx.choice_index = -1;
                 slot
@@ -851,15 +856,53 @@ pub fn handle_member_state(
             } else {
                 a as usize
             };
+
             if src_slot < 3 && dst_slot < 3 && src_slot != dst_slot {
-                state.players[p_idx].swap_slot_data(src_slot, dst_slot);
-                for &slot in &[src_slot, dst_slot] {
-                    let cid = state.players[p_idx].stage[slot];
-                    if cid >= 0 {
-                        let mut pos_ctx = ctx.clone();
-                        pos_ctx.source_card_id = cid;
-                        pos_ctx.area_idx = slot as i16;
-                        state.trigger_abilities(db, TriggerType::OnPositionChange, &pos_ctx);
+                let src_cid = state.players[p_idx].stage[src_slot];
+                if src_cid >= 0 {
+                    let dst_cid = state.players[p_idx].stage[dst_slot];
+                    if dst_cid == -1 {
+                        // Move to empty slot
+                        let src_tapped = state.players[p_idx].is_tapped(src_slot);
+                        let src_energy = std::mem::take(&mut state.players[p_idx].stage_energy[src_slot]);
+                        let src_energy_count = state.players[p_idx].stage_energy_count[src_slot];
+                        let src_blade_buffs = state.players[p_idx].blade_buffs[src_slot];
+                        let src_blade_override = state.players[p_idx].blade_overrides[src_slot];
+                        let src_heart_buffs = state.players[p_idx].heart_buffs[src_slot];
+
+                        state.players[p_idx].stage[dst_slot] = src_cid;
+                        state.players[p_idx].set_tapped(dst_slot, src_tapped);
+                        state.players[p_idx].stage_energy[dst_slot] = src_energy;
+                        state.players[p_idx].stage_energy_count[dst_slot] = src_energy_count;
+                        state.players[p_idx].blade_buffs[dst_slot] = src_blade_buffs;
+                        state.players[p_idx].blade_overrides[dst_slot] = src_blade_override;
+                        state.players[p_idx].heart_buffs[dst_slot] = src_heart_buffs;
+
+                        state.players[p_idx].stage[src_slot] = -1;
+                        state.players[p_idx].set_tapped(src_slot, false);
+                        state.players[p_idx].stage_energy[src_slot].clear();
+                        state.players[p_idx].stage_energy_count[src_slot] = 0;
+                        state.players[p_idx].blade_buffs[src_slot] = 0;
+                        state.players[p_idx].blade_overrides[src_slot] = -1;
+                        state.players[p_idx].heart_buffs[src_slot] = HeartBoard::default();
+                        
+                        // Rule: Moving to a new slot doesn't trigger OnPlay, but does count as "moved" for some restrictions.
+                        state.players[p_idx].set_moved(src_slot, true);
+                        state.players[p_idx].set_moved(dst_slot, true);
+                    } else {
+                        // Swap with occupied slot
+                        state.players[p_idx].swap_slot_data(src_slot, dst_slot);
+                    }
+
+                    // Trigger OnPositionChange for both involved cards
+                    for &slot in &[src_slot, dst_slot] {
+                        let cid = state.players[p_idx].stage[slot];
+                        if cid >= 0 {
+                            let mut pos_ctx = ctx.clone();
+                            pos_ctx.source_card_id = cid;
+                            pos_ctx.area_idx = slot as i16;
+                            state.trigger_abilities(db, TriggerType::OnPositionChange, &pos_ctx);
+                        }
                     }
                 }
             }
@@ -1511,6 +1554,7 @@ pub fn handle_score_hearts(
                     effective_slot as u8,
                 ));
             }
+            state.needs_stat_sync = true;
             state.log_event(
                 "EFFECT",
                 &format!("+{} Appeal", final_v),
@@ -1524,6 +1568,7 @@ pub fn handle_score_hearts(
         O_SET_BLADES => {
             if resolved_slot < 3 {
                 state.players[p_idx].blade_buffs[resolved_slot as usize] = v as i16;
+                state.needs_stat_sync = true;
             }
         }
         O_ADD_HEARTS => {
@@ -1554,6 +1599,7 @@ pub fn handle_score_hearts(
                     }
                 }
             }
+            state.needs_stat_sync = true;
             if !state.ui.silent {
                 if let Some(msg) = logging::get_opcode_log(O_ADD_HEARTS, v, a, s, 0) {
                     state.log(msg);
@@ -1573,10 +1619,12 @@ pub fn handle_score_hearts(
             if (a as usize) < 7 {
                 if resolved_slot >= 0 && resolved_slot < 3 {
                     state.players[p_idx].heart_buffs[resolved_slot as usize].set_color_count(a as usize, v as u8);
+                    state.needs_stat_sync = true;
                 } else if target_slot == 1 {
                     for t in 0..3 {
                         state.players[p_idx].heart_buffs[t].set_color_count(a as usize, v as u8);
                     }
+                    state.needs_stat_sync = true;
                 }
             }
         }

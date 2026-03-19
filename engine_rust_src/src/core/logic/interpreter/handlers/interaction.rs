@@ -330,6 +330,7 @@ pub fn handle_select_cards(
                 7 => ChoiceType::SelectDiscardPlay,
                 _ => ChoiceType::LookAndChoose,
             };
+            let choice_text = get_choice_text(db, ctx);
             if suspend_interaction(
                 state,
                 db,
@@ -338,7 +339,7 @@ pub fn handle_select_cards(
                 O_SELECT_CARDS,
                 s,
                 choice_type,
-                "",
+                &choice_text,
                 a as u64,
                 rem,
             ) {
@@ -550,6 +551,7 @@ pub fn handle_look_and_choose(
                     } else {
                         ChoiceType::LookAndChoose
                     };
+                    let choice_text = get_choice_text(db, ctx);
                     if suspend_interaction(
                         state,
                         db,
@@ -558,7 +560,7 @@ pub fn handle_look_and_choose(
                         O_LOOK_AND_CHOOSE,
                         s,
                         choice_type,
-                        "",
+                        &choice_text,
                         a as u64,
                         rem,
                     ) {

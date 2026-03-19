@@ -957,46 +957,244 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         state.log("Rule 8.4: --- LIVE RESULT PHASE ---".to_string());
     }
 
-    // 0. Trigger ON_LIVE_SUCCESS for successful performances (Rule 8.3.15 sequence completion)
+    let mut scores = [0u32; 2];
+    let mut has_success = [false; 2];
+
+    // 1. Judgment Phase: Calculate scores based on SUCCESSFUL lives (still in zone)
+    // IMPORTANT: We move this BEFORE triggers so that ON_LIVE_SUCCESS abilities can refer to current turn scores.
+    // We only perform this calculation if triggers haven't finished (to allow re-entry)
+    if !state.live_result_triggers_done {
+        for p in 0..2 {
+            let mut live_score = 0;
+            let mut player_has_success = false;
+            let mut has_live = false;
+            let mut p_score = 0;
+
+            // Check snapshot from check_performance_requirements first
+            let snapshot_success = state
+                .ui
+                .performance_results
+                .get(&(p as u8))
+                .and_then(|res| res.get("success"))
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+
+            for i in 0..3 {
+                let cid = state.players[p].live_zone[i];
+                if cid >= 0 {
+                    has_live = true;
+                    if let Some(card) = db.get_live(cid) {
+                        // Use snapshot score if available (from check_performance_requirements)
+                        let snapshot_score = state
+                            .ui
+                            .performance_results
+                            .get(&(p as u8))
+                            .and_then(|res| res.get("lives"))
+                            .and_then(|l| l.as_array())
+                            .and_then(|lives| lives.get(i))
+                            .and_then(|l_res| l_res.get("score"))
+                            .and_then(|s| s.as_u64());
+
+                        // Check if this specific live passed in the snapshot
+                        let snapshot_passed = state
+                            .ui
+                            .performance_results
+                            .get(&(p as u8))
+                            .and_then(|res| res.get("lives"))
+                            .and_then(|l| l.as_array())
+                            .and_then(|lives| lives.get(i))
+                            .and_then(|l_res| l_res.get("passed"))
+                            .and_then(|v| v.as_bool())
+                            .unwrap_or(false);
+
+                        if snapshot_passed || snapshot_score.is_some() {
+                            p_score += snapshot_score.unwrap_or(card.score as u64) as u32;
+                        }
+                    }
+                }
+            }
+
+            if has_live && snapshot_success {
+                live_score = p_score;
+                player_has_success = true;
+            } else if has_live {
+                // Rule 8.3.16: Clear zone if snapshot indicates failure
+                if !state.ui.silent {
+                    println!("[DEBUG] Rule 8.3.16: P{} performance FAILED. Clearing live zone.", p);
+                }
+                for i in 0..3 {
+                    if state.players[p].live_zone[i] >= 0 {
+                        let cid = state.players[p].live_zone[i];
+                        state.players[p].push_discard_card(cid);
+                        state.players[p].live_zone[i] = -1;
+                    }
+                }
+            }
+
+            if player_has_success {
+                if let Some(res) = state.ui.performance_results.get(&(p as u8)) {
+                    if let Some(vol) = res
+                        .get("yell_score_bonus")
+                        .and_then(|v| v.as_u64())
+                        .or_else(|| res.get("note_icons").and_then(|v| v.as_u64()))
+                    {
+                        live_score += vol as u32;
+                    }
+                }
+                has_success[p] = true;
+            }
+
+            // Pool O_BOOST_SCORE from constant abilities
+            let mut constant_bonuses = std::collections::HashMap::new();
+            for slot in 0..STAGE_SLOT_COUNT {
+                let cid = state.players[p].stage[slot];
+                if cid >= 0 {
+                    if let Some(m) = db.get_member(cid) {
+                        for ab in &m.abilities {
+                            if ab.trigger == TriggerType::Constant {
+                                let ctx = AbilityContext {
+                                    source_card_id: cid,
+                                    player_id: p as u8,
+                                    activator_id: p as u8,
+                                    area_idx: slot as i16,
+                                    ..Default::default()
+                                };
+                                if ab
+                                    .conditions
+                                    .iter()
+                                    .all(|c| state.check_condition(db, p, c, &ctx, 1))
+                                {
+                                    let bc = &ab.bytecode;
+                                    let mut i = 0;
+                                    while i + 4 < bc.len() {
+                                        if bc[i] == O_BOOST_SCORE {
+                                            *constant_bonuses.entry(cid).or_insert(0) += bc[i + 1];
+                                        }
+                                        i += 5;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // Pool O_BOOST_SCORE from granted constant abilities
+            for &(t_cid, s_cid, ab_idx) in &state.players[p].granted_abilities {
+                if let Some(slot) = state.players[p].stage.iter().position(|&cid| cid == t_cid) {
+                    if let Some(src_m) = db.get_member(s_cid) {
+                        if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                            if ab.trigger == TriggerType::Constant {
+                                let ctx = AbilityContext {
+                                    source_card_id: t_cid,
+                                    player_id: p as u8,
+                                    activator_id: p as u8,
+                                    area_idx: slot as i16,
+                                    ..Default::default()
+                                };
+                                if ab
+                                    .conditions
+                                    .iter()
+                                    .all(|c| state.check_condition(db, p, c, &ctx, 1))
+                                {
+                                    let bc = &ab.bytecode;
+                                    let mut i = 0;
+                                    while i + 4 < bc.len() {
+                                        if bc[i] == O_BOOST_SCORE {
+                                            *constant_bonuses.entry(s_cid).or_insert(0) += bc[i + 1];
+                                        }
+                                        i += 5;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            let mut total_constant_bonus = 0;
+            let mut score_breakdown = Vec::new();
+
+            // 1. Base Score (Lives)
+            score_breakdown.push(json!({
+                "source": "Base (Lives)",
+                "value": live_score.saturating_sub(state.players[p].current_turn_notes),
+                "type": "base"
+            }));
+
+            // 2. Note Bonus
+            if state.players[p].current_turn_notes > 0 {
+                score_breakdown.push(json!({
+                    "source": "Note Bonus",
+                    "value": state.players[p].current_turn_notes,
+                    "type": "note"
+                }));
+            }
+
+            // 3. Constant Bonuses
+            for (cid, bonus) in constant_bonuses {
+                total_constant_bonus += bonus;
+                let name = db
+                    .get_member(cid)
+                    .map(|m| m.name.clone())
+                    .unwrap_or_else(|| format!("Card {}", cid));
+                score_breakdown.push(json!({
+                    "source": name,
+                    "source_id": cid,
+                    "value": bonus,
+                    "type": "constant_ability"
+                }));
+            }
+
+            // 4. Triggered/Activated Bonuses (live_score_bonus_logs)
+            for &(cid, bonus) in &state.players[p].live_score_bonus_logs {
+                let name = if cid >= 0 {
+                    db.get_member(cid)
+                        .map(|m| m.name.clone())
+                        .or_else(|| db.get_live(cid).map(|l| l.name.clone()))
+                        .unwrap_or_else(|| format!("Card {}", cid))
+                } else {
+                    "Ability Effect".to_string()
+                };
+                score_breakdown.push(json!({
+                    "source": name,
+                    "source_id": cid,
+                    "value": bonus,
+                    "type": "triggered_ability"
+                }));
+            }
+
+            scores[p] = live_score
+                + total_constant_bonus.max(0) as u32
+                + state.players[p].live_score_bonus.max(0) as u32;
+
+            // CRITICAL: Update player score in state so conditions (opcode 220) can refer to it.
+            state.players[p].score = scores[p];
+
+            if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
+                if let serde_json::Value::Object(ref mut map) = res {
+                    if let Some(serde_json::Value::Object(ref mut b_map)) = map.get_mut("breakdown") {
+                        b_map.insert("scores".to_string(), json!(score_breakdown));
+                    }
+                }
+            }
+        }
+    } else {
+        // Triggers already in progress, just pull scores from state
+        for p in 0..2 {
+            scores[p] = state.players[p].score;
+            has_success[p] = state.ui.performance_results.get(&(p as u8))
+                .and_then(|res| res.get("success"))
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+        }
+    }
+
     // 0. Trigger ON_LIVE_SUCCESS for successful performances (Rule 8.3.15 sequence completion)
     // We iterate through players and slots, using a mask to track which cards have already triggered
     // This allows us to resume correctly if an ability (like Kimi no Kokoro) pauses for input.
     for i in 0..2 {
         let p = (state.first_player as usize + i) % 2;
-        if let Some(res) = state.ui.performance_results.get(&(p as u8)) {
-            if res
-                .get("success")
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false)
-            {
-                // Use bit 7 for "broad trigger done"
-                if (state.live_result_processed_mask[p] & 0x80) == 0 {
-                    state.live_result_processed_mask[p] |= 0x80;
-
-                    state.trigger_event(db, TriggerType::OnLiveSuccess, p, -1, -1, 0, -1);
-                    if state.phase == Phase::Response {
-                        return;
-                    }
-                }
-            }
-        }
-    }
-    // We no longer use a single boolean, as we track per-slot.
-    // If we reach here, all triggers are done.
-
-    let mut scores = [0u32; 2];
-    let mut has_success = [false; 2];
-
-    // 1. Judgment Phase: Calculate scores based on SUCCESSFUL lives (still in zone)
-    // IMPORTANT: We trust the snapshot from check_performance_requirements, not re-check hearts
-    for p in 0..2 {
-        let mut live_score = 0;
-        let mut player_has_success = false;
-        let mut has_live = false;
-        let mut p_score = 0;
-
-        // Check snapshot from check_performance_requirements first
-        let snapshot_success = state
+        let p_success = state
             .ui
             .performance_results
             .get(&(p as u8))
@@ -1004,221 +1202,30 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
 
-        for i in 0..3 {
-            let cid = state.players[p].live_zone[i];
-            if cid >= 0 {
-                has_live = true;
-                if let Some(card) = db.get_live(cid) {
-                    // Use snapshot score if available (from check_performance_requirements)
-                    let snapshot_score = state
-                        .ui
-                        .performance_results
-                        .get(&(p as u8))
-                        .and_then(|res| res.get("lives"))
-                        .and_then(|l| l.as_array())
-                        .and_then(|lives| lives.get(i))
-                        .and_then(|l_res| l_res.get("score"))
-                        .and_then(|s| s.as_u64());
+        if p_success {
+            // Use bit 7 for "broad trigger done"
+            if (state.live_result_processed_mask[p] & 0x80) == 0 {
+                state.live_result_processed_mask[p] |= 0x80;
 
-                    // Check if this specific live passed in the snapshot
-                    let snapshot_passed = state
-                        .ui
-                        .performance_results
-                        .get(&(p as u8))
-                        .and_then(|res| res.get("lives"))
-                        .and_then(|l| l.as_array())
-                        .and_then(|lives| lives.get(i))
-                        .and_then(|l_res| l_res.get("passed"))
-                        .and_then(|v| v.as_bool())
-                        .unwrap_or(false);
-
-                    if snapshot_passed || snapshot_score.is_some() {
-                        p_score += snapshot_score.unwrap_or(card.score as u64) as u32;
-                    }
-                }
-            }
-        }
-
-        // Trust the snapshot success flag instead of re-checking hearts
-        if !state.ui.silent {
-            println!("[DEBUG] P{} has_live={}, snapshot_success={}", p, has_live, snapshot_success);
-        }
-        if has_live && snapshot_success {
-            live_score = p_score;
-            player_has_success = true;
-        } else if has_live {
-            // Rule 8.3.16: Clear zone if snapshot indicates failure
-            if !state.ui.silent {
-                println!("[DEBUG] Rule 8.3.16: P{} performance FAILED. Clearing live zone.", p);
-                state.log(format!("Rule 8.3.16: P{} performance FAILED (unsatisfied requirements). Clearing live zone.", p));
-            }
-            for i in 0..3 {
-                if state.players[p].live_zone[i] >= 0 {
-                    let cid = state.players[p].live_zone[i];
-                    state.players[p].push_discard_card(cid);
-                    state.players[p].live_zone[i] = -1;
-                }
-            }
-        }
-
-        if player_has_success {
-            if let Some(res) = state.ui.performance_results.get(&(p as u8)) {
-                if let Some(vol) = res
-                    .get("yell_score_bonus")
-                    .and_then(|v| v.as_u64())
-                    .or_else(|| res.get("note_icons").and_then(|v| v.as_u64()))
-                {
-                    live_score += vol as u32;
-                }
-            }
-            has_success[p] = true;
-        }
-
-        // Pool O_BOOST_SCORE from constant abilities
-        let mut constant_bonuses = std::collections::HashMap::new();
-        for slot in 0..STAGE_SLOT_COUNT {
-            let cid = state.players[p].stage[slot];
-            if cid >= 0 {
-                if let Some(m) = db.get_member(cid) {
-                    for ab in &m.abilities {
-                        if ab.trigger == TriggerType::Constant {
-                            let ctx = AbilityContext {
-                                source_card_id: cid,
-                                player_id: p as u8,
-                                activator_id: p as u8,
-                                area_idx: slot as i16,
-                                ..Default::default()
-                            };
-                            if ab
-                                .conditions
-                                .iter()
-                                .all(|c| state.check_condition(db, p, c, &ctx, 1))
-                            {
-                                let bc = &ab.bytecode;
-                                let mut i = 0;
-                                while i + 4 < bc.len() {
-                                    if bc[i] == O_BOOST_SCORE {
-                                        *constant_bonuses.entry(cid).or_insert(0) += bc[i + 1];
-                                    }
-                                    i += 5;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        // Pool O_BOOST_SCORE from granted constant abilities
-        for &(t_cid, s_cid, ab_idx) in &state.players[p].granted_abilities {
-            if let Some(slot) = state.players[p]
-                .stage
-                .iter()
-                .position(|&cid| cid == t_cid)
-            {
-                if let Some(src_m) = db.get_member(s_cid) {
-                    if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
-                        if ab.trigger == TriggerType::Constant {
-                            let ctx = AbilityContext {
-                                source_card_id: t_cid,
-                                player_id: p as u8,
-                                activator_id: p as u8,
-                                area_idx: slot as i16,
-                                ..Default::default()
-                            };
-                            if ab
-                                .conditions
-                                .iter()
-                                .all(|c| state.check_condition(db, p, c, &ctx, 1))
-                            {
-                                let bc = &ab.bytecode;
-                                let mut i = 0;
-                                while i + 4 < bc.len() {
-                                    if bc[i] == O_BOOST_SCORE {
-                                        *constant_bonuses.entry(s_cid).or_insert(0) += bc[i + 1];
-                                    }
-                                    i += 5;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        let mut total_constant_bonus = 0;
-        let mut score_breakdown = Vec::new();
-
-        // 1. Base Score (Lives)
-        score_breakdown.push(json!({
-            "source": "Base (Lives)",
-            "value": live_score.saturating_sub(state.players[p].current_turn_notes),
-            "type": "base"
-        }));
-
-        // 2. Note Bonus
-        if state.players[p].current_turn_notes > 0 {
-            score_breakdown.push(json!({
-                "source": "Note Bonus",
-                "value": state.players[p].current_turn_notes,
-                "type": "note"
-            }));
-        }
-
-        // 3. Constant Bonuses
-        for (cid, bonus) in constant_bonuses {
-            total_constant_bonus += bonus;
-            let name = db
-                .get_member(cid)
-                .map(|m| m.name.clone())
-                .unwrap_or_else(|| format!("Card {}", cid));
-            score_breakdown.push(json!({
-                "source": name,
-                "source_id": cid,
-                "value": bonus,
-                "type": "constant_ability"
-            }));
-        }
-
-        // 4. Triggered/Activated Bonuses (live_score_bonus_logs)
-        for &(cid, bonus) in &state.players[p].live_score_bonus_logs {
-            let name = if cid >= 0 {
-                db.get_member(cid)
-                    .map(|m| m.name.clone())
-                    .or_else(|| db.get_live(cid).map(|l| l.name.clone()))
-                    .unwrap_or_else(|| format!("Card {}", cid))
-            } else {
-                "Ability Effect".to_string()
-            };
-            score_breakdown.push(json!({
-                "source": name,
-                "source_id": cid,
-                "value": bonus,
-                "type": "triggered_ability"
-            }));
-        }
-
-        scores[p] = live_score
-            + total_constant_bonus.max(0) as u32
-            + state.players[p].live_score_bonus.max(0) as u32;
-
-        if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
-            if let serde_json::Value::Object(ref mut map) = res {
-                if let Some(serde_json::Value::Object(ref mut b_map)) = map.get_mut("breakdown") {
-                    b_map.insert("scores".to_string(), json!(score_breakdown));
+                state.trigger_event(db, TriggerType::OnLiveSuccess, p, -1, -1, 0, -1);
+                if state.phase == Phase::Response {
+                    return;
                 }
             }
         }
     }
+    // All triggers are done.
+    state.live_result_triggers_done = true;
 
+    // DETERMINATION OF LEAD based on updated scores
     let p0_wins = has_success[0] && (!has_success[1] || scores[0] >= scores[1]);
     let p1_wins = has_success[1] && (!has_success[0] || scores[1] >= scores[0]);
 
     if !state.ui.silent || state.debug.debug_mode {
         println!("[DEBUG] Rule 8.4.6: p0_wins={}, p1_wins={}, has_success={:?}, scores={:?}", p0_wins, p1_wins, has_success, scores);
     }
-    let is_comparative_tie = p0_wins && p1_wins;
 
-    // Update results with final scores and triggered abilities
+    // Update performance results with final p0_wins/p1_wins and triggered abilities
     for p in 0..2 {
         let abilities: Vec<_> = state.players[p].perf_triggered_abilities.iter().map(|&(cid, ab_idx, trig)| {
             let card_name: String = db.get_member(cid)
@@ -1233,8 +1240,6 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 "id": ab_idx
             })
         }).collect();
-
-        state.players[p].score = scores[p];
 
         if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
             if let serde_json::Value::Object(ref mut map) = res {
@@ -1287,9 +1292,6 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         let wins = if p == 0 { p0_wins } else { p1_wins };
         if wins && !state.obtained_success_live[p] {
             state.obtained_success_live[p] = true;
-            if state.debug.debug_mode {
-                println!("[DEBUG] P{} SET obtained_success_live = true", p);
-            }
             let cards_in_zone: Vec<usize> = state.players[p]
                 .live_zone
                 .iter()

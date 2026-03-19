@@ -80104,7 +80104,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
+          "raw_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
           "trigger": 1,
           "effects": [
             {
@@ -80127,6 +80127,26 @@
               "runtime_value": 1,
               "runtime_attr": 2305843009213693952,
               "runtime_slot": 4
+            },
+            {
+              "effect_type": 17,
+              "value": 1,
+              "value_cond": 0,
+              "target": 6,
+              "params": {
+                "filter": "UNIT_MIRAKURA",
+                "chain_destinations": [
+                  "CARD_HAND"
+                ],
+                "destination": "card_hand",
+                "source": "discard"
+              },
+              "is_optional": false,
+              "modal_options": [],
+              "runtime_opcode": 17,
+              "runtime_value": 1,
+              "runtime_attr": 63050394785218560,
+              "runtime_slot": 458758
             }
           ],
           "conditions": [],
@@ -80159,11 +80179,11 @@
             0,
             0,
             16,
-            0,
+            17,
             1,
             2031616,
-            0,
-            48,
+            14680064,
+            458758,
             1,
             0,
             0,
@@ -80174,8 +80194,66 @@
           "requires_selection": false,
           "choice_flags": 0,
           "choice_count": 0,
-          "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
+          "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
           "filters": [
+            {
+              "target_player": 0,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": true,
+              "unit_id": 15,
+              "value_enabled": false,
+              "value_threshold": 0,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "zone_mask": 7,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false,
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
+            },
+            {
+              "target_player": 0,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": true,
+              "unit_id": 15,
+              "value_enabled": false,
+              "value_threshold": 0,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "zone_mask": 7,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false,
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
+            },
             {
               "target_player": 0,
               "card_type": 0,
@@ -80281,16 +80359,45 @@
               "color_mask": 0,
               "char_id_1": 0,
               "char_id_2": 0,
-              "zone_mask": 0,
+              "zone_mask": 7,
               "special_id": 0,
               "is_setsuna": false,
               "compare_accumulated": false,
               "is_optional": false,
               "keyword_energy": false,
               "keyword_member": false,
-              "packed_attr": 2031616,
-              "packed_attr_hex": "0x00000000001F0000",
-              "summary": "unit=15"
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
+            },
+            {
+              "target_player": 0,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": true,
+              "unit_id": 15,
+              "value_enabled": false,
+              "value_threshold": 0,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "zone_mask": 7,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false,
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
             }
           ],
           "option_names": [],
@@ -80316,13 +80423,29 @@
                 "conditions": [],
                 "optional": true,
                 "description": ""
+              },
+              {
+                "type": "RECOVER_MEMBER",
+                "value": 1,
+                "target": "CARD_HAND",
+                "params": {
+                  "filter": "UNIT_MIRAKURA",
+                  "chain_destinations": [
+                    "CARD_HAND"
+                  ],
+                  "destination": "card_hand",
+                  "source": "discard"
+                },
+                "conditions": [],
+                "optional": false,
+                "description": ""
               }
             ],
             "conditions": [],
             "costs": [],
             "once_per_turn": false,
-            "description": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
-            "instructions_summary": "Cost(DISCARD_HAND) → Condition(SUM_VALUE) → Effect(META_RULE) → Condition(SUM_VALUE) → Condition(NONE)"
+            "description": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
+            "instructions_summary": "Cost(DISCARD_HAND) → Condition(SUM_VALUE) → Effect(META_RULE) → Condition(SUM_VALUE) → Effect(RECOVER_MEMBER)"
           }
         },
         {
@@ -80797,7 +80920,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 17,
-      "ability_flags": 1,
+      "ability_flags": 5,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -80833,7 +80956,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
+          "raw_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
           "trigger": 1,
           "effects": [
             {
@@ -80856,6 +80979,26 @@
               "runtime_value": 1,
               "runtime_attr": 2305843009213693952,
               "runtime_slot": 4
+            },
+            {
+              "effect_type": 17,
+              "value": 1,
+              "value_cond": 0,
+              "target": 6,
+              "params": {
+                "filter": "UNIT_MIRAKURA",
+                "chain_destinations": [
+                  "CARD_HAND"
+                ],
+                "destination": "card_hand",
+                "source": "discard"
+              },
+              "is_optional": false,
+              "modal_options": [],
+              "runtime_opcode": 17,
+              "runtime_value": 1,
+              "runtime_attr": 63050394785218560,
+              "runtime_slot": 458758
             }
           ],
           "conditions": [],
@@ -80888,11 +81031,11 @@
             0,
             0,
             16,
-            0,
+            17,
             1,
             2031616,
-            0,
-            48,
+            14680064,
+            458758,
             1,
             0,
             0,
@@ -80903,8 +81046,66 @@
           "requires_selection": false,
           "choice_flags": 0,
           "choice_count": 0,
-          "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
+          "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
           "filters": [
+            {
+              "target_player": 0,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": true,
+              "unit_id": 15,
+              "value_enabled": false,
+              "value_threshold": 0,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "zone_mask": 7,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false,
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
+            },
+            {
+              "target_player": 0,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": true,
+              "unit_id": 15,
+              "value_enabled": false,
+              "value_threshold": 0,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "zone_mask": 7,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false,
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
+            },
             {
               "target_player": 0,
               "card_type": 0,
@@ -81010,16 +81211,45 @@
               "color_mask": 0,
               "char_id_1": 0,
               "char_id_2": 0,
-              "zone_mask": 0,
+              "zone_mask": 7,
               "special_id": 0,
               "is_setsuna": false,
               "compare_accumulated": false,
               "is_optional": false,
               "keyword_energy": false,
               "keyword_member": false,
-              "packed_attr": 2031616,
-              "packed_attr_hex": "0x00000000001F0000",
-              "summary": "unit=15"
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
+            },
+            {
+              "target_player": 0,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": true,
+              "unit_id": 15,
+              "value_enabled": false,
+              "value_threshold": 0,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "zone_mask": 7,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false,
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
             }
           ],
           "option_names": [],
@@ -81045,13 +81275,29 @@
                 "conditions": [],
                 "optional": true,
                 "description": ""
+              },
+              {
+                "type": "RECOVER_MEMBER",
+                "value": 1,
+                "target": "CARD_HAND",
+                "params": {
+                  "filter": "UNIT_MIRAKURA",
+                  "chain_destinations": [
+                    "CARD_HAND"
+                  ],
+                  "destination": "card_hand",
+                  "source": "discard"
+                },
+                "conditions": [],
+                "optional": false,
+                "description": ""
               }
             ],
             "conditions": [],
             "costs": [],
             "once_per_turn": false,
-            "description": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
-            "instructions_summary": "Cost(DISCARD_HAND) → Condition(SUM_VALUE) → Effect(META_RULE) → Condition(SUM_VALUE) → Condition(NONE)"
+            "description": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
+            "instructions_summary": "Cost(DISCARD_HAND) → Condition(SUM_VALUE) → Effect(META_RULE) → Condition(SUM_VALUE) → Effect(RECOVER_MEMBER)"
           }
         },
         {
@@ -81526,7 +81772,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 17,
-      "ability_flags": 1,
+      "ability_flags": 5,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -81562,7 +81808,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
+          "raw_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
           "trigger": 1,
           "effects": [
             {
@@ -81585,6 +81831,26 @@
               "runtime_value": 1,
               "runtime_attr": 2305843009213693952,
               "runtime_slot": 4
+            },
+            {
+              "effect_type": 17,
+              "value": 1,
+              "value_cond": 0,
+              "target": 6,
+              "params": {
+                "filter": "UNIT_MIRAKURA",
+                "chain_destinations": [
+                  "CARD_HAND"
+                ],
+                "destination": "card_hand",
+                "source": "discard"
+              },
+              "is_optional": false,
+              "modal_options": [],
+              "runtime_opcode": 17,
+              "runtime_value": 1,
+              "runtime_attr": 63050394785218560,
+              "runtime_slot": 458758
             }
           ],
           "conditions": [],
@@ -81617,11 +81883,11 @@
             0,
             0,
             16,
-            0,
+            17,
             1,
             2031616,
-            0,
-            48,
+            14680064,
+            458758,
             1,
             0,
             0,
@@ -81632,8 +81898,66 @@
           "requires_selection": false,
           "choice_flags": 0,
           "choice_count": 0,
-          "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
+          "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
           "filters": [
+            {
+              "target_player": 0,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": true,
+              "unit_id": 15,
+              "value_enabled": false,
+              "value_threshold": 0,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "zone_mask": 7,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false,
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
+            },
+            {
+              "target_player": 0,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": true,
+              "unit_id": 15,
+              "value_enabled": false,
+              "value_threshold": 0,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "zone_mask": 7,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false,
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
+            },
             {
               "target_player": 0,
               "card_type": 0,
@@ -81739,16 +82063,45 @@
               "color_mask": 0,
               "char_id_1": 0,
               "char_id_2": 0,
-              "zone_mask": 0,
+              "zone_mask": 7,
               "special_id": 0,
               "is_setsuna": false,
               "compare_accumulated": false,
               "is_optional": false,
               "keyword_energy": false,
               "keyword_member": false,
-              "packed_attr": 2031616,
-              "packed_attr_hex": "0x00000000001F0000",
-              "summary": "unit=15"
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
+            },
+            {
+              "target_player": 0,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": true,
+              "unit_id": 15,
+              "value_enabled": false,
+              "value_threshold": 0,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "zone_mask": 7,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false,
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
             }
           ],
           "option_names": [],
@@ -81774,13 +82127,29 @@
                 "conditions": [],
                 "optional": true,
                 "description": ""
+              },
+              {
+                "type": "RECOVER_MEMBER",
+                "value": 1,
+                "target": "CARD_HAND",
+                "params": {
+                  "filter": "UNIT_MIRAKURA",
+                  "chain_destinations": [
+                    "CARD_HAND"
+                  ],
+                  "destination": "card_hand",
+                  "source": "discard"
+                },
+                "conditions": [],
+                "optional": false,
+                "description": ""
               }
             ],
             "conditions": [],
             "costs": [],
             "once_per_turn": false,
-            "description": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
-            "instructions_summary": "Cost(DISCARD_HAND) → Condition(SUM_VALUE) → Effect(META_RULE) → Condition(SUM_VALUE) → Condition(NONE)"
+            "description": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
+            "instructions_summary": "Cost(DISCARD_HAND) → Condition(SUM_VALUE) → Effect(META_RULE) → Condition(SUM_VALUE) → Effect(RECOVER_MEMBER)"
           }
         },
         {
@@ -82255,7 +82624,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 17,
-      "ability_flags": 1,
+      "ability_flags": 5,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -82291,7 +82660,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
+          "raw_text": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
           "trigger": 1,
           "effects": [
             {
@@ -82314,6 +82683,26 @@
               "runtime_value": 1,
               "runtime_attr": 2305843009213693952,
               "runtime_slot": 4
+            },
+            {
+              "effect_type": 17,
+              "value": 1,
+              "value_cond": 0,
+              "target": 6,
+              "params": {
+                "filter": "UNIT_MIRAKURA",
+                "chain_destinations": [
+                  "CARD_HAND"
+                ],
+                "destination": "card_hand",
+                "source": "discard"
+              },
+              "is_optional": false,
+              "modal_options": [],
+              "runtime_opcode": 17,
+              "runtime_value": 1,
+              "runtime_attr": 63050394785218560,
+              "runtime_slot": 458758
             }
           ],
           "conditions": [],
@@ -82346,11 +82735,11 @@
             0,
             0,
             16,
-            0,
+            17,
             1,
             2031616,
-            0,
-            48,
+            14680064,
+            458758,
             1,
             0,
             0,
@@ -82361,8 +82750,66 @@
           "requires_selection": false,
           "choice_flags": 0,
           "choice_count": 0,
-          "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
+          "pseudocode": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
           "filters": [
+            {
+              "target_player": 0,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": true,
+              "unit_id": 15,
+              "value_enabled": false,
+              "value_threshold": 0,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "zone_mask": 7,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false,
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
+            },
+            {
+              "target_player": 0,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": true,
+              "unit_id": 15,
+              "value_enabled": false,
+              "value_threshold": 0,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "zone_mask": 7,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false,
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
+            },
             {
               "target_player": 0,
               "card_type": 0,
@@ -82468,16 +82915,45 @@
               "color_mask": 0,
               "char_id_1": 0,
               "char_id_2": 0,
-              "zone_mask": 0,
+              "zone_mask": 7,
               "special_id": 0,
               "is_setsuna": false,
               "compare_accumulated": false,
               "is_optional": false,
               "keyword_energy": false,
               "keyword_member": false,
-              "packed_attr": 2031616,
-              "packed_attr_hex": "0x00000000001F0000",
-              "summary": "unit=15"
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
+            },
+            {
+              "target_player": 0,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": true,
+              "unit_id": 15,
+              "value_enabled": false,
+              "value_threshold": 0,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "zone_mask": 7,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false,
+              "packed_attr": 63050394785218560,
+              "packed_attr_hex": "0x00E00000001F0000",
+              "summary": "unit=15, zone=discard"
             }
           ],
           "option_names": [],
@@ -82503,13 +82979,29 @@
                 "conditions": [],
                 "optional": true,
                 "description": ""
+              },
+              {
+                "type": "RECOVER_MEMBER",
+                "value": 1,
+                "target": "CARD_HAND",
+                "params": {
+                  "filter": "UNIT_MIRAKURA",
+                  "chain_destinations": [
+                    "CARD_HAND"
+                  ],
+                  "destination": "card_hand",
+                  "source": "discard"
+                },
+                "conditions": [],
+                "optional": false,
+                "description": ""
               }
             ],
             "conditions": [],
             "costs": [],
             "once_per_turn": false,
-            "description": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0); SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
-            "instructions_summary": "Cost(DISCARD_HAND) → Condition(SUM_VALUE) → Effect(META_RULE) → Condition(SUM_VALUE) → Condition(NONE)"
+            "description": "TRIGGER: ON_PLAY\nCOST: DISCARD_HAND(1) (Optional) -> SUCCESS\nEFFECT: CONDITION: VALUE_EQ(SUCCESS, TRUE); COUNT_MEMBER(PLAYER) {FILTER=\"NOT_SELF\"} (Optional) -> COUNT_VAL\nCONDITION: VALUE_GT(COUNT_VAL, 0)\nEFFECT: SELECT_RECOVER_MEMBER(1) {FILTER=\"UNIT_MIRAKURA\"} -> CARD_HAND",
+            "instructions_summary": "Cost(DISCARD_HAND) → Condition(SUM_VALUE) → Effect(META_RULE) → Condition(SUM_VALUE) → Effect(RECOVER_MEMBER)"
           }
         },
         {
@@ -82984,7 +83476,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 17,
-      "ability_flags": 1,
+      "ability_flags": 5,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -353304,6 +353796,6 @@
     "export_profile": "full",
     "source_hash": "fd5f3c04fc14c0e64cbe7813e248a3b8bb8d2ebe957b3a2ec392c8ae02c37afb",
     "generated_by": "compiler/main.py",
-    "generated_at": "2026-03-17T21:19:37.708104"
+    "generated_at": "2026-03-19T12:19:55.091808"
   }
 }

@@ -535,8 +535,9 @@ class AbilityParserV2:
                 new_costs = self._parse_pseudocode_costs(cost_str)
                 for c in new_costs:
                     # SYSTEMIC FIX: Sort costs between Activation Phase (Shell) and Execution Phase (Bytecode)
-                    # Mandatory initial costs go to 'costs' for transactional shell payment.
-                    # Optional or Mid-Ability costs go to 'instructions' for interpreter handling.
+                    # Mandatory initial costs stay in 'costs' for shell pre-checks.
+                    # Optional or mid-ability costs move to 'instructions' so the bytecode
+                    # interpreter can suspend for pay/skip interactions.
                     # Complex costs (SELECT_MEMBER, etc.) MUST be in bytecode
                     is_complex = c.type == AbilityCostType.NONE
 

@@ -14,7 +14,7 @@ This skill provides a complete end-to-end framework for developing, compiling, a
 Follow this 4-phase cycle for ALL ability work. **Do not reinvent scripts.**
 
 ### Phase 1: Research & Triage
-1. **Analyze Card**: `uv run python tools/card_finder.py "<ID_OR_NO>"`
+1. **Analyze Card**: `uv run python tools/cf.py "<ID_OR_NO>"`
    *   *Purpose*: View current JP text, pseudocode, and decoded bytecode side-by-side.
 2. **Check Rules**: Search `data/qa_data.json` for related rulings.
 3. **Verify Existing Logic**: `uv run python tools/test_pseudocode.py --card "<ID>"`
@@ -49,7 +49,7 @@ Follow this 4-phase cycle for ALL ability work. **Do not reinvent scripts.**
 
 | Tool | Command | Primary Use Case |
 | :--- | :--- | :--- |
-| **Finder** | `python tools/card_finder.py "<QUERY>"` | Start here. ID/Name lookup + logic view. |
+| **Finder** | `python tools/cf.py "<QUERY>"` | Start here. ID/Name lookup + logic view. |
 | **Inspector** | `python tools/inspect_ability.py <ID>` | Deep dive into bytecode vs semantic form. |
 | **Tester** | `python tools/test_pseudocode.py "<TEXT>"` | Rapid iterative prototyping of syntax. |
 | **Compiler** | `python -m compiler.main` | Official build of `cards_compiled.json`. |

@@ -165,9 +165,7 @@ def serve_img(filename):
 def serve_icon_root():
     return serve_img("icon_blade.png")
 
-
-# ai_agent = SmartHeuristicAgent()
-ai_agent = SmartAgent()  # Use original heuristic AI
+# AI agents are now instantiated per-room in create_room_internal
 
 # Global game state
 # Room Registry
@@ -208,9 +206,12 @@ vanilla_live_db: dict[int, Any] = {}
 vanilla_energy_db: dict[int, Any] = {}
 
 rust_serializer = None  # Initialized after data load
-game_history: list[dict] = []  # Global replay history (might need per-room later)
 
-# Legacy custom deck globals (used by init_game)
+# --- LEGACY GLOBALS (Single-Player / CLI Tests Only) ---
+# Do NOT use these in multi-room logic!
+game_history: list[dict] = []
+action_log: list[int] = []
+current_seed: int = 0
 custom_deck_p0: list[str] | None = None
 custom_deck_p1: list[str] | None = None
 custom_energy_deck_p0: list[str] | None = None
@@ -864,25 +865,22 @@ def save_replay(gs: GameState | None = None):
     except Exception as e:
         print(f"Failed to save replay: {e}")
 
-
-game_history = []  # For replay recording
-action_log = []  # For action-based replay
-current_seed = 0  # For deterministic replay
+# Global state variables removed to prevent room bleeding
 
 
 def init_game(deck_type="normal"):
-    global game_state, member_db, live_db, energy_db, game_history, current_seed, action_log
+    # This function is legacy and mainly for single-player tests.
+    # It now uses legacy global variables for backward compatibility.
+    global member_db, live_db, energy_db, game_history, action_log, current_seed
 
     # Ensure true randomness for each game
     import time
-
     real_seed = int(time.time() * 1000) % (2**31)
-    current_seed = real_seed
-    random.seed(real_seed)
 
-    # Store action history separately for Level 3 Replay
-    global action_log
+    current_seed = real_seed
+    game_history = []
     action_log = []
+    random.seed(real_seed)
 
     # DATA PATH: data/cards.json
     cards_path = os.path.join(DATA_DIR, "cards.json")
@@ -2522,6 +2520,7 @@ def score_turn_planner_sequence():
 
 @app.route("/api/replays", methods=["GET"])
 def list_replays():
+    replays = []
     # 1. Root replays
     try:
         if os.path.exists("replays"):

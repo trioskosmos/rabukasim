@@ -421,7 +421,7 @@ pub fn generate_card_report(card_id: i32) {
         .args(&[
             "run",
             "python",
-            "tools/card_finder.py",
+            "tools/cf.py",
             &card_id.to_string(),
             "--output",
             &format!("reports/card_{}.md", card_id),
@@ -442,7 +442,7 @@ pub fn generate_card_report(card_id: i32) {
             }
         }
         Err(e) => println!(
-            "[TEST_DEBUG] Failed to execute card_finder for Card {}: {}",
+            "[TEST_DEBUG] Failed to execute cf for Card {}: {}",
             card_id, e
         ),
     }
