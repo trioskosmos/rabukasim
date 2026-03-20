@@ -214,6 +214,8 @@ pub struct Ability {
     #[serde(default)]
     #[serde(skip_serializing)]
     pub opcodes_mask: u128,
+    #[serde(default, skip_serializing)]
+    pub sparse_frame_index: Option<serde_json::Value>,
 }
 
 impl std::hash::Hash for Ability {
@@ -233,6 +235,7 @@ impl std::hash::Hash for Ability {
         self.choice_count.hash(state);
         self.preparsed_modifiers.hash(state);
         self.opcodes_mask.hash(state);
+        self.sparse_frame_index.hash(state);
     }
 }
 

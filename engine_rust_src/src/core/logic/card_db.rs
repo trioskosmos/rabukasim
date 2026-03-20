@@ -20,6 +20,8 @@ use crate::core::hearts::HeartBoard;
 use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::fs;
 use std::collections::HashMap;
 // use crate::core::generated_constants::*; // Redundant due to enums.rs re-export
 // use crate::core::generated_constants::*; // Re-exported by enums.rs
@@ -141,6 +143,8 @@ pub struct CardDatabase {
     // Optimization 2: String No Lookup
     pub card_no_to_id: HashMap<String, i32>,
     pub energy_db: HashMap<i32, EnergyCard>,
+    #[serde(skip)]
+    pub sparse_ability_index: HashMap<String, Value>,
     #[serde(default)]
     pub is_vanilla: bool,
     #[serde(skip)]
@@ -186,6 +190,84 @@ impl CardDatabase {
         for ability in &mut card.abilities {
             Self::normalize_legacy_tap_member_ability(ability);
         }
+    }
+
+    fn load_sparse_ability_index() -> HashMap<String, Value> {
+        for path in ["data/ability_frame_index.json", "../data/ability_frame_index.json"] {
+            if let Ok(json) = fs::read_to_string(path) {
+                if let Ok(root) = serde_json::from_str::<Value>(&json) {
+                    let mut index = HashMap::new();
+                    if let Some(abilities) = root.get("abilities").and_then(|v| v.as_array()) {
+                        for entry in abilities {
+                            let Some(cards) = entry.get("cards").and_then(|v| v.as_array()) else {
+                                continue;
+                            };
+                            for card in cards {
+                                let Some(card_no) = card.get("card_no").and_then(|v| v.as_str()) else {
+                                    continue;
+                                };
+                                let Some(ability_index) = card.get("ability_index").and_then(|v| v.as_i64()) else {
+                                    continue;
+                                };
+                                let key = format!("{}#{}", card_no, ability_index);
+                                index.insert(key, entry.clone());
+                            }
+                        }
+                    }
+                    if !index.is_empty() {
+                        return index;
+                    }
+                }
+            }
+        }
+        HashMap::new()
+    }
+
+    fn attach_sparse_ability_index(
+        card_no: &str,
+        abilities: &mut [Ability],
+        index: &HashMap<String, Value>,
+    ) -> serde_json::Result<()> {
+        for (ability_index, ability) in abilities.iter_mut().enumerate() {
+            let key = format!("{}#{}", card_no, ability_index);
+            let entry = index.get(&key).ok_or_else(|| {
+                serde::de::Error::custom(format!(
+                    "missing sparse ability index entry for {} ability {}",
+                    card_no, ability_index
+                ))
+            })?;
+            ability.sparse_frame_index = Some(entry.clone());
+            let rebuilt = Self::sparse_entry_to_bytecode(entry);
+            if rebuilt.is_empty() {
+                return Err(serde::de::Error::custom(format!(
+                    "sparse ability index entry for {} ability {} has no source_words",
+                    card_no, ability_index
+                )));
+            }
+            ability.bytecode = rebuilt;
+            if ability.pseudocode.is_empty() {
+                if let Some(pseudo) = entry.get("pseudocode").and_then(|v| v.as_str()) {
+                    ability.pseudocode = pseudo.to_string();
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn sparse_entry_to_bytecode(entry: &Value) -> Vec<i32> {
+        let mut bytecode = Vec::new();
+        if let Some(frames) = entry.get("frames").and_then(|v| v.as_array()) {
+            for frame in frames {
+                if let Some(words) = frame.get("source_words").and_then(|v| v.as_array()) {
+                    for word in words {
+                        if let Some(val) = word.as_i64() {
+                            bytecode.push(val as i32);
+                        }
+                    }
+                }
+            }
+        }
+        bytecode
     }
 
     /// Extract the logical ID (0-4095) from a packed card ID.
@@ -271,6 +353,7 @@ impl Default for CardDatabase {
             lives_vec: vec![None; 4096],
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
+            sparse_ability_index: HashMap::new(),
             is_vanilla: false,
             cached_vanilla: None,
         }
@@ -622,6 +705,7 @@ impl CardDatabase {
             lives_vec: vec![None; 4096],
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
+            sparse_ability_index: Self::load_sparse_ability_index(),
             is_vanilla: false,
             cached_vanilla: None,
         };
@@ -633,6 +717,11 @@ impl CardDatabase {
                     Ok(mut card) => {
                         Self::normalize_member_runtime_compatibility(&mut card);
                         Self::enrich_member_runtime_metadata(&mut card);
+                        Self::attach_sparse_ability_index(
+                            &card.card_no,
+                            &mut card.abilities,
+                            &db.sparse_ability_index,
+                        )?;
 
                         db.members.insert(card.card_id, card.clone());
                         db.card_no_to_id.insert(card.card_no.clone(), card.card_id);
@@ -663,6 +752,11 @@ impl CardDatabase {
                     Ok(mut card) => {
                         Self::normalize_live_runtime_compatibility(&mut card);
                         Self::enrich_live_runtime_metadata(&mut card);
+                        Self::attach_sparse_ability_index(
+                            &card.card_no,
+                            &mut card.abilities,
+                            &db.sparse_ability_index,
+                        )?;
 
                         db.lives.insert(card.card_id, card.clone());
                         db.card_no_to_id.insert(card.card_no.clone(), card.card_id);

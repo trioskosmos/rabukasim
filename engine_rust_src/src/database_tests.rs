@@ -66,6 +66,94 @@ fn test_bytecode_sanity_all_cards() {
     );
 }
 
+#[test]
+fn test_sparse_ability_index_is_loaded() {
+    let card_db =
+        CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
+
+    let mut checked = 0usize;
+
+    for card in card_db.members.values() {
+        for (ability_index, ability) in card.abilities.iter().enumerate() {
+            let sparse = ability
+                .sparse_frame_index
+                .as_ref()
+                .expect("ability_frame_index.json should be attached to production abilities");
+            let frames = sparse
+                .get("frames")
+                .and_then(|v| v.as_array())
+                .expect("sparse ability entry should contain frames");
+
+            assert!(!frames.is_empty(), "sparse ability entry should not be empty");
+            assert!(
+                sparse.get("pseudocode").and_then(|v| v.as_str()).is_some(),
+                "sparse ability entry should expose pseudocode"
+            );
+
+            let rebuilt: Vec<i32> = frames
+                .iter()
+                .flat_map(|frame| {
+                    frame
+                        .get("source_words")
+                        .and_then(|v| v.as_array())
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|word| word.as_i64().map(|val| val as i32))
+                        .collect::<Vec<i32>>()
+                })
+                .collect();
+
+            assert_eq!(
+                ability.bytecode, rebuilt,
+                "loaded ability bytecode should be rebuilt from sparse frames for {} ability {}",
+                card.card_no, ability_index
+            );
+            checked += 1;
+        }
+    }
+
+    for card in card_db.lives.values() {
+        for (ability_index, ability) in card.abilities.iter().enumerate() {
+            let sparse = ability
+                .sparse_frame_index
+                .as_ref()
+                .expect("ability_frame_index.json should be attached to production abilities");
+            let frames = sparse
+                .get("frames")
+                .and_then(|v| v.as_array())
+                .expect("sparse ability entry should contain frames");
+
+            assert!(!frames.is_empty(), "sparse ability entry should not be empty");
+            assert!(
+                sparse.get("pseudocode").and_then(|v| v.as_str()).is_some(),
+                "sparse ability entry should expose pseudocode"
+            );
+
+            let rebuilt: Vec<i32> = frames
+                .iter()
+                .flat_map(|frame| {
+                    frame
+                        .get("source_words")
+                        .and_then(|v| v.as_array())
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|word| word.as_i64().map(|val| val as i32))
+                        .collect::<Vec<i32>>()
+                })
+                .collect();
+
+            assert_eq!(
+                ability.bytecode, rebuilt,
+                "loaded ability bytecode should be rebuilt from sparse frames for {} ability {}",
+                card.card_no, ability_index
+            );
+            checked += 1;
+        }
+    }
+
+    assert!(checked > 0, "expected at least one ability to verify");
+}
+
 fn verify_ability_bytecode(card_no: &str, ab_idx: usize, ab: &Ability, opcodes: &mut HashSet<i32>) {
     if ab.bytecode.is_empty() {
         return;

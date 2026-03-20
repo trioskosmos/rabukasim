@@ -178,11 +178,14 @@ class EffectMixin:
                 self.pending_activation = {"ability": ability, "context": context, "abi_key": abi_key}
                 return
 
-        # Prepare metadata for progress tracking
-        if JIT_AVAILABLE and hasattr(self, "fast_mode") and self.fast_mode:
+        # Prefer the stored bytecode path whenever it is available.
+        # This lets the runtime execute the sparse/bytecode representation directly
+        # instead of re-deriving behavior from parser_v2 output.
+        bytecode = list(getattr(ability, "bytecode", []) or [])
+        if bytecode:
+            self.pending_effects.insert(0, bytecode)
+        elif JIT_AVAILABLE and hasattr(self, "fast_mode") and self.fast_mode:
             bytecode = ability.compile()
-            # Push the compiled bytecode as a single "effect" to pending_effects
-            # _resolve_pending_effect will then pass it to _resolve_effect_opcode
             self.pending_effects.insert(0, bytecode)
         else:
             total = len(ability.effects)
