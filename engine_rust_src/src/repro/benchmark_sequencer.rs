@@ -11,6 +11,8 @@ fn benchmark_sequencer_speed() {
     
     // Initialize State
     let mut state = GameState::default();
+    state.ui.silent = true;
+    state.debug.debug_mode = false;
     state.players[0].player_id = 0;
     state.players[1].player_id = 1;
     state.phase = Phase::Main;

@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 from engine.game.effects.choices import normalize_choice_metadata, queue_target_hand_choice
+from engine.game.effects.metadata import _describe_ability
 from engine.game.enums import Phase
 from engine.models.ability import Ability, AbilityCostType, ConditionType, Cost, Effect, EffectType, ResolvingEffect, TargetType, TriggerType
 from engine.models.enums import Group, Unit
@@ -261,7 +262,7 @@ def resolve_pending_effect(game: Any, action: int, context: Optional[Dict[str, A
         "source_img": source_img,
         "step_progress": step_progress,
         "source_member": source_name,
-        "source_ability": self.current_resolving_ability.raw_text if self.current_resolving_ability else "",
+        "source_ability": _describe_ability(self.current_resolving_ability) if self.current_resolving_ability else "",
     }
 
     if hasattr(self, "log_rule"):
@@ -277,7 +278,8 @@ def resolve_pending_effect(game: Any, action: int, context: Optional[Dict[str, A
 
         ability_text = ""
         if self.current_resolving_ability:
-            ability_text = f" [{self.current_resolving_ability.raw_text[:20]}...]"
+            ability_preview = _describe_ability(self.current_resolving_ability)
+            ability_text = f" [{ability_preview[:20]}...]"
 
         msg = f"{source_name}: Resolving {effect.effect_type.name}{ability_text} (Val: {effect.value})"
         self.log_rule("Rule 9.7", msg)

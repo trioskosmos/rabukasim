@@ -227,13 +227,13 @@ impl ActionFactory {
                     if let Some(ab) = card.abilities.get(pi.ability_index as usize) {
                         if let Some(name) = ab.option_names.get(mode_idx as usize) {
                             if !name.is_empty() {
-                                return format!("Mode: {}", name);
+                                return format!("Mode: {}", Self::map_technical_label(name));
                             }
                         }
                         if let Some(options) = ab.modal_options.as_object() {
                             if let Some(name) = options.get(&mode_idx.to_string()) {
                                 if let Some(s) = name.as_str() {
-                                    return format!("Mode: {}", s);
+                                    return format!("Mode: {}", Self::map_technical_label(s));
                                 }
                             }
                         }
@@ -343,13 +343,13 @@ impl ActionFactory {
                 format!("Activate from Hand Index {}, Ability {}", hand_idx, ab_idx)
             }
             DecodedAction::Rps { p_idx, choice } => {
-                let move_key = match choice {
-                    0 => "rps_rock",
-                    1 => "rps_paper",
-                    2 => "rps_scissors",
-                    _ => "unknown",
+                let move_label = match choice {
+                    0 => "Rock",
+                    1 => "Paper",
+                    2 => "Scissors",
+                    _ => "Unknown",
                 };
-                format!("[[rps_p_chose:p_idx={}:move={}]]", p_idx, move_key)
+                format!("RPS (P{}): {}", p_idx + 1, move_label)
             }
             DecodedAction::SelectStageSlot { slot_idx } => {
                 let cid = player.stage[slot_idx];
@@ -371,6 +371,19 @@ impl ActionFactory {
                     "Turn Choice: {}",
                     if choice == 0 { "Go First" } else { "Go Second" }
                 )
+            }
+            DecodedAction::SelectChoice { choice_idx } => {
+                let choice_idx = choice_idx as usize;
+                if let Some(pi) = state.interaction_stack.last() {
+                    if let Some(option) = pi.options.get(choice_idx) {
+                        if let Some(s) = option.as_str() {
+                            if !s.is_empty() {
+                                return Self::map_technical_label(s);
+                            }
+                        }
+                    }
+                }
+                Self::get_action_label(action_id)
             }
             _ => {
                 if state.phase == crate::core::enums::Phase::TurnChoice {
@@ -462,13 +475,13 @@ impl ActionFactory {
                 format!("Choice {}", choice_idx + 1)
             }
             DecodedAction::Rps { p_idx, choice } => {
-                let move_key = match choice {
-                    0 => "rps_rock",
-                    1 => "rps_paper",
-                    2 => "rps_scissors",
-                    _ => "unknown",
+                let move_label = match choice {
+                    0 => "Rock",
+                    1 => "Paper",
+                    2 => "Scissors",
+                    _ => "Unknown",
                 };
-                format!("[[rps_p_chose:p_idx={}:move={}]]", p_idx, move_key)
+                format!("RPS (P{}): {}", p_idx + 1, move_label)
             }
             DecodedAction::TurnChoice { choice } => {
                 format!(
@@ -490,7 +503,9 @@ impl ActionFactory {
             return String::new();
         };
 
-        if !original_text.is_empty() {
+        if !original_text.is_empty() && !ability_text.is_empty() {
+            format!("[JP] {} / [EN] {}", original_text, ability_text)
+        } else if !original_text.is_empty() {
             original_text.clone()
         } else if !ability_text.is_empty() {
             ability_text.clone()
@@ -500,5 +515,41 @@ impl ActionFactory {
         } else {
             String::new()
         }
+    }
+
+    /// Maps a technical label (like "PAY_ENERGY(2)") to a friendly multi-lang string.
+    pub fn map_technical_label(label: &str) -> String {
+        if label.is_empty() {
+            return label.to_string();
+        }
+
+        // Check for common technical patterns
+        if label.starts_with("PAY_ENERGY(") && label.ends_with(')') {
+            let val = &label[11..label.len() - 1];
+            return format!("[JP] {}エネルギーを支払う / [EN] Pay {} Energy", val, val);
+        }
+        if label.starts_with("DISCARD_HAND(") && label.ends_with(')') {
+            let val = &label[13..label.len() - 1];
+            return format!("[JP] 手札を{}枚捨てる / [EN] Discard {} card(s)", val, val);
+        }
+        if label.starts_with("DRAW(") && label.ends_with(')') {
+            let val = &label[5..label.len() - 1];
+            return format!("[JP] カードを{}枚引く / [EN] Draw {} card(s)", val, val);
+        }
+        if label.starts_with("ADD_HEARTS(") && label.ends_with(')') {
+            let val = &label[11..label.len() - 1];
+            return format!("[JP] ボルテージ+{} / [EN] Voltage +{}", val, val);
+        }
+        if label.starts_with("ADD_BLADES(") && label.ends_with(')') {
+            let val = &label[11..label.len() - 1];
+            return format!("[JP] ブレード+{} / [EN] Blade +{}", val, val);
+        }
+
+        // Special case for generic Pass/Done if it matches technical key
+        if label == "PASS" || label == "DONE" {
+            return "[JP] 終了 / [EN] Pass / Done".to_string();
+        }
+
+        label.to_string()
     }
 }

@@ -1,7 +1,6 @@
 use engine_rust::core::heuristics::OriginalHeuristic;
-use engine_rust::core::logic::{GameState, Phase, CardDatabase};
+use engine_rust::core::logic::{GameState, Phase};
 use rand::SeedableRng;
-use rand::rngs::SmallRng;
 use engine_rust::core::mcts::{SearchHorizon, MCTS};
 use engine_rust::test_helpers::load_real_db;
 use rand::Rng;

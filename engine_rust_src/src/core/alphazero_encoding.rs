@@ -80,7 +80,7 @@ impl AlphaZeroEncoding for GameState {
         }
 
         // 3. Physical Entity Tracking (120 Entities total, 60 per player)
-        // We create a map of logical UID -> (Owner, Zone, Index) for all visible/tracked cards.
+        // We create an array map of logical UID -> (Owner, Zone, Index) for all visible/tracked cards.
         // Slots per player (60 total):
         // 0..2   : Stage (3)
         // 3..12  : Hand (10)
@@ -88,8 +88,7 @@ impl AlphaZeroEncoding for GameState {
         // 23..25 : Live Zone (3)
         // 26..34 : Success Lives (9)
         // 35..59 : Discard (25)
-        let mut entity_map: std::collections::HashMap<u32, (usize, u8, usize)> =
-            std::collections::HashMap::with_capacity(120);
+        let mut entity_map: [Option<(usize, u8, usize)>; 120] = [None; 120];
 
         for p_idx in 0..2 {
             let p = &self.core.players[p_idx];
@@ -98,30 +97,30 @@ impl AlphaZeroEncoding for GameState {
             // Stage (0..2)
             for (idx, cid) in p.stage.iter().enumerate() {
                 if *cid >= 0 {
-                    entity_map.insert(base_uid + idx as u32, (p_idx, 2, idx));
+                    entity_map[(base_uid + idx as u32) as usize] = Some((p_idx, 2, idx));
                 }
             }
             // Hand (3..12)
             for (idx, _) in p.hand.iter().enumerate().take(10) {
-                entity_map.insert(base_uid + 3 + idx as u32, (p_idx, 1, idx));
+                entity_map[(base_uid + 3 + idx as u32) as usize] = Some((p_idx, 1, idx));
             }
             // Energy (13..22)
             for (idx, _) in p.energy_zone.iter().enumerate().take(10) {
-                entity_map.insert(base_uid + 13 + idx as u32, (p_idx, 3, idx));
+                entity_map[(base_uid + 13 + idx as u32) as usize] = Some((p_idx, 3, idx));
             }
             // Live Zone (23..25)
             for (idx, cid) in p.live_zone.iter().enumerate() {
                 if *cid >= 0 {
-                    entity_map.insert(base_uid + 23 + idx as u32, (p_idx, 7, idx));
+                    entity_map[(base_uid + 23 + idx as u32) as usize] = Some((p_idx, 7, idx));
                 }
             }
             // Success Lives (26..34)
             for (idx, _) in p.success_lives.iter().enumerate().take(9) {
-                entity_map.insert(base_uid + 26 + idx as u32, (p_idx, 6, idx));
+                entity_map[(base_uid + 26 + idx as u32) as usize] = Some((p_idx, 6, idx));
             }
             // Discard (35..59)
             for (idx, _) in p.discard.iter().enumerate().take(25) {
-                entity_map.insert(base_uid + 35 + idx as u32, (p_idx, 4, idx));
+                entity_map[(base_uid + 35 + idx as u32) as usize] = Some((p_idx, 4, idx));
             }
         }
 
@@ -132,7 +131,7 @@ impl AlphaZeroEncoding for GameState {
         for &uid_base in &player_uid_bases {
             for offset in 0..AZ_MAX_ENTITIES_PER_PLAYER {
                 let uid = uid_base + offset as u32;
-                if let Some(&(owner, zone, z_idx)) = entity_map.get(&uid) {
+                if let Some((owner, zone, z_idx)) = entity_map[uid as usize] {
                     // Find card Template ID by scanning the zone (only done once per state)
                     let p = &self.core.players[owner];
                     let cid = match zone {

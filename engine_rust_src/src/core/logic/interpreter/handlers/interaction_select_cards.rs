@@ -9,6 +9,8 @@ use crate::core::{O_SELECT_CARDS};
 #[path = "interaction_select_cards_resolve.rs"]
 mod interaction_select_cards_resolve;
 
+const VARIABLE_SELECT_CARDS_OPTIONAL_PROMPT: i16 = -32000;
+
 pub fn handle_select_cards(
     state: &mut GameState,
     db: &CardDatabase,
@@ -22,6 +24,7 @@ pub fn handle_select_cards(
     let p_idx = ctx.player_id as usize;
     let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
     let optional_prompt_marker = -((v as i16) + 2);
+    let is_variable_selection = v < 0;
 
     let slot_info = instr.slot();
     let source_zone = slot_info.source_zone as u8;
@@ -33,6 +36,44 @@ pub fn handle_select_cards(
     } else {
         7
     };
+
+    if is_optional
+        && is_variable_selection
+        && ctx.choice_index == -1
+        && ctx.v_remaining == -1
+    {
+        if matches!(suspend_choice(
+            state,
+            db,
+            ctx,
+            ctx,
+            instr_ip,
+            O_SELECT_CARDS,
+            0,
+            ChoiceType::Optional,
+            a as u64,
+            VARIABLE_SELECT_CARDS_OPTIONAL_PROMPT,
+        ), HandlerResult::Suspend) {
+            return HandlerResult::Suspend;
+        }
+    }
+
+    if is_optional
+        && is_variable_selection
+        && ctx.v_remaining == VARIABLE_SELECT_CARDS_OPTIONAL_PROMPT
+    {
+        if ctx.choice_index == 1 || ctx.choice_index == CHOICE_DONE {
+            if let Some(execution_id) = state.ui.current_execution_id {
+                state.ui.cancelled_execution_ids.insert(execution_id);
+            }
+            return HandlerResult::Continue;
+        }
+
+        if ctx.choice_index == 0 {
+            ctx.choice_index = -1;
+            ctx.v_remaining = 0;
+        }
+    }
 
     if is_optional && v == 99 && ctx.choice_index == -1 && ctx.v_remaining == -1 {
         if matches!(suspend_choice(

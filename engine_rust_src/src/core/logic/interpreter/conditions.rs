@@ -871,7 +871,8 @@ pub fn resolve_count(
         };
         let check_success = op == C_COUNT_SUCCESS_LIVE || op == 307 || op == 405 || s_zone == Zone::SuccessPile;
 
-        let mut ids = Vec::new();
+        use smallvec::SmallVec;
+        let mut ids = SmallVec::<[i32; 32]>::new();
 
         if !only_opponent {
             if check_stage {
@@ -941,10 +942,17 @@ pub fn resolve_count(
             filter_attr &= !0x0C; // Clear Member (0x04) and Live (0x08) bits
         }
 
+        let filter = CardFilter::from_attr(filter_attr as i64);
+
         if (attr & FILTER_UNIQUE_NAMES) != 0 {
             let mut names = std::collections::HashSet::new();
             for id in ids {
-                if if state.debug.debug_mode { state.card_matches_filter_with_ctx_logs(db, id, filter_attr, ctx) } else { state.card_matches_filter_with_ctx(db, id, filter_attr, ctx) } {
+                let matched = if state.debug.debug_mode {
+                    state.card_matches_filter_with_ctx_logs(db, id, filter_attr, ctx)
+                } else {
+                    state.card_matches_filter_with_struct(db, id, &filter, ctx)
+                };
+                if matched {
                     if let Some(m) = db.get_member(id) {
                         names.insert(m.name.clone());
                     } else if let Some(l) = db.get_live(id) {
@@ -954,32 +962,34 @@ pub fn resolve_count(
             }
             names.len() as i32
         } else {
-
-
             // Handle "Other than Self" (NOT_SELF=2, NOT_ACTIVATOR=3) by subtraction
-            // This allows counting other instances of the same card ID.
             let special_id = (filter_attr >> 56) & 0x7;
-            let mut final_filter = filter_attr;
-            let mut do_subtraction = false;
+            let mut final_filter_struct = filter.clone();
+            let mut final_filter_attr = filter_attr;
             if special_id == 2 || special_id == 3 {
-                do_subtraction = true;
-                final_filter &= !(0x7u64 << 56); // Stripping Special ID bits
+                final_filter_struct.special_id = 0;
+                final_filter_attr &= !(0x7u64 << 56);
             }
 
             let raw_count = ids.iter()
                 .filter(|&&id| {
-                    let m = if state.debug.debug_mode { state.card_matches_filter_with_ctx_logs(db, id, final_filter, ctx) } else { state.card_matches_filter_with_ctx(db, id, final_filter, ctx) };
-                    if state.debug.debug_mode && (id == 10 || id == 4433) {
-                        // println!("[DEBUG]   ID {} matches filter? {}", id, m);
+                    if state.debug.debug_mode {
+                        state.card_matches_filter_with_ctx_logs(db, id, final_filter_attr, ctx)
+                    } else {
+                        state.card_matches_filter_with_struct(db, id, &final_filter_struct, ctx)
                     }
-                    m
                 })
                 .count() as i32;
 
             let mut res = raw_count;
-            if do_subtraction {
-                let target_id = if special_id == 3 { ctx.source_card_id } else if special_id == 2 { ctx.activator_id as i32 } else { -2 };
-                if ids.contains(&target_id) && if state.debug.debug_mode { state.card_matches_filter_with_ctx_logs(db, target_id, final_filter, ctx) } else { state.card_matches_filter_with_ctx(db, target_id, final_filter, ctx) } {
+            if special_id == 2 || special_id == 3 {
+                let target_id = if special_id == 3 { ctx.source_card_id } else { ctx.activator_id as i32 };
+                let target_matched = if state.debug.debug_mode {
+                    state.card_matches_filter_with_ctx_logs(db, target_id, final_filter_attr, ctx)
+                } else {
+                    state.card_matches_filter_with_struct(db, target_id, &final_filter_struct, ctx)
+                };
+                if ids.contains(&target_id) && target_matched {
                     res = (res - 1).max(0);
                 }
             }

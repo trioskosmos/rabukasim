@@ -152,7 +152,7 @@ impl GameState {
         discard_ctx.player_id = p_idx as u8;
         discard_ctx.activator_id = p_idx as u8;
         discard_ctx.trigger_type = TriggerType::OnMoveToDiscard;
-        discard_ctx.selected_cards = moved_cards.to_vec();
+        discard_ctx.selected_cards = smallvec::SmallVec::from_slice(moved_cards);
         if discard_ctx.source_card_id < 0 {
             discard_ctx.source_card_id = moved_cards[0];
         }

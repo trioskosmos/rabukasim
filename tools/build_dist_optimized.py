@@ -89,7 +89,7 @@ def run_rust_build():
 
     # 3. Copy binary to dist
     ext = ".exe" if sys.platform == "win32" else ""
-    src_bin = os.path.join(launcher_dir, "target", "release", f"loveca_launcher{ext}")
+    src_bin = os.path.join(launcher_dir, "target", "release", f"rabuka_launcher{ext}")
     dest_bin = os.path.join(DIST, f"LovecaSim{ext}")
 
     if os.path.exists(src_bin):

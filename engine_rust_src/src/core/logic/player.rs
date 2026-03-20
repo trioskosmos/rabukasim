@@ -444,6 +444,7 @@ impl PlayerState {
         self.heart_buffs = [HeartBoard::default(); 3];
         self.cost_reduction = 0;
         self.slot_cost_modifiers = [0; 3];
+        // self.cost_reductions is inside BoardAura so it is reset by BoardAura::default()
         self.live_score_bonus = 0;
         self.live_score_bonus_logs.clear();
         self.used_abilities.clear();
@@ -480,26 +481,15 @@ impl PlayerState {
     }
 
     pub fn copy_from(&mut self, other: &PlayerState) {
-        macro_rules! copy_smallvec {
-            ($dst:expr, $src:expr) => {
-                if $src.is_empty() {
-                    $dst.clear();
-                } else {
-                    $dst.clear();
-                    $dst.extend_from_slice(&$src);
-                }
-            };
-        }
-
         self.player_id = other.player_id;
-        copy_smallvec!(self.hand, other.hand);
-        copy_smallvec!(self.deck, other.deck);
-        copy_smallvec!(self.initial_deck, other.initial_deck);
-        copy_smallvec!(self.discard, other.discard);
-        copy_smallvec!(self.exile, other.exile);
-        copy_smallvec!(self.energy_deck, other.energy_deck);
-        copy_smallvec!(self.energy_zone, other.energy_zone);
-        copy_smallvec!(self.success_lives, other.success_lives);
+        self.hand.clone_from(&other.hand);
+        self.deck.clone_from(&other.deck);
+        // self.initial_deck.clone_from(&other.initial_deck); // Optimization: Never changes
+        self.discard.clone_from(&other.discard);
+        self.exile.clone_from(&other.exile);
+        self.energy_deck.clone_from(&other.energy_deck);
+        self.energy_zone.clone_from(&other.energy_zone);
+        self.success_lives.clone_from(&other.success_lives);
         self.live_zone = other.live_zone;
         self.stage = other.stage;
         self.stage_energy_count = other.stage_energy_count;
@@ -508,66 +498,60 @@ impl PlayerState {
         self.baton_touch_limit = other.baton_touch_limit;
         self.score = other.score;
         self.current_turn_notes = other.current_turn_notes;
-        copy_smallvec!(self.used_abilities, other.used_abilities);
+        self.used_abilities.clone_from(&other.used_abilities);
         self.live_score_bonus = other.live_score_bonus;
-        copy_smallvec!(self.live_score_bonus_logs, other.live_score_bonus_logs);
+        self.live_score_bonus_logs.clone_from(&other.live_score_bonus_logs);
         self.blade_buffs = other.blade_buffs;
         self.blade_overrides = other.blade_overrides;
         self.heart_buffs = other.heart_buffs;
         self.cost_reduction = other.cost_reduction;
         self.hand_increased_this_turn = other.hand_increased_this_turn;
         self.slot_cost_modifiers = other.slot_cost_modifiers;
-        copy_smallvec!(self.blade_buff_logs, other.blade_buff_logs);
-        copy_smallvec!(self.heart_buff_logs, other.heart_buff_logs);
+        self.blade_buff_logs.clone_from(&other.blade_buff_logs);
+        self.heart_buff_logs.clone_from(&other.heart_buff_logs);
         for i in 0..3 {
-            copy_smallvec!(self.stage_energy[i], other.stage_energy[i]);
+            self.stage_energy[i].clone_from(&other.stage_energy[i]);
         }
-        copy_smallvec!(self.color_transforms, other.color_transforms);
+        self.color_transforms.clone_from(&other.color_transforms);
         self.heart_req_reductions = other.heart_req_reductions;
         self.heart_req_additions = other.heart_req_additions;
-        copy_smallvec!(
-            self.heart_req_reduction_logs,
-            other.heart_req_reduction_logs
-        );
+        self.heart_req_reduction_logs.clone_from(&other.heart_req_reduction_logs);
         self.mulligan_selection = other.mulligan_selection;
-        copy_smallvec!(self.hand_added_turn, other.hand_added_turn);
-        copy_smallvec!(self.restrictions, other.restrictions);
-        copy_smallvec!(self.looked_cards, other.looked_cards);
-        copy_smallvec!(self.revealed_cards, other.revealed_cards);
-        copy_smallvec!(self.live_deck, other.live_deck);
-        copy_smallvec!(self.granted_abilities, other.granted_abilities);
-
-        self.perf_triggered_abilities.clear();
-        if !other.perf_triggered_abilities.is_empty() {
-            self.perf_triggered_abilities.extend(other.perf_triggered_abilities.iter().cloned());
-        }
-
-
-        self.cost_modifiers.clear();
-        if !other.cost_modifiers.is_empty() {
-            self.cost_modifiers
-                .extend(other.cost_modifiers.iter().cloned());
-        }
+        self.hand_added_turn.clone_from(&other.hand_added_turn);
+        self.restrictions.clone_from(&other.restrictions);
+        self.looked_cards.clone_from(&other.looked_cards);
+        self.revealed_cards.clone_from(&other.revealed_cards);
+        self.live_deck.clone_from(&other.live_deck);
+        
+        self.granted_abilities.clone_from(&other.granted_abilities);
+        self.perf_triggered_abilities.clone_from(&other.perf_triggered_abilities);
+        self.cost_modifiers.clone_from(&other.cost_modifiers);
 
         self.flags = other.flags;
         self.cheer_mod_count = other.cheer_mod_count;
         self.yell_count_reduction = other.yell_count_reduction;
-        copy_smallvec!(self.negated_triggers, other.negated_triggers);
+        
+        self.negated_triggers.clone_from(&other.negated_triggers);
+        
         self.prevent_activate = other.prevent_activate;
         self.prevent_baton_touch = other.prevent_baton_touch;
         self.prevent_success_pile_set = other.prevent_success_pile_set;
         self.prevent_play_to_slot_mask = other.prevent_play_to_slot_mask;
         self.played_group_mask = other.played_group_mask;
         self.play_count_this_turn = other.play_count_this_turn;
-        copy_smallvec!(self.yell_cards, other.yell_cards);
+        
+        self.yell_cards.clone_from(&other.yell_cards);
+        
         self.excess_hearts = other.excess_hearts;
         self.excess_hearts_by_color = other.excess_hearts_by_color;
         self.skip_next_activate = other.skip_next_activate;
         self.activated_energy_group_mask = other.activated_energy_group_mask;
         self.activated_member_group_mask = other.activated_member_group_mask;
         self.discarded_this_turn = other.discarded_this_turn;
-        copy_smallvec!(self.baton_source_ids, other.baton_source_ids);
-        copy_smallvec!(self.baton_source_slots, other.baton_source_slots);
+        
+        self.baton_source_ids.clone_from(&other.baton_source_ids);
+        self.baton_source_slots.clone_from(&other.baton_source_slots);
+        
         self.cached_total_hearts = other.cached_total_hearts;
         self.cached_total_blades = other.cached_total_blades;
         self.cached_deck_stats = other.cached_deck_stats;

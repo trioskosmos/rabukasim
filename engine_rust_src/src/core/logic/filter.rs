@@ -166,9 +166,11 @@ impl CardFilter {
 
         // 4. Character ID Filter
         if self.char_id_1 > 0 {
-            let (char_mask, normalized_name, _card_name) = if let Some(m) = db.get_member(cid) {
+            let member = db.get_member(cid);
+            let live = if member.is_none() { db.get_live(cid) } else { None };
+            let (char_mask, normalized_name, _card_name) = if let Some(m) = member {
                 (m.char_mask, Some(&m.normalized_name), Some(&m.name))
-            } else if let Some(l) = db.get_live(cid) {
+            } else if let Some(l) = live {
                 (l.char_mask, Some(&l.normalized_name), Some(&l.name))
             } else {
                 (0, None, None)
@@ -229,6 +231,7 @@ impl CardFilter {
             } else {
                 (0, None)
             };
+            // Optimization: Use bit 8 (Setsuna) from semantic_flags
             if (s_flags & 0x100) == 0 {
                 // Fallback for manual tests that didn't set flags but HAVE name
                 if let Some(n) = name {
@@ -364,6 +367,7 @@ impl CardFilter {
             };
             match self.special_id {
                 1 => {
+                    // Optimization: Bit 9 (Kanon) from semantic_flags
                     if (s_flags & 0x200) == 0 {
                         if let Some(n) = name {
                             if !n.contains("澁谷かのん") {
@@ -375,10 +379,11 @@ impl CardFilter {
                     }
                 }
                 2 => {
-                    // Bit 10 is "Contains MY舞"
+                    // Optimization: Bit 10 is "Contains MY舞"
                     if (s_flags & 0x400) != 0 {
                         return false;
                     }
+                    // Fallback for manual test cards
                     if let Some(n) = name {
                         if n.contains("MY舞") {
                             return false;
@@ -420,16 +425,32 @@ impl CardFilter {
                 return false;
             }
 
-            let name = if let Some(m) = db.get_member(cid) {
-                m.name.as_str()
+            let (char_mask, name) = if let Some(m) = db.get_member(cid) {
+                (m.char_mask, Some(&m.name))
             } else if let Some(l) = db.get_live(cid) {
-                l.name.as_str()
+                (l.char_mask, Some(&l.name))
             } else {
-                ""
+                (0, None)
             };
 
             let mut matched = false;
             for &looked_cid in &state.players[p_idx].revealed_cards {
+                // Optimization: Use char_mask intersection if both have masks
+                if char_mask != 0 {
+                    let looked_mask = if let Some(lm) = db.get_member(looked_cid) {
+                        lm.char_mask
+                    } else if let Some(ll) = db.get_live(looked_cid) {
+                        ll.char_mask
+                    } else {
+                        0
+                    };
+                    if looked_mask != 0 && (char_mask & looked_mask) != 0 {
+                        matched = true;
+                        break;
+                    }
+                }
+
+                // Fallback to string contains
                 let looked_name = if let Some(looked_m) = db.get_member(looked_cid) {
                     &looked_m.name
                 } else if let Some(looked_l) = db.get_live(looked_cid) {
@@ -438,9 +459,11 @@ impl CardFilter {
                     ""
                 };
 
-                if name.contains(looked_name) {
-                    matched = true;
-                    break;
+                if let Some(n) = name {
+                    if n.contains(looked_name) {
+                        matched = true;
+                        break;
+                    }
                 }
             }
             if !matched {

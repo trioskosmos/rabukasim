@@ -371,9 +371,18 @@ pub fn evaluate_player(
     }
     score += stage_val;
 
-    let stage_hearts_board = state.get_total_hearts(p_idx, db, 0);
+    let stage_hearts_board = if p.cached_total_blades > 0 || p.stage.iter().all(|&cid| cid == -1) {
+        p.cached_total_hearts
+    } else {
+        state.get_total_hearts(p_idx, db, 0)
+    };
+    
     let stage_hearts = stage_hearts_board.to_array_u32();
-    let stage_blades = state.get_total_blades(p_idx, db, 0);
+    let stage_blades = if p.cached_total_blades > 0 {
+        p.cached_total_blades
+    } else {
+        state.get_total_blades(p_idx, db, 0)
+    };
 
     let total_hearts: u32 = stage_hearts.iter().sum();
     let heart_val = total_hearts as f32 * cfg.weight_heart;
@@ -409,11 +418,10 @@ pub fn evaluate_player(
     let draw_potential = stats.avg_draw * expected_yell_count;
     expected_yell_count += draw_potential * cfg.weight_draw_potential;
 
-    let expected_yell_hearts: Vec<f32> = stats
-        .avg_hearts
-        .iter()
-        .map(|&h| h * expected_yell_count)
-        .collect();
+    let mut expected_yell_hearts_array = [0.0; 7];
+    for (i, &h) in stats.avg_hearts.iter().enumerate() {
+        expected_yell_hearts_array[i] = h * expected_yell_count;
+    }
     let expected_notes = stats.avg_notes * expected_yell_count;
 
     let mut max_prob = 0.0;
@@ -423,7 +431,7 @@ pub fn evaluate_player(
                 let prob = calculate_live_success_prob(
                     l,
                     &stage_hearts,
-                    &expected_yell_hearts,
+                    &expected_yell_hearts_array, // Pass array directly
                     p.heart_req_reductions.to_array(),
                 );
                 let prob_val = prob * 2000.0;
@@ -655,60 +663,11 @@ fn calculate_hand_quality(state: &GameState, db: &CardDatabase, p_idx: usize) ->
 
 fn calculate_card_potential(cid: i32, db: &CardDatabase, max_energy: u32) -> f32 {
     if let Some(m) = db.get_member(cid) {
-        let mut score = 0.0;
-        let stat_sum: u32 = m.hearts.iter().map(|&x| x as u32).sum();
-        score += (m.blades as f32 * 10.0 + stat_sum as f32) / (m.cost as f32 + 1.0);
+        let mut score = m.base_potential;
 
         if m.cost > max_energy {
             let diff = m.cost - max_energy;
             score -= diff as f32 * 0.5;
-        }
-
-        use crate::core::logic::{
-            FLAG_BOOST, FLAG_BUFF, FLAG_CHARGE, FLAG_DRAW, FLAG_RECOVER, FLAG_REDUCE, FLAG_SEARCH,
-            FLAG_TEMPO, FLAG_TRANSFORM, FLAG_WIN_COND,
-        };
-
-        let f = m.ability_flags;
-        if (f & FLAG_DRAW) != 0 {
-            score += 5.0;
-        }
-        if (f & FLAG_SEARCH) != 0 {
-            score += 5.0;
-        }
-        if (f & FLAG_RECOVER) != 0 {
-            score += 0.5;
-        }
-        if (f & FLAG_BUFF) != 0 {
-            score += 0.4;
-        }
-        if (f & FLAG_CHARGE) != 0 {
-            score += 1.2;
-        }
-        if (f & FLAG_TEMPO) != 0 {
-            score += 0.3;
-        }
-        if (f & FLAG_REDUCE) != 0 {
-            score += 0.6;
-        }
-        if (f & FLAG_BOOST) != 0 {
-            score += 0.6;
-        }
-        if (f & FLAG_TRANSFORM) != 0 {
-            score += 0.4;
-        }
-        if (f & FLAG_WIN_COND) != 0 {
-            score += 1.0;
-        }
-
-        if (m.synergy_flags & crate::core::logic::SYN_FLAG_GROUP) != 0 {
-            score += 0.3;
-        }
-        if (m.synergy_flags & crate::core::logic::SYN_FLAG_CENTER) != 0 {
-            score += 0.5;
-        }
-        if (m.cost_flags & crate::core::logic::COST_FLAG_TAP as u32) != 0 {
-            score += 0.2;
         }
 
         score

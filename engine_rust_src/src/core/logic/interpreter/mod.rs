@@ -344,6 +344,26 @@ pub fn resolve_bytecode(
                     real_op, a
                 );
             }
+            let accumulated_count = match real_op {
+                crate::core::generated_constants::C_COUNT_STAGE
+                | crate::core::generated_constants::C_COUNT_HAND
+                | crate::core::generated_constants::C_COUNT_DISCARD
+                | crate::core::generated_constants::C_COUNT_ENERGY
+                | crate::core::generated_constants::C_COUNT_HEARTS
+                | crate::core::generated_constants::C_COUNT_BLADES
+                | crate::core::generated_constants::C_COUNT_GROUP
+                | crate::core::generated_constants::C_COUNT_SUCCESS_LIVE
+                | 307 => Some(conditions::resolve_count(
+                    state,
+                    db,
+                    real_op,
+                    a as u64,
+                    target_slot,
+                    &frame.ctx,
+                    0,
+                )),
+                _ => None,
+            };
             let passed = if !executor.cond {
                 false // Already failed, no need to check
             } else {
@@ -358,6 +378,9 @@ pub fn resolve_bytecode(
                     0,
                 )
             };
+            if let Some(count) = accumulated_count {
+                frame.ctx.v_accumulated = count as i16;
+            }
             if state.debug.debug_mode {
                 let result_line = format!(
                     "BC_RESULT: ip={:<3} {}",
@@ -551,6 +574,10 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             };
 
             if let Some(t) = res_trigger {
+                if !state.interaction_stack.is_empty() {
+                    state.clear_execution_id();
+                    continue;
+                }
                 let was_cancelled = state.ui.cancelled_execution_ids.remove(&execution_id);
                 if was_cancelled {
                     state.clear_execution_id();

@@ -147,40 +147,62 @@ impl GameState {
     }
 
     pub fn card_matches_filter_with_ctx(&self, db: &CardDatabase, cid: i32, filter_attr: u64, ctx: &AbilityContext) -> bool {
-        self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, ctx, false)
+        self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, None, ctx, false)
     }
 
     pub fn card_matches_filter_with_ctx_logs(&self, db: &CardDatabase, cid: i32, filter_attr: u64, ctx: &AbilityContext) -> bool {
-        self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, ctx, true)
+        self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, None, ctx, true)
     }
 
-    fn card_matches_filter_with_ctx_internal(&self, db: &CardDatabase, cid: i32, filter_attr: u64, ctx: &AbilityContext, debug: bool) -> bool {
+    pub fn card_matches_filter_with_struct(&self, db: &CardDatabase, cid: i32, filter: &CardFilter, ctx: &AbilityContext) -> bool {
+        self.card_matches_filter_with_ctx_internal(db, cid, 0, Some(filter), ctx, false)
+    }
+
+    fn card_matches_filter_with_ctx_internal(&self, db: &CardDatabase, cid: i32, filter_attr: u64, filter_struct: Option<&CardFilter>, ctx: &AbilityContext, debug: bool) -> bool {
         if cid == -1 { return false; }
-        if filter_attr == 0 { return true; }
+        if filter_attr == 0 && filter_struct.is_none() { return true; }
 
-        let filter = CardFilter::from_attr(filter_attr as i64);
+        let filter_storage;
+        let filter = if let Some(f) = filter_struct {
+            f
+        } else {
+            filter_storage = CardFilter::from_attr(filter_attr as i64);
+            &filter_storage
+        };
+        
         let needs_dynamic_hearts = filter.color_mask != 0;
+        
+        // Fast Path: If the filter only checks static attributes (ID, Type, Group, Unit, Char)
+        // and doesn't require stage-specific state (tapped, hearts, ownership, or NOT_SELF),
+        // we can skip the expensive stage scanning loop.
+        let requires_stage_scan = needs_dynamic_hearts 
+            || filter.is_tapped 
+            || filter.target_player != 0 
+            || filter.special_id == 3 // NOT_SELF
+            || filter.zone_mask == 4; // Explicit STAGE check
 
-        for p in 0..2 {
-            for s in 0..3 {
-                if self.core.players[p].stage[s] == cid {
-                    let s_idx = s as i16;
-                    let p_idx = p as u8;
+        if requires_stage_scan {
+            for p in 0..2 {
+                for s in 0..3 {
+                    if self.core.players[p].stage[s] == cid {
+                        let s_idx = s as i16;
+                        let p_idx = p as u8;
 
-                    let tapped = self.core.players[p].is_tapped(s);
-                    let h_arr = if needs_dynamic_hearts {
-                        self.get_effective_hearts(p, s, db, 0).to_array()
-                    } else {
-                        [0u8; 7]
-                    };
+                        let tapped = self.core.players[p].is_tapped(s);
+                        let h_arr = if needs_dynamic_hearts {
+                            self.get_effective_hearts(p, s, db, 0).to_array()
+                        } else {
+                            [0u8; 7]
+                        };
 
-                    let res = if debug {
-                        filter.matches_with_logs(db, self, cid, ctx, Some((p_idx, s_idx)), tapped, Some(&h_arr))
-                    } else {
-                        filter.matches(self, db, cid, Some((p_idx, s_idx)), tapped, Some(&h_arr), ctx)
-                    };
-                    if res {
-                        return true;
+                        let res = if debug {
+                            filter.matches_with_logs(db, self, cid, ctx, Some((p_idx, s_idx)), tapped, Some(&h_arr))
+                        } else {
+                            filter.matches(self, db, cid, Some((p_idx, s_idx)), tapped, Some(&h_arr), ctx)
+                        };
+                        if res {
+                            return true;
+                        }
                     }
                 }
             }

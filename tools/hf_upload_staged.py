@@ -3,7 +3,7 @@ import os
 from huggingface_hub import HfApi
 
 # Configuration
-REPO_ID = "trioskosmos/lovecasim"
+REPO_ID = "trioskosmos/rabukasim"
 TOKEN = os.environ.get("HF_TOKEN")
 
 
@@ -33,6 +33,14 @@ def upload_to_hf():
                 "node_modules/*",
                 "*.lock",
                 "logs/*",
+                "hf_space/*",
+                ".uv-cache/*",
+                ".uv-cache-work/*",
+                ".uv_cache/*",
+                "tmp/*",
+                ".kilocode/*",
+                ".python/*",
+                "engine_rust_src/target/*",
             ],
         )
         print("Upload complete!")

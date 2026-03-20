@@ -88,11 +88,13 @@ impl GameState {
     }
 
     pub fn is_trigger_negated(&self, p_idx: usize, cid: i32, trigger_type: TriggerType) -> bool {
-        let player = &self.core.players[p_idx];
-        player
+        let negated = self.core.players[p_idx]
             .negated_triggers
             .iter()
-            .any(|(t_cid, t_trigger, _)| *t_cid == cid && *t_trigger == trigger_type)
+            .find(|entry| entry.0 == cid && entry.1 == trigger_type)
+            .map(|entry| entry.2)
+            .unwrap_or_default() > 0;
+        negated
     }
 
     pub fn trigger_abilities(
@@ -179,8 +181,9 @@ impl GameState {
         ctx: &AbilityContext,
         start_ab_idx: usize,
     ) {
+        use smallvec::SmallVec;
         // Collect all potential triggers
-        let mut queue = Vec::new();
+        let mut queue = SmallVec::<[(i32, i32, u16, AbilityContext, bool); 8]>::new();
         let p_idx = ctx.player_id as usize;
 
         // Stage Members
@@ -225,8 +228,9 @@ impl GameState {
         }
         self.trigger_depth += 1;
 
+        use smallvec::SmallVec;
         // Collect all potential triggers
-        let mut queue = Vec::new();
+        let mut queue = SmallVec::<[(i32, i32, u16, AbilityContext, bool); 8]>::new();
         let p_idx = ctx.player_id as usize;
 
         // 1. Stage Members
@@ -379,7 +383,7 @@ impl GameState {
         ctx: &AbilityContext,
         start_ab_idx: usize,
         is_live: bool,
-        queue: &mut Vec<(i32, i32, u16, AbilityContext, bool)>,
+        queue: &mut smallvec::SmallVec<[(i32, i32, u16, AbilityContext, bool); 8]>,
         slot_idx: i16,
     ) {
         if cid < 0 {
@@ -430,15 +434,15 @@ impl GameState {
                     if trigger != ctx.trigger_type || ab_idx >= start_ab_idx {
                         // Check and consume negation
                         let mut negated = false;
-                        if let Some(n_idx) = self.core.players[p_idx]
+                        if let Some(entry) = self.core.players[p_idx]
                             .negated_triggers
-                            .iter()
-                            .position(|&(t_cid, t_trig, count)| {
-                                t_cid == cid && t_trig == trigger && count > 0
-                            })
+                            .iter_mut()
+                            .find(|entry| entry.0 == cid && entry.1 == trigger)
                         {
-                            self.core.players[p_idx].negated_triggers[n_idx].2 -= 1;
-                            negated = true;
+                            if entry.2 > 0 {
+                                negated = true;
+                                entry.2 -= 1;
+                            }
                         }
 
                         if negated {
@@ -463,36 +467,36 @@ impl GameState {
 
         // --- PHASE 3: Granted (Triggered) Abilities Audit Fix ---
         if !is_live {
-            for i in 0..self.core.players[p_idx].granted_abilities.len() {
-                let (target_cid, source_cid, ab_idx) =
-                    self.core.players[p_idx].granted_abilities[i];
-                if target_cid == cid {
-                    if let Some(src_m) = db.get_member(source_cid) {
-                        if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
-                            if ab.trigger == trigger {
-                                if !resolution_trigger_matches_context(trigger, &ab.raw_text, ctx.trigger_type) {
-                                    continue;
-                                }
-                                if (trigger == TriggerType::OnPlay
-                                    || trigger == TriggerType::OnLeaves)
-                                    && (!(
-                                        slot_idx >= 0
-                                            && ctx.area_idx >= 0
-                                            && slot_idx == ctx.area_idx
-                                    ))
-                                    && !(slot_idx < 0 && cid == ctx.source_card_id)
-                                {
-                                    if slot_idx >= 0
-                                        && ctx.area_idx >= 0
-                                        && cid == ctx.source_card_id
-                                        && slot_idx != ctx.area_idx
-                                    {
-                                        continue;
-                                    }
-                                    continue;
-                                }
-                                queue.push((cid, source_cid, ab_idx as u16, ctx.clone(), false));
+            for &(target_cid, source_cid, ab_idx) in &self.core.players[p_idx].granted_abilities {
+                if target_cid != cid {
+                    continue;
+                }
+
+                if let Some(src_m) = db.get_member(source_cid) {
+                    if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                        if ab.trigger == trigger {
+                            if !resolution_trigger_matches_context(trigger, &ab.raw_text, ctx.trigger_type) {
+                                continue;
                             }
+                            if (trigger == TriggerType::OnPlay
+                                || trigger == TriggerType::OnLeaves)
+                                && (!(
+                                    slot_idx >= 0
+                                        && ctx.area_idx >= 0
+                                        && slot_idx == ctx.area_idx
+                                ))
+                                && !(slot_idx < 0 && cid == ctx.source_card_id)
+                            {
+                                if slot_idx >= 0
+                                    && ctx.area_idx >= 0
+                                    && cid == ctx.source_card_id
+                                    && slot_idx != ctx.area_idx
+                                {
+                                    continue;
+                                }
+                                continue;
+                            }
+                            queue.push((cid, source_cid, ab_idx as u16, ctx.clone(), false));
                         }
                     }
                 }

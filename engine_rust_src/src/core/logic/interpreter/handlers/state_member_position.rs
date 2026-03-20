@@ -80,6 +80,7 @@ pub fn handle_add_stage_energy(
     HandlerResult::Continue
 }
 
+
 pub fn handle_grant_ability(
     state: &mut GameState,
     p_idx: usize,
@@ -100,10 +101,10 @@ pub fn handle_grant_ability(
         return HandlerResult::Continue;
     }
 
-    for ab_idx in 0..v.max(0) {
+    if v >= 0 {
         state.players[p_idx]
             .granted_abilities
-            .push((target_cid, source_cid, ab_idx as u16));
+            .push((target_cid, source_cid, v as u16));
     }
     HandlerResult::Continue
 }

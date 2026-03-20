@@ -8,7 +8,7 @@ pub fn resolve_select_choice(
     ctx: &mut AbilityContext,
     instr_ip: usize,
     op: i32,
-    _v: i32,
+    v: i32,
     a: i64,
     s: i32,
     _p_idx: usize,
@@ -19,6 +19,12 @@ pub fn resolve_select_choice(
     let choice = ctx.choice_index as i32;
     let source_zone = slot_info.source_zone as u8;
     let filter_attr = a as u64;
+
+    if supports_partial_completion && choice == CHOICE_DONE as i32 {
+        ctx.choice_index = -1;
+        ctx.v_remaining = -1;
+        return HandlerResult::Continue;
+    }
 
     if source_zone == 6 || source_zone == 7 {
         ctx.target_slot = choice as i16;
@@ -54,6 +60,27 @@ pub fn resolve_select_choice(
     }
 
     if supports_partial_completion && !ctx.selected_cards.is_empty() {
+        let current_selection_count = match source_zone {
+            6 => state.players[target_player]
+                .hand
+                .iter()
+                .copied()
+                .filter(|cid| *cid >= 0 && ctx.selected_cards.contains(cid))
+                .count(),
+            7 => state.players[target_player]
+                .discard
+                .iter()
+                .copied()
+                .filter(|cid| *cid >= 0 && ctx.selected_cards.contains(cid))
+                .count(),
+            _ => state.players[target_player]
+                .stage
+                .iter()
+                .copied()
+                .filter(|cid| *cid >= 0 && ctx.selected_cards.contains(cid))
+                .count(),
+        };
+
         let remaining_candidates = match source_zone {
             6 => state.players[target_player]
                 .hand
@@ -87,7 +114,26 @@ pub fn resolve_select_choice(
                 .count(),
         };
 
-        if remaining_candidates == 0 {
+            let remaining_picks = (v as usize).saturating_sub(current_selection_count);
+
+        if remaining_picks > 0 && remaining_candidates > 0 {
+            ctx.choice_index = -1;
+            ctx.v_remaining = remaining_picks as i16;
+            if matches!(suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                instr_ip,
+                op,
+                s,
+                ChoiceType::SelectMember,
+                filter_attr,
+                remaining_picks as i16,
+            ), HandlerResult::Suspend) {
+                return HandlerResult::Suspend;
+            }
+        } else if remaining_picks > 0 && current_selection_count == 1 {
             if matches!(suspend_choice(
                 state,
                 db,

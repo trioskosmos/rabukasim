@@ -58,6 +58,16 @@ impl HandlerRegistry {
         let v = instr.v;
         let a = instr.a;
         let s = instr.raw_s;
+        eprintln!(
+            "[TRACE] DISPATCH: op={}, v={}, a={}, s={}, player_id={}, choice_index={}, phase={:?}",
+            op,
+            v,
+            a,
+            s,
+            ctx.player_id,
+            ctx.choice_index,
+            state.phase,
+        );
         if !state.ui.silent {
             println!("[DEBUG] DISPATCH: op={} v={} a={} s={}", op, v, a, s);
         }

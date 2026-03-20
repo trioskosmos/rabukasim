@@ -626,8 +626,12 @@ impl ResponseGenerator {
             }
             _ => {
                 // Stage (0-2) or Default
+                let exclude_selected = pi.choice_type != ChoiceType::TapMSelect;
                 for (i, &cid) in player.stage.iter().enumerate() {
-                    if cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx) {
+                    if cid >= 0
+                        && (!exclude_selected || !pi.ctx.selected_cards.contains(&cid))
+                        && state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx)
+                    {
                         receiver.add_action(
                             (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                         );

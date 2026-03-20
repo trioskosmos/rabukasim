@@ -471,282 +471,7 @@ fn state_cache_key(state: &GameState) -> u64 {
 
 pub struct TurnSequencer;
 
-// ═════════════════════════════════════════════════════════════════════════════
-// MODULE: MCTS IMPLEMENTATION
-// ═════════════════════════════════════════════════════════════════════════════
-
-/// MCTS Node for Monte Carlo Tree Search
-#[allow(dead_code)]
-#[derive(Clone)]
-struct MctsNode {
-    state: GameState,
-    action: Option<i32>,
-    parent: Option<usize>,
-    children: Vec<usize>,
-    visits: u32,
-    total_score: f32,
-    untried_actions: Vec<i32>,
-    depth: usize,
-}
-
-#[allow(dead_code)]
-impl MctsNode {
-    fn new(state: GameState, action: Option<i32>, parent: Option<usize>, db: &CardDatabase) -> Self {
-        // Get legal actions for this state
-        let legal_ids = state.get_legal_action_ids(db);
-
-        Self {
-            state,
-            action,
-            parent,
-            children: Vec::new(),
-            visits: 0,
-            total_score: 0.0,
-            untried_actions: legal_ids,
-            depth: 0, // Not used for limiting anymore
-        }
-    }
-
-    fn ucb1(&self, parent_visits: u32) -> f32 {
-        if self.visits == 0 {
-            f32::INFINITY
-        } else {
-            let exploitation = self.total_score / self.visits as f32;
-            let exploration = MCTS_EXPLORATION_CONST * (parent_visits as f32 / self.visits as f32).sqrt();
-            exploitation + exploration
-        }
-    }
-
-    fn is_fully_expanded(&self) -> bool {
-        self.untried_actions.is_empty()
-    }
-
-    fn average_score(&self) -> f32 {
-        if self.visits == 0 {
-            0.0
-        } else {
-            self.total_score / self.visits as f32
-        }
-    }
-}
-
-/// MCTS Tree structure
-#[allow(dead_code)]
-struct MctsTree {
-    nodes: Vec<MctsNode>,
-    db: CardDatabase,
-}
-
-#[allow(dead_code)]
-impl MctsTree {
-    fn new(root_state: GameState, db: CardDatabase) -> Self {
-        let mut nodes = Vec::new();
-
-        // Get legal actions for root with actual db
-        let legal_ids = root_state.get_legal_action_ids(&db);
-
-        let root = MctsNode {
-            state: root_state,
-            action: None,
-            parent: None,
-            children: Vec::new(),
-            visits: 0,
-            total_score: 0.0,
-            untried_actions: legal_ids,
-            depth: 0,
-        };
-
-        nodes.push(root);
-
-        Self { nodes, db }
-    }
-
-    fn root_index(&self) -> usize {
-        0
-    }
-
-    fn select_child(&self, node_idx: usize) -> Option<usize> {
-        let node = &self.nodes[node_idx];
-        if node.children.is_empty() {
-            return None;
-        }
-
-        let parent_visits = node.visits;
-        let mut best_idx = None;
-        let mut best_ucb = f32::NEG_INFINITY;
-
-        for &child_idx in &node.children {
-            let ucb = self.nodes[child_idx].ucb1(parent_visits);
-            if ucb > best_ucb {
-                best_ucb = ucb;
-                best_idx = Some(child_idx);
-            }
-        }
-
-        best_idx
-    }
-
-    fn expand(&mut self, parent_idx: usize) -> Option<usize> {
-        let parent = &mut self.nodes[parent_idx];
-
-        if parent.untried_actions.is_empty() {
-            return None;
-        }
-
-        // Pick a random untried action
-        let action_idx = parent.untried_actions.len() - 1;
-        let action = parent.untried_actions.remove(action_idx);
-
-        // Apply action to create new state
-        let mut new_state = parent.state.clone();
-        new_state.ui.silent = true;
-
-        let success = new_state.step(&self.db, action).is_ok();
-
-        if !success {
-            // Action failed, create a terminal node with low score
-            let new_node = MctsNode {
-                state: new_state,
-                action: Some(action),
-                parent: Some(parent_idx),
-                children: Vec::new(),
-                visits: 1,
-                total_score: -100.0, // Failed action gets negative score
-                untried_actions: Vec::new(),
-                depth: parent.depth + 1,
-            };
-
-            let new_idx = self.nodes.len();
-            self.nodes.push(new_node);
-            self.nodes[parent_idx].children.push(new_idx);
-            return Some(new_idx);
-        }
-
-        // Get legal actions for the new state (no depth limit for MCTS)
-        let new_legal_ids = new_state.get_legal_action_ids(&self.db);
-
-        let new_node = MctsNode {
-            state: new_state,
-            action: Some(action),
-            parent: Some(parent_idx),
-            children: Vec::new(),
-            visits: 0,
-            total_score: 0.0,
-            untried_actions: new_legal_ids,
-            depth: parent.depth + 1,
-        };
-
-        let new_idx = self.nodes.len();
-        self.nodes.push(new_node);
-        self.nodes[parent_idx].children.push(new_idx);
-
-        Some(new_idx)
-    }
-
-    fn simulate(&self, node_idx: usize) -> f32 {
-        let node = &self.nodes[node_idx];
-
-        // Simulate to the end of the turn (Main + LiveSet phases)
-        let mut sim_state = node.state.clone();
-        sim_state.ui.silent = true;
-
-        // Use random playout for the rest of the turn
-        thread_local! {
-            static LOCAL_RNG: std::cell::RefCell<SmallRng> = std::cell::RefCell::new(SmallRng::from_os_rng());
-        }
-        
-        LOCAL_RNG.with(|rng_cell| {
-            let mut rng = rng_cell.borrow_mut();
-            let mut steps = 0;
-            let max_steps = 100; // Safety limit for simulation
-
-            while sim_state.phase == Phase::Main && steps < max_steps {
-                let legal = sim_state.get_legal_action_ids(&self.db);
-                if legal.is_empty() {
-                    break;
-                }
-                if let Some(&action) = legal.choose(&mut *rng) {
-                    let _ = sim_state.step(&self.db, action);
-                }
-                steps += 1;
-            }
-        });
-
-        // Handle LiveSet phase
-        if sim_state.phase == Phase::LiveSet {
-            // Use the best liveset selection for simulation
-            let weights = TurnSequencer::config_snapshot().weights;
-            let eval_ctx = EvaluationContext::new(&sim_state, &self.db);
-            let (ls_actions, _, _) = TurnSequencer::find_best_liveset_selection_internal(&sim_state, &self.db, &weights, &eval_ctx);
-            for &act in &ls_actions {
-                let _ = sim_state.step(&self.db, act);
-            }
-        }
-
-        // Evaluate final state
-        let (board_score, live_ev) = TurnSequencer::evaluate_state_internal(&sim_state, &self.db);
-        board_score + live_ev
-    }
-
-    fn backpropagate(&mut self, node_idx: usize, score: f32) {
-        let mut idx = Some(node_idx);
-        while let Some(i) = idx {
-            self.nodes[i].visits += 1;
-            self.nodes[i].total_score += score;
-            idx = self.nodes[i].parent;
-        }
-    }
-
-    fn get_best_sequence(&self) -> Vec<i32> {
-        let root = &self.nodes[self.root_index()];
-        if root.children.is_empty() {
-            return Vec::new();
-        }
-
-        // Find the child with highest average score
-        let mut best_child = root.children[0];
-        let mut best_avg = f32::NEG_INFINITY;
-
-        for &child_idx in &root.children {
-            let avg = self.nodes[child_idx].average_score();
-            if avg > best_avg {
-                best_avg = avg;
-                best_child = child_idx;
-            }
-        }
-
-        // Build sequence by following best children
-        let mut sequence = Vec::new();
-        let mut current_idx = best_child;
-
-        while !self.nodes[current_idx].children.is_empty() {
-            if let Some(action) = self.nodes[current_idx].action {
-                sequence.push(action);
-            }
-
-            // Continue with best child
-            let mut best_next = self.nodes[current_idx].children[0];
-            let mut best_next_avg = f32::NEG_INFINITY;
-
-            for &child_idx in &self.nodes[current_idx].children {
-                let avg = self.nodes[child_idx].average_score();
-                if avg > best_next_avg {
-                    best_next_avg = avg;
-                    best_next = child_idx;
-                }
-            }
-
-            current_idx = best_next;
-        }
-
-        // Add final action
-        if let Some(action) = self.nodes[current_idx].action {
-            sequence.push(action);
-        }
-
-        sequence
-    }
-}
+// MCTS logic moved to core/mcts.rs
 
 #[derive(Clone)]
 pub struct SequenceResult {
@@ -1106,9 +831,10 @@ impl TurnSequencer {
         let mut actions = SmallVec::<[i32; 64]>::new();
         state.generate_legal_actions(db, state.current_player as usize, &mut actions);
 
+        let mut next_state = state.clone();
         let mut total = 1usize;
         for action in actions.into_iter().filter(|&action| action != ACTION_BASE_PASS) {
-            let mut next_state = state.clone();
+            next_state.copy_from(state);
             if next_state.step(db, action).is_ok() {
                 total += Self::count_main_end_sequences(&next_state, db, depth.saturating_sub(1));
             }
@@ -1131,13 +857,14 @@ impl TurnSequencer {
         let mut actions = SmallVec::<[i32; 64]>::new();
         state.generate_legal_actions(db, state.current_player as usize, &mut actions);
 
+        let mut next_state = state.clone();
         let mut total = 1usize;
         for action in actions.into_iter().filter(|&action| action != ACTION_BASE_PASS) {
             if total > cap {
                 return cap + 1;
             }
 
-            let mut next_state = state.clone();
+            next_state.copy_from(state);
             if next_state.step(db, action).is_err() {
                 continue;
             }
@@ -1190,13 +917,11 @@ impl TurnSequencer {
     #[allow(dead_code)]
     #[inline]
     fn board_state_hash(state: &GameState, p_idx: usize) -> u64 {
-        use std::collections::hash_map::DefaultHasher;
         use std::hash::Hasher;
-        let mut hasher = DefaultHasher::new();
-        
+        let mut hasher = FxHasher::default();
+
         // Hash stage (which cards are placed)
-        for &cid in &state.players[p_idx].stage {
-            hasher.write_i32(cid);
+        for &cid in &state.players[p_idx].stage {            hasher.write_i32(cid);
         }
         
         // Hash hand count (not individual cards, just total)
@@ -1219,10 +944,7 @@ impl TurnSequencer {
     ) -> (Vec<i32>, f32, (f32, f32), usize) {
         let mut node_count = 1;
 
-        if depth >= Self::config_snapshot().search.max_dfs_depth {
-            let (board, live) = Self::evaluate_state_for_player_with_weights_ctx(state, db, root_player, weights, eval_ctx);
-            return (Vec::new(), board + live, (board, live), 1);
-        }
+        // `depth` is the remaining depth (counts down to 0). No need to check config_snapshot here.
 
         if state.phase != Phase::Main {
             let (val, brk, nodes) = Self::evaluate_stop_state_with_nodes(state, db, root_player, weights, eval_ctx);
@@ -1249,8 +971,9 @@ impl TurnSequencer {
         let mut actions = SmallVec::<[i32; 64]>::new();
         state.generate_legal_actions(db, state.current_player as usize, &mut actions);
 
+        let mut next_state = state.clone();
         for action in actions.into_iter().filter(|&action| action != ACTION_BASE_PASS) {
-            let mut next_state = state.clone();
+            next_state.copy_from(state);
             if next_state.step(db, action).is_err() {
                 continue;
             }
@@ -1432,9 +1155,10 @@ impl TurnSequencer {
         let max_paths = 1000;
         let paths_to_try = legal_actions.len().min(max_paths);
 
+        let mut sim_state = state.clone();
         for i in 0..paths_to_try {
             let action = legal_actions[i];
-            let mut sim_state = state.clone();
+            sim_state.copy_from(state);
             sim_state.ui.silent = true;
 
             if sim_state.step(db, action).is_ok() {
@@ -1486,9 +1210,9 @@ impl TurnSequencer {
             return;
         }
 
-        // Try each LiveSet action
+        let mut sim_state = state.clone();
         for &action in &legal_actions {
-            let mut sim_state = state.clone();
+            sim_state.copy_from(state);
             sim_state.ui.silent = true;
 
             if sim_state.step(db, action).is_ok() {
@@ -1539,31 +1263,36 @@ impl TurnSequencer {
                 curr_state.generate_legal_actions(db, curr_state.current_player as usize, &mut legal_actions);
                 let mut candidates = Vec::new();
 
+                let mut scratch_state = curr_state.clone();
+                let mut scratch_final = curr_state.clone();
+
                 for action in legal_actions {
-                    let mut next_state = curr_state.clone();
-                    if next_state.step(db, action).is_ok() {
-                        if next_state.phase != Phase::Main {
+                    scratch_state.copy_from(&curr_state);
+                    if scratch_state.step(db, action).is_ok() {
+                        if scratch_state.phase != Phase::Main {
                             // Evaluate transition to LiveSet
-                            let mut final_state = next_state.clone();
-                            if final_state.phase == Phase::LiveSet {
-                                let (ls_actions, _, _) = Self::find_best_liveset_selection_with_weights(&final_state, db, weights, eval_ctx);
+                            scratch_final.copy_from(&scratch_state);
+                            if scratch_final.phase == Phase::LiveSet {
+                                let (ls_actions, _, _) = Self::find_best_liveset_selection_with_weights(&scratch_final, db, weights, eval_ctx);
                                 for &ls_act in &ls_actions {
-                                    let _ = final_state.step(db, ls_act);
+                                    let _ = scratch_final.step(db, ls_act);
                                 }
                             }
-                            let (b, l) = Self::evaluate_state_for_player_with_weights_ctx(&final_state, db, root_player, weights, eval_ctx);
-                            candidates.push((next_state, action, b + l, (b, l)));
+                            let (b, l) = Self::evaluate_state_for_player_with_weights_ctx(&scratch_final, db, root_player, weights, eval_ctx);
+                            candidates.push((action, b + l, (b, l)));
                         } else {
                             // Immediate heuristic for move ordering
-                            let (b, l) = Self::evaluate_state_for_player_with_weights_ctx(&next_state, db, root_player, weights, eval_ctx);
-                            candidates.push((next_state, action, b + l, (b, l)));
+                            let (b, l) = Self::evaluate_state_for_player_with_weights_ctx(&scratch_state, db, root_player, weights, eval_ctx);
+                            candidates.push((action, b + l, (b, l)));
                         }
                     }
                 }
 
                 // Sort and take top beam_width
-                candidates.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
-                for (ns, act, val, brk) in candidates.into_iter().take(beam_width) {
+                candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+                for (act, val, brk) in candidates.into_iter().take(beam_width) {
+                    let mut ns = curr_state.clone();
+                    let _ = ns.step(db, act); // apply the candidate action to get the simulated winner
                     let mut next_seq = seq.clone();
                     next_seq.push(act);
                     next_beam.push((ns, next_seq, val, brk));

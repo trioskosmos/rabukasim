@@ -367,6 +367,7 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
         "rule_log",
         "turn_history",
         "current_resolving_ability",
+        "current_resolving_ability_frame",
         "current_resolving_member",
         "current_resolving_member_id",
         "looked_cards",
@@ -426,6 +427,7 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
         # Track currently resolving ability for context
 
         self.current_resolving_ability: Optional[Ability] = None
+        self.current_resolving_ability_frame: Optional[Dict[str, Any]] = None
 
         self.current_resolving_member: Optional[str] = None  # Member name
 
@@ -598,6 +600,7 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
         self.rule_log.clear()
 
         self.current_resolving_ability = None
+        self.current_resolving_ability_frame = None
 
         self.current_resolving_member = None
 
@@ -664,6 +667,7 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
         new.rule_log = list(self.rule_log)
 
         new.current_resolving_ability = self.current_resolving_ability
+        new.current_resolving_ability_frame = self.current_resolving_ability_frame
 
         new.current_resolving_member = self.current_resolving_member
 

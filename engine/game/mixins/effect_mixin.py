@@ -119,12 +119,14 @@ class EffectMixin:
 
         return handle_cost(self, player_id, ability, context)
 
+    def _play_automatic_ability(self, player_id: int, ability: Ability, context: Dict[str, Any] = {}) -> None:
         """Resolve an automatic ability (Rule 9.5)."""
         if self.verbose:
             print(f"DEBUG: Entering _play_automatic_ability for player {player_id}")
         p = self.players[player_id]
         cid = context.get("card_id", -1)
         self.current_resolving_ability = ability
+        self.current_resolving_ability_frame = getattr(ability, "sparse_frame_index", None)
         area = context.get("area", -1)
         if area >= 0 and p.stage[area] >= 0:
             cid = p.stage[area]
@@ -199,6 +201,7 @@ class EffectMixin:
 
         if not self.pending_choices:
             self.current_resolving_ability = None
+            self.current_resolving_ability_frame = None
             self.current_resolving_member = None
             self.current_resolving_member_id = -1
             self.looked_cards = []  # Clear transient looked cards

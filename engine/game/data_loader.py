@@ -1,11 +1,38 @@
 import json
 import os
+from pathlib import Path
 from typing import Any, Dict, Tuple
 
 from pydantic import TypeAdapter
 
 from engine.models.ability import AbilityCostType, Cost
 from engine.models.card import EnergyCard, LiveCard, MemberCard
+
+
+_SPARSE_INDEX_CACHE: Dict[tuple[str, tuple[int, ...]], Dict[str, Any]] | None = None
+
+
+def _load_sparse_ability_index() -> Dict[tuple[str, tuple[int, ...]], Dict[str, Any]]:
+    global _SPARSE_INDEX_CACHE
+    if _SPARSE_INDEX_CACHE is not None:
+        return _SPARSE_INDEX_CACHE
+
+    index_path = Path(os.getcwd()) / "data" / "ability_frame_index.json"
+    cache: Dict[tuple[str, tuple[int, ...]], Dict[str, Any]] = {}
+    if index_path.exists():
+        try:
+            with index_path.open("r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+            for entry in payload.get("abilities", []):
+                trigger = str(entry.get("trigger", ""))
+                bytecode = tuple(int(word) for word in entry.get("bytecode", []))
+                if trigger and bytecode:
+                    cache[(trigger, bytecode)] = entry
+        except Exception:
+            cache = {}
+
+    _SPARSE_INDEX_CACHE = cache
+    return cache
 
 
 class CardDataLoader:
@@ -49,6 +76,21 @@ class CardDataLoader:
                             "optional": is_optional,
                         }
                     ]
+
+    def _attach_sparse_frame_index(self, cards: Dict[int, Any]) -> None:
+        sparse_index = _load_sparse_ability_index()
+        if not sparse_index:
+            return
+
+        for card in cards.values():
+            for ability in getattr(card, "abilities", []):
+                trigger_name = getattr(getattr(ability, "trigger", None), "name", "")
+                bytecode = tuple(int(word) for word in getattr(ability, "bytecode", []) or [])
+                if not trigger_name or not bytecode:
+                    continue
+                entry = sparse_index.get((trigger_name, bytecode))
+                if entry is not None:
+                    setattr(ability, "sparse_frame_index", entry)
 
     def load(self) -> Tuple[Dict[int, MemberCard], Dict[int, LiveCard], Dict[int, Any]]:
         # Auto-detect compiled file
@@ -96,6 +138,8 @@ class CardDataLoader:
 
             self._repair_stale_optional_energy_deck_costs(lives)
             self._repair_stale_optional_energy_deck_costs(members)
+            self._attach_sparse_frame_index(members)
+            self._attach_sparse_frame_index(lives)
 
         else:
             # Legacy raw format

@@ -34,9 +34,7 @@ impl ActionReceiver for [bool] {
 
 impl ActionReceiver for Vec<usize> {
     fn add_action(&mut self, action_id: usize) {
-        if !self.contains(&action_id) {
-            self.push(action_id);
-        }
+        self.push(action_id);
     }
     fn reset(&mut self) {
         self.clear();
@@ -48,10 +46,7 @@ impl ActionReceiver for Vec<usize> {
 
 impl ActionReceiver for Vec<i32> {
     fn add_action(&mut self, action_id: usize) {
-        let aid = action_id as i32;
-        if !self.contains(&aid) {
-            self.push(aid);
-        }
+        self.push(action_id as i32);
     }
     fn reset(&mut self) {
         self.clear();
@@ -63,10 +58,7 @@ impl ActionReceiver for Vec<i32> {
 
 impl<const N: usize> ActionReceiver for SmallVec<[i32; N]> {
     fn add_action(&mut self, action_id: usize) {
-        let aid = action_id as i32;
-        if !self.contains(&aid) {
-            self.push(aid);
-        }
+        self.push(action_id as i32);
     }
     fn reset(&mut self) {
         self.clear();
@@ -78,9 +70,7 @@ impl<const N: usize> ActionReceiver for SmallVec<[i32; N]> {
 
 impl<const N: usize> ActionReceiver for SmallVec<[usize; N]> {
     fn add_action(&mut self, action_id: usize) {
-        if !self.contains(&action_id) {
-            self.push(action_id);
-        }
+        self.push(action_id);
     }
     fn reset(&mut self) {
         self.clear();
@@ -283,14 +273,15 @@ pub struct GameState {
 impl GameState {
     pub fn is_card_in_zone(&self, ctx_player_id: u8, target_player: u8, cid: i32, mask: u8) -> bool {
         // target_player: 1=Self, 2=Opponent, 3=Both, 0=Any
-        let players_to_check: Vec<usize> = match target_player {
-            1 => vec![ctx_player_id as usize],
-            2 => vec![1 - (ctx_player_id as usize)],
-            3 | 0 => vec![0, 1], // Both or Any
-            _ => vec![ctx_player_id as usize],
+        let (players_to_check, p_count) = match target_player {
+            1 => ([ctx_player_id as usize, 0], 1),
+            2 => ([1 - (ctx_player_id as usize), 0], 1),
+            3 | 0 => ([0, 1], 2), // Both or Any
+            _ => ([ctx_player_id as usize, 0], 1),
         };
 
-        for p_idx in players_to_check {
+        for i in 0..p_count {
+            let p_idx = players_to_check[i];
             let p = &self.players[p_idx];
             // mask is a Zone enum value (3-bit packed)
             // 4=STAGE, 6=HAND, 7=DISCARD, 3=ENERGY

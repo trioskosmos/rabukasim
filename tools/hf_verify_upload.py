@@ -2,7 +2,7 @@ import os
 from huggingface_hub import HfApi
 
 # Configuration
-REPO_ID = "trioskosmos/LovecaSim"
+REPO_ID = "trioskosmos/rabukasim"
 TOKEN = os.environ.get("HF_TOKEN")
 
 def verify_space():

@@ -66,11 +66,16 @@ pub fn handle_meta_control(
             if target_slot >= 0 && (target_slot as usize) < 3 {
                 let cid = state.players[p_idx].stage[target_slot as usize];
                 if cid >= 0 {
-                    state.players[p_idx].negated_triggers.push((
-                        cid,
-                        trigger_type,
-                        (a as u64 & FILTER_MASK_LOWER).max(1) as i32,
-                    ));
+                    let count = (a as u64 & FILTER_MASK_LOWER).max(1) as i32;
+                    if let Some(entry) = state.players[p_idx]
+                        .negated_triggers
+                        .iter_mut()
+                        .find(|entry| entry.0 == cid && entry.1 == trigger_type)
+                    {
+                        entry.2 += count;
+                    } else {
+                        state.players[p_idx].negated_triggers.push((cid, trigger_type, count));
+                    }
                 }
             }
         }

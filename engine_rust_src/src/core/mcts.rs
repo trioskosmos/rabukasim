@@ -75,6 +75,7 @@ struct Node {
     children: SmallVec<[(i32, usize); 16]>, // (Action, NodeIndex in Arena)
     parent: Option<usize>,
     parent_action: i32,
+    depth: u16,
 }
 
 pub struct MCTS {
@@ -130,19 +131,7 @@ impl MCTS {
     }
 
     pub fn get_max_depth(&self) -> usize {
-        let mut max_d = 0;
-        for i in 0..self.nodes.len() {
-            let mut d = 0;
-            let mut curr = i;
-            while let Some(p) = self.nodes[curr].parent {
-                d += 1;
-                curr = p;
-            }
-            if d > max_d {
-                max_d = d;
-            }
-        }
-        max_d
+        self.nodes.iter().map(|n| n.depth as usize).max().unwrap_or(0)
     }
 
     pub fn search_parallel(
@@ -554,15 +543,21 @@ impl MCTS {
             children: SmallVec::new(),
             parent: None,
             parent_action: 0,
+            depth: 0,
         });
 
         let mut sims_done = 0;
+        let is_trace = num_sims == 1
+            && std::env::var("RABUKA_MCTS_TRACE")
+                .map(|value| value == "1")
+                .unwrap_or(false);
+
         loop {
             if num_sims > 0 && sims_done >= num_sims {
                 break;
             }
             if let Some(to) = timeout {
-                if start_time.elapsed() >= to {
+                if sims_done % 128 == 0 && start_time.elapsed() >= to {
                     break;
                 }
             }
@@ -570,10 +565,6 @@ impl MCTS {
                 break;
             } // Safety
 
-            let is_trace = num_sims == 1
-                && std::env::var("RABUKA_MCTS_TRACE")
-                    .map(|value| value == "1")
-                    .unwrap_or(false);
             let t_setup = std::time::Instant::now();
 
             // --- BRANCH: AlphaZero Batch or Sequential ---
@@ -649,6 +640,7 @@ impl MCTS {
                             children: SmallVec::new(),
                             parent: Some(node_idx),
                             parent_action: action,
+                            depth: self.nodes[node_idx].depth + 1,
                         });
                         self.nodes[node_idx].children.push((action, new_idx));
                         node_idx = new_idx;
@@ -802,6 +794,7 @@ impl MCTS {
                         children: SmallVec::new(),
                         parent: Some(node_idx),
                         parent_action: action,
+                        depth: self.nodes[node_idx].depth + 1,
                     };
 
                     let new_idx = self.nodes.len();
@@ -898,6 +891,7 @@ impl MCTS {
         let mut best_child = 0;
 
         let total_visits_sqrt = (node.visit_count as f32).sqrt();
+        let explore_base = exploration_weight * total_visits_sqrt;
 
         for &(_, child_idx) in &node.children {
             let child = &nodes[child_idx];
@@ -910,9 +904,7 @@ impl MCTS {
             };
 
             // PUCT Exploration (AlphaZero)
-            let explore = exploration_weight
-                * child.prior_prob
-                * (total_visits_sqrt / (1.0 + child.visit_count as f32));
+            let explore = explore_base * child.prior_prob / (1.0 + child.visit_count as f32);
 
             let score = exploit + explore;
 

@@ -19,9 +19,16 @@ pub fn resolve_select_cards(
     is_optional: bool,
 ) -> HandlerResult {
     let choice = ctx.choice_index as i32;
-    if choice == CHOICE_DONE as i32 && is_optional {
+    if choice == CHOICE_DONE as i32 {
         return HandlerResult::Continue;
     }
+
+    let choice_type = match effective_zone {
+        6 => ChoiceType::SelectHandDiscard,
+        7 => ChoiceType::SelectDiscardPlay,
+        _ => ChoiceType::LookAndChoose,
+    };
+    let is_variable_selection = v < 0;
 
     if choice != CHOICE_DONE as i32
         && choice >= 0
@@ -61,15 +68,30 @@ pub fn resolve_select_cards(
         } else {
             (v as i16).saturating_sub(1)
         };
-        if rem > 0 {
+        if is_variable_selection {
+            state.players[p_idx].looked_cards.remove(choice as usize);
+            ctx.choice_index = -1;
+            ctx.v_remaining = 0;
+            if !state.players[p_idx].looked_cards.is_empty() {
+                if matches!(suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    ctx,
+                    instr_ip,
+                    O_SELECT_CARDS,
+                    s,
+                    choice_type,
+                    a as u64,
+                    0,
+                ), HandlerResult::Suspend) {
+                    return HandlerResult::Suspend;
+                }
+            }
+        } else if rem > 0 {
             state.players[p_idx].looked_cards.remove(choice as usize);
             ctx.v_remaining = rem;
             ctx.choice_index = -1;
-            let choice_type = match effective_zone {
-                6 => ChoiceType::SelectHandDiscard,
-                7 => ChoiceType::SelectDiscardPlay,
-                _ => ChoiceType::LookAndChoose,
-            };
             if matches!(suspend_choice(
                 state,
                 db,

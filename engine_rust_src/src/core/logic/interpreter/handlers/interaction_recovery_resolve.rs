@@ -19,11 +19,8 @@ pub fn resolve_recovery(
     let slot_info = instr.slot();
     let source_zone = normalized_source_zone(slot_info.source_zone);
 
-    if ctx.choice_index == -1 && !state.players[p_idx].looked_cards.is_empty() {
+    if ctx.choice_index == -1 {
         state.players[p_idx].looked_cards.clear();
-    }
-
-    if state.players[p_idx].looked_cards.is_empty() {
         for cid in collect_zone_cards(state, p_idx, source_zone) {
             let type_matches = if real_op == O_RECOVER_LIVE {
                 db.get_live(cid).is_some()

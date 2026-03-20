@@ -174,13 +174,14 @@ impl MulliganController for GameState {
             );
         }
         if action == 0 {
-            let mut discards = Vec::new();
-            for i in 0..self.core.players[p_idx].hand.len() {
-                if (self.core.players[p_idx].mulligan_selection >> i) & 1 == 1 {
-                    discards.push(i as usize);
-                }
-            }
-            self.execute_mulligan(p_idx, discards);
+            let selection = self.core.players[p_idx].mulligan_selection;
+            let discard_indices = self.core.players[p_idx]
+                .hand
+                .iter()
+                .enumerate()
+                .filter_map(|(idx, _)| ((selection >> idx) & 1 == 1).then_some(idx))
+                .collect();
+            self.execute_mulligan(p_idx, discard_indices);
         } else if action >= ACTION_BASE_MULLIGAN && action <= ACTION_BASE_MULLIGAN + 59 {
             let card_idx = (action - ACTION_BASE_MULLIGAN) as usize;
             if card_idx < self.core.players[p_idx].hand.len() {
@@ -193,28 +194,30 @@ impl MulliganController for GameState {
     fn execute_mulligan(&mut self, player_idx: usize, discard_indices: Vec<usize>) {
         if self.debug.debug_mode {
             println!(
-                "[DEBUG] execute_mulligan: player={}, discards_len={}, current_phase={:?}",
+                "[DEBUG] execute_mulligan: player={}, discard_indices={:?}, current_phase={:?}",
                 player_idx,
-                discard_indices.len(),
+                discard_indices,
                 self.phase
             );
         }
-        self.log(format!(
-            "Rule 6.2.1.6: Player {} finished mulligan ({} cards)",
-            player_idx,
-            discard_indices.len()
-        ));
         let mut count = 0;
         let mut discards = Vec::new();
         let mut new_hand = SmallVec::new();
+        let discard_set: std::collections::HashSet<usize> = discard_indices.into_iter().collect();
         for (i, &cid) in self.core.players[player_idx].hand.iter().enumerate() {
-            if discard_indices.contains(&i) {
+            if discard_set.contains(&i) {
                 discards.push(cid);
                 count += 1;
             } else {
                 new_hand.push(cid);
             }
         }
+        
+        self.log(format!(
+            "Rule 6.2.1.6: Player {} finished mulligan ({} cards)",
+            player_idx,
+            count
+        ));
         self.core.players[player_idx].hand = new_hand;
         let t = self.turn as i32;
         for _ in 0..count {
@@ -228,6 +231,7 @@ impl MulliganController for GameState {
         self.core.players[player_idx].deck.extend(discards);
         let mut rng = Pcg64::from_os_rng();
         self.core.players[player_idx].deck.shuffle(&mut rng);
+        self.core.players[player_idx].mulligan_selection = 0;
         self.resolve_deck_refresh(player_idx);
         let prev_phase = self.phase;
         if self.phase == Phase::MulliganP1 {

@@ -18,6 +18,7 @@
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::interpreter::instruction::BytecodeProgram;
+use crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 // use crate::core::generated_constants::*; // Redundant due to enums.rs re-export
@@ -81,6 +82,8 @@ pub struct MemberCard {
     pub has_activated_stage: bool,
     #[serde(default)]
     pub normalized_name: String,
+    #[serde(default)]
+    pub base_potential: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -140,11 +143,51 @@ pub struct CardDatabase {
     pub energy_db: HashMap<i32, EnergyCard>,
     #[serde(default)]
     pub is_vanilla: bool,
+    #[serde(skip)]
+    pub cached_vanilla: Option<bool>,
 }
 
 pub const LOGIC_ID_MASK: i32 = 0x0FFF;
 
 impl CardDatabase {
+    fn normalize_legacy_tap_member_ability(ability: &mut Ability) {
+        let mentions_tap = ability.raw_text.contains("TAP_MEMBER")
+            || ability.pseudocode.contains("TAP_MEMBER");
+        let mentions_move = ability.raw_text.contains("MOVE_MEMBER")
+            || ability.pseudocode.contains("MOVE_MEMBER");
+        let has_stale_tap_effect = ability.effects.iter().any(|effect| {
+            effect.effect_type == EffectType::TapMember && effect.runtime_opcode == O_MOVE_MEMBER
+        });
+
+        if !has_stale_tap_effect && (!mentions_tap || mentions_move) {
+            return;
+        }
+
+        for effect in &mut ability.effects {
+            if effect.effect_type == EffectType::TapMember && effect.runtime_opcode == O_MOVE_MEMBER {
+                effect.runtime_opcode = O_TAP_MEMBER;
+            }
+        }
+
+        for ip in (0..ability.bytecode.len()).step_by(WORDS_PER_INSTRUCTION) {
+            if ability.bytecode[ip] == O_MOVE_MEMBER {
+                ability.bytecode[ip] = O_TAP_MEMBER;
+            }
+        }
+    }
+
+    fn normalize_member_runtime_compatibility(card: &mut MemberCard) {
+        for ability in &mut card.abilities {
+            Self::normalize_legacy_tap_member_ability(ability);
+        }
+    }
+
+    fn normalize_live_runtime_compatibility(card: &mut LiveCard) {
+        for ability in &mut card.abilities {
+            Self::normalize_legacy_tap_member_ability(ability);
+        }
+    }
+
     /// Extract the logical ID (0-4095) from a packed card ID.
     pub fn to_logic_id(packed_id: i32) -> usize {
         (packed_id & LOGIC_ID_MASK) as usize
@@ -229,6 +272,7 @@ impl Default for CardDatabase {
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
             is_vanilla: false,
+            cached_vanilla: None,
         }
     }
 }
@@ -482,6 +526,29 @@ impl CardDatabase {
 
         card.effect_mask = Self::compute_effect_mask(&card.abilities);
         card.normalized_name = card.name.replace(" ", "");
+
+        // Precompute base potential
+        let mut score = 0.0;
+        let stat_sum: u32 = card.hearts.iter().map(|&x| x as u32).sum();
+        score += (card.blades as f32 * 10.0 + stat_sum as f32) / (card.cost as f32 + 1.0);
+
+        let f = card.ability_flags;
+        if (f & FLAG_DRAW as u64) != 0 { score += 5.0; }
+        if (f & FLAG_SEARCH as u64) != 0 { score += 5.0; }
+        if (f & FLAG_RECOVER as u64) != 0 { score += 0.5; }
+        if (f & FLAG_BUFF as u64) != 0 { score += 0.4; }
+        if (f & FLAG_CHARGE as u64) != 0 { score += 1.2; }
+        if (f & FLAG_TEMPO as u64) != 0 { score += 0.3; }
+        if (f & FLAG_REDUCE as u64) != 0 { score += 0.6; }
+        if (f & FLAG_BOOST as u64) != 0 { score += 0.6; }
+        if (f & FLAG_TRANSFORM as u64) != 0 { score += 0.4; }
+        if (f & FLAG_WIN_COND as u64) != 0 { score += 1.0; }
+
+        if (card.synergy_flags & SYN_FLAG_GROUP) != 0 { score += 0.3; }
+        if (card.synergy_flags & SYN_FLAG_CENTER) != 0 { score += 0.5; }
+        if (card.cost_flags & COST_FLAG_TAP as u32) != 0 { score += 0.2; }
+        
+        card.base_potential = score;
     }
 
     pub fn enrich_live_runtime_metadata(card: &mut LiveCard) {
@@ -556,12 +623,15 @@ impl CardDatabase {
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
             is_vanilla: false,
+            cached_vanilla: None,
         };
+
 
         if let Some(members_raw) = raw.get("member_db").and_then(|m| m.as_object()) {
             for (_, val) in members_raw {
                 match serde_json::from_value::<MemberCard>(val.clone()) {
                     Ok(mut card) => {
+                        Self::normalize_member_runtime_compatibility(&mut card);
                         Self::enrich_member_runtime_metadata(&mut card);
 
                         db.members.insert(card.card_id, card.clone());
@@ -591,6 +661,7 @@ impl CardDatabase {
             for (_, val) in lives_raw {
                 match serde_json::from_value::<LiveCard>(val.clone()) {
                     Ok(mut card) => {
+                        Self::normalize_live_runtime_compatibility(&mut card);
                         Self::enrich_live_runtime_metadata(&mut card);
 
                         db.lives.insert(card.card_id, card.clone());
@@ -632,46 +703,44 @@ impl CardDatabase {
             }
         }
 
+        db.cached_vanilla = Some(db.is_vanilla || db.detect_abilityless());
+
         Ok(db)
     }
 
     // Fast Lookups
     pub fn get_member(&self, id: i32) -> Option<&MemberCard> {
-        let template_id = id;
-        if let Some(m) = self.members.get(&template_id) {
-            return Some(m);
-        }
-        // Collision protection: If this ID is known to be a Live card, it can't be a member variant.
-        if self.lives.contains_key(&id) {
-            return None;
-        }
-
+        // Fast path: Try vector (O(1)) and confirm exact ID match
         let logic_id = Self::to_logic_id(id);
         if logic_id < self.members_vec.len() {
             if let Some(m) = &self.members_vec[logic_id] {
-                // Verify this logic entry actually belongs to a Member variant space
-                // (This is a heuristic, but checking lives.contains_key above is the primary guard)
-                return Some(m);
+                if m.card_id == id {
+                    return Some(m);
+                }
             }
+        }
+        
+        // Slow path: Try HashMap
+        if let Some(m) = self.members.get(&id) {
+            return Some(m);
         }
         None
     }
 
     pub fn get_live(&self, id: i32) -> Option<&LiveCard> {
-        let template_id = id;
-        if let Some(l) = self.lives.get(&template_id) {
-            return Some(l);
-        }
-        // Collision protection
-        if self.members.contains_key(&id) {
-            return None;
-        }
-
+        // Fast path: Try vector (O(1)) and confirm exact ID match
         let logic_id = Self::to_logic_id(id);
         if logic_id < self.lives_vec.len() {
             if let Some(l) = &self.lives_vec[logic_id] {
-                return Some(l);
+                if l.card_id == id {
+                    return Some(l);
+                }
             }
+        }
+        
+        // Slow path: Try HashMap
+        if let Some(l) = self.lives.get(&id) {
+            return Some(l);
         }
         None
     }
@@ -703,6 +772,9 @@ impl CardDatabase {
     /// Check if vanilla mode is enabled (explicitly set OR detected from database).
     /// Use this instead of just checking is_vanilla flag.
     pub fn is_truly_vanilla(&self) -> bool {
+        if let Some(cached) = self.cached_vanilla {
+            return cached;
+        }
         self.is_vanilla || self.detect_abilityless()
     }
 

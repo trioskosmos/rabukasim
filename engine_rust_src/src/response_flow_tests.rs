@@ -184,8 +184,8 @@ fn test_nested_suspension_real_flow() {
                 bytecode: vec![
                     O_TAP_MEMBER,
                     0,
-                    2,
-                    0,
+                    2, // a_low: 2 (Target Opponent)
+                    536870912, // a_high: FILTER_IS_OPTIONAL (1 << 29 in the upper 32 bits, which is 1 << 61 total)
                     0,
                     O_RECOVER_MEMBER,
                     1,

@@ -45,23 +45,8 @@ impl GameState {
         self.core.live_set_pending_draws = other.core.live_set_pending_draws;
 
         // Interaction stack and trigger queue are expensive but necessary
-        if other.core.interaction_stack.is_empty() {
-            self.core.interaction_stack.clear();
-        } else {
-            self.core.interaction_stack.clear();
-            self.core
-                .interaction_stack
-                .extend_from_slice(&other.core.interaction_stack);
-        }
-
-        if other.core.trigger_queue.is_empty() {
-            self.core.trigger_queue.clear();
-        } else {
-            self.core.trigger_queue.clear();
-            self.core
-                .trigger_queue
-                .extend(other.core.trigger_queue.iter().cloned());
-        }
+        self.core.interaction_stack.clone_from(&other.core.interaction_stack);
+        self.core.trigger_queue.clone_from(&other.core.trigger_queue);
 
         self.core.live_result_selection_pending = other.core.live_result_selection_pending;
         self.core.live_result_triggers_done = other.core.live_result_triggers_done;

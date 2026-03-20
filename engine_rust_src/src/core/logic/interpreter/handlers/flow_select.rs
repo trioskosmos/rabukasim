@@ -33,6 +33,12 @@ pub fn handle_select_ops(
         }
     }
 
+    if supports_partial_completion && ctx.choice_index == CHOICE_DONE {
+        ctx.choice_index = -1;
+        ctx.v_remaining = -1;
+        return HandlerResult::Continue;
+    }
+
     if is_optional && ctx.choice_index == CHOICE_DONE {
         ctx.choice_index = -1;
         return HandlerResult::Continue;

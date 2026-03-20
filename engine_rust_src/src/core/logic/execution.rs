@@ -100,6 +100,7 @@ impl GameState {
                 let initial_player = self.current_player;
                 let (action_seq, _, _, _) = TurnSequencer::plan_full_turn(self, db);
 
+                let legal_actions = self.get_legal_action_ids(db);
                 for &action in &action_seq {
                     if self.is_terminal()
                         || self.phase != Phase::Main
@@ -107,7 +108,7 @@ impl GameState {
                     {
                         break;
                     }
-                    if !self.get_legal_action_ids(db).contains(&action) {
+                    if !legal_actions.contains(&action) {
                         break;
                     }
                     if self.step(db, action).is_err() {
@@ -140,6 +141,7 @@ impl GameState {
                 let initial_player = self.current_player;
                 let (action_seq, _, _) = TurnSequencer::find_best_liveset_selection(self, db);
 
+                let legal_actions = self.get_legal_action_ids(db);
                 for &action in &action_seq {
                     if self.is_terminal()
                         || self.phase != Phase::LiveSet
@@ -147,7 +149,7 @@ impl GameState {
                     {
                         break;
                     }
-                    if !self.get_legal_action_ids(db).contains(&action) {
+                    if !legal_actions.contains(&action) {
                         break;
                     }
                     if self.step(db, action).is_err() {
@@ -231,9 +233,12 @@ impl GameState {
         let opp = 1 - p_idx;
         let p0_score = self.core.players[0].score;
         let p1_score = self.core.players[1].score;
+        let mut base_state = self.clone();
+        base_state.ui.silent = true; // Always silent for evaluations
+        let mut state = base_state.clone();
         for &action in legal_indices.iter() {
-            let mut state = self.clone();
-            state.ui.silent = true; // Always silent for evaluations
+            state.copy_from(&base_state);
+            // State already silented
 
             // Randomize opponent hand/deck for evaluation robustness
             let opp_hand_len = state.players[opp].hand.len();
@@ -359,6 +364,8 @@ impl GameState {
     pub fn get_legal_action_ids_for_player(&self, db: &CardDatabase, p_idx: usize) -> Vec<i32> {
         let mut actions = SmallVec::<[i32; 64]>::new();
         self.generate_legal_actions(db, p_idx, &mut actions);
+        actions.sort_unstable();
+        actions.dedup();
         actions.to_vec()
     }
 

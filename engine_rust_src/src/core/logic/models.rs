@@ -118,7 +118,7 @@ pub struct AbilityContext {
     #[serde(default)]
     pub repeat_count: i16, // For O_REPEAT_ABILITY: tracks how many times ability has repeated
     #[serde(default)]
-    pub selected_cards: Vec<i32>, // IDs of cards picked in the current/last selection action
+    pub selected_cards: smallvec::SmallVec<[i32; 8]>, // IDs of cards picked in the current/last selection action
     #[serde(default)]
     pub auto_pick: bool, // If true, mandatory single-choice steps (like O_SELECT_MODE) will resolve automatically
 }
@@ -142,7 +142,7 @@ impl Default for AbilityContext {
             original_phase: None,
             original_current_player: None,
             repeat_count: 0,
-            selected_cards: Vec::new(),
+            selected_cards: smallvec::SmallVec::new(),
             auto_pick: false,
         }
     }

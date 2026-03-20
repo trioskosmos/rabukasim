@@ -14,46 +14,22 @@ pub fn handle_tap_member_selected(
 ) -> HandlerResult {
     let is_optional = instr.filter_attr().is_optional;
     let is_choice_done = ctx.choice_index == CHOICE_DONE;
-    let stale_select_member_choice = is_optional
-        && ctx.v_remaining == -1
-        && ctx.choice_index >= 0
-        && ctx.choice_index < 3
-        && ctx
-            .selected_cards
-            .last()
-            .copied()
-            .map(|selected_cid| {
-                state.players[p_idx]
-                    .stage
-                    .get(ctx.choice_index as usize)
-                    .copied()
-                    .unwrap_or(-1)
-                    == selected_cid
-            })
-            .unwrap_or(false);
+    let filter_attr = instr.filter_attr().to_attr();
+    let fixed_slot_matches = if resolved_slot >= 0 && resolved_slot < 3 {
+        let cid = state.players[p_idx].stage[resolved_slot as usize];
+        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+    } else {
+        false
+    };
+    let needs_selection = (a & 0x02) != 0 || (!fixed_slot_matches && filter_attr != 0);
 
     if is_optional || (a & 0x01) != 0 {
-        if stale_select_member_choice {
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                instr_ip,
-                O_TAP_MEMBER,
-                resolved_slot as i32,
-                ChoiceType::Optional,
-                a as u64,
-                -1,
-            ), HandlerResult::Suspend) {
-                return HandlerResult::Suspend;
-            }
-        }
-        if is_optional && (a & 0x02) != 0 && ctx.v_remaining == -1 {
+        if is_optional && ctx.v_remaining == -1 {
             if is_choice_done || ctx.choice_index == 1 {
                 return HandlerResult::SetCond(false);
             }
-            if ctx.choice_index == 0 {
+
+            if ctx.choice_index != 0 {
                 if matches!(suspend_choice(
                     state,
                     db,
@@ -61,30 +37,29 @@ pub fn handle_tap_member_selected(
                     ctx,
                     instr_ip,
                     O_TAP_MEMBER,
-                    0,
-                    ChoiceType::TapMSelect,
+                    resolved_slot as i32,
+                    ChoiceType::Optional,
                     a as u64,
-                    instr.v as i16,
+                    -1,
                 ), HandlerResult::Suspend) {
                     return HandlerResult::Suspend;
                 }
+                return HandlerResult::Continue;
             }
-        }
 
-        if is_optional && (a & 0x02) == 0 && ctx.v_remaining != -1 {
-            if ctx.choice_index >= 0 && ctx.choice_index < 3 {
-                state.players[p_idx].set_tapped(ctx.choice_index as usize, true);
+            ctx.choice_index = -1;
+            ctx.v_remaining = instr.v as i16;
+
+            if resolved_slot >= 0
+                && resolved_slot < 3
+                && fixed_slot_matches
+                && ctx.selected_cards.last().copied()
+                    == Some(state.players[p_idx].stage[resolved_slot as usize])
+            {
+                state.players[p_idx].set_tapped(resolved_slot as usize, true);
                 return HandlerResult::SetCond(true);
             }
-        }
 
-        if ctx.choice_index != 0 && ctx.choice_index != 1 && !is_choice_done {
-            if state.debug.debug_mode && !state.ui.silent {
-                println!(
-                    "[DEBUG] TAP_MEMBER: Ignoring choice {} for Optional prompt",
-                    ctx.choice_index
-                );
-            }
             if matches!(suspend_choice(
                 state,
                 db,
@@ -93,20 +68,33 @@ pub fn handle_tap_member_selected(
                 instr_ip,
                 O_TAP_MEMBER,
                 resolved_slot as i32,
-                ChoiceType::Optional,
-                a as u64,
-                -1,
+                ChoiceType::TapMSelect,
+                (a | 0x02) as u64,
+                instr.v as i16,
             ), HandlerResult::Suspend) {
                 return HandlerResult::Suspend;
             }
-            return HandlerResult::Continue;
+        }
+
+        if is_optional && ctx.v_remaining != -1 {
+            if ctx.choice_index >= 0 && ctx.choice_index < 3 {
+                eprintln!(
+                    "[TRACE] TAP_MEMBER_SELECTED: tapping slot {} on player {} (a={:#X}, v_remaining={})",
+                    ctx.choice_index,
+                    p_idx,
+                    a,
+                    ctx.v_remaining,
+                );
+                state.players[p_idx].set_tapped(ctx.choice_index as usize, true);
+                return HandlerResult::SetCond(true);
+            }
         }
 
         if is_choice_done || ctx.choice_index == 1 {
             return HandlerResult::SetCond(false);
         }
 
-        if resolved_slot == 4 && (a & 0x02) == 0 {
+        if needs_selection && ctx.choice_index == -1 {
             if matches!(suspend_choice(
                 state,
                 db,
@@ -124,6 +112,14 @@ pub fn handle_tap_member_selected(
         }
 
         if resolved_slot < 3 {
+            eprintln!(
+                "[TRACE] TAP_MEMBER_SELECTED: final tap slot {} on player {} (a={:#X}, choice_index={}, v_remaining={})",
+                resolved_slot,
+                p_idx,
+                a,
+                ctx.choice_index,
+                ctx.v_remaining,
+            );
             state.players[p_idx].set_tapped(resolved_slot as usize, true);
         }
         return HandlerResult::SetCond(true);

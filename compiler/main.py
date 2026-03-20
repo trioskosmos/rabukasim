@@ -1,6 +1,7 @@
 import datetime
 import os
 import sys
+from pathlib import Path
 
 # Add project root to path to allow imports if running as script
 if __name__ == "__main__":
@@ -22,6 +23,7 @@ from engine.models.enums import CHAR_MAP, Unit
 from engine.models.generated_metadata import CONDITIONS, COSTS, OPCODES
 from engine.models.opcodes import Opcode
 from engine.models.bytecode_readable import decode_bytecode
+from tools import bytecode_codec as ability_codec
 
 # --- Compile-time Bytecode Validation ---
 # Combined: all valid base opcodes derived from source metadata
@@ -270,6 +272,13 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
         print(f"Writing compiled data to {output_path}...")
     with open(output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(compiled_data, f, ensure_ascii=False, indent=2)
+
+    # --- Generate Sparse Ability Index ---
+    sparse_index_path = "data/ability_frame_index.json"
+    sparse_index = ability_codec.build_sparse_ability_index(compiled_data, ability_codec.load_json("data/metadata.json"))
+    ability_codec.dump_json(Path(sparse_index_path), sparse_index)
+    if not quiet:
+        print(f"Generating {sparse_index_path}...")
 
     # --- Generate Decoded Consolidated Abilities ---
     if not quiet:

@@ -5,81 +5,20 @@ use crate::core::logic::{Ability, AbilityContext, ActionReceiver, CardDatabase, 
 
 pub struct MainPhaseGenerator;
 
-fn activation_area_flags(ab: &Ability) -> (bool, bool) {
-    let mut area_hand = false;
-    let mut area_stage = false;
-
-    for cond in &ab.conditions {
-        if cond.condition_type != ConditionType::AreaCheck {
-            continue;
-        }
-        if let Some(arr) = cond.params.as_array() {
-            if arr.iter().any(|v| v.as_i64() == Some(6)) {
-                area_hand = true;
-            }
-            if arr
-                .iter()
-                .any(|v| (0..3).any(|slot| v.as_i64() == Some(slot as i64)))
-            {
-                area_stage = true;
-            }
-        }
-    }
-
-    if !area_hand && !area_stage {
-        area_stage = true;
-    }
-
-    (area_hand, area_stage)
-}
-
 fn has_on_play_choice(card: &MemberCard) -> bool {
     card.has_on_play_choice
-        || card.abilities.iter().any(|ab| {
-            let program = BytecodeProgram::from_slice(&ab.bytecode);
-            ab.trigger == TriggerType::OnPlay
-                && (ab.choice_flags != 0
-                    || [O_LOOK_AND_CHOOSE, O_SELECT_MODE, O_COLOR_SELECT, O_ORDER_DECK]
-                        .iter()
-                        .any(|&op| program.has_opcode(op)))
-        })
 }
 
 fn has_multi_baton(card: &MemberCard) -> bool {
     card.has_multi_baton
-        || card.abilities.iter().any(|ab| {
-            let program = BytecodeProgram::from_slice(&ab.bytecode);
-            let mut ip = 0;
-            while let Some(instr) = program.instruction_at(ip) {
-                if instr.op == O_BATON_TOUCH_MOD && instr.v >= 2 {
-                    return true;
-                }
-                ip = program.next_ip(ip);
-            }
-            false
-        })
 }
 
 fn has_activated_stage(card: &MemberCard) -> bool {
     card.has_activated_stage
-        || card.abilities.iter().any(|ab| {
-            if ab.trigger != TriggerType::Activated {
-                return false;
-            }
-            let (_, area_stage) = activation_area_flags(ab);
-            area_stage
-        })
 }
 
 fn has_activated_hand(card: &MemberCard) -> bool {
     card.has_activated_hand
-        || card.abilities.iter().any(|ab| {
-            if ab.trigger != TriggerType::Activated {
-                return false;
-            }
-            let (area_hand, _) = activation_area_flags(ab);
-            area_hand
-        })
 }
 
 impl ActionGenerator for MainPhaseGenerator {

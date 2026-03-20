@@ -264,37 +264,37 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                         }
                     }
                     // Wave 2: Granted abilities for blade sources
-                    for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities
-                    {
-                        if target_cid == cid {
-                            if let Some(src_m) = db.get_member(source_cid) {
-                                if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
-                                    if ab.trigger == TriggerType::Constant {
-                                        let ctx = AbilityContext {
-                                            source_card_id: cid,
-                                            player_id: p_idx as u8,
-                                            activator_id: p_idx as u8,
-                                            area_idx: i as i16,
-                                            ..Default::default()
-                                        };
-                                        if ab
-                                            .conditions
-                                            .iter()
-                                            .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
-                                        {
-                                            let bc = &ab.bytecode;
-                                            let mut bi = 0;
-                                            while bi + 4 < bc.len() {
-                                                if bc[bi] == O_ADD_BLADES && bc[bi + 1] > 0 {
-                                                    slot_blade_buffs.push(json!({
-                                                        "source": format!("Granted: {}", src_m.name),
-                                                        "amount": bc[bi + 1],
-                                                        "ability_text": ab.raw_text,
-                                                        "img": src_m.img_path
-                                                    }));
-                                                }
-                                                bi += 5;
+                    for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
+                        if target_cid != cid {
+                            continue;
+                        }
+                        if let Some(src_m) = db.get_member(source_cid) {
+                            if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                                if ab.trigger == TriggerType::Constant {
+                                    let ctx = AbilityContext {
+                                        source_card_id: cid,
+                                        player_id: p_idx as u8,
+                                        activator_id: p_idx as u8,
+                                        area_idx: i as i16,
+                                        ..Default::default()
+                                    };
+                                    if ab
+                                        .conditions
+                                        .iter()
+                                        .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
+                                    {
+                                        let bc = &ab.bytecode;
+                                        let mut bi = 0;
+                                        while bi + 4 < bc.len() {
+                                            if bc[bi] == O_ADD_BLADES && bc[bi + 1] > 0 {
+                                                slot_blade_buffs.push(json!({
+                                                    "source": format!("Granted: {}", src_m.name),
+                                                    "amount": bc[bi + 1],
+                                                    "ability_text": ab.raw_text,
+                                                    "img": src_m.img_path
+                                                }));
                                             }
+                                            bi += 5;
                                         }
                                     }
                                 }
@@ -522,47 +522,47 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                         }
                     }
                     // Wave 2: Granted abilities for heart sources
-                    for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities
-                    {
-                        if target_cid == cid {
-                            if let Some(src_m) = db.get_member(source_cid) {
-                                if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
-                                    if ab.trigger == TriggerType::Constant {
-                                        let ctx = AbilityContext {
-                                            source_card_id: cid,
-                                            player_id: p_idx as u8,
-                                            activator_id: p_idx as u8,
-                                            area_idx: i as i16,
-                                            ..Default::default()
-                                        };
-                                        if ab
-                                            .conditions
-                                            .iter()
-                                            .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
-                                        {
-                                            let bc = &ab.bytecode;
-                                            let mut bi = 0;
-                                            while bi + 4 < bc.len() {
-                                                let a_low = bc[bi + 2];
-                                                let a_high = bc[bi + 3];
-                                                let ba = ((a_high as i64) << 32) | (a_low as i64);
-                                                if bc[bi] == O_ADD_HEARTS && bc[bi + 1] > 0 {
-                                                    let mut color = ba as usize;
-                                                    if color == 0 {
-                                                        color = ctx.selected_color as usize;
-                                                    }
-                                                    if color < 7 {
-                                                        slot_heart_buffs.push(json!({
-                                                            "source": format!("Granted: {}", src_m.name),
-                                                            "amount": bc[bi + 1],
-                                                            "color": color,
-                                                            "ability_text": ab.raw_text,
-                                                            "img": src_m.img_path
-                                                        }));
-                                                    }
+                    for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
+                        if target_cid != cid {
+                            continue;
+                        }
+                        if let Some(src_m) = db.get_member(source_cid) {
+                            if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                                if ab.trigger == TriggerType::Constant {
+                                    let ctx = AbilityContext {
+                                        source_card_id: cid,
+                                        player_id: p_idx as u8,
+                                        activator_id: p_idx as u8,
+                                        area_idx: i as i16,
+                                        ..Default::default()
+                                    };
+                                    if ab
+                                        .conditions
+                                        .iter()
+                                        .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
+                                    {
+                                        let bc = &ab.bytecode;
+                                        let mut bi = 0;
+                                        while bi + 4 < bc.len() {
+                                            let a_low = bc[bi + 2];
+                                            let a_high = bc[bi + 3];
+                                            let ba = ((a_high as i64) << 32) | (a_low as i64);
+                                            if bc[bi] == O_ADD_HEARTS && bc[bi + 1] > 0 {
+                                                let mut color = ba as usize;
+                                                if color == 0 {
+                                                    color = ctx.selected_color as usize;
                                                 }
-                                                bi += 5;
+                                                if color < 7 {
+                                                    slot_heart_buffs.push(json!({
+                                                        "source": format!("Granted: {}", src_m.name),
+                                                        "amount": bc[bi + 1],
+                                                        "color": color,
+                                                        "ability_text": ab.raw_text,
+                                                        "img": src_m.img_path
+                                                    }));
+                                                }
                                             }
+                                            bi += 5;
                                         }
                                     }
                                 }
@@ -1120,13 +1120,13 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 }
             }
             // Pool O_BOOST_SCORE from granted constant abilities
-            for &(t_cid, s_cid, ab_idx) in &state.players[p].granted_abilities {
-                if let Some(slot) = state.players[p].stage.iter().position(|&cid| cid == t_cid) {
+            for &(target_cid, s_cid, ab_idx) in &state.players[p].granted_abilities {
+                if let Some(slot) = state.players[p].stage.iter().position(|&stage_cid| stage_cid == target_cid) {
                     if let Some(src_m) = db.get_member(s_cid) {
                         if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                             if ab.trigger == TriggerType::Constant {
                                 let ctx = AbilityContext {
-                                    source_card_id: t_cid,
+                                    source_card_id: target_cid,
                                     player_id: p as u8,
                                     activator_id: p as u8,
                                     area_idx: slot as i16,

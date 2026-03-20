@@ -81,6 +81,16 @@ pub fn handle_member_state(
                 }
             }
 
+            eprintln!(
+                "[TRACE] O_TAP_MEMBER: p_idx={}, target_p_idx={}, resolved_slot={}, a={:#X}, choice_index={}, selected_cards_last={:?}",
+                p_idx,
+                target_p_idx,
+                resolved_slot,
+                a,
+                ctx.choice_index,
+                ctx.selected_cards.last().copied(),
+            );
+
             if v == 0 && resolved_slot == 4 && a & 0x02 == 0 && (a & 0x01 != 0 || a & 0x80 != 0) {
                 let mod_a = a | 0x02;
                 if matches!(suspend_choice(

@@ -1070,7 +1070,7 @@ impl PyGameState {
             original_phase: None,
             original_current_player: None,
             repeat_count: 0,
-            selected_cards: Vec::new(),
+            selected_cards: smallvec::SmallVec::new(),
             v_accumulated: 0,
             auto_pick: false,
         };
