@@ -16,6 +16,7 @@ sequence exactly.
 import argparse
 import json
 from hashlib import sha1
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -43,12 +44,14 @@ DEFAULT_INPUT_PATH = ROOT_DIR / "data" / "cards_compiled.json"
 DEFAULT_OUTPUT_PATH = ROOT_DIR / "reports" / "bytecode_codec.json"
 
 
-def load_json(path: Path) -> dict[str, Any]:
+def load_json(path: Path | str) -> dict[str, Any]:
+    path = Path(path)
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
 
 
-def dump_json(path: Path, payload: dict[str, Any]) -> None:
+def dump_json(path: Path | str, payload: dict[str, Any]) -> None:
+    path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle, ensure_ascii=False, indent=2)
@@ -62,29 +65,60 @@ def reverse_map(mapping: dict[str, Any]) -> dict[int, str]:
 class MetadataLookups:
     metadata: dict[str, Any]
     opcodes_by_id: dict[int, str]
+    action_bases_by_id: dict[int, str]
     triggers_by_id: dict[int, str]
     targets_by_id: dict[int, str]
     conditions_by_id: dict[int, str]
     costs_by_id: dict[int, str]
     slot_indices_by_id: dict[int, str]
     target_players_by_id: dict[int, str]
+    opcode_sections_by_id: dict[int, tuple[str, str]]
 
 
 def load_lookups(metadata: dict[str, Any]) -> MetadataLookups:
+    opcode_sections_by_id: dict[int, tuple[str, str]] = {}
+    for section_name in ("opcodes", "conditions", "costs"):
+        section = metadata.get(section_name, {})
+        if isinstance(section, dict):
+            for name, value in section.items():
+                try:
+                    opcode_sections_by_id[int(value)] = (section_name, str(name))
+                except (TypeError, ValueError):
+                    continue
     return MetadataLookups(
         metadata=metadata,
         opcodes_by_id=reverse_map(metadata.get("opcodes", {})),
+        action_bases_by_id=reverse_map(metadata.get("action_bases", {})),
         triggers_by_id=reverse_map(metadata.get("triggers", {})),
         targets_by_id=reverse_map(metadata.get("targets", {})),
         conditions_by_id=reverse_map(metadata.get("conditions", {})),
         costs_by_id=reverse_map(metadata.get("costs", {})),
         slot_indices_by_id=reverse_map(metadata.get("slot_indices", {})),
         target_players_by_id=reverse_map(metadata.get("target_players", {})),
+        opcode_sections_by_id=opcode_sections_by_id,
     )
 
 
 def _name_for_id(value: int, table: dict[int, str], prefix: str) -> str:
     return table.get(int(value), f"{prefix}_{value}")
+
+
+def _opcode_name(value: int, lookups: MetadataLookups) -> tuple[str, str]:
+    if 1000 <= value < 2000:
+        base_value = value - 1000
+        if base_value in lookups.conditions_by_id:
+            return "conditions", lookups.conditions_by_id[base_value]
+        if base_value in lookups.opcodes_by_id:
+            return "opcodes", lookups.opcodes_by_id[base_value]
+    if value in lookups.opcodes_by_id:
+        return "opcodes", lookups.opcodes_by_id[value]
+    if value in lookups.action_bases_by_id:
+        return "action_bases", lookups.action_bases_by_id[value]
+    if value in lookups.conditions_by_id:
+        return "conditions", lookups.conditions_by_id[value]
+    if value in lookups.costs_by_id:
+        return "costs", lookups.costs_by_id[value]
+    return "opcodes", f"OP_{value}"
 
 
 def _slot_label(slot_value: int, lookups: MetadataLookups) -> str | None:
@@ -134,20 +168,76 @@ def decode_frame(words: list[int], lookups: MetadataLookups) -> dict[str, Any]:
         padded.extend([0] * (5 - len(padded)))
 
     opcode = int(padded[0])
-    opcode_name = _name_for_id(opcode, lookups.opcodes_by_id, "OP")
-    metadata_refs = [f"opcodes.{opcode_name}"] if opcode_name in lookups.metadata.get("opcodes", {}) else []
+    opcode_section, opcode_name = _opcode_name(opcode, lookups)
+    metadata_refs = [f"{opcode_section}.{opcode_name}"]
     slot_ref = _slot_label(int(padded[4]), lookups)
     if slot_ref:
         metadata_refs.append(slot_ref)
+    negated = 1000 <= opcode < 2000
 
     return {
         "words": padded,
         "opcode": opcode,
         "opcode_name": opcode_name,
+        "opcode_section": opcode_section,
+        "negated": negated or None,
         "metadata_refs": metadata_refs,
         "payload": _decode_payload(opcode_name, padded),
         "decoded": readable.decode_chunk(padded),
     }
+
+
+def _choice_blocks(frames: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    blocks: list[dict[str, Any]] = []
+    i = 0
+    while i < len(frames):
+        frame = frames[i]
+        if frame.get("opcode_name") == "SELECT_MODE":
+            payload = frame.get("payload", {}) if isinstance(frame.get("payload", {}), dict) else {}
+            option_count = int(payload.get("v", payload.get("raw", {}).get("value", 0)) or 0)
+            if option_count > 0 and i + 1 + option_count <= len(frames):
+                jump_table = frames[i + 1 : i + 1 + option_count]
+                if all(j.get("opcode_name") == "JUMP" for j in jump_table):
+                    targets: list[int] = []
+                    for jump_index, jump in enumerate(jump_table):
+                        jump_payload = jump.get("payload", {}) if isinstance(jump.get("payload", {}), dict) else {}
+                        jump_value = int(jump_payload.get("v", jump_payload.get("raw", {}).get("value", 0)) or 0)
+                        targets.append(max(0, i + 1 + jump_index + jump_value))
+
+                    end_index = len(frames)
+                    for idx in range(i + 1 + option_count, len(frames)):
+                        if frames[idx].get("opcode_name") == "RETURN":
+                            end_index = idx + 1
+                            break
+
+                    options: list[dict[str, Any]] = []
+                    for option_index, target_index in enumerate(targets):
+                        next_target = end_index
+                        for future_target in targets[option_index + 1 :]:
+                            if future_target > target_index:
+                                next_target = future_target
+                                break
+                        body_frames = [deepcopy(f) for f in frames[target_index:min(next_target, len(frames))]]
+                        options.append(
+                            {
+                                "index": option_index,
+                                "jump_target": target_index,
+                                "frames": body_frames,
+                            }
+                        )
+
+                    blocks.append(
+                        {
+                            "selector_frame_index": i,
+                            "option_count": option_count,
+                            "jump_table": [deepcopy(f) for f in jump_table],
+                            "options": options,
+                        }
+                    )
+                    i += 1 + option_count
+                    continue
+        i += 1
+    return blocks
 
 
 def encode_frame(frame: dict[str, Any]) -> list[int]:
@@ -203,7 +293,10 @@ def encode_frame(frame: dict[str, Any]) -> list[int]:
 
 def bytecode_to_model(bytecode: list[int], metadata: dict[str, Any] | None = None) -> dict[str, Any]:
     lookups = load_lookups(metadata or load_json(DEFAULT_METADATA_PATH))
-    frames = [decode_frame(bytecode[i : i + 5], lookups) for i in range(0, len(bytecode), 5)]
+    frames = [
+        dict(decode_frame(bytecode[i : i + 5], lookups), _frame_index=(i // 5))
+        for i in range(0, len(bytecode), 5)
+    ]
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "layout": {
@@ -211,6 +304,7 @@ def bytecode_to_model(bytecode: list[int], metadata: dict[str, Any] | None = Non
             "frame_order": ["opcode", "value", "attr_low", "attr_high", "slot"],
         },
         "frames": frames,
+        "choices": _choice_blocks(frames),
         "bytecode": [int(word) for word in bytecode],
     }
 
@@ -260,8 +354,9 @@ def _prune_sparse(value: Any) -> Any:
 
 def frame_to_sparse(frame: dict[str, Any]) -> dict[str, Any]:
     opcode_name = str(frame.get("opcode_name", "OP_0"))
+    opcode_id = int(frame.get("opcode", 0))
     payload = frame.get("payload", {}) if isinstance(frame, dict) else {}
-    sparse: dict[str, Any] = {"opcode": opcode_name}
+    sparse: dict[str, Any] = {"opcode_id": opcode_id, "opcode": opcode_name}
 
     if not isinstance(payload, dict):
         return sparse
@@ -283,7 +378,7 @@ def frame_to_sparse(frame: dict[str, Any]) -> dict[str, Any]:
     return sparse
 
 
-def model_to_sparse_model(model: dict[str, Any], include_raw_words: bool = True) -> dict[str, Any]:
+def model_to_sparse_model(model: dict[str, Any], include_raw_words: bool = False) -> dict[str, Any]:
     sparse_frames: list[dict[str, Any]] = []
     for frame in model.get("frames", []):
         sparse_frame = frame_to_sparse(frame)
@@ -409,7 +504,10 @@ def build_sparse_ability_index(compiled_data: dict[str, Any], metadata: dict[str
     payload["schema"] = "ability_frame_index.v1"
     for entry in payload.get("abilities", []):
         entry["frames"] = entry.pop("sparse_model", {}).get("frames", [])
-        entry["bytecode"] = entry.get("bytecode", [])
+        entry.pop("bytecode", None)
+        entry.pop("model", None)
+        entry.pop("round_trip_bytecode", None)
+        entry.pop("signature_source", None)
         entry["trigger"] = entry.get("trigger")
         entry["trigger_id"] = entry.get("trigger_id")
         entry["round_trip_matches"] = entry.get("round_trip_matches", False)

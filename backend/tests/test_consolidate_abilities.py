@@ -58,7 +58,7 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         same_signature = next(
             entry["signature"]
             for entry in payload["abilities"]
-            if entry["trigger"] == "ON_LIVE_START" and entry["bytecode"] == [opcode_id, 1, 0, 0, 1]
+            if entry["trigger"] == "ON_LIVE_START" and entry["frames"][0]["opcode_id"] == opcode_id
         )
         self.assertEqual(len(grouped[same_signature]["cards"]), 2)
         self.assertIn("Card A", {card["name"] for card in grouped[same_signature]["cards"]})

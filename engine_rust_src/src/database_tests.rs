@@ -86,22 +86,16 @@ fn test_sparse_ability_index_is_loaded() {
 
             assert!(!frames.is_empty(), "sparse ability entry should not be empty");
             assert!(
+                frames
+                    .iter()
+                    .all(|frame| frame.get("source_words").is_none()),
+                "sparse ability entry should not expose source_words"
+            );
+            assert!(
                 sparse.get("pseudocode").and_then(|v| v.as_str()).is_some(),
                 "sparse ability entry should expose pseudocode"
             );
-
-            let rebuilt: Vec<i32> = frames
-                .iter()
-                .flat_map(|frame| {
-                    frame
-                        .get("source_words")
-                        .and_then(|v| v.as_array())
-                        .into_iter()
-                        .flatten()
-                        .filter_map(|word| word.as_i64().map(|val| val as i32))
-                        .collect::<Vec<i32>>()
-                })
-                .collect();
+            let rebuilt = CardDatabase::sparse_entry_to_bytecode(sparse);
 
             assert_eq!(
                 ability.bytecode, rebuilt,
@@ -125,22 +119,16 @@ fn test_sparse_ability_index_is_loaded() {
 
             assert!(!frames.is_empty(), "sparse ability entry should not be empty");
             assert!(
+                frames
+                    .iter()
+                    .all(|frame| frame.get("source_words").is_none()),
+                "sparse ability entry should not expose source_words"
+            );
+            assert!(
                 sparse.get("pseudocode").and_then(|v| v.as_str()).is_some(),
                 "sparse ability entry should expose pseudocode"
             );
-
-            let rebuilt: Vec<i32> = frames
-                .iter()
-                .flat_map(|frame| {
-                    frame
-                        .get("source_words")
-                        .and_then(|v| v.as_array())
-                        .into_iter()
-                        .flatten()
-                        .filter_map(|word| word.as_i64().map(|val| val as i32))
-                        .collect::<Vec<i32>>()
-                })
-                .collect();
+            let rebuilt = CardDatabase::sparse_entry_to_bytecode(sparse);
 
             assert_eq!(
                 ability.bytecode, rebuilt,

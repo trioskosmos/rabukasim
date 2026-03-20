@@ -77,10 +77,19 @@ if "UNIQUE_NAMES_COUNT" not in CONDITIONS:
 
 
 def opcode_name(opcode: int, v: int = 0, a: int = 0, s: int = 0) -> str:
+    if 1000 <= opcode < 2000:
+        base_opcode = opcode - 1000
+        if base_opcode in CONDITION_NAMES:
+            return CONDITION_NAMES[base_opcode]
+        if base_opcode in OPCODE_NAMES:
+            return OPCODE_NAMES[base_opcode]
+        return f"OP_{base_opcode}"
     if opcode == 0 and (v != 0 or a != 0 or s != 0):
         # In SUNNY DAY SONG and others, opcode 0 with condition-like slot params 
         # is used for conditions handled by the interpreter's higher-level logic.
         return "CHECK_UNIQUE_NAMES_COUNT?"
+    if int(opcode) in CONDITION_NAMES:
+        return CONDITION_NAMES[int(opcode)]
     return OPCODE_NAMES.get(int(opcode), f"OP_{opcode}")
 
 

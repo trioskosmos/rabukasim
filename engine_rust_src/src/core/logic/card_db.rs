@@ -19,6 +19,7 @@ use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION;
+use crate::core::logic::interpreter::instruction::DecodedFilterAttr;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
@@ -240,7 +241,7 @@ impl CardDatabase {
             let rebuilt = Self::sparse_entry_to_bytecode(entry);
             if rebuilt.is_empty() {
                 return Err(serde::de::Error::custom(format!(
-                    "sparse ability index entry for {} ability {} has no source_words",
+                    "sparse ability index entry for {} ability {} has no encodable fields",
                     card_no, ability_index
                 )));
             }
@@ -254,20 +255,169 @@ impl CardDatabase {
         Ok(())
     }
 
-    fn sparse_entry_to_bytecode(entry: &Value) -> Vec<i32> {
+    pub(crate) fn sparse_entry_to_bytecode(entry: &Value) -> Vec<i32> {
         let mut bytecode = Vec::new();
         if let Some(frames) = entry.get("frames").and_then(|v| v.as_array()) {
             for frame in frames {
-                if let Some(words) = frame.get("source_words").and_then(|v| v.as_array()) {
-                    for word in words {
-                        if let Some(val) = word.as_i64() {
-                            bytecode.push(val as i32);
-                        }
-                    }
-                }
+                bytecode.extend(Self::encode_sparse_frame(frame));
             }
         }
         bytecode
+    }
+
+    fn encode_sparse_frame(frame: &Value) -> Vec<i32> {
+        let opcode_id = frame.get("opcode_id").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+        let opcode_name = frame.get("opcode").and_then(|v| v.as_str()).unwrap_or("");
+        let value = frame.get("value");
+        let attr = frame.get("attr");
+        let slot = frame.get("slot");
+
+        let v = Self::encode_sparse_value(opcode_name, value);
+        let a = Self::encode_sparse_attr(opcode_name, attr);
+        let s = Self::encode_sparse_slot(slot);
+
+        vec![opcode_id, v, a as i32, s, 0]
+    }
+
+    fn encode_sparse_value(opcode_name: &str, value: Option<&Value>) -> i32 {
+        let Some(value) = value else { return 0; };
+        match opcode_name {
+            "LOOK_AND_CHOOSE" => {
+                if let Some(obj) = value.as_object() {
+                    let count = obj.get("count").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                    let char_id_1 = obj.get("char_id_1").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                    let char_id_2 = obj.get("char_id_2").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                    let char_id_3 = obj.get("char_id_3").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                    let reveal = obj.get("reveal").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                    let dest_discard = obj.get("dest_discard").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                    (count & 0xff)
+                        | ((char_id_2 & 0x7f) << 8)
+                        | ((char_id_1 & 0x7f) << 16)
+                        | ((char_id_3 & 0x7f) << 23)
+                        | ((reveal & 0x1) << 30)
+                        | ((dest_discard & 0x1) << 31)
+                } else {
+                    value.as_i64().unwrap_or(0) as i32
+                }
+            }
+            "SET_HEART_COST" => {
+                if let Some(obj) = value.as_object() {
+                    let hearts = obj.get("hearts").and_then(|v| v.as_array());
+                    let mut v = 0i32;
+                    if let Some(hearts) = hearts {
+                        for (idx, heart) in hearts.iter().enumerate().take(7) {
+                            let count = heart.as_i64().unwrap_or(0) as i32 & 0xf;
+                            v |= count << (idx * 4);
+                        }
+                    }
+                    v
+                } else {
+                    value.as_i64().unwrap_or(0) as i32
+                }
+            }
+            "CALC_SUM_COST" => {
+                if let Some(obj) = value.as_object() {
+                    let base_value = obj.get("base_value").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                    let divisor = obj.get("divisor").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                    (base_value & 0xffff) | ((divisor & 0xffff) << 16)
+                } else {
+                    value.as_i64().unwrap_or(0) as i32
+                }
+            }
+            _ => {
+                if let Some(obj) = value.as_object() {
+                    obj.get("raw").and_then(|v| v.as_i64()).unwrap_or_else(|| value.as_i64().unwrap_or(0)) as i32
+                } else {
+                    value.as_i64().unwrap_or(0) as i32
+                }
+            }
+        }
+    }
+
+    fn encode_sparse_attr(opcode_name: &str, attr: Option<&Value>) -> u64 {
+        let Some(attr) = attr else { return 0; };
+        match opcode_name {
+            "SET_HEART_COST" => {
+                if let Some(obj) = attr.as_object() {
+                    let mut val: u64 = 0;
+                    for idx in 1..=8 {
+                        let key = format!("req_{}", idx);
+                        let req = obj.get(&key).and_then(|v| v.as_i64()).unwrap_or(0) as u64;
+                        val |= (req & 0xf) << ((idx - 1) * 4);
+                    }
+                    let unit_enabled = obj.get("unit_enabled").and_then(|v| v.as_i64()).unwrap_or(0) as u64;
+                    let unit_id = obj.get("unit_id").and_then(|v| v.as_i64()).unwrap_or(0) as u64;
+                    val |= (unit_enabled & 0x1) << 48;
+                    val |= (unit_id & 0x7f) << 49;
+                    val
+                } else {
+                    attr.as_i64().unwrap_or(0) as u64
+                }
+            }
+            _ => {
+                if let Some(obj) = attr.as_object() {
+                    let mut decoded = DecodedFilterAttr::default();
+                    decoded.target_player = obj.get("target_player").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                    decoded.card_type = obj.get("card_type").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                    decoded.group_enabled = obj.get("group_enabled").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.group_id = obj.get("group_id").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                    decoded.is_tapped = obj.get("is_tapped").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.has_blade_heart = obj.get("has_blade_heart").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.not_has_blade_heart = obj.get("not_has_blade_heart").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.unique_names = obj.get("unique_names").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.unit_enabled = obj.get("unit_enabled").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.unit_id = obj.get("unit_id").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                    decoded.value_enabled = obj.get("value_enabled").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.value_threshold = obj.get("value_threshold").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                    decoded.is_le = obj.get("is_le").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.is_cost_type = obj.get("is_cost_type").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.color_mask = obj.get("color_mask").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                    decoded.char_id_1 = obj.get("char_id_1").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                    decoded.char_id_2 = obj.get("char_id_2").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                    decoded.char_id_3 = obj.get("char_id_3").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                    decoded.zone_mask = obj.get("zone_mask").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                    decoded.special_id = obj.get("special_id").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                    decoded.is_setsuna = obj.get("is_setsuna").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.compare_accumulated = obj.get("compare_accumulated").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.is_optional = obj.get("is_optional").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.keyword_energy = obj.get("keyword_energy").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.keyword_member = obj.get("keyword_member").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.to_attr()
+                } else {
+                    attr.as_i64().unwrap_or(0) as u64
+                }
+            }
+        }
+    }
+
+    fn encode_sparse_slot(slot: Option<&Value>) -> i32 {
+        let Some(slot) = slot else { return 0; };
+        if let Some(obj) = slot.as_object() {
+            let target_slot = obj.get("target_slot").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            let remainder_zone = obj.get("remainder_zone").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            let source_zone = obj.get("source_zone").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            let dest_zone = obj.get("dest_zone").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            let is_opponent = obj.get("is_opponent").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            let is_reveal_until_live = obj.get("is_reveal_until_live").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            let is_baton_slot = obj.get("is_baton_slot").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            let is_empty_slot = obj.get("is_empty_slot").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            let is_wait = obj.get("is_wait").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            let is_dynamic = obj.get("is_dynamic").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            let area_idx = obj.get("area_idx").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            let reveal_or_baton = if is_reveal_until_live != 0 || is_baton_slot != 0 { 1 } else { 0 };
+            (target_slot & 0xff)
+                | ((remainder_zone & 0xff) << 8)
+                | ((source_zone & 0xf) << 16)
+                | ((dest_zone & 0xf) << 20)
+                | ((is_opponent & 0x1) << 24)
+                | ((reveal_or_baton & 0x1) << 25)
+                | ((is_empty_slot & 0x1) << 26)
+                | ((is_wait & 0x1) << 27)
+                | ((is_dynamic & 0x1) << 28)
+                | ((area_idx & 0x7) << 29)
+        } else {
+            slot.as_i64().unwrap_or(0) as i32
+        }
     }
 
     /// Extract the logical ID (0-4095) from a packed card ID.
