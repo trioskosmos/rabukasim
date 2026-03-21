@@ -5,6 +5,24 @@ This is the roadmap toward a writable ability system.
 The target is not “better bytecode authoring.”
 The target is a semantic ability format that can be written directly, validated directly, and then compiled into bytecode as a serialization step.
 
+## Important Files
+
+These are the main files to follow while we build the writable system:
+
+- [`data/metadata.json`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/data/metadata.json)
+- [`data/ability_frame_index.json`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/data/ability_frame_index.json)
+- [`data/cards_compiled.json`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/data/cards_compiled.json)
+- [`tools/bytecode_codec.py`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/tools/bytecode_codec.py)
+- [`tools/consolidate_abilities.py`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/tools/consolidate_abilities.py)
+- [`compiler/main.py`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/compiler/main.py)
+- [`compiler/parser_v2.py`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/compiler/parser_v2.py)
+- [`engine/models/ability.py`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/engine/models/ability.py)
+- [`engine/models/bytecode_readable.py`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/engine/models/bytecode_readable.py)
+- [`engine_rust_src/src/core/logic/card_db.rs`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/engine_rust_src/src/core/logic/card_db.rs)
+- [`engine_rust_src/src/core/logic/interpreter/mod.rs`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/engine_rust_src/src/core/logic/interpreter/mod.rs)
+- [`engine_rust_src/src/bin/rewrite_ability_index.rs`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/engine_rust_src/src/bin/rewrite_ability_index.rs)
+- [`ability_codec_system/README.md`](C:/Users/trios/.gemini/antigravity/vscode/loveca-copy/ability_codec_system/README.md)
+
 ## End Goal
 
 The final authoring flow should look like this:
@@ -41,6 +59,18 @@ Writers should not need to think in:
 - Negated `1xxx` frames represented explicitly as negated condition wrappers.
 - Branch-aware choice extraction for `SELECT_MODE`.
 - A reversible bytecode codec for inspection and preservation.
+- A compatibility `source_words` payload for exact runtime bytecode parity.
+
+## Important Constraint
+
+The sparse semantic fields are the writable direction we want, but they are not yet complete enough to replace bytecode reconstruction on their own.
+
+That means:
+
+- semantic fields are the authoring target
+- `source_words` is the exact compatibility layer
+- bytecode parity must remain the load-time gate until each opcode family is proven symmetric
+- any new semantic rewrite should be introduced behind a parity check, not by replacing the exact payload too early
 
 ## What Is Still Missing
 
@@ -106,6 +136,8 @@ It must know how to:
 - emit negated condition wrappers
 - preserve the exact runtime meaning of the current cards
 
+Until the compiler covers a family completely, the generated sparse index should keep the original flat `source_words` so the runtime never regresses while the writable model is still expanding.
+
 ### 5. Validation
 
 The writable schema needs strong validation so authors fail fast.
@@ -160,6 +192,10 @@ Make the semantic form the primary writable input for new cards.
 
 Use bytecode only as the emitted runtime artifact, with the reverse decoder serving inspection and verification.
 
+### Phase 6
+
+Only remove `source_words` compatibility when the parity suite proves that every supported semantic family reconstructs exact bytecode without fallback.
+
 ## What We Need to Keep Stable
 
 - The runtime must keep receiving valid bytecode.
@@ -175,6 +211,7 @@ Use bytecode only as the emitted runtime artifact, with the reverse decoder serv
 4. A reverse decoder from bytecode to semantic cards.
 5. Regression tests for the common ability families.
 6. Example cards written in the new semantic form.
+7. A parity checker that compares semantic rebuilds against `source_words`.
 
 ## Success Criteria
 
@@ -185,4 +222,4 @@ The new system is done when:
 - branch cards stay readable
 - negated conditions stay obvious
 - the engine still gets the same runtime bytecode it expects
-
+- the semantic rebuild path matches the original bytecode for every supported ability family without needing fallback compatibility

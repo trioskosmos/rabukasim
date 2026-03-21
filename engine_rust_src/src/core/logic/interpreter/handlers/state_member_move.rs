@@ -15,6 +15,7 @@ pub fn handle_move_member(
     resolved_slot: i32,
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
 ) -> HandlerResult {
+    let is_optional = (a as u64 & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
     let src_slot = if ctx.area_idx >= 0 {
         ctx.area_idx as usize
     } else {
@@ -22,6 +23,32 @@ pub fn handle_move_member(
     };
 
     let needs_choice = a == 99 || (a < 0 || a > 2);
+
+    if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
+        if matches!(suspend_choice(
+            state,
+            db,
+            ctx,
+            ctx,
+            instr_ip,
+            O_MOVE_MEMBER,
+            s,
+            ChoiceType::Optional,
+            a as u64,
+            -1,
+        ), HandlerResult::Suspend) {
+            return HandlerResult::Suspend;
+        }
+    }
+
+    if is_optional && ctx.v_remaining == -1 && ctx.choice_index != -1 {
+        if ctx.choice_index == 1 {
+            return HandlerResult::SetCond(false);
+        }
+        if ctx.choice_index == 0 {
+            ctx.choice_index = -1;
+        }
+    }
 
     if needs_choice && ctx.choice_index == -1 {
         let mut choice_ctx = ctx.clone();

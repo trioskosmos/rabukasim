@@ -501,7 +501,7 @@ pub fn resolve_bytecode(
     }
 
     // Restore phase if we finished a resumed execution and no new suspensions occurred
-    if ctx_in.choice_index != -1 && (state.phase == Phase::Response || state.phase == Phase::Setup) && state.interaction_stack.is_empty() {
+    if (state.phase == Phase::Response || state.phase == Phase::Setup) && state.interaction_stack.is_empty() {
         let orig = ctx_in.original_phase.unwrap_or(Phase::Main);
         state.phase = if orig == Phase::Response || orig == Phase::Setup {
             Phase::Main

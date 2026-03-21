@@ -543,6 +543,28 @@ impl ResponseController for GameState {
                             .add_to_color(heart_color_idx as usize, 1);
                     }
                     self.interaction_stack.pop();
+
+                    let current_execution_id = self.ui.current_execution_id.unwrap_or(0);
+                    let was_cancelled = current_execution_id > 0
+                        && self.ui.cancelled_execution_ids.remove(&current_execution_id);
+                    if !was_cancelled {
+                        let res_trigger = match pi.ctx.trigger_type {
+                            crate::core::enums::TriggerType::OnLiveStart => {
+                                Some(crate::core::enums::TriggerType::OnAbilityResolve)
+                            }
+                            crate::core::enums::TriggerType::OnLiveSuccess => {
+                                Some(crate::core::enums::TriggerType::OnAbilitySuccess)
+                            }
+                            _ => None,
+                        };
+
+                        if let Some(t) = res_trigger {
+                            let mut res_ctx = pi.ctx.clone();
+                            res_ctx.target_card_id = pi.ctx.source_card_id;
+                            self.trigger_abilities_from(db, t, &res_ctx, 0);
+                        }
+                    }
+
                     self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
                         Phase::Main
                     } else {

@@ -463,6 +463,7 @@ def build_ability_index(compiled_data: dict[str, Any], metadata: dict[str, Any])
                     "model": sig["model"],
                     "sparse_model": sig["sparse_model"],
                     "round_trip_matches": sig["round_trip_matches"],
+                    "source_words": list(bytecode),
                     "cards": [],
                 },
             )

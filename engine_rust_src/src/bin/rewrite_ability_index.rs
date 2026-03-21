@@ -293,9 +293,9 @@ fn strip_entry(value: &mut Value, metadata: &Value) {
                 obj.remove("signature_source");
                 obj.remove("round_trip_bytecode");
 
-                if let Some(frames) = obj.get_mut("frames").and_then(|v| v.as_array_mut()) {
+                let (opcode_names, choice_blocks) = if let Some(frames) = obj.get_mut("frames").and_then(|v| v.as_array_mut()) {
                     let mut opcode_names = Vec::new();
-                    for frame in frames {
+                    for frame in frames.iter_mut() {
                         let semantic = semanticize_frame(frame, metadata);
                         if let Some(opcode_name) = semantic.get("opcode").and_then(|v| v.as_str()) {
                             if !opcode_names.iter().any(|name: &String| name == opcode_name) {
@@ -304,11 +304,19 @@ fn strip_entry(value: &mut Value, metadata: &Value) {
                         }
                         *frame = semantic;
                     }
-                    obj.insert("opcode_names".to_string(), Value::Array(opcode_names.into_iter().map(Value::String).collect()));
-                    let choice_blocks = collect_choice_blocks(frames);
-                    if !choice_blocks.is_empty() {
-                        obj.insert("choices".to_string(), Value::Array(choice_blocks));
-                    }
+                    (opcode_names, collect_choice_blocks(frames))
+                } else {
+                    (Vec::new(), Vec::new())
+                };
+
+                if !opcode_names.is_empty() {
+                    obj.insert(
+                        "opcode_names".to_string(),
+                        Value::Array(opcode_names.into_iter().map(Value::String).collect()),
+                    );
+                }
+                if !choice_blocks.is_empty() {
+                    obj.insert("choices".to_string(), Value::Array(choice_blocks));
                 }
             }
         }

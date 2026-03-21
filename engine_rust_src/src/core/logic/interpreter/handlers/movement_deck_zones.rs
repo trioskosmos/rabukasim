@@ -30,6 +30,11 @@ pub fn handle_deck_zones(
     } else {
         resolve_target_slot(target_slot, ctx) as i32
     };
+    let look_resolved_slot = if op == O_REVEAL_CARDS {
+        6
+    } else {
+        resolved_slot
+    };
 
     match op {
         O_SEARCH_DECK => {
@@ -67,7 +72,7 @@ pub fn handle_deck_zones(
         }
         O_LOOK_DECK | O_REVEAL_CARDS | O_CHEER_REVEAL => {
             return movement_deck_look::handle_look_cards(
-                state, db, ctx, p_idx, op, v, a, instr_ip, resolved_slot,
+                state, db, ctx, p_idx, op, v, a, instr_ip, look_resolved_slot,
             );
         }
         O_LOOK_DECK_DYNAMIC => {

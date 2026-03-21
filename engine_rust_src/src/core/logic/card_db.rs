@@ -255,7 +255,17 @@ impl CardDatabase {
         Ok(())
     }
 
-    pub(crate) fn sparse_entry_to_bytecode(entry: &Value) -> Vec<i32> {
+    pub fn sparse_entry_to_bytecode(entry: &Value) -> Vec<i32> {
+        if let Some(words) = entry.get("source_words").and_then(|v| v.as_array()) {
+            let source_words: Vec<i32> = words
+                .iter()
+                .filter_map(|word| word.as_i64().map(|v| v as i32))
+                .collect();
+            if !source_words.is_empty() {
+                return source_words;
+            }
+        }
+
         let mut bytecode = Vec::new();
         if let Some(frames) = entry.get("frames").and_then(|v| v.as_array()) {
             for frame in frames {
@@ -275,8 +285,10 @@ impl CardDatabase {
         let v = Self::encode_sparse_value(opcode_name, value);
         let a = Self::encode_sparse_attr(opcode_name, attr);
         let s = Self::encode_sparse_slot(slot);
+        let a_low = a as u32 as i32;
+        let a_high = (a >> 32) as u32 as i32;
 
-        vec![opcode_id, v, a as i32, s, 0]
+        vec![opcode_id, v, a_low, a_high, s]
     }
 
     fn encode_sparse_value(opcode_name: &str, value: Option<&Value>) -> i32 {
@@ -288,8 +300,8 @@ impl CardDatabase {
                     let char_id_1 = obj.get("char_id_1").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
                     let char_id_2 = obj.get("char_id_2").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
                     let char_id_3 = obj.get("char_id_3").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-                    let reveal = obj.get("reveal").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-                    let dest_discard = obj.get("dest_discard").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                    let reveal = Self::sparse_boolish(obj.get("reveal"));
+                    let dest_discard = Self::sparse_boolish(obj.get("dest_discard"));
                     (count & 0xff)
                         | ((char_id_2 & 0x7f) << 8)
                         | ((char_id_1 & 0x7f) << 16)
@@ -345,7 +357,7 @@ impl CardDatabase {
                         let req = obj.get(&key).and_then(|v| v.as_i64()).unwrap_or(0) as u64;
                         val |= (req & 0xf) << ((idx - 1) * 4);
                     }
-                    let unit_enabled = obj.get("unit_enabled").and_then(|v| v.as_i64()).unwrap_or(0) as u64;
+                    let unit_enabled = Self::sparse_boolish(obj.get("unit_enabled")) as u64;
                     let unit_id = obj.get("unit_id").and_then(|v| v.as_i64()).unwrap_or(0) as u64;
                     val |= (unit_enabled & 0x1) << 48;
                     val |= (unit_id & 0x7f) << 49;
@@ -359,29 +371,29 @@ impl CardDatabase {
                     let mut decoded = DecodedFilterAttr::default();
                     decoded.target_player = obj.get("target_player").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
                     decoded.card_type = obj.get("card_type").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.group_enabled = obj.get("group_enabled").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.group_enabled = Self::sparse_boolish(obj.get("group_enabled")) != 0;
                     decoded.group_id = obj.get("group_id").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.is_tapped = obj.get("is_tapped").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
-                    decoded.has_blade_heart = obj.get("has_blade_heart").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
-                    decoded.not_has_blade_heart = obj.get("not_has_blade_heart").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
-                    decoded.unique_names = obj.get("unique_names").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
-                    decoded.unit_enabled = obj.get("unit_enabled").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.is_tapped = Self::sparse_boolish(obj.get("is_tapped")) != 0;
+                    decoded.has_blade_heart = Self::sparse_boolish(obj.get("has_blade_heart")) != 0;
+                    decoded.not_has_blade_heart = Self::sparse_boolish(obj.get("not_has_blade_heart")) != 0;
+                    decoded.unique_names = Self::sparse_boolish(obj.get("unique_names")) != 0;
+                    decoded.unit_enabled = Self::sparse_boolish(obj.get("unit_enabled")) != 0;
                     decoded.unit_id = obj.get("unit_id").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.value_enabled = obj.get("value_enabled").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.value_enabled = Self::sparse_boolish(obj.get("value_enabled")) != 0;
                     decoded.value_threshold = obj.get("value_threshold").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.is_le = obj.get("is_le").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
-                    decoded.is_cost_type = obj.get("is_cost_type").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.is_le = Self::sparse_boolish(obj.get("is_le")) != 0;
+                    decoded.is_cost_type = Self::sparse_boolish(obj.get("is_cost_type")) != 0;
                     decoded.color_mask = obj.get("color_mask").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
                     decoded.char_id_1 = obj.get("char_id_1").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
                     decoded.char_id_2 = obj.get("char_id_2").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
                     decoded.char_id_3 = obj.get("char_id_3").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
                     decoded.zone_mask = obj.get("zone_mask").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
                     decoded.special_id = obj.get("special_id").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.is_setsuna = obj.get("is_setsuna").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
-                    decoded.compare_accumulated = obj.get("compare_accumulated").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
-                    decoded.is_optional = obj.get("is_optional").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
-                    decoded.keyword_energy = obj.get("keyword_energy").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
-                    decoded.keyword_member = obj.get("keyword_member").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
+                    decoded.is_setsuna = Self::sparse_boolish(obj.get("is_setsuna")) != 0;
+                    decoded.compare_accumulated = Self::sparse_boolish(obj.get("compare_accumulated")) != 0;
+                    decoded.is_optional = Self::sparse_boolish(obj.get("is_optional")) != 0;
+                    decoded.keyword_energy = Self::sparse_boolish(obj.get("keyword_energy")) != 0;
+                    decoded.keyword_member = Self::sparse_boolish(obj.get("keyword_member")) != 0;
                     decoded.to_attr()
                 } else {
                     attr.as_i64().unwrap_or(0) as u64
@@ -395,14 +407,22 @@ impl CardDatabase {
         if let Some(obj) = slot.as_object() {
             let target_slot = obj.get("target_slot").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
             let remainder_zone = obj.get("remainder_zone").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-            let source_zone = obj.get("source_zone").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-            let dest_zone = obj.get("dest_zone").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-            let is_opponent = obj.get("is_opponent").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-            let is_reveal_until_live = obj.get("is_reveal_until_live").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-            let is_baton_slot = obj.get("is_baton_slot").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-            let is_empty_slot = obj.get("is_empty_slot").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-            let is_wait = obj.get("is_wait").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-            let is_dynamic = obj.get("is_dynamic").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+            let source_zone = obj
+                .get("source_zone")
+                .map(Self::zone_value_from_sparse)
+                .flatten()
+                .unwrap_or(0);
+            let dest_zone = obj
+                .get("dest_zone")
+                .map(Self::zone_value_from_sparse)
+                .flatten()
+                .unwrap_or(0);
+            let is_opponent = Self::sparse_boolish(obj.get("is_opponent"));
+            let is_reveal_until_live = Self::sparse_boolish(obj.get("is_reveal_until_live"));
+            let is_baton_slot = Self::sparse_boolish(obj.get("is_baton_slot"));
+            let is_empty_slot = Self::sparse_boolish(obj.get("is_empty_slot"));
+            let is_wait = Self::sparse_boolish(obj.get("is_wait"));
+            let is_dynamic = Self::sparse_boolish(obj.get("is_dynamic"));
             let area_idx = obj.get("area_idx").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
             let reveal_or_baton = if is_reveal_until_live != 0 || is_baton_slot != 0 { 1 } else { 0 };
             (target_slot & 0xff)
@@ -418,6 +438,37 @@ impl CardDatabase {
         } else {
             slot.as_i64().unwrap_or(0) as i32
         }
+    }
+
+    fn sparse_boolish(value: Option<&Value>) -> i32 {
+        match value {
+            Some(Value::Bool(flag)) => {
+                if *flag { 1 } else { 0 }
+            }
+            Some(Value::Number(num)) => num.as_i64().unwrap_or(0) as i32,
+            Some(other) => other.as_i64().unwrap_or(0) as i32,
+            None => 0,
+        }
+    }
+
+    fn zone_value_from_sparse(value: &Value) -> Option<i32> {
+        if let Some(raw) = value.as_i64() {
+            return Some(raw as i32);
+        }
+        let name = value.as_str()?.to_ascii_uppercase();
+        Some(match name.as_str() {
+            "DECK_TOP" => ZONE_DECK_TOP,
+            "DECK_BOTTOM" => ZONE_DECK_BOTTOM,
+            "ENERGY" => ZONE_ENERGY,
+            "STAGE" => ZONE_STAGE,
+            "DECK" => ZONE_DECK,
+            "HAND" => ZONE_HAND,
+            "DISCARD" => ZONE_DISCARD,
+            "LIVE_SET" => ZONE_LIVE_SET,
+            "SUCCESS_PILE" => ZONE_SUCCESS_PILE,
+            "YELL" => ZONE_YELL,
+            _ => 0,
+        })
     }
 
     /// Extract the logical ID (0-4095) from a packed card ID.
