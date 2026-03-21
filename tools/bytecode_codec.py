@@ -36,6 +36,8 @@ from engine.models.generated_packer import (
     unpack_v_look_choose,
     unpack_v_scalar_dynamic,
 )
+from engine.models.ability_filter import SPECIAL_ID_LABELS, ZONE_MASK_LABELS, PackedFilterSpec
+from engine.models.bytecode_readable import ZONE_NAMES, HEART_COLOR_NAMES
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -73,6 +75,11 @@ class MetadataLookups:
     slot_indices_by_id: dict[int, str]
     target_players_by_id: dict[int, str]
     opcode_sections_by_id: dict[int, tuple[str, str]]
+    ids_by_opcode: dict[str, int]
+    ids_by_slot: dict[str, int]
+    ids_by_special: dict[str, int]
+    ids_by_zone_mask: dict[str, int]
+    ids_by_zone: dict[str, int]
 
 
 def load_lookups(metadata: dict[str, Any]) -> MetadataLookups:
@@ -96,6 +103,11 @@ def load_lookups(metadata: dict[str, Any]) -> MetadataLookups:
         slot_indices_by_id=reverse_map(metadata.get("slot_indices", {})),
         target_players_by_id=reverse_map(metadata.get("target_players", {})),
         opcode_sections_by_id=opcode_sections_by_id,
+        ids_by_opcode={**metadata.get("opcodes", {}), **metadata.get("conditions", {}), **metadata.get("costs", {})},
+        ids_by_slot=metadata.get("slot_indices", {}),
+        ids_by_special={v: k for k, v in SPECIAL_ID_LABELS.items()},
+        ids_by_zone_mask={v: k for k, v in ZONE_MASK_LABELS.items()},
+        ids_by_zone={v: k for k, v in ZONE_NAMES.items()},
     )
 
 
@@ -121,44 +133,108 @@ def _opcode_name(value: int, lookups: MetadataLookups) -> tuple[str, str]:
     return "opcodes", f"OP_{value}"
 
 
+def _slot_name(slot_id: int, lookups: MetadataLookups) -> str:
+    # Mask out FILTER_IS_OPTIONAL (bit 61)
+    clean_id = slot_id & 0x1FFFFFFFFFFFFFFF
+    if clean_id in lookups.slot_indices_by_id:
+        return lookups.slot_indices_by_id[clean_id]
+    if clean_id in lookups.target_players_by_id:
+        return lookups.target_players_by_id[clean_id].title()
+    return f"Slot_{clean_id}"
+
+
 def _slot_label(slot_value: int, lookups: MetadataLookups) -> str | None:
-    if slot_value in lookups.target_players_by_id:
-        return f"target_players.{lookups.target_players_by_id[slot_value]}"
-    if slot_value in lookups.slot_indices_by_id:
-        return f"slot_indices.{lookups.slot_indices_by_id[slot_value]}"
+    # Mask out FILTER_IS_OPTIONAL (bit 61)
+    clean_value = slot_value & 0x1FFFFFFFFFFFFFFF
+    if clean_value in lookups.target_players_by_id:
+        return f"target_players.{lookups.target_players_by_id[clean_value]}"
+    if clean_value in lookups.slot_indices_by_id:
+        return lookups.slot_indices_by_id[clean_value]
     return None
 
 
-def _decode_payload(op_name: str, words: list[int]) -> dict[str, Any]:
-    _, v, a, s, _ = words
+def _opcode_label(value: int, lookups: MetadataLookups) -> str:
+    if value in lookups.opcodes_by_id:
+        return lookups.opcodes_by_id[value]
+    if value in lookups.conditions_by_id:
+        return lookups.conditions_by_id[value]
+    if value in lookups.costs_by_id:
+        return lookups.costs_by_id[value]
+    return f"OP_{value}"
+
+
+def _label_filter_dict(filter_dict: dict[str, Any]) -> dict[str, Any]:
+    labeled = dict(filter_dict)
+    if labeled.get("special_id") and labeled["special_id"] in SPECIAL_ID_LABELS:
+        labeled["special_id"] = SPECIAL_ID_LABELS[labeled["special_id"]]
+    if labeled.get("zone_mask") and labeled["zone_mask"] in ZONE_MASK_LABELS:
+        labeled["zone_mask"] = ZONE_MASK_LABELS[labeled["zone_mask"]]
+    return labeled
+
+
+def _label_slot_dict(slot_dict: dict[str, Any]) -> dict[str, Any]:
+    labeled = dict(slot_dict)
+    for key in ("source_zone", "dest_zone", "remainder_zone"):
+        if labeled.get(key) and labeled[key] in ZONE_NAMES:
+            labeled[key] = ZONE_NAMES[labeled[key]]
+    return labeled
+
+
+def _unlabel_filter_dict(filter_dict: dict[str, Any], lookups: MetadataLookups) -> dict[str, Any]:
+    unlabeled = dict(filter_dict)
+    if isinstance(unlabeled.get("special_id"), str):
+        unlabeled["special_id"] = lookups.ids_by_special.get(unlabeled["special_id"], 0)
+    if isinstance(unlabeled.get("zone_mask"), str):
+        unlabeled["zone_mask"] = lookups.ids_by_zone_mask.get(unlabeled["zone_mask"], 0)
+    return unlabeled
+
+
+def _unlabel_slot_dict(slot_dict: dict[str, Any], lookups: MetadataLookups) -> dict[str, Any]:
+    unlabeled = dict(slot_dict)
+    for key in ("source_zone", "dest_zone", "remainder_zone"):
+        if isinstance(unlabeled.get(key), str):
+            unlabeled[key] = lookups.ids_by_zone.get(unlabeled[key], 0)
+    return unlabeled
+
+
+def _decode_payload(op_name: str, words: list[int], lookups: MetadataLookups) -> dict[str, Any]:
+    op, v, a_low, a_high, s = words
+    a = ((a_high & 0xFFFFFFFF) << 32) | (a_low & 0xFFFFFFFF)
+
+    raw = {
+        "opcode": _opcode_label(words[0], lookups),
+        "value": v,
+        "attr": a,
+        "slot": _slot_label(s, lookups) or s,
+    }
 
     if op_name == "LOOK_AND_CHOOSE":
         return {
-            "raw": {"opcode": words[0], "value": v, "attr": a, "slot": s},
+            "raw": raw,
             "v": unpack_v_look_choose(v),
-            "a": unpack_a_standard(a),
-            "s": unpack_s_standard(s),
+            "a": _label_filter_dict(unpack_a_standard(a)),
+            "s": _label_slot_dict(unpack_s_standard(s)),
         }
     if op_name == "SET_HEART_COST":
         return {
-            "raw": {"opcode": words[0], "value": v, "attr": a, "slot": s},
+            "raw": raw,
             "v": unpack_v_heart_counts(v),
             "a": unpack_a_heart_cost(a),
-            "s": unpack_s_standard(s),
+            "s": _label_slot_dict(unpack_s_standard(s)),
         }
     if op_name == "CALC_SUM_COST":
         return {
-            "raw": {"opcode": words[0], "value": v, "attr": a, "slot": s},
+            "raw": raw,
             "v": unpack_v_scalar_dynamic(v),
-            "a": unpack_a_standard(a),
-            "s": unpack_s_standard(s),
+            "a": _label_filter_dict(unpack_a_standard(a)),
+            "s": _label_slot_dict(unpack_s_standard(s)),
         }
 
     return {
-        "raw": {"opcode": words[0], "value": v, "attr": a, "slot": s},
+        "raw": raw,
         "v": v,
-        "a": unpack_a_standard(a),
-        "s": unpack_s_standard(s),
+        "a": _label_filter_dict(unpack_a_standard(a)),
+        "s": _label_slot_dict(unpack_s_standard(s)),
     }
 
 
@@ -172,8 +248,21 @@ def decode_frame(words: list[int], lookups: MetadataLookups) -> dict[str, Any]:
     metadata_refs = [f"{opcode_section}.{opcode_name}"]
     slot_ref = _slot_label(int(padded[4]), lookups)
     if slot_ref:
-        metadata_refs.append(slot_ref)
+        metadata_refs.append(f"slot_indices.{slot_ref}")
     negated = 1000 <= opcode < 2000
+    payload = _decode_payload(opcode_name, padded, lookups)
+    semantic = {
+        "opcode_id": opcode,
+        "opcode_name": opcode_name,
+        "opcode_section": opcode_section,
+        "negated": bool(negated),
+        "decoded": readable.decode_chunk(padded),
+        "value": payload.get("v"),
+        "attr": payload.get("a"),
+        "slot": payload.get("s"),
+        "raw": payload.get("raw", {}),
+        "metadata_refs": metadata_refs,
+    }
 
     return {
         "words": padded,
@@ -182,8 +271,9 @@ def decode_frame(words: list[int], lookups: MetadataLookups) -> dict[str, Any]:
         "opcode_section": opcode_section,
         "negated": negated or None,
         "metadata_refs": metadata_refs,
-        "payload": _decode_payload(opcode_name, padded),
-        "decoded": readable.decode_chunk(padded),
+        "payload": payload,
+        "semantic": semantic,
+        "decoded": semantic["decoded"],
     }
 
 
@@ -240,12 +330,49 @@ def _choice_blocks(frames: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return blocks
 
 
-def encode_frame(frame: dict[str, Any]) -> list[int]:
+def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
     if "words" in frame and frame["words"]:
         words = list(frame["words"][:5])
         if len(words) < 5:
             words.extend([0] * (5 - len(words)))
         return [int(word) for word in words]
+
+    semantic = frame.get("semantic") if isinstance(frame, dict) else None
+    if isinstance(semantic, dict):
+        merged: dict[str, Any] = dict(frame)
+        merged.pop("semantic", None)
+
+        if "opcode" not in merged or isinstance(merged.get("opcode"), str):
+            merged["opcode"] = int(semantic.get("opcode_id", merged.get("opcode_id", 0)) or 0)
+        if "opcode_name" not in merged and semantic.get("opcode_name"):
+            merged["opcode_name"] = semantic.get("opcode_name")
+        if "payload" not in merged:
+            merged_payload: dict[str, Any] = {}
+            if isinstance(semantic.get("raw"), dict) and semantic.get("opcode_name") not in {"LOOK_AND_CHOOSE", "SET_HEART_COST", "CALC_SUM_COST"}:
+                merged_payload["raw"] = dict(semantic["raw"])
+
+            if semantic.get("opcode_name") in {"LOOK_AND_CHOOSE", "SET_HEART_COST", "CALC_SUM_COST"}:
+                if semantic.get("value") is not None:
+                    merged_payload["v"] = semantic.get("value")
+                if semantic.get("attr") is not None:
+                    merged_payload["a"] = _unlabel_filter_dict(semantic["attr"], lookups) if isinstance(semantic["attr"], dict) else semantic["attr"]
+                if semantic.get("slot") is not None:
+                    merged_payload["s"] = _unlabel_slot_dict(semantic["slot"], lookups) if isinstance(semantic["slot"], dict) else semantic["slot"]
+            else:
+                if semantic.get("value") is not None:
+                    merged_payload["v"] = semantic.get("value")
+
+            if merged_payload:
+                merged["payload"] = merged_payload
+
+        return encode_frame(merged, lookups)
+
+    source_words = frame.get("source_words") if isinstance(frame, dict) else None
+    if isinstance(source_words, list) and source_words:
+        words = [int(word) for word in source_words[:5]]
+        if len(words) < 5:
+            words.extend([0] * (5 - len(words)))
+        return words
 
     opcode = int(frame.get("opcode", 0))
     opcode_name = str(frame.get("opcode_name", ""))
@@ -253,11 +380,19 @@ def encode_frame(frame: dict[str, Any]) -> list[int]:
     raw = payload.get("raw", {}) if isinstance(payload, dict) else {}
 
     if raw:
+        raw_opcode = raw.get("opcode", opcode)
+        if isinstance(raw_opcode, str) and raw_opcode in lookups.ids_by_opcode:
+            raw_opcode = lookups.ids_by_opcode[raw_opcode]
+        
+        raw_slot = raw.get("slot", 0)
+        if isinstance(raw_slot, str) and raw_slot in lookups.ids_by_slot:
+            raw_slot = lookups.ids_by_slot[raw_slot]
+            
         return [
-            int(raw.get("opcode", opcode)),
+            int(raw_opcode),
             int(raw.get("value", 0)),
             int(raw.get("attr", 0)),
-            int(raw.get("slot", 0)),
+            int(raw_slot),
             0,
         ]
 
@@ -294,7 +429,11 @@ def encode_frame(frame: dict[str, Any]) -> list[int]:
 def bytecode_to_model(bytecode: list[int], metadata: dict[str, Any] | None = None) -> dict[str, Any]:
     lookups = load_lookups(metadata or load_json(DEFAULT_METADATA_PATH))
     frames = [
-        dict(decode_frame(bytecode[i : i + 5], lookups), _frame_index=(i // 5))
+        dict(
+            decode_frame(bytecode[i : i + 5], lookups),
+            ability_frame_index=(i // 5),
+            _frame_index=(i // 5),
+        )
         for i in range(0, len(bytecode), 5)
     ]
     return {
@@ -309,11 +448,12 @@ def bytecode_to_model(bytecode: list[int], metadata: dict[str, Any] | None = Non
     }
 
 
-def model_to_bytecode(model: dict[str, Any]) -> list[int]:
+def model_to_bytecode(model: dict[str, Any], metadata: dict[str, Any] | None = None) -> list[int]:
+    lookups = load_lookups(metadata or load_json(DEFAULT_METADATA_PATH))
     frames = model.get("frames", [])
     bytecode: list[int] = []
     for frame in frames:
-        bytecode.extend(encode_frame(frame))
+        bytecode.extend(encode_frame(frame, lookups))
     return bytecode
 
 
@@ -358,6 +498,10 @@ def frame_to_sparse(frame: dict[str, Any]) -> dict[str, Any]:
     payload = frame.get("payload", {}) if isinstance(frame, dict) else {}
     sparse: dict[str, Any] = {"opcode_id": opcode_id, "opcode": opcode_name}
 
+    frame_index = frame.get("ability_frame_index", frame.get("_frame_index")) if isinstance(frame, dict) else None
+    if isinstance(frame_index, int) and frame_index >= 0:
+        sparse["ability_frame_index"] = frame_index
+
     if not isinstance(payload, dict):
         return sparse
 
@@ -374,6 +518,39 @@ def frame_to_sparse(frame: dict[str, Any]) -> dict[str, Any]:
 
     if _is_sparse_value(payload.get("decoded")):
         sparse["decoded"] = payload.get("decoded")
+
+    semantic = frame.get("semantic") if isinstance(frame, dict) else None
+    if isinstance(semantic, dict):
+        sem_sparse: dict[str, Any] = {
+            "opcode_id": int(semantic.get("opcode_id", opcode_id)),
+            "opcode_name": str(semantic.get("opcode_name", opcode_name)),
+            "opcode_section": str(semantic.get("opcode_section", frame.get("opcode_section", "opcodes"))),
+        }
+        if _is_sparse_value(semantic.get("negated")):
+            sem_sparse["negated"] = semantic.get("negated")
+        if _is_sparse_value(semantic.get("decoded", frame.get("decoded"))):
+            sem_sparse["decoded"] = semantic.get("decoded", frame.get("decoded"))
+        
+        pruned_v = _prune_sparse(semantic.get("value"))
+        if _is_sparse_value(pruned_v):
+            sem_sparse["value"] = pruned_v
+            
+        pruned_a = _prune_sparse(semantic.get("attr"))
+        if _is_sparse_value(pruned_a):
+            sem_sparse["attr"] = pruned_a
+            
+        pruned_s = _prune_sparse(semantic.get("slot"))
+        if _is_sparse_value(pruned_s):
+            sem_sparse["slot"] = pruned_s
+            
+        pruned_raw = _prune_sparse(semantic.get("raw"))
+        if _is_sparse_value(pruned_raw):
+            sem_sparse["raw"] = pruned_raw
+            
+        if _is_sparse_value(semantic.get("metadata_refs")):
+            sem_sparse["metadata_refs"] = semantic.get("metadata_refs")
+            
+        sparse["semantic"] = sem_sparse
 
     return sparse
 
@@ -484,6 +661,7 @@ def build_ability_index(compiled_data: dict[str, Any], metadata: dict[str, Any])
         groups.values(),
         key=lambda entry: (
             entry["trigger"],
+            -len(entry["cards"]),
             entry["signature_hash"],
         ),
     )

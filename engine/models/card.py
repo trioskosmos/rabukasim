@@ -31,6 +31,8 @@ class MemberCard:
         np.ndarray, BeforeValidator(ensure_ndarray)
     ]  # Shape (7,) blade hearts by color (Index 6 = ALL)
     blades: int
+    original_text: str = ""
+    original_text_en: str = ""
     groups: Annotated[List[Group], BeforeValidator(ensure_group_list)] = field(default_factory=list)
     units: Annotated[List[Unit], BeforeValidator(ensure_unit_list)] = field(default_factory=list)
     abilities: List[Ability] = field(default_factory=list)
@@ -38,8 +40,6 @@ class MemberCard:
     rare: str = "N"  # Default to Normal (updated from rarity to match tests)
     # Rule 2.12: カードテキスト (Card Text)
     ability_text: str = ""
-    original_text: str = ""
-    original_text_en: str = ""
     # Rule 2.7: ブレードハート (Blade Heart Icons)
     volume_icons: int = 0
     draw_icons: int = 0
@@ -71,14 +71,14 @@ class LiveCard:
     required_hearts: Annotated[
         np.ndarray, BeforeValidator(ensure_ndarray)
     ]  # Shape (7,) required hearts by color (6 colors + any)
+    original_text: str = ""
+    original_text_en: str = ""
     abilities: List[Ability] = field(default_factory=list)
     groups: Annotated[List[Group], BeforeValidator(ensure_group_list)] = field(default_factory=list)
     units: Annotated[List[Unit], BeforeValidator(ensure_unit_list)] = field(default_factory=list)
     img_path: str = ""
     rare: str = "N"
     ability_text: str = ""
-    original_text: str = ""
-    original_text_en: str = ""
     volume_icons: int = 0
     draw_icons: int = 0
     semantic_flags: int = 0
@@ -104,10 +104,10 @@ class EnergyCard:
     """Represents an energy card with metadata"""
 
     card_id: int
+    original_text: str = ""
+    original_text_en: str = ""
     card_no: str = ""
     name: str = "Energy"
     img_path: str = ""
     ability_text: str = ""
-    original_text: str = ""
-    original_text_en: str = ""
     rare: str = "N"

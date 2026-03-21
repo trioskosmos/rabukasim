@@ -111,7 +111,7 @@ pub fn get_live_requirements(
         }
         if let Some(member) = db.get_member(source_cid) {
             for ab in &member.abilities {
-                if ab.trigger != TriggerType::Constant || !ab.raw_text.contains("OPPONENT_LIVE") {
+                if ab.trigger != TriggerType::Constant {
                     continue;
                 }
                 let ctx = AbilityContext {
@@ -131,9 +131,11 @@ pub fn get_live_requirements(
 
                 let program = ab.bytecode_program();
                 let mut ip = 0;
+                let mut touches_live_requirements = false;
                 while let Some(instr) = program.instruction_at(ip) {
                     let op = instr.op;
                     if op == O_INCREASE_HEART_COST {
+                        touches_live_requirements = true;
                         let val = instr.v;
                         let attr = instr.a as usize;
                         let idx = if attr == 0 || attr == 7 {
@@ -147,6 +149,7 @@ pub fn get_live_requirements(
                             aura.heart_req_additions.add_to_color(idx, val as i32);
                         }
                     } else if op == O_SET_HEART_COST {
+                        touches_live_requirements = true;
                         let mut override_board = HeartBoard::default();
                         process_heart_modifiers_bytecode(
                             &[
@@ -164,6 +167,10 @@ pub fn get_live_requirements(
                         aura.heart_req_additions = override_board;
                     }
                     ip = program.next_ip(ip);
+                }
+
+                if !touches_live_requirements {
+                    continue;
                 }
             }
         }

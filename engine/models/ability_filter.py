@@ -35,9 +35,33 @@ _CARD_TYPE_LABELS = {
 }
 
 _ZONE_MASK_LABELS = {
+    1: "deck",
+    2: "deck_bottom",
+    3: "energy",
     4: "stage",
+    5: "deck_top",
     6: "hand",
     7: "discard",
+}
+
+SPECIAL_ID_LABELS = {
+    1: "Kanon",
+    2: "Not MY舞",
+    3: "Not Self",
+    4: "Same Name",
+    5: "Base Cost",
+    6: "Selected",
+    7: "Not Selected",
+}
+
+ZONE_MASK_LABELS = {
+    1: "Main",
+    2: "Guest",
+    4: "Friend",
+    3: "Main+Guest",
+    5: "Main+Friend",
+    6: "Guest+Friend",
+    7: "ALL",
 }
 
 _COLOR_NAMES = ["pink", "red", "yellow", "green", "blue", "purple", "any"]
@@ -124,7 +148,10 @@ def format_filter_attr(packed_attr: int) -> str:
     if spec.zone_mask:
         parts.append(f"zone={_ZONE_MASK_LABELS.get(int(spec.zone_mask), spec.zone_mask)}")
     if spec.special_id:
-        parts.append(f"special={int(spec.special_id)}")
+        parts.append(f"special={SPECIAL_ID_LABELS.get(int(spec.special_id), spec.special_id)}")
+    
+    if spec.zone_mask:
+        parts.append(f"zone_mask={ZONE_MASK_LABELS.get(int(spec.zone_mask), spec.zone_mask)}")
     if spec.is_tapped:
         parts.append("status=tapped")
     if spec.has_blade_heart:

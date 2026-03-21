@@ -16,7 +16,9 @@ pub fn handle_look_cards(
     let count = v as usize;
     if resolved_slot == 6 {
         if ctx.choice_index == -1 {
-            if matches!(suspend_choice(
+            if state.players[p_idx].hand.len() == 1 {
+                ctx.choice_index = 0;
+            } else if matches!(suspend_choice(
                 state,
                 db,
                 ctx,

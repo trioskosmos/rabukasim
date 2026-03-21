@@ -3,6 +3,7 @@ use crate::core::logic::constants::FILTER_MASK_LOWER;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState};
 use crate::core::logic::interpreter::logging;
+use crate::core::logic::interpreter::handlers::state_helpers::source_ability;
 use super::movement_discard_helpers::{
     pop_card_from_zone, resolve_source_zone, zone_available_count, zone_card_count,
 };
@@ -92,6 +93,13 @@ pub fn handle_move_to_discard(
         return HandlerResult::Suspend;
     }
 
+    if is_optional
+        && matches!(source_zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default)
+        && next_ctx.choice_index == 0
+    {
+        next_ctx.choice_index = -1;
+    }
+
     let mut moved_cards = Vec::new();
 
     if next_ctx.choice_index != -1 {
@@ -140,6 +148,25 @@ pub fn handle_move_to_discard(
     // subsequent DISCARDED_CARDS conditions in the same ability can see it.
     if !next_ctx.selected_cards.is_empty() {
         ctx.selected_cards = next_ctx.selected_cards.clone();
+    }
+
+    if moved_cards.iter().any(|&cid| db.get_live(cid).is_some())
+        && ctx.area_idx >= 0
+        && ctx.area_idx < 3
+        && source_ability(db, ctx)
+            .map(|ability| {
+                ability.effects.iter().any(|effect| {
+                    effect.runtime_opcode == O_NOP
+                        && effect
+                            .params
+                            .get("raw_effect")
+                            .and_then(|value| value.as_str())
+                            == Some("TAP_SELF")
+                })
+            })
+            .unwrap_or(false)
+    {
+        state.players[p_idx].set_tapped(ctx.area_idx as usize, true);
     }
 
     // BATCH CONTEXT PRESERVATION: Use accumulated selected_cards from context, not local moved_cards

@@ -35,12 +35,61 @@ class BytecodeCodecTests(unittest.TestCase):
 
         self.assertEqual(round_tripped, list(ability["bytecode"]))
 
+    def test_sparse_model_preserves_source_words_when_requested(self) -> None:
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        bytecode = [30, 4, 0, 0, 1]
+
+        model = codec.bytecode_to_model(bytecode, metadata)
+        sparse_model = codec.model_to_sparse_model(model, include_raw_words=True)
+
+        self.assertEqual(model["frames"][0]["ability_frame_index"], 0)
+        self.assertEqual(sparse_model["frames"][0]["ability_frame_index"], 0)
+        self.assertEqual(sparse_model["frames"][0]["source_words"], bytecode)
+        self.assertEqual(sparse_model["bytecode"], bytecode)
+
+        compiled_data = {
+            "member_db": {
+                "card_a": {
+                    "card_no": "TST-001",
+                    "name": "Test Card",
+                    "abilities": [
+                        {
+                            "trigger": int(metadata["triggers"]["ON_LIVE_START"]),
+                            "bytecode": bytecode,
+                            "pseudocode": "TRIGGER: ON_LIVE_START\nEFFECT: SELECT_MODE(4) -> PLAYER",
+                        }
+                    ],
+                }
+            }
+        }
+
+        index = codec.build_ability_index(compiled_data, metadata)
+        self.assertEqual(index["summary"]["ability_count"], 1)
+        self.assertEqual(index["abilities"][0]["source_words"], bytecode)
+
+    def test_sparse_semantic_model_can_be_edited_and_re_encoded(self) -> None:
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        bytecode = [41, pack_v_look_choose(count=5, char_id_1=21, reveal=1, dest_discard=1), 0, 0, 0]
+
+        model = codec.bytecode_to_model(bytecode, metadata)
+        sparse_model = codec.model_to_sparse_model(model)
+
+        self.assertIn("semantic", sparse_model["frames"][0])
+        self.assertEqual(sparse_model["frames"][0]["ability_frame_index"], 0)
+        sparse_model["frames"][0]["semantic"]["value"]["count"] = 2
+
+        reencoded = codec.model_to_bytecode(sparse_model)
+
+        self.assertEqual(reencoded, [41, pack_v_look_choose(count=2, char_id_1=21, reveal=1, dest_discard=1), 0, 0, 0])
+        self.assertNotEqual(reencoded, bytecode)
+
     def test_select_mode_frame_round_trip(self) -> None:
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
 
         frame = {"words": [30, 4, 0, 0, 1]}
-        decoded = codec.decode_frame(frame["words"], codec.load_lookups(metadata))
-        encoded = codec.encode_frame(decoded)
+        lookups = codec.load_lookups(metadata)
+        decoded = codec.decode_frame(frame["words"], lookups)
+        encoded = codec.encode_frame(decoded, lookups)
 
         self.assertEqual(encoded, frame["words"])
         self.assertEqual(decoded["opcode_name"], "SELECT_MODE")
@@ -55,8 +104,8 @@ class BytecodeCodecTests(unittest.TestCase):
         look_model = codec.decode_frame(look_frame, lookups)
         heart_model = codec.decode_frame(heart_frame, lookups)
 
-        self.assertEqual(codec.encode_frame(look_model), look_frame)
-        self.assertEqual(codec.encode_frame(heart_model), heart_frame)
+        self.assertEqual(codec.encode_frame(look_model, lookups), look_frame)
+        self.assertEqual(codec.encode_frame(heart_model, lookups), heart_frame)
         self.assertEqual(look_model["payload"]["v"]["count"], 5)
         self.assertEqual(heart_model["payload"]["a"]["req_1"], 1)
 

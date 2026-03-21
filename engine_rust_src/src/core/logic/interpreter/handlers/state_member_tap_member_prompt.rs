@@ -13,7 +13,9 @@ pub fn handle_tap_member_prompt(
     resolved_slot: i32,
 ) -> HandlerResult {
     let is_optional = instr.filter_attr().is_optional;
-    let filter_attr = instr.filter_attr().to_attr();
+    let self_source_is_on_stage = ctx.area_idx >= 0 && ctx.area_idx < 3;
+    let filter_attr = instr.filter_attr().to_attr()
+        & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
     let fixed_slot_matches = if resolved_slot >= 0 && resolved_slot < 3 {
         let cid = state.players[p_idx].stage[resolved_slot as usize];
         cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
@@ -21,6 +23,10 @@ pub fn handle_tap_member_prompt(
         false
     };
     let needs_selection = (a & 0x02) != 0 || (!fixed_slot_matches && filter_attr != 0);
+
+    if !self_source_is_on_stage && resolved_slot == 4 && !needs_selection {
+        return HandlerResult::SetCond(false);
+    }
 
     if is_optional && ctx.v_remaining == -1 {
         if matches!(suspend_choice(

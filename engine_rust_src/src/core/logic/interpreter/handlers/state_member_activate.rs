@@ -10,6 +10,11 @@ pub fn handle_activate_member(
     v: i32,
     a: i64,
 ) -> HandlerResult {
+    let resolved_slot = if resolved_slot == 4 && ctx.area_idx >= 0 && ctx.area_idx < 3 {
+        ctx.area_idx as i32
+    } else {
+        resolved_slot
+    };
     let mut group_bits = 0u32;
     if let Some(card) = db.get_member(ctx.source_card_id) {
         for &g in &card.groups {

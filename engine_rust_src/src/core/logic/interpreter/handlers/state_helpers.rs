@@ -96,7 +96,9 @@ pub fn tap_opponent_chooser_player(db: &CardDatabase, ctx: &AbilityContext) -> u
             let mut saw_tap_member = false;
             for chunk in ability.bytecode.chunks(5) {
                 match chunk.first().copied().unwrap_or(0) {
-                    crate::core::enums::O_TAP_MEMBER => saw_tap_member = true,
+                    crate::core::enums::O_TAP_MEMBER | crate::core::enums::O_MOVE_MEMBER => {
+                        saw_tap_member = true
+                    }
                     crate::core::enums::O_TAP_OPPONENT if saw_tap_member => return true,
                     _ => {}
                 }

@@ -62,8 +62,16 @@ pub fn handle_set_tapped(
         }
     }
 
-    if resolved_slot < 3 {
-        state.players[p_idx].set_tapped(resolved_slot as usize, instr.v != 0);
+    let tap_slot = if is_optional && ctx.choice_index >= 0 && ctx.choice_index < 3 {
+        Some(ctx.choice_index as usize)
+    } else if resolved_slot >= 0 && resolved_slot < 3 {
+        Some(resolved_slot as usize)
+    } else {
+        None
+    };
+
+    if let Some(slot) = tap_slot {
+        state.players[p_idx].set_tapped(slot, instr.v != 0);
     }
 
     HandlerResult::Continue

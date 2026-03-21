@@ -80,13 +80,20 @@ def validate_bytecode(bytecode: list, card_no: str, ab_idx: int) -> list:
 
 
 def _build_export_excludes(export_profile: str) -> tuple[dict, dict]:
-    exclude_ability_fields = {"instructions": True}
+    exclude_ability_fields = {
+        "instructions": True,
+        "raw_text": True,
+        "pseudocode": True,
+        "filters": True,
+        "option_names": True,
+        "semantic_form": True,
+    }
     exclude_card_fields = {"faq": True, "abilities": {"__all__": exclude_ability_fields}}
 
     if export_profile == "runtime":
         exclude_ability_fields.update(
             {
-                "semantic_form": True,
+                "modal_options": True,
             }
         )
 

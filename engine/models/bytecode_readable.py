@@ -39,10 +39,13 @@ UNIT_NAMES = {int(value): name.title().replace("_", " ") for name, value in UNIT
 CARD_TYPE_NAMES = {int(value): name.title() for name, value in CARD_TYPES.items()}
 
 SPECIAL_ID_NAMES = {
-    0: "None",
-    1: "Self",
-    2: "Other than Self",
-    3: "Other than Activator",
+    1: "Kanon",
+    2: "Not MY舞",
+    3: "Not Self",
+    4: "Same Name",
+    5: "Base Cost",
+    6: "Selected",
+    7: "Not Selected",
 }
 
 SLOT_NAMES = {int(value): name for name, value in SLOT_INDICES.items()}
@@ -134,12 +137,28 @@ def decode_filter(filter_attr: int) -> str:
 
 
 def _slot_name(slot_id: int) -> str:
-    if slot_id in SLOT_NAMES:
-        return SLOT_NAMES[slot_id]
-    target_name = TARGET_NAMES.get(slot_id)
-    if target_name:
-        return target_name.title()
-    return f"Slot_{slot_id}"
+    # Handle FILTER_IS_OPTIONAL (bit 61)
+    is_optional = bool(slot_id & 2305843009213693952)
+    clean_id = slot_id & 0x1FFFFFFFFFFFFFFF  # Mask out bit 61
+
+    # Human-readable labels for special choice constants
+    if clean_id == 99:
+        return "Done/Cancel"
+    if clean_id == 999:
+        return "All"
+
+    if clean_id in SLOT_NAMES:
+        name = SLOT_NAMES[clean_id]
+    else:
+        target_name = TARGET_NAMES.get(clean_id)
+        if target_name:
+            name = target_name.title()
+        else:
+            name = f"Slot_{clean_id}"
+    
+    if is_optional:
+        return f"{name} (Optional)"
+    return name
 
 
 def _zone_name(zone_id: int) -> str:

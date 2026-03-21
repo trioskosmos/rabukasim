@@ -19,6 +19,8 @@ pub fn handle_discard_selection(
         return HandlerResult::Continue;
     }
 
+    let filter_attr_base = filter_attr_base & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
+
     if ctx.choice_index == -1 {
         state.players[target_p_idx].looked_cards.clear();
     }

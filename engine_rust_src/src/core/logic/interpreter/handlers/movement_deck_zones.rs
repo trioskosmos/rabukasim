@@ -31,7 +31,11 @@ pub fn handle_deck_zones(
         resolve_target_slot(target_slot, ctx) as i32
     };
     let look_resolved_slot = if op == O_REVEAL_CARDS {
-        6
+        if s == 6 || slot.source_zone as i32 == 6 || resolved_slot == 6 {
+            6
+        } else {
+            resolved_slot
+        }
     } else {
         resolved_slot
     };

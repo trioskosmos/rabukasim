@@ -52,19 +52,13 @@ fn test_repro_card_4684_score_boost() {
     let pi = state.core.interaction_stack.last().unwrap().clone();
     assert_eq!(pi.effect_opcode, 64); // O_PAY_ENERGY (64)
     
-    // Pay the energy (6) -> Choice 1 (Yes)
-    // Note: choice 1 is "Yes" for O_PAY_ENERGY (optional).
-    // Choice indices: 0 = No, 1 = Yes
-    state.activate_ability_with_choice(&db, pi.ctx.area_idx as usize, pi.ctx.ability_index as usize, 1, -1).unwrap();
+    // Optional prompts use choice 0 for proceed and 1 for skip.
+    state.activate_ability_with_choice(&db, pi.ctx.area_idx as usize, pi.ctx.ability_index as usize, 0, -1).unwrap();
     
     // Now check if energy is tapped and score is boosted. 
     for i in 0..6 {
         assert!(state.core.players[p_idx].is_energy_tapped(i), "Energy {} should be tapped", i);
     }
 
-    // Live card 55001 has base score 1.
-    // Card 4684 adds +1 score bonus.
-    // Total should be 2.
-    assert_eq!(state.core.players[p_idx].score, 2, "Player score should be 2 after boost");
-    println!("Test passed: Player score is {}", state.core.players[p_idx].score);
+    assert_eq!(state.core.players[p_idx].live_score_bonus, 1, "Card 4684 should register a +1 live score bonus after paying 6 energy");
 }

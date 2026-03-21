@@ -13,8 +13,10 @@ pub fn handle_tap_member_selected(
     resolved_slot: i32,
 ) -> HandlerResult {
     let is_optional = instr.filter_attr().is_optional;
+    let self_source_is_on_stage = ctx.area_idx >= 0 && ctx.area_idx < 3;
     let is_choice_done = ctx.choice_index == CHOICE_DONE;
-    let filter_attr = instr.filter_attr().to_attr();
+    let filter_attr = instr.filter_attr().to_attr()
+        & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
     let fixed_slot_matches = if resolved_slot >= 0 && resolved_slot < 3 {
         let cid = state.players[p_idx].stage[resolved_slot as usize];
         cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
@@ -22,6 +24,10 @@ pub fn handle_tap_member_selected(
         false
     };
     let needs_selection = (a & 0x02) != 0 || (!fixed_slot_matches && filter_attr != 0);
+
+    if !self_source_is_on_stage && resolved_slot == 4 && !needs_selection {
+        return HandlerResult::SetCond(false);
+    }
 
     if is_optional || (a & 0x01) != 0 {
         if is_optional && ctx.v_remaining == -1 {
@@ -50,12 +56,7 @@ pub fn handle_tap_member_selected(
             ctx.choice_index = -1;
             ctx.v_remaining = instr.v as i16;
 
-            if resolved_slot >= 0
-                && resolved_slot < 3
-                && fixed_slot_matches
-                && ctx.selected_cards.last().copied()
-                    == Some(state.players[p_idx].stage[resolved_slot as usize])
-            {
+            if resolved_slot >= 0 && resolved_slot < 3 && fixed_slot_matches {
                 state.players[p_idx].set_tapped(resolved_slot as usize, true);
                 return HandlerResult::SetCond(true);
             }
@@ -78,19 +79,12 @@ pub fn handle_tap_member_selected(
 
         if is_optional && ctx.v_remaining != -1 {
             if ctx.choice_index >= 0 && ctx.choice_index < 3 {
-                eprintln!(
-                    "[TRACE] TAP_MEMBER_SELECTED: tapping slot {} on player {} (a={:#X}, v_remaining={})",
-                    ctx.choice_index,
-                    p_idx,
-                    a,
-                    ctx.v_remaining,
-                );
                 state.players[p_idx].set_tapped(ctx.choice_index as usize, true);
                 return HandlerResult::SetCond(true);
             }
         }
 
-        if is_choice_done || ctx.choice_index == 1 {
+        if is_choice_done || (ctx.v_remaining == -1 && ctx.choice_index == 1) {
             return HandlerResult::SetCond(false);
         }
 
@@ -112,14 +106,6 @@ pub fn handle_tap_member_selected(
         }
 
         if resolved_slot < 3 {
-            eprintln!(
-                "[TRACE] TAP_MEMBER_SELECTED: final tap slot {} on player {} (a={:#X}, choice_index={}, v_remaining={})",
-                resolved_slot,
-                p_idx,
-                a,
-                ctx.choice_index,
-                ctx.v_remaining,
-            );
             state.players[p_idx].set_tapped(resolved_slot as usize, true);
         }
         return HandlerResult::SetCond(true);

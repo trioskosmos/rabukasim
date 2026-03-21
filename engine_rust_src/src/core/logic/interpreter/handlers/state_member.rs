@@ -46,6 +46,11 @@ pub fn handle_member_state(
             );
         }
         O_SET_TAPPED => {
+            let resolved_slot = if resolved_slot == 4 && ctx.area_idx >= 0 && ctx.area_idx < 3 {
+                ctx.area_idx as i32
+            } else {
+                resolved_slot
+            };
             return state_member_tap::handle_set_tapped(
                 state,
                 db,
@@ -58,6 +63,9 @@ pub fn handle_member_state(
         }
         O_TAP_MEMBER => {
             let mut resolved_slot = resolve_target_slot(target_slot, ctx);
+            if resolved_slot == 4 && ctx.area_idx >= 0 && ctx.area_idx < 3 {
+                resolved_slot = ctx.area_idx as usize;
+            }
             let filter_target = (a as u64 & 0x3) as u8;
             let mut target_p_idx = match filter_target {
                 2 => 1 - (ctx.player_id as usize),
@@ -80,16 +88,6 @@ pub fn handle_member_state(
                     }
                 }
             }
-
-            eprintln!(
-                "[TRACE] O_TAP_MEMBER: p_idx={}, target_p_idx={}, resolved_slot={}, a={:#X}, choice_index={}, selected_cards_last={:?}",
-                p_idx,
-                target_p_idx,
-                resolved_slot,
-                a,
-                ctx.choice_index,
-                ctx.selected_cards.last().copied(),
-            );
 
             if v == 0 && resolved_slot == 4 && a & 0x02 == 0 && (a & 0x01 != 0 || a & 0x80 != 0) {
                 let mod_a = a | 0x02;

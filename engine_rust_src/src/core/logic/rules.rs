@@ -422,7 +422,18 @@ pub fn get_member_cost(
             if (modif.target_mask & (1 << slot_idx)) != 0 {
                 // Check filters if any
                 let mut apply = true;
-                if let Some(src_m) = db.get_member(modif.source_cid) {
+                if modif.filter_mask != 0 {
+                    let src_ctx = AbilityContext {
+                        source_card_id: modif.source_cid,
+                        player_id: p_idx as u8,
+                        activator_id: p_idx as u8,
+                        area_idx: -1,
+                        ..Default::default()
+                    };
+                    if !state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx) {
+                        apply = false;
+                    }
+                } else if let Some(src_m) = db.get_member(modif.source_cid) {
                     if let Some(ab) = src_m.abilities.get(modif.ability_idx as usize) {
                         if !ab.filters.is_empty() {
                             let src_ctx = AbilityContext {
@@ -459,7 +470,18 @@ pub fn get_member_cost(
 
         for modif in &aura_ref.cost_modifiers {
             let mut apply = true;
-            if let Some(src_m) = db.get_member(modif.source_cid) {
+            if modif.filter_mask != 0 {
+                let src_ctx = AbilityContext {
+                    source_card_id: modif.source_cid,
+                    player_id: p_idx as u8,
+                    activator_id: p_idx as u8,
+                    area_idx: -1,
+                    ..Default::default()
+                };
+                if !state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx) {
+                    apply = false;
+                }
+            } else if let Some(src_m) = db.get_member(modif.source_cid) {
                 if let Some(ab) = src_m.abilities.get(modif.ability_idx as usize) {
                     if !ab.filters.is_empty() {
                         let src_ctx = AbilityContext {
@@ -689,9 +711,9 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                     let target_area = s & 0xFF;
 
                     let mut target_mask = 0u8;
-                    if target_area == 1 {
+                    if target_area == 1 || target_area == 4 || a != 0 || !ab.filters.is_empty() {
                         target_mask = 0b111;
-                    } else if target_area == 4 || target_area == 0 {
+                    } else if target_area == 0 {
                         target_mask = 1 << source_slot;
                     }
 
@@ -700,7 +722,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                             source_cid: cid,
                             amount: if op == O_REDUCE_COST { v as i16 } else { -(v as i16) },
                             target_mask,
-                            filter_mask: 0,
+                            filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
                             ability_idx: ab_idx as u16,
                         });
                     } else {
@@ -732,11 +754,17 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                     let s = instr.raw_s;
 
                     if op == O_REDUCE_COST || op == O_INCREASE_COST {
+                        let target_area = s & 0xFF;
+                        let target_mask = if target_area == 1 || target_area == 4 || a != 0 || !ab.filters.is_empty() {
+                            0b111
+                        } else {
+                            1 << source_slot
+                        };
                         aura.cost_modifiers.push(CachedCostModifier {
                             source_cid: cid,
                             amount: if op == O_REDUCE_COST { v as i16 } else { -(v as i16) },
-                            target_mask: 1 << source_slot,
-                            filter_mask: 0,
+                            target_mask,
+                            filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
                             ability_idx: ab_idx as u16,
                         });
                     } else {
@@ -803,7 +831,19 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                     continue;
                 }
 
-                let target_mask = if slot_idx < 3 { 1 << slot_idx } else { 0 };
+                let target_mask = if slot_idx < 3 && !ab.bytecode.is_empty() {
+                    let target_area = ab.bytecode.get(4).copied().unwrap_or(0);
+                    let runtime_attr = ab.bytecode.get(2).copied().unwrap_or(0) as u64;
+                    if target_area == 4 || runtime_attr != 0 || !ab.filters.is_empty() {
+                        0b111
+                    } else {
+                        1 << slot_idx
+                    }
+                } else if slot_idx < 3 {
+                    0b111
+                } else {
+                    0
+                };
 
                 let program = BytecodeProgram::from_slice(&ab.bytecode);
                 let mut ip = 0;
@@ -818,7 +858,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                             source_cid,
                             amount: if op == O_REDUCE_COST { v as i16 } else { -(v as i16) },
                             target_mask,
-                            filter_mask: 0,
+                            filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
                             ability_idx: ab_idx as u16,
                         });
                     } else if slot_idx < 3 {

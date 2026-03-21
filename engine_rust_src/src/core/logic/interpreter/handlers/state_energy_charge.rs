@@ -2,6 +2,27 @@ use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::constants::CHOICE_DONE;
 
+fn suspend_pay_energy(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    instr_ip: usize,
+    remaining: i16,
+) -> HandlerResult {
+    suspend_choice(
+        state,
+        db,
+        ctx,
+        ctx,
+        instr_ip,
+        O_PAY_ENERGY,
+        0,
+        ChoiceType::PayEnergy,
+        0,
+        remaining,
+    )
+}
+
 pub fn handle_energy_charge(
     state: &mut GameState,
     p_idx: usize,
@@ -31,6 +52,7 @@ pub fn handle_pay_energy(
     let available = (0..state.players[p_idx].energy_zone.len())
         .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
         .count() as i32;
+    let requires_explicit_selection = state.phase == Phase::Response;
 
     let is_optional = instr.filter_attr().is_optional;
 
@@ -126,26 +148,74 @@ pub fn handle_pay_energy(
             ctx.choice_index = -1;
             return HandlerResult::SetCond(false);
         }
+
+        let mut paid = 0;
+        let player = &mut state.players[p_idx];
+        for i in 0..player.energy_zone.len() {
+            if paid >= actual_v {
+                break;
+            }
+            if !player.is_energy_tapped(i) {
+                player.set_energy_tapped(i, true);
+                paid += 1;
+            }
+        }
+
         ctx.choice_index = -1;
+        ctx.v_accumulated = paid as i16;
+        return HandlerResult::SetCond(paid == actual_v);
     }
 
-    if available < actual_v {
+    let remaining = if ctx.v_remaining > 0 {
+        ctx.v_remaining
+    } else {
+        actual_v as i16
+    };
+
+    if available < remaining as i32 {
         return HandlerResult::SetCond(false);
     }
 
-    // Perform payment
-    let mut paid = 0;
-    let player = &mut state.players[p_idx];
-    for i in 0..player.energy_zone.len() {
-        if paid >= actual_v {
-            break;
+    if !requires_explicit_selection {
+        let mut paid = 0;
+        let player = &mut state.players[p_idx];
+        for i in 0..player.energy_zone.len() {
+            if paid >= remaining as i32 {
+                break;
+            }
+            if !player.is_energy_tapped(i) {
+                player.set_energy_tapped(i, true);
+                paid += 1;
+            }
         }
-        if !player.is_energy_tapped(i) {
-            player.set_energy_tapped(i, true);
-            paid += 1;
-        }
+
+        ctx.v_accumulated += paid as i16;
+        ctx.v_remaining = -1;
+        ctx.choice_index = -1;
+        return HandlerResult::SetCond(paid == remaining as i32);
     }
 
-    ctx.v_accumulated = paid as i16;
+    if ctx.choice_index == -1 {
+        let mut suspend_ctx = ctx.clone();
+        suspend_ctx.v_remaining = remaining;
+        return suspend_pay_energy(state, db, &suspend_ctx, instr_ip, remaining);
+    }
+
+    let e_idx = ctx.choice_index as usize;
+    if e_idx >= state.players[p_idx].energy_zone.len() || state.players[p_idx].is_energy_tapped(e_idx) {
+        return HandlerResult::SetCond(false);
+    }
+
+    state.players[p_idx].set_energy_tapped(e_idx, true);
+    ctx.v_accumulated += 1;
+    ctx.choice_index = -1;
+
+    let next_remaining = remaining - 1;
+    if next_remaining > 0 {
+        ctx.v_remaining = next_remaining;
+        return suspend_pay_energy(state, db, ctx, instr_ip, next_remaining);
+    }
+
+    ctx.v_remaining = -1;
     HandlerResult::SetCond(true)
 }

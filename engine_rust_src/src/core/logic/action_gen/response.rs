@@ -95,8 +95,10 @@ impl ResponseGenerator {
         }
 
         let targeted_live_heart_bonus = pending_targeted_live_heart_bonus(db, pi).filter(|_| {
-            pi.choice_type != ChoiceType::SelectHandDiscard
-                || (state.players[0].hand.is_empty() && state.players[1].hand.is_empty())
+            pi.ctx.trigger_type == TriggerType::OnLiveStart
+                && matches!(pi.choice_type, ChoiceType::SelectMember | ChoiceType::SelectHandDiscard)
+                && (pi.choice_type != ChoiceType::SelectHandDiscard
+                    || (state.players[0].hand.is_empty() && state.players[1].hand.is_empty()))
         });
 
         if let Some((_filter_attr, _heart_color_idx)) = targeted_live_heart_bonus {
@@ -138,6 +140,15 @@ impl ResponseGenerator {
                     receiver.add_action(
                         (ACTION_BASE_HAND_SELECT + i as i32) as usize,
                     );
+                }
+                return;
+            }
+            ChoiceType::TapO => {
+                let target_p_idx = 1 - (pi.ctx.activator_id as usize);
+                for (i, &cid) in state.players[target_p_idx].stage.iter().enumerate() {
+                    if cid >= 0 && !state.players[target_p_idx].is_tapped(i) {
+                        receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                    }
                 }
                 return;
             }
@@ -564,9 +575,12 @@ impl ResponseGenerator {
         if state.debug.debug_mode {
             println!("[DEBUG] generate_select_member_actions: p_idx={}, filter_attr={:X}", p_idx, filter_attr);
         }
+        let filter_only = filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
         let targeted_live_heart_bonus = pending_targeted_live_heart_bonus(db, pi).filter(|_| {
-            pi.choice_type != ChoiceType::SelectHandDiscard
-                || (state.players[0].hand.is_empty() && state.players[1].hand.is_empty())
+            pi.ctx.trigger_type == TriggerType::OnLiveStart
+                && matches!(pi.choice_type, ChoiceType::SelectMember | ChoiceType::SelectHandDiscard)
+                && (pi.choice_type != ChoiceType::SelectHandDiscard
+                    || (state.players[0].hand.is_empty() && state.players[1].hand.is_empty()))
         });
 
         if let Some((_follow_up_filter, _heart_color_idx)) = targeted_live_heart_bonus {
@@ -581,11 +595,14 @@ impl ResponseGenerator {
                 }
             }
             receiver.add_action(0);
+            if state.debug.debug_mode {
+                println!("[DEBUG] generate_select_member_actions: targeted_live_heart_bonus shortcut active");
+            }
             return;
         }
         let target_player = match (filter_attr & 0x3) as u8 {
             2 => 1 - p_idx,
-            3 => 1,
+            3 => p_idx,
             _ => p_idx,
         };
         let player = &state.players[target_player];
@@ -607,7 +624,7 @@ impl ResponseGenerator {
             6 => {
                 // Hand
                 for (i, &cid) in player.hand.iter().enumerate() {
-                    if state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx) {
+                    if state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx) {
                         receiver.add_action(
                             (ACTION_BASE_HAND_SELECT + i as i32) as usize,
                         );
@@ -617,7 +634,7 @@ impl ResponseGenerator {
             7 => {
                 // Discard
                 for (i, &cid) in player.discard.iter().enumerate() {
-                    if state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx) {
+                    if state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx) {
                         receiver.add_action(
                             (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
@@ -626,15 +643,13 @@ impl ResponseGenerator {
             }
             _ => {
                 // Stage (0-2) or Default
-                let exclude_selected = pi.choice_type != ChoiceType::TapMSelect;
+                let exclude_selected = false;
                 for (i, &cid) in player.stage.iter().enumerate() {
-                    if cid >= 0
+                    let matches = cid >= 0
                         && (!exclude_selected || !pi.ctx.selected_cards.contains(&cid))
-                        && state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx)
-                    {
-                        receiver.add_action(
-                            (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
-                        );
+                        && state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx);
+                    if matches {
+                        receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
                     }
                 }
             }

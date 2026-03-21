@@ -1,2 +1,0 @@
-"""Ability codec system package."""
-

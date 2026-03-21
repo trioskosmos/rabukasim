@@ -82,6 +82,7 @@ pub fn suspend_interaction(
         ChoiceType::LookAndChoose,
         ChoiceType::ColorSelect,
         ChoiceType::TapO, // Assuming TAP_M_SELECT doesn't exist in choice_types we added
+        ChoiceType::TapMSelect,
         ChoiceType::SelectMember,
         ChoiceType::SelectLive,
         ChoiceType::SelectPlayer,
