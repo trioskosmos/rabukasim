@@ -18,7 +18,7 @@ def analyze_gaps(keyword, concept_pattern):
 
     missing_phrases = []
 
-    for card_no, card in cards.items():
+    for _card_no, card in cards.items():
         text = card.get("ability", "")
         if keyword not in text:
             continue

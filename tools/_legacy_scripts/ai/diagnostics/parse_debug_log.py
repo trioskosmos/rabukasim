@@ -7,7 +7,6 @@ def parse_log():
         with open("debug_tournament.log", "r", encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
 
-    printing = False
     for i, line in enumerate(lines):
         if "FAILED:" in line or "Error:" in line or "Traceback" in line:
             print(f"--- ERROR FOUND at line {i} ---")

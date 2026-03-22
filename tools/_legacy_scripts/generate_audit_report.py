@@ -268,7 +268,6 @@ def generate_audit_report():
                 "SELECT_MEMBER": "Select {v} Member(s)",
                 "LOOK_AND_CHOOSE_ORDER": "Look at {v} cards and reorder",
                 "PAY_ENERGY": "Pay {v} Energy",
-                "ACTIVATE_ENERGY": "Activate {v} Energy",
             },
             "steps": {
                 "TRIGGER": "### Step: {v}",
@@ -340,7 +339,6 @@ def generate_audit_report():
                 "TYPE": "種類",
                 "ALL_BLADE_AS_ANY_HEART": "ALLブレードを任意のハートとして扱う",
                 "HEART_COST_REDUCE": "必要ハートを減らす",
-                "SCORE_TOTAL": "合計スコア",
                 "MODE": "モード",
                 "CENTER_ONLY": "センター限定",
                 "OUT_OF_CENTER": "センター以外へ",

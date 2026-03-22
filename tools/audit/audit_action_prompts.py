@@ -109,7 +109,7 @@ EFFECT_TYPE_MAP = {
 
 
 def generate_mermaid_flow(ab):
-    raw_text = ab.get("raw_text", "")
+    ab.get("raw_text", "")
     nodes = []
     edges = []
     node_counter = 0
@@ -165,7 +165,7 @@ def generate_mermaid_flow(ab):
         return prev_parents
 
     # 1. Costs
-    for i, cost in enumerate(ab.get("costs", [])):
+    for _i, cost in enumerate(ab.get("costs", [])):
         cost_type_int = cost.get("type", -1)
         # AbilityCostType mapping (approx)
         ctype_name = f"Cost_{cost_type_int}"
@@ -429,7 +429,7 @@ This document serves as a visual audit for all action bar prompts and ability re
                         btn_labels_jp.append(get_action_desc(bid, gs, lang="jp"))
 
                     report += "- **Button Labels:**\n"
-                    for en, jp in zip(btn_labels_en, btn_labels_jp):
+                    for en, jp in zip(btn_labels_en, btn_labels_jp, strict=False):
                         report += f"  - EN: `{en}` | JP: `{jp}`\n"
                     report += "\n"
 

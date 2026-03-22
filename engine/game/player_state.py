@@ -428,15 +428,15 @@ class PlayerState(StateMixin):
 
                 base_id = get_base_id(int(current_card_id))
                 if base_id in card_db:
-                    member = card_db[base_id]
-                group_name = cond.params.get("group", "")
+                    card_db[base_id]
+                cond.params.get("group", "")
                 # This would need to compare member's group with the condition's group
                 # For now, return True as a placeholder
                 return True
             return False
         elif cond.type == ConditionType.COUNT_GROUP:
             # Count members of a specific group in the stage
-            group_name = cond.params.get("group", "")
+            cond.params.get("group", "")
             min_count = cond.params.get("min", 1)
             zone = cond.params.get("zone", "STAGE")
 
@@ -449,7 +449,7 @@ class PlayerState(StateMixin):
                     if card_id >= 0 and card_db:
                         base_id = get_base_id(int(card_id))
                         if base_id in card_db:
-                            member = card_db[base_id]
+                            card_db[base_id]
                             # Compare member's group with the condition's group
                             # For now, return True as a placeholder
                             count += 1

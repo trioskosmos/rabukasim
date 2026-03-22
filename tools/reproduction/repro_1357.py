@@ -37,7 +37,11 @@ class ReproHelper:
             return card_no
         return self._card_no_to_id.get(card_no)
 
-    def set_state(self, p_idx, hand_cards=[], energy_count=0, stage_cards=[]):
+    def set_state(self, p_idx, hand_cards=None, energy_count=0, stage_cards=None):
+        if stage_cards is None:
+            stage_cards = []
+        if hand_cards is None:
+            hand_cards = []
         p = self.gs.get_player(p_idx)
         p.hand = [self.get_cid(c) for c in hand_cards if self.get_cid(c)]
         p.energy_zone = [40001] * energy_count

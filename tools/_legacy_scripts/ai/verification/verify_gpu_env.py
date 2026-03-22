@@ -133,8 +133,10 @@ def test_action_masks(env):
         return False
 
 
-def benchmark_throughput(batch_sizes=[128, 256, 512, 1024, 2048, 4096]):
+def benchmark_throughput(batch_sizes=None):
     """Benchmark GPU environment throughput."""
+    if batch_sizes is None:
+        batch_sizes = [128, 256, 512, 1024, 2048, 4096]
     print("\n=== Throughput Benchmark ===")
 
     try:
@@ -224,7 +226,7 @@ def compare_cpu_gpu():
         gpu_obs, gpu_rewards, gpu_dones, _ = gpu_env.step(gpu_actions)
 
         gpu_rewards_np = cp.asnumpy(gpu_rewards)
-        gpu_dones_np = cp.asnumpy(gpu_dones)
+        cp.asnumpy(gpu_dones)
 
         print(f"CPU rewards (first 5): {cpu_rewards[:5]}")
         print(f"GPU rewards (first 5): {gpu_rewards_np[:5]}")

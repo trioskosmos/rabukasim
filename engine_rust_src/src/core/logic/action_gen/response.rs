@@ -32,6 +32,25 @@ impl ResponseGenerator {
             .map(|effect| effect.runtime_attr)
     }
 
+    fn effect_filter_attr_for_opcode(ab: &Ability, opcode: i32) -> Option<u64> {
+        ab.effects
+            .iter()
+            .find(|effect| effect.runtime_opcode == opcode)
+            .and_then(|effect| {
+                effect
+                    .params
+                    .get("filter")
+                    .and_then(|value| value.as_str())
+                    .map(crate::core::logic::filter::map_filter_string_to_attr)
+            })
+    }
+
+    fn is_saintsnow_member(db: &CardDatabase, cid: i32) -> bool {
+        db.get_member(cid)
+            .map(|card| matches!(card.name.as_str(), "鹿角聖良" | "鹿角理亞"))
+            .unwrap_or(false)
+    }
+
     fn generate_internal<R: ActionReceiver + ?Sized>(
         &self,
         db: &CardDatabase,
@@ -434,8 +453,34 @@ impl ResponseGenerator {
                     return;
                 }
                 if choice_type == ChoiceType::MoveMemberDest {
+                    let composite_filter_attr = crate::core::logic::filter::map_filter_string_to_attr("HAS_GROUP_AQOURS_OR_SAINT_SNOW");
+                    let filter_attr = abilities
+                        .and_then(|abs| {
+                            let ab_idx_real = if pi.ability_index == -1 {
+                                abs.iter()
+                                    .position(|ab| {
+                                        (ab.choice_flags & (CHOICE_FLAG_LOOK
+                                            | CHOICE_FLAG_MODE
+                                            | CHOICE_FLAG_COLOR
+                                            | CHOICE_FLAG_ORDER))
+                                            != 0
+                                    })
+                                    .unwrap_or(0)
+                            } else {
+                                pi.ability_index as usize
+                            };
+
+                            abs.get(ab_idx_real)
+                        })
+                        .and_then(|ab| Self::effect_filter_attr_for_opcode(ab, O_MOVE_MEMBER))
+                        .unwrap_or(pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK);
                     for i in 0..3 {
-                        if i != pi.ctx.area_idx as usize {
+                        let cid = player.stage[i];
+                        if i != pi.ctx.area_idx as usize
+                            && cid >= 0
+                            && (state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx)
+                                || (filter_attr == composite_filter_attr && Self::is_saintsnow_member(db, cid)))
+                        {
                             receiver.add_action(
                                 (ACTION_BASE_STAGE_SLOTS + i as i32) as usize,
                             );

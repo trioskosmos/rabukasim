@@ -44,9 +44,6 @@ use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::{Duration, Instant};
 use std::sync::OnceLock;
-use rand::seq::IndexedRandom;
-use rand::rngs::SmallRng;
-use rand::SeedableRng;
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};

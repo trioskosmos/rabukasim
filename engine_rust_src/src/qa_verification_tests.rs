@@ -901,6 +901,57 @@ mod tests {
     }
 
     #[test]
+    fn test_id_717_baton_touch_untaps_energy() {
+        let db = load_real_db();
+        let leaving_id = 717;
+        let incoming_id = db
+            .members
+            .values()
+            .filter(|member| member.card_id != leaving_id)
+            .find(|member| {
+                member.groups.contains(&4)
+                    && member.cost >= 10
+                    && member.cost <= 12
+                    && !member.abilities.iter().any(|ability| ability.trigger == TriggerType::OnPlay)
+            })
+            .map(|member| member.card_id)
+            .expect("expected a Hasunosora member without an OnPlay trigger");
+
+        let mut state = create_test_state();
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.ui.silent = true;
+
+        for idx in 0..12 {
+            state.players[0].push_energy_card(3000 + idx as i32, idx >= 10);
+        }
+
+        state.players[0].baton_touch_count = 1;
+        state.prev_card_id = incoming_id;
+
+        let tapped_before = state.players[0].tapped_energy_mask.count_ones();
+        assert_eq!(tapped_before, 2, "test setup should start with exactly two tapped energy cards");
+
+        let ctx = AbilityContext {
+            player_id: 0,
+            activator_id: 0,
+            source_card_id: leaving_id,
+            target_card_id: incoming_id,
+            trigger_type: TriggerType::OnLeaves,
+            ..Default::default()
+        };
+
+        state.trigger_abilities(&db, TriggerType::OnLeaves, &ctx);
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.players[0].tapped_energy_mask.count_ones(),
+            0,
+            "717 should untap the two tapped energy cards after baton touch"
+        );
+    }
+
+    #[test]
     fn test_q203_niji_score_buff() {
         let mut state = create_test_state();
         let db = load_real_db();

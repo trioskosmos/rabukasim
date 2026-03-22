@@ -12,14 +12,14 @@ with open("data/cards_compiled.json", "r", encoding="utf-8") as f:
 print("=== UNRECOGNIZED EFFECT NAMES ===")
 raw_effects = Counter()
 
-for card_id, card in db["member_db"].items():
+for _card_id, card in db["member_db"].items():
     for ab in card.get("abilities", []):
         for eff in ab.get("effects", []):
             if eff.get("effect_type") == "META_RULE":
                 raw_effect = eff.get("params", {}).get("raw_effect", "UNKNOWN")
                 raw_effects[raw_effect] += 1
 
-for card_id, card in db["live_db"].items():
+for _card_id, card in db["live_db"].items():
     for ab in card.get("abilities", []):
         for eff in ab.get("effects", []):
             if eff.get("effect_type") == "META_RULE":

@@ -69,7 +69,7 @@ def test_rewards():
     print(f"Done Flag: {dones[0]} (Expected True)")
 
     assert np.isclose(rewards[0], 199.95)
-    assert dones[0] == True
+    assert dones[0]
 
     print("\nPASS: Reward Logic is fully functional and consistent.")
 

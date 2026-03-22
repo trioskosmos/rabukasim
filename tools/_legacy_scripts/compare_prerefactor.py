@@ -3,7 +3,7 @@ import os
 
 def check_missing_files(prerefactor_dir, current_repo_dir):
     missing_files = []
-    for root, dirs, files in os.walk(prerefactor_dir):
+    for root, _dirs, files in os.walk(prerefactor_dir):
         # Calculate the relative path from the prerefactor root
         rel_path = os.path.relpath(root, prerefactor_dir)
 

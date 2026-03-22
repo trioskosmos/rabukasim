@@ -43,7 +43,7 @@ def get_used_keywords():
     # We want "REMOVE_SELF", "DRAW", "CHECK_COUNT_STAGE"
 
     # Matches A_B at start of line (after prefix) or after ;
-    token_pattern = re.compile(r"(?:^|;\s*|\s+)([A-Z_]{2,})(?:$|[(\s])")
+    re.compile(r"(?:^|;\s*|\s+)([A-Z_]{2,})(?:$|[(\s])")
 
     for card in cards:
         if "abilities" not in card:

@@ -19,7 +19,7 @@ def inspect():
     # keys are "member_db", "live_db"
     member_db = full_db.get("member_db", {})
 
-    for cid, card in member_db.items():
+    for _cid, card in member_db.items():
         if card.get("type") != "member":
             continue
 
@@ -48,7 +48,7 @@ def inspect():
 
         if etype in SEMANTIC_HANDLERS:
             # Check Params safety (exclude complex nested logic for now)
-            params = eff.get("params", {})
+            eff.get("params", {})
             # We skip if params has 'condition' or 'target_filter' that looks complex
             # But earlier we relaxed this. Let's just include them for inspection.
             candidates.append((card["card_no"], card.get("name", "Unknown"), ab.get("text", "No Text")))

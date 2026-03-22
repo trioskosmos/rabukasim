@@ -44,7 +44,7 @@ def profile_agents(num_games=3):
 
     db = engine_rust.PyCardDatabase(db_content)
 
-    for name, agent in zip(agent_names, agents):
+    for name, agent in zip(agent_names, agents, strict=False):
         print(f"Profiling {name}...")
         for _ in range(num_games):
             game = engine_rust.PyGameState(db)
@@ -54,7 +54,6 @@ def profile_agents(num_games=3):
 
             step = 0
             while not game.is_terminal() and step < 200:
-                cp = game.current_player
                 phase = game.phase
 
                 if phase in [-1, 0, 4, 5]:

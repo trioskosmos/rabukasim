@@ -28,7 +28,7 @@ def check_icons():
 
     found_icons = Counter()
 
-    for card_id, card_data in cards.items():
+    for _card_id, card_data in cards.items():
         ability = card_data.get("ability", "")
         if not ability:
             continue

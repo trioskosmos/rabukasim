@@ -11,10 +11,10 @@ from tqdm import tqdm
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 import engine_rust
-
 from ai.agents.neural_mcts import HybridMCTSAgent
-from ai.models.training_config import POLICY_SIZE
 from ai.training.train import AlphaNet
+
+from ai.models.training_config import POLICY_SIZE
 from ai.utils.benchmark_decks import parse_deck
 
 

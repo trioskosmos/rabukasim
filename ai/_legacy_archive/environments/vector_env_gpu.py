@@ -282,7 +282,7 @@ class VectorEnvGPU:
                         for g in card.get("groups", []):
                             try:
                                 mask |= 1 << (int(g) % 20)
-                            except:
+                            except Exception:
                                 pass
                         host_stats[cid, 11] = mask
                         count += 1

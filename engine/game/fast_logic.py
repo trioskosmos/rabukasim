@@ -1862,7 +1862,7 @@ def run_opponent_turn_loop(
     Operating on single-environment slices (1D/2D).
     """
     # Safety limit to prevent infinite loops
-    for step_count in range(20):
+    for _step_count in range(20):
         action = select_heuristic_action(
             p_hand,
             p_deck,
@@ -2055,7 +2055,7 @@ def run_random_turn_loop(
     """
     Simulates a full opponent turn by selecting random legal actions.
     """
-    for step_count in range(20):  # Safety limit
+    for _step_count in range(20):  # Safety limit
         # Gather legal candidates
         candidates = [0]  # Always can Pass
 

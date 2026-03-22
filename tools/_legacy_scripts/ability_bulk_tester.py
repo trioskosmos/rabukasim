@@ -139,7 +139,7 @@ def verify_effect(game, member, effect):
 
             # Execute tap
             opp_mem.tapped = True
-            return opp_mem.tapped == True
+            return opp_mem.tapped
 
         elif effect.effect_type == EffectType.MOVE_TO_DECK:
             # Move from hand/discard to deck

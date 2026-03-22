@@ -19,7 +19,7 @@ def audit_numbers():
 
     # Map cards by card_no for fast lookup
     card_map = {}
-    for card_id, card in cards_data.items():
+    for _card_id, card in cards_data.items():
         if isinstance(card, dict) and "card_no" in card:
             card_map[card.get("card_no")] = card
 

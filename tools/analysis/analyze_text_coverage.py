@@ -366,7 +366,7 @@ def analyze_text_coverage():
     if "live_db" in data:
         cards.extend(data["live_db"].values())
 
-    total_cards = len(cards)
+    len(cards)
     cards_with_text = 0
     fully_covered = 0
     partially_covered = 0

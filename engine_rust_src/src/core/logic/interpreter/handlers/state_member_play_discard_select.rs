@@ -26,6 +26,8 @@ pub fn handle_discard_selection(
     }
 
     if state.players[target_p_idx].looked_cards.is_empty() {
+        ctx.choice_index = -1;
+
         let mut filter_attr = filter_attr_base;
         if is_total_cost {
             filter_attr |= 1u64 << 60;
@@ -44,25 +46,31 @@ pub fn handle_discard_selection(
             return HandlerResult::Continue;
         }
 
+        if state.players[target_p_idx].looked_cards.len() == 1 && !is_total_cost {
+            ctx.choice_index = 0;
+        }
+
         let mut target_ctx = ctx.clone();
         target_ctx.player_id = target_p_idx as u8;
         target_ctx.v_remaining = remaining;
         target_ctx.v_accumulated = ctx.v_accumulated;
         target_ctx.choice_index = -1;
 
-        if matches!(suspend_choice(
-            state,
-            db,
-            &target_ctx,
-            &target_ctx,
-            instr_ip,
-            O_PLAY_MEMBER_FROM_DISCARD,
-            s,
-            ChoiceType::SelectDiscardPlay,
-            filter_attr,
-            remaining,
-        ), HandlerResult::Suspend) {
-            return HandlerResult::Suspend;
+        if ctx.choice_index == -1 {
+            if matches!(suspend_choice(
+                state,
+                db,
+                &target_ctx,
+                &target_ctx,
+                instr_ip,
+                O_PLAY_MEMBER_FROM_DISCARD,
+                s,
+                ChoiceType::SelectDiscardPlay,
+                filter_attr,
+                remaining,
+            ), HandlerResult::Suspend) {
+                return HandlerResult::Suspend;
+            }
         }
     }
 

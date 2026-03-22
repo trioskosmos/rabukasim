@@ -7,7 +7,7 @@ def extract_abilities():
         cards = json.load(f)
 
     abilities = []
-    for card_id, card in cards.items():
+    for _card_id, card in cards.items():
         if "ability" in card and card["ability"]:
             abilities.append(card["ability"])
         # Also check card_variants if they exist, but cards.json seems to be flat

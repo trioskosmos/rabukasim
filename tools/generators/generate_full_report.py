@@ -62,7 +62,7 @@ def parse_verification_log():
 
 def find_tests_for_card(card_no):
     found_in = []
-    for root, dirs, files in os.walk(TESTS_DIR):
+    for root, _dirs, files in os.walk(TESTS_DIR):
         for file in files:
             if file.endswith(".py"):
                 path = os.path.join(root, file)
@@ -113,17 +113,17 @@ def main():
     all_cards = []
 
     if "member_db" in full_data:
-        for cid, card in full_data["member_db"].items():
+        for _cid, card in full_data["member_db"].items():
             all_cards.append(card)
     if "live_db" in full_data:
-        for cid, card in full_data["live_db"].items():
+        for _cid, card in full_data["live_db"].items():
             all_cards.append(card)
 
     print(f"Total cards found: {len(all_cards)}")
 
     rows = []
 
-    for i, card_data in enumerate(all_cards):
+    for _i, card_data in enumerate(all_cards):
         card_no = card_data.get("card_no", "N/A")
         name = card_data.get("name", "N/A")
 

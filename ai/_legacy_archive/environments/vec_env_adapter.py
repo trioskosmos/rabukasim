@@ -51,7 +51,7 @@ else:
             self.use_gpu = USE_GPU_ENV
 
             # For Legacy Adapter: Read MCTS_SIMS env var or default
-            mcts_sims = int(os.getenv("MCTS_SIMS", "50"))
+            int(os.getenv("MCTS_SIMS", "50"))
 
             if self.use_gpu:
                 # GPU Env doesn't support MCTS yet, pass legacy args
@@ -99,7 +99,7 @@ else:
 
                     if isinstance(obs, cp.ndarray):
                         obs = cp.asnumpy(obs)
-                except:
+                except Exception:
                     pass
             return obs
 
@@ -133,7 +133,7 @@ else:
                         rewards = cp.asnumpy(rewards)
                     if isinstance(dones, cp.ndarray):
                         dones = cp.asnumpy(dones)
-                except:
+                except Exception:
                     pass
 
             return obs, rewards, dones, infos
@@ -166,7 +166,7 @@ else:
 
                         if isinstance(masks, cp.ndarray):
                             masks = cp.asnumpy(masks)
-                    except:
+                    except Exception:
                         pass
                 return [masks[i] for i in range(self.num_envs)]
 
@@ -186,6 +186,6 @@ else:
 
                     if isinstance(masks, cp.ndarray):
                         masks = cp.asnumpy(masks)
-                except:
+                except Exception:
                     pass
             return masks

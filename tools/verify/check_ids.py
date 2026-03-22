@@ -10,6 +10,6 @@ except Exception as e:
     print(f"Error reading DB: {e}")
 
 print("Checking for engine_rust.pyd locations:")
-for root, dirs, files in os.walk("."):
+for root, _dirs, files in os.walk("."):
     if "engine_rust.pyd" in files:
         print(os.path.join(root, "engine_rust.pyd"))

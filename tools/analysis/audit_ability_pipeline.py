@@ -23,7 +23,7 @@ def run_audit():
     # Build reverse lookups
     compiled_by_cardno = {}
     for db_key in ["member_db", "live_db", "energy_db"]:
-        for cid, cdata in compiled.get(db_key, {}).items():
+        for _cid, cdata in compiled.get(db_key, {}).items():
             card_no = cdata.get("card_no", "")
             if card_no:
                 compiled_by_cardno[card_no] = cdata
@@ -37,7 +37,7 @@ def run_audit():
     # Rust test file card references
     rust_test_dir = "engine_rust_src/src"
     tested_cards = set()
-    for root, dirs, files in os.walk(rust_test_dir):
+    for root, _dirs, files in os.walk(rust_test_dir):
         for fn in files:
             if "test" in fn and fn.endswith(".rs"):
                 filepath = os.path.join(root, fn)
@@ -50,7 +50,7 @@ def run_audit():
     # Python test card references
     py_test_dir = "tests"
     if os.path.exists(py_test_dir):
-        for root, dirs, files in os.walk(py_test_dir):
+        for root, _dirs, files in os.walk(py_test_dir):
             for fn in files:
                 if fn.endswith(".py"):
                     filepath = os.path.join(root, fn)

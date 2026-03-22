@@ -156,7 +156,8 @@ mod tests {
         assert!(check_cost(&state, &db, 0, &cost, &ctx));
 
         // Pay cost
-        let success = pay_cost(&mut state, &db, 0, &cost, &ctx);
+        let mut ctx = ctx;
+        let success = pay_cost(&mut state, &db, 0, &cost, &mut ctx);
         assert!(success);
         let expected_hand: smallvec::SmallVec<[i32; 16]> = vec![101].into();
         assert_eq!(state.players[0].hand, expected_hand);
@@ -201,7 +202,8 @@ mod tests {
         };
 
         assert!(check_cost(&state, &db, 0, &cost, &ctx));
-        assert!(pay_cost(&mut state, &db, 0, &cost, &ctx));
+        let mut ctx = ctx;
+        assert!(pay_cost(&mut state, &db, 0, &cost, &mut ctx));
         assert!(state.players[0].success_lives.is_empty());
         assert_eq!(state.players[0].discard[0], 100);
     }

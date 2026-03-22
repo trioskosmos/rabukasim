@@ -10,7 +10,6 @@ if project_root not in sys.path:
 from engine.models.generated_packer import pack_a_heart_cost, pack_v_heart_counts, pack_v_look_choose
 from tools import bytecode_codec as codec
 
-
 ROOT = Path(project_root)
 
 

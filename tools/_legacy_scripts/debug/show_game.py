@@ -31,7 +31,6 @@ def decode_observation(obs):
             loc_val = obs[idx + 79]
             loc_str = "UNK"
             # Fuzzy match
-            best_diff = 1.0
             for k, v in locations.items():
                 diff = abs(loc_val - k)
                 if diff < 0.05:

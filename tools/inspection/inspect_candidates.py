@@ -21,7 +21,7 @@ def main():
     db = data["member_db"]
     candidates = ["PL!N-bp1-001-P", "PL!N-bp1-005-P", "PL!N-bp4-013-N", "PL!-bp4-011-N"]
 
-    for cid, card in db.items():
+    for _cid, card in db.items():
         if card["card_no"] in candidates:
             print(f"=== {card['card_no']} : {card['name']} ===")
             print(f"Blades: {card.get('blades', 0)}")

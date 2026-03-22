@@ -14,7 +14,7 @@ def find_longest_abilities():
     results = []
 
     # Process members
-    for m_id, m in data.get("member_db", {}).items():
+    for _m_id, m in data.get("member_db", {}).items():
         text = m.get("ability_text", "")
         if text:
             results.append(
@@ -28,7 +28,7 @@ def find_longest_abilities():
             )
 
     # Process lives
-    for l_id, l in data.get("live_db", {}).items():
+    for _l_id, l in data.get("live_db", {}).items():
         text = l.get("ability_text", "")
         if text:
             results.append(

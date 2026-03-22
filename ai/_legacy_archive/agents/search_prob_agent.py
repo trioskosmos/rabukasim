@@ -1,8 +1,8 @@
 from typing import List
 
 import numpy as np
-
 from ai.agents.agent_base import Agent
+
 from engine.game.enums import Phase as PhaseEnum
 from engine.game.game_state import GameState
 
@@ -243,7 +243,7 @@ class SearchProbAgent(Agent):
         # 3. Board Value (Hearts and Blades from members on stage)
         total_blades = 0
         total_hearts = np.zeros(7, dtype=np.int32)
-        for i, cid in enumerate(p.stage):
+        for _i, cid in enumerate(p.stage):
             if cid >= 0:
                 base_id = cid & 0xFFFFF
                 if base_id in state.member_db:
@@ -374,7 +374,7 @@ class SearchProbAgent(Agent):
                     alpha = max(alpha, eval)
                     if beta <= alpha:
                         break
-                except:
+                except Exception:
                     continue
             return max_eval
         else:
@@ -391,7 +391,7 @@ class SearchProbAgent(Agent):
                     beta = min(beta, eval)
                     if beta <= alpha:
                         break
-                except:
+                except Exception:
                     continue
             return min_eval
 

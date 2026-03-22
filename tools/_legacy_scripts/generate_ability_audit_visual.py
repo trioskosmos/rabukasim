@@ -39,7 +39,7 @@ def decompile(bytecode):
             try:
                 opcode_name = Opcode(op_val).name
                 cond_type_name = opcode_name.replace("CHECK_", "")
-                slot = packed_slot & 0x0F
+                packed_slot & 0x0F
                 comp_val = (packed_slot >> 4) & 0x0F
                 comp_map = {0: "GE", 1: "LE", 2: "GT", 3: "LT", 4: "EQ"}
                 comp_str = comp_map.get(comp_val, "GE")

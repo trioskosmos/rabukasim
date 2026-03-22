@@ -1,8 +1,8 @@
 import json
-import re
-from collections import defaultdict
 import os
+import re
 import sys
+from collections import defaultdict
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
@@ -35,7 +35,7 @@ def analyze():
 
     # Load consolidated abilities
     with open("data/consolidated_abilities.json", "r", encoding="utf-8") as f:
-        consolidated = json.load(f)
+        json.load(f)
 
     # Load cards compiled to get counts
     with open("data/cards_compiled.json", "r", encoding="utf-8") as f:
@@ -150,7 +150,9 @@ def analyze():
         "VALUE_NE",
     }
 
-    def print_gaps(category, found, meta, parser_aliases, ignore=set()):
+    def print_gaps(category, found, meta, parser_aliases, ignore=None):
+        if ignore is None:
+            ignore = set()
         print(f"\n=== {category} GAPS (Not in Metadata AND Not Aliased) ===")
         missing = []
         for kw, count in sorted(found.items(), key=lambda x: -x[1]):

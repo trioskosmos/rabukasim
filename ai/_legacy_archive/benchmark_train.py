@@ -10,10 +10,10 @@ sys.path.append(os.getcwd())
 
 import torch.nn.functional as F
 import torch.optim as optim
-
 from ai.environments.rust_env_lite import RustEnvLite
-from ai.models.training_config import INPUT_SIZE, POLICY_SIZE
 from ai.training.train import AlphaNet
+
+from ai.models.training_config import INPUT_SIZE, POLICY_SIZE
 
 
 def benchmark():

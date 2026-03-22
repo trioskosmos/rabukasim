@@ -16,6 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from ai.agents.agent_base import Agent
 from ai.agents.search_prob_agent import SearchProbAgent
+
 from engine.game.data_loader import CardDataLoader
 from engine.game.game_state import GameState, Phase
 

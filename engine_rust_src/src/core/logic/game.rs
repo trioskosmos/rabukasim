@@ -438,7 +438,8 @@ impl GameState {
         cost: &Cost,
         ctx: &AbilityContext,
     ) -> bool {
-        super::interpreter::pay_cost(self, db, p_idx, cost, ctx)
+        let mut ctx = ctx.clone();
+        super::interpreter::pay_cost(self, db, p_idx, cost, &mut ctx)
     }
 
 

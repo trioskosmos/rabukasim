@@ -28,7 +28,6 @@ def run_test():
     # Parse json to find the ID mapping manually
     data = json.loads(json_str)
     target_card_no = "PL!N-bp1-002-P"
-    target_id = -1
 
     # Helper to parse ID (mimic Rust/Python logic)
     # Rust logic is complex, usually (product << 20) | (card_no)
@@ -40,7 +39,6 @@ def run_test():
     # Parse json to find the ID mapping manually
     data = json.loads(json_str)
     target_card_no = "PL!N-bp1-002-P"
-    target_id = -1
 
     found = False
 
@@ -49,7 +47,7 @@ def run_test():
         for mid, mdata in data["member_db"].items():
             if mdata.get("card_no") == target_card_no:
                 print(f"Found {target_card_no} in member_db ID {mid}")
-                target_id = int(mid)
+                int(mid)
                 found = True
                 break
 
@@ -57,7 +55,7 @@ def run_test():
         for lid, ldata in data["live_db"].items():
             if ldata.get("card_no") == target_card_no:
                 print(f"Found {target_card_no} in live_db ID {lid}")
-                target_id = int(lid)
+                int(lid)
                 found = True
                 break
 
@@ -66,7 +64,7 @@ def run_test():
         return
 
     # Create Game
-    gs = engine_rust.PyGameState(db)
+    engine_rust.PyGameState(db)
 
     # Setup Hand with the card
     # We need the INTEGER ID.
@@ -79,8 +77,7 @@ def run_test():
     # Actually PyCardDatabase has get_member_ids (I added it!)
     ids = db.get_member_ids()
 
-    p_id = 0
-    for i in ids:
+    for _i in ids:
         # We can't easily get the card_no back from Rust via PyO3 without full bindings
         # But we can try to guess or use the python map
         pass

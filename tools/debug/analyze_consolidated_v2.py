@@ -2,10 +2,10 @@
 """Analyze consolidated pseudocode - improved version with alias checking."""
 
 import json
-import re
-from collections import defaultdict
 import os
+import re
 import sys
+from collections import defaultdict
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
@@ -15,8 +15,6 @@ from compiler.aliases import (
     EFFECT_GRAMMAR_CONVENIENCES,
     EFFECT_SEMANTIC_SPECIAL_CASES,
     EFFECT_TRUE_ALIASES,
-    IGNORED_CONDITIONS,
-    KEYWORD_CONDITIONS,
     TRIGGER_ALIASES,
 )
 
@@ -30,7 +28,7 @@ conditions = set()
 triggers = set()
 
 # Full analysis of all abilities
-for ability_text, pseudo in consolidated.items():
+for _ability_text, pseudo in consolidated.items():
     if not pseudo:
         continue
     lines = pseudo.split("\n")
@@ -81,7 +79,7 @@ for p in EFFECT_PATTERNS:
 
 # Add aliases as valid too
 parser_effects_with_aliases = parser_effects.copy()
-for alias, canonical in all_effect_aliases.items():
+for _alias, canonical in all_effect_aliases.items():
     parser_effects_with_aliases.add(canonical)
 
 # Load condition patterns
@@ -96,7 +94,7 @@ for p in CONDITION_PATTERNS:
 
 # Add aliases
 parser_conditions_with_aliases = parser_conditions.copy()
-for alias, canonical in all_condition_aliases.items():
+for _alias, canonical in all_condition_aliases.items():
     parser_conditions_with_aliases.add(canonical)
 
 # Load trigger patterns
@@ -111,7 +109,7 @@ for p in TRIGGER_PATTERNS:
 
 # Add aliases
 parser_triggers_with_aliases = parser_triggers.copy()
-for alias, canonical in all_trigger_aliases.items():
+for _alias, canonical in all_trigger_aliases.items():
     parser_triggers_with_aliases.add(canonical)
 
 print("\n" + "=" * 60)
@@ -177,7 +175,7 @@ effect_usage = defaultdict(int)
 condition_usage = defaultdict(int)
 trigger_usage = defaultdict(int)
 
-for ability_text, pseudo in consolidated.items():
+for _ability_text, pseudo in consolidated.items():
     if not pseudo:
         continue
     lines = pseudo.split("\n")

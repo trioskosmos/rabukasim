@@ -1,41 +1,35 @@
+import glob
 import os
 import sys
 import time
-
-# Immediate feedback
-print(" [Init] Python process started. Loading libraries...")
-
-print(" [Init] Loading Pytorch...", end="", flush=True)
-import torch
-import torch as th
-import torch.nn.functional as F
-
-print(" Done.")
-
-print(" [Init] Loading Gymnasium & SB3...", end="", flush=True)
-import glob
 import warnings
 
 import numpy as np
+import torch
+import torch as th
+import torch.nn.functional as F
 from gymnasium import spaces
 from sb3_contrib import MaskablePPO
 from stable_baselines3.common.callbacks import BaseCallback, CheckpointCallback
 from stable_baselines3.common.utils import explained_variance
 from tqdm import tqdm
 
-print(" Done.")
-
 # Filter Numba warning
-warnings.filterwarnings("ignore", category=RuntimeWarning, message="nopython is set for njit")
+warnings.filterwarnings(
+    "ignore", category=RuntimeWarning, message="nopython is set for njit"
+)
 
 # Ensure project root is in path
 sys.path.append(os.getcwd())
 
-print(" [Init] Loading LovecaSim Vector Engine...", end="", flush=True)
-from ai.environments.vec_env_adapter import VectorEnvAdapter
-from ai.utils.loveca_features_extractor import LovecaFeaturesExtractor
+from ai.environments.vec_env_adapter import VectorEnvAdapter  # noqa: E402
+from ai.utils.loveca_features_extractor import LovecaFeaturesExtractor  # noqa: E402
 
-print(" Done.")
+# Immediate feedback
+print(" [Init] Python process started. Loading libraries...")
+print(" [Init] Loading Pytorch... Done.")
+print(" [Init] Loading Gymnasium & SB3... Done.")
+print(" [Init] Loading LovecaSim Vector Engine... Done.")
 
 
 class TimeCheckpointCallback(BaseCallback):
@@ -126,7 +120,7 @@ class ModelSnapshotCallback(BaseCallback):
         self._prune_snapshots()
 
     def _prune_snapshots(self):
-        root = os.path.dirname(self.save_path)  # wait, save_path is "historiccheckpoints"?
+        os.path.dirname(self.save_path)  # wait, save_path is "historiccheckpoints"?
         # save_path passed in init is "historiccheckpoints" relative to cwd? Yes.
         # But wait, self.save_path in init is used.
 

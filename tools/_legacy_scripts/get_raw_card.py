@@ -6,7 +6,7 @@ def get_raw_card(card_no):
     with open("data/cards.json", "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    for k, v in data.items():
+    for _k, v in data.items():
         if v.get("card_no") == card_no:
             print(json.dumps(dict(v), indent=2, ensure_ascii=False))
             return

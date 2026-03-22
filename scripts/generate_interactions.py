@@ -1,7 +1,9 @@
 import json
 import os
+
 import engine_rust
 from tqdm import tqdm
+
 
 def generate_interactions():
     db_path = "engine/data/cards_compiled.json"
@@ -70,7 +72,7 @@ def generate_interactions():
                     choice_index=-1, 
                     selected_color=0
                 )
-            except Exception as e:
+            except Exception:
                 continue
             
             # Check interaction stack

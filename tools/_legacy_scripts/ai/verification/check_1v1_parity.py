@@ -21,10 +21,9 @@ def run_diagnostic():
 
     total_steps = 0
     opponent_scored = False
-    refreshed = False
 
     # Track initial deck
-    initial_deck = env.batch_global_ctx[0, 6]
+    env.batch_global_ctx[0, 6]
 
     for s in range(500):
         # Sample a random legal action

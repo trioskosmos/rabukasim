@@ -528,6 +528,7 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
     }
 
     while let Some((cid, ab_idx, ctx, is_live, _trigger)) = state.trigger_queue.pop_front() {
+        let mut ctx = ctx;
         // Generate a new ID for the activation
         state.generate_execution_id();
         let execution_id = state.ui.current_execution_id.unwrap_or(0);
@@ -540,7 +541,7 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             (ab, &ab.costs)
         };
 
-        if costs::pay_costs_transactional(state, db, costs, &ctx) {
+        if costs::pay_costs_transactional(state, db, costs, &mut ctx) {
             let p_idx = ctx.player_id as usize;
             let source_type = if is_live { 2 } else { 0 };
             let instance_key = state.get_once_per_turn_instance_key(

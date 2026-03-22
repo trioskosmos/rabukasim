@@ -212,12 +212,11 @@ class LoveLiveCardGameEnv(gym.Env):
         """Standard cleanup and reward calculation."""
         start_obs = time.perf_counter()
         observation = self._get_fast_observation()
-        obs_time = time.perf_counter() - start_obs
+        time.perf_counter() - start_obs
 
         reward = self.game.get_reward(self.agent_player_id)
         reward = self._shape_reward(reward)
         terminated = self.game.is_terminal()
-        truncated = False
 
         # Stability
         if not np.isfinite(observation).all():

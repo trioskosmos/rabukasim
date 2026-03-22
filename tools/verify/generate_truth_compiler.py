@@ -208,9 +208,9 @@ def run_extraction():
     skipped = {}
 
     # Results is [(interp, status, source), ...] for each card_id
-    id_to_res = {cid: res for cid, res in zip(card_ids, results)}
+    id_to_res = {cid: res for cid, res in zip(card_ids, results, strict=False)}
 
-    for cid, (interp, status, source) in id_to_res.items():
+    for cid, (interp, status, _source) in id_to_res.items():
         if interp and interp["abilities"]:
             truth_db[cid] = interp
         else:

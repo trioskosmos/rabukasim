@@ -47,7 +47,7 @@ def main():
     vanilla_card_ids = set()
 
     for db in [cards.get("member_db", {}), cards.get("live_db", {})]:
-        for cno, card in db.items():
+        for _cno, card in db.items():
             # Check if card has meaningful abilities
             abilities = card.get("abilities", [])
             has_ability = False

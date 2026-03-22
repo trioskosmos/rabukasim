@@ -5,7 +5,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
-from alphazero.training.vanilla_observation import MAX_HAND_SLOTS, MAX_INITIAL_DECK, OBS_DIM
+from alphazero.training.vanilla_observation import MAX_HAND_SLOTS, MAX_INITIAL_DECK
 
 ACTION_BASE_PASS = 0
 ACTION_BASE_MULLIGAN = 300

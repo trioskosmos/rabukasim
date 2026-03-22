@@ -7,18 +7,6 @@ use serde_json::{json, Map, Value};
 use std::fs;
 use std::path::PathBuf;
 
-fn reverse_map(value: &Value) -> std::collections::HashMap<i64, String> {
-    let mut out = std::collections::HashMap::new();
-    if let Some(obj) = value.as_object() {
-        for (name, raw) in obj {
-            if let Some(id) = raw.as_i64() {
-                out.insert(id, name.clone());
-            }
-        }
-    }
-    out
-}
-
 fn opcode_label(metadata: &Value, opcode_id: i64) -> (&'static str, String) {
     if (1000..2000).contains(&opcode_id) {
         let base_id = opcode_id - 1000;

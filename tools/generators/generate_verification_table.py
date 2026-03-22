@@ -15,7 +15,7 @@ def load_cards():
 def find_tests_for_card(card_no):
     # exact grep for card_no in tests dir using os.walk
     found_in = []
-    for root, dirs, files in os.walk(TESTS_DIR):
+    for root, _dirs, files in os.walk(TESTS_DIR):
         for file in files:
             if file.endswith(".py") or file.endswith(".md"):
                 path = os.path.join(root, file)
@@ -41,7 +41,7 @@ def main():
     rows = []
 
     total = len(cards)
-    for i, (card_id, card_data) in enumerate(cards.items()):
+    for i, (_card_id, card_data) in enumerate(cards.items()):
         if i % 100 == 0:
             print(f"Processing {i}/{total}...")
 
@@ -53,7 +53,7 @@ def main():
         test_files = find_tests_for_card(card_no)
 
         status = "Untested"
-        start_deck_batch = "test_verification_batch" in str(test_files)
+        "test_verification_batch" in str(test_files)
 
         if test_files:
             if "card_verification_log.md" in test_files and len(test_files) == 1:

@@ -76,7 +76,6 @@ def main():
 
     for key in sorted_keys:
         # Check if it's an EffectType
-        is_et = key in effect_types
         et_val = effect_types.get(key, "")
 
         jp = jp_opcodes.get(key, "")

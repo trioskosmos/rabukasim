@@ -1,21 +1,27 @@
+import argparse
 import os
 import sys
+from functools import partial
 
 import numpy as np
+import torch
 from sb3_contrib import MaskablePPO
 from sb3_contrib.common.wrappers import ActionMasker
-from stable_baselines3.common.callbacks import BaseCallback, CallbackList, CheckpointCallback
+from stable_baselines3.common.callbacks import (
+    BaseCallback,
+    CallbackList,
+    CheckpointCallback,
+)
 from stable_baselines3.common.monitor import Monitor
 
 # Ensure project root is in path for local imports
 if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 
+from ai.batched_env import BatchedSubprocVecEnv  # noqa: E402
+from ai.gym_env import LoveLiveCardGameEnv  # noqa: E402
+
 print(" [Heartbeat] train_optimized.py entry point reached.", flush=True)
-
-import argparse
-
-import torch
 
 # If many workers are used, we keep intra-op threads low to avoid overhead
 if int(os.getenv("TRAIN_CPUS", "4")) <= 4:
@@ -35,13 +41,9 @@ if sys.platform == "win32":
         cuda_path = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.2"
         if os.path.exists(cuda_path):
             os.environ["CUDA_PATH"] = cuda_path
-            os.environ["PATH"] = os.path.join(cuda_path, "bin") + os.pathsep + os.environ["PATH"]
-
-# Import our environment
-from functools import partial
-
-from ai.batched_env import BatchedSubprocVecEnv
-from ai.gym_env import LoveLiveCardGameEnv
+            os.environ["PATH"] = (
+                os.path.join(cuda_path, "bin") + os.pathsep + os.environ["PATH"]
+            )
 
 
 class TrainingStatsCallback(BaseCallback):

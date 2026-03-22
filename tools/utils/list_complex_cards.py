@@ -6,7 +6,6 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from game.ability import AbilityParser
-
 from tools.master_validator import MasterValidator
 
 

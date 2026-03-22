@@ -9,7 +9,7 @@ def inspect_card(target_no):
         member_db = full_db.get("member_db", {})
         found = False
 
-        for cid, card in member_db.items():
+        for _cid, card in member_db.items():
             if card.get("card_no") == target_no:
                 with open("inspect_output.txt", "w", encoding="utf-8") as f_out:
                     json.dump(card, f_out, indent=2, ensure_ascii=False)

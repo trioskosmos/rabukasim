@@ -415,10 +415,17 @@ mod tests {
 
         state.step_opponent_turnseq(&db);
 
-        // AI should have made a choice (not -1) and phase should advance to TurnChoice
-        assert_ne!(state.rps_choices[1], -1);
-        assert_eq!(state.phase, Phase::TurnChoice);
-        // current_player depends on who won RPS, so we don't assert it
+        // The AI must take a legal RPS action. That may either resolve the phase
+        // immediately or produce a valid draw reset if both players matched.
+        let resolved_rps = state.phase == Phase::TurnChoice;
+        let drew_rps = state.phase == Phase::Rps && state.rps_choices == [-1, -1];
+
+        assert!(
+            resolved_rps || drew_rps,
+            "AI should either resolve RPS or trigger a legal draw reset; phase={:?}, choices={:?}",
+            state.phase,
+            state.rps_choices
+        );
     }
 
     #[test]

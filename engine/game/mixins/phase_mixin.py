@@ -526,7 +526,6 @@ class PhaseMixin:
 
         # Apply score modifiers (Rule 11)
         for pid, p in enumerate([p0, p1]):
-            player_score_mods = []
             for ce in p.continuous_effects:
                 if ce["effect"].effect_type == EffectType.MODIFY_SCORE_RULE:
                     val = ce["effect"].value

@@ -37,13 +37,13 @@ def build_card_pool():
 
     # Check members
     members = data.get("member_db", {})
-    for cid, card in members.items():
+    for _cid, card in members.items():
         if not card.get("abilities") or len(card.get("abilities", [])) == 0:
             vanilla_members.append(card.get("card_no"))
 
     # Check lives
     lives = data.get("live_db", {})
-    for cid, card in lives.items():
+    for _cid, card in lives.items():
         if not card.get("abilities") or len(card.get("abilities", [])) == 0:
             vanilla_lives.append(card.get("card_no"))
 

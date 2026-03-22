@@ -9,7 +9,6 @@ if project_root not in sys.path:
 
 from tools import bytecode_codec as codec
 
-
 ROOT = Path(project_root)
 
 

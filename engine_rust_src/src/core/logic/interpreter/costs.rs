@@ -35,7 +35,7 @@ pub fn pay_costs_transactional(
     state: &mut GameState,
     db: &CardDatabase,
     costs: &[Cost],
-    ctx: &AbilityContext,
+    ctx: &mut AbilityContext,
 ) -> bool {
     let p_idx = ctx.player_id as usize;
 
@@ -225,7 +225,7 @@ pub fn pay_cost(
     db: &CardDatabase,
     p_idx: usize,
     cost: &Cost,
-    ctx: &AbilityContext,
+    ctx: &mut AbilityContext,
 ) -> bool {
     let mut attr = 0;
     if let Some(params) = cost.params.as_object() {
@@ -344,8 +344,12 @@ pub fn pay_cost(
                     {
                         state.players[p_idx].remove_hand_card(pos);
                         state.players[p_idx].push_discard_card(cid);
+                        ctx.selected_cards.push(cid);
                     }
                 }
+                state.players[p_idx].discarded_this_turn = state.players[p_idx]
+                    .discarded_this_turn
+                    .saturating_add(count as u16);
                 true
             } else {
                 let player = &mut state.players[p_idx];
@@ -355,8 +359,10 @@ pub fn pay_cost(
                 for _ in 0..count {
                     if let Some(cid) = player.pop_hand_card() {
                         player.push_discard_card(cid);
+                        ctx.selected_cards.push(cid);
                     }
                 }
+                player.discarded_this_turn = player.discarded_this_turn.saturating_add(count as u16);
                 true
             }
         }

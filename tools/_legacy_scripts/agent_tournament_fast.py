@@ -611,7 +611,7 @@ def main():
     meta = []
     for i in range(len(agent_names)):
         for j in range(i + 1, len(agent_names)):
-            for g in range(args.games_per_pair):
+            for _g in range(args.games_per_pair):
                 tasks.append((agent_names[i], agent_names[j], args.seed + len(tasks)))
                 meta.append((agent_names[i], agent_names[j]))
 
@@ -623,7 +623,7 @@ def main():
 
     elapsed = time.time() - start
 
-    for result, (a, b) in zip(results, meta):
+    for result, (a, b) in zip(results, meta, strict=False):
         elo.update(a, b, result)
         if result == 1.0:
             matchups[(a, b)][0] += 1

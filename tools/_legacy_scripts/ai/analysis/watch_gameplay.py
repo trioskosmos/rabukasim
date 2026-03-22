@@ -88,12 +88,12 @@ def watch_gameplay():
         score = gs.batch_scores[0]
         opp_score = gs.opp_scores[0]
         turn = gs.batch_global_ctx[0, 54]
-        hand_count = gs.batch_global_ctx[0, 3]
+        gs.batch_global_ctx[0, 3]
         energy = gs.batch_global_ctx[0, 5]
 
         dk = gs.batch_global_ctx[0, 6]
         hd = gs.batch_global_ctx[0, 3]
-        ctx_slice = gs.batch_global_ctx[0, :11]
+        gs.batch_global_ctx[0, :11]
 
         # Log all first 100 steps or state changes
         if step_count < 100 or action != 0 or ph != last_phase or score != last_score or opp_score != last_opp_score:

@@ -39,7 +39,7 @@ def trace_fixed_game():
         hand_names = [card_names.get(cid, f"ID:{cid}") for cid in hand if cid > 0]
 
         opp_hand = env.opp_hand[0]
-        opp_hand_names = [card_names.get(cid, f"ID:{cid}") for cid in opp_hand if cid > 0]
+        [card_names.get(cid, f"ID:{cid}") for cid in opp_hand if cid > 0]
 
         stage = env.batch_stage[0]
         stage_names = [card_names.get(cid, "Empty") for cid in stage]

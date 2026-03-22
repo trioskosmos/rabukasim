@@ -68,7 +68,7 @@ def run_single_game(g_idx, sims, p0_deck_info, p1_deck_info):
             best_action = 0
             most_visits = -1
 
-            for action, score, visits in suggestions:
+            for action, _score, visits in suggestions:
                 if action < POLICY_SIZE:
                     policy[int(action)] = visits
                 total_visits += visits
@@ -85,12 +85,12 @@ def run_single_game(g_idx, sims, p0_deck_info, p1_deck_info):
 
             try:
                 game.step(best_action)
-            except:
+            except Exception:
                 break
         else:
             try:
                 game.step(0)
-            except:
+            except Exception:
                 break
         step += 1
 
@@ -180,7 +180,7 @@ def generate_dataset(num_games=100, output_file="ai/data/data_batch_0.npz", sims
                 if s["games"] > 0:
                     wr = (s["p0_wins"] / s["games"]) * 100
                     avg0 = s["p0_total"] / s["games"]
-                    avg1 = s["p1_total"] / s["games"]
+                    s["p1_total"] / s["games"]
                     avg_t = s["turns_total"] / s["games"]
                     cols.append(f"{wr:>3.0f}%/{avg0:^3.1f}/T{avg_t:<2.1f}")
                 else:

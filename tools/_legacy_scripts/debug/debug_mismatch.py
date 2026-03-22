@@ -64,7 +64,7 @@ def debug_card(card_id):
 
     sents = p2._split_sentences(text)
     for i, sent in enumerate(sents):
-        parts = p2._split_sentences(sent)  # Wait, sents is already split
+        p2._split_sentences(sent)  # Wait, sents is already split
         colon_idx = sent.find("：")
         if colon_idx == -1:
             colon_idx = sent.find(":")

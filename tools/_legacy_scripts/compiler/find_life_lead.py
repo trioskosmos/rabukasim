@@ -8,7 +8,7 @@ def find_life_lead_cards():
 
     print("Cards with 'Life > Opponent' or similar:")
     count = 0
-    for cid, card in cards.items():
+    for _cid, card in cards.items():
         ability = card.get("ability", "")
         if "ライフが相手より" in ability:
             print(f"{card.get('card_no')}: {ability}")

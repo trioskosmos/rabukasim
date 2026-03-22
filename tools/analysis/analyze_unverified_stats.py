@@ -26,7 +26,7 @@ def main():
 
     unverified_count = 0
 
-    for cno, card in cards.get("member_db", {}).items():
+    for _cno, card in cards.get("member_db", {}).items():
         # Handle ID resolution
         real_cno = card.get("card_no")
         if not real_cno or real_cno in verified:

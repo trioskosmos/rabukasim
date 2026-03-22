@@ -67,15 +67,11 @@ def verify_abilities():
     py_gs.phase = gs.phase
 
     # 3. Find or Inject Ability Card
-    ability_card_id = -1
-    hand_idx = -1
-    for i, cid in enumerate(hand):
+    for _i, cid in enumerate(hand):
         if cid in members:
             card = members[cid]
             # Check for ACTIVATED trigger
             if any(ab.trigger.name == "ACTIVATED" for ab in card.abilities):
-                ability_card_id = cid
-                hand_idx = i
                 break
 
     # Sync Python GS for descriptions

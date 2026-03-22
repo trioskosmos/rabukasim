@@ -1,17 +1,17 @@
 ﻿from __future__ import annotations
 
 import random
-from typing import Any, Dict, List
-
-import numpy as np
+from typing import Any, Dict
 
 from engine.game.effects.metadata import resolve_source_metadata
-from engine.game.enums import Phase
 from engine.game.effects.zone_actions import move_stage_card
-from engine.models.ability import Ability, AbilityCostType, ConditionType, Effect, EffectType, TargetType, TriggerType
+from engine.game.enums import Phase
+from engine.models.ability import Ability, AbilityCostType, TargetType
 
 
-def handle_cost(game: Any, player_id: int, ability: Ability, context: Dict[str, Any] = {}) -> bool:
+def handle_cost(game: Any, player_id: int, ability: Ability, context: Dict[str, Any] = None) -> bool:
+    if context is None:
+        context = {}
     self = game
     """Handle ability costs (Rule 9.7.2). Returns True if cost paid/resolved."""
     p = self.players[player_id]

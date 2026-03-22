@@ -43,12 +43,10 @@ def extract_all_imgs():
 
     print("\n--- Potential Matches ---")
     for src, alt in unique_imgs:
-        matched = False
         for target_alt, target_filename in target_alts.items():
             if target_alt in alt:
                 full_url = BASE_URL + src if src.startswith("/") else src
                 print(f"MATCH: {target_filename} (Alt: {alt}) -> {full_url}")
-                matched = True
 
         # Also check for b_heart00 or similar in src
         if "heart" in src or "score" in src or "draw" in src:

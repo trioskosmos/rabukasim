@@ -18,7 +18,7 @@ def main():
     unique_abilities = {}  # ability_raw -> (bytecode, example_card_no)
 
     def process_db(db):
-        for card_id, card_data in db.items():
+        for _card_id, card_data in db.items():
             card_no = card_data.get("card_no")
             raw_text = raw_cards.get(card_no, {}).get("ability", "")
             if not raw_text:
@@ -27,7 +27,7 @@ def main():
             # Simple split if multiple abilities (imprecise but helpful for initial look)
             # Actually, compiled data has abilities separated.
             abilities_compiled = card_data.get("abilities", [])
-            for i, ab in enumerate(abilities_compiled):
+            for _i, ab in enumerate(abilities_compiled):
                 ab_raw = ab.get("raw_text", "")
                 if ab_raw not in unique_abilities:
                     unique_abilities[ab_raw] = (ab.get("bytecode", []), card_no)

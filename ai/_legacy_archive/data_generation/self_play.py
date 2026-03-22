@@ -45,7 +45,6 @@ def run_self_play_game(g_idx, sims, p0_deck_info, p1_deck_info):
     game_policies = []
     game_turns_remaining = []
     game_player_turn = []
-    game_score_diffs = []
 
     # Target values will be backfilled after game ends
 
@@ -117,13 +116,13 @@ def run_self_play_game(g_idx, sims, p0_deck_info, p1_deck_info):
 
             try:
                 game.step(int(action))
-            except:
+            except Exception:
                 break
         else:
             # Auto-step
             try:
                 game.step(0)
-            except:
+            except Exception:
                 break
         step += 1
 

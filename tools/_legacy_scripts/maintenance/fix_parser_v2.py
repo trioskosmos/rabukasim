@@ -6,7 +6,7 @@ with open(file_path, "r", encoding="utf-8") as f:
 new_lines = []
 skip_count = 0
 
-for i, line in enumerate(lines):
+for _i, line in enumerate(lines):
     if skip_count > 0:
         skip_count -= 1
         continue

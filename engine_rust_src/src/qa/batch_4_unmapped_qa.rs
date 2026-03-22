@@ -792,7 +792,7 @@ mod tests {
             "Q163: the activated ability should enter response target selection"
         );
 
-        let mut response_actions = Vec::new();
+        let mut response_actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, 0, &mut response_actions);
 
         assert!(
@@ -1135,7 +1135,7 @@ mod tests {
             "Q166: after paying the automatic costs, the ability should suspend for mode selection"
         );
 
-        let mut response_actions = Vec::new();
+        let mut response_actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, 0, &mut response_actions);
         assert!(
             response_actions.contains(&(ACTION_BASE_MODE + 0)),
@@ -1220,7 +1220,7 @@ mod tests {
             .expect("Q167: activating Honoka should succeed");
         state.process_trigger_queue(&db);
 
-        let mut response_actions = Vec::new();
+        let mut response_actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, 0, &mut response_actions);
         assert!(
             response_actions.contains(&(ACTION_BASE_MODE + 0)),
@@ -1889,7 +1889,7 @@ mod tests {
             "Q177: Maki's on-play ability should suspend for its optional BiBi tap cost"
         );
 
-        let mut response_actions = Vec::new();
+        let mut response_actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, 0, &mut response_actions);
         assert!(
             response_actions.contains(&(ACTION_BASE_CHOICE + 0)),
@@ -2137,7 +2137,7 @@ mod tests {
             "Q215: the PLACE_UNDER cost should suspend for an energy selection"
         );
 
-        let mut response_actions = Vec::new();
+        let mut response_actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, 0, &mut response_actions);
         assert!(
             response_actions.contains(&(ACTION_BASE_ENERGY + 0)),
@@ -2958,6 +2958,135 @@ mod tests {
             state.players[1].stage[1],
             opponent_left_id,
             "Q223: the displaced opponent member should move into center after the opponent's own choice"
+        );
+    }
+
+    #[test]
+    fn test_q4915_position_change_filters_aqours_and_saintsnow_destinations() {
+        // Q4915: 『起動ターン1回E：このメンバーを『Aqours』か『SaintSnow』のメンバーがいるエリアにポジションチェンジする。』
+        // The destination picker should only offer slots that already contain an Aqours or SaintSnow member.
+
+        let db = load_real_db();
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.phase = Phase::Main;
+        state.current_player = 0;
+
+        let seira_id = db
+            .id_by_no("PL!S-bp5-111-R")
+            .expect("Q4915: expected PL!S-bp5-111-R in the real DB");
+        let filter_ctx = AbilityContext {
+            source_card_id: seira_id,
+            player_id: 0,
+            activator_id: 0,
+            area_idx: 1,
+            ..Default::default()
+        };
+        let aqours_filter_attr = crate::core::logic::filter::map_filter_string_to_attr("AQOURS");
+        let aqours_id = db
+            .members
+            .values()
+            .find(|card| {
+                card.card_id != seira_id
+                    && state.card_matches_filter_with_ctx(db, card.card_id, aqours_filter_attr, &filter_ctx)
+            })
+            .map(|card| card.card_id)
+            .expect("Q4915: expected an Aqours member in the real DB");
+        let saintsnow_id = db
+            .members
+            .values()
+            .find(|card| {
+                card.card_id != seira_id
+                    && card.card_id != aqours_id
+                    && matches!(card.name.as_str(), "鹿角聖良" | "鹿角理亞")
+            })
+            .map(|card| card.card_id)
+            .expect("Q4915: expected a SaintSnow member in the real DB");
+
+        state.players[0].stage[1] = seira_id;
+        state.players[0].stage[0] = aqours_id;
+        state.players[0].stage[2] = saintsnow_id;
+        state.players[0].energy_zone = vec![3001].into();
+
+        state
+            .handle_main(&db, ACTION_BASE_STAGE + 100)
+            .expect("Q4915: activation should start");
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "Q4915: the activation should suspend for a destination choice"
+        );
+
+        let mut response_actions = Vec::new();
+        state.generate_legal_actions(&db, 0, &mut response_actions);
+        assert!(
+            response_actions.contains(&(ACTION_BASE_STAGE_SLOTS + 0)),
+            "Q4915: the Aqours slot should be a valid destination"
+        );
+        assert!(
+            response_actions.contains(&(ACTION_BASE_STAGE_SLOTS + 2)),
+            "Q4915: the SaintSnow slot should be a valid destination"
+        );
+        assert!(
+            !response_actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)),
+            "Q4915: the current slot must not be offered as a destination"
+        );
+        assert!(
+            !response_actions.contains(&0),
+            "Q4915: pass should not be surfaced while valid destinations exist"
+        );
+    }
+
+    #[test]
+    fn test_q4915_position_change_offers_pass_when_no_destination_matches() {
+        // Q4915: If no Aqours or SaintSnow member exists in another stage slot, the prompt should
+        // fall back to pass/finish instead of presenting invalid destination slots.
+
+        let db = load_real_db();
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.phase = Phase::Main;
+        state.current_player = 0;
+
+        let seira_id = db
+            .id_by_no("PL!S-bp5-111-R")
+            .expect("Q4915: expected PL!S-bp5-111-R in the real DB");
+        let mut off_group_ids = db
+            .members
+            .values()
+            .filter(|card| !card.groups.contains(&1) && !card.groups.contains(&11) && card.card_id != seira_id)
+            .map(|card| card.card_id);
+        let off_group_left = off_group_ids
+            .next()
+            .expect("Q4915: expected at least one off-group member in the real DB");
+        let off_group_right = off_group_ids
+            .next()
+            .expect("Q4915: expected a second off-group member in the real DB");
+
+        state.players[0].stage[1] = seira_id;
+        state.players[0].stage[0] = off_group_left;
+        state.players[0].stage[2] = off_group_right;
+        state.players[0].energy_zone = vec![3001].into();
+
+        state
+            .handle_main(&db, ACTION_BASE_STAGE + 100)
+            .expect("Q4915: activation should start");
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "Q4915: the activation should still suspend even when no destination matches"
+        );
+
+        let mut response_actions: Vec<i32> = Vec::new();
+        state.generate_legal_actions(&db, 0, &mut response_actions);
+        assert_eq!(
+            response_actions,
+            vec![0],
+            "Q4915: when no matching destination exists, only pass should remain"
         );
     }
 

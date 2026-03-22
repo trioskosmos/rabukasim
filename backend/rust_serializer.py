@@ -10,7 +10,6 @@ PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-import engine_rust
 
 from engine.game.desc_utils import get_action_desc
 from engine.game.enums import Phase
@@ -455,7 +454,7 @@ class RustGameStateSerializer:
         }
 
     def serialize_state(self, gs, viewer_idx=0, mode="pve", is_pvp=False, lang="jp"):
-        s = SERIALIZER_STRINGS.get(lang, SERIALIZER_STRINGS["jp"])
+        SERIALIZER_STRINGS.get(lang, SERIALIZER_STRINGS["jp"])
         legal_mask = gs.get_legal_actions()
         compat_gs = RustCompatGameState(gs, self.member_db, self.live_db, self.energy_db)
 

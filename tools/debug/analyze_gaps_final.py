@@ -2,10 +2,10 @@
 """Analyze consolidated pseudocode - final comprehensive analysis."""
 
 import json
-import re
-from collections import defaultdict
 import os
+import re
 import sys
+from collections import defaultdict
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
@@ -90,7 +90,7 @@ for p in EFFECT_PATTERNS:
             parser_effects.add(match.group(1))
 
 parser_effects_with_aliases = parser_effects.copy()
-for alias, canonical in all_effect_aliases.items():
+for _alias, canonical in all_effect_aliases.items():
     parser_effects_with_aliases.add(canonical)
 
 parser_conditions = set()
@@ -101,7 +101,7 @@ for p in CONDITION_PATTERNS:
             parser_conditions.add(match.group(1))
 
 parser_conditions_with_aliases = parser_conditions.copy()
-for alias, canonical in all_condition_aliases.items():
+for _alias, canonical in all_condition_aliases.items():
     parser_conditions_with_aliases.add(canonical)
 
 parser_triggers = set()
@@ -112,7 +112,7 @@ for p in TRIGGER_PATTERNS:
             parser_triggers.add(match.group(1))
 
 parser_triggers_with_aliases = parser_triggers.copy()
-for alias, canonical in all_trigger_aliases.items():
+for _alias, canonical in all_trigger_aliases.items():
     parser_triggers_with_aliases.add(canonical)
 
 # Get missing items

@@ -28,13 +28,13 @@ def benchmark():
 
     # 2. Benchmark Observations (Parallel)
     start = time.time()
-    obs = vgs.get_observations()
+    vgs.get_observations()
     obs_time = time.time() - start
     print(f" [Obs] {num_envs} envs encoded in {obs_time:.4f}s")
 
     # 3. Benchmark Action Masks (Parallel)
     start = time.time()
-    masks = vgs.get_action_masks()
+    vgs.get_action_masks()
     mask_time = time.time() - start
     print(f" [Mask] {num_envs} envs masked in {mask_time:.4f}s")
 

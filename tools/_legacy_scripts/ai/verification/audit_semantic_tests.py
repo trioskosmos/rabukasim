@@ -21,7 +21,7 @@ def audit_semantic_tests():
 
     found_any = set()
 
-    for root, dirs, files in os.walk(TEST_DIR):
+    for root, _dirs, files in os.walk(TEST_DIR):
         for file in files:
             if not file.endswith(".py"):
                 continue

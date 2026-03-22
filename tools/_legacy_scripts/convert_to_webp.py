@@ -21,7 +21,7 @@ def main():
     base_dir = "frontend/img/cards"
     png_files = []
 
-    for root, dirs, files in os.walk(base_dir):
+    for root, _dirs, files in os.walk(base_dir):
         for file in files:
             if file.lower().endswith(".png"):
                 png_files.append(os.path.join(root, file))

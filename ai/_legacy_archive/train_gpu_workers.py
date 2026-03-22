@@ -73,10 +73,10 @@ class DistributedVectorEnv(VecEnv):
 
         self.closed = False
         self.waiting = False
-        self.remotes, self.work_remotes = zip(*[mp.Pipe() for _ in range(num_workers)])
+        self.remotes, self.work_remotes = zip(*[mp.Pipe() for _ in range(num_workers)], strict=False)
         self.processes = []
 
-        for work_remote, remote in zip(self.work_remotes, self.remotes):
+        for work_remote, remote in zip(self.work_remotes, self.remotes, strict=False):
             p = mp.Process(target=worker_process, args=(work_remote, remote, envs_per_worker))
             p.daemon = True  # Kill if main process dies
             p.start()
@@ -86,7 +86,7 @@ class DistributedVectorEnv(VecEnv):
     def step_async(self, actions):
         # Split actions into chunks for each worker
         chunks = np.array_split(actions, self.num_workers)
-        for remote, action_chunk in zip(self.remotes, chunks):
+        for remote, action_chunk in zip(self.remotes, chunks, strict=False):
             remote.send(("step", action_chunk))
         self.waiting = True
 
@@ -95,7 +95,7 @@ class DistributedVectorEnv(VecEnv):
         self.waiting = False
 
         # Aggregate results
-        obs_list, rews_list, dones_list, infos_list = zip(*results)
+        obs_list, rews_list, dones_list, infos_list = zip(*results, strict=False)
 
         return (
             np.concatenate(obs_list),

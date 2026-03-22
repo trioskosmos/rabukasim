@@ -1,7 +1,5 @@
 ﻿from typing import Any, Dict, Optional
 
-from typing import Any, Dict, Optional
-
 from engine.models.ability import ConditionType
 from engine.models.enums import Group, Unit
 

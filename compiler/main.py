@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -9,20 +10,26 @@ if __name__ == "__main__":
 
 import argparse
 import json
+from typing import Any
 
 import numpy as np
 from pydantic import TypeAdapter
 
 # from compiler.parser import AbilityParser
 from compiler.pseudocode_pipeline import PseudocodeResolver
+from engine.models.ability import (
+    Ability,
+    AbilityCostType,
+    ConditionType,
+    EffectType,
+    TriggerType,
+)
 from engine.models.ability_ir import BYTECODE_LAYOUT_NAME, BYTECODE_LAYOUT_VERSION, SEMANTIC_FORM_VERSION, VersionGate
-from engine.models.ability import AbilityCostType, ConditionType, EffectType, TriggerType, Ability, Condition, Cost, Effect, to_signed_32
 from engine.models.bytecode_readable import decode_bytecode
 from engine.models.card import EnergyCard, LiveCard, MemberCard
 from engine.models.enums import CHAR_MAP, Unit
 from engine.models.generated_metadata import CONDITIONS, COSTS, OPCODES
 from engine.models.opcodes import Opcode
-from engine.models.bytecode_readable import decode_bytecode
 from tools import bytecode_codec as ability_codec
 
 # --- Compile-time Bytecode Validation ---
@@ -281,9 +288,9 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
         json.dump(compiled_data, f, ensure_ascii=False, indent=2)
 
     # --- Generate Sparse Ability Index ---
-    sparse_index_path = "data/ability_frame_index.json"
-    sparse_index = ability_codec.build_sparse_ability_index(compiled_data, ability_codec.load_json("data/metadata.json"))
-    ability_codec.dump_json(Path(sparse_index_path), sparse_index)
+    sparse_index_path = "data/ability_frame_index.yaml"
+    sparse_index = ability_codec.build_sparse_ability_index(compiled_data, ability_codec.load_data("data/metadata.json"))
+    ability_codec.dump_data(Path(sparse_index_path), sparse_index)
     if not quiet:
         print(f"Generating {sparse_index_path}...")
 
@@ -539,12 +546,13 @@ def _compile_abilities_for_export(abilities: list, card_no: str, scope: str, ver
         scope: Scope string ("MEMBER" or "LIVE") for error reporting
         version_gate: Optional VersionGate for controlling compilation version
     """
-    gate = version_gate or _COMPILATION_VERSION_GATE
     
     for idx, ab in enumerate(abilities):
         ab.card_no = card_no
         try:
-            ab.bytecode = ab.compile()
+            # Only compile if bytecode is not already present (e.g. from sparse source)
+            if not ab.bytecode:
+                ab.bytecode = ab.compile()
         except Exception as e:
             import traceback
 
@@ -571,6 +579,156 @@ if os.path.exists(MANUAL_TRANSLATIONS_EN_PATH):
     print(f"Loading manual English translations from {MANUAL_TRANSLATIONS_EN_PATH}")
     with open(MANUAL_TRANSLATIONS_EN_PATH, "r", encoding="utf-8") as f:
         _manual_translations_en = json.load(f)
+
+
+class SparseSourceManager:
+    """Manages loading and looking up abilities from the sparse frame index."""
+
+    _CARD_REF_RE = re.compile(
+        r"^(?P<card_no>[^|]+?)\s*\|.*?\(ab#(?P<idx>\d+)(?:[\s\u3000)]|$)"
+    )
+
+    def __init__(self, yaml_path: str):
+        self.yaml_path = yaml_path
+        # (card_no, ab_idx) -> sparse entry payload
+        self.mapping = {}
+        self._last_loaded_mtime: float | None = None
+        self._debug = os.environ.get("LOVECA_SPARSE_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
+        self.load(force=True)
+
+    def _log(self, message: str) -> None:
+        if self._debug:
+            print(message)
+
+    @classmethod
+    def _extract_card_ref(cls, card_ref: Any) -> tuple[str, int] | None:
+        if isinstance(card_ref, dict):
+            card_no = str(card_ref.get("card_no", "")).strip()
+            raw_idx = card_ref.get("ability_index", card_ref.get("ab_idx", card_ref.get("index")))
+            if card_no and raw_idx is not None:
+                try:
+                    return card_no, int(raw_idx)
+                except (TypeError, ValueError):
+                    return None
+            return None
+
+        card_str = str(card_ref).strip()
+        if not card_str:
+            return None
+
+        match = cls._CARD_REF_RE.match(card_str)
+        if not match:
+            return None
+
+        return match.group("card_no").strip(), int(match.group("idx"))
+
+    def load(self, force: bool = False):
+        if not os.path.exists(self.yaml_path):
+            self.mapping = {}
+            self._last_loaded_mtime = None
+            return
+
+        try:
+            current_mtime = os.path.getmtime(self.yaml_path)
+        except OSError:
+            self.mapping = {}
+            self._last_loaded_mtime = None
+            return
+
+        if not force and self._last_loaded_mtime == current_mtime and self.mapping:
+            return
+
+        try:
+            self._log(f"Loading sparse ability index from {self.yaml_path}")
+            data = ability_codec.load_data(self.yaml_path)
+            if not data:
+                self.mapping = {}
+                self._last_loaded_mtime = current_mtime
+                return
+
+            next_mapping = {}
+            abilities_list = data.get("abilities", [])
+            self._log(f"SparseSourceManager.load() found {len(abilities_list)} abilities in YAML")
+
+            for entry in abilities_list:
+                trigger_id = int(entry.get("trigger_id", 0))
+                frames = entry.get("frames", [])
+                cards_list = entry.get("cards", [])
+                for card_ref in cards_list:
+                    extracted = self._extract_card_ref(card_ref)
+                    if extracted is None:
+                        continue
+                    card_no, ab_idx = extracted
+                    next_mapping[(card_no, ab_idx)] = {
+                        "trigger_id": trigger_id,
+                        "frames": frames,
+                        "source_words": entry.get("source_words", []),
+                    }
+
+            self.mapping = next_mapping
+            self._last_loaded_mtime = current_mtime
+            self._log(f"Loaded {len(self.mapping)} sparse mappings into memory")
+        except Exception as e:
+            print(f"Warning: Failed to load sparse ability index: {e}")
+            self.mapping = {}
+            self._last_loaded_mtime = None
+
+    def get_ability(self, card_no: str, ab_idx: int) -> dict[str, Any] | None:
+        self.load()
+        return self.mapping.get((card_no.strip(), ab_idx))
+
+
+# Global sparse manager
+SPARSE_INDEX_PATH = "data/ability_frame_index.yaml"
+_sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
+
+
+def _build_ability_from_sparse_entry(entry: dict[str, Any], raw_text: str) -> Ability:
+    trigger_id = int(entry.get("trigger_id", 0))
+    source_words = [int(word) for word in entry.get("source_words", []) or []]
+    frames = entry.get("frames", []) or []
+    bytecode = source_words if source_words else ability_codec.model_to_bytecode({"frames": frames})
+
+    ability = Ability(
+        raw_text=raw_text,
+        trigger=TriggerType(trigger_id),
+        effects=[],
+        conditions=[],
+        costs=[],
+        pseudocode="[RECONSTRUCTED FROM SPARSE INDEX]",
+        bytecode=bytecode,
+    )
+    try:
+        ability.build_semantic_form()
+    except Exception:
+        pass
+    return ability
+
+
+def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability]:
+    raw_text = str(data.get("ability", ""))
+    abilities: list[Ability] = []
+    used_sparse = False
+
+    for ab_idx in range(10):
+        entry = _sparse_manager.get_ability(card_no, ab_idx)
+        if entry is None:
+            if used_sparse:
+                break
+            continue
+
+        abilities.append(_build_ability_from_sparse_entry(entry, raw_text))
+        used_sparse = True
+
+    if used_sparse:
+        return abilities
+
+    raw_ability = _pseudocode_resolver.resolve(card_kind, card_no, data, _bytecode_compile_errors)
+    if not raw_ability:
+        return []
+
+    print(f"[{card_no}] Loaded from pseudocode source")
+    return _v2_parser.parse(raw_ability)
 
 
 def compute_flags(card):
@@ -667,7 +825,22 @@ def compute_flags(card):
                     v = ab.bytecode[i + 1] if i + 1 < len(ab.bytecode) else 3
                     # Extract the high byte (pick count) as the choice count
                     pick_count = (v >> 8) & 0xFF
-                    ab.choice_count = pick_count if pick_count > 0 else 3
+                    if pick_count > 0:
+                        ab.choice_count = pick_count
+                    else:
+                        effect_choice_count = 0
+                        for eff in ab.effects:
+                            if eff.runtime_opcode == int(Opcode.LOOK_AND_CHOOSE) or eff.effect_type == EffectType.LOOK_AND_CHOOSE:
+                                raw_choice_count = eff.params.get("choose_count")
+                                if raw_choice_count is None:
+                                    continue
+                                try:
+                                    effect_choice_count = int(raw_choice_count)
+                                except (TypeError, ValueError):
+                                    effect_choice_count = 0
+                                if effect_choice_count > 0:
+                                    break
+                        ab.choice_count = effect_choice_count if effect_choice_count > 0 else 3
             elif op == int(Opcode.SELECT_MODE):
                 ab.choice_flags |= CHOICE_FLAG_MODE
                 if ab.choice_count == 0:
@@ -739,7 +912,7 @@ def _extract_units_from_add_tag(abilities):
     for ab_idx, ab in enumerate(abilities):
         if getattr(ab, "trigger", None) != TriggerType.CONSTANT:
             continue
-        for eff_idx, eff in enumerate(getattr(ab, "effects", [])):
+        for _eff_idx, eff in enumerate(getattr(ab, "effects", [])):
             if getattr(eff, "effect_type", None) != EffectType.META_RULE:
                 continue
             tag_str = eff.params.get("tag", "") if hasattr(eff, "params") else ""
@@ -781,8 +954,10 @@ def _normalize_unit_values(values):
 def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
     spec = data.get("special_heart", {})
     translation_en = _manual_translations_en.get(card_no)
-    raw_ability = _pseudocode_resolver.resolve("MEMBER", card_no, data, _bytecode_compile_errors)
-    abilities = _v2_parser.parse(raw_ability) if raw_ability else []
+
+    # --- Ability Source Resolution ---
+    # Try sparse index first, fall back to pseudocode.
+    abilities = _resolve_abilities("MEMBER", card_no, data)
 
     # --- GRANT_ABILITY FLATTENING ---
     extra_abilities = []
@@ -864,8 +1039,10 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
 def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
     spec = data.get("special_heart", {})
     translation_en = _manual_translations_en.get(card_no)
-    raw_ability = _pseudocode_resolver.resolve("LIVE", card_no, data, _bytecode_compile_errors)
-    abilities = _v2_parser.parse(raw_ability) if raw_ability else []
+
+    # --- Ability Source Resolution ---
+    # Try sparse index first, fall back to pseudocode.
+    abilities = _resolve_abilities("LIVE", card_no, data)
 
     # --- GRANT_ABILITY FLATTENING ---
     extra_abilities = []

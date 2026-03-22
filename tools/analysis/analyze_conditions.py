@@ -17,7 +17,6 @@ def main():
 
     verified = set(pool["verified_abilities"] + pool["vanilla_members"] + pool["vanilla_lives"])
 
-    unverified = []
     condition_counts = Counter()
 
     for cno, card in cards.get("member_db", {}).items():

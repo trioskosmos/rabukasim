@@ -194,9 +194,22 @@ impl CardDatabase {
     }
 
     fn load_sparse_ability_index() -> HashMap<String, Value> {
-        for path in ["data/ability_frame_index.json", "../data/ability_frame_index.json"] {
+        for path in [
+            "data/ability_frame_index.yaml",
+            "../data/ability_frame_index.yaml",
+            "data/ability_frame_index.json",
+            "../data/ability_frame_index.json",
+        ] {
             if let Ok(json) = fs::read_to_string(path) {
-                if let Ok(root) = serde_json::from_str::<Value>(&json) {
+                let parsed_root = if path.ends_with(".yaml") {
+                    serde_yaml::from_str::<serde_yaml::Value>(&json)
+                        .ok()
+                        .and_then(|yaml| serde_json::to_value(yaml).ok())
+                } else {
+                    serde_json::from_str::<Value>(&json).ok()
+                };
+
+                if let Some(root) = parsed_root {
                     let mut index = HashMap::new();
                     if let Some(abilities) = root.get("abilities").and_then(|v| v.as_array()) {
                         for entry in abilities {
@@ -204,14 +217,35 @@ impl CardDatabase {
                                 continue;
                             };
                             for card in cards {
-                                let Some(card_no) = card.get("card_no").and_then(|v| v.as_str()) else {
+                                if let Some(card_obj) = card.as_object() {
+                                    let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) else {
+                                        continue;
+                                    };
+                                    let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) else {
+                                        continue;
+                                    };
+                                    let key = format!("{}#{}", card_no, ability_index);
+                                    index.insert(key, entry.clone());
                                     continue;
-                                };
-                                let Some(ability_index) = card.get("ability_index").and_then(|v| v.as_i64()) else {
-                                    continue;
-                                };
-                                let key = format!("{}#{}", card_no, ability_index);
-                                index.insert(key, entry.clone());
+                                }
+
+                                if let Some(card_str) = card.as_str() {
+                                    let Some((card_no_part, tail)) = card_str.split_once(" |") else {
+                                        continue;
+                                    };
+                                    let Some(ab_marker) = tail.rfind("(ab#") else {
+                                        continue;
+                                    };
+                                    let ab_fragment = &tail[ab_marker + 4..];
+                                    let Some((ability_index_str, _)) = ab_fragment.split_once(' ') else {
+                                        continue;
+                                    };
+                                    let Some(ability_index) = ability_index_str.parse::<i64>().ok() else {
+                                        continue;
+                                    };
+                                    let key = format!("{}#{}", card_no_part.trim(), ability_index);
+                                    index.insert(key, entry.clone());
+                                }
                             }
                         }
                     }
@@ -652,7 +686,22 @@ impl CardDatabase {
                         if ab.choice_count == 0 {
                             let v = instr.v;
                             let pick = (v >> 8) & 0xFF;
-                            ab.choice_count = if pick > 0 { pick as u8 } else { 3 };
+                            if pick > 0 {
+                                ab.choice_count = pick as u8;
+                            } else {
+                                let effect_pick = ab
+                                    .effects
+                                    .iter()
+                                    .find(|effect| {
+                                        effect.runtime_opcode == O_LOOK_AND_CHOOSE
+                                            || effect.effect_type == EffectType::LookAndChoose
+                                    })
+                                    .and_then(|effect| effect.params.get("choose_count"))
+                                    .and_then(|value| value.as_u64())
+                                    .map(|value| value as u8)
+                                    .unwrap_or(0);
+                                ab.choice_count = if effect_pick > 0 { effect_pick } else { 3 };
+                            }
                         }
                     }
                     O_SELECT_MODE => {

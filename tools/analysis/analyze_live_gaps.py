@@ -19,7 +19,7 @@ def analyze_live_gaps():
 
     missing_patterns = []
 
-    for card_no, card in cards.items():
+    for _card_no, card in cards.items():
         text = card.get("ability", "")
         if "ライブ" not in text:
             continue

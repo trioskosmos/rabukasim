@@ -39,10 +39,10 @@ def test_python_logic():
     cond = Condition(ConditionType.OPPONENT_CHOICE, {}, [])
     # Pass context with card_id 123
     met = gs._check_condition(p1, cond, {"card_id": 123})
-    assert met == True, "Should be true if ID in set"
+    assert met, "Should be true if ID in set"
 
     met_fail = gs._check_condition(p1, cond, {"card_id": 999})
-    assert met_fail == False, "Should be false if ID not in set"
+    assert not met_fail, "Should be false if ID not in set"
     print("Python Logic OK")
 
 

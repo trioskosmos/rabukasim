@@ -33,7 +33,7 @@ def find_cards():
 
         # We just search for simple text match first as it's easier
         name = card.get("name", "")
-        text = card.get("text", "")
+        card.get("text", "")
         original_text = card.get("original_text", "")
 
         # Rank 9: Draw 2, Discard 2

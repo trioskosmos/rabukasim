@@ -1,4 +1,5 @@
 import os
+
 from huggingface_hub import HfApi
 
 # Configuration
@@ -16,7 +17,7 @@ def verify_space():
     try:
         # 1. Get Repo Info (Latest Commit)
         repo_info = api.repo_info(repo_id=REPO_ID, repo_type="space", token=TOKEN)
-        print(f"\n[Latest Commit Information]")
+        print("\n[Latest Commit Information]")
         print(f"Last Modified: {repo_info.lastModified}")
         print(f"Commit ID: {repo_info.sha}")
         
@@ -30,7 +31,7 @@ def verify_space():
         # 2. List Files
         files = api.list_repo_files(repo_id=REPO_ID, repo_type="space", token=TOKEN)
         
-        print(f"\n[File Verification]")
+        print("\n[File Verification]")
         print(f"Total Files: {len(files)}")
         
         # Check for directory structures

@@ -12,7 +12,6 @@ from torch.utils.data import DataLoader, Dataset
 sys.path.append(os.getcwd())
 
 from ai.models.fast_model import FastMoveModel
-
 from alphazero.alphanet import ACTION_SUB_TABLE, ACTION_TYPE_TABLE
 
 

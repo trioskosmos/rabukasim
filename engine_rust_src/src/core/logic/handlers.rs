@@ -957,7 +957,7 @@ impl ResponseController for GameState {
                     return Err("Conditions not met".to_string());
                 }
             }
-            if !costs::pay_costs_transactional(self, db, &ab.costs, &ctx) {
+            if !costs::pay_costs_transactional(self, db, &ab.costs, &mut ctx) {
                 return Err("Cannot afford costs".to_string());
             }
 
@@ -1214,16 +1214,18 @@ impl GameState {
                 self.core.players[p_idx].baton_source_ids.push(secondary_old_id);
                 self.core.players[p_idx].baton_source_slots.push(s_idx);
             }
+            let leave_ctx = AbilityContext {
+                player_id: p_idx as u8,
+                activator_id: p_idx as u8,
+                area_idx: s_idx as i16,
+                target_card_id: card_id,
+                ..Default::default()
+            };
             if let Some(old) = self.handle_member_leaves_stage(
                 p_idx,
                 s_idx,
                 db,
-                &AbilityContext {
-                    player_id: p_idx as u8,
-                    activator_id: p_idx as u8,
-                    area_idx: s_idx as i16,
-                    ..Default::default()
-                },
+                &leave_ctx,
             ) {
                 self.core.players[p_idx].push_discard_card(old);
             }
@@ -1233,16 +1235,18 @@ impl GameState {
         self.core.players[p_idx].remove_hand_card(hand_idx);
 
         if old_card_id >= 0 {
+            let leave_ctx = AbilityContext {
+                player_id: p_idx as u8,
+                activator_id: p_idx as u8,
+                area_idx: slot_idx as i16,
+                target_card_id: card_id,
+                ..Default::default()
+            };
             if let Some(old) = self.handle_member_leaves_stage(
                 p_idx,
                 slot_idx,
                 db,
-                &AbilityContext {
-                    player_id: p_idx as u8,
-                    activator_id: p_idx as u8,
-                    area_idx: slot_idx as i16,
-                    ..Default::default()
-                },
+                &leave_ctx,
             ) {
                 self.core.players[p_idx].push_discard_card(old);
             }

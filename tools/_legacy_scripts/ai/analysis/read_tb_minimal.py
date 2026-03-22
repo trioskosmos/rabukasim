@@ -39,7 +39,7 @@ event_files = [os.path.join(log_dir, f) for f in os.listdir(log_dir) if "tfevent
 stats = {}
 if event_files:
     # Use only the first file for speed
-    for step, tag, value in parse_tfevent(event_files[0]):
+    for _step, tag, value in parse_tfevent(event_files[0]):
         if tag not in stats:
             stats[tag] = []
         stats[tag].append(value)

@@ -74,7 +74,6 @@ def run_benchmark(deck_name, deck_file, db_content, sims=100):
     turn_limit = 10
     step = 0
     while not game.is_terminal() and game.turn <= turn_limit and step < 1000:
-        cp = game.current_player
         phase = game.phase
         is_interactive = phase in [-1, 0, 4, 5]
 

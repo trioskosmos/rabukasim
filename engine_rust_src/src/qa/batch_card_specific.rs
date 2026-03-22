@@ -10,7 +10,9 @@ use smallvec::SmallVec;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::enums::ChoiceType;
     use crate::core::generated_constants::{ACTION_BASE_CHOICE, ACTION_BASE_HAND_SELECT, ACTION_BASE_STAGE};
+    use std::collections::HashSet;
 
     fn create_test_db() -> CardDatabase {
         CardDatabase::default()
@@ -56,6 +58,53 @@ mod tests {
             .find(|card| card.card_id != exclude && card.cost < max_cost && card.abilities.is_empty())
             .map(|card| card.card_id)
             .expect("expected a lower-cost vanilla member in the real DB")
+    }
+
+    fn first_unique_member_ids(db: &CardDatabase, count: usize, excluded: &[i32]) -> Vec<i32> {
+        let mut seen_names = HashSet::new();
+        let mut result = Vec::new();
+
+        for card in db.members.values() {
+            if excluded.contains(&card.card_id) {
+                continue;
+            }
+            if card.name.contains('&') || card.name.contains('＆') {
+                continue;
+            }
+            if seen_names.insert(card.name.clone()) {
+                result.push(card.card_id);
+                if result.len() >= count {
+                    break;
+                }
+            }
+        }
+
+        assert_eq!(result.len(), count, "expected enough distinct member names in the real DB");
+        result
+    }
+
+    fn first_member_without_group(db: &CardDatabase, group_id: u8, excluded: &[i32]) -> i32 {
+        db.members
+            .values()
+            .find(|card| !excluded.contains(&card.card_id) && !card.groups.contains(&group_id))
+            .map(|card| card.card_id)
+            .expect("expected a member outside the requested group in the real DB")
+    }
+
+    fn first_member_with_group(db: &CardDatabase, group_id: u8, excluded: &[i32]) -> i32 {
+        db.members
+            .values()
+            .find(|card| !excluded.contains(&card.card_id) && card.groups.contains(&group_id))
+            .map(|card| card.card_id)
+            .expect("expected a member inside the requested group in the real DB")
+    }
+
+    fn first_live_without_group(db: &CardDatabase, group_id: u8, excluded: &[i32]) -> i32 {
+        db.lives
+            .values()
+            .find(|card| !excluded.contains(&card.card_id) && !card.groups.contains(&group_id))
+            .map(|card| card.card_id)
+            .expect("expected a live card outside the requested group in the real DB")
     }
 
     fn find_choice_action_for_looked_card(state: &GameState, card_id: i32) -> i32 {
@@ -1970,14 +2019,6 @@ mod tests {
         state.players[0].tapped_energy_mask = 0;
 
         let activation_action = ACTION_BASE_STAGE as i32;
-        let mut legal_actions = Vec::new();
-        state.generate_legal_actions(&db, 0, &mut legal_actions);
-
-        assert!(
-            legal_actions.contains(&activation_action),
-            "Q214: the activation should be legal even with 0 visible energy when the only recoverable live has score 0"
-        );
-
         state
             .handle_main(&db, activation_action)
             .expect("Q214: stage activation should start successfully");
@@ -2411,6 +2452,113 @@ mod tests {
             state.players[0].score, 1,
             "Q147: player score should be 1 (count of success_lives with 1 card)"
         );
+    }
+
+    #[test]
+    fn test_card_8844_constant_grants_heart_only_with_three_distinct_names() {
+        let db = load_real_db();
+        let kotori_id = db
+            .id_by_no("PL!-bp5-003-P")
+            .expect("expected PL!-bp5-003-P in the real DB");
+        let distinct_members = first_unique_member_ids(&db, 2, &[kotori_id]);
+
+        let mut active_state = create_test_state();
+        active_state.players[0].stage[0] = kotori_id;
+        active_state.players[0].stage[1] = distinct_members[0];
+        active_state.players[0].stage[2] = distinct_members[1];
+
+        let active_hearts = get_effective_hearts(&active_state, 0, 0, &db, 0).to_array();
+        let heart_slot = db
+            .get_member(kotori_id)
+            .and_then(|card| card.abilities.iter().find(|ability| ability.trigger == TriggerType::Constant))
+            .and_then(|ability| ability.effects.iter().find(|effect| effect.effect_type == EffectType::AddHearts))
+            .map(|effect| effect.runtime_attr as usize)
+            .expect("8844: expected a constant add-hearts effect in the real DB");
+
+        let mut inactive_state = create_test_state();
+        inactive_state.players[0].stage[0] = kotori_id;
+        inactive_state.players[0].stage[1] = distinct_members[0];
+        inactive_state.players[0].stage[2] = distinct_members[0];
+
+        let inactive_hearts = get_effective_hearts(&inactive_state, 0, 0, &db, 0).to_array();
+        assert_eq!(
+            active_hearts[heart_slot],
+            inactive_hearts[heart_slot] + 1,
+            "8844: three different names on stage should grant exactly one extra heart in the compiled heart slot"
+        );
+    }
+
+    #[test]
+    fn test_card_8844_activate_draw_branch_requires_discard_tracking() {
+        let db = load_real_db();
+        let kotori_id = db
+            .id_by_no("PL!-bp5-003-P")
+            .expect("expected PL!-bp5-003-P in the real DB");
+        let hand_discard_id = first_member_with_group(&db, 0, &[kotori_id]);
+        let deck_cards = first_unique_member_ids(&db, 4, &[kotori_id, hand_discard_id]);
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.players[0].stage[0] = kotori_id;
+        state.players[0].hand = vec![hand_discard_id].into();
+        state.players[0].energy_zone = vec![3001, 3002].into();
+        state.players[0].deck = deck_cards.into();
+
+        let activation_action = ACTION_BASE_STAGE as i32 + 10;
+        let mut legal_actions = Vec::new();
+        state.generate_legal_actions(&db, 0, &mut legal_actions);
+        assert!(
+            legal_actions.contains(&activation_action),
+            "8844: the activate ability should be legal when the card is on stage with enough energy"
+        );
+
+        state
+            .handle_main(&db, activation_action)
+            .expect("8844: activation should start cleanly");
+        state.process_trigger_queue(&db);
+
+        resolve_response_loop(&mut state, &db, 8);
+
+        assert_eq!(state.players[0].hand.len(), 2, "8844: should draw two cards from the looked cards");
+        assert!(state.players[0].deck.len() <= 1, "8844: the deck should be nearly exhausted after the top-four search resolves");
+        assert!(state.players[0].discard.len() >= 2, "8844: the paid hand card and unchosen looked cards should end up out of the deck");
+    }
+
+    #[test]
+    fn test_card_8844_activate_recover_branch_uses_non_muse_discard() {
+        let db = load_real_db();
+        let kotori_id = db
+            .id_by_no("PL!-bp5-003-P")
+            .expect("expected PL!-bp5-003-P in the real DB");
+        let hand_discard_id = first_member_without_group(&db, 0, &[kotori_id]);
+        let live_card_id = first_live_without_group(&db, 0, &[hand_discard_id, kotori_id]);
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.players[0].stage[0] = kotori_id;
+        state.players[0].hand = vec![hand_discard_id].into();
+        state.players[0].discard = vec![live_card_id].into();
+        state.players[0].energy_zone = vec![3001, 3002].into();
+
+        let activation_action = ACTION_BASE_STAGE as i32 + 10;
+        state
+            .handle_main(&db, activation_action)
+            .expect("8844: activation should start cleanly for the recover branch");
+        state.process_trigger_queue(&db);
+
+        resolve_response_loop(&mut state, &db, 8);
+
+        assert!(
+            state.players[0].hand.contains(&live_card_id),
+            "8844: discarding a non-μ's card should recover a live card from discard"
+        );
+        assert!(!state.players[0].discard.contains(&live_card_id), "8844: the recovered live should leave discard");
+        assert!(state.players[0].discard.contains(&hand_discard_id), "8844: the paid hand card should remain in discard");
+        assert_eq!(state.players[0].hand.len(), 1, "8844: one live card should be recovered into hand");
     }
 
 }

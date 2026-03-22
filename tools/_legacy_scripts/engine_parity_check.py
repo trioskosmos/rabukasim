@@ -79,7 +79,6 @@ def main():
         "CHECK_COUNT_BLADES": "C_BLD",
         "CHECK_TYPE_CHECK": "C_TYPE_CHECK",
         "CHECK_IS_IN_DISCARD": "C_IS_IN_DISCARD",
-        "CHECK_AREA_CHECK": "C_AREA_CHK",
         "ADD_BLADES": "O_BLADES",
         "ADD_HEARTS": "O_HEARTS",
         "RECOVER_LIVE": "O_RECOV_L",

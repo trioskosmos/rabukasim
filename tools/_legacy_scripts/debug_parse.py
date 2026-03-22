@@ -11,7 +11,7 @@ def debug():
     parser = AbilityParserV2()
     text = "TRIGGER: ON_LIVE_START\nEFFECT: SELECT_MODE(1) -> PLAYER\n  OPTION: チョコミント/ストロベリー/クッキー＆クリーム | EFFECT: DISCARD_HAND(1) -> PLAYER; DISCARD_HAND(1) -> OPPONENT\n  OPTION: あなた | EFFECT: DRAW(1) -> PLAYER; DRAW(1) -> OPPONENT\n  OPTION: その他 | EFFECT: BUFF_POWER(1) -> PLAYER; BUFF_POWER(1) -> OPPONENT"
     try:
-        abilities = parser.parse(text)
+        parser.parse(text)
         print("Successfully parsed!")
     except Exception:
         import traceback

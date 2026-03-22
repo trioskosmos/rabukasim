@@ -27,7 +27,7 @@ def analyze_products():
     # Map product -> set of icons found in that product
     product_icons = defaultdict(set)
 
-    for card_id, card_data in cards.items():
+    for _card_id, card_data in cards.items():
         product = card_data.get("product", "Unknown Product")
         ability = card_data.get("ability", "")
         if not ability:
@@ -43,7 +43,6 @@ def analyze_products():
 
     print(f"Analyzing {len(product_icons)} products for target icons: {TARGET_ICONS}")
 
-    matches_all = []
 
     print("\n--- Summary Matrix ---")
     print(f"{'Product':<40} | {'Found':<5} | {'Icons Present'}")

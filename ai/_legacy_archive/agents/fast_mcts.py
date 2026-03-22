@@ -111,7 +111,7 @@ class HeuristicMCTS:
             else:
                 reward = self._heuristic_eval(sim_state, state.current_player)
 
-            for i, n in enumerate(reversed(path)):
+            for _i, n in enumerate(reversed(path)):
                 n.visit_count += 1
                 # If n.player_just_moved == root_player, this node represents a state AFTER root moved.
                 # So its value should be positive if root won.

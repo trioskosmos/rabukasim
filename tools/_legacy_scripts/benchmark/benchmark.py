@@ -18,7 +18,7 @@ def run_benchmark_mode(fast_mode: bool, steps: int = 5000):
     get_legal = gs.get_legal_actions
     np.random.seed(42)  # Reset seed for fair comparison
 
-    for i in range(steps):
+    for _i in range(steps):
         legal = get_legal()
         if np.any(legal):
             valid_indices = np.where(legal)[0]

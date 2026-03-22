@@ -24,7 +24,7 @@ def main():
         if isinstance(obj, dict):
             if "img" in obj and obj["img"]:
                 needed_imgs.add(obj["img"])
-            for k, v in obj.items():
+            for _k, v in obj.items():
                 extract_imgs(v)
         elif isinstance(obj, list):
             for item in obj:
@@ -50,7 +50,7 @@ def main():
     # Strategy: iterate card_db, check if its relative path matches one of needed_imgs
 
     url_map = {}
-    for cid, card in card_db.items():
+    for _cid, card in card_db.items():
         img_url = card.get("img", "")
         if not img_url:
             continue

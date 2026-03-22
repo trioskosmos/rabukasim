@@ -438,7 +438,7 @@ def main():
 
     # Process member_db
     if "member_db" in data:
-        for card_id, card_data in data["member_db"].items():
+        for _card_id, card_data in data["member_db"].items():
             card_no = card_data.get("card_no", "Unknown")
             name = card_data.get("name", "Unknown")
 
@@ -463,7 +463,7 @@ def main():
 
     # Process live_db
     if "live_db" in data:
-        for card_id, card_data in data["live_db"].items():
+        for _card_id, card_data in data["live_db"].items():
             card_no = card_data.get("card_no", "Unknown")
             name = card_data.get("name", "Unknown")
 

@@ -147,7 +147,7 @@ def main():
     # We don't compare observation exact values because RNG differs.
     # But we check if Structure remains valid.
 
-    obs_cpu_post = cpu_env.get_observations()
+    cpu_env.get_observations()
     obs_gpu_post = gpu_env.get_observations()
 
     if isinstance(obs_gpu_post, cp.ndarray):

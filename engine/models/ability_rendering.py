@@ -8,7 +8,7 @@ from .ability_descriptions import (
 )
 from .ability_filter import format_filter_attr
 from .ability_ir import SemanticAbility, SemanticCondition, SemanticCost, SemanticEffect
-from .generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
+from .generated_enums import AbilityCostType, ConditionType, TargetType
 
 
 def build_semantic_form(ability: Any) -> Dict[str, Any]:

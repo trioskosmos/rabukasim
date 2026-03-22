@@ -21,9 +21,8 @@ def parse_deck_html(file_path):
     # Strategy: Find "card-view-item" images, extract title, then find the NEXT "num" span.
     # Actually, simpler Regex: title="([^"]+) : [^"]+"
 
-    matches = re.finditer(r'title="([^"]+) : ([^"]+)"', content)
+    re.finditer(r'title="([^"]+) : ([^"]+)"', content)
 
-    deck_list = []
 
     # We need to find quantities.
     # The HTML structure is:

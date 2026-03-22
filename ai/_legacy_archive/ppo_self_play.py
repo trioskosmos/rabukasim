@@ -8,7 +8,7 @@ from sb3_contrib import MaskablePPO
 # Ensure project root is in path
 sys.path.append(os.getcwd())
 
-from ai.vector_env import VectorGameState
+from ai.vector_env import VectorGameState  # noqa: E402
 
 
 def run_self_play():

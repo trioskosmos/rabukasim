@@ -50,7 +50,7 @@ def fix_imports_in_file(filepath):
 
 def main():
     root_tests = "tests"
-    for root, dirs, files in os.walk(root_tests):
+    for root, _dirs, files in os.walk(root_tests):
         for filename in files:
             if filename.endswith(".py"):
                 fix_imports_in_file(os.path.join(root, filename))

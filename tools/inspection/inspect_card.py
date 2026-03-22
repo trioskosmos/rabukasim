@@ -63,7 +63,7 @@ def inspect_card(card_no):
     print(f"\n=== Compiled Bytecode for {card_no} ===")
     compiled_abilities = compiled_card.get("abilities", [])
     for i, ab in enumerate(compiled_abilities):
-        trigger = ab.get("trigger")
+        ab.get("trigger")
         bytecode = ab.get("bytecode")
         print(f"Bytecode_Dump_{i}: {bytecode}")
 
@@ -74,7 +74,7 @@ def inspect_card(card_no):
 
     for i, ab in enumerate(compiled_abilities):
         bc = ab.get("bytecode", [])
-        trigger = ab.get("trigger")
+        ab.get("trigger")
 
         # Check for Activated Trigger (usually 6 in Python enum, check parser_v2 or logic.rs)
         # Actually logic.rs TriggerType::Activated is what matters.

@@ -32,7 +32,6 @@ from engine.models.generated_packer import (
     unpack_v_scalar_dynamic,
 )
 
-
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_COMPILED_PATH = ROOT_DIR / "data" / "cards_compiled.json"
 DEFAULT_METADATA_PATH = ROOT_DIR / "data" / "metadata.json"

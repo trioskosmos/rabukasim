@@ -9,7 +9,7 @@ found = False
 
 with open("data/cards.json", "r", encoding="utf-8") as f:
     d = json.load(f)
-    for k, v in d.items():
+    for _k, v in d.items():
         if v.get("card_no") == target_no:
             print(json.dumps(v, indent=2, ensure_ascii=False))
             found = True

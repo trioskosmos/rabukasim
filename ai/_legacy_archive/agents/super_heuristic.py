@@ -1,8 +1,8 @@
 import random
 
 import numpy as np
-
 from ai.headless_runner import Agent
+
 from engine.game.game_state import GameState, Phase
 
 
@@ -292,7 +292,7 @@ class SuperHeuristicAgent(Agent):
                     alpha = max(alpha, eval_val)
                     if beta <= alpha:
                         break
-                except:
+                except Exception:
                     pass
             return max_eval
         else:
@@ -305,6 +305,6 @@ class SuperHeuristicAgent(Agent):
                     beta = min(beta, eval_val)
                     if beta <= alpha:
                         break
-                except:
+                except Exception:
                     pass
             return min_eval

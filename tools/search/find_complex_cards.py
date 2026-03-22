@@ -9,15 +9,12 @@ def find_complex_cards():
     with open("engine/data/cards.json", encoding="utf-8") as f:
         data = json.load(f)
 
-    complex_types = [34, 35]  # REPLACE_EFFECT, TRIGGER_REMOTE
-    buff_type = 8  # BUFF_POWER
-    complex_conds = [9, 26]  # COUNT_GROUP, OPPONENT_ENERGY_DIFF
 
     found = {"replace": [], "remote": [], "buff": [], "cond": []}
 
     print(f"Scanning {len(data)} cards...")
 
-    for cid, c in data.items():
+    for _cid, c in data.items():
         if not c.get("ability"):
             continue
 
@@ -37,7 +34,7 @@ def find_complex_cards():
     loader = CardDataLoader("engine/data/cards.json")
     members, lives, energy = loader.load()
 
-    for cid, card in members.items():
+    for _cid, card in members.items():
         for ab in card.abilities:
             # Scan effects
             for eff in ab.effects:

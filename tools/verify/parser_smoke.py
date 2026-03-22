@@ -43,7 +43,7 @@ def main() -> None:
     cost_ability = _single_effect("TRIGGER: ON_LIVE_SUCCESS\nCOST: PLACE_ENERGY_WAIT(1) (Optional)\nEFFECT: DRAW(1)")
     cost_steps = [step for step in cost_ability.instructions if isinstance(step, Cost)]
     assert any(c.params.get("wait") for c in cost_steps), "expected wait flag on optional energy placement"
-    assert getattr(Opcode, "PLACE_ENERGY_FROM_DECK") == 39
+    assert Opcode.PLACE_ENERGY_FROM_DECK == 39
 
     print("parser smoke checks passed")
 

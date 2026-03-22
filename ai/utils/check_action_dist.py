@@ -24,7 +24,7 @@ def analyze_distribution(pattern):
 
         total_samples += len(best_actions)
         unique, counts = np.unique(best_actions, return_counts=True)
-        for a, c in zip(unique, counts):
+        for a, c in zip(unique, counts, strict=False):
             action_counts[a] = action_counts.get(a, 0) + c
 
     print(f"\nTotal Samples checked: {total_samples}")

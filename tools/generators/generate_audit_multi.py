@@ -22,7 +22,7 @@ def main():
     audit_entries = []
 
     def process_db(db):
-        for card_id, card_data in db.items():
+        for _card_id, card_data in db.items():
             card_no = card_data.get("card_no", "Unknown")
             name = card_data.get("name", "Unknown")
 

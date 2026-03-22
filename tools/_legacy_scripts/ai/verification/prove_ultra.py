@@ -32,8 +32,8 @@ def ultra_fast_vm(bytecode, global_ctx, flat_ctx, p_cont_vec):
     while ip < len(bytecode):
         op = bytecode[ip, 0]
         val = bytecode[ip, 1]
-        attr = bytecode[ip, 2]
-        slot = bytecode[ip, 3]
+        bytecode[ip, 2]
+        bytecode[ip, 3]
 
         if op == OP_RETURN:
             break

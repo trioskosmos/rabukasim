@@ -7,7 +7,7 @@ def search_cards():
         cards = json.load(f)
 
     print("Searching for Life Lead patterns...")
-    for cid, card in cards.items():
+    for _cid, card in cards.items():
         text = card.get("ability", "")
         if "ライフ" in text or "Life" in text:
             print(f"[{card.get('card_no')}] {text[:50]}...")

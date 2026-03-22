@@ -47,7 +47,7 @@ def dump_card():
             print(f"ID {target_id} not in members keys")
 
         found = False
-        for cid, card in members.items():
+        for _cid, card in members.items():
             if card.get("card_no") == "PL!S-pb1-013-N":
                 print(json.dumps(card, indent=2, ensure_ascii=False))
                 found = True

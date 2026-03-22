@@ -74,7 +74,7 @@ def profile_detailed(num_steps=100, sims=100):
 
         # 4. Legal Actions
         t0 = time.perf_counter()
-        legal = game.get_legal_action_ids()
+        game.get_legal_action_ids()
         timers["get_legal"].append(time.perf_counter() - t0)
 
         # 5. Engine Step

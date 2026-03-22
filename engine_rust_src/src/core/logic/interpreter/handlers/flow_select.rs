@@ -1,5 +1,6 @@
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use crate::core::logic::interpreter::instruction::BytecodeInstruction;
 use crate::core::models::CHOICE_DONE;
 
@@ -21,7 +22,23 @@ pub fn handle_select_ops(
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
 ) -> HandlerResult {
     let partial_selection_prompt = -1000 - (v as i16);
-    let supports_partial_completion = op == O_SELECT_MEMBER && v > 1;
+    let legacy_move_member_follow_up = if op == O_SELECT_MEMBER && v > 1 {
+        let source_ability = db
+            .get_member(ctx.source_card_id)
+            .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
+            .or_else(|| {
+                db.get_live(ctx.source_card_id)
+                    .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
+            });
+        let next_instr = source_ability
+            .and_then(|ability| BytecodeProgram::from_slice(&ability.bytecode).instruction_at(instr_ip + 5));
+        next_instr
+            .map(|next| next.op == O_MOVE_MEMBER && next.filter_attr().is_optional)
+            .unwrap_or(false)
+    } else {
+        false
+    };
+    let supports_partial_completion = op == O_SELECT_MEMBER && v > 1 && !legacy_move_member_follow_up;
     let is_optional =
         op == O_SELECT_MEMBER && (a as u64 & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
 

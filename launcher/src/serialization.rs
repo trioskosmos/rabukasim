@@ -2114,7 +2114,7 @@ mod tests {
         // --- RESPONSE PHASE SCENARIOS ---
         gs.phase = Phase::Response;
 
-        let mut base_pending = PendingInteraction {
+        let base_pending = PendingInteraction {
              card_id: 17, // Rin #17 has SELECT_MODE
              ability_index: 0,
              ctx: AbilityContext { player_id: 0, ..Default::default() },

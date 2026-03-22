@@ -1,10 +1,10 @@
 import os
 from typing import List
 
+import ai.research.integrated_step_numba as isn
 import numpy as np
 from numba import njit, prange
 
-import ai.research.integrated_step_numba as isn
 from engine.game.fast_logic import (
     batch_apply_action,
     resolve_bytecode,
@@ -1072,7 +1072,6 @@ def compute_action_masks_attention(
                     continue
 
                 is_member = card_stats[cid, 10] == 1
-                is_live = card_stats[cid, 10] == 2
 
                 if is_member:
                     # Play to Slot 0-2 (Actions 1-45)

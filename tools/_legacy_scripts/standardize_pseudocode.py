@@ -46,7 +46,7 @@ def standardize():
     }
 
     modified_count = 0
-    for card_id, entry in data.items():
+    for _card_id, entry in data.items():
         if "pseudocode" not in entry:
             continue
 

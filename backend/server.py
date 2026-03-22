@@ -153,7 +153,7 @@ def serve_img(filename):
     # Extra fallback for common icons if they are misplaced
     if filename == "icon_blade.png" or "icon_blade" in filename:
         # Try to find it anywhere in frontend/img
-        for root, dirs, files in os.walk(IMG_DIR):
+        for root, _dirs, files in os.walk(IMG_DIR):
             if "icon_blade.png" in files:
                 return send_from_directory(root, "icon_blade.png")
 
@@ -232,7 +232,7 @@ def load_game_data():
         energy_db.update(e)
 
         # Load vanilla data separately
-        print(f"Loading vanilla card data from: data/cards_vanilla.json")
+        print("Loading vanilla card data from: data/cards_vanilla.json")
         try:
             vanilla_path = os.path.join(DATA_DIR, "cards_vanilla.json")
             vanilla_loader = CardDataLoader(vanilla_path)
@@ -558,7 +558,7 @@ def build_planner_analysis_from_session(session, lang="jp", rust_db=None):
     )
 
     matched_prefix = 0
-    for own_action, optimal_action in zip(your_sequence["action_ids"], optimal["action_ids"]):
+    for own_action, optimal_action in zip(your_sequence["action_ids"], optimal["action_ids"], strict=False):
         if own_action != optimal_action:
             break
         matched_prefix += 1
@@ -648,7 +648,6 @@ def maybe_finalize_planner_session(
 def build_planner_payload(room, gs, player_idx, lang="jp"):
     """Build planner payload for displaying planning analysis to player (Rust engine only)."""
     planner_store = get_planner_store(room)
-    active = False
     session = planner_store["sessions"].get(str(player_idx))
     rust_db = get_rust_db_for_card_set(room.get("card_set", "compiled"))
 
@@ -656,7 +655,6 @@ def build_planner_payload(room, gs, player_idx, lang="jp"):
         session = ensure_planner_session(room, gs, player_idx)
 
     if session:
-        active = True
         analysis = build_planner_analysis_from_session(session, lang, rust_db)
         analysis["active"] = True
         analysis["available"] = True
@@ -1236,7 +1234,7 @@ def create_room_internal(
             gs.initialize_game(p0_m, p1_m, p0_e, p1_e, p0_l, p1_l)
         else:
             # Python engine initialization - for now provide sensible defaults
-            print(f"Python engine doesn't require explicit initialize_game call")
+            print("Python engine doesn't require explicit initialize_game call")
             # GameState should auto-init on creation
     except Exception as init_error:
         print(f"Warning: initialization error: {init_error}")
@@ -1350,8 +1348,6 @@ def create_new_room():
             if p1_main:
                 custom_decks["1"] = {"main": p1_main, "energy": p1_energy}
 
-    res = {}
-    res = {}
     with game_lock:
         print("DEBUG: Lock acquired. Creating room internal...", file=sys.stderr)
         ROOMS[room_id] = create_room_internal(room_id, mode, public=is_public, custom_decks=custom_decks, card_set=card_set)
@@ -1374,7 +1370,7 @@ def list_public_rooms():
             if room.get("public", False):
                 # Calculate player count
                 sessions = room.get("sessions", {})
-                player_count = len(set(sessions.values()))  # Approximate, might need better logic if spectators exist
+                len(set(sessions.values()))  # Approximate, might need better logic if spectators exist
                 # Or just count occupied slots (0 and 1)
                 occupied_slots = 0
                 taken_pids = set(sessions.values())
@@ -1669,7 +1665,7 @@ def background_game_loop():
 def get_state():
     try:
         room_id = get_room_id()
-        session_token = request.headers.get("X-Session-Token")
+        request.headers.get("X-Session-Token")
 
         with game_lock:
             # Development convenience: Auto-create room if missing IF it's "SINGLE_PLAYER"
@@ -2551,7 +2547,7 @@ def score_turn_planner_sequence():
         if room.get("engine") != "rust":
             return jsonify({"success": False, "error": "Turn planner is only available with the Rust engine."}), 400
 
-        gs = room["state"]
+        room["state"]
         player_idx = get_player_idx(room)
         planner_store = get_planner_store(room)
         session = planner_store["sessions"].get(str(player_idx))
@@ -2769,7 +2765,7 @@ def debug_rewind():
         if idx > 0:
             room["history_index"] = idx - 1
             # Restore the previous state from history
-            serialized_state = room["history_stack"][room["history_index"]]
+            room["history_stack"][room["history_index"]]
             
             # We need to reconstruct the GameState from the serialized state
             # For now, we'll just return success and let the frontend fetch the new state
@@ -2797,7 +2793,7 @@ def debug_redo():
         if idx < max_idx:
             room["history_index"] = idx + 1
             # Restore the next state from history
-            serialized_state = room["history_stack"][room["history_index"]]
+            room["history_stack"][room["history_index"]]
             
             # We need to reconstruct the GameState from the serialized state
             # For now, we'll just return success and let the frontend fetch the new state

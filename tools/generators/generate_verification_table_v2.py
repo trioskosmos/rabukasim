@@ -18,7 +18,7 @@ def load_cards():
 
 def find_tests_for_card(card_no):
     found_in = []
-    for root, dirs, files in os.walk(TESTS_DIR):
+    for root, _dirs, files in os.walk(TESTS_DIR):
         for file in files:
             if file.endswith(".py") or file.endswith(".md"):
                 path = os.path.join(root, file)
@@ -60,13 +60,13 @@ def main():
     # Process member_db
     if "member_db" in full_data:
         print(f"Processing member_db ({len(full_data['member_db'])} items)...")
-        for cid, card in full_data["member_db"].items():
+        for _cid, card in full_data["member_db"].items():
             all_cards.append(card)
 
     # Process live_db
     if "live_db" in full_data:
         print(f"Processing live_db ({len(full_data['live_db'])} items)...")
-        for cid, card in full_data["live_db"].items():
+        for _cid, card in full_data["live_db"].items():
             all_cards.append(card)
 
     print(f"Total cards found: {len(all_cards)}")

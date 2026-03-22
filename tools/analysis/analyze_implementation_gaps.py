@@ -33,7 +33,7 @@ trigger_counts = Counter(all_triggers)
 engine_path = "engine/game"
 implementation_code = ""
 
-for root, dirs, files in os.walk(engine_path):
+for root, _dirs, files in os.walk(engine_path):
     for file in files:
         if file.endswith(".py"):
             with open(os.path.join(root, file), "r", encoding="utf-8") as f:

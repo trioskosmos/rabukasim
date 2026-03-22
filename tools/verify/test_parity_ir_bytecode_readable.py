@@ -18,7 +18,7 @@ and consistent across compiled output.
 import json
 import os
 import sys
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
@@ -28,11 +28,9 @@ from engine.models.ability_ir import (
     BYTECODE_LAYOUT_NAME,
     BYTECODE_LAYOUT_VERSION,
     SEMANTIC_FORM_VERSION,
-    AbilityIR,
 )
 from engine.models.bytecode_readable import (
     CONDITION_NAMES,
-    COST_NAMES,
     OPCODE_NAMES,
     TRIGGER_NAMES,
     decode_bytecode,
@@ -406,17 +404,6 @@ def run_parity_tests(compiled_json_path: str = None) -> Tuple[int, int]:
     try:
         # This is a simplified test - in production you'd load from compiled data
         # For now, we just test the framework
-        sample_abilities = [
-            # Example ability (simplified for testing)
-            {
-                "trigger": "ON_PLAY",
-                "costs": [],
-                "conditions": [],
-                "effects": [],
-                "instructions": [],
-                "raw_text": "Test ability",
-            }
-        ]
 
         # Note: This is a placeholder. In real use, you'd load actual abilities
         # from the compiled JSON or from parsing

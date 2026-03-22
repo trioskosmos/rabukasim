@@ -28,7 +28,7 @@ def main():
         # Find compiled logic
         compiled = None
         for db in ["member_db", "live_db", "energy_db"]:
-            for cid, c in cards_compiled.get(db, {}).items():
+            for _cid, c in cards_compiled.get(db, {}).items():
                 if c.get("card_no") == no:
                     compiled = c
                     break

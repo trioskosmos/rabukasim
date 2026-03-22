@@ -1,3 +1,4 @@
+#![allow(unused_crate_dependencies)]
 //! Love Live Card Game Rust Engine - Test Suite Organization
 //!
 //! # Test Architecture Overview
@@ -240,6 +241,8 @@ mod debug_consts;
 
 #[cfg(feature = "extension-module")]
 use pyo3::prelude::*;
+
+use serde_json as _;
 
 #[cfg(feature = "extension-module")]
 #[pymodule]

@@ -25,7 +25,6 @@ def verify_lockstep():
             GameState.initialize_class_db(m_stats, l_stats)
 
     members = GameState.member_db
-    lives = GameState.live_db
 
     # 2. Initialize Environments
     py_env = GameState()

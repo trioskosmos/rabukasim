@@ -6,7 +6,7 @@ with open("engine/data/cards_compiled.json", "r", encoding="utf-8") as f:
 
 def find_card(card_no):
     for db_name in ["member_db", "live_db"]:
-        for card_id, card in data.get(db_name, {}).items():
+        for _card_id, card in data.get(db_name, {}).items():
             if card.get("card_no") == card_no:
                 return card
     return None

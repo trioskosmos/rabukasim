@@ -7,7 +7,7 @@ with open("data/cards_compiled.json", "r", encoding="utf-8") as f:
 
 print("=== META_RULE SAMPLES ===")
 count = 0
-for card_id, card in db["member_db"].items():
+for _card_id, card in db["member_db"].items():
     for i, ab in enumerate(card.get("abilities", [])):
         bc = ab.get("bytecode", [])
         if 29 in bc:
@@ -28,7 +28,7 @@ for card_id, card in db["member_db"].items():
 
 print("\n=== MISSING TRIGGER SAMPLES ===")
 count = 0
-for card_id, card in db["member_db"].items():
+for _card_id, card in db["member_db"].items():
     for i, ab in enumerate(card.get("abilities", [])):
         trigger = ab.get("trigger")
         if trigger is None or trigger == 0:

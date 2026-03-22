@@ -702,6 +702,11 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             continue;
         }
 
+        if part == "HAS_GROUP_AQOURS_OR_SAINT_SNOW" {
+            attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE | (101u64 << crate::core::logic::constants::FILTER_GROUP_ID_SHIFT);
+            continue;
+        }
+
         if part_trimmed.contains("NAME_IN") && part_trimmed.contains("澁谷かのん") {
             attr |= 1u64 << FILTER_SPECIAL_ID_SHIFT;
             continue;

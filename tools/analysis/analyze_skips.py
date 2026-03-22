@@ -90,7 +90,7 @@ for title, qa in unique_qas.items():
         skipped_qas.append((title, pcode, question, answer))
 
 print(f"Total Skips to Analyze: {len(skipped_qas)}")
-for title, pcode, q, a in skipped_qas[:20]:
+for title, pcode, q, _a in skipped_qas[:20]:
     print(f"--- {title} ---")
     print(f"PCODE: {pcode}")
     print(f"Q: {q[:100]}...")

@@ -149,7 +149,7 @@ def build_structured_instruction_ir(ability: Any) -> StructuredAbilityIR:
 
         if hasattr(instruction, "effect_type"):
             role = "effect"
-            opcode_name = _enum_name(getattr(instruction, "effect_type"))
+            opcode_name = _enum_name(instruction.effect_type)
             _append_if_present(operands, "value", OperandKind.INT, getattr(instruction, "value", 0))
             _append_if_present(
                 operands,

@@ -139,7 +139,7 @@ class SimpleNetwork:
         policies, values = self.forward(obs)
 
         results = []
-        for i, (policy, value) in enumerate(zip(policies, values)):
+        for i, (policy, value) in enumerate(zip(policies, values, strict=False)):
             legal = states[i].get_legal_actions()
             masked_policy = policy * legal
             if masked_policy.sum() > 0:
@@ -417,7 +417,7 @@ def train_network(network: SimpleNetwork, training_data: list, epochs: int = 10,
     all_policies = []
     all_values = []
 
-    for states, policies, winner, r0, r1 in training_data:
+    for states, policies, _winner, r0, r1 in training_data:
         for i, (s, p) in enumerate(zip(states, policies, strict=False)):
             all_states.append(s)
             all_policies.append(p)

@@ -14,7 +14,7 @@ def dump_cards():
     found = {}
 
     # cards.json structure is { "CARD_NO": { ... } }
-    for key, card in data.items():
+    for _key, card in data.items():
         if card.get("name") in names:
             # We want to find the one that matches the IDs in report if possible,
             # but we don't have the mapping from Card ID (int) to ID (string) here easily without compiling.

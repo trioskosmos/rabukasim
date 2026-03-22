@@ -1100,7 +1100,7 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
 
             # Note: We allow toggling selection.
 
-            m_sel = getattr(p, "mulligan_selection", set())
+            getattr(p, "mulligan_selection", set())
 
             for i in range(len(p.hand)):
                 mask[300 + i] = True

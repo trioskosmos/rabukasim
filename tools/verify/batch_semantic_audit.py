@@ -59,7 +59,7 @@ def run_batch_audit():
         pseudo = json.load(f)
 
     mismatches = []
-    total = len(cards)
+    len(cards)
     count = 0
 
     for cid, data in cards.items():

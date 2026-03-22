@@ -16,7 +16,7 @@ try:
         print("Assuming flat structure. Searching root...")
         source = data
 
-    for k, v in source.items():
+    for _k, v in source.items():
         # Handle if v is not dict (e.g. metadata)
         if isinstance(v, dict) and v.get("card_no") == "LL-bp3-001-R＋":
             found.append(v)

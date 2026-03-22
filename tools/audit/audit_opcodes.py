@@ -18,7 +18,6 @@ def parse_python_opcodes(path):
 
 
 def parse_js_opcodes(path):
-    handler_map = {}
     with open(path, "r", encoding="utf-8") as f:
         content = f.read()
 

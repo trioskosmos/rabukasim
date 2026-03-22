@@ -6,8 +6,9 @@ import torch
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from ai.models.training_config import INPUT_SIZE, POLICY_SIZE
 from ai.training.train import AlphaNet
+
+from ai.models.training_config import INPUT_SIZE, POLICY_SIZE
 
 
 def export_to_torchscript(model_path, output_path):

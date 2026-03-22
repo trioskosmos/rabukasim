@@ -31,7 +31,7 @@ def analyze_abilities():
     failed_count = 0
     cards_with_abilities = 0
 
-    for card_id, card in cards.items():
+    for _card_id, card in cards.items():
         # Check for compiled abilities first
         abilities_data = card.get("abilities", [])
         if not abilities_data:

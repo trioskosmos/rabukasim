@@ -42,7 +42,7 @@ def main():
 
     # helper to process a database
     def process_db(db):
-        for card_id, card_data in db.items():
+        for _card_id, card_data in db.items():
             card_no = card_data.get("card_no")
             if not card_no:
                 continue

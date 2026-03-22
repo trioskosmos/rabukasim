@@ -10,7 +10,7 @@ modular architecture based on:
 """
 
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from engine.models.ability import (
     Ability,
@@ -24,15 +24,15 @@ from engine.models.ability import (
     TriggerType,
 )
 
-from .parser_lexer import StructuredEffect, StructuralLexer
 from .parser_costs import parse_pseudocode_costs
-from .parser_effect_normalization import normalize_select_hand_effect
 from .parser_effect_aliases import resolve_effect_aliases
+from .parser_effect_normalization import normalize_select_hand_effect
 from .parser_grant_ability import parse_grant_ability_effect
+from .parser_lexer import StructuralLexer
+from .parser_patterns import MAX_SELECT_ALL, TRIGGER_ALIASES
 from .parser_play_member_resolution import resolve_play_member_source
-from .parser_target_resolution import resolve_target_type
 from .parser_semantics import looks_like_condition_instruction, parse_pseudocode_conditions
-from .parser_patterns import IGNORED_CONDITIONS, KEYWORD_CONDITIONS, MAX_SELECT_ALL, TRIGGER_ALIASES
+from .parser_target_resolution import resolve_target_type
 
 
 class AbilityParserV2:
@@ -47,7 +47,6 @@ class AbilityParserV2:
         text = text.replace("<br>", "\n")
 
         # Detect format
-        triggers = ["TRIGGER:", "CONDITION:", "EFFECT:", "COST:"]
 
         # Behavior blocks are handled if present, else fallback to pseudocode
         if text.strip().upper().startswith("BEHAVIOR:"):
@@ -586,6 +585,23 @@ class AbilityParserV2:
 
                 if name_up.startswith("PLAY_MEMBER"):
                     name_up = resolve_play_member_source(name_up, params, p, full_text)
+
+                if name_up == "DRAW_MEMBER_FROM_DECK":
+                    choose_count = 1
+                    if val and str(val).strip().isdigit():
+                        choose_count = int(str(val).strip())
+                    look_count = params.get("LOOK") or params.get("look") or choose_count
+                    try:
+                        look_count = int(str(look_count).strip())
+                    except (TypeError, ValueError):
+                        look_count = choose_count
+
+                    name_up = "LOOK_AND_CHOOSE"
+                    val = str(look_count)
+                    params["choose_count"] = choose_count
+                    params.setdefault("destination", "card_hand")
+                    params.setdefault("remainder", "discard")
+                    params.setdefault("chain_destinations", ["CARD_HAND"])
 
                 etype = getattr(EffectType, name_up, None)
 

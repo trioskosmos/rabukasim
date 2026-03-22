@@ -13,7 +13,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 import engine_rust
-from backend.server import describe_action_for_state
+
 from alphazero.training.overnight_vanilla import (
     VanillaPolicyModel,
     _apply_deterministic_setup,
@@ -24,6 +24,7 @@ from alphazero.training.overnight_vanilla import (
 from alphazero.training.vanilla_action_codec import build_legal_policy_mask, build_policy_engine_mapping
 from alphazero.training.vanilla_observation import build_card_feature_lookup, build_vanilla_observation
 from alphazero.vanilla_net import VanillaTransformerConfig
+from backend.server import describe_action_for_state
 
 PHASE_MAIN = 4
 PHASE_LIVE_SET = 5

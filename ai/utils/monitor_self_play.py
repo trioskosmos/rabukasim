@@ -18,9 +18,6 @@ def monitor_game():
     db = engine_rust.PyCardDatabase(db_content)
 
     # Use simple starter decks
-    p_deck = [124, 127] * 20
-    p_lives = [1024, 1025, 1027]
-    p_energy = [20000] * 10
 
     # Setup Agents
     game = engine_rust.PyGameState(db)
@@ -95,7 +92,7 @@ def monitor_game():
             legal_ids = game.get_legal_action_ids()
             legal_desc = [decode_action(aid, cur_p) for aid in legal_ids]
             print(f"  Legal Actions ({len(legal_ids)}):")
-            for aid, desc in zip(legal_ids, legal_desc):
+            for aid, desc in zip(legal_ids, legal_desc, strict=False):
                 print(f"    - {aid}: {desc}")
 
             # Use Hybrid MCTS

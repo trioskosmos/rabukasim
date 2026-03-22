@@ -22,7 +22,7 @@ def analyze_meta_rules():
     parser = AbilityParserV2()
     meta_rules = []
 
-    for card_id, entry in data.items():
+    for _card_id, entry in data.items():
         if "pseudocode" not in entry:
             continue
 

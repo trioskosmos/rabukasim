@@ -45,7 +45,7 @@ def main():
     # Map card_no -> ID for bytecode lookup
     # member_db is ID -> Data
     no_to_id_map = {}
-    for cid, c in member_db.items():
+    for _cid, c in member_db.items():
         if "card_no" in c:
             no_to_id_map[c["card_no"]] = c
 

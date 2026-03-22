@@ -40,7 +40,7 @@ def run():
     # Regex to catch "Q123", "Q12", "Q 123" if someone spaced it, but mostly Q\d{1,3}
     q_pattern = re.compile(r"\bQ\d{1,3}\b")
 
-    for root, dirs, files in os.walk(rust_dir):
+    for root, _dirs, files in os.walk(rust_dir):
         for file in files:
             if file.endswith(".rs"):
                 test_files_scanned += 1

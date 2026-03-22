@@ -8,7 +8,6 @@ if __name__ == "__main__":
 
 from engine.models.bytecode_readable import decode_bytecode
 
-
 if __name__ == "__main__":
     # Standardized UTF-8 Handling
     if sys.stdout.encoding.lower() != "utf-8":

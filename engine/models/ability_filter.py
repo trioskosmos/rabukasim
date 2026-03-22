@@ -1,7 +1,6 @@
 from dataclasses import dataclass, fields
 from typing import Any, Dict, List
 
-from .generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
 from .generated_packer import pack_a_standard, unpack_a_standard
 
 _BOOL_FILTER_FIELDS = {

@@ -147,7 +147,7 @@ def build_vanilla_observation(
     my_stage_hearts = _sum_stage_hearts(player_json, card_lookup)
     opp_stage_hearts = _sum_stage_hearts(opp_json, card_lookup)
     live_requirements = _sum_live_requirements(player_json, card_lookup)
-    live_deficits = [max(required - available, 0.0) for required, available in zip(live_requirements, my_stage_hearts)]
+    live_deficits = [max(required - available, 0.0) for required, available in zip(live_requirements, my_stage_hearts, strict=False)]
 
     my_tapped_mask = int(player_json.get("tapped_energy_mask", 0))
     opp_tapped_mask = int(opp_json.get("tapped_energy_mask", 0))

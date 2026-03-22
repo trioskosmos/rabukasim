@@ -19,7 +19,12 @@ from engine.models.generated_metadata import (
     UNIT_IDS,
     ZONES,
 )
-from engine.models.generated_packer import unpack_a_heart_cost, unpack_s_standard, unpack_v_heart_counts, unpack_v_look_choose
+from engine.models.generated_packer import (
+    unpack_a_heart_cost,
+    unpack_s_standard,
+    unpack_v_heart_counts,
+    unpack_v_look_choose,
+)
 
 OP = {name: int(value) for name, value in OPCODES.items()}
 OPCODE_NAMES = {int(value): name for name, value in OPCODES.items()}
@@ -487,7 +492,7 @@ def decode_bytecode_v2(bytecode: List[int]) -> str:
         return "None"
 
     lines = [
-        f"  [v2 layout - experimental, currently using v1 decoder]",
+        "  [v2 layout - experimental, currently using v1 decoder]",
         f"  Bytecode length: {len(bytecode)} words",
     ]
     lines.append("")

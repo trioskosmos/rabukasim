@@ -67,7 +67,7 @@ def extract_verified():
     # 2. Auto-include Vanilla Lives from DB
     vanilla_count = 0
     if "live_db" in db_data:
-        for card_key, card_def in db_data["live_db"].items():
+        for _card_key, card_def in db_data["live_db"].items():
             # Check for empty abilities list
             if len(card_def.get("abilities", [])) == 0:
                 c_no = card_def.get("card_no")

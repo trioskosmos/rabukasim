@@ -4,7 +4,7 @@ import os
 import re
 import sys
 import time
-from typing import Dict, List, Optional, Set, Any
+from typing import Dict, List, Optional
 
 # Add project root to path to allow imports from engine/compiler
 if __name__ == "__main__":
@@ -228,8 +228,6 @@ class CardReporter:
             raw = self.ds.cards_raw.get(n)
             if raw: break
 
-        compiled = None
-        cid = None
         for n in nos:
             for db_name in ["member_db", "live_db", "energy_db"]:
                 db = self.ds.cards_compiled.get(db_name, {})
@@ -315,7 +313,7 @@ class CardReporter:
 
     def get_full_data(self, resolved: Dict, skip_tests: bool = False):
         raw = resolved.get("raw")
-        compiled = resolved.get("compiled")
+        resolved.get("compiled")
         card_no = resolved.get("card_no")
         
         # QA

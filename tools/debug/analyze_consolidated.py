@@ -14,7 +14,7 @@ conditions = set()
 triggers = set()
 
 # Full analysis of all abilities
-for ability_text, pseudo in consolidated.items():
+for _ability_text, pseudo in consolidated.items():
     if not pseudo:
         continue
     lines = pseudo.split("\n")

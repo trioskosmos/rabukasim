@@ -15,7 +15,7 @@ def inspect_card(target_no):
 
     # Search in members
     card = None
-    for cid, m in db["member_db"].items():
+    for _cid, m in db["member_db"].items():
         if m["card_no"] == target_no:
             card = m
             break

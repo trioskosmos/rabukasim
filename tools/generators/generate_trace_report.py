@@ -3,7 +3,6 @@ import os
 
 from engine.models.bytecode_readable import decode_bytecode
 
-
 TriggerType = {
     0: "NONE",
     1: "ON_PLAY",
@@ -37,7 +36,7 @@ def main():
     for card_no in target_card_nos:
         # Find card in member_db
         card_data = None
-        for cid, c in db.get("member_db", {}).items():
+        for _cid, c in db.get("member_db", {}).items():
             if c.get("card_no") == card_no:
                 card_data = c
                 break

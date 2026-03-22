@@ -19,13 +19,13 @@ def load_verified_cards(log_path):
         r"\|\s*(PL[!-][\w-]+)\s*\|[^|]*\|\s*[^|]*\s*\|\s*\*\*?(Passed|Fixed|Verified|Inherited Fixed|VERIFIED|FIXED)\*\*?\s*\|",
         content,
     )
-    for card_no, status in matches:
+    for card_no, _status in matches:
         verified_cards.add(card_no)
 
     # Also look for the newer batch format
     # - **PL!N-sd1-027-SD (Just Believe!!!)**: [VERIFIED]
     matches_v2 = re.findall(r"-\s*\*\*?(PL[!-][\w-]+)\s*\(.*?\)\*\*?:\s*\[(VERIFIED|FIXED)\]", content)
-    for card_no, status in matches_v2:
+    for card_no, _status in matches_v2:
         verified_cards.add(card_no)
 
     print(f"Found {len(verified_cards)} verified cards in log.")

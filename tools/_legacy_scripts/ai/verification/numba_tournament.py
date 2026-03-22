@@ -71,7 +71,7 @@ def run_numba_tournament():
     print("Starting Matches...")
 
     try:
-        for b in range(num_batches):
+        for _b in range(num_batches):
             # Reset Adapter
             obs = env.reset()
             active_envs = np.ones(BATCH_SIZE, dtype=bool)

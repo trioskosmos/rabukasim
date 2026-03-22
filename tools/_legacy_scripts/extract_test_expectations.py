@@ -9,7 +9,7 @@ def extract_expectations(input_path, output_path):
 
     # Regex to find test functions
     # def test_strict_LL_bp1_001_R_(game):
-    test_func_pattern = re.compile(r"def test_strict_(.*?)_\(game\):")
+    re.compile(r"def test_strict_(.*?)_\(game\):")
 
     # Regex for assertions
     # ab0.trigger == 1
@@ -30,7 +30,7 @@ def extract_expectations(input_path, output_path):
         # Extract card ID from the start line
         # e.g. "LL_bp1_001_R_(game):"
         line_end = block.find("\n")
-        func_sig = block[:line_end]
+        block[:line_end]
 
         # Reconstruct card_no roughly or rely on regex inside the block if present
         # The function name usually maps to card_no with localized replacement?

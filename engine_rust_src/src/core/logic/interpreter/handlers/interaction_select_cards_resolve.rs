@@ -3,6 +3,35 @@ use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::enums::Zone;
 use crate::core::logic::interpreter::handlers::interaction_zone::remove_card_from_zone;
 
+fn choice_type_for_zone(effective_zone: u8) -> ChoiceType {
+    match effective_zone {
+        6 => ChoiceType::SelectHandDiscard,
+        7 => ChoiceType::SelectDiscardPlay,
+        _ => ChoiceType::LookAndChoose,
+    }
+}
+
+fn source_zone_for_choice(source_zone: u8) -> Zone {
+    match if source_zone != 0 { source_zone } else { 7 } {
+        4 => Zone::Stage,
+        6 => Zone::Hand,
+        7 => Zone::Discard,
+        8 => Zone::Deck,
+        15 => Zone::Yell,
+        _ => Zone::Discard,
+    }
+}
+
+fn place_chosen_card(state: &mut GameState, p_idx: usize, chosen: i32, dest_zone: u8) {
+    match dest_zone {
+        6 => state.players[p_idx].gain_hand_card(chosen),
+        7 => state.players[p_idx].push_discard_card(chosen),
+        8 | 0 => state.players[p_idx].push_deck_card(chosen),
+        13 => state.players[p_idx].success_lives.push(chosen),
+        _ => state.players[p_idx].push_hand_card(chosen),
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn resolve_select_cards(
     state: &mut GameState,
@@ -16,18 +45,14 @@ pub fn resolve_select_cards(
     a: i64,
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
     effective_zone: u8,
-    is_optional: bool,
+    _is_optional: bool,
 ) -> HandlerResult {
     let choice = ctx.choice_index as i32;
     if choice == CHOICE_DONE as i32 {
         return HandlerResult::Continue;
     }
 
-    let choice_type = match effective_zone {
-        6 => ChoiceType::SelectHandDiscard,
-        7 => ChoiceType::SelectDiscardPlay,
-        _ => ChoiceType::LookAndChoose,
-    };
+    let choice_type = choice_type_for_zone(effective_zone);
     let is_variable_selection = v < 0;
 
     if choice != CHOICE_DONE as i32
@@ -39,27 +64,11 @@ pub fn resolve_select_cards(
 
         let dest_zone = slot_info.dest_zone as u8;
         if dest_zone != 0 {
-            let source_zone = slot_info.source_zone as u8;
-            let actual_source = if source_zone != 0 { source_zone } else { 7 };
-
-            let actual_source = match actual_source {
-                4 => Zone::Stage,
-                6 => Zone::Hand,
-                7 => Zone::Discard,
-                8 => Zone::Deck,
-                15 => Zone::Yell,
-                _ => Zone::Discard,
-            };
+            let actual_source = source_zone_for_choice(slot_info.source_zone as u8);
             let found = remove_card_from_zone(state, db, ctx, p_idx, actual_source, chosen);
 
             if found {
-                match dest_zone {
-                    6 => state.players[p_idx].gain_hand_card(chosen),
-                    7 => state.players[p_idx].push_discard_card(chosen),
-                    8 | 0 => state.players[p_idx].push_deck_card(chosen),
-                    13 => state.players[p_idx].success_lives.push(chosen),
-                    _ => state.players[p_idx].push_hand_card(chosen),
-                }
+                place_chosen_card(state, p_idx, chosen, dest_zone);
             }
         }
 

@@ -33,7 +33,11 @@ class ReproHelper:
                 return cid
         return None
 
-    def set_state(self, p_idx, hand_cards=[], energy_count=0, deck_cards=[]):
+    def set_state(self, p_idx, hand_cards=None, energy_count=0, deck_cards=None):
+        if deck_cards is None:
+            deck_cards = []
+        if hand_cards is None:
+            hand_cards = []
         p = self.gs.get_player(p_idx)
         p.hand = [self.get_cid(c) for c in hand_cards if self.get_cid(c)]
         p.deck = [self.get_cid(c) for c in deck_cards if self.get_cid(c)]

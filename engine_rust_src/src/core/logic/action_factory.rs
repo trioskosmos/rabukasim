@@ -1,5 +1,6 @@
 use crate::core::generated_constants::*;
 use crate::core::logic::card_db::CardDatabase;
+use crate::core::logic::interpreter::instruction::{BytecodeProgram, WORDS_PER_INSTRUCTION};
 use crate::core::logic::models::AbilityContext;
 
 /// Structured representation of a decoded Action ID.
@@ -58,6 +59,74 @@ pub enum DecodedAction {
 
 /// Central factory for Action ID management and human-readable labeling.
 pub struct ActionFactory;
+
+impl ActionFactory {
+    fn infer_select_mode_label(
+        state: &super::game::GameState,
+        db: &CardDatabase,
+        mode_idx: i32,
+    ) -> Option<String> {
+        let pi = state.interaction_stack.last()?;
+        let card_id = if pi.card_id != -1 {
+            pi.card_id
+        } else {
+            pi.ctx.source_card_id
+        };
+
+        let abilities = if let Some(card) = db.get_member(card_id) {
+            Some(&card.abilities)
+        } else {
+            db.get_live(card_id).map(|card| &card.abilities)
+        }?;
+
+        let ability = abilities.get(pi.ability_index as usize)?;
+        let program = BytecodeProgram::from_slice(&ability.bytecode);
+
+        let mut select_mode_ip = 0;
+        while let Some(instr) = program.instruction_at(select_mode_ip) {
+            if instr.op == O_SELECT_MODE {
+                break;
+            }
+            select_mode_ip = program.next_ip(select_mode_ip);
+        }
+
+        let jump_instr_ip = select_mode_ip + WORDS_PER_INSTRUCTION + (mode_idx as usize * WORDS_PER_INSTRUCTION);
+        let jump_instr = program.instruction_at(jump_instr_ip)?;
+        if jump_instr.op != O_JUMP {
+            return None;
+        }
+
+        let effect_ip = program.jump_target(jump_instr_ip, jump_instr.v)?;
+        let effect_instr = program.instruction_at(effect_ip)?;
+        let technical_label = match effect_instr.op {
+            O_PAY_ENERGY => format!("PAY_ENERGY({})", effect_instr.v),
+            O_MOVE_TO_DISCARD => {
+                let slot = effect_instr.slot();
+                if slot.source_zone == crate::core::enums::Zone::Hand {
+                    format!("DISCARD_HAND({})", effect_instr.v)
+                } else {
+                    format!(
+                        "{}({})",
+                        crate::core::logic::interpreter::logging::get_opcode_name(effect_instr.op),
+                        effect_instr.v
+                    )
+                }
+            }
+            _ => format!(
+                "{}({})",
+                crate::core::logic::interpreter::logging::get_opcode_name(effect_instr.op),
+                effect_instr.v
+            ),
+        };
+
+        let friendly_label = Self::map_technical_label(&technical_label);
+        if friendly_label == technical_label {
+            Some(format!("Mode: {}", technical_label))
+        } else {
+            Some(format!("Mode: {} - {}", technical_label, friendly_label))
+        }
+    }
+}
 
 impl ActionFactory {
     /// Parses a raw action ID into a structured DecodedAction.
@@ -239,6 +308,10 @@ impl ActionFactory {
                         }
                     }
                 }
+            }
+
+            if let Some(label) = Self::infer_select_mode_label(state, db, mode_idx) {
+                return label;
             }
         }
 

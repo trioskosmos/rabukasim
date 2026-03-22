@@ -8,7 +8,7 @@ def find_infinite_abilities():
 
     print("Checking members for infinite activated abilities...")
     for mid, m in members.items():
-        for abi_idx, ab in enumerate(m.abilities):
+        for _abi_idx, ab in enumerate(m.abilities):
             if ab.trigger == TriggerType.ACTIVATED:
                 # Infinite if no cost and not once per turn
                 has_cost = len(ab.costs) > 0

@@ -40,7 +40,7 @@ def validate_card(card):
         all_conditions.extend(ability.conditions)
 
     effect_types = {e.effect_type for e in all_effects}
-    condition_types = {c.type for c in all_conditions}
+    {c.type for c in all_conditions}
 
     # --- HEURISTIC CHECKS ---
 

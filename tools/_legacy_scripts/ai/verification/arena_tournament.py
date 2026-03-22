@@ -11,9 +11,9 @@ import numpy as np
 # Ensure project root is in path
 sys.path.append(os.getcwd())
 
+from ai.headless_runner import Agent, RandomAgent, SmartHeuristicAgent, TrueRandomAgent
 from ai.obs_adapters import UnifiedObservationEncoder
 
-from ai.headless_runner import Agent, RandomAgent, SmartHeuristicAgent, TrueRandomAgent
 from engine.game.game_state import GameState, Phase, initialize_game
 
 

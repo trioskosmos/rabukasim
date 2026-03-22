@@ -50,7 +50,7 @@ def list_failures():
         print(f"- {card.get('card_no')} ({card.get('name')})")
 
     # Check if they are in compiled DB
-    missing_compiled = [
+    [
         c.get("card_no") for c in failures if c.get("id") not in compiled_ids and c.get("card_no") not in compiled_ids
     ]
     # Note: compiled keys are ints usually, cards.json keys are IDs.

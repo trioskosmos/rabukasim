@@ -29,7 +29,7 @@ def benchmark_python():
     # Operation: Draw 2 Cards
     # In Python, this involves creating Effect objects, calling resolve_effect, etc.
     # We will simulate the "Resolve Effect" loop which is the bottleneck.
-    eff = Effect(EffectType.DRAW, 2, TargetType.PLAYER)
+    Effect(EffectType.DRAW, 2, TargetType.PLAYER)
 
     start_time = time.perf_counter()
 

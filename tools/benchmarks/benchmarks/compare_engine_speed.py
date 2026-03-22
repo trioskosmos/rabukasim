@@ -16,7 +16,6 @@ from engine.models.opcodes import Opcode
 def benchmark_python_engine(iterations=1000):
     gs = GameState()
     gs.verbose = False
-    p = gs.active_player
 
     # Simple effect: ADD_BLADES
     effect = Effect(EffectType.ADD_BLADES, value=1, target=TargetType.MEMBER_SELF)
@@ -72,7 +71,7 @@ def benchmark_numba_engine(iterations=1000000):
     )
 
     start = time.time()
-    for i in range(iterations):
+    for _i in range(iterations):
         # We simulate the loop
         _, _, _ = resolve_opcode(
             opcode,

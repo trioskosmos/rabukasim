@@ -126,7 +126,6 @@ def main():
 
     start_time = time.time()
     total_games = 0
-    results = []
 
     # Stats aggregation
     agent_stats = {name: {"matches": 0, "wins": 0, "draws": 0} for name in G_AGENT_NAMES}

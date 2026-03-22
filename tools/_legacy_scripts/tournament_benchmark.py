@@ -80,7 +80,7 @@ def init_worker(tasks, member_db, live_db):
     GameState._init_jit_arrays()
 
     # Debug: Check key types
-    first_key = next(iter(G_MEMBER_DB.keys())) if G_MEMBER_DB else None
+    next(iter(G_MEMBER_DB.keys())) if G_MEMBER_DB else None
     # print(f"Worker initialized. DB size: {len(G_MEMBER_DB)}. First key type: {type(first_key)}")
 
 

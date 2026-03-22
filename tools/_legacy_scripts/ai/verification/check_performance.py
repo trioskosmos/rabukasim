@@ -34,7 +34,7 @@ def benchmark_performance():
         # Random valid actions (simulated by mask computation overhead + random choice)
         # To measure pure engine speed, we can just pass random ints or zeros
         # But let's do a realistic "random policy" overhead equivalent
-        masks = env.get_action_masks()  # (N, 2000)
+        env.get_action_masks()  # (N, 2000)
 
         # Fast random action selection provided by checking masks is slow in python loop
         # For pure engine throughput, let's just use action 0 (Pass) or random

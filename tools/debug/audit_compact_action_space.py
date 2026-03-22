@@ -12,9 +12,10 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 import engine_rust
-from backend.server import describe_action_for_state
+
 from alphazero.training.overnight_vanilla import load_tournament_decks, load_vanilla_database_json
 from alphazero.training.vanilla_action_codec import ACTION_SPACE, engine_action_to_policy_id
+from backend.server import describe_action_for_state
 
 
 def audit_random_games(

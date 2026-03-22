@@ -1,34 +1,21 @@
 ﻿import copy
-import random
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
-
-import numpy as np
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
-    from engine.models.ability import Ability, Cost, Effect
+    from engine.models.ability import Ability
 
-from engine.game.enums import Phase
 from engine.game.effects.choice_resolution import handle_choice
-from engine.game.effects.pending_effect_resolution import resolve_pending_effect
-from engine.game.effects.costs import can_pay_costs, pay_costs
-from engine.game.effects.energy import handle_tap_energy_cost
-from engine.game.effects.metadata import resolve_source_metadata
-from engine.game.effects.movement import move_member
-from engine.game.effects.zone_actions import move_stage_card
-from engine.game.effects.rules import apply_system_rules
 from engine.game.effects.condition_resolution import check_condition
+from engine.game.effects.movement import move_member
+from engine.game.effects.pending_effect_resolution import resolve_pending_effect
+from engine.game.effects.rules import apply_system_rules
 from engine.models.ability import (
     Ability,
-    AbilityCostType,
     ConditionType,
-    Cost,
-    Effect,
     EffectType,
     ResolvingEffect,
-    TargetType,
     TriggerType,
 )
-from engine.models.enums import Group, Unit
 from engine.models.opcodes import Opcode
 
 try:
@@ -114,13 +101,17 @@ class EffectMixin:
                             ctx.update({"zone": zone_name, "zone_index": i, "card_id": cid})
                             self.triggered_abilities.append((pid, ab, ctx))
 
-    def _handle_cost(self, player_id: int, ability: Ability, context: Dict[str, Any] = {}) -> bool:
+    def _handle_cost(self, player_id: int, ability: Ability, context: Dict[str, Any] = None) -> bool:
         from engine.game.effects.cost_resolution import handle_cost
 
+        if context is None:
+            context = {}
         return handle_cost(self, player_id, ability, context)
 
-    def _play_automatic_ability(self, player_id: int, ability: Ability, context: Dict[str, Any] = {}) -> None:
+    def _play_automatic_ability(self, player_id: int, ability: Ability, context: Dict[str, Any] = None) -> None:
         """Resolve an automatic ability (Rule 9.5)."""
+        if context is None:
+            context = {}
         if self.verbose:
             print(f"DEBUG: Entering _play_automatic_ability for player {player_id}")
         p = self.players[player_id]

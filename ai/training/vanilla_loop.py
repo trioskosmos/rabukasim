@@ -1,7 +1,7 @@
-from pathlib import Path
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 if str(ROOT_DIR) not in sys.path:
@@ -24,7 +24,6 @@ def _maybe_reexec_workspace_venv() -> None:
     raise SystemExit(result.returncode)
 
 from alphazero.training.overnight_vanilla import main
-
 
 if __name__ == "__main__":
     _maybe_reexec_workspace_venv()

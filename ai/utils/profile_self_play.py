@@ -62,7 +62,7 @@ def profile_game(sims=100, neural_weight=0.3):
 
             # 1. Encode State
             t0 = time.perf_counter()
-            encoded = game.encode_state(db)
+            game.encode_state(db)
             times["encode_state"] += time.perf_counter() - t0
 
             # 2. MCTS Suggestions
@@ -75,7 +75,7 @@ def profile_game(sims=100, neural_weight=0.3):
             action_ids = []
             visit_counts = []
             total_visits = 0
-            for action, score, visits in suggestions:
+            for action, _score, visits in suggestions:
                 if action < POLICY_SIZE:
                     action_ids.append(int(action))
                     visit_counts.append(visits)

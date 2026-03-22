@@ -223,7 +223,6 @@ mod tests {
     use engine_rust::core::logic::CardDatabase;
     use engine_rust::core::logic::card_db::{MemberCard, LiveCard};
     use engine_rust::core::logic::models::Ability;
-    use std::collections::HashMap;
 
     #[test]
     fn test_random_deck_generation_has_abilities() {

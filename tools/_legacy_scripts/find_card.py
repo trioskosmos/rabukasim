@@ -74,7 +74,7 @@ def main():
         "RURINO": "瑠璃乃",
     }
 
-    for cid, c in data.items():
+    for _cid, c in data.items():
         ctype = c.get("type", "")
         if args.type == "MEMBER" and "メンバー" not in ctype:
             continue

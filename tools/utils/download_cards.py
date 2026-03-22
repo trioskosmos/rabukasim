@@ -74,7 +74,7 @@ def main():
 
     # Collect tasks
     tasks = []
-    for cid, card in data.items():
+    for _cid, card in data.items():
         img_url = card.get("img")
         if not img_url:
             continue

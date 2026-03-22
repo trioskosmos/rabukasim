@@ -12,7 +12,7 @@ def main():
     card = cards.get(target_id)
     if not card:
         # Search values
-        for k, v in cards.items():
+        for _k, v in cards.items():
             if v.get("card_no") == target_id:
                 card = v
                 break

@@ -8,7 +8,6 @@ def visualize_game():
     env.reset()
 
     # Context Indices
-    SC = 0
     HD = 3
     DK = 6
     PH = 8

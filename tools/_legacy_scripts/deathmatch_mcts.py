@@ -47,7 +47,7 @@ def run_deathmatch(num_games=20, sims=1000):
     card_map = {}
 
     def process_db(db_section):
-        for cid, data in db_section.items():
+        for _cid, data in db_section.items():
             c_no = data.get("card_no")
             c_id = data.get("card_id")
             if c_no and c_id is not None:

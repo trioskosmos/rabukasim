@@ -51,7 +51,7 @@ def run_comparison():
     print(f"Comparing on {TEST_SAMPLES} samples...")
     masks = np.array([env.envs[0].action_masks()])
 
-    for i in range(TEST_SAMPLES):
+    for _i in range(TEST_SAMPLES):
         # Teacher Inference
         t0 = time.perf_counter()
         act_t, _ = teacher.predict(obs, action_masks=masks, deterministic=True)

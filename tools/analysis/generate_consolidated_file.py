@@ -34,7 +34,7 @@ def consolidate_abilities():
     card_pattern = re.compile(r"PL![A-Za-z!-]+[-_][a-zA-Z0-9＋+]+[-_][a-zA-Z0-9＋+]+")
 
     if os.path.exists(rust_dir):
-        for root, dirs, files in os.walk(rust_dir):
+        for root, _dirs, files in os.walk(rust_dir):
             for file in files:
                 if file.endswith(".rs"):
                     filepath = os.path.join(root, file)

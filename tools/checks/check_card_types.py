@@ -7,7 +7,7 @@ def check_card_types():
 
     ids = ["PL!S-pr-001-PR", "PL!S-pr-002-PR", "PL!S-pr-003-PR", "PL!S-pr-004-PR"]
 
-    for cid, c in data.items():
+    for _cid, c in data.items():
         if c.get("card_no") in ids:
             print(f"{c.get('card_no')}: type={c.get('card_type')}")
 

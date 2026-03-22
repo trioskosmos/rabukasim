@@ -22,7 +22,7 @@ def audit_integrity():
     }
 
     count = 0
-    for key, card in member_db.items():
+    for _key, card in member_db.items():
         original = card.get("original_text", "")
         pseudocode = card.get("ability_text", "")  # This contains the compiled pseudocode/text
         card_no = card.get("card_no", "Unknown")

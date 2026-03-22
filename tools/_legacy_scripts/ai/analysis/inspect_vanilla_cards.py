@@ -34,7 +34,7 @@ def main():
     for code in unique_codes:
         # Check Member DB
         found = False
-        for cid, data in member_db.items():
+        for _cid, data in member_db.items():
             if data["card_no"] == code:
                 found_members.append(code)
                 # Check abilities
@@ -50,7 +50,7 @@ def main():
 
         if not found:
             # Check Live DB
-            for cid, data in live_db.items():
+            for _cid, data in live_db.items():
                 if data["card_no"] == code:
                     found_lives.append(code)
                     print(f"Live {code}: Score {data.get('score', '?')}")

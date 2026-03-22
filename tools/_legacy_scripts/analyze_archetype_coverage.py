@@ -31,8 +31,8 @@ def analyze():
     examples = {}
 
     count = 0
-    for cid, card in data["member_db"].items():
-        for i, ab in enumerate(card.get("abilities", [])):
+    for _cid, card in data["member_db"].items():
+        for _i, ab in enumerate(card.get("abilities", [])):
             bc = ab.get("bytecode", [])
             if not bc:
                 continue

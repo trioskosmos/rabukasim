@@ -112,7 +112,7 @@ class FAQRuleExtractor:
         """Generate test data from all cards with FAQs."""
         test_data = []
 
-        for card_id, card_data in cards.items():
+        for _card_id, card_data in cards.items():
             if card_data.get("faq"):
                 rules = cls.extract_from_card_faqs(card_data)
                 for rule in rules:

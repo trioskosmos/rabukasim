@@ -18,7 +18,7 @@ def find_card_and_debug(card_no):
 
         card = cards.get(card_no)
         if not card:
-            for k, v in cards.items():
+            for _k, v in cards.items():
                 if v.get("card_no") == card_no:
                     card = v
                     break

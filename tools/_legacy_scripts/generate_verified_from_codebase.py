@@ -92,9 +92,9 @@ def generate_verified_pool():
         # Let's pre-index compiled by card_no
         if "compiled_index" not in locals():
             compiled_index = {}
-            for k, v in compiled_members.items():
+            for _k, v in compiled_members.items():
                 compiled_index[v["card_no"]] = v
-            for k, v in compiled_lives.items():
+            for _k, v in compiled_lives.items():
                 compiled_index[v["card_no"]] = v
 
         comp_card = compiled_index.get(cno)

@@ -100,7 +100,7 @@ def process_file(filepath):
 
 def main():
     src_dir = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\engine_rust_src\src"
-    for root, dirs, files in os.walk(src_dir):
+    for root, _dirs, files in os.walk(src_dir):
         for file in files:
             if file.endswith(".rs"):
                 if process_file(os.path.join(root, file)):

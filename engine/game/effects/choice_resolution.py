@@ -5,11 +5,6 @@ from typing import Any
 
 import numpy as np
 
-from engine.game.effects.choices import (
-    is_cost_payment_choice,
-    normalize_choice_metadata,
-    store_choice_answer,
-)
 from engine.game.effects.choice_actions import (
     handle_optional_select_from_list,
     resolve_select_from_discard_choice,
@@ -22,6 +17,11 @@ from engine.game.effects.choice_actions import (
     resolve_target_member_choice,
     resolve_target_removed_choice,
     resolve_target_success_lives_choice,
+)
+from engine.game.effects.choices import (
+    is_cost_payment_choice,
+    normalize_choice_metadata,
+    store_choice_answer,
 )
 from engine.game.enums import Phase
 from engine.models.ability import Effect, EffectType, ResolvingEffect

@@ -83,7 +83,7 @@ def check_behavior():
                 ph_str = v2p.get(ph, str(ph))
                 ec = env.game_state.batch_global_ctx[0, 50]
                 hand = env.game_state.batch_hand[0]
-                hand_cards = [int(c) for c in hand if c > 0]
+                [int(c) for c in hand if c > 0]
                 score_agent = env.game_state.batch_scores[0]
                 score_opp = env.game_state.opp_scores[0]
 

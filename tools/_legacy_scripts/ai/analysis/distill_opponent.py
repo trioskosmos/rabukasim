@@ -31,12 +31,10 @@ STUDENT_HIDDEN = 32  # Tiny!
 def generate_dataset(teacher, env, n_samples):
     print(f"Generating {n_samples} samples from Teacher...")
     obs_list = []
-    logits_list = []  # Or actions? Cloning logits is usually better for distillation (Knowledge Distillation)
     # But SB3 MaskablePPO doesn't easily expose logits via predict.
     # We'll use Behavior Cloning (BC) on deterministic teacher actions for simplicity first.
 
     action_list = []
-    mask_list = []
 
     obs = env.reset()
     count = 0

@@ -34,7 +34,7 @@ def generate_comparison_report():
                 card = cards_data.get(card_id)
                 if not card:
                     # Maybe it's nested
-                    for k, v in cards_data.items():
+                    for _k, v in cards_data.items():
                         if isinstance(v, list):
                             card = next((c for c in v if c.get("id") == card_id), None)
                             if card:

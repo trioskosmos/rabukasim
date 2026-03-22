@@ -9,8 +9,8 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 import engine_rust
-
 from ai.headless_runner import RandomAgent
+
 from backend.rust_serializer import RustCompatGameState, RustGameStateSerializer
 from engine.game.data_loader import CardDataLoader
 
@@ -23,7 +23,7 @@ def audit_state(state_dict, game_id, turn, phase):
     for action in state_dict.get("legal_actions", []):
         aid = action.get("id")
         desc = action.get("text", "")
-        raw = action.get("raw_text", "")
+        action.get("raw_text", "")
 
         # Check for undefined/None
         if desc is None or "undefined" in str(desc) or "None" in str(desc):
@@ -70,7 +70,7 @@ def run_audit(num_games=10):
     # The serializer expects string keys in some places or handles MaskedDB
     serializer = RustGameStateSerializer(member_db, live_db, energy_db)
 
-    agent = RandomAgent()
+    RandomAgent()
     total_issues = 0
     all_anomalies = []
 

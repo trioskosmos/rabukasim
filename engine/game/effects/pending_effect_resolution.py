@@ -1,15 +1,19 @@
 ﻿from __future__ import annotations
 
-import copy
 import random
 from typing import Any, Dict, Optional
 
 import numpy as np
 
-from engine.game.effects.choices import normalize_choice_metadata, queue_target_hand_choice
+from engine.game.effects.choices import queue_target_hand_choice
 from engine.game.effects.metadata import _describe_ability
-from engine.game.enums import Phase
-from engine.models.ability import Ability, AbilityCostType, ConditionType, Cost, Effect, EffectType, ResolvingEffect, TargetType, TriggerType
+from engine.models.ability import (
+    ConditionType,
+    Effect,
+    EffectType,
+    ResolvingEffect,
+    TargetType,
+)
 from engine.models.enums import Group, Unit
 from engine.models.opcodes import Opcode
 
@@ -858,7 +862,7 @@ def resolve_pending_effect(game: Any, action: int, context: Optional[Dict[str, A
                 # Determine the effect based on destination
                 dest = effect.params.get("destination", "hand")
                 any_number = effect.params.get("any_number", False)
-                reorder = effect.params.get("reorder", False)
+                effect.params.get("reorder", False)
 
                 reason = "look_and_choose"
                 desc = "Choose a card to put into your hand"
@@ -888,7 +892,7 @@ def resolve_pending_effect(game: Any, action: int, context: Optional[Dict[str, A
         count = effect.value
         source = effect.params.get("from", "hand")
         target = effect.params.get("target", "discard")
-        draw_on_discard = effect.params.get("draw_on_discard", True)
+        effect.params.get("draw_on_discard", True)
 
         if source == "deck" and target == "discard":
             # Direct mill from deck to discard (e.g., Nozomi SD1-007, Hanayo SD1-008)

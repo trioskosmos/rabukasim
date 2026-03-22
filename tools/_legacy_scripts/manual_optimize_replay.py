@@ -33,7 +33,7 @@ def optimize_file(filepath):
 
     # Let's see if the file has 'seed' in it (if we updated save_replay correctly).
     seed = data.get("seed")
-    action_log = data.get("action_log")  # Standard replays don't have this top-level, but check anyway.
+    data.get("action_log")  # Standard replays don't have this top-level, but check anyway.
 
     # If not present, we fall back to Level 2.
     if seed is None:

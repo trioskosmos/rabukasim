@@ -87,7 +87,7 @@ def verify_setup_parity():
     # Checks
     # 1. Live Cards
     py_p1_lives = [c for c in py_game.p1.live_zone if c]
-    numba_p1_lives = numba_env.batch_live[0][:2]
+    numba_env.batch_live[0][:2]
 
     print(f"Python P1 Lives Count: {len(py_p1_lives)}")
     print(f"Numba P1 Lives Count: {np.count_nonzero(numba_env.batch_live[0])}")

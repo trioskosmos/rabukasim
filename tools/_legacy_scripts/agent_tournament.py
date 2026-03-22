@@ -211,7 +211,7 @@ def run_single_game(args_tuple):
 
     # Run game
     turn_limit = 2000
-    for turn in range(turn_limit):
+    for _turn in range(turn_limit):
         if state.game_over:
             break
 
@@ -365,7 +365,7 @@ def main():
             task_metadata.append((name_a, name_b))
     else:
         for name_a, name_b in all_possible_pairs:
-            for game_idx in range(args.games_per_pair):
+            for _game_idx in range(args.games_per_pair):
                 game_tasks.append((name_a, name_b, args.seed + len(game_tasks)))
                 task_metadata.append((name_a, name_b))
 
@@ -376,7 +376,7 @@ def main():
         results = list(pool.imap(run_single_game, game_tasks, chunksize=1))
 
     # Process Results
-    for result, (name_a, name_b) in zip(results, task_metadata):
+    for result, (name_a, name_b) in zip(results, task_metadata, strict=False):
         elo.update(name_a, name_b, result)
         if result == 1.0:
             matchups[(name_a, name_b)][0] += 1

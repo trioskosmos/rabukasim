@@ -6,7 +6,7 @@ edition = "2021"
 default-run = "rabuka_launcher"
 
 [lints.rust]
-unused_crate_dependencies = "warn"
+unused_crate_dependencies = "allow"
 
 
 [lib]

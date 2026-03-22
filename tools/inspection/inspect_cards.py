@@ -6,7 +6,7 @@ def inspect_cards():
     with open("engine/data/cards.json", encoding="utf-8") as f:
         data = json.load(f)
 
-    for cid, c in data.items():
+    for _cid, c in data.items():
         if c.get("card_no") in ids:
             print(f"\n=== {c.get('card_no')} ({c.get('name')}) ===")
             print(f"Trigger: {c.get('ability')}")

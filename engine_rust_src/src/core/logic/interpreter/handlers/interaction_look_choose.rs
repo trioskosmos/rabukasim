@@ -40,6 +40,17 @@ pub fn handle_look_and_choose(
     let look_count = lc.count as usize;
     let reveal_flag = lc.reveal;
     let dest_discard_v = lc.dest_discard;
+    let compiled_choice_count = if ctx.source_card_id >= 0 && ctx.ability_index >= 0 {
+        let ability_index = ctx.ability_index as usize;
+        db.get_member(ctx.source_card_id)
+            .map(|card| &card.abilities)
+            .or_else(|| db.get_live(ctx.source_card_id).map(|card| &card.abilities))
+            .and_then(|abilities| abilities.get(ability_index))
+            .map(|ability| ability.choice_count.max(1))
+            .unwrap_or(1)
+    } else {
+        1
+    };
 
     if state.players[p_idx].looked_cards.is_empty() {
         let reveal_count = if source_zone == 6 {
@@ -98,7 +109,7 @@ pub fn handle_look_and_choose(
         filter_obj.char_id_2 = lc.char_id_2;
         filter_obj.char_id_3 = lc.char_id_3;
 
-        let pick_count = 1;
+        let pick_count = i16::from(compiled_choice_count);
         if matches!(suspend_choice(
             state,
             db,

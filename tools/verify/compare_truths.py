@@ -17,7 +17,7 @@ def compare_truths(v1_path, v2_path):
             continue
 
         c2 = v2[cid]
-        for i, (ab1, ab2) in enumerate(zip(c1["abilities"], c2["abilities"])):
+        for i, (ab1, ab2) in enumerate(zip(c1["abilities"], c2["abilities"], strict=False)):
 
             def get_cumulative(seq):
                 res = {}

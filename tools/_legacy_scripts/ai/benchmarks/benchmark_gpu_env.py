@@ -32,7 +32,7 @@ def benchmark_cpu(num_envs=4096, steps=100):
         for _ in range(steps):
             env.step(actions)
             # Simulate obs copy to "GPU" (conceptually)
-            obs = env.get_observations()
+            env.get_observations()
         end = time.time()
 
         total_steps = num_envs * steps

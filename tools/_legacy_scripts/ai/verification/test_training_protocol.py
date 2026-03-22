@@ -47,8 +47,6 @@ def train_verification():
         f.flush()  # Force flush for early visibility
 
         # Run Episodes
-        total_rewards = 0
-        total_turns = 0
 
         for game_idx in range(NUM_GAMES):
             f.write(f"--- Game {game_idx + 1} ---\n")

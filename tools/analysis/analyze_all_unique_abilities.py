@@ -38,7 +38,7 @@ def analyze_abilities():
         with open(compiled_path, "r", encoding="utf-8") as f:
             data = json.load(f)
             # Map card_no to opcodes/bytecode
-            for idx, member in data.get("member_db", {}).items():
+            for _idx, member in data.get("member_db", {}).items():
                 card_no = member.get("card_no")
                 if card_no:
                     # Collect bytecode for all abilities
@@ -46,7 +46,7 @@ def analyze_abilities():
                     for ability in member.get("abilities", []):
                         opcodes.append(",".join(map(str, ability.get("bytecode", []))))
                     compiled_db[card_no] = " | ".join(opcodes)
-            for idx, live in data.get("live_db", {}).items():
+            for _idx, live in data.get("live_db", {}).items():
                 card_no = live.get("card_no")
                 if card_no:
                     opcodes = []

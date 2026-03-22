@@ -7,7 +7,7 @@ def map_abilities_to_cards():
         cards = json.load(f)
 
     ability_map = defaultdict(list)
-    for card_id, card in cards.items():
+    for _card_id, card in cards.items():
         if "ability" in card and card["ability"]:
             ability_map[card["ability"]].append(card["card_no"])
 

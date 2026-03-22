@@ -44,7 +44,7 @@ def run_tournament(args):
 
     with open(cards_path, "r", encoding="utf-8") as f:
         data = json.load(f)
-        cards_json = json.dumps(data)
+        json.dumps(data)
 
     # Load card_no -> card_id map
     card_map = {}
@@ -109,14 +109,9 @@ def run_tournament(args):
 
     # Matchups: (Label, P0 Heuristic ID, P1 Heuristic ID)
     # 0 = Original (New Probabilistic), 1 = Simple, 2 = Legacy (Old Heuristic)
-    matchup_configs = [
-        ("New vs Legacy", 0, 2),
-        ("New vs Simple", 0, 1),
-    ]
 
     games_per_deck = 1 if is_test else 10
     p0_sims = 100
-    p1_sims = 100
 
     print("=" * 60)
     if is_test:

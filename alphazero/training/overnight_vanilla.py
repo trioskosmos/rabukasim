@@ -9,8 +9,8 @@ import json
 import logging
 import os
 import random
-import signal
 import shutil
+import signal
 import sys
 import time
 from dataclasses import asdict, dataclass
@@ -119,8 +119,6 @@ def _load_engine_module():
 
 engine_rust = _load_engine_module()
 
-from engine.game.deck_utils import UnifiedDeckParser
-
 from alphazero.training.disk_buffer import PersistentBuffer
 from alphazero.training.overnight_reward import (
     CompetitiveGameRewardBreakdown,
@@ -134,19 +132,19 @@ from alphazero.training.vanilla_action_codec import (
     ACTION_BASE_PASS,
     ACTION_SPACE,
     build_legal_policy_context,
-    build_legal_policy_mask,
     dense_to_sparse,
     engine_action_to_policy_id,
     sparse_policy_from_engine_visits,
 )
 from alphazero.vanilla_net import (
-    HighFidelityAlphaNet,
     VANILLA_CARD_FEATURES,
     VANILLA_GLOBAL_FEATURES,
     VANILLA_INPUT_DIM,
     VANILLA_TOTAL_CARDS,
+    HighFidelityAlphaNet,
     VanillaTransformerConfig,
 )
+from engine.game.deck_utils import UnifiedDeckParser
 
 logger = logging.getLogger("overnight_vanilla")
 
@@ -1380,7 +1378,7 @@ class VanillaSelfPlayTrainer:
         ranked.sort(key=lambda item: item[0], reverse=True)
         ordered = list(suggestions)
         replacement = [entry for _key, _idx, entry in ranked]
-        for target_idx, replacement_entry in zip(candidate_indexes, replacement):
+        for target_idx, replacement_entry in zip(candidate_indexes, replacement, strict=False):
             ordered[target_idx] = replacement_entry
         return ordered
 
@@ -2571,7 +2569,7 @@ def collect_probe_dataset(
             if not legal_ids:
                 state.auto_step(trainer.rust_db)
                 continue
-            current_player = int(state.current_player)
+            int(state.current_player)
             phase = int(state.phase)
             if phase in (PHASE_RPS, PHASE_TURN_ORDER):
                 state.step(min(legal_ids))

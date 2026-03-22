@@ -121,12 +121,12 @@ class LocalDeckScanner:
 
         boxes = []
         img_h, img_w = img.shape[:2]
-        img_area = img_h * img_w
+        img_h * img_w
 
-        for i, cnt in enumerate(contours):
+        for _i, cnt in enumerate(contours):
             # We want "leaf" contours or those with small children (the numbers inside)
             x, y, w, h = cv2.boundingRect(cnt)
-            area = w * h
+            w * h
 
             # Card aspect ratio is ~0.7, quantity box is ~1.5-2.0
             # Let's look for the quantity boxes first as they are very distinct white-on-black or inverse

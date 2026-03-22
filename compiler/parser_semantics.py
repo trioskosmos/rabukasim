@@ -168,6 +168,29 @@ def parse_pseudocode_conditions(parser: Any, text: str) -> List[Condition]:
                 conditions.append(Condition(ConditionType.COUNT_SUCCESS_LIVE, params, is_negated=is_negated))
                 continue
 
+        if name == "DISCARDED_CARDS" and not any(
+            key in params
+            for key in [
+                "min",
+                "count",
+                "value",
+                "diff",
+                "GE",
+                "LE",
+                "GT",
+                "LT",
+                "EQ",
+                "COUNT_GE",
+                "COUNT_LE",
+                "COUNT_GT",
+                "COUNT_LT",
+                "COUNT_EQ",
+                "val",
+            ]
+        ):
+            params["value"] = 1
+            params.setdefault("comparison", "GE")
+
         if name in CONDITION_TRUE_ALIASES:
             canonical_name, extra_params = CONDITION_TRUE_ALIASES[name]
             try:

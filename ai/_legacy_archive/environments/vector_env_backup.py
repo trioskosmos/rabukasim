@@ -289,14 +289,14 @@ class VectorGameState:
                                 for g in groups:
                                     try:
                                         mask |= 1 << (int(g) % 20)
-                                    except:
+                                    except Exception:
                                         pass
 
                                 units = card.get("units", [])
                                 for u in units:
                                     try:
                                         mask |= 1 << ((int(u) % 20) + 5)
-                                    except:
+                                    except Exception:
                                         pass
 
                                 self.card_stats[cid, 11] = mask
@@ -808,7 +808,6 @@ def resolve_live_performance(
         req_grn = card_stats[live_id, 15]
         req_blu = card_stats[live_id, 16]
         req_pur = card_stats[live_id, 17]
-        req_any = 0  # sum leftovers?
 
         # Sum Stage Stats
         stage_hearts = np.zeros(7, dtype=np.int32)

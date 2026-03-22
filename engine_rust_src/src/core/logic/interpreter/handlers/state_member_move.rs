@@ -50,6 +50,7 @@ pub fn handle_move_member(
     };
 
     let needs_choice = a == 99 || (a < 0 || a > 2);
+    let legacy_tap_selection = is_optional && needs_choice && s == 4 && !slot_info.is_opponent;
 
     if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
         if matches!(
@@ -96,7 +97,11 @@ pub fn handle_move_member(
                 instr_ip,
                 O_MOVE_MEMBER,
                 s,
-                ChoiceType::MoveMemberDest,
+                if legacy_tap_selection {
+                    ChoiceType::TapMSelect
+                } else {
+                    ChoiceType::MoveMemberDest
+                },
                 0,
                 if is_optional { 0 } else { -1 },
             ),
@@ -117,7 +122,13 @@ pub fn handle_move_member(
     };
 
     if is_optional {
-        let tap_slot = if needs_choice { dst_slot } else { src_slot };
+        let tap_slot = if legacy_tap_selection {
+            if needs_choice { dst_slot } else { src_slot }
+        } else if needs_choice {
+            dst_slot
+        } else {
+            src_slot
+        };
         if tap_slot < 3 && state.players[target_p_idx].stage[tap_slot] >= 0 {
             state.players[target_p_idx].set_tapped(tap_slot, true);
         }

@@ -52,7 +52,7 @@ class RustVectorEnv(VecEnv):
         l_ids = []
         try:
             with open("data/verified_card_pool.json", "r", encoding="utf-8") as f:
-                pool = json.load(f)
+                json.load(f)
 
             if self.db.has_member(1):
                 m_ids = [1] * 48

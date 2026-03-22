@@ -4,8 +4,7 @@ from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
-from engine.models.generated_metadata import COSTS, CONDITIONS, OPCODES, TRIGGERS, TARGETS, ZONES
-
+from engine.models.generated_metadata import CONDITIONS, COSTS, OPCODES, TARGETS, TRIGGERS, ZONES
 
 KNOWN_TRIGGERS = frozenset(TRIGGERS.keys())
 KNOWN_COSTS = frozenset(COSTS.keys())

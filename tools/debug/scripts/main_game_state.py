@@ -1366,7 +1366,7 @@ class GameState(ActionMixin, PhaseMixin, EffectMixin):
 
             base_idx = np.arange(3)[valid_mask]
 
-            valid_ids = stage_ids[valid_mask]
+            stage_ids[valid_mask]
 
             # Exists
 

@@ -7,6 +7,7 @@ import numpy as np
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from ai.search_prob_agent import SearchProbAgent, YellOddsCalculator
+
 from engine.game.enums import Phase as PhaseEnum
 from engine.game.game_state import GameState
 from engine.models.card import LiveCard, MemberCard

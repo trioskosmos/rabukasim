@@ -1,31 +1,22 @@
 import copy
 import re
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple, Union
 
 from engine.models.enums import CHAR_MAP
 from engine.models.opcodes import Opcode
-from .ability_ir import SemanticAbility, SemanticCondition, SemanticCost, SemanticEffect
-from .ability_descriptions import (
-    EFFECT_DESCRIPTIONS,
-    EFFECT_DESCRIPTIONS_JP,
-    TRIGGER_DESCRIPTIONS,
-    TRIGGER_DESCRIPTIONS_JP,
-)
-from .ability_filter import PackedFilterSpec, explain_filter_attr, format_filter_attr
-from .structured_instruction_ir import build_structured_instruction_ir
 
+from .ability_filter import PackedFilterSpec
 from .generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
 from .generated_metadata import COMPARISONS, COUNT_SOURCES, EXTRA_CONSTANTS, HEART_COLOR_MAP, META_RULE_TYPES, ZONES
 from .generated_packer import (
     pack_a_heart_cost,
-    pack_a_standard,
     pack_s_standard,
     pack_v_heart_counts,
     pack_v_look_choose,
     pack_v_scalar_dynamic,
-    unpack_a_standard,
 )
+from .structured_instruction_ir import build_structured_instruction_ir
 
 
 def to_signed_32(x):
@@ -122,6 +113,31 @@ class Ability:
 
         # 0. Compile Ordered Instructions (If present - New Parser V2.1)
         if self.instructions:
+            def emitted_post_chunk_words(index: int) -> int:
+                instr_local = self.instructions[index]
+                bc_local = instr_bytecodes[index]
+                emitted_words = len(bc_local) // 5
+
+                if isinstance(instr_local, Condition):
+                    next_is_condition_local = (
+                        index + 1 < len(self.instructions) and isinstance(self.instructions[index + 1], Condition)
+                    )
+                    if bc_local and not next_is_condition_local:
+                        block_end_local = index + 1
+                        while block_end_local < len(self.instructions) and not isinstance(
+                            self.instructions[block_end_local], Condition
+                        ):
+                            block_end_local += 1
+
+                        guarded_bc_sum_local = sum(len(c) for c in instr_bytecodes[index + 1 : block_end_local])
+                        if guarded_bc_sum_local > 0:
+                            emitted_words += 1
+
+                if isinstance(instr_local, Cost) and instr_local.is_optional:
+                    emitted_words += 1
+
+                return emitted_words
+
             # Pass 1: Pre-calculate individual instruction sizes
             instr_bytecodes = []
             self._last_counted_zone = None
@@ -188,12 +204,21 @@ class Ability:
                 bc_chunk = instr_bytecodes[i]
                 bytecode.extend(bc_chunk)
 
+                if isinstance(instr, Condition):
+                    next_is_condition = i + 1 < len(self.instructions) and isinstance(self.instructions[i + 1], Condition)
+                    if bc_chunk and not next_is_condition:
+                        block_end = i + 1
+                        while block_end < len(self.instructions) and not isinstance(self.instructions[block_end], Condition):
+                            block_end += 1
+
+                        guarded_bc_sum = sum(len(c) for c in instr_bytecodes[i + 1 : block_end])
+                        if guarded_bc_sum > 0:
+                            bytecode.extend([int(Opcode.JUMP_IF_FALSE), guarded_bc_sum // 5, 0, 0, 0])
+
                 if isinstance(instr, Cost) and instr.is_optional:
-                    # Calculate jump target based on BYTECODE size, not instruction count
-                    # skip_size = sum of lengths of remaining bytecode chunks / 5
-                    remaining_bc_sum = sum(len(c) for c in instr_bytecodes[i + 1 :])
-                    # We jump to the instruction AFTER the remaining ones (the RETURN)
-                    skip_count = remaining_bc_sum // 5
+                    # Skip the full remaining emitted body, including any synthetic
+                    # JUMP_IF_FALSE instructions that later passes add for condition blocks.
+                    skip_count = sum(emitted_post_chunk_words(j) for j in range(i + 1, len(self.instructions)))
                     bytecode.extend([int(Opcode.JUMP_IF_FALSE), to_signed_32(skip_count), 0, 0, 0])
 
             bytecode.extend([int(Opcode.RETURN), to_signed_32(0), to_signed_32(0), to_signed_32(0), to_signed_32(0)])
@@ -989,7 +1014,6 @@ class Ability:
     def _compile_single_effect(self, eff: Effect, bytecode: List[int]):
         # Normalize params to lowercase keys for consistent lookups
         eff.params = {str(k).lower(): v for k, v in eff.params.items()}
-        source_val = 0
         if hasattr(Opcode, eff.effect_type.name):
             op = getattr(Opcode, eff.effect_type.name)
 
@@ -1665,7 +1689,6 @@ class Ability:
         Standardized packing for all filter parameters (Revision 5, 64-bit).
         'source' can be an Effect, Condition, or direct Dict params.
         """
-        attr = 0
         from engine.models.enums import CHAR_MAP, Group, HeartColor, Unit
         from engine.models.generated_metadata import CHARACTER_IDS
 

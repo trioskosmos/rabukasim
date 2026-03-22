@@ -15,17 +15,20 @@ sequence exactly.
 
 import argparse
 import json
-from hashlib import sha1
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from hashlib import sha1
 from pathlib import Path
 from typing import Any
 
 from engine.models import bytecode_readable as readable
+from engine.models.ability_filter import SPECIAL_ID_LABELS, ZONE_MASK_LABELS
+from engine.models.bytecode_readable import ZONE_NAMES
 from engine.models.generated_packer import (
     pack_a_heart_cost,
     pack_a_standard,
+    pack_s_standard,
     pack_v_heart_counts,
     pack_v_look_choose,
     pack_v_scalar_dynamic,
@@ -36,27 +39,42 @@ from engine.models.generated_packer import (
     unpack_v_look_choose,
     unpack_v_scalar_dynamic,
 )
-from engine.models.ability_filter import SPECIAL_ID_LABELS, ZONE_MASK_LABELS, PackedFilterSpec
-from engine.models.bytecode_readable import ZONE_NAMES, HEART_COLOR_NAMES
-
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_METADATA_PATH = ROOT_DIR / "data" / "metadata.json"
 DEFAULT_INPUT_PATH = ROOT_DIR / "data" / "cards_compiled.json"
-DEFAULT_OUTPUT_PATH = ROOT_DIR / "reports" / "bytecode_codec.json"
+DEFAULT_OUTPUT_PATH = ROOT_DIR / "reports" / "bytecode_codec.yaml"
 
 
-def load_json(path: Path | str) -> dict[str, Any]:
+def load_data(path: Path | str) -> dict[str, Any]:
     path = Path(path)
     with path.open("r", encoding="utf-8") as handle:
+        if path.suffix.lower() in (".yml", ".yaml"):
+            import yaml
+            return yaml.safe_load(handle)
         return json.load(handle)
 
 
-def dump_json(path: Path | str, payload: dict[str, Any]) -> None:
+def load_json(path: Path | str) -> dict[str, Any]:
+    # Deprecated fallback
+    return load_data(path)
+
+
+def dump_data(path: Path | str, payload: dict[str, Any]) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
-        json.dump(payload, handle, ensure_ascii=False, indent=2)
+        if path.suffix.lower() in (".yml", ".yaml"):
+            import yaml
+            # Use sort_keys=False to preserve the ordered keys we carefully constructed
+            yaml.dump(payload, handle, allow_unicode=True, sort_keys=False, default_flow_style=False)
+        else:
+            json.dump(payload, handle, ensure_ascii=False, indent=2)
+
+
+def dump_json(path: Path | str, payload: dict[str, Any]) -> None:
+    # Deprecated fallback
+    dump_data(path, payload)
 
 
 def reverse_map(mapping: dict[str, Any]) -> dict[int, str]:
@@ -338,34 +356,42 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
         return [int(word) for word in words]
 
     semantic = frame.get("semantic") if isinstance(frame, dict) else None
-    if isinstance(semantic, dict):
+    
+    # If no payload exists, try to synthesize it from top-level properties or semantic
+    if isinstance(frame, dict) and "payload" not in frame:
         merged: dict[str, Any] = dict(frame)
-        merged.pop("semantic", None)
-
-        if "opcode" not in merged or isinstance(merged.get("opcode"), str):
-            merged["opcode"] = int(semantic.get("opcode_id", merged.get("opcode_id", 0)) or 0)
-        if "opcode_name" not in merged and semantic.get("opcode_name"):
-            merged["opcode_name"] = semantic.get("opcode_name")
-        if "payload" not in merged:
-            merged_payload: dict[str, Any] = {}
+        merged_payload: dict[str, Any] = {}
+        
+        if isinstance(semantic, dict):
+            merged.pop("semantic", None)
+            if "opcode" not in merged or isinstance(merged.get("opcode"), str):
+                merged["opcode"] = int(semantic.get("opcode_id", merged.get("opcode_id", 0)) or 0)
+            if "opcode_name" not in merged and semantic.get("opcode_name"):
+                merged["opcode_name"] = semantic.get("opcode_name")
+            
+            # Favor semantics over raw, but keep raw for obscure opcodes
             if isinstance(semantic.get("raw"), dict) and semantic.get("opcode_name") not in {"LOOK_AND_CHOOSE", "SET_HEART_COST", "CALC_SUM_COST"}:
                 merged_payload["raw"] = dict(semantic["raw"])
-
-            if semantic.get("opcode_name") in {"LOOK_AND_CHOOSE", "SET_HEART_COST", "CALC_SUM_COST"}:
-                if semantic.get("value") is not None:
-                    merged_payload["v"] = semantic.get("value")
-                if semantic.get("attr") is not None:
-                    merged_payload["a"] = _unlabel_filter_dict(semantic["attr"], lookups) if isinstance(semantic["attr"], dict) else semantic["attr"]
-                if semantic.get("slot") is not None:
-                    merged_payload["s"] = _unlabel_slot_dict(semantic["slot"], lookups) if isinstance(semantic["slot"], dict) else semantic["slot"]
-            else:
-                if semantic.get("value") is not None:
-                    merged_payload["v"] = semantic.get("value")
-
-            if merged_payload:
-                merged["payload"] = merged_payload
-
-        return encode_frame(merged, lookups)
+            if semantic.get("value") is not None:
+                merged_payload["v"] = semantic.get("value")
+            if semantic.get("attr") is not None:
+                merged_payload["a"] = _unlabel_filter_dict(semantic["attr"], lookups) if isinstance(semantic["attr"], dict) else semantic["attr"]
+            if semantic.get("slot") is not None:
+                merged_payload["s"] = _unlabel_slot_dict(semantic["slot"], lookups) if isinstance(semantic["slot"], dict) else semantic["slot"]
+        else:
+            # Fall back to top-level properties (what the user actually wrote recursively)
+            if "raw" in merged:
+                merged_payload["raw"] = merged.get("raw")
+            if "value" in merged:
+                merged_payload["v"] = merged.get("value")
+            if "attr" in merged:
+                merged_payload["a"] = _unlabel_filter_dict(merged["attr"], lookups) if isinstance(merged["attr"], dict) else merged["attr"]
+            if "slot" in merged:
+                merged_payload["s"] = _unlabel_slot_dict(merged["slot"], lookups) if isinstance(merged["slot"], dict) else merged["slot"]
+                
+        if merged_payload:
+            merged["payload"] = merged_payload
+            return encode_frame(merged, lookups)
 
     source_words = frame.get("source_words") if isinstance(frame, dict) else None
     if isinstance(source_words, list) and source_words:
@@ -421,13 +447,24 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
         return [opcode, int(v), int(a), int(s), 0]
 
     v = int(payload.get("v", 0)) if isinstance(payload, dict) else 0
-    a = int(payload.get("raw", {}).get("attr", 0)) if isinstance(payload, dict) and isinstance(payload.get("raw"), dict) else 0
-    s = int(payload.get("raw", {}).get("slot", 0)) if isinstance(payload, dict) and isinstance(payload.get("raw"), dict) else 0
+    a_data = payload.get("a", {}) if isinstance(payload, dict) else {}
+    s_data = payload.get("s", {}) if isinstance(payload, dict) else {}
+    
+    if isinstance(a_data, dict) and a_data:
+        a = pack_a_standard(**a_data)
+    else:
+        a = int(payload.get("raw", {}).get("attr", 0)) if isinstance(payload, dict) and isinstance(payload.get("raw"), dict) else 0
+        
+    if isinstance(s_data, dict) and s_data:
+        s = pack_s_standard(**s_data)
+    else:
+        s = int(payload.get("raw", {}).get("slot", 0)) if isinstance(payload, dict) and isinstance(payload.get("raw"), dict) else 0
+
     return [opcode, v, a, s, 0]
 
 
 def bytecode_to_model(bytecode: list[int], metadata: dict[str, Any] | None = None) -> dict[str, Any]:
-    lookups = load_lookups(metadata or load_json(DEFAULT_METADATA_PATH))
+    lookups = load_lookups(metadata or load_data(DEFAULT_METADATA_PATH))
     frames = [
         dict(
             decode_frame(bytecode[i : i + 5], lookups),
@@ -449,7 +486,7 @@ def bytecode_to_model(bytecode: list[int], metadata: dict[str, Any] | None = Non
 
 
 def model_to_bytecode(model: dict[str, Any], metadata: dict[str, Any] | None = None) -> list[int]:
-    lookups = load_lookups(metadata or load_json(DEFAULT_METADATA_PATH))
+    lookups = load_lookups(metadata or load_data(DEFAULT_METADATA_PATH))
     frames = model.get("frames", [])
     bytecode: list[int] = []
     for frame in frames:
@@ -515,42 +552,6 @@ def frame_to_sparse(frame: dict[str, Any]) -> dict[str, Any]:
         sparse["attr"] = _prune_sparse(a_value)
     if _is_sparse_value(_prune_sparse(s_value)):
         sparse["slot"] = _prune_sparse(s_value)
-
-    if _is_sparse_value(payload.get("decoded")):
-        sparse["decoded"] = payload.get("decoded")
-
-    semantic = frame.get("semantic") if isinstance(frame, dict) else None
-    if isinstance(semantic, dict):
-        sem_sparse: dict[str, Any] = {
-            "opcode_id": int(semantic.get("opcode_id", opcode_id)),
-            "opcode_name": str(semantic.get("opcode_name", opcode_name)),
-            "opcode_section": str(semantic.get("opcode_section", frame.get("opcode_section", "opcodes"))),
-        }
-        if _is_sparse_value(semantic.get("negated")):
-            sem_sparse["negated"] = semantic.get("negated")
-        if _is_sparse_value(semantic.get("decoded", frame.get("decoded"))):
-            sem_sparse["decoded"] = semantic.get("decoded", frame.get("decoded"))
-        
-        pruned_v = _prune_sparse(semantic.get("value"))
-        if _is_sparse_value(pruned_v):
-            sem_sparse["value"] = pruned_v
-            
-        pruned_a = _prune_sparse(semantic.get("attr"))
-        if _is_sparse_value(pruned_a):
-            sem_sparse["attr"] = pruned_a
-            
-        pruned_s = _prune_sparse(semantic.get("slot"))
-        if _is_sparse_value(pruned_s):
-            sem_sparse["slot"] = pruned_s
-            
-        pruned_raw = _prune_sparse(semantic.get("raw"))
-        if _is_sparse_value(pruned_raw):
-            sem_sparse["raw"] = pruned_raw
-            
-        if _is_sparse_value(semantic.get("metadata_refs")):
-            sem_sparse["metadata_refs"] = semantic.get("metadata_refs")
-            
-        sparse["semantic"] = sem_sparse
 
     return sparse
 
@@ -644,17 +645,9 @@ def build_ability_index(compiled_data: dict[str, Any], metadata: dict[str, Any])
                     "cards": [],
                 },
             )
+            ab_trigger_name = _name_for_id(int(ability.get("trigger", 0)), lookups.triggers_by_id, "TRIGGER")
             entry["cards"].append(
-                {
-                    "db": db_name,
-                    "card_id": card_id,
-                    "card_no": card_no,
-                    "name": card_name,
-                    "ability_index": ab_idx,
-                    "ability_trigger": _name_for_id(int(ability.get("trigger", 0)), lookups.triggers_by_id, "TRIGGER"),
-                    "raw_text": ability.get("raw_text", ""),
-                    "pseudocode": ability.get("pseudocode", ""),
-                }
+                f"{card_no} | {card_name} [{db_name}:{card_id}] (ab#{ab_idx} {ab_trigger_name})"
             )
 
     ordered_entries = sorted(
@@ -753,25 +746,25 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    metadata = load_json(args.metadata)
+    metadata = load_data(args.metadata)
     if args.mode == "report":
-        compiled_data = load_json(args.input)
-        dump_json(args.output, build_report(compiled_data, metadata))
+        compiled_data = load_data(args.input)
+        dump_data(args.output, build_report(compiled_data, metadata))
         print(f"Wrote codec report to {args.output}")
         return 0
 
     if args.mode == "decode":
-        payload = load_json(args.input)
+        payload = load_data(args.input)
         bytecode = payload.get("bytecode", [])
         model = bytecode_to_model(bytecode, metadata)
-        dump_json(args.output, model)
+        dump_data(args.output, model)
         print(f"Wrote decoded model to {args.output}")
         return 0
 
     if args.mode == "encode":
-        payload = load_json(args.input)
+        payload = load_data(args.input)
         bytecode = model_to_bytecode(payload)
-        dump_json(args.output, {"bytecode": bytecode})
+        dump_data(args.output, {"bytecode": bytecode})
         print(f"Wrote encoded bytecode to {args.output}")
         return 0
 

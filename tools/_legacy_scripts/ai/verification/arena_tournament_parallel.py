@@ -11,9 +11,9 @@ import numpy as np
 # Ensure project root is in path
 sys.path.append(os.getcwd())
 
+from ai.headless_runner import Agent, RandomAgent, SmartHeuristicAgent, TrueRandomAgent
 from sb3_contrib import MaskablePPO
 
-from ai.headless_runner import Agent, RandomAgent, SmartHeuristicAgent, TrueRandomAgent
 from engine.game.game_state import GameState, Phase, initialize_game
 
 # Global storage for PPO model in child processes
@@ -94,7 +94,7 @@ def run_match_worker(args):
             return TrueRandomAgent()
         return None
 
-    agent0 = create_agent(agent_type0)  # Wait, bug in my thought, fixed below
+    create_agent(agent_type0)  # Wait, bug in my thought, fixed below
 
 
 def run_match_wrapper(p):

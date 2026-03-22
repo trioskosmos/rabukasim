@@ -259,13 +259,11 @@ class SmartHeuristicAgent(Agent):
                     # Does this member provide a heart provided in 'pending_req' that we don't have enough of?
                     prov = member.hearts  # Shape (6,)
 
-                    matched_need = False
                     for c in range(6):
                         if pending_req[c] > current_hearts[c]:
                             # We need this color
                             if prov[c] > 0:
                                 score += 20  # HUGE bonus for matching a need
-                                matched_need = True
 
                     # A2. Total Heart Volume (Crucial for 'Any' requirements)
                     total_hearts = prov.sum()

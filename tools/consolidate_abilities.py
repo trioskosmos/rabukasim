@@ -19,7 +19,6 @@ if PROJECT_ROOT not in sys.path:
 
 from tools import bytecode_codec as codec
 
-
 DEFAULT_INPUT_PATH = ROOT_DIR / "data" / "cards_compiled.json"
 DEFAULT_METADATA_PATH = ROOT_DIR / "data" / "metadata.json"
 DEFAULT_OUTPUT_PATH = ROOT_DIR / "data" / "ability_frame_index.json"

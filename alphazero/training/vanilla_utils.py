@@ -10,15 +10,16 @@ import torch
 
 from alphazero.training.vanilla_action_codec import (
     ACTION_SPACE,
-    OBS_DIM,
     VanillaActionSpaceSpec,
-    assign_hand_positions,
     build_legal_policy_mask,
     build_policy_engine_mapping,
-    dense_to_sparse,
-    engine_action_to_policy_id as map_engine_to_vanilla,
-    policy_id_to_engine_action as action_256_to_engine_action,
     sparse_policy_from_engine_visits,
+)
+from alphazero.training.vanilla_action_codec import (
+    engine_action_to_policy_id as map_engine_to_vanilla,
+)
+from alphazero.training.vanilla_action_codec import (
+    policy_id_to_engine_action as action_256_to_engine_action,
 )
 from alphazero.vanilla_net import HighFidelityAlphaNet
 
@@ -81,6 +82,7 @@ class NeuralMCTS:
 
 def run_benchmark(model_path=None, sims: int = 32, model=None, db=None):
     import engine_rust
+
     from engine.game.deck_utils import UnifiedDeckParser
 
     root_dir = Path(__file__).resolve().parent.parent.parent

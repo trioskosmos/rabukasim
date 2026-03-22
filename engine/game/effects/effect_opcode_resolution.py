@@ -1,15 +1,10 @@
 ﻿from __future__ import annotations
 
-import copy
-import random
 from typing import Any, Dict
-
-import numpy as np
 
 from engine.game.effects.choices import queue_select_from_list_choice
 from engine.game.effects.hand import discard_hand_cards
 from engine.models.ability import ConditionType, Effect, EffectType, TargetType
-from engine.models.enums import Group, Unit
 from engine.models.opcodes import Opcode
 
 
@@ -105,7 +100,6 @@ def resolve_effect_opcode(game: Any, opcode: Opcode, seg: Any, context: Dict[str
 
         # If it's "SELF" (s == 0), we apply to current member.
         source_id = context.get("source_card_id", -1)
-        target_p = p
 
         # In Sumire's case, the pseudocode is:
         # EFFECT: GRANT_ABILITY(SELF, TRIGGER="CONSTANT", CONDITION="IS_ON_STAGE", EFFECT="BOOST_SCORE(1)")

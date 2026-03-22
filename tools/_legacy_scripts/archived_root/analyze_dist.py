@@ -16,7 +16,7 @@ for f in sorted(files[:5]):  # Check first 5 chunks for speed
 all_actions = np.array(all_actions)
 total = len(all_actions)
 unique, counts = np.unique(all_actions, return_counts=True)
-dist = dict(zip(unique, counts))
+dist = dict(zip(unique, counts, strict=False))
 
 print(f"\nTotal Samples Analyzed: {total}")
 print(f"Action 0 (Pass) Frequency: {dist.get(0, 0) / total * 100:.1f}%")

@@ -72,7 +72,6 @@ def encode_observations_attention(
 
     # Constants
     FEAT = 64
-    MAX_HAND = 15
 
     # Offsets (must match LovecaFeaturesExtractor slicing)
     HAND_START = 0  # 0 - 1024 (16 cards * 64)
@@ -681,7 +680,6 @@ def encode_observation_standard_single(
     # Opp History (5 * 80) = 400 -> End 2180
 
     # Offsets in array must match
-    VOLUMES_START = 60
 
     # Reset buffer for this env
     observations[i].fill(0.0)

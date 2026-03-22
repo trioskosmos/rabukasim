@@ -141,19 +141,19 @@ def main():
 
         for i in range(len(tiers) - 1):
             tier_name, threshold = tiers[i]
-            next_threshold = tiers[i + 1][1] if i + 1 < len(tiers) else -999
+            tiers[i + 1][1] if i + 1 < len(tiers) else -999
 
             # Filter cards in this band
             # For the last defined tier (D), we just take everything below C
             if i == len(tiers) - 1:
-                tier_cards = [(s, c) for s, c in card_scores if s < threshold]
+                [(s, c) for s, c in card_scores if s < threshold]
             else:
                 # Check if this is the last band in our loop (D Tier logic handled by falling through?)
                 # Actually strictly:
                 # SSS: >= mean + 3std
                 # SS: < 3std AND >= 2std
                 # ...
-                tier_cards = [(s, c) for s, c in card_scores if s >= threshold and (i == 0 or s < tiers[i - 1][1])]
+                [(s, c) for s, c in card_scores if s >= threshold and (i == 0 or s < tiers[i - 1][1])]
 
             # Since we iterate from top (SSS) down, we just need s >= threshold and s < previous_threshold
             # But simpler: just process list and remove? No, repeated iteration is fine.

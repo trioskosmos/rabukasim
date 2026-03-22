@@ -113,7 +113,6 @@ class AbilityParser:
                 if not is_continuation:
                     # --- Trigger Parsing ---
 
-                    triggers = []
 
                     line_lower = line.lower()
 

@@ -8,7 +8,6 @@ from pydantic import TypeAdapter
 from engine.models.ability import AbilityCostType, Cost
 from engine.models.card import EnergyCard, LiveCard, MemberCard
 
-
 _SPARSE_INDEX_CACHE: Dict[tuple[str, tuple[int, ...]], Dict[str, Any]] | None = None
 
 
@@ -90,7 +89,7 @@ class CardDataLoader:
                     continue
                 entry = sparse_index.get((trigger_name, bytecode))
                 if entry is not None:
-                    setattr(ability, "sparse_frame_index", entry)
+                    ability.sparse_frame_index = entry
 
     def load(self) -> Tuple[Dict[int, MemberCard], Dict[int, LiveCard], Dict[int, Any]]:
         # Auto-detect compiled file

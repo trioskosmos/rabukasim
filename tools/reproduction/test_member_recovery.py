@@ -43,7 +43,7 @@ def run_test():
     # If the engine is interactive (as recently refactored), this will PAUSE.
     # Since we aren't compiling, we check logic assuming it's interactive or automatic.
     try:
-        res = gs.trigger_ability_on_card(0, 248, 0, 0)
+        gs.trigger_ability_on_card(0, 248, 0, 0)
 
         # Resumption logic (if needed for interactive)
         if gs.get_player(0).pending_choice_type == "SELECT_FROM_DISCARD":

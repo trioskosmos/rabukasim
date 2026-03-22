@@ -8,7 +8,6 @@ def sanitize():
         lines = content.splitlines()
 
         new_lines = []
-        found_target = False
 
         for i, line in enumerate(lines):
             # Fix Indentation around line 143

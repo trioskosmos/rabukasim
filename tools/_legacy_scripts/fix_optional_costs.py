@@ -15,7 +15,7 @@ def main():
     fixed_count = 0
     cards_fixed = []
 
-    for cid, card in cards_db.items():
+    for _cid, card in cards_db.items():
         original_text = card.get("original_text", "")
         if not original_text:
             original_text = card.get("ability", "")

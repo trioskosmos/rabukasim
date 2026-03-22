@@ -124,10 +124,10 @@ def generate_opcode_docs(compiled_data: dict, output_path: str = "reports/opcode
                         break  # Incomplete chunk
 
                     op = bc[i]
-                    v = bc[i + 1]
+                    bc[i + 1]
                     v_cond = bc[i + 2]
-                    p1 = bc[i + 3]
-                    p2 = bc[i + 4]
+                    bc[i + 3]
+                    bc[i + 4]
 
                     # Handle negated conditions (1000+)
                     is_negated = op >= 1000

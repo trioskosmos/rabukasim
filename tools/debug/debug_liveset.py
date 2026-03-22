@@ -7,7 +7,7 @@ def debug_liveset():
     with open(json_path, "r", encoding="utf-8") as f:
         card_data_json = f.read()
 
-    db = rust_engine.PyCardDatabase(card_data_json)
+    rust_engine.PyCardDatabase(card_data_json)
     gs = rust_engine.PyGameState()
 
     # Setup a state similar to Step 7
@@ -23,7 +23,6 @@ def debug_liveset():
         gs.phase = 5  # LiveSet
         print(f"Set phase to {gs.phase}")
         # Add some cards to hand
-        p0_hand = [33, 33, 33]
         # We need to set hand in Rust. Does PyGameState allow this?
     except Exception as e:
         print(f"Could not set phase directly: {e}")

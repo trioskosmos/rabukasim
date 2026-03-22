@@ -271,7 +271,7 @@ class AbilityVerifier:
         if not self.cards_data:
             return reports
 
-        for card_id_str, card_data in self.cards_data.get("member_db", {}).items():
+        for _card_id_str, card_data in self.cards_data.get("member_db", {}).items():
             report = self.verify_card(card_data)
             reports.append(report)
 
@@ -636,7 +636,7 @@ def main():
     if args.card:
         # Verify specific card
         if verifier.cards_data:
-            for card_id_str, card_data in verifier.cards_data.get("member_db", {}).items():
+            for _card_id_str, card_data in verifier.cards_data.get("member_db", {}).items():
                 if card_data.get("card_no") == args.card:
                     report = verifier.verify_card(card_data)
                     print(f"Card: {report.card_no} - Status: {report.status}")
@@ -647,7 +647,7 @@ def main():
         # Verify all cards
         reports = verifier.verify_all()
         output_path = project_root / args.output
-        report_md = generate_report(reports, output_path)
+        generate_report(reports, output_path)
         print(f"Report generated: {output_path}")
         print(
             f"Total: {len(reports)}, Passed: {sum(1 for r in reports if r.status == 'PASS')}, "

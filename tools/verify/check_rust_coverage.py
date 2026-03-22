@@ -43,7 +43,7 @@ def check_coverage():
     covered_opcodes = set()
     covered_triggers = set()
 
-    for root, dirs, files in os.walk(RUST_SRC_DIR):
+    for root, _dirs, files in os.walk(RUST_SRC_DIR):
         for file in files:
             if file.endswith("_tests.rs") or file == "tests.rs":
                 path = os.path.join(root, file)
