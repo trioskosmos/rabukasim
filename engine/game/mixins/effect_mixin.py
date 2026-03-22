@@ -166,7 +166,11 @@ class EffectMixin:
 
                 # Defer execution for auto-abilities
                 abi_key = f"auto-{cid}"
-                self.pending_activation = {"ability": ability, "context": context, "abi_key": abi_key}
+                self.pending_activation = {
+                    "ability": ability,
+                    "context": {**context, "original_phase": self.phase},
+                    "abi_key": abi_key,
+                }
                 return
 
         # Prefer the stored bytecode path whenever it is available.

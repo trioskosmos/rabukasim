@@ -217,7 +217,11 @@ def _unlabel_slot_dict(slot_dict: dict[str, Any], lookups: MetadataLookups) -> d
 
 def _decode_payload(op_name: str, words: list[int], lookups: MetadataLookups) -> dict[str, Any]:
     op, v, a_low, a_high, s = words
-    a = ((a_high & 0xFFFFFFFF) << 32) | (a_low & 0xFFFFFFFF)
+    a_low_u = a_low & 0xFFFFFFFF
+    a_high_u = a_high & 0xFFFFFFFF
+    a = (a_high_u << 32) | a_low_u
+    if a_low > 0xFFFFFFFF or a_low < -0x80000000:
+        a = a_low
 
     raw = {
         "opcode": _opcode_label(words[0], lookups),
@@ -400,8 +404,8 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
             words.extend([0] * (5 - len(words)))
         return words
 
-    opcode = int(frame.get("opcode", 0))
-    opcode_name = str(frame.get("opcode_name", ""))
+    opcode = int(frame.get("opcode_id", frame.get("opcode", 0)) or 0)  # prefer numeric opcode_id
+    opcode_name = str(frame.get("opcode_name", frame.get("opcode", "")) or "")
     payload = frame.get("payload", {}) or {}
     raw = payload.get("raw", {}) if isinstance(payload, dict) else {}
 
@@ -414,12 +418,13 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
         if isinstance(raw_slot, str) and raw_slot in lookups.ids_by_slot:
             raw_slot = lookups.ids_by_slot[raw_slot]
             
+        a = int(raw.get("attr", 0))
         return [
             int(raw_opcode),
             int(raw.get("value", 0)),
-            int(raw.get("attr", 0)),
+            a & 0xFFFFFFFF,
+            (a >> 32) & 0xFFFFFFFF,
             int(raw_slot),
-            0,
         ]
 
     if opcode_name == "LOOK_AND_CHOOSE":
@@ -428,7 +433,7 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
         s = 0
         if isinstance(payload, dict) and isinstance(payload.get("s"), dict):
             s = payload["s"].get("raw", 0) or 0
-        return [opcode, int(v), int(a), int(s), 0]
+        return [opcode, int(v), int(a) & 0xFFFFFFFF, (int(a) >> 32) & 0xFFFFFFFF, int(s)]
 
     if opcode_name == "SET_HEART_COST":
         v = pack_v_heart_counts(**(payload.get("v", {}) if isinstance(payload, dict) else {}))
@@ -436,7 +441,7 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
         s = 0
         if isinstance(payload, dict) and isinstance(payload.get("s"), dict):
             s = payload["s"].get("raw", 0) or 0
-        return [opcode, int(v), int(a), int(s), 0]
+        return [opcode, int(v), int(a) & 0xFFFFFFFF, (int(a) >> 32) & 0xFFFFFFFF, int(s)]
 
     if opcode_name == "CALC_SUM_COST":
         v = pack_v_scalar_dynamic(**(payload.get("v", {}) if isinstance(payload, dict) else {}))
@@ -444,23 +449,46 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
         s = 0
         if isinstance(payload, dict) and isinstance(payload.get("s"), dict):
             s = payload["s"].get("raw", 0) or 0
-        return [opcode, int(v), int(a), int(s), 0]
+        return [opcode, int(v), int(a) & 0xFFFFFFFF, (int(a) >> 32) & 0xFFFFFFFF, int(s)]
 
     v = int(payload.get("v", 0)) if isinstance(payload, dict) else 0
     a_data = payload.get("a", {}) if isinstance(payload, dict) else {}
     s_data = payload.get("s", {}) if isinstance(payload, dict) else {}
     
+    # Resolve semantic labels in a_data
+    if isinstance(a_data, dict):
+        a_data = a_data.copy()
+        if "special_id" in a_data and isinstance(a_data["special_id"], str):
+            a_data["special_id"] = lookups.ids_by_special.get(a_data["special_id"], 0)
+        if "zone_mask" in a_data and isinstance(a_data["zone_mask"], str):
+            a_data["zone_mask"] = lookups.ids_by_zone_mask.get(a_data["zone_mask"], 0)
+        # Ensure all values are int/bool for the packer
+        for k, val in a_data.items():
+            if isinstance(val, (int, bool)):
+                continue
+            # Try to resolve other known labels if needed, but these are the main ones
+            
     if isinstance(a_data, dict) and a_data:
         a = pack_a_standard(**a_data)
     else:
         a = int(payload.get("raw", {}).get("attr", 0)) if isinstance(payload, dict) and isinstance(payload.get("raw"), dict) else 0
         
+    # Resolve semantic labels in s_data
+    if isinstance(s_data, dict):
+        s_data = s_data.copy()
+        if "source_zone" in s_data and isinstance(s_data["source_zone"], str):
+            s_data["source_zone"] = lookups.ids_by_zone.get(s_data["source_zone"], 0)
+        if "dest_zone" in s_data and isinstance(s_data["dest_zone"], str):
+            s_data["dest_zone"] = lookups.ids_by_zone.get(s_data["dest_zone"], 0)
+        if "remainder_zone" in s_data and isinstance(s_data["remainder_zone"], str):
+            s_data["remainder_zone"] = lookups.ids_by_zone.get(s_data["remainder_zone"], 0)
+
     if isinstance(s_data, dict) and s_data:
         s = pack_s_standard(**s_data)
     else:
         s = int(payload.get("raw", {}).get("slot", 0)) if isinstance(payload, dict) and isinstance(payload.get("raw"), dict) else 0
 
-    return [opcode, v, a, s, 0]
+    return [opcode, v, int(a) & 0xFFFFFFFF, (int(a) >> 32) & 0xFFFFFFFF, int(s)]
 
 
 def bytecode_to_model(bytecode: list[int], metadata: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -485,12 +513,17 @@ def bytecode_to_model(bytecode: list[int], metadata: dict[str, Any] | None = Non
     }
 
 
+def _to_i32(val: int) -> int:
+    val = val & 0xFFFFFFFF
+    return val if val < 0x80000000 else val - 0x100000000
+
+
 def model_to_bytecode(model: dict[str, Any], metadata: dict[str, Any] | None = None) -> list[int]:
     lookups = load_lookups(metadata or load_data(DEFAULT_METADATA_PATH))
     frames = model.get("frames", [])
     bytecode: list[int] = []
     for frame in frames:
-        bytecode.extend(encode_frame(frame, lookups))
+        bytecode.extend(_to_i32(w) for w in encode_frame(frame, lookups))
     return bytecode
 
 
@@ -560,6 +593,9 @@ def model_to_sparse_model(model: dict[str, Any], include_raw_words: bool = False
     sparse_frames: list[dict[str, Any]] = []
     for frame in model.get("frames", []):
         sparse_frame = frame_to_sparse(frame)
+        # Include the rich semantic dict so callers can edit named fields and re-encode.
+        if isinstance(frame.get("semantic"), dict):
+            sparse_frame["semantic"] = frame["semantic"]
         if include_raw_words and "words" in frame:
             sparse_frame["source_words"] = [int(word) for word in frame.get("words", [])]
         sparse_frames.append(sparse_frame)

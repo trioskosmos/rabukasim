@@ -31,7 +31,7 @@ fn main() {
         source_card_id: catchu_live_id,
         ..Default::default()
     };
-    engine_rust::core::logic::interpreter::resolve_bytecode(
+    let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
         &mut state,
         &db,
         std::sync::Arc::new(ability.bytecode.clone()),
@@ -49,7 +49,7 @@ fn main() {
         source_card_id: catchu_live_id,
         ..Default::default()
     };
-    engine_rust::core::logic::interpreter::resolve_bytecode(
+    let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
         &mut state,
         &db,
         std::sync::Arc::new(ability.bytecode.clone()),

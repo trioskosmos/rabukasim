@@ -121,9 +121,9 @@ impl ActionFactory {
 
         let friendly_label = Self::map_technical_label(&technical_label);
         if friendly_label == technical_label {
-            Some(format!("Mode: {}", technical_label))
+            Some(technical_label)
         } else {
-            Some(format!("Mode: {} - {}", technical_label, friendly_label))
+            Some(friendly_label)
         }
     }
 }
@@ -477,23 +477,20 @@ impl ActionFactory {
         match Self::parse_action(action_id) {
             DecodedAction::Pass => "Pass / Done".to_string(),
             DecodedAction::MulliganSelect { card_idx } => {
-                format!("Mulligan Hand Index {}", card_idx)
+                format!("[JP] 手札{}枚目を入れ替える / [EN] Replace Hand Card #{}", card_idx + 1, card_idx + 1)
             }
             DecodedAction::SetLive { hand_idx } => {
-                format!("Set Live Card (Hand Index {})", hand_idx)
+                format!("[JP] ライブをセット(手札{}) / [EN] Set Live Card (Hand #{})", hand_idx + 1, hand_idx + 1)
             }
-            DecodedAction::SelectMode { mode_idx } => format!("Select Mode {}", mode_idx),
+            DecodedAction::SelectMode { mode_idx } => format!("[JP] モード{}を選択 / [EN] Select Mode {}", mode_idx + 1, mode_idx + 1),
             DecodedAction::SelectColor { color_idx } => {
-                let color = match color_idx {
-                    0 => "Pink",
-                    1 => "Red",
-                    2 => "Yellow",
-                    3 => "Green",
-                    4 => "Blue",
-                    5 => "Purple",
-                    _ => "Unknown",
+                let color_jp = match color_idx {
+                    0 => "ピンク", 1 => "赤", 2 => "黄", 3 => "緑", 4 => "青", 5 => "紫", _ => "不明",
                 };
-                format!("Select Color {}", color)
+                let color_en = match color_idx {
+                    0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple", _ => "Unknown",
+                };
+                format!("[JP] {}を選択 / [EN] Select {}", color_jp, color_en)
             }
             DecodedAction::SelectStageSlot { slot_idx } => {
                 match slot_idx {
@@ -545,7 +542,7 @@ impl ActionFactory {
                 format!("Select Energy Index {}", energy_idx)
             }
             DecodedAction::SelectChoice { choice_idx } => {
-                format!("Choice {}", choice_idx + 1)
+                format!("[JP] 選択肢 {} / [EN] Choice {}", choice_idx + 1, choice_idx + 1)
             }
             DecodedAction::Rps { p_idx, choice } => {
                 let move_label = match choice {
@@ -573,18 +570,32 @@ impl ActionFactory {
         } else if let Some(live) = db.get_live(ctx.source_card_id) {
             (&live.original_text, &live.ability_text, &live.name)
         } else {
+            // Check for magic prompt markers in v_remaining
+            match ctx.v_remaining {
+                -32000 => return "[JP] 追加でカードを支払いますか？ / [EN] Pay additional cards?".to_string(),
+                -101 => return "[JP] この効果を解決しますか？ / [EN] Resolve this effect?".to_string(),
+                _ => {}
+            }
+            if ctx.source_card_id == -1 {
+                return "[JP] 選択してください / [EN] Please make a selection".to_string();
+            }
             return String::new();
         };
 
+        let lang_prompt = match ctx.v_remaining {
+            v if v > 0 => format!(" ([JP] {}枚選択 / [EN] Select {})", v, v),
+            _ => String::new(),
+        };
+
         if !original_text.is_empty() && !ability_text.is_empty() {
-            format!("[JP] {} / [EN] {}", original_text, ability_text)
+            format!("[JP] {} / [EN] {}{}", original_text, ability_text, lang_prompt)
         } else if !original_text.is_empty() {
-            original_text.clone()
+            format!("{}{}", original_text, lang_prompt)
         } else if !ability_text.is_empty() {
-            ability_text.clone()
+            format!("{}{}", ability_text, lang_prompt)
         } else if !name.is_empty() {
             // Provide a more descriptive label for optional choices if only the name is available
-            format!("Activate {}?", name)
+            format!("[JP] {}を発動しますか？ / [EN] Activate {}?{}", name, name, lang_prompt)
         } else {
             String::new()
         }
@@ -616,6 +627,45 @@ impl ActionFactory {
         if label.starts_with("ADD_BLADES(") && label.ends_with(')') {
             let val = &label[11..label.len() - 1];
             return format!("[JP] ブレード+{} / [EN] Blade +{}", val, val);
+        }
+
+        if label.starts_with("RECOVER_MEMBER(") && label.ends_with(')') {
+            let val = &label[15..label.len() - 1];
+            return format!("[JP] メンバーを{}枚控え室から戻す / [EN] Recover {} member(s) from Discard", val, val);
+        }
+        if label.starts_with("RECOVER_LIVE(") && label.ends_with(')') {
+            let val = &label[13..label.len() - 1];
+            return format!("[JP] ライブを{}枚控え室から戻す / [EN] Recover {} live card(s) from Discard", val, val);
+        }
+        if label.starts_with("ENERGY_CHARGE(") && label.ends_with(')') {
+            let val = &label[14..label.len() - 1];
+            return format!("[JP] エネルギーを{}チャージ / [EN] Charge {} Energy", val, val);
+        }
+        if label.starts_with("BOOST_SCORE(") && label.ends_with(')') {
+            let val = &label[12..label.len() - 1];
+            return format!("[JP] スコア+{} / [EN] Score +{}", val, val);
+        }
+        if label == "TAP_MEMBER" {
+            return "[JP] メンバーをタップ / [EN] Tap member".to_string();
+        }
+        if label == "ACTIVATE_MEMBER" {
+            return "[JP] スキル発動 / [EN] Activate skill".to_string();
+        }
+        if label == "MOVE_MEMBER" || label == "FORMATION_CHANGE" {
+            return "[JP] メンバー移動 / [EN] Move member".to_string();
+        }
+
+        // Handle technical Enum strings from ChoiceType.as_str()
+        match label {
+            "SELECT_MEMBER" => return "[JP] メンバーを選択 / [EN] Select a Member".to_string(),
+            "SELECT_LIVE" => return "[JP] ライブを選択 / [EN] Select a Live Card".to_string(),
+            "SELECT_DISCARD" => return "[JP] 控え室から選択 / [EN] Select from Discard".to_string(),
+            "LOOK_AND_CHOOSE" => return "[JP] 見て選ぶ / [EN] Look and Choose".to_string(),
+            "SELECT_CARDS" => return "[JP] カードを選択 / [EN] Select Card(s)".to_string(),
+            "COLOR_SELECT" => return "[JP] 色を選択 / [EN] Select a Color".to_string(),
+            "OPTIONAL" => return "[JP] 行うかどうか選択 / [EN] Optional Choice".to_string(),
+            "PAY_ENERGY" => return "[JP] コスト支払い / [EN] Pay Cost".to_string(),
+            _ => {}
         }
 
         // Special case for generic Pass/Done if it matches technical key

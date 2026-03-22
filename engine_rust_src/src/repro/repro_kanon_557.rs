@@ -30,7 +30,7 @@ mod tests {
 
         println!("Bytecode: {:?}", ab.bytecode);
 
-        resolve_bytecode(&mut state, &db, Arc::new(ab.bytecode.clone()), &ctx);
+        let _ = resolve_bytecode(&mut state, &db, Arc::new(ab.bytecode.clone()), &ctx);
 
         // Should have 8 energy cards now
         assert_eq!(state.players[0].energy_zone.len(), 8);

@@ -1365,7 +1365,7 @@ mod tests {
         let ctx = AbilityContext { player_id: p1 as u8, source_card_id: triple_id, ..Default::default() };
         let ability = db.get_member(triple_id).unwrap().abilities.get(1).unwrap();
 
-        resolve_bytecode(&mut state, &db, std::sync::Arc::new(ability.bytecode.clone()), &ctx);
+        let _ = resolve_bytecode(&mut state, &db, std::sync::Arc::new(ability.bytecode.clone()), &ctx);
     }
 
     #[test]

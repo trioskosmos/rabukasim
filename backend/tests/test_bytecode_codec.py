@@ -108,6 +108,50 @@ class BytecodeCodecTests(unittest.TestCase):
         self.assertEqual(look_model["payload"]["v"]["count"], 5)
         self.assertEqual(heart_model["payload"]["a"]["req_1"], 1)
 
+    # ------------------ NEW: frame-first model tests ------------------
+
+    def test_sparse_index_entries_have_no_top_level_bytecode(self) -> None:
+        """build_sparse_ability_index must not include a top-level bytecode field per entry."""
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
+        opcode_id = int(metadata["opcodes"]["DRAW"])
+
+        compiled_data = {
+            "member_db": {
+                "card_x": {
+                    "card_no": "TST-100",
+                    "name": "Frame Test Card",
+                    "abilities": [{"trigger": trigger_id, "bytecode": [opcode_id, 3, 0, 0, 0, 1, 0, 0, 0, 0], "pseudocode": "EFFECT: DRAW(3)"}],
+                }
+            }
+        }
+        payload = codec.build_sparse_ability_index(compiled_data, metadata)
+        for entry in payload["abilities"]:
+            self.assertNotIn("bytecode", entry, "Sparse index entry must not carry top-level bytecode field")
+            self.assertIn("frames", entry, "Sparse index entry must have a frames list")
+
+    def test_sparse_index_frames_round_trip_to_bytecode(self) -> None:
+        """Frames in a sparse index entry can be re-encoded to recreate the original bytecode."""
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
+        opcode_id = int(metadata["opcodes"]["DRAW"])
+        original_bytecode = [opcode_id, 3, 0, 0, 0, 1, 0, 0, 0, 0]
+
+        compiled_data = {
+            "member_db": {
+                "card_x": {
+                    "card_no": "TST-100",
+                    "name": "Frame Test Card",
+                    "abilities": [{"trigger": trigger_id, "bytecode": original_bytecode, "pseudocode": "EFFECT: DRAW(3)"}],
+                }
+            }
+        }
+        payload = codec.build_sparse_ability_index(compiled_data, metadata)
+        entry = payload["abilities"][0]
+        rebuilt = codec.model_to_bytecode({"frames": entry["frames"]})
+        self.assertEqual(rebuilt, original_bytecode, "Frames must round-trip to original bytecode")
+
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -287,12 +287,17 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
     with open(output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(compiled_data, f, ensure_ascii=False, indent=2)
 
-    # --- Generate Sparse Ability Index ---
-    sparse_index_path = "data/ability_frame_index.yaml"
+    # --- Generate Sparse Ability Index (canonical JSON) ---
+    sparse_index_path = "data/ability_frame_index.json"
     sparse_index = ability_codec.build_sparse_ability_index(compiled_data, ability_codec.load_data("data/metadata.json"))
     ability_codec.dump_data(Path(sparse_index_path), sparse_index)
     if not quiet:
         print(f"Generating {sparse_index_path}...")
+    # Migration guard: warn if the legacy YAML artifact still exists
+    legacy_yaml_path = "data/ability_frame_index.yaml"
+    if os.path.exists(legacy_yaml_path):
+        print(f"[MIGRATION WARNING] Legacy artifact exists: {legacy_yaml_path}. "
+              f"It is superseded by {sparse_index_path} and can be deleted.")
 
     # --- Generate Decoded Consolidated Abilities ---
     if not quiet:
@@ -678,16 +683,20 @@ class SparseSourceManager:
         return self.mapping.get((card_no.strip(), ab_idx))
 
 
-# Global sparse manager
-SPARSE_INDEX_PATH = "data/ability_frame_index.yaml"
+# Global sparse manager — JSON is the canonical format
+SPARSE_INDEX_PATH = "data/ability_frame_index.json"
 _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
 
 
 def _build_ability_from_sparse_entry(entry: dict[str, Any], raw_text: str) -> Ability:
     trigger_id = int(entry.get("trigger_id", 0))
-    source_words = [int(word) for word in entry.get("source_words", []) or []]
     frames = entry.get("frames", []) or []
-    bytecode = source_words if source_words else ability_codec.model_to_bytecode({"frames": frames})
+    # Rebuild bytecode from frames (canonical). Fall back to source_words only if
+    # frames are absent (migration-only shim — safe to remove once suite is green).
+    bytecode = ability_codec.model_to_bytecode({"frames": frames})
+    if not bytecode:
+        source_words = [int(word) for word in entry.get("source_words", []) or []]
+        bytecode = source_words
 
     ability = Ability(
         raw_text=raw_text,

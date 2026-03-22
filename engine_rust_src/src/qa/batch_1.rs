@@ -452,7 +452,7 @@ mod tests {
         // Revision 5: ZoneMask::Hand (6) at bit 53
         let attr = (6u64 << 53) as i64;
         let bytecode = vec![O_MOVE_TO_DISCARD, 5, (attr & 0xFFFFFFFF) as i32, (attr >> 32) as i32, 6, O_RETURN, 0, 0, 0, 0];
-        crate::core::logic::interpreter::resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
+        let _ = crate::core::logic::interpreter::resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
 
         // Q55: Should discard all 2 available cards and not error/hang
         assert_eq!(state.players[p_idx].hand.len(), 0, "Hand should be empty after partial discard");

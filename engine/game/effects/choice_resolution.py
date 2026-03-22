@@ -43,6 +43,11 @@ def handle_choice(game: Any, action: int) -> None:
     opp_idx = 1 - p_idx
     opp = self.players[opp_idx]
     cost_paid = False
+    original_phase = None
+    if getattr(self, "pending_activation", None):
+        original_phase = self.pending_activation.get("context", {}).get("original_phase")
+    if original_phase is None:
+        original_phase = choice_metadata.get("original_phase")
 
     store_choice_answer(self, action)
 
@@ -418,6 +423,9 @@ def handle_choice(game: Any, action: int) -> None:
                     self._resolve_pending_effect(0, context=ctx)
         elif not self.pending_choices or self.pending_choices[0][1].get("reason") != "cost":
             self.pending_activation = None
+
+    if not self.pending_choices and not self.pending_effects and not self.pending_activation and original_phase is not None:
+        self.phase = original_phase
 
     if self.pending_effects and not self.pending_choices:
         self._resolve_pending_effect(0, context=params)

@@ -1,7 +1,7 @@
 {
   "_metadata": {
     "generated_by": "compiler/main.py",
-    "generated_at": "2026-03-22T15:55:07.167447"
+    "generated_at": "2026-03-22T18:48:38.962043"
   },
   "{{toujyou.png|登場}}自分の控え室からメンバーカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」を、好きな組み合わせで合計3枚、控え室に置いてもよい：ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋３する。」を得る。\n（手札のこのカードもこの効果で控え室に置ける。）": {
     "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_MEMBER(1) (Optional) -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(3) {FILTER=\"Ayumu/Kanon/Kaho\"} (Optional)\nEFFECT: BOOST_SCORE(3) -> SELF",

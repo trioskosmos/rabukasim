@@ -55,7 +55,7 @@ fn test_q103_catchu_dynamic_condition() {
     let harness = engine_rust::test_helpers::GpuParityHarness::new(&db);
 
     for ability in &abilities {
-        engine_rust::core::logic::interpreter::resolve_bytecode(
+        let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
             &mut state,
             &db,
             std::sync::Arc::new(ability.bytecode.clone()),
@@ -94,7 +94,7 @@ fn test_q103_catchu_dynamic_condition() {
         ..Default::default()
     };
     for ability in &abilities {
-        engine_rust::core::logic::interpreter::resolve_bytecode(
+        let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
             &mut state,
             &db,
             std::sync::Arc::new(ability.bytecode.clone()),
@@ -129,7 +129,7 @@ fn test_q103_catchu_dynamic_condition() {
         ..Default::default()
     };
     for ability in &abilities {
-        engine_rust::core::logic::interpreter::resolve_bytecode(
+        let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
             &mut state,
             &db,
             std::sync::Arc::new(ability.bytecode.clone()),

@@ -41,7 +41,7 @@ fn test_card_557_logic_repro() {
     println!("Bytecode: {:?}", bytecode);
 
     // 6. Execute
-    resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode.clone()), &ctx);
+    let _ = resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode.clone()), &ctx);
 
     // 7. Verification
     // Success: Energy zone should have 8 cards, and the last one should be tapped (wait state).
@@ -89,7 +89,7 @@ fn test_card_557_logic_fail_if_not_only_liella() {
     let member = db.get_member(card_id).unwrap();
     let bytecode = &member.abilities[0].bytecode;
 
-    resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode.clone()), &ctx);
+    let _ = resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode.clone()), &ctx);
 
     // Should NOT have charged energy because ALL_MEMBERS condition failed
     assert_eq!(

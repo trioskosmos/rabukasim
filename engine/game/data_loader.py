@@ -8,25 +8,41 @@ from pydantic import TypeAdapter
 from engine.models.ability import AbilityCostType, Cost
 from engine.models.card import EnergyCard, LiveCard, MemberCard
 
-_SPARSE_INDEX_CACHE: Dict[tuple[str, tuple[int, ...]], Dict[str, Any]] | None = None
+import re as _re
+
+_SPARSE_INDEX_CACHE: Dict[str, Dict[str, Any]] | None = None
+_CARD_REF_RE = _re.compile(
+    r"^(?P<card_no>[^|]+?)\s*\|.*?\(ab#(?P<idx>\d+)(?:[\s\u3000)]|$)"
+)
 
 
-def _load_sparse_ability_index() -> Dict[tuple[str, tuple[int, ...]], Dict[str, Any]]:
+def _load_sparse_ability_index() -> Dict[str, Dict[str, Any]]:
+    """Load ability_frame_index.json keyed by 'card_no#ab_idx'.
+
+    This matches the lookup format used in card_db.rs and is robust to the
+    sparse index not carrying a top-level ``bytecode`` field per entry.
+    """
     global _SPARSE_INDEX_CACHE
     if _SPARSE_INDEX_CACHE is not None:
         return _SPARSE_INDEX_CACHE
 
     index_path = Path(os.getcwd()) / "data" / "ability_frame_index.json"
-    cache: Dict[tuple[str, tuple[int, ...]], Dict[str, Any]] = {}
+    cache: Dict[str, Dict[str, Any]] = {}
     if index_path.exists():
         try:
             with index_path.open("r", encoding="utf-8") as handle:
                 payload = json.load(handle)
             for entry in payload.get("abilities", []):
-                trigger = str(entry.get("trigger", ""))
-                bytecode = tuple(int(word) for word in entry.get("bytecode", []))
-                if trigger and bytecode:
-                    cache[(trigger, bytecode)] = entry
+                for card_ref in entry.get("cards", []):
+                    if isinstance(card_ref, dict):
+                        card_no = str(card_ref.get("card_no", "")).strip()
+                        ab_idx = card_ref.get("ability_index", card_ref.get("ab_idx"))
+                        if card_no and ab_idx is not None:
+                            cache[f"{card_no}#{ab_idx}"] = entry
+                    elif isinstance(card_ref, str):
+                        m = _CARD_REF_RE.match(card_ref.strip())
+                        if m:
+                            cache[f"{m.group('card_no').strip()}#{m.group('idx')}"] = entry
         except Exception:
             cache = {}
 
@@ -82,12 +98,10 @@ class CardDataLoader:
             return
 
         for card in cards.values():
-            for ability in getattr(card, "abilities", []):
-                trigger_name = getattr(getattr(ability, "trigger", None), "name", "")
-                bytecode = tuple(int(word) for word in getattr(ability, "bytecode", []) or [])
-                if not trigger_name or not bytecode:
-                    continue
-                entry = sparse_index.get((trigger_name, bytecode))
+            card_no = getattr(card, "card_no", "")
+            for ab_idx, ability in enumerate(getattr(card, "abilities", [])):
+                key = f"{card_no}#{ab_idx}"
+                entry = sparse_index.get(key)
                 if entry is not None:
                     ability.sparse_frame_index = entry
 

@@ -1697,7 +1697,7 @@ mod tests {
         let ctx = AbilityContext { player_id: p1 as u8, source_card_id: triple_id, ..Default::default() };
         let ability = db.get_member(triple_id).unwrap().abilities.get(1).unwrap();
 
-        resolve_bytecode(&mut state, &db, std::sync::Arc::new(ability.bytecode.clone()), &ctx);
+        let _ = resolve_bytecode(&mut state, &db, std::sync::Arc::new(ability.bytecode.clone()), &ctx);
     }
 
     #[test]
@@ -1801,7 +1801,7 @@ mod tests {
             .source(Zone::Hand)
             .dest(Zone::Discard)
             .build();
-        crate::core::logic::interpreter::resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
+        let _ = crate::core::logic::interpreter::resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
 
         // Q55: Should discard all 2 available cards and not error/hang
         assert_eq!(state.players[p_idx].hand.len(), 0, "Hand should be empty after partial discard");
@@ -2013,7 +2013,7 @@ mod tests {
             O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6
         ];
 
-        resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
+        let _ = resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
 
         let hand: Vec<i32> = state.players[0].hand.iter().copied().collect();
         assert!(hand.contains(&200), "Hand should contain the live card 200");
@@ -2059,7 +2059,7 @@ mod tests {
             O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6
         ];
 
-        resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
+        let _ = resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
 
         // Since no live cards found, all 2 deck cards moved to discard
         assert_eq!(state.players[0].deck.len(), 0);

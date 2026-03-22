@@ -30,7 +30,7 @@ fn test_card_558_wait_repro() {
     let bytecode = &member.abilities[0].bytecode;
 
     println!("Step 1: Initial call");
-    resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode.clone()), &ctx);
+    let _ = resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode.clone()), &ctx);
 
     // Should be suspended for OPTIONAL/TAP cost
     assert_eq!(state.phase, Phase::Response);
@@ -48,7 +48,7 @@ fn test_card_558_wait_repro() {
 
     state.phase = Phase::Main; // Reset for execution
     state.interaction_stack.pop(); // Simulate consumption
-    resolve_bytecode(
+    let _ = resolve_bytecode(
         &mut state,
         &db,
         std::sync::Arc::new(bytecode.clone()),

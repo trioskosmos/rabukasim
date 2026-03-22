@@ -38,34 +38,34 @@ pub fn resolve_recovery(
         }
     }
 
-        if ctx.choice_index == -1 {
-            let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
-            let is_single_choice_auto_pick = !is_optional
-                && state.players[p_idx].looked_cards.len() == 1
-                && real_op != O_RECOVER_MEMBER;
+    if ctx.choice_index == -1 {
+        let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
+        let is_single_choice_auto_pick = !is_optional
+            && state.players[p_idx].looked_cards.len() == 1
+            && real_op != O_RECOVER_MEMBER;
 
-            if is_single_choice_auto_pick {
-                ctx.choice_index = 0;
+        if is_single_choice_auto_pick {
+            ctx.choice_index = 0;
+        } else {
+            let choice_type = if real_op == O_RECOVER_LIVE {
+                ChoiceType::RecovL
             } else {
-                let choice_type = if real_op == O_RECOVER_LIVE {
-                    ChoiceType::RecovL
-                } else {
-                    ChoiceType::RecovM
-                };
-                if matches!(suspend_choice(
-                    state,
-                    db,
-                    ctx,
-                    ctx,
-                    instr_ip,
-                    real_op,
-                    0,
-                    choice_type,
-                    0,
-                    -1,
-                ), HandlerResult::Suspend) {
-                    return HandlerResult::Suspend;
-                }
+                ChoiceType::RecovM
+            };
+            if matches!(suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                instr_ip,
+                real_op,
+                0,
+                choice_type,
+                0,
+                -1,
+            ), HandlerResult::Suspend) {
+                return HandlerResult::Suspend;
+            }
         }
     }
 

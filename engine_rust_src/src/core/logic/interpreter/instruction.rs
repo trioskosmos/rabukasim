@@ -2,6 +2,7 @@ use crate::core::enums::Zone;
 use crate::core::generated_layout::*;
 use crate::core::generated_constants::*;
 use std::sync::Arc;
+use serde::{Deserialize, Serialize};
 
 pub const WORDS_PER_INSTRUCTION: usize = 5;
 const LAYOUT_TAG_MASK: u32 = 0xF000_0000;
@@ -16,7 +17,7 @@ const TAGGED_OPERAND_COUNT_MASK: u32 = 0xFF;
 const OPERAND_HEADER_TAG_MASK: u32 = 0xFF;
 const OPERAND_HEADER_WIDE_FLAG: u32 = 1 << 8;
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct DecodedSlot {
     pub target_slot: u8,
     pub source_zone: Zone,
@@ -66,9 +67,25 @@ impl DecodedSlot {
         else if v == ZONE_YELL { Zone::Yell }
         else { Zone::Default }
     }
+
+    pub fn to_raw(&self) -> i32 {
+        let mut s = 0u32;
+        s |= (self.target_slot as u32 & S_STANDARD_TARGET_SLOT_MASK as u32) << S_STANDARD_TARGET_SLOT_SHIFT;
+        s |= (self.remainder_zone as u32 & S_STANDARD_REMAINDER_ZONE_MASK as u32) << S_STANDARD_REMAINDER_ZONE_SHIFT;
+        s |= (self.source_zone as u8 as u32 & S_STANDARD_SOURCE_ZONE_MASK as u32) << S_STANDARD_SOURCE_ZONE_SHIFT;
+        s |= (self.dest_zone as u8 as u32 & S_STANDARD_DEST_ZONE_MASK as u32) << S_STANDARD_DEST_ZONE_SHIFT;
+        s |= (self.area_idx as u32 & S_STANDARD_AREA_IDX_MASK as u32) << S_STANDARD_AREA_IDX_SHIFT;
+        if self.is_opponent { s |= 1 << S_STANDARD_IS_OPPONENT_SHIFT; }
+        if self.is_reveal_until_live { s |= 1 << S_STANDARD_IS_REVEAL_UNTIL_LIVE_SHIFT; }
+        if self.is_baton_slot { s |= 1 << S_STANDARD_IS_BATON_SLOT_SHIFT; }
+        if self.is_empty_slot { s |= 1 << S_STANDARD_IS_EMPTY_SLOT_SHIFT; }
+        if self.is_wait { s |= 1 << S_STANDARD_IS_WAIT_SHIFT; }
+        if self.is_dynamic { s |= 1 << S_STANDARD_IS_DYNAMIC_SHIFT; }
+        s as i32
+    }
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct DecodedHeartCounts {
     pub pink: u8,
     pub red: u8,
@@ -94,7 +111,7 @@ impl DecodedHeartCounts {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct DecodedLookAndChoose {
     pub count: u8,
     pub char_id_1: u8,
@@ -116,9 +133,20 @@ impl DecodedLookAndChoose {
             dest_discard: ((uv >> V_LOOK_CHOOSE_DEST_DISCARD_SHIFT) & V_LOOK_CHOOSE_DEST_DISCARD_MASK) != 0,
         }
     }
+
+    pub fn to_raw(&self) -> i32 {
+        let mut v = 0u32;
+        v |= (self.count as u32 & V_LOOK_CHOOSE_COUNT_MASK) << V_LOOK_CHOOSE_COUNT_SHIFT;
+        v |= (self.char_id_1 as u32 & V_LOOK_CHOOSE_CHAR_ID_1_MASK) << V_LOOK_CHOOSE_CHAR_ID_1_SHIFT;
+        v |= (self.char_id_2 as u32 & V_LOOK_CHOOSE_CHAR_ID_2_MASK) << V_LOOK_CHOOSE_CHAR_ID_2_SHIFT;
+        v |= (self.char_id_3 as u32 & V_LOOK_CHOOSE_CHAR_ID_3_MASK) << V_LOOK_CHOOSE_CHAR_ID_3_SHIFT;
+        if self.reveal { v |= 1 << V_LOOK_CHOOSE_REVEAL_SHIFT; }
+        if self.dest_discard { v |= 1 << V_LOOK_CHOOSE_DEST_DISCARD_SHIFT; }
+        v as i32
+    }
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct DecodedHeartRequirements {
     pub reqs: [u8; 8],
 }
@@ -141,7 +169,7 @@ impl DecodedHeartRequirements {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct DecodedFilterAttr {
     pub target_player: u8,
     pub card_type: u8,
@@ -232,6 +260,7 @@ impl DecodedFilterAttr {
         a |= (self.char_id_1 as u64 & A_STANDARD_CHAR_ID_1_MASK) << A_STANDARD_CHAR_ID_1_SHIFT;
         a |= (self.char_id_2 as u64 & A_STANDARD_CHAR_ID_2_MASK) << A_STANDARD_CHAR_ID_2_SHIFT;
         a |= (self.zone_mask as u64 & A_STANDARD_ZONE_MASK_MASK) << A_STANDARD_ZONE_MASK_SHIFT;
+        a |= (self.special_id as u64 & A_STANDARD_SPECIAL_ID_MASK) << A_STANDARD_SPECIAL_ID_SHIFT;
         if self.is_setsuna { a |= 1 << A_STANDARD_IS_SETSUNA_SHIFT; }
         if self.compare_accumulated { a |= 1 << A_STANDARD_COMPARE_ACCUMULATED_SHIFT; }
         if self.is_optional { a |= 1 << A_STANDARD_IS_OPTIONAL_SHIFT; }

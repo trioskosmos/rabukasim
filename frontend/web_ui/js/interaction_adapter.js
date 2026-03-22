@@ -21,6 +21,7 @@ export const InteractionAdapter = {
             myEnergy: {},
             oppEnergy: {},
             discard: {},
+            selection: {},
             hasSelection: false
         };
 
@@ -101,11 +102,16 @@ export const InteractionAdapter = {
                 if (a.type === 'SELECT_DISCARD' || m.from_discard || (a.id >= 9300 && a.id <= 9999)) {
                     valid.discard['all'] = a.id;
                 }
+
+                // Choice Selection (Looked Cards / Selection Modal)
+                if (a.id >= 11000 && a.id <= 11999) {
+                    valid.selection[a.id - 11000] = a.id;
+                }
             });
 
             const hasCardActions = (Object.keys(valid.myHand).length + Object.keys(valid.myStage).length + Object.keys(valid.myLive).length +
                 Object.keys(valid.oppHand).length + Object.keys(valid.oppStage).length + Object.keys(valid.oppLive).length +
-                Object.keys(valid.myEnergy).length) > 0;
+                Object.keys(valid.myEnergy).length + Object.keys(valid.selection).length) > 0;
             valid.hasSelection = hasCardActions;
 
             // Handle pending choice options

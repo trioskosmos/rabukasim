@@ -14,16 +14,16 @@ use crate::core::enums::Phase;
 use crate::core::models::{GameState, AbilityContext};
 use crate::core::logic::constants::*;
 use super::CardDatabase;
-use super::Ability;
+use super::models::{Ability, AbilityFrame, FrameProgram};
 use self::instruction::{BytecodeProgram, WORDS_PER_INSTRUCTION};
 pub use conditions::{check_condition, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
 pub use handlers::{HandlerRegistry, HandlerResult};
 pub use suspension::{get_choice_text, resolve_target_slot, suspend_interaction};
 
-use std::sync::OnceLock;
 use std::collections::HashSet;
-use std::sync::Mutex;
+use std::fmt;
+use std::sync::{Arc, Mutex, OnceLock};
 
 pub static GLOBAL_OPCODE_TRACKER: OnceLock<Mutex<HashSet<i32>>> = OnceLock::new();
 
@@ -46,6 +46,58 @@ pub fn get_global_opcode_tracker() -> &'static Mutex<HashSet<i32>> {
 /// The maximum depth of nested bytecode execution (e.g. via O_TRIGGER_REMOTE)
 pub const MAX_DEPTH: usize = 8;
 pub const MAX_BYTECODE_LOG_SIZE: usize = 500;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum InterpreterError {
+    InfiniteLoop { steps: u32, limit: u32 },
+    InvalidInstruction { ip: usize },
+}
+
+impl fmt::Display for InterpreterError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            InterpreterError::InfiniteLoop { steps, limit } => {
+                write!(f, "interpreter exceeded step limit: {} >= {}", steps, limit)
+            }
+            InterpreterError::InvalidInstruction { ip } => {
+                write!(f, "invalid bytecode instruction at ip {}", ip)
+            }
+        }
+    }
+}
+
+fn begin_execution(state: &mut GameState, ctx_in: &AbilityContext) -> bool {
+    let execution_started = state.ui.current_execution_id.is_none() && ctx_in.program_counter == 0;
+    if execution_started {
+        state.generate_execution_id();
+        if !state.ui.silent {
+            state.log("Interpreter execution started.".to_string());
+        }
+    }
+    execution_started
+}
+
+fn finish_execution(state: &mut GameState, ctx_in: &AbilityContext, execution_started: bool) {
+    state.players[ctx_in.player_id as usize].revealed_cards.clear();
+
+    if execution_started {
+        state.clear_execution_id();
+    }
+
+    if (state.phase == Phase::Response || state.phase == Phase::Setup)
+        && state.interaction_stack.is_empty()
+    {
+        let orig = ctx_in.original_phase.unwrap_or(Phase::Main);
+        state.phase = if orig == Phase::Response || orig == Phase::Setup {
+            Phase::Main
+        } else {
+            orig
+        };
+        if let Some(p) = ctx_in.original_current_player {
+            state.current_player = p;
+        }
+    }
+}
 
 struct ExecutionFrame {
     program: BytecodeProgram,
@@ -104,22 +156,21 @@ pub fn resolve_ability(
     db: &CardDatabase,
     ability: &Ability,
     ctx_in: &AbilityContext,
-) {
+) -> Result<(), InterpreterError> {
     // VANILLA MODE: Skip all ability execution
     if db.is_truly_vanilla() {
-        return;
+        return Ok(());
+    }
+
+    if let Some(frame_prog) = &ability.frame_program {
+        return resolve_bytecode(state, db, Arc::new(frame_prog.to_bytecode()), ctx_in);
     }
 
     if !ability_uses_structured_runtime(ability) {
-        resolve_bytecode(state, db, std::sync::Arc::new(ability.bytecode.clone()), ctx_in);
-        return;
+        return resolve_bytecode(state, db, Arc::new(ability.bytecode.clone()), ctx_in);
     }
 
-    let _id = if state.ui.current_execution_id.is_none() && ctx_in.program_counter == 0 {
-        Some(state.generate_execution_id())
-    } else {
-        None
-    };
+    let execution_started = begin_execution(state, ctx_in);
 
     let registry = HandlerRegistry::new();
     let mut ctx = ctx_in.clone();
@@ -142,54 +193,35 @@ pub fn resolve_ability(
 
         match registry.dispatch(state, db, &mut ctx, &instr, ip, &[]) {
             HandlerResult::Continue => {
-                ctx.choice_index = -1;
-                ctx.v_remaining = -1;
+                ctx.clear_step_state();
                 effect_idx += 1;
             }
             HandlerResult::SetCond(_) => {
-                ctx.choice_index = -1;
-                ctx.v_remaining = -1;
+                ctx.clear_step_state();
                 effect_idx += 1;
             }
-            HandlerResult::Suspend => return,
+            HandlerResult::Suspend => return Ok(()),
             HandlerResult::Return => break,
             HandlerResult::Branch(new_ip) => {
-                ctx.choice_index = -1;
-                ctx.v_remaining = -1;
+                ctx.clear_step_state();
                 effect_idx = BytecodeProgram::effect_idx(new_ip);
             }
             HandlerResult::BranchToBytecode(new_bc) => {
-                resolve_bytecode(state, db, new_bc, &ctx);
-                if state.phase == Phase::Response {
-                    return;
+                if let Err(err) = resolve_bytecode(state, db, new_bc, &ctx) {
+                    finish_execution(state, ctx_in, execution_started);
+                    return Err(err);
                 }
-                ctx.choice_index = -1;
-                ctx.v_remaining = -1;
+                if state.phase == Phase::Response {
+                    return Ok(());
+                }
+                ctx.clear_step_state();
                 effect_idx += 1;
             }
         }
     }
 
-    state.players[ctx_in.player_id as usize].revealed_cards.clear();
-
-    if _id.is_some() {
-        state.clear_execution_id();
-    }
-
-    if ctx_in.choice_index != -1
-        && (state.phase == Phase::Response || state.phase == Phase::Setup)
-        && state.interaction_stack.is_empty()
-    {
-        let orig = ctx_in.original_phase.unwrap_or(Phase::Main);
-        state.phase = if orig == Phase::Response || orig == Phase::Setup {
-            Phase::Main
-        } else {
-            orig
-        };
-        if let Some(p) = ctx_in.original_current_player {
-            state.current_player = p;
-        }
-    }
+    finish_execution(state, ctx_in, execution_started);
+    Ok(())
 }
 
 impl BytecodeExecutor {
@@ -210,30 +242,31 @@ impl BytecodeExecutor {
     }
 }
 
+pub fn resolve_frames(
+    state: &mut GameState,
+    db: &CardDatabase,
+    frames: &[AbilityFrame],
+    ctx_in: &AbilityContext,
+) -> Result<(), InterpreterError> {
+    resolve_bytecode(state, db, Arc::new(FrameProgram { frames: frames.to_vec() }.to_bytecode()), ctx_in)
+}
+
 /// Main entry point for bytecode execution
 pub fn resolve_bytecode(
     state: &mut GameState,
     db: &CardDatabase,
-    bytecode: std::sync::Arc<Vec<i32>>,
+    bytecode: Arc<Vec<i32>>,
     ctx_in: &AbilityContext,
-) {
+) -> Result<(), InterpreterError> {
     // VANILLA MODE: Skip all bytecode execution
     if db.is_vanilla {
-        return;
+        return Ok(());
     }
 
-    let _id = if state.ui.current_execution_id.is_none() && ctx_in.program_counter == 0 {
-        Some(state.generate_execution_id())
-    } else {
-        None
-    };
+    let execution_started = begin_execution(state, ctx_in);
 
     let mut executor = BytecodeExecutor::new(bytecode, ctx_in);
     let registry = HandlerRegistry::new();
-
-    if !state.ui.silent && _id.is_some() {
-        state.log("Bytecode execution started.".to_string());
-    }
 
     while !executor.stack.is_empty() {
         if executor.steps >= MAX_INTERPRETER_STEPS {
@@ -242,7 +275,8 @@ pub fn resolve_bytecode(
                     println!("[ERROR] Interpreter infinite loop detected (1000 steps)");
                 }
             }
-            break;
+            finish_execution(state, ctx_in, execution_started);
+            return Err(InterpreterError::InfiniteLoop { steps: executor.steps, limit: MAX_INTERPRETER_STEPS });
         }
         executor.steps += 1;
 
@@ -251,12 +285,19 @@ pub fn resolve_bytecode(
         let frame = executor.stack.last_mut().unwrap();
 
         let ip = frame.ip;
-        if !frame.program.is_word_ip_valid(ip) {
+        if ip >= frame.program.len_words() {
             executor.pop_frame();
             continue;
         }
 
-        let instr = frame.program.instruction_at(ip).unwrap();
+        let instr = match frame.program.instruction_at(ip) {
+            Some(instr) => instr,
+            None => {
+                finish_execution(state, ctx_in, execution_started);
+                return Err(InterpreterError::InvalidInstruction { ip });
+            }
+        };
+
         let op = instr.op;
         let v = instr.v;
         let a = instr.a;
@@ -462,10 +503,10 @@ pub fn resolve_bytecode(
         ) {
             HandlerResult::Continue => {}
             HandlerResult::SetCond(c) => executor.cond = c,
-            HandlerResult::Suspend => return,
+            HandlerResult::Suspend => return Ok(()),
             HandlerResult::Return => {
                 if executor.pop_frame().is_none() {
-                    return;
+                    break;
                 }
             }
             HandlerResult::Branch(new_ip) => {
@@ -487,31 +528,13 @@ pub fn resolve_bytecode(
             // CRITICAL: Only reset these if we aren't suspended,
             // otherwise we lose the budget (v_remaining) and choice state for resumption.
             if do_reset {
-                f.ctx.choice_index = -1; // Reset choice index after each instruction
-                f.ctx.v_remaining = -1; // Reset v_remaining to prevent state leakage, UNLESS we are branching
+                f.ctx.clear_step_state(); // Reset choice state after each instruction
             }
         }
     }
 
-    // Cleanup revealed cards after ability finishes
-    state.players[ctx_in.player_id as usize].revealed_cards.clear();
-
-    if _id.is_some() {
-        state.clear_execution_id();
-    }
-
-    // Restore phase if we finished a resumed execution and no new suspensions occurred
-    if (state.phase == Phase::Response || state.phase == Phase::Setup) && state.interaction_stack.is_empty() {
-        let orig = ctx_in.original_phase.unwrap_or(Phase::Main);
-        state.phase = if orig == Phase::Response || orig == Phase::Setup {
-            Phase::Main
-        } else {
-            orig
-        };
-        if let Some(p) = ctx_in.original_current_player {
-            state.current_player = p;
-        }
-    }
+    finish_execution(state, ctx_in, execution_started);
+    Ok(())
 }
 
 /// Helper to check if an opcode is a condition
@@ -565,7 +588,7 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             if state.phase == Phase::PerformanceP1 || state.phase == Phase::PerformanceP2 || state.phase == Phase::LiveResult {
                 state.players[p_idx].perf_triggered_abilities.push((cid, ab_idx as i16, _trigger));
             }
-            resolve_ability(state, db, ability, &ctx);
+            let _ = resolve_ability(state, db, ability, &ctx);
 
             // Fire resolution triggers
             let res_trigger = match _trigger {
@@ -659,3 +682,4 @@ pub fn consume_once_per_turn(
     let uid = get_ability_uid(source_type, instance_key, id, ab_idx as u32);
     state.players[p_idx].used_abilities.push(uid);
 }
+

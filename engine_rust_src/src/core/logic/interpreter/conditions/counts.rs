@@ -2,7 +2,6 @@ use crate::core::enums::*;
 use crate::core::logic::constants::*;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
-use crate::core::hearts::HeartBoard;
 
 pub fn resolve_count(
     state: &GameState,

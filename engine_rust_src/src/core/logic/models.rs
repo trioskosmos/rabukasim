@@ -3,6 +3,93 @@ use crate::core::enums::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use crate::core::logic::interpreter::instruction::BytecodeProgram;
+use crate::core::logic::interpreter::instruction::{DecodedSlot, DecodedFilterAttr, DecodedLookAndChoose};
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+pub enum AbilityFrame {
+    Return,
+    Draw {
+        count: i32,
+    },
+    RecoverLive {
+        count: i32,
+        filter: DecodedFilterAttr,
+        slot: DecodedSlot,
+    },
+    RecoverMember {
+        count: i32,
+        filter: DecodedFilterAttr,
+        slot: DecodedSlot,
+    },
+    LookAndChoose {
+        params: DecodedLookAndChoose,
+        filter: DecodedFilterAttr,
+        slot: DecodedSlot,
+    },
+    SelectMember {
+        count: i32,
+        filter: DecodedFilterAttr,
+        slot: DecodedSlot,
+    },
+    MoveMember {
+        filter: DecodedFilterAttr,
+        slot: DecodedSlot,
+    },
+    MetaRule {
+        rule_type: i32,
+        filter: DecodedFilterAttr,
+        slot: DecodedSlot,
+    },
+    Raw {
+        opcode: i32,
+        value: i32,
+        attr: u64,
+        slot: i32,
+    },
+}
+
+impl Default for AbilityFrame {
+    fn default() -> Self {
+        AbilityFrame::Raw { opcode: 0, value: 0, attr: 0, slot: 0 }
+    }
+}
+
+impl AbilityFrame {
+    pub fn to_instruction(&self) -> crate::core::logic::interpreter::instruction::BytecodeInstruction {
+        let (op, v, a, s) = match self {
+            AbilityFrame::Return => (O_RETURN, 0, 0, 0),
+            AbilityFrame::Draw { count } => (O_DRAW, *count, 0, 0),
+            AbilityFrame::RecoverLive { count, filter, slot } => (O_RECOVER_LIVE, *count, filter.to_attr(), slot.to_raw()),
+            AbilityFrame::RecoverMember { count, filter, slot } => (O_RECOVER_MEMBER, *count, filter.to_attr(), slot.to_raw()),
+            AbilityFrame::LookAndChoose { params, filter, slot } => (O_LOOK_AND_CHOOSE, params.to_raw(), filter.to_attr(), slot.to_raw()),
+            AbilityFrame::SelectMember { count, filter, slot } => (O_SELECT_MEMBER, *count, filter.to_attr(), slot.to_raw()),
+            AbilityFrame::MoveMember { filter, slot } => (O_MOVE_MEMBER, 0, filter.to_attr(), slot.to_raw()),
+            AbilityFrame::MetaRule { rule_type, filter, slot } => (O_META_RULE, *rule_type, filter.to_attr(), slot.to_raw()),
+            AbilityFrame::Raw { opcode, value, attr, slot } => (*opcode, *value, *attr, *slot),
+        };
+        crate::core::logic::interpreter::instruction::BytecodeInstruction { op, v, a: a as i64, raw_s: s }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Hash)]
+pub struct FrameProgram {
+    pub frames: Vec<AbilityFrame>,
+}
+
+impl FrameProgram {
+    pub fn to_bytecode(&self) -> Vec<i32> {
+        let mut words = Vec::with_capacity(self.frames.len() * crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION);
+        for frame in &self.frames {
+            let instr = frame.to_instruction();
+            words.push(instr.op);
+            words.push(instr.v);
+            words.push(instr.a as i32);
+            words.push((instr.a >> 32) as i32);
+            words.push(instr.raw_s);
+        }
+        words
+    }
+}
 
 // Re-export constants so they're available to all modules using `use super::models::*;`
 pub use crate::core::logic::constants::*;
@@ -123,6 +210,32 @@ pub struct AbilityContext {
     pub auto_pick: bool, // If true, mandatory single-choice steps (like O_SELECT_MODE) will resolve automatically
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct StaticAbilityContext {
+    pub player_id: u8,
+    pub activator_id: u8,
+    pub area_idx: i16,
+    pub source_card_id: i32,
+    pub target_card_id: i32,
+    pub target_slot: i16,
+    pub ability_index: i16,
+    pub trigger_type: TriggerType,
+    pub original_phase: Option<Phase>,
+    pub original_current_player: Option<u8>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
+pub struct AbilityExecutionState {
+    pub choice_index: i16,
+    pub v_accumulated: i16,
+    pub program_counter: u16,
+    pub v_remaining: i16,
+    pub repeat_count: i16,
+    pub selected_cards: smallvec::SmallVec<[i32; 8]>,
+    pub selected_color: i16,
+    pub auto_pick: bool,
+}
+
 impl Default for AbilityContext {
     fn default() -> Self {
         Self {
@@ -145,6 +258,52 @@ impl Default for AbilityContext {
             selected_cards: smallvec::SmallVec::new(),
             auto_pick: false,
         }
+    }
+}
+
+impl AbilityContext {
+    pub fn static_context(&self) -> StaticAbilityContext {
+        StaticAbilityContext {
+            player_id: self.player_id,
+            activator_id: self.activator_id,
+            area_idx: self.area_idx,
+            source_card_id: self.source_card_id,
+            target_card_id: self.target_card_id,
+            target_slot: self.target_slot,
+            ability_index: self.ability_index,
+            trigger_type: self.trigger_type,
+            original_phase: self.original_phase,
+            original_current_player: self.original_current_player,
+        }
+    }
+
+    pub fn execution_state(&self) -> AbilityExecutionState {
+        AbilityExecutionState {
+            choice_index: self.choice_index,
+            v_accumulated: self.v_accumulated,
+            program_counter: self.program_counter,
+            v_remaining: self.v_remaining,
+            repeat_count: self.repeat_count,
+            selected_cards: self.selected_cards.clone(),
+            selected_color: self.selected_color,
+            auto_pick: self.auto_pick,
+        }
+    }
+
+    pub fn apply_execution_state(&mut self, execution_state: &AbilityExecutionState) {
+        self.choice_index = execution_state.choice_index;
+        self.v_accumulated = execution_state.v_accumulated;
+        self.program_counter = execution_state.program_counter;
+        self.v_remaining = execution_state.v_remaining;
+        self.repeat_count = execution_state.repeat_count;
+        self.selected_cards = execution_state.selected_cards.clone();
+        self.selected_color = execution_state.selected_color;
+        self.auto_pick = execution_state.auto_pick;
+    }
+
+    pub fn clear_step_state(&mut self) {
+        self.choice_index = -1;
+        self.v_remaining = -1;
     }
 }
 
@@ -216,6 +375,8 @@ pub struct Ability {
     pub opcodes_mask: u128,
     #[serde(default, skip_serializing)]
     pub sparse_frame_index: Option<serde_json::Value>,
+    #[serde(default, skip_serializing)]
+    pub frame_program: Option<FrameProgram>,
 }
 
 impl std::hash::Hash for Ability {
@@ -236,12 +397,42 @@ impl std::hash::Hash for Ability {
         self.preparsed_modifiers.hash(state);
         self.opcodes_mask.hash(state);
         self.sparse_frame_index.hash(state);
+        self.frame_program.hash(state);
     }
 }
 
 impl Ability {
     pub fn bytecode_program(&self) -> BytecodeProgram {
-        BytecodeProgram::from_slice(&self.bytecode)
+        if !self.bytecode.is_empty() {
+            BytecodeProgram::from_slice(&self.bytecode)
+        } else if let Some(frame_program) = &self.frame_program {
+            BytecodeProgram::from_slice(&frame_program.to_bytecode())
+        } else {
+            BytecodeProgram::from_slice(&[])
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn frame_program_to_bytecode_roundtrips_through_fixed_layout_decoder() {
+        let program = FrameProgram {
+            frames: vec![
+                AbilityFrame::Return,
+                AbilityFrame::Raw { opcode: 204, value: 3, attr: 0x1122_3344_5566_7788, slot: 9 },
+            ],
+        };
+
+        let words = program.to_bytecode();
+        assert_eq!(words.len(), 10);
+
+        let decoded = BytecodeProgram::from_slice(&words).decode_all();
+        assert_eq!(decoded.len(), 2);
+        assert_eq!(decoded[0], AbilityFrame::Return.to_instruction());
+        assert_eq!(decoded[1], AbilityFrame::Raw { opcode: 204, value: 3, attr: 0x1122_3344_5566_7788, slot: 9 }.to_instruction());
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

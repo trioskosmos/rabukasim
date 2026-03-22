@@ -60,8 +60,10 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
             if entry["trigger"] == "ON_LIVE_START" and entry["frames"][0]["opcode_id"] == opcode_id
         )
         self.assertEqual(len(grouped[same_signature]["cards"]), 2)
-        self.assertIn("Card A", {card["name"] for card in grouped[same_signature]["cards"]})
-        self.assertIn("Card B", {card["name"] for card in grouped[same_signature]["cards"]})
+        # cards are formatted strings like "A-001 | Card A [...] (ab#0 ON_LIVE_START)"
+        card_strings = grouped[same_signature]["cards"]
+        self.assertTrue(any("Card A" in c for c in card_strings))
+        self.assertTrue(any("Card B" in c for c in card_strings))
         self.assertTrue(grouped[same_signature]["round_trip_matches"])
         self.assertIn("frames", grouped[same_signature])
         self.assertTrue(all("opcode" in frame for frame in grouped[same_signature]["frames"]))

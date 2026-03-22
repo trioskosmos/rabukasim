@@ -66,3 +66,7 @@ path = "src/repro/c01_sumire_8752.rs"
 [[test]]
 name = "benchmark_sequencer"
 path = "src/repro/benchmark_sequencer.rs"
+
+[[test]]
+name = "random_moves_profiler"
+path = "src/repro/random_moves_profiler.rs"

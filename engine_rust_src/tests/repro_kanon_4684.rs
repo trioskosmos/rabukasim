@@ -31,7 +31,7 @@ fn test_repro_kanon_4684() {
     ctx.ability_index = 0;
     ctx.choice_index = 0; // Pay Energy
 
-    engine_rust::core::logic::interpreter::resolve_bytecode(
+    let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
         &mut state,
         &db,
         Arc::new(ab.bytecode.clone()),
@@ -55,7 +55,7 @@ fn test_repro_kanon_4684() {
     ctx2.ability_index = 0;
     ctx2.choice_index = 1; // Discard Hand
 
-    engine_rust::core::logic::interpreter::resolve_bytecode(
+    let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
         &mut state,
         &db,
         Arc::new(ab.bytecode.clone()),

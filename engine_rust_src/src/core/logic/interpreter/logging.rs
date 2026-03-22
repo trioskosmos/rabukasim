@@ -7,14 +7,14 @@ pub fn get_opcode_log(op: i32, v: i32, a: i64, _s: i32, result_count: i32) -> Op
         O_DRAW => Some(format!("Draw {} card(s)", v)),
         O_ADD_HEARTS => {
             let color_str = match a {
-                0 => "HEART_PINK",
-                1 => "HEART_RED",
-                2 => "HEART_YELLOW",
-                3 => "HEART_GREEN",
-                4 => "HEART_BLUE",
-                5 => "HEART_PURPLE",
-                6 => "HEART_ANY",
-                _ => "HEART_UNKNOWN",
+                0 => "Pink Heart",
+                1 => "Red Heart",
+                2 => "Yellow Heart",
+                3 => "Green Heart",
+                4 => "Blue Heart",
+                5 => "Purple Heart",
+                6 => "Any Heart",
+                _ => "Unknown Heart",
             };
             Some(format!("Added +{} {}", v, color_str))
         }
@@ -55,33 +55,33 @@ pub fn get_opcode_log(op: i32, v: i32, a: i64, _s: i32, result_count: i32) -> Op
         O_REVEAL_UNTIL => Some("Revealed cards until condition met".to_string()),
         O_REDUCE_HEART_REQ => {
             let color_str = match _s {
-                0 => "PINK", 1 => "RED", 2 => "YELLOW", 3 => "GREEN", 4 => "BLUE", 5 => "PURPLE", 6 => "ANY",
-                _ => "UNKNOWN",
+                0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple", 6 => "Any",
+                _ => "Unknown",
             };
             Some(format!("Reduced {} heart requirement by {}", color_str, v))
         }
         O_TRANSFORM_HEART => {
             let src_str = match a {
-                0 => "PINK", 1 => "RED", 2 => "YELLOW", 3 => "GREEN", 4 => "BLUE", 5 => "PURPLE", 6 => "ANY",
-                _ => "UNKNOWN",
+                0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple", 6 => "Any",
+                _ => "Unknown",
             };
             let dst_str = match _s {
-                0 => "PINK", 1 => "RED", 2 => "YELLOW", 3 => "GREEN", 4 => "BLUE", 5 => "PURPLE", 6 => "ANY",
-                _ => "UNKNOWN",
+                0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple", 6 => "Any",
+                _ => "Unknown",
             };
             Some(format!("Transformed {} required hearts to {} (qty={})", src_str, dst_str, v))
         }
         O_INCREASE_HEART_COST => {
             let color_str = match _s {
-                0 => "PINK", 1 => "RED", 2 => "YELLOW", 3 => "GREEN", 4 => "BLUE", 5 => "PURPLE", 6 => "ANY",
-                _ => "UNKNOWN",
+                0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple", 6 => "Any",
+                _ => "Unknown",
             };
             Some(format!("Increased {} heart requirement by {}", color_str, v))
         }
         O_TRANSFORM_COLOR => {
             let dst_str = match v {
-                0 => "PINK", 1 => "RED", 2 => "YELLOW", 3 => "GREEN", 4 => "BLUE", 5 => "PURPLE", 6 => "ANY",
-                _ => "UNKNOWN",
+                0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple", 6 => "Any",
+                _ => "Unknown",
             };
             Some(format!("All hearts transform to {}", dst_str))
         }

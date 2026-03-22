@@ -179,7 +179,12 @@ class ActionMixin:
             abi_key = f"{card_id}-{ability_idx}"
             self.pending_activation = {
                 "ability": ability,
-                "context": {"area": area, "card_id": card_id, "source_card_id": card_id},
+                "context": {
+                    "area": area,
+                    "card_id": card_id,
+                    "source_card_id": card_id,
+                    "original_phase": self.phase,
+                },
                 "abi_key": abi_key,
             }
             return

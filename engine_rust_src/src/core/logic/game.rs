@@ -352,7 +352,11 @@ impl GameState {
         bytecode: std::sync::Arc<Vec<i32>>,
         ctx_in: &AbilityContext,
     ) {
-        super::interpreter::resolve_bytecode(self, db, bytecode, ctx_in);
+        if let Err(err) = super::interpreter::resolve_bytecode(self, db, bytecode, ctx_in) {
+            if self.debug.debug_mode || !self.ui.silent {
+                self.log(format!("[ERROR] Interpreter error: {}", err));
+            }
+        }
     }
 
     /// Convenience: Accept Vec (takes ownership)
@@ -394,7 +398,11 @@ impl GameState {
         ability: &Ability,
         ctx_in: &AbilityContext,
     ) {
-        super::interpreter::resolve_ability(self, db, ability, ctx_in);
+        if let Err(err) = super::interpreter::resolve_ability(self, db, ability, ctx_in) {
+            if self.debug.debug_mode || !self.ui.silent {
+                self.log(format!("[ERROR] Interpreter error: {}", err));
+            }
+        }
     }
 
     pub fn check_condition(

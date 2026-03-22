@@ -1,5 +1,4 @@
 use crate::core::enums::*;
-use crate::core::logic::constants::*;
 use crate::core::logic::filter::map_filter_string_to_attr;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};
 use super::common::{parse_condition_type, MAX_CONDITION_CHECK_DEPTH};

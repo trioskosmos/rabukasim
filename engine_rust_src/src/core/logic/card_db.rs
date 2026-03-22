@@ -17,9 +17,9 @@
 
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
-use crate::core::logic::interpreter::instruction::BytecodeProgram;
-use crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION;
-use crate::core::logic::interpreter::instruction::DecodedFilterAttr;
+use crate::core::logic::interpreter::instruction::{
+    BytecodeProgram, DecodedFilterAttr, DecodedLookAndChoose, DecodedSlot, WORDS_PER_INSTRUCTION,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
@@ -194,11 +194,12 @@ impl CardDatabase {
     }
 
     fn load_sparse_ability_index() -> HashMap<String, Value> {
+        // JSON is the canonical format. YAML paths are legacy fallbacks only.
         for path in [
-            "data/ability_frame_index.yaml",
-            "../data/ability_frame_index.yaml",
             "data/ability_frame_index.json",
             "../data/ability_frame_index.json",
+            "data/ability_frame_index.yaml",
+            "../data/ability_frame_index.yaml",
         ] {
             if let Ok(json) = fs::read_to_string(path) {
                 let parsed_root = if path.ends_with(".yaml") {
@@ -272,6 +273,7 @@ impl CardDatabase {
                 ))
             })?;
             ability.sparse_frame_index = Some(entry.clone());
+            ability.frame_program = Some(Self::sparse_entry_to_frame_program(entry));
             let rebuilt = Self::sparse_entry_to_bytecode(entry);
             if rebuilt.is_empty() {
                 return Err(serde::de::Error::custom(format!(
@@ -280,6 +282,12 @@ impl CardDatabase {
                 )));
             }
             ability.bytecode = rebuilt;
+            if ability.effects.is_empty() {
+                let derived_effects = Self::frame_program_to_effects(ability.frame_program.as_ref().unwrap());
+                if !derived_effects.is_empty() {
+                    ability.effects = derived_effects;
+                }
+            }
             if ability.pseudocode.is_empty() {
                 if let Some(pseudo) = entry.get("pseudocode").and_then(|v| v.as_str()) {
                     ability.pseudocode = pseudo.to_string();
@@ -290,6 +298,19 @@ impl CardDatabase {
     }
 
     pub fn sparse_entry_to_bytecode(entry: &Value) -> Vec<i32> {
+        // Frame-first: rebuild bytecode from the frame model (canonical).
+        // source_words is a migration shim; fall back to it only if frames is absent.
+        let mut bytecode = Vec::new();
+        if let Some(frames) = entry.get("frames").and_then(|v| v.as_array()) {
+            if !frames.is_empty() {
+                for frame in frames {
+                    bytecode.extend(Self::encode_sparse_frame(frame));
+                }
+                return bytecode;
+            }
+        }
+
+        // Legacy fallback: source_words (migration shim — remove after suite is green)
         if let Some(words) = entry.get("source_words").and_then(|v| v.as_array()) {
             let source_words: Vec<i32> = words
                 .iter()
@@ -300,13 +321,167 @@ impl CardDatabase {
             }
         }
 
-        let mut bytecode = Vec::new();
+        bytecode
+    }
+
+    pub fn sparse_entry_to_frame_program(entry: &Value) -> FrameProgram {
+        let mut program_frames = Vec::new();
         if let Some(frames) = entry.get("frames").and_then(|v| v.as_array()) {
             for frame in frames {
-                bytecode.extend(Self::encode_sparse_frame(frame));
+                program_frames.push(Self::parse_semantic_frame(frame));
+            }
+        } else if let Some(words) = entry.get("source_words").and_then(|v| v.as_array()) {
+            let mut ip = 0;
+            while ip + 4 < words.len() {
+                let op = words[ip].as_i64().unwrap_or(0) as i32;
+                let v = words[ip + 1].as_i64().unwrap_or(0) as i32;
+                let a_low = words[ip + 2].as_i64().unwrap_or(0) as u32;
+                let a_high = words[ip + 3].as_i64().unwrap_or(0) as u32;
+                let a = (a_low as u64) | ((a_high as u64) << 32);
+                let s = words[ip + 4].as_i64().unwrap_or(0) as i32;
+                program_frames.push(Self::raw_to_semantic_frame(op, v, a, s));
+                ip += 5;
             }
         }
-        bytecode
+        FrameProgram { frames: program_frames }
+    }
+
+    fn frame_program_to_effects(frame_program: &FrameProgram) -> Vec<Effect> {
+        frame_program
+            .frames
+            .iter()
+            .filter_map(Self::frame_to_effect)
+            .collect()
+    }
+
+    fn frame_to_effect(frame: &AbilityFrame) -> Option<Effect> {
+        let instr = frame.to_instruction();
+        let effect_type = match instr.op {
+            O_DRAW => EffectType::Draw,
+            O_ADD_BLADES => EffectType::AddBlades,
+            O_ADD_HEARTS => EffectType::AddHearts,
+            O_REDUCE_COST => EffectType::ReduceCost,
+            O_LOOK_DECK => EffectType::LookDeck,
+            O_RECOVER_LIVE => EffectType::RecoverLive,
+            O_BOOST_SCORE => EffectType::BoostScore,
+            O_RECOVER_MEMBER => EffectType::RecoverMember,
+            O_BUFF_POWER => EffectType::BuffPower,
+            O_IMMUNITY => EffectType::Immunity,
+            O_MOVE_MEMBER => EffectType::MoveMember,
+            O_SWAP_CARDS => EffectType::SwapCards,
+            O_SEARCH_DECK => EffectType::SearchDeck,
+            O_ENERGY_CHARGE => EffectType::EnergyCharge,
+            O_SET_BLADES => EffectType::SetBlades,
+            O_SET_HEARTS => EffectType::SetHearts,
+            O_FORMATION_CHANGE => EffectType::FormationChange,
+            O_NEGATE_EFFECT => EffectType::NegateEffect,
+            O_ORDER_DECK => EffectType::OrderDeck,
+            O_META_RULE => EffectType::MetaRule,
+            O_SELECT_MODE => EffectType::SelectMode,
+            O_MOVE_TO_DECK => EffectType::MoveToDeck,
+            O_TAP_OPPONENT => EffectType::TapOpponent,
+            O_PLACE_UNDER => EffectType::PlaceUnder,
+            O_RESTRICTION => EffectType::Restriction,
+            O_BATON_TOUCH_MOD => EffectType::BatonTouchMod,
+            O_SET_SCORE => EffectType::SetScore,
+            O_SWAP_ZONE => EffectType::SwapZone,
+            O_TRANSFORM_COLOR => EffectType::TransformColor,
+            O_REVEAL_CARDS => EffectType::RevealCards,
+            O_LOOK_AND_CHOOSE => EffectType::LookAndChoose,
+            O_CHEER_REVEAL => EffectType::CheerReveal,
+            O_ACTIVATE_MEMBER => EffectType::ActivateMember,
+            O_ADD_TO_HAND => EffectType::AddToHand,
+            O_COLOR_SELECT => EffectType::ColorSelect,
+            O_TRIGGER_REMOTE => EffectType::TriggerRemote,
+            O_REDUCE_HEART_REQ => EffectType::ReduceHeartReq,
+            O_MODIFY_SCORE_RULE => EffectType::ModifyScoreRule,
+            O_ADD_STAGE_ENERGY => EffectType::AddStageEnergy,
+            O_SET_TAPPED => EffectType::SetTapped,
+            O_TAP_MEMBER => EffectType::TapMember,
+            O_PLAY_MEMBER_FROM_HAND => EffectType::PlayMemberFromHand,
+            O_MOVE_TO_DISCARD => EffectType::MoveToDiscard,
+            O_GRANT_ABILITY => EffectType::GrantAbility,
+            O_INCREASE_HEART_COST => EffectType::IncreaseHeartCost,
+            O_REDUCE_YELL_COUNT => EffectType::ReduceYellCount,
+            O_PLAY_MEMBER_FROM_DISCARD => EffectType::PlayMemberFromDiscard,
+            O_SELECT_MEMBER => EffectType::SelectMember,
+            O_DRAW_UNTIL => EffectType::DrawUntil,
+            O_SELECT_PLAYER => EffectType::SelectPlayer,
+            O_SELECT_LIVE => EffectType::SelectLive,
+            O_REVEAL_UNTIL => EffectType::RevealUntil,
+            O_INCREASE_COST => EffectType::IncreaseCost,
+            O_PREVENT_PLAY_TO_SLOT => EffectType::PreventPlayToSlot,
+            O_SWAP_AREA => EffectType::SwapArea,
+            O_TRANSFORM_HEART => EffectType::TransformHeart,
+            O_SELECT_CARDS => EffectType::SelectCards,
+            O_OPPONENT_CHOOSE => EffectType::OpponentChoose,
+            O_PLAY_LIVE_FROM_DISCARD => EffectType::PlayLiveFromDiscard,
+            O_REDUCE_LIVE_SET_LIMIT => EffectType::ReduceLiveSetLimit,
+            O_SET_TARGET_SELF => EffectType::SetTargetSelf,
+            O_SET_TARGET_OPPONENT => EffectType::SetTargetOpponent,
+            O_PREVENT_SET_TO_SUCCESS_PILE => EffectType::PreventSetToSuccessPile,
+            O_ACTIVATE_ENERGY => EffectType::ActivateEnergy,
+            O_PREVENT_ACTIVATE => EffectType::PreventActivate,
+            O_SET_HEART_COST => EffectType::SetHeartCost,
+            O_PREVENT_BATON_TOUCH => EffectType::PreventBatonTouch,
+            O_LOOK_DECK_DYNAMIC => EffectType::LookDeckDynamic,
+            O_REDUCE_SCORE => EffectType::ReduceScore,
+            O_REPEAT_ABILITY => EffectType::RepeatAbility,
+            O_LOSE_EXCESS_HEARTS => EffectType::LoseExcessHearts,
+            O_SKIP_ACTIVATE_PHASE => EffectType::SkipActivatePhase,
+            O_PAY_ENERGY_DYNAMIC => EffectType::PayEnergyDynamic,
+            O_PLACE_ENERGY_UNDER_MEMBER => EffectType::PlaceEnergyUnderMember,
+            O_CALC_SUM_COST => EffectType::CalcSumCost,
+            O_LOOK_REORDER_DISCARD => EffectType::LookReorderDiscard,
+            O_DIV_VALUE => EffectType::DivValue,
+            O_TRANSFORM_BLADES => EffectType::TransformBlades,
+            O_RETURN | O_JUMP | O_JUMP_IF_FALSE | O_PAY_ENERGY | C_SUM_VALUE => return None,
+            _ => return None,
+        };
+
+        Some(Effect {
+            effect_type,
+            value: instr.v,
+            value_cond: ConditionType::None,
+            target: TargetType::Self_,
+            is_optional: false,
+            params: serde_json::Value::Null,
+            runtime_opcode: instr.op,
+            runtime_value: instr.v,
+            runtime_attr: instr.a as u64,
+            runtime_slot: instr.raw_s,
+            modal_options: serde_json::Value::Null,
+        })
+    }
+
+    fn raw_to_semantic_frame(op: i32, v: i32, a: u64, s: i32) -> AbilityFrame {
+        let filter = DecodedFilterAttr::decode(a as i64);
+        let slot = DecodedSlot::decode(s);
+        match op {
+            O_RETURN => AbilityFrame::Return,
+            O_DRAW => AbilityFrame::Draw { count: v },
+            O_RECOVER_LIVE => AbilityFrame::RecoverLive { count: v, filter, slot },
+            O_RECOVER_MEMBER => AbilityFrame::RecoverMember { count: v, filter, slot },
+            O_LOOK_AND_CHOOSE => AbilityFrame::LookAndChoose {
+                params: DecodedLookAndChoose::decode(v),
+                filter,
+                slot,
+            },
+            O_SELECT_MEMBER => AbilityFrame::SelectMember { count: v, filter, slot },
+            O_MOVE_MEMBER => AbilityFrame::MoveMember { filter, slot },
+            O_META_RULE => AbilityFrame::MetaRule { rule_type: v, filter, slot },
+            _ => AbilityFrame::Raw { opcode: op, value: v, attr: a, slot: s },
+        }
+    }
+
+    fn parse_semantic_frame(frame: &Value) -> AbilityFrame {
+        let opcode_name = frame.get("opcode").and_then(|v| v.as_str()).unwrap_or("");
+        let opcode_id = frame.get("opcode_id").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+        let v = Self::encode_sparse_value(opcode_name, frame.get("value"));
+        let a = Self::encode_sparse_attr(opcode_name, frame.get("attr"));
+        let s = Self::encode_sparse_slot(frame.get("slot"));
+
+        Self::raw_to_semantic_frame(opcode_id, v, a, s)
     }
 
     fn encode_sparse_frame(frame: &Value) -> Vec<i32> {

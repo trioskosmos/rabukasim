@@ -79,7 +79,10 @@ pub fn finalize_play_member_from_discard(
         state.players[target_p_idx].set_moved(slot_idx, true);
         state.register_played_member(target_p_idx, card_id, db);
         state.players[target_p_idx].prevent_play_to_slot_mask |= 1 << slot_idx;
+
+
     }
 
     HandlerResult::Continue
 }
+
