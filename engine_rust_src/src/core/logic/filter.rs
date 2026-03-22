@@ -444,9 +444,8 @@ impl CardFilter {
                     } else {
                         0
                     };
-                    if looked_mask != 0 && (char_mask & looked_mask) != 0 {
-                        matched = true;
-                        break;
+                    if looked_mask != 0 && (char_mask & looked_mask) == 0 {
+                        continue;
                     }
                 }
 
@@ -481,10 +480,6 @@ impl CardFilter {
             }
         }
 
-        if state.debug.debug_mode {
-            let name = if let Some(m) = db.get_member(cid) { &m.name } else if let Some(l) = db.get_live(cid) { &l.name } else { "Unknown" };
-            println!("[DEBUG_FILTER] Card {} ({}) MATCHED filter.", cid, name);
-        }
         true
     }
 

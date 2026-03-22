@@ -1,4 +1,4 @@
-//! # Modular Bytecode Interpreter
+﻿//! # Modular Bytecode Interpreter
 //!
 //! This module decouples the monolithic interpreter into smaller, maintainable components.
 
@@ -14,7 +14,7 @@ use crate::core::enums::Phase;
 use crate::core::models::{GameState, AbilityContext};
 use crate::core::logic::constants::*;
 use super::CardDatabase;
-use super::models::{Ability, AbilityFrame, FrameProgram};
+use super::models::{Ability, AbilityFrame};
 use self::instruction::{BytecodeProgram, WORDS_PER_INSTRUCTION};
 pub use conditions::{check_condition, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
@@ -163,7 +163,7 @@ pub fn resolve_ability(
     }
 
     if let Some(frame_prog) = &ability.frame_program {
-        return resolve_bytecode(state, db, Arc::new(frame_prog.to_bytecode()), ctx_in);
+        return resolve_semantic_frames(state, db, &frame_prog.frames, ability.bytecode.as_slice(), ctx_in);
     }
 
     if !ability_uses_structured_runtime(ability) {
@@ -175,6 +175,7 @@ pub fn resolve_ability(
     let registry = HandlerRegistry::new();
     let mut ctx = ctx_in.clone();
     let mut effect_idx = BytecodeProgram::effect_idx(ctx_in.program_counter as usize);
+    println!("[DEBUG] resolve_ability starting. Source: {}, Effects: {}", ctx_in.source_card_id, ability.effects.len());
 
     while effect_idx < ability.effects.len() {
         let effect = &ability.effects[effect_idx];
@@ -224,6 +225,246 @@ pub fn resolve_ability(
     Ok(())
 }
 
+pub fn resolve_semantic_frames(
+    state: &mut GameState,
+    db: &CardDatabase,
+    frames: &[AbilityFrame],
+    legacy_bytecode: &[i32],
+    ctx_in: &AbilityContext,
+) -> Result<(), InterpreterError> {
+    if db.is_vanilla {
+        return Ok(());
+    }
+
+    let execution_started = begin_execution(state, ctx_in);
+
+    let registry = HandlerRegistry::new();
+    let mut ctx = ctx_in.clone();
+    let mut effect_idx = BytecodeProgram::effect_idx(ctx_in.program_counter as usize);
+    let legacy_program = if legacy_bytecode.is_empty() {
+        None
+    } else {
+        Some(BytecodeProgram::from_slice(legacy_bytecode))
+    };
+    let mut cond = true;
+    let mut steps = 0;
+
+    while effect_idx < frames.len() {
+        if steps >= MAX_INTERPRETER_STEPS {
+            finish_execution(state, ctx_in, execution_started);
+            return Err(InterpreterError::InfiniteLoop { steps, limit: MAX_INTERPRETER_STEPS });
+        }
+        steps += 1;
+        let frame = &frames[effect_idx];
+        let ip = BytecodeProgram::effect_ip(effect_idx);
+        let instr = frame.to_instruction();
+        let op = instr.op;
+        let v = instr.v;
+        let a = instr.a;
+        let s = instr.raw_s;
+
+        ctx.program_counter = ip as u16;
+        if effect_idx == BytecodeProgram::effect_idx(ctx_in.program_counter as usize) && ctx_in.choice_index != -1 {
+            ctx.choice_index = ctx_in.choice_index;
+        }
+
+        if op == crate::core::enums::O_NOP as i32 {
+            if let Some(ref mut set) = state.debug.executed_opcodes {
+                set.insert(op);
+            }
+            effect_idx += 1;
+            continue;
+        }
+        if op == crate::core::enums::O_RETURN as i32 {
+            if let Some(ref mut set) = state.debug.executed_opcodes {
+                set.insert(op);
+            }
+            break;
+        }
+
+        let mut real_op = op;
+        let mut is_negated = false;
+        if real_op >= crate::core::logic::constants::OPCODE_NEGATION_OFFSET {
+            is_negated = true;
+            real_op -= crate::core::logic::constants::OPCODE_NEGATION_OFFSET;
+        }
+
+        if state.debug.debug_mode {
+            let desc = logging::describe_trace_step(real_op, v, a, s, is_negated);
+            let card_name = db.get_member(ctx.source_card_id)
+                .map(|c| c.name.as_str())
+                .or_else(|| db.get_live(ctx.source_card_id).map(|l| l.name.as_str()))
+                .unwrap_or("System");
+            let log_line = format!("BC_STEP: [depth={}] [card={}] ip={:<3} {}", 0, card_name, ip, desc);
+            if !state.ui.silent {
+                println!("[DEBUG] {}", log_line);
+            }
+
+            let b_log = &mut state.ui.bytecode_log;
+            if b_log.len() < MAX_BYTECODE_LOG_SIZE {
+                b_log.push(log_line.clone());
+            }
+            state.trace_internal(&log_line);
+        }
+        if let Some(ref mut set) = state.debug.executed_opcodes {
+            set.insert(real_op);
+        }
+
+        let mut target_slot = s;
+        if (s & 0xFF) == crate::core::generated_constants::SLOT_CONTEXT {
+            target_slot = (s & !0xFF) | (ctx.target_slot as i32);
+        }
+
+        if (real_op >= crate::core::logic::constants::CONDITION_START_1 && real_op <= crate::core::logic::constants::CONDITION_END_1)
+            || (real_op >= crate::core::logic::constants::CONDITION_START_2 && real_op <= crate::core::logic::constants::CONDITION_END_2) {
+            if state.debug.debug_mode {
+                if !state.ui.silent {
+                    println!(
+                        "[DEBUG] CALLING check_condition_opcode: op={}, a={:x}",
+                        real_op, a
+                    );
+                }
+            }
+            let accumulated_count = match real_op {
+                crate::core::generated_constants::C_COUNT_STAGE
+                | crate::core::generated_constants::C_COUNT_HAND
+                | crate::core::generated_constants::C_COUNT_DISCARD
+                | crate::core::generated_constants::C_COUNT_ENERGY
+                | crate::core::generated_constants::C_COUNT_HEARTS
+                | crate::core::generated_constants::C_COUNT_BLADES
+                | crate::core::generated_constants::C_COUNT_GROUP
+                | crate::core::generated_constants::C_COUNT_SUCCESS_LIVE
+                | 307 => Some(conditions::resolve_count(
+                    state,
+                    db,
+                    real_op,
+                    a as u64,
+                    target_slot,
+                    &ctx,
+                    0,
+                )),
+                _ => None,
+            };
+            let passed = if !cond {
+                false
+            } else {
+                conditions::check_condition_opcode(
+                    state,
+                    db,
+                    real_op,
+                    v,
+                    a as u64,
+                    target_slot,
+                    &ctx,
+                    0,
+                )
+            };
+            if let Some(count) = accumulated_count {
+                ctx.v_accumulated = count as i16;
+            }
+            if state.debug.debug_mode {
+                let result_line = format!(
+                    "BC_RESULT: ip={:<3} {}",
+                    ip,
+                    if is_negated { !passed } else { passed }
+                );
+                if !state.ui.silent {
+                    println!("[DEBUG] {}", result_line);
+                }
+                let b_log = &mut state.ui.bytecode_log;
+                if b_log.len() < MAX_BYTECODE_LOG_SIZE {
+                    b_log.push(result_line.clone());
+                }
+                state.trace_internal(&result_line);
+            }
+            cond = cond && if is_negated { !passed } else { passed };
+            if state.debug.debug_mode {
+                let cond_desc = format!(
+                    "BC_COND: ip={:<3} {} -> passed={}, final={}",
+                    ip,
+                    logging::describe_condition(real_op, v, a as u64),
+                    passed,
+                    cond
+                );
+                if !state.ui.silent {
+                    println!("      | [COND] {}", cond_desc);
+                }
+
+                let b_log = &mut state.ui.bytecode_log;
+                if b_log.len() < MAX_BYTECODE_LOG_SIZE {
+                    b_log.push(cond_desc.clone());
+                }
+                state.trace_internal(&cond_desc);
+            }
+            ctx.choice_index = -1;
+            effect_idx += 1;
+            continue;
+        }
+
+        if real_op == crate::core::enums::O_JUMP as i32 {
+            if let Some(prog) = &legacy_program {
+                effect_idx = BytecodeProgram::effect_idx(
+                    prog.jump_target(ip, v).unwrap_or(prog.len_words()),
+                );
+            } else {
+                effect_idx = effect_idx + 1 + v.max(0) as usize;
+            }
+            ctx.choice_index = -1;
+            continue;
+        }
+        if real_op == crate::core::enums::O_JUMP_IF_FALSE as i32 {
+            if !cond {
+                if let Some(prog) = &legacy_program {
+                    effect_idx = BytecodeProgram::effect_idx(
+                        prog.jump_target(ip, v).unwrap_or(prog.len_words()),
+                    );
+                } else {
+                    effect_idx = effect_idx + 1 + v.max(0) as usize;
+                }
+            } else {
+                effect_idx += 1;
+            }
+            cond = true;
+            ctx.choice_index = -1;
+            continue;
+        }
+
+        if !cond {
+            effect_idx += 1;
+            continue;
+        }
+
+        let mut advance_effect = true;
+        match registry.dispatch(state, db, &mut ctx, &instr, ip, legacy_bytecode) {
+            HandlerResult::Continue => {}
+            HandlerResult::SetCond(new_cond) => cond = new_cond,
+            HandlerResult::Suspend => return Ok(()),
+            HandlerResult::Return => break,
+            HandlerResult::Branch(new_ip) => {
+                effect_idx = BytecodeProgram::effect_idx(new_ip);
+                advance_effect = false;
+            }
+            HandlerResult::BranchToBytecode(new_bc) => {
+                if let Err(err) = resolve_bytecode(state, db, new_bc, &ctx) {
+                    finish_execution(state, ctx_in, execution_started);
+                    return Err(err);
+                }
+                if state.phase == Phase::Response {
+                    return Ok(());
+                }
+            }
+        }
+
+        if advance_effect {
+            ctx.clear_step_state();
+            effect_idx += 1;
+        }
+    }
+
+    finish_execution(state, ctx_in, execution_started);
+    Ok(())
+}
+
 impl BytecodeExecutor {
     fn new(bytecode: std::sync::Arc<Vec<i32>>, ctx: &AbilityContext) -> Self {
         Self {
@@ -248,7 +489,7 @@ pub fn resolve_frames(
     frames: &[AbilityFrame],
     ctx_in: &AbilityContext,
 ) -> Result<(), InterpreterError> {
-    resolve_bytecode(state, db, Arc::new(FrameProgram { frames: frames.to_vec() }.to_bytecode()), ctx_in)
+    resolve_semantic_frames(state, db, frames, &[], ctx_in)
 }
 
 /// Main entry point for bytecode execution
@@ -258,6 +499,7 @@ pub fn resolve_bytecode(
     bytecode: Arc<Vec<i32>>,
     ctx_in: &AbilityContext,
 ) -> Result<(), InterpreterError> {
+    println!("[DEBUG] resolve_bytecode starting. Bytecode len: {}", bytecode.len());
     // VANILLA MODE: Skip all bytecode execution
     if db.is_vanilla {
         return Ok(());
@@ -354,7 +596,9 @@ pub fn resolve_bytecode(
                 .unwrap_or("System");
 
             let log_line = format!("BC_STEP: [depth={}] [card={}] ip={:<3} {}", stack_depth, card_name, ip, desc);
-            println!("[DEBUG] {}", log_line);
+            if !state.ui.silent {
+                println!("[DEBUG] {}", log_line);
+            }
 
             let b_log = &mut state.ui.bytecode_log;
             if b_log.len() < MAX_BYTECODE_LOG_SIZE {
@@ -380,10 +624,12 @@ pub fn resolve_bytecode(
         if (real_op >= crate::core::logic::constants::CONDITION_START_1 && real_op <= crate::core::logic::constants::CONDITION_END_1)
             || (real_op >= crate::core::logic::constants::CONDITION_START_2 && real_op <= crate::core::logic::constants::CONDITION_END_2) {
             if state.debug.debug_mode {
-                println!(
-                    "[DEBUG] CALLING check_condition_opcode: op={}, a={:x}",
-                    real_op, a
-                );
+                if !state.ui.silent {
+                    println!(
+                        "[DEBUG] CALLING check_condition_opcode: op={}, a={:x}",
+                        real_op, a
+                    );
+                }
             }
             let accumulated_count = match real_op {
                 crate::core::generated_constants::C_COUNT_STAGE
@@ -428,7 +674,9 @@ pub fn resolve_bytecode(
                     ip,
                     if is_negated { !passed } else { passed }
                 );
-                println!("[DEBUG] {}", result_line);
+                if !state.ui.silent {
+                    println!("[DEBUG] {}", result_line);
+                }
                 let b_log = &mut state.ui.bytecode_log;
                 if b_log.len() < MAX_BYTECODE_LOG_SIZE {
                     b_log.push(result_line.clone());
@@ -444,7 +692,9 @@ pub fn resolve_bytecode(
                     passed,
                     executor.cond
                 );
-                println!("      | [COND] {}", cond_desc);
+                if !state.ui.silent {
+                    println!("      | [COND] {}", cond_desc);
+                }
 
                 let b_log = &mut state.ui.bytecode_log;
                 if b_log.len() < MAX_BYTECODE_LOG_SIZE {
@@ -482,10 +732,12 @@ pub fn resolve_bytecode(
         // This handles cases where bytecode doesn't have explicit JUMP_IF_FALSE
         if !executor.cond {
             if state.debug.debug_mode {
-                println!(
-                    "      | [SKIP] Opcode {} skipped (cond=false)",
-                    logging::get_opcode_name(real_op)
-                );
+                if !state.ui.silent {
+                    println!(
+                        "      | [SKIP] Opcode {} skipped (cond=false)",
+                        logging::get_opcode_name(real_op)
+                    );
+                }
             }
             // Skip this opcode. cond will be reset by JUMP_IF_FALSE or end of scope.
             continue;
@@ -555,6 +807,7 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
         // Generate a new ID for the activation
         state.generate_execution_id();
         let execution_id = state.ui.current_execution_id.unwrap_or(0);
+        println!("[DEBUG] processing trigger: cid={}, ab_idx={}, execution_id={}, trigger={:?}", cid, ab_idx, execution_id, _trigger);
 
         let (ability, costs) = if is_live {
             let ab = &db.get_live(cid).unwrap().abilities[ab_idx as usize];
@@ -682,4 +935,7 @@ pub fn consume_once_per_turn(
     let uid = get_ability_uid(source_type, instance_key, id, ab_idx as u32);
     state.players[p_idx].used_abilities.push(uid);
 }
+
+
+
 

@@ -124,7 +124,7 @@ fn test_opcode_skip_activate_phase() {
 
     // Verify initial state
     assert!(
-        !state.players[0].skip_next_activate,
+        !state.players[0].skip_next_activate(),
         "skip_next_activate should be false initially"
     );
 
@@ -141,7 +141,7 @@ fn test_opcode_skip_activate_phase() {
 
     // Verify: skip_next_activate should be true
     assert!(
-        state.players[0].skip_next_activate,
+        state.players[0].skip_next_activate(),
         "skip_next_activate should be true after opcode"
     );
 }

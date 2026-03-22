@@ -389,7 +389,7 @@ fn test_conditions_exhaustive() {
     ));
 
     // [ConditionType::Baton]
-    state.players[0].baton_touch_count = 1;
+    state.players[0].set_baton_touch_count(1);
     assert!(state.check_condition(
         &db,
         0,

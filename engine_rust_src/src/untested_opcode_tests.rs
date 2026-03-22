@@ -106,7 +106,7 @@ fn test_opcode_prevent_set_to_success_pile() {
     state.ui.silent = true;
 
     // Initially the flag should be 0
-    assert_eq!(state.players[0].prevent_success_pile_set, 0);
+    assert_eq!(state.players[0].prevent_success_pile_set(), 0);
 
     let ctx = AbilityContext {
         player_id: 0,
@@ -129,7 +129,7 @@ fn test_opcode_prevent_set_to_success_pile() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(
-        state.players[0].prevent_success_pile_set, 1,
+        state.players[0].prevent_success_pile_set(), 1,
         "prevent_success_pile_set should be set to 1"
     );
 }
@@ -153,7 +153,7 @@ fn test_opcode_reduce_live_set_limit_stacking() {
 
     // Should stack (saturating_add)
     assert_eq!(
-        state.players[0].prevent_success_pile_set, 4,
+        state.players[0].prevent_success_pile_set(), 4,
         "prevent_success_pile_set should stack to 4 via O_REDUCE_LIVE_SET_LIMIT"
     );
 }
@@ -525,5 +525,5 @@ fn test_prevent_success_pile_integration() {
 
     // The flag should prevent the live from being moved to success_lives
     // This would be tested in the actual live success flow
-    assert_eq!(state.players[0].prevent_success_pile_set, 1);
+    assert_eq!(state.players[0].prevent_success_pile_set(), 1);
 }

@@ -98,5 +98,5 @@ fn test_baton_pass_restriction() {
     state
         .play_member(&db, 0, 0)
         .expect("Baton pass in next turn should succeed");
-    assert_eq!(state.players[0].baton_touch_count, 1);
+    assert_eq!(state.players[0].baton_touch_count(), 1);
 }

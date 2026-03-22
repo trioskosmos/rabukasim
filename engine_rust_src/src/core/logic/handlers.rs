@@ -926,7 +926,7 @@ impl ResponseController for GameState {
 
         // ENFORCEMENT PHASE: Check conditions and costs
         if !self.debug.debug_ignore_conditions {
-            if self.core.players[p_idx].prevent_activate > 0 {
+            if self.core.players[p_idx].prevent_activate() > 0 {
                 return Err("Cannot activate abilities due to restriction".to_string());
             }
 
@@ -1021,7 +1021,7 @@ impl TurnPhaseController for GameState {
         let p_idx = self.current_player as usize;
         self.setup_turn_log();
 
-        let skip = self.core.players[p_idx].skip_next_activate;
+        let skip = self.core.players[p_idx].skip_next_activate();
         if skip {
             if !self.ui.silent {
                 self.log(format!(
@@ -1029,7 +1029,7 @@ impl TurnPhaseController for GameState {
                     p_idx
                 ));
             }
-            self.core.players[p_idx].skip_next_activate = false;
+            self.core.players[p_idx].set_skip_next_activate(false);
         } else {
             if !self.ui.silent {
                 self.log(format!(
@@ -1160,7 +1160,7 @@ impl GameState {
             return Ok(());
         }
         let player = &self.core.players[p_idx];
-        if (player.prevent_play_to_slot_mask & (1 << slot_idx)) != 0 && player.stage[slot_idx] >= 0 {
+        if (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0 && player.stage[slot_idx] >= 0 {
             return Err("Cannot play to this slot due to restriction".to_string());
         }
         if player.is_moved(slot_idx) {
@@ -1169,10 +1169,10 @@ impl GameState {
 
         let old_card_id = player.stage[slot_idx];
         if old_card_id >= 0 {
-            if player.baton_touch_count >= player.baton_touch_limit {
+            if player.baton_touch_count() >= player.baton_touch_limit() {
                 return Err("Baton touch limit reached".to_string());
             }
-            if player.prevent_baton_touch > 0 {
+            if player.prevent_baton_touch() > 0 {
                 return Err("Baton Touch is restricted".to_string());
             }
             if GameState::has_restriction(self, p_idx, slot_idx, O_PREVENT_BATON_TOUCH, db) {
@@ -1202,13 +1202,13 @@ impl GameState {
     ) {
         let old_card_id = self.core.players[p_idx].stage[slot_idx];
         if old_card_id >= 0 {
-            self.core.players[p_idx].baton_touch_count += 1;
+            self.core.players[p_idx].set_baton_touch_count(self.core.players[p_idx].baton_touch_count() + 1);
             self.core.players[p_idx].baton_source_ids.push(old_card_id);
             self.core.players[p_idx].baton_source_slots.push(slot_idx);
         }
         if secondary_slot_idx >= 0 {
-            self.core.players[p_idx].baton_touch_count += 1;
             let s_idx = secondary_slot_idx as usize;
+            self.core.players[p_idx].set_baton_touch_count(self.core.players[p_idx].baton_touch_count() + 1);
             let secondary_old_id = self.core.players[p_idx].stage[s_idx];
             if secondary_old_id >= 0 {
                 self.core.players[p_idx].baton_source_ids.push(secondary_old_id);

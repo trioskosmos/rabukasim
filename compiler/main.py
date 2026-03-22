@@ -540,6 +540,12 @@ _COMPILATION_VERSION_GATE: VersionGate = VersionGate(
     semantic_version=SEMANTIC_FORM_VERSION
 )
 
+_FRAME_PROGRAM_METADATA = ability_codec.load_data(Path("data/metadata.json"))
+
+
+# Removed _build_frame_program and _frame_program_frame_from_model helpers
+# as they are replaced by Ability.to_frame_program() for direct emission.
+
 
 def _compile_abilities_for_export(abilities: list, card_no: str, scope: str, version_gate: VersionGate = None) -> None:
     """
@@ -558,6 +564,9 @@ def _compile_abilities_for_export(abilities: list, card_no: str, scope: str, ver
             # Only compile if bytecode is not already present (e.g. from sparse source)
             if not ab.bytecode:
                 ab.bytecode = ab.compile()
+            # Direct generation of frame program bypassing bytecode-to-model reconstruction
+            frames = ab.to_frame_program()
+            ab.frame_program = {"frames": frames}
         except Exception as e:
             import traceback
 
@@ -716,25 +725,22 @@ def _build_ability_from_sparse_entry(entry: dict[str, Any], raw_text: str) -> Ab
 
 def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability]:
     raw_text = str(data.get("ability", ""))
-    abilities: list[Ability] = []
-    used_sparse = False
-
-    for ab_idx in range(10):
-        entry = _sparse_manager.get_ability(card_no, ab_idx)
-        if entry is None:
-            if used_sparse:
-                break
-            continue
-
-        abilities.append(_build_ability_from_sparse_entry(entry, raw_text))
-        used_sparse = True
-
-    if used_sparse:
-        return abilities
-
     raw_ability = _pseudocode_resolver.resolve(card_kind, card_no, data, _bytecode_compile_errors)
     if not raw_ability:
-        return []
+        abilities: list[Ability] = []
+        used_sparse = False
+
+        for ab_idx in range(10):
+            entry = _sparse_manager.get_ability(card_no, ab_idx)
+            if entry is None:
+                if used_sparse:
+                    break
+                continue
+
+            abilities.append(_build_ability_from_sparse_entry(entry, raw_text))
+            used_sparse = True
+
+        return abilities if used_sparse else []
 
     print(f"[{card_no}] Loaded from pseudocode source")
     return _v2_parser.parse(raw_ability)

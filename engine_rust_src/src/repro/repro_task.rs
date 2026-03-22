@@ -220,7 +220,7 @@ mod tests {
         );
 
         // Set prevent_activate to block
-        state.players[0].prevent_activate = 1;
+        state.players[0].set_prevent_activate(1);
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
         let blocked_stage = stage_actions_in_range(

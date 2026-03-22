@@ -28,6 +28,10 @@ echo Compiling Card Data...
 uv run python -m compiler.main --quiet
 if %errorlevel% neq 0 goto CMD_FAIL
 
+echo Rebuilding Frame Index...
+uv run python tools/consolidate_abilities.py --input data/cards_compiled.json --metadata data/metadata.json --output data/ability_frame_index.json
+if %errorlevel% neq 0 goto CMD_FAIL
+
 :: Handle arguments
 set DO_FULL=0
 set DEBUG_ARG=

@@ -232,6 +232,8 @@ pub struct UIState {
     pub cancelled_execution_ids: HashSet<u32>,
     #[serde(default)]
     pub bytecode_log: Vec<String>,
+    #[serde(skip)]
+    pub processing_trigger_queue: bool,
 }
 
 impl Default for UIState {
@@ -246,6 +248,7 @@ impl Default for UIState {
             current_execution_id: None,
             cancelled_execution_ids: HashSet::new(),
             bytecode_log: Vec::new(),
+            processing_trigger_queue: false,
         }
     }
 }

@@ -188,7 +188,7 @@ impl ResponseGenerator {
             }
             ChoiceType::SelectStage => {
                 for i in 0..3 {
-                    if (player.prevent_play_to_slot_mask & (1 << i)) == 0 {
+                    if (player.prevent_play_to_slot_mask() & (1 << i)) == 0 {
                         receiver.add_action(
                             (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
@@ -200,7 +200,7 @@ impl ResponseGenerator {
                 // Count empty slots first to check if forced
                 let mut empty_slots = Vec::new();
                 for i in 0..3 {
-                    if player.stage[i] == -1 && (player.prevent_play_to_slot_mask & (1 << i)) == 0 {
+                    if player.stage[i] == -1 && (player.prevent_play_to_slot_mask() & (1 << i)) == 0 {
                         empty_slots.push(i);
                     }
                 }
@@ -222,7 +222,7 @@ impl ResponseGenerator {
             ChoiceType::SelectStageEmptyBaton => {
                 for i in 0..3 {
                     if player.stage[i] == -1
-                        && (player.prevent_play_to_slot_mask & (1 << i) as u8) == 0
+                        && (player.prevent_play_to_slot_mask() & (1 << i) as u8) == 0
                         && player.baton_source_slots.contains(&i)
                     {
                         receiver.add_action(
@@ -688,7 +688,7 @@ impl ResponseGenerator {
             }
             _ => {
                 // Stage (0-2) or Default
-                let exclude_selected = false;
+                let exclude_selected = true;
                 for (i, &cid) in player.stage.iter().enumerate() {
                     let matches = cid >= 0
                         && (!exclude_selected || !pi.ctx.selected_cards.contains(&cid))

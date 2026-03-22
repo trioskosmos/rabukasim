@@ -35,6 +35,9 @@ class Condition:
     is_negated: bool = False  # "If NOT X" / "Except X"
     value: int = 0
     attr: int = 0
+    runtime_opcode: int = 0
+    runtime_filter: Dict[str, Any] = field(default_factory=dict)
+    runtime_slot: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -50,6 +53,8 @@ class Effect:
     runtime_value: int = 0
     runtime_attr: int = 0
     runtime_slot: int = 0
+    runtime_filter: Dict[str, Any] = field(default_factory=dict)
+    runtime_slot_params: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass(slots=True)
 class ResolvingEffect:
@@ -69,7 +74,10 @@ class Cost:
     type: AbilityCostType
     value: int = 0
     params: Dict[str, Any] = field(default_factory=dict)
+    runtime_opcode: int = 0
     is_optional: bool = False
+    runtime_filter: Dict[str, Any] = field(default_factory=dict)
+    runtime_slot: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def cost_type(self) -> AbilityCostType:
@@ -86,6 +94,7 @@ class Ability:
     modal_options: List[List[Any]] = field(default_factory=list)  # For SELECT_MODE
     is_once_per_turn: bool = False
     bytecode: List[int] = field(default_factory=list)
+    frame_program: Dict[str, Any] = field(default_factory=dict)
     # Ordered list of operations (Union[Effect, Condition]) for precise execution order
     instructions: List[Union[Effect, Condition, Cost]] = field(default_factory=list)
     card_no: str = ""  # Metadata for debugging/tracing
@@ -99,6 +108,95 @@ class Ability:
 
     def build_structured_ir(self) -> Dict[str, Any]:
         return build_structured_instruction_ir(self).to_dict()
+
+    def to_frame_program(self) -> List[Union[str, Dict[str, Any]]]:
+        """Generate high-level semantic frames directly from instructions."""
+        # 1. First, perform a 'dry run' of compilation to hydrate all metadata
+        # (This populates runtime_opcode, runtime_filter, and runtime_slot_params/dict)
+        self.compile()
+
+        frames = []
+        for instr in self.instructions:
+            frame = self._instruction_to_frame(instr)
+            if frame:
+                frames.append(frame)
+
+        # 2. Add Return terminator if not present
+        if not frames or frames[-1] != "Return":
+            frames.append("Return")
+
+        return frames
+
+    def _instruction_to_frame(self, instr: Union[Effect, Condition, Cost]) -> Union[str, Dict[str, Any]]:
+        """Map a single instruction (Effect/Condition/Cost) to an AbilityFrame JSON-compatible dict."""
+        opcode_name = ""
+        value = 0
+        attr = {}
+        slot = {}
+        raw = instr.params.copy()
+
+        if isinstance(instr, Effect):
+            opcode_name = instr.effect_type.name
+            opcode_id = instr.runtime_opcode
+            value = instr.value
+            attr = instr.runtime_filter
+            slot = instr.runtime_slot_params
+        elif isinstance(instr, Condition):
+            opcode_name = f"CHECK_{instr.type.name}"
+            # CHECK_ opcodes are offset by 1000 in bytecode if negated, 
+            # but we want the base opcode_id for the frame
+            opcode_id = instr.runtime_opcode % 1000
+            value = instr.value
+            attr = instr.runtime_filter
+            slot = instr.runtime_slot
+        elif isinstance(instr, Cost):
+            # Map cost type to equivalent opcode name
+            mapping = {
+                AbilityCostType.ENERGY: "PAY_ENERGY",
+                AbilityCostType.TAP_SELF: "SET_TAPPED",
+                AbilityCostType.TAP_MEMBER: "TAP_MEMBER",
+                AbilityCostType.DISCARD_HAND: "MOVE_TO_DISCARD",
+                AbilityCostType.PLACE_ENERGY_FROM_DECK: "PLACE_ENERGY_FROM_DECK",
+                AbilityCostType.RETURN_HAND: "MOVE_MEMBER",
+                AbilityCostType.SACRIFICE_SELF: "MOVE_TO_DISCARD",
+            }
+            opcode_name = mapping.get(instr.type, "NONE")
+            opcode_id = instr.runtime_opcode
+            value = instr.value
+            attr = instr.runtime_filter
+            slot = instr.runtime_slot
+
+        if opcode_name == "RETURN":
+            return "Return"
+        
+        # Short-hands for standard frames
+        if opcode_name == "DRAW":
+            return {"Draw": {"count": int(value)}}
+        if opcode_name == "RECOVER_LIVE":
+            return {"RecoverLive": {"count": int(value), "filter": attr, "slot": slot}}
+        if opcode_name == "RECOVER_MEMBER":
+            return {"RecoverMember": {"count": int(value), "filter": attr, "slot": slot}}
+        if opcode_name == "LOOK_AND_CHOOSE":
+            # LOOK_AND_CHOOSE value is packed, but semantic frames might want the raw params?
+            # For now, use the packed value as 'params' to match current codec output
+            return {"LookAndChoose": {"params": value, "filter": attr, "slot": slot}}
+        if opcode_name == "SELECT_MEMBER":
+            return {"SelectMember": {"count": int(value), "filter": attr, "slot": slot}}
+        if opcode_name == "MOVE_MEMBER":
+            return {"MoveMember": {"filter": attr, "slot": slot}}
+        if opcode_name == "META_RULE":
+            return {"MetaRule": {"rule_type": int(value), "filter": attr, "slot": slot}}
+
+        # Default: Generic Semantic Frame
+        return {
+            "Semantic": {
+                "opcode": opcode_id,
+                "value": int(value),
+                "filter": attr,
+                "slot": slot,
+                "params": raw,
+            }
+        }
 
     def compile(self) -> List[int]:
         """Compile ability into fixed-width bytecode sequence (groups of 4 ints)."""
@@ -483,6 +581,8 @@ class Ability:
                 )
                 cond.value = ctype
                 cond.attr = 0
+                cond.runtime_filter = {"card_type": ctype}
+                cond.runtime_slot = {"target_slot": 0}
             return
 
         op_name = f"CHECK_{cond.type.name}"
@@ -495,6 +595,7 @@ class Ability:
 
         if op is not None:
             # Fixed width: [Opcode, Value, Attr, TargetSlot]
+            attr = 0
             # Check multiple potential keys for the value (min, count, value, diff) - case insensitive
             params_upper = {k.upper(): v for k, v in cond.params.items() if isinstance(k, str)}
 
@@ -577,12 +678,15 @@ class Ability:
                         attr = 5
                     else:
                         attr = 7  # Total count fallback
-            else:
                 attr = self._pack_filter_attr(cond)
 
             # Persist back to the Condition object for JSON serialization
             cond.value = val
             cond.attr = attr
+            
+            # Map back to structured filter object for direct frame generation
+            packed_a, filter_dict = self._pack_filter_attr_with_obj(cond)
+            cond.runtime_filter = filter_dict
 
             # Comparison and Slot Mapping
             comp_str = str(cond.params.get("comparison") or params_upper.get("COMPARISON") or "GE").upper()
@@ -613,6 +717,12 @@ class Ability:
                     slot |= 3 << 29
 
             packed_slot = (slot & 0x0F) | ((comp_val & 0x0F) << 4) | (slot & 0xFFFFFF00)
+            
+            cond.runtime_slot = {
+                "target_slot": slot & 0x0F,
+                "comparison": comp_val,
+                "raw_slot": slot
+            }
 
             bytecode.extend(
                 [
@@ -623,6 +733,7 @@ class Ability:
                     to_signed_32(packed_slot),
                 ]
             )
+            cond.runtime_opcode = int(op) + (1000 if cond.is_negated else 0)
 
         elif cond.type == ConditionType.UNIQUE_NAMES_COUNT:
             # Map UNIQUE_NAMES_COUNT to CHECK_COUNT_STAGE with FILTER_UNIQUE_NAMES bit (32768)
@@ -636,8 +747,8 @@ class Ability:
             comp_val = COMPARISONS.get(comp_str, 3) # Default GE
             slot = (int(TargetType.MEMBER_SELF) & 0x0F) | ((comp_val & 0x0F) << 4)
 
-            # Use CONDITIONS directly to avoid dynamic attribute issues
-            op_code = CONDITIONS.get("COUNT_STAGE", 203)
+            # Use op code for stage count directly
+            op_code =  203
             
             bytecode.extend(
                 [
@@ -834,6 +945,13 @@ class Ability:
                 value = 1
 
             slot = pack_s_standard(**slot_params)
+
+            # Capture structured filter and slot for direct frame program generation
+            _, filter_dict = self._pack_filter_attr_with_obj(cost)
+            cost.runtime_opcode = int(op)
+            cost.runtime_filter = filter_dict
+            cost.runtime_slot = slot_params
+
             bytecode.extend(
                 [
                     int(op),
@@ -1488,6 +1606,11 @@ class Ability:
                 ):
                     val = 1
 
+                # Capture structured filter and slot for direct frame program generation
+                _, filter_dict = self._pack_filter_attr_with_obj(eff)
+                eff.runtime_filter = filter_dict
+                eff.runtime_slot_params = slot_params
+
                 bytecode.extend(
                     [
                         int(op),
@@ -1685,6 +1808,9 @@ class Ability:
         return slot
 
     def _pack_filter_attr(self, source: Any) -> int:
+        return self._pack_filter_attr_with_obj(source)[0]
+
+    def _pack_filter_attr_with_obj(self, source: Any) -> Tuple[int, Dict[str, Any]]:
         """
         Standardized packing for all filter parameters (Revision 5, 64-bit).
         'source' can be an Effect, Condition, or direct Dict params.
@@ -2097,7 +2223,7 @@ class Ability:
         filter_spec = PackedFilterSpec(**filter_obj)
         self.filters.append(filter_spec.to_debug_dict())
         # Use generated packer to ensure bit parity with Rust
-        return filter_spec.pack()
+        return filter_spec.pack(), filter_spec.to_debug_dict()
 
     def reconstruct_text(self, lang: str = "en") -> str:
         from .ability_rendering import reconstruct_text

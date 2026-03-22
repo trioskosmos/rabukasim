@@ -511,7 +511,7 @@ mod tests {
             "Q193: the played member should occupy whichever baton source slot the player selected"
         );
         assert_eq!(
-            resolve_into_second_slot.players[0].baton_touch_count,
+            resolve_into_second_slot.players[0].baton_touch_count(),
             2,
             "Q193: resolving the play should consume two baton sources"
         );

@@ -217,6 +217,7 @@ impl CardDatabase {
                             let Some(cards) = entry.get("cards").and_then(|v| v.as_array()) else {
                                 continue;
                             };
+                            let compact_entry = Self::compact_sparse_ability_entry(entry);
                             for card in cards {
                                 if let Some(card_obj) = card.as_object() {
                                     let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) else {
@@ -226,7 +227,7 @@ impl CardDatabase {
                                         continue;
                                     };
                                     let key = format!("{}#{}", card_no, ability_index);
-                                    index.insert(key, entry.clone());
+                                    index.insert(key, compact_entry.clone());
                                     continue;
                                 }
 
@@ -245,7 +246,7 @@ impl CardDatabase {
                                         continue;
                                     };
                                     let key = format!("{}#{}", card_no_part.trim(), ability_index);
-                                    index.insert(key, entry.clone());
+                                    index.insert(key, compact_entry.clone());
                                 }
                             }
                         }
@@ -257,6 +258,54 @@ impl CardDatabase {
             }
         }
         HashMap::new()
+    }
+
+    fn compact_sparse_ability_entry(entry: &Value) -> Value {
+        let mut compact = serde_json::Map::new();
+
+        for key in ["pseudocode", "signature", "signature_hash", "round_trip_matches"] {
+            if let Some(value) = entry.get(key) {
+                compact.insert(key.to_string(), value.clone());
+            }
+        }
+
+        if let Some(cards) = entry.get("cards").and_then(|v| v.as_array()) {
+            compact.insert(
+                "cards".to_string(),
+                Value::Array(
+                    cards
+                        .iter()
+                        .filter_map(|card| card.as_str().map(|card_no| Value::String(card_no.to_string())))
+                        .collect(),
+                ),
+            );
+        }
+
+        if let Some(frames) = entry.get("frames").and_then(|v| v.as_array()) {
+            compact.insert(
+                "frames".to_string(),
+                Value::Array(frames.iter().map(Self::compact_sparse_frame).collect()),
+            );
+        } else if let Some(words) = entry.get("source_words").and_then(|v| v.as_array()) {
+            compact.insert(
+                "source_words".to_string(),
+                Value::Array(words.iter().filter_map(|word| word.as_i64().map(Value::from)).collect()),
+            );
+        }
+
+        Value::Object(compact)
+    }
+
+    fn compact_sparse_frame(frame: &Value) -> Value {
+        let mut compact = serde_json::Map::new();
+
+        for key in ["opcode_id", "opcode", "value", "attr", "slot"] {
+            if let Some(value) = frame.get(key) {
+                compact.insert(key.to_string(), value.clone());
+            }
+        }
+
+        Value::Object(compact)
     }
 
     fn attach_sparse_ability_index(
@@ -470,7 +519,13 @@ impl CardDatabase {
             O_SELECT_MEMBER => AbilityFrame::SelectMember { count: v, filter, slot },
             O_MOVE_MEMBER => AbilityFrame::MoveMember { filter, slot },
             O_META_RULE => AbilityFrame::MetaRule { rule_type: v, filter, slot },
-            _ => AbilityFrame::Raw { opcode: op, value: v, attr: a, slot: s },
+            _ => AbilityFrame::Semantic {
+                opcode: op,
+                value: v,
+                filter,
+                slot,
+                params: Value::Null,
+            },
         }
     }
 
@@ -485,7 +540,7 @@ impl CardDatabase {
     }
 
     fn encode_sparse_frame(frame: &Value) -> Vec<i32> {
-        let opcode_id = frame.get("opcode_id").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+        let opcode_id = Self::sparse_int(frame.get("opcode_id").or_else(|| frame.get("opcode"))).unwrap_or(0);
         let opcode_name = frame.get("opcode").and_then(|v| v.as_str()).unwrap_or("");
         let value = frame.get("value");
         let attr = frame.get("attr");
@@ -557,6 +612,23 @@ impl CardDatabase {
 
     fn encode_sparse_attr(opcode_name: &str, attr: Option<&Value>) -> u64 {
         let Some(attr) = attr else { return 0; };
+
+        fn sparse_special_id(value: Option<&Value>) -> u8 {
+            let Some(value) = value else { return 0; };
+            if let Some(numeric) = value.as_i64() {
+                return numeric as u8;
+            }
+            let Some(text) = value.as_str() else { return 0; };
+            match text.trim().to_ascii_lowercase().as_str() {
+                "same name" | "same_name" | "same-name" | "same name as revealed" => 4,
+                "not self" | "not_self" | "not-self" => 3,
+                "base cost" | "base_cost" | "base-cost" => 5,
+                "selected" => 6,
+                "not selected" | "not_selected" | "not-selected" => 7,
+                _ => 0,
+            }
+        }
+
         match opcode_name {
             "SET_HEART_COST" => {
                 if let Some(obj) = attr.as_object() {
@@ -597,7 +669,7 @@ impl CardDatabase {
                     decoded.char_id_2 = obj.get("char_id_2").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
                     decoded.char_id_3 = obj.get("char_id_3").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
                     decoded.zone_mask = obj.get("zone_mask").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.special_id = obj.get("special_id").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                    decoded.special_id = sparse_special_id(obj.get("special_id"));
                     decoded.is_setsuna = Self::sparse_boolish(obj.get("is_setsuna")) != 0;
                     decoded.compare_accumulated = Self::sparse_boolish(obj.get("compare_accumulated")) != 0;
                     decoded.is_optional = Self::sparse_boolish(obj.get("is_optional")) != 0;
@@ -613,6 +685,9 @@ impl CardDatabase {
 
     fn encode_sparse_slot(slot: Option<&Value>) -> i32 {
         let Some(slot) = slot else { return 0; };
+        if let Some(value) = Self::sparse_int(Some(slot)) {
+            return value;
+        }
         if let Some(obj) = slot.as_object() {
             let target_slot = obj.get("target_slot").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
             let remainder_zone = obj.get("remainder_zone").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
@@ -645,8 +720,34 @@ impl CardDatabase {
                 | ((is_dynamic & 0x1) << 28)
                 | ((area_idx & 0x7) << 29)
         } else {
-            slot.as_i64().unwrap_or(0) as i32
+            0
         }
+    }
+
+    fn sparse_int(value: Option<&Value>) -> Option<i32> {
+        let value = value?;
+        if let Some(raw) = value.as_i64() {
+            return Some(raw as i32);
+        }
+        let cleaned = value.as_str()?.trim();
+        if cleaned.is_empty() {
+            return Some(0);
+        }
+
+        if let Some(num) = cleaned.strip_prefix("OP_").and_then(|tail| tail.parse::<i32>().ok()) {
+            return Some(num);
+        }
+
+        if let Some(target_name) = cleaned.strip_prefix("target_players.") {
+            return match target_name.to_ascii_uppercase().as_str() {
+                "SELF" => Some(TARGET_PLAYER_SELF),
+                "OPPONENT" => Some(TARGET_PLAYER_OPPONENT),
+                "BOTH" => Some(TARGET_PLAYER_BOTH),
+                _ => None,
+            };
+        }
+
+        cleaned.parse::<i32>().ok()
     }
 
     fn sparse_boolish(value: Option<&Value>) -> i32 {

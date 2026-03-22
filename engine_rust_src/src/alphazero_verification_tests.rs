@@ -87,8 +87,8 @@ fn test_alphazero_volatile_flags() {
     let mut state = GameState::default();
 
     // 1. Manually set volatile flags
-    state.players[0].baton_touch_count = 1;
-    state.players[0].baton_touch_limit = 2;
+    state.players[0].set_baton_touch_count(1);
+    state.players[0].set_baton_touch_limit(2);
     state.players[0].hand_increased_this_turn = 3;
     state.performance_yell_done[0] = true;
 

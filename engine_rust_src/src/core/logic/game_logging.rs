@@ -26,7 +26,10 @@ impl GameState {
         if self.ui.rule_log.is_none() {
             self.ui.rule_log = Some(Vec::with_capacity(32));
         }
-        self.ui.rule_log.as_mut().unwrap().push(full_msg);
+        let rule_log = self.ui.rule_log.as_mut().unwrap();
+        if rule_log.len() < 2000 {
+            rule_log.push(full_msg);
+        }
     }
 
     pub fn log_rule(&mut self, rule: &str, msg: &str) {
@@ -66,8 +69,10 @@ impl GameState {
 
     pub fn trace_internal(&mut self, msg: &str) {
         if self.debug.debug_mode {
-            let trace_msg = format!("[TRC] {}", msg);
-            self.debug.trace_log.push(trace_msg);
+            if self.debug.trace_log.len() < 2000 {
+                let trace_msg = format!("[TRC] {}", msg);
+                self.debug.trace_log.push(trace_msg);
+            }
         }
     }
 
@@ -110,7 +115,10 @@ impl GameState {
             if self.ui.rule_log.is_none() {
                 self.ui.rule_log = Some(Vec::with_capacity(32));
             }
-            self.ui.rule_log.as_mut().unwrap().push(full_msg);
+            let rule_log = self.ui.rule_log.as_mut().unwrap();
+            if rule_log.len() < 2000 {
+                rule_log.push(full_msg);
+            }
         }
     }
 }

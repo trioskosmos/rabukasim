@@ -57,6 +57,8 @@ pub mod repro_task;
 #[cfg(test)]
 pub mod repro_card_103_placement;
 #[cfg(test)]
+pub mod repro_opcode_97;
+#[cfg(test)]
 pub mod test_yell_cards_condition;
 #[cfg(test)]
 pub mod card_10_cost_bug;

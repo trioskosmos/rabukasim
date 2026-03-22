@@ -18,6 +18,7 @@ const OPERAND_HEADER_TAG_MASK: u32 = 0xFF;
 const OPERAND_HEADER_WIDE_FLAG: u32 = 1 << 8;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[serde(from = "DecodedSlotRaw")]
 pub struct DecodedSlot {
     pub target_slot: u8,
     pub source_zone: Zone,
@@ -30,6 +31,58 @@ pub struct DecodedSlot {
     pub is_wait: bool,
     pub is_dynamic: bool,
     pub area_idx: u8,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum DecodedSlotRaw {
+    Legacy(i32),
+    Structured {
+        target_slot: u8,
+        source_zone: Zone,
+        dest_zone: Zone,
+        remainder_zone: u8,
+        is_opponent: bool,
+        is_reveal_until_live: bool,
+        is_baton_slot: bool,
+        is_empty_slot: bool,
+        is_wait: bool,
+        is_dynamic: bool,
+        area_idx: u8,
+    },
+}
+
+impl From<DecodedSlotRaw> for DecodedSlot {
+    fn from(raw: DecodedSlotRaw) -> Self {
+        match raw {
+            DecodedSlotRaw::Legacy(v) => Self::decode(v),
+            DecodedSlotRaw::Structured {
+                target_slot,
+                source_zone,
+                dest_zone,
+                remainder_zone,
+                is_opponent,
+                is_reveal_until_live,
+                is_baton_slot,
+                is_empty_slot,
+                is_wait,
+                is_dynamic,
+                area_idx,
+            } => Self {
+                target_slot,
+                source_zone,
+                dest_zone,
+                remainder_zone,
+                is_opponent,
+                is_reveal_until_live,
+                is_baton_slot,
+                is_empty_slot,
+                is_wait,
+                is_dynamic,
+                area_idx,
+            },
+        }
+    }
 }
 
 impl DecodedSlot {
@@ -86,6 +139,7 @@ impl DecodedSlot {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[serde(from = "DecodedHeartCountsRaw")]
 pub struct DecodedHeartCounts {
     pub pink: u8,
     pub red: u8,
@@ -94,6 +148,46 @@ pub struct DecodedHeartCounts {
     pub blue: u8,
     pub purple: u8,
     pub any: u8,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum DecodedHeartCountsRaw {
+    Legacy(i32),
+    Structured {
+        pink: u8,
+        red: u8,
+        yellow: u8,
+        green: u8,
+        blue: u8,
+        purple: u8,
+        any: u8,
+    },
+}
+
+impl From<DecodedHeartCountsRaw> for DecodedHeartCounts {
+    fn from(raw: DecodedHeartCountsRaw) -> Self {
+        match raw {
+            DecodedHeartCountsRaw::Legacy(v) => Self::decode(v),
+            DecodedHeartCountsRaw::Structured {
+                pink,
+                red,
+                yellow,
+                green,
+                blue,
+                purple,
+                any,
+            } => Self {
+                pink,
+                red,
+                yellow,
+                green,
+                blue,
+                purple,
+                any,
+            },
+        }
+    }
 }
 
 impl DecodedHeartCounts {
@@ -112,6 +206,7 @@ impl DecodedHeartCounts {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[serde(from = "DecodedLookAndChooseRaw")]
 pub struct DecodedLookAndChoose {
     pub count: u8,
     pub char_id_1: u8,
@@ -119,6 +214,43 @@ pub struct DecodedLookAndChoose {
     pub char_id_3: u8,
     pub reveal: bool,
     pub dest_discard: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum DecodedLookAndChooseRaw {
+    Legacy(i32),
+    Structured {
+        count: u8,
+        char_id_1: u8,
+        char_id_2: u8,
+        char_id_3: u8,
+        reveal: bool,
+        dest_discard: bool,
+    },
+}
+
+impl From<DecodedLookAndChooseRaw> for DecodedLookAndChoose {
+    fn from(raw: DecodedLookAndChooseRaw) -> Self {
+        match raw {
+            DecodedLookAndChooseRaw::Legacy(v) => Self::decode(v),
+            DecodedLookAndChooseRaw::Structured {
+                count,
+                char_id_1,
+                char_id_2,
+                char_id_3,
+                reveal,
+                dest_discard,
+            } => Self {
+                count,
+                char_id_1,
+                char_id_2,
+                char_id_3,
+                reveal,
+                dest_discard,
+            },
+        }
+    }
 }
 
 impl DecodedLookAndChoose {
@@ -147,8 +279,27 @@ impl DecodedLookAndChoose {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[serde(from = "DecodedHeartRequirementsRaw")]
 pub struct DecodedHeartRequirements {
     pub reqs: [u8; 8],
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum DecodedHeartRequirementsRaw {
+    Legacy(i64),
+    Structured {
+        reqs: [u8; 8],
+    },
+}
+
+impl From<DecodedHeartRequirementsRaw> for DecodedHeartRequirements {
+    fn from(raw: DecodedHeartRequirementsRaw) -> Self {
+        match raw {
+            DecodedHeartRequirementsRaw::Legacy(v) => Self::decode(v),
+            DecodedHeartRequirementsRaw::Structured { reqs } => Self { reqs },
+        }
+    }
 }
 
 impl DecodedHeartRequirements {
@@ -170,6 +321,7 @@ impl DecodedHeartRequirements {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[serde(from = "DecodedFilterAttrRaw")]
 pub struct DecodedFilterAttr {
     pub target_player: u8,
     pub card_type: u8,
@@ -196,6 +348,100 @@ pub struct DecodedFilterAttr {
     pub is_optional: bool,
     pub keyword_energy: bool,
     pub keyword_member: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum DecodedFilterAttrRaw {
+    Legacy(i64),
+    Structured {
+        target_player: u8,
+        card_type: u8,
+        group_enabled: bool,
+        group_id: u8,
+        is_tapped: bool,
+        has_blade_heart: bool,
+        not_has_blade_heart: bool,
+        unique_names: bool,
+        unit_enabled: bool,
+        unit_id: u8,
+        value_enabled: bool,
+        value_threshold: u8,
+        is_le: bool,
+        is_cost_type: bool,
+        color_mask: u8,
+        char_id_1: u8,
+        char_id_2: u8,
+        char_id_3: u8,
+        zone_mask: u8,
+        special_id: u8,
+        is_setsuna: bool,
+        compare_accumulated: bool,
+        is_optional: bool,
+        keyword_energy: bool,
+        keyword_member: bool,
+    },
+}
+
+impl From<DecodedFilterAttrRaw> for DecodedFilterAttr {
+    fn from(raw: DecodedFilterAttrRaw) -> Self {
+        match raw {
+            DecodedFilterAttrRaw::Legacy(v) => Self::decode(v),
+            DecodedFilterAttrRaw::Structured {
+                target_player,
+                card_type,
+                group_enabled,
+                group_id,
+                is_tapped,
+                has_blade_heart,
+                not_has_blade_heart,
+                unique_names,
+                unit_enabled,
+                unit_id,
+                value_enabled,
+                value_threshold,
+                is_le,
+                is_cost_type,
+                color_mask,
+                char_id_1,
+                char_id_2,
+                char_id_3,
+                zone_mask,
+                special_id,
+                is_setsuna,
+                compare_accumulated,
+                is_optional,
+                keyword_energy,
+                keyword_member,
+            } => Self {
+                target_player,
+                card_type,
+                group_enabled,
+                group_id,
+                is_tapped,
+                has_blade_heart,
+                not_has_blade_heart,
+                unique_names,
+                unit_enabled,
+                unit_id,
+                value_enabled,
+                value_threshold,
+                is_le,
+                is_cost_type,
+                color_mask,
+                char_id_1,
+                char_id_2,
+                char_id_3,
+                zone_mask,
+                special_id,
+                is_setsuna,
+                compare_accumulated,
+                is_optional,
+                keyword_energy,
+                keyword_member,
+            },
+        }
+    }
 }
 
 impl DecodedFilterAttr {

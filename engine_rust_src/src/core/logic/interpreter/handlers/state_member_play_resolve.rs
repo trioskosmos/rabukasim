@@ -52,7 +52,7 @@ pub fn finalize_play_member_from_discard(
     if slot_idx >= 3 {
         return HandlerResult::Continue;
     }
-    if (state.players[target_p_idx].prevent_play_to_slot_mask & (1 << slot_idx)) != 0
+    if (state.players[target_p_idx].prevent_play_to_slot_mask() & (1 << slot_idx)) != 0
         || (empty_slot_only && state.players[target_p_idx].stage[slot_idx] != -1)
     {
         return HandlerResult::Continue;
@@ -78,7 +78,8 @@ pub fn finalize_play_member_from_discard(
         state.players[target_p_idx].set_tapped(slot_idx, true);
         state.players[target_p_idx].set_moved(slot_idx, true);
         state.register_played_member(target_p_idx, card_id, db);
-        state.players[target_p_idx].prevent_play_to_slot_mask |= 1 << slot_idx;
+        let val = state.players[target_p_idx].prevent_play_to_slot_mask();
+        state.players[target_p_idx].set_prevent_play_to_slot_mask(val | (1 << slot_idx));
 
 
     }

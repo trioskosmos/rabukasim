@@ -111,7 +111,7 @@ fn test_repro_card_560_double_baton() {
         "Slot 1 should be empty after Double Baton"
     );
     assert_eq!(
-        state.players[0].baton_touch_count, 2,
+        state.players[0].baton_touch_count(), 2,
         "baton_touch_count should be 2"
     );
 
@@ -134,7 +134,7 @@ fn test_repro_card_560_double_baton() {
     eprintln!("\n=== Testing Second Ability ===");
     eprintln!(
         "baton_touch_count: {}",
-        state.players[0].baton_touch_count
+        state.players[0].baton_touch_count()
     );
     eprintln!("prev_card_id: {}", state.prev_card_id);
 
@@ -143,7 +143,7 @@ fn test_repro_card_560_double_baton() {
     eprintln!("Is in CENTER (slot 0): {}", is_center);
 
     // Check baton_touch_count == 2
-    let baton_count_correct = state.players[0].baton_touch_count == 2;
+    let baton_count_correct = state.players[0].baton_touch_count() == 2;
     eprintln!("baton_touch_count == 2: {}", baton_count_correct);
 
     // Check if Kanon and Keke are Liella! members (GROUP_ID=3)
@@ -270,5 +270,5 @@ fn test_card_560_second_ability_condition() {
     // and doesn't check FILTER
 
     // For now, just verify the basic double baton worked
-    assert_eq!(state.players[0].baton_touch_count, 2);
+    assert_eq!(state.players[0].baton_touch_count(), 2);
 }

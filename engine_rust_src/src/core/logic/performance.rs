@@ -1369,7 +1369,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                     let cid = state.players[p].live_zone[i];
                     if let Some(card) = db.get_live(cid) {
                         // Check for prevention effects
-                        if state.players[p].prevent_success_pile_set != 0 {
+                        if state.players[p].prevent_success_pile_set() != 0 {
                             return false;
                         }
                         if card.abilities.iter().any(|a| {

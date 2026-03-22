@@ -23,15 +23,17 @@ pub fn handle_set_tapped(
 ) -> HandlerResult {
     let is_optional = instr.filter_attr().is_optional;
 
-    eprintln!(
-        "[TRACE] SET_TAPPED: p_idx={}, resolved_slot={}, v={}, optional={}, choice_index={}, v_remaining={}",
-        p_idx,
-        resolved_slot,
-        instr.v,
-        is_optional,
-        ctx.choice_index,
-        ctx.v_remaining,
-    );
+    if !state.ui.silent {
+        eprintln!(
+            "[TRACE] SET_TAPPED: p_idx={}, resolved_slot={}, v={}, optional={}, choice_index={}, v_remaining={}",
+            p_idx,
+            resolved_slot,
+            instr.v,
+            is_optional,
+            ctx.choice_index,
+            ctx.v_remaining,
+        );
+    }
 
     if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
         if matches!(suspend_choice(

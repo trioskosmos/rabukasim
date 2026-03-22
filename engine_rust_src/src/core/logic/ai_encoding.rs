@@ -47,8 +47,8 @@ impl GameStateEncoding for GameState {
             .count();
         feats.push(p0_tapped as f32 / 10.0);
         feats.push(p1_tapped as f32 / 10.0);
-        feats.push(self.core.players[0].baton_touch_count as f32 / 3.0);
-        feats.push(self.core.players[1].baton_touch_count as f32 / 3.0);
+        feats.push(self.core.players[0].baton_touch_count() as f32 / 3.0);
+        feats.push(self.core.players[1].baton_touch_count() as f32 / 3.0);
         while feats.len() < 20 {
             feats.push(0.0);
         }

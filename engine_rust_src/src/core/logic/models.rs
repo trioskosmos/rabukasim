@@ -11,6 +11,14 @@ pub enum AbilityFrame {
     Draw {
         count: i32,
     },
+    Semantic {
+        opcode: i32,
+        value: i32,
+        filter: DecodedFilterAttr,
+        slot: DecodedSlot,
+        #[serde(default)]
+        params: Value,
+    },
     RecoverLive {
         count: i32,
         filter: DecodedFilterAttr,
@@ -55,24 +63,78 @@ impl Default for AbilityFrame {
 }
 
 impl AbilityFrame {
+    pub fn opcode(&self) -> i32 {
+        match self {
+            AbilityFrame::Return => O_RETURN,
+            AbilityFrame::Draw { .. } => O_DRAW,
+            AbilityFrame::Semantic { opcode, .. } => *opcode,
+            AbilityFrame::RecoverLive { .. } => O_RECOVER_LIVE,
+            AbilityFrame::RecoverMember { .. } => O_RECOVER_MEMBER,
+            AbilityFrame::LookAndChoose { .. } => O_LOOK_AND_CHOOSE,
+            AbilityFrame::SelectMember { .. } => O_SELECT_MEMBER,
+            AbilityFrame::MoveMember { .. } => O_MOVE_MEMBER,
+            AbilityFrame::MetaRule { .. } => O_META_RULE,
+            AbilityFrame::Raw { opcode, .. } => *opcode,
+        }
+    }
+
+    pub fn value(&self) -> i32 {
+        match self {
+            AbilityFrame::Return => 0,
+            AbilityFrame::Draw { count } => *count,
+            AbilityFrame::Semantic { value, .. } => *value,
+            AbilityFrame::RecoverLive { count, .. } => *count,
+            AbilityFrame::RecoverMember { count, .. } => *count,
+            AbilityFrame::LookAndChoose { params, .. } => params.to_raw(),
+            AbilityFrame::SelectMember { count, .. } => *count,
+            AbilityFrame::MoveMember { .. } => 0,
+            AbilityFrame::MetaRule { rule_type, .. } => *rule_type,
+            AbilityFrame::Raw { value, .. } => *value,
+        }
+    }
+
+    pub fn attr(&self) -> u64 {
+        match self {
+            AbilityFrame::Return => 0,
+            AbilityFrame::Draw { .. } => 0,
+            AbilityFrame::Semantic { filter, .. } => filter.to_attr(),
+            AbilityFrame::RecoverLive { filter, .. } => filter.to_attr(),
+            AbilityFrame::RecoverMember { filter, .. } => filter.to_attr(),
+            AbilityFrame::LookAndChoose { filter, .. } => filter.to_attr(),
+            AbilityFrame::SelectMember { filter, .. } => filter.to_attr(),
+            AbilityFrame::MoveMember { filter, .. } => filter.to_attr(),
+            AbilityFrame::MetaRule { filter, .. } => filter.to_attr(),
+            AbilityFrame::Raw { attr, .. } => *attr,
+        }
+    }
+
+    pub fn slot(&self) -> i32 {
+        match self {
+            AbilityFrame::Return => 0,
+            AbilityFrame::Draw { .. } => 0,
+            AbilityFrame::Semantic { slot, .. } => slot.to_raw(),
+            AbilityFrame::RecoverLive { slot, .. } => slot.to_raw(),
+            AbilityFrame::RecoverMember { slot, .. } => slot.to_raw(),
+            AbilityFrame::LookAndChoose { slot, .. } => slot.to_raw(),
+            AbilityFrame::SelectMember { slot, .. } => slot.to_raw(),
+            AbilityFrame::MoveMember { slot, .. } => slot.to_raw(),
+            AbilityFrame::MetaRule { slot, .. } => slot.to_raw(),
+            AbilityFrame::Raw { slot, .. } => *slot,
+        }
+    }
+
     pub fn to_instruction(&self) -> crate::core::logic::interpreter::instruction::BytecodeInstruction {
-        let (op, v, a, s) = match self {
-            AbilityFrame::Return => (O_RETURN, 0, 0, 0),
-            AbilityFrame::Draw { count } => (O_DRAW, *count, 0, 0),
-            AbilityFrame::RecoverLive { count, filter, slot } => (O_RECOVER_LIVE, *count, filter.to_attr(), slot.to_raw()),
-            AbilityFrame::RecoverMember { count, filter, slot } => (O_RECOVER_MEMBER, *count, filter.to_attr(), slot.to_raw()),
-            AbilityFrame::LookAndChoose { params, filter, slot } => (O_LOOK_AND_CHOOSE, params.to_raw(), filter.to_attr(), slot.to_raw()),
-            AbilityFrame::SelectMember { count, filter, slot } => (O_SELECT_MEMBER, *count, filter.to_attr(), slot.to_raw()),
-            AbilityFrame::MoveMember { filter, slot } => (O_MOVE_MEMBER, 0, filter.to_attr(), slot.to_raw()),
-            AbilityFrame::MetaRule { rule_type, filter, slot } => (O_META_RULE, *rule_type, filter.to_attr(), slot.to_raw()),
-            AbilityFrame::Raw { opcode, value, attr, slot } => (*opcode, *value, *attr, *slot),
-        };
+        let op = self.opcode();
+        let v = self.value();
+        let a = self.attr();
+        let s = self.slot();
         crate::core::logic::interpreter::instruction::BytecodeInstruction { op, v, a: a as i64, raw_s: s }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Hash)]
 pub struct FrameProgram {
+    #[serde(default)]
     pub frames: Vec<AbilityFrame>,
 }
 
@@ -370,12 +432,11 @@ pub struct Ability {
     pub filters: Vec<crate::core::logic::filter::CardFilter>,
     #[serde(default)]
     pub preparsed_modifiers: Vec<PreparsedModifier>,
-    #[serde(default)]
-    #[serde(skip_serializing)]
+    #[serde(default, skip_serializing)]
     pub opcodes_mask: u128,
     #[serde(default, skip_serializing)]
     pub sparse_frame_index: Option<serde_json::Value>,
-    #[serde(default, skip_serializing)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub frame_program: Option<FrameProgram>,
 }
 
@@ -403,10 +464,10 @@ impl std::hash::Hash for Ability {
 
 impl Ability {
     pub fn bytecode_program(&self) -> BytecodeProgram {
-        if !self.bytecode.is_empty() {
-            BytecodeProgram::from_slice(&self.bytecode)
-        } else if let Some(frame_program) = &self.frame_program {
+        if let Some(frame_program) = &self.frame_program {
             BytecodeProgram::from_slice(&frame_program.to_bytecode())
+        } else if !self.bytecode.is_empty() {
+            BytecodeProgram::from_slice(&self.bytecode)
         } else {
             BytecodeProgram::from_slice(&[])
         }

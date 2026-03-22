@@ -15,6 +15,8 @@ pub use interaction::*;
 pub use movement::*;
 pub use state::*;
 
+use super::instruction::BytecodeInstruction;
+use super::super::models::AbilityFrame;
 use crate::core::enums::*;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
@@ -58,16 +60,18 @@ impl HandlerRegistry {
         let v = instr.v;
         let a = instr.a;
         let s = instr.raw_s;
-        eprintln!(
-            "[TRACE] DISPATCH: op={}, v={}, a={}, s={}, player_id={}, choice_index={}, phase={:?}",
-            op,
-            v,
-            a,
-            s,
-            ctx.player_id,
-            ctx.choice_index,
-            state.phase,
-        );
+        if !state.ui.silent {
+            eprintln!(
+                "[TRACE] DISPATCH: op={}, v={}, a={}, s={}, player_id={}, choice_index={}, phase={:?}",
+                op,
+                v,
+                a,
+                s,
+                ctx.player_id,
+                ctx.choice_index,
+                state.phase,
+            );
+        }
         if !state.ui.silent {
             println!("[DEBUG] DISPATCH: op={} v={} a={} s={}", op, v, a, s);
         }
@@ -163,6 +167,37 @@ impl HandlerRegistry {
                     );
                 }
                 HandlerResult::Continue
+            }
+        }
+    }
+
+    /// Dispatches a semantic frame without requiring the caller to reconstruct bytecode.
+    pub fn dispatch_frame(
+        &self,
+        state: &mut GameState,
+        db: &CardDatabase,
+        ctx: &mut AbilityContext,
+        frame: &AbilityFrame,
+        instr_ip: usize,
+        bytecode: &[i32],
+    ) -> HandlerResult {
+        if !state.ui.silent {
+            println!("[DEBUG] DISPATCH_FRAME: {:?}", frame);
+        }
+
+        match frame {
+            AbilityFrame::Return => HandlerResult::Return,
+            AbilityFrame::Draw { .. }
+            | AbilityFrame::RecoverLive { .. }
+            | AbilityFrame::RecoverMember { .. }
+            | AbilityFrame::LookAndChoose { .. }
+            | AbilityFrame::SelectMember { .. }
+            | AbilityFrame::MoveMember { .. }
+            | AbilityFrame::MetaRule { .. }
+            | AbilityFrame::Semantic { .. }
+            | AbilityFrame::Raw { .. } => {
+                let instr: BytecodeInstruction = frame.to_instruction();
+                self.dispatch(state, db, ctx, &instr, instr_ip, bytecode)
             }
         }
     }

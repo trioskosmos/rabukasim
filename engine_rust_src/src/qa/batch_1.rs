@@ -240,7 +240,7 @@ mod tests {
 
         // Case 2: Baton 2 -> 3 (Cost 1-5 = -4 -> 0) (Q25, Q26)
         state.players[0].flags = 0; // Reset moved flags to allow second play to same slot
-        state.players[0].baton_touch_count = 0; // Reset baton touch limit
+        state.players[0].set_baton_touch_count(0); // Reset baton touch limit
         state.players[0].tapped_energy_mask = 0; // Reset for test
         state.players[0].hand = vec![3].into();
         state.play_member(&db, 0, 0).unwrap();

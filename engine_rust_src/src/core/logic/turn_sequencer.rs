@@ -436,13 +436,13 @@ fn state_cache_key(state: &GameState) -> u64 {
         p.tapped_energy_mask.hash(&mut hasher);
         p.success_lives.hash(&mut hasher);
         p.live_zone.hash(&mut hasher);
-        p.baton_touch_count.hash(&mut hasher);
+        p.baton_touch_count().hash(&mut hasher);
         p.blade_buffs.hash(&mut hasher);
         p.blade_overrides.hash(&mut hasher);
         p.heart_buffs.hash(&mut hasher);
         p.slot_cost_modifiers.hash(&mut hasher);
         p.hand_increased_this_turn.hash(&mut hasher);
-        p.play_count_this_turn.hash(&mut hasher);
+        p.play_count_this_turn().hash(&mut hasher);
         p.board_aura.hash(&mut hasher);
     }
 

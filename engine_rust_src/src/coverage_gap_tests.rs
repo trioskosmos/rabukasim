@@ -2,6 +2,10 @@
 //! This ensures 100% coverage of logic.rs opcodes.
 
 use crate::core::logic::card_db::LOGIC_ID_MASK;
+use crate::core::logic::interpreter::resolve_ability;
+use crate::core::logic::models::{Ability, AbilityFrame, FrameProgram};
+use crate::core::models::MemberCard;
+use crate::core::enums::TriggerType;
 use crate::test_helpers::{create_test_db, create_test_state};
 
 use crate::core::hearts::HeartBoard;
@@ -297,10 +301,10 @@ fn test_opcodes_state_modifiers_simple() {
     assert_eq!(state.players[0].blade_buffs[0], 5);
 
     // O_BATON_TOUCH_MOD: Modify baton count limit
-    state.players[0].baton_touch_limit = 1;
+    state.players[0].set_baton_touch_limit(1);
     let bc = vec![O_BATON_TOUCH_MOD, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
-    assert_eq!(state.players[0].baton_touch_limit, 2);
+    assert_eq!(state.players[0].baton_touch_limit(), 2);
 
     // O_GRANT_ABILITY: Grant ability 0 from member 3010 to slot 0
     state.players[0].stage[0] = 3010;
@@ -482,6 +486,89 @@ fn test_opcodes_selection() {
     // check if it paused.
     // implementation usually sets phase to Response and pending_ctx.
     // assert!(state.pending_ctx.is_some());
+}
+
+#[test]
+fn test_frame_program_only_ability_executes() {
+    let mut db = create_test_db();
+    let mut state = create_test_state();
+    let card_id = 9001;
+
+    let ability = Ability {
+        trigger: TriggerType::OnPlay,
+        bytecode: Vec::new(),
+        frame_program: Some(FrameProgram {
+            frames: vec![
+                AbilityFrame::Draw { count: 1 },
+                AbilityFrame::Return,
+            ],
+        }),
+        ..Default::default()
+    };
+
+    let member = MemberCard {
+        card_id,
+        card_no: "TEST-9001".to_string(),
+        name: "TEST-9001".to_string(),
+        abilities: vec![ability.clone()],
+        ..Default::default()
+    };
+    db.members.insert(card_id, member.clone());
+    let logic_id = (card_id & LOGIC_ID_MASK) as usize;
+    if db.members_vec.len() <= logic_id {
+        db.members_vec.resize(logic_id + 1, None);
+    }
+    db.members_vec[logic_id] = Some(member);
+
+    let before_deck = state.players[0].deck.len();
+    let before_hand = state.players[0].hand.len();
+    let ctx = AbilityContext {
+        player_id: 0,
+        source_card_id: card_id,
+        ..Default::default()
+    };
+
+    resolve_ability(&mut state, &db, &ability, &ctx).expect("semantic frame program should resolve");
+
+    assert_eq!(state.players[0].deck.len(), before_deck.saturating_sub(1));
+    assert_eq!(state.players[0].hand.len(), before_hand + 1);
+}
+
+#[test]
+fn test_frame_program_bytecode_parity_for_simple_draw() {
+    let db = create_test_db();
+    let ability_from_frames = Ability {
+        trigger: TriggerType::OnPlay,
+        bytecode: Vec::new(),
+        frame_program: Some(FrameProgram {
+            frames: vec![AbilityFrame::Draw { count: 1 }, AbilityFrame::Return],
+        }),
+        ..Default::default()
+    };
+    let ability_from_bytecode = Ability {
+        trigger: TriggerType::OnPlay,
+        bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
+        ..Default::default()
+    };
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        source_card_id: 10,
+        ..Default::default()
+    };
+
+    let mut semantic_state = create_test_state();
+    let mut bytecode_state = create_test_state();
+
+    resolve_ability(&mut semantic_state, &db, &ability_from_frames, &ctx)
+        .expect("semantic frame program should resolve");
+    resolve_ability(&mut bytecode_state, &db, &ability_from_bytecode, &ctx)
+        .expect("bytecode ability should resolve");
+
+    assert_eq!(semantic_state.players[0].hand.len(), bytecode_state.players[0].hand.len());
+    assert_eq!(semantic_state.players[0].deck.len(), bytecode_state.players[0].deck.len());
+    assert_eq!(semantic_state.players[0].hand, bytecode_state.players[0].hand);
+    assert_eq!(semantic_state.players[0].deck, bytecode_state.players[0].deck);
 }
 
 #[test]

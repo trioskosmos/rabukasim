@@ -58,11 +58,11 @@ pub fn handle_state_modifiers(
             };
 
             if op == O_PREVENT_ACTIVATE {
-                state.players[target_p_idx].prevent_activate = 1;
+                state.players[target_p_idx].set_prevent_activate(1);
             } else if op == O_PREVENT_BATON_TOUCH {
-                state.players[target_p_idx].prevent_baton_touch = 1;
+                state.players[target_p_idx].set_prevent_baton_touch(1);
             } else if op == O_PREVENT_SET_TO_SUCCESS_PILE {
-                state.players[target_p_idx].prevent_success_pile_set = 1;
+                state.players[target_p_idx].set_prevent_success_pile_set(1);
             } else if op == O_PREVENT_PLAY_TO_SLOT {
                 let resolved_slot = if target_slot == 10 {
                     ctx.target_slot as i32
@@ -70,15 +70,14 @@ pub fn handle_state_modifiers(
                     resolve_target_slot(target_slot, ctx) as i32
                 };
                 if resolved_slot >= 0 && resolved_slot < 3 {
-                    state.players[target_p_idx].prevent_play_to_slot_mask |=
-                        1 << (resolved_slot as u8);
+                    let old = state.players[target_p_idx].prevent_play_to_slot_mask();
+                    state.players[target_p_idx].set_prevent_play_to_slot_mask(old | (1 << resolved_slot) as u8);
                 }
             }
         }
         O_REDUCE_LIVE_SET_LIMIT => {
-            state.players[p_idx].prevent_success_pile_set = state.players[p_idx]
-                .prevent_success_pile_set
-                .saturating_add(v as u8);
+            let new_v = state.players[p_idx].prevent_success_pile_set().saturating_add(v as u8);
+            state.players[p_idx].set_prevent_success_pile_set(new_v);
         }
         O_REDUCE_YELL_COUNT => {
             let mut final_v = v;
@@ -97,7 +96,7 @@ pub fn handle_state_modifiers(
                 .yell_count_reduction
                 .saturating_add(final_v as i16);
         }
-        O_BATON_TOUCH_MOD => state.players[p_idx].baton_touch_limit = v as u8,
+        O_BATON_TOUCH_MOD => state.players[p_idx].set_baton_touch_limit(v as u8),
         O_IMMUNITY => state.players[p_idx].set_flag(
             crate::core::logic::player::PlayerState::FLAG_IMMUNITY,
             v != 0,

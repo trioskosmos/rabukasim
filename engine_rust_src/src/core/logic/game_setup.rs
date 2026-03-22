@@ -182,7 +182,8 @@ impl GameState {
                 }
             }
         }
-        self.core.players[p_idx].play_count_this_turn += 1;
+        let p = &mut self.core.players[p_idx];
+        p.set_play_count_this_turn(p.play_count_this_turn() + 1);
     }
 
     fn _fisher_yates_shuffle(&mut self, player_idx: usize) {

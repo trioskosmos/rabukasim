@@ -147,7 +147,7 @@ fn test_opcode_prevent_activate() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(
-        state.players[0].prevent_activate, 1,
+        state.players[0].prevent_activate(), 1,
         "Flag should be set"
     );
 
@@ -183,7 +183,7 @@ fn test_opcode_prevent_baton_touch() {
 
     // Setup: Slot 0 has a card (ID 10)
     state.players[0].stage[0] = 10;
-    state.players[0].baton_touch_limit = 1;
+    state.players[0].set_baton_touch_limit(1);
     state.players[0].hand.push(19); // Card to play
     state.players[0].hand_added_turn.push(0);
 
@@ -200,7 +200,7 @@ fn test_opcode_prevent_baton_touch() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(
-        state.players[0].prevent_baton_touch, 1,
+        state.players[0].prevent_baton_touch(), 1,
         "Flag should be set"
     );
 
@@ -246,7 +246,7 @@ fn test_opcode_prevent_play_to_slot() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_ne!(
-        state.players[0].prevent_play_to_slot_mask & (1 << 1),
+        state.players[0].prevent_play_to_slot_mask() & (1 << 1),
         0,
         "Mask should be set for slot 1"
     );

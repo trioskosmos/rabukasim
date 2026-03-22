@@ -34,10 +34,10 @@ impl AlphaZeroEncoding for GameState {
         tensor.push(self.core.players[me].hand.len() as f32 / 15.0);
         tensor.push(self.core.players[opp].hand.len() as f32 / 15.0);
 
-        tensor.push(self.core.players[me].baton_touch_count as f32 / 5.0);
-        tensor.push(self.core.players[me].baton_touch_limit as f32 / 5.0);
-        tensor.push(self.core.players[opp].baton_touch_count as f32 / 5.0);
-        tensor.push(self.core.players[opp].baton_touch_limit as f32 / 5.0);
+        tensor.push(self.core.players[me].baton_touch_count() as f32 / 5.0);
+        tensor.push(self.core.players[me].baton_touch_limit() as f32 / 5.0);
+        tensor.push(self.core.players[opp].baton_touch_count() as f32 / 5.0);
+        tensor.push(self.core.players[opp].baton_touch_limit() as f32 / 5.0);
 
         tensor.push(self.core.players[me].hand_increased_this_turn as f32 / 5.0);
         tensor.push(self.core.players[opp].hand_increased_this_turn as f32 / 5.0);

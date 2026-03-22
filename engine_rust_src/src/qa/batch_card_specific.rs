@@ -1162,7 +1162,9 @@ mod tests {
         assert!(!triggered_kanata, "Q188: WAIT state should not trigger automatic abilities");
 
         // Q169 Verification: Slot locking
-        assert!((state.players[p1].prevent_play_to_slot_mask & (1 << 0)) != 0);
+        assert!(
+            (state.players[p1].prevent_play_to_slot_mask() & (1 << 0)) != 0
+        );
         state.players[p1].hand.push(kota_id);
         state.phase = Phase::Main;
         let res = state.play_member(&db, state.players[p1].hand.len() - 1, 0);
@@ -1181,7 +1183,8 @@ mod tests {
         state.players[p1].hand.clear(); // Ensure index 0 is Nico
         state.players[p1].hand.push(nico_id);
         state.players[p1].stage[1] = -1; // Clear slot for new play
-        state.players[p1].prevent_play_to_slot_mask &= !(1 << 1);
+        let old_mask = state.players[p1].prevent_play_to_slot_mask();
+        state.players[p1].set_prevent_play_to_slot_mask(old_mask & !(1 << 1));
         state.players[p1].set_moved(1, false);
 
         state.play_member(&db, 0, 1).expect("Nico 2 play failed");
@@ -2272,7 +2275,7 @@ mod tests {
             "Q229: the play must be tracked as a baton touch from the lower-cost source member"
         );
         assert_eq!(
-            state.players[0].baton_touch_count,
+            state.players[0].baton_touch_count(),
             1,
             "Q229: exactly one baton source should be recorded for this play"
         );

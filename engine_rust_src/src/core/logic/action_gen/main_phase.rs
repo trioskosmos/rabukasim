@@ -66,7 +66,7 @@ impl ActionGenerator for MainPhaseGenerator {
                     }
 
                     // Check play restriction
-                    if (player.prevent_play_to_slot_mask & (1 << slot_idx)) != 0 {
+                    if (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0 {
                         continue;
                     }
 
@@ -74,7 +74,7 @@ impl ActionGenerator for MainPhaseGenerator {
                     if player.stage[slot_idx] >= 0 {
                         cost = (cost - slot_costs[slot_idx]).max(0);
                         // Check global baton touch prevention
-                        if player.prevent_baton_touch > 0 {
+                        if player.prevent_baton_touch() > 0 {
                             continue;
                         }
                         // Check card-specific restriction (cached)
@@ -132,7 +132,7 @@ impl ActionGenerator for MainPhaseGenerator {
                     // Note: multi-baton abilities won't exist in vanilla mode cards (empty abilities list)
                     if has_multi_baton(card) && hand_idx < 10 && player.stage[slot_idx] >= 0 {
                         // Check baton touch prevention for this primary slot
-                        if player.prevent_baton_touch > 0 {
+                        if player.prevent_baton_touch() > 0 {
                             continue;
                         }
                         if slot_prevents_baton_touch[slot_idx] {
@@ -172,7 +172,7 @@ impl ActionGenerator for MainPhaseGenerator {
         }
 
         // 2. Activate Stage Ability
-        if abilities_enabled && player.prevent_activate == 0 {
+        if abilities_enabled && player.prevent_activate() == 0 {
             for slot_idx in 0..3 {
                 let cid = player.stage[slot_idx];
                 if cid >= 0 {
@@ -225,7 +225,7 @@ impl ActionGenerator for MainPhaseGenerator {
         }
 
         // 3. Activate Hand Ability
-        if abilities_enabled && player.prevent_activate == 0 {
+        if abilities_enabled && player.prevent_activate() == 0 {
             for (hand_idx, &cid) in player.hand.iter().enumerate() {
                 let i = hand_idx as i32;
                 if i >= 60 {

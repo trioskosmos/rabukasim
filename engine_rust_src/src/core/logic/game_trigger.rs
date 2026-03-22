@@ -115,6 +115,7 @@ impl GameState {
         is_live: bool,
         trigger: TriggerType,
     ) {
+        println!("[DEBUG] Enqueueing trigger: {:?} for cid={}, ab_idx={}", trigger, cid, ab_idx);
         self.core
             .trigger_queue
             .push_back((cid, ab_idx, ctx, is_live, trigger));
@@ -400,6 +401,7 @@ impl GameState {
         if let Some(abs) = abilities {
             for (ab_idx, ab) in abs.iter().enumerate() {
                 if ab.trigger == trigger {
+                    println!("[DEBUG] Trigger match: cid={}, ab_idx={}, trigger={:?}, ab_trigger={:?}", cid, ab_idx, trigger, ab.trigger);
                     if !resolution_trigger_matches_context(trigger, &ab.raw_text, ctx.trigger_type) {
                         continue;
                     }

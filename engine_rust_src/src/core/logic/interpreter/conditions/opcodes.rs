@@ -40,11 +40,14 @@ pub fn check_condition_opcode(
     let real_slot = slot & 0xFF;
 
     if state.debug.debug_mode {
-        println!(
-            "[DEBUG] Condition Opcode: {}, Value: {}, Attr: {}, Slot: {} (Area: {}), Source: {:?}",
-            op, val, attr, real_slot, area_val, cid
-        );
+        if !state.ui.silent {
+            println!(
+                "[DEBUG] Condition Opcode: {}, Value: {}, Attr: {}, Slot: {} (Area: {}), Source: {:?}",
+                op, val, attr, real_slot, area_val, cid
+            );
+        }
     }
+
 
     let result = match op {
         0 => true,
@@ -185,7 +188,7 @@ pub fn check_condition_opcode(
                     let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
                     res = (player.played_group_mask & (1 << group_id)) != 0;
                 } else if val == 0 && attr == KEYWORD_PLAYED_THIS_TURN { res = ctx.area_idx == 1; }
-                else { res = compare_i32(player.play_count_this_turn as i32, val, slot); }
+                else { res = compare_i32(player.play_count_this_turn() as i32, val, slot); }
             }
             if (attr & KEYWORD_YELL_COUNT) != 0 { res = compare_i32(player.yell_cards.len() as i32, val, slot); }
             if (attr & KEYWORD_HAS_LIVE_SET) != 0 { res = player.live_zone.iter().any(|&c| c >= 0); }
@@ -211,7 +214,7 @@ pub fn check_condition_opcode(
         C_HAS_MOVED => ctx.area_idx >= 0 && player.is_moved(ctx.area_idx as usize),
         C_HAND_INCREASED => player.hand_increased_this_turn > 0,
         C_BATON => {
-            let count_ok = if val > 0 { player.baton_touch_count == val as u8 } else { player.baton_touch_count > 0 || state.prev_card_id != -1 };
+            let count_ok = if val > 0 { player.baton_touch_count() == val as u8 } else { player.baton_touch_count() > 0 || state.prev_card_id != -1 };
             if !count_ok { return false; }
             let filter_attr = if (attr & 0xFFFFFFFF00000000) == 0 && (attr & 0x1F) == 0 && attr != 0 && attr < 300 { 0x10 | (attr << 5) } else { attr };
             if filter_attr != 0 {

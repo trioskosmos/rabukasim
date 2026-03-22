@@ -140,6 +140,6 @@ pub fn handle_lose_excess_hearts(
 }
 
 pub fn handle_skip_activate_phase(state: &mut GameState, p_idx: usize) -> HandlerResult {
-    state.players[p_idx].skip_next_activate = true;
+    state.players[p_idx].set_skip_next_activate(true);
     HandlerResult::Continue
 }

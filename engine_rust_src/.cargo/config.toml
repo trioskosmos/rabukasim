@@ -7,6 +7,9 @@ linker = "rust-lld.exe"
 # Uncomment the following line if using a nightly toolchain for faster parallel frontend
 # rustflags = ["-Zthreads=8"]
 
+[env]
+RUST_TEST_THREADS = "1"
+
 [alias]
 # Build and install the extension into the current Python environment
 dev = "!cmd /c uv run maturin develop"

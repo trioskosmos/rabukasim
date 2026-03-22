@@ -46,6 +46,13 @@ opt-level = 1
 overflow-checks = false
 debug = true
 
+[profile.test]
+opt-level = 1
+overflow-checks = false
+debug = true
+codegen-units = 16
+lto = false
+
 [profile.release]
 lto = false
 codegen-units = 256

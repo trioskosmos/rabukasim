@@ -181,8 +181,38 @@ def _opcode_label(value: int, lookups: MetadataLookups) -> str:
     return f"OP_{value}"
 
 
+_BOOL_FILTER_FIELDS = {
+    "group_enabled",
+    "is_tapped",
+    "has_blade_heart",
+    "not_has_blade_heart",
+    "unique_names",
+    "unit_enabled",
+    "value_enabled",
+    "is_le",
+    "is_cost_type",
+    "is_setsuna",
+    "compare_accumulated",
+    "is_optional",
+    "keyword_energy",
+    "keyword_member",
+}
+
+_BOOL_SLOT_FIELDS = {
+    "is_opponent",
+    "is_reveal_until_live",
+    "is_baton_slot",
+    "is_empty_slot",
+    "is_wait",
+    "is_dynamic",
+}
+
+
 def _label_filter_dict(filter_dict: dict[str, Any]) -> dict[str, Any]:
     labeled = dict(filter_dict)
+    for key in _BOOL_FILTER_FIELDS:
+        if key in labeled:
+            labeled[key] = bool(labeled[key])
     if labeled.get("special_id") and labeled["special_id"] in SPECIAL_ID_LABELS:
         labeled["special_id"] = SPECIAL_ID_LABELS[labeled["special_id"]]
     if labeled.get("zone_mask") and labeled["zone_mask"] in ZONE_MASK_LABELS:
@@ -192,6 +222,9 @@ def _label_filter_dict(filter_dict: dict[str, Any]) -> dict[str, Any]:
 
 def _label_slot_dict(slot_dict: dict[str, Any]) -> dict[str, Any]:
     labeled = dict(slot_dict)
+    for key in _BOOL_SLOT_FIELDS:
+        if key in labeled:
+            labeled[key] = bool(labeled[key])
     for key in ("source_zone", "dest_zone", "remainder_zone"):
         if labeled.get(key) and labeled[key] in ZONE_NAMES:
             labeled[key] = ZONE_NAMES[labeled[key]]
@@ -215,7 +248,30 @@ def _unlabel_slot_dict(slot_dict: dict[str, Any], lookups: MetadataLookups) -> d
     return unlabeled
 
 
-def _decode_payload(op_name: str, words: list[int], lookups: MetadataLookups) -> dict[str, Any]:
+def _is_sparse_value(value: Any) -> bool:
+    """Helper to check if a value is 'non-zero' or non-default for sparse pruning."""
+    return value not in (None, 0, False, "", [], {})
+
+
+def _prune_sparse(value: Any) -> Any:
+    """Recursively prune zero/empty/False values from a structure, keeping 'raw' keys."""
+    if isinstance(value, dict):
+        pruned: dict[str, Any] = {}
+        for key, item in value.items():
+            if key == "raw":
+                pruned[key] = item
+                continue
+            pruned_item = _prune_sparse(item)
+            if _is_sparse_value(pruned_item):
+                pruned[key] = pruned_item
+        return pruned
+    if isinstance(value, list):
+        pruned_list = [_prune_sparse(item) for item in value]
+        return [item for item in pruned_list if _is_sparse_value(item)]
+    return value
+
+
+def _decode_payload(op_name: str, words: list[int], lookups: MetadataLookups, strict: bool = False) -> dict[str, Any]:
     op, v, a_low, a_high, s = words
     a_low_u = a_low & 0xFFFFFFFF
     a_high_u = a_high & 0xFFFFFFFF
@@ -230,10 +286,37 @@ def _decode_payload(op_name: str, words: list[int], lookups: MetadataLookups) ->
         "slot": _slot_label(s, lookups) or s,
     }
 
-    if op_name == "LOOK_AND_CHOOSE":
+    if strict:
+        a_dict = unpack_a_standard(a)
+        # Type casting for Rust engine (Serde bool requirements)
+        for key in _BOOL_FILTER_FIELDS:
+            if key in a_dict:
+                a_dict[key] = bool(a_dict[key])
+
+        # Virtual field for Rust (DecodedFilterAttr::char_id_3)
+        unit_enabled = a_dict.get("unit_enabled", False)
+        unit_id = a_dict.get("unit_id", 0)
+        a_dict["char_id_3"] = unit_id if not unit_enabled else 0
+        
+        s_dict = unpack_s_standard(s)
+        for key in _BOOL_SLOT_FIELDS:
+            if key in s_dict:
+                s_dict[key] = bool(s_dict[key])
+            
         return {
             "raw": raw,
-            "v": unpack_v_look_choose(v),
+            "v": v,
+            "a": a_dict,
+            "s": s_dict,
+        }
+
+    if op_name == "LOOK_AND_CHOOSE":
+        look_choose = unpack_v_look_choose(v)
+        look_choose["reveal"] = bool(look_choose.get("reveal"))
+        look_choose["dest_discard"] = bool(look_choose.get("dest_discard"))
+        return {
+            "raw": raw,
+            "v": look_choose,
             "a": _label_filter_dict(unpack_a_standard(a)),
             "s": _label_slot_dict(unpack_s_standard(s)),
         }
@@ -260,7 +343,7 @@ def _decode_payload(op_name: str, words: list[int], lookups: MetadataLookups) ->
     }
 
 
-def decode_frame(words: list[int], lookups: MetadataLookups) -> dict[str, Any]:
+def decode_frame(words: list[int], lookups: MetadataLookups, strict: bool = False) -> dict[str, Any]:
     padded = list(words[:5])
     if len(padded) < 5:
         padded.extend([0] * (5 - len(padded)))
@@ -272,7 +355,12 @@ def decode_frame(words: list[int], lookups: MetadataLookups) -> dict[str, Any]:
     if slot_ref:
         metadata_refs.append(f"slot_indices.{slot_ref}")
     negated = 1000 <= opcode < 2000
-    payload = _decode_payload(opcode_name, padded, lookups)
+    payload = _decode_payload(opcode_name, padded, lookups, strict=strict)
+    
+    # Prune attr and slot for cleaner semantic model
+    pruned_attr = payload.get("a") if strict else _prune_sparse(payload.get("a"))
+    pruned_slot = payload.get("s") if strict else _prune_sparse(payload.get("s"))
+
     semantic = {
         "opcode_id": opcode,
         "opcode_name": opcode_name,
@@ -280,11 +368,16 @@ def decode_frame(words: list[int], lookups: MetadataLookups) -> dict[str, Any]:
         "negated": bool(negated),
         "decoded": readable.decode_chunk(padded),
         "value": payload.get("v"),
-        "attr": payload.get("a"),
-        "slot": payload.get("s"),
+        "attr": pruned_attr if strict or _is_sparse_value(pruned_attr) else None,
+        "slot": pruned_slot if strict or _is_sparse_value(pruned_slot) else None,
         "raw": payload.get("raw", {}),
         "metadata_refs": metadata_refs,
     }
+    
+    # Prune semantic to remove the None values we just added if they were sparse
+    # This ensures those keys are omitted entirely in the JSON/YAML output.
+    if not strict:
+        semantic = _prune_sparse(semantic)
 
     return {
         "words": padded,
@@ -491,11 +584,11 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
     return [opcode, v, int(a) & 0xFFFFFFFF, (int(a) >> 32) & 0xFFFFFFFF, int(s)]
 
 
-def bytecode_to_model(bytecode: list[int], metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+def bytecode_to_model(bytecode: list[int], metadata: dict[str, Any] | None = None, strict: bool = False) -> dict[str, Any]:
     lookups = load_lookups(metadata or load_data(DEFAULT_METADATA_PATH))
     frames = [
         dict(
-            decode_frame(bytecode[i : i + 5], lookups),
+            decode_frame(bytecode[i : i + 5], lookups, strict=strict),
             ability_frame_index=(i // 5),
             _frame_index=(i // 5),
         )
