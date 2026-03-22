@@ -8,7 +8,7 @@ description: Consolidated skill for card data lookup, ID auditing, and mapping.
 This skill provides a unified entry point for finding card information, auditing IDs, and mapping legacy data.
 
 ## 🔍 Card Search & Lookup
-The primary tool is `tools/card_finder.py`. It supports:
+The primary tool is `tools/cf.py`. It supports:
 - **Card Number**: `PL!S-bp2-005-P`
 - **URL**: Extracted from card image URLs.
 - **Engine IDs**: Packed (16-bit) or Logic (0-4095).
@@ -19,7 +19,7 @@ The primary tool is `tools/card_finder.py`. It supports:
 **ALWAYS** generate a report and read it via `view_file`. This avoids Japanese character corruption in the terminal and provides a persistent, readable record.
 1. **Generate**:
    ```bash
-   uv run python tools/card_finder.py "<INPUT>" --output reports/card_analysis.md
+   uv run python tools/cf.py "<INPUT>" --output reports/card_analysis.md
    ```
 2. **Read**:
    Use `view_file` on the generated markdown file in the `reports/` directory.
