@@ -1,5 +1,6 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
+use crate::core::generated_layout::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use crate::core::logic::interpreter::instruction::BytecodeProgram;
@@ -16,6 +17,8 @@ pub enum AbilityFrame {
         value: i32,
         filter: DecodedFilterAttr,
         slot: DecodedSlot,
+        #[serde(default)]
+        is_negated: bool,
         #[serde(default)]
         params: Value,
     },
@@ -117,6 +120,17 @@ impl AbilityFrame {
         }
     }
 
+
+    pub fn is_negated(&self) -> bool {
+        match self {
+            AbilityFrame::Semantic { is_negated, .. } => *is_negated,
+            _ => {
+                let op = self.opcode();
+                op >= crate::core::logic::constants::OPCODE_NEGATION_OFFSET
+            }
+        }
+    }
+
     pub fn slot(&self) -> i32 {
         match self {
             AbilityFrame::Return => 0,
@@ -135,36 +149,39 @@ impl AbilityFrame {
 
     
     pub fn raw_opcode(&self) -> i32 {
-        self.to_instruction().op
+        self.opcode()
     }
     pub fn raw_value(&self) -> i32 {
-        self.to_instruction().v
+        self.value()
     }
     pub fn raw_attr(&self) -> u64 {
-        self.to_instruction().a as u64
+        self.attr()
     }
     pub fn raw_slot(&self) -> i32 {
-        self.to_instruction().raw_s
+        self.slot()
     }
 
 
     pub fn look_choose(&self) -> crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
-        self.to_instruction().look_choose()
+        match self {
+            AbilityFrame::LookAndChoose { params, .. } => *params,
+            _ => crate::core::logic::interpreter::instruction::DecodedLookAndChoose::decode(self.value()),
+        }
     }
     pub fn is_dynamic(&self) -> bool {
-        self.to_instruction().is_dynamic()
+        (self.attr() & (A_STANDARD_COMPARE_ACCUMULATED_MASK << A_STANDARD_COMPARE_ACCUMULATED_SHIFT) as u64) != 0
     }
     pub fn scalar_dynamic_base(&self) -> i32 {
-        self.to_instruction().scalar_dynamic_base()
+        ((self.value() as u32 >> V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT) & V_SCALAR_DYNAMIC_BASE_VALUE_MASK) as i32
     }
     pub fn scalar_dynamic_divisor(&self) -> i32 {
-        self.to_instruction().scalar_dynamic_divisor()
+        ((self.value() as u32 >> V_SCALAR_DYNAMIC_DIVISOR_SHIFT) & V_SCALAR_DYNAMIC_DIVISOR_MASK) as i32
     }
     pub fn heart_requirements(&self) -> crate::core::logic::interpreter::instruction::DecodedHeartRequirements {
-        self.to_instruction().heart_requirements()
+        crate::core::logic::interpreter::instruction::DecodedHeartRequirements::decode(self.attr() as i64)
     }
     pub fn heart_counts(&self) -> crate::core::logic::interpreter::instruction::DecodedHeartCounts {
-        self.to_instruction().heart_counts()
+        crate::core::logic::interpreter::instruction::DecodedHeartCounts::decode(self.value())
     }
 
     pub fn filter(&self) -> DecodedFilterAttr {
@@ -200,7 +217,13 @@ impl AbilityFrame {
         let v = self.value();
         let a = self.attr();
         let s = self.slot();
-        crate::core::logic::interpreter::instruction::BytecodeInstruction { op, v, a: a as i64, raw_s: s }
+
+        let mut final_op = op;
+        if self.is_negated() && op < crate::core::logic::constants::OPCODE_NEGATION_OFFSET {
+            final_op += crate::core::logic::constants::OPCODE_NEGATION_OFFSET;
+        }
+
+        crate::core::logic::interpreter::instruction::BytecodeInstruction { op: final_op, v, a: a as i64, raw_s: s }
     }
 }
 

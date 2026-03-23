@@ -178,7 +178,7 @@ impl CardDatabase {
                 if frame.opcode() == O_MOVE_MEMBER {
                     match frame.clone() {
                         AbilityFrame::MoveMember { filter, slot } => {
-                            *frame = AbilityFrame::Semantic { opcode: O_TAP_MEMBER, value: 0, filter, slot, params: serde_json::Value::Null };
+                            *frame = AbilityFrame::Semantic { opcode: O_TAP_MEMBER, value: 0, filter, slot, is_negated: false, params: serde_json::Value::Null };
                         }
                         AbilityFrame::Semantic { ref mut opcode, .. } => *opcode = O_TAP_MEMBER,
                         AbilityFrame::Raw { ref mut opcode, .. } => *opcode = O_TAP_MEMBER,
@@ -308,12 +308,12 @@ impl CardDatabase {
     }
 
     fn compact_sparse_frame_from_program(frame: &AbilityFrame) -> Value {
-        let instr = frame.to_instruction();
         let mut compact = serde_json::Map::new();
 
-        compact.insert("opcode_id".to_string(), Value::from(instr.op));
-        compact.insert("opcode".to_string(), Value::from(get_opcode_name(instr.op)));
-        compact.insert("value".to_string(), Value::from(instr.v));
+        let op = frame.opcode();
+        compact.insert("opcode_id".to_string(), Value::from(op));
+        compact.insert("opcode".to_string(), Value::from(get_opcode_name(op)));
+        compact.insert("value".to_string(), Value::from(frame.value()));
 
         let attr = serde_json::to_value(frame.filter()).unwrap_or(Value::Null);
         let slot = serde_json::to_value(frame.dslot()).unwrap_or(Value::Null);
@@ -391,8 +391,8 @@ impl CardDatabase {
     }
 
     fn frame_to_effect(frame: &AbilityFrame) -> Option<Effect> {
-        let instr = frame.to_instruction();
-        let effect_type = match instr.op {
+        let op = frame.opcode();
+        let effect_type = match op {
             O_DRAW => EffectType::Draw,
             O_ADD_BLADES => EffectType::AddBlades,
             O_ADD_HEARTS => EffectType::AddHearts,
@@ -477,15 +477,15 @@ impl CardDatabase {
 
         Some(Effect {
             effect_type,
-            value: instr.v,
+            value: frame.value(),
             value_cond: ConditionType::None,
             target: TargetType::Self_,
             is_optional: false,
             params: serde_json::Value::Null,
-            runtime_opcode: instr.op,
-            runtime_value: instr.v,
-            runtime_attr: instr.a as u64,
-            runtime_slot: instr.raw_s,
+            runtime_opcode: op,
+            runtime_value: frame.value(),
+            runtime_attr: frame.attr(),
+            runtime_slot: frame.slot(),
             modal_options: serde_json::Value::Null,
         })
     }
@@ -511,6 +511,7 @@ impl CardDatabase {
                 value: v,
                 filter,
                 slot,
+                is_negated: false,
                 params: Value::Null,
             },
         }
@@ -922,94 +923,92 @@ impl CardDatabase {
             let mut ability_flags_for_ab = 0u64;
             let mut unflagged_logic_present = false;
 
-            let program = ab.bytecode_program();
-            let mut ip = 0;
-            while let Some(instr) = program.instruction_at(ip) {
-                let op = instr.op;
+            if let Some(frame_program) = ab.frame_program.as_ref() {
+                for frame in &frame_program.frames {
+                    let op = frame.opcode();
 
-                match op {
-                    O_RETURN | O_LOOK_AND_CHOOSE => ability_flags_for_ab |= FLAG_DRAW as u64,
-                    O_SEARCH_DECK => ability_flags_for_ab |= FLAG_SEARCH as u64,
-                    O_RECOVER_LIVE | O_RECOVER_MEMBER => ability_flags_for_ab |= FLAG_RECOVER as u64,
-                    O_ADD_BLADES | O_ADD_HEARTS => ability_flags_for_ab |= FLAG_BUFF as u64,
-                    O_MOVE_MEMBER | O_SWAP_CARDS => ability_flags_for_ab |= FLAG_MOVE as u64,
-                    O_TAP_OPPONENT | O_TAP_MEMBER => ability_flags_for_ab |= FLAG_TAP as u64,
-                    O_ENERGY_CHARGE => ability_flags_for_ab |= FLAG_CHARGE as u64,
-                    O_ACTIVATE_MEMBER | O_SET_TAPPED => ability_flags_for_ab |= FLAG_TEMPO as u64,
-                    O_REDUCE_COST => ability_flags_for_ab |= FLAG_REDUCE as u64,
-                    O_BOOST_SCORE => ability_flags_for_ab |= FLAG_BOOST as u64,
-                    O_TRANSFORM_COLOR => ability_flags_for_ab |= FLAG_TRANSFORM as u64,
-                    O_REDUCE_HEART_REQ => ability_flags_for_ab |= FLAG_WIN_COND as u64,
-                    _ => {}
-                }
+                    match op {
+                        O_RETURN | O_LOOK_AND_CHOOSE => ability_flags_for_ab |= FLAG_DRAW as u64,
+                        O_SEARCH_DECK => ability_flags_for_ab |= FLAG_SEARCH as u64,
+                        O_RECOVER_LIVE | O_RECOVER_MEMBER => ability_flags_for_ab |= FLAG_RECOVER as u64,
+                        O_ADD_BLADES | O_ADD_HEARTS => ability_flags_for_ab |= FLAG_BUFF as u64,
+                        O_MOVE_MEMBER | O_SWAP_CARDS => ability_flags_for_ab |= FLAG_MOVE as u64,
+                        O_TAP_OPPONENT | O_TAP_MEMBER => ability_flags_for_ab |= FLAG_TAP as u64,
+                        O_ENERGY_CHARGE => ability_flags_for_ab |= FLAG_CHARGE as u64,
+                        O_ACTIVATE_MEMBER | O_SET_TAPPED => ability_flags_for_ab |= FLAG_TEMPO as u64,
+                        O_REDUCE_COST => ability_flags_for_ab |= FLAG_REDUCE as u64,
+                        O_BOOST_SCORE => ability_flags_for_ab |= FLAG_BOOST as u64,
+                        O_TRANSFORM_COLOR => ability_flags_for_ab |= FLAG_TRANSFORM as u64,
+                        O_REDUCE_HEART_REQ => ability_flags_for_ab |= FLAG_WIN_COND as u64,
+                        _ => {}
+                    }
 
-                match op {
-                    O_LOOK_AND_CHOOSE => {
-                        ab.choice_flags |= CHOICE_FLAG_LOOK;
-                        if ab.choice_count == 0 {
-                            let v = instr.v;
-                            let pick = (v >> 8) & 0xFF;
-                            if pick > 0 {
-                                ab.choice_count = pick as u8;
-                            } else {
-                                let effect_pick = ab
-                                    .effects
-                                    .iter()
-                                    .find(|effect| {
-                                        effect.runtime_opcode == O_LOOK_AND_CHOOSE
-                                            || effect.effect_type == EffectType::LookAndChoose
-                                    })
-                                    .and_then(|effect| effect.params.get("choose_count"))
-                                    .and_then(|value| value.as_u64())
-                                    .map(|value| value as u8)
-                                    .unwrap_or(0);
-                                ab.choice_count = if effect_pick > 0 { effect_pick } else { 3 };
+                    match op {
+                        O_LOOK_AND_CHOOSE => {
+                            ab.choice_flags |= CHOICE_FLAG_LOOK;
+                            if ab.choice_count == 0 {
+                                let v = frame.value();
+                                let pick = (v >> 8) & 0xFF;
+                                if pick > 0 {
+                                    ab.choice_count = pick as u8;
+                                } else {
+                                    let effect_pick = ab
+                                        .effects
+                                        .iter()
+                                        .find(|effect| {
+                                            effect.runtime_opcode == O_LOOK_AND_CHOOSE
+                                                || effect.effect_type == EffectType::LookAndChoose
+                                        })
+                                        .and_then(|effect| effect.params.get("choose_count"))
+                                        .and_then(|value| value.as_u64())
+                                        .map(|value| value as u8)
+                                        .unwrap_or(0);
+                                    ab.choice_count = if effect_pick > 0 { effect_pick } else { 3 };
+                                }
                             }
                         }
-                    }
-                    O_SELECT_MODE => {
-                        ab.choice_flags |= CHOICE_FLAG_MODE;
-                        if ab.choice_count == 0 {
-                            ab.choice_count = instr.v as u8;
+                        O_SELECT_MODE => {
+                            ab.choice_flags |= CHOICE_FLAG_MODE;
+                            if ab.choice_count == 0 {
+                                ab.choice_count = frame.value() as u8;
+                            }
                         }
-                    }
-                    O_COLOR_SELECT => {
-                        ab.choice_flags |= CHOICE_FLAG_COLOR;
-                        if ab.choice_count == 0 {
-                            ab.choice_count = 6;
+                        O_COLOR_SELECT => {
+                            ab.choice_flags |= CHOICE_FLAG_COLOR;
+                            if ab.choice_count == 0 {
+                                ab.choice_count = 6;
+                            }
                         }
-                    }
-                    O_ORDER_DECK => {
-                        ab.choice_flags |= CHOICE_FLAG_ORDER;
-                        if ab.choice_count == 0 {
-                            ab.choice_count = 3;
+                        O_ORDER_DECK => {
+                            ab.choice_flags |= CHOICE_FLAG_ORDER;
+                            if ab.choice_count == 0 {
+                                ab.choice_count = 3;
+                            }
                         }
+                        _ => {}
                     }
-                    _ => {}
+
+                    ab.opcodes_mask |= 1u128 << (op as u32 % 128);
+                    ability_opcodes_mask |= ab.opcodes_mask;
+                    trigger_mask |= 1u32 << (ab.trigger as u32 % 32);
+
+                    if op == O_BATON_TOUCH_MOD && frame.value() >= 2 {
+                        has_multi_baton = true;
+                    }
+
+                    if [O_ADD_BLADES, O_ADD_HEARTS, O_BUFF_POWER, O_REDUCE_COST, O_INCREASE_COST, O_SET_HEART_COST]
+                        .contains(&op)
+                    {
+                        let val = frame.value();
+                        let attr = frame.attr();
+                        let slot = frame.slot();
+                        ab.preparsed_modifiers.push(PreparsedModifier { op, val, attr, slot });
+                    }
+
+                    if !flagged_ops.contains(&op) {
+                        unflagged_logic_present = true;
+                    }
                 }
-
-                ab.opcodes_mask |= 1u128 << (op as u32 % 128);
-                ability_opcodes_mask |= ab.opcodes_mask;
-                trigger_mask |= 1u32 << (ab.trigger as u32 % 32);
-
-                if op == O_BATON_TOUCH_MOD && instr.v >= 2 {
-                    has_multi_baton = true;
-                }
-
-                if [O_ADD_BLADES, O_ADD_HEARTS, O_BUFF_POWER, O_REDUCE_COST, O_INCREASE_COST, O_SET_HEART_COST]
-                    .contains(&op)
-                {
-                    let val = instr.v;
-                    let attr = instr.a as u64;
-                    let slot = instr.raw_s;
-                    ab.preparsed_modifiers.push(PreparsedModifier { op, val, attr, slot });
-                }
-
-                if !flagged_ops.contains(&op) {
-                    unflagged_logic_present = true;
-                }
-
-                ip = program.next_ip(ip);
             }
 
             if ab.trigger == TriggerType::OnPlay && ab.choice_flags != 0 {
@@ -1387,7 +1386,14 @@ impl CardDatabase {
 
     // Static opcode check
     pub fn has_opcode_static_fast(ab: &Ability, target_op: i32) -> bool {
-        ab.bytecode_program().has_opcode(target_op)
+        if let Some(program) = ab.frame_program.as_ref() {
+            for frame in &program.frames {
+                if frame.opcode() == target_op {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     pub fn to_binary(&self) -> bincode::Result<Vec<u8>> {

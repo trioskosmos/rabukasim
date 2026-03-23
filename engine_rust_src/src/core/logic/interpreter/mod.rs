@@ -1,4 +1,4 @@
-﻿//! # Modular Bytecode Interpreter
+//! # Modular Bytecode Interpreter
 //!
 //! This module decouples the monolithic interpreter into smaller, maintainable components.
 
@@ -163,11 +163,10 @@ pub fn resolve_semantic_frames(
         steps += 1;
         let frame = &frames[effect_idx];
         let ip = BytecodeProgram::effect_ip(effect_idx);
-        let instr = frame.to_instruction();
-        let op = instr.op;
-        let v = instr.v;
-        let a = instr.a;
-        let s = instr.raw_s;
+        let op = frame.opcode();
+        let v = frame.value();
+        let a = frame.attr() as i64;
+        let s = frame.slot();
 
         ctx.program_counter = ip as u16;
         if effect_idx == BytecodeProgram::effect_idx(ctx_in.program_counter as usize) && ctx_in.choice_index != -1 {
@@ -189,9 +188,8 @@ pub fn resolve_semantic_frames(
         }
 
         let mut real_op = op;
-        let mut is_negated = false;
-        if real_op >= crate::core::logic::constants::OPCODE_NEGATION_OFFSET {
-            is_negated = true;
+        let is_negated = frame.is_negated();
+        if real_op >= crate::core::logic::constants::OPCODE_NEGATION_OFFSET && !is_negated {
             real_op -= crate::core::logic::constants::OPCODE_NEGATION_OFFSET;
         }
 
@@ -323,7 +321,7 @@ pub fn resolve_semantic_frames(
             continue;
         }
 
-        if !cond {
+        if !cond || is_negated {
             effect_idx += 1;
             continue;
         }

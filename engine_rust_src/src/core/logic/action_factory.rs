@@ -1,6 +1,5 @@
 use crate::core::generated_constants::*;
 use crate::core::logic::card_db::CardDatabase;
-use crate::core::logic::interpreter::instruction::{BytecodeProgram, WORDS_PER_INSTRUCTION};
 use crate::core::logic::models::AbilityContext;
 
 /// Structured representation of a decoded Action ID.
@@ -80,42 +79,47 @@ impl ActionFactory {
         }?;
 
         let ability = abilities.get(pi.ability_index as usize)?;
-        let program = ability.bytecode_program();
+        let frame_program = ability.frame_program.as_ref()?;
 
-        let mut select_mode_ip = 0;
-        while let Some(instr) = program.instruction_at(select_mode_ip) {
-            if instr.op == O_SELECT_MODE {
+        let mut select_mode_idx = 0;
+        let mut found = false;
+        for (i, frame) in frame_program.frames.iter().enumerate() {
+            if frame.opcode() == O_SELECT_MODE {
+                select_mode_idx = i;
+                found = true;
                 break;
             }
-            select_mode_ip = program.next_ip(select_mode_ip);
         }
-
-        let jump_instr_ip = select_mode_ip + WORDS_PER_INSTRUCTION + (mode_idx as usize * WORDS_PER_INSTRUCTION);
-        let jump_instr = program.instruction_at(jump_instr_ip)?;
-        if jump_instr.op != O_JUMP {
+        if !found {
             return None;
         }
 
-        let effect_ip = program.jump_target(jump_instr_ip, jump_instr.v)?;
-        let effect_instr = program.instruction_at(effect_ip)?;
-        let technical_label = match effect_instr.op {
-            O_PAY_ENERGY => format!("PAY_ENERGY({})", effect_instr.v),
+        let jump_frame_idx = select_mode_idx + 1 + mode_idx as usize;
+        let jump_frame = frame_program.frames.get(jump_frame_idx)?;
+        if jump_frame.opcode() != O_JUMP {
+            return None;
+        }
+
+        let target_idx = (jump_frame_idx as i32 + 1 + jump_frame.value()) as usize;
+        let effect_frame = frame_program.frames.get(target_idx)?;
+        let technical_label = match effect_frame.opcode() {
+            O_PAY_ENERGY => format!("PAY_ENERGY({})", effect_frame.value()),
             O_MOVE_TO_DISCARD => {
-                let slot = effect_instr.slot();
+                let slot = effect_frame.dslot();
                 if slot.source_zone == crate::core::enums::Zone::Hand {
-                    format!("DISCARD_HAND({})", effect_instr.v)
+                    format!("DISCARD_HAND({})", effect_frame.value())
                 } else {
                     format!(
                         "{}({})",
-                        crate::core::logic::interpreter::logging::get_opcode_name(effect_instr.op),
-                        effect_instr.v
+                        crate::core::logic::interpreter::logging::get_opcode_name(effect_frame.opcode()),
+                        effect_frame.value()
                     )
                 }
             }
             _ => format!(
                 "{}({})",
-                crate::core::logic::interpreter::logging::get_opcode_name(effect_instr.op),
-                effect_instr.v
+                crate::core::logic::interpreter::logging::get_opcode_name(effect_frame.opcode()),
+                effect_frame.value()
             ),
         };
 

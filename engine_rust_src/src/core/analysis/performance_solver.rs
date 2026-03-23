@@ -1,4 +1,3 @@
-use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::card_db::CardDatabase;
 use crate::core::logic::game::GameState;
@@ -312,41 +311,31 @@ impl PerformanceProbabilitySolver {
                 continue;
             }
 
-            let bc = ab.bytecode();
-            let mut i = 0;
-            use crate::core::generated_constants::*;
+            if let Some(frame_program) = ab.frame_program.as_ref() {
+                for frame in &frame_program.frames {
+                    let op = frame.opcode();
+                    let v = frame.value();
+                    let a = frame.attr();
+                    // let s = frame.slot();
 
-            while i + 4 < bc.len() {
-                let op = bc[i];
-                let v = bc[i + 1];
-                let a_low = bc[i + 2];
-                let a_high = bc[i + 3];
-                let a = ((a_high as i64) << 32) | (a_low as i64);
-                // let s = bc[i + 4];
-
-                if op == O_ADD_HEARTS {
-                    let mut color = a as usize;
-                    if color == 0 {
-                        // Fallback or color selection prediction? For now, assume special if not specified.
-                        // A more sophisticated solver might try all colors or use context.
-                        color = 6;
+                    if op == O_ADD_HEARTS {
+                        let mut color = a as usize;
+                        if color == 0 {
+                            color = 6;
+                        }
+                        if color < 7 {
+                            adj.extra_hearts[color] = adj.extra_hearts[color].saturating_add(v as u8);
+                        }
+                    } else if op == O_ADD_BLADES {
+                        adj.virtual_draws = adj.virtual_draws.saturating_add(v as u8);
+                    } else if op == O_DRAW {
+                        adj.virtual_draws = adj.virtual_draws.saturating_add(v as u8);
+                    } else if op == O_BOOST_SCORE {
+                        adj.boost_score = adj.boost_score.saturating_add(v as u8);
+                    } else if op == O_REDUCE_HEART_REQ {
+                        adj.extra_hearts[6] = adj.extra_hearts[6].saturating_add(v as u8);
                     }
-                    if color < 7 {
-                        adj.extra_hearts[color] = adj.extra_hearts[color].saturating_add(v as u8);
-                    }
-                } else if op == O_ADD_BLADES {
-                    // Each blade acts like an extra yell, which translates to virtual draws.
-                    // This is a simplification; actual blades modify cheer_mod_count.
-                    adj.virtual_draws = adj.virtual_draws.saturating_add(v as u8);
-                } else if op == O_DRAW {
-                    adj.virtual_draws = adj.virtual_draws.saturating_add(v as u8);
-                } else if op == O_BOOST_SCORE {
-                    adj.boost_score = adj.boost_score.saturating_add(v as u8);
-                } else if op == O_REDUCE_HEART_REQ {
-                    // Treat heart requirement reduction as adding special hearts for calculation purposes
-                    adj.extra_hearts[6] = adj.extra_hearts[6].saturating_add(v as u8);
                 }
-                i += 5;
             }
         }
         adj

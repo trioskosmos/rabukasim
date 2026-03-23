@@ -19,10 +19,10 @@ pub fn handle_deck_zones(
     frame: &AbilityFrame,
     frame_idx: usize,
 ) -> HandlerResult {
-    let op = frame.raw_opcode();
-    let v = frame.raw_value();
-    let a = frame.raw_attr() as i64;
-    let s = frame.raw_slot();
+    let op = frame.opcode();
+    let v = frame.value();
+    let a = frame.attr() as i64;
+    let s = frame.slot();
     let p_idx = ctx.player_id as usize;
     let slot = frame.dslot();
     let target_slot = slot.target_slot as i32;

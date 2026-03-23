@@ -10,9 +10,9 @@ pub fn handle_draw(
     ctx: &mut AbilityContext,
     frame: &AbilityFrame,
 ) -> HandlerResult {
-    let op = frame.raw_opcode();
-    let v = frame.raw_value();
-    let s = frame.raw_slot();
+    let op = frame.opcode();
+    let v = frame.value();
+    let s = frame.slot();
     let p_idx = ctx.player_id as usize;
     let count = if frame.filter().compare_accumulated {
         resolve_count(

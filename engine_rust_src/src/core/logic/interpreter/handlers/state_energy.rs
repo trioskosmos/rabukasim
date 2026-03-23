@@ -36,16 +36,11 @@ pub fn handle_energy(
 
     let frame: AbilityFrame = frame.into();
 
-    let op = frame.raw_opcode();
-
-    let v = frame.raw_value();
-
-    let a = frame.raw_attr() as i64;
-
+    let op = frame.opcode();
+    let v = frame.value();
+    let a = frame.attr() as i64;
     #[allow(unused_variables)]
-
-    let s = frame.raw_slot();
-
+    let s = frame.slot();
     let p_idx = ctx.player_id as usize;
 
 

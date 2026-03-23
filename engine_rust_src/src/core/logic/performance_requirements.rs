@@ -1,6 +1,5 @@
 use super::card_db::{CardDatabase, LiveCard};
 use super::game::GameState;
-use super::interpreter::instruction::BytecodeProgram;
 use super::models::*;
 use super::player::PlayerState;
 use super::rules::calculate_board_aura;
@@ -9,20 +8,18 @@ use crate::core::hearts::*;
 use super::interpreter::check_condition;
 use serde_json::json; // Value removed
 
-pub fn process_heart_modifiers_bytecode(
-    bc: &[i32],
+pub fn process_heart_modifiers_frames(
+    frames: &[AbilityFrame],
     req_board: &mut HeartBoard,
     adjustments: &mut Vec<serde_json::Value>,
     source_name: &str,
     source_id: i32,
 ) {
-    let program = BytecodeProgram::from_slice(bc);
-    let mut ip = 0;
-    while let Some(instr) = program.instruction_at(ip) {
-        let op = instr.op;
+    for frame in frames {
+        let op = frame.opcode();
         if op == O_SET_HEART_COST {
-            let val = instr.v;
-            let attr = instr.a as i32;
+            let val = frame.value();
+            let attr = frame.attr() as i32;
 
             adjustments.push(json!({
                 "source": source_name,
@@ -52,8 +49,8 @@ pub fn process_heart_modifiers_bytecode(
                 }
             }
         } else if op == O_INCREASE_HEART_COST {
-            let val = instr.v;
-            let attr = instr.a as usize;
+            let val = frame.value();
+            let attr = frame.attr() as usize;
             let idx = if attr == 0 || attr == 7 { 6 } else if attr <= 6 { attr - 1 } else { 99 };
             if idx < 7 {
                 let old = req_board.get_color_count(idx);
@@ -67,8 +64,8 @@ pub fn process_heart_modifiers_bytecode(
                 }));
             }
         } else if op == O_TRANSFORM_HEART {
-            let from_attr = instr.v as usize;
-            let to_attr = instr.a as usize;
+            let from_attr = frame.value() as usize;
+            let to_attr = frame.attr() as usize;
             let from_idx = if from_attr == 7 { 6 } else if from_attr >= 1 && from_attr <= 6 { from_attr - 1 } else { 99 };
             let to_idx = if to_attr == 7 { 6 } else if to_attr >= 1 && to_attr <= 6 { to_attr - 1 } else { 99 };
 
@@ -89,7 +86,6 @@ pub fn process_heart_modifiers_bytecode(
                 }
             }
         }
-        ip = program.next_ip(ip);
     }
 }
 
@@ -129,44 +125,41 @@ pub fn get_live_requirements(
                     continue;
                 }
 
-                let program = ab.bytecode_program();
-                let mut ip = 0;
                 let mut touches_live_requirements = false;
-                while let Some(instr) = program.instruction_at(ip) {
-                    let op = instr.op;
-                    if op == O_INCREASE_HEART_COST {
-                        touches_live_requirements = true;
-                        let val = instr.v;
-                        let attr = instr.a as usize;
-                        let idx = if attr == 0 || attr == 7 {
-                            6
-                        } else if attr <= 6 {
-                            attr - 1
-                        } else {
-                            99
-                        };
-                        if idx < 7 {
-                            aura.heart_req_additions.add_to_color(idx, val as i32);
+                if let Some(frame_program) = ab.frame_program.as_ref() {
+                    for frame in &frame_program.frames {
+                        let op = frame.opcode();
+                        if op == O_INCREASE_HEART_COST {
+                            touches_live_requirements = true;
+                            let val = frame.value();
+                            let attr = frame.attr() as usize;
+                            let idx = if attr == 0 || attr == 7 {
+                                6
+                            } else if attr <= 6 {
+                                attr - 1
+                            } else {
+                                99
+                            };
+                            if idx < 7 {
+                                aura.heart_req_additions.add_to_color(idx, val as i32);
+                            }
+                        } else if op == O_SET_HEART_COST {
+                            touches_live_requirements = true;
+                            let mut override_board = HeartBoard::default();
+                            process_heart_modifiers_frames(
+                                std::slice::from_ref(frame),
+                                &mut override_board,
+                                &mut Vec::new(),
+                                &member.name,
+                                source_cid,
+                            );
+                            aura.heart_req_additions = override_board;
                         }
-                    } else if op == O_SET_HEART_COST {
-                        touches_live_requirements = true;
-                        let mut override_board = HeartBoard::default();
-                        process_heart_modifiers_bytecode(
-                            &[
-                                instr.op,
-                                instr.v,
-                                instr.a as i32,
-                                (instr.a >> 32) as i32,
-                                instr.raw_s,
-                            ],
-                            &mut override_board,
-                            &mut Vec::new(),
-                            &member.name,
-                            source_cid,
-                        );
-                        aura.heart_req_additions = override_board;
                     }
-                    ip = program.next_ip(ip);
+
+                    if !touches_live_requirements {
+                        continue;
+                    }
                 }
 
                 if !touches_live_requirements {
@@ -185,7 +178,9 @@ pub fn get_live_requirements(
                 ..Default::default()
             };
             if ab.conditions.iter().all(|c| check_condition(state, db, p_idx, c, &ctx, 1)) {
-                process_heart_modifiers_bytecode(&ab.bytecode(), &mut req_board, &mut adjustments, &live.name, live.card_id);
+                if let Some(frame_program) = ab.frame_program.as_ref() {
+                    process_heart_modifiers_frames(&frame_program.frames, &mut req_board, &mut adjustments, &live.name, live.card_id);
+                }
             }
         }
     }

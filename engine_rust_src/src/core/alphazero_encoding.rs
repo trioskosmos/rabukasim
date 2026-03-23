@@ -1,4 +1,3 @@
-use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use crate::core::logic::{CardDatabase, GameState, PlayerState};
 use crate::core::analysis::pro_vision::ProVisionHints;
 
@@ -320,10 +319,18 @@ fn append_entity_vector(
             };
             tensor.push(is_spent);
             instructions_added += 4;
-            for code in ab.bytecode_program().words() {
-                if instructions_added < AZ_BYTECODE_MAX_LEN - 1 {
-                    tensor.push(*code as f32 / 255.0);
-                    instructions_added += 1;
+            if let Some(frame_program) = ab.frame_program.as_ref() {
+                for frame in &frame_program.frames {
+                    if instructions_added + 5 >= AZ_BYTECODE_MAX_LEN {
+                        break;
+                    }
+                    tensor.push(frame.opcode() as f32 / 255.0);
+                    tensor.push(frame.value() as f32 / 255.0);
+                    let a = frame.attr();
+                    tensor.push((a as u32) as f32 / 255.0);
+                    tensor.push((a >> 32) as u32 as f32 / 255.0);
+                    tensor.push(frame.slot() as f32 / 255.0);
+                    instructions_added += 5;
                 }
             }
             if instructions_added < AZ_BYTECODE_MAX_LEN {

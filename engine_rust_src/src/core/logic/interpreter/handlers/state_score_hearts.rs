@@ -21,11 +21,11 @@ pub fn handle_score_hearts(
     ctx: &mut AbilityContext,
     frame: &AbilityFrame,
 ) -> HandlerResult {
-    let op = frame.raw_opcode();
-    let v = frame.raw_value();
-    let a = frame.raw_attr() as i64;
+    let op = frame.opcode();
+    let v = frame.value();
+    let a = frame.attr() as i64;
     #[allow(unused_variables)]
-    let s = frame.raw_slot();
+    let s = frame.slot();
     let p_idx = ctx.player_id as usize;
 
     let slot_info = frame.dslot();

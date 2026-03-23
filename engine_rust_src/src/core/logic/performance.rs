@@ -231,32 +231,31 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                         .iter()
                                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
                                     {
-                                        let bc = ab.bytecode();
-                                        let mut bi = 0;
-                                        while bi + 4 < bc.len() {
-                                            let bop = bc[bi];
-                                            let bv = bc[bi + 1];
-                                            let bs = bc[bi + 4];
-                                            let mut targets_us = false;
-                                            if bs == 1 {
-                                                targets_us = true;
-                                            } else if (bs == 4 || bs == 0) && other_slot == i {
-                                                targets_us = true;
-                                            } else if bs == 10 && i as i16 == ctx.target_slot {
-                                                targets_us = true;
+                                        if let Some(frame_program) = ab.frame_program.as_ref() {
+                                            for frame in &frame_program.frames {
+                                                let bop = frame.opcode();
+                                                let bv = frame.value();
+                                                let bs = frame.slot();
+                                                let mut targets_us = false;
+                                                if bs == 1 {
+                                                    targets_us = true;
+                                                } else if (bs == 4 || bs == 0) && other_slot == i {
+                                                    targets_us = true;
+                                                } else if bs == 10 && i as i16 == ctx.target_slot {
+                                                    targets_us = true;
+                                                }
+                                                if (bop == O_ADD_BLADES || bop == O_BUFF_POWER)
+                                                    && targets_us
+                                                    && bv > 0
+                                                {
+                                                    slot_blade_buffs.push(json!({
+                                                        "source": other_m.name,
+                                                        "amount": bv,
+                                                        "ability_text": ab.raw_text,
+                                                        "img": other_m.img_path
+                                                    }));
+                                                }
                                             }
-                                            if (bop == O_ADD_BLADES || bop == O_BUFF_POWER)
-                                                && targets_us
-                                                && bv > 0
-                                            {
-                                                slot_blade_buffs.push(json!({
-                                                    "source": other_m.name,
-                                                    "amount": bv,
-                                                    "ability_text": ab.raw_text,
-                                                    "img": other_m.img_path
-                                                }));
-                                            }
-                                            bi += 5;
                                         }
                                     }
                                 }
@@ -283,18 +282,17 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                         .iter()
                                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
                                     {
-                                        let bc = ab.bytecode();
-                                        let mut bi = 0;
-                                        while bi + 4 < bc.len() {
-                                            if bc[bi] == O_ADD_BLADES && bc[bi + 1] > 0 {
-                                                slot_blade_buffs.push(json!({
-                                                    "source": format!("Granted: {}", src_m.name),
-                                                    "amount": bc[bi + 1],
-                                                    "ability_text": ab.raw_text,
-                                                    "img": src_m.img_path
-                                                }));
+                                        if let Some(frame_program) = ab.frame_program.as_ref() {
+                                            for frame in &frame_program.frames {
+                                                if frame.opcode() == O_ADD_BLADES && frame.value() > 0 {
+                                                    slot_blade_buffs.push(json!({
+                                                        "source": format!("Granted: {}", src_m.name),
+                                                        "amount": frame.value(),
+                                                        "ability_text": ab.raw_text,
+                                                        "img": src_m.img_path
+                                                    }));
+                                                }
                                             }
-                                            bi += 5;
                                         }
                                     }
                                 }
@@ -482,39 +480,36 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                         .iter()
                                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
                                     {
-                                        let bc = ab.bytecode();
-                                        let mut bi = 0;
-                                        while bi + 4 < bc.len() {
-                                            let bop = bc[bi];
-                                            let bv = bc[bi + 1];
-                                            let a_low = bc[bi + 2];
-                                            let a_high = bc[bi + 3];
-                                            let ba = ((a_high as i64) << 32) | (a_low as i64);
-                                            let bs = bc[bi + 4];
-                                            let mut targets_us = false;
-                                            if bs == 1 {
-                                                targets_us = true;
-                                            } else if (bs == 4 || bs == 0) && other_slot == i {
-                                                targets_us = true;
-                                            } else if bs == 10 && i as i16 == ctx.target_slot {
-                                                targets_us = true;
-                                            }
-                                            if bop == O_ADD_HEARTS && targets_us && bv > 0 {
-                                                let mut color = ba as usize;
-                                                if color == 0 {
-                                                    color = ctx.selected_color as usize;
+                                        if let Some(frame_program) = ab.frame_program.as_ref() {
+                                            for frame in &frame_program.frames {
+                                                let bop = frame.opcode();
+                                                let bv = frame.value();
+                                                let ba = frame.attr();
+                                                let bs = frame.slot();
+                                                let mut targets_us = false;
+                                                if bs == 1 {
+                                                    targets_us = true;
+                                                } else if (bs == 4 || bs == 0) && other_slot == i {
+                                                    targets_us = true;
+                                                } else if bs == 10 && i as i16 == ctx.target_slot {
+                                                    targets_us = true;
                                                 }
-                                                if color < 7 {
-                                                    slot_heart_buffs.push(json!({
-                                                        "source": other_m.name,
-                                                        "amount": bv,
-                                                        "color": color,
-                                                        "ability_text": ab.raw_text,
-                                                        "img": other_m.img_path
-                                                    }));
+                                                if bop == O_ADD_HEARTS && targets_us && bv > 0 {
+                                                    let mut color = ba as usize;
+                                                    if color == 0 {
+                                                        color = ctx.selected_color as usize;
+                                                    }
+                                                    if color < 7 {
+                                                        slot_heart_buffs.push(json!({
+                                                            "source": other_m.name,
+                                                            "amount": bv,
+                                                            "color": color,
+                                                            "ability_text": ab.raw_text,
+                                                            "img": other_m.img_path
+                                                        }));
+                                                    }
                                                 }
                                             }
-                                            bi += 5;
                                         }
                                     }
                                 }
@@ -541,28 +536,24 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                         .iter()
                                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
                                     {
-                                        let bc = ab.bytecode();
-                                        let mut bi = 0;
-                                        while bi + 4 < bc.len() {
-                                            let a_low = bc[bi + 2];
-                                            let a_high = bc[bi + 3];
-                                            let ba = ((a_high as i64) << 32) | (a_low as i64);
-                                            if bc[bi] == O_ADD_HEARTS && bc[bi + 1] > 0 {
-                                                let mut color = ba as usize;
-                                                if color == 0 {
-                                                    color = ctx.selected_color as usize;
-                                                }
-                                                if color < 7 {
-                                                    slot_heart_buffs.push(json!({
-                                                        "source": format!("Granted: {}", src_m.name),
-                                                        "amount": bc[bi + 1],
-                                                        "color": color,
-                                                        "ability_text": ab.raw_text,
-                                                        "img": src_m.img_path
-                                                    }));
+                                        if let Some(frame_program) = ab.frame_program.as_ref() {
+                                            for frame in &frame_program.frames {
+                                                if frame.opcode() == O_ADD_HEARTS && frame.value() > 0 {
+                                                    let mut color = frame.attr() as usize;
+                                                    if color == 0 {
+                                                        color = ctx.selected_color as usize;
+                                                    }
+                                                    if color < 7 {
+                                                        slot_heart_buffs.push(json!({
+                                                            "source": format!("Granted: {}", src_m.name),
+                                                            "amount": frame.value(),
+                                                            "color": color,
+                                                            "ability_text": ab.raw_text,
+                                                            "img": src_m.img_path
+                                                        }));
+                                                    }
                                                 }
                                             }
-                                            bi += 5;
                                         }
                                     }
                                 }

@@ -113,13 +113,10 @@ impl HandlerRegistry {
 
     ) -> HandlerResult {
 
-        let op = frame.raw_opcode();
-
-        let v = frame.raw_value();
-
-        let a = frame.raw_attr() as i64;
-
-        let s = frame.raw_slot();
+        let op = frame.opcode();
+        let v = frame.value();
+        let a = frame.attr() as i64;
+        let s = frame.slot();
 
         if !state.ui.silent {
 

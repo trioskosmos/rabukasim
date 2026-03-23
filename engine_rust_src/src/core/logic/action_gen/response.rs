@@ -535,15 +535,12 @@ impl ResponseGenerator {
                         if let Some(attr) = Self::effect_runtime_attr_for_opcode(ab, O_LOOK_AND_CHOOSE)
                         {
                             final_filter_attr = attr;
-                        } else {
-                            let program = ab.bytecode_program();
-                            let mut ip = 0;
-                            while let Some(instr) = program.instruction_at(ip) {
-                                if instr.op == O_LOOK_AND_CHOOSE {
-                                    final_filter_attr = instr.a as u64;
+                        } else if let Some(program) = ab.frame_program.as_ref() {
+                            for frame in &program.frames {
+                                if frame.opcode() == O_LOOK_AND_CHOOSE {
+                                    final_filter_attr = frame.attr();
                                     break;
                                 }
-                                ip = program.next_ip(ip);
                             }
                         }
                     }
@@ -756,46 +753,36 @@ impl ResponseGenerator {
 
                 if ab_idx_real < abs.len() {
                     let ab = &abs[ab_idx_real];
-                    let bc = ab.bytecode();
-                    let program = BytecodeProgram::from_slice(&bc);
-
-                    let mut ip = 0;
-                    while let Some(instr) = program.instruction_at(ip) {
-                        if instr.op == O_SELECT_MODE {
-                            break;
+                    if let Some(frame_program) = ab.frame_program.as_ref() {
+                        let mut select_mode_idx = 0;
+                        let mut found = false;
+                        for (idx, frame) in frame_program.frames.iter().enumerate() {
+                            if frame.opcode() == O_SELECT_MODE {
+                                select_mode_idx = idx;
+                                found = true;
+                                break;
+                            }
                         }
-                        ip = program.next_ip(ip);
-                    }
 
-                    // In 5-word format:
-                    // SELECT_MODE v a s
-                    // JUMP target1
-                    // JUMP target2
-                    // ...
+                        if found {
+                            let jump_frame_idx = select_mode_idx + 1 + i as usize;
+                            if let Some(jump_frame) = frame_program.frames.get(jump_frame_idx) {
+                                if jump_frame.opcode() == O_JUMP {
+                                    let target_idx = (jump_frame_idx as i32 + 1 + jump_frame.value()) as usize;
+                                    if let Some(effect_frame) = frame_program.frames.get(target_idx) {
+                                        let target_op = effect_frame.opcode();
+                                        let v = effect_frame.value();
 
-                    let jump_instr_ip = ip + WORDS_PER_INSTRUCTION + (i as usize * WORDS_PER_INSTRUCTION);
-                    if let Some(jump_instr) = program.instruction_at(jump_instr_ip) {
-                        if jump_instr.op == O_JUMP {
-                            let jump_val = jump_instr.v;
-                            // The JUMP target points to the skip-to-end instruction AFTER the option's effect block.
-                            // The actual first effect instruction is 5 bytes BEFORE that target.
-                            let effect_ip = program.jump_target(jump_instr_ip, jump_val);
-
-                            if let Some(effect_instr) = effect_ip.and_then(|ip| program.instruction_at(ip)) {
-                                let target_op = effect_instr.op;
-                                let v = effect_instr.v;
-
-                                if target_op == O_PAY_ENERGY {
-                                    let player = &state.players[p_idx];
-                                    let available = player.energy_zone.len() as i32 - player.tapped_energy_count() as i32;
-                                    if available < v {
-                                        option_valid = false;
+                                        if target_op == O_PAY_ENERGY {
+                                            let player = &state.players[p_idx];
+                                            let available = player.energy_zone.len() as i32 - player.tapped_energy_count() as i32;
+                                            if available < v {
+                                                option_valid = false;
+                                            }
+                                        } else if target_op == O_MOVE_TO_DISCARD {
+                                            option_valid = true;
+                                        }
                                     }
-                                } else if target_op == O_MOVE_TO_DISCARD {
-                                    // According to FAQ Q93, hand discard branches in mandatory SELECT_MODE
-                                    // must be selectable even if the player has fewer than the required cards.
-                                    // We allow this to proceed to handle partial fulfillment.
-                                    option_valid = true;
                                 }
                             }
                         }

@@ -159,43 +159,40 @@ fn apply_reduce_cost_modifiers(
         return;
     }
 
-    let program = ab.bytecode_program();
-    let mut ip = 0;
-    while let Some(instr) = program.instruction_at(ip) {
-        let op = instr.op;
-        if op != O_REDUCE_COST && op != O_INCREASE_COST {
-            ip = program.next_ip(ip);
-            continue;
-        }
+    if let Some(frame_program) = ab.frame_program.as_ref() {
+        for frame in &frame_program.frames {
+            let op = frame.opcode();
+            if op != O_REDUCE_COST && op != O_INCREASE_COST {
+                continue;
+            }
 
-        let val = instr.v;
-        let attr = instr.a as u64;
-        let slot = instr.raw_s;
+            let val = frame.value();
+            let attr = frame.attr();
+            let slot = frame.slot();
 
-        if ((slot as u32) & 0xFF) != 0 && ((slot as u32) & 0xFF) != 4 {
-            ip = program.next_ip(ip);
-            continue;
-        }
+            if ((slot as u32) & 0xFF) != 0 && ((slot as u32) & 0xFF) != 4 {
+                continue;
+            }
 
-        let mut multiplier = 1;
-        if (attr & DYNAMIC_VALUE) != 0 {
-            let count_op = (slot >> 8) & 0xFFFF;
-            multiplier = resolve_count(
-                state,
-                db,
-                count_op as i32,
-                attr & !DYNAMIC_VALUE,
-                slot,
-                ctx,
-                depth + 1,
-            );
+            let mut multiplier = 1;
+            if (attr & DYNAMIC_VALUE) != 0 {
+                let count_op = (slot >> 8) & 0xFFFF;
+                multiplier = resolve_count(
+                    state,
+                    db,
+                    count_op as i32,
+                    attr & !DYNAMIC_VALUE,
+                    slot,
+                    ctx,
+                    depth + 1,
+                );
+            }
+            if op == O_REDUCE_COST {
+                *cost -= val * multiplier;
+            } else {
+                *cost += val * multiplier;
+            }
         }
-        if op == O_REDUCE_COST {
-            *cost -= val * multiplier;
-        } else {
-            *cost += val * multiplier;
-        }
-        ip = program.next_ip(ip);
     }
 }
 
@@ -239,16 +236,15 @@ fn apply_external_reduce_cost_modifiers(
         return;
     }
 
-    let program = ab.bytecode_program();
-    let mut ip = 0;
-    while let Some(instr) = program.instruction_at(ip) {
-        let op = instr.op;
-        if op == O_REDUCE_COST {
-            *cost -= instr.v;
-        } else if op == O_INCREASE_COST {
-            *cost += instr.v;
+    if let Some(frame_program) = ab.frame_program.as_ref() {
+        for frame in &frame_program.frames {
+            let op = frame.opcode();
+            if op == O_REDUCE_COST {
+                *cost -= frame.value();
+            } else if op == O_INCREASE_COST {
+                *cost += frame.value();
+            }
         }
-        ip = program.next_ip(ip);
     }
 }
 
@@ -605,14 +601,13 @@ pub fn has_restriction(
                         .iter()
                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
                     {
-                        let bc = ab.bytecode();
-                        let mut i = 0;
-                        while i + 4 < bc.len() {
-                            if bc[i] == opcode {
+                    if let Some(frame_program) = ab.frame_program.as_ref() {
+                        for frame in &frame_program.frames {
+                            if frame.opcode() == opcode {
                                 return true;
                             }
-                            i += 5;
                         }
+                    }
                     }
                 }
             }
@@ -640,13 +635,12 @@ pub fn has_restriction(
                             .iter()
                             .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
                         {
-                            let bc = ab.bytecode();
-                            let mut i = 0;
-                            while i + 4 < bc.len() {
-                                if bc[i] == opcode {
-                                    return true;
+                            if let Some(frame_program) = ab.frame_program.as_ref() {
+                                for frame in &frame_program.frames {
+                                    if frame.opcode() == opcode {
+                                        return true;
+                                    }
                                 }
-                                i += 5;
                             }
                         }
                     }
@@ -743,14 +737,12 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                         }
                     }
                 }
-            } else {
-                let program = ab.bytecode_program();
-                let mut ip = 0;
-                while let Some(instr) = program.instruction_at(ip) {
-                    let op = instr.op;
-                    let v = instr.v;
-                    let a = instr.a as u64;
-                    let s = instr.raw_s;
+            } else if let Some(frame_program) = ab.frame_program.as_ref() {
+                for frame in &frame_program.frames {
+                    let op = frame.opcode();
+                    let v = frame.value();
+                    let a = frame.attr();
+                    let s = frame.slot();
 
                     if op == O_REDUCE_COST || op == O_INCREASE_COST {
                         let target_area = s & 0xFF;
@@ -780,7 +772,6 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                             source_slot,
                         );
                     }
-                    ip = program.next_ip(ip);
                 }
             }
         }
@@ -814,26 +805,27 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 continue;
             }
 
-                let ctx = AbilityContext {
-                    source_card_id: cid,
-                    player_id: player_idx as u8,
-                    activator_id: player_idx as u8,
-                    area_idx: if slot_idx < 3 { slot_idx as i16 } else { -1 },
-                    ..Default::default()
-                };
+            let ctx = AbilityContext {
+                source_card_id: cid,
+                player_id: player_idx as u8,
+                activator_id: player_idx as u8,
+                area_idx: if slot_idx < 3 { slot_idx as i16 } else { -1 },
+                ..Default::default()
+            };
 
-                if !ab
-                    .conditions
-                    .iter()
-                    .all(|c| check_condition(state, db, player_idx, c, &ctx, 1))
-                {
-                    continue;
-                }
+            if !ab
+                .conditions
+                .iter()
+                .all(|c| check_condition(state, db, player_idx, c, &ctx, 1))
+            {
+                continue;
+            }
 
-                let bytecode = ab.bytecode();
-                let target_mask = if slot_idx < 3 && !bytecode.is_empty() {
-                    let target_area = bytecode.get(4).copied().unwrap_or(0);
-                    let runtime_attr = bytecode.get(2).copied().unwrap_or(0) as u64;
+            let target_mask = if let Some(program) = ab.frame_program.as_ref() {
+                if slot_idx < 3 && !program.frames.is_empty() {
+                    let first_frame = &program.frames[0];
+                    let target_area = first_frame.slot() & 0xFF;
+                    let runtime_attr = first_frame.attr();
                     if target_area == 4 || runtime_attr != 0 || !ab.filters.is_empty() {
                         0b111
                     } else {
@@ -843,15 +835,19 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                     0b111
                 } else {
                     0
-                };
+                }
+            } else if slot_idx < 3 {
+                0b111
+            } else {
+                0
+            };
 
-                let program = ab.bytecode_program();
-                let mut ip = 0;
-                while let Some(instr) = program.instruction_at(ip) {
-                    let op = instr.op;
-                    let v = instr.v;
-                    let a = instr.a as u64;
-                    let s = instr.raw_s;
+            if let Some(frame_program) = ab.frame_program.as_ref() {
+                for frame in &frame_program.frames {
+                    let op = frame.opcode();
+                    let v = frame.value();
+                    let a = frame.attr();
+                    let s = frame.slot();
 
                     if op == O_REDUCE_COST || op == O_INCREASE_COST {
                         aura.cost_modifiers.push(CachedCostModifier {
@@ -875,7 +871,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                             slot_idx,
                         );
                     }
-                    ip = program.next_ip(ip);
+                }
             }
         }
     }

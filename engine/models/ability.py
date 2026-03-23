@@ -194,6 +194,7 @@ class Ability:
                 "value": int(value),
                 "filter": attr,
                 "slot": slot,
+                "is_negated": getattr(instr, "is_negated", False),
                 "params": raw,
             }
         }
