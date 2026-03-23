@@ -2,10 +2,10 @@ use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
+use rand::prelude::StdRng;
 use rand::seq::IndexedRandom;
 use rand::SeedableRng;
-use rand::prelude::StdRng;
 use smallvec::SmallVec;
 
 fn count_exact_main_sequences(state: &GameState, db: &CardDatabase, max_depth: usize) -> usize {
@@ -22,7 +22,10 @@ fn count_exact_main_sequences(state: &GameState, db: &CardDatabase, max_depth: u
 
         let mut total = 0usize;
         let mut saw_non_pass = false;
-        for action in actions.into_iter().filter(|&action| action != ACTION_BASE_PASS) {
+        for action in actions
+            .into_iter()
+            .filter(|&action| action != ACTION_BASE_PASS)
+        {
             saw_non_pass = true;
             let mut next_state = state.clone();
             if next_state.step(db, action).is_ok() {
@@ -145,7 +148,11 @@ fn main() {
     // Advance to first Main phase
     while state.phase != Phase::Main && !state.is_terminal() {
         match state.phase {
-            Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+            Phase::Rps
+            | Phase::MulliganP1
+            | Phase::MulliganP2
+            | Phase::TurnChoice
+            | Phase::Response => {
                 let legal = state.get_legal_action_ids(&db);
                 if !legal.is_empty() {
                     let &action = legal.choose(&mut rng).unwrap_or(&ACTION_BASE_PASS);
@@ -175,7 +182,11 @@ fn main() {
         match state.phase {
             Phase::Main => {
                 main_turns_played += 1;
-                let search_depth = engine_rust::core::logic::turn_sequencer::get_config().read().unwrap().search.max_dfs_depth;
+                let search_depth = engine_rust::core::logic::turn_sequencer::get_config()
+                    .read()
+                    .unwrap()
+                    .search
+                    .max_dfs_depth;
 
                 // Count exact sequences (diagnostic only, not used for move selection)
                 let count_start = Instant::now();
@@ -232,18 +243,32 @@ fn main() {
                 state.auto_step(&db);
                 let auto_elapsed = auto_start.elapsed();
                 if auto_elapsed.as_millis() > 5 {
-                    println!("[AUTO-STEP ({:?})] took {:.3}s", state.phase, auto_elapsed.as_secs_f64());
+                    println!(
+                        "[AUTO-STEP ({:?})] took {:.3}s",
+                        state.phase,
+                        auto_elapsed.as_secs_f64()
+                    );
                 }
             }
         }
     }
 
     let total_elapsed = game_start.elapsed();
-    println!("\n[GAME END] Completed {} main turns in {:.3}s", main_turns_played, total_elapsed.as_secs_f64());
-    println!("[WINNER] P{} (score P0: {}, P1: {})", 
-             if state.players[0].score > state.players[1].score { 0 } else { 1 },
-             state.players[0].score,
-             state.players[1].score);
+    println!(
+        "\n[GAME END] Completed {} main turns in {:.3}s",
+        main_turns_played,
+        total_elapsed.as_secs_f64()
+    );
+    println!(
+        "[WINNER] P{} (score P0: {}, P1: {})",
+        if state.players[0].score > state.players[1].score {
+            0
+        } else {
+            1
+        },
+        state.players[0].score,
+        state.players[1].score
+    );
     println!("[SPEEDS] Random moves should be essentially free; {:.3}s total = {:.1}ms per Main turn avg",
              total_elapsed.as_secs_f64(),
              (total_elapsed.as_secs_f64() * 1000.0) / main_turns_played.max(1) as f64);

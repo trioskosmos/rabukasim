@@ -1,5 +1,6 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
+use crate::core::logic::models::AbilityFrameComponents;
 // use crate::core::generated_constants::*;
 
 pub fn get_opcode_log(op: i32, v: i32, a: i64, _s: i32, result_count: i32) -> Option<String> {
@@ -55,32 +56,68 @@ pub fn get_opcode_log(op: i32, v: i32, a: i64, _s: i32, result_count: i32) -> Op
         O_REVEAL_UNTIL => Some("Revealed cards until condition met".to_string()),
         O_REDUCE_HEART_REQ => {
             let color_str = match _s {
-                0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple", 6 => "Any",
+                0 => "Pink",
+                1 => "Red",
+                2 => "Yellow",
+                3 => "Green",
+                4 => "Blue",
+                5 => "Purple",
+                6 => "Any",
                 _ => "Unknown",
             };
             Some(format!("Reduced {} heart requirement by {}", color_str, v))
         }
         O_TRANSFORM_HEART => {
             let src_str = match a {
-                0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple", 6 => "Any",
+                0 => "Pink",
+                1 => "Red",
+                2 => "Yellow",
+                3 => "Green",
+                4 => "Blue",
+                5 => "Purple",
+                6 => "Any",
                 _ => "Unknown",
             };
             let dst_str = match _s {
-                0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple", 6 => "Any",
+                0 => "Pink",
+                1 => "Red",
+                2 => "Yellow",
+                3 => "Green",
+                4 => "Blue",
+                5 => "Purple",
+                6 => "Any",
                 _ => "Unknown",
             };
-            Some(format!("Transformed {} required hearts to {} (qty={})", src_str, dst_str, v))
+            Some(format!(
+                "Transformed {} required hearts to {} (qty={})",
+                src_str, dst_str, v
+            ))
         }
         O_INCREASE_HEART_COST => {
             let color_str = match _s {
-                0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple", 6 => "Any",
+                0 => "Pink",
+                1 => "Red",
+                2 => "Yellow",
+                3 => "Green",
+                4 => "Blue",
+                5 => "Purple",
+                6 => "Any",
                 _ => "Unknown",
             };
-            Some(format!("Increased {} heart requirement by {}", color_str, v))
+            Some(format!(
+                "Increased {} heart requirement by {}",
+                color_str, v
+            ))
         }
         O_TRANSFORM_COLOR => {
             let dst_str = match v {
-                0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple", 6 => "Any",
+                0 => "Pink",
+                1 => "Red",
+                2 => "Yellow",
+                3 => "Green",
+                4 => "Blue",
+                5 => "Purple",
+                6 => "Any",
                 _ => "Unknown",
             };
             Some(format!("All hearts transform to {}", dst_str))
@@ -155,7 +192,13 @@ pub fn get_opcode_name(op: i32) -> &'static str {
         O_REDUCE_SCORE => "REDUCE_SCORE",
         O_LOSE_EXCESS_HEARTS => "LOSE_EXCESS_HEARTS",
         O_SKIP_ACTIVATE_PHASE => "SKIP_ACTIVATE_PHASE",
-        _ => if op == 127 { "TRANSFORM_BLADES" } else { ChoiceType::None.as_str() },
+        _ => {
+            if op == 127 {
+                "TRANSFORM_BLADES"
+            } else {
+                ChoiceType::None.as_str()
+            }
+        }
     }
 }
 
@@ -168,17 +211,24 @@ pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
         details = format!(" ({})", desc);
     }
 
-    let a_hex = if a != 0 { format!("0x{:012X}", a) } else { "0".to_string() };
+    let a_hex = if a != 0 {
+        format!("0x{:012X}", a)
+    } else {
+        "0".to_string()
+    };
 
     // Check if the opcode might have a target slot in `s`
     let slot = crate::core::logic::interpreter::instruction::DecodedSlot::decode(s);
-    let s_desc = format!("S:{:?}/{} -> D:{:?}/{}", slot.source_zone, slot.target_slot, slot.dest_zone, slot.area_idx);
+    let s_desc = format!(
+        "S:{:?}/{} -> D:{:?}/{}",
+        slot.source_zone, slot.target_slot, slot.dest_zone, slot.area_idx
+    );
 
     // Filter decoding if 'a' is non-zero and we are not in a NOP/RETURN op
     let a_desc = if a != 0 && op != O_NOP as i32 && op != O_RETURN as i32 {
         let f = crate::core::logic::filter::CardFilter::from_attr(a);
         let mut f_parts = Vec::new();
-        
+
         // Basic Type/Player info
         match f.target_player {
             1 => f_parts.push("Self".to_string()),
@@ -186,7 +236,7 @@ pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
             3 => f_parts.push("Both".to_string()),
             _ => {}
         }
-        
+
         match f.card_type {
             1 => f_parts.push("Member".to_string()),
             2 => f_parts.push("Live".to_string()),
@@ -207,17 +257,39 @@ pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
         }
 
         // Identity
-        if f.char_id_1 > 0 { f_parts.push(format!("Char:{}", f.char_id_1)); }
-        if f.group_enabled { f_parts.push(format!("Group:{}", f.group_id)); }
-        if f.unit_enabled { f_parts.push(format!("Unit:{}", f.unit_id)); }
-        
+        if f.char_id_1 > 0 {
+            f_parts.push(format!("Char:{}", f.char_id_1));
+        }
+        if f.group_enabled {
+            f_parts.push(format!("Group:{}", f.group_id));
+        }
+        if f.unit_enabled {
+            f_parts.push(format!("Unit:{}", f.unit_id));
+        }
+
         // Status/Values
-        if f.is_tapped { f_parts.push("Tapped".to_string()); }
-        if f.has_blade_heart { f_parts.push("HasBlade".to_string()); }
-        if f.not_has_blade_heart { f_parts.push("NoBlade".to_string()); }
-        if f.value_enabled { f_parts.push(format!("V{}{}", if f.is_le { "<=" } else { ">=" }, f.value_threshold)); }
-        if f.color_mask > 0 { f_parts.push(format!("Color:0x{:X}", f.color_mask)); }
-        if f.is_optional { f_parts.push("Optional".to_string()); }
+        if f.is_tapped {
+            f_parts.push("Tapped".to_string());
+        }
+        if f.has_blade_heart {
+            f_parts.push("HasBlade".to_string());
+        }
+        if f.not_has_blade_heart {
+            f_parts.push("NoBlade".to_string());
+        }
+        if f.value_enabled {
+            f_parts.push(format!(
+                "V{}{}",
+                if f.is_le { "<=" } else { ">=" },
+                f.value_threshold
+            ));
+        }
+        if f.color_mask > 0 {
+            f_parts.push(format!("Color:0x{:X}", f.color_mask));
+        }
+        if f.is_optional {
+            f_parts.push("Optional".to_string());
+        }
 
         if f_parts.is_empty() {
             a_hex
@@ -250,6 +322,20 @@ pub fn describe_trace_step(op: i32, v: i32, a: i64, s: i32, is_negated: bool) ->
     } else {
         format!("{} {} [{}]", prefix, body, name)
     }
+}
+
+pub fn describe_frame_step(frame: &AbilityFrameComponents<'_>) -> String {
+    describe_trace_step(
+        frame.opcode,
+        frame.value,
+        frame.raw_attr as i64,
+        frame.raw_slot,
+        frame.is_negated,
+    )
+}
+
+pub fn describe_frame_condition(frame: &AbilityFrameComponents<'_>) -> String {
+    describe_condition(frame.opcode, frame.value, frame.raw_attr)
 }
 
 pub fn is_condition_opcode(op: i32) -> bool {

@@ -1,11 +1,11 @@
-use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::*;
 use crate::core::logic::constants::CHOICE_DONE;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
-use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::interpreter::handlers::state_helpers::tap_opponent_chooser_player;
+use crate::core::logic::interpreter::handlers::HandlerResult;
 #[path = "state_member_activate.rs"]
 mod state_member_activate;
 #[path = "state_member_tap_member.rs"]
@@ -22,14 +22,15 @@ pub fn handle_set_tapped(
     p_idx: usize,
     resolved_slot: i32,
 ) -> HandlerResult {
-    let is_optional = frame.filter().is_optional;
+    let frame_data = frame.components();
+    let is_optional = frame_data.filter.is_optional;
 
     if !state.ui.silent {
         eprintln!(
             "[TRACE] SET_TAPPED: p_idx={}, resolved_slot={}, v={}, optional={}, choice_index={}, v_remaining={}",
             p_idx,
             resolved_slot,
-            frame.raw_value(),
+            frame_data.value,
             is_optional,
             ctx.choice_index,
             ctx.v_remaining,
@@ -37,18 +38,21 @@ pub fn handle_set_tapped(
     }
 
     if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            ctx,
-            frame_idx,
-            O_SET_TAPPED,
-            resolved_slot as i32,
-            ChoiceType::Optional,
-            frame.filter().to_attr(),
-            -1,
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                frame_idx,
+                O_SET_TAPPED,
+                resolved_slot as i32,
+                ChoiceType::Optional,
+                frame_data.raw_attr,
+                -1,
+            ),
+            HandlerResult::Suspend
+        ) {
             return HandlerResult::Suspend;
         }
     }
@@ -74,7 +78,7 @@ pub fn handle_set_tapped(
     };
 
     if let Some(slot) = tap_slot {
-        state.players[p_idx].set_tapped(slot, frame.raw_value() != 0);
+        state.players[p_idx].set_tapped(slot, frame_data.value != 0);
     }
 
     HandlerResult::Continue
@@ -90,7 +94,11 @@ pub fn handle_tap_opponent(
     v: i32,
 ) -> HandlerResult {
     let target_p_idx = 1 - (ctx.activator_id as usize);
-    let count = if ctx.v_remaining == -1 { v as i16 } else { ctx.v_remaining };
+    let count = if ctx.v_remaining == -1 {
+        v as i16
+    } else {
+        ctx.v_remaining
+    };
     if count <= 0 {
         return HandlerResult::Continue;
     }

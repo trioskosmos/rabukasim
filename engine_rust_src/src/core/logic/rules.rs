@@ -8,14 +8,14 @@ use crate::core::enums::*;
 pub use crate::core::generated_constants::*;
 use crate::core::hearts::*;
 pub use crate::core::logic::models::*;
+use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
-use serde::{Serialize, Deserialize};
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct CachedCostModifier {
     pub source_cid: i32,
     pub amount: i16,
-    pub target_mask: u8, // bitmask for slots 0, 1, 2
+    pub target_mask: u8,  // bitmask for slots 0, 1, 2
     pub filter_mask: u64, // simplified filter (type, color, etc) - for now we'll just store the ability index
     pub ability_idx: u16,
 }
@@ -113,7 +113,11 @@ fn get_effective_hearts_with_aura(
 }
 
 pub fn has_multi_baton(m: &MemberCard) -> u8 {
-    if m.has_multi_baton { 2 } else { 1 }
+    if m.has_multi_baton {
+        2
+    } else {
+        1
+    }
 }
 
 fn apply_reduce_cost_modifiers(
@@ -135,7 +139,9 @@ fn apply_reduce_cost_modifiers(
 
     if !ab.preparsed_modifiers.is_empty() {
         for pm in &ab.preparsed_modifiers {
-            if (pm.op == O_REDUCE_COST || pm.op == O_INCREASE_COST) && ((pm.slot as u32) & 0xFF == 0 || (pm.slot as u32) & 0xFF == 4) {
+            if (pm.op == O_REDUCE_COST || pm.op == O_INCREASE_COST)
+                && ((pm.slot as u32) & 0xFF == 0 || (pm.slot as u32) & 0xFF == 4)
+            {
                 let mut multiplier = 1;
                 if (pm.attr & DYNAMIC_VALUE) != 0 {
                     let count_op = (pm.slot >> 8) & 0xFFFF;
@@ -159,39 +165,43 @@ fn apply_reduce_cost_modifiers(
         return;
     }
 
-    if let Some(frame_program) = ab.frame_program.as_ref() {
-        for frame in &frame_program.frames {
-            let op = frame.opcode();
-            if op != O_REDUCE_COST && op != O_INCREASE_COST {
-                continue;
-            }
+    let mut frame_idx = 0;
+    loop {
+        let Some(frame) = ab.get_frame(frame_idx) else {
+            break;
+        };
+        frame_idx += 1;
 
-            let val = frame.value();
-            let attr = frame.attr();
-            let slot = frame.slot();
+        let op = frame.opcode();
+        if op != O_REDUCE_COST && op != O_INCREASE_COST {
+            continue;
+        }
 
-            if ((slot as u32) & 0xFF) != 0 && ((slot as u32) & 0xFF) != 4 {
-                continue;
-            }
+        let val = frame.value();
+        let attr = frame.attr();
+        let slot = frame.slot();
 
-            let mut multiplier = 1;
-            if (attr & DYNAMIC_VALUE) != 0 {
-                let count_op = (slot >> 8) & 0xFFFF;
-                multiplier = resolve_count(
-                    state,
-                    db,
-                    count_op as i32,
-                    attr & !DYNAMIC_VALUE,
-                    slot,
-                    ctx,
-                    depth + 1,
-                );
-            }
-            if op == O_REDUCE_COST {
-                *cost -= val * multiplier;
-            } else {
-                *cost += val * multiplier;
-            }
+        if ((slot as u32) & 0xFF) != 0 && ((slot as u32) & 0xFF) != 4 {
+            continue;
+        }
+
+        let mut multiplier = 1;
+        if (attr & DYNAMIC_VALUE) != 0 {
+            let count_op = (slot >> 8) & 0xFFFF;
+            multiplier = resolve_count(
+                state,
+                db,
+                count_op as i32,
+                attr & !DYNAMIC_VALUE,
+                slot,
+                ctx,
+                depth + 1,
+            );
+        }
+        if op == O_REDUCE_COST {
+            *cost -= val * multiplier;
+        } else {
+            *cost += val * multiplier;
         }
     }
 }
@@ -216,9 +226,11 @@ fn apply_external_reduce_cost_modifiers(
         return;
     }
 
-    if !ab.filters.iter().any(|filter| {
-        filter.matches(state, db, target_card_id, None, false, None, ctx)
-    }) {
+    if !ab
+        .filters
+        .iter()
+        .any(|filter| filter.matches(state, db, target_card_id, None, false, None, ctx))
+    {
         return;
     }
 
@@ -340,7 +352,12 @@ pub fn get_total_member_hearts(
     total
 }
 
-pub fn calculate_cost_delta(state: &GameState, db: &CardDatabase, card_id: i32, p_idx: usize) -> i32 {
+pub fn calculate_cost_delta(
+    state: &GameState,
+    db: &CardDatabase,
+    card_id: i32,
+    p_idx: usize,
+) -> i32 {
     let effective = get_member_cost(state, p_idx, card_id, -1, -1, db, 0);
     if let Some(m) = db.get_member(card_id) {
         effective - (m.cost as i32)
@@ -410,7 +427,9 @@ pub fn get_member_cost(
 
     // 2. Baton Touch & Cached Position Modifiers (Rule 12 & Auras)
     if slot_idx >= 0 && slot_idx < STAGE_SLOT_COUNT as i16 {
-        let aura_ref = query_aura.as_ref().unwrap_or(&state.players[p_idx].board_aura);
+        let aura_ref = query_aura
+            .as_ref()
+            .unwrap_or(&state.players[p_idx].board_aura);
         cost += aura_ref.slot_cost_modifiers[slot_idx as usize] as i32;
 
         for modif in &aura_ref.cost_modifiers {
@@ -425,7 +444,8 @@ pub fn get_member_cost(
                         area_idx: -1,
                         ..Default::default()
                     };
-                    if !state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx) {
+                    if !state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx)
+                    {
                         apply = false;
                     }
                 } else if let Some(src_m) = db.get_member(modif.source_cid) {
@@ -438,7 +458,11 @@ pub fn get_member_cost(
                                 area_idx: -1, // Not used for constant card filters
                                 ..Default::default()
                             };
-                            if !ab.filters.iter().any(|f: &crate::core::logic::filter::CardFilter| f.matches(state, db, card_id, None, false, None, &src_ctx)) {
+                            if !ab.filters.iter().any(
+                                |f: &crate::core::logic::filter::CardFilter| {
+                                    f.matches(state, db, card_id, None, false, None, &src_ctx)
+                                },
+                            ) {
                                 apply = false;
                             }
                         }
@@ -486,7 +510,13 @@ pub fn get_member_cost(
                             area_idx: -1,
                             ..Default::default()
                         };
-                        if !ab.filters.iter().any(|f: &crate::core::logic::filter::CardFilter| f.matches(state, db, card_id, None, false, None, &src_ctx)) {
+                        if !ab
+                            .filters
+                            .iter()
+                            .any(|f: &crate::core::logic::filter::CardFilter| {
+                                f.matches(state, db, card_id, None, false, None, &src_ctx)
+                            })
+                        {
                             apply = false;
                         }
                     }
@@ -511,7 +541,7 @@ pub fn get_member_cost(
     if db.is_truly_vanilla() {
         return cost.max(0);
     }
-    
+
     // Phase 2 Optimization: Constant ability cost reductions are now pre-calculated in BoardAura.
     // We no longer need to iterate over source slots or granted abilities here.
 
@@ -539,7 +569,7 @@ pub fn get_member_cost(
         };
         apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth + 1);
     }
-    
+
     // 5. Temporary cost modifiers (From Action Phase triggers)
     for (cond, amount) in &state.players[p_idx].cost_modifiers {
         let ctx = AbilityContext {
@@ -568,7 +598,7 @@ pub fn has_restriction(
     if db.is_truly_vanilla() {
         return false;
     }
-    
+
     let cid = state.players[p_idx].stage[slot_idx];
     if cid < 0 {
         return false;
@@ -601,13 +631,13 @@ pub fn has_restriction(
                         .iter()
                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
                     {
-                    if let Some(frame_program) = ab.frame_program.as_ref() {
-                        for frame in &frame_program.frames {
-                            if frame.opcode() == opcode {
-                                return true;
+                        if let Some(frame_program) = ab.frame_program.as_ref() {
+                            for frame in &frame_program.frames {
+                                if frame.opcode() == opcode {
+                                    return true;
+                                }
                             }
                         }
-                    }
                     }
                 }
             }
@@ -665,7 +695,10 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
             continue;
         }
         if state.debug.debug_mode && !state.ui.silent {
-            println!("[DEBUG] calculate_board_aura: player={}, source_slot={}, cid={}", player_idx, source_slot, cid);
+            println!(
+                "[DEBUG] calculate_board_aura: player={}, source_slot={}, cid={}",
+                player_idx, source_slot, cid
+            );
         }
         let Some(m) = db.get_member(cid) else {
             continue;
@@ -690,7 +723,10 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 .all(|c| check_condition(state, db, player_idx, c, &ctx, 1))
             {
                 if state.debug.debug_mode && !state.ui.silent {
-                    println!("[DEBUG] calculate_board_aura: ability {} on cid {} failed conditions", ab_idx, cid);
+                    println!(
+                        "[DEBUG] calculate_board_aura: ability {} on cid {} failed conditions",
+                        ab_idx, cid
+                    );
                 }
                 continue;
             }
@@ -713,7 +749,11 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                     if op == O_REDUCE_COST || op == O_INCREASE_COST {
                         aura.cost_modifiers.push(CachedCostModifier {
                             source_cid: cid,
-                            amount: if op == O_REDUCE_COST { v as i16 } else { -(v as i16) },
+                            amount: if op == O_REDUCE_COST {
+                                v as i16
+                            } else {
+                                -(v as i16)
+                            },
                             target_mask,
                             filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
                             ability_idx: ab_idx as u16,
@@ -727,6 +767,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                                     v,
                                     s,
                                     a,
+                                    None,
                                     &ctx,
                                     state,
                                     db,
@@ -746,14 +787,22 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
 
                     if op == O_REDUCE_COST || op == O_INCREASE_COST {
                         let target_area = s & 0xFF;
-                        let target_mask = if target_area == 1 || target_area == 4 || a != 0 || !ab.filters.is_empty() {
+                        let target_mask = if target_area == 1
+                            || target_area == 4
+                            || a != 0
+                            || !ab.filters.is_empty()
+                        {
                             0b111
                         } else {
                             1 << source_slot
                         };
                         aura.cost_modifiers.push(CachedCostModifier {
                             source_cid: cid,
-                            amount: if op == O_REDUCE_COST { v as i16 } else { -(v as i16) },
+                            amount: if op == O_REDUCE_COST {
+                                v as i16
+                            } else {
+                                -(v as i16)
+                            },
                             target_mask,
                             filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
                             ability_idx: ab_idx as u16,
@@ -765,6 +814,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                             v,
                             s,
                             a,
+                            None,
                             &ctx,
                             state,
                             db,
@@ -842,17 +892,21 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 0
             };
 
-            if let Some(frame_program) = ab.frame_program.as_ref() {
-                for frame in &frame_program.frames {
-                    let op = frame.opcode();
-                    let v = frame.value();
-                    let a = frame.attr();
-                    let s = frame.slot();
+            if !ab.effects.is_empty() {
+                for effect in &ab.effects {
+                    let op = effect.runtime_opcode;
+                    let v = effect.runtime_value;
+                    let a = effect.runtime_attr;
+                    let s = effect.runtime_slot;
 
                     if op == O_REDUCE_COST || op == O_INCREASE_COST {
                         aura.cost_modifiers.push(CachedCostModifier {
                             source_cid,
-                            amount: if op == O_REDUCE_COST { v as i16 } else { -(v as i16) },
+                            amount: if op == O_REDUCE_COST {
+                                v as i16
+                            } else {
+                                -(v as i16)
+                            },
                             target_mask,
                             filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
                             ability_idx: ab_idx as u16,
@@ -864,11 +918,43 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                             v,
                             s,
                             a,
+                            Some(&effect.params),
                             &ctx,
                             state,
                             db,
                             player_idx,
                             slot_idx,
+                        );
+                    }
+                }
+            } else {
+                let mut frame_idx = 0;
+                loop {
+                    let Some(frame) = ab.get_frame(frame_idx) else {
+                        break;
+                    };
+                    frame_idx += 1;
+
+                    let op = frame.opcode();
+                    let v = frame.value();
+                    let a = frame.attr();
+                    let s = frame.slot();
+
+                    if op == O_REDUCE_COST || op == O_INCREASE_COST {
+                        aura.cost_modifiers.push(CachedCostModifier {
+                            source_cid,
+                            amount: if op == O_REDUCE_COST {
+                                v as i16
+                            } else {
+                                -(v as i16)
+                            },
+                            target_mask,
+                            filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
+                            ability_idx: ab_idx as u16,
+                        });
+                    } else if slot_idx < 3 {
+                        apply_aura_modifier(
+                            &mut aura, op, v, s, a, None, &ctx, state, db, player_idx, slot_idx,
                         );
                     }
                 }
@@ -885,6 +971,7 @@ fn apply_aura_modifier(
     v: i32,
     s: i32,
     a: u64,
+    params: Option<&serde_json::Value>,
     ctx: &AbilityContext,
     state: &GameState,
     db: &CardDatabase,
@@ -897,6 +984,48 @@ fn apply_aura_modifier(
         let count_op = (s >> 8) & 0xFFFF;
         multiplier = resolve_count(state, db, count_op, a, s, ctx, 2);
     }
+
+    if multiplier == 1 {
+        if let Some(per_card) = params
+            .and_then(|value| value.get("per_card"))
+            .and_then(|value| value.as_str())
+        {
+            multiplier = match per_card.to_ascii_uppercase().as_str() {
+                "HAND" => state.players[p_idx].hand.len() as i32,
+                "DISCARD" | "DISCARD_COUNT" => state.players[p_idx].discard.len() as i32,
+                "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => {
+                    state.players[p_idx].success_lives.len() as i32
+                }
+                "STAGE" => state.players[p_idx]
+                    .stage
+                    .iter()
+                    .copied()
+                    .filter(|&cid| cid >= 0)
+                    .count() as i32,
+                _ => multiplier,
+            };
+        }
+    }
+
+    let decode_heart_color = |raw_attr: u64| -> usize {
+        let color_mask = raw_attr as usize & FILTER_MASK_LOWER as usize;
+        if color_mask != 0 {
+            if color_mask.count_ones() == 1 {
+                return color_mask.trailing_zeros() as usize;
+            }
+            if color_mask == 0x7F {
+                return ctx.selected_color as usize;
+            }
+        }
+
+        let mut color = raw_attr as usize & FILTER_MASK_LOWER as usize;
+        if color == 7 {
+            color = ctx.selected_color as usize;
+        } else if (1..=6).contains(&color) {
+            color -= 1;
+        }
+        color
+    };
 
     match op {
         O_ADD_BLADES | O_BUFF_POWER => {
@@ -912,39 +1041,36 @@ fn apply_aura_modifier(
                 let count_op = (s >> 8) & 0xFF;
                 multiplier = resolve_count(state, db, count_op, a, count_op, ctx, 2);
             }
-            let mut color = a as usize;
-            if color == 0 {
-                color = ctx.selected_color as usize;
-            }
+            let color = decode_heart_color(a);
             if color < 7 {
                 aura.hearts[target_slot].add_to_color(color, value * multiplier);
             }
         }
         O_REDUCE_COST => {
             if ((s as u32) & 0xFF) == 0 || ((s as u32) & 0xFF) == 4 || ((s as u32) & 0xFF) == 1 {
-                 // Generic slot/area reduction
-                 aura.slot_cost_modifiers[target_slot] -= value as i16 * multiplier as i16;
+                // Generic slot/area reduction
+                aura.slot_cost_modifiers[target_slot] -= value as i16 * multiplier as i16;
             }
         }
         O_INCREASE_COST => {
             if ((s as u32) & 0xFF) == 0 || ((s as u32) & 0xFF) == 4 || ((s as u32) & 0xFF) == 1 {
-                 aura.slot_cost_modifiers[target_slot] += value as i16 * multiplier as i16;
+                aura.slot_cost_modifiers[target_slot] += value as i16 * multiplier as i16;
             }
         }
         O_REDUCE_HEART_REQ => {
-             // Implementation for heart requirement reductions
-             let mut color = a as usize;
-             if color == 0 { color = ctx.selected_color as usize; }
-             if color < 7 {
-                 aura.heart_req_reductions.add_to_color(color, value * multiplier);
-             }
+            let color = decode_heart_color(a);
+            if color < 7 {
+                aura.heart_req_reductions
+                    .add_to_color(color, value * multiplier);
+            }
         }
         O_SET_HEART_COST => {
             // Unpack up to 8 values from A (each 4 bits)
             for i in 0..6 {
                 let req_val = (a >> (i * 4)) & 0xF;
                 if req_val > 0 {
-                    aura.heart_req_reductions.add_to_color(i, -(req_val as i32)); // Negative reduction = addition
+                    aura.heart_req_reductions.add_to_color(i, -(req_val as i32));
+                    // Negative reduction = addition
                 }
             }
         }

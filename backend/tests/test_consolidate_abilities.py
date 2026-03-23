@@ -67,6 +67,10 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         self.assertTrue(grouped[same_signature]["round_trip_matches"])
         self.assertIn("frames", grouped[same_signature])
         self.assertTrue(all("opcode" in frame for frame in grouped[same_signature]["frames"]))
+        self.assertEqual(grouped[same_signature]["opcode_sequence"], ["SELECT_MODE"])
+        self.assertEqual(grouped[same_signature]["rust_opcode_sequence"], ["O_SELECT_MODE"])
+        self.assertTrue(grouped[same_signature]["card_refs"])
+        self.assertEqual(grouped[same_signature]["card_refs"][0]["card_no"], "A-001")
 
     def test_frame_to_sparse_omits_zero_fields(self) -> None:
         sparse = codec.frame_to_sparse(
@@ -84,6 +88,32 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         self.assertEqual(sparse["value"], {"pink": 1})
         self.assertEqual(sparse["attr"], {"req_1": 1, "req_2": 1})
         self.assertNotIn("slot", sparse)
+
+    def test_compact_index_uses_write_friendly_frames(self) -> None:
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
+
+        compiled_data = {
+            "live_db": {
+                "card_x": {
+                    "card_no": "TST-200",
+                    "name": "Compact Frame Card",
+                    "abilities": [
+                        {
+                            "trigger": trigger_id,
+                            "bytecode": [int(metadata["opcodes"]["DRAW"]), 1, 0, 0, int(metadata["slot_indices"]["CONTEXT"]), int(metadata["opcodes"]["RETURN"]), 0, 0, 0, 0],
+                        }
+                    ],
+                }
+            }
+        }
+
+        payload = codec.build_compact_ability_index(compiled_data, metadata)
+        entry = payload["abilities"][0]
+        self.assertEqual(payload["schema"], "ability_frames.flat.v1")
+        self.assertTrue(all("op" in frame for frame in entry["frames"]))
+        rebuilt = codec.model_to_bytecode({"frames": entry["frames"]}, metadata)
+        self.assertEqual(rebuilt, compiled_data["live_db"]["card_x"]["abilities"][0]["bytecode"])
 
 
 if __name__ == "__main__":

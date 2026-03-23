@@ -74,7 +74,7 @@ fn test_sparse_ability_index_is_loaded() {
     let mut checked = 0usize;
 
     for card in card_db.members.values() {
-        for (ability_index, ability) in card.abilities.iter().enumerate() {
+        for (_ability_index, ability) in card.abilities.iter().enumerate() {
             let sparse = ability
                 .sparse_frame_index
                 .as_ref()
@@ -84,7 +84,10 @@ fn test_sparse_ability_index_is_loaded() {
                 .and_then(|v| v.as_array())
                 .expect("sparse ability entry should contain frames");
 
-            assert!(!frames.is_empty(), "sparse ability entry should not be empty");
+            assert!(
+                !frames.is_empty(),
+                "sparse ability entry should not be empty"
+            );
             assert!(
                 frames
                     .iter()
@@ -100,7 +103,7 @@ fn test_sparse_ability_index_is_loaded() {
     }
 
     for card in card_db.lives.values() {
-        for (ability_index, ability) in card.abilities.iter().enumerate() {
+        for (_ability_index, ability) in card.abilities.iter().enumerate() {
             let sparse = ability
                 .sparse_frame_index
                 .as_ref()
@@ -110,7 +113,10 @@ fn test_sparse_ability_index_is_loaded() {
                 .and_then(|v| v.as_array())
                 .expect("sparse ability entry should contain frames");
 
-            assert!(!frames.is_empty(), "sparse ability entry should not be empty");
+            assert!(
+                !frames.is_empty(),
+                "sparse ability entry should not be empty"
+            );
             assert!(
                 frames
                     .iter()
@@ -192,7 +198,8 @@ fn test_dry_run_all_cards() {
 
 #[test]
 fn test_generated_metadata_stays_in_sync() {
-    let metadata: Value = serde_json::from_str(METADATA_JSON).expect("Failed to parse metadata.json");
+    let metadata: Value =
+        serde_json::from_str(METADATA_JSON).expect("Failed to parse metadata.json");
 
     assert_generated_constants_match(&metadata, "opcodes", "O_");
     assert_generated_constants_match(&metadata, "action_bases", "ACTION_BASE_");
@@ -200,13 +207,20 @@ fn test_generated_metadata_stays_in_sync() {
     assert_generated_constants_match(&metadata, "costs", "COST_");
 
     assert_generated_enum_match(&metadata, "triggers", enum_variant_name, GENERATED_ENUMS_RS);
-    assert_generated_enum_match(&metadata, "targets", target_variant_name, GENERATED_ENUMS_RS);
+    assert_generated_enum_match(
+        &metadata,
+        "targets",
+        target_variant_name,
+        GENERATED_ENUMS_RS,
+    );
     assert_generated_enum_match(&metadata, "phases", enum_variant_name, GENERATED_ENUMS_RS);
 }
 
 fn assert_generated_constants_match(metadata: &Value, section: &str, prefix: &str) {
     for (key, value) in metadata_section(metadata, section) {
-        let expected = value.as_i64().unwrap_or_else(|| panic!("{section}.{key} is not numeric"));
+        let expected = value
+            .as_i64()
+            .unwrap_or_else(|| panic!("{section}.{key} is not numeric"));
         let expected_line = format!("pub const {prefix}{key}: i32 = {expected};");
         assert!(
             GENERATED_CONSTANTS_RS
@@ -224,7 +238,9 @@ fn assert_generated_enum_match(
     source: &str,
 ) {
     for (key, value) in metadata_section(metadata, section) {
-        let expected = value.as_i64().unwrap_or_else(|| panic!("{section}.{key} is not numeric"));
+        let expected = value
+            .as_i64()
+            .unwrap_or_else(|| panic!("{section}.{key} is not numeric"));
         let variant = variant_name(key);
         let expected_line = format!("{variant} = {expected},");
         assert!(

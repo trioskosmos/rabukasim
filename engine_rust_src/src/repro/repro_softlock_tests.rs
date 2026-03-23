@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
     use crate::core::enums::Phase;
-    use crate::core::logic::*;
     use crate::core::generated_constants::ACTION_BASE_HAND_SELECT;
+    use crate::core::logic::*;
     use crate::test_helpers::*;
 
     #[test]
@@ -17,12 +17,21 @@ mod tests {
         state.phase = Phase::PerformanceP1;
 
         // Trigger the ability
-        let ctx = AbilityContext { player_id: 0, source_card_id: 122, area_idx: 0, ..Default::default() };
+        let ctx = AbilityContext {
+            player_id: 0,
+            source_card_id: 122,
+            area_idx: 0,
+            ..Default::default()
+        };
         state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
         state.process_trigger_queue(&db);
 
         // The game should now be in Phase::Response with OPTIONAL interaction on stack
-        assert_eq!(state.phase, Phase::Response, "Should be in Response phase for optional choice");
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "Should be in Response phase for optional choice"
+        );
 
         // Check legal actions
         let mut receiver = TestActionReceiver::default();

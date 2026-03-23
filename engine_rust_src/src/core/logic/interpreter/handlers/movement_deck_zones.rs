@@ -1,17 +1,19 @@
-use crate::core::logic::models::AbilityFrame;
-use crate::core::enums::*;
-use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE, FILTER_MASK_LOWER, FLAG_REVEAL_UNTIL_IS_LIVE};
-use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState, TriggerType};
-use crate::core::models::interpreter::{check_condition_opcode, resolve_target_slot};
 use super::super::interaction::*;
 use super::super::HandlerResult;
+use crate::core::enums::*;
+use crate::core::logic::constants::{
+    CHOICE_ALL, CHOICE_DONE, FILTER_MASK_LOWER, FLAG_REVEAL_UNTIL_IS_LIVE,
+};
+use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState, TriggerType};
+use crate::core::models::interpreter::{check_condition_opcode, resolve_target_slot};
 
-#[path = "movement_deck_search.rs"]
-mod movement_deck_search;
-#[path = "movement_deck_move.rs"]
-mod movement_deck_move;
 #[path = "movement_deck_look.rs"]
 mod movement_deck_look;
+#[path = "movement_deck_move.rs"]
+mod movement_deck_move;
+#[path = "movement_deck_search.rs"]
+mod movement_deck_search;
 pub fn handle_deck_zones(
     state: &mut GameState,
     db: &CardDatabase,
@@ -19,12 +21,13 @@ pub fn handle_deck_zones(
     frame: &AbilityFrame,
     frame_idx: usize,
 ) -> HandlerResult {
-    let op = frame.opcode();
-    let v = frame.value();
-    let a = frame.attr() as i64;
-    let s = frame.slot();
+    let frame_data = frame.components();
+    let op = frame_data.opcode;
+    let v = frame_data.value;
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
-    let slot = frame.dslot();
+    let slot = frame_data.slot;
     let target_slot = slot.target_slot as i32;
     let resolved_slot = if target_slot == 10 {
         ctx.target_slot as i32
@@ -44,7 +47,13 @@ pub fn handle_deck_zones(
     match op {
         O_SEARCH_DECK => {
             return movement_deck_search::handle_search_deck(
-                state, db, ctx, p_idx, s, a, resolved_slot,
+                state,
+                db,
+                ctx,
+                p_idx,
+                s,
+                a,
+                resolved_slot,
             );
         }
         O_ORDER_DECK => {
@@ -66,18 +75,31 @@ pub fn handle_deck_zones(
             );
         }
         O_SWAP_CARDS => {
-            return movement_deck_move::handle_swap_cards(
-                state, p_idx, v, resolved_slot,
-            );
+            return movement_deck_move::handle_swap_cards(state, p_idx, v, resolved_slot);
         }
         O_REVEAL_UNTIL => {
             return movement_deck_look::handle_reveal_until(
-                state, db, ctx, p_idx, v, a, s, resolved_slot,
+                state,
+                db,
+                ctx,
+                p_idx,
+                v,
+                a,
+                s,
+                resolved_slot,
             );
         }
         O_LOOK_DECK | O_REVEAL_CARDS | O_CHEER_REVEAL => {
             return movement_deck_look::handle_look_cards(
-                state, db, ctx, p_idx, op, v, a, frame_idx, look_resolved_slot,
+                state,
+                db,
+                ctx,
+                p_idx,
+                op,
+                v,
+                a,
+                frame_idx,
+                look_resolved_slot,
             );
         }
         O_LOOK_DECK_DYNAMIC => {
@@ -102,6 +124,3 @@ pub fn handle_deck_zones(
         _ => return HandlerResult::Continue,
     }
 }
-
-
-

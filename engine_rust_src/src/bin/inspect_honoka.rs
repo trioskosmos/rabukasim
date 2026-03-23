@@ -2,8 +2,10 @@ use serde_json::Value;
 use std::fs;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let compiled: Value = serde_json::from_str(&fs::read_to_string("../data/cards_compiled.json")?)?;
-    let sparse: Value = serde_json::from_str(&fs::read_to_string("../data/ability_frame_index.json")?)?;
+    let compiled: Value =
+        serde_json::from_str(&fs::read_to_string("../data/cards_compiled.json")?)?;
+    let sparse: Value =
+        serde_json::from_str(&fs::read_to_string("../data/ability_frame_index.json")?)?;
 
     let mut originals: Vec<(usize, Vec<i32>, String)> = Vec::new();
     for db_name in ["member_db", "live_db"] {

@@ -1,5 +1,5 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
+use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_discard_placement(
@@ -15,11 +15,11 @@ pub fn handle_discard_placement(
     if state.players[target_p_idx].looked_cards.is_empty() {
         return HandlerResult::Continue;
     }
-    let card_id = state.players[target_p_idx].looked_cards.remove(0);
-
     if ctx.choice_index == 99 {
         return HandlerResult::Continue;
     }
+
+    let card_id = state.players[target_p_idx].looked_cards.remove(0);
 
     let resolved_slot = if ctx.choice_index >= 600 && ctx.choice_index < 603 {
         ctx.choice_index - 600
@@ -42,7 +42,6 @@ pub fn handle_discard_placement(
             target_p_idx,
             card_id,
             slot_idx,
-
             empty_slot_only,
             is_total_cost,
         );
@@ -50,7 +49,12 @@ pub fn handle_discard_placement(
 
     let remaining = remaining - 1;
     ctx.v_remaining = remaining;
-    if remaining > 0 {
+    let should_continue = if is_total_cost {
+        ctx.v_accumulated > 0 && remaining > 0
+    } else {
+        remaining > 0
+    };
+    if should_continue {
         ctx.choice_index = -1;
         return HandlerResult::Branch(frame_idx);
     }

@@ -1,5 +1,5 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
+use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
 pub fn apply_look_choice(
@@ -13,7 +13,11 @@ pub fn apply_look_choice(
     reveal_flag: bool,
     chosen: i32,
 ) {
-    let destination = if target_slot > 0 { target_slot as i32 } else { 6 };
+    let destination = if target_slot > 0 {
+        target_slot as i32
+    } else {
+        6
+    };
     match destination {
         7 => state.players[p_idx].push_discard_card(chosen),
         8 => state.players[p_idx].push_deck_card(chosen),

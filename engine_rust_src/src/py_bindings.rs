@@ -6,12 +6,12 @@ use crate::core::logic::{ChoiceType, GameState, Phase, PlayerState, Standardized
 use crate::core::mcts::{SearchHorizon, MCTS};
 use numpy::{PyArray1, PyArray2, PyArrayMethods, PyReadonlyArray1};
 use pyo3::prelude::*;
-use rayon::prelude::*;
 use rand::prelude::*;
 use rand::rngs::SmallRng;
+use rayon::prelude::*;
+use serde_json::json;
 use smallvec::SmallVec;
 use std::sync::Arc;
-use serde_json::json;
 // use crate::core::heuristics::{OriginalHeuristic, SimpleHeuristic};
 
 #[pyclass]
@@ -846,7 +846,14 @@ impl PyGameState {
             if let Some(obj) = params.as_object_mut() {
                 obj.insert(
                     "target_player".to_string(),
-                    serde_json::json!(1 - self.inner.interaction_stack.last().map(|pi| pi.ctx.activator_id).unwrap_or(self.inner.current_player)),
+                    serde_json::json!(
+                        1 - self
+                            .inner
+                            .interaction_stack
+                            .last()
+                            .map(|pi| pi.ctx.activator_id)
+                            .unwrap_or(self.inner.current_player)
+                    ),
                 );
             }
             result.push(("TARGET_OPPONENT_MEMBER".to_string(), params.to_string()));
@@ -855,15 +862,27 @@ impl PyGameState {
         } else if op == O_ACTIVATE_MEMBER {
             result.push(("TAP_MEMBER".to_string(), base_params.to_string()));
         } else if op == O_COLOR_SELECT {
-            result.push((ChoiceType::ColorSelect.as_str().to_string(), base_params.to_string()));
+            result.push((
+                ChoiceType::ColorSelect.as_str().to_string(),
+                base_params.to_string(),
+            ));
         } else if op == O_MOVE_TO_DISCARD {
-            result.push((ChoiceType::SelectHandDiscard.as_str().to_string(), base_params.to_string()));
+            result.push((
+                ChoiceType::SelectHandDiscard.as_str().to_string(),
+                base_params.to_string(),
+            ));
         } else if op == O_PLAY_MEMBER_FROM_HAND {
-            result.push((ChoiceType::SelectHandPlay.to_string(), base_params.to_string()));
+            result.push((
+                ChoiceType::SelectHandPlay.to_string(),
+                base_params.to_string(),
+            ));
         } else if op == O_SELECT_CARDS {
             result.push(("SELECT_FROM_LIST".to_string(), base_params.to_string()));
         } else if op == O_OPPONENT_CHOOSE {
-            result.push((ChoiceType::OpponentChoose.to_string(), base_params.to_string()));
+            result.push((
+                ChoiceType::OpponentChoose.to_string(),
+                base_params.to_string(),
+            ));
         } else if op == O_SELECT_MODE {
             // We might need to store the options in the state if we want better labels
             result.push((ChoiceType::SelectMode.to_string(), base_params.to_string()));
@@ -1043,9 +1062,9 @@ impl PyGameState {
         self.inner.auto_step(&self.db.inner);
     }
 
-    fn debug_execute_bytecode(
+    fn debug_execute_frame_program(
         &mut self,
-        bytecode: Vec<i32>,
+        frame_program_json: String,
         player_id: u8,
         area_idx: i32,
         source_card_id: i32,
@@ -1074,8 +1093,11 @@ impl PyGameState {
             v_accumulated: 0,
             auto_pick: false,
         };
+        let frame_program: crate::core::logic::models::FrameProgram =
+            serde_json::from_str(&frame_program_json)
+                .unwrap_or_else(|e| panic!("invalid frame_program JSON: {}", e));
         self.inner
-            .resolve_bytecode(db, std::sync::Arc::new(bytecode), &ctx);
+            .resolve_semantic_frames(db, &frame_program.frames, &ctx);
     }
 
     fn integrated_step(
@@ -1299,14 +1321,8 @@ impl PyGameState {
         let db = &self.db.inner;
         let mut mcts = MCTS::with_evaluator(evaluator.evaluator.clone(), batch_size);
         let h = OriginalHeuristic::default();
-        let (suggestions, _profiler) = mcts.search(
-            &self.inner,
-            db,
-            sims,
-            0.0,
-            SearchHorizon::GameEnd(),
-            &h,
-        );
+        let (suggestions, _profiler) =
+            mcts.search(&self.inner, db, sims, 0.0, SearchHorizon::GameEnd(), &h);
         suggestions
     }
 
@@ -1404,7 +1420,7 @@ impl PyGameState {
         }
     }
 
-    fn resolve_bytecode(&mut self, bytecode: Vec<i32>, player_id: u8, _area_idx: i32) {
+    fn resolve_frame_program(&mut self, frame_program_json: String, player_id: u8, _area_idx: i32) {
         let ctx = crate::core::logic::AbilityContext {
             player_id,
             activator_id: player_id,
@@ -1412,8 +1428,11 @@ impl PyGameState {
             original_phase: None,
             ..crate::core::logic::AbilityContext::default()
         };
+        let frame_program: crate::core::logic::models::FrameProgram =
+            serde_json::from_str(&frame_program_json)
+                .unwrap_or_else(|e| panic!("invalid frame_program JSON: {}", e));
         self.inner
-            .resolve_bytecode(&self.db.inner, std::sync::Arc::new(bytecode), &ctx);
+            .resolve_semantic_frames(&self.db.inner, &frame_program.frames, &ctx);
     }
 
     fn trigger_abilities(&mut self, trigger: i32, player_id: u8) {
@@ -1518,23 +1537,28 @@ impl PyGameState {
         let mut total_moves = 0;
         let mut total_meaningful_moves = 0;
         let mut gameplay_seconds = 0.0;
-        let mut action_stats: std::collections::HashMap<String, (u64, f64)> = std::collections::HashMap::new();
+        let mut action_stats: std::collections::HashMap<String, (u64, f64)> =
+            std::collections::HashMap::new();
 
         for _ in 0..num_games {
             let mut state = self.inner.clone();
             state.ui.silent = true;
-            
+
             let start = std::time::Instant::now();
             while state.phase != crate::core::logic::Phase::Terminal {
                 let mut actions = SmallVec::<[i32; 64]>::new();
-                state.generate_legal_actions(&db.inner, state.current_player as usize, &mut actions);
-                
+                state.generate_legal_actions(
+                    &db.inner,
+                    state.current_player as usize,
+                    &mut actions,
+                );
+
                 let action = if actions.is_empty() {
                     0
                 } else {
                     *actions.choose(&mut rng).unwrap()
                 };
-                
+
                 let step_start = std::time::Instant::now();
                 let _ = state.step(&db.inner, action);
                 let step_duration = step_start.elapsed().as_secs_f64();
@@ -1581,7 +1605,7 @@ impl PyGameState {
                 if action != 0 {
                     total_meaningful_moves += 1;
                 }
-                
+
                 if total_moves > 1000000 {
                     // Safety break for extreme cases
                     break;
@@ -1591,15 +1615,22 @@ impl PyGameState {
         }
 
         Python::with_gil(|py| {
-            let mps = if gameplay_seconds > 0.0 { total_moves as f64 / gameplay_seconds } else { 0.0 };
-            
+            let mps = if gameplay_seconds > 0.0 {
+                total_moves as f64 / gameplay_seconds
+            } else {
+                0.0
+            };
+
             let mut timing_breakdown = std::collections::HashMap::new();
             for (cat, (count, total_time)) in action_stats {
-                timing_breakdown.insert(cat, json!({
-                    "count": count,
-                    "total_time": total_time,
-                    "avg_time": if count > 0 { total_time / count as f64 } else { 0.0 }
-                }));
+                timing_breakdown.insert(
+                    cat,
+                    json!({
+                        "count": count,
+                        "total_time": total_time,
+                        "avg_time": if count > 0 { total_time / count as f64 } else { 0.0 }
+                    }),
+                );
             }
 
             let results = json!({
@@ -1612,19 +1643,28 @@ impl PyGameState {
             });
             let json_str = results.to_string();
             let json_mod = py.import("json").unwrap();
-            json_mod.call_method1("loads", (json_str,)).unwrap().to_object(py)
+            json_mod
+                .call_method1("loads", (json_str,))
+                .unwrap()
+                .to_object(py)
         })
     }
 
     #[pyo3(signature = (db))]
-    pub fn plan_full_turn(&self, db: &PyCardDatabase) -> (Vec<(i32, f32, f32, f32)>, Vec<i32>, usize, (f32, f32)) {
+    pub fn plan_full_turn(
+        &self,
+        db: &PyCardDatabase,
+    ) -> (Vec<(i32, f32, f32, f32)>, Vec<i32>, usize, (f32, f32)) {
         use crate::core::logic::turn_sequencer::TurnSequencer;
         let (seq, _val, breakdown, nodes) = TurnSequencer::plan_full_turn(&self.inner, &db.inner);
         (Vec::new(), seq, nodes, breakdown)
     }
 
     #[pyo3(signature = (db))]
-    pub fn plan_full_turn_with_stats(&self, db: &PyCardDatabase) -> (Vec<(i32, f32, f32, f32)>, Vec<i32>, usize, f32, (f32, f32)) {
+    pub fn plan_full_turn_with_stats(
+        &self,
+        db: &PyCardDatabase,
+    ) -> (Vec<(i32, f32, f32, f32)>, Vec<i32>, usize, f32, (f32, f32)) {
         use crate::core::logic::turn_sequencer::TurnSequencer;
         TurnSequencer::plan_full_turn_with_stats(&self.inner, &db.inner)
     }
@@ -1920,10 +1960,15 @@ impl PyAlphaZeroEvaluator {
         #[cfg(feature = "extension-module")]
         {
             let tensor_encoding = match tensor_type {
-                AlphaZeroTensorType::Vanilla => crate::core::alphazero_evaluator::PythonTensorEncoding::Vanilla,
-                AlphaZeroTensorType::Original => crate::core::alphazero_evaluator::PythonTensorEncoding::Original,
+                AlphaZeroTensorType::Vanilla => {
+                    crate::core::alphazero_evaluator::PythonTensorEncoding::Vanilla
+                }
+                AlphaZeroTensorType::Original => {
+                    crate::core::alphazero_evaluator::PythonTensorEncoding::Original
+                }
             };
-            let evaluator_impl = crate::core::alphazero_evaluator::PyAlphaZeroEvaluator::new(model, tensor_encoding);
+            let evaluator_impl =
+                crate::core::alphazero_evaluator::PyAlphaZeroEvaluator::new(model, tensor_encoding);
             Self {
                 evaluator: Arc::new(Box::new(evaluator_impl)),
             }

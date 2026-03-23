@@ -1,5 +1,5 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
+use crate::core::logic::models::AbilityFrame;
 #[path = "state_member_play_discard_place.rs"]
 mod state_member_play_discard_place;
 #[path = "state_member_play_discard_select.rs"]
@@ -21,7 +21,7 @@ pub fn handle_play_member_from_discard(
     // Modern: a=filter_attr, s=flags
     let (filter_attr_base, target_p_idx) = if a >= 1 && a <= 2 && (s as u32) > 1000 {
         (
-            0, // Legacy player-targeted variant often lacks explicit filter in bytecode, s contains flags.
+            0, // Legacy player-targeted variant often lacks explicit filter, s contains flags.
             if a == 2 {
                 1 - (ctx.activator_id as usize)
             } else {
@@ -48,13 +48,14 @@ pub fn handle_play_member_from_discard(
     // Support bit 31 (FILTER_COST_TYPE_FLAG) + bit 30 (FILTER_COST_LE) for legacy compiled cards
     let is_total_cost = (filter_attr_base & (1u64 << 60)) != 0
         || (filter_attr_base & (1u64 << 50)) != 0
-        || ((filter_attr_base & FILTER_COST_TYPE_FLAG) != 0 && (filter_attr_base & 1073741824) != 0);
+        || ((filter_attr_base & FILTER_COST_TYPE_FLAG) != 0
+            && (filter_attr_base & 1073741824) != 0);
 
     let remaining = if ctx.v_remaining == -1 {
         if is_total_cost {
-            ctx.v_accumulated =
-                ((filter_attr_base >> crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT)
-                    & 0x1F) as i16;
+            ctx.v_accumulated = ((filter_attr_base
+                >> crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT)
+                & 0x1F) as i16;
         }
         v as i16 * 2
     } else {

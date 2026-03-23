@@ -21,7 +21,9 @@ use crate::core::hearts::HeartBoard;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
-fn default_baton_touch_limit() -> u8 { 3 }
+fn default_baton_touch_limit() -> u8 {
+    3
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PlayerState {
@@ -118,7 +120,7 @@ pub struct PlayerState {
     pub played_group_mask: u32,
 
     #[serde(default)]
-    pub flags: u32, 
+    pub flags: u32,
     // Bitfields in flags:
     // 0: cannot_live
     // 1: deck_refreshed
@@ -135,7 +137,6 @@ pub struct PlayerState {
     // 25..26: prevent_baton_touch (2 bits)
     // 27..28: prevent_success_pile_set (2 bits)
     // 29..31: prevent_play_to_slot_mask (3 bits)
-    
     #[serde(default)]
     pub cheer_mod_count: u16,
     #[serde(default)]
@@ -284,42 +285,65 @@ impl PlayerState {
         }
     }
 
-    pub fn skip_next_activate(&self) -> bool { self.get_flag(Self::OFFSET_SKIP_NEXT_ACTIVATE) }
-    pub fn set_skip_next_activate(&mut self, val: bool) { self.set_flag(Self::OFFSET_SKIP_NEXT_ACTIVATE, val); }
-
-    pub fn baton_touch_count(&self) -> u8 { ((self.flags & Self::MASK_BATON_COUNT) >> Self::OFFSET_BATON_COUNT) as u8 }
-    pub fn set_baton_touch_count(&mut self, val: u8) {
-        self.flags = (self.flags & !Self::MASK_BATON_COUNT) | (((val as u32) & 0b11) << Self::OFFSET_BATON_COUNT);
+    pub fn skip_next_activate(&self) -> bool {
+        self.get_flag(Self::OFFSET_SKIP_NEXT_ACTIVATE)
+    }
+    pub fn set_skip_next_activate(&mut self, val: bool) {
+        self.set_flag(Self::OFFSET_SKIP_NEXT_ACTIVATE, val);
     }
 
-    pub fn baton_touch_limit(&self) -> u8 { self.baton_touch_limit }
+    pub fn baton_touch_count(&self) -> u8 {
+        ((self.flags & Self::MASK_BATON_COUNT) >> Self::OFFSET_BATON_COUNT) as u8
+    }
+    pub fn set_baton_touch_count(&mut self, val: u8) {
+        self.flags = (self.flags & !Self::MASK_BATON_COUNT)
+            | (((val as u32) & 0b11) << Self::OFFSET_BATON_COUNT);
+    }
+
+    pub fn baton_touch_limit(&self) -> u8 {
+        self.baton_touch_limit
+    }
     pub fn set_baton_touch_limit(&mut self, val: u8) {
         self.baton_touch_limit = val;
     }
 
-    pub fn play_count_this_turn(&self) -> u8 { ((self.flags & Self::MASK_PLAY_COUNT) >> Self::OFFSET_PLAY_COUNT) as u8 }
+    pub fn play_count_this_turn(&self) -> u8 {
+        ((self.flags & Self::MASK_PLAY_COUNT) >> Self::OFFSET_PLAY_COUNT) as u8
+    }
     pub fn set_play_count_this_turn(&mut self, val: u8) {
-        self.flags = (self.flags & !Self::MASK_PLAY_COUNT) | (((val as u32) & 0b11111) << Self::OFFSET_PLAY_COUNT);
+        self.flags = (self.flags & !Self::MASK_PLAY_COUNT)
+            | (((val as u32) & 0b11111) << Self::OFFSET_PLAY_COUNT);
     }
 
-    pub fn prevent_activate(&self) -> u8 { ((self.flags & Self::MASK_PREVENT_ACTIVATE) >> Self::OFFSET_PREVENT_ACTIVATE) as u8 }
+    pub fn prevent_activate(&self) -> u8 {
+        ((self.flags & Self::MASK_PREVENT_ACTIVATE) >> Self::OFFSET_PREVENT_ACTIVATE) as u8
+    }
     pub fn set_prevent_activate(&mut self, val: u8) {
-        self.flags = (self.flags & !Self::MASK_PREVENT_ACTIVATE) | (((val as u32) & 0b11) << Self::OFFSET_PREVENT_ACTIVATE);
+        self.flags = (self.flags & !Self::MASK_PREVENT_ACTIVATE)
+            | (((val as u32) & 0b11) << Self::OFFSET_PREVENT_ACTIVATE);
     }
 
-    pub fn prevent_baton_touch(&self) -> u8 { ((self.flags & Self::MASK_PREVENT_BATON) >> Self::OFFSET_PREVENT_BATON) as u8 }
+    pub fn prevent_baton_touch(&self) -> u8 {
+        ((self.flags & Self::MASK_PREVENT_BATON) >> Self::OFFSET_PREVENT_BATON) as u8
+    }
     pub fn set_prevent_baton_touch(&mut self, val: u8) {
-        self.flags = (self.flags & !Self::MASK_PREVENT_BATON) | (((val as u32) & 0b11) << Self::OFFSET_PREVENT_BATON);
+        self.flags = (self.flags & !Self::MASK_PREVENT_BATON)
+            | (((val as u32) & 0b11) << Self::OFFSET_PREVENT_BATON);
     }
 
-    pub fn prevent_success_pile_set(&self) -> u8 { self.live_set_limit }
+    pub fn prevent_success_pile_set(&self) -> u8 {
+        self.live_set_limit
+    }
     pub fn set_prevent_success_pile_set(&mut self, val: u8) {
         self.live_set_limit = val;
     }
 
-    pub fn prevent_play_to_slot_mask(&self) -> u8 { ((self.flags & Self::MASK_PREVENT_PLAY_TO_SLOT) >> Self::OFFSET_PREVENT_PLAY_TO_SLOT) as u8 }
+    pub fn prevent_play_to_slot_mask(&self) -> u8 {
+        ((self.flags & Self::MASK_PREVENT_PLAY_TO_SLOT) >> Self::OFFSET_PREVENT_PLAY_TO_SLOT) as u8
+    }
     pub fn set_prevent_play_to_slot_mask(&mut self, val: u8) {
-        self.flags = (self.flags & !Self::MASK_PREVENT_PLAY_TO_SLOT) | (((val as u32) & 0b111) << Self::OFFSET_PREVENT_PLAY_TO_SLOT);
+        self.flags = (self.flags & !Self::MASK_PREVENT_PLAY_TO_SLOT)
+            | (((val as u32) & 0b111) << Self::OFFSET_PREVENT_PLAY_TO_SLOT);
     }
 
     pub fn is_tapped(&self, slot: usize) -> bool {
@@ -477,7 +501,9 @@ impl PlayerState {
     }
 
     pub fn get_slot_of(&self, card_id: i32) -> Option<usize> {
-        self.stage.iter().position(|&stage_card_id| stage_card_id == card_id)
+        self.stage
+            .iter()
+            .position(|&stage_card_id| stage_card_id == card_id)
     }
 
     pub fn untap_all(&mut self, skip_physical_untap: bool) {
@@ -568,7 +594,8 @@ impl PlayerState {
         self.used_abilities.extend_from_slice(&other.used_abilities);
         self.live_score_bonus = other.live_score_bonus;
         self.live_score_bonus_logs.clear();
-        self.live_score_bonus_logs.extend_from_slice(&other.live_score_bonus_logs);
+        self.live_score_bonus_logs
+            .extend_from_slice(&other.live_score_bonus_logs);
         self.blade_buffs = other.blade_buffs;
         self.blade_overrides = other.blade_overrides;
         self.heart_buffs = other.heart_buffs;
@@ -576,24 +603,30 @@ impl PlayerState {
         self.hand_increased_this_turn = other.hand_increased_this_turn;
         self.slot_cost_modifiers = other.slot_cost_modifiers;
         self.blade_buff_logs.clear();
-        self.blade_buff_logs.extend_from_slice(&other.blade_buff_logs);
+        self.blade_buff_logs
+            .extend_from_slice(&other.blade_buff_logs);
         self.heart_buff_logs.clear();
-        self.heart_buff_logs.extend_from_slice(&other.heart_buff_logs);
+        self.heart_buff_logs
+            .extend_from_slice(&other.heart_buff_logs);
         for i in 0..3 {
             self.stage_energy[i].clear();
             self.stage_energy[i].extend_from_slice(&other.stage_energy[i]);
         }
         self.color_transforms.clear();
-        self.color_transforms.extend_from_slice(&other.color_transforms);
+        self.color_transforms
+            .extend_from_slice(&other.color_transforms);
         self.heart_req_reductions = other.heart_req_reductions;
         self.heart_req_additions = other.heart_req_additions;
         self.heart_req_reduction_logs.clear();
-        self.heart_req_reduction_logs.extend_from_slice(&other.heart_req_reduction_logs);
+        self.heart_req_reduction_logs
+            .extend_from_slice(&other.heart_req_reduction_logs);
         self.heart_req_addition_logs.clear();
-        self.heart_req_addition_logs.extend_from_slice(&other.heart_req_addition_logs);
+        self.heart_req_addition_logs
+            .extend_from_slice(&other.heart_req_addition_logs);
         self.mulligan_selection = other.mulligan_selection;
         self.hand_added_turn.clear();
-        self.hand_added_turn.extend_from_slice(&other.hand_added_turn);
+        self.hand_added_turn
+            .extend_from_slice(&other.hand_added_turn);
         self.restrictions.clear();
         self.restrictions.extend_from_slice(&other.restrictions);
         self.looked_cards.clear();
@@ -602,7 +635,7 @@ impl PlayerState {
         self.revealed_cards.extend_from_slice(&other.revealed_cards);
         self.live_deck.clear();
         self.live_deck.extend_from_slice(&other.live_deck);
-        
+
         self.granted_abilities = other.granted_abilities.clone();
         self.perf_triggered_abilities = other.perf_triggered_abilities.clone();
         self.cost_modifiers = other.cost_modifiers.clone();
@@ -610,23 +643,25 @@ impl PlayerState {
         self.flags = other.flags;
         self.cheer_mod_count = other.cheer_mod_count;
         self.yell_count_reduction = other.yell_count_reduction;
-        
+
         self.negated_triggers = other.negated_triggers.clone();
         self.played_group_mask = other.played_group_mask;
-        
+
         self.yell_cards.clear();
         self.yell_cards.extend_from_slice(&other.yell_cards);
-        
+
         self.excess_hearts = other.excess_hearts;
         self.excess_hearts_by_color = other.excess_hearts_by_color;
         self.activated_energy_group_mask = other.activated_energy_group_mask;
         self.activated_member_group_mask = other.activated_member_group_mask;
         self.discarded_this_turn = other.discarded_this_turn;
         self.baton_source_ids.clear();
-        self.baton_source_ids.extend_from_slice(&other.baton_source_ids);
+        self.baton_source_ids
+            .extend_from_slice(&other.baton_source_ids);
         self.baton_source_slots.clear();
-        self.baton_source_slots.extend_from_slice(&other.baton_source_slots);
-        
+        self.baton_source_slots
+            .extend_from_slice(&other.baton_source_slots);
+
         self.cached_total_hearts = other.cached_total_hearts;
         self.cached_total_blades = other.cached_total_blades;
         self.cached_slot_blades = other.cached_slot_blades;
@@ -682,7 +717,13 @@ mod test_sizes {
     #[test]
     fn test_print_player_state_sizes() {
         println!("Size of PlayerState: {}", size_of::<PlayerState>());
-        println!("Size of SmallVec<[i32; 16]>: {}", size_of::<SmallVec<[i32; 16]>>());
-        println!("Size of SmallVec<[i32; 60]>: {}", size_of::<SmallVec<[i32; 60]>>());
+        println!(
+            "Size of SmallVec<[i32; 16]>: {}",
+            size_of::<SmallVec<[i32; 16]>>()
+        );
+        println!(
+            "Size of SmallVec<[i32; 60]>: {}",
+            size_of::<SmallVec<[i32; 60]>>()
+        );
     }
 }

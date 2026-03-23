@@ -1,7 +1,7 @@
 use engine_rust::core::analysis::performance_solver::{
     AbilityAdjustments, PerformanceProbabilitySolver,
 };
-use engine_rust::core::logic::{GameState, CardDatabase};
+use engine_rust::core::logic::{CardDatabase, GameState};
 use engine_rust::test_helpers::load_real_db;
 
 fn parse_deck(path: &str, db: &CardDatabase) -> Vec<i32> {
@@ -90,10 +90,8 @@ fn main() {
 
         // Stage has 1 member
         state.players[p_idx].stage[0] = member_ids[0]; // Eli
-                                                            // Deck
-        state.players[p_idx]
-            .deck
-            .extend_from_slice(&member_ids);
+                                                       // Deck
+        state.players[p_idx].deck.extend_from_slice(&member_ids);
 
         let chance =
             PerformanceProbabilitySolver::calculate_win_chance(&state, &db, p_idx, live_id);
@@ -141,9 +139,7 @@ fn main() {
         // 15 Yells
         state.players[p_idx].cheer_mod_count = 15;
         // Deck
-        state.players[p_idx]
-            .deck
-            .extend_from_slice(&member_ids);
+        state.players[p_idx].deck.extend_from_slice(&member_ids);
 
         let chance =
             PerformanceProbabilitySolver::calculate_win_chance(&state, &db, p_idx, live_id);
@@ -186,9 +182,7 @@ fn main() {
     }
     // Base Yells: 10
     state.players[p_idx].cheer_mod_count = 10;
-    state.players[p_idx]
-        .deck
-        .extend_from_slice(&member_ids);
+    state.players[p_idx].deck.extend_from_slice(&member_ids);
     // Stage: 1 member to provide a base
     state.players[p_idx].stage[0] = member_ids[0];
 

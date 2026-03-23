@@ -2,10 +2,10 @@ use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
+use rand::prelude::StdRng;
 use rand::seq::IndexedRandom;
 use rand::SeedableRng;
-use rand::prelude::StdRng;
 use smallvec::SmallVec;
 
 fn count_exact_main_sequences(state: &GameState, db: &CardDatabase, max_depth: usize) -> usize {
@@ -22,7 +22,10 @@ fn count_exact_main_sequences(state: &GameState, db: &CardDatabase, max_depth: u
 
         let mut total = 0usize;
         let mut saw_non_pass = false;
-        for action in actions.into_iter().filter(|&action| action != ACTION_BASE_PASS) {
+        for action in actions
+            .into_iter()
+            .filter(|&action| action != ACTION_BASE_PASS)
+        {
             saw_non_pass = true;
             let mut next_state = state.clone();
             if next_state.step(db, action).is_ok() {
@@ -64,7 +67,7 @@ fn load_vanilla_db() -> CardDatabase {
 
 fn load_deck(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
     let candidates = [path, &format!("../{}", path), &format!("../../{}", path)];
-    
+
     for candidate in &candidates {
         if let Ok(content) = fs::read_to_string(candidate) {
             let mut members = Vec::new();
@@ -119,7 +122,7 @@ fn load_deck(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
             return (members, lives);
         }
     }
-    
+
     panic!("Could not load deck");
 }
 
@@ -146,7 +149,11 @@ fn main() {
     let setup_start = Instant::now();
     while state.phase != Phase::Main && !state.is_terminal() {
         match state.phase {
-            Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+            Phase::Rps
+            | Phase::MulliganP1
+            | Phase::MulliganP2
+            | Phase::TurnChoice
+            | Phase::Response => {
                 let legal = state.get_legal_action_ids(&db);
                 if !legal.is_empty() {
                     let &action = legal.choose(&mut rng).unwrap_or(&ACTION_BASE_PASS);
@@ -163,7 +170,11 @@ fn main() {
     println!("[SETUP] took {:.3}s\n", setup_start.elapsed().as_secs_f64());
 
     // Now analyze the first Main turn
-    let search_depth = engine_rust::core::logic::turn_sequencer::get_config().read().unwrap().search.max_dfs_depth;
+    let search_depth = engine_rust::core::logic::turn_sequencer::get_config()
+        .read()
+        .unwrap()
+        .search
+        .max_dfs_depth;
     println!("[TURN 1 ANALYSIS]");
     println!("  Player: P{}", state.current_player);
     println!("  Phase: {:?}", state.phase);
@@ -172,7 +183,11 @@ fn main() {
     let count_start = Instant::now();
     let exact_sequences = count_exact_main_sequences(&state, &db, search_depth);
     let count_time = count_start.elapsed();
-    println!("  1. COUNT SEQUENCES: {} sequences in {:.3}s", exact_sequences, count_time.as_secs_f64());
+    println!(
+        "  1. COUNT SEQUENCES: {} sequences in {:.3}s",
+        exact_sequences,
+        count_time.as_secs_f64()
+    );
 
     // Save state for next step
     // STEP 2: Execute one random move
@@ -189,27 +204,36 @@ fn main() {
         }
 
         let &action = legal.choose(&mut rng).unwrap_or(&ACTION_BASE_PASS);
-        
+
         let move_start = Instant::now();
         if state.step(&db, action).is_err() {
             break;
         }
         let move_time = move_start.elapsed();
-        
+
         move_num += 1;
         let action_str = if action == ACTION_BASE_PASS {
             "[PASS]".to_string()
         } else {
             format!("[ACTION {}]", action)
         };
-        println!("     Move {}: {} in {:.3}s", move_num, action_str, move_time.as_secs_f64());
-        
+        println!(
+            "     Move {}: {} in {:.3}s",
+            move_num,
+            action_str,
+            move_time.as_secs_f64()
+        );
+
         if action == ACTION_BASE_PASS {
             break;
         }
     }
     let main_time = main_start.elapsed();
-    println!("  Main phase total: {:.3}s ({} moves)", main_time.as_secs_f64(), move_num);
+    println!(
+        "  Main phase total: {:.3}s ({} moves)",
+        main_time.as_secs_f64(),
+        move_num
+    );
 
     // STEP 3: Rest of turn (LiveSet, auto_step, etc.)
     println!("\n  3. LIVESETS & AUTO-STEP:");
@@ -218,7 +242,7 @@ fn main() {
         if state.phase == Phase::Main {
             break; // Next turn
         }
-        
+
         let phase = state.phase.clone();
         let phase_start = Instant::now();
         let legal = state.get_legal_action_ids(&db);
@@ -229,7 +253,7 @@ fn main() {
             state.auto_step(&db);
         }
         let phase_time = phase_start.elapsed();
-        
+
         if phase_time.as_millis() > 0 {
             println!("     Phase {:?}: {:.3}s", phase, phase_time.as_secs_f64());
         }
@@ -239,28 +263,55 @@ fn main() {
 
     let turn_total = count_time + main_time + rest_time;
     println!("\n[BREAKDOWN]");
-    println!("  Sequence count: {:.3}s ({:.1}%)", count_time.as_secs_f64(), 
-             count_time.as_secs_f64() / turn_total.as_secs_f64() * 100.0);
-    println!("  Main phase moves: {:.3}s ({:.1}%)", main_time.as_secs_f64(),
-             main_time.as_secs_f64() / turn_total.as_secs_f64() * 100.0);
-    println!("  LiveSet/auto-step: {:.3}s ({:.1}%)", rest_time.as_secs_f64(),
-             rest_time.as_secs_f64() / turn_total.as_secs_f64() * 100.0);
+    println!(
+        "  Sequence count: {:.3}s ({:.1}%)",
+        count_time.as_secs_f64(),
+        count_time.as_secs_f64() / turn_total.as_secs_f64() * 100.0
+    );
+    println!(
+        "  Main phase moves: {:.3}s ({:.1}%)",
+        main_time.as_secs_f64(),
+        main_time.as_secs_f64() / turn_total.as_secs_f64() * 100.0
+    );
+    println!(
+        "  LiveSet/auto-step: {:.3}s ({:.1}%)",
+        rest_time.as_secs_f64(),
+        rest_time.as_secs_f64() / turn_total.as_secs_f64() * 100.0
+    );
     println!("  TOTAL TURN: {:.3}s", turn_total.as_secs_f64());
-    
+
     println!("\n[CONCLUSION]");
     if count_time.as_secs_f64() > 0.1 {
-        println!("  ⚠ Sequence counting is slow ({:.3}s)", count_time.as_secs_f64());
+        println!(
+            "  ⚠ Sequence counting is slow ({:.3}s)",
+            count_time.as_secs_f64()
+        );
     } else {
-        println!("  ✓ Sequence counting is fast ({:.3}s)", count_time.as_secs_f64());
+        println!(
+            "  ✓ Sequence counting is fast ({:.3}s)",
+            count_time.as_secs_f64()
+        );
     }
     if main_time.as_secs_f64() > 0.1 {
-        println!("  ⚠ Main phase execution is slow ({:.3}s)", main_time.as_secs_f64());
+        println!(
+            "  ⚠ Main phase execution is slow ({:.3}s)",
+            main_time.as_secs_f64()
+        );
     } else {
-        println!("  ✓ Main phase execution is fast ({:.3}s)", main_time.as_secs_f64());
+        println!(
+            "  ✓ Main phase execution is fast ({:.3}s)",
+            main_time.as_secs_f64()
+        );
     }
     if rest_time.as_secs_f64() > 0.1 {
-        println!("  ⚠ LiveSet/auto-step is slow ({:.3}s)", rest_time.as_secs_f64());
+        println!(
+            "  ⚠ LiveSet/auto-step is slow ({:.3}s)",
+            rest_time.as_secs_f64()
+        );
     } else {
-        println!("  ✓ LiveSet/auto-step is fast ({:.3}s)", rest_time.as_secs_f64());
+        println!(
+            "  ✓ LiveSet/auto-step is fast ({:.3}s)",
+            rest_time.as_secs_f64()
+        );
     }
 }

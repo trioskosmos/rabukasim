@@ -1,6 +1,6 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_tap_member_selected(
@@ -13,11 +13,11 @@ pub fn handle_tap_member_selected(
     a: i64,
     resolved_slot: i32,
 ) -> HandlerResult {
-    let is_optional = frame.filter().is_optional;
+    let frame_data = frame.components();
+    let is_optional = frame_data.filter.is_optional;
     let self_source_is_on_stage = ctx.area_idx >= 0 && ctx.area_idx < 3;
     let is_choice_done = ctx.choice_index == CHOICE_DONE;
-    let filter_attr = frame.filter().to_attr()
-        & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
+    let filter_attr = frame_data.raw_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
     let fixed_slot_matches = if resolved_slot >= 0 && resolved_slot < 3 {
         let cid = state.players[p_idx].stage[resolved_slot as usize];
         cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
@@ -37,7 +37,36 @@ pub fn handle_tap_member_selected(
             }
 
             if ctx.choice_index != 0 {
-                if matches!(suspend_choice(
+                if matches!(
+                    suspend_choice(
+                        state,
+                        db,
+                        ctx,
+                        ctx,
+                        frame_idx,
+                        O_TAP_MEMBER,
+                        resolved_slot as i32,
+                        ChoiceType::Optional,
+                        a as u64,
+                        -1,
+                    ),
+                    HandlerResult::Suspend
+                ) {
+                    return HandlerResult::Suspend;
+                }
+                return HandlerResult::Continue;
+            }
+
+            ctx.choice_index = -1;
+            ctx.v_remaining = frame_data.value as i16;
+
+            if resolved_slot >= 0 && resolved_slot < 3 && fixed_slot_matches {
+                state.players[p_idx].set_tapped(resolved_slot as usize, true);
+                return HandlerResult::SetCond(true);
+            }
+
+            if matches!(
+                suspend_choice(
                     state,
                     db,
                     ctx,
@@ -45,35 +74,12 @@ pub fn handle_tap_member_selected(
                     frame_idx,
                     O_TAP_MEMBER,
                     resolved_slot as i32,
-                    ChoiceType::Optional,
-                    a as u64,
-                    -1,
-                ), HandlerResult::Suspend) {
-                    return HandlerResult::Suspend;
-                }
-                return HandlerResult::Continue;
-            }
-
-            ctx.choice_index = -1;
-            ctx.v_remaining = frame.raw_value() as i16;
-
-            if resolved_slot >= 0 && resolved_slot < 3 && fixed_slot_matches {
-                state.players[p_idx].set_tapped(resolved_slot as usize, true);
-                return HandlerResult::SetCond(true);
-            }
-
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                frame_idx,
-                O_TAP_MEMBER,
-                resolved_slot as i32,
-                ChoiceType::TapMSelect,
-                (a | 0x02) as u64,
-                frame.raw_value() as i16,
-            ), HandlerResult::Suspend) {
+                    ChoiceType::TapMSelect,
+                    (a | 0x02) as u64,
+                    frame_data.value as i16,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }
@@ -90,18 +96,21 @@ pub fn handle_tap_member_selected(
         }
 
         if needs_selection && ctx.choice_index == -1 {
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                frame_idx,
-                O_TAP_MEMBER,
-                0,
-                ChoiceType::TapMSelect,
-                (a | 0x02) as u64,
-                frame.raw_value() as i16,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    ctx,
+                    frame_idx,
+                    O_TAP_MEMBER,
+                    0,
+                    ChoiceType::TapMSelect,
+                    (a | 0x02) as u64,
+                    frame_data.value as i16,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }

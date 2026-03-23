@@ -1,8 +1,8 @@
-use crate::core::logic::models::AbilityFrame;
 use super::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::constants::{DYNAMIC_VALUE, FILTER_MASK_LOWER};
 use crate::core::logic::interpreter::conditions::resolve_count;
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::interpreter::resolve_target_slot;
 
@@ -71,12 +71,15 @@ pub fn handle_state_modifiers(
                 };
                 if resolved_slot >= 0 && resolved_slot < 3 {
                     let old = state.players[target_p_idx].prevent_play_to_slot_mask();
-                    state.players[target_p_idx].set_prevent_play_to_slot_mask(old | (1 << resolved_slot) as u8);
+                    state.players[target_p_idx]
+                        .set_prevent_play_to_slot_mask(old | (1 << resolved_slot) as u8);
                 }
             }
         }
         O_REDUCE_LIVE_SET_LIMIT => {
-            let new_v = state.players[p_idx].prevent_success_pile_set().saturating_add(v as u8);
+            let new_v = state.players[p_idx]
+                .prevent_success_pile_set()
+                .saturating_add(v as u8);
             state.players[p_idx].set_prevent_success_pile_set(new_v);
         }
         O_REDUCE_YELL_COUNT => {

@@ -100,5 +100,5 @@ mod batch_card_specific_real_gaps;
 mod card_specific_ability_tests;
 mod comprehensive_qa_suite;
 mod drafts;
-mod test_rule_gaps;
 mod test_critical_gaps;
+mod test_rule_gaps;

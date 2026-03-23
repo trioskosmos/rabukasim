@@ -1,5 +1,5 @@
-use crate::core::logic::ConditionType;
 use crate::core::logic::constants::*;
+use crate::core::logic::ConditionType;
 
 pub const MAX_CONDITION_CHECK_DEPTH: u32 = 8;
 

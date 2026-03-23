@@ -146,10 +146,7 @@ fn test_opcode_prevent_activate() {
     let bc = vec![O_PREVENT_ACTIVATE, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
-    assert_eq!(
-        state.players[0].prevent_activate(), 1,
-        "Flag should be set"
-    );
+    assert_eq!(state.players[0].prevent_activate(), 1, "Flag should be set");
 
     // 3. Try to activate
     // activate_ability uses current_player
@@ -200,7 +197,8 @@ fn test_opcode_prevent_baton_touch() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(
-        state.players[0].prevent_baton_touch(), 1,
+        state.players[0].prevent_baton_touch(),
+        1,
         "Flag should be set"
     );
 
@@ -259,7 +257,10 @@ fn test_opcode_prevent_play_to_slot() {
     state.players[0].stage[1] = 10;
 
     let res = state.play_member(&db, 0, 1); // hand_idx 0 to slot 1 (occupied + restricted)
-    assert!(res.is_err(), "Play to slot 1 should fail when occupied and restricted");
+    assert!(
+        res.is_err(),
+        "Play to slot 1 should fail when occupied and restricted"
+    );
     if let Err(e) = res {
         assert!(
             e.contains("restriction"),

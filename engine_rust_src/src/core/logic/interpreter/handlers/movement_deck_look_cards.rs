@@ -1,6 +1,6 @@
-use crate::core::logic::models::AbilityFrame;
-use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use super::*;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_look_cards(
@@ -17,18 +17,21 @@ pub fn handle_look_cards(
     let count = v as usize;
     if resolved_slot == 6 {
         if ctx.choice_index == -1 {
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                frame_idx,
-                op,
-                0,
-                ChoiceType::RevealHand,
-                (a as u32) as u64,
-                v as i16,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    ctx,
+                    frame_idx,
+                    op,
+                    0,
+                    ChoiceType::RevealHand,
+                    (a as u32) as u64,
+                    v as i16,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }
@@ -58,18 +61,21 @@ pub fn handle_look_cards(
             };
             if next_v > 0 || v == 0 {
                 ctx.v_remaining = next_v;
-                if matches!(suspend_choice(
-                    state,
-                    db,
-                    ctx,
-                    ctx,
-                    frame_idx,
-                    op,
-                    0,
-                    ChoiceType::RevealHand,
-                    (a as u32) as u64,
-                    next_v,
-                ), HandlerResult::Suspend) {
+                if matches!(
+                    suspend_choice(
+                        state,
+                        db,
+                        ctx,
+                        ctx,
+                        frame_idx,
+                        op,
+                        0,
+                        ChoiceType::RevealHand,
+                        (a as u32) as u64,
+                        next_v,
+                    ),
+                    HandlerResult::Suspend
+                ) {
                     return HandlerResult::Suspend;
                 }
             }

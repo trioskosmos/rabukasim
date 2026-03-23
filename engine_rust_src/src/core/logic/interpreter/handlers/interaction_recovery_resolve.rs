@@ -1,9 +1,9 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::interaction_zone::{
     collect_zone_cards, normalized_source_zone, remove_card_from_zone,
 };
+use crate::core::logic::models::AbilityFrame;
 
 pub fn resolve_recovery(
     state: &mut GameState,
@@ -13,11 +13,12 @@ pub fn resolve_recovery(
     frame_idx: usize,
     real_op: i32,
 ) -> HandlerResult {
-    let v = frame.raw_value();
-    let a = frame.raw_attr() as i64;
-    let _s = frame.raw_slot();
+    let frame_data = frame.components();
+    let v = frame_data.value;
+    let a = frame_data.raw_attr as i64;
+    let _s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
-    let slot_info = frame.dslot();
+    let slot_info = frame_data.slot;
     let source_zone = normalized_source_zone(slot_info.source_zone);
 
     if ctx.choice_index == -1 {
@@ -53,18 +54,21 @@ pub fn resolve_recovery(
             } else {
                 ChoiceType::RecovM
             };
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                frame_idx,
-                real_op,
-                0,
-                choice_type,
-                0,
-                -1,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    ctx,
+                    frame_idx,
+                    real_op,
+                    0,
+                    choice_type,
+                    0,
+                    -1,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }
@@ -103,18 +107,21 @@ pub fn resolve_recovery(
                 } else {
                     ChoiceType::RecovM
                 };
-                if matches!(suspend_choice(
-                    state,
-                    db,
-                    ctx,
-                    ctx,
-                    frame_idx,
-                    real_op,
-                    0,
-                    choice_type,
-                    0,
-                    remaining,
-                ), HandlerResult::Suspend) {
+                if matches!(
+                    suspend_choice(
+                        state,
+                        db,
+                        ctx,
+                        ctx,
+                        frame_idx,
+                        real_op,
+                        0,
+                        choice_type,
+                        0,
+                        remaining,
+                    ),
+                    HandlerResult::Suspend
+                ) {
                     return HandlerResult::Suspend;
                 }
             }

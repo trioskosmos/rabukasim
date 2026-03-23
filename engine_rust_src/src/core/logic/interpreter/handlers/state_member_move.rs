@@ -1,7 +1,7 @@
-use crate::core::logic::models::AbilityFrame;
-use crate::core::hearts::HeartBoard;
 use super::*;
+use crate::core::hearts::HeartBoard;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_move_member(
@@ -124,7 +124,11 @@ pub fn handle_move_member(
 
     if is_optional {
         let tap_slot = if legacy_tap_selection {
-            if needs_choice { dst_slot } else { src_slot }
+            if needs_choice {
+                dst_slot
+            } else {
+                src_slot
+            }
         } else if needs_choice {
             dst_slot
         } else {
@@ -143,7 +147,8 @@ pub fn handle_move_member(
             let dst_cid = state.players[target_p_idx].stage[dst_slot];
             if dst_cid == -1 {
                 let src_tapped = state.players[target_p_idx].is_tapped(src_slot);
-                let src_energy = std::mem::take(&mut state.players[target_p_idx].stage_energy[src_slot]);
+                let src_energy =
+                    std::mem::take(&mut state.players[target_p_idx].stage_energy[src_slot]);
                 let src_energy_count = state.players[target_p_idx].stage_energy_count[src_slot];
                 let src_blade_buffs = state.players[target_p_idx].blade_buffs[src_slot];
                 let src_blade_override = state.players[target_p_idx].blade_overrides[src_slot];

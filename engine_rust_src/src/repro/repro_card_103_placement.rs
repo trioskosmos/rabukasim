@@ -1,9 +1,12 @@
+use crate::core::generated_constants::{
+    FLAG_EMPTY_SLOT_ONLY, O_PLAY_MEMBER_FROM_DISCARD, O_RETURN,
+};
 use crate::core::logic::*;
-use crate::core::generated_constants::{O_PLAY_MEMBER_FROM_DISCARD, O_RETURN, FLAG_EMPTY_SLOT_ONLY};
 use crate::test_helpers::load_real_db;
 
 #[test]
-fn test_repro_card_103_placement() { // Card No: LL-bp2-001-R
+fn test_repro_card_103_placement() {
+    // Card No: LL-bp2-001-R
     let mut state = GameState::default();
     let db = load_real_db();
 
@@ -20,8 +23,16 @@ fn test_repro_card_103_placement() { // Card No: LL-bp2-001-R
     // Opcode 63 (PLAY_MEMBER_FROM_DISCARD), v=1, a=Filter(Cost<=2), s=FLAG_EMPTY_SLOT_ONLY | Stage
     let s_word = FLAG_EMPTY_SLOT_ONLY | 4; // 4 is Stage zone
     let bytecode = vec![
-        O_PLAY_MEMBER_FROM_DISCARD as i32, 1, 0, 0, s_word as i32,
-        O_RETURN as i32, 0, 0, 0, 0
+        O_PLAY_MEMBER_FROM_DISCARD as i32,
+        1,
+        0,
+        0,
+        s_word as i32,
+        O_RETURN as i32,
+        0,
+        0,
+        0,
+        0,
     ];
 
     let ctx = AbilityContext {
@@ -32,7 +43,8 @@ fn test_repro_card_103_placement() { // Card No: LL-bp2-001-R
     };
 
     // Execute
-    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
+    let frames = crate::core::logic::models::FrameProgram::from_bytecode(&bytecode).frames;
+    state.resolve_semantic_frames(&db, &frames, &ctx);
 
     // Generate actions
     let mut actions = Vec::new();
@@ -44,10 +56,17 @@ fn test_repro_card_103_placement() { // Card No: LL-bp2-001-R
 
     println!("Actions: {:?}", actions);
     // Action 0 should be available if no slots are available
-    assert!(actions.contains(&0), "Action 0 (Pass) should be available when no empty slots exist");
+    assert!(
+        actions.contains(&0),
+        "Action 0 (Pass) should be available when no empty slots exist"
+    );
     // Action 500+ (Choice) should NOT contain stage slots 0, 1, 2 if they are full
     for i in 0..3 {
         let action_id = crate::core::logic::ACTION_BASE_CHOICE + i as i32;
-        assert!(!actions.contains(&action_id), "Slot {} should not be selectable for EMPTY_SLOT_ONLY play", i);
+        assert!(
+            !actions.contains(&action_id),
+            "Slot {} should not be selectable for EMPTY_SLOT_ONLY play",
+            i
+        );
     }
 }

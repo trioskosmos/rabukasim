@@ -1,5 +1,5 @@
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::{AbilityContext, CardDatabase, GameState, ChoiceType};
+use engine_rust::core::logic::{AbilityContext, CardDatabase, ChoiceType, GameState};
 
 #[test]
 fn test_card_558_wait_repro() {
@@ -27,10 +27,13 @@ fn test_card_558_wait_repro() {
 
     // Simulate OnPlay trigger
     let member = db.get_member(card_id).unwrap();
-    let bytecode = &member.abilities[0].bytecode;
+    let ability = member.abilities[0].clone();
+    let frame_program = ability
+        .semantic_frame_program()
+        .expect("Wait repro ability should have frame data");
 
     println!("Step 1: Initial call");
-    let _ = state.resolve_bytecode(&db, std::sync::Arc::new(bytecode.clone()), &ctx);
+    state.resolve_ability(&db, &ability, &ctx);
 
     // Should be suspended for OPTIONAL/TAP cost
     assert_eq!(state.phase, Phase::Response);
@@ -48,11 +51,7 @@ fn test_card_558_wait_repro() {
 
     state.phase = Phase::Main; // Reset for execution
     state.interaction_stack.pop(); // Simulate consumption
-    let _ = state.resolve_bytecode(
-        &db,
-        std::sync::Arc::new(bytecode.clone()),
-        &resume_ctx,
-    );
+    state.resolve_semantic_frames(&db, &frame_program.frames, &resume_ctx);
 
     // It should NOT return early. It should proceed to LOOK_AND_CHOOSE.
     // Since we have Liella cards in deck, it should show LOOK_AND_CHOOSE interaction.

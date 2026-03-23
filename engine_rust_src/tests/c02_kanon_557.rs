@@ -1,8 +1,8 @@
 use engine_rust::core::enums::*;
+use engine_rust::core::logic::models::{AbilityFrame, FrameProgram};
+use engine_rust::core::logic::AbilityContext;
 use engine_rust::core::logic::CardDatabase;
 use engine_rust::core::logic::GameState;
-use engine_rust::core::logic::AbilityContext;
-use std::sync::Arc;
 
 #[test]
 fn test_kanon_557_repro() {
@@ -18,12 +18,29 @@ fn test_kanon_557_repro() {
     let _filter_attr = 209u64 | (3u64 << 5) | 16u64 | (112u64 << 32); // ALL_MEMBERS {GROUP_ID=3}
     let mut ab = engine_rust::core::logic::Ability::default();
     ab.trigger = engine_rust::core::enums::TriggerType::OnPlay;
-    ab.bytecode = vec![
-        209, 4, 112, 0, 48,
-        213, 7, 0, 0, 48,
-        23, 1, 0, 0, 134217732,
-        1, 0, 0, 0, 0
-    ];
+    ab.frame_program = Some(FrameProgram {
+        frames: vec![
+            AbilityFrame::Raw {
+                opcode: 209,
+                value: 4,
+                attr: 112,
+                slot: 48,
+            },
+            AbilityFrame::Raw {
+                opcode: 213,
+                value: 7,
+                attr: 0,
+                slot: 48,
+            },
+            AbilityFrame::Raw {
+                opcode: 23,
+                value: 1,
+                attr: 0,
+                slot: 134217732,
+            },
+            AbilityFrame::Return,
+        ],
+    });
     kanon.abilities.push(ab);
     db.members.insert(kanon_id, kanon);
 
@@ -62,13 +79,17 @@ fn test_kanon_557_repro() {
         ..Default::default()
     };
 
-    let bc = Arc::new(db.members[&kanon_id].abilities[0].bytecode.clone());
-    state.resolve_bytecode(&db, bc, &ctx);
+    let ability = db.members[&kanon_id].abilities[0].clone();
+    state.resolve_ability(&db, &ability, &ctx);
 
     // Run interpreter just enough to resolve the stack
     for _ in 0..2 {
         let _ = state.step(&db, 0);
     }
 
-    assert_eq!(state.core.players[p1].energy_zone.len(), 9, "Kanon ON_PLAY should trigger at 8 energy!");
+    assert_eq!(
+        state.core.players[p1].energy_zone.len(),
+        9,
+        "Kanon ON_PLAY should trigger at 8 energy!"
+    );
 }

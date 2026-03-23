@@ -1,4 +1,4 @@
-﻿use engine_rust::core::heuristics::OriginalHeuristic;
+use engine_rust::core::heuristics::OriginalHeuristic;
 use engine_rust::core::logic::{CardDatabase, GameState, Phase};
 use engine_rust::core::mcts::{SearchHorizon, MCTS};
 use engine_rust::test_helpers::load_real_db;
@@ -32,12 +32,7 @@ fn parse_deck(path: &str, db: &CardDatabase) -> Vec<i32> {
     main_deck
 }
 
-fn analyze_state(
-    label: &str,
-    state: &GameState,
-    db: &CardDatabase,
-    time_limits: &[f32],
-) {
+fn analyze_state(label: &str, state: &GameState, db: &CardDatabase, time_limits: &[f32]) {
     println!("\n=== {} ===", label);
     println!(
         "Phase: {:?}, Turn: {}, Legal Actions: {}",

@@ -1,5 +1,5 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
+use crate::core::logic::models::AbilityFrame;
 
 #[path = "movement_deck_look_cards.rs"]
 mod movement_deck_look_cards;

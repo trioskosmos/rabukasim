@@ -23,7 +23,9 @@ fn test_strict_condition_logic_no_bypass() {
 
     let p0 = 0;
     // Give enough energy to play any card
-    for _ in 0..10 { state.players[p0].energy_zone.push(40000); }
+    for _ in 0..10 {
+        state.players[p0].energy_zone.push(40000);
+    }
     state.players[p0].tapped_energy_mask = 0;
 
     // Put card 278 in hand (PL!HS-PR-019-PR)
@@ -37,13 +39,21 @@ fn test_strict_condition_logic_no_bypass() {
 
     // Play card 278 (Action ID for hand 0, slot 0 is 1)
     let res = state.step(&db, (ACTION_BASE_HAND + 0) as i32);
-    assert!(res.is_ok(), "Play should succeed with enough energy, res: {:?}", res);
+    assert!(
+        res.is_ok(),
+        "Play should succeed with enough energy, res: {:?}",
+        res
+    );
 
     // Check state: 3 cards should be in discard from the deck
     assert_eq!(state.players[p0].discard.len(), 3);
 
     // Buff should NOT be applied because cards were not heart 04 members
-    assert_eq!(state.players[p0].heart_buffs[0].get_color_count(4), 0, "Buff should not be applied if condition fails");
+    assert_eq!(
+        state.players[p0].heart_buffs[0].get_color_count(4),
+        0,
+        "Buff should not be applied if condition fails"
+    );
 
     // SETUP SUCCESS
     let mut state = GameState::default();
@@ -79,5 +89,8 @@ fn test_effect_dissipation_manual() {
     state.do_active_phase(&db);
 
     // Buff should be cleared
-    assert_eq!(state.players[p0].blade_buffs[0], 0, "Buff should be cleared during Active Phase");
+    assert_eq!(
+        state.players[p0].blade_buffs[0], 0,
+        "Buff should be cleared during Active Phase"
+    );
 }

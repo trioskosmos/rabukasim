@@ -1,12 +1,12 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
+use crate::core::logic::models::AbilityFrame;
 
-#[path = "state_member_play_resolve.rs"]
-mod state_member_play_resolve;
 #[path = "state_member_play_discard.rs"]
 mod state_member_play_discard;
 #[path = "state_member_play_hand.rs"]
 mod state_member_play_hand;
+#[path = "state_member_play_resolve.rs"]
+mod state_member_play_resolve;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_play_member_from_hand(

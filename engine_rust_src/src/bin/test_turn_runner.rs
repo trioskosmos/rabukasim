@@ -9,26 +9,26 @@
 /// - Score breakdown (board_score + live_ev)
 /// - Performance metrics
 ///
-// ///  TUNABLE PARAMETERS 
+// ///  TUNABLE PARAMETERS
 const NUM_GAMES: usize = 5;
 const VERBOSE: bool = true;
-const TURN_LIMIT: u16 = 6;  // Quick games for diagnostics
-const _ACTIONS_PER_TURN_LIMIT: usize = 50;  // Max play actions per turn
-// /// 
+const TURN_LIMIT: u16 = 6; // Quick games for diagnostics
+const _ACTIONS_PER_TURN_LIMIT: usize = 50; // Max play actions per turn
+                                           // ///
 
 use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::turn_sequencer::{TurnSequencer};
+use engine_rust::core::logic::turn_sequencer::TurnSequencer;
 use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
 use rand::SeedableRng;
 
 use rand::seq::IndexedRandom;
 
-// // 
+// //
 // Diagnostics Tracking
-// // 
+// //
 
 #[derive(Debug, Clone, Default)]
 struct ActionDiagnostic {
@@ -62,9 +62,9 @@ struct GameDiagnostic {
     total_time_ms: f32,
 }
 
-// // 
+// //
 // Database Loading
-// // 
+// //
 
 fn load_vanilla_db() -> CardDatabase {
     let candidates = [
@@ -77,8 +77,7 @@ fn load_vanilla_db() -> CardDatabase {
         if !std::path::Path::new(path).exists() {
             continue;
         }
-        let abs = std::fs::canonicalize(path)
-            .unwrap_or_else(|_| std::path::PathBuf::from(path));
+        let abs = std::fs::canonicalize(path).unwrap_or_else(|_| std::path::PathBuf::from(path));
         println!("[DB_LOAD] Loading vanilla DB from: {:?}", abs);
         let json = fs::read_to_string(path).expect("Failed to read vanilla DB");
         let mut db = CardDatabase::from_json(&json).expect("Failed to parse vanilla DB");
@@ -145,9 +144,9 @@ fn fallback_deck(db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
     (members, lives)
 }
 
-// // 
+// //
 // Main Phase Handler (Exhaustive DFS)
-// // 
+// //
 
 struct MainPhaseResult {
     best_sequence: Vec<i32>,
@@ -193,9 +192,9 @@ fn handle_main_phase(state: &GameState, db: &CardDatabase) -> MainPhaseResult {
     }
 }
 
-// // 
+// //
 // LiveSet Phase Handler
-// // 
+// //
 
 struct LiveSetPhaseResult {
     best_sequence: Vec<i32>,
@@ -218,9 +217,9 @@ fn handle_liveset_phase(state: &GameState, db: &CardDatabase) -> LiveSetPhaseRes
     }
 }
 
-// // 
+// //
 // Single Turn Runner (Main 竊・LiveSet)
-// // 
+// //
 
 fn run_single_turn(state: &mut GameState, db: &CardDatabase, turn_num: u16) -> TurnDiagnostic {
     let mut turn_diag = TurnDiagnostic {
@@ -242,7 +241,7 @@ fn run_single_turn(state: &mut GameState, db: &CardDatabase, turn_num: u16) -> T
         );
     }
 
-//     //  MAIN PHASE 
+    //     //  MAIN PHASE
     let main_phase_start = Instant::now();
     let main_result = handle_main_phase(state, db);
 
@@ -251,15 +250,20 @@ fn run_single_turn(state: &mut GameState, db: &CardDatabase, turn_num: u16) -> T
         for action_diag in main_result.evaluated_actions.iter().take(5) {
             println!(
                 "  {:30} Board={:6.2} Live={:6.2} Total={:7.2}",
-                action_diag.action_label, action_diag.board_score, action_diag.live_ev, action_diag.total_score
+                action_diag.action_label,
+                action_diag.board_score,
+                action_diag.live_ev,
+                action_diag.total_score
             );
         }
         if main_result.evaluated_actions.len() > 5 {
-    println!("-------------------------------------------------------");
+            println!("-------------------------------------------------------");
         }
         println!(
             "   Best Sequence: {} actions, Nodes: {}, Time: {}s",
-            main_result.best_sequence.len(), main_result.nodes_explored, main_result.time_us
+            main_result.best_sequence.len(),
+            main_result.nodes_explored,
+            main_result.time_us
         );
         println!(
             "   Best Score: Board={:.2} + Live={:.2} = Total={:.2}",
@@ -284,7 +288,7 @@ fn run_single_turn(state: &mut GameState, db: &CardDatabase, turn_num: u16) -> T
     // Ensure we transition to EndMain (or LiveSet if applicable)
     let _ = state.step(db, ACTION_BASE_PASS);
 
-//     //  LIVESET PHASE 
+    //     //  LIVESET PHASE
     if state.phase == Phase::LiveSet {
         let liveset_result = handle_liveset_phase(state, db);
 
@@ -311,7 +315,11 @@ fn run_single_turn(state: &mut GameState, db: &CardDatabase, turn_num: u16) -> T
     // Auto-advance phases until next Main or Terminal (with safety limit)
     let mut phase_advance_count = 0;
     const MAX_PHASE_STEPS: usize = 100;
-    while !state.is_terminal() && state.phase != Phase::Main && state.turn == turn_num && phase_advance_count < MAX_PHASE_STEPS {
+    while !state.is_terminal()
+        && state.phase != Phase::Main
+        && state.turn == turn_num
+        && phase_advance_count < MAX_PHASE_STEPS
+    {
         let phase_before = state.phase.clone();
         state.auto_step(db);
         if state.phase == Phase::Response {
@@ -326,7 +334,10 @@ fn run_single_turn(state: &mut GameState, db: &CardDatabase, turn_num: u16) -> T
         if state.phase == phase_before {
             phase_advance_count += 1;
             if phase_advance_count > 10 {
-                eprintln!("笞・・ WARNING: Phase stuck at {:?} for {} steps. Breaking.", state.phase, phase_advance_count);
+                eprintln!(
+                    "⚠️ WARNING: Phase stuck at {:?} for {} steps. Breaking.",
+                    state.phase, phase_advance_count
+                );
                 break;
             }
         } else {
@@ -338,20 +349,20 @@ fn run_single_turn(state: &mut GameState, db: &CardDatabase, turn_num: u16) -> T
     turn_diag.final_total_score = main_result.total_score;
     turn_diag.total_time_us += main_phase_start.elapsed().as_micros();
 
-        println!(
-            "   Turn {} Summary: Nodes={}, Time={:.3}ms, Score={:.2}",
-            turn_num,
-            turn_diag.total_nodes,
-            turn_diag.total_time_us as f64 / 1000.0,
-            turn_diag.final_total_score
-        );
+    println!(
+        "   Turn {} Summary: Nodes={}, Time={:.3}ms, Score={:.2}",
+        turn_num,
+        turn_diag.total_nodes,
+        turn_diag.total_time_us as f64 / 1000.0,
+        turn_diag.final_total_score
+    );
 
     turn_diag
 }
 
-// // 
+// //
 // Full Game Runner
-// // 
+// //
 
 fn run_game(
     game_idx: usize,
@@ -389,7 +400,11 @@ fn run_game(
 
     while !state.is_terminal() && state.phase != Phase::Main && init_step_count < MAX_INIT_STEPS {
         match state.phase {
-            Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+            Phase::Rps
+            | Phase::MulliganP1
+            | Phase::MulliganP2
+            | Phase::TurnChoice
+            | Phase::Response => {
                 let legal = state.get_legal_action_ids(db);
                 if !legal.is_empty() {
                     if let Some(&action) = legal.choose(&mut rng) {
@@ -409,7 +424,10 @@ fn run_game(
     }
 
     if init_step_count >= MAX_INIT_STEPS {
-        eprintln!("笞・・ WARNING: Could not reach first Main phase after {} steps", MAX_INIT_STEPS);
+        eprintln!(
+            "⚠️ WARNING: Could not reach first Main phase after {} steps",
+            MAX_INIT_STEPS
+        );
     }
 
     if state.is_terminal() {
@@ -427,7 +445,11 @@ fn run_game(
         // Ensure current player Main phase
         if state.phase != Phase::Main {
             match state.phase {
-                Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+                Phase::Rps
+                | Phase::MulliganP1
+                | Phase::MulliganP2
+                | Phase::TurnChoice
+                | Phase::Response => {
                     let legal = state.get_legal_action_ids(db);
                     if !legal.is_empty() {
                         if let Some(&action) = legal.choose(&mut rng) {
@@ -454,7 +476,10 @@ fn run_game(
     }
 
     if step_count >= MAX_STEPS_TOTAL {
-        eprintln!("笞・・ WARNING: Reached max step limit ({}) - game may have infinite loop", MAX_STEPS_TOTAL);
+        eprintln!(
+            "⚠️ WARNING: Reached max step limit ({}) - game may have infinite loop",
+            MAX_STEPS_TOTAL
+        );
     }
 
     game_diag.winner = state.get_winner();
@@ -463,15 +488,19 @@ fn run_game(
 
     println!(
         "\n  \n  Final Result: Winner=P{}, Turns={}, Time={:.2}ms\n  Final Score: P0={} P1={}\n  ",
-        game_diag.winner, state.turn, game_diag.total_time_ms, game_diag.final_scores.0, game_diag.final_scores.1
+        game_diag.winner,
+        state.turn,
+        game_diag.total_time_ms,
+        game_diag.final_scores.0,
+        game_diag.final_scores.1
     );
 
     game_diag
 }
 
-// // 
+// //
 // Summary & Output
-// // 
+// //
 
 fn print_summary(games: &[GameDiagnostic]) {
     println!("=======================================================");
@@ -520,7 +549,10 @@ fn main() {
     println!("-------------------------------------------------------");
     println!("=======================================================");
 
-    let cfg = engine_rust::core::logic::turn_sequencer::get_config().read().unwrap().clone();
+    let cfg = engine_rust::core::logic::turn_sequencer::get_config()
+        .read()
+        .unwrap()
+        .clone();
     println!(
         "Config: DFS_Depth={}, MC_Trials={}\n",
         cfg.search.max_dfs_depth, cfg.search.mc_trials

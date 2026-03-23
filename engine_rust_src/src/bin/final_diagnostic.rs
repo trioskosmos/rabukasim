@@ -3,13 +3,12 @@
 /// Run with: cargo run --bin final_diagnostic --release
 ///
 /// Shows complete diagnostics for training the no-abilities variant with DFS
-
 use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::TurnSequencer;
-use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
 use rand::SeedableRng;
 
 use rand::seq::IndexedRandom;
@@ -25,8 +24,7 @@ fn load_vanilla_db() -> CardDatabase {
         if !std::path::Path::new(path).exists() {
             continue;
         }
-        let abs = std::fs::canonicalize(path)
-            .unwrap_or_else(|_| std::path::PathBuf::from(path));
+        let abs = std::fs::canonicalize(path).unwrap_or_else(|_| std::path::PathBuf::from(path));
         println!("[DB] Loading from: {:?}\n", abs);
         let json = fs::read_to_string(path).expect("Failed to read vanilla DB");
         let mut db = CardDatabase::from_json(&json).expect("Failed to parse vanilla DB");
@@ -102,7 +100,10 @@ fn main() {
 
     // Run a few sample games
     for game_num in 0..3 {
-        println!("╭─ GAME {} ───────────────────────────────────────────────╮", game_num + 1);
+        println!(
+            "╭─ GAME {} ───────────────────────────────────────────────╮",
+            game_num + 1
+        );
 
         let mut state = GameState::default();
         state.initialize_game(
@@ -119,7 +120,11 @@ fn main() {
         let mut step = 0;
         while !state.is_terminal() && state.phase != Phase::Main && step < 50 {
             match state.phase {
-                Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+                Phase::Rps
+                | Phase::MulliganP1
+                | Phase::MulliganP2
+                | Phase::TurnChoice
+                | Phase::Response => {
                     let legal = state.get_legal_action_ids(&db);
                     if !legal.is_empty() {
                         if let Some(&action) = legal.choose(&mut rng) {
@@ -137,7 +142,10 @@ fn main() {
         }
 
         if state.phase != Phase::Main {
-            println!("│  ⚠️  Could not reach Main phase (stuck at {:?})", state.phase);
+            println!(
+                "│  ⚠️  Could not reach Main phase (stuck at {:?})",
+                state.phase
+            );
             println!("╰──────────────────────────────────────────────────────────╯\n");
             continue;
         }
@@ -151,17 +159,29 @@ fn main() {
                 let stats = run_diagnostic_turn(&state, &db, &mut rng);
                 all_stats.push(stats.clone());
 
-                println!("│  Turn {}.{} | Hand: {} | Legal: {} | DFS Nodes: {}",
-                    stats.turn_num, state.current_player, stats.hand_size, stats.legal_actions, stats.dfs_nodes);
-                println!("│    Search: {}μs | Board: {:.2} | LiveEV: {:.2} | Total: {:.2}",
-                    stats.search_time_us, stats.board_score, stats.live_ev, stats.total_score);
+                println!(
+                    "│  Turn {}.{} | Hand: {} | Legal: {} | DFS Nodes: {}",
+                    stats.turn_num,
+                    state.current_player,
+                    stats.hand_size,
+                    stats.legal_actions,
+                    stats.dfs_nodes
+                );
+                println!(
+                    "│    Search: {}μs | Board: {:.2} | LiveEV: {:.2} | Total: {:.2}",
+                    stats.search_time_us, stats.board_score, stats.live_ev, stats.total_score
+                );
 
                 turn_count += 1;
                 let _ = state.step(&db, ACTION_BASE_PASS);
             } else {
                 // Auto-handle non-Main phases
                 match state.phase {
-                    Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+                    Phase::Rps
+                    | Phase::MulliganP1
+                    | Phase::MulliganP2
+                    | Phase::TurnChoice
+                    | Phase::Response => {
                         let legal = state.get_legal_action_ids(&db);
                         if !legal.is_empty() {
                             if let Some(&action) = legal.choose(&mut rng) {
@@ -176,7 +196,10 @@ fn main() {
             }
         }
 
-        println!("│  Final Score: P0={} P1={}", state.players[0].score, state.players[1].score);
+        println!(
+            "│  Final Score: P0={} P1={}",
+            state.players[0].score, state.players[1].score
+        );
         println!("╰──────────────────────────────────────────────────────────╯\n");
     }
 
@@ -186,17 +209,38 @@ fn main() {
         println!("║                     SUMMARY STATISTICS                     ║");
         println!("╚════════════════════════════════════════════════════════════╝\n");
 
-        let avg_nodes: f32 = all_stats.iter().map(|s| s.dfs_nodes as f32).sum::<f32>() / all_stats.len() as f32;
-        let avg_time: f32 = all_stats.iter().map(|s| s.search_time_us as f32).sum::<f32>() / all_stats.len() as f32;
-        let avg_board: f32 = all_stats.iter().map(|s| s.board_score).sum::<f32>() / all_stats.len() as f32;
-        let avg_live: f32 = all_stats.iter().map(|s| s.live_ev).sum::<f32>() / all_stats.len() as f32;
+        let avg_nodes: f32 =
+            all_stats.iter().map(|s| s.dfs_nodes as f32).sum::<f32>() / all_stats.len() as f32;
+        let avg_time: f32 = all_stats
+            .iter()
+            .map(|s| s.search_time_us as f32)
+            .sum::<f32>()
+            / all_stats.len() as f32;
+        let avg_board: f32 =
+            all_stats.iter().map(|s| s.board_score).sum::<f32>() / all_stats.len() as f32;
+        let avg_live: f32 =
+            all_stats.iter().map(|s| s.live_ev).sum::<f32>() / all_stats.len() as f32;
 
         println!("Turns Analyzed:     {}", all_stats.len());
-        println!("Avg Hand Size:      {:.1}", all_stats.iter().map(|s| s.hand_size as f32).sum::<f32>() / all_stats.len() as f32);
-        println!("Avg Legal Actions:  {:.1}", all_stats.iter().map(|s| s.legal_actions as f32).sum::<f32>() / all_stats.len() as f32);
+        println!(
+            "Avg Hand Size:      {:.1}",
+            all_stats.iter().map(|s| s.hand_size as f32).sum::<f32>() / all_stats.len() as f32
+        );
+        println!(
+            "Avg Legal Actions:  {:.1}",
+            all_stats
+                .iter()
+                .map(|s| s.legal_actions as f32)
+                .sum::<f32>()
+                / all_stats.len() as f32
+        );
         println!("\nDFS Performance:");
         println!("  Avg Nodes:       {:.0}", avg_nodes);
-        println!("  Avg Time:        {:.1}μs ({:.3}ms)", avg_time, avg_time / 1000.0);
+        println!(
+            "  Avg Time:        {:.1}μs ({:.3}ms)",
+            avg_time,
+            avg_time / 1000.0
+        );
         println!("  Throughput:      {:.0} turns/sec", 1_000_000.0 / avg_time);
         println!("\nScore Breakdown:");
         println!("  Avg Board Score: {:.2}", avg_board);

@@ -195,7 +195,8 @@ fn test_opcode_prevent_activate_rigor() {
 
     // Verify prevent_activate flag is set
     assert_eq!(
-        state.players[0].prevent_activate(), 1,
+        state.players[0].prevent_activate(),
+        1,
         "prevent_activate flag should be set"
     );
 

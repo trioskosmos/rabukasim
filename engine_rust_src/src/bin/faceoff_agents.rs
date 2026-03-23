@@ -1,5 +1,5 @@
 use engine_rust::core::heuristics::OriginalHeuristic;
-use engine_rust::core::logic::{GameState, CardDatabase};
+use engine_rust::core::logic::{CardDatabase, GameState};
 use rand::SeedableRng;
 
 use engine_rust::core::mcts::{SearchHorizon, MCTS};

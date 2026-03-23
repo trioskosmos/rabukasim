@@ -1,5 +1,5 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
+use crate::core::logic::models::AbilityFrame;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
@@ -16,7 +16,9 @@ pub fn handle_search_deck(
 ) -> HandlerResult {
     let search_target = ctx.target_slot as usize;
     if search_target < state.players[p_idx].deck.len() {
-        let cid = state.players[p_idx].remove_deck_card(search_target).unwrap();
+        let cid = state.players[p_idx]
+            .remove_deck_card(search_target)
+            .unwrap();
         match s {
             4 => {
                 let slot = (a as u64 & FILTER_MASK_LOWER) as usize;

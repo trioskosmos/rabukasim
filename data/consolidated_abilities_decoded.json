@@ -1,7 +1,7 @@
 {
   "_metadata": {
     "generated_by": "compiler/main.py",
-    "generated_at": "2026-03-23T02:52:54.869074"
+    "generated_at": "2026-03-23T21:43:49.497430"
   },
   "{{toujyou.png|登場}}自分の控え室からメンバーカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」を、好きな組み合わせで合計3枚、控え室に置いてもよい：ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを＋３する。」を得る。\n（手札のこのカードもこの効果で控え室に置ける。）": {
     "pseudocode": "TRIGGER: ON_PLAY\nEFFECT: RECOVER_MEMBER(1) (Optional) -> CARD_HAND\n\nTRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(3) {FILTER=\"Ayumu/Kanon/Kaho\"} (Optional)\nEFFECT: BOOST_SCORE(3) -> SELF",
@@ -348,7 +348,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=1, filter=[cost>=13], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -527,7 +527,7 @@
       ],
       [
         "00: IS_CENTER                 | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: NOT SELECT_MEMBER         | value=1, filter=[group=Muse], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: NOT SELECT_MEMBER         | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: MOVE_MEMBER               | from=Center Stage (1), to=Center Stage (1), slot=[target=Context Card, source=Deck Top]",
         "20: RETURN                    | done"
@@ -751,10 +751,10 @@
         "05: RETURN                    | done"
       ],
       [
-        "00: DISCARDED_CARDS           | value=1, filter=[group=Muse], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: DISCARDED_CARDS           | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: LOOK_AND_CHOOSE           | look=4, filter=[target=self] chars=[], reveal=False, discard_remainder=False, slot=[target=Context Card, remainder=Discard, source=Deck Top]",
-        "15: NOT DISCARDED_CARDS       | value=1, filter=[group=Muse], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "15: NOT DISCARDED_CARDS       | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "20: JUMP_IF_FALSE             | offset=1",
         "25: RECOVER_LIVE              | count=1, filter=[zone=discard, zone_mask=ALL, optional], slot=[target=Hand (Zone), source=Discard]",
         "30: RETURN                    | done"
@@ -773,7 +773,7 @@
         "10: RETURN                    | done"
       ],
       [
-        "00: GROUP_FILTER              | value=3, filter=[type=member, has_blade_heart], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: GROUP_FILTER              | value=3, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: ADD_HEARTS                | count=1, heart_type=any, slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -1002,7 +1002,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: GROUP_FILTER              | value=4, filter=[unit=Bibi], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: GROUP_FILTER              | value=4, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=3",
         "10: SET_TAPPED                | count=1, filter=[optional], slot=[target=Context Card]",
         "15: JUMP_IF_FALSE             | offset=2",
@@ -1011,7 +1011,7 @@
         "30: RETURN                    | done"
       ],
       [
-        "00: GROUP_FILTER              | value=4, filter=[unit=Bibi], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: GROUP_FILTER              | value=4, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=3",
         "10: SET_TAPPED                | count=1, filter=[optional], slot=[target=Context Card]",
         "15: JUMP_IF_FALSE             | offset=2",
@@ -1035,7 +1035,7 @@
       [
         "00: SET_TAPPED                | count=1, filter=[optional], slot=[target=Context Card]",
         "05: JUMP_IF_FALSE             | offset=3",
-        "10: COUNT_STAGE               | value=0, filter=[unit=Printemps], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "10: COUNT_STAGE               | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: JUMP_IF_FALSE             | offset=1",
         "20: ACTIVATE_ENERGY           | count=1, filter=[none], slot=[target=Context Card]",
         "25: RETURN                    | done"
@@ -1051,7 +1051,7 @@
     "decoded_bytecode": [
       [
         "00: IS_CENTER                 | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: SUCCESS_PILE_COUNT        | value=0, filter=[group=Muse], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: SUCCESS_PILE_COUNT        | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=2",
         "15: GRANT_ABILITY             | granted_index=1, filter=[none], slot=[target=Context Card]",
         "20: GRANT_ABILITY             | granted_index=2, filter=[none], slot=[target=Context Card]",
@@ -1091,7 +1091,7 @@
     "decoded_bytecode": [
       [
         "00: RECOVER_LIVE              | count=1, filter=[target=self, group=Muse, zone=discard, zone_mask=ALL, optional], slot=[target=Context Card, source=Discard]",
-        "05: SELECT_MEMBER             | value=1, filter=[target=opponent, status=tapped], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: SELECT_MEMBER             | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -1106,7 +1106,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: SELECT_MEMBER             | value=1, filter=[unit=Lily White, special=Not Self], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: SELECT_MEMBER             | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: MOVE_TO_DISCARD           | count=1, filter=[none], slot=[target=Hand (Zone)]",
         "15: RECOVER_LIVE              | count=1, filter=[group=Muse, zone=discard, zone_mask=ALL], slot=[target=Hand (Zone), source=Discard]",
@@ -1168,7 +1168,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_GROUP               | value=2, filter=[unit=Bibi, unique_names], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_GROUP               | value=2, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: TAP_OPPONENT              | value=1, filter=[target=opponent, cost<=4], slot=[target=Right Stage (2)]",
         "15: RETURN                    | done"
@@ -1403,7 +1403,7 @@
     "decoded_bytecode": [
       [
         "00: MOVE_TO_DISCARD           | count=5, filter=[target=self], slot=[target=Context Card, source=Deck Top, dest=Discard]",
-        "05: DISCARDED_CARDS           | value=1, filter=[type=live], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: DISCARDED_CARDS           | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -1429,7 +1429,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: GROUP_FILTER              | value=25, filter=[unit=99, char3=99, zone=discard, zone_mask=ALL], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: GROUP_FILTER              | value=25, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -1545,7 +1545,7 @@
     "decoded_bytecode": [
       [
         "00: MOVE_TO_DISCARD           | count=3, filter=[target=self, optional], slot=[target=Context Card, source=Deck Top, dest=Discard]",
-        "05: GROUP_FILTER              | value=4, filter=[zone=discard, zone_mask=ALL], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: GROUP_FILTER              | value=4, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: ADD_HEARTS                | count=1, heart_type=blue, slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -1579,7 +1579,7 @@
     "decoded_bytecode": [
       [
         "00: MOVE_TO_DISCARD           | count=3, filter=[target=self], slot=[target=Context Card, source=Deck Top, dest=Discard]",
-        "05: DISCARDED_CARDS           | value=4, filter=[type=member, zone=discard, zone_mask=ALL], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: DISCARDED_CARDS           | value=4, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: ADD_HEARTS                | count=1, heart_type=pink, slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -1718,7 +1718,7 @@
         "10: RETURN                    | done"
       ],
       [
-        "00: COUNT_STAGE               | value=1, filter=[special=Not Self], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "15: JUMP_IF_FALSE             | offset=3",
@@ -1751,7 +1751,7 @@
     "decoded_bytecode": [
       [
         "00: MOVE_TO_DISCARD           | count=3, filter=[target=self], slot=[target=Context Card, source=Deck Top, dest=Discard]",
-        "05: GROUP_FILTER              | value=3, filter=[type=member], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: GROUP_FILTER              | value=3, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: CHECK_UNIQUE_NAMES_COUNT? | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: RETURN                    | done"
       ]
@@ -1863,7 +1863,7 @@
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "05: JUMP_IF_FALSE             | offset=5",
         "10: SUM_VALUE                 | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "15: COUNT_STAGE               | value=0, filter=[special=Not Self], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "15: COUNT_STAGE               | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "20: SUM_VALUE                 | value=0, filter=[none], slot=[compare=GT (>), slot=Left Stage (0)]",
         "25: JUMP_IF_FALSE             | offset=1",
         "30: RECOVER_MEMBER            | count=1, filter=[unit=Mira Cra Park, zone=discard, zone_mask=ALL], slot=[target=Hand (Zone), source=Discard]",
@@ -1912,7 +1912,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[unit=Cerise Bouquet], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: RECOVER_LIVE              | count=1, filter=[group=Hasunosora, zone=discard, zone_mask=ALL, optional], slot=[target=Hand (Zone), source=Discard]",
         "15: RETURN                    | done"
@@ -2078,7 +2078,7 @@
     "decoded_bytecode": [
       [
         "00: MOVE_TO_DISCARD           | count=4, filter=[target=self, optional], slot=[target=Context Card, source=Deck Top, dest=Discard]",
-        "05: DISCARDED_CARDS           | value=1, filter=[type=live], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: DISCARDED_CARDS           | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: ADD_BLADES                | count=2, filter=[none], slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -2295,7 +2295,7 @@
         "05: JUMP_IF_FALSE             | offset=6",
         "10: LOOK_DECK                 | count=5, filter=[none], slot=[target=Context Card]",
         "15: ADD_TO_HAND               | value=1, filter=[optional], slot=[target=Context Card]",
-        "20: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[group=Hasunosora], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "20: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "25: JUMP_IF_FALSE             | offset=2",
         "30: ADD_HEARTS                | count=1, filter=[target=self, type=member, optional], slot=[target=Context Card]",
         "35: ADD_BLADES                | count=1, filter=[none], slot=[target=Context Card]",
@@ -2405,7 +2405,7 @@
     "decoded_bytecode": [
       [
         "00: MOVE_TO_DISCARD           | count=3, filter=[target=self, optional], slot=[target=Context Card, source=Deck Top, dest=Discard]",
-        "05: GROUP_FILTER              | value=4, filter=[zone=discard, zone_mask=ALL], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: GROUP_FILTER              | value=4, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: ADD_HEARTS                | count=1, heart_type=purple, slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -2436,7 +2436,7 @@
     "decoded_bytecode": [
       [
         "00: COUNT_STAGE               | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: GROUP_FILTER              | value=0, filter=[type=live], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: GROUP_FILTER              | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: LOOK_AND_CHOOSE           | look=5, filter=[target=self, type=live, optional] chars=[], reveal=True, discard_remainder=False, slot=[target=Context Card, source=Deck Top]",
         "20: RETURN                    | done"
@@ -2544,7 +2544,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=1, filter=[group=Nijigasaki], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: ACTIVATE_ENERGY           | count=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -2997,7 +2997,7 @@
         "00: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "05: SELECT_MEMBER             | count=1, filter=[target=opponent, cost<=9], slot=[target=Context Card, source=Stage]",
         "10: MOVE_MEMBER               | from=Center Stage (1), to=All_Players (Optional), slot=[target=Context Card]",
-        "15: COUNT_STAGE               | value=0, filter=[target=opponent, status=tapped], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "15: COUNT_STAGE               | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "20: JUMP_IF_FALSE             | offset=1",
         "25: RECOVER_MEMBER            | count=1, filter=[target=self, group=Nijigasaki, zone=discard, zone_mask=ALL, optional], slot=[target=Context Card, source=Discard]",
         "30: RETURN                    | done"
@@ -3131,7 +3131,7 @@
       ],
       [
         "00: MOVE_TO_DISCARD           | count=5, filter=[none], slot=[target=Card_Deck_Top, source=Stage, dest=Discard]",
-        "05: COUNT_LIVE_ZONE           | value=3, filter=[zone=discard, zone_mask=ALL], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: COUNT_LIVE_ZONE           | value=3, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: ADD_TO_HAND               | value=1, filter=[optional], slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -3507,7 +3507,7 @@
       [
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
         "05: JUMP_IF_FALSE             | offset=3",
-        "10: HAS_MEMBER                | value=0, filter=[special=Not Self], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "10: HAS_MEMBER                | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: JUMP_IF_FALSE             | offset=1",
         "20: RECOVER_LIVE              | count=1, filter=[group=Nijigasaki, zone=discard, zone_mask=ALL], slot=[target=Hand (Zone), source=Discard]",
         "25: RETURN                    | done"
@@ -3646,7 +3646,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_DISCARD             | value=1, filter=[type=member, has_blade_heart], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_DISCARD             | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "15: ADD_HEARTS                | count=3, heart_type=pink, slot=[target=Context Card]",
@@ -4211,8 +4211,8 @@
         "10: RETURN                    | done"
       ],
       [
-        "00: COUNT_STAGE               | value=3, filter=[unit=99, char3=99, unique_names], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: GROUP_FILTER              | value=0, filter=[type=live], slot=[compare=GE (>=), slot=Center Stage (1)]",
+        "00: COUNT_STAGE               | value=3, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: GROUP_FILTER              | value=0, filter=[none], slot=[compare=GE (>=), slot=Center Stage (1)]",
         "10: SUM_VALUE                 | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: SUM_VALUE                 | value=3, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "20: SUM_VALUE                 | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
@@ -4361,7 +4361,7 @@
     "decoded_bytecode": [
       [
         "00: RECOVER_LIVE              | count=1, filter=[zone=discard, zone_mask=ALL], slot=[target=Hand (Zone), source=Discard]",
-        "05: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[group=Aqours], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: ACTIVATE_ENERGY           | count=4, filter=[none], slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -4635,7 +4635,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: HAS_MEMBER                | value=0, filter=[target=opponent], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: HAS_MEMBER                | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: ADD_BLADES                | count=2, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -5033,7 +5033,7 @@
     "decoded_bytecode": [
       [
         "00: ADD_BLADES                | count=1, filter=[none], slot=[target=Context Card]",
-        "05: GROUP_FILTER              | value=1, filter=[type=live], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: GROUP_FILTER              | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: CHECK_UNIQUE_NAMES_COUNT? | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: RETURN                    | done"
       ]
@@ -5046,7 +5046,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: CHECK_UNIQUE_NAMES_COUNT? | value=7, filter=[group=Liella], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: CHECK_UNIQUE_NAMES_COUNT? | value=7, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: ENERGY_CHARGE             | count=1, filter=[none], slot=[target=Context Card, wait]",
         "15: RETURN                    | done"
@@ -5153,7 +5153,7 @@
     "decoded_bytecode": [
       [
         "00: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
-        "05: COUNT_STAGE               | value=1, filter=[char1=Mei], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: COUNT_STAGE               | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: CHECK_UNIQUE_NAMES_COUNT? | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: RETURN                    | done"
       ]
@@ -5219,7 +5219,7 @@
         "00: SELECT_MEMBER             | count=1, filter=[target=self, group=Liella, optional], slot=[target=Context Card, source=Stage]",
         "05: NEGATE_EFFECT             | value=0, filter=[none], slot=[target=Context Card]",
         "10: SUM_VALUE                 | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "15: CHECK_UNIQUE_NAMES_COUNT? | value=1, filter=[group=Liella, zone=discard, zone_mask=ALL], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "15: CHECK_UNIQUE_NAMES_COUNT? | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "20: RETURN                    | done"
       ]
     ]
@@ -5370,7 +5370,7 @@
         "05: RETURN                    | done"
       ],
       [
-        "00: COUNT_STAGE               | value=0, filter=[special=Not Self], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: REDUCE_YELL_COUNT         | value=8, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -5457,7 +5457,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: GROUP_FILTER              | value=4, filter=[group=Liella], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: GROUP_FILTER              | value=4, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: COUNT_ENERGY              | value=7, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: ENERGY_CHARGE             | count=1, filter=[none], slot=[target=Context Card, wait]",
@@ -5552,8 +5552,8 @@
     ],
     "decoded_bytecode": [
       [
-        "00: CHECK_UNIQUE_NAMES_COUNT? | value=3, filter=[group=Liella, unique_names], slot=[compare=GE (>=), slot=Center Stage (1)]",
-        "05: GROUP_FILTER              | value=1, filter=[type=live, group=Liella], slot=[compare=GE (>=), slot=Center Stage (1)]",
+        "00: CHECK_UNIQUE_NAMES_COUNT? | value=3, filter=[none], slot=[compare=GE (>=), slot=Center Stage (1)]",
+        "05: GROUP_FILTER              | value=1, filter=[none], slot=[compare=GE (>=), slot=Center Stage (1)]",
         "10: RETURN                    | done"
       ]
     ]
@@ -5812,8 +5812,8 @@
         "10: SET_TAPPED                | count=1, filter=[none], slot=[target=Context Card]",
         "15: DRAW                      | count=3, filter=[none], slot=[target=Context Card]",
         "20: MOVE_TO_DISCARD           | count=2, filter=[target=self, zone=hand, zone_mask=Guest+Friend], slot=[target=Center Stage (1), source=Hand, dest=Discard]",
-        "25: DISCARDED_CARDS           | value=1, filter=[has_blade_heart], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "30: DISCARDED_CARDS           | value=1, filter=[has_blade_heart], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "25: DISCARDED_CARDS           | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "30: DISCARDED_CARDS           | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "35: JUMP_IF_FALSE             | offset=1",
         "40: ADD_BLADES                | count=2, filter=[none], slot=[target=Context Card]",
         "45: RETURN                    | done"
@@ -5942,27 +5942,27 @@
         "00: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[source=Deck Top]",
         "05: JUMP_IF_FALSE             | offset=22",
         "10: ADD_BLADES                | count=1, filter=[none], slot=[target=Context Card]",
-        "15: DISCARDED_CARDS           | value=1, filter=[type=live], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "15: DISCARDED_CARDS           | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "20: JUMP_IF_FALSE             | offset=2",
         "25: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[source=Deck Top]",
         "30: JUMP_IF_FALSE             | offset=17",
         "35: ADD_BLADES                | count=1, filter=[none], slot=[target=Context Card]",
-        "40: DISCARDED_CARDS           | value=1, filter=[type=live], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "40: DISCARDED_CARDS           | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "45: JUMP_IF_FALSE             | offset=2",
         "50: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[source=Deck Top]",
         "55: JUMP_IF_FALSE             | offset=12",
         "60: ADD_BLADES                | count=1, filter=[none], slot=[target=Context Card]",
-        "65: DISCARDED_CARDS           | value=1, filter=[type=live], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "65: DISCARDED_CARDS           | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "70: JUMP_IF_FALSE             | offset=2",
         "75: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[source=Deck Top]",
         "80: JUMP_IF_FALSE             | offset=7",
         "85: ADD_BLADES                | count=1, filter=[none], slot=[target=Context Card]",
-        "90: DISCARDED_CARDS           | value=1, filter=[type=live], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "90: DISCARDED_CARDS           | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "95: JUMP_IF_FALSE             | offset=2",
         "100: MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[source=Deck Top]",
         "105: JUMP_IF_FALSE             | offset=2",
         "110: ADD_BLADES                | count=1, filter=[none], slot=[target=Context Card]",
-        "115: DISCARDED_CARDS           | value=1, filter=[type=live], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "115: DISCARDED_CARDS           | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "120: RETURN                    | done"
       ]
     ]
@@ -6199,7 +6199,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=7, filter=[group=Liella], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=7, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: SWAP_AREA                 | value=0, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -6296,7 +6296,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=1, filter=[group=Liella], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -6558,7 +6558,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_SUCCESS_LIVE        | value=2, filter=[group=Muse], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_SUCCESS_LIVE        | value=2, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -6680,7 +6680,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: GROUP_FILTER              | value=4, filter=[group=Muse], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: GROUP_FILTER              | value=4, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: SELECT_MEMBER             | count=1, filter=[target=self], slot=[target=Context Card, source=Stage]",
         "15: MOVE_MEMBER               | from=Done/Cancel, to=Done/Cancel, slot=[target=Center Stage (1)]",
@@ -6716,7 +6716,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: SELECT_MEMBER             | value=1, filter=[group=Muse], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: SELECT_MEMBER             | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=2, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -6756,7 +6756,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: HAS_MEMBER                | value=0, filter=[group=Muse], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: HAS_MEMBER                | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: REDUCE_HEART_REQ          | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -6825,7 +6825,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: HAS_MEMBER                | value=0, filter=[group=Arise], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: HAS_MEMBER                | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=10",
         "10: SELECT_MODE               | options=2, filter=[none], slot=[none]",
         "15: JUMP                      | offset=1",
@@ -6848,7 +6848,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=0, filter=[unit=Printemps, status=tapped], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: ACTIVATE_MEMBER           | count=99, filter=[target=self, unit=Printemps], slot=[target=Context Card]",
         "15: SUM_VALUE                 | value=3, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
@@ -6866,7 +6866,7 @@
     "decoded_bytecode": [
       [
         "00: COUNT_SUCCESS_LIVE        | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: COUNT_STAGE               | value=4, filter=[unit=Lily White], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: COUNT_STAGE               | value=4, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -6880,13 +6880,13 @@
     ],
     "decoded_bytecode": [
       [
-        "00: SELECT_MEMBER             | value=1, filter=[target=opponent, status=tapped], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: SELECT_MEMBER             | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: REDUCE_HEART_REQ          | value=2, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
       ],
       [
-        "00: CHECK_UNIQUE_NAMES_COUNT? | value=2, filter=[type=member, unit=Bibi], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: CHECK_UNIQUE_NAMES_COUNT? | value=2, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: RECOVER_MEMBER            | count=1, filter=[unit=Bibi, zone=discard, zone_mask=ALL], slot=[target=Hand (Zone), source=Discard]",
         "15: RETURN                    | done"
@@ -6914,7 +6914,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_SUCCESS_LIVE        | value=1, filter=[group=Muse], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_SUCCESS_LIVE        | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -7015,7 +7015,7 @@
     "decoded_bytecode": [
       [
         "00: SCORE_COMPARE             | value=0, filter=[none], slot=[compare=GT (>), slot=Left Stage (0)]",
-        "05: COUNT_STAGE               | value=1, filter=[group=Hasunosora], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: COUNT_STAGE               | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: ENERGY_CHARGE             | count=1, filter=[none], slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -7029,7 +7029,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=0, filter=[group=Hasunosora], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=12",
         "10: SELECT_MODE               | options=4, filter=[none], slot=[none]",
         "15: JUMP                      | offset=3",
@@ -7075,7 +7075,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=0, filter=[group=Hasunosora], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: REDUCE_HEART_REQ          | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -7089,7 +7089,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_DISCARD             | value=0, filter=[type=live, unit=Cerise Bouquet], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_DISCARD             | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -7103,7 +7103,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=0, filter=[group=Hasunosora], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: REDUCE_HEART_REQ          | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -7117,8 +7117,8 @@
     ],
     "decoded_bytecode": [
       [
-        "00: HAS_MEMBER                | value=0, filter=[char1=Kosuzu], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: HAS_MEMBER                | value=0, filter=[char1=Sayaka], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: HAS_MEMBER                | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: HAS_MEMBER                | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: SUM_VALUE                 | value=0, filter=[none], slot=[compare=GT (>), slot=Left Stage (0)]",
         "15: JUMP_IF_FALSE             | offset=1",
         "20: REDUCE_HEART_REQ          | value=3, filter=[none], slot=[target=Context Card]",
@@ -7133,7 +7133,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=0, filter=[group=Hasunosora], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: REDUCE_HEART_REQ          | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -7147,9 +7147,9 @@
     ],
     "decoded_bytecode": [
       [
-        "00: GROUP_FILTER              | value=0, filter=[char1=Rurino], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: GROUP_FILTER              | value=0, filter=[char1=Hime], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "10: GROUP_FILTER              | value=0, filter=[char1=Megu], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: GROUP_FILTER              | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: GROUP_FILTER              | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "10: GROUP_FILTER              | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: JUMP_IF_FALSE             | offset=1",
         "20: BOOST_SCORE               | value=2, filter=[none], slot=[target=Context Card]",
         "25: RETURN                    | done"
@@ -7165,7 +7165,7 @@
       [
         "00: PAY_ENERGY                | cost=1, filter=[optional], slot=[none]",
         "05: JUMP_IF_FALSE             | offset=5",
-        "10: HAS_MEMBER                | value=0, filter=[group=Hasunosora], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "10: HAS_MEMBER                | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: COUNT_STAGE               | value=2, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "20: CHECK_UNIQUE_NAMES_COUNT? | value=2, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "25: JUMP_IF_FALSE             | offset=1",
@@ -7216,7 +7216,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=2, filter=[group=Hasunosora, cost>=10], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=2, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -7251,7 +7251,7 @@
       [
         "00: PAY_ENERGY                | cost=2, filter=[optional], slot=[none]",
         "05: JUMP_IF_FALSE             | offset=3",
-        "10: HAS_MEMBER                | value=1, filter=[group=16, cost>=9], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "10: HAS_MEMBER                | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: JUMP_IF_FALSE             | offset=1",
         "20: SELECT_MODE               | options=1, filter=[none], slot=[target=Context Card]",
         "25: RETURN                    | done"
@@ -7265,7 +7265,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: HAS_MEMBER                | value=0, filter=[group=Hasunosora], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: HAS_MEMBER                | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "15: MOVE_TO_DISCARD           | count=1, filter=[target=self, zone=hand, zone_mask=Guest+Friend], slot=[target=Center Stage (1), source=Hand, dest=Discard]",
@@ -7281,7 +7281,7 @@
     "decoded_bytecode": [
       [
         "00: COUNT_GROUP               | value=3, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[type=live], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -7348,7 +7348,7 @@
         "00: PAY_ENERGY                | cost=2, filter=[optional], slot=[none]",
         "05: JUMP_IF_FALSE             | offset=4",
         "10: SUM_VALUE                 | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
-        "15: COUNT_STAGE               | value=1, filter=[group=Nijigasaki], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "15: COUNT_STAGE               | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "20: JUMP_IF_FALSE             | offset=1",
         "25: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "30: RETURN                    | done"
@@ -7401,7 +7401,7 @@
     "decoded_bytecode": [
       [
         "00: CHECK_UNIQUE_NAMES_COUNT? | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: COUNT_STAGE               | value=1, filter=[group=Nijigasaki], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: COUNT_STAGE               | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: ENERGY_CHARGE             | count=1, filter=[none], slot=[target=Context Card, wait]",
         "20: RETURN                    | done"
@@ -7416,7 +7416,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[type=live], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -7460,7 +7460,7 @@
         "05: RETURN                    | done"
       ],
       [
-        "00: GROUP_FILTER              | value=1, filter=[group=Nijigasaki], slot=[compare=GE (>=), slot=Center Stage (1)]",
+        "00: GROUP_FILTER              | value=1, filter=[none], slot=[compare=GE (>=), slot=Center Stage (1)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -7507,10 +7507,10 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_DISCARD             | value=4, filter=[type=live, group=Nijigasaki, unique_names], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_DISCARD             | value=4, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
-        "15: COUNT_DISCARD             | value=6, filter=[type=live, group=Nijigasaki, unique_names], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "15: COUNT_DISCARD             | value=6, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "20: JUMP_IF_FALSE             | offset=1",
         "25: BOOST_SCORE               | value=2, filter=[none], slot=[target=Context Card]",
         "30: RETURN                    | done"
@@ -7539,14 +7539,14 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_SUCCESS_LIVE        | value=0, filter=[group=Nijigasaki], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_SUCCESS_LIVE        | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: ENERGY_CHARGE             | count=1, filter=[optional], slot=[target=Context Card, wait]",
         "15: RECOVER_MEMBER            | count=1, filter=[zone=discard, zone_mask=ALL, optional], slot=[target=Hand (Zone), source=Discard]",
         "20: RETURN                    | done"
       ],
       [
-        "00: NOT COUNT_SUCCESS_LIVE    | value=0, filter=[group=Nijigasaki], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: NOT COUNT_SUCCESS_LIVE    | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=7",
         "10: SELECT_MODE               | options=2, filter=[none], slot=[none]",
         "15: JUMP                      | offset=1",
@@ -7567,7 +7567,7 @@
     "decoded_bytecode": [
       [
         "00: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: GROUP_FILTER              | value=4, filter=[group=Nijigasaki], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: GROUP_FILTER              | value=4, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: SCORE_COMPARE             | value=20, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: JUMP_IF_FALSE             | offset=1",
         "20: DRAW                      | count=3, filter=[none], slot=[target=Context Card]",
@@ -7631,10 +7631,10 @@
     ],
     "decoded_bytecode": [
       [
-        "00: HAS_MEMBER                | value=0, filter=[char1=Kasumi], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: HAS_MEMBER                | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: LOOK_DECK                 | count=4, filter=[none], slot=[target=Context Card]",
-        "15: CHECK_UNIQUE_NAMES_COUNT? | value=1, filter=[char1=Kasumi], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "15: CHECK_UNIQUE_NAMES_COUNT? | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "20: JUMP_IF_FALSE             | offset=2",
         "25: SELECT_MEMBER             | count=1, filter=[target=self, char1=Kasumi], slot=[target=Context Card, source=Stage]",
         "30: ADD_HEARTS                | count=99, heart_type=pink, slot=[target=Context Card]",
@@ -7698,7 +7698,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[group=Nijigasaki], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: SELECT_MEMBER             | count=1, filter=[target=self, group=Nijigasaki], slot=[target=Context Card, source=Stage]",
         "15: ADD_HEARTS                | count=5, heart_type=any, slot=[target=Context Card]",
@@ -7713,7 +7713,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=2, filter=[group=Nijigasaki], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=2, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: REDUCE_HEART_REQ          | value=3, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -7767,7 +7767,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_LIVE_ZONE           | value=0, filter=[unit=99, char3=99], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_LIVE_ZONE           | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: SELECT_MEMBER             | count=99, filter=[target=self], slot=[target=Context Card, source=Stage]",
         "15: ADD_BLADES                | count=1, filter=[none], slot=[target=Center Stage (1)]",
@@ -7858,7 +7858,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: HAS_MEMBER                | value=0, filter=[group=Aqours, cost>=9], slot=[compare=GE (>=), slot=Left Stage (0), area=center]",
+        "00: HAS_MEMBER                | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0), area=center]",
         "05: JUMP_IF_FALSE             | offset=8",
         "10: SELECT_MODE               | options=2, filter=[none], slot=[none]",
         "15: JUMP                      | offset=1",
@@ -7941,9 +7941,9 @@
     ],
     "decoded_bytecode": [
       [
-        "00: HAS_MEMBER                | value=0, filter=[group=Aqours], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: HAS_MEMBER                | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: HAS_MEMBER                | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "10: SCORE_COMPARE             | value=20, filter=[group=Aqours], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "10: SCORE_COMPARE             | value=20, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: JUMP_IF_FALSE             | offset=1",
         "20: MOVE_TO_DECK              | value=4, filter=[optional], slot=[target=Context Card]",
         "25: RETURN                    | done"
@@ -7957,7 +7957,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_HEARTS              | value=6, filter=[group=Aqours], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_HEARTS              | value=6, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: RETURN                    | done"
       ],
       [
@@ -7973,7 +7973,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_HEARTS              | value=10, filter=[group=Aqours], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_HEARTS              | value=10, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=2, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -7987,7 +7987,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_HEARTS              | value=4, filter=[group=Aqours], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_HEARTS              | value=4, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: BOOST_SCORE               | value=2, filter=[none], slot=[target=Context Card]",
@@ -8030,7 +8030,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: GROUP_FILTER              | value=1, filter=[type=live, group=Aqours], slot=[compare=GE (>=), slot=Center Stage (1)]",
+        "00: GROUP_FILTER              | value=1, filter=[none], slot=[compare=GE (>=), slot=Center Stage (1)]",
         "05: RETURN                    | done"
       ]
     ]
@@ -8090,8 +8090,8 @@
         "30: RETURN                    | done"
       ],
       [
-        "00: COUNT_STAGE               | value=1, filter=[char1=Kanon], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: COUNT_STAGE               | value=1, filter=[char1=Keke], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: COUNT_STAGE               | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -8105,7 +8105,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_GROUP               | value=5, filter=[zone=stage, zone_mask=Friend, unique_names], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_GROUP               | value=5, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: SET_HEART_COST            | counts=[red=2, yellow=2, purple=2], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -8162,7 +8162,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=0, filter=[char1=Kanon, unique_names], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: RETURN                    | done"
       ]
     ]
@@ -8193,13 +8193,13 @@
     ],
     "decoded_bytecode": [
       [
-        "00: SYNC_COST                 | value=0, filter=[group=Liella], slot=[compare=GT (>), slot=Left Stage (0), area=center]",
+        "00: SYNC_COST                 | value=0, filter=[none], slot=[compare=GT (>), slot=Left Stage (0), area=center]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
       ],
       [
-        "00: SELECT_MEMBER             | value=1, filter=[group=Liella, value>=3, colors=yellow], slot=[compare=GE (>=), slot=Left Stage (0), area=left]",
+        "00: SELECT_MEMBER             | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0), area=left]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: SELECT_MEMBER             | count=1, filter=[target=self, group=Liella, value>=3, colors=yellow], slot=[target=Context Card, source=Stage, area=left]",
         "15: ADD_BLADES                | count=2, filter=[none], slot=[target=Context Card]",
@@ -8219,7 +8219,7 @@
         "10: RETURN                    | done"
       ],
       [
-        "00: SELECT_MEMBER             | value=1, filter=[group=Liella], slot=[compare=GE (>=), slot=Left Stage (0), area=center]",
+        "00: SELECT_MEMBER             | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0), area=center]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -8233,7 +8233,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: CHECK_UNIQUE_NAMES_COUNT? | value=5, filter=[group=Liella, unique_names], slot=[compare=GE (>=), slot=Center Stage (1)]",
+        "00: CHECK_UNIQUE_NAMES_COUNT? | value=5, filter=[none], slot=[compare=GE (>=), slot=Center Stage (1)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -8254,7 +8254,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: GROUP_FILTER              | value=4, filter=[group=Liella], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: GROUP_FILTER              | value=4, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: FORMATION_CHANGE          | value=1, filter=[optional], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -8283,7 +8283,7 @@
     "decoded_bytecode": [
       [
         "00: COUNT_SUCCESS_LIVE        | value=2, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: GROUP_FILTER              | value=1, filter=[type=live], slot=[compare=GE (>=), slot=Center Stage (1)]",
+        "05: GROUP_FILTER              | value=1, filter=[none], slot=[compare=GE (>=), slot=Center Stage (1)]",
         "10: JUMP_IF_FALSE             | offset=1",
         "15: BOOST_SCORE               | value=2, filter=[none], slot=[target=Context Card]",
         "20: RETURN                    | done"
@@ -8324,7 +8324,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_HEARTS              | value=11, filter=[group=Liella], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_HEARTS              | value=11, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -8352,7 +8352,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=2, filter=[unit=Catchu, zone=stage, zone_mask=Friend], slot=[compare=GE (>=), slot=Context Card]",
+        "00: COUNT_STAGE               | value=2, filter=[none], slot=[compare=GE (>=), slot=Context Card]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: ACTIVATE_ENERGY           | count=6, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -8371,7 +8371,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=2, filter=[unit=Kaleidoscore, unique_names], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=2, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: BOOST_SCORE               | value=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -8385,7 +8385,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=0, filter=[unit=Syncrise], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: RETURN                    | done"
       ]
     ]
@@ -8485,7 +8485,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=1, filter=[cost>=13], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: DRAW                      | count=1, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -8651,8 +8651,8 @@
         "10: RETURN                    | done"
       ],
       [
-        "00: COUNT_STAGE               | value=3, filter=[unit=99, char3=99, unique_names], slot=[compare=GE (>=), slot=Left Stage (0)]",
-        "05: GROUP_FILTER              | value=0, filter=[type=live], slot=[compare=GE (>=), slot=Center Stage (1)]",
+        "00: COUNT_STAGE               | value=3, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "05: GROUP_FILTER              | value=0, filter=[none], slot=[compare=GE (>=), slot=Center Stage (1)]",
         "10: SUM_VALUE                 | value=1, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "15: SUM_VALUE                 | value=3, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "20: SUM_VALUE                 | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
@@ -8738,7 +8738,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[group=Nijigasaki], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: CHECK_UNIQUE_NAMES_COUNT? | value=0, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=2",
         "10: SELECT_MEMBER             | count=1, filter=[target=self, group=Nijigasaki], slot=[target=Context Card, source=Stage]",
         "15: ADD_HEARTS                | count=5, heart_type=any, slot=[target=Context Card]",
@@ -8781,7 +8781,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_GROUP               | value=5, filter=[zone=stage, zone_mask=Friend, unique_names], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_GROUP               | value=5, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: SET_HEART_COST            | counts=[red=2, yellow=2, purple=2], slot=[target=Context Card]",
         "15: RETURN                    | done"
@@ -8795,7 +8795,7 @@
     ],
     "decoded_bytecode": [
       [
-        "00: COUNT_STAGE               | value=7, filter=[group=Liella], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "00: COUNT_STAGE               | value=7, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
         "05: JUMP_IF_FALSE             | offset=1",
         "10: SWAP_AREA                 | value=0, filter=[none], slot=[target=Context Card]",
         "15: RETURN                    | done"

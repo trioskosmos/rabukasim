@@ -131,7 +131,11 @@ impl MCTS {
     }
 
     pub fn get_max_depth(&self) -> usize {
-        self.nodes.iter().map(|n| n.depth as usize).max().unwrap_or(0)
+        self.nodes
+            .iter()
+            .map(|n| n.depth as usize)
+            .max()
+            .unwrap_or(0)
     }
 
     pub fn search_parallel(
@@ -248,11 +252,7 @@ impl MCTS {
         stats
     }
 
-    fn root_action_tiebreak(
-        root_state: &GameState,
-        db: &CardDatabase,
-        action: i32,
-    ) -> (i32, i32) {
+    fn root_action_tiebreak(root_state: &GameState, db: &CardDatabase, action: i32) -> (i32, i32) {
         let mut sim = root_state.clone();
         if sim.step(db, action).is_err() {
             return (i32::MIN, i32::MIN);
@@ -677,7 +677,8 @@ impl MCTS {
                             _ => 0.5,
                         }
                     } else {
-                        let current_player_win_prob = ((output.value.clamp(-1.0, 1.0) + 1.0) * 0.5).clamp(0.0, 1.0);
+                        let current_player_win_prob =
+                            ((output.value.clamp(-1.0, 1.0) + 1.0) * 0.5).clamp(0.0, 1.0);
                         if leaf_state.current_player == 0 {
                             current_player_win_prob
                         } else {
@@ -878,7 +879,12 @@ impl MCTS {
             right
                 .2
                 .cmp(&left.2)
-                .then_with(|| right.1.partial_cmp(&left.1).unwrap_or(std::cmp::Ordering::Equal))
+                .then_with(|| {
+                    right
+                        .1
+                        .partial_cmp(&left.1)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                })
                 .then_with(|| right_tiebreak.0.cmp(&left_tiebreak.0))
                 .then_with(|| right_tiebreak.1.cmp(&left_tiebreak.1))
         });

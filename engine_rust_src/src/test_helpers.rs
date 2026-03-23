@@ -1,9 +1,11 @@
-use crate::core::logic::card_db::CardDatabase;
-use crate::core::logic::player::PlayerState;
-use crate::core::logic::*;
 use crate::core::enums::Zone;
 use crate::core::generated_layout::*;
+use crate::core::logic::card_db::CardDatabase;
 use crate::core::logic::constants::FILTER_IS_OPTIONAL;
+use crate::core::logic::interpreter::instruction::{DecodedFilterAttr, DecodedSlot};
+use crate::core::logic::models::{AbilityFrame, FrameProgram};
+use crate::core::logic::player::PlayerState;
+use crate::core::logic::*;
 use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Default)]
@@ -13,7 +15,9 @@ pub struct AbilityBuilder {
 
 impl AbilityBuilder {
     pub fn new() -> Self {
-        Self { bytecode: Vec::new() }
+        Self {
+            bytecode: Vec::new(),
+        }
     }
 
     pub fn push(mut self, op: i32, arg1: i32, arg2: i32, arg3: i32) -> Self {
@@ -35,6 +39,146 @@ impl AbilityBuilder {
 
     pub fn build(self) -> Vec<i32> {
         self.bytecode
+    }
+}
+
+pub struct FrameBuilder {
+    pub frames: Vec<AbilityFrame>,
+}
+
+impl FrameBuilder {
+    pub fn new() -> Self {
+        Self { frames: Vec::new() }
+    }
+
+    pub fn op(mut self, op: i32) -> Self {
+        self.frames.push(AbilityFrame::new(op, 0, 0, 0));
+        self
+    }
+
+    pub fn v(mut self, v_val: i32) -> Self {
+        if let Some(frame) = self.frames.last_mut() {
+            match frame {
+                AbilityFrame::Raw { value, .. } => *value = v_val,
+                AbilityFrame::Semantic { value, .. } => *value = v_val,
+                AbilityFrame::Draw { count } => *count = v_val,
+                AbilityFrame::RecoverLive { count, .. } => *count = v_val,
+                AbilityFrame::RecoverMember { count, .. } => *count = v_val,
+                AbilityFrame::SelectMember { count, .. } => *count = v_val,
+                AbilityFrame::MetaRule { rule_type, .. } => *rule_type = v_val,
+                _ => {}
+            }
+        }
+        self
+    }
+
+    pub fn a(mut self, a_val: i64) -> Self {
+        if let Some(frame) = self.frames.last_mut() {
+            match frame {
+                AbilityFrame::Raw { attr, .. } => *attr = a_val as u64,
+                AbilityFrame::Semantic { filter, .. } => *filter = DecodedFilterAttr::decode(a_val),
+                AbilityFrame::RecoverLive { filter, .. } => {
+                    *filter = DecodedFilterAttr::decode(a_val)
+                }
+                AbilityFrame::RecoverMember { filter, .. } => {
+                    *filter = DecodedFilterAttr::decode(a_val)
+                }
+                AbilityFrame::SelectMember { filter, .. } => {
+                    *filter = DecodedFilterAttr::decode(a_val)
+                }
+                AbilityFrame::LookAndChoose { filter, .. } => {
+                    *filter = DecodedFilterAttr::decode(a_val)
+                }
+                AbilityFrame::MoveMember { filter, .. } => {
+                    *filter = DecodedFilterAttr::decode(a_val)
+                }
+                AbilityFrame::MetaRule { filter, .. } => *filter = DecodedFilterAttr::decode(a_val),
+                _ => {}
+            }
+        }
+        self
+    }
+
+    pub fn optional(mut self, val: bool) -> Self {
+        if let Some(frame) = self.frames.last_mut() {
+            let mut filter = frame.filter();
+            filter.is_optional = val;
+            let a = filter.to_attr() as i64;
+            self = self.a(a);
+        }
+        self
+    }
+
+    pub fn s(mut self, s_val: i32) -> Self {
+        if let Some(frame) = self.frames.last_mut() {
+            match frame {
+                AbilityFrame::Raw { slot, .. } => *slot = s_val,
+                AbilityFrame::Semantic { slot, .. } => *slot = DecodedSlot::decode(s_val),
+                AbilityFrame::RecoverLive { slot, .. } => *slot = DecodedSlot::decode(s_val),
+                AbilityFrame::RecoverMember { slot, .. } => *slot = DecodedSlot::decode(s_val),
+                AbilityFrame::SelectMember { slot, .. } => *slot = DecodedSlot::decode(s_val),
+                AbilityFrame::LookAndChoose { slot, .. } => *slot = DecodedSlot::decode(s_val),
+                AbilityFrame::MoveMember { slot, .. } => *slot = DecodedSlot::decode(s_val),
+                AbilityFrame::MetaRule { slot, .. } => *slot = DecodedSlot::decode(s_val),
+                _ => {}
+            }
+        }
+        self
+    }
+
+    pub fn source(mut self, zone: Zone) -> Self {
+        if let Some(frame) = self.frames.last_mut() {
+            let mut dslot = frame.dslot();
+            dslot.source_zone = zone;
+            self = self.s(dslot.to_raw());
+        }
+        self
+    }
+
+    pub fn dest(mut self, zone: Zone) -> Self {
+        if let Some(frame) = self.frames.last_mut() {
+            let mut dslot = frame.dslot();
+            dslot.dest_zone = zone;
+            self = self.s(dslot.to_raw());
+        }
+        self
+    }
+
+    pub fn target(mut self, target_slot: u8) -> Self {
+        if let Some(frame) = self.frames.last_mut() {
+            let mut dslot = frame.dslot();
+            dslot.target_slot = target_slot;
+            self = self.s(dslot.to_raw());
+        }
+        self
+    }
+
+    pub fn area_idx(mut self, area_idx: u8) -> Self {
+        if let Some(frame) = self.frames.last_mut() {
+            let mut dslot = frame.dslot();
+            dslot.area_idx = area_idx;
+            self = self.s(dslot.to_raw());
+        }
+        self
+    }
+
+    pub fn comparison_mode(mut self, mode: u8) -> Self {
+        if let Some(frame) = self.frames.last_mut() {
+            let mut dslot = frame.dslot();
+            dslot.comparison = mode;
+            self = self.s(dslot.to_raw());
+        }
+        self
+    }
+
+    pub fn build(self) -> Vec<AbilityFrame> {
+        self.frames
+    }
+
+    pub fn build_prog(self) -> FrameProgram {
+        FrameProgram {
+            frames: self.frames,
+        }
     }
 }
 
@@ -77,14 +221,15 @@ impl BytecodeBuilder {
 
     pub fn optional(mut self, val: bool) -> Self {
         let idx = self.last_idx();
-        let mut a = ((self.bytecode[idx+3] as i64) << 32) | (self.bytecode[idx+2] as u32 as i64);
+        let mut a =
+            ((self.bytecode[idx + 3] as i64) << 32) | (self.bytecode[idx + 2] as u32 as i64);
         if val {
             a |= FILTER_IS_OPTIONAL as i64;
         } else {
             a &= !(FILTER_IS_OPTIONAL as i64);
         }
-        self.bytecode[idx+2] = a as i32;
-        self.bytecode[idx+3] = (a >> 32) as i32;
+        self.bytecode[idx + 2] = a as i32;
+        self.bytecode[idx + 3] = (a >> 32) as i32;
         self
     }
 
@@ -117,7 +262,6 @@ impl BytecodeBuilder {
     pub fn target(mut self, slot: u8) -> Self {
         let idx = self.last_idx();
         let mut s = self.bytecode[idx + 4] as u32;
-        // Optimization: Use 0x0F mask to avoid overlapping with legacy comparison_mode (bits 4-7)
         s &= !0x0F;
         s |= slot as u32 & 0x0F;
         self.bytecode[idx + 4] = s as i32;
@@ -139,7 +283,6 @@ impl BytecodeBuilder {
     pub fn comparison_mode(mut self, mode: u8) -> Self {
         let idx = self.last_idx();
         let mut s = self.bytecode[idx + 4] as u32;
-        // Legacy/Condition mode: bits 4-7
         s &= !(0x0F << 4);
         s |= (mode as u32 & 0x0F) << 4;
         self.bytecode[idx + 4] = s as i32;
@@ -237,7 +380,6 @@ impl ZoneSnapshot {
             }
         }
 
-        // Count actual cards (not -1 placeholders) for hand and deck
         let actual_hand_len = p.hand.iter().filter(|&&c| c >= 0).count();
         let actual_deck_len = p.deck.iter().filter(|&&c| c >= 0).count();
 
@@ -462,8 +604,6 @@ pub fn p_state(state: &GameState, p_idx: usize) -> &PlayerState {
     &state.players[p_idx]
 }
 
-// const DB_JSON: &str = include_str!("../../data/cards_compiled.json");
-
 fn try_load_db_from_path(path: &str) -> Option<CardDatabase> {
     if !std::path::Path::new(path).exists() {
         return None;
@@ -472,15 +612,12 @@ fn try_load_db_from_path(path: &str) -> Option<CardDatabase> {
     let json = std::fs::read_to_string(path).ok()?;
     let db = CardDatabase::from_json(&json).ok()?;
 
-    // Some workspace copies contain a tiny stub file with empty member/live DBs.
-    // Treat that as invalid for engine QA tests and continue searching.
     if db.members.is_empty() || db.lives.is_empty() {
         return None;
     }
 
     Some(db)
 }
-
 
 static REAL_DB: OnceLock<CardDatabase> = OnceLock::new();
 
@@ -523,7 +660,6 @@ pub fn load_real_db() -> &'static CardDatabase {
 pub fn create_test_db() -> CardDatabase {
     let mut db = CardDatabase::default();
 
-    // Generic cards
     for i in 3000..3501 {
         let mut hearts = [0u8; 7];
         hearts[0] = 1;
@@ -543,18 +679,16 @@ pub fn create_test_db() -> CardDatabase {
         }
     }
 
-    // Energy Card
     let mut energy = MemberCard::default();
     energy.card_id = 2000;
     energy.name = "Test Energy".to_string();
-    energy.hearts[0] = 1; // 1 Pink heart
+    energy.hearts[0] = 1;
     db.members.insert(2000, energy.clone());
     let eid = (2000 & LOGIC_ID_MASK) as usize;
     if eid < db.members_vec.len() {
         db.members_vec[eid] = Some(energy);
     }
 
-    // Generic Live
     let l55001 = LiveCard {
         card_id: 55001,
         card_no: "GEN-L-55001".to_string(),
@@ -569,7 +703,6 @@ pub fn create_test_db() -> CardDatabase {
         db.lives_vec[llid] = Some(l55001);
     }
 
-    // Archetype Cards
     add_card(
         &mut db,
         3121,
@@ -577,7 +710,7 @@ pub fn create_test_db() -> CardDatabase {
         vec![1],
         vec![(
             TriggerType::Activated,
-            vec![58, 1, 0, 0, 4, 17, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+            AbilityLogic::Bytecode(vec![58, 1, 0, 0, 4, 17, 1, 0, 0, 0, 1, 0, 0, 0, 0]),
             vec![],
         )],
     );
@@ -588,12 +721,10 @@ pub fn create_test_db() -> CardDatabase {
         vec![1],
         vec![(
             TriggerType::Activated,
-            vec![58, 1, 0, 0, 4, 15, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+            AbilityLogic::Bytecode(vec![58, 1, 0, 0, 4, 15, 1, 0, 0, 0, 1, 0, 0, 0, 0]),
             vec![],
         )],
     );
-    // CID 130: PL!-sd1-011-SD (OnPlay: MoveToDiscard(1) -> LookAndChoose(3,1))
-    // Bytecode: [58, 1, 2, 6, 41, 3, 1, 6, 1, 0, 0, 0]
     add_card(
         &mut db,
         130,
@@ -601,11 +732,10 @@ pub fn create_test_db() -> CardDatabase {
         vec![1],
         vec![(
             TriggerType::OnPlay,
-            vec![58, 1, 2, 0, 6, 41, 3, 1, 0, 6, 1, 0, 0, 0, 0],
+            AbilityLogic::Bytecode(vec![58, 1, 2, 0, 6, 41, 3, 1, 0, 6, 1, 0, 0, 0, 0]),
             vec![],
         )],
     );
-    // Old incorrect mock
     add_card(
         &mut db,
         3130,
@@ -613,9 +743,9 @@ pub fn create_test_db() -> CardDatabase {
         vec![1],
         vec![(
             TriggerType::OnPlay,
-            vec![
+            AbilityLogic::Bytecode(vec![
                 64, 0, 130, 0, 0, 41, 1, 24577, 0, 0, 14, 3, 0, 0, 0, 41, 1, 0, 0, 0, 1, 0, 0, 0, 0,
-            ],
+            ]),
             vec![],
         )],
     );
@@ -626,9 +756,9 @@ pub fn create_test_db() -> CardDatabase {
         vec![1],
         vec![(
             TriggerType::OnLiveStart,
-            vec![
+            AbilityLogic::Bytecode(vec![
                 64, 0, 130, 0, 0, 58, 1, 24576, 0, 0, 64, 1, 0, 0, 0, 16, 5, 0, 0, 0, 1, 0, 0, 0, 0,
-            ],
+            ]),
             vec![],
         )],
     );
@@ -639,7 +769,7 @@ pub fn create_test_db() -> CardDatabase {
         vec![1],
         vec![(
             TriggerType::OnPlay,
-            vec![10, 1, 0, 0, 0, 58, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+            AbilityLogic::Bytecode(vec![10, 1, 0, 0, 0, 58, 1, 0, 0, 0, 1, 0, 0, 0, 0]),
             vec![],
         )],
     );
@@ -650,12 +780,10 @@ pub fn create_test_db() -> CardDatabase {
         vec![1],
         vec![(
             TriggerType::OnPlay,
-            vec![10, 2, 0, 0, 0, 58, 2, 0, 0, 0, 1, 0, 0, 0, 0],
+            AbilityLogic::Bytecode(vec![10, 2, 0, 0, 0, 58, 2, 0, 0, 0, 1, 0, 0, 0, 0]),
             vec![],
         )],
     );
-    // CID 3001: Test card for O_OPPONENT_CHOOSE -> O_DRAW
-    // O_OPPONENT_CHOOSE(75) v=1 -> O_DRAW(10) v=1 -> O_RETURN(1)
     add_card(
         &mut db,
         3001,
@@ -663,13 +791,10 @@ pub fn create_test_db() -> CardDatabase {
         vec![1],
         vec![(
             TriggerType::OnPlay,
-            vec![75, 1, 0, 0, 0, 10, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+            AbilityLogic::Bytecode(vec![75, 1, 0, 0, 0, 10, 1, 0, 0, 0, 1, 0, 0, 0, 0]),
             vec![],
         )],
     );
-
-    // CID 4332: RANK-13 (OnLiveStart: PayEnergy(1) -> ColorSelect -> AddHearts(1))
-    // Real Bytecode: [64, 1, 2, 0, 45, 1, 0, 1, 12, 1, 0, 1, 1, 0, 0, 0]
     add_card(
         &mut db,
         4332,
@@ -677,9 +802,9 @@ pub fn create_test_db() -> CardDatabase {
         vec![2],
         vec![(
             TriggerType::OnLiveStart,
-            vec![
+            AbilityLogic::Bytecode(vec![
                 64, 1, 2, 0, 0, 45, 1, 0, 0, 1, 12, 1, 0, 0, 1, 1, 0, 0, 0, 0,
-            ],
+            ]),
             vec![],
         )],
     );
@@ -690,10 +815,12 @@ pub fn create_test_db() -> CardDatabase {
         vec![2],
         vec![(
             TriggerType::Activated,
-            vec![58, 1, 1, 0, 6, 3, 2, 0, 0, 0, 81, 2, 0, 0, 0, 1, 0, 0, 0, 0],
+            AbilityLogic::Bytecode(vec![
+                58, 1, 1, 0, 6, 3, 2, 0, 0, 0, 81, 2, 0, 0, 0, 1, 0, 0, 0, 0,
+            ]),
             vec![],
         )],
-    ); // Archetype 13: OnPlay -> Select Mode (2 options) -> [Op 8] or [Op 16] (Dummy) -> Tap Opponent / Draw
+    );
     add_card(
         &mut db,
         3017,
@@ -701,10 +828,10 @@ pub fn create_test_db() -> CardDatabase {
         vec![1],
         vec![(
             TriggerType::OnPlay,
-            vec![
+            AbilityLogic::Bytecode(vec![
                 30, 2, 8, 0, 16, 1, 0, 0, 0, 0, 32, 1, 0, 0, 0, 1, 0, 0, 0, 0, 10, 1, 0, 0, 0, 1,
                 0, 0, 0, 0,
-            ],
+            ]),
             vec![],
         )],
     );
@@ -717,8 +844,8 @@ pub fn create_test_state() -> GameState {
     state.players[0].player_id = 0;
     state.players[1].player_id = 1;
     state.phase = Phase::Main;
-    state.debug.debug_mode = true; // NEW: Enable debug mode for tests
-    state.ui.silent = false; // NEW: Disable silent mode for tests
+    state.debug.debug_mode = true;
+    state.ui.silent = false;
     for i in 0..2 {
         state.players[i].deck = vec![51001, 51002, 51003, 51004, 51005].into();
         state.players[i].energy_zone = vec![3101, 3102, 3103].into();
@@ -726,20 +853,35 @@ pub fn create_test_state() -> GameState {
     state
 }
 
-pub fn add_card(
+pub enum AbilityLogic {
+    Bytecode(Vec<i32>),
+    Frames(Vec<AbilityFrame>),
+}
 
+pub fn add_card(
     db: &mut CardDatabase,
     cid: i32,
     no: &str,
     groups: Vec<u8>,
-    abilities: Vec<(TriggerType, Vec<i32>, Vec<Condition>)>,
+    abilities: Vec<(TriggerType, AbilityLogic, Vec<Condition>)>,
 ) {
     let mut abs = Vec::new();
-    for (t, b, c) in abilities {
+    for (t, logic, c) in abilities {
+        let (bytecode, frame_program) = match logic {
+            AbilityLogic::Bytecode(b) => {
+                let fp = FrameProgram::from_bytecode(&b);
+                (b, Some(fp))
+            }
+            AbilityLogic::Frames(f) => {
+                let fp = FrameProgram { frames: f };
+                (fp.to_bytecode(), Some(fp))
+            }
+        };
+
         abs.push(Ability {
             trigger: t,
-            bytecode: b.clone(),
-            frame_program: Some(crate::core::logic::models::FrameProgram::from_bytecode(&b)),
+            bytecode,
+            frame_program,
             conditions: c,
             ..Default::default()
         });

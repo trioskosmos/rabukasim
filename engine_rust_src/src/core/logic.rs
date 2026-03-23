@@ -1,18 +1,19 @@
+pub mod ability_patterns;
 pub mod action_factory;
 pub mod action_gen;
-pub mod ability_patterns;
 pub mod ai_encoding;
 pub mod card_db;
 pub mod constants;
 pub mod diagnostics;
 pub mod execution;
 pub mod filter;
+pub mod filter_bench;
 pub mod game;
-mod game_logging;
-mod game_trigger;
-mod game_setup;
 mod game_action_processor;
+mod game_logging;
 mod game_rules_ext;
+mod game_setup;
+mod game_trigger;
 pub mod handlers;
 pub mod interpreter;
 pub mod models;
@@ -21,10 +22,9 @@ pub mod performance_allocation;
 pub mod performance_requirements;
 pub mod player;
 pub mod rules;
-pub mod state;
 pub mod standard_state;
+pub mod state;
 pub mod turn_sequencer;
-pub mod filter_bench;
 
 // Constants
 pub use constants::*;
@@ -37,8 +37,8 @@ pub use handlers::{
     TurnPhaseController,
 };
 pub use player::PlayerState;
-pub use state::{ActionReceiver, CoreGameState, DebugState, GameState, UIState};
 pub use standard_state::StandardizedState;
+pub use state::{ActionReceiver, CoreGameState, DebugState, GameState, UIState};
 
 // Re-export models
 pub use models::{
@@ -57,8 +57,8 @@ pub use interpreter::suspension::suspend_interaction;
 pub use interpreter::{
     check_once_per_turn, consume_once_per_turn, process_trigger_queue, resolve_frames,
 };
-pub use rules::get_effective_blades;
 pub use performance::PerformanceResults;
+pub use rules::get_effective_blades;
 
 // Heuristic flags (moved to constants.rs)
 // They are re-exported via 'pub use constants::*;' above

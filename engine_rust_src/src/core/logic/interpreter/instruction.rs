@@ -1,8 +1,8 @@
 use crate::core::enums::Zone;
-use crate::core::generated_layout::*;
 use crate::core::generated_constants::*;
-use std::sync::Arc;
+use crate::core::generated_layout::*;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 pub const WORDS_PER_INSTRUCTION: usize = 5;
 const LAYOUT_TAG_MASK: u32 = 0xF000_0000;
@@ -21,6 +21,7 @@ const OPERAND_HEADER_WIDE_FLAG: u32 = 1 << 8;
 #[serde(from = "DecodedSlotRaw")]
 pub struct DecodedSlot {
     pub target_slot: u8,
+    pub comparison: u8,
     pub source_zone: Zone,
     pub dest_zone: Zone,
     pub remainder_zone: u8,
@@ -37,49 +38,54 @@ pub struct DecodedSlot {
 #[serde(untagged)]
 enum DecodedSlotRaw {
     Legacy(i32),
-    Structured {
-        target_slot: u8,
-        source_zone: Zone,
-        dest_zone: Zone,
-        remainder_zone: u8,
-        is_opponent: bool,
-        is_reveal_until_live: bool,
-        is_baton_slot: bool,
-        is_empty_slot: bool,
-        is_wait: bool,
-        is_dynamic: bool,
-        area_idx: u8,
-    },
+    Structured(DecodedSlotStructuredRaw),
+}
+
+#[derive(Deserialize, Default)]
+struct DecodedSlotStructuredRaw {
+    #[serde(default)]
+    target_slot: Option<u8>,
+    #[serde(default)]
+    comparison: Option<u8>,
+    #[serde(default)]
+    source_zone: Option<Zone>,
+    #[serde(default)]
+    dest_zone: Option<Zone>,
+    #[serde(default)]
+    remainder_zone: Option<u8>,
+    #[serde(default)]
+    is_opponent: Option<bool>,
+    #[serde(default)]
+    is_reveal_until_live: Option<bool>,
+    #[serde(default)]
+    is_baton_slot: Option<bool>,
+    #[serde(default)]
+    is_empty_slot: Option<bool>,
+    #[serde(default)]
+    is_wait: Option<bool>,
+    #[serde(default)]
+    is_dynamic: Option<bool>,
+    #[serde(default)]
+    area_idx: Option<u8>,
 }
 
 impl From<DecodedSlotRaw> for DecodedSlot {
     fn from(raw: DecodedSlotRaw) -> Self {
         match raw {
             DecodedSlotRaw::Legacy(v) => Self::decode(v),
-            DecodedSlotRaw::Structured {
-                target_slot,
-                source_zone,
-                dest_zone,
-                remainder_zone,
-                is_opponent,
-                is_reveal_until_live,
-                is_baton_slot,
-                is_empty_slot,
-                is_wait,
-                is_dynamic,
-                area_idx,
-            } => Self {
-                target_slot,
-                source_zone,
-                dest_zone,
-                remainder_zone,
-                is_opponent,
-                is_reveal_until_live,
-                is_baton_slot,
-                is_empty_slot,
-                is_wait,
-                is_dynamic,
-                area_idx,
+            DecodedSlotRaw::Structured(raw) => Self {
+                target_slot: raw.target_slot.unwrap_or_default(),
+                comparison: raw.comparison.unwrap_or_default(),
+                source_zone: raw.source_zone.unwrap_or_default(),
+                dest_zone: raw.dest_zone.unwrap_or_default(),
+                remainder_zone: raw.remainder_zone.unwrap_or_default(),
+                is_opponent: raw.is_opponent.unwrap_or_default(),
+                is_reveal_until_live: raw.is_reveal_until_live.unwrap_or_default(),
+                is_baton_slot: raw.is_baton_slot.unwrap_or_default(),
+                is_empty_slot: raw.is_empty_slot.unwrap_or_default(),
+                is_wait: raw.is_wait.unwrap_or_default(),
+                is_dynamic: raw.is_dynamic.unwrap_or_default(),
+                area_idx: raw.area_idx.unwrap_or_default(),
             },
         }
     }
@@ -88,52 +94,94 @@ impl From<DecodedSlotRaw> for DecodedSlot {
 impl DecodedSlot {
     pub fn decode(raw_s: i32) -> Self {
         let s = raw_s as u32;
-        let source_zone_val = ((s >> S_STANDARD_SOURCE_ZONE_SHIFT) & S_STANDARD_SOURCE_ZONE_MASK as u32) as u8;
-        let dest_zone_val = ((s >> S_STANDARD_DEST_ZONE_SHIFT) & S_STANDARD_DEST_ZONE_MASK as u32) as u8;
+        let source_zone_val =
+            ((s >> S_STANDARD_SOURCE_ZONE_SHIFT) & S_STANDARD_SOURCE_ZONE_MASK as u32) as u8;
+        let dest_zone_val =
+            ((s >> S_STANDARD_DEST_ZONE_SHIFT) & S_STANDARD_DEST_ZONE_MASK as u32) as u8;
 
         Self {
-            target_slot: ((s >> S_STANDARD_TARGET_SLOT_SHIFT) & S_STANDARD_TARGET_SLOT_MASK as u32) as u8,
-            remainder_zone: ((s >> S_STANDARD_REMAINDER_ZONE_SHIFT) & S_STANDARD_REMAINDER_ZONE_MASK as u32) as u8,
+            target_slot: ((s >> S_STANDARD_TARGET_SLOT_SHIFT) & S_STANDARD_TARGET_SLOT_MASK as u32)
+                as u8,
+            comparison: ((s >> 4) & 0x0F) as u8,
+            remainder_zone: ((s >> S_STANDARD_REMAINDER_ZONE_SHIFT)
+                & S_STANDARD_REMAINDER_ZONE_MASK as u32) as u8,
             source_zone: Self::decode_zone(source_zone_val),
             dest_zone: Self::decode_zone(dest_zone_val),
             area_idx: ((s >> S_STANDARD_AREA_IDX_SHIFT) & S_STANDARD_AREA_IDX_MASK as u32) as u8,
-            is_opponent: ((s >> S_STANDARD_IS_OPPONENT_SHIFT) & S_STANDARD_IS_OPPONENT_MASK as u32) != 0,
-            is_reveal_until_live: ((s >> S_STANDARD_IS_REVEAL_UNTIL_LIVE_SHIFT) & S_STANDARD_IS_REVEAL_UNTIL_LIVE_MASK as u32) != 0,
-            is_baton_slot: ((s >> S_STANDARD_IS_BATON_SLOT_SHIFT) & S_STANDARD_IS_BATON_SLOT_MASK as u32) != 0,
-            is_empty_slot: ((s >> S_STANDARD_IS_EMPTY_SLOT_SHIFT) & S_STANDARD_IS_EMPTY_SLOT_MASK as u32) != 0,
+            is_opponent: ((s >> S_STANDARD_IS_OPPONENT_SHIFT) & S_STANDARD_IS_OPPONENT_MASK as u32)
+                != 0,
+            is_reveal_until_live: ((s >> S_STANDARD_IS_REVEAL_UNTIL_LIVE_SHIFT)
+                & S_STANDARD_IS_REVEAL_UNTIL_LIVE_MASK as u32)
+                != 0,
+            is_baton_slot: ((s >> S_STANDARD_IS_BATON_SLOT_SHIFT)
+                & S_STANDARD_IS_BATON_SLOT_MASK as u32)
+                != 0,
+            is_empty_slot: ((s >> S_STANDARD_IS_EMPTY_SLOT_SHIFT)
+                & S_STANDARD_IS_EMPTY_SLOT_MASK as u32)
+                != 0,
             is_wait: ((s >> S_STANDARD_IS_WAIT_SHIFT) & S_STANDARD_IS_WAIT_MASK as u32) != 0,
-            is_dynamic: ((s >> S_STANDARD_IS_DYNAMIC_SHIFT) & S_STANDARD_IS_DYNAMIC_MASK as u32) != 0,
+            is_dynamic: ((s >> S_STANDARD_IS_DYNAMIC_SHIFT) & S_STANDARD_IS_DYNAMIC_MASK as u32)
+                != 0,
         }
     }
 
     fn decode_zone(val: u8) -> Zone {
         let v = val as i32;
-        if v == ZONE_DECK_TOP { Zone::DeckTop }
-        else if v == ZONE_DECK_BOTTOM { Zone::DeckBottom }
-        else if v == ZONE_ENERGY { Zone::Energy }
-        else if v == ZONE_STAGE { Zone::Stage }
-        else if v == ZONE_HAND { Zone::Hand }
-        else if v == ZONE_DISCARD { Zone::Discard }
-        else if v == ZONE_DECK { Zone::Deck }
-        else if v == ZONE_LIVE_SET { Zone::LiveSet }
-        else if v == ZONE_SUCCESS_PILE { Zone::SuccessPile }
-        else if v == ZONE_YELL { Zone::Yell }
-        else { Zone::Default }
+        if v == ZONE_DECK_TOP {
+            Zone::DeckTop
+        } else if v == ZONE_DECK_BOTTOM {
+            Zone::DeckBottom
+        } else if v == ZONE_ENERGY {
+            Zone::Energy
+        } else if v == ZONE_STAGE {
+            Zone::Stage
+        } else if v == ZONE_HAND {
+            Zone::Hand
+        } else if v == ZONE_DISCARD {
+            Zone::Discard
+        } else if v == ZONE_DECK {
+            Zone::Deck
+        } else if v == ZONE_LIVE_SET {
+            Zone::LiveSet
+        } else if v == ZONE_SUCCESS_PILE {
+            Zone::SuccessPile
+        } else if v == ZONE_YELL {
+            Zone::Yell
+        } else {
+            Zone::Default
+        }
     }
 
     pub fn to_raw(&self) -> i32 {
         let mut s = 0u32;
-        s |= (self.target_slot as u32 & S_STANDARD_TARGET_SLOT_MASK as u32) << S_STANDARD_TARGET_SLOT_SHIFT;
-        s |= (self.remainder_zone as u32 & S_STANDARD_REMAINDER_ZONE_MASK as u32) << S_STANDARD_REMAINDER_ZONE_SHIFT;
-        s |= (self.source_zone as u8 as u32 & S_STANDARD_SOURCE_ZONE_MASK as u32) << S_STANDARD_SOURCE_ZONE_SHIFT;
-        s |= (self.dest_zone as u8 as u32 & S_STANDARD_DEST_ZONE_MASK as u32) << S_STANDARD_DEST_ZONE_SHIFT;
+        s |= (self.target_slot as u32 & S_STANDARD_TARGET_SLOT_MASK as u32)
+            << S_STANDARD_TARGET_SLOT_SHIFT;
+        s |= (self.comparison as u32 & 0x0F) << 4;
+        s |= (self.remainder_zone as u32 & S_STANDARD_REMAINDER_ZONE_MASK as u32)
+            << S_STANDARD_REMAINDER_ZONE_SHIFT;
+        s |= (self.source_zone as u8 as u32 & S_STANDARD_SOURCE_ZONE_MASK as u32)
+            << S_STANDARD_SOURCE_ZONE_SHIFT;
+        s |= (self.dest_zone as u8 as u32 & S_STANDARD_DEST_ZONE_MASK as u32)
+            << S_STANDARD_DEST_ZONE_SHIFT;
         s |= (self.area_idx as u32 & S_STANDARD_AREA_IDX_MASK as u32) << S_STANDARD_AREA_IDX_SHIFT;
-        if self.is_opponent { s |= 1 << S_STANDARD_IS_OPPONENT_SHIFT; }
-        if self.is_reveal_until_live { s |= 1 << S_STANDARD_IS_REVEAL_UNTIL_LIVE_SHIFT; }
-        if self.is_baton_slot { s |= 1 << S_STANDARD_IS_BATON_SLOT_SHIFT; }
-        if self.is_empty_slot { s |= 1 << S_STANDARD_IS_EMPTY_SLOT_SHIFT; }
-        if self.is_wait { s |= 1 << S_STANDARD_IS_WAIT_SHIFT; }
-        if self.is_dynamic { s |= 1 << S_STANDARD_IS_DYNAMIC_SHIFT; }
+        if self.is_opponent {
+            s |= 1 << S_STANDARD_IS_OPPONENT_SHIFT;
+        }
+        if self.is_reveal_until_live {
+            s |= 1 << S_STANDARD_IS_REVEAL_UNTIL_LIVE_SHIFT;
+        }
+        if self.is_baton_slot {
+            s |= 1 << S_STANDARD_IS_BATON_SLOT_SHIFT;
+        }
+        if self.is_empty_slot {
+            s |= 1 << S_STANDARD_IS_EMPTY_SLOT_SHIFT;
+        }
+        if self.is_wait {
+            s |= 1 << S_STANDARD_IS_WAIT_SHIFT;
+        }
+        if self.is_dynamic {
+            s |= 1 << S_STANDARD_IS_DYNAMIC_SHIFT;
+        }
         s as i32
     }
 }
@@ -262,18 +310,27 @@ impl DecodedLookAndChoose {
             char_id_2: ((uv >> V_LOOK_CHOOSE_CHAR_ID_2_SHIFT) & V_LOOK_CHOOSE_CHAR_ID_2_MASK) as u8,
             char_id_3: ((uv >> V_LOOK_CHOOSE_CHAR_ID_3_SHIFT) & V_LOOK_CHOOSE_CHAR_ID_3_MASK) as u8,
             reveal: ((uv >> V_LOOK_CHOOSE_REVEAL_SHIFT) & V_LOOK_CHOOSE_REVEAL_MASK) != 0,
-            dest_discard: ((uv >> V_LOOK_CHOOSE_DEST_DISCARD_SHIFT) & V_LOOK_CHOOSE_DEST_DISCARD_MASK) != 0,
+            dest_discard: ((uv >> V_LOOK_CHOOSE_DEST_DISCARD_SHIFT)
+                & V_LOOK_CHOOSE_DEST_DISCARD_MASK)
+                != 0,
         }
     }
 
     pub fn to_raw(&self) -> i32 {
         let mut v = 0u32;
         v |= (self.count as u32 & V_LOOK_CHOOSE_COUNT_MASK) << V_LOOK_CHOOSE_COUNT_SHIFT;
-        v |= (self.char_id_1 as u32 & V_LOOK_CHOOSE_CHAR_ID_1_MASK) << V_LOOK_CHOOSE_CHAR_ID_1_SHIFT;
-        v |= (self.char_id_2 as u32 & V_LOOK_CHOOSE_CHAR_ID_2_MASK) << V_LOOK_CHOOSE_CHAR_ID_2_SHIFT;
-        v |= (self.char_id_3 as u32 & V_LOOK_CHOOSE_CHAR_ID_3_MASK) << V_LOOK_CHOOSE_CHAR_ID_3_SHIFT;
-        if self.reveal { v |= 1 << V_LOOK_CHOOSE_REVEAL_SHIFT; }
-        if self.dest_discard { v |= 1 << V_LOOK_CHOOSE_DEST_DISCARD_SHIFT; }
+        v |=
+            (self.char_id_1 as u32 & V_LOOK_CHOOSE_CHAR_ID_1_MASK) << V_LOOK_CHOOSE_CHAR_ID_1_SHIFT;
+        v |=
+            (self.char_id_2 as u32 & V_LOOK_CHOOSE_CHAR_ID_2_MASK) << V_LOOK_CHOOSE_CHAR_ID_2_SHIFT;
+        v |=
+            (self.char_id_3 as u32 & V_LOOK_CHOOSE_CHAR_ID_3_MASK) << V_LOOK_CHOOSE_CHAR_ID_3_SHIFT;
+        if self.reveal {
+            v |= 1 << V_LOOK_CHOOSE_REVEAL_SHIFT;
+        }
+        if self.dest_discard {
+            v |= 1 << V_LOOK_CHOOSE_DEST_DISCARD_SHIFT;
+        }
         v as i32
     }
 }
@@ -288,9 +345,7 @@ pub struct DecodedHeartRequirements {
 #[serde(untagged)]
 enum DecodedHeartRequirementsRaw {
     Legacy(i64),
-    Structured {
-        reqs: [u8; 8],
-    },
+    Structured { reqs: [u8; 8] },
 }
 
 impl From<DecodedHeartRequirementsRaw> for DecodedHeartRequirements {
@@ -320,8 +375,7 @@ impl DecodedHeartRequirements {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
-#[serde(from = "DecodedFilterAttrRaw")]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Hash)]
 pub struct DecodedFilterAttr {
     pub target_player: u8,
     pub card_type: u8,
@@ -350,95 +404,150 @@ pub struct DecodedFilterAttr {
     pub keyword_member: bool,
 }
 
+impl<'de> Deserialize<'de> for DecodedFilterAttr {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = serde_json::Value::deserialize(deserializer)?;
+
+        let Some(map) = value.as_object() else {
+            return Ok(Self::default());
+        };
+
+        fn get_u8(map: &serde_json::Map<String, serde_json::Value>, key: &str) -> u8 {
+            map.get(key)
+                .and_then(|value| value.as_u64())
+                .unwrap_or_default() as u8
+        }
+
+        fn get_bool(map: &serde_json::Map<String, serde_json::Value>, key: &str) -> bool {
+            map.get(key)
+                .and_then(|value| value.as_bool())
+                .unwrap_or_default()
+        }
+
+        Ok(Self {
+            target_player: get_u8(map, "target_player"),
+            card_type: get_u8(map, "card_type"),
+            group_enabled: get_bool(map, "group_enabled"),
+            group_id: get_u8(map, "group_id"),
+            is_tapped: get_bool(map, "is_tapped"),
+            has_blade_heart: get_bool(map, "has_blade_heart"),
+            not_has_blade_heart: get_bool(map, "not_has_blade_heart"),
+            unique_names: get_bool(map, "unique_names"),
+            unit_enabled: get_bool(map, "unit_enabled"),
+            unit_id: get_u8(map, "unit_id"),
+            value_enabled: get_bool(map, "value_enabled"),
+            value_threshold: get_u8(map, "value_threshold"),
+            is_le: get_bool(map, "is_le"),
+            is_cost_type: get_bool(map, "is_cost_type"),
+            color_mask: get_u8(map, "color_mask"),
+            char_id_1: get_u8(map, "char_id_1"),
+            char_id_2: get_u8(map, "char_id_2"),
+            char_id_3: get_u8(map, "char_id_3"),
+            zone_mask: get_u8(map, "zone_mask"),
+            special_id: get_u8(map, "special_id"),
+            is_setsuna: get_bool(map, "is_setsuna"),
+            compare_accumulated: get_bool(map, "compare_accumulated"),
+            is_optional: get_bool(map, "is_optional"),
+            keyword_energy: get_bool(map, "keyword_energy"),
+            keyword_member: get_bool(map, "keyword_member"),
+        })
+    }
+}
+
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum DecodedFilterAttrRaw {
     Legacy(i64),
-    Structured {
-        target_player: u8,
-        card_type: u8,
-        group_enabled: bool,
-        group_id: u8,
-        is_tapped: bool,
-        has_blade_heart: bool,
-        not_has_blade_heart: bool,
-        unique_names: bool,
-        unit_enabled: bool,
-        unit_id: u8,
-        value_enabled: bool,
-        value_threshold: u8,
-        is_le: bool,
-        is_cost_type: bool,
-        color_mask: u8,
-        char_id_1: u8,
-        char_id_2: u8,
-        char_id_3: u8,
-        zone_mask: u8,
-        special_id: u8,
-        is_setsuna: bool,
-        compare_accumulated: bool,
-        is_optional: bool,
-        keyword_energy: bool,
-        keyword_member: bool,
-    },
+    Structured(DecodedFilterAttrStructuredRaw),
+}
+
+#[derive(Deserialize)]
+struct DecodedFilterAttrStructuredRaw {
+    #[serde(default)]
+    target_player: Option<u8>,
+    #[serde(default)]
+    card_type: Option<u8>,
+    #[serde(default)]
+    group_enabled: Option<bool>,
+    #[serde(default)]
+    group_id: Option<u8>,
+    #[serde(default)]
+    is_tapped: Option<bool>,
+    #[serde(default)]
+    has_blade_heart: Option<bool>,
+    #[serde(default)]
+    not_has_blade_heart: Option<bool>,
+    #[serde(default)]
+    unique_names: Option<bool>,
+    #[serde(default)]
+    unit_enabled: Option<bool>,
+    #[serde(default)]
+    unit_id: Option<u8>,
+    #[serde(default)]
+    value_enabled: Option<bool>,
+    #[serde(default)]
+    value_threshold: Option<u8>,
+    #[serde(default)]
+    is_le: Option<bool>,
+    #[serde(default)]
+    is_cost_type: Option<bool>,
+    #[serde(default)]
+    color_mask: Option<u8>,
+    #[serde(default)]
+    char_id_1: Option<u8>,
+    #[serde(default)]
+    char_id_2: Option<u8>,
+    #[serde(default)]
+    char_id_3: Option<u8>,
+    #[serde(default)]
+    zone_mask: Option<u8>,
+    #[serde(default)]
+    special_id: Option<u8>,
+    #[serde(default)]
+    is_setsuna: Option<bool>,
+    #[serde(default)]
+    compare_accumulated: Option<bool>,
+    #[serde(default)]
+    is_optional: Option<bool>,
+    #[serde(default)]
+    keyword_energy: Option<bool>,
+    #[serde(default)]
+    keyword_member: Option<bool>,
 }
 
 impl From<DecodedFilterAttrRaw> for DecodedFilterAttr {
     fn from(raw: DecodedFilterAttrRaw) -> Self {
         match raw {
             DecodedFilterAttrRaw::Legacy(v) => Self::decode(v),
-            DecodedFilterAttrRaw::Structured {
-                target_player,
-                card_type,
-                group_enabled,
-                group_id,
-                is_tapped,
-                has_blade_heart,
-                not_has_blade_heart,
-                unique_names,
-                unit_enabled,
-                unit_id,
-                value_enabled,
-                value_threshold,
-                is_le,
-                is_cost_type,
-                color_mask,
-                char_id_1,
-                char_id_2,
-                char_id_3,
-                zone_mask,
-                special_id,
-                is_setsuna,
-                compare_accumulated,
-                is_optional,
-                keyword_energy,
-                keyword_member,
-            } => Self {
-                target_player,
-                card_type,
-                group_enabled,
-                group_id,
-                is_tapped,
-                has_blade_heart,
-                not_has_blade_heart,
-                unique_names,
-                unit_enabled,
-                unit_id,
-                value_enabled,
-                value_threshold,
-                is_le,
-                is_cost_type,
-                color_mask,
-                char_id_1,
-                char_id_2,
-                char_id_3,
-                zone_mask,
-                special_id,
-                is_setsuna,
-                compare_accumulated,
-                is_optional,
-                keyword_energy,
-                keyword_member,
+            DecodedFilterAttrRaw::Structured(raw) => Self {
+                target_player: raw.target_player.unwrap_or_default(),
+                card_type: raw.card_type.unwrap_or_default(),
+                group_enabled: raw.group_enabled.unwrap_or_default(),
+                group_id: raw.group_id.unwrap_or_default(),
+                is_tapped: raw.is_tapped.unwrap_or_default(),
+                has_blade_heart: raw.has_blade_heart.unwrap_or_default(),
+                not_has_blade_heart: raw.not_has_blade_heart.unwrap_or_default(),
+                unique_names: raw.unique_names.unwrap_or_default(),
+                unit_enabled: raw.unit_enabled.unwrap_or_default(),
+                unit_id: raw.unit_id.unwrap_or_default(),
+                value_enabled: raw.value_enabled.unwrap_or_default(),
+                value_threshold: raw.value_threshold.unwrap_or_default(),
+                is_le: raw.is_le.unwrap_or_default(),
+                is_cost_type: raw.is_cost_type.unwrap_or_default(),
+                color_mask: raw.color_mask.unwrap_or_default(),
+                char_id_1: raw.char_id_1.unwrap_or_default(),
+                char_id_2: raw.char_id_2.unwrap_or_default(),
+                char_id_3: raw.char_id_3.unwrap_or_default(),
+                zone_mask: raw.zone_mask.unwrap_or_default(),
+                special_id: raw.special_id.unwrap_or_default(),
+                is_setsuna: raw.is_setsuna.unwrap_or_default(),
+                compare_accumulated: raw.compare_accumulated.unwrap_or_default(),
+                is_optional: raw.is_optional.unwrap_or_default(),
+                keyword_energy: raw.keyword_energy.unwrap_or_default(),
+                keyword_member: raw.keyword_member.unwrap_or_default(),
             },
         }
     }
@@ -448,24 +557,37 @@ impl DecodedFilterAttr {
     pub fn decode(a: i64) -> Self {
         let ua = a as u64;
         Self {
-            target_player: ((ua >> A_STANDARD_TARGET_PLAYER_SHIFT) & A_STANDARD_TARGET_PLAYER_MASK) as u8,
+            target_player: ((ua >> A_STANDARD_TARGET_PLAYER_SHIFT) & A_STANDARD_TARGET_PLAYER_MASK)
+                as u8,
             card_type: ((ua >> A_STANDARD_CARD_TYPE_SHIFT) & A_STANDARD_CARD_TYPE_MASK) as u8,
-            group_enabled: ((ua >> A_STANDARD_GROUP_ENABLED_SHIFT) & A_STANDARD_GROUP_ENABLED_MASK) != 0,
+            group_enabled: ((ua >> A_STANDARD_GROUP_ENABLED_SHIFT) & A_STANDARD_GROUP_ENABLED_MASK)
+                != 0,
             group_id: ((ua >> A_STANDARD_GROUP_ID_SHIFT) & A_STANDARD_GROUP_ID_MASK) as u8,
             is_tapped: ((ua >> A_STANDARD_IS_TAPPED_SHIFT) & A_STANDARD_IS_TAPPED_MASK) != 0,
-            has_blade_heart: ((ua >> A_STANDARD_HAS_BLADE_HEART_SHIFT) & A_STANDARD_HAS_BLADE_HEART_MASK) != 0,
-            not_has_blade_heart: ((ua >> A_STANDARD_NOT_HAS_BLADE_HEART_SHIFT) & A_STANDARD_NOT_HAS_BLADE_HEART_MASK) != 0,
-            unique_names: ((ua >> A_STANDARD_UNIQUE_NAMES_SHIFT) & A_STANDARD_UNIQUE_NAMES_MASK) != 0,
-            unit_enabled: ((ua >> A_STANDARD_UNIT_ENABLED_SHIFT) & A_STANDARD_UNIT_ENABLED_MASK) != 0,
+            has_blade_heart: ((ua >> A_STANDARD_HAS_BLADE_HEART_SHIFT)
+                & A_STANDARD_HAS_BLADE_HEART_MASK)
+                != 0,
+            not_has_blade_heart: ((ua >> A_STANDARD_NOT_HAS_BLADE_HEART_SHIFT)
+                & A_STANDARD_NOT_HAS_BLADE_HEART_MASK)
+                != 0,
+            unique_names: ((ua >> A_STANDARD_UNIQUE_NAMES_SHIFT) & A_STANDARD_UNIQUE_NAMES_MASK)
+                != 0,
+            unit_enabled: ((ua >> A_STANDARD_UNIT_ENABLED_SHIFT) & A_STANDARD_UNIT_ENABLED_MASK)
+                != 0,
             unit_id: ((ua >> A_STANDARD_UNIT_ID_SHIFT) & A_STANDARD_UNIT_ID_MASK) as u8,
-            value_enabled: ((ua >> A_STANDARD_VALUE_ENABLED_SHIFT) & A_STANDARD_VALUE_ENABLED_MASK) != 0,
-            value_threshold: ((ua >> A_STANDARD_VALUE_THRESHOLD_SHIFT) & A_STANDARD_VALUE_THRESHOLD_MASK) as u8,
+            value_enabled: ((ua >> A_STANDARD_VALUE_ENABLED_SHIFT) & A_STANDARD_VALUE_ENABLED_MASK)
+                != 0,
+            value_threshold: ((ua >> A_STANDARD_VALUE_THRESHOLD_SHIFT)
+                & A_STANDARD_VALUE_THRESHOLD_MASK) as u8,
             is_le: ((ua >> A_STANDARD_IS_LE_SHIFT) & A_STANDARD_IS_LE_MASK) != 0,
-            is_cost_type: ((ua >> A_STANDARD_IS_COST_TYPE_SHIFT) & A_STANDARD_IS_COST_TYPE_MASK) != 0,
+            is_cost_type: ((ua >> A_STANDARD_IS_COST_TYPE_SHIFT) & A_STANDARD_IS_COST_TYPE_MASK)
+                != 0,
             color_mask: ((ua >> A_STANDARD_COLOR_MASK_SHIFT) & A_STANDARD_COLOR_MASK_MASK) as u8,
             char_id_1: ((ua >> A_STANDARD_CHAR_ID_1_SHIFT) & A_STANDARD_CHAR_ID_1_MASK) as u8,
             char_id_2: ((ua >> A_STANDARD_CHAR_ID_2_SHIFT) & A_STANDARD_CHAR_ID_2_MASK) as u8,
-            char_id_3: if ((ua >> A_STANDARD_UNIT_ENABLED_SHIFT) & A_STANDARD_UNIT_ENABLED_MASK) == 0 {
+            char_id_3: if ((ua >> A_STANDARD_UNIT_ENABLED_SHIFT) & A_STANDARD_UNIT_ENABLED_MASK)
+                == 0
+            {
                 ((ua >> A_STANDARD_UNIT_ID_SHIFT) & A_STANDARD_UNIT_ID_MASK) as u8
             } else {
                 0
@@ -473,45 +595,75 @@ impl DecodedFilterAttr {
             zone_mask: ((ua >> A_STANDARD_ZONE_MASK_SHIFT) & A_STANDARD_ZONE_MASK_MASK) as u8,
             special_id: ((ua >> A_STANDARD_SPECIAL_ID_SHIFT) & A_STANDARD_SPECIAL_ID_MASK) as u8,
             is_setsuna: ((ua >> A_STANDARD_IS_SETSUNA_SHIFT) & A_STANDARD_IS_SETSUNA_MASK) != 0,
-            compare_accumulated: ((ua >> A_STANDARD_COMPARE_ACCUMULATED_SHIFT) & A_STANDARD_COMPARE_ACCUMULATED_MASK) != 0,
+            compare_accumulated: ((ua >> A_STANDARD_COMPARE_ACCUMULATED_SHIFT)
+                & A_STANDARD_COMPARE_ACCUMULATED_MASK)
+                != 0,
             is_optional: ((ua >> A_STANDARD_IS_OPTIONAL_SHIFT) & A_STANDARD_IS_OPTIONAL_MASK) != 0,
-            keyword_energy: ((ua >> A_STANDARD_KEYWORD_ENERGY_SHIFT) & A_STANDARD_KEYWORD_ENERGY_MASK) != 0,
-            keyword_member: ((ua >> A_STANDARD_KEYWORD_MEMBER_SHIFT) & A_STANDARD_KEYWORD_MEMBER_MASK) != 0,
+            keyword_energy: ((ua >> A_STANDARD_KEYWORD_ENERGY_SHIFT)
+                & A_STANDARD_KEYWORD_ENERGY_MASK)
+                != 0,
+            keyword_member: ((ua >> A_STANDARD_KEYWORD_MEMBER_SHIFT)
+                & A_STANDARD_KEYWORD_MEMBER_MASK)
+                != 0,
         }
     }
 
     pub fn to_attr(&self) -> u64 {
         let mut a: u64 = 0;
-        a |= (self.target_player as u64 & A_STANDARD_TARGET_PLAYER_MASK) << A_STANDARD_TARGET_PLAYER_SHIFT;
+        a |= (self.target_player as u64 & A_STANDARD_TARGET_PLAYER_MASK)
+            << A_STANDARD_TARGET_PLAYER_SHIFT;
         a |= (self.card_type as u64 & A_STANDARD_CARD_TYPE_MASK) << A_STANDARD_CARD_TYPE_SHIFT;
         if self.group_enabled {
             a |= 1 << A_STANDARD_GROUP_ENABLED_SHIFT;
             a |= (self.group_id as u64 & A_STANDARD_GROUP_ID_MASK) << A_STANDARD_GROUP_ID_SHIFT;
         }
-        if self.is_tapped { a |= 1 << A_STANDARD_IS_TAPPED_SHIFT; }
-        if self.has_blade_heart { a |= 1 << A_STANDARD_HAS_BLADE_HEART_SHIFT; }
-        if self.not_has_blade_heart { a |= 1 << A_STANDARD_NOT_HAS_BLADE_HEART_SHIFT; }
-        if self.unique_names { a |= 1 << A_STANDARD_UNIQUE_NAMES_SHIFT; }
+        if self.is_tapped {
+            a |= 1 << A_STANDARD_IS_TAPPED_SHIFT;
+        }
+        if self.has_blade_heart {
+            a |= 1 << A_STANDARD_HAS_BLADE_HEART_SHIFT;
+        }
+        if self.not_has_blade_heart {
+            a |= 1 << A_STANDARD_NOT_HAS_BLADE_HEART_SHIFT;
+        }
+        if self.unique_names {
+            a |= 1 << A_STANDARD_UNIQUE_NAMES_SHIFT;
+        }
         if self.unit_enabled {
             a |= 1 << A_STANDARD_UNIT_ENABLED_SHIFT;
             a |= (self.unit_id as u64 & A_STANDARD_UNIT_ID_MASK) << A_STANDARD_UNIT_ID_SHIFT;
         }
         if self.value_enabled {
             a |= 1 << A_STANDARD_VALUE_ENABLED_SHIFT;
-            a |= (self.value_threshold as u64 & A_STANDARD_VALUE_THRESHOLD_MASK) << A_STANDARD_VALUE_THRESHOLD_SHIFT;
+            a |= (self.value_threshold as u64 & A_STANDARD_VALUE_THRESHOLD_MASK)
+                << A_STANDARD_VALUE_THRESHOLD_SHIFT;
         }
-        if self.is_le { a |= 1 << A_STANDARD_IS_LE_SHIFT; }
-        if self.is_cost_type { a |= 1 << A_STANDARD_IS_COST_TYPE_SHIFT; }
+        if self.is_le {
+            a |= 1 << A_STANDARD_IS_LE_SHIFT;
+        }
+        if self.is_cost_type {
+            a |= 1 << A_STANDARD_IS_COST_TYPE_SHIFT;
+        }
         a |= (self.color_mask as u64 & A_STANDARD_COLOR_MASK_MASK) << A_STANDARD_COLOR_MASK_SHIFT;
         a |= (self.char_id_1 as u64 & A_STANDARD_CHAR_ID_1_MASK) << A_STANDARD_CHAR_ID_1_SHIFT;
         a |= (self.char_id_2 as u64 & A_STANDARD_CHAR_ID_2_MASK) << A_STANDARD_CHAR_ID_2_SHIFT;
         a |= (self.zone_mask as u64 & A_STANDARD_ZONE_MASK_MASK) << A_STANDARD_ZONE_MASK_SHIFT;
         a |= (self.special_id as u64 & A_STANDARD_SPECIAL_ID_MASK) << A_STANDARD_SPECIAL_ID_SHIFT;
-        if self.is_setsuna { a |= 1 << A_STANDARD_IS_SETSUNA_SHIFT; }
-        if self.compare_accumulated { a |= 1 << A_STANDARD_COMPARE_ACCUMULATED_SHIFT; }
-        if self.is_optional { a |= 1 << A_STANDARD_IS_OPTIONAL_SHIFT; }
-        if self.keyword_energy { a |= 1 << A_STANDARD_KEYWORD_ENERGY_SHIFT; }
-        if self.keyword_member { a |= 1 << A_STANDARD_KEYWORD_MEMBER_SHIFT; }
+        if self.is_setsuna {
+            a |= 1 << A_STANDARD_IS_SETSUNA_SHIFT;
+        }
+        if self.compare_accumulated {
+            a |= 1 << A_STANDARD_COMPARE_ACCUMULATED_SHIFT;
+        }
+        if self.is_optional {
+            a |= 1 << A_STANDARD_IS_OPTIONAL_SHIFT;
+        }
+        if self.keyword_energy {
+            a |= 1 << A_STANDARD_KEYWORD_ENERGY_SHIFT;
+        }
+        if self.keyword_member {
+            a |= 1 << A_STANDARD_KEYWORD_MEMBER_SHIFT;
+        }
         a
     }
 }
@@ -941,28 +1093,24 @@ impl BytecodeProgram {
 }
 
 impl BytecodeProgram {
-
     pub fn compact_words_for_instruction(instruction: BytecodeInstruction) -> Vec<i32> {
         Self::encode_compact_instruction(instruction)
     }
 }
 
 impl BytecodeProgram {
-
     pub fn is_compact_header(word: i32) -> bool {
         (word as u32 & COMPACT_HEADER_FLAG) != 0
     }
 }
 
 impl BytecodeProgram {
-
     pub fn fixed_layout_word_len() -> usize {
         WORDS_PER_INSTRUCTION
     }
 }
 
 impl BytecodeProgram {
-
     pub fn is_compact(&self) -> bool {
         self.layout() == BytecodeLayout::CompactV2
     }
@@ -973,7 +1121,6 @@ impl BytecodeProgram {
 }
 
 impl BytecodeProgram {
-
     pub fn decode_all(&self) -> Vec<BytecodeInstruction> {
         let mut decoded = Vec::new();
         let mut ip = 0;
@@ -987,29 +1134,35 @@ impl BytecodeProgram {
 
 impl BytecodeInstruction {
     pub fn new(op: i32, v: i32, a: i64, raw_s: i32) -> Self {
-        Self {
-            op,
-            v,
-            a,
-            raw_s,
-        }
+        Self { op, v, a, raw_s }
     }
 
     pub fn decode(bytecode: &[i32], ip: usize) -> Self {
         let op = bytecode[ip];
-        let v = if ip + 1 < bytecode.len() { bytecode[ip + 1] } else { 0 };
-        let a_low = if ip + 2 < bytecode.len() { bytecode[ip + 2] } else { 0 } as u32;
-        let a_high = if ip + 3 < bytecode.len() { bytecode[ip + 3] } else { 0 } as u32;
-        let raw_s = if ip + 4 < bytecode.len() { bytecode[ip + 4] } else { 0 };
+        let v = if ip + 1 < bytecode.len() {
+            bytecode[ip + 1]
+        } else {
+            0
+        };
+        let a_low = if ip + 2 < bytecode.len() {
+            bytecode[ip + 2]
+        } else {
+            0
+        } as u32;
+        let a_high = if ip + 3 < bytecode.len() {
+            bytecode[ip + 3]
+        } else {
+            0
+        } as u32;
+        let raw_s = if ip + 4 < bytecode.len() {
+            bytecode[ip + 4]
+        } else {
+            0
+        };
 
         let a = ((a_high as i64) << 32) | (a_low as i64);
 
-        Self {
-            op,
-            v,
-            a,
-            raw_s,
-        }
+        Self { op, v, a, raw_s }
     }
 
     pub fn slot(&self) -> DecodedSlot {
@@ -1041,11 +1194,14 @@ impl BytecodeInstruction {
     }
 
     pub fn is_dynamic(&self) -> bool {
-        (self.a & (A_STANDARD_COMPARE_ACCUMULATED_MASK << A_STANDARD_COMPARE_ACCUMULATED_SHIFT) as i64) != 0
+        (self.a
+            & (A_STANDARD_COMPARE_ACCUMULATED_MASK << A_STANDARD_COMPARE_ACCUMULATED_SHIFT) as i64)
+            != 0
     }
 
     pub fn scalar_dynamic_base(&self) -> i32 {
-        ((self.v as u32 >> V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT) & V_SCALAR_DYNAMIC_BASE_VALUE_MASK) as i32
+        ((self.v as u32 >> V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT) & V_SCALAR_DYNAMIC_BASE_VALUE_MASK)
+            as i32
     }
 
     pub fn scalar_dynamic_divisor(&self) -> i32 {
@@ -1054,7 +1210,6 @@ impl BytecodeInstruction {
 }
 
 impl BytecodeProgram {
-
     pub fn from_tagged_instructions(instructions: &[BytecodeInstruction]) -> Self {
         let mut words = Vec::new();
         for instruction in instructions {
@@ -1072,9 +1227,31 @@ impl BytecodeProgram {
 
 #[cfg(test)]
 mod tests {
-    use super::{BytecodeInstruction, BytecodeLayout, BytecodeProgram, DecodedFilterAttr};
+    use super::{
+        BytecodeInstruction, BytecodeLayout, BytecodeProgram, DecodedFilterAttr, DecodedSlot,
+    };
     use crate::core::enums::Zone;
     use crate::test_helpers::BytecodeBuilder;
+    use serde_json::json;
+
+    #[test]
+    fn decoded_slot_accepts_sparse_object() {
+        let slot: DecodedSlot = serde_json::from_value(json!({})).unwrap();
+        assert_eq!(slot, DecodedSlot::default());
+    }
+
+    #[test]
+    fn decoded_slot_accepts_partial_object() {
+        let slot: DecodedSlot = serde_json::from_value(json!({
+            "target_slot": 6,
+            "is_wait": true
+        }))
+        .unwrap();
+
+        assert_eq!(slot.target_slot, 6);
+        assert!(slot.is_wait);
+        assert_eq!(slot.source_zone, Default::default());
+    }
 
     #[test]
     fn compact_program_round_trips_instructions() {
@@ -1104,7 +1281,9 @@ mod tests {
         let program = BytecodeProgram::from_compact_instructions(&instructions);
         let jump_ip = program.next_ip(0);
         let target_ip = program.jump_target(jump_ip, 1).expect("jump target");
-        let target = program.instruction_at(target_ip).expect("target instruction");
+        let target = program
+            .instruction_at(target_ip)
+            .expect("target instruction");
 
         assert_eq!(target.op, 1);
     }
@@ -1137,7 +1316,9 @@ mod tests {
         let program = BytecodeProgram::from_tagged_instructions(&instructions);
         let jump_ip = program.next_ip(0);
         let target_ip = program.jump_target(jump_ip, 1).expect("jump target");
-        let target = program.instruction_at(target_ip).expect("target instruction");
+        let target = program
+            .instruction_at(target_ip)
+            .expect("target instruction");
 
         assert_eq!(target.op, 1);
     }
@@ -1145,8 +1326,14 @@ mod tests {
     #[test]
     fn tagged_program_is_more_explicit_than_fixed_width_for_sparse_instructions() {
         let instr = BytecodeInstruction::new(204, 3, 0, 0);
-        assert_eq!(BytecodeProgram::tagged_words_for_instruction(instr).len(), 3);
-        assert_eq!(BytecodeProgram::compact_words_for_instruction(instr).len(), 2);
+        assert_eq!(
+            BytecodeProgram::tagged_words_for_instruction(instr).len(),
+            3
+        );
+        assert_eq!(
+            BytecodeProgram::compact_words_for_instruction(instr).len(),
+            2
+        );
         assert_eq!(BytecodeProgram::fixed_layout_word_len(), 5);
     }
 

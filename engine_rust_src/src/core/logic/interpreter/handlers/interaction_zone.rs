@@ -1,5 +1,5 @@
-use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::Zone;
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 pub fn normalized_source_zone(zone: Zone) -> Zone {
@@ -29,7 +29,11 @@ pub fn remove_card_from_zone(
 ) -> bool {
     match normalized_source_zone(source_zone) {
         Zone::Yell => {
-            if let Some(pos) = state.players[p_idx].yell_cards.iter().position(|&x| x == cid) {
+            if let Some(pos) = state.players[p_idx]
+                .yell_cards
+                .iter()
+                .position(|&x| x == cid)
+            {
                 state.players[p_idx].yell_cards.remove(pos);
                 true
             } else {

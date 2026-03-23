@@ -29,7 +29,7 @@ fn test_meta_rule_yell_mulligan() {
         area_idx: 1,
         ..Default::default()
     };
-    state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+    state.resolve_ability(&db, ab, &ctx);
 
     assert_eq!(state.players[0].cheer_mod_count, 1);
 }
@@ -132,14 +132,13 @@ fn test_heart_transformation_kanan_via_reduction() {
         player_id: 0,
         ..Default::default()
     };
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
-
-    assert!(
-        state.players[0]
-            .heart_req_reductions
-            .get_color_count(1)
-            == 1
+    state.resolve_semantic_frames(
+        &db,
+        &crate::core::logic::models::FrameProgram::from_bytecode(&bc).frames,
+        &ctx,
     );
+
+    assert!(state.players[0].heart_req_reductions.get_color_count(1) == 1);
 }
 
 #[test]
@@ -162,7 +161,7 @@ fn test_selective_reveal_kanon() {
         ..Default::default()
     };
     println!("--- Testing Kanon ({}) ---", kanon_id);
-    state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+    state.resolve_ability(&db, ab, &ctx);
     state.dump_verbose();
 
     assert_eq!(state.phase, Phase::Response);

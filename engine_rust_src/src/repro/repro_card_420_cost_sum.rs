@@ -81,13 +81,26 @@ fn test_repro_card_420_cost_sum_limit() {
         state.step(&db, ACTION_BASE_CHOICE + idx as i32).unwrap(); // Select Card
 
         // Find an empty slot
-        let slot_idx = state.players[p_idx].stage.iter().position(|&c| c == -1).unwrap_or(1);
-        state.step(&db, ACTION_BASE_STAGE_SLOTS + slot_idx as i32).unwrap(); // Select Slot
+        let slot_idx = state.players[p_idx]
+            .stage
+            .iter()
+            .position(|&c| c == -1)
+            .unwrap_or(1);
+        state
+            .step(&db, ACTION_BASE_STAGE_SLOTS + slot_idx as i32)
+            .unwrap(); // Select Slot
 
         // After placing cost 4 card, v_accumulated should be 0.
         // The engine should see no more cards (since cost 2 > 0) and finish.
-        let on_stage = state.players[p_idx].stage.iter().any(|&cid| cid == cost_4_id);
-        assert!(on_stage, "Cost 4 card (ID {}) should be on stage. Stage: {:?}", cost_4_id, state.players[p_idx].stage);
+        let on_stage = state.players[p_idx]
+            .stage
+            .iter()
+            .any(|&cid| cid == cost_4_id);
+        assert!(
+            on_stage,
+            "Cost 4 card (ID {}) should be on stage. Stage: {:?}",
+            cost_4_id, state.players[p_idx].stage
+        );
     }
 
     // Scenario 2: Pick Cost 2 -> Should allow another Cost 2 but NOT Cost 4

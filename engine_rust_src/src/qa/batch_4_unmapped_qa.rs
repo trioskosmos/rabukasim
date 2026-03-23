@@ -1,7 +1,10 @@
-use crate::core::logic::*;
+use crate::core::generated_constants::{
+    ACTION_BASE_CHOICE, ACTION_BASE_ENERGY, ACTION_BASE_HAND_SELECT, ACTION_BASE_MODE,
+    ACTION_BASE_STAGE, ACTION_BASE_STAGE_SLOTS, UNIT_BIBI, UNIT_PRINTEMPS,
+};
 use crate::core::logic::rules::get_effective_hearts;
+use crate::core::logic::*;
 use crate::test_helpers::*;
-use crate::core::generated_constants::{ACTION_BASE_CHOICE, ACTION_BASE_ENERGY, ACTION_BASE_HAND_SELECT, ACTION_BASE_MODE, ACTION_BASE_STAGE, ACTION_BASE_STAGE_SLOTS, UNIT_BIBI, UNIT_PRINTEMPS};
 
 #[cfg(test)]
 mod tests {
@@ -399,7 +402,10 @@ mod tests {
                 ACTION_BASE_HAND_SELECT + 0
             } else if response_actions.contains(&(ACTION_BASE_STAGE_SLOTS + 0)) {
                 ACTION_BASE_STAGE_SLOTS + 0
-            } else if response_actions.iter().any(|candidate| *candidate >= ACTION_BASE_CHOICE) {
+            } else if response_actions
+                .iter()
+                .any(|candidate| *candidate >= ACTION_BASE_CHOICE)
+            {
                 *response_actions
                     .iter()
                     .filter(|candidate| **candidate >= ACTION_BASE_CHOICE)
@@ -465,14 +471,22 @@ mod tests {
         state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
         state.process_trigger_queue(&db);
 
-        assert_eq!(state.phase, Phase::Response, "Q157: optional attach should first suspend for the yes/no prompt");
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "Q157: optional attach should first suspend for the yes/no prompt"
+        );
 
         state
             .handle_response(&db, ACTION_BASE_CHOICE + 0)
             .expect("Q157: accepting the optional attach should resolve successfully");
         state.process_trigger_queue(&db);
 
-        assert_eq!(state.phase, Phase::Response, "Q157: after accepting, the ability should suspend for an energy choice");
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "Q157: after accepting, the ability should suspend for an energy choice"
+        );
 
         let mut response_actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, 0, &mut response_actions);
@@ -521,7 +535,11 @@ mod tests {
             .map(|card| card.card_id)
             .take(2)
             .collect();
-        assert_eq!(other_members.len(), 2, "Q158: expected two supporting members in real DB");
+        assert_eq!(
+            other_members.len(),
+            2,
+            "Q158: expected two supporting members in real DB"
+        );
 
         state.players[0].stage[0] = other_members[0];
         state.players[0].stage[1] = ayumu_id;
@@ -535,23 +553,48 @@ mod tests {
         state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
         state.process_trigger_queue(&db);
 
-        assert_eq!(state.phase, Phase::Response, "Q158: optional attach should first suspend for the yes/no prompt");
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "Q158: optional attach should first suspend for the yes/no prompt"
+        );
         state
             .handle_response(&db, ACTION_BASE_CHOICE + 0)
             .expect("Q158: accepting the optional attach should resolve successfully");
         state.process_trigger_queue(&db);
 
-        assert_eq!(state.phase, Phase::Response, "Q158: after accepting, the ability should suspend for an energy choice");
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "Q158: after accepting, the ability should suspend for an energy choice"
+        );
         state
             .handle_response(&db, ACTION_BASE_ENERGY + 0)
             .expect("Q158: selecting the energy should resolve successfully");
         state.process_trigger_queue(&db);
 
-        assert_eq!(state.players[0].blade_buffs[0], 2, "Q158: left stage member should gain +2 blades until live end");
-        assert_eq!(state.players[0].blade_buffs[1], 2, "Q158: source member should gain +2 blades until live end");
-        assert_eq!(state.players[0].blade_buffs[2], 2, "Q158: right stage member should gain +2 blades until live end");
-        assert_eq!(state.players[0].hand.len(), 1, "Q158: resolving the ability should also draw one card");
-        assert_ne!(state.phase, Phase::Response, "Q158: SELECT_MEMBER(ALL) -> TARGETS should resolve without a manual target prompt");
+        assert_eq!(
+            state.players[0].blade_buffs[0], 2,
+            "Q158: left stage member should gain +2 blades until live end"
+        );
+        assert_eq!(
+            state.players[0].blade_buffs[1], 2,
+            "Q158: source member should gain +2 blades until live end"
+        );
+        assert_eq!(
+            state.players[0].blade_buffs[2], 2,
+            "Q158: right stage member should gain +2 blades until live end"
+        );
+        assert_eq!(
+            state.players[0].hand.len(),
+            1,
+            "Q158: resolving the ability should also draw one card"
+        );
+        assert_ne!(
+            state.phase,
+            Phase::Response,
+            "Q158: SELECT_MEMBER(ALL) -> TARGETS should resolve without a manual target prompt"
+        );
     }
 
     #[test]
@@ -605,9 +648,13 @@ mod tests {
         legal_state.players[0].stage[0] = shizuku_id;
         legal_state.players[0].discard = vec![legal_remote_id].into();
         legal_state.players[0].deck = vec![deck_cards[0], deck_cards[1], deck_cards[2]].into();
-        legal_state
-            .trigger_queue
-            .push_back((shizuku_id, 0, shizuku_on_play_ctx.clone(), false, TriggerType::OnPlay));
+        legal_state.trigger_queue.push_back((
+            shizuku_id,
+            0,
+            shizuku_on_play_ctx.clone(),
+            false,
+            TriggerType::OnPlay,
+        ));
         legal_state.process_trigger_queue(&db);
 
         let legal_interaction = legal_state
@@ -631,9 +678,13 @@ mod tests {
         illegal_state.players[0].stage[0] = shizuku_id;
         illegal_state.players[0].discard = vec![tap_self_remote_id].into();
         illegal_state.players[0].deck = vec![deck_cards[0], deck_cards[1], deck_cards[2]].into();
-        illegal_state
-            .trigger_queue
-            .push_back((shizuku_id, 0, shizuku_on_play_ctx, false, TriggerType::OnPlay));
+        illegal_state.trigger_queue.push_back((
+            shizuku_id,
+            0,
+            shizuku_on_play_ctx,
+            false,
+            TriggerType::OnPlay,
+        ));
         illegal_state.process_trigger_queue(&db);
 
         assert!(
@@ -679,12 +730,15 @@ mod tests {
         state.ui.silent = true;
 
         // Setup: Players with specific deck configuration
-        state.players[0].deck = vec![100, 101, 102].into();  // Exactly 3 cards
+        state.players[0].deck = vec![100, 101, 102].into(); // Exactly 3 cards
         state.players[0].discard.clear();
 
         // Snapshot deck state before peek
         let deck_len_before = state.players[0].deck.len();
-        assert_eq!(deck_len_before, 3, "Q122: Deck should have exactly 3 cards before peek");
+        assert_eq!(
+            deck_len_before, 3,
+            "Q122: Deck should have exactly 3 cards before peek"
+        );
 
         // Simulate peeking at top 3 cards (this is typically done via ability resolution)
         // In bytecode, this would be something like:
@@ -692,7 +746,11 @@ mod tests {
 
         // Peek doesn't modify the deck structure yet
         let peeked_cards: Vec<i32> = state.players[0].deck.iter().take(3).copied().collect();
-        assert_eq!(peeked_cards.len(), 3, "Q122: Should be able to peek 3 cards");
+        assert_eq!(
+            peeked_cards.len(),
+            3,
+            "Q122: Should be able to peek 3 cards"
+        );
 
         // Verify deck unchanged after peek
         assert_eq!(
@@ -851,8 +909,16 @@ mod tests {
         let own_discard = discard_members[..6].to_vec();
         let opponent_members = discard_members[6..8].to_vec();
 
-        assert_eq!(discard_members.len(), 8, "Q164: expected eight non-source member cards for discard setup");
-        assert_eq!(opponent_members.len(), 2, "Q164: expected two opponent discard members");
+        assert_eq!(
+            discard_members.len(),
+            8,
+            "Q164: expected eight non-source member cards for discard setup"
+        );
+        assert_eq!(
+            opponent_members.len(),
+            2,
+            "Q164: expected two opponent discard members"
+        );
 
         state.players[0].stage[1] = rina_id;
         state.players[0].discard = own_discard.clone().into();
@@ -863,7 +929,11 @@ mod tests {
         state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
         state.process_trigger_queue(&db);
 
-        assert_eq!(state.phase, Phase::Response, "Q164: the optional live-start cost should suspend for discard selection");
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "Q164: the optional live-start cost should suspend for discard selection"
+        );
         assert!(
             matches!(
                 state.interaction_stack.last().map(|pi| pi.choice_type),
@@ -887,7 +957,9 @@ mod tests {
             "Q164: every selectable card must come from the controller's discard"
         );
         assert!(
-            !first_candidates.iter().any(|cid| opponent_members.contains(cid)),
+            !first_candidates
+                .iter()
+                .any(|cid| opponent_members.contains(cid)),
             "Q164: opponent discard members must not appear in the selectable candidate list"
         );
         let first_selected = first_candidates[0];
@@ -896,7 +968,11 @@ mod tests {
             .step(&db, ACTION_BASE_CHOICE + 0)
             .expect("Q164: selecting the first controller discard member should resolve");
 
-        assert_eq!(state.phase, Phase::Response, "Q164: selecting the first card should continue to the second selection");
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "Q164: selecting the first card should continue to the second selection"
+        );
         assert_eq!(
             state.interaction_stack.last().map(|pi| pi.v_remaining),
             Some(1),
@@ -904,11 +980,15 @@ mod tests {
         );
         let second_candidates = state.players[0].looked_cards.clone();
         assert!(
-            second_candidates.iter().all(|cid| own_discard.contains(cid)),
+            second_candidates
+                .iter()
+                .all(|cid| own_discard.contains(cid)),
             "Q164: the second selection must also be limited to the controller's discard"
         );
         assert!(
-            !second_candidates.iter().any(|cid| opponent_members.contains(cid)),
+            !second_candidates
+                .iter()
+                .any(|cid| opponent_members.contains(cid)),
             "Q164: opponent discard members must remain unavailable on the second selection"
         );
         assert!(
@@ -921,7 +1001,8 @@ mod tests {
             .expect("Q164: selecting the second controller discard member should resolve");
 
         assert!(
-            !state.players[0].discard.contains(&first_selected) && !state.players[0].discard.contains(&second_selected),
+            !state.players[0].discard.contains(&first_selected)
+                && !state.players[0].discard.contains(&second_selected),
             "Q164: the selected controller discard members should leave the controller's discard"
         );
         assert!(
@@ -929,7 +1010,10 @@ mod tests {
             "Q164: the selected controller discard members should be moved into the controller's deck"
         );
         assert!(
-            !state.players[0].deck.iter().any(|cid| opponent_members.contains(cid)),
+            !state.players[0]
+                .deck
+                .iter()
+                .any(|cid| opponent_members.contains(cid)),
             "Q164: opponent discard members must never be moved into the controller's deck"
         );
     }
@@ -1028,7 +1112,9 @@ mod tests {
             "Q165: exactly the six allowed Umi discard cards should be selectable"
         );
         assert!(
-            initial_candidates.iter().all(|cid| umi_only_discard.contains(cid)),
+            initial_candidates
+                .iter()
+                .all(|cid| umi_only_discard.contains(cid)),
             "Q165: every selectable discard card should come from the allowed-name Umi subset"
         );
         assert!(
@@ -1046,9 +1132,9 @@ mod tests {
             }
 
             selected.push(candidates[0]);
-            state
-                .step(&db, ACTION_BASE_CHOICE + 0)
-                .expect("Q165: choosing an allowed discard member should continue resolving the cost");
+            state.step(&db, ACTION_BASE_CHOICE + 0).expect(
+                "Q165: choosing an allowed discard member should continue resolving the cost",
+            );
         }
 
         assert_eq!(
@@ -1067,7 +1153,9 @@ mod tests {
             "Q165: the selected Umi discard cards should leave discard after paying the cost"
         );
         assert!(
-            selected.iter().all(|cid| state.players[0].deck.contains(cid)),
+            selected
+                .iter()
+                .all(|cid| state.players[0].deck.contains(cid)),
             "Q165: the selected Umi discard cards should be moved into the deck"
         );
         assert_eq!(
@@ -1297,14 +1385,14 @@ mod tests {
         let member_cards: Vec<i32> = db
             .members
             .values()
-            .filter(|card| !card.abilities.is_empty())  // Get cards with abilities
+            .filter(|card| !card.abilities.is_empty()) // Get cards with abilities
             .take(6)
             .map(|card| card.card_id)
             .collect();
 
         if member_cards.len() < 3 {
             eprintln!("Q149: Not enough member cards in DB for test");
-            return;  // Skip if insufficient real cards
+            return; // Skip if insufficient real cards
         }
 
         // Place member cards on stages
@@ -1318,8 +1406,7 @@ mod tests {
             .get(&member_cards[0])
             .map(|m| m.hearts.len() as u32)
             .unwrap_or(0)
-            + db
-                .members
+            + db.members
                 .get(&member_cards[1])
                 .map(|m| m.hearts.len() as u32)
                 .unwrap_or(0);
@@ -1331,8 +1418,14 @@ mod tests {
             .unwrap_or(0);
 
         // Assertion: heart totals are computed
-        assert!(p0_hearts > 0, "Q149: P0 heart total should be positive for the staged members");
-        assert!(p1_hearts > 0, "Q149: P1 heart total should be positive for the staged member");
+        assert!(
+            p0_hearts > 0,
+            "Q149: P0 heart total should be positive for the staged members"
+        );
+        assert!(
+            p1_hearts > 0,
+            "Q149: P1 heart total should be positive for the staged member"
+        );
 
         // Verify that if P0 has more hearts, the condition would be true
         if p0_hearts > p1_hearts {
@@ -1493,12 +1586,7 @@ mod tests {
 
                         if self_total <= opp_total && self_total + 4 > opp_total {
                             selected_stage = Some((
-                                self_a_id,
-                                self_b_id,
-                                opp_a_id,
-                                opp_b_id,
-                                self_total,
-                                opp_total,
+                                self_a_id, self_b_id, opp_a_id, opp_b_id, self_total, opp_total,
                             ));
                             break 'outer;
                         }
@@ -1563,8 +1651,7 @@ mod tests {
             "Q172: added hearts from abilities must count toward heart total"
         );
         assert_eq!(
-            ability_opp_total,
-            base_opp_total,
+            ability_opp_total, base_opp_total,
             "Q172: opponent control total should remain at the base heart count"
         );
 
@@ -1606,21 +1693,18 @@ mod tests {
             .map(|&count| count as i32)
             .sum();
         assert_eq!(
-            blade_only_self_total,
-            base_self_total,
+            blade_only_self_total, base_self_total,
             "Q172: yell blade hearts must not count toward total hearts"
         );
         assert_eq!(
-            blade_only_opp_total,
-            base_opp_total,
+            blade_only_opp_total, base_opp_total,
             "Q172: opponent control total should remain at the base heart count"
         );
 
         blade_only_state.trigger_event(&db, TriggerType::OnLiveSuccess, 0, -1, -1, 0, -1);
         blade_only_state.process_trigger_queue(&db);
         assert_eq!(
-            blade_only_state.players[0].live_score_bonus,
-            0,
+            blade_only_state.players[0].live_score_bonus, 0,
             "Q172: PL!-bp3-026-L must ignore yell blade hearts when checking the heart-total lead"
         );
     }
@@ -1968,8 +2052,7 @@ mod tests {
             .members
             .values()
             .filter(|card| {
-                card.units.contains(&(UNIT_PRINTEMPS as u8))
-                    && card.abilities.is_empty()
+                card.units.contains(&(UNIT_PRINTEMPS as u8)) && card.abilities.is_empty()
             })
             .map(|card| card.card_id)
             .take(3)
@@ -2019,8 +2102,7 @@ mod tests {
             .members
             .values()
             .filter(|card| {
-                card.units.contains(&(UNIT_PRINTEMPS as u8))
-                    && card.abilities.is_empty()
+                card.units.contains(&(UNIT_PRINTEMPS as u8)) && card.abilities.is_empty()
             })
             .map(|card| card.card_id)
             .take(3)
@@ -2075,17 +2157,20 @@ mod tests {
 
         state.players[0].live_zone[0] = live_id;
         state.players[0].yell_cards.clear();
-        state.ui.performance_results.insert(0, serde_json::json!({
-            "success": true,
-            "overall_yell_score_bonus": 0,
-            "lives": [{
-                "slot_idx": 0,
-                "card_id": live_id,
-                "passed": true,
-                "score": live_card.score,
-                "extra_hearts": 0
-            }]
-        }));
+        state.ui.performance_results.insert(
+            0,
+            serde_json::json!({
+                "success": true,
+                "overall_yell_score_bonus": 0,
+                "lives": [{
+                    "slot_idx": 0,
+                    "card_id": live_id,
+                    "passed": true,
+                    "score": live_card.score,
+                    "extra_hearts": 0
+                }]
+            }),
+        );
 
         state.do_live_result(&db);
         state.process_trigger_queue(&db);
@@ -2427,17 +2512,20 @@ mod tests {
         state.players[0].stage[2] = members[2];
         state.players[0].live_zone[0] = live_id;
         state.players[0].yell_cards.clear();
-        state.ui.performance_results.insert(0, serde_json::json!({
-            "success": true,
-            "overall_yell_score_bonus": 0,
-            "lives": [{
-                "slot_idx": 0,
-                "card_id": live_id,
-                "passed": true,
-                "score": live_card.score,
-                "extra_hearts": 0
-            }]
-        }));
+        state.ui.performance_results.insert(
+            0,
+            serde_json::json!({
+                "success": true,
+                "overall_yell_score_bonus": 0,
+                "lives": [{
+                    "slot_idx": 0,
+                    "card_id": live_id,
+                    "passed": true,
+                    "score": live_card.score,
+                    "extra_hearts": 0
+                }]
+            }),
+        );
 
         state.do_live_result(&db);
         state.process_trigger_queue(&db);
@@ -2512,8 +2600,7 @@ mod tests {
         state.process_trigger_queue(&db);
 
         assert_eq!(
-            state.players[0].stage[0],
-            target_id,
+            state.players[0].stage[0], target_id,
             "Q218: the abilityless member should end up in the baton-touched slot"
         );
         assert_eq!(
@@ -2586,8 +2673,7 @@ mod tests {
         state.process_trigger_queue(&db);
 
         assert_eq!(
-            state.players[0].stage[0],
-            target_id,
+            state.players[0].stage[0], target_id,
             "Q219: the cost-10 Liella member should end up in the baton-touched slot"
         );
         assert_eq!(
@@ -2704,7 +2790,9 @@ mod tests {
         let opponent_target_id = db
             .members
             .values()
-            .find(|card| card.card_id != umi_id && card.card_id != mixed_group_member_id && card.cost <= 10)
+            .find(|card| {
+                card.card_id != umi_id && card.card_id != mixed_group_member_id && card.cost <= 10
+            })
             .map(|card| card.card_id)
             .expect("Q228: expected an opponent member with cost 10 or less");
 
@@ -2858,7 +2946,11 @@ mod tests {
         let opponent_left_id = db
             .members
             .values()
-            .find(|card| card.card_id != vienna_id && card.card_id != own_center_id && card.card_id != own_side_id)
+            .find(|card| {
+                card.card_id != vienna_id
+                    && card.card_id != own_center_id
+                    && card.card_id != own_side_id
+            })
             .map(|card| card.card_id)
             .expect("Q223: expected an opponent left member");
         let opponent_center_id = db
@@ -2905,8 +2997,7 @@ mod tests {
             "Q223: Vienna's on-play effect should suspend for position-change choices"
         );
         assert_eq!(
-            state.current_player,
-            0,
+            state.current_player, 0,
             "Q223: the active player should choose their own position change first"
         );
 
@@ -2928,8 +3019,7 @@ mod tests {
             "Q223: after the active player's choice, the effect should continue with the opponent's choice"
         );
         assert_eq!(
-            state.current_player,
-            1,
+            state.current_player, 1,
             "Q223: the opponent should choose the destination for their own center member"
         );
 
@@ -2955,13 +3045,11 @@ mod tests {
             "Q223: the active player's own choice should swap their center with the selected destination"
         );
         assert_eq!(
-            state.players[0].stage[2],
-            own_center_id,
+            state.players[0].stage[2], own_center_id,
             "Q223: the active player's center member should move to the chosen right slot"
         );
         assert_eq!(
-            state.players[1].stage[0],
-            opponent_center_id,
+            state.players[1].stage[0], opponent_center_id,
             "Q223: the opponent's selected destination should receive their center member"
         );
         assert_eq!(
@@ -2998,7 +3086,12 @@ mod tests {
             .values()
             .find(|card| {
                 card.card_id != seira_id
-                    && state.card_matches_filter_with_ctx(db, card.card_id, aqours_filter_attr, &filter_ctx)
+                    && state.card_matches_filter_with_ctx(
+                        db,
+                        card.card_id,
+                        aqours_filter_attr,
+                        &filter_ctx,
+                    )
             })
             .map(|card| card.card_id)
             .expect("Q4915: expected an Aqours member in the real DB");
@@ -3066,7 +3159,9 @@ mod tests {
         let mut off_group_ids = db
             .members
             .values()
-            .filter(|card| !card.groups.contains(&1) && !card.groups.contains(&11) && card.card_id != seira_id)
+            .filter(|card| {
+                !card.groups.contains(&1) && !card.groups.contains(&11) && card.card_id != seira_id
+            })
             .map(|card| card.card_id);
         let off_group_left = off_group_ids
             .next()
@@ -3316,8 +3411,7 @@ mod tests {
         state.process_trigger_queue(&db);
 
         assert_eq!(
-            state.players[0].stage[1],
-            summoned_id,
+            state.players[0].stage[1], summoned_id,
             "Q199: the selected member should enter slot 1 through Rina's effect"
         );
 
@@ -3334,7 +3428,8 @@ mod tests {
     }
 
     #[test]
-    fn test_q213_facedown_hasunosora_member_in_live_zone_is_discarded_before_hanamusubi_reduction() {
+    fn test_q213_facedown_hasunosora_member_in_live_zone_is_discarded_before_hanamusubi_reduction()
+    {
         // Q213: a face-down Hasunosora member set during Live Set is discarded before Hanamusubi's
         // live-start reduction checks other cards in the live zone, so it must not reduce the
         // required green hearts.
@@ -3372,7 +3467,8 @@ mod tests {
         let live = db
             .get_live(hanamusubi_id)
             .expect("Q213: Hanamusubi must be a live card");
-        let (req_board, _) = crate::core::logic::performance::get_live_requirements(&state, &db, 0, live);
+        let (req_board, _) =
+            crate::core::logic::performance::get_live_requirements(&state, &db, 0, live);
         assert_eq!(
             req_board.get_color_count(3),
             9,
@@ -3604,7 +3700,10 @@ mod tests {
             safety += 1;
         }
 
-        assert!(safety < 8, "Q156: performance flow should finish without looping indefinitely");
+        assert!(
+            safety < 8,
+            "Q156: performance flow should finish without looping indefinitely"
+        );
         assert_eq!(
             state.players[0].yell_cards.len(),
             1,

@@ -1,5 +1,5 @@
-use crate::test_helpers::*;
 use crate::core::enums::*;
+use crate::test_helpers::*;
 
 #[test]
 fn test_hazuki_500_optional_cost_skip() {
@@ -24,7 +24,7 @@ fn test_hazuki_500_optional_cost_skip() {
     state.players[p_idx].deck = vec![101, 101, 101, 101, 101].into();
 
     // Trigger OnPlay
-      // Trigger OnPlay using the unified entry point
+    // Trigger OnPlay using the unified entry point
     state.trigger_event(&db, TriggerType::OnPlay, p_idx, hazuki_id, 0, 0, -1);
     state.process_trigger_queue(&db);
 
@@ -40,15 +40,26 @@ fn test_hazuki_500_optional_cost_skip() {
 
     // Let's check current interaction
     let interact = state.interaction_stack.last().expect("Should be suspended");
-    assert_eq!(interact.choice_type as u8, ChoiceType::SelectHandDiscard as u8);
+    assert_eq!(
+        interact.choice_type as u8,
+        ChoiceType::SelectHandDiscard as u8
+    );
 
     // Send Pass action (0) to skip optional discard
     state.step(&db, 0).expect("Should handle skip");
 
     // In the FIXED version, it returns RETURN (finishing the ability)
     // because JUMP_IF_FALSE (ip=05) should now jump to ip=20
-    assert_eq!(state.phase, Phase::Main, "Should have returned to Main phase after skipping cost");
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "Should have returned to Main phase after skipping cost"
+    );
 
     // If it proceeds, deck would be moved to looked_cards
-    assert_eq!(state.players[p_idx as usize].looked_cards.len(), 0, "Should NOT have cards in looked_cards if cost was skipped");
+    assert_eq!(
+        state.players[p_idx as usize].looked_cards.len(),
+        0,
+        "Should NOT have cards in looked_cards if cost was skipped"
+    );
 }

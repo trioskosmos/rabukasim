@@ -30,10 +30,18 @@ fn find_card_id(db: &CardDatabase, card_no: &str) -> i32 {
         .expect(&format!("Card {} not found", card_no))
 }
 
-/// Helper to find member card by character name
+/// Helper to find member card by character name, tolerating normalized or
+/// slightly messy imports in the compiled data.
 fn find_member_by_name(db: &CardDatabase, name_pattern: &str) -> Option<i32> {
+    let needle = name_pattern.replace(' ', "");
     for (id, member) in &db.members {
-        if member.name.contains(name_pattern) {
+        let member_name = member.name.replace(' ', "");
+        if member.name == name_pattern
+            || member.normalized_name == needle
+            || member_name == needle
+            || member_name.contains(&needle)
+            || needle.contains(&member_name)
+        {
             return Some(*id);
         }
     }
@@ -56,7 +64,7 @@ fn test_meta_rule_pl_sp_bp1_024_l_heart_buffs() {
 
     // Setup: Place Kanon and Keke on stage
     let kanon_id = find_member_by_name(&db, "澁谷かのん").unwrap_or(100);
-    let keke_id = find_member_by_name(&db, "可可").unwrap_or(101); // "唐可可" is often stored with a space or just "可可"
+    let keke_id = find_member_by_name(&db, "唐可可").unwrap_or(101);
     state.players[0].stage[0] = kanon_id;
     state.players[0].stage[1] = keke_id;
 
@@ -87,17 +95,24 @@ fn test_meta_rule_pl_sp_bp1_024_l_heart_buffs() {
     while state.phase == Phase::Response && !state.interaction_stack.is_empty() {
         dbg_iters += 1;
         if dbg_iters > 50 {
-            panic!("Infinite loop detected in interaction step! Current interaction: {:?}", state.interaction_stack.last());
+            panic!(
+                "Infinite loop detected in interaction step! Current interaction: {:?}",
+                state.interaction_stack.last()
+            );
         }
-        use crate::core::logic::action_gen::{ActionGenerator, response::ResponseGenerator};
+        use crate::core::logic::action_gen::{response::ResponseGenerator, ActionGenerator};
         let mut receiver: Vec<usize> = Vec::new();
         ResponseGenerator.generate(&db, 0, &state, &mut receiver);
 
-        println!("[DEBUG Loop] Iteration {} | receiver options: {:?}", dbg_iters, receiver);
+        println!(
+            "[DEBUG Loop] Iteration {} | receiver options: {:?}",
+            dbg_iters, receiver
+        );
         let mut act = receiver[0];
 
         // If it's a member selection, the receiver contains valid slot actions plus 0 (pass).
-        let is_select = state.interaction_stack.last().unwrap().choice_type == ChoiceType::SelectMember;
+        let is_select =
+            state.interaction_stack.last().unwrap().choice_type == ChoiceType::SelectMember;
         if is_select {
             // Filter out the 0 (pass) action to only have valid selections
             let valid_actions: Vec<usize> = receiver.into_iter().filter(|&a| a != 0).collect();
@@ -117,9 +132,15 @@ fn test_meta_rule_pl_sp_bp1_024_l_heart_buffs() {
         state.process_trigger_queue(&db);
     }
 
-    println!("[TEST] Stage after interactions: {:?}", state.players[0].stage);
+    println!(
+        "[TEST] Stage after interactions: {:?}",
+        state.players[0].stage
+    );
     for i in 0..3 {
-        println!("[TEST] Slot {}: heart_buff={:?}, blade_buff={}", i, state.players[0].heart_buffs[i], state.players[0].blade_buffs[i]);
+        println!(
+            "[TEST] Slot {}: heart_buff={:?}, blade_buff={}",
+            i, state.players[0].heart_buffs[i], state.players[0].blade_buffs[i]
+        );
     }
 
     // Assert: Both members should have heart buffs (heart01 based on bytecode)

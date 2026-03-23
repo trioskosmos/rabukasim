@@ -1,14 +1,14 @@
-use crate::core::logic::models::AbilityFrame;
-use crate::core::logic::interpreter::handlers::flow_helpers::{
-    current_effect, discard_current_yell_pile,
-};
 use super::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::filter::map_filter_string_to_attr;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::handlers::flow_helpers::{
+    current_effect, discard_current_yell_pile,
+};
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::performance::do_yell;
 use crate::core::logic::Phase;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
-use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_meta_rule(
@@ -51,22 +51,27 @@ pub fn handle_meta_rule(
             .stage
             .iter()
             .copied()
-            .filter(|&cid| cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx))
+            .filter(|&cid| {
+                cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+            })
             .count() as i16;
     } else if matches!(raw_effect, Some("DISCARD_YELL_PILE")) {
         if (a as u64 & FILTER_IS_OPTIONAL) != 0 && ctx.choice_index == -1 {
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                frame_idx,
-                O_META_RULE,
-                0,
-                ChoiceType::Optional,
-                a as u64,
-                -1,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    ctx,
+                    frame_idx,
+                    O_META_RULE,
+                    0,
+                    ChoiceType::Optional,
+                    a as u64,
+                    -1,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }

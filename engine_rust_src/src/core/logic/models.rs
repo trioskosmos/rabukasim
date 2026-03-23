@@ -1,10 +1,12 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use crate::core::generated_layout::*;
+use crate::core::logic::interpreter::instruction::BytecodeProgram;
+use crate::core::logic::interpreter::instruction::{
+    DecodedFilterAttr, DecodedLookAndChoose, DecodedSlot,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use crate::core::logic::interpreter::instruction::BytecodeProgram;
-use crate::core::logic::interpreter::instruction::{DecodedSlot, DecodedFilterAttr, DecodedLookAndChoose};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub enum AbilityFrame {
@@ -61,8 +63,26 @@ pub enum AbilityFrame {
 
 impl Default for AbilityFrame {
     fn default() -> Self {
-        AbilityFrame::Raw { opcode: 0, value: 0, attr: 0, slot: 0 }
+        AbilityFrame::Raw {
+            opcode: 0,
+            value: 0,
+            attr: 0,
+            slot: 0,
+        }
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct AbilityFrameComponents<'a> {
+    pub raw_opcode: i32,
+    pub opcode: i32,
+    pub value: i32,
+    pub filter: DecodedFilterAttr,
+    pub slot: DecodedSlot,
+    pub raw_attr: u64,
+    pub raw_slot: i32,
+    pub is_negated: bool,
+    pub params: Option<&'a Value>,
 }
 
 impl AbilityFrame {
@@ -88,6 +108,114 @@ impl AbilityFrame {
             AbilityFrame::MetaRule { .. } => O_META_RULE,
             AbilityFrame::Raw { opcode, .. } => *opcode,
         }
+    }
+
+    pub fn components(&self) -> AbilityFrameComponents<'_> {
+        let raw_opcode = self.opcode();
+        let is_negated = self.is_negated();
+        let opcode =
+            if is_negated && raw_opcode >= crate::core::logic::constants::OPCODE_NEGATION_OFFSET {
+                raw_opcode - crate::core::logic::constants::OPCODE_NEGATION_OFFSET
+            } else {
+                raw_opcode
+            };
+
+        match self {
+            AbilityFrame::Return => AbilityFrameComponents {
+                raw_opcode,
+                opcode,
+                value: 0,
+                filter: DecodedFilterAttr::default(),
+                slot: DecodedSlot::default(),
+                raw_attr: 0,
+                raw_slot: 0,
+                is_negated,
+                params: None,
+            },
+            AbilityFrame::Draw { count } => AbilityFrameComponents {
+                raw_opcode,
+                opcode,
+                value: *count,
+                filter: DecodedFilterAttr::default(),
+                slot: DecodedSlot::default(),
+                raw_attr: 0,
+                raw_slot: 0,
+                is_negated,
+                params: None,
+            },
+            AbilityFrame::Semantic {
+                value,
+                filter,
+                slot,
+                params,
+                ..
+            } => AbilityFrameComponents {
+                raw_opcode,
+                opcode,
+                value: *value,
+                filter: *filter,
+                slot: *slot,
+                raw_attr: filter.to_attr(),
+                raw_slot: slot.to_raw(),
+                is_negated,
+                params: Some(params),
+            },
+            AbilityFrame::RecoverLive {
+                count,
+                filter,
+                slot,
+            }
+            | AbilityFrame::RecoverMember {
+                count,
+                filter,
+                slot,
+            }
+            | AbilityFrame::SelectMember {
+                count,
+                filter,
+                slot,
+            } => AbilityFrameComponents {
+                raw_opcode,
+                opcode,
+                value: *count,
+                filter: *filter,
+                slot: *slot,
+                raw_attr: filter.to_attr(),
+                raw_slot: slot.to_raw(),
+                is_negated,
+                params: None,
+            },
+            AbilityFrame::LookAndChoose { filter, slot, .. }
+            | AbilityFrame::MoveMember { filter, slot }
+            | AbilityFrame::MetaRule { filter, slot, .. } => AbilityFrameComponents {
+                raw_opcode,
+                opcode,
+                value: self.value(),
+                filter: *filter,
+                slot: *slot,
+                raw_attr: filter.to_attr(),
+                raw_slot: slot.to_raw(),
+                is_negated,
+                params: None,
+            },
+            AbilityFrame::Raw {
+                value, attr, slot, ..
+            } => AbilityFrameComponents {
+                raw_opcode,
+                opcode,
+                value: *value,
+                filter: DecodedFilterAttr::decode(*attr as i64),
+                slot: DecodedSlot::decode(*slot),
+                raw_attr: *attr,
+                raw_slot: *slot,
+                is_negated,
+                params: None,
+            },
+        }
+    }
+
+    pub fn get_components(&self) -> AbilityFrameComponents<'_> {
+        self.components()
     }
 
     pub fn value(&self) -> i32 {
@@ -120,7 +248,6 @@ impl AbilityFrame {
         }
     }
 
-
     pub fn is_negated(&self) -> bool {
         match self {
             AbilityFrame::Semantic { is_negated, .. } => *is_negated,
@@ -146,8 +273,6 @@ impl AbilityFrame {
         }
     }
 
-
-    
     pub fn raw_opcode(&self) -> i32 {
         self.opcode()
     }
@@ -161,24 +286,35 @@ impl AbilityFrame {
         self.slot()
     }
 
-
-    pub fn look_choose(&self) -> crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
+    pub fn look_choose(
+        &self,
+    ) -> crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
         match self {
             AbilityFrame::LookAndChoose { params, .. } => *params,
-            _ => crate::core::logic::interpreter::instruction::DecodedLookAndChoose::decode(self.value()),
+            _ => crate::core::logic::interpreter::instruction::DecodedLookAndChoose::decode(
+                self.value(),
+            ),
         }
     }
     pub fn is_dynamic(&self) -> bool {
-        (self.attr() & (A_STANDARD_COMPARE_ACCUMULATED_MASK << A_STANDARD_COMPARE_ACCUMULATED_SHIFT) as u64) != 0
+        (self.attr()
+            & (A_STANDARD_COMPARE_ACCUMULATED_MASK << A_STANDARD_COMPARE_ACCUMULATED_SHIFT) as u64)
+            != 0
     }
     pub fn scalar_dynamic_base(&self) -> i32 {
-        ((self.value() as u32 >> V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT) & V_SCALAR_DYNAMIC_BASE_VALUE_MASK) as i32
+        ((self.value() as u32 >> V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT)
+            & V_SCALAR_DYNAMIC_BASE_VALUE_MASK) as i32
     }
     pub fn scalar_dynamic_divisor(&self) -> i32 {
-        ((self.value() as u32 >> V_SCALAR_DYNAMIC_DIVISOR_SHIFT) & V_SCALAR_DYNAMIC_DIVISOR_MASK) as i32
+        ((self.value() as u32 >> V_SCALAR_DYNAMIC_DIVISOR_SHIFT) & V_SCALAR_DYNAMIC_DIVISOR_MASK)
+            as i32
     }
-    pub fn heart_requirements(&self) -> crate::core::logic::interpreter::instruction::DecodedHeartRequirements {
-        crate::core::logic::interpreter::instruction::DecodedHeartRequirements::decode(self.attr() as i64)
+    pub fn heart_requirements(
+        &self,
+    ) -> crate::core::logic::interpreter::instruction::DecodedHeartRequirements {
+        crate::core::logic::interpreter::instruction::DecodedHeartRequirements::decode(
+            self.attr() as i64
+        )
     }
     pub fn heart_counts(&self) -> crate::core::logic::interpreter::instruction::DecodedHeartCounts {
         crate::core::logic::interpreter::instruction::DecodedHeartCounts::decode(self.value())
@@ -212,7 +348,9 @@ impl AbilityFrame {
         }
     }
 
-    pub fn to_instruction(&self) -> crate::core::logic::interpreter::instruction::BytecodeInstruction {
+    pub fn to_instruction(
+        &self,
+    ) -> crate::core::logic::interpreter::instruction::BytecodeInstruction {
         let op = self.opcode();
         let v = self.value();
         let a = self.attr();
@@ -223,7 +361,12 @@ impl AbilityFrame {
             final_op += crate::core::logic::constants::OPCODE_NEGATION_OFFSET;
         }
 
-        crate::core::logic::interpreter::instruction::BytecodeInstruction { op: final_op, v, a: a as i64, raw_s: s }
+        crate::core::logic::interpreter::instruction::BytecodeInstruction {
+            op: final_op,
+            v,
+            a: a as i64,
+            raw_s: s,
+        }
     }
 }
 
@@ -247,22 +390,24 @@ pub struct FrameProgram {
 impl FrameProgram {
     pub fn from_bytecode(bytecode: &[i32]) -> Self {
         let mut frames = Vec::new();
-        let mut ip = 0;
 
-        while ip + crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION <= bytecode.len() {
-            let opcode = bytecode[ip];
-            let value = bytecode[ip + 1];
-            let attr = ((bytecode[ip + 3] as i64) << 32) | (bytecode[ip + 2] as u32 as i64);
-            let raw_s = bytecode[ip + 4];
+        for chunk in bytecode.chunks_exact(
+            crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION,
+        ) {
+            let opcode = chunk[0];
+            let value = chunk[1];
+            let attr = ((chunk[3] as i64) << 32) | (chunk[2] as u32 as i64);
+            let raw_s = chunk[4];
             frames.push(AbilityFrame::new(opcode, value, attr, raw_s));
-            ip += crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION;
         }
 
         Self { frames }
     }
 
     pub fn to_bytecode(&self) -> Vec<i32> {
-        let mut words = Vec::with_capacity(self.frames.len() * crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION);
+        let mut words = Vec::with_capacity(
+            self.frames.len() * crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION,
+        );
         for frame in &self.frames {
             let instr = frame.to_instruction();
             words.push(instr.op);
@@ -584,36 +729,56 @@ impl std::hash::Hash for Ability {
 }
 
 impl Ability {
-    pub fn bytecode_program(&self) -> BytecodeProgram {
+    pub fn semantic_frame_program(&self) -> Option<FrameProgram> {
         if let Some(frame_program) = &self.frame_program {
-            BytecodeProgram::from_slice(&frame_program.to_bytecode())
-        } else if !self.bytecode.is_empty() {
-            BytecodeProgram::from_slice(&self.bytecode)
-        } else {
-            BytecodeProgram::from_slice(&[])
+            return Some(frame_program.clone());
         }
+
+        if let Some(sparse) = &self.sparse_frame_index {
+            return Some(crate::core::logic::CardDatabase::sparse_entry_to_frame_program(
+                sparse,
+            ));
+        }
+
+        #[cfg(test)]
+        {
+            if !self.bytecode.is_empty() {
+                return Some(FrameProgram::from_bytecode(&self.bytecode));
+            }
+        }
+
+        None
+    }
+
+    pub fn bytecode_program(&self) -> BytecodeProgram {
+        let bytecode = self
+            .semantic_frame_program()
+            .map(|program| program.to_bytecode())
+            .unwrap_or_else(|| self.bytecode.clone());
+        BytecodeProgram::from_slice(&bytecode)
     }
 
     pub fn bytecode(&self) -> Vec<i32> {
-        if let Some(frame_program) = &self.frame_program {
-            frame_program.to_bytecode()
-        } else if !self.bytecode.is_empty() {
-            self.bytecode.clone()
-        } else {
-            self.bytecode_program().words().to_vec()
-        }
+        self.semantic_frame_program()
+            .map(|program| program.to_bytecode())
+            .unwrap_or_else(|| self.bytecode.clone())
     }
 
     pub fn get_frame(&self, frame_idx: usize) -> Option<AbilityFrame> {
-        if let Some(frame_program) = &self.frame_program {
-            return frame_program.frames.get(frame_idx).cloned();
-        }
-        if let Some(sparse) = &self.sparse_frame_index {
-            let fp = crate::core::logic::CardDatabase::sparse_entry_to_frame_program(sparse);
-            return fp.frames.get(frame_idx).cloned();
-        }
-        let fp = FrameProgram::from_bytecode(&self.bytecode());
-        fp.frames.get(frame_idx).cloned()
+        self.semantic_frame_program()
+            .and_then(|program| program.frames.get(frame_idx).cloned())
+    }
+
+    pub fn opcodes(&self) -> Vec<i32> {
+        self.semantic_frame_program()
+            .map(|program| program.frames.iter().map(AbilityFrame::opcode).collect())
+            .unwrap_or_else(|| {
+                self.bytecode_program()
+                    .decode_all()
+                    .into_iter()
+                    .map(|instruction| instruction.op)
+                    .collect()
+            })
     }
 }
 
@@ -626,7 +791,12 @@ mod tests {
         let program = FrameProgram {
             frames: vec![
                 AbilityFrame::Return,
-                AbilityFrame::Raw { opcode: 204, value: 3, attr: 0x1122_3344_5566_7788, slot: 9 },
+                AbilityFrame::Raw {
+                    opcode: 204,
+                    value: 3,
+                    attr: 0x1122_3344_5566_7788,
+                    slot: 9,
+                },
             ],
         };
 
@@ -636,7 +806,16 @@ mod tests {
         let decoded = BytecodeProgram::from_slice(&words).decode_all();
         assert_eq!(decoded.len(), 2);
         assert_eq!(decoded[0], AbilityFrame::Return.to_instruction());
-        assert_eq!(decoded[1], AbilityFrame::Raw { opcode: 204, value: 3, attr: 0x1122_3344_5566_7788, slot: 9 }.to_instruction());
+        assert_eq!(
+            decoded[1],
+            AbilityFrame::Raw {
+                opcode: 204,
+                value: 3,
+                attr: 0x1122_3344_5566_7788,
+                slot: 9
+            }
+            .to_instruction()
+        );
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

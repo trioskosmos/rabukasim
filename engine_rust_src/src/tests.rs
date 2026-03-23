@@ -75,9 +75,7 @@ fn test_game_initialization() {
     assert_eq!(state.players[0].live_zone, [-1; 3]);
     assert_eq!(state.players[1].live_zone, [-1; 3]);
     // Lives are shuffled into the main deck (may be drawn into hand)
-    assert!(
-        state.players[0].deck.contains(&11000) || state.players[0].hand.contains(&11000)
-    );
+    assert!(state.players[0].deck.contains(&11000) || state.players[0].hand.contains(&11000));
 }
 
 #[test]

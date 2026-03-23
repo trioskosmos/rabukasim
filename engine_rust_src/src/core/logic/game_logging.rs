@@ -110,7 +110,9 @@ impl GameState {
 
         if log_to_rule_log && !silent {
             let turn_prefix = format!("[Turn {}]", turn);
-            let rule_prefix = rule_ref.map(|rule| format!("[{}] ", rule)).unwrap_or_default();
+            let rule_prefix = rule_ref
+                .map(|rule| format!("[{}] ", rule))
+                .unwrap_or_default();
             let full_msg = format!("{}{}{}", turn_prefix, rule_prefix, description);
             if self.ui.rule_log.is_none() {
                 self.ui.rule_log = Some(Vec::with_capacity(32));

@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use super::state::GameState;
 use crate::core::alphazero_encoding::AlphaZeroEncoding;
 use crate::core::logic::CardDatabase;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StandardizedState {

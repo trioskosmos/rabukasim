@@ -26,7 +26,7 @@ fn test_move_to_discard_from_deck_mill() {
         ..Default::default()
     };
 
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_semantic_frames(&db, &crate::core::logic::models::FrameProgram::from_bytecode(&bc).frames, &ctx);
 
     assert_eq!(state.players[0].deck.len(), 2, "Should have 2 cards left in deck");
     assert_eq!(state.players[0].discard.len(), 3, "Should have 3 cards in discard");
@@ -60,7 +60,7 @@ fn test_move_to_deck_from_stage() {
         ..Default::default()
     };
 
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_semantic_frames(&db, &crate::core::logic::models::FrameProgram::from_bytecode(&bc).frames, &ctx);
 
     assert_eq!(state.players[0].stage[0], -1, "Stage slot 0 should be empty");
     assert_eq!(state.players[0].deck.len(), 1, "Deck should have 1 card");
@@ -91,7 +91,7 @@ fn test_search_deck_to_stage() {
         ..Default::default()
     };
 
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_semantic_frames(&db, &crate::core::logic::models::FrameProgram::from_bytecode(&bc).frames, &ctx);
 
     assert_eq!(state.players[0].stage[0], 101, "Stage slot 0 should have card 101");
     assert!(state.players[0].deck.is_empty(), "Deck should be empty");
@@ -124,7 +124,7 @@ fn test_look_and_choose_to_stage() {
         ..Default::default()
     };
 
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_semantic_frames(&db, &crate::core::logic::models::FrameProgram::from_bytecode(&bc).frames, &ctx);
 
     // Assertions
     // Remainder should go back to Discard for source=Deck (7 | _)

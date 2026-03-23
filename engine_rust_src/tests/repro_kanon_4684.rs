@@ -1,6 +1,7 @@
-use engine_rust::core::logic::{CardDatabase, GameState, AbilityContext, PendingInteraction, ActionFactory};
-use engine_rust::core::enums::{Phase, ChoiceType, O_SELECT_MODE};
-use std::sync::Arc;
+use engine_rust::core::enums::{ChoiceType, Phase, O_SELECT_MODE};
+use engine_rust::core::logic::{
+    AbilityContext, ActionFactory, CardDatabase, GameState, PendingInteraction,
+};
 use smallvec::smallvec;
 
 #[test]
@@ -15,7 +16,13 @@ fn test_repro_kanon_4684() {
     let card_id = *db.card_no_to_id.get("PL!SP-pb1-001-R").unwrap();
 
     // Ability 0: ON_LIVE_START
-    let ab = db.get_member(card_id).unwrap().abilities.get(0).unwrap().clone();
+    let ab = db
+        .get_member(card_id)
+        .unwrap()
+        .abilities
+        .get(0)
+        .unwrap()
+        .clone();
 
     // ----------------------------------------------------------------------------------
     // Case 1: Select "Pay Energy" (Choice 0)
@@ -31,16 +38,19 @@ fn test_repro_kanon_4684() {
     ctx.ability_index = 0;
     ctx.choice_index = 0; // Pay Energy
 
-    let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
-        &mut state,
-        &db,
-        Arc::new(ab.bytecode.clone()),
-        &mut ctx,
-    );
+    state.resolve_ability(&db, &ab, &ctx);
 
     // Verify 2 energy tapped
-    assert_eq!(state.core.players[p1].tapped_energy_mask.count_ones(), 2, "2 energy should be tapped");
-    assert_eq!(state.core.players[p1].hand.len(), 2, "Hand should remain 2 cards");
+    assert_eq!(
+        state.core.players[p1].tapped_energy_mask.count_ones(),
+        2,
+        "2 energy should be tapped"
+    );
+    assert_eq!(
+        state.core.players[p1].hand.len(),
+        2,
+        "Hand should remain 2 cards"
+    );
 
     // ----------------------------------------------------------------------------------
     // Case 2: Select "Discard Hand" (Choice 1)
@@ -55,22 +65,24 @@ fn test_repro_kanon_4684() {
     ctx2.ability_index = 0;
     ctx2.choice_index = 1; // Discard Hand
 
-    let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
-        &mut state,
-        &db,
-        Arc::new(ab.bytecode.clone()),
-        &mut ctx2,
-    );
+    state.resolve_ability(&db, &ab, &ctx2);
 
     // Should be suspended for MOVE_TO_DISCARD
-    assert_eq!(state.core.phase, Phase::Response, "Should be in Response phase for card selection");
+    assert_eq!(
+        state.core.phase,
+        Phase::Response,
+        "Should be in Response phase for card selection"
+    );
     assert_eq!(state.core.interaction_stack.len(), 1);
     let pi = state.core.interaction_stack.last().unwrap();
     assert_eq!(pi.choice_type, ChoiceType::SelectHandDiscard);
     assert_eq!(pi.v_remaining, 2, "Should expect 2 cards to discard");
 
     // Verify choice index was reset in the engine (so it doesn't try to use it for card selection yet)
-    assert_eq!(pi.ctx.choice_index, -1, "Choice index should be reset before suspension");
+    assert_eq!(
+        pi.ctx.choice_index, -1,
+        "Choice index should be reset before suspension"
+    );
 
     // ----------------------------------------------------------------------------------
     // Case 3: Verify Labels via ActionFactory
@@ -92,6 +104,14 @@ fn test_repro_kanon_4684() {
     println!("Label 0: {}", label0);
     println!("Label 1: {}", label1);
 
-    assert!(label0.contains("PAY_ENERGY"), "Label 0 should contain PAY_ENERGY. Got: {}", label0);
-    assert!(label1.contains("DISCARD_HAND"), "Label 1 should contain DISCARD_HAND. Got: {}", label1);
+    assert!(
+        label0.contains("PAY_ENERGY"),
+        "Label 0 should contain PAY_ENERGY. Got: {}",
+        label0
+    );
+    assert!(
+        label1.contains("DISCARD_HAND"),
+        "Label 1 should contain DISCARD_HAND. Got: {}",
+        label1
+    );
 }

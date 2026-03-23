@@ -178,19 +178,29 @@ fn test_trigger_activated_eli() {
     state.resolve_bytecode_cref(&db, &custom_bytecode, &ctx);
 
     // Game rule: RECOVER_MEMBER always prompts user even with 1 valid card
-    assert_eq!(state.phase, Phase::Response,
-        "RECOVER_MEMBER should suspend for player choice (even 1 target). Hand: {:?}", state.players[0].hand);
+    assert_eq!(
+        state.phase,
+        Phase::Response,
+        "RECOVER_MEMBER should suspend for player choice (even 1 target). Hand: {:?}",
+        state.players[0].hand
+    );
     // Put Eli back in hand to allow activation
     state.players[0].hand.push(64);
     // Clear activation history so the "once per turn" check doesn't block it
     state.players[0].used_abilities.clear();
 
-    assert_eq!(state.interaction_stack.len(), 1, "Should have 1 pending interaction");
+    assert_eq!(
+        state.interaction_stack.len(),
+        1,
+        "Should have 1 pending interaction"
+    );
 
     // Resume with choice 0 (select Rin, the only valid card at index 0)
     let mut safety_counter = 0;
     while state.phase == Phase::Response && safety_counter < 5 {
-        state.step(&db, ACTION_BASE_CHOICE + 0).expect("Failed to resume ability");
+        state
+            .step(&db, ACTION_BASE_CHOICE + 0)
+            .expect("Failed to resume ability");
         state.process_trigger_queue(&db);
         safety_counter += 1;
     }
@@ -198,10 +208,19 @@ fn test_trigger_activated_eli() {
     // After choice: Rin should be in hand
     state.process_trigger_queue(&db);
 
-    assert_eq!(state.phase, Phase::Main,
-        "Should return to Main after selection. Hand: {:?}", state.players[0].hand);
-    assert!(state.players[0].hand.contains(&124),
-        "Hand should contain recovered member Rin (ID 124). Hand: {:?}", state.players[0].hand);
-    assert!(!state.players[0].discard.contains(&124),
-        "Rin should no longer be in discard");
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "Should return to Main after selection. Hand: {:?}",
+        state.players[0].hand
+    );
+    assert!(
+        state.players[0].hand.contains(&124),
+        "Hand should contain recovered member Rin (ID 124). Hand: {:?}",
+        state.players[0].hand
+    );
+    assert!(
+        !state.players[0].discard.contains(&124),
+        "Rin should no longer be in discard"
+    );
 }

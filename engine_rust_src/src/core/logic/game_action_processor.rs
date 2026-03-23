@@ -1,22 +1,36 @@
-use crate::core::enums::*;
-use super::state::{GameState, ActionReceiver};
 use super::card_db::CardDatabase;
 use super::models::AbilityContext;
+use super::state::{ActionReceiver, GameState};
+use crate::core::enums::*;
 // use crate::core::hearts::HeartBoard;
-use super::handlers::{MainPhaseController, MulliganController, ResponseController, TurnController};
 use super::action_factory::ActionFactory;
+use super::ai_encoding::GameStateEncoding;
+use super::handlers::{
+    MainPhaseController, MulliganController, ResponseController, TurnController,
+};
 use crate::core::heuristics::OriginalHeuristic;
 use crate::core::mcts::{SearchHorizon, MCTS};
-use super::ai_encoding::GameStateEncoding;
 
 impl GameState {
     pub fn get_combo_other_slot(primary_slot: usize, is_next: bool) -> usize {
         if primary_slot == 0 {
-            if is_next { 1 } else { 2 }
+            if is_next {
+                1
+            } else {
+                2
+            }
         } else if primary_slot == 1 {
-            if is_next { 2 } else { 0 }
+            if is_next {
+                2
+            } else {
+                0
+            }
         } else {
-            if is_next { 0 } else { 1 }
+            if is_next {
+                0
+            } else {
+                1
+            }
         }
     }
 

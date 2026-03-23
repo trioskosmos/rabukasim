@@ -26,17 +26,12 @@ fn main() {
         state.players[p1].tapped_energy_mask
     );
 
-    let mut ctx1 = engine_rust::core::logic::AbilityContext {
+    let ctx1 = engine_rust::core::logic::AbilityContext {
         player_id: p1 as u8,
         source_card_id: catchu_live_id,
         ..Default::default()
     };
-    let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
-        &mut state,
-        &db,
-        std::sync::Arc::new(ability.bytecode().clone()),
-        &mut ctx1,
-    );
+    state.resolve_ability(&db, &ability, &ctx1);
 
     println!(
         "After 1st execution tapped mask: {}",
@@ -44,17 +39,12 @@ fn main() {
     );
     println!("Score after 1st: {}", state.players[p1].score);
 
-    let mut ctx2 = engine_rust::core::logic::AbilityContext {
+    let ctx2 = engine_rust::core::logic::AbilityContext {
         player_id: p1 as u8,
         source_card_id: catchu_live_id,
         ..Default::default()
     };
-    let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
-        &mut state,
-        &db,
-        std::sync::Arc::new(ability.bytecode().clone()),
-        &mut ctx2,
-    );
+    state.resolve_ability(&db, &ability, &ctx2);
 
     println!(
         "After 2nd execution tapped mask: {}",

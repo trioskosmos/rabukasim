@@ -1,6 +1,6 @@
 use super::*;
-use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::enums::Zone;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::interaction_zone::remove_card_from_zone;
 
 fn choice_type_for_zone(effective_zone: u8) -> ChoiceType {
@@ -82,7 +82,30 @@ pub fn resolve_select_cards(
             ctx.choice_index = -1;
             ctx.v_remaining = 0;
             if !state.players[p_idx].looked_cards.is_empty() {
-                if matches!(suspend_choice(
+                if matches!(
+                    suspend_choice(
+                        state,
+                        db,
+                        ctx,
+                        ctx,
+                        frame_idx,
+                        O_SELECT_CARDS,
+                        s,
+                        choice_type,
+                        a as u64,
+                        0,
+                    ),
+                    HandlerResult::Suspend
+                ) {
+                    return HandlerResult::Suspend;
+                }
+            }
+        } else if rem > 0 {
+            state.players[p_idx].looked_cards.remove(choice as usize);
+            ctx.v_remaining = rem;
+            ctx.choice_index = -1;
+            if matches!(
+                suspend_choice(
                     state,
                     db,
                     ctx,
@@ -92,27 +115,10 @@ pub fn resolve_select_cards(
                     s,
                     choice_type,
                     a as u64,
-                    0,
-                ), HandlerResult::Suspend) {
-                    return HandlerResult::Suspend;
-                }
-            }
-        } else if rem > 0 {
-            state.players[p_idx].looked_cards.remove(choice as usize);
-            ctx.v_remaining = rem;
-            ctx.choice_index = -1;
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                frame_idx,
-                O_SELECT_CARDS,
-                s,
-                choice_type,
-                a as u64,
-                rem,
-            ), HandlerResult::Suspend) {
+                    rem,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }

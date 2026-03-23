@@ -1,17 +1,17 @@
-use crate::core::logic::models::AbilityFrame;
 use super::flow_helpers::current_effect;
 use super::HandlerResult;
+use crate::core::logic::models::AbilityFrame;
 
-#[path = "flow_select.rs"]
-mod flow_select;
-#[path = "flow_effects.rs"]
-mod flow_effects;
-#[path = "flow_swap.rs"]
-mod flow_swap;
 #[path = "flow_context.rs"]
 mod flow_context;
+#[path = "flow_effects.rs"]
+mod flow_effects;
+#[path = "flow_select.rs"]
+mod flow_select;
 #[path = "flow_state_mod.rs"]
 mod flow_state_mod;
+#[path = "flow_swap.rs"]
+mod flow_swap;
 use crate::core::enums::*;
 use crate::core::logic::constants::FILTER_MASK_LOWER;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
@@ -23,13 +23,14 @@ pub fn handle_meta_control(
     frame: &AbilityFrame,
     frame_idx: usize,
 ) -> HandlerResult {
-    let op = frame.opcode();
-    let v = frame.value();
-    let a = frame.attr() as i64;
-    let s = frame.slot();
+    let frame_data = frame.components();
+    let op = frame_data.opcode;
+    let v = frame_data.value;
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
     let base_p = ctx.activator_id as usize;
     let p_idx = ctx.player_id as usize;
-    let slot_info = frame.dslot();
+    let slot_info = frame_data.slot;
     let target_slot = slot_info.target_slot as i32;
 
     match op {
@@ -75,7 +76,9 @@ pub fn handle_meta_control(
                     {
                         entry.2 += count;
                     } else {
-                        state.players[p_idx].negated_triggers.push((cid, trigger_type, count));
+                        state.players[p_idx]
+                            .negated_triggers
+                            .push((cid, trigger_type, count));
                     }
                 }
             }
@@ -92,7 +95,18 @@ pub fn handle_meta_control(
         | O_BATON_TOUCH_MOD
         | O_IMMUNITY => {
             return flow_state_mod::handle_state_modifiers(
-                state, db, ctx, frame, op, v, a, s, p_idx, base_p, slot_info, target_slot,
+                state,
+                db,
+                ctx,
+                frame,
+                op,
+                v,
+                a,
+                s,
+                p_idx,
+                base_p,
+                slot_info,
+                target_slot,
             );
         }
         O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER => {
@@ -110,14 +124,33 @@ pub fn handle_meta_control(
         }
         O_META_RULE => {
             return flow_effects::handle_meta_rule(
-                state, db, ctx, frame, frame_idx, a, v, p_idx, base_p, slot_info, target_slot,
+                state,
+                db,
+                ctx,
+                frame,
+                frame_idx,
+                a,
+                v,
+                p_idx,
+                base_p,
+                slot_info,
+                target_slot,
             );
         }
         O_COLOR_SELECT => {
             return flow_context::handle_color_select(state, db, ctx, frame_idx);
         }
         O_SWAP_AREA => {
-            return flow_swap::handle_swap_area(state, ctx, base_p, slot_info, target_slot, a, s, v);
+            return flow_swap::handle_swap_area(
+                state,
+                ctx,
+                base_p,
+                slot_info,
+                target_slot,
+                a,
+                s,
+                v,
+            );
         }
         O_REPEAT_ABILITY => {
             return flow_context::handle_repeat_ability(ctx, v);

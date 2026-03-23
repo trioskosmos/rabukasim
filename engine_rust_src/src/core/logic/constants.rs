@@ -8,31 +8,51 @@ pub const ACTION_SPACE: usize = 16384;
 pub use crate::core::generated_constants::*;
 
 // --- Filter Bitfield Shifts (Revision 5) ---
-// These shifts define the "A" parameter (attribute/filter) in the bytecode.
+// These shifts define the "A" parameter (attribute/filter) in the semantic frame layout.
 // Alignment: This uses the `A_STANDARD` layout from `generated_layout.rs`.
 //
 // Layout Mapping (Revision 5):
-pub const FILTER_TARGET_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_TARGET_PLAYER_SHIFT as u64;
-pub const FILTER_TYPE_SHIFT_R5: u64 = crate::core::generated_layout::A_STANDARD_CARD_TYPE_SHIFT as u64;
-pub const FILTER_GROUP_ENABLE_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_GROUP_ENABLED_SHIFT as u64;
-pub const FILTER_GROUP_ID_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_GROUP_ID_SHIFT as u64;
-pub const FILTER_STATE_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_IS_TAPPED_SHIFT as u64;
-pub const FILTER_UNIT_ENABLE_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_UNIT_ENABLED_SHIFT as u64;
-pub const FILTER_UNIT_ID_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_UNIT_ID_SHIFT as u64;
-pub const FILTER_VALUE_ENABLE_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_VALUE_ENABLED_SHIFT as u64;
-pub const FILTER_VALUE_THRESHOLD_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_VALUE_THRESHOLD_SHIFT as u64;
+pub const FILTER_TARGET_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_TARGET_PLAYER_SHIFT as u64;
+pub const FILTER_TYPE_SHIFT_R5: u64 =
+    crate::core::generated_layout::A_STANDARD_CARD_TYPE_SHIFT as u64;
+pub const FILTER_GROUP_ENABLE_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_GROUP_ENABLED_SHIFT as u64;
+pub const FILTER_GROUP_ID_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_GROUP_ID_SHIFT as u64;
+pub const FILTER_STATE_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_IS_TAPPED_SHIFT as u64;
+pub const FILTER_UNIT_ENABLE_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_UNIT_ENABLED_SHIFT as u64;
+pub const FILTER_UNIT_ID_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_UNIT_ID_SHIFT as u64;
+pub const FILTER_VALUE_ENABLE_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_VALUE_ENABLED_SHIFT as u64;
+pub const FILTER_VALUE_THRESHOLD_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_VALUE_THRESHOLD_SHIFT as u64;
 pub const FILTER_VALUE_LE_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_IS_LE_SHIFT as u64;
-pub const FILTER_VALUE_TYPE_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_IS_COST_TYPE_SHIFT as u64;
-pub const FILTER_COLOR_SHIFT_R5: u64 = crate::core::generated_layout::A_STANDARD_COLOR_MASK_SHIFT as u64;
-pub const FILTER_CHAR_1_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_CHAR_ID_1_SHIFT as u64;
-pub const FILTER_CHAR_2_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_CHAR_ID_2_SHIFT as u64;
-pub const FILTER_ZONE_MASK_SHIFT_R5: u64 = crate::core::generated_layout::A_STANDARD_ZONE_MASK_SHIFT as u64;
-pub const FILTER_SPECIAL_ID_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_SPECIAL_ID_SHIFT as u64;
-pub const FILTER_SETSUNA_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_IS_SETSUNA_SHIFT as u64;
-pub const FILTER_DYNAMIC_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_COMPARE_ACCUMULATED_SHIFT as u64;
-pub const FILTER_OPTIONAL_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_IS_OPTIONAL_SHIFT as u64;
-pub const FILTER_KW_ENERGY_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_KEYWORD_ENERGY_SHIFT as u64;
-pub const FILTER_KW_MEMBER_SHIFT: u64 = crate::core::generated_layout::A_STANDARD_KEYWORD_MEMBER_SHIFT as u64;
+pub const FILTER_VALUE_TYPE_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_IS_COST_TYPE_SHIFT as u64;
+pub const FILTER_COLOR_SHIFT_R5: u64 =
+    crate::core::generated_layout::A_STANDARD_COLOR_MASK_SHIFT as u64;
+pub const FILTER_CHAR_1_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_CHAR_ID_1_SHIFT as u64;
+pub const FILTER_CHAR_2_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_CHAR_ID_2_SHIFT as u64;
+pub const FILTER_ZONE_MASK_SHIFT_R5: u64 =
+    crate::core::generated_layout::A_STANDARD_ZONE_MASK_SHIFT as u64;
+pub const FILTER_SPECIAL_ID_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_SPECIAL_ID_SHIFT as u64;
+pub const FILTER_SETSUNA_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_IS_SETSUNA_SHIFT as u64;
+pub const FILTER_DYNAMIC_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_COMPARE_ACCUMULATED_SHIFT as u64;
+pub const FILTER_OPTIONAL_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_IS_OPTIONAL_SHIFT as u64;
+pub const FILTER_KW_ENERGY_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_KEYWORD_ENERGY_SHIFT as u64;
+pub const FILTER_KW_MEMBER_SHIFT: u64 =
+    crate::core::generated_layout::A_STANDARD_KEYWORD_MEMBER_SHIFT as u64;
 
 // NOTE: Some opcodes (e.g., O_SET_HEART_COST) use A_HEART_COST layout.
 // Use `crate::core::generated_layout::A_HEART_COST_...` for those.
@@ -102,11 +122,11 @@ pub const TARGET_SLOT_FROM_CONTEXT: i32 = 10;
 pub const STAGE_SLOT_COUNT: usize = 3;
 
 // --- Ability Effect Mask Bits (precomputed to avoid cffi parsing issues) ---
-pub const EFFECT_MASK_BLADE: u64 = 1;      // was: 1 << 0
-pub const EFFECT_MASK_HEART: u64 = 2;      // was: 1 << 1
-pub const EFFECT_MASK_COST: u64 = 4;       // was: 1 << 2
-pub const EFFECT_MASK_REQ: u64 = 8;        // was: 1 << 3
-pub const EFFECT_MASK_GRANT: u64 = 16;     // was: 1 << 4
-pub const EFFECT_MASK_RULE: u64 = 32;      // was: 1 << 5
-pub const EFFECT_MASK_SCORE: u64 = 64;     // was: 1 << 6
-pub const EFFECT_MASK_DRAW: u64 = 128;     // was: 1 << 7
+pub const EFFECT_MASK_BLADE: u64 = 1; // was: 1 << 0
+pub const EFFECT_MASK_HEART: u64 = 2; // was: 1 << 1
+pub const EFFECT_MASK_COST: u64 = 4; // was: 1 << 2
+pub const EFFECT_MASK_REQ: u64 = 8; // was: 1 << 3
+pub const EFFECT_MASK_GRANT: u64 = 16; // was: 1 << 4
+pub const EFFECT_MASK_RULE: u64 = 32; // was: 1 << 5
+pub const EFFECT_MASK_SCORE: u64 = 64; // was: 1 << 6
+pub const EFFECT_MASK_DRAW: u64 = 128; // was: 1 << 7

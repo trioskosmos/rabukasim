@@ -32,21 +32,37 @@ fn test_performance_modal_breakdown_and_sum() {
     state.do_performance_phase(&db);
 
     // 5. Verify results
-    let res = state.ui.performance_results.get(&0).expect("Should have results for P0");
+    let res = state
+        .ui
+        .performance_results
+        .get(&0)
+        .expect("Should have results for P0");
 
-    let total_score = res["total_score"].as_u64().expect("Should have total_score");
-    assert_eq!(total_score, 1 + 1 + 2, "Total score should be sum of lives (1+1) + bonus (2)");
+    let total_score = res["total_score"]
+        .as_u64()
+        .expect("Should have total_score");
+    assert_eq!(
+        total_score,
+        1 + 1 + 2,
+        "Total score should be sum of lives (1+1) + bonus (2)"
+    );
 
     let breakdown = &res["breakdown"]["scores"];
     assert!(breakdown.is_array());
     let scores = breakdown.as_array().unwrap();
 
     // Base scores should be summed
-    let base = scores.iter().find(|s| s["type"] == "base").expect("Should have base score");
+    let base = scores
+        .iter()
+        .find(|s| s["type"] == "base")
+        .expect("Should have base score");
     assert_eq!(base["value"], 2);
 
     // Bonus should be present
-    let bonus = scores.iter().find(|s| s["type"] == "triggered_ability").expect("Should have bonus score");
+    let bonus = scores
+        .iter()
+        .find(|s| s["type"] == "triggered_ability")
+        .expect("Should have bonus score");
     assert_eq!(bonus["value"], 2);
     assert_eq!(bonus["source_id"], 101);
 }

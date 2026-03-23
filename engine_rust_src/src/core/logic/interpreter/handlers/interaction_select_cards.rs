@@ -1,10 +1,9 @@
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::{CHOICE_DONE, FILTER_IS_OPTIONAL};
-use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
-use crate::core::logic::interpreter::instruction::BytecodeInstruction;
-use crate::core::{O_SELECT_CARDS};
+use crate::core::logic::{AbilityContext, CardDatabase, GameState};
+use crate::core::O_SELECT_CARDS;
 
 #[path = "interaction_select_cards_resolve.rs"]
 mod interaction_select_cards_resolve;
@@ -18,15 +17,16 @@ pub fn handle_select_cards(
     frame: &crate::core::logic::models::AbilityFrame,
     instr_ip: usize,
 ) -> HandlerResult {
-    let v = frame.raw_value();
-    let a = frame.raw_attr() as i64;
-    let s = frame.raw_slot();
+    let frame_data = frame.components();
+    let v = frame_data.value;
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
     let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
     let optional_prompt_marker = -((v as i16) + 2);
     let is_variable_selection = v < 0;
 
-    let slot_info = frame.dslot();
+    let slot_info = frame_data.slot;
     let source_zone = slot_info.source_zone as u8;
     let ts = slot_info.target_slot;
     let effective_zone = if source_zone != 0 {
@@ -37,23 +37,22 @@ pub fn handle_select_cards(
         7
     };
 
-    if is_optional
-        && is_variable_selection
-        && ctx.choice_index == -1
-        && ctx.v_remaining == -1
-    {
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            ctx,
-            instr_ip,
-            O_SELECT_CARDS,
-            0,
-            ChoiceType::Optional,
-            a as u64,
-            VARIABLE_SELECT_CARDS_OPTIONAL_PROMPT,
-        ), HandlerResult::Suspend) {
+    if is_optional && is_variable_selection && ctx.choice_index == -1 && ctx.v_remaining == -1 {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                instr_ip,
+                O_SELECT_CARDS,
+                0,
+                ChoiceType::Optional,
+                a as u64,
+                VARIABLE_SELECT_CARDS_OPTIONAL_PROMPT,
+            ),
+            HandlerResult::Suspend
+        ) {
             return HandlerResult::Suspend;
         }
     }
@@ -76,18 +75,21 @@ pub fn handle_select_cards(
     }
 
     if is_optional && v == 99 && ctx.choice_index == -1 && ctx.v_remaining == -1 {
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            ctx,
-            instr_ip,
-            O_SELECT_CARDS,
-            0,
-            ChoiceType::Optional,
-            a as u64,
-            optional_prompt_marker,
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                instr_ip,
+                O_SELECT_CARDS,
+                0,
+                ChoiceType::Optional,
+                a as u64,
+                optional_prompt_marker,
+            ),
+            HandlerResult::Suspend
+        ) {
             return HandlerResult::Suspend;
         }
     }
@@ -136,22 +138,25 @@ pub fn handle_select_cards(
             7 => ChoiceType::SelectDiscardPlay,
             _ => ChoiceType::LookAndChoose,
         };
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            ctx,
-            instr_ip,
-            O_SELECT_CARDS,
-            0,
-            choice_type,
-            a as u64,
-            if ctx.v_remaining >= 0 {
-                ctx.v_remaining
-            } else {
-                v as i16
-            },
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                instr_ip,
+                O_SELECT_CARDS,
+                0,
+                choice_type,
+                a as u64,
+                if ctx.v_remaining >= 0 {
+                    ctx.v_remaining
+                } else {
+                    v as i16
+                },
+            ),
+            HandlerResult::Suspend
+        ) {
             return HandlerResult::Suspend;
         }
     }

@@ -1,10 +1,10 @@
-use crate::core::enums::*;
-use crate::core::models::LiveCard;
-use super::state::GameState;
 use super::card_db::CardDatabase;
-use super::models::AbilityContext;
-use crate::core::hearts::HeartBoard;
 use super::filter::CardFilter;
+use super::models::AbilityContext;
+use super::state::GameState;
+use crate::core::enums::*;
+use crate::core::hearts::HeartBoard;
+use crate::core::models::LiveCard;
 use rand::seq::SliceRandom;
 // use rand::SeedableRng;
 use rand_pcg::Pcg64;
@@ -12,18 +12,21 @@ use rand_pcg::Pcg64;
 impl GameState {
     pub fn resolve_deck_refresh(&mut self, player_idx: usize) {
         if !self.ui.silent {
-            self.log(format!("Rule 4.4.2: Player {}'s main deck is empty. Refreshing from discard.", player_idx));
+            self.log(format!(
+                "Rule 4.4.2: Player {}'s main deck is empty. Refreshing from discard.",
+                player_idx
+            ));
         }
-        
+
         // Use current state to seed the shuffle for deterministic replay if needed
         let player = &mut self.core.players[player_idx];
         let mut discard_cards: Vec<i32> = player.discard.drain(..).collect();
-        
+
         // Shuffle discard
         use rand::SeedableRng;
         let mut rng = Pcg64::seed_from_u64(self.core.turn as u64 * 1000 + player_idx as u64);
         discard_cards.shuffle(&mut rng);
-        
+
         // Main deck's new cards go AFTER any remaining cards (Rule 10.2.3)
         // Insert at bottom (index 0) to preserve top cards
         for cid in discard_cards {
@@ -34,8 +37,11 @@ impl GameState {
         if player.deck.len() > 60 {
             player.deck.truncate(60);
         }
-        
-        player.set_flag(crate::core::logic::player::PlayerState::FLAG_DECK_REFRESHED, true);
+
+        player.set_flag(
+            crate::core::logic::player::PlayerState::FLAG_DECK_REFRESHED,
+            true,
+        );
     }
 
     pub fn check_win_condition(&mut self) {
@@ -65,8 +71,13 @@ impl GameState {
         for i in 0..2 {
             // 1. Deck Refresh (Rule 4.4.2)
             if self.core.players[i].deck.is_empty() && !self.core.players[i].discard.is_empty() {
-                if self.core.players[i].get_flag(super::player::PlayerState::FLAG_SUPPRESS_AUTO_DECK_REFRESH) {
-                    self.core.players[i].set_flag(super::player::PlayerState::FLAG_SUPPRESS_AUTO_DECK_REFRESH, false);
+                if self.core.players[i]
+                    .get_flag(super::player::PlayerState::FLAG_SUPPRESS_AUTO_DECK_REFRESH)
+                {
+                    self.core.players[i].set_flag(
+                        super::player::PlayerState::FLAG_SUPPRESS_AUTO_DECK_REFRESH,
+                        false,
+                    );
                 } else {
                     self.resolve_deck_refresh(i);
                 }
@@ -105,35 +116,46 @@ impl GameState {
         self.process_trigger_queue(db);
     }
 
-
     pub fn sync_stat_caches(&mut self, p_idx: usize, db: &CardDatabase) {
-        use crate::core::logic::rules::{calculate_board_aura, get_effective_blades, get_effective_hearts};
-        
+        use crate::core::logic::rules::{
+            calculate_board_aura, get_effective_blades, get_effective_hearts,
+        };
+
         // 1. Calculate and cache the BoardAura (single pass over constant abilities)
         let aura = calculate_board_aura(self, p_idx, db);
         self.core.players[p_idx].board_aura = aura.clone();
-        
+
         // 2. Synchronize legacy cost modifiers (legacy compatibility)
         self.core.players[p_idx].slot_cost_modifiers = aura.slot_cost_modifiers;
         self.core.players[p_idx].heart_req_reductions = aura.heart_req_reductions;
         self.core.players[p_idx].heart_req_additions = aura.heart_req_additions;
+        for &(_, col, val) in &self.core.players[p_idx].heart_req_reduction_logs {
+            self.core.players[p_idx]
+                .heart_req_reductions
+                .add_to_color(col as usize, val as i32);
+        }
+        for &(_, col, val) in &self.core.players[p_idx].heart_req_addition_logs {
+            self.core.players[p_idx]
+                .heart_req_additions
+                .add_to_color(col as usize, val as i32);
+        }
 
         // 3. Calculate effective stats (now O(1) inside because they use board_aura)
         let mut total_blades = 0u32;
         let mut total_hearts = HeartBoard::default();
         let mut slot_blades = [0u32; 3];
         let mut slot_hearts = [HeartBoard::default(); 3];
-        
+
         for slot_idx in 0..3 {
             let b = get_effective_blades(self, p_idx, slot_idx, db, 1);
             slot_blades[slot_idx] = b;
             total_blades += b;
-            
+
             let h = get_effective_hearts(self, p_idx, slot_idx, db, 1);
             slot_hearts[slot_idx] = h;
             total_hearts.add(h);
         }
-        
+
         let player = &mut self.core.players[p_idx];
         player.cached_total_blades = total_blades;
         player.cached_total_hearts = total_hearts;
@@ -141,26 +163,55 @@ impl GameState {
         player.cached_slot_hearts = slot_hearts;
     }
 
-
     pub fn card_matches_filter(&self, db: &CardDatabase, cid: i32, filter_attr: u64) -> bool {
         self.card_matches_filter_with_ctx(db, cid, filter_attr, &AbilityContext::default())
     }
 
-    pub fn card_matches_filter_with_ctx(&self, db: &CardDatabase, cid: i32, filter_attr: u64, ctx: &AbilityContext) -> bool {
+    pub fn card_matches_filter_with_ctx(
+        &self,
+        db: &CardDatabase,
+        cid: i32,
+        filter_attr: u64,
+        ctx: &AbilityContext,
+    ) -> bool {
         self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, None, ctx, false)
     }
 
-    pub fn card_matches_filter_with_ctx_logs(&self, db: &CardDatabase, cid: i32, filter_attr: u64, ctx: &AbilityContext) -> bool {
+    pub fn card_matches_filter_with_ctx_logs(
+        &self,
+        db: &CardDatabase,
+        cid: i32,
+        filter_attr: u64,
+        ctx: &AbilityContext,
+    ) -> bool {
         self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, None, ctx, true)
     }
 
-    pub fn card_matches_filter_with_struct(&self, db: &CardDatabase, cid: i32, filter: &CardFilter, ctx: &AbilityContext) -> bool {
+    pub fn card_matches_filter_with_struct(
+        &self,
+        db: &CardDatabase,
+        cid: i32,
+        filter: &CardFilter,
+        ctx: &AbilityContext,
+    ) -> bool {
         self.card_matches_filter_with_ctx_internal(db, cid, 0, Some(filter), ctx, false)
     }
 
-    fn card_matches_filter_with_ctx_internal(&self, db: &CardDatabase, cid: i32, filter_attr: u64, filter_struct: Option<&CardFilter>, ctx: &AbilityContext, debug: bool) -> bool {
-        if cid == -1 { return false; }
-        if filter_attr == 0 && filter_struct.is_none() { return true; }
+    fn card_matches_filter_with_ctx_internal(
+        &self,
+        db: &CardDatabase,
+        cid: i32,
+        filter_attr: u64,
+        filter_struct: Option<&CardFilter>,
+        ctx: &AbilityContext,
+        debug: bool,
+    ) -> bool {
+        if cid == -1 {
+            return false;
+        }
+        if filter_attr == 0 && filter_struct.is_none() {
+            return true;
+        }
 
         let filter_storage;
         let filter = if let Some(f) = filter_struct {
@@ -169,9 +220,9 @@ impl GameState {
             filter_storage = CardFilter::from_attr(filter_attr as i64);
             &filter_storage
         };
-        
+
         let needs_dynamic_hearts = filter.color_mask != 0;
-        
+
         // Fast Path: If the filter only checks static attributes (ID, Type, Group, Unit, Char)
         // and doesn't require stage-specific state (tapped, hearts, ownership, or NOT_SELF),
         // we can skip the expensive stage scanning loop.
@@ -196,9 +247,25 @@ impl GameState {
                         };
 
                         let res = if debug {
-                            filter.matches_with_logs(db, self, cid, ctx, Some((p_idx, s_idx)), tapped, Some(&h_arr))
+                            filter.matches_with_logs(
+                                db,
+                                self,
+                                cid,
+                                ctx,
+                                Some((p_idx, s_idx)),
+                                tapped,
+                                Some(&h_arr),
+                            )
                         } else {
-                            filter.matches(self, db, cid, Some((p_idx, s_idx)), tapped, Some(&h_arr), ctx)
+                            filter.matches(
+                                self,
+                                db,
+                                cid,
+                                Some((p_idx, s_idx)),
+                                tapped,
+                                Some(&h_arr),
+                                ctx,
+                            )
                         };
                         if res {
                             return true;

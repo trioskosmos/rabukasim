@@ -1,6 +1,6 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_discard_selection(
@@ -38,7 +38,8 @@ pub fn handle_discard_selection(
             .iter()
             .filter(|&&cid| {
                 db.get_member(cid).is_some()
-                    && (filter_attr == 0 || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx))
+                    && (filter_attr == 0
+                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx))
             })
             .cloned()
             .collect();
@@ -58,18 +59,21 @@ pub fn handle_discard_selection(
         target_ctx.choice_index = -1;
 
         if ctx.choice_index == -1 {
-            if matches!(suspend_choice(
-                state,
-                db,
-                &target_ctx,
-                &target_ctx,
-                frame_idx,
-                O_PLAY_MEMBER_FROM_DISCARD,
-                s,
-                ChoiceType::SelectDiscardPlay,
-                filter_attr,
-                remaining,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    &target_ctx,
+                    &target_ctx,
+                    frame_idx,
+                    O_PLAY_MEMBER_FROM_DISCARD,
+                    s,
+                    ChoiceType::SelectDiscardPlay,
+                    filter_attr,
+                    remaining,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }
@@ -97,18 +101,21 @@ pub fn handle_discard_selection(
         } else {
             ChoiceType::SelectStage
         };
-        if matches!(suspend_choice(
-            state,
-            db,
-            &target_ctx,
-            &target_ctx,
-            frame_idx,
-            O_PLAY_MEMBER_FROM_DISCARD,
-            s,
-            choice_type,
-            filter_attr_base,
-            next_remaining,
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                &target_ctx,
+                &target_ctx,
+                frame_idx,
+                O_PLAY_MEMBER_FROM_DISCARD,
+                s,
+                choice_type,
+                filter_attr_base,
+                next_remaining,
+            ),
+            HandlerResult::Suspend
+        ) {
             return HandlerResult::Suspend;
         }
     }

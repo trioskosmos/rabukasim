@@ -1,7 +1,7 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
-use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::constants::CHOICE_DONE;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 
 fn suspend_pay_energy(
     state: &mut GameState,
@@ -55,7 +55,8 @@ pub fn handle_pay_energy(
         .count() as i32;
     let requires_explicit_selection = state.phase == Phase::Response;
 
-    let is_optional = frame.filter().is_optional;
+    let frame_data = frame.components();
+    let is_optional = frame_data.filter.is_optional;
 
     // --- CASE 1: Variable Energy Payment (e.g. Card 878) ---
     if v == -1 {
@@ -92,7 +93,9 @@ pub fn handle_pay_energy(
         } else if ctx.choice_index >= 0 {
             // An energy card was selected
             let e_idx = ctx.choice_index as usize;
-            if e_idx < state.players[p_idx].energy_zone.len() && !state.players[p_idx].is_energy_tapped(e_idx) {
+            if e_idx < state.players[p_idx].energy_zone.len()
+                && !state.players[p_idx].is_energy_tapped(e_idx)
+            {
                 state.players[p_idx].set_energy_tapped(e_idx, true);
                 ctx.v_accumulated += 1;
             }
@@ -136,7 +139,7 @@ pub fn handle_pay_energy(
                 O_PAY_ENERGY,
                 0,
                 ChoiceType::Optional,
-                frame.filter().to_attr(),
+                frame_data.raw_attr,
                 -1,
             );
         }
@@ -203,7 +206,9 @@ pub fn handle_pay_energy(
     }
 
     let e_idx = ctx.choice_index as usize;
-    if e_idx >= state.players[p_idx].energy_zone.len() || state.players[p_idx].is_energy_tapped(e_idx) {
+    if e_idx >= state.players[p_idx].energy_zone.len()
+        || state.players[p_idx].is_energy_tapped(e_idx)
+    {
         return HandlerResult::SetCond(false);
     }
 

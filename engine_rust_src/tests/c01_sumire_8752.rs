@@ -4,8 +4,8 @@ use engine_rust::core::logic::TriggerType;
 use engine_rust::core::logic::AbilityContext;
 use engine_rust::core::logic::MemberCard;
 use engine_rust::core::logic::Ability;
+use engine_rust::core::logic::models::{AbilityFrame, FrameProgram};
 use engine_rust::core::enums::*;
-use std::sync::Arc;
 
 #[test]
 fn test_sumire_8752_repro() {
@@ -28,11 +28,23 @@ fn test_sumire_8752_repro() {
 
     let mut ab = Ability::default();
     ab.trigger = TriggerType::OnPlay;
-    ab.bytecode = vec![
-        10, 2, 0, 0, 0,       // DRAW(2)
-        63, 1, (filter_attr & 0xFFFFFFFF) as i32, (filter_attr >> 32) as i32, 458756, // PLAY_MEMBER_FROM_DISCARD(1)
-        1, 0, 0, 0, 0         // RETURN
-    ];
+    ab.frame_program = Some(FrameProgram {
+        frames: vec![
+            AbilityFrame::Raw {
+                opcode: 10,
+                value: 2,
+                attr: 0,
+                slot: 0,
+            },
+            AbilityFrame::Raw {
+                opcode: 63,
+                value: 1,
+                attr: filter_attr as u64,
+                slot: 458756,
+            },
+            AbilityFrame::Return,
+        ],
+    });
     sumire.abilities.push(ab);
     db.members.insert(sumire_id, sumire);
 
@@ -61,9 +73,9 @@ fn test_sumire_8752_repro() {
         ..Default::default()
     };
 
-    println!("--- Running Bytecode ---");
-    let bc = Arc::new(db.members[&sumire_id].abilities[0].bytecode.clone());
-    state.resolve_bytecode(&db, bc, &ctx);
+    println!("--- Running Frames ---");
+    let ability = db.members[&sumire_id].abilities[0].clone();
+    state.resolve_ability(&db, &ability, &ctx);
 
     println!("Hand size after DRAW: {}", state.core.players[p1].hand.len());
     println!("Interaction stack size: {}", state.core.interaction_stack.len());

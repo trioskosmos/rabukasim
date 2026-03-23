@@ -1,5 +1,5 @@
-use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::constants::FLAG_REVEAL_UNTIL_IS_LIVE;
+use crate::core::logic::models::AbilityFrame;
 
 use super::HandlerResult;
 
@@ -66,11 +66,17 @@ pub fn handle_select_mode(
         let second_target = frame_idx + 3 + frames[second_jump].raw_value() as usize;
         let first_is_live_reveal = frames
             .get(first_target)
-            .map(|target| target.raw_opcode() == crate::core::enums::O_REVEAL_UNTIL && (target.raw_slot() as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0)
+            .map(|target| {
+                target.raw_opcode() == crate::core::enums::O_REVEAL_UNTIL
+                    && (target.raw_slot() as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0
+            })
             .unwrap_or(false);
         let second_is_live_reveal = frames
             .get(second_target)
-            .map(|target| target.raw_opcode() == crate::core::enums::O_REVEAL_UNTIL && (target.raw_slot() as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0)
+            .map(|target| {
+                target.raw_opcode() == crate::core::enums::O_REVEAL_UNTIL
+                    && (target.raw_slot() as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0
+            })
             .unwrap_or(false);
 
         if first_is_live_reveal ^ second_is_live_reveal {
@@ -79,14 +85,12 @@ pub fn handle_select_mode(
     }
     if choice >= v as usize {
         ctx.choice_index = -1;
-        return HandlerResult::Branch(
-                frame_idx + 1 + ((v as usize).saturating_sub(1)),
-        );
+        return HandlerResult::Branch(frame_idx + 1 + ((v as usize).saturating_sub(1)));
     }
 
-    let target_effect_idx = frame_idx + 2 + choice + frames[frame_idx + 1 + choice].raw_value() as usize;
+    let target_effect_idx =
+        frame_idx + 2 + choice + frames[frame_idx + 1 + choice].raw_value() as usize;
 
     ctx.choice_index = -1;
     HandlerResult::Branch(target_effect_idx)
 }
-

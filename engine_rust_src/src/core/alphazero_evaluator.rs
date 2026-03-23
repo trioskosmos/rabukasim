@@ -1,16 +1,16 @@
 // Basic imports
-use crate::core::logic::state::GameState;
-use crate::core::logic::card_db::CardDatabase;
-use crate::core::heuristics::{Heuristic, HeuristicConfig};
 #[cfg(feature = "extension-module")]
 use crate::core::alphazero_encoding_vanilla::AlphaZeroVanillaEncoding;
 #[cfg(feature = "extension-module")]
-use crate::core::logic::constants::ACTION_SPACE;
-#[cfg(feature = "extension-module")]
 use crate::core::generated_constants::{
-    ACTION_BASE_HAND, ACTION_BASE_LIVESET, ACTION_BASE_MULLIGAN, ACTION_BASE_PASS,
-    ACTION_BASE_RPS, ACTION_BASE_RPS_P2, ACTION_BASE_STAGE_SLOTS, ACTION_BASE_TURN_ORDER_FIRST,
+    ACTION_BASE_HAND, ACTION_BASE_LIVESET, ACTION_BASE_MULLIGAN, ACTION_BASE_PASS, ACTION_BASE_RPS,
+    ACTION_BASE_RPS_P2, ACTION_BASE_STAGE_SLOTS, ACTION_BASE_TURN_ORDER_FIRST,
 };
+use crate::core::heuristics::{Heuristic, HeuristicConfig};
+use crate::core::logic::card_db::CardDatabase;
+#[cfg(feature = "extension-module")]
+use crate::core::logic::constants::ACTION_SPACE;
+use crate::core::logic::state::GameState;
 
 /// Combined output from the Transformer for a single state.
 #[derive(Debug, Clone)]
@@ -82,7 +82,10 @@ pub struct PyAlphaZeroEvaluator {
 #[cfg(feature = "extension-module")]
 impl PyAlphaZeroEvaluator {
     pub fn new(model: PyObject, tensor_encoding: PythonTensorEncoding) -> Self {
-        Self { model, tensor_encoding }
+        Self {
+            model,
+            tensor_encoding,
+        }
     }
 }
 
@@ -101,7 +104,8 @@ const VANILLA_ACTION_LIVESET_OFFSET: usize = VANILLA_ACTION_MULLIGAN_OFFSET + 20
 #[cfg(feature = "extension-module")]
 const VANILLA_ACTION_MAIN_PLAY_OFFSET: usize = VANILLA_ACTION_LIVESET_OFFSET + 20;
 #[cfg(feature = "extension-module")]
-const VANILLA_ACTION_LIVE_RESULT_OFFSET: usize = VANILLA_ACTION_MAIN_PLAY_OFFSET + VANILLA_MAIN_PLAY_ACTIONS;
+const VANILLA_ACTION_LIVE_RESULT_OFFSET: usize =
+    VANILLA_ACTION_MAIN_PLAY_OFFSET + VANILLA_MAIN_PLAY_ACTIONS;
 
 #[cfg(feature = "extension-module")]
 fn engine_action_to_vanilla_policy_id(engine_action: i32) -> Option<usize> {
@@ -115,13 +119,20 @@ fn engine_action_to_vanilla_policy_id(engine_action: i32) -> Option<usize> {
         return Some(VANILLA_ACTION_RPS_OFFSET + (engine_action - ACTION_BASE_RPS_P2) as usize);
     }
     if (ACTION_BASE_TURN_ORDER_FIRST..=ACTION_BASE_TURN_ORDER_FIRST + 1).contains(&engine_action) {
-        return Some(VANILLA_ACTION_TURN_CHOICE_OFFSET + (engine_action - ACTION_BASE_TURN_ORDER_FIRST) as usize);
+        return Some(
+            VANILLA_ACTION_TURN_CHOICE_OFFSET
+                + (engine_action - ACTION_BASE_TURN_ORDER_FIRST) as usize,
+        );
     }
     if (ACTION_BASE_MULLIGAN..ACTION_BASE_MULLIGAN + 20).contains(&engine_action) {
-        return Some(VANILLA_ACTION_MULLIGAN_OFFSET + (engine_action - ACTION_BASE_MULLIGAN) as usize);
+        return Some(
+            VANILLA_ACTION_MULLIGAN_OFFSET + (engine_action - ACTION_BASE_MULLIGAN) as usize,
+        );
     }
     if (ACTION_BASE_LIVESET..ACTION_BASE_LIVESET + 20).contains(&engine_action) {
-        return Some(VANILLA_ACTION_LIVESET_OFFSET + (engine_action - ACTION_BASE_LIVESET) as usize);
+        return Some(
+            VANILLA_ACTION_LIVESET_OFFSET + (engine_action - ACTION_BASE_LIVESET) as usize,
+        );
     }
     if (ACTION_BASE_HAND..ACTION_BASE_HAND + 100).contains(&engine_action) {
         let adjusted = (engine_action - ACTION_BASE_HAND) as usize;
@@ -132,13 +143,18 @@ fn engine_action_to_vanilla_policy_id(engine_action: i32) -> Option<usize> {
         }
     }
     if (ACTION_BASE_STAGE_SLOTS..=ACTION_BASE_STAGE_SLOTS + 2).contains(&engine_action) {
-        return Some(VANILLA_ACTION_LIVE_RESULT_OFFSET + (engine_action - ACTION_BASE_STAGE_SLOTS) as usize);
+        return Some(
+            VANILLA_ACTION_LIVE_RESULT_OFFSET + (engine_action - ACTION_BASE_STAGE_SLOTS) as usize,
+        );
     }
     None
 }
 
 #[cfg(feature = "extension-module")]
-fn expand_vanilla_policy_to_engine_space(compact_policy: &[f32], legal_actions: &[i32]) -> Vec<f32> {
+fn expand_vanilla_policy_to_engine_space(
+    compact_policy: &[f32],
+    legal_actions: &[i32],
+) -> Vec<f32> {
     let mut expanded = vec![0.0; ACTION_SPACE];
     let mut mapped_total = 0.0f32;
 

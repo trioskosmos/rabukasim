@@ -1,8 +1,8 @@
+use engine_rust::core::enums::Phase;
+use engine_rust::core::logic::turn_sequencer::TurnSequencer;
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
 use std::fs;
 use std::time::Instant;
-use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
-use engine_rust::core::logic::turn_sequencer::TurnSequencer;
-use engine_rust::core::enums::Phase;
 
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
@@ -93,7 +93,14 @@ fn main() {
 
     let mut state = GameState::default();
     let energy_vec: Vec<i32> = db.energy_db.keys().take(12).cloned().collect();
-    state.initialize_game(p0_members, p1_members, energy_vec.clone(), energy_vec, p0_lives, p1_lives);
+    state.initialize_game(
+        p0_members,
+        p1_members,
+        energy_vec.clone(),
+        energy_vec,
+        p0_lives,
+        p1_lives,
+    );
     state.ui.silent = true;
 
     // Skip to Main phase
@@ -102,24 +109,31 @@ fn main() {
     }
 
     println!("\n=== CODE STRUCTURE ANALYSIS ===\n");
-    
+
     // Count actual number of legal actions in starting Main phase
     let mut actions: Vec<i32> = Vec::new();
     state.generate_legal_actions(&db, state.current_player as usize, &mut actions);
-    println!("[START] Player {}: {} legal actions available", state.current_player, actions.len());
+    println!(
+        "[START] Player {}: {} legal actions available",
+        state.current_player,
+        actions.len()
+    );
     println!("  Actions: {:?}", actions);
 
     // Measure evaluation cost
     println!("\n=== EVALUATION COST BREAKDOWN ===\n");
-    
+
     let eval_start = Instant::now();
     for _ in 0..1000 {
         let _ = TurnSequencer::plan_full_turn(&state, &db);
-        break;  // Just ONE search to measure timing
+        break; // Just ONE search to measure timing
     }
     let eval_time = eval_start.elapsed();
-    
-    println!("[SEARCH 1] Full search time: {:.3}ms", eval_time.as_secs_f32() * 1000.0);
+
+    println!(
+        "[SEARCH 1] Full search time: {:.3}ms",
+        eval_time.as_secs_f32() * 1000.0
+    );
 
     // Breakdown what evaluate_stop_state involves:
     println!("\n=== WHAT HAPPENS IN SEARCH ===\n");
@@ -140,24 +154,35 @@ fn main() {
     println!("\nKey insight: state.clone() happens for EVERY node");
 
     println!("\n=== SEARCH TREE ANALYSIS ===\n");
-    
+
     let mut _typical_depth = 0;
     let mut _nodes_visited: Vec<usize> = Vec::new();
-    
+
     // Simulate search tree: show typical branching
     println!("Typical action count by depth:");
     println!("  Depth 0 (start of turn): {} actions", actions.len());
-    
+
     // Try a few actions to see what's available
     for (i, &action) in actions.iter().take(2).enumerate() {
         let mut next_state = state.clone();
         if next_state.step(&db, action).is_ok() {
             let mut next_actions: Vec<i32> = Vec::new();
             if next_state.phase == Phase::Main {
-                next_state.generate_legal_actions(&db, next_state.current_player as usize, &mut next_actions);
-                println!("  Depth 1 (after action {}): {} actions available", i, next_actions.len());
+                next_state.generate_legal_actions(
+                    &db,
+                    next_state.current_player as usize,
+                    &mut next_actions,
+                );
+                println!(
+                    "  Depth 1 (after action {}): {} actions available",
+                    i,
+                    next_actions.len()
+                );
             } else {
-                println!("  Depth 1 (after action {}): Phase changed to {:?}", i, next_state.phase);
+                println!(
+                    "  Depth 1 (after action {}): Phase changed to {:?}",
+                    i, next_state.phase
+                );
             }
         }
     }
@@ -166,31 +191,39 @@ fn main() {
     println!("1. **State clone cost**: evaluate_stop_state clones state EVERY call");
     println!("   - For vanilla, we just count cards - clone isn't needed!");
     println!("   - Savings: 1.7µs × N nodes per turn");
-    
+
     println!("\n2. **Depth ceiling**: If average moves per depth = 2-3");
     println!("   - Depth 10 probably hits phase change around depth 3-5");
     println!("   - Exploring further is redundant");
-    
+
     println!("\n3. **LiveSet overhead**: If we're in MainPhase only");
     println!("   - evaluate_stop_state checks for LiveSet each time");
     println!("   - Main phase doesn't transition to LiveSet during search");
     println!("   - This check is redundant");
 
     println!("\n=== ACTUAL TIME BREAKDOWN ===\n");
-    
+
     // Profile what's actually slow
     let t = Instant::now();
     for _ in 0..100 {
         let _state_clone = state.clone();
     }
-    println!("[CLONE x100] {:.3}ms ({:.3}µs each)", t.elapsed().as_secs_f32() * 1000.0, t.elapsed().as_secs_f32() * 1000.0 / 100.0);
-    
+    println!(
+        "[CLONE x100] {:.3}ms ({:.3}µs each)",
+        t.elapsed().as_secs_f32() * 1000.0,
+        t.elapsed().as_secs_f32() * 1000.0 / 100.0
+    );
+
     let t = Instant::now();
     for _ in 0..1000 {
         let mut s = state.clone();
         let _ = s.step(&db, ACTION_BASE_PASS);
     }
-    println!("[STEP x1000] {:.3}ms ({:.3}µs each)", t.elapsed().as_secs_f32() * 1000.0, t.elapsed().as_secs_f32() * 1000.0 / 1000.0);
+    println!(
+        "[STEP x1000] {:.3}ms ({:.3}µs each)",
+        t.elapsed().as_secs_f32() * 1000.0,
+        t.elapsed().as_secs_f32() * 1000.0 / 1000.0
+    );
 
     println!("\n=== CONCLUSION ===\n");
     println!("For vanilla (~700 nodes per turn with ~60ms total):");

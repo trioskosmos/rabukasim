@@ -35,7 +35,11 @@ mod tests {
             println!("Live abilities count: {}", l.abilities.len());
             if !l.abilities.is_empty() {
                 println!("Ability 0 trigger: {:?}", l.abilities[0].trigger);
-                println!("Ability 0 bytecode: {:?}", l.abilities[0].bytecode);
+                if let Some(frame_program) = l.abilities[0].semantic_frame_program() {
+                    println!("Ability 0 frames: {:?}", frame_program.frames);
+                } else {
+                    println!("Ability 0 frames: <unavailable>");
+                }
                 println!(
                     "Ability 0 conditions count: {}",
                     l.abilities[0].conditions.len()
@@ -59,7 +63,8 @@ mod tests {
             activator_id: 0,
             ..Default::default()
         };
-        let instr = crate::core::logic::interpreter::instruction::BytecodeInstruction::new(81, 1, 0, 0);
+        let instr =
+            crate::core::logic::interpreter::instruction::BytecodeInstruction::new(81, 1, 0, 0);
         crate::core::logic::interpreter::handlers::handle_energy(
             &mut state, &db, &mut ctx, &instr, 0,
         );

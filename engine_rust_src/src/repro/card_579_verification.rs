@@ -1,9 +1,10 @@
-use crate::core::logic::*;
 use crate::core::logic::filter::CardFilter;
+use crate::core::logic::*;
 use crate::test_helpers::{create_test_state, load_real_db, TestUtils};
 
 #[test]
-fn test_card_579_ability_0_cost_comparison() { // Card No: PL!N-bp1-006-P
+fn test_card_579_ability_0_cost_comparison() {
+    // Card No: PL!N-bp1-006-P
     let db = load_real_db();
     let mut state = create_test_state();
     state.ui.silent = true;
@@ -72,14 +73,23 @@ fn test_card_579_ability_0_cost_comparison() { // Card No: PL!N-bp1-006-P
     let ability = db.lives[&target_id]
         .abilities
         .iter()
-        .find(|a| matches!(a.trigger, TriggerType::OnLiveStart) && a.bytecode.contains(&16))
+        .find(|a| {
+            matches!(a.trigger, TriggerType::OnLiveStart)
+                && a.semantic_frame_program()
+                    .map(|program| program.frames.iter().any(|frame| frame.opcode() == 16))
+                    .unwrap_or(false)
+        })
         .unwrap();
-    let bytecode = ability.bytecode.clone();
 
-    writeln!(log_file, "Bytecode: {:?}", bytecode).unwrap();
+    writeln!(
+        log_file,
+        "Ability frames: {:?}",
+        ability.semantic_frame_program()
+    )
+    .unwrap();
 
     // Test Case 1: P0 Cost > P1 Cost -> Should boost score
-    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
+    state.resolve_ability(&db, ability, &ctx);
 
     writeln!(
         log_file,
@@ -98,7 +108,7 @@ fn test_card_579_ability_0_cost_comparison() { // Card No: PL!N-bp1-006-P
     state.set_stage(1, 1, liella_member_id); // P1 Center: High Cost
     state.set_stage(0, 1, low_cost_id); // P0 Center: Lower Cost
 
-    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
+    state.resolve_ability(&db, ability, &ctx);
     writeln!(
         log_file,
         "Resulting Bonus (Case 2): {}",
@@ -153,10 +163,10 @@ fn test_card_579_ability_1_heart_filter() {
         ..Default::default()
     };
 
-    let bytecode = target_live.abilities[1].bytecode.clone();
+    let ability = &target_live.abilities[1];
 
     // Test Case 1: Left side has 0 hearts -> Should NOT add blades
-    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
+    state.resolve_ability(&db, ability, &ctx);
     assert_eq!(
         state.players[0].blade_buffs[0], 0,
         "Should NOT add blades if heart count is insufficient"
@@ -164,29 +174,34 @@ fn test_card_579_ability_1_heart_filter() {
 
     // Test Case 2: Raise the same member to 3 Yellow hearts total.
     println!("--- Test Case 2: Sufficient Hearts ---");
-    state
-        .players[0]
-        .heart_buffs[0]
-        .add_to_color(2, (3 - base_yellow_hearts) as i32);
+    state.players[0].heart_buffs[0].add_to_color(2, (3 - base_yellow_hearts) as i32);
 
     // Verify filter matches manually using the builder (Proof of Phase 3 readability)
     let mut filter = CardFilter::new();
-    filter.target_player = 1;        // Me
+    filter.target_player = 1; // Me
     filter.group_enabled = true;
-    filter.group_id = 3;             // Liella!
+    filter.group_id = 3; // Liella!
     filter.value_enabled = true;
-    filter.value_threshold = 3;       // 3+ Hearts
-    filter.color_mask = 1 << 2;      // Yellow (Color 2)
+    filter.value_threshold = 3; // 3+ Hearts
+    filter.color_mask = 1 << 2; // Yellow (Color 2)
     filter.is_enabled = true;
 
     let member_id = liella_member_id;
     let hearts = state.get_effective_hearts(0, 0, &db, 0).to_array();
     assert!(
-        filter.matches(&state, &db, member_id, None, false, Some(&hearts), &crate::core::logic::AbilityContext::default()),
+        filter.matches(
+            &state,
+            &db,
+            member_id,
+            None,
+            false,
+            Some(&hearts),
+            &crate::core::logic::AbilityContext::default()
+        ),
         "Builder filter should match the stage member with hearts"
     );
 
-    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
+    state.resolve_ability(&db, ability, &ctx);
     state.dump_verbose();
     assert_eq!(
         state.players[0].blade_buffs[0], 2,

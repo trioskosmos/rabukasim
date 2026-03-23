@@ -1,11 +1,11 @@
 use super::card_db::{CardDatabase, LiveCard};
 use super::game::GameState;
+use super::interpreter::check_condition;
 use super::models::*;
 use super::player::PlayerState;
 use super::rules::calculate_board_aura;
 use crate::core::enums::*;
 use crate::core::hearts::*;
-use super::interpreter::check_condition;
 use serde_json::json; // Value removed
 
 pub fn process_heart_modifiers_frames(
@@ -50,8 +50,14 @@ pub fn process_heart_modifiers_frames(
             }
         } else if op == O_INCREASE_HEART_COST {
             let val = frame.value();
-            let attr = frame.attr() as usize;
-            let idx = if attr == 0 || attr == 7 { 6 } else if attr <= 6 { attr - 1 } else { 99 };
+            let slot = frame.slot() as usize;
+            let idx = if slot == 7 {
+                6
+            } else if slot <= 6 {
+                slot
+            } else {
+                99
+            };
             if idx < 7 {
                 let old = req_board.get_color_count(idx);
                 req_board.set_color_count(idx, old.saturating_add(val as u8));
@@ -66,8 +72,20 @@ pub fn process_heart_modifiers_frames(
         } else if op == O_TRANSFORM_HEART {
             let from_attr = frame.value() as usize;
             let to_attr = frame.attr() as usize;
-            let from_idx = if from_attr == 7 { 6 } else if from_attr >= 1 && from_attr <= 6 { from_attr - 1 } else { 99 };
-            let to_idx = if to_attr == 7 { 6 } else if to_attr >= 1 && to_attr <= 6 { to_attr - 1 } else { 99 };
+            let from_idx = if from_attr == 7 {
+                6
+            } else if from_attr >= 1 && from_attr <= 6 {
+                from_attr - 1
+            } else {
+                99
+            };
+            let to_idx = if to_attr == 7 {
+                6
+            } else if to_attr >= 1 && to_attr <= 6 {
+                to_attr - 1
+            } else {
+                99
+            };
 
             if from_idx < 7 && to_idx < 7 && from_idx != to_idx {
                 let count = req_board.get_color_count(from_idx);
@@ -126,7 +144,7 @@ pub fn get_live_requirements(
                 }
 
                 let mut touches_live_requirements = false;
-                if let Some(frame_program) = ab.frame_program.as_ref() {
+                if let Some(frame_program) = ab.semantic_frame_program() {
                     for frame in &frame_program.frames {
                         let op = frame.opcode();
                         if op == O_INCREASE_HEART_COST {
@@ -177,15 +195,25 @@ pub fn get_live_requirements(
                 activator_id: p_idx as u8,
                 ..Default::default()
             };
-            if ab.conditions.iter().all(|c| check_condition(state, db, p_idx, c, &ctx, 1)) {
-                if let Some(frame_program) = ab.frame_program.as_ref() {
-                    process_heart_modifiers_frames(&frame_program.frames, &mut req_board, &mut adjustments, &live.name, live.card_id);
+            if ab
+                .conditions
+                .iter()
+                .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
+            {
+                if let Some(frame_program) = ab.semantic_frame_program() {
+                    process_heart_modifiers_frames(
+                        &frame_program.frames,
+                        &mut req_board,
+                        &mut adjustments,
+                        &live.name,
+                        live.card_id,
+                    );
                 }
             }
         }
     }
 
-    // Constant effects from stage members are now cached in BoardAura 
+    // Constant effects from stage members are now cached in BoardAura
     // and applied via heart_req_reductions/additions below.
 
     if !use_cached_modifiers {

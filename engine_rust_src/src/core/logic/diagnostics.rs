@@ -1,7 +1,7 @@
+use crate::core::logic::constants::STAGE_SLOT_COUNT;
 use crate::core::logic::player::PlayerState;
 use crate::core::logic::CardDatabase;
 use crate::core::logic::GameState;
-use crate::core::logic::constants::STAGE_SLOT_COUNT;
 
 impl GameState {
     pub fn dump_diagnostics(&self, db: &CardDatabase) {

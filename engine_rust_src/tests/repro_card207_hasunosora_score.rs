@@ -2,7 +2,7 @@ use engine_rust::core::models::CardDatabase;
 
 /// Card 207: Link to the FUTURE (PL!HS-bp2-020-L)
 /// **IMPORTANT: This is a LIVE CARD, not a member card!**
-/// 
+///
 /// Ability: {{live_start.png|ライブ開始時}}自分のステージにいる名前の異なる『蓮ノ空』のメンバー1人につき、このカードのスコアを＋２する。
 /// Effect: For each 'Hasunosora' member with a different name on your stage, increase this card's score by +2
 ///
@@ -28,7 +28,7 @@ fn test_card207_is_live_card_in_database() {
     println!("Card 207 (PL!HS-bp2-020-L) is a LIVE CARD");
     println!("  Name: Link to the FUTURE");
     println!("  Location in JSON: data/cards_compiled.json -> live_db[\"207\"]");
-    
+
     // Member accessor should fail
     if let Some(_member) = db.get_member(207) {
         println!("  ✗ Unexpectedly found in member database!");
@@ -59,7 +59,7 @@ fn test_card207_hasunosora_score_ability_exists() {
             } else {
                 println!("  Groups: {:?}", member.groups);
             }
-            
+
             // Verify this card has abilities
             println!("  Abilities: {}", member.abilities.len());
         }
@@ -98,7 +98,11 @@ fn test_verify_hasunosora_group_id() {
                 card_id,
                 member.card_no,
                 member.groups,
-                if is_hasunosora { "✓ Hasunosora" } else { "✗ Not Hasunosora" }
+                if is_hasunosora {
+                    "✓ Hasunosora"
+                } else {
+                    "✗ Not Hasunosora"
+                }
             );
         }
     }

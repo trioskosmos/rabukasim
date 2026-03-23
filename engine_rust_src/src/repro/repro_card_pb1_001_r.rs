@@ -1,4 +1,3 @@
-
 use crate::core::generated_constants::ACTION_BASE_MODE;
 use crate::core::logic::*;
 use crate::test_helpers::{load_real_db, TestUtils};
@@ -30,11 +29,7 @@ fn test_repro_pb1_001_r_softlock_fix() {
 
     // Start the ability to hit the mode selection interaction suspension
     println!("--- Starting Ability for Card {} ---", card_id);
-    state.resolve_bytecode_cref(
-        &db,
-        &db.get_member(card_id).unwrap().abilities[0].bytecode,
-        &ctx,
-    );
+    state.resolve_ability(&db, &db.get_member(card_id).unwrap().abilities[0], &ctx);
     state.dump_verbose();
 
     // Engine should be suspended waiting for interaction
@@ -64,10 +59,10 @@ fn test_repro_pb1_001_r_all_combinations() {
     // Mode 1: Discard 2 Hand (v=2)
 
     let scenarios = vec![
-        (2, 2, true, true),   // Both valid
-        (0, 2, false, true),  // Only hand valid (Energy hidden, Discard valid)
-        (2, 0, true, true),   // Both valid (Discard valid for partial)
-        (0, 0, false, true),  // Only discard valid (Energy hidden, Discard valid for partial)
+        (2, 2, true, true),  // Both valid
+        (0, 2, false, true), // Only hand valid (Energy hidden, Discard valid)
+        (2, 0, true, true),  // Both valid (Discard valid for partial)
+        (0, 0, false, true), // Only discard valid (Energy hidden, Discard valid for partial)
     ];
 
     for (en, hn, exp_0, exp_1) in scenarios {
@@ -83,11 +78,7 @@ fn test_repro_pb1_001_r_all_combinations() {
         };
 
         let target_id = 4684;
-        state.resolve_bytecode_cref(
-            &db,
-            &db.get_member(target_id).unwrap().abilities[0].bytecode,
-            &ctx,
-        );
+        state.resolve_ability(&db, &db.get_member(target_id).unwrap().abilities[0], &ctx);
         state.dump_verbose();
 
         let mut actions = Vec::new();
@@ -133,11 +124,7 @@ fn test_repro_card_103_full_board() {
     // The engine should NOT suspend for slot selection because there are 0 valid slots.
     // It should skip the effect for P0.
 
-    state.resolve_bytecode_cref(
-        &db,
-        &db.get_member(103).unwrap().abilities[0].bytecode,
-        &ctx,
-    );
+    state.resolve_ability(&db, &db.get_member(103).unwrap().abilities[0], &ctx);
     state.dump_verbose();
 
     // Verification:

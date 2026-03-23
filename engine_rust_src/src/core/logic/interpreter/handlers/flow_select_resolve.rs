@@ -121,41 +121,51 @@ pub fn resolve_select_choice(
                 .count(),
         };
 
-            let remaining_picks = (v as usize).saturating_sub(current_selection_count);
+        let remaining_picks = (v as usize).saturating_sub(current_selection_count);
 
         if remaining_picks > 0 && remaining_candidates > 0 {
             ctx.choice_index = -1;
             ctx.v_remaining = remaining_picks as i16;
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                instr_ip,
-                op,
-                s,
-                ChoiceType::SelectMember,
-                filter_attr,
-                remaining_picks as i16,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    ctx,
+                    instr_ip,
+                    op,
+                    s,
+                    ChoiceType::SelectMember,
+                    filter_attr,
+                    remaining_picks as i16,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         } else if remaining_picks > 0 && current_selection_count == 1 {
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                instr_ip,
-                op,
-                s,
-                ChoiceType::Optional,
-                0,
-                partial_selection_prompt,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    ctx,
+                    instr_ip,
+                    op,
+                    s,
+                    ChoiceType::Optional,
+                    0,
+                    partial_selection_prompt,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }
+    }
+
+    if !supports_partial_completion && !is_move_member_follow_up {
+        ctx.choice_index = -1;
     }
 
     HandlerResult::Continue

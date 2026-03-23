@@ -31,11 +31,11 @@
 //! Bit 63:     Keyword: Activated Member
 
 use super::CardDatabase;
-use serde::{Deserialize, Serialize};
 pub use crate::core::generated_constants::*;
 use crate::core::logic::constants::*;
+use serde::{Deserialize, Serialize};
 // use crate::core::enums::Zone;
-use crate::core::models::{GameState, AbilityContext};
+use crate::core::models::{AbilityContext, GameState};
 
 // --- Filter Bitfield Constants (Now loaded from generated_constants.rs via constants.rs) ---
 pub const FILTER_STATE_FLAGS_MASK: u64 = 61440; // 0xF000
@@ -97,17 +97,17 @@ impl CardFilter {
 
         // 0. Target Player Filter (bits 0-1)
         if self.target_player > 0 && self.target_player < 4 {
-             if let Some((p_idx, _)) = checked_slot {
-                 let target_p = match self.target_player {
-                     1 => ctx.player_id,
-                     2 => 1 - ctx.player_id,
-                     3 => 255, // Both (always pass later)
-                     _ => ctx.player_id,
-                 };
-                 if target_p != 255 && p_idx != target_p {
-                     return false;
-                 }
-             }
+            if let Some((p_idx, _)) = checked_slot {
+                let target_p = match self.target_player {
+                    1 => ctx.player_id,
+                    2 => 1 - ctx.player_id,
+                    3 => 255, // Both (always pass later)
+                    _ => ctx.player_id,
+                };
+                if target_p != 255 && p_idx != target_p {
+                    return false;
+                }
+            }
         }
 
         // 1. Card Type Filter (bits 2-3)
@@ -167,7 +167,11 @@ impl CardFilter {
         // 4. Character ID Filter
         if self.char_id_1 > 0 {
             let member = db.get_member(cid);
-            let live = if member.is_none() { db.get_live(cid) } else { None };
+            let live = if member.is_none() {
+                db.get_live(cid)
+            } else {
+                None
+            };
             let (char_mask, normalized_name, _card_name) = if let Some(m) = member {
                 (m.char_mask, Some(&m.normalized_name), Some(&m.name))
             } else if let Some(l) = live {
@@ -474,7 +478,10 @@ impl CardFilter {
         if self.zone_mask > 0 {
             if !state.is_card_in_zone(ctx.player_id, self.target_player, cid, self.zone_mask) {
                 if state.debug.debug_mode {
-                    println!("[DEBUG_FILTER] Card {} fails Zone check. Mask: {}, Player: {}", cid, self.zone_mask, self.target_player);
+                    println!(
+                        "[DEBUG_FILTER] Card {} fails Zone check. Mask: {}, Player: {}",
+                        cid, self.zone_mask, self.target_player
+                    );
                 }
                 return false;
             }
@@ -493,7 +500,15 @@ impl CardFilter {
         is_tapped_override: bool,
         effective_hearts: Option<&[u8; 7]>,
     ) -> bool {
-        self.matches(state, db, cid, checked_slot, is_tapped_override, effective_hearts, ctx)
+        self.matches(
+            state,
+            db,
+            cid,
+            checked_slot,
+            is_tapped_override,
+            effective_hearts,
+            ctx,
+        )
     }
 
     pub fn from_attr(a: i64) -> Self {
@@ -551,10 +566,18 @@ impl CardFilter {
             a |= 1u64 << FILTER_GROUP_ENABLE_SHIFT;
             a |= (self.group_id as u64 & 0x7F) << FILTER_GROUP_ID_SHIFT;
         }
-        if self.is_tapped { a |= 1u64 << FILTER_STATE_SHIFT; }
-        if self.has_blade_heart { a |= 1u64 << (FILTER_STATE_SHIFT+1); }
-        if self.not_has_blade_heart { a |= 1u64 << (FILTER_STATE_SHIFT+2); }
-        if self.unique_names { a |= 1u64 << (FILTER_STATE_SHIFT+3); }
+        if self.is_tapped {
+            a |= 1u64 << FILTER_STATE_SHIFT;
+        }
+        if self.has_blade_heart {
+            a |= 1u64 << (FILTER_STATE_SHIFT + 1);
+        }
+        if self.not_has_blade_heart {
+            a |= 1u64 << (FILTER_STATE_SHIFT + 2);
+        }
+        if self.unique_names {
+            a |= 1u64 << (FILTER_STATE_SHIFT + 3);
+        }
         if self.unit_enabled {
             a |= 1u64 << FILTER_UNIT_ENABLE_SHIFT;
             a |= (self.unit_id as u64 & 0x7F) << FILTER_UNIT_ID_SHIFT;
@@ -566,8 +589,12 @@ impl CardFilter {
         if self.value_enabled {
             a |= 1u64 << FILTER_VALUE_ENABLE_SHIFT;
             a |= (self.value_threshold as u64 & 0x1F) << FILTER_VALUE_THRESHOLD_SHIFT;
-            if self.is_le { a |= 1u64 << FILTER_VALUE_LE_SHIFT; }
-            if self.is_cost_type { a |= 1u64 << FILTER_VALUE_TYPE_SHIFT; }
+            if self.is_le {
+                a |= 1u64 << FILTER_VALUE_LE_SHIFT;
+            }
+            if self.is_cost_type {
+                a |= 1u64 << FILTER_VALUE_TYPE_SHIFT;
+            }
         }
 
         a |= (self.color_mask as u64 & 0x7F) << FILTER_COLOR_SHIFT_R5;
@@ -575,11 +602,21 @@ impl CardFilter {
         a |= (self.char_id_2 as u64 & 0x7F) << FILTER_CHAR_2_SHIFT;
         a |= (self.zone_mask as u64 & 0x7) << FILTER_ZONE_MASK_SHIFT_R5;
         a |= (self.special_id as u64 & 0x7) << FILTER_SPECIAL_ID_SHIFT;
-        if self.is_setsuna { a |= 1u64 << FILTER_SETSUNA_SHIFT; }
-        if self.compare_accumulated { a |= 1u64 << FILTER_DYNAMIC_SHIFT; }
-        if self.is_optional { a |= 1u64 << FILTER_OPTIONAL_SHIFT; }
-        if self.keyword_energy { a |= 1u64 << FILTER_KW_ENERGY_SHIFT; }
-        if self.keyword_member { a |= 1u64 << FILTER_KW_MEMBER_SHIFT; }
+        if self.is_setsuna {
+            a |= 1u64 << FILTER_SETSUNA_SHIFT;
+        }
+        if self.compare_accumulated {
+            a |= 1u64 << FILTER_DYNAMIC_SHIFT;
+        }
+        if self.is_optional {
+            a |= 1u64 << FILTER_OPTIONAL_SHIFT;
+        }
+        if self.keyword_energy {
+            a |= 1u64 << FILTER_KW_ENERGY_SHIFT;
+        }
+        if self.keyword_member {
+            a |= 1u64 << FILTER_KW_MEMBER_SHIFT;
+        }
 
         a as i64
     }
@@ -698,7 +735,8 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
         }
 
         if part == "HAS_GROUP_AQOURS_OR_SAINT_SNOW" {
-            attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE | (101u64 << crate::core::logic::constants::FILTER_GROUP_ID_SHIFT);
+            attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE
+                | (101u64 << crate::core::logic::constants::FILTER_GROUP_ID_SHIFT);
             continue;
         }
 
@@ -727,11 +765,14 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             };
             if let Some(s) = val_str {
                 if let Ok(threshold) = s.parse::<i32>() {
-                    attr |= crate::core::logic::constants::FILTER_VALUE_ENABLE_FLAG | ((threshold as u64) << crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT);
+                    attr |= crate::core::logic::constants::FILTER_VALUE_ENABLE_FLAG
+                        | ((threshold as u64)
+                            << crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT);
                     if part.contains("_LE") {
                         attr |= crate::core::logic::constants::FILTER_VALUE_LE_FLAG;
                     }
-                    attr |= crate::core::logic::constants::FILTER_VALUE_TYPE_FLAG; // Set Cost Type flag
+                    attr |= crate::core::logic::constants::FILTER_VALUE_TYPE_FLAG;
+                    // Set Cost Type flag
                 }
             }
         } else if part.starts_with("GROUP_ID=") || part.starts_with("GROUP_ID_") {
@@ -742,7 +783,8 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             };
             if let Some(s) = gid_str {
                 if let Ok(gid) = s.parse::<i32>() {
-                    attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE | ((gid as u64) << crate::core::logic::constants::FILTER_GROUP_ID_SHIFT);
+                    attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE
+                        | ((gid as u64) << crate::core::logic::constants::FILTER_GROUP_ID_SHIFT);
                 }
             }
         } else if part.starts_with("UNIT_") {
@@ -813,7 +855,13 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
             attr |= FILTER_TYPE_LIVE;
         } else if part == "AQOURS" || part == "AQUOURS" {
             attr |= FILTER_GROUP_ENABLE | (1u64 << FILTER_GROUP_ID_SHIFT);
-        } else if part == "M'S" || part == "μ'S" || part == "Μ'S" || part == "U'S" || part == "MUSE" || part == "MUS" {
+        } else if part == "M'S"
+            || part == "μ'S"
+            || part == "Μ'S"
+            || part == "U'S"
+            || part == "MUSE"
+            || part == "MUS"
+        {
             attr |= FILTER_GROUP_ENABLE | (0u64 << FILTER_GROUP_ID_SHIFT);
         } else if part == "UNIQUE_NAMES=TRUE"
             || part == "UNIQUE_NAMES"
@@ -837,13 +885,15 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
         } else if part.starts_with("BLADE_LE") {
             let val_str = part.replace("BLADE_LE", "").replace("_", "");
             if let Ok(threshold) = val_str.parse::<i32>() {
-                attr |= FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << FILTER_VALUE_THRESHOLD_SHIFT);
+                attr |=
+                    FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << FILTER_VALUE_THRESHOLD_SHIFT);
                 attr |= FILTER_VALUE_LE_SHIFT;
             }
         } else if part.starts_with("BLADE_GE") {
             let val_str = part.replace("BLADE_GE", "").replace("_", "");
             if let Ok(threshold) = val_str.parse::<i32>() {
-                attr |= FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << FILTER_VALUE_THRESHOLD_SHIFT);
+                attr |=
+                    FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << FILTER_VALUE_THRESHOLD_SHIFT);
             }
         } else if part == "COST_LE_REVEALED" {
             attr |= FILTER_COST_ENABLE | (1u64 << FILTER_VALUE_THRESHOLD_SHIFT);
@@ -883,7 +933,10 @@ mod tests {
             let attr = map_filter_string_to_attr(s);
             let group_id = (attr >> 5) & 0x7F;
             let group_enabled = (attr >> 4) & 1;
-            println!("Testing group '{}': attr={}, id={}, enabled={}", s, attr, group_id, group_enabled);
+            println!(
+                "Testing group '{}': attr={}, id={}, enabled={}",
+                s, attr, group_id, group_enabled
+            );
             assert_eq!(group_enabled, 1, "Group should be enabled for '{}'", s);
             assert_eq!(group_id, expected_id, "Incorrect group ID for '{}'", s);
         };

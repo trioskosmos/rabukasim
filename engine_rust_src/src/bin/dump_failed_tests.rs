@@ -1,7 +1,7 @@
-use std::fs::File;
-use std::io::Write;
 use engine_rust::core::logic::GameState;
 use smallvec::smallvec;
+use std::fs::File;
+use std::io::Write;
 
 fn main() {
     let mut states = vec![];

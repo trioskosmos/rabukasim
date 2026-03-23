@@ -5,7 +5,16 @@ import sys
 def main():
     print("Running compiler/main.py...")
     result = subprocess.run(
-        [sys.executable, "compiler/main.py", "--input", "data/cards.json", "--output", "data/cards_compiled.json"],
+        [
+            sys.executable,
+            "compiler/main.py",
+            "--input",
+            "data/cards.json",
+            "--output",
+            "data/cards_compiled.json",
+            "--export-profile",
+            "runtime",
+        ],
         capture_output=True,
         text=True,
         encoding="utf-8",

@@ -5,7 +5,7 @@
 //! - Condition Opcodes: C_HAS_COLOR (202), C_HAS_MOVED (228)
 
 use crate::core::logic::*;
-use crate::test_helpers::{add_card, create_test_db, create_test_state};
+use crate::test_helpers::{add_card, create_test_db, create_test_state, AbilityLogic};
 
 // =============================================================================
 // O_FORMATION_CHANGE (26) Tests
@@ -66,7 +66,7 @@ fn test_opcode_formation_change_triggers_position_change() {
         vec![1],
         vec![(
             TriggerType::OnPositionChange,
-            vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
+            AbilityLogic::Bytecode(vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0]),
             vec![],
         )],
     );
@@ -129,7 +129,8 @@ fn test_opcode_prevent_set_to_success_pile() {
     state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(
-        state.players[0].prevent_success_pile_set(), 1,
+        state.players[0].prevent_success_pile_set(),
+        1,
         "prevent_success_pile_set should be set to 1"
     );
 }
@@ -153,7 +154,8 @@ fn test_opcode_reduce_live_set_limit_stacking() {
 
     // Should stack (saturating_add)
     assert_eq!(
-        state.players[0].prevent_success_pile_set(), 4,
+        state.players[0].prevent_success_pile_set(),
+        4,
         "prevent_success_pile_set should stack to 4 via O_REDUCE_LIVE_SET_LIMIT"
     );
 }

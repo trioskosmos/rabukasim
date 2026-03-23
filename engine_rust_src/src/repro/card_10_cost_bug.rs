@@ -13,7 +13,6 @@
 /// - Play card 10 first (cost reduction applied to player)
 /// - Other cards in hand show cost reductions when they shouldn't
 /// - This is premature cost calculation, not a persistent state issue
-
 use crate::core::logic::*;
 use crate::test_helpers::load_real_db;
 
@@ -95,7 +94,9 @@ mod tests {
         let costs: Vec<(u32, i32)> = hand_cards
             .iter()
             .map(|&id| {
-                let card = db.get_member(id).expect(&format!("Card {} should exist", id));
+                let card = db
+                    .get_member(id)
+                    .expect(&format!("Card {} should exist", id));
                 (id as u32, card.cost as i32)
             })
             .collect();
@@ -126,7 +127,10 @@ mod tests {
         println!("  Card 121: {}", card_121_cost);
 
         // Verify they have different base costs (to catch if reduction affected both the same way)
-        assert_ne!(card_10_cost, card_121_cost, "Cards should have different base costs");
+        assert_ne!(
+            card_10_cost, card_121_cost,
+            "Cards should have different base costs"
+        );
     }
 
     /// Test Case 4: Edge case - all hand slots filled with different costs
@@ -158,8 +162,15 @@ mod tests {
         // BUG: Current behavior probably calculates all costs as reduced
 
         println!("Full hand distribution test:");
-        println!("  Card 10 base: {}, with 4 others → cost should be {}", cost_10, (cost_10 - 4).max(0));
-        println!("  Card 121 base: {}, with card 10's reduction → cost should STILL be {}", cost_121, cost_121);
+        println!(
+            "  Card 10 base: {}, with 4 others → cost should be {}",
+            cost_10,
+            (cost_10 - 4).max(0)
+        );
+        println!(
+            "  Card 121 base: {}, with card 10's reduction → cost should STILL be {}",
+            cost_121, cost_121
+        );
         println!("  Expected hand costs: [10-4, 121, 124, 100, 200]");
         println!("  Bug would show: All costs reduced by 4");
 
@@ -185,17 +196,30 @@ mod tests {
 
         println!("Persistence Test:");
         println!("  Phase 1: Hand = [10, 121]");
-        println!("    Card 10: base {}, after reduction by 1 = {}", cost_10_base, (cost_10_base - 1).max(0));
-        println!("    Card 121: base {}, should NOT be reduced = {}", cost_121_base, cost_121_base);
+        println!(
+            "    Card 10: base {}, after reduction by 1 = {}",
+            cost_10_base,
+            (cost_10_base - 1).max(0)
+        );
+        println!(
+            "    Card 121: base {}, should NOT be reduced = {}",
+            cost_121_base, cost_121_base
+        );
 
         // After card 10 is PLAYED (removed from hand), hand = [121]
         // At that point:
         // - cost_reduction should be 0 (no more card 10 with the ability)
         // - Card 121 cost should be base (no reduction)
         println!("  Phase 2: After card 10 played, hand = [121]");
-        println!("    Card 121 base {}, cost_reduction = 0, cost should be {}", cost_121_base, cost_121_base);
+        println!(
+            "    Card 121 base {}, cost_reduction = 0, cost should be {}",
+            cost_121_base, cost_121_base
+        );
 
-        println!("  BUG SYMPTOM: Card 121 cost shown as {}", cost_121_base - 1);
+        println!(
+            "  BUG SYMPTOM: Card 121 cost shown as {}",
+            cost_121_base - 1
+        );
         println!("    (incorrectly inherits cost_reduction from card 10)");
 
         // Verification
@@ -229,17 +253,32 @@ mod tests {
 
         println!("Action generation cost test:");
         println!("  Hand: [10, 121, 124] (size 3)");
-        println!("  Card 10 base: {}, reduced by 2 (other cards) = {}", cost_10, (cost_10 - 2).max(0));
+        println!(
+            "  Card 10 base: {}, reduced by 2 (other cards) = {}",
+            cost_10,
+            (cost_10 - 2).max(0)
+        );
         println!("  Card 121 base: {}, NOT reduced = {}", cost_121, cost_121);
         println!("  Card 124 base: {}, NOT reduced = {}", cost_124, cost_124);
 
         println!("  BUG WOULD SHOW:");
         println!("  Card 10: {}", (cost_10 - 2).max(0));
-        println!("  Card 121: {} (WRONG - should be {})", (cost_121 - 2).max(0), cost_121);
-        println!("  Card 124: {} (WRONG - should be {})", (cost_124 - 2).max(0), cost_124);
+        println!(
+            "  Card 121: {} (WRONG - should be {})",
+            (cost_121 - 2).max(0),
+            cost_121
+        );
+        println!(
+            "  Card 124: {} (WRONG - should be {})",
+            (cost_124 - 2).max(0),
+            cost_124
+        );
 
         // Verify test setup is valid
-        assert!(cost_10 > 0 && cost_121 > 0 && cost_124 > 0, "All cards should have costs");
+        assert!(
+            cost_10 > 0 && cost_121 > 0 && cost_124 > 0,
+            "All cards should have costs"
+        );
     }
 
     /// Test Case 7: Cost reduction opcode (13) with PER_CARD filter
@@ -273,11 +312,18 @@ mod tests {
         println!("  Other cards: {}", other_cards);
         println!("  Cost reduction should be: {}", other_cards);
 
-        state.resolve_bytecode_cref(&db, ability_0_bytecode, &ctx);
+        state.resolve_semantic_frames(
+            &db,
+            &crate::core::logic::models::FrameProgram::from_bytecode(ability_0_bytecode).frames,
+            &ctx,
+        );
 
         println!("=== AFTER ability ===");
         println!("Hand: {:?}", &state.players[0].hand);
-        println!("  Actual cost_reduction: {}", state.players[0].cost_reduction);
+        println!(
+            "  Actual cost_reduction: {}",
+            state.players[0].cost_reduction
+        );
 
         // Verify that cost_reduction == 4 (4 other cards, value=1 per card)
         assert_eq!(
@@ -292,10 +338,10 @@ mod tests {
     #[test]
     fn test_card_10_cost_reduction_hand_size_variations() {
         let hand_sizes = vec![
-            (vec![10], 0),                          // Only card 10: 0 other cards
-            (vec![10, 121], 1),                     // Card 10 + 1 other: 1 reduction
-            (vec![10, 121, 124], 2),                // Card 10 + 2 others: 2 reduction
-            (vec![10, 121, 124, 100, 200], 4),    // Card 10 + 4 others: 4 reduction (hand full)
+            (vec![10], 0),                     // Only card 10: 0 other cards
+            (vec![10, 121], 1),                // Card 10 + 1 other: 1 reduction
+            (vec![10, 121, 124], 2),           // Card 10 + 2 others: 2 reduction
+            (vec![10, 121, 124, 100, 200], 4), // Card 10 + 4 others: 4 reduction (hand full)
         ];
 
         let db = load_real_db();
@@ -314,7 +360,11 @@ mod tests {
             };
 
             // Apply card 10's real ability bytecode
-            state.resolve_bytecode_cref(&db, ability_0_bytecode, &ctx);
+            state.resolve_semantic_frames(
+                &db,
+                &crate::core::logic::models::FrameProgram::from_bytecode(ability_0_bytecode).frames,
+                &ctx,
+            );
 
             let expected = expected_other_count as i16;
 
@@ -359,7 +409,12 @@ mod tests {
         assert_eq!(state.players[0].cost_reduction, 0);
 
         // Run PREVENT_BATON_TOUCH ability
-        state.resolve_bytecode_cref(&db, &prevent_baton_bytecode, &ctx);
+        state.resolve_semantic_frames(
+            &db,
+            &crate::core::logic::models::FrameProgram::from_bytecode(&prevent_baton_bytecode)
+                .frames,
+            &ctx,
+        );
 
         // After running PREVENT_BATON_TOUCH, cost_reduction should STILL be 0
         assert_eq!(
@@ -395,13 +450,20 @@ mod tests {
         // Scenario 1: Calculate costs while card 10 is in hand
         println!("\nScenario 1: Before playing card 10");
         println!("  Hand size: 3, other cards in hand: 2");
-        println!("  Card 10 cost for play: {} - 2 = {}", base_cost_10, (base_cost_10 - 2).max(0));
+        println!(
+            "  Card 10 cost for play: {} - 2 = {}",
+            base_cost_10,
+            (base_cost_10 - 2).max(0)
+        );
         println!("  Card 121 cost for play: {} (no reduction)", base_cost_121);
 
         // Scenario 2: After playing card 10, costs should be recalculated
         println!("\nScenario 2: After playing card 10 (removed from hand)");
         println!("  Remaining hand: [121, 124]");
-        println!("  Card 121 cost for play: {} (card 10 ability no longer applies)", base_cost_121);
+        println!(
+            "  Card 121 cost for play: {} (card 10 ability no longer applies)",
+            base_cost_121
+        );
         println!("  Card 124 cost calculation should be independent");
 
         // The bug would manifest as:
@@ -422,41 +484,42 @@ mod tests {
     #[test]
     fn test_card_10_bytecode_attributes_inspect() {
         let db = load_real_db();
-        
+
         let card_10 = db.get_member(10).expect("Card 10 should exist");
-        
+
         println!("=== CARD 10 BYTECODE DIAGNOSTIC ===");
         println!("Card 10 ID: {}", card_10.card_id);
         println!("Card 10 has {} abilities", card_10.abilities.len());
-        
+
         for (idx, ability) in card_10.abilities.iter().enumerate() {
             println!("\n--- Ability {} ---", idx);
             println!("Trigger: {:?}", ability.trigger);
             println!("Bytecode length: {}", ability.bytecode.len());
-            
+
             if ability.bytecode.len() >= 5 {
                 let opcode = ability.bytecode[0];
                 let value = ability.bytecode[1];
                 let attr_lo = ability.bytecode[2];
                 let attr_hi = ability.bytecode[3];
                 let slot = ability.bytecode[4];
-                
+
                 println!("Opcode: {} (13 = REDUCE_COST)", opcode);
                 println!("Value: {}", value);
                 println!("Attr Low: {} (0x{:08x})", attr_lo, attr_lo);
                 println!("Attr High: {} (0x{:08x})", attr_hi, attr_hi);
                 println!("Slot/Zone: {} (0x{:08x})", slot, slot);
-                
-                if opcode == 13 { // O_REDUCE_COST
+
+                if opcode == 13 {
+                    // O_REDUCE_COST
                     // Decode the attributes
                     let attr = (attr_lo as u64) | ((attr_hi as u64) << 32);
                     println!("Combined Attr: 0x{:016x}", attr);
-                    
+
                     // Check for known filter flags
                     // Compare_accumulated mode = 0x03 (bits 0-1)
                     let compare_mode = attr & 0x03;
                     println!("Compare mode bits (0-1): 0x{:02x}", compare_mode);
-                    
+
                     // Filter type and NOT_SELF flag
                     let filter_info = (attr >> 2) & 0xFF;
                     println!("Filter info (bits 2-9): 0x{:02x}", filter_info);
@@ -470,40 +533,54 @@ mod tests {
     #[test]
     fn test_card_10_reduce_cost_explicit_hand_size() {
         let db = load_real_db();
-        
+
         let test_cases = vec![
             ("Empty hand + card_10", vec![10], 0),
             ("Hand with card_10 + 1 other", vec![10, 121], 1),
             ("Hand with card_10 + 2 others", vec![10, 121, 124], 2),
             ("Hand with card_10 + 3 others", vec![10, 121, 124, 100], 3),
-            ("Full hand with card_10 + 4 others", vec![10, 121, 124, 100, 200], 4),
+            (
+                "Full hand with card_10 + 4 others",
+                vec![10, 121, 124, 100, 200],
+                4,
+            ),
         ];
-        
+
         for (desc, hand_cards, expected_reduction) in test_cases {
             println!("\n=== Test: {} ===", desc);
             println!("Hand: {:?}", hand_cards);
             println!("Expected reduction: {}", expected_reduction);
-            
+
             let mut state = GameState::default();
             state.players[0].hand = hand_cards.into();
-            
+
             let ctx = AbilityContext {
                 player_id: 0,
                 ..AbilityContext::default()
             };
-            
+
             // Get card 10's actual bytecode from the database
             let card_10 = db.get_member(10).expect("Card 10");
             let ability_0_bytecode = &card_10.abilities[0].bytecode;
-            
-            println!("Bytecode: {:?}", &ability_0_bytecode[0..5.min(ability_0_bytecode.len())]);
-            
-            state.resolve_bytecode_cref(&db, ability_0_bytecode, &ctx);
-            
+
+            println!(
+                "Bytecode: {:?}",
+                &ability_0_bytecode[0..5.min(ability_0_bytecode.len())]
+            );
+
+            state.resolve_semantic_frames(
+                &db,
+                &crate::core::logic::models::FrameProgram::from_bytecode(ability_0_bytecode).frames,
+                &ctx,
+            );
+
             println!("Actual cost_reduction: {}", state.players[0].cost_reduction);
-            
+
             if state.players[0].cost_reduction as i32 != expected_reduction {
-                println!("❌ FAILED: Got {} but expected {}", state.players[0].cost_reduction, expected_reduction);
+                println!(
+                    "❌ FAILED: Got {} but expected {}",
+                    state.players[0].cost_reduction, expected_reduction
+                );
                 println!("  BUG: PER_CARD multiplier not applied correctly");
             } else {
                 println!("✓ PASS");

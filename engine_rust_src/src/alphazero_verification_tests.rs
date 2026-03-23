@@ -134,7 +134,11 @@ fn test_alphazero_volatile_flags() {
     // 3. Verify Identity Metadata
     // Meta block is 16 floats. Type starts at 100 + 16 = 116.
     assert_eq!(tensor_not_spent[116], 1.0, "Type should be Member (1.0)");
-    assert_eq!(tensor_not_spent[117], 103.0 / 50.0, "CharID should be normalized 103/50");
+    assert_eq!(
+        tensor_not_spent[117],
+        103.0 / 50.0,
+        "CharID should be normalized 103/50"
+    );
 
     // 4. Test SPENT
     let uid = crate::core::logic::interpreter::get_ability_uid(0, 0, 103, 0);

@@ -85,10 +85,7 @@ pub fn finalize_play_member_from_discard(
         state.register_played_member(target_p_idx, card_id, db);
         let old = state.players[target_p_idx].prevent_play_to_slot_mask();
         state.players[target_p_idx].set_prevent_play_to_slot_mask(old | (1 << slot_idx) as u8);
-
-
     }
 
     HandlerResult::Continue
 }
-

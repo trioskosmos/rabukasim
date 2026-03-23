@@ -3,7 +3,6 @@
 /// Run with: cargo run --bin game_runner_fixed --release
 ///
 /// This version properly handles all game phases and runs until score reaches 3
-
 use std::fs;
 use std::time::Instant;
 
@@ -30,8 +29,7 @@ fn load_vanilla_db() -> CardDatabase {
         if !std::path::Path::new(path).exists() {
             continue;
         }
-        let abs = std::fs::canonicalize(path)
-            .unwrap_or_else(|_| std::path::PathBuf::from(path));
+        let abs = std::fs::canonicalize(path).unwrap_or_else(|_| std::path::PathBuf::from(path));
         println!("[DB] Loading from: {:?}\n", abs);
         let json = fs::read_to_string(path).expect("Failed to read vanilla DB");
         let mut db = CardDatabase::from_json(&json).expect("Failed to parse vanilla DB");
@@ -94,8 +92,10 @@ fn run_game(
         if (state.turn, state.phase.clone()) != last_turn_phase {
             last_turn_phase = (state.turn, state.phase.clone());
             if VERBOSE {
-                println!("[Turn {} | {:?}] P0: {} | P1: {}",
-                    state.turn, state.phase, state.players[0].score, state.players[1].score);
+                println!(
+                    "[Turn {} | {:?}] P0: {} | P1: {}",
+                    state.turn, state.phase, state.players[0].score, state.players[1].score
+                );
             }
         }
 
@@ -106,7 +106,8 @@ fn run_game(
                 let _ = state.step(db, ACTION_BASE_PASS);
             } else {
                 // Use TurnSequencer to get best move
-                let (best_seq, _best_val, _breakdown, _nodes) = TurnSequencer::plan_full_turn(&state, db);
+                let (best_seq, _best_val, _breakdown, _nodes) =
+                    TurnSequencer::plan_full_turn(&state, db);
                 let action = if best_seq.is_empty() {
                     ACTION_BASE_PASS as i32
                 } else {
@@ -124,7 +125,8 @@ fn run_game(
             if legal.is_empty() {
                 let _ = state.step(db, ACTION_BASE_PASS);
             } else {
-                let (best_seq, _nodes, _val) = TurnSequencer::find_best_liveset_selection(&state, db);
+                let (best_seq, _nodes, _val) =
+                    TurnSequencer::find_best_liveset_selection(&state, db);
                 let action = if best_seq.is_empty() {
                     ACTION_BASE_PASS as i32
                 } else {
@@ -134,7 +136,14 @@ fn run_game(
             }
         }
         // Handle random/auto phases
-        else if matches!(state.phase, Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response) {
+        else if matches!(
+            state.phase,
+            Phase::Rps
+                | Phase::MulliganP1
+                | Phase::MulliganP2
+                | Phase::TurnChoice
+                | Phase::Response
+        ) {
             let legal = state.get_legal_action_ids(db);
             if !legal.is_empty() {
                 if let Some(&action) = legal.choose(rng) {
@@ -162,9 +171,14 @@ fn run_game(
 
     if VERBOSE {
         println!("=======================================================");
-        println!("  Final: Winner=P{} | Turns={} | Steps={}", winner, state.turn, current_step);
-        println!("  Score: P0={} P1={} | Time: {:.2}ms",
-            state.players[0].score, state.players[1].score, time_ms);
+        println!(
+            "  Final: Winner=P{} | Turns={} | Steps={}",
+            winner, state.turn, current_step
+        );
+        println!(
+            "  Score: P0={} P1={} | Time: {:.2}ms",
+            state.players[0].score, state.players[1].score, time_ms
+        );
         println!("=======================================================");
     }
 
@@ -205,10 +219,16 @@ fn main() {
     let avg_time = total_time / games.len() as f32;
 
     for g in &games {
-        println!("Game {}: {} turns, {} steps, P0={} P1={}, {:.2}ms",
-            g.game_num, g.final_turn, g.total_steps, g.p0_score, g.p1_score, g.time_ms);
+        println!(
+            "Game {}: {} turns, {} steps, P0={} P1={}, {:.2}ms",
+            g.game_num, g.final_turn, g.total_steps, g.p0_score, g.p1_score, g.time_ms
+        );
     }
 
-    println!("\nOverall: {} games, {:.2}ms avg/game", games.len(), avg_time);
+    println!(
+        "\nOverall: {} games, {:.2}ms avg/game",
+        games.len(),
+        avg_time
+    );
     println!("-------------------------------------------------------");
 }

@@ -46,7 +46,8 @@ mod tests {
         let pi = state.interaction_stack.last().unwrap();
         // Could be OPTIONAL (for PAY_ENERGY) or COLOR_SELECT (if optional was auto-accepted/skipped)
         assert!(
-            pi.choice_type == crate::core::enums::ChoiceType::Optional || pi.choice_type == crate::core::enums::ChoiceType::ColorSelect,
+            pi.choice_type == crate::core::enums::ChoiceType::Optional
+                || pi.choice_type == crate::core::enums::ChoiceType::ColorSelect,
             "Expected OPTIONAL or COLOR_SELECT, got: {}",
             pi.choice_type
         );

@@ -1,6 +1,6 @@
+use crate::core::generated_layout::S_STANDARD_IS_OPPONENT_SHIFT;
 use crate::core::logic::card_db::LOGIC_ID_MASK;
 use crate::core::logic::*;
-use crate::core::generated_layout::S_STANDARD_IS_OPPONENT_SHIFT;
 // use crate::core::enums::*;
 use crate::test_helpers::{create_test_db, create_test_state, Action};
 // use std::collections::HashMap;
@@ -40,11 +40,7 @@ fn test_triggers_group_a_action() {
             .id() as i32,
         )
         .unwrap();
-    assert_eq!(
-        state.players[0].hand.len(),
-        1,
-        "OnPlay should trigger draw"
-    );
+    assert_eq!(state.players[0].hand.len(), 1, "OnPlay should trigger draw");
 
     // [TriggerType::OnLeaves]
     let ab_leaves = Ability {
@@ -173,7 +169,7 @@ fn test_triggers_exhaustive() {
     db.members_vec[5915 & LOGIC_ID_MASK as usize] = Some(m_pos);
     state.players[0].stage[0] = 5915;
     state.players[0].deck.extend(vec![5960, 5961, 5962]); // Updated deck cards
-                                                               // Simulate position change (MoveMember) - ctx.area_idx=0 is source, target_slot=1 is destination
+                                                          // Simulate position change (MoveMember) - ctx.area_idx=0 is source, target_slot=1 is destination
     state.resolve_bytecode_cref(
         &db,
         &vec![O_MOVE_MEMBER, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
@@ -277,7 +273,10 @@ fn test_conditions_group_ab_state() {
             condition_type: ConditionType::IsCenter,
             ..Default::default()
         },
-        &AbilityContext { area_idx: 1, ..ctx.clone() },
+        &AbilityContext {
+            area_idx: 1,
+            ..ctx.clone()
+        },
         0
     ));
     // C_GROUP_FILTER: Source/Context card group check.
@@ -384,7 +383,10 @@ fn test_conditions_exhaustive() {
             condition_type: ConditionType::HasMoved,
             ..Default::default()
         },
-        &AbilityContext { area_idx: 0, ..ctx.clone() },
+        &AbilityContext {
+            area_idx: 0,
+            ..ctx.clone()
+        },
         0
     ));
 
@@ -649,10 +651,8 @@ fn test_costs_all_groups() {
 fn test_targets_all_groups() {
     let db = create_test_db();
     let mut state = create_test_state();
-    state.players[0].deck =
-        vec![5901, 5902, 5903, 5904, 5905, 5906, 5907, 5908, 5909, 5910].into(); // Updated deck cards
-    state.players[1].deck =
-        vec![5911, 5912, 5913, 5914, 5915, 5916, 5917, 5918, 5919, 5920].into(); // Updated deck cards
+    state.players[0].deck = vec![5901, 5902, 5903, 5904, 5905, 5906, 5907, 5908, 5909, 5910].into(); // Updated deck cards
+    state.players[1].deck = vec![5911, 5912, 5913, 5914, 5915, 5916, 5917, 5918, 5919, 5920].into(); // Updated deck cards
 
     // [TargetType::Player] (Target 1)
     state.resolve_bytecode_cref(

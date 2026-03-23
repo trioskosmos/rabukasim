@@ -1,5 +1,4 @@
 use engine_rust::core::logic::*;
-use std::sync::Arc;
 
 #[test]
 fn test_sumire_8752_repro() {
@@ -19,9 +18,21 @@ fn test_sumire_8752_repro() {
     let mut ab = Ability::default();
     ab.trigger = TriggerType::OnPlay;
     ab.bytecode = vec![
-        O_DRAW as i32, 2, 0, 0, 0,
-        O_PLAY_MEMBER_FROM_DISCARD as i32, 1, (filter_attr & 0xFFFFFFFF) as i32, (filter_attr >> 32) as i32, (FLAG_EMPTY_SLOT_ONLY as i32) | 4, // s = FLAG_EMPTY_SLOT_ONLY | 4 (Stage)
-        O_RETURN as i32, 0, 0, 0, 0
+        O_DRAW as i32,
+        2,
+        0,
+        0,
+        0,
+        O_PLAY_MEMBER_FROM_DISCARD as i32,
+        1,
+        (filter_attr & 0xFFFFFFFF) as i32,
+        (filter_attr >> 32) as i32,
+        (FLAG_EMPTY_SLOT_ONLY as i32) | 4, // s = FLAG_EMPTY_SLOT_ONLY | 4 (Stage)
+        O_RETURN as i32,
+        0,
+        0,
+        0,
+        0,
     ];
     sumire.abilities.push(ab);
     db.members.insert(sumire_id, sumire);
@@ -40,7 +51,9 @@ fn test_sumire_8752_repro() {
     state.players[p1].baton_source_ids.push(1);
     state.players[p1].baton_source_ids.push(2);
     state.players[p1].discard.push(cheap_liella_id);
-    for i in 0..10 { state.players[p1].deck.push(100 + i); }
+    for i in 0..10 {
+        state.players[p1].deck.push(100 + i);
+    }
 
     let ctx = AbilityContext {
         source_card_id: sumire_id,
@@ -51,14 +64,17 @@ fn test_sumire_8752_repro() {
     };
 
     println!("--- Running Bytecode ---");
-    let bc = Arc::new(db.members[&sumire_id].abilities[0].bytecode.clone());
-    state.resolve_bytecode(&db, bc, &ctx);
+    let ability = &db.members[&sumire_id].abilities[0];
+    state.resolve_ability(&db, ability, &ctx);
 
     println!("Hand size after DRAW: {}", state.players[p1].hand.len());
     println!("Interaction stack size: {}", state.interaction_stack.len());
 
     if let Some(pending) = state.interaction_stack.last() {
-        println!("Opcode: {}, ChoiceType: {:?}", pending.effect_opcode, pending.choice_type);
+        println!(
+            "Opcode: {}, ChoiceType: {:?}",
+            pending.effect_opcode, pending.choice_type
+        );
         assert_eq!(pending.effect_opcode, O_PLAY_MEMBER_FROM_DISCARD as i32);
         assert_eq!(pending.choice_type, ChoiceType::SelectDiscardPlay);
     } else {
@@ -74,12 +90,18 @@ fn test_sumire_8752_repro() {
     resume_ctx.program_counter = 5; // Pointing to O_PLAY_MEMBER_FROM_DISCARD
 
     println!("--- Resuming for Slot Selection ---");
-    let bc2 = Arc::new(db.members[&sumire_id].abilities[0].bytecode.clone());
-    state.resolve_bytecode(&db, bc2, &resume_ctx);
+    let ability = &db.members[&sumire_id].abilities[0];
+    state.resolve_ability(&db, ability, &resume_ctx);
 
-    println!("Interaction stack size after resume: {}", state.interaction_stack.len());
+    println!(
+        "Interaction stack size after resume: {}",
+        state.interaction_stack.len()
+    );
     if let Some(pending) = state.interaction_stack.last() {
-        println!("New Opcode: {}, ChoiceType: {:?}", pending.effect_opcode, pending.choice_type);
+        println!(
+            "New Opcode: {}, ChoiceType: {:?}",
+            pending.effect_opcode, pending.choice_type
+        );
         assert_eq!(pending.choice_type, ChoiceType::SelectStageEmpty);
         // CRITICAL: Ensure choice_index was reset to -1 so SelectStage interaction is created
         assert_eq!(pending.ctx.choice_index, -1);

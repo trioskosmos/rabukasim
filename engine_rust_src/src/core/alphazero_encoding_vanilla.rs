@@ -27,25 +27,39 @@ impl AlphaZeroVanillaEncoding for GameState {
         tensor.push(self.core.players[me].energy_zone.len() as f32 / 10.0);
         tensor.push(self.core.players[me].yell_cards.len() as f32 / 10.0);
         tensor.push(self.core.players[opp].yell_cards.len() as f32 / 10.0);
-        tensor.push(if self.core.performance_yell_done[me] { 1.0 } else { 0.0 });
+        tensor.push(if self.core.performance_yell_done[me] {
+            1.0
+        } else {
+            0.0
+        });
 
         // 2.1 Portfolio Synergies
         let (portfolio_stats, participation_hints) = self.analyze_portfolio_synergies(me, db);
-        for &val in &portfolio_stats { tensor.push(val); }
+        for &val in &portfolio_stats {
+            tensor.push(val);
+        }
 
         // 2.2 Immediate live-zone pressure and current-turn clearability
         let (active_live_ev, clearable_now) = self.analyze_active_live_zone(me, db);
         tensor.push(active_live_ev);
         tensor.push(clearable_now);
 
-        while tensor.len() < 20 { tensor.push(0.0); }
+        while tensor.len() < 20 {
+            tensor.push(0.0);
+        }
 
         // 3. High-Fidelity Card State (60 cards)
         let p = &self.core.players[me];
         for i in 0..AZ_VANILLA_TOTAL_CARDS {
-            let cid = if i < p.initial_deck.len() { p.initial_deck[i] } else { -1 };
+            let cid = if i < p.initial_deck.len() {
+                p.initial_deck[i]
+            } else {
+                -1
+            };
             if cid < 0 {
-                for _ in 0..AZ_VANILLA_CARD_FEATURES { tensor.push(0.0); }
+                for _ in 0..AZ_VANILLA_CARD_FEATURES {
+                    tensor.push(0.0);
+                }
                 continue;
             }
 
@@ -59,35 +73,58 @@ impl AlphaZeroVanillaEncoding for GameState {
                 // 3. Cost
                 tensor.push(m.cost as f32 / 10.0);
                 // 4-9. Normal Hearts (P,R,Y,G,B,P)
-                for h in 0..6 { tensor.push(m.hearts[h] as f32); }
+                for h in 0..6 {
+                    tensor.push(m.hearts[h] as f32);
+                }
                 // 10. Star Heart
                 tensor.push(m.hearts[6] as f32);
                 // 11. Individual Prob (Simple proxy for members: total hearts as potential)
                 tensor.push(m.hearts.iter().sum::<u8>() as f32 / 5.0);
                 // 12. Participation Hint
-                tensor.push(if participation_hints.contains(&cid) { 1.0 } else { 0.0 });
+                tensor.push(if participation_hints.contains(&cid) {
+                    1.0
+                } else {
+                    0.0
+                });
                 // 13. Note Icons
                 tensor.push(m.note_icons as f32 / 10.0);
             } else if let Some(l) = db.get_live(cid) {
                 tensor.push(2.0); // Type
                 tensor.push(l.score as f32 / 10.0); // Value
-                for h in 0..6 { tensor.push(l.required_hearts[h] as f32 / 10.0); }
+                for h in 0..6 {
+                    tensor.push(l.required_hearts[h] as f32 / 10.0);
+                }
                 tensor.push(l.required_hearts[6] as f32 / 10.0); // Star
-                // 11. Individual Success Prob
+                                                                 // 11. Individual Success Prob
                 let stage_hearts = self.get_total_stage_hearts(me, db);
                 let yell_stats = crate::core::heuristics::calculate_deck_expectations(&p.deck, db);
-                let blades = (0..3).map(|i| self.get_effective_blades(me, i, db, 0)).sum::<u32>();
-                let exp_yell_hearts: Vec<f32> = yell_stats.avg_hearts.iter().map(|&h| h * blades as f32).collect();
+                let blades = (0..3)
+                    .map(|i| self.get_effective_blades(me, i, db, 0))
+                    .sum::<u32>();
+                let exp_yell_hearts: Vec<f32> = yell_stats
+                    .avg_hearts
+                    .iter()
+                    .map(|&h| h * blades as f32)
+                    .collect();
                 let prob = crate::core::heuristics::calculate_live_success_prob(
-                    l, &stage_hearts, &exp_yell_hearts, p.heart_req_reductions.to_array()
+                    l,
+                    &stage_hearts,
+                    &exp_yell_hearts,
+                    p.heart_req_reductions.to_array(),
                 );
                 tensor.push(prob.min(1.0));
                 // 12. Participation Hint
-                tensor.push(if participation_hints.contains(&cid) { 1.0 } else { 0.0 });
+                tensor.push(if participation_hints.contains(&cid) {
+                    1.0
+                } else {
+                    0.0
+                });
                 // 13. Stats
                 tensor.push(l.note_icons as f32 / 10.0);
             } else {
-                for _ in 0..AZ_VANILLA_CARD_FEATURES-1 { tensor.push(0.0); }
+                for _ in 0..AZ_VANILLA_CARD_FEATURES - 1 {
+                    tensor.push(0.0);
+                }
             }
         }
 
@@ -113,13 +150,21 @@ impl GameState {
                 candidates.push(cid);
             }
         }
-        if candidates.is_empty() { return (stats, hints); }
+        if candidates.is_empty() {
+            return (stats, hints);
+        }
 
         // 2. Setup Resources
         let stage_hearts = self.get_total_stage_hearts(p_idx, db);
         let yell_stats = crate::core::heuristics::calculate_deck_expectations(&p.deck, db);
-        let blades = (0..3).map(|i| self.get_effective_blades(p_idx, i, db, 0)).sum::<u32>();
-        let exp_yell_hearts: Vec<f32> = yell_stats.avg_hearts.iter().map(|&h| h * blades as f32).collect();
+        let blades = (0..3)
+            .map(|i| self.get_effective_blades(p_idx, i, db, 0))
+            .sum::<u32>();
+        let exp_yell_hearts: Vec<f32> = yell_stats
+            .avg_hearts
+            .iter()
+            .map(|&h| h * blades as f32)
+            .collect();
 
         // 3. Absolute Best Subsets (1, 2, and 3)
         let mut best_global_ra_ev = 0.0;
@@ -130,7 +175,12 @@ impl GameState {
         // a) Evaluate Singles
         for i in 0..search_limit {
             let l1 = db.get_live(candidates[i]).unwrap();
-            let p1 = crate::core::heuristics::calculate_live_success_prob(l1, &stage_hearts, &exp_yell_hearts, p.heart_req_reductions.to_array());
+            let p1 = crate::core::heuristics::calculate_live_success_prob(
+                l1,
+                &stage_hearts,
+                &exp_yell_hearts,
+                p.heart_req_reductions.to_array(),
+            );
             let ev_raw = l1.score as f32 * p1;
             let ev_ra = l1.score as f32 * p1.powf(1.5);
 
@@ -145,12 +195,19 @@ impl GameState {
         // b) Evaluate Pairs
         if search_limit >= 2 {
             for i in 0..search_limit {
-                for j in (i+1)..search_limit {
+                for j in (i + 1)..search_limit {
                     let l1 = db.get_live(candidates[i]).unwrap();
                     let l2 = db.get_live(candidates[j]).unwrap();
                     let mut combined = l1.clone();
-                    for c in 0..7 { combined.required_hearts[c] += l2.required_hearts[c]; }
-                    let p2 = crate::core::heuristics::calculate_live_success_prob(&combined, &stage_hearts, &exp_yell_hearts, p.heart_req_reductions.to_array());
+                    for c in 0..7 {
+                        combined.required_hearts[c] += l2.required_hearts[c];
+                    }
+                    let p2 = crate::core::heuristics::calculate_live_success_prob(
+                        &combined,
+                        &stage_hearts,
+                        &exp_yell_hearts,
+                        p.heart_req_reductions.to_array(),
+                    );
                     let ev_raw = (l1.score + l2.score) as f32 * p2;
                     let ev_ra = (l1.score + l2.score) as f32 * p2.powf(1.5);
 
@@ -167,14 +224,22 @@ impl GameState {
         // c) Evaluate Trios
         if search_limit >= 3 {
             for i in 0..search_limit {
-                for j in (i+1)..search_limit {
-                    for k in (j+1)..search_limit {
+                for j in (i + 1)..search_limit {
+                    for k in (j + 1)..search_limit {
                         let l1 = db.get_live(candidates[i]).unwrap();
                         let l2 = db.get_live(candidates[j]).unwrap();
                         let l3 = db.get_live(candidates[k]).unwrap();
                         let mut combined = l1.clone();
-                        for c in 0..7 { combined.required_hearts[c] += l2.required_hearts[c] + l3.required_hearts[c]; }
-                        let p3 = crate::core::heuristics::calculate_live_success_prob(&combined, &stage_hearts, &exp_yell_hearts, p.heart_req_reductions.to_array());
+                        for c in 0..7 {
+                            combined.required_hearts[c] +=
+                                l2.required_hearts[c] + l3.required_hearts[c];
+                        }
+                        let p3 = crate::core::heuristics::calculate_live_success_prob(
+                            &combined,
+                            &stage_hearts,
+                            &exp_yell_hearts,
+                            p.heart_req_reductions.to_array(),
+                        );
                         let ev_raw = (l1.score + l2.score + l3.score) as f32 * p3;
                         let ev_ra = (l1.score + l2.score + l3.score) as f32 * p3.powf(1.5);
 
@@ -190,7 +255,8 @@ impl GameState {
         }
 
         // 4. Exhaustion Statistics
-        let total_avail: u32 = stage_hearts.iter().sum::<u32>() + exp_yell_hearts.iter().sum::<f32>() as u32;
+        let total_avail: u32 =
+            stage_hearts.iter().sum::<u32>() + exp_yell_hearts.iter().sum::<f32>() as u32;
         if total_avail > 0 {
             let mut best_3_req = 0;
             if best_indices.len() == 3 {
@@ -213,7 +279,9 @@ impl GameState {
         for i in 0..3 {
             let h = self.get_effective_hearts(p_idx, i, db, 0);
             let h_arr = h.to_array();
-            for c in 0..7 { hearts[c] += h_arr[c] as u32; }
+            for c in 0..7 {
+                hearts[c] += h_arr[c] as u32;
+            }
         }
         hearts
     }
@@ -222,8 +290,14 @@ impl GameState {
         let p = &self.core.players[p_idx];
         let stage_hearts = self.get_total_stage_hearts(p_idx, db);
         let yell_stats = crate::core::heuristics::calculate_deck_expectations(&p.deck, db);
-        let blades = (0..3).map(|i| self.get_effective_blades(p_idx, i, db, 0)).sum::<u32>();
-        let exp_yell_hearts: Vec<f32> = yell_stats.avg_hearts.iter().map(|&h| h * blades as f32).collect();
+        let blades = (0..3)
+            .map(|i| self.get_effective_blades(p_idx, i, db, 0))
+            .sum::<u32>();
+        let exp_yell_hearts: Vec<f32> = yell_stats
+            .avg_hearts
+            .iter()
+            .map(|&h| h * blades as f32)
+            .collect();
         let reductions = p.heart_req_reductions.to_array();
 
         let mut active_ev = 0.0;
@@ -246,7 +320,8 @@ impl GameState {
 
             let mut exact_clear = true;
             for color in 0..7 {
-                let req = (live.required_hearts[color] as i32 - reductions[color] as i32).max(0) as u32;
+                let req =
+                    (live.required_hearts[color] as i32 - reductions[color] as i32).max(0) as u32;
                 if stage_hearts[color] < req {
                     exact_clear = false;
                     break;
@@ -257,18 +332,35 @@ impl GameState {
             }
         }
 
-        ((active_ev / 9.0).clamp(0.0, 1.0), (clearable_now as f32 / 3.0).clamp(0.0, 1.0))
+        (
+            (active_ev / 9.0).clamp(0.0, 1.0),
+            (clearable_now as f32 / 3.0).clamp(0.0, 1.0),
+        )
     }
 }
 
 fn get_card_zone(state: &GameState, p_idx: usize, cid: i32) -> u8 {
     let p = &state.core.players[p_idx];
-    if p.hand.contains(&cid) { return 1; }
-    if p.stage.contains(&cid) { return 2; }
-    if p.energy_zone.contains(&cid) { return 3; }
-    if p.discard.contains(&cid) { return 4; }
-    if p.success_lives.contains(&cid) { return 5; }
-    if p.yell_cards.contains(&cid) { return 6; }
-    if p.live_zone.contains(&cid) { return 7; }
+    if p.hand.contains(&cid) {
+        return 1;
+    }
+    if p.stage.contains(&cid) {
+        return 2;
+    }
+    if p.energy_zone.contains(&cid) {
+        return 3;
+    }
+    if p.discard.contains(&cid) {
+        return 4;
+    }
+    if p.success_lives.contains(&cid) {
+        return 5;
+    }
+    if p.yell_cards.contains(&cid) {
+        return 6;
+    }
+    if p.live_zone.contains(&cid) {
+        return 7;
+    }
     0 // Deck
 }

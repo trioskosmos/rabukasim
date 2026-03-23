@@ -49,7 +49,6 @@ fn verify_manual_recovery_pattern() {
     );
     result.unwrap();
 
-
     assert_eq!(
         state.players[0].stage[0], -1,
         "Member should be in discard after sacrifice (Cost processing)"
@@ -59,20 +58,37 @@ fn verify_manual_recovery_pattern() {
     state.players[0].hand.clear();
 
     // EXECUTE: Trigger RECOVER_MEMBER (Card 120 Honoka has it at ab_idx 0)
-    let ctx = AbilityContext { player_id: 0, source_card_id: 120, ..Default::default() };
-    state.resolve_bytecode_cref(&db, &db.get_member(120).unwrap().abilities[0].bytecode, &ctx);
+    let ctx = AbilityContext {
+        player_id: 0,
+        source_card_id: 120,
+        ..Default::default()
+    };
+    state.resolve_bytecode_cref(
+        &db,
+        &db.get_member(120).unwrap().abilities[0].bytecode,
+        &ctx,
+    );
 
     // RESOLVE: The interactions (MOVE_TO_DISCARD then RecovM)
     let mut safety_counter = 0;
     while state.phase == Phase::Response && safety_counter < 5 {
-        println!("[TEST] Resolving suspension. Interaction: {:?}", state.interaction_stack.last().unwrap().choice_type);
-        state.step(&db, ACTION_BASE_CHOICE + 0).expect("Step failed to resolve recovery");
+        println!(
+            "[TEST] Resolving suspension. Interaction: {:?}",
+            state.interaction_stack.last().unwrap().choice_type
+        );
+        state
+            .step(&db, ACTION_BASE_CHOICE + 0)
+            .expect("Step failed to resolve recovery");
         state.process_trigger_queue(&db);
         safety_counter += 1;
     }
 
     println!("[TEST] Hand after recovery: {:?}", state.players[0].hand);
-    assert!(state.players[0].hand.contains(&121), "Hand should contain card 121. Hand: {:?}", state.players[0].hand);
+    assert!(
+        state.players[0].hand.contains(&121),
+        "Hand should contain card 121. Hand: {:?}",
+        state.players[0].hand
+    );
 }
 
 #[test]

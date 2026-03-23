@@ -1,6 +1,6 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_play_member_from_hand(
@@ -15,25 +15,32 @@ pub fn handle_play_member_from_hand(
     s: i32,
 ) -> HandlerResult {
     let remaining = if ctx.v_remaining == -1 {
-        if v == 1 { 1 } else { 2 }
+        if v == 1 {
+            1
+        } else {
+            2
+        }
     } else {
         ctx.v_remaining
     };
 
     if remaining == 2 {
         if ctx.choice_index == -1 {
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                frame_idx,
-                O_PLAY_MEMBER_FROM_HAND,
-                0,
-                ChoiceType::SelectHandPlay,
-                a as u64,
-                remaining,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    ctx,
+                    frame_idx,
+                    O_PLAY_MEMBER_FROM_HAND,
+                    0,
+                    ChoiceType::SelectHandPlay,
+                    a as u64,
+                    remaining,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }
@@ -48,18 +55,21 @@ pub fn handle_play_member_from_hand(
         if ctx.choice_index == -1 {
             let mut next_ctx = ctx.clone();
             next_ctx.player_id = p_idx as u8;
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                &next_ctx,
-                frame_idx,
-                O_PLAY_MEMBER_FROM_HAND,
-                s,
-                ChoiceType::SelectStage,
-                a as u64,
-                remaining,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    &next_ctx,
+                    frame_idx,
+                    O_PLAY_MEMBER_FROM_HAND,
+                    s,
+                    ChoiceType::SelectStage,
+                    a as u64,
+                    remaining,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }

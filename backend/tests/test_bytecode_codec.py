@@ -42,7 +42,9 @@ class BytecodeCodecTests(unittest.TestCase):
         sparse_model = codec.model_to_sparse_model(model, include_raw_words=True)
 
         self.assertEqual(model["frames"][0]["ability_frame_index"], 0)
+        self.assertEqual(model["frames"][0]["rust_opcode"], "O_SELECT_MODE")
         self.assertEqual(sparse_model["frames"][0]["ability_frame_index"], 0)
+        self.assertEqual(sparse_model["frames"][0]["rust_opcode"], "O_SELECT_MODE")
         self.assertEqual(sparse_model["frames"][0]["source_words"], bytecode)
         self.assertEqual(sparse_model["bytecode"], bytecode)
 
@@ -65,6 +67,8 @@ class BytecodeCodecTests(unittest.TestCase):
         index = codec.build_ability_index(compiled_data, metadata)
         self.assertEqual(index["summary"]["ability_count"], 1)
         self.assertEqual(index["abilities"][0]["source_words"], bytecode)
+        self.assertEqual(index["abilities"][0]["opcode_sequence"], ["SELECT_MODE"])
+        self.assertEqual(index["abilities"][0]["rust_opcode_sequence"], ["O_SELECT_MODE"])
 
     def test_sparse_semantic_model_can_be_edited_and_re_encoded(self) -> None:
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
@@ -79,7 +83,7 @@ class BytecodeCodecTests(unittest.TestCase):
 
         reencoded = codec.model_to_bytecode(sparse_model)
 
-        self.assertEqual(reencoded, [41, pack_v_look_choose(count=2, char_id_1=21, reveal=1, dest_discard=1), 0, 0, 0])
+        self.assertEqual(reencoded, [41, codec._to_i32(pack_v_look_choose(count=2, char_id_1=21, reveal=1, dest_discard=1)), 0, 0, 0])
         self.assertNotEqual(reencoded, bytecode)
 
     def test_select_mode_frame_round_trip(self) -> None:
@@ -151,7 +155,22 @@ class BytecodeCodecTests(unittest.TestCase):
         rebuilt = codec.model_to_bytecode({"frames": entry["frames"]})
         self.assertEqual(rebuilt, original_bytecode, "Frames must round-trip to original bytecode")
 
+    def test_sunny_day_song_compact_frames_round_trip(self) -> None:
+        """The long Sunny Day Song ability can be edited in compact form and re-encoded."""
+        compiled = codec.load_json(ROOT / "data" / "cards_compiled.json")
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+
+        card = compiled["live_db"]["669"]
+        ability = card["abilities"][0]
+        model = codec.bytecode_to_model(list(ability["bytecode"]), metadata)
+        compact_model = codec.model_to_compact_model(model)
+
+        self.assertGreaterEqual(len(compact_model["frames"]), 10)
+        self.assertTrue(all("op" in frame for frame in compact_model["frames"]))
+
+        rebuilt = codec.model_to_bytecode({"frames": compact_model["frames"]}, metadata)
+        self.assertEqual(rebuilt, list(ability["bytecode"]))
+
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -1,7 +1,7 @@
-use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::*;
-use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::logic::interpreter::instruction::DecodedSlot;
+use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 pub fn resolve_source_zone(slot: &DecodedSlot) -> Zone {
     if slot.source_zone != Zone::Default {
@@ -101,9 +101,9 @@ pub fn remove_card_by_index(
             .success_lives
             .pop()
             .map(|cid| cid as i32),
-        Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
-            state.players[player_idx].pop_deck_card().map(|cid| cid as i32)
-        }
+        Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => state.players[player_idx]
+            .pop_deck_card()
+            .map(|cid| cid as i32),
         Zone::Energy => state.players[player_idx]
             .pop_energy_card()
             .map(|cid| cid as i32),
@@ -129,9 +129,9 @@ pub fn pop_card_from_zone(
             .success_lives
             .pop()
             .map(|cid| cid as i32),
-        Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
-            state.players[player_idx].pop_deck_card().map(|cid| cid as i32)
-        }
+        Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => state.players[player_idx]
+            .pop_deck_card()
+            .map(|cid| cid as i32),
         Zone::Energy => state.players[player_idx]
             .pop_energy_card()
             .map(|cid| cid as i32),

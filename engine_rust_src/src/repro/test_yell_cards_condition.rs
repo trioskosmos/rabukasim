@@ -1,13 +1,13 @@
 /// Simple test to verify that the YELL_CARDS condition handler is working
 use crate::core::logic::*;
-use crate::test_helpers::{load_real_db, create_test_state};
+use crate::test_helpers::{create_test_state, load_real_db};
 
 #[test]
 fn test_yell_cards_condition_directly() {
     let db = load_real_db();
     let mut state = create_test_state();
     state.ui.silent = true;
-    
+
     // Create a simple condition that matches "YELL_CARDS"
     let condition = Condition {
         condition_type: ConditionType::None,
@@ -21,9 +21,9 @@ fn test_yell_cards_condition_directly() {
             "MIN": 3
         }),
     };
-    
+
     // Get some Liella! members
-    let mut liella_members = Vec::new();  
+    let mut liella_members = Vec::new();
     for cid in 100..600 {
         if let Some(member) = db.get_member(cid) {
             if member.groups.contains(&3) && liella_members.len() < 3 {
@@ -34,30 +34,28 @@ fn test_yell_cards_condition_directly() {
             break;
         }
     }
-    
+
     assert!(liella_members.len() >= 3, "Should find 3+ Liella! members");
-    
+
     // Add yelled cards
     for cid in liella_members {
         state.players[0].yell_cards.push(cid);
     }
-    
+
     let ctx = AbilityContext {
         player_id: 0,
         ..Default::default()
     };
-    
+
     // Check if condition passes
     let passes = crate::core::logic::interpreter::conditions::check_condition(
-        &state,
-        &db,
-        0,
-        &condition,
-        &ctx,
-        0
+        &state, &db, 0, &condition, &ctx, 0,
     );
-    
-    assert!(passes, "YELL_CARDS condition with 3+ unique Liella! members should pass");
+
+    assert!(
+        passes,
+        "YELL_CARDS condition with 3+ unique Liella! members should pass"
+    );
 }
 
 #[test]
@@ -65,7 +63,7 @@ fn test_yell_cards_condition_insufficient() {
     let db = load_real_db();
     let mut state = create_test_state();
     state.ui.silent = true;
-    
+
     let condition = Condition {
         condition_type: ConditionType::None,
         value: 3,
@@ -78,7 +76,7 @@ fn test_yell_cards_condition_insufficient() {
             "MIN": 3
         }),
     };
-    
+
     // Add only 2 Liella! members
     let mut liella_members = Vec::new();
     for cid in 100..600 {
@@ -91,24 +89,22 @@ fn test_yell_cards_condition_insufficient() {
             break;
         }
     }
-    
+
     for cid in liella_members {
         state.players[0].yell_cards.push(cid);
     }
-    
+
     let ctx = AbilityContext {
         player_id: 0,
         ..Default::default()
     };
-    
+
     let passes = crate::core::logic::interpreter::conditions::check_condition(
-        &state,
-        &db,
-        0,
-        &condition,
-        &ctx,
-        0
+        &state, &db, 0, &condition, &ctx, 0,
     );
-    
-    assert!(!passes, "YELL_CARDS condition with only 2 unique Liella! members should fail");
+
+    assert!(
+        !passes,
+        "YELL_CARDS condition with only 2 unique Liella! members should fail"
+    );
 }

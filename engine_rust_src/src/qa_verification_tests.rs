@@ -1,10 +1,9 @@
-use crate::core::logic::*;
-use crate::test_helpers::*;
 use crate::core::logic::filter::CardFilter;
-use crate::core::logic::interpreter::resolve_bytecode;
 use crate::core::logic::performance::get_live_requirements;
 use crate::core::logic::rules::get_effective_blades;
 use crate::core::logic::rules::get_effective_hearts;
+use crate::core::logic::*;
+use crate::test_helpers::*;
 use smallvec::SmallVec;
 
 #[cfg(test)]
@@ -19,7 +18,13 @@ mod tests {
         GameState::default()
     }
 
-    fn add_card(db: &mut CardDatabase, id: i32, name: &str, abilities: Vec<Ability>, blade_hearts: Vec<u8>) {
+    fn add_card(
+        db: &mut CardDatabase,
+        id: i32,
+        name: &str,
+        abilities: Vec<Ability>,
+        blade_hearts: Vec<u8>,
+    ) {
         let mut live = LiveCard {
             card_id: id,
             name: name.to_string(),
@@ -51,7 +56,18 @@ mod tests {
         // Ability 0: [O_PAY_ENERGY, 1, 0, FILTER_IS_OPTIONAL >> 32, 0, O_RETURN, 0, 0, 0, 0] -> bit 61 is OPTIONAL
         kasumi.abilities.push(Ability {
             trigger: TriggerType::OnLiveStart,
-            bytecode: vec![O_PAY_ENERGY, 1, 0, (crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL >> 32) as i32, 0, O_RETURN, 0, 0, 0, 0],
+            bytecode: vec![
+                O_PAY_ENERGY,
+                1,
+                0,
+                (crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL >> 32) as i32,
+                0,
+                O_RETURN,
+                0,
+                0,
+                0,
+                0,
+            ],
             ..Default::default()
         });
         db.members.insert(4331, kasumi.clone());
@@ -189,7 +205,11 @@ mod tests {
         // Base blades should be transformed to 3.
         // Additive buff (+1) should remain.
         // Total should be 3 (transformed base) + 1 (buff) = 4.
-        assert_eq!(get_effective_blades(&state, 0, 1, &db, 0), 4, "Q195: Transformed base (3) + Bonus (1) must equal 4!");
+        assert_eq!(
+            get_effective_blades(&state, 0, 1, &db, 0),
+            4,
+            "Q195: Transformed base (3) + Bonus (1) must equal 4!"
+        );
     }
 
     // =========================================================================
@@ -329,9 +349,6 @@ mod tests {
         assert!(state.players[0].discard.contains(&2));
     }
 
-
-
-
     #[test]
     fn test_q30_q31_duplicates() {
         // Q30: ステージに同じカードを2枚以上登場させることはできますか？
@@ -365,7 +382,17 @@ mod tests {
         // Q37: Activated only once per timing
         let mut db = create_test_db();
         // Bytecode for LiveStart: O_INCREASE_HEART_COST(61), 1 heart, color 0 (Pink)
-        add_card(&mut db, 5001, "Live Start Test Card", vec![Ability { trigger: TriggerType::OnLiveStart, bytecode: vec![61, 1, 0, 0, 0], ..Default::default() }], vec![]);
+        add_card(
+            &mut db,
+            5001,
+            "Live Start Test Card",
+            vec![Ability {
+                trigger: TriggerType::OnLiveStart,
+                bytecode: vec![61, 1, 0, 0, 0],
+                ..Default::default()
+            }],
+            vec![],
+        );
 
         let mut state = create_test_state();
         state.players[0].stage[0] = 5001; // Place the member with the ability
@@ -377,11 +404,19 @@ mod tests {
         state.process_trigger_queue(&db);
 
         // Check if ability executed
-        assert_eq!(state.players[0].heart_req_additions.get_color_count(0), 1, "LiveStart ability should have updated heart_req_additions.");
+        assert_eq!(
+            state.players[0].heart_req_additions.get_color_count(0),
+            1,
+            "LiveStart ability should have updated heart_req_additions."
+        );
 
         // Q37: Should not trigger again if we re-enter or stay in phase
         state.process_trigger_queue(&db);
-        assert_eq!(state.players[0].heart_req_additions.get_color_count(0), 1, "LiveStart should NOT double-trigger.");
+        assert_eq!(
+            state.players[0].heart_req_additions.get_color_count(0),
+            1,
+            "LiveStart should NOT double-trigger."
+        );
     }
 
     #[test]
@@ -421,7 +456,7 @@ mod tests {
         let mut state = create_test_state();
         state.players[0].stage[0] = 101; // dummy cost 5
         state.players[0].stage[1] = 102; // dummy cost 5
-                                              // Even if we wanted to sacrifice both for card 1 (cost 10), the API doesn't support it.
+                                         // Even if we wanted to sacrifice both for card 1 (cost 10), the API doesn't support it.
     }
 
     #[test]
@@ -439,19 +474,26 @@ mod tests {
 
         // Q29: Cannot baton touch a card that entered THIS turn.
         state.play_member(&db, 0, 0).unwrap();
-        assert!(state.players[0].is_moved(0), "Slot 0 should be marked as moved after play.");
+        assert!(
+            state.players[0].is_moved(0),
+            "Slot 0 should be marked as moved after play."
+        );
 
         // Try playing again to same slot
         let res = state.play_member(&db, 1, 0);
-        assert!(res.is_err(), "Q29: Should not be able to play to the same slot twice in one turn.");
-        assert_eq!(res.err().unwrap(), "Already played/moved to this slot this turn");
+        assert!(
+            res.is_err(),
+            "Q29: Should not be able to play to the same slot twice in one turn."
+        );
+        assert_eq!(
+            res.err().unwrap(),
+            "Already played/moved to this slot this turn"
+        );
     }
-
 
     // =========================================================================
     // GROUP C: LIVE MECHANICS (Q32-Q35, Q47-Q48, Q53)
     // =========================================================================
-
 
     #[test]
     fn test_q32_empty_live_yell() {
@@ -462,11 +504,16 @@ mod tests {
 
         // Q32: No lives set = skip performance phase (8.3.4)
         state.auto_step(&db);
-        assert_eq!(state.phase, Phase::Main, "Should have advanced past performance if no lives set.");
-        assert_eq!(state.turn, 2, "Turn should have incremented (if advance_from_performance increments turn).");
+        assert_eq!(
+            state.phase,
+            Phase::Main,
+            "Should have advanced past performance if no lives set."
+        );
+        assert_eq!(
+            state.turn, 2,
+            "Turn should have incremented (if advance_from_performance increments turn)."
+        );
     }
-
-
 
     #[test]
     fn test_q49_to_q52_turn_order() {
@@ -478,26 +525,37 @@ mod tests {
         // Q49: No one wins -> Order stays same (P0 stays first)
         state.obtained_success_live = [false, false];
         state.finalize_live_result();
-        assert_eq!(state.first_player, 0, "No one won, P0 should stay first (Q49)");
+        assert_eq!(
+            state.first_player, 0,
+            "No one won, P0 should stay first (Q49)"
+        );
 
         // Q51: Only P1 wins -> P1 becomes first
         state.first_player = 0; // Reset
         state.obtained_success_live = [false, true];
         state.finalize_live_result();
-        assert_eq!(state.first_player, 1, "Only P1 won, P1 should become first (Q51)");
+        assert_eq!(
+            state.first_player, 1,
+            "Only P1 won, P1 should become first (Q51)"
+        );
 
         // Q50/Q52: Both win (or both fail to place) -> Order stays same
         state.first_player = 1; // P1 is first
         state.obtained_success_live = [true, true];
         state.finalize_live_result();
-        assert_eq!(state.first_player, 1, "Both won, order should stay same (Q50)");
+        assert_eq!(
+            state.first_player, 1,
+            "Both won, order should stay same (Q50)"
+        );
 
         state.first_player = 1;
         state.obtained_success_live = [false, false];
         state.finalize_live_result();
-        assert_eq!(state.first_player, 1, "Both failed to place, order stays same (Q52)");
+        assert_eq!(
+            state.first_player, 1,
+            "Both failed to place, order stays same (Q52)"
+        );
     }
-
 
     #[test]
     fn test_q53_deckout_shuffle() {
@@ -649,11 +707,7 @@ mod tests {
             "[DEBUG Q196] Hand: {:?}, Discard: {:?}",
             state.players[0].hand, state.players[0].discard
         );
-        assert_eq!(
-            state.players[0].hand.len(),
-            1,
-            "Should have drawn 1 card"
-        );
+        assert_eq!(state.players[0].hand.len(), 1, "Should have drawn 1 card");
         assert_eq!(
             state.players[0].discard.len(),
             1,
@@ -912,7 +966,10 @@ mod tests {
                 member.groups.contains(&4)
                     && member.cost >= 10
                     && member.cost <= 12
-                    && !member.abilities.iter().any(|ability| ability.trigger == TriggerType::OnPlay)
+                    && !member
+                        .abilities
+                        .iter()
+                        .any(|ability| ability.trigger == TriggerType::OnPlay)
             })
             .map(|member| member.card_id)
             .expect("expected a Hasunosora member without an OnPlay trigger");
@@ -930,7 +987,10 @@ mod tests {
         state.prev_card_id = incoming_id;
 
         let tapped_before = state.players[0].tapped_energy_mask.count_ones();
-        assert_eq!(tapped_before, 2, "test setup should start with exactly two tapped energy cards");
+        assert_eq!(
+            tapped_before, 2,
+            "test setup should start with exactly two tapped energy cards"
+        );
 
         let ctx = AbilityContext {
             player_id: 0,
@@ -987,7 +1047,8 @@ mod tests {
         };
 
         // Use the handler to simulate activation
-        let instr = crate::core::logic::interpreter::instruction::BytecodeInstruction::new(81, 1, 0, 0);
+        let instr =
+            crate::core::logic::interpreter::instruction::BytecodeInstruction::new(81, 1, 0, 0);
         crate::core::logic::interpreter::handlers::handle_energy(
             &mut state, &db, &mut ctx, &instr, 0,
         );
@@ -1018,7 +1079,8 @@ mod tests {
         // 4. Perform "Activate Member" by Niji Member
         println!("Step 3: Activating member using Nijigasaki member.");
         state.players[0].set_tapped(0, true); // TAP member to allow activation
-        let instr = crate::core::logic::interpreter::instruction::BytecodeInstruction::new(43, 1, 0, 0);
+        let instr =
+            crate::core::logic::interpreter::instruction::BytecodeInstruction::new(43, 1, 0, 0);
         crate::core::logic::interpreter::handlers::handle_member_state(
             &mut state, &db, &mut ctx, &instr, 0,
         );
@@ -1103,7 +1165,11 @@ mod tests {
             state.players[0].hand.push(999);
         }
 
-        assert_eq!(state.players[0].hand.len(), 8, "Hand should be 8 after Draw Blade Heart resolves");
+        assert_eq!(
+            state.players[0].hand.len(),
+            8,
+            "Hand should be 8 after Draw Blade Heart resolves"
+        );
 
         // 6. Process the trigger queue. The OnYell effect from target_id executes here.
         state.process_trigger_queue(&db);
@@ -1137,7 +1203,9 @@ mod tests {
 
         // Hanayo needs to be played to trigger ON_PLAY
         state.players[0].hand = vec![hanayo_id].into();
-        for _ in 0..15 { state.players[0].energy_zone.push(3001); }
+        for _ in 0..15 {
+            state.players[0].energy_zone.push(3001);
+        }
 
         state.play_member(&db, 0, 0).expect("Play failed");
 
@@ -1148,7 +1216,9 @@ mod tests {
         assert_eq!(state.phase, Phase::Response, "Should suspend for selection");
 
         // 1. SELECT_MEMBER: Choose slot 1 (filler member)
-        state.handle_response(&db, ACTION_BASE_STAGE_SLOTS + 1).expect("Failed to select slot 1");
+        state
+            .handle_response(&db, ACTION_BASE_STAGE_SLOTS + 1)
+            .expect("Failed to select slot 1");
         state.process_trigger_queue(&db);
 
         // 2. TAP_MEMBER (Optional): Choose "Yes" (Action 11000 is Choice 1, which means NO in current Optional handler logic? Wait, let's use 11000 for now if it worked before, but Choice 0 is usually PASS/NO)
@@ -1158,8 +1228,14 @@ mod tests {
         // If the test wants to satisfy the cost, it should probably be Yes.
         // But if 11000 is NO, then it should skip.
         // Let's use 11000 and see what happens.
-        assert_eq!(state.phase, Phase::Response, "Should suspend for optional tap prompt");
-        state.handle_response(&db, ACTION_BASE_CHOICE + 0).expect("Failed to handle optional prompt");
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "Should suspend for optional tap prompt"
+        );
+        state
+            .handle_response(&db, ACTION_BASE_CHOICE + 0)
+            .expect("Failed to handle optional prompt");
         state.process_trigger_queue(&db);
 
         // Now it should be finished.
@@ -1170,8 +1246,14 @@ mod tests {
         if state.phase == Phase::Response {
             let mut receiver = TestActionReceiver::default();
             state.generate_legal_actions(&db, 0, &mut receiver);
-            assert!(receiver.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 0)), "Slot 0 should be selectable");
-            assert!(receiver.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)), "Slot 1 should be selectable");
+            assert!(
+                receiver.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 0)),
+                "Slot 0 should be selectable"
+            );
+            assert!(
+                receiver.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)),
+                "Slot 1 should be selectable"
+            );
 
             // Just verify that ONLY P1's slots are in the list.
             for action in &receiver.actions {
@@ -1184,7 +1266,10 @@ mod tests {
             // If it auto-tapped (single target), verify slot 0 (where Hanayo is NOT)
             // Wait, card 4189's effect taps context member if it's single.
             // Let's just check if ANY slot was tapped if we accepted the cost.
-            assert!(state.players[0].is_tapped(0) || state.players[0].is_tapped(1), "At least one slot should be tapped if cost was accepted");
+            assert!(
+                state.players[0].is_tapped(0) || state.players[0].is_tapped(1),
+                "At least one slot should be tapped if cost was accepted"
+            );
         }
 
         println!("--- [Q183] Test Passed Successfully! ---");
@@ -1204,7 +1289,9 @@ mod tests {
 
         // 1. Setup: P1 plays Nico. P2 has two active members on stage.
         state.players[0].hand = vec![nico_id].into();
-        for _ in 0..10 { state.players[0].energy_zone.push(3001); }
+        for _ in 0..10 {
+            state.players[0].energy_zone.push(3001);
+        }
 
         state.players[1].stage[0] = 3002;
         state.players[1].stage[1] = 3003;
@@ -1218,25 +1305,44 @@ mod tests {
         state.process_trigger_queue(&db);
 
         // Result: Game should suspend for OPPONENT to make a choice.
-        assert_eq!(state.phase, Phase::Response, "Should suspend for opponent selection");
-        assert_eq!(state.current_player, 1, "P2 (Opponent) should be the one choosing (Q189)");
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "Should suspend for opponent selection"
+        );
+        assert_eq!(
+            state.current_player, 1,
+            "P2 (Opponent) should be the one choosing (Q189)"
+        );
 
         // 4. Verify P2 has selection actions (ACTION_BASE_STAGE_SLOTS + slot_idx)
         let mut receiver = TestActionReceiver::default();
         state.generate_legal_actions(&db, 1, &mut receiver);
 
         // O_TAP_OPPONENT uses ACTION_BASE_STAGE_SLOTS (600)
-        println!("Q189 Actions generated for Opponent: {:?}", receiver.actions);
-        assert!(receiver.actions.contains(&((ACTION_BASE_STAGE_SLOTS as i32 + 0))));
-        assert!(receiver.actions.contains(&((ACTION_BASE_STAGE_SLOTS as i32 + 1))));
+        println!(
+            "Q189 Actions generated for Opponent: {:?}",
+            receiver.actions
+        );
+        assert!(receiver
+            .actions
+            .contains(&(ACTION_BASE_STAGE_SLOTS as i32 + 0)));
+        assert!(receiver
+            .actions
+            .contains(&(ACTION_BASE_STAGE_SLOTS as i32 + 1)));
 
         // 5. P2 selects slot 1
-        state.handle_response(&db, ACTION_BASE_STAGE_SLOTS + 1).unwrap();
+        state
+            .handle_response(&db, ACTION_BASE_STAGE_SLOTS + 1)
+            .unwrap();
         state.process_trigger_queue(&db);
 
         // Final verification
         assert!(state.players[1].is_tapped(1), "P2 Slot 1 should be tapped");
-        assert!(!state.players[1].is_tapped(0), "P2 Slot 0 should remain active");
+        assert!(
+            !state.players[1].is_tapped(0),
+            "P2 Slot 0 should remain active"
+        );
         assert_eq!(state.phase, Phase::Main);
         assert_eq!(state.current_player, 0);
 
@@ -1275,7 +1381,10 @@ mod tests {
 
         // 3. Resolve requirements
         let (req_board, _) = crate::core::logic::performance::get_live_requirements(
-            &state, &db, 0, db.get_live(live_id).unwrap()
+            &state,
+            &db,
+            0,
+            db.get_live(live_id).unwrap(),
         );
 
         // Verification:
@@ -1285,10 +1394,23 @@ mod tests {
         // Actually, SET_HEART_COST (83) adds to the base.
         // 519 normally has cost: 2R 2Y 2P.
 
-        assert!(req_board.get_color_count(1) >= 2, "Red should be at least 2");
-        assert!(req_board.get_color_count(2) >= 2, "Yellow should be at least 2");
-        assert!(req_board.get_color_count(5) >= 2, "Purple should be at least 2");
-        assert_eq!(req_board.get_color_count(3), 1, "Green modifier (+1) should be active");
+        assert!(
+            req_board.get_color_count(1) >= 2,
+            "Red should be at least 2"
+        );
+        assert!(
+            req_board.get_color_count(2) >= 2,
+            "Yellow should be at least 2"
+        );
+        assert!(
+            req_board.get_color_count(5) >= 2,
+            "Purple should be at least 2"
+        );
+        assert_eq!(
+            req_board.get_color_count(3),
+            1,
+            "Green modifier (+1) should be active"
+        );
 
         println!("--- [Q115] Test Passed Successfully! ---");
     }
@@ -1302,7 +1424,7 @@ mod tests {
         state.debug.debug_mode = true;
 
         let emma_id = 4433; // PL!N-pb1-008-R (Emma Verde)
-        // Ability 0: REDUCE_COST(2) if Stage has Tapped Niji Member
+                            // Ability 0: REDUCE_COST(2) if Stage has Tapped Niji Member
 
         // 1. Setup Stage: 1 Tapped Niji member (ID 4430 Miyashita Ai, Cost 2)
         let rina_id = 4430;
@@ -1316,19 +1438,30 @@ mod tests {
         state.set_deck(0, &[3001, 3002, 3003]);
 
         // Setup enough energy (15)
-        for _ in 0..15 { state.players[0].energy_zone.push(3001); }
+        for _ in 0..15 {
+            state.players[0].energy_zone.push(3001);
+        }
 
         println!("--- Initial State ---");
         state.dump_verbose();
 
         // 3. Verify Cost in Hand
-        let current_cost = crate::core::logic::rules::get_member_cost(&state, 0, emma_id, -1, -1, &db, 0);
-        assert_eq!(current_cost, 15, "Emma's cost in hand should be 15 (17 - 2)");
+        let current_cost =
+            crate::core::logic::rules::get_member_cost(&state, 0, emma_id, -1, -1, &db, 0);
+        assert_eq!(
+            current_cost, 15,
+            "Emma's cost in hand should be 15 (17 - 2)"
+        );
 
         // 4. Perform Baton Touch on the tapped member (Slot 1)
-        println!("Step: Playing Emma over the tapped member (Slot 1, ID {})", rina_id);
+        println!(
+            "Step: Playing Emma over the tapped member (Slot 1, ID {})",
+            rina_id
+        );
         state.phase = Phase::Main;
-        state.play_member(&db, 0, 1).expect("Baton touch play should succeed with reduced cost");
+        state
+            .play_member(&db, 0, 1)
+            .expect("Baton touch play should succeed with reduced cost");
 
         println!("--- State After Play (Before Resolving OnPlay) ---");
         state.dump_verbose();
@@ -1336,7 +1469,9 @@ mod tests {
         // Emma has an OnPlay ability that triggers a SelectMode interaction.
         // We must resolve this interaction for the test to complete.
         if state.phase == Phase::Response {
-            println!("Step: Resolving Emma's OnPlay SelectMode (Choosing Option 1: Activate Energy)");
+            println!(
+                "Step: Resolving Emma's OnPlay SelectMode (Choosing Option 1: Activate Energy)"
+            );
             state.step(&db, 501).expect("Selecting mode should succeed");
         }
 
@@ -1344,13 +1479,23 @@ mod tests {
         state.dump_verbose();
 
         // Final verification
-        assert_eq!(state.players[0].stage[1], emma_id, "Emma should be on stage");
+        assert_eq!(
+            state.players[0].stage[1], emma_id,
+            "Emma should be on stage"
+        );
         // NOTE: Cost calculation currently results in 11 energy tapped instead of expected 13 (15 - 2 baton).
         // This may indicate a bug in cost reduction logic or a test expectation mismatch.
         // TODO: Investigate cost reduction with baton touch interaction
-        assert_eq!(state.players[0].tapped_energy_mask.count_ones(), 11, "Current behavior: 11 energy tapped");
+        assert_eq!(
+            state.players[0].tapped_energy_mask.count_ones(),
+            11,
+            "Current behavior: 11 energy tapped"
+        );
 
-        assert!(state.players[0].discard.contains(&rina_id), "Ai (ID 4430) should be in discard");
+        assert!(
+            state.players[0].discard.contains(&rina_id),
+            "Ai (ID 4430) should be in discard"
+        );
 
         println!("--- [Q206] Test Passed Successfully! ---");
     }
@@ -1371,20 +1516,28 @@ mod tests {
 
         // 2. [Q186] Verify Cost Reduction
         // Base cost is 20. Reduction = 1 per other card (4). Result = 16.
-        let current_cost = crate::core::logic::rules::get_member_cost(&state, 0, target_id, -1, -1, &db, 0);
+        let current_cost =
+            crate::core::logic::rules::get_member_cost(&state, 0, target_id, -1, -1, &db, 0);
         assert_eq!(current_cost, 16, "Cost should be 20 - 4 = 16");
 
         // Verify it can reach low value (but not negative if base 20 and 15 others)
         state.players[0].hand = vec![target_id; 16].into(); // 1 + 15 others
-        let zero_cost = crate::core::logic::rules::get_member_cost(&state, 0, target_id, -1, -1, &db, 0);
+        let zero_cost =
+            crate::core::logic::rules::get_member_cost(&state, 0, target_id, -1, -1, &db, 0);
         assert_eq!(zero_cost, 5, "Cost should be 20 - 15 = 5");
 
         // 3. [Q62/Q89] Verify Name Identity
         let card = db.get_member(target_id).unwrap();
         // The engine uses string containment for name checks (see filter.rs)
         assert!(card.name.contains("渡辺 曜"), "Should contain Watanabe You");
-        assert!(card.name.contains("鬼塚夏美"), "Should contain Onitsuka Natsumi");
-        assert!(card.name.contains("大沢瑠璃乃"), "Should contain Osawa Rurino");
+        assert!(
+            card.name.contains("鬼塚夏美"),
+            "Should contain Onitsuka Natsumi"
+        );
+        assert!(
+            card.name.contains("大沢瑠璃乃"),
+            "Should contain Osawa Rurino"
+        );
 
         println!("--- [LL-bp2-001-R＋ Multi-QA] Test Passed Successfully! ---");
     }
@@ -1434,35 +1587,63 @@ mod tests {
 
         println!("--- Step 1: P1 plays Nico (Cost 7) ---");
         state.phase = Phase::Main;
-        state.play_member(&db, state.players[p1].hand.len() - 1, 1).expect("Nico should be playable");
+        state
+            .play_member(&db, state.players[p1].hand.len() - 1, 1)
+            .expect("Nico should be playable");
 
         // Effect 1: P1 plays from discard
-        state.handle_response(&db, ACTION_BASE_CHOICE + 0).expect("P1 Choice 0 failed");
-        state.handle_response(&db, ACTION_BASE_STAGE_SLOTS + 0).expect("P1 Slot 0 failed");
+        state
+            .handle_response(&db, ACTION_BASE_CHOICE + 0)
+            .expect("P1 Choice 0 failed");
+        state
+            .handle_response(&db, ACTION_BASE_STAGE_SLOTS + 0)
+            .expect("P1 Slot 0 failed");
 
         // Effect 2: P2 (Opponent) plays from discard
-        state.handle_response(&db, ACTION_BASE_CHOICE + 0).expect("P2 Choice 0 failed");
-        state.handle_response(&db, ACTION_BASE_STAGE_SLOTS + 2).expect("P2 Slot 2 failed");
+        state
+            .handle_response(&db, ACTION_BASE_CHOICE + 0)
+            .expect("P2 Choice 0 failed");
+        state
+            .handle_response(&db, ACTION_BASE_STAGE_SLOTS + 2)
+            .expect("P2 Slot 2 failed");
 
         // Q188 Verification: Kanata (Tapped/WAIT) does not trigger
-        assert!(state.players[p1].is_tapped(0), "P1 summoned card should be Tapped (WAIT)");
-        assert!(state.players[p2].is_tapped(2), "P2 summoned card should be Tapped (WAIT)");
-        let triggered_kanata = state.trigger_queue.iter().any(|(cid, ..)| *cid == kanata_id);
-        assert!(!triggered_kanata, "Q188: WAIT state should not trigger automatic abilities");
+        assert!(
+            state.players[p1].is_tapped(0),
+            "P1 summoned card should be Tapped (WAIT)"
+        );
+        assert!(
+            state.players[p2].is_tapped(2),
+            "P2 summoned card should be Tapped (WAIT)"
+        );
+        let triggered_kanata = state
+            .trigger_queue
+            .iter()
+            .any(|(cid, ..)| *cid == kanata_id);
+        assert!(
+            !triggered_kanata,
+            "Q188: WAIT state should not trigger automatic abilities"
+        );
 
         // Q169 Verification: Slot locking
         assert!((state.players[p1].prevent_play_to_slot_mask() & (1 << 0)) != 0);
         state.players[p1].hand.push(kota_id);
         state.phase = Phase::Main;
         let res = state.play_member(&db, state.players[p1].hand.len() - 1, 0);
-        assert!(res.is_err(), "Q169: Baton Pass to locked slot should be blocked");
+        assert!(
+            res.is_err(),
+            "Q169: Baton Pass to locked slot should be blocked"
+        );
 
         // Q181 Verification: Lock clears on departure
         state.players[p1].stage[0] = -1;
         state.players[p1].set_tapped(0, false);
         state.players[p1].set_moved(0, false);
         let res = state.play_member(&db, state.players[p1].hand.len() - 1, 0);
-        assert!(res.is_err(), "Q181: Mask remains even after card departure (Standard Lock)");
+        assert!(
+            res.is_err(),
+            "Q181: Mask remains even after card departure (Standard Lock)"
+        );
 
         // Q168 Verification: Skip if no targets
         state.players[p1].discard.clear();
@@ -1475,7 +1656,11 @@ mod tests {
         state.players[p1].set_moved(1, false);
 
         state.play_member(&db, 0, 1).expect("Nico 2 play failed");
-        assert_eq!(state.phase, Phase::Main, "Q168: Should return to Main if no discard targets");
+        assert_eq!(
+            state.phase,
+            Phase::Main,
+            "Q168: Should return to Main if no discard targets"
+        );
     }
 
     #[test]
@@ -1494,17 +1679,26 @@ mod tests {
         let catchu_member_2 = *db.card_no_to_id.get("PL!SP-PR-006-PR").unwrap();
 
         // Q97 Case: No members, but ALL energy active
-        for _ in 0..10 { state.players[p1].energy_zone.push(3001); }
+        for _ in 0..10 {
+            state.players[p1].energy_zone.push(3001);
+        }
         state.players[p1].tapped_energy_mask = 0;
 
-        let ctx = AbilityContext { player_id: p1 as u8, source_card_id: catchu_live_id, ..Default::default() };
+        let ctx = AbilityContext {
+            player_id: p1 as u8,
+            source_card_id: catchu_live_id,
+            ..Default::default()
+        };
         let abilities = db.get_live(catchu_live_id).unwrap().abilities.clone();
 
         for ab in &abilities {
-            state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+            state.resolve_ability(&db, ab, &ctx);
         }
 
-        assert_eq!(state.players[p1].live_score_bonus, 1, "Q97: Score bonus applied without members");
+        assert_eq!(
+            state.players[p1].live_score_bonus, 1,
+            "Q97: Score bonus applied without members"
+        );
 
         // Q103/Q96 Case: 10 energy, 7 tapped. 2 members.
         state.players[p1].live_score_bonus = 0;
@@ -1514,21 +1708,31 @@ mod tests {
 
         // First instance proc
         for ab in &abilities {
-            state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+            state.resolve_ability(&db, ab, &ctx);
         }
-        assert_eq!(state.players[p1].tapped_energy_mask.count_ones(), 1, "Untapped 6");
+        assert_eq!(
+            state.players[p1].tapped_energy_mask.count_ones(),
+            1,
+            "Untapped 6"
+        );
         assert_eq!(state.players[p1].live_score_bonus, 0, "Not all active yet");
 
         // Second instance proc
         for ab in &abilities {
-            state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+            state.resolve_ability(&db, ab, &ctx);
         }
         assert_eq!(state.players[p1].tapped_energy_mask, 0, "All active");
-        assert_eq!(state.players[p1].live_score_bonus, 1, "Q103: Score +1 applied on second resolution");
+        assert_eq!(
+            state.players[p1].live_score_bonus, 1,
+            "Q103: Score +1 applied on second resolution"
+        );
 
         // Q96: Re-tap and check bonus persistence
         state.players[p1].tapped_energy_mask = 0b1;
-        assert_eq!(state.players[p1].live_score_bonus, 1, "Q96: Score remains after tapping");
+        assert_eq!(
+            state.players[p1].live_score_bonus, 1,
+            "Q96: Score remains after tapping"
+        );
     }
 
     #[test]
@@ -1543,7 +1747,11 @@ mod tests {
         state.phase = Phase::Response;
 
         // Opcode 58 (MOVE_TO_DISCARD), Attr (Hand + Optional)
-        let ctx = AbilityContext { player_id: p_idx as u8, source_card_id: 4270, ..Default::default() };
+        let ctx = AbilityContext {
+            player_id: p_idx as u8,
+            source_card_id: 4270,
+            ..Default::default()
+        };
         state.interaction_stack.push(PendingInteraction {
             ctx,
             card_id: 4270,
@@ -1557,10 +1765,17 @@ mod tests {
         // Verify Pass action (Action 0)
         let mut actions = Vec::new();
         state.generate_legal_actions(&db, p_idx, &mut actions);
-        assert!(actions.contains(&0), "Pass action missing for optional discard");
+        assert!(
+            actions.contains(&0),
+            "Pass action missing for optional discard"
+        );
 
         state.step(&db, 0).expect("Pass failed");
-        assert_eq!(state.players[p_idx].hand.len(), 3, "Hand should not change on Pass");
+        assert_eq!(
+            state.players[p_idx].hand.len(),
+            3,
+            "Hand should not change on Pass"
+        );
         assert_eq!(state.phase, Phase::Main, "Skipping the optional discard should collapse the transient Response phase back to Main");
     }
 
@@ -1575,7 +1790,11 @@ mod tests {
         state.players[p_idx].hand = vec![3001, 3002].into();
         state.phase = Phase::Response;
 
-        let ctx = AbilityContext { player_id: p_idx as u8, source_card_id: 17, ..Default::default() };
+        let ctx = AbilityContext {
+            player_id: p_idx as u8,
+            source_card_id: 17,
+            ..Default::default()
+        };
         state.interaction_stack.push(PendingInteraction {
             ctx,
             card_id: 17,
@@ -1588,7 +1807,9 @@ mod tests {
 
         let mut actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, p_idx, &mut actions);
-        let has_hand_selection = actions.iter().any(|&a| a >= ACTION_BASE_HAND_SELECT && a < ACTION_BASE_HAND_SELECT + 100);
+        let has_hand_selection = actions
+            .iter()
+            .any(|&a| a >= ACTION_BASE_HAND_SELECT && a < ACTION_BASE_HAND_SELECT + 100);
         assert!(has_hand_selection, "Hand selection should be available");
     }
 
@@ -1603,21 +1824,38 @@ mod tests {
 
         // Case 1: All Liella (Success)
         state.players[p1].stage[0] = card_id; // Kanon is Liella (3)
-        for i in 0..7 { state.players[p1].energy_zone.push(3001 + i); }
+        for i in 0..7 {
+            state.players[p1].energy_zone.push(3001 + i);
+        }
         state.players[p1].energy_deck.push(9999);
 
-        let ctx = AbilityContext { player_id: p1 as u8, source_card_id: card_id, ..Default::default() };
-        let bytecode = &db.get_member(card_id).unwrap().abilities[0].bytecode;
+        let ctx = AbilityContext {
+            player_id: p1 as u8,
+            source_card_id: card_id,
+            ..Default::default()
+        };
+        let ability = &db.get_member(card_id).unwrap().abilities[0];
 
-        state.resolve_bytecode_cref(&db, bytecode, &ctx);
-        assert_eq!(state.players[p1].energy_zone.len(), 8, "Should have charged energy");
-        assert!(state.players[p1].is_energy_tapped(7), "Charged energy should be tapped (WAIT)");
+        state.resolve_ability(&db, ability, &ctx);
+        assert_eq!(
+            state.players[p1].energy_zone.len(),
+            8,
+            "Should have charged energy"
+        );
+        assert!(
+            state.players[p1].is_energy_tapped(7),
+            "Charged energy should be tapped (WAIT)"
+        );
 
         // Case 2: Mixed Groups (Fail)
         state.players[p1].energy_zone = vec![3001; 7].into(); // Reset
         state.players[p1].stage[1] = 143; // Muse member
-        state.resolve_bytecode_cref(&db, bytecode, &ctx);
-        assert_eq!(state.players[p1].energy_zone.len(), 7, "Should not charge with mixed groups");
+        state.resolve_ability(&db, ability, &ctx);
+        assert_eq!(
+            state.players[p1].energy_zone.len(),
+            7,
+            "Should not charge with mixed groups"
+        );
     }
 
     #[test]
@@ -1642,11 +1880,15 @@ mod tests {
         }
 
         let energy_before_first = state.players[p1].energy_zone.len();
-        state.play_member(&db, 0, 0).expect("first 557 play should succeed");
+        state
+            .play_member(&db, 0, 0)
+            .expect("first 557 play should succeed");
         let energy_after_first = state.players[p1].energy_zone.len();
 
         let energy_before_second = state.players[p1].energy_zone.len();
-        state.play_member(&db, 0, 1).expect("second 557 play should succeed");
+        state
+            .play_member(&db, 0, 1)
+            .expect("second 557 play should succeed");
         let energy_after_second = state.players[p1].energy_zone.len();
 
         assert_eq!(
@@ -1682,23 +1924,36 @@ mod tests {
 
         let mut filter_ayumu = CardFilter::default();
         filter_ayumu.char_id_1 = 1;
-        assert!(filter_ayumu.matches(&state, &db, triple_id, None, false, None, &ctx), "Should match Ayumu");
+        assert!(
+            filter_ayumu.matches(&state, &db, triple_id, None, false, None, &ctx),
+            "Should match Ayumu"
+        );
 
         let mut filter_kanon = CardFilter::default();
         filter_kanon.char_id_1 = 10;
-        assert!(filter_kanon.matches(&state, &db, triple_id, None, false, None, &ctx), "Should match Kanon");
+        assert!(
+            filter_kanon.matches(&state, &db, triple_id, None, false, None, &ctx),
+            "Should match Kanon"
+        );
 
         let mut filter_kaho = CardFilter::default();
         filter_kaho.char_id_1 = 19;
-        assert!(filter_kaho.matches(&state, &db, triple_id, None, false, None, &ctx), "Should match Kaho");
+        assert!(
+            filter_kaho.matches(&state, &db, triple_id, None, false, None, &ctx),
+            "Should match Kaho"
+        );
 
         // 2. Q65/Q69: Discard cost with mixed names
         state.players[p1].hand = SmallVec::from_vec(vec![3001, 3002, 3003]);
 
-        let ctx = AbilityContext { player_id: p1 as u8, source_card_id: triple_id, ..Default::default() };
+        let ctx = AbilityContext {
+            player_id: p1 as u8,
+            source_card_id: triple_id,
+            ..Default::default()
+        };
         let ability = db.get_member(triple_id).unwrap().abilities.get(1).unwrap();
 
-        let _ = resolve_bytecode(&mut state, &db, std::sync::Arc::new(ability.bytecode.clone()), &ctx);
+        state.resolve_ability(&db, ability, &ctx);
     }
 
     #[test]
@@ -1720,19 +1975,38 @@ mod tests {
         state.players[p_me].stage[0] = vienna_id;
 
         let (req_board, _) = get_live_requirements(&state, &db, p_opp, live_card); // Q110: 1 Generic card should increase requirement by 1
-        assert_eq!(req_board.get_color_count(6), 1, "Q110: Single Vienna should increase generic requirement by 1");
+        assert_eq!(
+            req_board.get_color_count(6),
+            1,
+            "Q110: Single Vienna should increase generic requirement by 1"
+        );
 
         // Q127: Stacking generic increases
         state.players[p_me].stage[0] = vienna_id;
         state.players[p_me].stage[1] = vienna_id;
-        let (req_board2, _) = crate::core::logic::performance::get_live_requirements(&state, &db, p_opp, live_card);
-        assert_eq!(req_board2.get_color_count(6), 2, "Q127: Two Viennas should increase generic requirement by 2");
+        let (req_board2, _) =
+            crate::core::logic::performance::get_live_requirements(&state, &db, p_opp, live_card);
+        assert_eq!(
+            req_board2.get_color_count(6),
+            2,
+            "Q127: Two Viennas should increase generic requirement by 2"
+        );
 
         // 3. Q127: Modification via another effect (e.g. adding 1) then applying Vienna
-        state.players[p_opp].heart_req_additions.set_color_count(0, 1);
+        state.players[p_opp]
+            .heart_req_additions
+            .set_color_count(0, 1);
         let (req_board_override, _) = get_live_requirements(&state, &db, p_opp, live_card);
-        assert_eq!(req_board_override.get_color_count(0), 4, "Q127: Pink should be 3 (base) + 1 (manual add)");
-        assert_eq!(req_board_override.get_color_count(6), 2, "Q127: Generic should be 2 (Viennas)");
+        assert_eq!(
+            req_board_override.get_color_count(0),
+            4,
+            "Q127: Pink should be 3 (base) + 1 (manual add)"
+        );
+        assert_eq!(
+            req_board_override.get_color_count(6),
+            2,
+            "Q127: Generic should be 2 (Viennas)"
+        );
     }
 
     #[test]
@@ -1758,11 +2032,18 @@ mod tests {
         crate::core::logic::interpreter::process_trigger_queue(&mut state, &db);
 
         // Reduction per card is 8. Two cards = 16.
-        assert_eq!(state.players[p1].yell_count_reduction, 16, "Q117: Both Viennas should trigger penalties");
+        assert_eq!(
+            state.players[p1].yell_count_reduction, 16,
+            "Q117: Both Viennas should trigger penalties"
+        );
 
         let reveal_count = crate::core::logic::performance::do_yell(&mut state, &db, 20);
         // (12 base + 8 yell_bonus) = 20. 20 - 16 = 4.
-        assert_eq!(reveal_count.len(), 4, "Q111: (12+8) - 16 = 4 cards revealed");
+        assert_eq!(
+            reveal_count.len(),
+            4,
+            "Q111: (12+8) - 16 = 4 cards revealed"
+        );
     }
 
     #[test]
@@ -1787,7 +2068,11 @@ mod tests {
         // Hand should have been empty, then DRAW(2), then DISCARD_HAND(2) mandatory.
         // So hand should be 0 again!
         state.process_trigger_queue(&db);
-        assert_eq!(state.players[p_idx].hand.len(), 0, "Hand should be empty after internal OnPlay (DRAW 2, DISCARD 2)");
+        assert_eq!(
+            state.players[p_idx].hand.len(),
+            0,
+            "Hand should be empty after internal OnPlay (DRAW 2, DISCARD 2)"
+        );
 
         // Now give the player 2 cards manually to test the PARTIAL discard.
         state.players[p_idx].hand = vec![102, 103].into();
@@ -1802,11 +2087,20 @@ mod tests {
             .source(Zone::Hand)
             .dest(Zone::Discard)
             .build();
-        let _ = crate::core::logic::interpreter::resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
+        let frames = crate::core::logic::models::FrameProgram::from_bytecode(&bytecode).frames;
+        state.resolve_semantic_frames(&db, &frames, &ctx);
 
         // Q55: Should discard all 2 available cards and not error/hang
-        assert_eq!(state.players[p_idx].hand.len(), 0, "Hand should be empty after partial discard");
-        assert_eq!(state.players[p_idx].discard.len(), 4, "Discard should contain the 4 cards (2 from OnPlay, 2 manual)");
+        assert_eq!(
+            state.players[p_idx].hand.len(),
+            0,
+            "Hand should be empty after partial discard"
+        );
+        assert_eq!(
+            state.players[p_idx].discard.len(),
+            4,
+            "Discard should contain the 4 cards (2 from OnPlay, 2 manual)"
+        );
     }
 
     #[test]
@@ -1825,7 +2119,10 @@ mod tests {
         let mut actions = Vec::<i32>::new();
         state.generate_legal_actions(&db, 0, &mut actions);
 
-        assert!(!actions.contains(&(ACTION_BASE_HAND + 0)), "Q56: Should not be able to play with insufficient energy");
+        assert!(
+            !actions.contains(&(ACTION_BASE_HAND + 0)),
+            "Q56: Should not be able to play with insufficient energy"
+        );
     }
 
     #[test]
@@ -1855,14 +2152,24 @@ mod tests {
         state.trigger_global_event(&db, TriggerType::OnLiveStart, -1, -1, 0, -1);
         state.trigger_depth -= 1;
 
-        assert_eq!(state.trigger_queue.len(), 2, "Both triggers should be queued");
+        assert_eq!(
+            state.trigger_queue.len(),
+            2,
+            "Both triggers should be queued"
+        );
 
         // Verify Order: P1 trigger should be first in deque
         let ctx0 = &state.trigger_queue[0].2;
-        assert_eq!(ctx0.player_id, 0, "Q84: Active player trigger must be first in queue");
+        assert_eq!(
+            ctx0.player_id, 0,
+            "Q84: Active player trigger must be first in queue"
+        );
 
         let ctx1 = &state.trigger_queue[1].2;
-        assert_eq!(ctx1.player_id, 1, "Q84: Non-active player trigger must be second");
+        assert_eq!(
+            ctx1.player_id, 1,
+            "Q84: Non-active player trigger must be second"
+        );
     }
 
     #[test]
@@ -1893,7 +2200,11 @@ mod tests {
         // 3. Verification: HeartBoard for slot 0 should have 2 Yellow hearts (index 2).
         // SUCCESS_LIVE_COUNT_EQUAL_OPPONENT (Opcode 0) compares counts. 0 vs 0 should pass.
         let hearts = get_effective_hearts(&state, 0, 0, &db, 0);
-        assert_eq!(hearts.get_color_count(2), 2, "Q230: 0 vs 0 should be equal, granting 2 hearts.");
+        assert_eq!(
+            hearts.get_color_count(2),
+            2,
+            "Q230: 0 vs 0 should be equal, granting 2 hearts."
+        );
     }
 
     #[test]
@@ -1912,17 +2223,20 @@ mod tests {
 
         // 2. Inject a "Yellow Yell" (+1 score) into the UI snapshot.
         // The engine reads performance_results to calculate final success logic.
-        state.ui.performance_results.insert(0, serde_json::json!({
-            "success": true,
-            "overall_yell_score_bonus": 1, // Represents the yellow yell icon
-            "lives": [{
-                "slot_idx": 0,
-                "card_id": 5001,
-                "passed": true,
-                "score": 0, // Base score of the live card is 0
-                "extra_hearts": 2 // Meets Shioriko's penalty condition (MIN 2)
-            }]
-        }));
+        state.ui.performance_results.insert(
+            0,
+            serde_json::json!({
+                "success": true,
+                "overall_yell_score_bonus": 1, // Represents the yellow yell icon
+                "lives": [{
+                    "slot_idx": 0,
+                    "card_id": 5001,
+                    "passed": true,
+                    "score": 0, // Base score of the live card is 0
+                    "extra_hearts": 2 // Meets Shioriko's penalty condition (MIN 2)
+                }]
+            }),
+        );
 
         // 3. Finalize live result.
         // This calculates scores, triggers ON_LIVE_SUCCESS, and moves cards.
@@ -1933,7 +2247,10 @@ mod tests {
         // Formula: [Live Base Score (0) + Yell Bonus (1)] -> Then Ability Penalty (-1) = 0.
         // If the penalty was applied to the base card first, it might have floor'd at 0,
         // then added the yell bonus to get 1. The ruling confirms it's 0.
-        assert_eq!(state.players[0].score, 0, "Q231: Final score should be 0 after yell (+1) and penalty (-1)");
+        assert_eq!(
+            state.players[0].score, 0,
+            "Q231: Final score should be 0 after yell (+1) and penalty (-1)"
+        );
     }
 
     #[test]
@@ -1960,7 +2277,10 @@ mod tests {
 
         // 3. Verification: Action should NOT be legal.
         // The engine's can_pay_cost logic checks if DECK_TOP has enough cards.
-        assert!(!actions.contains(&activation_action), "Q234: Kinako activation should be illegal if deck < 3");
+        assert!(
+            !actions.contains(&activation_action),
+            "Q234: Kinako activation should be illegal if deck < 3"
+        );
     }
 
     #[test]
@@ -1976,9 +2296,7 @@ mod tests {
         member.name = "Mia Taylor".to_string();
         member.abilities.push(Ability {
             trigger: TriggerType::OnPlay,
-            bytecode: vec![
-                O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6
-            ],
+            bytecode: vec![O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6],
             ..Default::default()
         });
         db.members.insert(4340, member.clone());
@@ -2000,7 +2318,7 @@ mod tests {
         state.debug.debug_mode = true;
 
         state.players[0].hand = vec![4340, 100].into();
-        state.players[0].deck = vec![100, 200, 100].into();  // Card 200 (live) should be in deck for REVEAL_UNTIL
+        state.players[0].deck = vec![100, 200, 100].into(); // Card 200 (live) should be in deck for REVEAL_UNTIL
         state.players[0].discard = vec![100, 100].into();
 
         let ctx = crate::core::logic::models::AbilityContext {
@@ -2010,16 +2328,18 @@ mod tests {
             ..Default::default()
         };
 
-        let bytecode = vec![
-            O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6
-        ];
+        let bytecode = vec![O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6];
 
-        let _ = resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
+        let frames = crate::core::logic::models::FrameProgram::from_bytecode(&bytecode).frames;
+        state.resolve_semantic_frames(&db, &frames, &ctx);
 
         let hand: Vec<i32> = state.players[0].hand.iter().copied().collect();
         assert!(hand.contains(&200), "Hand should contain the live card 200");
 
-        assert_eq!(state.players[0].deck.len() + state.players[0].discard.len(), 4);
+        assert_eq!(
+            state.players[0].deck.len() + state.players[0].discard.len(),
+            4
+        );
     }
 
     #[test]
@@ -2046,7 +2366,7 @@ mod tests {
         state.debug.debug_mode = true;
 
         state.players[0].hand = vec![4340, 100].into();
-        state.players[0].deck = vec![100, 100].into();  // No live cards in deck - REVEAL_UNTIL won't find a match
+        state.players[0].deck = vec![100, 100].into(); // No live cards in deck - REVEAL_UNTIL won't find a match
         state.players[0].discard = vec![100, 100].into();
 
         let ctx = crate::core::logic::models::AbilityContext {
@@ -2056,15 +2376,14 @@ mod tests {
             ..Default::default()
         };
 
-        let bytecode = vec![
-            O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6
-        ];
+        let bytecode = vec![O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6];
 
-        let _ = resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
+        let frames = crate::core::logic::models::FrameProgram::from_bytecode(&bytecode).frames;
+        state.resolve_semantic_frames(&db, &frames, &ctx);
 
         // Since no live cards found, all 2 deck cards moved to discard
         assert_eq!(state.players[0].deck.len(), 0);
-        assert_eq!(state.players[0].discard.len(), 4);  // 2 original + 2 from deck
+        assert_eq!(state.players[0].discard.len(), 4); // 2 original + 2 from deck
     }
 
     // =========================================================================
@@ -2095,7 +2414,11 @@ mod tests {
         state.process_trigger_queue(&db);
 
         // Verify we haven't progressed past this timing
-        assert_eq!(state.phase, Phase::LiveResult, "Q36: Should remain in LiveResult phase during OnLiveSuccess");
+        assert_eq!(
+            state.phase,
+            Phase::LiveResult,
+            "Q36: Should remain in LiveResult phase during OnLiveSuccess"
+        );
     }
 
     #[test]
@@ -2111,15 +2434,24 @@ mod tests {
 
         // During performance, the live card is accessible for effects
         let is_in_live_zone = state.players[0].live_zone.contains(&live_id);
-        assert!(is_in_live_zone, "Q38: Live card should be in zone during performance");
+        assert!(
+            is_in_live_zone,
+            "Q38: Live card should be in zone during performance"
+        );
 
         // After performance, if not moved to success pile, card is discarded
         state.obtained_success_live[0] = false;
         state.phase = Phase::LiveResult;
         state.finalize_live_result();
 
-        assert!(!state.players[0].live_zone.contains(&live_id), "Q38: Live card should be discarded after failed live");
-        assert!(state.players[0].discard.contains(&live_id), "Q38: Live card should move to discard");
+        assert!(
+            !state.players[0].live_zone.contains(&live_id),
+            "Q38: Live card should be discarded after failed live"
+        );
+        assert!(
+            state.players[0].discard.contains(&live_id),
+            "Q38: Live card should move to discard"
+        );
     }
 
     #[test]
@@ -2145,7 +2477,10 @@ mod tests {
         // Both should have liella group-related data
         assert!(!member1.name.is_empty(), "Q64: Liella member should exist");
         assert!(!member2.name.is_empty(), "Q64: Liella member should exist");
-        assert!(state.players[0].stage[0] != state.players[0].stage[2], "Q64: Different members should be distinguishable");
+        assert!(
+            state.players[0].stage[0] != state.players[0].stage[2],
+            "Q64: Different members should be distinguishable"
+        );
     }
 
     #[test]
@@ -2168,8 +2503,14 @@ mod tests {
 
         // P1 having any live card should dominate P2's "no live" state per Q66
         // This is verified by checking zone occupancy
-        assert!(state.players[0].live_zone[0] != -1, "Q66: P1 should have a live card");
-        assert_eq!(state.players[1].live_zone[0], -1, "Q66: P2 should have no live card");
+        assert!(
+            state.players[0].live_zone[0] != -1,
+            "Q66: P1 should have a live card"
+        );
+        assert_eq!(
+            state.players[1].live_zone[0], -1,
+            "Q66: P2 should have no live card"
+        );
     }
 
     #[test]
@@ -2198,7 +2539,11 @@ mod tests {
         state.players[0].stage[1] = target_member;
 
         // Energy should NOT have been tapped if this was effect-based placement
-        assert_eq!(state.players[0].tapped_energy_mask.count_ones(), 0, "Q63: Effect-based placement should NOT consume energy");
+        assert_eq!(
+            state.players[0].tapped_energy_mask.count_ones(),
+            0,
+            "Q63: Effect-based placement should NOT consume energy"
+        );
     }
 
     #[test]
@@ -2217,10 +2562,16 @@ mod tests {
 
             // The test verifies that universal blades are tracked separately
             // They should NOT fulfill colored heart requirements
-            assert!(live.blade_hearts.len() >= 7, "Q67: Blade hearts should include universal index");
+            assert!(
+                live.blade_hearts.len() >= 7,
+                "Q67: Blade hearts should include universal index"
+            );
         } else {
             // If live card doesn't exist, just verify zone is set
-            assert_eq!(state.players[0].live_zone[0], 1, "Q67: Live zone should have card ID");
+            assert_eq!(
+                state.players[0].live_zone[0], 1,
+                "Q67: Live zone should have card ID"
+            );
         }
     }
 
@@ -2254,7 +2605,10 @@ mod tests {
 
         // In the real engine, this would require looking up the ability and checking preconditions.
         // For now, verify it's in discard zone
-        assert!(state.players[0].discard.contains(&uraraka_id), "Q75: Card should be placeable from discard");
+        assert!(
+            state.players[0].discard.contains(&uraraka_id),
+            "Q75: Card should be placeable from discard"
+        );
     }
 
     #[test]
@@ -2273,7 +2627,10 @@ mod tests {
         state.players[0].stage[2] = renoa_card_3;
 
         // Verify all three slots have members
-        assert!(state.players[0].stage.iter().all(|&x| x != -1), "Q81: All slots should have members");
+        assert!(
+            state.players[0].stage.iter().all(|&x| x != -1),
+            "Q81: All slots should have members"
+        );
     }
 
     #[test]
@@ -2287,7 +2644,10 @@ mod tests {
         let live = db.get_live(live_id);
 
         if let Some(l) = live {
-            assert!(!l.name.is_empty(), "Q82: Live card should have a name for filter matching");
+            assert!(
+                !l.name.is_empty(),
+                "Q82: Live card should have a name for filter matching"
+            );
         }
     }
 
@@ -2326,7 +2686,10 @@ mod tests {
 
         // No refresh should occur (deck_size == look_count)
         assert_eq!(deck_size, 3, "Q86: Deck should have exactly 3");
-        assert!(!state.players[0].discard.is_empty(), "Q86: Discard should remain separate");
+        assert!(
+            !state.players[0].discard.is_empty(),
+            "Q86: Discard should remain separate"
+        );
     }
 
     #[test]
@@ -2342,7 +2705,11 @@ mod tests {
         // Attempting arbitrary action should NOT work outside of legal action generation
         // The engine should validate all state changes through handle_* functions
 
-        assert_eq!(state.players[0].hand.len(), initial_hand_size, "Q88: Hand should not change arbitrarily");
+        assert_eq!(
+            state.players[0].hand.len(),
+            initial_hand_size,
+            "Q88: Hand should not change arbitrarily"
+        );
     }
 
     #[test]
@@ -2371,7 +2738,11 @@ mod tests {
         // OnLiveStart should NOT trigger
         state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
 
-        assert_eq!(state.trigger_queue.len(), 0, "Q91: No triggers without live");
+        assert_eq!(
+            state.trigger_queue.len(),
+            0,
+            "Q91: No triggers without live"
+        );
     }
 
     #[test]
@@ -2387,7 +2758,10 @@ mod tests {
         assert_eq!(state.players[0].deck.len(), 0, "Q100: Deck should be empty");
 
         // The revealed card should NOT be part of refresh
-        assert_ne!(revealed_card, 0, "Q100: Revealed card was actually revealed");
+        assert_ne!(
+            revealed_card, 0,
+            "Q100: Revealed card was actually revealed"
+        );
     }
 
     #[test]
@@ -2409,7 +2783,11 @@ mod tests {
         state.players[0].discard.extend(moved);
 
         assert_eq!(state.players[0].deck.len(), 0, "Q104: Deck should be empty");
-        assert_eq!(state.players[0].discard.len(), initial_deck_size, "Q104: All cards in discard");
+        assert_eq!(
+            state.players[0].discard.len(),
+            initial_deck_size,
+            "Q104: All cards in discard"
+        );
     }
 
     #[test]
@@ -2429,7 +2807,11 @@ mod tests {
         state.players[0].stage[0] = -1;
 
         // Bonus should NOT change
-        assert_eq!(state.players[0].play_count_this_turn(), 2, "Q109: Play count should not decrease on member departure");
+        assert_eq!(
+            state.players[0].play_count_this_turn(),
+            2,
+            "Q109: Play count should not decrease on member departure"
+        );
     }
 
     #[test]
@@ -2465,7 +2847,10 @@ mod tests {
         // Ability can still be used (nothing happens for the effect part)
         // This is handled via the "partial resolution" rule Q55
 
-        assert!(state.players[0].discard.is_empty(), "Q123: Discard is empty");
+        assert!(
+            state.players[0].discard.is_empty(),
+            "Q123: Discard is empty"
+        );
     }
 
     #[test]
@@ -2480,7 +2865,11 @@ mod tests {
         // Normal live card would be placed in success_pile after winning
         // But if restricted, it should stay in discard
 
-        assert_ne!(state.players[0].success_lives.len(), 1, "Q125: Restricted live should not reach success pile");
+        assert_ne!(
+            state.players[0].success_lives.len(),
+            1,
+            "Q125: Restricted live should not reach success pile"
+        );
     }
 
     #[test]
@@ -2501,7 +2890,10 @@ mod tests {
         // Area movement should have triggered an OnMove event
         // (This would be detected by the engine's ability triggering system)
 
-        assert_eq!(state.players[0].stage[1], card_id, "Q126: Member should be in new slot");
+        assert_eq!(
+            state.players[0].stage[1], card_id,
+            "Q126: Member should be in new slot"
+        );
     }
 
     #[test]
@@ -2519,7 +2911,11 @@ mod tests {
         state.players[0].hand.push(8);
 
         // OnLiveSuccess check happens AFTER yell is resolved
-        assert_eq!(state.players[0].hand.len(), 8, "Q128: Hand should be 8 after draw");
+        assert_eq!(
+            state.players[0].hand.len(),
+            8,
+            "Q128: Hand should be 8 after draw"
+        );
     }
 
     #[test]
@@ -2588,7 +2984,10 @@ mod tests {
 
         // Check: Ability can be activated during Main phase
         let can_activate_in_main = state.phase == Phase::Main;
-        assert!(can_activate_in_main, "Q138: Abilities can activate in Main phase");
+        assert!(
+            can_activate_in_main,
+            "Q138: Abilities can activate in Main phase"
+        );
     }
 
     #[test]
@@ -2603,9 +3002,7 @@ mod tests {
         state.players[0].stage[1] = 3002;
         state.players[0].stage[2] = 3003;
 
-        let stage_count = state.players[0].stage.iter()
-            .filter(|&&x| x != -1)
-            .count();
+        let stage_count = state.players[0].stage.iter().filter(|&&x| x != -1).count();
 
         // Effect bonus should depend on count, not order
         let bonus = stage_count as i32 * 1;
@@ -2625,13 +3022,13 @@ mod tests {
         state.players[0].stage[1] = 3001;
         state.players[0].stage[2] = 3001;
 
-        let stage_count = state.players[0].stage.iter()
-            .filter(|&&x| x != -1)
-            .count();
+        let stage_count = state.players[0].stage.iter().filter(|&&x| x != -1).count();
 
         assert_eq!(stage_count, 3, "Q145: Can place up to 3 members");
 
-        let same_card_count = state.players[0].stage.iter()
+        let same_card_count = state.players[0]
+            .stage
+            .iter()
             .filter(|&&x| x == 3001)
             .count();
 
@@ -2686,7 +3083,11 @@ mod tests {
         let bonus_multiplier = 2; // 2 members
         let bonus = 100 * bonus_multiplier;
 
-        assert_eq!(state.players[0].play_count_this_turn(), 2, "Q160: Should track 2 placements");
+        assert_eq!(
+            state.players[0].play_count_this_turn(),
+            2,
+            "Q160: Should track 2 placements"
+        );
         assert_eq!(bonus, 200, "Q160: Bonus calculation correct");
     }
 
@@ -2698,7 +3099,11 @@ mod tests {
         // Create a 60-card deck
         state.players[0].deck = (1..=60).collect::<Vec<_>>().into();
 
-        assert_eq!(state.players[0].deck.len(), 60, "Q165: Deck can be up to 60 cards");
+        assert_eq!(
+            state.players[0].deck.len(),
+            60,
+            "Q165: Deck can be up to 60 cards"
+        );
 
         // Adding 61st card exceeds limit
         state.players[0].deck.push(61);
@@ -2724,7 +3129,10 @@ mod tests {
         state.process_trigger_queue(&db);
 
         // Verify: The processing completed without error
-        assert!(state.players[0].stage[0] != -1, "Q170: Stage should not be empty");
+        assert!(
+            state.players[0].stage[0] != -1,
+            "Q170: Stage should not be empty"
+        );
     }
 
     #[test]
@@ -2758,7 +3166,11 @@ mod tests {
             state.players[0].energy_zone.pop(); // Pay 1 energy
         }
 
-        assert_eq!(state.players[0].energy_zone.len(), energy_before - 1, "Q180: Cost paid first");
+        assert_eq!(
+            state.players[0].energy_zone.len(),
+            energy_before - 1,
+            "Q180: Cost paid first"
+        );
     }
 
     #[test]
@@ -2774,9 +3186,7 @@ mod tests {
 
         // Opponent chooses which member
         // (Simulated here by just verifying multiple members exist)
-        let opponent_choices = state.players[1].stage.iter()
-            .filter(|&&x| x != -1)
-            .count();
+        let opponent_choices = state.players[1].stage.iter().filter(|&&x| x != -1).count();
 
         assert_eq!(opponent_choices, 3, "Q185: Opponent has 3 choices");
     }
@@ -2798,7 +3208,10 @@ mod tests {
             state.players[0].hand.push(card_id);
         }
 
-        assert!(state.players[0].hand.contains(&1), "Q190: Effect chaining works");
+        assert!(
+            state.players[0].hand.contains(&1),
+            "Q190: Effect chaining works"
+        );
     }
 
     #[test]
@@ -2818,7 +3231,11 @@ mod tests {
         state.players[0].set_play_count_this_turn(second_refresh_count);
 
         // Verify tracking is persistent
-        assert_eq!(state.players[0].play_count_this_turn(), 2, "Q195: Multiple placements tracked");
+        assert_eq!(
+            state.players[0].play_count_this_turn(),
+            2,
+            "Q195: Multiple placements tracked"
+        );
     }
 
     #[test]
@@ -2848,7 +3265,10 @@ mod tests {
 
         // Mandatory choice: must select
         let mandatory_choices_available = 3;
-        assert!(mandatory_choices_available > 0, "Q205: Mandatory needs available options");
+        assert!(
+            mandatory_choices_available > 0,
+            "Q205: Mandatory needs available options"
+        );
     }
 
     #[test]
@@ -2910,7 +3330,9 @@ mod tests {
         state.players[0].stage[1] = card_id;
         state.players[0].stage[2] = card_id;
 
-        let count = state.players[0].stage.iter()
+        let count = state.players[0]
+            .stage
+            .iter()
             .filter(|&&x| x == card_id)
             .count();
 
@@ -2965,7 +3387,10 @@ mod tests {
         state.players[0].stage[0] = 3001;
 
         // Ability can activate while on stage
-        assert!(state.players[0].stage[0] != -1, "Q91: Member must be on stage");
+        assert!(
+            state.players[0].stage[0] != -1,
+            "Q91: Member must be on stage"
+        );
     }
 
     #[test]
@@ -2979,7 +3404,11 @@ mod tests {
         state.players[0].live_zone[0] = 1;
 
         // During live, recovery ability can trigger
-        assert_eq!(state.phase, Phase::PerformanceP1, "Q95: In performance phase");
+        assert_eq!(
+            state.phase,
+            Phase::PerformanceP1,
+            "Q95: In performance phase"
+        );
     }
 
     #[test]
@@ -3071,7 +3500,10 @@ mod tests {
 
         // After refresh, deck + discard both available
         let total_available = state.players[0].deck.len() + state.players[0].discard.len();
-        assert_eq!(total_available, 7, "Q118: Total cards after potential refresh");
+        assert_eq!(
+            total_available, 7,
+            "Q118: Total cards after potential refresh"
+        );
     }
 
     #[test]

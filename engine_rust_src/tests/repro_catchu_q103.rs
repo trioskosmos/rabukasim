@@ -50,19 +50,8 @@ fn test_q103_catchu_dynamic_condition() {
         ..Default::default()
     };
 
-    // Setup harness for GPU parity testing
-    #[cfg(feature = "gpu")]
-    let harness = engine_rust::test_helpers::GpuParityHarness::new(&db);
-
     for ability in &abilities {
-        let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
-            &mut state,
-            &db,
-            std::sync::Arc::new(ability.bytecode.clone()),
-            &mut ctx_q97,
-        );
-        #[cfg(feature = "gpu")]
-        harness.assert_bytecode_parity(&db, &state, &ability.bytecode, &ctx_q97, "Q97 Bonus Proc");
+        state.resolve_ability(&db, ability, &ctx_q97);
     }
 
     // Even without Catchu members, the dynamic condition evaluates "all active" and gives +1 Bonus.
@@ -94,20 +83,7 @@ fn test_q103_catchu_dynamic_condition() {
         ..Default::default()
     };
     for ability in &abilities {
-        let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
-            &mut state,
-            &db,
-            std::sync::Arc::new(ability.bytecode.clone()),
-            &mut ctx_q103_1,
-        );
-        #[cfg(feature = "gpu")]
-        harness.assert_bytecode_parity(
-            &db,
-            &state,
-            &ability.bytecode,
-            &ctx_q103_1,
-            "Q103 CatChu Proc 1",
-        );
+        state.resolve_ability(&db, ability, &ctx_q103_1);
     }
 
     // The "2 Catchu members" condition passes. ACTIVATE_ENERGY untaps up to 6 energy.
@@ -129,20 +105,7 @@ fn test_q103_catchu_dynamic_condition() {
         ..Default::default()
     };
     for ability in &abilities {
-        let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
-            &mut state,
-            &db,
-            std::sync::Arc::new(ability.bytecode.clone()),
-            &mut ctx_q103_2,
-        );
-        #[cfg(feature = "gpu")]
-        harness.assert_bytecode_parity(
-            &db,
-            &state,
-            &ability.bytecode,
-            &ctx_q103_2,
-            "Q103 CatChu Proc 2",
-        );
+        state.resolve_ability(&db, ability, &ctx_q103_2);
     }
 
     // 1 remaining energy readied. 0 tapped.

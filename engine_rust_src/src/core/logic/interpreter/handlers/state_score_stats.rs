@@ -1,10 +1,30 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
+use crate::core::logic::models::AbilityFrameComponents;
 
-#[path = "state_score_transforms.rs"]
-mod state_score_transforms;
 #[path = "state_score_slots.rs"]
 mod state_score_slots;
+#[path = "state_score_transforms.rs"]
+mod state_score_transforms;
+
+fn decode_heart_color(frame: &AbilityFrameComponents<'_>, ctx: &AbilityContext) -> usize {
+    let color_mask = frame.filter.color_mask as usize;
+    if color_mask != 0 {
+        if color_mask.count_ones() == 1 {
+            return color_mask.trailing_zeros() as usize;
+        }
+        if color_mask == 0x7F {
+            return ctx.selected_color as usize;
+        }
+    }
+
+    let mut color = frame.raw_attr as usize & FILTER_MASK_LOWER as usize;
+    if color == 7 {
+        color = ctx.selected_color as usize;
+    } else if (1..=6).contains(&color) {
+        color -= 1;
+    }
+    color
+}
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_add_blades(
@@ -71,22 +91,17 @@ pub fn handle_add_hearts(
     state: &mut GameState,
     ctx: &AbilityContext,
     p_idx: usize,
-    a: i64,
-    v: i32,
-    s: i32,
+    frame: &AbilityFrameComponents<'_>,
     resolved_slot: i32,
     target_slot: i32,
 ) -> HandlerResult {
-    let mut color = (a as u64 & FILTER_MASK_LOWER) as usize;
-    if color == 7 {
-        color = ctx.selected_color as usize;
-    }
+    let color = decode_heart_color(frame, ctx);
     if color < 7 {
         state_score_slots::apply_to_target_slots(target_slot, resolved_slot, |slot_idx| {
-            state.players[p_idx].heart_buffs[slot_idx].add_to_color(color, v as i32);
+            state.players[p_idx].heart_buffs[slot_idx].add_to_color(color, frame.value as i32);
             state.players[p_idx].heart_buff_logs.push((
                 ctx.source_card_id,
-                v,
+                frame.value,
                 color as u8,
                 slot_idx as u8,
             ));
@@ -94,13 +109,19 @@ pub fn handle_add_hearts(
     }
     state.needs_stat_sync = true;
     if !state.ui.silent {
-        if let Some(msg) = logging::get_opcode_log(O_ADD_HEARTS, v, a, s, 0) {
+        if let Some(msg) = logging::get_opcode_log(
+            O_ADD_HEARTS,
+            frame.value,
+            frame.raw_attr as i64,
+            frame.raw_slot,
+            0,
+        ) {
             state.log(msg);
         }
     }
     state.log_event(
         "EFFECT",
-        &format!("+{} Heart(s)", v),
+        &format!("+{} Heart(s)", frame.value),
         ctx.source_card_id,
         ctx.ability_index,
         p_idx as u8,
@@ -113,15 +134,16 @@ pub fn handle_add_hearts(
 #[allow(clippy::too_many_arguments)]
 pub fn handle_set_hearts(
     state: &mut GameState,
+    ctx: &AbilityContext,
     p_idx: usize,
-    a: i64,
-    v: i32,
+    frame: &AbilityFrameComponents<'_>,
     resolved_slot: i32,
     target_slot: i32,
 ) -> HandlerResult {
-    if (a as usize) < 7 {
+    let color = decode_heart_color(frame, ctx);
+    if color < 7 {
         state_score_slots::apply_to_target_slots(target_slot, resolved_slot, |slot_idx| {
-            state.players[p_idx].heart_buffs[slot_idx].set_color_count(a as usize, v as u8);
+            state.players[p_idx].heart_buffs[slot_idx].set_color_count(color, frame.value as u8);
         });
         state.needs_stat_sync = true;
     }

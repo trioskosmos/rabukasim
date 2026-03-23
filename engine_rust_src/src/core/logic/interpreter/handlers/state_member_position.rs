@@ -1,14 +1,13 @@
 /// Position and formation handlers routed through focused submodules.
-
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
-#[path = "state_member_move.rs"]
-mod state_member_move;
-#[path = "state_member_formation.rs"]
-mod state_member_formation;
 #[path = "state_energy_place.rs"]
 mod state_energy_place;
+#[path = "state_member_formation.rs"]
+mod state_member_formation;
+#[path = "state_member_move.rs"]
+mod state_member_move;
 
 pub use state_member_formation::handle_formation_change;
 pub use state_member_move::handle_move_member;
@@ -34,18 +33,21 @@ pub fn handle_place_under(
     let mut next_ctx = ctx.clone();
     next_ctx.player_id = p_idx as u8;
     if a & 0x01 != 0 && next_ctx.choice_index == -1 {
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            &next_ctx,
-            0,
-            O_PLACE_UNDER,
-            0,
-            ChoiceType::Optional,
-            a as u64,
-            -1,
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                &next_ctx,
+                0,
+                O_PLACE_UNDER,
+                0,
+                ChoiceType::Optional,
+                a as u64,
+                -1,
+            ),
+            HandlerResult::Suspend
+        ) {
             return HandlerResult::Suspend;
         }
     }
@@ -79,7 +81,6 @@ pub fn handle_add_stage_energy(
     state.players[p_idx].sync_stage_energy_count(slot);
     HandlerResult::Continue
 }
-
 
 pub fn handle_grant_ability(
     state: &mut GameState,

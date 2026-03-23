@@ -1,4 +1,3 @@
-
 use engine_rust::core::enums::ChoiceType;
 use engine_rust::core::enums::*;
 use engine_rust::core::logic::{AbilityContext, GameState, PendingInteraction};
@@ -29,6 +28,6 @@ fn main() {
 
     let deserialized: GameState = serde_json::from_str(&serialized).expect("Failed to deserialize");
     assert_eq!(deserialized.turn, 5);
-    
+
     println!("Serialization test passed!");
 }

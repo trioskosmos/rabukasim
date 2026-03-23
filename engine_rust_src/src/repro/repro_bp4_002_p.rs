@@ -61,7 +61,8 @@ fn test_repro_bp4_002_p_wait_flow() {
 
     // The interaction should be either OPTIONAL (for tap) or LOOK_AND_CHOOSE (if optional was auto-skipped)
     assert!(
-        interaction.choice_type == crate::core::enums::ChoiceType::Optional || interaction.choice_type == crate::core::enums::ChoiceType::LookAndChoose,
+        interaction.choice_type == crate::core::enums::ChoiceType::Optional
+            || interaction.choice_type == crate::core::enums::ChoiceType::LookAndChoose,
         "Interaction should be OPTIONAL or LOOK_AND_CHOOSE, got: {}",
         interaction.choice_type
     );
@@ -102,26 +103,32 @@ fn test_repro_bp4_002_p_wait_flow() {
             panic!("Infinite loop detected in LOOK_AND_CHOOSE resolution");
         }
         iter_count += 1;
-        
+
         let pi = state.interaction_stack.last().unwrap();
         println!("DEBUG: Resolving interaction: {:?}", pi);
 
         let mut receiver = crate::test_helpers::TestActionReceiver::default();
         state.generate_legal_actions(&db, 0, &mut receiver);
         println!("LEGAL ACTIONS: {:?}", receiver.actions);
-        
+
         // Pick the first legal action that is >= 8000, or just the first one
         let next_action = *receiver.actions.first().unwrap_or(&999);
         println!("Choosing action: {}", next_action);
 
         match state.step(&db, next_action) {
-            Ok(_) => { println!("Step Ok {}", next_action); }
+            Ok(_) => {
+                println!("Step Ok {}", next_action);
+            }
             Err(e) => {
                 println!("Step Err {}: {}", next_action, e);
                 if next_action != 999 {
                     match state.step(&db, 999) {
-                        Ok(_) => { println!("Step Ok 999"); },
-                        Err(e) => { println!("Step Err 999: {}", e); }
+                        Ok(_) => {
+                            println!("Step Ok 999");
+                        }
+                        Err(e) => {
+                            println!("Step Err 999: {}", e);
+                        }
                     }
                 }
             }

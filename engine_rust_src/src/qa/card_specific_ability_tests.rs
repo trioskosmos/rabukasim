@@ -25,15 +25,32 @@ mod card_specific_ability_tests {
 
         // Place a member in slot 0
         state.players[0].stage[0] = 5001;
-        assert_eq!(state.players[0].stage[0], 5001, "Member should be placed in slot 0");
+        assert_eq!(
+            state.players[0].stage[0], 5001,
+            "Member should be placed in slot 0"
+        );
 
         // Now slot 0 is occupied, verify others are still empty
-        assert_eq!(state.players[0].stage[1], -1, "Slot 1 should still be empty");
-        assert_eq!(state.players[0].stage[2], -1, "Slot 2 should still be empty");
+        assert_eq!(
+            state.players[0].stage[1], -1,
+            "Slot 1 should still be empty"
+        );
+        assert_eq!(
+            state.players[0].stage[2], -1,
+            "Slot 2 should still be empty"
+        );
 
         // Count occupied vs empty
-        let occupied = state.players[0].stage.iter().filter(|&&id| id != -1).count();
-        let empty = state.players[0].stage.iter().filter(|&&id| id == -1).count();
+        let occupied = state.players[0]
+            .stage
+            .iter()
+            .filter(|&&id| id != -1)
+            .count();
+        let empty = state.players[0]
+            .stage
+            .iter()
+            .filter(|&&id| id == -1)
+            .count();
 
         assert_eq!(occupied, 1, "Should have 1 occupied slot");
         assert_eq!(empty, 2, "Should have 2 empty slots");
@@ -94,17 +111,21 @@ mod card_specific_ability_tests {
 
         // Test ALL invalid sums: ensure ≠ off-by-one
         let invalid_costs = vec![
-            9, 11,      // Off by one from 10
-            19, 21,     // Off by one from 20
-            29, 31,     // Off by one from 30
-            39, 41,     // Off by one from 40
-            49, 51,     // Off by one from 50
-            15, 25, 35, 45,  // Between valid sums
+            9, 11, // Off by one from 10
+            19, 21, // Off by one from 20
+            29, 31, // Off by one from 30
+            39, 41, // Off by one from 40
+            49, 51, // Off by one from 50
+            15, 25, 35, 45, // Between valid sums
         ];
 
         for cost in &invalid_costs {
             let matches = cost == &10 || cost == &20 || cost == &30 || cost == &40 || cost == &50;
-            assert!(!matches, "Q78 FAIL: Cost {} should NOT match (off-by-one bug?)", cost);
+            assert!(
+                !matches,
+                "Q78 FAIL: Cost {} should NOT match (off-by-one bug?)",
+                cost
+            );
         }
 
         println!("[Q78] PASS: Cost exact-match validation correct");
@@ -132,11 +153,17 @@ mod card_specific_ability_tests {
         state.players[0].stage[0] = -1; // Clear the slot
 
         // Validate: Area 0 is now empty
-        assert_eq!(state.players[0].stage[0], -1, "Q79 PASS: Area is empty after member discarded");
+        assert_eq!(
+            state.players[0].stage[0], -1,
+            "Q79 PASS: Area is empty after member discarded"
+        );
 
         // CRITICAL: Can immediately place a new member in area 0
         state.players[0].stage[0] = 5002;
-        assert_eq!(state.players[0].stage[0], 5002, "Q79 PASS: New member can be placed in vacated area immediately");
+        assert_eq!(
+            state.players[0].stage[0], 5002,
+            "Q79 PASS: New member can be placed in vacated area immediately"
+        );
 
         println!("[Q79] PASS: Area reusability works correctly");
     }
@@ -174,7 +201,10 @@ mod card_specific_ability_tests {
         if !state.players[0].discard.is_empty() {
             let new_member = state.players[0].discard.pop().unwrap();
             state.players[0].stage[0] = new_member;
-            assert_eq!(state.players[0].stage[0], member, "Q80 PASS: Area available for new placement after cost");
+            assert_eq!(
+                state.players[0].stage[0], member,
+                "Q80 PASS: Area available for new placement after cost"
+            );
         }
 
         println!("[Q80] PASS: Activation cost flow works");
@@ -197,7 +227,7 @@ mod card_specific_ability_tests {
             Some(id) => {
                 println!("[Q81] Found card LL-bp1-001 with ID: {}", id);
                 id
-            },
+            }
             None => {
                 println!("[Q81 SKIP] Card LL-bp1-001 not available");
                 return;
@@ -217,8 +247,15 @@ mod card_specific_ability_tests {
         state.players[0].stage[0] = triple_name_card_id;
 
         // Count members on stage
-        let member_count = state.players[0].stage.iter().filter(|&&id| id != -1).count();
-        assert_eq!(member_count, 1, "Q81 PASS: Triple-name card counts as 1 member");
+        let member_count = state.players[0]
+            .stage
+            .iter()
+            .filter(|&&id| id != -1)
+            .count();
+        assert_eq!(
+            member_count, 1,
+            "Q81 PASS: Triple-name card counts as 1 member"
+        );
 
         println!("[Q81] PASS: Triple-name card correctly handled");
     }
@@ -257,13 +294,25 @@ mod card_specific_ability_tests {
 
         // Verify both cards exist and have groups assigned
         if let Some(card) = live_card_1 {
-            assert!(!card.groups.is_empty(), "Q82: PL!HS-bp1-023 should have at least one group");
-            println!("[Q82] PL!HS-bp1-023 {}: groups = {:?}", card.name, card.groups);
+            assert!(
+                !card.groups.is_empty(),
+                "Q82: PL!HS-bp1-023 should have at least one group"
+            );
+            println!(
+                "[Q82] PL!HS-bp1-023 {}: groups = {:?}",
+                card.name, card.groups
+            );
         }
 
         if let Some(card) = live_card_2 {
-            assert!(!card.groups.is_empty(), "Q82: PL!HS-PR-012 should have at least one group");
-            println!("[Q82] PL!HS-PR-012 {}: groups = {:?}", card.name, card.groups);
+            assert!(
+                !card.groups.is_empty(),
+                "Q82: PL!HS-PR-012 should have at least one group"
+            );
+            println!(
+                "[Q82] PL!HS-PR-012 {}: groups = {:?}",
+                card.name, card.groups
+            );
         }
 
         println!("[Q82] PASS: Live card groups are correctly assigned");

@@ -1,8 +1,8 @@
-use crate::core::logic::models::AbilityFrame;
-use super::*;
-use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use super::interaction_look_choose_apply::apply_look_choice;
 use super::interaction_look_choose_finalize::finalize_look_choice;
+use super::*;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
 pub fn resolve_look_choice(
@@ -45,7 +45,11 @@ pub fn resolve_look_choice(
                     chosen,
                 );
 
-                let rem = if ctx.v_remaining > 0 { ctx.v_remaining - 1 } else { 0 };
+                let rem = if ctx.v_remaining > 0 {
+                    ctx.v_remaining - 1
+                } else {
+                    0
+                };
                 if rem > 0 && revealed.iter().any(|&c| c != -1) {
                     state.players[p_idx].looked_cards = revealed.clone();
                     let choice_type = if source_zone == 6 {
@@ -55,18 +59,21 @@ pub fn resolve_look_choice(
                     } else {
                         ChoiceType::LookAndChoose
                     };
-                    if matches!(suspend_choice(
-                        state,
-                        db,
-                        ctx,
-                        ctx,
-                        frame_idx,
-                        O_LOOK_AND_CHOOSE,
-                        s,
-                        choice_type,
-                        a as u64,
-                        rem,
-                    ), HandlerResult::Suspend) {
+                    if matches!(
+                        suspend_choice(
+                            state,
+                            db,
+                            ctx,
+                            ctx,
+                            frame_idx,
+                            O_LOOK_AND_CHOOSE,
+                            s,
+                            choice_type,
+                            a as u64,
+                            rem,
+                        ),
+                        HandlerResult::Suspend
+                    ) {
                         return HandlerResult::Suspend;
                     }
                 }

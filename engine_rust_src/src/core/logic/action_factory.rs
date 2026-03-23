@@ -111,7 +111,9 @@ impl ActionFactory {
                 } else {
                     format!(
                         "{}({})",
-                        crate::core::logic::interpreter::logging::get_opcode_name(effect_frame.opcode()),
+                        crate::core::logic::interpreter::logging::get_opcode_name(
+                            effect_frame.opcode()
+                        ),
                         effect_frame.value()
                     )
                 }
@@ -295,7 +297,11 @@ impl ActionFactory {
         let decoded = Self::parse_action(action_id);
         if let DecodedAction::SelectMode { mode_idx } = decoded {
             if let Some(pi) = state.interaction_stack.last() {
-                let card_id = if pi.card_id != -1 { pi.card_id } else { pi.ctx.source_card_id };
+                let card_id = if pi.card_id != -1 {
+                    pi.card_id
+                } else {
+                    pi.ctx.source_card_id
+                };
                 if let Some(card) = db.get_member(card_id) {
                     if let Some(ab) = card.abilities.get(pi.ability_index as usize) {
                         if let Some(name) = ab.option_names.get(mode_idx as usize) {
@@ -438,7 +444,12 @@ impl ActionFactory {
                 };
                 if cid >= 0 {
                     if let Some(m) = db.get_member(cid) {
-                        return format!("Select Member ([{}] {}) at Slot {}", m.card_no, m.name, slot_idx + 1);
+                        return format!(
+                            "Select Member ([{}] {}) at Slot {}",
+                            m.card_no,
+                            m.name,
+                            slot_idx + 1
+                        );
                     }
                 }
                 format!("Select {}", slot_name)
@@ -481,29 +492,51 @@ impl ActionFactory {
         match Self::parse_action(action_id) {
             DecodedAction::Pass => "Pass / Done".to_string(),
             DecodedAction::MulliganSelect { card_idx } => {
-                format!("[JP] 手札{}枚目を入れ替える / [EN] Replace Hand Card #{}", card_idx + 1, card_idx + 1)
+                format!(
+                    "[JP] 手札{}枚目を入れ替える / [EN] Replace Hand Card #{}",
+                    card_idx + 1,
+                    card_idx + 1
+                )
             }
             DecodedAction::SetLive { hand_idx } => {
-                format!("[JP] ライブをセット(手札{}) / [EN] Set Live Card (Hand #{})", hand_idx + 1, hand_idx + 1)
+                format!(
+                    "[JP] ライブをセット(手札{}) / [EN] Set Live Card (Hand #{})",
+                    hand_idx + 1,
+                    hand_idx + 1
+                )
             }
-            DecodedAction::SelectMode { mode_idx } => format!("[JP] モード{}を選択 / [EN] Select Mode {}", mode_idx + 1, mode_idx + 1),
+            DecodedAction::SelectMode { mode_idx } => format!(
+                "[JP] モード{}を選択 / [EN] Select Mode {}",
+                mode_idx + 1,
+                mode_idx + 1
+            ),
             DecodedAction::SelectColor { color_idx } => {
                 let color_jp = match color_idx {
-                    0 => "ピンク", 1 => "赤", 2 => "黄", 3 => "緑", 4 => "青", 5 => "紫", _ => "不明",
+                    0 => "ピンク",
+                    1 => "赤",
+                    2 => "黄",
+                    3 => "緑",
+                    4 => "青",
+                    5 => "紫",
+                    _ => "不明",
                 };
                 let color_en = match color_idx {
-                    0 => "Pink", 1 => "Red", 2 => "Yellow", 3 => "Green", 4 => "Blue", 5 => "Purple", _ => "Unknown",
+                    0 => "Pink",
+                    1 => "Red",
+                    2 => "Yellow",
+                    3 => "Green",
+                    4 => "Blue",
+                    5 => "Purple",
+                    _ => "Unknown",
                 };
                 format!("[JP] {}を選択 / [EN] Select {}", color_jp, color_en)
             }
-            DecodedAction::SelectStageSlot { slot_idx } => {
-                match slot_idx {
-                    0 => "Select Left Slot".to_string(),
-                    1 => "Select Mid Slot".to_string(),
-                    2 => "Select Right Slot".to_string(),
-                    _ => "Select Slot".to_string(),
-                }
-            }
+            DecodedAction::SelectStageSlot { slot_idx } => match slot_idx {
+                0 => "Select Left Slot".to_string(),
+                1 => "Select Mid Slot".to_string(),
+                2 => "Select Right Slot".to_string(),
+                _ => "Select Slot".to_string(),
+            },
             DecodedAction::PlayMember {
                 hand_idx,
                 slot_idx,
@@ -546,7 +579,11 @@ impl ActionFactory {
                 format!("Select Energy Index {}", energy_idx)
             }
             DecodedAction::SelectChoice { choice_idx } => {
-                format!("[JP] 選択肢 {} / [EN] Choice {}", choice_idx + 1, choice_idx + 1)
+                format!(
+                    "[JP] 選択肢 {} / [EN] Choice {}",
+                    choice_idx + 1,
+                    choice_idx + 1
+                )
             }
             DecodedAction::Rps { p_idx, choice } => {
                 let move_label = match choice {
@@ -569,15 +606,22 @@ impl ActionFactory {
 
     /// Gets the descriptive text for a card choice.
     pub fn get_choice_text(db: &CardDatabase, ctx: &AbilityContext) -> String {
-        let (original_text, ability_text, name) = if let Some(card) = db.get_member(ctx.source_card_id) {
+        let (original_text, ability_text, name) = if let Some(card) =
+            db.get_member(ctx.source_card_id)
+        {
             (&card.original_text, &card.ability_text, &card.name)
         } else if let Some(live) = db.get_live(ctx.source_card_id) {
             (&live.original_text, &live.ability_text, &live.name)
         } else {
             // Check for magic prompt markers in v_remaining
             match ctx.v_remaining {
-                -32000 => return "[JP] 追加でカードを支払いますか？ / [EN] Pay additional cards?".to_string(),
-                -101 => return "[JP] この効果を解決しますか？ / [EN] Resolve this effect?".to_string(),
+                -32000 => {
+                    return "[JP] 追加でカードを支払いますか？ / [EN] Pay additional cards?"
+                        .to_string()
+                }
+                -101 => {
+                    return "[JP] この効果を解決しますか？ / [EN] Resolve this effect?".to_string()
+                }
                 _ => {}
             }
             if ctx.source_card_id == -1 {
@@ -592,14 +636,20 @@ impl ActionFactory {
         };
 
         if !original_text.is_empty() && !ability_text.is_empty() {
-            format!("[JP] {} / [EN] {}{}", original_text, ability_text, lang_prompt)
+            format!(
+                "[JP] {} / [EN] {}{}",
+                original_text, ability_text, lang_prompt
+            )
         } else if !original_text.is_empty() {
             format!("{}{}", original_text, lang_prompt)
         } else if !ability_text.is_empty() {
             format!("{}{}", ability_text, lang_prompt)
         } else if !name.is_empty() {
             // Provide a more descriptive label for optional choices if only the name is available
-            format!("[JP] {}を発動しますか？ / [EN] Activate {}?{}", name, name, lang_prompt)
+            format!(
+                "[JP] {}を発動しますか？ / [EN] Activate {}?{}",
+                name, name, lang_prompt
+            )
         } else {
             String::new()
         }
@@ -635,15 +685,24 @@ impl ActionFactory {
 
         if label.starts_with("RECOVER_MEMBER(") && label.ends_with(')') {
             let val = &label[15..label.len() - 1];
-            return format!("[JP] メンバーを{}枚控え室から戻す / [EN] Recover {} member(s) from Discard", val, val);
+            return format!(
+                "[JP] メンバーを{}枚控え室から戻す / [EN] Recover {} member(s) from Discard",
+                val, val
+            );
         }
         if label.starts_with("RECOVER_LIVE(") && label.ends_with(')') {
             let val = &label[13..label.len() - 1];
-            return format!("[JP] ライブを{}枚控え室から戻す / [EN] Recover {} live card(s) from Discard", val, val);
+            return format!(
+                "[JP] ライブを{}枚控え室から戻す / [EN] Recover {} live card(s) from Discard",
+                val, val
+            );
         }
         if label.starts_with("ENERGY_CHARGE(") && label.ends_with(')') {
             let val = &label[14..label.len() - 1];
-            return format!("[JP] エネルギーを{}チャージ / [EN] Charge {} Energy", val, val);
+            return format!(
+                "[JP] エネルギーを{}チャージ / [EN] Charge {} Energy",
+                val, val
+            );
         }
         if label.starts_with("BOOST_SCORE(") && label.ends_with(')') {
             let val = &label[12..label.len() - 1];
@@ -663,7 +722,9 @@ impl ActionFactory {
         match label {
             "SELECT_MEMBER" => return "[JP] メンバーを選択 / [EN] Select a Member".to_string(),
             "SELECT_LIVE" => return "[JP] ライブを選択 / [EN] Select a Live Card".to_string(),
-            "SELECT_DISCARD" => return "[JP] 控え室から選択 / [EN] Select from Discard".to_string(),
+            "SELECT_DISCARD" => {
+                return "[JP] 控え室から選択 / [EN] Select from Discard".to_string()
+            }
             "LOOK_AND_CHOOSE" => return "[JP] 見て選ぶ / [EN] Look and Choose".to_string(),
             "SELECT_CARDS" => return "[JP] カードを選択 / [EN] Select Card(s)".to_string(),
             "COLOR_SELECT" => return "[JP] 色を選択 / [EN] Select a Color".to_string(),

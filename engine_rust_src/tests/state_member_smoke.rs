@@ -1,5 +1,5 @@
-use engine_rust::core::logic::{AbilityContext, Phase};
 use engine_rust::core::logic::interpreter::instruction::BytecodeInstruction;
+use engine_rust::core::logic::{AbilityContext, Phase};
 use engine_rust::test_helpers::{create_test_db, create_test_state, BytecodeBuilder};
 
 #[test]

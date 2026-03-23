@@ -1,6 +1,6 @@
 #![cfg(feature = "gpu")]
 use crate::core::logic::card_db::LOGIC_ID_MASK;
-use crate::core::logic::{ChoiceType, CardDatabase, GameState, Phase};
+use crate::core::logic::{CardDatabase, ChoiceType, GameState, Phase};
 use crate::core::models::{AbilityContext, TriggerType};
 use crate::test_helpers::{create_test_state, Action as EngineAction, ZoneSnapshot};
 use serde::{Deserialize, Serialize};
@@ -719,12 +719,11 @@ impl SemanticAssertionEngine {
         let p_idx = player_id as usize;
 
         let base = match pi.choice_type {
-            ChoiceType::SelectMode | ChoiceType::Optional => {
+            ChoiceType::SelectMode | ChoiceType::Optional => crate::core::logic::ACTION_BASE_CHOICE,
+            ChoiceType::ColorSelect => crate::core::logic::ACTION_BASE_COLOR,
+            ChoiceType::SelectStage | ChoiceType::SelectLiveSlot | ChoiceType::TapO => {
                 crate::core::logic::ACTION_BASE_CHOICE
             }
-            ChoiceType::ColorSelect => crate::core::logic::ACTION_BASE_COLOR,
-            ChoiceType::SelectStage | ChoiceType::SelectLiveSlot
-            | ChoiceType::TapO => crate::core::logic::ACTION_BASE_CHOICE,
             ChoiceType::SelectHandDiscard
             | ChoiceType::RevealHand
             | ChoiceType::SelectSwapTarget => crate::core::logic::ACTION_BASE_HAND_SELECT,
@@ -785,14 +784,13 @@ impl SemanticAssertionEngine {
                     }
                 }
             }
-            ChoiceType::LookAndChoose | ChoiceType::RecovL | ChoiceType::RecovM
+            ChoiceType::LookAndChoose
+            | ChoiceType::RecovL
+            | ChoiceType::RecovM
             | ChoiceType::SelectCards => {
                 // Select from looked_cards
                 // First, check if looked_cards has any valid cards
-                let has_valid_cards = state.players[p_idx]
-                    .looked_cards
-                    .iter()
-                    .any(|&c| c != -1);
+                let has_valid_cards = state.players[p_idx].looked_cards.iter().any(|&c| c != -1);
 
                 if has_valid_cards {
                     for (i, &cid) in state.players[p_idx].looked_cards.iter().enumerate() {
@@ -804,7 +802,14 @@ impl SemanticAssertionEngine {
                                     let filter = crate::core::logic::filter::CardFilter::from_attr(
                                         pi.filter_attr,
                                     );
-                                    filter.matches(state, &self.db, cid, false, None, &crate::core::logic::AbilityContext::default())
+                                    filter.matches(
+                                        state,
+                                        &self.db,
+                                        cid,
+                                        false,
+                                        None,
+                                        &crate::core::logic::AbilityContext::default(),
+                                    )
                                 }
                                 _ => true,
                             };
@@ -2257,23 +2262,15 @@ mod tests {
                             );
 
                             // Capture initial snapshot
-                            let initial_snapshot =
-                                ZoneSnapshot::capture(&state.players[0], &state);
+                            let initial_snapshot = ZoneSnapshot::capture(&state.players[0], &state);
                             println!(
                                 "     Initial ZoneSnapshot hand_len: {}",
                                 initial_snapshot.hand_len
                             );
-                            println!(
-                                "     Raw hand array len: {}",
-                                state.players[0].hand.len()
-                            );
+                            println!("     Raw hand array len: {}", state.players[0].hand.len());
                             println!(
                                 "     Hand cards (first 5): {:?}",
-                                state.players[0]
-                                    .hand
-                                    .iter()
-                                    .take(5)
-                                    .collect::<Vec<_>>()
+                                state.players[0].hand.iter().take(5).collect::<Vec<_>>()
                             );
 
                             // Trigger the ability
@@ -2296,8 +2293,7 @@ mod tests {
                             }
 
                             // Capture final snapshot
-                            let final_snapshot =
-                                ZoneSnapshot::capture(&state.players[0], &state);
+                            let final_snapshot = ZoneSnapshot::capture(&state.players[0], &state);
                             println!(
                                 "     Final ZoneSnapshot hand_len: {}",
                                 final_snapshot.hand_len
@@ -2308,11 +2304,7 @@ mod tests {
                             );
                             println!(
                                 "     Final hand cards (first 5): {:?}",
-                                state.players[0]
-                                    .hand
-                                    .iter()
-                                    .take(5)
-                                    .collect::<Vec<_>>()
+                                state.players[0].hand.iter().take(5).collect::<Vec<_>>()
                             );
                             println!(
                                 "     Hand delta: {}",
@@ -2646,7 +2638,10 @@ mod tests {
         println!("--- Trace sd1-001 ---");
         SemanticAssertionEngine::setup_oracle_environment(&mut state, &engine.db, real_id);
         let snap0 = ZoneSnapshot::capture(&state.players[0]);
-        println!("Baseline Hand: {} ({:?})", snap0.hand_len, state.players[0].hand);
+        println!(
+            "Baseline Hand: {} ({:?})",
+            snap0.hand_len, state.players[0].hand
+        );
 
         let actx = AbilityContext {
             source_card_id: real_id,
@@ -2657,22 +2652,33 @@ mod tests {
             ..Default::default()
         };
         let is_live = engine.db.get_live(real_id as u16).is_some();
-        state.trigger_queue.push_back((real_id as u16, ab_idx as u16, actx, is_live, TriggerType::OnPlay));
+        state.trigger_queue.push_back((
+            real_id as u16,
+            ab_idx as u16,
+            actx,
+            is_live,
+            TriggerType::OnPlay,
+        ));
 
         println!("Triggering...");
         state.process_trigger_queue(&engine.db);
         state.step(&engine.db, 0).ok();
 
         let snap1 = ZoneSnapshot::capture(&state.players[0]);
-        println!("After OnPlay Hand: {} ({:?})", snap1.hand_len, state.players[0].hand);
+        println!(
+            "After OnPlay Hand: {} ({:?})",
+            snap1.hand_len, state.players[0].hand
+        );
 
         let mut safety = 0;
         while (!state.interaction_stack.is_empty()) && safety < 10 {
             engine.resolve_interaction(&mut state).ok();
             let snap_i = ZoneSnapshot::capture(&state.players[0]);
-            println!("Interaction Step {}: Hand={} ({:?})", safety, snap_i.hand_len, state.players[0].hand);
+            println!(
+                "Interaction Step {}: Hand={} ({:?})",
+                safety, snap_i.hand_len, state.players[0].hand
+            );
             safety += 1;
         }
     }
-
 }

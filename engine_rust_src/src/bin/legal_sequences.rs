@@ -123,7 +123,11 @@ fn advance_to_first_main(state: &mut GameState, db: &CardDatabase, seed: u64) {
 
     while state.phase != Phase::Main && !state.is_terminal() {
         match state.phase {
-            Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+            Phase::Rps
+            | Phase::MulliganP1
+            | Phase::MulliganP2
+            | Phase::TurnChoice
+            | Phase::Response => {
                 let legal = state.get_legal_action_ids(db);
                 if let Some(&action) = legal.choose(&mut rng) {
                     let _ = state.step(db, action);
@@ -162,7 +166,10 @@ fn enumerate_main_sequences(
     state.generate_legal_actions(db, state.current_player as usize, &mut actions);
 
     let mut saw_non_pass = false;
-    for action in actions.into_iter().filter(|&action| action != ACTION_BASE_PASS) {
+    for action in actions
+        .into_iter()
+        .filter(|&action| action != ACTION_BASE_PASS)
+    {
         saw_non_pass = true;
         let mut next_state = state.clone();
         if next_state.step(db, action).is_ok() {
@@ -226,14 +233,24 @@ fn main() {
 
     let mut root_actions = SmallVec::<[i32; 64]>::new();
     state.generate_legal_actions(&db, state.current_player as usize, &mut root_actions);
-    let root_non_pass = root_actions.iter().filter(|&&action| action != ACTION_BASE_PASS).count();
+    let root_non_pass = root_actions
+        .iter()
+        .filter(|&&action| action != ACTION_BASE_PASS)
+        .count();
 
     let start = Instant::now();
     let mut stats = SequenceStats::default();
     enumerate_main_sequences(&state, &db, 0, max_depth, &mut stats);
 
-    println!("phase={:?} seed={} max_depth={}", state.phase, seed, max_depth);
-    println!("root_actions_total={} root_actions_non_pass={}", root_actions.len(), root_non_pass);
+    println!(
+        "phase={:?} seed={} max_depth={}",
+        state.phase, seed, max_depth
+    );
+    println!(
+        "root_actions_total={} root_actions_non_pass={}",
+        root_actions.len(),
+        root_non_pass
+    );
     println!("total_sequences={}", stats.total_sequences);
     println!("unique_end_states={}", stats.unique_end_states.len());
     println!("max_card_plays_seen={}", stats.max_card_plays_seen);

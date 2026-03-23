@@ -2,11 +2,11 @@ use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
 use engine_rust::core::logic::turn_sequencer::TurnSequencer;
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
+use rand::prelude::StdRng;
 use rand::seq::IndexedRandom;
 use rand::SeedableRng;
-use rand::prelude::StdRng;
 
 fn load_vanilla_db() -> CardDatabase {
     let candidates = [
@@ -55,10 +55,13 @@ fn main() {
     state.ui.silent = true;
 
     let init_time = game_start.elapsed();
-    println!("[INIT] Game initialized in {:.3}ms\n", init_time.as_secs_f32() * 1000.0);
+    println!(
+        "[INIT] Game initialized in {:.3}ms\n",
+        init_time.as_secs_f32() * 1000.0
+    );
 
     let mut rng = StdRng::seed_from_u64(100);
-    
+
     // Advance to first Main phase
     println!("[SETUP PHASE]");
     let setup_start = Instant::now();
@@ -76,7 +79,11 @@ fn main() {
                 state.auto_step(&db);
                 let auto_time = auto_start.elapsed();
                 if auto_time.as_secs_f32() > 0.001 {
-                    println!("  Auto-step took {:.3}ms (phase: {:?})", auto_time.as_secs_f32() * 1000.0, state.phase);
+                    println!(
+                        "  Auto-step took {:.3}ms (phase: {:?})",
+                        auto_time.as_secs_f32() * 1000.0,
+                        state.phase
+                    );
                 }
             }
         }
@@ -85,7 +92,11 @@ fn main() {
             break;
         }
     }
-    println!("  Total setup: {:.3}ms in {} steps\n", setup_start.elapsed().as_secs_f32() * 1000.0, setup_turns);
+    println!(
+        "  Total setup: {:.3}ms in {} steps\n",
+        setup_start.elapsed().as_secs_f32() * 1000.0,
+        setup_turns
+    );
 
     let mut total_main_time = 0.0;
     let mut main_turns = 0;
@@ -101,7 +112,7 @@ fn main() {
                 let plan_start = Instant::now();
                 let (best_seq, _, _, evals) = TurnSequencer::plan_full_turn(&state, &db);
                 let plan_time = plan_start.elapsed();
-                
+
                 let exec_start = Instant::now();
                 for &action in &best_seq {
                     if state.phase != Phase::Main {
@@ -115,11 +126,16 @@ fn main() {
                     let _ = state.step(&db, ACTION_BASE_PASS);
                 }
                 let exec_time = exec_start.elapsed();
-                
+
                 let turn_time = turn_start.elapsed();
-                println!("  Turn {:2}: plan={:.2}ms exec={:.2}ms evals={:5} total={:.2}ms", 
-                    main_turns, plan_time.as_secs_f32()*1000.0, exec_time.as_secs_f32()*1000.0, 
-                    evals, turn_time.as_secs_f32()*1000.0);
+                println!(
+                    "  Turn {:2}: plan={:.2}ms exec={:.2}ms evals={:5} total={:.2}ms",
+                    main_turns,
+                    plan_time.as_secs_f32() * 1000.0,
+                    exec_time.as_secs_f32() * 1000.0,
+                    evals,
+                    turn_time.as_secs_f32() * 1000.0
+                );
                 total_main_time += turn_time.as_secs_f32();
             }
             Phase::LiveSet => {
@@ -130,15 +146,23 @@ fn main() {
                 }
                 let _ = state.step(&db, ACTION_BASE_PASS);
                 let ls_time = ls_start.elapsed();
-                println!("  LiveSet: {:.2}ms", ls_time.as_secs_f32()*1000.0);
+                println!("  LiveSet: {:.2}ms", ls_time.as_secs_f32() * 1000.0);
                 total_main_time += ls_time.as_secs_f32();
             }
-            Phase::Active | Phase::Draw | Phase::Energy | Phase::PerformanceP1 | Phase::PerformanceP2 => {
+            Phase::Active
+            | Phase::Draw
+            | Phase::Energy
+            | Phase::PerformanceP1
+            | Phase::PerformanceP2 => {
                 let auto_start = Instant::now();
                 state.auto_step(&db);
                 let auto_time = auto_start.elapsed();
                 if auto_time.as_secs_f32() > 0.001 {
-                    println!("  Auto {:?}: {:.2}ms", state.phase, auto_time.as_secs_f32()*1000.0);
+                    println!(
+                        "  Auto {:?}: {:.2}ms",
+                        state.phase,
+                        auto_time.as_secs_f32() * 1000.0
+                    );
                 }
             }
             Phase::LiveResult => {
@@ -149,7 +173,7 @@ fn main() {
                 }
                 let manual_time = manual_start.elapsed();
                 if manual_time.as_secs_f32() > 0.001 {
-                    println!("  LiveResult: {:.2}ms", manual_time.as_secs_f32()*1000.0);
+                    println!("  LiveResult: {:.2}ms", manual_time.as_secs_f32() * 1000.0);
                 }
             }
             Phase::Terminal => break,
@@ -161,11 +185,21 @@ fn main() {
 
     let total_time = game_start.elapsed();
     println!("\n[SUMMARY]");
-    println!("Total game time: {:.3}ms ({:.2}s)", total_time.as_secs_f32()*1000.0, total_time.as_secs_f32());
-    println!("Main turn time: {:.3}ms", total_main_time*1000.0);
+    println!(
+        "Total game time: {:.3}ms ({:.2}s)",
+        total_time.as_secs_f32() * 1000.0,
+        total_time.as_secs_f32()
+    );
+    println!("Main turn time: {:.3}ms", total_main_time * 1000.0);
     println!("Main turns played: {}", main_turns);
     if main_turns > 0 {
-        println!("Avg per main turn: {:.2}ms", (total_main_time*1000.0) / main_turns as f32);
+        println!(
+            "Avg per main turn: {:.2}ms",
+            (total_main_time * 1000.0) / main_turns as f32
+        );
     }
-    println!("Other time: {:.2}ms", (total_time.as_secs_f32() - total_main_time)*1000.0);
+    println!(
+        "Other time: {:.2}ms",
+        (total_time.as_secs_f32() - total_main_time) * 1000.0
+    );
 }

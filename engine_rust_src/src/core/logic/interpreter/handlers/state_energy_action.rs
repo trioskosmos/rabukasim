@@ -1,5 +1,5 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
+use crate::core::logic::models::AbilityFrame;
 
 pub fn handle_activate_energy(
     state: &mut GameState,
@@ -23,7 +23,10 @@ pub fn handle_activate_energy(
             }
         }
     } else if state.debug.debug_mode {
-        println!("[ENERGY_DEBUG] card NOT FOUND for id={}", ctx.source_card_id);
+        println!(
+            "[ENERGY_DEBUG] card NOT FOUND for id={}",
+            ctx.source_card_id
+        );
     }
 
     for i in 0..state.players[p_idx].energy_zone.len() {
@@ -32,7 +35,10 @@ pub fn handle_activate_energy(
         }
         if state.players[p_idx].is_energy_tapped(i) {
             if state.debug.debug_mode {
-                println!("[DEBUG-ENERGY] Untapping energy card {} for player {}", i, p_idx);
+                println!(
+                    "[DEBUG-ENERGY] Untapping energy card {} for player {}",
+                    i, p_idx
+                );
             }
             state.players[p_idx].set_energy_tapped(i, false);
             state.players[p_idx].activated_energy_group_mask |= group_bits;
@@ -48,11 +54,7 @@ pub fn handle_activate_energy(
     HandlerResult::Continue
 }
 
-pub fn handle_pay_energy_dynamic(
-    state: &mut GameState,
-    p_idx: usize,
-    v: i32,
-) -> HandlerResult {
+pub fn handle_pay_energy_dynamic(state: &mut GameState, p_idx: usize, v: i32) -> HandlerResult {
     let base_score = state.players[p_idx].score as i32;
     let total_cost = (base_score + v) as usize;
 

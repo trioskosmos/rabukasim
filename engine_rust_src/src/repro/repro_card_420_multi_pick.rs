@@ -75,8 +75,13 @@ fn test_repro_card_420_multi_pick_from_discard() {
 
     // Populate looked_cards with eligible members from discard
     state.players[p_idx].looked_cards.clear();
-    let matched_ids: Vec<i32> = state.players[p_idx].discard.iter()
-        .filter(|&&cid| db.get_member(cid).is_some() && (filter_attr == 0 || state.card_matches_filter(&db, cid, filter_attr)))
+    let matched_ids: Vec<i32> = state.players[p_idx]
+        .discard
+        .iter()
+        .filter(|&&cid| {
+            db.get_member(cid).is_some()
+                && (filter_attr == 0 || state.card_matches_filter(&db, cid, filter_attr))
+        })
         .cloned()
         .collect();
     state.players[p_idx].looked_cards.extend(matched_ids);
@@ -136,7 +141,8 @@ fn test_repro_card_420_multi_pick_from_discard() {
         pi.choice_type, pi.v_remaining
     );
     assert!(
-        pi.choice_type == crate::core::enums::ChoiceType::SelectStage || pi.choice_type == crate::core::enums::ChoiceType::SelectStageEmpty,
+        pi.choice_type == crate::core::enums::ChoiceType::SelectStage
+            || pi.choice_type == crate::core::enums::ChoiceType::SelectStageEmpty,
         "Should be asking for stage selection, got: {}",
         pi.choice_type
     );
@@ -180,7 +186,8 @@ fn test_repro_card_420_multi_pick_from_discard() {
         pi2.choice_type, pi2.v_remaining
     );
     assert_eq!(
-        pi2.choice_type, ChoiceType::SelectDiscardPlay,
+        pi2.choice_type,
+        ChoiceType::SelectDiscardPlay,
         "Should be asking for 2nd discard play"
     );
 

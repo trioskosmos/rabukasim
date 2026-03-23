@@ -42,7 +42,8 @@ mod tests {
 
         // Q15: Energy setup (should be face-down by default, face-up when placed in energy zone)
         // Initial energy deck (face-down)
-        state.players[0].energy_deck = vec![100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111].into();
+        state.players[0].energy_deck =
+            vec![100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111].into();
         assert_eq!(state.players[0].energy_deck.len(), 12); // Full energy deck
 
         // Energy zone starts empty, will have drawn energy (face-up)
@@ -132,10 +133,16 @@ mod tests {
         assert!(result.is_ok(), "Playing member should succeed");
 
         // 1. New member should be in stage[0] (replacement occurred)
-        assert_eq!(state.players[0].stage[0], 101, "New member should replace old member");
+        assert_eq!(
+            state.players[0].stage[0], 101,
+            "New member should replace old member"
+        );
 
         // 2. Old member should be in discard
-        assert!(state.players[0].discard.contains(&100), "Old member should be in discard");
+        assert!(
+            state.players[0].discard.contains(&100),
+            "Old member should be in discard"
+        );
     }
 
     #[test]

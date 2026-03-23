@@ -17,6 +17,7 @@ from engine.models.ability import (
     TriggerType,
 )
 from engine.models.opcodes import Opcode
+from tools import bytecode_codec as ability_codec
 
 try:
     from engine.game.numba_utils import JIT_AVAILABLE
@@ -173,10 +174,27 @@ class EffectMixin:
                 }
                 return
 
-        # Prefer the stored bytecode path whenever it is available.
-        # This lets the runtime execute the sparse/bytecode representation directly
-        # instead of re-deriving behavior from parser_v2 output.
-        bytecode = list(getattr(ability, "bytecode", []) or [])
+        # Prefer the frame program path first. If we cannot resolve a frame
+        # program, fall back to semantic compilation rather than stored bytecode.
+        frame_program = getattr(ability, "frame_program", None)
+        bytecode = []
+        if isinstance(frame_program, dict) and frame_program.get("frames"):
+            try:
+                bytecode = ability_codec.model_to_bytecode(
+                    ability_codec.frame_program_to_model(frame_program)
+                )
+            except Exception:
+                bytecode = []
+        if not bytecode:
+            sparse_frame_index = getattr(ability, "sparse_frame_index", None)
+            if isinstance(sparse_frame_index, dict) and sparse_frame_index.get("frames"):
+                try:
+                    bytecode = ability_codec.model_to_bytecode(
+                        ability_codec.frame_program_to_model(sparse_frame_index)
+                    )
+                except Exception:
+                    bytecode = []
+
         if bytecode:
             self.pending_effects.insert(0, bytecode)
         elif JIT_AVAILABLE and hasattr(self, "fast_mode") and self.fast_mode:

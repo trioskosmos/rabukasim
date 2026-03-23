@@ -44,18 +44,18 @@
 //   • --first-player accepts p0, p1, alternate, or random (default RPS flow).
 // ─────────────────────────────────────────────────────────────────────────────
 
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
-use serde::{Serialize, Deserialize};
 
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::TurnSequencer;
-use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
+use rand::prelude::StdRng;
 use rand::seq::IndexedRandom;
 use rand::SeedableRng;
-use rand::prelude::StdRng;
 use smallvec::SmallVec;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -315,7 +315,10 @@ fn count_exact_main_sequences(state: &GameState, db: &CardDatabase, max_depth: u
 
         let mut total = 0usize;
         let mut saw_non_pass = false;
-        for action in actions.into_iter().filter(|&action| action != ACTION_BASE_PASS) {
+        for action in actions
+            .into_iter()
+            .filter(|&action| action != ACTION_BASE_PASS)
+        {
             saw_non_pass = true;
             let mut next_state = state.clone();
             if next_state.step(db, action).is_ok() {
@@ -336,38 +339,56 @@ fn count_exact_main_sequences(state: &GameState, db: &CardDatabase, max_depth: u
     recurse(state, db, 0, max_depth)
 }
 
-
-fn log_heuristic(game_id: usize, turn: u32, player: u32, action: i32, breakdown: &engine_rust::core::logic::turn_sequencer::HeuristicBreakdown) {
-    use std::io::Write;
+fn log_heuristic(
+    game_id: usize,
+    turn: u32,
+    player: u32,
+    action: i32,
+    breakdown: &engine_rust::core::logic::turn_sequencer::HeuristicBreakdown,
+) {
     use std::fs::OpenOptions;
+    use std::io::Write;
 
     let res = OpenOptions::new()
         .create(true)
         .append(true)
         .open("heuristic_log.csv");
-    
+
     if let Ok(mut file) = res {
         if file.metadata().map(|m| m.len()).unwrap_or(1) == 0 {
             let _ = writeln!(file, "game_id,turn,player,action,board_score,live_ev,success_val,win_bonus,hand_momentum,cycling_bonus,total");
         }
-        
-        let _ = writeln!(file, "{},{},{},{},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2}",
-            game_id, turn, player, action,
-            breakdown.board_score, breakdown.live_ev, breakdown.success_val,
-            breakdown.win_bonus, breakdown.hand_momentum, breakdown.cycling_bonus, breakdown.total
+
+        let _ = writeln!(
+            file,
+            "{},{},{},{},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2}",
+            game_id,
+            turn,
+            player,
+            action,
+            breakdown.board_score,
+            breakdown.live_ev,
+            breakdown.success_val,
+            breakdown.win_bonus,
+            breakdown.hand_momentum,
+            breakdown.cycling_bonus,
+            breakdown.total
         );
     }
 }
 
 fn heuristic_logging_enabled() -> bool {
-    matches!(std::env::var("TURNSEQ_LOG_HEURISTIC").ok().as_deref(), Some("1") | Some("true") | Some("TRUE"))
+    matches!(
+        std::env::var("TURNSEQ_LOG_HEURISTIC").ok().as_deref(),
+        Some("1") | Some("true") | Some("TRUE")
+    )
 }
 
 fn execute_main_sequence(
     game_id: usize,
     turn: u32,
-    state: &mut GameState, 
-    db: &CardDatabase, 
+    state: &mut GameState,
+    db: &CardDatabase,
     planned_seq: &[i32],
     enable_logging: bool,
 ) -> Vec<i32> {
@@ -437,7 +458,7 @@ fn run_single_game(
     if let Some(first_player) = starting_player {
         force_starting_player(&mut state, first_player);
     }
-    state.ui.silent = silent; 
+    state.ui.silent = silent;
 
     let game_start = Instant::now();
     let mut rng = StdRng::seed_from_u64(seed);
@@ -455,7 +476,11 @@ fn run_single_game(
     // Advance to first Main phase (RPS, Mulligan, etc.)
     while state.phase != Phase::Main && !state.is_terminal() {
         match state.phase {
-            Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+            Phase::Rps
+            | Phase::MulliganP1
+            | Phase::MulliganP2
+            | Phase::TurnChoice
+            | Phase::Response => {
                 let legal = state.get_legal_action_ids(db);
                 if !legal.is_empty() {
                     let &action = legal.choose(&mut rng).unwrap_or(&ACTION_BASE_PASS);
@@ -485,7 +510,7 @@ fn run_single_game(
                 let current_player = state.current_player;
 
                 if !silent {
-                   std::env::set_var("TURNSEQ_DEBUG_EVAL", "1");
+                    std::env::set_var("TURNSEQ_DEBUG_EVAL", "1");
                 }
                 let turn_start = Instant::now();
                 let (best_seq, _, _, evals) = TurnSequencer::plan_full_turn(&state, db);
@@ -511,10 +536,10 @@ fn run_single_game(
                         evals as f32 / turn_duration.max(0.001)
                     );
                 }
-            },
+            }
             Phase::Active | Phase::Draw | Phase::Energy => {
                 state.auto_step(db);
-            },
+            }
             Phase::LiveSet => {
                 let (seq, _, _) = TurnSequencer::find_best_liveset_selection(&state, db);
                 if !silent {
@@ -529,23 +554,35 @@ fn run_single_game(
                 for &action in &seq {
                     if enable_heuristic_log {
                         let breakdown = TurnSequencer::get_score_breakdown(&state, db, p_idx);
-                        log_heuristic(game_id, main_turns_played as u32, p_idx as u32, action, &breakdown);
+                        log_heuristic(
+                            game_id,
+                            main_turns_played as u32,
+                            p_idx as u32,
+                            action,
+                            &breakdown,
+                        );
                     }
                     let _ = state.step(db, action);
                 }
                 if enable_heuristic_log {
                     let breakdown = TurnSequencer::get_score_breakdown(&state, db, p_idx);
-                    log_heuristic(game_id, main_turns_played as u32, p_idx as u32, ACTION_BASE_PASS, &breakdown);
+                    log_heuristic(
+                        game_id,
+                        main_turns_played as u32,
+                        p_idx as u32,
+                        ACTION_BASE_PASS,
+                        &breakdown,
+                    );
                 }
                 let _ = state.step(db, ACTION_BASE_PASS);
-            },
+            }
             Phase::PerformanceP1 | Phase::PerformanceP2 => {
                 state.auto_step(db);
-            },
+            }
             Phase::LiveResult => {
                 let action = choose_best_live_result_action(&state, db);
                 let _ = state.step(db, action);
-            },
+            }
             Phase::Terminal => break,
             _ => {
                 // For RPS/Mulligan if they happen mid-game (unlikely but safe)
@@ -618,11 +655,11 @@ fn main() {
     while i < args.len() {
         match args[i].as_str() {
             "--count" => {
-                count = args[i+1].parse().unwrap_or(1);
+                count = args[i + 1].parse().unwrap_or(1);
                 i += 2;
             }
             "--seed" => {
-                seed_base = args[i+1].parse().unwrap_or(100);
+                seed_base = args[i + 1].parse().unwrap_or(100);
                 i += 2;
             }
             "--silent" => {
@@ -630,11 +667,11 @@ fn main() {
                 i += 1;
             }
             "--deck-p0" => {
-                deck0_path = args[i+1].clone();
+                deck0_path = args[i + 1].clone();
                 i += 2;
             }
             "--deck-p1" => {
-                deck1_path = args[i+1].clone();
+                deck1_path = args[i + 1].clone();
                 i += 2;
             }
             "--first-player" => {
@@ -646,12 +683,14 @@ fn main() {
                 i += 2;
             }
             "--weight" => {
-                let pair = args[i+1].clone();
+                let pair = args[i + 1].clone();
                 let parts: Vec<&str> = pair.split('=').collect();
                 if parts.len() == 2 {
                     let key = parts[0];
                     let val: f32 = parts[1].parse().unwrap_or(0.0);
-                    let mut config = engine_rust::core::logic::turn_sequencer::get_config().write().unwrap();
+                    let mut config = engine_rust::core::logic::turn_sequencer::get_config()
+                        .write()
+                        .unwrap();
                     match key {
                         "board_presence" => config.weights.board_presence = val,
                         "blades" => config.weights.blades = val,
@@ -669,15 +708,27 @@ fn main() {
                 i += 2;
             }
             "--beam-search" => {
-                engine_rust::core::logic::turn_sequencer::get_config().write().unwrap().search.beam_search = true;
+                engine_rust::core::logic::turn_sequencer::get_config()
+                    .write()
+                    .unwrap()
+                    .search
+                    .beam_search = true;
                 i += 1;
             }
             "--no-memo" => {
-                engine_rust::core::logic::turn_sequencer::get_config().write().unwrap().search.use_memoization = false;
+                engine_rust::core::logic::turn_sequencer::get_config()
+                    .write()
+                    .unwrap()
+                    .search
+                    .use_memoization = false;
                 i += 1;
             }
             "--no-alpha-beta" => {
-                engine_rust::core::logic::turn_sequencer::get_config().write().unwrap().search.use_alpha_beta = false;
+                engine_rust::core::logic::turn_sequencer::get_config()
+                    .write()
+                    .unwrap()
+                    .search
+                    .use_alpha_beta = false;
                 i += 1;
             }
             "--json" => {
@@ -713,11 +764,14 @@ fn main() {
         println!("[DB] Loaded vanilla data");
         println!("[DECK] P0: {} | P1: {}", deck0_path, deck1_path);
         println!("[START] {:?}", starting_player_mode);
-        println!("[BATCH] Running {} games starting with seed {}", count, seed_base);
+        println!(
+            "[BATCH] Running {} games starting with seed {}",
+            count, seed_base
+        );
     }
 
     let start_all = Instant::now();
-    
+
     let results: Vec<GameResult> = if silent && count > 1 {
         use rayon::prelude::*;
         (0..count)
@@ -781,13 +835,27 @@ fn main() {
     let total_games = results.len();
     let p0_wins = results.iter().filter(|r| r.winner == 0).count();
     let p1_wins = results.iter().filter(|r| r.winner == 1).count();
-    let draws = results.iter().filter(|r| r.winner != 0 && r.winner != 1).count();
+    let draws = results
+        .iter()
+        .filter(|r| r.winner != 0 && r.winner != 1)
+        .count();
     let avg_p0 = results.iter().map(|r| r.score_p0 as f32).sum::<f32>() / total_games as f32;
     let avg_p1 = results.iter().map(|r| r.score_p1 as f32).sum::<f32>() / total_games as f32;
-    let avg_judgement_p0 = results.iter().map(|r| r.judgement_score_p0 as f32).sum::<f32>() / total_games as f32;
-    let avg_judgement_p1 = results.iter().map(|r| r.judgement_score_p1 as f32).sum::<f32>() / total_games as f32;
+    let avg_judgement_p0 = results
+        .iter()
+        .map(|r| r.judgement_score_p0 as f32)
+        .sum::<f32>()
+        / total_games as f32;
+    let avg_judgement_p1 = results
+        .iter()
+        .map(|r| r.judgement_score_p1 as f32)
+        .sum::<f32>()
+        / total_games as f32;
     let avg_turns = results.iter().map(|r| r.turns as f32).sum::<f32>() / total_games as f32;
-    let decisive_games: Vec<&GameResult> = results.iter().filter(|r| r.winner == 0 || r.winner == 1).collect();
+    let decisive_games: Vec<&GameResult> = results
+        .iter()
+        .filter(|r| r.winner == 0 || r.winner == 1)
+        .collect();
     let avg_decisive_turns = if decisive_games.is_empty() {
         0.0
     } else {
@@ -818,13 +886,23 @@ fn main() {
         println!("║  Batch Complete                     ║");
         println!("╚═══════════════════════════════════════╝");
         println!("Total Time: {:.2}s", start_all.elapsed().as_secs_f32());
-        println!("Wins: P0={} ({:.1}%) | P1={} ({:.1}%) | Draws={}",
-            p0_wins, (p0_wins as f32 / total_games as f32) * 100.0,
-            p1_wins, (p1_wins as f32 / total_games as f32) * 100.0,
-            draws);
+        println!(
+            "Wins: P0={} ({:.1}%) | P1={} ({:.1}%) | Draws={}",
+            p0_wins,
+            (p0_wins as f32 / total_games as f32) * 100.0,
+            p1_wins,
+            (p1_wins as f32 / total_games as f32) * 100.0,
+            draws
+        );
         println!("Avg Score: P0={:.2} | P1={:.2}", avg_p0, avg_p1);
-        println!("Avg Judgement: P0={:.2} | P1={:.2}", avg_judgement_p0, avg_judgement_p1);
-        println!("Avg Turns: {:.2} | Avg Decisive Turns: {:.2}", avg_turns, avg_decisive_turns);
+        println!(
+            "Avg Judgement: P0={:.2} | P1={:.2}",
+            avg_judgement_p0, avg_judgement_p1
+        );
+        println!(
+            "Avg Turns: {:.2} | Avg Decisive Turns: {:.2}",
+            avg_turns, avg_decisive_turns
+        );
         println!("Turn-Cap Games: {} / {}", capped_games, total_games);
     }
 }

@@ -1,3 +1,5 @@
+use crate::core::logic::interpreter::instruction::DecodedSlot;
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::*;
 use crate::test_helpers::*;
 
@@ -28,7 +30,18 @@ mod tests {
         // Ability 0: [O_PAY_ENERGY, 1, 0, FILTER_IS_OPTIONAL >> 32, 0, O_RETURN, 0, 0, 0, 0] -> bit 61 is OPTIONAL
         kasumi.abilities.push(Ability {
             trigger: TriggerType::OnLiveStart,
-            bytecode: vec![O_PAY_ENERGY, 1, 0, (crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL >> 32) as i32, 0, O_RETURN, 0, 0, 0, 0],
+            bytecode: vec![
+                O_PAY_ENERGY,
+                1,
+                0,
+                (crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL >> 32) as i32,
+                0,
+                O_RETURN,
+                0,
+                0,
+                0,
+                0,
+            ],
             ..Default::default()
         });
         db.members.insert(4331, kasumi.clone());
@@ -263,7 +276,7 @@ mod tests {
         let mut state = create_test_state();
         state.players[0].stage[0] = 101; // dummy cost 5
         state.players[0].stage[1] = 102; // dummy cost 5
-                                              // Even if we wanted to sacrifice both for card 1 (cost 10), the API doesn't support it.
+                                         // Even if we wanted to sacrifice both for card 1 (cost 10), the API doesn't support it.
     }
 
     #[test]
@@ -437,7 +450,11 @@ mod tests {
         // Hand should have been empty, then DRAW(2), then DISCARD_HAND(2) mandatory.
         // So hand should be 0 again!
         state.process_trigger_queue(&db);
-        assert_eq!(state.players[p_idx].hand.len(), 0, "Hand should be empty after internal OnPlay (DRAW 2, DISCARD 2)");
+        assert_eq!(
+            state.players[p_idx].hand.len(),
+            0,
+            "Hand should be empty after internal OnPlay (DRAW 2, DISCARD 2)"
+        );
 
         // Now give the player 2 cards manually to test the PARTIAL discard.
         state.players[p_idx].discard.clear();
@@ -448,15 +465,33 @@ mod tests {
             auto_pick: true,
             ..Default::default()
         };
-        // O_MOVE_TO_DISCARD(5) from Hand. We only have 2 cards.
-        // Revision 5: ZoneMask::Hand (6) at bit 53
-        let attr = (6u64 << 53) as i64;
-        let bytecode = vec![O_MOVE_TO_DISCARD, 5, (attr & 0xFFFFFFFF) as i32, (attr >> 32) as i32, 6, O_RETURN, 0, 0, 0, 0];
-        let _ = crate::core::logic::interpreter::resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode), &ctx);
+        // Step-by-step frame sequence: discard 2 cards from hand, then return.
+        let frames = vec![
+            AbilityFrame::Raw {
+                opcode: O_MOVE_TO_DISCARD,
+                value: 2,
+                attr: (6u64 << 53),
+                slot: DecodedSlot {
+                    target_slot: SLOT_HAND as u8,
+                    ..Default::default()
+                }
+                .to_raw(),
+            },
+            AbilityFrame::Return,
+        ];
+        state.resolve_semantic_frames(&db, &frames, &ctx);
 
         // Q55: Should discard all 2 available cards and not error/hang
-        assert_eq!(state.players[p_idx].hand.len(), 0, "Hand should be empty after partial discard");
-        assert_eq!(state.players[p_idx].discard.len(), 2, "Discard should contain the 2 new cards");
+        assert_eq!(
+            state.players[p_idx].hand.len(),
+            0,
+            "Hand should be empty after partial discard"
+        );
+        assert_eq!(
+            state.players[p_idx].discard.len(),
+            2,
+            "Discard should contain the 2 new cards"
+        );
     }
 
     #[test]
@@ -475,7 +510,10 @@ mod tests {
         let mut actions = Vec::<i32>::new();
         state.generate_legal_actions(&db, 0, &mut actions);
 
-        assert!(!actions.contains(&(ACTION_BASE_HAND + 0)), "Q56: Should not be able to play with insufficient energy");
+        assert!(
+            !actions.contains(&(ACTION_BASE_HAND + 0)),
+            "Q56: Should not be able to play with insufficient energy"
+        );
     }
 
     #[test]
@@ -519,15 +557,34 @@ mod tests {
 
         state.do_live_result(&db);
 
-        assert!(state.live_result_selection_pending, "Q83: multiple passed lives should require a choice");
-        assert_eq!(state.current_player, 0, "Q83: the winning player should choose the success live");
-        assert!(state.players[0].success_lives.is_empty(), "Q83: no live should move before selection");
+        assert!(
+            state.live_result_selection_pending,
+            "Q83: multiple passed lives should require a choice"
+        );
+        assert_eq!(
+            state.current_player, 0,
+            "Q83: the winning player should choose the success live"
+        );
+        assert!(
+            state.players[0].success_lives.is_empty(),
+            "Q83: no live should move before selection"
+        );
 
         state.handle_liveresult(&db, 601).unwrap();
 
-        assert_eq!(state.players[0].success_lives.as_slice(), &[18001], "Q83: only the selected live should enter the success pile");
-        assert!(state.players[0].discard.contains(&18000), "Q83: the non-selected winning live should be discarded during finalization");
-        assert!(!state.players[0].discard.contains(&18001), "Q83: the selected live must not be discarded");
+        assert_eq!(
+            state.players[0].success_lives.as_slice(),
+            &[18001],
+            "Q83: only the selected live should enter the success pile"
+        );
+        assert!(
+            state.players[0].discard.contains(&18000),
+            "Q83: the non-selected winning live should be discarded during finalization"
+        );
+        assert!(
+            !state.players[0].discard.contains(&18001),
+            "Q83: the selected live must not be discarded"
+        );
     }
 
     #[test]
@@ -557,14 +614,24 @@ mod tests {
         state.trigger_global_event(&db, TriggerType::OnLiveStart, -1, -1, 0, -1);
         state.trigger_depth -= 1;
 
-        assert_eq!(state.trigger_queue.len(), 2, "Both triggers should be queued");
+        assert_eq!(
+            state.trigger_queue.len(),
+            2,
+            "Both triggers should be queued"
+        );
 
         // Verify Order: P1 trigger should be first in deque
         let ctx0 = &state.trigger_queue[0].2;
-        assert_eq!(ctx0.player_id, 0, "Q84: Active player trigger must be first in queue");
+        assert_eq!(
+            ctx0.player_id, 0,
+            "Q84: Active player trigger must be first in queue"
+        );
 
         let ctx1 = &state.trigger_queue[1].2;
-        assert_eq!(ctx1.player_id, 1, "Q84: Non-active player trigger must be second");
+        assert_eq!(
+            ctx1.player_id, 1,
+            "Q84: Non-active player trigger must be second"
+        );
     }
 
     // =========================================================================
@@ -596,15 +663,18 @@ mod tests {
         let p1_score = state.players[1].live_score_bonus;
 
         let should_change = if p0_score > p1_score {
-            true  // P0 should be leader
+            true // P0 should be leader
         } else if p1_score > p0_score {
             false // P1 should be leader
         } else {
-            false  // Stay same per Q50
+            false // Stay same per Q50
         };
 
         // Default is P0 first, so if scores equal, should_change should be false
-        assert!(!should_change, "Q50: Turn order should not change when both succeed with same score");
+        assert!(
+            !should_change,
+            "Q50: Turn order should not change when both succeed with same score"
+        );
     }
 
     // Q51: Only one player places card in success zone → that player becomes first attack
@@ -660,15 +730,21 @@ mod tests {
         state.ui.silent = true;
 
         // Find a real card (use any member ID)
-        let target_card = 4369;  // Generic member ID
+        let target_card = 4369; // Generic member ID
 
         // Place 2 copies on stage
         state.players[0].stage[0] = target_card;
         state.players[0].stage[1] = target_card;
 
         // Verify both slots are filled with same card
-        assert_eq!(state.players[0].stage[0], state.players[0].stage[1], "Q58: Both slots should have same card");
-        assert_eq!(state.players[0].stage[0], target_card, "Q58: Card ID should match");
+        assert_eq!(
+            state.players[0].stage[0], state.players[0].stage[1],
+            "Q58: Both slots should have same card"
+        );
+        assert_eq!(
+            state.players[0].stage[0], target_card,
+            "Q58: Card ID should match"
+        );
     }
 
     // Q59: Card that moves = new card (resets turn-once)
@@ -686,13 +762,19 @@ mod tests {
 
         // Card uses ability (turn-once consumed)
         // Then card moves to slot 1 (simulated)
-        state.players[0].stage[0] = 0;  // Remove from slot 0
-        state.players[0].stage[1] = card_id;  // Place in slot 1
+        state.players[0].stage[0] = 0; // Remove from slot 0
+        state.players[0].stage[1] = card_id; // Place in slot 1
 
         // Per Q59: Card is now treated as "new card" after moving zones
         // Turn-once counter should be reset (engine detail, but we verify state change)
-        assert_eq!(state.players[0].stage[0], 0, "Q59: Slot 0 should be empty after move");
-        assert_eq!(state.players[0].stage[1], card_id, "Q59: Card should be in slot 1");
+        assert_eq!(
+            state.players[0].stage[0], 0,
+            "Q59: Slot 0 should be empty after move"
+        );
+        assert_eq!(
+            state.players[0].stage[1], card_id,
+            "Q59: Card should be in slot 1"
+        );
     }
 
     // Q60: Forced vs optional abilities
@@ -744,7 +826,10 @@ mod tests {
 
         // Order should stay same: still P0 first, P1 second
         // (implicit in state initialization)
-        assert_eq!(state.first_player, 0, "Q49: Turn order unchanged when no success");
+        assert_eq!(
+            state.first_player, 0,
+            "Q49: Turn order unchanged when no success"
+        );
     }
 
     // =========================================================================
@@ -759,7 +844,7 @@ mod tests {
         state.ui.silent = true;
 
         // Setup: Live zone with cards to generate yells
-        state.players[0].live_zone[0] = 100;  // Generic card
+        state.players[0].live_zone[0] = 100; // Generic card
         state.players[0].live_zone[1] = 101;
         state.players[0].live_zone[2] = 102;
 
@@ -769,7 +854,10 @@ mod tests {
 
         // Yell process: count = 0; while draw < count: resolve_yell
         // Per Q39/Q40: Must complete ALL yells for this live
-        assert!(state.players[0].live_zone[0] != 0, "Q39/Q40: Must perform all yell checks");
+        assert!(
+            state.players[0].live_zone[0] != 0,
+            "Q39/Q40: Must perform all yell checks"
+        );
     }
 
     // Q43: Draw icon from yell becomes card draw AFTER all yells done
@@ -790,7 +878,11 @@ mod tests {
         // but after all yell checks complete
 
         // Verify: can inspect this via trigger queue or simulation
-        assert_eq!(state.players[0].hand.len(), hand_before, "Q43: Draw happens after yells complete");
+        assert_eq!(
+            state.players[0].hand.len(),
+            hand_before,
+            "Q43: Draw happens after yells complete"
+        );
     }
 
     // Q44: Score icon adds to LIVE CARD score (not live score)
@@ -808,7 +900,10 @@ mod tests {
         // If yell has score icons, they modify the live card's score
 
         // This is structural - test that live zone cards have score field
-        assert!(state.players[0].live_zone.len() > 0 || true, "Q44: Score tracking supported");
+        assert!(
+            state.players[0].live_zone.len() > 0 || true,
+            "Q44: Score tracking supported"
+        );
     }
 
     // Q45: ALL Blade (wildcard) from yell
@@ -825,7 +920,7 @@ mod tests {
         // If all blade appears in yell, can substitute for any missing color
 
         // Test: Verify wildcard heart support
-        let _required_hearts = [1, 0, 1, 0, 0, 0, 0];  // Example requirement
+        let _required_hearts = [1, 0, 1, 0, 0, 0, 0]; // Example requirement
         let has_all_blade = true;
 
         // With wildcard, gaps can be filled
@@ -881,6 +976,9 @@ mod tests {
 
         // This is a nuance of heart resolution - decided at check time
         let check_all_heart_timing = true;
-        assert!(check_all_heart_timing, "Q46: Heart color decided at check time");
+        assert!(
+            check_all_heart_timing,
+            "Q46: Heart color decided at check time"
+        );
     }
 }

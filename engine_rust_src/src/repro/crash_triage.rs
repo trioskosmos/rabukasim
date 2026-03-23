@@ -238,7 +238,7 @@ fn test_state_delta_verification() {
             state.players[0].discard = (300..305).collect(); // 5 in discard
             state.players[0].energy_zone = vec![40000i32; 8].into(); // 8 energy cards
             state.players[0].tapped_energy_mask = 0b00001111; // 4 energy tapped
-                                                                   // Put a live card in live zone and one in discard for recovery tests
+                                                              // Put a live card in live zone and one in discard for recovery tests
             state.players[0].live_zone[0] = 15001;
             state.players[0].discard.push(15002); // Live in discard for O_RECOVER_LIVE
 
@@ -254,8 +254,8 @@ fn test_state_delta_verification() {
             let before = ZoneSnapshot::capture(&state.players[0], &state);
 
             // Execute
-            let bytecode_slice: &[i32] = &bc_clone;
-            state.resolve_bytecode_slice(&db, bytecode_slice, &ctx);
+            let frames = crate::core::logic::models::FrameProgram::from_bytecode(&bc_clone).frames;
+            state.resolve_semantic_frames(&db, &frames, &ctx);
 
             let suspended = state.phase == Phase::Response || !state.interaction_stack.is_empty();
             let after = ZoneSnapshot::capture(&state.players[0], &state);

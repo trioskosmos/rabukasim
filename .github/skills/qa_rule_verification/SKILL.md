@@ -17,7 +17,7 @@ This skill provides a standardized approach to ensuring the LovecaSim engine ali
 - **Tools**:
     - `tools/gen_full_matrix.py`: **[Updater Path]** Re-generates the comprehensive matrix and coverage dashboard.
     - `tools/play_interactive.py`: CLI tool for manual state injection and verification (use `exec` for god-mode).
-    - `tools/card_finder.py`: Multi-layer lookup tool for cards and related Q&A rulings.
+    - `tools/cf.py`: Multi-layer lookup tool for cards and related Q&A rulings.
 
 ## 2. Tagging & Identification
 - **Test Tags**: Every Rust test MUST be tagged with `#[test]` and follow the naming convention `test_q{ID}_{descriptor}`.
@@ -50,7 +50,8 @@ The first priority is to:
 If a ruling appears to fail, check all of these before assuming the Rust runtime is correct:
 - `data/consolidated_abilities.json` may show that the card-text simplification or translation is wrong.
 - `compiler/` may show that the parser/compiler translated the pseudocode to conditions/effects incorrectly.
-- The compiled `bytecode` in `data/cards_compiled.json` may not actually represent the behavior printed on the card.
+- The **Frame Sequence** in `data/ability_frames.json` may not actually represent the behavior printed on the card.
+- The `signature` mapping between card data and `data/ability_frames.json` might be broken.
 
 Do not prefer “easy passing coverage” over finding defects. A good QA test is allowed to fail first if that failure exposes a real engine or card-data bug.
 
@@ -65,8 +66,8 @@ Do not prefer “easy passing coverage” over finding defects. A good QA test i
 
 ### Phase 3: Engine Verification (Rust)
 1. Identify the rule ID (e.g., Q195).
-2. Use `card_finder.py "Q195"` to find related cards and original ability text.
-3. Cross-check the ruling against `data/consolidated_abilities.json`, `compiler/`, and the compiled `bytecode` for the referenced card before assuming the current data is correct.
+2. Use `cf.py "Q195"` to find related cards, signatures, and frame programs.
+3. Cross-check the ruling against `data/consolidated_abilities.json`, `compiler/`, and the **Frame Sequence** for the signature in `data/ability_frames.json` before assuming the current data is correct.
 3. Implement a focused test in `qa_verification_tests.rs`.
    - **CRITICAL:** Include original ability text and QA ruling as comments.
 4. Run `cargo test qa_verification_tests` to verify compliance.
@@ -80,7 +81,7 @@ Do not prefer “easy passing coverage” over finding defects. A good QA test i
 ### High-Level Process
 1. **Identify Unmapped QAs**: Review `qa_test_matrix.md` and filter for entries marked with `ℹ️` (no test) that have card-specific references
 2. **Verify the target is still uncovered**: Do not select any QID already marked `✅` unless the assignment is specifically to remediate a weak existing test
-3. **Prioritize by Defect Exposure**: Prefer tests most likely to uncover engine/runtime bugs, parser/compiler mistranslations, or bad compiled bytecode before chasing easy green coverage
+3. **Prioritize by Defect Exposure**: Prefer tests most likely to uncover engine/runtime bugs, parser/compiler mistranslations, or **bad Frame sequences** before chasing easy green coverage
 4. **Group by Category**: Create test batches organized by theme (e.g., "Live Card Mechanics", "Activation Rules", "Member Placement")
 5. **Implement Tests**: Write tests in `engine_rust_src/src/qa/batch_card_specific.rs` or another active module under `engine_rust_src/src/qa/` following the pattern below
 6. **Update Matrix**: Run `python tools/gen_full_matrix.py` to verify coverage increase and confirm the targeted `ℹ️` row changed as expected
@@ -297,7 +298,7 @@ fn test_q50_both_success_same_score_order_unchanged() {
 ```
 
 ## 6. Best Practices
-- **Real Data Only**: **CRITICAL POLICY:** Always use `load_real_db()` and real card IDs. NEVER mock card abilities or bytecode manually via `add_card()` or similar methods.
+- **Real Data Only**: **CRITICAL POLICY:** Always use `load_real_db()` and real card IDs. NEVER mock card abilities or **Frame sequences** manually via `add_card()` or similar methods.
 - **Isolation**: Use `create_test_state()` to ensure a pristine game state for each test.
 - **Engine Calls Required**: Every QA test MUST call at least one engine function (`do_*()`, `play_member()`, `handle_*()`, etc.)
 - **Documentation**: Every test MUST include comments detailing:
@@ -346,7 +347,7 @@ state.players[0].stage[0] = card_id;  // Valid indices: 0, 1, 2
 **Fix**:
 ```rust
 // Use card_finder.py to verify the card number exists:
-// python tools/card_finder.py "PL!N-bp1-012-R"
+// python tools/cf.py "PL!N-bp1-012-R"
 
 // Use unwrap_or() with a known fallback:
 let card_id = db.id_by_no("PL!N-bp1-012-R＋")
@@ -378,11 +379,11 @@ assert!(!in_discard, "Card was discarded instead");
 **Fix**:
 1. Verify card ability in `data/consolidated_abilities.json`:
 ```bash
-python tools/card_finder.py "Q89" | grep -A5 "name.*description"
+python tools/cf.py "Q89" | grep -A5 "name.*description"
 ```
-2. Check `data/cards_compiled.json` for the compiled bytecode of the card:
+2. Check `data/ability_frames.json` for the frame sequence of the card signature:
 ```bash
-cat data/cards_compiled.json | jq '.[] | select(.id == 1234) | .bytecode'
+grep -A20 "SIGNATURE_HERE" data/ability_frames.json
 ```
 
 ### Matrix Inconsistencies
@@ -476,13 +477,13 @@ echo "✅ All QA checks passed"
 ### Discovering Q&A Information
 ```bash
 # Find all Q&A rulings mentioning "baton"
-python tools/card_finder.py "baton"
+python tools/cf.py "baton"
 
 # Find Q147 specifically
-python tools/card_finder.py "Q147"
+python tools/cf.py "Q147"
 
 # List related cards for Q89
-python tools/card_finder.py "Q89" | grep -i "related\|card_no"
+python tools/cf.py "Q89" | grep -i "related\|card_no"
 ```
 
 ### Test Execution & Debugging
@@ -536,7 +537,7 @@ python tools/play_interactive.py exec
 START: You found an unmapped QA ruling (marked ℹ️ in matrix)
   │
   ├─ Does it reference a specific card number or ability?
-  │   ├─ YES → Look up card via card_finder.py
+  │   ├─ YES → Look up card via cf.py
   │   │         ├─ Can I resolve it to a real card? → YES: Continue to "Define Setup"
   │   │         └─ NO: Mark as "Data Gap" and skip (report separately)
   │   │

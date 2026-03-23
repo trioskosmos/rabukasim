@@ -1,9 +1,9 @@
 use engine_rust::core::heuristics::OriginalHeuristic;
 use engine_rust::core::logic::{GameState, Phase};
-use rand::SeedableRng;
 use engine_rust::core::mcts::{SearchHorizon, MCTS};
 use engine_rust::test_helpers::load_real_db;
 use rand::Rng;
+use rand::SeedableRng;
 
 fn main() {
     println!("=== Face-off: Random (P0) vs MCTS AlphaZero Heuristic (P1) ===");

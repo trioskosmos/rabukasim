@@ -1,8 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::core::logic::{GameState, CardDatabase, AbilityContext, TriggerType};
-    use crate::core::logic::interpreter::resolve_bytecode;
-    use std::sync::Arc;
+    use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
 
     #[test]
     fn test_kanon_557_repro() {
@@ -30,13 +28,16 @@ mod tests {
 
         println!("Bytecode: {:?}", ab.bytecode);
 
-        let _ = resolve_bytecode(&mut state, &db, Arc::new(ab.bytecode.clone()), &ctx);
+        state.resolve_ability(&db, ab, &ctx);
 
         // Should have 8 energy cards now
         assert_eq!(state.players[0].energy_zone.len(), 8);
 
         // The last one (idx 7) should be tapped
-        assert!(state.players[0].is_energy_tapped(7), "Energy at index 7 should be tapped!");
+        assert!(
+            state.players[0].is_energy_tapped(7),
+            "Energy at index 7 should be tapped!"
+        );
         println!("Tapped mask: {:b}", state.players[0].tapped_energy_mask);
     }
 }

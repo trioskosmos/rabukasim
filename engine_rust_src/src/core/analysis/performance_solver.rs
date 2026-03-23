@@ -1,7 +1,7 @@
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::card_db::CardDatabase;
-use crate::core::logic::game::GameState;
 use crate::core::logic::constants::*;
+use crate::core::logic::game::GameState;
 
 /// Analysis tool to calculate mathematical probabilities during the performance phase.
 pub struct PerformanceProbabilitySolver;
@@ -324,7 +324,8 @@ impl PerformanceProbabilitySolver {
                             color = 6;
                         }
                         if color < 7 {
-                            adj.extra_hearts[color] = adj.extra_hearts[color].saturating_add(v as u8);
+                            adj.extra_hearts[color] =
+                                adj.extra_hearts[color].saturating_add(v as u8);
                         }
                     } else if op == O_ADD_BLADES {
                         adj.virtual_draws = adj.virtual_draws.saturating_add(v as u8);

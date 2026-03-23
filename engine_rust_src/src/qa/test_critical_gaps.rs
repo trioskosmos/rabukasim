@@ -110,6 +110,9 @@ mod tests {
         let satisfies_b = triple_card_contains.contains(&"澁谷かのん");
         let satisfies_c = triple_card_contains.contains(&"日野下花帆");
 
-        assert!(satisfies_a && satisfies_b && satisfies_c, "Q235: Triple-name satisfies all");
+        assert!(
+            satisfies_a && satisfies_b && satisfies_c,
+            "Q235: Triple-name satisfies all"
+        );
     }
 }

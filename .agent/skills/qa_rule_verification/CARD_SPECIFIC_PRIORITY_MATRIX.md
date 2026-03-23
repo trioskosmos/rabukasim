@@ -5,6 +5,62 @@
 
 ---
 
+## Bottom-Up Uncovered Sweep (Q237 -> Q156)
+
+Use this pass when the instruction is to continue from the end of the matrix downward. The ordering below starts at Q237 and groups uncovered rulings that share the same real cards or can reuse the same harness setup.
+
+### Shared-Card Batches
+
+| Bottom Start | Batch | Shared Cards | Why Batch Them Together |
+|------|-------|--------------|--------------------------|
+| **Q237** | **Q237/Q236** | `PL!HS-bp5-001-R＋` | Same reveal-name-matching card; positive and negative case should share one setup. |
+| **Q233** | **Q233/Q221** | `PL!SP-bp5-005-R＋`, `PL!SP-bp5-005-P`, `PL!SP-bp5-005-AR`, `PL!SP-bp5-005-SEC` | Same discard-trigger card family; one batch can verify both trigger re-fire behavior and "those cards" scoping. |
+| **Q232** | **Q232/Q216** | `PL!N-bp5-026-L` | Same live card appears in both rulings; score-icon semantics and multi-member heart aggregation can share one live-resolution harness. |
+| **Q227** | **Q227/Q217** | `PL!N-bp5-030-L` | Same card; both rulings hinge on whether a live-start cost/event counts as the trigger condition. |
+| **Q211** | **Q211/Q210** | `PL!-bp5-021-L` | Same multi-name counting card; build one stage-reference harness and cover both one-member and two-member interpretations. |
+| **Q208** | **Q208/Q207** | `PL!-bp5-003-R＋`, `PL!-bp5-003-P`, `PL!-bp5-003-AR`, `PL!-bp5-003-SEC`, `PL!N-bp5-027-L` | Same multi-name reference package; one name-resolution fixture should cover both "1 member" and "counts as 2 total members" rulings. |
+| **Q192** | **Q192/Q187** | `PL!SP-bp4-023-L` | Partial overlap on the same card; pair it with Q192 while the color-change / target-exclusion logic is loaded. |
+| **Q179** | **Q179/Q178** | `PL!-pb1-028-L` | Same active-all-Printemps live-start effect; natural positive/negative pair on number of members activated. |
+
+### Bottom-Up Order After Grouping
+
+| Order | QA Batch | Cards | Notes |
+|------|----------|-------|-------|
+| 1 | **Q237/Q236** | `PL!HS-bp5-001-R＋` | Reverse-name matching around `Dream Believers` / `Dream Believers（104期Ver.）`. |
+| 2 | **Q233/Q221** | `PL!SP-bp5-005-*` | Trigger source tracking plus scoped reference to cards just discarded. |
+| 3 | **Q232/Q216** | `PL!N-bp5-026-L`, `PL!N-bp5-015-N` | One shared live harness, one extra supporting heart-pattern setup. |
+| 4 | **Q228** | `PL!-bp5-004-R＋` | Cost reduction with multi-name member already on stage. |
+| 5 | **Q227/Q217** | `PL!N-bp5-030-L` | Zero-card cost payment and unpaid live-start cost should be tested together. |
+| 6 | **Q226** | `PL!N-bp5-021-N` | Deck-bottom placement edge case with only two cards remaining. |
+| 7 | **Q225** | `LL-bp5-002-L` | Standalone multi-name member count ruling. |
+| 8 | **Q224** | `LL-bp5-001-L` | Aggregate heart-condition check across multiple members. |
+| 9 | **Q223** | `PL!SP-bp5-010-*` | Opponent decides destination for forced opponent position change. |
+| 10 | **Q222** | `PL!SP-bp5-009-*` | Repeating live-start effect after the source becomes waited mid-resolution. |
+| 11 | **Q219** | `PL!SP-bp5-003-*` | Baton constant applies to cost-10 `Liella!` member. |
+| 12 | **Q218** | `PL!S-bp5-001-*` | Baton constant applies even when the hand member has no abilities. |
+| 13 | **Q215** | `PL!N-bp5-008-*` | Cost can place waited energy under the member. |
+| 14 | **Q213** | `PL!HS-bp5-019-L` | Facedown member set during live-card set phase must not reduce hearts. |
+| 15 | **Q212** | `PL!HS-bp5-017-L` | Shared-name member should not satisfy the live-start condition. |
+| 16 | **Q211/Q210** | `PL!-bp5-021-L` | Multi-name member reference batch. |
+| 17 | **Q208/Q207** | `PL!-bp5-003-*`, `PL!N-bp5-027-L` | Multi-name member reference batch. |
+| 18 | **Q199** | `PL!N-pb1-013-*`, `PL!N-pb1-015-*`, `PL!N-pb1-017-*`, `PL!N-pb1-023-*` | One reusable summon-then-baton-forbidden harness covers the full family. |
+| 19 | **Q192/Q187** | `PL!N-bp3-030-L`, `PL!N-bp4-025-L`, `PL!SP-bp4-023-L` | Shared color/selection logic; keep together if targeting `PL!SP-bp4-023-L`. |
+| 20 | **Q191** | `PL!N-bp4-030-L` | Duplicate live-success option selection should be rejected. |
+| 21 | **Q182** | `PL!S-bp3-019-L` | Zero-yell-card edge case still satisfies the "0 non-blade cards" branch. |
+| 22 | **Q179/Q178** | `PL!-pb1-028-L` | Printemps activation batch. |
+| 23 | **Q177** | `PL!-pb1-015-P＋`, `PL!-pb1-015-R` | Mandatory auto-resolution when the trigger condition is met. |
+| 24 | **Q159** | `PL!N-bp3-003-R`, `PL!N-bp3-003-P` | On-play borrowed ability must reject costs requiring the source member itself to wait. |
+| 25 | **Q156** | `PL!S-bp3-020-L` | Dual-live re-yell sequencing; likely worth a dedicated harness because both live copies matter. |
+
+### Best Reuse Opportunities
+
+| Theme | QA IDs | Reusable Setup |
+|------|--------|----------------|
+| Multi-name member counting | **Q225/Q211/Q210/Q208/Q207** | Keep one fixture with `LL-bp1-001-R+` or `LL-bp3-001-R+` plus one ordinary named member to flip between "1 member" and "2 members present" interpretations. |
+| Shared trigger card families | **Q233/Q221**, **Q227/Q217**, **Q179/Q178** | Implement as paired positive/negative tests in the same module while the same card text is already loaded. |
+| Live-start aggregate heart checks | **Q224/Q216/Q232** | One performance-phase harness can validate both score behavior and aggregate heart-pattern conditions. |
+| Baton-entry restriction families | **Q219/Q218/Q199** | One baton-touch harness can be reused with different static modifiers and entry-source cards. |
+
 ## Critical Priority: Card-Specific Tests Requiring Real Cards
 
 ### Tier 1: Foundational + Multiple Real Card References (HIGHEST IMPACT)

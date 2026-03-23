@@ -100,6 +100,7 @@ def _build_export_excludes(export_profile: str) -> tuple[dict, dict]:
     if export_profile == "runtime":
         exclude_ability_fields.update(
             {
+                "bytecode": True,
                 "modal_options": True,
             }
         )
@@ -287,10 +288,15 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
     with open(output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(compiled_data, f, ensure_ascii=False, indent=2)
 
-    # --- Generate Sparse Ability Index (canonical JSON) ---
+    # --- Generate Semantic Ability Index (canonical JSON) ---
     sparse_index_path = "data/ability_frame_index.json"
-    sparse_index = ability_codec.build_sparse_ability_index(compiled_data, ability_codec.load_data("data/metadata.json"))
-    ability_codec.dump_data(Path(sparse_index_path), sparse_index)
+    from tools import semantic_frame_index as semantic_index
+
+    sparse_index = semantic_index.build_semantic_ability_index(
+        compiled_data,
+        semantic_index.load_json(Path("data/metadata.json")),
+    )
+    semantic_index.dump_json(Path(sparse_index_path), sparse_index)
     if not quiet:
         print(f"Generating {sparse_index_path}...")
     # Migration guard: warn if the legacy YAML artifact still exists
@@ -561,12 +567,11 @@ def _compile_abilities_for_export(abilities: list, card_no: str, scope: str, ver
     for idx, ab in enumerate(abilities):
         ab.card_no = card_no
         try:
-            # Only compile if bytecode is not already present (e.g. from sparse source)
-            if not ab.bytecode:
-                ab.bytecode = ab.compile()
-            # Direct generation of frame program bypassing bytecode-to-model reconstruction
-            frames = ab.to_frame_program()
-            ab.frame_program = {"frames": frames}
+            frame_program = getattr(ab, "frame_program", None)
+            frames = frame_program.get("frames") if isinstance(frame_program, dict) else None
+            if not frames:
+                frames = ab.to_frame_program()
+                ab.frame_program = {"frames": frames}
         except Exception as e:
             import traceback
 
@@ -692,21 +697,15 @@ class SparseSourceManager:
         return self.mapping.get((card_no.strip(), ab_idx))
 
 
-# Global sparse manager — JSON is the canonical format
-SPARSE_INDEX_PATH = "data/ability_frame_index.json"
+# Global sparse manager. This is the editable semantic source of truth used by the compiler.
+ABILITY_FRAME_SOURCE_PATH = "data/ability_frames.json"
+SPARSE_INDEX_PATH = ABILITY_FRAME_SOURCE_PATH
 _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
 
 
 def _build_ability_from_sparse_entry(entry: dict[str, Any], raw_text: str) -> Ability:
     trigger_id = int(entry.get("trigger_id", 0))
     frames = entry.get("frames", []) or []
-    # Rebuild bytecode from frames (canonical). Fall back to source_words only if
-    # frames are absent (migration-only shim — safe to remove once suite is green).
-    bytecode = ability_codec.model_to_bytecode({"frames": frames})
-    if not bytecode:
-        source_words = [int(word) for word in entry.get("source_words", []) or []]
-        bytecode = source_words
-
     ability = Ability(
         raw_text=raw_text,
         trigger=TriggerType(trigger_id),
@@ -714,8 +713,8 @@ def _build_ability_from_sparse_entry(entry: dict[str, Any], raw_text: str) -> Ab
         conditions=[],
         costs=[],
         pseudocode="[RECONSTRUCTED FROM SPARSE INDEX]",
-        bytecode=bytecode,
     )
+    ability.frame_program = {"frames": frames}
     try:
         ability.build_semantic_form()
     except Exception:
@@ -725,25 +724,23 @@ def _build_ability_from_sparse_entry(entry: dict[str, Any], raw_text: str) -> Ab
 
 def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability]:
     raw_text = str(data.get("ability", ""))
-    raw_ability = _pseudocode_resolver.resolve(card_kind, card_no, data, _bytecode_compile_errors)
-    if not raw_ability:
-        abilities: list[Ability] = []
-        used_sparse = False
+    abilities: list[Ability] = []
+    used_sparse = False
 
-        for ab_idx in range(10):
-            entry = _sparse_manager.get_ability(card_no, ab_idx)
-            if entry is None:
-                if used_sparse:
-                    break
-                continue
+    for ab_idx in range(10):
+        entry = _sparse_manager.get_ability(card_no, ab_idx)
+        if entry is None:
+            if used_sparse:
+                break
+            continue
 
-            abilities.append(_build_ability_from_sparse_entry(entry, raw_text))
-            used_sparse = True
+        abilities.append(_build_ability_from_sparse_entry(entry, raw_text))
+        used_sparse = True
 
-        return abilities if used_sparse else []
+    if used_sparse:
+        return abilities
 
-    print(f"[{card_no}] Loaded from pseudocode source")
-    return _v2_parser.parse(raw_ability)
+    raise ValueError(f"[{card_no}] Missing editable frame entry in {SPARSE_INDEX_PATH}")
 
 
 def compute_flags(card):
@@ -1226,7 +1223,7 @@ def check_parity(input_path, output_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Compile raw card data to bytecode with optional version gating"
+        description="Compile raw card data into frame-first card JSON with optional version gating"
     )
     parser.add_argument("--input", default="data/cards.json", help="Path to raw cards.json")
     parser.add_argument("--output", default="data/cards_compiled.json", help="Output path")

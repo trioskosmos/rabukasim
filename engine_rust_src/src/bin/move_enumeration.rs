@@ -1,6 +1,6 @@
-use std::fs;
-use engine_rust::core::logic::{GameState, CardDatabase};
 use engine_rust::core::enums::Phase;
+use engine_rust::core::logic::{CardDatabase, GameState};
+use std::fs;
 
 fn load_vanilla_db() -> CardDatabase {
     let candidates = [
@@ -95,12 +95,15 @@ fn main() {
     println!("╚═══════════════════════════════════════════════════╝\n");
 
     let legal_root = state.get_legal_action_ids(&db);
-    
+
     println!("Initial State:");
     println!("  Current player: P{}", state.current_player);
     println!("  Phase: {:?}", state.phase);
     println!("  Hand size: {}", state.players[0].hand.len());
-    println!("  Stage: {} cards", state.players[0].stage.iter().filter(|&&c| c >= 0).count());
+    println!(
+        "  Stage: {} cards",
+        state.players[0].stage.iter().filter(|&&c| c >= 0).count()
+    );
     println!("  Legal actions: {}\n", legal_root.len());
 
     // Theoretical analysis
@@ -113,7 +116,7 @@ fn main() {
         let tree_size = branching.powi(depth as i32);
         // Alpha-beta roughly reduces by factor of sqrt(branching)
         let compressed = (branching.sqrt()).powi(depth as i32);
-        
+
         println!(
             "{:>5} | {:>9.1} | {:>14.0} | {:>19.0}",
             depth, branching, tree_size, compressed

@@ -1,5 +1,5 @@
-use std::fs;
 use engine_rust::core::logic::CardDatabase;
+use std::fs;
 
 #[allow(dead_code)]
 fn load_vanilla_db() -> CardDatabase {
@@ -72,36 +72,36 @@ fn main() {
     // Based on actual measurements from alpha-beta test:
     // - Exhaustive DFS: 7.95M nodes in 129.7s = ~61.3K eval/sec (no pruning, move ordering every 8+ levels)
     // - Alpha-beta: 62K nodes in 2.85s = ~21.7K eval/sec (with pruning, move ordering every 8+ levels)
-    
+
     println!("Actual Measured Performance:\n");
-    
+
     println!("  Without Alpha-Beta (Exhaustive DFS):");
     println!("    Nodes:       7,950,000");
     println!("    Time:        129.7s");
     println!("    Throughput:  61,325 eval/sec");
     println!("    Per-node:    16.3 µs\n");
-    
+
     println!("  With Alpha-Beta (Pruned DFS):");
     println!("    Nodes:       62,000");
     println!("    Time:        2.85s");
     println!("    Throughput:  21,700 eval/sec");
     println!("    Per-node:    46.0 µs\n");
-    
+
     println!("Analysis:\n");
     println!("  ✗ Per-node cost is HIGHER with alpha-beta (46µs vs 16µs)");
     println!("  ✓ But node reduction dominates (127x fewer nodes = 45.5x faster)");
     println!("  ✓ Quality identical: same game outcome\n");
-    
+
     println!("Why per-node cost is higher:");
     println!("  1. Move ordering requires state clones + heuristic eval");
     println!("  2. Only applied at shallow depths (depth > 8) to balance speed");
     println!("  3. Cost amortized because 127x fewer nodes are visited\n");
-    
+
     println!("To actually WIN games, we need:");
     println!("  1. Good heuristic weights (board_presence, live_ev_multiplier, etc)");
     println!("  2. Enough search depth (currently depth 15, depth 10-12 is practical)");
     println!("  3. Fast evaluation per node (already optimized)\n");
-    
+
     println!("Summary:\n");
     println!("  Current speed:    21.7K eval/s (time-efficient with pruning)");
     println!("  Max theoretical:  61.3K eval/s (no pruning, but explores 127x more)");

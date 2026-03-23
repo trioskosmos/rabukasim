@@ -3,15 +3,14 @@
 /// Run with: cargo run --bin full_game_runner --release
 ///
 /// Plays complete games until one player reaches score 3
-
 use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::turn_sequencer::TurnSequencer;
-use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
-use rand::SeedableRng;
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
 use rand::seq::IndexedRandom;
+use rand::SeedableRng;
 
 fn load_vanilla_db() -> CardDatabase {
     let candidates = [
@@ -24,8 +23,7 @@ fn load_vanilla_db() -> CardDatabase {
         if !std::path::Path::new(path).exists() {
             continue;
         }
-        let abs = std::fs::canonicalize(path)
-            .unwrap_or_else(|_| std::path::PathBuf::from(path));
+        let abs = std::fs::canonicalize(path).unwrap_or_else(|_| std::path::PathBuf::from(path));
         println!("[DB] {} loaded\n", abs.display());
         let json = fs::read_to_string(path).expect("Failed to read vanilla DB");
         let mut db = CardDatabase::from_json(&json).expect("Failed to parse vanilla DB");
@@ -51,7 +49,11 @@ fn advance_to_phase(
     let mut steps = 0;
     while state.phase != target_phase && !state.is_terminal() && steps < max_steps {
         match state.phase {
-            Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+            Phase::Rps
+            | Phase::MulliganP1
+            | Phase::MulliganP2
+            | Phase::TurnChoice
+            | Phase::Response => {
                 let legal = state.get_legal_action_ids(db);
                 if !legal.is_empty() {
                     if let Some(&action) = legal.choose(rng) {
@@ -111,9 +113,15 @@ fn main() {
     let max_turns = 50;
     let mut turn = 0;
 
-    while !state.is_terminal() && state.players[0].score < 3 && state.players[1].score < 3  && turn < max_turns {
-        println!("┌─ Turn {} (P{}) Score: P0={} P1={}",
-            state.turn, state.current_player, state.players[0].score, state.players[1].score);
+    while !state.is_terminal()
+        && state.players[0].score < 3
+        && state.players[1].score < 3
+        && turn < max_turns
+    {
+        println!(
+            "┌─ Turn {} (P{}) Score: P0={} P1={}",
+            state.turn, state.current_player, state.players[0].score, state.players[1].score
+        );
 
         if state.phase != Phase::Main {
             if !advance_to_phase(&mut state, &db, Phase::Main, &mut rng, 50) {
@@ -123,11 +131,19 @@ fn main() {
         }
 
         // ─ MAIN PHASE ─
-        let (best_seq, _best_val, (board_score, live_ev), nodes) = TurnSequencer::plan_full_turn(&state, &db);
-        println!("│  Main Phase: {} legal actions, {} DFS nodes",
-            state.get_legal_action_ids(&db).len(), nodes);
-        println!("│    Best Score: Board={:.2} + Live={:.2} = {:.2}",
-            board_score, live_ev, board_score + live_ev);
+        let (best_seq, _best_val, (board_score, live_ev), nodes) =
+            TurnSequencer::plan_full_turn(&state, &db);
+        println!(
+            "│  Main Phase: {} legal actions, {} DFS nodes",
+            state.get_legal_action_ids(&db).len(),
+            nodes
+        );
+        println!(
+            "│    Best Score: Board={:.2} + Live={:.2} = {:.2}",
+            board_score,
+            live_ev,
+            board_score + live_ev
+        );
 
         // Execute best sequence
         for &action in &best_seq {
@@ -155,7 +171,11 @@ fn main() {
         // ─ AUTO-ADVANCE to next Main/Terminal ─
         while !state.is_terminal() && state.phase != Phase::Main {
             match state.phase {
-                Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+                Phase::Rps
+                | Phase::MulliganP1
+                | Phase::MulliganP2
+                | Phase::TurnChoice
+                | Phase::Response => {
                     let legal = state.get_legal_action_ids(&db);
                     if !legal.is_empty() {
                         if let Some(&action) = legal.choose(&mut rng) {
@@ -173,8 +193,10 @@ fn main() {
             }
         }
 
-        println!("│  End-of-turn Score: P0={} P1={}",
-            state.players[0].score, state.players[1].score);
+        println!(
+            "│  End-of-turn Score: P0={} P1={}",
+            state.players[0].score, state.players[1].score
+        );
         println!("└─ Turn {} Complete\n", state.turn);
 
         turn += 1;
@@ -196,7 +218,10 @@ fn main() {
 
     println!("Result:");
     println!("  Winner: P{}", winner);
-    println!("  Final Score: P0={} P1={}", state.players[0].score, state.players[1].score);
+    println!(
+        "  Final Score: P0={} P1={}",
+        state.players[0].score, state.players[1].score
+    );
     println!("  Turns Played: {}", state.turn);
     println!("  Time: {:.3}s\n", total_time);
 

@@ -2,10 +2,10 @@ use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
+use rand::prelude::StdRng;
 use rand::seq::IndexedRandom;
 use rand::SeedableRng;
-use rand::prelude::StdRng;
 
 fn load_vanilla_db() -> CardDatabase {
     let candidates = [
@@ -28,7 +28,7 @@ fn load_vanilla_db() -> CardDatabase {
 
 fn load_deck(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
     let candidates = [path, &format!("../{}", path), &format!("../../{}", path)];
-    
+
     for candidate in &candidates {
         if let Ok(content) = fs::read_to_string(candidate) {
             let mut members = Vec::new();
@@ -83,7 +83,7 @@ fn load_deck(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
             return (members, lives);
         }
     }
-    
+
     panic!("Could not load deck");
 }
 
@@ -114,7 +114,11 @@ fn main() {
     println!("Advancing to first Main phase...");
     while state.phase != Phase::Main && !state.is_terminal() {
         match state.phase {
-            Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+            Phase::Rps
+            | Phase::MulliganP1
+            | Phase::MulliganP2
+            | Phase::TurnChoice
+            | Phase::Response => {
                 let legal = state.get_legal_action_ids(&db);
                 if !legal.is_empty() {
                     let &action = legal.choose(&mut rng).unwrap_or(&ACTION_BASE_PASS);
@@ -131,7 +135,7 @@ fn main() {
 
     // Profile Main phase moves
     println!("TURN 1 - First Main phase profiling:\n");
-    
+
     let player = state.current_player;
     println!("Player: P{}", player);
 
@@ -152,24 +156,33 @@ fn main() {
         }
 
         let &action = legal.choose(&mut rng).unwrap_or(&ACTION_BASE_PASS);
-        
+
         let move_start = Instant::now();
         if state.step(&db, action).is_err() {
             break;
         }
         let move_time = move_start.elapsed().as_micros() as f64 / 1000.0;
-        
+
         move_count += 1;
-        println!("  Move {}: action={} - {:.3}ms", move_count, action, move_time);
+        println!(
+            "  Move {}: action={} - {:.3}ms",
+            move_count, action, move_time
+        );
         total_moves_time += move_time;
-        
+
         if action == ACTION_BASE_PASS {
             break;
         }
     }
 
-    println!("\nTurn 1 Main phase: {} moves in {:.3}ms", move_count, total_moves_time);
-    println!("Average per move: {:.3}ms", total_moves_time / move_count as f64);
+    println!(
+        "\nTurn 1 Main phase: {} moves in {:.3}ms",
+        move_count, total_moves_time
+    );
+    println!(
+        "Average per move: {:.3}ms",
+        total_moves_time / move_count as f64
+    );
 
     // Check if abilities are actually present
     println!("\n[CHECK] Verifying card abilities in vanilla DB:");
@@ -190,21 +203,28 @@ fn main() {
         }
     }
 
-    println!("  Total cards: {} members, {} lives", db.members.len(), db.lives.len());
+    println!(
+        "  Total cards: {} members, {} lives",
+        db.members.len(),
+        db.lives.len()
+    );
     println!("  Cards with abilities: {}", cards_with_abilities);
     println!("  Total abilities: {}", total_abilities);
-    
+
     if total_abilities == 0 {
         println!("  ✓ Vanilla game has NO abilities (as expected)");
     } else {
-        println!("  ⚠ WARNING: Vanilla game has {} abilities!", total_abilities);
+        println!(
+            "  ⚠ WARNING: Vanilla game has {} abilities!",
+            total_abilities
+        );
     }
 
     // Now profile a full turn (Main + LiveSet phases)
     println!("\n[FULL TURN] Now playing full turn including LiveSet...\n");
 
     let turn_start = Instant::now();
-    
+
     // Skip to next Main phase
     while !state.is_terminal() && state.phase != Phase::Main {
         state.auto_step(&db);
@@ -226,7 +246,7 @@ fn main() {
         }
 
         let &action = legal.choose(&mut rng).unwrap_or(&ACTION_BASE_PASS);
-        
+
         let move_start = Instant::now();
         if state.step(&db, action).is_err() {
             break;
@@ -234,7 +254,7 @@ fn main() {
         let move_time = move_start.elapsed().as_micros() as f64 / 1000.0;
         total_moves_time += move_time;
         move_count += 1;
-        
+
         if action == ACTION_BASE_PASS {
             break;
         }
@@ -266,8 +286,14 @@ fn main() {
 
     println!("TURN 2 - Full turn breakdown:");
     println!("  Player: P{}", player2);
-    println!("  Main phase: {} moves in {:.3}ms", move_count, total_moves_time);
-    println!("  LiveSet phase: {} selections in {}ms", liveset_count, liveset_time);
+    println!(
+        "  Main phase: {} moves in {:.3}ms",
+        move_count, total_moves_time
+    );
+    println!(
+        "  LiveSet phase: {} selections in {}ms",
+        liveset_count, liveset_time
+    );
     println!("  Auto-step phases: {}ms", auto_time);
     println!("  TOTAL: {}ms", turn_total);
 }

@@ -1,8 +1,8 @@
+use super::common::{parse_condition_type, MAX_CONDITION_CHECK_DEPTH};
+use super::opcodes::check_condition_opcode;
 use crate::core::enums::*;
 use crate::core::logic::filter::map_filter_string_to_attr;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};
-use super::common::{parse_condition_type, MAX_CONDITION_CHECK_DEPTH};
-use super::opcodes::check_condition_opcode;
 
 pub fn get_param_case_insensitive<'a>(
     params: &'a serde_json::Map<String, serde_json::Value>,
@@ -91,7 +91,10 @@ pub fn evaluate_raw_condition(
                 .success_lives
                 .iter()
                 .copied()
-                .any(|cid| cid >= 0 && (filter_attr == 0 || state.card_matches_filter(db, cid, filter_attr)));
+                .any(|cid| {
+                    cid >= 0
+                        && (filter_attr == 0 || state.card_matches_filter(db, cid, filter_attr))
+                });
 
             if raw_cond == "HAS_SUCCESS_LIVE" {
                 has_matching_success_live
@@ -141,7 +144,12 @@ pub fn evaluate_raw_condition(
                 .ui
                 .performance_results
                 .get(&(ctx.player_id as u8))
-                .or_else(|| state.ui.last_performance_results.get(&(ctx.player_id as u8)));
+                .or_else(|| {
+                    state
+                        .ui
+                        .last_performance_results
+                        .get(&(ctx.player_id as u8))
+                });
 
             let live_score = perf_res
                 .and_then(|res| res.get("lives"))
@@ -169,7 +177,10 @@ pub fn evaluate_raw_condition(
                         }
                     })
                 })
-                .or_else(|| db.get_live(ctx.source_card_id).map(|live| live.score as i32))
+                .or_else(|| {
+                    db.get_live(ctx.source_card_id)
+                        .map(|live| live.score as i32)
+                })
                 .unwrap_or_default();
 
             if let Some(eq) = get_param_case_insensitive(params, "EQ")
@@ -177,12 +188,12 @@ pub fn evaluate_raw_condition(
                 .and_then(|v| v.as_i64())
             {
                 live_score == eq as i32
-            } else if let Some(min) = get_param_case_insensitive(params, "MIN")
-                .and_then(|v| v.as_i64())
+            } else if let Some(min) =
+                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
             {
                 live_score >= min as i32
-            } else if let Some(max) = get_param_case_insensitive(params, "MAX")
-                .and_then(|v| v.as_i64())
+            } else if let Some(max) =
+                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
             {
                 live_score <= max as i32
             } else {
@@ -210,9 +221,13 @@ pub fn evaluate_raw_condition(
 
             if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 target_count == eq as i32
-            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
+            } else if let Some(min) =
+                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
+            {
                 target_count >= min as i32
-            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
+            } else if let Some(max) =
+                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
+            {
                 target_count <= max as i32
             } else {
                 target_count > 0
@@ -231,9 +246,13 @@ pub fn evaluate_raw_condition(
 
             if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 target_hearts == eq as i32
-            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
+            } else if let Some(min) =
+                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
+            {
                 target_hearts >= min as i32
-            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
+            } else if let Some(max) =
+                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
+            {
                 target_hearts <= max as i32
             } else {
                 target_hearts > 0
@@ -241,7 +260,8 @@ pub fn evaluate_raw_condition(
         }
         "REDUCE_YELL_COUNT" => {
             let player_yell_count = state.players[ctx.player_id as usize].yell_cards.len() as i32;
-            let opponent_yell_count = state.players[1 - ctx.player_id as usize].yell_cards.len() as i32;
+            let opponent_yell_count =
+                state.players[1 - ctx.player_id as usize].yell_cards.len() as i32;
 
             if get_param_case_insensitive(params, "LESS_THAN")
                 .and_then(|v| v.as_str())
@@ -255,7 +275,9 @@ pub fn evaluate_raw_condition(
                 .unwrap_or(false)
             {
                 player_yell_count > opponent_yell_count
-            } else if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
+            } else if let Some(eq) =
+                get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64())
+            {
                 player_yell_count == eq as i32
             } else {
                 player_yell_count > 0
@@ -263,7 +285,9 @@ pub fn evaluate_raw_condition(
         }
         "YELL_PILE_CONTAINS" => {
             let yell_cards = &state.players[ctx.player_id as usize].yell_cards;
-            let filter = get_param_case_insensitive(params, "FILTER").and_then(|v| v.as_str()).unwrap_or("");
+            let filter = get_param_case_insensitive(params, "FILTER")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
 
             let card_has_blade_heart = |cid: i32| {
                 db.get_member(cid)
@@ -282,19 +306,29 @@ pub fn evaluate_raw_condition(
                 _ => true,
             };
 
-            let matching_count = yell_cards.iter().copied().filter(|&cid| matches_filter(cid)).count() as i32;
+            let matching_count = yell_cards
+                .iter()
+                .copied()
+                .filter(|&cid| matches_filter(cid))
+                .count() as i32;
 
-            if filter.eq_ignore_ascii_case("HAS_ALL_BLADE") && 
-               get_param_case_insensitive(params, "EQ").is_none() &&
-               get_param_case_insensitive(params, "MIN").is_none() &&
-               get_param_case_insensitive(params, "MAX").is_none()
+            if filter.eq_ignore_ascii_case("HAS_ALL_BLADE")
+                && get_param_case_insensitive(params, "EQ").is_none()
+                && get_param_case_insensitive(params, "MIN").is_none()
+                && get_param_case_insensitive(params, "MAX").is_none()
             {
                 !yell_cards.is_empty() && matching_count == yell_cards.len() as i32
-            } else if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
+            } else if let Some(eq) =
+                get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64())
+            {
                 matching_count == eq as i32
-            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
+            } else if let Some(min) =
+                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
+            {
                 matching_count >= min as i32
-            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
+            } else if let Some(max) =
+                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
+            {
                 matching_count <= max as i32
             } else {
                 matching_count > 0
@@ -304,30 +338,47 @@ pub fn evaluate_raw_condition(
             let mut name_pool = Vec::<String>::new();
             let mut stage_name_options = Vec::<Vec<usize>>::new();
             for &cid in &state.players[ctx.player_id as usize].stage {
-                if cid < 0 { continue; }
+                if cid < 0 {
+                    continue;
+                }
                 if let Some(member) = db.get_member(cid) {
                     let mut options = Vec::new();
                     for part in member.name.split(['&', '＆']) {
                         let normalized = part.trim();
                         if !normalized.is_empty() {
-                            let name_index = if let Some(existing_index) = name_pool.iter().position(|existing| existing == normalized) {
+                            let name_index = if let Some(existing_index) =
+                                name_pool.iter().position(|existing| existing == normalized)
+                            {
                                 existing_index
                             } else {
                                 name_pool.push(normalized.to_string());
                                 name_pool.len() - 1
                             };
-                            if !options.contains(&name_index) { options.push(name_index); }
+                            if !options.contains(&name_index) {
+                                options.push(name_index);
+                            }
                         }
                     }
-                    if !options.is_empty() { stage_name_options.push(options); }
+                    if !options.is_empty() {
+                        stage_name_options.push(options);
+                    }
                 }
             }
 
-            fn assign_name(card_index: usize, options: &[Vec<usize>], owner: &mut [Option<usize>], seen: &mut [bool]) -> bool {
+            fn assign_name(
+                card_index: usize,
+                options: &[Vec<usize>],
+                owner: &mut [Option<usize>],
+                seen: &mut [bool],
+            ) -> bool {
                 for &name_idx in &options[card_index] {
-                    if seen[name_idx] { continue; }
+                    if seen[name_idx] {
+                        continue;
+                    }
                     seen[name_idx] = true;
-                    if owner[name_idx].is_none() || assign_name(owner[name_idx].unwrap(), options, owner, seen) {
+                    if owner[name_idx].is_none()
+                        || assign_name(owner[name_idx].unwrap(), options, owner, seen)
+                    {
                         owner[name_idx] = Some(card_index);
                         return true;
                     }
@@ -339,14 +390,20 @@ pub fn evaluate_raw_condition(
             let mut count = 0;
             for i in 0..stage_name_options.len() {
                 let mut seen = vec![false; name_pool.len()];
-                if assign_name(i, &stage_name_options, &mut owner, &mut seen) { count += 1; }
+                if assign_name(i, &stage_name_options, &mut owner, &mut seen) {
+                    count += 1;
+                }
             }
 
             if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 count == eq as i32
-            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
+            } else if let Some(min) =
+                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
+            {
                 count >= min as i32
-            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
+            } else if let Some(max) =
+                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
+            {
                 count <= max as i32
             } else {
                 count > 0
@@ -355,10 +412,14 @@ pub fn evaluate_raw_condition(
         "UNIQUE_HEART_TYPES" => {
             let mut color_mask: u8 = 0;
             for &cid in &state.players[ctx.player_id as usize].stage {
-                if cid < 0 { continue; }
+                if cid < 0 {
+                    continue;
+                }
                 if let Some(member) = db.get_member(cid) {
                     for (color_idx, &count) in member.hearts.iter().enumerate().take(6) {
-                        if count > 0 { color_mask |= 1u8 << color_idx; }
+                        if count > 0 {
+                            color_mask |= 1u8 << color_idx;
+                        }
                     }
                 }
             }
@@ -366,9 +427,13 @@ pub fn evaluate_raw_condition(
 
             if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 unique_colors == eq as i32
-            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
+            } else if let Some(min) =
+                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
+            {
                 unique_colors >= min as i32
-            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
+            } else if let Some(max) =
+                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
+            {
                 unique_colors <= max as i32
             } else {
                 unique_colors > 0
@@ -376,36 +441,58 @@ pub fn evaluate_raw_condition(
         }
         "YELL_CARDS" => {
             let yell_cards = &state.players[ctx.player_id as usize].yell_cards;
-            let filter_str = get_param_case_insensitive(params, "FILTER").and_then(|v| v.as_str()).unwrap_or("");
+            let filter_str = get_param_case_insensitive(params, "FILTER")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
             let mut group_id: u8 = 0;
             let mut check_unique_names = false;
             for part in filter_str.split(',') {
                 let part = part.trim();
                 if part.starts_with("GROUP_ID=") {
-                    if let Ok(gid) = part.strip_prefix("GROUP_ID=").unwrap_or("0").parse::<u8>() { group_id = gid; }
+                    if let Ok(gid) = part.strip_prefix("GROUP_ID=").unwrap_or("0").parse::<u8>() {
+                        group_id = gid;
+                    }
                 } else if part == "UNIQUE_NAMES" || part == "unique_names" {
                     check_unique_names = true;
                 }
             }
-            let filtered_cards: Vec<i32> = yell_cards.iter().copied().filter(|&cid| {
-                if group_id > 0 {
-                    db.get_member(cid).map(|m| m.groups.contains(&group_id)).or_else(|| db.get_live(cid).map(|l| l.groups.contains(&group_id))).unwrap_or(false)
-                } else { true }
-            }).collect();
+            let filtered_cards: Vec<i32> = yell_cards
+                .iter()
+                .copied()
+                .filter(|&cid| {
+                    if group_id > 0 {
+                        db.get_member(cid)
+                            .map(|m| m.groups.contains(&group_id))
+                            .or_else(|| db.get_live(cid).map(|l| l.groups.contains(&group_id)))
+                            .unwrap_or(false)
+                    } else {
+                        true
+                    }
+                })
+                .collect();
             let count = if check_unique_names {
                 let mut names = std::collections::HashSet::new();
                 for &cid in &filtered_cards {
-                    if let Some(m) = db.get_member(cid) { names.insert(m.name.clone()); }
-                    else if let Some(l) = db.get_live(cid) { names.insert(l.name.clone()); }
+                    if let Some(m) = db.get_member(cid) {
+                        names.insert(m.name.clone());
+                    } else if let Some(l) = db.get_live(cid) {
+                        names.insert(l.name.clone());
+                    }
                 }
                 names.len() as i32
-            } else { filtered_cards.len() as i32 };
+            } else {
+                filtered_cards.len() as i32
+            };
 
             if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 count == eq as i32
-            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
+            } else if let Some(min) =
+                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
+            {
                 count >= min as i32
-            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
+            } else if let Some(max) =
+                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
+            {
                 count <= max as i32
             } else {
                 count > 0
@@ -435,9 +522,8 @@ pub fn check_condition(
     let mut slot = cond.target_slot as i32;
 
     if let Some(params) = cond.params.as_object() {
-        let get_param = |key: &str| -> Option<&serde_json::Value> {
-            get_param_case_insensitive(params, key)
-        };
+        let get_param =
+            |key: &str| -> Option<&serde_json::Value> { get_param_case_insensitive(params, key) };
 
         if val == 0 {
             if let Some(min) = get_param("min").and_then(|v| v.as_i64()) {
@@ -462,36 +548,63 @@ pub fn check_condition(
 
         if let Some(p_val) = get_param("player").and_then(|v| v.as_i64()) {
             match p_val {
-                x if x == TARGET_PLAYER_SELF as i64 => { mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_SELF as u64; }
-                x if x == TARGET_PLAYER_OPPONENT as i64 => { mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_OPPONENT as u64; }
-                x if x == TARGET_PLAYER_BOTH as i64 => { mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_BOTH as u64; }
+                x if x == TARGET_PLAYER_SELF as i64 => {
+                    mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_SELF as u64;
+                }
+                x if x == TARGET_PLAYER_OPPONENT as i64 => {
+                    mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_OPPONENT as u64;
+                }
+                x if x == TARGET_PLAYER_BOTH as i64 => {
+                    mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_BOTH as u64;
+                }
                 _ => {}
             }
         }
 
         if let Some(kw) = get_param("keyword").and_then(|v| v.as_str()) {
             match kw {
-                "PLAYED_THIS_TURN" | "COUNT_PLAYED_THIS_TURN" => { mapped_attr |= KEYWORD_PLAYED_THIS_TURN }
+                "PLAYED_THIS_TURN" | "COUNT_PLAYED_THIS_TURN" => {
+                    mapped_attr |= KEYWORD_PLAYED_THIS_TURN
+                }
                 "YELL_COUNT" | "COUNT_YELL_REVEALED" => mapped_attr |= KEYWORD_YELL_COUNT,
                 "HAS_LIVE_SET" => mapped_attr |= KEYWORD_HAS_LIVE_SET,
                 "UNIQUE_NAMES" | "COUNT_UNIQUE_NAMES" => mapped_attr |= FILTER_UNIQUE_NAMES,
-                "DID_ACTIVATE_ENERGY" | "DID_ACTIVATE_ENERGY_BY_GROUP" | "DID_ACTIVATE_ENERGY_BY_MEMBER_EFFECT" => { mapped_attr |= KEYWORD_ACTIVATED_ENERGY_BY_GROUP }
-                "DID_ACTIVATE_MEMBER" | "DID_ACTIVATE_MEMBER_BY_GROUP" | "DID_ACTIVATE_MEMBER_BY_MEMBER_EFFECT" => { mapped_attr |= KEYWORD_ACTIVATED_MEMBER_BY_GROUP }
+                "DID_ACTIVATE_ENERGY"
+                | "DID_ACTIVATE_ENERGY_BY_GROUP"
+                | "DID_ACTIVATE_ENERGY_BY_MEMBER_EFFECT" => {
+                    mapped_attr |= KEYWORD_ACTIVATED_ENERGY_BY_GROUP
+                }
+                "DID_ACTIVATE_MEMBER"
+                | "DID_ACTIVATE_MEMBER_BY_GROUP"
+                | "DID_ACTIVATE_MEMBER_BY_MEMBER_EFFECT" => {
+                    mapped_attr |= KEYWORD_ACTIVATED_MEMBER_BY_GROUP
+                }
                 "REVEALED_CONTAINS" => {
                     mapped_attr |= FILTER_REVEALED_CONTEXT;
                     if let Some(val_str) = params.get("value").and_then(|v| v.as_str()) {
-                        if val_str == "live" { val = CARD_TYPE_LIVE; }
-                        else if val_str == "member" { val = CARD_TYPE_MEMBER; }
+                        if val_str == "live" {
+                            val = CARD_TYPE_LIVE;
+                        } else if val_str == "member" {
+                            val = CARD_TYPE_MEMBER;
+                        }
                     }
                 }
                 _ => {}
             }
         }
 
-        if attr == 0 { attr = mapped_attr; } else { attr |= mapped_attr; }
+        if attr == 0 {
+            attr = mapped_attr;
+        } else {
+            attr |= mapped_attr;
+        }
 
-        if cond.condition_type == ConditionType::GroupFilter || cond.condition_type == ConditionType::DiscardedCards {
-            if params.get("all").and_then(|v| v.as_bool()).unwrap_or(false) { val |= 0x04; }
+        if cond.condition_type == ConditionType::GroupFilter
+            || cond.condition_type == ConditionType::DiscardedCards
+        {
+            if params.get("all").and_then(|v| v.as_bool()).unwrap_or(false) {
+                val |= 0x04;
+            }
         }
 
         if ((slot >> 4) & 0x0F) == 0 {
@@ -501,18 +614,36 @@ pub fn check_condition(
         }
     }
 
-    let raw_cond_result = cond.params.as_object().map(|p| evaluate_raw_condition(state, db, p_idx, cond, ctx, depth, p)).unwrap_or(true);
+    let raw_cond_result = cond
+        .params
+        .as_object()
+        .map(|p| evaluate_raw_condition(state, db, p_idx, cond, ctx, depth, p))
+        .unwrap_or(true);
 
     let result = if cond.condition_type != ConditionType::None {
-        check_condition_opcode(state, db, cond.condition_type as i32, val, attr, slot, ctx, depth + 1)
-    } else { raw_cond_result };
+        check_condition_opcode(
+            state,
+            db,
+            cond.condition_type as i32,
+            val,
+            attr,
+            slot,
+            ctx,
+            depth + 1,
+        )
+    } else {
+        raw_cond_result
+    };
 
     let result = if cond.is_negated { !result } else { result };
 
     if !result && state.debug.debug_ignore_conditions {
         if let Some(ref log) = state.debug.bypassed_conditions {
             if let Ok(mut bypassed) = log.0.lock() {
-                bypassed.push(format!("BYPASS Condition: Type {:?}, Value {}, Attr {}", cond.condition_type, cond.value, cond.attr));
+                bypassed.push(format!(
+                    "BYPASS Condition: Type {:?}, Value {}, Attr {}",
+                    cond.condition_type, cond.value, cond.attr
+                ));
             }
         }
         return true;

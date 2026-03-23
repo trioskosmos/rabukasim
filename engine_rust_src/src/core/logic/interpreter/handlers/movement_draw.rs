@@ -1,33 +1,24 @@
-use crate::core::logic::models::AbilityFrame;
-use crate::core::enums::*;
-use crate::core::logic::constants::FILTER_MASK_LOWER;
-use crate::core::logic::interpreter::conditions::resolve_count;
-use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use super::super::HandlerResult;
+use crate::core::enums::*;
+use crate::core::logic::interpreter::conditions::resolve_count_frame;
+use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 pub fn handle_draw(
     state: &mut GameState,
     _db: &CardDatabase,
     ctx: &mut AbilityContext,
     frame: &AbilityFrame,
 ) -> HandlerResult {
-    let op = frame.opcode();
-    let v = frame.value();
-    let s = frame.slot();
+    let frame_data = frame.components();
+    let op = frame_data.opcode;
+    let v = frame_data.value;
     let p_idx = ctx.player_id as usize;
-    let count = if frame.filter().compare_accumulated {
-        resolve_count(
-            state,
-            _db,
-            s,
-            (frame.filter().to_attr() & FILTER_MASK_LOWER) as u64,
-            p_idx as i32,
-            ctx,
-            0,
-        ) as u32
+    let count = if frame_data.filter.compare_accumulated {
+        resolve_count_frame(state, _db, &frame_data, ctx, 0) as u32
     } else {
         v as u32
     };
-    let slot = frame.dslot();
+    let slot = frame_data.slot;
     let target_p = if slot.is_opponent { 1 - p_idx } else { p_idx };
 
     match op {
@@ -73,7 +64,7 @@ pub fn handle_draw(
             }
         }
         O_ADD_TO_HAND => {
-            if s == 90 || s == 6 {
+            if frame_data.raw_slot == 90 || frame_data.raw_slot == 6 {
                 for _ in 0..v as usize {
                     if !state.players[p_idx].looked_cards.is_empty() {
                         let cid = state.players[p_idx].looked_cards.remove(0);
@@ -88,6 +79,3 @@ pub fn handle_draw(
     }
     HandlerResult::Continue
 }
-
-
-

@@ -50,7 +50,8 @@ mod tests {
 
         // Accept either OPTIONAL or SELECT_HAND_DISCARD as the first interaction
         assert!(
-            pi.choice_type == crate::core::enums::ChoiceType::Optional || pi.choice_type == crate::core::enums::ChoiceType::SelectHandDiscard,
+            pi.choice_type == crate::core::enums::ChoiceType::Optional
+                || pi.choice_type == crate::core::enums::ChoiceType::SelectHandDiscard,
             "Choice type should be OPTIONAL or SELECT_HAND_DISCARD, got: {}",
             pi.choice_type
         );

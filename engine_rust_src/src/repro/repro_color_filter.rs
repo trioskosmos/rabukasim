@@ -58,7 +58,11 @@ mod tests {
             ability_cid,
             "BP2-005",
             vec![1],
-            vec![(TriggerType::OnPlay, bytecode, vec![])],
+            vec![(
+                TriggerType::OnPlay,
+                AbilityLogic::Bytecode(bytecode),
+                vec![],
+            )],
         );
 
         let mut state = create_test_state();

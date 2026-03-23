@@ -1,15 +1,16 @@
 use crate::core::enums::*;
 use crate::core::generated_constants::{ACTION_BASE_RPS, ACTION_BASE_RPS_P2};
+use crate::core::logic::constants::STAGE_SLOT_COUNT;
 use crate::core::logic::{
     ability_patterns::{
         encode_optional_mode_mask, is_optional_live_start_discard_count_ability,
-        optional_mode_effect, pending_live_ability, pending_member_ability, pending_optional_mode_mask,
-        pending_targeted_live_heart_bonus,
+        optional_mode_effect, pending_live_ability, pending_member_ability,
+        pending_optional_mode_mask, pending_targeted_live_heart_bonus,
     },
-    action_factory::DecodedAction, interpreter::costs, AbilityContext, ActionFactory, CardDatabase,
-    GameState, Phase,
+    action_factory::DecodedAction,
+    interpreter::costs,
+    AbilityContext, ActionFactory, CardDatabase, GameState, Phase,
 };
-use crate::core::logic::constants::STAGE_SLOT_COUNT;
 // use crate::core::hearts::*;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
@@ -119,7 +120,10 @@ impl TurnController for GameState {
 
                 if draw_count >= 5 {
                     if !self.ui.silent {
-                        self.log("Maximum RPS draws reached. P0 wins by default to progress.".to_string());
+                        self.log(
+                            "Maximum RPS draws reached. P0 wins by default to progress."
+                                .to_string(),
+                        );
                     }
                     self.current_player = 0;
                     self.first_player = 0;
@@ -134,10 +138,7 @@ impl TurnController for GameState {
                 let p0_wins = (p0 == 0 && p1 == 2) || (p0 == 1 && p1 == 0) || (p0 == 2 && p1 == 1);
                 let winner = if p0_wins { 0 } else { 1 };
                 if !self.ui.silent {
-                    self.log(format!(
-                        "[[rps_winner_chooses:winner={}]]",
-                        winner
-                    ));
+                    self.log(format!("[[rps_winner_chooses:winner={}]]", winner));
                 }
                 self.current_player = winner as u8;
                 self.phase = Phase::TurnChoice;
@@ -195,9 +196,7 @@ impl MulliganController for GameState {
         if self.debug.debug_mode {
             println!(
                 "[DEBUG] execute_mulligan: player={}, discard_indices={:?}, current_phase={:?}",
-                player_idx,
-                discard_indices,
-                self.phase
+                player_idx, discard_indices, self.phase
             );
         }
         let mut count = 0;
@@ -212,11 +211,10 @@ impl MulliganController for GameState {
                 new_hand.push(cid);
             }
         }
-        
+
         self.log(format!(
             "Rule 6.2.1.6: Player {} finished mulligan ({} cards)",
-            player_idx,
-            count
+            player_idx, count
         ));
         self.core.players[player_idx].hand = new_hand;
         let t = self.turn as i32;
@@ -392,7 +390,7 @@ impl MainPhaseController for GameState {
                             p_idx, reason, cid
                         ));
                     }
-                        self.core.players[p_idx].push_discard_card(cid);
+                    self.core.players[p_idx].push_discard_card(cid);
                 } else {
                     self.core.players[p_idx].success_lives.push(cid);
                     self.obtained_success_live[p_idx] = true;
@@ -437,7 +435,10 @@ impl MainPhaseController for GameState {
             self.current_player = 1 - self.first_player;
             self.phase = Phase::Active;
             if !self.ui.silent {
-                self.log_rule("Rule 7.4", &format!("Entering Active Phase for Player {}.", self.current_player));
+                self.log_rule(
+                    "Rule 7.4",
+                    &format!("Entering Active Phase for Player {}.", self.current_player),
+                );
             }
         } else {
             self.phase = Phase::LiveSet;
@@ -466,8 +467,9 @@ impl ResponseController for GameState {
             if let Some(mask) = pending_optional_mode_mask(db, &pi) {
                 if matches!(decoded_action, DecodedAction::SelectMode { .. }) {
                     let ability = pending_live_ability(db, &pi).ok_or("Ability not found")?;
-                    let (selected_effect, remaining_mask) = optional_mode_effect(ability, mask, choice_idx)
-                        .ok_or("Invalid optional mode selection".to_string())?;
+                    let (selected_effect, remaining_mask) =
+                        optional_mode_effect(ability, mask, choice_idx)
+                            .ok_or("Invalid optional mode selection".to_string())?;
 
                     self.interaction_stack.pop();
 
@@ -482,10 +484,8 @@ impl ResponseController for GameState {
                             self.players[p_idx].push_energy_card(cid, is_wait);
                         }
                     } else if selected_effect.runtime_opcode == O_RECOVER_MEMBER {
-                        if let Some(recover_pos) = self.players[p_idx]
-                            .discard
-                            .iter()
-                            .position(|&cid| {
+                        if let Some(recover_pos) =
+                            self.players[p_idx].discard.iter().position(|&cid| {
                                 db.get_member(cid).is_some()
                                     && self.card_matches_filter_with_ctx(
                                         db,
@@ -495,7 +495,8 @@ impl ResponseController for GameState {
                                     )
                             })
                         {
-                            if let Some(cid) = self.players[p_idx].remove_discard_card(recover_pos) {
+                            if let Some(cid) = self.players[p_idx].remove_discard_card(recover_pos)
+                            {
                                 self.players[p_idx].gain_hand_card(cid);
                             }
                         }
@@ -505,7 +506,8 @@ impl ResponseController for GameState {
                         let mut next_ctx = pi.ctx.clone();
                         next_ctx.choice_index = -1;
                         next_ctx.v_accumulated = encode_optional_mode_mask(remaining_mask);
-                        let choice_text = crate::core::logic::interpreter::get_choice_text(db, &next_ctx);
+                        let choice_text =
+                            crate::core::logic::interpreter::get_choice_text(db, &next_ctx);
                         crate::core::logic::interpreter::suspend_interaction(
                             self,
                             db,
@@ -524,7 +526,9 @@ impl ResponseController for GameState {
                     }
 
                     if self.interaction_stack.is_empty() {
-                        self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
+                        self.phase = if pi.original_phase == Phase::Response
+                            || pi.original_phase == Phase::Setup
+                        {
                             Phase::Main
                         } else {
                             pi.original_phase
@@ -537,7 +541,9 @@ impl ResponseController for GameState {
                 }
             }
 
-            if let Some((_filter_attr, heart_color_idx)) = pending_targeted_live_heart_bonus(db, &pi) {
+            if let Some((_filter_attr, heart_color_idx)) =
+                pending_targeted_live_heart_bonus(db, &pi)
+            {
                 if let DecodedAction::SelectStageSlot { slot_idx } = decoded_action {
                     let p_idx = pi.ctx.player_id as usize;
                     if (slot_idx as usize) < STAGE_SLOT_COUNT {
@@ -548,7 +554,10 @@ impl ResponseController for GameState {
 
                     let current_execution_id = self.ui.current_execution_id.unwrap_or(0);
                     let was_cancelled = current_execution_id > 0
-                        && self.ui.cancelled_execution_ids.remove(&current_execution_id);
+                        && self
+                            .ui
+                            .cancelled_execution_ids
+                            .remove(&current_execution_id);
                     if !was_cancelled {
                         let res_trigger = match pi.ctx.trigger_type {
                             crate::core::enums::TriggerType::OnLiveStart => {
@@ -568,7 +577,9 @@ impl ResponseController for GameState {
                     }
 
                     if self.interaction_stack.is_empty() {
-                        self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
+                        self.phase = if pi.original_phase == Phase::Response
+                            || pi.original_phase == Phase::Setup
+                        {
                             Phase::Main
                         } else {
                             pi.original_phase
@@ -591,7 +602,6 @@ impl ResponseController for GameState {
                     self.ui.cancelled_execution_ids.insert(execution_id);
                 }
             }
-
         }
 
         let (execution_id, ctx_res) = {
@@ -734,16 +744,13 @@ impl ResponseController for GameState {
         let p_idx = self.current_player as usize;
         if self.phase == Phase::Response {
             let (cid, ctx, orig_phase, orig_cp) = if let Some(pi) = self.interaction_stack.last() {
-                let restored_phase = pi
-                    .ctx
-                    .original_phase
-                    .unwrap_or_else(|| {
-                        if pi.original_phase == Phase::Setup {
-                            self.phase
-                        } else {
-                            pi.original_phase
-                        }
-                    });
+                let restored_phase = pi.ctx.original_phase.unwrap_or_else(|| {
+                    if pi.original_phase == Phase::Setup {
+                        self.phase
+                    } else {
+                        pi.original_phase
+                    }
+                });
                 let mut c = pi.ctx.clone();
                 c.choice_index = choice_idx as i16;
                 c.original_phase = Some(restored_phase);
@@ -755,38 +762,41 @@ impl ResponseController for GameState {
                 return Err("No pending interaction".to_string());
             };
 
-            let bytecode = if cid == -1 {
+            let semantic_frames = if cid == -1 {
                 let pi = self.interaction_stack.last().unwrap();
-                let virtual_bc = vec![
-                    pi.effect_opcode,
-                    pi.ctx.v_remaining as i32,
-                    (pi.filter_attr & 0xFFFFFFFF) as i32,
-                    (pi.filter_attr >> 32) as i32,
-                    0, // raw_s
-                    O_RETURN,
-                    0,
-                    0,
-                    0,
-                    0,
-                ];
-                Some(virtual_bc)
+                Some(vec![
+                    crate::core::logic::models::AbilityFrame::Semantic {
+                        opcode: pi.effect_opcode,
+                        value: pi.ctx.v_remaining as i32,
+                        filter:
+                            crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(
+                                pi.filter_attr as i64,
+                            ),
+                        slot: crate::core::logic::interpreter::instruction::DecodedSlot::default(),
+                        is_negated: false,
+                        params: serde_json::Value::Null,
+                    },
+                    crate::core::logic::models::AbilityFrame::Return,
+                ])
             } else {
                 None
             };
 
             // SYSTEMIC FIX: If this is an optional effect and the user chose PASS (99),
-            // and we are NOT using the ability bytecode (cid == -1, virtual BC),
+            // and we are NOT using a persisted ability frame sequence (cid == -1, virtual),
             // ensure we pop it properly. Actually, even for cid != -1, if it's an optional
-            // discard cost inside bytecode, the PASS action (99) should jump past it.
+            // discard cost inside a legacy sequence, the PASS action (99) should jump past it.
             // If the interpreter returns without suspending, we need to restore phase.
 
-            // For virtual bytecode (pi.card_id == -1), we must pop.
-            // For actual ability bytecode, we pop because resolve_bytecode will use ctx.choice_index
+            // For virtual semantic frames (pi.card_id == -1), we must pop.
+            // For actual abilities, we pop because resolve_ability will use ctx.choice_index
             // to jump or skip, and if it doesn't suspend again, we restore the phase below.
             self.interaction_stack.pop();
 
-            if let Some(bytecode) = bytecode {
-                let _ = crate::core::logic::interpreter::resolve_bytecode(self, db, std::sync::Arc::new(bytecode), &ctx);
+            if let Some(frames) = semantic_frames {
+                let _ = crate::core::logic::interpreter::resolve_semantic_frames(
+                    self, db, &frames, &ctx,
+                );
             } else if let Some(mem) = db.get_member(cid) {
                 let ab = mem.abilities.get(ab_idx).ok_or("Ability not found")?;
                 self.resolve_ability(db, ab, &ctx);
@@ -821,7 +831,10 @@ impl ResponseController for GameState {
             if self.interaction_stack.is_empty() {
                 let current_execution_id = self.ui.current_execution_id.unwrap_or(0);
                 let was_cancelled = current_execution_id > 0
-                    && self.ui.cancelled_execution_ids.remove(&current_execution_id);
+                    && self
+                        .ui
+                        .cancelled_execution_ids
+                        .remove(&current_execution_id);
                 let suppress_resolve_trigger = choice_idx == 1
                     && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
                     && pending_member_ability(db, ctx.source_card_id, ctx.ability_index)
@@ -829,8 +842,12 @@ impl ResponseController for GameState {
                         .unwrap_or(false);
                 if !was_cancelled {
                     let res_trigger = match ctx.trigger_type {
-                        crate::core::enums::TriggerType::OnLiveStart => Some(crate::core::enums::TriggerType::OnAbilityResolve),
-                        crate::core::enums::TriggerType::OnLiveSuccess => Some(crate::core::enums::TriggerType::OnAbilitySuccess),
+                        crate::core::enums::TriggerType::OnLiveStart => {
+                            Some(crate::core::enums::TriggerType::OnAbilityResolve)
+                        }
+                        crate::core::enums::TriggerType::OnLiveSuccess => {
+                            Some(crate::core::enums::TriggerType::OnAbilitySuccess)
+                        }
                         _ => None,
                     };
 
@@ -843,7 +860,11 @@ impl ResponseController for GameState {
                     }
                 }
                 if self.debug.debug_mode {
-                    println!("[DEBUG_RES] Restoring phase. orig_phase={:?}, stack_len={}", orig_phase, self.interaction_stack.len());
+                    println!(
+                        "[DEBUG_RES] Restoring phase. orig_phase={:?}, stack_len={}",
+                        orig_phase,
+                        self.interaction_stack.len()
+                    );
                 }
                 if self.interaction_stack.is_empty() {
                     self.phase = if orig_phase == Phase::Response || orig_phase == Phase::Setup {
@@ -928,13 +949,13 @@ impl ResponseController for GameState {
         if target_slot >= 0 {
             ctx.target_slot = target_slot as i16;
         }
-        let source_type = if slot_idx < STAGE_SLOT_COUNT as usize { 0 } else { 1 }; // 0=Stage, 1=Other
-        let instance_key = self.get_once_per_turn_instance_key(
-            p_idx,
-            source_type,
-            slot_idx as i16,
-            cid,
-        );
+        let source_type = if slot_idx < STAGE_SLOT_COUNT as usize {
+            0
+        } else {
+            1
+        }; // 0=Stage, 1=Other
+        let instance_key =
+            self.get_once_per_turn_instance_key(p_idx, source_type, slot_idx as i16, cid);
 
         // ENFORCEMENT PHASE: Check conditions and costs
         if !self.debug.debug_ignore_conditions {
@@ -1063,7 +1084,10 @@ impl TurnPhaseController for GameState {
         if self.phase == Phase::Active {
             self.phase = Phase::Energy;
             if !self.ui.silent {
-                self.log_rule("Rule 7.5", &format!("Entering Energy Phase for Player {}.", p_idx));
+                self.log_rule(
+                    "Rule 7.5",
+                    &format!("Entering Energy Phase for Player {}.", p_idx),
+                );
             }
         }
     }
@@ -1084,7 +1108,10 @@ impl TurnPhaseController for GameState {
         }
         self.phase = Phase::Draw;
         if !self.ui.silent {
-            self.log_rule("Rule 7.6", &format!("Entering Draw Phase for Player {}.", p_idx));
+            self.log_rule(
+                "Rule 7.6",
+                &format!("Entering Draw Phase for Player {}.", p_idx),
+            );
         }
     }
 
@@ -1104,12 +1131,23 @@ impl TurnPhaseController for GameState {
         }
         if !self.ui.silent {
             self.log(format!("Rule 7.6.2: Player {} draws a card.", p_idx));
-            self.log_event("DRAW", "Player draws 1 card", -1, -1, p_idx as u8, Some("Rule 7.6.2"), true);
+            self.log_event(
+                "DRAW",
+                "Player draws 1 card",
+                -1,
+                -1,
+                p_idx as u8,
+                Some("Rule 7.6.2"),
+                true,
+            );
         }
         self.draw_cards(p_idx, 1);
         self.phase = Phase::Main;
         if !self.ui.silent {
-            self.log_rule("Rule 7.7", &format!("Entering Main Phase for Player {}.", p_idx));
+            self.log_rule(
+                "Rule 7.7",
+                &format!("Entering Main Phase for Player {}.", p_idx),
+            );
         }
     }
 }
@@ -1176,7 +1214,9 @@ impl GameState {
             return Ok(());
         }
         let player = &self.core.players[p_idx];
-        if (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0 && player.stage[slot_idx] >= 0 {
+        if (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0
+            && player.stage[slot_idx] >= 0
+        {
             return Err("Cannot play to this slot due to restriction".to_string());
         }
         if player.is_moved(slot_idx) {
@@ -1218,16 +1258,20 @@ impl GameState {
     ) {
         let old_card_id = self.core.players[p_idx].stage[slot_idx];
         if old_card_id >= 0 {
-            self.core.players[p_idx].set_baton_touch_count(self.core.players[p_idx].baton_touch_count() + 1);
+            self.core.players[p_idx]
+                .set_baton_touch_count(self.core.players[p_idx].baton_touch_count() + 1);
             self.core.players[p_idx].baton_source_ids.push(old_card_id);
             self.core.players[p_idx].baton_source_slots.push(slot_idx);
         }
         if secondary_slot_idx >= 0 {
             let s_idx = secondary_slot_idx as usize;
-            self.core.players[p_idx].set_baton_touch_count(self.core.players[p_idx].baton_touch_count() + 1);
+            self.core.players[p_idx]
+                .set_baton_touch_count(self.core.players[p_idx].baton_touch_count() + 1);
             let secondary_old_id = self.core.players[p_idx].stage[s_idx];
             if secondary_old_id >= 0 {
-                self.core.players[p_idx].baton_source_ids.push(secondary_old_id);
+                self.core.players[p_idx]
+                    .baton_source_ids
+                    .push(secondary_old_id);
                 self.core.players[p_idx].baton_source_slots.push(s_idx);
             }
             let leave_ctx = AbilityContext {
@@ -1237,12 +1281,7 @@ impl GameState {
                 target_card_id: card_id,
                 ..Default::default()
             };
-            if let Some(old) = self.handle_member_leaves_stage(
-                p_idx,
-                s_idx,
-                db,
-                &leave_ctx,
-            ) {
+            if let Some(old) = self.handle_member_leaves_stage(p_idx, s_idx, db, &leave_ctx) {
                 self.core.players[p_idx].push_discard_card(old);
             }
             self.core.players[p_idx].set_moved(s_idx, true);
@@ -1258,12 +1297,7 @@ impl GameState {
                 target_card_id: card_id,
                 ..Default::default()
             };
-            if let Some(old) = self.handle_member_leaves_stage(
-                p_idx,
-                slot_idx,
-                db,
-                &leave_ctx,
-            ) {
+            if let Some(old) = self.handle_member_leaves_stage(p_idx, slot_idx, db, &leave_ctx) {
                 self.core.players[p_idx].push_discard_card(old);
             }
         }

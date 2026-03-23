@@ -1,8 +1,10 @@
-﻿use std::fs;
+use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::turn_sequencer::{SearchConfig, SequencerConfig, TurnSequencer, WeightsConfig};
+use engine_rust::core::logic::turn_sequencer::{
+    SearchConfig, SequencerConfig, TurnSequencer, WeightsConfig,
+};
 use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
 use rand::prelude::StdRng;
 use rand::seq::IndexedRandom;
@@ -147,7 +149,9 @@ fn execute_main_sequence(state: &mut GameState, db: &CardDatabase, planned_seq: 
 }
 
 fn set_config(cfg: &SequencerConfig) {
-    *engine_rust::core::logic::turn_sequencer::get_config().write().unwrap() = cfg.clone();
+    *engine_rust::core::logic::turn_sequencer::get_config()
+        .write()
+        .unwrap() = cfg.clone();
 }
 
 fn run_single_game(
@@ -179,7 +183,11 @@ fn run_single_game(
 
     while state.phase != Phase::Main && !state.is_terminal() {
         match state.phase {
-            Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+            Phase::Rps
+            | Phase::MulliganP1
+            | Phase::MulliganP2
+            | Phase::TurnChoice
+            | Phase::Response => {
                 let legal = state.get_legal_action_ids(db);
                 if let Some(&action) = legal.choose(&mut rng) {
                     let _ = state.step(db, action);
@@ -200,7 +208,11 @@ fn run_single_game(
             break;
         }
 
-        let active_cfg = if state.current_player == 0 { p0_config } else { p1_config };
+        let active_cfg = if state.current_player == 0 {
+            p0_config
+        } else {
+            p1_config
+        };
 
         match state.phase {
             Phase::Main => {
@@ -218,7 +230,11 @@ fn run_single_game(
                 }
                 let _ = state.step(db, ACTION_BASE_PASS);
             }
-            Phase::Active | Phase::Draw | Phase::Energy | Phase::PerformanceP1 | Phase::PerformanceP2 => {
+            Phase::Active
+            | Phase::Draw
+            | Phase::Energy
+            | Phase::PerformanceP1
+            | Phase::PerformanceP2 => {
                 state.auto_step(db);
             }
             Phase::LiveResult => {
@@ -237,7 +253,12 @@ fn run_single_game(
         }
     }
 
-    (state.get_winner(), state.turn as u32, start.elapsed().as_secs_f32(), total_evals)
+    (
+        state.get_winner(),
+        state.turn as u32,
+        start.elapsed().as_secs_f32(),
+        total_evals,
+    )
 }
 
 fn make_candidates(base: &SequencerConfig) -> Vec<Candidate> {
@@ -258,7 +279,8 @@ fn make_candidates(base: &SequencerConfig) -> Vec<Candidate> {
     let mut depth12_live = base.clone();
     depth12_live.search.max_dfs_depth = base.search.max_dfs_depth.max(12);
     depth12_live.weights.live_ev_multiplier += 3.0;
-    depth12_live.weights.liveset_placement_bonus = depth12_live.weights.liveset_placement_bonus.max(2.0);
+    depth12_live.weights.liveset_placement_bonus =
+        depth12_live.weights.liveset_placement_bonus.max(2.0);
     out.push(Candidate {
         name: "depth12_live_focus",
         config: depth12_live,
@@ -326,7 +348,10 @@ fn main() {
     let db = load_vanilla_db();
     let p0_deck = load_deck(&deck0_path, &db);
     let p1_deck = load_deck(&deck1_path, &db);
-    let baseline = engine_rust::core::logic::turn_sequencer::get_config().read().unwrap().clone();
+    let baseline = engine_rust::core::logic::turn_sequencer::get_config()
+        .read()
+        .unwrap()
+        .clone();
     let candidates = make_candidates(&baseline);
 
     let mut results = Vec::new();
@@ -388,7 +413,10 @@ fn main() {
             serde_json::to_string_pretty(&best_config).unwrap(),
         )
         .expect("failed to write sequencer_config.json");
-        eprintln!("best_candidate={} margin={} -> sequencer_config.json updated", best_name, best_margin);
+        eprintln!(
+            "best_candidate={} margin={} -> sequencer_config.json updated",
+            best_name, best_margin
+        );
     } else {
         eprintln!("no candidate beat baseline; sequencer_config.json unchanged");
     }

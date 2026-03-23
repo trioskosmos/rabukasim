@@ -1,20 +1,20 @@
-use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::{ChoiceType, TriggerType};
 use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE};
-use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
+use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::O_LOOK_AND_CHOOSE;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
-#[path = "interaction_look_choose_resolve.rs"]
-mod interaction_look_choose_resolve;
 #[path = "interaction_look_choose_apply.rs"]
 mod interaction_look_choose_apply;
 #[path = "interaction_look_choose_finalize.rs"]
 mod interaction_look_choose_finalize;
+#[path = "interaction_look_choose_resolve.rs"]
+mod interaction_look_choose_resolve;
 
 pub fn handle_look_and_choose(
     state: &mut GameState,
@@ -23,11 +23,12 @@ pub fn handle_look_and_choose(
     frame: &AbilityFrame,
     frame_idx: usize,
 ) -> HandlerResult {
-    let _v = frame.raw_value();
-    let a = frame.raw_attr() as i64;
-    let s = frame.raw_slot();
+    let frame_data = frame.components();
+    let _v = frame_data.value;
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
-    let slot_info = frame.dslot();
+    let slot_info = frame_data.slot;
     let target_slot = slot_info.target_slot;
     let rem_dest = slot_info.dest_zone as u8;
     let source_zone_bits = slot_info.source_zone as u8;
@@ -104,24 +105,27 @@ pub fn handle_look_and_choose(
         };
         let lc = frame.look_choose();
 
-        let mut filter_obj = frame.filter();
+        let mut filter_obj = frame_data.filter;
         filter_obj.char_id_1 = lc.char_id_1;
         filter_obj.char_id_2 = lc.char_id_2;
         filter_obj.char_id_3 = lc.char_id_3;
 
         let pick_count = i16::from(compiled_choice_count);
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            ctx,
-            frame_idx,
-            O_LOOK_AND_CHOOSE,
-            s,
-            choice_type,
-            filter_obj.to_attr(),
-            pick_count,
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                frame_idx,
+                O_LOOK_AND_CHOOSE,
+                s,
+                choice_type,
+                filter_obj.to_attr(),
+                pick_count,
+            ),
+            HandlerResult::Suspend
+        ) {
             let is_optional = filter_obj.is_optional;
             if is_optional && ctx.choice_index == CHOICE_DONE {
                 let cards: Vec<i32> = state.players[p_idx].looked_cards.drain(..).collect();

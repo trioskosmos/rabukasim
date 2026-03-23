@@ -1,8 +1,8 @@
-use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::FILTER_IS_OPTIONAL;
-use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::interpreter::HandlerResult;
 use crate::core::O_LOOK_REORDER_DISCARD;
 
@@ -19,18 +19,21 @@ pub fn handle_look_reorder_discard(
     let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
 
     if is_optional && state.players[p_idx].looked_cards.is_empty() && ctx.choice_index == -1 {
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            ctx,
-            frame_idx,
-            O_LOOK_REORDER_DISCARD,
-            0,
-            ChoiceType::Optional,
-            a as u64,
-            -1,
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                frame_idx,
+                O_LOOK_REORDER_DISCARD,
+                0,
+                ChoiceType::Optional,
+                a as u64,
+                -1,
+            ),
+            HandlerResult::Suspend
+        ) {
             return HandlerResult::Suspend;
         }
     }
@@ -57,18 +60,21 @@ pub fn handle_look_reorder_discard(
 
     if !state.players[p_idx].looked_cards.is_empty() {
         if ctx.choice_index == -1 {
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                frame_idx,
-                O_LOOK_REORDER_DISCARD,
-                0,
-                ChoiceType::SelectCardsOrder,
-                a as u64,
-                -1,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    ctx,
+                    frame_idx,
+                    O_LOOK_REORDER_DISCARD,
+                    0,
+                    ChoiceType::SelectCardsOrder,
+                    a as u64,
+                    -1,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }
@@ -87,18 +93,21 @@ pub fn handle_look_reorder_discard(
             state.players[p_idx].push_deck_card(cid);
 
             if !state.players[p_idx].looked_cards.is_empty() {
-                if matches!(suspend_choice(
-                    state,
-                    db,
-                    ctx,
-                    ctx,
-                    frame_idx,
-                    O_LOOK_REORDER_DISCARD,
-                    0,
-                    ChoiceType::SelectCardsOrder,
-                    a as u64,
-                    -1,
-                ), HandlerResult::Suspend) {
+                if matches!(
+                    suspend_choice(
+                        state,
+                        db,
+                        ctx,
+                        ctx,
+                        frame_idx,
+                        O_LOOK_REORDER_DISCARD,
+                        0,
+                        ChoiceType::SelectCardsOrder,
+                        a as u64,
+                        -1,
+                    ),
+                    HandlerResult::Suspend
+                ) {
                     return HandlerResult::Suspend;
                 }
             } else {

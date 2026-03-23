@@ -1,7 +1,10 @@
+use std::fs;
+
 use engine_rust::core::logic::card_db::CardDatabase;
 
 fn main() {
-    let db = CardDatabase::load_from_json("..\\engine\\gen\\cards_compiled.json").unwrap();
+    let json = fs::read_to_string("..\\engine\\gen\\cards_compiled.json").unwrap();
+    let db = CardDatabase::from_json(&json).unwrap();
     if let Some(member) = db.get_member(4397) {
         println!("Member: {}", member.name);
         for (i, ab) in member.abilities.iter().enumerate() {

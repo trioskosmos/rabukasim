@@ -1,6 +1,5 @@
-
+use engine_rust::core::logic::{CardDatabase, GameState};
 use std::fs;
-use engine_rust::core::logic::{GameState, CardDatabase};
 
 fn main() {
     println!("Turn Sequencer Diagnostic Tool");
@@ -15,14 +14,21 @@ fn main() {
             }
         }
     }
-    
+
     if let Some(db) = db_opt {
         println!("Loaded DB successfully");
         let mut state = GameState::default();
         let members: Vec<i32> = db.members.keys().take(48).cloned().collect();
         let lives: Vec<i32> = db.lives.keys().take(12).cloned().collect();
         let energy: Vec<i32> = db.energy_db.keys().take(12).cloned().collect();
-        state.initialize_game(members.clone(), members, energy.clone(), energy, lives.clone(), lives);
+        state.initialize_game(
+            members.clone(),
+            members,
+            energy.clone(),
+            energy,
+            lives.clone(),
+            lives,
+        );
         println!("Game initialized. Turn: {}", state.turn);
     } else {
         println!("Could not load database");

@@ -1,5 +1,5 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
+use crate::core::logic::models::AbilityFrame;
 #[path = "state_energy_place_select.rs"]
 mod state_energy_place_select;
 
@@ -62,7 +62,9 @@ pub fn handle_place_energy_under_member(
                     None
                 };
 
-                if let Some(idx) = selected_idx.filter(|&idx| idx < state.players[p_idx].energy_zone.len()) {
+                if let Some(idx) =
+                    selected_idx.filter(|&idx| idx < state.players[p_idx].energy_zone.len())
+                {
                     let energy_cid = state.players[p_idx].remove_energy_card(idx).unwrap();
                     state.players[p_idx].stage_energy[slot].push(energy_cid);
                 } else {

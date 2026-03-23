@@ -1,7 +1,6 @@
 use engine_rust::core::logic::*;
 use engine_rust::test_helpers::*;
 
-
 #[test]
 fn test_rurino_filter_masking_fix() {
     let db = load_real_db();
@@ -41,7 +40,9 @@ fn test_rurino_filter_masking_fix() {
     println!("DEBUG: Hand: {:?}", state.core.players[p_idx].hand);
 
     // Action IDs for hand selection are ACTION_BASE_HAND_SELECT + hand_index
-    let has_hand_selection = actions.iter().any(|&a| a >= ACTION_BASE_HAND_SELECT && a < ACTION_BASE_HAND_SELECT + 100);
+    let has_hand_selection = actions
+        .iter()
+        .any(|&a| a >= ACTION_BASE_HAND_SELECT && a < ACTION_BASE_HAND_SELECT + 100);
     assert!(
         has_hand_selection,
         "At least one hand selection action should be available. Actions: {:?}",

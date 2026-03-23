@@ -7,16 +7,14 @@ const NUM_GAMES: usize = 1;
 const STEP_LIMIT: usize = 500;
 const TURN_LIMIT: u16 = 10;
 /// ─────────────────────────────────────────────────────────────────────────────
-
 use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::turn_sequencer::{TurnSequencer};
-use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
+use engine_rust::core::logic::turn_sequencer::TurnSequencer;
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
 use rand::prelude::*;
 use rand::SeedableRng;
-
 
 // ── DB loading ────────────────────────────────────────────────────────────────
 
@@ -31,8 +29,7 @@ fn load_vanilla_db() -> CardDatabase {
         if !std::path::Path::new(path).exists() {
             continue;
         }
-        let abs = std::fs::canonicalize(path)
-            .unwrap_or_else(|_| std::path::PathBuf::from(path));
+        let abs = std::fs::canonicalize(path).unwrap_or_else(|_| std::path::PathBuf::from(path));
         println!("[DB_LOAD] Loading vanilla DB from: {:?}", abs);
         let json = fs::read_to_string(path).expect("Failed to read vanilla DB");
         let mut db = CardDatabase::from_json(&json).expect("Failed to parse vanilla DB");
@@ -52,12 +49,16 @@ fn load_deck_combined(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
 
     for line in content.lines() {
         let line = line.trim();
-        if line.is_empty() || line.starts_with('#') { continue; }
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
         let parts: Vec<&str> = line.split_whitespace().collect();
         let card_no = parts[0];
         let count: usize = if parts.len() >= 3 && parts[1] == "x" {
             parts[2].parse().unwrap_or(1)
-        } else { 1 };
+        } else {
+            1
+        };
 
         if let Some(id) = db.id_by_no(card_no) {
             for _ in 0..count {
@@ -73,10 +74,18 @@ fn load_deck_combined(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
     // Official Rules: 48 members + 12 lives = 60 cards
     // If deck is invalid, pad with anything from the DB to avoid Turn 0 termination
     while members.len() < 48 {
-        if let Some(&id) = db.members.keys().next() { members.push(id); } else { break; }
+        if let Some(&id) = db.members.keys().next() {
+            members.push(id);
+        } else {
+            break;
+        }
     }
     while lives.len() < 12 {
-        if let Some(&id) = db.lives.keys().next() { lives.push(id); } else { break; }
+        if let Some(&id) = db.lives.keys().next() {
+            lives.push(id);
+        } else {
+            break;
+        }
     }
 
     members.truncate(48);
@@ -104,7 +113,13 @@ struct AIDecision {
 fn pick_action(state: &GameState, db: &CardDatabase, rng: &mut impl rand::RngCore) -> AIDecision {
     let legal = state.get_legal_action_ids(db);
     if legal.is_empty() {
-        return AIDecision { action: None, nodes: 0, board_score: 0.0, live_ev: 0.0, duration_us: 0 };
+        return AIDecision {
+            action: None,
+            nodes: 0,
+            board_score: 0.0,
+            live_ev: 0.0,
+            duration_us: 0,
+        };
     }
 
     let start = Instant::now();
@@ -112,25 +127,57 @@ fn pick_action(state: &GameState, db: &CardDatabase, rng: &mut impl rand::RngCor
         Phase::Main => {
             let (best_seq, _best_val, breakdown, nodes) = TurnSequencer::plan_full_turn(state, db);
             let duration = start.elapsed().as_micros();
-            let action = if best_seq.is_empty() { Some(ACTION_BASE_PASS as usize) } else { Some(best_seq[0] as usize) };
-            AIDecision { action, nodes, board_score: breakdown.0, live_ev: breakdown.1, duration_us: duration }
+            let action = if best_seq.is_empty() {
+                Some(ACTION_BASE_PASS as usize)
+            } else {
+                Some(best_seq[0] as usize)
+            };
+            AIDecision {
+                action,
+                nodes,
+                board_score: breakdown.0,
+                live_ev: breakdown.1,
+                duration_us: duration,
+            }
         }
         Phase::LiveSet => {
             let (seq, _nodes, val_encoded) = TurnSequencer::find_best_liveset_selection(state, db);
             let duration = start.elapsed().as_micros();
-            let action = if seq.is_empty() { Some(ACTION_BASE_PASS as usize) } else { Some(seq[0] as usize) };
+            let action = if seq.is_empty() {
+                Some(ACTION_BASE_PASS as usize)
+            } else {
+                Some(seq[0] as usize)
+            };
             let score = val_encoded as f32 / 1000.0;
-            AIDecision { action, nodes: _nodes, board_score: 0.0, live_ev: score, duration_us: duration }
+            AIDecision {
+                action,
+                nodes: _nodes,
+                board_score: 0.0,
+                live_ev: score,
+                duration_us: duration,
+            }
         }
         // Randomize RPS, Mulligan, and Choice phases for variability
         Phase::Rps | Phase::MulliganP1 | Phase::TurnChoice | Phase::Response => {
             let duration = start.elapsed().as_micros();
             let action = Some(*legal.choose(rng).unwrap_or(&legal[0]) as usize);
-            AIDecision { action, nodes: 0, board_score: 0.0, live_ev: 0.0, duration_us: duration }
+            AIDecision {
+                action,
+                nodes: 0,
+                board_score: 0.0,
+                live_ev: 0.0,
+                duration_us: duration,
+            }
         }
         _ => {
             let duration = start.elapsed().as_micros();
-            AIDecision { action: Some(legal[0] as usize), nodes: 0, board_score: 0.0, live_ev: 0.0, duration_us: duration }
+            AIDecision {
+                action: Some(legal[0] as usize),
+                nodes: 0,
+                board_score: 0.0,
+                live_ev: 0.0,
+                duration_us: duration,
+            }
         }
     }
 }
@@ -156,13 +203,21 @@ fn run_game(
     // Note: initialize_game will combine members+lives into the deck and shuffle.
     // Starting lives zone is empty.
     state.initialize_game(
-        p0_deck, p1_deck,
-        energy_ids.to_vec(), energy_ids.to_vec(),
-        p0_lives, p1_lives
+        p0_deck,
+        p1_deck,
+        energy_ids.to_vec(),
+        energy_ids.to_vec(),
+        p0_lives,
+        p1_lives,
     );
 
-    println!("[INIT] Phase: {:?}, P0 Hand: {}, P0 Deck: {}, P0 Lives: {}",
-        state.phase, state.players[0].hand.len(), state.players[0].deck.len(), state.players[0].success_lives.len());
+    println!(
+        "[INIT] Phase: {:?}, P0 Hand: {}, P0 Deck: {}, P0 Lives: {}",
+        state.phase,
+        state.players[0].hand.len(),
+        state.players[0].deck.len(),
+        state.players[0].success_lives.len()
+    );
 
     state.ui.silent = true;
 
@@ -182,39 +237,71 @@ fn run_game(
 
         if (state.turn, state.phase) != last_turn_phase {
             last_turn_phase = (state.turn, state.phase);
-            println!("\n[Turn {} | P{} | {:?}] Space Score: P0={} P1={}",
-                state.turn, state.current_player, state.phase, state.players[0].score, state.players[1].score);
+            println!(
+                "\n[Turn {} | P{} | {:?}] Space Score: P0={} P1={}",
+                state.turn,
+                state.current_player,
+                state.phase,
+                state.players[0].score,
+                state.players[1].score
+            );
         }
 
         let decision = pick_action(&state, db, rng);
         if let Some(action) = decision.action {
             let label = state.get_verbose_action_label(action as i32, db);
             if decision.nodes > 0 || state.phase != Phase::Main {
-                println!("  P{} @ {:?} → {} [Nodes: {}, Board: {:.2}, LiveEV: {:.2}, Time: {}us]",
-                    state.current_player, state.phase, label, decision.nodes, decision.board_score, decision.live_ev, decision.duration_us);
+                println!(
+                    "  P{} @ {:?} → {} [Nodes: {}, Board: {:.2}, LiveEV: {:.2}, Time: {}us]",
+                    state.current_player,
+                    state.phase,
+                    label,
+                    decision.nodes,
+                    decision.board_score,
+                    decision.live_ev,
+                    decision.duration_us
+                );
             }
 
             if state.step(db, action as i32).is_err() {
                 let _ = state.step(db, ACTION_BASE_PASS);
             }
         } else {
-            println!("  [WARN] No actions for P{} at {:?}", state.current_player, state.phase);
+            println!(
+                "  [WARN] No actions for P{} at {:?}",
+                state.current_player, state.phase
+            );
             let _ = state.step(db, ACTION_BASE_PASS);
         }
         current_step += 1;
     }
 
-    if current_step >= STEP_LIMIT { println!("[TERMINAL] Step limit reached!"); }
-    if state.turn > TURN_LIMIT { println!("[TERMINAL] Turn limit reached!"); }
+    if current_step >= STEP_LIMIT {
+        println!("[TERMINAL] Step limit reached!");
+    }
+    if state.turn > TURN_LIMIT {
+        println!("[TERMINAL] Turn limit reached!");
+    }
 
     let winner = state.get_winner();
-    println!("\n  ── Game {} finished: Winner=P{} | Turns={}", game_idx + 1, winner, state.turn);
-    println!("  Final Score: P0={} P1={}", state.players[0].score, state.players[1].score);
+    println!(
+        "\n  ── Game {} finished: Winner=P{} | Turns={}",
+        game_idx + 1,
+        winner,
+        state.turn
+    );
+    println!(
+        "  Final Score: P0={} P1={}",
+        state.players[0].score, state.players[1].score
+    );
 }
 
 fn main() {
     println!("Vanilla AI Simulation Runner (Official Rules Alignment)\n");
-    let cfg = engine_rust::core::logic::turn_sequencer::get_config().read().unwrap().clone();
+    let cfg = engine_rust::core::logic::turn_sequencer::get_config()
+        .read()
+        .unwrap()
+        .clone();
     println!("DFS Max Depth: {}", cfg.search.max_dfs_depth);
 
     let db = load_vanilla_db();

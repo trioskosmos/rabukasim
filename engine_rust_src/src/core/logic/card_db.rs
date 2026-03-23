@@ -1,7 +1,7 @@
 //! # LovecaSim Card Database
 //!
 //! This module defines the `CardDatabase` which acts as the source of truth for
-//! card statistics, images, and bytecode instructions.
+//! card statistics, images, and semantic frame instructions.
 //!
 //! ## Key Roles:
 //! - **Centralized Card Data**: Stores `MemberCard` and `LiveCard` structures.
@@ -17,15 +17,20 @@
 
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
-use crate::core::logic::interpreter::instruction::{DecodedFilterAttr, DecodedLookAndChoose, DecodedSlot};
-use crate::core::logic::interpreter::logging::get_opcode_name;
+use crate::core::logic::interpreter::instruction::{
+    DecodedFilterAttr, DecodedLookAndChoose, DecodedSlot,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::fs;
 use std::collections::HashMap;
+use std::fs;
 // use crate::core::generated_constants::*; // Redundant due to enums.rs re-export
 // use crate::core::generated_constants::*; // Re-exported by enums.rs
 use super::models::*;
+
+const EMBEDDED_ABILITY_FRAMES_JSON: &str = include_str!("../../../../data/ability_frames.json");
+const EMBEDDED_ABILITY_FRAME_INDEX_JSON: &str =
+    include_str!("../../../../data/ability_frame_index.json");
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct MemberCard {
@@ -154,11 +159,104 @@ pub struct CardDatabase {
 pub const LOGIC_ID_MASK: i32 = 0x0FFF;
 
 impl CardDatabase {
+    fn load_sparse_ability_index_from_json(json: &str) -> HashMap<String, Value> {
+        let parsed_root = serde_json::from_str::<Value>(json).ok();
+        if let Some(root) = parsed_root {
+            let mut index = HashMap::new();
+            if let Some(abilities) = root.get("abilities").and_then(|v| v.as_array()) {
+                for entry in abilities {
+                    let Some(cards) = entry.get("cards").and_then(|v| v.as_array()) else {
+                        continue;
+                    };
+                    let compact_entry = Self::compact_sparse_ability_entry(entry);
+                    for card in cards {
+                        if let Some(card_obj) = card.as_object() {
+                            let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str())
+                            else {
+                                continue;
+                            };
+                            let Some(ability_index) =
+                                card_obj.get("ability_index").and_then(|v| v.as_i64())
+                            else {
+                                continue;
+                            };
+                            let key = format!("{}#{}", card_no, ability_index);
+                            index.insert(key, compact_entry.clone());
+                            continue;
+                        }
+
+                        if let Some(card_str) = card.as_str() {
+                            let Some((card_no_part, tail)) = card_str.split_once(" |") else {
+                                continue;
+                            };
+                            let Some(ab_marker) = tail.rfind("(ab#") else {
+                                continue;
+                            };
+                            let ab_fragment = &tail[ab_marker + 4..];
+                            let Some((ability_index_str, _)) = ab_fragment.split_once(' ') else {
+                                continue;
+                            };
+                            let Some(ability_index) = ability_index_str.parse::<i64>().ok() else {
+                                continue;
+                            };
+                            let key = format!("{}#{}", card_no_part.trim(), ability_index);
+                            index.insert(key, compact_entry.clone());
+                        }
+                    }
+                }
+            }
+            return index;
+        }
+        HashMap::new()
+    }
+
+    pub fn find_ability_by_bytecode<'a>(
+        &'a self,
+        bytecode: &[i32],
+        ctx: &AbilityContext,
+    ) -> Option<&'a Ability> {
+        if let Some(member) = self.get_member(ctx.source_card_id) {
+            if let Some(ability) = member
+                .abilities
+                .iter()
+                .find(|ability| ability.bytecode() == bytecode)
+            {
+                return Some(ability);
+            }
+        }
+
+        if let Some(live) = self.get_live(ctx.source_card_id) {
+            if let Some(ability) = live
+                .abilities
+                .iter()
+                .find(|ability| ability.bytecode() == bytecode)
+            {
+                return Some(ability);
+            }
+        }
+
+        self.members
+            .values()
+            .find_map(|card| {
+                card.abilities
+                    .iter()
+                    .find(|ability| ability.bytecode() == bytecode)
+            })
+            .or_else(|| {
+                self.lives.values().find_map(|card| {
+                    card.abilities
+                        .iter()
+                        .find(|ability| ability.bytecode() == bytecode)
+                })
+            })
+    }
+
     fn normalize_legacy_tap_member_ability(ability: &mut Ability) {
+        let opcodes = ability.opcodes();
         let mentions_tap = ability.raw_text.contains("TAP_MEMBER")
-            || ability.pseudocode.contains("TAP_MEMBER");
+            || opcodes.iter().any(|op| *op == O_TAP_MEMBER);
         let mentions_move = ability.raw_text.contains("MOVE_MEMBER")
-            || ability.pseudocode.contains("MOVE_MEMBER");
+            || opcodes.iter().any(|op| *op == O_MOVE_MEMBER);
         let has_stale_tap_effect = ability.effects.iter().any(|effect| {
             effect.effect_type == EffectType::TapMember && effect.runtime_opcode == O_MOVE_MEMBER
         });
@@ -168,7 +266,8 @@ impl CardDatabase {
         }
 
         for effect in &mut ability.effects {
-            if effect.effect_type == EffectType::TapMember && effect.runtime_opcode == O_MOVE_MEMBER {
+            if effect.effect_type == EffectType::TapMember && effect.runtime_opcode == O_MOVE_MEMBER
+            {
                 effect.runtime_opcode = O_TAP_MEMBER;
             }
         }
@@ -178,7 +277,14 @@ impl CardDatabase {
                 if frame.opcode() == O_MOVE_MEMBER {
                     match frame.clone() {
                         AbilityFrame::MoveMember { filter, slot } => {
-                            *frame = AbilityFrame::Semantic { opcode: O_TAP_MEMBER, value: 0, filter, slot, is_negated: false, params: serde_json::Value::Null };
+                            *frame = AbilityFrame::Semantic {
+                                opcode: O_TAP_MEMBER,
+                                value: 0,
+                                filter,
+                                slot,
+                                is_negated: false,
+                                params: serde_json::Value::Null,
+                            };
                         }
                         AbilityFrame::Semantic { ref mut opcode, .. } => *opcode = O_TAP_MEMBER,
                         AbilityFrame::Raw { ref mut opcode, .. } => *opcode = O_TAP_MEMBER,
@@ -202,66 +308,42 @@ impl CardDatabase {
     }
 
     fn load_sparse_ability_index() -> HashMap<String, Value> {
+        let authored = Self::load_sparse_ability_index_from_json(EMBEDDED_ABILITY_FRAMES_JSON);
+        if !authored.is_empty() {
+            return authored;
+        }
+
+        let embedded = Self::load_sparse_ability_index_from_json(EMBEDDED_ABILITY_FRAME_INDEX_JSON);
+        if !embedded.is_empty() {
+            return embedded;
+        }
+
         for path in [
+            "data/ability_frames.json",
+            "../data/ability_frames.json",
             "data/ability_frame_index.json",
             "../data/ability_frame_index.json",
         ] {
             if let Ok(json) = fs::read_to_string(path) {
-                let parsed_root = serde_json::from_str::<Value>(&json).ok();
-                if let Some(root) = parsed_root {
-                    let mut index = HashMap::new();
-                    if let Some(abilities) = root.get("abilities").and_then(|v| v.as_array()) {
-                        for entry in abilities {
-                            let Some(cards) = entry.get("cards").and_then(|v| v.as_array()) else {
-                                continue;
-                            };
-                            let compact_entry = Self::compact_sparse_ability_entry(entry);
-                            for card in cards {
-                                if let Some(card_obj) = card.as_object() {
-                                    let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) else {
-                                        continue;
-                                    };
-                                    let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) else {
-                                        continue;
-                                    };
-                                    let key = format!("{}#{}", card_no, ability_index);
-                                    index.insert(key, compact_entry.clone());
-                                    continue;
-                                }
-
-                                if let Some(card_str) = card.as_str() {
-                                    let Some((card_no_part, tail)) = card_str.split_once(" |") else {
-                                        continue;
-                                    };
-                                    let Some(ab_marker) = tail.rfind("(ab#") else {
-                                        continue;
-                                    };
-                                    let ab_fragment = &tail[ab_marker + 4..];
-                                    let Some((ability_index_str, _)) = ab_fragment.split_once(' ') else {
-                                        continue;
-                                    };
-                                    let Some(ability_index) = ability_index_str.parse::<i64>().ok() else {
-                                        continue;
-                                    };
-                                    let key = format!("{}#{}", card_no_part.trim(), ability_index);
-                                    index.insert(key, compact_entry.clone());
-                                }
-                            }
-                        }
-                    }
-                    if !index.is_empty() {
-                        return index;
-                    }
+                let index = Self::load_sparse_ability_index_from_json(&json);
+                if !index.is_empty() {
+                    return index;
                 }
             }
         }
+
         HashMap::new()
     }
 
     fn compact_sparse_ability_entry(entry: &Value) -> Value {
         let mut compact = serde_json::Map::new();
 
-        for key in ["pseudocode", "signature", "signature_hash", "round_trip_matches"] {
+        for key in [
+            "pseudocode",
+            "signature",
+            "signature_hash",
+            "round_trip_matches",
+        ] {
             if let Some(value) = entry.get(key) {
                 compact.insert(key.to_string(), value.clone());
             }
@@ -273,7 +355,10 @@ impl CardDatabase {
                 Value::Array(
                     cards
                         .iter()
-                        .filter_map(|card| card.as_str().map(|card_no| Value::String(card_no.to_string())))
+                        .filter_map(|card| {
+                            card.as_str()
+                                .map(|card_no| Value::String(card_no.to_string()))
+                        })
                         .collect(),
                 ),
             );
@@ -284,12 +369,6 @@ impl CardDatabase {
                 "frames".to_string(),
                 Value::Array(frames.iter().map(Self::compact_sparse_frame).collect()),
             );
-        } else if entry.get("source_words").and_then(|v| v.as_array()).is_some() {
-            let program = Self::sparse_entry_to_frame_program(entry);
-            compact.insert(
-                "frames".to_string(),
-                Value::Array(program.frames.iter().map(Self::compact_sparse_frame_from_program).collect()),
-            );
         }
 
         Value::Object(compact)
@@ -298,27 +377,21 @@ impl CardDatabase {
     fn compact_sparse_frame(frame: &Value) -> Value {
         let mut compact = serde_json::Map::new();
 
-        for key in ["opcode_id", "opcode", "value", "attr", "slot"] {
+        for key in [
+            "kind",
+            "opcode_id",
+            "opcode",
+            "value",
+            "filter",
+            "slot",
+            "is_negated",
+            "params",
+            "attr",
+        ] {
             if let Some(value) = frame.get(key) {
                 compact.insert(key.to_string(), value.clone());
             }
         }
-
-        Value::Object(compact)
-    }
-
-    fn compact_sparse_frame_from_program(frame: &AbilityFrame) -> Value {
-        let mut compact = serde_json::Map::new();
-
-        let op = frame.opcode();
-        compact.insert("opcode_id".to_string(), Value::from(op));
-        compact.insert("opcode".to_string(), Value::from(get_opcode_name(op)));
-        compact.insert("value".to_string(), Value::from(frame.value()));
-
-        let attr = serde_json::to_value(frame.filter()).unwrap_or(Value::Null);
-        let slot = serde_json::to_value(frame.dslot()).unwrap_or(Value::Null);
-        compact.insert("attr".to_string(), attr);
-        compact.insert("slot".to_string(), slot);
 
         Value::Object(compact)
     }
@@ -337,16 +410,19 @@ impl CardDatabase {
                 ))
             })?;
             ability.sparse_frame_index = Some(entry.clone());
-            let program = Self::sparse_entry_to_frame_program(entry);
-            if program.frames.is_empty() {
-                return Err(serde::de::Error::custom(format!(
-                    "sparse ability index entry for {} ability {} produced empty frame program",
-                    card_no, ability_index
-                )));
+            if ability.frame_program.is_none() {
+                let program = Self::sparse_entry_to_frame_program(entry);
+                if program.frames.is_empty() {
+                    return Err(serde::de::Error::custom(format!(
+                        "sparse ability index entry for {} ability {} produced empty frame program",
+                        card_no, ability_index
+                    )));
+                }
+                ability.frame_program = Some(program);
             }
-            ability.frame_program = Some(program);
             if ability.effects.is_empty() {
-                let derived_effects = Self::frame_program_to_effects(ability.frame_program.as_ref().unwrap());
+                let derived_effects =
+                    Self::frame_program_to_effects(ability.frame_program.as_ref().unwrap());
                 if !derived_effects.is_empty() {
                     ability.effects = derived_effects;
                 }
@@ -366,20 +442,10 @@ impl CardDatabase {
             for frame in frames {
                 program_frames.push(Self::parse_semantic_frame(frame));
             }
-        } else if let Some(words) = entry.get("source_words").and_then(|v| v.as_array()) {
-            let mut ip = 0;
-            while ip + 4 < words.len() {
-                let op = words[ip].as_i64().unwrap_or(0) as i32;
-                let v = words[ip + 1].as_i64().unwrap_or(0) as i32;
-                let a_low = words[ip + 2].as_i64().unwrap_or(0) as u32;
-                let a_high = words[ip + 3].as_i64().unwrap_or(0) as u32;
-                let a = (a_low as u64) | ((a_high as u64) << 32);
-                let s = words[ip + 4].as_i64().unwrap_or(0) as i32;
-                program_frames.push(Self::raw_to_semantic_frame(op, v, a, s));
-                ip += 5;
-            }
         }
-        FrameProgram { frames: program_frames }
+        FrameProgram {
+            frames: program_frames,
+        }
     }
 
     fn frame_program_to_effects(frame_program: &FrameProgram) -> Vec<Effect> {
@@ -490,283 +556,405 @@ impl CardDatabase {
         })
     }
 
-    fn raw_to_semantic_frame(op: i32, v: i32, a: u64, s: i32) -> AbilityFrame {
-        let filter = DecodedFilterAttr::decode(a as i64);
-        let slot = DecodedSlot::decode(s);
-        match op {
-            O_RETURN => AbilityFrame::Return,
-            O_DRAW => AbilityFrame::Draw { count: v },
-            O_RECOVER_LIVE => AbilityFrame::RecoverLive { count: v, filter, slot },
-            O_RECOVER_MEMBER => AbilityFrame::RecoverMember { count: v, filter, slot },
-            O_LOOK_AND_CHOOSE => AbilityFrame::LookAndChoose {
-                params: DecodedLookAndChoose::decode(v),
-                filter,
-                slot,
-            },
-            O_SELECT_MEMBER => AbilityFrame::SelectMember { count: v, filter, slot },
-            O_MOVE_MEMBER => AbilityFrame::MoveMember { filter, slot },
-            O_META_RULE => AbilityFrame::MetaRule { rule_type: v, filter, slot },
-            _ => AbilityFrame::Semantic {
-                opcode: op,
-                value: v,
-                filter,
-                slot,
-                is_negated: false,
-                params: Value::Null,
-            },
-        }
-    }
-
     fn parse_semantic_frame(frame: &Value) -> AbilityFrame {
-        let opcode_name = frame.get("opcode").and_then(|v| v.as_str()).unwrap_or("");
-        let opcode_id = frame.get("opcode_id").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-        let v = Self::encode_sparse_value(opcode_name, frame.get("value"));
-        let a = Self::encode_sparse_attr(opcode_name, frame.get("attr"));
-        let s = Self::encode_sparse_slot(frame.get("slot"));
-
-        Self::raw_to_semantic_frame(opcode_id, v, a, s)
-    }
-
-    fn encode_sparse_frame(frame: &Value) -> Vec<i32> {
-        let opcode_id = Self::sparse_int(frame.get("opcode_id").or_else(|| frame.get("opcode"))).unwrap_or(0);
-        let opcode_name = frame.get("opcode").and_then(|v| v.as_str()).unwrap_or("");
-        let value = frame.get("value");
-        let attr = frame.get("attr");
-        let slot = frame.get("slot");
-
-        let v = Self::encode_sparse_value(opcode_name, value);
-        let a = Self::encode_sparse_attr(opcode_name, attr);
-        let s = Self::encode_sparse_slot(slot);
-        let a_low = a as u32 as i32;
-        let a_high = (a >> 32) as u32 as i32;
-
-        vec![opcode_id, v, a_low, a_high, s]
-    }
-
-    fn encode_sparse_value(opcode_name: &str, value: Option<&Value>) -> i32 {
-        let Some(value) = value else { return 0; };
-        match opcode_name {
-            "LOOK_AND_CHOOSE" => {
-                if let Some(obj) = value.as_object() {
-                    let count = obj.get("count").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-                    let char_id_1 = obj.get("char_id_1").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-                    let char_id_2 = obj.get("char_id_2").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-                    let char_id_3 = obj.get("char_id_3").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-                    let reveal = Self::sparse_boolish(obj.get("reveal"));
-                    let dest_discard = Self::sparse_boolish(obj.get("dest_discard"));
-                    (count & 0xff)
-                        | ((char_id_2 & 0x7f) << 8)
-                        | ((char_id_1 & 0x7f) << 16)
-                        | ((char_id_3 & 0x7f) << 23)
-                        | ((reveal & 0x1) << 30)
-                        | ((dest_discard & 0x1) << 31)
-                } else {
-                    value.as_i64().unwrap_or(0) as i32
-                }
+        if let Some(kind) = frame.as_str() {
+            if kind == "Return" {
+                return AbilityFrame::Return;
             }
-            "SET_HEART_COST" => {
-                if let Some(obj) = value.as_object() {
-                    let hearts = obj.get("hearts").and_then(|v| v.as_array());
-                    let mut v = 0i32;
-                    if let Some(hearts) = hearts {
-                        for (idx, heart) in hearts.iter().enumerate().take(7) {
-                            let count = heart.as_i64().unwrap_or(0) as i32 & 0xf;
-                            v |= count << (idx * 4);
+        }
+
+        let semantic = frame.get("semantic").filter(|value| value.is_object());
+        let mut kind = frame
+            .get("kind")
+            .and_then(|v| v.as_str())
+            .or_else(|| frame.get("op").and_then(|v| v.as_str()))
+            .unwrap_or("");
+        let mut payload = semantic.unwrap_or(frame);
+        if kind.is_empty() {
+            if let Some(obj) = frame.as_object() {
+                if obj.len() == 1 {
+                    if let Some((key, value)) = obj.iter().next() {
+                        if value.is_object()
+                            || value.is_array()
+                            || value.is_string()
+                            || value.is_number()
+                        {
+                            kind = key.as_str();
+                            payload = value;
                         }
                     }
-                    v
-                } else {
-                    value.as_i64().unwrap_or(0) as i32
                 }
             }
-            "CALC_SUM_COST" => {
-                if let Some(obj) = value.as_object() {
-                    let base_value = obj.get("base_value").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-                    let divisor = obj.get("divisor").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-                    (base_value & 0xffff) | ((divisor & 0xffff) << 16)
+        }
+
+        let opcode_name = payload
+            .get("opcode_name")
+            .or_else(|| payload.get("op"))
+            .or_else(|| frame.get("opcode_name"))
+            .or_else(|| frame.get("op"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let opcode_id = payload
+            .get("opcode_id")
+            .or_else(|| payload.get("opcode"))
+            .or_else(|| payload.get("op"))
+            .or_else(|| frame.get("opcode_id"))
+            .or_else(|| frame.get("opcode"))
+            .and_then(|v| v.as_i64())
+            .unwrap_or(0) as i32;
+        let value = payload
+            .get("value")
+            .or_else(|| payload.get("v"))
+            .or_else(|| frame.get("value"))
+            .or_else(|| frame.get("v"))
+            .and_then(|v| v.as_i64())
+            .unwrap_or(0) as i32;
+        let raw_attr = payload
+            .get("params")
+            .and_then(|v| v.as_object())
+            .and_then(|obj| obj.get("attr"))
+            .or_else(|| payload.get("attr").filter(|value| value.is_number()))
+            .or_else(|| frame.get("attr").filter(|value| value.is_number()));
+        let raw_slot = payload
+            .get("params")
+            .and_then(|v| v.as_object())
+            .and_then(|obj| obj.get("slot"))
+            .or_else(|| payload.get("slot").filter(|value| value.is_number()))
+            .or_else(|| frame.get("slot").filter(|value| value.is_number()));
+        let filter = Self::parse_sparse_filter_attr(
+            payload
+                .get("filter")
+                .or_else(|| payload.get("attr"))
+                .or_else(|| frame.get("attr")),
+            raw_attr,
+        );
+        let slot = Self::parse_sparse_slot(
+            payload.get("slot").or_else(|| frame.get("slot")),
+            raw_slot,
+            payload.get("params").or_else(|| frame.get("params")),
+        );
+        let is_negated = payload
+            .get("is_negated")
+            .or_else(|| payload.get("negated"))
+            .or_else(|| frame.get("negated"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        let params = payload
+            .get("params")
+            .or_else(|| frame.get("params"))
+            .cloned()
+            .unwrap_or(Value::Null);
+        let opcode_key = if !kind.is_empty() { kind } else { opcode_name };
+
+        match opcode_key {
+            "Return" | "RETURN" => AbilityFrame::Return,
+            "Draw" | "DRAW" => AbilityFrame::Draw { count: value },
+            "RecoverLive" | "RECOVER_LIVE" => AbilityFrame::RecoverLive {
+                count: value,
+                filter,
+                slot,
+            },
+            "RecoverMember" | "RECOVER_MEMBER" => AbilityFrame::RecoverMember {
+                count: value,
+                filter,
+                slot,
+            },
+            "LookAndChoose" | "LOOK_AND_CHOOSE" => AbilityFrame::LookAndChoose {
+                params: Self::parse_sparse_look_choose(Some(&params))
+                    .unwrap_or_else(|| DecodedLookAndChoose::decode(value)),
+                filter,
+                slot,
+            },
+            "SelectMember" | "SELECT_MEMBER" => AbilityFrame::SelectMember {
+                count: value,
+                filter,
+                slot,
+            },
+            "MoveMember" | "MOVE_MEMBER" => AbilityFrame::MoveMember { filter, slot },
+            "MetaRule" | "META_RULE" => AbilityFrame::MetaRule {
+                rule_type: value,
+                filter,
+                slot,
+            },
+            _ => AbilityFrame::Semantic {
+                opcode: if opcode_id != 0 {
+                    opcode_id
                 } else {
-                    value.as_i64().unwrap_or(0) as i32
-                }
-            }
-            _ => {
-                if let Some(obj) = value.as_object() {
-                    obj.get("raw").and_then(|v| v.as_i64()).unwrap_or_else(|| value.as_i64().unwrap_or(0)) as i32
-                } else {
-                    value.as_i64().unwrap_or(0) as i32
-                }
-            }
+                    Self::opcode_id_from_name(opcode_name)
+                },
+                value,
+                filter,
+                slot,
+                is_negated,
+                params,
+            },
         }
     }
 
-    fn encode_sparse_attr(opcode_name: &str, attr: Option<&Value>) -> u64 {
-        let Some(attr) = attr else { return 0; };
+    fn parse_sparse_filter_attr(
+        value: Option<&Value>,
+        raw_attr: Option<&Value>,
+    ) -> DecodedFilterAttr {
+        let mut filter = raw_attr
+            .and_then(|value| value.as_i64())
+            .map(DecodedFilterAttr::decode)
+            .unwrap_or_default();
 
-        fn sparse_special_id(value: Option<&Value>) -> u8 {
-            let Some(value) = value else { return 0; };
-            if let Some(numeric) = value.as_i64() {
-                return numeric as u8;
-            }
-            let Some(text) = value.as_str() else { return 0; };
-            match text.trim().to_ascii_lowercase().as_str() {
-                "same name" | "same_name" | "same-name" | "same name as revealed" => 4,
-                "not self" | "not_self" | "not-self" => 3,
-                "base cost" | "base_cost" | "base-cost" => 5,
-                "selected" => 6,
-                "not selected" | "not_selected" | "not-selected" => 7,
-                _ => 0,
-            }
+        let Some(value) = value else {
+            return filter;
+        };
+        if let Some(raw) = value.as_i64() {
+            return DecodedFilterAttr::decode(raw);
         }
 
-        match opcode_name {
-            "SET_HEART_COST" => {
-                if let Some(obj) = attr.as_object() {
-                    let mut val: u64 = 0;
-                    for idx in 1..=8 {
-                        let key = format!("req_{}", idx);
-                        let req = obj.get(&key).and_then(|v| v.as_i64()).unwrap_or(0) as u64;
-                        val |= (req & 0xf) << ((idx - 1) * 4);
-                    }
-                    let unit_enabled = Self::sparse_boolish(obj.get("unit_enabled")) as u64;
-                    let unit_id = obj.get("unit_id").and_then(|v| v.as_i64()).unwrap_or(0) as u64;
-                    val |= (unit_enabled & 0x1) << 48;
-                    val |= (unit_id & 0x7f) << 49;
-                    val
-                } else {
-                    attr.as_i64().unwrap_or(0) as u64
-                }
-            }
-            _ => {
-                if let Some(obj) = attr.as_object() {
-                    let mut decoded = DecodedFilterAttr::default();
-                    decoded.target_player = obj.get("target_player").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.card_type = obj.get("card_type").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.group_enabled = Self::sparse_boolish(obj.get("group_enabled")) != 0;
-                    decoded.group_id = obj.get("group_id").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.is_tapped = Self::sparse_boolish(obj.get("is_tapped")) != 0;
-                    decoded.has_blade_heart = Self::sparse_boolish(obj.get("has_blade_heart")) != 0;
-                    decoded.not_has_blade_heart = Self::sparse_boolish(obj.get("not_has_blade_heart")) != 0;
-                    decoded.unique_names = Self::sparse_boolish(obj.get("unique_names")) != 0;
-                    decoded.unit_enabled = Self::sparse_boolish(obj.get("unit_enabled")) != 0;
-                    decoded.unit_id = obj.get("unit_id").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.value_enabled = Self::sparse_boolish(obj.get("value_enabled")) != 0;
-                    decoded.value_threshold = obj.get("value_threshold").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.is_le = Self::sparse_boolish(obj.get("is_le")) != 0;
-                    decoded.is_cost_type = Self::sparse_boolish(obj.get("is_cost_type")) != 0;
-                    decoded.color_mask = obj.get("color_mask").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.char_id_1 = obj.get("char_id_1").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.char_id_2 = obj.get("char_id_2").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.char_id_3 = obj.get("char_id_3").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.zone_mask = obj.get("zone_mask").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                    decoded.special_id = sparse_special_id(obj.get("special_id"));
-                    decoded.is_setsuna = Self::sparse_boolish(obj.get("is_setsuna")) != 0;
-                    decoded.compare_accumulated = Self::sparse_boolish(obj.get("compare_accumulated")) != 0;
-                    decoded.is_optional = Self::sparse_boolish(obj.get("is_optional")) != 0;
-                    decoded.keyword_energy = Self::sparse_boolish(obj.get("keyword_energy")) != 0;
-                    decoded.keyword_member = Self::sparse_boolish(obj.get("keyword_member")) != 0;
-                    decoded.to_attr()
-                } else {
-                    attr.as_i64().unwrap_or(0) as u64
-                }
-            }
+        let Some(obj) = value.as_object() else {
+            return filter;
+        };
+
+        if let Some(v) = obj.get("target_player").and_then(|v| v.as_u64()) {
+            filter.target_player = v as u8;
         }
+        if let Some(v) = obj.get("card_type").and_then(|v| v.as_u64()) {
+            filter.card_type = v as u8;
+        }
+        if let Some(v) = obj.get("group_enabled").and_then(|v| v.as_bool()) {
+            filter.group_enabled = v;
+        }
+        if let Some(v) = obj.get("group_id").and_then(|v| v.as_u64()) {
+            filter.group_id = v as u8;
+        }
+        if let Some(v) = obj.get("is_tapped").and_then(|v| v.as_bool()) {
+            filter.is_tapped = v;
+        }
+        if let Some(v) = obj.get("has_blade_heart").and_then(|v| v.as_bool()) {
+            filter.has_blade_heart = v;
+        }
+        if let Some(v) = obj.get("not_has_blade_heart").and_then(|v| v.as_bool()) {
+            filter.not_has_blade_heart = v;
+        }
+        if let Some(v) = obj.get("unique_names").and_then(|v| v.as_bool()) {
+            filter.unique_names = v;
+        }
+        if let Some(v) = obj.get("unit_enabled").and_then(|v| v.as_bool()) {
+            filter.unit_enabled = v;
+        }
+        if let Some(v) = obj.get("unit_id").and_then(|v| v.as_u64()) {
+            filter.unit_id = v as u8;
+        }
+        if let Some(v) = obj.get("value_enabled").and_then(|v| v.as_bool()) {
+            filter.value_enabled = v;
+        }
+        if let Some(v) = obj.get("value_threshold").and_then(|v| v.as_u64()) {
+            filter.value_threshold = v as u8;
+        }
+        if let Some(v) = obj.get("is_le").and_then(|v| v.as_bool()) {
+            filter.is_le = v;
+        }
+        if let Some(v) = obj.get("is_cost_type").and_then(|v| v.as_bool()) {
+            filter.is_cost_type = v;
+        }
+        if let Some(v) = obj.get("color_mask").and_then(|v| v.as_u64()) {
+            filter.color_mask = v as u8;
+        }
+        if let Some(v) = obj.get("char_id_1").and_then(|v| v.as_u64()) {
+            filter.char_id_1 = v as u8;
+        }
+        if let Some(v) = obj.get("char_id_2").and_then(|v| v.as_u64()) {
+            filter.char_id_2 = v as u8;
+        }
+        if let Some(v) = obj.get("char_id_3").and_then(|v| v.as_u64()) {
+            filter.char_id_3 = v as u8;
+        }
+        if let Some(v) = obj.get("zone_mask").and_then(|v| v.as_u64()) {
+            filter.zone_mask = v as u8;
+        }
+        if let Some(v) = obj.get("special_id").and_then(|v| v.as_u64()) {
+            filter.special_id = v as u8;
+        }
+        if let Some(v) = obj.get("is_setsuna").and_then(|v| v.as_bool()) {
+            filter.is_setsuna = v;
+        }
+        if let Some(v) = obj.get("compare_accumulated").and_then(|v| v.as_bool()) {
+            filter.compare_accumulated = v;
+        }
+        if let Some(v) = obj.get("is_optional").and_then(|v| v.as_bool()) {
+            filter.is_optional = v;
+        }
+        if let Some(v) = obj.get("keyword_energy").and_then(|v| v.as_bool()) {
+            filter.keyword_energy = v;
+        }
+        if let Some(v) = obj.get("keyword_member").and_then(|v| v.as_bool()) {
+            filter.keyword_member = v;
+        }
+        filter
     }
 
-    fn encode_sparse_slot(slot: Option<&Value>) -> i32 {
-        let Some(slot) = slot else { return 0; };
-        if let Some(value) = Self::sparse_int(Some(slot)) {
-            return value;
+    fn parse_sparse_slot(
+        value: Option<&Value>,
+        raw_slot: Option<&Value>,
+        params: Option<&Value>,
+    ) -> DecodedSlot {
+        let mut slot = raw_slot
+            .and_then(|value| value.as_i64())
+            .map(|raw| DecodedSlot::decode(raw as i32))
+            .unwrap_or_default();
+
+        let Some(value) = value else {
+            return slot;
+        };
+        if let Some(raw) = value.as_i64() {
+            return DecodedSlot::decode(raw as i32);
         }
-        if let Some(obj) = slot.as_object() {
-            let target_slot = obj.get("target_slot").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-            let remainder_zone = obj.get("remainder_zone").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-            let source_zone = obj
-                .get("source_zone")
-                .map(Self::zone_value_from_sparse)
-                .flatten()
-                .unwrap_or(0);
-            let dest_zone = obj
-                .get("dest_zone")
-                .map(Self::zone_value_from_sparse)
-                .flatten()
-                .unwrap_or(0);
-            let is_opponent = Self::sparse_boolish(obj.get("is_opponent"));
-            let is_reveal_until_live = Self::sparse_boolish(obj.get("is_reveal_until_live"));
-            let is_baton_slot = Self::sparse_boolish(obj.get("is_baton_slot"));
-            let is_empty_slot = Self::sparse_boolish(obj.get("is_empty_slot"));
-            let is_wait = Self::sparse_boolish(obj.get("is_wait"));
-            let is_dynamic = Self::sparse_boolish(obj.get("is_dynamic"));
-            let area_idx = obj.get("area_idx").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-            let reveal_or_baton = if is_reveal_until_live != 0 || is_baton_slot != 0 { 1 } else { 0 };
-            (target_slot & 0xff)
-                | ((remainder_zone & 0xff) << 8)
-                | ((source_zone & 0xf) << 16)
-                | ((dest_zone & 0xf) << 20)
-                | ((is_opponent & 0x1) << 24)
-                | ((reveal_or_baton & 0x1) << 25)
-                | ((is_empty_slot & 0x1) << 26)
-                | ((is_wait & 0x1) << 27)
-                | ((is_dynamic & 0x1) << 28)
-                | ((area_idx & 0x7) << 29)
-        } else {
-            0
+
+        let Some(obj) = value.as_object() else {
+            return slot;
+        };
+
+        if let Some(v) = obj.get("target_slot").and_then(|v| v.as_u64()) {
+            slot.target_slot = v as u8;
         }
+        if let Some(v) = obj.get("comparison").and_then(|v| v.as_u64()) {
+            slot.comparison = v as u8;
+        }
+        if let Some(v) = obj.get("source_zone").and_then(Self::parse_sparse_zone) {
+            slot.source_zone = v;
+        }
+        if let Some(v) = obj.get("dest_zone").and_then(Self::parse_sparse_zone) {
+            slot.dest_zone = v;
+        }
+        if let Some(v) = obj.get("remainder_zone").and_then(|v| v.as_u64()) {
+            slot.remainder_zone = v as u8;
+        }
+        if let Some(v) = obj.get("is_opponent").and_then(|v| v.as_bool()) {
+            slot.is_opponent = v;
+        }
+        if let Some(v) = obj.get("is_reveal_until_live").and_then(|v| v.as_bool()) {
+            slot.is_reveal_until_live = v;
+        }
+        if let Some(v) = obj.get("is_baton_slot").and_then(|v| v.as_bool()) {
+            slot.is_baton_slot = v;
+        }
+        if let Some(v) = obj.get("is_empty_slot").and_then(|v| v.as_bool()) {
+            slot.is_empty_slot = v;
+        }
+        if let Some(v) = obj.get("is_wait").and_then(|v| v.as_bool()) {
+            slot.is_wait = v;
+        }
+        if let Some(v) = obj.get("is_dynamic").and_then(|v| v.as_bool()) {
+            slot.is_dynamic = v;
+        }
+        if let Some(v) = obj.get("area_idx").and_then(|v| v.as_u64()) {
+            slot.area_idx = v as u8;
+        }
+
+        if slot.comparison == 0 {
+            if let Some(params_obj) = params.and_then(|v| v.as_object()) {
+                let comp = params_obj
+                    .get("comparison")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_ascii_uppercase())
+                    .or_else(|| {
+                        if params_obj.contains_key("GE") {
+                            Some("GE".to_string())
+                        } else if params_obj.contains_key("GT") {
+                            Some("GT".to_string())
+                        } else if params_obj.contains_key("LE") {
+                            Some("LE".to_string())
+                        } else if params_obj.contains_key("LT") {
+                            Some("LT".to_string())
+                        } else if params_obj.contains_key("EQ") {
+                            Some("EQ".to_string())
+                        } else {
+                            None
+                        }
+                    });
+
+                slot.comparison = match comp.as_deref() {
+                    Some("GT") => 1,
+                    Some("LT") => 2,
+                    Some("GE") => 3,
+                    Some("LE") => 4,
+                    Some("EQ") => 0,
+                    _ => slot.comparison,
+                };
+            }
+        }
+        slot
     }
 
-    fn sparse_int(value: Option<&Value>) -> Option<i32> {
+    fn parse_sparse_zone(value: &Value) -> Option<crate::core::enums::Zone> {
+        if let Some(raw) = value.as_u64() {
+            return Some(match raw as i32 {
+                crate::core::enums::ZONE_DECK_TOP => crate::core::enums::Zone::DeckTop,
+                crate::core::enums::ZONE_DECK_BOTTOM => crate::core::enums::Zone::DeckBottom,
+                crate::core::enums::ZONE_ENERGY => crate::core::enums::Zone::Energy,
+                crate::core::enums::ZONE_STAGE => crate::core::enums::Zone::Stage,
+                crate::core::enums::ZONE_HAND => crate::core::enums::Zone::Hand,
+                crate::core::enums::ZONE_DISCARD => crate::core::enums::Zone::Discard,
+                crate::core::enums::ZONE_DECK => crate::core::enums::Zone::Deck,
+                crate::core::enums::ZONE_LIVE_SET => crate::core::enums::Zone::LiveSet,
+                crate::core::enums::ZONE_SUCCESS_PILE => crate::core::enums::Zone::SuccessPile,
+                crate::core::enums::ZONE_YELL => crate::core::enums::Zone::Yell,
+                _ => crate::core::enums::Zone::Default,
+            });
+        }
+
+        let text = value.as_str()?.trim().to_ascii_uppercase();
+        Some(match text.as_str() {
+            "DECK_TOP" | "DECKTOP" => crate::core::enums::Zone::DeckTop,
+            "DECK_BOTTOM" | "DECKBOTTOM" => crate::core::enums::Zone::DeckBottom,
+            "ENERGY" => crate::core::enums::Zone::Energy,
+            "STAGE" => crate::core::enums::Zone::Stage,
+            "HAND" => crate::core::enums::Zone::Hand,
+            "DISCARD" => crate::core::enums::Zone::Discard,
+            "DECK" => crate::core::enums::Zone::Deck,
+            "LIVE_SET" | "LIVESET" => crate::core::enums::Zone::LiveSet,
+            "SUCCESS_PILE" | "SUCCESSPILE" => crate::core::enums::Zone::SuccessPile,
+            "YELL" => crate::core::enums::Zone::Yell,
+            _ => crate::core::enums::Zone::Default,
+        })
+    }
+
+    fn parse_sparse_look_choose(value: Option<&Value>) -> Option<DecodedLookAndChoose> {
         let value = value?;
         if let Some(raw) = value.as_i64() {
-            return Some(raw as i32);
+            return Some(DecodedLookAndChoose::decode(raw as i32));
         }
-        let cleaned = value.as_str()?.trim();
-        if cleaned.is_empty() {
-            return Some(0);
+        let obj = value.as_object()?;
+        let mut decoded = DecodedLookAndChoose::default();
+        if let Some(v) = obj.get("count").and_then(|v| v.as_u64()) {
+            decoded.count = v as u8;
         }
-
-        if let Some(num) = cleaned.strip_prefix("OP_").and_then(|tail| tail.parse::<i32>().ok()) {
-            return Some(num);
+        if let Some(v) = obj.get("char_id_1").and_then(|v| v.as_u64()) {
+            decoded.char_id_1 = v as u8;
         }
-
-        if let Some(target_name) = cleaned.strip_prefix("target_players.") {
-            return match target_name.to_ascii_uppercase().as_str() {
-                "SELF" => Some(TARGET_PLAYER_SELF),
-                "OPPONENT" => Some(TARGET_PLAYER_OPPONENT),
-                "BOTH" => Some(TARGET_PLAYER_BOTH),
-                _ => None,
-            };
+        if let Some(v) = obj.get("char_id_2").and_then(|v| v.as_u64()) {
+            decoded.char_id_2 = v as u8;
         }
-
-        cleaned.parse::<i32>().ok()
+        if let Some(v) = obj.get("char_id_3").and_then(|v| v.as_u64()) {
+            decoded.char_id_3 = v as u8;
+        }
+        if let Some(v) = obj.get("reveal").and_then(|v| v.as_bool()) {
+            decoded.reveal = v;
+        }
+        if let Some(v) = obj.get("dest_discard").and_then(|v| v.as_bool()) {
+            decoded.dest_discard = v;
+        }
+        Some(decoded)
     }
 
-    fn sparse_boolish(value: Option<&Value>) -> i32 {
-        match value {
-            Some(Value::Bool(flag)) => {
-                if *flag { 1 } else { 0 }
-            }
-            Some(Value::Number(num)) => num.as_i64().unwrap_or(0) as i32,
-            Some(other) => other.as_i64().unwrap_or(0) as i32,
-            None => 0,
-        }
-    }
-
-    fn zone_value_from_sparse(value: &Value) -> Option<i32> {
-        if let Some(raw) = value.as_i64() {
-            return Some(raw as i32);
-        }
-        let name = value.as_str()?.to_ascii_uppercase();
-        Some(match name.as_str() {
-            "DECK_TOP" => ZONE_DECK_TOP,
-            "DECK_BOTTOM" => ZONE_DECK_BOTTOM,
-            "ENERGY" => ZONE_ENERGY,
-            "STAGE" => ZONE_STAGE,
-            "DECK" => ZONE_DECK,
-            "HAND" => ZONE_HAND,
-            "DISCARD" => ZONE_DISCARD,
-            "LIVE_SET" => ZONE_LIVE_SET,
-            "SUCCESS_PILE" => ZONE_SUCCESS_PILE,
-            "YELL" => ZONE_YELL,
+    fn opcode_id_from_name(opcode_name: &str) -> i32 {
+        match opcode_name {
+            "RETURN" => O_RETURN,
+            "DRAW" => O_DRAW,
+            "RECOVER_LIVE" => O_RECOVER_LIVE,
+            "RECOVER_MEMBER" => O_RECOVER_MEMBER,
+            "LOOK_AND_CHOOSE" => O_LOOK_AND_CHOOSE,
+            "SELECT_MEMBER" => O_SELECT_MEMBER,
+            "MOVE_MEMBER" => O_MOVE_MEMBER,
+            "META_RULE" => O_META_RULE,
             _ => 0,
-        })
+        }
     }
 
     /// Extract the logical ID (0-4095) from a packed card ID.
@@ -782,7 +970,6 @@ impl CardDatabase {
     pub fn compute_effect_mask(abilities: &[Ability]) -> u64 {
         let mut mask = 0u64;
         for ab in abilities {
-            
             if Self::has_opcode_static_fast(ab, O_ADD_BLADES as i32)
                 || Self::has_opcode_static_fast(ab, O_SET_BLADES as i32)
                 || Self::has_opcode_static_fast(ab, O_BUFF_POWER as i32)
@@ -930,12 +1117,16 @@ impl CardDatabase {
                     match op {
                         O_RETURN | O_LOOK_AND_CHOOSE => ability_flags_for_ab |= FLAG_DRAW as u64,
                         O_SEARCH_DECK => ability_flags_for_ab |= FLAG_SEARCH as u64,
-                        O_RECOVER_LIVE | O_RECOVER_MEMBER => ability_flags_for_ab |= FLAG_RECOVER as u64,
+                        O_RECOVER_LIVE | O_RECOVER_MEMBER => {
+                            ability_flags_for_ab |= FLAG_RECOVER as u64
+                        }
                         O_ADD_BLADES | O_ADD_HEARTS => ability_flags_for_ab |= FLAG_BUFF as u64,
                         O_MOVE_MEMBER | O_SWAP_CARDS => ability_flags_for_ab |= FLAG_MOVE as u64,
                         O_TAP_OPPONENT | O_TAP_MEMBER => ability_flags_for_ab |= FLAG_TAP as u64,
                         O_ENERGY_CHARGE => ability_flags_for_ab |= FLAG_CHARGE as u64,
-                        O_ACTIVATE_MEMBER | O_SET_TAPPED => ability_flags_for_ab |= FLAG_TEMPO as u64,
+                        O_ACTIVATE_MEMBER | O_SET_TAPPED => {
+                            ability_flags_for_ab |= FLAG_TEMPO as u64
+                        }
                         O_REDUCE_COST => ability_flags_for_ab |= FLAG_REDUCE as u64,
                         O_BOOST_SCORE => ability_flags_for_ab |= FLAG_BOOST as u64,
                         O_TRANSFORM_COLOR => ability_flags_for_ab |= FLAG_TRANSFORM as u64,
@@ -996,13 +1187,25 @@ impl CardDatabase {
                         has_multi_baton = true;
                     }
 
-                    if [O_ADD_BLADES, O_ADD_HEARTS, O_BUFF_POWER, O_REDUCE_COST, O_INCREASE_COST, O_SET_HEART_COST]
-                        .contains(&op)
+                    if [
+                        O_ADD_BLADES,
+                        O_ADD_HEARTS,
+                        O_BUFF_POWER,
+                        O_REDUCE_COST,
+                        O_INCREASE_COST,
+                        O_SET_HEART_COST,
+                    ]
+                    .contains(&op)
                     {
                         let val = frame.value();
                         let attr = frame.attr();
                         let slot = frame.slot();
-                        ab.preparsed_modifiers.push(PreparsedModifier { op, val, attr, slot });
+                        ab.preparsed_modifiers.push(PreparsedModifier {
+                            op,
+                            val,
+                            attr,
+                            slot,
+                        });
                     }
 
                     if !flagged_ops.contains(&op) {
@@ -1128,21 +1331,47 @@ impl CardDatabase {
         score += (card.blades as f32 * 10.0 + stat_sum as f32) / (card.cost as f32 + 1.0);
 
         let f = card.ability_flags;
-        if (f & FLAG_DRAW as u64) != 0 { score += 5.0; }
-        if (f & FLAG_SEARCH as u64) != 0 { score += 5.0; }
-        if (f & FLAG_RECOVER as u64) != 0 { score += 0.5; }
-        if (f & FLAG_BUFF as u64) != 0 { score += 0.4; }
-        if (f & FLAG_CHARGE as u64) != 0 { score += 1.2; }
-        if (f & FLAG_TEMPO as u64) != 0 { score += 0.3; }
-        if (f & FLAG_REDUCE as u64) != 0 { score += 0.6; }
-        if (f & FLAG_BOOST as u64) != 0 { score += 0.6; }
-        if (f & FLAG_TRANSFORM as u64) != 0 { score += 0.4; }
-        if (f & FLAG_WIN_COND as u64) != 0 { score += 1.0; }
+        if (f & FLAG_DRAW as u64) != 0 {
+            score += 5.0;
+        }
+        if (f & FLAG_SEARCH as u64) != 0 {
+            score += 5.0;
+        }
+        if (f & FLAG_RECOVER as u64) != 0 {
+            score += 0.5;
+        }
+        if (f & FLAG_BUFF as u64) != 0 {
+            score += 0.4;
+        }
+        if (f & FLAG_CHARGE as u64) != 0 {
+            score += 1.2;
+        }
+        if (f & FLAG_TEMPO as u64) != 0 {
+            score += 0.3;
+        }
+        if (f & FLAG_REDUCE as u64) != 0 {
+            score += 0.6;
+        }
+        if (f & FLAG_BOOST as u64) != 0 {
+            score += 0.6;
+        }
+        if (f & FLAG_TRANSFORM as u64) != 0 {
+            score += 0.4;
+        }
+        if (f & FLAG_WIN_COND as u64) != 0 {
+            score += 1.0;
+        }
 
-        if (card.synergy_flags & SYN_FLAG_GROUP) != 0 { score += 0.3; }
-        if (card.synergy_flags & SYN_FLAG_CENTER) != 0 { score += 0.5; }
-        if (card.cost_flags & COST_FLAG_TAP as u32) != 0 { score += 0.2; }
-        
+        if (card.synergy_flags & SYN_FLAG_GROUP) != 0 {
+            score += 0.3;
+        }
+        if (card.synergy_flags & SYN_FLAG_CENTER) != 0 {
+            score += 0.5;
+        }
+        if (card.cost_flags & COST_FLAG_TAP as u32) != 0 {
+            score += 0.2;
+        }
+
         card.base_potential = score;
     }
 
@@ -1221,7 +1450,6 @@ impl CardDatabase {
             is_vanilla: false,
             cached_vanilla: None,
         };
-
 
         if let Some(members_raw) = raw.get("member_db").and_then(|m| m.as_object()) {
             for (_, val) in members_raw {
@@ -1325,7 +1553,7 @@ impl CardDatabase {
                 }
             }
         }
-        
+
         // Slow path: Try HashMap
         if let Some(m) = self.members.get(&id) {
             return Some(m);
@@ -1343,7 +1571,7 @@ impl CardDatabase {
                 }
             }
         }
-        
+
         // Slow path: Try HashMap
         if let Some(l) = self.lives.get(&id) {
             return Some(l);
@@ -1514,7 +1742,7 @@ pub const CHARACTER_NAMES: [&str; 78] = [
     "百生吟子",
     "徒町小鈴",
     "安養寺姫芽", // 66-69
-    "", // 70
+    "",           // 70
     "綺羅ツバサ",
     "統堂英玲奈",
     "優木あんじゅ",

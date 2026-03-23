@@ -1,7 +1,6 @@
-use crate::core::logic::*;
 use crate::core::enums::EffectType;
+use crate::core::logic::*;
 use crate::test_helpers::{create_test_state, load_real_db};
-use std::sync::Arc;
 
 /// Test that card 4558 (松浦果南) Ability 0 (ON_LIVE_START) executes correctly
 #[test]
@@ -12,7 +11,7 @@ fn test_card_4558_ability_0_on_live_start_pay_energy() {
 
     // Setup: Player 0 on stage, has energy
     state.players[0].stage[0] = 4558; // Card PL!S-pb1-003-R
-    // Add some energy cards to the energy zone
+                                      // Add some energy cards to the energy zone
     for _ in 0..5 {
         state.players[0].energy_zone.push(401); // Energy card
     }
@@ -25,10 +24,16 @@ fn test_card_4558_ability_0_on_live_start_pay_energy() {
     assert_eq!(card_data.abilities.len(), 2, "Card should have 2 abilities");
 
     let ability_0 = &card_data.abilities[0];
-    assert_eq!(ability_0.trigger as i32, 2, "First ability should be ON_LIVE_START (trigger=2)");
+    assert_eq!(
+        ability_0.trigger as i32, 2,
+        "First ability should be ON_LIVE_START (trigger=2)"
+    );
 
     // Verify bytecode exists
-    assert!(!ability_0.bytecode.is_empty(), "Ability 0 should have bytecode");
+    assert!(
+        !ability_0.bytecode.is_empty(),
+        "Ability 0 should have bytecode"
+    );
     println!("Ability 0 bytecode: {:?}", ability_0.bytecode);
 
     // Manually execute the ability through the interpreter
@@ -40,12 +45,14 @@ fn test_card_4558_ability_0_on_live_start_pay_energy() {
     ctx.ability_index = 0;
 
     // Process the ability
-    let bytecode_arc = Arc::new(ability_0.bytecode.clone());
-    state.resolve_bytecode(&db, bytecode_arc, &ctx);
+    state.resolve_ability(&db, ability_0, &ctx);
 
     // Verify: Check if energy was deducted (cost = 2)
     // Note: The ability cost is optional, so it should ask for PAY_ENERGY(2)
-    println!("Energy zone after ability execution: {:?}", state.players[0].energy_zone);
+    println!(
+        "Energy zone after ability execution: {:?}",
+        state.players[0].energy_zone
+    );
 
     // The ability should at least be executable without panic
     assert!(true, "Ability executed without panic");
@@ -66,10 +73,16 @@ fn test_card_4558_ability_1_on_live_success_recover_live() {
 
     let card_data = db.members.get(&4558).expect("Card 4558 should exist");
     let ability_1 = &card_data.abilities[1];
-    assert_eq!(ability_1.trigger as i32, 3, "Second ability should be ON_LIVE_SUCCESS (trigger=3)");
+    assert_eq!(
+        ability_1.trigger as i32, 3,
+        "Second ability should be ON_LIVE_SUCCESS (trigger=3)"
+    );
 
     // Verify bytecode exists
-    assert!(!ability_1.bytecode.is_empty(), "Ability 1 should have bytecode");
+    assert!(
+        !ability_1.bytecode.is_empty(),
+        "Ability 1 should have bytecode"
+    );
     println!("Ability 1 bytecode: {:?}", ability_1.bytecode);
 
     // The ability should be executable
@@ -80,8 +93,7 @@ fn test_card_4558_ability_1_on_live_success_recover_live() {
     ctx.target_slot = 0;
     ctx.ability_index = 1;
 
-    let bytecode_arc = Arc::new(ability_1.bytecode.clone());
-    state.resolve_bytecode(&db, bytecode_arc, &ctx);
+    state.resolve_ability(&db, ability_1, &ctx);
 
     println!("Ability 1 executed successfully");
     assert!(true, "Ability executed without panic");
@@ -104,7 +116,10 @@ fn test_card_4558_abilities_in_compiled_data() {
 
     // Ability 0: ON_LIVE_START (trigger=2)
     let ab0 = &card.abilities[0];
-    assert_eq!(ab0.trigger as i32, 2, "Ability 0 should have trigger=2 (ON_LIVE_START)");
+    assert_eq!(
+        ab0.trigger as i32, 2,
+        "Ability 0 should have trigger=2 (ON_LIVE_START)"
+    );
     assert!(
         !ab0.bytecode.is_empty(),
         "Ability 0 should have bytecode compiled"
@@ -117,13 +132,17 @@ fn test_card_4558_abilities_in_compiled_data() {
 
     let effect_0 = &ab0.effects[0];
     assert_eq!(
-        effect_0.effect_type, EffectType::TransformHeart,
+        effect_0.effect_type,
+        EffectType::TransformHeart,
         "Effect should be TRANSFORM_HEART"
     );
 
     // Ability 1: ON_LIVE_SUCCESS (trigger=3)
     let ab1 = &card.abilities[1];
-    assert_eq!(ab1.trigger as i32, 3, "Ability 1 should have trigger=3 (ON_LIVE_SUCCESS)");
+    assert_eq!(
+        ab1.trigger as i32, 3,
+        "Ability 1 should have trigger=3 (ON_LIVE_SUCCESS)"
+    );
     assert!(
         !ab1.bytecode.is_empty(),
         "Ability 1 should have bytecode compiled"
@@ -136,7 +155,8 @@ fn test_card_4558_abilities_in_compiled_data() {
 
     let effect_1 = &ab1.effects[0];
     assert_eq!(
-        effect_1.effect_type, EffectType::RecoverLive,
+        effect_1.effect_type,
+        EffectType::RecoverLive,
         "Effect should be RECOVER_LIVE"
     );
 

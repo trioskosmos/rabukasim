@@ -1,11 +1,11 @@
 //! Tests for opcodes and conditions that were previously uncovered.
 //! This ensures 100% coverage of logic.rs opcodes.
 
+use crate::core::enums::TriggerType;
 use crate::core::logic::card_db::LOGIC_ID_MASK;
 use crate::core::logic::interpreter::resolve_ability;
 use crate::core::logic::models::{Ability, AbilityFrame, FrameProgram};
 use crate::core::models::MemberCard;
-use crate::core::enums::TriggerType;
 use crate::test_helpers::{create_test_db, create_test_state};
 
 use crate::core::hearts::HeartBoard;
@@ -228,7 +228,7 @@ fn test_conditions_misc() {
 
     // C_DECK_REFRESHED
     state.players[0].flags |= 1 << PlayerState::FLAG_DECK_REFRESHED; // Need public const or value?
-                                                                          // PlayerState::FLAG_DECK_REFRESHED is 0. 1<<0 = 1.
+                                                                     // PlayerState::FLAG_DECK_REFRESHED is 0. 1<<0 = 1.
     assert!(check_cond(&mut state, &db, C_DECK_REFRESHED, 0, 0, 0));
 
     // C_IS_IN_DISCARD
@@ -441,12 +441,7 @@ fn test_opcodes_complex_mod() {
     // It usually works globally or on specific live?
     // logic.rs: O_REDUCE_HEART_REQ => { player.heart_req_reductions.add(...) }
     // It's a `HeartBoard`.
-    assert_eq!(
-        state.players[0]
-            .heart_req_reductions
-            .get_color_count(0),
-        1
-    );
+    assert_eq!(state.players[0].heart_req_reductions.get_color_count(0), 1);
 }
 
 #[test]
@@ -498,10 +493,7 @@ fn test_frame_program_only_ability_executes() {
         trigger: TriggerType::OnPlay,
         bytecode: Vec::new(),
         frame_program: Some(FrameProgram {
-            frames: vec![
-                AbilityFrame::Draw { count: 1 },
-                AbilityFrame::Return,
-            ],
+            frames: vec![AbilityFrame::Draw { count: 1 }, AbilityFrame::Return],
         }),
         ..Default::default()
     };
@@ -528,7 +520,8 @@ fn test_frame_program_only_ability_executes() {
         ..Default::default()
     };
 
-    resolve_ability(&mut state, &db, &ability, &ctx).expect("semantic frame program should resolve");
+    resolve_ability(&mut state, &db, &ability, &ctx)
+        .expect("semantic frame program should resolve");
 
     assert_eq!(state.players[0].deck.len(), before_deck.saturating_sub(1));
     assert_eq!(state.players[0].hand.len(), before_hand + 1);
@@ -565,10 +558,22 @@ fn test_frame_program_bytecode_parity_for_simple_draw() {
     resolve_ability(&mut bytecode_state, &db, &ability_from_bytecode, &ctx)
         .expect("bytecode ability should resolve");
 
-    assert_eq!(semantic_state.players[0].hand.len(), bytecode_state.players[0].hand.len());
-    assert_eq!(semantic_state.players[0].deck.len(), bytecode_state.players[0].deck.len());
-    assert_eq!(semantic_state.players[0].hand, bytecode_state.players[0].hand);
-    assert_eq!(semantic_state.players[0].deck, bytecode_state.players[0].deck);
+    assert_eq!(
+        semantic_state.players[0].hand.len(),
+        bytecode_state.players[0].hand.len()
+    );
+    assert_eq!(
+        semantic_state.players[0].deck.len(),
+        bytecode_state.players[0].deck.len()
+    );
+    assert_eq!(
+        semantic_state.players[0].hand,
+        bytecode_state.players[0].hand
+    );
+    assert_eq!(
+        semantic_state.players[0].deck,
+        bytecode_state.players[0].deck
+    );
 }
 
 #[test]

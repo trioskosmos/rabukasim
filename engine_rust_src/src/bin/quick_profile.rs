@@ -1,8 +1,8 @@
+use engine_rust::core::enums::Phase;
+use engine_rust::core::logic::turn_sequencer::TurnSequencer;
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
 use std::fs;
 use std::time::Instant;
-use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
-use engine_rust::core::logic::turn_sequencer::{TurnSequencer};
-use engine_rust::core::enums::Phase;
 
 fn load_vanilla_db() -> CardDatabase {
     let candidates = [
@@ -77,14 +77,14 @@ fn load_deck(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
 
 fn main() {
     println!("\n=== MICRO-BENCHMARKS ===\n");
-    
+
     let db = load_vanilla_db();
     let (p0_members, p0_lives) = load_deck("ai/decks/liella_cup.txt", &db);
     let (p1_members, p1_lives) = load_deck("ai/decks/liella_cup.txt", &db);
 
     let mut state = GameState::default();
     let energy_vec: Vec<i32> = db.energy_db.keys().take(12).cloned().collect();
-    
+
     println!("[INIT] Creating game state...");
     let t = Instant::now();
     state.initialize_game(
@@ -103,7 +103,10 @@ fn main() {
     for _ in 0..1000 {
         let _ = state.clone();
     }
-    println!("[CLONE] 1000 clones: {:.3}µs per clone", t.elapsed().as_secs_f32() * 1_000_000.0 / 1000.0);
+    println!(
+        "[CLONE] 1000 clones: {:.3}µs per clone",
+        t.elapsed().as_secs_f32() * 1_000_000.0 / 1000.0
+    );
 
     // Measure action generation
     let mut actions: Vec<i32> = Vec::new();
@@ -112,7 +115,11 @@ fn main() {
         actions.clear();
         state.generate_legal_actions(&db, state.current_player as usize, &mut actions);
     }
-    println!("[ACTIONS] 10000 gens: {:.3}µs per gen ({} actions)", t.elapsed().as_secs_f32() * 1_000_000.0 / 10000.0, actions.len());
+    println!(
+        "[ACTIONS] 10000 gens: {:.3}µs per gen ({} actions)",
+        t.elapsed().as_secs_f32() * 1_000_000.0 / 10000.0,
+        actions.len()
+    );
 
     // Measure state.step()
     let t = Instant::now();
@@ -120,7 +127,10 @@ fn main() {
         let mut temp = state.clone();
         let _ = temp.step(&db, ACTION_BASE_PASS);
     }
-    println!("[STEP] 1000 steps: {:.3}µs per step", t.elapsed().as_secs_f32() * 1_000_000.0 / 1000.0);
+    println!(
+        "[STEP] 1000 steps: {:.3}µs per step",
+        t.elapsed().as_secs_f32() * 1_000_000.0 / 1000.0
+    );
 
     // Measure full op
     let t = Instant::now();
@@ -132,17 +142,26 @@ fn main() {
             let _ = temp.step(&db, acts[0]);
         }
     }
-    println!("[FULL-OP] 1000x (gen+clone+step): {:.3}µs per op", t.elapsed().as_secs_f32() * 1_000_000.0 / 1000.0);
+    println!(
+        "[FULL-OP] 1000x (gen+clone+step): {:.3}µs per op",
+        t.elapsed().as_secs_f32() * 1_000_000.0 / 1000.0
+    );
 
     println!("\n=== PHASE TRANSITION ===\n");
-    
+
     // Skip to Main phase
     let t = Instant::now();
     while state.phase != Phase::Main && !state.is_terminal() {
         state.auto_step(&db);
     }
-    println!("[STARTUP] Reached Main phase in {:.3}s", t.elapsed().as_secs_f32());
-    println!("  Current state: Player={}, Phase={:?}", state.current_player, state.phase);
+    println!(
+        "[STARTUP] Reached Main phase in {:.3}s",
+        t.elapsed().as_secs_f32()
+    );
+    println!(
+        "  Current state: Player={}, Phase={:?}",
+        state.current_player, state.phase
+    );
 
     // Generate actions
     let mut main_actions: Vec<i32> = Vec::new();
@@ -152,14 +171,24 @@ fn main() {
     println!("\n=== SINGLE TURN SEARCH ===\n");
 
     let search_start = Instant::now();
-    let (best_seq, best_val, (board_ev, live_ev), evals) = TurnSequencer::plan_full_turn(&state, &db);
+    let (best_seq, best_val, (board_ev, live_ev), evals) =
+        TurnSequencer::plan_full_turn(&state, &db);
     let search_elapsed = search_start.elapsed();
 
-    println!("[SEARCH] Completed in {:.3}ms", search_elapsed.as_secs_f32() * 1000.0);
+    println!(
+        "[SEARCH] Completed in {:.3}ms",
+        search_elapsed.as_secs_f32() * 1000.0
+    );
     println!("  Best sequence: {} actions", best_seq.len());
-    println!("  Evaluation: {:.2} (board={:.2}, live={:.2})", best_val, board_ev, live_ev);
+    println!(
+        "  Evaluation: {:.2} (board={:.2}, live={:.2})",
+        best_val, board_ev, live_ev
+    );
     println!("  Evaluations run: {}", evals);
-    println!("  Time per eval: {:.3}µs", search_elapsed.as_secs_f32() * 1_000_000.0 / evals.max(1) as f32);
+    println!(
+        "  Time per eval: {:.3}µs",
+        search_elapsed.as_secs_f32() * 1_000_000.0 / evals.max(1) as f32
+    );
 
     println!("\n=== EXECUTE SEQUENCE ===\n");
 
@@ -174,14 +203,24 @@ fn main() {
         }
         let _ = state.step(&db, action);
     }
-    println!("[EXEC] Executed {} actions in {:.3}ms", best_seq.len(), exec_start.elapsed().as_secs_f32() * 1000.0);
-    
+    println!(
+        "[EXEC] Executed {} actions in {:.3}ms",
+        best_seq.len(),
+        exec_start.elapsed().as_secs_f32() * 1000.0
+    );
+
     if state.phase == Phase::Main {
         let _ = state.step(&db, ACTION_BASE_PASS);
         println!("[PASS] Turn ended");
     }
 
     println!("\n=== ANALYSIS ===\n");
-    println!("Turn search (search + exec): {:.3}ms", (search_elapsed + exec_start.elapsed()).as_secs_f32() * 1000.0);
-    println!("If repeated 10 times: {:.3}s", (search_elapsed + exec_start.elapsed()).as_secs_f32() * 1000.0 * 10.0 / 1000.0);
+    println!(
+        "Turn search (search + exec): {:.3}ms",
+        (search_elapsed + exec_start.elapsed()).as_secs_f32() * 1000.0
+    );
+    println!(
+        "If repeated 10 times: {:.3}s",
+        (search_elapsed + exec_start.elapsed()).as_secs_f32() * 1000.0 * 10.0 / 1000.0
+    );
 }

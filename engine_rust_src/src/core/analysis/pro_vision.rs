@@ -8,7 +8,7 @@ use crate::core::logic::{CardDatabase, GameState, PlayerState};
 pub struct ProVisionHints {
     pub win_probabilities: [f32; 3], // Slots 70-72
     pub deck_distribution: [f32; 7], // Slots 73-79
-    pub energy_projection: f32,       // Slot 80
+    pub energy_projection: f32,      // Slot 80
 }
 
 impl ProVisionHints {
@@ -25,7 +25,11 @@ impl ProVisionHints {
 
 /// Calculate win probability for current live slots.
 /// Currently a baseline placeholder for a future exact PerformanceProbabilitySolver.
-fn calculate_win_probabilities(_state: &GameState, _db: &CardDatabase, _player_idx: usize) -> [f32; 3] {
+fn calculate_win_probabilities(
+    _state: &GameState,
+    _db: &CardDatabase,
+    _player_idx: usize,
+) -> [f32; 3] {
     // TODO: Integrate exact PerformanceProbabilitySolver logic
     [0.5, 0.5, 0.5]
 }

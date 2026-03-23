@@ -18,7 +18,7 @@ mod tests {
         // Q14: デッキをシャッフルをする際に、気をつけることはありますか？
         // A14: シャッフルを行うプレイヤー自身が、どこにどのカードがあるかわからなくなるように、
         //      しっかりと無作為化をしてください。その後、対戦相手にシャッフル（カット）を行ってもらってください。
-        // 
+        //
         // Engine Verification: Deck must maintain 60 distinct cards through phase transitions.
         // If deck becomes unknown order, random card draw operations should all succeed.
         // (Actual shuffle randomization is UX concern; engine just maintains deck integrity.)
@@ -52,7 +52,11 @@ mod tests {
         );
 
         // Assert 2: Hand gains exactly 1 card
-        assert_eq!(state.players[0].hand.len(), 1, "Q14: hand gains 1 card from draw");
+        assert_eq!(
+            state.players[0].hand.len(),
+            1,
+            "Q14: hand gains 1 card from draw"
+        );
 
         // Assert 3: Card drawn is from the correct ID range (deck integrity)
         let drawn_card = state.players[0].hand[0];
@@ -66,7 +70,7 @@ mod tests {
             state.players[0].deck.len() <= 60,
             "Q14: deck size remains valid after draw"
         );
-        
+
         println!("[Q14] PASS: Deck shuffle maintains integrity through draw phase");
     }
 
@@ -93,26 +97,43 @@ mod tests {
         state.players[0].tapped_energy_mask = 0; // All active initially
 
         // Assert 1: Energy deck face-down (separate storage, not accessible via zone)
-        assert_eq!(initial_energy_deck_len, 12, "Q15: energy deck has 12 cards face-down");
+        assert_eq!(
+            initial_energy_deck_len, 12,
+            "Q15: energy deck has 12 cards face-down"
+        );
 
         // Assert 2: Energy zone face-up (visible, can reference by ID)
-        assert_eq!(state.players[0].energy_zone.len(), 3, "Q15: energy zone visible with 3 cards");
+        assert_eq!(
+            state.players[0].energy_zone.len(),
+            3,
+            "Q15: energy zone visible with 3 cards"
+        );
 
         // Action: Activate phase - tap one energy to wait state
         state.phase = Phase::Main;
         state.players[0].tapped_energy_mask = 0b001; // Tap first energy
 
         // Assert 3: Tapped energy state changed (横向き = wait), but card identity preserved
-        assert_eq!(state.players[0].tapped_energy_mask, 0b001, "Q15: first energy now wait (tapped)");
-        assert_eq!(state.players[0].energy_zone[0], 3001, "Q15: card identity unchanged when tapped");
+        assert_eq!(
+            state.players[0].tapped_energy_mask, 0b001,
+            "Q15: first energy now wait (tapped)"
+        );
+        assert_eq!(
+            state.players[0].energy_zone[0], 3001,
+            "Q15: card identity unchanged when tapped"
+        );
 
         // Action: Attempt to use tapped energy (should fail - only active energy can be used)
         state.players[0].stage = [1, -1, -1];
         let player = &state.players[0];
-        let active_energy_count = player.energy_zone.len() as u32 - player.tapped_energy_mask.count_ones();
+        let active_energy_count =
+            player.energy_zone.len() as u32 - player.tapped_energy_mask.count_ones();
 
         // Assert 4: Only active (not tapped) energy is available for costs
-        assert_eq!(active_energy_count, 2, "Q15: only 2 active energy available after tapping 1");
+        assert_eq!(
+            active_energy_count, 2,
+            "Q15: only 2 active energy available after tapping 1"
+        );
 
         println!("[Q15] PASS: Energy deck face-down, energy zone face-up; tapping changes state not identity");
     }
@@ -152,7 +173,7 @@ mod tests {
         state.phase = Phase::Main;
         state.players[0].stage[0] = 5001; // Occupied slot
         state.players[0].hand = vec![5002].into();
-        
+
         // Provide enough energy for baton cost: 3 - 2 = 1 energy needed
         state.players[0].energy_zone = vec![3001].into();
         state.players[0].tapped_energy_mask = 0; // All active
@@ -161,7 +182,10 @@ mod tests {
 
         // Action: Call play_member (baton touch to non-empty slot)
         let result = state.play_member(&db, 0, 0);
-        assert!(result.is_ok(), "Q27: Baton touch should succeed with sufficient energy");
+        assert!(
+            result.is_ok(),
+            "Q27: Baton touch should succeed with sufficient energy"
+        );
 
         let discard_after = state.players[0].discard.len();
 
@@ -182,7 +206,10 @@ mod tests {
         assert_eq!(state.players[0].stage[0], 5002, "Q27: New member on stage");
 
         // Assert 4: Old member NOT in hand or stage (was successfully replaced)
-        assert!(!state.players[0].hand.contains(&5001), "Q27: Old member not in hand");
+        assert!(
+            !state.players[0].hand.contains(&5001),
+            "Q27: Old member not in hand"
+        );
 
         println!("[Q27] PASS: Baton touch discards exactly 1 member, not multiple");
     }
@@ -211,7 +238,7 @@ mod tests {
         let mut state = create_test_state();
         state.ui.silent = true;
         state.phase = Phase::Main;
-        
+
         // Setup: Place same card via play_member() calls to different slots
         state.players[0].hand = vec![5100, 5100, 5100].into(); // 3 copies in hand
 
@@ -223,7 +250,10 @@ mod tests {
         // Place second copy (slot 1)
         let result2 = state.play_member(&db, 0, 1);
         assert!(result2.is_ok(), "Q30: Second placement should succeed");
-        assert_eq!(state.players[0].stage[1], 5100, "Q30: Second copy on slot 1");
+        assert_eq!(
+            state.players[0].stage[1], 5100,
+            "Q30: Second copy on slot 1"
+        );
 
         // Place third copy (slot 2)
         let result3 = state.play_member(&db, 0, 2);
@@ -231,11 +261,16 @@ mod tests {
         assert_eq!(state.players[0].stage[2], 5100, "Q30: Third copy on slot 2");
 
         // Assert: All three slots contain same card ID
-        let duplicate_count = state.players[0].stage.iter()
+        let duplicate_count = state.players[0]
+            .stage
+            .iter()
             .filter(|&&cid| cid == 5100)
             .count();
 
-        assert_eq!(duplicate_count, 3, "Q30: All 3 stage slots can have same card");
+        assert_eq!(
+            duplicate_count, 3,
+            "Q30: All 3 stage slots can have same card"
+        );
         println!("[Q30] PASS: Same card can be placed 3 times on stage");
     }
 
@@ -269,17 +304,20 @@ mod tests {
         state.players[0].live_zone[2] = 5200;
 
         // Assert 1: All three slots contain same live card
-        let duplicate_live_count = state.players[0].live_zone.iter()
+        let duplicate_live_count = state.players[0]
+            .live_zone
+            .iter()
             .filter(|&&cid| cid == 5200)
             .count();
         assert_eq!(
-            duplicate_live_count,
-            3,
+            duplicate_live_count, 3,
             "Q31: All 3 live zone slots filled with same card"
         );
 
         // Assert 2: Total score calculation includes all duplicates
-        let expected_score: u32 = state.players[0].live_zone.iter()
+        let expected_score: u32 = state.players[0]
+            .live_zone
+            .iter()
             .filter(|&&cid| cid == 5200)
             .fold(0, |sum, _| {
                 sum + db.lives.get(&5200).map(|l| l.score).unwrap_or(0)
@@ -288,17 +326,23 @@ mod tests {
 
         // Assert 3: Live result phase can process all duplicates
         state.phase = Phase::LiveResult;
-        state.ui.performance_results.insert(0, serde_json::json!({
-            "success": true,
-            "lives": [
-                {"passed": true, "score": 1, "slot_idx": 0},
-                {"passed": true, "score": 1, "slot_idx": 1},
-                {"passed": true, "score": 1, "slot_idx": 2}
-            ]
-        }));
+        state.ui.performance_results.insert(
+            0,
+            serde_json::json!({
+                "success": true,
+                "lives": [
+                    {"passed": true, "score": 1, "slot_idx": 0},
+                    {"passed": true, "score": 1, "slot_idx": 1},
+                    {"passed": true, "score": 1, "slot_idx": 2}
+                ]
+            }),
+        );
 
         // No errors should occur processing multiple identical live cards
-        assert!(!state.players[0].live_zone.is_empty(), "Q31: Live zone maintained");
+        assert!(
+            !state.players[0].live_zone.is_empty(),
+            "Q31: Live zone maintained"
+        );
 
         println!("[Q31] PASS: Same live card can be placed 3 times in live zone");
     }
@@ -352,17 +396,19 @@ mod tests {
 
         // Record initial first_player
         let initial_first = state.first_player;
-        
+
         // Verify both have success cards
-        assert!(!state.players[0].success_lives.is_empty(), "Q50: P0 has success live");
-        assert!(!state.players[1].success_lives.is_empty(), "Q50: P1 has success live");
+        assert!(
+            !state.players[0].success_lives.is_empty(),
+            "Q50: P0 has success live"
+        );
+        assert!(
+            !state.players[1].success_lives.is_empty(),
+            "Q50: P1 has success live"
+        );
 
         // When both place, turn order should be unchanged (this is the core rule)
-        assert_eq!(
-            initial_first,
-            0,
-            "Q50: Initial first player is 0"
-        );
+        assert_eq!(initial_first, 0, "Q50: Initial first player is 0");
 
         println!("[Q50] PASS: Turn order unchanged when both players place success lives");
     }
@@ -389,8 +435,16 @@ mod tests {
         state.players[1].success_lives = vec![602].into(); // P1 placed one
 
         // Verify the condition
-        assert_eq!(state.players[0].success_lives.len(), 0, "Q51: P0 has no success live");
-        assert_eq!(state.players[1].success_lives.len(), 1, "Q51: P1 placed 1 success live");
+        assert_eq!(
+            state.players[0].success_lives.len(),
+            0,
+            "Q51: P0 has no success live"
+        );
+        assert_eq!(
+            state.players[1].success_lives.len(),
+            1,
+            "Q51: P1 placed 1 success live"
+        );
 
         println!("[Q51] PASS: Asymmetric placement condition verified");
     }
@@ -420,12 +474,18 @@ mod tests {
         state.players[0].live_zone[0] = live_id;
         state.players[1].live_zone[0] = live_id;
 
-        state.ui.performance_results.insert(0, serde_json::json!({
-            "success": true, "lives": [{"passed": true}]
-        }));
-        state.ui.performance_results.insert(1, serde_json::json!({
-            "success": true, "lives": [{"passed": true}]
-        }));
+        state.ui.performance_results.insert(
+            0,
+            serde_json::json!({
+                "success": true, "lives": [{"passed": true}]
+            }),
+        );
+        state.ui.performance_results.insert(
+            1,
+            serde_json::json!({
+                "success": true, "lives": [{"passed": true}]
+            }),
+        );
         state.live_result_processed_mask = [0x80, 0x80];
 
         // Action: Neither can place
@@ -433,7 +493,10 @@ mod tests {
         state.finalize_live_result();
 
         // Assert: Order unchanged (no one placed)
-        assert_eq!(state.first_player, 0, "Q52: Order unchanged when no one places");
+        assert_eq!(
+            state.first_player, 0,
+            "Q52: Order unchanged when no one places"
+        );
     }
 
     // =========================================================================
@@ -467,7 +530,10 @@ mod tests {
 
         // In actual engine, calling do_draw_phase would trigger refresh
         // For this test, we verify the rule understanding is correct
-        assert!(state.players[0].discard.len() > 0, "Q53: Discard available for refresh");
+        assert!(
+            state.players[0].discard.len() > 0,
+            "Q53: Discard available for refresh"
+        );
     }
 
     // =========================================================================
@@ -493,7 +559,10 @@ mod tests {
         let discard_count = state.players[0].discard.len();
 
         // Total available: 4 + 5 = 9 >= 5 ✓
-        assert!(deck_count + discard_count >= 5, "Q85: Sufficient cards with refresh");
+        assert!(
+            deck_count + discard_count >= 5,
+            "Q85: Sufficient cards with refresh"
+        );
     }
 
     #[test]
@@ -514,7 +583,10 @@ mod tests {
 
         // Discard should remain untouched
         let discard_count_before = state.players[0].discard.len();
-        assert_eq!(discard_count_before, 5, "Q86: Discard unchanged on exact peek");
+        assert_eq!(
+            discard_count_before, 5,
+            "Q86: Discard unchanged on exact peek"
+        );
     }
 
     // =========================================================================
@@ -566,7 +638,11 @@ mod tests {
 
         // Assert: All moved
         assert_eq!(state.players[0].deck.len(), 0, "Q104: Deck empty");
-        assert_eq!(state.players[0].discard.len(), 5, "Q104: All cards in discard");
+        assert_eq!(
+            state.players[0].discard.len(),
+            5,
+            "Q104: All cards in discard"
+        );
     }
 
     // =========================================================================
@@ -584,7 +660,7 @@ mod tests {
         // If baton touch happens, member moves and energy stays intact in the new location.
 
         let mut db = load_real_db().clone();
-        
+
         // Create stage member (with energy underneath)
         let mut member_slot0 = MemberCard::default();
         member_slot0.card_id = 6001;
@@ -614,7 +690,7 @@ mod tests {
         state.players[0].stage[0] = 6001;
         state.players[0].stage[1] = 6010;
         state.players[0].stage_energy[0] = vec![3001, 3002].into(); // Energy under slot 0
-        
+
         // Setup: Replacement in hand for baton touch
         state.players[0].hand = vec![6002].into();
         state.players[0].energy_zone = vec![3001, 3002, 3003].into(); // Enough to pay cost
@@ -624,15 +700,24 @@ mod tests {
         assert!(result.is_ok(), "Q139: Baton touch should succeed");
 
         // Assert 1: Member moved to slot 0
-        assert_eq!(state.players[0].stage[0], 6002, "Q139: New member in slot 0");
+        assert_eq!(
+            state.players[0].stage[0], 6002,
+            "Q139: New member in slot 0"
+        );
 
         // Assert 2: Energy under slot 0 was reclaimed/transferred appropriately
         // (Exact behavior depends on implementation - either moved to deck or cleared)
         // For this test, we verify the slot cleanup happened
-        assert_eq!(state.players[0].stage[1], 6010, "Q139: Slot 1 member unchanged");
+        assert_eq!(
+            state.players[0].stage[1], 6010,
+            "Q139: Slot 1 member unchanged"
+        );
 
         // Assert 3: Old member was discarded
-        assert!(state.players[0].discard.contains(&6001), "Q139: Old member discarded");
+        assert!(
+            state.players[0].discard.contains(&6001),
+            "Q139: Old member discarded"
+        );
 
         println!("[Q139] PASS: Under-member energy behavior during baton touch verified");
     }
@@ -659,15 +744,25 @@ mod tests {
         state.players[0].stage_energy[0] = vec![3005, 3006, 3007].into(); // 3 energy underneath
 
         // Verify preconditions
-        assert_eq!(state.players[0].stage[0], 6005, "Q141: Member on stage initially");
-        assert_eq!(state.players[0].stage_energy[0].len(), 3, "Q141: Energy underneath initially");
+        assert_eq!(
+            state.players[0].stage[0], 6005,
+            "Q141: Member on stage initially"
+        );
+        assert_eq!(
+            state.players[0].stage_energy[0].len(),
+            3,
+            "Q141: Energy underneath initially"
+        );
 
         // Simulate baton touch removal: Member removed, energy cleared
         state.players[0].stage[0] = 6006; // New member placed
         state.players[0].stage_energy[0] = vec![].into(); // Energy cleared for new member
 
         // Assert 1: Old member no longer on stage
-        assert_ne!(state.players[0].stage[0], 6005, "Q141: Old member removed from stage");
+        assert_ne!(
+            state.players[0].stage[0], 6005,
+            "Q141: Old member removed from stage"
+        );
 
         // Assert 2: New member on stage
         assert_eq!(state.players[0].stage[0], 6006, "Q141: New member on stage");
@@ -707,8 +802,11 @@ mod tests {
         // - Wait members: blades NOT counted toward yell total
 
         // Verification: Just ensure wait state concept is understood
-        assert_eq!(state.players[0].stage.iter().filter(|&&id| id >= 0).count(), 2,
-                   "Q133: Two members on stage");
+        assert_eq!(
+            state.players[0].stage.iter().filter(|&&id| id >= 0).count(),
+            2,
+            "Q133: Two members on stage"
+        );
     }
 
     #[test]
@@ -749,7 +847,10 @@ mod tests {
         let result = state.play_member(&db, 0, 0);
 
         // Assert: Baton touch succeeds and new member is active (not wait)
-        assert!(result.is_ok(), "Q134: Baton touch with wait member succeeds");
+        assert!(
+            result.is_ok(),
+            "Q134: Baton touch with wait member succeeds"
+        );
         assert_eq!(state.players[0].stage[0], 7002, "Q134: New member placed");
     }
 
@@ -770,7 +871,10 @@ mod tests {
         // at the start of active phase automatically
 
         // Verification: Just ensure concept is present
-        assert_eq!(state.players[0].stage.iter().filter(|&&id| id >= 0).count(), 3);
+        assert_eq!(
+            state.players[0].stage.iter().filter(|&&id| id >= 0).count(),
+            3
+        );
     }
 
     #[test]
@@ -795,7 +899,10 @@ mod tests {
         }
 
         // Assert: Member still in stage (wait state preserved internally)
-        assert_eq!(state.players[0].stage[1], 100, "Q136: Member moved and wait preserved");
+        assert_eq!(
+            state.players[0].stage[1], 100,
+            "Q136: Member moved and wait preserved"
+        );
     }
 
     #[test]
@@ -841,8 +948,15 @@ mod tests {
         // The rule states: Can place live card even if no stage members
         // (Unlike older TCGs where stage is prerequisite)
 
-        assert_eq!(state.players[0].live_zone.iter().filter(|&&id| id >= 0).count(), 0,
-                   "Q72: No live cards placed yet");
+        assert_eq!(
+            state.players[0]
+                .live_zone
+                .iter()
+                .filter(|&&id| id >= 0)
+                .count(),
+            0,
+            "Q72: No live cards placed yet"
+        );
     }
 
     #[test]
@@ -869,7 +983,10 @@ mod tests {
         // 5. If new deck + discard both become 0, stop and resolve what was found
 
         // Verification: Just ensure the concept is correct
-        assert!(state.players[0].deck.len() <= 1, "Q101: Minimal deck for edge case");
+        assert!(
+            state.players[0].deck.len() <= 1,
+            "Q101: Minimal deck for edge case"
+        );
     }
 
     #[test]
@@ -882,9 +999,9 @@ mod tests {
         let mut state = create_test_state();
 
         // Setup: Members in different slots
-        state.players[0].stage[0] = 100;  // Left slot
-        state.players[0].stage[1] = 101;  // CENTER slot
-        state.players[0].stage[2] = 102;  // Right slot
+        state.players[0].stage[0] = 100; // Left slot
+        state.players[0].stage[1] = 101; // CENTER slot
+        state.players[0].stage[2] = 102; // Right slot
 
         // Center slot is index 1 (middle slot)
         let center_slot_index = 1;
@@ -892,10 +1009,14 @@ mod tests {
         // Rule: Center abilities only work if member is at center_slot_index
         // If moved to other slots, center ability becomes inactive
 
-        assert_eq!(state.players[0].stage[center_slot_index], 101,
-                   "Q143: Member at center slot has center ability active");
-        assert_eq!(state.players[0].stage[0], 100,
-                   "Q143: Member at left slot has center ability inactive");
+        assert_eq!(
+            state.players[0].stage[center_slot_index], 101,
+            "Q143: Member at center slot has center ability active"
+        );
+        assert_eq!(
+            state.players[0].stage[0], 100,
+            "Q143: Member at left slot has center ability inactive"
+        );
     }
 
     // =========================================================================
@@ -953,7 +1074,10 @@ mod tests {
 
         // Rule: Discard as many as possible (1/2)
         let discarded = std::cmp::min(initial_hand, 2);
-        assert_eq!(discarded, 1, "Q93: Partial resolution discards 1 of 2 requested");
+        assert_eq!(
+            discarded, 1,
+            "Q93: Partial resolution discards 1 of 2 requested"
+        );
 
         // Case 2: Hand has 0 cards
         state.players[0].hand = vec![].into();
@@ -1024,10 +1148,13 @@ mod tests {
         // (Even though it touched two conditions, it's the same member)
 
         let _appearing_members = 1; // The member that appeared
-        let _moving_members = 1;    // Same member moved
-        let total_unique = 1;      // Should be 1, not 2
+        let _moving_members = 1; // Same member moved
+        let total_unique = 1; // Should be 1, not 2
 
-        assert_eq!(total_unique, 1, "Q99: Member counted once despite appearing AND moving");
+        assert_eq!(
+            total_unique, 1,
+            "Q99: Member counted once despite appearing AND moving"
+        );
     }
 
     #[test]
@@ -1051,14 +1178,24 @@ mod tests {
 
         // First void: Ability becomes inactive (condition met, hand +1 effect triggers)
         let first_void_triggers_effect = true;
-        assert!(first_void_triggers_effect, "Q106: First void triggers effect");
+        assert!(
+            first_void_triggers_effect,
+            "Q106: First void triggers effect"
+        );
 
         // Second void attempt: Ability already void, cannot void what's already void
         let second_void_triggers_effect = false; // Should be false
-        assert!(!second_void_triggers_effect, "Q106: Cannot void already-void ability");
+        assert!(
+            !second_void_triggers_effect,
+            "Q106: Cannot void already-void ability"
+        );
 
         // Therefore, hand should NOT get +1 on second attempt
-        assert_eq!(state.players[0].hand.len(), 0, "Q106: Hand unchanged on second void");
+        assert_eq!(
+            state.players[0].hand.len(),
+            0,
+            "Q106: Hand unchanged on second void"
+        );
     }
 
     #[test]
@@ -1078,7 +1215,7 @@ mod tests {
 
         // Setup: Card with activation ability, plus card to discard
         let activator_id = 8003; // Card with {{kidou.png|起動}} ability
-        let discarded_id = 8004;  // Member to discard (with {{toujyou.png|登場}} ability)
+        let discarded_id = 8004; // Member to discard (with {{toujyou.png|登場}} ability)
 
         state.players[0].stage[0] = activator_id;
         state.players[0].hand = vec![discarded_id].into();
@@ -1094,8 +1231,14 @@ mod tests {
         // NOT the activator card (8003)
 
         let ability_source = discarded_id;
-        assert_eq!(ability_source, 8004, "Q108: Appearance ability from discarded card");
-        assert_ne!(ability_source, activator_id, "Q108: NOT from activator card");
+        assert_eq!(
+            ability_source, 8004,
+            "Q108: Appearance ability from discarded card"
+        );
+        assert_ne!(
+            ability_source, activator_id,
+            "Q108: NOT from activator card"
+        );
     }
 
     #[test]
@@ -1120,7 +1263,10 @@ mod tests {
 
         // Therefore no yell → cards not revealed → ability doesn't trigger
         let ability_triggers = yell_occurs && true; // second condition (no blade heart in revealed)
-        assert!(!ability_triggers, "Q113: Ability doesn't trigger without yell");
+        assert!(
+            !ability_triggers,
+            "Q113: Ability doesn't trigger without yell"
+        );
     }
 
     #[test]
@@ -1154,7 +1300,10 @@ mod tests {
 
         // Ability should still trigger (location condition met, timing not required)
         let ability_condition_met = on_stage && !entered_this_turn;
-        assert!(ability_condition_met, "Q114: Can use ability with members from prior turns");
+        assert!(
+            ability_condition_met,
+            "Q114: Can use ability with members from prior turns"
+        );
     }
 
     #[test]
@@ -1184,7 +1333,10 @@ mod tests {
         let _reduced_yell_count = 9; // Even if yell reveals only 9 instead of 10+
 
         // Score increase should still apply (condition checked independently)
-        assert!(blade_condition, "Q116: Score increases despite reduced yell count");
+        assert!(
+            blade_condition,
+            "Q116: Score increases despite reduced yell count"
+        );
     }
 
     #[test]
@@ -1214,7 +1366,10 @@ mod tests {
 
         // Therefore "そうした場合" clause doesn't trigger, hand effect doesn't apply
         let final_hand_size = state.players[0].hand.len();
-        assert_eq!(final_hand_size, 0, "Q118: Hand unchanged when selection incomplete");
+        assert_eq!(
+            final_hand_size, 0,
+            "Q118: Hand unchanged when selection incomplete"
+        );
     }
 
     #[test]
@@ -1231,7 +1386,7 @@ mod tests {
 
         // Setup: Ability trigger snapshot
         state.players[0].hand = vec![100, 101, 102].into(); // 3 cards
-        state.players[1].hand = vec![200, 201].into();       // 2 cards
+        state.players[1].hand = vec![200, 201].into(); // 2 cards
 
         // Ability resolves at this moment:
         let p0_hand_at_resolution = state.players[0].hand.len();
@@ -1248,7 +1403,10 @@ mod tests {
 
         // Score bonus does NOT change retroactively
         // It was already applied/not applied based on snapshot
-        assert_eq!(score_bonus_applied, 1, "Q119: Score immutable post-resolution");
+        assert_eq!(
+            score_bonus_applied, 1,
+            "Q119: Score immutable post-resolution"
+        );
     }
 
     #[test]
@@ -1300,7 +1458,11 @@ mod tests {
         state.players[0].stage[1] = 101;
 
         // Both active (not wait)
-        assert_eq!(state.phase, Phase::PerformanceP1, "Q40: In performance phase");
+        assert_eq!(
+            state.phase,
+            Phase::PerformanceP1,
+            "Q40: In performance phase"
+        );
 
         // Calculate blades that can be yelled
         let blades_available = 2; // Two members, can contribute blades
@@ -1372,7 +1534,7 @@ mod tests {
 
         let trigger_count = 1;
         let _reduced_yell_count = 12 - 8;
-        let reveal_count = vec![1,2,3,4];
+        let reveal_count = vec![1, 2, 3, 4];
         assert_eq!(reveal_count.len(), 4, "Q111: Exact count check");
         assert_eq!(trigger_count, 1, "Q45: One-time ability fires only once");
     }
@@ -1412,7 +1574,10 @@ mod tests {
 
         // Second appearance: ability cannot fire (flag already set)
         let can_fire_second = !game_once_flag_after;
-        assert!(!can_fire_second, "Q58: Cannot fire again (game-once flag set)");
+        assert!(
+            !can_fire_second,
+            "Q58: Cannot fire again (game-once flag set)"
+        );
     }
 
     #[test]
@@ -1533,7 +1698,10 @@ mod tests {
 
         // Only AFTER ability 1 fully resolves, can ability 2 trigger
         let ability_2_can_fire = ability_1_resolves;
-        assert!(ability_2_can_fire, "Q75: Ability 2 triggers after Ability 1");
+        assert!(
+            ability_2_can_fire,
+            "Q75: Ability 2 triggers after Ability 1"
+        );
 
         // Fundamental rule: sequential activation ensures state consistency
     }
@@ -1562,7 +1730,10 @@ mod tests {
 
         // Cannot place at slot 1 (has this-turn member)
         let can_place_at_slot_1 = false;
-        assert!(!can_place_at_slot_1, "Q76: Cannot baton to this-turn member");
+        assert!(
+            !can_place_at_slot_1,
+            "Q76: Cannot baton to this-turn member"
+        );
     }
 
     #[test]
@@ -1600,7 +1771,10 @@ mod tests {
         let _p1_second = if p1_first_choice == 3 { 4 } else { 3 };
 
         assert_eq!(p0_first_choice, 1);
-        assert_eq!(p1_first_choice, 3, "Q84: P1 abilities fire after P0 completes");
+        assert_eq!(
+            p1_first_choice, 3,
+            "Q84: P1 abilities fire after P0 completes"
+        );
     }
 
     // =========================================================================
@@ -1647,7 +1821,11 @@ mod tests {
 
         // After enforcement, we enforce down to 7
         let max_hand = 7;
-        let final_size = if hand_size > max_hand { max_hand } else { hand_size };
+        let final_size = if hand_size > max_hand {
+            max_hand
+        } else {
+            hand_size
+        };
         assert_eq!(final_size, max_hand, "Q30: Hand size enforced to max 7");
     }
 
@@ -1671,7 +1849,10 @@ mod tests {
 
         // Nothing automatically appears or happens
         let automatic_trigger = false;
-        assert!(!automatic_trigger, "Q37: No automatic effects without explicit ability text");
+        assert!(
+            !automatic_trigger,
+            "Q37: No automatic effects without explicit ability text"
+        );
     }
 
     #[test]
@@ -1701,8 +1882,8 @@ mod tests {
 
         // If ANY cost insufficient, cannot play
         state.players[0].energy_zone = vec![1].into(); // Less than needed
-        let can_pay_now = state.players[0].energy_zone.len() >= energy_cost &&
-                         state.players[0].hand.len() >= hand_cost;
+        let can_pay_now = state.players[0].energy_zone.len() >= energy_cost
+            && state.players[0].hand.len() >= hand_cost;
         assert!(!can_pay_now, "Q49: Cannot play with insufficient cost");
     }
 
@@ -1728,7 +1909,10 @@ mod tests {
         // Not interleaved, not nested
 
         let ability_1_complete_first = true;
-        assert!(ability_1_complete_first, "Q53: Ability 1 completes before Ability 2 starts");
+        assert!(
+            ability_1_complete_first,
+            "Q53: Ability 1 completes before Ability 2 starts"
+        );
     }
 
     #[test]
@@ -1768,7 +1952,10 @@ mod tests {
         // Cannot activate without cost
         let hand_is_empty = state.players[0].hand.is_empty();
         let can_activate = !hand_is_empty; // Need at least 1 card
-        assert!(!can_activate, "Q55: Cannot activate activated ability without sufficient hand");
+        assert!(
+            !can_activate,
+            "Q55: Cannot activate activated ability without sufficient hand"
+        );
     }
 
     #[test]
@@ -1794,7 +1981,10 @@ mod tests {
 
         // When disabled, cannot activate
         let can_activate = !ability_disabled;
-        assert!(!can_activate, "Q65: Activated ability disabled prevents activation");
+        assert!(
+            !can_activate,
+            "Q65: Activated ability disabled prevents activation"
+        );
     }
 
     #[test]
@@ -1845,7 +2035,10 @@ mod tests {
 
         // 3. Choose between options
         let choice_made_now = true;
-        assert!(choice_made_now, "Q73: Choice made during response window, not at activation");
+        assert!(
+            choice_made_now,
+            "Q73: Choice made during response window, not at activation"
+        );
     }
 
     #[test]
@@ -1866,7 +2059,10 @@ mod tests {
 
         // But: Game-once flag prevents re-triggering
         let can_fire_next_turn = false; // Even though turn-once resets
-        assert!(!can_fire_next_turn, "Q80: Game-once restriction takes precedence");
+        assert!(
+            !can_fire_next_turn,
+            "Q80: Game-once restriction takes precedence"
+        );
     }
 
     #[test]
@@ -1888,6 +2084,9 @@ mod tests {
 
         // Branch to fallback
         let _fallback_executes = true;
-        assert!(_fallback_executes, "Q87: Fallback effect executes when primary fails");
+        assert!(
+            _fallback_executes,
+            "Q87: Fallback effect executes when primary fails"
+        );
     }
 }

@@ -50,5 +50,8 @@ fn test_sumire_8752_trigger_repro() {
         cond_results.push(res);
     }
 
-    assert!(cond_results.iter().all(|&r| r), "One or more conditions failed!");
+    assert!(
+        cond_results.iter().all(|&r| r),
+        "One or more conditions failed!"
+    );
 }

@@ -1,10 +1,10 @@
-use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::*;
 use crate::core::logic::constants::{CHOICE_DONE, STAGE_SLOT_COUNT};
-use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
+use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 pub fn handle_play_live_from_discard(
     state: &mut GameState,
@@ -13,10 +13,11 @@ pub fn handle_play_live_from_discard(
     frame: &AbilityFrame,
     frame_idx: usize,
 ) -> HandlerResult {
-    let v = frame.raw_value();
-    let a = frame.raw_attr() as i64;
-    let s = frame.raw_slot();
-    let slot_info = frame.dslot();
+    let frame_data = frame.components();
+    let v = frame_data.value;
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
+    let slot_info = frame_data.slot;
     let target_p_idx = if slot_info.is_opponent {
         1 - (ctx.activator_id as usize)
     } else {
@@ -52,18 +53,21 @@ pub fn handle_play_live_from_discard(
             }
             let mut target_ctx = ctx.clone();
             target_ctx.player_id = target_p_idx as u8;
-            if matches!(suspend_choice(
-                state,
-                db,
-                &target_ctx,
-                &target_ctx,
-                frame_idx,
-                O_PLAY_LIVE_FROM_DISCARD,
-                s,
-                ChoiceType::SelectDiscardPlay,
-                a as u64,
-                remaining,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    &target_ctx,
+                    &target_ctx,
+                    frame_idx,
+                    O_PLAY_LIVE_FROM_DISCARD,
+                    s,
+                    ChoiceType::SelectDiscardPlay,
+                    a as u64,
+                    remaining,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }
@@ -90,18 +94,21 @@ pub fn handle_play_live_from_discard(
                 remaining -= 1;
                 let mut target_ctx = ctx.clone();
                 target_ctx.player_id = target_p_idx as u8;
-                if matches!(suspend_choice(
-                    state,
-                    db,
-                    &target_ctx,
-                    &target_ctx,
-                    frame_idx,
-                    O_PLAY_LIVE_FROM_DISCARD,
-                    s,
-                    ChoiceType::SelectLiveSlot,
-                    a as u64,
-                    remaining,
-                ), HandlerResult::Suspend) {
+                if matches!(
+                    suspend_choice(
+                        state,
+                        db,
+                        &target_ctx,
+                        &target_ctx,
+                        frame_idx,
+                        O_PLAY_LIVE_FROM_DISCARD,
+                        s,
+                        ChoiceType::SelectLiveSlot,
+                        a as u64,
+                        remaining,
+                    ),
+                    HandlerResult::Suspend
+                ) {
                     return HandlerResult::Suspend;
                 }
             }

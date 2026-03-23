@@ -1,5 +1,8 @@
 use crate::core::enums::ChoiceType;
-use crate::core::generated_constants::{ACTION_BASE_CHOICE, ACTION_BASE_HAND, ACTION_BASE_HAND_SELECT, ACTION_BASE_STAGE, ACTION_BASE_STAGE_SLOTS, C_COUNT_STAGE, C_TOTAL_BLADES};
+use crate::core::generated_constants::{
+    ACTION_BASE_CHOICE, ACTION_BASE_HAND, ACTION_BASE_HAND_SELECT, ACTION_BASE_STAGE,
+    ACTION_BASE_STAGE_SLOTS, C_COUNT_STAGE, C_TOTAL_BLADES,
+};
 use crate::core::logic::*;
 use crate::test_helpers::*;
 
@@ -38,7 +41,8 @@ mod tests {
     }
 
     fn blade_threshold_pair(db: &CardDatabase, threshold: u32) -> (i32, i32, u32, u32) {
-        let mut candidates: Vec<&MemberCard> = db.members.values().filter(|card| card.blades > 0).collect();
+        let mut candidates: Vec<&MemberCard> =
+            db.members.values().filter(|card| card.blades > 0).collect();
         candidates.sort_by_key(|card| std::cmp::Reverse(card.blades));
 
         for active in &candidates {
@@ -51,12 +55,19 @@ mod tests {
                 }
                 let total = active.blades.saturating_add(waiting.blades);
                 if total >= threshold {
-                    return (active.card_id, waiting.card_id, active.blades, waiting.blades);
+                    return (
+                        active.card_id,
+                        waiting.card_id,
+                        active.blades,
+                        waiting.blades,
+                    );
                 }
             }
         }
 
-        panic!("expected two members whose combined blades cross the threshold only when both count");
+        panic!(
+            "expected two members whose combined blades cross the threshold only when both count"
+        );
     }
 
     fn setup_sumire_double_baton_state(db: &CardDatabase) -> GameState {
@@ -86,7 +97,9 @@ mod tests {
         let live_id = db
             .id_by_no("PL!S-pb1-021-L")
             .expect("Q132: expected Strawberry Trapper in DB");
-        let live = db.get_live(live_id).expect("Q132: live card should resolve from DB");
+        let live = db
+            .get_live(live_id)
+            .expect("Q132: live card should resolve from DB");
         let ability = live
             .abilities
             .iter()
@@ -160,7 +173,11 @@ mod tests {
                     break 'search;
                 }
                 for k in (j + 1)..aqours_candidates.len() {
-                    let triple = vec![aqours_candidates[i], aqours_candidates[j], aqours_candidates[k]];
+                    let triple = vec![
+                        aqours_candidates[i],
+                        aqours_candidates[j],
+                        aqours_candidates[k],
+                    ];
                     if {
                         let stage_members = triple.clone();
                         let mut state = create_test_state();
@@ -409,8 +426,14 @@ mod tests {
             active_blades.saturating_add(waiting_blades) >= 10,
             "Q148: chosen pair must only cross the threshold when the waiting member is counted"
         );
-        assert!(!without_condition, "Q148: the threshold condition should fail before counting the waiting member");
-        assert!(with_condition, "Q148: the total-blades threshold should pass once the waiting member is included");
+        assert!(
+            !without_condition,
+            "Q148: the threshold condition should fail before counting the waiting member"
+        );
+        assert!(
+            with_condition,
+            "Q148: the total-blades threshold should pass once the waiting member is included"
+        );
     }
 
     #[test]
@@ -463,8 +486,16 @@ mod tests {
         let mut actions = Vec::new();
         state.generate_legal_actions(&db, 0, &mut actions);
 
-        assert_eq!(state.players[0].energy_zone.len(), 3, "Q184: energy zone should only count visible energy cards");
-        assert_eq!(state.players[0].stage_energy[0].len(), 2, "Q184: under-member energy should be tracked separately");
+        assert_eq!(
+            state.players[0].energy_zone.len(),
+            3,
+            "Q184: energy zone should only count visible energy cards"
+        );
+        assert_eq!(
+            state.players[0].stage_energy[0].len(),
+            2,
+            "Q184: under-member energy should be tracked separately"
+        );
         assert!(
             !actions.contains(&play_to_empty_slot),
             "Q184: two cards under a member must not let a 3-energy board pay for a cost-4 play"
@@ -535,7 +566,8 @@ mod tests {
             "Q194: a same-turn member cannot be used as the primary baton slot"
         );
         assert!(
-            !actions.contains(&(ACTION_BASE_HAND + 4)) && !actions.contains(&(ACTION_BASE_HAND + 5)),
+            !actions.contains(&(ACTION_BASE_HAND + 4))
+                && !actions.contains(&(ACTION_BASE_HAND + 5)),
             "Q194: any double-baton line using the same-turn member must be rejected"
         );
     }
@@ -570,8 +602,7 @@ mod tests {
             "Q198: Lanzhu's stage-entry auto should not activate a waiting energy when she is the member being replaced"
         );
         assert_eq!(
-            state.players[0].stage[1],
-            cost11_member_id,
+            state.players[0].stage[1], cost11_member_id,
             "Q198: the replacement member should still be the card left on stage"
         );
         assert!(

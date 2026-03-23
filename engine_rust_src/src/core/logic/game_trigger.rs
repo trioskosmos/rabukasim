@@ -1,9 +1,9 @@
-use crate::core::enums::{TriggerType, ConditionType};
-use crate::core::logic::ability_patterns::should_skip_inline_live_precheck;
-use super::state::GameState;
 use super::card_db::CardDatabase;
-use super::models::AbilityContext;
 use super::constants::MAX_CONDITION_CHECK_DEPTH;
+use super::models::AbilityContext;
+use super::state::GameState;
+use crate::core::enums::{ConditionType, TriggerType};
+use crate::core::logic::ability_patterns::should_skip_inline_live_precheck;
 
 fn parse_resolution_trigger_subtype(raw_text: &str) -> Option<TriggerType> {
     let type_start = raw_text.find("TYPE=\"")? + 6;
@@ -54,7 +54,14 @@ impl GameState {
         id: u32,
         ab_idx: usize,
     ) {
-        super::interpreter::consume_once_per_turn(self, p_idx, source_type, instance_key, id, ab_idx);
+        super::interpreter::consume_once_per_turn(
+            self,
+            p_idx,
+            source_type,
+            instance_key,
+            id,
+            ab_idx,
+        );
     }
 
     pub fn get_once_per_turn_instance_key(
@@ -93,7 +100,8 @@ impl GameState {
             .iter()
             .find(|entry| entry.0 == cid && entry.1 == trigger_type)
             .map(|entry| entry.2)
-            .unwrap_or_default() > 0;
+            .unwrap_or_default()
+            > 0;
         negated
     }
 
@@ -115,7 +123,10 @@ impl GameState {
         is_live: bool,
         trigger: TriggerType,
     ) {
-        println!("[DEBUG] Enqueueing trigger: {:?} for cid={}, ab_idx={}", trigger, cid, ab_idx);
+        println!(
+            "[DEBUG] Enqueueing trigger: {:?} for cid={}, ab_idx={}",
+            trigger, cid, ab_idx
+        );
         self.core
             .trigger_queue
             .push_back((cid, ab_idx, ctx, is_live, trigger));
@@ -190,13 +201,31 @@ impl GameState {
         // Stage Members
         for slot_idx in 0..3 {
             let cid = self.core.players[p_idx].stage[slot_idx];
-            self.collect_triggers_for_card(db, cid, trigger, ctx, start_ab_idx, false, &mut queue, slot_idx as i16);
+            self.collect_triggers_for_card(
+                db,
+                cid,
+                trigger,
+                ctx,
+                start_ab_idx,
+                false,
+                &mut queue,
+                slot_idx as i16,
+            );
         }
 
         // Performance/Live Cards
         for slot_idx in 0..3 {
             let cid = self.core.players[p_idx].live_zone[slot_idx];
-            self.collect_triggers_for_card(db, cid, trigger, ctx, start_ab_idx, true, &mut queue, slot_idx as i16);
+            self.collect_triggers_for_card(
+                db,
+                cid,
+                trigger,
+                ctx,
+                start_ab_idx,
+                true,
+                &mut queue,
+                slot_idx as i16,
+            );
         }
 
         for (cid, _def_cid, ab_idx, mut ab_ctx, is_live) in queue {
@@ -225,7 +254,10 @@ impl GameState {
             return;
         }
         if !self.ui.silent {
-            println!("[DEBUG] trigger_abilities_from: {:?} for player {}", trigger, ctx.player_id);
+            println!(
+                "[DEBUG] trigger_abilities_from: {:?} for player {}",
+                trigger, ctx.player_id
+            );
         }
         self.trigger_depth += 1;
 
@@ -237,13 +269,31 @@ impl GameState {
         // 1. Stage Members
         for slot_idx in 0..3 {
             let cid = self.core.players[p_idx].stage[slot_idx];
-            self.collect_triggers_for_card(db, cid, trigger, ctx, start_ab_idx, false, &mut queue, slot_idx as i16);
+            self.collect_triggers_for_card(
+                db,
+                cid,
+                trigger,
+                ctx,
+                start_ab_idx,
+                false,
+                &mut queue,
+                slot_idx as i16,
+            );
         }
 
         // 2. Performance/Live Cards
         for slot_idx in 0..3 {
             let cid = self.core.players[p_idx].live_zone[slot_idx];
-            self.collect_triggers_for_card(db, cid, trigger, ctx, start_ab_idx, true, &mut queue, slot_idx as i16);
+            self.collect_triggers_for_card(
+                db,
+                cid,
+                trigger,
+                ctx,
+                start_ab_idx,
+                true,
+                &mut queue,
+                slot_idx as i16,
+            );
         }
 
         // 3. Source Card (if not on stage/live)
@@ -290,6 +340,7 @@ impl GameState {
                 let ab = &db.get_member(def_cid).unwrap().abilities[ab_idx as usize];
                 (ab, &ab.conditions, &ab.pseudocode)
             };
+            let semantic_program = ability.semantic_frame_program();
 
             // Unified logging: TRIGGER events now go to both turn_history and rule_log
             let card_name = if is_live {
@@ -314,17 +365,61 @@ impl GameState {
                 &db.get_member(def_cid).unwrap().abilities[ab_idx as usize].costs
             };
 
-            let skip_precheck_for_compensation = is_live && should_skip_inline_live_precheck(ability);
+            let skip_precheck_for_compensation =
+                is_live && should_skip_inline_live_precheck(ability);
 
-            // Check conditions before resolving bytecode
+            // Check conditions before resolving the semantic frame sequence
             let mut all_met = true;
             if !skip_precheck_for_compensation {
-                for cond in conditions {
-                    if !super::interpreter::conditions::check_condition(
-                        self, db, p_idx, cond, &ab_ctx, 1,
-                    ) {
-                        all_met = false;
-                        break;
+                if let Some(program) = semantic_program.as_ref() {
+                    let mut saw_condition = false;
+                    for frame in &program.frames {
+                        let frame_data = frame.components();
+                        let has_raw_condition = frame_data
+                            .params
+                            .and_then(|value| value.as_object())
+                            .map(|params| {
+                                params.get("raw_cond").is_some() || params.get("RAW_COND").is_some()
+                            })
+                            .unwrap_or(false);
+                        let is_condition = has_raw_condition
+                            || (frame_data.opcode
+                                >= crate::core::logic::constants::CONDITION_START_1
+                                && frame_data.opcode
+                                    <= crate::core::logic::constants::CONDITION_END_1)
+                            || (frame_data.opcode
+                                >= crate::core::logic::constants::CONDITION_START_2
+                                && frame_data.opcode
+                                    <= crate::core::logic::constants::CONDITION_END_2);
+
+                        if !is_condition {
+                            if saw_condition {
+                                break;
+                            }
+                            continue;
+                        }
+
+                        saw_condition = true;
+                        let passed = super::interpreter::conditions::check_condition_frame(
+                            self,
+                            db,
+                            &frame_data,
+                            &ab_ctx,
+                            1,
+                        );
+                        if !passed {
+                            all_met = false;
+                            break;
+                        }
+                    }
+                } else {
+                    for cond in conditions {
+                        if !super::interpreter::conditions::check_condition(
+                            self, db, p_idx, cond, &ab_ctx, 1,
+                        ) {
+                            all_met = false;
+                            break;
+                        }
                     }
                 }
             }
@@ -401,16 +496,19 @@ impl GameState {
         if let Some(abs) = abilities {
             for (ab_idx, ab) in abs.iter().enumerate() {
                 if ab.trigger == trigger {
-                    println!("[DEBUG] Trigger match: cid={}, ab_idx={}, trigger={:?}, ab_trigger={:?}", cid, ab_idx, trigger, ab.trigger);
-                    if !resolution_trigger_matches_context(trigger, &ab.raw_text, ctx.trigger_type) {
+                    println!(
+                        "[DEBUG] Trigger match: cid={}, ab_idx={}, trigger={:?}, ab_trigger={:?}",
+                        cid, ab_idx, trigger, ab.trigger
+                    );
+                    if !resolution_trigger_matches_context(trigger, &ab.raw_text, ctx.trigger_type)
+                    {
                         continue;
                     }
-                    
+
                     // Filter OnPlay/OnLeaves to only the specific card being moved
                     // UNLESS it is a monitoring ability (has a GroupFilter/Score/etc condition)
-                    let is_same_slot_instance = slot_idx >= 0
-                        && ctx.area_idx >= 0
-                        && slot_idx == ctx.area_idx;
+                    let is_same_slot_instance =
+                        slot_idx >= 0 && ctx.area_idx >= 0 && slot_idx == ctx.area_idx;
                     let is_explicit_source_card = slot_idx < 0 && cid == ctx.source_card_id;
                     let is_same_card_different_slot = slot_idx >= 0
                         && ctx.area_idx >= 0
@@ -477,16 +575,17 @@ impl GameState {
                 if let Some(src_m) = db.get_member(source_cid) {
                     if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                         if ab.trigger == trigger {
-                            if !resolution_trigger_matches_context(trigger, &ab.raw_text, ctx.trigger_type) {
+                            if !resolution_trigger_matches_context(
+                                trigger,
+                                &ab.raw_text,
+                                ctx.trigger_type,
+                            ) {
                                 continue;
                             }
-                            if (trigger == TriggerType::OnPlay
-                                || trigger == TriggerType::OnLeaves)
-                                && (!(
-                                    slot_idx >= 0
-                                        && ctx.area_idx >= 0
-                                        && slot_idx == ctx.area_idx
-                                ))
+                            if (trigger == TriggerType::OnPlay || trigger == TriggerType::OnLeaves)
+                                && (!(slot_idx >= 0
+                                    && ctx.area_idx >= 0
+                                    && slot_idx == ctx.area_idx))
                                 && !(slot_idx < 0 && cid == ctx.source_card_id)
                             {
                                 if slot_idx >= 0

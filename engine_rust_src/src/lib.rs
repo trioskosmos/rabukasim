@@ -193,15 +193,15 @@ mod enforcement_tests;
 #[cfg(test)]
 mod filter_audit_tests;
 #[cfg(test)]
+mod perf_tests;
+#[cfg(test)]
+mod qa;
+#[cfg(test)]
 mod qa_verification_tests;
 #[cfg(test)]
 mod rule_alignment_tests;
 #[cfg(test)]
 mod semantic_assertions;
-#[cfg(test)]
-mod qa;
-#[cfg(test)]
-mod perf_tests;
 
 #[cfg(test)]
 mod meta_rule_card_tests;

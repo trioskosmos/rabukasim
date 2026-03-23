@@ -1,7 +1,7 @@
-use crate::core::logic::models::AbilityFrame;
 use super::super::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 pub fn handle_swap_zone(
@@ -20,18 +20,21 @@ pub fn handle_swap_zone(
         }
         state.players[p_idx].looked_cards.clear();
         state.players[p_idx].looked_cards.extend(cards);
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            ctx,
-            frame_idx,
-            O_SWAP_ZONE,
-            0,
-            ChoiceType::SelectSwapSource,
-            0,
-            1,
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                frame_idx,
+                O_SWAP_ZONE,
+                0,
+                ChoiceType::SelectSwapSource,
+                0,
+                1,
+            ),
+            HandlerResult::Suspend
+        ) {
             return HandlerResult::Suspend;
         }
     }
@@ -44,18 +47,21 @@ pub fn handle_swap_zone(
             let mut next_ctx = ctx.clone();
             next_ctx.choice_index = -1;
             next_ctx.v_remaining = 0;
-            if matches!(suspend_choice(
-                state,
-                db,
-                &next_ctx,
-                &next_ctx,
-                frame_idx,
-                O_SWAP_ZONE,
-                0,
-                ChoiceType::SelectHandPlay,
-                0,
-                1,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    &next_ctx,
+                    &next_ctx,
+                    frame_idx,
+                    O_SWAP_ZONE,
+                    0,
+                    ChoiceType::SelectHandPlay,
+                    0,
+                    1,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }

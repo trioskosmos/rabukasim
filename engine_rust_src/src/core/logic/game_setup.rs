@@ -1,12 +1,12 @@
-use rand::SeedableRng;
 use rand::seq::SliceRandom;
+use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use smallvec::SmallVec;
 
-use crate::core::enums::*;
 use super::card_db::*;
 use super::player::*;
 use super::state::*;
+use crate::core::enums::*;
 
 impl GameState {
     pub fn setup_turn_log(&mut self) {
@@ -45,8 +45,12 @@ impl GameState {
         self.core.live_set_pending_draws = other.core.live_set_pending_draws;
 
         // Interaction stack and trigger queue are expensive but necessary
-        self.core.interaction_stack.clone_from(&other.core.interaction_stack);
-        self.core.trigger_queue.clone_from(&other.core.trigger_queue);
+        self.core
+            .interaction_stack
+            .clone_from(&other.core.interaction_stack);
+        self.core
+            .trigger_queue
+            .clone_from(&other.core.trigger_queue);
 
         self.core.live_result_selection_pending = other.core.live_result_selection_pending;
         self.core.live_result_triggers_done = other.core.live_result_triggers_done;
@@ -151,7 +155,7 @@ impl GameState {
         for i in 0..2 {
             for _ in 0..3 {
                 if let Some(cid) = self.core.players[i].energy_deck.pop() {
-                        self.core.players[i].push_energy_card(cid, false);
+                    self.core.players[i].push_energy_card(cid, false);
                 }
             }
         }

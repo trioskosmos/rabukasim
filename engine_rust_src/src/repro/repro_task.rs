@@ -462,13 +462,11 @@ mod tests {
         println!("Blades (with cost 13): {}", blades_with_13);
 
         assert_eq!(
-            blades_solitary,
-            base_blades,
+            blades_solitary, base_blades,
             "Card 410 should not gain bonus blades without a cost 13+ member on either stage"
         );
         assert_eq!(
-            blades_with_11,
-            base_blades,
+            blades_with_11, base_blades,
             "A cost 11 member should not satisfy card 410's passive"
         );
         assert_eq!(

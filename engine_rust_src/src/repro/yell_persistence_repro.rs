@@ -85,10 +85,7 @@ fn test_yell_persistence_and_selection() {
 
     // Step 4: Now it should trigger LOOK_AND_CHOOSE from YELL (Source 15).
     println!("DEBUG: Phase after discard: {:?}", state.phase);
-    println!(
-        "DEBUG: looked_cards: {:?}",
-        state.players[0].looked_cards
-    );
+    println!("DEBUG: looked_cards: {:?}", state.players[0].looked_cards);
     println!(
         "DEBUG: interaction_stack: {:?}",
         state.interaction_stack.len()

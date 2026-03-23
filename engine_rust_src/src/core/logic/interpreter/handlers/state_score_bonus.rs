@@ -1,5 +1,5 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
+use crate::core::logic::models::AbilityFrame;
 
 pub fn handle_boost_score(
     state: &mut GameState,
@@ -17,9 +17,10 @@ pub fn handle_boost_score(
         }
     }
 
-    let v = frame.raw_value();
-    let a = frame.raw_attr() as i64;
-    let s = frame.raw_slot();
+    let frame_data = frame.components();
+    let v = frame_data.value;
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
 
     let mut final_v = v;
     if frame.is_dynamic() {
@@ -27,13 +28,13 @@ pub fn handle_boost_score(
         let base = frame.scalar_dynamic_base();
         let paid = ctx.v_accumulated as i32;
         final_v = base * (paid / divisor);
-    } else if frame.filter().compare_accumulated {
+    } else if frame_data.filter.compare_accumulated {
         let count = resolve_count(
             state,
             db,
-            frame.raw_slot(),
-            (frame.filter().to_attr() & 0xFFFFFFFF) as u64,
-            p_idx as i32,
+            frame_data.opcode,
+            frame_data.raw_attr,
+            frame_data.raw_slot,
             ctx,
             0,
         );
@@ -68,12 +69,12 @@ pub fn handle_reduce_cost(
 ) -> HandlerResult {
     let mut final_v = v;
 
-    if frame.filter().compare_accumulated {
-        let filter_attr = frame.filter().to_attr() & 0xFFFFFFFF;
-        let filter = crate::core::logic::filter::CardFilter::from_attr(filter_attr as i64);
+    let frame_data = frame.components();
+
+    if frame_data.filter.compare_accumulated {
         let mut count = 0i32;
         let player = &state.players[p_idx];
-        let zone_mask = filter.zone_mask as u64;
+        let zone_mask = frame_data.filter.zone_mask as u64;
         if zone_mask == 0 {
             for &card_id in player.hand.iter() {
                 if card_id >= 0 && card_id as i32 != ctx.source_card_id {
@@ -129,13 +130,13 @@ pub fn handle_reduce_score(state: &mut GameState, target_p: usize, v: i32) -> Ha
     HandlerResult::Continue
 }
 
-pub fn handle_lose_excess_hearts(
-    state: &mut GameState,
-    p_idx: usize,
-    v: i32,
-) -> HandlerResult {
+pub fn handle_lose_excess_hearts(state: &mut GameState, p_idx: usize, v: i32) -> HandlerResult {
     let player = &mut state.players[p_idx];
-    let reduction = if v == 0 { player.excess_hearts } else { v as u32 };
+    let reduction = if v == 0 {
+        player.excess_hearts
+    } else {
+        v as u32
+    };
     player.excess_hearts = player.excess_hearts.saturating_sub(reduction);
     HandlerResult::Continue
 }

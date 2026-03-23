@@ -1,5 +1,5 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
+use crate::core::logic::models::AbilityFrame;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
@@ -24,7 +24,12 @@ pub fn handle_move_to_deck(
         } else {
             ctx.selected_cards.len()
         };
-        let moved_cards: Vec<i32> = ctx.selected_cards.iter().take(move_count).copied().collect();
+        let moved_cards: Vec<i32> = ctx
+            .selected_cards
+            .iter()
+            .take(move_count)
+            .copied()
+            .collect();
 
         for &cid in &moved_cards {
             if let Some(pos) = state.players[p_idx].discard.iter().position(|&c| c == cid) {

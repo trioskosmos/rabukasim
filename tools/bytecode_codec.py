@@ -151,6 +151,127 @@ def _opcode_name(value: int, lookups: MetadataLookups) -> tuple[str, str]:
     return "opcodes", f"OP_{value}"
 
 
+def _rust_opcode_name(opcode_section: str, opcode_name: str) -> str:
+    prefix_by_section = {
+        "opcodes": "O",
+        "conditions": "C",
+        "costs": "COST",
+        "action_bases": "ACTION_BASE",
+    }
+    prefix = prefix_by_section.get(opcode_section, "O")
+    return f"{prefix}_{opcode_name}"
+
+
+def _rust_handler_path(opcode_name: str) -> str:
+    handler_groups = {
+        "SELECT_MODE": "engine_rust_src/src/core/logic/interpreter/handlers/select_mode.rs::handle_select_mode",
+        "DRAW": "engine_rust_src/src/core/logic/interpreter/handlers/movement_draw.rs::handle_draw",
+        "DRAW_UNTIL": "engine_rust_src/src/core/logic/interpreter/handlers/movement_draw.rs::handle_draw",
+        "ADD_TO_HAND": "engine_rust_src/src/core/logic/interpreter/handlers/movement_draw.rs::handle_draw",
+        "ACTIVATE_MEMBER": "engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs::handle_member_state",
+        "SET_TAPPED": "engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs::handle_member_state",
+        "TAP_MEMBER": "engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs::handle_member_state",
+        "TAP_OPPONENT": "engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs::handle_member_state",
+        "MOVE_MEMBER": "engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs::handle_member_state",
+        "FORMATION_CHANGE": "engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs::handle_member_state",
+        "PLACE_UNDER": "engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs::handle_member_state",
+        "ADD_STAGE_ENERGY": "engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs::handle_member_state",
+        "GRANT_ABILITY": "engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs::handle_member_state",
+        "PLAY_MEMBER_FROM_HAND": "engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs::handle_member_state",
+        "PLAY_MEMBER_FROM_DISCARD": "engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs::handle_member_state",
+        "INCREASE_COST": "engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs::handle_member_state",
+        "ENERGY_CHARGE": "engine_rust_src/src/core/logic/interpreter/handlers/state_energy.rs::handle_energy",
+        "PAY_ENERGY": "engine_rust_src/src/core/logic/interpreter/handlers/state_energy.rs::handle_energy",
+        "ACTIVATE_ENERGY": "engine_rust_src/src/core/logic/interpreter/handlers/state_energy.rs::handle_energy",
+        "PAY_ENERGY_DYNAMIC": "engine_rust_src/src/core/logic/interpreter/handlers/state_energy.rs::handle_energy",
+        "PLACE_ENERGY_UNDER_MEMBER": "engine_rust_src/src/core/logic/interpreter/handlers/state_energy.rs::handle_energy",
+        "SEARCH_DECK": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "ORDER_DECK": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "MOVE_TO_DECK": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "SWAP_CARDS": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "REVEAL_UNTIL": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "LOOK_DECK": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "REVEAL_CARDS": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "CHEER_REVEAL": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "LOOK_DECK_DYNAMIC": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "MOVE_TO_DISCARD": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "LOOK_AND_CHOOSE": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "RECOVER_LIVE": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "RECOVER_MEMBER": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "PLAY_LIVE_FROM_DISCARD": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "SELECT_CARDS": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "LOOK_REORDER_DISCARD": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "SWAP_ZONE": "engine_rust_src/src/core/logic/interpreter/handlers/movement_deck_zones.rs::handle_deck_zones",
+        "BOOST_SCORE": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "REDUCE_COST": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "SET_SCORE": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "ADD_BLADES": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "BUFF_POWER": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "SET_BLADES": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "ADD_HEARTS": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "SET_HEARTS": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "TRANSFORM_COLOR": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "REDUCE_HEART_REQ": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "TRANSFORM_HEART": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "INCREASE_HEART_COST": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "SET_HEART_COST": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "REDUCE_SCORE": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "LOSE_EXCESS_HEARTS": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "TRANSFORM_BLADES": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "SKIP_ACTIVATE_PHASE": "engine_rust_src/src/core/logic/interpreter/handlers/state_score_hearts.rs::handle_score_hearts",
+        "NEGATE_EFFECT": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "REDUCE_YELL_COUNT": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "RESTRICTION": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "SELECT_MEMBER": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "SELECT_LIVE": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "SELECT_PLAYER": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "OPPONENT_CHOOSE": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "PREVENT_ACTIVATE": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "PREVENT_BATON_TOUCH": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "PREVENT_SET_TO_SUCCESS_PILE": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "PREVENT_PLAY_TO_SLOT": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "TRIGGER_REMOTE": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "REDUCE_LIVE_SET_LIMIT": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "META_RULE": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "BATON_TOUCH_MOD": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "IMMUNITY": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "COLOR_SELECT": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "SWAP_AREA": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "REPEAT_ABILITY": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "SET_TARGET_SELF": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "SET_TARGET_OPPONENT": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "CALC_SUM_COST": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+        "DIV_VALUE": "engine_rust_src/src/core/logic/interpreter/handlers/flow.rs::handle_meta_control",
+    }
+    return handler_groups.get(opcode_name, "engine_rust_src/src/core/logic/interpreter/handlers/mod.rs::HandlerRegistry::dispatch")
+
+
+def _format_frame_trace(frame: dict[str, Any]) -> str:
+    opcode_name = str(frame.get("opcode_name", frame.get("opcode", "")) or "")
+    rust_opcode = str(frame.get("rust_opcode", "") or "")
+    handler_path = _rust_handler_path(opcode_name)
+
+    parts = [rust_opcode or opcode_name or "OP_0", f"[{handler_path}]"]
+
+    value = frame.get("value")
+    if value not in (None, 0):
+        parts.append(f"value={value}")
+
+    attr = frame.get("attr") or frame.get("filter")
+    if isinstance(attr, dict) and attr:
+        parts.append(f"attr={attr}")
+
+    slot = frame.get("slot")
+    if isinstance(slot, dict) and slot:
+        parts.append(f"slot={slot}")
+
+    params = frame.get("params")
+    if params not in (None, {}, []):
+        parts.append(f"params={params}")
+
+    return " | ".join(parts)
+
+
 def _slot_name(slot_id: int, lookups: MetadataLookups) -> str:
     # Mask out FILTER_IS_OPTIONAL (bit 61)
     clean_id = slot_id & 0x1FFFFFFFFFFFFFFF
@@ -350,6 +471,7 @@ def decode_frame(words: list[int], lookups: MetadataLookups, strict: bool = Fals
 
     opcode = int(padded[0])
     opcode_section, opcode_name = _opcode_name(opcode, lookups)
+    rust_opcode = _rust_opcode_name(opcode_section, opcode_name)
     metadata_refs = [f"{opcode_section}.{opcode_name}"]
     slot_ref = _slot_label(int(padded[4]), lookups)
     if slot_ref:
@@ -365,6 +487,7 @@ def decode_frame(words: list[int], lookups: MetadataLookups, strict: bool = Fals
         "opcode_id": opcode,
         "opcode_name": opcode_name,
         "opcode_section": opcode_section,
+        "rust_opcode": rust_opcode,
         "negated": bool(negated),
         "decoded": readable.decode_chunk(padded),
         "value": payload.get("v"),
@@ -384,6 +507,7 @@ def decode_frame(words: list[int], lookups: MetadataLookups, strict: bool = Fals
         "opcode": opcode,
         "opcode_name": opcode_name,
         "opcode_section": opcode_section,
+        "rust_opcode": rust_opcode,
         "negated": negated or None,
         "metadata_refs": metadata_refs,
         "payload": payload,
@@ -453,6 +577,10 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
         return [int(word) for word in words]
 
     semantic = frame.get("semantic") if isinstance(frame, dict) else None
+    opcode_alias = frame.get("op") if isinstance(frame, dict) else None
+    if isinstance(opcode_alias, str) and opcode_alias and "opcode_name" not in frame:
+        frame = dict(frame)
+        frame["opcode_name"] = opcode_alias
     
     # If no payload exists, try to synthesize it from top-level properties or semantic
     if isinstance(frame, dict) and "payload" not in frame:
@@ -485,7 +613,9 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
                 merged_payload["a"] = _unlabel_filter_dict(merged["attr"], lookups) if isinstance(merged["attr"], dict) else merged["attr"]
             if "slot" in merged:
                 merged_payload["s"] = _unlabel_slot_dict(merged["slot"], lookups) if isinstance(merged["slot"], dict) else merged["slot"]
-                
+            if "params" in merged and "v" not in merged_payload:
+                merged_payload["v"] = merged.get("params")
+
         if merged_payload:
             merged["payload"] = merged_payload
             return encode_frame(merged, lookups)
@@ -497,9 +627,24 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
             words.extend([0] * (5 - len(words)))
         return words
 
-    opcode = int(frame.get("opcode_id", frame.get("opcode", 0)) or 0)  # prefer numeric opcode_id
+    opcode_value = frame.get("opcode_id", None)
+    if opcode_value is None:
+        opcode_value = frame.get("opcode", 0)
+    try:
+        opcode = int(opcode_value or 0)  # prefer numeric opcode_id
+    except (TypeError, ValueError):
+        opcode = 0
     opcode_name = str(frame.get("opcode_name", frame.get("opcode", "")) or "")
+    if opcode == 0 and opcode_name in lookups.ids_by_opcode:
+        opcode = int(lookups.ids_by_opcode[opcode_name])
     payload = frame.get("payload", {}) or {}
+    negated = bool(
+        frame.get("negated")
+        or frame.get("is_negated")
+        or (isinstance(payload, dict) and (payload.get("negated") or payload.get("is_negated")))
+    )
+    if negated and opcode < 1000:
+        opcode += 1000
     raw = payload.get("raw", {}) if isinstance(payload, dict) else {}
 
     if raw:
@@ -620,6 +765,82 @@ def model_to_bytecode(model: dict[str, Any], metadata: dict[str, Any] | None = N
     return bytecode
 
 
+def frame_program_to_model(frame_program: Any) -> dict[str, Any]:
+    """Normalize an Ability.frame_program payload into codec model form.
+
+    The runtime and semantic index both store frame programs as a small set of
+    human-readable frame variants. This helper converts that shape into the
+    flat model structure understood by ``model_to_bytecode``.
+    """
+
+    if isinstance(frame_program, dict):
+        frames = frame_program.get("frames", [])
+    else:
+        frames = frame_program
+
+    normalized_frames: list[dict[str, Any]] = []
+    for frame in frames or []:
+        if frame == "Return":
+            normalized_frames.append(
+                {
+                    "opcode": "RETURN",
+                    "opcode_name": "RETURN",
+                    "opcode_id": 1,
+                    "value": 0,
+                    "filter": {},
+                    "slot": {},
+                    "is_negated": False,
+                    "params": None,
+                }
+            )
+            continue
+
+        if not isinstance(frame, dict):
+            continue
+
+        if "opcode" in frame or "opcode_id" in frame or "payload" in frame or "semantic" in frame:
+            normalized_frames.append(dict(frame))
+            continue
+
+        if len(frame) == 1:
+            kind, payload = next(iter(frame.items()))
+            if kind == "Semantic" and isinstance(payload, dict):
+                normalized_frames.append(dict(payload))
+                continue
+
+            if kind in {"Draw", "RecoverLive", "RecoverMember", "LookAndChoose", "SelectMember", "MoveMember", "MetaRule"}:
+                opcode_name = {
+                    "Draw": "DRAW",
+                    "RecoverLive": "RECOVER_LIVE",
+                    "RecoverMember": "RECOVER_MEMBER",
+                    "LookAndChoose": "LOOK_AND_CHOOSE",
+                    "SelectMember": "SELECT_MEMBER",
+                    "MoveMember": "MOVE_MEMBER",
+                    "MetaRule": "META_RULE",
+                }[kind]
+                payload = payload if isinstance(payload, dict) else {}
+                value_key = "count" if kind != "MetaRule" else "rule_type"
+                normalized_frames.append(
+                    {
+                        "opcode": opcode_name,
+                        "opcode_name": opcode_name,
+                        "opcode_id": 0,
+                        "value": int(payload.get(value_key, 0) or 0),
+                        "filter": dict(payload.get("filter", {})) if isinstance(payload.get("filter", {}), dict) else {},
+                        "slot": dict(payload.get("slot", {})) if isinstance(payload.get("slot", {}), dict) else {},
+                        "is_negated": bool(payload.get("is_negated", False)),
+                        "params": payload.get("params"),
+                    }
+                )
+                continue
+
+        normalized_frames.append(dict(frame))
+
+    return {
+        "frames": normalized_frames,
+    }
+
+
 def _iter_cards(compiled_data: dict[str, Any]):
     for db_name in ("member_db", "live_db", "energy_db"):
         for card_id, card in compiled_data.get(db_name, {}).items():
@@ -629,9 +850,7 @@ def _iter_cards(compiled_data: dict[str, Any]):
 def render_model_pseudocode(model: dict[str, Any]) -> str:
     lines: list[str] = []
     for frame in model.get("frames", []):
-        decoded = frame.get("decoded")
-        if decoded:
-            lines.append(str(decoded))
+        lines.append(_format_frame_trace(frame))
     return "\n".join(lines).strip()
 
 
@@ -656,21 +875,42 @@ def _prune_sparse(value: Any) -> Any:
 
 
 def frame_to_sparse(frame: dict[str, Any]) -> dict[str, Any]:
-    opcode_name = str(frame.get("opcode_name", "OP_0"))
-    opcode_id = int(frame.get("opcode", 0))
+    semantic = frame.get("semantic") if isinstance(frame, dict) and isinstance(frame.get("semantic"), dict) else {}
+    opcode_name = str(
+        frame.get("opcode_name")
+        or frame.get("op")
+        or semantic.get("opcode_name")
+        or "OP_0"
+    )
+    opcode_id = int(
+        frame.get("opcode")
+        or frame.get("opcode_id")
+        or semantic.get("opcode_id", 0)
+        or 0
+    )
     payload = frame.get("payload", {}) if isinstance(frame, dict) else {}
     sparse: dict[str, Any] = {"opcode_id": opcode_id, "opcode": opcode_name}
+    rust_opcode = (
+        frame.get("rust_opcode")
+        or frame.get("rust_opcode_name")
+        or semantic.get("rust_opcode")
+        or semantic.get("rust_opcode_name")
+    )
+    if isinstance(rust_opcode, str) and rust_opcode:
+        sparse["rust_opcode"] = rust_opcode
 
     frame_index = frame.get("ability_frame_index", frame.get("_frame_index")) if isinstance(frame, dict) else None
     if isinstance(frame_index, int) and frame_index >= 0:
         sparse["ability_frame_index"] = frame_index
 
-    if not isinstance(payload, dict):
-        return sparse
+    if not isinstance(payload, dict) or not payload:
+        payload = frame if isinstance(frame, dict) else {}
 
-    v_value = payload.get("v")
-    a_value = payload.get("a")
-    s_value = payload.get("s")
+    v_value = payload.get("v", payload.get("value"))
+    a_value = payload.get("a", payload.get("attr"))
+    s_value = payload.get("s", payload.get("slot"))
+    neg_value = payload.get("negated", payload.get("is_negated"))
+    params_value = payload.get("params")
 
     if _is_sparse_value(_prune_sparse(v_value)):
         sparse["value"] = _prune_sparse(v_value)
@@ -678,6 +918,10 @@ def frame_to_sparse(frame: dict[str, Any]) -> dict[str, Any]:
         sparse["attr"] = _prune_sparse(a_value)
     if _is_sparse_value(_prune_sparse(s_value)):
         sparse["slot"] = _prune_sparse(s_value)
+    if bool(neg_value):
+        sparse["negated"] = True
+    if params_value not in (None, {}, []):
+        sparse["params"] = params_value
 
     return sparse
 
@@ -701,6 +945,54 @@ def model_to_sparse_model(model: dict[str, Any], include_raw_words: bool = False
     }
 
 
+def frame_to_compact(frame: dict[str, Any]) -> dict[str, Any]:
+    sparse = frame_to_sparse(frame)
+    compact: dict[str, Any] = {
+        "op": sparse["opcode"],
+        "opcode_id": sparse["opcode_id"],
+    }
+    if isinstance(sparse.get("rust_opcode"), str) and sparse["rust_opcode"]:
+        compact["rust_opcode"] = sparse["rust_opcode"]
+
+    if isinstance(sparse.get("value"), dict):
+        compact["value"] = sparse["value"]
+    elif sparse.get("value") not in (None, 0):
+        compact["value"] = sparse["value"]
+
+    if isinstance(sparse.get("attr"), dict) and sparse["attr"]:
+        compact["attr"] = sparse["attr"]
+    if isinstance(sparse.get("slot"), dict) and sparse["slot"]:
+        compact["slot"] = sparse["slot"]
+    if sparse.get("is_negated"):
+        compact["negated"] = True
+    if sparse.get("negated"):
+        compact["negated"] = True
+    if sparse.get("params") not in (None, {}, []):
+        compact["params"] = sparse["params"]
+    if isinstance(sparse.get("ability_frame_index"), int):
+        compact["frame_index"] = sparse["ability_frame_index"]
+    if isinstance(frame.get("source_words"), list) and frame.get("source_words"):
+        compact["source_words"] = [int(word) for word in frame["source_words"]]
+
+    return compact
+
+
+def model_to_compact_model(model: dict[str, Any], include_raw_words: bool = False) -> dict[str, Any]:
+    compact_frames: list[dict[str, Any]] = []
+    for frame in model.get("frames", []):
+        compact_frame = frame_to_compact(frame)
+        if include_raw_words and "words" in frame:
+            compact_frame["source_words"] = [int(word) for word in frame.get("words", [])]
+        compact_frames.append(compact_frame)
+
+    return {
+        "generated_at": model.get("generated_at"),
+        "layout": model.get("layout", {}),
+        "frames": compact_frames,
+        "bytecode": [int(word) for word in model.get("bytecode", [])],
+    }
+
+
 def ability_signature(ability: dict[str, Any], metadata: dict[str, Any] | MetadataLookups) -> dict[str, Any]:
     lookups = metadata if isinstance(metadata, MetadataLookups) else load_lookups(metadata)
     trigger_id = int(ability.get("trigger", 0))
@@ -715,10 +1007,21 @@ def ability_signature(ability: dict[str, Any], metadata: dict[str, Any] | Metada
     signature_source = json.dumps(signature_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     signature_hash = sha1(signature_source.encode("utf-8")).hexdigest()
     opcode_names = []
+    opcode_sequence = []
+    opcode_ids = []
+    rust_opcode_sequence = []
     for frame in model.get("frames", []):
         opcode_name = frame.get("opcode_name")
-        if opcode_name and opcode_name not in opcode_names:
-            opcode_names.append(str(opcode_name))
+        opcode_id = frame.get("opcode_id")
+        rust_opcode = frame.get("rust_opcode")
+        if opcode_name:
+            opcode_sequence.append(str(opcode_name))
+            if opcode_name not in opcode_names:
+                opcode_names.append(str(opcode_name))
+        if opcode_id is not None:
+            opcode_ids.append(int(opcode_id))
+        if isinstance(rust_opcode, str) and rust_opcode:
+            rust_opcode_sequence.append(rust_opcode)
 
     return {
         "signature": f"{trigger_name}|{signature_hash}",
@@ -729,7 +1032,10 @@ def ability_signature(ability: dict[str, Any], metadata: dict[str, Any] | Metada
         "bytecode": bytecode,
         "bytecode_words": len(bytecode),
         "frame_count": len(model.get("frames", [])),
+        "opcode_sequence": opcode_sequence,
+        "opcode_ids": opcode_ids,
         "opcode_names": opcode_names,
+        "rust_opcode_sequence": rust_opcode_sequence,
         "pseudocode": render_model_pseudocode(model),
         "model": model,
         "sparse_model": model_to_sparse_model(model),
@@ -765,18 +1071,32 @@ def build_ability_index(compiled_data: dict[str, Any], metadata: dict[str, Any])
                     "bytecode": sig["bytecode"],
                     "bytecode_words": sig["bytecode_words"],
                     "frame_count": sig["frame_count"],
+                    "opcode_sequence": sig["opcode_sequence"],
+                    "opcode_ids": sig["opcode_ids"],
                     "opcode_names": sig["opcode_names"],
+                    "rust_opcode_sequence": sig["rust_opcode_sequence"],
                     "pseudocode": sig["pseudocode"],
                     "model": sig["model"],
                     "sparse_model": sig["sparse_model"],
                     "round_trip_matches": sig["round_trip_matches"],
                     "source_words": list(bytecode),
                     "cards": [],
+                    "card_refs": [],
                 },
             )
             ab_trigger_name = _name_for_id(int(ability.get("trigger", 0)), lookups.triggers_by_id, "TRIGGER")
             entry["cards"].append(
                 f"{card_no} | {card_name} [{db_name}:{card_id}] (ab#{ab_idx} {ab_trigger_name})"
+            )
+            entry["card_refs"].append(
+                {
+                    "db": db_name,
+                    "card_id": int(card_id) if str(card_id).isdigit() else card_id,
+                    "card_no": card_no,
+                    "name": card_name,
+                    "ability_index": ab_idx,
+                    "trigger": ab_trigger_name,
+                }
             )
 
     ordered_entries = sorted(
@@ -811,6 +1131,22 @@ def build_sparse_ability_index(compiled_data: dict[str, Any], metadata: dict[str
         entry.pop("signature_source", None)
         entry["trigger"] = entry.get("trigger")
         entry["trigger_id"] = entry.get("trigger_id")
+        entry["round_trip_matches"] = entry.get("round_trip_matches", False)
+    return payload
+
+
+def build_compact_ability_index(compiled_data: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
+    """Build a human-editable ability index from compiled cards."""
+
+    payload = build_ability_index(compiled_data, metadata)
+    payload["schema"] = "ability_frames.flat.v1"
+    for entry in payload.get("abilities", []):
+        model = entry.pop("model", {})
+        entry["frames"] = [frame_to_compact(frame) for frame in model.get("frames", [])]
+        entry.pop("sparse_model", None)
+        entry.pop("bytecode", None)
+        entry.pop("round_trip_bytecode", None)
+        entry.pop("signature_source", None)
         entry["round_trip_matches"] = entry.get("round_trip_matches", False)
     return payload
 

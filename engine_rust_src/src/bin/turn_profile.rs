@@ -2,11 +2,11 @@ use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
 use engine_rust::core::logic::turn_sequencer::TurnSequencer;
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
+use rand::prelude::StdRng;
 use rand::seq::IndexedRandom;
 use rand::SeedableRng;
-use rand::prelude::StdRng;
 
 fn load_vanilla_db() -> CardDatabase {
     let candidates = [
@@ -27,7 +27,12 @@ fn load_vanilla_db() -> CardDatabase {
     panic!("cards_vanilla.json not found");
 }
 
-fn count_legal_actions_recursive(state: &GameState, db: &CardDatabase, depth: usize, max_depth: usize) -> usize {
+fn count_legal_actions_recursive(
+    state: &GameState,
+    db: &CardDatabase,
+    depth: usize,
+    max_depth: usize,
+) -> usize {
     if state.phase != Phase::Main || depth >= max_depth {
         return 1;
     }
@@ -74,7 +79,7 @@ fn main() {
     state.ui.silent = true;
 
     let mut rng = StdRng::seed_from_u64(100);
-    
+
     // Advance to first Main phase
     while state.phase != Phase::Main && !state.is_terminal() {
         match state.phase {
@@ -103,20 +108,21 @@ fn main() {
             let branches_start = Instant::now();
             let branches = count_legal_actions_recursive(&state, &db, 0, depth);
             let branches_time = branches_start.elapsed();
-            
+
             let plan_start = Instant::now();
             let (_, _, _, evals) = TurnSequencer::plan_full_turn(&state, &db);
             let plan_time = plan_start.elapsed();
-            
+
             let avg_time_per_eval = if evals > 0 {
                 (plan_time.as_secs_f32() * 1000.0) / evals as f32
             } else {
                 0.0
             };
-            
+
             let percent_of_depth = (branches as f32).log2();
-            
-            println!("{:4} | {:5} | {:8} | {:9.2}ms | {:5} | {:11.3}ms | {:10.2}ms | {:.1}%",
+
+            println!(
+                "{:4} | {:5} | {:8} | {:9.2}ms | {:5} | {:11.3}ms | {:10.2}ms | {:.1}%",
                 main_turns,
                 depth,
                 branches,
@@ -126,9 +132,9 @@ fn main() {
                 plan_time.as_secs_f32() * 1000.0,
                 percent_of_depth * 10.0
             );
-            
+
             total_main_time += plan_time.as_secs_f32();
-            
+
             // Execute the turn to advance state
             let (seq, _, _, _) = TurnSequencer::plan_full_turn(&state, &db);
             for &action in &seq {
@@ -143,7 +149,7 @@ fn main() {
                 let _ = state.step(&db, ACTION_BASE_PASS);
             }
         }
-        
+
         // Handle other phases
         while state.phase != Phase::Main && !state.is_terminal() && state.phase != Phase::Terminal {
             match state.phase {
@@ -154,7 +160,11 @@ fn main() {
                     }
                     let _ = state.step(&db, ACTION_BASE_PASS);
                 }
-                Phase::Active | Phase::Draw | Phase::Energy | Phase::PerformanceP1 | Phase::PerformanceP2 => {
+                Phase::Active
+                | Phase::Draw
+                | Phase::Energy
+                | Phase::PerformanceP1
+                | Phase::PerformanceP2 => {
                     state.auto_step(&db);
                 }
                 Phase::LiveResult => {
@@ -173,8 +183,21 @@ fn main() {
 
     let total_time = game_start.elapsed();
     println!("\n[GAME SUMMARY]");
-    println!("Total game time: {:.2}ms", total_time.as_secs_f32() * 1000.0);
-    println!("Main planning time: {:.2}ms ({} turns)", total_main_time * 1000.0, main_turns);
-    println!("Avg per main turn: {:.2}ms", (total_main_time * 1000.0) / main_turns as f32);
-    println!("Overhead: {:.2}ms", (total_time.as_secs_f32() - total_main_time) * 1000.0);
+    println!(
+        "Total game time: {:.2}ms",
+        total_time.as_secs_f32() * 1000.0
+    );
+    println!(
+        "Main planning time: {:.2}ms ({} turns)",
+        total_main_time * 1000.0,
+        main_turns
+    );
+    println!(
+        "Avg per main turn: {:.2}ms",
+        (total_main_time * 1000.0) / main_turns as f32
+    );
+    println!(
+        "Overhead: {:.2}ms",
+        (total_time.as_secs_f32() - total_main_time) * 1000.0
+    );
 }

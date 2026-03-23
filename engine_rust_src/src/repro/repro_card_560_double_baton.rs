@@ -111,7 +111,8 @@ fn test_repro_card_560_double_baton() {
         "Slot 1 should be empty after Double Baton"
     );
     assert_eq!(
-        state.players[0].baton_touch_count(), 2,
+        state.players[0].baton_touch_count(),
+        2,
         "baton_touch_count should be 2"
     );
 

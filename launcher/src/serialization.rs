@@ -1693,9 +1693,9 @@ pub fn serialize_player_rich(
     let m = obj.as_object_mut().unwrap();
     m.insert("looked_cards".into(), json!(p.looked_cards.iter().map(|&cid| serialize_card(cid as i32, db, is_viewer, lang)).collect::<Vec<Value>>()));
     m.insert("heart_buffs".into(), json!(p.heart_buffs.iter().map(|hb| hb.to_array()).collect::<Vec<[u8; 7]>>()));
-    m.insert("prevent_activate".into(), json!(p.prevent_activate));
-    m.insert("prevent_baton_touch".into(), json!(p.prevent_baton_touch));
-    m.insert("prevent_success_pile_set".into(), json!(p.prevent_success_pile_set));
+    m.insert("prevent_activate".into(), json!(p.prevent_activate()));
+    m.insert("prevent_baton_touch".into(), json!(p.prevent_baton_touch()));
+    m.insert("prevent_success_pile_set".into(), json!(p.prevent_success_pile_set()));
     m.insert("activated_energy_group_mask".into(), json!(p.activated_energy_group_mask));
     m.insert("activated_member_group_mask".into(), json!(p.activated_member_group_mask));
     m.insert("discarded_this_turn".into(), json!(p.discarded_this_turn));
@@ -1703,7 +1703,7 @@ pub fn serialize_player_rich(
     m.insert("heart_req_reductions".into(), json!(p.heart_req_reductions.to_array()));
     m.insert("heart_req_additions".into(), json!(p.heart_req_additions.to_array()));
     // Deep diagnostics
-    m.insert("baton_touch_count".into(), json!(p.baton_touch_count));
+    m.insert("baton_touch_count".into(), json!(p.baton_touch_count()));
     m.insert("baton_touch_limit".into(), json!(p.baton_touch_limit));
     m.insert("live_score_bonus".into(), json!(p.live_score_bonus));
     m.insert("live_score_bonus_logs".into(), json!(p.live_score_bonus_logs.iter().map(|(cid, amt)| json!({"source": cid, "amount": amt})).collect::<Vec<Value>>()));
@@ -1712,19 +1712,19 @@ pub fn serialize_player_rich(
     m.insert("heart_buff_logs".into(), json!(p.heart_buff_logs.iter().map(|(src, amt, col, slot)| json!({"source": src, "amount": amt, "color": col, "slot": slot})).collect::<Vec<Value>>()));
     m.insert("yell_count_reduction".into(), json!(p.yell_count_reduction));
     m.insert("flags".into(), json!(p.flags));
-    m.insert("play_count_this_turn".into(), json!(p.play_count_this_turn));
+    m.insert("play_count_this_turn".into(), json!(p.play_count_this_turn()));
     m.insert("stage_energy_count".into(), json!(p.stage_energy_count));
     m.insert("stage_energy".into(), json!(p.stage_energy.iter().map(|sv| sv.iter().map(|&cid| cid).collect::<Vec<i32>>()).collect::<Vec<Vec<i32>>>()));
     m.insert("restrictions".into(), json!(p.restrictions.iter().collect::<Vec<&u8>>()));
     m.insert("negated_triggers_count".into(), json!(p.negated_triggers.len()));
     m.insert("granted_abilities_count".into(), json!(p.granted_abilities.len()));
-    m.insert("prevent_play_to_slot_mask".into(), json!(p.prevent_play_to_slot_mask));
+    m.insert("prevent_play_to_slot_mask".into(), json!(p.prevent_play_to_slot_mask()));
     m.insert("hand_increased_this_turn".into(), json!(p.hand_increased_this_turn));
     m.insert("cheer_mod_count".into(), json!(p.cheer_mod_count));
     m.insert("current_turn_notes".into(), json!(p.current_turn_notes));
     m.insert("color_transforms_count".into(), json!(p.color_transforms.len()));
     m.insert("excess_hearts".into(), json!(p.excess_hearts));
-    m.insert("skip_next_activate".into(), json!(p.skip_next_activate));
+    m.insert("skip_next_activate".into(), json!(p.skip_next_activate()));
     m.insert("used_abilities_count".into(), json!(p.used_abilities.len()));
     m.insert("exile_count".into(), json!(p.exile.len()));
     m.insert("live_deck_count".into(), json!(p.live_deck.len()));

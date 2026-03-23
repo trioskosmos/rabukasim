@@ -36,12 +36,14 @@ fn test_card_557_logic_repro() {
 
     // 5. Get ability 0 bytecode
     let member = db.get_member(card_id).expect("Card 557 not found");
-    let bytecode = &member.abilities[0].bytecode;
-
-    println!("Bytecode: {:?}", bytecode);
+    let ability = member.abilities[0].clone();
+    let frame_program = ability
+        .semantic_frame_program()
+        .expect("Card 557 ability should have frame data");
+    println!("Frames: {:?}", frame_program.frames);
 
     // 6. Execute
-    let _ = state.resolve_bytecode(&db, std::sync::Arc::new(bytecode.clone()), &ctx);
+    state.resolve_semantic_frames(&db, &frame_program.frames, &ctx);
 
     // 7. Verification
     // Success: Energy zone should have 8 cards, and the last one should be tapped (wait state).
@@ -87,9 +89,12 @@ fn test_card_557_logic_fail_if_not_only_liella() {
     };
 
     let member = db.get_member(card_id).unwrap();
-    let bytecode = &member.abilities[0].bytecode;
+    let ability = member.abilities[0].clone();
+    let frame_program = ability
+        .semantic_frame_program()
+        .expect("Card 557 ability should have frame data");
 
-    let _ = state.resolve_bytecode(&db, std::sync::Arc::new(bytecode.clone()), &ctx);
+    state.resolve_semantic_frames(&db, &frame_program.frames, &ctx);
 
     // Should NOT have charged energy because ALL_MEMBERS condition failed
     assert_eq!(

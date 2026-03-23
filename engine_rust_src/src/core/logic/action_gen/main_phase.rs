@@ -33,7 +33,8 @@ impl ActionGenerator for MainPhaseGenerator {
         receiver.add_action(0);
 
         // Optimization 3: Bitmask-based Energy counting
-        let available_energy = player.energy_zone.len() as i32 - player.tapped_energy_count() as i32;
+        let available_energy =
+            player.energy_zone.len() as i32 - player.tapped_energy_count() as i32;
 
         // Pre-calculate stage slot costs, data, and restrictions (CRITICAL OPTIMIZATION)
         let mut slot_costs = [0; 3];
@@ -333,7 +334,8 @@ mod tests {
             receiver
                 .actions
                 .iter()
-                .all(|action| *action < ACTION_BASE_HAND_CHOICE || *action >= ACTION_BASE_STAGE_CHOICE),
+                .all(|action| *action < ACTION_BASE_HAND_CHOICE
+                    || *action >= ACTION_BASE_STAGE_CHOICE),
             "vanilla mode should not expose main-phase choice-based ability actions: {:?}",
             receiver.actions
         );
@@ -341,7 +343,8 @@ mod tests {
             receiver
                 .actions
                 .iter()
-                .all(|action| *action < ACTION_BASE_HAND_ACTIVATE || *action >= ACTION_BASE_HAND_CHOICE),
+                .all(|action| *action < ACTION_BASE_HAND_ACTIVATE
+                    || *action >= ACTION_BASE_HAND_CHOICE),
             "vanilla mode should not expose hand ability activations: {:?}",
             receiver.actions
         );

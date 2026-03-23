@@ -1,79 +1,62 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-echo ==========================================
-echo Rabuka Simulator Startup
-echo ==========================================
-
-echo [1/3] Checking dependencies...
 where cargo >nul 2>&1
-if %errorlevel% neq 0 goto NO_CARGO
+if errorlevel 1 goto NO_CARGO
 
 where uv >nul 2>&1
-if %errorlevel% neq 0 goto NO_UV
+if errorlevel 1 goto NO_UV
 
-echo [2/3] Cleaning up processes...
-:: Kill other instances of this script (using title/command line filtering)
 powershell -NoProfile -Command "$ppid = (Get-CimInstance Win32_Process -Filter \"ProcessId = $PID\").ParentProcessId; Get-CimInstance Win32_Process -Filter \"Name = 'cmd.exe'\" | Where-Object { $_.CommandLine -like '*start_server.bat*' -and $_.ProcessId -ne $PID -and $_.ProcessId -ne $ppid } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
 
 taskkill /F /IM rabuka_launcher.exe /T 2>nul
-:: Simplified PowerShell cleanup - Protecting browsers
 powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8000,8080,8888,3000,5000 -ErrorAction SilentlyContinue | ForEach-Object { $p = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue; if ($p -and $p.ProcessName -notmatch 'chrome|msedge|firefox|brave|browser') { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } }"
 
-echo.
-echo [3/3] Preparing Environment...
+echo [build] Preparing environment...
 if not exist "data\cards.json" goto NO_DATA
 
-echo Compiling Card Data...
-uv run python -m compiler.main --quiet
-if %errorlevel% neq 0 goto CMD_FAIL
+echo [build] Compiling card data...
+uv run python -m compiler.main --quiet --export-profile runtime
+if errorlevel 1 goto CMD_FAIL
 
-echo Rebuilding Frame Index...
-uv run python tools/consolidate_abilities.py --input data/cards_compiled.json --metadata data/metadata.json --output data/ability_frame_index.json
-if %errorlevel% neq 0 goto CMD_FAIL
+echo [build] Syncing authored ability frames into runtime index...
+uv run python tools/sync_ability_frame_index.py --input data/ability_frames.json --metadata data/metadata.json --output data/ability_frame_index.json
+if errorlevel 1 goto CMD_FAIL
 
-:: Handle arguments
 set DO_FULL=0
 set DEBUG_ARG=
 for %%a in (%*) do (
-    if "%%a"=="--full" set DO_FULL=1
-    if "%%a"=="--debug" set DEBUG_ARG=--debug
-    if "%%a"=="-d" set DEBUG_ARG=--debug
+    if /i "%%~a"=="--full" set DO_FULL=1
+    if /i "%%~a"=="--debug" set DEBUG_ARG=--debug
+    if /i "%%~a"=="-d" set DEBUG_ARG=--debug
 )
 
 if %DO_FULL% neq 1 goto SKIP_MATURIN
-echo Building Python Extension (Maturin)...
+echo [build] Building Python extension (maturin)...
 uv run maturin develop
-if %errorlevel% neq 0 goto CMD_FAIL
+if errorlevel 1 goto CMD_FAIL
 goto SYNC_ASSETS
 
 :SKIP_MATURIN
-echo Skipping Maturin build (use --full to build Python extension).
+echo [build] Skipping Python extension build (use --full).
 
 :SYNC_ASSETS
-echo Synchronizing Frontend Assets...
+echo [build] Synchronizing frontend assets...
 uv run python tools/sync_launcher_assets.py
-if %errorlevel% neq 0 goto CMD_FAIL
+if errorlevel 1 goto CMD_FAIL
 
-echo.
-echo Starting Rabuka Simulator Server (Rust)...
-echo NOTE: Using Rust Launcher as verified Source of Truth.
-if "%DEBUG_ARG%"=="--debug" echo [DEBUG MODE ENABLED]
-echo.
+echo [run] Starting Rust server...
+if "%DEBUG_ARG%"=="--debug" echo [run] Debug mode enabled.
 
 pushd launcher
 cargo run --release --features nn --bin rabuka_launcher -- %DEBUG_ARG%
-echo.
-echo TIP: For live frontend editing, run 'npm run dev' in frontend/web_ui
 set "EXIT_CODE=%errorlevel%"
 popd
 
-:: If it's a normal exit (0) or a Ctrl+C exit (non-zero common codes), go to END
-if %EXIT_CODE% equ 0 goto END
-if %EXIT_CODE% equ -1073741510 goto END
-if %EXIT_CODE% equ 3221225786 goto END
+if "%EXIT_CODE%"=="0" goto END
+if "%EXIT_CODE%"=="-1073741510" goto END
+if "%EXIT_CODE%"=="3221225786" goto END
 
-:: Otherwise it's a real failure
 goto CMD_FAIL
 
 :NO_CARGO

@@ -1,8 +1,8 @@
-use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::FILTER_MASK_LOWER;
-use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::interpreter::HandlerResult;
 use crate::core::O_ORDER_DECK;
 
@@ -28,18 +28,21 @@ pub fn handle_order_deck(
     }
     if !state.players[p_idx].looked_cards.is_empty() {
         if ctx.choice_index == -1 {
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                frame_idx,
-                O_ORDER_DECK,
-                0,
-                ChoiceType::OrderDeck,
-                0,
-                -1,
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    ctx,
+                    frame_idx,
+                    O_ORDER_DECK,
+                    0,
+                    ChoiceType::OrderDeck,
+                    0,
+                    -1,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
         }
@@ -55,18 +58,21 @@ pub fn handle_order_deck(
             let cid = state.players[p_idx].looked_cards.remove(idx);
             state.players[p_idx].push_deck_card(cid);
             if !state.players[p_idx].looked_cards.is_empty() {
-                if matches!(suspend_choice(
-                    state,
-                    db,
-                    ctx,
-                    ctx,
-                    frame_idx,
-                    O_ORDER_DECK,
-                    0,
-                    ChoiceType::OrderDeck,
-                    0,
-                    -1,
-                ), HandlerResult::Suspend) {
+                if matches!(
+                    suspend_choice(
+                        state,
+                        db,
+                        ctx,
+                        ctx,
+                        frame_idx,
+                        O_ORDER_DECK,
+                        0,
+                        ChoiceType::OrderDeck,
+                        0,
+                        -1,
+                    ),
+                    HandlerResult::Suspend
+                ) {
                     return HandlerResult::Suspend;
                 }
             }

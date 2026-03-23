@@ -1,12 +1,12 @@
-use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::*;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, Zone};
 use crate::core::models::CHOICE_DONE;
 
-use super::super::movement_discard_helpers::remove_card_by_index;
 use super::super::super::HandlerResult;
+use super::super::movement_discard_helpers::remove_card_by_index;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_discard_resume(
@@ -41,22 +41,25 @@ pub fn handle_discard_resume(
         }
 
         if (next_ctx.v_remaining > 0) || (next_ctx.v_remaining == -1 && count > 0) {
-            if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                &*next_ctx,
-                frame_idx,
-                O_MOVE_TO_DISCARD,
-                s,
-                choice_type,
-                filter_attr,
-                if next_ctx.v_remaining > 0 {
-                    next_ctx.v_remaining
-                } else {
-                    count as i16
-                },
-            ), HandlerResult::Suspend) {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    &*next_ctx,
+                    frame_idx,
+                    O_MOVE_TO_DISCARD,
+                    s,
+                    choice_type,
+                    filter_attr,
+                    if next_ctx.v_remaining > 0 {
+                        next_ctx.v_remaining
+                    } else {
+                        count as i16
+                    },
+                ),
+                HandlerResult::Suspend
+            ) {
                 return HandlerResult::Suspend;
             }
             return HandlerResult::Continue;
@@ -111,12 +114,15 @@ pub fn handle_discard_resume(
         next_ctx.choice_index = -1;
         next_ctx.selected_cards.push(removed_cid);
 
-        let is_forced_pick = !is_optional
-            && (count as usize) >= (state.players[target_player_idx].hand.len());
+        let is_forced_pick =
+            !is_optional && (count as usize) >= (state.players[target_player_idx].hand.len());
         if (ctx.auto_pick || is_forced_pick) && !is_optional {
             let still_available = match source_zone {
                 Zone::Hand => !state.players[target_player_idx].hand.is_empty(),
-                Zone::Stage => state.players[target_player_idx].stage.iter().any(|&c| c >= 0),
+                Zone::Stage => state.players[target_player_idx]
+                    .stage
+                    .iter()
+                    .any(|&c| c >= 0),
                 _ => true,
             };
 
@@ -128,18 +134,21 @@ pub fn handle_discard_resume(
             }
         }
 
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            &*next_ctx,
-            frame_idx,
-            O_MOVE_TO_DISCARD,
-            s,
-            choice_type,
-            filter_attr,
-            next_ctx.v_remaining,
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                &*next_ctx,
+                frame_idx,
+                O_MOVE_TO_DISCARD,
+                s,
+                choice_type,
+                filter_attr,
+                next_ctx.v_remaining,
+            ),
+            HandlerResult::Suspend
+        ) {
             return HandlerResult::Suspend;
         }
     }

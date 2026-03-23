@@ -1,19 +1,19 @@
-use engine_rust::core::logic::{CardDatabase, GameState};
 use engine_rust::core::enums::Phase;
+use engine_rust::core::logic::{CardDatabase, GameState};
+use engine_rust::core::ACTION_BASE_PASS;
 use serde_json::json;
 use smallvec::SmallVec;
-use engine_rust::core::{ACTION_BASE_PASS};
 use std::fs;
 
 fn main() {
     // Load vanilla database
     let db = load_vanilla_db();
     let mut state = GameState::default();
-    
+
     // Build decks from actual cards in database
     let mut dummy_deck = Vec::new();
     let mut dummy_lives = Vec::new();
-    
+
     // Collect real member cards
     for &id in db.members.keys() {
         dummy_deck.push(id);
@@ -21,7 +21,7 @@ fn main() {
             break;
         }
     }
-    
+
     // Pad if needed
     while dummy_deck.len() < 48 {
         if let Some(&id) = db.members.keys().next() {
@@ -30,7 +30,7 @@ fn main() {
             break;
         }
     }
-    
+
     // Collect real live cards
     for &id in db.lives.keys() {
         dummy_lives.push(id);
@@ -38,7 +38,7 @@ fn main() {
             break;
         }
     }
-    
+
     // Pad if needed
     while dummy_lives.len() < 12 {
         if let Some(&id) = db.lives.keys().next() {
@@ -47,10 +47,10 @@ fn main() {
             break;
         }
     }
-    
+
     // Collect energy cards
     let dummy_energy: Vec<i32> = db.energy_db.keys().take(12).cloned().collect();
-    
+
     state.initialize_game(
         dummy_deck.clone(),
         dummy_deck.clone(),
@@ -59,7 +59,7 @@ fn main() {
         dummy_lives.clone(),
         dummy_lives.clone(),
     );
-    
+
     // Step through mulligan etc to reach Main phase
     while state.phase != Phase::Main {
         let legal = state.get_legal_action_ids(&db);
@@ -72,24 +72,27 @@ fn main() {
             break;
         }
     }
-    
+
     // Get initial player to search from
     let root_player = state.current_player as usize;
-    
+
     println!("Initial state - Current player: {}", root_player);
     let mut test_actions = SmallVec::<[i32; 64]>::new();
     state.generate_legal_actions(&db, state.current_player as usize, &mut test_actions);
     println!("Legal actions at start: {} actions", test_actions.len());
-    
+
     println!("\nEnumerating ALL legal sequences from root state...");
-    
+
     // Single DFS pass: count all sequences at each depth
     let mut stats = SequenceStats::new();
     enumerate_sequences(&state, &db, root_player, 0, &mut stats);
-    
+
     // Output results
     println!("\n=== SEQUENCE ENUMERATION RESULTS ===");
-    println!("Total sequences explored (leaf nodes): {}", stats.total_sequences);
+    println!(
+        "Total sequences explored (leaf nodes): {}",
+        stats.total_sequences
+    );
     println!("\nSequences by depth:");
     for (depth, count) in &stats.by_depth {
         let ratio = if *depth == 0 {
@@ -97,9 +100,12 @@ fn main() {
         } else {
             *count as f32 / stats.by_depth.get(&(depth - 1)).copied().unwrap_or(1) as f32
         };
-        println!("  Depth {}: {} sequences (branching ratio from prev: {:.2}x)", depth, count, ratio);
+        println!(
+            "  Depth {}: {} sequences (branching ratio from prev: {:.2}x)",
+            depth, count, ratio
+        );
     }
-    
+
     // Compute average branching factor
     if stats.by_depth.len() >= 2 {
         let mut total_ratio = 0.0;
@@ -115,17 +121,20 @@ fn main() {
         }
         if count > 0 {
             let avg_branching = total_ratio / count as f32;
-            println!("\nAverage branching factor (seq_ratio): {:.2}x", avg_branching);
+            println!(
+                "\nAverage branching factor (seq_ratio): {:.2}x",
+                avg_branching
+            );
         }
     }
-    
+
     // JSON output
     let json_stats = json!({
         "total_sequences": stats.total_sequences,
         "max_depth_explored": stats.by_depth.keys().max().copied().unwrap_or(0),
         "by_depth": stats.by_depth,
     });
-    
+
     println!("\nJSON output:");
     println!("{}", serde_json::to_string_pretty(&json_stats).unwrap());
 }
@@ -140,7 +149,7 @@ impl SequenceStats {
     fn new() -> Self {
         Self::default()
     }
-    
+
     fn record_sequence(&mut self, depth: usize) {
         self.total_sequences += 1;
         *self.by_depth.entry(depth).or_insert(0) += 1;
@@ -158,30 +167,31 @@ fn enumerate_sequences(
     if depth == 0 {
         println!("DEBUG: Entering with depth=0");
     }
-    
+
     // Base case: hard depth limit
     if depth > 15 {
         stats.record_sequence(depth);
         return;
     }
-    
+
     // Check if current player HAS legal Main actions (excluding Pass means no real moves)
     let mut actions = SmallVec::<[i32; 64]>::new();
     state.generate_legal_actions(db, state.current_player as usize, &mut actions);
-    
+
     if depth == 0 {
         println!("DEBUG: Total actions = {}", actions.len());
     }
-    
+
     // Filter out Pass - if only Pass is legal, turn ends
-    let main_actions: Vec<i32> = actions.into_iter()
+    let main_actions: Vec<i32> = actions
+        .into_iter()
         .filter(|&a| a != ACTION_BASE_PASS)
         .collect();
-    
+
     if depth == 0 {
         println!("DEBUG: Non-Pass actions = {}", main_actions.len());
     }
-    
+
     // If no real Main phase actions, sequence ends here
     if main_actions.is_empty() || state.phase != Phase::Main {
         if depth == 0 {
@@ -190,11 +200,11 @@ fn enumerate_sequences(
         stats.record_sequence(depth);
         return;
     }
-    
+
     if depth == 0 {
         println!("DEBUG: Will recurse into {} actions", main_actions.len());
     }
-    
+
     // Recursive case: try all non-Pass legal actions
     for action in main_actions {
         let mut next_state = state.clone();

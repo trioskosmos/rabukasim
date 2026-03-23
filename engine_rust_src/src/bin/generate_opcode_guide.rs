@@ -1,7 +1,7 @@
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs;
 use std::fmt::Write as _;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 #[derive(Default)]
@@ -106,7 +106,11 @@ fn add_names_from_value(value: &Value, set: &mut BTreeSet<String>) {
 }
 
 fn escape_md(input: &str) -> String {
-    input.replace('|', "\\|").replace('\r', "").trim().to_string()
+    input
+        .replace('|', "\\|")
+        .replace('\r', "")
+        .trim()
+        .to_string()
 }
 
 fn field_description(field: &str) -> &'static str {
@@ -263,22 +267,38 @@ fn render_name_id_table(
                 let words_used = if stat.words_used.is_empty() {
                     "none".to_string()
                 } else {
-                    stat.words_used.iter().cloned().collect::<Vec<_>>().join(", ")
+                    stat.words_used
+                        .iter()
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join(", ")
                 };
                 let value_fields = if stat.value_fields.is_empty() {
                     "none".to_string()
                 } else {
-                    stat.value_fields.iter().cloned().collect::<Vec<_>>().join(", ")
+                    stat.value_fields
+                        .iter()
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join(", ")
                 };
                 let attr_fields = if stat.attr_fields.is_empty() {
                     "none".to_string()
                 } else {
-                    stat.attr_fields.iter().cloned().collect::<Vec<_>>().join(", ")
+                    stat.attr_fields
+                        .iter()
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join(", ")
                 };
                 let slot_fields = if stat.slot_fields.is_empty() {
                     "none".to_string()
                 } else {
-                    stat.slot_fields.iter().cloned().collect::<Vec<_>>().join(", ")
+                    stat.slot_fields
+                        .iter()
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join(", ")
                 };
                 let note = opcode_note(name, stat);
                 writeln!(
@@ -292,7 +312,8 @@ fn render_name_id_table(
                     escape_md(&attr_fields),
                     escape_md(&slot_fields),
                     escape_md(&note),
-                ).unwrap();
+                )
+                .unwrap();
             } else {
                 writeln!(
                     md,
@@ -302,7 +323,13 @@ fn render_name_id_table(
                 ).unwrap();
             }
         } else {
-            writeln!(md, "| {} | {} | not a frame family; reference table only |", escape_md(name), id).unwrap();
+            writeln!(
+                md,
+                "| {} | {} | not a frame family; reference table only |",
+                escape_md(name),
+                id
+            )
+            .unwrap();
         }
     }
 
@@ -330,11 +357,15 @@ fn main() {
 
     let metadata = read_json(&metadata_path);
     let index = read_json(&index_path);
-    let layout = metadata.get("bytecode_layout").cloned().unwrap_or(Value::Null);
+    let layout = metadata
+        .get("bytecode_layout")
+        .cloned()
+        .unwrap_or(Value::Null);
     let opcode_entries = extract_named_ids(metadata.get("opcodes").unwrap_or(&Value::Null));
     let condition_entries = extract_named_ids(metadata.get("conditions").unwrap_or(&Value::Null));
     let cost_entries = extract_named_ids(metadata.get("costs").unwrap_or(&Value::Null));
-    let action_base_entries = extract_named_ids(metadata.get("action_bases").unwrap_or(&Value::Null));
+    let action_base_entries =
+        extract_named_ids(metadata.get("action_bases").unwrap_or(&Value::Null));
     let trigger_entries = extract_named_ids(metadata.get("triggers").unwrap_or(&Value::Null));
     let target_entries = extract_named_ids(metadata.get("targets").unwrap_or(&Value::Null));
     let slot_entries = extract_named_ids(metadata.get("slot_indices").unwrap_or(&Value::Null));
@@ -381,15 +412,16 @@ fn main() {
                 .entry(opcode.clone())
                 .or_insert_with(|| OpcodeStat::new(opcode.clone(), opcode_id));
             stat.frame_count += 1;
-            if let Some(section) = frame
-                .get("opcode_section")
-                .and_then(Value::as_str)
-                .or_else(|| {
-                    frame
-                        .get("semantic")
-                        .and_then(|s| s.get("opcode_section"))
-                        .and_then(Value::as_str)
-                })
+            if let Some(section) =
+                frame
+                    .get("opcode_section")
+                    .and_then(Value::as_str)
+                    .or_else(|| {
+                        frame
+                            .get("semantic")
+                            .and_then(|s| s.get("opcode_section"))
+                            .and_then(Value::as_str)
+                    })
             {
                 stat.sections.insert(section.to_string());
             }
@@ -424,7 +456,11 @@ fn main() {
                 }
             }
 
-            if frame.get("negated").and_then(Value::as_bool).unwrap_or(false) {
+            if frame
+                .get("negated")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
                 stat.negated = true;
             }
 
@@ -451,7 +487,11 @@ fn main() {
     let mut md = String::new();
     writeln!(&mut md, "# Opcode Guide").unwrap();
     writeln!(&mut md).unwrap();
-    writeln!(&mut md, "Generated from `data/metadata.json` and `data/ability_frame_index.json`.").unwrap();
+    writeln!(
+        &mut md,
+        "Generated from `data/metadata.json` and `data/ability_frame_index.json`."
+    )
+    .unwrap();
     writeln!(&mut md).unwrap();
     writeln!(&mut md, "This guide is field-based, not just byte-based: it shows which frame words and decoded fields each opcode family actually uses in the current compiled cards.").unwrap();
     writeln!(&mut md).unwrap();
@@ -467,22 +507,46 @@ fn main() {
     writeln!(&mut md, "## Current Coverage").unwrap();
     writeln!(&mut md).unwrap();
     writeln!(&mut md, "| Opcode | Id | Frames | Words Used | Value Fields | Attr Fields | Slot Fields | What Changes | Example Cards |").unwrap();
-    writeln!(&mut md, "| --- | ---: | ---: | --- | --- | --- | --- | --- | --- |").unwrap();
+    writeln!(
+        &mut md,
+        "| --- | ---: | ---: | --- | --- | --- | --- | --- | --- |"
+    )
+    .unwrap();
 
     for stat in stats.values() {
-        let mut words_used = stat.words_used.iter().cloned().collect::<Vec<_>>().join(", ");
+        let mut words_used = stat
+            .words_used
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(", ");
         if words_used.is_empty() {
             words_used = "none".to_string();
         }
-        let mut value_fields = stat.value_fields.iter().cloned().collect::<Vec<_>>().join(", ");
+        let mut value_fields = stat
+            .value_fields
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(", ");
         if value_fields.is_empty() {
             value_fields = "none".to_string();
         }
-        let mut attr_fields = stat.attr_fields.iter().cloned().collect::<Vec<_>>().join(", ");
+        let mut attr_fields = stat
+            .attr_fields
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(", ");
         if attr_fields.is_empty() {
             attr_fields = "none".to_string();
         }
-        let mut slot_fields = stat.slot_fields.iter().cloned().collect::<Vec<_>>().join(", ");
+        let mut slot_fields = stat
+            .slot_fields
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(", ");
         if slot_fields.is_empty() {
             slot_fields = "none".to_string();
         }
@@ -505,13 +569,18 @@ fn main() {
             escape_md(&slot_fields),
             escape_md(&note),
             escape_md(&examples),
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     writeln!(&mut md).unwrap();
     writeln!(&mut md, "## Bit Packing Reference").unwrap();
     writeln!(&mut md).unwrap();
-    writeln!(&mut md, "These tables are the exact packed-word definitions from `data/metadata.json`.").unwrap();
+    writeln!(
+        &mut md,
+        "These tables are the exact packed-word definitions from `data/metadata.json`."
+    )
+    .unwrap();
     writeln!(&mut md).unwrap();
     if let Some(words) = layout.get("words") {
         render_layout_section(&mut md, "Word Layout", words);
@@ -551,13 +620,15 @@ fn main() {
     writeln!(&mut md).unwrap();
 
     for stat in stats.values() {
-        writeln!(&mut md, "### {} (`{}`)", escape_md(&stat.opcode), stat.opcode_id).unwrap();
-        writeln!(&mut md).unwrap();
         writeln!(
             &mut md,
-            "{}",
-            opcode_note(&stat.opcode, stat)
-        ).unwrap();
+            "### {} (`{}`)",
+            escape_md(&stat.opcode),
+            stat.opcode_id
+        )
+        .unwrap();
+        writeln!(&mut md).unwrap();
+        writeln!(&mut md, "{}", opcode_note(&stat.opcode, stat)).unwrap();
         writeln!(&mut md).unwrap();
         writeln!(&mut md, "- Frames observed: {}", stat.frame_count).unwrap();
         writeln!(
@@ -566,36 +637,56 @@ fn main() {
             if stat.words_used.is_empty() {
                 "none".to_string()
             } else {
-                stat.words_used.iter().cloned().collect::<Vec<_>>().join(", ")
+                stat.words_used
+                    .iter()
+                    .cloned()
+                    .collect::<Vec<_>>()
+                    .join(", ")
             }
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(
             &mut md,
             "- Value fields: {}",
             if stat.value_fields.is_empty() {
                 "none".to_string()
             } else {
-                stat.value_fields.iter().cloned().collect::<Vec<_>>().join(", ")
+                stat.value_fields
+                    .iter()
+                    .cloned()
+                    .collect::<Vec<_>>()
+                    .join(", ")
             }
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(
             &mut md,
             "- Attr fields: {}",
             if stat.attr_fields.is_empty() {
                 "none".to_string()
             } else {
-                stat.attr_fields.iter().cloned().collect::<Vec<_>>().join(", ")
+                stat.attr_fields
+                    .iter()
+                    .cloned()
+                    .collect::<Vec<_>>()
+                    .join(", ")
             }
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(
             &mut md,
             "- Slot fields: {}",
             if stat.slot_fields.is_empty() {
                 "none".to_string()
             } else {
-                stat.slot_fields.iter().cloned().collect::<Vec<_>>().join(", ")
+                stat.slot_fields
+                    .iter()
+                    .cloned()
+                    .collect::<Vec<_>>()
+                    .join(", ")
             }
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(
             &mut md,
             "- Example frames: {}",
@@ -604,7 +695,8 @@ fn main() {
             } else {
                 stat.examples.join(" | ")
             }
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(
             &mut md,
             "- Example cards: {}",
@@ -613,7 +705,8 @@ fn main() {
             } else {
                 stat.cards.join(" | ")
             }
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(&mut md).unwrap();
     }
 
@@ -630,7 +723,8 @@ fn main() {
             escape_md(field),
             escape_md(meaning),
             escape_md(&opcode_list)
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     fs::write(&output_path, md)

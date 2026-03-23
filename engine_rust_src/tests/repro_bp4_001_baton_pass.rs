@@ -85,10 +85,13 @@ fn test_card_557_condition_check_direct() {
     }
     state.core.players[p1].energy_deck.push(9999);
 
-    // Get bytecode
+    // Get frame data
     let member = db.get_member(kanon_id).unwrap();
-    let bytecode = &member.abilities[0].bytecode;
-    println!("Bytecode: {:?}", bytecode);
+    let ability = member.abilities[0].clone();
+    let frame_program = ability
+        .semantic_frame_program()
+        .expect("Kanon ability should have frame data");
+    println!("Frames: {:?}", frame_program.frames);
 
     // Execute
     let ctx = AbilityContext {
@@ -98,7 +101,7 @@ fn test_card_557_condition_check_direct() {
         ..Default::default()
     };
 
-    state.resolve_bytecode_cref(&db, bytecode, &ctx);
+    state.resolve_semantic_frames(&db, &frame_program.frames, &ctx);
 
     // Should succeed - only Liella! on stage
     assert_eq!(
@@ -132,9 +135,11 @@ fn test_card_557_condition_fails_with_mixed_groups() {
     }
     state.core.players[p1].energy_deck.push(9999);
 
-    // Get bytecode
     let member = db.get_member(kanon_id).unwrap();
-    let bytecode = &member.abilities[0].bytecode;
+    let ability = member.abilities[0].clone();
+    let frame_program = ability
+        .semantic_frame_program()
+        .expect("Kanon ability should have frame data");
 
     // Execute
     let ctx = AbilityContext {
@@ -144,7 +149,7 @@ fn test_card_557_condition_fails_with_mixed_groups() {
         ..Default::default()
     };
 
-    state.resolve_bytecode_cref(&db, bytecode, &ctx);
+    state.resolve_semantic_frames(&db, &frame_program.frames, &ctx);
 
     // Should fail - mixed groups on stage
     assert_eq!(

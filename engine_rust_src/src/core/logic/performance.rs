@@ -263,7 +263,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                         }
                     }
                     // Wave 2: Granted abilities for blade sources
-                    for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
+                    for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities
+                    {
                         if target_cid != cid {
                             continue;
                         }
@@ -284,7 +285,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                     {
                                         if let Some(frame_program) = ab.frame_program.as_ref() {
                                             for frame in &frame_program.frames {
-                                                if frame.opcode() == O_ADD_BLADES && frame.value() > 0 {
+                                                if frame.opcode() == O_ADD_BLADES
+                                                    && frame.value() > 0
+                                                {
                                                     slot_blade_buffs.push(json!({
                                                         "source": format!("Granted: {}", src_m.name),
                                                         "amount": frame.value(),
@@ -517,7 +520,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                         }
                     }
                     // Wave 2: Granted abilities for heart sources
-                    for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
+                    for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities
+                    {
                         if target_cid != cid {
                             continue;
                         }
@@ -538,7 +542,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                     {
                                         if let Some(frame_program) = ab.frame_program.as_ref() {
                                             for frame in &frame_program.frames {
-                                                if frame.opcode() == O_ADD_HEARTS && frame.value() > 0 {
+                                                if frame.opcode() == O_ADD_HEARTS
+                                                    && frame.value() > 0
+                                                {
                                                     let mut color = frame.attr() as usize;
                                                     if color == 0 {
                                                         color = ctx.selected_color as usize;
@@ -1096,13 +1102,14 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                                     .iter()
                                     .all(|c| state.check_condition(db, p, c, &ctx, 1))
                                 {
-                                    let bc = ab.bytecode();
-                                    let mut i = 0;
-                                    while i + 4 < bc.len() {
-                                        if bc[i] == O_BOOST_SCORE {
-                                            *constant_bonuses.entry(cid).or_insert(0) += bc[i + 1];
+                                    if let Some(frame_program) = ab.semantic_frame_program() {
+                                        for frame in &frame_program.frames {
+                                            let frame_data = frame.components();
+                                            if frame_data.opcode == O_BOOST_SCORE {
+                                                *constant_bonuses.entry(cid).or_insert(0) +=
+                                                    frame_data.value;
+                                            }
                                         }
-                                        i += 5;
                                     }
                                 }
                             }
@@ -1112,7 +1119,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             }
             // Pool O_BOOST_SCORE from granted constant abilities
             for &(target_cid, s_cid, ab_idx) in &state.players[p].granted_abilities {
-                if let Some(slot) = state.players[p].stage.iter().position(|&stage_cid| stage_cid == target_cid) {
+                if let Some(slot) = state.players[p]
+                    .stage
+                    .iter()
+                    .position(|&stage_cid| stage_cid == target_cid)
+                {
                     if let Some(src_m) = db.get_member(s_cid) {
                         if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                             if ab.trigger == TriggerType::Constant {
@@ -1128,14 +1139,14 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                                     .iter()
                                     .all(|c| state.check_condition(db, p, c, &ctx, 1))
                                 {
-                                    let bc = ab.bytecode();
-                                    let mut i = 0;
-                                    while i + 4 < bc.len() {
-                                        if bc[i] == O_BOOST_SCORE {
-                                            *constant_bonuses.entry(s_cid).or_insert(0) +=
-                                                bc[i + 1];
+                                    if let Some(frame_program) = ab.semantic_frame_program() {
+                                        for frame in &frame_program.frames {
+                                            let frame_data = frame.components();
+                                            if frame_data.opcode == O_BOOST_SCORE {
+                                                *constant_bonuses.entry(s_cid).or_insert(0) +=
+                                                    frame_data.value;
+                                            }
                                         }
-                                        i += 5;
                                     }
                                 }
                             }

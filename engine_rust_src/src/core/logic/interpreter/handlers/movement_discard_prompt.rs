@@ -1,8 +1,8 @@
-use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::models::interpreter::HandlerResult;
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, Zone};
+use crate::core::models::interpreter::HandlerResult;
 
 #[allow(clippy::too_many_arguments)]
 pub fn prepare_discard_prompt(
@@ -41,18 +41,21 @@ pub fn prepare_discard_prompt(
             Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default
         )
     {
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            next_ctx,
-            frame_idx,
-            O_MOVE_TO_DISCARD,
-            s,
-            ChoiceType::Optional,
-            filter_attr,
-            count as i16,
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                next_ctx,
+                frame_idx,
+                O_MOVE_TO_DISCARD,
+                s,
+                ChoiceType::Optional,
+                filter_attr,
+                count as i16,
+            ),
+            HandlerResult::Suspend
+        ) {
             return true;
         }
     }
@@ -134,18 +137,21 @@ pub fn prepare_discard_prompt(
                 next_ctx.choice_index = 0;
             } else if ctx.auto_pick && !is_optional && available_count > 0 {
                 next_ctx.choice_index = 0;
-            } else if matches!(suspend_choice(
-                state,
-                db,
-                ctx,
-                next_ctx,
-                frame_idx,
-                O_MOVE_TO_DISCARD,
-                s,
-                choice_type,
-                filter_attr_with_mask,
-                v as i16,
-            ), HandlerResult::Suspend) {
+            } else if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    next_ctx,
+                    frame_idx,
+                    O_MOVE_TO_DISCARD,
+                    s,
+                    choice_type,
+                    filter_attr_with_mask,
+                    v as i16,
+                ),
+                HandlerResult::Suspend
+            ) {
                 return true;
             }
         }

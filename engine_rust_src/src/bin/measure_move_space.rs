@@ -1,16 +1,16 @@
-use std::fs;
-use std::time::Instant;
-use engine_rust::core::logic::{CardDatabase, GameState};
 use engine_rust::core::enums::Phase;
+use engine_rust::core::logic::{CardDatabase, GameState};
 use engine_rust::core::ACTION_BASE_PASS;
+use rand::prelude::StdRng;
 use rand::seq::IndexedRandom;
 use rand::SeedableRng;
-use rand::prelude::StdRng;
+use std::fs;
+use std::time::Instant;
 
 fn main() {
     let db = load_vanilla_db();
     let mut state = GameState::default();
-    
+
     // Build decks from actual cards
     let (dummy_deck, dummy_lives, dummy_energy) = build_decks(&db);
     state.initialize_game(
@@ -21,7 +21,7 @@ fn main() {
         dummy_lives.clone(),
         dummy_lives.clone(),
     );
-    
+
     // Step to Main phase
     println!("[init] Stepping to Main phase...");
     let step_start = Instant::now();
@@ -35,35 +35,39 @@ fn main() {
             break;
         }
     }
-    println!("[init] ✓ Reached Main phase in {:.2}s\n", step_start.elapsed().as_secs_f32());
-    
+    println!(
+        "[init] ✓ Reached Main phase in {:.2}s\n",
+        step_start.elapsed().as_secs_f32()
+    );
+
     println!("=== MOVE SPACE DISTRIBUTION ===\n");
-    
+
     // Run random walks with progress logging
     let num_samples = 100;
     let mut depth_counts = std::collections::BTreeMap::new();
     let mut rng = StdRng::seed_from_u64(42);
-    
+
     let start = Instant::now();
     let mut last_progress = Instant::now();
     let mut last_count = 0;
-    
+
     for sample_idx in 0..num_samples {
         let mut test_state = state.clone();
         let mut depth = 0;
-        
+
         loop {
             // Get legal non-Pass actions
             let legal = test_state.get_legal_action_ids(&db);
-            let main_actions: Vec<i32> = legal.iter()
+            let main_actions: Vec<i32> = legal
+                .iter()
                 .filter(|&&a| a != ACTION_BASE_PASS)
                 .copied()
                 .collect();
-            
+
             if main_actions.is_empty() || test_state.phase != Phase::Main {
                 break;
             }
-            
+
             // Pick random action
             if let Some(&action) = main_actions.choose(&mut rng) {
                 if test_state.step(&db, action).is_err() {
@@ -77,9 +81,9 @@ fn main() {
                 break;
             }
         }
-        
+
         *depth_counts.entry(depth).or_insert(0) += 1;
-        
+
         // Progress log every second
         if last_progress.elapsed().as_secs_f32() >= 1.0 {
             let total_elapsed = start.elapsed().as_secs_f32();
@@ -93,32 +97,35 @@ fn main() {
             );
             last_progress = Instant::now();
             last_count = current_count;
-            
+
             // Timeout check
             if elapsed_secs > 10 && stalled {
                 println!("[TIMEOUT] No progress for 10+ seconds, terminating...\n");
-                println!("Partial results ({}/{} samples completed):", current_count, num_samples);
+                println!(
+                    "Partial results ({}/{} samples completed):",
+                    current_count, num_samples
+                );
                 break;
             }
         }
     }
-    
+
     let total_time = start.elapsed().as_secs_f32();
     println!("\n[done] Completed in {:.2}s\n", total_time);
-    
+
     println!("Random walk results:\n");
     for (depth, count) in &depth_counts {
         let pct = (*count as f32 / depth_counts.values().sum::<usize>() as f32) * 100.0;
         println!("Depth {}: {} sequences ({:.1}%)", depth, count, pct);
     }
-    
+
     // Estimate branching if we have enough data
     if depth_counts.len() >= 2 {
         let depths: Vec<usize> = depth_counts.keys().copied().collect();
         if depths[0] + 1 == depths[1] {
             let branching = depth_counts[&depths[1]] as f32 / depth_counts[&depths[0]] as f32;
             println!("\nEstimated branching factor: {:.2}x", branching);
-            
+
             // Extrapolate
             println!("\nExtrapolated sequence counts:");
             for d in 1..=10 {
@@ -132,7 +139,7 @@ fn main() {
 fn build_decks(db: &CardDatabase) -> (Vec<i32>, Vec<i32>, Vec<i32>) {
     let mut dummy_deck = Vec::new();
     let mut dummy_lives = Vec::new();
-    
+
     for &id in db.members.keys() {
         dummy_deck.push(id);
         if dummy_deck.len() >= 48 {
@@ -146,7 +153,7 @@ fn build_decks(db: &CardDatabase) -> (Vec<i32>, Vec<i32>, Vec<i32>) {
             break;
         }
     }
-    
+
     for &id in db.lives.keys() {
         dummy_lives.push(id);
         if dummy_lives.len() >= 12 {
@@ -160,9 +167,9 @@ fn build_decks(db: &CardDatabase) -> (Vec<i32>, Vec<i32>, Vec<i32>) {
             break;
         }
     }
-    
+
     let dummy_energy: Vec<i32> = db.energy_db.keys().take(12).cloned().collect();
-    
+
     (dummy_deck, dummy_lives, dummy_energy)
 }
 

@@ -39,8 +39,9 @@ def generate_interactions():
         
         abilities = card_data.get("abilities", [])
         for ab_idx, ab in enumerate(abilities):
-            bytecode = ab.get("bytecode", [])
-            if not bytecode:
+            frame_program = ab.get("frame_program", {})
+            frames = frame_program.get("frames", []) if isinstance(frame_program, dict) else []
+            if not frames:
                 continue
             
             # Create a fresh game state for each ability
@@ -63,8 +64,8 @@ def generate_interactions():
             
             # Execute bytecode
             try:
-                gs.debug_execute_bytecode(
-                    bytecode, 
+                gs.debug_execute_frame_program(
+                    json.dumps(frame_program),
                     player_id=0, 
                     area_idx=0, 
                     source_card_id=mid, 
@@ -105,16 +106,17 @@ def generate_interactions():
         card_data = db_data["live_db"][str(lid)]
         abilities = card_data.get("abilities", [])
         for ab_idx, ab in enumerate(abilities):
-            bytecode = ab.get("bytecode", [])
-            if not bytecode:
+            frame_program = ab.get("frame_program", {})
+            frames = frame_program.get("frames", []) if isinstance(frame_program, dict) else []
+            if not frames:
                 continue
             
             gs = engine_rust.PyGameState(db)
             gs.initialize_game(p0_deck, p1_deck, p0_energy, p1_energy, p0_lives, p1_lives)
             
             try:
-                gs.debug_execute_bytecode(
-                    bytecode, 
+                gs.debug_execute_frame_program(
+                    json.dumps(frame_program),
                     player_id=0, 
                     area_idx=0, 
                     source_card_id=lid, 

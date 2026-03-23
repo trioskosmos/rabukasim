@@ -2,10 +2,10 @@ use std::fs;
 use std::time::Instant;
 
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::{GameState, CardDatabase, ACTION_BASE_PASS};
+use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
+use rand::prelude::StdRng;
 use rand::seq::IndexedRandom;
 use rand::SeedableRng;
-use rand::prelude::StdRng;
 use smallvec::SmallVec;
 
 fn count_exact_main_sequences(state: &GameState, db: &CardDatabase, max_depth: usize) -> usize {
@@ -22,7 +22,10 @@ fn count_exact_main_sequences(state: &GameState, db: &CardDatabase, max_depth: u
 
         let mut total = 0usize;
         let mut saw_non_pass = false;
-        for action in actions.into_iter().filter(|&action| action != ACTION_BASE_PASS) {
+        for action in actions
+            .into_iter()
+            .filter(|&action| action != ACTION_BASE_PASS)
+        {
             saw_non_pass = true;
             let mut next_state = state.clone();
             if next_state.step(db, action).is_ok() {
@@ -64,7 +67,7 @@ fn load_vanilla_db() -> CardDatabase {
 
 fn load_deck(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
     let candidates = [path, &format!("../{}", path), &format!("../../{}", path)];
-    
+
     for candidate in &candidates {
         if let Ok(content) = fs::read_to_string(candidate) {
             let mut members = Vec::new();
@@ -119,7 +122,7 @@ fn load_deck(path: &str, db: &CardDatabase) -> (Vec<i32>, Vec<i32>) {
             return (members, lives);
         }
     }
-    
+
     panic!("Could not load deck");
 }
 
@@ -145,7 +148,10 @@ fn main() {
     let max_turns = 20usize;
 
     println!("\n[GAME TIMING] Per-turn breakdown with sequence counts\n");
-    println!("{:>4} {:>2} {:>8} {:>10} {:>8}", "TURN", "P", "SEQS", "TIME(ms)", "CUM(s)");
+    println!(
+        "{:>4} {:>2} {:>8} {:>10} {:>8}",
+        "TURN", "P", "SEQS", "TIME(ms)", "CUM(s)"
+    );
     println!("{:-<4} {:-<2} {:-<8} {:-<10} {:-<8}", "", "", "", "", "");
 
     let mut main_turns_played = 0usize;
@@ -154,7 +160,11 @@ fn main() {
     // Advance to first Main phase
     while state.phase != Phase::Main && !state.is_terminal() {
         match state.phase {
-            Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+            Phase::Rps
+            | Phase::MulliganP1
+            | Phase::MulliganP2
+            | Phase::TurnChoice
+            | Phase::Response => {
                 let legal = state.get_legal_action_ids(&db);
                 if !legal.is_empty() {
                     let &action = legal.choose(&mut rng).unwrap_or(&ACTION_BASE_PASS);
@@ -175,10 +185,14 @@ fn main() {
             Phase::Main => {
                 main_turns_played += 1;
                 let player = state.current_player;
-                let search_depth = engine_rust::core::logic::turn_sequencer::get_config().read().unwrap().search.max_dfs_depth;
+                let search_depth = engine_rust::core::logic::turn_sequencer::get_config()
+                    .read()
+                    .unwrap()
+                    .search
+                    .max_dfs_depth;
 
                 let turn_start = Instant::now();
-                
+
                 // Count sequences
                 let exact_sequences = count_exact_main_sequences(&state, &db, search_depth);
 
@@ -214,12 +228,14 @@ fn main() {
                 let turn_time_ms = turn_start.elapsed().as_millis() as usize;
                 total_ms += turn_time_ms;
 
-                println!("{:4} {:2} {:8} {:10} {:>7.2}s", 
-                         main_turns_played, 
-                         player, 
-                         exact_sequences,
-                         turn_time_ms, 
-                         total_ms as f64 / 1000.0);
+                println!(
+                    "{:4} {:2} {:8} {:10} {:>7.2}s",
+                    main_turns_played,
+                    player,
+                    exact_sequences,
+                    turn_time_ms,
+                    total_ms as f64 / 1000.0
+                );
             }
             _ => {
                 state.auto_step(&db);
@@ -236,9 +252,23 @@ fn main() {
     println!("\n{:=<50}", "");
     println!("[SUMMARY]");
     println!("  Turns: {} Main turns completed", main_turns_played);
-    println!("  Total time: {:.3}s ({} ms)", total_elapsed.as_secs_f64(), total_ms);
-    println!("  Average per turn: {:.1}ms", total_ms as f64 / main_turns_played.max(1) as f64);
-    println!("  Winner: P{}", if state.players[0].score > state.players[1].score { 0 } else { 1 });
+    println!(
+        "  Total time: {:.3}s ({} ms)",
+        total_elapsed.as_secs_f64(),
+        total_ms
+    );
+    println!(
+        "  Average per turn: {:.1}ms",
+        total_ms as f64 / main_turns_played.max(1) as f64
+    );
+    println!(
+        "  Winner: P{}",
+        if state.players[0].score > state.players[1].score {
+            0
+        } else {
+            1
+        }
+    );
     println!("\n[OBSERVATION]");
     println!("  If early turns are fast (< 10ms) but later turns are slow (> 100ms),");
     println!("  it indicates the game engine slows down as board complexity increases.");

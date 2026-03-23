@@ -1,5 +1,4 @@
 use crate::core::enums::*;
-use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use crate::core::logic::{Ability, CardDatabase, PendingInteraction};
 
 pub const OPTIONAL_MODE_MASK_BASE: i16 = 1900;
@@ -16,16 +15,23 @@ pub fn decode_optional_mode_mask(value: i16) -> Option<i16> {
     }
 }
 
-pub fn pending_live_ability<'a>(db: &'a CardDatabase, pi: &PendingInteraction) -> Option<&'a Ability> {
+pub fn pending_live_ability<'a>(
+    db: &'a CardDatabase,
+    pi: &PendingInteraction,
+) -> Option<&'a Ability> {
     fn ability_matches_pending(ability: &Ability, pi: &PendingInteraction) -> bool {
-        if pi.choice_type == ChoiceType::SelectMode && is_distinct_optional_mode_live_ability(ability) {
+        if pi.choice_type == ChoiceType::SelectMode
+            && is_distinct_optional_mode_live_ability(ability)
+        {
             return true;
         }
 
         ability.effects.iter().any(|effect| {
             effect.runtime_opcode == pi.effect_opcode
-                || (pi.choice_type == ChoiceType::SelectMember && effect.runtime_opcode == O_SELECT_MEMBER)
-                || (pi.choice_type == ChoiceType::SelectMode && effect.runtime_opcode == O_SELECT_MODE)
+                || (pi.choice_type == ChoiceType::SelectMember
+                    && effect.runtime_opcode == O_SELECT_MEMBER)
+                || (pi.choice_type == ChoiceType::SelectMode
+                    && effect.runtime_opcode == O_SELECT_MODE)
         })
     }
 
@@ -54,7 +60,11 @@ pub fn pending_live_ability<'a>(db: &'a CardDatabase, pi: &PendingInteraction) -
     None
 }
 
-pub fn pending_member_ability<'a>(db: &'a CardDatabase, source_card_id: i32, ability_index: i16) -> Option<&'a Ability> {
+pub fn pending_member_ability<'a>(
+    db: &'a CardDatabase,
+    source_card_id: i32,
+    ability_index: i16,
+) -> Option<&'a Ability> {
     let ability_index = usize::try_from(ability_index).ok()?;
     db.get_member(source_card_id)?.abilities.get(ability_index)
 }
@@ -107,7 +117,11 @@ pub fn pending_optional_mode_mask(db: &CardDatabase, pi: &PendingInteraction) ->
     }
 }
 
-pub fn optional_mode_effect<'a>(ability: &'a Ability, mask: i16, choice_idx: i32) -> Option<(&'a crate::core::logic::Effect, i16)> {
+pub fn optional_mode_effect<'a>(
+    ability: &'a Ability,
+    mask: i16,
+    choice_idx: i32,
+) -> Option<(&'a crate::core::logic::Effect, i16)> {
     let effect_index = usize::try_from(choice_idx).ok()?;
     let selected_bit = 1i16.checked_shl(choice_idx as u32)?;
     if (mask & selected_bit) == 0 {
@@ -118,12 +132,25 @@ pub fn optional_mode_effect<'a>(ability: &'a Ability, mask: i16, choice_idx: i32
     Some((effect, mask & !selected_bit))
 }
 
-pub fn pending_targeted_live_heart_bonus(db: &CardDatabase, pi: &PendingInteraction) -> Option<(u64, u8)> {
+pub fn pending_targeted_live_heart_bonus(
+    db: &CardDatabase,
+    pi: &PendingInteraction,
+) -> Option<(u64, u8)> {
     let ability = pending_live_ability(db, pi)?;
     if ability.trigger != TriggerType::OnLiveStart
         || ability.effects.len() != 5
-        || ability.effects.iter().filter(|effect| effect.runtime_opcode == O_SELECT_MEMBER).count() != 1
-        || ability.effects.iter().filter(|effect| effect.runtime_opcode == O_ADD_HEARTS).count() != 1
+        || ability
+            .effects
+            .iter()
+            .filter(|effect| effect.runtime_opcode == O_SELECT_MEMBER)
+            .count()
+            != 1
+        || ability
+            .effects
+            .iter()
+            .filter(|effect| effect.runtime_opcode == O_ADD_HEARTS)
+            .count()
+            != 1
         || ability.effects.get(0).map(|effect| effect.runtime_opcode) != Some(O_DRAW)
         || ability.effects.get(1).map(|effect| effect.runtime_opcode) != Some(O_MOVE_TO_DISCARD)
         || ability.effects.get(4).map(|effect| effect.runtime_opcode) != Some(O_BOOST_SCORE)
@@ -134,8 +161,8 @@ pub fn pending_targeted_live_heart_bonus(db: &CardDatabase, pi: &PendingInteract
     let is_target_selection_step = pi.effect_opcode == O_SELECT_MEMBER
         || pi.choice_type == ChoiceType::SelectMember
         || (pi.filter_attr & !0x3) == ability.effects.get(2)?.runtime_attr;
-    let is_vacuous_discard_step = pi.effect_opcode == O_MOVE_TO_DISCARD
-        && pi.choice_type == ChoiceType::SelectHandDiscard;
+    let is_vacuous_discard_step =
+        pi.effect_opcode == O_MOVE_TO_DISCARD && pi.choice_type == ChoiceType::SelectHandDiscard;
     if !is_target_selection_step && !is_vacuous_discard_step {
         return None;
     }
@@ -146,11 +173,12 @@ pub fn pending_targeted_live_heart_bonus(db: &CardDatabase, pi: &PendingInteract
 }
 
 pub fn is_optional_live_start_discard_count_ability(ability: &Ability) -> bool {
-    let program = ability.bytecode_program();
     ability.trigger == TriggerType::OnLiveStart
-        && program
-            .instruction_at(0)
-            .map(|instr| instr.op == O_SELECT_CARDS && instr.v == 99)
+        && ability
+            .frame_program
+            .as_ref()
+            .and_then(|program| program.frames.first())
+            .map(|frame| frame.opcode() == O_SELECT_CARDS && frame.value() == 99)
             .unwrap_or(false)
         && ability.effects.iter().any(|effect| {
             effect.runtime_opcode == O_ADD_BLADES
@@ -168,5 +196,6 @@ pub fn should_skip_inline_live_precheck(ability: &Ability) -> bool {
     }
 
     let condition_blocks = ability.raw_text.matches("CONDITION:").count();
-    ability.trigger == TriggerType::OnLiveStart && condition_blocks > ability.conditions.len().max(1)
+    ability.trigger == TriggerType::OnLiveStart
+        && condition_blocks > ability.conditions.len().max(1)
 }

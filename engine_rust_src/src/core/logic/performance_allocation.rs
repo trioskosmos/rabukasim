@@ -1,5 +1,5 @@
-use serde_json::json;
 use crate::core::hearts::*;
+use serde_json::json;
 
 #[derive(Clone, Debug)]
 pub struct SourceInfo {
@@ -26,7 +26,9 @@ pub fn allocate_hearts_for_live(
     // 1. Specific colors 0-5
     for color_idx in 0..6 {
         let mut needed = req_arr[color_idx];
-        if needed == 0 { continue; }
+        if needed == 0 {
+            continue;
+        }
 
         // Try matching color first
         for src in heart_sources.iter_mut() {
@@ -39,6 +41,7 @@ pub fn allocate_hearts_for_live(
                 src.documented_bonus_hearts[color_idx] -= from_bonus;
 
                 src.hearts[color_idx] -= take;
+                remaining_hearts[color_idx] = remaining_hearts[color_idx].saturating_sub(take);
                 needed -= take;
                 allocations.push(json!({
                     "source_id": src.id,
@@ -53,7 +56,9 @@ pub fn allocate_hearts_for_live(
                     "amount": take
                 }));
             }
-            if needed == 0 { break; }
+            if needed == 0 {
+                break;
+            }
         }
 
         // Then try wildcards (index 6)
@@ -67,6 +72,7 @@ pub fn allocate_hearts_for_live(
                     src.documented_bonus_hearts[6] -= from_bonus;
 
                     src.hearts[6] -= take;
+                    remaining_hearts[6] = remaining_hearts[6].saturating_sub(take);
                     needed -= take;
                     allocations.push(json!({
                         "source_id": src.id,
@@ -82,7 +88,9 @@ pub fn allocate_hearts_for_live(
                         "wildcard": true
                     }));
                 }
-                if needed == 0 { break; }
+                if needed == 0 {
+                    break;
+                }
             }
         }
     }
@@ -100,6 +108,7 @@ pub fn allocate_hearts_for_live(
                 src.documented_bonus_hearts[6] -= from_bonus;
 
                 src.hearts[6] -= take;
+                remaining_hearts[6] = remaining_hearts[6].saturating_sub(take);
                 any_needed -= take;
                 allocations.push(json!({
                     "source_id": src.id,
@@ -114,7 +123,9 @@ pub fn allocate_hearts_for_live(
                     "amount": take
                 }));
             }
-            if any_needed == 0 { break; }
+            if any_needed == 0 {
+                break;
+            }
         }
 
         // Then use remaining colors
@@ -129,6 +140,8 @@ pub fn allocate_hearts_for_live(
                         src.documented_bonus_hearts[color_idx] -= from_bonus;
 
                         src.hearts[color_idx] -= take;
+                        remaining_hearts[color_idx] =
+                            remaining_hearts[color_idx].saturating_sub(take);
                         any_needed -= take;
                         allocations.push(json!({
                             "source_id": src.id,
@@ -143,17 +156,14 @@ pub fn allocate_hearts_for_live(
                             "amount": take
                         }));
                     }
-                    if any_needed == 0 { break; }
+                    if any_needed == 0 {
+                        break;
+                    }
                 }
-                if any_needed == 0 { break; }
+                if any_needed == 0 {
+                    break;
+                }
             }
         }
     }
-
-    let mut remaining_hearts_u32 = remaining_hearts.map(|x| x as u32);
-    crate::core::hearts::process_hearts(
-        &mut remaining_hearts_u32,
-        &req_arr.map(|x| x as u32),
-    );
-    *remaining_hearts = remaining_hearts_u32.map(|x| x as u8);
 }

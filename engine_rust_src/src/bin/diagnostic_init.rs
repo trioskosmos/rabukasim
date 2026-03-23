@@ -1,13 +1,12 @@
+use engine_rust::core::enums::Phase;
+use engine_rust::core::logic::{CardDatabase, GameState};
+use rand::SeedableRng;
 /// diagnostic_init.rs — Game Initialization Diagnostic
 ///
 /// Run with: cargo run --bin diagnostic_init [--release]
 ///
 /// Purpose: Diagnose why games are failing to initialize properly
-
 use std::fs;
-use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::{GameState, CardDatabase};
-use rand::SeedableRng;
 
 use rand::seq::IndexedRandom;
 
@@ -22,8 +21,7 @@ fn load_vanilla_db() -> CardDatabase {
         if !std::path::Path::new(path).exists() {
             continue;
         }
-        let abs = std::fs::canonicalize(path)
-            .unwrap_or_else(|_| std::path::PathBuf::from(path));
+        let abs = std::fs::canonicalize(path).unwrap_or_else(|_| std::path::PathBuf::from(path));
         println!("[DB_LOAD] Loading from: {:?}", abs);
         let json = fs::read_to_string(path).expect("Failed to read vanilla DB");
         let mut db = CardDatabase::from_json(&json).expect("Failed to parse vanilla DB");
@@ -38,8 +36,12 @@ fn main() {
 
     let db = load_vanilla_db();
 
-    println!("DB loaded: {} members, {} lives, {} energy",
-        db.members.len(), db.lives.len(), db.energy_db.len());
+    println!(
+        "DB loaded: {} members, {} lives, {} energy",
+        db.members.len(),
+        db.lives.len(),
+        db.energy_db.len()
+    );
 
     // Get sample cards
     let members: Vec<i32> = db.members.keys().take(48).cloned().collect();
@@ -108,17 +110,27 @@ fn main() {
 
         // Handle non-auto phases that require player actions
         match state.phase {
-            Phase::Rps | Phase::MulliganP1 | Phase::MulliganP2 | Phase::TurnChoice | Phase::Response => {
+            Phase::Rps
+            | Phase::MulliganP1
+            | Phase::MulliganP2
+            | Phase::TurnChoice
+            | Phase::Response => {
                 // Get legal actions and pick one randomly
                 let legal = state.get_legal_action_ids(&db);
                 if !legal.is_empty() {
                     if let Some(&action) = legal.choose(&mut rng) {
                         if let Err(e) = state.step(&db, action as i32) {
-                            println!("  Step {}: Phase = {:?} → step() error: {:?}", count, state.phase, e);
+                            println!(
+                                "  Step {}: Phase = {:?} → step() error: {:?}",
+                                count, state.phase, e
+                            );
                         }
                     }
                 } else {
-                    println!("  Step {}: Phase = {:?} → no legal actions!", count, phase_str);
+                    println!(
+                        "  Step {}: Phase = {:?} → no legal actions!",
+                        count, phase_str
+                    );
                     break;
                 }
             }
@@ -149,7 +161,13 @@ fn main() {
     println!("\nFinal state:");
     println!("  P0 Score: {}", state.players[0].score);
     println!("  P1 Score: {}", state.players[1].score);
-    println!("  P0 Success Lives: {}", state.players[0].success_lives.len());
-    println!("  P1 Success Lives: {}", state.players[1].success_lives.len());
+    println!(
+        "  P0 Success Lives: {}",
+        state.players[0].success_lives.len()
+    );
+    println!(
+        "  P1 Success Lives: {}",
+        state.players[1].success_lives.len()
+    );
     println!("  Turn: {}", state.turn);
 }

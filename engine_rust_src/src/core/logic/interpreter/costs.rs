@@ -337,11 +337,7 @@ pub fn pay_cost(
                 }
 
                 for cid in to_discard {
-                    if let Some(pos) = state.players[p_idx]
-                        .hand
-                        .iter()
-                        .position(|&x| x == cid)
-                    {
+                    if let Some(pos) = state.players[p_idx].hand.iter().position(|&x| x == cid) {
                         state.players[p_idx].remove_hand_card(pos);
                         state.players[p_idx].push_discard_card(cid);
                         ctx.selected_cards.push(cid);
@@ -362,7 +358,8 @@ pub fn pay_cost(
                         ctx.selected_cards.push(cid);
                     }
                 }
-                player.discarded_this_turn = player.discarded_this_turn.saturating_add(count as u16);
+                player.discarded_this_turn =
+                    player.discarded_this_turn.saturating_add(count as u16);
                 true
             }
         }

@@ -1,5 +1,5 @@
-use crate::core::logic::{CardDatabase, GameState, PlayerState};
 use crate::core::analysis::pro_vision::ProVisionHints;
+use crate::core::logic::{CardDatabase, GameState, PlayerState};
 
 pub const AZ_BYTECODE_MAX_LEN: usize = 128;
 // Base(16) + Identity(16) + Stats(10) + Bytecode(128) = 170
@@ -296,7 +296,14 @@ fn append_entity_vector(
             }
             tensor.push(ab.trigger as i32 as f32 / 20.0);
             tensor.push(if ab.is_once_per_turn { 1.0 } else { 0.0 });
-            tensor.push((ab.frame_program.as_ref().map(|p| p.frames.len()).unwrap_or(0) * 5) as f32 / 128.0);
+            tensor.push(
+                (ab.frame_program
+                    .as_ref()
+                    .map(|p| p.frames.len())
+                    .unwrap_or(0)
+                    * 5) as f32
+                    / 128.0,
+            );
             let is_spent = if ab.is_once_per_turn {
                 let s_type = if db.get_member(template_id).is_some() {
                     0

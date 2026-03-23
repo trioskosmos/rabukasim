@@ -376,7 +376,7 @@ pub fn evaluate_player(
     } else {
         state.get_total_hearts(p_idx, db, 0)
     };
-    
+
     let stage_hearts = stage_hearts_board.to_array_u32();
     let stage_blades = if p.cached_total_blades > 0 {
         p.cached_total_blades

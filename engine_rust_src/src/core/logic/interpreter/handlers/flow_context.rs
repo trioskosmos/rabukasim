@@ -1,7 +1,7 @@
-use crate::core::logic::models::AbilityFrame;
 use super::HandlerResult;
-use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::enums::*;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 pub fn handle_opponent_choose(
@@ -14,18 +14,21 @@ pub fn handle_opponent_choose(
         // Flip player_id BEFORE suspension so that the interaction is attributed to the opponent
         ctx.player_id = 1 - ctx.player_id;
 
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            ctx,
-            frame_idx,
-            O_OPPONENT_CHOOSE,
-            0,
-            ChoiceType::OpponentChoose,
-            0,
-            -1,
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                frame_idx,
+                O_OPPONENT_CHOOSE,
+                0,
+                ChoiceType::OpponentChoose,
+                0,
+                -1,
+            ),
+            HandlerResult::Suspend
+        ) {
             return HandlerResult::Suspend;
         }
     }
@@ -39,18 +42,21 @@ pub fn handle_color_select(
     frame_idx: usize,
 ) -> HandlerResult {
     if ctx.choice_index == -1 {
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            ctx,
-            frame_idx,
-            O_COLOR_SELECT,
-            0,
-            ChoiceType::ColorSelect,
-            0,
-            -1,
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                frame_idx,
+                O_COLOR_SELECT,
+                0,
+                ChoiceType::ColorSelect,
+                0,
+                -1,
+            ),
+            HandlerResult::Suspend
+        ) {
             return HandlerResult::Suspend;
         }
     } else {

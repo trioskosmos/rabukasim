@@ -1,7 +1,26 @@
 use crate::core::enums::*;
 use crate::core::logic::constants::*;
 use crate::core::logic::filter::CardFilter;
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
+
+pub fn resolve_count_frame(
+    state: &GameState,
+    db: &CardDatabase,
+    frame: &AbilityFrameComponents<'_>,
+    ctx: &AbilityContext,
+    depth: u32,
+) -> i32 {
+    resolve_count(
+        state,
+        db,
+        frame.opcode,
+        frame.raw_attr,
+        frame.raw_slot,
+        ctx,
+        depth,
+    )
+}
 
 pub fn resolve_count(
     state: &GameState,
@@ -25,7 +44,8 @@ pub fn resolve_count(
         || (op >= 400 && op < 500)
     {
         let filter = CardFilter::from_attr(attr as i64);
-        let include_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8 || filter.target_player == TARGET_PLAYER_BOTH as u8;
+        let include_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8
+            || filter.target_player == TARGET_PLAYER_BOTH as u8;
         let only_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8;
 
         let zone_mask = filter.zone_mask as u64;
@@ -35,27 +55,34 @@ pub fn resolve_count(
         let s_zone = slot_decoded.source_zone;
 
         let check_stage = if op >= 400 && op < 500 {
-            op == 401 || (has_zone_mask && zone_mask == ZONE_STAGE as u64) || (!has_zone_mask && s_zone == Zone::Stage)
+            op == 401
+                || (has_zone_mask && zone_mask == ZONE_STAGE as u64)
+                || (!has_zone_mask && s_zone == Zone::Stage)
         } else if has_zone_mask {
             zone_mask == ZONE_STAGE as u64
         } else {
             op == C_COUNT_STAGE || op == C_COUNT_GROUP || s_zone == Zone::Stage
         };
         let check_discard = if op >= 400 && op < 500 {
-            op == 403 || (has_zone_mask && zone_mask == ZONE_DISCARD as u64) || (!has_zone_mask && s_zone == Zone::Discard)
+            op == 403
+                || (has_zone_mask && zone_mask == ZONE_DISCARD as u64)
+                || (!has_zone_mask && s_zone == Zone::Discard)
         } else if has_zone_mask {
             zone_mask == ZONE_DISCARD as u64
         } else {
             op == C_COUNT_DISCARD || s_zone == Zone::Discard
         };
         let check_hand = if op >= 400 && op < 500 {
-            op == 402 || (has_zone_mask && zone_mask == ZONE_HAND as u64) || (!has_zone_mask && s_zone == Zone::Hand)
+            op == 402
+                || (has_zone_mask && zone_mask == ZONE_HAND as u64)
+                || (!has_zone_mask && s_zone == Zone::Hand)
         } else if has_zone_mask {
             zone_mask == ZONE_HAND as u64
         } else {
             op == C_COUNT_HAND || s_zone == Zone::Hand
         };
-        let check_success = op == C_COUNT_SUCCESS_LIVE || op == 307 || op == 405 || s_zone == Zone::SuccessPile;
+        let check_success =
+            op == C_COUNT_SUCCESS_LIVE || op == 307 || op == 405 || s_zone == Zone::SuccessPile;
 
         use smallvec::SmallVec;
         let mut ids = SmallVec::<[i32; 32]>::new();
@@ -144,7 +171,8 @@ pub fn resolve_count(
                 final_filter_attr &= !(0x7u64 << 56);
             }
 
-            let raw_count = ids.iter()
+            let raw_count = ids
+                .iter()
                 .filter(|&&id| {
                     if state.debug.debug_mode {
                         state.card_matches_filter_with_ctx_logs(db, id, final_filter_attr, ctx)
@@ -156,7 +184,11 @@ pub fn resolve_count(
 
             let mut res = raw_count;
             if special_id == 2 || special_id == 3 {
-                let target_id = if special_id == 3 { ctx.source_card_id } else { ctx.activator_id as i32 };
+                let target_id = if special_id == 3 {
+                    ctx.source_card_id
+                } else {
+                    ctx.activator_id as i32
+                };
                 let target_matched = if state.debug.debug_mode {
                     state.card_matches_filter_with_ctx_logs(db, target_id, final_filter_attr, ctx)
                 } else {

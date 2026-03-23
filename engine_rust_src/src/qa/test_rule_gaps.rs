@@ -58,8 +58,15 @@ mod tests {
         }
 
         // Verify: All 5 cards peeked
-        assert_eq!(peeked.len(), 5, "Q85: Final peek count is 5 (4 + 1 after refresh)");
-        assert_eq!(peeked[4], 110, "Q85: 5th card is from refreshed pile (first from discard)");
+        assert_eq!(
+            peeked.len(),
+            5,
+            "Q85: Final peek count is 5 (4 + 1 after refresh)"
+        );
+        assert_eq!(
+            peeked[4], 110,
+            "Q85: 5th card is from refreshed pile (first from discard)"
+        );
     }
 
     // =========================================================================
@@ -139,7 +146,11 @@ mod tests {
         }
 
         // At this point: revealed_cards has 3 cards, deck is empty
-        assert_eq!(revealed_cards.len(), 3, "Q100: Yelled 3 cards (deck was 3 cards)");
+        assert_eq!(
+            revealed_cards.len(),
+            3,
+            "Q100: Yelled 3 cards (deck was 3 cards)"
+        );
         assert_eq!(deck_temp.len(), 0, "Q100: Deck exhausted during yell");
 
         // Phase: Refresh should trigger because deck is now 0
@@ -153,7 +164,10 @@ mod tests {
             "Q100: Refresh pile has 10 cards (all discard)"
         );
         assert_eq!(
-            revealed_cards.iter().filter(|c| discard_for_refresh.contains(c)).count(),
+            revealed_cards
+                .iter()
+                .filter(|c| discard_for_refresh.contains(c))
+                .count(),
             0,
             "Q100: Revealed yell cards are NOT in refresh pile"
         );
@@ -189,8 +203,16 @@ mod tests {
             }
         }
 
-        assert_eq!(moved_to_discard.len(), 4, "Q104: Phase 1 - Moved 4 cards to discard");
-        assert_eq!(state.players[0].deck.len(), 0, "Q104: Deck empty after moving 4 cards");
+        assert_eq!(
+            moved_to_discard.len(),
+            4,
+            "Q104: Phase 1 - Moved 4 cards to discard"
+        );
+        assert_eq!(
+            state.players[0].deck.len(),
+            0,
+            "Q104: Deck empty after moving 4 cards"
+        );
 
         // Phase 2: Refresh with the moved cards included
         let mut refreshed_deck = moved_to_discard.clone();
@@ -230,10 +252,12 @@ mod tests {
         let initial_discard_size = state.players[0].discard.len();
 
         // Verify preconditions
-        assert_eq!(initial_deck_size, 10, "Integration: Deck starts with 10 cards");
         assert_eq!(
-            initial_discard_size,
-            20,
+            initial_deck_size, 10,
+            "Integration: Deck starts with 10 cards"
+        );
+        assert_eq!(
+            initial_discard_size, 20,
             "Integration: Discard starts with 20 cards"
         );
 

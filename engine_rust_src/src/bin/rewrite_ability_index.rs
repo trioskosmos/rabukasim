@@ -166,7 +166,11 @@ fn decode_slot(raw_slot: Option<i64>) -> Option<Value> {
         obj.insert("dest_zone".to_string(), json!(name));
     }
     sparse_bool(&mut obj, "is_opponent", decoded.is_opponent);
-    sparse_bool(&mut obj, "is_reveal_until_live", decoded.is_reveal_until_live);
+    sparse_bool(
+        &mut obj,
+        "is_reveal_until_live",
+        decoded.is_reveal_until_live,
+    );
     sparse_bool(&mut obj, "is_baton_slot", decoded.is_baton_slot);
     sparse_bool(&mut obj, "is_empty_slot", decoded.is_empty_slot);
     sparse_bool(&mut obj, "is_wait", decoded.is_wait);
@@ -215,14 +219,22 @@ fn collect_choice_blocks(frames: &[Value]) -> Vec<Value> {
     while i < frames.len() {
         let frame = &frames[i];
         if frame.get("opcode").and_then(|v| v.as_str()) == Some("SELECT_MODE") {
-            let option_count = frame.get("value").and_then(|v| v.as_i64()).unwrap_or(0).max(0) as usize;
+            let option_count = frame
+                .get("value")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0)
+                .max(0) as usize;
             if option_count > 0 && i + 1 + option_count <= frames.len() {
                 let jump_table = &frames[i + 1..i + 1 + option_count];
-                if jump_table.iter().all(|j| j.get("opcode").and_then(|v| v.as_str()) == Some("JUMP")) {
+                if jump_table
+                    .iter()
+                    .all(|j| j.get("opcode").and_then(|v| v.as_str()) == Some("JUMP"))
+                {
                     let mut targets: Vec<usize> = Vec::new();
                     for (jump_index, jump) in jump_table.iter().enumerate() {
                         let jump_value = jump.get("value").and_then(|v| v.as_i64()).unwrap_or(0);
-                        let target = (i as i64 + 1 + jump_index as i64 + jump_value).max(0) as usize;
+                        let target =
+                            (i as i64 + 1 + jump_index as i64 + jump_value).max(0) as usize;
                         targets.push(target);
                     }
 
@@ -257,7 +269,10 @@ fn collect_choice_blocks(frames: &[Value]) -> Vec<Value> {
                     let mut block = Map::new();
                     block.insert("selector_frame_index".to_string(), json!(i));
                     block.insert("option_count".to_string(), json!(option_count));
-                    block.insert("jump_table".to_string(), Value::Array(jump_table.iter().cloned().collect()));
+                    block.insert(
+                        "jump_table".to_string(),
+                        Value::Array(jump_table.iter().cloned().collect()),
+                    );
                     block.insert("options".to_string(), Value::Array(options));
                     blocks.push(Value::Object(block));
                     i += 1 + option_count;
@@ -281,7 +296,9 @@ fn strip_entry(value: &mut Value, metadata: &Value) {
                 obj.remove("signature_source");
                 obj.remove("round_trip_bytecode");
 
-                let (opcode_names, choice_blocks) = if let Some(frames) = obj.get_mut("frames").and_then(|v| v.as_array_mut()) {
+                let (opcode_names, choice_blocks) = if let Some(frames) =
+                    obj.get_mut("frames").and_then(|v| v.as_array_mut())
+                {
                     let mut opcode_names = Vec::new();
                     for frame in frames.iter_mut() {
                         let semantic = semanticize_frame(frame, metadata);

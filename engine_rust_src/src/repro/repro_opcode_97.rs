@@ -21,7 +21,8 @@ mod tests {
         target_slot: u8,
     ) {
         let bytecode = opcode_97_bytecode(target_slot);
-        state.resolve_bytecode_cref(db, &bytecode, ctx);
+        let frames = crate::core::logic::models::FrameProgram::from_bytecode(&bytecode).frames;
+        state.resolve_semantic_frames(db, &frames, ctx);
     }
 
     fn setup_state(stage_slot: usize, source_card_id: i32) -> GameState {

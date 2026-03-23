@@ -1,7 +1,7 @@
-use crate::core::logic::models::AbilityFrame;
-use crate::core::hearts::HeartBoard;
 use super::*;
+use crate::core::hearts::HeartBoard;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_formation_change(
@@ -72,18 +72,21 @@ pub fn handle_formation_change(
             }
         }
     } else if ctx.choice_index == -1 {
-        if matches!(suspend_choice(
-            state,
-            db,
-            ctx,
-            ctx,
-            frame_idx,
-            O_FORMATION_CHANGE,
-            s,
-            ChoiceType::RearrangeFormation,
-            0,
-            -1,
-        ), HandlerResult::Suspend) {
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                frame_idx,
+                O_FORMATION_CHANGE,
+                s,
+                ChoiceType::RearrangeFormation,
+                0,
+                -1,
+            ),
+            HandlerResult::Suspend
+        ) {
             return HandlerResult::Suspend;
         }
     } else {

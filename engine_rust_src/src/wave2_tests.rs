@@ -193,9 +193,7 @@ fn test_granted_ability_propagation_cost() {
 
     // 3. Grant Ability to Card 110
     state.players[0].stage[0] = -1; // Slot must be empty to check "play cost" without baton touch
-    state.players[0]
-        .granted_abilities
-        .push((110, source_id, 0));
+    state.players[0].granted_abilities.push((110, source_id, 0));
 
     // 4. Check Cost
     let cost = state.get_member_cost(0, 110, 0, -1, &db, 0);
@@ -274,9 +272,7 @@ fn test_granted_ability_propagation_score() {
         },
     );
 
-    state.players[0]
-        .granted_abilities
-        .push((110, source_id, 0));
+    state.players[0].granted_abilities.push((110, source_id, 0));
 
     // Performance results
     state.ui.performance_results.insert(

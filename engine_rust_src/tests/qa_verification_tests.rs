@@ -17,16 +17,13 @@ fn test_q103_dynamic_condition_resolution() {
 fn test_filter_constant_usage_canonical_names_only() {
     let src_dir = "../src";
     let forbidden_patterns = vec![
-        "FILTER_GROUP_SHIFT",      // Should be FILTER_GROUP_ID_SHIFT
-        "FILTER_UNIT_SHIFT",       // Should be FILTER_UNIT_ID_SHIFT
-        "FILTER_SPECIAL_SHIFT",    // Should be FILTER_SPECIAL_ID_SHIFT
-        "FILTER_COST_SHIFT",       // Should be FILTER_VALUE_THRESHOLD_SHIFT
+        "FILTER_GROUP_SHIFT",   // Should be FILTER_GROUP_ID_SHIFT
+        "FILTER_UNIT_SHIFT",    // Should be FILTER_UNIT_ID_SHIFT
+        "FILTER_SPECIAL_SHIFT", // Should be FILTER_SPECIAL_ID_SHIFT
+        "FILTER_COST_SHIFT",    // Should be FILTER_VALUE_THRESHOLD_SHIFT
     ];
 
-    let generated_files = vec![
-        "generated_constants.rs",
-        "generated_layout.rs",
-    ];
+    let generated_files = vec!["generated_constants.rs", "generated_layout.rs"];
 
     let mut violations = Vec::new();
 
@@ -67,7 +64,12 @@ fn test_filter_constant_usage_canonical_names_only() {
         }
     }
 
-    scan_directory(Path::new(src_dir), &forbidden_patterns, &generated_files, &mut violations);
+    scan_directory(
+        Path::new(src_dir),
+        &forbidden_patterns,
+        &generated_files,
+        &mut violations,
+    );
 
     if !violations.is_empty() {
         panic!(

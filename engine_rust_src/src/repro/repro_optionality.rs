@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::core::logic::*;
-    use crate::test_helpers::{add_card, create_test_db, create_test_state, Action};
+    use crate::test_helpers::{add_card, create_test_db, create_test_state, AbilityLogic, Action};
 
     #[test]
     fn test_optional_tap_cost_accept() {
@@ -19,7 +19,7 @@ mod tests {
             vec![1],
             vec![(
                 TriggerType::Activated,
-                vec![17, 2, 0, 0], // O_ADD_BLADES +2
+                AbilityLogic::Bytecode(vec![17, 2, 0, 0]), // O_ADD_BLADES +2
                 vec![],
             )],
         );
@@ -36,10 +36,7 @@ mod tests {
         state.auto_step(&db);
 
         // Basic verification that card is on stage
-        assert!(
-            state.players[0].stage[0] >= 0,
-            "Card should be on stage"
-        );
+        assert!(state.players[0].stage[0] >= 0, "Card should be on stage");
     }
 
     #[test]
@@ -67,7 +64,7 @@ mod tests {
             vec![1],
             vec![(
                 TriggerType::OnPlay,
-                vec![10, 1, 0, 0], // O_DRAW 1
+                AbilityLogic::Bytecode(vec![10, 1, 0, 0]), // O_DRAW 1
                 vec![],
             )],
         );

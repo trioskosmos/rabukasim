@@ -1,19 +1,19 @@
-use crate::core::logic::models::AbilityFrame;
-use crate::core::enums::*;
-use crate::core::logic::constants::FILTER_MASK_LOWER;
-use crate::core::logic::interpreter::conditions::resolve_count;
-use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState};
-use crate::core::logic::interpreter::logging;
-use crate::core::logic::interpreter::handlers::state_helpers::source_ability;
 use super::movement_discard_helpers::{
     pop_card_from_zone, resolve_source_zone, zone_available_count, zone_card_count,
 };
-#[path = "movement_discard_select.rs"]
-mod movement_discard_select;
+use crate::core::enums::*;
+use crate::core::logic::constants::FILTER_MASK_LOWER;
+use crate::core::logic::interpreter::conditions::resolve_count;
+use crate::core::logic::interpreter::handlers::state_helpers::source_ability;
+use crate::core::logic::interpreter::logging;
+use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState};
 #[path = "movement_discard_prompt.rs"]
 mod movement_discard_prompt;
 #[path = "movement_discard_resume.rs"]
 mod movement_discard_resume;
+#[path = "movement_discard_select.rs"]
+mod movement_discard_select;
 use super::super::HandlerResult;
 pub fn handle_move_to_discard(
     state: &mut GameState,
@@ -22,24 +22,25 @@ pub fn handle_move_to_discard(
     frame: &AbilityFrame,
     frame_idx: usize,
 ) -> HandlerResult {
-    let a = frame.raw_attr() as i64;
-    let s = frame.raw_slot();
+    let frame_data = frame.components();
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
-    let v = if frame.filter().compare_accumulated {
+    let v = if frame_data.filter.compare_accumulated {
         resolve_count(
             state,
             db,
             s,
-            (frame.filter().to_attr() & FILTER_MASK_LOWER) as u64,
+            frame_data.raw_attr & FILTER_MASK_LOWER,
             p_idx as i32,
             ctx,
             0,
         ) as i32
     } else {
-        frame.raw_value()
+        frame_data.value
     };
     let base_p = ctx.activator_id as usize;
-    let slot = frame.dslot();
+    let slot = frame_data.slot;
     let source_zone = resolve_source_zone(&slot);
     let target_player_idx = if slot.is_opponent { 1 - base_p } else { base_p };
 
@@ -57,7 +58,7 @@ pub fn handle_move_to_discard(
     }
 
     let filter_attr = (a as u64) & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
-    let is_optional = frame.filter().is_optional;
+    let is_optional = frame_data.filter.is_optional;
 
     if state.debug.debug_mode {
         println!(
@@ -95,7 +96,10 @@ pub fn handle_move_to_discard(
     }
 
     if is_optional
-        && matches!(source_zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default)
+        && matches!(
+            source_zone,
+            Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default
+        )
         && next_ctx.choice_index == 0
     {
         next_ctx.choice_index = -1;
@@ -188,6 +192,3 @@ pub fn handle_move_to_discard(
     state.players[target_player_idx].hand.retain(|c| *c != -1);
     HandlerResult::Continue
 }
-
-
-

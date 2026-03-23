@@ -32,8 +32,7 @@ use crate::core::hearts::*;
 use crate::core::heuristics::{EvalMode, Heuristic};
 // use crate::core::logic::ai_encoding::GameStateEncoding;
 use crate::core::logic::handlers::{
-    MainPhaseController, MulliganController, ResponseController,
-    TurnPhaseController,
+    MainPhaseController, MulliganController, ResponseController, TurnPhaseController,
 };
 // use crate::core::logic::game_trigger::resolution_trigger_matches_context;
 // use crate::core::logic::ActionFactory;
@@ -71,25 +70,29 @@ impl GameState {
         let mut total_hearts = HeartBoard::default();
         let mut total_blades = 0;
         let mut slot_blades = [0u32; 3];
-        let mut slot_hearts = [HeartBoard::default(), HeartBoard::default(), HeartBoard::default()];
-        
+        let mut slot_hearts = [
+            HeartBoard::default(),
+            HeartBoard::default(),
+            HeartBoard::default(),
+        ];
+
         for i in 0..3 {
             let sb = self.get_effective_blades(p_idx, i, db, 1);
             let sh = self.get_effective_hearts(p_idx, i, db, 1);
-            
+
             slot_blades[i] = sb;
             slot_hearts[i] = sh;
-            
+
             total_blades += sb;
             total_hearts.add(sh);
         }
-        
+
         let p = &mut self.core.players[p_idx];
         p.cached_slot_blades = slot_blades;
         p.cached_slot_hearts = slot_hearts;
         p.cached_total_hearts = total_hearts;
         p.cached_total_blades = total_blades;
-        
+
         // Initial deck stats sync if needed
         if p.cached_deck_stats.count == 0.0 && !p.deck.is_empty() {
             p.cached_deck_stats = crate::core::heuristics::calculate_deck_expectations(&p.deck, db);
@@ -180,7 +183,12 @@ impl GameState {
     pub fn get_total_hearts(&self, p_idx: usize, db: &CardDatabase, depth: u32) -> HeartBoard {
         super::rules::get_total_hearts(self, p_idx, db, depth)
     }
-    pub fn get_total_member_hearts(&self, p_idx: usize, db: &CardDatabase, depth: u32) -> HeartBoard {
+    pub fn get_total_member_hearts(
+        &self,
+        p_idx: usize,
+        db: &CardDatabase,
+        depth: u32,
+    ) -> HeartBoard {
         super::rules::get_total_member_hearts(self, p_idx, db, depth)
     }
     pub fn calculate_cost_delta(&self, db: &CardDatabase, card_id: i32, p_idx: usize) -> i32 {
@@ -195,7 +203,15 @@ impl GameState {
         db: &CardDatabase,
         depth: u32,
     ) -> i32 {
-        super::rules::get_member_cost(self, p_idx, card_id, slot_idx, secondary_slot_idx, db, depth)
+        super::rules::get_member_cost(
+            self,
+            p_idx,
+            card_id,
+            slot_idx,
+            secondary_slot_idx,
+            db,
+            depth,
+        )
     }
     pub fn has_restriction(
         &self,
@@ -216,12 +232,12 @@ impl GameState {
     ) {
         let was_tapped = self.core.players[player_idx].is_tapped(slot_idx);
         self.core.players[player_idx].set_tapped(slot_idx, tapped);
-        
+
         // When member becomes tapped (not untapped), trigger ON_MEMBER_TAP abilities on opponent
         if tapped && !was_tapped {
             let other_player = 1 - player_idx;
             let card_id = self.core.players[player_idx].stage[slot_idx];
-            
+
             let ctx = AbilityContext {
                 player_id: other_player as u8,
                 activator_id: other_player as u8,
@@ -247,7 +263,6 @@ impl GameState {
     }
 
     // --- Phase Methods ---
-
 
     pub fn play_member(
         &mut self,
@@ -366,9 +381,6 @@ impl GameState {
         super::interpreter::pay_cost(self, db, p_idx, cost, &mut ctx)
     }
 
-
-
-
     pub fn evaluate<H: Heuristic>(
         &self,
         db: &CardDatabase,
@@ -379,5 +391,4 @@ impl GameState {
     ) -> f32 {
         heuristic.evaluate(self, db, p0_baseline, p1_baseline, eval_mode, None, None)
     }
-
 }

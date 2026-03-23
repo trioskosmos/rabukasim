@@ -1,9 +1,9 @@
-use crate::core::logic::models::AbilityFrame;
 use super::*;
-#[path = "state_member_tap_member_selected.rs"]
-mod state_member_tap_member_selected;
+use crate::core::logic::models::AbilityFrame;
 #[path = "state_member_tap_member_prompt.rs"]
 mod state_member_tap_member_prompt;
+#[path = "state_member_tap_member_selected.rs"]
+mod state_member_tap_member_selected;
 
 pub fn handle_tap_member(
     state: &mut GameState,

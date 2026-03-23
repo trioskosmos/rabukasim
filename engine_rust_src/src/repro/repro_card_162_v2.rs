@@ -18,11 +18,11 @@ mod tests {
         // 05: CHECK_DISCARDED_CARDS(all=true, filter=110)
         // 10: ADD_HEARTS(1)
         // 15: RETURN
-        
+
         // Scenario 1: All 3 are members (type=member is bit 1: 0x02)
         // Card 10 is verified to be a member and exists.
         state.set_deck(p_idx, &[10, 10, 10, 10, 10]);
-        
+
         state.players[p_idx].hand.push(card_id);
         let slot = 0;
         state.players[p_idx].stage[slot] = card_id;
@@ -36,10 +36,10 @@ mod tests {
         };
 
         let initial_hearts = state.players[p_idx].heart_buffs[slot].get_color_count(0); // Pink/Red hearts
-        
+
         println!("--- Triggering OnPlay for Card 162 (All Match) ---");
         state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
-        
+
         assert_eq!(
             state.players[p_idx].heart_buffs[slot].get_color_count(0),
             initial_hearts + 1,
@@ -52,13 +52,13 @@ mod tests {
         // Search for a non-member card key in logic_db.
         // Usually Live cards start from higher indices or specific ranges.
         // Card 6 is verified to be a Live card.
-        state2.set_deck(p_idx, &[10, 10, 6, 10, 10]); 
+        state2.set_deck(p_idx, &[10, 10, 6, 10, 10]);
         state2.players[p_idx].hand.push(card_id);
         state2.players[p_idx].stage[slot] = card_id;
-        
+
         println!("--- Triggering OnPlay for Card 162 (Partial Match) ---");
         state2.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
-        
+
         assert_eq!(
             state2.players[p_idx].heart_buffs[slot].get_color_count(0),
             initial_hearts,

@@ -4,7 +4,6 @@
 //! and resolving target slots.
 
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PendingInteraction, Phase};
-use crate::core::logic::interpreter::instruction::BytecodeProgram;
 
 pub fn get_choice_text(db: &CardDatabase, ctx: &AbilityContext) -> String {
     crate::core::logic::ActionFactory::get_choice_text(db, ctx)
@@ -38,7 +37,7 @@ pub fn suspend_interaction(
     };
 
     let mut p_ctx = ctx.clone();
-    p_ctx.program_counter = BytecodeProgram::effect_ip(instr_ip) as u16;
+    p_ctx.program_counter = instr_ip as u16;
     p_ctx.choice_index = -1;
     p_ctx.v_remaining = v_remaining;
     p_ctx.original_phase = Some(original_phase);
@@ -107,7 +106,8 @@ pub fn suspend_interaction(
         );
     }
 
-    if should_check_skip && final_actions.is_empty()
+    if should_check_skip
+        && final_actions.is_empty()
         && choice_type != crate::core::enums::ChoiceType::OpponentChoose
     {
         if state.debug.debug_mode {
