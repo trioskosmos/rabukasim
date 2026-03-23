@@ -727,6 +727,7 @@ pub fn create_test_state() -> GameState {
 }
 
 pub fn add_card(
+
     db: &mut CardDatabase,
     cid: i32,
     no: &str,
@@ -737,7 +738,8 @@ pub fn add_card(
     for (t, b, c) in abilities {
         abs.push(Ability {
             trigger: t,
-            bytecode: b,
+            bytecode: b.clone(),
+            frame_program: Some(crate::core::logic::models::FrameProgram::from_bytecode(&b)),
             conditions: c,
             ..Default::default()
         });

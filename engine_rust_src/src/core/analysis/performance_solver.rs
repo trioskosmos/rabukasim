@@ -1,3 +1,4 @@
+use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::card_db::CardDatabase;
 use crate::core::logic::game::GameState;
@@ -311,7 +312,7 @@ impl PerformanceProbabilitySolver {
                 continue;
             }
 
-            let bc = &ab.bytecode;
+            let bc = ab.bytecode();
             let mut i = 0;
             use crate::core::generated_constants::*;
 

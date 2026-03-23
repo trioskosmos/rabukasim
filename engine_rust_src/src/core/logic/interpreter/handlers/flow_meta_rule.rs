@@ -1,10 +1,10 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::interpreter::handlers::flow_helpers::{
     current_effect, discard_current_yell_pile,
 };
 use super::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::filter::map_filter_string_to_attr;
-use crate::core::logic::interpreter::instruction::BytecodeInstruction;
 use crate::core::logic::performance::do_yell;
 use crate::core::logic::Phase;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -15,8 +15,8 @@ pub fn handle_meta_rule(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
     a: i64,
     v: i32,
     p_idx: usize,
@@ -29,12 +29,12 @@ pub fn handle_meta_rule(
     } else {
         base_p
     };
-    let raw_effect = current_effect(db, ctx, instr)
+    let raw_effect = current_effect(db, ctx, frame)
         .and_then(|effect| effect.params.get("raw_effect"))
         .and_then(|value: &serde_json::Value| value.as_str());
 
     if matches!(raw_effect, Some("COUNT_MEMBER")) {
-        let effect = current_effect(db, ctx, instr);
+        let effect = current_effect(db, ctx, frame);
         let filter_attr = effect
             .and_then(|effect| effect.params.get("filter"))
             .and_then(|value: &serde_json::Value| value.as_str())
@@ -60,7 +60,7 @@ pub fn handle_meta_rule(
                 db,
                 ctx,
                 ctx,
-                instr_ip,
+                frame_idx,
                 O_META_RULE,
                 0,
                 ChoiceType::Optional,

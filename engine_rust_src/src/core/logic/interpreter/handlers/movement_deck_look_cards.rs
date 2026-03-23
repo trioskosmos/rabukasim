@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use super::*;
 
@@ -10,7 +11,7 @@ pub fn handle_look_cards(
     op: i32,
     v: i32,
     a: i64,
-    instr_ip: usize,
+    frame_idx: usize,
     resolved_slot: i32,
 ) -> HandlerResult {
     let count = v as usize;
@@ -21,7 +22,7 @@ pub fn handle_look_cards(
                 db,
                 ctx,
                 ctx,
-                instr_ip,
+                frame_idx,
                 op,
                 0,
                 ChoiceType::RevealHand,
@@ -62,7 +63,7 @@ pub fn handle_look_cards(
                     db,
                     ctx,
                     ctx,
-                    instr_ip,
+                    frame_idx,
                     op,
                     0,
                     ChoiceType::RevealHand,

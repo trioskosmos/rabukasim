@@ -2,7 +2,6 @@ use super::card_db::{CardDatabase, MemberCard};
 use super::game::GameState;
 use crate::core::logic::interpreter::check_condition;
 use crate::core::logic::interpreter::conditions::resolve_count;
-use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use std::cell::Cell;
 
 use crate::core::enums::*;
@@ -160,7 +159,7 @@ fn apply_reduce_cost_modifiers(
         return;
     }
 
-    let program = BytecodeProgram::from_slice(&ab.bytecode);
+    let program = ab.bytecode_program();
     let mut ip = 0;
     while let Some(instr) = program.instruction_at(ip) {
         let op = instr.op;
@@ -240,7 +239,7 @@ fn apply_external_reduce_cost_modifiers(
         return;
     }
 
-    let program = BytecodeProgram::from_slice(&ab.bytecode);
+    let program = ab.bytecode_program();
     let mut ip = 0;
     while let Some(instr) = program.instruction_at(ip) {
         let op = instr.op;
@@ -606,7 +605,7 @@ pub fn has_restriction(
                         .iter()
                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
                     {
-                        let bc = &ab.bytecode;
+                        let bc = ab.bytecode();
                         let mut i = 0;
                         while i + 4 < bc.len() {
                             if bc[i] == opcode {
@@ -641,7 +640,7 @@ pub fn has_restriction(
                             .iter()
                             .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
                         {
-                            let bc = &ab.bytecode;
+                            let bc = ab.bytecode();
                             let mut i = 0;
                             while i + 4 < bc.len() {
                                 if bc[i] == opcode {
@@ -745,7 +744,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                     }
                 }
             } else {
-                let program = BytecodeProgram::from_slice(&ab.bytecode);
+                let program = ab.bytecode_program();
                 let mut ip = 0;
                 while let Some(instr) = program.instruction_at(ip) {
                     let op = instr.op;
@@ -831,9 +830,10 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                     continue;
                 }
 
-                let target_mask = if slot_idx < 3 && !ab.bytecode.is_empty() {
-                    let target_area = ab.bytecode.get(4).copied().unwrap_or(0);
-                    let runtime_attr = ab.bytecode.get(2).copied().unwrap_or(0) as u64;
+                let bytecode = ab.bytecode();
+                let target_mask = if slot_idx < 3 && !bytecode.is_empty() {
+                    let target_area = bytecode.get(4).copied().unwrap_or(0);
+                    let runtime_attr = bytecode.get(2).copied().unwrap_or(0) as u64;
                     if target_area == 4 || runtime_attr != 0 || !ab.filters.is_empty() {
                         0b111
                     } else {
@@ -845,7 +845,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                     0
                 };
 
-                let program = BytecodeProgram::from_slice(&ab.bytecode);
+                let program = ab.bytecode_program();
                 let mut ip = 0;
                 while let Some(instr) = program.instruction_at(ip) {
                     let op = instr.op;

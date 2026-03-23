@@ -21,6 +21,8 @@ use crate::core::hearts::HeartBoard;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
+fn default_baton_touch_limit() -> u8 { 3 }
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PlayerState {
     pub player_id: u8,
@@ -60,6 +62,11 @@ pub struct PlayerState {
     pub live_score_bonus_logs: SmallVec<[(i32, i32); 4]>, // (source_cid, amount)
     #[serde(default)]
     pub blade_buffs: [i16; 3],
+    // 16..17: baton_touch_limit (2 bits)
+    #[serde(default = "default_baton_touch_limit")]
+    pub baton_touch_limit: u8,
+    #[serde(default)]
+    pub live_set_limit: u8,
     #[serde(default)]
     pub blade_overrides: [i16; 3], // -1 = no override
     #[serde(default)]
@@ -189,6 +196,7 @@ impl Default for PlayerState {
             live_score_bonus: 0,
             live_score_bonus_logs: SmallVec::new(),
             blade_buffs: [0; 3],
+            live_set_limit: 0,
             blade_overrides: [-1; 3],
             heart_buffs: [HeartBoard::default(); 3],
             blade_buff_logs: SmallVec::new(),
@@ -213,6 +221,7 @@ impl Default for PlayerState {
             cost_modifiers: Vec::new(),
             board_aura: BoardAura::default(),
             flags: 3 << 16, // Default baton_touch_limit = 3 (bits 16..17)
+            baton_touch_limit: 3,
             cheer_mod_count: 0,
             yell_count_reduction: 0,
             negated_triggers: Vec::new(),
@@ -283,9 +292,9 @@ impl PlayerState {
         self.flags = (self.flags & !Self::MASK_BATON_COUNT) | (((val as u32) & 0b11) << Self::OFFSET_BATON_COUNT);
     }
 
-    pub fn baton_touch_limit(&self) -> u8 { ((self.flags & Self::MASK_BATON_LIMIT) >> Self::OFFSET_BATON_LIMIT) as u8 }
+    pub fn baton_touch_limit(&self) -> u8 { self.baton_touch_limit }
     pub fn set_baton_touch_limit(&mut self, val: u8) {
-        self.flags = (self.flags & !Self::MASK_BATON_LIMIT) | (((val as u32) & 0b11) << Self::OFFSET_BATON_LIMIT);
+        self.baton_touch_limit = val;
     }
 
     pub fn play_count_this_turn(&self) -> u8 { ((self.flags & Self::MASK_PLAY_COUNT) >> Self::OFFSET_PLAY_COUNT) as u8 }
@@ -303,9 +312,9 @@ impl PlayerState {
         self.flags = (self.flags & !Self::MASK_PREVENT_BATON) | (((val as u32) & 0b11) << Self::OFFSET_PREVENT_BATON);
     }
 
-    pub fn prevent_success_pile_set(&self) -> u8 { ((self.flags & Self::MASK_PREVENT_SUCCESS_PILE) >> Self::OFFSET_PREVENT_SUCCESS_PILE) as u8 }
+    pub fn prevent_success_pile_set(&self) -> u8 { self.live_set_limit }
     pub fn set_prevent_success_pile_set(&mut self, val: u8) {
-        self.flags = (self.flags & !Self::MASK_PREVENT_SUCCESS_PILE) | (((val as u32) & 0b11) << Self::OFFSET_PREVENT_SUCCESS_PILE);
+        self.live_set_limit = val;
     }
 
     pub fn prevent_play_to_slot_mask(&self) -> u8 { ((self.flags & Self::MASK_PREVENT_PLAY_TO_SLOT) >> Self::OFFSET_PREVENT_PLAY_TO_SLOT) as u8 }

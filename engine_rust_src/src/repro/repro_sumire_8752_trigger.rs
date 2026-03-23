@@ -23,11 +23,11 @@ fn test_sumire_8752_trigger_repro() {
     // Setup state for double baton
     // Played Sumire to Center (slot 1) replacing something
     state.players[p1].stage[1] = sumire_id;
-    state.players[p1].baton_touch_count = 2; // Double baton
+    state.players[p1].baton_source_ids.extend([1, 2]); // Double baton
     state.players[p1].baton_source_ids.push(kanon_id as i32);
     state.players[p1].baton_source_ids.push(kanon_id as i32); // Simulating 2 Liella sources
     state.prev_card_id = kanon_id as i32; // Primary baton source (Liella)
-    state.players[p1].play_count_this_turn = 1; // Just played a card
+    state.players[p1].set_play_count_this_turn(1); // Just played a card
 
     let ctx = AbilityContext {
         player_id: p1 as u8,

@@ -1,5 +1,5 @@
 use engine_rust::core::enums::Phase;
-use engine_rust::core::logic::{resolve_bytecode, AbilityContext, CardDatabase, GameState, ChoiceType};
+use engine_rust::core::logic::{AbilityContext, CardDatabase, GameState, ChoiceType};
 
 #[test]
 fn test_card_558_wait_repro() {
@@ -30,7 +30,7 @@ fn test_card_558_wait_repro() {
     let bytecode = &member.abilities[0].bytecode;
 
     println!("Step 1: Initial call");
-    let _ = resolve_bytecode(&mut state, &db, std::sync::Arc::new(bytecode.clone()), &ctx);
+    let _ = state.resolve_bytecode(&db, std::sync::Arc::new(bytecode.clone()), &ctx);
 
     // Should be suspended for OPTIONAL/TAP cost
     assert_eq!(state.phase, Phase::Response);
@@ -48,8 +48,7 @@ fn test_card_558_wait_repro() {
 
     state.phase = Phase::Main; // Reset for execution
     state.interaction_stack.pop(); // Simulate consumption
-    let _ = resolve_bytecode(
-        &mut state,
+    let _ = state.resolve_bytecode(
         &db,
         std::sync::Arc::new(bytecode.clone()),
         &resume_ctx,

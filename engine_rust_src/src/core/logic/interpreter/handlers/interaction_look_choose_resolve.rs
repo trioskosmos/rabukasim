@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use super::interaction_look_choose_apply::apply_look_choice;
@@ -8,8 +9,8 @@ pub fn resolve_look_choice(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    _instr: &BytecodeInstruction,
-    instr_ip: usize,
+    _frame: &AbilityFrame,
+    frame_idx: usize,
     p_idx: usize,
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
     target_slot: u8,
@@ -59,7 +60,7 @@ pub fn resolve_look_choice(
                         db,
                         ctx,
                         ctx,
-                        instr_ip,
+                        frame_idx,
                         O_LOOK_AND_CHOOSE,
                         s,
                         choice_type,

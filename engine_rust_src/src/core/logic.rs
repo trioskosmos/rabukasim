@@ -55,7 +55,7 @@ pub use interpreter::conditions::{check_condition, check_condition_opcode};
 pub use interpreter::costs::{check_cost, pay_cost};
 pub use interpreter::suspension::suspend_interaction;
 pub use interpreter::{
-    check_once_per_turn, consume_once_per_turn, process_trigger_queue, resolve_bytecode,
+    check_once_per_turn, consume_once_per_turn, process_trigger_queue, resolve_frames,
 };
 pub use rules::get_effective_blades;
 pub use performance::PerformanceResults;

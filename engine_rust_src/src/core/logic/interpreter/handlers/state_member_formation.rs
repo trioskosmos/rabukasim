@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::hearts::HeartBoard;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
@@ -7,8 +8,8 @@ pub fn handle_formation_change(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    _instr: &BytecodeInstruction,
-    instr_ip: usize,
+    _frame: &AbilityFrame,
+    frame_idx: usize,
     p_idx: usize,
     a: i64,
     s: i32,
@@ -76,7 +77,7 @@ pub fn handle_formation_change(
             db,
             ctx,
             ctx,
-            instr_ip,
+            frame_idx,
             O_FORMATION_CHANGE,
             s,
             ChoiceType::RearrangeFormation,

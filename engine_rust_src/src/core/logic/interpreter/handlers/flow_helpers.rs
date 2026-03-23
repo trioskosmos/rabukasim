@@ -1,9 +1,10 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, Effect, GameState};
 
 pub fn current_effect<'a>(
     db: &'a CardDatabase,
     ctx: &AbilityContext,
-    instr: &crate::core::logic::interpreter::instruction::BytecodeInstruction,
+    frame: &AbilityFrame,
 ) -> Option<&'a Effect> {
     let ab_idx = usize::try_from(ctx.ability_index).ok()?;
     db.get_live(ctx.source_card_id)
@@ -14,10 +15,10 @@ pub fn current_effect<'a>(
         })
         .and_then(|ability| {
             ability.effects.iter().find(|effect| {
-                effect.runtime_opcode == instr.op
-                    && effect.runtime_value == instr.v
-                    && effect.runtime_attr == instr.a as u64
-                    && effect.runtime_slot == instr.raw_s
+                effect.runtime_opcode == frame.raw_opcode()
+                    && effect.runtime_value == frame.raw_value()
+                    && effect.runtime_attr == frame.raw_attr()
+                    && effect.runtime_slot == frame.raw_slot()
             })
         })
 }

@@ -15,6 +15,7 @@ pub fn resolve_select_choice(
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
     supports_partial_completion: bool,
     partial_selection_prompt: i16,
+    is_move_member_follow_up: bool,
 ) -> HandlerResult {
     let choice = ctx.choice_index as i32;
     let source_zone = slot_info.source_zone as u8;
@@ -57,6 +58,12 @@ pub fn resolve_select_choice(
     };
     if selected_cid >= 0 && !ctx.selected_cards.contains(&selected_cid) {
         ctx.selected_cards.push(selected_cid);
+    }
+
+    if is_move_member_follow_up {
+        ctx.area_idx = choice as i16;
+        ctx.choice_index = -1;
+        return HandlerResult::Continue;
     }
 
     if supports_partial_completion && !ctx.selected_cards.is_empty() {

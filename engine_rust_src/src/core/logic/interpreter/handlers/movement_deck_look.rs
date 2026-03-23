@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 
 #[path = "movement_deck_look_cards.rs"]
@@ -25,6 +26,7 @@ pub fn handle_reveal_until(
             if state.players[p_idx].discard.is_empty() {
                 break;
             }
+            state.players[p_idx].set_flag(PlayerState::FLAG_DECK_REFRESHED, true);
             state.resolve_deck_refresh(p_idx);
             if state.players[p_idx].deck.is_empty() {
                 break;
@@ -40,10 +42,8 @@ pub fn handle_reveal_until(
             let is_live_only = (s as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0;
             let matches = if is_live_only {
                 db.get_live(cid).is_some()
-            } else if v == 0 {
-                state.card_matches_filter_with_ctx(db, cid, a as u64, ctx)
             } else {
-                check_condition_opcode(state, db, v, a as i32, a as u64, s, &new_ctx, 0)
+                v != 0 && check_condition_opcode(state, db, v, a as i32, a as u64, s, &new_ctx, 0)
             };
 
             if matches {
@@ -79,7 +79,7 @@ pub fn handle_look_cards(
     op: i32,
     v: i32,
     a: i64,
-    instr_ip: usize,
+    frame_idx: usize,
     resolved_slot: i32,
 ) -> HandlerResult {
     movement_deck_look_cards::handle_look_cards(
@@ -90,7 +90,7 @@ pub fn handle_look_cards(
         op,
         v,
         a,
-        instr_ip,
+        frame_idx,
         resolved_slot,
     )
 }

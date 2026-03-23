@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 #[path = "state_member_play_discard_place.rs"]
 mod state_member_play_discard_place;
@@ -9,8 +10,8 @@ pub fn handle_play_member_from_discard(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
     v: i32,
     a: i64,
     s: i32,
@@ -29,7 +30,7 @@ pub fn handle_play_member_from_discard(
         )
     } else {
         let filter_target = (a as u64) & 0x03;
-        let is_opp = filter_target == 2 || instr.slot().is_opponent;
+        let is_opp = filter_target == 2 || frame.dslot().is_opponent;
         let t_idx = if is_opp {
             1 - (ctx.activator_id as usize)
         } else {
@@ -69,7 +70,7 @@ pub fn handle_play_member_from_discard(
             state,
             db,
             ctx,
-            instr_ip,
+            frame_idx,
             target_p_idx,
             filter_attr_base,
             empty_slot_only,
@@ -86,7 +87,7 @@ pub fn handle_play_member_from_discard(
             target_p_idx,
             empty_slot_only,
             is_total_cost,
-            instr_ip,
+            frame_idx,
             remaining,
         );
     }

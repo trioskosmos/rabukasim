@@ -1,7 +1,7 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::models::interpreter::HandlerResult;
-use crate::core::logic::interpreter::instruction::BytecodeInstruction;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, Zone};
 
 #[allow(clippy::too_many_arguments)]
@@ -9,8 +9,8 @@ pub fn prepare_discard_prompt(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &AbilityContext,
-    instr: &BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
     p_idx: usize,
     source_zone: Zone,
     count: i32,
@@ -46,7 +46,7 @@ pub fn prepare_discard_prompt(
             db,
             ctx,
             next_ctx,
-            instr_ip,
+            frame_idx,
             O_MOVE_TO_DISCARD,
             s,
             ChoiceType::Optional,
@@ -113,7 +113,7 @@ pub fn prepare_discard_prompt(
         }
 
         if next_ctx.choice_index == -1 {
-            let mut filter_obj = instr.filter_attr();
+            let mut filter_obj = frame.filter();
             if source_zone == Zone::Stage {
                 filter_obj.zone_mask = 4;
             } else if source_zone == Zone::Hand {
@@ -139,7 +139,7 @@ pub fn prepare_discard_prompt(
                 db,
                 ctx,
                 next_ctx,
-                instr_ip,
+                frame_idx,
                 O_MOVE_TO_DISCARD,
                 s,
                 choice_type,

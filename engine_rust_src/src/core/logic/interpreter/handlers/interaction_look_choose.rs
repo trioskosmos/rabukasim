@@ -1,9 +1,9 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::{ChoiceType, TriggerType};
 use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
-use crate::core::logic::interpreter::instruction::BytecodeInstruction;
 use crate::core::O_LOOK_AND_CHOOSE;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
@@ -20,14 +20,14 @@ pub fn handle_look_and_choose(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
 ) -> HandlerResult {
-    let _v = instr.v;
-    let a = instr.a;
-    let s = instr.raw_s;
+    let _v = frame.raw_value();
+    let a = frame.raw_attr() as i64;
+    let s = frame.raw_slot();
     let p_idx = ctx.player_id as usize;
-    let slot_info = instr.slot();
+    let slot_info = frame.dslot();
     let target_slot = slot_info.target_slot;
     let rem_dest = slot_info.dest_zone as u8;
     let source_zone_bits = slot_info.source_zone as u8;
@@ -36,7 +36,7 @@ pub fn handle_look_and_choose(
     } else {
         source_zone_bits as i32
     };
-    let lc = instr.look_choose();
+    let lc = frame.look_choose();
     let look_count = lc.count as usize;
     let reveal_flag = lc.reveal;
     let dest_discard_v = lc.dest_discard;
@@ -102,9 +102,9 @@ pub fn handle_look_and_choose(
         } else {
             ChoiceType::LookAndChoose
         };
-        let lc = instr.look_choose();
+        let lc = frame.look_choose();
 
-        let mut filter_obj = instr.filter_attr();
+        let mut filter_obj = frame.filter();
         filter_obj.char_id_1 = lc.char_id_1;
         filter_obj.char_id_2 = lc.char_id_2;
         filter_obj.char_id_3 = lc.char_id_3;
@@ -115,7 +115,7 @@ pub fn handle_look_and_choose(
             db,
             ctx,
             ctx,
-            instr_ip,
+            frame_idx,
             O_LOOK_AND_CHOOSE,
             s,
             choice_type,
@@ -135,8 +135,8 @@ pub fn handle_look_and_choose(
         state,
         db,
         ctx,
-        instr,
-        instr_ip,
+        frame,
+        frame_idx,
         p_idx,
         slot_info,
         target_slot,

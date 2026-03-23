@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::state_score_slots::apply_to_target_slots;
 

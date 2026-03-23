@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::super::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
@@ -7,10 +8,10 @@ pub fn handle_swap_zone(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &crate::core::logic::interpreter::instruction::BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
 ) -> HandlerResult {
-    let _s = instr.raw_s;
+    let _s = frame.raw_slot();
     let p_idx = ctx.player_id as usize;
     if ctx.choice_index == -1 && ctx.v_remaining == -1 {
         let cards = state.players[p_idx].success_lives.clone();
@@ -24,7 +25,7 @@ pub fn handle_swap_zone(
             db,
             ctx,
             ctx,
-            instr_ip,
+            frame_idx,
             O_SWAP_ZONE,
             0,
             ChoiceType::SelectSwapSource,
@@ -48,7 +49,7 @@ pub fn handle_swap_zone(
                 db,
                 &next_ctx,
                 &next_ctx,
-                instr_ip,
+                frame_idx,
                 O_SWAP_ZONE,
                 0,
                 ChoiceType::SelectHandPlay,

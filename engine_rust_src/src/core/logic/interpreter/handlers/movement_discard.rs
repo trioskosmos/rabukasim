@@ -1,4 +1,5 @@
-﻿use crate::core::enums::*;
+use crate::core::logic::models::AbilityFrame;
+use crate::core::enums::*;
 use crate::core::logic::constants::FILTER_MASK_LOWER;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState};
@@ -18,27 +19,27 @@ pub fn handle_move_to_discard(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &crate::core::logic::interpreter::instruction::BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
 ) -> HandlerResult {
-    let a = instr.a;
-    let s = instr.raw_s;
+    let a = frame.raw_attr() as i64;
+    let s = frame.raw_slot();
     let p_idx = ctx.player_id as usize;
-    let v = if instr.filter_attr().compare_accumulated {
+    let v = if frame.filter().compare_accumulated {
         resolve_count(
             state,
             db,
             s,
-            (instr.filter_attr().to_attr() & FILTER_MASK_LOWER) as u64,
+            (frame.filter().to_attr() & FILTER_MASK_LOWER) as u64,
             p_idx as i32,
             ctx,
             0,
         ) as i32
     } else {
-        instr.v
+        frame.raw_value()
     };
     let base_p = ctx.activator_id as usize;
-    let slot = instr.slot();
+    let slot = frame.dslot();
     let source_zone = resolve_source_zone(&slot);
     let target_player_idx = if slot.is_opponent { 1 - base_p } else { base_p };
 
@@ -56,7 +57,7 @@ pub fn handle_move_to_discard(
     }
 
     let filter_attr = (a as u64) & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
-    let is_optional = instr.filter_attr().is_optional;
+    let is_optional = frame.filter().is_optional;
 
     if state.debug.debug_mode {
         println!(
@@ -76,8 +77,8 @@ pub fn handle_move_to_discard(
         state,
         db,
         ctx,
-        instr,
-        instr_ip,
+        frame,
+        frame_idx,
         p_idx,
         source_zone,
         count,
@@ -107,8 +108,8 @@ pub fn handle_move_to_discard(
             state,
             db,
             ctx,
-            instr,
-            instr_ip,
+            frame,
+            frame_idx,
             target_player_idx,
             source_zone,
             count,

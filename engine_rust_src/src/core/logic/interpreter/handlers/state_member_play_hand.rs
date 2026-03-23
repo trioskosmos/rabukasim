@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
@@ -6,8 +7,8 @@ pub fn handle_play_member_from_hand(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
     p_idx: usize,
     v: i32,
     a: i64,
@@ -26,7 +27,7 @@ pub fn handle_play_member_from_hand(
                 db,
                 ctx,
                 ctx,
-                instr_ip,
+                frame_idx,
                 O_PLAY_MEMBER_FROM_HAND,
                 0,
                 ChoiceType::SelectHandPlay,
@@ -41,7 +42,7 @@ pub fn handle_play_member_from_hand(
             ctx.target_slot = h_idx as i16;
             ctx.v_remaining = 1;
             ctx.choice_index = -1;
-            return handle_play_member_from_hand(state, db, ctx, instr, instr_ip, p_idx, v, a, s);
+            return handle_play_member_from_hand(state, db, ctx, frame, frame_idx, p_idx, v, a, s);
         }
     } else if remaining == 1 {
         if ctx.choice_index == -1 {
@@ -52,7 +53,7 @@ pub fn handle_play_member_from_hand(
                 db,
                 ctx,
                 &next_ctx,
-                instr_ip,
+                frame_idx,
                 O_PLAY_MEMBER_FROM_HAND,
                 s,
                 ChoiceType::SelectStage,

@@ -185,7 +185,7 @@ pub fn get_live_requirements(
                 ..Default::default()
             };
             if ab.conditions.iter().all(|c| check_condition(state, db, p_idx, c, &ctx, 1)) {
-                process_heart_modifiers_bytecode(&ab.bytecode, &mut req_board, &mut adjustments, &live.name, live.card_id);
+                process_heart_modifiers_bytecode(&ab.bytecode(), &mut req_board, &mut adjustments, &live.name, live.card_id);
             }
         }
     }

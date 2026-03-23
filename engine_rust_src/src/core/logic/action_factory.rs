@@ -80,7 +80,7 @@ impl ActionFactory {
         }?;
 
         let ability = abilities.get(pi.ability_index as usize)?;
-        let program = BytecodeProgram::from_slice(&ability.bytecode);
+        let program = ability.bytecode_program();
 
         let mut select_mode_ip = 0;
         while let Some(instr) = program.instruction_at(select_mode_ip) {

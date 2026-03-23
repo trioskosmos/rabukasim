@@ -1,5 +1,5 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::*;
-use crate::core::logic::interpreter::instruction::BytecodeInstruction;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, Zone};
 
 use super::super::super::HandlerResult;
@@ -9,8 +9,8 @@ pub fn handle_selected_discard(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
     target_player_idx: usize,
     source_zone: Zone,
     count: i32,
@@ -26,8 +26,8 @@ pub fn handle_selected_discard(
         state,
         db,
         ctx,
-        instr,
-        instr_ip,
+        frame,
+        frame_idx,
         target_player_idx,
         source_zone,
         count,

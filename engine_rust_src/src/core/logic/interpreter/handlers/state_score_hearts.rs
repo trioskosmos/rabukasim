@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::interpreter::handlers::state_helpers::{
     inline_value_ge_threshold, update_live_score_snapshot,
 };
@@ -6,7 +7,6 @@ use crate::core::enums::*;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
-use crate::core::logic::interpreter::instruction::BytecodeInstruction;
 use crate::core::models::interpreter::resolve_target_slot;
 
 #[path = "state_score_bonus.rs"]
@@ -19,16 +19,16 @@ pub fn handle_score_hearts(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
+    frame: &AbilityFrame,
 ) -> HandlerResult {
-    let op = instr.op;
-    let v = instr.v;
-    let a = instr.a;
+    let op = frame.raw_opcode();
+    let v = frame.raw_value();
+    let a = frame.raw_attr() as i64;
     #[allow(unused_variables)]
-    let s = instr.raw_s;
+    let s = frame.raw_slot();
     let p_idx = ctx.player_id as usize;
 
-    let slot_info = instr.slot();
+    let slot_info = frame.dslot();
     let target_p = if slot_info.is_opponent {
         1 - p_idx
     } else {
@@ -43,10 +43,10 @@ pub fn handle_score_hearts(
 
     match op {
         O_BOOST_SCORE => {
-            return state_score_bonus::handle_boost_score(state, db, ctx, instr, p_idx, target_p);
+            return state_score_bonus::handle_boost_score(state, db, ctx, frame, p_idx, target_p);
         }
         O_REDUCE_COST => {
-            return state_score_bonus::handle_reduce_cost(state, ctx, instr, p_idx, v);
+            return state_score_bonus::handle_reduce_cost(state, ctx, frame, p_idx, v);
         }
         O_SET_SCORE => {
             return state_score_bonus::handle_set_score(state, db, ctx, target_p, v);
@@ -74,7 +74,7 @@ pub fn handle_score_hearts(
         }
         O_TRANSFORM_BLADES => {
             return state_score_stats::handle_transform_blades(
-                state, p_idx, v, target_p, target_slot, resolved_slot, instr.slot(),
+                state, p_idx, v, target_p, target_slot, resolved_slot, frame.dslot(),
             );
         }
         O_REDUCE_HEART_REQ => {
@@ -94,7 +94,7 @@ pub fn handle_score_hearts(
         }
         O_SET_HEART_COST => {
             return state_score_requirements::handle_set_heart_cost(
-                state, ctx, instr, p_idx, target_p, s, v,
+                state, ctx, frame, p_idx, target_p, s, v,
             );
         }
         O_REDUCE_SCORE => {

@@ -83,11 +83,17 @@ fn test_meta_rule_pl_sp_bp1_024_l_heart_buffs() {
     // So the test logic was fundamentally flawed or the bytecode of that card has a known quirk.
     // To just unblock the interaction stack and let it proceed, we'll pick the first available action.
     let mut choose_second = false;
+    let mut dbg_iters = 0;
     while state.phase == Phase::Response && !state.interaction_stack.is_empty() {
+        dbg_iters += 1;
+        if dbg_iters > 50 {
+            panic!("Infinite loop detected in interaction step! Current interaction: {:?}", state.interaction_stack.last());
+        }
         use crate::core::logic::action_gen::{ActionGenerator, response::ResponseGenerator};
         let mut receiver: Vec<usize> = Vec::new();
         ResponseGenerator.generate(&db, 0, &state, &mut receiver);
 
+        println!("[DEBUG Loop] Iteration {} | receiver options: {:?}", dbg_iters, receiver);
         let mut act = receiver[0];
 
         // If it's a member selection, the receiver contains valid slot actions plus 0 (pass).
@@ -95,6 +101,7 @@ fn test_meta_rule_pl_sp_bp1_024_l_heart_buffs() {
         if is_select {
             // Filter out the 0 (pass) action to only have valid selections
             let valid_actions: Vec<usize> = receiver.into_iter().filter(|&a| a != 0).collect();
+            println!("[DEBUG Loop] Valid distinct actions: {:?}", valid_actions);
             if !valid_actions.is_empty() {
                 if choose_second && valid_actions.len() > 1 {
                     act = valid_actions[1];
@@ -105,6 +112,7 @@ fn test_meta_rule_pl_sp_bp1_024_l_heart_buffs() {
             }
         }
 
+        println!("[DEBUG Loop] Stepping action: {}", act);
         state.step(&db, act as i32).expect("Step failed");
         state.process_trigger_queue(&db);
     }

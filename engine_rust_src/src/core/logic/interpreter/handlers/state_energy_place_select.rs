@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
@@ -6,7 +7,7 @@ pub fn handle_place_energy_from_zone(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr_ip: usize,
+    frame_idx: usize,
     p_idx: usize,
     slot: usize,
     a: i64,
@@ -19,7 +20,7 @@ pub fn handle_place_energy_from_zone(
             db,
             ctx,
             ctx,
-            instr_ip,
+            frame_idx,
             O_PLACE_ENERGY_UNDER_MEMBER,
             0,
             ChoiceType::Optional,
@@ -53,7 +54,7 @@ pub fn handle_place_energy_from_zone(
             db,
             ctx,
             &next_ctx,
-            instr_ip,
+            frame_idx,
             O_PLACE_ENERGY_UNDER_MEMBER,
             0,
             ChoiceType::PayEnergy,

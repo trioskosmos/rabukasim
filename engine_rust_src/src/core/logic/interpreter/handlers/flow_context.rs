@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::HandlerResult;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::enums::*;
@@ -7,7 +8,7 @@ pub fn handle_opponent_choose(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr_ip: usize,
+    frame_idx: usize,
 ) -> HandlerResult {
     if ctx.choice_index == -1 {
         // Flip player_id BEFORE suspension so that the interaction is attributed to the opponent
@@ -18,7 +19,7 @@ pub fn handle_opponent_choose(
             db,
             ctx,
             ctx,
-            instr_ip,
+            frame_idx,
             O_OPPONENT_CHOOSE,
             0,
             ChoiceType::OpponentChoose,
@@ -35,7 +36,7 @@ pub fn handle_color_select(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr_ip: usize,
+    frame_idx: usize,
 ) -> HandlerResult {
     if ctx.choice_index == -1 {
         if matches!(suspend_choice(
@@ -43,7 +44,7 @@ pub fn handle_color_select(
             db,
             ctx,
             ctx,
-            instr_ip,
+            frame_idx,
             O_COLOR_SELECT,
             0,
             ChoiceType::ColorSelect,

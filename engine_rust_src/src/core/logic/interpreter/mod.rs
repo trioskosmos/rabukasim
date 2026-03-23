@@ -15,7 +15,7 @@ use crate::core::models::{GameState, AbilityContext};
 use crate::core::logic::constants::*;
 use super::CardDatabase;
 use super::models::{Ability, AbilityFrame};
-use self::instruction::{BytecodeProgram, WORDS_PER_INSTRUCTION};
+use self::instruction::BytecodeProgram;
 pub use conditions::{check_condition, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
 pub use handlers::{HandlerRegistry, HandlerResult};
@@ -111,46 +111,6 @@ struct BytecodeExecutor {
     steps: u32,
 }
 
-fn effect_has_modal_options(effect: &crate::core::logic::Effect) -> bool {
-    match &effect.modal_options {
-        serde_json::Value::Null => false,
-        serde_json::Value::Array(values) => !values.is_empty(),
-        serde_json::Value::Object(values) => !values.is_empty(),
-        _ => true,
-    }
-}
-
-fn ability_uses_structured_runtime(ability: &Ability) -> bool {
-    if ability.effects.is_empty() {
-        return false;
-    }
-    if ability.bytecode.len() != ability.effects.len() * WORDS_PER_INSTRUCTION + WORDS_PER_INSTRUCTION {
-        return false;
-    }
-
-    for (idx, effect) in ability.effects.iter().enumerate() {
-        if effect.runtime_opcode == 0 || effect_has_modal_options(effect) {
-            return false;
-        }
-
-        let ip = BytecodeProgram::effect_ip(idx);
-        let a_low = effect.runtime_attr as u32 as i32;
-        let a_high = (effect.runtime_attr >> 32) as u32 as i32;
-
-        if ability.bytecode[ip] != effect.runtime_opcode
-            || ability.bytecode[ip + 1] != effect.runtime_value
-            || ability.bytecode[ip + 2] != a_low
-            || ability.bytecode[ip + 3] != a_high
-            || ability.bytecode[ip + 4] != effect.runtime_slot
-        {
-            return false;
-        }
-    }
-
-    ability.bytecode.last().copied() == Some(0)
-        && ability.bytecode.get(ability.bytecode.len().saturating_sub(5)).copied() == Some(O_RETURN)
-}
-
 pub fn resolve_ability(
     state: &mut GameState,
     db: &CardDatabase,
@@ -163,73 +123,24 @@ pub fn resolve_ability(
     }
 
     if let Some(frame_prog) = &ability.frame_program {
-        return resolve_semantic_frames(state, db, &frame_prog.frames, ability.bytecode.as_slice(), ctx_in);
+        return resolve_semantic_frames(state, db, &frame_prog.frames, ctx_in);
     }
 
-    if !ability_uses_structured_runtime(ability) {
-        return resolve_bytecode(state, db, Arc::new(ability.bytecode.clone()), ctx_in);
-    }
-
-    let execution_started = begin_execution(state, ctx_in);
-
-    let registry = HandlerRegistry::new();
-    let mut ctx = ctx_in.clone();
-    let mut effect_idx = BytecodeProgram::effect_idx(ctx_in.program_counter as usize);
-    println!("[DEBUG] resolve_ability starting. Source: {}, Effects: {}", ctx_in.source_card_id, ability.effects.len());
-
-    while effect_idx < ability.effects.len() {
-        let effect = &ability.effects[effect_idx];
-        let ip = BytecodeProgram::effect_ip(effect_idx);
-        ctx.program_counter = ip as u16;
-        if effect_idx == BytecodeProgram::effect_idx(ctx_in.program_counter as usize) && ctx_in.choice_index != -1 {
-            ctx.choice_index = ctx_in.choice_index;
-        }
-
-        let instr = instruction::BytecodeInstruction::new(
-            effect.runtime_opcode,
-            effect.runtime_value,
-            effect.runtime_attr as i64,
-            effect.runtime_slot,
-        );
-
-        match registry.dispatch(state, db, &mut ctx, &instr, ip, &[]) {
-            HandlerResult::Continue => {
-                ctx.clear_step_state();
-                effect_idx += 1;
-            }
-            HandlerResult::SetCond(_) => {
-                ctx.clear_step_state();
-                effect_idx += 1;
-            }
-            HandlerResult::Suspend => return Ok(()),
-            HandlerResult::Return => break,
-            HandlerResult::Branch(new_ip) => {
-                ctx.clear_step_state();
-                effect_idx = BytecodeProgram::effect_idx(new_ip);
-            }
-            HandlerResult::BranchToBytecode(new_bc) => {
-                if let Err(err) = resolve_bytecode(state, db, new_bc, &ctx) {
-                    finish_execution(state, ctx_in, execution_started);
-                    return Err(err);
-                }
-                if state.phase == Phase::Response {
-                    return Ok(());
-                }
-                ctx.clear_step_state();
-                effect_idx += 1;
-            }
+    if let Some(sparse) = &ability.sparse_frame_index {
+        let frame_prog = CardDatabase::sparse_entry_to_frame_program(sparse);
+        if !frame_prog.frames.is_empty() {
+            return resolve_semantic_frames(state, db, &frame_prog.frames, ctx_in);
         }
     }
 
-    finish_execution(state, ctx_in, execution_started);
-    Ok(())
+    let frame_prog = crate::core::logic::models::FrameProgram::from_bytecode(&ability.bytecode());
+    resolve_semantic_frames(state, db, &frame_prog.frames, ctx_in)
 }
 
 pub fn resolve_semantic_frames(
     state: &mut GameState,
     db: &CardDatabase,
     frames: &[AbilityFrame],
-    legacy_bytecode: &[i32],
     ctx_in: &AbilityContext,
 ) -> Result<(), InterpreterError> {
     if db.is_vanilla {
@@ -241,11 +152,6 @@ pub fn resolve_semantic_frames(
     let registry = HandlerRegistry::new();
     let mut ctx = ctx_in.clone();
     let mut effect_idx = BytecodeProgram::effect_idx(ctx_in.program_counter as usize);
-    let legacy_program = if legacy_bytecode.is_empty() {
-        None
-    } else {
-        Some(BytecodeProgram::from_slice(legacy_bytecode))
-    };
     let mut cond = true;
     let mut steps = 0;
 
@@ -402,25 +308,13 @@ pub fn resolve_semantic_frames(
         }
 
         if real_op == crate::core::enums::O_JUMP as i32 {
-            if let Some(prog) = &legacy_program {
-                effect_idx = BytecodeProgram::effect_idx(
-                    prog.jump_target(ip, v).unwrap_or(prog.len_words()),
-                );
-            } else {
-                effect_idx = effect_idx + 1 + v.max(0) as usize;
-            }
+            effect_idx = (effect_idx as i64 + 1 + v as i64).max(0) as usize;
             ctx.choice_index = -1;
             continue;
         }
         if real_op == crate::core::enums::O_JUMP_IF_FALSE as i32 {
             if !cond {
-                if let Some(prog) = &legacy_program {
-                    effect_idx = BytecodeProgram::effect_idx(
-                        prog.jump_target(ip, v).unwrap_or(prog.len_words()),
-                    );
-                } else {
-                    effect_idx = effect_idx + 1 + v.max(0) as usize;
-                }
+                effect_idx = (effect_idx as i64 + 1 + v as i64).max(0) as usize;
             } else {
                 effect_idx += 1;
             }
@@ -435,17 +329,17 @@ pub fn resolve_semantic_frames(
         }
 
         let mut advance_effect = true;
-        match registry.dispatch(state, db, &mut ctx, &instr, ip, legacy_bytecode) {
+        match registry.dispatch(state, db, &mut ctx, frame, effect_idx, frames) {
             HandlerResult::Continue => {}
             HandlerResult::SetCond(new_cond) => cond = new_cond,
             HandlerResult::Suspend => return Ok(()),
             HandlerResult::Return => break,
-            HandlerResult::Branch(new_ip) => {
-                effect_idx = BytecodeProgram::effect_idx(new_ip);
+            HandlerResult::Branch(new_effect_idx) => {
+                effect_idx = new_effect_idx;
                 advance_effect = false;
             }
-            HandlerResult::BranchToBytecode(new_bc) => {
-                if let Err(err) = resolve_bytecode(state, db, new_bc, &ctx) {
+            HandlerResult::BranchToFrames(new_frames) => {
+                if let Err(err) = resolve_semantic_frames(state, db, new_frames.as_slice(), &ctx) {
                     finish_execution(state, ctx_in, execution_started);
                     return Err(err);
                 }
@@ -456,7 +350,6 @@ pub fn resolve_semantic_frames(
         }
 
         if advance_effect {
-            ctx.clear_step_state();
             effect_idx += 1;
         }
     }
@@ -489,7 +382,7 @@ pub fn resolve_frames(
     frames: &[AbilityFrame],
     ctx_in: &AbilityContext,
 ) -> Result<(), InterpreterError> {
-    resolve_semantic_frames(state, db, frames, &[], ctx_in)
+    resolve_semantic_frames(state, db, frames, ctx_in)
 }
 
 /// Main entry point for bytecode execution
@@ -745,13 +638,15 @@ pub fn resolve_bytecode(
 
         // Dispatch to handlers - Use 64-bit 'a' directly
         let mut do_reset = true;
+        let frame_idx = ip / crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION;
+        let dispatch_frame = AbilityFrame::new(instr.op, instr.v, instr.a, instr.raw_s);
         match registry.dispatch(
             state,
             db,
             &mut frame.ctx,
-            &instr,
-            ip,
-            frame.program.words(),
+            &dispatch_frame,
+            frame_idx,
+            &[],
         ) {
             HandlerResult::Continue => {}
             HandlerResult::SetCond(c) => executor.cond = c,
@@ -761,14 +656,14 @@ pub fn resolve_bytecode(
                     break;
                 }
             }
-            HandlerResult::Branch(new_ip) => {
-                frame.ip = new_ip;
+            HandlerResult::Branch(new_effect_idx) => {
+                frame.ip = BytecodeProgram::effect_ip(new_effect_idx);
                 do_reset = false; // Branch explicitly loops back, requiring state like v_remaining to persist
             }
-            HandlerResult::BranchToBytecode(new_bc) => {
+            HandlerResult::BranchToFrames(new_frames) => {
                 let next_ctx = frame.ctx.clone();
                 executor.stack.push(ExecutionFrame {
-                    program: BytecodeProgram::new(new_bc),
+                    program: BytecodeProgram::from_frames(new_frames.as_slice()),
                     ip: 0,
                     ctx: next_ctx,
                 });
@@ -776,12 +671,8 @@ pub fn resolve_bytecode(
         }
 
         // Obtaining frame again after dispatch might be necessary if we popped, but the loop head handles it.
-        if let Some(f) = executor.stack.last_mut() {
-            // CRITICAL: Only reset these if we aren't suspended,
-            // otherwise we lose the budget (v_remaining) and choice state for resumption.
-            if do_reset {
-                f.ctx.clear_step_state(); // Reset choice state after each instruction
-            }
+        if let Some(_f) = executor.stack.last_mut() {
+            // Handlers are responsible for clearing their own step state once they consume it.
         }
     }
 

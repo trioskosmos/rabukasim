@@ -1,4 +1,5 @@
-﻿use crate::core::enums::*;
+use crate::core::logic::models::AbilityFrame;
+use crate::core::enums::*;
 use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE, FILTER_MASK_LOWER, FLAG_REVEAL_UNTIL_IS_LIVE};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState, TriggerType};
 use crate::core::models::interpreter::{check_condition_opcode, resolve_target_slot};
@@ -15,15 +16,15 @@ pub fn handle_deck_zones(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &crate::core::logic::interpreter::instruction::BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
 ) -> HandlerResult {
-    let op = instr.op;
-    let v = instr.v;
-    let a = instr.a;
-    let s = instr.raw_s;
+    let op = frame.raw_opcode();
+    let v = frame.raw_value();
+    let a = frame.raw_attr() as i64;
+    let s = frame.raw_slot();
     let p_idx = ctx.player_id as usize;
-    let slot = instr.slot();
+    let slot = frame.dslot();
     let target_slot = slot.target_slot as i32;
     let resolved_slot = if target_slot == 10 {
         ctx.target_slot as i32
@@ -47,10 +48,10 @@ pub fn handle_deck_zones(
             );
         }
         O_ORDER_DECK => {
-            return super::handle_order_deck(state, db, ctx, p_idx, v, a, instr_ip);
+            return super::handle_order_deck(state, db, ctx, p_idx, v, a, frame_idx);
         }
         O_LOOK_REORDER_DISCARD => {
-            return super::handle_look_reorder_discard(state, db, ctx, p_idx, v, a, instr_ip);
+            return super::handle_look_reorder_discard(state, db, ctx, p_idx, v, a, frame_idx);
         }
         O_MOVE_TO_DECK => {
             return movement_deck_move::handle_move_to_deck(
@@ -76,28 +77,28 @@ pub fn handle_deck_zones(
         }
         O_LOOK_DECK | O_REVEAL_CARDS | O_CHEER_REVEAL => {
             return movement_deck_look::handle_look_cards(
-                state, db, ctx, p_idx, op, v, a, instr_ip, look_resolved_slot,
+                state, db, ctx, p_idx, op, v, a, frame_idx, look_resolved_slot,
             );
         }
         O_LOOK_DECK_DYNAMIC => {
             return movement_deck_look::handle_look_deck_dynamic(state, ctx, p_idx, v);
         }
         O_MOVE_TO_DISCARD => {
-            return super::handle_move_to_discard(state, db, ctx, instr, instr_ip);
+            return super::handle_move_to_discard(state, db, ctx, frame, frame_idx);
         }
         O_LOOK_AND_CHOOSE => {
-            return handle_look_and_choose(state, db, ctx, instr, instr_ip);
+            return handle_look_and_choose(state, db, ctx, frame, frame_idx);
         }
         O_RECOVER_LIVE | O_RECOVER_MEMBER => {
-            return handle_recovery(state, db, ctx, instr, instr_ip, op);
+            return handle_recovery(state, db, ctx, frame, frame_idx, op);
         }
         O_PLAY_LIVE_FROM_DISCARD => {
-            return handle_play_live_from_discard(state, db, ctx, instr, instr_ip);
+            return handle_play_live_from_discard(state, db, ctx, frame, frame_idx);
         }
         O_SELECT_CARDS => {
-            return handle_select_cards(state, db, ctx, instr, instr_ip);
+            return handle_select_cards(state, db, ctx, frame, frame_idx);
         }
-        O_SWAP_ZONE => return super::handle_swap_zone(state, db, ctx, instr, instr_ip),
+        O_SWAP_ZONE => return super::handle_swap_zone(state, db, ctx, frame, frame_idx),
         _ => return HandlerResult::Continue,
     }
 }

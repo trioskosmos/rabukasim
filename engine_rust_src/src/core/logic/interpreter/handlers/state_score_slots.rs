@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 pub fn apply_to_target_slots(
     target_slot: i32,
     resolved_slot: i32,

@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::*;
 use crate::core::logic::constants::CHOICE_DONE;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
@@ -16,19 +17,19 @@ pub fn handle_set_tapped(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &crate::core::logic::interpreter::instruction::BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
     p_idx: usize,
     resolved_slot: i32,
 ) -> HandlerResult {
-    let is_optional = instr.filter_attr().is_optional;
+    let is_optional = frame.filter().is_optional;
 
     if !state.ui.silent {
         eprintln!(
             "[TRACE] SET_TAPPED: p_idx={}, resolved_slot={}, v={}, optional={}, choice_index={}, v_remaining={}",
             p_idx,
             resolved_slot,
-            instr.v,
+            frame.raw_value(),
             is_optional,
             ctx.choice_index,
             ctx.v_remaining,
@@ -41,11 +42,11 @@ pub fn handle_set_tapped(
             db,
             ctx,
             ctx,
-            instr_ip,
+            frame_idx,
             O_SET_TAPPED,
             resolved_slot as i32,
             ChoiceType::Optional,
-            instr.filter_attr().to_attr(),
+            frame.filter().to_attr(),
             -1,
         ), HandlerResult::Suspend) {
             return HandlerResult::Suspend;
@@ -73,7 +74,7 @@ pub fn handle_set_tapped(
     };
 
     if let Some(slot) = tap_slot {
-        state.players[p_idx].set_tapped(slot, instr.v != 0);
+        state.players[p_idx].set_tapped(slot, frame.raw_value() != 0);
     }
 
     HandlerResult::Continue
@@ -83,8 +84,8 @@ pub fn handle_tap_opponent(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    _instr: &crate::core::logic::interpreter::instruction::BytecodeInstruction,
-    instr_ip: usize,
+    _instr: &AbilityFrame,
+    frame_idx: usize,
     a: i64,
     v: i32,
 ) -> HandlerResult {
@@ -105,7 +106,7 @@ pub fn handle_tap_opponent(
             db,
             &choice_ctx,
             &choice_ctx,
-            instr_ip,
+            frame_idx,
             O_TAP_OPPONENT,
             0,
             ChoiceType::TapO,
@@ -130,7 +131,7 @@ pub fn handle_tap_opponent(
                     db,
                     &choice_ctx,
                     &choice_ctx,
-                    instr_ip,
+                    frame_idx,
                     O_TAP_OPPONENT,
                     0,
                     ChoiceType::TapO,

@@ -37,7 +37,8 @@ fn test_sumire_8752_repro() {
 
     let p1 = 0;
     state.players[p1].stage[1] = sumire_id;
-    state.players[p1].baton_touch_count = 2;
+    state.players[p1].baton_source_ids.push(1);
+    state.players[p1].baton_source_ids.push(2);
     state.players[p1].discard.push(cheap_liella_id);
     for i in 0..10 { state.players[p1].deck.push(100 + i); }
 

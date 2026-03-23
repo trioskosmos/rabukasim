@@ -274,6 +274,88 @@ pub struct GameState {
 }
 
 impl GameState {
+    pub fn resolve_bytecode(
+        &mut self,
+        db: &CardDatabase,
+        bytecode: std::sync::Arc<Vec<i32>>,
+        ctx_in: &AbilityContext,
+    ) {
+        if let Err(err) = crate::core::logic::interpreter::resolve_bytecode(self, db, bytecode, ctx_in) {
+            if self.debug.debug_mode || !self.ui.silent {
+                self.log(format!("[ERROR] Interpreter error: {}", err));
+            }
+        }
+    }
+
+    pub fn resolve_bytecode_owned(
+        &mut self,
+        db: &CardDatabase,
+        bytecode: Vec<i32>,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_bytecode(db, std::sync::Arc::new(bytecode), ctx_in);
+    }
+
+    pub fn resolve_bytecode_cref(
+        &mut self,
+        db: &CardDatabase,
+        bytecode: &Vec<i32>,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_bytecode(db, std::sync::Arc::new(bytecode.clone()), ctx_in);
+    }
+
+    pub fn resolve_bytecode_slice(
+        &mut self,
+        db: &CardDatabase,
+        bytecode: &[i32],
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_bytecode(db, std::sync::Arc::new(bytecode.to_vec()), ctx_in);
+    }
+
+    pub fn resolve_ability(
+        &mut self,
+        db: &CardDatabase,
+        ability: &crate::core::logic::models::Ability,
+        ctx_in: &AbilityContext,
+    ) {
+        if let Err(err) = crate::core::logic::interpreter::resolve_ability(self, db, ability, ctx_in) {
+            if self.debug.debug_mode || !self.ui.silent {
+                self.log(format!("[ERROR] Interpreter error: {}", err));
+            }
+        }
+    }
+
+    
+    pub fn check_condition_opcode(
+        &self,
+        db: &CardDatabase,
+        opcode: i32,
+        value: i32,
+        attr: u64,
+        slot_mask: i32,
+        ctx: &AbilityContext,
+        depth: u32,
+    ) -> bool {
+        crate::core::logic::interpreter::conditions::opcodes::check_condition_opcode(
+            self, db, opcode, value, attr, slot_mask, ctx, depth
+        )
+    }
+
+    pub fn check_condition(
+        &self,
+        db: &CardDatabase,
+        player_idx: usize,
+        cond: &crate::core::logic::models::Condition,
+        ctx: &AbilityContext,
+        depth: u32,
+    ) -> bool {
+        crate::core::logic::interpreter::check_condition(self, db, player_idx, cond, ctx, depth)
+    }
+}
+
+impl GameState {
     pub fn is_card_in_zone(&self, ctx_player_id: u8, target_player: u8, cid: i32, mask: u8) -> bool {
         // target_player: 1=Self, 2=Opponent, 3=Both, 0=Any
         let (players_to_check, p_count) = match target_player {

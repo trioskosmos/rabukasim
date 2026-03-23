@@ -523,11 +523,13 @@ impl ResponseController for GameState {
                         return Ok(());
                     }
 
-                    self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
-                        Phase::Main
-                    } else {
-                        pi.original_phase
-                    };
+                    if self.interaction_stack.is_empty() {
+                        self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
+                            Phase::Main
+                        } else {
+                            pi.original_phase
+                        };
+                    }
                     self.current_player = pi.original_current_player;
                     self.clear_execution_id();
                     self.check_win_condition();
@@ -565,11 +567,13 @@ impl ResponseController for GameState {
                         }
                     }
 
-                    self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
-                        Phase::Main
-                    } else {
-                        pi.original_phase
-                    };
+                    if self.interaction_stack.is_empty() {
+                        self.phase = if pi.original_phase == Phase::Response || pi.original_phase == Phase::Setup {
+                            Phase::Main
+                        } else {
+                            pi.original_phase
+                        };
+                    }
                     self.current_player = pi.original_current_player;
                     self.clear_execution_id();
                     self.check_win_condition();
@@ -782,7 +786,7 @@ impl ResponseController for GameState {
             self.interaction_stack.pop();
 
             if let Some(bytecode) = bytecode {
-                self.resolve_bytecode(db, std::sync::Arc::new(bytecode), &ctx);
+                let _ = crate::core::logic::interpreter::resolve_bytecode(self, db, std::sync::Arc::new(bytecode), &ctx);
             } else if let Some(mem) = db.get_member(cid) {
                 let ab = mem.abilities.get(ab_idx).ok_or("Ability not found")?;
                 self.resolve_ability(db, ab, &ctx);
@@ -792,6 +796,12 @@ impl ResponseController for GameState {
             } else {
                 return Err("Card not found".to_string());
             }
+
+            if self.phase == Phase::Response {
+                self.process_rule_checks(db);
+                return Ok(());
+            }
+
             self.process_rule_checks(db);
 
             let declined_ll_bp2_live_start_cleanup = choice_idx == 1
@@ -835,11 +845,13 @@ impl ResponseController for GameState {
                 if self.debug.debug_mode {
                     println!("[DEBUG_RES] Restoring phase. orig_phase={:?}, stack_len={}", orig_phase, self.interaction_stack.len());
                 }
-                self.phase = if orig_phase == Phase::Response || orig_phase == Phase::Setup {
-                    Phase::Main
-                } else {
-                    orig_phase
-                };
+                if self.interaction_stack.is_empty() {
+                    self.phase = if orig_phase == Phase::Response || orig_phase == Phase::Setup {
+                        Phase::Main
+                    } else {
+                        orig_phase
+                    };
+                }
                 self.current_player = orig_cp;
             }
             return Ok(());
@@ -1144,6 +1156,10 @@ impl GameState {
             start_ab_idx,
             ctx.choice_index,
         );
+        if self.phase == Phase::Response {
+            self.process_rule_checks(db);
+            return Ok(());
+        }
         self.process_rule_checks(db);
         Ok(())
     }

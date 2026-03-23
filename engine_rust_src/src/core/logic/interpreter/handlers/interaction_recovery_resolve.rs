@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::interaction_zone::{
@@ -8,15 +9,15 @@ pub fn resolve_recovery(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
     real_op: i32,
 ) -> HandlerResult {
-    let v = instr.v;
-    let a = instr.a;
-    let _s = instr.raw_s;
+    let v = frame.raw_value();
+    let a = frame.raw_attr() as i64;
+    let _s = frame.raw_slot();
     let p_idx = ctx.player_id as usize;
-    let slot_info = instr.slot();
+    let slot_info = frame.dslot();
     let source_zone = normalized_source_zone(slot_info.source_zone);
 
     if ctx.choice_index == -1 {
@@ -57,7 +58,7 @@ pub fn resolve_recovery(
                 db,
                 ctx,
                 ctx,
-                instr_ip,
+                frame_idx,
                 real_op,
                 0,
                 choice_type,
@@ -107,7 +108,7 @@ pub fn resolve_recovery(
                     db,
                     ctx,
                     ctx,
-                    instr_ip,
+                    frame_idx,
                     real_op,
                     0,
                     choice_type,

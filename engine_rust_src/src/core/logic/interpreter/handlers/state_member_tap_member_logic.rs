@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 #[path = "state_member_tap_member_selected.rs"]
 mod state_member_tap_member_selected;
@@ -8,8 +9,8 @@ pub fn handle_tap_member(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &crate::core::logic::interpreter::instruction::BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
     p_idx: usize,
     a: i64,
     resolved_slot: i32,
@@ -19,8 +20,8 @@ pub fn handle_tap_member(
             state,
             db,
             ctx,
-            instr,
-            instr_ip,
+            frame,
+            frame_idx,
             p_idx,
             a,
             resolved_slot,
@@ -30,8 +31,8 @@ pub fn handle_tap_member(
             state,
             db,
             ctx,
-            instr,
-            instr_ip,
+            frame,
+            frame_idx,
             p_idx,
             a,
             resolved_slot,

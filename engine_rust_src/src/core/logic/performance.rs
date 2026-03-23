@@ -231,7 +231,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                         .iter()
                                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
                                     {
-                                        let bc = &ab.bytecode;
+                                        let bc = ab.bytecode();
                                         let mut bi = 0;
                                         while bi + 4 < bc.len() {
                                             let bop = bc[bi];
@@ -283,7 +283,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                         .iter()
                                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
                                     {
-                                        let bc = &ab.bytecode;
+                                        let bc = ab.bytecode();
                                         let mut bi = 0;
                                         while bi + 4 < bc.len() {
                                             if bc[bi] == O_ADD_BLADES && bc[bi + 1] > 0 {
@@ -482,7 +482,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                         .iter()
                                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
                                     {
-                                        let bc = &ab.bytecode;
+                                        let bc = ab.bytecode();
                                         let mut bi = 0;
                                         while bi + 4 < bc.len() {
                                             let bop = bc[bi];
@@ -541,7 +541,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                         .iter()
                                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
                                     {
-                                        let bc = &ab.bytecode;
+                                        let bc = ab.bytecode();
                                         let mut bi = 0;
                                         while bi + 4 < bc.len() {
                                             let a_low = bc[bi + 2];
@@ -1105,7 +1105,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                                     .iter()
                                     .all(|c| state.check_condition(db, p, c, &ctx, 1))
                                 {
-                                    let bc = &ab.bytecode;
+                                    let bc = ab.bytecode();
                                     let mut i = 0;
                                     while i + 4 < bc.len() {
                                         if bc[i] == O_BOOST_SCORE {
@@ -1137,7 +1137,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                                     .iter()
                                     .all(|c| state.check_condition(db, p, c, &ctx, 1))
                                 {
-                                    let bc = &ab.bytecode;
+                                    let bc = ab.bytecode();
                                     let mut i = 0;
                                     while i + 4 < bc.len() {
                                         if bc[i] == O_BOOST_SCORE {

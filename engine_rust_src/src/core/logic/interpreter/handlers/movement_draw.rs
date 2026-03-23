@@ -1,4 +1,5 @@
-﻿use crate::core::enums::*;
+use crate::core::logic::models::AbilityFrame;
+use crate::core::enums::*;
 use crate::core::logic::constants::FILTER_MASK_LOWER;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -7,18 +8,18 @@ pub fn handle_draw(
     state: &mut GameState,
     _db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &crate::core::logic::interpreter::instruction::BytecodeInstruction,
+    frame: &AbilityFrame,
 ) -> HandlerResult {
-    let op = instr.op;
-    let v = instr.v;
-    let s = instr.raw_s;
+    let op = frame.raw_opcode();
+    let v = frame.raw_value();
+    let s = frame.raw_slot();
     let p_idx = ctx.player_id as usize;
-    let count = if instr.filter_attr().compare_accumulated {
+    let count = if frame.filter().compare_accumulated {
         resolve_count(
             state,
             _db,
             s,
-            (instr.filter_attr().to_attr() & FILTER_MASK_LOWER) as u64,
+            (frame.filter().to_attr() & FILTER_MASK_LOWER) as u64,
             p_idx as i32,
             ctx,
             0,
@@ -26,7 +27,7 @@ pub fn handle_draw(
     } else {
         v as u32
     };
-    let slot = instr.slot();
+    let slot = frame.dslot();
     let target_p = if slot.is_opponent { 1 - p_idx } else { p_idx };
 
     match op {

@@ -152,7 +152,8 @@ mod tests {
         state.phase = Phase::Main;
         state.current_player = 0;
         state.first_player = 0;
-        state.ui.silent = true;
+        state.ui.silent = false;
+        state.debug.debug_mode = true;
 
         let kanan_id = db
             .id_by_no("PL!S-bp3-001-P")
@@ -944,7 +945,8 @@ mod tests {
         state.phase = Phase::Main;
         state.current_player = 0;
         state.first_player = 0;
-        state.ui.silent = true;
+        state.ui.silent = false;
+        state.debug.debug_mode = true;
 
         let trio_id = db
             .id_by_no("LL-bp3-001-R＋")
@@ -1093,7 +1095,11 @@ mod tests {
         let mut inert_member_ids: Vec<i32> = db
             .members
             .values()
-            .filter(|card| card.card_id != honoka_id && card.abilities.is_empty())
+            .filter(|card| {
+                card.card_id != honoka_id
+                    && card.abilities.is_empty()
+                    && db.get_live(card.card_id).is_none()
+            })
             .map(|card| card.card_id)
             .collect();
         inert_member_ids.sort_unstable();
@@ -1143,7 +1149,7 @@ mod tests {
         );
 
         state
-            .step(&db, ACTION_BASE_MODE + 0)
+            .step(&db, ACTION_BASE_MODE + 1)
             .expect("Q166: selecting the live-card mode should resolve the reveal-until effect");
 
         assert!(
@@ -1193,7 +1199,11 @@ mod tests {
         let mut inert_member_ids: Vec<i32> = db
             .members
             .values()
-            .filter(|card| card.card_id != honoka_id && card.abilities.is_empty())
+            .filter(|card| {
+                card.card_id != honoka_id
+                    && card.abilities.is_empty()
+                    && db.get_live(card.card_id).is_none()
+            })
             .map(|card| card.card_id)
             .collect();
         inert_member_ids.sort_unstable();
@@ -1228,7 +1238,7 @@ mod tests {
         );
 
         state
-            .step(&db, ACTION_BASE_MODE + 0)
+            .step(&db, ACTION_BASE_MODE + 1)
             .expect("Q167: selecting the live-card mode should resolve even when no target exists");
 
         assert!(

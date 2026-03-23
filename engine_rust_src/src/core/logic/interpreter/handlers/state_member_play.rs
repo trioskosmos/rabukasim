@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 
 #[path = "state_member_play_resolve.rs"]
@@ -12,15 +13,15 @@ pub fn handle_play_member_from_hand(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
     p_idx: usize,
     v: i32,
     a: i64,
     s: i32,
 ) -> HandlerResult {
     state_member_play_hand::handle_play_member_from_hand(
-        state, db, ctx, instr, instr_ip, p_idx, v, a, s,
+        state, db, ctx, frame, frame_idx, p_idx, v, a, s,
     )
 }
 

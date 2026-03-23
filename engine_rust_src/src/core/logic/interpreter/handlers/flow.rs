@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::flow_helpers::current_effect;
 use super::HandlerResult;
 
@@ -19,16 +20,16 @@ pub fn handle_meta_control(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &super::super::instruction::BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
 ) -> HandlerResult {
-    let op = instr.op;
-    let v = instr.v;
-    let a = instr.a;
-    let s = instr.raw_s;
+    let op = frame.raw_opcode();
+    let v = frame.raw_value();
+    let a = frame.raw_attr() as i64;
+    let s = frame.raw_slot();
     let base_p = ctx.activator_id as usize;
     let p_idx = ctx.player_id as usize;
-    let slot_info = instr.slot();
+    let slot_info = frame.dslot();
     let target_slot = slot_info.target_slot as i32;
 
     match op {
@@ -91,29 +92,29 @@ pub fn handle_meta_control(
         | O_BATON_TOUCH_MOD
         | O_IMMUNITY => {
             return flow_state_mod::handle_state_modifiers(
-                state, db, ctx, instr, op, v, a, s, p_idx, base_p, slot_info, target_slot,
+                state, db, ctx, frame, op, v, a, s, p_idx, base_p, slot_info, target_slot,
             );
         }
         O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER => {
             return flow_select::handle_select_ops(
-                state, db, ctx, instr, instr_ip, op, v, a, s, p_idx, slot_info,
+                state, db, ctx, frame, frame_idx, op, v, a, s, p_idx, slot_info,
             );
         }
         O_OPPONENT_CHOOSE => {
-            return flow_context::handle_opponent_choose(state, db, ctx, instr_ip);
+            return flow_context::handle_opponent_choose(state, db, ctx, frame_idx);
         }
         O_TRIGGER_REMOTE => {
             return flow_effects::handle_trigger_remote(
-                state, db, ctx, instr, instr_ip, v, p_idx, slot_info,
+                state, db, ctx, frame, frame_idx, v, p_idx, slot_info,
             );
         }
         O_META_RULE => {
             return flow_effects::handle_meta_rule(
-                state, db, ctx, instr, instr_ip, a, v, p_idx, base_p, slot_info, target_slot,
+                state, db, ctx, frame, frame_idx, a, v, p_idx, base_p, slot_info, target_slot,
             );
         }
         O_COLOR_SELECT => {
-            return flow_context::handle_color_select(state, db, ctx, instr_ip);
+            return flow_context::handle_color_select(state, db, ctx, frame_idx);
         }
         O_SWAP_AREA => {
             return flow_swap::handle_swap_area(state, ctx, base_p, slot_info, target_slot, a, s, v);

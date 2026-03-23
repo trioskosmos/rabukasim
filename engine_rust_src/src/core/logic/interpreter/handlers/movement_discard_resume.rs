@@ -1,7 +1,7 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::*;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::interpreter::instruction::BytecodeInstruction;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, Zone};
 use crate::core::models::CHOICE_DONE;
 
@@ -13,8 +13,8 @@ pub fn handle_discard_resume(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
     target_player_idx: usize,
     source_zone: Zone,
     count: i32,
@@ -46,7 +46,7 @@ pub fn handle_discard_resume(
                 db,
                 ctx,
                 &*next_ctx,
-                instr_ip,
+                frame_idx,
                 O_MOVE_TO_DISCARD,
                 s,
                 choice_type,
@@ -123,7 +123,7 @@ pub fn handle_discard_resume(
             if still_available {
                 next_ctx.choice_index = 0;
                 return crate::core::logic::interpreter::handlers::movement::handle_move_to_discard(
-                    state, db, next_ctx, instr, instr_ip,
+                    state, db, next_ctx, frame, frame_idx,
                 );
             }
         }
@@ -133,7 +133,7 @@ pub fn handle_discard_resume(
             db,
             ctx,
             &*next_ctx,
-            instr_ip,
+            frame_idx,
             O_MOVE_TO_DISCARD,
             s,
             choice_type,

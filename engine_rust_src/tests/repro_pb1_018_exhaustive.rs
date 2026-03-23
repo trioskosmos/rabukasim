@@ -110,12 +110,12 @@ fn test_pb1_018_exhaustive() {
     println!("Verifying Q169: Slot is locked for the turn (even for Baton Pass)...");
     // P1 played Nico (Slot 1) and summoned Kota (Slot 0). Both should be locked.
     assert_eq!(
-        state.core.players[p1].prevent_play_to_slot_mask,
+        state.core.players[p1].prevent_play_to_slot_mask(),
         (1 << 0) | (1 << 1),
         "P1 Slot 0 and 1 lock mask"
     );
     assert_eq!(
-        state.core.players[p2].prevent_play_to_slot_mask,
+        state.core.players[p2].prevent_play_to_slot_mask(),
         1 << 2,
         "P2 Slot 2 lock mask"
     );
@@ -175,7 +175,8 @@ fn test_pb1_018_exhaustive() {
 
     // Clear a spot for Nico
     state.core.players[p1].stage[1] = -1;
-    state.core.players[p1].prevent_play_to_slot_mask &= !(1 << 1); // Unlock slot 1
+    let old_mask = state.core.players[p1].prevent_play_to_slot_mask();
+    state.core.players[p1].set_prevent_play_to_slot_mask(old_mask & !(1 << 1)); // Unlock slot 1
     state.core.players[p1].set_moved(1, false); // Clear moved flag
     state.core.players[p1].set_tapped(1, false);
 

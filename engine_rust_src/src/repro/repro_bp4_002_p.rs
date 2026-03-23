@@ -94,17 +94,36 @@ fn test_repro_bp4_002_p_wait_flow() {
     // LOOK_AND_CHOOSE requires selecting from looked_cards or skipping
     // ACTION_BASE_CHOICE + 0 = select first option, or we may need to skip if no valid choices
     // Keep stepping until we complete the interaction
+    let mut iter_count = 0;
     while state.phase == Phase::Response && !state.interaction_stack.is_empty() {
+        if iter_count > 10 {
+            println!("--- BREAKING INFINITE LOOP ---");
+            state.dump();
+            panic!("Infinite loop detected in LOOK_AND_CHOOSE resolution");
+        }
+        iter_count += 1;
+        
         let pi = state.interaction_stack.last().unwrap();
-        println!("DEBUG: Resolving interaction: {}", pi.choice_type);
+        println!("DEBUG: Resolving interaction: {:?}", pi);
 
-        // For LOOK_AND_CHOOSE, try to select the first available option
-        // or skip if that doesn't work
-        match state.step(&db, ACTION_BASE_CHOICE + 0) {
-            Ok(_) => {}
-            Err(_) => {
-                // Try skip action if selection fails (Pass = 999)
-                let _ = state.step(&db, 999);
+        let mut receiver = crate::test_helpers::TestActionReceiver::default();
+        state.generate_legal_actions(&db, 0, &mut receiver);
+        println!("LEGAL ACTIONS: {:?}", receiver.actions);
+        
+        // Pick the first legal action that is >= 8000, or just the first one
+        let next_action = *receiver.actions.first().unwrap_or(&999);
+        println!("Choosing action: {}", next_action);
+
+        match state.step(&db, next_action) {
+            Ok(_) => { println!("Step Ok {}", next_action); }
+            Err(e) => {
+                println!("Step Err {}: {}", next_action, e);
+                if next_action != 999 {
+                    match state.step(&db, 999) {
+                        Ok(_) => { println!("Step Ok 999"); },
+                        Err(e) => { println!("Step Err 999: {}", e); }
+                    }
+                }
             }
         }
     }

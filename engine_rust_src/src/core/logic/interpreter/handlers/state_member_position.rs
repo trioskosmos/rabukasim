@@ -1,4 +1,4 @@
-//! Position and formation handlers routed through focused submodules.
+/// Position and formation handlers routed through focused submodules.
 
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
@@ -56,7 +56,7 @@ pub fn handle_place_under(
         &mut next_ctx,
         0,
         p_idx,
-        &BytecodeInstruction::new(O_PLACE_ENERGY_UNDER_MEMBER, 0, a, 0),
+        &AbilityFrame::new(O_PLACE_ENERGY_UNDER_MEMBER, 0, a, 0),
         a,
     );
 }

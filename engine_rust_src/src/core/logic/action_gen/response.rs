@@ -536,7 +536,7 @@ impl ResponseGenerator {
                         {
                             final_filter_attr = attr;
                         } else {
-                            let program = BytecodeProgram::from_slice(&ab.bytecode);
+                            let program = ab.bytecode_program();
                             let mut ip = 0;
                             while let Some(instr) = program.instruction_at(ip) {
                                 if instr.op == O_LOOK_AND_CHOOSE {
@@ -651,6 +651,17 @@ impl ResponseGenerator {
             _ => p_idx,
         };
         let player = &state.players[target_player];
+
+        if pi.choice_type == ChoiceType::TapMSelect && filter_only == 0 {
+            for (i, &cid) in player.stage.iter().enumerate() {
+                if cid >= 0 {
+                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                }
+            }
+            receiver.add_action(0);
+            return;
+        }
+
         let packed_zone = (filter_attr >> 12) & 0x0F;
         let target_slot = if packed_zone > 0 {
             packed_zone as usize
@@ -669,7 +680,7 @@ impl ResponseGenerator {
             6 => {
                 // Hand
                 for (i, &cid) in player.hand.iter().enumerate() {
-                    if state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx) {
+                    if filter_only == 0 || state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx) {
                         receiver.add_action(
                             (ACTION_BASE_HAND_SELECT + i as i32) as usize,
                         );
@@ -679,7 +690,7 @@ impl ResponseGenerator {
             7 => {
                 // Discard
                 for (i, &cid) in player.discard.iter().enumerate() {
-                    if state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx) {
+                    if filter_only == 0 || state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx) {
                         receiver.add_action(
                             (ACTION_BASE_CHOICE + i as i32) as usize,
                         );
@@ -692,7 +703,7 @@ impl ResponseGenerator {
                 for (i, &cid) in player.stage.iter().enumerate() {
                     let matches = cid >= 0
                         && (!exclude_selected || !pi.ctx.selected_cards.contains(&cid))
-                        && state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx);
+                        && (filter_only == 0 || state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx));
                     if matches {
                         receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
                     }
@@ -745,8 +756,8 @@ impl ResponseGenerator {
 
                 if ab_idx_real < abs.len() {
                     let ab = &abs[ab_idx_real];
-                    let bc = &ab.bytecode;
-                    let program = BytecodeProgram::from_slice(bc);
+                    let bc = ab.bytecode();
+                    let program = BytecodeProgram::from_slice(&bc);
 
                     let mut ip = 0;
                     while let Some(instr) = program.instruction_at(ip) {

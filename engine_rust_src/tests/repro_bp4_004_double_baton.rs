@@ -103,7 +103,7 @@ fn test_card_560_double_baton_liella() {
     );
     println!(
         "Baton touch count: {}",
-        state.core.players[p1].baton_touch_count
+        state.core.players[p1].baton_touch_count()
     );
 
     // Verify play succeeded
@@ -115,5 +115,5 @@ fn test_card_560_double_baton_liella() {
     // 2. BATON_TOUCH {FILTER="GROUP_ID=3", COUNT_EQ_2} - baton_touch_count == 2 AND source is Liella!
 
     // With single baton pass, baton_touch_count should be 1
-    assert_eq!(state.core.players[p1].baton_touch_count, 1);
+    assert_eq!(state.core.players[p1].baton_touch_count(), 1);
 }

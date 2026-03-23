@@ -551,6 +551,19 @@ pub struct BytecodeProgram {
 }
 
 impl BytecodeProgram {
+    pub fn from_frames(frames: &[crate::core::logic::models::AbilityFrame]) -> Self {
+        let mut words = Vec::with_capacity(frames.len() * WORDS_PER_INSTRUCTION);
+        for frame in frames {
+            let instr = frame.to_instruction();
+            words.push(instr.op);
+            words.push(instr.v);
+            words.push(instr.a as u32 as i32);
+            words.push((instr.a >> 32) as u32 as i32);
+            words.push(instr.raw_s);
+        }
+        Self::from_slice(&words)
+    }
+
     pub fn new(words: Arc<Vec<i32>>) -> Self {
         Self { words }
     }
@@ -928,24 +941,28 @@ impl BytecodeProgram {
 }
 
 impl BytecodeProgram {
+
     pub fn compact_words_for_instruction(instruction: BytecodeInstruction) -> Vec<i32> {
         Self::encode_compact_instruction(instruction)
     }
 }
 
 impl BytecodeProgram {
+
     pub fn is_compact_header(word: i32) -> bool {
         (word as u32 & COMPACT_HEADER_FLAG) != 0
     }
 }
 
 impl BytecodeProgram {
+
     pub fn fixed_layout_word_len() -> usize {
         WORDS_PER_INSTRUCTION
     }
 }
 
 impl BytecodeProgram {
+
     pub fn is_compact(&self) -> bool {
         self.layout() == BytecodeLayout::CompactV2
     }
@@ -956,6 +973,7 @@ impl BytecodeProgram {
 }
 
 impl BytecodeProgram {
+
     pub fn decode_all(&self) -> Vec<BytecodeInstruction> {
         let mut decoded = Vec::new();
         let mut ip = 0;
@@ -1036,6 +1054,7 @@ impl BytecodeInstruction {
 }
 
 impl BytecodeProgram {
+
     pub fn from_tagged_instructions(instructions: &[BytecodeInstruction]) -> Self {
         let mut words = Vec::new();
         for instruction in instructions {

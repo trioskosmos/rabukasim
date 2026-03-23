@@ -146,7 +146,7 @@ pub fn pending_targeted_live_heart_bonus(db: &CardDatabase, pi: &PendingInteract
 }
 
 pub fn is_optional_live_start_discard_count_ability(ability: &Ability) -> bool {
-    let program = BytecodeProgram::from_slice(&ability.bytecode);
+    let program = ability.bytecode_program();
     ability.trigger == TriggerType::OnLiveStart
         && program
             .instruction_at(0)

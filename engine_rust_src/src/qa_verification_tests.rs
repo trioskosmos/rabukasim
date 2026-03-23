@@ -1451,9 +1451,7 @@ mod tests {
         assert!(!triggered_kanata, "Q188: WAIT state should not trigger automatic abilities");
 
         // Q169 Verification: Slot locking
-        assert!(
-            (state.players[p1].prevent_play_to_slot_mask() & (1 << 0)) != 0
-        );
+        assert!((state.players[p1].prevent_play_to_slot_mask() & (1 << 0)) != 0);
         state.players[p1].hand.push(kota_id);
         state.phase = Phase::Main;
         let res = state.play_member(&db, state.players[p1].hand.len() - 1, 0);
@@ -1472,8 +1470,8 @@ mod tests {
         state.players[p1].hand.clear(); // Ensure index 0 is Nico
         state.players[p1].hand.push(nico_id);
         state.players[p1].stage[1] = -1; // Clear slot for new play
-        let old_mask = state.players[p1].prevent_play_to_slot_mask();
-        state.players[p1].set_prevent_play_to_slot_mask(old_mask & !(1 << 1));
+        let current_mask = state.players[p1].prevent_play_to_slot_mask();
+        state.players[p1].set_prevent_play_to_slot_mask(current_mask & !(1 << 1));
         state.players[p1].set_moved(1, false);
 
         state.play_member(&db, 0, 1).expect("Nico 2 play failed");
@@ -2680,10 +2678,10 @@ mod tests {
 
         // Track members placed this turn
         state.players[0].set_play_count_this_turn(0);
-        let count = state.players[0].play_count_this_turn();
-        state.players[0].set_play_count_this_turn(count + 1); // First member
-        let count = state.players[0].play_count_this_turn();
-        state.players[0].set_play_count_this_turn(count + 1); // Second member
+        let first_count = state.players[0].play_count_this_turn() + 1;
+        state.players[0].set_play_count_this_turn(first_count); // First member
+        let second_count = state.players[0].play_count_this_turn() + 1;
+        state.players[0].set_play_count_this_turn(second_count); // Second member
 
         let bonus_multiplier = 2; // 2 members
         let bonus = 100 * bonus_multiplier;
@@ -2812,12 +2810,12 @@ mod tests {
         state.players[0].set_play_count_this_turn(0);
 
         // First placement
-        let count = state.players[0].play_count_this_turn();
-        state.players[0].set_play_count_this_turn(count + 1);
+        let first_refresh_count = state.players[0].play_count_this_turn() + 1;
+        state.players[0].set_play_count_this_turn(first_refresh_count);
 
         // Second placement (different card)
-        let count = state.players[0].play_count_this_turn();
-        state.players[0].set_play_count_this_turn(count + 1);
+        let second_refresh_count = state.players[0].play_count_this_turn() + 1;
+        state.players[0].set_play_count_this_turn(second_refresh_count);
 
         // Verify tracking is persistent
         assert_eq!(state.players[0].play_count_this_turn(), 2, "Q195: Multiple placements tracked");

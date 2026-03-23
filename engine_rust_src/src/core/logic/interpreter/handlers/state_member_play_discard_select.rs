@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
@@ -6,7 +7,7 @@ pub fn handle_discard_selection(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr_ip: usize,
+    frame_idx: usize,
     target_p_idx: usize,
     filter_attr_base: u64,
     empty_slot_only: bool,
@@ -62,7 +63,7 @@ pub fn handle_discard_selection(
                 db,
                 &target_ctx,
                 &target_ctx,
-                instr_ip,
+                frame_idx,
                 O_PLAY_MEMBER_FROM_DISCARD,
                 s,
                 ChoiceType::SelectDiscardPlay,
@@ -101,7 +102,7 @@ pub fn handle_discard_selection(
             db,
             &target_ctx,
             &target_ctx,
-            instr_ip,
+            frame_idx,
             O_PLAY_MEMBER_FROM_DISCARD,
             s,
             choice_type,

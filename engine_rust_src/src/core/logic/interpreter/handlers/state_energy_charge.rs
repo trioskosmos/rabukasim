@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::constants::CHOICE_DONE;
@@ -6,7 +7,7 @@ fn suspend_pay_energy(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &AbilityContext,
-    instr_ip: usize,
+    frame_idx: usize,
     remaining: i16,
 ) -> HandlerResult {
     suspend_choice(
@@ -14,7 +15,7 @@ fn suspend_pay_energy(
         db,
         ctx,
         ctx,
-        instr_ip,
+        frame_idx,
         O_PAY_ENERGY,
         0,
         ChoiceType::PayEnergy,
@@ -43,18 +44,18 @@ pub fn handle_pay_energy(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr_ip: usize,
+    frame_idx: usize,
     p_idx: usize,
-    instr: &BytecodeInstruction,
-    _v: i32, // Ignore param v, use instr.v
+    frame: &AbilityFrame,
+    _v: i32, // Ignore param v, use frame.raw_value()
 ) -> HandlerResult {
-    let v = instr.v;
+    let v = frame.raw_value();
     let available = (0..state.players[p_idx].energy_zone.len())
         .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
         .count() as i32;
     let requires_explicit_selection = state.phase == Phase::Response;
 
-    let is_optional = instr.filter_attr().is_optional;
+    let is_optional = frame.filter().is_optional;
 
     // --- CASE 1: Variable Energy Payment (e.g. Card 878) ---
     if v == -1 {
@@ -74,7 +75,7 @@ pub fn handle_pay_energy(
                 db,
                 ctx,
                 ctx,
-                instr_ip,
+                frame_idx,
                 crate::core::enums::O_PAY_ENERGY,
                 0,
                 crate::core::enums::ChoiceType::PayEnergy,
@@ -109,7 +110,7 @@ pub fn handle_pay_energy(
                 db,
                 ctx,
                 ctx,
-                instr_ip,
+                frame_idx,
                 crate::core::enums::O_PAY_ENERGY,
                 0,
                 crate::core::enums::ChoiceType::PayEnergy,
@@ -131,11 +132,11 @@ pub fn handle_pay_energy(
                 db,
                 ctx,
                 ctx,
-                instr_ip,
+                frame_idx,
                 O_PAY_ENERGY,
                 0,
                 ChoiceType::Optional,
-                instr.filter_attr().to_attr(),
+                frame.filter().to_attr(),
                 -1,
             );
         }
@@ -198,7 +199,7 @@ pub fn handle_pay_energy(
     if ctx.choice_index == -1 {
         let mut suspend_ctx = ctx.clone();
         suspend_ctx.v_remaining = remaining;
-        return suspend_pay_energy(state, db, &suspend_ctx, instr_ip, remaining);
+        return suspend_pay_energy(state, db, &suspend_ctx, frame_idx, remaining);
     }
 
     let e_idx = ctx.choice_index as usize;
@@ -213,7 +214,7 @@ pub fn handle_pay_energy(
     let next_remaining = remaining - 1;
     if next_remaining > 0 {
         ctx.v_remaining = next_remaining;
-        return suspend_pay_energy(state, db, ctx, instr_ip, next_remaining);
+        return suspend_pay_energy(state, db, ctx, frame_idx, next_remaining);
     }
 
     ctx.v_remaining = -1;

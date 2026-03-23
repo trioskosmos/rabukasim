@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::*;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::logic::interpreter::instruction::DecodedSlot;

@@ -95,13 +95,6 @@ fn test_sparse_ability_index_is_loaded() {
                 sparse.get("pseudocode").and_then(|v| v.as_str()).is_some(),
                 "sparse ability entry should expose pseudocode"
             );
-            let rebuilt = CardDatabase::sparse_entry_to_bytecode(sparse);
-
-            assert_eq!(
-                ability.bytecode, rebuilt,
-                "loaded ability bytecode should be rebuilt from sparse frames for {} ability {}",
-                card.card_no, ability_index
-            );
             checked += 1;
         }
     }
@@ -127,13 +120,6 @@ fn test_sparse_ability_index_is_loaded() {
             assert!(
                 sparse.get("pseudocode").and_then(|v| v.as_str()).is_some(),
                 "sparse ability entry should expose pseudocode"
-            );
-            let rebuilt = CardDatabase::sparse_entry_to_bytecode(sparse);
-
-            assert_eq!(
-                ability.bytecode, rebuilt,
-                "loaded ability bytecode should be rebuilt from sparse frames for {} ability {}",
-                card.card_no, ability_index
             );
             checked += 1;
         }

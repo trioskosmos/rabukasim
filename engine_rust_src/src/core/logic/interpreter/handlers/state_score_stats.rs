@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 
 #[path = "state_score_transforms.rs"]

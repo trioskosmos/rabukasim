@@ -1,10 +1,11 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 
 pub fn handle_boost_score(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
+    frame: &AbilityFrame,
     p_idx: usize,
     target_p: usize,
 ) -> HandlerResult {
@@ -16,22 +17,22 @@ pub fn handle_boost_score(
         }
     }
 
-    let v = instr.v;
-    let a = instr.a;
-    let s = instr.raw_s;
+    let v = frame.raw_value();
+    let a = frame.raw_attr() as i64;
+    let s = frame.raw_slot();
 
     let mut final_v = v;
-    if instr.is_dynamic() {
-        let divisor = instr.scalar_dynamic_divisor().max(1);
-        let base = instr.scalar_dynamic_base();
+    if frame.is_dynamic() {
+        let divisor = frame.scalar_dynamic_divisor().max(1);
+        let base = frame.scalar_dynamic_base();
         let paid = ctx.v_accumulated as i32;
         final_v = base * (paid / divisor);
-    } else if instr.filter_attr().compare_accumulated {
+    } else if frame.filter().compare_accumulated {
         let count = resolve_count(
             state,
             db,
-            instr.raw_s,
-            (instr.filter_attr().to_attr() & 0xFFFFFFFF) as u64,
+            frame.raw_slot(),
+            (frame.filter().to_attr() & 0xFFFFFFFF) as u64,
             p_idx as i32,
             ctx,
             0,
@@ -61,14 +62,14 @@ pub fn handle_boost_score(
 pub fn handle_reduce_cost(
     state: &mut GameState,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
+    frame: &AbilityFrame,
     p_idx: usize,
     v: i32,
 ) -> HandlerResult {
     let mut final_v = v;
 
-    if instr.filter_attr().compare_accumulated {
-        let filter_attr = instr.filter_attr().to_attr() & 0xFFFFFFFF;
+    if frame.filter().compare_accumulated {
+        let filter_attr = frame.filter().to_attr() & 0xFFFFFFFF;
         let filter = crate::core::logic::filter::CardFilter::from_attr(filter_attr as i64);
         let mut count = 0i32;
         let player = &state.players[p_idx];

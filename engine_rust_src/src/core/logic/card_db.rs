@@ -17,9 +17,8 @@
 
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
-use crate::core::logic::interpreter::instruction::{
-    BytecodeProgram, DecodedFilterAttr, DecodedLookAndChoose, DecodedSlot, WORDS_PER_INSTRUCTION,
-};
+use crate::core::logic::interpreter::instruction::{DecodedFilterAttr, DecodedLookAndChoose, DecodedSlot};
+use crate::core::logic::interpreter::logging::get_opcode_name;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
@@ -174,9 +173,18 @@ impl CardDatabase {
             }
         }
 
-        for ip in (0..ability.bytecode.len()).step_by(WORDS_PER_INSTRUCTION) {
-            if ability.bytecode[ip] == O_MOVE_MEMBER {
-                ability.bytecode[ip] = O_TAP_MEMBER;
+        if let Some(program) = &mut ability.frame_program {
+            for frame in &mut program.frames {
+                if frame.opcode() == O_MOVE_MEMBER {
+                    match frame.clone() {
+                        AbilityFrame::MoveMember { filter, slot } => {
+                            *frame = AbilityFrame::Semantic { opcode: O_TAP_MEMBER, value: 0, filter, slot, params: serde_json::Value::Null };
+                        }
+                        AbilityFrame::Semantic { ref mut opcode, .. } => *opcode = O_TAP_MEMBER,
+                        AbilityFrame::Raw { ref mut opcode, .. } => *opcode = O_TAP_MEMBER,
+                        _ => {}
+                    }
+                }
             }
         }
     }
@@ -194,22 +202,12 @@ impl CardDatabase {
     }
 
     fn load_sparse_ability_index() -> HashMap<String, Value> {
-        // JSON is the canonical format. YAML paths are legacy fallbacks only.
         for path in [
             "data/ability_frame_index.json",
             "../data/ability_frame_index.json",
-            "data/ability_frame_index.yaml",
-            "../data/ability_frame_index.yaml",
         ] {
             if let Ok(json) = fs::read_to_string(path) {
-                let parsed_root = if path.ends_with(".yaml") {
-                    serde_yaml::from_str::<serde_yaml::Value>(&json)
-                        .ok()
-                        .and_then(|yaml| serde_json::to_value(yaml).ok())
-                } else {
-                    serde_json::from_str::<Value>(&json).ok()
-                };
-
+                let parsed_root = serde_json::from_str::<Value>(&json).ok();
                 if let Some(root) = parsed_root {
                     let mut index = HashMap::new();
                     if let Some(abilities) = root.get("abilities").and_then(|v| v.as_array()) {
@@ -286,10 +284,11 @@ impl CardDatabase {
                 "frames".to_string(),
                 Value::Array(frames.iter().map(Self::compact_sparse_frame).collect()),
             );
-        } else if let Some(words) = entry.get("source_words").and_then(|v| v.as_array()) {
+        } else if entry.get("source_words").and_then(|v| v.as_array()).is_some() {
+            let program = Self::sparse_entry_to_frame_program(entry);
             compact.insert(
-                "source_words".to_string(),
-                Value::Array(words.iter().filter_map(|word| word.as_i64().map(Value::from)).collect()),
+                "frames".to_string(),
+                Value::Array(program.frames.iter().map(Self::compact_sparse_frame_from_program).collect()),
             );
         }
 
@@ -308,6 +307,22 @@ impl CardDatabase {
         Value::Object(compact)
     }
 
+    fn compact_sparse_frame_from_program(frame: &AbilityFrame) -> Value {
+        let instr = frame.to_instruction();
+        let mut compact = serde_json::Map::new();
+
+        compact.insert("opcode_id".to_string(), Value::from(instr.op));
+        compact.insert("opcode".to_string(), Value::from(get_opcode_name(instr.op)));
+        compact.insert("value".to_string(), Value::from(instr.v));
+
+        let attr = serde_json::to_value(frame.filter()).unwrap_or(Value::Null);
+        let slot = serde_json::to_value(frame.dslot()).unwrap_or(Value::Null);
+        compact.insert("attr".to_string(), attr);
+        compact.insert("slot".to_string(), slot);
+
+        Value::Object(compact)
+    }
+
     fn attach_sparse_ability_index(
         card_no: &str,
         abilities: &mut [Ability],
@@ -322,15 +337,14 @@ impl CardDatabase {
                 ))
             })?;
             ability.sparse_frame_index = Some(entry.clone());
-            ability.frame_program = Some(Self::sparse_entry_to_frame_program(entry));
-            let rebuilt = Self::sparse_entry_to_bytecode(entry);
-            if rebuilt.is_empty() {
+            let program = Self::sparse_entry_to_frame_program(entry);
+            if program.frames.is_empty() {
                 return Err(serde::de::Error::custom(format!(
-                    "sparse ability index entry for {} ability {} has no encodable fields",
+                    "sparse ability index entry for {} ability {} produced empty frame program",
                     card_no, ability_index
                 )));
             }
-            ability.bytecode = rebuilt;
+            ability.frame_program = Some(program);
             if ability.effects.is_empty() {
                 let derived_effects = Self::frame_program_to_effects(ability.frame_program.as_ref().unwrap());
                 if !derived_effects.is_empty() {
@@ -344,33 +358,6 @@ impl CardDatabase {
             }
         }
         Ok(())
-    }
-
-    pub fn sparse_entry_to_bytecode(entry: &Value) -> Vec<i32> {
-        // Frame-first: rebuild bytecode from the frame model (canonical).
-        // source_words is a migration shim; fall back to it only if frames is absent.
-        let mut bytecode = Vec::new();
-        if let Some(frames) = entry.get("frames").and_then(|v| v.as_array()) {
-            if !frames.is_empty() {
-                for frame in frames {
-                    bytecode.extend(Self::encode_sparse_frame(frame));
-                }
-                return bytecode;
-            }
-        }
-
-        // Legacy fallback: source_words (migration shim — remove after suite is green)
-        if let Some(words) = entry.get("source_words").and_then(|v| v.as_array()) {
-            let source_words: Vec<i32> = words
-                .iter()
-                .filter_map(|word| word.as_i64().map(|v| v as i32))
-                .collect();
-            if !source_words.is_empty() {
-                return source_words;
-            }
-        }
-
-        bytecode
     }
 
     pub fn sparse_entry_to_frame_program(entry: &Value) -> FrameProgram {
@@ -794,59 +781,59 @@ impl CardDatabase {
     pub fn compute_effect_mask(abilities: &[Ability]) -> u64 {
         let mut mask = 0u64;
         for ab in abilities {
-            let bc = &ab.bytecode;
-            if Self::has_opcode_static_fast(bc, O_ADD_BLADES as i32)
-                || Self::has_opcode_static_fast(bc, O_SET_BLADES as i32)
-                || Self::has_opcode_static_fast(bc, O_BUFF_POWER as i32)
-                || Self::has_opcode_static_fast(bc, O_TRANSFORM_BLADES as i32)
+            
+            if Self::has_opcode_static_fast(ab, O_ADD_BLADES as i32)
+                || Self::has_opcode_static_fast(ab, O_SET_BLADES as i32)
+                || Self::has_opcode_static_fast(ab, O_BUFF_POWER as i32)
+                || Self::has_opcode_static_fast(ab, O_TRANSFORM_BLADES as i32)
             {
                 mask |= EFFECT_MASK_BLADE;
             }
-            if Self::has_opcode_static_fast(bc, O_ADD_HEARTS as i32)
-                || Self::has_opcode_static_fast(bc, O_SET_HEARTS as i32)
-                || Self::has_opcode_static_fast(bc, O_TRANSFORM_HEART as i32)
+            if Self::has_opcode_static_fast(ab, O_ADD_HEARTS as i32)
+                || Self::has_opcode_static_fast(ab, O_SET_HEARTS as i32)
+                || Self::has_opcode_static_fast(ab, O_TRANSFORM_HEART as i32)
             {
                 mask |= EFFECT_MASK_HEART;
             }
-            if Self::has_opcode_static_fast(bc, O_REDUCE_COST as i32)
-                || Self::has_opcode_static_fast(bc, O_INCREASE_COST as i32)
-                || Self::has_opcode_static_fast(bc, O_CALC_SUM_COST as i32)
+            if Self::has_opcode_static_fast(ab, O_REDUCE_COST as i32)
+                || Self::has_opcode_static_fast(ab, O_INCREASE_COST as i32)
+                || Self::has_opcode_static_fast(ab, O_CALC_SUM_COST as i32)
             {
                 mask |= EFFECT_MASK_COST;
             }
-            if Self::has_opcode_static_fast(bc, O_REDUCE_HEART_REQ as i32)
-                || Self::has_opcode_static_fast(bc, O_SET_HEART_COST as i32)
-                || Self::has_opcode_static_fast(bc, O_INCREASE_HEART_COST as i32)
-                || Self::has_opcode_static_fast(bc, O_REDUCE_LIVE_SET_LIMIT as i32)
+            if Self::has_opcode_static_fast(ab, O_REDUCE_HEART_REQ as i32)
+                || Self::has_opcode_static_fast(ab, O_SET_HEART_COST as i32)
+                || Self::has_opcode_static_fast(ab, O_INCREASE_HEART_COST as i32)
+                || Self::has_opcode_static_fast(ab, O_REDUCE_LIVE_SET_LIMIT as i32)
             {
                 mask |= EFFECT_MASK_REQ;
             }
-            if Self::has_opcode_static_fast(bc, O_GRANT_ABILITY as i32) {
+            if Self::has_opcode_static_fast(ab, O_GRANT_ABILITY as i32) {
                 mask |= EFFECT_MASK_GRANT;
             }
-            if Self::has_opcode_static_fast(bc, O_META_RULE as i32)
-                || Self::has_opcode_static_fast(bc, O_RESTRICTION as i32)
-                || Self::has_opcode_static_fast(bc, O_PREVENT_PLAY_TO_SLOT as i32)
-                || Self::has_opcode_static_fast(bc, O_PREVENT_SET_TO_SUCCESS_PILE as i32)
-                || Self::has_opcode_static_fast(bc, O_PREVENT_ACTIVATE as i32)
-                || Self::has_opcode_static_fast(bc, O_PREVENT_BATON_TOUCH as i32)
+            if Self::has_opcode_static_fast(ab, O_META_RULE as i32)
+                || Self::has_opcode_static_fast(ab, O_RESTRICTION as i32)
+                || Self::has_opcode_static_fast(ab, O_PREVENT_PLAY_TO_SLOT as i32)
+                || Self::has_opcode_static_fast(ab, O_PREVENT_SET_TO_SUCCESS_PILE as i32)
+                || Self::has_opcode_static_fast(ab, O_PREVENT_ACTIVATE as i32)
+                || Self::has_opcode_static_fast(ab, O_PREVENT_BATON_TOUCH as i32)
             {
                 mask |= EFFECT_MASK_RULE;
             }
-            if Self::has_opcode_static_fast(bc, O_BOOST_SCORE as i32)
-                || Self::has_opcode_static_fast(bc, O_SET_SCORE as i32)
-                || Self::has_opcode_static_fast(bc, O_REDUCE_SCORE as i32)
-                || Self::has_opcode_static_fast(bc, O_MODIFY_SCORE_RULE as i32)
+            if Self::has_opcode_static_fast(ab, O_BOOST_SCORE as i32)
+                || Self::has_opcode_static_fast(ab, O_SET_SCORE as i32)
+                || Self::has_opcode_static_fast(ab, O_REDUCE_SCORE as i32)
+                || Self::has_opcode_static_fast(ab, O_MODIFY_SCORE_RULE as i32)
             {
                 mask |= EFFECT_MASK_SCORE;
             }
-            if Self::has_opcode_static_fast(bc, O_DRAW as i32)
-                || Self::has_opcode_static_fast(bc, O_LOOK_DECK as i32)
-                || Self::has_opcode_static_fast(bc, O_SEARCH_DECK as i32)
-                || Self::has_opcode_static_fast(bc, O_LOOK_AND_CHOOSE as i32)
-                || Self::has_opcode_static_fast(bc, O_ADD_TO_HAND as i32)
-                || Self::has_opcode_static_fast(bc, O_DRAW_UNTIL as i32)
-                || Self::has_opcode_static_fast(bc, O_REVEAL_UNTIL as i32)
+            if Self::has_opcode_static_fast(ab, O_DRAW as i32)
+                || Self::has_opcode_static_fast(ab, O_LOOK_DECK as i32)
+                || Self::has_opcode_static_fast(ab, O_SEARCH_DECK as i32)
+                || Self::has_opcode_static_fast(ab, O_LOOK_AND_CHOOSE as i32)
+                || Self::has_opcode_static_fast(ab, O_ADD_TO_HAND as i32)
+                || Self::has_opcode_static_fast(ab, O_DRAW_UNTIL as i32)
+                || Self::has_opcode_static_fast(ab, O_REVEAL_UNTIL as i32)
             {
                 mask |= EFFECT_MASK_DRAW;
             }
@@ -1399,13 +1386,8 @@ impl CardDatabase {
     }
 
     // Static opcode check
-    pub fn has_opcode_static(bytecode: &[i32], target_op: i32) -> bool {
-        BytecodeProgram::from_slice(bytecode).has_opcode(target_op)
-    }
-
-    // Optimized opcode check that just checks 0th element of chunks(5)
-    pub fn has_opcode_static_fast(bytecode: &[i32], target_op: i32) -> bool {
-        BytecodeProgram::from_slice(bytecode).has_opcode(target_op)
+    pub fn has_opcode_static_fast(ab: &Ability, target_op: i32) -> bool {
+        ab.bytecode_program().has_opcode(target_op)
     }
 
     pub fn to_binary(&self) -> bincode::Result<Vec<u8>> {
@@ -1417,11 +1399,9 @@ impl CardDatabase {
     }
 }
 
-pub fn bytecode_has_choice(bytecode: &[i32]) -> bool {
-    let program = BytecodeProgram::from_slice(bytecode);
-    let mut ip = 0;
-    while let Some(instr) = program.instruction_at(ip) {
-        let op = instr.op;
+pub fn program_has_choice(program: &FrameProgram) -> bool {
+    for frame in &program.frames {
+        let op = frame.opcode();
         if op == O_SELECT_MODE
             || op == O_LOOK_AND_CHOOSE
             || op == O_COLOR_SELECT
@@ -1433,33 +1413,26 @@ pub fn bytecode_has_choice(bytecode: &[i32]) -> bool {
         {
             return true;
         }
-        ip = program.next_ip(ip);
     }
     false
 }
 
-pub fn bytecode_needs_early_pause(bytecode: &[i32]) -> bool {
-    let program = BytecodeProgram::from_slice(bytecode);
-    let mut ip = 0;
-    while let Some(instr) = program.instruction_at(ip) {
-        let op = instr.op;
+pub fn program_needs_early_pause(program: &FrameProgram) -> bool {
+    for frame in &program.frames {
+        let op = frame.opcode();
         if op == O_SELECT_MODE || op == O_COLOR_SELECT || op == O_LOOK_AND_CHOOSE {
             return true;
         }
-        ip = program.next_ip(ip);
     }
     false
 }
 
-pub fn bytecode_needs_early_pause_opcode(bytecode: &[i32]) -> i32 {
-    let program = BytecodeProgram::from_slice(bytecode);
-    let mut ip = 0;
-    while let Some(instr) = program.instruction_at(ip) {
-        let op = instr.op;
+pub fn program_needs_early_pause_opcode(program: &FrameProgram) -> i32 {
+    for frame in &program.frames {
+        let op = frame.opcode();
         if op == O_SELECT_MODE || op == O_COLOR_SELECT || op == O_LOOK_AND_CHOOSE {
             return op;
         }
-        ip = program.next_ip(ip);
     }
     -1
 }

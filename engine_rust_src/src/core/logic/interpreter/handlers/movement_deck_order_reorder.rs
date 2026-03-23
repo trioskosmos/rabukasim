@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::FILTER_IS_OPTIONAL;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -13,7 +14,7 @@ pub fn handle_look_reorder_discard(
     p_idx: usize,
     v: i32,
     a: i64,
-    instr_ip: usize,
+    frame_idx: usize,
 ) -> HandlerResult {
     let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
 
@@ -23,7 +24,7 @@ pub fn handle_look_reorder_discard(
             db,
             ctx,
             ctx,
-            instr_ip,
+            frame_idx,
             O_LOOK_REORDER_DISCARD,
             0,
             ChoiceType::Optional,
@@ -61,7 +62,7 @@ pub fn handle_look_reorder_discard(
                 db,
                 ctx,
                 ctx,
-                instr_ip,
+                frame_idx,
                 O_LOOK_REORDER_DISCARD,
                 0,
                 ChoiceType::SelectCardsOrder,
@@ -91,7 +92,7 @@ pub fn handle_look_reorder_discard(
                     db,
                     ctx,
                     ctx,
-                    instr_ip,
+                    frame_idx,
                     O_LOOK_REORDER_DISCARD,
                     0,
                     ChoiceType::SelectCardsOrder,

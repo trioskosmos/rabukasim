@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 #[path = "state_energy_place_select.rs"]
 mod state_energy_place_select;
@@ -6,12 +7,12 @@ pub fn handle_place_energy_under_member(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr_ip: usize,
+    frame_idx: usize,
     p_idx: usize,
-    instr: &BytecodeInstruction,
+    frame: &AbilityFrame,
     a: i64,
 ) -> HandlerResult {
-    let slot_info = instr.slot();
+    let slot_info = frame.dslot();
     let src_zone = slot_info.source_zone as u8;
     let slot = match slot_info.target_slot {
         0 | 4 => {
@@ -38,7 +39,7 @@ pub fn handle_place_energy_under_member(
 
     if src_zone == 3 {
         return state_energy_place_select::handle_place_energy_from_zone(
-            state, db, ctx, instr_ip, p_idx, slot, a,
+            state, db, ctx, frame_idx, p_idx, slot, a,
         );
     }
 

@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
@@ -6,16 +7,16 @@ pub fn handle_tap_member_selected(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &crate::core::logic::interpreter::instruction::BytecodeInstruction,
-    instr_ip: usize,
+    frame: &AbilityFrame,
+    frame_idx: usize,
     p_idx: usize,
     a: i64,
     resolved_slot: i32,
 ) -> HandlerResult {
-    let is_optional = instr.filter_attr().is_optional;
+    let is_optional = frame.filter().is_optional;
     let self_source_is_on_stage = ctx.area_idx >= 0 && ctx.area_idx < 3;
     let is_choice_done = ctx.choice_index == CHOICE_DONE;
-    let filter_attr = instr.filter_attr().to_attr()
+    let filter_attr = frame.filter().to_attr()
         & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
     let fixed_slot_matches = if resolved_slot >= 0 && resolved_slot < 3 {
         let cid = state.players[p_idx].stage[resolved_slot as usize];
@@ -41,7 +42,7 @@ pub fn handle_tap_member_selected(
                     db,
                     ctx,
                     ctx,
-                    instr_ip,
+                    frame_idx,
                     O_TAP_MEMBER,
                     resolved_slot as i32,
                     ChoiceType::Optional,
@@ -54,7 +55,7 @@ pub fn handle_tap_member_selected(
             }
 
             ctx.choice_index = -1;
-            ctx.v_remaining = instr.v as i16;
+            ctx.v_remaining = frame.raw_value() as i16;
 
             if resolved_slot >= 0 && resolved_slot < 3 && fixed_slot_matches {
                 state.players[p_idx].set_tapped(resolved_slot as usize, true);
@@ -66,12 +67,12 @@ pub fn handle_tap_member_selected(
                 db,
                 ctx,
                 ctx,
-                instr_ip,
+                frame_idx,
                 O_TAP_MEMBER,
                 resolved_slot as i32,
                 ChoiceType::TapMSelect,
                 (a | 0x02) as u64,
-                instr.v as i16,
+                frame.raw_value() as i16,
             ), HandlerResult::Suspend) {
                 return HandlerResult::Suspend;
             }
@@ -94,12 +95,12 @@ pub fn handle_tap_member_selected(
                 db,
                 ctx,
                 ctx,
-                instr_ip,
+                frame_idx,
                 O_TAP_MEMBER,
                 0,
                 ChoiceType::TapMSelect,
                 (a | 0x02) as u64,
-                instr.v as i16,
+                frame.raw_value() as i16,
             ), HandlerResult::Suspend) {
                 return HandlerResult::Suspend;
             }

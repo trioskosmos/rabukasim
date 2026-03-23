@@ -1,8 +1,8 @@
+use crate::core::logic::models::AbilityFrame;
 use super::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::constants::{DYNAMIC_VALUE, FILTER_MASK_LOWER};
 use crate::core::logic::interpreter::conditions::resolve_count;
-use crate::core::logic::interpreter::instruction::BytecodeInstruction;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::interpreter::resolve_target_slot;
 
@@ -11,7 +11,7 @@ pub fn handle_state_modifiers(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    _instr: &BytecodeInstruction,
+    _frame: &AbilityFrame,
     op: i32,
     v: i32,
     a: i64,

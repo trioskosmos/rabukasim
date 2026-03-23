@@ -1,8 +1,10 @@
+use crate::core::logic::models::AbilityFrame;
 use super::HandlerResult;
 use crate::core::enums::ChoiceType;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::interpreter::get_choice_text;
 use crate::core::models::suspend_interaction;
+use crate::core::logic::interpreter::instruction::BytecodeProgram;
 
 #[allow(clippy::too_many_arguments)]
 #[allow(clippy::too_many_arguments)]
@@ -11,7 +13,7 @@ pub fn suspend_choice(
     db: &CardDatabase,
     choice_ctx: &AbilityContext,
     suspend_ctx: &AbilityContext,
-    instr_ip: usize,
+    frame_idx: usize,
     op: i32,
     s: i32,
     choice_type: ChoiceType,
@@ -23,7 +25,7 @@ pub fn suspend_choice(
         db,
         choice_ctx,
         suspend_ctx,
-        instr_ip,
+        frame_idx,
         op,
         s,
         choice_type,
@@ -40,7 +42,7 @@ pub fn suspend_choice_with_options(
     db: &CardDatabase,
     choice_ctx: &AbilityContext,
     suspend_ctx: &AbilityContext,
-    instr_ip: usize,
+    frame_idx: usize,
     op: i32,
     s: i32,
     choice_type: ChoiceType,
@@ -54,7 +56,7 @@ pub fn suspend_choice_with_options(
         state,
         db,
         suspend_ctx,
-        instr_ip,
+        frame_idx,
         op,
         s,
         choice_type,

@@ -34,7 +34,7 @@ fn main() {
     let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
         &mut state,
         &db,
-        std::sync::Arc::new(ability.bytecode.clone()),
+        std::sync::Arc::new(ability.bytecode().clone()),
         &mut ctx1,
     );
 
@@ -52,7 +52,7 @@ fn main() {
     let _ = engine_rust::core::logic::interpreter::resolve_bytecode(
         &mut state,
         &db,
-        std::sync::Arc::new(ability.bytecode.clone()),
+        std::sync::Arc::new(ability.bytecode().clone()),
         &mut ctx2,
     );
 

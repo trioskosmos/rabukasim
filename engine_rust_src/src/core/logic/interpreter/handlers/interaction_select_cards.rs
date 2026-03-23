@@ -15,18 +15,18 @@ pub fn handle_select_cards(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    instr: &BytecodeInstruction,
+    frame: &crate::core::logic::models::AbilityFrame,
     instr_ip: usize,
 ) -> HandlerResult {
-    let v = instr.v;
-    let a = instr.a;
-    let s = instr.raw_s;
+    let v = frame.raw_value();
+    let a = frame.raw_attr() as i64;
+    let s = frame.raw_slot();
     let p_idx = ctx.player_id as usize;
     let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
     let optional_prompt_marker = -((v as i16) + 2);
     let is_variable_selection = v < 0;
 
-    let slot_info = instr.slot();
+    let slot_info = frame.dslot();
     let source_zone = slot_info.source_zone as u8;
     let ts = slot_info.target_slot;
     let effective_zone = if source_zone != 0 {
@@ -160,7 +160,7 @@ pub fn handle_select_cards(
         state,
         db,
         ctx,
-        instr,
+        frame,
         instr_ip,
         p_idx,
         s,

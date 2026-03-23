@@ -1,3 +1,4 @@
+use crate::core::logic::models::AbilityFrame;
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::FILTER_MASK_LOWER;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -13,7 +14,7 @@ pub fn handle_order_deck(
     p_idx: usize,
     v: i32,
     a: i64,
-    instr_ip: usize,
+    frame_idx: usize,
 ) -> HandlerResult {
     if state.players[p_idx].looked_cards.is_empty() && v > 0 {
         if state.players[p_idx].deck.len() < v as usize {
@@ -32,7 +33,7 @@ pub fn handle_order_deck(
                 db,
                 ctx,
                 ctx,
-                instr_ip,
+                frame_idx,
                 O_ORDER_DECK,
                 0,
                 ChoiceType::OrderDeck,
@@ -59,7 +60,7 @@ pub fn handle_order_deck(
                     db,
                     ctx,
                     ctx,
-                    instr_ip,
+                    frame_idx,
                     O_ORDER_DECK,
                     0,
                     ChoiceType::OrderDeck,
