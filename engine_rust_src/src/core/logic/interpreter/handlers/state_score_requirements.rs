@@ -93,31 +93,55 @@ pub fn handle_increase_heart_cost(
 
     p_idx: usize,
 
-    s: i64,
-
-    v: i32,
+    frame: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let color = if s == 7 {
-        6
-    } else if (s as usize) <= 6 {
-        s as usize
+    let color = if let Some(params) = frame.params.and_then(|value| value.as_object()) {
+        if let Some(heart_type) = params.get("heart_type").and_then(|value| value.as_u64()) {
+            if heart_type == 7 {
+                6
+            } else if heart_type <= 6 {
+                heart_type as usize
+            } else {
+                99
+            }
+        } else if frame.filter.color_mask != 0 {
+            if frame.filter.color_mask == 0x7F {
+                6
+            } else {
+                frame.filter.color_mask.trailing_zeros() as usize
+            }
+        } else {
+            6
+        }
+    } else if frame.filter.color_mask != 0 {
+        if frame.filter.color_mask == 0x7F {
+            6
+        } else {
+            frame.filter.color_mask.trailing_zeros() as usize
+        }
     } else {
-        99
+        6
     };
 
     if color < 7 {
         state.players[p_idx]
             .heart_req_additions
-            .add_to_color(color, v);
+            .add_to_color(color, frame.value);
 
         state.players[p_idx].heart_req_addition_logs.push((
             ctx.source_card_id,
             color as u8,
-            v as u8,
+            frame.value as u8,
         ));
 
         if !state.ui.silent {
-            if let Some(msg) = logging::get_opcode_log(O_INCREASE_HEART_COST, v, 0, color as i32, 0)
+            if let Some(msg) = logging::get_opcode_log(
+                O_INCREASE_HEART_COST,
+                frame.value,
+                0,
+                color as i32,
+                0,
+            )
             {
                 state.log(msg);
             }

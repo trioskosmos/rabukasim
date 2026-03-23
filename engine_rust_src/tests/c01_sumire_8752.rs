@@ -44,6 +44,7 @@ fn test_sumire_8752_repro() {
             },
             AbilityFrame::Return,
         ],
+        raw_program: None,
     });
     sumire.abilities.push(ab);
     db.members.insert(sumire_id, sumire);

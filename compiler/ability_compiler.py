@@ -75,19 +75,76 @@ class AbilityCompiler:
         self._last_counted_zone = None
         self.filters = []
 
-    def compile_to_frames(self, ability) -> List[Dict[str, Any]]:
-        # Perform dry run to hydrate all metadata fields
-        self.compile_to_bytecode(ability)
+    def _is_effect_instruction(self, instr: Any) -> bool:
+        return hasattr(instr, "effect_type")
 
-        frames = []
-        for instr in ability.instructions:
+    def _is_condition_instruction(self, instr: Any) -> bool:
+        return hasattr(instr, "is_negated") and hasattr(instr, "type") and not hasattr(instr, "effect_type")
+
+    def _is_cost_instruction(self, instr: Any) -> bool:
+        return hasattr(instr, "type") and not hasattr(instr, "effect_type") and not hasattr(instr, "is_negated")
+
+    def compile_to_frames(self, ability) -> List[Union[str, Dict[str, Any]]]:
+        return self._build_frame_program_from_source(ability)
+
+    def _frame_program_frames(self, frame_program: Any) -> list[Any]:
+        if isinstance(frame_program, dict):
+            frames = frame_program.get("frames", [])
+        else:
+            frames = frame_program
+
+        if not isinstance(frames, list):
+            return []
+
+        return [copy.deepcopy(frame) for frame in frames]
+
+    def _hydrate_instruction_frames(self, ability) -> list[Union[Effect, Condition, Cost]]:
+        instructions = copy.deepcopy(list(getattr(ability, "instructions", []) or []))
+        if not instructions:
+            instructions = [
+                *copy.deepcopy(getattr(ability, "costs", []) or []),
+                *copy.deepcopy(getattr(ability, "conditions", []) or []),
+                *copy.deepcopy(getattr(ability, "effects", []) or []),
+            ]
+
+        trigger = getattr(ability, "trigger", TriggerType.NONE)
+        for instr in instructions:
+            if self._is_condition_instruction(instr):
+                # CONSTANT abilities keep conditions out of emitted bytecode, but
+                # the frame export still needs hydrated condition metadata.
+                self._compile_single_condition(instr, [])
+            elif self._is_effect_instruction(instr):
+                self._compile_single_effect(instr, [])
+            elif self._is_cost_instruction(instr):
+                self._compile_single_cost(instr, [])
+
+        if trigger == TriggerType.CONSTANT:
+            return instructions
+
+        return instructions
+
+    def _build_frame_program_from_source(self, ability) -> List[Union[str, Dict[str, Any]]]:
+        existing_frame_program = getattr(ability, "frame_program", None)
+        frames = self._frame_program_frames(existing_frame_program)
+        if frames:
+            return frames
+
+        sparse_frame_index = getattr(ability, "sparse_frame_index", None)
+        frames = self._frame_program_frames(sparse_frame_index)
+        if frames:
+            return frames
+
+        instructions = self._hydrate_instruction_frames(ability)
+
+        frames_out: list[Union[str, Dict[str, Any]]] = []
+        for instr in instructions:
             frame = self._instruction_to_frame(instr)
             if frame:
-                frames.append(frame)
+                frames_out.append(frame)
 
-        if not frames or frames[-1] != "Return":
-            frames.append("Return")
-        return frames
+        if not frames_out or frames_out[-1] != "Return":
+            frames_out.append("Return")
+        return frames_out
 
     def compile_to_bytecode(self, ability) -> List[int]:
         bytecode = []
@@ -1138,8 +1195,12 @@ class AbilityCompiler:
         """Map a single instruction (Effect/Condition/Cost) to an AbilityFrame JSON-compatible dict."""
         opcode_id = 0
         opcode_name = "NONE"
+        value = 0
+        attr = {}
+        slot = {}
+        raw = copy.deepcopy(getattr(instr, "params", {})) if hasattr(instr, "params") else {}
 
-        if isinstance(instr, Effect):
+        if self._is_effect_instruction(instr):
             opcode_name = instr.effect_type.name
             try:
                 opcode_id = getattr(instr, "runtime_opcode", 0)
@@ -1155,7 +1216,7 @@ class AbilityCompiler:
             value = instr.value
             attr = getattr(instr, "runtime_filter", {})
             slot = getattr(instr, "runtime_slot_params", {})
-        elif isinstance(instr, Condition):
+        elif self._is_condition_instruction(instr):
             opcode_name = f"CHECK_{instr.type.name}"
             try:
                 opcode_id = getattr(instr, "runtime_opcode", 0) % 1000
@@ -1170,7 +1231,7 @@ class AbilityCompiler:
             value = instr.value
             attr = getattr(instr, "runtime_filter", {})
             slot = getattr(instr, "runtime_slot", {})
-        elif isinstance(instr, Cost):
+        elif self._is_cost_instruction(instr):
             mapping = {
                 AbilityCostType.ENERGY: "PAY_ENERGY",
                 AbilityCostType.TAP_SELF: "SET_TAPPED",
@@ -1200,8 +1261,6 @@ class AbilityCompiler:
             value = instr.value
             attr = getattr(instr, "runtime_filter", {})
             slot = getattr(instr, "runtime_slot", {})
-  slot = instr.runtime_slot
-
         if opcode_name == "RETURN":
             return "Return"
         
@@ -1235,3 +1294,8 @@ class AbilityCompiler:
                 "params": raw,
             }
         }
+
+
+def build_frame_program(ability) -> List[Union[str, Dict[str, Any]]]:
+    """Build a frame program without round-tripping through bytecode."""
+    return AbilityCompiler()._build_frame_program_from_source(ability)

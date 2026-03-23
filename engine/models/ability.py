@@ -110,21 +110,23 @@ class Ability:
         return build_structured_instruction_ir(self).to_dict()
 
     def to_frame_program(self) -> List[Union[str, Dict[str, Any]]]:
-        """Generate high-level semantic frames directly from instructions."""
-        # 1. First, perform a 'dry run' of compilation to hydrate all metadata
-        # (This populates runtime_opcode, runtime_filter, and runtime_slot_params/dict)
-        self.compile()
+        """Generate high-level semantic frames without regenerating bytecode."""
+        existing_frame_program = getattr(self, "frame_program", None)
+        if isinstance(existing_frame_program, dict):
+            frames = existing_frame_program.get("frames", [])
+            if isinstance(frames, list) and frames:
+                return [copy.deepcopy(frame) for frame in frames]
 
-        frames = []
-        for instr in self.instructions:
-            frame = self._instruction_to_frame(instr)
-            if frame:
-                frames.append(frame)
+        sparse_frame_index = getattr(self, "sparse_frame_index", None)
+        if isinstance(sparse_frame_index, dict):
+            frames = sparse_frame_index.get("frames", [])
+            if isinstance(frames, list) and frames:
+                return [copy.deepcopy(frame) for frame in frames]
 
-        # 2. Add Return terminator if not present
-        if not frames or frames[-1] != "Return":
-            frames.append("Return")
+        from compiler.ability_compiler import build_frame_program
 
+        frames = build_frame_program(self)
+        self.frame_program = {"frames": copy.deepcopy(frames)}
         return frames
 
     def _instruction_to_frame(self, instr: Union[Effect, Condition, Cost]) -> Union[str, Dict[str, Any]]:

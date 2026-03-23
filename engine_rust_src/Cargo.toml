@@ -46,12 +46,19 @@ opt-level = 1
 overflow-checks = false
 debug = true
 
+[profile.dev.package."*"]
+opt-level = 3
+
 [profile.test]
 opt-level = 1
 overflow-checks = false
 debug = true
 codegen-units = 16
 lto = false
+
+# Link-time optimization for dependencies but not for the main crate
+[profile.test.package."*"]
+opt-level = 3
 
 [profile.release]
 lto = false

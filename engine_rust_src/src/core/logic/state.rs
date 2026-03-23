@@ -276,18 +276,17 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn resolve_bytecode(
+    pub fn resolve_bytecode<B: AsRef<[i32]>>(
         &mut self,
         db: &CardDatabase,
-        bytecode: std::sync::Arc<Vec<i32>>,
+        bytecode: B,
         ctx_in: &AbilityContext,
     ) {
-        let frame_program =
-            crate::core::logic::models::FrameProgram::from_bytecode(bytecode.as_ref());
-        if let Err(err) = crate::core::logic::interpreter::resolve_semantic_frames(
+        let bytecode = bytecode.as_ref();
+        if let Err(err) = crate::core::logic::interpreter::resolve_bytecode(
             self,
             db,
-            &frame_program.frames,
+            std::sync::Arc::new(bytecode.to_vec()),
             ctx_in,
         ) {
             if self.debug.debug_mode || !self.ui.silent {
@@ -296,22 +295,13 @@ impl GameState {
         }
     }
 
-    pub fn resolve_bytecode_owned(
-        &mut self,
-        db: &CardDatabase,
-        bytecode: Vec<i32>,
-        ctx_in: &AbilityContext,
-    ) {
-        self.resolve_bytecode(db, std::sync::Arc::new(bytecode), ctx_in);
-    }
-
     pub fn resolve_bytecode_cref(
         &mut self,
         db: &CardDatabase,
         bytecode: &Vec<i32>,
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_bytecode(db, std::sync::Arc::new(bytecode.clone()), ctx_in);
+        self.resolve_bytecode(db, bytecode, ctx_in);
     }
 
     pub fn resolve_bytecode_slice(
@@ -320,7 +310,7 @@ impl GameState {
         bytecode: &[i32],
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_bytecode(db, std::sync::Arc::new(bytecode.to_vec()), ctx_in);
+        self.resolve_bytecode(db, bytecode, ctx_in);
     }
 
     pub fn resolve_ability(

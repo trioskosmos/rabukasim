@@ -5,7 +5,7 @@ if TYPE_CHECKING:
 
 
 def _describe_ability(ability: "Ability") -> str:
-    sparse = getattr(ability, "sparse_frame_index", None)
+    sparse = getattr(ability, "frame_program", None) or getattr(ability, "sparse_frame_index", None)
     if isinstance(sparse, dict):
         pseudocode = sparse.get("pseudocode")
         if pseudocode:

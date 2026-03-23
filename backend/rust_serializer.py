@@ -95,6 +95,17 @@ SERIALIZER_STRINGS = {
 }
 
 
+def _derived_card_text(abilities, fallback: str) -> str:
+    if fallback and str(fallback).strip():
+        return str(fallback)
+    parts = []
+    for ab in abilities or []:
+        raw = str(getattr(ab, "raw_text", "")).strip()
+        if raw:
+            parts.append(raw)
+    return "\n".join(parts)
+
+
 class RustCompatPlayer:
     def __init__(self, p):
         self._p = p
@@ -228,9 +239,7 @@ class RustGameStateSerializer:
         if bid_str in self.member_db:
             m = self.member_db[bid_str]
             abilities = getattr(m, "abilities", [])
-            at = "\n".join([getattr(ab, "raw_text", "") for ab in abilities if getattr(ab, "raw_text", "")])
-            if not at:
-                at = getattr(m, "ability_text", "")
+            at = _derived_card_text(abilities, getattr(m, "ability_text", "") or getattr(m, "original_text", ""))
 
             res = {
                 "card_no": m.card_no,
@@ -242,16 +251,14 @@ class RustGameStateSerializer:
                 "hearts": list(m.hearts),
                 "blade_hearts": list(m.blade_hearts),
                 "text": at,
-                "original_text": m.original_text,
+                "original_text": at or m.original_text,
                 "original_text_en": getattr(m, "original_text_en", ""),
-                "ability": m.original_text,
+                "ability": at or m.original_text,
             }
         elif bid_str in self.live_db:
             l = self.live_db[bid_str]
             abilities = getattr(l, "abilities", [])
-            at = "\n".join([getattr(ab, "raw_text", "") for ab in abilities if getattr(ab, "raw_text", "")])
-            if not at:
-                at = getattr(l, "ability_text", "")
+            at = _derived_card_text(abilities, getattr(l, "ability_text", "") or getattr(l, "original_text", ""))
 
             res = {
                 "card_no": l.card_no,
@@ -261,9 +268,9 @@ class RustGameStateSerializer:
                 "img": l.img_path,
                 "required_hearts": list(l.required_hearts),
                 "text": at,
-                "original_text": l.original_text,
+                "original_text": at or l.original_text,
                 "original_text_en": getattr(l, "original_text_en", ""),
-                "ability": l.original_text,
+                "ability": at or l.original_text,
             }
         elif bid_str in self.energy_db:
             e = self.energy_db[bid_str]

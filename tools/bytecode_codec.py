@@ -246,6 +246,29 @@ def _rust_handler_path(opcode_name: str) -> str:
     return handler_groups.get(opcode_name, "engine_rust_src/src/core/logic/interpreter/handlers/mod.rs::HandlerRegistry::dispatch")
 
 
+def _signature_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _signature_value(value[key]) for key in sorted(value.keys())}
+    if isinstance(value, list):
+        return [_signature_value(item) for item in value]
+    return value
+
+
+def _compiled_card_metadata(card: dict[str, Any], db_name: str, card_id: Any, card_no: str, card_name: str) -> dict[str, Any]:
+    return {
+        "db": db_name,
+        "card_id": int(card_id) if str(card_id).isdigit() else card_id,
+        "card_no": card_no,
+        "name": card_name,
+        "original_text": card.get("original_text", ""),
+        "original_text_en": card.get("original_text_en", ""),
+        "semantic_flags": int(card.get("semantic_flags", 0)),
+        "ability_flags": int(card.get("ability_flags", 0)),
+        "synergy_flags": int(card.get("synergy_flags", 0)),
+        "cost_flags": int(card.get("cost_flags", 0)),
+    }
+
+
 def _format_frame_trace(frame: dict[str, Any]) -> str:
     opcode_name = str(frame.get("opcode_name", frame.get("opcode", "")) or "")
     rust_opcode = str(frame.get("rust_opcode", "") or "")
@@ -997,12 +1020,25 @@ def ability_signature(ability: dict[str, Any], metadata: dict[str, Any] | Metada
     lookups = metadata if isinstance(metadata, MetadataLookups) else load_lookups(metadata)
     trigger_id = int(ability.get("trigger", 0))
     trigger_name = _name_for_id(trigger_id, lookups.triggers_by_id, "TRIGGER")
-    bytecode = [int(word) for word in ability.get("bytecode", [])]
-    model = bytecode_to_model(bytecode, lookups.metadata)
+    frame_program_payload = ability.get("frame_program", ability.get("sparse_frame_index", ability.get("frames", {})))
+    if isinstance(frame_program_payload, dict) and frame_program_payload.get("frames"):
+        model = frame_program_to_model(frame_program_payload)
+        bytecode = model_to_bytecode(model, lookups.metadata)
+    elif isinstance(frame_program_payload, list) and frame_program_payload:
+        model = frame_program_to_model({"frames": frame_program_payload})
+        bytecode = model_to_bytecode(model, lookups.metadata)
+    else:
+        bytecode = [int(word) for word in ability.get("bytecode", [])]
+        model = bytecode_to_model(bytecode, lookups.metadata)
     round_trip_bytecode = model_to_bytecode(model)
     signature_payload = {
         "trigger": trigger_id,
         "bytecode": bytecode,
+        "costs": _signature_value(ability.get("costs", [])),
+        "is_once_per_turn": bool(ability.get("is_once_per_turn", False)),
+        "requires_selection": bool(ability.get("requires_selection", False)),
+        "choice_flags": int(ability.get("choice_flags", 0)),
+        "choice_count": int(ability.get("choice_count", 0)),
     }
     signature_source = json.dumps(signature_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     signature_hash = sha1(signature_source.encode("utf-8")).hexdigest()
@@ -1055,8 +1091,14 @@ def build_ability_index(compiled_data: dict[str, Any], metadata: dict[str, Any])
         card_name = str(card.get("name", ""))
         card_no = str(card.get("card_no", ""))
         for ab_idx, ability in enumerate(card.get("abilities", [])):
-            bytecode = [int(word) for word in ability.get("bytecode", [])]
-            if not bytecode:
+            frame_program_payload = ability.get("frame_program", ability.get("sparse_frame_index", ability.get("frames", {})))
+            if isinstance(frame_program_payload, dict) and frame_program_payload.get("frames"):
+                bytecode = [int(word) for word in frame_program_payload.get("bytecode", ability.get("bytecode", []))]
+            elif isinstance(frame_program_payload, list) and frame_program_payload:
+                bytecode = [int(word) for word in ability.get("bytecode", [])]
+            else:
+                bytecode = [int(word) for word in ability.get("bytecode", [])]
+            if not bytecode and not frame_program_payload:
                 continue
 
             total_abilities += 1
@@ -1080,6 +1122,20 @@ def build_ability_index(compiled_data: dict[str, Any], metadata: dict[str, Any])
                     "sparse_model": sig["sparse_model"],
                     "round_trip_matches": sig["round_trip_matches"],
                     "source_words": list(bytecode),
+                    "costs": deepcopy(ability.get("costs", [])),
+                    "is_once_per_turn": bool(ability.get("is_once_per_turn", False)),
+                    "requires_selection": bool(ability.get("requires_selection", False)),
+                    "choice_flags": int(ability.get("choice_flags", 0)),
+                    "choice_count": int(ability.get("choice_count", 0)),
+                    "modal_options": deepcopy(ability.get("modal_options", [])),
+                    "conditions": deepcopy(ability.get("conditions", [])),
+                    "compiled_ability": deepcopy(ability),
+                    "original_text": card.get("original_text", ""),
+                    "original_text_en": card.get("original_text_en", ""),
+                    "semantic_flags": int(card.get("semantic_flags", 0)),
+                    "ability_flags": int(card.get("ability_flags", 0)),
+                    "synergy_flags": int(card.get("synergy_flags", 0)),
+                    "cost_flags": int(card.get("cost_flags", 0)),
                     "cards": [],
                     "card_refs": [],
                 },
@@ -1090,10 +1146,7 @@ def build_ability_index(compiled_data: dict[str, Any], metadata: dict[str, Any])
             )
             entry["card_refs"].append(
                 {
-                    "db": db_name,
-                    "card_id": int(card_id) if str(card_id).isdigit() else card_id,
-                    "card_no": card_no,
-                    "name": card_name,
+                    **_compiled_card_metadata(card, db_name, card_id, card_no, card_name),
                     "ability_index": ab_idx,
                     "trigger": ab_trigger_name,
                 }
@@ -1126,8 +1179,6 @@ def build_sparse_ability_index(compiled_data: dict[str, Any], metadata: dict[str
     for entry in payload.get("abilities", []):
         entry["frames"] = entry.pop("sparse_model", {}).get("frames", [])
         entry.pop("bytecode", None)
-        entry.pop("model", None)
-        entry.pop("round_trip_bytecode", None)
         entry.pop("signature_source", None)
         entry["trigger"] = entry.get("trigger")
         entry["trigger_id"] = entry.get("trigger_id")

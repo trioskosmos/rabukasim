@@ -494,6 +494,7 @@ fn test_frame_program_only_ability_executes() {
         bytecode: Vec::new(),
         frame_program: Some(FrameProgram {
             frames: vec![AbilityFrame::Draw { count: 1 }, AbilityFrame::Return],
+            raw_program: None,
         }),
         ..Default::default()
     };
@@ -535,6 +536,7 @@ fn test_frame_program_bytecode_parity_for_simple_draw() {
         bytecode: Vec::new(),
         frame_program: Some(FrameProgram {
             frames: vec![AbilityFrame::Draw { count: 1 }, AbilityFrame::Return],
+            raw_program: None,
         }),
         ..Default::default()
     };

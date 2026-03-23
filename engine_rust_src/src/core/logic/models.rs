@@ -1,14 +1,14 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use crate::core::generated_layout::*;
-use crate::core::logic::interpreter::instruction::BytecodeProgram;
 use crate::core::logic::interpreter::instruction::{
     DecodedFilterAttr, DecodedLookAndChoose, DecodedSlot,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::hash::{Hash, Hasher};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Hash)]
 pub enum AbilityFrame {
     Return,
     Draw {
@@ -61,6 +61,16 @@ pub enum AbilityFrame {
     },
 }
 
+impl<'de> Deserialize<'de> for AbilityFrame {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = Value::deserialize(deserializer)?;
+        Ok(Self::from_json_value(&value))
+    }
+}
+
 impl Default for AbilityFrame {
     fn default() -> Self {
         AbilityFrame::Raw {
@@ -86,6 +96,170 @@ pub struct AbilityFrameComponents<'a> {
 }
 
 impl AbilityFrame {
+    fn normalize_frame_kind(kind: &str) -> String {
+        let mut normalized = String::with_capacity(kind.len() + 4);
+        for (index, ch) in kind.chars().enumerate() {
+            if ch.is_ascii_uppercase() && index > 0 {
+                normalized.push('_');
+            }
+            normalized.push(ch.to_ascii_uppercase());
+        }
+        normalized
+    }
+
+    fn opcode_id_from_frame_kind(kind: &str) -> i32 {
+        match kind {
+            "RETURN" => O_RETURN,
+            "DRAW" => O_DRAW,
+            "RECOVER_LIVE" => O_RECOVER_LIVE,
+            "RECOVER_MEMBER" => O_RECOVER_MEMBER,
+            "LOOK_AND_CHOOSE" => O_LOOK_AND_CHOOSE,
+            "SELECT_MEMBER" => O_SELECT_MEMBER,
+            "MOVE_MEMBER" => O_MOVE_MEMBER,
+            "MOVE_TO_DISCARD" => O_MOVE_TO_DISCARD,
+            "META_RULE" => O_META_RULE,
+            _ => 0,
+        }
+    }
+
+    pub(crate) fn from_json_value(frame: &Value) -> Self {
+        if matches!(frame.as_str(), Some("Return" | "RETURN")) {
+            return AbilityFrame::Return;
+        }
+
+        let semantic = frame.get("semantic").filter(|value| value.is_object());
+        let mut payload = semantic.unwrap_or(frame);
+        let mut kind = frame
+            .get("kind")
+            .and_then(|v| v.as_str())
+            .or_else(|| frame.get("op").and_then(|v| v.as_str()))
+            .unwrap_or("");
+        if kind.is_empty() {
+            if let Some(obj) = frame.as_object() {
+                if obj.len() == 1 {
+                    if let Some((key, value)) = obj.iter().next() {
+                        if value.is_object()
+                            || value.is_array()
+                            || value.is_string()
+                            || value.is_number()
+                        {
+                            kind = key.as_str();
+                            payload = value;
+                        }
+                    }
+                }
+            }
+        } else if semantic.is_none() {
+            if let Some(value) = frame.get(kind) {
+                if value.is_object() || value.is_array() || value.is_string() || value.is_number() {
+                    payload = value;
+                }
+            }
+        }
+
+        let opcode_name = payload
+            .get("opcode_name")
+            .or_else(|| payload.get("op"))
+            .or_else(|| frame.get("opcode_name"))
+            .or_else(|| frame.get("op"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let opcode_id = payload
+            .get("opcode_id")
+            .or_else(|| payload.get("opcode"))
+            .or_else(|| payload.get("op"))
+            .or_else(|| frame.get("opcode_id"))
+            .or_else(|| frame.get("opcode"))
+            .and_then(|v| v.as_i64())
+            .unwrap_or(0) as i32;
+        let value = payload
+            .get("value")
+            .or_else(|| payload.get("count"))
+            .or_else(|| payload.get("params"))
+            .or_else(|| payload.get("v"))
+            .or_else(|| frame.get("value"))
+            .or_else(|| frame.get("v"))
+            .and_then(|v| v.as_i64())
+            .unwrap_or(0) as i32;
+        let filter = payload
+            .get("filter")
+            .or_else(|| payload.get("attr"))
+            .or_else(|| frame.get("attr"))
+            .cloned()
+            .and_then(|value| serde_json::from_value::<DecodedFilterAttr>(value).ok())
+            .unwrap_or_default();
+        let slot = payload
+            .get("slot")
+            .or_else(|| frame.get("slot"))
+            .cloned()
+            .and_then(|value| serde_json::from_value::<DecodedSlot>(value).ok())
+            .unwrap_or_default();
+        let is_negated = payload
+            .get("is_negated")
+            .or_else(|| payload.get("negated"))
+            .or_else(|| frame.get("negated"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        let params = payload
+            .get("params")
+            .or_else(|| frame.get("params"))
+            .cloned()
+            .unwrap_or(Value::Null);
+        let opcode_key = if !kind.is_empty() {
+            kind
+        } else {
+            opcode_name
+        };
+        let opcode_key = Self::normalize_frame_kind(opcode_key);
+
+        let resolved_opcode_id = if opcode_id != 0 {
+            opcode_id
+        } else {
+            Self::opcode_id_from_frame_kind(opcode_key.as_str())
+        };
+
+        match opcode_key.as_str() {
+            "RETURN" => AbilityFrame::Return,
+            "DRAW" => AbilityFrame::Draw { count: value },
+            "RECOVER_LIVE" => AbilityFrame::RecoverLive {
+                count: value,
+                filter,
+                slot,
+            },
+            "RECOVER_MEMBER" => AbilityFrame::RecoverMember {
+                count: value,
+                filter,
+                slot,
+            },
+            "LOOK_AND_CHOOSE" => AbilityFrame::LookAndChoose {
+                params: serde_json::from_value(params.clone())
+                    .ok()
+                    .unwrap_or_else(|| DecodedLookAndChoose::decode(value)),
+                filter,
+                slot,
+            },
+            "SELECT_MEMBER" => AbilityFrame::SelectMember {
+                count: value,
+                filter,
+                slot,
+            },
+            "MOVE_MEMBER" => AbilityFrame::MoveMember { filter, slot },
+            "META_RULE" => AbilityFrame::MetaRule {
+                rule_type: value,
+                filter,
+                slot,
+            },
+            _ => AbilityFrame::Semantic {
+                opcode: resolved_opcode_id,
+                value,
+                filter,
+                slot,
+                is_negated,
+                params,
+            },
+        }
+    }
+
     pub fn new(opcode: i32, value: i32, attr: i64, raw_s: i32) -> Self {
         AbilityFrame::Raw {
             opcode,
@@ -93,6 +267,25 @@ impl AbilityFrame {
             attr: attr as u64,
             slot: raw_s,
         }
+    }
+
+    pub fn from_effect(effect: &Effect) -> Self {
+        if !effect.params.is_null() {
+            return AbilityFrame::Semantic {
+                opcode: effect.runtime_opcode,
+                value: effect.runtime_value,
+                filter: DecodedFilterAttr::decode(effect.runtime_attr as i64),
+                slot: DecodedSlot::decode(effect.runtime_slot),
+                is_negated: false,
+                params: effect.params.clone(),
+            };
+        }
+        Self::new(
+            effect.runtime_opcode,
+            effect.runtime_value,
+            effect.runtime_attr as i64,
+            effect.runtime_slot,
+        )
     }
 
     pub fn opcode(&self) -> i32 {
@@ -381,10 +574,68 @@ impl From<&crate::core::logic::interpreter::instruction::BytecodeInstruction> fo
         AbilityFrame::new(instr.op, instr.v, instr.a, instr.raw_s)
     }
 }
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FrameProgram {
-    #[serde(default)]
     pub frames: Vec<AbilityFrame>,
+    pub raw_program: Option<Value>,
+}
+
+impl Serialize for FrameProgram {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        if let Some(raw) = &self.raw_program {
+            return raw.serialize(serializer);
+        }
+
+        let mut map = serde_json::Map::new();
+        map.insert(
+            "frames".to_string(),
+            Value::Array(
+                self.frames
+                    .iter()
+                    .map(|frame| serde_json::to_value(frame).unwrap_or(Value::Null))
+                    .collect(),
+            ),
+        );
+        Value::Object(map).serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for FrameProgram {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let raw_program = Value::deserialize(deserializer)?;
+        let frames = raw_program
+            .get("frames")
+            .and_then(|v| v.as_array())
+            .map(|frames| {
+                frames
+                    .iter()
+                    .map(AbilityFrame::from_json_value)
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+
+        Ok(Self {
+            frames,
+            raw_program: Some(raw_program),
+        })
+    }
+}
+
+impl Hash for FrameProgram {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.frames.hash(state);
+        if let Some(raw_program) = &self.raw_program {
+            if let Ok(raw_json) = serde_json::to_string(raw_program) {
+                raw_json.hash(state);
+            }
+        }
+    }
 }
 
 impl FrameProgram {
@@ -401,10 +652,30 @@ impl FrameProgram {
             frames.push(AbilityFrame::new(opcode, value, attr, raw_s));
         }
 
-        Self { frames }
+        Self {
+            frames,
+            raw_program: Some(serde_json::json!({
+                "frames": [],
+                "bytecode": bytecode,
+            })),
+        }
     }
 
     pub fn to_bytecode(&self) -> Vec<i32> {
+        if let Some(raw_program) = &self.raw_program {
+            if let Some(words) = raw_program.get("bytecode").and_then(|v| v.as_array()) {
+                let mut bytecode = Vec::with_capacity(words.len());
+                for word in words {
+                    if let Some(value) = word.as_i64() {
+                        bytecode.push(value as i32);
+                    }
+                }
+                if !bytecode.is_empty() {
+                    return bytecode;
+                }
+            }
+        }
+
         let mut words = Vec::with_capacity(
             self.frames.len() * crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION,
         );
@@ -729,62 +1000,77 @@ impl std::hash::Hash for Ability {
 }
 
 impl Ability {
-    pub fn semantic_frame_program(&self) -> Option<FrameProgram> {
-        if let Some(frame_program) = &self.frame_program {
-            return Some(frame_program.clone());
+    fn resolved_frame_program(&self) -> Option<FrameProgram> {
+        if let Some(program) = self.frame_program.clone() {
+            return Some(program);
         }
 
-        if let Some(sparse) = &self.sparse_frame_index {
-            return Some(crate::core::logic::CardDatabase::sparse_entry_to_frame_program(
-                sparse,
-            ));
-        }
-
-        #[cfg(test)]
-        {
-            if !self.bytecode.is_empty() {
-                return Some(FrameProgram::from_bytecode(&self.bytecode));
-            }
+        if !self.bytecode.is_empty() {
+            return Some(FrameProgram::from_bytecode(&self.bytecode));
         }
 
         None
     }
 
-    pub fn bytecode_program(&self) -> BytecodeProgram {
-        let bytecode = self
-            .semantic_frame_program()
-            .map(|program| program.to_bytecode())
-            .unwrap_or_else(|| self.bytecode.clone());
-        BytecodeProgram::from_slice(&bytecode)
+    pub fn semantic_frame_program(&self) -> Option<FrameProgram> {
+        self.resolved_frame_program()
     }
 
     pub fn bytecode(&self) -> Vec<i32> {
-        self.semantic_frame_program()
-            .map(|program| program.to_bytecode())
-            .unwrap_or_else(|| self.bytecode.clone())
+        self.resolved_frame_program()
+            .map_or_else(|| self.bytecode.clone(), |frame_program| frame_program.to_bytecode())
     }
 
     pub fn get_frame(&self, frame_idx: usize) -> Option<AbilityFrame> {
-        self.semantic_frame_program()
-            .and_then(|program| program.frames.get(frame_idx).cloned())
+        self.frames().get(frame_idx).cloned()
     }
 
-    pub fn opcodes(&self) -> Vec<i32> {
-        self.semantic_frame_program()
-            .map(|program| program.frames.iter().map(AbilityFrame::opcode).collect())
-            .unwrap_or_else(|| {
-                self.bytecode_program()
-                    .decode_all()
-                    .into_iter()
-                    .map(|instruction| instruction.op)
-                    .collect()
-            })
+    pub fn frames(&self) -> Vec<AbilityFrame> {
+        self.resolved_frame_program()
+            .map_or_else(Vec::new, |frame_program| frame_program.frames)
+    }
+
+    pub fn get_modal_option_frames(&self, choice_idx: usize) -> Option<Vec<AbilityFrame>> {
+        // First try to find it in effects[0].modal_options (Standard authored modal)
+        if let Some(effect) = self.effects.first() {
+            if let Some(options) = effect.modal_options.as_array() {
+                if let Some(option) = options.get(choice_idx) {
+                    if let Some(effects) = option.as_array() {
+                        let mut frames = Vec::new();
+                        for effect_val in effects {
+                            if let Ok(e) = serde_json::from_value::<Effect>(effect_val.clone()) {
+                                frames.push(AbilityFrame::from_effect(&e));
+                            }
+                        }
+                        return Some(frames);
+                    }
+                }
+            }
+        }
+
+        // Fallback to top-level modal_options
+        if let Some(options) = self.modal_options.as_array() {
+            if let Some(option) = options.get(choice_idx) {
+                if let Some(effects) = option.as_array() {
+                    let mut frames = Vec::new();
+                    for effect_val in effects {
+                        if let Ok(e) = serde_json::from_value::<Effect>(effect_val.clone()) {
+                            frames.push(AbilityFrame::from_effect(&e));
+                        }
+                    }
+                    return Some(frames);
+                }
+            }
+        }
+
+        None
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::logic::interpreter::instruction::BytecodeProgram;
 
     #[test]
     fn frame_program_to_bytecode_roundtrips_through_fixed_layout_decoder() {
@@ -798,6 +1084,7 @@ mod tests {
                     slot: 9,
                 },
             ],
+            raw_program: None,
         };
 
         let words = program.to_bytecode();

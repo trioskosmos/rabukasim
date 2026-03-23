@@ -2,11 +2,15 @@ import os
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+from compiler.ability_compiler import AbilityCompiler
+from engine.models.ability import Ability
+from engine.models.generated_enums import TriggerType
 from tools import frame_codec as codec
 
 ROOT = Path(project_root)
@@ -61,32 +65,92 @@ class FrameCodecTests(unittest.TestCase):
 
         runtime_payload = codec.build_runtime_ability_index(payload, metadata)
         self.assertEqual(runtime_payload["schema"], "ability_frame_index.flat.v2")
-        self.assertNotIn("signature_source", runtime_payload["abilities"][0])
-        self.assertTrue(all("source_words" not in frame for frame in runtime_payload["abilities"][0]["frames"]))
+        self.assertIn("signature_source", runtime_payload["abilities"][0])
+        self.assertEqual(runtime_payload["abilities"][0]["frames"][0]["source_words"], [2, 1, 0, 0, 0])
 
-    def test_legacy_compiled_input_bootstraps_into_authored_frames(self) -> None:
+    def test_authored_input_normalizes_frame_metadata(self) -> None:
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
         trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
-        draw_opcode = int(metadata["opcodes"]["DRAW"])
-        return_opcode = int(metadata["opcodes"]["RETURN"])
 
-        compiled_data = {
-            "member_db": {
-                "card_a": {
-                    "card_no": "A-001",
-                    "name": "Bootstrap Card",
-                    "abilities": [
-                        {"trigger": trigger_id, "bytecode": [draw_opcode, 1, 0, 0, 0, return_opcode, 0, 0, 0, 0]}
-                    ],
+        authored_data = {
+            "summary": {"card_count": 1, "ability_count": 1},
+            "abilities": [
+                {
+                    "trigger_id": trigger_id,
+                    "frames": [{"op": "DRAW", "value": 1}, "Return"],
+                    "card_refs": [{"card_no": "A-001", "ability_index": 0}],
+                    "is_once_per_turn": True,
+                    "choice_flags": 4,
+                    "choice_count": 2,
                 }
-            }
+            ],
         }
 
-        payload = codec.build_compact_ability_index(compiled_data, metadata)
+        payload = codec.build_compact_ability_index(authored_data, metadata)
         entry = payload["abilities"][0]
         self.assertEqual(payload["schema"], "ability_frames.flat.v2")
-        self.assertEqual(entry["source_mode"], "legacy_bootstrap")
+        self.assertEqual(entry["source_mode"], "frame_authored")
         self.assertEqual([frame["op"] for frame in entry["frames"]], ["DRAW", "RETURN"])
+        self.assertTrue(entry["is_once_per_turn"])
+        self.assertEqual(entry["choice_flags"], 4)
+        self.assertEqual(entry["choice_count"], 2)
+
+    def test_ability_to_frame_program_prefers_existing_frames(self) -> None:
+        ability = Ability(
+            raw_text="authored",
+            trigger=TriggerType.CONSTANT,
+            effects=[],
+            frame_program={"frames": [{"op": "DRAW", "value": 1}, "Return"]},
+        )
+
+        with patch.object(Ability, "compile", side_effect=AssertionError("compile() should not run")):
+            frames = ability.to_frame_program()
+
+        self.assertEqual([frame["op"] if isinstance(frame, dict) else frame for frame in frames], ["DRAW", "Return"])
+
+    def test_compiler_compile_to_frames_uses_authored_source(self) -> None:
+        ability = Ability(
+            raw_text="authored",
+            trigger=TriggerType.CONSTANT,
+            effects=[],
+            frame_program={"frames": [{"op": "DRAW", "value": 1}, "Return"]},
+        )
+        compiler = AbilityCompiler()
+
+        with patch.object(compiler, "compile_to_bytecode", side_effect=AssertionError("bytecode path should not run")):
+            frames = compiler.compile_to_frames(ability)
+
+        self.assertEqual([frame["op"] if isinstance(frame, dict) else frame for frame in frames], ["DRAW", "Return"])
+
+    def test_bytecode_no_longer_drives_frame_program_generation(self) -> None:
+        ability = Ability(
+            raw_text="legacy",
+            trigger=TriggerType.CONSTANT,
+            effects=[],
+            frame_program={"frames": [{"op": "DRAW", "value": 1}, "Return"]},
+            bytecode=[999, 888, 777, 666, 555],
+        )
+
+        with patch.object(Ability, "compile", side_effect=AssertionError("compile() should not run")):
+            frames = ability.to_frame_program()
+
+        self.assertEqual([frame["op"] if isinstance(frame, dict) else frame for frame in frames], ["DRAW", "Return"])
+        self.assertEqual(ability.frame_program["frames"][0]["op"], "DRAW")
+
+    def test_compiler_compile_to_frames_uses_authored_frames_even_with_bytecode_present(self) -> None:
+        ability = Ability(
+            raw_text="legacy",
+            trigger=TriggerType.CONSTANT,
+            effects=[],
+            frame_program={"frames": [{"op": "DRAW", "value": 1}, "Return"]},
+            bytecode=[999, 888, 777, 666, 555],
+        )
+        compiler = AbilityCompiler()
+
+        with patch.object(compiler, "compile_to_bytecode", side_effect=AssertionError("bytecode path should not run")):
+            frames = compiler.compile_to_frames(ability)
+
+        self.assertEqual([frame["op"] if isinstance(frame, dict) else frame for frame in frames], ["DRAW", "Return"])
 
 
 if __name__ == "__main__":

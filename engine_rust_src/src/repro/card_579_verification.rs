@@ -75,16 +75,14 @@ fn test_card_579_ability_0_cost_comparison() {
         .iter()
         .find(|a| {
             matches!(a.trigger, TriggerType::OnLiveStart)
-                && a.semantic_frame_program()
-                    .map(|program| program.frames.iter().any(|frame| frame.opcode() == 16))
-                    .unwrap_or(false)
+                && a.frames().iter().any(|frame| frame.opcode() == 16)
         })
         .unwrap();
 
     writeln!(
         log_file,
         "Ability frames: {:?}",
-        ability.semantic_frame_program()
+        ability.frames()
     )
     .unwrap();
 

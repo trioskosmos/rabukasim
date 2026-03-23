@@ -17,12 +17,6 @@ from engine.models.ability import (
     TriggerType,
 )
 from engine.models.opcodes import Opcode
-from tools import bytecode_codec as ability_codec
-
-try:
-    from engine.game.numba_utils import JIT_AVAILABLE
-except ImportError:
-    JIT_AVAILABLE = False
 
 
 class EffectMixin:
@@ -118,7 +112,9 @@ class EffectMixin:
         p = self.players[player_id]
         cid = context.get("card_id", -1)
         self.current_resolving_ability = ability
-        self.current_resolving_ability_frame = getattr(ability, "sparse_frame_index", None)
+        self.current_resolving_ability_frame = getattr(ability, "frame_program", None) or getattr(
+            ability, "sparse_frame_index", None
+        )
         area = context.get("area", -1)
         if area >= 0 and p.stage[area] >= 0:
             cid = p.stage[area]
@@ -174,39 +170,15 @@ class EffectMixin:
                 }
                 return
 
-        # Prefer the frame program path first. If we cannot resolve a frame
-        # program, fall back to semantic compilation rather than stored bytecode.
-        frame_program = getattr(ability, "frame_program", None)
-        bytecode = []
-        if isinstance(frame_program, dict) and frame_program.get("frames"):
-            try:
-                bytecode = ability_codec.model_to_bytecode(
-                    ability_codec.frame_program_to_model(frame_program)
-                )
-            except Exception:
-                bytecode = []
-        if not bytecode:
-            sparse_frame_index = getattr(ability, "sparse_frame_index", None)
-            if isinstance(sparse_frame_index, dict) and sparse_frame_index.get("frames"):
-                try:
-                    bytecode = ability_codec.model_to_bytecode(
-                        ability_codec.frame_program_to_model(sparse_frame_index)
-                    )
-                except Exception:
-                    bytecode = []
-
-        if bytecode:
-            self.pending_effects.insert(0, bytecode)
-        elif JIT_AVAILABLE and hasattr(self, "fast_mode") and self.fast_mode:
-            bytecode = ability.compile()
-            self.pending_effects.insert(0, bytecode)
-        else:
-            total = len(ability.effects)
-            for i, phase_effect in enumerate(reversed(ability.effects)):
-                step = total - i
-                # COPY effect to prevent mutation of shared objects
-                eff_copy = copy.copy(phase_effect)
-                self.pending_effects.insert(0, ResolvingEffect(eff_copy, cid, step, total))
+        # The legacy Python runtime no longer regenerates bytecode from frames.
+        # Resolve through the semantic effect list instead, which remains the
+        # compatibility path while the Rust engine is the active executor.
+        total = len(ability.effects)
+        for i, phase_effect in enumerate(reversed(ability.effects)):
+            step = total - i
+            # COPY effect to prevent mutation of shared objects
+            eff_copy = copy.copy(phase_effect)
+            self.pending_effects.insert(0, ResolvingEffect(eff_copy, cid, step, total))
         while self.pending_effects and not self.pending_choices:
             pass
             self._resolve_pending_effect(0, context=context)

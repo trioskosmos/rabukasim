@@ -13,6 +13,26 @@ use rabuka_launcher::handlers::route_request;
 use rabuka_launcher::utils::get_local_ip;
 use rabuka_launcher::{Assets};
 
+fn snapshot_is_valid(db: &CardDatabase) -> bool {
+    !db.members.is_empty() && !db.lives.is_empty()
+}
+
+fn binary_snapshot_is_stale(bin_path: &str, json_path: &str) -> bool {
+    let bin_meta = match std::fs::metadata(bin_path) {
+        Ok(meta) => meta,
+        Err(_) => return true,
+    };
+    let json_meta = match std::fs::metadata(json_path) {
+        Ok(meta) => meta,
+        Err(_) => return false,
+    };
+
+    match (bin_meta.modified(), json_meta.modified()) {
+        (Ok(bin_time), Ok(json_time)) => bin_time < json_time,
+        _ => false,
+    }
+}
+
 
 fn main() {
     let start_time = std::time::SystemTime::now()
@@ -31,14 +51,26 @@ fn main() {
 
     println!("Loading card database...");
     let bin_path = "../data/cards_compiled.bin";
+    let json_path = "../data/cards_compiled.json";
+    let stale_binary = binary_snapshot_is_stale(bin_path, json_path);
 
     let mut need_new_snapshot = false;
     let card_db = match std::fs::read(bin_path) {
         Ok(bin_data) => {
             match CardDatabase::from_binary(&bin_data) {
                 Ok(db) => {
-                    println!("[DB] Loaded from binary snapshot (FAST)");
-                    db
+                    if !stale_binary && snapshot_is_valid(&db) {
+                        println!("[DB] Loaded from binary snapshot (FAST)");
+                        db
+                    } else {
+                        if stale_binary {
+                            println!("[DB] Binary snapshot is older than JSON, reloading from JSON...");
+                        } else {
+                            println!("[DB] Binary snapshot is missing member/live cards, reloading from JSON...");
+                        }
+                        need_new_snapshot = true;
+                        load_db_from_json()
+                    }
                 },
                 Err(e) => {
                     println!("[DB] Binary load failed, falling back to JSON: {}", e);

@@ -1,7 +1,7 @@
 use super::card_db::{CardDatabase, MemberCard};
 use super::game::GameState;
 use crate::core::logic::interpreter::check_condition;
-use crate::core::logic::interpreter::conditions::resolve_count;
+use crate::core::logic::interpreter::conditions::{check_condition_frame, resolve_count};
 use std::cell::Cell;
 
 use crate::core::enums::*;
@@ -33,6 +33,49 @@ pub struct BoardAura {
 
 thread_local! {
     static ON_DEMAND_AURA_QUERY: Cell<bool> = const { Cell::new(false) };
+}
+
+fn ability_conditions_met(
+    state: &GameState,
+    db: &CardDatabase,
+    player_idx: usize,
+    ab: &Ability,
+    ctx: &AbilityContext,
+) -> bool {
+    let frames = ab.frames();
+    if frames.is_empty() {
+        return ab
+            .conditions
+            .iter()
+            .all(|condition| check_condition(state, db, player_idx, condition, ctx, 1));
+    }
+
+    let mut saw_condition = false;
+    for frame in &frames {
+        let frame_data = frame.components();
+        let has_raw_condition = frame_data
+            .params
+            .and_then(|value| value.as_object())
+            .map(|params| params.get("raw_cond").is_some() || params.get("RAW_COND").is_some())
+            .unwrap_or(false);
+        let is_condition = has_raw_condition
+            || (frame_data.opcode >= CONDITION_START_1 && frame_data.opcode <= CONDITION_END_1)
+            || (frame_data.opcode >= CONDITION_START_2 && frame_data.opcode <= CONDITION_END_2);
+
+        if !is_condition {
+            if saw_condition {
+                break;
+            }
+            continue;
+        }
+
+        saw_condition = true;
+        if !check_condition_frame(state, db, &frame_data, ctx, 1) {
+            return false;
+        }
+    }
+
+    true
 }
 
 fn get_query_aura(
@@ -129,15 +172,109 @@ fn apply_reduce_cost_modifiers(
     ctx: &AbilityContext,
     depth: u32,
 ) {
-    if !ab
-        .conditions
-        .iter()
-        .all(|c| check_condition(state, db, p_idx, c, ctx, depth + 1))
-    {
+    if !ability_conditions_met(state, db, p_idx, ab, ctx) {
         return;
     }
 
-    if !ab.preparsed_modifiers.is_empty() {
+    let mut frame_idx = 0;
+    let mut applied_any_frame = false;
+    loop {
+        let Some(frame) = ab.get_frame(frame_idx) else {
+            break;
+        };
+        frame_idx += 1;
+
+        let op = frame.opcode();
+        if op != O_REDUCE_COST && op != O_INCREASE_COST {
+            continue;
+        }
+
+        applied_any_frame = true;
+        let val = frame.value();
+        let frame_data = frame.components();
+
+        let mut multiplier = 1;
+        let per_card = frame_data
+            .params
+            .and_then(|value| value.as_object())
+            .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
+            .and_then(|value| value.as_str())
+            .map(|value| value.to_ascii_uppercase());
+
+        if frame_data.slot.is_dynamic || frame_data.filter.compare_accumulated || per_card.is_some()
+        {
+            let count_op = if let Some(ref per_card) = per_card {
+                match per_card.as_str() {
+                    "HAND" => C_COUNT_HAND,
+                    "DISCARD" | "DISCARD_COUNT" => C_COUNT_DISCARD,
+                    "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => C_COUNT_SUCCESS_LIVE,
+                    "STAGE" => C_COUNT_STAGE,
+                    _ => 0,
+                }
+            } else {
+                match frame_data.slot.source_zone {
+                    Zone::Hand => C_COUNT_HAND,
+                    Zone::Discard => C_COUNT_DISCARD,
+                    Zone::Stage => C_COUNT_STAGE,
+                    Zone::SuccessPile => C_COUNT_SUCCESS_LIVE,
+                    _ => 0,
+                }
+            };
+
+            if count_op != 0 {
+                multiplier = resolve_count(
+                    state,
+                    db,
+                    count_op,
+                    frame_data.raw_attr,
+                    frame_data.raw_slot,
+                    ctx,
+                    depth + 1,
+                );
+                if op == O_REDUCE_COST
+                    && frame_data.filter.special_id == 0
+                    && frame_data.raw_attr == 0
+                    && multiplier > 0
+                {
+                    let owner_idx = if frame_data.slot.is_opponent {
+                        1 - p_idx
+                    } else {
+                        p_idx
+                    };
+                    let source_card_id = ctx.source_card_id;
+                    let source_is_counted = match frame_data.slot.source_zone {
+                        Zone::Hand => state.players[owner_idx]
+                            .hand
+                            .iter()
+                            .any(|&id| id == source_card_id),
+                        Zone::Stage => state.players[owner_idx]
+                            .stage
+                            .iter()
+                            .any(|&id| id == source_card_id),
+                        Zone::Discard => state.players[owner_idx]
+                            .discard
+                            .iter()
+                            .any(|&id| id == source_card_id),
+                        Zone::SuccessPile => state.players[owner_idx]
+                            .success_lives
+                            .iter()
+                            .any(|&id| id == source_card_id),
+                        _ => false,
+                    };
+                    if source_is_counted {
+                        multiplier -= 1;
+                    }
+                }
+            }
+        }
+        if op == O_REDUCE_COST {
+            *cost -= val * multiplier;
+        } else {
+            *cost += val * multiplier;
+        }
+    }
+
+    if !applied_any_frame && !ab.preparsed_modifiers.is_empty() {
         for pm in &ab.preparsed_modifiers {
             if (pm.op == O_REDUCE_COST || pm.op == O_INCREASE_COST)
                 && ((pm.slot as u32) & 0xFF == 0 || (pm.slot as u32) & 0xFF == 4)
@@ -162,47 +299,6 @@ fn apply_reduce_cost_modifiers(
                 }
             }
         }
-        return;
-    }
-
-    let mut frame_idx = 0;
-    loop {
-        let Some(frame) = ab.get_frame(frame_idx) else {
-            break;
-        };
-        frame_idx += 1;
-
-        let op = frame.opcode();
-        if op != O_REDUCE_COST && op != O_INCREASE_COST {
-            continue;
-        }
-
-        let val = frame.value();
-        let attr = frame.attr();
-        let slot = frame.slot();
-
-        if ((slot as u32) & 0xFF) != 0 && ((slot as u32) & 0xFF) != 4 {
-            continue;
-        }
-
-        let mut multiplier = 1;
-        if (attr & DYNAMIC_VALUE) != 0 {
-            let count_op = (slot >> 8) & 0xFFFF;
-            multiplier = resolve_count(
-                state,
-                db,
-                count_op as i32,
-                attr & !DYNAMIC_VALUE,
-                slot,
-                ctx,
-                depth + 1,
-            );
-        }
-        if op == O_REDUCE_COST {
-            *cost -= val * multiplier;
-        } else {
-            *cost += val * multiplier;
-        }
     }
 }
 
@@ -217,12 +313,7 @@ fn apply_external_reduce_cost_modifiers(
     target_card_id: i32,
     depth: u32,
 ) {
-    if ab.filters.is_empty()
-        || !ab
-            .conditions
-            .iter()
-            .all(|c| check_condition(state, db, p_idx, c, ctx, depth + 1))
-    {
+    if ab.filters.is_empty() || !ability_conditions_met(state, db, p_idx, ab, ctx) {
         return;
     }
 
@@ -248,14 +339,12 @@ fn apply_external_reduce_cost_modifiers(
         return;
     }
 
-    if let Some(frame_program) = ab.frame_program.as_ref() {
-        for frame in &frame_program.frames {
-            let op = frame.opcode();
-            if op == O_REDUCE_COST {
-                *cost -= frame.value();
-            } else if op == O_INCREASE_COST {
-                *cost += frame.value();
-            }
+    for frame in ab.frames() {
+        let op = frame.opcode();
+        if op == O_REDUCE_COST {
+            *cost -= frame.value();
+        } else if op == O_INCREASE_COST {
+            *cost += frame.value();
         }
     }
 }
@@ -717,11 +806,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 ..Default::default()
             };
 
-            if !ab
-                .conditions
-                .iter()
-                .all(|c| check_condition(state, db, player_idx, c, &ctx, 1))
-            {
+            if !ability_conditions_met(state, db, player_idx, ab, &ctx) {
                 if state.debug.debug_mode && !state.ui.silent {
                     println!(
                         "[DEBUG] calculate_board_aura: ability {} on cid {} failed conditions",
@@ -863,11 +948,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 ..Default::default()
             };
 
-            if !ab
-                .conditions
-                .iter()
-                .all(|c| check_condition(state, db, player_idx, c, &ctx, 1))
-            {
+            if !ability_conditions_met(state, db, player_idx, ab, &ctx) {
                 continue;
             }
 

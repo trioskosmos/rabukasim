@@ -108,6 +108,20 @@ pub fn translate_card_name(jp_name: &str, lang: &str) -> String {
     jp_name.to_string()
 }
 
+fn derived_card_text_from_abilities(abilities: &[Ability], fallback: &str) -> String {
+    if !fallback.trim().is_empty() {
+        return fallback.to_string();
+    }
+
+    abilities
+        .iter()
+        .map(|ab| ab.raw_text.trim())
+        .filter(|text| !text.is_empty())
+        .map(|text| text.to_string())
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 pub fn get_filter_description(filter_attr: u64, lang: &str) -> String {
     if filter_attr == 0 { return String::new(); }
     let mut parts: Vec<String> = Vec::new();
@@ -1405,7 +1419,7 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool, lang: &str) -
     let (name, ability, ability_en, rare, img) = if let Some(m) = member {
         (
             m.name.clone(),
-            m.original_text.clone(),
+            derived_card_text_from_abilities(&m.abilities, &m.original_text),
             m.original_text_en.clone(),
             "M".to_string(),
             m.img_path.clone(),
@@ -1413,7 +1427,7 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool, lang: &str) -
     } else if let Some(l) = live {
         (
             l.name.clone(),
-            l.original_text.clone(),
+            derived_card_text_from_abilities(&l.abilities, &l.original_text),
             l.original_text_en.clone(),
             "LIVE".to_string(),
             l.img_path.clone(),

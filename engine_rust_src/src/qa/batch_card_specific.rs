@@ -1161,13 +1161,13 @@ mod tests {
             state.players[0].stage[1], emma_id,
             "Emma should be on stage"
         );
-        // NOTE: Cost calculation currently results in 11 energy tapped instead of expected 13 (15 - 2 baton).
-        // This may indicate a bug in cost reduction logic or a test expectation mismatch.
-        // TODO: Investigate cost reduction with baton touch interaction
+        // Verified behavior: Emma's own constant reduction applies while the
+        // tapped member is still on stage, then Baton Touch reduces the final
+        // play payment to 13.
         assert_eq!(
             state.players[0].tapped_energy_mask.count_ones(),
-            11,
-            "Current behavior: 11 energy tapped"
+            13,
+            "Baton Touch play should tap 13 energy after Emma's hand reduction"
         );
 
         assert!(

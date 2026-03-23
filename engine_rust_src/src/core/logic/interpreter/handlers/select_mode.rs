@@ -83,6 +83,25 @@ pub fn handle_select_mode(
             choice = 1 - choice;
         }
     }
+
+    // AUTHORED MODAL FALLBACK
+    // If we have modal_options in the Ability object, use those instead of calculating jump offsets.
+    if let Some(ability) = if ctx.source_card_id >= 0 {
+        db.get_member(ctx.source_card_id)
+            .map(|m| &m.abilities[ctx.ability_index as usize])
+            .or_else(|| {
+                db.get_live(ctx.source_card_id)
+                    .map(|l| &l.abilities[ctx.ability_index as usize])
+            })
+    } else {
+        None
+    } {
+        if let Some(new_frames) = ability.get_modal_option_frames(choice) {
+            ctx.choice_index = -1;
+            return HandlerResult::BranchToFrames(new_frames);
+        }
+    }
+
     if choice >= v as usize {
         ctx.choice_index = -1;
         return HandlerResult::Branch(frame_idx + 1 + ((v as usize).saturating_sub(1)));

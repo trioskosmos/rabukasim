@@ -3,28 +3,27 @@ import json
 import os
 
 OPCODES = {
-    1: " ",  # O_RETURN (skip)
-    10: "draw_cards({p}, {v} as u32);",  # O_DRAW
-    11: "players[{p}].blade_buffs[{s}] += {v};",  # O_BLADES
-    12: "players[{p}].heart_buffs[{s}].add_to_color({a} as usize, {v} as i32);",  # O_HEARTS
-    13: "players[{p}].cost_reduction += {v};",  # O_REDUCE_COST
-    16: "players[{p}].live_score_bonus += {v};",  # O_BOOST
-    18: "players[{p}].blade_buffs[{s}] += {v};",  # O_BUFF
-    23: "draw_energy_cards({p}, {v});",  # O_CHARGE
-    37: "players[{p}].score = {v} as u32;",  # O_SET_SCORE
-    39: "players[{p}].color_transforms.push(({a} as u8, {s} as u8));",
-    43: "set_member_tapped({p}, {s}, false);",  # O_ACTIVATE_MEMBER
-    49: "players[{p}].live_score_bonus += {v};",  # O_MODIFY_SCORE_RULE
-    51: "set_member_tapped({p}, {s}, true);",  # O_SET_TAPPED
-    64: "pay_energy({p}, {v});",  # O_PAY_ENERGY
-    81: "activate_energy({p}, {v});",  # O_ACTIVATE_ENERGY
+    "DRAW": "draw_cards({p}, {v} as u32);",
+    "ADD_BLADES": "players[{p}].blade_buffs[{s}] += {v};",
+    "ADD_HEARTS": "players[{p}].heart_buffs[{s}].add_to_color({a} as usize, {v} as i32);",
+    "REDUCE_COST": "players[{p}].cost_reduction += {v};",
+    "BOOST_SCORE": "players[{p}].live_score_bonus += {v};",
+    "BUFF": "players[{p}].blade_buffs[{s}] += {v};",
+    "ENERGY_CHARGE": "draw_energy_cards({p}, {v});",
+    "SET_SCORE": "players[{p}].score = {v} as u32;",
+    "TRANSFORM_COLOR": "players[{p}].color_transforms.push(({a} as u8, {s} as u8));",
+    "ACTIVATE_MEMBER": "set_member_tapped({p}, {s}, false);",
+    "MODIFY_SCORE_RULE": "players[{p}].live_score_bonus += {v};",
+    "SET_TAPPED": "set_member_tapped({p}, {s}, true);",
+    "PAY_ENERGY": "pay_energy({p}, {v});",
+    "ACTIVATE_ENERGY": "activate_energy({p}, {v});",
 }
 
 
 def generate_rust():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
-    db_path = os.path.join(project_root, "data", "cards_compiled.json")
+    db_path = os.path.join(project_root, "data", "ability_frames.json")
     out_path = os.path.join(project_root, "engine_rust_src", "src", "core", "hardcoded.rs")
 
     with open(db_path, "r", encoding="utf-8") as f:
@@ -42,116 +41,94 @@ def generate_rust():
     out.append("    match (card_id, ab_idx) {")
 
     count = 0
-    for cid_str, card in db["member_db"].items():
-        cid = int(cid_str)
-        for i, ab in enumerate(card["abilities"]):
-            bc = ab["bytecode"]
-            if not bc:
-                continue
+    for entry in db.get("abilities", []):
+        card_refs = entry.get("card_refs", [])
+        frames = entry.get("frames", [])
+        if not card_refs or not frames:
+            continue
 
-            # Blacklist complex opcodes
-            complex_ops = {
-                14,
-                15,
-                17,
-                19,
-                20,
-                21,
-                22,
-                24,
-                25,
-                26,
-                27,
-                28,
-                30,
-                31,
-                32,
-                33,
-                34,
-                35,
-                36,
-                38,
-                40,
-                41,
-                42,
-                44,
-                45,
-                46,
-                47,
-                48,
-                50,
-                52,
-                53,
-                57,
-                58,
-                60,
-                61,
-                62,
-                63,
-                66,
-                69,
-                70,
-                72,
-                74,
-                75,
-                76,
-            }
-            is_complex = any(op in complex_ops for op in bc[::5])
-            if len(bc) > 30 or is_complex or 2 in bc[::5] or 3 in bc[::5]:
-                continue
+        # Keep the generator conservative. Anything with control flow or
+        # non-trivial semantic frames should fall back to the interpreter.
+        complex_ops = {
+            "JUMP",
+            "JUMP_IF_FALSE",
+            "LOOK_AND_CHOOSE",
+            "SELECT_MODE",
+            "COLOR_SELECT",
+            "ORDER_DECK",
+            "MOVE_TO_DECK",
+            "MOVE_TO_DISCARD",
+            "PLAY_MEMBER_FROM_HAND",
+            "HAS_KEYWORD",
+            "GROUP_FILTER",
+            "COUNT_STAGE",
+            "COUNT_CARDS",
+            "SUM_VALUE",
+            "META_RULE",
+        }
 
-            if len(bc) % 5 != 0:
-                print(f"Warning: Skipping card {cid} ab {i} due to malformed bytecode length {len(bc)}")
+        simple_frames = []
+        valid = True
+        for frame in frames:
+            op = str(frame.get("op") or frame.get("opcode") or frame.get("opcode_name") or frame.get("kind") or "").upper()
+            if not op or op == "RETURN":
                 continue
+            if op in complex_ops:
+                valid = False
+                break
+            if op not in OPCODES:
+                valid = False
+                break
+            if bool(frame.get("negated") or frame.get("is_negated")):
+                valid = False
+                break
 
+            slot = frame.get("slot", {})
+            target_slot = slot.get("target_slot") if isinstance(slot, dict) else None
+            if target_slot not in (0, 1, 2, 3, 4, 10):
+                valid = False
+                break
+
+            simple_frames.append(frame)
+
+        if valid and simple_frames:
             rust_lines = []
-            valid = True
-            for j in range(0, len(bc), 5):
-                # Bytecode Layout V1: [Op, Value, AttrLow, AttrHigh, Slot]
-                op, v, a_low, a_high, s = bc[j : j + 5]
-                a = a_low # Use AttrLow for the simple hardcoded logic
-                if op == 0:
-                    continue
-
-                # Handle negations (mapped in resolve_bytecode as op + 1000)
-                real_op = op
-                if real_op >= 1000:
-                    valid = False
-                    break
-
-                # Hardcoded output only supports plain slot literals or the ctx target sentinel.
-                # Packed slot words can carry encoded flags; those should fall back to the interpreter.
-                if s not in (0, 1, 2, 3, 4, 10):
-                    valid = False
-                    break
-
-                slot = "ctx.target_slot as usize" if s == 10 else f"{s} as usize"
-
-                if real_op in OPCODES:
-                    line = OPCODES[real_op].format(p="p_idx", v=v, a=a, s=slot)
-                    rust_lines.append(line)
-                    if real_op == 1:
-                        break
+            for frame in simple_frames:
+                op = str(frame.get("op")).upper()
+                value = frame.get("value", 0)
+                if not isinstance(value, int):
+                    value = 0
+                attr = frame.get("attr", {})
+                if isinstance(attr, int):
+                    a = attr
+                elif isinstance(attr, dict):
+                    a = int(attr.get("heart_color", attr.get("color", attr.get("color_index", attr.get("attr", 0)))))
                 else:
-                    valid = False
-                    break
+                    a = 0
+                slot = frame.get("slot", {})
+                target_slot = slot.get("target_slot") if isinstance(slot, dict) else 0
+                slot_expr = "ctx.target_slot as usize" if target_slot == 10 else f"{int(target_slot)} as usize"
+                line = OPCODES[op].format(p="p_idx", v=value, a=a, s=slot_expr)
+                rust_lines.append(line)
 
-            if valid and rust_lines:
-                out.append(f"        ({cid}, {i}) => {{")
-                pseudo = " ".join((ab.get("pseudocode") or "").strip().splitlines())
-                raw_text = " ".join((ab.get("raw_text") or "").strip().splitlines())
-                if pseudo:
-                    out.append(f"            // pseudocode: {pseudo}")
-                elif raw_text:
-                    out.append(f"            // raw_text: {raw_text}")
-                for line in rust_lines:
-                    line = line.strip()
-                    if not line:
+            if rust_lines:
+                pseudo = " ".join((entry.get("pseudocode") or "").strip().splitlines())
+                for card_ref in card_refs:
+                    if not isinstance(card_ref, dict):
                         continue
-                    out.append(f"            state.{line}")
-                out.append("            true")
-                out.append("        },")
-                count += 1
+                    card_id = card_ref.get("card_id")
+                    ability_index = card_ref.get("ability_index")
+                    if not isinstance(card_id, int) or not isinstance(ability_index, int):
+                        continue
+
+                    out.append(f"        ({card_id}, {ability_index}) => {{")
+                    if pseudo:
+                        out.append(f"            // pseudocode: {pseudo}")
+                    for line in rust_lines:
+                        out.append(f"            state.{line.strip()}")
+                    out.append("            true")
+                    out.append("        },")
+                    count += 1
 
     out.append("        _ => false,")
     out.append("    }")

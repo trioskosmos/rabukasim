@@ -42,6 +42,17 @@ class UnifiedDeckParser:
         """Normalize card codes for matching."""
         if not code:
             return ""
+        normalized = []
+        for ch in code.strip():
+            if ch in {" ", "\u3000"}:
+                continue
+            if ch in {"＋", "﹢", "⁺"}:
+                normalized.append("+")
+            elif ch in {"－", "—", "–", "―", "−", "ー"}:
+                normalized.append("-")
+            else:
+                normalized.append(ch)
+        return "".join(normalized).upper()
         return code.strip().replace("＋", "+").replace("－", "-").replace("ー", "-").upper()
 
     def resolve_card(self, code_or_id: str) -> Dict:

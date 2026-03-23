@@ -46,7 +46,7 @@ pub fn handle_score_hearts(
             return state_score_bonus::handle_boost_score(state, db, ctx, frame, p_idx, target_p);
         }
         O_REDUCE_COST => {
-            return state_score_bonus::handle_reduce_cost(state, ctx, frame, p_idx, v);
+            return state_score_bonus::handle_reduce_cost(state, db, ctx, frame, p_idx, v);
         }
         O_SET_SCORE => {
             return state_score_bonus::handle_set_score(state, db, ctx, target_p, v);
@@ -108,7 +108,10 @@ pub fn handle_score_hearts(
         }
         O_INCREASE_HEART_COST => {
             return state_score_requirements::handle_increase_heart_cost(
-                state, ctx, p_idx, s as i64, v,
+                state,
+                ctx,
+                p_idx,
+                &frame_data,
             );
         }
         O_SET_HEART_COST => {

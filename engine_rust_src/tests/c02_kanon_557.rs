@@ -40,6 +40,7 @@ fn test_kanon_557_repro() {
             },
             AbilityFrame::Return,
         ],
+        raw_program: None,
     });
     kanon.abilities.push(ab);
     db.members.insert(kanon_id, kanon);

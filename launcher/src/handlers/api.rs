@@ -15,7 +15,7 @@ use engine_rust::core::mcts::{MCTS, SearchHorizon};
 // Removed unused Request types from import
 use crate::models::{AppState, Room, CreateRoomReq, JoinRoomReq, ActionReq, UploadDeckReq, SetDeckReq};
 use crate::serialization::{serialize_state_rich, get_action_desc_rich};
-use crate::utils::{parse_body, generate_room_code, get_header, resolve_deck, get_random_valid_deck, parse_deck_content, load_named_deck, normalize_code};
+use crate::utils::{parse_body, generate_room_code, get_header, resolve_deck, get_random_valid_deck, parse_deck_content, load_named_deck, normalize_card_code};
 use crate::Decks;
 
 const MAX_HISTORY_SNAPSHOTS: usize = 100;
@@ -1225,21 +1225,21 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
             let mut registry = HashMap::new();
 
             for m in state.card_db.members.values() {
-                registry.insert(normalize_code(&m.card_no), json!({
+                registry.insert(normalize_card_code(&m.card_no), json!({
                     "name": m.name,
                     "type": "member",
                     "img": m.img_path
                 }));
             }
             for l in state.card_db.lives.values() {
-                registry.insert(normalize_code(&l.card_no), json!({
+                registry.insert(normalize_card_code(&l.card_no), json!({
                     "name": l.name,
                     "type": "live",
                     "img": l.img_path
                 }));
             }
             for e in state.card_db.energy_db.values() {
-                registry.insert(normalize_code(&e.card_no), json!({
+                registry.insert(normalize_card_code(&e.card_no), json!({
                     "name": e.name,
                     "type": "energy",
                     "img": e.img_path

@@ -7,73 +7,52 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from tools import bytecode_codec as codec
+from tools import bytecode_codec as legacy_codec
+from tools import frame_codec as codec
 
 ROOT = Path(project_root)
 
 
 class ConsolidateAbilitiesTests(unittest.TestCase):
-    def test_groups_same_trigger_and_bytecode_together(self) -> None:
+    def test_normalizes_authored_frames_and_preserves_card_refs(self) -> None:
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
         trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
-        opcode_id = int(metadata["opcodes"]["SELECT_MODE"])
 
-        compiled_data = {
-            "member_db": {
-                "card_a": {
-                    "card_no": "A-001",
-                    "name": "Card A",
-                    "abilities": [
-                        {"trigger": trigger_id, "bytecode": [opcode_id, 1, 0, 0, 1], "pseudocode": "A"},
-                        {"trigger": trigger_id, "bytecode": [opcode_id, 2, 0, 0, 1], "pseudocode": "B"},
+        authored_data = {
+            "summary": {"card_count": 2, "ability_count": 2},
+            "abilities": [
+                {
+                    "trigger_id": trigger_id,
+                    "frames": [{"op": "SELECT_MODE", "value": 2}, "Return"],
+                    "pseudocode": "A",
+                    "cards": ["A-001 | Card A [member_db:1] (ab#0 ON_LIVE_START)", "A-002 | Card B [member_db:2] (ab#0 ON_LIVE_START)"],
+                    "card_refs": [
+                        {"card_no": "A-001", "ability_index": 0, "db": "member_db", "card_id": 1, "name": "Card A", "trigger": "ON_LIVE_START"},
+                        {"card_no": "A-002", "ability_index": 0, "db": "member_db", "card_id": 2, "name": "Card B", "trigger": "ON_LIVE_START"},
                     ],
                 },
-                "card_b": {
-                    "card_no": "A-002",
-                    "name": "Card B",
-                    "abilities": [
-                        {"trigger": trigger_id, "bytecode": [opcode_id, 1, 0, 0, 1], "pseudocode": "A"},
-                    ],
+                {
+                    "trigger_id": int(metadata["triggers"]["CONSTANT"]),
+                    "frames": [{"op": "RETURN"}],
+                    "card_refs": [{"card_no": "A-003", "ability_index": 0}],
                 },
-                "card_c": {
-                    "card_no": "A-003",
-                    "name": "Card C",
-                    "abilities": [
-                        {"trigger": int(metadata["triggers"]["CONSTANT"]), "bytecode": [opcode_id, 1, 0, 0, 1]},
-                    ],
-                },
-            }
+            ],
         }
 
-        payload = codec.build_sparse_ability_index(compiled_data, metadata)
-        self.assertEqual(payload["summary"]["card_count"], 3)
-        self.assertEqual(payload["summary"]["ability_count"], 4)
-        self.assertEqual(payload["summary"]["unique_ability_count"], 3)
+        payload = codec.build_compact_ability_index(authored_data, metadata)
+        self.assertEqual(payload["summary"]["card_count"], 2)
+        self.assertEqual(payload["summary"]["ability_count"], 2)
+        self.assertEqual(payload["summary"]["unique_ability_count"], 2)
 
-        grouped = {
-            entry["signature"]: entry
-            for entry in payload["abilities"]
-        }
-        same_signature = next(
-            entry["signature"]
-            for entry in payload["abilities"]
-            if entry["trigger"] == "ON_LIVE_START" and entry["frames"][0]["opcode_id"] == opcode_id
-        )
-        self.assertEqual(len(grouped[same_signature]["cards"]), 2)
-        # cards are formatted strings like "A-001 | Card A [...] (ab#0 ON_LIVE_START)"
-        card_strings = grouped[same_signature]["cards"]
-        self.assertTrue(any("Card A" in c for c in card_strings))
-        self.assertTrue(any("Card B" in c for c in card_strings))
-        self.assertTrue(grouped[same_signature]["round_trip_matches"])
-        self.assertIn("frames", grouped[same_signature])
-        self.assertTrue(all("opcode" in frame for frame in grouped[same_signature]["frames"]))
-        self.assertEqual(grouped[same_signature]["opcode_sequence"], ["SELECT_MODE"])
-        self.assertEqual(grouped[same_signature]["rust_opcode_sequence"], ["O_SELECT_MODE"])
-        self.assertTrue(grouped[same_signature]["card_refs"])
-        self.assertEqual(grouped[same_signature]["card_refs"][0]["card_no"], "A-001")
+        entry = next(item for item in payload["abilities"] if item["trigger"] == "ON_LIVE_START")
+        self.assertEqual(len(entry["cards"]), 2)
+        self.assertEqual(len(entry["card_refs"]), 2)
+        self.assertEqual(entry["opcode_sequence"], ["SELECT_MODE", "RETURN"])
+        self.assertEqual(entry["rust_opcode_sequence"], ["O_SELECT_MODE", "O_RETURN"])
+        self.assertEqual(entry["card_refs"][0]["card_no"], "A-001")
 
     def test_frame_to_sparse_omits_zero_fields(self) -> None:
-        sparse = codec.frame_to_sparse(
+        sparse = legacy_codec.frame_to_sparse(
             {
                 "opcode_name": "SET_HEART_COST",
                 "payload": {
@@ -93,27 +72,40 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
         trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
 
-        compiled_data = {
-            "live_db": {
-                "card_x": {
-                    "card_no": "TST-200",
-                    "name": "Compact Frame Card",
-                    "abilities": [
-                        {
-                            "trigger": trigger_id,
-                            "bytecode": [int(metadata["opcodes"]["DRAW"]), 1, 0, 0, int(metadata["slot_indices"]["CONTEXT"]), int(metadata["opcodes"]["RETURN"]), 0, 0, 0, 0],
-                        }
+        authored_data = {
+            "summary": {"card_count": 1, "ability_count": 1},
+            "abilities": [
+                {
+                    "trigger_id": trigger_id,
+                    "frames": [
+                        {"op": "DRAW", "value": 1, "slot": {"target_slot": int(metadata["slot_indices"]["CONTEXT"])}},
+                        "Return",
                     ],
+                    "card_refs": [{"card_no": "TST-200", "ability_index": 0}],
                 }
-            }
+            ],
         }
 
-        payload = codec.build_compact_ability_index(compiled_data, metadata)
+        payload = codec.build_compact_ability_index(authored_data, metadata)
         entry = payload["abilities"][0]
-        self.assertEqual(payload["schema"], "ability_frames.flat.v1")
+        self.assertEqual(payload["schema"], "ability_frames.flat.v2")
         self.assertTrue(all("op" in frame for frame in entry["frames"]))
-        rebuilt = codec.model_to_bytecode({"frames": entry["frames"]}, metadata)
-        self.assertEqual(rebuilt, compiled_data["live_db"]["card_x"]["abilities"][0]["bytecode"])
+        rebuilt = legacy_codec.model_to_bytecode({"frames": entry["frames"]}, metadata)
+        self.assertEqual(
+            rebuilt,
+            [
+                int(metadata["opcodes"]["DRAW"]),
+                1,
+                0,
+                0,
+                int(metadata["slot_indices"]["CONTEXT"]),
+                int(metadata["opcodes"]["RETURN"]),
+                0,
+                0,
+                0,
+                0,
+            ],
+        )
 
 
 if __name__ == "__main__":

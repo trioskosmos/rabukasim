@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Sync the runtime ability frame index from the editable frame source."""
+"""Sync the runtime ability frame index from authored ability frame data."""
 
 import argparse
 import os
@@ -20,8 +20,8 @@ DEFAULT_OUTPUT_PATH = ROOT_DIR / "data" / "ability_frame_index.json"
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build the runtime ability frame index from the authored frame source")
-    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT_PATH, help="Editable semantic ability JSON")
+    parser = argparse.ArgumentParser(description="Build the runtime ability frame index from authored frame data")
+    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT_PATH, help="Authored ability frame JSON")
     parser.add_argument("--metadata", type=Path, default=DEFAULT_METADATA_PATH, help="Metadata JSON")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT_PATH, help="Runtime ability frame index JSON")
     return parser.parse_args()

@@ -178,6 +178,7 @@ impl FrameBuilder {
     pub fn build_prog(self) -> FrameProgram {
         FrameProgram {
             frames: self.frames,
+            raw_program: None,
         }
     }
 }
@@ -873,7 +874,10 @@ pub fn add_card(
                 (b, Some(fp))
             }
             AbilityLogic::Frames(f) => {
-                let fp = FrameProgram { frames: f };
+                let fp = FrameProgram {
+                    frames: f,
+                    raw_program: None,
+                };
                 (fp.to_bytecode(), Some(fp))
             }
         };

@@ -87,7 +87,11 @@ def _resolve_opcode_id(frame: dict[str, Any], opcode_name: str, lookups: Any) ->
 
 def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None = None) -> dict[str, Any]:
     if frame == "Return":
-        base: dict[str, Any] = {"op": "RETURN", "opcode_id": int(lookups.ids_by_opcode.get("RETURN", 1))}
+        base: dict[str, Any] = {
+            "op": "RETURN",
+            "opcode_id": int(lookups.ids_by_opcode.get("RETURN", 1)),
+            "rust_opcode": "O_RETURN",
+        }
         if frame_index is not None:
             base["frame_index"] = frame_index
         return base
@@ -103,12 +107,6 @@ def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None 
 
     if isinstance(frame, dict) and isinstance(frame.get("semantic"), dict):
         frame = codec.frame_to_compact(frame)
-
-    if isinstance(frame, dict) and isinstance(frame.get("source_words"), list) and not any(
-        key in frame for key in ("op", "opcode", "opcode_id", "opcode_name", "kind")
-    ):
-        decoded = codec.decode_frame(frame["source_words"], lookups)
-        frame = codec.frame_to_compact(decoded)
 
     if not isinstance(frame, dict):
         raise ValueError(f"unsupported frame payload: {frame!r}")
@@ -198,6 +196,15 @@ def _normalize_entry(entry: dict[str, Any], lookups: Any) -> dict[str, Any]:
         "source_mode": entry.get("source_mode", "frame_authored"),
     }
 
+    if "is_once_per_turn" in entry:
+        normalized["is_once_per_turn"] = bool(entry.get("is_once_per_turn"))
+    if "requires_selection" in entry:
+        normalized["requires_selection"] = bool(entry.get("requires_selection"))
+    if "choice_flags" in entry:
+        normalized["choice_flags"] = int(entry.get("choice_flags", 0) or 0)
+    if "choice_count" in entry:
+        normalized["choice_count"] = int(entry.get("choice_count", 0) or 0)
+
     if "round_trip_matches" in entry:
         normalized["round_trip_matches"] = bool(entry.get("round_trip_matches"))
     if "bytecode_words" in entry and isinstance(entry.get("bytecode_words"), int):
@@ -225,21 +232,13 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
 
 
 def build_compact_ability_index(compiled_data: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
-    if isinstance(compiled_data.get("abilities"), list):
-        return normalize_authored_ability_index(compiled_data, metadata)
+    if not isinstance(compiled_data.get("abilities"), list):
+        raise ValueError("ability frame compaction now requires authored frame data")
 
-    payload = codec.build_compact_ability_index(compiled_data, metadata)
-    payload["source_mode"] = "legacy_bootstrap"
-    for entry in payload.get("abilities", []):
-        entry["source_mode"] = "legacy_bootstrap"
-    return normalize_authored_ability_index(payload, metadata)
+    return normalize_authored_ability_index(compiled_data, metadata)
 
 
 def build_runtime_ability_index(payload: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
     normalized = normalize_authored_ability_index(payload, metadata)
     normalized["schema"] = "ability_frame_index.flat.v2"
-    for entry in normalized.get("abilities", []):
-        entry.pop("signature_source", None)
-        for frame in entry.get("frames", []):
-            frame.pop("source_words", None)
     return normalized

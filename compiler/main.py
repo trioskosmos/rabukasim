@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import os
 import re
@@ -20,8 +22,12 @@ from compiler.pseudocode_pipeline import PseudocodeResolver
 from engine.models.ability import (
     Ability,
     AbilityCostType,
+    Condition,
     ConditionType,
+    Cost,
+    Effect,
     EffectType,
+    TargetType,
     TriggerType,
 )
 from engine.models.ability_ir import BYTECODE_LAYOUT_NAME, BYTECODE_LAYOUT_VERSION, SEMANTIC_FORM_VERSION, VersionGate
@@ -31,6 +37,7 @@ from engine.models.enums import CHAR_MAP, Unit
 from engine.models.generated_metadata import CONDITIONS, COSTS, OPCODES
 from engine.models.opcodes import Opcode
 from tools import bytecode_codec as ability_codec
+from tools import frame_codec
 
 # --- Compile-time Bytecode Validation ---
 # Combined: all valid base opcodes derived from source metadata
@@ -123,6 +130,7 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
         "meta": {
             "version": "1.0",
             "source": input_path,
+            "ability_source": SPARSE_INDEX_PATH,
             "bytecode_layout_version": BYTECODE_LAYOUT_VERSION,
             "bytecode_layout_name": BYTECODE_LAYOUT_NAME,
             "semantic_form_version": SEMANTIC_FORM_VERSION,
@@ -288,15 +296,34 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
     with open(output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(compiled_data, f, ensure_ascii=False, indent=2)
 
+    metadata = ability_codec.load_data(Path("data/metadata.json"))
+
+    # --- Consume the authored frame source without rewriting it ---
+    ability_frames_path = Path(ABILITY_FRAME_SOURCE_PATH)
+    if ability_frames_path.exists():
+        ability_frames = ability_codec.load_data(ability_frames_path)
+        if not quiet:
+            print(f"Using authored ability frames from {ability_frames_path}...")
+    else:
+        ability_frames = {
+            "source": str(ability_frames_path),
+            "metadata_source": "data/metadata.json",
+            "summary": {"card_count": 0, "ability_count": 0, "unique_ability_count": 0},
+            "abilities": [],
+        }
+        print(f"[FRAME WARNING] Authored frame source not found: {ability_frames_path}")
+
+    normalized_ability_frames = frame_codec.normalize_authored_ability_index(ability_frames, metadata)
+
     # --- Generate Semantic Ability Index (canonical JSON) ---
     sparse_index_path = "data/ability_frame_index.json"
     from tools import semantic_frame_index as semantic_index
 
     sparse_index = semantic_index.build_semantic_ability_index(
-        compiled_data,
-        semantic_index.load_json(Path("data/metadata.json")),
+        normalized_ability_frames,
+        metadata,
     )
-    semantic_index.dump_json(Path(sparse_index_path), sparse_index)
+    ability_codec.dump_json(Path(sparse_index_path), sparse_index)
     if not quiet:
         print(f"Generating {sparse_index_path}...")
     # Migration guard: warn if the legacy YAML artifact still exists
@@ -547,10 +574,38 @@ _COMPILATION_VERSION_GATE: VersionGate = VersionGate(
 )
 
 _FRAME_PROGRAM_METADATA = ability_codec.load_data(Path("data/metadata.json"))
+_COMPILED_CARD_DB_CACHE: dict[str, Any] | None = None
 
 
 # Removed _build_frame_program and _frame_program_frame_from_model helpers
 # as they are replaced by Ability.to_frame_program() for direct emission.
+
+
+def _iter_ability_frames(ability):
+    frame_program = getattr(ability, "frame_program", None)
+    frames = frame_program.get("frames") if isinstance(frame_program, dict) else None
+    if isinstance(frames, list) and frames:
+        for frame in frames:
+            if isinstance(frame, dict):
+                op_name = str(frame.get("op") or frame.get("opcode") or frame.get("opcode_name") or frame.get("kind") or "").upper()
+                if op_name:
+                    yield op_name, frame
+        return
+
+    bytecode = list(getattr(ability, "bytecode", []) or [])
+    for i in range(0, len(bytecode), 5):
+        op = bytecode[i]
+        real_op = op - 1000 if op >= 1000 else op
+        try:
+            op_name = Opcode(real_op).name
+        except Exception:
+            op_name = str(real_op)
+        yield op_name, {
+            "value": bytecode[i + 1] if i + 1 < len(bytecode) else 0,
+            "attr": {},
+            "slot": {},
+            "is_negated": op >= 1000,
+        }
 
 
 def _compile_abilities_for_export(abilities: list, card_no: str, scope: str, version_gate: VersionGate = None) -> None:
@@ -572,6 +627,9 @@ def _compile_abilities_for_export(abilities: list, card_no: str, scope: str, ver
             if not frames:
                 frames = ab.to_frame_program()
                 ab.frame_program = {"frames": frames}
+            if isinstance(getattr(ab, "frame_program", None), dict):
+                model = ability_codec.frame_program_to_model(ab.frame_program)
+                ab.bytecode = ability_codec.model_to_bytecode(model, _FRAME_PROGRAM_METADATA)
         except Exception as e:
             import traceback
 
@@ -672,7 +730,8 @@ class SparseSourceManager:
             for entry in abilities_list:
                 trigger_id = int(entry.get("trigger_id", 0))
                 frames = entry.get("frames", [])
-                cards_list = entry.get("cards", [])
+                card_refs = entry.get("card_refs", [])
+                cards_list = card_refs if isinstance(card_refs, list) and card_refs else entry.get("cards", [])
                 for card_ref in cards_list:
                     extracted = self._extract_card_ref(card_ref)
                     if extracted is None:
@@ -681,6 +740,11 @@ class SparseSourceManager:
                     next_mapping[(card_no, ab_idx)] = {
                         "trigger_id": trigger_id,
                         "frames": frames,
+                        "pseudocode": entry.get("pseudocode", ""),
+                        "is_once_per_turn": bool(entry.get("is_once_per_turn", False)),
+                        "requires_selection": bool(entry.get("requires_selection", False)),
+                        "choice_flags": int(entry.get("choice_flags", 0) or 0),
+                        "choice_count": int(entry.get("choice_count", 0) or 0),
                         "source_words": entry.get("source_words", []),
                     }
 
@@ -706,13 +770,18 @@ _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
 def _build_ability_from_sparse_entry(entry: dict[str, Any], raw_text: str) -> Ability:
     trigger_id = int(entry.get("trigger_id", 0))
     frames = entry.get("frames", []) or []
+    pseudocode = str(entry.get("pseudocode", "")).strip() or "[RECONSTRUCTED FROM SPARSE INDEX]"
     ability = Ability(
         raw_text=raw_text,
         trigger=TriggerType(trigger_id),
         effects=[],
         conditions=[],
         costs=[],
-        pseudocode="[RECONSTRUCTED FROM SPARSE INDEX]",
+        is_once_per_turn=bool(entry.get("is_once_per_turn", False)),
+        requires_selection=bool(entry.get("requires_selection", False)),
+        choice_flags=int(entry.get("choice_flags", 0) or 0),
+        choice_count=int(entry.get("choice_count", 0) or 0),
+        pseudocode=pseudocode,
     )
     ability.frame_program = {"frames": frames}
     try:
@@ -722,10 +791,236 @@ def _build_ability_from_sparse_entry(entry: dict[str, Any], raw_text: str) -> Ab
     return ability
 
 
+def _card_has_ability_source(data: dict[str, Any]) -> bool:
+    for key in ("ability", "original_text", "pseudocode"):
+        if str(data.get(key, "")).strip():
+            return True
+    if isinstance(data.get("abilities"), list) and data["abilities"]:
+        return True
+    if isinstance(data.get("frame_program"), dict) and data["frame_program"].get("frames"):
+        return True
+    return False
+
+
+def _load_compiled_card_db() -> dict[str, Any]:
+    global _COMPILED_CARD_DB_CACHE
+    if _COMPILED_CARD_DB_CACHE is not None:
+        return _COMPILED_CARD_DB_CACHE
+
+    for candidate in (
+        Path("engine/data/cards_compiled.json"),
+        Path("data/cards_compiled.json"),
+    ):
+        if candidate.exists():
+            try:
+                _COMPILED_CARD_DB_CACHE = ability_codec.load_data(candidate)
+                return _COMPILED_CARD_DB_CACHE
+            except Exception:
+                continue
+
+    _COMPILED_CARD_DB_CACHE = {}
+    return _COMPILED_CARD_DB_CACHE
+
+
+def _ability_from_dict(payload: dict[str, Any]) -> Ability:
+    effects: list[Effect] = []
+    for eff in payload.get("effects", []) if isinstance(payload.get("effects"), list) else []:
+        if not isinstance(eff, dict):
+            continue
+        effect_type_value = eff.get("effect_type", eff.get("type", 0))
+        try:
+            effect_type = EffectType(int(effect_type_value))
+        except Exception:
+            try:
+                effect_type = EffectType[str(effect_type_value)]
+            except Exception:
+                effect_type = EffectType.NONE
+
+        target_value = eff.get("target", eff.get("target_type", 0))
+        try:
+            target = TargetType(int(target_value))
+        except Exception:
+            try:
+                target = TargetType[str(target_value)]
+            except Exception:
+                target = TargetType.SELF
+
+        modal_options = []
+        for option in eff.get("modal_options", []) if isinstance(eff.get("modal_options"), list) else []:
+            option_items = []
+            for item in option if isinstance(option, list) else []:
+                if isinstance(item, dict):
+                    option_items.append(_effect_from_dict(item))
+            if option_items:
+                modal_options.append(option_items)
+
+        effects.append(
+            Effect(
+                effect_type=effect_type,
+                value=int(eff.get("value", 0) or 0),
+                value_cond=ConditionType(int(eff.get("value_cond", 0) or 0)) if str(eff.get("value_cond", 0)).isdigit() else ConditionType.NONE,
+                target=target,
+                params=dict(eff.get("params", {})) if isinstance(eff.get("params", {}), dict) else {},
+                is_optional=bool(eff.get("is_optional", eff.get("optional", False))),
+                modal_options=modal_options,
+                runtime_opcode=int(eff.get("runtime_opcode", 0) or 0),
+                runtime_value=int(eff.get("runtime_value", 0) or 0),
+                runtime_attr=int(eff.get("runtime_attr", 0) or 0),
+                runtime_slot=int(eff.get("runtime_slot", 0) or 0),
+                runtime_filter=dict(eff.get("runtime_filter", {})) if isinstance(eff.get("runtime_filter", {}), dict) else {},
+                runtime_slot_params=dict(eff.get("runtime_slot_params", {})) if isinstance(eff.get("runtime_slot_params", {}), dict) else {},
+            )
+        )
+
+    conditions: list[Condition] = []
+    for cond in payload.get("conditions", []) if isinstance(payload.get("conditions"), list) else []:
+        if not isinstance(cond, dict):
+            continue
+        cond_type_value = cond.get("type", cond.get("condition_type", 0))
+        try:
+            cond_type = ConditionType(int(cond_type_value))
+        except Exception:
+            try:
+                cond_type = ConditionType[str(cond_type_value)]
+            except Exception:
+                cond_type = ConditionType.NONE
+        conditions.append(
+            Condition(
+                type=cond_type,
+                params=dict(cond.get("params", {})) if isinstance(cond.get("params", {}), dict) else {},
+                is_negated=bool(cond.get("is_negated", cond.get("negated", False))),
+                value=int(cond.get("value", 0) or 0),
+                attr=int(cond.get("attr", 0) or 0),
+                runtime_opcode=int(cond.get("runtime_opcode", 0) or 0),
+                runtime_filter=dict(cond.get("runtime_filter", {})) if isinstance(cond.get("runtime_filter", {}), dict) else {},
+                runtime_slot=dict(cond.get("runtime_slot", {})) if isinstance(cond.get("runtime_slot", {}), dict) else {},
+            )
+        )
+
+    costs: list[Cost] = []
+    for cost in payload.get("costs", []) if isinstance(payload.get("costs"), list) else []:
+        if not isinstance(cost, dict):
+            continue
+        cost_type_value = cost.get("type", cost.get("cost_type", 0))
+        try:
+            cost_type = AbilityCostType(int(cost_type_value))
+        except Exception:
+            try:
+                cost_type = AbilityCostType[str(cost_type_value)]
+            except Exception:
+                cost_type = AbilityCostType.NONE
+        costs.append(
+            Cost(
+                type=cost_type,
+                value=int(cost.get("value", 0) or 0),
+                params=dict(cost.get("params", {})) if isinstance(cost.get("params", {}), dict) else {},
+                runtime_opcode=int(cost.get("runtime_opcode", 0) or 0),
+                is_optional=bool(cost.get("is_optional", cost.get("optional", False))),
+                runtime_filter=dict(cost.get("runtime_filter", {})) if isinstance(cost.get("runtime_filter", {}), dict) else {},
+                runtime_slot=dict(cost.get("runtime_slot", {})) if isinstance(cost.get("runtime_slot", {}), dict) else {},
+            )
+        )
+
+    frame_program_payload = payload.get("frame_program", payload.get("sparse_frame_index", payload.get("frames", {})))
+    if isinstance(frame_program_payload, dict) and frame_program_payload.get("frames"):
+        frame_program = {"frames": list(frame_program_payload.get("frames", []))}
+    elif isinstance(frame_program_payload, list) and frame_program_payload:
+        frame_program = {"frames": list(frame_program_payload)}
+    else:
+        frame_program = {"frames": []}
+    bytecode = []
+    if isinstance(frame_program, dict) and frame_program.get("frames"):
+        bytecode = ability_codec.model_to_bytecode(
+            ability_codec.frame_program_to_model(frame_program),
+            _FRAME_PROGRAM_METADATA,
+        )
+    elif isinstance(payload.get("bytecode"), list):
+        bytecode = [int(word) for word in payload.get("bytecode", [])]
+    ability = Ability(
+        raw_text=str(payload.get("raw_text", payload.get("original_text", ""))),
+        trigger=TriggerType(int(payload.get("trigger", 0))),
+        effects=effects,
+        conditions=conditions,
+        costs=costs,
+        modal_options=[list(option) for option in payload.get("modal_options", [])] if isinstance(payload.get("modal_options"), list) else [],
+        is_once_per_turn=bool(payload.get("is_once_per_turn", False)),
+        bytecode=bytecode,
+        frame_program=frame_program,
+        instructions=[],
+        card_no=str(payload.get("card_no", "")),
+        requires_selection=bool(payload.get("requires_selection", False)),
+        choice_flags=int(payload.get("choice_flags", 0)),
+        choice_count=int(payload.get("choice_count", 0)),
+        pseudocode=str(payload.get("pseudocode", "")),
+        filters=list(payload.get("filters", [])) if isinstance(payload.get("filters"), list) else [],
+        option_names=list(payload.get("option_names", [])) if isinstance(payload.get("option_names"), list) else [],
+    )
+    try:
+        ability.build_semantic_form()
+    except Exception:
+        pass
+    return ability
+
+
+def _effect_from_dict(payload: dict[str, Any]) -> Effect:
+    effect_type_value = payload.get("effect_type", payload.get("type", 0))
+    try:
+        effect_type = EffectType(int(effect_type_value))
+    except Exception:
+        try:
+            effect_type = EffectType[str(effect_type_value)]
+        except Exception:
+            effect_type = EffectType.NONE
+    target_value = payload.get("target", payload.get("target_type", 0))
+    try:
+        target = TargetType(int(target_value))
+    except Exception:
+        try:
+            target = TargetType[str(target_value)]
+        except Exception:
+            target = TargetType.SELF
+    return Effect(
+        effect_type=effect_type,
+        value=int(payload.get("value", 0) or 0),
+        value_cond=ConditionType(int(payload.get("value_cond", 0) or 0)) if str(payload.get("value_cond", 0)).isdigit() else ConditionType.NONE,
+        target=target,
+        params=dict(payload.get("params", {})) if isinstance(payload.get("params", {}), dict) else {},
+        is_optional=bool(payload.get("is_optional", payload.get("optional", False))),
+        modal_options=[],
+        runtime_opcode=int(payload.get("runtime_opcode", 0) or 0),
+        runtime_value=int(payload.get("runtime_value", 0) or 0),
+        runtime_attr=int(payload.get("runtime_attr", 0) or 0),
+        runtime_slot=int(payload.get("runtime_slot", 0) or 0),
+        runtime_filter=dict(payload.get("runtime_filter", {})) if isinstance(payload.get("runtime_filter", {}), dict) else {},
+        runtime_slot_params=dict(payload.get("runtime_slot_params", {})) if isinstance(payload.get("runtime_slot_params", {}), dict) else {},
+    )
+
+
+def _build_abilities_from_compiled_db(card_kind: str, card_no: str) -> list[Ability]:
+    compiled_db = _load_compiled_card_db()
+    for db_name in ("member_db", "live_db"):
+        db = compiled_db.get(db_name, {})
+        if not isinstance(db, dict):
+            continue
+        for card_data in db.values():
+            if not isinstance(card_data, dict):
+                continue
+            if str(card_data.get("card_no", "")).strip() != card_no:
+                continue
+            abilities_data = card_data.get("abilities", [])
+            if not isinstance(abilities_data, list):
+                continue
+            return [_ability_from_dict(ab) for ab in abilities_data if isinstance(ab, dict)]
+    return []
+
+
 def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability]:
-    raw_text = str(data.get("ability", ""))
+    if not _card_has_ability_source(data):
+        return []
+
     abilities: list[Ability] = []
     used_sparse = False
+    raw_text = str(data.get("ability", data.get("original_text", "")))
 
     for ab_idx in range(10):
         entry = _sparse_manager.get_ability(card_no, ab_idx)
@@ -740,7 +1035,29 @@ def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability
     if used_sparse:
         return abilities
 
-    raise ValueError(f"[{card_no}] Missing editable frame entry in {SPARSE_INDEX_PATH}")
+    raw_ability_text = str(data.get("ability", "")).strip()
+    if raw_ability_text:
+        pseudocode_text = _pseudocode_resolver.resolve(card_kind, card_no, data, [])
+        if pseudocode_text and pseudocode_text.strip() and pseudocode_text.strip() != raw_ability_text:
+            parsed = _v2_parser.parse(pseudocode_text)
+            if parsed and any(
+                ab.effects or ab.conditions or ab.costs or getattr(ab, "instructions", [])
+                for ab in parsed
+            ):
+                return parsed
+
+        parsed = _v2_parser.parse(raw_ability_text)
+        if parsed and any(
+            ab.effects or ab.conditions or ab.costs or getattr(ab, "instructions", [])
+            for ab in parsed
+        ):
+            return parsed
+
+    compiled_abilities = _build_abilities_from_compiled_db(card_kind, card_no)
+    if compiled_abilities:
+        return compiled_abilities
+
+    raise ValueError(f"[{card_no}] Missing editable frame entry and no compiled ability data was available")
 
 
 def compute_flags(card):
@@ -774,39 +1091,44 @@ def compute_flags(card):
     }
 
     core_ops = {
-        int(Opcode.DRAW),
-        int(Opcode.RECOVER_MEMBER),
-        int(Opcode.RECOVER_LIVE),
-        int(Opcode.ADD_BLADES),
-        int(Opcode.ADD_HEARTS),
-        int(Opcode.SEARCH_DECK),
-        int(Opcode.BOOST_SCORE),
-        int(Opcode.ENERGY_CHARGE),
-        int(Opcode.MOVE_MEMBER),
-        int(Opcode.SWAP_CARDS),
-        int(Opcode.TAP_OPPONENT),
-        int(Opcode.MODIFY_SCORE_RULE),
-        int(Opcode.REDUCE_COST),
-        int(Opcode.REDUCE_HEART_REQ),
-        int(Opcode.RETURN),
-        int(Opcode.LOOK_AND_CHOOSE),
-        int(Opcode.TAP_MEMBER),
-        int(Opcode.ACTIVATE_MEMBER),
-        int(Opcode.SET_TAPPED),
-        int(Opcode.TRANSFORM_COLOR),
-        int(Opcode.NOP),
-        int(Opcode.RETURN),
-        int(Opcode.JUMP),
-        int(Opcode.JUMP_IF_FALSE),
-        int(Opcode.META_RULE),
-        int(Opcode.SELECT_MODE),
-        int(Opcode.COLOR_SELECT),
-        int(Opcode.ORDER_DECK),
-        int(Opcode.MOVE_TO_DECK),
-        int(Opcode.MOVE_TO_DISCARD),
-        int(Opcode.PLAY_MEMBER_FROM_HAND),
-        int(Opcode.SET_TARGET_SELF),
-        int(Opcode.SET_TARGET_OPPONENT),
+        "DRAW",
+        "RECOVER_MEMBER",
+        "RECOVER_LIVE",
+        "ADD_BLADES",
+        "ADD_HEARTS",
+        "SEARCH_DECK",
+        "BOOST_SCORE",
+        "ENERGY_CHARGE",
+        "MOVE_MEMBER",
+        "SWAP_CARDS",
+        "TAP_OPPONENT",
+        "MODIFY_SCORE_RULE",
+        "REDUCE_COST",
+        "REDUCE_HEART_REQ",
+        "RETURN",
+        "LOOK_AND_CHOOSE",
+        "TAP_MEMBER",
+        "ACTIVATE_MEMBER",
+        "SET_TAPPED",
+        "TRANSFORM_COLOR",
+        "NOP",
+        "JUMP",
+        "JUMP_IF_FALSE",
+        "META_RULE",
+        "SELECT_MODE",
+        "COLOR_SELECT",
+        "ORDER_DECK",
+        "MOVE_TO_DECK",
+        "MOVE_TO_DISCARD",
+        "PLAY_MEMBER_FROM_HAND",
+        "SET_TARGET_SELF",
+        "SET_TARGET_OPPONENT",
+        "SUM_VALUE",
+        "HAS_KEYWORD",
+        "COUNT_STAGE",
+        "COUNT_CARDS",
+        "GROUP_FILTER",
+        "DISCARDED_CARDS",
     }
 
     for ab in card.abilities:
@@ -820,23 +1142,26 @@ def compute_flags(card):
         if ab.is_once_per_turn:
             semantic_flags |= 0x08
 
-        # Bytecode loop for Ability & Choice Flags
+        # Frame/opcode loop for Ability & Choice Flags
         unflagged_logic = False
-        for i in range(0, len(ab.bytecode), 5):
-            op = ab.bytecode[i]
-            if op in flagged_ops:
-                ability_flags |= flagged_ops[op]
+        for op_name, frame in _iter_ability_frames(ab):
+            op_name = str(op_name).upper()
+            op_id = int(Opcode[op_name]) if op_name in Opcode.__members__ else None
 
-            if op not in core_ops and op < 100:  # Opcode < 100 are effect opcodes
+            if op_id is not None and op_id in flagged_ops:
+                ability_flags |= flagged_ops[op_id]
+
+            if op_name not in core_ops and not op_name.startswith("C_"):
                 unflagged_logic = True
 
             # Choice Flags
-            if op == int(Opcode.LOOK_AND_CHOOSE):
+            if op_name == "LOOK_AND_CHOOSE":
                 ab.choice_flags |= CHOICE_FLAG_LOOK
                 if ab.choice_count == 0:
-                    v = ab.bytecode[i + 1] if i + 1 < len(ab.bytecode) else 3
-                    # Extract the high byte (pick count) as the choice count
-                    pick_count = (v >> 8) & 0xFF
+                    raw_choice = frame.get("value", 0)
+                    pick_count = 0
+                    if isinstance(raw_choice, int):
+                        pick_count = (raw_choice >> 8) & 0xFF
                     if pick_count > 0:
                         ab.choice_count = pick_count
                     else:
@@ -853,30 +1178,36 @@ def compute_flags(card):
                                 if effect_choice_count > 0:
                                     break
                         ab.choice_count = effect_choice_count if effect_choice_count > 0 else 3
-            elif op == int(Opcode.SELECT_MODE):
+            elif op_name == "SELECT_MODE":
                 ab.choice_flags |= CHOICE_FLAG_MODE
                 if ab.choice_count == 0:
-                    ab.choice_count = ab.bytecode[i + 1] if i + 1 < len(ab.bytecode) else 2
-            elif op == int(Opcode.COLOR_SELECT):
+                    raw_choice = frame.get("value", 0)
+                    ab.choice_count = int(raw_choice) if isinstance(raw_choice, int) and raw_choice > 0 else 2
+            elif op_name == "COLOR_SELECT":
                 ab.choice_flags |= CHOICE_FLAG_COLOR
                 if ab.choice_count == 0:
                     # Try to get the actual choice count from the effect's params
                     choice_count_from_effect = None
-                    color_select_effect_type = int(Opcode.COLOR_SELECT)
-                    for eff in ab.effects:
-                        if eff.effect_type == color_select_effect_type:
-                            if "choices" in eff.params:
-                                choice_count_from_effect = len(eff.params["choices"])
-                            break
+                    params = frame.get("params", {}) if isinstance(frame.get("params"), dict) else {}
+                    choices = params.get("choices")
+                    if isinstance(choices, list) and choices:
+                        choice_count_from_effect = len(choices)
                     ab.choice_count = choice_count_from_effect if choice_count_from_effect else 6
-            elif op == int(Opcode.ORDER_DECK):
+            elif op_name == "ORDER_DECK":
                 ab.choice_flags |= CHOICE_FLAG_ORDER
                 if ab.choice_count == 0:
                     ab.choice_count = 3
                 # Check if this ability also has a REMAINDER discard instruction
-                for eff in ab.effects:
-                    if eff.params.get("remainder") == "discard" or eff.params.get("destination") == "discard" or eff.params.get("raw_val") == "REMAINDER":
-                        ab.choice_flags |= CHOICE_FLAG_DISCARD
+                params = frame.get("params", {}) if isinstance(frame.get("params"), dict) else {}
+                attr = frame.get("attr", {}) if isinstance(frame.get("attr"), dict) else {}
+                if (
+                    params.get("remainder") == "discard"
+                    or params.get("destination") == "discard"
+                    or params.get("raw_val") == "REMAINDER"
+                    or attr.get("remainder") == "discard"
+                    or attr.get("destination") == "discard"
+                ):
+                    ab.choice_flags |= CHOICE_FLAG_DISCARD
 
         if unflagged_logic:
             semantic_flags |= 0x10
@@ -1207,18 +1538,22 @@ def check_parity(input_path, output_path):
         print("Error: Compiled data not found.")
         return False
 
-    # Check if meta contains the source hash
-    stored_hash = compiled_data.get("meta", {}).get("source_hash")
+    meta = compiled_data.get("meta", {})
+    stored_hash = meta.get("source_hash")
     current_hash = calculate_hash(input_path)
+    stored_ability_hash = meta.get("ability_source_hash")
+    current_ability_hash = calculate_hash(SPARSE_INDEX_PATH)
 
-    if stored_hash == current_hash:
+    if stored_hash == current_hash and stored_ability_hash == current_ability_hash:
         print("SUCCESS: Parity check passed. Compiled data is up to date.")
         return True
-    else:
-        print("WARNING: Parity check FAILED. Source file has changed since last compilation.")
-        print(f"Stored:  {stored_hash}")
-        print(f"Current: {current_hash}")
-        return False
+
+    print("WARNING: Parity check FAILED. Source file has changed since last compilation.")
+    print(f"Stored cards:   {stored_hash}")
+    print(f"Current cards:   {current_hash}")
+    print(f"Stored frames:   {stored_ability_hash}")
+    print(f"Current frames:  {current_ability_hash}")
+    return False
 
 
 if __name__ == "__main__":
@@ -1272,6 +1607,7 @@ if __name__ == "__main__":
         if "meta" not in compiled_data:
             compiled_data["meta"] = {}
         compiled_data["meta"]["source_hash"] = calculate_hash(args.input)
+        compiled_data["meta"]["ability_source_hash"] = calculate_hash(SPARSE_INDEX_PATH)
         compiled_data["meta"]["generated_by"] = "compiler/main.py"
         compiled_data["meta"]["generated_at"] = datetime.datetime.now().isoformat()
         with open(args.output, "w", encoding="utf-8", newline="\n") as f:

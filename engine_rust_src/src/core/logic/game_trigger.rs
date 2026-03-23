@@ -340,7 +340,7 @@ impl GameState {
                 let ab = &db.get_member(def_cid).unwrap().abilities[ab_idx as usize];
                 (ab, &ab.conditions, &ab.pseudocode)
             };
-            let semantic_program = ability.semantic_frame_program();
+            let frames = ability.frames();
 
             // Unified logging: TRIGGER events now go to both turn_history and rule_log
             let card_name = if is_live {
@@ -371,9 +371,18 @@ impl GameState {
             // Check conditions before resolving the semantic frame sequence
             let mut all_met = true;
             if !skip_precheck_for_compensation {
-                if let Some(program) = semantic_program.as_ref() {
+                if frames.is_empty() {
+                    for cond in conditions {
+                        if !super::interpreter::conditions::check_condition(
+                            self, db, p_idx, cond, &ab_ctx, 1,
+                        ) {
+                            all_met = false;
+                            break;
+                        }
+                    }
+                } else {
                     let mut saw_condition = false;
-                    for frame in &program.frames {
+                    for frame in &frames {
                         let frame_data = frame.components();
                         let has_raw_condition = frame_data
                             .params
@@ -408,15 +417,6 @@ impl GameState {
                             1,
                         );
                         if !passed {
-                            all_met = false;
-                            break;
-                        }
-                    }
-                } else {
-                    for cond in conditions {
-                        if !super::interpreter::conditions::check_condition(
-                            self, db, p_idx, cond, &ab_ctx, 1,
-                        ) {
                             all_met = false;
                             break;
                         }

@@ -7,6 +7,18 @@ mod state_score_slots;
 mod state_score_transforms;
 
 fn decode_heart_color(frame: &AbilityFrameComponents<'_>, ctx: &AbilityContext) -> usize {
+    if let Some(params) = frame.params.and_then(|value| value.as_object()) {
+        if let Some(heart_type) = params.get("heart_type").and_then(|value| value.as_u64()) {
+            return if heart_type == 7 {
+                6
+            } else if heart_type <= 6 {
+                heart_type as usize
+            } else {
+                ctx.selected_color as usize
+            };
+        }
+    }
+
     let color_mask = frame.filter.color_mask as usize;
     if color_mask != 0 {
         if color_mask.count_ones() == 1 {
@@ -17,13 +29,7 @@ fn decode_heart_color(frame: &AbilityFrameComponents<'_>, ctx: &AbilityContext) 
         }
     }
 
-    let mut color = frame.raw_attr as usize & FILTER_MASK_LOWER as usize;
-    if color == 7 {
-        color = ctx.selected_color as usize;
-    } else if (1..=6).contains(&color) {
-        color -= 1;
-    }
-    color
+    ctx.selected_color as usize
 }
 
 #[allow(clippy::too_many_arguments)]

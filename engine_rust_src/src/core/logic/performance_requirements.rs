@@ -144,39 +144,33 @@ pub fn get_live_requirements(
                 }
 
                 let mut touches_live_requirements = false;
-                if let Some(frame_program) = ab.semantic_frame_program() {
-                    for frame in &frame_program.frames {
-                        let op = frame.opcode();
-                        if op == O_INCREASE_HEART_COST {
-                            touches_live_requirements = true;
-                            let val = frame.value();
-                            let attr = frame.attr() as usize;
-                            let idx = if attr == 0 || attr == 7 {
-                                6
-                            } else if attr <= 6 {
-                                attr - 1
-                            } else {
-                                99
-                            };
-                            if idx < 7 {
-                                aura.heart_req_additions.add_to_color(idx, val as i32);
-                            }
-                        } else if op == O_SET_HEART_COST {
-                            touches_live_requirements = true;
-                            let mut override_board = HeartBoard::default();
-                            process_heart_modifiers_frames(
-                                std::slice::from_ref(frame),
-                                &mut override_board,
-                                &mut Vec::new(),
-                                &member.name,
-                                source_cid,
-                            );
-                            aura.heart_req_additions = override_board;
+                for frame in ab.frames() {
+                    let op = frame.opcode();
+                    if op == O_INCREASE_HEART_COST {
+                        touches_live_requirements = true;
+                        let val = frame.value();
+                        let attr = frame.attr() as usize;
+                        let idx = if attr == 0 || attr == 7 {
+                            6
+                        } else if attr <= 6 {
+                            attr - 1
+                        } else {
+                            99
+                        };
+                        if idx < 7 {
+                            aura.heart_req_additions.add_to_color(idx, val as i32);
                         }
-                    }
-
-                    if !touches_live_requirements {
-                        continue;
+                    } else if op == O_SET_HEART_COST {
+                        touches_live_requirements = true;
+                        let mut override_board = HeartBoard::default();
+                        process_heart_modifiers_frames(
+                            std::slice::from_ref(&frame),
+                            &mut override_board,
+                            &mut Vec::new(),
+                            &member.name,
+                            source_cid,
+                        );
+                        aura.heart_req_additions = override_board;
                     }
                 }
 
@@ -200,9 +194,10 @@ pub fn get_live_requirements(
                 .iter()
                 .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
             {
-                if let Some(frame_program) = ab.semantic_frame_program() {
+                let frames = ab.frames();
+                if !frames.is_empty() {
                     process_heart_modifiers_frames(
-                        &frame_program.frames,
+                        &frames,
                         &mut req_board,
                         &mut adjustments,
                         &live.name,

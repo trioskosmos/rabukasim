@@ -35,10 +35,11 @@ mod tests {
             println!("Live abilities count: {}", l.abilities.len());
             if !l.abilities.is_empty() {
                 println!("Ability 0 trigger: {:?}", l.abilities[0].trigger);
-                if let Some(frame_program) = l.abilities[0].semantic_frame_program() {
-                    println!("Ability 0 frames: {:?}", frame_program.frames);
-                } else {
+                let frames = l.abilities[0].frames();
+                if frames.is_empty() {
                     println!("Ability 0 frames: <unavailable>");
+                } else {
+                    println!("Ability 0 frames: {:?}", frames);
                 }
                 println!(
                     "Ability 0 conditions count: {}",

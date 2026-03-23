@@ -728,6 +728,39 @@ impl ResponseGenerator {
         pi: &PendingInteraction,
         abilities: Option<&Vec<Ability>>,
     ) {
+        fn modal_option_is_available(
+            state: &GameState,
+            p_idx: usize,
+            option: &serde_json::Value,
+        ) -> bool {
+            let Some(first_effect) = option.as_array().and_then(|effects| effects.first()) else {
+                return true;
+            };
+
+            let opcode = first_effect
+                .get("runtime_opcode")
+                .and_then(|value| value.as_i64())
+                .filter(|value| *value != 0)
+                .or_else(|| first_effect.get("effect_type").and_then(|value| value.as_i64()))
+                .unwrap_or(0) as i32;
+            let value = first_effect
+                .get("runtime_value")
+                .and_then(|raw| raw.as_i64())
+                .filter(|raw| *raw != 0)
+                .or_else(|| first_effect.get("value").and_then(|raw| raw.as_i64()))
+                .unwrap_or(0) as i32;
+
+            match opcode {
+                O_PAY_ENERGY => {
+                    let player = &state.players[p_idx];
+                    let available = player.energy_zone.len() as i32 - player.tapped_energy_count() as i32;
+                    available >= value
+                }
+                O_MOVE_TO_DISCARD => true,
+                _ => true,
+            }
+        }
+
         if let Some(mask) = pending_optional_mode_mask(db, pi) {
             if let Some(ability) = pending_live_ability(db, pi) {
                 for effect_idx in 0..ability.effects.len() {
@@ -751,6 +784,7 @@ impl ResponseGenerator {
         };
         for i in 0..count {
             let mut option_valid = true;
+            let mut option_checked = false;
             if let Some(abs) = abilities {
                 let ab_idx_real = if pi.ability_index == -1 {
                     abs.iter()
@@ -777,6 +811,7 @@ impl ResponseGenerator {
                             let jump_frame_idx = select_mode_idx + 1 + i as usize;
                             if let Some(jump_frame) = frame_program.frames.get(jump_frame_idx) {
                                 if jump_frame.opcode() == O_JUMP {
+                                    option_checked = true;
                                     let target_idx =
                                         (jump_frame_idx as i32 + 1 + jump_frame.value()) as usize;
                                     if let Some(effect_frame) = frame_program.frames.get(target_idx)
@@ -796,6 +831,18 @@ impl ResponseGenerator {
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+
+                    if !option_checked {
+                        if let Some(select_effect) = ab.effects.first() {
+                            if let Some(option) = select_effect
+                                .modal_options
+                                .as_array()
+                                .and_then(|options| options.get(i as usize))
+                            {
+                                option_valid = modal_option_is_available(state, p_idx, option);
                             }
                         }
                     }

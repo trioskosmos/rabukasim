@@ -111,11 +111,12 @@ pub fn resolve_ability(
         return Ok(());
     }
 
-    if let Some(frame_prog) = ability.semantic_frame_program() {
-        return resolve_semantic_frames(state, db, &frame_prog.frames, ctx_in);
+    let frames = ability.frames();
+    if frames.is_empty() {
+        Ok(())
+    } else {
+        resolve_semantic_frames(state, db, &frames, ctx_in)
     }
-
-    Ok(())
 }
 
 pub fn resolve_semantic_frames(
@@ -346,15 +347,6 @@ pub fn resolve_semantic_frames(
     Ok(())
 }
 
-pub fn resolve_frames(
-    state: &mut GameState,
-    db: &CardDatabase,
-    frames: &[AbilityFrame],
-    ctx_in: &AbilityContext,
-) -> Result<(), InterpreterError> {
-    resolve_semantic_frames(state, db, frames, ctx_in)
-}
-
 /// Legacy adapter: decode bytecode once and execute the semantic frame sequence.
 /// Kept for compatibility while the remaining tests and tools are migrated.
 pub fn resolve_bytecode(
@@ -368,11 +360,11 @@ pub fn resolve_bytecode(
     }
 
     if let Some(ability) = db.find_ability_by_bytecode(bytecode.as_ref(), ctx_in) {
-        return resolve_ability(state, db, ability, ctx_in);
+        resolve_ability(state, db, ability, ctx_in)
+    } else {
+        let frame_program = crate::core::logic::models::FrameProgram::from_bytecode(bytecode.as_ref());
+        resolve_semantic_frames(state, db, &frame_program.frames, ctx_in)
     }
-
-    let frame_program = crate::core::logic::models::FrameProgram::from_bytecode(bytecode.as_ref());
-    resolve_semantic_frames(state, db, &frame_program.frames, ctx_in)
 }
 
 /// Helper to check if an opcode is a condition

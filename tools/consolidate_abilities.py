@@ -25,7 +25,7 @@ DEFAULT_OUTPUT_PATH = ROOT_DIR / "data" / "ability_frames.json"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build or normalize the authored ability frame source")
-    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT_PATH, help="Authored frame JSON or legacy compiled card JSON")
+    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT_PATH, help="Authored frame JSON")
     parser.add_argument("--metadata", type=Path, default=DEFAULT_METADATA_PATH, help="Metadata JSON")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT_PATH, help="Output JSON path")
     return parser.parse_args()

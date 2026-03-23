@@ -1102,13 +1102,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                                     .iter()
                                     .all(|c| state.check_condition(db, p, c, &ctx, 1))
                                 {
-                                    if let Some(frame_program) = ab.semantic_frame_program() {
-                                        for frame in &frame_program.frames {
-                                            let frame_data = frame.components();
-                                            if frame_data.opcode == O_BOOST_SCORE {
-                                                *constant_bonuses.entry(cid).or_insert(0) +=
-                                                    frame_data.value;
-                                            }
+                                    for frame in ab.frames() {
+                                        let frame_data = frame.components();
+                                        if frame_data.opcode == O_BOOST_SCORE {
+                                            *constant_bonuses.entry(cid).or_insert(0) +=
+                                                frame_data.value;
                                         }
                                     }
                                 }
@@ -1139,13 +1137,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                                     .iter()
                                     .all(|c| state.check_condition(db, p, c, &ctx, 1))
                                 {
-                                    if let Some(frame_program) = ab.semantic_frame_program() {
-                                        for frame in &frame_program.frames {
-                                            let frame_data = frame.components();
-                                            if frame_data.opcode == O_BOOST_SCORE {
-                                                *constant_bonuses.entry(s_cid).or_insert(0) +=
-                                                    frame_data.value;
-                                            }
+                                    for frame in ab.frames() {
+                                        let frame_data = frame.components();
+                                        if frame_data.opcode == O_BOOST_SCORE {
+                                            *constant_bonuses.entry(s_cid).or_insert(0) +=
+                                                frame_data.value;
                                         }
                                     }
                                 }
