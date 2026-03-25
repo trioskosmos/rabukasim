@@ -389,7 +389,7 @@ impl CardDatabase {
         };
         compact.insert("frame_program".to_string(), frame_program_value.clone());
 
-        let source_words = ability.bytecode();
+        let source_words = ability.words();
         compact.insert(
             "source_words".to_string(),
             Value::Array(source_words.iter().copied().map(Value::from).collect()),

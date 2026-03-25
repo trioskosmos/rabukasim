@@ -205,7 +205,7 @@ pub fn get_opcode_name(op: i32) -> &'static str {
     }
 }
 
-pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
+pub fn describe_frame_words(op: i32, v: i32, a: i64, s: i32) -> String {
     let base_name = get_opcode_name(op);
     let mut details = String::new();
 
@@ -309,6 +309,10 @@ pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
     )
 }
 
+pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
+    describe_frame_words(op, v, a, s)
+}
+
 pub fn describe_trace_step(op: i32, v: i32, a: i64, s: i32, is_negated: bool) -> String {
     let name = get_opcode_name(op);
     let prefix = if is_condition_opcode(op) { "IF" } else { "DO" };
@@ -317,7 +321,7 @@ pub fn describe_trace_step(op: i32, v: i32, a: i64, s: i32, is_negated: bool) ->
     } else if let Some(desc) = get_opcode_log(op, v, a, s, 0) {
         desc
     } else {
-        describe_bytecode(op, v, a, s)
+        describe_frame_words(op, v, a, s)
     };
 
     if is_negated {

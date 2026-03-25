@@ -233,7 +233,8 @@ pub struct UIState {
     #[serde(default)]
     pub cancelled_execution_ids: HashSet<u32>,
     #[serde(default)]
-    pub bytecode_log: Vec<String>,
+    #[serde(alias = "bytecode_log")]
+    pub semantic_log: Vec<String>,
     #[serde(skip)]
     pub processing_trigger_queue: bool,
 }
@@ -249,7 +250,7 @@ impl Default for UIState {
             next_execution_id: 1,
             current_execution_id: None,
             cancelled_execution_ids: HashSet::new(),
-            bytecode_log: Vec::new(),
+            semantic_log: Vec::new(),
             processing_trigger_queue: false,
         }
     }
@@ -276,17 +277,17 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn resolve_bytecode<B: AsRef<[i32]>>(
+    pub fn resolve_frames<B: AsRef<[i32]>>(
         &mut self,
         db: &CardDatabase,
-        bytecode: B,
+        words: B,
         ctx_in: &AbilityContext,
     ) {
-        let bytecode = bytecode.as_ref();
-        if let Err(err) = crate::core::logic::interpreter::resolve_bytecode(
+        let frame_program = FrameProgram::from_words(words.as_ref());
+        if let Err(err) = crate::core::logic::interpreter::resolve_semantic_frames(
             self,
             db,
-            std::sync::Arc::new(bytecode.to_vec()),
+            &frame_program.frames,
             ctx_in,
         ) {
             if self.debug.debug_mode || !self.ui.silent {
@@ -295,13 +296,22 @@ impl GameState {
         }
     }
 
+    pub fn resolve_bytecode<B: AsRef<[i32]>>(
+        &mut self,
+        db: &CardDatabase,
+        bytecode: B,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_frames(db, bytecode, ctx_in);
+    }
+
     pub fn resolve_bytecode_cref(
         &mut self,
         db: &CardDatabase,
         bytecode: &Vec<i32>,
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_bytecode(db, bytecode, ctx_in);
+        self.resolve_frames(db, bytecode, ctx_in);
     }
 
     pub fn resolve_bytecode_slice(
@@ -310,7 +320,7 @@ impl GameState {
         bytecode: &[i32],
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_bytecode(db, bytecode, ctx_in);
+        self.resolve_frames(db, bytecode, ctx_in);
     }
 
     pub fn resolve_ability(

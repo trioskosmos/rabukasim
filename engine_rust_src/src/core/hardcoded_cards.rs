@@ -2,7 +2,7 @@
 //!
 //! These are extracted from the hardcoded_abilities() match statement.
 //! Cards listed here have special-case implementations rather than being
-//! decoded from compiled bytecode.
+//! decoded from compiled frame words.
 
 // Card IDs with hardcoded rule implementations
 pub const CARD_HARDCODED_ENERGY_PAY_1: &[i32] = &[

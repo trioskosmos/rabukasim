@@ -21,6 +21,9 @@ def load_json(path: Path | str) -> dict[str, Any]:
 
 
 def dump_json(path: Path | str, payload: dict[str, Any]) -> None:
+    target = Path(path)
+    if target.name == "ability_frames.json":
+        raise ValueError("writing to data/ability_frames.json is disabled; use a generated index path instead")
     codec.dump_json(path, payload)
 
 
@@ -139,7 +142,7 @@ def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None 
     return normalized
 
 
-def _signature_payload(trigger_id: int, frames: list[dict[str, Any]]) -> dict[str, Any]:
+def _signature_payload(trigger_id: int, frames: list[dict[str, Any]], metadata: dict[str, Any] | None = None) -> dict[str, Any]:
     signature_frames: list[dict[str, Any]] = []
     for frame in frames:
         signature_frame: dict[str, Any] = {"op": frame["op"]}
@@ -147,11 +150,17 @@ def _signature_payload(trigger_id: int, frames: list[dict[str, Any]]) -> dict[st
             if field in frame:
                 signature_frame[field] = frame[field]
         signature_frames.append(signature_frame)
-    return {"trigger": trigger_id, "frames": signature_frames}
+    payload = {"trigger": trigger_id, "frames": signature_frames}
+    if metadata:
+        metadata_fields = ("is_once_per_turn", "requires_selection", "choice_flags", "choice_count")
+        for field in metadata_fields:
+            if field in metadata:
+                payload[field] = metadata[field]
+    return payload
 
 
-def frame_signature(trigger_id: int, frames: list[dict[str, Any]], lookups: Any) -> dict[str, Any]:
-    payload = _signature_payload(trigger_id, frames)
+def frame_signature(trigger_id: int, frames: list[dict[str, Any]], lookups: Any, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload = _signature_payload(trigger_id, frames, metadata)
     signature_source = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     signature_hash = sha1(signature_source.encode("utf-8")).hexdigest()
     return {
@@ -172,7 +181,7 @@ def _normalize_entry(entry: dict[str, Any], lookups: Any) -> dict[str, Any]:
     trigger = _trigger_name(trigger_id, lookups)
     raw_frames = entry.get("frames", []) if isinstance(entry.get("frames"), list) else []
     frames = [_normalize_authored_frame(frame, lookups, idx) for idx, frame in enumerate(raw_frames)]
-    signature = frame_signature(trigger_id, frames, lookups)
+    signature = frame_signature(trigger_id, frames, lookups, metadata=entry)
     cards, card_refs = _normalize_cards(entry)
 
     opcode_sequence = [frame["op"] for frame in frames]

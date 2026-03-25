@@ -941,20 +941,24 @@ impl Hash for FrameProgram {
 }
 
 impl FrameProgram {
-    pub fn from_bytecode(bytecode: &[i32]) -> Self {
-        let decoded = BytecodeProgram::from_slice(bytecode).decode_all();
+    pub fn from_words(words: &[i32]) -> Self {
+        let decoded = BytecodeProgram::from_slice(words).decode_all();
         let frames = decoded.iter().map(AbilityFrame::from_instruction).collect();
 
         Self {
             frames,
             raw_program: Some(serde_json::json!({
                 "frames": [],
-                "bytecode": bytecode,
+                "bytecode": words,
             })),
         }
     }
 
-    pub fn to_bytecode(&self) -> Vec<i32> {
+    pub fn from_bytecode(bytecode: &[i32]) -> Self {
+        Self::from_words(bytecode)
+    }
+
+    pub fn to_words(&self) -> Vec<i32> {
         if let Some(raw_program) = &self.raw_program {
             if let Some(words) = raw_program.get("bytecode").and_then(|v| v.as_array()) {
                 let mut bytecode = Vec::with_capacity(words.len());
@@ -981,6 +985,10 @@ impl FrameProgram {
             words.push(instr.raw_s);
         }
         words
+    }
+
+    pub fn to_bytecode(&self) -> Vec<i32> {
+        self.to_words()
     }
 }
 
@@ -1307,10 +1315,14 @@ impl Ability {
         self.resolved_frame_program()
     }
 
-    pub fn bytecode(&self) -> Vec<i32> {
+    pub fn words(&self) -> Vec<i32> {
         self.frame_program
             .as_ref()
-            .map_or_else(Vec::new, |program| program.to_bytecode())
+            .map_or_else(Vec::new, FrameProgram::to_words)
+    }
+
+    pub fn bytecode(&self) -> Vec<i32> {
+        self.words()
     }
 
     pub fn get_frame(&self, frame_idx: usize) -> Option<AbilityFrame> {

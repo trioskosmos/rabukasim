@@ -22,7 +22,7 @@ pub use suspension::{get_choice_text, resolve_target_slot, suspend_interaction};
 
 use std::collections::HashSet;
 use std::fmt;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Mutex, OnceLock};
 
 pub static GLOBAL_OPCODE_TRACKER: OnceLock<Mutex<HashSet<i32>>> = OnceLock::new();
 
@@ -44,7 +44,8 @@ pub fn get_global_opcode_tracker() -> &'static Mutex<HashSet<i32>> {
 
 /// The maximum depth of nested semantic-frame execution (e.g. via O_TRIGGER_REMOTE)
 pub const MAX_DEPTH: usize = 8;
-pub const MAX_BYTECODE_LOG_SIZE: usize = 500;
+pub const MAX_FRAME_LOG_SIZE: usize = 500;
+pub const MAX_BYTECODE_LOG_SIZE: usize = MAX_FRAME_LOG_SIZE;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InterpreterError {
@@ -167,28 +168,28 @@ pub fn resolve_semantic_frames(
         }
 
         if state.debug.debug_mode {
-            let desc = logging::describe_frame_step(&frame_data);
+        let desc = logging::describe_frame_step(&frame_data);
             let card_name = db
                 .get_member(ctx.source_card_id)
                 .map(|c| c.name.as_str())
                 .or_else(|| db.get_live(ctx.source_card_id).map(|l| l.name.as_str()))
                 .unwrap_or("System");
             let log_line = format!(
-                "BC_STEP: [depth={}] [phase={:?}] [card={}] ip={:<3} {}",
+                "FRAME_STEP: [depth={}] [phase={:?}] [card={}] ip={:<3} {}",
                 state.core.trigger_depth, state.phase, card_name, ip, desc
             );
             if !state.ui.silent {
                 println!("[DEBUG] {}", log_line);
             }
 
-            let b_log = &mut state.ui.bytecode_log;
-            if b_log.len() < MAX_BYTECODE_LOG_SIZE {
+            let b_log = &mut state.ui.semantic_log;
+            if b_log.len() < MAX_FRAME_LOG_SIZE {
                 b_log.push(log_line.clone());
             }
             state.trace_internal(&log_line);
             let semantic_line = logging::describe_frame_semantics(&frame_data, &ctx, db);
             state.trace_internal(&format!(
-                "BC_SEM: [depth={}] [phase={:?}] [card={}] ip={:<3} {}",
+                "FRAME_SEM: [depth={}] [phase={:?}] [card={}] ip={:<3} {}",
                 state.core.trigger_depth, state.phase, card_name, ip, semantic_line
             ));
         }
@@ -251,7 +252,7 @@ pub fn resolve_semantic_frames(
             }
             if state.debug.debug_mode {
                 let result_line = format!(
-                    "BC_RESULT: ip={:<3} {}",
+                    "FRAME_RESULT: ip={:<3} {}",
                     ip,
                     if condition_frame.is_negated {
                         !passed
@@ -262,8 +263,8 @@ pub fn resolve_semantic_frames(
                 if !state.ui.silent {
                     println!("[DEBUG] {}", result_line);
                 }
-                let b_log = &mut state.ui.bytecode_log;
-                if b_log.len() < MAX_BYTECODE_LOG_SIZE {
+                let b_log = &mut state.ui.semantic_log;
+                if b_log.len() < MAX_FRAME_LOG_SIZE {
                     b_log.push(result_line.clone());
                 }
                 state.trace_internal(&result_line);
@@ -276,7 +277,7 @@ pub fn resolve_semantic_frames(
                 };
             if state.debug.debug_mode {
                 let cond_desc = format!(
-                    "BC_COND: ip={:<3} {} -> passed={}, final={}",
+                    "FRAME_COND: ip={:<3} {} -> passed={}, final={}",
                     ip,
                     logging::describe_frame_condition(&condition_frame),
                     passed,
@@ -286,8 +287,8 @@ pub fn resolve_semantic_frames(
                     println!("      | [COND] {}", cond_desc);
                 }
 
-                let b_log = &mut state.ui.bytecode_log;
-                if b_log.len() < MAX_BYTECODE_LOG_SIZE {
+                let b_log = &mut state.ui.semantic_log;
+                if b_log.len() < MAX_FRAME_LOG_SIZE {
                     b_log.push(cond_desc.clone());
                 }
                 state.trace_internal(&cond_desc);
@@ -350,37 +351,6 @@ pub fn resolve_semantic_frames(
 
     finish_execution(state, ctx_in, execution_started);
     Ok(())
-}
-
-/// Legacy adapter: decode bytecode once and execute the semantic frame sequence.
-/// Kept for compatibility while the remaining tests and tools are migrated.
-pub fn resolve_bytecode(
-    state: &mut GameState,
-    db: &CardDatabase,
-    bytecode: Arc<Vec<i32>>,
-    ctx_in: &AbilityContext,
-) -> Result<(), InterpreterError> {
-    if db.is_vanilla {
-        return Ok(());
-    }
-
-    if ctx_in.source_card_id >= 0 && ctx_in.ability_index >= 0 {
-        let ability_idx = ctx_in.ability_index as usize;
-        let ability = if let Some(member) = db.get_member(ctx_in.source_card_id) {
-            member.abilities.get(ability_idx)
-        } else if let Some(live) = db.get_live(ctx_in.source_card_id) {
-            live.abilities.get(ability_idx)
-        } else {
-            None
-        };
-
-        if let Some(ability) = ability {
-            return resolve_ability(state, db, ability, ctx_in);
-        }
-    }
-
-    let frame_program = crate::core::logic::models::FrameProgram::from_bytecode(bytecode.as_ref());
-    resolve_semantic_frames(state, db, &frame_program.frames, ctx_in)
 }
 
 /// Helper to check if an opcode is a condition

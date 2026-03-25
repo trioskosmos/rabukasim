@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-"""Generate the flat, human-editable ability frame source.
+"""Generate consolidated ability JSON from authored frame data.
 
-This is the authored form we want to edit directly. It keeps each unique
-ability as a straight sequence of opcode records, one frame per line/item.
+This script now keeps its JSON output away from `data/ability_frames.json`
+so the authored source file is never overwritten by a generator.
 """
 
 import argparse
@@ -20,11 +20,11 @@ from tools import frame_codec as codec
 
 DEFAULT_INPUT_PATH = ROOT_DIR / "data" / "ability_frames.json"
 DEFAULT_METADATA_PATH = ROOT_DIR / "data" / "metadata.json"
-DEFAULT_OUTPUT_PATH = ROOT_DIR / "data" / "ability_frames.json"
+DEFAULT_OUTPUT_PATH = ROOT_DIR / "data" / "consolidated_abilities.json"
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build or normalize the authored ability frame source")
+    parser = argparse.ArgumentParser(description="Build or normalize consolidated ability JSON")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT_PATH, help="Authored frame JSON")
     parser.add_argument("--metadata", type=Path, default=DEFAULT_METADATA_PATH, help="Metadata JSON")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT_PATH, help="Output JSON path")
@@ -37,7 +37,7 @@ def main() -> int:
     metadata = codec.load_json(args.metadata)
     payload = codec.build_compact_ability_index(compiled_data, metadata)
     codec.dump_json(args.output, payload)
-    print(f"Wrote authored ability frame source to {args.output}")
+    print(f"Wrote consolidated ability JSON to {args.output}")
     print(f"Unique abilities: {payload['summary']['unique_ability_count']}")
     print(f"Abilities processed: {payload['summary']['ability_count']}")
     return 0
