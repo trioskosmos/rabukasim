@@ -37,6 +37,21 @@ pub fn handle_set_tapped(
         );
     }
 
+    if is_optional && ctx.v_remaining == -1 && ctx.choice_index == 1 {
+        if let Some(execution_id) = state.ui.current_execution_id {
+            state.ui.cancelled_execution_ids.insert(execution_id);
+        }
+        return HandlerResult::Continue;
+    }
+
+    if is_optional && ctx.v_remaining == -1 && ctx.choice_index == 0 {
+        if resolved_slot >= 0 && resolved_slot < 3 {
+            state.players[p_idx].set_tapped(resolved_slot as usize, true);
+        }
+        ctx.choice_index = -1;
+        return HandlerResult::Continue;
+    }
+
     if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
         if matches!(
             suspend_choice(
@@ -57,19 +72,15 @@ pub fn handle_set_tapped(
         }
     }
 
-    if is_optional && ctx.v_remaining == -1 && ctx.choice_index != -1 {
-        if ctx.choice_index == 1 {
-            if let Some(execution_id) = state.ui.current_execution_id {
-                state.ui.cancelled_execution_ids.insert(execution_id);
-            }
-            return HandlerResult::Continue;
-        }
-        if ctx.choice_index == 0 {
-            ctx.choice_index = -1;
-        }
-    }
+    let should_tap = frame_data.value != 0;
 
-    let tap_slot = if is_optional && ctx.choice_index >= 0 && ctx.choice_index < 3 {
+    let tap_slot = if is_optional && ctx.v_remaining == -1 {
+        if resolved_slot >= 0 && resolved_slot < 3 {
+            Some(resolved_slot as usize)
+        } else {
+            None
+        }
+    } else if is_optional && ctx.choice_index >= 0 && ctx.choice_index < 3 {
         Some(ctx.choice_index as usize)
     } else if resolved_slot >= 0 && resolved_slot < 3 {
         Some(resolved_slot as usize)
@@ -78,7 +89,7 @@ pub fn handle_set_tapped(
     };
 
     if let Some(slot) = tap_slot {
-        state.players[p_idx].set_tapped(slot, frame_data.value != 0);
+        state.players[p_idx].set_tapped(slot, should_tap);
     }
 
     HandlerResult::Continue

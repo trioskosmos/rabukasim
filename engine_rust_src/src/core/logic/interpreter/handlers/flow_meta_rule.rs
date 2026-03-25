@@ -2,6 +2,7 @@ use super::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::filter::map_filter_string_to_attr;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::handlers::flow_helpers::current_effect_by_frame_index;
 use crate::core::logic::interpreter::handlers::flow_helpers::{
     current_effect, discard_current_yell_pile,
 };
@@ -29,12 +30,27 @@ pub fn handle_meta_rule(
     } else {
         base_p
     };
-    let raw_effect = current_effect(db, ctx, frame)
+    let effect_lookup = current_effect_by_frame_index(db, ctx, frame, frame_idx)
+        .or_else(|| {
+            let ab_idx = usize::try_from(ctx.ability_index).ok();
+            ab_idx
+                .and_then(|ab_idx| {
+                    db.get_live(ctx.source_card_id)
+                        .and_then(|card| card.abilities.get(ab_idx))
+                        .or_else(|| {
+                            db.get_member(ctx.source_card_id)
+                                .and_then(|card| card.abilities.get(ab_idx))
+                        })
+                })
+                .and_then(|ability| ability.effects.get(frame_idx))
+        })
+        .or_else(|| current_effect(db, ctx, frame));
+    let raw_effect = effect_lookup
         .and_then(|effect| effect.params.get("raw_effect"))
         .and_then(|value: &serde_json::Value| value.as_str());
 
     if matches!(raw_effect, Some("COUNT_MEMBER")) {
-        let effect = current_effect(db, ctx, frame);
+        let effect = effect_lookup;
         let filter_attr = effect
             .and_then(|effect| effect.params.get("filter"))
             .and_then(|value: &serde_json::Value| value.as_str())
@@ -113,15 +129,33 @@ pub fn handle_meta_rule(
         if let Some(slot_idx) = slot_idx.filter(|&slot| slot < 3) {
             state.players[p_idx].set_tapped(slot_idx, true);
         }
-    } else if a == 0 || a == 10 {
-        state.players[target_p_idx].cheer_mod_count = state.players[target_p_idx]
-            .cheer_mod_count
-            .saturating_add(v as u16);
-    } else if a == 8 {
-        if v == 1 {
+    } else if let Some(effect) = effect_lookup {
+        let rule_type = effect
+            .params
+            .get("type")
+            .or_else(|| effect.params.get("TYPE"))
+            .and_then(|value| value.as_str())
+            .map(|value| value.to_ascii_uppercase());
+        let rule_name = effect
+            .params
+            .get("rule")
+            .or_else(|| effect.params.get("RULE"))
+            .and_then(|value| value.as_str())
+            .map(|value| value.to_ascii_uppercase());
+
+        if matches!(rule_name.as_deref(), Some("ALL_ENERGY_ACTIVE"))
+            || (v == 1 && matches!(rule_type.as_deref(), Some("SCORE_RULE")))
+        {
             let all_active = state.players[p_idx].tapped_energy_count() == 0;
             return HandlerResult::SetCond(all_active);
         }
+    }
+
+    if frame.opcode() == O_META_RULE && (a == 0 || a == 10) {
+        state.players[target_p_idx].cheer_mod_count = state.players[target_p_idx]
+            .cheer_mod_count
+            .saturating_add(v as u16);
+        return HandlerResult::Continue;
     }
 
     HandlerResult::Continue

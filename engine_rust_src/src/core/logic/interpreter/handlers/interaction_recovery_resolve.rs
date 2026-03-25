@@ -1,9 +1,11 @@
 use super::*;
+use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::interaction_zone::{
     collect_zone_cards, normalized_source_zone, remove_card_from_zone,
 };
 use crate::core::logic::models::AbilityFrame;
+use crate::core::models::Zone;
 
 pub fn resolve_recovery(
     state: &mut GameState,
@@ -15,38 +17,56 @@ pub fn resolve_recovery(
 ) -> HandlerResult {
     let frame_data = frame.components();
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
+    let a = filter_attr_from_params(frame_data.params).unwrap_or(frame_data.raw_attr) as i64;
     let _s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let source_zone = normalized_source_zone(slot_info.source_zone);
+    let zone_cards = collect_zone_cards(state, p_idx, source_zone);
 
-    if ctx.choice_index == -1 {
+    let looked_cards_match_zone = state.players[p_idx]
+        .looked_cards
+        .iter()
+        .any(|cid| zone_cards.contains(cid));
+
+    if state.players[p_idx].looked_cards.is_empty() || !looked_cards_match_zone {
         state.players[p_idx].looked_cards.clear();
-        for cid in collect_zone_cards(state, p_idx, source_zone) {
+        for cid in &zone_cards {
             let type_matches = if real_op == O_RECOVER_LIVE {
-                db.get_live(cid).is_some()
+                db.get_live(*cid).is_some()
             } else {
-                db.get_member(cid).is_some()
+                db.get_member(*cid).is_some()
             };
             if type_matches
-                && (a == 0 || state.card_matches_filter_with_ctx(db, cid, a as u64, ctx))
+                && (a == 0 || state.card_matches_filter_with_ctx(db, *cid, a as u64, ctx))
             {
-                state.players[p_idx].looked_cards.push(cid);
+                state.players[p_idx].looked_cards.push(*cid);
             }
         }
         if state.players[p_idx].looked_cards.is_empty() {
+            if real_op == O_RECOVER_MEMBER {
+                if let Some(&sacrificed_cid) = ctx.selected_cards.first() {
+                    let _ =
+                        remove_card_from_zone(state, db, ctx, p_idx, Zone::Stage, sacrificed_cid);
+                }
+            }
             return HandlerResult::Continue;
         }
     }
 
-    if ctx.choice_index == -1 {
-        let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
-        let is_single_choice_auto_pick = !is_optional
-            && state.players[p_idx].looked_cards.len() == 1
-            && real_op != O_RECOVER_MEMBER;
+    let active_recovery_prompt = state
+        .interaction_stack
+        .last()
+        .map(|interaction| {
+            matches!(
+                interaction.choice_type,
+                ChoiceType::RecovL | ChoiceType::RecovM
+            )
+        })
+        .unwrap_or(false);
 
-        if is_single_choice_auto_pick {
+    if ctx.choice_index == -1 {
+        if real_op == O_RECOVER_LIVE && state.players[p_idx].looked_cards.len() == 1 {
             ctx.choice_index = 0;
         } else {
             let choice_type = if real_op == O_RECOVER_LIVE {

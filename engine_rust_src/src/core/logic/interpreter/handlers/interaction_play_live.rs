@@ -1,6 +1,7 @@
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::*;
 use crate::core::logic::constants::{CHOICE_DONE, STAGE_SLOT_COUNT};
+use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::models::AbilityFrame;
@@ -15,7 +16,7 @@ pub fn handle_play_live_from_discard(
 ) -> HandlerResult {
     let frame_data = frame.components();
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
+    let a = filter_attr_from_params(frame_data.params).unwrap_or(frame_data.raw_attr) as i64;
     let s = frame_data.raw_slot;
     let slot_info = frame_data.slot;
     let target_p_idx = if slot_info.is_opponent {
@@ -63,7 +64,7 @@ pub fn handle_play_live_from_discard(
                     O_PLAY_LIVE_FROM_DISCARD,
                     s,
                     ChoiceType::SelectDiscardPlay,
-                    a as u64,
+                    filter_attr,
                     remaining,
                 ),
                 HandlerResult::Suspend
@@ -94,6 +95,11 @@ pub fn handle_play_live_from_discard(
                 remaining -= 1;
                 let mut target_ctx = ctx.clone();
                 target_ctx.player_id = target_p_idx as u8;
+                target_ctx.selected_cards = ctx.selected_cards.clone();
+                if !target_ctx.selected_cards.contains(&chosen) {
+                    target_ctx.selected_cards.push(chosen);
+                }
+                ctx.choice_index = -1;
                 if matches!(
                     suspend_choice(
                         state,

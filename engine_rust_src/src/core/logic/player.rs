@@ -156,6 +156,8 @@ pub struct PlayerState {
     #[serde(default)]
     pub discarded_this_turn: u16,
     #[serde(default)]
+    pub discard_ids_this_turn: SmallVec<[i32; 16]>,
+    #[serde(default)]
     pub baton_source_ids: SmallVec<[i32; 4]>,
     #[serde(default)]
     pub baton_source_slots: SmallVec<[usize; 4]>,
@@ -242,6 +244,7 @@ impl Default for PlayerState {
             cached_deck_stats: DeckStats::default(),
             yell_heart_bonus: [HeartBoard::default(); 3],
             yell_blade_bonus: [0; 3],
+            discard_ids_this_turn: SmallVec::new(),
         }
     }
 }
@@ -404,6 +407,8 @@ impl PlayerState {
 
     pub fn push_discard_card(&mut self, card_id: i32) {
         self.discard.push(card_id);
+        self.discarded_this_turn += 1;
+        self.discard_ids_this_turn.push(card_id);
     }
 
     pub fn pop_discard_card(&mut self) -> Option<i32> {
@@ -549,6 +554,7 @@ impl PlayerState {
         self.activated_energy_group_mask = 0;
         self.activated_member_group_mask = 0;
         self.discarded_this_turn = 0;
+        self.discard_ids_this_turn.clear();
         self.cached_total_hearts = HeartBoard::default();
         self.cached_total_blades = 0;
         self.cached_deck_stats = DeckStats::default();
@@ -655,6 +661,9 @@ impl PlayerState {
         self.activated_energy_group_mask = other.activated_energy_group_mask;
         self.activated_member_group_mask = other.activated_member_group_mask;
         self.discarded_this_turn = other.discarded_this_turn;
+        self.discard_ids_this_turn.clear();
+        self.discard_ids_this_turn
+            .extend_from_slice(&other.discard_ids_this_turn);
         self.baton_source_ids.clear();
         self.baton_source_ids
             .extend_from_slice(&other.baton_source_ids);

@@ -61,7 +61,7 @@ impl FrameBuilder {
             match frame {
                 AbilityFrame::Raw { value, .. } => *value = v_val,
                 AbilityFrame::Semantic { value, .. } => *value = v_val,
-                AbilityFrame::Draw { count } => *count = v_val,
+                AbilityFrame::Draw { count, .. } => *count = v_val,
                 AbilityFrame::RecoverLive { count, .. } => *count = v_val,
                 AbilityFrame::RecoverMember { count, .. } => *count = v_val,
                 AbilityFrame::SelectMember { count, .. } => *count = v_val,

@@ -50,6 +50,12 @@ pub fn handle_activate_energy(
             "[DEBUG-ENERGY] O_ACTIVATE_ENERGY: Untapped {}/{} cards. Mask now: {:b}",
             count, v, state.players[p_idx].tapped_energy_mask
         );
+        println!(
+            "[DEBUG-ENERGY] activation masks energy={:b} member={:b} played={:b}",
+            state.players[p_idx].activated_energy_group_mask,
+            state.players[p_idx].activated_member_group_mask,
+            state.players[p_idx].played_group_mask
+        );
     }
     HandlerResult::Continue
 }

@@ -67,7 +67,7 @@ pub fn handle_play_member_from_discard(
     }
 
     if remaining % 2 == 0 {
-        return state_member_play_discard_select::handle_discard_selection(
+        let selection_result = state_member_play_discard_select::handle_discard_selection(
             state,
             db,
             ctx,
@@ -80,6 +80,25 @@ pub fn handle_play_member_from_discard(
             remaining,
             s,
         );
+        if matches!(selection_result, HandlerResult::Continue)
+            && !state.players[target_p_idx].looked_cards.is_empty()
+            && ctx.choice_index != -1
+        {
+            return state_member_play_discard_select::handle_discard_selection(
+                state,
+                db,
+                ctx,
+                frame_idx,
+                target_p_idx,
+                filter_attr_base,
+                empty_slot_only,
+                baton_slot_only,
+                is_total_cost,
+                remaining,
+                s,
+            );
+        }
+        return selection_result;
     } else {
         return state_member_play_discard_place::handle_discard_placement(
             state,

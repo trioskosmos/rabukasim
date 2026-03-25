@@ -257,6 +257,8 @@ impl DecodedHeartCounts {
 #[serde(from = "DecodedLookAndChooseRaw")]
 pub struct DecodedLookAndChoose {
     pub count: u8,
+    #[serde(default)]
+    pub choose_count: u8,
     pub char_id_1: u8,
     pub char_id_2: u8,
     pub char_id_3: u8,
@@ -270,6 +272,8 @@ enum DecodedLookAndChooseRaw {
     Legacy(i32),
     Structured {
         count: u8,
+        #[serde(default)]
+        choose_count: u8,
         char_id_1: u8,
         char_id_2: u8,
         char_id_3: u8,
@@ -284,6 +288,7 @@ impl From<DecodedLookAndChooseRaw> for DecodedLookAndChoose {
             DecodedLookAndChooseRaw::Legacy(v) => Self::decode(v),
             DecodedLookAndChooseRaw::Structured {
                 count,
+                choose_count,
                 char_id_1,
                 char_id_2,
                 char_id_3,
@@ -291,6 +296,7 @@ impl From<DecodedLookAndChooseRaw> for DecodedLookAndChoose {
                 dest_discard,
             } => Self {
                 count,
+                choose_count,
                 char_id_1,
                 char_id_2,
                 char_id_3,
@@ -306,6 +312,7 @@ impl DecodedLookAndChoose {
         let uv = v as u32;
         Self {
             count: ((uv >> V_LOOK_CHOOSE_COUNT_SHIFT) & V_LOOK_CHOOSE_COUNT_MASK) as u8,
+            choose_count: 0,
             char_id_1: ((uv >> V_LOOK_CHOOSE_CHAR_ID_1_SHIFT) & V_LOOK_CHOOSE_CHAR_ID_1_MASK) as u8,
             char_id_2: ((uv >> V_LOOK_CHOOSE_CHAR_ID_2_SHIFT) & V_LOOK_CHOOSE_CHAR_ID_2_MASK) as u8,
             char_id_3: ((uv >> V_LOOK_CHOOSE_CHAR_ID_3_SHIFT) & V_LOOK_CHOOSE_CHAR_ID_3_MASK) as u8,

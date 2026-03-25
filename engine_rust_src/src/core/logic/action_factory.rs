@@ -79,49 +79,29 @@ impl ActionFactory {
         }?;
 
         let ability = abilities.get(pi.ability_index as usize)?;
-        let frame_program = ability.frame_program.as_ref()?;
+        let target = ability
+            .get_modal_option_frames(mode_idx as usize)?
+            .into_iter()
+            .next()?;
 
-        let mut select_mode_idx = 0;
-        let mut found = false;
-        for (i, frame) in frame_program.frames.iter().enumerate() {
-            if frame.opcode() == O_SELECT_MODE {
-                select_mode_idx = i;
-                found = true;
-                break;
-            }
-        }
-        if !found {
-            return None;
-        }
-
-        let jump_frame_idx = select_mode_idx + 1 + mode_idx as usize;
-        let jump_frame = frame_program.frames.get(jump_frame_idx)?;
-        if jump_frame.opcode() != O_JUMP {
-            return None;
-        }
-
-        let target_idx = (jump_frame_idx as i32 + 1 + jump_frame.value()) as usize;
-        let effect_frame = frame_program.frames.get(target_idx)?;
-        let technical_label = match effect_frame.opcode() {
-            O_PAY_ENERGY => format!("PAY_ENERGY({})", effect_frame.value()),
+        let technical_label = match target.opcode() {
+            O_PAY_ENERGY => format!("PAY_ENERGY({})", target.value()),
             O_MOVE_TO_DISCARD => {
-                let slot = effect_frame.dslot();
+                let slot = target.dslot();
                 if slot.source_zone == crate::core::enums::Zone::Hand {
-                    format!("DISCARD_HAND({})", effect_frame.value())
+                    format!("DISCARD_HAND({})", target.value())
                 } else {
                     format!(
                         "{}({})",
-                        crate::core::logic::interpreter::logging::get_opcode_name(
-                            effect_frame.opcode()
-                        ),
-                        effect_frame.value()
+                        crate::core::logic::interpreter::logging::get_opcode_name(target.opcode()),
+                        target.value()
                     )
                 }
             }
             _ => format!(
                 "{}({})",
-                crate::core::logic::interpreter::logging::get_opcode_name(effect_frame.opcode()),
-                effect_frame.value()
+                crate::core::logic::interpreter::logging::get_opcode_name(target.opcode()),
+                target.value()
             ),
         };
 
@@ -313,6 +293,25 @@ impl ActionFactory {
                             if let Some(name) = options.get(&mode_idx.to_string()) {
                                 if let Some(s) = name.as_str() {
                                     return format!("Mode: {}", Self::map_technical_label(s));
+                                }
+                            }
+                        }
+                        if let Some(select_mode_effect) = ab
+                            .effects
+                            .iter()
+                            .find(|effect| effect.runtime_opcode == O_SELECT_MODE)
+                        {
+                            if let Some(options_val) = select_mode_effect
+                                .params
+                                .get("options")
+                                .or_else(|| select_mode_effect.params.get("OPTIONS"))
+                            {
+                                if let Some(options_arr) = options_val.as_array() {
+                                    if let Some(option) = options_arr.get(mode_idx as usize) {
+                                        if let Some(s) = option.as_str() {
+                                            return format!("Mode: {}", s);
+                                        }
+                                    }
                                 }
                             }
                         }

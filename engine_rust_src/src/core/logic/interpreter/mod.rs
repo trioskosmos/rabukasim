@@ -77,10 +77,6 @@ fn begin_execution(state: &mut GameState, ctx_in: &AbilityContext) -> bool {
 }
 
 fn finish_execution(state: &mut GameState, ctx_in: &AbilityContext, execution_started: bool) {
-    state.players[ctx_in.player_id as usize]
-        .revealed_cards
-        .clear();
-
     if execution_started {
         state.clear_execution_id();
     }
@@ -178,8 +174,8 @@ pub fn resolve_semantic_frames(
                 .or_else(|| db.get_live(ctx.source_card_id).map(|l| l.name.as_str()))
                 .unwrap_or("System");
             let log_line = format!(
-                "BC_STEP: [depth={}] [card={}] ip={:<3} {}",
-                0, card_name, ip, desc
+                "BC_STEP: [depth={}] [phase={:?}] [card={}] ip={:<3} {}",
+                state.core.trigger_depth, state.phase, card_name, ip, desc
             );
             if !state.ui.silent {
                 println!("[DEBUG] {}", log_line);
@@ -190,6 +186,11 @@ pub fn resolve_semantic_frames(
                 b_log.push(log_line.clone());
             }
             state.trace_internal(&log_line);
+            let semantic_line = logging::describe_frame_semantics(&frame_data, &ctx, db);
+            state.trace_internal(&format!(
+                "BC_SEM: [depth={}] [phase={:?}] [card={}] ip={:<3} {}",
+                state.core.trigger_depth, state.phase, card_name, ip, semantic_line
+            ));
         }
         if let Some(ref mut set) = state.debug.executed_opcodes {
             set.insert(frame_data.opcode);
@@ -328,7 +329,11 @@ pub fn resolve_semantic_frames(
                 advance_effect = false;
             }
             HandlerResult::BranchToFrames(new_frames) => {
-                if let Err(err) = resolve_semantic_frames(state, db, new_frames.as_slice(), &ctx) {
+                let mut branch_ctx = ctx.clone();
+                branch_ctx.program_counter = 0;
+                if let Err(err) =
+                    resolve_semantic_frames(state, db, new_frames.as_slice(), &branch_ctx)
+                {
                     finish_execution(state, ctx_in, execution_started);
                     return Err(err);
                 }
@@ -359,12 +364,23 @@ pub fn resolve_bytecode(
         return Ok(());
     }
 
-    if let Some(ability) = db.find_ability_by_bytecode(bytecode.as_ref(), ctx_in) {
-        resolve_ability(state, db, ability, ctx_in)
-    } else {
-        let frame_program = crate::core::logic::models::FrameProgram::from_bytecode(bytecode.as_ref());
-        resolve_semantic_frames(state, db, &frame_program.frames, ctx_in)
+    if ctx_in.source_card_id >= 0 && ctx_in.ability_index >= 0 {
+        let ability_idx = ctx_in.ability_index as usize;
+        let ability = if let Some(member) = db.get_member(ctx_in.source_card_id) {
+            member.abilities.get(ability_idx)
+        } else if let Some(live) = db.get_live(ctx_in.source_card_id) {
+            live.abilities.get(ability_idx)
+        } else {
+            None
+        };
+
+        if let Some(ability) = ability {
+            return resolve_ability(state, db, ability, ctx_in);
+        }
     }
+
+    let frame_program = crate::core::logic::models::FrameProgram::from_bytecode(bytecode.as_ref());
+    resolve_semantic_frames(state, db, &frame_program.frames, ctx_in)
 }
 
 /// Helper to check if an opcode is a condition

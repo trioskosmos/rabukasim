@@ -22,6 +22,10 @@ mod tests {
                 O_META_RULE, 1, 0, 0, // Increment cheer_mod_count by 1
                 O_RETURN, 0, 0, 0
             ],
+            frame_program: Some(crate::core::logic::models::FrameProgram::from_bytecode(&[
+                O_META_RULE, 1, 0, 0,
+                O_RETURN, 0, 0, 0,
+            ])),
             ..Default::default()
         });
         db.members.insert(1, card_a);

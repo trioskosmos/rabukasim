@@ -2,6 +2,7 @@ use super::common::{parse_condition_type, MAX_CONDITION_CHECK_DEPTH};
 use super::opcodes::check_condition_opcode;
 use crate::core::enums::*;
 use crate::core::logic::filter::map_filter_string_to_attr;
+use crate::core::logic::heart_semantics::decode_heart_type_value;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};
 
 pub fn get_param_case_insensitive<'a>(
@@ -77,8 +78,255 @@ pub fn evaluate_raw_condition(
     else {
         return true;
     };
-
     match raw_cond {
+        "PLAYER_CENTER_COST_GT_OPPONENT_CENTER_COST" => {
+            let player_center = state.players[ctx.player_id as usize]
+                .stage
+                .get(1)
+                .copied()
+                .unwrap_or(-1);
+            let opponent_center = state.players[1 - ctx.player_id as usize]
+                .stage
+                .get(1)
+                .copied()
+                .unwrap_or(-1);
+
+            let player_cost = if player_center >= 0 {
+                db.get_member(player_center)
+                    .map(|member| member.cost as i32)
+                    .unwrap_or(0)
+            } else {
+                0
+            };
+            let opponent_cost = if opponent_center >= 0 {
+                db.get_member(opponent_center)
+                    .map(|member| member.cost as i32)
+                    .unwrap_or(0)
+            } else {
+                0
+            };
+
+            player_cost > opponent_cost
+        }
+        "COUNT_MEMBER" => {
+            let filter_attr = get_param_case_insensitive(params, "FILTER")
+                .or_else(|| get_param_case_insensitive(params, "filter"))
+                .and_then(|value| value.as_str())
+                .map(map_filter_string_to_attr)
+                .filter(|&attr| attr != 0)
+                .unwrap_or(cond.attr);
+
+            let target_player = get_param_case_insensitive(params, "val")
+                .or_else(|| get_param_case_insensitive(params, "player"))
+                .and_then(|value| value.as_str())
+                .map(|value| value.to_ascii_uppercase())
+                .map(|value| match value.as_str() {
+                    "OPPONENT" => 1 - ctx.player_id as usize,
+                    "BOTH" | "ALL" | "PLAYER" | "SELF" => ctx.player_id as usize,
+                    _ => ctx.player_id as usize,
+                })
+                .unwrap_or(ctx.player_id as usize);
+
+            let count = state.players[target_player]
+                .stage
+                .iter()
+                .copied()
+                .filter(|&cid| cid >= 0)
+                .filter(|&cid| {
+                    filter_attr == 0
+                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+                })
+                .count() as i32;
+
+            if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
+                count == eq as i32
+            } else if let Some(ge) =
+                get_param_case_insensitive(params, "GE").and_then(|v| v.as_i64())
+            {
+                count >= ge as i32
+            } else if let Some(min) =
+                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
+            {
+                count >= min as i32
+            } else if let Some(max) =
+                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
+            {
+                count <= max as i32
+            } else {
+                count > 0
+            }
+        }
+        "COUNT_STAGE" => {
+            let mut filter_attr = get_param_case_insensitive(params, "FILTER")
+                .or_else(|| get_param_case_insensitive(params, "filter"))
+                .and_then(|value| value.as_str())
+                .map(map_filter_string_to_attr)
+                .filter(|&attr| attr != 0)
+                .unwrap_or(cond.attr);
+
+            if let Some(area) = get_param_case_insensitive(params, "AREA")
+                .or_else(|| get_param_case_insensitive(params, "area"))
+                .and_then(|v| v.as_str())
+            {
+                if area.eq_ignore_ascii_case("ANY_STAGE") || area.eq_ignore_ascii_case("ALL_AREAS")
+                {
+                    filter_attr = (filter_attr & !0x3) | (TARGET_PLAYER_BOTH as u64);
+                }
+            }
+
+            let mut value = cond.value;
+            if value == 0 {
+                if let Some(min) =
+                    get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
+                {
+                    value = min as i32;
+                } else if let Some(eq) =
+                    get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64())
+                {
+                    value = eq as i32;
+                } else if let Some(max) =
+                    get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
+                {
+                    value = max as i32;
+                }
+            }
+
+            check_condition_opcode(
+                state,
+                db,
+                203,
+                value,
+                filter_attr,
+                cond.target_slot as i32,
+                ctx,
+                depth + 1,
+            )
+        }
+        "ALL_MEMBERS" => {
+            let filter_attr = get_param_case_insensitive(params, "FILTER")
+                .or_else(|| get_param_case_insensitive(params, "filter"))
+                .and_then(|value| value.as_str())
+                .map(map_filter_string_to_attr)
+                .filter(|&attr| attr != 0)
+                .unwrap_or(cond.attr);
+
+            let target_player = get_param_case_insensitive(params, "val")
+                .or_else(|| get_param_case_insensitive(params, "player"))
+                .and_then(|value| value.as_str())
+                .map(|value| value.to_ascii_uppercase())
+                .map(|value| match value.as_str() {
+                    "OPPONENT" => 1 - ctx.player_id as usize,
+                    "BOTH" | "ALL" | "PLAYER" | "SELF" => ctx.player_id as usize,
+                    _ => ctx.player_id as usize,
+                })
+                .unwrap_or(ctx.player_id as usize);
+
+            let stage = &state.players[target_player].stage;
+            let total = stage.iter().copied().filter(|&cid| cid >= 0).count() as i32;
+            let matching = stage
+                .iter()
+                .copied()
+                .filter(|&cid| cid >= 0)
+                .filter(|&cid| {
+                    filter_attr == 0
+                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+                })
+                .count() as i32;
+
+            if total == 0 {
+                false
+            } else if let Some(eq) =
+                get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64())
+            {
+                matching == eq as i32
+            } else if let Some(ge) =
+                get_param_case_insensitive(params, "GE").and_then(|v| v.as_i64())
+            {
+                matching >= ge as i32
+            } else if let Some(min) =
+                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
+            {
+                matching >= min as i32
+            } else if let Some(max) =
+                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
+            {
+                matching <= max as i32
+            } else {
+                matching == total
+            }
+        }
+        "ENERGY_COUNT" => {
+            let target_is_opponent = get_param_case_insensitive(params, "val")
+                .and_then(|v| v.as_str())
+                .map(|v| v.eq_ignore_ascii_case("OPPONENT"))
+                .unwrap_or(false);
+            let target_player = if target_is_opponent {
+                1 - ctx.player_id as usize
+            } else {
+                ctx.player_id as usize
+            };
+
+            let energy_count = state.players[target_player].energy_zone.len() as i32;
+            if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
+                energy_count == eq as i32
+            } else if let Some(ge) =
+                get_param_case_insensitive(params, "GE").and_then(|v| v.as_i64())
+            {
+                energy_count >= ge as i32
+            } else if let Some(min) =
+                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
+            {
+                energy_count >= min as i32
+            } else if let Some(max) =
+                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
+            {
+                energy_count <= max as i32
+            } else {
+                energy_count > 0
+            }
+        }
+        "DID_ACTIVATE_ENERGY"
+        | "DID_ACTIVATE_ENERGY_BY_GROUP"
+        | "DID_ACTIVATE_ENERGY_BY_MEMBER_EFFECT"
+        | "DID_ACTIVATE_MEMBER"
+        | "DID_ACTIVATE_MEMBER_BY_GROUP"
+        | "DID_ACTIVATE_MEMBER_BY_MEMBER_EFFECT" => check_condition_opcode(
+            state,
+            db,
+            C_HAS_KEYWORD,
+            cond.value,
+            cond.attr,
+            cond.target_slot as i32,
+            ctx,
+            depth + 1,
+        ),
+        "ALL_CARDS_MATCH" => {
+            let filter_attr = get_param_case_insensitive(params, "FILTER")
+                .or_else(|| get_param_case_insensitive(params, "filter"))
+                .and_then(|value| value.as_str())
+                .map(map_filter_string_to_attr)
+                .filter(|&attr| attr != 0)
+                .unwrap_or(cond.attr);
+
+            let mut value = cond.value;
+            if get_param_case_insensitive(params, "all")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+            {
+                value |= 0x04;
+            }
+
+            check_condition_opcode(
+                state,
+                db,
+                309,
+                value,
+                filter_attr,
+                cond.target_slot as i32,
+                ctx,
+                depth + 1,
+            )
+        }
         "HAS_SUCCESS_LIVE" | "NOT_HAS_SUCCESS_LIVE" => {
             let filter_attr = get_param_case_insensitive(params, "FILTER")
                 .or_else(|| get_param_case_insensitive(params, "filter"))
@@ -211,10 +459,10 @@ pub fn evaluate_raw_condition(
                 &state.players[ctx.player_id as usize]
             };
 
-            let heart_type = get_param_case_insensitive(params, "HEART_TYPE")
-                .and_then(|v| v.as_u64())
-                .map(|v| v as usize);
-            let target_count = heart_type
+            let target_count = params
+                .get("heart_type")
+                .or_else(|| params.get("HEART_TYPE"))
+                .and_then(decode_heart_type_value)
                 .filter(|&heart_type| heart_type < 7)
                 .map(|heart_type| target_player.excess_hearts_by_color[heart_type] as i32)
                 .unwrap_or_else(|| target_player.excess_hearts as i32);
@@ -256,6 +504,41 @@ pub fn evaluate_raw_condition(
                 target_hearts <= max as i32
             } else {
                 target_hearts > 0
+            }
+        }
+        "HEARTS_COUNT" => {
+            let target_is_opponent = get_param_case_insensitive(params, "target")
+                .or_else(|| get_param_case_insensitive(params, "val"))
+                .and_then(|v| v.as_str())
+                .map(|v| v.eq_ignore_ascii_case("OPPONENT"))
+                .unwrap_or(false);
+            let self_hearts = state
+                .get_total_member_hearts(ctx.player_id as usize, db, depth + 1)
+                .get_total_count() as i32;
+            let opponent_hearts = state
+                .get_total_member_hearts(1 - ctx.player_id as usize, db, depth + 1)
+                .get_total_count() as i32;
+
+            let (lhs, rhs) = if target_is_opponent {
+                (self_hearts, opponent_hearts)
+            } else {
+                (opponent_hearts, self_hearts)
+            };
+
+            let target_value = get_param_case_insensitive(params, "val")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(cond.value as i64) as i32;
+            match get_param_case_insensitive(params, "comparison")
+                .and_then(|v| v.as_str())
+                .map(|value| value.to_ascii_uppercase())
+                .as_deref()
+            {
+                Some("GT") => lhs > rhs,
+                Some("GE") | Some("GTE") => lhs >= rhs,
+                Some("LT") => lhs < rhs,
+                Some("LE") | Some("LTE") => lhs <= rhs,
+                Some("EQ") | Some("EQUAL") => lhs == rhs,
+                _ => lhs > rhs.max(target_value),
             }
         }
         "REDUCE_YELL_COUNT" => {

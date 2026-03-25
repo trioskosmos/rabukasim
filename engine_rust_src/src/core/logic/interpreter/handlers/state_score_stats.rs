@@ -1,4 +1,5 @@
 use super::*;
+use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 use crate::core::logic::models::AbilityFrameComponents;
 
 #[path = "state_score_slots.rs"]
@@ -7,16 +8,8 @@ mod state_score_slots;
 mod state_score_transforms;
 
 fn decode_heart_color(frame: &AbilityFrameComponents<'_>, ctx: &AbilityContext) -> usize {
-    if let Some(params) = frame.params.and_then(|value| value.as_object()) {
-        if let Some(heart_type) = params.get("heart_type").and_then(|value| value.as_u64()) {
-            return if heart_type == 7 {
-                6
-            } else if heart_type <= 6 {
-                heart_type as usize
-            } else {
-                ctx.selected_color as usize
-            };
-        }
+    if let Some(color) = decode_heart_type_from_params(frame.params) {
+        return color;
     }
 
     let color_mask = frame.filter.color_mask as usize;
@@ -29,7 +22,12 @@ fn decode_heart_color(frame: &AbilityFrameComponents<'_>, ctx: &AbilityContext) 
         }
     }
 
-    ctx.selected_color as usize
+    match frame.raw_attr {
+        0 => ctx.selected_color as usize,
+        7 => 6,
+        raw if raw <= 6 => raw as usize,
+        _ => ctx.selected_color as usize,
+    }
 }
 
 #[allow(clippy::too_many_arguments)]

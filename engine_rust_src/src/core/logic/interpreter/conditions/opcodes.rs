@@ -43,6 +43,7 @@ pub fn check_condition_frame(
         frame.value,
         frame.raw_attr,
         frame.raw_slot,
+        frame.params,
         frame.filter,
         frame.slot,
         ctx,
@@ -67,6 +68,7 @@ pub fn check_condition_opcode(
         val,
         attr,
         slot,
+        None,
         DecodedFilterAttr::decode(attr as i64),
         DecodedSlot::decode(slot),
         ctx,
@@ -81,6 +83,7 @@ fn check_condition_with_parts(
     val: i32,
     attr: u64,
     slot: i32,
+    params: Option<&serde_json::Value>,
     filter: DecodedFilterAttr,
     slot_info: DecodedSlot,
     ctx: &AbilityContext,
@@ -359,13 +362,28 @@ fn check_condition_with_parts(
             (opp_energy - my_energy) >= val
         }
         C_HAS_KEYWORD => {
+            if (attr & KEYWORD_ACTIVATED_ENERGY_BY_GROUP) != 0 {
+                if (attr & FILTER_GROUP_ENABLE) != 0 {
+                    let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
+                    return (player.activated_energy_group_mask & (1 << group_id)) != 0;
+                }
+                return player.activated_energy_group_mask != 0;
+            }
+            if (attr & KEYWORD_ACTIVATED_MEMBER_BY_GROUP) != 0 {
+                if (attr & FILTER_GROUP_ENABLE) != 0 {
+                    let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
+                    return (player.activated_member_group_mask & (1 << group_id)) != 0;
+                }
+                return player.activated_member_group_mask != 0;
+            }
+
             let mut res = false;
             if (attr & KEYWORD_PLAYED_THIS_TURN) != 0 || attr == 0 {
                 if (attr & FILTER_GROUP_ENABLE) != 0 {
                     let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
                     res = (player.played_group_mask & (1 << group_id)) != 0;
-                } else if val == 0 && attr == KEYWORD_PLAYED_THIS_TURN {
-                    res = ctx.area_idx == 1;
+                } else if val == 0 && ((attr & KEYWORD_PLAYED_THIS_TURN) != 0 || attr == 0) {
+                    res = player.play_count_this_turn() > 0;
                 } else {
                     res = compare_i32(player.play_count_this_turn() as i32, val, slot);
                 }
@@ -387,18 +405,6 @@ fn check_condition_with_parts(
                         .looked_cards
                         .iter()
                         .any(|&cid| db.get_member(cid).is_some());
-                }
-            }
-            if (attr & KEYWORD_ACTIVATED_ENERGY_BY_GROUP) != 0 {
-                if (attr & FILTER_GROUP_ENABLE) != 0 {
-                    let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
-                    res = (player.activated_energy_group_mask & (1 << group_id)) != 0;
-                }
-            }
-            if (attr & KEYWORD_ACTIVATED_MEMBER_BY_GROUP) != 0 {
-                if (attr & FILTER_GROUP_ENABLE) != 0 {
-                    let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
-                    res = (player.activated_member_group_mask & (1 << group_id)) != 0;
                 }
             }
             res
@@ -714,10 +720,21 @@ fn check_condition_with_parts(
                     .filter(|&cid| attr == 0 || state.card_matches_filter(db, cid, attr))
                     .count() as i32
             } else {
-                player.discarded_this_turn as i32
+                player
+                    .discard_ids_this_turn
+                    .iter()
+                    .copied()
+                    .filter(|&cid| attr == 0 || state.card_matches_filter(db, cid, attr))
+                    .count() as i32
             };
-            if (val & 0x04) != 0 && !ctx.selected_cards.is_empty() {
-                matching_count == ctx.selected_cards.len() as i32
+            if (val & 0x04) != 0 {
+                // "all=true" logic
+                let source_count = if !ctx.selected_cards.is_empty() {
+                    ctx.selected_cards.len() as i32
+                } else {
+                    player.discard_ids_this_turn.len() as i32
+                };
+                source_count > 0 && matching_count == source_count
             } else {
                 compare_i32(matching_count, val, slot)
             }
@@ -738,8 +755,36 @@ fn check_condition_with_parts(
             compare_i32(count, val, slot)
         }
         311 => {
-            let (self_cost, opp_cost) = if area_val >= 1 && area_val <= 3 {
-                let idx = (area_val - 1) as usize;
+            let area_override = params
+                .and_then(|value| value.as_object())
+                .and_then(|params| params.get("area").or_else(|| params.get("AREA")))
+                .and_then(|value| value.as_str())
+                .map(|value| value.to_ascii_uppercase())
+                .and_then(|value| match value.as_str() {
+                    "LEFT_SIDE" | "LEFT" => Some(0usize),
+                    "CENTER" => Some(1usize),
+                    "RIGHT_SIDE" | "RIGHT" => Some(2usize),
+                    _ => None,
+                });
+
+            let (self_cost, opp_cost) = if let Some(idx) = area_override {
+                let s_cid = player.stage[idx];
+                let o_cid = opponent.stage[idx];
+                let s_cost =
+                    if s_cid >= 0 && (attr == 0 || state.card_matches_filter(db, s_cid, attr)) {
+                        db.get_member(s_cid).map_or(0, |m| m.cost as i32)
+                    } else {
+                        0
+                    };
+                let o_cost =
+                    if o_cid >= 0 && (attr == 0 || state.card_matches_filter(db, o_cid, attr)) {
+                        db.get_member(o_cid).map_or(0, |m| m.cost as i32)
+                    } else {
+                        0
+                    };
+                (s_cost, o_cost)
+            } else if area_val >= 1 && area_val <= 3 {
+                let idx = area_val as usize;
                 let s_cid = player.stage[idx];
                 let o_cid = opponent.stage[idx];
                 let s_cost =

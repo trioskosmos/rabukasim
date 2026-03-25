@@ -89,7 +89,10 @@ fn test_sparse_ability_index_is_loaded() {
                 "sparse ability entry should not be empty"
             );
             assert!(
-                sparse.get("source_words").and_then(|v| v.as_array()).is_some(),
+                sparse
+                    .get("source_words")
+                    .and_then(|v| v.as_array())
+                    .is_some(),
                 "sparse ability entry should preserve source_words"
             );
             assert!(
@@ -116,7 +119,10 @@ fn test_sparse_ability_index_is_loaded() {
                 "sparse ability entry should not be empty"
             );
             assert!(
-                sparse.get("source_words").and_then(|v| v.as_array()).is_some(),
+                sparse
+                    .get("source_words")
+                    .and_then(|v| v.as_array())
+                    .is_some(),
                 "sparse ability entry should preserve source_words"
             );
             assert!(

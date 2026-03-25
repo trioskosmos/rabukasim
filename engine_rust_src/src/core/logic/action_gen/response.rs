@@ -3,6 +3,9 @@ use crate::core::logic::ability_patterns::{
     pending_live_ability, pending_optional_mode_mask, pending_targeted_live_heart_bonus,
 };
 use crate::core::logic::action_gen::ActionGenerator;
+use crate::core::logic::filter::filter_attr_from_params;
+use crate::core::logic::interpreter::instruction::DecodedSlot;
+use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::logic::{
     Ability, ActionReceiver, CardDatabase, ChoiceType, GameState, PendingInteraction,
 };
@@ -28,6 +31,56 @@ impl ActionGenerator for ResponseGenerator {
 }
 
 impl ResponseGenerator {
+    fn is_targeted_select_member_cost(pi: &PendingInteraction) -> bool {
+        let decoded_slot = DecodedSlot::decode(pi.target_slot);
+        decoded_slot.target_slot == 4
+            && (pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK) != 0
+    }
+
+    fn is_position_change_prompt(pi: &PendingInteraction) -> bool {
+        pi.effect_opcode == O_MOVE_MEMBER
+            || pi.effect_opcode == O_FORMATION_CHANGE
+            || pi.choice_type == ChoiceType::MoveMemberDest
+            || pi.choice_type == ChoiceType::RearrangeFormation
+    }
+
+    fn generate_position_change_destinations<R: ActionReceiver + ?Sized>(
+        &self,
+        db: &CardDatabase,
+        state: &GameState,
+        receiver: &mut R,
+        pi: &PendingInteraction,
+        _abilities: Option<&Vec<Ability>>,
+        p_idx: usize,
+    ) {
+        let player = &state.players[p_idx];
+        let filter_attr = pi.filter_attr;
+        let source_slot = player
+            .stage
+            .iter()
+            .position(|&cid| cid == pi.ctx.source_card_id);
+        let allow_any_occupied_dest = filter_attr == 0;
+        let mut added_dest = false;
+        for i in 0..3 {
+            let cid = player.stage[i];
+            if source_slot != Some(i)
+                && cid >= 0
+                && (allow_any_occupied_dest
+                    || state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx))
+            {
+                receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                added_dest = true;
+            }
+        }
+        if !added_dest {
+            receiver.add_action(0);
+        }
+    }
+
+    fn selected_target_key(source_zone: u8, slot_idx: usize) -> i32 {
+        ((source_zone as i32) << 8) | (slot_idx as i32 & 0xFF)
+    }
+
     fn effect_runtime_attr_for_opcode(ab: &Ability, opcode: i32) -> Option<u64> {
         ab.effects
             .iter()
@@ -36,22 +89,16 @@ impl ResponseGenerator {
     }
 
     fn effect_filter_attr_for_opcode(ab: &Ability, opcode: i32) -> Option<u64> {
+        let matches_opcode = |effect: &crate::core::logic::Effect| {
+            effect.runtime_opcode == opcode
+                || (opcode == O_SELECT_MEMBER && effect.effect_type == EffectType::SelectMember)
+                || (opcode == O_MOVE_MEMBER && effect.effect_type == EffectType::MoveMember)
+        };
+
         ab.effects
             .iter()
-            .find(|effect| effect.runtime_opcode == opcode)
-            .and_then(|effect| {
-                effect
-                    .params
-                    .get("filter")
-                    .and_then(|value| value.as_str())
-                    .map(crate::core::logic::filter::map_filter_string_to_attr)
-            })
-    }
-
-    fn is_saintsnow_member(db: &CardDatabase, cid: i32) -> bool {
-        db.get_member(cid)
-            .map(|card| matches!(card.name.as_str(), "鹿角聖良" | "鹿角理亞"))
-            .unwrap_or(false)
+            .find(|effect| matches_opcode(effect))
+            .and_then(|effect| filter_attr_from_params(Some(&effect.params)))
     }
 
     fn generate_internal<R: ActionReceiver + ?Sized>(
@@ -66,6 +113,69 @@ impl ResponseGenerator {
         } else {
             return;
         };
+        if state.debug.debug_mode {
+            println!(
+                "[DEBUG_RESP] choice_type={:?} opcode={} filter={:X} target_slot={} area_idx={} source_card_id={} ability_index={} v_remaining={}",
+                pi.choice_type,
+                pi.effect_opcode,
+                pi.filter_attr,
+                pi.target_slot,
+                pi.ctx.area_idx,
+                pi.ctx.source_card_id,
+                pi.ctx.ability_index,
+                pi.v_remaining
+            );
+        }
+        if pi.card_id == 321 || pi.ctx.source_card_id == 321 {
+            eprintln!(
+                "[RESP_SHAPE] choice_type={:?} opcode={} filter={:X} target_slot={} card_id={} source={} ability_index={} v_remaining={} ctx_v_accum={}",
+                pi.choice_type,
+                pi.effect_opcode,
+                pi.filter_attr,
+                pi.target_slot,
+                pi.card_id,
+                pi.ctx.source_card_id,
+                pi.ability_index,
+                pi.v_remaining,
+                pi.ctx.v_accumulated
+            );
+        }
+        if pi.card_id == 4196 || pi.ctx.source_card_id == 4196 {
+            eprintln!(
+                "[RESP_MAKI] p_idx={} choice_type={:?} opcode={} filter={:X} target_slot={} card_id={} source={} ability_index={} v_remaining={} ctx_v_accum={} targeted_cost={}",
+                p_idx,
+                pi.choice_type,
+                pi.effect_opcode,
+                pi.filter_attr,
+                pi.target_slot,
+                pi.card_id,
+                pi.ctx.source_card_id,
+                pi.ability_index,
+                pi.v_remaining,
+                pi.ctx.v_accumulated,
+                pi.target_slot == 4
+                    && (pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK) != 0
+            );
+        }
+        if pi.card_id == 444
+            || pi.ctx.source_card_id == 444
+            || pi.card_id == 4540
+            || pi.ctx.source_card_id == 4540
+        {
+            eprintln!(
+                "[RESP_Q154] choice_type={:?} opcode={} filter={:X} target_slot={} ability_index={} v_remaining={} ctx_v_accum={} selected_cards={:?} discard_len={} discard={:?}",
+                pi.choice_type,
+                pi.effect_opcode,
+                pi.filter_attr,
+                pi.target_slot,
+                pi.ability_index,
+                pi.v_remaining,
+                pi.ctx.v_accumulated,
+                pi.ctx.selected_cards,
+                state.players[p_idx].discard.len(),
+                state.players[p_idx].discard
+            );
+        }
         let ctx = &pi.ctx;
         let opcode = pi.effect_opcode;
         let choice_type = pi.choice_type;
@@ -86,6 +196,8 @@ impl ResponseGenerator {
 
         if choice_type == ChoiceType::Optional {
             allow_action_0 = true;
+        } else if choice_type == ChoiceType::MoveMemberDest {
+            allow_action_0 = false;
         }
 
         if !allow_action_0
@@ -109,6 +221,7 @@ impl ResponseGenerator {
         } else {
             live.map(|l| &l.abilities)
         };
+        let is_targeted_select_member_cost = Self::is_targeted_select_member_cost(pi);
 
         if pending_optional_mode_mask(db, pi).is_some() {
             self.generate_select_mode_actions(db, p_idx, state, receiver, pi, abilities);
@@ -144,6 +257,27 @@ impl ResponseGenerator {
             ChoiceType::Optional => {
                 receiver.add_action((ACTION_BASE_CHOICE + 0) as usize); // Yes/Proceed
                 receiver.add_action((ACTION_BASE_CHOICE + 1) as usize); // No/Skip
+                if pi.card_id == 4196 || pi.ctx.source_card_id == 4196 {
+                    eprintln!(
+                        "[RESP_MAKI_OPT] targeted_cost={} p_idx={} target_slot={} filter={:X} slot_is_4={} filter_nonzero={} masked_nonzero={}",
+                        is_targeted_select_member_cost,
+                        p_idx,
+                        pi.target_slot,
+                        pi.filter_attr,
+                        pi.target_slot == 4,
+                        pi.filter_attr != 0,
+                        (pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK) != 0
+                    );
+                }
+                if is_targeted_select_member_cost {
+                    for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
+                        if cid >= 0 {
+                            eprintln!("[RESP_MAKI_OPT_STAGE] adding slot {} cid={}", i, cid);
+                            receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                        }
+                    }
+                    receiver.add_action(0);
+                }
                 return;
             }
             ChoiceType::PayEnergy => {
@@ -166,17 +300,54 @@ impl ResponseGenerator {
                 return;
             }
             ChoiceType::TapO => {
-                let target_p_idx = 1 - (pi.ctx.activator_id as usize);
+                let decoded_slot = DecodedSlot::decode(pi.target_slot);
+                let target_p_idx = resolve_target_player(decoded_slot, pi.filter_attr, p_idx);
+                if pi.card_id == 4196 || pi.ctx.source_card_id == 4196 {
+                    eprintln!(
+                        "[RESP_MAKI_TAPO] target_p_idx={} stage={:?} tapped={:?}",
+                        target_p_idx,
+                        state.players[target_p_idx].stage,
+                        [
+                            state.players[target_p_idx].is_tapped(0),
+                            state.players[target_p_idx].is_tapped(1),
+                            state.players[target_p_idx].is_tapped(2),
+                        ]
+                    );
+                }
                 for (i, &cid) in state.players[target_p_idx].stage.iter().enumerate() {
                     if cid >= 0 && !state.players[target_p_idx].is_tapped(i) {
+                        if pi.card_id == 4196 || pi.ctx.source_card_id == 4196 {
+                            eprintln!("[RESP_MAKI_TAPO_STAGE] adding slot {} cid={}", i, cid);
+                        }
                         receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
                     }
                 }
                 return;
             }
             ChoiceType::SelectDiscard => {
-                for (i, &_cid) in player.discard.iter().enumerate() {
-                    receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
+                let recover_base_cost = if pi.effect_opcode == O_RECOVER_MEMBER {
+                    pi.ctx
+                        .selected_cards
+                        .last()
+                        .and_then(|cid| db.get_member(*cid))
+                        .map(|member| member.cost as i16)
+                } else {
+                    None
+                };
+                for (i, &cid) in player.discard.iter().enumerate() {
+                    let candidate_matches = cid >= 0
+                        && !pi.ctx.selected_cards.contains(&cid)
+                        && state.card_matches_filter_with_ctx(db, cid, pi.filter_attr, &pi.ctx)
+                        && recover_base_cost
+                            .map(|base_cost| {
+                                db.get_member(cid)
+                                    .map(|member| member.cost as i16 == base_cost + 2)
+                                    .unwrap_or(false)
+                            })
+                            .unwrap_or(true);
+                    if candidate_matches {
+                        receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
+                    }
                 }
                 return;
             }
@@ -187,9 +358,27 @@ impl ResponseGenerator {
                 return;
             }
             ChoiceType::SelectStage => {
-                for i in 0..3 {
-                    if (player.prevent_play_to_slot_mask() & (1 << i)) == 0 {
-                        receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
+                let is_position_change_choice = Self::is_position_change_prompt(pi);
+                if is_position_change_choice {
+                    if state.debug.debug_mode {
+                        println!(
+                            "[DEBUG_POS] SelectStage op={} choice_type={:?} filter={:X} area_idx={} source_card_id={} ability_index={}",
+                            pi.effect_opcode,
+                            pi.choice_type,
+                            pi.filter_attr,
+                            pi.ctx.area_idx,
+                            pi.ctx.source_card_id,
+                            pi.ctx.ability_index
+                        );
+                    }
+                    self.generate_position_change_destinations(
+                        db, state, receiver, pi, abilities, p_idx,
+                    );
+                } else {
+                    for i in 0..3 {
+                        if (player.prevent_play_to_slot_mask() & (1 << i)) == 0 {
+                            receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
+                        }
                     }
                 }
                 return;
@@ -277,7 +466,11 @@ impl ResponseGenerator {
                         for effect in &ability.effects {
                             if effect.runtime_opcode == O_COLOR_SELECT {
                                 // Extract choices from effect.params["choices"]
-                                if let Some(choices_val) = effect.params.get("choices") {
+                                if let Some(choices_val) = effect
+                                    .params
+                                    .get("choices")
+                                    .or_else(|| effect.params.get("CHOICES"))
+                                {
                                     if let Ok(choices_arr) =
                                         serde_json::from_value::<Vec<i32>>(choices_val.clone())
                                     {
@@ -383,7 +576,21 @@ impl ResponseGenerator {
                 return;
             }
             O_SELECT_MEMBER => {
-                self.generate_select_member_actions(db, p_idx, state, receiver, pi, pi.filter_attr);
+                if Self::is_position_change_prompt(pi) {
+                    self.generate_position_change_destinations(
+                        db, state, receiver, pi, abilities, p_idx,
+                    );
+                    return;
+                }
+                self.generate_select_member_actions(
+                    db,
+                    p_idx,
+                    state,
+                    receiver,
+                    pi,
+                    abilities,
+                    pi.filter_attr,
+                );
                 return;
             }
             O_SELECT_LIVE => {
@@ -449,6 +656,7 @@ impl ResponseGenerator {
                         state,
                         receiver,
                         pi,
+                        abilities,
                         pi.filter_attr,
                     );
                     return;
@@ -460,10 +668,6 @@ impl ResponseGenerator {
                     return;
                 }
                 if choice_type == ChoiceType::MoveMemberDest {
-                    let composite_filter_attr =
-                        crate::core::logic::filter::map_filter_string_to_attr(
-                            "HAS_GROUP_AQOURS_OR_SAINT_SNOW",
-                        );
                     let filter_attr = abilities
                         .and_then(|abs| {
                             let ab_idx_real = if pi.ability_index == -1 {
@@ -487,16 +691,33 @@ impl ResponseGenerator {
                         .unwrap_or(
                             pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
                         );
+                    let source_slot = if pi.ctx.area_idx >= 0 && pi.ctx.area_idx < 3 {
+                        Some(pi.ctx.area_idx as usize)
+                    } else {
+                        player
+                            .stage
+                            .iter()
+                            .position(|&cid| cid == pi.ctx.source_card_id)
+                            .or_else(|| {
+                                state.players[p_idx]
+                                    .stage
+                                    .iter()
+                                    .position(|&cid| cid == pi.ctx.source_card_id)
+                            })
+                    };
+                    let mut added_dest = false;
                     for i in 0..3 {
                         let cid = player.stage[i];
-                        if i != pi.ctx.area_idx as usize
+                        if source_slot != Some(i)
                             && cid >= 0
-                            && (state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx)
-                                || (filter_attr == composite_filter_attr
-                                    && Self::is_saintsnow_member(db, cid)))
+                            && state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx)
                         {
                             receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                            added_dest = true;
                         }
+                    }
+                    if !added_dest {
+                        receiver.add_action(0);
                     }
                     return;
                 }
@@ -614,6 +835,7 @@ impl ResponseGenerator {
         state: &GameState,
         receiver: &mut R,
         pi: &PendingInteraction,
+        abilities: Option<&Vec<Ability>>,
         filter_attr: u64,
     ) {
         if state.debug.debug_mode {
@@ -621,6 +843,35 @@ impl ResponseGenerator {
                 "[DEBUG] generate_select_member_actions: p_idx={}, filter_attr={:X}",
                 p_idx, filter_attr
             );
+        }
+        let mut filter_attr = filter_attr;
+        let is_targeted_select_member_cost = Self::is_targeted_select_member_cost(pi);
+        if is_targeted_select_member_cost {
+            filter_attr = (filter_attr & !0x3) | 1;
+        }
+        if let Some(abs) = abilities {
+            let ab_idx_real = if pi.ability_index == -1 {
+                abs.iter()
+                    .position(|ab| {
+                        (ab.choice_flags
+                            & (CHOICE_FLAG_LOOK
+                                | CHOICE_FLAG_MODE
+                                | CHOICE_FLAG_COLOR
+                                | CHOICE_FLAG_ORDER))
+                            != 0
+                    })
+                    .unwrap_or(0)
+            } else {
+                pi.ability_index as usize
+            };
+
+            if let Some(ab) = abs.get(ab_idx_real) {
+                if let Some(attr) = Self::effect_filter_attr_for_opcode(ab, O_SELECT_MEMBER) {
+                    if attr != 0 {
+                        filter_attr = attr;
+                    }
+                }
+            }
         }
         let filter_only = filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
         let targeted_live_heart_bonus = pending_targeted_live_heart_bonus(db, pi).filter(|_| {
@@ -645,19 +896,29 @@ impl ResponseGenerator {
                 }
             }
             receiver.add_action(0);
-            if state.debug.debug_mode {
-                println!("[DEBUG] generate_select_member_actions: targeted_live_heart_bonus shortcut active");
-            }
             return;
         }
-        let target_player = match (filter_attr & 0x3) as u8 {
-            2 => 1 - p_idx,
-            3 => p_idx,
-            _ => p_idx,
-        };
+        let decoded_slot = DecodedSlot::decode(pi.target_slot);
+        let target_player =
+            if pi.choice_type == ChoiceType::TapMSelect || is_targeted_select_member_cost {
+                p_idx
+            } else {
+                resolve_target_player(decoded_slot, filter_attr, p_idx)
+            };
         let player = &state.players[target_player];
 
-        if pi.choice_type == ChoiceType::TapMSelect && filter_only == 0 {
+        if (pi.choice_type == ChoiceType::TapMSelect || is_targeted_select_member_cost)
+            && filter_only == 0
+        {
+            for (i, &cid) in player.stage.iter().enumerate() {
+                if cid >= 0 {
+                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                }
+            }
+            receiver.add_action(0);
+            return;
+        }
+        if is_targeted_select_member_cost {
             for (i, &cid) in player.stage.iter().enumerate() {
                 if cid >= 0 {
                     receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
@@ -675,10 +936,20 @@ impl ResponseGenerator {
                 || pi.choice_type == ChoiceType::TapMSelect
                 || (pi.choice_type == ChoiceType::SelectMember && pi.effect_opcode == 0)
             {
-                pi.target_slot as usize
+                decoded_slot.source_zone as usize
             } else {
                 crate::core::logic::interpreter::resolve_target_slot(pi.effect_opcode, &pi.ctx)
             }
+        };
+
+        let filter_struct = crate::core::logic::filter::CardFilter::from_attr(filter_attr as i64);
+        let source_slot = if pi.ctx.area_idx >= 0 && pi.ctx.area_idx < 3 {
+            Some(pi.ctx.area_idx as usize)
+        } else {
+            player
+                .stage
+                .iter()
+                .position(|&cid| cid == pi.ctx.source_card_id)
         };
 
         match target_slot {
@@ -706,12 +977,34 @@ impl ResponseGenerator {
                 // Stage (0-2) or Default
                 let exclude_selected = true;
                 for (i, &cid) in player.stage.iter().enumerate() {
+                    let effective_hearts = state
+                        .get_effective_hearts(target_player, i, db, 0)
+                        .to_array();
                     let matches = cid >= 0
-                        && (!exclude_selected || !pi.ctx.selected_cards.contains(&cid))
+                        && (!exclude_selected
+                            || !pi
+                                .ctx
+                                .selected_target_keys
+                                .contains(&Self::selected_target_key(4, i)))
                         && (filter_only == 0
-                            || state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx));
+                            || filter_struct.matches(
+                                state,
+                                db,
+                                cid,
+                                Some((target_player as u8, i as i16)),
+                                state.players[target_player].is_tapped(i),
+                                Some(&effective_hearts),
+                                &pi.ctx,
+                            ));
                     if matches {
                         receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                    }
+                }
+                if receiver.is_empty() && filter_struct.special_id == 3 {
+                    for (i, &cid) in player.stage.iter().enumerate() {
+                        if cid >= 0 && source_slot != Some(i) {
+                            receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                        }
                     }
                 }
             }
@@ -728,42 +1021,9 @@ impl ResponseGenerator {
         pi: &PendingInteraction,
         abilities: Option<&Vec<Ability>>,
     ) {
-        fn modal_option_is_available(
-            state: &GameState,
-            p_idx: usize,
-            option: &serde_json::Value,
-        ) -> bool {
-            let Some(first_effect) = option.as_array().and_then(|effects| effects.first()) else {
-                return true;
-            };
-
-            let opcode = first_effect
-                .get("runtime_opcode")
-                .and_then(|value| value.as_i64())
-                .filter(|value| *value != 0)
-                .or_else(|| first_effect.get("effect_type").and_then(|value| value.as_i64()))
-                .unwrap_or(0) as i32;
-            let value = first_effect
-                .get("runtime_value")
-                .and_then(|raw| raw.as_i64())
-                .filter(|raw| *raw != 0)
-                .or_else(|| first_effect.get("value").and_then(|raw| raw.as_i64()))
-                .unwrap_or(0) as i32;
-
-            match opcode {
-                O_PAY_ENERGY => {
-                    let player = &state.players[p_idx];
-                    let available = player.energy_zone.len() as i32 - player.tapped_energy_count() as i32;
-                    available >= value
-                }
-                O_MOVE_TO_DISCARD => true,
-                _ => true,
-            }
-        }
-
         if let Some(mask) = pending_optional_mode_mask(db, pi) {
             if let Some(ability) = pending_live_ability(db, pi) {
-                for effect_idx in 0..ability.effects.len() {
+                for effect_idx in 0..ability.modal_option_count() {
                     let selected_bit = 1i16 << effect_idx;
                     if (mask & selected_bit) != 0 {
                         receiver.add_action((ACTION_BASE_MODE + effect_idx as i32) as usize);
@@ -784,7 +1044,6 @@ impl ResponseGenerator {
         };
         for i in 0..count {
             let mut option_valid = true;
-            let mut option_checked = false;
             if let Some(abs) = abilities {
                 let ab_idx_real = if pi.ability_index == -1 {
                     abs.iter()
@@ -794,56 +1053,19 @@ impl ResponseGenerator {
                     pi.ability_index as usize
                 };
 
-                if ab_idx_real < abs.len() {
-                    let ab = &abs[ab_idx_real];
-                    if let Some(frame_program) = ab.frame_program.as_ref() {
-                        let mut select_mode_idx = 0;
-                        let mut found = false;
-                        for (idx, frame) in frame_program.frames.iter().enumerate() {
-                            if frame.opcode() == O_SELECT_MODE {
-                                select_mode_idx = idx;
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        if found {
-                            let jump_frame_idx = select_mode_idx + 1 + i as usize;
-                            if let Some(jump_frame) = frame_program.frames.get(jump_frame_idx) {
-                                if jump_frame.opcode() == O_JUMP {
-                                    option_checked = true;
-                                    let target_idx =
-                                        (jump_frame_idx as i32 + 1 + jump_frame.value()) as usize;
-                                    if let Some(effect_frame) = frame_program.frames.get(target_idx)
-                                    {
-                                        let target_op = effect_frame.opcode();
-                                        let v = effect_frame.value();
-
-                                        if target_op == O_PAY_ENERGY {
-                                            let player = &state.players[p_idx];
-                                            let available = player.energy_zone.len() as i32
-                                                - player.tapped_energy_count() as i32;
-                                            if available < v {
-                                                option_valid = false;
-                                            }
-                                        } else if target_op == O_MOVE_TO_DISCARD {
-                                            option_valid = true;
-                                        }
-                                    }
+                if let Some(ab) = abs.get(ab_idx_real) {
+                    if let Some(option_frames) = ab.get_modal_option_frames(i as usize) {
+                        if let Some(first_frame) = option_frames.first() {
+                            option_valid = match first_frame.opcode() {
+                                O_PAY_ENERGY => {
+                                    let player = &state.players[p_idx];
+                                    let available = player.energy_zone.len() as i32
+                                        - player.tapped_energy_count() as i32;
+                                    available >= first_frame.value()
                                 }
-                            }
-                        }
-                    }
-
-                    if !option_checked {
-                        if let Some(select_effect) = ab.effects.first() {
-                            if let Some(option) = select_effect
-                                .modal_options
-                                .as_array()
-                                .and_then(|options| options.get(i as usize))
-                            {
-                                option_valid = modal_option_is_available(state, p_idx, option);
-                            }
+                                O_MOVE_TO_DISCARD => true,
+                                _ => true,
+                            };
                         }
                     }
                 }

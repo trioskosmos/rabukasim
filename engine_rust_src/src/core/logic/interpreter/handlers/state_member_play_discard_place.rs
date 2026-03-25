@@ -20,6 +20,7 @@ pub fn handle_discard_placement(
     }
 
     let card_id = state.players[target_p_idx].looked_cards.remove(0);
+    state.players[target_p_idx].looked_cards.clear();
 
     let resolved_slot = if ctx.choice_index >= 600 && ctx.choice_index < 603 {
         ctx.choice_index - 600
@@ -49,10 +50,20 @@ pub fn handle_discard_placement(
 
     let remaining = remaining - 1;
     ctx.v_remaining = remaining;
-    let should_continue = if is_total_cost {
-        ctx.v_accumulated > 0 && remaining > 0
+    let has_more_candidates = if remaining > 0 {
+        state.players[target_p_idx].discard.iter().any(|&cid| {
+            db.get_member(cid)
+                .map(|member| member.cost as i16 == remaining)
+                .unwrap_or(false)
+                && !ctx.selected_cards.contains(&cid)
+        })
     } else {
-        remaining > 0
+        false
+    };
+    let should_continue = if is_total_cost {
+        ctx.v_accumulated > 0 && remaining > 0 && has_more_candidates
+    } else {
+        remaining > 0 && has_more_candidates
     };
     if should_continue {
         ctx.choice_index = -1;

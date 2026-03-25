@@ -28,7 +28,9 @@ pub fn apply_look_choice(
                     state.players[p_idx].push_discard_card(cid as i32);
                 }
                 state.players[p_idx].stage[slot] = chosen;
-                state.players[p_idx].set_tapped(slot, slot_info.is_wait);
+                if slot_info.is_wait {
+                    state.players[p_idx].set_tapped(slot, true);
+                }
                 state.players[p_idx].set_moved(slot, true);
                 state.register_played_member(p_idx, chosen, db);
                 let new_ctx = AbilityContext {

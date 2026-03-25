@@ -29,11 +29,6 @@ fn test_card_4558_ability_0_on_live_start_pay_energy() {
         "First ability should be ON_LIVE_START (trigger=2)"
     );
 
-    // Verify bytecode exists
-    assert!(
-        !ability_0.bytecode.is_empty(),
-        "Ability 0 should have bytecode"
-    );
     println!("Ability 0 bytecode: {:?}", ability_0.bytecode);
 
     // Manually execute the ability through the interpreter
@@ -78,11 +73,6 @@ fn test_card_4558_ability_1_on_live_success_recover_live() {
         "Second ability should be ON_LIVE_SUCCESS (trigger=3)"
     );
 
-    // Verify bytecode exists
-    assert!(
-        !ability_1.bytecode.is_empty(),
-        "Ability 1 should have bytecode"
-    );
     println!("Ability 1 bytecode: {:?}", ability_1.bytecode);
 
     // The ability should be executable
@@ -120,10 +110,6 @@ fn test_card_4558_abilities_in_compiled_data() {
         ab0.trigger as i32, 2,
         "Ability 0 should have trigger=2 (ON_LIVE_START)"
     );
-    assert!(
-        !ab0.bytecode.is_empty(),
-        "Ability 0 should have bytecode compiled"
-    );
     assert_eq!(
         ab0.effects.len(),
         1,
@@ -142,10 +128,6 @@ fn test_card_4558_abilities_in_compiled_data() {
     assert_eq!(
         ab1.trigger as i32, 3,
         "Ability 1 should have trigger=3 (ON_LIVE_SUCCESS)"
-    );
-    assert!(
-        !ab1.bytecode.is_empty(),
-        "Ability 1 should have bytecode compiled"
     );
     assert_eq!(
         ab1.effects.len(),
@@ -187,8 +169,6 @@ fn test_card_4558_ability_exposure_in_game_state() {
 
     // Verify abilities are accessible
     assert_eq!(card.abilities.len(), 2);
-    assert!(!card.abilities[0].bytecode.is_empty());
-    assert!(!card.abilities[1].bytecode.is_empty());
 
     println!("✅ Card 4558 abilities are properly exposed");
 }

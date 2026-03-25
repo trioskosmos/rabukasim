@@ -1,7 +1,10 @@
+use crate::core::logic::interpreter::logging;
+use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::logic::models::AbilityFrame;
 
 use super::*;
 
+use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
 use crate::core::models::CHOICE_DONE;
@@ -35,7 +38,8 @@ pub fn handle_select_ops(
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
 ) -> HandlerResult {
     let partial_selection_prompt = -1000 - (v as i16);
-
+    let frame_components = _frame.components();
+    let frame_filter_attr = frame_components.filter.to_attr();
     let legacy_move_member_follow_up = if op == O_SELECT_MEMBER {
         let source_ability = db
             .get_member(ctx.source_card_id)
@@ -63,7 +67,7 @@ pub fn handle_select_ops(
         op == O_SELECT_MEMBER && v > 1 && !legacy_move_member_follow_up;
 
     let is_optional = op == O_SELECT_MEMBER
-        && (a as u64 & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
+        && (frame_filter_attr & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
 
     if supports_partial_completion && ctx.v_remaining == partial_selection_prompt {
         if ctx.choice_index == 0 || ctx.choice_index == 1 || ctx.choice_index == CHOICE_DONE {
@@ -89,48 +93,73 @@ pub fn handle_select_ops(
         return HandlerResult::Continue;
     }
 
+    if is_optional && op == O_SELECT_MEMBER {
+        if ctx.choice_index == 1 || ctx.choice_index == CHOICE_DONE {
+            ctx.choice_index = -1;
+            return HandlerResult::SetCond(false);
+        }
+        if ctx.choice_index == 0 {
+            ctx.choice_index = -1;
+        }
+    }
+
+    let filter_attr = filter_attr_from_params(frame_components.params).unwrap_or_else(|| {
+        if frame_filter_attr != 0 {
+            frame_filter_attr
+        } else {
+            a as u64
+        }
+    });
+    let is_targeted_select_member_cost = slot_info.target_slot == 4
+        && filter_attr_from_params(frame_components.params).unwrap_or_else(|| {
+            if frame_filter_attr != 0 {
+                frame_filter_attr
+            } else {
+                a as u64
+            }
+        }) != 0;
+    let filter_attr = if is_targeted_select_member_cost {
+        (filter_attr & !0x3) | 1
+    } else {
+        filter_attr
+    };
+
+    if state.debug.debug_mode && op == O_SELECT_MEMBER {
+        state.trace_internal(&format!(
+            "BC_SELECT_MEMBER: [phase={:?}] source_zone={} filter=[{}] {}",
+            state.phase,
+            slot_info.source_zone as u8,
+            logging::describe_filter_attr(
+                crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(
+                    filter_attr as i64
+                )
+            ),
+            logging::describe_context(ctx)
+        ));
+    }
+
     if op == O_SELECT_MEMBER && v == 99 && ctx.choice_index == -1 {
-        let filter_attr = a as u64;
-
-        let target_player = match (filter_attr & 0x3) as u8 {
-            2 => 1 - p_idx,
-
-            3 => 1,
-
-            _ => p_idx,
+        let target_player = if is_targeted_select_member_cost {
+            p_idx
+        } else {
+            resolve_target_player(slot_info, filter_attr, p_idx)
         };
 
         ctx.selected_cards.clear();
+        ctx.selected_target_keys.clear();
 
-        for &cid in &state.players[target_player].stage {
+        for (slot_idx, &cid) in state.players[target_player].stage.iter().enumerate() {
             if cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx) {
                 ctx.selected_cards.push(cid);
+                ctx.selected_target_keys
+                    .push(((4_i32) << 8) | (slot_idx as i32 & 0xFF));
             }
         }
 
         return HandlerResult::Continue;
     }
 
-    let area_val = (s >> 29) & 0x07;
-
-    if area_val >= 1 && area_val <= 3 {
-        let auto_slot = (area_val - 1) as i16;
-
-        ctx.area_idx = auto_slot;
-
-        if legacy_move_member_follow_up {
-            ctx.choice_index = -1;
-        } else {
-            ctx.choice_index = auto_slot;
-        }
-
-        if state.debug.debug_mode {
-            println!(
-                "[DEBUG] O_SELECT_MEMBER: Auto-selecting slot {} based on area bits",
-                auto_slot
-            );
-        }
-    } else if ctx.choice_index == -1 {
+    if ctx.choice_index == -1 {
         let choice_type = match op {
             O_SELECT_MEMBER => ChoiceType::SelectMember,
 
@@ -142,22 +171,18 @@ pub fn handle_select_ops(
         };
 
         let mut flip_ctx = ctx.clone();
-
-        if s == 2 {
-            flip_ctx.player_id = 1 - (p_idx as u8);
-        } else if s == 3 {
-            flip_ctx.player_id = 1;
-        }
+        flip_ctx.player_id = match (filter_attr & 0x3) as u8 {
+            2 => 1 - (p_idx as u8),
+            3 => 1,
+            _ => p_idx as u8,
+        };
 
         if is_optional && op == O_SELECT_MEMBER {
             let source_zone = slot_info.source_zone as u8;
-
-            let target_player = match (a as u64 & 0x3) as u8 {
-                2 => 1 - (flip_ctx.player_id as usize),
-
-                3 => 1,
-
-                _ => flip_ctx.player_id as usize,
+            let target_player = if is_targeted_select_member_cost {
+                p_idx
+            } else {
+                resolve_target_player(slot_info, filter_attr, p_idx)
             };
 
             let has_legal_target = match source_zone {
@@ -166,7 +191,7 @@ pub fn handle_select_ops(
                     .iter()
                     .copied()
                     .any(|cid| {
-                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, a as u64, ctx)
+                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
                     }),
 
                 7 => state.players[target_player]
@@ -174,7 +199,7 @@ pub fn handle_select_ops(
                     .iter()
                     .copied()
                     .any(|cid| {
-                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, a as u64, ctx)
+                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
                     }),
 
                 _ => state.players[target_player]
@@ -182,13 +207,50 @@ pub fn handle_select_ops(
                     .iter()
                     .copied()
                     .any(|cid| {
-                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, a as u64, ctx)
+                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
                     }),
             };
 
             if !has_legal_target {
                 return HandlerResult::Continue;
             }
+        }
+
+        if op == O_SELECT_MEMBER {
+            let source_zone = slot_info.source_zone as u8;
+            let target_player = if is_targeted_select_member_cost {
+                p_idx
+            } else {
+                resolve_target_player(slot_info, filter_attr, p_idx)
+            };
+
+            let looked_cards: Vec<i32> = match source_zone {
+                6 => state.players[target_player]
+                    .hand
+                    .iter()
+                    .copied()
+                    .filter(|&cid| {
+                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+                    })
+                    .collect(),
+                7 => state.players[target_player]
+                    .discard
+                    .iter()
+                    .copied()
+                    .filter(|&cid| {
+                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+                    })
+                    .collect(),
+                _ => state.players[target_player]
+                    .stage
+                    .iter()
+                    .copied()
+                    .filter(|&cid| {
+                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+                    })
+                    .collect(),
+            };
+            state.players[target_player].looked_cards = looked_cards.into();
         }
 
         if matches!(
@@ -201,8 +263,12 @@ pub fn handle_select_ops(
                 op,
                 s,
                 choice_type,
-                a as u64,
-                -1,
+                filter_attr,
+                if op == O_SELECT_MEMBER && v > 0 {
+                    v as i16
+                } else {
+                    -1
+                },
             ),
             HandlerResult::Suspend
         ) {

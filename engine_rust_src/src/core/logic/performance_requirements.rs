@@ -6,7 +6,30 @@ use super::player::PlayerState;
 use super::rules::calculate_board_aura;
 use crate::core::enums::*;
 use crate::core::hearts::*;
+use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 use serde_json::json; // Value removed
+
+fn decode_heart_requirement_color(frame: &AbilityFrameComponents<'_>) -> usize {
+    let raw_slot = frame.raw_slot as usize;
+    if let Some(color) = decode_heart_type_from_params(frame.params) {
+        return color;
+    }
+
+    let color_mask = frame.filter.color_mask as usize;
+    if color_mask != 0 {
+        if color_mask == 0x7F {
+            6
+        } else {
+            color_mask.trailing_zeros() as usize
+        }
+    } else {
+        match raw_slot {
+            4 | 7 => 6,
+            0..=6 => raw_slot,
+            _ => 6,
+        }
+    }
+}
 
 pub fn process_heart_modifiers_frames(
     frames: &[AbilityFrame],
@@ -50,14 +73,7 @@ pub fn process_heart_modifiers_frames(
             }
         } else if op == O_INCREASE_HEART_COST {
             let val = frame.value();
-            let slot = frame.slot() as usize;
-            let idx = if slot == 7 {
-                6
-            } else if slot <= 6 {
-                slot
-            } else {
-                99
-            };
+            let idx = decode_heart_requirement_color(&frame.components());
             if idx < 7 {
                 let old = req_board.get_color_count(idx);
                 req_board.set_color_count(idx, old.saturating_add(val as u8));
@@ -149,14 +165,7 @@ pub fn get_live_requirements(
                     if op == O_INCREASE_HEART_COST {
                         touches_live_requirements = true;
                         let val = frame.value();
-                        let attr = frame.attr() as usize;
-                        let idx = if attr == 0 || attr == 7 {
-                            6
-                        } else if attr <= 6 {
-                            attr - 1
-                        } else {
-                            99
-                        };
+                        let idx = decode_heart_requirement_color(&frame.components());
                         if idx < 7 {
                             aura.heart_req_additions.add_to_color(idx, val as i32);
                         }

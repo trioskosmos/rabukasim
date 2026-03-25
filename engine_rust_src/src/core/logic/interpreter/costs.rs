@@ -343,9 +343,6 @@ pub fn pay_cost(
                         ctx.selected_cards.push(cid);
                     }
                 }
-                state.players[p_idx].discarded_this_turn = state.players[p_idx]
-                    .discarded_this_turn
-                    .saturating_add(count as u16);
                 true
             } else {
                 let player = &mut state.players[p_idx];
@@ -358,8 +355,6 @@ pub fn pay_cost(
                         ctx.selected_cards.push(cid);
                     }
                 }
-                player.discarded_this_turn =
-                    player.discarded_this_turn.saturating_add(count as u16);
                 true
             }
         }

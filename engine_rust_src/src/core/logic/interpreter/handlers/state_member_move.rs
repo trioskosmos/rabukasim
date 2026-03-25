@@ -1,6 +1,8 @@
 use super::*;
 use crate::core::hearts::HeartBoard;
+use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
@@ -17,37 +19,56 @@ pub fn handle_move_member(
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
 ) -> HandlerResult {
     let is_optional = (a as u64 & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
+    let frame_data = _frame.components();
+    let is_position_change_choice = frame_data
+        .params
+        .map(|params| {
+            params.get("destination").is_some()
+                || params.get("DESTINATION").is_some()
+                || params.get("source").is_some()
+                || params.get("SOURCE").is_some()
+        })
+        .unwrap_or(false);
+    let filter_attr = filter_attr_from_params(frame_data.params).unwrap_or_else(|| {
+        let frame_filter_attr = frame_data.filter.to_attr();
+        if frame_filter_attr != 0 {
+            frame_filter_attr
+        } else {
+            a as u64
+        }
+    });
 
-    let mut target_p_idx = p_idx;
-    if let Some(&selected_cid) = ctx.selected_cards.last() {
-        if let Some(found_p_idx) = (0..=1).find(|&candidate_p_idx| {
-            state.players[candidate_p_idx]
-                .stage
-                .iter()
-                .any(|&cid| cid == selected_cid)
-        }) {
-            target_p_idx = found_p_idx;
+    let mut target_p_idx = if is_position_change_choice {
+        ctx.player_id as usize
+    } else {
+        resolve_target_player(slot_info, filter_attr, p_idx)
+    };
+    if !is_position_change_choice {
+        if let Some(&selected_cid) = ctx.selected_cards.last() {
+            if let Some(found_p_idx) = (0..=1).find(|&candidate_p_idx| {
+                state.players[candidate_p_idx]
+                    .stage
+                    .iter()
+                    .any(|&cid| cid == selected_cid)
+            }) {
+                target_p_idx = found_p_idx;
+            }
         }
     }
 
-    let src_slot = if ctx.area_idx >= 0 {
+    let player = &state.players[target_p_idx];
+    let src_slot = if is_position_change_choice {
+        1
+    } else if let Some(&selected_cid) = ctx.selected_cards.last() {
+        state.players[target_p_idx]
+            .stage
+            .iter()
+            .position(|&cid| cid == selected_cid)
+            .unwrap_or(resolved_slot as usize)
+    } else if ctx.area_idx >= 0 {
         ctx.area_idx as usize
     } else {
         resolved_slot as usize
-    };
-
-    let src_slot = if src_slot >= 3 {
-        if let Some(&selected_cid) = ctx.selected_cards.last() {
-            state.players[target_p_idx]
-                .stage
-                .iter()
-                .position(|&cid| cid == selected_cid)
-                .unwrap_or(src_slot)
-        } else {
-            src_slot
-        }
-    } else {
-        src_slot
     };
 
     let needs_choice = a == 99 || (a < 0 || a > 2);
@@ -64,7 +85,7 @@ pub fn handle_move_member(
                 O_MOVE_MEMBER,
                 s,
                 ChoiceType::Optional,
-                a as u64,
+                filter_attr,
                 -1,
             ),
             HandlerResult::Suspend
@@ -84,7 +105,7 @@ pub fn handle_move_member(
         }
     }
 
-    if needs_choice && ctx.choice_index == -1 {
+    if needs_choice && ctx.choice_index == -1 && is_position_change_choice {
         let mut choice_ctx = ctx.clone();
         if slot_info.is_opponent || slot_info.target_slot == 2 {
             choice_ctx.player_id = 1 - ctx.player_id;
@@ -103,7 +124,7 @@ pub fn handle_move_member(
                 } else {
                     ChoiceType::MoveMemberDest
                 },
-                0,
+                filter_attr,
                 if is_optional { 0 } else { -1 },
             ),
             HandlerResult::Suspend
@@ -116,8 +137,10 @@ pub fn handle_move_member(
         let slot = ctx.choice_index as usize;
         ctx.choice_index = -1;
         slot
-    } else if ctx.target_slot != -1 && a != 99 {
+    } else if is_position_change_choice && ctx.target_slot != -1 && a != 99 {
         ctx.target_slot as usize
+    } else if !is_position_change_choice {
+        src_slot
     } else {
         a as usize
     };
@@ -129,6 +152,8 @@ pub fn handle_move_member(
             } else {
                 src_slot
             }
+        } else if !is_position_change_choice {
+            src_slot
         } else if needs_choice {
             dst_slot
         } else {

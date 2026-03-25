@@ -1,7 +1,9 @@
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::{CHOICE_DONE, FILTER_IS_OPTIONAL};
+use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::O_SELECT_CARDS;
 
@@ -19,7 +21,8 @@ pub fn handle_select_cards(
 ) -> HandlerResult {
     let frame_data = frame.components();
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
+    let a =
+        filter_attr_from_params(frame_data.params).unwrap_or(frame_data.filter.to_attr()) as i64;
     let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
     let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
@@ -36,6 +39,18 @@ pub fn handle_select_cards(
     } else {
         7
     };
+
+    if state.debug.debug_mode {
+        state.trace_internal(&format!(
+            "BC_SELECT_CARDS: [phase={:?}] zone={} optional={} variable={} looked={} {}",
+            state.phase,
+            effective_zone,
+            is_optional,
+            is_variable_selection,
+            state.players[p_idx].looked_cards.len(),
+            logging::describe_context(ctx)
+        ));
+    }
 
     if is_optional && is_variable_selection && ctx.choice_index == -1 && ctx.v_remaining == -1 {
         if matches!(

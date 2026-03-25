@@ -41,10 +41,9 @@ impl GameState {
         self.core.prev_card_id = other.core.prev_card_id;
         self.core.turn = other.core.turn;
         self.core.rps_draw_count = other.core.rps_draw_count;
-        self.core.trigger_depth = other.core.trigger_depth;
         self.core.live_set_pending_draws = other.core.live_set_pending_draws;
 
-        // Interaction stack and trigger queue are expensive but necessary
+        // Interaction stack and trigger queue carry live interaction state.
         self.core
             .interaction_stack
             .clone_from(&other.core.interaction_stack);

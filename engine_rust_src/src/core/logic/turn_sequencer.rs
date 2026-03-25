@@ -474,8 +474,6 @@ fn state_cache_key(state: &GameState) -> u64 {
     state.first_player.hash(&mut hasher);
     state.phase.hash(&mut hasher);
     state.turn.hash(&mut hasher);
-    state.trigger_depth.hash(&mut hasher);
-
     for pending in &state.interaction_stack {
         hash_pending_interaction(pending, &mut hasher);
     }

@@ -15,6 +15,7 @@ mod game_rules_ext;
 mod game_setup;
 mod game_trigger;
 pub mod handlers;
+pub mod heart_semantics;
 pub mod interpreter;
 pub mod models;
 pub mod performance;
@@ -54,9 +55,7 @@ pub use crate::core::hearts::HeartBoard;
 pub use interpreter::conditions::{check_condition, check_condition_opcode};
 pub use interpreter::costs::{check_cost, pay_cost};
 pub use interpreter::suspension::suspend_interaction;
-pub use interpreter::{
-    check_once_per_turn, consume_once_per_turn, process_trigger_queue,
-};
+pub use interpreter::{check_once_per_turn, consume_once_per_turn, process_trigger_queue};
 pub use performance::PerformanceResults;
 pub use rules::get_effective_blades;
 

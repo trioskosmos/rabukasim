@@ -34,6 +34,15 @@ pub fn prepare_discard_prompt(
         return false;
     }
 
+    if available_count == 0 {
+        return false;
+    }
+
+    if !is_optional && next_ctx.choice_index == -1 && count == 1 && available_count == 1 {
+        next_ctx.choice_index = 0;
+        return false;
+    }
+
     if is_optional
         && next_ctx.choice_index == -1
         && matches!(
@@ -60,19 +69,6 @@ pub fn prepare_discard_prompt(
         }
     }
 
-    if source_zone == Zone::Stage && next_ctx.choice_index == -1 && count == 1 {
-        let slot = if ctx.target_slot >= 0 {
-            ctx.target_slot as usize
-        } else if next_ctx.area_idx >= 0 {
-            next_ctx.area_idx as usize
-        } else {
-            0
-        };
-        if slot < 3 && state.players[target_player_idx].stage[slot] >= 0 {
-            next_ctx.choice_index = slot as i16;
-        }
-    }
-
     if next_ctx.choice_index == -1
         && count > 0
         && source_zone != Zone::Default
@@ -80,41 +76,6 @@ pub fn prepare_discard_prompt(
         && source_zone != Zone::DeckTop
         && source_zone != Zone::DeckBottom
     {
-        if state.players[p_idx].looked_cards.len() == 1 && !is_optional && count == 1 {
-            next_ctx.choice_index = 0;
-        }
-
-        if !is_optional && next_ctx.choice_index == -1 {
-            if source_zone == Zone::Hand {
-                let hand_len = state.players[p_idx].hand.len();
-                if hand_len > 0 && (count as usize) >= hand_len {
-                    next_ctx.choice_index = 0;
-                }
-            } else {
-                let available_indices = state.get_card_ids_in_zone(p_idx as u8, source_zone as u8);
-                let mut matching_indices = Vec::new();
-                for &card_idx in &available_indices {
-                    if state.card_matches_filter_with_ctx(db, card_idx, filter_attr, next_ctx) {
-                        matching_indices.push(card_idx);
-                    }
-                }
-
-                if !matching_indices.is_empty() && (count as usize) >= matching_indices.len() {
-                    if source_zone == Zone::Stage {
-                        if let Some(pos) = state.players[p_idx]
-                            .stage
-                            .iter()
-                            .position(|&c| c == matching_indices[0])
-                        {
-                            next_ctx.choice_index = pos as i16;
-                        }
-                    } else {
-                        next_ctx.choice_index = 0;
-                    }
-                }
-            }
-        }
-
         if next_ctx.choice_index == -1 {
             let mut filter_obj = frame.filter();
             if source_zone == Zone::Stage {
@@ -133,11 +94,7 @@ pub fn prepare_discard_prompt(
                     .len(),
             };
 
-            if !is_optional && (count as usize) >= items_count && items_count > 0 {
-                next_ctx.choice_index = 0;
-            } else if ctx.auto_pick && !is_optional && available_count > 0 {
-                next_ctx.choice_index = 0;
-            } else if matches!(
+            if matches!(
                 suspend_choice(
                     state,
                     db,

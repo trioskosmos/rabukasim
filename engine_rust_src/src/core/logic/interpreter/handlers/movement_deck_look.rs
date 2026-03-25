@@ -18,16 +18,30 @@ pub fn handle_reveal_until(
     let mut found = false;
     let mut revealed_count = 0;
     let mut revealed_non_matches = Vec::new();
+    let mut stop_after_refresh = false;
     while !found {
         if revealed_count > 60 {
             break;
         }
         if state.players[p_idx].deck.is_empty() {
             if state.players[p_idx].discard.is_empty() {
+                if revealed_non_matches.is_empty() {
+                    break;
+                }
+                for cid in revealed_non_matches.drain(..) {
+                    state.players[p_idx].push_discard_card(cid);
+                }
+                stop_after_refresh = true;
+            }
+
+            if state.players[p_idx].discard.is_empty() {
                 break;
             }
             state.players[p_idx].set_flag(PlayerState::FLAG_DECK_REFRESHED, true);
             state.resolve_deck_refresh(p_idx);
+            if stop_after_refresh {
+                break;
+            }
             if state.players[p_idx].deck.is_empty() {
                 break;
             }
@@ -64,6 +78,7 @@ pub fn handle_reveal_until(
         state.players[p_idx].push_discard_card(cid);
     }
     if found && state.players[p_idx].deck.is_empty() && !state.players[p_idx].discard.is_empty() {
+        state.players[p_idx].set_flag(PlayerState::FLAG_DECK_REFRESHED, true);
         state.players[p_idx].set_flag(PlayerState::FLAG_SUPPRESS_AUTO_DECK_REFRESH, true);
     }
 
@@ -75,6 +90,7 @@ pub fn handle_look_cards(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
+    frame: &AbilityFrame,
     p_idx: usize,
     op: i32,
     v: i32,
@@ -86,6 +102,7 @@ pub fn handle_look_cards(
         state,
         db,
         ctx,
+        frame,
         p_idx,
         op,
         v,

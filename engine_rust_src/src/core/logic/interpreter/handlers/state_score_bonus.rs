@@ -1,6 +1,8 @@
 use super::*;
 use crate::core::enums::Zone;
-use crate::core::logic::constants::{C_COUNT_DISCARD, C_COUNT_HAND, C_COUNT_STAGE, C_COUNT_SUCCESS_LIVE};
+use crate::core::logic::constants::{
+    C_COUNT_DISCARD, C_COUNT_HAND, C_COUNT_STAGE, C_COUNT_SUCCESS_LIVE,
+};
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::models::AbilityFrame;
 
@@ -58,9 +60,18 @@ fn resolve_dynamic_multiplier(
             };
             let source_card_id = ctx.source_card_id;
             let source_is_counted = match frame_data.slot.source_zone {
-                Zone::Hand => state.players[owner_idx].hand.iter().any(|&id| id == source_card_id),
-                Zone::Stage => state.players[owner_idx].stage.iter().any(|&id| id == source_card_id),
-                Zone::Discard => state.players[owner_idx].discard.iter().any(|&id| id == source_card_id),
+                Zone::Hand => state.players[owner_idx]
+                    .hand
+                    .iter()
+                    .any(|&id| id == source_card_id),
+                Zone::Stage => state.players[owner_idx]
+                    .stage
+                    .iter()
+                    .any(|&id| id == source_card_id),
+                Zone::Discard => state.players[owner_idx]
+                    .discard
+                    .iter()
+                    .any(|&id| id == source_card_id),
                 Zone::SuccessPile => state.players[owner_idx]
                     .success_lives
                     .iter()

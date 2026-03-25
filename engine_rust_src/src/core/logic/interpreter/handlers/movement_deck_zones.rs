@@ -94,6 +94,7 @@ pub fn handle_deck_zones(
                 state,
                 db,
                 ctx,
+                frame,
                 p_idx,
                 op,
                 v,

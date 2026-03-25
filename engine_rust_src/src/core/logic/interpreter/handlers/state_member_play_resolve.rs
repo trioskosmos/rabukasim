@@ -85,7 +85,23 @@ pub fn finalize_play_member_from_discard(
         state.register_played_member(target_p_idx, card_id, db);
         let old = state.players[target_p_idx].prevent_play_to_slot_mask();
         state.players[target_p_idx].set_prevent_play_to_slot_mask(old | (1 << slot_idx) as u8);
+
+        let new_ctx = AbilityContext {
+            source_card_id: card_id,
+            player_id: target_p_idx as u8,
+            activator_id: ctx.activator_id,
+            area_idx: slot_idx as i16,
+            ..Default::default()
+        };
+        state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
+        if state.phase == crate::core::enums::Phase::Response {
+            ctx.choice_index = -1;
+            ctx.v_remaining = 0;
+            return HandlerResult::Suspend;
+        }
     }
 
+    ctx.choice_index = -1;
+    ctx.v_remaining = 0;
     HandlerResult::Continue
 }

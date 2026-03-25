@@ -114,11 +114,11 @@ impl GameState {
     pub fn draw_cards(&mut self, player_idx: usize, count: u32) {
         let t = self.turn as i32;
         for _ in 0..count {
-            if self.core.players[player_idx].deck.is_empty() {
+            if self.players[player_idx].deck.is_empty() {
                 self.resolve_deck_refresh(player_idx);
             }
-            if let Some(card_id) = self.core.players[player_idx].pop_deck_card() {
-                self.core.players[player_idx].draw_hand_card(card_id, t);
+            if let Some(card_id) = self.players[player_idx].pop_deck_card() {
+                self.players[player_idx].draw_hand_card(card_id, t);
             }
         }
     }

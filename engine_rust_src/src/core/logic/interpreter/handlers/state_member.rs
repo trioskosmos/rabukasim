@@ -4,9 +4,12 @@ use crate::core::logic::interpreter::handlers::HandlerResult;
 
 use crate::core::enums::*;
 
+use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+
+use crate::core::logic::interpreter::suspension::resolve_target_player;
 
 use crate::core::models::interpreter::resolve_target_slot;
 
@@ -84,44 +87,118 @@ pub fn handle_member_state(
 
         O_TAP_MEMBER => {
             let mut resolved_slot = resolve_target_slot(target_slot, ctx);
+            let is_select_member_choice = frame_data
+                .params
+                .map(|params| {
+                    params.get("FILTER").is_some()
+                        || params.get("filter").is_some()
+                        || params
+                            .get("destination")
+                            .and_then(|value| value.as_str())
+                            .map(|value| value.eq_ignore_ascii_case("target"))
+                            .unwrap_or(false)
+                        || params
+                            .get("cost_type_name")
+                            .and_then(|value| value.as_str())
+                            .map(|value| value.eq_ignore_ascii_case("SELECT_MEMBER"))
+                            .unwrap_or(false)
+                })
+                .unwrap_or(false);
+            let ability_filter_attr = db
+                .get_member(ctx.source_card_id)
+                .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
+                .or_else(|| {
+                    db.get_live(ctx.source_card_id)
+                        .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
+                })
+                .and_then(|ability| {
+                    ability
+                        .effects
+                        .iter()
+                        .find(|effect| effect.runtime_opcode == O_TAP_MEMBER)
+                        .and_then(|effect| filter_attr_from_params(Some(&effect.params)))
+                })
+                .unwrap_or(0);
+            let frame_filter_attr = frame_data.filter.to_attr();
 
             if resolved_slot == 4 && ctx.area_idx >= 0 && ctx.area_idx < 3 {
                 resolved_slot = ctx.area_idx as usize;
             }
 
-            let filter_target = (a as u64 & 0x3) as u8;
-
-            let mut target_p_idx = match filter_target {
-                2 => 1 - (ctx.player_id as usize),
-
-                3 => 1,
-
-                _ if slot_info.is_opponent || slot_info.target_slot == 2 => {
-                    1 - (ctx.player_id as usize)
-                }
-
-                _ => ctx.player_id as usize,
+            let filter_attr = if ability_filter_attr != 0 {
+                ability_filter_attr
+            } else if frame_filter_attr != 0 {
+                frame_filter_attr
+            } else {
+                a as u64
             };
+            let filter_target = (filter_attr & 0x3) as u8;
+            if state.debug.debug_mode && ctx.source_card_id == 4196 {
+                eprintln!(
+                    "[STATE_TAP] v={} a={:X} filter={:X} filter_target={} resolved_slot={} choice_index={} v_remaining={} area_idx={}",
+                    v,
+                    a,
+                    filter_attr,
+                    filter_target,
+                    resolved_slot,
+                    ctx.choice_index,
+                    ctx.v_remaining,
+                    ctx.area_idx
+                );
+            }
 
-            if let Some(&selected_cid) = ctx.selected_cards.last() {
-                for candidate_p_idx in 0..=1 {
-                    if let Some(slot) = state.players[candidate_p_idx]
-                        .stage
-                        .iter()
-                        .position(|&cid| cid == selected_cid)
-                    {
-                        target_p_idx = candidate_p_idx;
+            let mut target_p_idx =
+                resolve_target_player(slot_info, filter_attr, ctx.player_id as usize);
 
-                        resolved_slot = slot;
-
-                        break;
+            if filter_target != 2 && filter_target != 3 {
+                if let Some(&selected_cid) = ctx.selected_cards.last() {
+                    for candidate_p_idx in 0..=1 {
+                        if let Some(slot) = state.players[candidate_p_idx]
+                            .stage
+                            .iter()
+                            .position(|&cid| cid == selected_cid)
+                        {
+                            target_p_idx = candidate_p_idx;
+                            resolved_slot = slot;
+                            break;
+                        }
                     }
                 }
             }
 
-            if v == 0 && resolved_slot == 4 && a & 0x02 == 0 && (a & 0x01 != 0 || a & 0x80 != 0) {
-                let mod_a = a | 0x02;
+            if state.debug.debug_mode && ctx.source_card_id == 4196 {
+                eprintln!(
+                    "[STATE_TAP] target_p_idx={} stage={:?} tapped={:?}",
+                    target_p_idx,
+                    state.players[target_p_idx].stage,
+                    [
+                        state.players[target_p_idx].is_tapped(0),
+                        state.players[target_p_idx].is_tapped(1),
+                        state.players[target_p_idx].is_tapped(2),
+                    ]
+                );
+            }
 
+            if ctx.source_card_id == 4196 {
+                eprintln!(
+                    "[STATE_TAP_SEL] target_slot={} resolved_slot={} select_member={} ability_filter={:X} a={:X} cond={}",
+                    target_slot,
+                    resolved_slot,
+                    is_select_member_choice,
+                    ability_filter_attr,
+                    a,
+                    target_slot == 4
+                        && (is_select_member_choice || ability_filter_attr != 0)
+                        && a & 0x02 == 0
+                        && (a & 0x01 != 0 || a & 0x80 != 0 || is_select_member_choice)
+                );
+            }
+
+            if target_slot == 4
+                && (is_select_member_choice || ability_filter_attr != 0)
+                && a & 0x02 == 0
+                && (a & 0x01 != 0 || a & 0x80 != 0 || is_select_member_choice)
+            {
                 if matches!(
                     suspend_choice(
                         state,
@@ -132,7 +209,7 @@ pub fn handle_member_state(
                         O_TAP_MEMBER,
                         0,
                         ChoiceType::TapMSelect,
-                        mod_a as u64,
+                        ability_filter_attr,
                         v as i16,
                     ),
                     HandlerResult::Suspend

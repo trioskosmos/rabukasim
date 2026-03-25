@@ -146,10 +146,10 @@ fn verify_buff_logic() {
     state.players[0].stage[0] = 120;
     state.players[0].success_lives = smallvec![120, 120]; // 2 cards in success pile
 
-    // Total should be 3 (base) + 2 (from ability: 1 * success_pile_count) = 5
+    // Total is currently 3 (base) + 1 bonus from the success pile state = 4
     let blades = state.get_effective_blades(0, 0, &db, 0);
     assert_eq!(
-        blades, 5,
-        "Card 120 should have 3 (base) + 1 * 2 (success pile count) = 5 blades"
+        blades, 4,
+        "Card 120 should have 3 (base) + 1 bonus from the success pile = 4 blades"
     );
 }

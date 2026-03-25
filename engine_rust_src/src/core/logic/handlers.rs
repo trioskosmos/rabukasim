@@ -452,7 +452,11 @@ impl MainPhaseController for GameState {
 impl ResponseController for GameState {
     fn handle_response(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
         let decoded_action = ActionFactory::parse_action(action);
+        let mut response_original_phase = Phase::Main;
+        let mut response_original_current_player = self.current_player;
         if let Some(pi) = self.interaction_stack.last().cloned() {
+            response_original_phase = pi.original_phase;
+            response_original_current_player = pi.original_current_player;
             let choice_idx = match decoded_action {
                 DecodedAction::Pass => 99,
                 DecodedAction::SelectMode { mode_idx } => mode_idx,
@@ -464,33 +468,61 @@ impl ResponseController for GameState {
                 _ => -1,
             };
 
+            if pi.choice_type == ChoiceType::Optional
+                && pi.target_slot == 4
+                && (pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK) != 0
+                && choice_idx == 0
+            {
+                let owner = pi.ctx.player_id as usize;
+                if let Some(slot_idx) = self.players[owner].stage.iter().position(|&cid| cid >= 0) {
+                    self.players[owner].set_tapped(slot_idx, true);
+                }
+                if let Some(current) = self.interaction_stack.last_mut() {
+                    current.choice_type = ChoiceType::SelectMember;
+                    current.ctx.choice_index = -1;
+                }
+                return Ok(());
+            }
+
             if let Some(mask) = pending_optional_mode_mask(db, &pi) {
                 if matches!(decoded_action, DecodedAction::SelectMode { .. }) {
                     let ability = pending_live_ability(db, &pi).ok_or("Ability not found")?;
-                    let (selected_effect, remaining_mask) =
+                    if pi.card_id == 321 || pi.ctx.source_card_id == 321 {
+                        eprintln!(
+                            "[MODE_HANDLE] choice_idx={} mask={:b} ability_count={} selected_cards={:?} v_accum={} frame0={:?}",
+                            choice_idx,
+                            mask,
+                            ability.modal_option_count(),
+                            pi.ctx.selected_cards,
+                            pi.ctx.v_accumulated,
+                            ability.get_modal_option_frames(choice_idx as usize)
+                        );
+                    }
+                    let (selected_frame, remaining_mask) =
                         optional_mode_effect(ability, mask, choice_idx)
                             .ok_or("Invalid optional mode selection".to_string())?;
 
                     self.interaction_stack.pop();
 
                     let p_idx = pi.ctx.player_id as usize;
-                    if selected_effect.runtime_opcode == O_ENERGY_CHARGE {
+                    if selected_frame.opcode() == O_ENERGY_CHARGE {
                         if let Some(cid) = self.players[p_idx].energy_deck.pop() {
-                            let is_wait = selected_effect
+                            let is_wait = selected_frame
+                                .components()
                                 .params
-                                .get("wait")
+                                .and_then(|params| params.get("wait"))
                                 .and_then(|value| value.as_bool())
                                 .unwrap_or(false);
                             self.players[p_idx].push_energy_card(cid, is_wait);
                         }
-                    } else if selected_effect.runtime_opcode == O_RECOVER_MEMBER {
+                    } else if selected_frame.opcode() == O_RECOVER_MEMBER {
                         if let Some(recover_pos) =
                             self.players[p_idx].discard.iter().position(|&cid| {
                                 db.get_member(cid).is_some()
                                     && self.card_matches_filter_with_ctx(
                                         db,
                                         cid,
-                                        selected_effect.runtime_attr,
+                                        selected_frame.attr(),
                                         &pi.ctx,
                                     )
                             })
@@ -504,6 +536,17 @@ impl ResponseController for GameState {
 
                     if remaining_mask > 0 {
                         let mut next_ctx = pi.ctx.clone();
+                        if !next_ctx.selected_cards.contains(&choice_idx) {
+                            next_ctx.selected_cards.push(choice_idx);
+                        }
+                        if pi.card_id == 321 || pi.ctx.source_card_id == 321 {
+                            eprintln!(
+                                "[MODE_DEBUG_NEXT] choice_idx={} remaining_mask={:b} selected_cards={:?}",
+                                choice_idx,
+                                remaining_mask,
+                                next_ctx.selected_cards
+                            );
+                        }
                         next_ctx.choice_index = -1;
                         next_ctx.v_accumulated = encode_optional_mode_mask(remaining_mask);
                         let choice_text =
@@ -602,6 +645,20 @@ impl ResponseController for GameState {
                     self.ui.cancelled_execution_ids.insert(execution_id);
                 }
             }
+        }
+
+        if self.interaction_stack.is_empty() {
+            self.phase = if response_original_phase == Phase::Response
+                || response_original_phase == Phase::Setup
+            {
+                Phase::Main
+            } else {
+                response_original_phase
+            };
+            self.current_player = response_original_current_player;
+            self.clear_execution_id();
+            self.check_win_condition();
+            return Ok(());
         }
 
         let (execution_id, ctx_res) = {

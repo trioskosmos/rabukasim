@@ -1,5 +1,6 @@
 use super::super::HandlerResult;
 use crate::core::enums::*;
+use crate::core::generated_layout::S_STANDARD_IS_OPPONENT_SHIFT;
 use crate::core::logic::interpreter::conditions::resolve_count_frame;
 use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -19,31 +20,53 @@ pub fn handle_draw(
         v as u32
     };
     let slot = frame_data.slot;
-    let target_p = if slot.is_opponent { 1 - p_idx } else { p_idx };
+    let raw_is_opponent = ((frame_data.raw_slot as u32 >> S_STANDARD_IS_OPPONENT_SHIFT) & 1) != 0;
+    let target_p = if slot.is_opponent || raw_is_opponent {
+        1 - p_idx
+    } else {
+        p_idx
+    };
 
     match op {
         O_DRAW => {
             // Draw to hand (or specified destination zone)
+            if state.debug.debug_mode {
+                state.trace_internal(&format!(
+                    "BC_DRAW: target_p={} deck_before={} hand_before={} dest={:?} {}",
+                    target_p,
+                    state.players[target_p].deck.len(),
+                    state.players[target_p].hand.len(),
+                    slot.dest_zone,
+                    crate::core::logic::interpreter::logging::describe_context(ctx)
+                ));
+            }
             for _ in 0..count {
-                if state.core.players[target_p].deck.is_empty() {
+                if state.players[target_p].deck.is_empty() {
                     state.resolve_deck_refresh(target_p);
                 }
-                if let Some(card_id) = state.core.players[target_p].pop_deck_card() {
+                if let Some(card_id) = state.players[target_p].pop_deck_card() {
                     let t = state.turn as i32;
                     // Route to destination zone based on slot.dest_zone
                     match slot.dest_zone {
                         Zone::Hand => {
-                            state.core.players[target_p].draw_hand_card(card_id, t);
+                            state.players[target_p].draw_hand_card(card_id, t);
                         }
                         Zone::Discard => {
-                            state.core.players[target_p].push_discard_card(card_id);
+                            state.players[target_p].push_discard_card(card_id);
                         }
                         _ => {
                             // Default to hand if zone is not explicitly specified
-                            state.core.players[target_p].draw_hand_card(card_id, t);
+                            state.players[target_p].draw_hand_card(card_id, t);
                         }
                     }
                 }
+            }
+            if state.debug.debug_mode {
+                state.trace_internal(&format!(
+                    "BC_DRAW_DONE: deck_after={} hand_after={}",
+                    state.players[target_p].deck.len(),
+                    state.players[target_p].hand.len()
+                ));
             }
             state.log_event(
                 "EFFECT",

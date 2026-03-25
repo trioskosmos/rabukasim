@@ -41,7 +41,7 @@ pub fn handle_move_to_discard(
     };
     let base_p = ctx.activator_id as usize;
     let slot = frame_data.slot;
-    let source_zone = resolve_source_zone(&slot);
+    let mut source_zone = resolve_source_zone(&slot);
     let target_player_idx = if slot.is_opponent { 1 - base_p } else { base_p };
 
     let count = if (v as u32 & (1 << 31)) != 0 {
@@ -51,6 +51,17 @@ pub fn handle_move_to_discard(
     } else {
         v
     };
+    if source_zone == Zone::Stage
+        && frame_data
+            .params
+            .as_ref()
+            .and_then(|params| params.get("operation").or_else(|| params.get("OPERATION")))
+            .and_then(|value| value.as_str())
+            .map(|value| value.eq_ignore_ascii_case("UNTIL_SIZE"))
+            .unwrap_or(false)
+    {
+        source_zone = Zone::Hand;
+    }
     if target_player_idx != p_idx
         && state.players[target_player_idx].get_flag(PlayerState::FLAG_IMMUNITY)
     {

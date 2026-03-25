@@ -7,6 +7,7 @@ use std::cell::Cell;
 use crate::core::enums::*;
 pub use crate::core::generated_constants::*;
 use crate::core::hearts::*;
+use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 pub use crate::core::logic::models::*;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
@@ -192,10 +193,12 @@ fn apply_reduce_cost_modifiers(
         applied_any_frame = true;
         let val = frame.value();
         let frame_data = frame.components();
+        let params = frame_data
+            .params
+            .or_else(|| ab.effects.get(frame_idx).map(|effect| &effect.params));
 
         let mut multiplier = 1;
-        let per_card = frame_data
-            .params
+        let per_card = params
             .and_then(|value| value.as_object())
             .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
             .and_then(|value| value.as_str())
@@ -817,6 +820,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
             }
 
             if !ab.preparsed_modifiers.is_empty() {
+                let effect_params = ab.effects.first().map(|effect| &effect.params);
                 for pm in &ab.preparsed_modifiers {
                     let op = pm.op;
                     let v = pm.val;
@@ -852,7 +856,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                                     v,
                                     s,
                                     a,
-                                    None,
+                                    effect_params,
                                     &ctx,
                                     state,
                                     db,
@@ -864,11 +868,15 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                     }
                 }
             } else if let Some(frame_program) = ab.frame_program.as_ref() {
-                for frame in &frame_program.frames {
-                    let op = frame.opcode();
-                    let v = frame.value();
-                    let a = frame.attr();
-                    let s = frame.slot();
+                for (frame_idx, frame) in frame_program.frames.iter().enumerate() {
+                    let frame_data = frame.components();
+                    let op = frame_data.opcode;
+                    let v = frame_data.value;
+                    let a = frame_data.raw_attr;
+                    let s = frame_data.raw_slot;
+                    let params = frame_data
+                        .params
+                        .or_else(|| ab.effects.get(frame_idx).map(|effect| &effect.params));
 
                     if op == O_REDUCE_COST || op == O_INCREASE_COST {
                         let target_area = s & 0xFF;
@@ -899,7 +907,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                             v,
                             s,
                             a,
-                            None,
+                            params,
                             &ctx,
                             state,
                             db,
@@ -1059,6 +1067,28 @@ fn apply_aura_modifier(
     p_idx: usize,
     target_slot: usize,
 ) {
+    let decode_heart_requirement_color =
+        |raw_slot: i32, raw_attr: u64, params: Option<&serde_json::Value>| -> usize {
+            if let Some(color) = decode_heart_type_from_params(params) {
+                return color;
+            }
+
+            let color_mask = raw_attr as usize & FILTER_MASK_LOWER as usize;
+            if color_mask != 0 {
+                if color_mask == 0x7F {
+                    6
+                } else {
+                    color_mask.trailing_zeros() as usize
+                }
+            } else {
+                match raw_slot as usize {
+                    4 | 7 => 6,
+                    0..=6 => raw_slot as usize,
+                    _ => 6,
+                }
+            }
+        };
+
     let value = if v > 0xFFFF { v & 0xFFFF } else { v };
     let mut multiplier = 1;
     if (s & 0x10000) != 0 {
@@ -1139,7 +1169,7 @@ fn apply_aura_modifier(
             }
         }
         O_REDUCE_HEART_REQ => {
-            let color = decode_heart_color(a);
+            let color = decode_heart_requirement_color(s, a, params);
             if color < 7 {
                 aura.heart_req_reductions
                     .add_to_color(color, value * multiplier);

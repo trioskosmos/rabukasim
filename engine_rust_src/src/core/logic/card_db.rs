@@ -214,33 +214,6 @@ impl CardDatabase {
         HashMap::new()
     }
 
-    pub fn find_ability_by_bytecode<'a>(
-        &'a self,
-        bytecode: &[i32],
-        ctx: &AbilityContext,
-    ) -> Option<&'a Ability> {
-        fn find_match<'a>(abilities: &'a [Ability], bytecode: &[i32]) -> Option<&'a Ability> {
-            abilities.iter().find(|ability| ability.bytecode() == bytecode)
-        }
-
-        if let Some(member) = self.get_member(ctx.source_card_id) {
-            if let Some(ability) = find_match(&member.abilities, bytecode) {
-                return Some(ability);
-            }
-        }
-
-        if let Some(live) = self.get_live(ctx.source_card_id) {
-            if let Some(ability) = find_match(&live.abilities, bytecode) {
-                return Some(ability);
-            }
-        }
-
-        self.members
-            .values()
-            .find_map(|card| find_match(&card.abilities, bytecode))
-            .or_else(|| self.lives.values().find_map(|card| find_match(&card.abilities, bytecode)))
-    }
-
     fn normalize_legacy_tap_member_ability(ability: &mut Ability) {
         let has_stale_tap_effect = ability.effects.iter().any(|effect| {
             effect.effect_type == EffectType::TapMember && effect.runtime_opcode == O_MOVE_MEMBER
@@ -252,8 +225,8 @@ impl CardDatabase {
 
         let opcodes: Vec<i32> = ability.frames().iter().map(AbilityFrame::opcode).collect();
 
-        let mentions_tap = ability.raw_text.contains("TAP_MEMBER")
-            || opcodes.iter().any(|op| *op == O_TAP_MEMBER);
+        let mentions_tap =
+            ability.raw_text.contains("TAP_MEMBER") || opcodes.iter().any(|op| *op == O_TAP_MEMBER);
         let mentions_move = ability.raw_text.contains("MOVE_MEMBER")
             || opcodes.iter().any(|op| *op == O_MOVE_MEMBER);
 
@@ -347,6 +320,10 @@ impl CardDatabase {
             "opcode_sequence",
             "opcode_names",
             "rust_opcode_sequence",
+            "is_once_per_turn",
+            "requires_selection",
+            "choice_flags",
+            "choice_count",
         ] {
             if let Some(value) = entry.get(key) {
                 compact.insert(key.to_string(), value.clone());
@@ -378,12 +355,13 @@ impl CardDatabase {
         Value::Object(compact)
     }
 
-    fn synthesize_sparse_ability_entry(card_no: &str, ability_index: usize, ability: &Ability) -> Value {
+    fn synthesize_sparse_ability_entry(
+        card_no: &str,
+        ability_index: usize,
+        ability: &Ability,
+    ) -> Value {
         let mut compact = serde_json::Map::new();
-        compact.insert(
-            "trigger".to_string(),
-            Value::from(ability.trigger as i64),
-        );
+        compact.insert("trigger".to_string(), Value::from(ability.trigger as i64));
         compact.insert(
             "trigger_id".to_string(),
             Value::from(ability.trigger as i64),
@@ -406,9 +384,6 @@ impl CardDatabase {
 
         let frame_program_value = if let Some(program) = ability.frame_program.as_ref() {
             serde_json::to_value(program).unwrap_or_else(|_| Value::Object(serde_json::Map::new()))
-        } else if !ability.bytecode.is_empty() {
-            serde_json::to_value(FrameProgram::from_bytecode(&ability.bytecode))
-                .unwrap_or_else(|_| Value::Object(serde_json::Map::new()))
         } else {
             Value::Object(serde_json::Map::new())
         };
@@ -419,7 +394,13 @@ impl CardDatabase {
             "source_words".to_string(),
             Value::Array(source_words.iter().copied().map(Value::from).collect()),
         );
-        compact.insert("frames".to_string(), frame_program_value.get("frames").cloned().unwrap_or(Value::Array(vec![])));
+        compact.insert(
+            "frames".to_string(),
+            frame_program_value
+                .get("frames")
+                .cloned()
+                .unwrap_or(Value::Array(vec![])),
+        );
 
         Value::Object(compact)
     }
@@ -479,12 +460,62 @@ impl CardDatabase {
                 }
                 ability.frame_program = Some(program);
             }
-            if let Some(program) = ability.frame_program.as_ref() {
-                let derived_effects = Self::frame_program_to_effects(program);
-                if !derived_effects.is_empty() {
-                    ability.effects = derived_effects;
+            if let Some(choose_count) = ability
+                .effects
+                .iter()
+                .find(|effect| {
+                    effect.runtime_opcode == O_LOOK_AND_CHOOSE
+                        || effect.effect_type == EffectType::LookAndChoose
+                })
+                .and_then(|effect| effect.params.get("choose_count"))
+                .and_then(Self::parse_u8_value)
+            {
+                if let Some(program) = ability.frame_program.as_mut() {
+                    if let Some(AbilityFrame::LookAndChoose { params, .. }) = program
+                        .frames
+                        .iter_mut()
+                        .find(|frame| frame.opcode() == O_LOOK_AND_CHOOSE)
+                    {
+                        if params.choose_count == 0 {
+                            params.choose_count = choose_count;
+                        }
+                    }
                 }
-                ability.bytecode = program.to_bytecode();
+            }
+            if let Some(program) = ability.frame_program.as_ref() {
+                let mut meaningful_frames = program
+                    .frames
+                    .iter()
+                    .filter(|frame| frame.opcode() != O_RETURN);
+                for effect in ability.effects.iter_mut() {
+                    let Some(frame) = meaningful_frames.next() else {
+                        break;
+                    };
+                    let components = frame.components();
+                    let needs_params = effect.params.is_null()
+                        || effect
+                            .params
+                            .as_object()
+                            .map(|params| !params.contains_key("choices"))
+                            .unwrap_or(true);
+                    if needs_params {
+                        if let Some(params) = components.params {
+                            effect.params = params.clone();
+                        }
+                    }
+                    if effect.runtime_opcode == 0 {
+                        effect.runtime_opcode = components.raw_opcode;
+                    }
+                    if effect.runtime_value == 0 {
+                        effect.runtime_value = components.value;
+                    }
+                    if effect.runtime_attr == 0 {
+                        effect.runtime_attr = components.raw_attr;
+                    }
+                    if effect.runtime_slot == 0 {
+                        effect.runtime_slot = components.raw_slot;
+                    }
+                }
             }
             if ability.pseudocode.is_empty() {
                 if let Some(pseudo) = entry.get("pseudocode").and_then(|v| v.as_str()) {
@@ -506,114 +537,6 @@ impl CardDatabase {
             frames: program_frames,
             raw_program: Some(entry.clone()),
         }
-    }
-
-    fn frame_program_to_effects(frame_program: &FrameProgram) -> Vec<Effect> {
-        frame_program
-            .frames
-            .iter()
-            .filter_map(Self::frame_to_effect)
-            .collect()
-    }
-
-    fn frame_to_effect(frame: &AbilityFrame) -> Option<Effect> {
-        let op = frame.opcode();
-        let effect_type = match op {
-            O_DRAW => EffectType::Draw,
-            O_ADD_BLADES => EffectType::AddBlades,
-            O_ADD_HEARTS => EffectType::AddHearts,
-            O_REDUCE_COST => EffectType::ReduceCost,
-            O_LOOK_DECK => EffectType::LookDeck,
-            O_RECOVER_LIVE => EffectType::RecoverLive,
-            O_BOOST_SCORE => EffectType::BoostScore,
-            O_RECOVER_MEMBER => EffectType::RecoverMember,
-            O_BUFF_POWER => EffectType::BuffPower,
-            O_IMMUNITY => EffectType::Immunity,
-            O_MOVE_MEMBER => EffectType::MoveMember,
-            O_SWAP_CARDS => EffectType::SwapCards,
-            O_SEARCH_DECK => EffectType::SearchDeck,
-            O_ENERGY_CHARGE => EffectType::EnergyCharge,
-            O_SET_BLADES => EffectType::SetBlades,
-            O_SET_HEARTS => EffectType::SetHearts,
-            O_FORMATION_CHANGE => EffectType::FormationChange,
-            O_NEGATE_EFFECT => EffectType::NegateEffect,
-            O_ORDER_DECK => EffectType::OrderDeck,
-            O_META_RULE => EffectType::MetaRule,
-            O_SELECT_MODE => EffectType::SelectMode,
-            O_MOVE_TO_DECK => EffectType::MoveToDeck,
-            O_TAP_OPPONENT => EffectType::TapOpponent,
-            O_PLACE_UNDER => EffectType::PlaceUnder,
-            O_RESTRICTION => EffectType::Restriction,
-            O_BATON_TOUCH_MOD => EffectType::BatonTouchMod,
-            O_SET_SCORE => EffectType::SetScore,
-            O_SWAP_ZONE => EffectType::SwapZone,
-            O_TRANSFORM_COLOR => EffectType::TransformColor,
-            O_REVEAL_CARDS => EffectType::RevealCards,
-            O_LOOK_AND_CHOOSE => EffectType::LookAndChoose,
-            O_CHEER_REVEAL => EffectType::CheerReveal,
-            O_ACTIVATE_MEMBER => EffectType::ActivateMember,
-            O_ADD_TO_HAND => EffectType::AddToHand,
-            O_COLOR_SELECT => EffectType::ColorSelect,
-            O_TRIGGER_REMOTE => EffectType::TriggerRemote,
-            O_REDUCE_HEART_REQ => EffectType::ReduceHeartReq,
-            O_MODIFY_SCORE_RULE => EffectType::ModifyScoreRule,
-            O_ADD_STAGE_ENERGY => EffectType::AddStageEnergy,
-            O_SET_TAPPED => EffectType::SetTapped,
-            O_TAP_MEMBER => EffectType::TapMember,
-            O_PLAY_MEMBER_FROM_HAND => EffectType::PlayMemberFromHand,
-            O_MOVE_TO_DISCARD => EffectType::MoveToDiscard,
-            O_GRANT_ABILITY => EffectType::GrantAbility,
-            O_INCREASE_HEART_COST => EffectType::IncreaseHeartCost,
-            O_REDUCE_YELL_COUNT => EffectType::ReduceYellCount,
-            O_PLAY_MEMBER_FROM_DISCARD => EffectType::PlayMemberFromDiscard,
-            O_SELECT_MEMBER => EffectType::SelectMember,
-            O_DRAW_UNTIL => EffectType::DrawUntil,
-            O_SELECT_PLAYER => EffectType::SelectPlayer,
-            O_SELECT_LIVE => EffectType::SelectLive,
-            O_REVEAL_UNTIL => EffectType::RevealUntil,
-            O_INCREASE_COST => EffectType::IncreaseCost,
-            O_PREVENT_PLAY_TO_SLOT => EffectType::PreventPlayToSlot,
-            O_SWAP_AREA => EffectType::SwapArea,
-            O_TRANSFORM_HEART => EffectType::TransformHeart,
-            O_SELECT_CARDS => EffectType::SelectCards,
-            O_OPPONENT_CHOOSE => EffectType::OpponentChoose,
-            O_PLAY_LIVE_FROM_DISCARD => EffectType::PlayLiveFromDiscard,
-            O_REDUCE_LIVE_SET_LIMIT => EffectType::ReduceLiveSetLimit,
-            O_SET_TARGET_SELF => EffectType::SetTargetSelf,
-            O_SET_TARGET_OPPONENT => EffectType::SetTargetOpponent,
-            O_PREVENT_SET_TO_SUCCESS_PILE => EffectType::PreventSetToSuccessPile,
-            O_ACTIVATE_ENERGY => EffectType::ActivateEnergy,
-            O_PREVENT_ACTIVATE => EffectType::PreventActivate,
-            O_SET_HEART_COST => EffectType::SetHeartCost,
-            O_PREVENT_BATON_TOUCH => EffectType::PreventBatonTouch,
-            O_LOOK_DECK_DYNAMIC => EffectType::LookDeckDynamic,
-            O_REDUCE_SCORE => EffectType::ReduceScore,
-            O_REPEAT_ABILITY => EffectType::RepeatAbility,
-            O_LOSE_EXCESS_HEARTS => EffectType::LoseExcessHearts,
-            O_SKIP_ACTIVATE_PHASE => EffectType::SkipActivatePhase,
-            O_PAY_ENERGY_DYNAMIC => EffectType::PayEnergyDynamic,
-            O_PLACE_ENERGY_UNDER_MEMBER => EffectType::PlaceEnergyUnderMember,
-            O_CALC_SUM_COST => EffectType::CalcSumCost,
-            O_LOOK_REORDER_DISCARD => EffectType::LookReorderDiscard,
-            O_DIV_VALUE => EffectType::DivValue,
-            O_TRANSFORM_BLADES => EffectType::TransformBlades,
-            O_RETURN | O_JUMP | O_JUMP_IF_FALSE | O_PAY_ENERGY | C_SUM_VALUE => return None,
-            _ => return None,
-        };
-
-        Some(Effect {
-            effect_type,
-            value: frame.value(),
-            value_cond: ConditionType::None,
-            target: TargetType::Self_,
-            is_optional: false,
-            params: serde_json::Value::Null,
-            runtime_opcode: op,
-            runtime_value: frame.value(),
-            runtime_attr: frame.attr(),
-            runtime_slot: frame.slot(),
-            modal_options: serde_json::Value::Null,
-        })
     }
 
     fn parse_semantic_frame(frame: &Value) -> AbilityFrame {
@@ -854,6 +777,14 @@ impl CardDatabase {
         if let Some(v) = obj.get("count").and_then(|v| v.as_u64()) {
             decoded.count = v as u8;
         }
+        if let Some(v) = obj.get("choose_count").and_then(|v| v.as_u64()) {
+            decoded.choose_count = v as u8;
+        } else if let Some(v) = obj
+            .get("choose_count")
+            .and_then(|v| v.as_str().and_then(|s| s.parse::<u64>().ok()))
+        {
+            decoded.choose_count = v as u8;
+        }
         if let Some(v) = obj.get("char_id_1").and_then(|v| v.as_u64()) {
             decoded.char_id_1 = v as u8;
         }
@@ -870,6 +801,13 @@ impl CardDatabase {
             decoded.dest_discard = v;
         }
         Some(decoded)
+    }
+
+    fn parse_u8_value(value: &Value) -> Option<u8> {
+        value
+            .as_u64()
+            .or_else(|| value.as_str().and_then(|s| s.parse::<u64>().ok()))
+            .map(|v| v as u8)
     }
 
     fn opcode_id_from_name(opcode_name: &str) -> i32 {
@@ -1080,10 +1018,33 @@ impl CardDatabase {
                                                 || effect.effect_type == EffectType::LookAndChoose
                                         })
                                         .and_then(|effect| effect.params.get("choose_count"))
-                                        .and_then(|value| value.as_u64())
-                                        .map(|value| value as u8)
+                                        .and_then(Self::parse_u8_value)
                                         .unwrap_or(0);
                                     ab.choice_count = if effect_pick > 0 { effect_pick } else { 3 };
+                                }
+                            }
+                        }
+                        O_RECOVER_MEMBER
+                        | O_RECOVER_LIVE
+                        | O_MOVE_TO_DISCARD
+                        | O_SELECT_MEMBER
+                        | O_SELECT_LIVE
+                        | O_SELECT_PLAYER
+                        | O_SELECT_CARDS
+                        | O_PLAY_MEMBER_FROM_HAND
+                        | O_PLAY_MEMBER_FROM_DISCARD
+                        | O_PLAY_LIVE_FROM_DISCARD
+                        | O_MOVE_MEMBER
+                        | O_SWAP_CARDS
+                        | O_TAP_MEMBER
+                        | O_TAP_OPPONENT
+                        | O_SET_TAPPED
+                        | O_ACTIVATE_MEMBER => {
+                            ab.requires_selection = true;
+                            if ab.choice_count == 0 {
+                                let v = frame.value();
+                                if v > 0 {
+                                    ab.choice_count = v as u8;
                                 }
                             }
                         }
@@ -1096,7 +1057,16 @@ impl CardDatabase {
                         O_COLOR_SELECT => {
                             ab.choice_flags |= CHOICE_FLAG_COLOR;
                             if ab.choice_count == 0 {
-                                ab.choice_count = 6;
+                                ab.choice_count = frame
+                                    .components()
+                                    .params
+                                    .and_then(|value| value.as_object())
+                                    .and_then(|params| {
+                                        params.get("choices").or_else(|| params.get("CHOICES"))
+                                    })
+                                    .and_then(|value| value.as_array())
+                                    .map(|choices| choices.len() as u8)
+                                    .unwrap_or(6);
                             }
                         }
                         O_ORDER_DECK => {
@@ -1140,6 +1110,20 @@ impl CardDatabase {
                     if !flagged_ops.contains(&op) {
                         unflagged_logic_present = true;
                     }
+                }
+            }
+
+            let semantic_program = ab.frame_program.as_ref().cloned();
+            if let Some(frame_program) = semantic_program.as_ref() {
+                let derived = derive_choice_metadata(frame_program);
+                if derived.requires_selection {
+                    ab.requires_selection = true;
+                }
+                if derived.choice_flags != 0 {
+                    ab.choice_flags |= derived.choice_flags;
+                }
+                if derived.choice_count > 0 {
+                    ab.choice_count = ab.choice_count.max(derived.choice_count);
                 }
             }
 
@@ -1384,13 +1368,13 @@ impl CardDatabase {
             for (_, val) in members_raw {
                 match serde_json::from_value::<MemberCard>(val.clone()) {
                     Ok(mut card) => {
-                        Self::normalize_member_runtime_compatibility(&mut card);
-                        Self::enrich_member_runtime_metadata(&mut card);
                         Self::attach_sparse_ability_index(
                             &card.card_no,
                             &mut card.abilities,
                             &db.sparse_ability_index,
                         )?;
+                        Self::normalize_member_runtime_compatibility(&mut card);
+                        Self::enrich_member_runtime_metadata(&mut card);
 
                         db.members.insert(card.card_id, card.clone());
                         db.card_no_to_id.insert(card.card_no.clone(), card.card_id);
@@ -1419,13 +1403,13 @@ impl CardDatabase {
             for (_, val) in lives_raw {
                 match serde_json::from_value::<LiveCard>(val.clone()) {
                     Ok(mut card) => {
-                        Self::normalize_live_runtime_compatibility(&mut card);
-                        Self::enrich_live_runtime_metadata(&mut card);
                         Self::attach_sparse_ability_index(
                             &card.card_no,
                             &mut card.abilities,
                             &db.sparse_ability_index,
                         )?;
+                        Self::normalize_live_runtime_compatibility(&mut card);
+                        Self::enrich_live_runtime_metadata(&mut card);
 
                         db.lives.insert(card.card_id, card.clone());
                         db.card_no_to_id.insert(card.card_no.clone(), card.card_id);
@@ -1573,6 +1557,19 @@ pub fn program_has_choice(program: &FrameProgram) -> bool {
             || op == O_PLAY_MEMBER_FROM_HAND
             || op == O_PLAY_MEMBER_FROM_DISCARD
             || op == O_OPPONENT_CHOOSE
+            || op == O_RECOVER_LIVE
+            || op == O_RECOVER_MEMBER
+            || op == O_MOVE_MEMBER
+            || op == O_SELECT_MEMBER
+            || op == O_SELECT_LIVE
+            || op == O_SELECT_PLAYER
+            || op == O_SELECT_CARDS
+            || op == O_MOVE_TO_DISCARD
+            || op == O_TAP_MEMBER
+            || op == O_ACTIVATE_MEMBER
+            || op == O_SET_TAPPED
+            || op == O_PAY_ENERGY
+            || op == O_MOVE_TO_DECK
         {
             return true;
         }
@@ -1583,7 +1580,19 @@ pub fn program_has_choice(program: &FrameProgram) -> bool {
 pub fn program_needs_early_pause(program: &FrameProgram) -> bool {
     for frame in &program.frames {
         let op = frame.opcode();
-        if op == O_SELECT_MODE || op == O_COLOR_SELECT || op == O_LOOK_AND_CHOOSE {
+        if op == O_SELECT_MODE
+            || op == O_COLOR_SELECT
+            || op == O_LOOK_AND_CHOOSE
+            || op == O_SELECT_CARDS
+            || op == O_SELECT_MEMBER
+            || op == O_SELECT_LIVE
+            || op == O_SELECT_PLAYER
+            || op == O_RECOVER_LIVE
+            || op == O_RECOVER_MEMBER
+            || op == O_MOVE_MEMBER
+            || op == O_MOVE_TO_DISCARD
+            || op == O_MOVE_TO_DECK
+        {
             return true;
         }
     }
@@ -1593,11 +1602,102 @@ pub fn program_needs_early_pause(program: &FrameProgram) -> bool {
 pub fn program_needs_early_pause_opcode(program: &FrameProgram) -> i32 {
     for frame in &program.frames {
         let op = frame.opcode();
-        if op == O_SELECT_MODE || op == O_COLOR_SELECT || op == O_LOOK_AND_CHOOSE {
+        if op == O_SELECT_MODE
+            || op == O_COLOR_SELECT
+            || op == O_LOOK_AND_CHOOSE
+            || op == O_SELECT_CARDS
+            || op == O_SELECT_MEMBER
+            || op == O_SELECT_LIVE
+            || op == O_SELECT_PLAYER
+            || op == O_RECOVER_LIVE
+            || op == O_RECOVER_MEMBER
+            || op == O_MOVE_MEMBER
+            || op == O_MOVE_TO_DISCARD
+            || op == O_MOVE_TO_DECK
+        {
             return op;
         }
     }
     -1
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+struct DerivedChoiceMetadata {
+    requires_selection: bool,
+    choice_flags: u8,
+    choice_count: u8,
+}
+
+fn frame_choice_count(frame: &AbilityFrame) -> u8 {
+    let value = frame.value();
+    match frame.opcode() {
+        O_LOOK_AND_CHOOSE => frame.look_choose().choose_count.max(1),
+        O_SELECT_MODE => value.max(1) as u8,
+        O_COLOR_SELECT => frame
+            .components()
+            .params
+            .and_then(|value| value.as_object())
+            .and_then(|params| params.get("choices").or_else(|| params.get("CHOICES")))
+            .and_then(|value| value.as_array())
+            .map(|choices| choices.len().max(1) as u8)
+            .unwrap_or(6),
+        O_ORDER_DECK | O_LOOK_REORDER_DISCARD => value.max(3).max(1) as u8,
+        O_SELECT_CARDS => value.max(1) as u8,
+        O_RECOVER_LIVE | O_RECOVER_MEMBER | O_MOVE_MEMBER | O_SELECT_MEMBER | O_SELECT_LIVE
+        | O_SELECT_PLAYER | O_MOVE_TO_DISCARD | O_TAP_MEMBER | O_TAP_OPPONENT
+        | O_ACTIVATE_MEMBER | O_SET_TAPPED | O_PAY_ENERGY | O_MOVE_TO_DECK => value.max(1) as u8,
+        _ => value.max(1) as u8,
+    }
+}
+
+fn derive_choice_metadata(program: &FrameProgram) -> DerivedChoiceMetadata {
+    let mut metadata = DerivedChoiceMetadata::default();
+
+    for frame in &program.frames {
+        let opcode = frame.opcode();
+        let is_optional = frame.filter().is_optional;
+
+        if is_optional {
+            metadata.requires_selection = true;
+        }
+
+        match opcode {
+            O_LOOK_AND_CHOOSE => {
+                metadata.requires_selection = true;
+                metadata.choice_flags |= CHOICE_FLAG_LOOK;
+                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
+            }
+            O_SELECT_MODE => {
+                metadata.requires_selection = true;
+                metadata.choice_flags |= CHOICE_FLAG_MODE;
+                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
+            }
+            O_COLOR_SELECT => {
+                metadata.requires_selection = true;
+                metadata.choice_flags |= CHOICE_FLAG_COLOR;
+                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
+            }
+            O_ORDER_DECK | O_LOOK_REORDER_DISCARD => {
+                metadata.requires_selection = true;
+                metadata.choice_flags |= CHOICE_FLAG_ORDER;
+                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
+            }
+            O_SELECT_CARDS | O_RECOVER_LIVE | O_RECOVER_MEMBER | O_MOVE_MEMBER
+            | O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER | O_MOVE_TO_DISCARD
+            | O_MOVE_TO_DECK | O_TAP_MEMBER | O_TAP_OPPONENT | O_ACTIVATE_MEMBER | O_SET_TAPPED
+            | O_PAY_ENERGY => {
+                metadata.requires_selection = true;
+                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
+            }
+            _ => {}
+        }
+    }
+
+    if metadata.choice_flags != 0 {
+        metadata.requires_selection = true;
+    }
+
+    metadata
 }
 
 pub const CHARACTER_NAMES: [&str; 78] = [

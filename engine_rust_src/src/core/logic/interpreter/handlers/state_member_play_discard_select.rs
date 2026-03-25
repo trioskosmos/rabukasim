@@ -22,7 +22,7 @@ pub fn handle_discard_selection(
 
     let filter_attr_base = filter_attr_base & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
 
-    if ctx.choice_index == -1 {
+    if ctx.choice_index == -1 && ctx.v_remaining == -1 {
         state.players[target_p_idx].looked_cards.clear();
     }
 
@@ -38,6 +38,11 @@ pub fn handle_discard_selection(
             .iter()
             .filter(|&&cid| {
                 db.get_member(cid).is_some()
+                    && db
+                        .get_member(cid)
+                        .map(|member| member.cost as i16 == remaining)
+                        .unwrap_or(false)
+                    && !ctx.selected_cards.contains(&cid)
                     && (filter_attr == 0
                         || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx))
             })
@@ -46,10 +51,6 @@ pub fn handle_discard_selection(
         state.players[target_p_idx].looked_cards.extend(matched_ids);
         if state.players[target_p_idx].looked_cards.is_empty() {
             return HandlerResult::Continue;
-        }
-
-        if state.players[target_p_idx].looked_cards.len() == 1 && !is_total_cost {
-            ctx.choice_index = 0;
         }
 
         let mut target_ctx = ctx.clone();
@@ -92,7 +93,12 @@ pub fn handle_discard_selection(
         target_ctx.player_id = target_p_idx as u8;
         target_ctx.v_remaining = next_remaining;
         target_ctx.v_accumulated = ctx.v_accumulated;
+        target_ctx.selected_cards = ctx.selected_cards.clone();
+        if !target_ctx.selected_cards.contains(&cid) {
+            target_ctx.selected_cards.push(cid);
+        }
         target_ctx.choice_index = -1;
+        ctx.choice_index = -1;
 
         let choice_type = if baton_slot_only {
             ChoiceType::SelectStageEmptyBaton

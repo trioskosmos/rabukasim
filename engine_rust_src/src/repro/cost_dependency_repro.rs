@@ -24,6 +24,12 @@ mod tests {
                          O_LOOK_AND_CHOOSE, 5, 0, 6, // Effect
                          O_RETURN, 0, 0, 0
                      ],
+                     frame_program: Some(crate::core::logic::models::FrameProgram::from_bytecode(&[
+                         O_MOVE_TO_DISCARD, 1, 2, 6,
+                         O_JUMP_F, 12, 0, 0,
+                         O_LOOK_AND_CHOOSE, 5, 0, 6,
+                         O_RETURN, 0, 0, 0,
+                     ])),
                      ..Default::default()
                  }
             ],

@@ -1,6 +1,9 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
+use crate::core::logic::interpreter::instruction::{DecodedFilterAttr, DecodedSlot};
 use crate::core::logic::models::AbilityFrameComponents;
+use crate::core::logic::{AbilityContext, CardDatabase, PendingInteraction};
+use serde_json::Value;
 // use crate::core::generated_constants::*;
 
 pub fn get_opcode_log(op: i32, v: i32, a: i64, _s: i32, result_count: i32) -> Option<String> {
@@ -336,6 +339,212 @@ pub fn describe_frame_step(frame: &AbilityFrameComponents<'_>) -> String {
 
 pub fn describe_frame_condition(frame: &AbilityFrameComponents<'_>) -> String {
     describe_condition(frame.opcode, frame.value, frame.raw_attr)
+}
+
+fn truncate_text(text: String, max_len: usize) -> String {
+    if text.len() <= max_len {
+        text
+    } else {
+        text.chars()
+            .take(max_len.saturating_sub(1))
+            .collect::<String>()
+            + "…"
+    }
+}
+
+fn join_parts(parts: Vec<String>) -> String {
+    if parts.is_empty() {
+        "-".to_string()
+    } else {
+        parts.join(", ")
+    }
+}
+
+pub fn describe_filter_attr(filter: DecodedFilterAttr) -> String {
+    let mut parts = Vec::new();
+
+    if filter.target_player != 0 {
+        parts.push(format!("target_player={}", filter.target_player));
+    }
+    if filter.card_type != 0 {
+        parts.push(format!("card_type={}", filter.card_type));
+    }
+    if filter.group_enabled {
+        parts.push(format!(
+            "group={}({})",
+            filter.group_id,
+            get_group_name(filter.group_id, "en")
+        ));
+    }
+    if filter.unit_enabled {
+        parts.push(format!(
+            "unit={}({})",
+            filter.unit_id,
+            get_unit_name(filter.unit_id, "en")
+        ));
+    }
+    if filter.char_id_1 != 0 {
+        parts.push(format!("char_1={}", filter.char_id_1));
+    }
+    if filter.char_id_2 != 0 {
+        parts.push(format!("char_2={}", filter.char_id_2));
+    }
+    if filter.char_id_3 != 0 {
+        parts.push(format!("char_3={}", filter.char_id_3));
+    }
+    if filter.zone_mask != 0 {
+        parts.push(format!("zone=0x{:X}", filter.zone_mask));
+    }
+    if filter.color_mask != 0 {
+        parts.push(format!("color=0x{:X}", filter.color_mask));
+    }
+    if filter.is_tapped {
+        parts.push("tapped".to_string());
+    }
+    if filter.has_blade_heart {
+        parts.push("has_blade".to_string());
+    }
+    if filter.not_has_blade_heart {
+        parts.push("no_blade".to_string());
+    }
+    if filter.unique_names {
+        parts.push("unique_names".to_string());
+    }
+    if filter.value_enabled {
+        parts.push(format!(
+            "value{}{}",
+            if filter.is_le { "<=" } else { ">=" },
+            filter.value_threshold
+        ));
+    }
+    if filter.special_id != 0 {
+        parts.push(format!("special={}", filter.special_id));
+    }
+    if filter.is_setsuna {
+        parts.push("setsuna".to_string());
+    }
+    if filter.compare_accumulated {
+        parts.push("compare_accumulated".to_string());
+    }
+    if filter.is_optional {
+        parts.push("optional".to_string());
+    }
+    if filter.keyword_energy {
+        parts.push("keyword_energy".to_string());
+    }
+    if filter.keyword_member {
+        parts.push("keyword_member".to_string());
+    }
+
+    join_parts(parts)
+}
+
+pub fn describe_slot(slot: DecodedSlot) -> String {
+    let mut parts = vec![
+        format!("src={:?}", slot.source_zone),
+        format!("dst={:?}", slot.dest_zone),
+        format!("target={}", slot.target_slot),
+        format!("area={}", slot.area_idx),
+    ];
+
+    if slot.is_opponent {
+        parts.push("opponent".to_string());
+    }
+    if slot.is_reveal_until_live {
+        parts.push("reveal_until_live".to_string());
+    }
+    if slot.is_baton_slot {
+        parts.push("baton".to_string());
+    }
+    if slot.is_empty_slot {
+        parts.push("empty".to_string());
+    }
+    if slot.is_wait {
+        parts.push("wait".to_string());
+    }
+    if slot.is_dynamic {
+        parts.push("dynamic".to_string());
+    }
+
+    join_parts(parts)
+}
+
+pub fn describe_params(params: Option<&Value>) -> String {
+    match params {
+        Some(value) if value.is_object() || value.is_array() => truncate_text(
+            serde_json::to_string(value).unwrap_or_else(|_| "<invalid-json>".into()),
+            240,
+        ),
+        Some(value) => truncate_text(value.to_string(), 240),
+        None => "-".to_string(),
+    }
+}
+
+pub fn describe_context(ctx: &AbilityContext) -> String {
+    format!(
+        "ctx[p={},a={},src={},ab={},pc={},choice={},v_acc={},v_rem={},slot={},area={},color={},trigger={:?}]",
+        ctx.player_id,
+        ctx.activator_id,
+        ctx.source_card_id,
+        ctx.ability_index,
+        ctx.program_counter,
+        ctx.choice_index,
+        ctx.v_accumulated,
+        ctx.v_remaining,
+        ctx.target_slot,
+        ctx.area_idx,
+        ctx.selected_color,
+        ctx.trigger_type
+    )
+}
+
+pub fn describe_frame_semantics(
+    frame: &AbilityFrameComponents<'_>,
+    ctx: &AbilityContext,
+    db: &CardDatabase,
+) -> String {
+    let card_name = db
+        .get_member(ctx.source_card_id)
+        .map(|c| c.name.as_str())
+        .or_else(|| db.get_live(ctx.source_card_id).map(|c| c.name.as_str()))
+        .unwrap_or("System");
+
+    format!(
+        "card={} {} raw[a={},s={}] filter=[{}] slot=[{}] params=[{}] {}",
+        card_name,
+        describe_trace_step(
+            frame.opcode,
+            frame.value,
+            frame.raw_attr as i64,
+            frame.raw_slot,
+            frame.is_negated
+        ),
+        frame.raw_attr,
+        frame.raw_slot,
+        describe_filter_attr(frame.filter),
+        describe_slot(frame.slot),
+        describe_params(frame.params),
+        describe_context(ctx)
+    )
+}
+
+pub fn describe_pending_interaction(pi: &PendingInteraction) -> String {
+    format!(
+        "pending[op={},choice={},card={},ab={},v={},filter=[{}],slot={},phase={:?},cp={},exec={},actions={},options={},{}]",
+        get_opcode_name(pi.effect_opcode),
+        pi.choice_type.as_str(),
+        pi.card_id,
+        pi.ability_index,
+        pi.v_remaining,
+        describe_filter_attr(DecodedFilterAttr::decode(pi.filter_attr as i64)),
+        pi.target_slot,
+        pi.original_phase,
+        pi.original_current_player,
+        pi.execution_id,
+        pi.actions.len(),
+        pi.options.len(),
+        describe_context(&pi.ctx)
+    )
 }
 
 pub fn is_condition_opcode(op: i32) -> bool {

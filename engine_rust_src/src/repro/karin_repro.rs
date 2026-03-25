@@ -34,6 +34,11 @@ mod tests {
                 15, 1, 0, 6,  // O_RECOVER_LIVE
                 1, 0, 0, 0    // O_RETURN
             ],
+            frame_program: Some(crate::core::logic::models::FrameProgram::from_bytecode(&[
+                58, 1, 0, 6,
+                15, 1, 0, 6,
+                1, 0, 0, 0,
+            ])),
             ..Default::default()
         });
         db.members.insert(599, card);

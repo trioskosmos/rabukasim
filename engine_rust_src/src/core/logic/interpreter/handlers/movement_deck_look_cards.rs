@@ -1,4 +1,5 @@
 use super::*;
+use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::models::AbilityFrame;
 
@@ -7,6 +8,7 @@ pub fn handle_look_cards(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
+    frame: &AbilityFrame,
     p_idx: usize,
     op: i32,
     v: i32,
@@ -15,6 +17,7 @@ pub fn handle_look_cards(
     resolved_slot: i32,
 ) -> HandlerResult {
     let count = v as usize;
+    let filter_attr = filter_attr_from_params(frame.components().params).unwrap_or(a as u64);
     if resolved_slot == 6 {
         if ctx.choice_index == -1 {
             if matches!(
@@ -27,7 +30,7 @@ pub fn handle_look_cards(
                     op,
                     0,
                     ChoiceType::RevealHand,
-                    (a as u32) as u64,
+                    filter_attr,
                     v as i16,
                 ),
                 HandlerResult::Suspend
@@ -71,7 +74,7 @@ pub fn handle_look_cards(
                         op,
                         0,
                         ChoiceType::RevealHand,
-                        (a as u32) as u64,
+                        filter_attr,
                         next_v,
                     ),
                     HandlerResult::Suspend
@@ -82,6 +85,7 @@ pub fn handle_look_cards(
         }
     } else {
         if state.players[p_idx].deck.len() < count {
+            state.players[p_idx].set_flag(PlayerState::FLAG_DECK_REFRESHED, true);
             state.resolve_deck_refresh(p_idx);
         }
         let deck_len = state.players[p_idx].deck.len();

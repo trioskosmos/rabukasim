@@ -1,5 +1,4 @@
 use super::card_db::CardDatabase;
-use super::constants::MAX_CONDITION_CHECK_DEPTH;
 use super::models::AbilityContext;
 use super::state::GameState;
 use crate::core::enums::{ConditionType, TriggerType};
@@ -32,7 +31,15 @@ pub(super) fn resolution_trigger_matches_context(
 
 impl GameState {
     pub fn process_trigger_queue(&mut self, db: &CardDatabase) {
+        if self.core.trigger_depth > 0 {
+            return;
+        }
+
+        self.core.trigger_depth += 1;
+
         super::interpreter::process_trigger_queue(self, db);
+
+        self.core.trigger_depth -= 1;
     }
 
     pub fn check_once_per_turn(
@@ -165,7 +172,6 @@ impl GameState {
         start_ab_idx: usize,
         choice: i16,
     ) {
-        self.trigger_depth += 1;
         let cp = self.current_player as usize;
         for i in 0..2 {
             let p_idx = (cp + i) % 2;
@@ -178,60 +184,7 @@ impl GameState {
                 choice_index: choice,
                 ..Default::default()
             };
-            self.trigger_abilities_from_internal(db, trigger, &ctx, start_ab_idx);
-        }
-        self.trigger_depth -= 1;
-        if self.trigger_depth == 0 {
-            self.process_trigger_queue(db);
-        }
-    }
-
-    fn trigger_abilities_from_internal(
-        &mut self,
-        db: &CardDatabase,
-        trigger: TriggerType,
-        ctx: &AbilityContext,
-        start_ab_idx: usize,
-    ) {
-        use smallvec::SmallVec;
-        // Collect all potential triggers
-        let mut queue = SmallVec::<[(i32, i32, u16, AbilityContext, bool); 8]>::new();
-        let p_idx = ctx.player_id as usize;
-
-        // Stage Members
-        for slot_idx in 0..3 {
-            let cid = self.core.players[p_idx].stage[slot_idx];
-            self.collect_triggers_for_card(
-                db,
-                cid,
-                trigger,
-                ctx,
-                start_ab_idx,
-                false,
-                &mut queue,
-                slot_idx as i16,
-            );
-        }
-
-        // Performance/Live Cards
-        for slot_idx in 0..3 {
-            let cid = self.core.players[p_idx].live_zone[slot_idx];
-            self.collect_triggers_for_card(
-                db,
-                cid,
-                trigger,
-                ctx,
-                start_ab_idx,
-                true,
-                &mut queue,
-                slot_idx as i16,
-            );
-        }
-
-        for (cid, _def_cid, ab_idx, mut ab_ctx, is_live) in queue {
-            ab_ctx.source_card_id = cid;
-            ab_ctx.ability_index = ab_idx as i16;
-            self.enqueue_trigger(cid, ab_idx as u16, ab_ctx, is_live, trigger);
+            self.trigger_abilities_from(db, trigger, &ctx, start_ab_idx);
         }
     }
 
@@ -247,19 +200,12 @@ impl GameState {
             return;
         }
 
-        if self.trigger_depth as u32 > MAX_CONDITION_CHECK_DEPTH {
-            if !self.ui.silent {
-                println!("[DEBUG] Trigger depth limit reached for {:?}.", trigger);
-            }
-            return;
-        }
         if !self.ui.silent {
             println!(
                 "[DEBUG] trigger_abilities_from: {:?} for player {}",
                 trigger, ctx.player_id
             );
         }
-        self.trigger_depth += 1;
 
         use smallvec::SmallVec;
         // Collect all potential triggers
@@ -465,10 +411,7 @@ impl GameState {
             }
         }
 
-        self.trigger_depth -= 1;
-        if self.trigger_depth == 0 {
-            self.process_trigger_queue(db);
-        }
+        self.process_trigger_queue(db);
     }
 
     fn collect_triggers_for_card(
@@ -494,8 +437,20 @@ impl GameState {
 
         let p_idx = ctx.player_id as usize;
         if let Some(abs) = abilities {
+            let has_distinct_optional_mode = trigger == TriggerType::OnLiveSuccess
+                && abs.iter().any(|ability| {
+                    super::ability_patterns::is_distinct_optional_mode_live_ability(ability)
+                });
             for (ab_idx, ab) in abs.iter().enumerate() {
                 if ab.trigger == trigger {
+                    if has_distinct_optional_mode
+                        && ((ab.choice_flags & crate::core::logic::constants::CHOICE_FLAG_MODE)
+                            != 0
+                            || ab.get_modal_option_frames(0).is_some()
+                            || ab.choice_count > 0)
+                    {
+                        continue;
+                    }
                     println!(
                         "[DEBUG] Trigger match: cid={}, ab_idx={}, trigger={:?}, ab_trigger={:?}",
                         cid, ab_idx, trigger, ab.trigger

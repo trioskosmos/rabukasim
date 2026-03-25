@@ -8,6 +8,37 @@ use crate::core::models::CHOICE_DONE;
 use super::super::super::HandlerResult;
 use super::super::movement_discard_helpers::remove_card_by_index;
 
+fn finish_pending_interaction(state: &mut GameState) {
+    let popped = state.interaction_stack.pop();
+    if state.interaction_stack.is_empty() {
+        let original_phase = popped
+            .as_ref()
+            .map(|pi| pi.original_phase)
+            .unwrap_or(state.phase);
+        eprintln!(
+            "[DEBUG_FINISH_PENDING] popped={:?} original_phase={:?} current_phase_before={:?}",
+            popped.as_ref().map(|pi| pi.choice_type),
+            original_phase,
+            state.phase
+        );
+        state.phase = if original_phase == Phase::Response || original_phase == Phase::Setup {
+            Phase::Main
+        } else {
+            original_phase
+        };
+        eprintln!(
+            "[DEBUG_FINISH_PENDING] phase_after={:?} current_player_before={} orig_player={:?}",
+            state.phase,
+            state.current_player,
+            popped.as_ref().map(|pi| pi.original_current_player)
+        );
+        if let Some(pi) = popped {
+            state.current_player = pi.original_current_player;
+        }
+        state.clear_execution_id();
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn handle_discard_resume(
     state: &mut GameState,
@@ -91,6 +122,9 @@ pub fn handle_discard_resume(
     } else {
         (count as i16) - 1
     };
+    if !next_ctx.selected_cards.contains(&removed_cid) {
+        next_ctx.selected_cards.push(removed_cid);
+    }
     if next_ctx.v_remaining > 0 {
         let still_available = match source_zone {
             Zone::Hand => state.players[target_player_idx].hand.iter().any(|&c| {
@@ -108,11 +142,20 @@ pub fn handle_discard_resume(
         };
 
         if !still_available {
+            if ctx.source_card_id == 444 || ctx.source_card_id == 4540 {
+                eprintln!(
+                    "[DEBUG_MOV_RESUME_NOFOLLOW] removed_cid={} choice_type={:?} remaining={} stack={}",
+                    removed_cid,
+                    choice_type,
+                    next_ctx.v_remaining,
+                    state.interaction_stack.len()
+                );
+            }
+            finish_pending_interaction(state);
             return HandlerResult::Continue;
         }
 
         next_ctx.choice_index = -1;
-        next_ctx.selected_cards.push(removed_cid);
 
         let is_forced_pick =
             !is_optional && (count as usize) >= (state.players[target_player_idx].hand.len());

@@ -6,10 +6,36 @@ use crate::core::enums::*;
 // use crate::core::hearts::*;
 pub use super::performance_allocation::*;
 pub use super::performance_requirements::*;
+use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 use crate::core::logic::interpreter::check_condition;
 use serde_json::{json, Value};
 
 pub type PerformanceResults = serde_json::Value;
+
+fn semantic_heart_color_from_frame(frame: &AbilityFrameComponents<'_>, fallback: usize) -> usize {
+    if let Some(color) = decode_heart_type_from_params(frame.params) {
+        return color;
+    }
+
+    if frame.filter.color_mask != 0 {
+        if frame.filter.color_mask == 0x7F {
+            return 6;
+        }
+        return frame.filter.color_mask.trailing_zeros() as usize;
+    }
+
+    if frame.raw_attr != 0 {
+        let mask = frame.raw_attr as usize;
+        if mask == 0x7F {
+            return 6;
+        }
+        if mask.count_ones() == 1 && mask < 1 << 7 {
+            return mask.trailing_zeros() as usize;
+        }
+    }
+
+    fallback
+}
 
 // ============================================================================
 // MODULE: YELL SYSTEM
@@ -487,7 +513,6 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                             for frame in &frame_program.frames {
                                                 let bop = frame.opcode();
                                                 let bv = frame.value();
-                                                let ba = frame.attr();
                                                 let bs = frame.slot();
                                                 let mut targets_us = false;
                                                 if bs == 1 {
@@ -498,14 +523,14 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                                     targets_us = true;
                                                 }
                                                 if bop == O_ADD_HEARTS && targets_us && bv > 0 {
-                                                    let mut color = ba as usize;
-                                                    if color == 0 {
-                                                        color = ctx.selected_color as usize;
-                                                    }
+                                                    let color = semantic_heart_color_from_frame(
+                                                        &frame.components(),
+                                                        ctx.selected_color as usize,
+                                                    );
                                                     if color < 7 {
                                                         slot_heart_buffs.push(json!({
-                                                            "source": other_m.name,
-                                                            "amount": bv,
+                                                        "source": other_m.name,
+                                                        "amount": bv,
                                                             "color": color,
                                                             "ability_text": ab.raw_text,
                                                             "img": other_m.img_path
@@ -545,10 +570,10 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                                 if frame.opcode() == O_ADD_HEARTS
                                                     && frame.value() > 0
                                                 {
-                                                    let mut color = frame.attr() as usize;
-                                                    if color == 0 {
-                                                        color = ctx.selected_color as usize;
-                                                    }
+                                                    let color = semantic_heart_color_from_frame(
+                                                        &frame.components(),
+                                                        ctx.selected_color as usize,
+                                                    );
                                                     if color < 7 {
                                                         slot_heart_buffs.push(json!({
                                                             "source": format!("Granted: {}", src_m.name),

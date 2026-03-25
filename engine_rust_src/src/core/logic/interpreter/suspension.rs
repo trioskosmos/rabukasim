@@ -3,12 +3,16 @@
 //! This module contains the logic for suspending execution for user input
 //! and resolving target slots.
 
+use crate::core::enums::ChoiceType;
+use crate::core::logic::interpreter::instruction::DecodedSlot;
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PendingInteraction, Phase};
 
 pub fn get_choice_text(db: &CardDatabase, ctx: &AbilityContext) -> String {
     crate::core::logic::ActionFactory::get_choice_text(db, ctx)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn suspend_interaction(
     state: &mut GameState,
     db: &CardDatabase,
@@ -16,7 +20,7 @@ pub fn suspend_interaction(
     instr_ip: usize,
     effect_opcode: i32,
     target_slot: i32,
-    choice_type: crate::core::enums::ChoiceType,
+    choice_type: ChoiceType,
     choice_text: &str,
     filter_attr: u64,
     v_remaining: i16,
@@ -26,7 +30,6 @@ pub fn suspend_interaction(
     let original_phase = if let Some(p) = ctx.original_phase {
         p
     } else if state.phase == Phase::Response {
-        // Fallback for cases where context didn't carry it (e.g. root activation via trigger)
         state
             .interaction_stack
             .last()
@@ -62,6 +65,15 @@ pub fn suspend_interaction(
         execution_id,
         ..Default::default()
     });
+    if state.debug.debug_mode {
+        if let Some(interaction) = state.interaction_stack.last() {
+            state.trace_internal(&format!(
+                "BC_SUSPEND: [phase={:?}] {}",
+                state.phase,
+                logging::describe_pending_interaction(interaction)
+            ));
+        }
+    }
     let chooser_p_idx = ctx.player_id;
     state.phase = Phase::Response;
     state.current_player = chooser_p_idx;
@@ -74,14 +86,11 @@ pub fn suspend_interaction(
 
     let _actions_len = final_actions.len();
 
-    // Don't skip suspension for OPTIONAL, LOOK_AND_CHOOSE, COLOR_SELECT, TAP_M_SELECT, etc.
-    // These are legitimate choice types that should always suspend even with limited actions.
-    use crate::core::enums::ChoiceType;
     let always_suspend_types = [
         ChoiceType::Optional,
         ChoiceType::LookAndChoose,
         ChoiceType::ColorSelect,
-        ChoiceType::TapO, // Assuming TAP_M_SELECT doesn't exist in choice_types we added
+        ChoiceType::TapO,
         ChoiceType::TapMSelect,
         ChoiceType::SelectMember,
         ChoiceType::SelectLive,
@@ -94,6 +103,9 @@ pub fn suspend_interaction(
         ChoiceType::SelectHandDiscard,
         ChoiceType::SelectHandPlay,
         ChoiceType::SelectCardsOrder,
+        ChoiceType::OrderDeck,
+        ChoiceType::RecovM,
+        ChoiceType::RecovL,
     ];
     let should_check_skip = !always_suspend_types.contains(&choice_type);
 
@@ -106,16 +118,20 @@ pub fn suspend_interaction(
         );
     }
 
-    if should_check_skip
-        && final_actions.is_empty()
-        && choice_type != crate::core::enums::ChoiceType::OpponentChoose
-    {
+    if should_check_skip && final_actions.is_empty() && choice_type != ChoiceType::OpponentChoose {
         if state.debug.debug_mode {
             println!(
                 "[DEBUG] Softlock prevented: {:?} has no legal actions. Skipping suspension.",
                 choice_type
             );
         }
+        state.trace_internal(&format!(
+            "BC_SUSPEND_SKIP: [phase={:?}] choice_type={} v_remaining={} {}",
+            state.phase,
+            choice_type.as_str(),
+            v_remaining,
+            logging::describe_context(ctx)
+        ));
         state.interaction_stack.pop();
         state.phase = original_phase;
         state.current_player = original_cp;
@@ -133,7 +149,6 @@ pub fn resolve_target_slot(target_slot: i32, ctx: &AbilityContext) -> usize {
     if target_slot == 4 && ctx.area_idx >= 0 {
         ctx.area_idx as usize
     } else if target_slot == -1 || target_slot == 4 {
-        // Fallback to 0 if we expect a slot but none is provided, or if slot 4 is passed without context
         if ctx.area_idx >= 0 {
             ctx.area_idx as usize
         } else {
@@ -141,5 +156,20 @@ pub fn resolve_target_slot(target_slot: i32, ctx: &AbilityContext) -> usize {
         }
     } else {
         target_slot.max(0) as usize
+    }
+}
+
+/// Resolves which player a selection prompt should operate on from semantic slot/filter data.
+pub fn resolve_target_player(
+    decoded_slot: DecodedSlot,
+    filter_attr: u64,
+    default_player: usize,
+) -> usize {
+    let raw_target = (filter_attr & 0x3) as u8;
+
+    if decoded_slot.is_opponent || decoded_slot.target_slot == 2 || raw_target == 2 {
+        1 - default_player
+    } else {
+        default_player
     }
 }

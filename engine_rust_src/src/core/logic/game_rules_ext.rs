@@ -226,11 +226,13 @@ impl GameState {
         // Fast Path: If the filter only checks static attributes (ID, Type, Group, Unit, Char)
         // and doesn't require stage-specific state (tapped, hearts, ownership, or NOT_SELF),
         // we can skip the expensive stage scanning loop.
-        let requires_stage_scan = needs_dynamic_hearts 
-            || filter.is_tapped 
-            || filter.target_player != 0 
+        let requires_stage_scan = needs_dynamic_hearts
+            || filter.is_tapped
+            || filter.target_player != 0
             || filter.special_id == 3 // NOT_SELF
-            || filter.zone_mask == 4; // Explicit STAGE check
+            || filter.zone_mask == 4 // Explicit STAGE check
+            || filter.keyword_energy
+            || filter.keyword_member;
 
         if requires_stage_scan {
             for p in 0..2 {

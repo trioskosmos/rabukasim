@@ -59,20 +59,32 @@ pub fn handle_select_mode(
     }
 
     let mut choice = ctx.choice_index as usize;
-    if v == 2 && frame_idx + 3 < frames.len() {
-        let first_jump = frame_idx + 1;
-        let second_jump = frame_idx + 2;
-        let first_target = frame_idx + 2 + frames[first_jump].raw_value() as usize;
-        let second_target = frame_idx + 3 + frames[second_jump].raw_value() as usize;
-        let first_is_live_reveal = frames
-            .get(first_target)
+
+    let ability = if ctx.source_card_id >= 0 {
+        db.get_member(ctx.source_card_id)
+            .map(|m| &m.abilities[ctx.ability_index as usize])
+            .or_else(|| {
+                db.get_live(ctx.source_card_id)
+                    .map(|l| &l.abilities[ctx.ability_index as usize])
+            })
+    } else {
+        None
+    };
+
+    let resolve_option = |idx: usize| -> Option<AbilityFrame> {
+        ability
+            .and_then(|ability| ability.get_modal_option_frames(idx))
+            .and_then(|frames| frames.into_iter().next())
+    };
+
+    if v == 2 {
+        let first_is_live_reveal = resolve_option(0)
             .map(|target| {
                 target.raw_opcode() == crate::core::enums::O_REVEAL_UNTIL
                     && (target.raw_slot() as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0
             })
             .unwrap_or(false);
-        let second_is_live_reveal = frames
-            .get(second_target)
+        let second_is_live_reveal = resolve_option(1)
             .map(|target| {
                 target.raw_opcode() == crate::core::enums::O_REVEAL_UNTIL
                     && (target.raw_slot() as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0
@@ -84,22 +96,9 @@ pub fn handle_select_mode(
         }
     }
 
-    // AUTHORED MODAL FALLBACK
-    // If we have modal_options in the Ability object, use those instead of calculating jump offsets.
-    if let Some(ability) = if ctx.source_card_id >= 0 {
-        db.get_member(ctx.source_card_id)
-            .map(|m| &m.abilities[ctx.ability_index as usize])
-            .or_else(|| {
-                db.get_live(ctx.source_card_id)
-                    .map(|l| &l.abilities[ctx.ability_index as usize])
-            })
-    } else {
-        None
-    } {
-        if let Some(new_frames) = ability.get_modal_option_frames(choice) {
-            ctx.choice_index = -1;
-            return HandlerResult::BranchToFrames(new_frames);
-        }
+    if let Some(new_frame) = resolve_option(choice) {
+        ctx.choice_index = -1;
+        return HandlerResult::BranchToFrames(std::sync::Arc::new(vec![new_frame]));
     }
 
     if choice >= v as usize {

@@ -130,9 +130,6 @@ pub fn tap_opponent_chooser_player(db: &CardDatabase, ctx: &AbilityContext) -> u
         })
         .unwrap_or(false);
 
-    if chooser_is_activator {
-        ctx.activator_id
-    } else {
-        (1 - (ctx.activator_id as usize)) as u8
-    }
+    let _ = chooser_is_activator;
+    ctx.activator_id
 }

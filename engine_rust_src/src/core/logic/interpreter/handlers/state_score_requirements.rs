@@ -95,24 +95,11 @@ pub fn handle_increase_heart_cost(
 
     frame: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let color = if let Some(params) = frame.params.and_then(|value| value.as_object()) {
-        if let Some(heart_type) = params.get("heart_type").and_then(|value| value.as_u64()) {
-            if heart_type == 7 {
-                6
-            } else if heart_type <= 6 {
-                heart_type as usize
-            } else {
-                99
-            }
-        } else if frame.filter.color_mask != 0 {
-            if frame.filter.color_mask == 0x7F {
-                6
-            } else {
-                frame.filter.color_mask.trailing_zeros() as usize
-            }
-        } else {
-            6
-        }
+    let raw_slot = frame.slot.target_slot as usize;
+    let color = if let Some(color) =
+        crate::core::logic::heart_semantics::decode_heart_type_from_params(frame.params)
+    {
+        color
     } else if frame.filter.color_mask != 0 {
         if frame.filter.color_mask == 0x7F {
             6
@@ -120,7 +107,11 @@ pub fn handle_increase_heart_cost(
             frame.filter.color_mask.trailing_zeros() as usize
         }
     } else {
-        6
+        match raw_slot {
+            4 | 7 => 6,
+            0..=6 => raw_slot,
+            _ => 6,
+        }
     };
 
     if color < 7 {
@@ -135,13 +126,8 @@ pub fn handle_increase_heart_cost(
         ));
 
         if !state.ui.silent {
-            if let Some(msg) = logging::get_opcode_log(
-                O_INCREASE_HEART_COST,
-                frame.value,
-                0,
-                color as i32,
-                0,
-            )
+            if let Some(msg) =
+                logging::get_opcode_log(O_INCREASE_HEART_COST, frame.value, 0, color as i32, 0)
             {
                 state.log(msg);
             }

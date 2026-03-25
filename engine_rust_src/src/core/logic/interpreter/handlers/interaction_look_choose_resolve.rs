@@ -1,6 +1,7 @@
 use super::interaction_look_choose_apply::apply_look_choice;
 use super::interaction_look_choose_finalize::finalize_look_choice;
 use super::*;
+use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::models::AbilityFrame;
 
@@ -23,6 +24,7 @@ pub fn resolve_look_choice(
 ) -> HandlerResult {
     let choice = ctx.choice_index as i32;
     let mut revealed = std::mem::take(&mut state.players[p_idx].looked_cards);
+    let semantic_attr = filter_attr_from_params(_frame.components().params);
     if choice == CHOICE_DONE as i32 {
         state.players[p_idx].looked_cards.retain(|c| *c != -1);
         return HandlerResult::Continue;
@@ -44,6 +46,12 @@ pub fn resolve_look_choice(
                     reveal_flag,
                     chosen,
                 );
+
+                if source_zone == 7 {
+                    if let Some(member) = db.get_member(chosen) {
+                        ctx.v_accumulated = (ctx.v_accumulated - member.cost as i16).max(0);
+                    }
+                }
 
                 let rem = if ctx.v_remaining > 0 {
                     ctx.v_remaining - 1
@@ -69,7 +77,7 @@ pub fn resolve_look_choice(
                             O_LOOK_AND_CHOOSE,
                             s,
                             choice_type,
-                            a as u64,
+                            semantic_attr.unwrap_or(a as u64),
                             rem,
                         ),
                         HandlerResult::Suspend
