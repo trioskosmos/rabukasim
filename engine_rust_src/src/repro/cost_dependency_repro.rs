@@ -15,19 +15,10 @@ mod tests {
                      // Optional cost ability
                      trigger: TriggerType::Activated,
                      // Cost: Discard 1 (Type 6, Val 1). Effect: Look 5 (Type 41, Val 5)
-                     // Bytecode: [6, 1, 0, 0, 41, 5, 0, 0, 0, 0, 0, 0]
-                     // Actually, let's use check logic from test below:
-                     // It expects O_MOVE_TO_DISCARD then O_JUMP_F.
-                     bytecode: vec![
+                     frame_program: Some(FrameProgram::from_words(&[
                          O_MOVE_TO_DISCARD, 1, 2, 6, // Cost (Optional, Hand)
                          O_JUMP_F, 12, 0, 0,         // If skipped, jump to Return (IP 12)
                          O_LOOK_AND_CHOOSE, 5, 0, 6, // Effect
-                         O_RETURN, 0, 0, 0
-                     ],
-                     frame_program: Some(crate::core::logic::models::FrameProgram::from_bytecode(&[
-                         O_MOVE_TO_DISCARD, 1, 2, 6,
-                         O_JUMP_F, 12, 0, 0,
-                         O_LOOK_AND_CHOOSE, 5, 0, 6,
                          O_RETURN, 0, 0, 0,
                      ])),
                      ..Default::default()

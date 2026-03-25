@@ -13,7 +13,8 @@ def to_pascal_case(snake_str):
 
 def resolve_extra_constants(metadata):
     extra_constants = dict(metadata.get("extra_constants", {}))
-    layout_fields = metadata.get("bytecode_layout", {}).get("A", {}).get("standard", {})
+    packed_layout = metadata.get("packed_layout") or metadata.get("bytecode_layout", {})
+    layout_fields = packed_layout.get("A", {}).get("standard", {})
 
     shift_mappings = {
         "FILTER_TYPE_SHIFT": "card_type",
@@ -828,8 +829,8 @@ def sync():
         json.dump(parity_data, f, indent=2)
 
     # --- Generate Packed Layout Helpers ---
-    if "bytecode_layout" in metadata:
-        layout = metadata["bytecode_layout"]
+    layout = metadata.get("packed_layout") or metadata.get("bytecode_layout")
+    if layout:
 
         # 1. Python Generated Packer
         py_packer_path = "engine/models/generated_packer.py"

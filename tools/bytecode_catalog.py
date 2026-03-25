@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-"""Generate a bytecode atlas for cards.
+"""Generate and archive a bytecode atlas for cards.
 
-This is intentionally closer to the existing 5-word bytecode layout than to the
-older canonical ability experiments. The goal is to make every word traceable
+This remains intentionally closer to the existing 5-word bytecode layout than
+to the authored semantic frame source. The goal is to make every word traceable
 back to:
 
 * the opcode / target / trigger metadata in ``data/metadata.json``
@@ -35,8 +35,8 @@ from engine.models.generated_packer import (
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_COMPILED_PATH = ROOT_DIR / "data" / "cards_compiled.json"
 DEFAULT_METADATA_PATH = ROOT_DIR / "data" / "metadata.json"
-DEFAULT_OUTPUT_PATH = ROOT_DIR / "reports" / "bytecode_catalog.json"
-DEFAULT_MARKDOWN_PATH = ROOT_DIR / "reports" / "bytecode_catalog.md"
+DEFAULT_OUTPUT_PATH = ROOT_DIR / "archive" / "reports" / "bytecode_catalog.json"
+DEFAULT_MARKDOWN_PATH = ROOT_DIR / "archive" / "reports" / "bytecode_catalog.md"
 
 
 COMMON_CODE_REFS = [
@@ -50,62 +50,62 @@ WORD_CODE_REFS = {
         "compiler/main.py:validate_bytecode",
     ],
     "value": [
-        "engine/models/ability.py:Ability.compile",
+        "compiler/ability_compiler.py:compile_to_bytecode",
         "engine/models/bytecode_readable.py:decode_chunk",
     ],
     "offset": [
-        "engine/models/ability.py:Ability.compile",
+        "compiler/ability_compiler.py:compile_to_bytecode",
         "compiler/main.py:validate_bytecode",
         "engine/models/bytecode_readable.py:decode_chunk",
     ],
     "packed_attr_low": [
-        "engine/models/ability.py:_pack_filter_attr",
+        "compiler/ability_compiler.py:_pack_filter_attr",
         "engine/models/generated_packer.py:pack_a_standard",
         "engine/models/bytecode_readable.py:decode_filter",
     ],
     "packed_attr_high": [
-        "engine/models/ability.py:_pack_filter_attr",
+        "compiler/ability_compiler.py:_pack_filter_attr",
         "engine/models/generated_packer.py:pack_a_standard",
         "engine/models/bytecode_readable.py:decode_filter",
     ],
     "slot": [
-        "engine/models/ability.py:_resolve_effect_target",
-        "engine/models/ability.py:_resolve_effect_source_zone",
+        "compiler/ability_compiler.py:_resolve_effect_target",
+        "compiler/ability_compiler.py:_resolve_effect_source_zone",
         "engine/models/bytecode_readable.py:decode_standard_slot",
     ],
 }
 
 OPCODE_CODE_REFS = {
     "SELECT_MODE": [
-        "engine/models/ability.py:Ability.compile",
-        "engine/models/ability.py:_compile_single_effect",
-        "engine/models/ability.py:SELECT_MODE jump-table branch",
+        "compiler/ability_compiler.py:compile_to_bytecode",
+        "compiler/ability_compiler.py:_compile_single_effect",
+        "compiler/ability_compiler.py:SELECT_MODE jump-table branch",
     ],
     "LOOK_AND_CHOOSE": [
-        "engine/models/ability.py:_pack_effect_look_and_choose",
+        "compiler/ability_compiler.py:_pack_effect_look_and_choose",
         "engine/models/generated_packer.py:pack_v_look_choose",
         "engine/models/bytecode_readable.py:_decode_look_and_choose",
     ],
     "SET_HEART_COST": [
-        "engine/models/ability.py:_pack_effect_heart_cost",
+        "compiler/ability_compiler.py:_pack_effect_heart_cost",
         "engine/models/generated_packer.py:pack_v_heart_counts",
         "engine/models/generated_packer.py:pack_a_heart_cost",
         "engine/models/bytecode_readable.py:_decode_set_heart_cost",
     ],
     "CALC_SUM_COST": [
-        "engine/models/ability.py:_resolve_effect_dynamic_multiplier",
+        "compiler/ability_compiler.py:_resolve_effect_dynamic_multiplier",
         "engine/models/generated_packer.py:pack_v_scalar_dynamic",
     ],
     "JUMP": [
-        "engine/models/ability.py:Ability.compile",
+        "compiler/ability_compiler.py:compile_to_bytecode",
         "compiler/main.py:validate_bytecode",
     ],
     "JUMP_IF_FALSE": [
-        "engine/models/ability.py:Ability.compile",
+        "compiler/ability_compiler.py:compile_to_bytecode",
         "compiler/main.py:validate_bytecode",
     ],
     "RETURN": [
-        "engine/models/ability.py:Ability.compile",
+        "compiler/ability_compiler.py:compile_to_bytecode",
         "compiler/main.py:validate_bytecode",
     ],
 }
@@ -290,9 +290,13 @@ def unpack_word_payload(op_name: str, frame: list[int]) -> dict[str, Any]:
         payload["a"] = unpack_a_standard(a)
         payload["s"] = unpack_s_standard(s)
     else:
-        payload["v"] = int(v)
+        slot = unpack_s_standard(s)
+        if slot.get("is_dynamic"):
+            payload["v"] = unpack_v_scalar_dynamic(v)["base_value"]
+        else:
+            payload["v"] = int(v)
         payload["a"] = unpack_a_standard(a)
-        payload["s"] = unpack_s_standard(s)
+        payload["s"] = slot
 
     return payload
 

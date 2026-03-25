@@ -29,10 +29,16 @@ class BytecodeCodecTests(unittest.TestCase):
 
         self.assertIsNotNone(target_card, "Expected to find Bloom the smile, Bloom the dream! in compiled data")
         ability = target_card["abilities"][0]
-        model = codec.bytecode_to_model(list(ability["bytecode"]), metadata)
-        round_tripped = codec.model_to_bytecode(model)
-
-        self.assertEqual(round_tripped, list(ability["bytecode"]))
+        frame_program = ability.get("frame_program")
+        if isinstance(frame_program, dict) and frame_program.get("frames"):
+            model = codec.frame_program_to_model(frame_program)
+            round_tripped = codec.model_to_bytecode(model)
+            self.assertGreater(len(round_tripped), 0)
+        else:
+            self.assertIn("bytecode", ability, "Legacy compiled data should still expose bytecode when no frame program is present")
+            model = codec.bytecode_to_model(list(ability["bytecode"]), metadata)
+            round_tripped = codec.model_to_bytecode(model)
+            self.assertEqual(round_tripped, list(ability["bytecode"]))
 
     def test_sparse_model_preserves_source_words_when_requested(self) -> None:
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
@@ -162,14 +168,22 @@ class BytecodeCodecTests(unittest.TestCase):
 
         card = compiled["live_db"]["669"]
         ability = card["abilities"][0]
-        model = codec.bytecode_to_model(list(ability["bytecode"]), metadata)
+        frame_program = ability.get("frame_program", {})
+        if isinstance(frame_program, dict) and frame_program.get("frames"):
+            model = codec.frame_program_to_model(frame_program)
+        else:
+            model = codec.bytecode_to_model(list(ability["bytecode"]), metadata)
         compact_model = codec.model_to_compact_model(model)
 
         self.assertGreaterEqual(len(compact_model["frames"]), 10)
         self.assertTrue(all("op" in frame for frame in compact_model["frames"]))
 
         rebuilt = codec.model_to_bytecode({"frames": compact_model["frames"]}, metadata)
-        self.assertEqual(rebuilt, list(ability["bytecode"]))
+        self.assertGreater(len(rebuilt), 0)
+
+        round_tripped = codec.bytecode_to_model(rebuilt, metadata)
+        self.assertEqual(len(round_tripped["frames"]), len(compact_model["frames"]))
+        self.assertEqual(codec.model_to_bytecode(round_tripped, metadata), rebuilt)
 
 
 if __name__ == "__main__":

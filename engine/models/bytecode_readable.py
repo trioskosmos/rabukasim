@@ -24,6 +24,7 @@ from engine.models.generated_packer import (
     unpack_s_standard,
     unpack_v_heart_counts,
     unpack_v_look_choose,
+    unpack_v_scalar_dynamic,
 )
 
 OP = {name: int(value) for name, value in OPCODES.items()}
@@ -116,7 +117,6 @@ AREA_NAMES = {
 _FLAG_25_BATON_OPS = {OP.get("PLAY_MEMBER_FROM_HAND"), OP.get("PLAY_MEMBER_FROM_DISCARD")}
 _FLAG_25_CAPTURE_OPS = {OP.get("SELECT_MEMBER"), OP.get("MOVE_TO_DISCARD")}
 _FLAG_25_REVEAL_OPS = {OP.get("REVEAL_UNTIL")}
-
 RE_ID_REPLACEMENT = re.compile(r"(group|unit|char\d|type|special)=(\d+)")
 
 
@@ -385,6 +385,9 @@ def decode_chunk(chunk: List[int]) -> str:
         v_label = "options"
     elif base_op == OP.get("SET_HEARTS"):
         v_label = "value"
+
+    if unpack_s_standard(s).get("is_dynamic"):
+        v = unpack_v_scalar_dynamic(v)["base_value"]
 
     # Default params string
     params = f"{v_label}={v}, {a_label}=[{decode_filter(a)}], {s_label}=[{decode_standard_slot(s, base_op)}]"

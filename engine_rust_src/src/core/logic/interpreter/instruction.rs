@@ -1144,25 +1144,25 @@ impl BytecodeInstruction {
         Self { op, v, a, raw_s }
     }
 
-    pub fn decode(bytecode: &[i32], ip: usize) -> Self {
-        let op = bytecode[ip];
-        let v = if ip + 1 < bytecode.len() {
-            bytecode[ip + 1]
+    pub fn decode(words: &[i32], ip: usize) -> Self {
+        let op = words[ip];
+        let v = if ip + 1 < words.len() {
+            words[ip + 1]
         } else {
             0
         };
-        let a_low = if ip + 2 < bytecode.len() {
-            bytecode[ip + 2]
+        let a_low = if ip + 2 < words.len() {
+            words[ip + 2]
         } else {
             0
         } as u32;
-        let a_high = if ip + 3 < bytecode.len() {
-            bytecode[ip + 3]
+        let a_high = if ip + 3 < words.len() {
+            words[ip + 3]
         } else {
             0
         } as u32;
-        let raw_s = if ip + 4 < bytecode.len() {
-            bytecode[ip + 4]
+        let raw_s = if ip + 4 < words.len() {
+            words[ip + 4]
         } else {
             0
         };

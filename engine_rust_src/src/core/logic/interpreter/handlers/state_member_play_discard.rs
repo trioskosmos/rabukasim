@@ -47,11 +47,14 @@ pub fn handle_play_member_from_discard(
     // Support legacy bit 50 (FILTER_TOTAL_COST)
     // Support bit 31 (FILTER_COST_TYPE_FLAG) + bit 30 (FILTER_COST_LE) for legacy compiled cards
     let is_total_cost = (filter_attr_base & (1u64 << 60)) != 0
-        || (filter_attr_base & (1u64 << 50)) != 0
-        || ((filter_attr_base & FILTER_COST_TYPE_FLAG) != 0
-            && (filter_attr_base & 1073741824) != 0);
+        || (filter_attr_base & (1u64 << 50)) != 0;
 
-    let remaining = if ctx.v_remaining == -1 {
+    let is_fresh_chain =
+        ctx.selected_cards.is_empty() && state.players[target_p_idx].looked_cards.is_empty();
+    let remaining = if is_fresh_chain || ctx.v_remaining == -1 {
+        if ctx.repeat_count <= 0 {
+            ctx.repeat_count = v as i16;
+        }
         if is_total_cost {
             ctx.v_accumulated = ((filter_attr_base
                 >> crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT)
@@ -62,11 +65,14 @@ pub fn handle_play_member_from_discard(
         ctx.v_remaining
     };
 
-    if remaining <= 0 {
+    if remaining < 0 {
         return HandlerResult::Continue;
     }
 
-    if remaining % 2 == 0 {
+    let needs_discard_selection = state.players[target_p_idx].looked_cards.is_empty()
+        || ctx.selected_cards.is_empty();
+
+    if needs_discard_selection {
         let selection_result = state_member_play_discard_select::handle_discard_selection(
             state,
             db,
@@ -99,16 +105,16 @@ pub fn handle_play_member_from_discard(
             );
         }
         return selection_result;
-    } else {
-        return state_member_play_discard_place::handle_discard_placement(
-            state,
-            db,
-            ctx,
-            target_p_idx,
-            empty_slot_only,
-            is_total_cost,
-            frame_idx,
-            remaining,
-        );
     }
+
+    return state_member_play_discard_place::handle_discard_placement(
+        state,
+        db,
+        ctx,
+        target_p_idx,
+        empty_slot_only,
+        is_total_cost,
+        frame_idx,
+        remaining,
+    );
 }

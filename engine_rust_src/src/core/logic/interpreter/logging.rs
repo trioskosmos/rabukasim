@@ -309,8 +309,12 @@ pub fn describe_frame_words(op: i32, v: i32, a: i64, s: i32) -> String {
     )
 }
 
-pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
+pub fn describe_words(op: i32, v: i32, a: i64, s: i32) -> String {
     describe_frame_words(op, v, a, s)
+}
+
+pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
+    describe_words(op, v, a, s)
 }
 
 pub fn describe_trace_step(op: i32, v: i32, a: i64, s: i32, is_negated: bool) -> String {

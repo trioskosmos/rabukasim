@@ -65,6 +65,9 @@ fn test_sumire_8752_repro() {
     state.core.players[p1].baton_source_slots.push(1); // Baton touched slot 1
     state.core.players[p1].discard.push(cheap_liella_id);
     for i in 0..10 { state.core.players[p1].deck.push(100 + i); }
+    
+    // Set cost to 4 (should still be playable as per Sumire's text "cost 4 or less")
+    db.members.get_mut(&cheap_liella_id).unwrap().cost = 4;
 
     let mut ctx = AbilityContext {
         source_card_id: sumire_id,

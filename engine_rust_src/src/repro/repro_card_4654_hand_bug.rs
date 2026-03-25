@@ -51,7 +51,7 @@ fn test_repro_card_4654_hand_clearing() {
     assert_eq!(state.players[0].hand.len(), 5);
 
     // Execute bytecode
-    let frames = engine_rust::core::logic::models::FrameProgram::from_bytecode(&bytecode).frames;
+    let frames = crate::rules::FrameProgram::from_words(&bytecode).frames;
     state.resolve_semantic_frames(&db, &frames, &ctx);
 
     // The engine should now have suspended for interaction if logic proceeds correctly to look at deck.

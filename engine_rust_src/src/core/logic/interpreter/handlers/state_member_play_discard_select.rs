@@ -22,6 +22,10 @@ pub fn handle_discard_selection(
 
     let filter_attr_base = filter_attr_base & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
 
+    if ctx.repeat_count <= 0 {
+        return HandlerResult::Continue;
+    }
+
     if ctx.choice_index == -1 && ctx.v_remaining == -1 {
         state.players[target_p_idx].looked_cards.clear();
     }
@@ -33,6 +37,10 @@ pub fn handle_discard_selection(
         if is_total_cost {
             filter_attr |= 1u64 << 60;
         }
+        let mut filter_ctx = ctx.clone();
+        filter_ctx.player_id = target_p_idx as u8;
+        filter_ctx.v_remaining = remaining;
+        filter_ctx.v_accumulated = ctx.v_accumulated;
         let matched_ids: Vec<i32> = state.players[target_p_idx]
             .discard
             .iter()
@@ -40,11 +48,24 @@ pub fn handle_discard_selection(
                 db.get_member(cid).is_some()
                     && db
                         .get_member(cid)
-                        .map(|member| member.cost as i16 == remaining)
+                        .map(|member| {
+                            if is_total_cost {
+                                member.cost as i16 <= remaining
+                            } else {
+                                // For count-based play, each card uses 2 steps (select card + select slot).
+                                // A card is selectable if we have at least 2 steps left,
+                                // or if we already have 1 step left and only need to place the card
+                                // (the latter is handled by the state machine branch).
+                                // In the selection phase, remaining MUST be >= 2 if we are starting a new card.
+                                // But since we might be in a chain, we just check if it's > 0
+                                // and rely on the subtraction logic to keep it synced.
+                                true
+                            }
+                        })
                         .unwrap_or(false)
                     && !ctx.selected_cards.contains(&cid)
                     && (filter_attr == 0
-                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx))
+                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, &filter_ctx))
             })
             .cloned()
             .collect();
@@ -53,10 +74,7 @@ pub fn handle_discard_selection(
             return HandlerResult::Continue;
         }
 
-        let mut target_ctx = ctx.clone();
-        target_ctx.player_id = target_p_idx as u8;
-        target_ctx.v_remaining = remaining;
-        target_ctx.v_accumulated = ctx.v_accumulated;
+        let mut target_ctx = filter_ctx.clone();
         target_ctx.choice_index = -1;
 
         if ctx.choice_index == -1 {
@@ -88,7 +106,15 @@ pub fn handle_discard_selection(
         state.players[target_p_idx].looked_cards.clear();
         state.players[target_p_idx].looked_cards.push(cid);
 
-        let next_remaining = remaining - 1;
+        let selected_cost = db
+            .get_member(cid)
+            .map(|member| member.cost as i16)
+            .unwrap_or(0);
+        let next_remaining = if is_total_cost {
+            remaining.saturating_sub(selected_cost)
+        } else {
+            remaining.saturating_sub(1)
+        };
         let mut target_ctx = ctx.clone();
         target_ctx.player_id = target_p_idx as u8;
         target_ctx.v_remaining = next_remaining;

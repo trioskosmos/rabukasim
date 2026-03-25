@@ -82,10 +82,10 @@ def fix_mod_rs(filename):
     for pat, repl in patterns_to_fix:
         content = re.sub(pat, repl, content, flags=re.DOTALL)
 
-    # Now for resolve_bytecode (the second half of the file)
+    # Now for resolve_frames (the second half of the file)
     # I'll just look for the println! and ensure they are properly gated and have their variables.
     
-    # 3. resolve_bytecode cond_desc
+    # 3. resolve_frames cond_desc
     content = re.sub(
         r'executor\.cond = executor\.cond && if is_negated \{ !passed \} else \{ passed \};\s+if state\.debug\.debug_mode \{.*?\}\s+frame\.ctx\.choice_index = -1;',
         r'''executor.cond = executor.cond && if is_negated { !passed } else { passed };

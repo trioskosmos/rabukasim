@@ -1,46 +1,38 @@
 use crate::core::enums::Phase;
-use crate::core::generated_constants::{ACTION_BASE_CHOICE, O_PLAY_MEMBER_FROM_DISCARD};
+use crate::core::generated_constants::{
+    ACTION_BASE_CHOICE, ACTION_BASE_HAND, ACTION_BASE_STAGE_SLOTS,
+};
 use crate::core::logic::*;
 use crate::test_helpers::load_real_db;
 
-/// Test that O_PLAY_MEMBER_FROM_DISCARD with v=2 allows picking two cards
-/// through the full interaction sequence:
-///   1. Populate looked_cards -> Suspend for SELECT_DISCARD_PLAY
-///   2. User picks card 1 -> Suspend for SELECT_STAGE
-///   3. User picks slot -> Card placed, suspend for 2nd SELECT_DISCARD_PLAY
-///   4. User picks card 2 -> Suspend for SELECT_STAGE
-///   5. User picks slot -> Card placed, done
+/// Regression test for PL!S-bp2-006-P / card 420.
+/// The effect should allow at most two discard picks, and members placed by it
+/// should enter the stage active unless the card text says otherwise.
 #[test]
 fn test_repro_card_420_multi_pick_from_discard() {
     let db = load_real_db();
     let mut state = GameState::default();
-    state.ui.silent = false;
-    state.debug.debug_mode = true;
+    state.ui.silent = true;
+    state.debug.debug_mode = false;
 
     let p_idx = 0usize;
     state.current_player = p_idx as u8;
     state.phase = Phase::Main;
 
-    // Card 420 = PL!S-bp2-006-P (津島善子)
-    // Its ability 0 bytecodes: PAY_ENERGY(4, optional) then PLAY_MEMBER_FROM_DISCARD(v=2, cost_le_4)
     let card_420_id = 420;
     let card = db
         .get_member(card_420_id)
         .expect("Card 420 not found in DB");
-    eprintln!("Card 420: {} ({})", card.name, card.card_no);
     assert!(!card.abilities.is_empty(), "Card 420 should have abilities");
 
-    // Find two low-cost members for the discard pile with NO abilities
-    // (to prevent nested suspensions during OnPlay triggers)
     let mut discard_members: Vec<i32> = Vec::new();
     for (_card_no, &id) in db.card_no_to_id.iter() {
         if id == card_420_id {
             continue;
         }
         if let Some(m) = db.get_member(id) {
-            if m.cost <= 2 && m.abilities.is_empty() && discard_members.len() < 3 {
+            if m.cost <= 2 && m.abilities.is_empty() {
                 discard_members.push(id);
-                eprintln!("  Discard candidate: {} (cost={})", m.name, m.cost);
             }
         }
         if discard_members.len() >= 3 {
@@ -48,116 +40,77 @@ fn test_repro_card_420_multi_pick_from_discard() {
         }
     }
     assert!(
-        discard_members.len() >= 2,
-        "Need at least 2 vanilla low-cost members in DB"
+        discard_members.len() >= 3,
+        "Need at least 3 vanilla low-cost members in DB"
     );
 
-    // Setup: empty stage, members in discard, plenty of energy
-    // IMPORTANT: Populate deck to prevent deck refresh (process_rule_checks triggers
-    // refresh when deck is empty + discard non-empty, which would move discard to deck)
     state.players[p_idx].stage = [-1, -1, -1];
+    state.players[p_idx].hand = vec![card_420_id].into();
     state.players[p_idx].discard = discard_members.clone().into();
-    state.players[p_idx].deck = vec![9999; 5].into(); // Dummy cards to prevent deck refresh
-    state.players[p_idx].energy_zone = vec![9000; 6].into(); // 6 energy (enough for PAY_ENERGY 4)
-    state.players[p_idx].energy_deck = vec![9000; 5].into(); // Prevent energy deck empty issues
+    state.players[p_idx].deck = vec![9999; 5].into();
+    state.players[p_idx].energy_zone = vec![9000; 20].into();
+    state.players[p_idx].energy_deck = vec![9000; 20].into();
 
-    // Manually push the PLAY_MEMBER_FROM_DISCARD interaction to skip the PAY_ENERGY step
-    // This simulates the point where the user has already paid energy and the engine
-    // is now asking them to select a member from discard.
-    let filter_attr = {
-        // Decode from real bytecodes: a_low=1224736768, a_high=-2147483648
-        let a_low = card.abilities[0].bytecode[7] as u32;
-        let a_high = card.abilities[0].bytecode[8] as u32;
-        ((a_high as u64) << 32) | (a_low as u64)
-    };
-    let s_word = card.abilities[0].bytecode[9]; // 458756
-    eprintln!("filter_attr={:#018x}, s_word={}", filter_attr, s_word);
+    state.step(&db, ACTION_BASE_HAND + 0).unwrap();
+    state.step(&db, ACTION_BASE_CHOICE + 0).unwrap();
 
-    // Populate looked_cards with eligible members from discard
-    state.players[p_idx].looked_cards.clear();
-    let matched_ids: Vec<i32> = state.players[p_idx]
-        .discard
-        .iter()
-        .filter(|&&cid| {
-            db.get_member(cid).is_some()
-                && (filter_attr == 0 || state.card_matches_filter(&db, cid, filter_attr))
-        })
-        .cloned()
-        .collect();
-    state.players[p_idx].looked_cards.extend(matched_ids);
-    let initial_looked = state.players[p_idx].looked_cards.len();
-    eprintln!("Initial looked_cards: {} members", initial_looked);
     assert!(
-        initial_looked >= 2,
-        "Should have at least 2 eligible members in looked_cards"
+        matches!(
+            state.interaction_stack.last().map(|pi| pi.choice_type),
+            Some(crate::core::enums::ChoiceType::SelectDiscardPlay)
+        ),
+        "First discard selection prompt should appear"
     );
 
-    // Push the initial SELECT_DISCARD_PLAY interaction
-    let v_remaining = 4i16; // v=2, so remaining = v*2 = 4
-    let ctx = AbilityContext {
-        player_id: p_idx as u8,
-        activator_id: p_idx as u8,
-        source_card_id: card_420_id,
-        ability_index: 0,
-        program_counter: 10, // IP of O_PLAY_MEMBER_FROM_DISCARD in card 420's bytecodes
-        v_remaining,
-        v_accumulated: 4,
-        choice_index: -1,
-        ..Default::default()
-    };
-    state.interaction_stack.push(PendingInteraction {
-        ctx: ctx.clone(),
-        card_id: card_420_id,
-        ability_index: 0,
-        effect_opcode: O_PLAY_MEMBER_FROM_DISCARD,
-        target_slot: 0,
-        choice_type: crate::core::enums::ChoiceType::SelectDiscardPlay,
-        filter_attr,
-        choice_text: String::new(),
-        v_remaining,
-        original_phase: Phase::Main,
-        original_current_player: p_idx as u8,
-        execution_id: 0,
-        ..Default::default()
-    });
-    state.phase = Phase::Response;
+    state.step(&db, ACTION_BASE_CHOICE + 0).unwrap();
+    let slot_1 = state.players[p_idx]
+        .stage
+        .iter()
+        .position(|&c| c == -1)
+        .expect("Need an empty slot for the first discard placement");
+    state.step(&db, ACTION_BASE_STAGE_SLOTS + slot_1 as i32)
+        .unwrap();
 
-    eprintln!("\n=== Step 1: Pick first card (index 0) ===");
-    let pick_card_0 = ACTION_BASE_CHOICE; // Choice index 0
-    state.step(&db, pick_card_0).expect("Pick card 0 failed");
+    assert!(
+        matches!(
+            state.interaction_stack.last().map(|pi| pi.choice_type),
+            Some(crate::core::enums::ChoiceType::SelectDiscardPlay)
+        ),
+        "A second discard selection prompt should appear"
+    );
 
-    // The engine may either keep the response open for the stage prompt or
-    // auto-resolve the follow-up depending on the currently loaded data.
-    // The durable behavior we care about is that the discard-picked member
-    // is actually placed on stage.
-    eprintln!("\n=== Step 2: Optional follow-up ===");
-    if state.phase == Phase::Response && !state.interaction_stack.is_empty() {
-        let pi2 = state
-            .interaction_stack
-            .last()
-            .expect("Should have pending interaction");
-        eprintln!(
-            "  Pending: type={}, v_remaining={}",
-            pi2.choice_type, pi2.v_remaining
-        );
+    state.step(&db, ACTION_BASE_CHOICE + 0).unwrap();
+    let slot_2 = state.players[p_idx]
+        .stage
+        .iter()
+        .position(|&c| c == -1)
+        .expect("Need an empty slot for the second discard placement");
+    state.step(&db, ACTION_BASE_STAGE_SLOTS + slot_2 as i32)
+        .unwrap();
 
-        let looked = &state.players[p_idx].looked_cards;
-        eprintln!("  looked_cards after 1st placement: {} cards", looked.len());
-        assert!(
-            !looked.is_empty(),
-            "looked_cards should be repopulated for the follow-up card pick"
-        );
+    assert!(
+        state.interaction_stack.is_empty(),
+        "The effect should stop after two discard placements"
+    );
 
-        let pick_card_1 = ACTION_BASE_CHOICE;
-        state.step(&db, pick_card_1).expect("Pick card 1 failed");
+    let picked_members: Vec<i32> = state.players[p_idx]
+        .stage
+        .iter()
+        .copied()
+        .filter(|cid| discard_members.contains(cid))
+        .collect();
+    assert_eq!(
+        picked_members.len(),
+        2,
+        "Exactly two discard members should be placed"
+    );
 
-        if state.phase == Phase::Response {
-            let pick_slot_1 = ACTION_BASE_CHOICE + 1;
-            state.step(&db, pick_slot_1).expect("Pick slot 1 failed");
+    for (slot_idx, &cid) in state.players[p_idx].stage.iter().enumerate() {
+        if discard_members.contains(&cid) {
+            assert!(
+                !state.players[p_idx].is_tapped(slot_idx),
+                "Discard-played members should enter active, not tapped"
+            );
         }
     }
-
-    eprintln!("  Final stage: {:?}", state.players[p_idx].stage);
-
-    eprintln!("\n[PASS] Multi-pick PLAY_MEMBER_FROM_DISCARD(v=2) works correctly!");
 }

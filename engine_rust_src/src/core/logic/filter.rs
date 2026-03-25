@@ -1,4 +1,4 @@
-//! Card Filter Module
+﻿//! Card Filter Module
 //!
 //! This module provides a structured way to handle card filtering logic.
 //! The 64-bit filter attribute is decomposed into meaningful fields for clarity.
@@ -32,7 +32,6 @@
 
 use super::CardDatabase;
 pub use crate::core::generated_constants::*;
-use crate::core::logic::constants::*;
 use serde::{Deserialize, Serialize};
 // use crate::core::enums::Zone;
 use crate::core::models::{AbilityContext, GameState};
@@ -270,7 +269,7 @@ impl CardFilter {
             if (s_flags & 0x100) == 0 {
                 // Fallback for manual tests that didn't set flags but HAVE name
                 if let Some(n) = name {
-                    if !n.contains("せつ菜") {
+                    if !n.contains("KANON") {
                         return false;
                     }
                 } else {
@@ -279,7 +278,7 @@ impl CardFilter {
             }
         }
 
-        // 6. Value Threshold Filter — Cost for Members, Hearts for Live (bit 24 + bits 25-29)
+        // 6. Value Threshold Filter - Cost for Members, Hearts for Live (bit 24 + bits 25-29)
         if self.value_enabled {
             let actual_val = if self.is_cost_type {
                 // Cost mode: check member cost
@@ -430,10 +429,9 @@ impl CardFilter {
             };
             match self.special_id {
                 1 => {
-                    // Optimization: Bit 9 (Kanon) from semantic_flags
                     if (s_flags & 0x200) == 0 {
                         if let Some(n) = name {
-                            if !n.contains("澁谷かのん") {
+                            if !n.contains("KANON") {
                                 return false;
                             }
                         } else {
@@ -442,13 +440,11 @@ impl CardFilter {
                     }
                 }
                 2 => {
-                    // Optimization: Bit 10 is "Contains MY舞"
                     if (s_flags & 0x400) != 0 {
                         return false;
                     }
-                    // Fallback for manual test cards
                     if let Some(n) = name {
-                        if n.contains("MY舞") {
+                        if n.contains("MY") {
                             return false;
                         }
                     }
@@ -480,7 +476,6 @@ impl CardFilter {
                 _ => {}
             }
         }
-
         // 10.5 Unique Names Filter (bit 15) - Used as SAME_NAME_AS_REVEALED
         if self.special_id == 4 {
             let p_idx = ctx.player_id as usize;
@@ -545,7 +540,6 @@ impl CardFilter {
                 return false;
             }
         }
-
         true
     }
 
@@ -571,113 +565,11 @@ impl CardFilter {
     }
 
     pub fn from_attr(a: i64) -> Self {
-        if a == 0 {
-            return Self::default();
-        }
-        let a = a as u64;
-
-        // Implementation Note: This unpacking follows the "A_STANDARD" layout (Revision 5).
-        // Bits 0-1: Target Player (0=Self, 1=Active, 2=Opponent)
-        // Bits 2-3: Card Type (1=Member, 2=Live)
-        // Bits 32-38: Color Mask
-        let unit_enabled = ((a >> FILTER_UNIT_ENABLE_SHIFT) & 0x1) != 0;
-        let unit_id = ((a >> FILTER_UNIT_ID_SHIFT) & 0x7F) as u8;
-
-        Self {
-            is_enabled: true,
-            target_player: ((a >> FILTER_TARGET_SHIFT) & 0x3) as u8,
-            card_type: ((a >> FILTER_TYPE_SHIFT_R5) & 0x3) as u8,
-            group_enabled: ((a >> FILTER_GROUP_ENABLE_SHIFT) & 0x1) != 0,
-            group_id: ((a >> FILTER_GROUP_ID_SHIFT) & 0x7F) as u8,
-            is_tapped: ((a >> FILTER_STATE_SHIFT) & 0x1) != 0,
-            has_blade_heart: ((a >> (FILTER_STATE_SHIFT + 1)) & 0x1) != 0,
-            not_has_blade_heart: ((a >> (FILTER_STATE_SHIFT + 2)) & 0x1) != 0,
-            unique_names: ((a >> (FILTER_STATE_SHIFT + 3)) & 0x1) != 0,
-            unit_enabled,
-            unit_id,
-            value_enabled: ((a >> FILTER_VALUE_ENABLE_SHIFT) & 0x1) != 0,
-            value_threshold: ((a >> FILTER_VALUE_THRESHOLD_SHIFT) & 0x1F) as u8,
-            is_le: ((a >> FILTER_VALUE_LE_SHIFT) & 0x1) != 0,
-            is_cost_type: ((a >> FILTER_VALUE_TYPE_SHIFT) & 0x1) != 0,
-            color_mask: ((a >> FILTER_COLOR_SHIFT_R5) & 0x7F) as u8,
-            char_id_1: ((a >> FILTER_CHAR_1_SHIFT) & 0x7F) as u8,
-            char_id_2: ((a >> FILTER_CHAR_2_SHIFT) & 0x7F) as u8,
-            char_id_3: if !unit_enabled { unit_id } else { 0 },
-            zone_mask: ((a >> FILTER_ZONE_MASK_SHIFT_R5) & 0x7) as u8,
-            special_id: ((a >> FILTER_SPECIAL_ID_SHIFT) & 0x7) as u8,
-            is_setsuna: ((a >> FILTER_SETSUNA_SHIFT) & 0x1) != 0,
-            compare_accumulated: ((a >> FILTER_DYNAMIC_SHIFT) & 0x1) != 0,
-            is_optional: ((a >> FILTER_OPTIONAL_SHIFT) & 0x1) != 0,
-            keyword_energy: ((a >> FILTER_KW_ENERGY_SHIFT) & 0x1) != 0,
-            keyword_member: ((a >> FILTER_KW_MEMBER_SHIFT) & 0x1) != 0,
-        }
+        crate::core::logic::filter_attr_compat::card_filter_from_attr(a)
     }
 
     pub fn to_attr(&self) -> i64 {
-        if !self.is_enabled {
-            return 0;
-        }
-
-        let mut a: u64 = 0;
-        a |= (self.target_player as u64 & 0x3) << FILTER_TARGET_SHIFT;
-        a |= (self.card_type as u64 & 0x3) << FILTER_TYPE_SHIFT_R5;
-        if self.group_enabled {
-            a |= 1u64 << FILTER_GROUP_ENABLE_SHIFT;
-            a |= (self.group_id as u64 & 0x7F) << FILTER_GROUP_ID_SHIFT;
-        }
-        if self.is_tapped {
-            a |= 1u64 << FILTER_STATE_SHIFT;
-        }
-        if self.has_blade_heart {
-            a |= 1u64 << (FILTER_STATE_SHIFT + 1);
-        }
-        if self.not_has_blade_heart {
-            a |= 1u64 << (FILTER_STATE_SHIFT + 2);
-        }
-        if self.unique_names {
-            a |= 1u64 << (FILTER_STATE_SHIFT + 3);
-        }
-        if self.unit_enabled {
-            a |= 1u64 << FILTER_UNIT_ENABLE_SHIFT;
-            a |= (self.unit_id as u64 & 0x7F) << FILTER_UNIT_ID_SHIFT;
-        } else if self.char_id_3 > 0 {
-            // Pack char_id_3 into unit_id bits if unit is not enabled
-            a |= (self.char_id_3 as u64 & 0x7F) << FILTER_UNIT_ID_SHIFT;
-        }
-
-        if self.value_enabled {
-            a |= 1u64 << FILTER_VALUE_ENABLE_SHIFT;
-            a |= (self.value_threshold as u64 & 0x1F) << FILTER_VALUE_THRESHOLD_SHIFT;
-            if self.is_le {
-                a |= 1u64 << FILTER_VALUE_LE_SHIFT;
-            }
-            if self.is_cost_type {
-                a |= 1u64 << FILTER_VALUE_TYPE_SHIFT;
-            }
-        }
-
-        a |= (self.color_mask as u64 & 0x7F) << FILTER_COLOR_SHIFT_R5;
-        a |= (self.char_id_1 as u64 & 0x7F) << FILTER_CHAR_1_SHIFT;
-        a |= (self.char_id_2 as u64 & 0x7F) << FILTER_CHAR_2_SHIFT;
-        a |= (self.zone_mask as u64 & 0x7) << FILTER_ZONE_MASK_SHIFT_R5;
-        a |= (self.special_id as u64 & 0x7) << FILTER_SPECIAL_ID_SHIFT;
-        if self.is_setsuna {
-            a |= 1u64 << FILTER_SETSUNA_SHIFT;
-        }
-        if self.compare_accumulated {
-            a |= 1u64 << FILTER_DYNAMIC_SHIFT;
-        }
-        if self.is_optional {
-            a |= 1u64 << FILTER_OPTIONAL_SHIFT;
-        }
-        if self.keyword_energy {
-            a |= 1u64 << FILTER_KW_ENERGY_SHIFT;
-        }
-        if self.keyword_member {
-            a |= 1u64 << FILTER_KW_MEMBER_SHIFT;
-        }
-
-        a as i64
+        crate::core::logic::filter_attr_compat::card_filter_to_attr(self)
     }
 
     pub fn new() -> Self {
@@ -785,603 +677,9 @@ impl CardFilter {
 }
 
 pub fn map_filter_string_to_attr(filter: &str) -> u64 {
-    let mut attr: u64 = 0;
-    for part in filter.split(',') {
-        let part_trimmed = part.trim();
-        let part = part_trimmed.to_uppercase();
-        if part.is_empty() {
-            continue;
-        }
-
-        if part == "OPPONENT" || part == "TARGET=OPPONENT" || part == "TARGET_OPPONENT" {
-            attr |= 2u64 << crate::core::logic::constants::FILTER_TARGET_SHIFT;
-            continue;
-        }
-        if part == "SELF"
-            || part == "ME"
-            || part == "PLAYER"
-            || part == "TARGET=SELF"
-            || part == "TARGET_PLAYER"
-        {
-            attr |= 1u64 << crate::core::logic::constants::FILTER_TARGET_SHIFT;
-            continue;
-        }
-        if part == "BOTH" || part == "ALL" || part == "TARGET=BOTH" || part == "TARGET_ALL" {
-            attr |= 3u64 << crate::core::logic::constants::FILTER_TARGET_SHIFT;
-            continue;
-        }
-
-        if part == "HAS_GROUP_AQOURS_OR_SAINT_SNOW" {
-            attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE
-                | (101u64 << crate::core::logic::constants::FILTER_GROUP_ID_SHIFT);
-            continue;
-        }
-
-        if part_trimmed.contains("NAME_IN") && part_trimmed.contains("澁谷かのん") {
-            attr |= 1u64 << FILTER_SPECIAL_ID_SHIFT;
-            continue;
-        }
-        if part_trimmed.contains("NOT_NAME=MY舞") {
-            attr |= 2u64 << FILTER_SPECIAL_ID_SHIFT;
-            continue;
-        }
-        if part == "SAME_NAME_AS_REVEALED" {
-            attr |= 4u64 << FILTER_SPECIAL_ID_SHIFT;
-            continue;
-        }
-        if part == "SELECTED_DISCARD" {
-            attr |= 6u64 << FILTER_SPECIAL_ID_SHIFT;
-            continue;
-        }
-
-        if let Some((color_mask, threshold)) = parse_semantic_heart_filter(part_trimmed) {
-            attr |= crate::core::logic::constants::FILTER_VALUE_ENABLE_FLAG
-                | ((threshold as u64)
-                    << crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT)
-                | ((color_mask as u64) << crate::core::logic::constants::FILTER_COLOR_SHIFT_R5);
-            continue;
-        }
-
-        if part.starts_with("COST") {
-            let val_str = if part.contains('=') {
-                part.split('=').last()
-            } else {
-                part.split('_').last()
-            };
-            if let Some(s) = val_str {
-                if let Ok(threshold) = s.parse::<i32>() {
-                    attr |= crate::core::logic::constants::FILTER_VALUE_ENABLE_FLAG
-                        | ((threshold as u64)
-                            << crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT);
-                    if part.contains("_LE") {
-                        attr |= crate::core::logic::constants::FILTER_VALUE_LE_FLAG;
-                    }
-                    attr |= crate::core::logic::constants::FILTER_VALUE_TYPE_FLAG;
-                    // Set Cost Type flag
-                }
-            }
-        } else if part.starts_with("GROUP_ID=") || part.starts_with("GROUP_ID_") {
-            let gid_str = if part.contains('=') {
-                part.split('=').last()
-            } else {
-                part.split('_').last()
-            };
-            if let Some(s) = gid_str {
-                if let Ok(gid) = s.parse::<i32>() {
-                    attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE
-                        | ((gid as u64) << crate::core::logic::constants::FILTER_GROUP_ID_SHIFT);
-                }
-            }
-        } else if part.starts_with("UNIT_") {
-            let unit_name = part.replace("UNIT_", "").replace("_ONLY", "");
-            let unit_id = match unit_name.as_str() {
-                "PRINTEMPS" => 0,
-                "LILY_WHITE" | "LILYWHITE" => 1,
-                "BIBI" => 2,
-                "CYARON" => 3,
-                "AZALEA" => 4,
-                "GUILTY_KISS" | "GUILTYKISS" => 5,
-                "DIVER_DIVA" | "DIVERDIVA" => 6,
-                "A_ZU_NA" | "AZUNA" => 7,
-                "QU4RTZ" => 8,
-                "R3BIRTH" => 9,
-                "CATCHU" => 10,
-                "KALEIDOSCORE" => 11,
-                "5YNCRI5E" | "SYNCRISE" => 12,
-                "CERISE_BOUQUET" | "CERISE" => 13,
-                "DOLLCHESTRA" | "DOLL" => 14,
-                "MIRA_CRA_PARK" | "MIRA-CRA" | "MIRAKURA" => 15,
-                _ => -1,
-            };
-            if unit_id >= 0 {
-                attr |= FILTER_UNIT_ENABLE | ((unit_id as u64) << FILTER_UNIT_ID_SHIFT);
-            } else {
-                // Fallback: Check if it's a group name incorrectly prefixed with UNIT_
-                match unit_name.as_str() {
-                    "HASUNOSORA" | "HASU" => {
-                        attr |= FILTER_GROUP_ENABLE | (4u64 << FILTER_GROUP_ID_SHIFT);
-                    }
-                    "LIELLA" => {
-                        attr |= FILTER_GROUP_ENABLE | (3u64 << FILTER_GROUP_ID_SHIFT);
-                    }
-                    "NIJIGASAKI" | "NIJIGAKU" | "NIJI" => {
-                        attr |= FILTER_GROUP_ENABLE | (2u64 << FILTER_GROUP_ID_SHIFT);
-                    }
-                    "AQOURS" | "AQUOURS" => {
-                        attr |= FILTER_GROUP_ENABLE | (1u64 << FILTER_GROUP_ID_SHIFT);
-                    }
-                    "MUSE" | "MUS" | "μ'S" | "Μ'S" | "U'S" | "M'S" => {
-                        attr |= FILTER_GROUP_ENABLE | (0u64 << FILTER_GROUP_ID_SHIFT);
-                    }
-                    "ARISE" => {
-                        attr |= FILTER_GROUP_ENABLE | (10u64 << FILTER_GROUP_ID_SHIFT);
-                    }
-                    "SAINT_SNOW" => {
-                        attr |= FILTER_GROUP_ENABLE | (11u64 << FILTER_GROUP_ID_SHIFT);
-                    }
-                    "SUNNY_PASSION" => {
-                        attr |= FILTER_GROUP_ENABLE | (12u64 << FILTER_GROUP_ID_SHIFT);
-                    }
-                    "MUSICAL" => {
-                        attr |= FILTER_GROUP_ENABLE | (13u64 << FILTER_GROUP_ID_SHIFT);
-                    }
-                    _ => {}
-                }
-            }
-        } else if part == "TAPPED" || part == "STATUS=TAPPED" {
-            attr |= FILTER_TAPPED;
-        } else if part == "HAS_BLADE_HEART" {
-            attr |= FILTER_HAS_BLADE_HEART;
-        } else if part == "NOT_HAS_BLADE_HEART" {
-            attr |= FILTER_NOT_HAS_BLADE_HEART;
-        } else if part == "TYPE_MEMBER" {
-            attr |= FILTER_TYPE_MEMBER;
-        } else if part == "TYPE_LIVE" {
-            attr |= FILTER_TYPE_LIVE;
-        } else if part == "AQOURS" || part == "AQUOURS" {
-            attr |= FILTER_GROUP_ENABLE | (1u64 << FILTER_GROUP_ID_SHIFT);
-        } else if part == "M'S"
-            || part == "μ'S"
-            || part == "Μ'S"
-            || part == "U'S"
-            || part == "MUSE"
-            || part == "MUS"
-        {
-            attr |= FILTER_GROUP_ENABLE | (0u64 << FILTER_GROUP_ID_SHIFT);
-        } else if part == "UNIQUE_NAMES=TRUE"
-            || part == "UNIQUE_NAMES"
-            || part == "SAME_UNIQUE_NAMES"
-        {
-            attr |= FILTER_UNIQUE_NAMES;
-        } else if part == "SMILE" || part == "PINK" || part == "COLOR_0" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 0);
-        } else if part == "PURE" || part == "GREEN" || part == "COLOR_3" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 3);
-        } else if part == "COOL" || part == "BLUE" || part == "COLOR_4" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 4);
-        } else if part == "RED" || part == "COLOR_1" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 1);
-        } else if part == "YELLOW" || part == "COLOR_2" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 2);
-        } else if part == "PURPLE" || part == "COLOR_5" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 5);
-        } else if part == "ANY" || part == "COLOR_7" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 6); // R5 uses bit 6 for ANY/ALL
-        } else if part.starts_with("BLADE_LE") {
-            let val_str = part.replace("BLADE_LE", "").replace("_", "");
-            if let Ok(threshold) = val_str.parse::<i32>() {
-                attr |=
-                    FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << FILTER_VALUE_THRESHOLD_SHIFT);
-                attr |= FILTER_VALUE_LE_SHIFT;
-            }
-        } else if part.starts_with("BLADE_GE") {
-            let val_str = part.replace("BLADE_GE", "").replace("_", "");
-            if let Ok(threshold) = val_str.parse::<i32>() {
-                attr |=
-                    FILTER_BLADE_FILTER_FLAG | ((threshold as u64) << FILTER_VALUE_THRESHOLD_SHIFT);
-            }
-        } else if part == "COST_LE_REVEALED" {
-            attr |= FILTER_COST_ENABLE | (1u64 << FILTER_VALUE_THRESHOLD_SHIFT);
-            attr |= FILTER_VALUE_LE_SHIFT;
-            attr |= FILTER_REVEALED_CONTEXT;
-            attr |= FILTER_COST_TYPE_FLAG;
-        } else if part == "HEART_PINK" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 0);
-        } else if part == "HEART_BLUE" {
-            attr |= 1u64 << (FILTER_COLOR_SHIFT_R5 + 4);
-        } else if part == "HASUNOSORA" || part == "HASU" {
-            attr |= FILTER_GROUP_ENABLE | (4u64 << FILTER_GROUP_ID_SHIFT);
-        } else if part == "LIELLA" {
-            attr |= FILTER_GROUP_ENABLE | (3u64 << FILTER_GROUP_ID_SHIFT);
-        } else if part == "NIJIGASAKI" || part == "NIJIGAKU" || part == "NIJI" {
-            attr |= FILTER_GROUP_ENABLE | (2u64 << FILTER_GROUP_ID_SHIFT);
-        } else if part == "ARISE" {
-            attr |= FILTER_GROUP_ENABLE | (10u64 << FILTER_GROUP_ID_SHIFT);
-        } else if part == "SAINT_SNOW" {
-            attr |= FILTER_GROUP_ENABLE | (11u64 << FILTER_GROUP_ID_SHIFT);
-        } else if part == "SUNNY_PASSION" {
-            attr |= FILTER_GROUP_ENABLE | (12u64 << FILTER_GROUP_ID_SHIFT);
-        } else if part == "MUSICAL" {
-            attr |= FILTER_GROUP_ENABLE | (13u64 << FILTER_GROUP_ID_SHIFT);
-        }
-    }
-    attr
-}
-
-fn parse_semantic_heart_filter(part: &str) -> Option<(u8, u8)> {
-    let upper = part.trim().to_uppercase();
-    let token = upper.as_str();
-    let token = token.strip_prefix("HAS_").unwrap_or(token);
-    let token = token
-        .strip_prefix("HEART_")
-        .or_else(|| token.strip_prefix("COLOR_"))
-        .unwrap_or(token);
-
-    let (color_part, threshold_part) =
-        token.rsplit_once("_X").or_else(|| token.rsplit_once('X'))?;
-
-    let color_mask = match color_part {
-        "SMILE" | "PINK" | "COLOR_0" | "00" | "0" => 1 << 0,
-        "RED" | "COLOR_1" | "01" | "1" => 1 << 1,
-        "YELLOW" | "COLOR_2" | "02" | "2" => 1 << 2,
-        "GREEN" | "PURE" | "COLOR_3" | "03" | "3" => 1 << 3,
-        "BLUE" | "COOL" | "COLOR_4" | "04" | "4" => 1 << 4,
-        "PURPLE" | "COLOR_5" | "05" | "5" => 1 << 5,
-        "ANY" | "ALL" | "COLOR_7" => 1 << 6,
-        _ => return None,
-    };
-
-    let threshold = threshold_part.trim_start_matches('_').parse::<u8>().ok()?;
-
-    Some((color_mask, threshold))
+    crate::core::logic::filter_attr_compat::map_filter_string_to_attr(filter)
 }
 
 pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64> {
-    let Some(obj) = params.and_then(|value| value.as_object()) else {
-        return None;
-    };
-
-    let attr = semantic_filter_attr_from_object(obj);
-    if attr == 0 {
-        None
-    } else {
-        Some(attr)
-    }
-}
-
-fn semantic_filter_attr_from_object(obj: &serde_json::Map<String, serde_json::Value>) -> u64 {
-    let mut attr = 0u64;
-
-    if let Some(value) = obj.get("target_player") {
-        if let Some(v) = value.as_u64() {
-            attr |= (v & 0x3) << crate::core::logic::constants::FILTER_TARGET_SHIFT;
-        } else if let Some(v) = value.as_str() {
-            attr |= match v.to_uppercase().as_str() {
-                "SELF" | "ME" | "PLAYER" => {
-                    1u64 << crate::core::logic::constants::FILTER_TARGET_SHIFT
-                }
-                "OPPONENT" => 2u64 << crate::core::logic::constants::FILTER_TARGET_SHIFT,
-                "BOTH" | "ALL" => 3u64 << crate::core::logic::constants::FILTER_TARGET_SHIFT,
-                _ => 0,
-            };
-        }
-    }
-    if let Some(value) = obj.get("card_type") {
-        if let Some(v) = value.as_u64() {
-            attr |= (v & 0x3) << crate::core::logic::constants::FILTER_TYPE_SHIFT_R5;
-        }
-    }
-    if let Some(value) = obj.get("group_enabled") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE;
-        }
-    }
-    if let Some(value) = obj.get("group_id") {
-        if let Some(v) = value.as_u64() {
-            attr |= (v & 0x7F) << crate::core::logic::constants::FILTER_GROUP_ID_SHIFT;
-            attr |= crate::core::logic::constants::FILTER_GROUP_ENABLE;
-        }
-    }
-    if let Some(value) = obj.get("is_tapped") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= crate::core::logic::constants::FILTER_TAPPED;
-        }
-    }
-    if let Some(value) = obj.get("has_blade_heart") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= crate::core::logic::constants::FILTER_HAS_BLADE_HEART;
-        }
-    }
-    if let Some(value) = obj.get("not_has_blade_heart") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= crate::core::logic::constants::FILTER_NOT_HAS_BLADE_HEART;
-        }
-    }
-    if let Some(value) = obj.get("unique_names") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= crate::core::logic::constants::FILTER_UNIQUE_NAMES;
-        }
-    }
-    if let Some(value) = obj.get("unit_enabled") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= crate::core::logic::constants::FILTER_UNIT_ENABLE;
-        }
-    }
-    if let Some(value) = obj.get("unit_id") {
-        if let Some(v) = value.as_u64() {
-            attr |= (v & 0x7F) << crate::core::logic::constants::FILTER_UNIT_ID_SHIFT;
-            attr |= crate::core::logic::constants::FILTER_UNIT_ENABLE;
-        }
-    }
-    if let Some(value) = obj.get("value_enabled") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= crate::core::logic::constants::FILTER_VALUE_ENABLE_FLAG;
-        }
-    }
-    if let Some(value) = obj.get("value_threshold") {
-        if let Some(v) = value.as_u64() {
-            attr |= (v & 0x1F) << crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT;
-            attr |= crate::core::logic::constants::FILTER_VALUE_ENABLE_FLAG;
-        }
-    }
-    if let Some(value) = obj.get("is_le") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= crate::core::logic::constants::FILTER_VALUE_LE_FLAG;
-        }
-    }
-    if let Some(value) = obj.get("is_cost_type") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= crate::core::logic::constants::FILTER_VALUE_TYPE_FLAG;
-        }
-    }
-    if let Some(value) = obj.get("heart_color").or_else(|| obj.get("heart_type")) {
-        if let Some(mask) = semantic_heart_mask_from_value(value) {
-            attr |= (mask as u64) << crate::core::logic::constants::FILTER_COLOR_SHIFT_R5;
-        }
-    }
-    if let Some(value) = obj
-        .get("heart_count")
-        .or_else(|| obj.get("min_count"))
-        .or_else(|| obj.get("min"))
-        .or_else(|| obj.get("count"))
-        .or_else(|| obj.get("threshold"))
-        .or_else(|| obj.get("value"))
-    {
-        if let Some(v) = value.as_u64() {
-            attr |= crate::core::logic::constants::FILTER_VALUE_ENABLE_FLAG
-                | ((v & 0x1F) << crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT);
-        }
-    }
-    if let Some(value) = obj.get("char_id_1") {
-        if let Some(v) = value.as_u64() {
-            attr |= (v & 0x7F) << crate::core::logic::constants::FILTER_CHAR_1_SHIFT;
-        }
-    }
-    if let Some(value) = obj.get("char_id_2") {
-        if let Some(v) = value.as_u64() {
-            attr |= (v & 0x7F) << crate::core::logic::constants::FILTER_CHAR_2_SHIFT;
-        }
-    }
-    if let Some(value) = obj.get("char_id_3") {
-        if let Some(v) = value.as_u64() {
-            attr |= (v & 0x7F) << crate::core::logic::constants::FILTER_UNIT_ID_SHIFT;
-        }
-    }
-    if let Some(value) = obj.get("zone_mask") {
-        if let Some(v) = value.as_u64() {
-            attr |= (v & 0x7) << crate::core::logic::constants::FILTER_ZONE_MASK_SHIFT_R5;
-        }
-    }
-    if let Some(value) = obj.get("special_id") {
-        if let Some(v) = value.as_u64() {
-            attr |= (v & 0x7) << crate::core::logic::constants::FILTER_SPECIAL_ID_SHIFT;
-        }
-    }
-    if let Some(value) = obj.get("is_setsuna") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= 1u64 << crate::core::logic::constants::FILTER_SETSUNA_SHIFT;
-        }
-    }
-    if let Some(value) = obj.get("compare_accumulated") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= 1u64 << crate::core::logic::constants::FILTER_DYNAMIC_SHIFT;
-        }
-    }
-    if let Some(value) = obj.get("is_optional") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= 1u64 << crate::core::logic::constants::FILTER_OPTIONAL_SHIFT;
-        }
-    }
-    if let Some(value) = obj.get("keyword_energy") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= 1u64 << crate::core::logic::constants::FILTER_KW_ENERGY_SHIFT;
-        }
-    }
-    if let Some(value) = obj.get("keyword_member") {
-        if value.as_bool().unwrap_or(false) {
-            attr |= 1u64 << crate::core::logic::constants::FILTER_KW_MEMBER_SHIFT;
-        }
-    }
-
-    if let Some(filter_str) = obj.get("FILTER").or_else(|| obj.get("filter")) {
-        if let Some(filter_str) = filter_str.as_str() {
-            let normalized = filter_str.trim();
-            if normalized.eq_ignore_ascii_case("Umi/Yoshiko/Rina")
-                || normalized.eq_ignore_ascii_case("Umi / Yoshiko / Rina")
-            {
-                let mut filter = CardFilter::default();
-                filter.is_enabled = true;
-                filter.char_id_1 = 4;
-                filter.char_id_2 = 16;
-                filter.is_optional = obj
-                    .get("is_optional")
-                    .or_else(|| obj.get("IS_OPTIONAL"))
-                    .and_then(|value| value.as_bool())
-                    .unwrap_or(true);
-                return filter.to_attr() as u64;
-            }
-            attr |= map_filter_string_to_attr(filter_str);
-        }
-    }
-
-    attr
-}
-
-fn semantic_heart_mask_from_value(value: &serde_json::Value) -> Option<u8> {
-    if let Some(mask) = value.as_u64() {
-        return match mask {
-            0 => Some(1 << 0),
-            1 => Some(1 << 1),
-            2 => Some(1 << 2),
-            3 => Some(1 << 3),
-            4 => Some(1 << 4),
-            5 => Some(1 << 5),
-            6 => Some(1 << 6),
-            _ => None,
-        };
-    }
-
-    let value = value.as_str()?.trim().to_uppercase();
-    match value.as_str() {
-        "PINK" | "SMILE" => Some(1 << 0),
-        "RED" => Some(1 << 1),
-        "YELLOW" => Some(1 << 2),
-        "GREEN" | "PURE" => Some(1 << 3),
-        "BLUE" | "COOL" => Some(1 << 4),
-        "PURPLE" => Some(1 << 5),
-        "ANY" | "ALL" => Some(1 << 6),
-        "0" | "COLOR_0" => Some(1 << 0),
-        "1" | "COLOR_1" => Some(1 << 1),
-        "2" | "COLOR_2" => Some(1 << 2),
-        "3" | "COLOR_3" => Some(1 << 3),
-        "4" | "COLOR_4" => Some(1 << 4),
-        "5" | "COLOR_5" => Some(1 << 5),
-        "6" | "COLOR_7" => Some(1 << 6),
-        _ => None,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_map_filter_string_to_attr_groups() {
-        let check = |s: &str, expected_id: u64| {
-            let attr = map_filter_string_to_attr(s);
-            let group_id = (attr >> 5) & 0x7F;
-            let group_enabled = (attr >> 4) & 1;
-            println!(
-                "Testing group '{}': attr={}, id={}, enabled={}",
-                s, attr, group_id, group_enabled
-            );
-            assert_eq!(group_enabled, 1, "Group should be enabled for '{}'", s);
-            assert_eq!(group_id, expected_id, "Incorrect group ID for '{}'", s);
-        };
-
-        check("UNIT_HASU", 4);
-        check("UNIT_HASUNOSORA", 4);
-        check("HASU", 4);
-        check("HASUNOSORA", 4);
-
-        check("UNIT_NIJI", 2);
-        check("UNIT_NIJIGASAKI", 2);
-        check("NIJI", 2);
-        check("NIJIGASAKI", 2);
-
-        check("UNIT_AQOURS", 1);
-        check("UNIT_AQUOURS", 1);
-        check("AQOURS", 1);
-        check("AQUOURS", 1);
-
-        check("UNIT_MUSE", 0);
-        check("MUSE", 0);
-        check("μ'S", 0);
-
-        check("ARISE", 10);
-        check("UNIT_ARISE", 10);
-        check("SAINT_SNOW", 11);
-        check("UNIT_SAINT_SNOW", 11);
-        check("SUNNY_PASSION", 12);
-        check("UNIT_SUNNY_PASSION", 12);
-        check("MUSICAL", 13);
-        check("UNIT_MUSICAL", 13);
-    }
-
-    #[test]
-    fn test_map_filter_string_to_attr_semantic_heart_filters() {
-        let attr = map_filter_string_to_attr("GROUP_ID=3, HAS_HEART_02_X3");
-        assert_ne!(attr, 0);
-        assert_ne!(
-            attr & crate::core::logic::constants::FILTER_VALUE_ENABLE_FLAG,
-            0
-        );
-        assert_eq!(
-            (attr >> crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT) & 0x1F,
-            3
-        );
-        assert_ne!(
-            attr & (1u64 << (crate::core::logic::constants::FILTER_COLOR_SHIFT_R5 + 2)),
-            0
-        );
-
-        let attr = map_filter_string_to_attr("HAS_COLOR_YELLOW_X3");
-        assert_ne!(attr, 0);
-        assert_ne!(
-            attr & crate::core::logic::constants::FILTER_VALUE_ENABLE_FLAG,
-            0
-        );
-        assert_eq!(
-            (attr >> crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT) & 0x1F,
-            3
-        );
-        assert_ne!(
-            attr & (1u64 << (crate::core::logic::constants::FILTER_COLOR_SHIFT_R5 + 2)),
-            0
-        );
-    }
-
-    #[test]
-    fn test_map_filter_string_to_attr_target_player_tokens() {
-        let opponent = map_filter_string_to_attr("OPPONENT, COST_LE=10");
-        assert_eq!(
-            (opponent >> crate::core::logic::constants::FILTER_TARGET_SHIFT) & 0x3,
-            2
-        );
-
-        let self_target = map_filter_string_to_attr("SELF, COST_LE=10");
-        assert_eq!(
-            (self_target >> crate::core::logic::constants::FILTER_TARGET_SHIFT) & 0x3,
-            1
-        );
-
-        let both = map_filter_string_to_attr("ALL, COST_LE=10");
-        assert_eq!(
-            (both >> crate::core::logic::constants::FILTER_TARGET_SHIFT) & 0x3,
-            3
-        );
-    }
-
-    #[test]
-    fn test_filter_attr_from_params_prefers_semantic_heart_fields() {
-        let params = serde_json::json!({
-            "group_id": 3,
-            "heart_color": "YELLOW",
-            "min_count": 4,
-        });
-
-        let attr = filter_attr_from_params(Some(&params)).expect("semantic params should decode");
-        assert_ne!(
-            attr & crate::core::logic::constants::FILTER_VALUE_ENABLE_FLAG,
-            0
-        );
-        assert_eq!(
-            (attr >> crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT) & 0x1F,
-            4
-        );
-        assert_ne!(
-            attr & (1u64 << (crate::core::logic::constants::FILTER_COLOR_SHIFT_R5 + 2)),
-            0
-        );
-    }
+    crate::core::logic::filter_attr_compat::filter_attr_from_params(params)
 }

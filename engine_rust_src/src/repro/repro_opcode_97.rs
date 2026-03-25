@@ -21,7 +21,7 @@ mod tests {
         target_slot: u8,
     ) {
         let bytecode = opcode_97_bytecode(target_slot);
-        let frames = crate::core::logic::models::FrameProgram::from_bytecode(&bytecode).frames;
+        let frames = FrameProgram::from_words(&bytecode).frames;
         state.resolve_semantic_frames(db, &frames, ctx);
     }
 

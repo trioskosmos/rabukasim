@@ -54,7 +54,11 @@ pub fn resolve_count(
         let slot_decoded = crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot);
         let s_zone = slot_decoded.source_zone;
 
-        let check_stage = if op >= 400 && op < 500 {
+        let is_explicit_success_count = op == C_COUNT_SUCCESS_LIVE || op == 307 || op == 405;
+
+        let check_stage = if is_explicit_success_count {
+            false
+        } else if op >= 400 && op < 500 {
             op == 401
                 || (has_zone_mask && zone_mask == ZONE_STAGE as u64)
                 || (!has_zone_mask && s_zone == Zone::Stage)
@@ -63,7 +67,9 @@ pub fn resolve_count(
         } else {
             op == C_COUNT_STAGE || op == C_COUNT_GROUP || s_zone == Zone::Stage
         };
-        let check_discard = if op >= 400 && op < 500 {
+        let check_discard = if is_explicit_success_count {
+            false
+        } else if op >= 400 && op < 500 {
             op == 403
                 || (has_zone_mask && zone_mask == ZONE_DISCARD as u64)
                 || (!has_zone_mask && s_zone == Zone::Discard)
@@ -72,7 +78,9 @@ pub fn resolve_count(
         } else {
             op == C_COUNT_DISCARD || s_zone == Zone::Discard
         };
-        let check_hand = if op >= 400 && op < 500 {
+        let check_hand = if is_explicit_success_count {
+            false
+        } else if op >= 400 && op < 500 {
             op == 402
                 || (has_zone_mask && zone_mask == ZONE_HAND as u64)
                 || (!has_zone_mask && s_zone == Zone::Hand)
@@ -82,7 +90,7 @@ pub fn resolve_count(
             op == C_COUNT_HAND || s_zone == Zone::Hand
         };
         let check_success =
-            op == C_COUNT_SUCCESS_LIVE || op == 307 || op == 405 || s_zone == Zone::SuccessPile;
+            is_explicit_success_count || s_zone == Zone::SuccessPile;
 
         use smallvec::SmallVec;
         let mut ids = SmallVec::<[i32; 32]>::new();

@@ -254,7 +254,7 @@ fn test_state_delta_verification() {
             let before = ZoneSnapshot::capture(&state.players[0], &state);
 
             // Execute
-            let frames = crate::core::logic::models::FrameProgram::from_bytecode(&bc_clone).frames;
+            let frames = FrameProgram::from_words(&bc_clone).frames;
             state.resolve_semantic_frames(&db, &frames, &ctx);
 
             let suspended = state.phase == Phase::Response || !state.interaction_stack.is_empty();

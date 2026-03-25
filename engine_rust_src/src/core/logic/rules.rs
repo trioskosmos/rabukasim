@@ -43,12 +43,16 @@ fn ability_conditions_met(
     ab: &Ability,
     ctx: &AbilityContext,
 ) -> bool {
-    let frames = ab.frames();
-    if frames.is_empty() {
+    if !ab.conditions.is_empty() {
         return ab
             .conditions
             .iter()
             .all(|condition| check_condition(state, db, player_idx, condition, ctx, 1));
+    }
+
+    let frames = ab.frames();
+    if frames.is_empty() {
+        return true;
     }
 
     let mut saw_condition = false;
@@ -77,6 +81,18 @@ fn ability_conditions_met(
     }
 
     true
+}
+
+fn aura_target_mask(source_slot: usize, target_area: i32, attr: u64, has_filters: bool) -> u8 {
+    if target_area == 1 {
+        0b111
+    } else if target_area == 4 {
+        1 << source_slot
+    } else if attr != 0 || has_filters {
+        0b111
+    } else {
+        1 << source_slot
+    }
 }
 
 fn get_query_aura(
@@ -314,7 +330,7 @@ fn apply_external_reduce_cost_modifiers(
     p_idx: usize,
     ctx: &AbilityContext,
     target_card_id: i32,
-    depth: u32,
+    _depth: u32,
 ) {
     if ab.filters.is_empty() || !ability_conditions_met(state, db, p_idx, ab, ctx) {
         return;
@@ -828,12 +844,8 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                     let a = pm.attr;
                     let target_area = s & 0xFF;
 
-                    let mut target_mask = 0u8;
-                    if target_area == 1 || target_area == 4 || a != 0 || !ab.filters.is_empty() {
-                        target_mask = 0b111;
-                    } else if target_area == 0 {
-                        target_mask = 1 << source_slot;
-                    }
+                    let target_mask =
+                        aura_target_mask(source_slot, target_area, a, !ab.filters.is_empty());
 
                     if op == O_REDUCE_COST || op == O_INCREASE_COST {
                         aura.cost_modifiers.push(CachedCostModifier {
@@ -880,15 +892,8 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
 
                     if op == O_REDUCE_COST || op == O_INCREASE_COST {
                         let target_area = s & 0xFF;
-                        let target_mask = if target_area == 1
-                            || target_area == 4
-                            || a != 0
-                            || !ab.filters.is_empty()
-                        {
-                            0b111
-                        } else {
-                            1 << source_slot
-                        };
+                        let target_mask =
+                            aura_target_mask(source_slot, target_area, a, !ab.filters.is_empty());
                         aura.cost_modifiers.push(CachedCostModifier {
                             source_cid: cid,
                             amount: if op == O_REDUCE_COST {
@@ -965,11 +970,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                     let first_frame = &program.frames[0];
                     let target_area = first_frame.slot() & 0xFF;
                     let runtime_attr = first_frame.attr();
-                    if target_area == 4 || runtime_attr != 0 || !ab.filters.is_empty() {
-                        0b111
-                    } else {
-                        1 << slot_idx
-                    }
+                    aura_target_mask(slot_idx, target_area, runtime_attr, !ab.filters.is_empty())
                 } else if slot_idx < 3 {
                     0b111
                 } else {

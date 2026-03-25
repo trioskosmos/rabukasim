@@ -314,7 +314,7 @@ mod tests {
 
         state.resolve_semantic_frames(
             &db,
-            &crate::core::logic::models::FrameProgram::from_bytecode(ability_0_bytecode).frames,
+            &FrameProgram::from_words(ability_0_bytecode).frames,
             &ctx,
         );
 
@@ -362,7 +362,7 @@ mod tests {
             // Apply card 10's real ability bytecode
             state.resolve_semantic_frames(
                 &db,
-                &crate::core::logic::models::FrameProgram::from_bytecode(ability_0_bytecode).frames,
+                &FrameProgram::from_words(ability_0_bytecode).frames,
                 &ctx,
             );
 
@@ -411,7 +411,7 @@ mod tests {
         // Run PREVENT_BATON_TOUCH ability
         state.resolve_semantic_frames(
             &db,
-            &crate::core::logic::models::FrameProgram::from_bytecode(&prevent_baton_bytecode)
+            &FrameProgram::from_words(&prevent_baton_bytecode)
                 .frames,
             &ctx,
         );
@@ -570,7 +570,7 @@ mod tests {
 
             state.resolve_semantic_frames(
                 &db,
-                &crate::core::logic::models::FrameProgram::from_bytecode(ability_0_bytecode).frames,
+                &FrameProgram::from_words(ability_0_bytecode).frames,
                 &ctx,
             );
 

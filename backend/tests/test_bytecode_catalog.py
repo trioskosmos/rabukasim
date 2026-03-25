@@ -23,7 +23,7 @@ class BytecodeCatalogTests(unittest.TestCase):
         self.assertEqual(annotation["opcode_name"], "SELECT_MODE")
         self.assertEqual(annotation["words"][0]["metadata_refs"], ["metadata.opcodes.SELECT_MODE"])
         self.assertEqual(annotation["words"][1]["role"], "option_count")
-        self.assertTrue(any("Ability.compile" in ref for ref in annotation["code_refs"]))
+        self.assertTrue(any("compile_to_bytecode" in ref for ref in annotation["code_refs"]))
         self.assertIn("SELECT_MODE", annotation["decoded"])
 
     def test_set_heart_cost_frame_annotation_unpacks_packed_fields(self) -> None:

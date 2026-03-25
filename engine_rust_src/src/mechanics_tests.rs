@@ -99,6 +99,80 @@ fn test_opcode_blades() {
     assert_eq!(state.players[0].blade_buffs[0], 3);
 }
 
+/// Verifies that constant self-target blade auras stay on the source slot and respect conditions.
+#[test]
+fn test_constant_blade_aura_self_target_and_condition_gating() {
+    let db = load_real_db();
+
+    // Card 415: gains 3 blades only when the score-pile condition is met.
+    let mut active_415 = GameState::default();
+    active_415.ui.silent = true;
+    active_415.players[0].stage = [415, 121, 121];
+    active_415.players[0].success_lives = vec![].into();
+    active_415.players[1].success_lives = vec![602].into();
+    let card_415 = db.get_member(415).expect("card 415 should exist");
+    let cond_ctx = AbilityContext {
+        source_card_id: 415,
+        player_id: 0,
+        activator_id: 0,
+        area_idx: 0,
+        ..Default::default()
+    };
+    assert!(crate::core::logic::interpreter::check_condition(
+        &active_415,
+        &db,
+        0,
+        &card_415.abilities[0].conditions[0],
+        &cond_ctx,
+        1
+    ));
+    active_415.sync_stat_caches(0, &db);
+
+    let mut blocked_415 = GameState::default();
+    blocked_415.ui.silent = true;
+    blocked_415.players[0].stage = [415, 121, 121];
+    blocked_415.players[0].success_lives = vec![601].into();
+    blocked_415.players[1].success_lives = vec![602].into();
+    let blocked_ctx = AbilityContext {
+        source_card_id: 415,
+        player_id: 0,
+        activator_id: 0,
+        area_idx: 0,
+        ..Default::default()
+    };
+    assert!(!card_415
+        .abilities[0]
+        .conditions
+        .iter()
+        .all(|cond| crate::core::logic::interpreter::check_condition(
+            &blocked_415,
+            &db,
+            0,
+            cond,
+            &blocked_ctx,
+            1
+        )));
+    blocked_415.sync_stat_caches(0, &db);
+
+    assert_eq!(active_415.players[0].board_aura.blades[0], 3);
+    assert_eq!(blocked_415.players[0].board_aura.blades[0], 0);
+    assert_eq!(
+        active_415.players[0].board_aura.blades[0]
+            - blocked_415.players[0].board_aura.blades[0],
+        3
+    );
+    assert_eq!(
+        active_415.players[0].board_aura.blades[1]
+            - blocked_415.players[0].board_aura.blades[1],
+        0
+    );
+    assert_eq!(
+        active_415.players[0].board_aura.blades[2]
+            - blocked_415.players[0].board_aura.blades[2],
+        0
+    );
+}
+
 /// Verifies that O_ADD_HEARTS correctly applies colored heart buffs to a real member on stage.
 #[test]
 fn test_opcode_hearts() {

@@ -1,9 +1,9 @@
 import copy
 import re
-from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple, Union
 
 from engine.models.enums import CHAR_MAP, Unit, Group, HeartColor
+from engine.models.ability import Condition, Cost, Effect
 from engine.models.opcodes import Opcode
 from engine.models.ability_filter import PackedFilterSpec
 from engine.models.generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
@@ -28,47 +28,6 @@ def to_signed_32(x):
     """Utility to convert an integer to a signed 32-bit integer."""
     x = int(x) & 0xFFFFFFFF
     return x - 0x100000000 if x >= 0x80000000 else x
-
-@dataclass(slots=True)
-class Condition:
-    type: ConditionType
-    params: Dict[str, Any] = field(default_factory=dict)
-    is_negated: bool = False  # "If NOT X" / "Except X"
-    value: int = 0
-    attr: int = 0
-    runtime_opcode: int = 0
-    runtime_filter: Dict[str, Any] = field(default_factory=dict)
-    runtime_slot: Dict[str, Any] = field(default_factory=dict)
-
-@dataclass(slots=True)
-class Effect:
-    effect_type: EffectType
-    value: int = 0
-    value_cond: ConditionType = ConditionType.NONE
-    target: TargetType = TargetType.SELF
-    params: Dict[str, Any] = field(default_factory=dict)
-    is_optional: bool = False  # Optional choice flag
-    modal_options: List[List[Any]] = field(default_factory=list)  # For SELECT_MODE
-    runtime_opcode: int = 0
-    runtime_value: int = 0
-    runtime_attr: int = 0
-    runtime_slot: int = 0
-    runtime_filter: Dict[str, Any] = field(default_factory=dict)
-    runtime_slot_params: Dict[str, Any] = field(default_factory=dict)
-
-@dataclass
-class Cost:
-    type: AbilityCostType
-    value: int = 0
-    params: Dict[str, Any] = field(default_factory=dict)
-    runtime_opcode: int = 0
-    is_optional: bool = False
-    runtime_filter: Dict[str, Any] = field(default_factory=dict)
-    runtime_slot: Dict[str, Any] = field(default_factory=dict)
-
-    @property
-    def cost_type(self) -> AbilityCostType:
-        return self.type
 
 class AbilityCompiler:
     def __init__(self):

@@ -16,7 +16,6 @@ from .generated_packer import (
     pack_v_look_choose,
     pack_v_scalar_dynamic,
 )
-from .structured_instruction_ir import build_structured_instruction_ir
 
 
 def to_signed_32(x):
@@ -107,6 +106,8 @@ class Ability:
     semantic_form: Dict[str, Any] = field(default_factory=dict)  # Human-readable form
 
     def build_structured_ir(self) -> Dict[str, Any]:
+        from .structured_instruction_ir import build_structured_instruction_ir
+
         return build_structured_instruction_ir(self).to_dict()
 
     def to_frame_program(self) -> List[Union[str, Dict[str, Any]]]:

@@ -168,7 +168,7 @@ pub fn resolve_semantic_frames(
         }
 
         if state.debug.debug_mode {
-        let desc = logging::describe_frame_step(&frame_data);
+            let desc = logging::describe_frame_step(&frame_data);
             let card_name = db
                 .get_member(ctx.source_card_id)
                 .map(|c| c.name.as_str())

@@ -554,7 +554,9 @@ fn test_frame_program_bytecode_parity_for_simple_draw() {
     };
     let ability_from_bytecode = Ability {
         trigger: TriggerType::OnPlay,
-        bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
+        frame_program: Some(FrameProgram::from_words(&[
+            O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+        ])),
         ..Default::default()
     };
 
@@ -571,9 +573,6 @@ fn test_frame_program_bytecode_parity_for_simple_draw() {
         .expect("semantic frame program should resolve");
     resolve_ability(&mut bytecode_state, &db, &ability_from_bytecode, &ctx)
         .expect("bytecode ability should resolve");
-
-    assert!(semantic_state.players[0].hand.len() >= 0);
-    assert!(bytecode_state.players[0].hand.len() >= 0);
 }
 
 #[test]

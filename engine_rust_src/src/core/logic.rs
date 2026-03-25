@@ -7,6 +7,7 @@ pub mod constants;
 pub mod diagnostics;
 pub mod execution;
 pub mod filter;
+pub mod filter_attr_compat;
 pub mod filter_bench;
 pub mod game;
 mod game_action_processor;
@@ -43,8 +44,8 @@ pub use state::{ActionReceiver, CoreGameState, DebugState, GameState, UIState};
 
 // Re-export models
 pub use models::{
-    Ability, AbilityContext, Condition, Cost, DeckStats, Effect, EnergyCard, PendingInteraction,
-    TurnEvent,
+    Ability, AbilityContext, AbilityFrame, Condition, Cost, DeckStats, Effect, EnergyCard,
+    FrameProgram, PendingInteraction, TurnEvent,
 };
 
 // Re-export enums and constants

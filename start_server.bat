@@ -16,8 +16,12 @@ powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8000,8080,8888,3
 echo [build] Preparing environment...
 if not exist "data\cards.json" goto NO_DATA
 
+echo [build] Checking card data parity...
+uv run python -m compiler.main --check
+if not errorlevel 1 goto SKIP_CARD_BUILD
+
 echo [build] Compiling card data...
-uv run python -m compiler.main --quiet
+uv run python -m compiler.main --export-profile runtime
 if errorlevel 1 goto CMD_FAIL
 
 echo [build] Syncing authored ability frames into runtime index...
@@ -27,6 +31,11 @@ if errorlevel 1 goto CMD_FAIL
 echo [build] Generating Rust optimizations...
 uv run python tools/codegen_abilities.py
 if errorlevel 1 goto CMD_FAIL
+
+goto SYNC_ASSETS
+
+:SKIP_CARD_BUILD
+echo [build] Card data is up to date. Skipping compiler, frame sync, and codegen.
 
 set DO_FULL=0
 set DEBUG_ARG=
@@ -53,16 +62,12 @@ if errorlevel 1 goto CMD_FAIL
 echo [run] Starting Rust server...
 if "%DEBUG_ARG%"=="--debug" echo [run] Debug mode enabled.
 
-pushd launcher
-cargo run --release --features nn --bin rabuka_launcher -- %DEBUG_ARG%
-set "EXIT_CODE=%errorlevel%"
-popd
+start "Rabuka Launcher" /D "%~dp0launcher" cmd /k "cargo run --release --features nn --bin rabuka_launcher -- %DEBUG_ARG%"
+if errorlevel 1 goto CMD_FAIL
 
-if "%EXIT_CODE%"=="0" goto END
-if "%EXIT_CODE%"=="-1073741510" goto END
-if "%EXIT_CODE%"=="3221225786" goto END
-
-goto CMD_FAIL
+echo.
+echo [run] Server launched in a separate window and will open in your browser shortly.
+goto END
 
 :NO_CARGO
 echo ERROR: 'cargo' not found. Please install Rust.

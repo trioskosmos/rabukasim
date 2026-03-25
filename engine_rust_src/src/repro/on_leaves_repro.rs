@@ -18,11 +18,7 @@ mod tests {
         card_a.name = "Listener".to_string();
         card_a.abilities.push(Ability {
             trigger: TriggerType::OnLeaves,
-            bytecode: vec![
-                O_META_RULE, 1, 0, 0, // Increment cheer_mod_count by 1
-                O_RETURN, 0, 0, 0
-            ],
-            frame_program: Some(crate::core::logic::models::FrameProgram::from_bytecode(&[
+            frame_program: Some(FrameProgram::from_words(&[
                 O_META_RULE, 1, 0, 0,
                 O_RETURN, 0, 0, 0,
             ])),

@@ -16,7 +16,7 @@ echo [build] Preparing environment...
 if not exist "data\cards.json" goto NO_DATA
 
 echo [build] Compiling card data...
-uv run python -m compiler.main --quiet --export-profile runtime
+uv run python -m compiler.main --export-profile runtime
 if errorlevel 1 goto CMD_FAIL
 
 echo [build] Syncing authored ability frames into runtime index...
@@ -48,16 +48,12 @@ if errorlevel 1 goto CMD_FAIL
 echo [run] Starting Rust server...
 if "%DEBUG_ARG%"=="--debug" echo [run] Debug mode enabled.
 
-pushd launcher
-cargo run --release --features nn --bin rabuka_launcher -- %DEBUG_ARG%
-set "EXIT_CODE=%errorlevel%"
-popd
+start "Rabuka Launcher" /D "%~dp0launcher" cmd /k "cargo run --release --features nn --bin rabuka_launcher -- %DEBUG_ARG%"
+if errorlevel 1 goto CMD_FAIL
 
-if "%EXIT_CODE%"=="0" goto END
-if "%EXIT_CODE%"=="-1073741510" goto END
-if "%EXIT_CODE%"=="3221225786" goto END
-
-goto CMD_FAIL
+echo.
+echo [run] Server launched in a separate window and will open in your browser shortly.
+goto END
 
 :NO_CARGO
 echo ERROR: 'cargo' not found. Please install Rust.

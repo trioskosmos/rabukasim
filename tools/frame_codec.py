@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from hashlib import sha1
 from pathlib import Path
 from typing import Any
+
+from engine.models import bytecode_readable as readable
+from engine.models.generated_packer import unpack_v_scalar_dynamic
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = os.path.abspath(str(ROOT_DIR))
@@ -14,6 +18,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 from tools import bytecode_codec as codec
+
 
 
 def load_json(path: Path | str) -> dict[str, Any]:
@@ -46,6 +51,33 @@ def _resolve_trigger_id(trigger: Any, lookups: Any) -> int:
 
 def _trigger_name(trigger_id: int, lookups: Any) -> str:
     return codec._name_for_id(trigger_id, lookups.triggers_by_id, "TRIGGER")
+
+
+def _card_ref_label(card_ref: dict[str, Any]) -> str:
+    card_no = str(card_ref.get("card_no", "")).strip()
+    name = str(card_ref.get("name", "")).strip()
+    db = str(card_ref.get("db", "")).strip()
+    card_id = card_ref.get("card_id")
+    ability_index = card_ref.get("ability_index", card_ref.get("ab_idx", card_ref.get("index", 0)))
+    trigger = str(card_ref.get("trigger", "")).strip()
+
+    if not card_no:
+        return ""
+
+    label = card_no
+    if name:
+        label = f"{label} | {name}"
+    if db and card_id is not None:
+        label = f"{label} [{db}:{card_id}]"
+    if ability_index is not None:
+        label = f"{label} (ab#{ability_index}"
+        if trigger:
+            label = f"{label} {trigger})"
+        else:
+            label = f"{label})"
+    elif trigger:
+        label = f"{label} ({trigger})"
+    return label
 
 
 def _normalize_scalar(value: Any) -> Any:
@@ -128,6 +160,10 @@ def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None 
             if normalized_value not in (None, False, 0, "", [], {}):
                 normalized[field] = normalized_value
 
+    slot = frame.get("slot") if isinstance(frame.get("slot"), dict) else normalized.get("slot")
+    if isinstance(slot, dict) and slot.get("is_dynamic") and isinstance(normalized.get("value"), int):
+        normalized["value"] = int(unpack_v_scalar_dynamic(int(normalized["value"]))["base_value"])
+
     negated = frame.get("negated", frame.get("is_negated", False))
     if bool(negated):
         normalized["negated"] = True
@@ -136,8 +172,8 @@ def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None 
     if isinstance(explicit_index, int) and explicit_index >= 0:
         normalized["frame_index"] = explicit_index
 
-    if isinstance(frame.get("source_words"), list) and frame["source_words"]:
-        normalized["source_words"] = [int(word) for word in frame["source_words"]]
+        if isinstance(frame.get("source_words"), list) and frame["source_words"]:
+            normalized["source_words"] = [int(word) for word in frame["source_words"]]
 
     return normalized
 
@@ -171,9 +207,40 @@ def frame_signature(trigger_id: int, frames: list[dict[str, Any]], lookups: Any,
 
 
 def _normalize_cards(entry: dict[str, Any]) -> tuple[list[Any], list[dict[str, Any]]]:
-    cards = list(entry.get("cards", [])) if isinstance(entry.get("cards"), list) else []
-    card_refs = list(entry.get("card_refs", [])) if isinstance(entry.get("card_refs"), list) else []
+    raw_cards = list(entry.get("cards", [])) if isinstance(entry.get("cards"), list) else []
+    card_refs = []
+    for card_ref in entry.get("card_refs", []) if isinstance(entry.get("card_refs"), list) else []:
+        if isinstance(card_ref, dict):
+            card_refs.append(dict(card_ref))
+
+    cards = raw_cards
+    if not cards and card_refs:
+        cards = [_card_ref_label(card_ref) for card_ref in card_refs]
+        cards = [card for card in cards if card]
     return cards, card_refs
+
+
+def _render_pseudocode(frames: list[dict[str, Any]], lookups: Any) -> str:
+    source_words: list[int] = []
+    for frame in frames:
+        frame_words = frame.get("source_words")
+        if isinstance(frame_words, list) and frame_words:
+            source_words.extend(int(word) for word in frame_words)
+        else:
+            source_words.extend(int(word) for word in codec.encode_frame(frame, lookups))
+
+    if not source_words:
+        return ""
+
+    decoded = readable.decode_bytecode(source_words)
+    lines: list[str] = []
+    for line in decoded.splitlines():
+        if line.startswith("--- BYTECODE LEGEND ---"):
+            break
+        cleaned = re.sub(r"^\s*\d+:\s*", "", line).rstrip()
+        if cleaned:
+            lines.append(cleaned)
+    return "\n".join(lines)
 
 
 def _normalize_entry(entry: dict[str, Any], lookups: Any) -> dict[str, Any]:
@@ -201,7 +268,7 @@ def _normalize_entry(entry: dict[str, Any], lookups: Any) -> dict[str, Any]:
         "frames": frames,
         "cards": cards,
         "card_refs": card_refs,
-        "pseudocode": str(entry.get("pseudocode", "")),
+        "pseudocode": _render_pseudocode(frames, lookups) or str(entry.get("pseudocode", "")),
         "source_mode": entry.get("source_mode", "frame_authored"),
     }
 
@@ -216,9 +283,6 @@ def _normalize_entry(entry: dict[str, Any], lookups: Any) -> dict[str, Any]:
 
     if "round_trip_matches" in entry:
         normalized["round_trip_matches"] = bool(entry.get("round_trip_matches"))
-    if "bytecode_words" in entry and isinstance(entry.get("bytecode_words"), int):
-        normalized["bytecode_words"] = int(entry["bytecode_words"])
-
     return normalized
 
 

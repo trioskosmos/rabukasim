@@ -1573,7 +1573,7 @@ mod tests {
     use crate::core::logic::interpreter::instruction::{BytecodeInstruction, BytecodeProgram};
 
     #[test]
-    fn frame_program_to_bytecode_roundtrips_through_fixed_layout_decoder() {
+    fn frame_program_to_words_roundtrips_through_fixed_layout_decoder() {
         let program = FrameProgram {
             frames: vec![
                 AbilityFrame::Return,
@@ -1587,7 +1587,7 @@ mod tests {
             raw_program: None,
         };
 
-        let words = program.to_bytecode();
+        let words = program.to_words();
         assert_eq!(words.len(), 10);
 
         let decoded = BytecodeProgram::from_slice(&words).decode_all();
@@ -1606,7 +1606,7 @@ mod tests {
     }
 
     #[test]
-    fn frame_program_from_bytecode_preserves_structured_slots() {
+    fn frame_program_from_words_preserves_structured_slots() {
         let bytecode = vec![
             BytecodeInstruction::new(O_RECOVER_LIVE, 1, 0, 0x0001_0080),
             BytecodeInstruction::new(O_RETURN, 0, 0, 0),
@@ -1626,7 +1626,7 @@ mod tests {
                 .collect::<Vec<_>>(),
         );
 
-        let frame_program = FrameProgram::from_bytecode(program.words());
+        let frame_program = FrameProgram::from_words(program.words());
         assert_eq!(frame_program.frames.len(), 2);
         match &frame_program.frames[0] {
             AbilityFrame::RecoverLive { count, slot, .. } => {

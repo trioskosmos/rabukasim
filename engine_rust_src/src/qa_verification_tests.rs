@@ -68,7 +68,7 @@ mod tests {
                 0,
                 0,
             ],
-            frame_program: Some(crate::core::logic::models::FrameProgram::from_bytecode(&[
+            frame_program: Some(FrameProgram::from_words(&[
                 O_PAY_ENERGY,
                 1,
                 0,
@@ -126,7 +126,7 @@ mod tests {
         kasumi.abilities.push(Ability {
             trigger: TriggerType::OnLiveStart,
             bytecode: vec![O_PAY_ENERGY, 1, 0x82, 0, O_RETURN],
-            frame_program: Some(crate::core::logic::models::FrameProgram::from_bytecode(&[
+            frame_program: Some(FrameProgram::from_words(&[
                 O_PAY_ENERGY,
                 1,
                 0x82,
@@ -189,7 +189,7 @@ mod tests {
         member_b.abilities.push(Ability {
             trigger: TriggerType::OnPlay,
             bytecode: vec![O_TRANSFORM_BLADES, 3, 0, 0, 4], // v=3, target=4 (Slot Context)
-            frame_program: Some(crate::core::logic::models::FrameProgram::from_bytecode(&[
+            frame_program: Some(FrameProgram::from_words(&[
                 O_TRANSFORM_BLADES,
                 3,
                 0,
@@ -2268,7 +2268,7 @@ mod tests {
         member.abilities.push(Ability {
             trigger: TriggerType::OnPlay,
             bytecode: vec![O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6],
-            frame_program: Some(crate::core::logic::models::FrameProgram::from_bytecode(&[
+            frame_program: Some(FrameProgram::from_words(&[
                 O_REVEAL_UNTIL,
                 0,
                 0,
@@ -2308,7 +2308,7 @@ mod tests {
 
         let bytecode = vec![O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6];
 
-        let frames = crate::core::logic::models::FrameProgram::from_bytecode(&bytecode).frames;
+        let frames = FrameProgram::from_words(&bytecode).frames;
         state.resolve_semantic_frames(&db, &frames, &ctx);
 
         let hand: Vec<i32> = state.players[0].hand.iter().copied().collect();
@@ -2356,7 +2356,7 @@ mod tests {
 
         let bytecode = vec![O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6];
 
-        let frames = crate::core::logic::models::FrameProgram::from_bytecode(&bytecode).frames;
+        let frames = FrameProgram::from_words(&bytecode).frames;
         state.resolve_semantic_frames(&db, &frames, &ctx);
 
         assert!(

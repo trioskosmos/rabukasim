@@ -83,6 +83,7 @@ pub fn finalize_play_member_from_discard(
         state.players[target_p_idx].set_tapped(slot_idx, true);
         state.players[target_p_idx].set_moved(slot_idx, true);
         state.register_played_member(target_p_idx, card_id, db);
+        ctx.repeat_count = ctx.repeat_count.saturating_sub(1);
         let old = state.players[target_p_idx].prevent_play_to_slot_mask();
         state.players[target_p_idx].set_prevent_play_to_slot_mask(old | (1 << slot_idx) as u8);
 

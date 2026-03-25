@@ -75,7 +75,10 @@ mod tests {
             .filter_map(|card_id| db.get_member(*card_id).map(|card| card.name.clone()))
             .collect();
 
-        for card in db.members.values() {
+        let mut cards: Vec<&MemberCard> = db.members.values().collect();
+        cards.sort_by_key(|card| card.card_id);
+
+        for card in cards {
             if excluded.contains(&card.card_id) || excluded_names.contains(&card.name) {
                 continue;
             }
@@ -273,8 +276,7 @@ mod tests {
         member_b.name = "Special Color".to_string();
         member_b.abilities.push(Ability {
             trigger: TriggerType::OnPlay,
-            bytecode: vec![O_TRANSFORM_BLADES, 3, 0, 0, 4], // v=3, target=4 (Slot Context)
-            frame_program: Some(crate::core::logic::models::FrameProgram::from_bytecode(&[
+            frame_program: Some(FrameProgram::from_words(&[
                 O_TRANSFORM_BLADES,
                 3,
                 0,

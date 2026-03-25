@@ -10,14 +10,13 @@ fn test_card126_draw_repro() {
     let member_card_id = 3001;
 
     // Card 126: Move 5 from DeckTop to Discard. If Live card among them, Draw 1.
-    // Bytecode: [58, 5, 0, 0, 241, 309, 1, 8, 4, 10, 1, 0, 0, 0, 1, 0, 0, 0, 0]
     let mut card126 = MemberCard::default();
     card126.card_id = card126_id;
     let mut ab = Ability::default();
     ab.trigger = TriggerType::OnPlay;
-    ab.bytecode = vec![
+    ab.frame_program = Some(FrameProgram::from_words(&[
         58, 5, 1, 0, 65540, 309, 1, 8, 0, 48, 10, 1, 0, 0, 4, 1, 0, 0, 0, 0,
-    ];
+    ]));
     card126.abilities.push(ab);
     db.members.insert(card126_id, card126);
 
@@ -66,8 +65,16 @@ fn test_card126_draw_repro() {
         println!("Discard size: {}", state.players[p1].discard.len());
 
         // Assertions
-        assert_eq!(state.players[p1].discard.len(), 0, "Card 126 path is currently a no-op here");
-        assert_eq!(state.players[p1].hand.len(), 0, "Card 126 path is currently a no-op here");
+        assert_eq!(
+            state.players[p1].discard.len(),
+            5,
+            "Card 126 should discard 5 cards"
+        );
+        assert_eq!(
+            state.players[p1].hand.len(),
+            1,
+            "Card 126 should draw 1 when a Live card is revealed"
+        );
     }
 
     // Case 2: No Live card at top of deck -> Draw should NOT happen
@@ -95,7 +102,15 @@ fn test_card126_draw_repro() {
         println!("Discard size: {}", state.players[p1].discard.len());
 
         // Assertions
-        assert_eq!(state.players[p1].discard.len(), 0, "Card 126 path is currently a no-op here");
-        assert_eq!(state.players[p1].hand.len(), 0, "Card 126 path is currently a no-op here");
+        assert_eq!(
+            state.players[p1].discard.len(),
+            5,
+            "Card 126 should discard 5 cards"
+        );
+        assert_eq!(
+            state.players[p1].hand.len(),
+            0,
+            "Card 126 should not draw when no Live card is revealed"
+        );
     }
 }

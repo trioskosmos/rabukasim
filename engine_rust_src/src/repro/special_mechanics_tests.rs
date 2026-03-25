@@ -134,7 +134,7 @@ fn test_heart_transformation_kanan_via_reduction() {
     };
     state.resolve_semantic_frames(
         &db,
-        &crate::core::logic::models::FrameProgram::from_bytecode(&bc).frames,
+        &FrameProgram::from_words(&bc).frames,
         &ctx,
     );
 

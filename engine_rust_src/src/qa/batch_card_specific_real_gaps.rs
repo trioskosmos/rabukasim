@@ -579,8 +579,6 @@ mod tests {
         state.players[0].energy_zone = vec![3001].into();
         state.players[0].set_energy_tapped(0, true);
 
-        let tapped_before = state.players[0].tapped_energy_mask.count_ones();
-
         state
             .play_member(&db, 0, 1)
             .expect("Q198: cost-11 baton play should succeed");

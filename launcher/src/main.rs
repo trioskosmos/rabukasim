@@ -10,7 +10,7 @@ use engine_rust::core::models::{CardDatabase};
 // Internal modules are now in lib.rs
 use rabuka_launcher::models::{AppState};
 use rabuka_launcher::handlers::route_request;
-use rabuka_launcher::utils::get_local_ip;
+use rabuka_launcher::utils::{get_local_ip, launcher_url, preferred_server_ports};
 use rabuka_launcher::{Assets};
 
 fn snapshot_is_valid(db: &CardDatabase) -> bool {
@@ -168,7 +168,7 @@ fn main() {
 
     // 4. Start Server
     let env_port = std::env::var("PORT").ok().and_then(|p| p.parse().ok());
-    let ports = if let Some(p) = env_port { vec![p] } else { vec![8000, 8080, 8888, 3000, 5000] };
+    let ports = preferred_server_ports(env_port);
 
     let mut server = None;
     let mut port = 0;
@@ -198,10 +198,12 @@ fn main() {
     println!("--------------------------------------------------");
 
     // Auto-open browser
-    let url = format!("http://127.0.0.1:{}/index.html", port);
+    let url = launcher_url(port);
     thread::spawn(move || {
         thread::sleep(Duration::from_millis(1000));
-        let _ = webbrowser::open(&url);
+        if webbrowser::open(&url).is_err() {
+            println!("[WARN] Failed to open browser automatically. Open {} manually.", url);
+        }
     });
 
     let shared_state = app_state.clone();

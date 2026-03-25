@@ -15,7 +15,9 @@ fn create_test_db() -> CardDatabase {
         card_id: 500,
         abilities: vec![Ability {
             trigger: TriggerType::Activated, // or whatever triggers manually
-            bytecode: vec![O_RECOVER_MEMBER, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
+            frame_program: Some(FrameProgram::from_words(&[
+                O_RECOVER_MEMBER, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+            ])),
             ..Default::default()
         }],
         ..Default::default()
@@ -170,7 +172,7 @@ fn test_nested_suspension_real_flow() {
             card_id: 501,
             abilities: vec![Ability {
                 trigger: TriggerType::Activated,
-                bytecode: vec![
+                frame_program: Some(FrameProgram::from_words(&[
                     O_TAP_MEMBER,
                     0,
                     2,         // a_low: 2 (Target Opponent)
@@ -186,7 +188,7 @@ fn test_nested_suspension_real_flow() {
                     0,
                     0,
                     0,
-                ],
+                ])),
                 ..Default::default()
             }],
             ..Default::default()

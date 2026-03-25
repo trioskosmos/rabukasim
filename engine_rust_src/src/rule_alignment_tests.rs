@@ -82,7 +82,9 @@ fn test_priority_p1_triggers_first() {
     m1.name = "P0 Member".to_string();
     m1.abilities.push(Ability {
         trigger: TriggerType::OnLiveSuccess,
-        bytecode: vec![O_BOOST_SCORE, 100, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
+        frame_program: Some(FrameProgram::from_words(&[
+            O_BOOST_SCORE, 100, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+        ])),
         ..Default::default()
     });
     db.members.insert(101, m1.clone());
@@ -94,7 +96,9 @@ fn test_priority_p1_triggers_first() {
     m2.name = "P1 Member".to_string();
     m2.abilities.push(Ability {
         trigger: TriggerType::OnLiveSuccess,
-        bytecode: vec![O_BOOST_SCORE, 200, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
+        frame_program: Some(FrameProgram::from_words(&[
+            O_BOOST_SCORE, 200, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+        ])),
         ..Default::default()
     });
     db.members.insert(102, m2.clone());
@@ -123,9 +127,6 @@ fn test_priority_p1_triggers_first() {
 
     // Run judgement
     state.do_live_result(&db);
-
-    assert!(state.players[0].score >= 0);
-    assert!(state.players[1].score >= 0);
 }
 
 #[test]

@@ -543,6 +543,7 @@ impl CardDatabase {
         AbilityFrame::from_json_value(frame)
     }
 
+    #[allow(dead_code)]
     fn parse_sparse_filter_attr(
         value: Option<&Value>,
         raw_attr: Option<&Value>,
@@ -641,6 +642,7 @@ impl CardDatabase {
         filter
     }
 
+    #[allow(dead_code)]
     fn parse_sparse_slot(
         value: Option<&Value>,
         raw_slot: Option<&Value>,
@@ -734,6 +736,7 @@ impl CardDatabase {
         slot
     }
 
+    #[allow(dead_code)]
     fn parse_sparse_zone(value: &Value) -> Option<crate::core::enums::Zone> {
         if let Some(raw) = value.as_u64() {
             return Some(match raw as i32 {
@@ -767,6 +770,7 @@ impl CardDatabase {
         })
     }
 
+    #[allow(dead_code)]
     fn parse_sparse_look_choose(value: Option<&Value>) -> Option<DecodedLookAndChoose> {
         let value = value?;
         if let Some(raw) = value.as_i64() {
@@ -810,6 +814,7 @@ impl CardDatabase {
             .map(|v| v as u8)
     }
 
+    #[allow(dead_code)]
     fn opcode_id_from_name(opcode_name: &str) -> i32 {
         match opcode_name {
             "RETURN" => O_RETURN,

@@ -89,6 +89,14 @@ pub fn get_local_ip() -> Result<String, ()> {
     socket.local_addr().map(|addr| addr.ip().to_string()).map_err(|_| ())
 }
 
+pub fn preferred_server_ports(env_port: Option<u16>) -> Vec<u16> {
+    env_port.map_or_else(|| vec![8000, 8080, 8888, 3000, 5000], |port| vec![port])
+}
+
+pub fn launcher_url(port: u16) -> String {
+    format!("http://127.0.0.1:{}/index.html", port)
+}
+
 pub fn parse_body<T: serde::de::DeserializeOwned>(request: &mut Request) -> Result<T, String> {
     let mut content = String::new();
     request.as_reader().read_to_string(&mut content).map_err(|e| e.to_string())?;
@@ -291,5 +299,20 @@ mod tests {
             let l = db.lives.get(&lid).unwrap();
             assert!(!l.abilities.is_empty(), "Live card {} should have abilities", lid);
         }
+    }
+
+    #[test]
+    fn test_preferred_server_ports_defaults_to_fallback_list() {
+        assert_eq!(preferred_server_ports(None), vec![8000, 8080, 8888, 3000, 5000]);
+    }
+
+    #[test]
+    fn test_preferred_server_ports_honors_env_port() {
+        assert_eq!(preferred_server_ports(Some(4321)), vec![4321]);
+    }
+
+    #[test]
+    fn test_launcher_url_points_to_index_html() {
+        assert_eq!(launcher_url(8000), "http://127.0.0.1:8000/index.html");
     }
 }

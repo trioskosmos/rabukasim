@@ -296,13 +296,31 @@ impl GameState {
         }
     }
 
+    pub fn resolve_words<B: AsRef<[i32]>>(
+        &mut self,
+        db: &CardDatabase,
+        words: B,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_frames(db, words, ctx_in);
+    }
+
     pub fn resolve_bytecode<B: AsRef<[i32]>>(
         &mut self,
         db: &CardDatabase,
         bytecode: B,
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_frames(db, bytecode, ctx_in);
+        self.resolve_words(db, bytecode, ctx_in);
+    }
+
+    pub fn resolve_words_cref(
+        &mut self,
+        db: &CardDatabase,
+        words: &Vec<i32>,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_frames(db, words, ctx_in);
     }
 
     pub fn resolve_bytecode_cref(
@@ -311,7 +329,16 @@ impl GameState {
         bytecode: &Vec<i32>,
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_frames(db, bytecode, ctx_in);
+        self.resolve_words_cref(db, bytecode, ctx_in);
+    }
+
+    pub fn resolve_words_slice(
+        &mut self,
+        db: &CardDatabase,
+        words: &[i32],
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_frames(db, words, ctx_in);
     }
 
     pub fn resolve_bytecode_slice(
@@ -320,7 +347,7 @@ impl GameState {
         bytecode: &[i32],
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_frames(db, bytecode, ctx_in);
+        self.resolve_words_slice(db, bytecode, ctx_in);
     }
 
     pub fn resolve_ability(

@@ -21,7 +21,9 @@ fn test_enforce_cost_failure() {
             value: 2,
             ..Default::default()
         }],
-        bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0],
+        frame_program: Some(FrameProgram::from_words(&[
+            O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0,
+        ])),
         ..Default::default()
     });
     db.members.insert(cid, m.clone());
@@ -53,7 +55,9 @@ fn test_enforce_condition_failure() {
             value: 3,
             ..Default::default()
         }],
-        bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0],
+        frame_program: Some(FrameProgram::from_words(&[
+            O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0,
+        ])),
         ..Default::default()
     });
     db.members.insert(cid, m.clone());
@@ -83,7 +87,9 @@ fn test_enforce_once_per_turn_failure() {
     m.abilities.push(Ability {
         trigger: TriggerType::Activated,
         is_once_per_turn: true,
-        bytecode: vec![O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0],
+        frame_program: Some(FrameProgram::from_words(&[
+            O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0,
+        ])),
         ..Default::default()
     });
     db.members.insert(cid, m.clone());

@@ -1818,7 +1818,7 @@ pub fn serialize_state_rich(
     map.insert("triggered_abilities".to_string(), json!(triggered_abilities));
     map.insert("opponent_triggered_abilities".to_string(), json!(opponent_triggered_abilities));
     map.insert("queue_depth".to_string(), json!(gs.trigger_queue.len()));
-    map.insert("bytecode_log".to_string(), json!(gs.ui.bytecode_log.clone()));
+    map.insert("semantic_log".to_string(), json!(gs.ui.semantic_log.clone()));
 
     // RPS Masking
     if gs.phase as i8 == 1 && (gs.rps_choices[0] == -1 || gs.rps_choices[1] == -1) {

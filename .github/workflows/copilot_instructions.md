@@ -71,7 +71,8 @@ uv run mypy .
 
 ### Testing
 Tests are run using the Rust test suite.
-- **Run all tests:** `cargo test --manifest-path engine_rust_src/Cargo.toml --no-fail-fast -- --nocapture`
+- **Run the library tests only:** `cargo test --manifest-path engine_rust_src/Cargo.toml --lib --no-fail-fast`
+- **Target one area when possible:** `cargo test --manifest-path engine_rust_src/Cargo.toml --lib qa` or `cargo test --manifest-path engine_rust_src/Cargo.toml --lib opcode`
 - **Data Source:** Rust tests read compiled card data from `engine/data/`, which is auto-synced from `data/` by the compiler.
 
 ## Windows Environment Notes

@@ -48,12 +48,26 @@ pub fn handle_discard_placement(
         );
     }
 
-    let remaining = remaining - 1;
-    ctx.v_remaining = remaining;
-    let has_more_candidates = if remaining > 0 {
+    let next_remaining = if is_total_cost {
+        remaining
+    } else {
+        remaining.saturating_sub(1)
+    };
+
+    ctx.v_remaining = next_remaining;
+    let has_more_candidates = if next_remaining > 0 {
         state.players[target_p_idx].discard.iter().any(|&cid| {
             db.get_member(cid)
-                .map(|member| member.cost as i16 == remaining)
+                .map(|member| {
+                    if is_total_cost {
+                        member.cost as i16 <= next_remaining
+                    } else {
+                        // For count-based play, we need at least 2 steps (select card + select slot)
+                        // This check is used to decide if we should branch back to selection.
+                        // If we only have 1 step left, we can't select another card.
+                        next_remaining >= 2
+                    }
+                })
                 .unwrap_or(false)
                 && !ctx.selected_cards.contains(&cid)
         })
@@ -61,9 +75,12 @@ pub fn handle_discard_placement(
         false
     };
     let should_continue = if is_total_cost {
-        ctx.v_accumulated > 0 && remaining > 0 && has_more_candidates
+        ctx.v_accumulated > 0
+            && next_remaining > 0
+            && has_more_candidates
+            && ctx.repeat_count > 0
     } else {
-        remaining > 0 && has_more_candidates
+        next_remaining > 0 && has_more_candidates && ctx.repeat_count > 0
     };
     if should_continue {
         ctx.choice_index = -1;

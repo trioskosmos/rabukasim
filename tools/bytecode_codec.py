@@ -479,11 +479,16 @@ def _decode_payload(op_name: str, words: list[int], lookups: MetadataLookups, st
             "s": _label_slot_dict(unpack_s_standard(s)),
         }
 
+    a_dict = unpack_a_standard(a)
+    s_dict = unpack_s_standard(s)
+    if s_dict.get("is_dynamic"):
+        v = unpack_v_scalar_dynamic(v)["base_value"]
+
     return {
         "raw": raw,
         "v": v,
-        "a": _label_filter_dict(unpack_a_standard(a)),
-        "s": _label_slot_dict(unpack_s_standard(s)),
+        "a": _label_filter_dict(a_dict),
+        "s": _label_slot_dict(s_dict),
     }
 
 
@@ -670,6 +675,57 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
         opcode += 1000
     raw = payload.get("raw", {}) if isinstance(payload, dict) else {}
 
+    def _pack_look_value(value: Any) -> int:
+        if isinstance(value, dict):
+            return int(pack_v_look_choose(**value))
+        return int(value or 0)
+
+    def _pack_heart_value(value: Any) -> int:
+        if isinstance(value, dict):
+            return int(pack_v_heart_counts(**value))
+        return int(value or 0)
+
+    def _pack_dynamic_value(value: Any) -> int:
+        if isinstance(value, dict):
+            return int(pack_v_scalar_dynamic(**value))
+        return int(value or 0)
+
+    def _pack_standard_slot(value: Any) -> int:
+        if not isinstance(value, dict):
+            return int(value or 0)
+
+        slot_data = dict(value)
+        raw_slot = slot_data.pop("raw_slot", None)
+        comparison = slot_data.pop("comparison", None)
+
+        if raw_slot is not None or comparison is not None:
+            if raw_slot is None:
+                raw_slot = slot_data.get("target_slot", 0)
+            if isinstance(raw_slot, str) and raw_slot in lookups.ids_by_slot:
+                raw_slot = lookups.ids_by_slot[raw_slot]
+
+            packed_slot = int(raw_slot or 0)
+            if comparison is not None:
+                if isinstance(comparison, str):
+                    comparison = lookups.metadata.get("comparisons", {}).get(str(comparison).upper(), comparison)
+                comparison_val = int(comparison or 0)
+                area_idx = slot_data.get("area_idx", 0)
+                if isinstance(area_idx, str):
+                    try:
+                        area_idx = int(area_idx)
+                    except ValueError:
+                        area_idx = 0
+                packed_slot = (packed_slot & 0xFFFFFF00) | (packed_slot & 0x0F) | ((comparison_val & 0x0F) << 4) | ((int(area_idx or 0) & 0x07) << 29)
+            return packed_slot
+
+        if "source_zone" in slot_data and isinstance(slot_data["source_zone"], str):
+            slot_data["source_zone"] = lookups.ids_by_zone.get(slot_data["source_zone"], 0)
+        if "dest_zone" in slot_data and isinstance(slot_data["dest_zone"], str):
+            slot_data["dest_zone"] = lookups.ids_by_zone.get(slot_data["dest_zone"], 0)
+        if "remainder_zone" in slot_data and isinstance(slot_data["remainder_zone"], str):
+            slot_data["remainder_zone"] = lookups.ids_by_zone.get(slot_data["remainder_zone"], 0)
+        return int(pack_s_standard(**slot_data))
+
     if raw:
         raw_opcode = raw.get("opcode", opcode)
         if isinstance(raw_opcode, str) and raw_opcode in lookups.ids_by_opcode:
@@ -689,27 +745,27 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
         ]
 
     if opcode_name == "LOOK_AND_CHOOSE":
-        v = pack_v_look_choose(**(payload.get("v", {}) if isinstance(payload, dict) else {}))
+        v = _pack_look_value(payload.get("v", {}) if isinstance(payload, dict) else {})
         a = pack_a_standard(**(payload.get("a", {}) if isinstance(payload, dict) else {}))
         s = 0
-        if isinstance(payload, dict) and isinstance(payload.get("s"), dict):
-            s = payload["s"].get("raw", 0) or 0
+        if isinstance(payload, dict):
+            s = _pack_standard_slot(payload.get("s", 0))
         return [opcode, int(v), int(a) & 0xFFFFFFFF, (int(a) >> 32) & 0xFFFFFFFF, int(s)]
 
     if opcode_name == "SET_HEART_COST":
-        v = pack_v_heart_counts(**(payload.get("v", {}) if isinstance(payload, dict) else {}))
+        v = _pack_heart_value(payload.get("v", {}) if isinstance(payload, dict) else {})
         a = pack_a_heart_cost(**(payload.get("a", {}) if isinstance(payload, dict) else {}))
         s = 0
-        if isinstance(payload, dict) and isinstance(payload.get("s"), dict):
-            s = payload["s"].get("raw", 0) or 0
+        if isinstance(payload, dict):
+            s = _pack_standard_slot(payload.get("s", 0))
         return [opcode, int(v), int(a) & 0xFFFFFFFF, (int(a) >> 32) & 0xFFFFFFFF, int(s)]
 
     if opcode_name == "CALC_SUM_COST":
-        v = pack_v_scalar_dynamic(**(payload.get("v", {}) if isinstance(payload, dict) else {}))
+        v = _pack_dynamic_value(payload.get("v", {}) if isinstance(payload, dict) else {})
         a = pack_a_standard(**(payload.get("a", {}) if isinstance(payload, dict) else {}))
         s = 0
-        if isinstance(payload, dict) and isinstance(payload.get("s"), dict):
-            s = payload["s"].get("raw", 0) or 0
+        if isinstance(payload, dict):
+            s = _pack_standard_slot(payload.get("s", 0))
         return [opcode, int(v), int(a) & 0xFFFFFFFF, (int(a) >> 32) & 0xFFFFFFFF, int(s)]
 
     v = int(payload.get("v", 0)) if isinstance(payload, dict) else 0
@@ -744,10 +800,9 @@ def encode_frame(frame: dict[str, Any], lookups: MetadataLookups) -> list[int]:
         if "remainder_zone" in s_data and isinstance(s_data["remainder_zone"], str):
             s_data["remainder_zone"] = lookups.ids_by_zone.get(s_data["remainder_zone"], 0)
 
-    if isinstance(s_data, dict) and s_data:
-        s = pack_s_standard(**s_data)
-    else:
-        s = int(payload.get("raw", {}).get("slot", 0)) if isinstance(payload, dict) and isinstance(payload.get("raw"), dict) else 0
+    s = _pack_standard_slot(s_data)
+    if s == 0 and isinstance(payload, dict) and isinstance(payload.get("raw"), dict):
+        s = int(payload.get("raw", {}).get("slot", 0))
 
     return [opcode, v, int(a) & 0xFFFFFFFF, (int(a) >> 32) & 0xFFFFFFFF, int(s)]
 
@@ -905,12 +960,15 @@ def frame_to_sparse(frame: dict[str, Any]) -> dict[str, Any]:
         or semantic.get("opcode_name")
         or "OP_0"
     )
-    opcode_id = int(
-        frame.get("opcode")
-        or frame.get("opcode_id")
-        or semantic.get("opcode_id", 0)
-        or 0
-    )
+    opcode_value = frame.get("opcode")
+    opcode_id_value = frame.get("opcode_id")
+    if isinstance(opcode_value, str) and opcode_id_value is None:
+        opcode_id_value = semantic.get("opcode_id", 0)
+
+    try:
+        opcode_id = int(opcode_id_value if opcode_id_value is not None else opcode_value or semantic.get("opcode_id", 0) or 0)
+    except (TypeError, ValueError):
+        opcode_id = int(semantic.get("opcode_id", 0) or 0)
     payload = frame.get("payload", {}) if isinstance(frame, dict) else {}
     sparse: dict[str, Any] = {"opcode_id": opcode_id, "opcode": opcode_name}
     rust_opcode = (

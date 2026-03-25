@@ -247,12 +247,12 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
 
             try:
                 if ctype == "メンバー":
-                    m_card = parse_member(packed_id, v_key, v_data)
+                    m_card = parse_member(packed_id, v_key, v_data, export_profile=export_profile)
                     compiled_data["member_db"][str(packed_id)] = member_adapter.dump_python(
                         m_card, mode="json", exclude=exclude_card_fields
                     )
                 elif ctype == "ライブ":
-                    l_card = parse_live(packed_id, v_key, v_data)
+                    l_card = parse_live(packed_id, v_key, v_data, export_profile=export_profile)
                     compiled_data["live_db"][str(packed_id)] = live_adapter.dump_python(
                         l_card, mode="json", exclude=exclude_card_fields
                     )
@@ -273,19 +273,20 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
     bc_errors = list(_bytecode_compile_errors)
     _bytecode_compile_errors.clear()
 
-    # --- Bytecode Validation Pass ---
-    for db_key in ["member_db", "live_db"]:
-        for cid_str, card_data in compiled_data[db_key].items():
-            card_no = card_data.get("card_no", cid_str)
-            for ab_idx, ab in enumerate(card_data.get("abilities", [])):
-                bc = ab.get("bytecode", [])
-                issues = validate_bytecode(bc, card_no, ab_idx)
-                validation_issues.extend(issues)
+    if export_profile != "runtime":
+        # --- Bytecode Validation Pass ---
+        for db_key in ["member_db", "live_db"]:
+            for cid_str, card_data in compiled_data[db_key].items():
+                card_no = card_data.get("card_no", cid_str)
+                for ab_idx, ab in enumerate(card_data.get("abilities", [])):
+                    bc = ab.get("bytecode", [])
+                    issues = validate_bytecode(bc, card_no, ab_idx)
+                    validation_issues.extend(issues)
 
-    # Output Automatic Documentation
-    from compiler.doc_generator import generate_opcode_docs
+        # Output Automatic Documentation
+        from compiler.doc_generator import generate_opcode_docs
 
-    generate_opcode_docs(compiled_data, "reports/opcode_reference.md")
+        generate_opcode_docs(compiled_data, "reports/opcode_reference.md")
 
     # Note: Units extraction is now handled in parse_live() and parse_member()
     # via consolidated_abilities metadata and ADD_TAG extraction helpers
@@ -296,119 +297,120 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
     with open(output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(compiled_data, f, ensure_ascii=False, indent=2)
 
-    metadata = ability_codec.load_data(Path("data/metadata.json"))
+    if export_profile != "runtime":
+        metadata = ability_codec.load_data(Path("data/metadata.json"))
 
-    # --- Consume the authored frame source without rewriting it ---
-    ability_frames_path = Path(ABILITY_FRAME_SOURCE_PATH)
-    if ability_frames_path.exists():
-        ability_frames = ability_codec.load_data(ability_frames_path)
+        # --- Consume the authored frame source without rewriting it ---
+        ability_frames_path = Path(ABILITY_FRAME_SOURCE_PATH)
+        if ability_frames_path.exists():
+            ability_frames = ability_codec.load_data(ability_frames_path)
+            if not quiet:
+                print(f"Using authored ability frames from {ability_frames_path}...")
+        else:
+            ability_frames = {
+                "source": str(ability_frames_path),
+                "metadata_source": "data/metadata.json",
+                "summary": {"card_count": 0, "ability_count": 0, "unique_ability_count": 0},
+                "abilities": [],
+            }
+            print(f"[FRAME WARNING] Authored frame source not found: {ability_frames_path}")
+
+        normalized_ability_frames = frame_codec.normalize_authored_ability_index(ability_frames, metadata)
+
+        # --- Generate Semantic Ability Index (canonical JSON) ---
+        sparse_index_path = "data/ability_frame_index.json"
+        from tools import semantic_frame_index as semantic_index
+
+        sparse_index = semantic_index.build_semantic_ability_index(
+            normalized_ability_frames,
+            metadata,
+        )
+        ability_codec.dump_json(Path(sparse_index_path), sparse_index)
         if not quiet:
-            print(f"Using authored ability frames from {ability_frames_path}...")
-    else:
-        ability_frames = {
-            "source": str(ability_frames_path),
-            "metadata_source": "data/metadata.json",
-            "summary": {"card_count": 0, "ability_count": 0, "unique_ability_count": 0},
-            "abilities": [],
+            print(f"Generating {sparse_index_path}...")
+        # Migration guard: warn if the legacy YAML artifact still exists
+        legacy_yaml_path = "data/ability_frame_index.yaml"
+        if os.path.exists(legacy_yaml_path):
+            print(f"[MIGRATION WARNING] Legacy artifact exists: {legacy_yaml_path}. "
+                  f"It is superseded by {sparse_index_path} and can be deleted.")
+
+        # --- Generate Decoded Consolidated Abilities ---
+        if not quiet:
+            print("Generating consolidated_abilities_decoded.json...")
+
+        decoded_output_path = "data/consolidated_abilities_decoded.json"
+        consolidated_decoded = {
+            "_metadata": {
+                "generated_by": "compiler/main.py",
+                "generated_at": datetime.datetime.now().isoformat()
+            }
         }
-        print(f"[FRAME WARNING] Authored frame source not found: {ability_frames_path}")
+        decoded_by_card_no = {}
 
-    normalized_ability_frames = frame_codec.normalize_authored_ability_index(ability_frames, metadata)
+        # We'll use the original consolidated_abilities structure as a template
+        # but only for the keys that were actually compiled
+        for db_name in ["member_db", "live_db"]:
+            for cid_str, card_data in compiled_data[db_name].items():
+                card_no = str(card_data.get("card_no", "")).strip()
+                raw_jp = card_data.get("original_text", "")
+                decoded_abs = []
+                for ab in card_data.get("abilities", []):
+                    bc = ab.get("bytecode", [])
+                    if bc:
+                        # Use the authoritative decoder from bytecode_readable
+                        decoded_str = decode_bytecode(bc)
+                        # Split into lines and remove the legend if present
+                        lines = decoded_str.split("\n")
+                        if "--- BYTECODE LEGEND ---" in lines:
+                            legend_idx = lines.index("--- BYTECODE LEGEND ---")
+                            lines = lines[:legend_idx]
 
-    # --- Generate Semantic Ability Index (canonical JSON) ---
-    sparse_index_path = "data/ability_frame_index.json"
-    from tools import semantic_frame_index as semantic_index
+                        # Also strip "  00: " prefixes if we want it cleaner, but the user asked for "like in the debug menu"
+                        # The debug menu shows the prefixes.
+                        decoded_abs.append([line.strip() for line in lines if line.strip()])
 
-    sparse_index = semantic_index.build_semantic_ability_index(
-        normalized_ability_frames,
-        metadata,
-    )
-    ability_codec.dump_json(Path(sparse_index_path), sparse_index)
-    if not quiet:
-        print(f"Generating {sparse_index_path}...")
-    # Migration guard: warn if the legacy YAML artifact still exists
-    legacy_yaml_path = "data/ability_frame_index.yaml"
-    if os.path.exists(legacy_yaml_path):
-        print(f"[MIGRATION WARNING] Legacy artifact exists: {legacy_yaml_path}. "
-              f"It is superseded by {sparse_index_path} and can be deleted.")
+                if not decoded_abs:
+                    continue
 
-    # --- Generate Decoded Consolidated Abilities ---
-    if not quiet:
-        print("Generating consolidated_abilities_decoded.json...")
-    
-    decoded_output_path = "data/consolidated_abilities_decoded.json"
-    consolidated_decoded = {
-        "_metadata": {
-            "generated_by": "compiler/main.py",
-            "generated_at": datetime.datetime.now().isoformat()
-        }
-    }
-    decoded_by_card_no = {}
-    
-    # We'll use the original consolidated_abilities structure as a template
-    # but only for the keys that were actually compiled
-    for db_name in ["member_db", "live_db"]:
-        for cid_str, card_data in compiled_data[db_name].items():
-            card_no = str(card_data.get("card_no", "")).strip()
-            raw_jp = card_data.get("original_text", "")
-            decoded_abs = []
-            for ab in card_data.get("abilities", []):
-                bc = ab.get("bytecode", [])
-                if bc:
-                    # Use the authoritative decoder from bytecode_readable
-                    decoded_str = decode_bytecode(bc)
-                    # Split into lines and remove the legend if present
-                    lines = decoded_str.split("\n")
-                    if "--- BYTECODE LEGEND ---" in lines:
-                        legend_idx = lines.index("--- BYTECODE LEGEND ---")
-                        lines = lines[:legend_idx]
-                    
-                    # Also strip "  00: " prefixes if we want it cleaner, but the user asked for "like in the debug menu"
-                    # The debug menu shows the prefixes.
-                    decoded_abs.append([line.strip() for line in lines if line.strip()])
+                if card_no:
+                    decoded_by_card_no[card_no] = decoded_abs
 
+                if not raw_jp or raw_jp in consolidated_decoded:
+                    continue
+
+                # Find the original entry from consolidated_abilities to get metadata (like card lists)
+                original_entry = _pseudocode_resolver.consolidated.get(raw_jp)
+                if not original_entry:
+                    continue
+
+                # Copy the original entry and add decoded_bytecode
+                new_entry = dict(original_entry) if isinstance(original_entry, dict) else {"pseudocode": original_entry}
+                new_entry["decoded_bytecode"] = decoded_abs
+                consolidated_decoded[raw_jp] = new_entry
+
+        # Some consolidated keys are intentionally preserved "constant" JP strings that
+        # no longer exactly match the compiled card text. Backfill those entries by card id
+        # so the decoded export still covers every in-use consolidated ability constant.
+        for raw_jp, original_entry in _pseudocode_resolver.consolidated.items():
+            if raw_jp in consolidated_decoded or not isinstance(original_entry, dict):
+                continue
+
+            candidate_card_nos = []
+            for key in ("cards", "ids"):
+                values = original_entry.get(key, [])
+                if isinstance(values, list):
+                    candidate_card_nos.extend(str(value).strip() for value in values if str(value).strip())
+
+            decoded_abs = next((decoded_by_card_no.get(card_no) for card_no in candidate_card_nos if card_no in decoded_by_card_no), None)
             if not decoded_abs:
                 continue
 
-            if card_no:
-                decoded_by_card_no[card_no] = decoded_abs
-
-            if not raw_jp or raw_jp in consolidated_decoded:
-                continue
-
-            # Find the original entry from consolidated_abilities to get metadata (like card lists)
-            original_entry = _pseudocode_resolver.consolidated.get(raw_jp)
-            if not original_entry:
-                continue
-
-            # Copy the original entry and add decoded_bytecode
-            new_entry = dict(original_entry) if isinstance(original_entry, dict) else {"pseudocode": original_entry}
+            new_entry = dict(original_entry)
             new_entry["decoded_bytecode"] = decoded_abs
             consolidated_decoded[raw_jp] = new_entry
 
-    # Some consolidated keys are intentionally preserved "constant" JP strings that
-    # no longer exactly match the compiled card text. Backfill those entries by card id
-    # so the decoded export still covers every in-use consolidated ability constant.
-    for raw_jp, original_entry in _pseudocode_resolver.consolidated.items():
-        if raw_jp in consolidated_decoded or not isinstance(original_entry, dict):
-            continue
-
-        candidate_card_nos = []
-        for key in ("cards", "ids"):
-            values = original_entry.get(key, [])
-            if isinstance(values, list):
-                candidate_card_nos.extend(str(value).strip() for value in values if str(value).strip())
-
-        decoded_abs = next((decoded_by_card_no.get(card_no) for card_no in candidate_card_nos if card_no in decoded_by_card_no), None)
-        if not decoded_abs:
-            continue
-
-        new_entry = dict(original_entry)
-        new_entry["decoded_bytecode"] = decoded_abs
-        consolidated_decoded[raw_jp] = new_entry
-
-    with open(decoded_output_path, "w", encoding="utf-8", newline="\n") as f:
-        json.dump(consolidated_decoded, f, ensure_ascii=False, indent=2)
+        with open(decoded_output_path, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(consolidated_decoded, f, ensure_ascii=False, indent=2)
 
     # ============================================================
     #  COMPILATION SUMMARY
@@ -608,7 +610,13 @@ def _iter_ability_frames(ability):
         }
 
 
-def _compile_abilities_for_export(abilities: list, card_no: str, scope: str, version_gate: VersionGate = None) -> None:
+def _compile_abilities_for_export(
+    abilities: list,
+    card_no: str,
+    scope: str,
+    version_gate: VersionGate = None,
+    export_profile: str = "full",
+) -> None:
     """
     Compile abilities for export with optional version gating.
     
@@ -627,7 +635,7 @@ def _compile_abilities_for_export(abilities: list, card_no: str, scope: str, ver
             if not frames:
                 frames = ab.to_frame_program()
                 ab.frame_program = {"frames": frames}
-            if isinstance(getattr(ab, "frame_program", None), dict):
+            if export_profile != "runtime" and isinstance(getattr(ab, "frame_program", None), dict):
                 model = ability_codec.frame_program_to_model(ab.frame_program)
                 ab.bytecode = ability_codec.model_to_bytecode(model, _FRAME_PROGRAM_METADATA)
         except Exception as e:
@@ -1294,7 +1302,7 @@ def _normalize_unit_values(values):
     return normalized
 
 
-def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
+def parse_member(card_id: int, card_no: str, data: dict, export_profile: str = "full") -> MemberCard:
     spec = data.get("special_heart", {})
     translation_en = _manual_translations_en.get(card_no)
 
@@ -1349,7 +1357,7 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
         faq=data.get("faq", []),
     )
 
-    _compile_abilities_for_export(card.abilities, card_no, "MEMBER")
+    _compile_abilities_for_export(card.abilities, card_no, "MEMBER", export_profile=export_profile)
 
     # Extract units from CONSTANT ADD_TAG effects and merge with existing units
     add_tag_units = _extract_units_from_add_tag(card.abilities)
@@ -1379,7 +1387,7 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
     return card
 
 
-def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
+def parse_live(card_id: int, card_no: str, data: dict, export_profile: str = "full") -> LiveCard:
     spec = data.get("special_heart", {})
     translation_en = _manual_translations_en.get(card_no)
 
@@ -1423,7 +1431,7 @@ def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
         faq=data.get("faq", []),
     )
 
-    _compile_abilities_for_export(card.abilities, card_no, "LIVE")
+    _compile_abilities_for_export(card.abilities, card_no, "LIVE", export_profile=export_profile)
 
     # Extract units from CONSTANT ADD_TAG effects and merge with existing units
     add_tag_units = _extract_units_from_add_tag(card.abilities)

@@ -44,7 +44,7 @@ fn test_q103_catchu_dynamic_condition() {
     }
     state.core.players[p1].tapped_energy_mask = 0; // All Active
 
-    let mut ctx_q97 = engine_rust::core::logic::AbilityContext {
+    let ctx_q97 = engine_rust::core::logic::AbilityContext {
         player_id: p1 as u8,
         source_card_id: catchu_live_id,
         ..Default::default()
@@ -77,7 +77,7 @@ fn test_q103_catchu_dynamic_condition() {
     state.core.players[p1].tapped_energy_mask = 0b111_1111; // 7 bits tapped
 
     // First proc (CatChu 1)
-    let mut ctx_q103_1 = engine_rust::core::logic::AbilityContext {
+    let ctx_q103_1 = engine_rust::core::logic::AbilityContext {
         player_id: p1 as u8,
         source_card_id: catchu_live_id,
         ..Default::default()
@@ -99,7 +99,7 @@ fn test_q103_catchu_dynamic_condition() {
     );
 
     // Second proc (CatChu 2)
-    let mut ctx_q103_2 = engine_rust::core::logic::AbilityContext {
+    let ctx_q103_2 = engine_rust::core::logic::AbilityContext {
         player_id: p1 as u8,
         source_card_id: catchu_live_id,
         ..Default::default()

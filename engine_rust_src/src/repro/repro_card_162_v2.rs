@@ -62,8 +62,6 @@ mod tests {
 
         state.players[p_idx].discard_ids_this_turn.clear();
 
-        let initial_hearts = state.players[p_idx].heart_buffs[slot].get_color_count(0); // Pink/Red hearts
-
         println!("--- Triggering OnPlay for Card 162 (All Match) ---");
         state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
 

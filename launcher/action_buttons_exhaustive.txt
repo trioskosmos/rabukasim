@@ -93,8 +93,8 @@ ID 585 | [JP] 【色を選択】紫         | この色を選択します。 (CO
 === Scenario: Choice: Select Mode ===
 Phase: Response
 [Logic Entry] Opcode: 30 | CardID: 17 | AbIdx: 0
-ID 500 | [JP] {{icon_draw.png|D}}1枚引く | モードを選択します。 (CHOICE)
-       | [EN] Draw 1{{icon_draw.png|D}} | Select mode. (CHOICE)
+ID 500 | [JP] 選択肢 1           | モードを選択します。 (CHOICE)
+       | [EN] Choice 1        | Select mode. (CHOICE)
 -------
 ID 501 | [JP] 選択肢 2           | モードを選択します。 (CHOICE)
        | [EN] Choice 2        | Select mode. (CHOICE)

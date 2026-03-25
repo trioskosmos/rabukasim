@@ -26,7 +26,7 @@ def replace_in_file(filename):
                     println!("[DEBUG] {}", result_line);
                 }"""
     
-    # 3. resolve_bytecode log_line
+    # 3. resolve_frames log_line
     old3 = """            let log_line = format!("BC_STEP: [depth={}] [card={}] ip={:<3} {}", stack_depth, card_name, ip, desc);
             println!("[DEBUG] {}", log_line);"""
     new3 = """            let log_line = format!("BC_STEP: [depth={}] [card={}] ip={:<3} {}", stack_depth, card_name, ip, desc);
@@ -34,7 +34,7 @@ def replace_in_file(filename):
                 println!("[DEBUG] {}", log_line);
             }"""
             
-    # 4. resolve_bytecode check_condition_opcode
+    # 4. resolve_frames check_condition_opcode
     old4 = """            if state.debug.debug_mode {
                 println!(
                     "[DEBUG] CALLING check_condition_opcode: op={}, a={:x}",
@@ -50,13 +50,13 @@ def replace_in_file(filename):
                 }
             }"""
 
-    # 5. resolve_bytecode result_line
+    # 5. resolve_frames result_line
     old5 = """                println!("[DEBUG] {}", result_line);"""
     new5 = """                if !state.ui.silent {
                     println!("[DEBUG] {}", result_line);
                 }"""
 
-    # 6. resolve_bytecode cond_desc
+    # 6. resolve_frames cond_desc
     old6 = """                println!("      | [COND] {}", cond_desc);"""
     new6 = """                if !state.ui.silent {
                     println!("      | [COND] {}", cond_desc);

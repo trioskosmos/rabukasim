@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests {
     use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
-    use std::sync::Arc;
 
     #[test]
     fn test_kanon_557_repro() {
