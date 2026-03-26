@@ -9,7 +9,7 @@ fn test_card_557_logic_repro() {
     let db = CardDatabase::from_json(&json_content).unwrap();
 
     let p1 = 0;
-    // PL!SP-bp4-001-P is ID 557
+    // PL!SP-bp4-001-Pis ID 557
     let card_id = 557;
 
     // 1. Setup Stage with Liella! (Group ID 3)

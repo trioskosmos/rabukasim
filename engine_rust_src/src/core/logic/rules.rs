@@ -115,7 +115,7 @@ fn get_query_aura(
     Some(aura)
 }
 
-fn get_effective_blades_with_aura(
+pub fn get_effective_blades_with_aura(
     state: &GameState,
     player_idx: usize,
     slot_idx: usize,
@@ -148,7 +148,7 @@ fn get_effective_blades_with_aura(
     (val + buff as i32).max(0) as u32
 }
 
-fn get_effective_hearts_with_aura(
+pub fn get_effective_hearts_with_aura(
     state: &GameState,
     player_idx: usize,
     slot_idx: usize,

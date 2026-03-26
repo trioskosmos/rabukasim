@@ -1,35 +1,42 @@
 from __future__ import annotations
 
 import json
+import yaml
 import os
 import re
 import sys
 from datetime import datetime, timezone
 from hashlib import sha1
 from pathlib import Path
-from typing import Any
-
-from engine.models import bytecode_readable as readable
+from typing import Any, Dict, List, Union, Tuple
+from copy import deepcopy
 from engine.models.generated_packer import unpack_v_scalar_dynamic
 
+# ROOT_DIR for relative lookups
 ROOT_DIR = Path(__file__).resolve().parents[1]
-PROJECT_ROOT = os.path.abspath(str(ROOT_DIR))
-if PROJECT_ROOT not in sys.path:
-    sys.path.append(PROJECT_ROOT)
-
-from tools import bytecode_codec as codec
-
+class MetadataLookups:
+    def __init__(self, metadata: dict):
+        self.metadata = metadata
+        self.ids_by_trigger = {str(k).upper(): v for k, v in metadata.get("triggers", {}).items()}
+        self.triggers_by_id = {int(v): k for k, v in metadata.get("triggers", {}).items()}
+        self.ids_by_opcode = {str(k).upper(): v for k, v in metadata.get("opcodes", {}).items()}
+        self.opcodes_by_id = {int(v): k for k, v in metadata.get("opcodes", {}).items()}
+        self.ids_by_zone = {str(k).upper(): v for k, v in metadata.get("zones", {}).items()}
+        self.ids_by_slot = {str(k).upper(): v for k, v in metadata.get("slots", {}).items()}
+        self.ids_by_special = {str(k).upper(): v for k, v in metadata.get("specials", {}).items()}
+        self.ids_by_zone_mask = {str(k).upper(): v for k, v in metadata.get("zone_masks", {}).items()}
+def load_yaml(path: Path | str) -> dict[str, Any]:
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
 
 
 def load_json(path: Path | str) -> dict[str, Any]:
-    return codec.load_json(path)
-
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 def dump_json(path: Path | str, payload: dict[str, Any]) -> None:
-    target = Path(path)
-    if target.name == "ability_frames.json":
-        raise ValueError("writing to data/ability_frames.json is disabled; use a generated index path instead")
-    codec.dump_json(path, payload)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2, ensure_ascii=False)
 
 
 def _utc_now() -> str:
@@ -50,7 +57,7 @@ def _resolve_trigger_id(trigger: Any, lookups: Any) -> int:
 
 
 def _trigger_name(trigger_id: int, lookups: Any) -> str:
-    return codec._name_for_id(trigger_id, lookups.triggers_by_id, "TRIGGER")
+    return lookups.triggers_by_id.get(trigger_id, f"TRIGGER_{trigger_id}")
 
 
 def _card_ref_label(card_ref: dict[str, Any]) -> str:
@@ -96,6 +103,29 @@ def _normalize_scalar(value: Any) -> Any:
     return value
 
 
+def frame_to_compact(frame: dict[str, Any]) -> dict[str, Any]:
+    """Convert a verbose frame (potentially with bytecode/semantic) to a compact authored-style frame."""
+    compact = {}
+
+    # Try to extract from semantic first (preferred)
+    semantic = frame.get("semantic", {})
+    if isinstance(semantic, dict) and semantic:
+        compact["op"] = semantic.get("opcode_name") or frame.get("op")
+        if "value" in semantic:
+            compact["value"] = semantic["value"]
+        if "attr" in semantic:
+            compact["attr"] = semantic["attr"]
+        if "slot" in semantic:
+            compact["slot"] = semantic["slot"]
+        return _normalize_scalar(compact)
+
+    # Fallback to direct fields
+    compact["op"] = frame.get("op") or frame.get("opcode_name")
+    for field in ["value", "attr", "slot"]:
+        if field in frame:
+            compact[field] = frame[field]
+
+    return _normalize_scalar(compact)
 def _resolve_opcode_name(frame: dict[str, Any], lookups: Any) -> str:
     opcode_name = frame.get("op") or frame.get("opcode") or frame.get("opcode_name") or frame.get("kind")
     if isinstance(opcode_name, str) and opcode_name:
@@ -103,7 +133,7 @@ def _resolve_opcode_name(frame: dict[str, Any], lookups: Any) -> str:
 
     opcode_id = frame.get("opcode_id")
     if isinstance(opcode_id, int):
-        return codec._name_for_id(opcode_id, lookups.opcodes_by_id, "OP")
+        return lookups.opcodes_by_id.get(opcode_id, f"OP_{opcode_id}")
 
     return "RETURN" if frame == {"Return": {}} else "OP_0"
 
@@ -141,7 +171,7 @@ def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None 
             frame = {"kind": key, "value": payload}
 
     if isinstance(frame, dict) and isinstance(frame.get("semantic"), dict):
-        frame = codec.frame_to_compact(frame)
+        frame = frame_to_compact(frame)
 
     if not isinstance(frame, dict):
         raise ValueError(f"unsupported frame payload: {frame!r}")
@@ -221,26 +251,7 @@ def _normalize_cards(entry: dict[str, Any]) -> tuple[list[Any], list[dict[str, A
 
 
 def _render_pseudocode(frames: list[dict[str, Any]], lookups: Any) -> str:
-    source_words: list[int] = []
-    for frame in frames:
-        frame_words = frame.get("source_words")
-        if isinstance(frame_words, list) and frame_words:
-            source_words.extend(int(word) for word in frame_words)
-        else:
-            source_words.extend(int(word) for word in codec.encode_frame(frame, lookups))
-
-    if not source_words:
-        return ""
-
-    decoded = readable.decode_bytecode(source_words)
-    lines: list[str] = []
-    for line in decoded.splitlines():
-        if line.startswith("--- BYTECODE LEGEND ---"):
-            break
-        cleaned = re.sub(r"^\s*\d+:\s*", "", line).rstrip()
-        if cleaned:
-            lines.append(cleaned)
-    return "\n".join(lines)
+    return ""
 
 
 def _normalize_entry(entry: dict[str, Any], lookups: Any) -> dict[str, Any]:
@@ -287,7 +298,7 @@ def _normalize_entry(entry: dict[str, Any], lookups: Any) -> dict[str, Any]:
 
 
 def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
-    lookups = codec.load_lookups(metadata)
+    lookups = MetadataLookups(metadata)
     entries = [_normalize_entry(entry, lookups) for entry in payload.get("abilities", [])]
     entries.sort(key=lambda entry: (entry["trigger"], -len(entry["cards"]), entry["signature_hash"]))
     return {

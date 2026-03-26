@@ -304,7 +304,7 @@ mod tests {
 
         // Get the real bytecode from card 10
         let card_10 = db.get_member(10).expect("Card 10 should exist");
-        let ability_0_bytecode = &card_10.abilities[0].bytecode;
+        let ability_0_bytecode = card_10.abilities[0].bytecode();
 
         println!("Test REDUCE_COST opcode:");
         println!("  Hand size: {}", state.players[0].hand.len());
@@ -314,7 +314,7 @@ mod tests {
 
         state.resolve_semantic_frames(
             &db,
-            &FrameProgram::from_words(ability_0_bytecode).frames,
+            &FrameProgram::from_words(&ability_0_bytecode).frames,
             &ctx,
         );
 
@@ -346,7 +346,7 @@ mod tests {
 
         let db = load_real_db();
         let card_10 = db.get_member(10).expect("Card 10 should exist");
-        let ability_0_bytecode = &card_10.abilities[0].bytecode;
+        let ability_0_bytecode = card_10.abilities[0].bytecode();
 
         for (hand_cards, expected_other_count) in hand_sizes {
             let mut state = GameState::default();
@@ -362,7 +362,7 @@ mod tests {
             // Apply card 10's real ability bytecode
             state.resolve_semantic_frames(
                 &db,
-                &FrameProgram::from_words(ability_0_bytecode).frames,
+                &FrameProgram::from_words(&ability_0_bytecode).frames,
                 &ctx,
             );
 
@@ -561,7 +561,7 @@ mod tests {
 
             // Get card 10's actual bytecode from the database
             let card_10 = db.get_member(10).expect("Card 10");
-            let ability_0_bytecode = &card_10.abilities[0].bytecode;
+            let ability_0_bytecode = card_10.abilities[0].bytecode();
 
             println!(
                 "Bytecode: {:?}",
@@ -570,7 +570,7 @@ mod tests {
 
             state.resolve_semantic_frames(
                 &db,
-                &FrameProgram::from_words(ability_0_bytecode).frames,
+                &FrameProgram::from_words(&ability_0_bytecode).frames,
                 &ctx,
             );
 

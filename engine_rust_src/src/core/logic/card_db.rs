@@ -31,6 +31,7 @@ use super::models::*;
 const EMBEDDED_ABILITY_FRAMES_JSON: &str = include_str!("../../../../data/ability_frames.json");
 const EMBEDDED_ABILITY_FRAME_INDEX_JSON: &str =
     include_str!("../../../../data/ability_frame_index.json");
+const LEGACY_CARD_ID_MAPPING_JSON: &str = include_str!("../../../../data/card_id_mapping.json");
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct MemberCard {
@@ -150,6 +151,8 @@ pub struct CardDatabase {
     pub energy_db: HashMap<i32, EnergyCard>,
     #[serde(skip)]
     pub sparse_ability_index: HashMap<String, Value>,
+    #[serde(skip)]
+    pub legacy_id_aliases: HashMap<i32, i32>,
     #[serde(default)]
     pub is_vanilla: bool,
     #[serde(skip)]
@@ -159,6 +162,10 @@ pub struct CardDatabase {
 pub const LOGIC_ID_MASK: i32 = 0x0FFF;
 
 impl CardDatabase {
+    fn normalize_card_no(card_no: &str) -> String {
+        card_no.replace('＋', "+")
+    }
+
     fn load_sparse_ability_index_from_json(json: &str) -> HashMap<String, Value> {
         let parsed_root = serde_json::from_str::<Value>(json).ok();
         if let Some(root) = parsed_root {
@@ -245,7 +252,7 @@ impl CardDatabase {
             for frame in &mut program.frames {
                 if frame.opcode() == O_MOVE_MEMBER {
                     match frame.clone() {
-                        AbilityFrame::MoveMember { filter, slot } => {
+                        AbilityFrame::MoveMember { filter, slot, .. } => {
                             *frame = AbilityFrame::Semantic {
                                 opcode: O_TAP_MEMBER,
                                 value: 0,
@@ -302,6 +309,23 @@ impl CardDatabase {
         }
 
         HashMap::new()
+    }
+
+    fn load_legacy_id_aliases(card_no_to_id: &HashMap<String, i32>) -> HashMap<i32, i32> {
+        let mut aliases = HashMap::new();
+        let legacy_map = serde_json::from_str::<HashMap<String, i32>>(LEGACY_CARD_ID_MAPPING_JSON)
+            .unwrap_or_default();
+
+        for (card_no, legacy_id) in legacy_map {
+            let normalized = Self::normalize_card_no(&card_no);
+            if let Some(&current_id) = card_no_to_id.get(&normalized) {
+                if current_id != legacy_id {
+                    aliases.insert(legacy_id, current_id);
+                }
+            }
+        }
+
+        aliases
     }
 
     fn compact_sparse_ability_entry(entry: &Value) -> Value {
@@ -912,6 +936,7 @@ impl Default for CardDatabase {
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
             sparse_ability_index: HashMap::new(),
+            legacy_id_aliases: HashMap::new(),
             is_vanilla: false,
             cached_vanilla: None,
         }
@@ -1365,6 +1390,7 @@ impl CardDatabase {
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
             sparse_ability_index: Self::load_sparse_ability_index(),
+            legacy_id_aliases: HashMap::new(),
             is_vanilla: false,
             cached_vanilla: None,
         };
@@ -1382,7 +1408,8 @@ impl CardDatabase {
                         Self::enrich_member_runtime_metadata(&mut card);
 
                         db.members.insert(card.card_id, card.clone());
-                        db.card_no_to_id.insert(card.card_no.clone(), card.card_id);
+                        db.card_no_to_id
+                            .insert(Self::normalize_card_no(&card.card_no), card.card_id);
 
                         // Populate Vector (Logic Deduplication)
                         let logic_id = Self::to_logic_id(card.card_id);
@@ -1417,7 +1444,8 @@ impl CardDatabase {
                         Self::enrich_live_runtime_metadata(&mut card);
 
                         db.lives.insert(card.card_id, card.clone());
-                        db.card_no_to_id.insert(card.card_no.clone(), card.card_id);
+                        db.card_no_to_id
+                            .insert(Self::normalize_card_no(&card.card_no), card.card_id);
 
                         // Populate Vector (Logic Deduplication)
                         let logic_id = Self::to_logic_id(card.card_id);
@@ -1455,6 +1483,27 @@ impl CardDatabase {
             }
         }
 
+        db.legacy_id_aliases = Self::load_legacy_id_aliases(&db.card_no_to_id);
+
+        let legacy_aliases: Vec<(i32, i32)> = db
+            .legacy_id_aliases
+            .iter()
+            .map(|(&legacy_id, &current_id)| (legacy_id, current_id))
+            .collect();
+
+        for (legacy_id, current_id) in legacy_aliases {
+            if !db.members.contains_key(&legacy_id) {
+                if let Some(card) = db.members.get(&current_id).cloned() {
+                    db.members.insert(legacy_id, card);
+                }
+            }
+            if !db.lives.contains_key(&legacy_id) {
+                if let Some(card) = db.lives.get(&current_id).cloned() {
+                    db.lives.insert(legacy_id, card);
+                }
+            }
+        }
+
         db.cached_vanilla = Some(db.is_vanilla || db.detect_abilityless());
 
         Ok(db)
@@ -1462,17 +1511,22 @@ impl CardDatabase {
 
     // Fast Lookups
     pub fn get_member(&self, id: i32) -> Option<&MemberCard> {
+        let resolved_id = self.legacy_id_aliases.get(&id).copied().unwrap_or(id);
+
         // Fast path: Try vector (O(1)) and confirm exact ID match
-        let logic_id = Self::to_logic_id(id);
+        let logic_id = Self::to_logic_id(resolved_id);
         if logic_id < self.members_vec.len() {
             if let Some(m) = &self.members_vec[logic_id] {
-                if m.card_id == id {
+                if m.card_id == resolved_id || m.card_id == id {
                     return Some(m);
                 }
             }
         }
 
         // Slow path: Try HashMap
+        if let Some(m) = self.members.get(&resolved_id) {
+            return Some(m);
+        }
         if let Some(m) = self.members.get(&id) {
             return Some(m);
         }
@@ -1480,17 +1534,22 @@ impl CardDatabase {
     }
 
     pub fn get_live(&self, id: i32) -> Option<&LiveCard> {
+        let resolved_id = self.legacy_id_aliases.get(&id).copied().unwrap_or(id);
+
         // Fast path: Try vector (O(1)) and confirm exact ID match
-        let logic_id = Self::to_logic_id(id);
+        let logic_id = Self::to_logic_id(resolved_id);
         if logic_id < self.lives_vec.len() {
             if let Some(l) = &self.lives_vec[logic_id] {
-                if l.card_id == id {
+                if l.card_id == resolved_id || l.card_id == id {
                     return Some(l);
                 }
             }
         }
 
         // Slow path: Try HashMap
+        if let Some(l) = self.lives.get(&resolved_id) {
+            return Some(l);
+        }
         if let Some(l) = self.lives.get(&id) {
             return Some(l);
         }
@@ -1498,7 +1557,8 @@ impl CardDatabase {
     }
 
     pub fn id_by_no(&self, card_no: &str) -> Option<i32> {
-        self.card_no_to_id.get(card_no).copied()
+        let normalized = Self::normalize_card_no(card_no);
+        self.card_no_to_id.get(&normalized).copied()
     }
 
     pub fn get_name(&self, id: i32) -> Option<String> {

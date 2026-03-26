@@ -826,9 +826,7 @@ impl ResponseController for GameState {
                         opcode: pi.effect_opcode,
                         value: pi.ctx.v_remaining as i32,
                         filter:
-                            crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(
-                                pi.filter_attr as i64,
-                            ),
+                        crate::core::logic::filter::CardFilter::from_attr(pi.filter_attr as i64),
                         slot: crate::core::logic::interpreter::instruction::DecodedSlot::default(),
                         is_negated: false,
                         params: serde_json::Value::Null,

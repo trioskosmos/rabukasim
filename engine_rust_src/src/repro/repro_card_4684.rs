@@ -6,7 +6,7 @@ fn test_repro_card_4684_score_boost() {
     let mut db = create_test_db();
 
     // Explicitly add card 4684 to the test DB
-    // ライブ成功時EEEEEE支払ってもよい：ライブの合計スコアを＋１する。
+    // ライブ成功時EEEEEE支払ってもよい：ライブの合計スコアを+１する。
     // Bytecode: [64, 6, 0, 536870912, 0, 3, 2, 0, 0, 0, 312, 0, 0, 0, 0, 16, 1, 0, 0, 4, 1, 0, 0, 0, 0]
     add_card(
         &mut db,

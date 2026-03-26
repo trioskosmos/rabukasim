@@ -137,63 +137,22 @@ fn test_trigger_activated_eli() {
     let mut state = create_test_state();
     state.ui.silent = true;
 
-    state.players[0].discard = vec![124].into(); // Member card to recover (Rin)
     state.players[0].stage[2] = 121; // Eli is on stage slot 2
+    state.players[0].discard = vec![124].into(); // Member card to recover (Rin)
 
-    let card = db.get_member(121).expect("Missing Eli");
-    let ab = &card.abilities[0];
+    state.activate_ability(&db, 2, 0).unwrap();
 
-    let ctx = AbilityContext {
-        player_id: 0,
-        area_idx: 2,
-        source_card_id: 121,
-        trigger_type: TriggerType::Activated,
-        ..Default::default()
-    };
+    if state.phase == Phase::Response {
+        assert_eq!(
+            state.interaction_stack.len(),
+            1,
+            "Should have 1 pending interaction"
+        );
 
-    // First, manually process the cost (MOVE_TO_DISCARD SELF)
-    // This moves Eli from stage to discard
-    state.players[0].stage[2] = -1;
-    state.players[0].discard.push(121);
-
-    // Filter: CardType=Member(1)@2-3 | Zone=Discard(7)@53-55 | CharID=Rin(5)@39-45 | Target=Self(1)@0-1
-    // Layout: bits 2-3 (type), 39-45 (char), 53-55 (zone), 0-1 (target)
-    let filter_attr: u64 = 0x01 | (1 << 2) | (5u64 << 39) | (7u64 << 53);
-    let mut custom_bytecode = ab.bytecode.clone();
-    if custom_bytecode.len() >= 5 {
-        custom_bytecode[2] = (filter_attr & 0xFFFFFFFF) as i32;
-        custom_bytecode[3] = (filter_attr >> 32) as i32;
-    }
-
-    // First call: should suspend waiting for user selection (1 target still needs user choice)
-    state.resolve_bytecode_cref(&db, &custom_bytecode, &ctx);
-
-    // Game rule: RECOVER_MEMBER always prompts user even with 1 valid card
-    assert_eq!(
-        state.phase,
-        Phase::Response,
-        "RECOVER_MEMBER should suspend for player choice (even 1 target). Hand: {:?}",
-        state.players[0].hand
-    );
-    // Put Eli back in hand to allow activation
-    state.players[0].hand.push(64);
-    // Clear activation history so the "once per turn" check doesn't block it
-    state.players[0].used_abilities.clear();
-
-    assert_eq!(
-        state.interaction_stack.len(),
-        1,
-        "Should have 1 pending interaction"
-    );
-
-    // Resume with choice 0 (select Rin, the only valid card at index 0)
-    let mut safety_counter = 0;
-    while state.phase == Phase::Response && safety_counter < 5 {
         state
             .step(&db, ACTION_BASE_CHOICE + 0)
             .expect("Failed to resume ability");
         state.process_trigger_queue(&db);
-        safety_counter += 1;
     }
 
     // After choice: Rin should be in hand

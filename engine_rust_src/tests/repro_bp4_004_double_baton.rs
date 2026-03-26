@@ -1,4 +1,4 @@
-/// Reproduction test for PL!SP-bp4-004-P (Card 560)
+/// Reproduction test for PL!SP-bp4-004-P(Card 560)
 /// Issue: Second ability with BATON_TOUCH condition doesn't trigger correctly
 ///
 /// Card 560 (平安名すみれ):
@@ -25,8 +25,8 @@ fn test_card_560_double_baton_liella() {
     let p1 = 0;
 
     // Card IDs
-    let sumire_id = 560; // PL!SP-bp4-004-P (Liella! - Group 3)
-    let kanon_id = 557; // PL!SP-bp4-001-P (Liella! - Group 3)
+    let sumire_id = 560; // PL!SP-bp4-004-P(Liella! - Group 3)
+    let kanon_id = 557; // PL!SP-bp4-001-P(Liella! - Group 3)
     let rin_id = 143; // Muse member (Group 1) for first baton pass
 
     // Get card info

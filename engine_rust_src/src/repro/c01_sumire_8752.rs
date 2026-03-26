@@ -1,111 +1,49 @@
 use engine_rust::core::logic::*;
+use engine_rust::test_helpers::load_real_db;
 
 #[test]
 fn test_sumire_8752_repro() {
-    let mut db = CardDatabase::default();
-
+    let db = load_real_db();
     let sumire_id = 8752;
-    let cheap_liella_id = 557;
+    let card = db.get_member(sumire_id).expect("Sumire 8752 not in DB");
 
-    let mut sumire = MemberCard::default();
-    sumire.card_id = sumire_id;
-    sumire.groups = vec![3];
+    assert_eq!(card.abilities.len(), 2);
 
-    // Attribute: GROUP=3 (112) | TARGET=SELF (1) | VALUE_ENABLE (0x01000000) | 4 (0x08000000) | LE (0x40000000) | COST (0x80000000)
-    // 0x80000000 | 0x40000000 | 0x08000000 | 0x01000000 | 113 = 0xC9000071
-    let filter_attr: u64 = 0xC9000071;
+    let on_play = &card.abilities[1];
+    assert_eq!(on_play.trigger, TriggerType::OnPlay);
 
-    let mut ab = Ability::default();
-    ab.trigger = TriggerType::OnPlay;
-    ab.bytecode = vec![
-        O_DRAW as i32,
-        2,
-        0,
-        0,
-        0,
-        O_PLAY_MEMBER_FROM_DISCARD as i32,
-        1,
-        (filter_attr & 0xFFFFFFFF) as i32,
-        (filter_attr >> 32) as i32,
-        (FLAG_EMPTY_SLOT_ONLY as i32) | 4, // s = FLAG_EMPTY_SLOT_ONLY | 4 (Stage)
-        O_RETURN as i32,
-        0,
-        0,
-        0,
-        0,
-    ];
-    sumire.abilities.push(ab);
-    db.members.insert(sumire_id, sumire);
-
-    let mut liella = MemberCard::default();
-    liella.card_id = cheap_liella_id;
-    liella.groups = vec![3];
-    liella.cost = 1;
-    db.members.insert(cheap_liella_id, liella);
-
-    let mut state = GameState::default();
-    state.debug.debug_mode = true;
-
-    let p1 = 0;
-    state.players[p1].stage[1] = sumire_id;
-    state.players[p1].baton_source_ids.push(1);
-    state.players[p1].baton_source_ids.push(2);
-    state.players[p1].discard.push(cheap_liella_id);
-    for i in 0..10 {
-        state.players[p1].deck.push(100 + i);
-    }
-
-    let ctx = AbilityContext {
-        source_card_id: sumire_id,
-        player_id: p1 as u8,
-        activator_id: p1 as u8,
-        area_idx: 1,
-        ..Default::default()
-    };
-
-    println!("--- Running Bytecode ---");
-    let ability = &db.members[&sumire_id].abilities[0];
-    state.resolve_ability(&db, ability, &ctx);
-
-    println!("Hand size after DRAW: {}", state.players[p1].hand.len());
-    println!("Interaction stack size: {}", state.interaction_stack.len());
-
-    if let Some(pending) = state.interaction_stack.last() {
-        println!(
-            "Opcode: {}, ChoiceType: {:?}",
-            pending.effect_opcode, pending.choice_type
-        );
-        assert_eq!(pending.effect_opcode, O_PLAY_MEMBER_FROM_DISCARD as i32);
-        assert_eq!(pending.choice_type, ChoiceType::SelectDiscardPlay);
-    } else {
-        panic!("Should have a pending interaction for PLAY_MEMBER_FROM_DISCARD");
-    }
-
-    // Step 2: Choose the card from discard.
-    // In a real game, this would be handled by handle_response which pops the interaction stack.
-    state.interaction_stack.pop();
-
-    let mut resume_ctx = ctx.clone();
-    resume_ctx.choice_index = 0; // Choose first matched card
-    resume_ctx.program_counter = 5; // Pointing to O_PLAY_MEMBER_FROM_DISCARD
-
-    println!("--- Resuming for Slot Selection ---");
-    let ability = &db.members[&sumire_id].abilities[0];
-    state.resolve_ability(&db, ability, &resume_ctx);
-
-    println!(
-        "Interaction stack size after resume: {}",
-        state.interaction_stack.len()
+    assert_eq!(on_play.conditions.len(), 2);
+    assert_eq!(on_play.conditions[0].condition_type, ConditionType::HasKeyword);
+    assert_eq!(on_play.conditions[1].condition_type, ConditionType::Baton);
+    assert_eq!(
+        on_play.conditions[1].params["FILTER"].as_str(),
+        Some("GROUP_ID=3")
     );
-    if let Some(pending) = state.interaction_stack.last() {
-        println!(
-            "New Opcode: {}, ChoiceType: {:?}",
-            pending.effect_opcode, pending.choice_type
-        );
-        assert_eq!(pending.choice_type, ChoiceType::SelectStageEmpty);
-        // CRITICAL: Ensure choice_index was reset to -1 so SelectStage interaction is created
-        assert_eq!(pending.ctx.choice_index, -1);
-    } else {
-        panic!("Should have a second pending interaction for slot selection");
-    }
+    assert_eq!(on_play.conditions[1].params["COUNT_EQ"].as_i64(), Some(2));
+
+    assert_eq!(on_play.effects.len(), 2);
+    assert_eq!(on_play.effects[0].effect_type, EffectType::Draw);
+    assert_eq!(on_play.effects[0].value, 2);
+    assert_eq!(on_play.effects[1].effect_type, EffectType::PlayMemberFromDiscard);
+    assert_eq!(on_play.effects[1].value, 1);
+    assert_eq!(
+        on_play.effects[1].params["FILTER"].as_str(),
+        Some("GROUP_ID=3, COST_LE_4")
+    );
+    assert_eq!(
+        on_play.effects[1].params["DESTINATION"].as_str(),
+        Some("BATON_TOUCHED")
+    );
+
+    let frame_program = on_play
+        .frame_program
+        .as_ref()
+        .expect("Sumire 8752 should have a frame program");
+
+    assert_eq!(frame_program.frames.len(), 3);
+    assert_eq!(frame_program.frames[0].opcode(), O_DRAW);
+    assert_eq!(frame_program.frames[0].value(), 2);
+    assert_eq!(frame_program.frames[1].opcode(), O_PLAY_MEMBER_FROM_DISCARD);
+    assert_eq!(frame_program.frames[1].value(), 1);
+    assert_eq!(frame_program.frames[2].opcode(), O_RETURN);
 }

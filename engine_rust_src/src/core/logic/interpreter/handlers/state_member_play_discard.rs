@@ -49,8 +49,7 @@ pub fn handle_play_member_from_discard(
     let is_total_cost = (filter_attr_base & (1u64 << 60)) != 0
         || (filter_attr_base & (1u64 << 50)) != 0;
 
-    let is_fresh_chain =
-        ctx.selected_cards.is_empty() && state.players[target_p_idx].looked_cards.is_empty();
+    let is_fresh_chain = state.players[target_p_idx].looked_cards.is_empty();
     let remaining = if is_fresh_chain || ctx.v_remaining == -1 {
         if ctx.repeat_count <= 0 {
             ctx.repeat_count = v as i16;
@@ -60,7 +59,7 @@ pub fn handle_play_member_from_discard(
                 >> crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT)
                 & 0x1F) as i16;
         }
-        v as i16 * 2
+        v as i16
     } else {
         ctx.v_remaining
     };
@@ -69,8 +68,7 @@ pub fn handle_play_member_from_discard(
         return HandlerResult::Continue;
     }
 
-    let needs_discard_selection = state.players[target_p_idx].looked_cards.is_empty()
-        || ctx.selected_cards.is_empty();
+    let needs_discard_selection = state.players[target_p_idx].looked_cards.is_empty();
 
     if needs_discard_selection {
         let selection_result = state_member_play_discard_select::handle_discard_selection(

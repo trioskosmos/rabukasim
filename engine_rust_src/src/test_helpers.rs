@@ -2,7 +2,8 @@ use crate::core::enums::Zone;
 use crate::core::generated_layout::*;
 use crate::core::logic::card_db::CardDatabase;
 use crate::core::logic::constants::FILTER_IS_OPTIONAL;
-use crate::core::logic::interpreter::instruction::{DecodedFilterAttr, DecodedSlot};
+use crate::core::logic::filter::CardFilter;
+use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::models::{AbilityFrame, FrameProgram};
 use crate::core::logic::player::PlayerState;
 use crate::core::logic::*;
@@ -76,23 +77,25 @@ impl FrameBuilder {
         if let Some(frame) = self.frames.last_mut() {
             match frame {
                 AbilityFrame::Raw { attr, .. } => *attr = a_val as u64,
-                AbilityFrame::Semantic { filter, .. } => *filter = DecodedFilterAttr::decode(a_val),
+                AbilityFrame::Semantic { filter, .. } => *filter = CardFilter::from_attr(a_val),
                 AbilityFrame::RecoverLive { filter, .. } => {
-                    *filter = DecodedFilterAttr::decode(a_val)
+                    *filter = CardFilter::from_attr(a_val)
                 }
                 AbilityFrame::RecoverMember { filter, .. } => {
-                    *filter = DecodedFilterAttr::decode(a_val)
+                    *filter = CardFilter::from_attr(a_val)
                 }
                 AbilityFrame::SelectMember { filter, .. } => {
-                    *filter = DecodedFilterAttr::decode(a_val)
+                    *filter = CardFilter::from_attr(a_val)
                 }
                 AbilityFrame::LookAndChoose { filter, .. } => {
-                    *filter = DecodedFilterAttr::decode(a_val)
+                    *filter = CardFilter::from_attr(a_val)
                 }
                 AbilityFrame::MoveMember { filter, .. } => {
-                    *filter = DecodedFilterAttr::decode(a_val)
+                    *filter = CardFilter::from_attr(a_val)
                 }
-                AbilityFrame::MetaRule { filter, .. } => *filter = DecodedFilterAttr::decode(a_val),
+                AbilityFrame::MetaRule { filter, .. } => {
+                    *filter = CardFilter::from_attr(a_val)
+                }
                 _ => {}
             }
         }

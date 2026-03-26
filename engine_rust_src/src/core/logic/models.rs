@@ -1,9 +1,9 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use crate::core::generated_layout::*;
-use crate::core::logic::filter::filter_attr_from_params;
+use crate::core::logic::filter::{CardFilter, filter_attr_from_params};
 use crate::core::logic::interpreter::instruction::{
-    BytecodeInstruction, BytecodeProgram, DecodedFilterAttr, DecodedLookAndChoose, DecodedSlot,
+    BytecodeInstruction, BytecodeProgram, DecodedLookAndChoose, DecodedSlot,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -19,7 +19,7 @@ pub enum AbilityFrame {
     Semantic {
         opcode: i32,
         value: i32,
-        filter: DecodedFilterAttr,
+        filter: CardFilter,
         slot: DecodedSlot,
         #[serde(default)]
         is_negated: bool,
@@ -28,31 +28,33 @@ pub enum AbilityFrame {
     },
     RecoverLive {
         count: i32,
-        filter: DecodedFilterAttr,
+        filter: CardFilter,
         slot: DecodedSlot,
     },
     RecoverMember {
         count: i32,
-        filter: DecodedFilterAttr,
+        filter: CardFilter,
         slot: DecodedSlot,
     },
     LookAndChoose {
         params: DecodedLookAndChoose,
-        filter: DecodedFilterAttr,
+        filter: CardFilter,
         slot: DecodedSlot,
     },
     SelectMember {
         count: i32,
-        filter: DecodedFilterAttr,
+        filter: CardFilter,
         slot: DecodedSlot,
     },
     MoveMember {
-        filter: DecodedFilterAttr,
+        filter: CardFilter,
         slot: DecodedSlot,
+        #[serde(default)]
+        from_slot: i32,
     },
     MetaRule {
         rule_type: i32,
-        filter: DecodedFilterAttr,
+        filter: CardFilter,
         slot: DecodedSlot,
     },
     Raw {
@@ -89,7 +91,7 @@ pub struct AbilityFrameComponents<'a> {
     pub raw_opcode: i32,
     pub opcode: i32,
     pub value: i32,
-    pub filter: DecodedFilterAttr,
+    pub filter: CardFilter,
     pub slot: DecodedSlot,
     pub raw_attr: u64,
     pub raw_slot: i32,
@@ -277,7 +279,7 @@ impl AbilityFrame {
             .or_else(|| payload.get("attr"))
             .or_else(|| frame.get("attr"))
             .cloned()
-            .and_then(|value| serde_json::from_value::<DecodedFilterAttr>(value).ok())
+            .and_then(|value| serde_json::from_value::<CardFilter>(value).ok())
             .unwrap_or_default();
         let slot = payload
             .get("slot")
@@ -297,7 +299,7 @@ impl AbilityFrame {
             .cloned()
             .unwrap_or(Value::Null);
         let filter = if let Some(filter_attr) = filter_attr_from_params(Some(&params)) {
-            DecodedFilterAttr::decode((filter.to_attr() | filter_attr) as i64)
+            CardFilter::from_attr((filter.to_attr() as u64 | filter_attr) as i64)
         } else {
             filter
         };
@@ -376,10 +378,14 @@ impl AbilityFrame {
                 filter,
                 slot,
             },
-            "MOVE_MEMBER" => AbilityFrame::MoveMember { filter, slot },
+            "MOVE_MEMBER" => AbilityFrame::MoveMember {
+                filter,
+                slot,
+                from_slot: 0,
+            },
             "META_RULE" => AbilityFrame::MetaRule {
                 rule_type: value,
-                filter,
+                filter: filter,
                 slot,
             },
             _ => AbilityFrame::Semantic {
@@ -401,7 +407,7 @@ impl AbilityFrame {
             instr.op
         };
 
-        let filter = DecodedFilterAttr::decode(instr.a);
+        let filter = CardFilter::from_attr(instr.a);
         let slot = DecodedSlot::decode(instr.raw_s);
 
         if is_negated {
@@ -441,10 +447,14 @@ impl AbilityFrame {
                 filter,
                 slot,
             },
-            O_MOVE_MEMBER => AbilityFrame::MoveMember { filter, slot },
+            O_MOVE_MEMBER => AbilityFrame::MoveMember {
+                filter,
+                slot,
+                from_slot: 0,
+            },
             O_META_RULE => AbilityFrame::MetaRule {
                 rule_type: instr.v,
-                filter,
+                filter: CardFilter::from_attr(instr.a),
                 slot,
             },
             _ => AbilityFrame::Semantic {
@@ -556,7 +566,7 @@ impl AbilityFrame {
             return AbilityFrame::Semantic {
                 opcode: runtime_opcode,
                 value: runtime_value,
-                filter: DecodedFilterAttr::decode(runtime_attr as i64),
+                filter: CardFilter::from_attr(runtime_attr as i64),
                 slot,
                 is_negated: false,
                 params: effect.params.clone(),
@@ -600,7 +610,7 @@ impl AbilityFrame {
                 raw_opcode,
                 opcode,
                 value: 0,
-                filter: DecodedFilterAttr::default(),
+                filter: CardFilter::default(),
                 slot: DecodedSlot::default(),
                 raw_attr: 0,
                 raw_slot: 0,
@@ -611,7 +621,7 @@ impl AbilityFrame {
                 raw_opcode,
                 opcode,
                 value: *count,
-                filter: DecodedFilterAttr::default(),
+                filter: CardFilter::default(),
                 slot: *slot,
                 raw_attr: 0,
                 raw_slot: slot.to_raw(),
@@ -630,7 +640,7 @@ impl AbilityFrame {
                 value: *value,
                 filter: *filter,
                 slot: *slot,
-                raw_attr: filter.to_attr(),
+                raw_attr: filter.to_attr() as u64,
                 raw_slot: slot.to_raw(),
                 is_negated,
                 params: Some(params),
@@ -655,31 +665,39 @@ impl AbilityFrame {
                 value: *count,
                 filter: *filter,
                 slot: *slot,
-                raw_attr: filter.to_attr(),
+                raw_attr: filter.to_attr() as u64,
                 raw_slot: slot.to_raw(),
                 is_negated,
                 params: None,
             },
             AbilityFrame::LookAndChoose { filter, slot, .. }
-            | AbilityFrame::MoveMember { filter, slot }
-            | AbilityFrame::MetaRule { filter, slot, .. } => AbilityFrameComponents {
+            | AbilityFrame::MoveMember { filter, slot, .. } => AbilityFrameComponents {
                 raw_opcode,
                 opcode,
                 value: self.value(),
                 filter: *filter,
                 slot: *slot,
-                raw_attr: filter.to_attr(),
+                raw_attr: filter.to_attr() as u64,
                 raw_slot: slot.to_raw(),
                 is_negated,
                 params: None,
             },
-            AbilityFrame::Raw {
-                value, attr, slot, ..
-            } => AbilityFrameComponents {
+            AbilityFrame::MetaRule { filter, slot, .. } => AbilityFrameComponents {
+                raw_opcode,
+                opcode,
+                value: self.value(),
+                filter: *filter,
+                slot: *slot,
+                raw_attr: filter.to_attr() as u64,
+                raw_slot: slot.to_raw(),
+                is_negated,
+                params: None,
+            },
+            AbilityFrame::Raw { value, attr, slot, .. } => AbilityFrameComponents {
                 raw_opcode,
                 opcode,
                 value: *value,
-                filter: DecodedFilterAttr::decode(*attr as i64),
+                filter: CardFilter::from_attr(*attr as i64),
                 slot: DecodedSlot::decode(*slot),
                 raw_attr: *attr,
                 raw_slot: *slot,
@@ -687,10 +705,6 @@ impl AbilityFrame {
                 params: None,
             },
         }
-    }
-
-    pub fn get_components(&self) -> AbilityFrameComponents<'_> {
-        self.components()
     }
 
     pub fn value(&self) -> i32 {
@@ -712,13 +726,13 @@ impl AbilityFrame {
         match self {
             AbilityFrame::Return => 0,
             AbilityFrame::Draw { .. } => 0,
-            AbilityFrame::Semantic { filter, .. } => filter.to_attr(),
-            AbilityFrame::RecoverLive { filter, .. } => filter.to_attr(),
-            AbilityFrame::RecoverMember { filter, .. } => filter.to_attr(),
-            AbilityFrame::LookAndChoose { filter, .. } => filter.to_attr(),
-            AbilityFrame::SelectMember { filter, .. } => filter.to_attr(),
-            AbilityFrame::MoveMember { filter, .. } => filter.to_attr(),
-            AbilityFrame::MetaRule { filter, .. } => filter.to_attr(),
+            AbilityFrame::Semantic { filter, .. } => filter.to_attr() as u64,
+            AbilityFrame::RecoverLive { filter, .. } => filter.to_attr() as u64,
+            AbilityFrame::RecoverMember { filter, .. } => filter.to_attr() as u64,
+            AbilityFrame::LookAndChoose { filter, .. } => filter.to_attr() as u64,
+            AbilityFrame::SelectMember { filter, .. } => filter.to_attr() as u64,
+            AbilityFrame::MoveMember { filter, .. } => filter.to_attr() as u64,
+            AbilityFrame::MetaRule { filter, .. } => filter.to_attr() as u64,
             AbilityFrame::Raw { attr, .. } => *attr,
         }
     }
@@ -795,7 +809,7 @@ impl AbilityFrame {
         crate::core::logic::interpreter::instruction::DecodedHeartCounts::decode(self.value())
     }
 
-    pub fn filter(&self) -> DecodedFilterAttr {
+    pub fn filter(&self) -> CardFilter {
         match self {
             AbilityFrame::Semantic { filter, .. } => *filter,
             AbilityFrame::RecoverLive { filter, .. } => *filter,
@@ -803,9 +817,9 @@ impl AbilityFrame {
             AbilityFrame::LookAndChoose { filter, .. } => *filter,
             AbilityFrame::SelectMember { filter, .. } => *filter,
             AbilityFrame::MoveMember { filter, .. } => *filter,
-            AbilityFrame::MetaRule { filter, .. } => *filter,
-            AbilityFrame::Raw { attr, .. } => DecodedFilterAttr::decode((*attr) as i64),
-            _ => DecodedFilterAttr::default(),
+            AbilityFrame::MetaRule { filter, .. } => CardFilter::from_attr(filter.to_attr() as i64),
+            AbilityFrame::Raw { attr, .. } => CardFilter::from_attr((*attr) as i64),
+            _ => CardFilter::default(),
         }
     }
 

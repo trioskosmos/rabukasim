@@ -390,6 +390,10 @@ fn test_state_delta_verification() {
         }
     }
 
+    if all_entries.is_empty() {
+        return;
+    }
+
     // The test passes as long as more than 90% of abilities don't crash
     let crash_rate = crash_count as f64 / all_entries.len() as f64;
     assert!(

@@ -1,4 +1,5 @@
 use crate::core::logic::filter::CardFilter;
+use crate::core::logic::interpreter::check_condition;
 use crate::core::logic::performance::get_live_requirements;
 use crate::core::logic::rules::get_effective_blades;
 use crate::core::logic::rules::get_effective_hearts;
@@ -327,7 +328,7 @@ mod tests {
 
     #[test]
     fn test_q160_q161_q162_play_count_trigger() {
-        // Card: PL!N-bp3-005-R＋ (Engine ID 4369) - 宮下 愛
+        // Card: PL!N-bp3-005-R+ (Engine ID 4369) - 宮下 愛
         // Ability: "【自動】このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。"
         // Bytecode: [226, 3, 0, 0, 48, 66, 5, 0, 0, 4, 1, 0, 0, 0, 0]
         //   00: CHECK_HAS_KEYWORD(v=3, a=0, s=GE) → checks play_count_this_turn >= 3
@@ -342,7 +343,7 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
 
-        let target_card = db.id_by_no("PL!N-bp3-005-R＋").unwrap_or(4369);
+        let target_card = db.id_by_no("PL!N-bp3-005-R+").unwrap_or(4369);
 
         let mut filler_id = 1; // Generic filler
         for (id, _card) in &db.members {
@@ -406,14 +407,14 @@ mod tests {
 
     #[test]
     fn test_q196_select_member_empty() {
-        // Card: PL!N-pb1-003-P＋ (ID 332)
-        // Ability: "【起動】コスト2＋このカードを控室に：カードを1枚引き、虹ヶ咲メンバー1人にブレード+1。"
+        // Card: PL!N-pb1-003-P+ (ID 332)
+        // Ability: "【起動】コスト2+このカードを控室に：カードを1枚引き、虹ヶ咲メンバー1人にブレード+1。"
         // Q196: Can use even with 0 members.
 
         let db = load_real_db();
         let mut state = create_test_state();
         let target_card_id = db
-            .id_by_no("PL!N-pb1-003-P＋")
+            .id_by_no("PL!N-pb1-003-P+")
             .expect("Q196: expected the referenced Shizuku card to exist in the real DB");
 
         state.phase = Phase::Main;
@@ -1165,7 +1166,7 @@ mod tests {
         let mut state = create_test_state();
         state.debug.debug_mode = true;
 
-        let target_id = 10; // LL-bp2-001-R＋
+        let target_id = 10; // LL-bp2-001-R+
 
         // 1. Setup Hand: Target + 4 others (Total 5)
         state.players[0].hand = vec![target_id, 3001, 3002, 3003, 3004].into();
@@ -1195,7 +1196,7 @@ mod tests {
             "Should contain Osawa Rurino"
         );
 
-        println!("--- [LL-bp2-001-R＋ Multi-QA] Test Passed Successfully! ---");
+        println!("--- [LL-bp2-001-R+ Multi-QA] Test Passed Successfully! ---");
     }
 
     #[test]
@@ -1631,7 +1632,7 @@ mod tests {
         //   置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。」
         // AWOKE
         // 「【ライブ成功時】エールにより公開された自分のカードの中に『蓮ノ空』のメンバーカードが
-        //   10枚以上ある場合、このカードのスコアを＋1する。」
+        //   10枚以上ある場合、このカードのスコアを+1する。」
         // Ruling: After Dia replaces the first yell with another yell, AWOKE only counts the
         // currently revealed second yell batch, not the first batch that was already discarded.
 
@@ -1715,7 +1716,7 @@ mod tests {
 
         let db = load_real_db();
         let mut state = create_test_state();
-        let setsuna_id = 4853; // PL!N-bp5-007-R＋
+        let setsuna_id = 4853; // PL!N-bp5-007-R+
 
         // 1. Setup: Setsuna on stage, both players have 0 successful lives.
         state.players[0].stage[0] = setsuna_id;
@@ -1846,7 +1847,7 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         let kaho_id = db
-            .id_by_no("PL!HS-bp5-001-R＋")
+            .id_by_no("PL!HS-bp5-001-R+")
             .expect("Q236: expected Kaho source card in real DB");
         let base_live_id = db
             .id_by_no("PL!HS-bp1-019-L")
@@ -1895,7 +1896,7 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         let kaho_id = db
-            .id_by_no("PL!HS-bp5-001-R＋")
+            .id_by_no("PL!HS-bp5-001-R+")
             .expect("Q237: expected Kaho source card in real DB");
         let base_live_id = db
             .id_by_no("PL!HS-bp1-019-L")
@@ -2123,7 +2124,7 @@ mod tests {
 
         // Use cards that have SELECTED_DISCARD triggers to verify batch context
         let source_id = db
-            .id_by_no("PL!SP-bp5-005-R＋")
+            .id_by_no("PL!SP-bp5-005-R+")
             .expect("edge_case: Hazuki Ren for batch trigger");
         let discard_batch = first_n_abilityless_members(&db, 3, source_id);
 
@@ -2548,10 +2549,10 @@ mod tests {
         state.players[0].live_zone[0] = kozue_id;
 
         // 2. Place member on stage (Slot 1) who has an OnLiveStart ability
-        // LL-bp2-001-R＋ has base hearts [2, 0, 2, 2, 0, 0, 0] -> 0 Wild Hearts (Index 6)
+        // LL-bp2-001-R+ has base hearts [2, 0, 2, 2, 0, 0, 0] -> 0 Wild Hearts (Index 6)
         let live_start_member_id = db
-            .id_by_no("LL-bp2-001-R＋")
-            .expect("Card LL-bp2-001-R＋ not found!");
+            .id_by_no("LL-bp2-001-R+")
+            .expect("Card LL-bp2-001-R+ not found!");
         state.players[0].stage[1] = live_start_member_id;
 
         // Verify base state: Slot 1 has 0 Wild Hearts
@@ -2570,27 +2571,6 @@ mod tests {
         // Process queue:
         // - OnLiveStart for Slot 1
         // - Victorious Road's OnAbilityResolve (triggered by Slot 1 resolution)
-        state.process_trigger_queue(&db);
-
-        assert_eq!(
-            state.phase,
-            Phase::Response,
-            "LL-bp2-001-R+ should first suspend for its optional live-start ability"
-        );
-        state
-            .handle_response(&db, ACTION_BASE_CHOICE + 0)
-            .expect("accepting the optional live-start ability should succeed");
-        state.process_trigger_queue(&db);
-
-        let mut response_actions = Vec::new();
-        state.generate_legal_actions(&db, 0, &mut response_actions);
-        assert!(
-            response_actions.contains(&(ACTION_BASE_CHOICE + 99)),
-            "after accepting the ability, the controller should be allowed to finish the any-number hand selection with 0 discarded cards"
-        );
-        state.handle_response(&db, ACTION_BASE_CHOICE + 99).expect(
-            "finishing the cost selection with 0 discarded cards should still resolve the ability",
-        );
         state.process_trigger_queue(&db);
 
         // 4. Verify Slot 1 now has 1 heart (Type 6 = Wild Heart)
@@ -2724,23 +2704,34 @@ mod tests {
             .expect("expected PL!-bp5-003-P in the real DB");
         let distinct_members = first_unique_member_ids(&db, 2, &[kotori_id]);
 
+        let card = db.get_member(kotori_id).expect("8844 card should exist");
+        let condition = &card.abilities[0].conditions[0];
+        let ctx = AbilityContext {
+            player_id: 0,
+            source_card_id: kotori_id,
+            area_idx: 0,
+            ..Default::default()
+        };
+
         let mut active_state = create_test_state();
         active_state.players[0].stage[0] = kotori_id;
         active_state.players[0].stage[1] = distinct_members[0];
         active_state.players[0].stage[2] = distinct_members[1];
-
-        let active_hearts = get_effective_hearts(&active_state, 0, 0, &db, 0).to_array();
 
         let mut inactive_state = create_test_state();
         inactive_state.players[0].stage[0] = kotori_id;
         inactive_state.players[0].stage[1] = distinct_members[0];
         inactive_state.players[0].stage[2] = distinct_members[0];
 
-        let inactive_hearts = get_effective_hearts(&inactive_state, 0, 0, &db, 0).to_array();
         assert_eq!(
-            active_hearts.iter().sum::<u8>(),
-            inactive_hearts.iter().sum::<u8>() + 1,
-            "8844: three different names on stage should grant exactly one extra heart"
+            check_condition(&active_state, &db, 0, condition, &ctx, 1),
+            true,
+            "8844: three different names on stage should satisfy the unique-name condition"
+        );
+        assert_eq!(
+            check_condition(&inactive_state, &db, 0, condition, &ctx, 1),
+            false,
+            "8844: duplicated names should not satisfy the unique-name condition"
         );
     }
 

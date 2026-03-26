@@ -138,8 +138,8 @@ fn test_opcode_tap_opponent_dynamic() {
 
     for (&cid, m) in db.members.iter() {
         for (ai, a) in m.abilities.iter().enumerate() {
-            let has_tap = a.bytecode.iter().step_by(5).any(|&op| op == 32);
-            let has_modal = a.bytecode.iter().step_by(5).any(|&op| op == 30 || op == 64);
+            let has_tap = (a.opcodes_mask & (1 << 32)) != 0;
+            let has_modal = (a.opcodes_mask & ((1u128 << 30) | (1u128 << 64))) != 0;
             if has_tap && !has_modal {
                 found_card_id = Some(cid);
                 found_ab_idx = Some(ai);

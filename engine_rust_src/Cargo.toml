@@ -2,6 +2,8 @@
 name = "engine_rust"
 version = "0.1.2"
 edition = "2021"
+# Keep cargo test focused on the library + explicit tests.
+autobins = false
 
 [lints.rust]
 unused_crate_dependencies = "allow"
@@ -9,6 +11,7 @@ unused_crate_dependencies = "allow"
 [lib]
 name = "engine_rust"
 crate-type = ["cdylib", "rlib"]
+doctest = false
 
 [dependencies]
 ort = { version = "2.0.0-rc.9", features = ["ndarray"], optional = true }
@@ -27,7 +30,6 @@ rand = { version = "0.9.0", default-features = false, features = ["small_rng", "
 rand_pcg = "0.9.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serde_yaml = "0.9"
 serde_repr = "0.1"
 bincode = "1.3"
 
@@ -41,24 +43,266 @@ nn = ["dep:ort"]
 extension-module = ["dep:pyo3", "dep:numpy", "pyo3/extension-module"]
 gpu = []
 
+[[bin]]
+name = "ai_battle"
+path = "src/bin/ai_battle.rs"
+test = false
+
+[[bin]]
+name = "ai_game"
+path = "src/bin/ai_game.rs"
+test = false
+
+[[bin]]
+name = "analyze_mcts_depth"
+path = "src/bin/analyze_mcts_depth.rs"
+test = false
+
+[[bin]]
+name = "bench_filter"
+path = "src/bin/bench_filter.rs"
+test = false
+
+[[bin]]
+name = "benchmark_prof"
+path = "src/bin/benchmark_prof.rs"
+test = false
+
+[[bin]]
+name = "benchmark_unified"
+path = "src/bin/benchmark_unified.rs"
+test = false
+
+[[bin]]
+name = "code_analysis"
+path = "src/bin/code_analysis.rs"
+test = false
+
+[[bin]]
+name = "debug_filter"
+path = "src/bin/debug_filter.rs"
+test = false
+
+[[bin]]
+name = "detailed_perf"
+path = "src/bin/detailed_perf.rs"
+test = false
+
+[[bin]]
+name = "diag_eval_cost"
+path = "src/bin/diag_eval_cost.rs"
+test = false
+
+[[bin]]
+name = "diagnostic_init"
+path = "src/bin/diagnostic_init.rs"
+test = false
+
+[[bin]]
+name = "dump_failed_tests"
+path = "src/bin/dump_failed_tests.rs"
+test = false
+
+[[bin]]
+name = "enumerate_sequences"
+path = "src/bin/enumerate_sequences.rs"
+test = false
+
+[[bin]]
+name = "explain_solver"
+path = "src/bin/explain_solver.rs"
+test = false
+
+[[bin]]
+name = "faceoff_agents"
+path = "src/bin/faceoff_agents.rs"
+test = false
+
+[[bin]]
+name = "faceoff_random_vs_mcts"
+path = "src/bin/faceoff_random_vs_mcts.rs"
+test = false
+
+[[bin]]
+name = "final_diagnostic"
+path = "src/bin/final_diagnostic.rs"
+test = false
+
+[[bin]]
+name = "full_game_runner"
+path = "src/bin/full_game_runner.rs"
+test = false
+
+[[bin]]
+name = "full_game_sim"
+path = "src/bin/full_game_sim.rs"
+test = false
+
+[[bin]]
+name = "full_game_timing"
+path = "src/bin/full_game_timing.rs"
+test = false
+
+[[bin]]
+name = "full_profile"
+path = "src/bin/full_profile.rs"
+test = false
+
+[[bin]]
+name = "game_runner_fixed"
+path = "src/bin/game_runner_fixed.rs"
+test = false
+
+[[bin]]
+name = "generate_opcode_guide"
+path = "src/bin/generate_opcode_guide.rs"
+test = false
+
+[[bin]]
+name = "inject_source_words"
+path = "src/bin/inject_source_words.rs"
+test = false
+
+[[bin]]
+name = "inspect_honoka"
+path = "src/bin/inspect_honoka.rs"
+test = false
+
+[[bin]]
+name = "lean_diag"
+path = "src/bin/lean_diag.rs"
+test = false
+
+[[bin]]
+name = "legal_sequences"
+path = "src/bin/legal_sequences.rs"
+test = false
+
+[[bin]]
+name = "measure_move_space"
+path = "src/bin/measure_move_space.rs"
+test = false
+
+[[bin]]
+name = "move_enumeration"
+path = "src/bin/move_enumeration.rs"
+test = false
+
+[[bin]]
+name = "profile_node"
+path = "src/bin/profile_node.rs"
+test = false
+
+[[bin]]
+name = "profile_step"
+path = "src/bin/profile_step.rs"
+test = false
+
+[[bin]]
+name = "quick_diag"
+path = "src/bin/quick_diag.rs"
+test = false
+
+[[bin]]
+name = "quick_move_space"
+path = "src/bin/quick_move_space.rs"
+test = false
+
+[[bin]]
+name = "quick_profile"
+path = "src/bin/quick_profile.rs"
+test = false
+
+[[bin]]
+name = "random_game"
+path = "src/bin/random_game.rs"
+test = false
+
+[[bin]]
+name = "repro_test_cond"
+path = "src/bin/repro_test_cond.rs"
+test = false
+
+[[bin]]
+name = "rewrite_ability_index"
+path = "src/bin/rewrite_ability_index.rs"
+test = false
+
+[[bin]]
+name = "simple_game"
+path = "src/bin/simple_game.rs"
+test = false
+
+[[bin]]
+name = "test_filter"
+path = "src/bin/test_filter.rs"
+test = false
+
+[[bin]]
+name = "test_labels"
+path = "src/bin/test_labels.rs"
+test = false
+
+[[bin]]
+name = "test_serialization"
+path = "src/bin/test_serialization.rs"
+test = false
+
+[[bin]]
+name = "test_turn_runner"
+path = "src/bin/test_turn_runner.rs"
+test = false
+
+[[bin]]
+name = "timing_breakdown"
+path = "src/bin/timing_breakdown.rs"
+test = false
+
+[[bin]]
+name = "tune_sequencer"
+path = "src/bin/tune_sequencer.rs"
+test = false
+
+[[bin]]
+name = "turn_diagnostics"
+path = "src/bin/turn_diagnostics.rs"
+test = false
+
+[[bin]]
+name = "turn_profile"
+path = "src/bin/turn_profile.rs"
+test = false
+
+[[bin]]
+name = "verify_greedy_success"
+path = "src/bin/verify_greedy_success.rs"
+test = false
+
+[[bin]]
+name = "verify_mcts"
+path = "src/bin/verify_mcts.rs"
+test = false
+
 [profile.dev]
-opt-level = 1
+opt-level = 0
 overflow-checks = false
 debug = true
+incremental = true
+codegen-units = 256
 
 [profile.dev.package."*"]
-opt-level = 3
+opt-level = 0
 
 [profile.test]
-opt-level = 1
+opt-level = 0
 overflow-checks = false
-debug = true
-codegen-units = 16
+debug = 0
+incremental = true
+codegen-units = 256
 lto = false
 
-# Link-time optimization for dependencies but not for the main crate
 [profile.test.package."*"]
-opt-level = 3
+opt-level = 0
 
 [profile.release]
 lto = false

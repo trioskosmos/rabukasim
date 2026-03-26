@@ -25,7 +25,10 @@ pub fn handle_select_mode(
             ctx.choice_index = 0;
         } else {
             let slot = frame.dslot();
-            let is_opponent = slot.is_opponent || slot.target_slot == 2;
+            let filter = frame.filter();
+            let is_opponent = slot.is_opponent
+                || slot.target_slot == 2
+                || filter.target_player == 2;
             let choice_type = if is_opponent {
                 ChoiceType::OpponentChoose
             } else {

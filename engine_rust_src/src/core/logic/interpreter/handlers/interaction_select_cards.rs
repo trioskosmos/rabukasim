@@ -4,6 +4,7 @@ use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::interpreter::logging;
+use crate::core::logic::interpreter::suspension::finish_pending_interaction;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::O_SELECT_CARDS;
 
@@ -11,6 +12,15 @@ use crate::core::O_SELECT_CARDS;
 mod interaction_select_cards_resolve;
 
 const VARIABLE_SELECT_CARDS_OPTIONAL_PROMPT: i16 = -32000;
+
+fn cancel_optional_selection(state: &mut GameState) {
+    let p_idx = state.current_player as usize;
+    if let Some(execution_id) = state.ui.current_execution_id {
+        state.ui.cancelled_execution_ids.insert(execution_id);
+    }
+    state.players[p_idx].looked_cards.clear();
+    finish_pending_interaction(state);
+}
 
 pub fn handle_select_cards(
     state: &mut GameState,
@@ -76,14 +86,12 @@ pub fn handle_select_cards(
         && is_variable_selection
         && ctx.v_remaining == VARIABLE_SELECT_CARDS_OPTIONAL_PROMPT
     {
-        if ctx.choice_index == 1 || ctx.choice_index == CHOICE_DONE {
-            if let Some(execution_id) = state.ui.current_execution_id {
-                state.ui.cancelled_execution_ids.insert(execution_id);
-            }
+        if ctx.choice_index == 0 || ctx.choice_index == CHOICE_DONE {
+            cancel_optional_selection(state);
             return HandlerResult::Continue;
         }
 
-        if ctx.choice_index == 0 {
+        if ctx.choice_index == 1 {
             ctx.choice_index = -1;
             ctx.v_remaining = 0;
         }
@@ -110,14 +118,12 @@ pub fn handle_select_cards(
     }
 
     if is_optional && v == 99 && ctx.v_remaining == optional_prompt_marker {
-        if ctx.choice_index == 1 || ctx.choice_index == CHOICE_DONE {
-            if let Some(execution_id) = state.ui.current_execution_id {
-                state.ui.cancelled_execution_ids.insert(execution_id);
-            }
+        if ctx.choice_index == 0 || ctx.choice_index == CHOICE_DONE {
+            cancel_optional_selection(state);
             return HandlerResult::Continue;
         }
 
-        if ctx.choice_index == 0 {
+        if ctx.choice_index == 1 {
             ctx.choice_index = -1;
             ctx.v_remaining = v as i16;
         }

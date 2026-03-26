@@ -22,10 +22,6 @@ pub fn handle_discard_selection(
 
     let filter_attr_base = filter_attr_base & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
 
-    if ctx.repeat_count <= 0 {
-        return HandlerResult::Continue;
-    }
-
     if ctx.choice_index == -1 && ctx.v_remaining == -1 {
         state.players[target_p_idx].looked_cards.clear();
     }
@@ -44,30 +40,27 @@ pub fn handle_discard_selection(
         let matched_ids: Vec<i32> = state.players[target_p_idx]
             .discard
             .iter()
-            .filter(|&&cid| {
-                db.get_member(cid).is_some()
-                    && db
-                        .get_member(cid)
-                        .map(|member| {
-                            if is_total_cost {
-                                member.cost as i16 <= remaining
-                            } else {
-                                // For count-based play, each card uses 2 steps (select card + select slot).
-                                // A card is selectable if we have at least 2 steps left,
-                                // or if we already have 1 step left and only need to place the card
-                                // (the latter is handled by the state machine branch).
-                                // In the selection phase, remaining MUST be >= 2 if we are starting a new card.
-                                // But since we might be in a chain, we just check if it's > 0
-                                // and rely on the subtraction logic to keep it synced.
-                                true
-                            }
-                        })
-                        .unwrap_or(false)
+            .filter_map(|&cid| {
+                let member = db.get_member(cid)?;
+                let cost_ok = if is_total_cost {
+                    member.cost as i16 <= remaining
+                } else {
+                    // For count-based play, each card uses 2 steps (select card + select slot).
+                    // We only need to know that a candidate exists here; the state machine
+                    // handles the exact step accounting in the placement phase.
+                    true
+                };
+
+                if cost_ok
                     && !ctx.selected_cards.contains(&cid)
                     && (filter_attr == 0
                         || state.card_matches_filter_with_ctx(db, cid, filter_attr, &filter_ctx))
+                {
+                    Some(cid)
+                } else {
+                    None
+                }
             })
-            .cloned()
             .collect();
         state.players[target_p_idx].looked_cards.extend(matched_ids);
         if state.players[target_p_idx].looked_cards.is_empty() {

@@ -424,10 +424,12 @@ impl PlayerState {
     }
 
     pub fn push_deck_card(&mut self, card_id: i32) {
+        self.cached_deck_stats = DeckStats::default();
         self.deck.push(card_id);
     }
 
     pub fn pop_deck_card(&mut self) -> Option<i32> {
+        self.cached_deck_stats = DeckStats::default();
         self.deck.pop()
     }
 
@@ -436,6 +438,7 @@ impl PlayerState {
             return None;
         }
 
+        self.cached_deck_stats = DeckStats::default();
         Some(self.deck.remove(idx))
     }
 

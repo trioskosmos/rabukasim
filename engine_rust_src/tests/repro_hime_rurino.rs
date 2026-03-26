@@ -11,7 +11,7 @@ fn test_rurino_filter_masking_fix() {
     // Hand contains some cards - use valid card IDs from the database
     // Let's use card IDs that exist in the database
     let card1 = db.id_by_no("PL!N-bp1-001-R").unwrap_or(1);
-    let card2 = db.id_by_no("PL!N-bp1-002-R").unwrap_or(2);
+    let card2 = db.id_by_no("PL!N-bp1-002-R+").unwrap_or(2);
     state.core.players[p_idx].hand = vec![card1, card2].into();
     state.phase = Phase::Response;
 

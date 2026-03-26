@@ -106,84 +106,8 @@ class AbilityCompiler:
         return frames_out
 
     def compile_to_bytecode(self, ability) -> List[int]:
-        bytecode = []
-        self.filters = []
-        
-        # Hydrate CONSTANT triggers
-        if ability.trigger == TriggerType.CONSTANT:
-            for cond in ability.conditions:
-                self._compile_single_condition(cond, [])
+        return []
 
-        if ability.instructions:
-            instr_bytecodes = []
-            self._last_counted_zone = None
-            last_emitted_target = None
-            i = 0
-            while i < len(ability.instructions):
-                instr = ability.instructions[i]
-                if isinstance(instr, Effect) and instr.params.get("raw_effect") == "COUNT_CARDS":
-                    self._last_counted_zone = (instr.params.get("zone") or instr.params.get("ZONE") or "").upper()
-
-                temp_bc = []
-                if isinstance(instr, Condition):
-                    if ability.trigger != TriggerType.CONSTANT:
-                        self._compile_single_condition(instr, temp_bc)
-                elif isinstance(instr, Effect) and instr.target == TargetType.ALL_PLAYERS:
-                    block = [instr]
-                    j = i + 1
-                    while j < len(ability.instructions) and isinstance(ability.instructions[j], Effect) and ability.instructions[j].target == TargetType.ALL_PLAYERS:
-                        block.append(ability.instructions[j])
-                        j += 1
-                    last_emitted_target = self._compile_all_players_block(temp_bc, block, last_emitted_target)
-                    instr_bytecodes.append(temp_bc)
-                    for _ in range(i + 1, j): instr_bytecodes.append([])
-                    i = j
-                    continue
-                elif isinstance(instr, Effect):
-                    last_emitted_target = self._compile_effect_with_target_persistence(instr, temp_bc, last_emitted_target)
-                elif isinstance(instr, Cost):
-                    self._compile_single_cost(instr, temp_bc)
-                instr_bytecodes.append(temp_bc)
-                i += 1
-
-            for i, instr in enumerate(ability.instructions):
-                bc_chunk = instr_bytecodes[i]
-                bytecode.extend(bc_chunk)
-                if isinstance(instr, Condition):
-                    next_is_cond = i + 1 < len(ability.instructions) and isinstance(ability.instructions[i + 1], Condition)
-                    if bc_chunk and not next_is_cond:
-                        block_end = i + 1
-                        while block_end < len(ability.instructions) and not isinstance(ability.instructions[block_end], Condition):
-                            block_end += 1
-                        guarded_sum = sum(len(c) for c in instr_bytecodes[i + 1 : block_end])
-                        if guarded_sum > 0: bytecode.extend([int(Opcode.JUMP_IF_FALSE), guarded_sum // 5, 0, 0, 0])
-                if isinstance(instr, Cost) and instr.is_optional:
-                    skip_count = self._calculate_skip_count(ability.instructions, instr_bytecodes, i)
-                    bytecode.extend([int(Opcode.JUMP_IF_FALSE), to_signed_32(skip_count), 0, 0, 0])
-
-            bytecode.extend([int(Opcode.RETURN), 0, 0, 0, 0])
-            return bytecode
-
-        # Legacy fallback
-        if ability.trigger != TriggerType.CONSTANT:
-            for cond in ability.conditions: self._compile_single_condition(cond, bytecode)
-        for eff in ability.effects: self._compile_single_effect(eff, bytecode)
-        bytecode.extend([int(Opcode.RETURN), 0, 0, 0, 0])
-        return bytecode
-
-    def _calculate_skip_count(self, instructions, instr_bytecodes, start_idx):
-        words = 0
-        for i in range(start_idx + 1, len(instructions)):
-            words += len(instr_bytecodes[i]) // 5
-            if isinstance(instructions[i], Condition):
-                next_is_cond = i + 1 < len(instructions) and isinstance(instructions[i + 1], Condition)
-                if instr_bytecodes[i] and not next_is_cond:
-                    be = i + 1
-                    while be < len(instructions) and not isinstance(instructions[be], Condition): be += 1
-                    gs = sum(len(c) for c in instr_bytecodes[i + 1 : be])
-                    if gs > 0: words += 1
-            if isinstance(instructions[i], Cost) and instructions[i].is_optional: words += 1
-        return words
 
     def _compile_all_players_block(self, bytecode, block, last_target):
         last_target = self._emit_target_opcode_if_needed(bytecode, TargetType.PLAYER, last_target)

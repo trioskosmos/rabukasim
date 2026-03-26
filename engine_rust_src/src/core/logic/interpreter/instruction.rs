@@ -2,6 +2,7 @@ use crate::core::enums::Zone;
 use crate::core::generated_constants::*;
 use crate::core::generated_layout::*;
 use serde::{Deserialize, Serialize};
+use crate::core::logic::filter::CardFilter;
 use std::sync::Arc;
 
 pub const WORDS_PER_INSTRUCTION: usize = 5;
@@ -672,6 +673,39 @@ impl DecodedFilterAttr {
             a |= 1 << A_STANDARD_KEYWORD_MEMBER_SHIFT;
         }
         a
+    }
+}
+
+impl DecodedFilterAttr {
+    pub fn to_card_filter(&self) -> CardFilter {
+        CardFilter {
+            is_enabled: true,
+            target_player: self.target_player,
+            card_type: self.card_type,
+            group_enabled: self.group_enabled,
+            group_id: self.group_id,
+            is_tapped: self.is_tapped,
+            has_blade_heart: self.has_blade_heart,
+            not_has_blade_heart: self.not_has_blade_heart,
+            unique_names: self.unique_names,
+            unit_enabled: self.unit_enabled,
+            unit_id: self.unit_id,
+            value_enabled: self.value_enabled,
+            value_threshold: self.value_threshold,
+            is_le: self.is_le,
+            is_cost_type: self.is_cost_type,
+            color_mask: self.color_mask,
+            char_id_1: self.char_id_1,
+            char_id_2: self.char_id_2,
+            char_id_3: self.char_id_3,
+            zone_mask: self.zone_mask,
+            special_id: self.special_id,
+            is_setsuna: self.is_setsuna,
+            compare_accumulated: self.compare_accumulated,
+            is_optional: self.is_optional,
+            keyword_energy: self.keyword_energy,
+            keyword_member: self.keyword_member,
+        }
     }
 }
 

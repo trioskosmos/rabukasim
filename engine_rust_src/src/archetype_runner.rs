@@ -99,7 +99,7 @@ fn load_id_mapping(scenarios: &[Scenario]) -> HashMap<i32, i32> {
         let old_id = scenario.real_card_id as i32;
         if map.contains_key(&old_id) { continue; }
 
-        // The scenario_name usually contains the Card No, e.g., "Pass Case: PL!N-pb1-001-P＋ Ab 0 T1"
+        // The scenario_name usually contains the Card No, e.g., "Pass Case: PL!N-pb1-001-P+ Ab 0 T1"
         // We look for the longest matching key to avoid partial matches
         let mut best_match: Option<(usize, i32)> = None;
         for (card_no, &logic_id) in &new_id_map {

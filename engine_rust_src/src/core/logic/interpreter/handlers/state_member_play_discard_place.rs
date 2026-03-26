@@ -62,10 +62,7 @@ pub fn handle_discard_placement(
                     if is_total_cost {
                         member.cost as i16 <= next_remaining
                     } else {
-                        // For count-based play, we need at least 2 steps (select card + select slot)
-                        // This check is used to decide if we should branch back to selection.
-                        // If we only have 1 step left, we can't select another card.
-                        next_remaining >= 2
+                        next_remaining > 0
                     }
                 })
                 .unwrap_or(false)
@@ -75,12 +72,9 @@ pub fn handle_discard_placement(
         false
     };
     let should_continue = if is_total_cost {
-        ctx.v_accumulated > 0
-            && next_remaining > 0
-            && has_more_candidates
-            && ctx.repeat_count > 0
+        ctx.v_accumulated > 0 && next_remaining > 0 && has_more_candidates
     } else {
-        next_remaining > 0 && has_more_candidates && ctx.repeat_count > 0
+        next_remaining > 0 && has_more_candidates
     };
     if should_continue {
         ctx.choice_index = -1;

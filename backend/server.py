@@ -761,22 +761,28 @@ def get_card_no_mapping(card_set: str = "compiled") -> dict[str, int]:
         return card_no_to_id
 
 
+def lookup_card_no_id(card_no: str, card_set: str = "compiled") -> int | None:
+    """Resolve a card code through the normalized card-no map."""
+    mapping = get_card_no_mapping(card_set)
+    norm_code = UnifiedDeckParser.normalize_code(card_no)
+    return mapping.get(norm_code)
+
+
 def convert_deck_strings_to_ids(deck_strings, card_set: str = "compiled"):
     """Convert list of card_no strings to internal IDs (Unique Instance IDs).
     Uses the appropriate mapping based on card_set ("vanilla" or "compiled").
     """
-    mapping = get_card_no_mapping(card_set)
     ids = []
     counts = {}
     for card_no in deck_strings:
-        norm_code = UnifiedDeckParser.normalize_code(card_no)
-        if norm_code in mapping:
-            base_id = mapping[norm_code]
+        base_id = lookup_card_no_id(card_no, card_set)
+        if base_id is not None:
             count = counts.get(base_id, 0)
             uid = create_uid(base_id, count)
             counts[base_id] = count + 1
             ids.append(uid)
         else:
+            norm_code = UnifiedDeckParser.normalize_code(card_no)
             print(f"Warning: Unknown card_no '{card_no}' (norm: '{norm_code}') in {card_set} set, skipping.")
     return ids
 
@@ -1823,11 +1829,13 @@ def get_room_assets():
     for _pid, deck_info in custom_decks.items():
         # 'main' and 'energy' contain card_no strings
         for card_no in deck_info.get("main", []):
-            if card_no in card_no_to_id:
-                add_card_assets(card_no_to_id[card_no])
+            card_id = lookup_card_no_id(card_no)
+            if card_id is not None:
+                add_card_assets(card_id)
         for card_no in deck_info.get("energy", []):
-            if card_no in card_no_to_id:
-                add_card_assets(card_no_to_id[card_no])
+            card_id = lookup_card_no_id(card_no)
+            if card_id is not None:
+                add_card_assets(card_id)
 
     # 2. From Current Game State (Active)
     if room.get("state"):
@@ -2022,10 +2030,12 @@ def validate_cards():
 
     print(f"DEBUG: validation - map size: {len(card_no_to_id)}", flush=True)
     test_key = "PL!SP-bp1-004-R"
-    if test_key in card_no_to_id:
-        print(f"DEBUG: validation - found {test_key}: {card_no_to_id[test_key]}", flush=True)
+    test_key_norm = UnifiedDeckParser.normalize_code(test_key)
+    test_key_val = lookup_card_no_id(test_key)
+    if test_key_val is not None:
+        print(f"DEBUG: validation - found {test_key_norm}: {test_key_val}", flush=True)
     else:
-        print(f"DEBUG: validation - {test_key} NOT FOUND in map!", flush=True)
+        print(f"DEBUG: validation - {test_key_norm} NOT FOUND in map!", flush=True)
 
     known = []
     unknown = []
@@ -2039,9 +2049,8 @@ def validate_cards():
     for card_id in card_ids:
         # print(f"DEBUG: Checking {card_id}", flush=True)
         qty = card_counts.get(card_id, 1)
-        norm_id = UnifiedDeckParser.normalize_code(card_id)
-        if norm_id in card_no_to_id:
-            internal_id = card_no_to_id[norm_id]
+        internal_id = lookup_card_no_id(card_id)
+        if internal_id is not None:
             known.append(card_id)
 
             # Determine type and get name
@@ -2059,8 +2068,8 @@ def validate_cards():
 
     debug_info = {
         "map_size": len(card_no_to_id),
-        "test_key_exists": "PL!SP-bp1-004-R" in card_no_to_id,
-        "test_key_val": card_no_to_id.get("PL!SP-bp1-004-R", "N/A"),
+        "test_key_exists": test_key_val is not None,
+        "test_key_val": test_key_val if test_key_val is not None else "N/A",
         "first_5_keys": list(card_no_to_id.keys())[:5],
     }
 

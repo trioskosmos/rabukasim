@@ -6,7 +6,7 @@ use engine_rust::test_helpers::load_real_db;
 fn test_sumire_8752_trigger_repro() {
     let db = load_real_db();
 
-    // Card 8752: PL!SP-bp4-004-P＋
+    // Card 8752: PL!SP-bp4-004-P+
     let sumire_id = 8752;
     let card = db.get_member(sumire_id).expect("Sumire 8752 not in DB");
 

@@ -12,6 +12,14 @@ PROJECT_ROOT = os.path.abspath(str(ROOT_DIR))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
+import hashlib
+
+def calculate_hash(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
 from tools import frame_codec as codec
 
 DEFAULT_INPUT_PATH = ROOT_DIR / "data" / "ability_frames.json"
@@ -29,12 +37,34 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    
+    # --- Parity Check ---
+    hash_file = ROOT_DIR / "data" / ".ability_frame_sync_hash"
+    h1 = calculate_hash(args.input)
+    h2 = calculate_hash(args.metadata)
+    current_hash = f"{h1}|{h2}"
+    
+    if hash_file.exists() and args.output.exists():
+        with open(hash_file, "r") as f:
+            stored_hash = f.read().strip()
+        if stored_hash == current_hash:
+            print("Ability frame index is up to date (O(1) match). Skipping sync.")
+            return 0
+
     payload = codec.load_json(args.input)
     metadata = codec.load_json(args.metadata)
     runtime_payload = codec.build_runtime_ability_index(payload, metadata)
     codec.dump_json(args.output, runtime_payload)
     print(f"Wrote runtime ability frame index to {args.output}")
     print(f"Unique abilities: {runtime_payload.get('summary', {}).get('unique_ability_count', 0)}")
+    
+    # Save hash for parity
+    try:
+        with open(hash_file, "w") as f:
+            f.write(current_hash)
+    except Exception as e:
+        print(f"Warning: Could not save parity hash: {e}")
+        
     return 0
 
 

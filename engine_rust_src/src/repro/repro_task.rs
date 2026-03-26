@@ -49,7 +49,7 @@ mod tests {
     #[test]
     fn test_ability_activation_zone_repro() {
         let db = load_db();
-        // Card ID 4264 (PL!HS-bp1-003-R＋) — has Activated ability at index 1
+        // Card ID 4264 (PL!HS-bp1-003-R+) — has Activated ability at index 1
         let target_cid = 4264;
 
         let mut state = GameState::default();

@@ -39,7 +39,7 @@ mod qa_remaining_gaps {
     fn test_q147_score_bonus_snapshot() {
         let mut game = Game::new_test();
 
-        // Live card with: "ライブ開始時 自分のハンドが5枚以上の場合、このカードのスコアを＋1"
+        // Live card with: "ライブ開始時 自分のハンドが5枚以上の場合、このカードのスコアを+1"
         let live_card = Card::live("PL!-bp1-025")
             .with_ability_live_start_conditional("hand_size_5plus", "score", 1);
 

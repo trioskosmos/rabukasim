@@ -3,10 +3,45 @@ use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
-use crate::core::logic::EffectType;
 
 fn selected_target_key(source_zone: u8, slot_idx: i32) -> i32 {
     ((source_zone as i32) << 8) | (slot_idx & 0xFF)
+}
+
+fn cards_for_source_zone(state: &GameState, target_player: usize, source_zone: u8) -> Vec<i32> {
+    match source_zone {
+        6 => state.players[target_player].hand.to_vec(),
+        7 => state.players[target_player].discard.to_vec(),
+        _ => state.players[target_player].stage.to_vec(),
+    }
+}
+
+fn count_selected_targets(cards: &[i32], source_zone: u8, keys: &[i32]) -> usize {
+    cards
+        .iter()
+        .enumerate()
+        .filter(|(idx, cid)| **cid >= 0 && keys.contains(&selected_target_key(source_zone, *idx as i32)))
+        .count()
+}
+
+fn count_remaining_targets(
+    state: &GameState,
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    cards: &[i32],
+    source_zone: u8,
+    keys: &[i32],
+    filter_attr: u64,
+) -> usize {
+    cards
+        .iter()
+        .enumerate()
+        .filter(|(idx, cid)| {
+            **cid >= 0
+                && !keys.contains(&selected_target_key(source_zone, *idx as i32))
+                && state.card_matches_filter_with_ctx(db, **cid, filter_attr, ctx)
+        })
+        .count()
 }
 
 fn recover_select_filter_attr(db: &CardDatabase, ctx: &AbilityContext, current: u64) -> u64 {
@@ -37,24 +72,11 @@ fn recover_select_filter_attr(db: &CardDatabase, ctx: &AbilityContext, current: 
         return current;
     };
 
-    if let Some(frame) = ability
+    ability
         .frames()
         .iter()
         .find(|frame| frame.opcode() == O_SELECT_MEMBER)
-    {
-        if let Some(attr) = filter_attr_from_params(frame.get_components().params) {
-            return current | attr;
-        }
-    }
-
-    ability
-        .effects
-        .iter()
-        .find(|effect| {
-            effect.runtime_opcode == O_SELECT_MEMBER
-                || effect.effect_type == EffectType::SelectMember
-        })
-        .and_then(|effect| filter_attr_from_params(Some(&effect.params)))
+        .and_then(|frame| filter_attr_from_params(frame.components().params))
         .map(|attr| current | attr)
         .unwrap_or(current)
 }
@@ -118,22 +140,9 @@ pub fn resolve_select_choice(
     } else {
         resolve_target_player(slot_info, filter_attr, ctx.player_id as usize)
     };
-    let selected_cid = match source_zone {
-        6 => state.players[target_player]
-            .hand
-            .get(choice as usize)
-            .copied()
-            .unwrap_or(-1),
-        7 => state.players[target_player]
-            .discard
-            .get(choice as usize)
-            .copied()
-            .unwrap_or(-1),
-        _ => state.players[target_player]
-            .stage
-            .get(choice as usize)
-            .copied()
-            .unwrap_or(-1),
+    let selected_cid = {
+        let source_cards = cards_for_source_zone(state, target_player, source_zone);
+        source_cards.get(choice as usize).copied().unwrap_or(-1)
     };
     if selected_cid >= 0 && !ctx.selected_cards.contains(&selected_cid) {
         ctx.selected_cards.push(selected_cid);
@@ -175,80 +184,20 @@ pub fn resolve_select_choice(
     }
 
     if supports_partial_completion && !ctx.selected_cards.is_empty() {
-        let current_selection_count = match source_zone {
-            6 => state.players[target_player]
-                .hand
-                .iter()
-                .enumerate()
-                .filter(|(idx, cid)| {
-                    **cid >= 0
-                        && ctx
-                            .selected_target_keys
-                            .contains(&selected_target_key(source_zone, *idx as i32))
-                })
-                .count(),
-            7 => state.players[target_player]
-                .discard
-                .iter()
-                .enumerate()
-                .filter(|(idx, cid)| {
-                    **cid >= 0
-                        && ctx
-                            .selected_target_keys
-                            .contains(&selected_target_key(source_zone, *idx as i32))
-                })
-                .count(),
-            _ => state.players[target_player]
-                .stage
-                .iter()
-                .enumerate()
-                .filter(|(idx, cid)| {
-                    **cid >= 0
-                        && ctx
-                            .selected_target_keys
-                            .contains(&selected_target_key(source_zone, *idx as i32))
-                })
-                .count(),
-        };
-
-        let remaining_candidates = match source_zone {
-            6 => state.players[target_player]
-                .hand
-                .iter()
-                .enumerate()
-                .filter(|(idx, cid)| {
-                    **cid >= 0
-                        && !ctx
-                            .selected_target_keys
-                            .contains(&selected_target_key(source_zone, *idx as i32))
-                        && state.card_matches_filter_with_ctx(db, **cid, filter_attr, ctx)
-                })
-                .count(),
-            7 => state.players[target_player]
-                .discard
-                .iter()
-                .enumerate()
-                .filter(|(idx, cid)| {
-                    **cid >= 0
-                        && !ctx
-                            .selected_target_keys
-                            .contains(&selected_target_key(source_zone, *idx as i32))
-                        && state.card_matches_filter_with_ctx(db, **cid, filter_attr, ctx)
-                })
-                .count(),
-            _ => state.players[target_player]
-                .stage
-                .iter()
-                .enumerate()
-                .filter(|(idx, cid)| {
-                    **cid >= 0
-                        && !ctx
-                            .selected_target_keys
-                            .contains(&selected_target_key(source_zone, *idx as i32))
-                        && state.card_matches_filter_with_ctx(db, **cid, filter_attr, ctx)
-                })
-                .count(),
-        };
+        let current_selection_count = count_selected_targets(
+            cards_for_source_zone(state, target_player, source_zone).as_slice(),
+            source_zone,
+            &ctx.selected_target_keys,
+        );
+        let remaining_candidates = count_remaining_targets(
+            state,
+            db,
+            ctx,
+            cards_for_source_zone(state, target_player, source_zone).as_slice(),
+            source_zone,
+            &ctx.selected_target_keys,
+            filter_attr,
+        );
 
         let remaining_picks = (v as usize).saturating_sub(current_selection_count);
 

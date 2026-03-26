@@ -95,6 +95,10 @@ pub fn handle_tap_member_selected(
         return HandlerResult::SetCond(false);
     }
 
+    if is_optional && !needs_selection && ctx.v_remaining == -1 {
+        return HandlerResult::SetCond(false);
+    }
+
     if is_optional || (a & 0x01) != 0 {
         if is_optional && ctx.v_remaining == -1 {
             if is_choice_done || ctx.choice_index == 1 {

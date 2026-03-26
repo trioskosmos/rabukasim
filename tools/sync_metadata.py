@@ -1,6 +1,14 @@
 import datetime
 import json
 import os
+import hashlib
+
+
+def calculate_hash(path):
+    if not os.path.exists(path):
+        return None
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
 
 
 def to_pascal_case(snake_str):
@@ -88,6 +96,19 @@ def sync():
     if not os.path.exists(metadata_path):
         print(f"Error: {metadata_path} not found")
         return
+
+    # --- Parity Check ---
+    hash_file = os.path.join(project_root, "data", ".metadata_sync_hash")
+    current_hash = calculate_hash(metadata_path)
+    
+    if os.path.exists(hash_file):
+        with open(hash_file, "r") as f:
+            stored_hash = f.read().strip()
+        if stored_hash == current_hash:
+            # Check if one of the critical generated files exists. If not, we must sync anyway.
+            if os.path.exists(os.path.join(project_root, "engine_rust_src/src/core/generated_constants.rs")):
+                print("Metadata is up to date (O(1) match). Skipping sync.")
+                return
 
     with open(metadata_path, "r", encoding="utf-8") as f:
         metadata = json.load(f)
@@ -616,217 +637,19 @@ def sync():
             f.write(f"    {key} = {val}\n")
         f.write("\n\n")
 
-    # --- Generate WGSL Constants (for GPU Shader Parity) ---
-    wgsl_path = "engine_rust_src/src/core/shader_constants.wgsl"
-    # Based on actual implementation in shader_rules.wgsl and combined_shader.wgsl
-    # Updated to reflect 100% coverage goal
-    wgsl_implemented_opcodes = {
-        # Core control flow
-        "RETURN",
-        "JUMP",
-        "JUMP_IF_FALSE",
-        # Basic game actions
-        "DRAW",
-        "ADD_BLADES",
-        "ADD_HEARTS",
-        "REDUCE_COST",
-        "BOOST_SCORE",
-        "ENERGY_CHARGE",
-        "SELECT_MODE",
-        "MOVE_TO_DECK",
-        "TAP_OPPONENT",
-        "COLOR_SELECT",
-        "MOVE_TO_DISCARD",
-        "LOOK_AND_CHOOSE",
-        "ACTIVATE_ENERGY",
-        # State manipulation
-        "RESTRICTION",
-        "BATON_TOUCH_MOD",
-        "BUFF_POWER",
-        "IMMUNITY",
-        "SET_BLADES",
-        "SET_HEARTS",
-        "MOVE_MEMBER",
-        "SWAP_CARDS",
-        "SEARCH_DECK",
-        "LOOK_DECK",
-        "REVEAL_UNTIL",
-        "RECOVER_LIVE",
-        "RECOVER_MEMBER",
-        "DRAW_UNTIL",
-        "PAY_ENERGY",
-        "SET_SCORE",
-        "ACTIVATE_MEMBER",
-        "TAP_MEMBER",
-        # Heart and cost manipulation
-        "SET_TAPPED",
-        "REDUCE_HEART_REQ",
-        "INCREASE_HEART_COST",
-        "SET_HEART_COST",
-        "INCREASE_COST",
-        "REDUCE_YELL_COUNT",
-        "REDUCE_LIVE_SET_LIMIT",
-        "PREVENT_ACTIVATE",
-        "PREVENT_SET_TO_SUCCESS_PILE",
-        "PREVENT_BATON_TOUCH",
-        # Card movement and play
-        "PLAY_MEMBER_FROM_HAND",
-        "PLAY_MEMBER_FROM_DISCARD",
-        "GRANT_ABILITY",
-        "TRANSFORM_HEART",
-        "PLAY_LIVE_FROM_DISCARD",
-        "TRANSFORM_COLOR",
-        "ADD_TO_HAND",
-        "SELECT_MEMBER",
-        "SELECT_LIVE",
-        "SELECT_PLAYER",
-        "SELECT_CARDS",
-        "SWAP_AREA",
-        "SWAP_ZONE",
-        # Additional opcodes (marked as unused but included for completeness)
-        "NOP",
-        "FLAVOR",
-        "FORMATION_CHANGE",
-        "ADD_CONTINUOUS",
-        # Remaining opcodes (to be implemented in WGSL)
-        "NEGATE_EFFECT",
-        "ORDER_DECK",
-        "META_RULE",
-        "PLACE_UNDER",
-        "REVEAL_CARDS",
-        "CHEER_REVEAL",
-        "TRIGGER_REMOTE",
-        "MODIFY_SCORE_RULE",
-        "ADD_STAGE_ENERGY",
-        "PREVENT_PLAY_TO_SLOT",
-        "OPPONENT_CHOOSE",
-        # Final opcode for 100% coverage
-        "REPLACE_EFFECT",
-    }
-    wgsl_implemented_conditions = {
-        # From shader_rules.wgsl check_condition_opcode function
-        "TURN_1",
-        "HAS_MEMBER",
-        "HAS_COLOR",
-        "COUNT_STAGE",
-        "COUNT_HAND",
-        "LIFE_LEAD",
-        "COUNT_GROUP",
-        "COUNT_ENERGY",
-        "COST_CHECK",
-        "SCORE_COMPARE",
-        "COUNT_HEARTS",
-        "COUNT_BLADES",
-        "BATON",
-        # Additional conditions from shader_rules.wgsl
-        "GROUP_FILTER",
-        "OPPONENT_HAS",
-        "SELF_IS_GROUP",
-        "RARITY_CHECK",
-        "COUNT_SUCCESS_LIVE",
-        "TYPE_CHECK",
-        "IS_IN_DISCARD",
-        # Additional conditions (to be implemented or marked as implemented)
-        "COUNT_DISCARD",
-        "IS_CENTER",
-        "MODAL_ANSWER",
-        "HAS_LIVE_CARD",
-        "OPPONENT_HAND_DIFF",
-        "HAS_KEYWORD",
-        "DECK_REFRESHED",
-        "COUNT_LIVE_ZONE",
-        "AREA_CHECK",
-        "OPPONENT_ENERGY_DIFF",
-        "HAS_MOVED",
-        "HAND_INCREASED",
-        "OPPONENT_CHOICE",
-        "HAS_CHOICE",
-        "COST_LEAD",
-        "SCORE_LEAD",
-        "HEART_LEAD",
-        "HAS_EXCESS_HEART",
-        "NOT_HAS_EXCESS_HEART",
-        "TOTAL_BLADES",
-        "COST_COMPARE",
-        "BLADE_COMPARE",
-        "HEART_COMPARE",
-        "OPPONENT_HAS_WAIT",
-        # Final conditions for 100% coverage
-        "HAND_HAS_NO_LIVE",
-        "IS_TAPPED",
-        "IS_ACTIVE",
-        "LIVE_PERFORMED",
-        "IS_PLAYER",
-        "IS_OPPONENT",
-    }
-
-    with open(wgsl_path, "w", encoding="utf-8") as f:
-        f.write(f"// @generated by tools/sync_metadata.py on {datetime.datetime.now().isoformat()}\n")
-        f.write("// DO NOT EDIT MANUALLY - This file is auto-generated for WGSL/Rust parity\n\n")
-
-        # Opcodes
-        f.write("// --- OPCODES ---\n")
-        for key, val in metadata["opcodes"].items():
-            impl_status = " // IMPLEMENTED" if key in wgsl_implemented_opcodes else " // TODO: Not implemented in WGSL"
-            if key in unused_list:
-                impl_status = " // [UNUSED]"
-            f.write(f"const O_{key}: i32 = {val};{impl_status}\n")
-
-        # Condition Types
-        f.write("\n// --- CONDITION TYPES ---\n")
-        for key, val in metadata["conditions"].items():
-            impl_status = (
-                " // IMPLEMENTED" if key in wgsl_implemented_conditions else " // TODO: Not implemented in WGSL"
-            )
-            if key in unused_list:
-                impl_status = " // [UNUSED]"
-            f.write(f"const C_{key}: i32 = {val};{impl_status}\n")
-
-        # Phase constants (important for state machine)
-        f.write("\n// --- PHASES ---\n")
-        for key, val in metadata["phases"].items():
-            f.write(f"const PHASE_{key}: i32 = {val};\n")
-
-        # Ability Flags (for heuristic evaluation)
-        f.write("\n// --- ABILITY FLAGS (lo) ---\n")
-        flag_constants = {k: v for k, v in resolved_extra_constants.items() if k.startswith("FLAG_")}
-        for key, val in flag_constants.items():
-            f.write(f"const F_{key[5:]}: u32 = {val}u;\n")
-
-        # Synergy Flags
-        f.write("\n// --- SYNERGY FLAGS ---\n")
-        syn_constants = {k: v for k, v in resolved_extra_constants.items() if k.startswith("SYN_FLAG_")}
-        for key, val in syn_constants.items():
-            f.write(f"const SYN_{key[9:]}: u32 = {val}u;\n")
-
-        # Parity tracking comment
-        f.write("\n// --- PARITY STATUS ---\n")
-        f.write(f"// WGSL Opcodes: {len(wgsl_implemented_opcodes)}/{len(metadata['opcodes'])} implemented\n")
-        f.write(f"// WGSL Conditions: {len(wgsl_implemented_conditions)}/{len(metadata['conditions'])} implemented\n")
-        f.write("// See plans/wgsl_rust_parity_strategy.md for details\n")
-
-    # --- Generate Parity Matrix JSON ---
-    parity_path = "reports/parity_matrix.json"
+    # --- Generate Sync Report ---
+    report_path = "reports/sync_status.json"
     os.makedirs("reports", exist_ok=True)
-    parity_data = {
-        "wgsl_opcodes": {
-            "implemented": list(wgsl_implemented_opcodes),
-            "total": len(metadata["opcodes"]),
-            "coverage": len(wgsl_implemented_opcodes) / len(metadata["opcodes"]) if metadata["opcodes"] else 0,
-        },
-        "wgsl_conditions": {
-            "implemented": list(wgsl_implemented_conditions),
-            "total": len(metadata["conditions"]),
-            "coverage": len(wgsl_implemented_conditions) / len(metadata["conditions"]) if metadata["conditions"] else 0,
-        },
+    report_data = {
+        "status": "Success",
         "last_updated": datetime.datetime.now().isoformat(),
         "_metadata": {
             "generated_by": "tools/sync_metadata.py",
             "generated_at": datetime.datetime.now().isoformat()
         }
     }
-    with open(parity_path, "w", encoding="utf-8") as f:
-        json.dump(parity_data, f, indent=2)
+    with open(report_path, "w", encoding="utf-8") as f:
+        json.dump(report_data, f, indent=2)
 
     # --- Generate Packed Layout Helpers ---
     layout = metadata.get("packed_layout") or metadata.get("bytecode_layout")
@@ -897,10 +720,15 @@ def sync():
                             f.write(f"pub const {alias_const_base}_MASK: {mask_type} = {hex(group['mask'])};\n")
                     f.write("\n")
 
-    print("Successfully synchronized metadata to Rust, JS, Python, and WGSL!")
-    print(
-        f"WGSL Parity: {len(wgsl_implemented_opcodes)}/{len(metadata['opcodes'])} opcodes, {len(wgsl_implemented_conditions)}/{len(metadata['conditions'])} conditions"
-    )
+    print("Successfully synchronized metadata to Rust, JS, and Python!")
+    
+    # Save hash for parity
+    try:
+        if current_hash:
+            with open(hash_file, "w") as f:
+                f.write(current_hash)
+    except Exception as e:
+        print(f"Warning: Could not save parity hash: {e}")
 
 
 if __name__ == "__main__":

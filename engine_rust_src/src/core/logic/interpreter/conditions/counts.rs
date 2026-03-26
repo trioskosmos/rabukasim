@@ -4,6 +4,14 @@ use crate::core::logic::filter::CardFilter;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
+fn target_player_pair(filter: &CardFilter, p_idx: usize) -> (usize, Option<usize>) {
+    match filter.target_player {
+        2 => (1 - p_idx, None),
+        3 => (p_idx, Some(1 - p_idx)),
+        _ => (p_idx, None),
+    }
+}
+
 pub fn resolve_count_frame(
     state: &GameState,
     db: &CardDatabase,
@@ -210,7 +218,15 @@ pub fn resolve_count(
         }
     } else {
         match op {
-            C_COUNT_ENERGY => player.energy_zone.len() as i32,
+            C_COUNT_ENERGY => {
+                let filter = CardFilter::from_attr(attr as i64);
+                let (primary_player, secondary_player) = target_player_pair(&filter, p_idx);
+                let mut total = state.players[primary_player].energy_zone.len() as i32;
+                if let Some(other_player) = secondary_player {
+                    total += state.players[other_player].energy_zone.len() as i32;
+                }
+                total
+            }
             C_COUNT_BLADES | C_COUNT_HEARTS | C_COUNT_STAGE | C_COUNT_GROUP => {
                 let target_slot = slot & 0x0F;
                 let resolved_slot = if target_slot == 10 {
@@ -303,26 +319,45 @@ pub fn get_condition_count(
     let opponent = &state.players[1 - p_idx];
 
     let filter_attr = (attr as u64) & 0x00000000FFFFFFFF;
+    let filter = CardFilter::from_attr(filter_attr as i64);
+    let (primary_player, secondary_player) = target_player_pair(&filter, p_idx);
+
+    let count_zone = |cards: &[i32]| -> i32 {
+        cards
+            .iter()
+            .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr))
+            .count() as i32
+    };
 
     match cond_id {
         C_COUNT_STAGE => {
-            let mut ids = Vec::new();
-            ids.extend(player.stage.iter().filter(|&&id| id >= 0));
-            ids.into_iter()
-                .filter(|&&id| state.card_matches_filter(db, id, filter_attr))
-                .count() as i32
+            let mut total = count_zone(&state.players[primary_player].stage);
+            if let Some(other_player) = secondary_player {
+                total += count_zone(&state.players[other_player].stage);
+            }
+            total
         }
-        C_COUNT_HAND => player
-            .hand
-            .iter()
-            .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr))
-            .count() as i32,
-        C_COUNT_DISCARD => player
-            .discard
-            .iter()
-            .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr))
-            .count() as i32,
-        C_COUNT_ENERGY => player.energy_zone.len() as i32,
+        C_COUNT_HAND => {
+            let mut total = count_zone(&state.players[primary_player].hand);
+            if let Some(other_player) = secondary_player {
+                total += count_zone(&state.players[other_player].hand);
+            }
+            total
+        }
+        C_COUNT_DISCARD => {
+            let mut total = count_zone(&state.players[primary_player].discard);
+            if let Some(other_player) = secondary_player {
+                total += count_zone(&state.players[other_player].discard);
+            }
+            total
+        }
+        C_COUNT_ENERGY => {
+            let mut total = state.players[primary_player].energy_zone.len() as i32;
+            if let Some(other_player) = secondary_player {
+                total += state.players[other_player].energy_zone.len() as i32;
+            }
+            total
+        }
         C_COUNT_HEARTS => {
             let mut total = 0;
             for i in 0..3 {

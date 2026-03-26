@@ -56,7 +56,6 @@ pub fn handle_move_member(
         }
     }
 
-    let player = &state.players[target_p_idx];
     let src_slot = if is_position_change_choice {
         1
     } else if let Some(&selected_cid) = ctx.selected_cards.last() {
@@ -145,22 +144,24 @@ pub fn handle_move_member(
         a as usize
     };
 
-    if is_optional {
-        let tap_slot = if legacy_tap_selection {
-            if needs_choice {
+    let tap_slot = |use_destination: bool| {
+        if legacy_tap_selection {
+            if use_destination {
                 dst_slot
             } else {
                 src_slot
             }
-        } else if !is_position_change_choice {
-            src_slot
-        } else if needs_choice {
+        } else if is_position_change_choice && use_destination {
             dst_slot
         } else {
             src_slot
-        };
-        if tap_slot < 3 && state.players[target_p_idx].stage[tap_slot] >= 0 {
-            state.players[target_p_idx].set_tapped(tap_slot, true);
+        }
+    };
+
+    if is_optional {
+        let tap_idx = tap_slot(needs_choice);
+        if tap_idx < 3 && state.players[target_p_idx].stage[tap_idx] >= 0 {
+            state.players[target_p_idx].set_tapped(tap_idx, true);
         }
         ctx.v_remaining = -1;
         return HandlerResult::Continue;

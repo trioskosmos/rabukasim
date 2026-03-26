@@ -9,7 +9,7 @@ fn test_card_558_wait_repro() {
     let db = CardDatabase::from_json(&json_content).unwrap();
 
     let p1 = 0;
-    // PL!SP-bp4-002-P is ID 558
+    // PL!SP-bp4-002-Pis ID 558
     let card_id = 558;
 
     // Put card in hand

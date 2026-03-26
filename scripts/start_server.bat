@@ -7,15 +7,14 @@ if errorlevel 1 goto NO_CARGO
 where uv >nul 2>&1
 if errorlevel 1 goto NO_UV
 
-powershell -NoProfile -Command "$ppid = (Get-CimInstance Win32_Process -Filter \"ProcessId = $PID\").ParentProcessId; Get-CimInstance Win32_Process -Filter \"Name = 'cmd.exe'\" | Where-Object { $_.CommandLine -like '*start_server.bat*' -and $_.ProcessId -ne $PID -and $_.ProcessId -ne $ppid } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
-
-taskkill /F /IM rabuka_launcher.exe /T 2>nul
-powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8000,8080,8888,3000,5000 -ErrorAction SilentlyContinue | ForEach-Object { $p = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue; if ($p -and $p.ProcessName -notmatch 'chrome|msedge|firefox|brave|browser') { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } }"
+echo [build] Checking for stale processes and syncing metadata...
+powershell -NoProfile -Command "$ppid=(Get-CimInstance Win32_Process -Filter \"ProcessId=$PID\").ParentProcessId; Get-CimInstance Win32_Process -Filter \"Name='cmd.exe'\" | Where-Object { $_.CommandLine -like '*start_server.bat*' -and $_.ProcessId -ne $PID -and $_.ProcessId -ne $ppid } | Stop-Process -Force -ErrorAction SilentlyContinue; taskkill /F /IM rabuka_launcher.exe /T 2>$null; Get-NetTCPConnection -LocalPort 8000,8080,8888,3000,5000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"
+uv run python tools/sync_metadata.py
 
 echo [build] Preparing environment...
 if not exist "data\cards.json" goto NO_DATA
 
-echo [build] Compiling card data...
+echo [build] Compiling frame data...
 uv run python -m compiler.main --export-profile runtime
 if errorlevel 1 goto CMD_FAIL
 

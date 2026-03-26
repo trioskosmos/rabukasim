@@ -3,6 +3,7 @@ use super::movement_discard_helpers::{
 };
 use crate::core::enums::*;
 use crate::core::logic::constants::FILTER_MASK_LOWER;
+use crate::core::logic::constants::FILTER_IS_OPTIONAL;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::handlers::state_helpers::source_ability;
 use crate::core::logic::interpreter::logging;
@@ -69,7 +70,7 @@ pub fn handle_move_to_discard(
     }
 
     let filter_attr = (a as u64) & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
-    let is_optional = frame_data.filter.is_optional;
+    let is_optional = frame_data.filter.is_optional || (a as u64 & FILTER_IS_OPTIONAL) != 0;
 
     if state.debug.debug_mode {
         println!(

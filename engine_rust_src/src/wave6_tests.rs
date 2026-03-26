@@ -192,12 +192,12 @@ mod tests {
         let db = load_real_db();
         let p_idx = 0;
 
-        // Card ID 10: LL-bp2-001-R＋ — has a real CONSTANT ability with O_PREVENT_BATON_TOUCH
+        // Card ID 10: LL-bp2-001-R+ — has a real CONSTANT ability with O_PREVENT_BATON_TOUCH
         // No mocked bytecode needed: the real compiled data provides the restriction.
         state.players[p_idx].stage[0] = 10;
 
         // Give player another member in hand (use a real card from the DB)
-        let other_member_id = 9; // LL-bp1-001-R＋ (cost 20)
+        let other_member_id = 9; // LL-bp1-001-R+ (cost 20)
         state.players[p_idx].hand.clear();
         state.players[p_idx].hand_added_turn.clear();
         state.players[p_idx].hand.push(other_member_id);

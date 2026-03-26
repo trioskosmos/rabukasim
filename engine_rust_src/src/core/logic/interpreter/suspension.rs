@@ -12,6 +12,25 @@ pub fn get_choice_text(db: &CardDatabase, ctx: &AbilityContext) -> String {
     crate::core::logic::ActionFactory::get_choice_text(db, ctx)
 }
 
+pub fn finish_pending_interaction(state: &mut GameState) {
+    let popped = state.interaction_stack.pop();
+    if state.interaction_stack.is_empty() {
+        let original_phase = popped
+            .as_ref()
+            .map(|pi| pi.original_phase)
+            .unwrap_or(state.phase);
+        state.phase = if original_phase == Phase::Response || original_phase == Phase::Setup {
+            Phase::Main
+        } else {
+            original_phase
+        };
+        if let Some(pi) = popped {
+            state.current_player = pi.original_current_player;
+        }
+        state.clear_execution_id();
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn suspend_interaction(
     state: &mut GameState,
@@ -85,6 +104,25 @@ pub fn suspend_interaction(
     state.interaction_stack.last_mut().unwrap().actions = final_actions.clone();
 
     let _actions_len = final_actions.len();
+    if choice_type == ChoiceType::Optional
+        && final_actions.len() == 1
+        && final_actions[0] == 0
+    {
+        if state.debug.debug_mode {
+            println!("[DEBUG] Auto-skipping degenerate optional prompt: {:?}", choice_type);
+        }
+        state.trace_internal(&format!(
+            "BC_SUSPEND_SKIP_OPTIONAL: [phase={:?}] choice_type={} v_remaining={} {}",
+            state.phase,
+            choice_type.as_str(),
+            v_remaining,
+            logging::describe_context(ctx)
+        ));
+        state.interaction_stack.pop();
+        state.phase = original_phase;
+        state.current_player = original_cp;
+        return false;
+    }
 
     let always_suspend_types = [
         ChoiceType::Optional,

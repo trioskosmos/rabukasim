@@ -1,4 +1,4 @@
-/// Reproduction test for PL!SP-bp4-001-P (Card 557)
+/// Reproduction test for PL!SP-bp4-001-P(Card 557)
 /// Issue: ALL_MEMBERS condition doesn't activate correctly when baton passed from non-Liella!
 ///
 /// Expected behavior:

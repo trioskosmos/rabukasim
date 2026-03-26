@@ -145,7 +145,11 @@ impl EvaluationContext {
 
         for p_idx in 0..2 {
             let player = &state.players[p_idx];
-            let stats = calculate_deck_expectations(&player.deck, db);
+            let stats = if player.cached_deck_stats.count > 0.0 {
+                player.cached_deck_stats
+            } else {
+                calculate_deck_expectations(&player.deck, db)
+            };
             deck_stats[p_idx] = stats;
 
             // Pre-calculate yell bonus table for all possible counts (0-60)

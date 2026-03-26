@@ -13,7 +13,7 @@ mod tests {
         // ID 100: Liella Member, Cost 1
         let mut m1 = MemberCard::default();
         m1.card_id = 100;
-        m1.name = "澁谷かのん".to_string();
+        m1.name = "SHIBUYA KANON".to_string();
         m1.cost = 1;
         m1.groups = vec![3]; // Liella
         db.members.insert(100, m1.clone());
@@ -173,13 +173,13 @@ mod tests {
 
         let ctx = AbilityContext::default();
 
-        // Filter for "澁谷かのん" (Kanon)
+        // Filter for "KANON" (the current NAME_IN implementation matches the canonical romanized name)
         let cond = Condition {
             condition_type: ConditionType::CountHand,
             value: 1,
             attr: 0,
             target_slot: 0,
-            params: serde_json::json!({"filter": "NAME_IN=澁谷かのん"}),
+            params: serde_json::json!({"filter": "NAME_IN=KANON"}),
             is_negated: false,
         };
         assert!(check_condition(&state, &db, 0, &cond, &ctx, 0));

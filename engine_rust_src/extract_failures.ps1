@@ -1,4 +1,4 @@
-$text = [System.IO.File]::ReadAllText('all_tests_full_output.txt', [System.Text.Encoding]::Unicode)
+$text = [System.IO.File]::ReadAllText('all_tests_full_output.txt', [System.Text.Encoding]::UTF8)
 $start = $text.IndexOf('failures:')
 if ($start -ge 0) {
     $details = $text.Substring($start)

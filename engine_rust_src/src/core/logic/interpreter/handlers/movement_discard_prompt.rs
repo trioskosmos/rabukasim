@@ -104,7 +104,7 @@ pub fn prepare_discard_prompt(
                     O_MOVE_TO_DISCARD,
                     s,
                     choice_type,
-                    filter_attr_with_mask,
+                    filter_attr_with_mask as u64,
                     v as i16,
                 ),
                 HandlerResult::Suspend

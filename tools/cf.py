@@ -403,9 +403,16 @@ class CardReporter:
             for i, ab in enumerate(compiled.get("abilities", [])):
                 trig = ab.get("trigger", 0)
                 bc = ab.get("bytecode", [])
+                fp = ab.get("frame_program")
+                
                 print(f"\n#### Ability {i} (Trigger: {trig})")
+                
+                if fp:
+                    print("**Ability Frames**:")
+                    print(self._format_frame_program(fp))
+                
                 print(f"**Bytecode**: `{bc}`")
-                print("**Decoded**:\n```\n{0}\n```".format(decode_bytecode(bc)))
+                print("**Decoded Bytecode**:\n```\n{0}\n```".format(decode_bytecode(bc)))
 
         if data.get("qas"):
             print(f"- **QA Rulings**: {len(data['qas'])} items.")
@@ -440,7 +447,11 @@ class CardReporter:
                 # If it's a relative path, try to make it a file:// URL for VS Code
                 if not img.startswith("http"):
                     abs_img = os.path.abspath(img)
-                    img_url = f"file:///{abs_img.replace(os.sep, '/')}"
+                    # On Windows, need to ensure the path is correctly formatted for file://
+                    img_path_str = abs_img.replace(os.sep, '/')
+                    if not img_path_str.startswith('/'):
+                        img_path_str = '/' + img_path_str
+                    img_url = f"file://{img_path_str}"
                 else:
                     img_url = img
                 lines.append(f"\n![{raw.get('name')}]({img_url})")
@@ -471,11 +482,54 @@ class CardReporter:
                     for f in filters:
                         lines.append(f"| {f.get('card_type', 'Any')} | {f.get('target_player', 'Self')} | {f.get('summary', '')} |")
 
+                fp = ab.get("frame_program")
+                if fp:
+                    lines.append("\n#### Ability Frames")
+                    lines.append("```")
+                    lines.append(self._format_frame_program(fp))
+                    lines.append("```")
+
                 lines.append(f"\n#### Decoded Bytecode\n```\n{decode_bytecode(ab.get('bytecode', []))}\n```")
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
         print(f"Report generated: {output_path}")
+
+    def _format_frame_program(self, frame_program: Dict) -> str:
+        if not frame_program or "frames" not in frame_program:
+            return ""
+        
+        lines = []
+        for i, frame in enumerate(frame_program["frames"]):
+            if isinstance(frame, str):
+                lines.append(f"  [{i:02d}] {frame}")
+            elif isinstance(frame, dict):
+                # Usually it's {"OpName": {params...}}
+                for op_name, params in frame.items():
+                    param_parts = []
+                    if isinstance(params, dict):
+                        # Show 'count' or 'value' if present
+                        if "count" in params: param_parts.append(f"count={params['count']}")
+                        if "value" in params: param_parts.append(f"value={params['value']}")
+                        if "filter" in params and isinstance(params["filter"], dict):
+                            summary = params["filter"].get("summary")
+                            if summary: param_parts.append(f"filter=[{summary}]")
+                        
+                        # Simplified slot description
+                        if "slot" in params and isinstance(params["slot"], dict):
+                            slot = params["slot"]
+                            if slot.get("target_slot") is not None:
+                                param_parts.append(f"slot={slot['target_slot']}")
+                            if slot.get("source_zone"):
+                                param_parts.append(f"src={slot['source_zone']}")
+                            if slot.get("dest_zone"):
+                                param_parts.append(f"dest={slot['dest_zone']}")
+                                
+                    param_str = f"({', '.join(param_parts)})" if param_parts else ""
+                    lines.append(f"  [{i:02d}] {op_name}{param_str}")
+            else:
+                lines.append(f"  [{i:02d}] {frame}")
+        return "\n".join(lines)
 
     def loop(self):
         self.run_interactive()

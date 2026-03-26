@@ -9,6 +9,7 @@ modular architecture based on:
 4. Structural Lexing: Balanced-brace scanning instead of greedy regex
 """
 
+import functools
 import re
 from typing import Any, Dict, List
 
@@ -41,6 +42,7 @@ class AbilityParserV2:
     def __init__(self):
         pass
 
+    @functools.lru_cache(maxsize=2048)
     def parse(self, text: str) -> List[Ability]:
         """Parse ability text into structured Ability objects."""
         # Preprocess

@@ -20,9 +20,8 @@ def sync_assets():
     LAUNCH_DEST_FINAL = os.path.join(ROOT, "launcher", "static_content")
     LAUNCH_DEST = os.path.join(ROOT, "launcher", ".static_content_staging")
     
-    if os.path.exists(LAUNCH_DEST):
-        shutil.rmtree(LAUNCH_DEST)
-    os.makedirs(LAUNCH_DEST)
+    if not os.path.exists(LAUNCH_DEST):
+        os.makedirs(LAUNCH_DEST)
 
     print("--- Syncing Assets to Launcher ---")
 
@@ -38,7 +37,9 @@ def sync_assets():
             if os.path.isdir(s):
                 shutil.copytree(s, d, dirs_exist_ok=True)
             else:
-                shutil.copy2(s, d)
+                # O(changed) check: only copy if dest doesn't exist or mtime/size differs
+                if not os.path.exists(d) or os.path.getmtime(s) > os.path.getmtime(d) or os.path.getsize(s) != os.path.getsize(d):
+                    shutil.copy2(s, d)
 
     # 1b. Sync Compiled Data
     print("Syncing Compiled Data...")
@@ -60,10 +61,11 @@ def sync_assets():
     if not os.path.exists(IMG_DEST):
         os.makedirs(IMG_DEST)
 
-    # Clean up existing cards to ensure no stale PNGs
+    # O(changed) sync: we don't rmtree CARDS_DEST here because that makes it O(n).
+    # Instead, we'll let the walk handle individual file updates.
+    # We only clean up if we want a precise mirror, but for dev startup, 
+    # additive sync with mtime check is usually enough and faster.
     CARDS_DEST = os.path.join(IMG_DEST, "cards")
-    if os.path.exists(CARDS_DEST):
-        shutil.rmtree(CARDS_DEST)
 
     count = 0
     for root, dirs, files in os.walk(IMG_SRC):
@@ -97,8 +99,10 @@ def sync_assets():
             if should_copy:
                 if not os.path.exists(target_dir):
                     os.makedirs(target_dir)
-                shutil.copy2(src_file, dest_file)
-                count += 1
+                # O(changed) check
+                if not os.path.exists(dest_file) or os.path.getmtime(src_file) > os.path.getmtime(dest_file) or os.path.getsize(src_file) != os.path.getsize(dest_file):
+                    shutil.copy2(src_file, dest_file)
+                    count += 1
 
     print(f"Done! Synced {count} image/data files.")
 

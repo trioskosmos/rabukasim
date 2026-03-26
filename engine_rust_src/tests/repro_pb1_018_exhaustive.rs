@@ -14,7 +14,7 @@ fn test_pb1_018_exhaustive() {
     let p2 = 1;
 
     // Card IDs
-    let nico_id = 4199; // PL!-pb1-018-R (矢澤にこ)
+    let nico_id = 4199; // PL!-pb1-018-R(矢澤にこ)
     let kota_id = 31; // Cost 2 Nico
     let kanata_id = 724; // Cost 2 Kaho
 

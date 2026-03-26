@@ -44,7 +44,7 @@ pub fn check_condition_frame(
         frame.raw_attr,
         frame.raw_slot,
         frame.params,
-        frame.filter,
+        DecodedFilterAttr::decode(frame.filter.to_attr() as i64),
         frame.slot,
         ctx,
         depth,

@@ -603,7 +603,7 @@ mod tests {
 
     #[test]
     fn test_q160_q161_q162_play_count_trigger() {
-        // Card: PL!N-bp3-005-R＋ (Engine ID 4369) - 宮下 愛
+        // Card: PL!N-bp3-005-R+ (Engine ID 4369) - 宮下 愛
         // Ability: "【自動】このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。"
         // Bytecode: [226, 3, 0, 0, 48, 66, 5, 0, 0, 4, 1, 0, 0, 0, 0]
         //   00: CHECK_HAS_KEYWORD(v=3, a=0, s=GE) → checks play_count_this_turn >= 3
@@ -618,7 +618,7 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
 
-        let target_card = db.id_by_no("PL!N-bp3-005-R＋").unwrap_or(4369);
+        let target_card = db.id_by_no("PL!N-bp3-005-R+").unwrap_or(4369);
 
         let mut filler_id = 1; // Generic filler
         for (id, _card) in &db.members {
@@ -682,14 +682,14 @@ mod tests {
 
     #[test]
     fn test_q196_select_member_empty() {
-        // Card: PL!N-pb1-003-P＋ (ID 332)
-        // Ability: "【起動】コスト2＋このカードを控室に：カードを1枚引き、虹ヶ咲メンバー1人にブレード+1。"
+        // Card: PL!N-pb1-003-P+ (ID 332)
+        // Ability: "【起動】コスト2+このカードを控室に：カードを1枚引き、虹ヶ咲メンバー1人にブレード+1。"
         // Q196: Can use even with 0 members.
 
         let db = load_real_db();
         let mut state = create_test_state();
         let target_card_id = db
-            .id_by_no("PL!N-pb1-003-P＋")
+            .id_by_no("PL!N-pb1-003-P+")
             .expect("Q196: expected the referenced Shizuku card to exist in the real DB");
 
         state.phase = Phase::Main;
@@ -1500,7 +1500,7 @@ mod tests {
         let mut state = create_test_state();
         state.debug.debug_mode = true;
 
-        let target_id = 10; // LL-bp2-001-R＋
+        let target_id = 10; // LL-bp2-001-R+
 
         // 1. Setup Hand: Target + 4 others (Total 5)
         state.players[0].hand = vec![target_id, 3001, 3002, 3003, 3004].into();
@@ -1530,7 +1530,7 @@ mod tests {
             "Should contain Osawa Rurino"
         );
 
-        println!("--- [LL-bp2-001-R＋ Multi-QA] Test Passed Successfully! ---");
+        println!("--- [LL-bp2-001-R+ Multi-QA] Test Passed Successfully! ---");
     }
     // =========================================================================
     // GROUP D: WAVE 2 & SPECIAL CARDS (Nico, CatChu!, etc.)
@@ -2151,7 +2151,7 @@ mod tests {
 
         let db = load_real_db();
         let mut state = create_test_state();
-        let setsuna_id = 4853; // PL!N-bp5-007-R＋
+        let setsuna_id = 4853; // PL!N-bp5-007-R+
 
         // 1. Setup: Setsuna on stage, both players have 0 successful lives.
         state.players[0].stage[0] = setsuna_id;

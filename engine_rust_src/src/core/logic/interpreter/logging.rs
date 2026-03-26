@@ -529,7 +529,7 @@ pub fn describe_frame_semantics(
         ),
         frame.raw_attr,
         frame.raw_slot,
-        describe_filter_attr(frame.filter),
+        describe_filter_attr(DecodedFilterAttr::decode(frame.filter.to_attr() as i64)),
         describe_slot(frame.slot),
         describe_params(frame.params),
         describe_context(ctx)

@@ -72,7 +72,7 @@ mod tests {
 
     fn setup_sumire_double_baton_state(db: &CardDatabase) -> GameState {
         let sumire_id = db
-            .id_by_no("PL!SP-bp4-004-R＋")
+            .id_by_no("PL!SP-bp4-004-R+")
             .expect("Q193/Q194: expected Sumire double-baton card in DB");
         let kanon_id = db
             .id_by_no("PL!SP-bp4-001-P")
@@ -348,7 +348,7 @@ mod tests {
     fn test_q146_on_play_counts_the_member_itself() {
         let db = load_real_db();
         let umi_id = db
-            .id_by_no("PL!-bp3-004-R＋")
+            .id_by_no("PL!-bp3-004-R+")
             .expect("Q146: expected Umi card in DB");
 
         let mut state = create_test_state();
@@ -567,7 +567,7 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         let lanzhu_id = db
-            .id_by_no("PL!N-pb1-012-P＋")
+            .id_by_no("PL!N-pb1-012-P+")
             .expect("Q198: expected Lanzhu card in DB");
         let cost11_member_id = first_member_with_cost(&db, 11, |card| card.card_id != lanzhu_id);
 
@@ -640,7 +640,7 @@ mod tests {
             .id_by_no("PL!N-pb1-016-R")
             .expect("Q204: expected Karin in DB");
         let multi_name_id = db
-            .id_by_no("LL-bp4-001-R＋")
+            .id_by_no("LL-bp4-001-R+")
             .expect("Q204: expected the Karin-containing multi-name member in DB");
         let mut positive_state = create_test_state();
         positive_state.phase = Phase::Main;

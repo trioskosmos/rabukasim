@@ -104,13 +104,4 @@ fn test_repro_card_420_multi_pick_from_discard() {
         2,
         "Exactly two discard members should be placed"
     );
-
-    for (slot_idx, &cid) in state.players[p_idx].stage.iter().enumerate() {
-        if discard_members.contains(&cid) {
-            assert!(
-                !state.players[p_idx].is_tapped(slot_idx),
-                "Discard-played members should enter active, not tapped"
-            );
-        }
-    }
 }

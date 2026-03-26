@@ -7,6 +7,7 @@ use crate::core::hearts::HeartBoard;
 use crate::core::models::LiveCard;
 use rand::seq::SliceRandom;
 // use rand::SeedableRng;
+use super::models::DeckStats;
 use rand_pcg::Pcg64;
 
 impl GameState {
@@ -20,6 +21,7 @@ impl GameState {
 
         // Use current state to seed the shuffle for deterministic replay if needed
         let player = &mut self.core.players[player_idx];
+        player.cached_deck_stats = DeckStats::default();
         let mut discard_cards: Vec<i32> = player.discard.drain(..).collect();
 
         // Shuffle discard
@@ -118,7 +120,7 @@ impl GameState {
 
     pub fn sync_stat_caches(&mut self, p_idx: usize, db: &CardDatabase) {
         use crate::core::logic::rules::{
-            calculate_board_aura, get_effective_blades, get_effective_hearts,
+            calculate_board_aura, get_effective_blades_with_aura, get_effective_hearts_with_aura,
         };
 
         // 1. Calculate and cache the BoardAura (single pass over constant abilities)
@@ -140,18 +142,18 @@ impl GameState {
                 .add_to_color(col as usize, val as i32);
         }
 
-        // 3. Calculate effective stats (now O(1) inside because they use board_aura)
+        // 3. Calculate effective stats (O(1) pass using the pre-calculated aura)
         let mut total_blades = 0u32;
         let mut total_hearts = HeartBoard::default();
         let mut slot_blades = [0u32; 3];
         let mut slot_hearts = [HeartBoard::default(); 3];
 
         for slot_idx in 0..3 {
-            let b = get_effective_blades(self, p_idx, slot_idx, db, 1);
+            let b = get_effective_blades_with_aura(self, p_idx, slot_idx, db, &aura);
             slot_blades[slot_idx] = b;
             total_blades += b;
 
-            let h = get_effective_hearts(self, p_idx, slot_idx, db, 1);
+            let h = get_effective_hearts_with_aura(self, p_idx, slot_idx, db, &aura);
             slot_hearts[slot_idx] = h;
             total_hearts.add(h);
         }

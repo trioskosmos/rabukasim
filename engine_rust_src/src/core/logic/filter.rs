@@ -1,4 +1,4 @@
-﻿//! Card Filter Module
+//! Card Filter Module
 //!
 //! This module provides a structured way to handle card filtering logic.
 //! The 64-bit filter attribute is decomposed into meaningful fields for clarity.
@@ -41,7 +41,7 @@ pub const FILTER_STATE_FLAGS_MASK: u64 = 61440; // 0xF000
 
 /// A structured representation of the 64-bit filter attribute
 /// Synchronized with ability.py _pack_filter_attr layout.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(default)]
 pub struct CardFilter {
     pub is_enabled: bool,
@@ -568,8 +568,8 @@ impl CardFilter {
         crate::core::logic::filter_attr_compat::card_filter_from_attr(a)
     }
 
-    pub fn to_attr(&self) -> i64 {
-        crate::core::logic::filter_attr_compat::card_filter_to_attr(self)
+    pub fn to_attr(&self) -> u64 {
+        crate::core::logic::filter_attr_compat::card_filter_to_attr(self) as u64
     }
 
     pub fn new() -> Self {

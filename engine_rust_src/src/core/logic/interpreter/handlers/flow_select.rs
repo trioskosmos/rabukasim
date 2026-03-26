@@ -12,8 +12,28 @@ use crate::core::models::CHOICE_DONE;
 #[path = "flow_select_resolve.rs"]
 mod flow_select_resolve;
 
-#[allow(clippy::too_many_arguments)]
+fn cards_for_source_zone(state: &GameState, target_player: usize, source_zone: u8) -> &[i32] {
+    match source_zone {
+        6 => state.players[target_player].hand.as_slice(),
+        7 => state.players[target_player].discard.as_slice(),
+        _ => state.players[target_player].stage.as_slice(),
+    }
+}
 
+fn resolve_select_member_target_player(
+    slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
+    filter_attr: u64,
+    p_idx: usize,
+    is_targeted_select_member_cost: bool,
+) -> usize {
+    if is_targeted_select_member_cost {
+        return p_idx;
+    }
+
+    resolve_target_player(slot_info, filter_attr, p_idx)
+}
+
+#[allow(clippy::too_many_arguments)]
 pub fn handle_select_ops(
     state: &mut GameState,
 
@@ -40,6 +60,14 @@ pub fn handle_select_ops(
     let partial_selection_prompt = -1000 - (v as i16);
     let frame_components = _frame.components();
     let frame_filter_attr = frame_components.filter.to_attr();
+    let resolved_filter_attr =
+        filter_attr_from_params(frame_components.params).unwrap_or_else(|| {
+            if frame_filter_attr != 0 {
+                frame_filter_attr
+            } else {
+                a as u64
+            }
+        });
     let legacy_move_member_follow_up = if op == O_SELECT_MEMBER {
         let source_ability = db
             .get_member(ctx.source_card_id)
@@ -103,25 +131,11 @@ pub fn handle_select_ops(
         }
     }
 
-    let filter_attr = filter_attr_from_params(frame_components.params).unwrap_or_else(|| {
-        if frame_filter_attr != 0 {
-            frame_filter_attr
-        } else {
-            a as u64
-        }
-    });
-    let is_targeted_select_member_cost = slot_info.target_slot == 4
-        && filter_attr_from_params(frame_components.params).unwrap_or_else(|| {
-            if frame_filter_attr != 0 {
-                frame_filter_attr
-            } else {
-                a as u64
-            }
-        }) != 0;
+    let is_targeted_select_member_cost = slot_info.target_slot == 4 && resolved_filter_attr != 0;
     let filter_attr = if is_targeted_select_member_cost {
-        (filter_attr & !0x3) | 1
+        (resolved_filter_attr & !0x3) | 1
     } else {
-        filter_attr
+        resolved_filter_attr
     };
 
     if state.debug.debug_mode && op == O_SELECT_MEMBER {
@@ -139,16 +153,19 @@ pub fn handle_select_ops(
     }
 
     if op == O_SELECT_MEMBER && v == 99 && ctx.choice_index == -1 {
-        let target_player = if is_targeted_select_member_cost {
-            p_idx
-        } else {
-            resolve_target_player(slot_info, filter_attr, p_idx)
-        };
-
+        let target_player = resolve_select_member_target_player(
+            slot_info,
+            filter_attr,
+            p_idx,
+            is_targeted_select_member_cost,
+        );
         ctx.selected_cards.clear();
         ctx.selected_target_keys.clear();
 
-        for (slot_idx, &cid) in state.players[target_player].stage.iter().enumerate() {
+        for (slot_idx, &cid) in cards_for_source_zone(state, target_player, slot_info.source_zone as u8)
+            .iter()
+            .enumerate()
+        {
             if cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx) {
                 ctx.selected_cards.push(cid);
                 ctx.selected_target_keys
@@ -158,6 +175,16 @@ pub fn handle_select_ops(
 
         return HandlerResult::Continue;
     }
+
+    let matching_cards = |cards: &[i32]| -> Vec<i32> {
+        cards
+            .iter()
+            .copied()
+            .filter(|&cid| {
+                cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+            })
+            .collect()
+    };
 
     if ctx.choice_index == -1 {
         let choice_type = match op {
@@ -179,37 +206,14 @@ pub fn handle_select_ops(
 
         if is_optional && op == O_SELECT_MEMBER {
             let source_zone = slot_info.source_zone as u8;
-            let target_player = if is_targeted_select_member_cost {
-                p_idx
-            } else {
-                resolve_target_player(slot_info, filter_attr, p_idx)
-            };
-
-            let has_legal_target = match source_zone {
-                6 => state.players[target_player]
-                    .hand
-                    .iter()
-                    .copied()
-                    .any(|cid| {
-                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
-                    }),
-
-                7 => state.players[target_player]
-                    .discard
-                    .iter()
-                    .copied()
-                    .any(|cid| {
-                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
-                    }),
-
-                _ => state.players[target_player]
-                    .stage
-                    .iter()
-                    .copied()
-                    .any(|cid| {
-                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
-                    }),
-            };
+            let target_player = resolve_select_member_target_player(
+                slot_info,
+                filter_attr,
+                p_idx,
+                is_targeted_select_member_cost,
+            );
+            let has_legal_target =
+                !matching_cards(cards_for_source_zone(state, target_player, source_zone)).is_empty();
 
             if !has_legal_target {
                 return HandlerResult::Continue;
@@ -218,38 +222,13 @@ pub fn handle_select_ops(
 
         if op == O_SELECT_MEMBER {
             let source_zone = slot_info.source_zone as u8;
-            let target_player = if is_targeted_select_member_cost {
-                p_idx
-            } else {
-                resolve_target_player(slot_info, filter_attr, p_idx)
-            };
-
-            let looked_cards: Vec<i32> = match source_zone {
-                6 => state.players[target_player]
-                    .hand
-                    .iter()
-                    .copied()
-                    .filter(|&cid| {
-                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
-                    })
-                    .collect(),
-                7 => state.players[target_player]
-                    .discard
-                    .iter()
-                    .copied()
-                    .filter(|&cid| {
-                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
-                    })
-                    .collect(),
-                _ => state.players[target_player]
-                    .stage
-                    .iter()
-                    .copied()
-                    .filter(|&cid| {
-                        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
-                    })
-                    .collect(),
-            };
+            let target_player = resolve_select_member_target_player(
+                slot_info,
+                filter_attr,
+                p_idx,
+                is_targeted_select_member_cost,
+            );
+            let looked_cards = matching_cards(cards_for_source_zone(state, target_player, source_zone));
             state.players[target_player].looked_cards = looked_cards.into();
         }
 
